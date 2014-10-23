@@ -1,0 +1,51 @@
+package com.torodb.torod.tools.sequencer;
+
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+
+
+import java.util.EnumMap;
+import java.util.EnumSet;
+import java.util.logging.Logger;
+
+/**
+ *
+ * @author Gonzalo Ortiz Jaureguizar <gortiz at nosys.es>
+ */
+public class Sequencer<E extends Enum<E>> {
+
+    private final EnumSet<E> sentMessages;
+    private final EnumMap<E, java.lang.Thread> reservedMessages;
+    private static final Logger LOG = Logger.getLogger(Sequencer.class.getName());
+
+    public Sequencer(Class<E> messagesEnum) {
+        sentMessages = EnumSet.noneOf(messagesEnum);
+        reservedMessages = new EnumMap<E, java.lang.Thread>(messagesEnum);
+    }
+    
+    public void waitFor(E message) {
+        synchronized (message) {
+            assert !reservedMessages.containsKey(message) : 
+                    "Thread '" + reservedMessages.get(message) + "' already reserved this message";
+            reservedMessages.put(message, java.lang.Thread.currentThread());
+            while (!sentMessages.contains(message)) {
+                try {
+                    message.wait();
+                } catch (InterruptedException ex) {
+                    throw new InterruptedExceptionRuntimeException(ex);
+                }
+            }
+        }
+    }
+    
+    public void notify(E message) {
+        synchronized (message) {
+            assert !sentMessages.contains(message) : "Message '"+message+"' has already been sent";
+            sentMessages.add(message);
+            message.notifyAll();
+        }
+    }
+}

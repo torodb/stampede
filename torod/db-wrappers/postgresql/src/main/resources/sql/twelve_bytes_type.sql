@@ -1,0 +1,1 @@
+CREATE DOMAIN twelve_bytes AS bytea;
