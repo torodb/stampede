@@ -256,7 +256,7 @@ public class BasicQueryTranslator {
             throw new UserToroException(
                     "$and operand requires an array of json objects, but "
                             + uncastedArg + " is "
-                            + "recived");
+                            + "received");
         }
 
         ConjunctionBuilder buidler = new ConjunctionBuilder();
