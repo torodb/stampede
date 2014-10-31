@@ -41,12 +41,15 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
  */
 class DefaultCursorManager implements CursorManager {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(DefaultCursorManager.class);
     private static final long FIRST_CURSOR_ID = 0;
     static final int OLD_CACHE_EVICTION_PERIOD = 10000;
 
@@ -195,8 +198,9 @@ class DefaultCursorManager implements CursorManager {
             close(cursorId);
 
             if (newReadElements > cursor.getLimit()) {
-                throw new IllegalArgumentException("It was expected " + cursor.getLimit() + " as limit of the cursor, "
-                        + "but " + newReadElements + " has been read");
+                LOGGER.warn("It was expected " + cursor.getLimit() + " as "
+                        + "limit of the cursor, but " + newReadElements 
+                        + " has been read");
             }
 
             return true;
