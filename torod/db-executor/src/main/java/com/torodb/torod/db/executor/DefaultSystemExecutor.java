@@ -27,7 +27,7 @@ import com.torodb.torod.core.executor.ToroTaskExecutionException;
 import com.torodb.torod.core.subdocument.SubDocType;
 import com.torodb.torod.db.executor.jobs.CreateCollectionCallable;
 import com.torodb.torod.db.executor.jobs.CreateSubDocTableCallable;
-import com.torodb.torod.db.executor.jobs.FindCollectionCallable;
+import com.torodb.torod.db.executor.jobs.FindCollectionsCallable;
 import com.torodb.torod.db.executor.jobs.ReserveSubDocIdsCallable;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -75,7 +75,7 @@ class DefaultSystemExecutor implements SystemExecutor {
 
     @Override
     public Future<Map<String, Integer>> findCollections() {
-        return submit(new FindCollectionCallable(wrapper));
+        return submit(new FindCollectionsCallable(wrapper));
     }
 
     @Override

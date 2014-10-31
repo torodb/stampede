@@ -17,7 +17,6 @@
  *     Copyright (c) 2014, 8Kdata Technology
  *     
  */
-
 package com.torodb.torod.core.dbWrapper;
 
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
@@ -31,20 +30,35 @@ public interface DbWrapper {
     /**
      * Initializes this object.
      * <p>
-     * This method is called when ToroD starts to retrieve some internal information from the database and setup inner
-     * data structures.
+     * This method is called when ToroD starts to retrieve some internal
+     * information from the database and setup inner data structures.
      */
     public void initialize();
 
     /**
      * Returns a {@link DbConnection}.
      * <p>
-     * Caller owns the connection and he must call {@link DbConnection#close()} to release it.
+     * Caller owns the connection and he must call {@link DbConnection#close()}
+     * to release it.
      * <p>
-     * @return
-     * @throws com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException
+     * The calling thread will be blocked until a SQL connection is usable if
+     * the connection pooler is blocker.
+     * <p>
+     * @return @throws
+     * com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException
      */
     @Nonnull
-    public DbConnection consumeDbConnection() throws ImplementationDbException;
-    
+    public DbConnection consumeSessionDbConnection() throws ImplementationDbException;
+
+    /**
+     * Retruns the {@link DbConnection} that is reserved to execute system
+     * actions.
+     * <p>
+     * Only a system thread should use this connection.
+     * <p>
+     * @return
+     * @throws ImplementationDbException
+     */
+    public DbConnection getSystemDbConnection() throws ImplementationDbException;
+
 }

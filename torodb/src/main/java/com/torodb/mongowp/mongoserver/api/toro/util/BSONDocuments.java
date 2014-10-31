@@ -20,19 +20,15 @@
 
 package com.torodb.mongowp.mongoserver.api.toro.util;
 
+import com.eightkdata.nettybson.api.BSONDocument;
+import com.eightkdata.nettybson.mongodriver.MongoBSONDocument;
+import com.torodb.kvdocument.conversion.mongo.MongoValueConverter;
+import com.torodb.torod.core.subdocument.ToroDocument;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-
 import javax.annotation.Nonnull;
-
 import org.bson.BSONObject;
-
-import com.torodb.torod.core.subdocument.ToroDocument;
-
-import com.torodb.kvdocument.conversion.mongo.MongoValueConverter;
-import com.eightkdata.nettybson.api.BSONDocument;
-import com.eightkdata.nettybson.mongodriver.MongoBSONDocument;
 
 /**
  *

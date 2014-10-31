@@ -23,12 +23,12 @@ package com.torodb.translator;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.torodb.torod.core.exceptions.UserToroException;
-import com.torodb.torod.core.language.AttributeReference;
-import com.torodb.torod.core.language.update.*;
 import com.torodb.kvdocument.conversion.mongo.MongoValueConverter;
 import com.torodb.kvdocument.values.DocValue;
 import com.torodb.kvdocument.values.NumericDocValue;
+import com.torodb.torod.core.exceptions.UserToroException;
+import com.torodb.torod.core.language.AttributeReference;
+import com.torodb.torod.core.language.update.*;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -40,6 +40,9 @@ import org.bson.BSONObject;
  *
  */
 public class UpdateActionTranslator {
+    
+    UpdateActionTranslator() {
+    }
 
     public static UpdateAction translate(BSONObject updateObject) {
         
@@ -80,7 +83,7 @@ public class UpdateActionTranslator {
                 throw new UserToroException("Unknown modifier: "+key);
             }
             translateSingleOperation(
-                    builder, 
+                    builder,
                     UpdateOperator.fromKey(key), 
                     updateObject.get(key)
             );
@@ -127,8 +130,7 @@ public class UpdateActionTranslator {
     }
     
     private static AttributeReference parseAttributReferenceAsObjectReference(
-            String key
-    ) {
+            String key) {
         ImmutableList.Builder<AttributeReference.Key> newKeysBuilder 
                 = ImmutableList.<AttributeReference.Key>builder();
         
@@ -139,7 +141,8 @@ public class UpdateActionTranslator {
         return new AttributeReference(newKeysBuilder.build());
     }
     
-    private static Collection<AttributeReference> parseAttributeReference(String key) {
+    private static Collection<AttributeReference> parseAttributeReference(
+            String key) {
         String[] tokens = key.split("\\.");
         
         List<AttributeReference.Key> keys = Lists.newArrayList();
@@ -149,12 +152,7 @@ public class UpdateActionTranslator {
         return attRefs;
     }
     
-    private static void parseAttributeReference(
-            String[] tokens, 
-            int depth,
-            List<AttributeReference.Key> keys,
-            Collection<AttributeReference> attRefs
-    ) {
+    private static void parseAttributeReference(String[] tokens, int depth, List<AttributeReference.Key> keys, Collection<AttributeReference> attRefs) {
         if (tokens.length == depth) {
             attRefs.add(new AttributeReference(keys));
         }
@@ -176,9 +174,7 @@ public class UpdateActionTranslator {
     }
     
     private static void translateIncrement(
-            CompositeUpdateAction.Builder builder,
-            BSONObject argument
-    ) {
+            CompositeUpdateAction.Builder builder, BSONObject argument) {
         for (String key : argument.keySet()) {
             Collection<AttributeReference> attRefs 
                     = parseAttributeReference(key);
@@ -199,9 +195,7 @@ public class UpdateActionTranslator {
     }
 
     private static void translateMove(
-            CompositeUpdateAction.Builder builder, 
-            BSONObject argument
-    ) {
+            CompositeUpdateAction.Builder builder, BSONObject argument) {
         for (String key : argument.keySet()) {
             Collection<AttributeReference> attRefs
                     = parseAttributeReference(key);
@@ -225,9 +219,7 @@ public class UpdateActionTranslator {
     }
 
     private static void translateMultiply(
-            CompositeUpdateAction.Builder builder, 
-            BSONObject argument
-    ) {
+            CompositeUpdateAction.Builder builder, BSONObject argument) {
         for (String key : argument.keySet()) {
             Collection<AttributeReference> attRefs
                     = parseAttributeReference(key);
@@ -248,16 +240,12 @@ public class UpdateActionTranslator {
     }
 
     private static void translateSetCurrentDate(
-            CompositeUpdateAction.Builder builder, 
-            BSONObject argument
-    ) {
+            CompositeUpdateAction.Builder builder, BSONObject argument) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
     private static void translateSetField(
-            CompositeUpdateAction.Builder builder, 
-            BSONObject argument
-    ) {
+            CompositeUpdateAction.Builder builder, BSONObject argument) {
         for (String key : argument.keySet()) {
             Collection<AttributeReference> attRefs
                     = parseAttributeReference(key);
@@ -274,9 +262,7 @@ public class UpdateActionTranslator {
     }
 
     private static void translateUnsetField(
-            CompositeUpdateAction.Builder builder, 
-            BSONObject argument
-    ) {
+            CompositeUpdateAction.Builder builder, BSONObject argument) {
         for (String key : argument.keySet()) {
             Collection<AttributeReference> attRefs
                     = parseAttributeReference(key);
@@ -286,8 +272,9 @@ public class UpdateActionTranslator {
             );
         }
     }
-    
+
     private static enum UpdateOperator {
+
         INCREMENT("$inc"),
         MOVE("$rename"),
         MULTIPLY("$mult"),
@@ -297,7 +284,6 @@ public class UpdateActionTranslator {
         
         private static final Map<String, UpdateOperator> operandsByKey;
         private final String key;
-
         static {
             operandsByKey = Maps.newHashMapWithExpectedSize(UpdateOperator.values().length);
             for (UpdateOperator operand : UpdateOperator.values()) {
@@ -321,7 +307,8 @@ public class UpdateActionTranslator {
         public static UpdateOperator fromKey(String key) {
             UpdateOperator result = operandsByKey.get(key);
             if (result == null) {
-                throw new IllegalArgumentException("There is no operand whose key is '" + key + "'");
+                throw new IllegalArgumentException("There is no operand whose "
+                        + "key is '" + key + "'");
             }
             return result;
         }

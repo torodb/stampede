@@ -19,21 +19,30 @@
  */
 
 
-package com.torodb.mongowp.mongoserver.di;
+package com.torodb.di;
 
-import javax.inject.Singleton;
-
+import com.eightkdata.mongowp.mongoserver.MongoServerConfig;
 import com.google.inject.AbstractModule;
-import com.toro.torod.connection.DefaultTorod;
-import com.torodb.torod.core.Torod;
+import com.torodb.Config;
+import com.torodb.mongowp.mongoserver.api.toro.util.MongoDocumentBuilderFactory;
+import com.torodb.torod.core.config.DocumentBuilderFactory;
+import com.torodb.torod.core.config.TorodConfig;
 
 /**
  *
  */
-public class ConnectionModule extends AbstractModule {
+public class ConfigModule extends AbstractModule {
    
+    private final Config config;
+
+    public ConfigModule(Config config) {
+        this.config = config;
+    }
+    
     @Override
     protected void configure() {
-        bind(Torod.class).to(DefaultTorod.class).in(Singleton.class);
+        bind(TorodConfig.class).toInstance(config);
+        bind(MongoServerConfig.class).toInstance(config);
+        bind(DocumentBuilderFactory.class).to(MongoDocumentBuilderFactory.class);
     }
 }

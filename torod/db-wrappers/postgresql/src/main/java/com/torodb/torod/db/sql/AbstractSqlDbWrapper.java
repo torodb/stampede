@@ -24,6 +24,7 @@ import com.torodb.torod.db.postgresql.meta.TorodbMeta;
 import com.torodb.torod.core.config.TorodConfig;
 import com.torodb.torod.core.dbWrapper.DbConnection;
 import com.torodb.torod.core.dbWrapper.DbWrapper;
+import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -42,13 +43,15 @@ import org.jooq.impl.DSL;
 public abstract class AbstractSqlDbWrapper implements DbWrapper {
 
     private final AtomicBoolean isInitialized;
-    private final DataSource ds;
+    private final DataSource sessionDataSource;
+    private final DataSource systemDataSource;
     private TorodbMeta meta;
     
 
     @Inject
     public AbstractSqlDbWrapper(TorodConfig config) {
-        this.ds = config.getDataSource();
+        this.sessionDataSource = config.getSessionDataSource();
+        this.systemDataSource = config.getSystemDataSource();
 
         isInitialized = new AtomicBoolean(false);
     }
@@ -70,7 +73,7 @@ public abstract class AbstractSqlDbWrapper implements DbWrapper {
         Connection c = null;
 
         try {
-            c = ds.getConnection();
+            c = sessionDataSource.getConnection();
             c.setAutoCommit(false);
 
             meta = new TorodbMeta(getDsl(c));
@@ -97,7 +100,16 @@ public abstract class AbstractSqlDbWrapper implements DbWrapper {
     }
 
     @Override
-    public DbConnection consumeDbConnection() {
+    public DbConnection consumeSessionDbConnection() {
+        return consumeConnection(sessionDataSource);
+    }
+
+    @Override
+    public DbConnection getSystemDbConnection() throws ImplementationDbException {
+        return consumeConnection(systemDataSource);
+    }
+    
+    private DbConnection consumeConnection(DataSource ds) {
         if (!isInitialized()) {
             throw new IllegalStateException("The db-wrapper is not initialized");
         }

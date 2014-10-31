@@ -18,21 +18,24 @@
  *     
  */
 
-
-package com.torodb.mongowp.mongoserver.di;
+package com.torodb.di;
 
 import com.google.inject.AbstractModule;
-import com.torodb.torod.d2r.DefaultD2RTranslator;
-import com.torodb.torod.core.d2r.D2RTranslator;
+import com.torodb.torod.core.dbWrapper.DbWrapper;
+import com.torodb.torod.db.postgresql.PostgresqlDbWrapper;
 import javax.inject.Singleton;
 
 /**
  *
  */
-public class D2RModule extends AbstractModule {
-   
+public class DbWrapperModule extends AbstractModule {
+
+    public DbWrapperModule() {
+    }
+
     @Override
     protected void configure() {
-        bind(D2RTranslator.class).to(DefaultD2RTranslator.class).in(Singleton.class);
+        bind(DbWrapper.class).to(PostgresqlDbWrapper.class).in(Singleton.class);
+        bind(PostgresqlDbWrapper.class).in(Singleton.class);
     }
 }

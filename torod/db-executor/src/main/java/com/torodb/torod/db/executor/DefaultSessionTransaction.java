@@ -128,7 +128,7 @@ public class DefaultSessionTransaction implements SessionTransaction {
         public DbConnection getConnection() {
             if (connection == null) {
                 try {
-                    connection = dbWrapper.consumeDbConnection();
+                    connection = dbWrapper.consumeSessionDbConnection();
                 }
                 catch (ImplementationDbException ex) {
                     throw new ToroImplementationException(ex);

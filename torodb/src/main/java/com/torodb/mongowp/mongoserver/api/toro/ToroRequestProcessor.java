@@ -20,53 +20,8 @@
 
 package com.torodb.mongowp.mongoserver.api.toro;
 
-import io.netty.util.AttributeKey;
-import io.netty.util.AttributeMap;
-
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import javax.inject.Inject;
-
-import org.bson.BSONObject;
-
-import com.torodb.mongowp.mongoserver.api.toro.util.BSONDocuments;
-import com.torodb.mongowp.mongoserver.api.toro.util.BSONToroDocument;
-import com.torodb.torod.core.Torod;
-import com.torodb.torod.core.WriteFailMode;
-import com.torodb.torod.core.connection.DeleteResponse;
-import com.torodb.torod.core.connection.InsertResponse;
-import com.torodb.torod.core.connection.ToroConnection;
-import com.torodb.torod.core.connection.ToroTransaction;
-import com.torodb.torod.core.connection.UpdateResponse;
-import com.torodb.torod.core.cursors.CursorId;
-import com.torodb.torod.core.language.operations.DeleteOperation;
-import com.torodb.torod.core.language.operations.UpdateOperation;
-import com.torodb.torod.core.language.projection.Projection;
-import com.torodb.torod.core.language.querycriteria.QueryCriteria;
-import com.torodb.torod.core.language.update.UpdateAction;
-import com.torodb.torod.core.subdocument.ToroDocument;
-import com.torodb.translator.QueryCriteriaTranslator;
-import com.torodb.translator.QueryEncapsulation;
-import com.torodb.translator.QueryModifier;
-import com.torodb.translator.QuerySortOrder;
-import com.torodb.translator.UpdateActionTranslator;
-
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import com.eightkdata.mongowp.messages.request.DeleteMessage;
-import com.eightkdata.mongowp.messages.request.GetMoreMessage;
-import com.eightkdata.mongowp.messages.request.InsertMessage;
-import com.eightkdata.mongowp.messages.request.KillCursorsMessage;
-import com.eightkdata.mongowp.messages.request.QueryMessage;
+import com.eightkdata.mongowp.messages.request.*;
 import com.eightkdata.mongowp.messages.request.QueryMessage.Flag;
-import com.eightkdata.mongowp.messages.request.RequestOpCode;
-import com.eightkdata.mongowp.messages.request.UpdateMessage;
 import com.eightkdata.mongowp.messages.response.ReplyMessage;
 import com.eightkdata.mongowp.mongoserver.api.AbstractRequestProcessor;
 import com.eightkdata.mongowp.mongoserver.api.QueryCommandProcessor;
@@ -77,6 +32,27 @@ import com.eightkdata.mongowp.mongoserver.protocol.MongoWP;
 import com.eightkdata.mongowp.mongoserver.protocol.MongoWP.ErrorCode;
 import com.eightkdata.nettybson.api.BSONDocument;
 import com.eightkdata.nettybson.mongodriver.MongoBSONDocument;
+import com.torodb.mongowp.mongoserver.api.toro.util.BSONDocuments;
+import com.torodb.mongowp.mongoserver.api.toro.util.BSONToroDocument;
+import com.torodb.torod.core.Torod;
+import com.torodb.torod.core.WriteFailMode;
+import com.torodb.torod.core.connection.*;
+import com.torodb.torod.core.cursors.CursorId;
+import com.torodb.torod.core.language.operations.DeleteOperation;
+import com.torodb.torod.core.language.operations.UpdateOperation;
+import com.torodb.torod.core.language.projection.Projection;
+import com.torodb.torod.core.language.querycriteria.QueryCriteria;
+import com.torodb.torod.core.language.update.UpdateAction;
+import com.torodb.torod.core.subdocument.ToroDocument;
+import com.torodb.translator.*;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import io.netty.util.AttributeKey;
+import io.netty.util.AttributeMap;
+import java.util.*;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
+import javax.inject.Inject;
+import org.bson.BSONObject;
 
 
 /**
@@ -211,9 +187,9 @@ public class ToroRequestProcessor extends AbstractRequestProcessor {
     	//TODO: Implement this with torod when transaction will tell if there is more data
     	if (results.size() >= MongoWP.MONGO_CURSOR_LIMIT) {
     		cursorIdReturned = cursorId.getNumericId();
-        	transactionMap.put(Long.valueOf(cursorId.getNumericId()), transaction);
+        	transactionMap.put(cursorId.getNumericId(), transaction);
         	//TODO: Implement this with torod when transaction will give the position
-        	positionMap.put(Long.valueOf(cursorId.getNumericId()), new AtomicInteger(0));
+        	positionMap.put(cursorId.getNumericId(), new AtomicInteger(0));
     	} else {
     		transaction.closeCursor(cursorId);
     		transaction.close();
@@ -275,12 +251,12 @@ public class ToroRequestProcessor extends AbstractRequestProcessor {
     	if (results.size() >= MongoWP.MONGO_CURSOR_LIMIT) {
     		cursorIdReturned = cursorId.getNumericId();
         	//TODO: Implement this with torod when transaction will give the position
-    		position = positionMap.get(Long.valueOf(cursorId.getNumericId())).getAndAdd(results.size());
+    		position = positionMap.get(cursorId.getNumericId()).getAndAdd(results.size());
     	} else {
     		transaction.closeCursor(cursorId);
     		transaction.close();
-        	transactionMap.remove(Long.valueOf(cursorId.getNumericId()));
-    		position = positionMap.remove(Long.valueOf(cursorId.getNumericId())).get();
+        	transactionMap.remove(cursorId.getNumericId());
+    		position = positionMap.remove(cursorId.getNumericId()).get();
     	}
 		
 		messageReplier.replyMessageMultipleDocumentsWithFlags(cursorIdReturned, position, results,
@@ -305,12 +281,12 @@ public class ToroRequestProcessor extends AbstractRequestProcessor {
 		for (int index = 0; index < numberOfCursors; index++) {
 			CursorId cursorId = new CursorId(cursorIds[index]);
 			
-			if (transactionMap.containsKey(Long.valueOf(cursorId.getNumericId()))) {
+			if (transactionMap.containsKey(cursorId.getNumericId())) {
 				ToroTransaction transaction = transactionMap.get(Long.valueOf(cursorId.getNumericId()));
 				transaction.closeCursor(cursorId);
 				transaction.close();
-				transactionMap.remove(Long.valueOf(cursorId.getNumericId()));
-				positionMap.remove(Long.valueOf(cursorId.getNumericId()));
+				transactionMap.remove(cursorId.getNumericId());
+				positionMap.remove(cursorId.getNumericId());
 			}
 		}
 	}
@@ -325,7 +301,7 @@ public class ToroRequestProcessor extends AbstractRequestProcessor {
     	WriteFailMode writeFailMode = 
     			insertMessage.getFlags().contains(InsertMessage.Flag.CONTINUE_ON_ERROR)?
     					WriteFailMode.ISOLATED:WriteFailMode.ORDERED;
-		Iterable<?> documents = (Iterable<?>) insertMessage.getDocuments();
+		Iterable<?> documents = insertMessage.getDocuments();
     	List<ToroDocument> inserts = new ArrayList<ToroDocument>();
     	Iterator<?> documentsIterator = documents.iterator();
     	while(documentsIterator.hasNext()) {

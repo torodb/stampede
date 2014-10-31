@@ -22,7 +22,6 @@ package com.torodb.translator;
 
 import com.torodb.torod.core.exceptions.UserToroException;
 import com.torodb.torod.core.language.querycriteria.QueryCriteria;
-import java.util.logging.Logger;
 import org.bson.BSONObject;
 
 /**

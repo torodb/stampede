@@ -29,7 +29,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Collection;
 import java.util.LinkedList;
-import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.junit.Ignore;
@@ -43,11 +43,11 @@ public class SequencerTest {
 
     private final long maxExpectedMillis;
     private static final Logger LOG = Logger.getLogger(SequencerTest.class.getName());
-    private final ConcurrentLinkedDeque<Throwable> throwables;
+    private final ConcurrentLinkedQueue<Throwable> throwables;
 
     public SequencerTest(long maxExpectedMillis) {
         this.maxExpectedMillis = maxExpectedMillis;
-        this.throwables = new ConcurrentLinkedDeque<Throwable>();
+        this.throwables = new ConcurrentLinkedQueue<Throwable>();
     }
 
     @Test
@@ -59,7 +59,7 @@ public class SequencerTest {
     public void finish() throws Exception {
     }
 
-    public static void test(Object testCase, long maxExpectedMillis, ConcurrentLinkedDeque<Throwable> throwables) throws SequencerTimeoutException, Throwable {
+    public static void test(Object testCase, long maxExpectedMillis, ConcurrentLinkedQueue<Throwable> throwables) throws SequencerTimeoutException, Throwable {
         Collection<Thread> threads = new LinkedList<Thread>();
         Class<?> c = testCase.getClass();
         for (Method method : c.getMethods()) {
@@ -87,12 +87,12 @@ public class SequencerTest {
             for (Throwable throwable : throwables) {
                 System.err.println(Throwables.getStackTraceAsString(throwable));
             }
-            throw throwables.getFirst();
+            throw throwables.peek();
         }
     }
 
     @SuppressFBWarnings(value = "UW_UNCOND_WAIT")
-    private static void waitSubtasks(Collection<Thread> threads, long maxExpectedMillis, ConcurrentLinkedDeque<Throwable> throwables) {
+    private static void waitSubtasks(Collection<Thread> threads, long maxExpectedMillis, ConcurrentLinkedQueue<Throwable> throwables) {
         long maxTime = System.currentTimeMillis() + maxExpectedMillis;
         final Object lock = new Object();
         while (maxTime > System.currentTimeMillis()) {
@@ -144,7 +144,7 @@ public class SequencerTest {
         }
     }
 
-    private static Runnable createRunnable(final Object testCase, final Method m, final ConcurrentLinkedDeque<Throwable> throwables) {
+    private static Runnable createRunnable(final Object testCase, final Method m, final ConcurrentLinkedQueue<Throwable> throwables) {
         return new Runnable() {
 
             @Override

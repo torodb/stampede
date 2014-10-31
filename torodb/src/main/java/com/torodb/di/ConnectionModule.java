@@ -18,29 +18,21 @@
  *     
  */
 
-package com.torodb.torod.db.executor.jobs;
 
-import com.torodb.torod.core.dbWrapper.DbConnection;
-import com.torodb.torod.core.dbWrapper.DbWrapper;
-import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
-import java.util.Map;
+package com.torodb.di;
+
+import com.google.inject.AbstractModule;
+import com.toro.torod.connection.DefaultTorod;
+import com.torodb.torod.core.Torod;
+import javax.inject.Singleton;
 
 /**
  *
  */
-public class FindCollectionCallable extends IsolatedDbCallable<Map<String, Integer>> {
-
-    public FindCollectionCallable(DbWrapper dbWrapperPool) {
-        super(dbWrapperPool);
-    }
-
+public class ConnectionModule extends AbstractModule {
+   
     @Override
-    Map<String, Integer> call(DbConnection db) throws ImplementationDbException {
-        return db.findCollections();
+    protected void configure() {
+        bind(Torod.class).to(DefaultTorod.class).in(Singleton.class);
     }
-
-    @Override
-    void doCallback() {
-    }
-
 }

@@ -20,29 +20,34 @@
 
 package com.torodb;
 
+import com.torodb.di.MongoServerModule;
+import com.torodb.di.DbWrapperModule;
+import com.torodb.di.ConfigModule;
+import com.torodb.di.DbMetaInformationCacheModule;
+import com.torodb.di.ConnectionModule;
+import com.torodb.di.ExecutorModule;
+import com.torodb.di.D2RModule;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import com.beust.jcommander.JCommander;
 import com.eightkdata.mongowp.mongoserver.MongoServer;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.torodb.mongowp.mongoserver.di.*;
 import com.torodb.torod.core.Torod;
-import org.slf4j.LoggerFactory;
-
 import java.io.*;
 import java.nio.charset.Charset;
+import org.slf4j.LoggerFactory;
 
 /**
  *
  */
 public class Main {
+    
+    private static final String VERSION = "0.10";
 
 	public static void main(String[] args) throws Exception {
 		final Config config = new Config();
 		JCommander jCommander = new JCommander(config, args);
-
-		JCommander.getConsole().println("torodb v1.0");
 		
 		if (config.help()) {
 			jCommander.usage();
@@ -77,14 +82,18 @@ public class Main {
 		if (config.debug()) {
 			Logger root = (Logger)LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
 			root.setLevel(Level.DEBUG);
-		} else
-		if (config.verbose()) {
-			Logger root = (Logger)LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
-			root.setLevel(Level.INFO);
 		} else {
-			Logger root = (Logger)LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
-			root.setLevel(Level.WARN);
-		}
+            if (config.verbose()) {
+                Logger root
+                        = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+                root.setLevel(Level.INFO);
+            }
+            else {
+                Logger root
+                        = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+                root.setLevel(Level.WARN);
+            }
+        }
 
 		config.initialize();
 
@@ -105,11 +114,16 @@ public class Main {
 		
 		Runtime.getRuntime().addShutdownHook(shutdown);
 
-		run(torod, server);
-		
-		Runtime.getRuntime().removeShutdownHook(shutdown);
-		
-		shutdown(config, torod, server);
+        Thread serverThread = new Thread() {
+            @Override
+            public void run() {
+                JCommander.getConsole().println("Starting ToroDB v" + VERSION 
+                        + " listening on port " + config.getPort());
+                Main.run(torod, server);
+                shutdown(config, torod, server);
+            }
+        };
+        serverThread.start();
 	}
 
 	private static void run(final Torod torod, final MongoServer server) {
@@ -128,7 +142,7 @@ public class Main {
 		Console c = System.console();
 		if (c == null) { // IN ECLIPSE IDE
 			System.out.print(text);
-			InputStream in = System.in;
+            InputStream in = System.in;
 			int max = 50;
 			byte[] b = new byte[max];
 

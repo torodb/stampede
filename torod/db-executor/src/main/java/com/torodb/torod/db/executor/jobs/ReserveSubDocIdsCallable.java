@@ -29,7 +29,7 @@ import javax.annotation.Nullable;
 /**
  *
  */
-public class ReserveSubDocIdsCallable extends IsolatedDbCallable<Void> {
+public class ReserveSubDocIdsCallable extends SystemDbCallable<Void> {
 
     private final String collection;
     private final int idsToReserve;

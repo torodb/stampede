@@ -29,11 +29,11 @@ import java.util.concurrent.Callable;
 /**
  *
  */
-abstract class IsolatedDbCallable<R> implements Callable<R> {
+abstract class SystemDbCallable<R> implements Callable<R> {
 
     private final DbWrapper dbWrapperPool;
 
-    public IsolatedDbCallable(DbWrapper dbWrapperPool) {
+    public SystemDbCallable(DbWrapper dbWrapperPool) {
         this.dbWrapperPool = dbWrapperPool;
     }
 
@@ -43,7 +43,7 @@ abstract class IsolatedDbCallable<R> implements Callable<R> {
 
     @Override
     public R call() throws ImplementationDbException, UserDbException {
-        DbConnection db = dbWrapperPool.consumeDbConnection();
+        DbConnection db = dbWrapperPool.getSystemDbConnection();
         try {
             R result = call(db);
             

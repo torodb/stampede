@@ -29,7 +29,7 @@ import javax.annotation.Nullable;
 /**
  *
  */
-public class CreateCollectionCallable extends IsolatedDbCallable<Void> {
+public class CreateCollectionCallable extends SystemDbCallable<Void> {
 
     private final String collection;
     private final @Nullable

@@ -30,7 +30,7 @@ import javax.annotation.Nullable;
 /**
  *
  */
-public class CreateSubDocTableCallable extends IsolatedDbCallable<Void> {
+public class CreateSubDocTableCallable extends SystemDbCallable<Void> {
 
     private final String collection;
     private final SubDocType type;

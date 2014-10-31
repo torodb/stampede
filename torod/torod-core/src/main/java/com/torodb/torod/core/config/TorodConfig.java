@@ -17,8 +17,6 @@
  *     Copyright (c) 2014, 8Kdata Technology
  *     
  */
-
-
 package com.torodb.torod.core.config;
 
 import javax.sql.DataSource;
@@ -27,11 +25,28 @@ import javax.sql.DataSource;
  *
  */
 public interface TorodConfig {
-    
-    public DataSource getDataSource();
-    
+
+    public DataSource getSessionDataSource();
+
+    /**
+     * Returns a datasource that provides at least one connection.
+     * <p>
+     * This will be the connection where all system actions (like create tables
+     * or reserve ids) will be executed.
+     * <p>
+     * To avoid interblocks, this datasource must be able to provide a
+     * connection even if the
+     * {@link #getSessionDataSource() common datasource} does not have any
+     * free connection.
+     * <p>
+     * No more than one system connection is used at the same time, so a 
+     * datasource with only one connection perfectly fits with this datasource.
+     * @return
+     */
+    public DataSource getSystemDataSource();
+
     public int getByJobDependencyStripes();
- 
+
     public int getCacheSubDocTypeStripes();
 
     public int getBySessionStripes();

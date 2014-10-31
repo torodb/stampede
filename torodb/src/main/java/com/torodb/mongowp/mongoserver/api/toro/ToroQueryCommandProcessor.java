@@ -20,44 +20,6 @@
 
 package com.torodb.mongowp.mongoserver.api.toro;
 
-import io.netty.util.AttributeMap;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Future;
-
-import javax.annotation.Nonnull;
-
-import org.bson.BSONObject;
-import org.bson.BasicBSONObject;
-
-import com.mongodb.WriteConcern;
-import com.torodb.mongowp.mongoserver.api.toro.util.BSONDocuments;
-import com.torodb.mongowp.mongoserver.api.toro.util.BSONToroDocument;
-import com.torodb.torod.core.WriteFailMode;
-import com.torodb.torod.core.connection.DeleteResponse;
-import com.torodb.torod.core.connection.InsertResponse;
-import com.torodb.torod.core.connection.ToroConnection;
-import com.torodb.torod.core.connection.ToroTransaction;
-import com.torodb.torod.core.connection.UpdateResponse;
-import com.torodb.torod.core.cursors.CursorId;
-import com.torodb.torod.core.language.operations.DeleteOperation;
-import com.torodb.torod.core.language.operations.UpdateOperation;
-import com.torodb.torod.core.language.projection.Projection;
-import com.torodb.torod.core.language.querycriteria.QueryCriteria;
-import com.torodb.torod.core.language.querycriteria.TrueQueryCriteria;
-import com.torodb.torod.core.language.update.UpdateAction;
-import com.torodb.torod.core.subdocument.ToroDocument;
-import com.torodb.translator.QueryCriteriaTranslator;
-import com.torodb.translator.QueryEncapsulation;
-import com.torodb.translator.QueryModifier;
-import com.torodb.translator.QuerySortOrder;
-import com.torodb.translator.UpdateActionTranslator;
-
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import com.eightkdata.mongowp.messages.request.RequestOpCode;
 import com.eightkdata.mongowp.mongoserver.api.QueryCommandProcessor;
 import com.eightkdata.mongowp.mongoserver.api.callback.LastError;
@@ -68,11 +30,34 @@ import com.eightkdata.mongowp.mongoserver.protocol.MongoWP;
 import com.eightkdata.mongowp.mongoserver.protocol.MongoWP.ErrorCode;
 import com.eightkdata.nettybson.api.BSONDocument;
 import com.eightkdata.nettybson.mongodriver.MongoBSONDocument;
+import com.mongodb.WriteConcern;
+import com.torodb.mongowp.mongoserver.api.toro.util.BSONDocuments;
+import com.torodb.mongowp.mongoserver.api.toro.util.BSONToroDocument;
+import com.torodb.torod.core.WriteFailMode;
+import com.torodb.torod.core.connection.*;
+import com.torodb.torod.core.cursors.CursorId;
+import com.torodb.torod.core.language.operations.DeleteOperation;
+import com.torodb.torod.core.language.operations.UpdateOperation;
+import com.torodb.torod.core.language.projection.Projection;
+import com.torodb.torod.core.language.querycriteria.QueryCriteria;
+import com.torodb.torod.core.language.querycriteria.TrueQueryCriteria;
+import com.torodb.torod.core.language.update.UpdateAction;
+import com.torodb.torod.core.subdocument.ToroDocument;
+import com.torodb.translator.*;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import io.netty.util.AttributeMap;
+import java.util.*;
+import java.util.concurrent.Future;
+import javax.annotation.Nonnull;
+import org.bson.BSONObject;
+import org.bson.BasicBSONObject;
 
 /**
  *
  */
 public class ToroQueryCommandProcessor implements QueryCommandProcessor {
+    public static final Map<String,Integer> NUM_INDEXES_MAP
+            = new HashMap<String, Integer>();
 
 	//TODO: implement with toro natives
 	@Override
@@ -252,7 +237,7 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
 		Object value = document.getValue(key);
 		
 		if (value instanceof Boolean) {
-			return ((Boolean) value).booleanValue();
+			return ((Boolean) value);
 		}
 		
 		if (value instanceof Number) {
@@ -270,7 +255,7 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
 		Object value = object.get(key);
 		
 		if (value instanceof Boolean) {
-			return ((Boolean) value).booleanValue();
+			return ((Boolean) value);
 		}
 		
 		if (value instanceof Number) {
@@ -374,8 +359,6 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
 		messageReplier.replyMessageNoCursor(reply);
 	}
 
-	public static final Map<String,Integer> NUM_INDEXES_MAP = 
-			new HashMap<String, Integer>(); 
 	
 	//TODO: implement with toro natives
 	@Override

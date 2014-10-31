@@ -21,17 +21,11 @@
 
 package com.torodb.translator;
 
-import com.torodb.translator.BasicQueryTranslator;
 import com.mongodb.util.JSON;
 import com.torodb.torod.core.exceptions.UserToroException;
 import com.torodb.torod.core.language.querycriteria.QueryCriteria;
-import com.torodb.translator.BasicQueryTranslator;
 import org.bson.BSONObject;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 
 
 /**
@@ -39,7 +33,7 @@ import org.junit.Test;
  */
 public class BasicQueryTranslatorTest {
     
-    private static BasicQueryTranslator translator = new BasicQueryTranslator();
+    private static final BasicQueryTranslator translator = new BasicQueryTranslator();
     
     public BasicQueryTranslatorTest() {
     }

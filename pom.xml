@@ -6,7 +6,7 @@
 
     <groupId>com.torodb</groupId>
     <artifactId>torodb-parent</artifactId>
-    <version>0.10</version>
+    <version>0.11</version>
     <packaging>pom</packaging>
     
     <name>ToroDB parent</name>
@@ -167,6 +167,58 @@
 
     <profiles>
         <profile>
+            <id>jdk6</id>
+            <activation>
+                <jdk>1.6</jdk>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <version>3.2</version>
+                        <configuration>
+                            <source>1.6</source>
+                            <target>1.6</target>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <version>2.4</version>
+                        <executions>
+                            <execution>
+                                <id>attach-sources</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>findbugs-maven-plugin</artifactId>
+                        <version>2.5.5</version>
+                        <configuration>
+                            <effort>Max</effort>
+                            <threshold>Low</threshold>
+                            <xmlOutput>true</xmlOutput>
+                            <findbugsXmlOutputDirectory>${project.build.directory}/findbugs</findbugsXmlOutputDirectory>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>analyze-compile</id>
+                                <phase>compile</phase>
+                                <goals>
+                                    <goal>check</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
             <id>default</id>
             <activation>
                 <activeByDefault>true</activeByDefault>
@@ -176,7 +228,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-compiler-plugin</artifactId>
-                        <version>3.1</version>
+                        <version>3.2</version>
                         <configuration>
                             <source>1.6</source>
                             <target>1.6</target>

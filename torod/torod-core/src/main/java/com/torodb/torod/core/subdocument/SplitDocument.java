@@ -32,7 +32,6 @@ import com.torodb.torod.core.subdocument.structure.StructureElementDFW;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.Map;
-import java.util.Objects;
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.Immutable;
 
@@ -102,9 +101,9 @@ public class SplitDocument {
 
     @Override
     public int hashCode() {
-        int hash = 7;
-        hash = 19 * hash + this.id;
-        hash = 19 * hash + Objects.hashCode(this.root);
+        int hash = 3;
+        hash = 29 * hash + this.id;
+        hash = 29 * hash + (this.root != null ? this.root.hashCode() : 0);
         return hash;
     }
 
@@ -120,13 +119,18 @@ public class SplitDocument {
         if (this.id != other.id) {
             return false;
         }
-        if (!Objects.equals(this.root, other.root)) {
+        if (this.root != other.root && (this.root == null ||
+                !this.root.equals(other.root))) {
             return false;
         }
-        if (!Objects.equals(this.subDocuments, other.subDocuments)) {
+        if (this.subDocuments != other.subDocuments &&
+                (this.subDocuments == null ||
+                !this.subDocuments.equals(other.subDocuments))) {
             return false;
         }
-        if (!Objects.equals(this.structures, other.structures)) {
+        if (this.structures != other.structures &&
+                (this.structures == null ||
+                !this.structures.equals(other.structures))) {
             return false;
         }
         return true;

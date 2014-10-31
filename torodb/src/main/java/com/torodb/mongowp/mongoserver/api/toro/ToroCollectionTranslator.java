@@ -22,19 +22,22 @@ package com.torodb.mongowp.mongoserver.api.toro;
 
 public class ToroCollectionTranslator {
 
-	public static String translate(String collection) {
-		StringBuilder collectionNameBuilder = new StringBuilder();
-		
-		for (char c : collection.toCharArray()) {
-			if ((c < 'a' || c > 'z') && (c < '0' || c > '9')) {
-				collectionNameBuilder.append('_');
-				collectionNameBuilder.append(String.valueOf((int) c));
-			} else {
-				collectionNameBuilder.append(c);
-			}	
-		}
-		
-		return String.valueOf(collectionNameBuilder);
-	}
+    public static String translate(String collection) {
+        StringBuilder collectionNameBuilder = new StringBuilder();
+        
+        for (char c : collection.toCharArray()) {
+            if ((c < 'a' || c > 'z') && (c < '0' || c > '9')) {
+                collectionNameBuilder.append('_');
+                collectionNameBuilder.append(String.valueOf((int) c));
+            } else {
+                collectionNameBuilder.append(c);
+            }
+        }
+        
+        return String.valueOf(collectionNameBuilder);
+    }
+
+	private ToroCollectionTranslator() {
+    }
 	
 }

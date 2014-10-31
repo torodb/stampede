@@ -20,12 +20,9 @@
 
 package com.torodb.mongowp.mongoserver.api.toro.util;
 
-import java.util.Objects;
-
 import com.google.common.base.Preconditions;
-import com.torodb.torod.core.subdocument.ToroDocument;
-
 import com.torodb.kvdocument.values.ObjectValue;
+import com.torodb.torod.core.subdocument.ToroDocument;
 
 /**
  *
@@ -51,7 +48,7 @@ public class MongoDocument implements ToroDocument {
     @Override
     public int hashCode() {
         int hash = 5;
-        hash = 37 * hash + Objects.hashCode(this.root);
+        hash = 89 * hash + (this.root != null ? this.root.hashCode() : 0);
         return hash;
     }
 
@@ -64,11 +61,10 @@ public class MongoDocument implements ToroDocument {
             return false;
         }
         final MongoDocument other = (MongoDocument) obj;
-        if (!Objects.equals(this.root, other.root)) {
-            return false;
-        }
-        return true;
+        return !(this.root != other.root && (this.root == null ||
+                !this.root.equals(other.root)));
     }
+
     
     public static class Builder implements ToroDocument.DocumentBuilder {
 

@@ -45,7 +45,12 @@ public class DefaultDbValueTypeMetaInformationCacheSimpleTest {
                 new TorodConfig() {
 
                     @Override
-                    public DataSource getDataSource() {
+                    public DataSource getSessionDataSource() {
+                        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+                    }
+
+                    @Override
+                    public DataSource getSystemDataSource() {
                         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
                     }
 

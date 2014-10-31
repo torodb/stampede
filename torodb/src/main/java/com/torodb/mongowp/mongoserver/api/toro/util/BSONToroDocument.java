@@ -20,14 +20,11 @@
 
 package com.torodb.mongowp.mongoserver.api.toro.util;
 
-import javax.annotation.Nonnull;
-
-import org.bson.BSONObject;
-
-import com.torodb.torod.core.subdocument.ToroDocument;
-
 import com.torodb.kvdocument.conversion.mongo.MongoValueConverter;
 import com.torodb.kvdocument.values.ObjectValue;
+import com.torodb.torod.core.subdocument.ToroDocument;
+import javax.annotation.Nonnull;
+import org.bson.BSONObject;
 
 /**
  *

@@ -18,23 +18,21 @@
  *     
  */
 
-package com.torodb.mongowp.mongoserver.di;
+
+package com.torodb.di;
 
 import com.google.inject.AbstractModule;
-import com.torodb.mongowp.mongoserver.api.toro.ToroQueryCommandProcessor;
-import com.torodb.mongowp.mongoserver.api.toro.ToroRequestProcessor;
-
-import com.eightkdata.mongowp.mongoserver.api.QueryCommandProcessor;
-import com.eightkdata.mongowp.mongoserver.api.callback.RequestProcessor;
+import com.torodb.torod.core.d2r.D2RTranslator;
+import com.torodb.torod.d2r.DefaultD2RTranslator;
+import javax.inject.Singleton;
 
 /**
  *
  */
-public class MongoServerModule extends AbstractModule {
-
+public class D2RModule extends AbstractModule {
+   
     @Override
     protected void configure() {
-        bind(RequestProcessor.class).to(ToroRequestProcessor.class);
-        bind(QueryCommandProcessor.class).to(ToroQueryCommandProcessor.class);
+        bind(D2RTranslator.class).to(DefaultD2RTranslator.class).in(Singleton.class);
     }
 }

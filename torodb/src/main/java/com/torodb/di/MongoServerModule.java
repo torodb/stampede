@@ -18,24 +18,22 @@
  *     
  */
 
-package com.torodb.mongowp.mongoserver.di;
+package com.torodb.di;
 
+import com.eightkdata.mongowp.mongoserver.api.QueryCommandProcessor;
+import com.eightkdata.mongowp.mongoserver.api.callback.RequestProcessor;
 import com.google.inject.AbstractModule;
-import com.torodb.torod.db.postgresql.PostgresqlDbWrapper;
-import com.torodb.torod.core.dbWrapper.DbWrapper;
-import javax.inject.Singleton;
+import com.torodb.mongowp.mongoserver.api.toro.ToroQueryCommandProcessor;
+import com.torodb.mongowp.mongoserver.api.toro.ToroRequestProcessor;
 
 /**
  *
  */
-public class DbWrapperModule extends AbstractModule {
-
-    public DbWrapperModule() {
-    }
+public class MongoServerModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(DbWrapper.class).to(PostgresqlDbWrapper.class).in(Singleton.class);
-        bind(PostgresqlDbWrapper.class).in(Singleton.class);
+        bind(RequestProcessor.class).to(ToroRequestProcessor.class);
+        bind(QueryCommandProcessor.class).to(ToroQueryCommandProcessor.class);
     }
 }

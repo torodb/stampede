@@ -20,19 +20,6 @@
 
 package com.torodb.mongowp.mongoserver.api.toro;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-
-import javax.annotation.Nonnull;
-
-import com.mongodb.WriteConcern;
-import com.torodb.torod.core.connection.DeleteResponse;
-import com.torodb.torod.core.connection.InsertResponse;
-import com.torodb.torod.core.connection.UpdateResponse;
-
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import com.eightkdata.mongowp.messages.request.RequestOpCode;
 import com.eightkdata.mongowp.mongoserver.api.QueryCommandProcessor.QueryCommand;
 import com.eightkdata.mongowp.mongoserver.api.callback.LastError;
@@ -41,6 +28,16 @@ import com.eightkdata.mongowp.mongoserver.api.commands.QueryAndWriteOperationsQu
 import com.eightkdata.mongowp.mongoserver.protocol.MongoWP;
 import com.eightkdata.nettybson.api.BSONDocument;
 import com.eightkdata.nettybson.mongodriver.MongoBSONDocument;
+import com.mongodb.WriteConcern;
+import com.torodb.torod.core.connection.DeleteResponse;
+import com.torodb.torod.core.connection.InsertResponse;
+import com.torodb.torod.core.connection.UpdateResponse;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import javax.annotation.Nonnull;
 
 /**
  * 
@@ -66,20 +63,6 @@ public class ToroLastError implements LastError {
 		this.errorCode = errorCode;
 	}
 
-	private static class LastErrorResult {
-		public long wtime = System.currentTimeMillis();
-		public int n = 0;
-		public int updatedExisting = 0;
-		public int upserted = 0;
-		public boolean error;
-		public MongoWP.ErrorCode errorCode;
-		public boolean writeConcernError = false;
-		
-		public LastErrorResult(ToroLastError toroLastError) {
-			error = toroLastError.error;
-			errorCode = toroLastError.errorCode;
-		}
-	}
 
 	@Override
 	public void getLastError(@Nonnull Object w, boolean j, boolean fsync, int wtimeout, MessageReplier messageReplier) throws Exception {
@@ -247,4 +230,20 @@ public class ToroLastError implements LastError {
 
 		return writeConcern;
 	}
+
+    private static class LastErrorResult {
+
+        public long wtime = System.currentTimeMillis();
+        public int n = 0;
+        public int updatedExisting = 0;
+        public int upserted = 0;
+        public boolean error;
+        public MongoWP.ErrorCode errorCode;
+        public boolean writeConcernError = false;
+
+        LastErrorResult(ToroLastError toroLastError) {
+            error = toroLastError.error;
+            errorCode = toroLastError.errorCode;
+        }
+    }
 }

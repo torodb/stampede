@@ -18,25 +18,29 @@
  *     
  */
 
+package com.torodb.torod.db.executor.jobs;
 
-package com.torodb.mongowp.mongoserver.di;
-
-import javax.inject.Singleton;
-
-import com.google.inject.AbstractModule;
-import com.torodb.DefaultExecutorServiceProvider;
-import com.torodb.torod.core.executor.ExecutorFactory;
-import com.torodb.torod.db.executor.DefaultExecutorFactory;
-import com.torodb.torod.db.executor.ExecutorServiceProvider;
+import com.torodb.torod.core.dbWrapper.DbConnection;
+import com.torodb.torod.core.dbWrapper.DbWrapper;
+import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
+import java.util.Map;
 
 /**
  *
  */
-public class ExecutorModule extends AbstractModule {
+public class FindCollectionsCallable extends SystemDbCallable<Map<String, Integer>> {
+
+    public FindCollectionsCallable(DbWrapper dbWrapperPool) {
+        super(dbWrapperPool);
+    }
 
     @Override
-    protected void configure() {
-        bind(ExecutorFactory.class).to(DefaultExecutorFactory.class).in(Singleton.class);
-        bind(ExecutorServiceProvider.class).to(DefaultExecutorServiceProvider.class).in(Singleton.class);
+    Map<String, Integer> call(DbConnection db) throws ImplementationDbException {
+        return db.findCollections();
     }
+
+    @Override
+    void doCallback() {
+    }
+
 }

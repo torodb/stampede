@@ -20,16 +20,14 @@
 
 package com.torodb;
 
-import javax.sql.DataSource;
-
-import org.postgresql.ds.PGSimpleDataSource;
-
 import com.beust.jcommander.Parameter;
+import com.eightkdata.mongowp.mongoserver.MongoServerConfig;
+import com.google.common.base.Preconditions;
 import com.torodb.torod.core.config.TorodConfig;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
-
-import com.eightkdata.mongowp.mongoserver.MongoServerConfig;
+import javax.sql.DataSource;
+import org.postgresql.ds.PGSimpleDataSource;
 
 /**
  *
@@ -49,7 +47,7 @@ public class Config implements TorodConfig, MongoServerConfig {
 	@Parameter(names={"--ask-for-password"}, description="Force input of PostgreSQL's database user password.")
 	private boolean askForPassword = false;
 	private String dbpass = null;
-	@Parameter(names={"-c","--connections"}, description="Number of connections to establish to the PostgreSQL database")
+	@Parameter(names={"-c","--connections"}, description="Number of connections to establish to the PostgreSQL database. It must be higher or equal than 2")
 	private Integer dbpoolSize = 10;
 	@Parameter(names={"-P", "--mongoport"}, description="Port to listen on for Mongo wire protocol connections")
     private int mongoPort = 27017;
@@ -58,10 +56,8 @@ public class Config implements TorodConfig, MongoServerConfig {
 	@Parameter(names={"--verbose"}, description="Change log level to INFO")
 	private boolean verbose = false;
 
-    private DataSource ds;
-
-    public Config() {
-    }
+    private DataSource commonDataSource;
+    private DataSource systemDataSource;
     
     public String getDbhost() {
 		return dbhost;
@@ -96,6 +92,14 @@ public class Config implements TorodConfig, MongoServerConfig {
 	}
     
     public void initialize() {
+        Preconditions.checkState(dbpoolSize >= 2, "At least two connections with "
+            +"the backend SQL database are required");
+        
+        commonDataSource = createDataSource(dbpoolSize - 1);
+        systemDataSource = createDataSource(1);
+    }
+    
+    private DataSource createDataSource(int maxPoolSize) {
         PGSimpleDataSource pgds = new PGSimpleDataSource();
         pgds.setServerName(dbhost);
         pgds.setPortNumber(dbport);
@@ -104,14 +108,14 @@ public class Config implements TorodConfig, MongoServerConfig {
         pgds.setPassword(dbpass);
 
         HikariConfig hikariConfig = new HikariConfig();
-        hikariConfig.setMaximumPoolSize(dbpoolSize);
+        hikariConfig.setMaximumPoolSize(maxPoolSize);
         hikariConfig.setDataSource(pgds);
 
-        ds = new HikariDataSource(hikariConfig);
+        return new HikariDataSource(hikariConfig);
     }
     
     public void shutdown() {
-    	((HikariDataSource) ds).shutdown();
+    	((HikariDataSource) commonDataSource).shutdown();
     }
     
     @Override
@@ -128,8 +132,13 @@ public class Config implements TorodConfig, MongoServerConfig {
     }
 
     @Override
-    public DataSource getDataSource() {
-        return ds;
+    public DataSource getSessionDataSource() {
+        return commonDataSource;
+    }
+
+    @Override
+    public DataSource getSystemDataSource() {
+        return systemDataSource;
     }
 
     @Override
