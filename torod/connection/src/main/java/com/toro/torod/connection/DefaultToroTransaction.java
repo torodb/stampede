@@ -419,5 +419,10 @@ public class DefaultToroTransaction implements ToroTransaction {
         //when a cursor is removed from the cursor manager, it is closed in the database
         cursorManager.close(cursorId);
     }
+    
+    @Override
+    public void createEmptyCollection(String collection) {
+    	d2r.createEmptyCollection(executor, collection);
+    }
 
 }

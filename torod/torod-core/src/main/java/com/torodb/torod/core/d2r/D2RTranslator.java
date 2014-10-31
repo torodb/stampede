@@ -31,6 +31,8 @@ import java.util.concurrent.Future;
 public interface D2RTranslator {
 
     public void initialize();
+    
+    public void createEmptyCollection(SessionExecutor sessionExecutor, String collection);
 
     public SplitDocument translate(SessionExecutor sessionExecutor, String collection, ToroDocument document);
 

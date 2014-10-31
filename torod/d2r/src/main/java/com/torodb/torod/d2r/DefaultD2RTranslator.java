@@ -77,6 +77,10 @@ public class DefaultD2RTranslator implements D2RTranslator {
     @Override
     public void shutdownNow() {
     }
+    
+    public void createEmptyCollection(SessionExecutor sessionExecutor, String collection) {
+    	cache.createCollection(sessionExecutor, collection);
+    }
 
     @Override
     public SplitDocument translate(SessionExecutor sessionExecutor, String collection, ToroDocument document) {
