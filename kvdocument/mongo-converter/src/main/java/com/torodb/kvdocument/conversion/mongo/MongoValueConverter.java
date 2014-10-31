@@ -41,11 +41,8 @@ import java.util.List;
 import java.util.Map;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
-import org.bson.types.BasicBSONList;
 import org.bson.types.ObjectId;
-import org.threeten.bp.Instant;
-import org.threeten.bp.LocalDateTime;
-import org.threeten.bp.ZoneOffset;
+import org.threeten.bp.*;
 
 /**
  *
@@ -108,7 +105,7 @@ public class MongoValueConverter {
             Date date = (Date) value;
             LocalDateTime dateTime = LocalDateTime.ofInstant(
                     Instant.ofEpochMilli(date.getTime()),
-                    ZoneOffset.UTC
+                    ZoneId.systemDefault()
             );
             return new DateTimeValue(dateTime);
         }
@@ -180,27 +177,25 @@ public class MongoValueConverter {
         public Object visit(TwelveBytesValue value,
                             Void arg) {
             byte[] kvBytes = value.getArrayValue();
-//            byte[] bsonBytes = new byte[12];
-//            reverse(kvBytes, bsonBytes);
             return new ObjectId(kvBytes);
         }
 
         @Override
         public Object visit(DateTimeValue value,
                             Void arg) {
-            return new Date(Instant.from(value.getValue()).toEpochMilli());
+            return DateTimeUtils.toSqlTimestamp(value.getValue());
         }
 
         @Override
         public Object visit(DateValue value,
                             Void arg) {
-            return new Date(Instant.from(value.getValue()).toEpochMilli());
+            return DateTimeUtils.toSqlDate(value.getValue());
         }
 
         @Override
         public Object visit(TimeValue value,
                             Void arg) {
-            return new Date(Instant.from(value.getValue()).toEpochMilli());
+            return DateTimeUtils.toSqlTime(value.getValue());
         }
 
         @Override
