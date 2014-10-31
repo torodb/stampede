@@ -27,9 +27,11 @@ import com.torodb.torod.core.language.operations.UpdateOperation;
 import com.torodb.torod.core.language.projection.Projection;
 import com.torodb.torod.core.language.querycriteria.QueryCriteria;
 import com.torodb.torod.core.subdocument.ToroDocument;
+
 import java.io.Closeable;
 import java.util.List;
 import java.util.concurrent.Future;
+
 import javax.annotation.Nonnegative;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -143,5 +145,13 @@ public interface ToroTransaction extends Closeable {
             @Nonnull List<? extends UpdateOperation> updates,
             @Nonnull WriteFailMode mode
     );
+    
+    /**
+    * Creates an empty collection
+    * <p>
+    * @param collection
+    * @return
+    */
+    public void createEmptyCollection(@Nonnull String collection);
 
 }
