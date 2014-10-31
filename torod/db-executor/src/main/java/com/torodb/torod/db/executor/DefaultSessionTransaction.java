@@ -38,8 +38,6 @@ import com.torodb.torod.db.executor.jobs.*;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Future;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
