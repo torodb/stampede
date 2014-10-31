@@ -22,10 +22,8 @@ package com.torodb.kvdocument.values;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-import com.torodb.kvdocument.types.DocType;
 import com.torodb.kvdocument.types.TwelveBytesType;
 import java.util.List;
-import java.util.Objects;
 
 /**
  *
@@ -122,8 +120,8 @@ public class TwelveBytesValue implements DocValue {
 
     @Override
     public int hashCode() {
-        int hash = 5;
-        hash = 23 * hash + Objects.hashCode(this.bytes);
+        int hash = 7;
+        hash = 53 * hash + (this.bytes != null ? this.bytes.hashCode() : 0);
         return hash;
     }
 
@@ -136,7 +134,8 @@ public class TwelveBytesValue implements DocValue {
             return false;
         }
         final TwelveBytesValue other = (TwelveBytesValue) obj;
-        if (!Objects.equals(this.bytes, other.bytes)) {
+        if (this.bytes != other.bytes &&
+                (this.bytes == null || !this.bytes.equals(other.bytes))) {
             return false;
         }
         return true;

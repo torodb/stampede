@@ -21,7 +21,6 @@
 
 package com.torodb.kvdocument.types;
 
-import java.util.Objects;
 import javax.annotation.concurrent.Immutable;
 
 /**
@@ -44,7 +43,8 @@ public class ArrayType implements DocType {
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 13 * hash + Objects.hashCode(this.elementType);
+        hash = 23 * hash +
+                (this.elementType != null ? this.elementType.hashCode() : 0);
         return hash;
     }
 
@@ -57,7 +57,9 @@ public class ArrayType implements DocType {
             return false;
         }
         final ArrayType other = (ArrayType) obj;
-        if (!Objects.equals(this.elementType, other.elementType)) {
+        if (this.elementType != other.elementType &&
+                (this.elementType == null ||
+                !this.elementType.equals(other.elementType))) {
             return false;
         }
         return true;

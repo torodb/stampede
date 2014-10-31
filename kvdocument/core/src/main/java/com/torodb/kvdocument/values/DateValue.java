@@ -22,7 +22,6 @@ package com.torodb.kvdocument.values;
 
 import com.torodb.kvdocument.types.DateType;
 import com.torodb.kvdocument.types.DocType;
-import java.util.Objects;
 import org.threeten.bp.LocalDate;
 
 /**
@@ -49,6 +48,29 @@ public class DateValue implements DocValue {
     @Override
     public DocType getType() {
         return DateType.INSTANCE;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 43 * hash + (this.value != null ? this.value.hashCode() : 0);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final DateValue other = (DateValue) obj;
+        if (this.value != other.value &&
+                (this.value == null || !this.value.equals(other.value))) {
+            return false;
+        }
+        return true;
     }
     
     @Override
