@@ -23,8 +23,8 @@ package com.torodb.torod.db.metaInf;
 import com.torodb.torod.db.metaInf.idHeuristic.LazyReserveIdHeuristic;
 import com.torodb.torod.core.config.TorodConfig;
 import com.torodb.torod.core.executor.ExecutorFactory;
-import javax.sql.DataSource;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import static org.mockito.Mockito.mock;
 
@@ -38,47 +38,15 @@ public class DefaultDbValueTypeMetaInformationCacheSimpleTest {
         ExecutorFactory executorFactory = mock(ExecutorFactory.class);
         ReservedIdInfoFactory tableMetaInfoFactory = new DefaultTableMetaInfoFactory();
 
+        TorodConfig config = mock(TorodConfig.class, new ThrowExceptionAnswer());
+        Mockito.doReturn(64).when(config).getCacheSubDocTypeStripes();
+        
         DefaultDbMetaInformationCache cache = new DefaultDbMetaInformationCache(
                 executorFactory,
                 new LazyReserveIdHeuristic(),
                 tableMetaInfoFactory,
-                new TorodConfig() {
-
-                    @Override
-                    public DataSource getSessionDataSource() {
-                        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-                    }
-
-                    @Override
-                    public DataSource getSystemDataSource() {
-                        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-                    }
-
-                    @Override
-                    public int getByJobDependencyStripes() {
-                        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-                    }
-
-                    @Override
-                    public int getCacheSubDocTypeStripes() {
-                        return 64;
-                    }
-
-                    @Override
-                    public int getBySessionStripes() {
-                        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-                    }
-
-                    @Override
-                    public long getDefaultCursorTimeout() {
-                        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-                    }
-
-                    @Override
-                    public int getSessionExecutorThreads() {
-                        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-                    }
-                });
+                config
+        );
 
         try {
             cache.createSubDocTypeTable(null, "test", null);
