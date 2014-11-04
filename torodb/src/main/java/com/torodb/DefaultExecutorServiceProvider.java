@@ -34,34 +34,21 @@ import javax.inject.Inject;
  */
 public class DefaultExecutorServiceProvider implements ExecutorServiceProvider {
 
-    private final int stripes;
-    private final ExecutorService[] sessionServices;
     private final ExecutorService systemExecutor;
 
     @Inject
-    public DefaultExecutorServiceProvider(TorodConfig config) {
-        this.stripes = config.getSessionExecutorThreads();
-        sessionServices = new ExecutorService[stripes];
-        for (int i = 0; i < stripes; i++) {
-            sessionServices[i] = Executors.newSingleThreadExecutor(new MyThreadFactory("toro-session-"+i));
-        }
+    public DefaultExecutorServiceProvider() {
         this.systemExecutor = Executors.newSingleThreadExecutor(new MyThreadFactory("toro-system"));
     }
 
     @Override
     public void shutdown() {
         systemExecutor.shutdown();
-        for (ExecutorService sessionService : sessionServices) {
-            sessionService.shutdown();
-        }
     }
 
     @Override
     public void shutdownNow() {
         systemExecutor.shutdownNow();
-        for (ExecutorService sessionService : sessionServices) {
-            sessionService.shutdownNow();
-        }
     }
     
     @Override
@@ -71,17 +58,12 @@ public class DefaultExecutorServiceProvider implements ExecutorServiceProvider {
 
     @Override
     public ExecutorService consumeSessionExecutorService(Session session) {
-        int index = session.hashCode() % stripes;
-        if (index < 0) {
-            assert index >= -stripes;
-            index += stripes;
-        }
-        return sessionServices[index];
+        return Executors.newSingleThreadExecutor(new MyThreadFactory("toro-"+session));
     }
 
     @Override
     public void releaseExecutorService(ExecutorService service) {
-        //nothing to do
+        service.shutdown();
     }
     
     private static class MyThreadFactory implements ThreadFactory {

@@ -152,18 +152,8 @@ public class Config implements TorodConfig, MongoServerConfig {
     }
 
     @Override
-    public int getBySessionStripes() {
-        return 16;
-    }
-
-    @Override
     public long getDefaultCursorTimeout() {
         return 10 * 60 * 1000;
-    }
-
-    @Override
-    public int getSessionExecutorThreads() {
-        return dbpoolSize;
     }
 
 }

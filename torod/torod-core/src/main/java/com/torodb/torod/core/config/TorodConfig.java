@@ -49,9 +49,5 @@ public interface TorodConfig {
 
     public int getCacheSubDocTypeStripes();
 
-    public int getBySessionStripes();
-
     public long getDefaultCursorTimeout();
-
-    public int getSessionExecutorThreads();
 }
