@@ -22,7 +22,6 @@
 package com.torodb.torod.core.executor;
 
 import com.torodb.torod.core.Session;
-import java.util.concurrent.Future;
 import javax.annotation.Nonnull;
 
 /**
