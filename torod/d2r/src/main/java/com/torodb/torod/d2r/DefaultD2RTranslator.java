@@ -69,6 +69,11 @@ public class DefaultD2RTranslator implements D2RTranslator {
     @Override
     public void initialize() {
     }
+    
+    @Override
+    public void createEmptyCollection(SessionExecutor sessionExecutor, String collection) {
+    	cache.createCollection(sessionExecutor, collection);
+    }
 
     @Override
     public void shutdown() {

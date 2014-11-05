@@ -44,11 +44,15 @@ import com.torodb.torod.core.language.querycriteria.TrueQueryCriteria;
 import com.torodb.torod.core.language.update.UpdateAction;
 import com.torodb.torod.core.subdocument.ToroDocument;
 import com.torodb.translator.*;
+
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.netty.util.AttributeMap;
+
 import java.util.*;
 import java.util.concurrent.Future;
+
 import javax.annotation.Nonnull;
+
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 
@@ -391,6 +395,45 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
 		BSONDocument reply = new MongoBSONDocument(keyValues);
 		messageReplier.replyMessageNoCursor(reply);
     }
+	
+	@Override
+	public void create(BSONDocument document, MessageReplier messageReplier)
+			throws Exception {
+		BSONDocument reply = null;
+		String collection = ToroCollectionTranslator
+				.translate((String) document.getValue("create"));
+		Boolean capped = (Boolean) document.getValue("capped");
+		Boolean autoIndexId = (Boolean) document.getValue("autoIndexId");
+		Boolean usePowerOf2Sizes = (Boolean) document.getValue("usePowerOf2Sizes");
+		Double size = (Double) document.getValue("size");
+		Double max = (Double) document.getValue("max");
+
+		if (null != capped && true == capped) { // Other flags silently ignored
+			ErrorCode errorCode = ErrorCode.UNIMPLEMENTED_FLAG;
+			messageReplier.replyQueryCommandFailure(errorCode, "capped");
+			return;
+		}
+
+		AttributeMap attributeMap = messageReplier.getAttributeMap();
+		ToroConnection connection = attributeMap.attr(
+				ToroRequestProcessor.CONNECTION).get();
+
+		ToroTransaction transaction = connection.createTransaction();
+
+		try {
+			transaction.createEmptyCollection(collection);
+
+			// Neccessary? Because DDL usually does not need a COMMIT anyway
+			Future<?> futureCommitResponse = transaction.commit();
+		} finally {
+			transaction.close();
+		}
+
+		Map<String, Object> keyValues = new HashMap<String, Object>();
+		keyValues.put("ok", MongoWP.OK);
+		reply = new MongoBSONDocument(keyValues);
+		messageReplier.replyMessageNoCursor(reply);
+	}
 
 	private WriteFailMode getWriteFailMode(BSONDocument document) {
         return WriteFailMode.TRANSACTIONAL;

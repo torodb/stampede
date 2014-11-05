@@ -143,5 +143,13 @@ public interface ToroTransaction extends Closeable {
             @Nonnull List<? extends UpdateOperation> updates,
             @Nonnull WriteFailMode mode
     );
+    
+    /**
+     * Creates an empty collection
+     * <p>
+     * @param collection
+     * @return
+     */
+     public void createEmptyCollection(@Nonnull String collection);
 
 }
