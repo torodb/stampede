@@ -22,27 +22,26 @@
 package com.toro.torod.cursors;
 
 import com.torodb.torod.core.config.TorodConfig;
-import com.torodb.torod.core.cursors.CursorManagerFactory;
-import com.torodb.torod.core.dbMetaInf.CursorManager;
-import com.torodb.torod.core.executor.SessionExecutor;
-import com.torodb.torod.core.executor.SessionTransaction;
+import com.torodb.torod.core.cursors.InnerCursorManagerFactory;
+import com.torodb.torod.core.cursors.InnerCursorManager;
+import com.torodb.torod.core.dbWrapper.DbWrapper;
 import javax.inject.Inject;
 
 /**
  *
  */
-public class DefaultCursorManagerFactory implements CursorManagerFactory {
+public class DefaultInnerCursorManagerFactory implements InnerCursorManagerFactory {
 
     private final TorodConfig config;
     
     @Inject
-    public DefaultCursorManagerFactory(TorodConfig config)  {
+    public DefaultInnerCursorManagerFactory(TorodConfig config)  {
         this.config = config;
     }
     
     @Override
-    public CursorManager createCursorManager(SessionTransaction transaction) {
-        return new DefaultCursorManager(config, transaction);
+    public InnerCursorManager createCursorManager(DbWrapper dbWrapper) {
+        return new DefaultInnerCursorManager(config, dbWrapper);
     }
     
 }

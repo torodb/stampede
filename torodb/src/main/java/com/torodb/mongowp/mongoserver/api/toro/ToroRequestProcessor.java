@@ -63,13 +63,8 @@ public class ToroRequestProcessor extends AbstractRequestProcessor {
 	
 	public final static AttributeKey<ToroConnection> CONNECTION = 
 			AttributeKey.valueOf("connection");
-	public final static AttributeKey<Map<Long, ToroTransaction>> TRANSACTION_MAP = 
-			AttributeKey.valueOf("transactionMap");
 	public final static AttributeKey<LastError> LAST_ERROR = 
 			AttributeKey.valueOf("lastError");
-	//TODO: Implement this with torod when transaction will give the position
-	public final static AttributeKey<Map<Long, AtomicInteger>> POSITION_MAP = 
-			AttributeKey.valueOf("positionMap");
 	
 	private final Torod torod;
 
@@ -86,8 +81,6 @@ public class ToroRequestProcessor extends AbstractRequestProcessor {
 		ToroConnection connection = torod.openConnection();
 		attributeMap.attr(MessageReplier.CONNECTION_ID).set(connectionId.incrementAndGet());
         attributeMap.attr(CONNECTION).set(connection);
-		Map<Long, ToroTransaction> transactionMap = new HashMap<Long, ToroTransaction>();
-        attributeMap.attr(TRANSACTION_MAP).set(transactionMap);
         attributeMap.attr(LAST_ERROR).set(new ToroLastError(
         		RequestOpCode.RESERVED, 
         		null, 
@@ -95,27 +88,11 @@ public class ToroRequestProcessor extends AbstractRequestProcessor {
         		null, 
         		false, 
         		null));
-		Map<Long, AtomicInteger> positionMap = new HashMap<Long, AtomicInteger>();
-        attributeMap.attr(POSITION_MAP).set(positionMap);
 	}
 
 	@Override
 	public void onChannelInactive(AttributeMap attributeMap) {
 		ToroConnection connection = attributeMap.attr(CONNECTION).get();
-		Map<Long, ToroTransaction> transactionMap = attributeMap.attr(TRANSACTION_MAP).get();
-		Map<Long, AtomicInteger> positionMap = attributeMap.attr(POSITION_MAP).get();
-		if (transactionMap != null) {
-			for (Map.Entry<Long, ToroTransaction> cursorIdTransaction : transactionMap.entrySet()) {
-				Long cursorId = cursorIdTransaction.getKey();
-				ToroTransaction transaction = cursorIdTransaction.getValue();
-				transaction.closeCursor(new CursorId(cursorId));
-				transaction.close();
-			}
-	        attributeMap.attr(TRANSACTION_MAP).set(null);
-		}
-		if (positionMap != null) {
-	        attributeMap.attr(POSITION_MAP).set(null);
-		}
 		if (connection != null) {
 			connection.close();
 	        attributeMap.attr(CONNECTION).set(null);
@@ -129,10 +106,8 @@ public class ToroRequestProcessor extends AbstractRequestProcessor {
 			MessageReplier messageReplier) throws Exception {
 		AttributeMap attributeMap = messageReplier.getAttributeMap();
 		ToroConnection connection = attributeMap.attr(CONNECTION).get();
-		Map<Long, ToroTransaction> transactionMap = attributeMap.attr(TRANSACTION_MAP).get();
-		Map<Long, AtomicInteger> positionMap = attributeMap.attr(POSITION_MAP).get();
 		
-        ToroTransaction transaction = connection.createTransaction();
+        CursorManager cursorManager = connection.getCursorManager();
         
     	String collection = ToroCollectionTranslator.translate(queryMessage.getCollection());
     	QueryCriteriaTranslator queryCriteriaTranslator = new QueryCriteriaTranslator();
@@ -159,8 +134,8 @@ public class ToroRequestProcessor extends AbstractRequestProcessor {
     	boolean autoclose = false;
     	boolean hasTimeout = !queryMessage.isFlagSet(Flag.NO_CURSOR_TIMEOUT);
     	
-    	CursorId cursorId = null;
-    	BSONDocuments results = null;
+    	CursorId cursorId;
+    	BSONDocuments results;
     	
     	if (queryMessage.isFlagSet(Flag.TAILABLE_CURSOR)) {
     		messageReplier.replyQueryFailure(ErrorCode.UNIMPLEMENTED_FLAG, "TailableCursor");
@@ -175,24 +150,19 @@ public class ToroRequestProcessor extends AbstractRequestProcessor {
     	}
     	
     	if (limit == 0) {
-        	cursorId = transaction.query(collection, queryCriteria, projection, numberToSkip, autoclose, hasTimeout);
+        	cursorId = cursorManager.openUnlimitedCursor(collection, queryCriteria, projection, numberToSkip, autoclose, hasTimeout);
     	} else {
-        	cursorId = transaction.query(collection, queryCriteria, projection, numberToSkip, limit, autoclose, hasTimeout);
+        	cursorId = cursorManager.openLimitedCursor(collection, queryCriteria, projection, numberToSkip, limit, autoclose, hasTimeout);
     	}
     	
-   		results = new BSONDocuments(transaction.readCursor(cursorId, MongoWP.MONGO_CURSOR_LIMIT));
+   		results = new BSONDocuments(cursorManager.readCursor(cursorId, MongoWP.MONGO_CURSOR_LIMIT));
 
    		long cursorIdReturned = 0;
     	
-    	//TODO: Implement this with torod when transaction will tell if there is more data
     	if (results.size() >= MongoWP.MONGO_CURSOR_LIMIT) {
     		cursorIdReturned = cursorId.getNumericId();
-        	transactionMap.put(cursorId.getNumericId(), transaction);
-        	//TODO: Implement this with torod when transaction will give the position
-        	positionMap.put(cursorId.getNumericId(), new AtomicInteger(0));
     	} else {
-    		transaction.closeCursor(cursorId);
-    		transaction.close();
+    		cursorManager.closeCursor(cursorId);
     	}
     	
 		messageReplier.replyMessageMultipleDocumentsWithFlags(cursorIdReturned, 0, results,
@@ -211,7 +181,8 @@ public class ToroRequestProcessor extends AbstractRequestProcessor {
         		true, 
         		errorCode);
         attributeMap.attr(ToroRequestProcessor.LAST_ERROR).set(lastError);
-        messageReplier.replyQueryCommandFailure(errorCode, 
+        messageReplier.replyQueryCommandFailure(
+                errorCode, 
         		query.getKeys().iterator().hasNext()?query.getKeys().iterator().next():"");
 	}
 
@@ -235,32 +206,34 @@ public class ToroRequestProcessor extends AbstractRequestProcessor {
 	public void getMore(GetMoreMessage getMoreMessage,
 			MessageReplier messageReplier) throws Exception {
 		AttributeMap attributeMap = messageReplier.getAttributeMap();
-		Map<Long, ToroTransaction> transactionMap = attributeMap.attr(TRANSACTION_MAP).get();
-		Map<Long, AtomicInteger> positionMap = attributeMap.attr(POSITION_MAP).get();
 		
 		CursorId cursorId = new CursorId(getMoreMessage.getCursorId());
 		
-		ToroTransaction transaction = transactionMap.get(Long.valueOf(cursorId.getNumericId()));
+        CursorManager cursorManager
+                = attributeMap.attr(CONNECTION).get().getCursorManager();
+        
 		BSONDocuments results = 
-				new BSONDocuments(transaction.readCursor(cursorId, MongoWP.MONGO_CURSOR_LIMIT));
+				new BSONDocuments(
+                        cursorManager.readCursor(
+                                cursorId, 
+                                MongoWP.MONGO_CURSOR_LIMIT
+                        )
+                );
     	
     	long cursorIdReturned = 0;
     	
-    	//TODO: Implement this with torod when transaction will tell if there is more data
-    	Integer position = null;
-    	if (results.size() >= MongoWP.MONGO_CURSOR_LIMIT) {
-    		cursorIdReturned = cursorId.getNumericId();
-        	//TODO: Implement this with torod when transaction will give the position
-    		position = positionMap.get(cursorId.getNumericId()).getAndAdd(results.size());
-    	} else {
-    		transaction.closeCursor(cursorId);
-    		transaction.close();
-        	transactionMap.remove(cursorId.getNumericId());
-    		position = positionMap.remove(cursorId.getNumericId()).get();
+    	cursorIdReturned = cursorId.getNumericId();
+        Integer position = cursorManager.getPosition(cursorId).get();
+		if (results.size() < MongoWP.MONGO_CURSOR_LIMIT) {
+    		cursorManager.closeCursor(cursorId);
     	}
-		
-		messageReplier.replyMessageMultipleDocumentsWithFlags(cursorIdReturned, position, results,
-				EnumSet.noneOf(ReplyMessage.Flag.class));
+        
+		messageReplier.replyMessageMultipleDocumentsWithFlags(
+                cursorIdReturned, 
+                position, 
+                results,
+				EnumSet.noneOf(ReplyMessage.Flag.class)
+        );
 	}
 
 	@Override
@@ -269,25 +242,18 @@ public class ToroRequestProcessor extends AbstractRequestProcessor {
 			throws Exception {
 		AttributeMap attributeMap = messageReplier.getAttributeMap();
 		ToroConnection connection = attributeMap.attr(CONNECTION).get();
-		Map<Long, ToroTransaction> transactionMap = attributeMap.attr(TRANSACTION_MAP).get();
-		Map<Long, AtomicInteger> positionMap = attributeMap.attr(POSITION_MAP).get();
 		
-		if (connection == null || transactionMap == null || positionMap == null) {
+		if (connection == null) {
 			return;
 		}
+        CursorManager cursorManager = connection.getCursorManager();
 		
 		int numberOfCursors = killCursorsMessage.getNumberOfCursors();
 		long[] cursorIds = killCursorsMessage.getCursorIds();
 		for (int index = 0; index < numberOfCursors; index++) {
 			CursorId cursorId = new CursorId(cursorIds[index]);
 			
-			if (transactionMap.containsKey(cursorId.getNumericId())) {
-				ToroTransaction transaction = transactionMap.get(Long.valueOf(cursorId.getNumericId()));
-				transaction.closeCursor(cursorId);
-				transaction.close();
-				transactionMap.remove(cursorId.getNumericId());
-				positionMap.remove(cursorId.getNumericId());
-			}
+            cursorManager.closeCursor(cursorId);
 		}
 	}
 

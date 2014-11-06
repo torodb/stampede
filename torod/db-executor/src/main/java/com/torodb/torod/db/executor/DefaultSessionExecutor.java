@@ -21,10 +21,17 @@
 package com.torodb.torod.db.executor;
 
 import com.torodb.torod.core.Session;
+import com.torodb.torod.core.cursors.CursorId;
 import com.torodb.torod.core.dbWrapper.DbWrapper;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.executor.SessionExecutor;
 import com.torodb.torod.core.executor.SessionTransaction;
+import com.torodb.torod.core.executor.ToroTaskExecutionException;
+import com.torodb.torod.core.language.projection.Projection;
+import com.torodb.torod.core.language.querycriteria.QueryCriteria;
+import com.torodb.torod.core.subdocument.SplitDocument;
+import com.torodb.torod.db.executor.jobs.*;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -37,7 +44,7 @@ class DefaultSessionExecutor implements SessionExecutor {
     private final DbWrapper wrapper;
     private final ExecutorService executorService;
     private final Monitor monitor;
-    ExecutorServiceProvider executorServiceProvider;
+    private final ExecutorServiceProvider executorServiceProvider;
     private final ExceptionHandler exceptionHandler;
     private final Session session;
 
@@ -79,6 +86,48 @@ class DefaultSessionExecutor implements SessionExecutor {
     @Override
     public SessionTransaction createTransaction() throws ImplementationDbException {
         return new DefaultSessionTransaction(this, wrapper);
+    }
+
+    @Override
+    public Future<Void> query(
+            String collection, 
+            CursorId cursorId,
+            QueryCriteria filter,
+            Projection projection,
+            int maxResults) {
+        return submit(
+                new QueryCallable(
+                        wrapper, 
+                        collection, 
+                        cursorId,
+                        filter,
+                        projection,
+                        maxResults
+                )
+        );
+    }
+
+    @Override
+    public Future<List<? extends SplitDocument>> readCursor(CursorId cursorId, int limit)
+            throws ToroTaskExecutionException {
+        return submit(new ReadCursorCallable(wrapper, cursorId, limit));
+    }
+
+    @Override
+    public Future<List<? extends SplitDocument>> readAllCursor(CursorId cursorId)
+            throws ToroTaskExecutionException {
+        return submit(new ReadAllCursorCallable(wrapper, cursorId));
+    }
+
+    @Override
+    public Future<Integer> countRemainingDocs(CursorId cursorId) {
+        return submit(new CountRemainingDocs(wrapper, cursorId));
+    }
+
+    @Override
+    public Future<?> closeCursor(CursorId cursorId) throws
+            ToroTaskExecutionException {
+        return submit(new CloseCursorCallable(wrapper, cursorId));
     }
     
     @Override

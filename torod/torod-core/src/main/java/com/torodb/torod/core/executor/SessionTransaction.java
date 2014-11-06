@@ -66,46 +66,9 @@ public interface SessionTransaction extends Closeable {
             WriteFailMode mode)
             throws ToroTaskExecutionException;
 
-    Future<Void> query(
-            @Nonnull String collection,
-            @Nonnull CursorId cursorId,
-            @Nullable QueryCriteria queryCriteria,
-            @Nullable Projection projection
-    );
-
-    /**
-     *
-     * @param cursorId
-     * @param limit
-     * @return a list of split documents retrieved from the cursor. Almost the given limit of documents are returned.
-     *         less than the given limit of documents are returned iff the cursor reach its end.
-     * @throws ToroTaskExecutionException
-     */
-    Future<List<? extends SplitDocument>> readCursor(
-            CursorId cursorId,
-            int limit
-    ) throws ToroTaskExecutionException;
-
-    /**
-     * Completly read the given cursor.
-     * <p>
-     * @param cursorId
-     * @return a list of split documents retrieved from the cursor.
-     * @throws ToroTaskExecutionException
-     */
-    Future<List<? extends SplitDocument>> readAllCursor(
-            CursorId cursorId
-    ) throws ToroTaskExecutionException;
-
     public Future<DeleteResponse> delete(
             @Nonnull String collection, 
             @Nonnull List<? extends DeleteOperation> deletes, 
             @Nonnull WriteFailMode mode
     );
-
-    Future<?> closeCursor(
-            CursorId cursorId
-    ) throws ToroTaskExecutionException;
-
-    Future<Integer> countRemainingDocs(CursorId cursorId);
 }

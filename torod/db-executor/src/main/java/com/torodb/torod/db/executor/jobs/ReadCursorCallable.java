@@ -22,7 +22,7 @@ package com.torodb.torod.db.executor.jobs;
 
 import com.torodb.torod.core.cursors.CursorId;
 import com.torodb.torod.core.dbWrapper.Cursor;
-import com.torodb.torod.core.dbWrapper.DbConnection;
+import com.torodb.torod.core.dbWrapper.DbWrapper;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.db.executor.DefaultSessionTransaction;
@@ -34,16 +34,16 @@ import java.util.concurrent.Callable;
  */
 public class ReadCursorCallable implements Callable<List<? extends SplitDocument>> {
 
-    private final DefaultSessionTransaction.DbConnectionProvider connectionProvider;
+    private final DbWrapper dbWrapper;
     private final CursorId cursorId;
     private final int maxResult;
 
     public ReadCursorCallable(
-            DefaultSessionTransaction.DbConnectionProvider connectionProvider,
+            DbWrapper dbWrapper,
             CursorId cursorId,
             int maxResult
     ) {
-        this.connectionProvider = connectionProvider;
+        this.dbWrapper = dbWrapper;
         this.cursorId = cursorId;
         this.maxResult = maxResult;
     }
@@ -53,7 +53,7 @@ public class ReadCursorCallable implements Callable<List<? extends SplitDocument
         Cursor cursor = null;
         boolean closeCursor = false;
         try {
-            cursor = connectionProvider.getConnection().getDbCursor(cursorId);
+            cursor = dbWrapper.getGlobalCursor(cursorId);
 
             return cursor.readDocuments(maxResult);
         }

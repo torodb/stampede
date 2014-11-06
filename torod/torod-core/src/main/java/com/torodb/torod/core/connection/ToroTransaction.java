@@ -60,70 +60,7 @@ public interface ToroTransaction extends Closeable {
             @Nonnull Iterable<ToroDocument> documents,
             WriteFailMode mode
     );
-
-    /**
-     * Makes a query without limit.
-     * <p>
-     * @param collection
-     * @param queryCriteria if null, all documents are returned
-     * @param projection    if null, all fields are returned
-     * @param numberToSkip
-     * @param autoclose
-     * @param hasTimeout
-     * @return
-     */
-    public CursorId query(
-            @Nonnull String collection,
-            @Nullable QueryCriteria queryCriteria,
-            @Nullable Projection projection,
-            @Nonnegative int numberToSkip,
-            boolean autoclose,
-            boolean hasTimeout
-    );
-
-    /**
-     * Makes a query with limit.
-     * <p>
-     * @param collection
-     * @param queryCriteria if null, all documents are returned
-     * @param projection    if null, all fields are returned
-     * @param numberToSkip
-     * @param limit         must be higher than 0
-     * @param autoclose
-     * @param hasTimeout
-     * @return
-     */
-    public CursorId query(
-            @Nonnull String collection,
-            @Nullable QueryCriteria queryCriteria,
-            @Nullable Projection projection,
-            @Nonnegative int numberToSkip,
-            int limit,
-            boolean autoclose,
-            boolean hasTimeout
-    );
-
-    /**
-     *
-     * @param cursorId
-     * @param limit    must be a positive integer (>= 1)
-     * @return
-     */
-    public List<ToroDocument> readCursor(
-            @Nonnull CursorId cursorId,
-            @Nonnegative int limit
-    );
-
-    public List<ToroDocument> readAllCursor(
-            @Nonnull CursorId cursorId
-    );
-
-    public void closeCursor(CursorId cursorId);
     
-    public Future<Integer> getPosition(CursorId cursorId);
-    
-    public Future<Integer> countRemainingDocs(CursorId cursorId);
-
     /**
      * Deletes documents that fulfil the given condition.
      * <p>

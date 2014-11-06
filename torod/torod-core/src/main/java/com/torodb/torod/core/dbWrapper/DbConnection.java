@@ -122,35 +122,4 @@ public interface DbConnection {
             @Nonnull QueryCriteria condition, 
             boolean justOne
     ) throws ImplementationDbException, UserDbException;
-
-    /**
-     * Executes a query and return a cursor to the result.
-     * 
-     * This cursor must be closed onces it is not needed.
-     * 
-     * @param collection
-     * @param cursorId
-     * @param filter
-     * @param projection 
-     * @return A cursor to the query result. This cursor must be closed once it is not needed.
-     * @throws com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException
-     * @throws com.torodb.torod.core.dbWrapper.exceptions.UserDbException
-     */
-    @Nonnull
-    public Cursor query(
-            @Nonnull String collection,
-            @Nonnull CursorId cursorId,
-            @Nullable QueryCriteria filter,
-            @Nullable Projection projection
-    ) throws ImplementationDbException, UserDbException;
-    
-    /**
-     * Returns the {@link Cursor cursor} represented by the given {@linkplain CursorId cursor id}
-     * @param cursorId
-     * @return 
-     * @throws IllegalArgumentException If there is no cursor associated with the given cursor id
-     * @throws com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException
-     */
-    @Nonnull
-    public Cursor getDbCursor(CursorId cursorId) throws IllegalArgumentException, ImplementationDbException;
 }

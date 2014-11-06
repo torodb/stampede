@@ -21,42 +21,54 @@
 package com.torodb.torod.db.executor.jobs;
 
 import com.torodb.torod.core.cursors.CursorId;
+import com.torodb.torod.core.dbWrapper.DbWrapper;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.dbWrapper.exceptions.UserDbException;
 import com.torodb.torod.core.language.projection.Projection;
 import com.torodb.torod.core.language.querycriteria.QueryCriteria;
 import com.torodb.torod.db.executor.DefaultSessionTransaction;
 import java.util.concurrent.Callable;
+import javax.annotation.Nonnegative;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  *
  */
 public class QueryCallable implements Callable<Void> {
 
-    private final DefaultSessionTransaction.DbConnectionProvider connectionProvider;
+    private final DbWrapper dbWrapper;
     private final String collection;
     private final CursorId cursorId;
     private final QueryCriteria filter;
     private final Projection projection;
+    private final int maxResults;
 
     public QueryCallable(
-            DefaultSessionTransaction.DbConnectionProvider connectionProvider,
-            String collection, 
-            CursorId cursorId, 
-            QueryCriteria filter, 
-            Projection projection) {
+            @Nonnull DbWrapper dbWrapper,
+            @Nonnull String collection, 
+            @Nonnull CursorId cursorId, 
+            @Nullable QueryCriteria filter, 
+            @Nullable Projection projection,
+            @Nonnegative int maxResults) {
         
-        this.connectionProvider = connectionProvider;
+        this.dbWrapper = dbWrapper;
         this.collection = collection;
         this.cursorId = cursorId;
         this.filter = filter;
         this.projection = projection;
+        this.maxResults = maxResults;
     }
 
     @Override
     public Void call() throws ImplementationDbException, UserDbException {
-        connectionProvider.getConnection()
-                .query(collection, cursorId, filter, projection);
+        dbWrapper.openGlobalCursor(
+                collection, 
+                cursorId, 
+                filter, 
+                projection, 
+                maxResults
+        );
         return null;
     }
 

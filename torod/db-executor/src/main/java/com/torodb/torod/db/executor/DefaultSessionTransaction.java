@@ -84,36 +84,8 @@ public class DefaultSessionTransaction implements SessionTransaction {
     }
 
     @Override
-    public Future<Void> query(String collection, CursorId cursorId, QueryCriteria filter, Projection projection) {
-        return executor.submit(new QueryCallable(connectionProvider, collection, cursorId, filter, projection));
-    }
-
-    @Override
-    public Future<List<? extends SplitDocument>> readCursor(CursorId cursorId, int limit)
-            throws ToroTaskExecutionException {
-        return executor.submit(new ReadCursorCallable(connectionProvider, cursorId, limit));
-    }
-
-    @Override
-    public Future<List<? extends SplitDocument>> readAllCursor(CursorId cursorId)
-            throws ToroTaskExecutionException {
-        return executor.submit(new ReadAllCursorCallable(connectionProvider, cursorId));
-    }
-
-    @Override
     public Future<DeleteResponse> delete(String collection, List<? extends DeleteOperation> deletes, WriteFailMode mode) {
         return executor.submit(new DeleteCallable(connectionProvider, collection, deletes, mode));
-    }
-
-    @Override
-    public Future<Integer> countRemainingDocs(CursorId cursorId) {
-        return executor.submit(new CountRemainingDocs(connectionProvider, cursorId));
-    }
-
-    @Override
-    public Future<?> closeCursor(CursorId cursorId) throws
-            ToroTaskExecutionException {
-        return executor.submit(new CloseCursorCallable(connectionProvider, cursorId));
     }
 
     public static class DbConnectionProvider {

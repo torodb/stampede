@@ -21,14 +21,12 @@
 
 package com.torodb.torod.core.cursors;
 
-import com.torodb.torod.core.dbMetaInf.CursorManager;
-import com.torodb.torod.core.executor.SessionExecutor;
-import com.torodb.torod.core.executor.SessionTransaction;
+import com.torodb.torod.core.dbWrapper.DbWrapper;
 
 /**
  *
  */
-public interface CursorManagerFactory {
+public interface InnerCursorManagerFactory {
     
-    CursorManager createCursorManager(SessionTransaction transaction);
+    InnerCursorManager createCursorManager(DbWrapper dbWrapper);
 }

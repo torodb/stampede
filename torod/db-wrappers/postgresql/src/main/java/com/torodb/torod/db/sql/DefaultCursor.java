@@ -22,7 +22,9 @@ package com.torodb.torod.db.sql;
 
 import com.google.common.collect.Table;
 import com.torodb.torod.core.dbWrapper.Cursor;
+import com.torodb.torod.core.exceptions.ToroRuntimeException;
 import com.torodb.torod.core.subdocument.SplitDocument;
+import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
@@ -88,7 +90,12 @@ public class DefaultCursor implements Cursor {
 
     @Override
     public void close() {
-        databaseGateway.close();
+        try {
+            databaseGateway.close();
+        } catch (SQLException ex) {
+            //TODO: Study exceptions
+            throw new ToroRuntimeException(ex);
+        }
     }
 
     public static class MyCursorException extends com.torodb.torod.core.dbWrapper.Cursor.CursorException {
@@ -134,6 +141,7 @@ public class DefaultCursor implements Cursor {
             return delegate.next();
         }
         
+        @Override
         public void remove() {
             throw new UnsupportedOperationException("remove");
         }
@@ -148,7 +156,8 @@ public class DefaultCursor implements Cursor {
         
         /**
          * This method is called once the cursor doesn't need the connection provider anymore.
+         * @throws java.sql.SQLException
          */
-        void close();
+        void close() throws SQLException;
     }
 }

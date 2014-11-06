@@ -23,9 +23,10 @@ package com.toro.torod.connection;
 import com.torodb.torod.core.connection.ToroConnection;
 import com.torodb.torod.core.Torod;
 import com.torodb.torod.core.config.DocumentBuilderFactory;
-import com.torodb.torod.core.cursors.CursorManagerFactory;
+import com.torodb.torod.core.cursors.InnerCursorManagerFactory;
 import com.torodb.torod.core.d2r.D2RTranslator;
 import com.torodb.torod.core.dbMetaInf.DbMetaInformationCache;
+import com.torodb.torod.core.dbWrapper.DbWrapper;
 import com.torodb.torod.core.executor.ExecutorFactory;
 import javax.inject.Inject;
 
@@ -37,7 +38,8 @@ public class DefaultTorod implements Torod {
     private final D2RTranslator d2r;
     private final DbMetaInformationCache cache;
     private final ExecutorFactory executorFactory;
-    private final CursorManagerFactory cursorManagerFactory;
+    private final DbWrapper dbWrapper;
+    private final InnerCursorManagerFactory cursorManagerFactory;
     private final DocumentBuilderFactory documentBuilderFactory;
 
     @Inject
@@ -45,11 +47,13 @@ public class DefaultTorod implements Torod {
             D2RTranslator d2RTranslator,
             DbMetaInformationCache cache,
             ExecutorFactory executorFactory,
-            CursorManagerFactory cursorManagerFactory,
+            DbWrapper dbWrapper,
+            InnerCursorManagerFactory cursorManagerFactory,
             DocumentBuilderFactory documentBuilderFactory) {
         this.d2r = d2RTranslator;
         this.cache = cache;
         this.executorFactory = executorFactory;
+        this.dbWrapper = dbWrapper;
         this.cursorManagerFactory = cursorManagerFactory;
         this.documentBuilderFactory = documentBuilderFactory;
     }
@@ -66,6 +70,7 @@ public class DefaultTorod implements Torod {
         return new DefaultToroConnection(
                 d2r, 
                 executorFactory, 
+                dbWrapper,
                 cursorManagerFactory,
                 documentBuilderFactory,
                 cache

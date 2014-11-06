@@ -44,6 +44,8 @@ public interface TorodConfig {
      * @return
      */
     public DataSource getSystemDataSource();
+    
+    public DataSource getGlobalCursorDatasource();
 
     public int getByJobDependencyStripes();
 

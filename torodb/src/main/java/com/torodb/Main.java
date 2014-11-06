@@ -43,7 +43,7 @@ import org.slf4j.LoggerFactory;
  */
 public class Main {
     
-    private static final String VERSION = "0.10";
+    private static final String VERSION = "0.12";
 
 	public static void main(String[] args) throws Exception {
 		final Config config = new Config();

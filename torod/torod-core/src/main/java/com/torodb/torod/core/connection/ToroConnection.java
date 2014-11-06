@@ -40,6 +40,8 @@ public interface ToroConnection extends Closeable {
     
     public ToroTransaction createTransaction() throws ImplementationDbException;
     
+    public CursorManager getCursorManager();
+    
     public Session getSession();
 
     /**

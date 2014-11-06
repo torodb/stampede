@@ -56,7 +56,6 @@ public abstract class AbstractSqlDbConnection implements DbConnection {
     private final TorodbMeta meta;
     private final Configuration jooqConf;
     private final DSLContext dsl;
-    private final ConcurrentMap<CursorId, com.torodb.torod.core.dbWrapper.Cursor> openCursors;
     private static final Logger LOG
             = Logger.getLogger(AbstractSqlDbConnection.class.getName());
 
@@ -65,7 +64,6 @@ public abstract class AbstractSqlDbConnection implements DbConnection {
         this.jooqConf = dsl.configuration();
         this.dsl = dsl;
         this.meta = meta;
-        this.openCursors = new MapMaker().makeMap();
     }
 
     protected abstract String getCreateSubDocTypeTableQuery(SubDocTable table, Configuration conf);
@@ -277,71 +275,5 @@ public abstract class AbstractSqlDbConnection implements DbConnection {
         StructureConverter converter = new StructureConverter(collectionSchema);
 
         return converter.from(found.value2());
-    }
-
-    @Override
-    public com.torodb.torod.core.dbWrapper.Cursor query(String collection, CursorId cursorId, QueryCriteria filter, Projection projection) {
-        com.torodb.torod.core.dbWrapper.Cursor cursor;
-
-        if (!meta.exists(collection)) {
-            cursor = new EmptyCursor();
-        }
-        else {
-            CollectionSchema colSchema = meta.getCollectionSchema(collection);
-
-            QueryEvaluator queryEvaluator = new QueryEvaluator(colSchema);
-
-            Set<Integer> dids = queryEvaluator.evaluateDid(filter, getDsl());
-
-            cursor = new DefaultCursor(
-                    new MyCursorConnectionProvider(
-                            cursorId, 
-                            jooqConf, 
-                            colSchema, 
-                            projection
-                    ),
-                    dids
-            );
-        }
-
-        openCursors.put(cursorId, cursor);
-
-        return cursor;
-    }
-
-    @Override
-    public com.torodb.torod.core.dbWrapper.Cursor getDbCursor(CursorId cursorId) throws IllegalArgumentException {
-        com.torodb.torod.core.dbWrapper.Cursor cursor = openCursors.get(cursorId);
-        if (cursor == null) {
-            throw new IllegalArgumentException("There is no open cursor with id " + cursorId);
-        }
-
-        return cursor;
-    }
-
-    private class MyCursorConnectionProvider implements DefaultCursor.DatabaseCursorGateway {
-
-        private final CursorId cursorId;
-        private final Configuration configuration;
-        private final CollectionSchema colSchema;
-        private final Projection projection;
-
-        public MyCursorConnectionProvider(CursorId cursorId, Configuration configuration, CollectionSchema colSchema, Projection projection) {
-            this.cursorId = cursorId;
-            this.configuration = configuration;
-            this.colSchema = colSchema;
-            this.projection = projection;
-        }
-
-        @Override
-        public List<SplitDocument> readDocuments(Integer[] documents) {
-            return Routines.readDocuments(configuration, colSchema, documents, projection);
-        }
-
-        @Override
-        public void close() {
-            openCursors.remove(cursorId);
-        }
-
     }
 }

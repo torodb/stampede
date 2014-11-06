@@ -47,8 +47,17 @@ public class Config implements TorodConfig, MongoServerConfig {
 	@Parameter(names={"--ask-for-password"}, description="Force input of PostgreSQL's database user password.")
 	private boolean askForPassword = false;
 	private String dbpass = null;
-	@Parameter(names={"-c","--connections"}, description="Number of connections to establish to the PostgreSQL database. It must be higher or equal than 2")
-	private Integer dbpoolSize = 10;
+	@Parameter(
+            names={"-c","--total-connections"}, 
+            description="Maximum number of connections to establish to the "
+                    + "PostgreSQL database. It must be higher or equal than 3")
+    private Integer connectionPoolSize = 30;
+    @Parameter(
+            names={"-r","--read-connections"}, 
+            description="Reserved connections that will be reserved to store "
+                    + "global cursors. It must be lower than total connections "
+                    + "minus 2")
+    private Integer reservedReadPoolSize = 10;
 	@Parameter(names={"-P", "--mongoport"}, description="Port to listen on for Mongo wire protocol connections")
     private int mongoPort = 27017;
 	@Parameter(names={"--debug"}, description="Change log level to DEBUG")
@@ -58,6 +67,7 @@ public class Config implements TorodConfig, MongoServerConfig {
 
     private DataSource commonDataSource;
     private DataSource systemDataSource;
+    private DataSource globalCursorDataSource;
     
     public String getDbhost() {
 		return dbhost;
@@ -92,11 +102,24 @@ public class Config implements TorodConfig, MongoServerConfig {
 	}
     
     public void initialize() {
-        Preconditions.checkState(dbpoolSize >= 2, "At least two connections with "
-            +"the backend SQL database are required");
+        Preconditions.checkState(
+                connectionPoolSize >= 3, 
+                "At least three connections with the backend SQL database are "
+                        + "required"
+        );
+        Preconditions.checkState(
+                reservedReadPoolSize >= 1,
+                "At least one read connection is required"
+        );
+        Preconditions.checkState(
+                reservedReadPoolSize <= connectionPoolSize -2, 
+                "Reserved read connections must be lower than total "
+                        + "connections minus two"
+        );
         
-        commonDataSource = createDataSource(dbpoolSize - 1);
+        commonDataSource = createDataSource(connectionPoolSize - reservedReadPoolSize);
         systemDataSource = createDataSource(1);
+        globalCursorDataSource = createDataSource(reservedReadPoolSize);
     }
     
     private DataSource createDataSource(int maxPoolSize) {
@@ -139,6 +162,11 @@ public class Config implements TorodConfig, MongoServerConfig {
     @Override
     public DataSource getSystemDataSource() {
         return systemDataSource;
+    }
+
+    @Override
+    public DataSource getGlobalCursorDatasource() {
+        return globalCursorDataSource;
     }
 
     @Override

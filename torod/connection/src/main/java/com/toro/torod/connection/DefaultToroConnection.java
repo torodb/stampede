@@ -22,41 +22,51 @@ package com.toro.torod.connection;
 
 import com.torodb.torod.core.Session;
 import com.torodb.torod.core.config.DocumentBuilderFactory;
+import com.torodb.torod.core.connection.CursorManager;
 import com.torodb.torod.core.connection.ToroConnection;
 import com.torodb.torod.core.connection.ToroTransaction;
-import com.torodb.torod.core.cursors.CursorManagerFactory;
+import com.torodb.torod.core.cursors.InnerCursorManagerFactory;
 import com.torodb.torod.core.d2r.D2RTranslator;
 import com.torodb.torod.core.dbMetaInf.DbMetaInformationCache;
+import com.torodb.torod.core.dbWrapper.DbWrapper;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.executor.ExecutorFactory;
 import com.torodb.torod.core.executor.SessionExecutor;
 import com.torodb.torod.core.executor.SessionTransaction;
+import javax.annotation.concurrent.NotThreadSafe;
 
 /**
  *
  */
+@NotThreadSafe
 class DefaultToroConnection implements ToroConnection {
 
     private final Session session;
     private final D2RTranslator d2r;
     private final SessionExecutor executor;
-    private final CursorManagerFactory cursorManagerFactory;
     private final DocumentBuilderFactory documentBuilderFactory;
     private final DbMetaInformationCache cache;
+    private final CursorManager cursorManager;
 
     DefaultToroConnection(
             D2RTranslator d2RTranslator,
             ExecutorFactory executorFactory,
-            CursorManagerFactory cursorManagerFactory,
+            DbWrapper dbWrapper,
+            InnerCursorManagerFactory cursorManagerFactory,
             DocumentBuilderFactory documentBuilderFactory,
             DbMetaInformationCache cache) {
         this.session = new DefaultSession();
         this.d2r = d2RTranslator;
 
         this.executor = executorFactory.createSessionExecutor(session);
-        this.cursorManagerFactory = cursorManagerFactory;
         this.documentBuilderFactory = documentBuilderFactory;
         this.cache = cache;
+        this.cursorManager = new DefaultCursorManager(
+                cursorManagerFactory.createCursorManager(dbWrapper), 
+                dbWrapper, 
+                executor, 
+                d2r
+        );
     }
 
     @Override
@@ -86,9 +96,14 @@ class DefaultToroConnection implements ToroConnection {
                 sessionTransaction, 
                 d2r, 
                 executor, 
-                cursorManagerFactory.createCursorManager(sessionTransaction),
-                documentBuilderFactory
+                documentBuilderFactory,
+                cursorManager
         );
+    }
+
+    @Override
+    public CursorManager getCursorManager() {
+        return cursorManager;
     }
 
 }
