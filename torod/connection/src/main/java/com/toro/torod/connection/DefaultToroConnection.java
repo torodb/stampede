@@ -25,7 +25,7 @@ import com.torodb.torod.core.config.DocumentBuilderFactory;
 import com.torodb.torod.core.connection.CursorManager;
 import com.torodb.torod.core.connection.ToroConnection;
 import com.torodb.torod.core.connection.ToroTransaction;
-import com.torodb.torod.core.cursors.InnerCursorManagerFactory;
+import com.torodb.torod.core.cursors.InnerCursorManager;
 import com.torodb.torod.core.d2r.D2RTranslator;
 import com.torodb.torod.core.dbMetaInf.DbMetaInformationCache;
 import com.torodb.torod.core.dbWrapper.DbWrapper;
@@ -62,7 +62,7 @@ class DefaultToroConnection implements ToroConnection {
         this.documentBuilderFactory = documentBuilderFactory;
         this.cache = cache;
         this.cursorManager = new DefaultCursorManager(
-                cursorManagerFactory.createCursorManager(dbWrapper), 
+                globalInnerCursorManager, 
                 dbWrapper, 
                 executor, 
                 d2r

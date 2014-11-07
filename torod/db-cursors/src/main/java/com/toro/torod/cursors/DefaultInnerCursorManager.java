@@ -50,7 +50,7 @@ import org.slf4j.LoggerFactory;
  *
  */
 @ThreadSafe
-class DefaultInnerCursorManager implements InnerCursorManager {
+public class DefaultInnerCursorManager implements InnerCursorManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultInnerCursorManager.class);
     private static final long FIRST_CURSOR_ID = 0;
@@ -78,7 +78,7 @@ class DefaultInnerCursorManager implements InnerCursorManager {
     private final Ticker ticker;
 
     @Inject
-    DefaultInnerCursorManager(TorodConfig config, DbWrapper dbWrapper) {
+    public DefaultInnerCursorManager(TorodConfig config, DbWrapper dbWrapper) {
         this.actualTimeout = config.getDefaultCursorTimeout();
         this.removalListener = new MyRemovalListener();
         this.ticker = Ticker.systemTicker();

@@ -33,6 +33,7 @@ import com.beust.jcommander.JCommander;
 import com.eightkdata.mongowp.mongoserver.MongoServer;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.torodb.di.*;
 import com.torodb.torod.core.Torod;
 import java.io.*;
 import java.nio.charset.Charset;
@@ -97,10 +98,16 @@ public class Main {
 
 		config.initialize();
 
-		Injector injector = Guice.createInjector(new ConfigModule(config),
-				new MongoServerModule(), new DbWrapperModule(),
-				new ExecutorModule(), new DbMetaInformationCacheModule(),
-				new D2RModule(), new ConnectionModule());
+		Injector injector = Guice.createInjector(
+                new ConfigModule(config),
+				new MongoServerModule(),
+                new DbWrapperModule(),
+				new ExecutorModule(),
+                new DbMetaInformationCacheModule(),
+				new D2RModule(), 
+                new ConnectionModule(),
+                new InnerCursorManagerModule()
+        );
 
 		final Torod torod = injector.getInstance(Torod.class);
 		final MongoServer server = injector.getInstance(MongoServer.class);
