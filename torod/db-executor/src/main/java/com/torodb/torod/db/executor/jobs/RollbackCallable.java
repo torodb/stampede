@@ -20,6 +20,8 @@
 
 package com.torodb.torod.db.executor.jobs;
 
+import com.google.common.base.Supplier;
+import com.torodb.torod.core.dbWrapper.DbConnection;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.db.executor.DefaultSessionTransaction;
 import java.util.concurrent.Callable;
@@ -29,17 +31,17 @@ import java.util.concurrent.Callable;
  */
 public class RollbackCallable implements Callable<Void> {
     
-    private final DefaultSessionTransaction.DbConnectionProvider connectionProvider;
+    private final Supplier<DbConnection> connectionProvider;
 
     public RollbackCallable(
-            DefaultSessionTransaction.DbConnectionProvider connectionProvider
+            Supplier<DbConnection> connectionProvider
     ) {
         this.connectionProvider = connectionProvider;
     }
 
     @Override
     public Void call() throws ImplementationDbException {
-        connectionProvider.getConnection().rollback();
+        connectionProvider.get().rollback();
         
         return null;
     }

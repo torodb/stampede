@@ -20,6 +20,7 @@
 
 package com.torodb.torod.db.executor.jobs;
 
+import com.google.common.base.Supplier;
 import com.google.common.collect.Lists;
 import com.torodb.torod.core.WriteFailMode;
 import com.torodb.torod.core.connection.DeleteResponse;
@@ -40,13 +41,13 @@ import javax.annotation.Nullable;
  */
 public class DeleteCallable implements Callable<DeleteResponse> {
 
-    private final DefaultSessionTransaction.DbConnectionProvider connectionProvider;
+    private final Supplier<DbConnection> connectionProvider;
     private final String collection;
     private final List<? extends DeleteOperation> deletes;
     private final WriteFailMode mode;
 
     public DeleteCallable(
-            DefaultSessionTransaction.DbConnectionProvider connectionProvider,
+            Supplier<DbConnection> connectionProvider,
             String collection, 
             List<? extends DeleteOperation> deletes, 
             WriteFailMode mode
@@ -72,7 +73,7 @@ public class DeleteCallable implements Callable<DeleteResponse> {
     }
 
     private DeleteResponse isolatedDelete() throws ImplementationDbException {
-        DbConnection connection = connectionProvider.getConnection();
+        DbConnection connection = connectionProvider.get();
         int deleted = 0;
         List<WriteError> errors = Lists.newLinkedList();
 
@@ -90,7 +91,7 @@ public class DeleteCallable implements Callable<DeleteResponse> {
     }
 
     private DeleteResponse orderedDelete() throws ImplementationDbException, UserDbException {
-        DbConnection connection = connectionProvider.getConnection();
+        DbConnection connection = connectionProvider.get();
         int deleted = 0;
         List<WriteError> errors = Lists.newLinkedList();
         int index = -1;
@@ -110,7 +111,7 @@ public class DeleteCallable implements Callable<DeleteResponse> {
     }
 
     private DeleteResponse transactionalDelete() throws ImplementationDbException, UserDbException {
-        DbConnection connection = connectionProvider.getConnection();
+        DbConnection connection = connectionProvider.get();
         int deleted = 0;
         List<WriteError> errors = Lists.newLinkedList();
         int index = -1;

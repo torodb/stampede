@@ -20,6 +20,8 @@
 
 package com.torodb.torod.db.executor.jobs;
 
+import com.google.common.base.Supplier;
+import com.torodb.torod.core.dbWrapper.DbConnection;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.dbWrapper.exceptions.UserDbException;
 import com.torodb.torod.db.executor.DefaultSessionTransaction;
@@ -30,17 +32,17 @@ import java.util.concurrent.Callable;
  */
 public class CloseConnectionCallable implements Callable<Void> {
     
-    private final DefaultSessionTransaction.DbConnectionProvider connectionProvider;
+    private final Supplier<DbConnection> connectionProvider;
 
     public CloseConnectionCallable(
-            DefaultSessionTransaction.DbConnectionProvider connectionProvider
+            Supplier<DbConnection> connectionProvider
     ) {
         this.connectionProvider = connectionProvider;
     }
 
     @Override
     public Void call() throws ImplementationDbException, UserDbException {
-        connectionProvider.getConnection().close();
+        connectionProvider.get().close();
         
         return null;
     }

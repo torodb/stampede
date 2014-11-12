@@ -20,6 +20,7 @@
 
 package com.torodb.torod.db.executor;
 
+import com.google.common.base.Supplier;
 import com.torodb.torod.core.WriteFailMode;
 import com.torodb.torod.core.connection.DeleteResponse;
 import com.torodb.torod.core.connection.InsertResponse;
@@ -88,7 +89,7 @@ public class DefaultSessionTransaction implements SessionTransaction {
         return executor.submit(new DeleteCallable(connectionProvider, collection, deletes, mode));
     }
 
-    public static class DbConnectionProvider {
+    public static class DbConnectionProvider implements Supplier<DbConnection> {
 
         private final DbWrapper dbWrapper;
         private DbConnection connection;
@@ -97,7 +98,8 @@ public class DefaultSessionTransaction implements SessionTransaction {
             this.dbWrapper = dbWrapper;
         }
 
-        public DbConnection getConnection() {
+        @Override
+        public DbConnection get() {
             if (connection == null) {
                 try {
                     connection = dbWrapper.consumeSessionDbConnection();

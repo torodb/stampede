@@ -21,6 +21,7 @@
 package com.torodb.torod.db.executor.jobs;
 
 import com.google.common.base.Function;
+import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
@@ -36,7 +37,6 @@ import com.torodb.torod.core.dbWrapper.exceptions.UserDbException;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.core.subdocument.SubDocType;
 import com.torodb.torod.core.subdocument.SubDocument;
-import com.torodb.torod.db.executor.DefaultSessionTransaction;
 import java.util.*;
 import java.util.concurrent.Callable;
 import javax.annotation.Nonnull;
@@ -46,13 +46,13 @@ import javax.annotation.Nonnull;
  */
 public class InsertSplitDocumentCallable implements Callable<InsertResponse> {
 
-    private final DefaultSessionTransaction.DbConnectionProvider connectionProvider;
+    private final Supplier<DbConnection> connectionProvider;
     private final String collection;
     private final Collection<SplitDocument> docs;
     private final WriteFailMode mode;
 
     public InsertSplitDocumentCallable(
-            DefaultSessionTransaction.DbConnectionProvider connectionProvider,
+            Supplier<DbConnection> connectionProvider,
             String collection,
             Collection<SplitDocument> docs,
             WriteFailMode mode) {
@@ -78,7 +78,7 @@ public class InsertSplitDocumentCallable implements Callable<InsertResponse> {
     }
 
     private void insertSingleDoc(SplitDocument doc) throws ImplementationDbException, UserDbException {
-        DbConnection connection = connectionProvider.getConnection();
+        DbConnection connection = connectionProvider.get();
         connection.insertRootDocuments(collection, Collections.singleton(doc));
         
         for (SubDocType type : doc.getSubDocuments().rowKeySet()) {
@@ -121,7 +121,7 @@ public class InsertSplitDocumentCallable implements Callable<InsertResponse> {
     }
 
     private InsertResponse transactionalInsert() throws ImplementationDbException {
-        DbConnection connection = connectionProvider.getConnection();
+        DbConnection connection = connectionProvider.get();
         List<WriteError> errors = Lists.newLinkedList();
         
         try {
