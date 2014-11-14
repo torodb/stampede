@@ -24,8 +24,9 @@ import com.google.common.base.Supplier;
 import com.torodb.torod.core.dbWrapper.DbConnection;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.dbWrapper.exceptions.UserDbException;
-import com.torodb.torod.db.executor.DefaultSessionTransaction;
+import com.torodb.torod.db.executor.report.CommitReport;
 import java.util.concurrent.Callable;
+import javax.inject.Inject;
 
 /**
  *
@@ -33,14 +34,21 @@ import java.util.concurrent.Callable;
 public class CommitCallable implements Callable<Void> {
     
     private final Supplier<DbConnection> connectionProvider;
+    private final CommitReport report;
 
-    public CommitCallable(Supplier<DbConnection> connectionProvider) {
+    @Inject
+    public CommitCallable(
+            Supplier<DbConnection> connectionProvider, 
+            CommitReport report) {
         this.connectionProvider = connectionProvider;
+        this.report = report;
     }
 
     @Override
     public Void call() throws ImplementationDbException, UserDbException {
         connectionProvider.get().commit();
+        
+        report.taskExecuted();
         
         return null;
     }

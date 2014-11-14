@@ -31,10 +31,12 @@ import com.torodb.torod.core.language.projection.Projection;
 import com.torodb.torod.core.language.querycriteria.QueryCriteria;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.db.executor.jobs.*;
+import com.torodb.torod.db.executor.report.ReportFactory;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import javax.inject.Inject;
 
 /**
  *
@@ -47,20 +49,24 @@ class DefaultSessionExecutor implements SessionExecutor {
     private final ExecutorServiceProvider executorServiceProvider;
     private final ExceptionHandler exceptionHandler;
     private final Session session;
+    private final ReportFactory reportFactory;
 
+    @Inject
     public DefaultSessionExecutor(
             ExceptionHandler exceptionHandler,
             DefaultExecutorFactory factory, 
             DbWrapper wrapper, 
             ExecutorServiceProvider executorServiceProvider,
             Monitor monitor,
-            Session session) {
+            Session session,
+            ReportFactory reportFactory) {
         this.executorServiceProvider = executorServiceProvider;
         this.exceptionHandler = exceptionHandler;
         this.wrapper = wrapper;
         this.executorService = executorServiceProvider.consumeSessionExecutorService(session);
         this.monitor = monitor;
         this.session = session;
+        this.reportFactory = reportFactory;
     }
 
     @Override
@@ -85,7 +91,7 @@ class DefaultSessionExecutor implements SessionExecutor {
 
     @Override
     public SessionTransaction createTransaction() throws ImplementationDbException {
-        return new DefaultSessionTransaction(this, wrapper);
+        return new DefaultSessionTransaction(this, wrapper, reportFactory);
     }
 
     @Override
@@ -102,7 +108,8 @@ class DefaultSessionExecutor implements SessionExecutor {
                         cursorId,
                         filter,
                         projection,
-                        maxResults
+                        maxResults,
+                        reportFactory.createQueryReport()
                 )
         );
     }
@@ -110,24 +117,49 @@ class DefaultSessionExecutor implements SessionExecutor {
     @Override
     public Future<List<? extends SplitDocument>> readCursor(CursorId cursorId, int limit)
             throws ToroTaskExecutionException {
-        return submit(new ReadCursorCallable(wrapper, cursorId, limit));
+        return submit(
+                new ReadCursorCallable(
+                        wrapper, 
+                        cursorId, 
+                        limit,
+                        reportFactory.createReadCursorReport()
+                )
+        );
     }
 
     @Override
     public Future<List<? extends SplitDocument>> readAllCursor(CursorId cursorId)
             throws ToroTaskExecutionException {
-        return submit(new ReadAllCursorCallable(wrapper, cursorId));
+        return submit(
+                new ReadAllCursorCallable(
+                        wrapper, 
+                        cursorId,
+                        reportFactory.createReadAllCursorReport()
+                )
+        );
     }
 
     @Override
     public Future<Integer> countRemainingDocs(CursorId cursorId) {
-        return submit(new CountRemainingDocs(wrapper, cursorId));
+        return submit(
+                new CountRemainingDocs(
+                        wrapper, 
+                        cursorId,
+                        reportFactory.createCountRemainingDocsReport()
+                )
+        );
     }
 
     @Override
     public Future<?> closeCursor(CursorId cursorId) throws
             ToroTaskExecutionException {
-        return submit(new CloseCursorCallable(wrapper, cursorId));
+        return submit(
+                new CloseCursorCallable(
+                        wrapper, 
+                        cursorId,
+                        reportFactory.createCloseCursorReport()
+                )
+        );
     }
     
     @Override

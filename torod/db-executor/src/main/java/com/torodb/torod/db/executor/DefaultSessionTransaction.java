@@ -17,14 +17,12 @@
  *     Copyright (c) 2014, 8Kdata Technology
  *     
  */
-
 package com.torodb.torod.db.executor;
 
 import com.google.common.base.Supplier;
 import com.torodb.torod.core.WriteFailMode;
 import com.torodb.torod.core.connection.DeleteResponse;
 import com.torodb.torod.core.connection.InsertResponse;
-import com.torodb.torod.core.cursors.CursorId;
 import com.torodb.torod.core.dbWrapper.DbConnection;
 import com.torodb.torod.core.dbWrapper.DbWrapper;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
@@ -32,10 +30,9 @@ import com.torodb.torod.core.exceptions.ToroImplementationException;
 import com.torodb.torod.core.executor.SessionTransaction;
 import com.torodb.torod.core.executor.ToroTaskExecutionException;
 import com.torodb.torod.core.language.operations.DeleteOperation;
-import com.torodb.torod.core.language.projection.Projection;
-import com.torodb.torod.core.language.querycriteria.QueryCriteria;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.db.executor.jobs.*;
+import com.torodb.torod.db.executor.report.ReportFactory;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Future;
@@ -45,32 +42,50 @@ import java.util.concurrent.Future;
  */
 public class DefaultSessionTransaction implements SessionTransaction {
 
-    private final DbWrapper dbWrapper;
     private final DefaultSessionExecutor executor;
     private final DbConnectionProvider connectionProvider;
     private boolean closed;
+    private final ReportFactory reportFactory;
 
-    DefaultSessionTransaction(DefaultSessionExecutor executor, DbWrapper dbWrapper) {
+    DefaultSessionTransaction(
+            DefaultSessionExecutor executor,
+            DbWrapper dbWrapper,
+            ReportFactory reportFactory) {
         this.executor = executor;
-        this.dbWrapper = dbWrapper;
         this.connectionProvider = new DbConnectionProvider(dbWrapper);
+        this.reportFactory = reportFactory;
         closed = false;
     }
 
     @Override
     public Future<?> rollback() {
-        return executor.submit(new RollbackCallable(connectionProvider));
+        return executor.submit(
+                new RollbackCallable(
+                        connectionProvider,
+                        reportFactory.createRollbackReport()
+                )
+        );
     }
 
     @Override
     public Future<?> commit() {
-        return executor.submit(new CommitCallable(connectionProvider));
+        return executor.submit(
+                new CommitCallable(
+                        connectionProvider,
+                        reportFactory.createCommitReport()
+                )
+        );
     }
 
     @Override
     public void close() {
         closed = true;
-        executor.submit(new CloseConnectionCallable(connectionProvider));
+        executor.submit(
+                new CloseConnectionCallable(
+                        connectionProvider,
+                        reportFactory.createCloseConnectionReport()
+                )
+        );
     }
 
     @Override
@@ -79,14 +94,35 @@ public class DefaultSessionTransaction implements SessionTransaction {
     }
 
     @Override
-    public Future<InsertResponse> insertSplitDocuments(String collection, Collection<SplitDocument> documents, WriteFailMode mode)
+    public Future<InsertResponse> insertSplitDocuments(
+            String collection, 
+            Collection<SplitDocument> documents, 
+            WriteFailMode mode)
             throws ToroTaskExecutionException {
-        return executor.submit(new InsertSplitDocumentCallable(connectionProvider, collection, documents, mode));
+        return executor.submit(
+                new InsertSplitDocumentCallable(
+                        connectionProvider,
+                        collection,
+                        documents,
+                        mode,
+                        reportFactory.createInsertReport()
+                ));
     }
 
     @Override
-    public Future<DeleteResponse> delete(String collection, List<? extends DeleteOperation> deletes, WriteFailMode mode) {
-        return executor.submit(new DeleteCallable(connectionProvider, collection, deletes, mode));
+    public Future<DeleteResponse> delete(
+            String collection, 
+            List<? extends DeleteOperation> deletes, 
+            WriteFailMode mode) {
+        return executor.submit(
+                new DeleteCallable(
+                        connectionProvider, 
+                        collection, 
+                        deletes, 
+                        mode,
+                        reportFactory.createDeleteReport()
+                )
+        );
     }
 
     public static class DbConnectionProvider implements Supplier<DbConnection> {

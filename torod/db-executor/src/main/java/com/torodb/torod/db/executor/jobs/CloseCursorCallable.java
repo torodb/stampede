@@ -24,8 +24,9 @@ import com.torodb.torod.core.cursors.CursorId;
 import com.torodb.torod.core.dbWrapper.Cursor;
 import com.torodb.torod.core.dbWrapper.DbWrapper;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
-import com.torodb.torod.db.executor.DefaultSessionTransaction;
+import com.torodb.torod.db.executor.report.CloseCursorReport;
 import java.util.concurrent.Callable;
+import javax.inject.Inject;
 
 /**
  *
@@ -34,13 +35,16 @@ public class CloseCursorCallable implements Callable<Void> {
 
     private final DbWrapper dbWrapper;
     private final CursorId cursorId;
+    private final CloseCursorReport report;
 
+    @Inject
     public CloseCursorCallable(
             DbWrapper dbWrapper, 
-            CursorId cursorId
-    ) {
+            CursorId cursorId, 
+            CloseCursorReport report) {
         this.dbWrapper = dbWrapper;
         this.cursorId = cursorId;
+        this.report = report;
     }
 
 
@@ -49,6 +53,8 @@ public class CloseCursorCallable implements Callable<Void> {
         Cursor cursor = dbWrapper.getGlobalCursor(cursorId);
 
         cursor.close();
+        
+        report.taskExecuted(cursorId);
 
         return null;
     }

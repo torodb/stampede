@@ -26,6 +26,8 @@ import com.torodb.DefaultExecutorServiceProvider;
 import com.torodb.torod.core.executor.ExecutorFactory;
 import com.torodb.torod.db.executor.DefaultExecutorFactory;
 import com.torodb.torod.db.executor.ExecutorServiceProvider;
+import com.torodb.torod.db.executor.report.DummyReportFactory;
+import com.torodb.torod.db.executor.report.ReportFactory;
 import javax.inject.Singleton;
 
 /**
@@ -37,5 +39,6 @@ public class ExecutorModule extends AbstractModule {
     protected void configure() {
         bind(ExecutorFactory.class).to(DefaultExecutorFactory.class).in(Singleton.class);
         bind(ExecutorServiceProvider.class).to(DefaultExecutorServiceProvider.class).in(Singleton.class);
+        bind(ReportFactory.class).to(DummyReportFactory.class).in(Singleton.class);
     }
 }

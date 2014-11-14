@@ -139,6 +139,11 @@
                 <scope>provided</scope>
                 <type>jar</type>
             </dependency>
+            <dependency>
+                <groupId>com.google.inject</groupId>
+                <artifactId>guice</artifactId>
+                <version>3.0</version>
+            </dependency>
 
             <dependency>
                 <groupId>junit</groupId>

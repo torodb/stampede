@@ -22,7 +22,7 @@ package com.torodb.torod.db.executor.jobs;
 
 import com.torodb.torod.core.cursors.CursorId;
 import com.torodb.torod.core.dbWrapper.DbWrapper;
-import com.torodb.torod.db.executor.DefaultSessionTransaction;
+import com.torodb.torod.db.executor.report.CountRemainingDocsReport;
 import java.util.concurrent.Callable;
 
 /**
@@ -32,15 +32,22 @@ public class CountRemainingDocs implements Callable<Integer> {
 
     private final DbWrapper dbWrapper;
     private final CursorId cursorId;
+    private final CountRemainingDocsReport report;
 
-    public CountRemainingDocs(DbWrapper dbWrapper, CursorId cursorId) {
+    public CountRemainingDocs(
+            DbWrapper dbWrapper, 
+            CursorId cursorId, 
+            CountRemainingDocsReport report) {
         this.dbWrapper = dbWrapper;
         this.cursorId = cursorId;
+        this.report = report;
     }
 
     @Override
     public Integer call() throws Exception {
-        return dbWrapper.getGlobalCursor(cursorId).countRemainingDocs();
+        int result = dbWrapper.getGlobalCursor(cursorId).countRemainingDocs();
+        report.taskExecuted(cursorId, result);
+        return result;
     }
     
 }
