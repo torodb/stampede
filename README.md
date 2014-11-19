@@ -66,5 +66,5 @@ Alternatively to the command line options, you may create a `~/.toropass` file, 
 
 [1]: http://www.torodb.com
 [2]: http://www.postgresql.org
-[3]: http://maven.torodb.com/release/com/torodb/torodb/0.10/torodb-0.10-jar-with-dependencies.jar
+[3]: http://maven.torodb.com/release/com/torodb/torodb/0.12/torodb-0.12-jar-with-dependencies.jar
 [4]: http://www.postgresql.org/docs/9.3/static/libpq-pgpass.html
