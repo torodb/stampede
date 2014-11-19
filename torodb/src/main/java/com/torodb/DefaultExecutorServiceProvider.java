@@ -22,7 +22,6 @@
 package com.torodb;
 
 import com.torodb.torod.core.Session;
-import com.torodb.torod.core.config.TorodConfig;
 import com.torodb.torod.db.executor.ExecutorServiceProvider;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
