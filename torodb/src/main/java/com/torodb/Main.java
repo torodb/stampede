@@ -102,7 +102,7 @@ public class Main {
                 new ConfigModule(config),
 				new MongoServerModule(),
                 new DbWrapperModule(),
-				new ExecutorModule(),
+				new ExecutorModule(1000, 1000, 0.2),
                 new DbMetaInformationCacheModule(),
 				new D2RModule(), 
                 new ConnectionModule(),

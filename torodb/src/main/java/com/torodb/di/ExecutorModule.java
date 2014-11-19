@@ -18,16 +18,16 @@
  *     
  */
 
-
 package com.torodb.di;
 
 import com.google.inject.AbstractModule;
-import com.torodb.DefaultExecutorServiceProvider;
 import com.torodb.torod.core.executor.ExecutorFactory;
 import com.torodb.torod.db.executor.DefaultExecutorFactory;
 import com.torodb.torod.db.executor.ExecutorServiceProvider;
 import com.torodb.torod.db.executor.report.DummyReportFactory;
 import com.torodb.torod.db.executor.report.ReportFactory;
+import com.torodb.torod.db.executor.servicefactory.LazyBlockingExecutorServiceProvider;
+import com.torodb.torod.db.executor.servicefactory.MemBlockingExecutorServiceProvider;
 import javax.inject.Singleton;
 
 /**
@@ -35,10 +35,27 @@ import javax.inject.Singleton;
  */
 public class ExecutorModule extends AbstractModule {
 
+    private final int maxQueueSize;
+    private final long maxWaitTime;
+    private final double grantedMemPercentage;
+
+    public ExecutorModule(int maxQueueSize, long maxWaitTime, double grantedMemPercentage) {
+        this.maxQueueSize = maxQueueSize;
+        this.maxWaitTime = maxWaitTime;
+        this.grantedMemPercentage = grantedMemPercentage;
+    }
+    
     @Override
     protected void configure() {
         bind(ExecutorFactory.class).to(DefaultExecutorFactory.class).in(Singleton.class);
-        bind(ExecutorServiceProvider.class).to(DefaultExecutorServiceProvider.class).in(Singleton.class);
-        bind(ReportFactory.class).to(DummyReportFactory.class).in(Singleton.class);
+        bind(ExecutorServiceProvider.class).toInstance(
+                new MemBlockingExecutorServiceProvider(
+                        grantedMemPercentage, 
+                        maxWaitTime, 
+                        new LazyBlockingExecutorServiceProvider(maxQueueSize)
+                )
+        );
+        bind(ReportFactory.class)
+                .toInstance(DummyReportFactory.getInstance());
     }
 }
