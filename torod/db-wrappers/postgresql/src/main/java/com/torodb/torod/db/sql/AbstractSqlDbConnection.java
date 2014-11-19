@@ -23,7 +23,6 @@ package com.torodb.torod.db.sql;
 import com.google.common.collect.*;
 import com.torodb.torod.core.subdocument.SubDocument;
 import com.torodb.torod.core.subdocument.SubDocType;
-import com.torodb.torod.core.cursors.CursorId;
 import com.torodb.torod.db.postgresql.meta.CollectionSchema;
 import com.torodb.torod.db.postgresql.meta.Routines;
 import com.torodb.torod.db.postgresql.meta.TorodbMeta;
@@ -31,15 +30,12 @@ import com.torodb.torod.db.postgresql.meta.tables.SubDocTable;
 import com.torodb.torod.db.postgresql.meta.tables.records.SubDocTableRecord;
 import com.torodb.torod.core.dbWrapper.DbConnection;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
-import com.torodb.torod.core.language.projection.Projection;
 import com.torodb.torod.core.language.querycriteria.QueryCriteria;
-import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.core.subdocument.structure.DocStructure;
 import com.torodb.torod.db.postgresql.converters.StructureConverter;
 import com.torodb.torod.db.postgresql.query.QueryEvaluator;
 import java.sql.*;
 import java.util.*;
-import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.Nullable;
@@ -161,7 +157,7 @@ public abstract class AbstractSqlDbConnection implements DbConnection {
     @Override
     public void insertSubdocuments(String collection, SubDocType type, Iterator<? extends SubDocument> subDocuments) {
         try {
-//            Collection<Query> inserts = Lists.newLinkedList();
+            Collection<Query> inserts = Lists.newLinkedList();
 
             SubDocTable table = meta.getCollectionSchema(collection).getSubDocTable(type);
 
@@ -176,11 +172,11 @@ public abstract class AbstractSqlDbConnection implements DbConnection {
                 InsertSetMoreStep<?> insert = dsl.insertInto(table)
                         .set(record);
 
-//                inserts.add(insert);
-                insert.execute();
+                inserts.add(insert);
+//                insert.execute();
             }
 
-//            dsl.batch(inserts).execute();
+            dsl.batch(inserts).execute();
         } catch (DataAccessException ex) {
             //TODO: Change exception
             throw new RuntimeException(ex);
