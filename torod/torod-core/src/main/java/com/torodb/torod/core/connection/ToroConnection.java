@@ -20,9 +20,12 @@
 
 package com.torodb.torod.core.connection;
 
+import com.torodb.torod.core.pojos.Database;
 import com.torodb.torod.core.Session;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
-
+import java.io.Closeable;
+import java.util.List;
+import java.util.concurrent.Future;
 import javax.annotation.concurrent.NotThreadSafe;
 import java.io.Closeable;
 
@@ -51,4 +54,7 @@ public interface ToroConnection extends Closeable {
      */
     public boolean createCollection(String collection);
 
+    
+    public Future<List<Database>> getDatabases();
+    
 }
