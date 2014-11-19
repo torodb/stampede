@@ -22,8 +22,9 @@ package com.torodb.torod.core.connection;
 
 import com.torodb.torod.core.Session;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
-import java.io.Closeable;
+
 import javax.annotation.concurrent.NotThreadSafe;
+import java.io.Closeable;
 
 /**
  *
@@ -40,5 +41,12 @@ public interface ToroConnection extends Closeable {
     public ToroTransaction createTransaction() throws ImplementationDbException;
     
     public Session getSession();
-    
+
+    /**
+     * Checks whether a collection already exists. If it doesn't, it creates the collection
+     * @param collection The name of the collection
+     * @return true if the collection was created, false if it already existed
+     */
+    public boolean createCollection(String collection);
+
 }

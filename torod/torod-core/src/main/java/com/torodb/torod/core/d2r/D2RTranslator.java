@@ -23,7 +23,6 @@ package com.torodb.torod.core.d2r;
 import com.torodb.torod.core.executor.SessionExecutor;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.core.subdocument.ToroDocument;
-import java.util.concurrent.Future;
 
 /**
  *
@@ -31,8 +30,6 @@ import java.util.concurrent.Future;
 public interface D2RTranslator {
 
     public void initialize();
-    
-    public void createEmptyCollection(SessionExecutor sessionExecutor, String collection);
 
     public SplitDocument translate(SessionExecutor sessionExecutor, String collection, ToroDocument document);
 
