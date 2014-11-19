@@ -18,7 +18,7 @@ ToroDB is written in Java and requires:
 Installation
 ------------
 
-You may compile ToroDB yourself. All the project is written in Java and managed with Maven, so you need a javac and maven. Just execute "`mvn package`" on the root directory and find the executable jar file in `torodb/target/torodb-0.10-jar-with-dependencies.jar`.
+You may compile ToroDB yourself. All the project is written in Java and managed with Maven, so you need a javac and maven. Just execute "`mvn package`" on the root directory and find the executable jar file in `torodb/target/torodb-0.12-jar-with-dependencies.jar`.
 
 Alternatively, you may download a [compiled version][3] from ToroDB's maven repository.
 
@@ -26,7 +26,7 @@ Alternatively, you may download a [compiled version][3] from ToroDB's maven repo
 Running ToroDB
 --------------
 
-Execute with `java -jar <path>/torodb-0.10-jar-with-dependencies.jar <arguments>`. If you run with `--help`, you will see the required and optional arguments to run ToroDB:
+Execute with `java -jar <path>/torodb-0.12-jar-with-dependencies.jar <arguments>`. If you run with `--help`, you will see the required and optional arguments to run ToroDB:
 
     --ask-for-password
        Force input of PostgreSQL's database user password.
