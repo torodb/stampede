@@ -7,7 +7,7 @@
     <parent>
         <groupId>com.torodb</groupId>
         <artifactId>torodb-parent</artifactId>
-        <version>0.11</version>
+        <version>0.12</version>
     </parent>
 
     <artifactId>torodb</artifactId>
@@ -56,7 +56,7 @@
         <dependency>
             <groupId>com.8kdata.mongowp</groupId>
             <artifactId>mongo-server</artifactId>
-            <version>0.11</version>
+            <version>0.12</version>
         </dependency>
         <dependency>
             <groupId>com.torodb.torod</groupId>
@@ -105,7 +105,7 @@
         <dependency>
             <groupId>com.torodb.kvdocument</groupId>
             <artifactId>mongo-converter</artifactId>
-            <version>0.11</version>
+            <version>0.12</version>
         </dependency>
     </dependencies>
 

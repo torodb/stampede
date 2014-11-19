@@ -24,22 +24,23 @@ import com.google.common.collect.MapMaker;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Futures;
 import com.torodb.torod.core.config.TorodConfig;
-import com.torodb.torod.core.executor.ToroTaskExecutionException;
 import com.torodb.torod.core.dbMetaInf.DbMetaInformationCache;
 import com.torodb.torod.core.executor.ExecutorFactory;
 import com.torodb.torod.core.executor.SessionExecutor;
 import com.torodb.torod.core.executor.SystemExecutor;
+import com.torodb.torod.core.executor.ToroTaskExecutionException;
 import com.torodb.torod.core.subdocument.SubDocType;
-import java.util.*;
+
+import javax.annotation.Nonnegative;
+import javax.annotation.Nonnull;
+import javax.annotation.concurrent.ThreadSafe;
+import javax.inject.Inject;
+import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import javax.annotation.Nonnegative;
-import javax.annotation.Nonnull;
-import javax.annotation.concurrent.ThreadSafe;
-import javax.inject.Inject;
 
 /**
  *
@@ -107,28 +108,37 @@ public class DefaultDbMetaInformationCache implements DbMetaInformationCache {
     }
 
     @Override
-    public void createCollection(@Nonnull SessionExecutor sessionExecutor, @Nonnull String collection) {
-        if (collection == null) {
-            throw new IllegalArgumentException("The collection must be non null");
-        }
-        if (createdCollections.containsKey(collection)) {
-            return;
+    public boolean collectionExists(@Nonnull String collection) {
+        return createdCollections.containsKey(collection);
+    }
+
+    private boolean collectionExists(@Nonnull SessionExecutor sessionExecutor, @Nonnull String collection) {
+        if (collectionExists(collection)) {
+            return true;
         }
         Long tick = creationCollectionPendingJobs.get(collection);
         if (tick != null) {
             sessionExecutor.pauseUntil(tick);
-            return;
+            return true;
+        }
+
+        return false;
+    }
+
+    @Override
+    public boolean createCollection(@Nonnull SessionExecutor sessionExecutor, @Nonnull String collection) {
+        if (collection == null || collection.isEmpty()) {
+            throw new IllegalArgumentException("The collection must be non null and non empty");
+        }
+
+        if(collectionExists(sessionExecutor, collection)) {
+            return false;
         }
 
         collectionCreationLock.lock();
         try {
-            if (createdCollections.containsKey(collection)) {
-                return;
-            }
-            tick = creationCollectionPendingJobs.get(collection);
-            if (creationCollectionPendingJobs.containsKey(collection)) {
-                sessionExecutor.pauseUntil(tick);
-                return;
+            if(collectionExists(sessionExecutor, collection)) {
+                return false;
             }
 
             startCollectionCreation(collection, INITIAL_USED_ID);
@@ -144,7 +154,7 @@ public class DefaultDbMetaInformationCache implements DbMetaInformationCache {
                     }
             );
 
-            tick = executorFactory.getSystemExecutor().getTick();
+            Long tick = executorFactory.getSystemExecutor().getTick();
             creationCollectionPendingJobs.put(collection, tick);
 
             if (response.isDone()) {
@@ -158,6 +168,8 @@ public class DefaultDbMetaInformationCache implements DbMetaInformationCache {
         } finally {
             collectionCreationLock.unlock();
         }
+
+        return true;
     }
 
     @Override

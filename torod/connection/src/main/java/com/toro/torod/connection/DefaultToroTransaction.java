@@ -42,16 +42,17 @@ import com.torodb.torod.core.language.operations.UpdateOperation;
 import com.torodb.torod.core.language.projection.Projection;
 import com.torodb.torod.core.language.querycriteria.QueryCriteria;
 import com.torodb.torod.core.language.querycriteria.utils.EqualFactory;
-import com.torodb.torod.core.language.update.*;
+import com.torodb.torod.core.language.update.UpdateAction;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.core.subdocument.ToroDocument;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 /**
  *
