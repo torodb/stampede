@@ -34,7 +34,6 @@
         <dependency>
             <groupId>com.google.inject</groupId>
             <artifactId>guice</artifactId>
-            <version>3.0</version>
         </dependency>
         <dependency>
             <groupId>com.beust</groupId>
@@ -109,7 +108,7 @@
         </dependency>
     </dependencies>
 
-    <build>
+    <build>        
         <plugins>
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
