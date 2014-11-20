@@ -112,7 +112,9 @@
     <build>
         <plugins>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
+                <version>2.5.1</version>
                 <configuration>
                     <archive>
                         <manifest>
@@ -122,6 +124,9 @@
                     <descriptorRefs>
                         <descriptorRef>jar-with-dependencies</descriptorRef>
                     </descriptorRefs>
+                    <finalName>${project.artifactId}</finalName>
+                    <attach>false</attach>
+                    <appendAssemblyId>false</appendAssemblyId>
                     <dependencySets>
                         <dependencySet>
                             <unpack>false</unpack>
