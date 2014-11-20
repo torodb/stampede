@@ -23,7 +23,6 @@ package com.torodb.torod.core.d2r;
 import com.torodb.torod.core.executor.SessionExecutor;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.core.subdocument.ToroDocument;
-import java.util.concurrent.Future;
 
 /**
  *

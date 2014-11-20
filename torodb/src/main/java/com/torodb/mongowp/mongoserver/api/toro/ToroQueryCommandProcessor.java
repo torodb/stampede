@@ -46,11 +46,12 @@ import com.torodb.torod.core.subdocument.ToroDocument;
 import com.torodb.translator.*;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.netty.util.AttributeMap;
-import java.util.*;
-import java.util.concurrent.Future;
-import javax.annotation.Nonnull;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
+
+import javax.annotation.Nonnull;
+import java.util.*;
+import java.util.concurrent.Future;
 
 /**
  *
@@ -391,6 +392,33 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
 		BSONDocument reply = new MongoBSONDocument(keyValues);
 		messageReplier.replyMessageNoCursor(reply);
     }
+	
+	@Override
+	public void create(BSONDocument document, MessageReplier messageReplier)
+			throws Exception {
+		String collection = ToroCollectionTranslator
+				.translate((String) document.getValue("create"));
+		Boolean capped = (Boolean) document.getValue("capped");
+
+		if (capped != null && capped) { // Other flags silently ignored
+			messageReplier.replyQueryCommandFailure(ErrorCode.UNIMPLEMENTED_FLAG, "capped");
+			return;
+		}
+
+		AttributeMap attributeMap = messageReplier.getAttributeMap();
+		ToroConnection connection = attributeMap.attr(
+				ToroRequestProcessor.CONNECTION).get();
+
+		Map<String, Object> keyValues = new HashMap<String, Object>();
+		if(connection.createCollection(collection)) {
+			keyValues.put("ok", MongoWP.OK);
+		} else {
+			keyValues.put("ok", MongoWP.KO);
+			keyValues.put("errmsg", "collection already exists");
+		}
+
+		messageReplier.replyMessageNoCursor(new MongoBSONDocument(keyValues));
+	}
 
 	private WriteFailMode getWriteFailMode(BSONDocument document) {
         return WriteFailMode.TRANSACTIONAL;

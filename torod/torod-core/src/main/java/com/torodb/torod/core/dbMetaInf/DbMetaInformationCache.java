@@ -22,7 +22,7 @@ package com.torodb.torod.core.dbMetaInf;
 
 import com.torodb.torod.core.executor.SessionExecutor;
 import com.torodb.torod.core.subdocument.SubDocType;
-import java.util.concurrent.Future;
+
 import javax.annotation.Nonnegative;
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.ThreadSafe;
@@ -68,6 +68,14 @@ public interface DbMetaInformationCache {
     ) throws IllegalArgumentException;
 
     /**
+     * Checks whether a collection already exists in the database. There's no guarantee that a non existing collection
+     * may exist at a later time, but if this method returns true, the collection is already created
+     * @param collection
+     * @return True if the collection exists, false if (currently) it doesn't
+     */
+    public boolean collectionExists(@Nonnull String collection);
+
+    /**
      * This method must be called to guarantee that the database is prepared to work with the given collection (in the
      * MongoDB sense).
      * <p>
@@ -75,8 +83,9 @@ public interface DbMetaInformationCache {
      * <p>
      * @param sessionExecutor
      * @param collection
+     * @return Returns whether the collection was created (returns false if the collection already existed)
      */
-    public void createCollection(
+    public boolean createCollection(
             @Nonnull SessionExecutor sessionExecutor,
             @Nonnull String collection);
 

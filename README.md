@@ -18,7 +18,7 @@ ToroDB is written in Java and requires:
 Installation
 ------------
 
-You may compile ToroDB yourself. All the project is written in Java and managed with Maven, so you need a javac and maven. Just execute "`mvn package`" on the root directory and find the executable jar file in `torodb/target/torodb-0.10-jar-with-dependencies.jar`.
+You may compile ToroDB yourself. All the project is written in Java and managed with Maven, so you need a javac and maven. Just execute "`mvn package`" on the root directory and find the executable jar file in `torodb/target/torodb-0.12-jar-with-dependencies.jar`.
 
 Alternatively, you may download a [compiled version][3] from ToroDB's maven repository.
 
@@ -26,7 +26,7 @@ Alternatively, you may download a [compiled version][3] from ToroDB's maven repo
 Running ToroDB
 --------------
 
-Execute with `java -jar <path>/torodb-0.10-jar-with-dependencies.jar <arguments>`. If you run with `--help`, you will see the required and optional arguments to run ToroDB:
+Execute with `java -jar <path>/torodb-0.12-jar-with-dependencies.jar <arguments>`. If you run with `--help`, you will see the required and optional arguments to run ToroDB:
 
     --ask-for-password
        Force input of PostgreSQL's database user password.
@@ -66,5 +66,5 @@ Alternatively to the command line options, you may create a `~/.toropass` file, 
 
 [1]: http://www.torodb.com
 [2]: http://www.postgresql.org
-[3]: http://maven.torodb.com/release/com/torodb/torodb/0.10/torodb-0.10-jar-with-dependencies.jar
+[3]: http://maven.torodb.com/release/com/torodb/torodb/0.12/torodb-0.12-jar-with-dependencies.jar
 [4]: http://www.postgresql.org/docs/9.3/static/libpq-pgpass.html
