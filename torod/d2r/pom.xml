@@ -4,7 +4,7 @@
     <parent>
         <groupId>com.torodb.torod</groupId>
         <artifactId>torod-pom</artifactId>
-        <version>0.12</version>
+        <version>0.15-SNAPSHOT</version>
     </parent>
     <artifactId>d2r</artifactId>
     
@@ -31,7 +31,7 @@
         <dependency>
             <groupId>com.torodb.kvdocument</groupId>
             <artifactId>kvdocument-core</artifactId>
-            <version>${project.version}</version>
+            <version>${kvdocument.version}</version>
         </dependency>
         <dependency>
             <groupId>com.google.code.findbugs</groupId>
@@ -42,7 +42,7 @@
         <dependency>
             <groupId>com.torodb.kvdocument</groupId>
             <artifactId>json-converter</artifactId>
-            <version>${project.version}</version>
+            <version>${kvdocument.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
