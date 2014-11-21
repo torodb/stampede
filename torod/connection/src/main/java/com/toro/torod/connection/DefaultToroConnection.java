@@ -55,7 +55,7 @@ class DefaultToroConnection implements ToroConnection {
             D2RTranslator d2RTranslator,
             ExecutorFactory executorFactory,
             DbWrapper dbWrapper,
-            InnerCursorManagerFactory cursorManagerFactory,
+            InnerCursorManager globalInnerCursorManager,
             DocumentBuilderFactory documentBuilderFactory,
             DbMetaInformationCache cache) {
         this.session = new DefaultSession();

@@ -71,7 +71,7 @@ public class DefaultTorod implements Torod {
                 d2r, 
                 executorFactory, 
                 dbWrapper,
-                cursorManagerFactory,
+                cursorManager,
                 documentBuilderFactory,
                 cache
         );
