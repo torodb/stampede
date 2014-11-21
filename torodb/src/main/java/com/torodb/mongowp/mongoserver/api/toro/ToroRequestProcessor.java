@@ -154,7 +154,7 @@ public class ToroRequestProcessor extends AbstractRequestProcessor {
     	} else {
         	cursorId = cursorManager.openLimitedCursor(collection, queryCriteria, projection, numberToSkip, limit, autoclose, hasTimeout);
     	}
-    	
+        
    		results = new BSONDocuments(cursorManager.readCursor(cursorId, MongoWP.MONGO_CURSOR_LIMIT));
 
    		long cursorIdReturned = 0;

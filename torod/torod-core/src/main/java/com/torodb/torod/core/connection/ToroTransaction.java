@@ -21,11 +21,8 @@
 package com.torodb.torod.core.connection;
 
 import com.torodb.torod.core.WriteFailMode;
-import com.torodb.torod.core.cursors.CursorId;
 import com.torodb.torod.core.language.operations.DeleteOperation;
 import com.torodb.torod.core.language.operations.UpdateOperation;
-import com.torodb.torod.core.language.projection.Projection;
-import com.torodb.torod.core.language.querycriteria.QueryCriteria;
 import com.torodb.torod.core.subdocument.ToroDocument;
 
 import javax.annotation.Nonnegative;

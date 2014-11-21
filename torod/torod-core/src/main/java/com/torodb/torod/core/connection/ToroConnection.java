@@ -55,6 +55,6 @@ public interface ToroConnection extends Closeable {
     public boolean createCollection(String collection);
 
     
-    public Future<List<Database>> getDatabases();
+    public Future<List<? extends Database>> getDatabases();
     
 }

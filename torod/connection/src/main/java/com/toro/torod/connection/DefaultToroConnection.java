@@ -33,6 +33,9 @@ import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.executor.ExecutorFactory;
 import com.torodb.torod.core.executor.SessionExecutor;
 import com.torodb.torod.core.executor.SessionTransaction;
+import com.torodb.torod.core.pojos.Database;
+import java.util.List;
+import java.util.concurrent.Future;
 import javax.annotation.concurrent.NotThreadSafe;
 
 /**
@@ -104,6 +107,11 @@ class DefaultToroConnection implements ToroConnection {
     @Override
     public CursorManager getCursorManager() {
         return cursorManager;
+    }
+
+    @Override
+    public Future<List<? extends Database>> getDatabases() {
+        return executor.getDatabases();
     }
 
 }

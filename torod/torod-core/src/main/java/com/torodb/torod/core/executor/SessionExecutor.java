@@ -24,6 +24,7 @@ import com.torodb.torod.core.cursors.CursorId;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.language.projection.Projection;
 import com.torodb.torod.core.language.querycriteria.QueryCriteria;
+import com.torodb.torod.core.pojos.Database;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import java.io.Closeable;
 import java.util.List;
@@ -95,4 +96,6 @@ public interface SessionExecutor extends Closeable {
     ) throws ToroTaskExecutionException;
 
     Future<Integer> countRemainingDocs(CursorId cursorId);
+
+    public Future<List<? extends Database>> getDatabases();
 }

@@ -20,6 +20,7 @@
 package com.torodb.torod.db.executor;
 
 import com.torodb.torod.core.Session;
+import com.torodb.torod.core.annotations.DatabaseName;
 import com.torodb.torod.core.dbWrapper.DbWrapper;
 import com.torodb.torod.core.executor.SessionExecutor;
 import com.torodb.torod.core.executor.ExecutorFactory;
@@ -45,12 +46,14 @@ public class DefaultExecutorFactory implements ExecutorFactory {
     private final Monitor monitor;
     private final DefaultExceptionHandler exceptionHandler;
     private final ReportFactory reportFactory;
+    private final String databaseName;
 
     @Inject
     public DefaultExecutorFactory(
             ExecutorServiceProvider executorServiceProvider,
             DbWrapper dbWrapper,
-            ReportFactory reportFactory) {
+            ReportFactory reportFactory,
+            @DatabaseName String databaseName) {
         final long initialTick = 0;
         this.exceptionHandler = new DefaultExceptionHandler();
 
@@ -69,6 +72,7 @@ public class DefaultExecutorFactory implements ExecutorFactory {
                 reportFactory
         );
         this.reportFactory = reportFactory;
+        this.databaseName = databaseName;
     }
 
     @Override
@@ -91,12 +95,12 @@ public class DefaultExecutorFactory implements ExecutorFactory {
     public SessionExecutor createSessionExecutor(Session session) {
         return new DefaultSessionExecutor(
                 exceptionHandler, 
-                this, 
                 dbWrapper, 
                 executorServiceProvider, 
                 monitor, 
                 session,
-                reportFactory
+                reportFactory,
+                databaseName
         );
     }
 

@@ -30,7 +30,9 @@ import com.torodb.torod.db.postgresql.meta.CollectionSchema;
 import com.torodb.torod.db.postgresql.meta.TorodbMeta;
 import com.torodb.torod.db.postgresql.meta.tables.SubDocTable;
 import com.torodb.torod.db.sql.AbstractSqlDbConnection;
+import com.torodb.torod.db.sql.AutoCloser;
 import java.io.Serializable;
+import java.sql.*;
 import java.util.*;
 import java.util.Comparator;
 import javax.annotation.Nonnull;
@@ -49,10 +51,15 @@ class PostgresqlDbConnection extends AbstractSqlDbConnection {
     static final String SUBDOC_TABLE_DOC_ID_COLUMN = "docId";
     static final String SUBDOC_TABLE_KEYS_COLUMN = "keys";
     private final FieldComparator fieldComparator = new FieldComparator();
+    private final String databaseName;
 
     @Inject
-    public PostgresqlDbConnection(DSLContext dsl, TorodbMeta meta) {
+    public PostgresqlDbConnection(
+            DSLContext dsl, 
+            TorodbMeta meta,
+            String databaseName) {
         super(dsl, meta);
+        this.databaseName = databaseName;
     }
 
     @Override
@@ -120,6 +127,32 @@ class PostgresqlDbConnection extends AbstractSqlDbConnection {
         } catch (DataAccessException ex) {
             //TODO: Change exception
             throw new RuntimeException(ex);
+        }
+    }
+
+    @Override
+    public long getDatabaseSize() {
+        ConnectionProvider connectionProvider
+                = getDsl().configuration().connectionProvider();
+        Connection connection = connectionProvider.acquire();
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        
+        try {
+            ps = connection.prepareStatement("SELECT * from pg_database_size(?)");
+            ps.setString(1, databaseName);
+            rs = ps.executeQuery();
+            rs.next();
+            return rs.getLong(1);
+        }
+        catch (SQLException ex) {
+            //TODO: Change exception
+            throw new RuntimeException(ex);
+        }
+        finally {
+            AutoCloser.close(rs);
+            AutoCloser.close(ps);
+            connectionProvider.release(connection);
         }
     }
     

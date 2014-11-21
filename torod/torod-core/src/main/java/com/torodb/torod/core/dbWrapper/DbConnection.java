@@ -20,10 +20,8 @@
 
 package com.torodb.torod.core.dbWrapper;
 
-import com.torodb.torod.core.cursors.CursorId;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.dbWrapper.exceptions.UserDbException;
-import com.torodb.torod.core.language.projection.Projection;
 import com.torodb.torod.core.language.querycriteria.QueryCriteria;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.core.subdocument.SubDocType;
@@ -33,7 +31,6 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
 
 /**
@@ -122,4 +119,9 @@ public interface DbConnection {
             @Nonnull QueryCriteria condition, 
             boolean justOne
     ) throws ImplementationDbException, UserDbException;
+
+    /**
+     * @return the size (in bytes) of the database this connection is connected with.
+     */
+    public long getDatabaseSize();
 }
