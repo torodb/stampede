@@ -165,6 +165,41 @@
                 <version>5.0.0.RELEASE</version>
             </extension>
         </extensions>
+        <plugins>
+            <plugin>
+                <groupId>net.wouterdanes</groupId>
+                <artifactId>mustache-maven-plugin</artifactId>
+                <version>1.1</version>
+                <inherited>false</inherited>
+                <executions>
+                    <execution>
+                        <id>run-mustache-template</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>mustache</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <encoding>UTF-8</encoding>
+                    <context>
+                        ---
+                        latestVersion: ${project.version}
+                        latestVersionURL: http://${S3.bucket}/release/com/torodb/torodb/${project.version}/torodb.jar
+                    </context>
+                    <templates>
+                        <template>
+                            <templateFile>${project.basedir}/torodb-LATEST.mustache</templateFile>
+                            <outputPath>${project.basedir}/torodb-LATEST</outputPath>
+                        </template>
+                        <template>
+                            <templateFile>${project.basedir}/README.md.mustache</templateFile>
+                            <outputPath>${project.basedir}/README.md</outputPath>
+                        </template>
+                    </templates>
+                </configuration>
+            </plugin>
+        </plugins>
     </build>
 
     <profiles>
