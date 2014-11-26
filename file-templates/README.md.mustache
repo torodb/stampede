@@ -2,35 +2,33 @@
 
 ToroDB is an open source, document-oriented, JSON database that runs on top of PostgreSQL. JSON documents are stored relationally, not as a blob/jsonb. This leads to significant storage and I/O savings. It speaks natively the MongoDB protocol, meaning that it can be used with any mongo-compatible client.
 
-ToroDB follows a RERO (Release Early, Release Often) policy. Current version is considered a "developer preview" and hence is not suitable for production use. However, any feedback, contributions, help and/or patches are very welcome.
+ToroDB follows a RERO (Release Early, Release Often) policy. Current version is considered a "developer preview" and hence is not suitable for production use. However, any feedback, contributions, help and/or patches are very welcome. Please join the [torodb-dev][8] mailing list for further discussion.
 
-For more information, please see [ToroDB's website][1] and [this presentation][7] about ToroDB.
+For more information, please see [ToroDB's website][1] and this [latest presentation][7] about ToroDB.
 
 
 ## Requisites
 
 ToroDB is written in Java and requires:
 
-* A suitable JVM, version 6 or higher. It has been tested with Oracle JVM v8.
-* A [PostgreSQL][2] database, version 9.4. PostgreSQL 9.4 is currently in beta3.
+* A suitable JVM, version 6 or higher. It has been tested with Oracle JVM v6-8.
+* A [PostgreSQL][2] database, version 9.4. PostgreSQL 9.4 is currently in RC1.
 
 
 ## Download/Installation
 
 ### Download the compiled jar file
 
-You may download the [latest version][3] of ToroDB from ToroDB's maven repository. There is also a [torodb-LATEST][8] file which always specifies in JSON the latest version and the download URL, if you'd like to script it.
-
-See below for instructions on how to run it.
+You may download the [latest version][3] (v. {{latestVersion}}) of ToroDB from ToroDB's maven repository. See below for instructions on how to run it.
 
 
 ### Compile and install from sources
 
 You may compile ToroDB yourself. All the project is written in Java and managed with Maven, so you need a javac and maven.
 
-ToroDB is based on the [Mongo Wire Protocol library][5] (mongowp), which is a library also built by [8Kdata][6] to help construct programs that speak the MongoDB protocol. You may also compile this library yourself, or let maven download it from the repository automatically.
+ToroDB is based on the [Mongo Wire Protocol library][5] (mongowp), which is another library built by [8Kdata][6] to help construct programs that speak the MongoDB protocol. You may also compile this library yourself, or let maven download it from the repository automatically.
 
-Just execute "`mvn package`" on the root directory and find the executable jar file in `torodb/target/torodb.jar`.
+Just run "`mvn package`" on the root directory and find the executable jar file in `torodb/target/torodb.jar`.
 
 
 ## Running ToroDB
@@ -75,9 +73,9 @@ Alternatively to the command line options, you may create a `~/.toropass` file, 
 
 [1]: http://www.torodb.com
 [2]: http://www.postgresql.org
-[3]: {{latestVersionURL}}
+[3]: http://maven.torodb.com/jar/com/torodb/torodb/{{latestVersion}}/torodb.jar
 [4]: http://www.postgresql.org/docs/9.3/static/libpq-pgpass.html
 [5]: https://github.com/8kdata/mongowp
-[6]: http://8kdata.com
+[6]: http://www.8kdata.com
 [7]: http://www.slideshare.net/8kdata/big-dataspain2014-torodbbridgebetweennosqlandrelational
-[8]: https://raw.githubusercontent.com/torodb/torodb/master/torodb-LATEST
+[8]: https://groups.google.com/forum/#!forum/torodb-dev

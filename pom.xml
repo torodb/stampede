@@ -16,7 +16,8 @@
         <url>www.8kdata.com</url>
     </organization>
     
-    <url>www.8kdata.com</url>
+    <url>www.torodb.com</url>
+
     <scm>
         <connection>scm:git:https://github.com/torodb/</connection>
     </scm>
@@ -40,9 +41,14 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <S3.bucket>maven.torodb.com</S3.bucket>
+
         <kvdocument.version>0.12</kvdocument.version>
         <torod.version>0.15-SNAPSHOT</torod.version>
+
+        <S3.bucket>maven.torodb.com</S3.bucket>
+        <deploy.repository>http://${S3.bucket}</deploy.repository>
+        <deploy.repository.release.urlpath>release</deploy.repository.release.urlpath>
+        <deploy.repository.snapshot.urlpath>snapshot</deploy.repository.snapshot.urlpath>
     </properties>
 
     <modules>
@@ -55,7 +61,7 @@
         <repository>  
             <id>aws-release</id>
             <name>S3 Release Repository</name>  
-            <url>http://maven.torodb.com/release</url>  
+            <url>${deploy.repository}/${deploy.repository.release.urlpath}</url>
             <releases>  
                 <enabled>true</enabled>  
             </releases>  
@@ -66,27 +72,27 @@
         <repository>  
             <id>aws-snapshot</id>
             <name>S3 Snapshot Repository</name>  
-            <url>http://maven.torodb.com/snapshot</url>  
+            <url>${deploy.repository}/${deploy.repository.snapshot.urlpath}</url>
             <releases>  
                 <enabled>false</enabled>  
             </releases>  
             <snapshots>  
                 <enabled>true</enabled>  
             </snapshots>  
-        </repository>  
+        </repository>
     </repositories>
 
-    <distributionManagement>  
+    <distributionManagement>
         <repository>  
             <id>aws-release</id>
             <name>S3 Release Repository</name>  
-            <url>s3://${S3.bucket}/release</url>  
+            <url>s3://${S3.bucket}/${deploy.repository.release.urlpath}</url>
         </repository>  
         <snapshotRepository>  
             <id>aws-snapshot</id>  
             <name>S3 Snapshot Repository</name>  
-            <url>https://${S3.bucket}/snapshot</url>  
-        </snapshotRepository>  
+            <url>s3://${S3.bucket}/${deploy.repository.snapshot.urlpath}</url>
+        </snapshotRepository>
     </distributionManagement> 
 
     <dependencyManagement>
@@ -185,15 +191,10 @@
                     <context>
                         ---
                         latestVersion: ${project.version}
-                        latestVersionURL: http://${S3.bucket}/release/com/torodb/torodb/${project.version}/torodb.jar
                     </context>
                     <templates>
                         <template>
-                            <templateFile>${project.basedir}/torodb-LATEST.mustache</templateFile>
-                            <outputPath>${project.basedir}/torodb-LATEST</outputPath>
-                        </template>
-                        <template>
-                            <templateFile>${project.basedir}/README.md.mustache</templateFile>
+                            <templateFile>${project.basedir}/file-templates/README.md.mustache</templateFile>
                             <outputPath>${project.basedir}/README.md</outputPath>
                         </template>
                     </templates>
