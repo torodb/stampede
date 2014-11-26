@@ -236,6 +236,12 @@ public abstract class AbstractSqlDbConnection implements DbConnection {
     }
 
     @Override
+    public void dropCollection(String collection) {
+        CollectionSchema colSchema = meta.getCollectionSchema(collection);
+        Routines.dropCollection(jooqConf, colSchema);
+    }
+
+    @Override
     public Map<Integer, DocStructure> getAllStructures(String collection) throws ImplementationDbException {
         CollectionSchema collectionSchema = meta.getCollectionSchema(collection);
 

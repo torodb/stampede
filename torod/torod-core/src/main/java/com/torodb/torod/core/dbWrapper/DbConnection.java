@@ -124,4 +124,8 @@ public interface DbConnection {
      * @return the size (in bytes) of the database this connection is connected with.
      */
     public long getDatabaseSize();
+    
+    public void dropCollection(
+            @Nonnull String collection
+    );
 }

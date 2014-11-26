@@ -43,7 +43,6 @@ import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.core.subdocument.ToroDocument;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -118,6 +117,11 @@ public class DefaultToroTransaction implements ToroTransaction {
             //TODO: Change exceptions
             throw new RuntimeException(ex);
         }
+    }
+
+    @Override
+    public Future<?> dropCollection(String collection) {
+        return sessionTransaction.dropCollection(collection);
     }
 
     @Override

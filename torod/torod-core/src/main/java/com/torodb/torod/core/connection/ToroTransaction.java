@@ -25,9 +25,7 @@ import com.torodb.torod.core.language.operations.DeleteOperation;
 import com.torodb.torod.core.language.operations.UpdateOperation;
 import com.torodb.torod.core.subdocument.ToroDocument;
 
-import javax.annotation.Nonnegative;
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.io.Closeable;
 import java.util.List;
 import java.util.concurrent.Future;
@@ -77,5 +75,9 @@ public interface ToroTransaction extends Closeable {
             @Nonnull String collection,
             @Nonnull List<? extends UpdateOperation> updates,
             @Nonnull WriteFailMode mode
+    );
+    
+    public Future<?> dropCollection(
+            @Nonnull String collection
     );
 }

@@ -23,17 +23,13 @@ package com.torodb.torod.core.executor;
 import com.torodb.torod.core.WriteFailMode;
 import com.torodb.torod.core.connection.DeleteResponse;
 import com.torodb.torod.core.connection.InsertResponse;
-import com.torodb.torod.core.cursors.CursorId;
 import com.torodb.torod.core.language.operations.DeleteOperation;
-import com.torodb.torod.core.language.projection.Projection;
-import com.torodb.torod.core.language.querycriteria.QueryCriteria;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import java.io.Closeable;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Future;
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 /**
  *
@@ -70,5 +66,9 @@ public interface SessionTransaction extends Closeable {
             @Nonnull String collection, 
             @Nonnull List<? extends DeleteOperation> deletes, 
             @Nonnull WriteFailMode mode
+    );
+    
+    public Future<?> dropCollection(
+            @Nonnull String collection
     );
 }

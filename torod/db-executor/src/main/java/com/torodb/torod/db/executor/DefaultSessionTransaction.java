@@ -125,6 +125,16 @@ public class DefaultSessionTransaction implements SessionTransaction {
         );
     }
 
+    @Override
+    public Future<?> dropCollection(String collection) {
+        return executor.submit(
+                new DropCollectionCallable(
+                        connectionProvider,
+                        collection
+                )
+        );
+    }
+
     public static class DbConnectionProvider implements Supplier<DbConnection> {
 
         private final DbWrapper dbWrapper;

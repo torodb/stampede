@@ -322,7 +322,6 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
 		messageReplier.replyMessageNoCursor(reply);
 	}
 
-	//TODO: implement with toro natives
 	@Override
 	public void drop(BSONDocument document, MessageReplier messageReplier) throws Exception {
 		AttributeMap attributeMap = messageReplier.getAttributeMap();
@@ -331,39 +330,19 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
         Map<String, Object> keyValues = new HashMap<String, Object>();
 		
 		String collection = ToroCollectionTranslator.translate((String) document.getValue("drop"));
-    	
-    	WriteFailMode writeFailMode = getWriteFailMode(document);
-    	List<DeleteOperation> deletes = new ArrayList<DeleteOperation>();
-   		QueryCriteria queryCriteria = TrueQueryCriteria.getInstance();
-   		deletes.add(new DeleteOperation(queryCriteria, false));
-		
-        ToroTransaction transaction = connection.createTransaction();
-        
-        try {
-        	Future<DeleteResponse> futureDropResponse = transaction.delete(collection, deletes, writeFailMode);
-        	
-            Future<?> futureCommitResponse = transaction.commit();
-            
-            futureDropResponse.get();
-            futureCommitResponse.get();
-            
-            LastError lastError = new ToroLastError(
-            		RequestOpCode.OP_QUERY, 
-            		AdministrationQueryCommand.drop, 
-            		futureDropResponse, 
-            		futureCommitResponse, 
-            		false, 
-            		null);
-            attributeMap.attr(ToroRequestProcessor.LAST_ERROR).set(lastError);
-        } finally {
-           	transaction.close();
-        }
-		
-		keyValues.put("ok", MongoWP.OK);
-		BSONDocument reply = new MongoBSONDocument(keyValues);
-		messageReplier.replyMessageNoCursor(reply);
-	}
 
+        ToroTransaction transaction = connection.createTransaction();
+        try {
+            transaction.dropCollection(collection);
+            transaction.commit();
+            
+            keyValues.put("ok", MongoWP.OK);
+            BSONDocument reply = new MongoBSONDocument(keyValues);
+            messageReplier.replyMessageNoCursor(reply);
+        } finally {
+            transaction.close();
+        }
+	}
 	
 	//TODO: implement with toro natives
 	@Override

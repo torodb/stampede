@@ -26,6 +26,7 @@ import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.core.subdocument.structure.DocStructure;
 import com.torodb.torod.db.postgresql.meta.routines.CreateCollectionSchema;
 import com.torodb.torod.db.postgresql.meta.routines.DeleteDocuments;
+import com.torodb.torod.db.postgresql.meta.routines.DropCollection;
 import com.torodb.torod.db.postgresql.meta.routines.QueryRoutine;
 import java.util.List;
 import org.jooq.Configuration;
@@ -89,5 +90,9 @@ public class Routines {
     
     public static int deleteDocuments(Configuration configuration, CollectionSchema colSchema, Multimap<DocStructure, Integer> didsByStructure, boolean justOne) {
         return DeleteDocuments.execute(configuration, colSchema, didsByStructure, justOne);
+    }
+
+    public static void dropCollection(Configuration jooqConf, CollectionSchema colSchema) {
+        DropCollection.execute(jooqConf, colSchema);
     }
 }

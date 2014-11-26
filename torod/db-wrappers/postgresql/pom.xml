@@ -44,7 +44,7 @@
         <dependency>
             <groupId>org.jooq</groupId>
             <artifactId>jooq</artifactId>
-            <version>3.4.4-byteafix</version>
+            <version>3.4.4</version>
         </dependency>
         <dependency>
             <groupId>org.jooq</groupId>
