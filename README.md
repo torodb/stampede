@@ -12,7 +12,7 @@ For more information, please see [ToroDB's website][1] and this [latest presenta
 ToroDB is written in Java and requires:
 
 * A suitable JVM, version 6 or higher. It has been tested with Oracle JVM v6-8.
-* A [PostgreSQL][2] database, version 9.4. PostgreSQL 9.4 is currently in RC1.
+* A [PostgreSQL][2] database, version 9.4. PostgreSQL 9.4 is currently in [RC1][9].
 
 
 ## Download/Installation
@@ -28,7 +28,7 @@ You may compile ToroDB yourself. All the project is written in Java and managed 
 
 ToroDB is based on the [Mongo Wire Protocol library][5] (mongowp), which is another library built by [8Kdata][6] to help construct programs that speak the MongoDB protocol. You may also compile this library yourself, or let maven download it from the repository automatically.
 
-Just run "`mvn package`" on the root directory and find the executable jar file in `torodb/target/torodb.jar`.
+Just run "`mvn package`" on the root directory and find the executable jar file in `torodb/target/torodb-0.15-SNAPSHOT-jar-with-dependencies.jar`.
 
 
 ## Running ToroDB
@@ -79,3 +79,4 @@ Alternatively to the command line options, you may create a `~/.toropass` file, 
 [6]: http://www.8kdata.com
 [7]: http://www.slideshare.net/8kdata/big-dataspain2014-torodbbridgebetweennosqlandrelational
 [8]: https://groups.google.com/forum/#!forum/torodb-dev
+[9]: http://www.postgresql.org/download/
