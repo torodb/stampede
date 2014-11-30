@@ -7,7 +7,7 @@
     <parent>
         <groupId>com.torodb</groupId>
         <artifactId>torodb-parent</artifactId>
-        <version>0.12</version>
+        <version>0.15-SNAPSHOT</version>
     </parent>
 
     <artifactId>torodb</artifactId>
@@ -61,37 +61,37 @@
         <dependency>
             <groupId>com.torodb.torod</groupId>
             <artifactId>connection</artifactId>
-            <version>${project.version}</version>
+            <version>${torod.version}</version>
         </dependency>
         <dependency>
             <groupId>com.torodb.torod</groupId>
             <artifactId>d2r</artifactId>
-            <version>${project.version}</version>
+            <version>${torod.version}</version>
         </dependency>
         <dependency>
             <groupId>com.torodb.torod.db-wrappers</groupId>
             <artifactId>postgresql</artifactId>
-            <version>${project.version}</version>
+            <version>${torod.version}</version>
         </dependency>
         <dependency>
             <groupId>com.torodb.torod</groupId>
             <artifactId>db-executor</artifactId>
-            <version>${project.version}</version>
+            <version>${torod.version}</version>
         </dependency>
         <dependency>
             <groupId>com.torodb.torod</groupId>
             <artifactId>db-meta-inf</artifactId>
-            <version>${project.version}</version>
+            <version>${torod.version}</version>
         </dependency>
         <dependency>
             <groupId>com.torodb.torod</groupId>
             <artifactId>db-cursors</artifactId>
-            <version>${project.version}</version>
+            <version>${torod.version}</version>
         </dependency>
         <dependency>
             <groupId>com.torodb.torod</groupId>
             <artifactId>torod-core</artifactId>
-            <version>${project.version}</version>
+            <version>${torod.version}</version>
         </dependency>
         <dependency>
             <groupId>com.google.code.findbugs</groupId>
@@ -105,14 +105,16 @@
         <dependency>
             <groupId>com.torodb.kvdocument</groupId>
             <artifactId>mongo-converter</artifactId>
-            <version>0.12</version>
+            <version>${kvdocument.version}</version>
         </dependency>
     </dependencies>
 
     <build>
         <plugins>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
+                <version>2.5.2</version>
                 <configuration>
                     <archive>
                         <manifest>
@@ -122,11 +124,6 @@
                     <descriptorRefs>
                         <descriptorRef>jar-with-dependencies</descriptorRef>
                     </descriptorRefs>
-                    <dependencySets>
-                        <dependencySet>
-                            <unpack>false</unpack>
-                        </dependencySet>
-                    </dependencySets>
                 </configuration>
                 <executions>
                     <execution>

@@ -225,7 +225,7 @@ public class DefaultD2RTranslator implements D2RTranslator {
             return new com.torodb.kvdocument.values.TimeValue(value.getValue());
         }
 
-        private static class Argument {
+        public static class Argument {
 
             private final SplitDocument splitDoc;
             private StructureElement structure;
