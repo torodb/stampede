@@ -71,6 +71,12 @@ The database must exist, and the username must have superuser privileges. This w
 Alternatively to the command line options, you may create a `~/.toropass` file, which follows the syntax of [PostgreSQL's pgpass][4] files.
 
 
+## Are you a developer? Want to contribute? Questions about the source code?
+
+Please see [CONTRIBUTING][10].
+
+
+
 [1]: http://www.torodb.com
 [2]: http://www.postgresql.org
 [3]: http://maven.torodb.com/jar/com/torodb/torodb/0.15-SNAPSHOT/torodb.jar
@@ -80,3 +86,4 @@ Alternatively to the command line options, you may create a `~/.toropass` file, 
 [7]: http://www.slideshare.net/8kdata/big-dataspain2014-torodbbridgebetweennosqlandrelational
 [8]: https://groups.google.com/forum/#!forum/torodb-dev
 [9]: http://www.postgresql.org/download/
+[10]: https://github.com/torodb/torodb/blob/master/CONTRIBUTING.md
