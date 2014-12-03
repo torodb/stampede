@@ -50,7 +50,7 @@ public class FindCollectionsCallable extends SystemDbCallable<Map<String, Intege
     }
 
     @Override
-    void doCallback() {
+    void doCallback(Map<String, Integer> result) {
     }
 
 }

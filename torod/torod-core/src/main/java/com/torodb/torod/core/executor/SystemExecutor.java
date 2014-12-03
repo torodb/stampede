@@ -20,7 +20,10 @@
 
 package com.torodb.torod.core.executor;
 
+import com.torodb.torod.core.pojos.NamedToroIndex;
+import com.torodb.torod.core.pojos.IndexedAttributes;
 import com.torodb.torod.core.subdocument.SubDocType;
+import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.Future;
 import javax.annotation.Nonnegative;
@@ -71,6 +74,21 @@ public interface SystemExecutor {
      * @see UserExecutor#pauseUntil(int)
      */
     long getTick();
+    
+    Future<NamedToroIndex> createIndex(
+            String collectionName,
+            String indexName, 
+            IndexedAttributes attributes,
+            boolean unique,
+            boolean blocking,
+            CreateIndexCallback callback
+    );
+    
+    Future<Boolean> dropIndex(
+            String indexName
+    );
+    
+    public Future<Collection<? extends NamedToroIndex>> getIndexes();
 
     public static interface CreateCollectionCallback {
 
@@ -85,5 +103,10 @@ public interface SystemExecutor {
     public static interface ReserveDocIdsCallback {
 
         public void reservedDocIds(String collection, @Nonnegative int idsToReserve);
+    }
+    
+    public static interface CreateIndexCallback {
+        
+        public void createdIndex(NamedToroIndex index);
     }
 }

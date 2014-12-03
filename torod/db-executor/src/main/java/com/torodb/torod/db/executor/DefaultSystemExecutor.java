@@ -21,15 +21,16 @@
 
 package com.torodb.torod.db.executor;
 
+import com.torodb.torod.db.executor.jobs.CreateIndexCallable;
 import com.torodb.torod.core.dbWrapper.DbWrapper;
 import com.torodb.torod.core.executor.SystemExecutor;
 import com.torodb.torod.core.executor.ToroTaskExecutionException;
+import com.torodb.torod.core.pojos.NamedToroIndex;
+import com.torodb.torod.core.pojos.IndexedAttributes;
 import com.torodb.torod.core.subdocument.SubDocType;
-import com.torodb.torod.db.executor.jobs.CreateCollectionCallable;
-import com.torodb.torod.db.executor.jobs.CreateSubDocTableCallable;
-import com.torodb.torod.db.executor.jobs.FindCollectionsCallable;
-import com.torodb.torod.db.executor.jobs.ReserveSubDocIdsCallable;
+import com.torodb.torod.db.executor.jobs.*;
 import com.torodb.torod.db.executor.report.ReportFactory;
+import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -120,6 +121,44 @@ class DefaultSystemExecutor implements SystemExecutor {
                         wrapper,
                         reportFactory.createFindCollectionsReport()
                 )
+        );
+    }
+
+    @Override
+    public Future<NamedToroIndex> createIndex(
+            String collectionName,
+            String indexName, 
+            IndexedAttributes attributes, 
+            boolean unique, 
+            boolean blocking, 
+            CreateIndexCallback callback) {
+        return submit(
+                new CreateIndexCallable(
+                        wrapper, 
+                        collectionName,
+                        indexName, 
+                        attributes, 
+                        unique, 
+                        blocking, 
+                        callback
+                )
+        );
+    }
+
+    @Override
+    public Future<Boolean> dropIndex(String indexName) {
+        return submit(
+                new DropIndexCallable(
+                        wrapper,
+                        indexName
+                )
+        );
+    }
+
+    @Override
+    public Future<Collection<? extends NamedToroIndex>> getIndexes() {
+        return submit(
+                new GetIndexesCallable(wrapper)
         );
     }
 

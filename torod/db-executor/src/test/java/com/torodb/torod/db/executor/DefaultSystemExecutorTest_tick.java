@@ -24,7 +24,6 @@ package com.torodb.torod.db.executor;
 import com.torodb.torod.core.dbWrapper.DbWrapper;
 import com.torodb.torod.core.executor.ToroTaskExecutionException;
 import com.torodb.torod.db.executor.report.DummyReportFactory;
-import com.torodb.torod.db.executor.report.ReportFactory;
 import java.util.concurrent.ExecutorService;
 import org.junit.Before;
 import org.junit.Test;

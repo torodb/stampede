@@ -46,14 +46,11 @@ public class PostgresqlDbWrapper extends AbstractSqlDbWrapper {
     private static final int DB_SUPPORT_MAJOR = 9;
     private static final int DB_SUPPORT_MINOR = 4;
 
-    private final String databaseName;
-
     @Inject
     public PostgresqlDbWrapper(
-            DbBackend config,
-            @DatabaseName String databaseName) {
-        super(config);
-        this.databaseName = databaseName;
+            @DatabaseName String databaseName,
+            TorodConfig config) {
+        super(databaseName, config);
     }
 
     @Override
@@ -65,7 +62,7 @@ public class PostgresqlDbWrapper extends AbstractSqlDbWrapper {
 
     @Override
     protected DbConnection reserveConnection(DSLContext dsl, TorodbMeta meta) {
-        return new PostgresqlDbConnection(dsl, meta, databaseName);
+        return new PostgresqlDbConnection(dsl, meta);
     }
     
     protected void checkDbSupported(Connection conn) throws SQLException, ImplementationDbException {    	

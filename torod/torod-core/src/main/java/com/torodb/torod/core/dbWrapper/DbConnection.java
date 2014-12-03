@@ -23,6 +23,8 @@ package com.torodb.torod.core.dbWrapper;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.dbWrapper.exceptions.UserDbException;
 import com.torodb.torod.core.language.querycriteria.QueryCriteria;
+import com.torodb.torod.core.pojos.NamedToroIndex;
+import com.torodb.torod.core.pojos.IndexedAttributes;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.core.subdocument.SubDocType;
 import com.torodb.torod.core.subdocument.SubDocument;
@@ -30,6 +32,7 @@ import com.torodb.torod.core.subdocument.structure.DocStructure;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.Future;
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.ThreadSafe;
 
@@ -128,4 +131,18 @@ public interface DbConnection {
     public void dropCollection(
             @Nonnull String collection
     );
+    
+    public NamedToroIndex createIndex(
+            @Nonnull String collection,
+            @Nonnull String indexName, 
+            @Nonnull IndexedAttributes attributes,
+            boolean unique,
+            boolean blocking
+    );
+    
+    public boolean dropIndex(
+            String indexName
+    );
+    
+    public Collection<? extends NamedToroIndex> getIndexes();
 }

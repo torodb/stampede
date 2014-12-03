@@ -17,11 +17,12 @@
  *     Copyright (c) 2014, 8Kdata Technology
  *     
  */
-
 package com.torodb.torod.db.postgresql;
 
 import com.google.common.collect.Lists;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
+import com.torodb.torod.core.pojos.IndexedAttributes;
+import com.torodb.torod.core.pojos.NamedToroIndex;
 import com.torodb.torod.core.subdocument.BasicType;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.db.postgresql.converters.jooq.SubdocValueConverter;
@@ -31,10 +32,15 @@ import com.torodb.torod.db.postgresql.meta.TorodbMeta;
 import com.torodb.torod.db.postgresql.meta.tables.SubDocTable;
 import com.torodb.torod.db.sql.AbstractSqlDbConnection;
 import com.torodb.torod.db.sql.AutoCloser;
+import com.torodb.torod.db.sql.index.NamedDbIndex;
+import com.torodb.torod.db.sql.index.UnnamedDbIndex;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.Serializable;
 import java.sql.*;
 import java.util.*;
 import java.util.Comparator;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import org.jooq.*;
@@ -51,15 +57,12 @@ class PostgresqlDbConnection extends AbstractSqlDbConnection {
     static final String SUBDOC_TABLE_DOC_ID_COLUMN = "docId";
     static final String SUBDOC_TABLE_KEYS_COLUMN = "keys";
     private final FieldComparator fieldComparator = new FieldComparator();
-    private final String databaseName;
 
     @Inject
     public PostgresqlDbConnection(
-            DSLContext dsl, 
-            TorodbMeta meta,
-            String databaseName) {
+            DSLContext dsl,
+            TorodbMeta meta) {
         super(dsl, meta);
-        this.databaseName = databaseName;
     }
 
     @Override
@@ -72,7 +75,7 @@ class PostgresqlDbConnection extends AbstractSqlDbConnection {
                 .append(" (")
                 .append(field.getName())
                 .append(')');
-        
+
         return sb.toString();
     }
 
@@ -103,17 +106,17 @@ class PostgresqlDbConnection extends AbstractSqlDbConnection {
 
     @Override
     public void insertRootDocuments(
-            @Nonnull String collection, 
+            @Nonnull String collection,
             @Nonnull Collection<SplitDocument> docs
     ) throws ImplementationDbException {
-        
+
         try {
             CollectionSchema colSchema = getMeta().getCollectionSchema(collection);
 
             Field<Integer> idField = DSL.field("did", SQLDataType.INTEGER.nullable(false));
             Field<Integer> sidField = DSL.field("sid", SQLDataType.INTEGER.nullable(false));
 
-            
+
             InsertValuesStep2<Record, Integer, Integer> insertInto = getDsl().insertInto(DSL.tableByName(colSchema.getName(), "root"), idField, sidField);
 
             for (SplitDocument splitDocument : docs) {
@@ -123,10 +126,36 @@ class PostgresqlDbConnection extends AbstractSqlDbConnection {
             }
 
             insertInto.execute();
-            
+
         } catch (DataAccessException ex) {
             //TODO: Change exception
             throw new RuntimeException(ex);
+        }
+    }
+
+    @Override
+    public NamedDbIndex createDbIndex(
+            NamedToroIndex toroNamedIndex, 
+            UnnamedDbIndex dbUnnamedIndex) {
+        //TODO: Implement this command
+        throw new UnsupportedOperationException("Not supported yet."); 
+    }
+
+    @SuppressFBWarnings("SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE")
+    @Override
+    protected void dropIndex(NamedDbIndex index) {
+        ConnectionProvider connectionProvider
+                = getDsl().configuration().connectionProvider();
+        Connection connection = connectionProvider.acquire();
+        Statement st = null;
+        try {
+            st = connection.createStatement();
+            st.executeUpdate("DROP TABLE " + index.getName());
+        } catch (SQLException ex) {
+            Logger.getLogger(PostgresqlDbConnection.class.getName()).log(Level.SEVERE, null, ex);
+        } finally {
+            AutoCloser.close(st);
+            connectionProvider.release(connection);
         }
     }
 
@@ -137,10 +166,10 @@ class PostgresqlDbConnection extends AbstractSqlDbConnection {
         Connection connection = connectionProvider.acquire();
         PreparedStatement ps = null;
         ResultSet rs = null;
-        
+
         try {
             ps = connection.prepareStatement("SELECT * from pg_database_size(?)");
-            ps.setString(1, databaseName);
+            ps.setString(1, getMeta().getDatabaseName());
             rs = ps.executeQuery();
             rs.next();
             return rs.getLong(1);
@@ -155,14 +184,14 @@ class PostgresqlDbConnection extends AbstractSqlDbConnection {
             connectionProvider.release(connection);
         }
     }
-    
+
     private String getSqlType(Field<?> field, Configuration conf) {
         if (field.getConverter() != null) {
             SubdocValueConverter arrayConverter
                     = ValueToJooqConverterProvider.getConverter(BasicType.ARRAY);
             SubdocValueConverter twelveBytesConverter
                     = ValueToJooqConverterProvider.getConverter(BasicType.TWELVE_BYTES);
-            
+
             if (field.getConverter().getClass().equals(arrayConverter.getClass())) {
                 return "jsonb";
             }
@@ -183,18 +212,18 @@ class PostgresqlDbConnection extends AbstractSqlDbConnection {
     private static class FieldComparator implements Comparator<Field>, Serializable {
 
         private static final List<Integer> sqlTypeOrder = Arrays.asList(new Integer[]{
-            java.sql.Types.NULL,
-            java.sql.Types.DOUBLE,
-            java.sql.Types.BIGINT,
-            java.sql.Types.INTEGER,
-            java.sql.Types.FLOAT,
-            java.sql.Types.TIME,
-            java.sql.Types.DATE,
-            java.sql.Types.REAL,
-            java.sql.Types.TINYINT,
-            java.sql.Types.CHAR,
-            java.sql.Types.BIT
-        });
+                    java.sql.Types.NULL,
+                    java.sql.Types.DOUBLE,
+                    java.sql.Types.BIGINT,
+                    java.sql.Types.INTEGER,
+                    java.sql.Types.FLOAT,
+                    java.sql.Types.TIME,
+                    java.sql.Types.DATE,
+                    java.sql.Types.REAL,
+                    java.sql.Types.TINYINT,
+                    java.sql.Types.CHAR,
+                    java.sql.Types.BIT
+                });
         private static final long serialVersionUID = 1L;
 
         @Override
@@ -209,7 +238,7 @@ class PostgresqlDbConnection extends AbstractSqlDbConnection {
             } else if (o2.getName().equals(SubDocTable.INDEX_COLUMN_NAME)) {
                 return 1;
             }
-            
+
             int i1 = sqlTypeOrder.indexOf(o1.getDataType().getSQLType());
             int i2 = sqlTypeOrder.indexOf(o2.getDataType().getSQLType());
 

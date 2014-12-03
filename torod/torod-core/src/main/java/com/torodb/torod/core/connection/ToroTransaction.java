@@ -23,10 +23,13 @@ package com.torodb.torod.core.connection;
 import com.torodb.torod.core.WriteFailMode;
 import com.torodb.torod.core.language.operations.DeleteOperation;
 import com.torodb.torod.core.language.operations.UpdateOperation;
+import com.torodb.torod.core.pojos.NamedToroIndex;
+import com.torodb.torod.core.pojos.IndexedAttributes;
 import com.torodb.torod.core.subdocument.ToroDocument;
 
 import javax.annotation.Nonnull;
 import java.io.Closeable;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Future;
 
@@ -80,4 +83,17 @@ public interface ToroTransaction extends Closeable {
     public Future<?> dropCollection(
             @Nonnull String collection
     );
+    
+    public Future<NamedToroIndex> createIndex(
+            String indexName, 
+            IndexedAttributes attributes,
+            boolean unique,
+            boolean blocking
+    );
+    
+    public Future<Boolean> dropIndex(
+            String indexName
+    );
+    
+    public Collection<? extends NamedToroIndex> getIndexes();
 }

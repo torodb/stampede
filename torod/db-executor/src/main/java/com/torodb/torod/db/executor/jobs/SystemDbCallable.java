@@ -39,7 +39,7 @@ abstract class SystemDbCallable<R> implements Callable<R> {
 
     abstract R call(DbConnection db) throws ImplementationDbException, UserDbException;
     
-    abstract void doCallback();
+    abstract void doCallback(R result);
 
     @Override
     public R call() throws ImplementationDbException, UserDbException {
@@ -49,7 +49,7 @@ abstract class SystemDbCallable<R> implements Callable<R> {
             
             db.commit();
             
-            doCallback();
+            doCallback(result);
             
             return result;
         } catch (RuntimeException ex) {

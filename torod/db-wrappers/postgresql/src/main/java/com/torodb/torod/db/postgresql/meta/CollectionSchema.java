@@ -118,6 +118,10 @@ public final class CollectionSchema extends SchemaImpl {
     public static boolean isCollectionSchema(Schema schema) {
         return schemaNameToCollection(schema.getName()) != null;
     }
+    
+    public static boolean isCollectionSchema(String schemaName) {
+        return schemaNameToCollection(schemaName) != null;
+    }
 
     /**
      *
@@ -211,7 +215,7 @@ public final class CollectionSchema extends SchemaImpl {
      *         collection
      */
     @Nullable
-    private static String schemaNameToCollection(String name) {
+    public static String schemaNameToCollection(String name) {
         Matcher matcher = collectionSchemaPattern.matcher(name);
         if (matcher.find()) {
             return matcher.group(1);

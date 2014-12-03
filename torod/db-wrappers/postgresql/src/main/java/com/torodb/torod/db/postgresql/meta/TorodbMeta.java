@@ -21,9 +21,7 @@
 package com.torodb.torod.db.postgresql.meta;
 
 import com.google.common.collect.MapMaker;
-import com.google.common.collect.Maps;
 import com.google.common.io.CharStreams;
-import com.google.common.io.Files;
 import com.torodb.torod.core.exceptions.ToroImplementationException;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.BufferedReader;
@@ -34,7 +32,6 @@ import java.nio.charset.Charset;
 import java.sql.*;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 import org.jooq.DSLContext;
 import org.jooq.Meta;
@@ -47,10 +44,14 @@ import org.slf4j.LoggerFactory;
  */
 public class TorodbMeta {
 
+    private final String databaseName;
     private final ConcurrentMap<String, CollectionSchema> collectionSchemes;
     private static final Logger LOGGER = LoggerFactory.getLogger(TorodbMeta.class);
     
-    public TorodbMeta(DSLContext dsl) throws SQLException, IOException {
+    public TorodbMeta(
+            String databaseName,
+            DSLContext dsl) throws SQLException, IOException {
+        this.databaseName = databaseName;
         Meta jooqMeta = dsl.meta();
         Connection conn = dsl.configuration().connectionProvider().acquire();
         DatabaseMetaData jdbcMeta = conn.getMetaData();
@@ -70,6 +71,10 @@ public class TorodbMeta {
 
         dsl.configuration().connectionProvider().release(conn);
 
+    }
+
+    public String getDatabaseName() {
+        return databaseName;
     }
 
     public boolean exists(String collection) {

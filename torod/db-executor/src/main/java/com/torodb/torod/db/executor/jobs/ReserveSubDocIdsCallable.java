@@ -62,7 +62,7 @@ public class ReserveSubDocIdsCallable extends SystemDbCallable<Void> {
     }
 
     @Override
-    void doCallback() {
+    void doCallback(Void result) {
         if (callback != null) {
             callback.reservedDocIds(collection, idsToReserve);
         }

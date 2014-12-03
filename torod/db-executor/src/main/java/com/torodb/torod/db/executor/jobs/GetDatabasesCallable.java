@@ -36,7 +36,7 @@ public class GetDatabasesCallable extends SystemDbCallable<List<? extends Databa
     }
 
     @Override
-    void doCallback() {
+    void doCallback(List<? extends Database> result) {
     }
 
 }

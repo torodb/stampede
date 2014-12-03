@@ -30,6 +30,7 @@ import com.torodb.torod.core.config.DocumentBuilderFactory;
 import com.torodb.torod.core.connection.*;
 import com.torodb.torod.core.cursors.CursorId;
 import com.torodb.torod.core.d2r.D2RTranslator;
+import com.torodb.torod.core.dbMetaInf.DbMetaInformationCache;
 import com.torodb.torod.core.exceptions.ToroImplementationException;
 import com.torodb.torod.core.exceptions.UserToroException;
 import com.torodb.torod.core.executor.SessionExecutor;
@@ -39,8 +40,11 @@ import com.torodb.torod.core.language.operations.DeleteOperation;
 import com.torodb.torod.core.language.operations.UpdateOperation;
 import com.torodb.torod.core.language.querycriteria.utils.EqualFactory;
 import com.torodb.torod.core.language.update.UpdateAction;
+import com.torodb.torod.core.pojos.NamedToroIndex;
+import com.torodb.torod.core.pojos.IndexedAttributes;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.core.subdocument.ToroDocument;
+import java.util.Collection;
 
 import javax.annotation.Nonnull;
 import java.util.Collections;
@@ -59,6 +63,7 @@ public class DefaultToroTransaction implements ToroTransaction {
     private final SessionExecutor executor;
     private final DocumentBuilderFactory documentBuilderFactory;
     private final CursorManager cursorManager;
+    private final DbMetaInformationCache cache;
     
     DefaultToroTransaction(
             Session session,
@@ -66,13 +71,15 @@ public class DefaultToroTransaction implements ToroTransaction {
             D2RTranslator d2r,
             SessionExecutor executor,
             DocumentBuilderFactory documentBuilderFactory,
-            CursorManager cursorManager
+            CursorManager cursorManager,
+            DbMetaInformationCache cache
     ) {
         this.sessionTransaction = sessionTransaction;
         this.d2r = d2r;
         this.executor = executor;
         this.documentBuilderFactory = documentBuilderFactory;
         this.cursorManager = cursorManager;
+        this.cache = cache;
     }
 
     @Override
@@ -130,6 +137,21 @@ public class DefaultToroTransaction implements ToroTransaction {
             @Nonnull List<? extends DeleteOperation> deletes,
             @Nonnull WriteFailMode mode) {
         return sessionTransaction.delete(collection, deletes, mode);
+    }
+
+    @Override
+    public Future<NamedToroIndex> createIndex(String indexName, IndexedAttributes attributes, boolean unique, boolean blocking) {
+        return cache.createIndex(indexName, attributes, unique, blocking);
+    }
+
+    @Override
+    public Future<Boolean> dropIndex(String indexName) {
+        return cache.dropIndex(indexName);
+    }
+
+    @Override
+    public Collection<? extends NamedToroIndex> getIndexes() {
+        return cache.getIndexes();
     }
 
     @Override

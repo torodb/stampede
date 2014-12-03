@@ -28,7 +28,10 @@ import com.torodb.torod.core.executor.ExecutorFactory;
 import com.torodb.torod.core.executor.SessionExecutor;
 import com.torodb.torod.core.executor.SystemExecutor;
 import com.torodb.torod.core.executor.ToroTaskExecutionException;
+import com.torodb.torod.core.pojos.IndexedAttributes;
+import com.torodb.torod.core.pojos.NamedToroIndex;
 import com.torodb.torod.core.subdocument.SubDocType;
+import java.util.Collection;
 
 import javax.annotation.Nonnegative;
 import javax.annotation.Nonnull;
@@ -195,6 +198,28 @@ public class DefaultDbMetaInformationCache implements DbMetaInformationCache {
         }
         
         return collectionMetaInfo.reserveDocId(sessionExecutor, neededIds);
+    }
+
+    @Override
+    public Future<NamedToroIndex> createIndex(
+            String indexName,
+            IndexedAttributes attributes, 
+            boolean unique, 
+            boolean blocking) {
+        //TODO: Implement this
+        throw new UnsupportedOperationException("Not supported yet."); 
+    }
+
+    @Override
+    public Future<Boolean> dropIndex(String indexName) {
+        //TODO: Implement this
+        throw new UnsupportedOperationException("Not supported yet."); 
+    }
+
+    @Override
+    public Collection<? extends NamedToroIndex> getIndexes() {
+        //TODO: Implement this
+        throw new UnsupportedOperationException("Not supported yet."); 
     }
 
     private void startCollectionCreation(String collection, int initialId) {

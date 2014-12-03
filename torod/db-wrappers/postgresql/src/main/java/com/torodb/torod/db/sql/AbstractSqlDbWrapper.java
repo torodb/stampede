@@ -61,6 +61,7 @@ public abstract class AbstractSqlDbWrapper implements DbWrapper {
     private final DataSource systemDataSource;
     private final DataSource globalCursorDataSource;
     private final ConcurrentMap<CursorId, com.torodb.torod.core.dbWrapper.Cursor> openCursors;
+    private final String databaseName;
     private TorodbMeta meta;
 
 

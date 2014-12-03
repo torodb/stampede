@@ -21,7 +21,11 @@
 package com.torodb.torod.core.dbMetaInf;
 
 import com.torodb.torod.core.executor.SessionExecutor;
+import com.torodb.torod.core.pojos.NamedToroIndex;
+import com.torodb.torod.core.pojos.IndexedAttributes;
 import com.torodb.torod.core.subdocument.SubDocType;
+import java.util.Collection;
+import java.util.concurrent.Future;
 
 import javax.annotation.Nonnegative;
 import javax.annotation.Nonnull;
@@ -88,6 +92,19 @@ public interface DbMetaInformationCache {
     public boolean createCollection(
             @Nonnull SessionExecutor sessionExecutor,
             @Nonnull String collection);
+    
+    public Future<NamedToroIndex> createIndex(
+            String indexName, 
+            IndexedAttributes attributes,
+            boolean unique,
+            boolean blocking
+    );
+    
+    public Future<Boolean> dropIndex(
+            String indexName
+    );
+    
+    public Collection<? extends NamedToroIndex> getIndexes();
 
     public void initialize();
     

@@ -20,6 +20,9 @@
 
 package com.torodb.torod.db.sql;
 
+import com.torodb.torod.db.sql.index.IndexManager;
+import com.torodb.torod.db.sql.index.UnnamedDbIndex;
+import com.torodb.torod.db.sql.index.NamedDbIndex;
 import com.google.common.collect.*;
 import com.torodb.torod.core.subdocument.SubDocument;
 import com.torodb.torod.core.subdocument.SubDocType;
@@ -30,10 +33,19 @@ import com.torodb.torod.db.postgresql.meta.tables.SubDocTable;
 import com.torodb.torod.db.postgresql.meta.tables.records.SubDocTableRecord;
 import com.torodb.torod.core.dbWrapper.DbConnection;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
+import com.torodb.torod.core.language.AttributeReference;
 import com.torodb.torod.core.language.querycriteria.QueryCriteria;
+import com.torodb.torod.core.pojos.DefaultNamedToroIndex;
+import com.torodb.torod.core.pojos.NamedToroIndex;
+import com.torodb.torod.core.pojos.IndexedAttributes;
+import com.torodb.torod.core.subdocument.SubDocAttribute;
+import com.torodb.torod.core.subdocument.structure.ArrayStructure;
 import com.torodb.torod.core.subdocument.structure.DocStructure;
+import com.torodb.torod.core.subdocument.structure.StructureElement;
 import com.torodb.torod.db.postgresql.converters.StructureConverter;
 import com.torodb.torod.db.postgresql.query.QueryEvaluator;
+import com.torodb.torod.db.sql.delegator.CreateIndexDelegator;
+import com.torodb.torod.db.sql.index.IndexedColumnInfo;
 import java.sql.*;
 import java.util.*;
 import java.util.logging.Level;
@@ -47,24 +59,38 @@ import org.jooq.impl.DSL;
 /**
  *
  */
-public abstract class AbstractSqlDbConnection implements DbConnection {
+public abstract class AbstractSqlDbConnection implements 
+        DbConnection, 
+        CreateIndexDelegator.NamedDbIndexCreator {
 
     private final TorodbMeta meta;
     private final Configuration jooqConf;
     private final DSLContext dsl;
     private static final Logger LOG
             = Logger.getLogger(AbstractSqlDbConnection.class.getName());
+    private final IndexManager indexRelation;
+    private final CreateIndexDelegator createIndexDelegator;
 
     @Inject
     public AbstractSqlDbConnection(DSLContext dsl, TorodbMeta meta) {
         this.jooqConf = dsl.configuration();
         this.dsl = dsl;
         this.meta = meta;
+        this.indexRelation = new IndexManager();
+        this.createIndexDelegator = new CreateIndexDelegator(indexRelation, meta, this);
     }
 
     protected abstract String getCreateSubDocTypeTableQuery(SubDocTable table, Configuration conf);
 
     protected abstract String getCreateIndexQuery(SubDocTable table, Field<?> field, Configuration conf);
+    
+    @Override
+    public abstract NamedDbIndex createDbIndex(
+            NamedToroIndex toroNamedIndex,
+            UnnamedDbIndex dbUnnamedIndex
+    );
+    
+    protected abstract void dropIndex(NamedDbIndex index);
 
     protected DSLContext getDsl() {
         return dsl;
@@ -180,6 +206,56 @@ public abstract class AbstractSqlDbConnection implements DbConnection {
         } catch (DataAccessException ex) {
             //TODO: Change exception
             throw new RuntimeException(ex);
+        }
+    }
+
+    @Override
+    public Collection<? extends NamedToroIndex> getIndexes() {
+        indexRelation.getReadLock().lock();
+        try {
+            return indexRelation.getToroNamedIndexes();
+        } finally {
+            indexRelation.getReadLock().unlock();
+        }
+    }
+
+    @Override
+    public NamedToroIndex createIndex(
+            String collection,
+            String indexName, 
+            IndexedAttributes attributes, 
+            boolean unique, 
+            boolean blocking) {
+        return createIndexDelegator.createIndex(
+                collection, 
+                indexName, 
+                attributes, 
+                unique, 
+                blocking
+        );
+    }
+
+    @Override
+    public boolean dropIndex(String indexName) {
+        indexRelation.getReadLock().lock();
+        try {
+            if (!indexRelation.existsToroIndex(indexName)) {
+                return false;
+            }
+        } finally {
+            indexRelation.getReadLock().unlock();
+        }
+        indexRelation.getWriteLock().lock();
+        try {
+            Set<NamedDbIndex> removedDbIndexes = indexRelation.removeToroIndex(indexName);
+
+            for (NamedDbIndex dbIndex : removedDbIndexes) {
+                dropIndex(dbIndex);
+            }
+        
+            return true;
+        } finally {
+            indexRelation.getWriteLock().unlock();
         }
     }
 
