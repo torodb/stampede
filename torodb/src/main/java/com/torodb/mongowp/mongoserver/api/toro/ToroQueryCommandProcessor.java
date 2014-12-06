@@ -89,38 +89,42 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
     	QueryCriteria queryCriteria = queryCriteriaTranslator.translate(query);
     	Projection projection = null;
     	int numberToSkip = document.hasKey("skip")?((Number) document.getValue("skip")).intValue():0;
-    	int limit = document.hasKey("limit")?((Number) document.getValue("limit")).intValue():0;
     	boolean autoclose = true;
     	boolean hasTimeout = false;
     	
     	CursorId cursorId = null;
     	BSONDocuments results = null;
     	
-    	limit = 0;
-    	
-        ToroTransaction transaction = connection.createTransaction();
+        CursorManager cursorManager = connection.getCursorManager();
         
-        try {
-	    	if (limit == 0) {
-	        	cursorId = transaction.query(collection, queryCriteria, projection, numberToSkip, autoclose, hasTimeout);
-	    	} else {
-	        	cursorId = transaction.query(collection, queryCriteria, projection, numberToSkip, limit, autoclose, hasTimeout);
-	    	}
-	    	
-	    	try {
-		    	int count = 0;
-		    	
-		    	do {
-			        results = new BSONDocuments(transaction.readCursor(cursorId, MongoWP.MONGO_CURSOR_LIMIT));
-			    	count += results.size();
-		    	} while(results.size() >= MongoWP.MONGO_CURSOR_LIMIT);
+        cursorId = cursorManager
+                .openUnlimitedCursor(
+                        collection,
+                        queryCriteria,
+                        projection,
+                        numberToSkip,
+                        autoclose,
+                        hasTimeout
+                );
 
-		    	keyValues.put("n", count);
-	    	} finally {
-	    		transaction.closeCursor(cursorId);
-	    	}
-        } finally {
-        	transaction.close();
+        try {
+            int count = 0;
+
+            do {
+                results = new BSONDocuments(
+                        cursorManager.readCursor(
+                                cursorId,
+                                MongoWP.MONGO_CURSOR_LIMIT
+                        )
+                );
+                count += results.size();
+            }
+            while (results.size() >= MongoWP.MONGO_CURSOR_LIMIT);
+
+            keyValues.put("n", count);
+        }
+        finally {
+            cursorManager.closeCursor(cursorId);
         }
     	
 		keyValues.put("ok", MongoWP.OK);

@@ -24,7 +24,9 @@ import com.torodb.torod.core.dbWrapper.DbConnection;
 import com.torodb.torod.core.dbWrapper.DbWrapper;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.executor.SystemExecutor;
+import com.torodb.torod.db.executor.report.ReserveSubDocIdsReport;
 import javax.annotation.Nullable;
+import javax.inject.Inject;
 
 /**
  *
@@ -33,18 +35,23 @@ public class ReserveSubDocIdsCallable extends SystemDbCallable<Void> {
 
     private final String collection;
     private final int idsToReserve;
-    private final @Nullable SystemExecutor.ReserveDocIdsCallback callback;
+    @Nullable 
+    private final SystemExecutor.ReserveDocIdsCallback callback;
+    private final ReserveSubDocIdsReport report;
 
+    @Inject
     public ReserveSubDocIdsCallable(
             DbWrapper dbWrapperPool,
             String collection,
             int idsToReserve,
-            SystemExecutor.ReserveDocIdsCallback callback) {
+            SystemExecutor.ReserveDocIdsCallback callback,
+            ReserveSubDocIdsReport report) {
 
         super(dbWrapperPool);
         this.collection = collection;
         this.idsToReserve = idsToReserve;
         this.callback = callback;
+        this.report = report;
     }
 
     @Override
@@ -59,5 +66,6 @@ public class ReserveSubDocIdsCallable extends SystemDbCallable<Void> {
         if (callback != null) {
             callback.reservedDocIds(collection, idsToReserve);
         }
+        report.taskExecuted(collection, idsToReserve);
     }
 }

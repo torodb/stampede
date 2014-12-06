@@ -20,14 +20,27 @@
 
 package com.torodb.torod.db.sql;
 
+import com.google.common.collect.MapMaker;
 import com.torodb.torod.db.postgresql.meta.TorodbMeta;
 import com.torodb.torod.core.config.TorodConfig;
+import com.torodb.torod.core.cursors.CursorId;
+import com.torodb.torod.core.dbWrapper.Cursor;
 import com.torodb.torod.core.dbWrapper.DbConnection;
 import com.torodb.torod.core.dbWrapper.DbWrapper;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
+import com.torodb.torod.core.dbWrapper.exceptions.UserDbException;
+import com.torodb.torod.core.language.projection.Projection;
+import com.torodb.torod.core.language.querycriteria.QueryCriteria;
+import com.torodb.torod.core.subdocument.SplitDocument;
+import com.torodb.torod.db.postgresql.meta.CollectionSchema;
+import com.torodb.torod.db.postgresql.meta.Routines;
+import com.torodb.torod.db.postgresql.query.QueryEvaluator;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.inject.Inject;
 import javax.sql.DataSource;
@@ -45,6 +58,8 @@ public abstract class AbstractSqlDbWrapper implements DbWrapper {
     private final AtomicBoolean isInitialized;
     private final DataSource sessionDataSource;
     private final DataSource systemDataSource;
+    private final DataSource globalCursorDataSource;
+    private final ConcurrentMap<CursorId, com.torodb.torod.core.dbWrapper.Cursor> openCursors;
     private TorodbMeta meta;
     
 
@@ -52,8 +67,10 @@ public abstract class AbstractSqlDbWrapper implements DbWrapper {
     public AbstractSqlDbWrapper(TorodConfig config) {
         this.sessionDataSource = config.getSessionDataSource();
         this.systemDataSource = config.getSystemDataSource();
+        this.globalCursorDataSource = config.getGlobalCursorDatasource();
 
         isInitialized = new AtomicBoolean(false);
+        this.openCursors = new MapMaker().makeMap();
     }
 
     protected abstract Configuration getJooqConfiguration(ConnectionProvider connectionProvider);
@@ -101,15 +118,19 @@ public abstract class AbstractSqlDbWrapper implements DbWrapper {
 
     @Override
     public DbConnection consumeSessionDbConnection() {
-        return consumeConnection(sessionDataSource);
+        return createDbConnection(consumeConnection(sessionDataSource));
     }
 
     @Override
     public DbConnection getSystemDbConnection() throws ImplementationDbException {
-        return consumeConnection(systemDataSource);
+        return createDbConnection(consumeConnection(systemDataSource));
     }
     
-    private DbConnection consumeConnection(DataSource ds) {
+    private DbConnection createDbConnection(Connection c) {
+        return reserveConnection(getDsl(c), meta);
+    }
+    
+    private Connection consumeConnection(DataSource ds) {
         if (!isInitialized()) {
             throw new IllegalStateException("The db-wrapper is not initialized");
         }
@@ -119,7 +140,7 @@ public abstract class AbstractSqlDbWrapper implements DbWrapper {
             c.setAutoCommit(false);
             //TODO: Set isolation
 
-            return reserveConnection(getDsl(c), meta);
+            return c;
         } catch (SQLException ex) {
             if (c != null) {
                 try {
@@ -134,6 +155,62 @@ public abstract class AbstractSqlDbWrapper implements DbWrapper {
 
     public boolean isInitialized() {
         return isInitialized.get();
+    }
+
+    @Override
+    public com.torodb.torod.core.dbWrapper.Cursor openGlobalCursor(
+            String collection, 
+            CursorId cursorId, 
+            QueryCriteria filter, 
+            Projection projection,
+            int maxResults
+    ) throws ImplementationDbException, UserDbException {
+        
+        com.torodb.torod.core.dbWrapper.Cursor cursor;
+
+        if (!meta.exists(collection)) {
+            cursor = new EmptyCursor();
+        }
+        else {
+            CollectionSchema colSchema = meta.getCollectionSchema(collection);
+
+            QueryEvaluator queryEvaluator = new QueryEvaluator(colSchema);
+
+            Connection connection = consumeConnection(globalCursorDataSource);
+            DSLContext dsl = getDsl(connection);
+            
+            Set<Integer> dids = queryEvaluator.evaluateDid(
+                    filter, 
+                    dsl, 
+                    maxResults
+            );
+
+            cursor = new DefaultCursor(
+                    new AbstractSqlDbWrapper.MyCursorConnectionProvider(
+                            cursorId, 
+                            dsl, 
+                            colSchema, 
+                            connection,
+                            projection
+                    ),
+                    dids
+            );
+        }
+
+        openCursors.put(cursorId, cursor);
+
+        return cursor;
+    }
+
+    @Override
+    public com.torodb.torod.core.dbWrapper.Cursor getGlobalCursor(CursorId cursorId) 
+            throws IllegalArgumentException {
+        com.torodb.torod.core.dbWrapper.Cursor cursor = openCursors.get(cursorId);
+        if (cursor == null) {
+            throw new IllegalArgumentException("There is no open cursor with id " + cursorId);
+        }
+
+        return cursor;
     }
 
     public static class MyConnectionProvider implements ConnectionProvider {
@@ -151,6 +228,42 @@ public abstract class AbstractSqlDbWrapper implements DbWrapper {
 
         @Override
         public void release(Connection connection) throws DataAccessException {
+        }
+
+    }
+
+    private class MyCursorConnectionProvider implements DefaultCursor.DatabaseCursorGateway {
+
+        private final CursorId cursorId;
+        private final Configuration configuration;
+        private final CollectionSchema colSchema;
+        private final Connection connection;
+        private final Projection projection;
+
+        public MyCursorConnectionProvider(
+                CursorId cursorId, 
+                DSLContext dsl, 
+                CollectionSchema colSchema, 
+                Connection connection,
+                Projection projection) {
+            this.cursorId = cursorId;
+            this.configuration = dsl.configuration();
+            this.colSchema = colSchema;
+            this.connection = connection;
+            this.projection = projection;
+            
+            assert configuration.connectionProvider().acquire() == connection;
+        }
+
+        @Override
+        public List<SplitDocument> readDocuments(Integer[] documents) {
+            return Routines.readDocuments(configuration, colSchema, documents, projection);
+        }
+
+        @Override
+        public void close() throws SQLException {
+            connection.close();
+            openCursors.remove(cursorId);
         }
 
     }

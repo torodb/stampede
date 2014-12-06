@@ -22,12 +22,11 @@ package com.toro.torod.cursors;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Ticker;
-import com.torodb.torod.core.Session;
 import com.torodb.torod.core.config.TorodConfig;
-import com.torodb.torod.core.cursors.CursorId;
 import com.torodb.torod.core.cursors.CursorProperties;
-import com.torodb.torod.core.executor.SessionExecutor;
-import com.torodb.torod.core.executor.SessionTransaction;
+import com.torodb.torod.core.dbWrapper.Cursor;
+import com.torodb.torod.core.dbWrapper.DbWrapper;
+import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.executor.ToroTaskExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -46,8 +45,6 @@ import static org.mockito.Mockito.*;
 public class DefaultCursorManagerTest {
 
     private final TorodConfig config;
-    private final Session session1 = mock(Session.class);
-    private final Session session2 = new MyConnectionId();
     private final long timeout = 1000 * 60 * 60; //in milliseconds
 
     public DefaultCursorManagerTest() {
@@ -73,18 +70,16 @@ public class DefaultCursorManagerTest {
     @Test
     public void testCreateCursor_basic() {
         doReturn(timeout).when(config).getDefaultCursorTimeout();
-        SessionTransaction sessionTransaction = mock(SessionTransaction.class, new ThrowsException(new AssertionError()));
+        DbWrapper dbWrapper = mock(DbWrapper.class, new ThrowsException(new AssertionError()));
 
-        DefaultCursorManager cursorManager = new DefaultCursorManager(config, sessionTransaction);
+        DefaultInnerCursorManager cursorManager = new DefaultInnerCursorManager(config, dbWrapper);
 
-        CursorProperties createdCursor1 = cursorManager.createUnlimitedCursor(session1, false, false);
-        assert createdCursor1.getOwner().equals(session1);
+        CursorProperties createdCursor1 = cursorManager.openUnlimitedCursor(false, false);
         assert createdCursor1.getId() != null;
         assert createdCursor1.hasLimit() == false;
         assert createdCursor1.hasTimeout() == false;
 
-        CursorProperties createdCursor2 = cursorManager.createLimitedCursor(session2, true, true, 1000);
-        assert createdCursor2.getOwner().equals(session2);
+        CursorProperties createdCursor2 = cursorManager.openLimitedCursor(true, true, 1000);
         assert createdCursor2.getId() != null;
         assert createdCursor2.getLimit() == 1000;
         assert createdCursor2.hasLimit() == true;
@@ -94,32 +89,32 @@ public class DefaultCursorManagerTest {
     @Test(expected = IllegalArgumentException.class)
     public void testCreateLimitedCursor_negativeLimit() {
         doReturn(Long.MAX_VALUE).when(config).getDefaultCursorTimeout();
-        SessionTransaction sessionTransaction = mock(SessionTransaction.class, new ThrowsException(new AssertionError()));
+        DbWrapper dbWrapper = mock(DbWrapper.class, new ThrowsException(new AssertionError()));
 
-        DefaultCursorManager cursorManager = new DefaultCursorManager(config, sessionTransaction);
+        DefaultInnerCursorManager cursorManager = new DefaultInnerCursorManager(config, dbWrapper);
 
-        cursorManager.createLimitedCursor(session1, false, false, -100);
+        cursorManager.openLimitedCursor(false, false, -100);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testCreateLimitedCursor_zeroLimit() {
         doReturn(Long.MAX_VALUE).when(config).getDefaultCursorTimeout();
-        SessionTransaction sessionTransaction = mock(SessionTransaction.class, new ThrowsException(new AssertionError()));
+        DbWrapper dbWrapper = mock(DbWrapper.class, new ThrowsException(new AssertionError()));
 
-        DefaultCursorManager cursorManager = new DefaultCursorManager(config, sessionTransaction);
+        DefaultInnerCursorManager cursorManager = new DefaultInnerCursorManager(config, dbWrapper);
 
-        cursorManager.createLimitedCursor(session1, false, false, 0);
+        cursorManager.openLimitedCursor(false, false, 0);
     }
 
     @Test
     public void testCreateCursor_different() {
         doReturn(Long.MAX_VALUE).when(config).getDefaultCursorTimeout();
-        SessionTransaction sessionTransaction = mock(SessionTransaction.class, new ThrowsException(new AssertionError()));
+        DbWrapper dbWrapper = mock(DbWrapper.class, new ThrowsException(new AssertionError()));
 
-        DefaultCursorManager cursorManager = new DefaultCursorManager(config, sessionTransaction);
+        DefaultInnerCursorManager cursorManager = new DefaultInnerCursorManager(config, dbWrapper);
 
-        CursorProperties createdCursor1 = cursorManager.createUnlimitedCursor(session1, false, false);
-        CursorProperties createdCursor2 = cursorManager.createUnlimitedCursor(session1, false, false);
+        CursorProperties createdCursor1 = cursorManager.openUnlimitedCursor(false, false);
+        CursorProperties createdCursor2 = cursorManager.openUnlimitedCursor(false, false);
 
         assert createdCursor1.getId().equals(createdCursor2.getId()) == false : "Two different cursos has the same id!";
     }
@@ -127,44 +122,44 @@ public class DefaultCursorManagerTest {
     @Test
     public void testExists() {
         doReturn(Long.MAX_VALUE).when(config).getDefaultCursorTimeout();
-        SessionTransaction sessionTransaction = mock(SessionTransaction.class, new ThrowsException(new AssertionError()));
+        DbWrapper dbWrapper = mock(DbWrapper.class, new ThrowsException(new AssertionError()));
 
-        DefaultCursorManager cursorManager = new DefaultCursorManager(config, sessionTransaction);
+        DefaultInnerCursorManager cursorManager = new DefaultInnerCursorManager(config, dbWrapper);
 
-        CursorProperties createdCursor1 = cursorManager.createUnlimitedCursor(session1, false, false);
+        CursorProperties createdCursor1 = cursorManager.openUnlimitedCursor(false, false);
 
         assert cursorManager.exists(createdCursor1.getId());
     }
 
     @Test
-    public void testClose() throws ToroTaskExecutionException {
+    public void testClose() throws ToroTaskExecutionException, IllegalArgumentException, ImplementationDbException {
         doReturn(Long.MAX_VALUE).when(config).getDefaultCursorTimeout();
-        SessionTransaction sessionTransaction = mock(SessionTransaction.class);
+        DbWrapper dbWrapper = mock(DbWrapper.class);
+        Cursor mockedCursor = mock(Cursor.class);
+        
+        DefaultInnerCursorManager cursorManager = new DefaultInnerCursorManager(config, dbWrapper);
 
-        DefaultCursorManager cursorManager = new DefaultCursorManager(config, sessionTransaction);
-
-        CursorProperties createdCursor1 = cursorManager.createUnlimitedCursor(session1, false, false);
+        CursorProperties createdCursor1 = cursorManager.openUnlimitedCursor(false, false);
+        
+        doReturn(mockedCursor).when(dbWrapper).getGlobalCursor(createdCursor1.getId());
 
         assert cursorManager.exists(createdCursor1.getId()) : "A recently created cursor should be contained in the cursor manager";
-
-        //once a cursor is closed in cursorManager, the executor must be notified
-        doReturn(null).when(sessionTransaction).closeCursor(createdCursor1.getId());
-
+        
         cursorManager.close(createdCursor1.getId());
         assert cursorManager.exists(createdCursor1.getId()) == false : "a closed cursor shouldn't be contained in the cursor manager";
 
         //executor should only recive one call to closeCursor with the give cursorId
-        verify(sessionTransaction, only()).closeCursor(createdCursor1.getId());
+        verify(mockedCursor, only()).close();
     }
 
     @Test()
     public void testNotifyRead_noLimit() {
         doReturn(Long.MAX_VALUE).when(config).getDefaultCursorTimeout();
-        SessionTransaction sessionTransaction = mock(SessionTransaction.class, new ThrowsException(new AssertionError()));
+        DbWrapper dbWrapper = mock(DbWrapper.class, new ThrowsException(new AssertionError()));
 
-        DefaultCursorManager cursorManager = new DefaultCursorManager(config, sessionTransaction);
+        DefaultInnerCursorManager cursorManager = new DefaultInnerCursorManager(config, dbWrapper);
 
-        CursorProperties createdCursor1 = cursorManager.createUnlimitedCursor(session1, false, false);
+        CursorProperties createdCursor1 = cursorManager.openUnlimitedCursor(false, false);
 
         assert cursorManager.notifyRead(createdCursor1.getId(), 123) == false;
     }
@@ -172,11 +167,11 @@ public class DefaultCursorManagerTest {
     @Test(expected = IllegalArgumentException.class)
     public void testNotifyRead_negativeReadElements() {
         doReturn(Long.MAX_VALUE).when(config).getDefaultCursorTimeout();
-        SessionTransaction sessionTransaction = mock(SessionTransaction.class, new ThrowsException(new AssertionError()));
+        DbWrapper dbWrapper = mock(DbWrapper.class, new ThrowsException(new AssertionError()));
 
-        DefaultCursorManager cursorManager = new DefaultCursorManager(config, sessionTransaction);
+        DefaultInnerCursorManager cursorManager = new DefaultInnerCursorManager(config, dbWrapper);
 
-        CursorProperties createdCursor1 = cursorManager.createLimitedCursor(session1, false, true, 1000000);
+        CursorProperties createdCursor1 = cursorManager.openLimitedCursor(false, true, 1000000);
 
         cursorManager.notifyRead(createdCursor1.getId(), -123);
     }
@@ -184,11 +179,11 @@ public class DefaultCursorManagerTest {
     @Test()
     public void test_readLogic() {
         doReturn(Long.MAX_VALUE).when(config).getDefaultCursorTimeout();
-        SessionTransaction sessionTransaction = mock(SessionTransaction.class, new ThrowsException(new AssertionError()));
+        DbWrapper dbWrapper = mock(DbWrapper.class, new ThrowsException(new AssertionError()));
 
-        DefaultCursorManager cursorManager = new DefaultCursorManager(config, sessionTransaction);
+        DefaultInnerCursorManager cursorManager = new DefaultInnerCursorManager(config, dbWrapper);
 
-        CursorProperties createdCursor1 = cursorManager.createLimitedCursor(session1, false, true, 1000000);
+        CursorProperties createdCursor1 = cursorManager.openLimitedCursor(false, true, 1000000);
 
         assert cursorManager.getReadElements(createdCursor1.getId()) == 0;
 
@@ -201,11 +196,11 @@ public class DefaultCursorManagerTest {
 
     public void testGetReadElements_withoutLimit() {
         doReturn(Long.MAX_VALUE).when(config).getDefaultCursorTimeout();
-        SessionTransaction sessionTransaction = mock(SessionTransaction.class, new ThrowsException(new AssertionError()));
+        DbWrapper dbWrapper = mock(DbWrapper.class, new ThrowsException(new AssertionError()));
 
-        DefaultCursorManager cursorManager = new DefaultCursorManager(config, sessionTransaction);
+        DefaultInnerCursorManager cursorManager = new DefaultInnerCursorManager(config, dbWrapper);
 
-        CursorProperties createdCursor1 = cursorManager.createUnlimitedCursor(session1, false, true);
+        CursorProperties createdCursor1 = cursorManager.openUnlimitedCursor(false, true);
 
         assert cursorManager.getReadElements(createdCursor1.getId()) == 0;
     }
@@ -213,113 +208,123 @@ public class DefaultCursorManagerTest {
     @Test
     public void testNotifyAllRead_notAutoclose() {
         doReturn(Long.MAX_VALUE).when(config).getDefaultCursorTimeout();
-        SessionTransaction sessionTransaction = mock(SessionTransaction.class, new ThrowsException(new AssertionError()));
+        DbWrapper dbWrapper = mock(DbWrapper.class, new ThrowsException(new AssertionError()));
 
-        DefaultCursorManager cursorManager = new DefaultCursorManager(config, sessionTransaction);
+        DefaultInnerCursorManager cursorManager = new DefaultInnerCursorManager(config, dbWrapper);
 
-        CursorProperties createdCursor1 = cursorManager.createUnlimitedCursor(session1, false, false);
+        CursorProperties createdCursor1 = cursorManager.openUnlimitedCursor(false, false);
 
         assert cursorManager.notifyAllRead(createdCursor1.getId()) == false;
     }
 
     @Test
-    public void testNotifyAllRead_autoclose() throws ToroTaskExecutionException {
+    public void testNotifyAllRead_autoclose() throws ToroTaskExecutionException, ImplementationDbException {
         doReturn(Long.MAX_VALUE).when(config).getDefaultCursorTimeout();
-        SessionTransaction sessionTransaction = mock(SessionTransaction.class);
+        DbWrapper dbWrapper = mock(DbWrapper.class);
+        Cursor mockedCursor = mock(Cursor.class);
 
-        DefaultCursorManager cursorManager = new DefaultCursorManager(config, sessionTransaction);
+        DefaultInnerCursorManager cursorManager = new DefaultInnerCursorManager(config, dbWrapper);
 
-        CursorProperties createdCursor1 = cursorManager.createUnlimitedCursor(session1, false, true);
+        CursorProperties createdCursor1 = cursorManager.openUnlimitedCursor(false, true);
 
-        //once a cursor is closed in cursorManager, the executor must be notified
-        doReturn(null).when(sessionTransaction).closeCursor(createdCursor1.getId());
+        doReturn(mockedCursor).when(dbWrapper).getGlobalCursor(createdCursor1.getId());
+        
+        assert cursorManager.exists(createdCursor1.getId()) : "A recently created cursor should be contained in the cursor manager";
 
         cursorManager.notifyAllRead(createdCursor1.getId());
 
         assert cursorManager.exists(createdCursor1.getId()) == false : "the cursor should be closed";
 
         //executor should only recive one call to closeCursor with the give cursorId
-        verify(sessionTransaction, only()).closeCursor(createdCursor1.getId());
+        verify(mockedCursor, only()).close();
     }
 
     @Test
     public void testGetCursor() {
         doReturn(Long.MAX_VALUE).when(config).getDefaultCursorTimeout();
-        SessionTransaction sessionTransaction = mock(SessionTransaction.class, new ThrowsException(new AssertionError()));
+        DbWrapper dbWrapper = mock(DbWrapper.class, new ThrowsException(new AssertionError()));
 
-        DefaultCursorManager cursorManager = new DefaultCursorManager(config, sessionTransaction);
+        DefaultInnerCursorManager cursorManager = new DefaultInnerCursorManager(config, dbWrapper);
 
-        CursorProperties createdCursor1 = cursorManager.createUnlimitedCursor(session1, false, true);
+        CursorProperties createdCursor1 = cursorManager.openUnlimitedCursor(false, true);
         assert cursorManager.getCursor(createdCursor1.getId()).equals(createdCursor1);
     }
 
     @Test
-    public void testTimeout() throws ToroTaskExecutionException {
+    public void testTimeout() throws ToroTaskExecutionException, ImplementationDbException {
         doReturn(timeout).when(config).getDefaultCursorTimeout();
         
-        SessionTransaction sessionTransaction = mock(SessionTransaction.class, new ThrowsException(new AssertionError()));
+        DbWrapper dbWrapper = mock(DbWrapper.class, new ThrowsException(new AssertionError()));
+        Cursor notUsedCursor = mock(Cursor.class);
+        Cursor usedCursor = mock(Cursor.class);
+        Cursor recentlyCreatedCursor = mock(Cursor.class);
 
         FakeTicker ticker = new FakeTicker();
 
-        DefaultCursorManager cursorManager = new DefaultCursorManager(config, sessionTransaction, ticker);
+        DefaultInnerCursorManager cursorManager = new DefaultInnerCursorManager(config, dbWrapper, ticker);
 
-        CursorProperties withoutTimeoutCursor = cursorManager.createUnlimitedCursor(session1, false, false);
+        CursorProperties withoutTimeoutCursor = cursorManager.openUnlimitedCursor(false, false);
 
         ticker.advance(2 * timeout, TimeUnit.MILLISECONDS);
-        CursorProperties notUsedCursor = cursorManager.createUnlimitedCursor(session1, true, false);
-        CursorProperties usedCursor = cursorManager.createUnlimitedCursor(session1, true, false);
-
-        doReturn(null).when(sessionTransaction).closeCursor(notUsedCursor.getId());
-        doReturn(null).when(sessionTransaction).closeCursor(usedCursor.getId());
+        CursorProperties notUsedCursorProp = cursorManager.openUnlimitedCursor(true, false);
+        CursorProperties usedCursorProp = cursorManager.openUnlimitedCursor(true, false);
+        
+        doReturn(notUsedCursor).when(dbWrapper).getGlobalCursor(notUsedCursorProp.getId());
+        doReturn(usedCursor).when(dbWrapper).getGlobalCursor(usedCursorProp.getId());
 
         ticker.advance(2 * timeout / 3, TimeUnit.MILLISECONDS);
-        assert cursorManager.exists(usedCursor.getId()) == true;
+        assert cursorManager.exists(usedCursorProp.getId()) == true;
 
         ticker.advance(2 * timeout / 3, TimeUnit.MILLISECONDS);
 
         //ticker has advanced 4 / 3 * timeout milliseconds since used and not used limited cursors are created, 2 / 3 since used cursor was used
-        CursorProperties recentlyCreatedCursor = cursorManager.createUnlimitedCursor(session1, true, false);
-        doReturn(null).when(sessionTransaction).closeCursor(recentlyCreatedCursor.getId());
+        CursorProperties recentlyCreatedCursorProp = cursorManager.openUnlimitedCursor(true, false);
+        doReturn(recentlyCreatedCursor).when(dbWrapper).getGlobalCursor(
+                recentlyCreatedCursorProp.getId()
+        );
 
         assert cursorManager.exists(withoutTimeoutCursor.getId()) == true;
-        assert cursorManager.exists(notUsedCursor.getId()) == false;
-        assert cursorManager.exists(usedCursor.getId()) == true;
-        assert cursorManager.exists(recentlyCreatedCursor.getId()) == true;
+        assert cursorManager.exists(notUsedCursorProp.getId()) == false;
+        assert cursorManager.exists(usedCursorProp.getId()) == true;
+        assert cursorManager.exists(recentlyCreatedCursorProp.getId()) == true;
 
         ticker.advance(2 * timeout, TimeUnit.MILLISECONDS);
         assert cursorManager.exists(withoutTimeoutCursor.getId()) == true;
-        assert cursorManager.exists(usedCursor.getId()) == false;
-        assert cursorManager.exists(recentlyCreatedCursor.getId()) == false;
+        assert cursorManager.exists(usedCursorProp.getId()) == false;
+        assert cursorManager.exists(recentlyCreatedCursorProp.getId()) == false;
 
         /*
          * even if the cursor doesn't exist, the close listener may be not notified until some actions happen.
          */
-        CursorProperties token = cursorManager.createUnlimitedCursor(session1, true, true);
+        CursorProperties token = cursorManager.openUnlimitedCursor(true, true);
         for (int i = 0; i < 100; i++) {
             cursorManager.exists(token.getId());
         }
 
-        verify(sessionTransaction).closeCursor(notUsedCursor.getId());
-        verify(sessionTransaction).closeCursor(usedCursor.getId());
-        verify(sessionTransaction).closeCursor(recentlyCreatedCursor.getId());
-        verifyNoMoreInteractions(sessionTransaction);
+        verify(notUsedCursor).close();
+        verify(usedCursor).close();
+        verify(recentlyCreatedCursor).close();
+        verifyNoMoreInteractions(notUsedCursor, usedCursor, recentlyCreatedCursor);
     }
 
     @Test
-    public void testDifferentTimeouts() throws ToroTaskExecutionException {
+    public void testDifferentTimeouts() throws ToroTaskExecutionException, ImplementationDbException {
         doReturn(timeout).when(config).getDefaultCursorTimeout();
 
-        SessionTransaction sessionTransaction = mock(SessionTransaction.class, new ThrowsException(new AssertionError()));
+        DbWrapper dbWrapper = mock(DbWrapper.class, new ThrowsException(new AssertionError()));
+        Cursor mockedCursor = mock(Cursor.class);
 
         FakeTicker ticker = new FakeTicker();
 
-        DefaultCursorManager cursorManager = new DefaultCursorManager(config, sessionTransaction, ticker);
+        DefaultInnerCursorManager cursorManager = new DefaultInnerCursorManager(config, dbWrapper, ticker);
 
-        CursorProperties t1Cursor = cursorManager.createUnlimitedCursor(session1, true, false);
-        doReturn(null).when(sessionTransaction).closeCursor(t1Cursor.getId());
+        CursorProperties t1Cursor = cursorManager.openUnlimitedCursor(true, false);
+        doReturn(mockedCursor).when(dbWrapper).getGlobalCursor(t1Cursor.getId());
+        
+        assert cursorManager.exists(t1Cursor.getId()) : "A recently created cursor should be contained in the cursor manager";
 
         cursorManager.setTimeout(1000 * timeout);
-        CursorProperties t2Cursor = cursorManager.createUnlimitedCursor(session1, true, false);
+        CursorProperties t2Cursor = cursorManager.openUnlimitedCursor(true, false);
 
         ticker.advance(2 * timeout, TimeUnit.MILLISECONDS);
         assert cursorManager.exists(t1Cursor.getId()) == false;
@@ -327,16 +332,19 @@ public class DefaultCursorManagerTest {
     }
 
     @Test
-    public void testOldCacheEviction() throws ToroTaskExecutionException {
+    public void testOldCacheEviction() throws ToroTaskExecutionException, ImplementationDbException {
         doReturn(timeout).when(config).getDefaultCursorTimeout();
 
-        SessionTransaction sessionTransaction = mock(SessionTransaction.class, new ThrowsException(new AssertionError()));
+        DbWrapper dbWrapper = mock(DbWrapper.class, new ThrowsException(new AssertionError()));
+        Cursor mockedCursor = mock(Cursor.class);
 
-        doReturn(null).when(sessionTransaction).closeCursor(any(CursorId.class));
+        DefaultInnerCursorManager cursorManager = new DefaultInnerCursorManager(config, dbWrapper);
 
-        DefaultCursorManager cursorManager = new DefaultCursorManager(config, sessionTransaction);
-
-        CursorProperties cp1 = cursorManager.createUnlimitedCursor(session1, true, true);
+        CursorProperties cp1 = cursorManager.openUnlimitedCursor(true, true);
+        
+        doReturn(mockedCursor).when(dbWrapper).getGlobalCursor(cp1.getId());
+        
+        assert cursorManager.exists(cp1.getId()) : "A recently created cursor should be contained in the cursor manager";
 
         cursorManager.setTimeout(timeout + 1);
 
@@ -344,16 +352,11 @@ public class DefaultCursorManagerTest {
 
         cursorManager.close(cp1.getId());
 
-        for (int i = 0; i < DefaultCursorManager.OLD_CACHE_EVICTION_PERIOD; i++) {
+        for (int i = 0; i < DefaultInnerCursorManager.OLD_CACHE_EVICTION_PERIOD; i++) {
             cursorManager.exists(cp1.getId());
         }
 
         assert cursorManager.getOldCachesSize() == 0;
-    }
-
-    private static class MyConnectionId implements Session {
-
-        private static final long serialVersionUID = 1L;
     }
 
     public static class FakeTicker extends Ticker {

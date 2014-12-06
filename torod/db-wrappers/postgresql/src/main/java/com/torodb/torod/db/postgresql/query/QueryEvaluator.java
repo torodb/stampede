@@ -87,11 +87,13 @@ public class QueryEvaluator {
      * <p>
      * @param criteria
      * @param dsl
+     * @param maxResults
      * @return 
      */
     public Set<Integer> evaluateDid(
             @Nullable QueryCriteria criteria, 
-            DSLContext dsl
+            DSLContext dsl,
+            int maxResults
     ) {
         DidsQueryEvaluatorCollector collector
                 = new DidsQueryEvaluatorCollector();

@@ -22,8 +22,6 @@
 package com.torodb.di;
 
 import com.google.inject.AbstractModule;
-import com.toro.torod.cursors.DefaultCursorManagerFactory;
-import com.torodb.torod.core.cursors.CursorManagerFactory;
 import com.torodb.torod.core.dbMetaInf.DbMetaInformationCache;
 import com.torodb.torod.db.metaInf.DefaultDbMetaInformationCache;
 import com.torodb.torod.db.metaInf.DefaultTableMetaInfoFactory;
@@ -47,8 +45,6 @@ public class DbMetaInformationCacheModule extends AbstractModule {
 //        bind(ReservedIdHeuristic.class).to(LazyReserveIdHeuristic.class).in(Singleton.class);
         bind(ReservedIdHeuristic.class).toInstance(new PoolReserveIdHeuristic(50000, 0.75));
         bind(ReservedIdInfoFactory.class).to(DefaultTableMetaInfoFactory.class).in(Singleton.class);
-
-        bind(CursorManagerFactory.class).to(DefaultCursorManagerFactory.class).in(Singleton.class);
     }
     
     

@@ -18,7 +18,7 @@
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>9.3-1101-jdbc41</version>
+            <version>9.3-1102-jdbc4</version>
         </dependency>
         <dependency>
             <groupId>com.zaxxer</groupId>
@@ -34,7 +34,6 @@
         <dependency>
             <groupId>com.google.inject</groupId>
             <artifactId>guice</artifactId>
-            <version>3.0</version>
         </dependency>
         <dependency>
             <groupId>com.beust</groupId>
@@ -109,7 +108,7 @@
         </dependency>
     </dependencies>
 
-    <build>
+    <build>        
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

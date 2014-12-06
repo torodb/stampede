@@ -22,30 +22,36 @@ package com.torodb.torod.db.executor.jobs;
 
 import com.torodb.torod.core.cursors.CursorId;
 import com.torodb.torod.core.dbWrapper.Cursor;
-import com.torodb.torod.core.dbWrapper.DbConnection;
+import com.torodb.torod.core.dbWrapper.DbWrapper;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.db.executor.DefaultSessionTransaction;
+import com.torodb.torod.db.executor.report.ReadCursorReport;
 import java.util.List;
 import java.util.concurrent.Callable;
+import javax.inject.Inject;
 
 /**
  *
  */
 public class ReadCursorCallable implements Callable<List<? extends SplitDocument>> {
 
-    private final DefaultSessionTransaction.DbConnectionProvider connectionProvider;
+    private final DbWrapper dbWrapper;
     private final CursorId cursorId;
     private final int maxResult;
+    private final ReadCursorReport report;
 
+    @Inject
     public ReadCursorCallable(
-            DefaultSessionTransaction.DbConnectionProvider connectionProvider,
+            DbWrapper dbWrapper,
             CursorId cursorId,
-            int maxResult
+            int maxResult,
+            ReadCursorReport report
     ) {
-        this.connectionProvider = connectionProvider;
+        this.dbWrapper = dbWrapper;
         this.cursorId = cursorId;
         this.maxResult = maxResult;
+        this.report = report;
     }
 
     @Override
@@ -53,9 +59,13 @@ public class ReadCursorCallable implements Callable<List<? extends SplitDocument
         Cursor cursor = null;
         boolean closeCursor = false;
         try {
-            cursor = connectionProvider.getConnection().getDbCursor(cursorId);
+            cursor = dbWrapper.getGlobalCursor(cursorId);
 
-            return cursor.readDocuments(maxResult);
+            List<SplitDocument> result = cursor.readDocuments(maxResult);
+            
+            report.taskExecuted(cursorId, maxResult);
+            
+            return result;
         }
         catch (RuntimeException ex) {
             closeCursor = true;

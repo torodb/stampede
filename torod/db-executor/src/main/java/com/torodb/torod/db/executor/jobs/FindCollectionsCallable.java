@@ -23,20 +23,30 @@ package com.torodb.torod.db.executor.jobs;
 import com.torodb.torod.core.dbWrapper.DbConnection;
 import com.torodb.torod.core.dbWrapper.DbWrapper;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
+import com.torodb.torod.db.executor.report.FindCollectionsReport;
 import java.util.Map;
+import javax.inject.Inject;
 
 /**
  *
  */
 public class FindCollectionsCallable extends SystemDbCallable<Map<String, Integer>> {
 
-    public FindCollectionsCallable(DbWrapper dbWrapperPool) {
+    private final FindCollectionsReport report;
+    
+    @Inject
+    public FindCollectionsCallable(
+            DbWrapper dbWrapperPool, 
+            FindCollectionsReport report) {
         super(dbWrapperPool);
+        this.report = report;
     }
 
     @Override
     Map<String, Integer> call(DbConnection db) throws ImplementationDbException {
-        return db.findCollections();
+        Map<String, Integer> result = db.findCollections();
+        report.taskExecuted();
+        return result;
     }
 
     @Override

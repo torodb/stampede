@@ -29,9 +29,7 @@ import com.torodb.torod.core.WriteFailMode;
 import com.torodb.torod.core.config.DocumentBuilderFactory;
 import com.torodb.torod.core.connection.*;
 import com.torodb.torod.core.cursors.CursorId;
-import com.torodb.torod.core.cursors.CursorProperties;
 import com.torodb.torod.core.d2r.D2RTranslator;
-import com.torodb.torod.core.dbMetaInf.CursorManager;
 import com.torodb.torod.core.exceptions.ToroImplementationException;
 import com.torodb.torod.core.exceptions.UserToroException;
 import com.torodb.torod.core.executor.SessionExecutor;
@@ -39,8 +37,6 @@ import com.torodb.torod.core.executor.SessionTransaction;
 import com.torodb.torod.core.executor.ToroTaskExecutionException;
 import com.torodb.torod.core.language.operations.DeleteOperation;
 import com.torodb.torod.core.language.operations.UpdateOperation;
-import com.torodb.torod.core.language.projection.Projection;
-import com.torodb.torod.core.language.querycriteria.QueryCriteria;
 import com.torodb.torod.core.language.querycriteria.utils.EqualFactory;
 import com.torodb.torod.core.language.update.UpdateAction;
 import com.torodb.torod.core.subdocument.SplitDocument;
@@ -59,27 +55,25 @@ import java.util.concurrent.Future;
  */
 public class DefaultToroTransaction implements ToroTransaction {
 
-    private final Session session;
     private final SessionTransaction sessionTransaction;
     private final D2RTranslator d2r;
     private final SessionExecutor executor;
-    private final CursorManager cursorManager;
     private final DocumentBuilderFactory documentBuilderFactory;
-
-    public DefaultToroTransaction(
+    private final CursorManager cursorManager;
+    
+    DefaultToroTransaction(
             Session session,
             SessionTransaction sessionTransaction,
             D2RTranslator d2r,
             SessionExecutor executor,
-            CursorManager cursorManager,
-            DocumentBuilderFactory documentBuilderFactory
+            DocumentBuilderFactory documentBuilderFactory,
+            CursorManager cursorManager
     ) {
-        this.session = session;
         this.sessionTransaction = sessionTransaction;
         this.d2r = d2r;
         this.executor = executor;
-        this.cursorManager = cursorManager;
         this.documentBuilderFactory = documentBuilderFactory;
+        this.cursorManager = cursorManager;
     }
 
     @Override
@@ -124,158 +118,6 @@ public class DefaultToroTransaction implements ToroTransaction {
             //TODO: Change exceptions
             throw new RuntimeException(ex);
         }
-    }
-
-    @Override
-    public CursorId query(
-            String collection,
-            @Nullable QueryCriteria queryCriteria,
-            @Nullable Projection projection,
-            int numberToSkip,
-            boolean autoclose,
-            boolean hasTimeout) {
-
-        CursorProperties cursor
-                = cursorManager.createUnlimitedCursor(
-                        session,
-                        hasTimeout,
-                        autoclose
-                );
-        sessionTransaction.query(
-                collection,
-                cursor.getId(),
-                queryCriteria,
-                projection
-        );
-
-        return cursor.getId();
-    }
-
-    @Override
-    public CursorId query(
-            String collection,
-            @Nullable QueryCriteria queryCriteria,
-            @Nullable Projection projection,
-            int numberToSkip,
-            int limit,
-            boolean autoclose,
-            boolean hasTimeout) {
-
-        if (limit <= 0) {
-            throw new IllegalArgumentException(
-                    "The limit must be higher than 0 (>= 1)");
-        }
-        CursorProperties cursor
-                = cursorManager.createLimitedCursor(
-                        session,
-                        hasTimeout,
-                        autoclose,
-                        limit
-                );
-        sessionTransaction.query(collection, cursor.getId(), queryCriteria,
-                                 projection);
-
-        return cursor.getId();
-    }
-
-    @Override
-    public List<ToroDocument> readCursor(CursorId cursorId,
-                                         int limit) {
-        //TODO: check security
-
-        if (limit <= 0) {
-            throw new IllegalArgumentException(
-                    "Limit must be a positive numbre, but " + limit
-                    + " was recived");
-        }
-
-        try {
-            List<? extends SplitDocument> splitDocs = sessionTransaction.
-                    readCursor(cursorId, limit)
-                    .get();
-            List<ToroDocument> docs = Lists.newArrayListWithCapacity(splitDocs.
-                    size());
-            for (SplitDocument splitDocument : splitDocs) {
-                docs.add(d2r.translate(executor, splitDocument));
-            }
-
-            cursorManager.notifyRead(cursorId, docs.size());
-
-            return docs;
-        }
-        catch (ToroTaskExecutionException ex) {
-            //TODO: Change exceptions
-            throw new RuntimeException(ex);
-        }
-        catch (InterruptedException ex) {
-            //TODO: Change exceptions
-            throw new RuntimeException(ex);
-        }
-        catch (ExecutionException ex) {
-            //TODO: Change exceptions
-            throw new RuntimeException(ex);
-        }
-    }
-
-    @Override
-    public List<ToroDocument> readAllCursor(CursorId cursorId) {
-        //TODO: check security
-
-        try {
-            List<? extends SplitDocument> splitDocs;
-
-            CursorProperties prop = cursorManager.getCursor(cursorId);
-            if (prop.hasLimit()) {
-                int elementsToRead = prop.getLimit() - cursorManager.
-                        getReadElements(cursorId);
-
-                assert elementsToRead >= 0;
-
-                if (elementsToRead == 0) {
-                    return Collections.emptyList();
-                }
-                else {
-                    splitDocs = sessionTransaction.readAllCursor(cursorId)
-                            .get();
-                }
-            }
-            else {
-                splitDocs = sessionTransaction.readAllCursor(cursorId)
-                        .get();
-            }
-
-            List<ToroDocument> docs = Lists.newArrayListWithCapacity(splitDocs.
-                    size());
-            for (SplitDocument splitDocument : splitDocs) {
-                docs.add(d2r.translate(executor, splitDocument));
-            }
-
-            cursorManager.notifyAllRead(cursorId);
-
-            return docs;
-        }
-        catch (ToroTaskExecutionException ex) {
-            //TODO: Change exceptions
-            throw new RuntimeException(ex);
-        }
-        catch (InterruptedException ex) {
-            //TODO: Change exceptions
-            throw new RuntimeException(ex);
-        }
-        catch (ExecutionException ex) {
-            //TODO: Change exceptions
-            throw new RuntimeException(ex);
-        }
-    }
-
-    @Override
-    public Future<Integer> getPosition(CursorId cursorId) {
-        return Futures.immediateFuture(cursorManager.getReadElements(cursorId));
-    }
-
-    @Override
-    public Future<Integer> countRemainingDocs(CursorId cursorId) {
-        return sessionTransaction.countRemainingDocs(cursorId);
     }
 
     @Override
@@ -331,9 +173,15 @@ public class DefaultToroTransaction implements ToroTransaction {
             UpdateResponse.Builder responseBuilder
     ) throws InterruptedException, ExecutionException {
 
-        CursorId cursor = query(collection, update.getQuery(), null, 0, true,
-                                false);
-        List<ToroDocument> candidates = readAllCursor(cursor);
+        CursorId cursor = cursorManager.openUnlimitedCursor(
+                collection, 
+                update.getQuery(), 
+                null, 
+                0, 
+                true,
+                false
+        );
+        List<ToroDocument> candidates = cursorManager.readAllCursor(cursor);
 
         responseBuilder.addCandidates(candidates.size());
 
@@ -411,14 +259,6 @@ public class DefaultToroTransaction implements ToroTransaction {
 
     private ToroDocument documentToInsert(UpdateAction action) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public void closeCursor(CursorId cursorId) {
-        //TODO: check security
-
-        //when a cursor is removed from the cursor manager, it is closed in the database
-        cursorManager.close(cursorId);
     }
 
 }

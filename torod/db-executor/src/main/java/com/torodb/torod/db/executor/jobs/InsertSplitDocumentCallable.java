@@ -21,6 +21,7 @@
 package com.torodb.torod.db.executor.jobs;
 
 import com.google.common.base.Function;
+import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
@@ -36,49 +37,60 @@ import com.torodb.torod.core.dbWrapper.exceptions.UserDbException;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.core.subdocument.SubDocType;
 import com.torodb.torod.core.subdocument.SubDocument;
-import com.torodb.torod.db.executor.DefaultSessionTransaction;
+import com.torodb.torod.db.executor.report.InsertReport;
 import java.util.*;
 import java.util.concurrent.Callable;
 import javax.annotation.Nonnull;
+import javax.inject.Inject;
 
 /**
  *
  */
 public class InsertSplitDocumentCallable implements Callable<InsertResponse> {
 
-    private final DefaultSessionTransaction.DbConnectionProvider connectionProvider;
+    private final Supplier<DbConnection> connectionProvider;
     private final String collection;
     private final Collection<SplitDocument> docs;
     private final WriteFailMode mode;
+    private final InsertReport report;
 
+    @Inject
     public InsertSplitDocumentCallable(
-            DefaultSessionTransaction.DbConnectionProvider connectionProvider,
-            String collection,
-            Collection<SplitDocument> docs,
-            WriteFailMode mode) {
-
+            Supplier<DbConnection> connectionProvider, 
+            String collection, 
+            Collection<SplitDocument> docs, 
+            WriteFailMode mode, 
+            InsertReport report) {
         this.connectionProvider = connectionProvider;
         this.collection = collection;
         this.docs = docs;
         this.mode = mode;
+        this.report = report;
     }
 
     @Override
     public InsertResponse call() throws Exception {
+        InsertResponse result;
         switch (mode) {
             case ISOLATED:
-                return isolatedInsert();
+                result = isolatedInsert();
+                break;
             case ORDERED:
-                return orderedInsert();
+                result = orderedInsert();
+                break;
             case TRANSACTIONAL:
-                return transactionalInsert();
+                result = transactionalInsert();
+                break;
             default:
                 throw new AssertionError("Study exceptions");
         }
+        report.taskExecuted(result.getInsertedSize());
+        
+        return result;
     }
 
     private void insertSingleDoc(SplitDocument doc) throws ImplementationDbException, UserDbException {
-        DbConnection connection = connectionProvider.getConnection();
+        DbConnection connection = connectionProvider.get();
         connection.insertRootDocuments(collection, Collections.singleton(doc));
         
         for (SubDocType type : doc.getSubDocuments().rowKeySet()) {
@@ -121,7 +133,7 @@ public class InsertSplitDocumentCallable implements Callable<InsertResponse> {
     }
 
     private InsertResponse transactionalInsert() throws ImplementationDbException {
-        DbConnection connection = connectionProvider.getConnection();
+        DbConnection connection = connectionProvider.get();
         List<WriteError> errors = Lists.newLinkedList();
         
         try {

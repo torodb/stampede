@@ -29,6 +29,7 @@ import com.torodb.torod.db.executor.jobs.CreateCollectionCallable;
 import com.torodb.torod.db.executor.jobs.CreateSubDocTableCallable;
 import com.torodb.torod.db.executor.jobs.FindCollectionsCallable;
 import com.torodb.torod.db.executor.jobs.ReserveSubDocIdsCallable;
+import com.torodb.torod.db.executor.report.ReportFactory;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -44,13 +45,21 @@ class DefaultSystemExecutor implements SystemExecutor {
     private final Monitor monitor;
     private final AtomicLong taskCounter;
     private final ExceptionHandler exceptionHandler;
+    private final ReportFactory reportFactory;
 
-    public DefaultSystemExecutor(ExceptionHandler exceptionHandler, DbWrapper wrapper, ExecutorServiceProvider executorServiceProvider, Monitor monitor, long initialTick) {
+    public DefaultSystemExecutor(
+            ExceptionHandler exceptionHandler, 
+            DbWrapper wrapper, 
+            ExecutorServiceProvider executorServiceProvider, 
+            Monitor monitor, 
+            long initialTick,
+            ReportFactory reportFactory) {
         this.exceptionHandler = exceptionHandler;
         this.wrapper = wrapper;
         this.executorService = executorServiceProvider.consumeSystemExecutorService();
         this.monitor = monitor;
         this.taskCounter = new AtomicLong(initialTick);
+        this.reportFactory = reportFactory;
     }
 
     @Override
@@ -59,23 +68,59 @@ class DefaultSystemExecutor implements SystemExecutor {
     }
 
     @Override
-    public Future<?> createCollection(String collection, CreateCollectionCallback callback) throws ToroTaskExecutionException {
-        return submit(new CreateCollectionCallable(collection, callback, wrapper));
+    public Future<?> createCollection(
+            String collection, 
+            CreateCollectionCallback callback) throws ToroTaskExecutionException {
+        return submit(
+                new CreateCollectionCallable(
+                        wrapper,
+                        collection, 
+                        callback, 
+                        reportFactory.createCreateCollectionReport()
+                )
+        );
     }
 
     @Override
-    public Future<?> createSubDocTable(String collection, SubDocType type, CreateSubDocTypeTableCallback callback) throws ToroTaskExecutionException {
-        return submit(new CreateSubDocTableCallable(wrapper, collection, type, callback));
+    public Future<?> createSubDocTable(
+            String collection, 
+            SubDocType type, 
+            CreateSubDocTypeTableCallback callback) throws ToroTaskExecutionException {
+        return submit(
+                new CreateSubDocTableCallable(
+                        wrapper, 
+                        collection, 
+                        type, 
+                        callback,
+                        reportFactory.createCreateSubDocTableReport()
+                )
+        );
     }
 
     @Override
-    public Future<?> reserveDocIds(String collection, int idsToReserve, ReserveDocIdsCallback callback) throws ToroTaskExecutionException {
-        return submit(new ReserveSubDocIdsCallable(wrapper, collection, idsToReserve, callback));
+    public Future<?> reserveDocIds(
+            String collection, 
+            int idsToReserve, 
+            ReserveDocIdsCallback callback) throws ToroTaskExecutionException {
+        return submit(
+                new ReserveSubDocIdsCallable(
+                        wrapper, 
+                        collection, 
+                        idsToReserve, 
+                        callback,
+                        reportFactory.createReserveSubDocIdsReport()
+                )
+        );
     }
 
     @Override
     public Future<Map<String, Integer>> findCollections() {
-        return submit(new FindCollectionsCallable(wrapper));
+        return submit(
+                new FindCollectionsCallable(
+                        wrapper,
+                        reportFactory.createFindCollectionsReport()
+                )
+        );
     }
 
     @Override

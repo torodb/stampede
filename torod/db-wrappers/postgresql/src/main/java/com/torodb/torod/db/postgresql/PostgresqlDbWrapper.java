@@ -21,6 +21,7 @@
 
 package com.torodb.torod.db.postgresql;
 
+import com.torodb.torod.core.annotations.DatabaseName;
 import com.torodb.torod.db.postgresql.meta.TorodbMeta;
 import com.torodb.torod.db.sql.AbstractSqlDbWrapper;
 import com.torodb.torod.core.config.TorodConfig;
@@ -39,9 +40,14 @@ import org.jooq.impl.DefaultConfiguration;
 @Singleton
 public class PostgresqlDbWrapper extends AbstractSqlDbWrapper {
 
+    private final String databaseName;
+    
     @Inject
-    public PostgresqlDbWrapper(TorodConfig config) {
+    public PostgresqlDbWrapper(
+            TorodConfig config, 
+            @DatabaseName String databaseName) {
         super(config);
+        this.databaseName = databaseName;
     }
 
     @Override
@@ -53,6 +59,6 @@ public class PostgresqlDbWrapper extends AbstractSqlDbWrapper {
 
     @Override
     protected DbConnection reserveConnection(DSLContext dsl, TorodbMeta meta) {
-        return new PostgresqlDbConnection(dsl, meta);
+        return new PostgresqlDbConnection(dsl, meta, databaseName);
     }
 }

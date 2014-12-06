@@ -17,32 +17,34 @@
  *     Copyright (c) 2014, 8Kdata Technology
  *     
  */
-
-
-package com.toro.torod.cursors;
-
-import com.torodb.torod.core.config.TorodConfig;
-import com.torodb.torod.core.cursors.CursorManagerFactory;
-import com.torodb.torod.core.dbMetaInf.CursorManager;
-import com.torodb.torod.core.executor.SessionExecutor;
-import com.torodb.torod.core.executor.SessionTransaction;
-import javax.inject.Inject;
+package com.torodb.torod.core.pojos;
 
 /**
  *
  */
-public class DefaultCursorManagerFactory implements CursorManagerFactory {
+public class DefaultDatabase implements Database {
 
-    private final TorodConfig config;
-    
-    @Inject
-    public DefaultCursorManagerFactory(TorodConfig config)  {
-        this.config = config;
+    private final String name;
+    private final long size;
+
+    public DefaultDatabase(String name, long size) {
+        this.name = name;
+        this.size = size;
     }
-    
+
     @Override
-    public CursorManager createCursorManager(SessionTransaction transaction) {
-        return new DefaultCursorManager(config, transaction);
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public long getSize() {
+        return size;
+    }
+
+    @Override
+    public String toString() {
+        return "Database {" + "name=" + name + ", size=" + size + '}';
     }
     
 }

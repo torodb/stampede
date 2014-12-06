@@ -20,27 +20,35 @@
 
 package com.torodb.torod.db.executor.jobs;
 
+import com.google.common.base.Supplier;
+import com.torodb.torod.core.dbWrapper.DbConnection;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.db.executor.DefaultSessionTransaction;
+import com.torodb.torod.db.executor.report.RollbackReport;
 import java.util.concurrent.Callable;
+import javax.inject.Inject;
 
 /**
  *
  */
 public class RollbackCallable implements Callable<Void> {
     
-    private final DefaultSessionTransaction.DbConnectionProvider connectionProvider;
+    private final Supplier<DbConnection> connectionProvider;
+    private final RollbackReport report;
 
+    @Inject
     public RollbackCallable(
-            DefaultSessionTransaction.DbConnectionProvider connectionProvider
+            Supplier<DbConnection> connectionProvider,
+            RollbackReport report
     ) {
         this.connectionProvider = connectionProvider;
+        this.report = report;
     }
 
     @Override
     public Void call() throws ImplementationDbException {
-        connectionProvider.getConnection().rollback();
-        
+        connectionProvider.get().rollback();
+        report.taskExecuted();
         return null;
     }
 }
