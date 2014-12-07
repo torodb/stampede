@@ -32,8 +32,9 @@ public interface DbWrapper {
      * <p>
      * This method is called when ToroD starts to retrieve some internal
      * information from the database and setup inner data structures.
+     * @throws ImplementationDbException upon detecting an incompatible version of the database.
      */
-    public void initialize();
+    public void initialize() throws ImplementationDbException;
 
     /**
      * Returns a {@link DbConnection}.

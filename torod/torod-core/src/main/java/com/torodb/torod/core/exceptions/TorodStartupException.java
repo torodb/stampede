@@ -18,24 +18,24 @@
  *     
  */
 
-package com.torodb.torod.core;
+package com.torodb.torod.core.exceptions;
 
-import com.torodb.torod.core.connection.ToroConnection;
-import com.torodb.torod.core.exceptions.TorodStartupException;
+public class TorodStartupException extends ToroRuntimeException {
+    private static final long serialVersionUID = 1L;
 
-import javax.annotation.concurrent.ThreadSafe;
+    public TorodStartupException() {
+    }
 
-/**
- *
- */
-@ThreadSafe
-public interface Torod {
+    public TorodStartupException(String message) {
+        super(message);
+    }
 
-    public void start() throws TorodStartupException;
+    public TorodStartupException(String message, Throwable cause) {
+        super(message, cause);
+    }
 
-    public ToroConnection openConnection();
+    public TorodStartupException(Throwable cause) {
+        super(cause);
+    }
     
-    public void shutdown();
-    
-    public void shutdownNow();
 }
