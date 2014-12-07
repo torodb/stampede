@@ -4,15 +4,15 @@ ToroDB is an open source, document-oriented, JSON database that runs on top of P
 
 ToroDB follows a RERO (Release Early, Release Often) policy. Current version is considered a "developer preview" and hence is not suitable for production use. However, any feedback, contributions, help and/or patches are very welcome. Please join the [torodb-dev][8] mailing list for further discussion.
 
-For more information, please see [ToroDB's website][1] and this [latest presentation][7] about ToroDB.
+For more information, please see [ToroDB's website][1], this [latest presentation][7] or this [video recording of a presentation][11] about ToroDB.
 
 
 ## Requisites
 
 ToroDB is written in Java and requires:
 
-* A suitable JVM, version 6 or higher. It has been tested with Oracle JVM v6-8.
-* A [PostgreSQL][2] database, version 9.4. PostgreSQL 9.4 is currently in [RC1][9].
+* A suitable JRE, version 6 or higher. It has been mainly tested with Oracle JRE 8.
+* A [PostgreSQL][2] database, version 9.4 or higher. PostgreSQL 9.4 is currently in [RC1][9].
 
 
 ## Download/Installation
@@ -28,7 +28,7 @@ You may compile ToroDB yourself. All the project is written in Java and managed 
 
 ToroDB is based on the [Mongo Wire Protocol library][5] (mongowp), which is another library built by [8Kdata][6] to help construct programs that speak the MongoDB protocol. You may also compile this library yourself, or let maven download it from the repository automatically.
 
-Just run "`mvn package`" on the root directory and find the executable jar file in `torodb/target/torodb-0.15-SNAPSHOT-jar-with-dependencies.jar`.
+Just run `mvn package` on the root directory and find the executable jar file in `torodb/target/torodb-0.15-SNAPSHOT-jar-with-dependencies.jar`.
 
 
 ## Running ToroDB
@@ -87,3 +87,4 @@ Please see [CONTRIBUTING][10].
 [8]: https://groups.google.com/forum/#!forum/torodb-dev
 [9]: http://www.postgresql.org/download/
 [10]: https://github.com/torodb/torodb/blob/master/CONTRIBUTING.md
+[11]: http://www.bigdataspain.org/2014/conference/new-open-source-database-a-bridge-between-the-nosql-and-relational-worlds
