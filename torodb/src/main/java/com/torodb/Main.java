@@ -27,15 +27,20 @@ import com.torodb.di.DbMetaInformationCacheModule;
 import com.torodb.di.ConnectionModule;
 import com.torodb.di.ExecutorModule;
 import com.torodb.di.D2RModule;
+
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
+
 import com.beust.jcommander.JCommander;
 import com.eightkdata.mongowp.mongoserver.MongoServer;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.torodb.torod.core.Torod;
+import com.torodb.torod.core.exceptions.TorodStartupException;
+
 import java.io.*;
 import java.nio.charset.Charset;
+
 import org.slf4j.LoggerFactory;
 
 /**
@@ -127,7 +132,12 @@ public class Main {
 	}
 
 	private static void run(final Torod torod, final MongoServer server) {
-		torod.start();
+		try {
+			torod.start();
+		} catch (TorodStartupException e) {
+			LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME).error(e.getMessage());
+			throw new RuntimeException(e.getMessage());
+		}
 		server.run();
 	}
 

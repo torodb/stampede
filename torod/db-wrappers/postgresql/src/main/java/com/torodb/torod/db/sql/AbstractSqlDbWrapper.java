@@ -42,7 +42,8 @@ import org.jooq.impl.DSL;
  */
 public abstract class AbstractSqlDbWrapper implements DbWrapper {
 
-    private final AtomicBoolean isInitialized;
+    
+	private final AtomicBoolean isInitialized;
     private final DataSource sessionDataSource;
     private final DataSource systemDataSource;
     private TorodbMeta meta;
@@ -64,8 +65,10 @@ public abstract class AbstractSqlDbWrapper implements DbWrapper {
         return DSL.using(getJooqConfiguration(new MyConnectionProvider(c)));
     }
 
+    protected abstract void checkDbSupported(Connection c) throws SQLException, ImplementationDbException;
+    
     @Override
-    public void initialize() {
+    public void initialize() throws ImplementationDbException {
         if (isInitialized()) {
             throw new IllegalStateException("The db-wrapper is already initialized");
         }
@@ -74,8 +77,9 @@ public abstract class AbstractSqlDbWrapper implements DbWrapper {
 
         try {
             c = sessionDataSource.getConnection();
+            checkDbSupported(c);
             c.setAutoCommit(false);
-
+            
             meta = new TorodbMeta(getDsl(c));
             c.commit();
 
@@ -131,7 +135,8 @@ public abstract class AbstractSqlDbWrapper implements DbWrapper {
             throw new RuntimeException(ex);
         }
     }
-
+    
+    
     public boolean isInitialized() {
         return isInitialized.get();
     }
