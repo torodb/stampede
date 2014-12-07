@@ -23,6 +23,7 @@ package com.torodb.di;
 import com.eightkdata.mongowp.mongoserver.api.QueryCommandProcessor;
 import com.eightkdata.mongowp.mongoserver.api.callback.RequestProcessor;
 import com.google.inject.AbstractModule;
+import com.torodb.BuildProperties;
 import com.torodb.mongowp.mongoserver.api.toro.ToroQueryCommandProcessor;
 import com.torodb.mongowp.mongoserver.api.toro.ToroRequestProcessor;
 
@@ -34,6 +35,7 @@ public class MongoServerModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(RequestProcessor.class).to(ToroRequestProcessor.class);
+        bind(BuildProperties.class).asEagerSingleton();
         bind(QueryCommandProcessor.class).to(ToroQueryCommandProcessor.class);
     }
 }

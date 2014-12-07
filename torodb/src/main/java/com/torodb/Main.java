@@ -20,13 +20,6 @@
 
 package com.torodb;
 
-import com.torodb.di.MongoServerModule;
-import com.torodb.di.DbWrapperModule;
-import com.torodb.di.ConfigModule;
-import com.torodb.di.DbMetaInformationCacheModule;
-import com.torodb.di.ConnectionModule;
-import com.torodb.di.ExecutorModule;
-import com.torodb.di.D2RModule;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import com.beust.jcommander.JCommander;
@@ -35,15 +28,15 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.torodb.di.*;
 import com.torodb.torod.core.Torod;
-import java.io.*;
-import java.nio.charset.Charset;
 import org.slf4j.LoggerFactory;
 
+import java.io.*;
+import java.nio.charset.Charset;
+
 /**
- *
+ * ToroDB's entry point
  */
 public class Main {
-    
     private static final String VERSION = "0.12";
 
 	public static void main(String[] args) throws Exception {
@@ -111,6 +104,7 @@ public class Main {
 
 		final Torod torod = injector.getInstance(Torod.class);
 		final MongoServer server = injector.getInstance(MongoServer.class);
+		final BuildProperties buildProperties = injector.getInstance(BuildProperties.class);
 
 		Thread shutdown = new Thread() {
 			@Override
@@ -124,8 +118,10 @@ public class Main {
         Thread serverThread = new Thread() {
             @Override
             public void run() {
-                JCommander.getConsole().println("Starting ToroDB v" + VERSION 
-                        + " listening on port " + config.getPort());
+                JCommander.getConsole().println(
+						"Starting ToroDB v" + buildProperties.getFullVersion() + " listening on port "
+						+ config.getPort()
+				);
                 Main.run(torod, server);
                 shutdown(config, torod, server);
             }

@@ -30,7 +30,11 @@ import com.eightkdata.mongowp.mongoserver.protocol.MongoWP;
 import com.eightkdata.mongowp.mongoserver.protocol.MongoWP.ErrorCode;
 import com.eightkdata.nettybson.api.BSONDocument;
 import com.eightkdata.nettybson.mongodriver.MongoBSONDocument;
+import com.google.common.base.Joiner;
+import com.google.common.collect.Lists;
+import com.google.inject.Inject;
 import com.mongodb.WriteConcern;
+import com.torodb.BuildProperties;
 import com.torodb.mongowp.mongoserver.api.toro.util.BSONDocuments;
 import com.torodb.mongowp.mongoserver.api.toro.util.BSONToroDocument;
 import com.torodb.torod.core.WriteFailMode;
@@ -57,8 +61,15 @@ import java.util.concurrent.Future;
  *
  */
 public class ToroQueryCommandProcessor implements QueryCommandProcessor {
+	private final BuildProperties buildProperties;
+
     public static final Map<String,Integer> NUM_INDEXES_MAP
             = new HashMap<String, Integer>();
+
+	@Inject
+	public ToroQueryCommandProcessor(BuildProperties buildProperties) {
+		this.buildProperties = buildProperties;
+	}
 
 	//TODO: implement with toro natives
 	@Override
@@ -583,18 +594,21 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
 	public void buildInfo(MessageReplier messageReplier) {
 		Map<String, Object> keyValues = new HashMap<String, Object>();
 		
-		keyValues.put("version", MongoWP.VERSION_STRING);
-		keyValues.put("gitVersion", 41);
-		keyValues.put("OpenSSLVersion", "");
-		keyValues.put("sysInfo", 
-			System.getProperty("os.name") + " " + 
-			System.getProperty("os.version"));
-		keyValues.put("loaderFlags", "");
-		keyValues.put("compilerFlags", "");
-		keyValues.put("allocator", "");
-		keyValues.put("versionArray", MongoWP.VERSION);
-		keyValues.put("javascriptEngine", "");
-		keyValues.put("bits", 64);
+		keyValues.put(
+				"version", MongoWP.VERSION_STRING + " (compatible; ToroDB " + buildProperties.getFullVersion() + ")"
+		);
+		keyValues.put("gitVersion", buildProperties.getGitCommitId());
+		keyValues.put(
+				"sysInfo",
+				buildProperties.getOsName() + " " + buildProperties.getOsVersion() + " " + buildProperties.getOsArch()
+		);
+		keyValues.put(
+				"versionArray",	Lists.newArrayList(
+						buildProperties.getMajorVersion(), buildProperties.getMinorVersion(),
+						buildProperties.getSubVersion(), 0
+				)
+		);
+		keyValues.put("bits", "amd64".equals(buildProperties.getOsArch()) ? 64 : 32);
 		keyValues.put("debug", false);
 		keyValues.put("maxBsonObjectSize", MongoWP.MAX_BSON_DOCUMENT_SIZE);
 		keyValues.put("ok", MongoWP.OK);
