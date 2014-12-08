@@ -22,26 +22,32 @@
 package com.torodb.torod.db.postgresql;
 
 import com.torodb.torod.core.annotations.DatabaseName;
-import com.torodb.torod.db.postgresql.meta.TorodbMeta;
-import com.torodb.torod.db.sql.AbstractSqlDbWrapper;
 import com.torodb.torod.core.config.TorodConfig;
 import com.torodb.torod.core.dbWrapper.DbConnection;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
+import com.torodb.torod.db.postgresql.meta.TorodbMeta;
+import com.torodb.torod.db.sql.AbstractSqlDbWrapper;
 import org.jooq.Configuration;
 import org.jooq.ConnectionProvider;
 import org.jooq.DSLContext;
 import org.jooq.SQLDialect;
 import org.jooq.impl.DefaultConfiguration;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import java.sql.Connection;
+import java.sql.SQLException;
+
 /**
  *
  */
 @Singleton
 public class PostgresqlDbWrapper extends AbstractSqlDbWrapper {
+    private static final int DB_SUPPORT_MAJOR = 9;
+    private static final int DB_SUPPORT_MINOR = 4;
 
     private final String databaseName;
-    
+
     @Inject
     public PostgresqlDbWrapper(
             TorodConfig config, 
@@ -60,5 +66,18 @@ public class PostgresqlDbWrapper extends AbstractSqlDbWrapper {
     @Override
     protected DbConnection reserveConnection(DSLContext dsl, TorodbMeta meta) {
         return new PostgresqlDbConnection(dsl, meta, databaseName);
+    }
+    
+    protected void checkDbSupported(Connection conn) throws SQLException, ImplementationDbException {    	
+        int major = conn.getMetaData().getDatabaseMajorVersion();
+        int minor = conn.getMetaData().getDatabaseMinorVersion();
+        
+		if (! (major > DB_SUPPORT_MAJOR || (major == DB_SUPPORT_MAJOR && minor >= DB_SUPPORT_MINOR))) {
+			throw new ImplementationDbException(
+                    true,
+                    "ToroDB requires PostgreSQL version " + DB_SUPPORT_MAJOR + "." + DB_SUPPORT_MINOR
+                            +" or higher! Detected " + major + "." + minor
+            );
+		}
     }
 }

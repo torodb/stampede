@@ -18,26 +18,24 @@
  *     
  */
 
+package com.torodb.torod.core.exceptions;
 
-package com.torodb.torod.core.executor;
+public class TorodStartupException extends ToroRuntimeException {
+    private static final long serialVersionUID = 1L;
 
-import com.torodb.torod.core.Session;
-import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
-import javax.annotation.Nonnull;
+    public TorodStartupException() {
+    }
 
-/**
- *
- */
-public interface ExecutorFactory {
+    public TorodStartupException(String message) {
+        super(message);
+    }
 
-    void initialize() throws ImplementationDbException;
+    public TorodStartupException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public TorodStartupException(Throwable cause) {
+        super(cause);
+    }
     
-    @Nonnull
-    SystemExecutor getSystemExecutor();
-
-    SessionExecutor createSessionExecutor(Session session);
-    
-    public void shutdown();
-    
-    public void shutdownNow();
 }

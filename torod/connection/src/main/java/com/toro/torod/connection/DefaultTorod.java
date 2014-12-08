@@ -27,7 +27,10 @@ import com.torodb.torod.core.cursors.InnerCursorManager;
 import com.torodb.torod.core.d2r.D2RTranslator;
 import com.torodb.torod.core.dbMetaInf.DbMetaInformationCache;
 import com.torodb.torod.core.dbWrapper.DbWrapper;
+import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
+import com.torodb.torod.core.exceptions.TorodStartupException;
 import com.torodb.torod.core.executor.ExecutorFactory;
+
 import javax.inject.Inject;
 
 /**
@@ -60,7 +63,11 @@ public class DefaultTorod implements Torod {
 
     @Override
     public void start() {
-        executorFactory.initialize();
+        try {
+			executorFactory.initialize();
+		} catch (ImplementationDbException e) {
+			throw new TorodStartupException(e.getMessage());
+		}
         cache.initialize();
         d2r.initialize();
     }

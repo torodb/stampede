@@ -20,6 +20,7 @@
 
 package com.torodb;
 
+
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import com.beust.jcommander.JCommander;
@@ -28,6 +29,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.torodb.di.*;
 import com.torodb.torod.core.Torod;
+import com.torodb.torod.core.exceptions.TorodStartupException;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
@@ -74,7 +76,7 @@ public class Main {
 		}
 		
 		if (config.debug()) {
-			Logger root = (Logger)LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+			Logger root = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
 			root.setLevel(Level.DEBUG);
 		} else {
             if (config.verbose()) {
@@ -92,15 +94,15 @@ public class Main {
 		config.initialize();
 
 		Injector injector = Guice.createInjector(
-                new ConfigModule(config),
+				new ConfigModule(config),
 				new MongoServerModule(),
-                new DbWrapperModule(),
+				new DbWrapperModule(),
 				new ExecutorModule(1000, 1000, 0.2),
-                new DbMetaInformationCacheModule(),
-				new D2RModule(), 
-                new ConnectionModule(),
-                new InnerCursorManagerModule()
-        );
+				new DbMetaInformationCacheModule(),
+				new D2RModule(),
+				new ConnectionModule(),
+				new InnerCursorManagerModule()
+		);
 
 		final Torod torod = injector.getInstance(Torod.class);
 		final MongoServer server = injector.getInstance(MongoServer.class);
@@ -130,7 +132,12 @@ public class Main {
 	}
 
 	private static void run(final Torod torod, final MongoServer server) {
-		torod.start();
+		try {
+			torod.start();
+		} catch (TorodStartupException e) {
+			LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME).error(e.getMessage());
+			throw new RuntimeException(e.getMessage());
+		}
 		server.run();
 	}
 

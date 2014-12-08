@@ -22,16 +22,18 @@ package com.torodb.torod.db.executor;
 import com.torodb.torod.core.Session;
 import com.torodb.torod.core.annotations.DatabaseName;
 import com.torodb.torod.core.dbWrapper.DbWrapper;
-import com.torodb.torod.core.executor.SessionExecutor;
+import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.executor.ExecutorFactory;
+import com.torodb.torod.core.executor.SessionExecutor;
 import com.torodb.torod.core.executor.SystemExecutor;
-import com.torodb.torod.db.executor.report.*;
+import com.torodb.torod.db.executor.report.ReportFactory;
+
+import javax.annotation.concurrent.ThreadSafe;
+import javax.inject.Inject;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.annotation.concurrent.ThreadSafe;
-import javax.inject.Inject;
 
 /**
  *
@@ -76,7 +78,7 @@ public class DefaultExecutorFactory implements ExecutorFactory {
     }
 
     @Override
-    public void initialize() {
+    public void initialize() throws ImplementationDbException {
         dbWrapper.initialize();
         initialized.set(true);
     }
