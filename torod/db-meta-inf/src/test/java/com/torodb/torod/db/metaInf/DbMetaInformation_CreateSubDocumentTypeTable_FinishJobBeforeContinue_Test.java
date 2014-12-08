@@ -21,6 +21,7 @@
 package com.torodb.torod.db.metaInf;
 
 import com.torodb.torod.core.config.TorodConfig;
+import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.executor.SessionExecutor;
 import com.torodb.torod.core.executor.ExecutorFactory;
 import com.torodb.torod.core.executor.SystemExecutor;
@@ -29,9 +30,10 @@ import com.torodb.torod.core.subdocument.*;
 import com.torodb.torod.tools.sequencer.ConcurrentTest;
 import com.torodb.torod.tools.sequencer.Sequencer;
 import com.torodb.torod.tools.sequencer.SequencerTest;
-import java.util.concurrent.Future;
-import org.junit.Before;
 
+import java.util.concurrent.Future;
+
+import org.junit.Before;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -65,7 +67,7 @@ public class DbMetaInformation_CreateSubDocumentTypeTable_FinishJobBeforeContinu
     }
 
     @Before
-    public void setUp() throws ToroTaskExecutionException {
+    public void setUp() throws ToroTaskExecutionException, ImplementationDbException {
         sequencer = new Sequencer<MySteps>(MySteps.class);
         future = mock(Future.class);
 
@@ -123,7 +125,7 @@ public class DbMetaInformation_CreateSubDocumentTypeTable_FinishJobBeforeContinu
         Mockito.doReturn(1l).when(systemExecutor).getTick();
     }
     
-    private void createExecutorFactory() {
+    private void createExecutorFactory() throws ImplementationDbException {
         executorFactory = Mockito.mock(ExecutorFactory.class, new ThrowExceptionAnswer());
         Mockito.doNothing().when(executorFactory).initialize();
         Mockito.doReturn(systemExecutor).when(executorFactory).getSystemExecutor();
