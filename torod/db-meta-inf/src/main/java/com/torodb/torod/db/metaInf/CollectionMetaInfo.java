@@ -131,11 +131,11 @@ class CollectionMetaInfo {
 
         Future<?> blocker = reserveMoreIdsIfNeeded(collection, info);
         if (blocker == null) {
-            LOGGER.info("I have consumed {} doc ids of collection {}. I didn't need to wait for new ids", neededIds, collection);
+            LOGGER.debug("I have consumed {} doc ids of collection {}. I didn't need to wait for new ids", neededIds, collection);
         } else {
             Long tick = systemExecutor.getTick();
             sessionExecutor.pauseUntil(tick);
-            LOGGER.info("I have consumed {} doc ids of collection {}. I needed to wait for new ids", neededIds, collection);
+            LOGGER.debug("I have consumed {} doc ids of collection {}. I needed to wait for new ids", neededIds, collection);
         }
 
         return firstFreeId;

@@ -20,35 +20,26 @@
 
 package com.torodb;
 
-import com.torodb.di.MongoServerModule;
-import com.torodb.di.DbWrapperModule;
-import com.torodb.di.ConfigModule;
-import com.torodb.di.DbMetaInformationCacheModule;
-import com.torodb.di.ConnectionModule;
-import com.torodb.di.ExecutorModule;
-import com.torodb.di.D2RModule;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
-
 import com.beust.jcommander.JCommander;
 import com.eightkdata.mongowp.mongoserver.MongoServer;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.torodb.di.*;
 import com.torodb.torod.core.Torod;
 import com.torodb.torod.core.exceptions.TorodStartupException;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.charset.Charset;
 
-import org.slf4j.LoggerFactory;
-
 /**
- *
+ * ToroDB's entry point
  */
 public class Main {
-    
-    private static final String VERSION = "0.10";
+    private static final String VERSION = "0.12";
 
 	public static void main(String[] args) throws Exception {
 		final Config config = new Config();
@@ -85,7 +76,7 @@ public class Main {
 		}
 		
 		if (config.debug()) {
-			Logger root = (Logger)LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+			Logger root = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
 			root.setLevel(Level.DEBUG);
 		} else {
             if (config.verbose()) {
@@ -102,13 +93,20 @@ public class Main {
 
 		config.initialize();
 
-		Injector injector = Guice.createInjector(new ConfigModule(config),
-				new MongoServerModule(), new DbWrapperModule(),
-				new ExecutorModule(), new DbMetaInformationCacheModule(),
-				new D2RModule(), new ConnectionModule());
+		Injector injector = Guice.createInjector(
+				new ConfigModule(config),
+				new MongoServerModule(),
+				new DbWrapperModule(),
+				new ExecutorModule(1000, 1000, 0.2),
+				new DbMetaInformationCacheModule(),
+				new D2RModule(),
+				new ConnectionModule(),
+				new InnerCursorManagerModule()
+		);
 
 		final Torod torod = injector.getInstance(Torod.class);
 		final MongoServer server = injector.getInstance(MongoServer.class);
+		final BuildProperties buildProperties = injector.getInstance(BuildProperties.class);
 
 		Thread shutdown = new Thread() {
 			@Override
@@ -122,8 +120,10 @@ public class Main {
         Thread serverThread = new Thread() {
             @Override
             public void run() {
-                JCommander.getConsole().println("Starting ToroDB v" + VERSION 
-                        + " listening on port " + config.getPort());
+                JCommander.getConsole().println(
+						"Starting ToroDB v" + buildProperties.getFullVersion() + " listening on port "
+						+ config.getPort()
+				);
                 Main.run(torod, server);
                 shutdown(config, torod, server);
             }

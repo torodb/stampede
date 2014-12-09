@@ -20,6 +20,7 @@
 
 package com.torodb.torod.db.executor.jobs;
 
+import com.google.common.base.Supplier;
 import com.google.common.collect.Lists;
 import com.torodb.torod.core.WriteFailMode;
 import com.torodb.torod.core.connection.DeleteResponse;
@@ -29,50 +30,60 @@ import com.torodb.torod.core.dbWrapper.exceptions.DbException;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.dbWrapper.exceptions.UserDbException;
 import com.torodb.torod.core.language.operations.DeleteOperation;
-import com.torodb.torod.db.executor.DefaultSessionTransaction;
+import com.torodb.torod.db.executor.report.DeleteReport;
 import java.util.List;
 import java.util.concurrent.Callable;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.inject.Inject;
 
 /**
  *
  */
 public class DeleteCallable implements Callable<DeleteResponse> {
 
-    private final DefaultSessionTransaction.DbConnectionProvider connectionProvider;
+    private final Supplier<DbConnection> connectionProvider;
     private final String collection;
     private final List<? extends DeleteOperation> deletes;
     private final WriteFailMode mode;
+    private final DeleteReport report;
 
+    @Inject
     public DeleteCallable(
-            DefaultSessionTransaction.DbConnectionProvider connectionProvider,
+            Supplier<DbConnection> connectionProvider, 
             String collection, 
             List<? extends DeleteOperation> deletes, 
-            WriteFailMode mode
-    ) {
+            WriteFailMode mode, 
+            DeleteReport report) {
         this.connectionProvider = connectionProvider;
         this.collection = collection;
         this.deletes = deletes;
         this.mode = mode;
+        this.report = report;
     }
-
+    
     @Override
     public DeleteResponse call() throws Exception {
+        DeleteResponse response;
         switch (mode) {
             case ISOLATED:
-                return isolatedDelete();
+                response = isolatedDelete();
+                break;
             case ORDERED:
-                return orderedDelete();
+                response = orderedDelete();
+                break;
             case TRANSACTIONAL:
-                return transactionalDelete();
+                response = transactionalDelete();
+                break;
             default:
                 throw new AssertionError("Study exceptions");
         }
+        report.taskExecuted(collection, deletes, mode);
+        return response;
     }
 
     private DeleteResponse isolatedDelete() throws ImplementationDbException {
-        DbConnection connection = connectionProvider.getConnection();
+        DbConnection connection = connectionProvider.get();
         int deleted = 0;
         List<WriteError> errors = Lists.newLinkedList();
 
@@ -90,7 +101,7 @@ public class DeleteCallable implements Callable<DeleteResponse> {
     }
 
     private DeleteResponse orderedDelete() throws ImplementationDbException, UserDbException {
-        DbConnection connection = connectionProvider.getConnection();
+        DbConnection connection = connectionProvider.get();
         int deleted = 0;
         List<WriteError> errors = Lists.newLinkedList();
         int index = -1;
@@ -110,7 +121,7 @@ public class DeleteCallable implements Callable<DeleteResponse> {
     }
 
     private DeleteResponse transactionalDelete() throws ImplementationDbException, UserDbException {
-        DbConnection connection = connectionProvider.getConnection();
+        DbConnection connection = connectionProvider.get();
         int deleted = 0;
         List<WriteError> errors = Lists.newLinkedList();
         int index = -1;

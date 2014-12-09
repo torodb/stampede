@@ -7,18 +7,23 @@
     <parent>
         <groupId>com.torodb</groupId>
         <artifactId>torodb-parent</artifactId>
-        <version>0.15-SNAPSHOT</version>
+        <version>0.15</version>
     </parent>
 
     <artifactId>torodb</artifactId>
     <name>ToroDB Main</name>
     <packaging>jar</packaging>
 
+    <properties>
+        <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:ssZZ</maven.build.timestamp.format>
+        <build.timestamp>${maven.build.timestamp}</build.timestamp>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>9.3-1101-jdbc41</version>
+            <version>9.3-1102-jdbc4</version>
         </dependency>
         <dependency>
             <groupId>com.zaxxer</groupId>
@@ -34,7 +39,6 @@
         <dependency>
             <groupId>com.google.inject</groupId>
             <artifactId>guice</artifactId>
-            <version>3.0</version>
         </dependency>
         <dependency>
             <groupId>com.beust</groupId>
@@ -107,9 +111,14 @@
             <artifactId>mongo-converter</artifactId>
             <version>${kvdocument.version}</version>
         </dependency>
+        <dependency>
+            <groupId>commons-configuration</groupId>
+            <artifactId>commons-configuration</artifactId>
+            <version>1.10</version>
+        </dependency>
     </dependencies>
 
-    <build>
+    <build>        
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -135,6 +144,30 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>2.7</version>
+            </plugin>
+            <plugin>
+                <groupId>pl.project13.maven</groupId>
+                <artifactId>git-commit-id-plugin</artifactId>
+                <version>2.1.11</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>revision</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
+
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
     </build>
 </project>

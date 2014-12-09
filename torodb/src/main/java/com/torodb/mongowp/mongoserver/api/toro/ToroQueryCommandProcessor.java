@@ -30,7 +30,11 @@ import com.eightkdata.mongowp.mongoserver.protocol.MongoWP;
 import com.eightkdata.mongowp.mongoserver.protocol.MongoWP.ErrorCode;
 import com.eightkdata.nettybson.api.BSONDocument;
 import com.eightkdata.nettybson.mongodriver.MongoBSONDocument;
+import com.google.common.base.Joiner;
+import com.google.common.collect.Lists;
+import com.google.inject.Inject;
 import com.mongodb.WriteConcern;
+import com.torodb.BuildProperties;
 import com.torodb.mongowp.mongoserver.api.toro.util.BSONDocuments;
 import com.torodb.mongowp.mongoserver.api.toro.util.BSONToroDocument;
 import com.torodb.torod.core.WriteFailMode;
@@ -57,8 +61,15 @@ import java.util.concurrent.Future;
  *
  */
 public class ToroQueryCommandProcessor implements QueryCommandProcessor {
+	private final BuildProperties buildProperties;
+
     public static final Map<String,Integer> NUM_INDEXES_MAP
             = new HashMap<String, Integer>();
+
+	@Inject
+	public ToroQueryCommandProcessor(BuildProperties buildProperties) {
+		this.buildProperties = buildProperties;
+	}
 
 	//TODO: implement with toro natives
 	@Override
@@ -89,38 +100,42 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
     	QueryCriteria queryCriteria = queryCriteriaTranslator.translate(query);
     	Projection projection = null;
     	int numberToSkip = document.hasKey("skip")?((Number) document.getValue("skip")).intValue():0;
-    	int limit = document.hasKey("limit")?((Number) document.getValue("limit")).intValue():0;
     	boolean autoclose = true;
     	boolean hasTimeout = false;
     	
     	CursorId cursorId = null;
     	BSONDocuments results = null;
     	
-    	limit = 0;
-    	
-        ToroTransaction transaction = connection.createTransaction();
+        CursorManager cursorManager = connection.getCursorManager();
         
-        try {
-	    	if (limit == 0) {
-	        	cursorId = transaction.query(collection, queryCriteria, projection, numberToSkip, autoclose, hasTimeout);
-	    	} else {
-	        	cursorId = transaction.query(collection, queryCriteria, projection, numberToSkip, limit, autoclose, hasTimeout);
-	    	}
-	    	
-	    	try {
-		    	int count = 0;
-		    	
-		    	do {
-			        results = new BSONDocuments(transaction.readCursor(cursorId, MongoWP.MONGO_CURSOR_LIMIT));
-			    	count += results.size();
-		    	} while(results.size() >= MongoWP.MONGO_CURSOR_LIMIT);
+        cursorId = cursorManager
+                .openUnlimitedCursor(
+                        collection,
+                        queryCriteria,
+                        projection,
+                        numberToSkip,
+                        autoclose,
+                        hasTimeout
+                );
 
-		    	keyValues.put("n", count);
-	    	} finally {
-	    		transaction.closeCursor(cursorId);
-	    	}
-        } finally {
-        	transaction.close();
+        try {
+            int count = 0;
+
+            do {
+                results = new BSONDocuments(
+                        cursorManager.readCursor(
+                                cursorId,
+                                MongoWP.MONGO_CURSOR_LIMIT
+                        )
+                );
+                count += results.size();
+            }
+            while (results.size() >= MongoWP.MONGO_CURSOR_LIMIT);
+
+            keyValues.put("n", count);
+        }
+        finally {
+            cursorManager.closeCursor(cursorId);
         }
     	
 		keyValues.put("ok", MongoWP.OK);
@@ -318,7 +333,6 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
 		messageReplier.replyMessageNoCursor(reply);
 	}
 
-	//TODO: implement with toro natives
 	@Override
 	public void drop(BSONDocument document, MessageReplier messageReplier) throws Exception {
 		AttributeMap attributeMap = messageReplier.getAttributeMap();
@@ -327,39 +341,19 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
         Map<String, Object> keyValues = new HashMap<String, Object>();
 		
 		String collection = ToroCollectionTranslator.translate((String) document.getValue("drop"));
-    	
-    	WriteFailMode writeFailMode = getWriteFailMode(document);
-    	List<DeleteOperation> deletes = new ArrayList<DeleteOperation>();
-   		QueryCriteria queryCriteria = TrueQueryCriteria.getInstance();
-   		deletes.add(new DeleteOperation(queryCriteria, false));
-		
-        ToroTransaction transaction = connection.createTransaction();
-        
-        try {
-        	Future<DeleteResponse> futureDropResponse = transaction.delete(collection, deletes, writeFailMode);
-        	
-            Future<?> futureCommitResponse = transaction.commit();
-            
-            futureDropResponse.get();
-            futureCommitResponse.get();
-            
-            LastError lastError = new ToroLastError(
-            		RequestOpCode.OP_QUERY, 
-            		AdministrationQueryCommand.drop, 
-            		futureDropResponse, 
-            		futureCommitResponse, 
-            		false, 
-            		null);
-            attributeMap.attr(ToroRequestProcessor.LAST_ERROR).set(lastError);
-        } finally {
-           	transaction.close();
-        }
-		
-		keyValues.put("ok", MongoWP.OK);
-		BSONDocument reply = new MongoBSONDocument(keyValues);
-		messageReplier.replyMessageNoCursor(reply);
-	}
 
+        ToroTransaction transaction = connection.createTransaction();
+        try {
+            transaction.dropCollection(collection);
+            transaction.commit();
+            
+            keyValues.put("ok", MongoWP.OK);
+            BSONDocument reply = new MongoBSONDocument(keyValues);
+            messageReplier.replyMessageNoCursor(reply);
+        } finally {
+            transaction.close();
+        }
+	}
 	
 	//TODO: implement with toro natives
 	@Override
@@ -579,18 +573,21 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
 	public void buildInfo(MessageReplier messageReplier) {
 		Map<String, Object> keyValues = new HashMap<String, Object>();
 		
-		keyValues.put("version", MongoWP.VERSION_STRING);
-		keyValues.put("gitVersion", 41);
-		keyValues.put("OpenSSLVersion", "");
-		keyValues.put("sysInfo", 
-			System.getProperty("os.name") + " " + 
-			System.getProperty("os.version"));
-		keyValues.put("loaderFlags", "");
-		keyValues.put("compilerFlags", "");
-		keyValues.put("allocator", "");
-		keyValues.put("versionArray", MongoWP.VERSION);
-		keyValues.put("javascriptEngine", "");
-		keyValues.put("bits", 64);
+		keyValues.put(
+				"version", MongoWP.VERSION_STRING + " (compatible; ToroDB " + buildProperties.getFullVersion() + ")"
+		);
+		keyValues.put("gitVersion", buildProperties.getGitCommitId());
+		keyValues.put(
+				"sysInfo",
+				buildProperties.getOsName() + " " + buildProperties.getOsVersion() + " " + buildProperties.getOsArch()
+		);
+		keyValues.put(
+				"versionArray",	Lists.newArrayList(
+						buildProperties.getMajorVersion(), buildProperties.getMinorVersion(),
+						buildProperties.getSubVersion(), 0
+				)
+		);
+		keyValues.put("bits", "amd64".equals(buildProperties.getOsArch()) ? 64 : 32);
 		keyValues.put("debug", false);
 		keyValues.put("maxBsonObjectSize", MongoWP.MAX_BSON_DOCUMENT_SIZE);
 		keyValues.put("ok", MongoWP.OK);

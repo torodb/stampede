@@ -44,14 +44,12 @@ public interface TorodConfig {
      * @return
      */
     public DataSource getSystemDataSource();
+    
+    public DataSource getGlobalCursorDatasource();
 
     public int getByJobDependencyStripes();
 
     public int getCacheSubDocTypeStripes();
 
-    public int getBySessionStripes();
-
     public long getDefaultCursorTimeout();
-
-    public int getSessionExecutorThreads();
 }

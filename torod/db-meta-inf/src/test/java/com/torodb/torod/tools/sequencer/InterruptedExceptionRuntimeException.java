@@ -27,6 +27,7 @@ package com.torodb.torod.tools.sequencer;
  *
  */
 class InterruptedExceptionRuntimeException extends RuntimeException {
+    private static final long serialVersionUID = 1L;
     private final InterruptedException ex;
 
     public InterruptedExceptionRuntimeException(InterruptedException ex) {

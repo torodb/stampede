@@ -18,30 +18,30 @@
  *     
  */
 
-package com.torodb.torod.core.dbMetaInf;
+package com.torodb.torod.core.cursors;
 
-import com.torodb.torod.core.Session;
-import com.torodb.torod.core.cursors.CursorProperties;
-import com.torodb.torod.core.cursors.CursorId;
+import com.torodb.torod.core.Torod;
+import com.torodb.torod.core.connection.CursorManager;
 import com.torodb.torod.core.dbWrapper.Cursor;
 import java.io.Closeable;
 
 /**
- *
+ * A low level object that manages cursors.
+ * 
+ * This class is not designed to be used by {@linkplain Torod torod} users. They
+ * shoud use {@linkplain CursorManager} instead.
  */
-public interface CursorManager extends Closeable {
+public interface InnerCursorManager extends Closeable {
 
     /**
      * Creates a cursor.
      * <p>
      * <p>
-     * @param owner
      * @param hasTimeout
      * @param autoclose
      * @return The created cursor
      */
-    public CursorProperties createUnlimitedCursor(
-            Session owner,
+    public CursorProperties openUnlimitedCursor(
             boolean hasTimeout,
             boolean autoclose
     );
@@ -56,8 +56,7 @@ public interface CursorManager extends Closeable {
      * @param autoclose
      * @return The created cursor
      */
-    public CursorProperties createLimitedCursor(
-            Session owner,
+    public CursorProperties openLimitedCursor(
             boolean hasTimeout,
             boolean autoclose,
             int limit
@@ -130,13 +129,14 @@ public interface CursorManager extends Closeable {
      *
      * Performs any pending maintenance operations needed by the cache.
      * <p>
-     * Some {@link CursorManager cursor managers} automatically manage the unused cursors, but others could need an
+     * Some {@link InnerCursorManager cursor managers} automatically manage the unused cursors, but others could need an
      * external actor that calls this method.
      * <p>
      * Exactly which activities are performed -- if any -- is implementation-dependent.
      */
     public void cleanUp();
     
+    @Override
     public void close();
 
 }

@@ -23,9 +23,6 @@ package com.torodb.torod.core.executor;
 
 import com.torodb.torod.core.Session;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
-
-import java.util.concurrent.Future;
-
 import javax.annotation.Nonnull;
 
 /**

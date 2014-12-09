@@ -18,17 +18,15 @@
  *     
  */
 
-
-package com.torodb.torod.core.cursors;
-
-import com.torodb.torod.core.dbMetaInf.CursorManager;
-import com.torodb.torod.core.executor.SessionExecutor;
-import com.torodb.torod.core.executor.SessionTransaction;
+package com.torodb.torod.core.pojos;
 
 /**
  *
  */
-public interface CursorManagerFactory {
+public interface Database {
+
+    String getName();
     
-    CursorManager createCursorManager(SessionTransaction transaction);
+    long getSize();
+    
 }

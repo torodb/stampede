@@ -25,6 +25,7 @@ import com.eightkdata.mongowp.mongoserver.MongoServerConfig;
 import com.google.inject.AbstractModule;
 import com.torodb.Config;
 import com.torodb.mongowp.mongoserver.api.toro.util.MongoDocumentBuilderFactory;
+import com.torodb.torod.core.annotations.DatabaseName;
 import com.torodb.torod.core.config.DocumentBuilderFactory;
 import com.torodb.torod.core.config.TorodConfig;
 
@@ -44,5 +45,8 @@ public class ConfigModule extends AbstractModule {
         bind(TorodConfig.class).toInstance(config);
         bind(MongoServerConfig.class).toInstance(config);
         bind(DocumentBuilderFactory.class).to(MongoDocumentBuilderFactory.class);
+        bind(String.class)
+                .annotatedWith(DatabaseName.class)
+                .toInstance(config.getDbname());
     }
 }

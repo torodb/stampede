@@ -20,10 +20,8 @@
 
 package com.torodb.torod.core.dbWrapper;
 
-import com.torodb.torod.core.cursors.CursorId;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.dbWrapper.exceptions.UserDbException;
-import com.torodb.torod.core.language.projection.Projection;
 import com.torodb.torod.core.language.querycriteria.QueryCriteria;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.core.subdocument.SubDocType;
@@ -33,7 +31,6 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
 
 /**
@@ -124,33 +121,11 @@ public interface DbConnection {
     ) throws ImplementationDbException, UserDbException;
 
     /**
-     * Executes a query and return a cursor to the result.
-     * 
-     * This cursor must be closed onces it is not needed.
-     * 
-     * @param collection
-     * @param cursorId
-     * @param filter
-     * @param projection 
-     * @return A cursor to the query result. This cursor must be closed once it is not needed.
-     * @throws com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException
-     * @throws com.torodb.torod.core.dbWrapper.exceptions.UserDbException
+     * @return the size (in bytes) of the database this connection is connected with.
      */
-    @Nonnull
-    public Cursor query(
-            @Nonnull String collection,
-            @Nonnull CursorId cursorId,
-            @Nullable QueryCriteria filter,
-            @Nullable Projection projection
-    ) throws ImplementationDbException, UserDbException;
+    public long getDatabaseSize();
     
-    /**
-     * Returns the {@link Cursor cursor} represented by the given {@linkplain CursorId cursor id}
-     * @param cursorId
-     * @return 
-     * @throws IllegalArgumentException If there is no cursor associated with the given cursor id
-     * @throws com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException
-     */
-    @Nonnull
-    public Cursor getDbCursor(CursorId cursorId) throws IllegalArgumentException, ImplementationDbException;
+    public void dropCollection(
+            @Nonnull String collection
+    );
 }

@@ -24,7 +24,9 @@ import com.torodb.torod.core.dbWrapper.DbConnection;
 import com.torodb.torod.core.dbWrapper.DbWrapper;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.executor.SystemExecutor;
+import com.torodb.torod.db.executor.report.CreateCollectionReport;
 import javax.annotation.Nullable;
+import javax.inject.Inject;
 
 /**
  *
@@ -32,13 +34,20 @@ import javax.annotation.Nullable;
 public class CreateCollectionCallable extends SystemDbCallable<Void> {
 
     private final String collection;
-    private final @Nullable
-    SystemExecutor.CreateCollectionCallback callback;
+    @Nullable
+    private final SystemExecutor.CreateCollectionCallback callback;
+    private final CreateCollectionReport report;
 
-    public CreateCollectionCallable(String collection, SystemExecutor.CreateCollectionCallback callback, DbWrapper dbWrapperPool) {
+    @Inject
+    public CreateCollectionCallable(
+            DbWrapper dbWrapperPool,
+            String collection, 
+            SystemExecutor.CreateCollectionCallback callback, 
+            CreateCollectionReport report) {
         super(dbWrapperPool);
         this.collection = collection;
         this.callback = callback;
+        this.report = report;
     }
 
     @Override
@@ -53,5 +62,6 @@ public class CreateCollectionCallable extends SystemDbCallable<Void> {
         if (callback != null) {
             callback.createdCollection(collection);
         }
+        report.taskExecuted(collection);
     }
 }

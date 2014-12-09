@@ -22,28 +22,32 @@ package com.torodb.torod.db.executor.jobs;
 
 import com.torodb.torod.core.cursors.CursorId;
 import com.torodb.torod.core.dbWrapper.Cursor;
-import com.torodb.torod.core.dbWrapper.DbConnection;
 import com.torodb.torod.core.dbWrapper.DbWrapper;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.subdocument.SplitDocument;
-import com.torodb.torod.db.executor.DefaultSessionTransaction;
+import com.torodb.torod.db.executor.report.ReadAllCursorReport;
 import java.util.List;
 import java.util.concurrent.Callable;
+import javax.inject.Inject;
 
 /**
  *
  */
 public class ReadAllCursorCallable implements Callable<List<? extends SplitDocument>> {
 
-    private final DefaultSessionTransaction.DbConnectionProvider connectionProvider;
+    private final DbWrapper dbWrapper;
     private final CursorId cursorId;
+    private final ReadAllCursorReport report;
 
+    @Inject
     public ReadAllCursorCallable(
-            DefaultSessionTransaction.DbConnectionProvider connectionProvider, 
-            CursorId cursorId) {
+            DbWrapper dbWrapper, 
+            CursorId cursorId,
+            ReadAllCursorReport report) {
         
-        this.connectionProvider = connectionProvider;
+        this.dbWrapper = dbWrapper;
         this.cursorId = cursorId;
+        this.report = report;
     }
 
     @Override
@@ -51,9 +55,13 @@ public class ReadAllCursorCallable implements Callable<List<? extends SplitDocum
         Cursor cursor = null;
         boolean closeCursor = false;
         try {
-            cursor = connectionProvider.getConnection().getDbCursor(cursorId);
+            cursor = dbWrapper.getGlobalCursor(cursorId);
 
-            return cursor.readAllDocuments();
+            List<SplitDocument> result = cursor.readAllDocuments();
+            
+            report.tastExecuted(cursorId);
+            
+            return result;
         }
         catch (RuntimeException ex) {
             closeCursor = true;

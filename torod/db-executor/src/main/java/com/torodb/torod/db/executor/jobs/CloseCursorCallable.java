@@ -22,33 +22,39 @@ package com.torodb.torod.db.executor.jobs;
 
 import com.torodb.torod.core.cursors.CursorId;
 import com.torodb.torod.core.dbWrapper.Cursor;
-import com.torodb.torod.core.dbWrapper.DbConnection;
+import com.torodb.torod.core.dbWrapper.DbWrapper;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
-import com.torodb.torod.db.executor.DefaultSessionTransaction;
+import com.torodb.torod.db.executor.report.CloseCursorReport;
 import java.util.concurrent.Callable;
+import javax.inject.Inject;
 
 /**
  *
  */
 public class CloseCursorCallable implements Callable<Void> {
 
-    private final DefaultSessionTransaction.DbConnectionProvider connectionProvider;
+    private final DbWrapper dbWrapper;
     private final CursorId cursorId;
+    private final CloseCursorReport report;
 
+    @Inject
     public CloseCursorCallable(
-            DefaultSessionTransaction.DbConnectionProvider connectionProvider, 
-            CursorId cursorId
-    ) {
-        this.connectionProvider = connectionProvider;
+            DbWrapper dbWrapper, 
+            CursorId cursorId, 
+            CloseCursorReport report) {
+        this.dbWrapper = dbWrapper;
         this.cursorId = cursorId;
+        this.report = report;
     }
 
 
     @Override
     public Void call() throws IllegalArgumentException, ImplementationDbException {
-        Cursor cursor = connectionProvider.getConnection().getDbCursor(cursorId);
+        Cursor cursor = dbWrapper.getGlobalCursor(cursorId);
 
         cursor.close();
+        
+        report.taskExecuted(cursorId);
 
         return null;
     }

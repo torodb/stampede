@@ -28,18 +28,15 @@ import com.torodb.torod.core.Session;
 public class CursorProperties {
 
     private final CursorId id;
-    private final Session owner;
     private final boolean hasTimeout;
     private final int limit;
     private final boolean autoclose;
 
     public CursorProperties(
             CursorId id,
-            Session owner,
             boolean hasTimeout,
             boolean autoclose) {
         this.id = id;
-        this.owner = owner;
         this.hasTimeout = hasTimeout;
 
         this.limit = -1;
@@ -49,12 +46,10 @@ public class CursorProperties {
 
     public CursorProperties(
             CursorId id,
-            Session owner,
             boolean hasTimeout,
             int limit,
             boolean autoclose) {
         this.id = id;
-        this.owner = owner;
         this.hasTimeout = hasTimeout;
 
         if (limit <= 0) {
@@ -67,10 +62,6 @@ public class CursorProperties {
 
     public CursorId getId() {
         return id;
-    }
-
-    public Session getOwner() {
-        return owner;
     }
 
     public boolean hasTimeout() {

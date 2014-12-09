@@ -29,10 +29,10 @@ import com.google.common.collect.MapMaker;
 import com.torodb.torod.core.cursors.CursorProperties;
 import com.torodb.torod.core.cursors.CursorId;
 import com.torodb.torod.core.config.TorodConfig;
-import com.torodb.torod.core.Session;
-import com.torodb.torod.core.executor.ToroTaskExecutionException;
-import com.torodb.torod.core.dbMetaInf.CursorManager;
-import com.torodb.torod.core.executor.SessionTransaction;
+import com.torodb.torod.core.cursors.InnerCursorManager;
+import com.torodb.torod.core.dbWrapper.Cursor;
+import com.torodb.torod.core.dbWrapper.DbWrapper;
+import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
@@ -41,15 +41,18 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import javax.annotation.concurrent.ThreadSafe;
+import javax.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  *
  */
-class DefaultCursorManager implements CursorManager {
+@ThreadSafe
+public class DefaultInnerCursorManager implements InnerCursorManager {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(DefaultCursorManager.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DefaultInnerCursorManager.class);
     private static final long FIRST_CURSOR_ID = 0;
     static final int OLD_CACHE_EVICTION_PERIOD = 10000;
 
@@ -65,7 +68,7 @@ class DefaultCursorManager implements CursorManager {
     private final Set<Cache<CursorId, CursorProperties>> oldCaches;
     private final AtomicInteger counterToOldCacheEviction = new AtomicInteger();
     private final MyRemovalListener removalListener;
-    private final SessionTransaction sessionTransaction;
+    private final DbWrapper dbWrapper;
     private long actualTimeout;
     /**
      * Stores the number of read elements for each cursor (autocloseable or not).
@@ -74,11 +77,12 @@ class DefaultCursorManager implements CursorManager {
     private final AtomicLong cursorIdProvider;
     private final Ticker ticker;
 
-    DefaultCursorManager(TorodConfig config, SessionTransaction sessionTransaction) {
+    @Inject
+    public DefaultInnerCursorManager(TorodConfig config, DbWrapper dbWrapper) {
         this.actualTimeout = config.getDefaultCursorTimeout();
-        this.sessionTransaction = sessionTransaction;
         this.removalListener = new MyRemovalListener();
         this.ticker = Ticker.systemTicker();
+        this.dbWrapper = dbWrapper;
         
         withoutTimeout = new MapMaker()
                 .makeMap();
@@ -96,11 +100,14 @@ class DefaultCursorManager implements CursorManager {
      * @param sessionTransaction
      * @param ticker 
      */
-    protected DefaultCursorManager(TorodConfig config, SessionTransaction sessionTransaction, Ticker ticker) {
+    protected DefaultInnerCursorManager(
+            TorodConfig config, 
+            DbWrapper dbWrapper, 
+            Ticker ticker) {
         this.actualTimeout = config.getDefaultCursorTimeout();
-        this.sessionTransaction = sessionTransaction;
         this.removalListener = new MyRemovalListener();
         this.ticker = ticker;
+        this.dbWrapper = dbWrapper;
         
         withoutTimeout = new MapMaker()
                 .makeMap();
@@ -113,10 +120,9 @@ class DefaultCursorManager implements CursorManager {
     }
 
     @Override
-    public CursorProperties createUnlimitedCursor(Session owner, boolean hasTimeout, boolean autoclose) {
+    public CursorProperties openUnlimitedCursor(boolean hasTimeout, boolean autoclose) {
         CursorProperties cursorProps = new CursorProperties(
                 new CursorId(cursorIdProvider.incrementAndGet()),
-                owner,
                 hasTimeout,
                 autoclose
         );
@@ -127,10 +133,9 @@ class DefaultCursorManager implements CursorManager {
     }
 
     @Override
-    public CursorProperties createLimitedCursor(Session owner, boolean hasTimeout, boolean autoclose, int limit) {
+    public CursorProperties openLimitedCursor(boolean hasTimeout, boolean autoclose, int limit) {
         CursorProperties cursorProps = new CursorProperties(
                 new CursorId(cursorIdProvider.incrementAndGet()),
-                owner,
                 hasTimeout,
                 limit,
                 autoclose
@@ -343,10 +348,13 @@ class DefaultCursorManager implements CursorManager {
         public void onRemoval(CursorId key, CursorProperties value) {
             try {
                 readElementMap.remove(key);
-                sessionTransaction.closeCursor(key);
-            } catch (ToroTaskExecutionException ex) {
+                Cursor globalCursor = dbWrapper.getGlobalCursor(key);
+                globalCursor.close();
+            } catch (ImplementationDbException ex) {
                 //TODO: Change exceptions
                 throw new RuntimeException(ex); //this exception will be logged and swallowed by the cache!!!!
+            } catch (IllegalArgumentException ex) {
+                LOGGER.warn("Cursor "+key+" has been closed before");
             }
 
         }

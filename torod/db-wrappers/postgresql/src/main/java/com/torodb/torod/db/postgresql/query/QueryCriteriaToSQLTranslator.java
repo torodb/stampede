@@ -41,7 +41,6 @@ import com.torodb.torod.core.language.querycriteria.IsEqualQueryCriteria;
 import com.torodb.torod.core.language.querycriteria.TypeIsQueryCriteria;
 import com.torodb.torod.core.language.querycriteria.AttributeQueryCriteria;
 import com.google.common.base.Preconditions;
-import com.torodb.torod.core.exceptions.ToroImplementationException;
 import com.torodb.torod.core.language.querycriteria.utils.QueryCriteriaDFW;
 import com.torodb.torod.core.language.querycriteria.utils.QueryCriteriaVisitor;
 import com.torodb.torod.core.subdocument.BasicType;
@@ -225,6 +224,7 @@ public class QueryCriteriaToSQLTranslator {
                 if (key instanceof AttributeReference.ObjectKey) {
                     break;
                 }
+                assert key instanceof AttributeReference.ArrayKey;
                 lastObjectKeyIndex--;
             }
             assert lastObjectKeyIndex >= -1 && lastObjectKeyIndex < keys.size();
@@ -465,7 +465,7 @@ public class QueryCriteriaToSQLTranslator {
 
             if (typeCondition != null) {
                 criteriaCondition = typeCondition.and(criteriaCondition);
-            };
+            }
 
             return addArrayCondition(criteria, criteriaCondition, keys, inArray);
         }

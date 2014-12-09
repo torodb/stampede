@@ -19,8 +19,14 @@
  */
 package com.torodb.torod.core.dbWrapper;
 
+import com.torodb.torod.core.cursors.CursorId;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
+import com.torodb.torod.core.dbWrapper.exceptions.UserDbException;
+import com.torodb.torod.core.language.projection.Projection;
+import com.torodb.torod.core.language.querycriteria.QueryCriteria;
+import javax.annotation.Nonnegative;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  *
@@ -45,11 +51,12 @@ public interface DbWrapper {
      * The calling thread will be blocked until a SQL connection is usable if
      * the connection pooler is blocker.
      * <p>
-     * @return @throws
-     * com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException
+     * @throws ImplementationDbException
+     * @return
      */
     @Nonnull
-    public DbConnection consumeSessionDbConnection() throws ImplementationDbException;
+    public DbConnection consumeSessionDbConnection() throws
+            ImplementationDbException;
 
     /**
      * Retruns the {@link DbConnection} that is reserved to execute system
@@ -57,9 +64,48 @@ public interface DbWrapper {
      * <p>
      * Only a system thread should use this connection.
      * <p>
-     * @return
      * @throws ImplementationDbException
+     * @return
      */
     public DbConnection getSystemDbConnection() throws ImplementationDbException;
+
+    /**
+     * Executes a openGlobalCursor and return a cursor to the result.
+     * <p>
+     * This cursor must be closed onces it is not needed.
+     * <p>
+     * @param collection
+     * @param cursorId
+     * @param filter
+     * @param projection
+     * @param maxResults a non negative integer, the upper size of elements to
+     *                   return or 0 to return all documents.
+     * @return A cursor to the openGlobalCursor result. This cursor must be closed once it
+         is not needed.
+     * @throws ImplementationDbException
+     * @throws UserDbException
+     */
+    @Nonnull
+    public Cursor openGlobalCursor(
+            @Nonnull String collection,
+            @Nonnull CursorId cursorId,
+            @Nullable QueryCriteria filter,
+            @Nullable Projection projection,
+            @Nonnegative int maxResults
+    ) throws ImplementationDbException, UserDbException;
+
+    /**
+     * Returns the {@link Cursor cursor} represented by the given
+     * {@linkplain CursorId cursor id}
+     * <p>
+     * @param cursorId
+     * @return
+     * @throws IllegalArgumentException  If there is no cursor associated with
+     *                                   the given cursor id
+     * @throws ImplementationDbException
+     */
+    @Nonnull
+    public Cursor getGlobalCursor(CursorId cursorId) throws IllegalArgumentException,
+            ImplementationDbException;
 
 }
