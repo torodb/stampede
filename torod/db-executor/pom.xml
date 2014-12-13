@@ -4,7 +4,7 @@
     <parent>
         <groupId>com.torodb.torod</groupId>
         <artifactId>torod-pom</artifactId>
-        <version>0.15</version>
+        <version>0.16-SNAPSHOT</version>
     </parent>
     
     <artifactId>db-executor</artifactId>
