@@ -23,7 +23,6 @@ package com.torodb.torod.db.metaInf;
 import com.google.common.collect.MapMaker;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Futures;
-import com.torodb.torod.core.config.TorodConfig;
 import com.torodb.torod.core.dbMetaInf.DbMetaInformationCache;
 import com.torodb.torod.core.executor.ExecutorFactory;
 import com.torodb.torod.core.executor.SessionExecutor;
@@ -64,8 +63,7 @@ public class DefaultDbMetaInformationCache implements DbMetaInformationCache {
     DefaultDbMetaInformationCache(
             ExecutorFactory executorFactory,
             ReservedIdHeuristic subDocTypeIdHeuristic,
-            ReservedIdInfoFactory tableMetaInfoFactory,
-            TorodConfig config
+            ReservedIdInfoFactory tableMetaInfoFactory
     ) {
         this.executorFactory = executorFactory;
         this.createdCollections = new MapMaker().makeMap();

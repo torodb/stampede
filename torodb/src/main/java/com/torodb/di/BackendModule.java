@@ -21,27 +21,26 @@
 
 package com.torodb.di;
 
-import com.eightkdata.mongowp.mongoserver.MongoServerConfig;
 import com.google.inject.AbstractModule;
-import com.torodb.Config;
-import com.torodb.mongowp.mongoserver.api.toro.util.MongoDocumentBuilderFactory;
-import com.torodb.torod.core.annotations.DatabaseName;
-import com.torodb.torod.core.config.DocumentBuilderFactory;
+import com.torodb.torod.backend.db.DbBackendConfiguration;
+import com.torodb.torod.backend.db.postgresql.PostgreSQLDbBackend;
+import com.torodb.torod.core.backend.DbBackend;
+
+import javax.inject.Singleton;
 
 /**
  *
  */
-public class ConfigModule extends AbstractModule {
-    private final Config config;
+public class BackendModule extends AbstractModule {
+    private final DbBackendConfiguration configuration;
 
-    public ConfigModule(Config config) {
-        this.config = config;
+    public BackendModule(DbBackendConfiguration config) {
+        this.configuration = config;
     }
-    
+
     @Override
     protected void configure() {
-        bind(MongoServerConfig.class).toInstance(config);
-        bind(DocumentBuilderFactory.class).to(MongoDocumentBuilderFactory.class);
-        bind(String.class).annotatedWith(DatabaseName.class).toInstance(config.getDbName());
+        bind(DbBackend.class).to(PostgreSQLDbBackend.class).in(Singleton.class);
+        bind(DbBackendConfiguration.class).toInstance(configuration);
     }
 }

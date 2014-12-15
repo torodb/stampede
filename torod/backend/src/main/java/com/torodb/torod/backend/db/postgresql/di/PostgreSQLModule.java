@@ -15,33 +15,23 @@
  *     along with ToroDB. If not, see <http://www.gnu.org/licenses/>.
  *
  *     Copyright (c) 2014, 8Kdata Technology
- *     
+ *
  */
 
+package com.torodb.torod.backend.db.postgresql.di;
 
-package com.torodb.di;
-
-import com.eightkdata.mongowp.mongoserver.MongoServerConfig;
 import com.google.inject.AbstractModule;
-import com.torodb.Config;
-import com.torodb.mongowp.mongoserver.api.toro.util.MongoDocumentBuilderFactory;
-import com.torodb.torod.core.annotations.DatabaseName;
-import com.torodb.torod.core.config.DocumentBuilderFactory;
+import com.torodb.torod.backend.db.postgresql.OfficialPostgreSQLDriver;
+import com.torodb.torod.backend.db.postgresql.PostgreSQLDriverProvider;
+
+import javax.inject.Singleton;
 
 /**
  *
  */
-public class ConfigModule extends AbstractModule {
-    private final Config config;
-
-    public ConfigModule(Config config) {
-        this.config = config;
-    }
-    
+public class PostgreSQLModule extends AbstractModule {
     @Override
     protected void configure() {
-        bind(MongoServerConfig.class).toInstance(config);
-        bind(DocumentBuilderFactory.class).to(MongoDocumentBuilderFactory.class);
-        bind(String.class).annotatedWith(DatabaseName.class).toInstance(config.getDbName());
+        bind(PostgreSQLDriverProvider.class).to(OfficialPostgreSQLDriver.class).in(Singleton.class);
     }
 }

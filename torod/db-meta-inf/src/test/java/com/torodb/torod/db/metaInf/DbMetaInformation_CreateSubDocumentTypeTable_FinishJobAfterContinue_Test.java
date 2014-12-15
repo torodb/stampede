@@ -20,30 +20,28 @@
 
 package com.torodb.torod.db.metaInf;
 
-import com.torodb.torod.core.config.TorodConfig;
+import com.torodb.torod.core.backend.DbBackend;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
-import com.torodb.torod.core.executor.SessionExecutor;
 import com.torodb.torod.core.executor.ExecutorFactory;
+import com.torodb.torod.core.executor.SessionExecutor;
 import com.torodb.torod.core.executor.SystemExecutor;
 import com.torodb.torod.core.executor.ToroTaskExecutionException;
-import com.torodb.torod.core.subdocument.*;
+import com.torodb.torod.core.subdocument.BasicType;
+import com.torodb.torod.core.subdocument.SubDocAttribute;
+import com.torodb.torod.core.subdocument.SubDocType;
 import com.torodb.torod.tools.sequencer.ConcurrentTest;
 import com.torodb.torod.tools.sequencer.Sequencer;
 import com.torodb.torod.tools.sequencer.SequencerTest;
-
-import java.util.concurrent.Future;
-
 import org.junit.Before;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
+import java.util.concurrent.Future;
+
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.*;
 
 /**
  *
@@ -90,13 +88,9 @@ public class DbMetaInformation_CreateSubDocumentTypeTable_FinishJobAfterContinue
     }
 
     private void createCache() {
-        TorodConfig config = mock(TorodConfig.class, new ThrowExceptionAnswer());
+        DbBackend config = mock(DbBackend.class, new ThrowExceptionAnswer());
         Mockito.doReturn(64).when(config).getCacheSubDocTypeStripes();
-        cache = new DefaultDbMetaInformationCache(
-                executorFactory,
-                idHeuristic,
-                tableMetaInfoFactory,
-                config);
+        cache = new DefaultDbMetaInformationCache(executorFactory, idHeuristic, tableMetaInfoFactory);
 
         cache.createCollection(null, COLLECTION);
     }

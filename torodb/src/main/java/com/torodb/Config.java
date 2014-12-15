@@ -22,17 +22,12 @@ package com.torodb;
 
 import com.beust.jcommander.Parameter;
 import com.eightkdata.mongowp.mongoserver.MongoServerConfig;
-import com.google.common.base.Preconditions;
-import com.torodb.torod.core.config.TorodConfig;
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
-import javax.sql.DataSource;
-import org.postgresql.ds.PGSimpleDataSource;
+import com.torodb.torod.backend.db.DbBackendConfiguration;
 
 /**
  *
  */
-public class Config implements TorodConfig, MongoServerConfig {
+public class Config implements DbBackendConfiguration, MongoServerConfig {
 	
 	@Parameter(names={"--help","--usage"}, description="Print this usage guide")
 	private boolean help = false;
@@ -65,26 +60,6 @@ public class Config implements TorodConfig, MongoServerConfig {
 	@Parameter(names={"--verbose"}, description="Change log level to INFO")
 	private boolean verbose = false;
 
-    private DataSource commonDataSource;
-    private DataSource systemDataSource;
-    private DataSource globalCursorDataSource;
-    
-    public String getDbhost() {
-		return dbhost;
-	}
-
-	public Integer getDbport() {
-		return dbport;
-	}
-
-	public String getDbname() {
-		return dbname;
-	}
-
-	public String getDbuser() {
-		return dbuser;
-	}
-
 	public boolean askForPassword() {
     	return askForPassword;
     }
@@ -100,51 +75,6 @@ public class Config implements TorodConfig, MongoServerConfig {
 	public boolean verbose() {
 		return verbose;
 	}
-    
-    public void initialize() {
-        Preconditions.checkState(
-                connectionPoolSize >= 3, 
-                "At least three connections with the backend SQL database are "
-                        + "required"
-        );
-        Preconditions.checkState(
-                reservedReadPoolSize >= 1,
-                "At least one read connection is required"
-        );
-        Preconditions.checkState(
-                reservedReadPoolSize <= connectionPoolSize -2, 
-                "Reserved read connections must be lower than total "
-                        + "connections minus two"
-        );
-        
-        commonDataSource = createDataSource(connectionPoolSize - reservedReadPoolSize);
-        systemDataSource = createDataSource(1);
-        globalCursorDataSource = createDataSource(reservedReadPoolSize);
-    }
-    
-    private DataSource createDataSource(int maxPoolSize) {
-        PGSimpleDataSource pgds = new PGSimpleDataSource();
-        pgds.setServerName(dbhost);
-        pgds.setPortNumber(dbport);
-        pgds.setDatabaseName(dbname);
-        pgds.setUser(dbuser);
-        pgds.setPassword(dbpass);
-
-        HikariConfig hikariConfig = new HikariConfig();
-        hikariConfig.setMaximumPoolSize(maxPoolSize);
-        hikariConfig.setDataSource(pgds);
-
-        return new HikariDataSource(hikariConfig);
-    }
-    
-    public void shutdown() {
-    	((HikariDataSource) commonDataSource).shutdown();
-    }
-    
-    @Override
-	public int getPort() {
-		return mongoPort;
-	}
 
 	public void setPassword(String password) {
     	this.dbpass = password;
@@ -154,34 +84,49 @@ public class Config implements TorodConfig, MongoServerConfig {
     	return help;
     }
 
+
+    // DbBackendConfiguration methods
+
     @Override
-    public DataSource getSessionDataSource() {
-        return commonDataSource;
+    public int getConnectionPoolSize() {
+        return connectionPoolSize;
     }
 
     @Override
-    public DataSource getSystemDataSource() {
-        return systemDataSource;
+    public int getReservedReadPoolSize() {
+        return reservedReadPoolSize;
     }
 
     @Override
-    public DataSource getGlobalCursorDatasource() {
-        return globalCursorDataSource;
+    public String getUsername() {
+        return dbuser;
     }
 
     @Override
-    public int getByJobDependencyStripes() {
-        return 16;
+    public String getPassword() {
+        return dbpass;
     }
 
     @Override
-    public int getCacheSubDocTypeStripes() {
-        return 64;
+    public String getDbHost() {
+        return dbhost;
     }
 
     @Override
-    public long getDefaultCursorTimeout() {
-        return 10 * 60 * 1000;
+    public String getDbName() {
+        return dbname;
     }
 
+    @Override
+    public int getDbPort() {
+        return dbport;
+    }
+
+
+    // MongoServerConfig methods
+
+    @Override
+    public int getPort() {
+        return mongoPort;
+    }
 }
