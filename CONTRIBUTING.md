@@ -10,7 +10,7 @@ Please observe the following rules when contributing to ToroDB:
 
 * Contact us at toro at ToroDB dot com before sending a pull request, to have a contributor agreement signed with us. This is a requirement for your pull request to be merged upstream.
 
-* Changes and pull requests should be performed from the ``dev`` branch, instead of ``master``. Please adhere as much as possible to the apparent style of the code you are editing.
+* Changes and pull requests should be performed from the ``devel`` branch, instead of ``master``. Please adhere as much as possible to the apparent style of the code you are editing.
 
 
 [1]: https://groups.google.com/forum/#!forum/torodb-dev
