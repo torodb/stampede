@@ -20,7 +20,14 @@
 
 package com.torodb.torod.backend.db.postgresql;
 
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+
 import com.torodb.torod.backend.db.DbBackendConfiguration;
+import com.torodb.torod.core.exceptions.ToroRuntimeException;
+
 import org.postgresql.ds.PGSimpleDataSource;
 
 import javax.sql.DataSource;
@@ -43,6 +50,30 @@ public class OfficialPostgreSQLDriver implements PostgreSQLDriverProvider {
 
         dataSource.setApplicationName("torodb-" + poolName);
 
+        Statement stat = null;
+        ResultSet rs = null;
+        Connection conn = null;
+        try {
+            conn = dataSource.getConnection();
+            stat = conn.createStatement();
+            rs = stat.executeQuery("SELECT 1");
+            rs.next();
+        } catch (SQLException ex) {
+            throw new ToroRuntimeException(ex.getLocalizedMessage());
+        } finally {
+	            try {	
+		            if (rs != null) rs.close();                      
+	            } catch (SQLException ex) {	
+	            }
+	            try {	
+		            if (stat != null) stat.close();                      
+	        	} catch (SQLException ex) {	
+	            } 
+	            try {	
+	                if (conn != null) conn.close();                      
+	            } catch (SQLException ex) {	
+	            } 
+        }     
         return dataSource;
     }
 }
