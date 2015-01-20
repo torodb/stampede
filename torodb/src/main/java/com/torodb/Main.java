@@ -23,15 +23,18 @@ package com.torodb;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
+
 import com.beust.jcommander.JCommander;
 import com.eightkdata.mongowp.mongoserver.MongoServer;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.ProvisionException;
 import com.torodb.di.*;
 import com.torodb.torod.backend.db.postgresql.di.PostgreSQLModule;
 import com.torodb.torod.core.Torod;
 import com.torodb.torod.core.backend.DbBackend;
 import com.torodb.torod.core.exceptions.TorodStartupException;
+
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
@@ -104,7 +107,10 @@ public class Main {
 				new InnerCursorManagerModule()
 		);
 
-		final DbBackend dbBackend = injector.getInstance(DbBackend.class);
+		final DbBackend dbBackend;
+		try
+		{
+		dbBackend = injector.getInstance(DbBackend.class);
 		final Torod torod = injector.getInstance(Torod.class);
 		final MongoServer server = injector.getInstance(MongoServer.class);
 		final BuildProperties buildProperties = injector.getInstance(BuildProperties.class);
@@ -130,6 +136,17 @@ public class Main {
             }
         };
         serverThread.start();
+		}
+		catch (ProvisionException pe) {
+			                String causeMessage;
+			                if (pe.getCause() != null) {
+						        causeMessage = pe.getCause().getMessage();
+						    } else {
+						        causeMessage = pe.getMessage();
+						    }
+						    JCommander.getConsole().println(causeMessage);
+						    System.exit(1);
+					}
 	}
 
 	private static void run(final Torod torod, final MongoServer server) {
