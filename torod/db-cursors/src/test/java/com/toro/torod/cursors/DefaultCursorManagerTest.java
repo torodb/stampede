@@ -22,7 +22,7 @@ package com.toro.torod.cursors;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Ticker;
-import com.torodb.torod.core.config.TorodConfig;
+import com.torodb.torod.core.backend.DbBackend;
 import com.torodb.torod.core.cursors.CursorProperties;
 import com.torodb.torod.core.dbWrapper.Cursor;
 import com.torodb.torod.core.dbWrapper.DbWrapper;
@@ -44,11 +44,11 @@ import static org.mockito.Mockito.*;
  */
 public class DefaultCursorManagerTest {
 
-    private final TorodConfig config;
+    private final DbBackend config;
     private final long timeout = 1000 * 60 * 60; //in milliseconds
 
     public DefaultCursorManagerTest() {
-        config = mock(TorodConfig.class, new ThrowsException(new AssertionError()));
+        config = mock(DbBackend.class, new ThrowsException(new AssertionError()));
     }
 
     @BeforeClass

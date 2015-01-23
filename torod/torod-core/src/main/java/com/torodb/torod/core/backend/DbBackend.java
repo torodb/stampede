@@ -17,15 +17,16 @@
  *     Copyright (c) 2014, 8Kdata Technology
  *     
  */
-package com.torodb.torod.core.config;
+package com.torodb.torod.core.backend;
+
+import com.torodb.torod.core.Backend;
 
 import javax.sql.DataSource;
 
 /**
- *
+ * A specialized Backend based on an underlying database service to perform all data operations.
  */
-public interface TorodConfig {
-
+public interface DbBackend extends Backend {
     public DataSource getSessionDataSource();
 
     /**
@@ -52,4 +53,6 @@ public interface TorodConfig {
     public int getCacheSubDocTypeStripes();
 
     public long getDefaultCursorTimeout();
+
+    public void shutdown();
 }

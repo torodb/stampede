@@ -21,10 +21,8 @@
 package com.torodb.torod.db.sql;
 
 import com.google.common.collect.MapMaker;
-import com.torodb.torod.db.postgresql.meta.TorodbMeta;
-import com.torodb.torod.core.config.TorodConfig;
+import com.torodb.torod.core.backend.DbBackend;
 import com.torodb.torod.core.cursors.CursorId;
-import com.torodb.torod.core.dbWrapper.Cursor;
 import com.torodb.torod.core.dbWrapper.DbConnection;
 import com.torodb.torod.core.dbWrapper.DbWrapper;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
@@ -34,7 +32,16 @@ import com.torodb.torod.core.language.querycriteria.QueryCriteria;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.db.postgresql.meta.CollectionSchema;
 import com.torodb.torod.db.postgresql.meta.Routines;
+import com.torodb.torod.db.postgresql.meta.TorodbMeta;
 import com.torodb.torod.db.postgresql.query.QueryEvaluator;
+import org.jooq.Configuration;
+import org.jooq.ConnectionProvider;
+import org.jooq.DSLContext;
+import org.jooq.exception.DataAccessException;
+import org.jooq.impl.DSL;
+
+import javax.inject.Inject;
+import javax.sql.DataSource;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -42,33 +49,26 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
-import javax.inject.Inject;
-import javax.sql.DataSource;
-import org.jooq.Configuration;
-import org.jooq.ConnectionProvider;
-import org.jooq.DSLContext;
-import org.jooq.exception.DataAccessException;
-import org.jooq.impl.DSL;
 
 /**
  *
  */
 public abstract class AbstractSqlDbWrapper implements DbWrapper {
 
-    
+
 	private final AtomicBoolean isInitialized;
     private final DataSource sessionDataSource;
     private final DataSource systemDataSource;
     private final DataSource globalCursorDataSource;
     private final ConcurrentMap<CursorId, com.torodb.torod.core.dbWrapper.Cursor> openCursors;
     private TorodbMeta meta;
-    
+
 
     @Inject
-    public AbstractSqlDbWrapper(TorodConfig config) {
-        this.sessionDataSource = config.getSessionDataSource();
-        this.systemDataSource = config.getSystemDataSource();
-        this.globalCursorDataSource = config.getGlobalCursorDatasource();
+    public AbstractSqlDbWrapper(DbBackend dbBackend) {
+        this.sessionDataSource = dbBackend.getSessionDataSource();
+        this.systemDataSource = dbBackend.getSystemDataSource();
+        this.globalCursorDataSource = dbBackend.getGlobalCursorDatasource();
 
         isInitialized = new AtomicBoolean(false);
         this.openCursors = new MapMaker().makeMap();

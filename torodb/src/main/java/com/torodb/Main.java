@@ -23,13 +23,18 @@ package com.torodb;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
+
 import com.beust.jcommander.JCommander;
 import com.eightkdata.mongowp.mongoserver.MongoServer;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.ProvisionException;
 import com.torodb.di.*;
+import com.torodb.torod.backend.db.postgresql.di.PostgreSQLModule;
 import com.torodb.torod.core.Torod;
+import com.torodb.torod.core.backend.DbBackend;
 import com.torodb.torod.core.exceptions.TorodStartupException;
+
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
@@ -39,8 +44,6 @@ import java.nio.charset.Charset;
  * ToroDB's entry point
  */
 public class Main {
-    private static final String VERSION = "0.12";
-
 	public static void main(String[] args) throws Exception {
 		final Config config = new Config();
 		JCommander jCommander = new JCommander(config, args);
@@ -61,10 +64,10 @@ public class Main {
 				   continue;
 			   }
 			   
-			   if ((toroPassChunks[0].equals("*") || toroPassChunks[0].equals(config.getDbhost())) &&
-					   (toroPassChunks[1].equals("*") || toroPassChunks[1].equals(String.valueOf(config.getDbport()))) &&
-					   (toroPassChunks[2].equals("*") || toroPassChunks[2].equals(config.getDbname())) &&
-					   (toroPassChunks[2].equals("*") || toroPassChunks[3].equals(config.getDbuser()))) {
+			   if ((toroPassChunks[0].equals("*") || toroPassChunks[0].equals(config.getDbHost())) &&
+					   (toroPassChunks[1].equals("*") || toroPassChunks[1].equals(String.valueOf(config.getDbPort()))) &&
+					   (toroPassChunks[2].equals("*") || toroPassChunks[2].equals(config.getDbName())) &&
+					   (toroPassChunks[2].equals("*") || toroPassChunks[3].equals(config.getUsername()))) {
 				   config.setPassword(toroPassChunks[4]);
 			   }
 			}
@@ -91,9 +94,9 @@ public class Main {
             }
         }
 
-		config.initialize();
-
 		Injector injector = Guice.createInjector(
+				new BackendModule(config),
+				new PostgreSQLModule(),
 				new ConfigModule(config),
 				new MongoServerModule(),
 				new DbWrapperModule(),
@@ -104,6 +107,10 @@ public class Main {
 				new InnerCursorManagerModule()
 		);
 
+		final DbBackend dbBackend;
+		try
+		{
+		dbBackend = injector.getInstance(DbBackend.class);
 		final Torod torod = injector.getInstance(Torod.class);
 		final MongoServer server = injector.getInstance(MongoServer.class);
 		final BuildProperties buildProperties = injector.getInstance(BuildProperties.class);
@@ -111,7 +118,7 @@ public class Main {
 		Thread shutdown = new Thread() {
 			@Override
 			public void run() {
-				shutdown(config, torod, server);
+				shutdown(dbBackend, torod, server);
 			}
 		};
 		
@@ -121,14 +128,25 @@ public class Main {
             @Override
             public void run() {
                 JCommander.getConsole().println(
-						"Starting ToroDB v" + buildProperties.getFullVersion() + " listening on port "
-						+ config.getPort()
+						"Starting ToroDB v" + buildProperties.getFullVersion() +
+								" listening on port " + config.getPort()
 				);
                 Main.run(torod, server);
-                shutdown(config, torod, server);
+                shutdown(dbBackend, torod, server);
             }
         };
         serverThread.start();
+		}
+		catch (ProvisionException pe) {
+			                String causeMessage;
+			                if (pe.getCause() != null) {
+						        causeMessage = pe.getCause().getMessage();
+						    } else {
+						        causeMessage = pe.getMessage();
+						    }
+						    JCommander.getConsole().println(causeMessage);
+						    System.exit(1);
+					}
 	}
 
 	private static void run(final Torod torod, final MongoServer server) {
@@ -141,11 +159,10 @@ public class Main {
 		server.run();
 	}
 
-	private static void shutdown(final Config config,
-			final Torod torod, final MongoServer server) {
+	private static void shutdown(final DbBackend dbBackend, final Torod torod, final MongoServer server) {
 		server.stop();
 		torod.shutdown();
-		config.shutdown();
+		dbBackend.shutdown();
 	}
 
 	private static String readPwd(String text) throws IOException {

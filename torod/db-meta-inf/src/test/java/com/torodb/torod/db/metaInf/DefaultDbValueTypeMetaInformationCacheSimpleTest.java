@@ -21,7 +21,7 @@
 package com.torodb.torod.db.metaInf;
 
 import com.torodb.torod.db.metaInf.idHeuristic.LazyReserveIdHeuristic;
-import com.torodb.torod.core.config.TorodConfig;
+import com.torodb.torod.core.backend.DbBackend;
 import com.torodb.torod.core.executor.ExecutorFactory;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -38,14 +38,13 @@ public class DefaultDbValueTypeMetaInformationCacheSimpleTest {
         ExecutorFactory executorFactory = mock(ExecutorFactory.class);
         ReservedIdInfoFactory tableMetaInfoFactory = new DefaultTableMetaInfoFactory();
 
-        TorodConfig config = mock(TorodConfig.class, new ThrowExceptionAnswer());
+        DbBackend config = mock(DbBackend.class, new ThrowExceptionAnswer());
         Mockito.doReturn(64).when(config).getCacheSubDocTypeStripes();
         
         DefaultDbMetaInformationCache cache = new DefaultDbMetaInformationCache(
                 executorFactory,
                 new LazyReserveIdHeuristic(),
-                tableMetaInfoFactory,
-                config
+                tableMetaInfoFactory
         );
 
         try {

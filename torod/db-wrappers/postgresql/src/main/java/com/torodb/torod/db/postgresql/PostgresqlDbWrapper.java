@@ -22,7 +22,7 @@
 package com.torodb.torod.db.postgresql;
 
 import com.torodb.torod.core.annotations.DatabaseName;
-import com.torodb.torod.core.config.TorodConfig;
+import com.torodb.torod.core.backend.DbBackend;
 import com.torodb.torod.core.dbWrapper.DbConnection;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.db.postgresql.meta.TorodbMeta;
@@ -50,7 +50,7 @@ public class PostgresqlDbWrapper extends AbstractSqlDbWrapper {
 
     @Inject
     public PostgresqlDbWrapper(
-            TorodConfig config, 
+            DbBackend config,
             @DatabaseName String databaseName) {
         super(config);
         this.databaseName = databaseName;

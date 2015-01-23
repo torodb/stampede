@@ -28,7 +28,7 @@ import com.google.common.cache.RemovalNotification;
 import com.google.common.collect.MapMaker;
 import com.torodb.torod.core.cursors.CursorProperties;
 import com.torodb.torod.core.cursors.CursorId;
-import com.torodb.torod.core.config.TorodConfig;
+import com.torodb.torod.core.backend.DbBackend;
 import com.torodb.torod.core.cursors.InnerCursorManager;
 import com.torodb.torod.core.dbWrapper.Cursor;
 import com.torodb.torod.core.dbWrapper.DbWrapper;
@@ -78,7 +78,7 @@ public class DefaultInnerCursorManager implements InnerCursorManager {
     private final Ticker ticker;
 
     @Inject
-    public DefaultInnerCursorManager(TorodConfig config, DbWrapper dbWrapper) {
+    public DefaultInnerCursorManager(DbBackend config, DbWrapper dbWrapper) {
         this.actualTimeout = config.getDefaultCursorTimeout();
         this.removalListener = new MyRemovalListener();
         this.ticker = Ticker.systemTicker();
@@ -101,7 +101,7 @@ public class DefaultInnerCursorManager implements InnerCursorManager {
      * @param ticker 
      */
     protected DefaultInnerCursorManager(
-            TorodConfig config, 
+            DbBackend config,
             DbWrapper dbWrapper, 
             Ticker ticker) {
         this.actualTimeout = config.getDefaultCursorTimeout();

@@ -15,33 +15,34 @@
  *     along with ToroDB. If not, see <http://www.gnu.org/licenses/>.
  *
  *     Copyright (c) 2014, 8Kdata Technology
- *     
+ *
  */
 
+package com.torodb.torod.backend.db.postgresql;
 
-package com.torodb.di;
+import com.torodb.torod.backend.db.AbstractDbBackend;
+import com.torodb.torod.backend.db.DbBackendConfiguration;
 
-import com.eightkdata.mongowp.mongoserver.MongoServerConfig;
-import com.google.inject.AbstractModule;
-import com.torodb.Config;
-import com.torodb.mongowp.mongoserver.api.toro.util.MongoDocumentBuilderFactory;
-import com.torodb.torod.core.annotations.DatabaseName;
-import com.torodb.torod.core.config.DocumentBuilderFactory;
+import javax.inject.Inject;
+import javax.sql.DataSource;
 
 /**
  *
+ * PostgreSQL-based backend
  */
-public class ConfigModule extends AbstractModule {
-    private final Config config;
+public class PostgreSQLDbBackend extends AbstractDbBackend {
+    private final PostgreSQLDriverProvider driverProvider;
 
-    public ConfigModule(Config config) {
-        this.config = config;
+    @Inject
+    public PostgreSQLDbBackend(DbBackendConfiguration configuration, PostgreSQLDriverProvider driverProvider) {
+        super(configuration);
+        this.driverProvider = driverProvider;
+
+        initialize();
     }
-    
+
     @Override
-    protected void configure() {
-        bind(MongoServerConfig.class).toInstance(config);
-        bind(DocumentBuilderFactory.class).to(MongoDocumentBuilderFactory.class);
-        bind(String.class).annotatedWith(DatabaseName.class).toInstance(config.getDbName());
+    protected DataSource getConfiguredDataSource(DbBackendConfiguration configuration, String poolName) {
+        return driverProvider.getConfiguredDataSource(configuration, poolName);
     }
 }
