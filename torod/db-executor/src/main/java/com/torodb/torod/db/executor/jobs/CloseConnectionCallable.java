@@ -20,35 +20,45 @@
 
 package com.torodb.torod.db.executor.jobs;
 
-import com.google.common.base.Supplier;
 import com.torodb.torod.core.dbWrapper.DbConnection;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.dbWrapper.exceptions.UserDbException;
-import com.torodb.torod.db.executor.report.CloseConnectionReport;
-import java.util.concurrent.Callable;
-import javax.inject.Inject;
+import com.torodb.torod.core.exceptions.ToroException;
+import com.torodb.torod.core.exceptions.ToroImplementationException;
+import com.torodb.torod.core.exceptions.ToroRuntimeException;
+import com.torodb.torod.core.exceptions.UserToroException;
 
 /**
  *
  */
-public class CloseConnectionCallable implements Callable<Void> {
+public class CloseConnectionCallable extends TransactionalJob<Void> {
     
-    private final Supplier<DbConnection> connectionProvider;
-    private final CloseConnectionReport report;
+    private final Report report;
 
-    @Inject
     public CloseConnectionCallable(
-            Supplier<DbConnection> connectionProvider,
-            CloseConnectionReport report
-    ) {
-        this.connectionProvider = connectionProvider;
+            DbConnection connection, 
+            TransactionAborter abortCallback,
+            Report report) {
+        super(connection, abortCallback);
         this.report = report;
     }
 
     @Override
-    public Void call() throws ImplementationDbException, UserDbException {
-        connectionProvider.get().close();
-        report.taskExecuted();
-        return null;
+    protected Void failableCall() throws ToroException, ToroRuntimeException {
+        try {
+            getConnection().close();
+            report.closeConnectionExecuted();
+            return null;
+        }
+        catch (ImplementationDbException ex) {
+            throw new ToroImplementationException(ex);
+        }
+        catch (UserDbException ex) {
+            throw new UserToroException(ex);
+        }
+    }
+    
+    public static interface Report {
+        public void closeConnectionExecuted();
     }
 }

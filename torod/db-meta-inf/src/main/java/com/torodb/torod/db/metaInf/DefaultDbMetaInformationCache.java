@@ -24,6 +24,7 @@ import com.google.common.collect.MapMaker;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Futures;
 import com.torodb.torod.core.dbMetaInf.DbMetaInformationCache;
+import com.torodb.torod.core.exceptions.ToroRuntimeException;
 import com.torodb.torod.core.executor.ExecutorFactory;
 import com.torodb.torod.core.executor.SessionExecutor;
 import com.torodb.torod.core.executor.SystemExecutor;
@@ -43,6 +44,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -159,11 +162,20 @@ public class DefaultDbMetaInformationCache implements DbMetaInformationCache {
             creationCollectionPendingJobs.put(collection, tick);
 
             if (response.isDone()) {
+                response.get();
                 creationCollectionPendingJobs.remove(collection);
             } else {
                 sessionExecutor.pauseUntil(tick);
             }
         } catch (ToroTaskExecutionException ex) {
+            //TODO: Change exception
+            throw new RuntimeException(ex);
+        }
+        catch (InterruptedException ex) {
+            //TODO: Change exception
+            throw new RuntimeException(ex);
+        }
+        catch (ExecutionException ex) {
             //TODO: Change exception
             throw new RuntimeException(ex);
         } finally {
@@ -198,28 +210,6 @@ public class DefaultDbMetaInformationCache implements DbMetaInformationCache {
         }
         
         return collectionMetaInfo.reserveDocId(sessionExecutor, neededIds);
-    }
-
-    @Override
-    public Future<NamedToroIndex> createIndex(
-            String indexName,
-            IndexedAttributes attributes, 
-            boolean unique, 
-            boolean blocking) {
-        //TODO: Implement this
-        throw new UnsupportedOperationException("Not supported yet."); 
-    }
-
-    @Override
-    public Future<Boolean> dropIndex(String indexName) {
-        //TODO: Implement this
-        throw new UnsupportedOperationException("Not supported yet."); 
-    }
-
-    @Override
-    public Collection<? extends NamedToroIndex> getIndexes() {
-        //TODO: Implement this
-        throw new UnsupportedOperationException("Not supported yet."); 
     }
 
     private void startCollectionCreation(String collection, int initialId) {

@@ -49,8 +49,8 @@ public class PostgresqlDbWrapper extends AbstractSqlDbWrapper {
     @Inject
     public PostgresqlDbWrapper(
             @DatabaseName String databaseName,
-            TorodConfig config) {
-        super(databaseName, config);
+            DbBackend dbBackend) {
+        super(databaseName, dbBackend);
     }
 
     @Override
@@ -65,6 +65,7 @@ public class PostgresqlDbWrapper extends AbstractSqlDbWrapper {
         return new PostgresqlDbConnection(dsl, meta);
     }
     
+    @Override
     protected void checkDbSupported(Connection conn) throws SQLException, ImplementationDbException {    	
         int major = conn.getMetaData().getDatabaseMajorVersion();
         int minor = conn.getMetaData().getDatabaseMinorVersion();

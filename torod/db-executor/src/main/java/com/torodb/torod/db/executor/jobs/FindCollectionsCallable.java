@@ -23,7 +23,7 @@ package com.torodb.torod.db.executor.jobs;
 import com.torodb.torod.core.dbWrapper.DbConnection;
 import com.torodb.torod.core.dbWrapper.DbWrapper;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
-import com.torodb.torod.db.executor.report.FindCollectionsReport;
+import java.util.Collections;
 import java.util.Map;
 import javax.inject.Inject;
 
@@ -32,12 +32,12 @@ import javax.inject.Inject;
  */
 public class FindCollectionsCallable extends SystemDbCallable<Map<String, Integer>> {
 
-    private final FindCollectionsReport report;
+    private final Report report;
     
     @Inject
     public FindCollectionsCallable(
             DbWrapper dbWrapperPool, 
-            FindCollectionsReport report) {
+            Report report) {
         super(dbWrapperPool);
         this.report = report;
     }
@@ -45,12 +45,15 @@ public class FindCollectionsCallable extends SystemDbCallable<Map<String, Intege
     @Override
     Map<String, Integer> call(DbConnection db) throws ImplementationDbException {
         Map<String, Integer> result = db.findCollections();
-        report.taskExecuted();
         return result;
     }
 
     @Override
     void doCallback(Map<String, Integer> result) {
+        report.findCollectionExecuted(Collections.unmodifiableMap(result));
     }
 
+    public static interface Report {
+            public void findCollectionExecuted(Map<String, Integer> collections);
+    }
 }

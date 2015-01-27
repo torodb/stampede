@@ -2,29 +2,42 @@
 package com.torodb.torod.db.executor.jobs;
 
 import com.torodb.torod.core.dbWrapper.DbConnection;
-import com.torodb.torod.core.dbWrapper.DbWrapper;
-import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
-import com.torodb.torod.core.dbWrapper.exceptions.UserDbException;
+import com.torodb.torod.core.exceptions.ToroException;
+import com.torodb.torod.core.exceptions.ToroRuntimeException;
 import com.torodb.torod.core.pojos.NamedToroIndex;
 import java.util.Collection;
 
 /**
  *
  */
-public class GetIndexesCallable extends SystemDbCallable<Collection<? extends NamedToroIndex>> {
+public class GetIndexesCallable extends TransactionalJob<Collection<? extends NamedToroIndex>> {
 
-    public GetIndexesCallable(DbWrapper dbWrapperPool) {
-        super(dbWrapperPool);
+    private final Report report;
+    private final String collection;
+
+    public GetIndexesCallable(
+            DbConnection connection, 
+            TransactionAborter abortCallback,
+            Report report, 
+            String collection) {
+        super(connection, abortCallback);
+        this.report = report;
+        this.collection = collection;
     }
+    
 
     @Override
-    Collection<? extends NamedToroIndex> call(DbConnection db) 
-            throws ImplementationDbException, UserDbException {
-        return db.getIndexes();
+    protected Collection<? extends NamedToroIndex> failableCall() 
+            throws ToroException, ToroRuntimeException {
+        Collection<? extends NamedToroIndex> result
+                = getConnection().getIndexes(collection);
+        report.getIndexesExecuted(collection, result);
+        
+        return result;
     }
-
-    @Override
-    void doCallback(Collection<? extends NamedToroIndex> result) {
+    
+    public static interface Report {
+        public void getIndexesExecuted(String collection, Collection<? extends NamedToroIndex> result);
     }
 
 }

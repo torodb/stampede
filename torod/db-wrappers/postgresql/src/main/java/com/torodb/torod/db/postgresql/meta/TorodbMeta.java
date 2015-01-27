@@ -97,7 +97,7 @@ public class TorodbMeta {
             throw new IllegalArgumentException("Collection '" + collection
                     + "' is already associated with a collection schema");
         }
-        CollectionSchema result = new CollectionSchema(collection, dsl);
+        CollectionSchema result = new CollectionSchema(collection, dsl, this);
         collectionSchemes.put(collection, result);
 
         return result;
@@ -108,7 +108,7 @@ public class TorodbMeta {
             DSLContext dsl,
             DatabaseMetaData jdbcMeta
     ) {
-        CollectionSchema colSchema = new CollectionSchema(schema, dsl, jdbcMeta);
+        CollectionSchema colSchema = new CollectionSchema(schema, dsl, jdbcMeta, this);
         collectionSchemes.put(colSchema.getCollection(), colSchema);
     }
 

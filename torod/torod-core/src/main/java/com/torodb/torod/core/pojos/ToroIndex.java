@@ -1,12 +1,13 @@
 
 package com.torodb.torod.core.pojos;
 
+import java.io.Serializable;
 import javax.annotation.Nonnull;
 
 /**
  *
  */
-public interface ToroIndex {
+public interface ToroIndex extends Serializable {
 
     @Nonnull
     public IndexedAttributes getAttributes();

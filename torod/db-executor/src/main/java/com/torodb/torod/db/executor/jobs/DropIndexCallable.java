@@ -2,30 +2,38 @@
 package com.torodb.torod.db.executor.jobs;
 
 import com.torodb.torod.core.dbWrapper.DbConnection;
-import com.torodb.torod.core.dbWrapper.DbWrapper;
-import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
-import com.torodb.torod.core.dbWrapper.exceptions.UserDbException;
+import com.torodb.torod.core.exceptions.ToroException;
+import com.torodb.torod.core.exceptions.ToroRuntimeException;
 
 /**
  *
  */
-public class DropIndexCallable extends SystemDbCallable<Boolean> {
+public class DropIndexCallable extends TransactionalJob<Boolean> {
 
+    private final Report report;
+    private final String collection;
     private final String indexName;
 
-    public DropIndexCallable(DbWrapper dbWrapperPool, String indexName) {
-        super(dbWrapperPool);
+    public DropIndexCallable(
+            DbConnection connection, 
+            TransactionAborter abortCallback, 
+            Report report, 
+            String collection, 
+            String indexName) {
+        super(connection, abortCallback);
+        this.report = report;
+        this.collection = collection;
         this.indexName = indexName;
     }
 
     @Override
-    Boolean call(DbConnection db) 
-            throws ImplementationDbException, UserDbException {
-        return db.dropIndex(indexName);
+    protected Boolean failableCall() throws ToroException, ToroRuntimeException {
+        boolean result = getConnection().dropIndex(collection, indexName);
+        report.dropIndexExecuted(collection, indexName, result);
+        return result;
     }
 
-    @Override
-    void doCallback(Boolean result) {
+    public static interface Report {
+        public void dropIndexExecuted(String collection, String indexName, boolean removed);
     }
-
 }

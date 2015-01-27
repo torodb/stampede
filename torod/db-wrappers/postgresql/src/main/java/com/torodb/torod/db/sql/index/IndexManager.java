@@ -1,216 +1,373 @@
 package com.torodb.torod.db.sql.index;
 
-import com.google.common.collect.*;
-import com.torodb.torod.core.exceptions.ToroImplementationException;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
+import com.torodb.torod.core.exceptions.ToroRuntimeException;
+import com.torodb.torod.core.language.AttributeReference;
+import com.torodb.torod.core.pojos.DefaultNamedToroIndex;
+import com.torodb.torod.core.pojos.IndexedAttributes;
 import com.torodb.torod.core.pojos.NamedToroIndex;
 import com.torodb.torod.core.pojos.UnnamedToroIndex;
+import com.torodb.torod.core.subdocument.SubDocAttribute;
+import com.torodb.torod.core.subdocument.structure.ArrayStructure;
+import com.torodb.torod.core.subdocument.structure.DocStructure;
+import com.torodb.torod.core.subdocument.structure.StructureElement;
+import com.torodb.torod.db.postgresql.meta.CollectionSchema;
+import com.torodb.torod.db.postgresql.meta.StructuresCache;
+import com.torodb.torod.db.postgresql.meta.TorodbMeta;
+import com.torodb.torod.db.postgresql.meta.tables.SubDocTable;
+import java.io.Serializable;
 import java.util.*;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import javax.annotation.concurrent.NotThreadSafe;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
  */
-@NotThreadSafe
-public class IndexManager {
+public class IndexManager implements Serializable {
 
-    private final Map<String, NamedToroIndex> toroNameToNamed;
-    private final BiMap<String, NamedDbIndex> dbNameToNamed;
-    private final BiMap<NamedToroIndex, UnnamedToroIndex> toroNamedToUnnamed;
-    private final BiMap<NamedDbIndex, UnnamedDbIndex> dbNamedToUnnamed;
-    private final Multimap<UnnamedToroIndex, UnnamedDbIndex> toroToDb;
-    private final Multimap<UnnamedDbIndex, UnnamedToroIndex> dbToToro;
-    private final ReentrantReadWriteLock lock;
+    private static final Logger LOGGER
+            = LoggerFactory.getLogger(IndexManager.class);
+    private static final long serialVersionUID = 1L;
 
-    public IndexManager() {
-        toroNameToNamed = Maps.newHashMap();
-        dbNameToNamed = HashBiMap.create();
+    private final CollectionSchema colSchema;
+    private final IndexRelationManager indexRelation;
+    private final String databaseName;
 
-        toroNamedToUnnamed = HashBiMap.create();
-        dbNamedToUnnamed = HashBiMap.create();
-
-        toroToDb = HashMultimap.create();
-        dbToToro = HashMultimap.create();
-
-        lock = new ReentrantReadWriteLock(true);
+    public IndexManager(
+            CollectionSchema colSchema,
+            TorodbMeta meta) {
+        this.colSchema = colSchema;
+        this.indexRelation = new IndexRelationManager();
+        this.databaseName = meta.getDatabaseName();
     }
 
-    public Lock getWriteLock() {
-        return lock.writeLock();
-    }
+    public void initialize(
+            Set<NamedDbIndex> dbIndexes,
+            Set<NamedToroIndex> toroIndexes,
+            StructuresCache structures) {
 
-    public Lock getReadLock() {
-        return lock.readLock();
-    }
-
-    public boolean existsToroIndex(String indexName) {
-        return toroNameToNamed.containsKey(indexName);
-    }
-
-    public boolean existsToroIndex(UnnamedToroIndex index) {
-        return toroToDb.containsKey(index);
-    }
-
-    public boolean existsDbIndex(String indexName) {
-        return dbNameToNamed.containsKey(indexName);
-    }
-
-    public boolean existsDbIndex(UnnamedDbIndex index) {
-        return dbToToro.containsKey(index);
-    }
-
-    public Set<UnnamedToroIndex> getToroUnnamedIndexes() {
-        return toroToDb.keySet();
-    }
-
-    public Set<NamedToroIndex> getToroNamedIndexes() {
-        return toroNamedToUnnamed.keySet();
-    }
-
-    public Set<UnnamedDbIndex> getDbIndexes() {
-        return dbToToro.keySet();
-    }
-
-    public Collection<UnnamedDbIndex> getDbIndexes(UnnamedToroIndex toroIndex) {
-        Collection<UnnamedDbIndex> result = toroToDb.get(toroIndex);
-        if (result.isEmpty()) {
-            throw new IllegalArgumentException("Torodb index '" + toroIndex
-                    + "' is not stored in this index relation");
-        }
-        return result;
-    }
-
-    public Collection<UnnamedToroIndex> getToroIndexes(UnnamedDbIndex dbIndex) {
-        Collection<UnnamedToroIndex> result = dbToToro.get(dbIndex);
-        if (result.isEmpty()) {
-            throw new IllegalArgumentException("DB index '" + dbIndex
-                    + "' is not stored in this index relation");
-        }
-        return result;
-    }
-
-    /**
-     * Returns the existing {@link NamedDbIndex named db index} that has the
-     * same associated info than the candidate given or null if there is no
-     * index that fulfil that condition
-     * <p>
-     * @param candidate
-     * @return
-     */
-    @Nullable
-    public NamedDbIndex getDbIndex(UnnamedDbIndex candidate) {
-        return dbNamedToUnnamed.inverse().get(candidate);
-    }
-
-    private void checkValidToInsert(NamedToroIndex toroIndex) {
-        if (existsToroIndex(toroIndex.getName())) {
-            throw new IllegalArgumentException(
-                    "ToroIndex with name " + toroIndex.getName()
-                    + " already "
-                    + "exists"
-            );
-        }
-        if (existsToroIndex(toroIndex.asUnnamed())) {
-            throw new IllegalArgumentException(
-                    "ToroIndex like " + toroIndex.asUnnamed()
-                    + " already exists"
-            );
-        }
-    }
-
-    private void checkValidToInsert(NamedDbIndex named) {
-        NamedDbIndex oldNamed = dbNameToNamed.get(named.getName());
-        if (oldNamed == null) {
-            return ;
-        }
-        if (!oldNamed.equals(named)) {
-            throw new IllegalArgumentException(
-                    "DbIndex like " + named.asUnnamed() + " already exists");
-        }
-    }
-
-    public void addIndexRelation(NamedToroIndex toroNamed, NamedDbIndex dbNamed) {
-        checkValidToInsert(dbNamed);
-        checkValidToInsert(toroNamed);
-
-        UnnamedToroIndex toroUnnamed = toroNamed.asUnnamed();
-        UnnamedDbIndex dbUnnamed = dbNamed.asUnnamed();
-
-        boolean modified;
-
-        //connect name with toro named index
-        modified = toroNameToNamed.putIfAbsent(toroNamed.getName(), toroNamed) != null;
-        assert modified;
-
-        //connect toro named index with unnamed index
-        modified = toroNamedToUnnamed.putIfAbsent(toroNamed, toroUnnamed) != null;
-        assert modified;
-
-        //connect toro unnamed with db unnamed
-        modified = toroToDb.put(toroUnnamed, dbUnnamed);
-        assert modified : "There is a previous relation from '"
-                + toroUnnamed + "' to '" + dbUnnamed + "'";
-        
-        //connect db unnamed with db named
-        UnnamedDbIndex oldUnamed = dbNamedToUnnamed.putIfAbsent(dbNamed, dbUnnamed);
-        assert oldUnamed == null || oldUnamed.equals(dbUnnamed);
-
-        //connect db named with its name
-        NamedDbIndex oldNamed = dbNameToNamed.putIfAbsent(dbNamed.getName(), dbNamed);
-        assert oldNamed == null || oldNamed.equals(dbNamed);
-    }
-
-    public Set<NamedDbIndex> removeToroIndex(String toroIndexName) {
-
-        NamedToroIndex toroNamed = toroNameToNamed.remove(toroIndexName);
-        if (toroNamed == null) {
-            throw new IllegalArgumentException("There is no toro index called "
-                    + toroIndexName);
-        }
-
-        UnnamedToroIndex toroUnnamed = toroNamedToUnnamed.remove(toroNamed);
-        if (toroUnnamed == null) {
-            throw new ToroImplementationException("A relation between "
-                    + toroNamed + " and a unnamed toro index was expected"
-            );
-        }
-        
-        Collection<UnnamedDbIndex> dbUnnameds = toroToDb.removeAll(toroUnnamed);
-        if (dbUnnameds.isEmpty()) {
-            throw new ToroImplementationException("A relation between "
-                    + toroIndexName + " and at least one unnamed db index was "
-                    + "expected"
-            );
-        }
-        
-        Set<NamedDbIndex> result = Sets.newHashSetWithExpectedSize(dbUnnameds.size());
-        
-        for (UnnamedDbIndex dbUnnamed : dbUnnameds) {
-
-            boolean removed = dbToToro.remove(dbUnnamed, toroUnnamed);
-            assert removed;
+        IndexRelationManager.IndexWriteTransaction indexTransaction
+                = indexRelation.createWriteTransaction();
+        try {
             
-            if (!dbToToro.containsKey(dbUnnamed)) {
-                NamedDbIndex dbNamed = dbNamedToUnnamed.inverse().remove(dbUnnamed);
-                if (dbNamed == null) {
-                    throw new ToroImplementationException("It was expected that "
-                            + "the existent unnamed db index " + dbUnnamed + " was "
-                            + "associated with named db index, but it is not"
-                    );
-                }
-                result.add(dbNamed);
-                if (dbNameToNamed.inverse().remove(dbNamed) == null) {
-                    throw new ToroImplementationException("It was expected that "
-                            + "the existent named db index " + dbNamed + " was "
-                            + "associated with a name, but it is not"
+            for (NamedDbIndex dbIndex : dbIndexes) {
+                indexTransaction.storeDbIndex(dbIndex);
+            }
+            for (NamedToroIndex toroIndex : toroIndexes) {
+                indexTransaction.storeToroIndex(toroIndex);
+            }
+            
+            Set<NamedDbIndex> notVisitedDbIndexes
+                    = Sets.newHashSetWithExpectedSize(dbIndexes.size());
+            for (NamedDbIndex dbIndex : dbIndexes) {
+                notVisitedDbIndexes.add(dbIndex);
+            }
 
+            for (NamedToroIndex toroIndex : toroIndexes) {
+                for (DocStructure structure : structures.getAllStructures().values()) {
+                    List<UnnamedDbIndex> requiredIndexes = indexOnStructure(
+                            toroIndex.asUnnamed(),
+                            structure
                     );
+                    if (requiredIndexes == null) {
+                        continue;
+                    }
+                    for (UnnamedDbIndex requiredIndex : requiredIndexes) {
+                        NamedDbIndex equivalentNamedDbIndex 
+                                = indexTransaction.getDbIndex(requiredIndex);
+                        
+                        if (equivalentNamedDbIndex == null) {
+                            throw new ToroRuntimeException(
+                                    toroIndex + " requires a index like "
+                                    + requiredIndex + " to index structure "
+                                    + structure + " but that db index does not "
+                                    + "exist"
+                            );
+                        }
+                        indexTransaction.addIndexRelation(
+                                toroIndex.getName(), 
+                                equivalentNamedDbIndex.getName()
+                        );
+
+                        notVisitedDbIndexes.remove(equivalentNamedDbIndex);
+                    }
+                }
+            }
+
+            for (NamedDbIndex notVisitedDbIndex : notVisitedDbIndexes) {
+                LOGGER.warn("Index {}.{} is not used.", colSchema.getName(), notVisitedDbIndex.getName());
+            }
+            indexTransaction.commit();
+        }
+        finally {
+            indexTransaction.close();
+        }
+    }
+
+    @Nonnull
+    public NamedToroIndex createIndex(
+            String indexName,
+            IndexedAttributes attributes,
+            boolean unique,
+            boolean blocking,
+            DbIndexCreator dbIndexCreator,
+            ToroIndexCreatedListener toroIndexListener) {
+
+        IndexRelationManager.IndexWriteTransaction indexTransaction
+                = indexRelation.createWriteTransaction();
+        try {
+            if (indexTransaction.existsToroIndex(indexName)) {
+                throw new IllegalArgumentException(
+                        "There is another index called '" + indexName + "'"
+                );
+            }
+
+            NamedToroIndex toroIndex = new DefaultNamedToroIndex(
+                    indexName,
+                    attributes,
+                    databaseName,
+                    colSchema.getCollection(),
+                    unique
+            );
+            
+            indexTransaction.storeToroIndex(toroIndex);
+
+            toroIndexListener.eventToroIndexCreated(toroIndex);
+
+            Set<UnnamedDbIndex> dbUnnamedCandidates
+                    = toDbIndex(toroIndex, colSchema);
+            for (UnnamedDbIndex dbUnnamedCandidate : dbUnnamedCandidates) {
+                NamedDbIndex dbTargetNamed
+                        = indexTransaction.getDbIndex(dbUnnamedCandidate);
+
+                if (dbTargetNamed == null) {
+                    dbTargetNamed = dbIndexCreator.createIndex(
+                            colSchema,
+                            dbUnnamedCandidate
+                    );
+                    indexTransaction.storeDbIndex(dbTargetNamed);
+                }
+                indexTransaction.addIndexRelation(indexName, dbTargetNamed.getName());
+            }
+            indexTransaction.commit();
+            return toroIndex;
+        }
+        finally {
+            indexTransaction.close();
+        }
+    }
+
+    private Set<UnnamedDbIndex> toDbIndex(NamedToroIndex index, CollectionSchema colSchema) {
+
+        Set<UnnamedDbIndex> result = Sets.newHashSet();
+
+        for (DocStructure root : colSchema.getStructuresCache().getAllStructures().values()) {
+            List<UnnamedDbIndex> toDbIndexes
+                    = indexOnStructure(index.asUnnamed(), root);
+            if (toDbIndexes != null) {
+                result.addAll(toDbIndexes);
+            }
+        }
+        return result;
+    }
+
+    @Nullable
+    private List<UnnamedDbIndex> indexOnStructure(
+            UnnamedToroIndex index,
+            DocStructure root) {
+
+        IndexedAttributes indexedAtts = index.getAttributes();
+
+        List<UnnamedDbIndex> result
+                = Lists.newArrayListWithCapacity(indexedAtts.size());
+
+        for (Map.Entry<AttributeReference, Boolean> entrySet : indexedAtts.entrySet()) {
+            String tableName = getRelativeIndexedColumnInfo(
+                    root,
+                    entrySet.getKey()
+            );
+            if (tableName == null) {
+                return null;
+            }
+
+            List<AttributeReference.Key> keys = entrySet.getKey().getKeys();
+
+            result.add(
+                    new UnnamedDbIndex(
+                            colSchema.getName(),
+                            tableName,
+                            keys.get(keys.size() - 1).toString(),
+                            entrySet.getValue()
+                    )
+            );
+        }
+        return result;
+    }
+
+    @Nullable
+    private String getRelativeIndexedColumnInfo(
+            DocStructure root,
+            AttributeReference attRef) {
+
+        DocStructure lastDocStructure;
+        StructureElement structureElem = root;
+
+        final int structureLimit = attRef.getKeys().size() - 1;
+        for (int i = 0; i < structureLimit; i++) {
+            AttributeReference.Key key = attRef.getKeys().get(i);
+
+            if (structureElem instanceof DocStructure) {
+                if (!(key instanceof AttributeReference.ObjectKey)) {
+                    return null;
+                }
+                AttributeReference.ObjectKey objKey
+                        = (AttributeReference.ObjectKey) key;
+                lastDocStructure = (DocStructure) structureElem;
+                structureElem
+                        = lastDocStructure.getElements().get(objKey.getKey());
+                if (structureElem == null) {
+                    return null;
+                }
+            }
+            else {
+                if (structureElem instanceof ArrayStructure) {
+                    if (!(key instanceof AttributeReference.ArrayKey)) {
+                        return null;
+                    }
+                    AttributeReference.ArrayKey arrKey
+                            = (AttributeReference.ArrayKey) key;
+                    structureElem
+                            = ((ArrayStructure) structureElem).get(arrKey.getIndex());
+                    if (structureElem == null) {
+                        return null;
+                    }
+                }
+                else {
+                    LOGGER.warn("Unexpected structure {}", structureElem.getClass().getName());
+                    return null;
                 }
             }
         }
+        AttributeReference.Key key = attRef.getKeys().get(structureLimit);
+
+        if (structureElem instanceof DocStructure) {
+            if (!(key instanceof AttributeReference.ObjectKey)) {
+                return null;
+            }
+            AttributeReference.ObjectKey objKey
+                    = (AttributeReference.ObjectKey) key;
+            lastDocStructure = (DocStructure) structureElem;
+            SubDocAttribute attribute = lastDocStructure
+                    .getType()
+                    .getAttribute(
+                            objKey.getKey()
+                    );
+            if (attribute == null) {
+                return null;
+            }
+            SubDocTable subDocTable
+                    = colSchema.getSubDocTable(lastDocStructure.getType());
+
+            return subDocTable.getName();
+        }
+        else {
+            //TODO: keys whose last container is not an documento are not supported
+            return null;
+        }
+    }
+
+    public boolean dropIndex(
+            String indexName,
+            DbIndexDropper dbIndexDropper,
+            ToroIndexDroppedListener toroIndexListener) {
         
-        return result;
+        IndexRelationManager.IndexWriteTransaction indexTransaction
+                = indexRelation.createWriteTransaction();
+
+        try {
+        
+            if (!indexTransaction.existsToroIndex(indexName)) {
+                return false;
+            }
+        
+            toroIndexListener.eventToroIndexRemoved(colSchema, indexName);
+
+            Set<NamedDbIndex> removedDbIndexes
+                    = indexTransaction.removeToroIndex(indexName);
+
+            for (NamedDbIndex dbIndex : removedDbIndexes) {
+                dbIndexDropper.dropIndex(colSchema, dbIndex);
+            }
+
+            indexTransaction.commit();
+            return true;
+        }
+        finally {
+            indexTransaction.close();
+        }
+    }
+
+    public void newStructureDetected(
+            DocStructure newStructure,
+            DbIndexCreator dbIndexCreator) {
+        IndexRelationManager.IndexWriteTransaction indexTransaction
+                = indexRelation.createWriteTransaction();
+        try {
+            for (NamedToroIndex index : indexTransaction.getToroNamedIndexes()) {
+                List<UnnamedDbIndex> dbIndexes
+                        = indexOnStructure(index.asUnnamed(), newStructure);
+                if (dbIndexes != null) {
+                    for (UnnamedDbIndex dbIndex : dbIndexes) {
+                        if (!indexTransaction.exists(dbIndex)) {
+                            NamedDbIndex namedDbIndex
+                                    = dbIndexCreator.createIndex(colSchema, dbIndex);
+                            indexTransaction.storeDbIndex(namedDbIndex);
+                            indexTransaction.addIndexRelation(
+                                    index.getName(), 
+                                    namedDbIndex.getName()
+                            );
+                        }
+                    }
+                }
+            }
+            indexTransaction.commit();
+        }
+        finally {
+            indexTransaction.close();
+        }
+    }
+
+    public Collection<? extends NamedToroIndex> getIndexes() {
+        return indexRelation.getReadTransaction().getToroNamedIndexes();
+    }
+
+    public static interface DbIndexCreator {
+
+        public NamedDbIndex createIndex(
+                @Nonnull CollectionSchema colSchema,
+                @Nonnull UnnamedDbIndex unnamedDbIndex
+        );
+    }
+
+    public static interface DbIndexDropper {
+
+        void dropIndex(
+                @Nonnull CollectionSchema colSchema,
+                @Nonnull NamedDbIndex index);
+    }
+
+    public static interface ToroIndexCreatedListener {
+
+        void eventToroIndexCreated(@Nonnull NamedToroIndex index);
+    }
+
+    public static interface ToroIndexDroppedListener {
+
+        public void eventToroIndexRemoved(
+                @Nonnull CollectionSchema colSchema,
+                @Nonnull String indexName);
     }
 }

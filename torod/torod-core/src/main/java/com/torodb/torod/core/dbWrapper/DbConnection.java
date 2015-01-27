@@ -32,7 +32,6 @@ import com.torodb.torod.core.subdocument.structure.DocStructure;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.concurrent.Future;
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.ThreadSafe;
 
@@ -98,11 +97,8 @@ public interface DbConnection {
     /**
      * Inserts all subdocuments of the given subtype contained in the given doc.
      * @param collection
-     * @param doc
      * @param subDocuments
      * @param subDocType
-     * @throws ImplementationDbException
-     * @throws UserDbException 
      */
     public void insertSubdocuments(
             @Nonnull String collection,
@@ -141,8 +137,9 @@ public interface DbConnection {
     );
     
     public boolean dropIndex(
+            String collection,
             String indexName
     );
     
-    public Collection<? extends NamedToroIndex> getIndexes();
+    public Collection<? extends NamedToroIndex> getIndexes(String collection);
 }

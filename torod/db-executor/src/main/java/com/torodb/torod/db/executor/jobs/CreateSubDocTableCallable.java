@@ -25,7 +25,6 @@ import com.torodb.torod.core.dbWrapper.DbWrapper;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.executor.SystemExecutor;
 import com.torodb.torod.core.subdocument.SubDocType;
-import com.torodb.torod.db.executor.report.CreateSubDocTableReport;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 
@@ -38,7 +37,7 @@ public class CreateSubDocTableCallable extends SystemDbCallable<Void> {
     private final SubDocType type;
     @Nullable
     private final SystemExecutor.CreateSubDocTypeTableCallback callback;
-    private final CreateSubDocTableReport report;
+    private final Report report;
 
     @Inject
     public CreateSubDocTableCallable(
@@ -46,7 +45,7 @@ public class CreateSubDocTableCallable extends SystemDbCallable<Void> {
             String collection, 
             SubDocType type, 
             SystemExecutor.CreateSubDocTypeTableCallback callback, 
-            CreateSubDocTableReport report) {
+            Report report) {
         super(dbWrapper);
         this.collection = collection;
         this.type = type;
@@ -65,6 +64,10 @@ public class CreateSubDocTableCallable extends SystemDbCallable<Void> {
         if (callback != null) {
             callback.createSubDocTypeTable(collection, type);
         }
-        report.taskExecuted(collection, type);
+        report.createSubDocTableExecuted(collection, type);
+    }
+    
+    public static interface Report {
+        public void createSubDocTableExecuted(String collection, SubDocType type);
     }
 }

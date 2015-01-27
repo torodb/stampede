@@ -91,15 +91,6 @@ public class DefaultSystemExecutorTest_tick {
     }
     
     @Test
-    public void testGetTick_getLastUsedIds() throws ToroTaskExecutionException {
-        long tick1 = executor.getTick();
-        
-        executor.getLastUsedIds();
-        long tick2 = executor.getTick();
-        assert tick2 == tick1 + 1 : tick2 + " != " + (tick1 + 1);
-    }
-    
-    @Test
     public void testGetTick_reserveDocIds() throws ToroTaskExecutionException {
         long tick1 = executor.getTick();
         

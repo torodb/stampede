@@ -30,12 +30,17 @@ import com.torodb.torod.core.exceptions.ToroImplementationException;
 import com.torodb.torod.core.executor.SessionTransaction;
 import com.torodb.torod.core.executor.ToroTaskExecutionException;
 import com.torodb.torod.core.language.operations.DeleteOperation;
+import com.torodb.torod.core.pojos.IndexedAttributes;
+import com.torodb.torod.core.pojos.NamedToroIndex;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.db.executor.jobs.*;
 import com.torodb.torod.db.executor.report.ReportFactory;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -43,25 +48,31 @@ import java.util.concurrent.Future;
 public class DefaultSessionTransaction implements SessionTransaction {
 
     private final DefaultSessionExecutor executor;
-    private final DbConnectionProvider connectionProvider;
+    private final AtomicBoolean aborted;
     private boolean closed;
+    private final DbConnection dbConnection;
     private final ReportFactory reportFactory;
+    private final MyAborter aborter;
+    private static final Logger LOGGER = LoggerFactory.getLogger(DefaultSessionTransaction.class);
 
     DefaultSessionTransaction(
             DefaultSessionExecutor executor,
-            DbWrapper dbWrapper,
+            DbConnection dbConnection,
             ReportFactory reportFactory) {
+        this.aborted = new AtomicBoolean(false);
+        this.dbConnection = dbConnection;
         this.executor = executor;
-        this.connectionProvider = new DbConnectionProvider(dbWrapper);
         this.reportFactory = reportFactory;
+        this.aborter = new MyAborter();
         closed = false;
     }
 
     @Override
     public Future<?> rollback() {
-        return executor.submit(
+        return submit(
                 new RollbackCallable(
-                        connectionProvider,
+                        dbConnection,
+                        aborter, 
                         reportFactory.createRollbackReport()
                 )
         );
@@ -69,9 +80,10 @@ public class DefaultSessionTransaction implements SessionTransaction {
 
     @Override
     public Future<?> commit() {
-        return executor.submit(
+        return submit(
                 new CommitCallable(
-                        connectionProvider,
+                        dbConnection,
+                        aborter,
                         reportFactory.createCommitReport()
                 )
         );
@@ -80,9 +92,10 @@ public class DefaultSessionTransaction implements SessionTransaction {
     @Override
     public void close() {
         closed = true;
-        executor.submit(
+        submit(
                 new CloseConnectionCallable(
-                        connectionProvider,
+                        dbConnection,
+                        aborter,
                         reportFactory.createCloseConnectionReport()
                 )
         );
@@ -99,13 +112,14 @@ public class DefaultSessionTransaction implements SessionTransaction {
             Collection<SplitDocument> documents, 
             WriteFailMode mode)
             throws ToroTaskExecutionException {
-        return executor.submit(
-                new InsertSplitDocumentCallable(
-                        connectionProvider,
+        return submit(
+                new InsertCallable(
+                        dbConnection,
+                        aborter,
+                        reportFactory.createInsertReport(),
                         collection,
                         documents,
-                        mode,
-                        reportFactory.createInsertReport()
+                        mode
                 ));
     }
 
@@ -114,25 +128,77 @@ public class DefaultSessionTransaction implements SessionTransaction {
             String collection, 
             List<? extends DeleteOperation> deletes, 
             WriteFailMode mode) {
-        return executor.submit(
+        return submit(
                 new DeleteCallable(
-                        connectionProvider, 
+                        dbConnection, 
+                        aborter,
+                        reportFactory.createDeleteReport(),
                         collection, 
                         deletes, 
-                        mode,
-                        reportFactory.createDeleteReport()
+                        mode
                 )
         );
     }
 
     @Override
     public Future<?> dropCollection(String collection) {
-        return executor.submit(
+        return submit(
                 new DropCollectionCallable(
-                        connectionProvider,
+                        dbConnection,
+                        aborter,
+                        reportFactory.createDropCollectionReport(),
                         collection
                 )
         );
+    }
+
+    @Override
+    public Future<NamedToroIndex> createIndex(
+            String collectionName,
+            String indexName, 
+            IndexedAttributes attributes, 
+            boolean unique, 
+            boolean blocking) {
+        return submit(
+                new CreateIndexCallable(
+                        dbConnection, 
+                        aborter,
+                        reportFactory.createIndexReport(),
+                        collectionName,
+                        indexName, 
+                        attributes, 
+                        unique, 
+                        blocking
+                )
+        );
+    }
+
+    @Override
+    public Future<Boolean> dropIndex(String collection, String indexName) {
+        return submit(
+                new DropIndexCallable(
+                        dbConnection,
+                        aborter,
+                        reportFactory.createDropIndexReport(),
+                        collection,
+                        indexName
+                )
+        );
+    }
+
+    @Override
+    public Future<Collection<? extends NamedToroIndex>> getIndexes(String collection) {
+        return submit(
+                new GetIndexesCallable(
+                        dbConnection, 
+                        aborter,
+                        reportFactory.createGetIndexReport(),
+                        collection)
+        );
+    }
+    
+    protected <R> Future<R> submit(Job<R> callable) {
+        return executor.submit(callable);
     }
 
     public static class DbConnectionProvider implements Supplier<DbConnection> {
@@ -157,6 +223,21 @@ public class DefaultSessionTransaction implements SessionTransaction {
             }
             return connection;
         }
+    }
+    
+    private class MyAborter implements TransactionalJob.TransactionAborter {
+
+        @Override
+        public boolean isAborted() {
+            return DefaultSessionTransaction.this.aborted.get();
+        }
+
+        @Override
+        public <R> void abort(Job<R> job) {
+            LOGGER.debug("Transaction aborted");
+            DefaultSessionTransaction.this.aborted.set(true);
+        }
+        
     }
 
 }

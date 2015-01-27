@@ -17,49 +17,75 @@
  *     Copyright (c) 2014, 8Kdata Technology
  *     
  */
-
 package com.torodb.torod.db.executor.jobs;
 
 import com.torodb.torod.core.dbWrapper.DbConnection;
 import com.torodb.torod.core.dbWrapper.DbWrapper;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.dbWrapper.exceptions.UserDbException;
-import java.util.concurrent.Callable;
+import com.torodb.torod.core.exceptions.ToroException;
+import com.torodb.torod.core.exceptions.ToroImplementationException;
+import com.torodb.torod.core.exceptions.ToroRuntimeException;
+import com.torodb.torod.core.exceptions.UserToroException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
  */
-abstract class SystemDbCallable<R> implements Callable<R> {
+abstract class SystemDbCallable<R> extends Job<R> {
 
     private final DbWrapper dbWrapperPool;
+    private DbConnection connection = null;
 
     public SystemDbCallable(DbWrapper dbWrapperPool) {
         this.dbWrapperPool = dbWrapperPool;
     }
 
-    abstract R call(DbConnection db) throws ImplementationDbException, UserDbException;
-    
+    abstract R call(DbConnection db) throws ImplementationDbException,
+            UserDbException;
+
     abstract void doCallback(R result);
 
     @Override
-    public R call() throws ImplementationDbException, UserDbException {
-        DbConnection db = dbWrapperPool.getSystemDbConnection();
+    protected R onFail(Throwable t) throws ToroException, ToroRuntimeException {
+        if (connection != null) {
+            try {
+                connection.close();
+            }
+            catch (ImplementationDbException ex) {
+                throw new ToroImplementationException(ex);
+            }
+            catch (UserDbException ex) {
+                throw new UserToroException(ex);
+            }
+        }
+        if (t instanceof ToroException) {
+            throw (ToroException) t;
+        }
+        throw new ToroRuntimeException(t);
+    }
+
+    @Override
+    protected R failableCall() throws ToroException, ToroRuntimeException {
         try {
-            R result = call(db);
-            
-            db.commit();
-            
-            doCallback(result);
-            
-            return result;
-        } catch (RuntimeException ex) {
-            db.rollback();
-            throw ex;
-        } catch (Error error) {
-            db.rollback();
-            throw error;
-        } finally {
-            db.close();
+            connection = dbWrapperPool.getSystemDbConnection();
+            try {
+                R result = call(connection);
+
+                connection.commit();
+
+                doCallback(result);
+
+                return result;
+            }
+            finally {
+                connection.close();
+            }
+        } catch (ImplementationDbException ex) {
+            throw new ToroImplementationException(ex);
+        } catch (UserDbException ex) {
+            throw new UserToroException(ex);
         }
     }
 

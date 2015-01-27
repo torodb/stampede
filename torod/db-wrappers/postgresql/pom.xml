@@ -43,12 +43,12 @@
         <dependency>
             <groupId>org.jooq</groupId>
             <artifactId>jooq</artifactId>
-            <version>3.4.4</version>
+            <version>3.5.1</version>
         </dependency>
         <dependency>
             <groupId>org.jooq</groupId>
             <artifactId>jooq-meta</artifactId>
-            <version>3.4.4</version>
+            <version>3.5.1</version>
         </dependency>
         <dependency>
             <groupId>com.google.code.findbugs</groupId>

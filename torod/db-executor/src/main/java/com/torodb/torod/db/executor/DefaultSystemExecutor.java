@@ -21,16 +21,12 @@
 
 package com.torodb.torod.db.executor;
 
-import com.torodb.torod.db.executor.jobs.CreateIndexCallable;
 import com.torodb.torod.core.dbWrapper.DbWrapper;
 import com.torodb.torod.core.executor.SystemExecutor;
 import com.torodb.torod.core.executor.ToroTaskExecutionException;
-import com.torodb.torod.core.pojos.NamedToroIndex;
-import com.torodb.torod.core.pojos.IndexedAttributes;
 import com.torodb.torod.core.subdocument.SubDocType;
 import com.torodb.torod.db.executor.jobs.*;
 import com.torodb.torod.db.executor.report.ReportFactory;
-import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -124,58 +120,15 @@ class DefaultSystemExecutor implements SystemExecutor {
         );
     }
 
-    @Override
-    public Future<NamedToroIndex> createIndex(
-            String collectionName,
-            String indexName, 
-            IndexedAttributes attributes, 
-            boolean unique, 
-            boolean blocking, 
-            CreateIndexCallback callback) {
-        return submit(
-                new CreateIndexCallable(
-                        wrapper, 
-                        collectionName,
-                        indexName, 
-                        attributes, 
-                        unique, 
-                        blocking, 
-                        callback
-                )
-        );
-    }
-
-    @Override
-    public Future<Boolean> dropIndex(String indexName) {
-        return submit(
-                new DropIndexCallable(
-                        wrapper,
-                        indexName
-                )
-        );
-    }
-
-    @Override
-    public Future<Collection<? extends NamedToroIndex>> getIndexes() {
-        return submit(
-                new GetIndexesCallable(wrapper)
-        );
-    }
-
-    @Override
-    public Future<Map<String, Integer>> getLastUsedIds() throws ToroTaskExecutionException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-    
-    private <R> Future<R> submit(Callable<R> callable) {
+    private <R> Future<R> submit(Job<R> job) {
         taskCounter.incrementAndGet();
-        return executorService.submit(new SystemRunnable<R>(callable));
+        return executorService.submit(new SystemRunnable<R>(job));
     }
     
     private class SystemRunnable<R> implements Callable<R> {
-        private final Callable<R> delegate;
+        private final Job<R> delegate;
 
-        public SystemRunnable(Callable<R> delegate) {
+        public SystemRunnable(Job<R> delegate) {
             this.delegate = delegate;
         }
 

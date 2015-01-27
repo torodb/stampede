@@ -85,15 +85,17 @@ public interface ToroTransaction extends Closeable {
     );
     
     public Future<NamedToroIndex> createIndex(
-            String indexName, 
-            IndexedAttributes attributes,
+            @Nonnull String collection,
+            @Nonnull String indexName, 
+            @Nonnull IndexedAttributes attributes,
             boolean unique,
             boolean blocking
     );
     
     public Future<Boolean> dropIndex(
-            String indexName
+            @Nonnull String collection,
+            @Nonnull String indexName
     );
     
-    public Collection<? extends NamedToroIndex> getIndexes();
+    public Collection<? extends NamedToroIndex> getIndexes(@Nonnull String collection);
 }

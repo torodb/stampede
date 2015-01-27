@@ -1,37 +1,49 @@
 package com.torodb.torod.db.executor.report;
 
+import com.torodb.torod.db.executor.jobs.*;
+
 /**
  *
  */
 public interface ReportFactory {
 
-    public CloseConnectionReport createCloseConnectionReport();
+    public CloseConnectionCallable.Report createCloseConnectionReport();
 
-    public CloseCursorReport createCloseCursorReport();
+    public CloseCursorCallable.Report createCloseCursorReport();
 
-    public CommitReport createCommitReport();
+    public CommitCallable.Report createCommitReport();
 
-    public CountRemainingDocsReport createCountRemainingDocsReport();
+    public CountRemainingDocsCallable.Report createCountRemainingDocsReport();
 
-    public CreateCollectionReport createCreateCollectionReport();
+    public CreateCollectionCallable.Report createCreateCollectionReport();
 
-    public CreateSubDocTableReport createCreateSubDocTableReport();
+    public CreateSubDocTableCallable.Report createCreateSubDocTableReport();
 
-    public DeleteReport createDeleteReport();
+    public DeleteCallable.Report createDeleteReport();
 
-    public FindCollectionsReport createFindCollectionsReport();
+    public FindCollectionsCallable.Report createFindCollectionsReport();
 
-    public InsertReport createInsertReport();
+    public InsertCallable.Report createInsertReport();
 
-    public QueryReport createQueryReport();
+    public QueryCallable.Report createQueryReport();
 
-    public ReadAllCursorReport createReadAllCursorReport();
+    public ReadAllCursorCallable.Report createReadAllCursorReport();
 
-    public ReadCursorReport createReadCursorReport();
+    public ReadCursorCallable.Report createReadCursorReport();
 
-    public ReserveSubDocIdsReport createReserveSubDocIdsReport();
+    public ReserveSubDocIdsCallable.Report createReserveSubDocIdsReport();
 
-    public RollbackReport createRollbackReport();
+    public RollbackCallable.Report createRollbackReport();
+
+    public DropCollectionCallable.Report createDropCollectionReport();
+
+    public CreateIndexCallable.Report createIndexReport();
+
+    public DropIndexCallable.Report createDropIndexReport();
+
+    public GetIndexesCallable.Report createGetIndexReport();
+
+    public GetDatabasesCallable.Report createGetDatabasesReport();
 
 
 }

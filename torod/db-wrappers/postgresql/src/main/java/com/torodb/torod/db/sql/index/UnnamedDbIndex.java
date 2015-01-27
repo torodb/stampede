@@ -1,7 +1,6 @@
 
 package com.torodb.torod.db.sql.index;
 
-import com.google.common.collect.ImmutableList;
 import javax.annotation.concurrent.Immutable;
 
 /**
@@ -9,34 +8,42 @@ import javax.annotation.concurrent.Immutable;
  */
 @Immutable
 public final class UnnamedDbIndex implements DbIndex {
+    private static final long serialVersionUID = 1L;
     private final String schema;
-    private final boolean unique;
-    private final ImmutableList<IndexedColumnInfo> columns;
+    private final String table;
+    private final String column;
+    private final boolean ascending;
 
     public UnnamedDbIndex(
             String schema, 
-            boolean unique, 
-            ImmutableList<IndexedColumnInfo> columns) {
+            String tableName, 
+            String columnName, 
+            boolean ascending) {
         this.schema = schema;
-        this.unique = unique;
-        this.columns = columns;
+        this.table = tableName;
+        this.column = columnName;
+        this.ascending = ascending;
     }
     
     @Override
     public String getSchema() {
         return schema;
     }
-
+    
     @Override
-    public boolean isUnique() {
-        return unique;
+    public String getTable() {
+        return table;
+    }
+    
+    @Override
+    public String getColumn() {
+        return column;
     }
 
-    @Override
-    public ImmutableList<IndexedColumnInfo> getColumns() {
-        return columns;
+    public boolean isAscending() {
+        return ascending;
     }
-
+    
     @Override
     public UnnamedDbIndex asUnnamed() {
         return this;
@@ -44,9 +51,11 @@ public final class UnnamedDbIndex implements DbIndex {
 
     @Override
     public int hashCode() {
-        int hash = 3;
-        hash = 83 * hash + (this.schema != null ? this.schema.hashCode() : 0);
-        hash = 83 * hash + (this.unique ? 1 : 0);
+        int hash = 5;
+        hash = 29 * hash + (this.schema != null ? this.schema.hashCode() : 0);
+        hash = 29 * hash + (this.table != null ? this.table.hashCode() : 0);
+        hash = 29 * hash + (this.column != null ? this.column.hashCode() : 0);
+        hash = 29 * hash + (this.ascending ? 1 : 0);
         return hash;
     }
 
@@ -63,48 +72,21 @@ public final class UnnamedDbIndex implements DbIndex {
                 : !this.schema.equals(other.schema)) {
             return false;
         }
-        if (this.unique != other.unique) {
+        if ((this.table == null) ? (other.table != null)
+                : !this.table.equals(other.table)) {
             return false;
         }
-        return !(this.columns != other.columns &&
-                (this.columns == null || !this.columns.equals(other.columns)));
+        if ((this.column == null) ? (other.column != null)
+                : !this.column.equals(other.column)) {
+            return false;
+        }
+        return this.ascending == other.ascending;
     }
 
-    public final static class Builder {
-
-        private String schema;
-        private boolean unique;
-        private ImmutableList.Builder<IndexedColumnInfo> columnsBuilder;
-
-        public Builder() {
-            clear();
-        }
-
-        public Builder setSchema(String schema) {
-            this.schema = schema;
-            return this;
-        }
-
-        public Builder setUnique(boolean unique) {
-            this.unique = unique;
-            return this;
-        }
-        
-        public Builder addColumn(IndexedColumnInfo columnInfo) {
-            this.columnsBuilder.add(columnInfo);
-            return this;
-        }
-        
-        public void clear() {
-            schema = null;
-            unique = false;
-            columnsBuilder = new ImmutableList.Builder<IndexedColumnInfo>();
-        }
-
-        public UnnamedDbIndex build() {
-            return new UnnamedDbIndex(schema, unique, columnsBuilder.build());
-        }
-
+    @Override
+    public String toString() {
+        return "table=" + table + ", column=" + column +
+                ", ascending=" + ascending;
     }
 
 }

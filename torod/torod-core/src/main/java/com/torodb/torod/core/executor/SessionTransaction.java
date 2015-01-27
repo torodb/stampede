@@ -24,6 +24,8 @@ import com.torodb.torod.core.WriteFailMode;
 import com.torodb.torod.core.connection.DeleteResponse;
 import com.torodb.torod.core.connection.InsertResponse;
 import com.torodb.torod.core.language.operations.DeleteOperation;
+import com.torodb.torod.core.pojos.IndexedAttributes;
+import com.torodb.torod.core.pojos.NamedToroIndex;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import java.io.Closeable;
 import java.util.Collection;
@@ -69,6 +71,23 @@ public interface SessionTransaction extends Closeable {
     );
     
     public Future<?> dropCollection(
+            @Nonnull String collection
+    );
+    
+    public Future<NamedToroIndex> createIndex(
+            @Nonnull String collection,
+            @Nonnull String indexName, 
+            @Nonnull IndexedAttributes attributes,
+            boolean unique,
+            boolean blocking
+    );
+    
+    public Future<Boolean> dropIndex(
+            @Nonnull String collection,
+            @Nonnull String indexName
+    );
+    
+    public Future<Collection<? extends NamedToroIndex>> getIndexes(
             @Nonnull String collection
     );
 }

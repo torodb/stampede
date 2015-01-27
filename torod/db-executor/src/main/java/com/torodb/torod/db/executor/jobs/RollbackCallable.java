@@ -20,35 +20,44 @@
 
 package com.torodb.torod.db.executor.jobs;
 
-import com.google.common.base.Supplier;
 import com.torodb.torod.core.dbWrapper.DbConnection;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
-import com.torodb.torod.db.executor.DefaultSessionTransaction;
-import com.torodb.torod.db.executor.report.RollbackReport;
-import java.util.concurrent.Callable;
-import javax.inject.Inject;
+import com.torodb.torod.core.exceptions.ToroException;
+import com.torodb.torod.core.exceptions.ToroImplementationException;
+import com.torodb.torod.core.exceptions.ToroRuntimeException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
  */
-public class RollbackCallable implements Callable<Void> {
+public class RollbackCallable extends TransactionalJob<Void> {
     
-    private final Supplier<DbConnection> connectionProvider;
-    private final RollbackReport report;
+    private final Report report;
+    private final static Logger LOGGER = LoggerFactory.getLogger(TransactionalJob.class);
 
-    @Inject
     public RollbackCallable(
-            Supplier<DbConnection> connectionProvider,
-            RollbackReport report
-    ) {
-        this.connectionProvider = connectionProvider;
+            DbConnection connection, 
+            TransactionAborter aborter,
+            Report report) {
+        super(connection, aborter);
         this.report = report;
     }
 
     @Override
-    public Void call() throws ImplementationDbException {
-        connectionProvider.get().rollback();
-        report.taskExecuted();
-        return null;
+    protected Void failableCall() throws ToroException, ToroRuntimeException {
+        try {
+            getConnection().rollback();
+            report.rollbackExecuted();
+            return null;
+        }
+        catch (ImplementationDbException ex) {
+            LOGGER.error("Error while rollbacking a transaction!");
+            throw new ToroImplementationException(ex);
+        }
+    }
+    
+    public static interface Report {
+        public void rollbackExecuted();
     }
 }

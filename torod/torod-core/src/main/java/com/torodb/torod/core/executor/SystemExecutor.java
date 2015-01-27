@@ -20,10 +20,7 @@
 
 package com.torodb.torod.core.executor;
 
-import com.torodb.torod.core.pojos.NamedToroIndex;
-import com.torodb.torod.core.pojos.IndexedAttributes;
 import com.torodb.torod.core.subdocument.SubDocType;
-import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.Future;
 import javax.annotation.Nonnegative;
@@ -54,16 +51,6 @@ public interface SystemExecutor {
     Future<Map<String, Integer>> findCollections();
 
     /**
-     * Returns the last reserved document id for each collection in the database.
-     * <p>
-     * @return A {@link Future} whose result is a map that stores the last used doc id for each collection in the
-     *         database
-     * @throws com.torodb.torod.core.executor.ToroTaskExecutionException
-     */
-    Future<Map<String, Integer>> getLastUsedIds()
-            throws ToroTaskExecutionException;
-
-    /**
      * Returns a number that identifies the last pending job.
      * <p>
      * Subsequent calls to this method will return the same or a higher value, but never a lower one.
@@ -75,21 +62,6 @@ public interface SystemExecutor {
      */
     long getTick();
     
-    Future<NamedToroIndex> createIndex(
-            String collectionName,
-            String indexName, 
-            IndexedAttributes attributes,
-            boolean unique,
-            boolean blocking,
-            CreateIndexCallback callback
-    );
-    
-    Future<Boolean> dropIndex(
-            String indexName
-    );
-    
-    public Future<Collection<? extends NamedToroIndex>> getIndexes();
-
     public static interface CreateCollectionCallback {
 
         public void createdCollection(String collection);
@@ -103,10 +75,5 @@ public interface SystemExecutor {
     public static interface ReserveDocIdsCallback {
 
         public void reservedDocIds(String collection, @Nonnegative int idsToReserve);
-    }
-    
-    public static interface CreateIndexCallback {
-        
-        public void createdIndex(NamedToroIndex index);
     }
 }

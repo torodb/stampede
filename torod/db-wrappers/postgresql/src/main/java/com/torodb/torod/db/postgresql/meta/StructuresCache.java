@@ -44,7 +44,7 @@ public class StructuresCache implements Serializable {
 
     private static final Field<Integer> sidField = DSL.field("sid", SQLDataType.INTEGER);
     private static final Field<String> structuresField = DSL.field("_structure", SQLDataType.VARCHAR);
-    private final String schemaName;
+    private final CollectionSchema colSchema;
     private final StructureConverter converter;
     private final BiMap<Integer, DocStructure> structures;
     /**
@@ -56,8 +56,11 @@ public class StructuresCache implements Serializable {
     private static final Logger LOG
             = Logger.getLogger(StructuresCache.class.getName());
 
-    public StructuresCache(String schemaName, StructureConverter converter) {
-        this.schemaName = schemaName;
+    public StructuresCache(
+            CollectionSchema colSchema,
+            String schemaName, 
+            StructureConverter converter) {
+        this.colSchema = colSchema;
         this.converter = converter;
         this.table = DSL.tableByName(schemaName, "structures");
         this.structures = HashBiMap.create(1000);
@@ -70,7 +73,7 @@ public class StructuresCache implements Serializable {
         stream.defaultReadObject();
 
         insertLock = new ReentrantLock();
-        table = DSL.tableByName(schemaName, "structures");
+        table = DSL.tableByName(colSchema.getName(), "structures");
     }
 
     public void initialize(DSLContext dsl, Iterable<? extends Table> tables) {
@@ -121,7 +124,10 @@ public class StructuresCache implements Serializable {
         return structures.inverse().get(structure);
     }
 
-    public int getOrCreateStructure(DocStructure structure, DSLContext dsl) {
+    public int getOrCreateStructure(
+            DocStructure structure, 
+            DSLContext dsl, 
+            NewStructureListener newStructureListener) {
         Integer id = structures.inverse().get(structure);
 
         if (id != null) {
@@ -132,16 +138,7 @@ public class StructuresCache implements Serializable {
         try {
             id = structures.inverse().get(structure);
             if (id == null) {
-                id = idProvider++;
-
-                assert !structures.containsKey(id);
-
-                dsl.insertInto(table)
-                        .set(sidField, id)
-                        .set(structuresField, converter.to(structure))
-                        .execute();
-
-                structures.put(id, structure);
+                id = createStructure(structure, dsl, newStructureListener);
             }
         } finally {
             insertLock.unlock();
@@ -154,5 +151,28 @@ public class StructuresCache implements Serializable {
     public BiMap<Integer, DocStructure> getAllStructures() {
         return ImmutableBiMap.copyOf(structures);
     }
+    
+    private Integer createStructure(
+            DocStructure structure, 
+            DSLContext dsl,
+            NewStructureListener newStructureListener) {
+        Integer id = idProvider++;
 
+        assert !structures.containsKey(id);
+
+        dsl.insertInto(table)
+                .set(sidField, id)
+                .set(structuresField, converter.to(structure))
+                .execute();
+
+        structures.put(id, structure);
+        
+        newStructureListener.eventNewStructure(colSchema, structure);
+        
+        return id;
+    }
+
+    public static interface NewStructureListener {
+        public void eventNewStructure(CollectionSchema colSchema, DocStructure newStructure);
+    }
 }

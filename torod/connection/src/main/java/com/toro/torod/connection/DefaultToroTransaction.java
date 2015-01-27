@@ -32,6 +32,7 @@ import com.torodb.torod.core.cursors.CursorId;
 import com.torodb.torod.core.d2r.D2RTranslator;
 import com.torodb.torod.core.dbMetaInf.DbMetaInformationCache;
 import com.torodb.torod.core.exceptions.ToroImplementationException;
+import com.torodb.torod.core.exceptions.ToroRuntimeException;
 import com.torodb.torod.core.exceptions.UserToroException;
 import com.torodb.torod.core.executor.SessionExecutor;
 import com.torodb.torod.core.executor.SessionTransaction;
@@ -52,6 +53,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -63,7 +66,6 @@ public class DefaultToroTransaction implements ToroTransaction {
     private final SessionExecutor executor;
     private final DocumentBuilderFactory documentBuilderFactory;
     private final CursorManager cursorManager;
-    private final DbMetaInformationCache cache;
     
     DefaultToroTransaction(
             Session session,
@@ -71,15 +73,13 @@ public class DefaultToroTransaction implements ToroTransaction {
             D2RTranslator d2r,
             SessionExecutor executor,
             DocumentBuilderFactory documentBuilderFactory,
-            CursorManager cursorManager,
-            DbMetaInformationCache cache
+            CursorManager cursorManager
     ) {
         this.sessionTransaction = sessionTransaction;
         this.d2r = d2r;
         this.executor = executor;
         this.documentBuilderFactory = documentBuilderFactory;
         this.cursorManager = cursorManager;
-        this.cache = cache;
     }
 
     @Override
@@ -140,18 +140,37 @@ public class DefaultToroTransaction implements ToroTransaction {
     }
 
     @Override
-    public Future<NamedToroIndex> createIndex(String indexName, IndexedAttributes attributes, boolean unique, boolean blocking) {
-        return cache.createIndex(indexName, attributes, unique, blocking);
+    public Future<NamedToroIndex> createIndex(
+            String collection,
+            String indexName, 
+            IndexedAttributes attributes, 
+            boolean unique, 
+            boolean blocking) {
+        return sessionTransaction.createIndex(
+                collection, 
+                indexName, 
+                attributes, 
+                unique, 
+                blocking
+        );
     }
 
     @Override
-    public Future<Boolean> dropIndex(String indexName) {
-        return cache.dropIndex(indexName);
+    public Future<Boolean> dropIndex(String collection, String indexName) {
+        return sessionTransaction.dropIndex(collection, indexName);
     }
 
     @Override
-    public Collection<? extends NamedToroIndex> getIndexes() {
-        return cache.getIndexes();
+    public Collection<? extends NamedToroIndex> getIndexes(String collection) {
+        try {
+            return sessionTransaction.getIndexes(collection).get();
+        }
+        catch (InterruptedException ex) {
+            throw new ToroRuntimeException(ex);
+        }
+        catch (ExecutionException ex) {
+            throw new ToroRuntimeException(ex);
+        }
     }
 
     @Override

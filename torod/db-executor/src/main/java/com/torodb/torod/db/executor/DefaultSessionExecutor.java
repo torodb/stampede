@@ -45,7 +45,7 @@ import javax.inject.Inject;
  */
 class DefaultSessionExecutor implements SessionExecutor {
 
-    private final DbWrapper wrapper;
+    private final LazyDbWrapper wrapper;
     private final ExecutorService executorService;
     private final Monitor monitor;
     private final ExecutorServiceProvider executorServiceProvider;
@@ -65,7 +65,7 @@ class DefaultSessionExecutor implements SessionExecutor {
             @DatabaseName String databaseName) {
         this.executorServiceProvider = executorServiceProvider;
         this.exceptionHandler = exceptionHandler;
-        this.wrapper = wrapper;
+        this.wrapper = new LazyDbWrapper(wrapper);
         this.executorService = executorServiceProvider.consumeSessionExecutorService(session);
         this.monitor = monitor;
         this.session = session;
@@ -89,13 +89,13 @@ class DefaultSessionExecutor implements SessionExecutor {
         });
     }
     
-    protected <R> Future<R> submit(Callable<R> callable) {
-        return executorService.submit(new DefaultSessionExecutor.SessionRunnable(callable));
+    protected <R> Future<R> submit(Job<R> job) {
+        return executorService.submit(new DefaultSessionExecutor.SessionRunnable(job));
     }
 
     @Override
     public SessionTransaction createTransaction() throws ImplementationDbException {
-        return new DefaultSessionTransaction(this, wrapper, reportFactory);
+        return new DefaultSessionTransaction(this, wrapper.consumeSessionDbConnection(), reportFactory);
     }
 
     @Override
@@ -107,13 +107,13 @@ class DefaultSessionExecutor implements SessionExecutor {
             int maxResults) {
         return submit(
                 new QueryCallable(
-                        wrapper, 
+                        wrapper,
+                        reportFactory.createQueryReport(), 
                         collection, 
                         cursorId,
                         filter,
                         projection,
-                        maxResults,
-                        reportFactory.createQueryReport()
+                        maxResults
                 )
         );
     }
@@ -123,10 +123,10 @@ class DefaultSessionExecutor implements SessionExecutor {
             throws ToroTaskExecutionException {
         return submit(
                 new ReadCursorCallable(
-                        wrapper, 
+                        wrapper,
+                        reportFactory.createReadCursorReport(), 
                         cursorId, 
-                        limit,
-                        reportFactory.createReadCursorReport()
+                        limit
                 )
         );
     }
@@ -136,9 +136,9 @@ class DefaultSessionExecutor implements SessionExecutor {
             throws ToroTaskExecutionException {
         return submit(
                 new ReadAllCursorCallable(
-                        wrapper, 
-                        cursorId,
-                        reportFactory.createReadAllCursorReport()
+                        wrapper,
+                        reportFactory.createReadAllCursorReport(), 
+                        cursorId
                 )
         );
     }
@@ -146,10 +146,10 @@ class DefaultSessionExecutor implements SessionExecutor {
     @Override
     public Future<Integer> countRemainingDocs(CursorId cursorId) {
         return submit(
-                new CountRemainingDocs(
-                        wrapper, 
-                        cursorId,
-                        reportFactory.createCountRemainingDocsReport()
+                new CountRemainingDocsCallable(
+                        wrapper,
+                        reportFactory.createCountRemainingDocsReport(), 
+                        cursorId
                 )
         );
     }
@@ -159,6 +159,7 @@ class DefaultSessionExecutor implements SessionExecutor {
         return submit(
                 new GetDatabasesCallable(
                         wrapper, 
+                        reportFactory.createGetDatabasesReport(),
                         databaseName
                 )
         );
@@ -169,9 +170,9 @@ class DefaultSessionExecutor implements SessionExecutor {
             ToroTaskExecutionException {
         return submit(
                 new CloseCursorCallable(
-                        wrapper, 
-                        cursorId,
-                        reportFactory.createCloseCursorReport()
+                        wrapper,
+                        reportFactory.createCloseCursorReport(), 
+                        cursorId
                 )
         );
     }
@@ -183,9 +184,9 @@ class DefaultSessionExecutor implements SessionExecutor {
 
     private class SessionRunnable<R> implements Callable<R> {
 
-        private final Callable<R> delegate;
+        private final Job<R> delegate;
 
-        public SessionRunnable(Callable<R> delegate) {
+        public SessionRunnable(Job<R> delegate) {
             this.delegate = delegate;
         }
 
@@ -197,6 +198,5 @@ class DefaultSessionExecutor implements SessionExecutor {
                 return exceptionHandler.catchSessionException(ex, this, session);
             }
         }
-
     }
 }

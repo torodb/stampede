@@ -21,26 +21,21 @@ package com.torodb.torod.db.postgresql;
 
 import com.google.common.collect.Lists;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
-import com.torodb.torod.core.pojos.IndexedAttributes;
-import com.torodb.torod.core.pojos.NamedToroIndex;
 import com.torodb.torod.core.subdocument.BasicType;
 import com.torodb.torod.core.subdocument.SplitDocument;
+import com.torodb.torod.core.subdocument.structure.DocStructure;
 import com.torodb.torod.db.postgresql.converters.jooq.SubdocValueConverter;
 import com.torodb.torod.db.postgresql.converters.jooq.ValueToJooqConverterProvider;
 import com.torodb.torod.db.postgresql.meta.CollectionSchema;
+import com.torodb.torod.db.postgresql.meta.StructuresCache;
 import com.torodb.torod.db.postgresql.meta.TorodbMeta;
 import com.torodb.torod.db.postgresql.meta.tables.SubDocTable;
 import com.torodb.torod.db.sql.AbstractSqlDbConnection;
 import com.torodb.torod.db.sql.AutoCloser;
-import com.torodb.torod.db.sql.index.NamedDbIndex;
-import com.torodb.torod.db.sql.index.UnnamedDbIndex;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.Serializable;
 import java.sql.*;
 import java.util.*;
 import java.util.Comparator;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import org.jooq.*;
@@ -57,6 +52,7 @@ class PostgresqlDbConnection extends AbstractSqlDbConnection {
     static final String SUBDOC_TABLE_DOC_ID_COLUMN = "docId";
     static final String SUBDOC_TABLE_KEYS_COLUMN = "keys";
     private final FieldComparator fieldComparator = new FieldComparator();
+    private final MyStructureListener listener = new MyStructureListener();
 
     @Inject
     public PostgresqlDbConnection(
@@ -120,7 +116,11 @@ class PostgresqlDbConnection extends AbstractSqlDbConnection {
             InsertValuesStep2<Record, Integer, Integer> insertInto = getDsl().insertInto(DSL.tableByName(colSchema.getName(), "root"), idField, sidField);
 
             for (SplitDocument splitDocument : docs) {
-                int structureId = colSchema.getStructuresCache().getOrCreateStructure(splitDocument.getRoot(), getDsl());
+                int structureId = colSchema.getStructuresCache().getOrCreateStructure(
+                        splitDocument.getRoot(), 
+                        getDsl(),
+                        listener
+                );
 
                 insertInto = insertInto.values(splitDocument.getDocumentId(), structureId);
             }
@@ -130,32 +130,6 @@ class PostgresqlDbConnection extends AbstractSqlDbConnection {
         } catch (DataAccessException ex) {
             //TODO: Change exception
             throw new RuntimeException(ex);
-        }
-    }
-
-    @Override
-    public NamedDbIndex createDbIndex(
-            NamedToroIndex toroNamedIndex, 
-            UnnamedDbIndex dbUnnamedIndex) {
-        //TODO: Implement this command
-        throw new UnsupportedOperationException("Not supported yet."); 
-    }
-
-    @SuppressFBWarnings("SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE")
-    @Override
-    protected void dropIndex(NamedDbIndex index) {
-        ConnectionProvider connectionProvider
-                = getDsl().configuration().connectionProvider();
-        Connection connection = connectionProvider.acquire();
-        Statement st = null;
-        try {
-            st = connection.createStatement();
-            st.executeUpdate("DROP TABLE " + index.getName());
-        } catch (SQLException ex) {
-            Logger.getLogger(PostgresqlDbConnection.class.getName()).log(Level.SEVERE, null, ex);
-        } finally {
-            AutoCloser.close(st);
-            connectionProvider.release(connection);
         }
     }
 
@@ -254,5 +228,17 @@ class PostgresqlDbConnection extends AbstractSqlDbConnection {
             return i1 - i2;
         }
 
+    }
+    
+    private class MyStructureListener implements StructuresCache.NewStructureListener {
+
+        @Override
+        public void eventNewStructure(CollectionSchema colSchema, DocStructure newStructure) {
+            colSchema.getIndexManager().newStructureDetected(
+                    newStructure, 
+                    PostgresqlDbConnection.this
+            );
+        }
+        
     }
 }

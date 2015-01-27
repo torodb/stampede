@@ -24,26 +24,29 @@ import com.torodb.torod.core.cursors.CursorId;
 import com.torodb.torod.core.dbWrapper.Cursor;
 import com.torodb.torod.core.dbWrapper.DbWrapper;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
+import com.torodb.torod.core.exceptions.ToroException;
+import com.torodb.torod.core.exceptions.ToroImplementationException;
+import com.torodb.torod.core.exceptions.ToroRuntimeException;
 import com.torodb.torod.core.subdocument.SplitDocument;
-import com.torodb.torod.db.executor.report.ReadAllCursorReport;
+import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.Callable;
 import javax.inject.Inject;
 
 /**
  *
  */
-public class ReadAllCursorCallable implements Callable<List<? extends SplitDocument>> {
+public class ReadAllCursorCallable extends Job<List<? extends SplitDocument>> {
 
     private final DbWrapper dbWrapper;
     private final CursorId cursorId;
-    private final ReadAllCursorReport report;
+    private final Report report;
+    private Cursor cursor = null;
 
     @Inject
     public ReadAllCursorCallable(
-            DbWrapper dbWrapper, 
-            CursorId cursorId,
-            ReadAllCursorReport report) {
+            DbWrapper dbWrapper,
+            Report report, 
+            CursorId cursorId) {
         
         this.dbWrapper = dbWrapper;
         this.cursorId = cursorId;
@@ -51,34 +54,35 @@ public class ReadAllCursorCallable implements Callable<List<? extends SplitDocum
     }
 
     @Override
-    public List<? extends SplitDocument> call() throws IllegalArgumentException, ImplementationDbException {
-        Cursor cursor = null;
-        boolean closeCursor = false;
+    protected List<? extends SplitDocument> failableCall() throws ToroException,
+            ToroRuntimeException {
         try {
             cursor = dbWrapper.getGlobalCursor(cursorId);
 
             List<SplitDocument> result = cursor.readAllDocuments();
             
-            report.tastExecuted(cursorId);
+            report.readAllCursorExecuted(cursorId, Collections.unmodifiableList(result));
             
             return result;
         }
-        catch (RuntimeException ex) {
-            closeCursor = true;
-            throw ex;
-        }
-        catch (Error ex) {
-            closeCursor = true;
-            throw ex;
-        }
         catch (ImplementationDbException ex) {
-            closeCursor = true;
-            throw ex;
+            throw new ToroImplementationException(ex);
         }
-        finally {
-            if (closeCursor && cursor != null) {
-                cursor.close();
-            }
+    }
+
+    @Override
+    protected List<? extends SplitDocument> onFail(Throwable t) throws
+            ToroException, ToroRuntimeException {
+        if (cursor != null) {
+            cursor.close();
         }
+        if (t instanceof ToroException) {
+            throw (ToroException) t;
+        }
+        throw new ToroRuntimeException(t);
+    }
+    
+    public static interface Report {
+        public void readAllCursorExecuted(CursorId cursorId, List<? extends SplitDocument> result);
     }
 }

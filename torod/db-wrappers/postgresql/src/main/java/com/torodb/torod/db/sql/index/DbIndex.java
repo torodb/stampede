@@ -1,19 +1,18 @@
 
 package com.torodb.torod.db.sql.index;
 
-import com.google.common.collect.ImmutableList;
-import java.util.List;
+import java.io.Serializable;
 
 /**
  *
  */
-public interface DbIndex {
+public interface DbIndex extends Serializable {
 
     public String getSchema();
-
-    public boolean isUnique();
-
-    public ImmutableList<IndexedColumnInfo> getColumns();
+    
+    public String getTable();
+    
+    public String getColumn();
     
     public UnnamedDbIndex asUnnamed();
     

@@ -1,6 +1,5 @@
 package com.torodb.torod.db.sql.index;
 
-import com.google.common.collect.ImmutableList;
 import javax.annotation.concurrent.Immutable;
 
 /**
@@ -8,6 +7,7 @@ import javax.annotation.concurrent.Immutable;
  */
 @Immutable
 public class NamedDbIndex implements DbIndex {
+    private static final long serialVersionUID = 1L;
 
     private final String name;
     private final UnnamedDbIndex unnamed;
@@ -21,23 +21,19 @@ public class NamedDbIndex implements DbIndex {
         return name;
     }
 
-    public UnnamedDbIndex getInfo() {
-        return unnamed;
-    }
-
     @Override
     public String getSchema() {
         return unnamed.getSchema();
     }
 
     @Override
-    public boolean isUnique() {
-        return unnamed.isUnique();
+    public String getTable() {
+        return unnamed.getTable();
     }
 
     @Override
-    public ImmutableList<IndexedColumnInfo> getColumns() {
-        return unnamed.getColumns();
+    public String getColumn() {
+        return unnamed.getColumn();
     }
 
     @Override
@@ -66,11 +62,8 @@ public class NamedDbIndex implements DbIndex {
                 : !this.name.equals(other.name)) {
             return false;
         }
-        if (this.unnamed != other.unnamed && (this.unnamed == null ||
-                !this.unnamed.equals(other.unnamed))) {
-            return false;
-        }
-        return true;
+        return !(this.unnamed != other.unnamed && (this.unnamed == null ||
+                !this.unnamed.equals(other.unnamed)));
     }
 
 }

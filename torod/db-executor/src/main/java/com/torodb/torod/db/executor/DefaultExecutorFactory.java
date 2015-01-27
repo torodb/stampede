@@ -23,6 +23,8 @@ import com.torodb.torod.core.Session;
 import com.torodb.torod.core.annotations.DatabaseName;
 import com.torodb.torod.core.dbWrapper.DbWrapper;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
+import com.torodb.torod.core.exceptions.ToroImplementationException;
+import com.torodb.torod.core.exceptions.UserToroException;
 import com.torodb.torod.core.executor.ExecutorFactory;
 import com.torodb.torod.core.executor.SessionExecutor;
 import com.torodb.torod.core.executor.SystemExecutor;
@@ -32,8 +34,8 @@ import javax.annotation.concurrent.ThreadSafe;
 import javax.inject.Inject;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -49,6 +51,7 @@ public class DefaultExecutorFactory implements ExecutorFactory {
     private final DefaultExceptionHandler exceptionHandler;
     private final ReportFactory reportFactory;
     private final String databaseName;
+    private static final Logger LOGGER = LoggerFactory.getLogger(DefaultExecutorFactory.class);
 
     @Inject
     public DefaultExecutorFactory(
@@ -118,15 +121,15 @@ public class DefaultExecutorFactory implements ExecutorFactory {
         @Override
         public <R> R catchSystemException(Throwable t, Callable<R> task) throws
                 Exception {
-            Logger.getLogger(DefaultExceptionHandler.class.getName()).log(Level.SEVERE, null, t);
-            return null;
+            LOGGER.error("System executor exception", t);
+            throw new ToroImplementationException(t);
         }
 
         @Override
         public <R> R catchSessionException(Throwable t, Callable<R> task, Session s)
                 throws Exception {
-            Logger.getLogger(DefaultExceptionHandler.class.getName()).log(Level.SEVERE, null, t);
-            return null;
+            LOGGER.error("Session executor exception", t);
+            throw new UserToroException(t);
         }
     }
 }

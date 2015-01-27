@@ -21,6 +21,7 @@
 package com.torodb.torod.db.sql;
 
 import com.google.common.collect.MapMaker;
+import com.torodb.torod.core.annotations.DatabaseName;
 import com.torodb.torod.core.backend.DbBackend;
 import com.torodb.torod.core.cursors.CursorId;
 import com.torodb.torod.core.dbWrapper.DbConnection;
@@ -63,16 +64,18 @@ public abstract class AbstractSqlDbWrapper implements DbWrapper {
     private final ConcurrentMap<CursorId, com.torodb.torod.core.dbWrapper.Cursor> openCursors;
     private final String databaseName;
     private TorodbMeta meta;
-
-
+    
     @Inject
-    public AbstractSqlDbWrapper(DbBackend dbBackend) {
+    public AbstractSqlDbWrapper(
+            @DatabaseName String databaseName,
+            DbBackend dbBackend) {
         this.sessionDataSource = dbBackend.getSessionDataSource();
         this.systemDataSource = dbBackend.getSystemDataSource();
         this.globalCursorDataSource = dbBackend.getGlobalCursorDatasource();
 
         isInitialized = new AtomicBoolean(false);
         this.openCursors = new MapMaker().makeMap();
+        this.databaseName = databaseName;
     }
 
     protected abstract Configuration getJooqConfiguration(ConnectionProvider connectionProvider);
@@ -84,7 +87,7 @@ public abstract class AbstractSqlDbWrapper implements DbWrapper {
     }
 
     protected abstract void checkDbSupported(Connection c) throws SQLException, ImplementationDbException;
-    
+
     @Override
     public void initialize() throws ImplementationDbException {
         if (isInitialized()) {
@@ -98,7 +101,7 @@ public abstract class AbstractSqlDbWrapper implements DbWrapper {
             checkDbSupported(c);
             c.setAutoCommit(false);
             
-            meta = new TorodbMeta(getDsl(c));
+            meta = new TorodbMeta(databaseName, getDsl(c));
             c.commit();
 
             isInitialized.set(true);
@@ -238,7 +241,7 @@ public abstract class AbstractSqlDbWrapper implements DbWrapper {
 
     }
 
-    private class MyCursorConnectionProvider implements DefaultCursor.DatabaseCursorGateway {
+    class MyCursorConnectionProvider implements DefaultCursor.DatabaseCursorGateway {
 
         private final CursorId cursorId;
         private final Configuration configuration;

@@ -100,8 +100,7 @@ class DefaultToroConnection implements ToroConnection {
                 d2r, 
                 executor, 
                 documentBuilderFactory,
-                cursorManager,
-                cache
+                cursorManager
         );
     }
 

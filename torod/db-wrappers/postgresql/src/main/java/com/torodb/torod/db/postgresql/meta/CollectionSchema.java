@@ -27,6 +27,7 @@ import com.torodb.torod.db.postgresql.IdsFilter;
 import com.torodb.torod.db.postgresql.converters.StructureConverter;
 import com.torodb.torod.db.postgresql.meta.tables.SubDocTable;
 import com.torodb.torod.core.subdocument.SubDocType;
+import com.torodb.torod.db.sql.index.IndexManager;
 import java.sql.DatabaseMetaData;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -55,22 +56,26 @@ public final class CollectionSchema extends SchemaImpl {
     private final HashMap<SubDocType, SubDocTable> tables;
     private final AtomicInteger typeIdProvider;
     private final StructuresCache structuresCache;
+    private final IndexStorage indexStorage;
+    private final IndexManager indexManager;
 
-    CollectionSchema(String collection, DSLContext dsl) {
+    CollectionSchema(String collection, DSLContext dsl, TorodbMeta torodbMeta) {
         this(
                 getCollectionSchemaName(collection), 
                 Collections.<Table<?>>emptyList(), 
                 dsl,
-                null
+                null,
+                torodbMeta
         );
     }
 
-    CollectionSchema(Schema schema, DSLContext dsl, DatabaseMetaData jdbcMeta) {
+    CollectionSchema(Schema schema, DSLContext dsl, DatabaseMetaData jdbcMeta, TorodbMeta torodbMeta) {
         this(
                 schema.getName(), 
                 schema.getTables(), 
                 dsl,
-                jdbcMeta
+                jdbcMeta,
+                torodbMeta
         );
         assert isCollectionSchema(schema);
     }
@@ -79,7 +84,8 @@ public final class CollectionSchema extends SchemaImpl {
             String schemaName, 
             Iterable<? extends Table> tables, 
             DSLContext dsl,
-            DatabaseMetaData jdbcMeta
+            DatabaseMetaData jdbcMeta,
+            TorodbMeta torodbMeta
     ) {
         super(schemaName);
 
@@ -87,7 +93,7 @@ public final class CollectionSchema extends SchemaImpl {
         this.typesById = HashBiMap.create();
         this.tables = Maps.newHashMap();
         this.structureConverter = new StructureConverter(this);
-        this.structuresCache = new StructuresCache(schemaName, structureConverter);
+        this.structuresCache = new StructuresCache(this, schemaName, structureConverter);
 
         int maxTypeId = MIN_VALUE_TABLE_ID;
 
@@ -113,6 +119,24 @@ public final class CollectionSchema extends SchemaImpl {
         this.structureConverter.initialize();
 
         this.structuresCache.initialize(dsl, tables);
+        
+        this.indexStorage = new IndexStorage(torodbMeta.getDatabaseName(), this);
+        indexStorage.initialize(dsl);
+        
+        this.indexManager = new IndexManager(this, torodbMeta);
+        indexManager.initialize(
+                indexStorage.getAllDbIndexes(dsl), 
+                indexStorage.getAllToroIndexes(dsl),
+                structuresCache
+        );
+    }
+
+    public IndexManager getIndexManager() {
+        return indexManager;
+    }
+    
+    public IndexStorage getIndexStorage() {
+        return indexStorage;
     }
 
     public static boolean isCollectionSchema(Schema schema) {

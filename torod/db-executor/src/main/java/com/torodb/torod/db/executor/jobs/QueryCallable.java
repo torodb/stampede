@@ -21,13 +21,16 @@
 package com.torodb.torod.db.executor.jobs;
 
 import com.torodb.torod.core.cursors.CursorId;
+import com.torodb.torod.core.dbWrapper.Cursor;
 import com.torodb.torod.core.dbWrapper.DbWrapper;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.dbWrapper.exceptions.UserDbException;
+import com.torodb.torod.core.exceptions.ToroException;
+import com.torodb.torod.core.exceptions.ToroImplementationException;
+import com.torodb.torod.core.exceptions.ToroRuntimeException;
+import com.torodb.torod.core.exceptions.UserToroException;
 import com.torodb.torod.core.language.projection.Projection;
 import com.torodb.torod.core.language.querycriteria.QueryCriteria;
-import com.torodb.torod.db.executor.report.QueryReport;
-import java.util.concurrent.Callable;
 import javax.annotation.Nonnegative;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -36,7 +39,7 @@ import javax.inject.Inject;
 /**
  *
  */
-public class QueryCallable implements Callable<Void> {
+public class QueryCallable extends Job<Void> {
 
     private final DbWrapper dbWrapper;
     private final String collection;
@@ -44,17 +47,18 @@ public class QueryCallable implements Callable<Void> {
     private final QueryCriteria filter;
     private final Projection projection;
     private final int maxResults;
-    private final QueryReport report;
+    private final Report report;
+    private Cursor cursor = null;
 
     @Inject
     public QueryCallable(
             @Nonnull DbWrapper dbWrapper,
+            @Nonnull Report report,
             @Nonnull String collection, 
             @Nonnull CursorId cursorId, 
             @Nullable QueryCriteria filter, 
             @Nullable Projection projection,
-            @Nonnegative int maxResults,
-            QueryReport report) {
+            @Nonnegative int maxResults) {
         
         this.dbWrapper = dbWrapper;
         this.collection = collection;
@@ -66,23 +70,52 @@ public class QueryCallable implements Callable<Void> {
     }
 
     @Override
-    public Void call() throws ImplementationDbException, UserDbException {
-        dbWrapper.openGlobalCursor(
-                collection, 
-                cursorId, 
-                filter, 
-                projection, 
-                maxResults
-        );
-        report.taskExecuted(
-                collection, 
-                cursorId, 
-                filter, 
-                projection, 
-                maxResults, 
-                dbWrapper.getGlobalCursor(cursorId).countRemainingDocs()
-        );
+    protected Void failableCall() throws ToroException, ToroRuntimeException {
+        try {
+            cursor = dbWrapper.openGlobalCursor(
+                    collection,
+                    cursorId,
+                    filter,
+                    projection,
+                    maxResults
+            );
+            report.queryExecuted(
+                    collection, 
+                    cursorId, 
+                    filter, 
+                    projection, 
+                    maxResults, 
+                    dbWrapper.getGlobalCursor(cursorId).countRemainingDocs()
+            );
+        }
+        catch (ImplementationDbException ex) {
+            throw new ToroImplementationException(ex);
+        }
+        catch (UserDbException ex) {
+            throw new UserToroException(ex);
+        }
         return null;
     }
 
+    @Override
+    protected Void onFail(Throwable t) throws ToroException,
+            ToroRuntimeException {
+        if (cursor != null) {
+            cursor.close();
+        }
+        if (t instanceof ToroException) {
+            throw (ToroException) t;
+        }
+        throw new ToroRuntimeException(t);
+    }
+
+    public static interface Report {
+        public void queryExecuted(
+            @Nonnull String collection, 
+            @Nonnull CursorId cursorId, 
+            @Nullable QueryCriteria filter, 
+            @Nullable Projection projection,
+            @Nonnegative int maxResults,
+            @Nonnegative int realResultCount);
+    }
 }

@@ -20,7 +20,6 @@
 
 package com.torodb.torod.db.executor.jobs;
 
-import com.google.common.base.Supplier;
 import com.google.common.collect.Lists;
 import com.torodb.torod.core.WriteFailMode;
 import com.torodb.torod.core.connection.DeleteResponse;
@@ -29,61 +28,69 @@ import com.torodb.torod.core.dbWrapper.DbConnection;
 import com.torodb.torod.core.dbWrapper.exceptions.DbException;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.dbWrapper.exceptions.UserDbException;
+import com.torodb.torod.core.exceptions.ToroException;
+import com.torodb.torod.core.exceptions.ToroImplementationException;
+import com.torodb.torod.core.exceptions.ToroRuntimeException;
+import com.torodb.torod.core.exceptions.UserToroException;
 import com.torodb.torod.core.language.operations.DeleteOperation;
-import com.torodb.torod.db.executor.report.DeleteReport;
 import java.util.List;
-import java.util.concurrent.Callable;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import javax.inject.Inject;
 
 /**
  *
  */
-public class DeleteCallable implements Callable<DeleteResponse> {
+public class DeleteCallable extends TransactionalJob<DeleteResponse> {
 
-    private final Supplier<DbConnection> connectionProvider;
+    private final Report report;
     private final String collection;
     private final List<? extends DeleteOperation> deletes;
     private final WriteFailMode mode;
-    private final DeleteReport report;
 
-    @Inject
     public DeleteCallable(
-            Supplier<DbConnection> connectionProvider, 
+            DbConnection connection,
+            TransactionAborter abortCallback,
+            Report report, 
             String collection, 
             List<? extends DeleteOperation> deletes, 
-            WriteFailMode mode, 
-            DeleteReport report) {
-        this.connectionProvider = connectionProvider;
+            WriteFailMode mode) {
+        super(connection, abortCallback);
+        this.report = report;
         this.collection = collection;
         this.deletes = deletes;
         this.mode = mode;
-        this.report = report;
     }
-    
+
     @Override
-    public DeleteResponse call() throws Exception {
-        DeleteResponse response;
-        switch (mode) {
-            case ISOLATED:
-                response = isolatedDelete();
-                break;
-            case ORDERED:
-                response = orderedDelete();
-                break;
-            case TRANSACTIONAL:
-                response = transactionalDelete();
-                break;
-            default:
-                throw new AssertionError("Study exceptions");
+    protected DeleteResponse failableCall() throws ToroException, ToroRuntimeException {
+        try {
+            DeleteResponse response;
+            switch (mode) {
+                case ISOLATED:
+                    response = isolatedDelete();
+                    break;
+                case ORDERED:
+                    response = orderedDelete();
+                    break;
+                case TRANSACTIONAL:
+                    response = transactionalDelete();
+                    break;
+                default:
+                    throw new AssertionError("Study exceptions");
+            }
+            report.deleteExecuted(collection, deletes, mode);
+            return response;
         }
-        report.taskExecuted(collection, deletes, mode);
-        return response;
+        catch (ImplementationDbException ex) {
+            throw new ToroImplementationException(ex);
+        }
+        catch (UserDbException ex) {
+            throw new UserToroException(ex);
+        }
     }
 
     private DeleteResponse isolatedDelete() throws ImplementationDbException {
-        DbConnection connection = connectionProvider.get();
+        DbConnection connection = getConnection();
         int deleted = 0;
         List<WriteError> errors = Lists.newLinkedList();
 
@@ -101,7 +108,7 @@ public class DeleteCallable implements Callable<DeleteResponse> {
     }
 
     private DeleteResponse orderedDelete() throws ImplementationDbException, UserDbException {
-        DbConnection connection = connectionProvider.get();
+        DbConnection connection = getConnection();
         int deleted = 0;
         List<WriteError> errors = Lists.newLinkedList();
         int index = -1;
@@ -121,7 +128,7 @@ public class DeleteCallable implements Callable<DeleteResponse> {
     }
 
     private DeleteResponse transactionalDelete() throws ImplementationDbException, UserDbException {
-        DbConnection connection = connectionProvider.get();
+        DbConnection connection = getConnection();
         int deleted = 0;
         List<WriteError> errors = Lists.newLinkedList();
         int index = -1;
@@ -158,5 +165,12 @@ public class DeleteCallable implements Callable<DeleteResponse> {
             return new DeleteResponse(true, deleted, null);
         }
         return new DeleteResponse(false, deleted, errors);
+    }
+    
+    public static interface Report {
+        public void deleteExecuted(
+            String collection, 
+            List<? extends DeleteOperation> deletes, 
+            WriteFailMode mode);
     }
 }

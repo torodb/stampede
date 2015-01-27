@@ -20,36 +20,48 @@
 
 package com.torodb.torod.db.executor.jobs;
 
-import com.google.common.base.Supplier;
 import com.torodb.torod.core.dbWrapper.DbConnection;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.dbWrapper.exceptions.UserDbException;
-import com.torodb.torod.db.executor.report.CommitReport;
-import java.util.concurrent.Callable;
-import javax.inject.Inject;
+import com.torodb.torod.core.exceptions.ToroException;
+import com.torodb.torod.core.exceptions.ToroImplementationException;
+import com.torodb.torod.core.exceptions.ToroRuntimeException;
+import com.torodb.torod.core.exceptions.UserToroException;
 
 /**
  *
  */
-public class CommitCallable implements Callable<Void> {
+public class CommitCallable extends TransactionalJob<Void> {
     
-    private final Supplier<DbConnection> connectionProvider;
-    private final CommitReport report;
+    private final Report report;
 
-    @Inject
     public CommitCallable(
-            Supplier<DbConnection> connectionProvider, 
-            CommitReport report) {
-        this.connectionProvider = connectionProvider;
+            DbConnection connection, 
+            TransactionAborter abortCallback,
+            Report report) {
+        super(connection, abortCallback);
         this.report = report;
     }
 
+
     @Override
-    public Void call() throws ImplementationDbException, UserDbException {
-        connectionProvider.get().commit();
-        
-        report.taskExecuted();
-        
-        return null;
+    protected Void failableCall() throws ToroException, ToroRuntimeException {
+        try {
+            getConnection().commit();
+            
+            report.commitExecuted();
+            
+            return null;
+        }
+        catch (ImplementationDbException ex) {
+            throw new ToroImplementationException(ex);
+        }
+        catch (UserDbException ex) {
+            throw new UserToroException(ex);
+        }
+    }
+      
+    public static interface Report {
+        public void commitExecuted();
     }
 }

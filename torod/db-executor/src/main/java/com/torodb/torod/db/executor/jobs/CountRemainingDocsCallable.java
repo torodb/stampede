@@ -17,32 +17,28 @@
  *     Copyright (c) 2014, 8Kdata Technology
  *     
  */
-
 package com.torodb.torod.db.executor.jobs;
 
 import com.torodb.torod.core.cursors.CursorId;
-import com.torodb.torod.core.dbWrapper.Cursor;
 import com.torodb.torod.core.dbWrapper.DbWrapper;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.exceptions.ToroException;
 import com.torodb.torod.core.exceptions.ToroImplementationException;
 import com.torodb.torod.core.exceptions.ToroRuntimeException;
 import com.torodb.torod.core.exceptions.UserToroException;
-import javax.inject.Inject;
 
 /**
  *
  */
-public class CloseCursorCallable extends Job<Void> {
+public class CountRemainingDocsCallable extends Job<Integer> {
 
     private final DbWrapper dbWrapper;
     private final CursorId cursorId;
     private final Report report;
 
-    @Inject
-    public CloseCursorCallable(
-            DbWrapper dbWrapper, 
-            Report report, 
+    public CountRemainingDocsCallable(
+            DbWrapper dbWrapper,
+            Report report,
             CursorId cursorId) {
         this.dbWrapper = dbWrapper;
         this.cursorId = cursorId;
@@ -50,15 +46,11 @@ public class CloseCursorCallable extends Job<Void> {
     }
 
     @Override
-    protected Void failableCall() throws ToroException, ToroRuntimeException {
+    protected Integer failableCall() throws ToroException, ToroRuntimeException {
         try {
-            Cursor cursor = dbWrapper.getGlobalCursor(cursorId);
-            
-            cursor.close();
-            
-            report.closeCursorExecuted(cursorId);
-            
-            return null;
+            int result = dbWrapper.getGlobalCursor(cursorId).countRemainingDocs();
+            report.countRemainingDocsExecuted(cursorId, result);
+            return result;
         }
         catch (IllegalArgumentException ex) {
             throw new UserToroException(ex);
@@ -69,17 +61,16 @@ public class CloseCursorCallable extends Job<Void> {
     }
 
     @Override
-    protected Void onFail(Throwable t) throws ToroException,
+    protected Integer onFail(Throwable t) throws ToroException,
             ToroRuntimeException {
         if (t instanceof ToroException) {
             throw (ToroException) t;
         }
         throw new ToroRuntimeException(t);
     }
-    
+
     public static interface Report {
-        
-        public void closeCursorExecuted(CursorId cursorId);
+        public void countRemainingDocsExecuted(CursorId cursorId, int remainingDocs);
     }
 
 }
