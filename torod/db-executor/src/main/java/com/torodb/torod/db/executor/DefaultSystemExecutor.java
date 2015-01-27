@@ -21,12 +21,16 @@
 
 package com.torodb.torod.db.executor;
 
+import com.torodb.torod.db.executor.jobs.CreateIndexCallable;
 import com.torodb.torod.core.dbWrapper.DbWrapper;
 import com.torodb.torod.core.executor.SystemExecutor;
 import com.torodb.torod.core.executor.ToroTaskExecutionException;
+import com.torodb.torod.core.pojos.NamedToroIndex;
+import com.torodb.torod.core.pojos.IndexedAttributes;
 import com.torodb.torod.core.subdocument.SubDocType;
 import com.torodb.torod.db.executor.jobs.*;
 import com.torodb.torod.db.executor.report.ReportFactory;
+import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
