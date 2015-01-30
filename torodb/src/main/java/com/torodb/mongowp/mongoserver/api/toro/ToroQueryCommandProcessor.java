@@ -32,6 +32,7 @@ import com.eightkdata.nettybson.api.BSONDocument;
 import com.eightkdata.nettybson.mongodriver.MongoBSONDocument;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.mongodb.WriteConcern;
 import com.torodb.BuildProperties;
@@ -596,7 +597,7 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
 		messageReplier.replyMessageNoCursor(document);
 	}
 
-	@Override
+    @Override
 	public boolean handleError(QueryCommand userCommand, MessageReplier messageReplier, Throwable throwable)
 			throws Exception {
 		//TODO: Map real mongo error codes		

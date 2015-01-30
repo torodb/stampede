@@ -20,7 +20,6 @@
 
 package com.torodb.torod.core.executor;
 
-import com.torodb.torod.core.pojos.NamedToroIndex;
 import com.torodb.torod.core.subdocument.SubDocType;
 import java.util.Map;
 import java.util.concurrent.Future;
@@ -76,10 +75,5 @@ public interface SystemExecutor {
     public static interface ReserveDocIdsCallback {
 
         public void reservedDocIds(String collection, @Nonnegative int idsToReserve);
-    }
-    
-    public static interface CreateIndexCallback {
-        
-        public void createdIndex(NamedToroIndex index);
     }
 }
