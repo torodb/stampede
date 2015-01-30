@@ -107,47 +107,49 @@ public class Main {
 				new InnerCursorManagerModule()
 		);
 
-		final DbBackend dbBackend;
-		try
-		{
-		dbBackend = injector.getInstance(DbBackend.class);
-		final Torod torod = injector.getInstance(Torod.class);
-		final MongoServer server = injector.getInstance(MongoServer.class);
-		final BuildProperties buildProperties = injector.getInstance(BuildProperties.class);
+        final DbBackend dbBackend;
+        try {
+            dbBackend = injector.getInstance(DbBackend.class);
+            final Torod torod = injector.getInstance(Torod.class);
+            final MongoServer server = injector.getInstance(MongoServer.class);
+            final BuildProperties buildProperties
+                    = injector.getInstance(BuildProperties.class);
 
-		Thread shutdown = new Thread() {
-			@Override
-			public void run() {
-				shutdown(dbBackend, torod, server);
-			}
-		};
-		
-		Runtime.getRuntime().addShutdownHook(shutdown);
+            Thread shutdown = new Thread() {
+                @Override
+                public void run() {
+                    shutdown(dbBackend, torod, server);
+                }
+            };
 
-        Thread serverThread = new Thread() {
-            @Override
-            public void run() {
-                JCommander.getConsole().println(
-						"Starting ToroDB v" + buildProperties.getFullVersion() +
-								" listening on port " + config.getPort()
-				);
-                Main.run(torod, server);
-                shutdown(dbBackend, torod, server);
+            Runtime.getRuntime().addShutdownHook(shutdown);
+
+            Thread serverThread = new Thread() {
+                @Override
+                public void run() {
+                    JCommander.getConsole().println(
+                            "Starting ToroDB v"
+                            + buildProperties.getFullVersion()
+                            + " listening on port " + config.getPort()
+                    );
+                    Main.run(torod, server);
+                    shutdown(dbBackend, torod, server);
+                }
+            };
+            serverThread.start();
+        }
+        catch (ProvisionException pe) {
+            String causeMessage;
+            if (pe.getCause() != null) {
+                causeMessage = pe.getCause().getMessage();
             }
-        };
-        serverThread.start();
-		}
-		catch (ProvisionException pe) {
-			                String causeMessage;
-			                if (pe.getCause() != null) {
-						        causeMessage = pe.getCause().getMessage();
-						    } else {
-						        causeMessage = pe.getMessage();
-						    }
-						    JCommander.getConsole().println(causeMessage);
-						    System.exit(1);
-					}
-	}
+            else {
+                causeMessage = pe.getMessage();
+            }
+            JCommander.getConsole().println(causeMessage);
+            System.exit(1);
+        }
+    }
 
 	private static void run(final Torod torod, final MongoServer server) {
 		try {
