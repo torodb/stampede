@@ -24,15 +24,12 @@ import com.eightkdata.mongowp.messages.request.RequestOpCode;
 import com.eightkdata.mongowp.mongoserver.api.QueryCommandProcessor;
 import com.eightkdata.mongowp.mongoserver.api.callback.LastError;
 import com.eightkdata.mongowp.mongoserver.api.callback.MessageReplier;
-import com.eightkdata.mongowp.mongoserver.api.commands.AdministrationQueryCommand;
 import com.eightkdata.mongowp.mongoserver.api.commands.QueryAndWriteOperationsQueryCommand;
 import com.eightkdata.mongowp.mongoserver.protocol.MongoWP;
 import com.eightkdata.mongowp.mongoserver.protocol.MongoWP.ErrorCode;
 import com.eightkdata.nettybson.api.BSONDocument;
 import com.eightkdata.nettybson.mongodriver.MongoBSONDocument;
-import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.mongodb.WriteConcern;
 import com.torodb.BuildProperties;
@@ -45,8 +42,8 @@ import com.torodb.torod.core.language.operations.DeleteOperation;
 import com.torodb.torod.core.language.operations.UpdateOperation;
 import com.torodb.torod.core.language.projection.Projection;
 import com.torodb.torod.core.language.querycriteria.QueryCriteria;
-import com.torodb.torod.core.language.querycriteria.TrueQueryCriteria;
 import com.torodb.torod.core.language.update.UpdateAction;
+import com.torodb.torod.core.pojos.Database;
 import com.torodb.torod.core.subdocument.ToroDocument;
 import com.torodb.translator.*;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -56,6 +53,7 @@ import org.bson.BasicBSONObject;
 
 import javax.annotation.Nonnull;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 /**
@@ -360,31 +358,40 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
 	@Override
     public void createIndexes(@Nonnull BSONDocument document, @Nonnull MessageReplier messageReplier) throws Exception {
         Map<String, Object> keyValues = new HashMap<String, Object>();
-    	
-		String collection = ToroCollectionTranslator.translate((String) document.getValue("createIndexes"));
-		Iterable<?> indexes = (Iterable<?>) document.getValue("indexes");
-		Iterator<?> indexesIterator = indexes.iterator();
-		int newIndexesCount = 0;
-		while (indexesIterator.hasNext()) {
-			indexesIterator.next();
-			newIndexesCount++;
-		}
-        
-		keyValues.put("createdCollectionAutomatically", false);
-		synchronized (NUM_INDEXES_MAP) {
-			if (!NUM_INDEXES_MAP.containsKey(collection)) {
-				NUM_INDEXES_MAP.put(collection, 0);
-			}
-			
-			int numIndexes = NUM_INDEXES_MAP.get(collection);
-			keyValues.put("numIndexesBefore", numIndexes);
-			numIndexes+=newIndexesCount;
-			NUM_INDEXES_MAP.put(collection, numIndexes);
-			keyValues.put("numIndexesAfter", numIndexes);
-		}
-		
-		keyValues.put("ok", MongoWP.OK);
+
+        String collection = ToroCollectionTranslator.translate((String) document.getValue("createIndexes"));
+        Iterable<?> indexes = (Iterable<?>) document.getValue("indexes");
+        Iterator<?> indexesIterator = indexes.iterator();
+        int newIndexesCount = 0;
+        while (indexesIterator.hasNext()) {
+            indexesIterator.next();
+            newIndexesCount++;
+        }
+
+        keyValues.put("createdCollectionAutomatically", false);
+        synchronized (NUM_INDEXES_MAP) {
+            if (!NUM_INDEXES_MAP.containsKey(collection)) {
+                NUM_INDEXES_MAP.put(collection, 0);
+            }
+
+            int numIndexes = NUM_INDEXES_MAP.get(collection);
+            keyValues.put("numIndexesBefore", numIndexes);
+            numIndexes+=newIndexesCount;
+            NUM_INDEXES_MAP.put(collection, numIndexes);
+            keyValues.put("numIndexesAfter", numIndexes);
+        }
+
+        keyValues.put("ok", MongoWP.OK);
 		BSONDocument reply = new MongoBSONDocument(keyValues);
+		messageReplier.replyMessageNoCursor(reply);
+    }
+
+    //TODO: Implement with toro natives
+    @Override
+    public void dropIndex(BSONDocument query, MessageReplier messageReplier) {
+        Map<String, Object> keyValues = new HashMap<String, Object>();
+        keyValues.put("ok", MongoWP.KO);
+        BSONDocument reply = new MongoBSONDocument(keyValues);
 		messageReplier.replyMessageNoCursor(reply);
     }
 	
@@ -615,6 +622,44 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
         
 		return true;
 	}
+
+    @Override
+    public void ping(MessageReplier messageReplier) {
+        Map<String, Object> keyValues = new HashMap<String, Object>();
+        keyValues.put("ok", MongoWP.OK);
+        
+        BSONDocument document = new MongoBSONDocument(keyValues);
+		messageReplier.replyMessageNoCursor(document);
+    }
+
+    @Override
+    public void listDatabases(MessageReplier messageReplier) throws ExecutionException, InterruptedException{
+        AttributeMap attributeMap = messageReplier.getAttributeMap();
+        ToroConnection connection = attributeMap.attr(ToroRequestProcessor.CONNECTION).get();
+        
+        List<? extends Database> databases = connection.getDatabases().get();
+        
+        double totalSize = 0;
+        List<BSONObject> databaseDocs = Lists.newArrayListWithCapacity(databases.size());
+        for (Database database : databases) {
+            BSONObject databaseDoc = new BasicBSONObject();
+            databaseDoc.put("name", database.getName());
+            databaseDoc.put("sizeOnDisk", Long.valueOf(database.getSize()).doubleValue());
+            //TODO: This is not true, but...
+            databaseDoc.put("empty", database.getSize() == 0);
+            
+            totalSize += database.getSize();
+            databaseDocs.add(databaseDoc);
+        }
+        BSONObject response = new BasicBSONObject(3);
+        
+        response.put("databases", databaseDocs);
+        response.put("totalSize", totalSize);
+        response.put("ok", MongoWP.OK);
+        
+        BSONDocument document = new MongoBSONDocument(response.toMap());
+		messageReplier.replyMessageNoCursor(document);
+    }
 
 	@Override
 	public void unimplemented(QueryCommand userCommand, MessageReplier messageReplier) throws Exception {
