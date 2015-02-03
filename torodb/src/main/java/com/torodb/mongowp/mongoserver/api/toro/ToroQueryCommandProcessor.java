@@ -29,21 +29,28 @@ import com.eightkdata.mongowp.mongoserver.protocol.MongoWP;
 import com.eightkdata.mongowp.mongoserver.protocol.MongoWP.ErrorCode;
 import com.eightkdata.nettybson.api.BSONDocument;
 import com.eightkdata.nettybson.mongodriver.MongoBSONDocument;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.mongodb.WriteConcern;
 import com.torodb.BuildProperties;
+import com.torodb.kvdocument.conversion.mongo.MongoTypeConverter;
 import com.torodb.mongowp.mongoserver.api.toro.util.BSONDocuments;
 import com.torodb.mongowp.mongoserver.api.toro.util.BSONToroDocument;
 import com.torodb.torod.core.WriteFailMode;
 import com.torodb.torod.core.connection.*;
 import com.torodb.torod.core.cursors.CursorId;
+import com.torodb.torod.core.exceptions.ExistentIndexException;
+import com.torodb.torod.core.exceptions.UserToroException;
+import com.torodb.torod.core.language.AttributeReference;
 import com.torodb.torod.core.language.operations.DeleteOperation;
 import com.torodb.torod.core.language.operations.UpdateOperation;
 import com.torodb.torod.core.language.projection.Projection;
 import com.torodb.torod.core.language.querycriteria.QueryCriteria;
 import com.torodb.torod.core.language.update.UpdateAction;
 import com.torodb.torod.core.pojos.Database;
+import com.torodb.torod.core.pojos.IndexedAttributes;
 import com.torodb.torod.core.subdocument.ToroDocument;
 import com.torodb.translator.*;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -61,9 +68,6 @@ import java.util.concurrent.Future;
  */
 public class ToroQueryCommandProcessor implements QueryCommandProcessor {
 	private final BuildProperties buildProperties;
-
-    public static final Map<String,Integer> NUM_INDEXES_MAP
-            = new HashMap<String, Integer>();
 
 	@Inject
 	public ToroQueryCommandProcessor(BuildProperties buildProperties) {
@@ -353,46 +357,177 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
             transaction.close();
         }
 	}
+    
+    private AttributeReference parseAttributeReference(String path) {
+        AttributeReference.Builder builder = new AttributeReference.Builder();
+        
+        StringTokenizer st = new StringTokenizer(path, ".");
+        while (st.hasMoreTokens()) {
+            builder.addObjectKey(st.nextToken());
+        }
+        return builder.build();
+    }
 	
 	//TODO: implement with toro natives
 	@Override
-    public void createIndexes(@Nonnull BSONDocument document, @Nonnull MessageReplier messageReplier) throws Exception {
-        Map<String, Object> keyValues = new HashMap<String, Object>();
+    public void createIndexes(@Nonnull BSONDocument document, @Nonnull MessageReplier messageReplier)
+            throws Exception {
+        BSONObject keyValues = new BasicBSONObject();
 
-        String collection = ToroCollectionTranslator.translate((String) document.getValue("createIndexes"));
-        Iterable<?> indexes = (Iterable<?>) document.getValue("indexes");
-        Iterator<?> indexesIterator = indexes.iterator();
-        int newIndexesCount = 0;
-        while (indexesIterator.hasNext()) {
-            indexesIterator.next();
-            newIndexesCount++;
+        Object collectionValue = document.getValue("createIndexes");
+        if (!(collectionValue instanceof String)) {
+            keyValues.put("ok", MongoWP.KO);
+            keyValues.put("code", (double) 13111);
+            keyValues.put("errmsg", "exception: wrong type for field (createIndexes)");
+            messageReplier.replyMessageNoCursor(new MongoBSONDocument(keyValues));
+            return;
         }
+        String collection = (String) collectionValue;
+        Object indexesValue = document.getValue("indexes");
+        if (!(indexesValue instanceof List)) {
+            keyValues.put("ok", MongoWP.KO);
+            keyValues.put("errmsg", "indexes has to be an array");
+            messageReplier.replyMessageNoCursor(new MongoBSONDocument(keyValues));
+            return;
+        }
+        //TODO: Unsafe cast
+        List<BSONObject> uncastedIndexes = (List<BSONObject>) indexesValue;
 
-        keyValues.put("createdCollectionAutomatically", false);
-        synchronized (NUM_INDEXES_MAP) {
-            if (!NUM_INDEXES_MAP.containsKey(collection)) {
-                NUM_INDEXES_MAP.put(collection, 0);
+        AttributeMap attributeMap = messageReplier.getAttributeMap();
+        ToroConnection connection
+                = attributeMap.attr(ToroRequestProcessor.CONNECTION).get();
+
+        int numIndexesBefore;
+
+        ToroTransaction transaction = null;
+        try {
+            transaction = connection.createTransaction();
+
+            numIndexesBefore = transaction.getIndexes(collection).size();
+            try {
+                for (BSONObject uncastedIndex : uncastedIndexes) {
+                    String name = (String) uncastedIndex.removeField("name");
+                    BSONObject key
+                            = (BSONObject) uncastedIndex.removeField("key");
+                    Boolean unique
+                            = (Boolean) uncastedIndex.removeField("unique");
+                    unique = unique != null ? unique : false;
+                    Boolean sparse
+                            = (Boolean) uncastedIndex.removeField("sparse");
+                    sparse = sparse != null ? sparse : false;
+
+                    if (!uncastedIndex.keySet().isEmpty()) {
+                        keyValues.put("ok", MongoWP.KO);
+                        String errmsg = "Options "
+                                + uncastedIndex.keySet().toString()
+                                + " are not supported";
+                        keyValues.put("errmsg", errmsg);
+                        messageReplier.replyMessageNoCursor(new MongoBSONDocument(keyValues));
+                        return;
+                    }
+
+                    IndexedAttributes.Builder indexedAttsBuilder
+                            = new IndexedAttributes.Builder();
+
+                    for (String path : key.keySet()) {
+                        AttributeReference attRef
+                                = parseAttributeReference(path);
+                        boolean ascending = ((Number) key.get(path)).intValue()
+                                > 0;
+
+                        indexedAttsBuilder.addAttribute(attRef, ascending);
+                    }
+
+                    transaction.createIndex(collection, name, indexedAttsBuilder.build(), unique, sparse).get();
+                }
+
+                int numIndexesAfter = transaction.getIndexes(collection).size();
+
+                transaction.commit().get();
+
+                keyValues.put("ok", MongoWP.OK);
+                keyValues.put("createdCollectionAutomatically", false);
+                keyValues.put("numIndexesBefore", numIndexesBefore);
+                keyValues.put("numIndexesAfter", numIndexesAfter);
+
+                BSONDocument reply = new MongoBSONDocument(keyValues);
+                messageReplier.replyMessageNoCursor(reply);
             }
+            catch (ExecutionException ex) {
+                if (ex.getCause() instanceof ExistentIndexException) {
+                    keyValues.put("ok", MongoWP.OK);
+                    keyValues.put("note", ex.getCause().getMessage());
+                    keyValues.put("numIndexesBefore", numIndexesBefore);
 
-            int numIndexes = NUM_INDEXES_MAP.get(collection);
-            keyValues.put("numIndexesBefore", numIndexes);
-            numIndexes+=newIndexesCount;
-            NUM_INDEXES_MAP.put(collection, numIndexes);
-            keyValues.put("numIndexesAfter", numIndexes);
+                    messageReplier.replyMessageNoCursor(new MongoBSONDocument(keyValues));
+                }
+                else {
+                    throw ex;
+                }
+            }
+        }
+        finally {
+            if (transaction != null) {
+                transaction.close();
+            }
         }
 
-        keyValues.put("ok", MongoWP.OK);
-		BSONDocument reply = new MongoBSONDocument(keyValues);
-		messageReplier.replyMessageNoCursor(reply);
     }
 
-    //TODO: Implement with toro natives
     @Override
-    public void dropIndex(BSONDocument query, MessageReplier messageReplier) {
-        Map<String, Object> keyValues = new HashMap<String, Object>();
-        keyValues.put("ok", MongoWP.KO);
-        BSONDocument reply = new MongoBSONDocument(keyValues);
-		messageReplier.replyMessageNoCursor(reply);
+    public void dropIndexes(BSONDocument query, MessageReplier messageReplier) throws Exception {
+        Map<String, Object> keyValues = Maps.newHashMap();
+        
+        Object dropIndexesValue = query.getValue("dropIndexes");
+        Object indexValue = query.getValue("index");
+        
+        if (!(dropIndexesValue instanceof String)) {
+            keyValues.put("ok", MongoWP.KO);
+            keyValues.put("errmsg", "The field 'dropIndexes' must be a string");
+            messageReplier.replyMessageNoCursor(new MongoBSONDocument(keyValues));
+            return ;
+        }
+        if (!(indexValue instanceof String)) {
+            keyValues.put("ok", MongoWP.KO);
+            keyValues.put("errmsg", "The field 'index' must be a string");
+            messageReplier.replyMessageNoCursor(new MongoBSONDocument(keyValues));
+            return ;
+        }
+        
+        String collection = (String) dropIndexesValue;
+        String indexName = (String) indexValue;
+        
+        AttributeMap attributeMap = messageReplier.getAttributeMap();
+        ToroConnection connection = attributeMap.attr(ToroRequestProcessor.CONNECTION).get();
+        
+        ToroTransaction transaction = null;
+        try {
+            transaction = connection.createTransaction();
+            
+            if (indexName.equals("*")) { //TODO: Support * in dropIndexes
+                keyValues.put("ok", MongoWP.KO);
+                keyValues.put("errmsg", "The wildcard '*' is not supported by ToroDB right now");
+                messageReplier.replyMessageNoCursor(new MongoBSONDocument(keyValues));
+                return ;
+            }
+        
+            Boolean removed = transaction.dropIndex(collection, indexName).get();
+            if (!removed) {
+                keyValues.put("ok", MongoWP.KO);
+                keyValues.put("errmsg", "index not found with name ["+indexName+"]");
+                messageReplier.replyMessageNoCursor(new MongoBSONDocument(keyValues));
+                return ;
+            }
+            
+            transaction.commit();
+            
+            keyValues.put("ok", MongoWP.OK);
+            messageReplier.replyMessageNoCursor(new MongoBSONDocument(keyValues));
+        } finally {
+            if (transaction != null) {
+                transaction.close();
+            }
+        }
     }
 	
 	@Override

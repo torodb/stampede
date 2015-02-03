@@ -45,6 +45,9 @@ public abstract class TransactionalJob<R> extends Job<R> {
         if (t instanceof ToroException) {
             throw (ToroException) t;
         }
+        if (t instanceof ToroRuntimeException) {
+            throw (ToroRuntimeException) t;
+        }
         throw new ToroRuntimeException(t);
     }
     

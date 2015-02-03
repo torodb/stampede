@@ -280,12 +280,8 @@ public class IndexRelationManager implements Serializable {
 
             Collection<UnnamedDbIndex> dbUnnameds
                     = memory.toroToDb.removeAll(toroUnnamed);
-            if (dbUnnameds.isEmpty()) {
-                throw new ToroImplementationException("A relation between "
-                        + toroIndexName
-                        + " and at least one unnamed db index was "
-                        + "expected"
-                );
+            if (dbUnnameds.isEmpty()) { //this can happen when there is no structure that matches the index
+                return Collections.emptySet();
             }
 
             Set<NamedDbIndex> result

@@ -23,7 +23,9 @@ import com.torodb.torod.core.Session;
 import com.torodb.torod.core.annotations.DatabaseName;
 import com.torodb.torod.core.dbWrapper.DbWrapper;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
+import com.torodb.torod.core.exceptions.ToroException;
 import com.torodb.torod.core.exceptions.ToroImplementationException;
+import com.torodb.torod.core.exceptions.ToroRuntimeException;
 import com.torodb.torod.core.exceptions.UserToroException;
 import com.torodb.torod.core.executor.ExecutorFactory;
 import com.torodb.torod.core.executor.SessionExecutor;
@@ -122,13 +124,25 @@ public class DefaultExecutorFactory implements ExecutorFactory {
         public <R> R catchSystemException(Throwable t, Callable<R> task) throws
                 Exception {
             LOGGER.error("System executor exception", t);
-            throw new ToroImplementationException(t);
+            if (t instanceof ToroException) {
+                throw (ToroException) t;
+            }
+            if (t instanceof ToroRuntimeException) {
+                throw (ToroRuntimeException) t;
+            }
+            throw new UserToroException(t);
         }
 
         @Override
         public <R> R catchSessionException(Throwable t, Callable<R> task, Session s)
                 throws Exception {
             LOGGER.error("Session executor exception", t);
+            if (t instanceof ToroException) {
+                throw (ToroException) t;
+            }
+            if (t instanceof ToroRuntimeException) {
+                throw (ToroRuntimeException) t;
+            }
             throw new UserToroException(t);
         }
     }

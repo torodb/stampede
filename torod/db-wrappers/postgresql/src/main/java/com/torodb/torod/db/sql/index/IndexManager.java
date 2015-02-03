@@ -2,7 +2,9 @@ package com.torodb.torod.db.sql.index;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.torodb.torod.core.exceptions.ExistentIndexException;
 import com.torodb.torod.core.exceptions.ToroRuntimeException;
+import com.torodb.torod.core.exceptions.UserToroException;
 import com.torodb.torod.core.language.AttributeReference;
 import com.torodb.torod.core.pojos.DefaultNamedToroIndex;
 import com.torodb.torod.core.pojos.IndexedAttributes;
@@ -119,12 +121,6 @@ public class IndexManager implements Serializable {
         IndexRelationManager.IndexWriteTransaction indexTransaction
                 = indexRelation.createWriteTransaction();
         try {
-            if (indexTransaction.existsToroIndex(indexName)) {
-                throw new IllegalArgumentException(
-                        "There is another index called '" + indexName + "'"
-                );
-            }
-
             NamedToroIndex toroIndex = new DefaultNamedToroIndex(
                     indexName,
                     attributes,
@@ -132,6 +128,18 @@ public class IndexManager implements Serializable {
                     colSchema.getCollection(),
                     unique
             );
+            
+            if (indexTransaction.existsToroIndex(indexName)) {
+                NamedToroIndex oldToroIndex = indexTransaction.getToroIndex(indexName);
+                if (oldToroIndex.equals(toroIndex)) {
+                    throw new ExistentIndexException(indexName, colSchema.getCollection());
+                }
+                else {
+                    throw new UserToroException(
+                            "There is another index called '" + indexName + "'"
+                    );
+                }
+            }
             
             indexTransaction.storeToroIndex(toroIndex);
 

@@ -21,6 +21,7 @@
 package com.torodb.torod.core.connection;
 
 import com.torodb.torod.core.WriteFailMode;
+import com.torodb.torod.core.exceptions.ExistentIndexException;
 import com.torodb.torod.core.language.operations.DeleteOperation;
 import com.torodb.torod.core.language.operations.UpdateOperation;
 import com.torodb.torod.core.pojos.NamedToroIndex;
@@ -90,7 +91,7 @@ public interface ToroTransaction extends Closeable {
             @Nonnull IndexedAttributes attributes,
             boolean unique,
             boolean blocking
-    );
+    ) throws ExistentIndexException;
     
     public Future<Boolean> dropIndex(
             @Nonnull String collection,
