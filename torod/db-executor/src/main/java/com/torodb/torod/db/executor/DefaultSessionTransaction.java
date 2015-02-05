@@ -141,18 +141,6 @@ public class DefaultSessionTransaction implements SessionTransaction {
     }
 
     @Override
-    public Future<?> dropCollection(String collection) {
-        return submit(
-                new DropCollectionCallable(
-                        dbConnection,
-                        aborter,
-                        reportFactory.createDropCollectionReport(),
-                        collection
-                )
-        );
-    }
-
-    @Override
     public Future<NamedToroIndex> createIndex(
             String collectionName,
             String indexName, 

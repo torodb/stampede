@@ -24,6 +24,7 @@ import com.torodb.torod.core.subdocument.SubDocType;
 import java.util.Map;
 import java.util.concurrent.Future;
 import javax.annotation.Nonnegative;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 /**
@@ -35,6 +36,10 @@ public interface SystemExecutor {
             String collection,
             @Nullable CreateCollectionCallback callback)
             throws ToroTaskExecutionException;
+    
+    public Future<?> dropCollection(
+            @Nonnull String collection
+    );
 
     Future<?> createSubDocTable(
             String collection,

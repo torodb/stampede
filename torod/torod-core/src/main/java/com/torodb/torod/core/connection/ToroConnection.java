@@ -27,6 +27,8 @@ import java.util.List;
 import java.util.concurrent.Future;
 import javax.annotation.concurrent.NotThreadSafe;
 import java.io.Closeable;
+import java.util.Collection;
+import javax.annotation.Nonnull;
 
 /**
  *
@@ -52,7 +54,12 @@ public interface ToroConnection extends Closeable {
      * @return true if the collection was created, false if it already existed
      */
     public boolean createCollection(String collection);
-
+    
+    public Collection<String> getCollections();
+    
+    public boolean dropCollection(
+            @Nonnull String collection
+    );
     
     public Future<List<? extends Database>> getDatabases();
     

@@ -34,6 +34,7 @@ import com.torodb.torod.core.executor.ExecutorFactory;
 import com.torodb.torod.core.executor.SessionExecutor;
 import com.torodb.torod.core.executor.SessionTransaction;
 import com.torodb.torod.core.pojos.Database;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Future;
 import javax.annotation.concurrent.NotThreadSafe;
@@ -78,12 +79,22 @@ class DefaultToroConnection implements ToroConnection {
     }
 
     @Override
+    public Collection<String> getCollections() {
+        return cache.getCollections();
+    }
+
+    @Override
     public boolean createCollection(String collection) {
         if(cache.collectionExists(collection)) {
             return false;
         }
 
         return cache.createCollection(executor, collection);
+    }
+    
+    @Override
+    public boolean dropCollection(String collection) {
+        return cache.dropCollection(executor, collection);
     }
 
     @Override

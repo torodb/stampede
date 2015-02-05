@@ -79,6 +79,17 @@ class DefaultSystemExecutor implements SystemExecutor {
     }
 
     @Override
+    public Future<?> dropCollection(String collection) {
+        return submit(
+                new DropCollectionCallable(
+                        wrapper,
+                        collection,
+                        reportFactory.createDropCollectionReport()
+                )
+        );
+    }
+
+    @Override
     public Future<?> createSubDocTable(
             String collection, 
             SubDocType type, 

@@ -27,8 +27,6 @@ import com.torodb.torod.core.exceptions.ToroException;
 import com.torodb.torod.core.exceptions.ToroImplementationException;
 import com.torodb.torod.core.exceptions.ToroRuntimeException;
 import com.torodb.torod.core.exceptions.UserToroException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *

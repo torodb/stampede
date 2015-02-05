@@ -26,6 +26,7 @@ import com.google.common.collect.ImmutableSet;
 import com.torodb.torod.core.language.querycriteria.utils.QueryCriteriaVisitor;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.Collection;
+import java.util.Set;
 
 /**
  *
@@ -51,7 +52,7 @@ public class ContainsAttributesQueryCriteria extends AttributeQueryCriteria {
         return super.getAttributeReference();
     }
 
-    public Collection<String> getAttributes() {
+    public Set<String> getAttributes() {
         return attributes;
     }
 

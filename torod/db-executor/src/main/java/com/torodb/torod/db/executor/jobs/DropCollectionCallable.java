@@ -1,35 +1,34 @@
 
 package com.torodb.torod.db.executor.jobs;
 
-import com.google.common.base.Supplier;
 import com.torodb.torod.core.dbWrapper.DbConnection;
-import com.torodb.torod.core.exceptions.ToroException;
-import com.torodb.torod.core.exceptions.ToroRuntimeException;
-import java.util.concurrent.Callable;
+import com.torodb.torod.core.dbWrapper.DbWrapper;
+import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 
 /**
  *
  */
-public class DropCollectionCallable extends TransactionalJob<Void> {
+public class DropCollectionCallable extends SystemDbCallable<Void> {
 
     private final Report report;
     private final String collection;
 
-    public DropCollectionCallable(
-            DbConnection connection, 
-            TransactionAborter abortCallback, 
-            Report report, 
-            String collection) {
-        super(connection, abortCallback);
+    public DropCollectionCallable(DbWrapper dbWrapperPool, String collection, Report report) {
+        super(dbWrapperPool);
         this.report = report;
         this.collection = collection;
     }
+    
+    @Override
+    Void call(DbConnection db) throws ImplementationDbException {
+        db.dropCollection(collection);
+
+        return null;
+    }
 
     @Override
-    protected Void failableCall() throws ToroException, ToroRuntimeException {
-        getConnection().dropCollection(collection);
+    void doCallback(Void result) {
         report.dropCollectionExecuted(collection);
-        return null;
     }
 
     public static interface Report {

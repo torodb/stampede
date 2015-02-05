@@ -20,7 +20,6 @@
 
 package com.torodb.kvdocument.values;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.torodb.kvdocument.types.ObjectType;
 import java.util.Collection;
@@ -28,6 +27,9 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nonnull;
+import org.threeten.bp.LocalDate;
+import org.threeten.bp.LocalDateTime;
+import org.threeten.bp.LocalTime;
 
 /**
  *
@@ -211,6 +213,50 @@ public class ObjectValue implements DocValue {
             }
             
             return this;
+        }
+        
+        public Builder putValue(String key, boolean value) {
+            return putValue(key, value ? BooleanValue.TRUE : BooleanValue.FALSE);
+        }
+        
+        public Builder putValue(String key, LocalDateTime value) {
+            return putValue(key, new DateTimeValue(value));
+        }
+        
+        public Builder putValue(String key, LocalDate value) {
+            return putValue(key, new DateValue(value));
+        }
+        
+        public Builder putValue(String key, double value) {
+            return putValue(key, new DoubleValue(value));
+        }
+        
+        public Builder putValue(String key, int value) {
+            return putValue(key, new IntegerValue(value));
+        }
+        
+        public Builder putValue(String key, long value) {
+            return putValue(key, new LongValue(value));
+        }
+        
+        public Builder putNullValue(String key) {
+            return putValue(key, NullValue.INSTANCE);
+        }
+        
+        public Builder putValue(String key, String value) {
+            return putValue(key, new StringValue(value));
+        }
+        
+        public Builder putValue(String key, LocalTime value) {
+            return putValue(key, new TimeValue(value));
+        }
+        
+        public Builder putValue(String key, ObjectValue.Builder value) {
+            return putValue(key, value.build());
+        }
+        
+        public Builder putValue(String key, ArrayValue.Builder value) {
+            return putValue(key, value.build());
         }
         
         public ArrayValue.Builder newArray(String key) {

@@ -127,11 +127,6 @@ public class DefaultToroTransaction implements ToroTransaction {
     }
 
     @Override
-    public Future<?> dropCollection(String collection) {
-        return sessionTransaction.dropCollection(collection);
-    }
-
-    @Override
     public Future<DeleteResponse> delete(
             @Nonnull String collection,
             @Nonnull List<? extends DeleteOperation> deletes,

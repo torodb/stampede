@@ -22,6 +22,7 @@ package com.torodb.torod.core.dbMetaInf;
 
 import com.torodb.torod.core.executor.SessionExecutor;
 import com.torodb.torod.core.subdocument.SubDocType;
+import java.util.Set;
 
 import javax.annotation.Nonnegative;
 import javax.annotation.Nonnull;
@@ -88,6 +89,13 @@ public interface DbMetaInformationCache {
     public boolean createCollection(
             @Nonnull SessionExecutor sessionExecutor,
             @Nonnull String collection);
+
+    public boolean dropCollection(
+            @Nonnull SessionExecutor sessionExecutor, 
+            @Nonnull String collection);
+    
+    @Nonnull
+    public Set<String> getCollections();
     
     public void initialize();
     

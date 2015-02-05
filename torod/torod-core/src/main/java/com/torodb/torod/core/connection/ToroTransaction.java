@@ -81,10 +81,6 @@ public interface ToroTransaction extends Closeable {
             @Nonnull WriteFailMode mode
     );
     
-    public Future<?> dropCollection(
-            @Nonnull String collection
-    );
-    
     public Future<NamedToroIndex> createIndex(
             @Nonnull String collection,
             @Nonnull String indexName, 

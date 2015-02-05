@@ -24,28 +24,24 @@ import com.google.common.collect.MapMaker;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Futures;
 import com.torodb.torod.core.dbMetaInf.DbMetaInformationCache;
-import com.torodb.torod.core.exceptions.ToroRuntimeException;
 import com.torodb.torod.core.executor.ExecutorFactory;
 import com.torodb.torod.core.executor.SessionExecutor;
 import com.torodb.torod.core.executor.SystemExecutor;
 import com.torodb.torod.core.executor.ToroTaskExecutionException;
-import com.torodb.torod.core.pojos.IndexedAttributes;
-import com.torodb.torod.core.pojos.NamedToroIndex;
 import com.torodb.torod.core.subdocument.SubDocType;
-import java.util.Collection;
+import java.util.Collections;
 
 import javax.annotation.Nonnegative;
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.ThreadSafe;
 import javax.inject.Inject;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
@@ -130,6 +126,11 @@ public class DefaultDbMetaInformationCache implements DbMetaInformationCache {
     }
 
     @Override
+    public Set<String> getCollections() {
+        return Collections.unmodifiableSet(createdCollections.keySet());
+    }
+
+    @Override
     public boolean createCollection(@Nonnull SessionExecutor sessionExecutor, @Nonnull String collection) {
         if (collection == null || collection.isEmpty()) {
             throw new IllegalArgumentException("The collection must be non null and non empty");
@@ -183,6 +184,43 @@ public class DefaultDbMetaInformationCache implements DbMetaInformationCache {
         }
 
         return true;
+    }
+
+    @Override
+    public boolean dropCollection(SessionExecutor sessionExecutor, String collection) {
+        if (collection == null || collection.isEmpty()) {
+            throw new IllegalArgumentException("The collection must be non null and non empty");
+        }
+        
+        if (!collectionExists(collection)) {
+            return false;
+        }
+        
+        collectionCreationLock.lock();
+        try {
+            if (!collectionExists(sessionExecutor, collection)) {
+                return false;
+            }
+            Future<?> response = executorFactory.getSystemExecutor().dropCollection(collection);
+            response.get();
+            
+            assert !creationCollectionPendingJobs.containsKey(collection);
+            
+            Object removed = createdCollections.remove(collection);
+            assert removed != null;
+            removed = collectionMetaInfoMap.remove(collection);
+            assert removed != null;
+            
+            return true;
+        }
+        catch (InterruptedException ex) {
+            throw new RuntimeException(ex);
+        }
+        catch (ExecutionException ex) {
+            throw new RuntimeException(ex);
+        } finally {
+            collectionCreationLock.unlock();
+        }
     }
 
     @Override
