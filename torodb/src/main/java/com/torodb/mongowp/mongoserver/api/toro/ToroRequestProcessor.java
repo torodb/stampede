@@ -24,6 +24,7 @@ import com.eightkdata.mongowp.messages.request.*;
 import com.eightkdata.mongowp.messages.request.QueryMessage.Flag;
 import com.eightkdata.mongowp.messages.response.ReplyMessage;
 import com.eightkdata.mongowp.mongoserver.api.AbstractRequestProcessor;
+import com.eightkdata.mongowp.mongoserver.api.MetaQueryProcessor;
 import com.eightkdata.mongowp.mongoserver.api.QueryCommandProcessor;
 import com.eightkdata.mongowp.mongoserver.api.QueryCommandProcessor.QueryCommand;
 import com.eightkdata.mongowp.mongoserver.api.callback.LastError;
@@ -69,10 +70,11 @@ public class ToroRequestProcessor extends AbstractRequestProcessor {
 	private final Torod torod;
 
     @Inject
-    public ToroRequestProcessor(Torod torod, 
-    		QueryCommandProcessor queryCommandProcessor) {
-        super(queryCommandProcessor);
-        
+    public ToroRequestProcessor(
+            Torod torod, 
+            QueryCommandProcessor queryCommandProcessor, 
+            MetaQueryProcessor metaQueryProcessor) {
+        super(queryCommandProcessor, metaQueryProcessor);
         this.torod = torod;
     }
 
@@ -110,24 +112,8 @@ public class ToroRequestProcessor extends AbstractRequestProcessor {
         CursorManager cursorManager = connection.getCursorManager();
         
     	String collection = ToroCollectionTranslator.translate(queryMessage.getCollection());
-    	QueryCriteriaTranslator queryCriteriaTranslator = new QueryCriteriaTranslator();
-    	BSONDocument document = queryMessage.getDocument();
-    	for (String key : document.getKeys()) {
-    		if (QueryModifier.getByKey(key) != null || QuerySortOrder.getByKey(key) != null) {
-    			throw new Exception("Modifier " + key + " not supported");
-    		}
-    	}
-    	BSONObject query = ((MongoBSONDocument) document).getBSONObject();
-    	for (String key : query.keySet()) {
-    		if (QueryEncapsulation.getByKey(key) != null) {
-    			Object queryObject = query.get(key);
-    			if (queryObject != null && queryObject instanceof BSONObject) {
-    				query = (BSONObject) queryObject;
-    				break;
-    			}
-    		}
-    	}
-    	QueryCriteria queryCriteria = queryCriteriaTranslator.translate(query);
+    	
+    	QueryCriteria queryCriteria = Util.translateQuery(queryMessage.getDocument());
     	Projection projection = null;
     	int numberToSkip = queryMessage.getNumberToSkip();
     	int limit = queryMessage.getNumberToReturn();

@@ -30,7 +30,7 @@ public class MongoDocumentBuilderFactory implements DocumentBuilderFactory {
 
     @Override
     public ToroDocument.DocumentBuilder newDocBuilder() {
-        return new MongoDocument.Builder();
+        return new KVToroDocument.Builder();
     }
 
 }

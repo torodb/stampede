@@ -35,10 +35,10 @@ import org.bson.BSONObject;
  */
 public class BSONDocuments implements Iterable<BSONDocument> {
 	
-	private final Iterable<?> documents;
+	private final Iterable<ToroDocument> documents;
 	private int size = 0;	
 	
-	public BSONDocuments(@Nonnull Iterable<?> documents) {
+	public BSONDocuments(@Nonnull Iterable<ToroDocument> documents) {
 		this.documents = documents;
 		
 		size = 0;
@@ -57,7 +57,7 @@ public class BSONDocuments implements Iterable<BSONDocument> {
 	@Override
 	public Iterator<BSONDocument> iterator() {
 		return new Iterator<BSONDocument>() {
-			Iterator<?> iterator = documents.iterator();
+			Iterator<ToroDocument> iterator = documents.iterator();
 			
 			@Override
 			public boolean hasNext() {
@@ -66,7 +66,7 @@ public class BSONDocuments implements Iterable<BSONDocument> {
 
 			@Override
 			public BSONDocument next() {
-				ToroDocument document = (ToroDocument) iterator.next();
+				ToroDocument document = iterator.next();
 				Map<String, Object> keyValues = new HashMap<String, Object>();
 				BSONObject object = MongoValueConverter.translateObject(document.getRoot());
 				for (String key : object.keySet()) {

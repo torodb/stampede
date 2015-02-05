@@ -29,20 +29,17 @@ import com.eightkdata.mongowp.mongoserver.protocol.MongoWP;
 import com.eightkdata.mongowp.mongoserver.protocol.MongoWP.ErrorCode;
 import com.eightkdata.nettybson.api.BSONDocument;
 import com.eightkdata.nettybson.mongodriver.MongoBSONDocument;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.mongodb.WriteConcern;
 import com.torodb.BuildProperties;
-import com.torodb.kvdocument.conversion.mongo.MongoTypeConverter;
 import com.torodb.mongowp.mongoserver.api.toro.util.BSONDocuments;
 import com.torodb.mongowp.mongoserver.api.toro.util.BSONToroDocument;
 import com.torodb.torod.core.WriteFailMode;
 import com.torodb.torod.core.connection.*;
 import com.torodb.torod.core.cursors.CursorId;
 import com.torodb.torod.core.exceptions.ExistentIndexException;
-import com.torodb.torod.core.exceptions.UserToroException;
 import com.torodb.torod.core.language.AttributeReference;
 import com.torodb.torod.core.language.operations.DeleteOperation;
 import com.torodb.torod.core.language.operations.UpdateOperation;
@@ -345,17 +342,12 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
 		
 		String collection = ToroCollectionTranslator.translate((String) document.getValue("drop"));
 
-        ToroTransaction transaction = connection.createTransaction();
-        try {
-            transaction.dropCollection(collection);
-            transaction.commit();
-            
-            keyValues.put("ok", MongoWP.OK);
-            BSONDocument reply = new MongoBSONDocument(keyValues);
-            messageReplier.replyMessageNoCursor(reply);
-        } finally {
-            transaction.close();
-        }
+        connection.dropCollection(collection);
+        
+        keyValues.put("ok", MongoWP.OK);
+        BSONDocument reply = new MongoBSONDocument(keyValues);
+        messageReplier.replyMessageNoCursor(reply);
+
 	}
     
     private AttributeReference parseAttributeReference(String path) {

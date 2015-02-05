@@ -27,11 +27,11 @@ import com.torodb.torod.core.subdocument.ToroDocument;
 /**
  *
  */
-public class MongoDocument implements ToroDocument {
+public class KVToroDocument implements ToroDocument {
 
     private final ObjectValue root;
 
-    public MongoDocument(ObjectValue root) {
+    public KVToroDocument(ObjectValue root) {
         this.root = root;
     }
 
@@ -60,7 +60,7 @@ public class MongoDocument implements ToroDocument {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final MongoDocument other = (MongoDocument) obj;
+        final KVToroDocument other = (KVToroDocument) obj;
         return !(this.root != other.root && (this.root == null ||
                 !this.root.equals(other.root)));
     }
@@ -80,7 +80,7 @@ public class MongoDocument implements ToroDocument {
         public ToroDocument build() {
             Preconditions.checkArgument(root != null);
             
-            return new MongoDocument(root);
+            return new KVToroDocument(root);
         }
 
     }
