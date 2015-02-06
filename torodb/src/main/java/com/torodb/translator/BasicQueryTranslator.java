@@ -334,8 +334,7 @@ public class BasicQueryTranslator {
             throw new ToroImplementationException("A bson object was expected");
         }
         BSONObject arg = (BSONObject) uncastedArg;
-        if (arg.keySet().
-                size() == 1) {
+        if (arg.keySet().size() == 1) {
             String key = arg.keySet().
                     iterator().
                     next();
