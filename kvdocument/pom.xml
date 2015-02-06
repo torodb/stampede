@@ -4,12 +4,12 @@
     <parent>
         <groupId>com.torodb</groupId>
         <artifactId>torodb-parent</artifactId>
-        <version>0.20</version>
+        <version>0.21-SNAPSHOT</version>
     </parent>
     
     <groupId>com.torodb.kvdocument</groupId>
     <artifactId>kvdocument-pom</artifactId>
-    <version>0.13</version>
+    <version>0.14-SNAPSHOT</version>
     <packaging>pom</packaging>
     
     <name>KVDocument: POM</name>

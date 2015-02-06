@@ -6,7 +6,7 @@
 
     <groupId>com.torodb</groupId>
     <artifactId>torodb-parent</artifactId>
-    <version>0.20</version>
+    <version>0.21-SNAPSHOT</version>
     <packaging>pom</packaging>
     
     <name>ToroDB parent</name>
@@ -42,7 +42,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <kvdocument.version>0.13</kvdocument.version>
+        <kvdocument.version>0.14-SNAPSHOT</kvdocument.version>
         <torod.version>${project.version}</torod.version>
 
         <S3.bucket>maven.torodb.com</S3.bucket>
