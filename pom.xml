@@ -6,7 +6,7 @@
 
     <groupId>com.torodb</groupId>
     <artifactId>torodb-parent</artifactId>
-    <version>0.16-SNAPSHOT</version>
+    <version>0.20</version>
     <packaging>pom</packaging>
     
     <name>ToroDB parent</name>
@@ -42,7 +42,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <kvdocument.version>0.12</kvdocument.version>
+        <kvdocument.version>0.13</kvdocument.version>
         <torod.version>${project.version}</torod.version>
 
         <S3.bucket>maven.torodb.com</S3.bucket>
@@ -100,7 +100,7 @@
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-api</artifactId>
-                <version>1.7.7</version>
+                <version>1.7.10</version>
             </dependency>
             <dependency>
                 <groupId>ch.qos.logback</groupId>
@@ -120,7 +120,7 @@
             <dependency>
                 <groupId>org.mongodb</groupId>
                 <artifactId>mongo-java-driver</artifactId>
-                <version>2.12.3</version>
+                <version>2.13.0</version>
             </dependency>        
             <dependency>
                 <groupId>javax.inject</groupId>
@@ -131,7 +131,7 @@
             <dependency>
                 <groupId>org.threeten</groupId>
                 <artifactId>threetenbp</artifactId>
-                <version>1.0</version>
+                <version>1.2</version>
             </dependency>
 
             <dependency>
@@ -156,13 +156,13 @@
             <dependency>
                 <groupId>junit</groupId>
                 <artifactId>junit</artifactId>
-                <version>4.11</version>
+                <version>4.12</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.mockito</groupId>
                 <artifactId>mockito-core</artifactId>
-                <version>1.10.8</version>
+                <version>1.10.19</version>
                 <scope>test</scope>
             </dependency>
         </dependencies>

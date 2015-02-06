@@ -7,7 +7,7 @@
     <parent>
         <groupId>com.torodb</groupId>
         <artifactId>torodb-parent</artifactId>
-        <version>0.16-SNAPSHOT</version>
+        <version>0.20</version>
     </parent>
 
     <artifactId>torodb</artifactId>
@@ -32,7 +32,7 @@
         <dependency>
             <groupId>com.beust</groupId>
             <artifactId>jcommander</artifactId>
-            <version>1.30</version>
+            <version>1.47</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -49,7 +49,7 @@
         <dependency>
             <groupId>com.8kdata.mongowp</groupId>
             <artifactId>mongo-server</artifactId>
-            <version>0.13</version>
+            <version>0.14</version>
         </dependency>
         <dependency>
             <groupId>com.torodb.torod</groupId>
@@ -117,7 +117,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
-                <version>2.5.2</version>
+                <version>2.5.3</version>
                 <configuration>
                     <archive>
                         <manifest>
@@ -146,7 +146,7 @@
             <plugin>
                 <groupId>pl.project13.maven</groupId>
                 <artifactId>git-commit-id-plugin</artifactId>
-                <version>2.1.11</version>
+                <version>2.1.12</version>
                 <executions>
                     <execution>
                         <goals>
