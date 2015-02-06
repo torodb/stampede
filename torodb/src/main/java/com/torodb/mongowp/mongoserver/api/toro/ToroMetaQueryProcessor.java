@@ -59,7 +59,7 @@ public class ToroMetaQueryProcessor extends MetaQueryProcessor {
                 candidates.add(
                         new KVToroDocument(
                                 new ObjectValue.Builder()
-                                        .putValue(collection, collectionNamespace)
+                                        .putValue("name", collectionNamespace)
                                         .build()
                         )
                 );
