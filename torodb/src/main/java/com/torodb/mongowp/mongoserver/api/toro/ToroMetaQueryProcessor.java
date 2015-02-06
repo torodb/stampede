@@ -101,37 +101,39 @@ public class ToroMetaQueryProcessor extends MetaQueryProcessor {
         AttributeMap attributeMap = messageReplier.getAttributeMap();
         ToroConnection connection = attributeMap.attr(ToroRequestProcessor.CONNECTION).get();
         
-        String collection = queryMessage.getCollection();
+        Collection<String> allCollections = connection.getCollections();
         
         List<ToroDocument> candidates = Lists.newArrayList();
         ToroTransaction transaction = connection.createTransaction();
         try {
-            String collectionNamespace = databaseName + '.' + collection;
+            for (String collection : allCollections) {
 
-            Collection<? extends NamedToroIndex> indexes
-                    = transaction.getIndexes(collection);
-            for (NamedToroIndex index : indexes) {
-                ObjectValue.Builder objBuider = new ObjectValue.Builder()
-                        .putValue("v", 1)
-                        .putValue("name", index.getName())
-                        .putValue("ns", collectionNamespace)
-                        .putValue("key", new ObjectValue.Builder()
-                );
-                ObjectValue.Builder keyBuilder = new ObjectValue.Builder();
-                for (Map.Entry<AttributeReference, Boolean> entrySet : index.getAttributes().entrySet()) {
-                    keyBuilder.putValue(
-                            entrySet.getKey().toString(),
-                            entrySet.getValue() ? 1 : -1
+                String collectionNamespace = databaseName + '.' + collection;
+
+                Collection<? extends NamedToroIndex> indexes
+                        = transaction.getIndexes(collection);
+                for (NamedToroIndex index : indexes) {
+                    ObjectValue.Builder objBuider = new ObjectValue.Builder()
+                            .putValue("v", 1)
+                            .putValue("name", index.getName())
+                            .putValue("ns", collectionNamespace)
+                            .putValue("key", new ObjectValue.Builder()
+                            );
+                    ObjectValue.Builder keyBuilder = new ObjectValue.Builder();
+                    for (Map.Entry<AttributeReference, Boolean> entrySet : index.getAttributes().entrySet()) {
+                        keyBuilder.putValue(
+                                entrySet.getKey().toString(),
+                                entrySet.getValue() ? 1 : -1
+                        );
+                    }
+                    objBuider.putValue("key", keyBuilder);
+
+                    candidates.add(
+                            new KVToroDocument(
+                                    objBuider.build()
+                            )
                     );
                 }
-                objBuider.putValue("key", keyBuilder);
-                
-                
-                candidates.add(
-                        new KVToroDocument(
-                                objBuider.build()
-                        )
-                );
             }
 
         } finally {
@@ -206,8 +208,11 @@ public class ToroMetaQueryProcessor extends MetaQueryProcessor {
                     return null;
                 }
                 else {
-                    DocValue referencedValue
-                            = value.get(((AttributeReference.ObjectKey) nextAtt).getKeyValue());
+                    AttributeReference.ObjectKey castedAtt = (AttributeReference.ObjectKey) nextAtt;
+                    if (!value.contains(castedAtt.getKeyValue())) {
+                        return null;
+                    }
+                    DocValue referencedValue = value.get(castedAtt.getKeyValue());
                     if (!atts.hasNext()) {
                         return referencedValue;
                     }
@@ -235,8 +240,14 @@ public class ToroMetaQueryProcessor extends MetaQueryProcessor {
                     return null;
                 }
                 else {
-                    DocValue referencedValue
-                            = value.get(((AttributeReference.ArrayKey) nextAtt).getKeyValue());
+                    AttributeReference.ArrayKey castedAtt = (AttributeReference.ArrayKey) nextAtt;
+                    if (castedAtt.getIndex() < 0) {
+                        return null;
+                    }
+                    if (castedAtt.getIndex() >= value.size()) {
+                        return null;
+                    }
+                    DocValue referencedValue = value.get(castedAtt.getKeyValue());
                     if (!atts.hasNext()) {
                         return referencedValue;
                     }
