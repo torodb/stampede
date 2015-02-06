@@ -44,7 +44,7 @@ public class ObjectValue implements DocValue {
 
     @Nonnull
     public DocValue get(String key) {
-        if (values.containsKey(key)) {
+        if (!values.containsKey(key)) {
             throw new IllegalArgumentException(key + " is not a key of this document");
         }
         assert values.get(key) != null;
