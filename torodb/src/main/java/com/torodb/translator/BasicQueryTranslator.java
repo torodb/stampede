@@ -168,6 +168,10 @@ public class BasicQueryTranslator {
         if (isAnd(key) || isOr(key) || isNor(key)) {
             return ExpressionType.AND_OR_NOR;
         }
+        
+        if (isSubQuery(key)) {
+            return ExpressionType.INVALID;
+        }
 
         if (!(uncastedArg instanceof BSONObject)) {
             return ExpressionType.EQUALITY;
