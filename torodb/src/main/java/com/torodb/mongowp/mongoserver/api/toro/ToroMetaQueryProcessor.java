@@ -1,9 +1,7 @@
-
 package com.torodb.mongowp.mongoserver.api.toro;
 
-import com.eightkdata.mongowp.messages.request.QueryMessage;
 import com.eightkdata.mongowp.mongoserver.api.MetaQueryProcessor;
-import com.eightkdata.mongowp.mongoserver.api.callback.MessageReplier;
+import com.eightkdata.nettybson.api.BSONDocument;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Lists;
@@ -14,7 +12,6 @@ import com.torodb.mongowp.mongoserver.api.toro.util.KVToroDocument;
 import com.torodb.torod.core.annotations.DatabaseName;
 import com.torodb.torod.core.connection.ToroConnection;
 import com.torodb.torod.core.connection.ToroTransaction;
-import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.exceptions.UserToroException;
 import com.torodb.torod.core.language.AttributeReference;
 import com.torodb.torod.core.language.querycriteria.*;
@@ -23,10 +20,12 @@ import com.torodb.torod.core.pojos.NamedToroIndex;
 import com.torodb.torod.core.subdocument.BasicType;
 import com.torodb.torod.core.subdocument.ToroDocument;
 import com.torodb.torod.core.subdocument.values.Value;
+import com.torodb.translator.QueryCriteriaTranslator;
 import io.netty.util.AttributeMap;
 import java.util.*;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import org.bson.BSONObject;
 
 /**
  *
@@ -35,42 +34,48 @@ public class ToroMetaQueryProcessor extends MetaQueryProcessor {
 
     private final String databaseName;
     private static final ValueConverter VALUE_CONVERTER = new ValueConverter();
+    private final QueryCriteriaTranslator queryCriteriaTranslator;
 
     @Inject
-    public ToroMetaQueryProcessor(@DatabaseName String databaseName) {
+    public ToroMetaQueryProcessor(
+            @DatabaseName String databaseName,
+            QueryCriteriaTranslator queryCriteriaTranslator) {
         this.databaseName = databaseName;
+        this.queryCriteriaTranslator = queryCriteriaTranslator;
     }
-    
-    
+
     @Override
-    protected void queryNamespaces(QueryMessage queryMessage, MessageReplier messageReplier) throws ImplementationDbException {
-        AttributeMap attributeMap = messageReplier.getAttributeMap();
-        ToroConnection connection = attributeMap.attr(ToroRequestProcessor.CONNECTION).get();
+    protected Iterable<BSONDocument> queryNamespaces(AttributeMap attributeMap, BSONObject query)
+            throws Exception {
+
+        ToroConnection connection
+                = attributeMap.attr(ToroRequestProcessor.CONNECTION).get();
         
         Collection<String> allCollections = connection.getCollections();
-        
+
         List<ToroDocument> candidates = Lists.newArrayList();
         ToroTransaction transaction = connection.createTransaction();
         try {
-            
+
             for (String collection : allCollections) {
                 String collectionNamespace = databaseName + '.' + collection;
-                
+
                 candidates.add(
                         new KVToroDocument(
                                 new ObjectValue.Builder()
-                                        .putValue("name", collectionNamespace)
-                                        .build()
+                                .putValue("name", collectionNamespace)
+                                .build()
                         )
                 );
-                
+
                 Collection<? extends NamedToroIndex> indexes
                         = transaction.getIndexes(collection);
                 for (NamedToroIndex index : indexes) {
                     candidates.add(
                             new KVToroDocument(
                                     new ObjectValue.Builder()
-                                    .putValue("name", collectionNamespace + '.' + index.getName())
+                                    .putValue("name", collectionNamespace + '.'
+                                            + index.getName())
                                     .build()
                             )
                     );
@@ -84,25 +89,30 @@ public class ToroMetaQueryProcessor extends MetaQueryProcessor {
                     )
             );
 
-        } finally {
+        }
+        finally {
             transaction.close();
         }
-        
-        QueryCriteria queryCriteria = Util.translateQuery(queryMessage.getDocument());
+
+        QueryCriteria queryCriteria;
+        if (query == null) {
+            queryCriteria = TrueQueryCriteria.getInstance();
+        } else {
+            queryCriteria = queryCriteriaTranslator.translate(query);
+        }
         Collection<ToroDocument> filtrered
                 = applyQueryCriteria(candidates, queryCriteria);
-        
-        BSONDocuments docs = new BSONDocuments(filtrered);
-        messageReplier.replyMessageNoCursor(docs);
+
+        return new BSONDocuments(filtrered);
     }
 
     @Override
-    protected void queryIndexes(QueryMessage queryMessage, MessageReplier messageReplier) throws ImplementationDbException {
-        AttributeMap attributeMap = messageReplier.getAttributeMap();
-        ToroConnection connection = attributeMap.attr(ToroRequestProcessor.CONNECTION).get();
-        
+    protected Iterable<BSONDocument> queryIndexes(AttributeMap attributeMap, BSONObject query)
+            throws Exception {
+        ToroConnection connection
+                = attributeMap.attr(ToroRequestProcessor.CONNECTION).get();
         Collection<String> allCollections = connection.getCollections();
-        
+
         List<ToroDocument> candidates = Lists.newArrayList();
         ToroTransaction transaction = connection.createTransaction();
         try {
@@ -136,48 +146,54 @@ public class ToroMetaQueryProcessor extends MetaQueryProcessor {
                 }
             }
 
-        } finally {
+        }
+        finally {
             transaction.close();
         }
-        
-        QueryCriteria queryCriteria = Util.translateQuery(queryMessage.getDocument());
+
+        QueryCriteria queryCriteria;
+        if (query == null) {
+            queryCriteria = TrueQueryCriteria.getInstance();
+        } else {
+            queryCriteria = queryCriteriaTranslator.translate(query);
+        }
         Collection<ToroDocument> filtrered
                 = applyQueryCriteria(candidates, queryCriteria);
-        
-        BSONDocuments docs = new BSONDocuments(filtrered);
-        messageReplier.replyMessageNoCursor(docs);
+
+        return new BSONDocuments(filtrered);
     }
 
     @Override
-    protected void queryProfile(QueryMessage queryMessage, MessageReplier messageReplier) {
-        //TODO: Support
+    protected Iterable<BSONDocument> queryProfile(AttributeMap attributeMap, BSONObject query)
+            throws Exception {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
     @Override
-    protected void queryJS(QueryMessage queryMessage, MessageReplier messageReplier) {
-        //TODO: Support
+    protected Iterable<BSONDocument> queryJS(AttributeMap attributeMap, BSONObject query)
+            throws Exception {
         throw new UnsupportedOperationException("Not supported yet.");
     }
-    
+
     private Collection<ToroDocument> applyQueryCriteria(
             Collection<ToroDocument> candidates,
             QueryCriteria queryCriteria) {
 
         QueryCriteriaEvaluator qce = new QueryCriteriaEvaluator(queryCriteria);
-        
+
         return Collections2.filter(candidates, qce);
     }
-    
-    private static class QueryCriteriaEvaluator 
-            implements QueryCriteriaVisitor<Boolean, DocValue>, Predicate<ToroDocument> {
+
+    private static class QueryCriteriaEvaluator
+            implements QueryCriteriaVisitor<Boolean, DocValue>,
+            Predicate<ToroDocument> {
 
         private final QueryCriteria qc;
 
         public QueryCriteriaEvaluator(QueryCriteria qc) {
             this.qc = qc;
         }
-        
+
         @Override
         public boolean apply(@Nonnull ToroDocument input) {
             return qc.accept(this, input.getRoot());
@@ -208,11 +224,13 @@ public class ToroMetaQueryProcessor extends MetaQueryProcessor {
                     return null;
                 }
                 else {
-                    AttributeReference.ObjectKey castedAtt = (AttributeReference.ObjectKey) nextAtt;
+                    AttributeReference.ObjectKey castedAtt
+                            = (AttributeReference.ObjectKey) nextAtt;
                     if (!value.contains(castedAtt.getKeyValue())) {
                         return null;
                     }
-                    DocValue referencedValue = value.get(castedAtt.getKeyValue());
+                    DocValue referencedValue
+                            = value.get(castedAtt.getKeyValue());
                     if (!atts.hasNext()) {
                         return referencedValue;
                     }
@@ -240,14 +258,16 @@ public class ToroMetaQueryProcessor extends MetaQueryProcessor {
                     return null;
                 }
                 else {
-                    AttributeReference.ArrayKey castedAtt = (AttributeReference.ArrayKey) nextAtt;
+                    AttributeReference.ArrayKey castedAtt
+                            = (AttributeReference.ArrayKey) nextAtt;
                     if (castedAtt.getIndex() < 0) {
                         return null;
                     }
                     if (castedAtt.getIndex() >= value.size()) {
                         return null;
                     }
-                    DocValue referencedValue = value.get(castedAtt.getKeyValue());
+                    DocValue referencedValue
+                            = value.get(castedAtt.getKeyValue());
                     if (!atts.hasNext()) {
                         return referencedValue;
                     }
@@ -263,7 +283,7 @@ public class ToroMetaQueryProcessor extends MetaQueryProcessor {
                 }
             }
         }
-        
+
         @Override
         public Boolean visit(TrueQueryCriteria criteria, DocValue arg) {
             return true;
@@ -276,13 +296,13 @@ public class ToroMetaQueryProcessor extends MetaQueryProcessor {
 
         @Override
         public Boolean visit(AndQueryCriteria criteria, DocValue arg) {
-            return criteria.getSubQueryCriteria1().accept(this, arg) 
+            return criteria.getSubQueryCriteria1().accept(this, arg)
                     && criteria.getSubQueryCriteria2().accept(this, arg);
         }
 
         @Override
         public Boolean visit(OrQueryCriteria criteria, DocValue arg) {
-            return criteria.getSubQueryCriteria1().accept(this, arg) 
+            return criteria.getSubQueryCriteria1().accept(this, arg)
                     || criteria.getSubQueryCriteria2().accept(this, arg);
         }
 
@@ -297,8 +317,9 @@ public class ToroMetaQueryProcessor extends MetaQueryProcessor {
             if (referenced == null) {
                 return false;
             }
-            
-            BasicType basicType = referenced.accept(VALUE_CONVERTER, null).getType();
+
+            BasicType basicType
+                    = referenced.accept(VALUE_CONVERTER, null).getType();
             return criteria.getExpectedType().equals(basicType);
         }
 
@@ -308,7 +329,7 @@ public class ToroMetaQueryProcessor extends MetaQueryProcessor {
             if (referenced == null) {
                 return false;
             }
-            
+
             return criteria.getValue().equals(referenced.accept(VALUE_CONVERTER, null));
         }
 
@@ -322,13 +343,15 @@ public class ToroMetaQueryProcessor extends MetaQueryProcessor {
             if (innerValue instanceof Number) {
                 if (referenced.getValue() instanceof Number) {
                     Number refNumber = (Number) referenced.getValue();
-                    return refNumber.doubleValue() > ((Number) innerValue).doubleValue();
+                    return refNumber.doubleValue()
+                            > ((Number) innerValue).doubleValue();
                 }
                 return false;
             }
             if (innerValue instanceof String) {
                 if (referenced.getValue() instanceof String) {
-                    return ((String) referenced.getValue()).compareTo((String) innerValue) > 0;
+                    return ((String) referenced.getValue()).compareTo((String) innerValue)
+                            > 0;
                 }
                 return false;
             }
@@ -345,13 +368,15 @@ public class ToroMetaQueryProcessor extends MetaQueryProcessor {
             if (innerValue instanceof Number) {
                 if (referenced.getValue() instanceof Number) {
                     Number refNumber = (Number) referenced.getValue();
-                    return refNumber.doubleValue() >= ((Number) innerValue).doubleValue();
+                    return refNumber.doubleValue()
+                            >= ((Number) innerValue).doubleValue();
                 }
                 return false;
             }
             if (innerValue instanceof String) {
                 if (referenced.getValue() instanceof String) {
-                    return ((String) referenced.getValue()).compareTo((String) innerValue) >= 0;
+                    return ((String) referenced.getValue()).compareTo((String) innerValue)
+                            >= 0;
                 }
                 return false;
             }
@@ -368,13 +393,15 @@ public class ToroMetaQueryProcessor extends MetaQueryProcessor {
             if (innerValue instanceof Number) {
                 if (referenced.getValue() instanceof Number) {
                     Number refNumber = (Number) referenced.getValue();
-                    return refNumber.doubleValue() < ((Number) innerValue).doubleValue();
+                    return refNumber.doubleValue()
+                            < ((Number) innerValue).doubleValue();
                 }
                 return false;
             }
             if (innerValue instanceof String) {
                 if (referenced.getValue() instanceof String) {
-                    return ((String) referenced.getValue()).compareTo((String) innerValue) < 0;
+                    return ((String) referenced.getValue()).compareTo((String) innerValue)
+                            < 0;
                 }
                 return false;
             }
@@ -391,13 +418,15 @@ public class ToroMetaQueryProcessor extends MetaQueryProcessor {
             if (innerValue instanceof Number) {
                 if (referenced.getValue() instanceof Number) {
                     Number refNumber = (Number) referenced.getValue();
-                    return refNumber.doubleValue() <= ((Number) innerValue).doubleValue();
+                    return refNumber.doubleValue()
+                            <= ((Number) innerValue).doubleValue();
                 }
                 return false;
             }
             if (innerValue instanceof String) {
                 if (referenced.getValue() instanceof String) {
-                    return ((String) referenced.getValue()).compareTo((String) innerValue) <= 0;
+                    return ((String) referenced.getValue()).compareTo((String) innerValue)
+                            <= 0;
                 }
                 return false;
             }
@@ -434,9 +463,11 @@ public class ToroMetaQueryProcessor extends MetaQueryProcessor {
             if (referenced == null) {
                 return false;
             }
-            if (referenced.getValue() instanceof Integer || referenced.getValue() instanceof Long) {
+            if (referenced.getValue() instanceof Integer
+                    || referenced.getValue() instanceof Long) {
                 long refValue = ((Number) referenced.getValue()).longValue();
-                long reminder = refValue % criteria.getDivisor().getValue().longValue();
+                long reminder = refValue
+                        % criteria.getDivisor().getValue().longValue();
                 return reminder == criteria.getReminder().getValue().longValue();
             }
             return false;
@@ -451,7 +482,8 @@ public class ToroMetaQueryProcessor extends MetaQueryProcessor {
             if (!(referenced instanceof ArrayValue)) {
                 return false;
             }
-            return ((ArrayValue) referenced).size() == criteria.getValue().getValue();
+            return ((ArrayValue) referenced).size()
+                    == criteria.getValue().getValue();
         }
 
         @Override
@@ -467,10 +499,11 @@ public class ToroMetaQueryProcessor extends MetaQueryProcessor {
             if (criteria.getAttributes().size() > refObject.keySet().size()) {
                 return false;
             }
-            if (criteria.isExclusive() && criteria.getAttributes().size() != refObject.keySet().size()) {
-                    return false;
+            if (criteria.isExclusive() && criteria.getAttributes().size()
+                    != refObject.keySet().size()) {
+                return false;
             }
-            
+
             return refObject.keySet().containsAll(criteria.getAttributes());
         }
 
@@ -492,7 +525,7 @@ public class ToroMetaQueryProcessor extends MetaQueryProcessor {
             return false;
         }
     }
-    
+
     private static class ValueConverter implements DocValueVisitor<Value, Void> {
 
         @Override
@@ -559,6 +592,6 @@ public class ToroMetaQueryProcessor extends MetaQueryProcessor {
         public Value visit(TimeValue value, Void arg) {
             return new com.torodb.torod.core.subdocument.values.TimeValue(value.getValue());
         }
-        
+
     }
 }

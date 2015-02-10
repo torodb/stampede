@@ -29,6 +29,7 @@ import com.torodb.BuildProperties;
 import com.torodb.mongowp.mongoserver.api.toro.ToroMetaQueryProcessor;
 import com.torodb.mongowp.mongoserver.api.toro.ToroQueryCommandProcessor;
 import com.torodb.mongowp.mongoserver.api.toro.ToroRequestProcessor;
+import com.torodb.translator.QueryCriteriaTranslator;
 
 /**
  *
@@ -41,5 +42,6 @@ public class MongoServerModule extends AbstractModule {
         bind(BuildProperties.class).asEagerSingleton();
         bind(QueryCommandProcessor.class).to(ToroQueryCommandProcessor.class);
         bind(MetaQueryProcessor.class).to(ToroMetaQueryProcessor.class).in(Singleton.class);
+        bind(QueryCriteriaTranslator.class).toInstance(new QueryCriteriaTranslator());
     }
 }

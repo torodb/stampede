@@ -24,6 +24,8 @@ import com.eightkdata.mongowp.messages.request.RequestOpCode;
 import com.eightkdata.mongowp.mongoserver.api.QueryCommandProcessor;
 import com.eightkdata.mongowp.mongoserver.api.callback.LastError;
 import com.eightkdata.mongowp.mongoserver.api.callback.MessageReplier;
+import com.eightkdata.mongowp.mongoserver.api.commands.CountReply;
+import com.eightkdata.mongowp.mongoserver.api.commands.CountRequest;
 import com.eightkdata.mongowp.mongoserver.api.commands.QueryAndWriteOperationsQueryCommand;
 import com.eightkdata.mongowp.mongoserver.protocol.MongoWP;
 import com.eightkdata.mongowp.mongoserver.protocol.MongoWP.ErrorCode;
@@ -43,14 +45,13 @@ import com.torodb.torod.core.exceptions.ExistentIndexException;
 import com.torodb.torod.core.language.AttributeReference;
 import com.torodb.torod.core.language.operations.DeleteOperation;
 import com.torodb.torod.core.language.operations.UpdateOperation;
-import com.torodb.torod.core.language.projection.Projection;
 import com.torodb.torod.core.language.querycriteria.QueryCriteria;
+import com.torodb.torod.core.language.querycriteria.TrueQueryCriteria;
 import com.torodb.torod.core.language.update.UpdateAction;
 import com.torodb.torod.core.pojos.Database;
 import com.torodb.torod.core.pojos.IndexedAttributes;
 import com.torodb.torod.core.subdocument.ToroDocument;
 import com.torodb.translator.*;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.netty.util.AttributeMap;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
@@ -64,59 +65,44 @@ import java.util.concurrent.Future;
  *
  */
 public class ToroQueryCommandProcessor implements QueryCommandProcessor {
+    private final QueryCriteriaTranslator queryCriteriaTranslator;
 	private final BuildProperties buildProperties;
 
 	@Inject
-	public ToroQueryCommandProcessor(BuildProperties buildProperties) {
+	public ToroQueryCommandProcessor(
+            BuildProperties buildProperties,
+            QueryCriteriaTranslator queryCriteriaTranslator) {
 		this.buildProperties = buildProperties;
+        this.queryCriteriaTranslator = queryCriteriaTranslator;
 	}
 
-	//TODO: implement with toro natives
-	@Override
-	@SuppressFBWarnings("NP_LOAD_OF_KNOWN_NULL_VALUE")
-	public void count(BSONDocument document, MessageReplier messageReplier) throws Exception {
-		AttributeMap attributeMap = messageReplier.getAttributeMap();
+    @Override
+    public CountReply count(CountRequest request) throws Exception {
+        AttributeMap attributeMap = request.getAttributes();
         ToroConnection connection = attributeMap.attr(ToroRequestProcessor.CONNECTION).get();
 
-		Map<String, Object> keyValues = new HashMap<String, Object>();
+    	QueryCriteria queryCriteria;
+        if (request.getQuery() == null) {
+            queryCriteria = TrueQueryCriteria.getInstance();
+        } else {
+            queryCriteria = queryCriteriaTranslator.translate(
+                request.getQuery()
+            );
+        }
         
-    	String collection = ToroCollectionTranslator.translate((String) document.getValue("count"));
-    	QueryCriteriaTranslator queryCriteriaTranslator = new QueryCriteriaTranslator();
-    	BSONObject query = (BSONObject) document.getValue("query");
-    	for (String key : query.keySet()) {
-    		if (QueryModifier.getByKey(key) != null || QuerySortOrder.getByKey(key) != null) {
-    			throw new Exception("Modifier " + key + " not supported");
-    		}
-    	}
-    	for (String key : query.keySet()) {
-    		if (QueryEncapsulation.getByKey(key) != null) {
-    			Object queryObject = query.get(key);
-    			if (queryObject != null && queryObject instanceof BSONObject) {
-    				query = (BSONObject) queryObject;
-    				break;
-    			}
-    		}
-    	}
-    	QueryCriteria queryCriteria = queryCriteriaTranslator.translate(query);
-    	Projection projection = null;
-    	int numberToSkip = document.hasKey("skip")?((Number) document.getValue("skip")).intValue():0;
-    	boolean autoclose = true;
-    	boolean hasTimeout = false;
-    	
-    	CursorId cursorId = null;
-    	BSONDocuments results = null;
+        CursorId cursorId;
+    	BSONDocuments results;
     	
         CursorManager cursorManager = connection.getCursorManager();
         
-        cursorId = cursorManager
-                .openUnlimitedCursor(
-                        collection,
-                        queryCriteria,
-                        projection,
-                        numberToSkip,
-                        autoclose,
-                        hasTimeout
-                );
+        cursorId = cursorManager.openUnlimitedCursor(
+                request.getCollection(),
+                queryCriteria,
+                null,
+                request.getSkip(),
+                true,
+                true
+        );
 
         try {
             int count = 0;
@@ -132,15 +118,11 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
             }
             while (results.size() >= MongoWP.MONGO_CURSOR_LIMIT);
 
-            keyValues.put("n", count);
+            return new CountReply(count);
         }
         finally {
             cursorManager.closeCursor(cursorId);
         }
-    	
-		keyValues.put("ok", MongoWP.OK);
-		BSONDocument reply = new MongoBSONDocument(keyValues);
-		messageReplier.replyMessageNoCursor(reply);
 	}
 	
 	@Override

@@ -21,7 +21,6 @@
 package com.torodb.mongowp.mongoserver.api.toro;
 
 import com.eightkdata.mongowp.messages.request.*;
-import com.eightkdata.mongowp.messages.request.QueryMessage.Flag;
 import com.eightkdata.mongowp.messages.response.ReplyMessage;
 import com.eightkdata.mongowp.mongoserver.api.AbstractRequestProcessor;
 import com.eightkdata.mongowp.mongoserver.api.MetaQueryProcessor;
@@ -29,8 +28,9 @@ import com.eightkdata.mongowp.mongoserver.api.QueryCommandProcessor;
 import com.eightkdata.mongowp.mongoserver.api.QueryCommandProcessor.QueryCommand;
 import com.eightkdata.mongowp.mongoserver.api.callback.LastError;
 import com.eightkdata.mongowp.mongoserver.api.callback.MessageReplier;
+import com.eightkdata.mongowp.mongoserver.api.commands.QueryReply;
+import com.eightkdata.mongowp.mongoserver.api.commands.QueryRequest;
 import com.eightkdata.mongowp.mongoserver.protocol.MongoWP;
-import com.eightkdata.mongowp.mongoserver.protocol.MongoWP.ErrorCode;
 import com.eightkdata.nettybson.api.BSONDocument;
 import com.eightkdata.nettybson.mongodriver.MongoBSONDocument;
 import com.torodb.mongowp.mongoserver.api.toro.util.BSONDocuments;
@@ -39,10 +39,12 @@ import com.torodb.torod.core.Torod;
 import com.torodb.torod.core.WriteFailMode;
 import com.torodb.torod.core.connection.*;
 import com.torodb.torod.core.cursors.CursorId;
+import com.torodb.torod.core.exceptions.UserToroException;
 import com.torodb.torod.core.language.operations.DeleteOperation;
 import com.torodb.torod.core.language.operations.UpdateOperation;
 import com.torodb.torod.core.language.projection.Projection;
 import com.torodb.torod.core.language.querycriteria.QueryCriteria;
+import com.torodb.torod.core.language.querycriteria.TrueQueryCriteria;
 import com.torodb.torod.core.language.update.UpdateAction;
 import com.torodb.torod.core.subdocument.ToroDocument;
 import com.torodb.translator.*;
@@ -68,14 +70,17 @@ public class ToroRequestProcessor extends AbstractRequestProcessor {
 			AttributeKey.valueOf("lastError");
 	
 	private final Torod torod;
+    private final QueryCriteriaTranslator queryCriteriaTranslator;
 
     @Inject
     public ToroRequestProcessor(
             Torod torod, 
             QueryCommandProcessor queryCommandProcessor, 
-            MetaQueryProcessor metaQueryProcessor) {
+            MetaQueryProcessor metaQueryProcessor,
+            QueryCriteriaTranslator queryCriteriaTranslator) {
         super(queryCommandProcessor, metaQueryProcessor);
         this.torod = torod;
+        this.queryCriteriaTranslator = queryCriteriaTranslator;
     }
 
 	@Override
@@ -103,42 +108,52 @@ public class ToroRequestProcessor extends AbstractRequestProcessor {
 	}
 
 	@Override
-	@SuppressFBWarnings("NP_LOAD_OF_KNOWN_NULL_VALUE")
-	public void queryNonCommand(QueryMessage queryMessage,
-			MessageReplier messageReplier) throws Exception {
-		AttributeMap attributeMap = messageReplier.getAttributeMap();
+    @SuppressFBWarnings("NP_LOAD_OF_KNOWN_NULL_VALUE")
+	public QueryReply query(QueryRequest request) throws Exception {
+		AttributeMap attributeMap = request.getAttributes();
 		ToroConnection connection = attributeMap.attr(CONNECTION).get();
 		
         CursorManager cursorManager = connection.getCursorManager();
         
-    	String collection = ToroCollectionTranslator.translate(queryMessage.getCollection());
-    	
-    	QueryCriteria queryCriteria = Util.translateQuery(queryMessage.getDocument());
+        if (request.getProjection() != null) {
+            throw new UserToroException("Projections are not supported");
+        }
+    	QueryCriteria queryCriteria;
+        if (request.getQuery() == null) {
+            queryCriteria = TrueQueryCriteria.getInstance();
+        } else {
+            queryCriteria = queryCriteriaTranslator.translate(
+                request.getQuery()
+            );
+        }
     	Projection projection = null;
-    	int numberToSkip = queryMessage.getNumberToSkip();
-    	int limit = queryMessage.getNumberToReturn();
-    	boolean autoclose = false;
-    	boolean hasTimeout = !queryMessage.isFlagSet(Flag.NO_CURSOR_TIMEOUT);
     	
     	CursorId cursorId;
     	BSONDocuments results;
     	
-    	if (queryMessage.isFlagSet(Flag.TAILABLE_CURSOR)) {
-    		messageReplier.replyQueryFailure(ErrorCode.UNIMPLEMENTED_FLAG, "TailableCursor");
-    		return;
-    	}
-    	
-    	if (limit < 0) {
-    		autoclose = true;
-    		limit = -limit;
-    	} else if (limit == 1) {
-    		autoclose = true;
-    	}
-    	
-    	if (limit == 0) {
-        	cursorId = cursorManager.openUnlimitedCursor(collection, queryCriteria, projection, numberToSkip, autoclose, hasTimeout);
+        if (request.isTailable()) {
+            throw new UserToroException("TailableCursors are not supported");
+        }
+        
+    	if (request.getLimit() == 0) {
+        	cursorId = cursorManager.openUnlimitedCursor(
+                    request.getCollection(), 
+                    queryCriteria, 
+                    projection, 
+                    request.getNumberToSkip(),
+                    request.isAutoclose(),
+                    !request.isNoCursorTimeout()
+            );
     	} else {
-        	cursorId = cursorManager.openLimitedCursor(collection, queryCriteria, projection, numberToSkip, limit, autoclose, hasTimeout);
+        	cursorId = cursorManager.openLimitedCursor(
+                    request.getCollection(),
+                    queryCriteria, 
+                    projection, 
+                    request.getNumberToSkip(),
+                    request.getLimit(),
+                    request.isAutoclose(),
+                    !request.isNoCursorTimeout()
+            );
     	}
         
    		results = new BSONDocuments(cursorManager.readCursor(cursorId, MongoWP.MONGO_CURSOR_LIMIT));
@@ -150,9 +165,12 @@ public class ToroRequestProcessor extends AbstractRequestProcessor {
     	} else {
     		cursorManager.closeCursor(cursorId);
     	}
-    	
-		messageReplier.replyMessageMultipleDocumentsWithFlags(cursorIdReturned, 0, results,
-				EnumSet.noneOf(ReplyMessage.Flag.class));
+        
+        return new QueryReply.Builder()
+                .setCursorId(cursorIdReturned)
+                .setStartingFrom(0)
+                .setDocuments(results)
+                .build();
 	}
 
 	@Override
