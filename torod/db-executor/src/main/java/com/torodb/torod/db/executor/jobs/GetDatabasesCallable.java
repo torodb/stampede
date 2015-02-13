@@ -1,9 +1,8 @@
 package com.torodb.torod.db.executor.jobs;
 
 import com.torodb.torod.core.dbWrapper.DbConnection;
-import com.torodb.torod.core.dbWrapper.DbWrapper;
-import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
-import com.torodb.torod.core.dbWrapper.exceptions.UserDbException;
+import com.torodb.torod.core.exceptions.ToroException;
+import com.torodb.torod.core.exceptions.ToroRuntimeException;
 import com.torodb.torod.core.pojos.Database;
 import com.torodb.torod.core.pojos.DefaultDatabase;
 import java.util.Collections;
@@ -12,35 +11,32 @@ import java.util.List;
 /**
  *
  */
-public class GetDatabasesCallable extends SystemDbCallable<List<? extends Database>> {
+public class GetDatabasesCallable extends TransactionalJob<List<? extends Database>> {
 
     private final Report report;
     private final String databaseName;
 
     public GetDatabasesCallable(
-            DbWrapper dbWrapperPool,
-            Report report,
+            DbConnection connection, 
+            TransactionAborter abortCallback,
+            Report report, 
             String databaseName) {
-        super(dbWrapperPool);
+        super(connection, abortCallback);
         this.report = report;
         this.databaseName = databaseName;
     }
 
     @Override
-    List<? extends Database> call(DbConnection db)
-            throws ImplementationDbException, UserDbException {
+    protected List<? extends Database> failableCall() throws ToroException,
+            ToroRuntimeException {
         List<DefaultDatabase> result = Collections.singletonList(
                 new DefaultDatabase(
                         databaseName,
-                        db.getDatabaseSize()
+                        getConnection().getDatabaseSize()
                 )
         );
+        report.getDatabasesExecuted(Collections.unmodifiableList(result));
         return result;
-    }
-
-    @Override
-    void doCallback(List<? extends Database> result) {
-        report.getDatabasesExecuted(result);
     }
 
     public static interface Report {

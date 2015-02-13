@@ -30,7 +30,6 @@ import com.torodb.torod.core.config.DocumentBuilderFactory;
 import com.torodb.torod.core.connection.*;
 import com.torodb.torod.core.cursors.CursorId;
 import com.torodb.torod.core.d2r.D2RTranslator;
-import com.torodb.torod.core.dbMetaInf.DbMetaInformationCache;
 import com.torodb.torod.core.exceptions.ToroImplementationException;
 import com.torodb.torod.core.exceptions.ToroRuntimeException;
 import com.torodb.torod.core.exceptions.UserToroException;
@@ -39,8 +38,10 @@ import com.torodb.torod.core.executor.SessionTransaction;
 import com.torodb.torod.core.executor.ToroTaskExecutionException;
 import com.torodb.torod.core.language.operations.DeleteOperation;
 import com.torodb.torod.core.language.operations.UpdateOperation;
+import com.torodb.torod.core.language.querycriteria.QueryCriteria;
 import com.torodb.torod.core.language.querycriteria.utils.EqualFactory;
 import com.torodb.torod.core.language.update.UpdateAction;
+import com.torodb.torod.core.pojos.Database;
 import com.torodb.torod.core.pojos.NamedToroIndex;
 import com.torodb.torod.core.pojos.IndexedAttributes;
 import com.torodb.torod.core.subdocument.SplitDocument;
@@ -53,8 +54,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
@@ -166,6 +165,31 @@ public class DefaultToroTransaction implements ToroTransaction {
         catch (ExecutionException ex) {
             throw new ToroRuntimeException(ex);
         }
+    }
+
+    @Override
+    public Future<Long> getIndexSize(String collection, String indexName) {
+        return sessionTransaction.getIndexSize(collection, indexName);
+    }
+
+    @Override
+    public Future<Long> getCollectionSize(String collection) {
+        return sessionTransaction.getCollectionSize(collection);
+    }
+
+    @Override
+    public Future<Long> getDocumentsSize(String collection) {
+        return sessionTransaction.getDocumentsSize(collection);
+    }
+
+    @Override
+    public Future<Integer> count(String collection, QueryCriteria query) {
+        return sessionTransaction.count(collection, query);
+    }
+    
+    @Override
+    public Future<List<? extends Database>> getDatabases() {
+        return sessionTransaction.getDatabases();
     }
 
     @Override

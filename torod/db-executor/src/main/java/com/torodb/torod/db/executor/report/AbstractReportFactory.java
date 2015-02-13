@@ -118,6 +118,26 @@ public class AbstractReportFactory implements ReportFactory {
         return DUMMY_REPORT;
     }
 
+    @Override
+    public CountCallable.Report createCountReport() {
+        return DUMMY_REPORT;
+    }
+
+    @Override
+    public GetIndexSizeCallable.Report createGetIndexSizeReport() {
+        return DUMMY_REPORT;
+    }
+
+    @Override
+    public GetCollectionSizeCallable.Report createGetCollectionSizeReport() {
+        return DUMMY_REPORT;
+    }
+
+    @Override
+    public GetDocumentsSize.Report createGetDocumentsSize() {
+        return DUMMY_REPORT;
+    }
+
     private static class DummyReport implements CloseConnectionCallable.Report,
             CloseCursorCallable.Report, CommitCallable.Report,
             CountRemainingDocsCallable.Report, CreateCollectionCallable.Report, 
@@ -127,7 +147,9 @@ public class AbstractReportFactory implements ReportFactory {
             ReadCursorCallable.Report, ReserveSubDocIdsCallable.Report,
             RollbackCallable.Report, DropCollectionCallable.Report, 
             CreateIndexCallable.Report, DropIndexCallable.Report,
-            GetIndexesCallable.Report, GetDatabasesCallable.Report {
+            GetIndexesCallable.Report, GetDatabasesCallable.Report,
+            CountCallable.Report, GetIndexSizeCallable.Report, 
+            GetCollectionSizeCallable.Report, GetDocumentsSize.Report {
 
         public static final DummyReport INSTANCE = new DummyReport();
 
@@ -211,6 +233,22 @@ public class AbstractReportFactory implements ReportFactory {
 
         @Override
         public void getDatabasesExecuted(List<? extends Database> databases) {
+        }
+
+        @Override
+        public void countExecuted(String collection, QueryCriteria query, int count) {
+        }
+
+        @Override
+        public void getIndexSizeExecuted(String collection, String index, Long size) {
+        }
+
+        @Override
+        public void getCollectionSizeExecuted(String collection, Long size) {
+        }
+
+        @Override
+        public void getDocumentSizeExecuted(String collection, Long size) {
         }
 
     }

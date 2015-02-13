@@ -1,9 +1,13 @@
 package com.torodb.mongowp.mongoserver.api.toro;
 
 import com.eightkdata.mongowp.mongoserver.api.MetaQueryProcessor;
+import com.eightkdata.mongowp.mongoserver.api.commands.CollStatsReply;
+import com.eightkdata.mongowp.mongoserver.api.commands.CollStatsRequest;
 import com.eightkdata.nettybson.api.BSONDocument;
 import com.google.common.base.Predicate;
+import com.google.common.base.Supplier;
 import com.google.common.collect.Collections2;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.torodb.kvdocument.values.*;
@@ -166,13 +170,36 @@ public class ToroMetaQueryProcessor extends MetaQueryProcessor {
     @Override
     protected Iterable<BSONDocument> queryProfile(AttributeMap attributeMap, BSONObject query)
             throws Exception {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return Collections.emptySet();
     }
 
     @Override
     protected Iterable<BSONDocument> queryJS(AttributeMap attributeMap, BSONObject query)
             throws Exception {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return Collections.emptySet();
+    }
+
+    @Override
+    public CollStatsReply collStats(
+            CollStatsRequest request, 
+            Supplier<Iterable<BSONDocument>> docsSupplier) throws Exception {
+        CollStatsReply.Builder replyBuilder = new CollStatsReply.Builder(
+                request.getDatabase(), 
+                request.getCollection())
+                .setCapped(false)
+                .setIdIndexExists(false)
+                .setLastExtentSize(1)
+                .setNumExtents(1)
+                .setPaddingFactor(0)
+                .setScale(request.getScale().intValue())
+                .setSize(0)
+                .setSizeByIndex(Collections.<String, Number>emptyMap())
+                .setStorageSize(0)
+                .setUsePowerOf2Sizes(false);
+        
+        replyBuilder.setCount(Iterables.size(docsSupplier.get()));
+        
+        return replyBuilder.build();
     }
 
     private Collection<ToroDocument> applyQueryCriteria(

@@ -59,6 +59,15 @@ public interface SessionExecutor extends Closeable {
 
     SessionTransaction createTransaction() throws ImplementationDbException;
     
+    /**
+     * 
+     * @param collection
+     * @param cursorId
+     * @param queryCriteria
+     * @param projection
+     * @param maxResults 0 means no bounds
+     * @return 
+     */
     Future<Void> query(
             @Nonnull String collection,
             @Nonnull CursorId cursorId,
@@ -96,6 +105,4 @@ public interface SessionExecutor extends Closeable {
     ) throws ToroTaskExecutionException;
 
     Future<Integer> countRemainingDocs(CursorId cursorId);
-
-    public Future<List<? extends Database>> getDatabases();
 }

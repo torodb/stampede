@@ -220,5 +220,45 @@ public class LazyDbWrapper implements DbWrapper {
                 throw new ToroImplementationException(ex);
             }
         }
+
+        @Override
+        public Integer count(String collection, QueryCriteria query) {
+            try {
+                return getDelegate().count(collection, query);
+            }
+            catch (ImplementationDbException ex) {
+                throw new ToroImplementationException(ex);
+            }
+        }
+
+        @Override
+        public Long getCollectionSize(String collection) {
+            try {
+                return getDelegate().getCollectionSize(collection);
+            }
+            catch (ImplementationDbException ex) {
+                throw new ToroImplementationException(ex);
+            }
+        }
+
+        @Override
+        public Long getIndexSize(String collection, String index) {
+            try {
+                return getDelegate().getIndexSize(collection, index);
+            }
+            catch (ImplementationDbException ex) {
+                throw new ToroImplementationException(ex);
+            }
+        }
+
+        @Override
+        public Long getDocumentsSize(String collection) {
+            try {
+                return getDelegate().getDocumentsSize(collection);
+            }
+            catch (ImplementationDbException ex) {
+                throw new ToroImplementationException(ex);
+            }
+        }
     }
 }

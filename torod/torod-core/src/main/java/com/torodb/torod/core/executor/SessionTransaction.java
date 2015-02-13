@@ -24,6 +24,8 @@ import com.torodb.torod.core.WriteFailMode;
 import com.torodb.torod.core.connection.DeleteResponse;
 import com.torodb.torod.core.connection.InsertResponse;
 import com.torodb.torod.core.language.operations.DeleteOperation;
+import com.torodb.torod.core.language.querycriteria.QueryCriteria;
+import com.torodb.torod.core.pojos.Database;
 import com.torodb.torod.core.pojos.IndexedAttributes;
 import com.torodb.torod.core.pojos.NamedToroIndex;
 import com.torodb.torod.core.subdocument.SplitDocument;
@@ -86,4 +88,14 @@ public interface SessionTransaction extends Closeable {
     public Future<Collection<? extends NamedToroIndex>> getIndexes(
             @Nonnull String collection
     );
+
+    public Future<List<? extends Database>> getDatabases();
+
+    public Future<Integer> count(String collection, QueryCriteria query);
+
+    public Future<Long> getIndexSize(String collection, String indexName);
+    
+    public Future<Long> getDocumentsSize(String collection);
+
+    public Future<Long> getCollectionSize(String collection);
 }

@@ -91,7 +91,7 @@ public final class UnnamedToroIndex implements ToroIndex {
 
     @Override
     public String toString() {
-        return "db toro index on (" + attributes + " (" + (unique ? "unique" : "no unique") + "))";
+        return "Toro index on (" + attributes + " (" + (unique ? "unique" : "no unique") + "))";
     }
 
     public static class Builder {

@@ -109,6 +109,7 @@
                             <dependency>
                                 <groupId>org.postgresql</groupId>
                                 <artifactId>postgresql</artifactId>
+                                <version>9.4-1200-jdbc41</version>
                             </dependency>
                         </dependencies>
 
@@ -131,7 +132,7 @@
                                     <name>org.jooq.util.postgres.PostgresDatabase</name>
                                     <includes>.*</includes>
                                     <excludes></excludes>
-                                    <!--<inputSchema>col_test</inputSchema>-->
+                                    <inputSchema>public</inputSchema>
                                 </database>
                                 <target>
                                     <packageName>com.torodb.torod.db.meta</packageName>

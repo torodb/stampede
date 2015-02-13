@@ -87,9 +87,10 @@ public class QueryEvaluator {
      * <p>
      * @param criteria
      * @param dsl
-     * @param maxResults
+     * @param maxResults 0 means no bounds. This param is ignored right now.
      * @return 
      */
+    //TODO: maxResults is ignored!
     public Set<Integer> evaluateDid(
             @Nullable QueryCriteria criteria, 
             DSLContext dsl,

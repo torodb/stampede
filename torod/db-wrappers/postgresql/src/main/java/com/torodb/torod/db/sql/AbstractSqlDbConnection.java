@@ -349,4 +349,20 @@ public abstract class AbstractSqlDbConnection implements
     public void eventToroIndexRemoved(CollectionSchema colSchema, String indexName) {
         colSchema.getIndexStorage().eventToroIndexRemoved(dsl, indexName);
     }
+    
+    @Override
+    public Integer count(String collection, QueryCriteria query) {
+        CollectionSchema colSchema = meta.getCollectionSchema(collection);
+
+        QueryEvaluator queryEvaluator = new QueryEvaluator(colSchema);
+
+        Set<Integer> dids = queryEvaluator.evaluateDid(
+                query,
+                dsl,
+                0
+        );
+        
+        return dids.size();
+    }
+
 }

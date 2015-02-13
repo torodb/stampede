@@ -24,10 +24,7 @@ import com.google.common.collect.Multimap;
 import com.torodb.torod.core.language.projection.Projection;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.core.subdocument.structure.DocStructure;
-import com.torodb.torod.db.postgresql.meta.routines.CreateCollectionSchema;
-import com.torodb.torod.db.postgresql.meta.routines.DeleteDocuments;
-import com.torodb.torod.db.postgresql.meta.routines.DropCollection;
-import com.torodb.torod.db.postgresql.meta.routines.QueryRoutine;
+import com.torodb.torod.db.postgresql.meta.routines.*;
 import java.util.List;
 import org.jooq.Configuration;
 

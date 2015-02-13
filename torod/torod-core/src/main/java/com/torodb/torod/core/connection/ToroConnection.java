@@ -61,6 +61,4 @@ public interface ToroConnection extends Closeable {
             @Nonnull String collection
     );
     
-    public Future<List<? extends Database>> getDatabases();
-    
 }

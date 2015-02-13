@@ -126,12 +126,8 @@ public class IndexRelationManager implements Serializable {
             return memory.dbToToro.keySet();
         }
 
-        public Collection<UnnamedDbIndex> getDbIndexes(UnnamedToroIndex toroIndex) {
+        public Collection<UnnamedDbIndex> getRelatedDbIndexes(UnnamedToroIndex toroIndex) {
             Collection<UnnamedDbIndex> result = memory.toroToDb.get(toroIndex);
-            if (result.isEmpty()) {
-                throw new IllegalArgumentException("Torodb index '" + toroIndex
-                        + "' is not stored in this index relation");
-            }
             return result;
         }
 
@@ -139,12 +135,8 @@ public class IndexRelationManager implements Serializable {
             return memory.toroToDb.containsKey(toroIndex);
         }
 
-        public Collection<UnnamedToroIndex> getToroIndexes(UnnamedDbIndex dbIndex) {
+        public Collection<UnnamedToroIndex> getRelatedToroIndexes(UnnamedDbIndex dbIndex) {
             Collection<UnnamedToroIndex> result = memory.dbToToro.get(dbIndex);
-            if (result.isEmpty()) {
-                throw new IllegalArgumentException("DB index '" + dbIndex
-                        + "' is not stored in this index relation");
-            }
             return result;
         }
 
@@ -152,6 +144,19 @@ public class IndexRelationManager implements Serializable {
             return memory.dbToToro.containsKey(dbIndex);
         }
 
+        /**
+         * Returns the existing {@link NamedToroIndex named toro index} that has
+         * the same associated info than the candidate given or null if there is
+         * no index that fulfil that condition
+         * <p>
+         * @param candidate
+         * @return
+         */
+        @Nullable
+        public NamedToroIndex getToroIndex(UnnamedToroIndex candidate) {
+            return memory.toroNamedToUnnamed.inverse().get(candidate);
+        }
+        
         /**
          * Returns the existing {@link NamedDbIndex named db index} that has the
          * same associated info than the candidate given or null if there is no
@@ -260,6 +265,9 @@ public class IndexRelationManager implements Serializable {
             }
 
             boolean modified = memory.toroToDb.put(unnamedToroIndex, unnamedDbIndex);
+            assert modified;
+            
+            modified = memory.dbToToro.put(unnamedDbIndex, unnamedToroIndex);
             assert modified;
         }
 

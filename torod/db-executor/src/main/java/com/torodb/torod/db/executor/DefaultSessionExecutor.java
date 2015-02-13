@@ -95,7 +95,12 @@ class DefaultSessionExecutor implements SessionExecutor {
 
     @Override
     public SessionTransaction createTransaction() throws ImplementationDbException {
-        return new DefaultSessionTransaction(this, wrapper.consumeSessionDbConnection(), reportFactory);
+        return new DefaultSessionTransaction(
+                this, 
+                wrapper.consumeSessionDbConnection(), 
+                reportFactory, 
+                databaseName
+        );
     }
 
     @Override
@@ -154,18 +159,7 @@ class DefaultSessionExecutor implements SessionExecutor {
         );
     }
 
-    @Override
-    public Future<List<? extends Database>> getDatabases() {
-        return submit(
-                new GetDatabasesCallable(
-                        wrapper, 
-                        reportFactory.createGetDatabasesReport(),
-                        databaseName
-                )
-        );
-    }
-
-    @Override
+   @Override
     public Future<?> closeCursor(CursorId cursorId) throws
             ToroTaskExecutionException {
         return submit(

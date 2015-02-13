@@ -120,9 +120,4 @@ class DefaultToroConnection implements ToroConnection {
         return cursorManager;
     }
 
-    @Override
-    public Future<List<? extends Database>> getDatabases() {
-        return executor.getDatabases();
-    }
-
 }

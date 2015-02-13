@@ -3,6 +3,7 @@ package com.torodb.torod.db.sql.index;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.torodb.torod.core.exceptions.ExistentIndexException;
+import com.torodb.torod.core.exceptions.ToroImplementationException;
 import com.torodb.torod.core.exceptions.ToroRuntimeException;
 import com.torodb.torod.core.exceptions.UserToroException;
 import com.torodb.torod.core.language.AttributeReference;
@@ -109,6 +110,44 @@ public class IndexManager implements Serializable {
         }
     }
 
+    public Set<NamedDbIndex> getRelatedDbIndexes(String toroIndexName) {
+        IndexRelationManager.IndexReadTransaction transaction
+                = indexRelation.getReadTransaction();
+        
+        if (!transaction.existsToroIndex(toroIndexName)) {
+            throw new UserToroException("There is no index named '" + toroIndexName + "'");
+        }
+        NamedToroIndex toroIndex = transaction.getToroIndex(toroIndexName);
+        Collection<UnnamedDbIndex> unnamedDbIndexes
+                = transaction.getRelatedDbIndexes(toroIndex.asUnnamed());
+        Set<NamedDbIndex> result = Sets.newHashSetWithExpectedSize(unnamedDbIndexes.size());
+       
+        for (UnnamedDbIndex unnamedDbIndex : unnamedDbIndexes) {
+            result.add(transaction.getDbIndex(unnamedDbIndex));
+        }
+        return result;
+    }
+    
+    public Set<NamedToroIndex> getRelatedToroIndexes(String dbIndexName) {
+        IndexRelationManager.IndexReadTransaction transaction
+                = indexRelation.getReadTransaction();
+        
+        if (!transaction.existsDbIndex(dbIndexName)) {
+            throw new ToroImplementationException(
+                    "There is no db index named '" + dbIndexName + "'"
+            );
+        }
+        NamedDbIndex dbIndex = transaction.getDbIndex(dbIndexName);
+        Collection<UnnamedToroIndex> unnamedToroIndexes
+                = transaction.getRelatedToroIndexes(dbIndex.asUnnamed());
+        Set<NamedToroIndex> result = Sets.newHashSetWithExpectedSize(unnamedToroIndexes.size());
+       
+        for (UnnamedToroIndex unnamedToroIndex : unnamedToroIndexes) {
+            result.add(transaction.getToroIndex(unnamedToroIndex));
+        }
+        return result;
+    }
+    
     @Nonnull
     public NamedToroIndex createIndex(
             String indexName,

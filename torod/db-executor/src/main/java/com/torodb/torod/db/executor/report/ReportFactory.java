@@ -45,5 +45,13 @@ public interface ReportFactory {
 
     public GetDatabasesCallable.Report createGetDatabasesReport();
 
+    public CountCallable.Report createCountReport();
+
+    public GetIndexSizeCallable.Report createGetIndexSizeReport();
+
+    public GetCollectionSizeCallable.Report createGetCollectionSizeReport();
+
+    public GetDocumentsSize.Report createGetDocumentsSize();
+
 
 }

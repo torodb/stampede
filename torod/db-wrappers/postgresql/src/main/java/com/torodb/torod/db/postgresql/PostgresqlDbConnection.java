@@ -27,15 +27,20 @@ import com.torodb.torod.core.subdocument.structure.DocStructure;
 import com.torodb.torod.db.postgresql.converters.jooq.SubdocValueConverter;
 import com.torodb.torod.db.postgresql.converters.jooq.ValueToJooqConverterProvider;
 import com.torodb.torod.db.postgresql.meta.CollectionSchema;
+import com.torodb.torod.db.postgresql.meta.Routines;
 import com.torodb.torod.db.postgresql.meta.StructuresCache;
 import com.torodb.torod.db.postgresql.meta.TorodbMeta;
 import com.torodb.torod.db.postgresql.meta.tables.SubDocTable;
 import com.torodb.torod.db.sql.AbstractSqlDbConnection;
 import com.torodb.torod.db.sql.AutoCloser;
+import com.torodb.torod.db.sql.index.NamedDbIndex;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.Serializable;
 import java.sql.*;
 import java.util.*;
 import java.util.Comparator;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import org.jooq.*;
@@ -150,6 +155,127 @@ class PostgresqlDbConnection extends AbstractSqlDbConnection {
         }
         catch (SQLException ex) {
             //TODO: Change exception
+            throw new RuntimeException(ex);
+        }
+        finally {
+            AutoCloser.close(rs);
+            AutoCloser.close(ps);
+            connectionProvider.release(connection);
+        }
+    }
+
+    @Override
+    public Long getCollectionSize(String collection) {
+        CollectionSchema colSchema = getMeta().getCollectionSchema(collection);
+        
+        ConnectionProvider connectionProvider 
+                = getDsl().configuration().connectionProvider();
+        
+        Connection connection = connectionProvider.acquire();
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        
+        try {
+            ps = connection.prepareStatement("SELECT sum(table_size)::bigint " 
+                + "FROM ("
+                + "  SELECT "
+                + "    pg_relation_size(pg_catalog.pg_class.oid) as table_size "
+                + "  FROM pg_catalog.pg_class "
+                + "    JOIN pg_catalog.pg_namespace "
+                + "       ON relnamespace = pg_catalog.pg_namespace.oid "
+                + "    WHERE pg_catalog.pg_namespace.nspname = ?"
+                + ") AS t"
+            );
+            ps.setString(1, colSchema.getName());
+            rs = ps.executeQuery();
+            rs.next();
+            return rs.getLong(1);
+        }
+        catch (SQLException ex) {
+            throw new RuntimeException(ex);
+        }
+        finally {
+            AutoCloser.close(rs);
+            AutoCloser.close(ps);
+            connectionProvider.release(connection);
+        }
+    }
+
+    @Override
+    public Long getDocumentsSize(String collection) {
+        CollectionSchema colSchema = getMeta().getCollectionSchema(collection);
+        
+        ConnectionProvider connectionProvider 
+                = getDsl().configuration().connectionProvider();
+        
+        Connection connection = connectionProvider.acquire();
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        
+        try {
+            ps = connection.prepareStatement(
+                    "SELECT sum(table_size)::bigint from ("
+                    + "SELECT pg_relation_size(pg_class.oid) AS table_size "
+                    + "FROM pg_class join pg_tables on pg_class.relname = pg_tables.tablename "
+                    + "where pg_tables.schemaname = ? "
+                    + "   and pg_tables.tablename LIKE 't_%'"
+                    + ") as t");
+            ps.setString(1, colSchema.getName());
+            rs = ps.executeQuery();
+            rs.next();
+            
+            return rs.getLong(1);
+        }
+        catch (SQLException ex) {
+            throw new RuntimeException(ex);
+        }
+        finally {
+            AutoCloser.close(rs);
+            AutoCloser.close(ps);
+            connectionProvider.release(connection);
+        }
+    }
+
+    @Override
+    public Long getIndexSize(String collection, String index) {
+        CollectionSchema colSchema = getMeta().getCollectionSchema(collection);
+        
+        ConnectionProvider connectionProvider 
+                = getDsl().configuration().connectionProvider();
+        
+        Connection connection = connectionProvider.acquire();
+        PreparedStatement ps = null;
+        
+        Set<NamedDbIndex> relatedDbIndexes
+                = colSchema.getIndexManager().getRelatedDbIndexes(index);
+        
+        long result = 0;
+        ResultSet rs = null;
+        try {
+            
+            for (NamedDbIndex dbIndex : relatedDbIndexes) {
+                ps = connection.prepareStatement(
+                    "SELECT sum(table_size)::bigint from ("
+                    + "SELECT pg_relation_size(pg_class.oid) AS table_size "
+                    + "FROM pg_class join pg_indexes "
+                    + "  on pg_class.relname = pg_indexes.tablename "
+                    + "WHERE pg_indexes.schemaname = ? "
+                    + "  and pg_indexes.indexname = ?"
+                    + ") as t");
+                
+                ps.setString(1, colSchema.getName());
+                ps.setString(2, dbIndex.getName());
+                rs = ps.executeQuery();
+                int usedBy = colSchema.getIndexManager().getRelatedToroIndexes(
+                        dbIndex.getName()
+                ).size();
+                assert usedBy != 0;
+                rs.next();
+                result += rs.getLong(1) / usedBy;
+            }
+            return result;
+        }
+        catch (SQLException ex) {
             throw new RuntimeException(ex);
         }
         finally {

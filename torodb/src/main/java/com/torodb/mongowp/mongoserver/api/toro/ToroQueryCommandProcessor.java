@@ -24,9 +24,7 @@ import com.eightkdata.mongowp.messages.request.RequestOpCode;
 import com.eightkdata.mongowp.mongoserver.api.QueryCommandProcessor;
 import com.eightkdata.mongowp.mongoserver.api.callback.LastError;
 import com.eightkdata.mongowp.mongoserver.api.callback.MessageReplier;
-import com.eightkdata.mongowp.mongoserver.api.commands.CountReply;
-import com.eightkdata.mongowp.mongoserver.api.commands.CountRequest;
-import com.eightkdata.mongowp.mongoserver.api.commands.QueryAndWriteOperationsQueryCommand;
+import com.eightkdata.mongowp.mongoserver.api.commands.*;
 import com.eightkdata.mongowp.mongoserver.protocol.MongoWP;
 import com.eightkdata.mongowp.mongoserver.protocol.MongoWP.ErrorCode;
 import com.eightkdata.nettybson.api.BSONDocument;
@@ -36,11 +34,10 @@ import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.mongodb.WriteConcern;
 import com.torodb.BuildProperties;
-import com.torodb.mongowp.mongoserver.api.toro.util.BSONDocuments;
 import com.torodb.mongowp.mongoserver.api.toro.util.BSONToroDocument;
 import com.torodb.torod.core.WriteFailMode;
 import com.torodb.torod.core.connection.*;
-import com.torodb.torod.core.cursors.CursorId;
+import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.exceptions.ExistentIndexException;
 import com.torodb.torod.core.language.AttributeReference;
 import com.torodb.torod.core.language.operations.DeleteOperation;
@@ -50,6 +47,7 @@ import com.torodb.torod.core.language.querycriteria.TrueQueryCriteria;
 import com.torodb.torod.core.language.update.UpdateAction;
 import com.torodb.torod.core.pojos.Database;
 import com.torodb.torod.core.pojos.IndexedAttributes;
+import com.torodb.torod.core.pojos.NamedToroIndex;
 import com.torodb.torod.core.subdocument.ToroDocument;
 import com.torodb.translator.*;
 import io.netty.util.AttributeMap;
@@ -90,38 +88,17 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
             );
         }
         
-        CursorId cursorId;
-    	BSONDocuments results;
-    	
-        CursorManager cursorManager = connection.getCursorManager();
+        ToroTransaction transaction = connection.createTransaction();
         
-        cursorId = cursorManager.openUnlimitedCursor(
-                request.getCollection(),
-                queryCriteria,
-                null,
-                request.getSkip(),
-                true,
-                true
-        );
-
         try {
-            int count = 0;
-
-            do {
-                results = new BSONDocuments(
-                        cursorManager.readCursor(
-                                cursorId,
-                                MongoWP.MONGO_CURSOR_LIMIT
-                        )
-                );
-                count += results.size();
-            }
-            while (results.size() >= MongoWP.MONGO_CURSOR_LIMIT);
-
+            Integer count = transaction.count(
+                    request.getCollection(), 
+                    queryCriteria
+            ).get();
+            
             return new CountReply(count);
-        }
-        finally {
-            cursorManager.closeCursor(cursorId);
+        } finally {
+            transaction.close();
         }
 	}
 	
@@ -742,32 +719,96 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
     }
 
     @Override
-    public void listDatabases(MessageReplier messageReplier) throws ExecutionException, InterruptedException{
+    public void listDatabases(MessageReplier messageReplier) throws ExecutionException, InterruptedException, ImplementationDbException{
         AttributeMap attributeMap = messageReplier.getAttributeMap();
         ToroConnection connection = attributeMap.attr(ToroRequestProcessor.CONNECTION).get();
         
-        List<? extends Database> databases = connection.getDatabases().get();
+        ToroTransaction transaction = connection.createTransaction();
         
-        double totalSize = 0;
-        List<BSONObject> databaseDocs = Lists.newArrayListWithCapacity(databases.size());
-        for (Database database : databases) {
-            BSONObject databaseDoc = new BasicBSONObject();
-            databaseDoc.put("name", database.getName());
-            databaseDoc.put("sizeOnDisk", Long.valueOf(database.getSize()).doubleValue());
-            //TODO: This is not true, but...
-            databaseDoc.put("empty", database.getSize() == 0);
-            
-            totalSize += database.getSize();
-            databaseDocs.add(databaseDoc);
+        try {
+            List<? extends Database> databases
+                    = transaction.getDatabases().get();
+
+            double totalSize = 0;
+            List<BSONObject> databaseDocs
+                    = Lists.newArrayListWithCapacity(databases.size());
+            for (Database database : databases) {
+                BSONObject databaseDoc = new BasicBSONObject();
+                databaseDoc.put("name", database.getName());
+                databaseDoc.put("sizeOnDisk", Long.valueOf(database.getSize()).doubleValue());
+                //TODO: This is not true, but...
+                databaseDoc.put("empty", database.getSize() == 0);
+
+                totalSize += database.getSize();
+                databaseDocs.add(databaseDoc);
+            }
+            BSONObject response = new BasicBSONObject(3);
+
+            response.put("databases", databaseDocs);
+            response.put("totalSize", totalSize);
+            response.put("ok", MongoWP.OK);
+
+            BSONDocument document = new MongoBSONDocument(response.toMap());
+            messageReplier.replyMessageNoCursor(document);
+        } finally {
+            transaction.close();
         }
-        BSONObject response = new BasicBSONObject(3);
+    }
+
+    @Override
+    public CollStatsReply collStats(CollStatsRequest request) throws Exception {
+        CollStatsReply.Builder replyBuilder = new CollStatsReply.Builder(
+                request.getDatabase(), 
+                request.getCollection());
+        replyBuilder
+                .setCapped(false)
+                .setLastExtentSize(1)
+                .setNumExtents(1)
+                .setPaddingFactor(0)
+                .setScale(request.getScale().intValue())
+                .setUsePowerOf2Sizes(false);
+                
+        AttributeMap attributeMap = request.getAttributes();
+        ToroConnection connection = attributeMap.attr(ToroRequestProcessor.CONNECTION).get();
         
-        response.put("databases", databaseDocs);
-        response.put("totalSize", totalSize);
-        response.put("ok", MongoWP.OK);
-        
-        BSONDocument document = new MongoBSONDocument(response.toMap());
-		messageReplier.replyMessageNoCursor(document);
+        ToroTransaction transaction = connection.createTransaction();
+        int scale = replyBuilder.getScale();
+        try {
+            Collection<? extends NamedToroIndex> indexes
+                    = transaction.getIndexes(request.getCollection());
+            Map<String, Long> sizeByMap = Maps.newHashMapWithExpectedSize(indexes.size());
+            for (NamedToroIndex index : indexes) {
+                Long indexSize = transaction.getIndexSize(
+                        request.getCollection(), 
+                        index.getName()
+                ).get();
+                sizeByMap.put(index.getName(), indexSize / scale);
+            }
+            
+            replyBuilder.setSizeByIndex(sizeByMap);
+            
+            replyBuilder.setIdIndexExists(sizeByMap.containsKey("_id"));
+            replyBuilder.setCount(
+                    transaction.count(
+                            request.getCollection(), 
+                            TrueQueryCriteria.getInstance()
+                    ).get()
+            );
+            replyBuilder.setSize(
+                    transaction.getDocumentsSize(
+                            request.getCollection()
+                    ).get() / scale
+            );
+            replyBuilder.setStorageSize(
+                    transaction.getCollectionSize(
+                            request.getCollection()
+                    ).get() / scale
+            );
+            
+            return replyBuilder.build();
+        } finally {
+            transaction.close();
+        }
     }
 
 	@Override

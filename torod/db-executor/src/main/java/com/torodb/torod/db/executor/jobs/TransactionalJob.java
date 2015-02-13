@@ -5,7 +5,6 @@ import com.torodb.torod.core.dbWrapper.DbConnection;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.exceptions.ToroException;
 import com.torodb.torod.core.exceptions.ToroRuntimeException;
-import javax.inject.Provider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

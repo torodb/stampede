@@ -24,6 +24,8 @@ import com.torodb.torod.core.WriteFailMode;
 import com.torodb.torod.core.exceptions.ExistentIndexException;
 import com.torodb.torod.core.language.operations.DeleteOperation;
 import com.torodb.torod.core.language.operations.UpdateOperation;
+import com.torodb.torod.core.language.querycriteria.QueryCriteria;
+import com.torodb.torod.core.pojos.Database;
 import com.torodb.torod.core.pojos.NamedToroIndex;
 import com.torodb.torod.core.pojos.IndexedAttributes;
 import com.torodb.torod.core.subdocument.ToroDocument;
@@ -95,4 +97,32 @@ public interface ToroTransaction extends Closeable {
     );
     
     public Collection<? extends NamedToroIndex> getIndexes(@Nonnull String collection);
+
+    /**
+     * 
+     * @param collection
+     * @param indexName
+     * @return the bytes used to store indexes
+     */
+    public Future<Long> getIndexSize(String collection, String indexName);
+
+    /**
+     * 
+     * @param collection
+     * @return the bytes used to store a collection. It includes its documents,
+     * indexes and metadata
+     */
+    public Future<Long> getCollectionSize(String collection);
+    
+    /**
+     * 
+     * @param collection
+     * @return the bytes used to store all documents in a collection. It does
+     * not include indexes or metadata
+     */
+    public Future<Long> getDocumentsSize(String collection);
+
+    public Future<Integer> count(String collection, QueryCriteria query);
+
+    public Future<List<? extends Database>> getDatabases();
 }

@@ -21,6 +21,7 @@ package com.torodb.torod.db.executor;
 
 import com.google.common.base.Supplier;
 import com.torodb.torod.core.WriteFailMode;
+import com.torodb.torod.core.annotations.DatabaseName;
 import com.torodb.torod.core.connection.DeleteResponse;
 import com.torodb.torod.core.connection.InsertResponse;
 import com.torodb.torod.core.dbWrapper.DbConnection;
@@ -30,6 +31,8 @@ import com.torodb.torod.core.exceptions.ToroImplementationException;
 import com.torodb.torod.core.executor.SessionTransaction;
 import com.torodb.torod.core.executor.ToroTaskExecutionException;
 import com.torodb.torod.core.language.operations.DeleteOperation;
+import com.torodb.torod.core.language.querycriteria.QueryCriteria;
+import com.torodb.torod.core.pojos.Database;
 import com.torodb.torod.core.pojos.IndexedAttributes;
 import com.torodb.torod.core.pojos.NamedToroIndex;
 import com.torodb.torod.core.subdocument.SplitDocument;
@@ -53,17 +56,21 @@ public class DefaultSessionTransaction implements SessionTransaction {
     private final DbConnection dbConnection;
     private final ReportFactory reportFactory;
     private final MyAborter aborter;
+    private final String databaseName;
+    
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultSessionTransaction.class);
 
     DefaultSessionTransaction(
             DefaultSessionExecutor executor,
             DbConnection dbConnection,
-            ReportFactory reportFactory) {
+            ReportFactory reportFactory,
+            @DatabaseName String databaseName) {
         this.aborted = new AtomicBoolean(false);
         this.dbConnection = dbConnection;
         this.executor = executor;
         this.reportFactory = reportFactory;
         this.aborter = new MyAborter();
+        this.databaseName = databaseName;
         closed = false;
     }
 
@@ -184,7 +191,69 @@ public class DefaultSessionTransaction implements SessionTransaction {
                         collection)
         );
     }
-    
+
+    @Override
+    public Future<List<? extends Database>> getDatabases() {
+        return submit(
+                new GetDatabasesCallable(
+                        dbConnection,
+                        aborter,
+                        reportFactory.createGetDatabasesReport(),
+                        databaseName
+                )
+        );
+    }
+
+    @Override
+    public Future<Integer> count(String collection, QueryCriteria query) {
+        return submit(
+                new CountCallable(
+                        dbConnection,
+                        aborter,
+                        reportFactory.createCountReport(), 
+                        collection, 
+                        query
+                )
+        );
+    }
+
+    @Override
+    public Future<Long> getIndexSize(String collection, String indexName) {
+        return submit(
+                new GetIndexSizeCallable(
+                        dbConnection, 
+                        aborter, 
+                        reportFactory.createGetIndexSizeReport(),
+                        collection, 
+                        indexName
+                )
+        );
+    }
+
+    @Override
+    public Future<Long> getCollectionSize(String collection) {
+        return submit(
+                new GetCollectionSizeCallable(
+                        dbConnection, 
+                        aborter, 
+                        reportFactory.createGetCollectionSizeReport(), 
+                        collection
+                )
+        );
+    }
+
+    @Override
+    public Future<Long> getDocumentsSize(String collection) {
+        return submit(
+                new GetDocumentsSize(
+                        dbConnection,
+                        aborter,
+                        reportFactory.createGetDocumentsSize(),
+                        collection
+                )
+        );
+    }
+
     protected <R> Future<R> submit(Job<R> callable) {
         return executor.submit(callable);
     }

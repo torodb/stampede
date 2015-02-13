@@ -142,4 +142,12 @@ public interface DbConnection {
     );
     
     public Collection<? extends NamedToroIndex> getIndexes(String collection);
+
+    public Integer count(String collection, QueryCriteria query);
+
+    public Long getCollectionSize(String collection);
+    
+    public Long getDocumentsSize(String collection);
+
+    public Long getIndexSize(String collection, String index);
 }
