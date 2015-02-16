@@ -49,9 +49,16 @@ public class ToroMetaQueryProcessor extends MetaQueryProcessor {
     }
 
     @Override
-    protected Iterable<BSONDocument> queryNamespaces(AttributeMap attributeMap, BSONObject query)
+    protected Iterable<BSONDocument> queryNamespaces(
+            String database, 
+            AttributeMap attributeMap, 
+            BSONObject query)
             throws Exception {
-
+        
+        if (!database.equals(databaseName)) {
+            return Collections.emptyList();
+        }
+        
         ToroConnection connection
                 = attributeMap.attr(ToroRequestProcessor.CONNECTION).get();
         
@@ -78,7 +85,7 @@ public class ToroMetaQueryProcessor extends MetaQueryProcessor {
                     candidates.add(
                             new KVToroDocument(
                                     new ObjectValue.Builder()
-                                    .putValue("name", collectionNamespace + '.'
+                                    .putValue("name", collectionNamespace + ".$"
                                             + index.getName())
                                     .build()
                             )
@@ -111,8 +118,16 @@ public class ToroMetaQueryProcessor extends MetaQueryProcessor {
     }
 
     @Override
-    protected Iterable<BSONDocument> queryIndexes(AttributeMap attributeMap, BSONObject query)
+    protected Iterable<BSONDocument> queryIndexes(
+            String database,
+            AttributeMap attributeMap, 
+            BSONObject query)
             throws Exception {
+        
+        if (!database.equals(databaseName)) {
+            return Collections.emptyList();
+        }
+        
         ToroConnection connection
                 = attributeMap.attr(ToroRequestProcessor.CONNECTION).get();
         Collection<String> allCollections = connection.getCollections();
@@ -168,21 +183,35 @@ public class ToroMetaQueryProcessor extends MetaQueryProcessor {
     }
 
     @Override
-    protected Iterable<BSONDocument> queryProfile(AttributeMap attributeMap, BSONObject query)
+    protected Iterable<BSONDocument> queryProfile(
+            String database,
+            AttributeMap attributeMap, 
+            BSONObject query)
             throws Exception {
+        
         return Collections.emptySet();
     }
 
     @Override
-    protected Iterable<BSONDocument> queryJS(AttributeMap attributeMap, BSONObject query)
+    protected Iterable<BSONDocument> queryJS(
+            String database,
+            AttributeMap attributeMap, 
+            BSONObject query)
             throws Exception {
         return Collections.emptySet();
     }
 
     @Override
     public CollStatsReply collStats(
+            String database,
             CollStatsRequest request, 
             Supplier<Iterable<BSONDocument>> docsSupplier) throws Exception {
+        
+        if (!database.equals(databaseName)) {
+            throw new UserToroException(
+                    "Collection [" + database + '.' + request.getCollection() 
+                    + "] not found. ");
+        }
         CollStatsReply.Builder replyBuilder = new CollStatsReply.Builder(
                 request.getDatabase(), 
                 request.getCollection())

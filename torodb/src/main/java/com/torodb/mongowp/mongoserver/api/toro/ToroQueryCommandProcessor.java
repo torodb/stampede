@@ -36,9 +36,11 @@ import com.mongodb.WriteConcern;
 import com.torodb.BuildProperties;
 import com.torodb.mongowp.mongoserver.api.toro.util.BSONToroDocument;
 import com.torodb.torod.core.WriteFailMode;
+import com.torodb.torod.core.annotations.DatabaseName;
 import com.torodb.torod.core.connection.*;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.exceptions.ExistentIndexException;
+import com.torodb.torod.core.exceptions.UserToroException;
 import com.torodb.torod.core.language.AttributeReference;
 import com.torodb.torod.core.language.operations.DeleteOperation;
 import com.torodb.torod.core.language.operations.UpdateOperation;
@@ -65,17 +67,23 @@ import java.util.concurrent.Future;
 public class ToroQueryCommandProcessor implements QueryCommandProcessor {
     private final QueryCriteriaTranslator queryCriteriaTranslator;
 	private final BuildProperties buildProperties;
+    private final String databaseName;
 
 	@Inject
 	public ToroQueryCommandProcessor(
             BuildProperties buildProperties,
-            QueryCriteriaTranslator queryCriteriaTranslator) {
+            QueryCriteriaTranslator queryCriteriaTranslator,
+            @DatabaseName String databaseName) {
 		this.buildProperties = buildProperties;
         this.queryCriteriaTranslator = queryCriteriaTranslator;
+        this.databaseName = databaseName;
 	}
 
     @Override
     public CountReply count(CountRequest request) throws Exception {
+        if (!request.getDatabase().equals(databaseName)) {
+            return new CountReply(0);
+        }
         AttributeMap attributeMap = request.getAttributes();
         ToroConnection connection = attributeMap.attr(ToroRequestProcessor.CONNECTION).get();
 
@@ -426,10 +434,10 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
     }
 
     @Override
-    public void dropIndexes(BSONDocument query, MessageReplier messageReplier) throws Exception {
+    public void deleteIndexes(BSONDocument query, MessageReplier messageReplier) throws Exception {
         Map<String, Object> keyValues = Maps.newHashMap();
         
-        Object dropIndexesValue = query.getValue("dropIndexes");
+        Object dropIndexesValue = query.getValue("deleteIndexes");
         Object indexValue = query.getValue("index");
         
         if (!(dropIndexesValue instanceof String)) {
@@ -455,7 +463,7 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
         try {
             transaction = connection.createTransaction();
             
-            if (indexName.equals("*")) { //TODO: Support * in dropIndexes
+            if (indexName.equals("*")) { //TODO: Support * in deleteIndexes
                 keyValues.put("ok", MongoWP.KO);
                 keyValues.put("errmsg", "The wildcard '*' is not supported by ToroDB right now");
                 messageReplier.replyMessageNoCursor(new MongoBSONDocument(keyValues));
