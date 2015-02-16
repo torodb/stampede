@@ -90,6 +90,14 @@ public class TorodbMeta {
         return schema;
     }
 
+    public void dropCollectionSchema(String collection) {
+        CollectionSchema removed = collectionSchemes.remove(collection);
+        if (removed == null) {
+            throw new IllegalArgumentException("Collection " + collection
+                    + " didn't exist");
+        }
+    }
+
     public CollectionSchema createCollectionSchema(
             String collection,
             DSLContext dsl) {

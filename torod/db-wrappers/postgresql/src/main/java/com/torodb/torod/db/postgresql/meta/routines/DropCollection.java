@@ -1,37 +1,32 @@
 
 package com.torodb.torod.db.postgresql.meta.routines;
 
+import com.torodb.torod.core.exceptions.ToroImplementationException;
 import com.torodb.torod.db.postgresql.meta.CollectionSchema;
-import com.torodb.torod.db.postgresql.meta.tables.SubDocTable;
 import com.torodb.torod.db.sql.AutoCloser;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import java.sql.Array;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.Collection;
+import java.sql.*;
 import org.jooq.*;
-import org.jooq.impl.DSL;
 
 /**
  *
  */
 public class DropCollection {
 
+    @SuppressFBWarnings("SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE")
     public static void execute(Configuration jooqConf, CollectionSchema colSchema) {
-        DSLContext dsl = DSL.using(jooqConf);
-        for (SubDocTable subDocTable : colSchema.getSubDocTables()) {
-            deleteAll(dsl, subDocTable);
-        }
         
-        Table<Record> rootTable = DSL.tableByName(colSchema.getName(), "root");
-        deleteAll(dsl, rootTable);
+        ConnectionProvider provider = jooqConf.connectionProvider();
+        Connection connection = provider.acquire();
+        Statement st = null;
+        try {
+            st = connection.createStatement();
+            st.executeUpdate("DROP SCHEMA "+colSchema.getName()+" CASCADE");
+        }
+        catch (SQLException ex) {
+            throw new ToroImplementationException(ex);
+        } finally {
+            AutoCloser.close(st);
+        }
     }
-    
-    private static void deleteAll(DSLContext dsl, Table table) {
-        dsl.delete(table)
-                .execute();
-    }
-
 }

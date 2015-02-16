@@ -25,6 +25,7 @@ import com.torodb.torod.core.language.projection.Projection;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.core.subdocument.structure.DocStructure;
 import com.torodb.torod.db.postgresql.meta.routines.*;
+import java.sql.SQLException;
 import java.util.List;
 import org.jooq.Configuration;
 

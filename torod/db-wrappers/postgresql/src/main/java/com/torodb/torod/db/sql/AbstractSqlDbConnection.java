@@ -284,6 +284,7 @@ public abstract class AbstractSqlDbConnection implements
     public void dropCollection(String collection) {
         CollectionSchema colSchema = meta.getCollectionSchema(collection);
         Routines.dropCollection(jooqConf, colSchema);
+        meta.dropCollectionSchema(collection);
     }
 
     @Override
