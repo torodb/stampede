@@ -51,11 +51,15 @@ import com.torodb.translator.*;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.netty.util.AttributeKey;
 import io.netty.util.AttributeMap;
-import java.util.*;
+import org.bson.BSONObject;
+
+import javax.inject.Inject;
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
-import javax.inject.Inject;
-import org.bson.BSONObject;
 
 
 /**
@@ -223,17 +227,16 @@ public class ToroRequestProcessor extends AbstractRequestProcessor {
                                 MongoWP.MONGO_CURSOR_LIMIT
                         )
                 );
-    	
-    	long cursorIdReturned = 0;
-    	
-    	cursorIdReturned = cursorId.getNumericId();
+
+        boolean cursorEmptied = results.size() < MongoWP.MONGO_CURSOR_LIMIT;
+
         Integer position = cursorManager.getPosition(cursorId).get();
-		if (results.size() < MongoWP.MONGO_CURSOR_LIMIT) {
+		if (cursorEmptied) {
     		cursorManager.closeCursor(cursorId);
     	}
         
 		messageReplier.replyMessageMultipleDocumentsWithFlags(
-                cursorIdReturned, 
+                cursorEmptied ? 0 : cursorId.getNumericId(),        // Signal "don't read more from cursor" if emptied
                 position, 
                 results,
 				EnumSet.noneOf(ReplyMessage.Flag.class)
