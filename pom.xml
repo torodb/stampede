@@ -176,36 +176,6 @@
                 <version>5.0.0.RELEASE</version>
             </extension>
         </extensions>
-        <plugins>
-            <plugin>
-                <groupId>net.wouterdanes</groupId>
-                <artifactId>mustache-maven-plugin</artifactId>
-                <version>1.1</version>
-                <inherited>false</inherited>
-                <executions>
-                    <execution>
-                        <id>run-mustache-template</id>
-                        <phase>validate</phase>
-                        <goals>
-                            <goal>mustache</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <encoding>UTF-8</encoding>
-                    <context>
-                        ---
-                        latestVersion: ${project.version}
-                    </context>
-                    <templates>
-                        <template>
-                            <templateFile>${project.basedir}/file-templates/README.md.mustache</templateFile>
-                            <outputPath>${project.basedir}/README.md</outputPath>
-                        </template>
-                    </templates>
-                </configuration>
-            </plugin>
-        </plugins>
     </build>
 
     <profiles>
@@ -309,6 +279,34 @@
                                 </goals>
                             </execution>
                         </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>net.wouterdanes</groupId>
+                        <artifactId>mustache-maven-plugin</artifactId>
+                        <version>1.1</version>
+                        <inherited>false</inherited>
+                        <executions>
+                            <execution>
+                                <id>run-mustache-template</id>
+                                <phase>validate</phase>
+                                <goals>
+                                    <goal>mustache</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <encoding>UTF-8</encoding>
+                            <context>
+                                ---
+                                latestVersion: ${project.version}
+                            </context>
+                            <templates>
+                                <template>
+                                    <templateFile>${project.basedir}/file-templates/README.md.mustache</templateFile>
+                                    <outputPath>${project.basedir}/README.md</outputPath>
+                                </template>
+                            </templates>
+                        </configuration>
                     </plugin>
                 </plugins>
             </build>
