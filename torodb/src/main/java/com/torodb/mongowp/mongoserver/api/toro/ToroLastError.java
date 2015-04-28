@@ -104,9 +104,9 @@ public class ToroLastError implements LastError {
 		}
 		lastErrorResult.wtime = System.currentTimeMillis() - lastErrorResult.wtime;
 		
-		keyValues.put("ok", lastErrorResult.error?MongoWP.KO:MongoWP.OK);
-		if (error) {
-			keyValues.put("err", lastErrorResult.errorCode.getErrorMessage());
+		keyValues.put("ok", lastErrorResult.error ? MongoWP.KO : MongoWP.OK);
+        if (error) { //TODO: Check if we want to use this or lastErrorResult.error
+            keyValues.put("err", lastErrorResult.errorCode.getErrorMessage());
 			keyValues.put("code", lastErrorResult.errorCode.getErrorCode());
 		}
 		keyValues.put("connectionId", messageReplier.getConnectionId());
@@ -145,7 +145,7 @@ public class ToroLastError implements LastError {
 		}
 		if (futureOperationResponse.isDone() || futureOperationResponse.isCancelled()) {
 			InsertResponse insertResponse = (InsertResponse) futureOperationResponse.get();
-			lastErrorResult.error = insertResponse.isSuccess();
+			lastErrorResult.error = !insertResponse.isSuccess();
 			if (lastErrorResult.error) {
 				lastErrorResult.errorCode = MongoWP.ErrorCode.INTERNAL_ERROR;
 			} else {
@@ -175,7 +175,8 @@ public class ToroLastError implements LastError {
 				lastErrorResult.errorCode = MongoWP.ErrorCode.INTERNAL_ERROR;
 			} else {
 				lastErrorResult.n = updateResponse.getModified();
-				lastErrorResult.updatedExisting = updateResponse.getModified() - updateResponse.getInsertedDocuments().size();
+                int modifiedCount = updateResponse.getModified() - updateResponse.getInsertedDocuments().size();
+				lastErrorResult.updatedExisting = modifiedCount > 0;
 				lastErrorResult.upserted = updateResponse.getInsertedDocuments().size();
 			}
 		}
@@ -197,7 +198,7 @@ public class ToroLastError implements LastError {
 		}
 		if (futureOperationResponse.isDone() || futureOperationResponse.isCancelled()) {
 			DeleteResponse deleteResponse = (DeleteResponse) futureOperationResponse.get();
-			lastErrorResult.error = deleteResponse.isSuccess();
+			lastErrorResult.error = !deleteResponse.isSuccess();
 			if (lastErrorResult.error) {
 				lastErrorResult.errorCode = MongoWP.ErrorCode.INTERNAL_ERROR;
 			} else {
@@ -235,7 +236,7 @@ public class ToroLastError implements LastError {
 
         public long wtime = System.currentTimeMillis();
         public int n = 0;
-        public int updatedExisting = 0;
+        public boolean updatedExisting = false;
         public int upserted = 0;
         public boolean error;
         public MongoWP.ErrorCode errorCode;
