@@ -67,7 +67,7 @@ public class Main {
 			   if ((toroPassChunks[0].equals("*") || toroPassChunks[0].equals(config.getDbHost())) &&
 					   (toroPassChunks[1].equals("*") || toroPassChunks[1].equals(String.valueOf(config.getDbPort()))) &&
 					   (toroPassChunks[2].equals("*") || toroPassChunks[2].equals(config.getDbName())) &&
-					   (toroPassChunks[2].equals("*") || toroPassChunks[3].equals(config.getUsername()))) {
+					   (toroPassChunks[3].equals("*") || toroPassChunks[3].equals(config.getUsername()))) {
 				   config.setPassword(toroPassChunks[4]);
 			   }
 			}
