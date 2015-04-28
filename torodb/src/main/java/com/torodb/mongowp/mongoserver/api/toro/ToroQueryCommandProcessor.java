@@ -40,7 +40,6 @@ import com.torodb.torod.core.annotations.DatabaseName;
 import com.torodb.torod.core.connection.*;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.exceptions.ExistentIndexException;
-import com.torodb.torod.core.exceptions.UserToroException;
 import com.torodb.torod.core.language.AttributeReference;
 import com.torodb.torod.core.language.operations.DeleteOperation;
 import com.torodb.torod.core.language.operations.UpdateOperation;
@@ -60,11 +59,14 @@ import javax.annotation.Nonnull;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
  */
 public class ToroQueryCommandProcessor implements QueryCommandProcessor {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ToroQueryCommandProcessor.class);
     private final QueryCriteriaTranslator queryCriteriaTranslator;
 	private final BuildProperties buildProperties;
     private final String databaseName;
@@ -834,4 +836,16 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
         attributeMap.attr(ToroRequestProcessor.LAST_ERROR).set(lastError);
         messageReplier.replyQueryCommandFailure(errorCode, userCommand.getKey());
 	}
+
+    @Override
+    public void getnonce(MessageReplier messageReplier) {
+        LOGGER.warn("Authentication not supported. Operation 'getnonce' "
+                + "called. A fake value is returned");
+        BSONObject replyObj = new BasicBSONObject();
+        Random r = new Random();
+        String nonce = Long.toHexString(r.nextLong());
+        replyObj.put("nonce", nonce);
+        replyObj.put("ok", MongoWP.OK);
+        messageReplier.replyMessageNoCursor(new MongoBSONDocument(replyObj));
+    }
 }
