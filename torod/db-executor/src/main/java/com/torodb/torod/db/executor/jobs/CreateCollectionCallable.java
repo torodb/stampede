@@ -26,13 +26,16 @@ import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.executor.SystemExecutor;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
+import javax.json.Json;
 
 /**
  *
  */
 public class CreateCollectionCallable extends SystemDbCallable<Void> {
 
-    private final String collection;
+    private final String collectionName;
+    private final String schemaName;
+    private final Json other;
     @Nullable
     private final SystemExecutor.CreateCollectionCallback callback;
     private final Report report;
@@ -40,18 +43,22 @@ public class CreateCollectionCallable extends SystemDbCallable<Void> {
     @Inject
     public CreateCollectionCallable(
             DbWrapper dbWrapperPool,
-            String collection, 
+            String collectionName, 
+            String schemaName, 
+            Json other,
             SystemExecutor.CreateCollectionCallback callback, 
             Report report) {
         super(dbWrapperPool);
-        this.collection = collection;
+        this.collectionName = collectionName;
+        this.schemaName = schemaName;
+        this.other = other;
         this.callback = callback;
         this.report = report;
     }
 
     @Override
     Void call(DbConnection db) throws ImplementationDbException {
-        db.createCollection(collection);
+        db.createCollection(collectionName, schemaName, other);
 
         return null;
     }
@@ -59,9 +66,9 @@ public class CreateCollectionCallable extends SystemDbCallable<Void> {
     @Override
     void doCallback(Void result) {
         if (callback != null) {
-            callback.createdCollection(collection);
+            callback.createdCollection(collectionName);
         }
-        report.createCollectionExecuted(collection);
+        report.createCollectionExecuted(collectionName);
     }
     
     public static interface Report {

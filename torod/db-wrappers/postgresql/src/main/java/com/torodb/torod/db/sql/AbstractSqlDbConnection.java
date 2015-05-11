@@ -34,20 +34,24 @@ import com.torodb.torod.core.language.querycriteria.QueryCriteria;
 import com.torodb.torod.core.pojos.NamedToroIndex;
 import com.torodb.torod.core.pojos.IndexedAttributes;
 import com.torodb.torod.core.subdocument.structure.DocStructure;
-import com.torodb.torod.db.postgresql.converters.StructureConverter;
+import com.torodb.torod.db.exceptions.InvalidCollectionSchemaException;
+import com.torodb.torod.db.postgresql.IdsFilter;
+import com.torodb.torod.db.postgresql.meta.tables.CollectionsTable;
 import com.torodb.torod.db.postgresql.query.QueryEvaluator;
 import com.torodb.torod.db.sql.index.IndexManager;
 import com.torodb.torod.db.sql.index.NamedDbIndex;
 import com.torodb.torod.db.sql.index.UnnamedDbIndex;
 import java.sql.*;
 import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
+import javax.json.Json;
 import org.jooq.*;
 import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -58,12 +62,13 @@ public abstract class AbstractSqlDbConnection implements
         IndexManager.DbIndexDropper,
         IndexManager.ToroIndexCreatedListener,
         IndexManager.ToroIndexDroppedListener {
+    
+    private static final Logger LOGGER
+            = LoggerFactory.getLogger(AbstractSqlDbConnection.class);
 
     private final TorodbMeta meta;
     private final Configuration jooqConf;
     private final DSLContext dsl;
-    private static final Logger LOG
-            = Logger.getLogger(AbstractSqlDbConnection.class.getName());
 
     @Inject
     public AbstractSqlDbConnection(
@@ -77,6 +82,16 @@ public abstract class AbstractSqlDbConnection implements
     protected abstract String getCreateSubDocTypeTableQuery(SubDocTable table, Configuration conf);
 
     protected abstract String getCreateIndexQuery(SubDocTable table, Field<?> field, Configuration conf);
+    
+    protected abstract void createSchema(String escapedSchemaName) throws SQLException;
+
+    protected abstract void createStructuresTable(String escapedSchemaName) throws SQLException;
+
+    protected abstract void createRootTable(String escapedSchemaName) throws SQLException;
+
+    protected abstract String getRootSeqName();
+
+    protected abstract void createSequence(String escapedSchemaName, String seqName) throws SQLException;
     
     protected DSLContext getDsl() {
         return dsl;
@@ -120,12 +135,41 @@ public abstract class AbstractSqlDbConnection implements
     }
 
     @Override
-    public void createCollection(String collection) {
+    public void createCollection(
+            @Nonnull String collectionName, 
+            @Nullable String schemaName,
+            @Nullable Json other) {
         try {
-            Routines.createCollectionSchema(jooqConf, collection);
+            if (schemaName == null) {
+                schemaName = collectionName;
+            }
+            String escapedSchemaName = IdsFilter.escapeSchemaName(schemaName);
+            createSchema(escapedSchemaName);
+            createSequence(escapedSchemaName, getRootSeqName());
+            createRootTable(escapedSchemaName);
+            createStructuresTable(escapedSchemaName);
+
+            String otherAsString = other != null ? other.toString() : null;
+            int inserted = dsl.insertInto(CollectionsTable.COLLECTIONS)
+                    .set(CollectionsTable.COLLECTIONS.NAME, collectionName)
+                    .set(CollectionsTable.COLLECTIONS.SCHEMA, escapedSchemaName)
+                    .set(CollectionsTable.COLLECTIONS.CAPPED, false)
+                    .set(CollectionsTable.COLLECTIONS.MAX_SIZE, 0)
+                    .set(CollectionsTable.COLLECTIONS.MAX_ELEMENTES, 0)
+                    .set(CollectionsTable.COLLECTIONS.OTHER, otherAsString)
+                    .execute();
+            assert inserted == 1;
             
-            meta.createCollectionSchema(collection, dsl);
+            meta.createCollectionSchema(collectionName, schemaName, dsl);
         } catch (DataAccessException ex) {
+            //TODO: Change exception
+            throw new RuntimeException(ex);
+        }
+        catch (SQLException ex) {
+            //TODO: Change exception
+            throw new RuntimeException(ex);
+        }
+        catch (InvalidCollectionSchemaException ex) {
             //TODO: Change exception
             throw new RuntimeException(ex);
         }
@@ -155,10 +199,11 @@ public abstract class AbstractSqlDbConnection implements
             return;
         }
 
+        CollectionSchema colSchema = meta.getCollectionSchema(collection);
         try {
             Routines.reserveDocIds(
                     jooqConf,
-                    collection,
+                    colSchema,
                     idsToReserve);
         } catch (DataAccessException ex) {
             //TODO: Change exception
@@ -241,25 +286,25 @@ public abstract class AbstractSqlDbConnection implements
 
         Map<String, Integer> result = Maps.newHashMapWithExpectedSize(collections.size());
 
-        for (CollectionSchema schema : collections) {
-            String schemaName = schema.getCollection();
-            int firstFree = Routines.firstFreeDocId(jooqConf, schemaName);
-            result.put(schemaName, firstFree);
+        for (CollectionSchema colSchema : collections) {
+            int firstFree = Routines.firstFreeDocId(jooqConf, colSchema);
+            result.put(colSchema.getCollection(), firstFree);
 
             Integer lastUsed = (Integer) getDsl().select(DSL.max(DSL.field("did")))
-                    .from(DSL.tableByName(schema.getName(), "root"))
+                    .from(DSL.table(DSL.name(colSchema.getName(), "root")))
                     .fetchOne().value1();
 
+            LOGGER.debug("Collection {} has {} as last used id", colSchema.getName(), lastUsed);
+            
             if (lastUsed == null) {
                 lastUsed = 0;
             }
 
             if (lastUsed >= firstFree) {
-                LOG.log(
-                        Level.WARNING, 
-                        "Collection {0}.root: last used = {1}. First free = {2}", 
+                LOGGER.warn(
+                        "Collection {}.root: last used = {}. First free = {}", 
                         new Object[]{
-                            schemaName,
+                            colSchema.getName(),
                             lastUsed,
                             firstFree
                         }
@@ -285,44 +330,6 @@ public abstract class AbstractSqlDbConnection implements
         CollectionSchema colSchema = meta.getCollectionSchema(collection);
         Routines.dropCollection(jooqConf, colSchema);
         meta.dropCollectionSchema(collection);
-    }
-
-    @Override
-    public Map<Integer, DocStructure> getAllStructures(String collection) throws ImplementationDbException {
-        CollectionSchema collectionSchema = meta.getCollectionSchema(collection);
-
-        Field<Integer> structureIdField = DSL.fieldByName(Integer.class, "id");
-        Field<String> structureField = DSL.fieldByName(String.class, "_structure");
-
-        Result<Record2<Integer, String>> structures = dsl.select(structureIdField, structureField)
-                .from("structures", collectionSchema.getName())
-                .fetch();
-
-        StructureConverter converter = new StructureConverter(collectionSchema);
-        Map<Integer, DocStructure> result = Maps.newHashMapWithExpectedSize(structures.size());
-        for (Record2<Integer, String> record2 : structures) {
-            DocStructure structure = converter.from(record2.value2());
-            result.put(record2.value1(), structure);
-        }
-
-        return result;
-    }
-
-    @Override
-    public DocStructure getStructure(String collection, int structureId) throws ImplementationDbException {
-        CollectionSchema collectionSchema = meta.getCollectionSchema(collection);
-
-        Field<Integer> idField = DSL.fieldByName(Integer.class, "id");
-        Field<String> structureField = DSL.fieldByName(String.class, "_structure");
-
-        Record2<Integer, String> found = dsl.select(idField, structureField)
-                .from("structures", collectionSchema.getName())
-                .where(idField.eq(structureId))
-                .fetchOne();
-
-        StructureConverter converter = new StructureConverter(collectionSchema);
-
-        return converter.from(found.value2());
     }
 
     @Override

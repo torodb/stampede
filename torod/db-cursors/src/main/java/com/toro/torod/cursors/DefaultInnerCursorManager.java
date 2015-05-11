@@ -354,7 +354,7 @@ public class DefaultInnerCursorManager implements InnerCursorManager {
                 //TODO: Change exceptions
                 throw new RuntimeException(ex); //this exception will be logged and swallowed by the cache!!!!
             } catch (IllegalArgumentException ex) {
-                LOGGER.warn("Cursor "+key+" has been closed before");
+                LOGGER.warn("Cursor {} has been closed before", key);
             }
 
         }

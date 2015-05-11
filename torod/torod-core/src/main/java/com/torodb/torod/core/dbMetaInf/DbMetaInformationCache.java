@@ -26,7 +26,9 @@ import java.util.Set;
 
 import javax.annotation.Nonnegative;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
+import javax.json.Json;
 import javax.json.JsonValue.ValueType;
 
 /**
@@ -83,12 +85,15 @@ public interface DbMetaInformationCache {
      * This method is idempotent.
      * <p>
      * @param sessionExecutor
-     * @param collection
+     * @param collectionName
+     * @param other
      * @return Returns whether the collection was created (returns false if the collection already existed)
      */
     public boolean createCollection(
             @Nonnull SessionExecutor sessionExecutor,
-            @Nonnull String collection);
+            @Nonnull String collectionName,
+            @Nullable Json other
+    );
 
     public boolean dropCollection(
             @Nonnull SessionExecutor sessionExecutor, 

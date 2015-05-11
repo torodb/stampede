@@ -20,15 +20,14 @@
 
 package com.torodb.torod.core.connection;
 
-import com.torodb.torod.core.pojos.Database;
 import com.torodb.torod.core.Session;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
-import java.util.List;
-import java.util.concurrent.Future;
 import javax.annotation.concurrent.NotThreadSafe;
 import java.io.Closeable;
 import java.util.Collection;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import javax.json.Json;
 
 /**
  *
@@ -51,9 +50,10 @@ public interface ToroConnection extends Closeable {
     /**
      * Checks whether a collection already exists. If it doesn't, it creates the collection
      * @param collection The name of the collection
+     * @param otherInfo A JSON document with extra information
      * @return true if the collection was created, false if it already existed
      */
-    public boolean createCollection(String collection);
+    public boolean createCollection(@Nonnull String collection, @Nullable Json otherInfo);
     
     public Collection<String> getCollections();
     

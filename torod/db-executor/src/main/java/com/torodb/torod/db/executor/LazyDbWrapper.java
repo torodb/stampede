@@ -21,6 +21,7 @@ import java.util.Iterator;
 import java.util.Map;
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.NotThreadSafe;
+import javax.json.Json;
 
 /**
  *
@@ -101,21 +102,11 @@ public class LazyDbWrapper implements DbWrapper {
         }
 
         @Override
-        public void createCollection(String collection) throws
-                ImplementationDbException {
-            getDelegate().createCollection(collection);
-        }
-
-        @Override
-        public Map<Integer, DocStructure> getAllStructures(String collection)
-                throws ImplementationDbException {
-            return getDelegate().getAllStructures(collection);
-        }
-
-        @Override
-        public DocStructure getStructure(String collection, int structureId)
-                throws ImplementationDbException {
-            return getDelegate().getStructure(collection, structureId);
+        public void createCollection(
+                String collectionName, 
+                String schemaName, 
+                Json other) throws ImplementationDbException {
+            getDelegate().createCollection(collectionName, schemaName, other);
         }
 
         @Override

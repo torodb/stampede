@@ -25,16 +25,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 import javax.annotation.concurrent.GuardedBy;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  *
  */
 public class LazyBlockingExecutorServiceProvider extends AbstractExecutorServiceProvider {
 
-    private final static Logger LOGGER
-            = LoggerFactory.getLogger(LazyBlockingExecutorServiceProvider.class);
     private final AtomicInteger threadNumberCounter;
     private final ThreadGroup threadGroup;
     private final int queueSize;

@@ -508,7 +508,7 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
 				ToroRequestProcessor.CONNECTION).get();
 
 		Map<String, Object> keyValues = new HashMap<String, Object>();
-		if(connection.createCollection(collection)) {
+		if(connection.createCollection(collection, null)) {
 			keyValues.put("ok", MongoWP.OK);
 		} else {
 			keyValues.put("ok", MongoWP.KO);

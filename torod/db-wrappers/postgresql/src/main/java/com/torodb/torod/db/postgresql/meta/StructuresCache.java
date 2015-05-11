@@ -62,7 +62,7 @@ public class StructuresCache implements Serializable {
             StructureConverter converter) {
         this.colSchema = colSchema;
         this.converter = converter;
-        this.table = DSL.tableByName(schemaName, "structures");
+        this.table = DSL.table(DSL.name(schemaName, "structures"));
         this.structures = HashBiMap.create(1000);
         this.insertLock = new ReentrantLock();
     }
@@ -73,20 +73,21 @@ public class StructuresCache implements Serializable {
         stream.defaultReadObject();
 
         insertLock = new ReentrantLock();
-        table = DSL.tableByName(colSchema.getName(), "structures");
+        table = DSL.table(DSL.name(colSchema.getName(), "structures"));
     }
 
     public void initialize(DSLContext dsl, Iterable<? extends Table> tables) {
 
-        boolean tableExists = false;
+        boolean structureTableExists = false;
         for (Table table1 : tables) {
             if (isStructureTable(table1)) {
-                tableExists = true;
+                structureTableExists = true;
                 break;
             }
         }
+        idProvider = 0;
 
-        if (tableExists) {
+        if (structureTableExists) {
 
             Result<Record2<Integer, String>> fetch = dsl.select(sidField, structuresField)
                     .from(table)
@@ -103,10 +104,10 @@ public class StructuresCache implements Serializable {
                     maxId = record.value1();
                 }
             }
+            if (maxId == Integer.MIN_VALUE) {
+                maxId = -1;
+            }            
             idProvider = maxId + 1;
-        }
-        else {
-            idProvider = 0;
         }
     }
 

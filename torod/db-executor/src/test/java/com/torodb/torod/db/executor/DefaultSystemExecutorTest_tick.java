@@ -67,11 +67,11 @@ public class DefaultSystemExecutorTest_tick {
         
         long tick1 = executor.getTick();
         
-        executor.createCollection(null, null);
+        executor.createCollection(null, null, null);
         long tick2 = executor.getTick();
         assert tick2 == tick1 + 1 : tick2 + " != " + (tick1 + 1);
     }
-    
+        
     @Test
     public void testGetTick_createSubDocTable() throws ToroTaskExecutionException {
         long tick1 = executor.getTick();

@@ -33,7 +33,9 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
+import javax.json.Json;
 
 /**
  *
@@ -54,12 +56,11 @@ public interface DbConnection {
 
     public void rollback() throws ImplementationDbException;
 
-    public void createCollection(String collection) throws ImplementationDbException;
+    public void createCollection(
+            @Nonnull String collectionName, 
+            @Nullable String schemaName,
+            @Nullable Json other) throws ImplementationDbException;
     
-    public Map<Integer, DocStructure> getAllStructures(String collection) throws ImplementationDbException;
-    
-    public DocStructure getStructure(String collection, int structureId) throws ImplementationDbException;
-
     /**
      * Creates a table the table that will store elements of the given {@link SubDocType} in the database.
      * <p>

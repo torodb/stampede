@@ -26,16 +26,13 @@ package com.torodb.torod.db.postgresql;
  */
 public class IdsFilter {
     
-    public static void filterCollectionName(String collection) throws IllegalArgumentException {
+    public static String escapeSchemaName(String collection) throws IllegalArgumentException {
         filter(collection);
+        return collection;
     }
     
     public static String escapeAttributeName(String attributeName) throws IllegalArgumentException {
-//        return new StringBuilder(attributeName.length() + 2)
-//                .append('"')
-//                .append(attributeName)
-//                .append('"')
-//                .toString();
+        filter(attributeName);
         return attributeName;
     }
     

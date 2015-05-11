@@ -33,11 +33,9 @@ import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.executor.ExecutorFactory;
 import com.torodb.torod.core.executor.SessionExecutor;
 import com.torodb.torod.core.executor.SessionTransaction;
-import com.torodb.torod.core.pojos.Database;
 import java.util.Collection;
-import java.util.List;
-import java.util.concurrent.Future;
 import javax.annotation.concurrent.NotThreadSafe;
+import javax.json.Json;
 
 /**
  *
@@ -84,12 +82,12 @@ class DefaultToroConnection implements ToroConnection {
     }
 
     @Override
-    public boolean createCollection(String collection) {
+    public boolean createCollection(String collection, Json otherInfo) {
         if(cache.collectionExists(collection)) {
             return false;
         }
 
-        return cache.createCollection(executor, collection);
+        return cache.createCollection(executor, collection, otherInfo);
     }
     
     @Override

@@ -23,6 +23,10 @@ package com.torodb.torod.db.postgresql.meta;
 import com.google.common.collect.MapMaker;
 import com.google.common.io.CharStreams;
 import com.torodb.torod.core.exceptions.ToroImplementationException;
+import com.torodb.torod.db.exceptions.InvalidCollectionSchemaException;
+import com.torodb.torod.db.exceptions.InvalidDatabaseException;
+import com.torodb.torod.db.postgresql.meta.tables.CollectionsTable;
+import com.torodb.torod.db.postgresql.meta.tables.records.CollectionsRecord;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -35,7 +39,7 @@ import java.util.Collections;
 import java.util.concurrent.ConcurrentMap;
 import org.jooq.DSLContext;
 import org.jooq.Meta;
-import org.jooq.Schema;
+import org.jooq.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,27 +54,45 @@ public class TorodbMeta {
     
     public TorodbMeta(
             String databaseName,
-            DSLContext dsl) throws SQLException, IOException {
+            DSLContext dsl) throws SQLException, IOException, InvalidDatabaseException {
         this.databaseName = databaseName;
         Meta jooqMeta = dsl.meta();
         Connection conn = dsl.configuration().connectionProvider().acquire();
         DatabaseMetaData jdbcMeta = conn.getMetaData();
 
-        //only system executor thread will update this map
+        //only system executor thread can update this map
         collectionSchemes = new MapMaker().concurrencyLevel(1).makeMap();
 
-        for (Schema schema : jooqMeta.getSchemas()) {
-            if (CollectionSchema.isCollectionSchema(schema)) {
-                createCollectionSchema(schema, dsl, jdbcMeta);
-            }
-        }
-
+        TorodbSchema.TORODB.checkOrCreate(dsl, jooqMeta, jdbcMeta);
+        loadAllCollectionSchemas(dsl, jooqMeta, jdbcMeta);
+        
         createTypes(conn, jdbcMeta);
         createProcedures(conn, jdbcMeta);
         createCast(conn, jdbcMeta);
 
         dsl.configuration().connectionProvider().release(conn);
 
+    }
+    
+    private void loadAllCollectionSchemas(
+            DSLContext dsl,
+            Meta jooqMeta,
+            DatabaseMetaData jdbcMeta) throws InvalidCollectionSchemaException {
+        
+        Result<CollectionsRecord> records
+                = dsl.selectFrom(CollectionsTable.COLLECTIONS).fetch();
+        
+        for (CollectionsRecord colRecord : records) {
+            CollectionSchema colSchema = new CollectionSchema(
+                    colRecord.getSchema(), 
+                    colRecord.getName(),
+                    dsl, 
+                    jdbcMeta, 
+                    jooqMeta, 
+                    this
+            );
+            collectionSchemes.put(colSchema.getCollection(), colSchema);
+        }
     }
 
     public String getDatabaseName() {
@@ -99,25 +121,17 @@ public class TorodbMeta {
     }
 
     public CollectionSchema createCollectionSchema(
-            String collection,
-            DSLContext dsl) {
-        if (collectionSchemes.containsKey(collection)) {
-            throw new IllegalArgumentException("Collection '" + collection
+            String colName,
+            String schemaName,
+            DSLContext dsl) throws InvalidCollectionSchemaException {
+        if (collectionSchemes.containsKey(colName)) {
+            throw new IllegalArgumentException("Collection '" + colName
                     + "' is already associated with a collection schema");
         }
-        CollectionSchema result = new CollectionSchema(collection, dsl, this);
-        collectionSchemes.put(collection, result);
+        CollectionSchema result = new CollectionSchema(schemaName, colName, dsl, this);
+        collectionSchemes.put(colName, result);
 
         return result;
-    }
-
-    private void createCollectionSchema(
-            Schema schema,
-            DSLContext dsl,
-            DatabaseMetaData jdbcMeta
-    ) {
-        CollectionSchema colSchema = new CollectionSchema(schema, dsl, jdbcMeta, this);
-        collectionSchemes.put(colSchema.getCollection(), colSchema);
     }
 
     public Collection<CollectionSchema> getCollectionSchemes() {
@@ -175,7 +189,6 @@ public class TorodbMeta {
             Connection conn,
             DatabaseMetaData jdbcMeta
     ) throws SQLException, IOException {
-        createCollectionToSchemaProcedure(conn, jdbcMeta);
         createCreateCollectionSchemaProcedure(conn, jdbcMeta);
         createFindDocProcedure(conn, jdbcMeta);
         createFindDocsProcedure(conn, jdbcMeta);
@@ -190,13 +203,6 @@ public class TorodbMeta {
 
     private void createTwelveBytesType(Connection conn) throws IOException, SQLException {
         executeSql(conn, "/sql/twelve_bytes_type.sql");
-    }
-    
-    private void createCollectionToSchemaProcedure(
-            Connection conn, 
-            DatabaseMetaData jdbcMeta
-    ) throws SQLException, IOException {
-        createProcedure(conn, jdbcMeta, "collection_to_schema");
     }
     
     private void createCreateCollectionSchemaProcedure(

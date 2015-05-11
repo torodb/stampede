@@ -23,7 +23,6 @@ package com.torodb.torod.core.dbWrapper;
 
 import com.torodb.torod.core.subdocument.SplitDocument;
 import java.io.Closeable;
-import java.sql.SQLException;
 import java.util.List;
 import javax.annotation.Nonnull;
 

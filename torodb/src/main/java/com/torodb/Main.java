@@ -85,7 +85,7 @@ public class Main {
             if (config.verbose()) {
                 Logger root
                         = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
-                root.setLevel(Level.INFO);
+                root.setLevel(Level.TRACE);
             }
             else {
                 Logger root
