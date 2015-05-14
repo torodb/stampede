@@ -23,17 +23,20 @@ package com.torodb.torod.core.dbWrapper;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.dbWrapper.exceptions.UserDbException;
 import com.torodb.torod.core.language.querycriteria.QueryCriteria;
+import com.torodb.torod.core.pojos.CollectionMetainfo;
 import com.torodb.torod.core.pojos.NamedToroIndex;
 import com.torodb.torod.core.pojos.IndexedAttributes;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.core.subdocument.SubDocType;
 import com.torodb.torod.core.subdocument.SubDocument;
-import com.torodb.torod.core.subdocument.structure.DocStructure;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
+import javax.json.Json;
 
 /**
  *
@@ -54,12 +57,11 @@ public interface DbConnection {
 
     public void rollback() throws ImplementationDbException;
 
-    public void createCollection(String collection) throws ImplementationDbException;
+    public void createCollection(
+            @Nonnull String collectionName, 
+            @Nullable String schemaName,
+            @Nullable Json other) throws ImplementationDbException;
     
-    public Map<Integer, DocStructure> getAllStructures(String collection) throws ImplementationDbException;
-    
-    public DocStructure getStructure(String collection, int structureId) throws ImplementationDbException;
-
     /**
      * Creates a table the table that will store elements of the given {@link SubDocType} in the database.
      * <p>
@@ -140,7 +142,20 @@ public interface DbConnection {
             String collection,
             String indexName
     );
-    
+
+    /**
+     * Returns the collections metainformation of all collections on the 
+     * database
+     * <p>
+     * This cursor must be closed onces it is not needed.
+     * <p>
+     * @return
+     * @throws ImplementationDbException 
+     * @throws UserDbException
+     */
+    @Nonnull
+    public List<CollectionMetainfo> getCollectionsMetainfo();
+
     public Collection<? extends NamedToroIndex> getIndexes(String collection);
 
     public Integer count(String collection, QueryCriteria query);

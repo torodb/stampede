@@ -85,7 +85,7 @@ public class Main {
             if (config.verbose()) {
                 Logger root
                         = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
-                root.setLevel(Level.INFO);
+                root.setLevel(Level.TRACE);
             }
             else {
                 Logger root
@@ -103,8 +103,7 @@ public class Main {
 				new ExecutorModule(1000, 1000, 0.2),
 				new DbMetaInformationCacheModule(),
 				new D2RModule(),
-				new ConnectionModule(),
-				new InnerCursorManagerModule()
+				new ConnectionModule()
 		);
 
         final DbBackend dbBackend;

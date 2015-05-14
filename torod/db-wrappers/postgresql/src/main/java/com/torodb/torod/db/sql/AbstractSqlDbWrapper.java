@@ -31,6 +31,7 @@ import com.torodb.torod.core.dbWrapper.exceptions.UserDbException;
 import com.torodb.torod.core.language.projection.Projection;
 import com.torodb.torod.core.language.querycriteria.QueryCriteria;
 import com.torodb.torod.core.subdocument.SplitDocument;
+import com.torodb.torod.db.exceptions.InvalidDatabaseException;
 import com.torodb.torod.db.postgresql.meta.CollectionSchema;
 import com.torodb.torod.db.postgresql.meta.Routines;
 import com.torodb.torod.db.postgresql.meta.TorodbMeta;
@@ -50,6 +51,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -112,6 +115,10 @@ public abstract class AbstractSqlDbWrapper implements DbWrapper {
             //TODO: Change exception
             throw new RuntimeException(ex);
         } catch (DataAccessException ex) {
+            //TODO: Change exception
+            throw new RuntimeException(ex);
+        }
+        catch (InvalidDatabaseException ex) {
             //TODO: Change exception
             throw new RuntimeException(ex);
         } finally {

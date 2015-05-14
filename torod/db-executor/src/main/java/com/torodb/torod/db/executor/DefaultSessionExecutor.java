@@ -30,7 +30,7 @@ import com.torodb.torod.core.executor.SessionTransaction;
 import com.torodb.torod.core.executor.ToroTaskExecutionException;
 import com.torodb.torod.core.language.projection.Projection;
 import com.torodb.torod.core.language.querycriteria.QueryCriteria;
-import com.torodb.torod.core.pojos.Database;
+import com.torodb.torod.core.pojos.CollectionMetainfo;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.db.executor.jobs.*;
 import com.torodb.torod.db.executor.report.ReportFactory;
@@ -124,6 +124,16 @@ class DefaultSessionExecutor implements SessionExecutor {
     }
 
     @Override
+    public Future<List<CollectionMetainfo>> getCollectionsMetainfo() {
+        return submit(
+                new GetCollectionsMetainfoCallable(
+                        wrapper,
+                        reportFactory.createGetCollectionsMetainfoReport()
+                )
+        );
+    }
+
+    @Override
     public Future<List<? extends SplitDocument>> readCursor(CursorId cursorId, int limit)
             throws ToroTaskExecutionException {
         return submit(
@@ -149,17 +159,6 @@ class DefaultSessionExecutor implements SessionExecutor {
     }
 
     @Override
-    public Future<Integer> countRemainingDocs(CursorId cursorId) {
-        return submit(
-                new CountRemainingDocsCallable(
-                        wrapper,
-                        reportFactory.createCountRemainingDocsReport(), 
-                        cursorId
-                )
-        );
-    }
-
-   @Override
     public Future<?> closeCursor(CursorId cursorId) throws
             ToroTaskExecutionException {
         return submit(
@@ -169,6 +168,18 @@ class DefaultSessionExecutor implements SessionExecutor {
                         cursorId
                 )
         );
+    }
+
+    @Override
+    public Future<Integer> getMaxElements(CursorId cursorId) {
+        return submit(
+                new MaxElementsCallable(wrapper, reportFactory.createMaxElementsReport(), cursorId)
+        );
+    }
+
+    @Override
+    public Future<Void> noop() {
+        return submit(new NoopJob());
     }
     
     @Override

@@ -42,6 +42,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import javax.annotation.Nullable;
+import javax.json.Json;
 
 /**
  *
@@ -131,24 +133,30 @@ public class DefaultDbMetaInformationCache implements DbMetaInformationCache {
     }
 
     @Override
-    public boolean createCollection(@Nonnull SessionExecutor sessionExecutor, @Nonnull String collection) {
-        if (collection == null || collection.isEmpty()) {
+    public boolean createCollection(
+            @Nonnull SessionExecutor sessionExecutor, 
+            @Nonnull String collectionName, 
+            @Nullable Json other) {
+        if (collectionName == null || collectionName.isEmpty()) {
             throw new IllegalArgumentException("The collection must be non null and non empty");
         }
 
-        if(collectionExists(sessionExecutor, collection)) {
+        if(collectionExists(sessionExecutor, collectionName)) {
             return false;
         }
 
         collectionCreationLock.lock();
         try {
-            if(collectionExists(sessionExecutor, collection)) {
+            if(collectionExists(sessionExecutor, collectionName)) {
                 return false;
             }
 
-            startCollectionCreation(collection, INITIAL_USED_ID);
+            startCollectionCreation(collectionName, INITIAL_USED_ID);
 
-            Future<?> response = executorFactory.getSystemExecutor().createCollection(collection,
+            Future<?> response = executorFactory.getSystemExecutor().createCollection(
+                    collectionName,
+                    other,
+                    
                     new SystemExecutor.CreateCollectionCallback() {
 
                         @Override
@@ -160,11 +168,11 @@ public class DefaultDbMetaInformationCache implements DbMetaInformationCache {
             );
 
             Long tick = executorFactory.getSystemExecutor().getTick();
-            creationCollectionPendingJobs.put(collection, tick);
+            creationCollectionPendingJobs.put(collectionName, tick);
 
             if (response.isDone()) {
                 response.get();
-                creationCollectionPendingJobs.remove(collection);
+                creationCollectionPendingJobs.remove(collectionName);
             } else {
                 sessionExecutor.pauseUntil(tick);
             }

@@ -39,6 +39,8 @@ import com.torodb.torod.core.Torod;
 import com.torodb.torod.core.WriteFailMode;
 import com.torodb.torod.core.connection.*;
 import com.torodb.torod.core.cursors.CursorId;
+import com.torodb.torod.core.cursors.UserCursor;
+import com.torodb.torod.core.exceptions.CursorNotFoundException;
 import com.torodb.torod.core.exceptions.UserToroException;
 import com.torodb.torod.core.language.operations.DeleteOperation;
 import com.torodb.torod.core.language.operations.UpdateOperation;
@@ -60,12 +62,16 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
  *
  */
 public class ToroRequestProcessor extends AbstractRequestProcessor {
+    private static final Logger LOGGER
+            = LoggerFactory.getLogger(ToroRequestProcessor.class);
     public static final AtomicInteger connectionId = new AtomicInteger(0);
 	
 	public final static AttributeKey<ToroConnection> CONNECTION = 
@@ -117,8 +123,6 @@ public class ToroRequestProcessor extends AbstractRequestProcessor {
 		AttributeMap attributeMap = request.getAttributes();
 		ToroConnection connection = attributeMap.attr(CONNECTION).get();
 		
-        CursorManager cursorManager = connection.getCursorManager();
-        
         if (request.getProjection() != null) {
             throw new UserToroException("Projections are not supported");
         }
@@ -132,7 +136,7 @@ public class ToroRequestProcessor extends AbstractRequestProcessor {
         }
     	Projection projection = null;
     	
-    	CursorId cursorId;
+    	UserCursor<ToroDocument> cursor;
     	BSONDocuments results;
     	
         if (request.isTailable()) {
@@ -140,7 +144,7 @@ public class ToroRequestProcessor extends AbstractRequestProcessor {
         }
         
     	if (request.getLimit() == 0) {
-        	cursorId = cursorManager.openUnlimitedCursor(
+            cursor = connection.openUnlimitedCursor(
                     request.getCollection(), 
                     queryCriteria, 
                     projection, 
@@ -149,10 +153,10 @@ public class ToroRequestProcessor extends AbstractRequestProcessor {
                     !request.isNoCursorTimeout()
             );
     	} else {
-        	cursorId = cursorManager.openLimitedCursor(
+            cursor = connection.openLimitedCursor(
                     request.getCollection(),
-                    queryCriteria, 
-                    projection, 
+                    queryCriteria,
+                    projection,
                     request.getNumberToSkip(),
                     request.getLimit(),
                     request.isAutoclose(),
@@ -160,14 +164,14 @@ public class ToroRequestProcessor extends AbstractRequestProcessor {
             );
     	}
         
-   		results = new BSONDocuments(cursorManager.readCursor(cursorId, MongoWP.MONGO_CURSOR_LIMIT));
+   		results = new BSONDocuments(cursor.read(MongoWP.MONGO_CURSOR_LIMIT));
 
    		long cursorIdReturned = 0;
     	
     	if (results.size() >= MongoWP.MONGO_CURSOR_LIMIT) {
-    		cursorIdReturned = cursorId.getNumericId();
+    		cursorIdReturned = cursor.getId().getNumericId();
     	} else {
-    		cursorManager.closeCursor(cursorId);
+    		cursor.close();
     	}
         
         return new QueryReply.Builder()
@@ -214,33 +218,35 @@ public class ToroRequestProcessor extends AbstractRequestProcessor {
 	public void getMore(GetMoreMessage getMoreMessage,
 			MessageReplier messageReplier) throws Exception {
 		AttributeMap attributeMap = messageReplier.getAttributeMap();
-		
+		ToroConnection connection = attributeMap.attr(CONNECTION).get();
+        
 		CursorId cursorId = new CursorId(getMoreMessage.getCursorId());
 		
-        CursorManager cursorManager
-                = attributeMap.attr(CONNECTION).get().getCursorManager();
-        
-		BSONDocuments results = 
-				new BSONDocuments(
-                        cursorManager.readCursor(
-                                cursorId, 
-                                MongoWP.MONGO_CURSOR_LIMIT
-                        )
-                );
+        try {
+            UserCursor cursor = connection.getCursor(cursorId);
 
-        boolean cursorEmptied = results.size() < MongoWP.MONGO_CURSOR_LIMIT;
+            BSONDocuments results = 
+                    new BSONDocuments(
+                            cursor.read(MongoWP.MONGO_CURSOR_LIMIT)
+                    );
 
-        Integer position = cursorManager.getPosition(cursorId).get();
-		if (cursorEmptied) {
-    		cursorManager.closeCursor(cursorId);
-    	}
+            boolean cursorEmptied = results.size() < MongoWP.MONGO_CURSOR_LIMIT;
+
+            Integer position = cursor.getPosition();
+            if (cursorEmptied) {
+                cursor.close();
+            }
+
+            messageReplier.replyMessageMultipleDocumentsWithFlags(
+                    cursorEmptied ? 0 : cursorId.getNumericId(),        // Signal "don't read more from cursor" if emptied
+                    position, 
+                    results,
+                    EnumSet.noneOf(ReplyMessage.Flag.class)
+            );
+        } catch (CursorNotFoundException ex) {
+            throw ex; //TODO: change that to translate the exception to whatever mongo protocol used to notify a closed or no existing cursor
+        }
         
-		messageReplier.replyMessageMultipleDocumentsWithFlags(
-                cursorEmptied ? 0 : cursorId.getNumericId(),        // Signal "don't read more from cursor" if emptied
-                position, 
-                results,
-				EnumSet.noneOf(ReplyMessage.Flag.class)
-        );
 	}
 
 	@Override
@@ -253,14 +259,16 @@ public class ToroRequestProcessor extends AbstractRequestProcessor {
 		if (connection == null) {
 			return;
 		}
-        CursorManager cursorManager = connection.getCursorManager();
-		
+        
 		int numberOfCursors = killCursorsMessage.getNumberOfCursors();
 		long[] cursorIds = killCursorsMessage.getCursorIds();
 		for (int index = 0; index < numberOfCursors; index++) {
 			CursorId cursorId = new CursorId(cursorIds[index]);
 			
-            cursorManager.closeCursor(cursorId);
+            try {
+                connection.getCursor(cursorId).close();
+            } catch (CursorNotFoundException ex) {
+            }
 		}
 	}
 
@@ -310,7 +318,6 @@ public class ToroRequestProcessor extends AbstractRequestProcessor {
 		
     	String collection = ToroCollectionTranslator.translate(updateMessage.getCollection());
     	WriteFailMode writeFailMode = WriteFailMode.ORDERED;
-    	QueryCriteriaTranslator queryCriteriaTranslator = new QueryCriteriaTranslator();
     	BSONDocument selector = updateMessage.getSelector();
     	for (String key : selector.getKeys()) {
     		if (QueryModifier.getByKey(key) != null || QuerySortOrder.getByKey(key) != null) {
@@ -365,7 +372,6 @@ public class ToroRequestProcessor extends AbstractRequestProcessor {
 		
     	String collection = ToroCollectionTranslator.translate(deleteMessage.getCollection());
     	WriteFailMode writeFailMode = WriteFailMode.ORDERED;
-    	QueryCriteriaTranslator queryCriteriaTranslator = new QueryCriteriaTranslator();
     	BSONDocument document = deleteMessage.getDocument();
     	for (String key : document.getKeys()) {
     		if (QueryModifier.getByKey(key) != null || QuerySortOrder.getByKey(key) != null) {

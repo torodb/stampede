@@ -33,6 +33,7 @@ import com.torodb.torod.db.postgresql.meta.tables.SubDocTable;
 import com.torodb.torod.db.sql.AbstractSqlDbConnection;
 import com.torodb.torod.db.sql.AutoCloser;
 import com.torodb.torod.db.sql.index.NamedDbIndex;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.Serializable;
 import java.sql.*;
 import java.util.*;
@@ -194,6 +195,79 @@ class PostgresqlDbConnection extends AbstractSqlDbConnection {
             AutoCloser.close(rs);
             AutoCloser.close(ps);
             connectionProvider.release(connection);
+        }
+    }
+
+    @SuppressFBWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
+    @Override
+    protected void createSchema(String escapedSchemaName) throws SQLException {
+        Connection c = getDsl().configuration().connectionProvider().acquire();
+
+        PreparedStatement ps = null;
+        try {
+            ps = c.prepareStatement("CREATE SCHEMA \"" + escapedSchemaName + "\"");
+            ps.executeUpdate();
+        } finally {
+            AutoCloser.close(ps);
+            getDsl().configuration().connectionProvider().release(c);
+        }
+    }
+
+    @SuppressFBWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
+    @Override
+    protected void createStructuresTable(String escapedSchemaName) throws SQLException {
+        Connection c = getDsl().configuration().connectionProvider().acquire();
+
+        PreparedStatement ps = null;
+        try {
+            ps = c.prepareStatement("CREATE TABLE \"" + escapedSchemaName + "\".structures("
+                    + "sid int PRIMARY KEY,"
+                    + "_structure jsonb NOT NULL"
+                    + ")");
+            ps.executeUpdate();
+        } finally {
+            AutoCloser.close(ps);
+            getDsl().configuration().connectionProvider().release(c);
+        }
+    }
+
+    @SuppressFBWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
+    @Override
+    protected void createRootTable(String escapedSchemaName) throws SQLException {
+        Connection c = getDsl().configuration().connectionProvider().acquire();
+
+        PreparedStatement ps = null;
+        try {
+            ps = c.prepareStatement("CREATE TABLE \""+ escapedSchemaName + "\".root("
+                    + "did int PRIMARY KEY DEFAULT nextval('" + escapedSchemaName + ".root_seq'),"
+                    + "sid int NOT NULL"
+                    + ")");
+            ps.executeUpdate();
+        } finally {
+            AutoCloser.close(ps);
+            getDsl().configuration().connectionProvider().release(c);
+        }
+    }
+
+    @Override
+    protected String getRootSeqName() {
+        return "root_seq";
+    }
+
+    @SuppressFBWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
+    @Override
+    protected void createSequence(String escapedSchemaName, String seqName) throws SQLException {
+        Connection c = getDsl().configuration().connectionProvider().acquire();
+
+        PreparedStatement ps = null;
+        try {
+            ps = c.prepareStatement("CREATE SEQUENCE "
+                    + "\""+ escapedSchemaName +"\".\"" + seqName + "\" "
+                    + "MINVALUE 0 START 0");
+            ps.executeUpdate();
+        } finally {
+            AutoCloser.close(ps);
+            getDsl().configuration().connectionProvider().release(c);
         }
     }
 

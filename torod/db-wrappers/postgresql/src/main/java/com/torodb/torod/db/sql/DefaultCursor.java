@@ -23,6 +23,7 @@ package com.torodb.torod.db.sql;
 import com.google.common.collect.Table;
 import com.torodb.torod.core.dbWrapper.Cursor;
 import com.torodb.torod.core.exceptions.ToroRuntimeException;
+import com.torodb.torod.core.exceptions.UnknownMaxElementsException;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import java.sql.SQLException;
 import java.util.Collection;
@@ -40,6 +41,7 @@ public class DefaultCursor implements Cursor {
 
     private final DatabaseCursorGateway databaseGateway;
     private final MyIterator dids;
+    private final int maxElements;
     
     /**
      *
@@ -51,6 +53,7 @@ public class DefaultCursor implements Cursor {
             @Nonnull Set<Integer> dids) {
         this.dids = new MyIterator(dids);
         this.databaseGateway = databaseGateway;
+        this.maxElements = dids.size();
     }
     
     @Override
@@ -84,8 +87,8 @@ public class DefaultCursor implements Cursor {
     }
 
     @Override
-    public int countRemainingDocs() {
-        return dids.getRemainingDocs();
+    public int getMaxElements() throws UnknownMaxElementsException {
+        return maxElements;
     }
 
     @Override

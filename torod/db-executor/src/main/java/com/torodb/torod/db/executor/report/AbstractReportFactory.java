@@ -7,6 +7,7 @@ import com.torodb.torod.core.cursors.CursorId;
 import com.torodb.torod.core.language.operations.DeleteOperation;
 import com.torodb.torod.core.language.projection.Projection;
 import com.torodb.torod.core.language.querycriteria.QueryCriteria;
+import com.torodb.torod.core.pojos.CollectionMetainfo;
 import com.torodb.torod.core.pojos.Database;
 import com.torodb.torod.core.pojos.IndexedAttributes;
 import com.torodb.torod.core.pojos.NamedToroIndex;
@@ -35,11 +36,6 @@ public class AbstractReportFactory implements ReportFactory {
 
     @Override
     public CommitCallable.Report createCommitReport() {
-        return DUMMY_REPORT;
-    }
-
-    @Override
-    public CountRemainingDocsCallable.Report createCountRemainingDocsReport() {
         return DUMMY_REPORT;
     }
 
@@ -134,13 +130,23 @@ public class AbstractReportFactory implements ReportFactory {
     }
 
     @Override
-    public GetDocumentsSize.Report createGetDocumentsSize() {
+    public GetDocumentsSize.Report createGetDocumentsSizeReport() {
+        return DUMMY_REPORT;
+    }
+
+    @Override
+    public GetCollectionsMetainfoCallable.Report createGetCollectionsMetainfoReport() {
+        return DUMMY_REPORT;
+    }
+
+    @Override
+    public MaxElementsCallable.Report createMaxElementsReport() {
         return DUMMY_REPORT;
     }
 
     private static class DummyReport implements CloseConnectionCallable.Report,
             CloseCursorCallable.Report, CommitCallable.Report,
-            CountRemainingDocsCallable.Report, CreateCollectionCallable.Report, 
+            CreateCollectionCallable.Report, 
             CreateSubDocTableCallable.Report, DeleteCallable.Report,
             FindCollectionsCallable.Report, InsertCallable.Report,
             QueryCallable.Report, ReadAllCursorCallable.Report, 
@@ -149,7 +155,8 @@ public class AbstractReportFactory implements ReportFactory {
             CreateIndexCallable.Report, DropIndexCallable.Report,
             GetIndexesCallable.Report, GetDatabasesCallable.Report,
             CountCallable.Report, GetIndexSizeCallable.Report, 
-            GetCollectionSizeCallable.Report, GetDocumentsSize.Report {
+            GetCollectionSizeCallable.Report, GetDocumentsSize.Report, 
+            GetCollectionsMetainfoCallable.Report, MaxElementsCallable.Report {
 
         public static final DummyReport INSTANCE = new DummyReport();
 
@@ -163,10 +170,6 @@ public class AbstractReportFactory implements ReportFactory {
 
         @Override
         public void commitExecuted() {
-        }
-
-        @Override
-        public void countRemainingDocsExecuted(CursorId cursorId, int remainingDocs) {
         }
 
         @Override
@@ -190,7 +193,7 @@ public class AbstractReportFactory implements ReportFactory {
         }
 
         @Override
-        public void queryExecuted(String collection, CursorId cursorId, QueryCriteria filter, Projection projection, int maxResults, int realResultCount) {
+        public void queryExecuted(String collection, CursorId cursorId, QueryCriteria filter, Projection projection, int maxResults) {
         }
 
         @Override
@@ -249,6 +252,14 @@ public class AbstractReportFactory implements ReportFactory {
 
         @Override
         public void getDocumentSizeExecuted(String collection, Long size) {
+        }
+
+        @Override
+        public void getCollectionsMetainfoExecuted(List<CollectionMetainfo> metainfo) {
+        }
+
+        @Override
+        public void maxElementsExecuted(CursorId cursorId, int result) {
         }
 
     }

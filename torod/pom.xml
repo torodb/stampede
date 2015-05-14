@@ -20,7 +20,6 @@
         <module>db-wrappers</module>
         <module>d2r</module>
         <module>connection</module>
-        <module>db-cursors</module>
         <module>backend</module>
     </modules>
 

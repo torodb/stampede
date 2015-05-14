@@ -1,7 +1,6 @@
-CREATE OR REPLACE FUNCTION find_doc(collection varchar, did integer, tables integer[])
+CREATE OR REPLACE FUNCTION find_doc(col_schema varchar, did integer, tables integer[])
 RETURNS SETOF find_doc_type AS $$
 DECLARE
-    col_schema varchar := collection_to_schema(collection);
     t integer;
     i integer := 0;
     n integer := array_length(tables, 1);

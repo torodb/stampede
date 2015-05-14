@@ -23,10 +23,10 @@ package com.torodb.torod.db.postgresql.meta;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Maps;
-import com.torodb.torod.db.postgresql.IdsFilter;
 import com.torodb.torod.db.postgresql.converters.StructureConverter;
 import com.torodb.torod.db.postgresql.meta.tables.SubDocTable;
 import com.torodb.torod.core.subdocument.SubDocType;
+import com.torodb.torod.db.exceptions.InvalidCollectionSchemaException;
 import com.torodb.torod.db.sql.index.IndexManager;
 import java.sql.DatabaseMetaData;
 import java.util.ArrayList;
@@ -35,8 +35,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.jooq.*;
 import org.jooq.impl.SchemaImpl;
@@ -47,7 +46,6 @@ import org.jooq.impl.SchemaImpl;
 public final class CollectionSchema extends SchemaImpl {
 
     private static final long serialVersionUID = 577805060;
-    private static final Pattern collectionSchemaPattern = Pattern.compile("col_([_a-z0-9]+)");
     private static final int MIN_VALUE_TABLE_ID = 0;
 
     private final String collection;
@@ -59,66 +57,81 @@ public final class CollectionSchema extends SchemaImpl {
     private final IndexStorage indexStorage;
     private final IndexManager indexManager;
 
-    CollectionSchema(String collection, DSLContext dsl, TorodbMeta torodbMeta) {
+    CollectionSchema(
+            @Nonnull String schemName, 
+            @Nonnull String colName, 
+            @Nonnull DSLContext dsl, 
+            @Nonnull TorodbMeta torodbMeta) throws InvalidCollectionSchemaException {
         this(
-                getCollectionSchemaName(collection), 
-                Collections.<Table<?>>emptyList(), 
+                schemName,
+                colName, 
                 dsl,
+                null,
                 null,
                 torodbMeta
         );
     }
-
-    CollectionSchema(Schema schema, DSLContext dsl, DatabaseMetaData jdbcMeta, TorodbMeta torodbMeta) {
-        this(
-                schema.getName(), 
-                schema.getTables(), 
-                dsl,
-                jdbcMeta,
-                torodbMeta
-        );
-        assert isCollectionSchema(schema);
-    }
-
-    private CollectionSchema(
-            String schemaName, 
-            Iterable<? extends Table> tables, 
-            DSLContext dsl,
-            DatabaseMetaData jdbcMeta,
-            TorodbMeta torodbMeta
-    ) {
+    
+    public CollectionSchema(
+            @Nonnull String schemaName,
+            @Nonnull String colName, 
+            @Nonnull DSLContext dsl, 
+            @Nullable DatabaseMetaData jdbcMeta, 
+            @Nullable Meta jooqMeta, 
+            @Nonnull TorodbMeta torodbMeta) throws InvalidCollectionSchemaException {
         super(schemaName);
-
-        this.collection = schemaNameToCollection(schemaName);
+        
+        this.collection = colName;
         this.typesById = HashBiMap.create();
         this.tables = Maps.newHashMap();
         this.structureConverter = new StructureConverter(this);
-        this.structuresCache = new StructuresCache(this, schemaName, structureConverter);
+        this.structuresCache = new StructuresCache(this, getName(), structureConverter);
 
         int maxTypeId = MIN_VALUE_TABLE_ID;
 
-        for (Table<?> table : tables) {
-            if (SubDocTable.isSubDocTable(table.getName())) {
-                SubDocTable subDocTable = new SubDocTable(
-                        table.getName(), 
-                        this, 
-                        jdbcMeta
-                );
-                int subDocId = subDocTable.getTypeId();
-                SubDocType type = subDocTable.getSubDocType();
-                this.tables.put(type, subDocTable);
-                this.typesById.put(subDocId, type);
-
-                if (maxTypeId < subDocId) {
-                    maxTypeId = subDocId;
+        Iterable<? extends Table> existingTables;
+        if (jooqMeta != null) {
+            Schema standardSchema = null;
+            for (Schema schema : jooqMeta.getSchemas()) {
+                if (schema.getName().equals(schemaName)) {
+                    standardSchema = schema;
+                    break;
                 }
             }
+            if (standardSchema == null) {
+                throw new IllegalStateException(
+                        "The collection "+collection+" is associated with schema "
+                        + schemaName+" but there is no schema with that name");
+            }
+
+            checkCollectionSchema(standardSchema);
+            for (Table<?> table : standardSchema.getTables()) {
+                if (SubDocTable.isSubDocTable(table.getName())) {
+                    SubDocTable subDocTable = new SubDocTable(
+                            table.getName(), 
+                            this, 
+                            jdbcMeta
+                    );
+                    int subDocId = subDocTable.getTypeId();
+                    SubDocType type = subDocTable.getSubDocType();
+                    this.tables.put(type, subDocTable);
+                    this.typesById.put(subDocId, type);
+
+                    if (maxTypeId < subDocId) {
+                        maxTypeId = subDocId;
+                    }
+                }
+            }
+            existingTables = standardSchema.getTables();
+        }
+        else {
+            existingTables = Collections.emptySet();
         }
         this.typeIdProvider = new AtomicInteger(maxTypeId);
 
         this.structureConverter.initialize();
 
-        this.structuresCache.initialize(dsl, tables);
+        this.structuresCache.initialize(dsl, existingTables);
         
         this.indexStorage = new IndexStorage(torodbMeta.getDatabaseName(), this);
         indexStorage.initialize(dsl);
@@ -130,7 +143,7 @@ public final class CollectionSchema extends SchemaImpl {
                 structuresCache
         );
     }
-
+    
     public IndexManager getIndexManager() {
         return indexManager;
     }
@@ -139,12 +152,8 @@ public final class CollectionSchema extends SchemaImpl {
         return indexStorage;
     }
 
-    public static boolean isCollectionSchema(Schema schema) {
-        return schemaNameToCollection(schema.getName()) != null;
-    }
-    
-    public static boolean isCollectionSchema(String schemaName) {
-        return schemaNameToCollection(schemaName) != null;
+    public static void checkCollectionSchema(Schema schema) throws InvalidCollectionSchemaException {
+        //TODO: improve checks
     }
 
     /**
@@ -226,25 +235,6 @@ public final class CollectionSchema extends SchemaImpl {
 
     public StructuresCache getStructuresCache() {
         return structuresCache;
-    }
-
-    private static String getCollectionSchemaName(String collection) {
-        IdsFilter.filterCollectionName(collection);
-        return "col_" + collection;
-    }
-
-    /**
-     * @param name
-     * @return the name of the collection represented by this schema name or null if the given name doesn't represent a
-     *         collection
-     */
-    @Nullable
-    public static String schemaNameToCollection(String name) {
-        Matcher matcher = collectionSchemaPattern.matcher(name);
-        if (matcher.find()) {
-            return matcher.group(1);
-        }
-        return null;
     }
 
     public StructureConverter getStructureConverter() {

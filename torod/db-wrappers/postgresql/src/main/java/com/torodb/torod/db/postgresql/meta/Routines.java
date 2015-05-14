@@ -40,27 +40,14 @@ import org.jooq.Configuration;
 public class Routines {
 
     /**
-     * Call <code>public.create_collection_schema(collection varchar)</code>
-     * <p>
-     * @param configuration
-     * @param collection
-     */
-    public static void createCollectionSchema(Configuration configuration, String collection) {
-        CreateCollectionSchema f = new CreateCollectionSchema();
-        f.setCollection(collection);
-
-        f.execute(configuration);
-    }
-
-    /**
      * Call <code>public.first_free_value_type_id</code>
      * @param configuration
      * @param colSchema
      * @return 
      */
-    public static Integer firstFreeDocId(Configuration configuration, String colSchema) {
+    public static Integer firstFreeDocId(Configuration configuration, CollectionSchema colSchema) {
         com.torodb.torod.db.postgresql.meta.routines.FirstFreeDocId f = new com.torodb.torod.db.postgresql.meta.routines.FirstFreeDocId();
-        f.setColSchema(colSchema);
+        f.setColSchema(colSchema.getName());
 
         f.execute(configuration);
         return f.getReturnValue();
@@ -69,11 +56,11 @@ public class Routines {
     /**
      * Call <code>public.reserve_value_type_id</code>
      * @param configuration
-     * @param colSchema
+     * @param colSchema 
      * @param increment
      * @return 
      */
-    public static Integer reserveDocIds(Configuration configuration, String colSchema, Integer increment) {
+    public static Integer reserveDocIds(Configuration configuration, CollectionSchema colSchema, Integer increment) {
         com.torodb.torod.db.postgresql.meta.routines.ReserveDocIds f = new com.torodb.torod.db.postgresql.meta.routines.ReserveDocIds();
         f.setColSchema(colSchema);
         f.setIncrement(increment);

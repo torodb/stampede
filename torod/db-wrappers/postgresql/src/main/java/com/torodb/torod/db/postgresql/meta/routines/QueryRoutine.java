@@ -70,7 +70,7 @@ public class QueryRoutine {
             c = configuration.connectionProvider().acquire();
             ps = c.prepareStatement(QUERY);
 
-            ps.setString(1, colSchema.getCollection());
+            ps.setString(1, colSchema.getName());
 
             ps.setArray(2, c.createArrayOf("integer", requestedDocs));
 

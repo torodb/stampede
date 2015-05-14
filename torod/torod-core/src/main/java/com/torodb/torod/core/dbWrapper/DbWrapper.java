@@ -105,7 +105,6 @@ public interface DbWrapper {
      * @throws ImplementationDbException
      */
     @Nonnull
-    public Cursor getGlobalCursor(CursorId cursorId) throws IllegalArgumentException,
-            ImplementationDbException;
+    public Cursor getGlobalCursor(CursorId cursorId) throws IllegalArgumentException;
 
 }

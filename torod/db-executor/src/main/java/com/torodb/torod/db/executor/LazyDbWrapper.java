@@ -10,17 +10,19 @@ import com.torodb.torod.core.dbWrapper.exceptions.UserDbException;
 import com.torodb.torod.core.exceptions.ToroImplementationException;
 import com.torodb.torod.core.language.projection.Projection;
 import com.torodb.torod.core.language.querycriteria.QueryCriteria;
+import com.torodb.torod.core.pojos.CollectionMetainfo;
 import com.torodb.torod.core.pojos.IndexedAttributes;
 import com.torodb.torod.core.pojos.NamedToroIndex;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.core.subdocument.SubDocType;
 import com.torodb.torod.core.subdocument.SubDocument;
-import com.torodb.torod.core.subdocument.structure.DocStructure;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.NotThreadSafe;
+import javax.json.Json;
 
 /**
  *
@@ -64,7 +66,7 @@ public class LazyDbWrapper implements DbWrapper {
 
     @Override
     public Cursor getGlobalCursor(CursorId cursorId) throws
-            IllegalArgumentException, ImplementationDbException {
+            IllegalArgumentException {
         return delegate.getGlobalCursor(cursorId);
     }
     
@@ -101,21 +103,11 @@ public class LazyDbWrapper implements DbWrapper {
         }
 
         @Override
-        public void createCollection(String collection) throws
-                ImplementationDbException {
-            getDelegate().createCollection(collection);
-        }
-
-        @Override
-        public Map<Integer, DocStructure> getAllStructures(String collection)
-                throws ImplementationDbException {
-            return getDelegate().getAllStructures(collection);
-        }
-
-        @Override
-        public DocStructure getStructure(String collection, int structureId)
-                throws ImplementationDbException {
-            return getDelegate().getStructure(collection, structureId);
+        public void createCollection(
+                String collectionName, 
+                String schemaName, 
+                Json other) throws ImplementationDbException {
+            getDelegate().createCollection(collectionName, schemaName, other);
         }
 
         @Override
@@ -255,6 +247,16 @@ public class LazyDbWrapper implements DbWrapper {
         public Long getDocumentsSize(String collection) {
             try {
                 return getDelegate().getDocumentsSize(collection);
+            }
+            catch (ImplementationDbException ex) {
+                throw new ToroImplementationException(ex);
+            }
+        }
+
+        @Override
+        public List<CollectionMetainfo> getCollectionsMetainfo() {
+            try {
+                return getDelegate().getCollectionsMetainfo();
             }
             catch (ImplementationDbException ex) {
                 throw new ToroImplementationException(ex);

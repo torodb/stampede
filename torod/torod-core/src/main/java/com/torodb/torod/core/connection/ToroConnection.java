@@ -20,15 +20,23 @@
 
 package com.torodb.torod.core.connection;
 
-import com.torodb.torod.core.pojos.Database;
 import com.torodb.torod.core.Session;
+import com.torodb.torod.core.cursors.CursorId;
+import com.torodb.torod.core.cursors.UserCursor;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
-import java.util.List;
-import java.util.concurrent.Future;
+import com.torodb.torod.core.exceptions.CursorNotFoundException;
+import com.torodb.torod.core.exceptions.ToroException;
+import com.torodb.torod.core.language.projection.Projection;
+import com.torodb.torod.core.language.querycriteria.QueryCriteria;
+import com.torodb.torod.core.pojos.CollectionMetainfo;
+import com.torodb.torod.core.subdocument.ToroDocument;
 import javax.annotation.concurrent.NotThreadSafe;
 import java.io.Closeable;
 import java.util.Collection;
+import javax.annotation.Nonnegative;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import javax.json.Json;
 
 /**
  *
@@ -42,19 +50,78 @@ public interface ToroConnection extends Closeable {
     @Override
     public void close();
     
+    @Nonnull
     public ToroTransaction createTransaction() throws ImplementationDbException;
+
+    @Nonnull
+    public UserCursor getCursor(CursorId cursorId) throws CursorNotFoundException;
     
-    public CursorManager getCursorManager();
+    /**
+     * Opens a unlimited cursor that iterates over the given query.
+     * <p>
+     * @param collection
+     * @param queryCriteria if null, all documents are returned
+     * @param projection    if null, all fields are returned
+     * @param numberToSkip
+     * @param autoclose
+     * @param hasTimeout
+     * @return
+     * @throws ToroException
+     */
+    @Nonnull
+    public UserCursor<ToroDocument> openUnlimitedCursor(
+            @Nonnull String collection,
+            @Nullable QueryCriteria queryCriteria,
+            @Nullable Projection projection,
+            @Nonnegative int numberToSkip,
+            boolean autoclose,
+            boolean hasTimeout
+    ) throws ToroException;
+
+    /**
+     * Opens a limited cursor that iterates over the given query.
+     * <p>
+     * @param collection
+     * @param queryCriteria if null, all documents are returned
+     * @param projection    if null, all fields are returned
+     * @param numberToSkip
+     * @param limit         must be higher than 0
+     * @param autoclose
+     * @param hasTimeout
+     * @return
+     * @throws ToroException
+     */
+    @Nonnull
+    public UserCursor<ToroDocument> openLimitedCursor(
+            @Nonnull String collection,
+            @Nullable QueryCriteria queryCriteria,
+            @Nullable Projection projection,
+            @Nonnegative int numberToSkip,
+            int limit,
+            boolean autoclose,
+            boolean hasTimeout
+    ) throws ToroException;
     
+    /**
+     * Opens a new cursor that iterates over all collection metainformation on
+     * the database.
+     * @return 
+     */
+    @Nonnull
+    public UserCursor<CollectionMetainfo> openCollectionsMetainfoCursor();
+    
+    @Nonnull
     public Session getSession();
 
     /**
      * Checks whether a collection already exists. If it doesn't, it creates the collection
      * @param collection The name of the collection
+     * @param otherInfo A JSON document with extra information
      * @return true if the collection was created, false if it already existed
      */
-    public boolean createCollection(String collection);
+    public boolean createCollection(@Nonnull String collection, @Nullable Json otherInfo);
     
+    @Nonnull
     public Collection<String> getCollections();
     
     public boolean dropCollection(

@@ -32,6 +32,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
+import javax.json.Json;
 
 /**
  *
@@ -66,12 +67,15 @@ class DefaultSystemExecutor implements SystemExecutor {
 
     @Override
     public Future<?> createCollection(
-            String collection, 
+            String collectionName, 
+            Json other,
             CreateCollectionCallback callback) throws ToroTaskExecutionException {
         return submit(
                 new CreateCollectionCallable(
                         wrapper,
-                        collection, 
+                        collectionName, 
+                        null,
+                        other,
                         callback, 
                         reportFactory.createCreateCollectionReport()
                 )

@@ -84,8 +84,7 @@ public class QueryCallable extends Job<Void> {
                     cursorId, 
                     filter, 
                     projection, 
-                    maxResults, 
-                    dbWrapper.getGlobalCursor(cursorId).countRemainingDocs()
+                    maxResults
             );
         }
         catch (ImplementationDbException ex) {
@@ -115,7 +114,6 @@ public class QueryCallable extends Job<Void> {
             @Nonnull CursorId cursorId, 
             @Nullable QueryCriteria filter, 
             @Nullable Projection projection,
-            @Nonnegative int maxResults,
-            @Nonnegative int realResultCount);
+            @Nonnegative int maxResults);
     }
 }

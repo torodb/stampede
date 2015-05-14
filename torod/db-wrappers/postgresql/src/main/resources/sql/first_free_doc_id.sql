@@ -1,7 +1,7 @@
-CREATE OR REPLACE FUNCTION first_free_doc_id(collection varchar)
+CREATE OR REPLACE FUNCTION first_free_doc_id(col_schema varchar)
 RETURNS integer AS $$
 DECLARE
-    seq_name varchar := collection_to_schema(collection) || '.root_seq';
+    seq_name varchar := col_schema || '.root_seq';
 BEGIN
     return nextval(seq_name);
 END;

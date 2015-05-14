@@ -23,9 +23,7 @@ package com.torodb.torod.db.executor.jobs;
 import com.torodb.torod.core.cursors.CursorId;
 import com.torodb.torod.core.dbWrapper.Cursor;
 import com.torodb.torod.core.dbWrapper.DbWrapper;
-import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.exceptions.ToroException;
-import com.torodb.torod.core.exceptions.ToroImplementationException;
 import com.torodb.torod.core.exceptions.ToroRuntimeException;
 import com.torodb.torod.core.exceptions.UserToroException;
 import javax.inject.Inject;
@@ -62,9 +60,6 @@ public class CloseCursorCallable extends Job<Void> {
         }
         catch (IllegalArgumentException ex) {
             throw new UserToroException(ex);
-        }
-        catch (ImplementationDbException ex) {
-            throw new ToroImplementationException(ex);
         }
     }
 

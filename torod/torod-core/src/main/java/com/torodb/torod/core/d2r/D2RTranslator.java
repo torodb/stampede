@@ -33,7 +33,7 @@ public interface D2RTranslator {
 
     public SplitDocument translate(SessionExecutor sessionExecutor, String collection, ToroDocument document);
 
-    public ToroDocument translate(SessionExecutor sessionExecutor, SplitDocument splitDocument);
+    public ToroDocument translate(SplitDocument splitDocument);
     
     public void shutdown();
     

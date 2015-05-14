@@ -24,15 +24,12 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.Futures;
 import com.toro.torod.connection.update.Updator;
-import com.torodb.torod.core.Session;
 import com.torodb.torod.core.WriteFailMode;
 import com.torodb.torod.core.config.DocumentBuilderFactory;
 import com.torodb.torod.core.connection.*;
-import com.torodb.torod.core.cursors.CursorId;
+import com.torodb.torod.core.cursors.UserCursor;
 import com.torodb.torod.core.d2r.D2RTranslator;
-import com.torodb.torod.core.exceptions.ToroImplementationException;
-import com.torodb.torod.core.exceptions.ToroRuntimeException;
-import com.torodb.torod.core.exceptions.UserToroException;
+import com.torodb.torod.core.exceptions.*;
 import com.torodb.torod.core.executor.SessionExecutor;
 import com.torodb.torod.core.executor.SessionTransaction;
 import com.torodb.torod.core.executor.ToroTaskExecutionException;
@@ -64,21 +61,19 @@ public class DefaultToroTransaction implements ToroTransaction {
     private final D2RTranslator d2r;
     private final SessionExecutor executor;
     private final DocumentBuilderFactory documentBuilderFactory;
-    private final CursorManager cursorManager;
+    private final DefaultToroConnection connection;
     
     DefaultToroTransaction(
-            Session session,
+            DefaultToroConnection connection,
             SessionTransaction sessionTransaction,
             D2RTranslator d2r,
             SessionExecutor executor,
-            DocumentBuilderFactory documentBuilderFactory,
-            CursorManager cursorManager
-    ) {
+            DocumentBuilderFactory documentBuilderFactory) {
+        this.connection = connection;
         this.sessionTransaction = sessionTransaction;
         this.d2r = d2r;
         this.executor = executor;
         this.documentBuilderFactory = documentBuilderFactory;
-        this.cursorManager = cursorManager;
     }
 
     @Override
@@ -237,15 +232,30 @@ public class DefaultToroTransaction implements ToroTransaction {
             UpdateResponse.Builder responseBuilder
     ) throws InterruptedException, ExecutionException {
 
-        CursorId cursor = cursorManager.openUnlimitedCursor(
-                collection, 
-                update.getQuery(), 
-                null, 
-                0, 
-                true,
-                false
-        );
-        List<ToroDocument> candidates = cursorManager.readAllCursor(cursor);
+        UserCursor<ToroDocument> cursor;
+        try {
+            cursor = connection.openUnlimitedCursor(
+                            collection,
+                            update.getQuery(),
+                            null,
+                            0,
+                            true,
+                            false
+                    );
+        }
+        catch (NotAutoclosableCursorException ex) {
+            throw new ToroImplementationException("This should not happen!", ex);
+        }
+        List<ToroDocument> candidates;
+        try {
+            candidates = cursor.readAll();
+        }
+        catch (ClosedToroCursorException ex) {
+            throw new ToroImplementationException(
+                    "The used cursor has been closed before it can be used", 
+                    ex
+            );
+        }
 
         responseBuilder.addCandidates(candidates.size());
 

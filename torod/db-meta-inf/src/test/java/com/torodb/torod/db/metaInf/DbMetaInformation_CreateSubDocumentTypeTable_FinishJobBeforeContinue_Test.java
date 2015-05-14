@@ -38,9 +38,8 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 import java.util.concurrent.Future;
+import javax.json.Json;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.*;
 
 /**
@@ -90,7 +89,7 @@ public class DbMetaInformation_CreateSubDocumentTypeTable_FinishJobBeforeContinu
         Mockito.doReturn(64).when(config).getCacheSubDocTypeStripes();
         cache = new DefaultDbMetaInformationCache(executorFactory, idHeuristic, tableMetaInfoFactory);
         
-        cache.createCollection(null, COLLECTION);
+        cache.createCollection(null, COLLECTION, null);
     }
     
     private SessionExecutor createSessionExecutor() {
@@ -113,9 +112,9 @@ public class DbMetaInformation_CreateSubDocumentTypeTable_FinishJobBeforeContinu
 
             @Override
             public Object answer(InvocationOnMock invocation) throws Throwable {
-                return whenCreateCollection(COLLECTION, (SystemExecutor.CreateCollectionCallback) invocation.getArguments()[1]);
+                return whenCreateCollection(COLLECTION, (SystemExecutor.CreateCollectionCallback) invocation.getArguments()[2]);
             }
-        }).when(systemExecutor).createCollection(any(String.class), any(SystemExecutor.CreateCollectionCallback.class));
+        }).when(systemExecutor).createCollection(any(String.class), any(Json.class), any(SystemExecutor.CreateCollectionCallback.class));
         Mockito.doReturn(1l).when(systemExecutor).getTick();
     }
     
@@ -152,7 +151,7 @@ public class DbMetaInformation_CreateSubDocumentTypeTable_FinishJobBeforeContinu
                         eq(type),
                         any(SystemExecutor.CreateSubDocTypeTableCallback.class));
         verify(systemExecutor)
-                .createCollection(eq(COLLECTION), any(SystemExecutor.CreateCollectionCallback.class));
+                .createCollection(eq(COLLECTION), any(Json.class), any(SystemExecutor.CreateCollectionCallback.class));
         verify(systemExecutor, Mockito.atLeast(1))
                 .getTick();
         verifyNoMoreInteractions(systemExecutor);

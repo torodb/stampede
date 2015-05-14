@@ -43,12 +43,12 @@
         <dependency>
             <groupId>org.jooq</groupId>
             <artifactId>jooq</artifactId>
-            <version>3.4.4-byteafix</version>
+            <version>3.6.0</version>
         </dependency>
         <dependency>
             <groupId>org.jooq</groupId>
             <artifactId>jooq-meta</artifactId>
-            <version>3.5.1</version>
+            <version>3.6.0</version>
         </dependency>
         <dependency>
             <groupId>com.google.code.findbugs</groupId>
@@ -93,7 +93,7 @@
                         <!-- Specify the maven code generator plugin -->
                         <groupId>org.jooq</groupId>
                         <artifactId>jooq-codegen-maven</artifactId>
-                        <version>3.4.1</version>
+                        <version>3.6.0</version>
 
                         <!-- The plugin should hook into the generate goal -->
                         <executions>
@@ -120,7 +120,7 @@
                             <!-- JDBC connection parameters -->
                             <jdbc>
                                 <driver>org.postgresql.Driver</driver>
-                                <url>jdbc:postgresql://localhost/torod</url>
+                                <url>jdbc:postgresql://localhost:5433/torod</url>
                                 <user>torod</user>
                                 <password>torod</password>
                             </jdbc>
@@ -132,7 +132,7 @@
                                     <name>org.jooq.util.postgres.PostgresDatabase</name>
                                     <includes>.*</includes>
                                     <excludes></excludes>
-                                    <inputSchema>public</inputSchema>
+                                    <inputSchema>torodb</inputSchema>
                                 </database>
                                 <target>
                                     <packageName>com.torodb.torod.db.meta</packageName>

@@ -141,7 +141,7 @@ public class MemBlockingExecutorServiceProvider extends AbstractExecutorServiceP
                 if (hadToStop) {
                     long waitedMicros = (System.nanoTime() - startNanos)
                             / 1000000;
-                    LOGGER.debug("Task had to wait " + waitedMicros + " ms");
+                    LOGGER.debug("Task had to wait {} ms", waitedMicros);
                 }
         }
         

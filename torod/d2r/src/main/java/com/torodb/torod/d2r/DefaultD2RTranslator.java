@@ -80,7 +80,7 @@ public class DefaultD2RTranslator implements D2RTranslator {
 
     @Override
     public SplitDocument translate(SessionExecutor sessionExecutor, String collection, ToroDocument document) {
-        cache.createCollection(sessionExecutor, collection);
+        cache.createCollection(sessionExecutor, collection, null);
 
         final SplitDocument splitDocument = splitter.split(sessionExecutor, collection, document);
 
@@ -88,7 +88,7 @@ public class DefaultD2RTranslator implements D2RTranslator {
     }
 
     @Override
-    public ToroDocument translate(SessionExecutor sessionExecutor, SplitDocument splitDocument) {
+    public ToroDocument translate(SplitDocument splitDocument) {
         final ToroDocument.DocumentBuilder docBuilder = documentBuilderFactory.newDocBuilder();
 
         SubDocValueToDocValueTranslator.Argument arg = new SubDocValueToDocValueTranslator.Argument(splitDocument, splitDocument.getRoot());

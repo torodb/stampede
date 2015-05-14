@@ -19,7 +19,6 @@
  */
 package com.torodb.torod.db.postgresql.meta.routines;
 
-import com.google.common.collect.Iterators;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
 import com.google.common.collect.Sets;
@@ -35,7 +34,6 @@ import java.sql.*;
 import java.util.*;
 import org.jooq.*;
 import org.jooq.impl.DSL;
-import org.jooq.impl.SQLDataType;
 
 /**
  *

@@ -1,75 +1,88 @@
 
 package com.toro.torod.connection;
 
-import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.Futures;
-import com.torodb.torod.core.connection.CursorManager;
-import com.torodb.torod.core.cursors.CursorId;
-import com.torodb.torod.core.cursors.CursorProperties;
-import com.torodb.torod.core.cursors.InnerCursorManager;
+import com.toro.torod.connection.cursors.CollectionMetainfoToroCursor;
+import com.toro.torod.connection.cursors.StandardDocumentToroCursor;
+import com.torodb.torod.core.backend.DbBackend;
+import com.torodb.torod.core.cursors.*;
 import com.torodb.torod.core.d2r.D2RTranslator;
-import com.torodb.torod.core.dbWrapper.DbWrapper;
+import com.torodb.torod.core.exceptions.CursorNotFoundException;
+import com.torodb.torod.core.exceptions.NotAutoclosableCursorException;
+import com.torodb.torod.core.exceptions.ToroRuntimeException;
 import com.torodb.torod.core.executor.SessionExecutor;
-import com.torodb.torod.core.executor.ToroTaskExecutionException;
 import com.torodb.torod.core.language.projection.Projection;
 import com.torodb.torod.core.language.querycriteria.QueryCriteria;
-import com.torodb.torod.core.subdocument.SplitDocument;
+import com.torodb.torod.core.pojos.CollectionMetainfo;
 import com.torodb.torod.core.subdocument.ToroDocument;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 
 /**
  *
  */
-public class DefaultCursorManager implements CursorManager {
+public class DefaultCursorManager implements ToroCursorManager {
 
-    private final InnerCursorManager innerCursorManager;
-    private final DbWrapper dbWrapper;
-    private final SessionExecutor sessionExecutor;
+    private final ToroCursorStorage storage;
     private final D2RTranslator d2r;
+    private final AtomicInteger idProvider;
 
     @Inject
     public DefaultCursorManager(
-            InnerCursorManager innerCursorManager, 
-            DbWrapper dbWrapper, 
-            SessionExecutor sessionExecutor, 
+            DbBackend backend,
             D2RTranslator d2r) {
-        this.innerCursorManager = innerCursorManager;
-        this.dbWrapper = dbWrapper;
-        this.sessionExecutor = sessionExecutor;
+        this.storage = new ToroCursorStorage(backend);
         this.d2r = d2r;
+        this.idProvider = new AtomicInteger(0);
     }
-
+    
     @Override
-    public CursorId openUnlimitedCursor(
+    public ToroCursor<ToroDocument> openUnlimitedCursor(
+            @Nonnull SessionExecutor sessionExecutor,
             String collection,
             @Nullable QueryCriteria queryCriteria,
             @Nullable Projection projection,
             int numberToSkip,
             boolean autoclose,
-            boolean hasTimeout) {
+            boolean hasTimeout) throws NotAutoclosableCursorException {
 
-        CursorProperties cursor = innerCursorManager.openUnlimitedCursor(
-                        hasTimeout,
-                        autoclose
-                );
-        sessionExecutor.query(
+        CursorId id = consumeId();
+        
+        Future<Void> query = sessionExecutor.query(
                 collection,
-                cursor.getId(),
+                id,
                 queryCriteria,
                 projection,
                 0
         );
-
-        return cursor.getId();
+        try {
+            query.get();
+        }
+        catch (InterruptedException ex) {
+            throw new ToroRuntimeException(ex);
+        }
+        catch (ExecutionException ex) {
+            throw new ToroRuntimeException(ex);
+        }
+        
+        StandardDocumentToroCursor cursor;
+        cursor = new StandardDocumentToroCursor(
+                sessionExecutor,
+                id,
+                hasTimeout,
+                autoclose,
+                d2r
+        );
+        return storage.storeCursor(cursor, sessionExecutor);
     }
 
     @Override
-    public CursorId openLimitedCursor(
+    public ToroCursor<ToroDocument> openLimitedCursor(
+            @Nonnull SessionExecutor sessionExecutor,
             String collection,
             @Nullable QueryCriteria queryCriteria,
             @Nullable Projection projection,
@@ -78,130 +91,73 @@ public class DefaultCursorManager implements CursorManager {
             boolean autoclose,
             boolean hasTimeout) {
 
-        if (maxResults <= 0) {
-            throw new IllegalArgumentException(
-                    "The limit must be higher than 0 (>= 1)");
-        }
-        CursorProperties cursor = innerCursorManager.openLimitedCursor(
-                        hasTimeout,
-                        autoclose,
-                        maxResults
-                );
-        sessionExecutor.query(
-                collection, 
-                cursor.getId(),
+        CursorId id = consumeId();
+        
+        Future<Void> query = sessionExecutor.query(
+                collection,
+                id,
                 queryCriteria,
                 projection,
-                maxResults
+                0
         );
-
-        return cursor.getId();
-    }
-
-    @Override
-    public List<ToroDocument> readCursor(CursorId cursorId,
-                                         int limit) {
-        //TODO: check security
-
-        if (limit <= 0) {
-            throw new IllegalArgumentException(
-                    "Limit must be a positive numbre, but " + limit
-                    + " was recived");
-        }
-
         try {
-            List<? extends SplitDocument> splitDocs = sessionExecutor
-                    .readCursor(cursorId, limit)
-                    .get();
-            List<ToroDocument> docs = Lists.newArrayListWithCapacity(
-                    splitDocs.size()
-            );
-            for (SplitDocument splitDocument : splitDocs) {
-                docs.add(d2r.translate(sessionExecutor, splitDocument));
-            }
-
-            innerCursorManager.notifyRead(cursorId, docs.size());
-
-            return docs;
-        }
-        catch (ToroTaskExecutionException ex) {
-            //TODO: Change exceptions
-            throw new RuntimeException(ex);
+            query.get();
         }
         catch (InterruptedException ex) {
-            //TODO: Change exceptions
-            throw new RuntimeException(ex);
+            throw new ToroRuntimeException(ex);
         }
         catch (ExecutionException ex) {
-            //TODO: Change exceptions
-            throw new RuntimeException(ex);
+            throw new ToroRuntimeException(ex);
         }
+        
+        StandardDocumentToroCursor cursor = new StandardDocumentToroCursor(
+                sessionExecutor,
+                id, 
+                hasTimeout, 
+                maxResults,
+                autoclose, 
+                d2r
+        );
+        return storage.storeCursor(cursor, sessionExecutor);
     }
 
     @Override
-    public List<ToroDocument> readAllCursor(CursorId cursorId) {
-        //TODO: check security
-
-        try {
-            List<? extends SplitDocument> splitDocs;
-
-            CursorProperties prop = innerCursorManager.getCursor(cursorId);
-            if (prop.hasLimit()) {
-                int elementsToRead = prop.getLimit() - innerCursorManager.
-                        getReadElements(cursorId);
-
-                assert elementsToRead >= 0;
-
-                if (elementsToRead == 0) {
-                    return Collections.emptyList();
-                }
-                else {
-                    splitDocs = sessionExecutor.readAllCursor(cursorId).get();
-                }
-            }
-            else {
-                splitDocs = sessionExecutor.readAllCursor(cursorId).get();
-            }
-
-            List<ToroDocument> docs = Lists.newArrayListWithCapacity(splitDocs.
-                    size());
-            for (SplitDocument splitDocument : splitDocs) {
-                docs.add(d2r.translate(sessionExecutor, splitDocument));
-            }
-
-            innerCursorManager.notifyAllRead(cursorId);
-
-            return docs;
-        }
-        catch (ToroTaskExecutionException ex) {
-            //TODO: Change exceptions
-            throw new RuntimeException(ex);
-        }
-        catch (InterruptedException ex) {
-            //TODO: Change exceptions
-            throw new RuntimeException(ex);
-        }
-        catch (ExecutionException ex) {
-            //TODO: Change exceptions
-            throw new RuntimeException(ex);
-        }
+    public ToroCursor<CollectionMetainfo> openCollectionsMetainfoCursor(
+            @Nonnull SessionExecutor sessionExecutor) {
+        Future<List<CollectionMetainfo>> futureMetainfo = 
+                sessionExecutor.getCollectionsMetainfo();
+        
+        CursorId id = consumeId();
+        CollectionMetainfoToroCursor cursor = new CollectionMetainfoToroCursor(
+                id, 
+                true, 
+                true, 
+                futureMetainfo
+        );
+        
+        return storage.storeCursor(cursor, sessionExecutor);
     }
 
     @Override
-    public Future<Integer> getPosition(CursorId cursorId) {
-        return Futures.immediateFuture(innerCursorManager.getReadElements(cursorId));
+    public ToroCursor lookForCursor(CursorId cursorId) throws
+            CursorNotFoundException {
+        return storage.getCursor(cursorId);
     }
 
     @Override
-    public Future<Integer> countRemainingDocs(CursorId cursorId) {
-        return sessionExecutor.countRemainingDocs(cursorId);
+    public <E> ToroCursor<E> lookForCursor(CursorId cursorId, Class<E> expectedTypeClass)
+            throws CursorNotFoundException {
+        ToroCursor cursor = storage.getCursor(cursorId);
+        if (expectedTypeClass.isAssignableFrom(cursor.getType())) {
+            return cursor;
+        }
+        throw new CursorNotFoundException(
+                cursorId, 
+                "Cursor with "+ cursorId+" is of a different type ("+cursor.getType()+")"
+        );
     }
-
-    @Override
-    public void closeCursor(CursorId cursorId) {
-        //TODO: check security
-
-        //when a cursor is removed from the cursor manager, it is closed in the database
-        innerCursorManager.close(cursorId);
+    
+    private CursorId consumeId() {
+        return new CursorId(idProvider.incrementAndGet());
     }
 }

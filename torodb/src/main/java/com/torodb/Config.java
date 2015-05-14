@@ -57,7 +57,7 @@ public class Config implements DbBackendConfiguration, MongoServerConfig {
     private int mongoPort = 27017;
 	@Parameter(names={"--debug"}, description="Change log level to DEBUG")
 	private boolean debug = false;
-	@Parameter(names={"--verbose"}, description="Change log level to INFO")
+	@Parameter(names={"--verbose"}, description="Change log level to TRACE")
 	private boolean verbose = false;
 
 	public boolean askForPassword() {

@@ -22,8 +22,8 @@ package com.toro.torod.connection;
 
 import com.torodb.torod.core.connection.ToroConnection;
 import com.torodb.torod.core.Torod;
+import com.torodb.torod.core.backend.DbBackend;
 import com.torodb.torod.core.config.DocumentBuilderFactory;
-import com.torodb.torod.core.cursors.InnerCursorManager;
 import com.torodb.torod.core.d2r.D2RTranslator;
 import com.torodb.torod.core.dbMetaInf.DbMetaInformationCache;
 import com.torodb.torod.core.dbWrapper.DbWrapper;
@@ -42,8 +42,8 @@ public class DefaultTorod implements Torod {
     private final DbMetaInformationCache cache;
     private final ExecutorFactory executorFactory;
     private final DbWrapper dbWrapper;
-    private final InnerCursorManager cursorManager;
     private final DocumentBuilderFactory documentBuilderFactory;
+    private final DefaultCursorManager cursorManager;
 
     @Inject
     public DefaultTorod(
@@ -51,14 +51,14 @@ public class DefaultTorod implements Torod {
             DbMetaInformationCache cache,
             ExecutorFactory executorFactory,
             DbWrapper dbWrapper,
-            InnerCursorManager globalInnerCursorManager,
-            DocumentBuilderFactory documentBuilderFactory) {
+            DocumentBuilderFactory documentBuilderFactory,
+            DbBackend dbBackend) {
         this.d2r = d2RTranslator;
         this.cache = cache;
         this.executorFactory = executorFactory;
         this.dbWrapper = dbWrapper;
-        this.cursorManager = globalInnerCursorManager;
         this.documentBuilderFactory = documentBuilderFactory;
+        this.cursorManager = new DefaultCursorManager(dbBackend, d2r);
     }
 
     @Override
@@ -75,10 +75,10 @@ public class DefaultTorod implements Torod {
     @Override
     public ToroConnection openConnection() {
         return new DefaultToroConnection(
+                cursorManager,
                 d2r, 
                 executorFactory, 
                 dbWrapper,
-                cursorManager,
                 documentBuilderFactory,
                 cache
         );
