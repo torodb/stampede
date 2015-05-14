@@ -103,8 +103,7 @@ public class Main {
 				new ExecutorModule(1000, 1000, 0.2),
 				new DbMetaInformationCacheModule(),
 				new D2RModule(),
-				new ConnectionModule(),
-				new InnerCursorManagerModule()
+				new ConnectionModule()
 		);
 
         final DbBackend dbBackend;

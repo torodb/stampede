@@ -46,6 +46,7 @@ public class CollectionsTable extends TableImpl<CollectionsRecord> {
 
 	/**
 	 * The class holding records for this type
+     * @return 
 	 */
 	@Override
 	public Class<CollectionsRecord> getRecordType() {
@@ -87,6 +88,9 @@ public class CollectionsTable extends TableImpl<CollectionsRecord> {
 	 */
 	public final TableField<CollectionsRecord, String> OTHER 
             = createField("other", SQLDataType.VARCHAR, this, "");
+    
+    public final TableField<CollectionsRecord, String> STORAGE_ENGINE 
+            = createField("storage_engine", SQLDataType.VARCHAR.nullable(false), this, "");
 
 	/**
 	 * Create a <code>torodb.collections</code> table reference
@@ -119,7 +123,8 @@ public class CollectionsTable extends TableImpl<CollectionsRecord> {
                 + "capped boolean not null, "
                 + "max_size int not null, "
                 + "max_elementes int not null, "
-                + "other jsonb)";
+                + "other jsonb,"
+                + "storage_engine varchar not null)";
     }
 
 	/**

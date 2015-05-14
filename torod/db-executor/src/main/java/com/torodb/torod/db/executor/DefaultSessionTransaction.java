@@ -248,7 +248,7 @@ public class DefaultSessionTransaction implements SessionTransaction {
                 new GetDocumentsSize(
                         dbConnection,
                         aborter,
-                        reportFactory.createGetDocumentsSize(),
+                        reportFactory.createGetDocumentsSizeReport(),
                         collection
                 )
         );

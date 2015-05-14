@@ -21,6 +21,8 @@
 
 package com.torodb.torod.core.dbWrapper;
 
+import com.torodb.torod.core.cursors.ToroCursor;
+import com.torodb.torod.core.exceptions.UnknownMaxElementsException;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import java.io.Closeable;
 import java.util.List;
@@ -36,13 +38,18 @@ public interface Cursor extends Closeable {
     @Nonnull
     public List<SplitDocument> readAllDocuments() throws CursorException;
     
-    public int countRemainingDocs();
-    
     /**
      * Close the cursor and the connection that created it.
      */
     @Override
     public void close();
+
+    /**
+     * Same as {@link ToroCursor#getMaxElements() }
+     * @return
+     * @throws UnknownMaxElementsException 
+     */
+    public int getMaxElements() throws UnknownMaxElementsException;
     
     public static class CursorException extends RuntimeException {
         private static final long serialVersionUID = 1L;

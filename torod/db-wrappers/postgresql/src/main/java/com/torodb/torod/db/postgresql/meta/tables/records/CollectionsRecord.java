@@ -24,7 +24,7 @@ import org.jooq.*;
 import org.jooq.impl.UpdatableRecordImpl;
 
 public class CollectionsRecord extends UpdatableRecordImpl<CollectionsRecord> 
-        implements Record6<String, String, Boolean, Integer, Integer, String> {
+        implements Record7<String, String, Boolean, Integer, Integer, String, String> {
 
 	private static final long serialVersionUID = -2107968478;
 
@@ -66,7 +66,7 @@ public class CollectionsRecord extends UpdatableRecordImpl<CollectionsRecord>
 	/**
 	 * Getter for <code>torodb.collections.capped</code>.
 	 */
-	public Boolean getCapped() {
+	public Boolean isCapped() {
 		return (Boolean) getValue(2);
 	}
 
@@ -106,13 +106,6 @@ public class CollectionsRecord extends UpdatableRecordImpl<CollectionsRecord>
 	}
 
 	/**
-	 * Getter for <code>torodb.collections.auto_index_id</code>.
-	 */
-	public Boolean getAutoIndexId() {
-		return (Boolean) getValue(5);
-	}
-
-	/**
 	 * Setter for <code>torodb.collections.other</code>.
 	 */
 	public void setOther(String value) {
@@ -125,6 +118,14 @@ public class CollectionsRecord extends UpdatableRecordImpl<CollectionsRecord>
 	public String getOther() {
 		return (String) getValue(6);
 	}
+    
+    public void setStorageEngine(String engine) {
+        setValue(7, engine);
+    }
+    
+    public String getStorageEngine() {
+        return (String) getValue(7);
+    }
 
 	// -------------------------------------------------------------------------
 	// Primary key information
@@ -146,16 +147,16 @@ public class CollectionsRecord extends UpdatableRecordImpl<CollectionsRecord>
 	 * {@inheritDoc}
 	 */
 	@Override
-	public Row6<String, String, Boolean, Integer, Integer, String> fieldsRow() {
-		return (Row6) super.fieldsRow();
+	public Row7<String, String, Boolean, Integer, Integer, String, String> fieldsRow() {
+		return (Row7) super.fieldsRow();
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
 	@Override
-	public Row6<String, String, Boolean, Integer, Integer, String> valuesRow() {
-		return (Row6) super.valuesRow();
+	public Row7<String, String, Boolean, Integer, Integer, String, String> valuesRow() {
+		return (Row7) super.valuesRow();
 	}
 
 	/**
@@ -205,6 +206,10 @@ public class CollectionsRecord extends UpdatableRecordImpl<CollectionsRecord>
 	public Field<String> field6() {
 		return CollectionsTable.COLLECTIONS.OTHER;
 	}
+    
+    public Field<String> field7() {
+        return CollectionsTable.COLLECTIONS.STORAGE_ENGINE;
+    }
 
 	/**
 	 * {@inheritDoc}
@@ -227,7 +232,7 @@ public class CollectionsRecord extends UpdatableRecordImpl<CollectionsRecord>
 	 */
 	@Override
 	public Boolean value3() {
-		return getCapped();
+		return isCapped();
 	}
 
 	/**
@@ -252,6 +257,11 @@ public class CollectionsRecord extends UpdatableRecordImpl<CollectionsRecord>
 	@Override
 	public String value6() {
 		return getOther();
+	}
+    
+    @Override
+	public String value7() {
+		return getStorageEngine();
 	}
 
 	/**
@@ -308,12 +318,17 @@ public class CollectionsRecord extends UpdatableRecordImpl<CollectionsRecord>
 		setOther(value);
 		return this;
 	}
+    
+    public CollectionsRecord value7(String value) {
+		setStorageEngine(value);
+		return this;
+	}
 
 	/**
 	 * {@inheritDoc}
 	 */
 	@Override
-	public CollectionsRecord values(String value1, String value2, Boolean value3, Integer value4, Integer value5, String value6) {
+	public CollectionsRecord values(String value1, String value2, Boolean value3, Integer value4, Integer value5, String value6, String value7) {
 		return this;
 	}
 
@@ -331,7 +346,7 @@ public class CollectionsRecord extends UpdatableRecordImpl<CollectionsRecord>
 	/**
 	 * Create a detached, initialised CollectionsRecord
 	 */
-	public CollectionsRecord(String name, String schema, Boolean capped, Integer maxSize, Integer maxElementes, String other) {
+	public CollectionsRecord(String name, String schema, Boolean capped, Integer maxSize, Integer maxElementes, String other, String storageEngine) {
 		super(CollectionsTable.COLLECTIONS);
 
 		setValue(0, name);
@@ -340,5 +355,6 @@ public class CollectionsRecord extends UpdatableRecordImpl<CollectionsRecord>
 		setValue(3, maxSize);
 		setValue(4, maxElementes);
 		setValue(5, other);
+        setValue(6, storageEngine);
 	}
 }

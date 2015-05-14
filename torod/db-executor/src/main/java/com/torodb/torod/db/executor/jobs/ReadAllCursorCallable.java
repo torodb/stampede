@@ -23,9 +23,7 @@ package com.torodb.torod.db.executor.jobs;
 import com.torodb.torod.core.cursors.CursorId;
 import com.torodb.torod.core.dbWrapper.Cursor;
 import com.torodb.torod.core.dbWrapper.DbWrapper;
-import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.exceptions.ToroException;
-import com.torodb.torod.core.exceptions.ToroImplementationException;
 import com.torodb.torod.core.exceptions.ToroRuntimeException;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import java.util.Collections;
@@ -56,18 +54,13 @@ public class ReadAllCursorCallable extends Job<List<? extends SplitDocument>> {
     @Override
     protected List<? extends SplitDocument> failableCall() throws ToroException,
             ToroRuntimeException {
-        try {
-            cursor = dbWrapper.getGlobalCursor(cursorId);
+        cursor = dbWrapper.getGlobalCursor(cursorId);
 
-            List<SplitDocument> result = cursor.readAllDocuments();
-            
-            report.readAllCursorExecuted(cursorId, Collections.unmodifiableList(result));
-            
-            return result;
-        }
-        catch (ImplementationDbException ex) {
-            throw new ToroImplementationException(ex);
-        }
+        List<SplitDocument> result = cursor.readAllDocuments();
+
+        report.readAllCursorExecuted(cursorId, Collections.unmodifiableList(result));
+
+        return result;
     }
 
     @Override

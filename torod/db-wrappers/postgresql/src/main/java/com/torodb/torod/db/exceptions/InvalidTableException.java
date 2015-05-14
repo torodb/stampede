@@ -5,6 +5,7 @@ package com.torodb.torod.db.exceptions;
  *
  */
 public class InvalidTableException extends InvalidDatabaseException {
+    private static final long serialVersionUID = 1L;
 
     private final String schema;
     private final String table;

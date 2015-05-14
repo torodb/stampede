@@ -88,7 +88,7 @@ public class DefaultD2RTranslator implements D2RTranslator {
     }
 
     @Override
-    public ToroDocument translate(SessionExecutor sessionExecutor, SplitDocument splitDocument) {
+    public ToroDocument translate(SplitDocument splitDocument) {
         final ToroDocument.DocumentBuilder docBuilder = documentBuilderFactory.newDocBuilder();
 
         SubDocValueToDocValueTranslator.Argument arg = new SubDocValueToDocValueTranslator.Argument(splitDocument, splitDocument.getRoot());

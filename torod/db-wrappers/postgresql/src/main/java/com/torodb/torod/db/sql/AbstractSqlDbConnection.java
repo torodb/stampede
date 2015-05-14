@@ -31,22 +31,27 @@ import com.torodb.torod.db.postgresql.meta.tables.records.SubDocTableRecord;
 import com.torodb.torod.core.dbWrapper.DbConnection;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.language.querycriteria.QueryCriteria;
+import com.torodb.torod.core.pojos.CollectionMetainfo;
 import com.torodb.torod.core.pojos.NamedToroIndex;
 import com.torodb.torod.core.pojos.IndexedAttributes;
 import com.torodb.torod.core.subdocument.structure.DocStructure;
 import com.torodb.torod.db.exceptions.InvalidCollectionSchemaException;
 import com.torodb.torod.db.postgresql.IdsFilter;
 import com.torodb.torod.db.postgresql.meta.tables.CollectionsTable;
+import com.torodb.torod.db.postgresql.meta.tables.records.CollectionsRecord;
 import com.torodb.torod.db.postgresql.query.QueryEvaluator;
 import com.torodb.torod.db.sql.index.IndexManager;
 import com.torodb.torod.db.sql.index.NamedDbIndex;
 import com.torodb.torod.db.sql.index.UnnamedDbIndex;
+import java.io.StringReader;
 import java.sql.*;
 import java.util.*;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.json.Json;
+import javax.json.JsonReader;
+import javax.json.JsonStructure;
 import org.jooq.*;
 import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
@@ -157,6 +162,7 @@ public abstract class AbstractSqlDbConnection implements
                     .set(CollectionsTable.COLLECTIONS.MAX_SIZE, 0)
                     .set(CollectionsTable.COLLECTIONS.MAX_ELEMENTES, 0)
                     .set(CollectionsTable.COLLECTIONS.OTHER, otherAsString)
+                    .set(CollectionsTable.COLLECTIONS.STORAGE_ENGINE, "torodb-dev")
                     .execute();
             assert inserted == 1;
             
@@ -344,6 +350,39 @@ public abstract class AbstractSqlDbConnection implements
         colSchema
                 .getIndexStorage()
                 .dropIndex(dsl, index);
+    }
+
+    @Override
+    public List<CollectionMetainfo> getCollectionsMetainfo() {
+        
+        Result<CollectionsRecord> records = dsl
+                .selectFrom(CollectionsTable.COLLECTIONS)
+                .fetch();
+        
+        List<CollectionMetainfo> result = Lists.newArrayListWithCapacity(records.size());
+        for (CollectionsRecord record : records) {
+            String otherAsString = record.getOther();
+            JsonStructure other;
+            if (otherAsString == null) {
+                other = null;
+            }
+            else {
+                JsonReader reader = Json.createReader(new StringReader(otherAsString));
+                other = reader.read();
+            }
+            result.add(
+                    new CollectionMetainfo(
+                            record.getName(), 
+                            record.isCapped(), 
+                            record.getMaxSize(), 
+                            record.getMaxElementes(), 
+                            other,
+                            record.getStorageEngine()
+                    )
+            );
+        }
+        
+        return result;
     }
 
     @Override

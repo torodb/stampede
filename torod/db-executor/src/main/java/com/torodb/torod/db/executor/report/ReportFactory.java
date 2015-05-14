@@ -13,8 +13,6 @@ public interface ReportFactory {
 
     public CommitCallable.Report createCommitReport();
 
-    public CountRemainingDocsCallable.Report createCountRemainingDocsReport();
-
     public CreateCollectionCallable.Report createCreateCollectionReport();
 
     public CreateSubDocTableCallable.Report createCreateSubDocTableReport();
@@ -51,7 +49,9 @@ public interface ReportFactory {
 
     public GetCollectionSizeCallable.Report createGetCollectionSizeReport();
 
-    public GetDocumentsSize.Report createGetDocumentsSize();
+    public GetDocumentsSize.Report createGetDocumentsSizeReport();
+    
+    public GetCollectionsMetainfoCallable.Report createGetCollectionsMetainfoReport();
 
-
+    public MaxElementsCallable.Report createMaxElementsReport();
 }

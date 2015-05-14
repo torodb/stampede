@@ -21,6 +21,7 @@
 package com.torodb.torod.db.sql;
 
 import com.torodb.torod.core.dbWrapper.Cursor;
+import com.torodb.torod.core.exceptions.UnknownMaxElementsException;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import java.util.Collections;
 import java.util.List;
@@ -50,13 +51,13 @@ public class EmptyCursor implements Cursor {
     }
 
     @Override
-    public int countRemainingDocs() {
-        return 0;
+    public void close() {
+        closed = true;
     }
 
     @Override
-    public void close() {
-        closed = true;
+    public int getMaxElements() throws UnknownMaxElementsException {
+        return 0;
     }
     
 }

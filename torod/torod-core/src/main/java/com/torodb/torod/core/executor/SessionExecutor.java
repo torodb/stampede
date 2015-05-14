@@ -24,7 +24,7 @@ import com.torodb.torod.core.cursors.CursorId;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.language.projection.Projection;
 import com.torodb.torod.core.language.querycriteria.QueryCriteria;
-import com.torodb.torod.core.pojos.Database;
+import com.torodb.torod.core.pojos.CollectionMetainfo;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import java.io.Closeable;
 import java.util.List;
@@ -75,6 +75,8 @@ public interface SessionExecutor extends Closeable {
             @Nullable Projection projection,
             @Nonnegative int maxResults
     );
+    
+    Future<List<CollectionMetainfo>> getCollectionsMetainfo();
 
     /**
      *
@@ -104,5 +106,7 @@ public interface SessionExecutor extends Closeable {
             CursorId cursorId
     ) throws ToroTaskExecutionException;
 
-    Future<Integer> countRemainingDocs(CursorId cursorId);
+    public Future<Void> noop();
+    
+    public Future<Integer> getMaxElements(CursorId cursorId);
 }
