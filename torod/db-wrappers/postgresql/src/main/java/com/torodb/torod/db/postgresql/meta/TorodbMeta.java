@@ -189,7 +189,6 @@ public class TorodbMeta {
             Connection conn,
             DatabaseMetaData jdbcMeta
     ) throws SQLException, IOException {
-        createCreateCollectionSchemaProcedure(conn, jdbcMeta);
         createFindDocProcedure(conn, jdbcMeta);
         createFindDocsProcedure(conn, jdbcMeta);
         createFirstFreeDocIdProcedure(conn, jdbcMeta);
@@ -203,13 +202,6 @@ public class TorodbMeta {
 
     private void createTwelveBytesType(Connection conn) throws IOException, SQLException {
         executeSql(conn, "/sql/twelve_bytes_type.sql");
-    }
-    
-    private void createCreateCollectionSchemaProcedure(
-            Connection conn, 
-            DatabaseMetaData jdbcMeta
-    ) throws SQLException, IOException {
-        createProcedure(conn, jdbcMeta, "create_collection_schema");
     }
     
     private void createFindDocProcedure(

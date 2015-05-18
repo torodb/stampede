@@ -1,6 +1,7 @@
 
 package com.torodb.torod.core.utils;
 
+import com.google.common.base.Predicate;
 import com.torodb.kvdocument.values.*;
 import com.torodb.torod.core.exceptions.UserToroException;
 import com.torodb.torod.core.language.AttributeReference;
@@ -26,6 +27,26 @@ public class DocValueQueryCriteriaEvaluator {
                 new QueryCriteriaEvaluator(), 
                 value
         );
+    }
+    
+    public static Predicate<DocValue> createPredicate(QueryCriteria query) {
+        return new QueryCriteriaPredicate(query);
+    }
+    
+    private static class QueryCriteriaPredicate implements Predicate<DocValue> {
+
+        private final QueryCriteria qc;
+        private final QueryCriteriaEvaluator evaluator;
+
+        public QueryCriteriaPredicate(@Nonnull QueryCriteria qc) {
+            this.qc = qc;
+            this.evaluator = new QueryCriteriaEvaluator();
+        }
+        
+        @Override
+        public boolean apply(DocValue value) {
+            return qc.accept(evaluator, value);
+        }
     }
 
     private static class QueryCriteriaEvaluator
