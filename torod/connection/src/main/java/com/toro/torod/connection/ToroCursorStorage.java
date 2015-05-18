@@ -176,8 +176,8 @@ public class ToroCursorStorage {
         if (counter % OLD_CACHE_EVICTION_PERIOD == 0) {
             removeUnusedCaches();
         }
-        for (ToroCursor expiredCursor : expiredCursors) {
-            expiredCursor.close(executor);
+        for (StoredToroCursorDelegator expiredCursor : expiredCursors) {
+            expiredCursor.privateClose(executor);
         }
     }
     
@@ -319,6 +319,10 @@ public class ToroCursorStorage {
         @Override
         public boolean isAutoclosable() {
             return delegate.isAutoclosable();
+        }
+
+        private void privateClose(SessionExecutor executor) {
+            delegate.close(executor);
         }
         
     }

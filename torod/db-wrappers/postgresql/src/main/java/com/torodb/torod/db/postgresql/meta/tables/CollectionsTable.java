@@ -167,7 +167,7 @@ public class CollectionsTable extends TableImpl<CollectionsRecord> {
         if (table.getSchema() == null || !getSchema().getName().equals(table.getSchema().getName())) {
             return false;
         }
-        if (table.fields().length != 6) {
+        if (table.fields().length != 7) {
             return false;
         }
         return true; //TODO: improve the check

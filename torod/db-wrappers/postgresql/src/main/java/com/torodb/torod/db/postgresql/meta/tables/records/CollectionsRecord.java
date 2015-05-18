@@ -99,32 +99,25 @@ public class CollectionsRecord extends UpdatableRecordImpl<CollectionsRecord>
 	}
 
 	/**
-	 * Setter for <code>torodb.collections.auto_index_id</code>.
-	 */
-	public void setAutoIndexId(Boolean value) {
-		setValue(5, value);
-	}
-
-	/**
 	 * Setter for <code>torodb.collections.other</code>.
 	 */
 	public void setOther(String value) {
-		setValue(6, value);
+		setValue(5, value);
 	}
 
 	/**
 	 * Getter for <code>torodb.collections.other</code>.
 	 */
 	public String getOther() {
-		return (String) getValue(6);
+		return (String) getValue(5);
 	}
     
     public void setStorageEngine(String engine) {
-        setValue(7, engine);
+        setValue(6, engine);
     }
     
     public String getStorageEngine() {
-        return (String) getValue(7);
+        return (String) getValue(6);
     }
 
 	// -------------------------------------------------------------------------

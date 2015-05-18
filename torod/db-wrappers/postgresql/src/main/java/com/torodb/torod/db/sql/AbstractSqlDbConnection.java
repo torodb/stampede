@@ -30,6 +30,7 @@ import com.torodb.torod.db.postgresql.meta.tables.SubDocTable;
 import com.torodb.torod.db.postgresql.meta.tables.records.SubDocTableRecord;
 import com.torodb.torod.core.dbWrapper.DbConnection;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
+import com.torodb.torod.core.exceptions.UserToroException;
 import com.torodb.torod.core.language.querycriteria.QueryCriteria;
 import com.torodb.torod.core.pojos.CollectionMetainfo;
 import com.torodb.torod.core.pojos.NamedToroIndex;
@@ -248,8 +249,12 @@ public abstract class AbstractSqlDbConnection implements
 
     @Override
     public Collection<? extends NamedToroIndex> getIndexes(String collection) {
-        CollectionSchema colSchema = meta.getCollectionSchema(collection);
-        return colSchema.getIndexManager().getIndexes();
+        try {
+            CollectionSchema colSchema = meta.getCollectionSchema(collection);
+            return colSchema.getIndexManager().getIndexes();
+        } catch (IllegalArgumentException ex) {
+            throw new UserToroException("Collection '" + collection + "' does no exist", ex);
+        }
     }
 
     @Override

@@ -29,27 +29,37 @@ import com.eightkdata.mongowp.mongoserver.protocol.MongoWP;
 import com.eightkdata.mongowp.mongoserver.protocol.MongoWP.ErrorCode;
 import com.eightkdata.nettybson.api.BSONDocument;
 import com.eightkdata.nettybson.mongodriver.MongoBSONDocument;
+import com.google.common.base.Function;
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.mongodb.WriteConcern;
 import com.torodb.BuildProperties;
+import com.torodb.kvdocument.conversion.mongo.MongoValueConverter;
+import com.torodb.kvdocument.values.DocValue;
+import com.torodb.kvdocument.values.ObjectValue;
 import com.torodb.mongowp.mongoserver.api.toro.util.BSONToroDocument;
 import com.torodb.torod.core.WriteFailMode;
 import com.torodb.torod.core.annotations.DatabaseName;
 import com.torodb.torod.core.connection.*;
+import com.torodb.torod.core.cursors.UserCursor;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.exceptions.ExistentIndexException;
+import com.torodb.torod.core.exceptions.UserToroException;
 import com.torodb.torod.core.language.AttributeReference;
 import com.torodb.torod.core.language.operations.DeleteOperation;
 import com.torodb.torod.core.language.operations.UpdateOperation;
 import com.torodb.torod.core.language.querycriteria.QueryCriteria;
 import com.torodb.torod.core.language.querycriteria.TrueQueryCriteria;
 import com.torodb.torod.core.language.update.UpdateAction;
+import com.torodb.torod.core.pojos.CollectionMetainfo;
 import com.torodb.torod.core.pojos.Database;
 import com.torodb.torod.core.pojos.IndexedAttributes;
 import com.torodb.torod.core.pojos.NamedToroIndex;
 import com.torodb.torod.core.subdocument.ToroDocument;
+import com.torodb.torod.core.utils.DocValueQueryCriteriaEvaluator;
 import com.torodb.translator.*;
 import io.netty.util.AttributeMap;
 import org.bson.BSONObject;
@@ -59,6 +69,7 @@ import javax.annotation.Nonnull;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import org.bson.types.BasicBSONList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -170,7 +181,6 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
     	
     	WriteFailMode writeFailMode = getWriteFailMode(document);
     	WriteConcern writeConcern = getWriteConcern(document);
-    	QueryCriteriaTranslator queryCriteriaTranslator = new QueryCriteriaTranslator();
 		Iterable<?> documents = (Iterable<?>) document.getValue("updates");
     	List<UpdateOperation> updates = new ArrayList<UpdateOperation>();
     	Iterator<?> documentsIterator = documents.iterator();
@@ -261,7 +271,6 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
     	
     	WriteFailMode writeFailMode = getWriteFailMode(document);
     	WriteConcern writeConcern = getWriteConcern(document);
-    	QueryCriteriaTranslator queryCriteriaTranslator = new QueryCriteriaTranslator();
 		Iterable<?> documents = (Iterable<?>) document.getValue("deletes");
     	List<DeleteOperation> deletes = new ArrayList<DeleteOperation>();
     	Iterator<?> documentsIterator = documents.iterator();
@@ -847,5 +856,133 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
         replyObj.put("nonce", nonce);
         replyObj.put("ok", MongoWP.OK);
         messageReplier.replyMessageNoCursor(new MongoBSONDocument(replyObj));
+    }
+
+    @Override
+    public void listCollections(MessageReplier messageReplier, BSONDocument query)
+            throws Exception {
+        ToroConnection connection = messageReplier.getAttributeMap()
+                .attr(ToroRequestProcessor.CONNECTION).get();
+
+        assert query.getValue("listCollections") != null;
+        Object filterObject = query.getValue("filter");
+        QueryCriteria filter;
+        if (filterObject == null) {
+            filter = TrueQueryCriteria.getInstance();
+        }
+        else {
+            if (filterObject instanceof BSONObject) {
+                filter = queryCriteriaTranslator.translate((BSONObject) filterObject);
+            }
+            else {
+                throw new UserToroException("Filter " + filterObject
+                        + " has not been recognized as a valid filter");
+            }
+        }
+        Predicate<DocValue> predicate
+                = DocValueQueryCriteriaEvaluator.createPredicate(filter);
+
+        UserCursor<CollectionMetainfo> cursor
+                = connection.openCollectionsMetainfoCursor();
+
+        ArrayList<ObjectValue> collectionsInfo = Lists.newArrayList(
+                Iterables.filter(
+                        Iterables.transform(
+                                cursor.readAll(),
+                                new CollectionMetainfoToDocValue()
+                        ),
+                        predicate
+                )
+        );
+        BasicBSONList firstBatch = new BasicBSONList();
+        for (ObjectValue colInfo : collectionsInfo) {
+            firstBatch.add(MongoValueConverter.translateObject(colInfo));
+        }
+
+        BasicBSONObject root = new BasicBSONObject();
+        root.append("ok", MongoWP.OK);
+        root.append("cursor", new BasicBSONObject()
+                .append("id", (long) 0)
+                .append("ns", databaseName + ".$cmd.listCollections")
+                .append("firstBatch", firstBatch)
+        );
+        BSONDocument result = new MongoBSONDocument((BSONObject) root);
+
+        messageReplier.replyMessageNoCursor(result);
+    }
+    
+    @Override
+    public void listIndexes(MessageReplier messageReplier, String collection)
+            throws Exception {
+        ToroConnection connection = messageReplier.getAttributeMap()
+                .attr(ToroRequestProcessor.CONNECTION).get();
+        ToroTransaction transaction = connection.createTransaction();
+        
+        Collection<? extends NamedToroIndex> indexes = transaction.getIndexes(collection);
+        
+        BasicBSONList firstBatch = new BasicBSONList();
+        
+        for (NamedToroIndex index : indexes) {
+            String collectionNamespace = databaseName + '.' + collection;
+            ObjectValue.Builder objBuider = new ObjectValue.Builder()
+                    .putValue("v", 1)
+                    .putValue("name", index.getName())
+                    .putValue("ns", collectionNamespace)
+                    .putValue("key", new ObjectValue.Builder()
+                    );
+            ObjectValue.Builder keyBuilder = new ObjectValue.Builder();
+            for (Map.Entry<AttributeReference, Boolean> entrySet : index.getAttributes().entrySet()) {
+                keyBuilder.putValue(
+                        entrySet.getKey().toString(),
+                        entrySet.getValue() ? 1 : -1
+                );
+            }
+            objBuider.putValue("key", keyBuilder);
+            
+            firstBatch.add(
+                MongoValueConverter.translateObject(objBuider.build())
+            );
+        }
+        
+        BasicBSONObject root = new BasicBSONObject();
+        root.append("ok", MongoWP.OK);
+        root.append("cursor", new BasicBSONObject()
+                .append("id", (long) 0)
+                .append("ns", databaseName + ".$cmd.listIndexes." + collection)
+                .append("firstBatch", firstBatch)
+        );
+        BSONDocument result = new MongoBSONDocument((BSONObject) root);
+
+        messageReplier.replyMessageNoCursor(result);
+    }
+    
+    private static class CollectionMetainfoToDocValue implements Function<CollectionMetainfo, ObjectValue>{
+
+        @Override
+        public ObjectValue apply(CollectionMetainfo input) {
+            if (input == null) {
+                return null;
+            }
+            ObjectValue.Builder optionsBuider = new ObjectValue.Builder()
+                    .putValue("capped", input.isCapped())
+                    .putValue("autoIndexId", false)
+                    .putValue("flags", 2)
+                    .putValue("storageEngine", input.getStorageEngine());
+            if (input.isCapped()) {
+                if (input.getMaxSize() > 0) {
+                    optionsBuider.putValue("size", input.getMaxSize());
+                }
+                if (input.getMaxElements() > 0) {
+                    optionsBuider.putValue("max", input.getMaxElements());
+                }
+            }
+            
+            
+            ObjectValue.Builder builder = new ObjectValue.Builder();
+            return builder
+                    .putValue("name", input.getName())
+                    .putValue("options", optionsBuider)
+                    .build();
+        }
     }
 }

@@ -36,8 +36,8 @@ import org.bson.BSONObject;
 public class BSONDocuments implements Iterable<BSONDocument> {
 	
 	private final Iterable<ToroDocument> documents;
-	private int size = 0;	
-	
+	private int size = 0;
+    
 	public BSONDocuments(@Nonnull Iterable<ToroDocument> documents) {
 		this.documents = documents;
 		
