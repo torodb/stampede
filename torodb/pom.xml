@@ -7,7 +7,7 @@
     <parent>
         <groupId>com.torodb</groupId>
         <artifactId>torodb-parent</artifactId>
-        <version>0.21-SNAPSHOT</version>
+        <version>0.21</version>
     </parent>
 
     <artifactId>torodb</artifactId>
@@ -49,7 +49,7 @@
         <dependency>
             <groupId>com.8kdata.mongowp</groupId>
             <artifactId>mongo-server</artifactId>
-            <version>0.15-SNAPSHOT</version>
+            <version>0.15</version>
         </dependency>
         <dependency>
             <groupId>com.torodb.torod</groupId>
@@ -74,11 +74,6 @@
         <dependency>
             <groupId>com.torodb.torod</groupId>
             <artifactId>db-meta-inf</artifactId>
-            <version>${torod.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.torodb.torod</groupId>
-            <artifactId>db-cursors</artifactId>
             <version>${torod.version}</version>
         </dependency>
         <dependency>
