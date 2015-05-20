@@ -4,7 +4,7 @@
     <parent>
         <groupId>com.torodb.torod</groupId>
         <artifactId>torod-pom</artifactId>
-        <version>0.21</version>
+        <version>0.22-SNAPSHOT</version>
     </parent>
     
     <artifactId>torod-core</artifactId>
@@ -24,7 +24,7 @@
         <dependency>
             <groupId>com.torodb.kvdocument</groupId>
             <artifactId>kvdocument-core</artifactId>
-            <version>${kvdocument.version}</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>javax.json</groupId>

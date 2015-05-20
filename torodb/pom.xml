@@ -7,7 +7,7 @@
     <parent>
         <groupId>com.torodb</groupId>
         <artifactId>torodb-parent</artifactId>
-        <version>0.21</version>
+        <version>0.22-SNAPSHOT</version>
     </parent>
 
     <artifactId>torodb</artifactId>
@@ -23,7 +23,6 @@
         <dependency>
             <groupId>org.glassfish</groupId>
             <artifactId>javax.json</artifactId>
-            <version>1.0.4</version>
         </dependency>
         <dependency>
             <groupId>com.google.inject</groupId>
@@ -32,7 +31,6 @@
         <dependency>
             <groupId>com.beust</groupId>
             <artifactId>jcommander</artifactId>
-            <version>1.47</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -49,7 +47,6 @@
         <dependency>
             <groupId>com.8kdata.mongowp</groupId>
             <artifactId>mongo-server</artifactId>
-            <version>0.15</version>
         </dependency>
         <dependency>
             <groupId>com.torodb.torod</groupId>
@@ -98,12 +95,11 @@
         <dependency>
             <groupId>com.torodb.kvdocument</groupId>
             <artifactId>mongo-converter</artifactId>
-            <version>${kvdocument.version}</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>commons-configuration</groupId>
             <artifactId>commons-configuration</artifactId>
-            <version>1.10</version>
         </dependency>
     </dependencies>
 

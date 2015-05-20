@@ -4,7 +4,7 @@
     <parent>
         <groupId>com.torodb</groupId>
         <artifactId>torodb-parent</artifactId>
-        <version>0.21</version>
+        <version>0.22-SNAPSHOT</version>
     </parent>
     
     <groupId>com.torodb.torod</groupId>
@@ -22,14 +22,4 @@
         <module>connection</module>
         <module>backend</module>
     </modules>
-
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>org.postgresql</groupId>
-                <artifactId>postgresql</artifactId>
-                <version>9.3-1102-jdbc4</version>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
 </project>

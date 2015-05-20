@@ -210,14 +210,13 @@ public class ToroLastError implements LastError {
 	@SuppressFBWarnings("DLS_DEAD_LOCAL_STORE")
 	private WriteConcern getWriteConcern(Object w, boolean j, boolean fsync, int wtimeout) {
 		WriteConcern writeConcern = WriteConcern.ACKNOWLEDGED;
-        boolean continueOnError = j;
 
         if (w instanceof Number) {
 			if (((Number) w).intValue() <= 1 && wtimeout > 0) {
 				throw new IllegalArgumentException("wtimeout cannot be grater than 0 for w <= 1");
 			}
 			
-			writeConcern = new WriteConcern(((Number) w).intValue(), wtimeout, fsync, j, continueOnError);
+			writeConcern = new WriteConcern(((Number) w).intValue(), wtimeout, fsync, j);
 		} else
    		if (w instanceof String && w.equals("majority")) {
    			if (wtimeout > 0) {

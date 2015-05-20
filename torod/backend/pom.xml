@@ -9,7 +9,7 @@
     <parent>
         <artifactId>torod-pom</artifactId>
         <groupId>com.torodb.torod</groupId>
-        <version>0.21</version>
+        <version>0.22-SNAPSHOT</version>
     </parent>
 
     <artifactId>backend</artifactId>
@@ -30,7 +30,6 @@
         <dependency>
             <groupId>com.zaxxer</groupId>
             <artifactId>HikariCP-java6</artifactId>
-            <version>2.2.5</version>
         </dependency>
         <dependency>
             <groupId>org.postgresql</groupId>

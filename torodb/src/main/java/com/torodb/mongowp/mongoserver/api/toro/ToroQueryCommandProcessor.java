@@ -557,7 +557,7 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
 	    				throw new IllegalArgumentException("wtimeout cannot be grater than 0 for w <= 1");
 	    			}
 	    			
-	    			writeConcern = new WriteConcern(((Number) w).intValue(), wtimeout, fsync, j, continueOnError);
+	    			writeConcern = new WriteConcern(((Number) w).intValue(), wtimeout, fsync, j);
 	    		} else
 	       		if (w instanceof String && w.equals("majority")) {
 	       			if (wtimeout > 0) {
