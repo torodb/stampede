@@ -44,6 +44,7 @@ import com.torodb.kvdocument.types.LongType;
 import com.torodb.kvdocument.types.NullType;
 import com.torodb.kvdocument.types.ObjectType;
 import com.torodb.kvdocument.types.StringType;
+import com.torodb.kvdocument.values.*;
 import java.math.BigDecimal;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -302,6 +303,12 @@ public class JsonValueConverter {
         @Override
         public Void visit(TimeValue value, ValueConsumer arg) {
             arg.consume(value.toString());
+            return null;
+        }
+
+        @Override
+        public Void visit(PosixPatternValue value, ValueConsumer arg) {
+            arg.consume(value.getValue());
             return null;
         }
 

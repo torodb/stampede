@@ -21,18 +21,7 @@
 
 package com.torodb.kvdocument.conversion.mongo;
 
-import com.torodb.kvdocument.types.GenericType;
-import com.torodb.kvdocument.types.DateTimeType;
-import com.torodb.kvdocument.types.BooleanType;
-import com.torodb.kvdocument.types.LongType;
-import com.torodb.kvdocument.types.NullType;
-import com.torodb.kvdocument.types.IntegerType;
-import com.torodb.kvdocument.types.ArrayType;
-import com.torodb.kvdocument.types.ObjectType;
-import com.torodb.kvdocument.types.StringType;
-import com.torodb.kvdocument.types.DocType;
-import com.torodb.kvdocument.types.DoubleType;
-import com.torodb.kvdocument.types.TwelveBytesType;
+import com.torodb.kvdocument.types.*;
 
 /**
  *
@@ -63,12 +52,12 @@ public class MongoTypeConverter {
                 return TwelveBytesType.INSTANCE;
             case 9:
                 return DateTimeType.INSTANCE;
-
+            case 11:
+                return PosixPatternType.INSTANCE;
             case 17:
             case 15:
             case 14:
             case 13:
-            case 11:
             case 5:
             case 6:
             case 255:

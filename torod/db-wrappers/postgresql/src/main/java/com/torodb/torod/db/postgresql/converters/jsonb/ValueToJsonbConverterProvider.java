@@ -46,6 +46,7 @@ public class ValueToJsonbConverterProvider {
     private final ValueConverter<String, StringValue> stringConverter;
     private final ValueConverter<String, TimeValue> timeConverter;
     private final ValueConverter<String, TwelveBytesValue> twelveBytesConverter;
+    private final ValueConverter<String, PosixPatternValue> posixPatternConverter;
 
     private ValueToJsonbConverterProvider() {
         arrayConverter = new ArrayValueToJsonbConverter();
@@ -59,6 +60,7 @@ public class ValueToJsonbConverterProvider {
         stringConverter = new StringValueToJsonbConverter();
         timeConverter = new TimeValueToJsonbConverter();
         twelveBytesConverter = new TwelveBytesValueToJsonbConverter();
+        posixPatternConverter = new PosixPatternValueToJsonbConverter();
 
         converters = Maps.newEnumMap(BasicType.class);
         converters.put(BasicType.ARRAY, arrayConverter);
@@ -72,6 +74,7 @@ public class ValueToJsonbConverterProvider {
         converters.put(BasicType.STRING, stringConverter);
         converters.put(BasicType.TIME, timeConverter);
         converters.put(BasicType.TWELVE_BYTES, twelveBytesConverter);
+        converters.put(BasicType.POSIX_PATTERN, posixPatternConverter);
 
     }
 
@@ -87,50 +90,6 @@ public class ValueToJsonbConverterProvider {
                     + "elements of type " + valueType);
         }
         return converter;
-    }
-
-    public ValueConverter<JsonArray, ArrayValue> getArrayConverter() {
-        return arrayConverter;
-    }
-
-    public ValueConverter<Boolean, BooleanValue> getBooleanConverter() {
-        return booleanConverter;
-    }
-
-    public ValueConverter<String, DateValue> getDateConverter() {
-        return dateConverter;
-    }
-
-    public ValueConverter<String, DateTimeValue> getDateTimeConverter() {
-        return dateTimeConverter;
-    }
-
-    public ValueConverter<Object, DoubleValue> getDoubleConverter() {
-        return doubleConverter;
-    }
-
-    public ValueConverter<Number, IntegerValue> getIntegerConverter() {
-        return integerConverter;
-    }
-
-    public ValueConverter<Number, LongValue> getLongConverter() {
-        return longConverter;
-    }
-
-    public ValueConverter<Void, NullValue> getNullConverter() {
-        return nullConverter;
-    }
-
-    public ValueConverter<String, StringValue> getStringConverter() {
-        return stringConverter;
-    }
-
-    public ValueConverter<String, TimeValue> getTimeConverter() {
-        return timeConverter;
-    }
-
-    public ValueConverter<String, TwelveBytesValue> getTwelveBytesConverter() {
-        return twelveBytesConverter;
     }
 
     private static class ValueToJsonConverterProviderHolder {

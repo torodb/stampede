@@ -43,6 +43,7 @@ import com.torodb.torod.core.subdocument.ToroDocument;
 import com.torodb.torod.core.subdocument.values.Value;
 import com.torodb.kvdocument.types.ArrayType;
 import com.torodb.kvdocument.types.ObjectType;
+import com.torodb.kvdocument.values.*;
 import java.util.LinkedList;
 import java.util.Map;
 
@@ -181,6 +182,13 @@ public class EqualFactory {
         public Value<?> visit(TimeValue value,
                               Void arg) {
             return new com.torodb.torod.core.subdocument.values.TimeValue(
+                    value.getValue()
+            );
+        }
+
+        @Override
+        public Value<?> visit(PosixPatternValue value, Void arg) {
+            return new com.torodb.torod.core.subdocument.values.PosixPatternValue(
                     value.getValue()
             );
         }
@@ -351,6 +359,13 @@ public class EqualFactory {
         @Override
         public Void visit(
                 TimeValue value,
+                LinkedList<AttributeReference.Key> arg) {
+            return defaultcase(value, arg);
+        }
+
+        @Override
+        public Void visit(
+                PosixPatternValue value,
                 LinkedList<AttributeReference.Key> arg) {
             return defaultcase(value, arg);
         }

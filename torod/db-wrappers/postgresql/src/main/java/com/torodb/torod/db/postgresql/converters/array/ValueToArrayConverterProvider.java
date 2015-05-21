@@ -35,6 +35,7 @@ import com.google.common.collect.Maps;
 import com.torodb.torod.core.exceptions.ToroImplementationException;
 import com.torodb.torod.core.subdocument.BasicType;
 import com.torodb.torod.core.subdocument.values.*;
+import com.torodb.torod.db.postgresql.converters.jsonb.*;
 import java.util.Map;
 import javax.annotation.Nonnull;
 import javax.json.JsonArray;
@@ -59,6 +60,7 @@ public class ValueToArrayConverterProvider {
     private final ValueConverter<String, StringValue> stringConverter;
     private final ValueConverter<String, TimeValue> timeConverter;
     private final ValueConverter<String, TwelveBytesValue> twelveBytesConverter;
+    private final ValueConverter<String, PosixPatternValue> posixPatterConverter;
 
     private ValueToArrayConverterProvider() {
         arrayConverter = new ArrayValueToJsonbConverter();
@@ -72,6 +74,7 @@ public class ValueToArrayConverterProvider {
         stringConverter = new StringValueToJsonbConverter();
         timeConverter = new TimeValueToJsonbConverter();
         twelveBytesConverter = new TwelveBytesToArrayConverter();
+        posixPatterConverter = new PosixPatternValueToJsonbConverter();
 
         converters = Maps.newEnumMap(BasicType.class);
         converters.put(BasicType.ARRAY, arrayConverter);
@@ -85,7 +88,7 @@ public class ValueToArrayConverterProvider {
         converters.put(BasicType.STRING, stringConverter);
         converters.put(BasicType.TIME, timeConverter);
         converters.put(BasicType.TWELVE_BYTES, twelveBytesConverter);
-
+        converters.put(BasicType.POSIX_PATTERN, posixPatterConverter);
     }
 
     public static ValueToArrayConverterProvider getInstance() {
@@ -186,6 +189,10 @@ public class ValueToArrayConverterProvider {
 
     public ValueConverter<String, TwelveBytesValue> getTwelveBytesConverter() {
         return twelveBytesConverter;
+    }
+    
+    public ValueConverter<String, PosixPatternValue> getPosixConverter() {
+        return posixPatterConverter;
     }
 
     private static class ToArrayConverterHolder {

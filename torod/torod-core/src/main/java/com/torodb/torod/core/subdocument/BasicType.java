@@ -20,18 +20,7 @@
 
 package com.torodb.torod.core.subdocument;
 
-import com.torodb.kvdocument.types.TimeType;
-import com.torodb.kvdocument.types.ArrayType;
-import com.torodb.kvdocument.types.DoubleType;
-import com.torodb.kvdocument.types.DateTimeType;
-import com.torodb.kvdocument.types.IntegerType;
-import com.torodb.kvdocument.types.TwelveBytesType;
-import com.torodb.kvdocument.types.StringType;
-import com.torodb.kvdocument.types.BooleanType;
-import com.torodb.kvdocument.types.DateType;
-import com.torodb.kvdocument.types.DocType;
-import com.torodb.kvdocument.types.LongType;
-import com.torodb.kvdocument.types.NullType;
+import com.torodb.kvdocument.types.*;
 import javax.annotation.Nonnull;
 
 /**
@@ -41,32 +30,18 @@ import javax.annotation.Nonnull;
  */
 public enum BasicType {
 
-    NULL('n'),
-    BOOLEAN('b'),
-    INTEGER('i'),
-    LONG('l'),
-    DOUBLE('d'),
-    STRING('s'),
-    ARRAY('a'),
-    TWELVE_BYTES('q'),
-    DATE('e'),
-    DATETIME('r'),
-    TIME('t');
-    
-    private final char id;
-
-    private BasicType(char id) {
-        this.id = id;
-    }
-
-    public char getId() {
-        return id;
-    }
-
-    @Override
-    public String toString() {
-        return Character.toString(id);
-    }
+    NULL,
+    BOOLEAN,
+    INTEGER,
+    LONG,
+    DOUBLE,
+    STRING,
+    ARRAY,
+    TWELVE_BYTES,
+    DATE,
+    DATETIME,
+    TIME,
+    POSIX_PATTERN;
     
     @Nonnull
     public static BasicType fromDocType(DocType docType) {
@@ -102,6 +77,9 @@ public enum BasicType {
         }
         if (docType instanceof TimeType) {
             return DATE;
+        }
+        if (docType instanceof PosixPatternType) {
+            return POSIX_PATTERN;
         }
         throw new IllegalArgumentException(docType + " does not correspond with a basic type");
     }

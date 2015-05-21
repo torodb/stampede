@@ -36,9 +36,11 @@ import com.torodb.kvdocument.values.NullValue;
 import com.torodb.kvdocument.values.ArrayValue;
 import com.google.common.collect.Lists;
 import com.torodb.kvdocument.types.GenericType;
+import com.torodb.kvdocument.values.*;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.types.ObjectId;
@@ -118,6 +120,9 @@ public class MongoValueConverter {
         if (value instanceof Long) {
             return new LongValue((Long) value);
         }
+        if (value instanceof Pattern) {
+            return PosixPatternValue.fromJavaPattern((Pattern) value);
+        }
 
         throw new IllegalArgumentException("Arguments of " + value.getClass()
                 + " type are not supported yet");
@@ -196,6 +201,11 @@ public class MongoValueConverter {
         public Object visit(TimeValue value,
                             Void arg) {
             return DateTimeUtils.toSqlTime(value.getValue());
+        }
+
+        @Override
+        public Object visit(PosixPatternValue value, Void arg) {
+            return value.toJavaPattern();
         }
 
         @Override

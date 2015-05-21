@@ -158,6 +158,14 @@ public class ArrayValueToJsonbConverter implements
             return null;
         }
 
+        @Override
+        public Void visit(PosixPatternValue value, JsonArrayBuilder arg) {
+            arg.add(ValueToArrayConverterProvider.getInstance()
+                    .getPosixConverter().toJson(value)
+            );
+            return null;
+        }
+
     }
 
 }

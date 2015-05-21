@@ -89,5 +89,10 @@ public class DocValueAdaptor<Result, Arg> implements DocValueVisitor<Result, Arg
     public Result visit(TimeValue value, Arg arg) {
         return defaultCase(value, arg);
     }
+
+    @Override
+    public Result visit(PosixPatternValue value, Arg arg) {
+        return defaultCase(value, arg);
+    }
     
 }

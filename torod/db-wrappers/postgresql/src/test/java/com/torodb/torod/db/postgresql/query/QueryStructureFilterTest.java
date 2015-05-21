@@ -694,6 +694,13 @@ public class QueryStructureFilterTest {
             return BasicType.TIME;
         }
 
+        @Override
+        public BasicType visit(
+                com.torodb.kvdocument.values.PosixPatternValue value,
+                Void arg) {
+            return BasicType.POSIX_PATTERN;
+        }
+
     }
 
 }

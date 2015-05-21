@@ -49,5 +49,6 @@ public interface DocValueVisitor<Result, Arg> {
     
     public Result visit(TimeValue value, Arg arg);
 
+    public Result visit(PosixPatternValue value, Arg arg);
     
 }

@@ -446,5 +446,10 @@ public class DocValueQueryCriteriaEvaluator {
             return new com.torodb.torod.core.subdocument.values.TimeValue(value.getValue());
         }
 
+        @Override
+        public Value visit(PosixPatternValue value, Void arg) {
+            return new com.torodb.torod.core.subdocument.values.PosixPatternValue(value.getValue());
+        }
+
     }
 }

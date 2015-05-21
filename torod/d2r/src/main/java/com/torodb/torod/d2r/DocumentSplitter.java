@@ -36,6 +36,7 @@ import com.torodb.kvdocument.values.DateTimeValue;
 import com.torodb.kvdocument.values.ObjectValue;
 import com.torodb.kvdocument.values.TwelveBytesValue;
 import com.google.common.collect.Maps;
+import com.torodb.kvdocument.values.*;
 import com.torodb.torod.core.dbMetaInf.DbMetaInformationCache;
 import com.torodb.torod.core.executor.SessionExecutor;
 import com.torodb.torod.core.subdocument.BasicType;
@@ -214,6 +215,11 @@ public class DocumentSplitter {
                 TimeValue value,
                 Void arg) {
             return BasicType.TIME;
+        }
+
+        @Override
+        public BasicType visit(PosixPatternValue value, Void arg) {
+            return BasicType.POSIX_PATTERN;
         }
 
     }
@@ -433,6 +439,16 @@ public class DocumentSplitter {
 
             arg.consume(
                     new com.torodb.torod.core.subdocument.values.TimeValue(
+                            value.getValue()
+                    )
+            );
+            return null;
+        }
+
+        @Override
+        public Void visit(PosixPatternValue value, TranslatorConsumer arg) {
+            arg.consume(
+                    new com.torodb.torod.core.subdocument.values.PosixPatternValue(
                             value.getValue()
                     )
             );

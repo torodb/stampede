@@ -225,6 +225,11 @@ public class DefaultD2RTranslator implements D2RTranslator {
             return new com.torodb.kvdocument.values.TimeValue(value.getValue());
         }
 
+        @Override
+        public DocValue visit(PosixPatternValue value, Argument arg) {
+            return com.torodb.kvdocument.values.PosixPatternValue.fromPosixPattern(value.getValue());
+        }
+
         public static class Argument {
 
             private final SplitDocument splitDoc;
