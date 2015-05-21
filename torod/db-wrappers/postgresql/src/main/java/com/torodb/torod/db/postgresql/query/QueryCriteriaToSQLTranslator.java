@@ -677,8 +677,8 @@ public class QueryCriteriaToSQLTranslator {
             Object translatedObject = converter.toJson(value);
             String result;
 
-            if (value.getType().equals(BasicType.STRING)) {
-                result = '\"' + translatedObject.toString() + '\"';
+            if (translatedObject instanceof String) {
+                result = '\"' + (String) translatedObject + '\"';
             }
             else {
                 result = translatedObject.toString();

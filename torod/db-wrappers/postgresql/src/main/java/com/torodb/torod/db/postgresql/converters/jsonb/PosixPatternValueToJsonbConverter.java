@@ -19,7 +19,6 @@
  */
 package com.torodb.torod.db.postgresql.converters.jsonb;
 
-import com.torodb.torod.core.exceptions.ToroImplementationException;
 import com.torodb.torod.core.subdocument.values.PosixPatternValue;
 import com.torodb.torod.db.postgresql.converters.ValueConverter;
 
@@ -46,8 +45,7 @@ public class PosixPatternValueToJsonbConverter implements
 
     @Override
     public PosixPatternValue toValue(String value) {
-        
-        return new PosixPatternValue(value.substring(1, value.length() - 1));
+        return new PosixPatternValue(value);
     }
 
 }
