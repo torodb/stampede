@@ -280,8 +280,9 @@ public class ToroRequestProcessor extends AbstractRequestProcessor {
 		
 		String collection = ToroCollectionTranslator.translate(insertMessage.getCollection());
     	WriteFailMode writeFailMode = 
-    			insertMessage.getFlags().contains(InsertMessage.Flag.CONTINUE_ON_ERROR)?
-    					WriteFailMode.ISOLATED:WriteFailMode.ORDERED;
+//    			insertMessage.getFlags().contains(InsertMessage.Flag.CONTINUE_ON_ERROR)?
+//    					WriteFailMode.ISOLATED:WriteFailMode.ORDERED;
+                WriteFailMode.TRANSACTIONAL;
 		Iterable<?> documents = insertMessage.getDocuments();
     	List<ToroDocument> inserts = new ArrayList<ToroDocument>();
     	Iterator<?> documentsIterator = documents.iterator();
