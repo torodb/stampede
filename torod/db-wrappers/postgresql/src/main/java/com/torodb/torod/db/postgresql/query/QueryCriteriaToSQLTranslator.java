@@ -41,12 +41,14 @@ import com.torodb.torod.core.language.querycriteria.IsEqualQueryCriteria;
 import com.torodb.torod.core.language.querycriteria.TypeIsQueryCriteria;
 import com.torodb.torod.core.language.querycriteria.AttributeQueryCriteria;
 import com.google.common.base.Preconditions;
+import com.torodb.torod.core.language.querycriteria.*;
 import com.torodb.torod.core.language.querycriteria.utils.QueryCriteriaDFW;
 import com.torodb.torod.core.language.querycriteria.utils.QueryCriteriaVisitor;
 import com.torodb.torod.core.subdocument.BasicType;
 import com.torodb.torod.core.subdocument.SubDocType;
 import com.torodb.torod.core.subdocument.structure.DocStructure;
 import com.torodb.torod.core.subdocument.values.*;
+import com.torodb.torod.db.postgresql.converters.PatternConverter;
 import com.torodb.torod.db.postgresql.converters.ValueConverter;
 import com.torodb.torod.db.postgresql.converters.jooq.SubdocValueConverter;
 import com.torodb.torod.db.postgresql.converters.jooq.ValueToJooqConverterProvider;
@@ -540,6 +542,30 @@ public class QueryCriteriaToSQLTranslator {
             }
 
             Condition criteriaCondition = field.lessOrEqual(value);
+
+            if (typeCondition != null) {
+                criteriaCondition = typeCondition.and(criteriaCondition);
+            }
+
+            return addArrayCondition(criteria, criteriaCondition, keys, inArray);
+        }
+
+        @Override
+        public Condition visit(MatchPatternQueryCriteria criteria, Boolean inArray) {
+            String[] keys = translateArrayRef(criteria);
+            Field field = DSL.field(getFieldName(keys));
+            Condition typeCondition = null;
+
+            if (isInArrayValue(criteria.getAttributeReference(), inArray)) {
+                typeCondition = DSL.condition("jsonb_typeof(" + field + ") = '"
+                        + getJsonType(BasicType.STRING) + "'");
+            }
+
+            Condition criteriaCondition = field.likeRegex(
+                    PatternConverter.toPosixPattern(
+                            criteria.getValue()
+                    )
+            );
 
             if (typeCondition != null) {
                 criteriaCondition = typeCondition.and(criteriaCondition);

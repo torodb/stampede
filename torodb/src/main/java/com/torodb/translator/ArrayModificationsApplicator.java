@@ -357,6 +357,26 @@ public class ArrayModificationsApplicator {
         }
 
         @Override
+        public QueryCriteria visit(MatchPatternQueryCriteria criteria, Void arg) {
+            Set<AttributeReference> combinedAttRefs = combineAttributeReferences(criteria.getAttributeReference());
+            if (combinedAttRefs.size() == 1) {
+                return criteria;
+            }
+
+            DisjunctionBuilder disjunctionBuilder = new DisjunctionBuilder();
+            for (AttributeReference combinedAttRef : combinedAttRefs) {
+                disjunctionBuilder.add(
+                        new MatchPatternQueryCriteria(
+                                combinedAttRef,
+                                criteria.getValue()
+                        )
+                );
+            }
+
+            return disjunctionBuilder.build();
+        }
+
+        @Override
         public QueryCriteria visit(TypeIsQueryCriteria criteria, Void arg) {
             Set<AttributeReference> combinedAttRefs = combineAttributeReferences(criteria.getAttributeReference());
             if (combinedAttRefs.size() == 1) {
@@ -491,6 +511,11 @@ public class ArrayModificationsApplicator {
         }
 
         @Override
+        public QueryCriteria visit(MatchPatternQueryCriteria criteria, List<AttributeReference.Key> arg) {
+            return queryCriteriaCase(criteria, arg);
+        }
+
+        @Override
         public QueryCriteria visit(IsObjectQueryCriteria criteria, List<AttributeReference.Key> arg) {
             return queryCriteriaCase(criteria, arg);
         }
@@ -594,6 +619,11 @@ public class ArrayModificationsApplicator {
         @Override
         public QueryCriteria visit(IsLessOrEqualQueryCriteria criteria, List<AttributeReference.Key> arg) {
             return new IsLessOrEqualQueryCriteria(new AttributeReference(arg), criteria.getValue());
+        }
+
+        @Override
+        public QueryCriteria visit(MatchPatternQueryCriteria criteria, List<AttributeReference.Key> arg) {
+            return new MatchPatternQueryCriteria(new AttributeReference(arg), criteria.getValue());
         }
 
         @Override

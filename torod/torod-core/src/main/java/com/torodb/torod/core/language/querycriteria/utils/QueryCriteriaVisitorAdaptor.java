@@ -20,26 +20,7 @@
 
 package com.torodb.torod.core.language.querycriteria.utils;
 
-import com.torodb.torod.core.language.querycriteria.AndQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.IsLessQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.IsGreaterQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.OrQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.IsLessOrEqualQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.ExistsQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.AttributeAndValueQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.ContainsAttributesQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.QueryCriteria;
-import com.torodb.torod.core.language.querycriteria.InQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.IsEqualQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.SizeIsQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.IsObjectQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.TypeIsQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.FalseQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.AttributeQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.TrueQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.ModIsQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.IsGreaterOrEqualQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.NotQueryCriteria;
+import com.torodb.torod.core.language.querycriteria.*;
 
 /**
  *
@@ -142,6 +123,11 @@ public class QueryCriteriaVisitorAdaptor<Result, Arg> implements QueryCriteriaVi
 
     @Override
     public Result visit(ExistsQueryCriteria criteria, Arg arg) {
+        return visit((AttributeQueryCriteria) criteria, arg);
+    }
+
+    @Override
+    public Result visit(MatchPatternQueryCriteria criteria, Arg arg) {
         return visit((AttributeQueryCriteria) criteria, arg);
     }
 

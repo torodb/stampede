@@ -24,7 +24,6 @@ package com.torodb.torod.core.language.querycriteria;
 import com.torodb.torod.core.language.AttributeReference;
 import com.torodb.torod.core.language.querycriteria.utils.QueryCriteriaVisitor;
 import com.torodb.torod.core.subdocument.values.IntegerValue;
-import com.torodb.torod.core.subdocument.values.Value;
 
 /**
  *
@@ -38,7 +37,7 @@ public class SizeIsQueryCriteria extends AttributeAndValueQueryCriteria {
 
     @Override
     protected int getBaseHash() {
-        return 23;
+        return 29;
     }
 
     @Override

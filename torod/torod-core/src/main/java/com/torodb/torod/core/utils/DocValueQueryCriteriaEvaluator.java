@@ -10,6 +10,7 @@ import com.torodb.torod.core.language.querycriteria.utils.QueryCriteriaVisitor;
 import com.torodb.torod.core.subdocument.BasicType;
 import com.torodb.torod.core.subdocument.values.Value;
 import java.util.Iterator;
+import java.util.regex.Matcher;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -377,6 +378,20 @@ public class DocValueQueryCriteriaEvaluator {
             }
             return false;
         }
+
+        @Override
+        public Boolean visit(MatchPatternQueryCriteria criteria, DocValue arg) {
+            DocValue referenced = resolve(criteria.getAttributeReference(), arg);
+            if (referenced == null) {
+                return false;
+            }
+            if (!(referenced instanceof StringValue)) {
+                return false;
+            }
+            String valAsString = ((StringValue) referenced).getValue();
+            Matcher matcher = criteria.getValue().getValue().matcher(valAsString);
+            return matcher.matches();
+        }
     }
 
     private static class ValueConverter implements DocValueVisitor<Value, Void> {
@@ -447,8 +462,8 @@ public class DocValueQueryCriteriaEvaluator {
         }
 
         @Override
-        public Value visit(PosixPatternValue value, Void arg) {
-            return new com.torodb.torod.core.subdocument.values.PosixPatternValue(value.getValue());
+        public Value visit(PatternValue value, Void arg) {
+            return new com.torodb.torod.core.subdocument.values.PatternValue(value.getValue());
         }
 
     }

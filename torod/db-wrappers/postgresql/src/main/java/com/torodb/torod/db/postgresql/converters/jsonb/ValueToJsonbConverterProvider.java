@@ -27,7 +27,6 @@ import com.torodb.torod.core.subdocument.values.*;
 import java.util.Map;
 import javax.annotation.Nonnull;
 import javax.json.JsonArray;
-import javax.json.JsonObject;
 
 /**
  *
@@ -46,7 +45,7 @@ public class ValueToJsonbConverterProvider {
     private final ValueConverter<String, StringValue> stringConverter;
     private final ValueConverter<String, TimeValue> timeConverter;
     private final ValueConverter<String, TwelveBytesValue> twelveBytesConverter;
-    private final ValueConverter<String, PosixPatternValue> posixPatternConverter;
+    private final ValueConverter<String, PatternValue> posixPatternConverter;
 
     private ValueToJsonbConverterProvider() {
         arrayConverter = new ArrayValueToJsonbConverter();
@@ -74,7 +73,7 @@ public class ValueToJsonbConverterProvider {
         converters.put(BasicType.STRING, stringConverter);
         converters.put(BasicType.TIME, timeConverter);
         converters.put(BasicType.TWELVE_BYTES, twelveBytesConverter);
-        converters.put(BasicType.POSIX_PATTERN, posixPatternConverter);
+        converters.put(BasicType.PATTERN, posixPatternConverter);
 
     }
 

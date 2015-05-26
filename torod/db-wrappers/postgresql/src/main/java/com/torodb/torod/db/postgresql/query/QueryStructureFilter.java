@@ -40,6 +40,7 @@ import com.torodb.torod.core.language.querycriteria.TrueQueryCriteria;
 import com.torodb.torod.core.language.querycriteria.IsEqualQueryCriteria;
 import com.torodb.torod.core.language.querycriteria.TypeIsQueryCriteria;
 import com.google.common.collect.*;
+import com.torodb.torod.core.language.querycriteria.*;
 import com.torodb.torod.core.language.utils.AttributeReferenceResolver;
 import com.torodb.torod.core.language.querycriteria.utils.DisjunctionBuilder;
 import com.torodb.torod.core.language.querycriteria.utils.QueryCriteriaVisitor;
@@ -500,6 +501,12 @@ public class QueryStructureFilter {
         public QueryCriteria visit(IsEqualQueryCriteria criteria,
                                    List<AttributeReference.Key> arg) {
             return new IsEqualQueryCriteria(criteria.getAttributeReference()
+                    .prepend(arg), criteria.getValue());
+        }
+
+        @Override
+        public QueryCriteria visit(MatchPatternQueryCriteria criteria, List<AttributeReference.Key> arg) {
+            return new MatchPatternQueryCriteria(criteria.getAttributeReference()
                     .prepend(arg), criteria.getValue());
         }
 

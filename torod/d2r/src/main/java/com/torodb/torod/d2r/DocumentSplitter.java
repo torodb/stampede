@@ -218,8 +218,8 @@ public class DocumentSplitter {
         }
 
         @Override
-        public BasicType visit(PosixPatternValue value, Void arg) {
-            return BasicType.POSIX_PATTERN;
+        public BasicType visit(PatternValue value, Void arg) {
+            return BasicType.PATTERN;
         }
 
     }
@@ -446,9 +446,9 @@ public class DocumentSplitter {
         }
 
         @Override
-        public Void visit(PosixPatternValue value, TranslatorConsumer arg) {
+        public Void visit(PatternValue value, TranslatorConsumer arg) {
             arg.consume(
-                    new com.torodb.torod.core.subdocument.values.PosixPatternValue(
+                    new com.torodb.torod.core.subdocument.values.PatternValue(
                             value.getValue()
                     )
             );

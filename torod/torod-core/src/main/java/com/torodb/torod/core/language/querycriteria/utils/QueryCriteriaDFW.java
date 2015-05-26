@@ -21,25 +21,7 @@
 
 package com.torodb.torod.core.language.querycriteria.utils;
 
-import com.torodb.torod.core.language.querycriteria.AndQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.IsLessQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.IsGreaterQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.OrQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.IsLessOrEqualQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.ExistsQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.AttributeAndValueQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.ContainsAttributesQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.InQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.IsEqualQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.SizeIsQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.IsObjectQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.TypeIsQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.FalseQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.AttributeQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.TrueQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.ModIsQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.IsGreaterOrEqualQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.NotQueryCriteria;
+import com.torodb.torod.core.language.querycriteria.*;
 
 /**
  *
@@ -320,6 +302,21 @@ public class QueryCriteriaDFW<Arg> implements QueryCriteriaVisitor<Void, Arg>{
         
         postAttributeQuery(criteria, arg);
         postExists(criteria, arg);
+        
+        return null;
+    }
+
+    protected void preMatchPattern(MatchPatternQueryCriteria criteria, Arg arg) {
+    }
+    protected void postMatchPattern(MatchPatternQueryCriteria criteria, Arg arg) {
+    }
+    @Override
+    public Void visit(MatchPatternQueryCriteria criteria, Arg arg) {
+        preMatchPattern(criteria, arg);
+        preAttributeQuery(criteria, arg);
+        
+        postAttributeQuery(criteria, arg);
+        postMatchPattern(criteria, arg);
         
         return null;
     }

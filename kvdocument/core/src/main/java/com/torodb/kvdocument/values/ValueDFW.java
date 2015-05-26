@@ -249,14 +249,14 @@ public class ValueDFW<Arg> implements DocValueVisitor<Void, Arg> {
         return null;
     }
 
-    protected void prePatternValue(PosixPatternValue value, Arg arg) {
+    protected void prePatternValue(PatternValue value, Arg arg) {
     }
     
-    protected void postPatternValue(PosixPatternValue value, Arg arg) {
+    protected void postPatternValue(PatternValue value, Arg arg) {
     }
     
     @Override
-    public Void visit(PosixPatternValue value, Arg arg) {
+    public Void visit(PatternValue value, Arg arg) {
         preDefaultValue(value, arg);
         prePatternValue(value, arg);
         

@@ -53,6 +53,6 @@ public interface DocTypeVisitor<Result, Arg> {
     
     public Result visit(TimeType type, Arg arg);
 
-    public Result accept(PosixPatternType type, Arg arg);
+    public Result accept(PatternType type, Arg arg);
 
 }

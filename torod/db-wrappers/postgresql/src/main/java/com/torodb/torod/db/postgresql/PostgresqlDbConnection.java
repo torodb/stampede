@@ -361,8 +361,8 @@ class PostgresqlDbConnection extends AbstractSqlDbConnection {
                     = ValueToJooqConverterProvider.getConverter(BasicType.ARRAY);
             SubdocValueConverter twelveBytesConverter
                     = ValueToJooqConverterProvider.getConverter(BasicType.TWELVE_BYTES);
-            SubdocValueConverter posixPatternConverter
-                    = ValueToJooqConverterProvider.getConverter(BasicType.POSIX_PATTERN);
+            SubdocValueConverter patternConverter
+                    = ValueToJooqConverterProvider.getConverter(BasicType.PATTERN);
 
             if (field.getConverter().getClass().equals(arrayConverter.getClass())) {
                 return "jsonb";
@@ -370,8 +370,8 @@ class PostgresqlDbConnection extends AbstractSqlDbConnection {
             if (field.getConverter().getClass().equals(twelveBytesConverter.getClass())) {
                 return "twelve_bytes";
             }
-            if (field.getConverter().getClass().equals(posixPatternConverter.getClass())) {
-                return "posix_pattern";
+            if (field.getConverter().getClass().equals(patternConverter.getClass())) {
+                return "torodb_pattern";
             }
         }
         return field.getDataType().getTypeName(conf);

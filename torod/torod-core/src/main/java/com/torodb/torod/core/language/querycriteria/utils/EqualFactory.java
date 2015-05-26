@@ -187,8 +187,8 @@ public class EqualFactory {
         }
 
         @Override
-        public Value<?> visit(PosixPatternValue value, Void arg) {
-            return new com.torodb.torod.core.subdocument.values.PosixPatternValue(
+        public Value<?> visit(PatternValue value, Void arg) {
+            return new com.torodb.torod.core.subdocument.values.PatternValue(
                     value.getValue()
             );
         }
@@ -365,7 +365,7 @@ public class EqualFactory {
 
         @Override
         public Void visit(
-                PosixPatternValue value,
+                PatternValue value,
                 LinkedList<AttributeReference.Key> arg) {
             return defaultcase(value, arg);
         }

@@ -20,12 +20,12 @@
 
 package com.torodb.translator;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Maps;
+import com.google.common.collect.*;
 import com.torodb.kvdocument.conversion.mongo.MongoTypeConverter;
 import com.torodb.kvdocument.conversion.mongo.MongoValueConverter;
 import com.torodb.kvdocument.types.DocType;
 import com.torodb.kvdocument.types.ObjectType;
+import com.torodb.kvdocument.types.PatternType;
 import com.torodb.kvdocument.values.DocValue;
 import com.torodb.torod.core.exceptions.ToroImplementationException;
 import com.torodb.torod.core.exceptions.UserToroException;
@@ -37,10 +37,15 @@ import com.torodb.torod.core.language.querycriteria.utils.EqualFactory;
 import com.torodb.torod.core.subdocument.BasicType;
 import com.torodb.torod.core.subdocument.values.ArrayValue;
 import com.torodb.torod.core.subdocument.values.IntegerValue;
+import com.torodb.torod.core.subdocument.values.PatternValue;
 import com.torodb.torod.core.subdocument.values.ValueFactory;
+import com.torodb.translator.exp.modifiers.ExpModifications;
+import com.torodb.translator.exp.modifiers.ExpModifier;
+import com.torodb.translator.exp.modifiers.RegexExpModifier;
 import java.util.*;
 import java.util.regex.Pattern;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import org.bson.BSONObject;
 
 /**
@@ -74,8 +79,10 @@ public class BasicQueryTranslator {
     public QueryCriteria translate(
             BSONObject queryObject
     ) throws UserToroException {
-        return translateImplicitAnd(AttributeReference.EMPTY_REFERENCE,
-                                    queryObject);
+        return translateImplicitAnd(
+                AttributeReference.EMPTY_REFERENCE,
+                queryObject
+        );
     }
 
     private AttributeReference translateObjectAttributeReference(
@@ -109,48 +116,76 @@ public class BasicQueryTranslator {
         if (keys.size() == 1) {
             String key = keys.iterator().
                     next();
+            
+            if (isExpModifier(key)) {
+                ExpModifications newModifiers = new ExpModifications(exp);
+                ClassToInstanceMap<ExpModifier> notConsumedModifiers
+                        = newModifiers.getNotConsumedModifiers();
+                assert !notConsumedModifiers.isEmpty();
+                throw new NotConsumedExpModifierException(notConsumedModifiers);
+            }
+            
             Object uncastedArg = exp.get(key);
-            return translateExp(attRefAcum, key, uncastedArg);
+            return translateExp(attRefAcum, key, uncastedArg, ExpModifications.NO_MODIFICATIONS);
         }
 
         ConjunctionBuilder conjunctionBuilder = new ConjunctionBuilder();
 
+        ExpModifications newModifiers = new ExpModifications(exp);
         //TODO: Constraint merged ands, ors, nors and subqueries and equalities
         for (String key : keys) {
+            if (isExpModifier(key)) {
+                continue;
+            }
+            
             Object uncastedArg = exp.get(key);
-            conjunctionBuilder.add(translateExp(attRefAcum, key, uncastedArg));
+            conjunctionBuilder.add(
+                    translateExp(
+                            attRefAcum, 
+                            key, 
+                            uncastedArg, 
+                            newModifiers
+                    )
+            );
+        }
+        ClassToInstanceMap<ExpModifier> notConsumedModifiers = newModifiers
+                .getNotConsumedModifiers();
+        if (!notConsumedModifiers.isEmpty()) {
+            throw new NotConsumedExpModifierException(notConsumedModifiers);
         }
 
         return conjunctionBuilder.build();
     }
 
+    @Nonnull
     private QueryCriteria translateExp(
             @Nonnull AttributeReference attRefAcum,
             @Nonnull String key,
-            @Nonnull Object uncastedArg
+            @Nonnull Object uncastedArg,
+            @Nonnull ExpModifications modifications
     ) throws UserToroException {
         switch (getExpressionType(key, uncastedArg)) {
             case AND_OR_NOR: {
                 if (isAnd(key)) {
-                    return translateAndOperand(attRefAcum, uncastedArg);
+                    return translateAndOperand(attRefAcum, uncastedArg, modifications);
                 }
                 if (isOr(key)) {
-                    return translateOrOperand(attRefAcum, uncastedArg);
+                    return translateOrOperand(attRefAcum, uncastedArg, modifications);
                 }
                 if (isNor(key)) {
-                    return translateNorOperand(attRefAcum, uncastedArg);
+                    return translateNorOperand(attRefAcum, uncastedArg, modifications);
                 }
                 throw new ToroImplementationException("Unexpected operation");
             }
             case EQUALITY: {
                 AttributeReference newAttRefAcum
                         = translateObjectAttributeReference(attRefAcum, key);
-                return translateEquality(newAttRefAcum, uncastedArg);
+                return translateEquality(newAttRefAcum, uncastedArg, modifications);
             }
             case SUB_EXP: {
                 AttributeReference newAttRefAcum
                         = translateObjectAttributeReference(attRefAcum, key);
-                return translateSubQueries(newAttRefAcum, uncastedArg);
+                return translateSubQueries(newAttRefAcum, uncastedArg, modifications);
             }
             case INVALID:
             default: {
@@ -161,20 +196,26 @@ public class BasicQueryTranslator {
         }
     }
 
-    private ExpressionType getExpressionType(
+    private NodeType getExpressionType(
             @Nonnull String key,
             @Nonnull Object uncastedArg
     ) {
         if (isAnd(key) || isOr(key) || isNor(key)) {
-            return ExpressionType.AND_OR_NOR;
+            return NodeType.AND_OR_NOR;
+        }
+        
+        if (isExpModifier(key)) {
+            throw new ToroImplementationException(
+                    "An expression but not a modifier was expected"
+            );
         }
         
         if (isSubQuery(key)) {
-            return ExpressionType.INVALID;
+            return NodeType.INVALID;
         }
 
         if (!(uncastedArg instanceof BSONObject)) {
-            return ExpressionType.EQUALITY;
+            return NodeType.EQUALITY;
         }
 
         Set<String> keySet = ((BSONObject) uncastedArg).keySet();
@@ -186,36 +227,35 @@ public class BasicQueryTranslator {
             if (isSubQuery(subKey)) {
                 oneSubQuery |= true;
             }
-            else {
+            else if (!isExpModifier(subKey)) {
                 oneNoSubQuery |= true;
             }
         }
         if (!oneSubQuery) {
-            return ExpressionType.EQUALITY;
+            return NodeType.EQUALITY;
         }
         if (oneNoSubQuery) {
-            return ExpressionType.INVALID;
+            return NodeType.INVALID;
         }
-        return ExpressionType.SUB_EXP;
+        return NodeType.SUB_EXP;
     }
 
-    private boolean isAnd(
-            @Nonnull String key
-    ) {
+    private boolean isAnd(@Nonnull String key   ) {
         return key.equals("$and");
     }
 
-    private boolean isOr(
-            @Nonnull String key
-    ) {
+    private boolean isOr(@Nonnull String key) {
         return key.equals("$or");
     }
 
-    private boolean isNor(
-            @Nonnull String key) {
+    private boolean isNor(@Nonnull String key) {
         return key.equals("$nor");
     }
 
+    private boolean isExpModifier(@Nonnull String key) {
+        return ExpModifications.isExpModifer(key);
+    }
+    
     private boolean isSubQuery(@Nonnull String key) {
         return QueryOperator.isSubQuery(key);
     }
@@ -230,7 +270,7 @@ public class BasicQueryTranslator {
             return false;
         }
         for (String key : keySet) {
-            if (!isSubQuery(key)) {
+            if (!isSubQuery(key) && !isExpModifier(key)) {
                 return false;
             }
         }
@@ -239,7 +279,8 @@ public class BasicQueryTranslator {
 
     private QueryCriteria translateAndOperand(
             @Nonnull AttributeReference attRefAcum,
-            @Nonnull Object uncastedArg
+            @Nonnull Object uncastedArg,
+            @Nonnull ExpModifications modifications
     ) throws UserToroException {
         if (!(uncastedArg instanceof List)) {
             throw new UserToroException(
@@ -266,7 +307,8 @@ public class BasicQueryTranslator {
 
     private QueryCriteria translateOrOperand(
             @Nonnull AttributeReference attRefAcum,
-            @Nonnull Object uncastedArg
+            @Nonnull Object uncastedArg,
+            @Nonnull ExpModifications modifications
     ) throws UserToroException {
         if (!(uncastedArg instanceof List)) {
             throw new UserToroException(
@@ -300,7 +342,8 @@ public class BasicQueryTranslator {
 
     private QueryCriteria translateNorOperand(
             @Nonnull AttributeReference attRefAcum,
-            @Nonnull Object uncastedArg
+            @Nonnull Object uncastedArg,
+            @Nonnull ExpModifications modifications
     ) throws UserToroException {
         //http://docs.mongodb.org/manual/reference/operator/query/nor/#op._S_nor
         if (!(uncastedArg instanceof List)) {
@@ -313,22 +356,33 @@ public class BasicQueryTranslator {
         }
 
         return new NotQueryCriteria(
-                translateOrOperand(attRefAcum, value)
+                translateOrOperand(attRefAcum, value, ExpModifications.NO_MODIFICATIONS)
         );
     }
 
     private QueryCriteria translateEquality(
             @Nonnull AttributeReference attRefAcum,
-            @Nonnull Object uncastedArg
+            @Nonnull Object uncastedArg,
+            @Nonnull ExpModifications modifications
     ) {
         DocValue value = MongoValueConverter.translateBSON(uncastedArg);
-
-        return EqualFactory.createEquality(attRefAcum, value);
+        
+        if (value instanceof com.torodb.kvdocument.values.PatternValue) {
+            com.torodb.kvdocument.values.PatternValue castedValue = 
+                    (com.torodb.kvdocument.values.PatternValue) value;
+            return new MatchPatternQueryCriteria(
+                    attRefAcum, 
+                    new PatternValue(castedValue.getValue())
+            );
+        } else {
+            return EqualFactory.createEquality(attRefAcum, value);
+        }
     }
 
     private QueryCriteria translateSubQueries(
             @Nonnull AttributeReference attRefAcum,
-            @Nonnull Object uncastedArg
+            @Nonnull Object uncastedArg,
+            @Nonnull ExpModifications modifications
     ) throws UserToroException {
         if (!(uncastedArg instanceof BSONObject)) {
             throw new ToroImplementationException("A bson object was expected");
@@ -338,15 +392,27 @@ public class BasicQueryTranslator {
             String key = arg.keySet().
                     iterator().
                     next();
-            return translateSubQuery(attRefAcum, key, arg.get(key));
+            return translateSubQuery(attRefAcum, key, arg.get(key), modifications);
         }
         else {
             ConjunctionBuilder cb = new ConjunctionBuilder();
+            ExpModifications newModifiers = new ExpModifications(arg);
+            
             for (String key : arg.keySet()) {
+                if (isExpModifier(key)) {
+                    continue;
+                }
                 cb.add(
-                        translateSubQuery(attRefAcum, key, arg.get(key))
+                        translateSubQuery(attRefAcum, key, arg.get(key), newModifiers)
                 );
             }
+            
+            ClassToInstanceMap<ExpModifier> notConsumedModifiers = newModifiers
+                    .getNotConsumedModifiers();
+            if (!notConsumedModifiers.isEmpty()) {
+                throw new NotConsumedExpModifierException(notConsumedModifiers);
+            }
+        
             return cb.build();
         }
     }
@@ -354,55 +420,57 @@ public class BasicQueryTranslator {
     private QueryCriteria translateSubQuery(
             @Nonnull AttributeReference attRefAcum,
             @Nonnull String key,
-            @Nonnull Object uncastedArg
+            @Nonnull Object uncastedArg,
+            @Nonnull ExpModifications modifications
     ) throws UserToroException {
         switch (QueryOperator.fromKey(key)) {
             case GT_KEY:
-                return translateGtOperand(attRefAcum, uncastedArg);
+                return translateGtOperand(attRefAcum, uncastedArg, modifications);
             case GTE_KEY:
-                return translateGteOperand(attRefAcum, uncastedArg);
+                return translateGteOperand(attRefAcum, uncastedArg, modifications);
             case LT_KEY:
-                return translateLtOperand(attRefAcum, uncastedArg);
+                return translateLtOperand(attRefAcum, uncastedArg, modifications);
             case LTE_KEY:
-                return translateLteOperand(attRefAcum, uncastedArg);
+                return translateLteOperand(attRefAcum, uncastedArg, modifications);
             case NE_KEY:
-                return translateNeOperand(attRefAcum, uncastedArg);
+                return translateNeOperand(attRefAcum, uncastedArg, modifications);
             case IN_KEY:
-                return translateInOperand(attRefAcum, uncastedArg);
+                return translateInOperand(attRefAcum, uncastedArg, modifications);
             case NIN_KEY:
-                return translateNinOperand(attRefAcum, uncastedArg);
+                return translateNinOperand(attRefAcum, uncastedArg, modifications);
             case NOT_KEY:
-                return translateNotOperand(attRefAcum, uncastedArg);
+                return translateNotOperand(attRefAcum, uncastedArg, modifications);
             case EXISTS_KEY:
-                return translateExistsOperand(attRefAcum, uncastedArg);
+                return translateExistsOperand(attRefAcum, uncastedArg, modifications);
             case TYPE_KEY:
-                return translateTypeOperand(attRefAcum, uncastedArg);
+                return translateTypeOperand(attRefAcum, uncastedArg, modifications);
             case MOD_KEY:
-                return translateModOperand(attRefAcum, uncastedArg);
+                return translateModOperand(attRefAcum, uncastedArg, modifications);
             case REGEX_KEY:
-                return translateRegexOperand(attRefAcum, uncastedArg);
+                return translateRegexOperand(attRefAcum, uncastedArg, modifications);
             case TEXT_KEY:
-                return translateTextOperand(attRefAcum, uncastedArg);
+                return translateTextOperand(attRefAcum, uncastedArg, modifications);
             case WHERE_KEY:
-                return translateWhereOperand(attRefAcum, uncastedArg);
+                return translateWhereOperand(attRefAcum, uncastedArg, modifications);
             case ALL_KEY:
-                return translateAllOperand(attRefAcum, uncastedArg);
+                return translateAllOperand(attRefAcum, uncastedArg, modifications);
             case ELEM_MATCH_KEY:
-                return translateElemMatchOperand(attRefAcum, uncastedArg);
+                return translateElemMatchOperand(attRefAcum, uncastedArg, modifications);
             case SIZE_KEY:
-                return translateSizeOperand(attRefAcum, uncastedArg);
+                return translateSizeOperand(attRefAcum, uncastedArg, modifications);
             case GEO_WITHIN_KEY:
             case GEO_INTERSECTS_KEY:
             case NEAR_KEY:
             case NEAR_SPHERE_KEY:
             default:
-                return translateUnsupportedOperation(attRefAcum, uncastedArg);
+                return translateUnsupportedOperation(attRefAcum, uncastedArg, modifications);
         }
     }
 
     private QueryCriteria translateUnsupportedOperation(
             @Nonnull AttributeReference attRefAcum,
-            @Nonnull Object uncastedArg)
+            @Nonnull Object uncastedArg,
+            @Nonnull ExpModifications modifications)
             throws UserToroException {
         throw new UserToroException("The operation " + uncastedArg
                                             + " is not supported right now");
@@ -410,7 +478,8 @@ public class BasicQueryTranslator {
 
     private QueryCriteria translateGtOperand(
             @Nonnull AttributeReference attRefAcum,
-            @Nonnull Object uncastedArg) {
+            @Nonnull Object uncastedArg,
+            @Nonnull ExpModifications modifications) {
         DocValue docValue = MongoValueConverter.translateBSON(uncastedArg);
         return new IsGreaterQueryCriteria(
                 attRefAcum,
@@ -420,7 +489,8 @@ public class BasicQueryTranslator {
 
     private QueryCriteria translateGteOperand(
             @Nonnull AttributeReference attRefAcum,
-            @Nonnull Object uncastedArg) {
+            @Nonnull Object uncastedArg,
+            @Nonnull ExpModifications modifications) {
         DocValue docValue = MongoValueConverter.translateBSON(uncastedArg);
         return new IsGreaterOrEqualQueryCriteria(
                 attRefAcum,
@@ -430,7 +500,8 @@ public class BasicQueryTranslator {
 
     private QueryCriteria translateLtOperand(
             @Nonnull AttributeReference attRefAcum,
-            @Nonnull Object uncastedArg) {
+            @Nonnull Object uncastedArg,
+            @Nonnull ExpModifications modifications) {
         DocValue docValue = MongoValueConverter.translateBSON(uncastedArg);
         return new IsLessQueryCriteria(
                 attRefAcum,
@@ -440,7 +511,8 @@ public class BasicQueryTranslator {
 
     private QueryCriteria translateLteOperand(
             @Nonnull AttributeReference attRefAcum,
-            @Nonnull Object uncastedArg) {
+            @Nonnull Object uncastedArg,
+            @Nonnull ExpModifications modifications) {
         DocValue docValue = MongoValueConverter.translateBSON(uncastedArg);
         return new IsLessOrEqualQueryCriteria(
                 attRefAcum,
@@ -450,7 +522,8 @@ public class BasicQueryTranslator {
 
     private QueryCriteria translateNeOperand(
             @Nonnull AttributeReference attRefAcum,
-            @Nonnull Object uncastedArg) {
+            @Nonnull Object uncastedArg,
+            @Nonnull ExpModifications modifications) {
         DocValue docValue = MongoValueConverter.translateBSON(uncastedArg);
         return new NotQueryCriteria(
                 EqualFactory.createEquality(
@@ -462,7 +535,8 @@ public class BasicQueryTranslator {
 
     private QueryCriteria translateInOperand(
             @Nonnull AttributeReference attRefAcum,
-            @Nonnull Object uncastedArg) {
+            @Nonnull Object uncastedArg,
+            @Nonnull ExpModifications modifications) {
         if (!(uncastedArg instanceof List)) {
             throw new ToroImplementationException("$in needs an array");
         }
@@ -475,7 +549,8 @@ public class BasicQueryTranslator {
 
     private QueryCriteria translateNinOperand(
             @Nonnull AttributeReference attRefAcum,
-            @Nonnull Object uncastedArg) {
+            @Nonnull Object uncastedArg,
+            @Nonnull ExpModifications modifications) {
         if (!(uncastedArg instanceof List)) {
             throw new ToroImplementationException("$in needs an array");
         }
@@ -490,7 +565,8 @@ public class BasicQueryTranslator {
 
     private QueryCriteria translateNotOperand(
             @Nonnull AttributeReference attRefAcum,
-            @Nonnull Object uncastedArg)
+            @Nonnull Object uncastedArg,
+            @Nonnull ExpModifications modifications)
             throws UserToroException {
         if (!(uncastedArg instanceof BSONObject)) {
             if (uncastedArg instanceof Pattern) {
@@ -500,15 +576,16 @@ public class BasicQueryTranslator {
             throw new UserToroException(
                     "$not needs a regex (not supported right now) or document");
         }
-
+        
         return new NotQueryCriteria(
-                translateSubQueries(attRefAcum, uncastedArg)
+                translateSubQueries(attRefAcum, uncastedArg, ExpModifications.NO_MODIFICATIONS)
         );
     }
 
     private QueryCriteria translateExistsOperand(
             @Nonnull AttributeReference attRefAcum,
-            @Nonnull Object uncastedArg)
+            @Nonnull Object uncastedArg,
+            @Nonnull ExpModifications modifications)
             throws UserToroException {
         if (!(uncastedArg instanceof Boolean)) {
             throw new UserToroException("$exists needs a boolean");
@@ -553,7 +630,8 @@ public class BasicQueryTranslator {
 
     private QueryCriteria translateTypeOperand(
             @Nonnull AttributeReference attRefAcum,
-            @Nonnull Object uncastedArg)
+            @Nonnull Object uncastedArg,
+            @Nonnull ExpModifications modifications)
             throws UserToroException {
         if (!(uncastedArg instanceof Integer)) {
             throw new UserToroException("$type needs an integer");
@@ -578,7 +656,8 @@ public class BasicQueryTranslator {
 
     private QueryCriteria translateModOperand(
             @Nonnull AttributeReference attRefAcum,
-            @Nonnull Object uncastedArg)
+            @Nonnull Object uncastedArg,
+            @Nonnull ExpModifications modifications)
             throws UserToroException {
         if (!(uncastedArg instanceof List)) {
             throw new UserToroException("$mod needs an array");
@@ -614,25 +693,52 @@ public class BasicQueryTranslator {
 
     private QueryCriteria translateRegexOperand(
             @Nonnull AttributeReference attRefAcum,
-            @Nonnull Object uncastedArg) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            @Nonnull Object uncastedArg,
+            @Nonnull ExpModifications modifications) {
+        String pattern;
+        int flags;
+        if (uncastedArg instanceof String) {
+            pattern = (String) uncastedArg;
+            flags = 0;
+        }
+        else if (uncastedArg instanceof Pattern) {
+            Pattern arg = (Pattern) uncastedArg;
+            pattern = arg.pattern();
+            flags = arg.flags();
+        }
+        else {
+            throw new UserToroException("$regex has to be a string or a pattern");
+        }
+        
+        Pattern regex;
+        RegexExpModifier modifier = modifications.consumeModifier(RegexExpModifier.class);
+        if (modifier != null) {
+            regex = Pattern.compile(pattern, flags | modifier.toPatternFlags());
+        }
+        else {
+            regex = Pattern.compile(pattern, flags);
+        }
+        return new MatchPatternQueryCriteria(attRefAcum, new PatternValue(regex));
     }
 
     private QueryCriteria translateTextOperand(
             @Nonnull AttributeReference attRefAcum,
-            @Nonnull Object uncastedArg) {
+            @Nonnull Object uncastedArg,
+            @Nonnull ExpModifications modifications) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     private QueryCriteria translateWhereOperand(
             @Nonnull AttributeReference attRefAcum,
-            @Nonnull Object uncastedArg) {
+            @Nonnull Object uncastedArg,
+            @Nonnull ExpModifications modifications) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     private QueryCriteria translateAllOperand(
             @Nonnull AttributeReference attRefAcum,
-            @Nonnull Object uncastedArg)
+            @Nonnull Object uncastedArg,
+            @Nonnull ExpModifications modifications)
             throws UserToroException {
         if (!(uncastedArg instanceof List)) {
             throw new UserToroException("$all needs an array");
@@ -670,7 +776,8 @@ public class BasicQueryTranslator {
 
     private QueryCriteria translateElemMatchOperand(
             @Nonnull AttributeReference attRefAcum,
-            @Nonnull Object uncastedArg)
+            @Nonnull Object uncastedArg,
+            @Nonnull ExpModifications modifications)
             throws UserToroException {
         if (!(uncastedArg instanceof BSONObject)) {
             throw new UserToroException("$elemMatch needs an object");
@@ -680,12 +787,18 @@ public class BasicQueryTranslator {
         BSONObject castedObject = (BSONObject) uncastedArg;
 
         if (isSubQuery(uncastedArg)) {
-            body = translateSubQueries(AttributeReference.EMPTY_REFERENCE,
-                                       uncastedArg);
+            ExpModifications newModifications = new ExpModifications(castedObject);
+            body = translateSubQueries(
+                    AttributeReference.EMPTY_REFERENCE,
+                    uncastedArg,
+                    newModifications
+            );
         }
         else {
-            body = translateImplicitAnd(AttributeReference.EMPTY_REFERENCE,
-                                        castedObject);
+            body = translateImplicitAnd(
+                    AttributeReference.EMPTY_REFERENCE,
+                    castedObject
+            );
         }
         return new ExistsQueryCriteria(
                 attRefAcum,
@@ -695,7 +808,8 @@ public class BasicQueryTranslator {
 
     private QueryCriteria translateSizeOperand(
             @Nonnull AttributeReference attRefAcum,
-            @Nonnull Object uncastedArg)
+            @Nonnull Object uncastedArg,
+            @Nonnull ExpModifications modifications)
             throws UserToroException {
         Object uncastedValue = uncastedArg;
         if (!(uncastedValue instanceof Integer)) {
@@ -709,8 +823,7 @@ public class BasicQueryTranslator {
 
     }
 
-    private static enum ExpressionType {
-
+    private static enum NodeType {
         EQUALITY,
         SUB_EXP,
         AND_OR_NOR,

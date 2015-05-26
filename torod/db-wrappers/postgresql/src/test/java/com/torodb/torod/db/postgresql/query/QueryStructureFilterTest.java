@@ -696,9 +696,9 @@ public class QueryStructureFilterTest {
 
         @Override
         public BasicType visit(
-                com.torodb.kvdocument.values.PosixPatternValue value,
+                com.torodb.kvdocument.values.PatternValue value,
                 Void arg) {
-            return BasicType.POSIX_PATTERN;
+            return BasicType.PATTERN;
         }
 
     }

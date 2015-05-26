@@ -53,7 +53,7 @@ public class MongoTypeConverter {
             case 9:
                 return DateTimeType.INSTANCE;
             case 11:
-                return PosixPatternType.INSTANCE;
+                return PatternType.INSTANCE;
             case 17:
             case 15:
             case 14:

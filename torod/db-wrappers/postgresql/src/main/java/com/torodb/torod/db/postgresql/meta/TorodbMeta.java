@@ -144,7 +144,7 @@ public class TorodbMeta {
     ) throws SQLException, IOException {
         boolean findDocTypeExists = false;
         boolean twelveBytesExists = false;
-        boolean posixPatternExists = false;
+        boolean torodbPatternExists = false;
         
         ResultSet typeInfo = null;
         try {
@@ -157,11 +157,11 @@ public class TorodbMeta {
                 twelveBytesExists = 
                         twelveBytesExists
                         || typeInfo.getString("TYPE_NAME").equals("twelve_bytes");
-                posixPatternExists = 
-                        posixPatternExists
-                        || typeInfo.getString("TYPE_NAME").equals("posix_pattern");
+                torodbPatternExists = 
+                        torodbPatternExists
+                        || typeInfo.getString("TYPE_NAME").equals("torodb_pattern");
                 
-                if (findDocTypeExists && twelveBytesExists && posixPatternExists) {
+                if (findDocTypeExists && twelveBytesExists && torodbPatternExists) {
                     break;
                 }
             }
@@ -187,13 +187,13 @@ public class TorodbMeta {
         else {
             LOGGER.debug("Type twelve_bytes found");
         }
-        if (!posixPatternExists) {
-            LOGGER.debug("Creating type posix_pattern");
-            createPosixPatternType(conn);
-            LOGGER.debug("Created type posix_pattern");
+        if (!torodbPatternExists) {
+            LOGGER.debug("Creating type torodb_pattern");
+            createTorodbPatternType(conn);
+            LOGGER.debug("Created type torodb_pattern");
         }
         else {
-            LOGGER.debug("Type posix_pattern found");
+            LOGGER.debug("Type torodb_pattern found");
         }
     }
 
@@ -216,8 +216,8 @@ public class TorodbMeta {
         executeSql(conn, "/sql/twelve_bytes_type.sql");
     }
 
-    private void createPosixPatternType(Connection conn) throws IOException, SQLException {
-        executeSql(conn, "/sql/posix_pattern_type.sql");
+    private void createTorodbPatternType(Connection conn) throws IOException, SQLException {
+        executeSql(conn, "/sql/torodb_pattern_type.sql");
     }
     
     private void createFindDocProcedure(

@@ -91,7 +91,7 @@ public class DocValueAdaptor<Result, Arg> implements DocValueVisitor<Result, Arg
     }
 
     @Override
-    public Result visit(PosixPatternValue value, Arg arg) {
+    public Result visit(PatternValue value, Arg arg) {
         return defaultCase(value, arg);
     }
     

@@ -307,8 +307,8 @@ public class JsonValueConverter {
         }
 
         @Override
-        public Void visit(PosixPatternValue value, ValueConsumer arg) {
-            arg.consume(value.getValue());
+        public Void visit(PatternValue value, ValueConsumer arg) {
+            arg.consume(value.toString());
             return null;
         }
 

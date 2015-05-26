@@ -159,7 +159,7 @@ public class ArrayValueToJsonbConverter implements
         }
 
         @Override
-        public Void visit(PosixPatternValue value, JsonArrayBuilder arg) {
+        public Void visit(PatternValue value, JsonArrayBuilder arg) {
             arg.add(ValueToArrayConverterProvider.getInstance()
                     .getPosixConverter().toJson(value)
             );

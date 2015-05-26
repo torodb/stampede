@@ -30,7 +30,6 @@ import com.torodb.torod.core.language.querycriteria.utils.DisjunctionBuilder;
 import com.torodb.torod.core.subdocument.BasicType;
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 import javax.annotation.Nullable;
 
 /**

@@ -4,12 +4,12 @@ package com.torodb.kvdocument.types;
 /**
  *
  */
-public class PosixPatternType implements DocType {
+public class PatternType implements DocType {
     private static final long serialVersionUID = 1L;
 
-    public static final PosixPatternType INSTANCE = new PosixPatternType();
+    public static final PatternType INSTANCE = new PatternType();
     
-    private PosixPatternType()  {}
+    private PatternType()  {}
     
     @Override
     public <Result, Arg> Result accept(DocTypeVisitor<Result, Arg> visitor, Arg arg) {

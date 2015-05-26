@@ -60,7 +60,7 @@ public class ValueToArrayConverterProvider {
     private final ValueConverter<String, StringValue> stringConverter;
     private final ValueConverter<String, TimeValue> timeConverter;
     private final ValueConverter<String, TwelveBytesValue> twelveBytesConverter;
-    private final ValueConverter<String, PosixPatternValue> posixPatterConverter;
+    private final ValueConverter<String, PatternValue> posixPatterConverter;
 
     private ValueToArrayConverterProvider() {
         arrayConverter = new ArrayValueToJsonbConverter();
@@ -88,7 +88,7 @@ public class ValueToArrayConverterProvider {
         converters.put(BasicType.STRING, stringConverter);
         converters.put(BasicType.TIME, timeConverter);
         converters.put(BasicType.TWELVE_BYTES, twelveBytesConverter);
-        converters.put(BasicType.POSIX_PATTERN, posixPatterConverter);
+        converters.put(BasicType.PATTERN, posixPatterConverter);
     }
 
     public static ValueToArrayConverterProvider getInstance() {
@@ -191,7 +191,7 @@ public class ValueToArrayConverterProvider {
         return twelveBytesConverter;
     }
     
-    public ValueConverter<String, PosixPatternValue> getPosixConverter() {
+    public ValueConverter<String, PatternValue> getPosixConverter() {
         return posixPatterConverter;
     }
 

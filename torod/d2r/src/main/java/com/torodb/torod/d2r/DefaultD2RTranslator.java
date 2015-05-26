@@ -226,8 +226,8 @@ public class DefaultD2RTranslator implements D2RTranslator {
         }
 
         @Override
-        public DocValue visit(PosixPatternValue value, Argument arg) {
-            return com.torodb.kvdocument.values.PosixPatternValue.fromPosixPattern(value.getValue());
+        public DocValue visit(PatternValue value, Argument arg) {
+            return new com.torodb.kvdocument.values.PatternValue(value.getValue());
         }
 
         public static class Argument {

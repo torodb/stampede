@@ -17,47 +17,42 @@
  *     Copyright (c) 2014, 8Kdata Technology
  *     
  */
-package com.torodb.torod.db.postgresql.converters.jooq;
 
-import com.torodb.torod.core.subdocument.BasicType;
-import com.torodb.torod.core.subdocument.values.PosixPatternValue;
-import org.jooq.DataType;
-import org.jooq.impl.SQLDataType;
+
+package com.torodb.torod.core.language.querycriteria;
+
+import com.torodb.torod.core.language.AttributeReference;
+import com.torodb.torod.core.language.querycriteria.utils.QueryCriteriaVisitor;
+import com.torodb.torod.core.subdocument.values.PatternValue;
 
 /**
  *
  */
-public class PosixPatternValueConverter implements SubdocValueConverter<String, PosixPatternValue>{
+public class MatchPatternQueryCriteria extends AttributeAndValueQueryCriteria {
     private static final long serialVersionUID = 1L;
 
-    @Override
-    public DataType<String> getDataType() {
-        return SQLDataType.VARCHAR;
+    public MatchPatternQueryCriteria(AttributeReference attributeReference, PatternValue value) {
+        super(attributeReference, value);
     }
 
     @Override
-    public BasicType getErasuredType() {
-        return BasicType.POSIX_PATTERN;
+    protected int getBaseHash() {
+        return 23;
+    }
+    
+    @Override
+    public PatternValue getValue() {
+        return (PatternValue) super.getValue();
     }
 
     @Override
-    public PosixPatternValue from(String databaseObject) {
-        return new PosixPatternValue(databaseObject);
+    public String toString() {
+        return getAttributeReference() + "->matchPattern(" + getValue() + ")";
     }
-
+    
     @Override
-    public String to(PosixPatternValue userObject) {
-        return userObject.getValue();
-    }
-
-    @Override
-    public Class<String> fromType() {
-        return String.class;
-    }
-
-    @Override
-    public Class<PosixPatternValue> toType() {
-        return PosixPatternValue.class;
+    public <Result, Arg> Result accept(QueryCriteriaVisitor<Result, Arg> visitor, Arg arg) {
+        return visitor.visit(this, arg);
     }
 
 }

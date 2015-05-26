@@ -47,7 +47,7 @@ public class ValueToJooqConverterProvider {
         converters.put(BasicType.DATETIME, new DateTimeValueConverter());
         converters.put(BasicType.TIME, new TimeValueConverter());
         converters.put(BasicType.TWELVE_BYTES, new TwelveBytesValueConverter());
-        converters.put(BasicType.POSIX_PATTERN, new PosixPatternValueConverter());
+        converters.put(BasicType.PATTERN, new PatternValueConverter());
     }
 
     public static SubdocValueConverter<?, ? extends Value<? extends Serializable>> getConverter(BasicType type) {

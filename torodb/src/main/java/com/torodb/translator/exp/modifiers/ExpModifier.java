@@ -18,35 +18,14 @@
  *     
  */
 
-package com.torodb.torod.core.subdocument.values;
+package com.torodb.translator.exp.modifiers;
+
+import java.io.Serializable;
 
 /**
  *
  */
-public interface ValueVisitor<Result, Arg> {
-
-    public Result visit(BooleanValue value, Arg arg);
+public interface ExpModifier extends Serializable {
     
-    public Result visit(NullValue value, Arg arg);
     
-    public Result visit(ArrayValue value, Arg arg);
-    
-    public Result visit(IntegerValue value, Arg arg);
-
-    public Result visit(LongValue value, Arg arg);
-    
-    public Result visit(DoubleValue value, Arg arg);
-    
-    public Result visit(StringValue value, Arg arg);
-    
-    public Result visit(TwelveBytesValue value, Arg arg);
-    
-    public Result visit(DateTimeValue value, Arg arg);
-    
-    public Result visit(DateValue value, Arg arg);
-    
-    public Result visit(TimeValue value, Arg arg);
-
-    public Result visit(PatternValue value, Arg arg);
-
 }

@@ -73,8 +73,8 @@ public class BasicTypeToSqlType {
                 if (jdbcStringType.equals("twelve_bytes")) {
                     return BasicType.TWELVE_BYTES;
                 }
-                if (jdbcStringType.equals("posix_pattern")) {
-                    return BasicType.POSIX_PATTERN;
+                if (jdbcStringType.equals("torodb_pattern")) {
+                    return BasicType.PATTERN;
                 }
                 break;
             }

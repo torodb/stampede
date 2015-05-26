@@ -121,7 +121,7 @@ public class MongoValueConverter {
             return new LongValue((Long) value);
         }
         if (value instanceof Pattern) {
-            return PosixPatternValue.fromJavaPattern((Pattern) value);
+            return new PatternValue((Pattern) value);
         }
 
         throw new IllegalArgumentException("Arguments of " + value.getClass()
@@ -204,8 +204,8 @@ public class MongoValueConverter {
         }
 
         @Override
-        public Object visit(PosixPatternValue value, Void arg) {
-            return value.toJavaPattern();
+        public Object visit(PatternValue value, Void arg) {
+            return value.getValue();
         }
 
         @Override

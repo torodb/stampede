@@ -17,36 +17,49 @@
  *     Copyright (c) 2014, 8Kdata Technology
  *     
  */
-package com.torodb.torod.db.postgresql.converters.jsonb;
+package com.torodb.torod.db.postgresql.converters.jooq;
 
+import com.torodb.torod.core.subdocument.BasicType;
 import com.torodb.torod.core.subdocument.values.PatternValue;
 import com.torodb.torod.db.postgresql.converters.PatternConverter;
-import com.torodb.torod.db.postgresql.converters.ValueConverter;
+import java.util.regex.Pattern;
+import org.jooq.DataType;
+import org.jooq.impl.SQLDataType;
 
 /**
  *
  */
-public class PosixPatternValueToJsonbConverter implements 
-        ValueConverter<String, PatternValue> {
+public class PatternValueConverter implements SubdocValueConverter<String, PatternValue>{
+    private static final long serialVersionUID = 1L;
 
     @Override
-    public Class<? extends String> getJsonClass() {
+    public DataType<String> getDataType() {
+        return SQLDataType.VARCHAR;
+    }
+
+    @Override
+    public BasicType getErasuredType() {
+        return BasicType.PATTERN;
+    }
+
+    @Override
+    public PatternValue from(String databaseObject) {
+        return PatternConverter.fromPosixPattern(databaseObject);
+    }
+
+    @Override
+    public String to(PatternValue userObject) {
+        return PatternConverter.toPosixPattern(userObject);
+    }
+
+    @Override
+    public Class<String> fromType() {
         return String.class;
     }
 
     @Override
-    public Class<? extends PatternValue> getValueClass() {
+    public Class<PatternValue> toType() {
         return PatternValue.class;
-    }
-
-    @Override
-    public String toJson(PatternValue value) {
-        return PatternConverter.toPosixPattern(value);
-    }
-
-    @Override
-    public PatternValue toValue(String value) {
-        return PatternConverter.fromPosixPattern(value);
     }
 
 }

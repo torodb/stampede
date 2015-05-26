@@ -41,6 +41,7 @@ import com.torodb.torod.core.language.querycriteria.IsEqualQueryCriteria;
 import com.torodb.torod.core.language.querycriteria.TypeIsQueryCriteria;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.*;
+import com.torodb.torod.core.language.querycriteria.*;
 import com.torodb.torod.core.language.utils.AttributeReferenceResolver;
 import com.torodb.torod.core.language.querycriteria.utils.QueryCriteriaVisitor;
 import com.torodb.torod.core.subdocument.structure.DocStructure;
@@ -509,6 +510,13 @@ public class QueryEvaluator {
         @Nonnull
         @Override
         public TranslatorResult visit(IsLessQueryCriteria criteria, DocStructure arg) {
+            TranslatorResult result
+                    = getTargetStructure(criteria.getAttributeReference(), arg, criteria);
+            return result;
+        }
+
+        @Override
+        public TranslatorResult visit(MatchPatternQueryCriteria criteria, DocStructure arg) {
             TranslatorResult result
                     = getTargetStructure(criteria.getAttributeReference(), arg, criteria);
             return result;
