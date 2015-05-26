@@ -25,7 +25,6 @@ import com.torodb.kvdocument.conversion.mongo.MongoTypeConverter;
 import com.torodb.kvdocument.conversion.mongo.MongoValueConverter;
 import com.torodb.kvdocument.types.DocType;
 import com.torodb.kvdocument.types.ObjectType;
-import com.torodb.kvdocument.types.PatternType;
 import com.torodb.kvdocument.values.DocValue;
 import com.torodb.torod.core.exceptions.ToroImplementationException;
 import com.torodb.torod.core.exceptions.UserToroException;
@@ -45,7 +44,6 @@ import com.torodb.translator.exp.modifiers.RegexExpModifier;
 import java.util.*;
 import java.util.regex.Pattern;
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import org.bson.BSONObject;
 
 /**
