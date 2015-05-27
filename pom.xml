@@ -6,7 +6,7 @@
 
     <groupId>com.torodb</groupId>
     <artifactId>torodb-parent</artifactId>
-    <version>0.22</version>
+    <version>0.23-SNAPSHOT</version>
     <packaging>pom</packaging>
     
     <name>ToroDB parent</name>
