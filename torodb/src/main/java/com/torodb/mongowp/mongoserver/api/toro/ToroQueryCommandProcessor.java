@@ -95,6 +95,7 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
     @Override
     public CountReply count(CountRequest request) throws Exception {
         if (!request.getDatabase().equals(databaseName)) {
+            LOGGER.warn("Requested command {} on the unexistent database {}", "count", request.getDatabase());
             return new CountReply(0);
         }
         AttributeMap attributeMap = request.getAttributes();
@@ -130,7 +131,7 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
 		
 		Map<String, Object> keyValues = new HashMap<String, Object>();
 		
-		String collection = ToroCollectionTranslator.translate((String) document.getValue("insert"));
+		String collection = (String) document.getValue("insert");
     	WriteFailMode writeFailMode = getWriteFailMode(document);
     	WriteConcern writeConcern = getWriteConcern(document);
 		Iterable<?> documents = (Iterable<?>) document.getValue("documents");
@@ -177,7 +178,7 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
 		
         Map<String, Object> keyValues = new HashMap<String, Object>();
 		
-		String collection = ToroCollectionTranslator.translate((String) document.getValue("update"));
+		String collection = (String) document.getValue("update");
     	
     	WriteFailMode writeFailMode = getWriteFailMode(document);
     	WriteConcern writeConcern = getWriteConcern(document);
@@ -267,7 +268,7 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
 		
         Map<String, Object> keyValues = new HashMap<String, Object>();
 		
-		String collection = ToroCollectionTranslator.translate((String) document.getValue("delete"));
+		String collection = (String) document.getValue("delete");
     	
     	WriteFailMode writeFailMode = getWriteFailMode(document);
     	WriteConcern writeConcern = getWriteConcern(document);
@@ -318,7 +319,7 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
 		
         Map<String, Object> keyValues = new HashMap<String, Object>();
 		
-		String collection = ToroCollectionTranslator.translate((String) document.getValue("drop"));
+		String collection = (String) document.getValue("drop");
 
         connection.dropCollection(collection);
         
@@ -503,8 +504,7 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
 	@Override
 	public void create(BSONDocument document, MessageReplier messageReplier)
 			throws Exception {
-		String collection = ToroCollectionTranslator
-				.translate((String) document.getValue("create"));
+		String collection = (String) document.getValue("create");
 		Boolean capped = (Boolean) document.getValue("capped");
 
 		if (capped != null && capped) { // Other flags silently ignored
@@ -585,7 +585,7 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
 	public void validate(String database, BSONDocument document, MessageReplier messageReplier) {
 		Map<String, Object> keyValues = new HashMap<String, Object>();
 		
-		String collection = ToroCollectionTranslator.translate((String) document.getValue("validate"));
+		String collection = (String) document.getValue("validate");
 		boolean full = getBoolean(document, "full", false);
 		String ns = database + "." + collection;
 		

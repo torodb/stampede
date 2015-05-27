@@ -278,7 +278,7 @@ public class ToroRequestProcessor extends AbstractRequestProcessor {
 		AttributeMap attributeMap = messageReplier.getAttributeMap();
         ToroConnection connection = attributeMap.attr(ToroRequestProcessor.CONNECTION).get();
 		
-		String collection = ToroCollectionTranslator.translate(insertMessage.getCollection());
+		String collection = insertMessage.getCollection();
     	WriteFailMode writeFailMode = 
 //    			insertMessage.getFlags().contains(InsertMessage.Flag.CONTINUE_ON_ERROR)?
 //    					WriteFailMode.ISOLATED:WriteFailMode.ORDERED;
@@ -317,7 +317,7 @@ public class ToroRequestProcessor extends AbstractRequestProcessor {
 		AttributeMap attributeMap = messageReplier.getAttributeMap();
 		ToroConnection connection = attributeMap.attr(CONNECTION).get();
 		
-    	String collection = ToroCollectionTranslator.translate(updateMessage.getCollection());
+    	String collection = updateMessage.getCollection();
     	WriteFailMode writeFailMode = WriteFailMode.ORDERED;
     	BSONDocument selector = updateMessage.getSelector();
     	for (String key : selector.getKeys()) {
@@ -371,7 +371,7 @@ public class ToroRequestProcessor extends AbstractRequestProcessor {
 		AttributeMap attributeMap = messageReplier.getAttributeMap();
 		ToroConnection connection = attributeMap.attr(CONNECTION).get();
 		
-    	String collection = ToroCollectionTranslator.translate(deleteMessage.getCollection());
+    	String collection = deleteMessage.getCollection();
     	WriteFailMode writeFailMode = WriteFailMode.ORDERED;
     	BSONDocument document = deleteMessage.getDocument();
     	for (String key : document.getKeys()) {
