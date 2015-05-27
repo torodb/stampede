@@ -6,7 +6,7 @@
 
     <groupId>com.torodb</groupId>
     <artifactId>torodb-parent</artifactId>
-    <version>0.22-SNAPSHOT</version>
+    <version>0.22</version>
     <packaging>pom</packaging>
     
     <name>ToroDB parent</name>
@@ -86,7 +86,7 @@
             <id>aws-release</id>
             <name>S3 Release Repository</name>  
             <url>s3://${S3.bucket}/${deploy.repository.release.urlpath}</url>
-        </repository>  
+        </repository>
         <snapshotRepository>  
             <id>aws-snapshot</id>  
             <name>S3 Snapshot Repository</name>  
@@ -155,7 +155,7 @@
             <dependency>
                 <groupId>com.zaxxer</groupId>
                 <artifactId>HikariCP-java6</artifactId>
-                <version>2.3.7</version>
+                <version>2.3.8</version>
             </dependency>
             
             <dependency>
@@ -167,7 +167,7 @@
             <dependency>
                 <groupId>com.8kdata.mongowp</groupId>
                 <artifactId>mongo-server</artifactId>
-                <version>0.16-SNAPSHOT</version>
+                <version>0.15</version>
             </dependency>
 
             <dependency>
