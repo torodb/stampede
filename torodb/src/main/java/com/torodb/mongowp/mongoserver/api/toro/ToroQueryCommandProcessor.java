@@ -94,10 +94,6 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
 
     @Override
     public CountReply count(CountRequest request) throws Exception {
-        if (!request.getDatabase().equals(databaseName)) {
-            LOGGER.warn("Requested command {} on the unexistent database {}", "count", request.getDatabase());
-            return new CountReply(0);
-        }
         AttributeMap attributeMap = request.getAttributes();
         ToroConnection connection = attributeMap.attr(ToroRequestProcessor.CONNECTION).get();
 
