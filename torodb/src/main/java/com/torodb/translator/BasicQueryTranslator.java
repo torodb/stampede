@@ -422,6 +422,8 @@ public class BasicQueryTranslator {
             @Nonnull ExpModifications modifications
     ) throws UserToroException {
         switch (QueryOperator.fromKey(key)) {
+            case EQ_KEY:
+                return translateEqOperand(attRefAcum, uncastedArg, modifications);
             case GT_KEY:
                 return translateGtOperand(attRefAcum, uncastedArg, modifications);
             case GTE_KEY:
@@ -472,6 +474,17 @@ public class BasicQueryTranslator {
             throws UserToroException {
         throw new UserToroException("The operation " + uncastedArg
                                             + " is not supported right now");
+    }
+    
+    private QueryCriteria translateEqOperand(
+            @Nonnull AttributeReference attRefAcum,
+            @Nonnull Object uncastedArg,
+            @Nonnull ExpModifications modifications) {
+        DocValue docValue = MongoValueConverter.translateBSON(uncastedArg);
+        return new IsEqualQueryCriteria(
+                attRefAcum,
+                ValueFactory.fromDocValue(docValue)
+        );
     }
 
     private QueryCriteria translateGtOperand(
@@ -830,6 +843,7 @@ public class BasicQueryTranslator {
 
     private static enum QueryOperator {
 
+        EQ_KEY("$eq"),
         GT_KEY("$gt"),
         GTE_KEY("$gte"),
         LT_KEY("$lt"),
