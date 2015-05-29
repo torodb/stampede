@@ -191,7 +191,7 @@
             <dependency>
                 <groupId>com.beust</groupId>
                 <artifactId>jcommander</artifactId>
-                <version>1.47</version>
+                <version>1.47</version> <!-- 1.48 requires jdk 7-->
             </dependency>
 
             <dependency>
