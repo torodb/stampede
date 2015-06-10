@@ -132,24 +132,30 @@ public class ToroLastError implements LastError {
 	private void getLastInsertError(WriteConcern writeConcern,
 			LastErrorResult lastErrorResult) throws InterruptedException,
 			ExecutionException {
-		if (futureOperationResponse == null || futureCommitResponse == null) {
+		if (futureOperationResponse == null && futureCommitResponse == null) {
 			return;
 		}
 		if (writeConcern.getW() > 0) {
 			try {
-				futureOperationResponse.get();
-				futureCommitResponse.get();
+				if (futureOperationResponse != null) {
+                    if (futureOperationResponse.isDone()  || futureOperationResponse.isCancelled()) {
+                        InsertResponse insertResponse
+                                = (InsertResponse) futureOperationResponse.get();
+                        lastErrorResult.error = !insertResponse.isSuccess();
+                        if (lastErrorResult.error) {
+                            lastErrorResult.errorCode = MongoWP.ErrorCode.INTERNAL_ERROR;
+                        }
+                        else {
+                            lastErrorResult.n = insertResponse.getInsertedSize();
+                        }
+                    }
+                    futureOperationResponse.get();
+                }
+                if (futureCommitResponse != null) {
+                    futureCommitResponse.get();
+                }
 			} catch(Exception exception) {
 				lastErrorResult.error = true;
-			}
-		}
-		if (futureOperationResponse.isDone() || futureOperationResponse.isCancelled()) {
-			InsertResponse insertResponse = (InsertResponse) futureOperationResponse.get();
-			lastErrorResult.error = !insertResponse.isSuccess();
-			if (lastErrorResult.error) {
-				lastErrorResult.errorCode = MongoWP.ErrorCode.INTERNAL_ERROR;
-			} else {
-				lastErrorResult.n = insertResponse.getInsertedSize();
 			}
 		}
 	}
