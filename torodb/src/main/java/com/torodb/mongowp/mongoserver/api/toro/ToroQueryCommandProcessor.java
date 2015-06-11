@@ -398,6 +398,7 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
                     for (String path : key.keySet()) {
                         AttributeReference attRef
                                 = parseAttributeReference(path);
+                        //TODO: Check that key.get(path) is a number!!
                         boolean ascending = ((Number) key.get(path)).intValue()
                                 > 0;
 
