@@ -259,9 +259,8 @@ public class IndexRelationManager implements Serializable {
             assert unnamedDbIndex != null;
 
             if (memory.toroToDb.containsEntry(unnamedToroIndex, unnamedDbIndex)) {
-                throw new IllegalArgumentException(
-                        "There is already a relation between a similar unnamed "
-                        + "toro index and a similar unnamed db index");
+                assert memory.dbToToro.containsEntry(unnamedDbIndex, unnamedToroIndex);
+                return ;
             }
 
             boolean modified = memory.toroToDb.put(unnamedToroIndex, unnamedDbIndex);
