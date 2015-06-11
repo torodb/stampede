@@ -163,6 +163,7 @@ class DefaultToroConnection implements ToroConnection {
     public ToroTransaction createTransaction() throws ImplementationDbException {
         SessionTransaction sessionTransaction = executor.createTransaction();
         return new DefaultToroTransaction(
+                cache,
                 this, 
                 sessionTransaction, 
                 d2r, 

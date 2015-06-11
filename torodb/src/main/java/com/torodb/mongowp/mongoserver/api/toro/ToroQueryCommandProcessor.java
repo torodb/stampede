@@ -119,13 +119,11 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
             transaction.close();
         }
 	}
-	
+
 	@Override
-	public void insert(BSONDocument document, MessageReplier messageReplier) throws Exception {
-		AttributeMap attributeMap = messageReplier.getAttributeMap();
+	public com.eightkdata.mongowp.mongoserver.api.pojos.InsertResponse insert(
+            BSONDocument document, AttributeMap attributeMap) throws Exception {
         ToroConnection connection = attributeMap.attr(ToroRequestProcessor.CONNECTION).get();
-		
-		Map<String, Object> keyValues = new HashMap<String, Object>();
 		
 		String collection = (String) document.getValue("insert");
     	WriteFailMode writeFailMode = getWriteFailMode(document);
@@ -139,6 +137,8 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
     	}
 		
         ToroTransaction transaction = connection.createTransaction();
+        
+        ToroInsertResponse.Builder responseBuilder = new ToroInsertResponse.Builder();
 		
         try {
         	Future<InsertResponse> futureInsertResponse = transaction.insertDocuments(collection, inserts, writeFailMode);
@@ -148,7 +148,7 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
             if (writeConcern.getW() > 0) {
 	            InsertResponse insertResponse = futureInsertResponse.get();
 	            futureCommitResponse.get();
-				keyValues.put("n", insertResponse.getInsertedSize());
+                responseBuilder.setN(insertResponse.getInsertedSize());
             }
             LastError lastError = new ToroLastError(
             		RequestOpCode.OP_QUERY, 
@@ -158,13 +158,12 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
             		false, 
             		null);
             attributeMap.attr(ToroRequestProcessor.LAST_ERROR).set(lastError);
+            
+            responseBuilder.setOk(true);
+            return responseBuilder.build();
         } finally {
            	transaction.close();
         }
-		
-		keyValues.put("ok", MongoWP.OK);
-		BSONDocument reply = new MongoBSONDocument(keyValues);
-		messageReplier.replyMessageNoCursor(reply);
 	}
 
 	@Override

@@ -20,13 +20,13 @@
 
 package com.torodb.di;
 
-import com.eightkdata.mongowp.mongoserver.api.MetaQueryProcessor;
+import com.eightkdata.mongowp.mongoserver.api.MetaCommandProcessor;
 import com.eightkdata.mongowp.mongoserver.api.QueryCommandProcessor;
 import com.eightkdata.mongowp.mongoserver.api.callback.RequestProcessor;
 import com.google.inject.AbstractModule;
 import com.google.inject.Singleton;
 import com.torodb.BuildProperties;
-import com.torodb.mongowp.mongoserver.api.toro.ToroMetaQueryProcessor;
+import com.torodb.mongowp.mongoserver.api.toro.ToroMetaCommandProcessor;
 import com.torodb.mongowp.mongoserver.api.toro.ToroQueryCommandProcessor;
 import com.torodb.mongowp.mongoserver.api.toro.ToroRequestProcessor;
 import com.torodb.translator.QueryCriteriaTranslator;
@@ -41,7 +41,7 @@ public class MongoServerModule extends AbstractModule {
         bind(RequestProcessor.class).to(ToroRequestProcessor.class);
         bind(BuildProperties.class).asEagerSingleton();
         bind(QueryCommandProcessor.class).to(ToroQueryCommandProcessor.class);
-        bind(MetaQueryProcessor.class).to(ToroMetaQueryProcessor.class).in(Singleton.class);
+        bind(MetaCommandProcessor.class).to(ToroMetaCommandProcessor.class).in(Singleton.class);
         bind(QueryCriteriaTranslator.class).toInstance(new QueryCriteriaTranslator());
     }
 }

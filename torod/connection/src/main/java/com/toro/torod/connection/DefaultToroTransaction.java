@@ -29,6 +29,7 @@ import com.torodb.torod.core.config.DocumentBuilderFactory;
 import com.torodb.torod.core.connection.*;
 import com.torodb.torod.core.cursors.UserCursor;
 import com.torodb.torod.core.d2r.D2RTranslator;
+import com.torodb.torod.core.dbMetaInf.DbMetaInformationCache;
 import com.torodb.torod.core.exceptions.*;
 import com.torodb.torod.core.executor.SessionExecutor;
 import com.torodb.torod.core.executor.SessionTransaction;
@@ -57,6 +58,7 @@ import java.util.concurrent.Future;
  */
 public class DefaultToroTransaction implements ToroTransaction {
 
+    private final DbMetaInformationCache cache;
     private final SessionTransaction sessionTransaction;
     private final D2RTranslator d2r;
     private final SessionExecutor executor;
@@ -64,11 +66,13 @@ public class DefaultToroTransaction implements ToroTransaction {
     private final DefaultToroConnection connection;
     
     DefaultToroTransaction(
+            DbMetaInformationCache cache,
             DefaultToroConnection connection,
             SessionTransaction sessionTransaction,
             D2RTranslator d2r,
             SessionExecutor executor,
             DocumentBuilderFactory documentBuilderFactory) {
+        this.cache = cache;
         this.connection = connection;
         this.sessionTransaction = sessionTransaction;
         this.d2r = d2r;
@@ -125,6 +129,7 @@ public class DefaultToroTransaction implements ToroTransaction {
             @Nonnull String collection,
             @Nonnull List<? extends DeleteOperation> deletes,
             @Nonnull WriteFailMode mode) {
+        cache.createCollection(executor, collection, null);
         return sessionTransaction.delete(collection, deletes, mode);
     }
 
@@ -135,6 +140,7 @@ public class DefaultToroTransaction implements ToroTransaction {
             IndexedAttributes attributes, 
             boolean unique, 
             boolean blocking) {
+        cache.createCollection(executor, collection, null);
         return sessionTransaction.createIndex(
                 collection, 
                 indexName, 
@@ -146,12 +152,14 @@ public class DefaultToroTransaction implements ToroTransaction {
 
     @Override
     public Future<Boolean> dropIndex(String collection, String indexName) {
+        cache.createCollection(executor, collection, null);
         return sessionTransaction.dropIndex(collection, indexName);
     }
 
     @Override
     public Collection<? extends NamedToroIndex> getIndexes(String collection) {
         try {
+            cache.createCollection(executor, collection, null);
             return sessionTransaction.getIndexes(collection).get();
         }
         catch (InterruptedException ex) {
@@ -164,21 +172,25 @@ public class DefaultToroTransaction implements ToroTransaction {
 
     @Override
     public Future<Long> getIndexSize(String collection, String indexName) {
+        cache.createCollection(executor, collection, null);
         return sessionTransaction.getIndexSize(collection, indexName);
     }
 
     @Override
     public Future<Long> getCollectionSize(String collection) {
+        cache.createCollection(executor, collection, null);
         return sessionTransaction.getCollectionSize(collection);
     }
 
     @Override
     public Future<Long> getDocumentsSize(String collection) {
+        cache.createCollection(executor, collection, null);
         return sessionTransaction.getDocumentsSize(collection);
     }
 
     @Override
     public Future<Integer> count(String collection, QueryCriteria query) {
+        cache.createCollection(executor, collection, null);
         return sessionTransaction.count(collection, query);
     }
     

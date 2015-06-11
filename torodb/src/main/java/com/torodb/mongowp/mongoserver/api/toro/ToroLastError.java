@@ -38,12 +38,16 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import javax.annotation.Nonnull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 
  */
 public class ToroLastError implements LastError {
 	
+    private static final Logger LOGGER
+            = LoggerFactory.getLogger(ToroLastError.class);
 	@Nonnull private final RequestOpCode requestOpCode;
 	private final QueryCommand queryCommand;
 	private final Future<?> futureOperationResponse;
@@ -151,12 +155,14 @@ public class ToroLastError implements LastError {
                     }
                     futureOperationResponse.get();
                 }
-                if (futureCommitResponse != null) {
-                    futureCommitResponse.get();
-                }
-			} catch(Exception exception) {
+			} catch(InterruptedException exception) {
+                LOGGER.debug("Exception while last error was calculated", exception);
 				lastErrorResult.error = true;
 			}
+            catch (ExecutionException exception) {
+                LOGGER.debug("Exception while last error was calculated", exception);
+                lastErrorResult.error = true;
+            }
 		}
 	}
 

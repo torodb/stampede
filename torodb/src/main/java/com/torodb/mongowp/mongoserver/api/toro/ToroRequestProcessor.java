@@ -23,7 +23,7 @@ package com.torodb.mongowp.mongoserver.api.toro;
 import com.eightkdata.mongowp.messages.request.*;
 import com.eightkdata.mongowp.messages.response.ReplyMessage;
 import com.eightkdata.mongowp.mongoserver.api.AbstractRequestProcessor;
-import com.eightkdata.mongowp.mongoserver.api.MetaQueryProcessor;
+import com.eightkdata.mongowp.mongoserver.api.MetaCommandProcessor;
 import com.eightkdata.mongowp.mongoserver.api.QueryCommandProcessor;
 import com.eightkdata.mongowp.mongoserver.api.QueryCommandProcessor.QueryCommand;
 import com.eightkdata.mongowp.mongoserver.api.callback.LastError;
@@ -33,6 +33,9 @@ import com.eightkdata.mongowp.mongoserver.api.commands.QueryRequest;
 import com.eightkdata.mongowp.mongoserver.protocol.MongoWP;
 import com.eightkdata.nettybson.api.BSONDocument;
 import com.eightkdata.nettybson.mongodriver.MongoBSONDocument;
+import com.google.common.base.Function;
+import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.Futures;
 import com.torodb.mongowp.mongoserver.api.toro.util.BSONDocuments;
 import com.torodb.mongowp.mongoserver.api.toro.util.BSONToroDocument;
 import com.torodb.torod.core.Torod;
@@ -62,6 +65,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.bson.BasicBSONObject;
+import org.bson.types.BasicBSONList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -81,16 +86,19 @@ public class ToroRequestProcessor extends AbstractRequestProcessor {
 	
 	private final Torod torod;
     private final QueryCriteriaTranslator queryCriteriaTranslator;
+    private final ToroMetaCommandProcessor metaProcessor;
 
     @Inject
     public ToroRequestProcessor(
             Torod torod, 
             QueryCommandProcessor queryCommandProcessor, 
-            MetaQueryProcessor metaQueryProcessor,
-            QueryCriteriaTranslator queryCriteriaTranslator) {
+            MetaCommandProcessor metaQueryProcessor,
+            QueryCriteriaTranslator queryCriteriaTranslator,
+            ToroMetaCommandProcessor metaProcessor) {
         super(queryCommandProcessor, metaQueryProcessor);
         this.torod = torod;
         this.queryCriteriaTranslator = queryCriteriaTranslator;
+        this.metaProcessor = metaProcessor;
     }
 
 	@Override
@@ -279,35 +287,60 @@ public class ToroRequestProcessor extends AbstractRequestProcessor {
         ToroConnection connection = attributeMap.attr(ToroRequestProcessor.CONNECTION).get();
 		
 		String collection = insertMessage.getCollection();
-    	WriteFailMode writeFailMode = 
-//    			insertMessage.getFlags().contains(InsertMessage.Flag.CONTINUE_ON_ERROR)?
-//    					WriteFailMode.ISOLATED:WriteFailMode.ORDERED;
-                WriteFailMode.TRANSACTIONAL;
-		Iterable<?> documents = insertMessage.getDocuments();
-    	List<ToroDocument> inserts = new ArrayList<ToroDocument>();
-    	Iterator<?> documentsIterator = documents.iterator();
-    	while(documentsIterator.hasNext()) {
-    		BSONObject object = ((MongoBSONDocument) documentsIterator.next()).getBSONObject();
-    		inserts.add(new BSONToroDocument(object));
-    	}
-		
-        ToroTransaction transaction = connection.createTransaction();
-		
-        try {
-        	Future<InsertResponse> futureInsertResponse = transaction.insertDocuments(collection, inserts, writeFailMode);
-        	
-            Future<?> futureCommitResponse = transaction.commit();
+        
+        if (metaProcessor.isMetaCollection(collection)) {
+            BSONObject insertQuery = new BasicBSONObject();
+            insertQuery.put("insert", collection);
+            insertQuery.put("ordered", insertMessage.isFlagSet(InsertMessage.Flag.CONTINUE_ON_ERROR));
             
-            LastError lastError = new ToroLastError(
-            		RequestOpCode.OP_INSERT, 
-            		null, 
-            		futureInsertResponse, 
-            		futureCommitResponse, 
-            		false, 
-            		null);
+            BasicBSONList docsToInsert = new BasicBSONList();
+            for (BSONDocument document : insertMessage.getDocuments()) {
+                docsToInsert.add(new BasicBSONObject(document.asMap()));
+            }
+            insertQuery.put("documents", docsToInsert);
+            
+            Future<InsertResponse> future;
+            try {
+                Future<com.eightkdata.mongowp.mongoserver.api.pojos.InsertResponse> response
+                        = metaProcessor.insert(messageReplier.getAttributeMap(), collection, new MongoBSONDocument(insertQuery));
+                future = Futures.lazyTransform(response, new InsertResponseTransformFunction());
+            } catch (Exception ex) {
+                future = Futures.immediateFailedFuture(ex);
+            }
+            
+            LastError lastError = new ToroLastError(RequestOpCode.OP_INSERT, null, future, null, false, null);
             attributeMap.attr(ToroRequestProcessor.LAST_ERROR).set(lastError);
-        } finally {
-           	transaction.close();
+        }
+        else {
+            WriteFailMode writeFailMode = 
+    //    			insertMessage.getFlags().contains(InsertMessage.Flag.CONTINUE_ON_ERROR)?
+    //    					WriteFailMode.ISOLATED:WriteFailMode.ORDERED;
+                    WriteFailMode.TRANSACTIONAL;
+            List<BSONDocument> documents = insertMessage.getDocuments();
+            List<ToroDocument> inserts = new ArrayList<ToroDocument>();
+            Iterator<?> documentsIterator = documents.iterator();
+            while(documentsIterator.hasNext()) {
+                BSONObject object = ((MongoBSONDocument) documentsIterator.next()).getBSONObject();
+                inserts.add(new BSONToroDocument(object));
+            }
+            ToroTransaction transaction = connection.createTransaction();
+
+            try {
+                Future<InsertResponse> futureInsertResponse = transaction.insertDocuments(collection, inserts, writeFailMode);
+
+                Future<?> futureCommitResponse = transaction.commit();
+
+                LastError lastError = new ToroLastError(
+                        RequestOpCode.OP_INSERT, 
+                        null, 
+                        futureInsertResponse, 
+                        futureCommitResponse, 
+                        false, 
+                        null);
+                attributeMap.attr(ToroRequestProcessor.LAST_ERROR).set(lastError);
+            } finally {
+                transaction.close();
+            }
         }
 	}
 
@@ -443,5 +476,20 @@ public class ToroRequestProcessor extends AbstractRequestProcessor {
         
 		return true;
 	}
+
+    private static class InsertResponseTransformFunction implements Function<com.eightkdata.mongowp.mongoserver.api.pojos.InsertResponse, InsertResponse> {
+
+        @Override
+        public InsertResponse apply(com.eightkdata.mongowp.mongoserver.api.pojos.InsertResponse input) {
+            if (input == null) {
+                return null;
+            }
+            List<WriteError> errors = Lists.newArrayListWithCapacity(input.getWriteErrors().size());
+            for (com.eightkdata.mongowp.mongoserver.api.pojos.InsertResponse.WriteError writeError : input.getWriteErrors()) {
+                errors.add(new WriteError(writeError.getIndex(), writeError.getCode(), writeError.getErrmsg()));
+            }
+            return new InsertResponse(input.isOk(), input.getN(), errors);
+        }
+    }
 
 }
