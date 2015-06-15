@@ -21,6 +21,9 @@
 
 package com.torodb.torod.db.postgresql;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 /**
  *
  */
@@ -35,12 +38,24 @@ public class IdsFilter {
         filter(attributeName);
         return attributeName;
     }
+
+    public static String escapeIndexName(String indexName) {
+        filter(indexName);
+        return indexName;
+    }
     
     private static void filter(String str) {
-        for (char c : str.toCharArray()) {
-            if (!Character.isLowerCase(c) && !Character.isDigit(c) && c != '_') {
-                throw new IllegalArgumentException("At the present time Torod doesn't support '" + c + "' as "
-                        + "identifier character. Only a alphanumeric letters and '_' are supported");
+        if (str.length() > 63) {
+            throw new IllegalArgumentException(str + " is too long to be a "
+                    + "valid PostgreSQL name. By default names must be shorter "
+                    + "than 64, but it has " + str.length() + " characters");
+        }
+        Pattern quotesPattern = Pattern.compile("(\"+)");
+        Matcher matcher = quotesPattern.matcher(str);
+        while (matcher.find()) {
+            if (((matcher.end() - matcher.start()) & 1) == 1) { //lenght is uneven
+                throw new IllegalArgumentException("The name '" + str + "' is"
+                        + "illegal because contains an open quote at " + matcher.start());
             }
         }
     }

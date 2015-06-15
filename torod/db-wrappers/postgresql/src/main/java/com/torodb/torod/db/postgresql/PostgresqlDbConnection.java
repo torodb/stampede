@@ -66,13 +66,13 @@ class PostgresqlDbConnection extends AbstractSqlDbConnection {
     @Override
     protected String getCreateIndexQuery(SubDocTable table, Field<?> field, Configuration conf) {
         StringBuilder sb = new StringBuilder();
-        sb.append("CREATE INDEX ON ")
+        sb.append("CREATE INDEX ON \"")
                 .append(table.getSchema().getName())
-                .append('.')
+                .append("\".\"")
                 .append(table.getName())
-                .append(" (")
+                .append("\" (\"")
                 .append(field.getName())
-                .append(')');
+                .append("\")");
 
         return sb.toString();
     }
@@ -80,11 +80,11 @@ class PostgresqlDbConnection extends AbstractSqlDbConnection {
     @Override
     protected String getCreateSubDocTypeTableQuery(SubDocTable table, Configuration conf) {
         StringBuilder sb = new StringBuilder();
-        sb.append("CREATE TABLE ")
+        sb.append("CREATE TABLE \"")
                 .append(table.getSchema().getName())
-                .append('.')
+                .append("\".\"")
                 .append(table.getName())
-                .append('(');
+                .append("\"(");
 
         for (Field field : getFieldIterator(table.fields())) {
             sb
@@ -115,7 +115,13 @@ class PostgresqlDbConnection extends AbstractSqlDbConnection {
             Field<Integer> sidField = DSL.field("sid", SQLDataType.INTEGER.nullable(false));
 
 
-            InsertValuesStep2<Record, Integer, Integer> insertInto = getDsl().insertInto(DSL.tableByName(colSchema.getName(), "root"), idField, sidField);
+            InsertValuesStep2<Record, Integer, Integer> insertInto = 
+                    getDsl()
+                    .insertInto(
+                            DSL.table(DSL.name(colSchema.getName(), "root")), 
+                            idField, 
+                            sidField
+                    );
 
             for (SplitDocument splitDocument : docs) {
                 int structureId = colSchema.getStructuresCache().getOrCreateStructure(
@@ -239,7 +245,7 @@ class PostgresqlDbConnection extends AbstractSqlDbConnection {
         PreparedStatement ps = null;
         try {
             ps = c.prepareStatement("CREATE TABLE \""+ escapedSchemaName + "\".root("
-                    + "did int PRIMARY KEY DEFAULT nextval('" + escapedSchemaName + ".root_seq'),"
+                    + "did int PRIMARY KEY DEFAULT nextval('\"" + escapedSchemaName + "\".root_seq'),"
                     + "sid int NOT NULL"
                     + ")");
             ps.executeUpdate();

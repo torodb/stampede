@@ -9,13 +9,13 @@ DECLARE
 BEGIN
 
     RETURN QUERY EXECUTE 
-        'SELECT $1, null::integer, root.sid, null::text FROM (SELECT * FROM ' || col_schema || '.root WHERE did = $1) AS root'
+        'SELECT $1, null::integer, root.sid, null::text FROM (SELECT * FROM "' || col_schema || '".root WHERE did = $1) AS root'
         USING did;
     FOREACH t IN ARRAY tables
     LOOP
         RETURN QUERY EXECUTE 
             'SELECT $1, ' || t || ', subdoc.index, to_json(subdoc)::text
-                FROM (SELECT * FROM ' || col_schema || '.t_' || t || ' WHERE did = $1) as subdoc'
+                FROM (SELECT * FROM "' || col_schema || '"."t_' || t || '" WHERE did = $1) as subdoc'
             USING did;
     END LOOP;
 END;

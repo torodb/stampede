@@ -33,8 +33,6 @@ import java.io.Serializable;
  */
 public class SplitDocumentConverter implements Serializable {
 
-    private static final String REFS_KEY = "refs";
-    private static final String STRUCTURE_KEY = "structure";
     private static final SubDocConverter SUB_DOC_CONVERTER = new SubDocConverter();
 
     public static final SplitDocumentConverter INSTANCE = new SplitDocumentConverter();

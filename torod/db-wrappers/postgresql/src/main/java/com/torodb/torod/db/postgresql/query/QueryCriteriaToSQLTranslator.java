@@ -107,11 +107,11 @@ public class QueryCriteriaToSQLTranslator {
         SubDocTable subDocTable
                 = schema.getSubDocTable(subDocStructure.getType());
 
-        Table<?> rootTable = DSL.tableByName(schema.getName(), "root");
+        Table<?> rootTable = DSL.table(DSL.name(schema.getName(), "root"));
         Field<Integer> rootSidField
-                = DSL.fieldByName(Integer.class, schema.getName(), "root", "sid");
+                = DSL.field(DSL.name(schema.getName(), "root", "sid"), Integer.class);
         Field<Integer> rootDidField
-                = DSL.fieldByName(Integer.class, schema.getName(), "root", "did");
+                = DSL.field(DSL.name(schema.getName(), "root", "did"), Integer.class);
 
         int index = subDocStructure.getIndex();
         Condition indexCondition;
@@ -270,7 +270,7 @@ public class QueryCriteriaToSQLTranslator {
             StringBuilder sb = new StringBuilder(12 + (to - from + 1) * 2);
 
             for (int i = from; i < to; i++) {
-                sb.append(keys[i])
+                sb.append('"').append(keys[i]).append('"')
                         .append("->");
             }
             sb.delete(sb.length() - 2, sb.length()); //last '->' must be removed
@@ -590,7 +590,7 @@ public class QueryCriteriaToSQLTranslator {
             }
             else {
                 Field valueField
-                        = DSL.fieldByName(String.class, getIteratorVariableName());
+                        = DSL.field(DSL.name(getIteratorVariableName()), String.class);
                 Table subTable = DSL.table("jsonb_array_elements("
                         + translateValueToSQL(criteria.getValue()) + ")").as(getIteratorVariableName());
 
@@ -650,13 +650,13 @@ public class QueryCriteriaToSQLTranslator {
             }
 
             Condition criteriaCondition = DSL.condition(
-                    "jsonb_array_length(" + field.getName() + ") = ?",
+                    "jsonb_array_length(\"" + field.getName() + "\") = ?",
                     value
             );
 
             if (arraySource) {
-                criteriaCondition = DSL.condition("jsonb_typeof("
-                        + field.getName() + ") = 'array'")
+                criteriaCondition = DSL.condition("jsonb_typeof(\""
+                        + field.getName() + "\") = 'array'")
                         .and(criteriaCondition);
             }
 
@@ -668,7 +668,7 @@ public class QueryCriteriaToSQLTranslator {
             String[] keys = translateArrayRef(criteria.getAttributeReference());
             Field field = DSL.field(getFieldName(keys));
 
-            Field valueField = DSL.fieldByName(getIteratorVariableName());
+            Field valueField = DSL.field(DSL.name(getIteratorVariableName()));
             Table subTable 
                     = DSL.table("jsonb_array_elements(" + field.getName() + ")");
 

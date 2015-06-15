@@ -22,6 +22,7 @@ package com.torodb.torod.db.postgresql.meta;
 import com.google.common.collect.Sets;
 import com.torodb.torod.core.exceptions.ToroRuntimeException;
 import com.torodb.torod.core.pojos.NamedToroIndex;
+import com.torodb.torod.db.postgresql.IdsFilter;
 import com.torodb.torod.db.postgresql.converters.jsonb.ToroIndexToJsonbConverter;
 import com.torodb.torod.db.postgresql.meta.tables.SubDocTable;
 import com.torodb.torod.db.sql.AutoCloser;
@@ -76,7 +77,8 @@ public class IndexStorage implements Serializable {
                 .fetchOne(0, int.class) > 0;
 
         if (!tableExists) {
-            dsl.execute("CREATE TABLE "+colSchema.getName()+"."+toroIndexTable.getName()+" ("
+            Name tableName = DSL.name(colSchema.getName(), toroIndexTable.getName());
+            dsl.execute("CREATE TABLE " + dsl.render(tableName) + " ("
                     + toroIndexTable.nameColumn.getName() + " VARCHAR PRIMARY KEY, "
                     + toroIndexTable.indexColumn.getName() + " JSONB NOT NULL"
                     + ")");
@@ -189,11 +191,7 @@ public class IndexStorage implements Serializable {
     @SuppressFBWarnings("SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE")
     public NamedDbIndex createIndex(DSLContext dsl, UnnamedDbIndex unnamedDbIndex) {
         String indexName = unnamedDbIndex.getTable() + '_' + unnamedDbIndex.getColumn();
-        
-        Table<?> table = DSL.tableByName(
-                unnamedDbIndex.getSchema(), 
-                unnamedDbIndex.getTable()
-        );
+        indexName = IdsFilter.escapeIndexName(indexName);
         
         ConnectionProvider connectionProvider
                 = dsl.configuration().connectionProvider();
@@ -201,8 +199,9 @@ public class IndexStorage implements Serializable {
         Statement st = null;
         try {
             st = connection.createStatement();
-            String query = "CREATE INDEX " + indexName + " ON "+ table + " (" 
-                    + unnamedDbIndex.getColumn() + " " 
+            String query = "CREATE INDEX \"" + indexName + "\" ON "
+                    + "\"" + unnamedDbIndex.getSchema() + "\".\""+ unnamedDbIndex.getTable() + "\" ("
+                    + "\"" + unnamedDbIndex.getColumn() + "\" "
                     + (unnamedDbIndex.isAscending() ? "ASC" : "DESC") + ')';
             LOGGER.debug("Creating a db index with query: " + query);
             st.executeUpdate(query);

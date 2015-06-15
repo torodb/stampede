@@ -23,7 +23,7 @@ public class DropCollection {
         Statement st = null;
         try {
             st = connection.createStatement();
-            st.executeUpdate("DROP SCHEMA "+colSchema.getName()+" CASCADE");
+            st.executeUpdate("DROP SCHEMA \""+colSchema.getName()+"\" CASCADE");
             
             DSLContext dsl = DSL.using(jooqConf);
             int deleted = dsl.deleteFrom(CollectionsTable.COLLECTIONS)

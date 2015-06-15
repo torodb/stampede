@@ -37,6 +37,8 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.SQLException;
+import org.jooq.conf.RenderNameStyle;
+import org.jooq.conf.Settings;
 
 /**
  *
@@ -57,7 +59,10 @@ public class PostgresqlDbWrapper extends AbstractSqlDbWrapper {
     protected Configuration getJooqConfiguration(ConnectionProvider cp) {
         return new DefaultConfiguration()
                 .set(cp)
-                .set(SQLDialect.POSTGRES);
+                .set(SQLDialect.POSTGRES)
+                .set(new Settings()
+                        .withRenderNameStyle(RenderNameStyle.QUOTED)
+                );
     }
 
     @Override

@@ -24,7 +24,6 @@ package com.torodb.torod.db.postgresql.converters;
 import com.torodb.torod.core.exceptions.ToroImplementationException;
 import com.torodb.torod.core.subdocument.BasicType;
 import java.sql.Types;
-import org.jooq.impl.SQLDataType;
 
 /**
  *
