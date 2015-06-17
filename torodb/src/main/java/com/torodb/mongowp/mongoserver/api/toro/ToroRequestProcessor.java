@@ -28,8 +28,8 @@ import com.eightkdata.mongowp.mongoserver.api.QueryCommandProcessor;
 import com.eightkdata.mongowp.mongoserver.api.QueryCommandProcessor.QueryCommand;
 import com.eightkdata.mongowp.mongoserver.api.callback.LastError;
 import com.eightkdata.mongowp.mongoserver.api.callback.MessageReplier;
-import com.eightkdata.mongowp.mongoserver.api.commands.QueryReply;
-import com.eightkdata.mongowp.mongoserver.api.commands.QueryRequest;
+import com.eightkdata.mongowp.mongoserver.api.commands.pojos.QueryReply;
+import com.eightkdata.mongowp.mongoserver.api.commands.pojos.QueryRequest;
 import com.eightkdata.mongowp.mongoserver.protocol.MongoWP;
 import com.eightkdata.nettybson.api.BSONDocument;
 import com.eightkdata.nettybson.mongodriver.MongoBSONDocument;
@@ -192,7 +192,7 @@ public class ToroRequestProcessor extends AbstractRequestProcessor {
 	@Override
 	public void noSuchCommand(BSONDocument query, MessageReplier messageReplier) throws Exception {
 		AttributeMap attributeMap = messageReplier.getAttributeMap();
-    	MongoWP.ErrorCode errorCode = MongoWP.ErrorCode.NO_SUCH_COMMAND;
+    	MongoWP.ErrorCode errorCode = MongoWP.ErrorCode.COMMAND_NOT_FOUND;
         LastError lastError = new ToroLastError(
         		RequestOpCode.OP_QUERY, 
         		null, 
@@ -301,7 +301,7 @@ public class ToroRequestProcessor extends AbstractRequestProcessor {
             
             Future<InsertResponse> future;
             try {
-                Future<com.eightkdata.mongowp.mongoserver.api.pojos.InsertResponse> response
+                Future<com.eightkdata.mongowp.mongoserver.api.commands.pojos.InsertReply> response
                         = metaProcessor.insert(messageReplier.getAttributeMap(), collection, new MongoBSONDocument(insertQuery));
                 future = Futures.lazyTransform(response, new InsertResponseTransformFunction());
             } catch (Exception ex) {
@@ -477,15 +477,15 @@ public class ToroRequestProcessor extends AbstractRequestProcessor {
 		return true;
 	}
 
-    private static class InsertResponseTransformFunction implements Function<com.eightkdata.mongowp.mongoserver.api.pojos.InsertResponse, InsertResponse> {
+    private static class InsertResponseTransformFunction implements Function<com.eightkdata.mongowp.mongoserver.api.commands.pojos.InsertReply, InsertResponse> {
 
         @Override
-        public InsertResponse apply(com.eightkdata.mongowp.mongoserver.api.pojos.InsertResponse input) {
+        public InsertResponse apply(com.eightkdata.mongowp.mongoserver.api.commands.pojos.InsertReply input) {
             if (input == null) {
                 return null;
             }
             List<WriteError> errors = Lists.newArrayListWithCapacity(input.getWriteErrors().size());
-            for (com.eightkdata.mongowp.mongoserver.api.pojos.InsertResponse.WriteError writeError : input.getWriteErrors()) {
+            for (com.eightkdata.mongowp.mongoserver.api.commands.pojos.InsertReply.WriteError writeError : input.getWriteErrors()) {
                 errors.add(new WriteError(writeError.getIndex(), writeError.getCode(), writeError.getErrmsg()));
             }
             return new InsertResponse(input.isOk(), input.getN(), errors);

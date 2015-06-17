@@ -1,9 +1,9 @@
 package com.torodb.mongowp.mongoserver.api.toro;
 
 import com.eightkdata.mongowp.mongoserver.api.MetaCommandProcessor;
-import com.eightkdata.mongowp.mongoserver.api.commands.CollStatsReply;
-import com.eightkdata.mongowp.mongoserver.api.commands.CollStatsRequest;
-import com.eightkdata.mongowp.mongoserver.api.pojos.InsertResponse;
+import com.eightkdata.mongowp.mongoserver.api.commands.pojos.CollStatsReply;
+import com.eightkdata.mongowp.mongoserver.api.commands.pojos.CollStatsRequest;
+import com.eightkdata.mongowp.mongoserver.api.commands.pojos.InsertReply;
 import com.eightkdata.mongowp.mongoserver.protocol.MongoWP;
 import com.eightkdata.nettybson.api.BSONDocument;
 import com.eightkdata.nettybson.mongodriver.MongoBSONDocument;
@@ -209,7 +209,7 @@ public class ToroMetaCommandProcessor extends MetaCommandProcessor {
     }
 
     @Override
-    public Future<InsertResponse> insertIndex(
+    public Future<InsertReply> insertIndex(
             AttributeMap attributeMap, 
             List<BSONDocument> docsToInsert, 
             boolean ordered, 
@@ -309,7 +309,7 @@ public class ToroMetaCommandProcessor extends MetaCommandProcessor {
     }
 
     @Override
-    public Future<InsertResponse> insertNamespace(
+    public Future<InsertReply> insertNamespace(
             AttributeMap attributeMap, 
             List<BSONDocument> docsToInsert, 
             boolean ordered, WriteConcern wc) throws Exception {
@@ -317,7 +317,7 @@ public class ToroMetaCommandProcessor extends MetaCommandProcessor {
     }
 
     @Override
-    public Future<InsertResponse> insertProfile(
+    public Future<InsertReply> insertProfile(
             AttributeMap attributeMap, 
             List<BSONDocument> docsToInsert, 
             boolean ordered, 
@@ -326,7 +326,7 @@ public class ToroMetaCommandProcessor extends MetaCommandProcessor {
     }
 
     @Override
-    public Future<InsertResponse> insertJS(
+    public Future<InsertReply> insertJS(
             AttributeMap attributeMap, 
             List<BSONDocument> docsToInsert, 
             boolean ordered, 
@@ -392,7 +392,7 @@ public class ToroMetaCommandProcessor extends MetaCommandProcessor {
         
     }
 
-    private static class InsertResponseFuture implements Future<InsertResponse> {
+    private static class InsertResponseFuture implements Future<InsertReply> {
 
         private final List<Future<?>> creationFutures;
         private final Future<?> commitFuture;
@@ -423,17 +423,16 @@ public class ToroMetaCommandProcessor extends MetaCommandProcessor {
         }
         
         @Override
-        public InsertResponse get() throws InterruptedException,
+        public InsertReply get() throws InterruptedException,
                 ExecutionException {
-            ImmutableList.Builder<InsertResponse.WriteError> writeErrorsBuilder
+            ImmutableList.Builder<InsertReply.WriteError> writeErrorsBuilder
                     = ImmutableList.builder();
             for (int i = 0; i < creationFutures.size(); i++) {
                 try {
                     creationFutures.get(i).get();
                 }
                 catch (Throwable ex) {
-                    writeErrorsBuilder.add(
-                            new InsertResponse.WriteError(
+                    writeErrorsBuilder.add(new InsertReply.WriteError(
                                     i,
                                     MongoWP.ErrorCode.INTERNAL_ERROR.getErrorCode(),
                                     ex.getMessage()
@@ -441,18 +440,18 @@ public class ToroMetaCommandProcessor extends MetaCommandProcessor {
                     );
                 }
             }
-            ImmutableList<InsertResponse.WriteError> writeErrors
+            ImmutableList<InsertReply.WriteError> writeErrors
                     = writeErrorsBuilder.build();
-            return new ToroInsertResponse(
+            return new ToroInsertReply(
                     writeErrors != null,
                     creationFutures.size() - writeErrors.size(),
                     writeErrors,
-                    ImmutableList.<InsertResponse.WriteConcernError>of()
+                    ImmutableList.<InsertReply.WriteConcernError>of()
             );
         }
         
         @Override
-        public InsertResponse get(long timeout, TimeUnit unit) throws
+        public InsertReply get(long timeout, TimeUnit unit) throws
                 InterruptedException, ExecutionException,
                 TimeoutException {
             throw new UnsupportedOperationException("Not supported.");

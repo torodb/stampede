@@ -20,6 +20,10 @@
 
 package com.torodb.mongowp.mongoserver.api.toro;
 
+import com.eightkdata.mongowp.mongoserver.api.commands.pojos.CollStatsRequest;
+import com.eightkdata.mongowp.mongoserver.api.commands.pojos.CollStatsReply;
+import com.eightkdata.mongowp.mongoserver.api.commands.pojos.CountReply;
+import com.eightkdata.mongowp.mongoserver.api.commands.pojos.CountRequest;
 import com.eightkdata.mongowp.messages.request.RequestOpCode;
 import com.eightkdata.mongowp.mongoserver.api.QueryCommandProcessor;
 import com.eightkdata.mongowp.mongoserver.api.callback.LastError;
@@ -121,7 +125,7 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
 	}
 
 	@Override
-	public com.eightkdata.mongowp.mongoserver.api.pojos.InsertResponse insert(
+	public com.eightkdata.mongowp.mongoserver.api.commands.pojos.InsertReply insert(
             BSONDocument document, AttributeMap attributeMap) throws Exception {
         ToroConnection connection = attributeMap.attr(ToroRequestProcessor.CONNECTION).get();
 		
@@ -138,7 +142,7 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
 		
         ToroTransaction transaction = connection.createTransaction();
         
-        ToroInsertResponse.Builder responseBuilder = new ToroInsertResponse.Builder();
+        ToroInsertReply.Builder responseBuilder = new ToroInsertReply.Builder();
 		
         try {
         	Future<InsertResponse> futureInsertResponse = transaction.insertDocuments(collection, inserts, writeFailMode);
@@ -828,8 +832,7 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
 
 	@Override
 	public void unimplemented(QueryCommand userCommand, MessageReplier messageReplier) throws Exception {
-		//TODO: Map real mongo error codes		
-		ErrorCode errorCode = ErrorCode.UNIMPLEMENTED_COMMAND;
+		ErrorCode errorCode = ErrorCode.COMMAND_NOT_SUPPORTED;
 		AttributeMap attributeMap = messageReplier.getAttributeMap();
         LastError lastError = new ToroLastError(
         		RequestOpCode.OP_QUERY, 

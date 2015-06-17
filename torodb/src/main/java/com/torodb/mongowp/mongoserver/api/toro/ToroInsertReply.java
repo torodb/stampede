@@ -1,9 +1,8 @@
 package com.torodb.mongowp.mongoserver.api.toro;
 
-import com.eightkdata.mongowp.mongoserver.api.QueryCommandProcessor;
 import com.eightkdata.mongowp.mongoserver.api.callback.LastError;
 import com.eightkdata.mongowp.mongoserver.api.callback.MessageReplier;
-import com.eightkdata.mongowp.mongoserver.api.pojos.InsertResponse;
+import com.eightkdata.mongowp.mongoserver.api.commands.pojos.InsertReply;
 import com.eightkdata.mongowp.mongoserver.protocol.MongoWP;
 import com.eightkdata.nettybson.mongodriver.MongoBSONDocument;
 import com.google.common.collect.ImmutableList;
@@ -14,9 +13,9 @@ import org.bson.types.BasicBSONList;
 /**
  *
  */
-public class ToroInsertResponse extends InsertResponse {
+public class ToroInsertReply extends InsertReply {
 
-    public ToroInsertResponse(
+    public ToroInsertReply(
             boolean ok,
             int n,
             ImmutableList<WriteError> writeErrors,
@@ -53,7 +52,7 @@ public class ToroInsertResponse extends InsertResponse {
     }
 
     @Override
-    public void renderize(MessageReplier messageReplier) {
+    public void reply(MessageReplier messageReplier) {
         BasicBSONObject obj = new BasicBSONObject();
         obj.put("ok", isOk() ? MongoWP.OK : MongoWP.KO);
         obj.put("n", getN());
@@ -117,8 +116,8 @@ public class ToroInsertResponse extends InsertResponse {
             return writeConcernErrors;
         }
 
-        public ToroInsertResponse build() {
-            return new ToroInsertResponse(
+        public ToroInsertReply build() {
+            return new ToroInsertReply(
                     ok,
                     n,
                     writeErrors.build(),
