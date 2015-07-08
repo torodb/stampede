@@ -20,6 +20,7 @@
 
 package com.torodb.mongowp.mongoserver.api.toro;
 
+import com.eightkdata.mongowp.mongoserver.api.commands.QueryAndWriteOperationsQueryCommand;
 import com.eightkdata.mongowp.mongoserver.api.commands.pojos.CollStatsRequest;
 import com.eightkdata.mongowp.mongoserver.api.commands.pojos.CollStatsReply;
 import com.eightkdata.mongowp.mongoserver.api.commands.pojos.CountReply;
@@ -28,7 +29,6 @@ import com.eightkdata.mongowp.messages.request.RequestOpCode;
 import com.eightkdata.mongowp.mongoserver.api.QueryCommandProcessor;
 import com.eightkdata.mongowp.mongoserver.api.callback.LastError;
 import com.eightkdata.mongowp.mongoserver.api.callback.MessageReplier;
-import com.eightkdata.mongowp.mongoserver.api.commands.*;
 import com.eightkdata.mongowp.mongoserver.protocol.MongoWP;
 import com.eightkdata.mongowp.mongoserver.protocol.MongoWP.ErrorCode;
 import com.eightkdata.nettybson.api.BSONDocument;

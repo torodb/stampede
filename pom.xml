@@ -169,6 +169,16 @@
                 <artifactId>mongo-server</artifactId>
                 <version>0.16-SNAPSHOT</version>
             </dependency>
+            <dependency>
+                <groupId>com.8kdata.mongowp</groupId>
+                <artifactId>mongo-server-api</artifactId>
+                <version>0.16-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>com.8kdata.mongowp</groupId>
+                <artifactId>mongo-server-api-safe</artifactId>
+                <version>0.16-SNAPSHOT</version>
+            </dependency>
 
             <dependency>
                 <groupId>com.google.code.findbugs</groupId>

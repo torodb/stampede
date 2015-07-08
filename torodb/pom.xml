@@ -46,7 +46,15 @@
         </dependency>
         <dependency>
             <groupId>com.8kdata.mongowp</groupId>
+            <artifactId>mongo-server-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.8kdata.mongowp</groupId>
             <artifactId>mongo-server</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.8kdata.mongowp</groupId>
+            <artifactId>mongo-server-api-safe</artifactId>
         </dependency>
         <dependency>
             <groupId>com.torodb.torod</groupId>

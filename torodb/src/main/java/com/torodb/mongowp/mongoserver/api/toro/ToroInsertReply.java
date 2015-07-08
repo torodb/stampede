@@ -15,12 +15,26 @@ import org.bson.types.BasicBSONList;
  */
 public class ToroInsertReply extends InsertReply {
 
+    public ToroInsertReply(int n) {
+        super(n);
+    }
+
     public ToroInsertReply(
-            boolean ok,
-            int n,
-            ImmutableList<WriteError> writeErrors,
-            ImmutableList<WriteConcernError> writeConcernErrors) {
-        super(ok, n, writeErrors, writeConcernErrors);
+            int n, 
+            ImmutableList<WriteError> writeErrors, 
+            ImmutableList<WriteConcernError> writeConcernErrors, 
+            MongoWP.ErrorCode errorCode, 
+            String errorMessage) {
+        super(n, writeErrors, writeConcernErrors, errorCode, errorMessage);
+    }
+
+    public ToroInsertReply(
+            int n, 
+            ImmutableList<WriteError> writeErrors, 
+            ImmutableList<WriteConcernError> writeConcernErrors, 
+            MongoWP.ErrorCode errorCode, 
+            Object... args) {
+        super(n, writeErrors, writeConcernErrors, errorCode, args);
     }
 
     @Override
@@ -35,9 +49,9 @@ public class ToroInsertReply extends InsertReply {
                     int wtimeout,
                     MessageReplier messageReplier) throws Exception {
                 BasicBSONObject obj = new BasicBSONObject();
-                obj.put("ok", isOk() ? MongoWP.OK : MongoWP.KO);
-                obj.put("err", MongoWP.ErrorCode.INTERNAL_ERROR.getErrorMessage());
-                obj.put("code", MongoWP.ErrorCode.INTERNAL_ERROR.getErrorCode());
+                toMap(obj);
+                obj.put("err", getErrorMessage());
+                obj.put("code", getErrorCode().getErrorCode());
                 obj.put("connectionId", messageReplier.getConnectionId());
                 //obj.put("lastOp", ); ???
                 obj.put("n", getN());
@@ -54,7 +68,7 @@ public class ToroInsertReply extends InsertReply {
     @Override
     public void reply(MessageReplier messageReplier) {
         BasicBSONObject obj = new BasicBSONObject();
-        obj.put("ok", isOk() ? MongoWP.OK : MongoWP.KO);
+        toMap(obj);
         obj.put("n", getN());
 
         if (!getWriteErrors().isEmpty()) {
@@ -87,25 +101,27 @@ public class ToroInsertReply extends InsertReply {
 
     public static class Builder {
 
-        private boolean ok;
+        private MongoWP.ErrorCode errorCode;
         private int n;
         private final ImmutableList.Builder<WriteError> writeErrors = ImmutableList.builder();
         private final ImmutableList.Builder<WriteConcernError> writeConcernErrors = ImmutableList.builder();
 
-        public boolean isOk() {
-            return ok;
+        public MongoWP.ErrorCode getErrorCode() {
+            return errorCode;
         }
 
-        public void setOk(boolean ok) {
-            this.ok = ok;
+        public Builder setErrorCode(MongoWP.ErrorCode errorCode) {
+            this.errorCode = errorCode;
+            return this;
         }
 
         public int getN() {
             return n;
         }
 
-        public void setN(int n) {
+        public Builder setN(int n) {
             this.n = n;
+            return this;
         }
 
         public ImmutableList.Builder<WriteError> getWriteErrors() {
@@ -118,10 +134,10 @@ public class ToroInsertReply extends InsertReply {
 
         public ToroInsertReply build() {
             return new ToroInsertReply(
-                    ok,
                     n,
                     writeErrors.build(),
-                    writeConcernErrors.build()
+                    writeConcernErrors.build(),
+                    errorCode
             );
         }
     }

@@ -23,21 +23,23 @@ package com.torodb.mongowp.mongoserver.api.toro;
 import com.eightkdata.mongowp.messages.request.RequestOpCode;
 import com.eightkdata.mongowp.mongoserver.api.QueryCommandProcessor.QueryCommand;
 import com.eightkdata.mongowp.mongoserver.api.callback.LastError;
-import com.eightkdata.mongowp.mongoserver.api.callback.MessageReplier;
 import com.eightkdata.mongowp.mongoserver.api.commands.QueryAndWriteOperationsQueryCommand;
+import com.eightkdata.mongowp.mongoserver.callback.MessageReplier;
 import com.eightkdata.mongowp.mongoserver.protocol.MongoWP;
-import com.eightkdata.nettybson.api.BSONDocument;
-import com.eightkdata.nettybson.mongodriver.MongoBSONDocument;
+import com.eightkdata.mongowp.mongoserver.protocol.exceptions.MongoServerException;
 import com.mongodb.WriteConcern;
 import com.torodb.torod.core.connection.DeleteResponse;
 import com.torodb.torod.core.connection.InsertResponse;
 import com.torodb.torod.core.connection.UpdateResponse;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import java.util.HashMap;
-import java.util.Map;
+import java.text.MessageFormat;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import javax.annotation.Nonnull;
+import org.bson.BsonBoolean;
+import org.bson.BsonDocument;
+import org.bson.BsonInt32;
+import org.bson.BsonString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,23 +56,30 @@ public class ToroLastError implements LastError {
 	private final Future<?> futureCommitResponse;
 	private final boolean error;
 	private final MongoWP.ErrorCode errorCode;
+    private final Object[] args;
 
 	public ToroLastError(@Nonnull RequestOpCode requestOpCode,
 			QueryCommand queryCommand,
 			Future<?> futureOperationResponse, Future<?> futureCommitResponse, 
-			boolean error, MongoWP.ErrorCode errorCode) {
+			boolean error, MongoWP.ErrorCode errorCode, Object... msgArgs) {
 		this.requestOpCode = requestOpCode;
 		this.queryCommand = queryCommand;
 		this.futureOperationResponse = futureOperationResponse;
 		this.futureCommitResponse = futureCommitResponse;
 		this.error = error;
 		this.errorCode = errorCode;
+        this.args = msgArgs;
 	}
 
 
 	@Override
-	public void getLastError(@Nonnull Object w, boolean j, boolean fsync, int wtimeout, MessageReplier messageReplier) throws Exception {
-		Map<String, Object> keyValues = new HashMap<String, Object>();
+	public void getLastError(
+            Object w,
+            boolean j,
+            boolean fsync,
+            int wtimeout,
+            MessageReplier messageReplier) throws MongoServerException {
+        BsonDocument reply = new BsonDocument();
 		
 		WriteConcern writeConcern = getWriteConcern(w, j, fsync, wtimeout);
 		LastErrorResult lastErrorResult = new LastErrorResult(this);
@@ -108,34 +117,34 @@ public class ToroLastError implements LastError {
 		}
 		lastErrorResult.wtime = System.currentTimeMillis() - lastErrorResult.wtime;
 		
-		keyValues.put("ok", lastErrorResult.error ? MongoWP.KO : MongoWP.OK);
+		reply.put("ok", lastErrorResult.error ? MongoWP.BSON_KO : MongoWP.BSON_OK);
         if (error) { //TODO: Check if we want to use this or lastErrorResult.error
-            keyValues.put("err", lastErrorResult.errorCode.getErrorMessage());
-			keyValues.put("code", lastErrorResult.errorCode.getErrorCode());
+            String message = MessageFormat.format(lastErrorResult.errorCode.getErrorMessage(), args);
+            reply.put("err", new BsonString(message));
+			reply.put("code", new BsonInt32(lastErrorResult.errorCode.getErrorCode()));
 		}
-		keyValues.put("connectionId", messageReplier.getConnectionId());
+		reply.put("connectionId", new BsonInt32(messageReplier.getConnectionId()));
 		//TODO: keyValues.put("lastOp", ???);
 		//TODO: keyValues.put("shards", ???);
 		//TODO: keyValues.put("singleShard", ???);
 		
-		keyValues.put("n", lastErrorResult.n);
-		keyValues.put("updatedExisting", lastErrorResult.updatedExisting);
-		keyValues.put("upserted", lastErrorResult.upserted);
-		keyValues.put("wnote", lastErrorResult.writeConcernError?MongoWP.OK:MongoWP.KO);
+		reply.put("n", new BsonInt32(lastErrorResult.n));
+		reply.put("updatedExisting", BsonBoolean.valueOf(lastErrorResult.updatedExisting));
+		reply.put("upserted", lastErrorResult.upserted);
+		reply.put("wnote", lastErrorResult.writeConcernError?MongoWP.OK:MongoWP.KO);
 		//TODO: Implement timeout
-		keyValues.put("wtimeout", false);
+		reply.put("wtimeout", false);
 		//TODO: keyValues.put("waited", wtime);
-		keyValues.put("wtime", (int) lastErrorResult.wtime);
+		reply.put("wtime", (int) lastErrorResult.wtime);
 		
 		//TODO: Add undocumented "syncMillis" and "writtenTo"
 		
-		BSONDocument reply = new MongoBSONDocument(keyValues);
+
 		messageReplier.replyMessageNoCursor(reply);
 	}
 
 	private void getLastInsertError(WriteConcern writeConcern,
-			LastErrorResult lastErrorResult) throws InterruptedException,
-			ExecutionException {
+			LastErrorResult lastErrorResult) throws MongoServerException {
 		if (futureOperationResponse == null && futureCommitResponse == null) {
 			return;
 		}
@@ -167,8 +176,7 @@ public class ToroLastError implements LastError {
 	}
 
 	private void getLastUpdateError(WriteConcern writeConcern,
-			LastErrorResult lastErrorResult) throws InterruptedException,
-			ExecutionException {
+			LastErrorResult lastErrorResult) throws MongoServerException {
 		if (futureOperationResponse == null || futureCommitResponse == null) {
 			return;
 		}
@@ -195,8 +203,7 @@ public class ToroLastError implements LastError {
 	}
 
 	private void getLastDeleteError(WriteConcern writeConcern,
-			LastErrorResult lastErrorResult) throws InterruptedException,
-			ExecutionException {
+			LastErrorResult lastErrorResult) throws MongoServerException {
 		if (futureOperationResponse == null || futureCommitResponse == null) {
 			return;
 		}
