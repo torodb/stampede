@@ -160,6 +160,8 @@ public class StandardDocumentToroCursor extends DefaultToroCursor<ToroDocument> 
                     "Limit must be a positive numbre, but " + limit
                     + " was recived");
         }
+
+        limit = Math.min(limit, maxElements - position);
         
         try {
             executor.noop().get();

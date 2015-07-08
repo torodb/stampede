@@ -56,15 +56,14 @@ import com.torodb.translator.*;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.netty.util.AttributeKey;
 import io.netty.util.AttributeMap;
-import org.bson.BSONObject;
-
-import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
+import javax.inject.Inject;
+import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.types.BasicBSONList;
 import org.slf4j.Logger;
