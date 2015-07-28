@@ -3,12 +3,12 @@
 		<!-- encoders are assigned the type ch.qos.logback.classic.encoder.PatternLayoutEncoder 
 			by default -->
 		<encoder>
-			<pattern>%-4relative [%thread] %-5level %logger{35} - %msg %n
-			</pattern>
+			<pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{35} - %msg %n</pattern>
 		</encoder>
 	</appender>
 <!--	<root level="WARN">-->
     <root level="DEBUG">
 		<appender-ref ref="STDOUT" />
 	</root>
+    <logger name="com.zaxxer.hikari.pool" level="WARN"/>
 </configuration>

@@ -18,30 +18,19 @@
  *     
  */
 
+package com.torodb.util;
 
-package com.torodb.di;
-
-import com.eightkdata.mongowp.mongoserver.MongoServerConfig;
-import com.google.inject.AbstractModule;
-import com.torodb.Config;
-import com.torodb.util.MongoDocumentBuilderFactory;
-import com.torodb.torod.core.annotations.DatabaseName;
 import com.torodb.torod.core.config.DocumentBuilderFactory;
+import com.torodb.torod.core.subdocument.ToroDocument;
 
 /**
  *
  */
-public class ConfigModule extends AbstractModule {
-    private final Config config;
+public class MongoDocumentBuilderFactory implements DocumentBuilderFactory {
 
-    public ConfigModule(Config config) {
-        this.config = config;
-    }
-    
     @Override
-    protected void configure() {
-        bind(MongoServerConfig.class).toInstance(config);
-        bind(DocumentBuilderFactory.class).to(MongoDocumentBuilderFactory.class);
-        bind(String.class).annotatedWith(DatabaseName.class).toInstance(config.getDbName());
+    public ToroDocument.DocumentBuilder newDocBuilder() {
+        return new KVToroDocument.Builder();
     }
+
 }

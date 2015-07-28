@@ -109,6 +109,11 @@
             <groupId>commons-configuration</groupId>
             <artifactId>commons-configuration</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.torodb.torod</groupId>
+            <artifactId>mongodb-layer</artifactId>
+            <version>0.23-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 
     <build>        

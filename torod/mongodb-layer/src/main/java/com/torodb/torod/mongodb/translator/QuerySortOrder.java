@@ -18,30 +18,27 @@
  *     
  */
 
-
-package com.torodb.di;
-
-import com.eightkdata.mongowp.mongoserver.MongoServerConfig;
-import com.google.inject.AbstractModule;
-import com.torodb.Config;
-import com.torodb.util.MongoDocumentBuilderFactory;
-import com.torodb.torod.core.annotations.DatabaseName;
-import com.torodb.torod.core.config.DocumentBuilderFactory;
+package com.torodb.torod.mongodb.translator;
 
 /**
- *
+ * 
  */
-public class ConfigModule extends AbstractModule {
-    private final Config config;
+public enum QuerySortOrder {
+	NATURAL("$natural"); // A special sort order that orders documents using the order of documents on disk.
 
-    public ConfigModule(Config config) {
-        this.config = config;
-    }
-    
-    @Override
-    protected void configure() {
-        bind(MongoServerConfig.class).toInstance(config);
-        bind(DocumentBuilderFactory.class).to(MongoDocumentBuilderFactory.class);
-        bind(String.class).annotatedWith(DatabaseName.class).toInstance(config.getDbName());
-    }
+	public static QuerySortOrder getByKey(String key) {
+		for (QuerySortOrder sortOrder : QuerySortOrder.values()) {
+			if (sortOrder.key.equals(key)) {
+				return sortOrder;
+			}
+		}
+
+		return null;
+	}
+
+	private final String key;
+
+	private QuerySortOrder(String key) {
+		this.key = key;
+	}
 }

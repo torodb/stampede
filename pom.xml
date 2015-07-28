@@ -179,6 +179,11 @@
                 <artifactId>mongo-server-api-safe</artifactId>
                 <version>0.16-SNAPSHOT</version>
             </dependency>
+            <dependency>
+                <groupId>com.8kdata.mongowp.api.safe.library</groupId>
+                <artifactId>v3m0</artifactId>
+                <version>0.16-SNAPSHOT</version>
+            </dependency>
 
             <dependency>
                 <groupId>com.google.code.findbugs</groupId>

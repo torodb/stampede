@@ -80,9 +80,8 @@ public interface UserCursor<E> {
     
     /**
      * Close the cursor, releasing the resources associated with it.
-     * 
-     * This method do not closeImmediately the cursor until the jobs that are already in
- the given executor have been executed
+     * <p>
+     * This method do not return until the cursor is closed
      */
     public void close();
     

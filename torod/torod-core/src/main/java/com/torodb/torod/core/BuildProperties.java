@@ -15,33 +15,49 @@
  *     along with ToroDB. If not, see <http://www.gnu.org/licenses/>.
  *
  *     Copyright (c) 2014, 8Kdata Technology
- *     
+ *
  */
 
+package com.torodb.torod.core;
 
-package com.torodb.di;
 
-import com.eightkdata.mongowp.mongoserver.MongoServerConfig;
-import com.google.inject.AbstractModule;
-import com.torodb.Config;
-import com.torodb.util.MongoDocumentBuilderFactory;
-import com.torodb.torod.core.annotations.DatabaseName;
-import com.torodb.torod.core.config.DocumentBuilderFactory;
+import javax.annotation.concurrent.Immutable;
 
 /**
  *
  */
-public class ConfigModule extends AbstractModule {
-    private final Config config;
+@Immutable
+public interface BuildProperties {
 
-    public ConfigModule(Config config) {
-        this.config = config;
-    }
-    
-    @Override
-    protected void configure() {
-        bind(MongoServerConfig.class).toInstance(config);
-        bind(DocumentBuilderFactory.class).to(MongoDocumentBuilderFactory.class);
-        bind(String.class).annotatedWith(DatabaseName.class).toInstance(config.getDbName());
-    }
+    public String getFullVersion();
+
+    public int getMajorVersion();
+
+    public int getMinorVersion();
+
+    public int getSubVersion();
+
+    public String getExtraVersion();
+
+    public long getBuildTime();
+
+    public String getGitCommitId();
+
+    public String getGitBranch();
+
+    public String getGitRemoteOriginUrl();
+
+    public String getJavaVersion();
+
+    public String getJavaVendor();
+
+    public String getJavaVMSpecificationVersion();
+
+    public String getJavaVMVersion();
+
+    public String getOsName();
+
+    public String getOsArch();
+
+    public String getOsVersion();
 }

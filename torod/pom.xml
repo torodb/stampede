@@ -21,5 +21,6 @@
         <module>d2r</module>
         <module>connection</module>
         <module>backend</module>
+        <module>mongodb-layer</module>
     </modules>
 </project>

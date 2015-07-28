@@ -333,10 +333,10 @@ public class DefaultToroTransaction implements ToroTransaction {
                             objectsToInsert,
                             WriteFailMode.TRANSACTIONAL
                     ).get();
-            if (insertResponse.getInsertedSize() != objectsToInsert.size()) {
+            if (insertResponse.getInsertedDocsCounter() != objectsToInsert.size()) {
                 throw new ToroImplementationException("Update: "
                         + objectsToInsert.size() + " should be inserted, but "
-                        + insertResponse.getInsertedSize() + " objects have "
+                        + insertResponse.getInsertedDocsCounter() + " objects have "
                         + "been inserted instead");
             }
         }

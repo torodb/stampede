@@ -20,29 +20,13 @@
 
 package com.torodb.kvdocument.conversion.mongo;
 
-import com.torodb.kvdocument.values.DateTimeValue;
-import com.torodb.kvdocument.values.TimeValue;
-import com.torodb.kvdocument.values.DocValue;
-import com.torodb.kvdocument.values.TwelveBytesValue;
-import com.torodb.kvdocument.values.LongValue;
-import com.torodb.kvdocument.values.DateValue;
-import com.torodb.kvdocument.values.IntegerValue;
-import com.torodb.kvdocument.values.DocValueVisitor;
-import com.torodb.kvdocument.values.StringValue;
-import com.torodb.kvdocument.values.BooleanValue;
-import com.torodb.kvdocument.values.DoubleValue;
-import com.torodb.kvdocument.values.ObjectValue;
-import com.torodb.kvdocument.values.NullValue;
-import com.torodb.kvdocument.values.ArrayValue;
-import com.google.common.collect.Lists;
+import com.google.common.primitives.UnsignedInteger;
 import com.torodb.kvdocument.types.GenericType;
 import com.torodb.kvdocument.values.*;
-import java.util.Date;
-import java.util.List;
+import com.torodb.kvdocument.values.StringValue;
 import java.util.Map;
 import java.util.regex.Pattern;
-import org.bson.BSONObject;
-import org.bson.BasicBSONObject;
+import org.bson.*;
 import org.bson.types.ObjectId;
 import org.threeten.bp.*;
 
@@ -54,17 +38,17 @@ public class MongoValueConverter {
     private static final KVValueTranslator KV_VALUE_TRANSATOR
             = new KVValueTranslator();
 
-    public static ObjectValue translateObject(BSONObject object) {
+    public static ObjectValue translateObject(BsonDocument document) {
         ObjectValue.Builder builder = new ObjectValue.Builder();
-        for (String key : object.keySet()) {
-            builder.putValue(key, translateBSON(object.get(key)));
+        for (String key : document.keySet()) {
+            builder.putValue(key, translateBSON(document.get(key)));
         }
         return builder.build();
     }
 
-    public static ArrayValue translateArray(List array) {
+    public static ArrayValue translateArray(BsonArray array) {
         ArrayValue.Builder builder = new ArrayValue.Builder();
-        for (Object object : array) {
+        for (BsonValue object : array) {
             builder.add(translateBSON(object));
         }
         if (array.isEmpty()) {
@@ -73,81 +57,91 @@ public class MongoValueConverter {
         return builder.build();
     }
 
-    public static BSONObject translateObject(ObjectValue object) {
-        return (BSONObject) object.accept(KV_VALUE_TRANSATOR, null);
+    public static BsonDocument translateObject(ObjectValue object) {
+        return (BsonDocument) object.accept(KV_VALUE_TRANSATOR, null);
     }
 
-    public static DocValue translateBSON(Object value) {
-        if (value instanceof Double) {
-            return new DoubleValue((Double) value);
+    public static DocValue translateBSON(BsonValue value) {
+        if (value == null) {
+            return NullValue.INSTANCE;
         }
-        if (value instanceof String) {
-            return new StringValue((String) value);
+        if (value.isDouble()) {
+            return new DoubleValue(value.asDouble().getValue());
         }
-        if (value instanceof List) {
-            List list = (List) value;
-            return translateArray(list);
+        if (value.isString()) {
+            return new StringValue(value.asString().getValue());
         }
-        if (value instanceof BSONObject) {
-            return translateObject((BSONObject) value);
+        if (value.isArray()) {
+            return translateArray(value.asArray());
         }
-        if (value instanceof ObjectId) {
-            ObjectId id = (ObjectId) value;
+        if (value.isDocument()) {
+            return translateObject(value.asDocument());
+        }
+        if (value.isObjectId()) {
+            ObjectId id = value.asObjectId().getValue();
             byte[] bsonBytes = id.toByteArray();
             return new TwelveBytesValue(bsonBytes);
         }
-        if (value instanceof Boolean) {
-            Boolean bool = (Boolean) value;
+        if (value.isBoolean()) {
+            boolean bool = value.asBoolean().getValue();
             if (bool) {
                 return BooleanValue.TRUE;
             }
             return BooleanValue.FALSE;
         }
-        if (value instanceof Date) {
-            Date date = (Date) value;
+        if (value.isDateTime()) {
+            Instant instant = Instant.ofEpochMilli(value.asDateTime().getValue());
             LocalDateTime dateTime = LocalDateTime.ofInstant(
-                    Instant.ofEpochMilli(date.getTime()),
-                    ZoneId.systemDefault()
+                    instant,
+                    ZoneOffset.UTC
             );
             return new DateTimeValue(dateTime);
         }
-        if (value == null) {
-            return NullValue.INSTANCE;
+        if (value.isInt32()) {
+            return new IntegerValue(value.asInt32().intValue());
         }
-        if (value instanceof Integer) {
-            return new IntegerValue((Integer) value);
+        if (value.isInt64()) {
+            return new LongValue(value.asInt64().longValue());
         }
-        if (value instanceof Long) {
-            return new LongValue((Long) value);
-        }
-        if (value instanceof Pattern) {
-            return new PatternValue((Pattern) value);
+        if (value.isRegularExpression()) {
+            BsonRegularExpression exp = value.asRegularExpression();
+            return new PatternValue(
+                    Pattern.compile(
+                            exp.getPattern(),
+                            patternOptionsToFlags(exp.getOptions())
+                    )
+            );
         }
 
         throw new IllegalArgumentException("Arguments of " + value.getClass()
                 + " type are not supported yet");
 
     }
+
+    public static int patternOptionsToFlags(String options) {
+        return 0; //TODO: parse regexp options!
+    }
+
+    public static String patternFlagsToOptions(int flags) {
+        return ""; //TODO: parse regexp options!
+    }
     
     private static class KVValueTranslator implements
-            DocValueVisitor<Object, Void> {
+            DocValueVisitor<BsonValue, Void> {
 
         @Override
-        public Object visit(BooleanValue value,
-                            Void arg) {
-            return value.getValue();
+        public BsonValue visit(BooleanValue value, Void arg) {
+            return BsonBoolean.valueOf(value.getValue());
         }
 
         @Override
-        public Object visit(NullValue value,
-                            Void arg) {
+        public BsonValue visit(NullValue value, Void arg) {
             return null;
         }
 
         @Override
-        public Object visit(ArrayValue value,
-                            Void arg) {
-            List<Object> result = Lists.newArrayListWithCapacity(value.size());
+        public BsonValue visit(ArrayValue value, Void arg) {
+            BsonArray result = new BsonArray();
             for (DocValue docValue : value) {
                 result.add(docValue.accept(this, arg));
             }
@@ -155,64 +149,62 @@ public class MongoValueConverter {
         }
 
         @Override
-        public Object visit(IntegerValue value,
-                            Void arg) {
-            return value.getValue();
+        public BsonValue visit(IntegerValue value, Void arg) {
+            return new BsonInt32(value.getValue());
         }
 
         @Override
-        public Object visit(LongValue value,
-                            Void arg) {
-            return value.getValue();
+        public BsonValue visit(LongValue value, Void arg) {
+            return new BsonInt64(value.getValue());
         }
 
         @Override
-        public Object visit(DoubleValue value,
-                            Void arg) {
-            return value.getValue();
+        public BsonValue visit(DoubleValue value, Void arg) {
+            return new BsonDouble(value.getValue());
         }
 
         @Override
-        public Object visit(StringValue value,
-                            Void arg) {
-            return value.getValue();
+        public BsonValue visit(StringValue value, Void arg) {
+            return new BsonString(value.getValue());
         }
 
         @Override
-        public Object visit(TwelveBytesValue value,
-                            Void arg) {
+        public BsonValue visit(TwelveBytesValue value, Void arg) {
             byte[] kvBytes = value.getArrayValue();
-            return new ObjectId(kvBytes);
+            return new BsonObjectId(new ObjectId(kvBytes));
         }
 
         @Override
-        public Object visit(DateTimeValue value,
-                            Void arg) {
-            return DateTimeUtils.toSqlTimestamp(value.getValue());
+        public BsonValue visit(DateTimeValue value, Void arg) {
+            Instant instant = value.getValue().toInstant(ZoneOffset.UTC);
+            return new BsonTimestamp(
+                    UnsignedInteger.valueOf(instant.getEpochSecond()).intValue(),
+                    instant.getNano()
+            );
         }
 
         @Override
-        public Object visit(DateValue value,
-                            Void arg) {
-            return DateTimeUtils.toSqlDate(value.getValue());
+        public BsonValue visit(DateValue value, Void arg) {
+            Instant instant = value.getValue().atStartOfDay().toInstant(ZoneOffset.UTC);
+            return new BsonDateTime(instant.toEpochMilli());
         }
 
         @Override
-        public Object visit(TimeValue value,
-                            Void arg) {
-            return DateTimeUtils.toSqlTime(value.getValue());
+        public BsonValue visit(TimeValue value, Void arg) {
+            throw new UnsupportedOperationException("Is is not defined how to translate time values to BSON");
         }
 
         @Override
-        public Object visit(PatternValue value, Void arg) {
-            return value.getValue();
+        public BsonValue visit(PatternValue value, Void arg) {
+            return new BsonRegularExpression(
+                    value.getValue().pattern(),
+                    patternFlagsToOptions(value.getValue().flags())
+            );
         }
 
         @Override
-        public Object visit(ObjectValue object,
-                            Void arg) {
-            BSONObject result = new BasicBSONObject(object.getAttributes()
-                    .size());
+        public BsonValue visit(ObjectValue object, Void arg) {
+            BsonDocument result = new BsonDocument();
 
             for (Map.Entry<String, DocValue> entry : object.getAttributes()) {
                 result.put(entry.getKey(), entry.getValue().accept(this, arg));

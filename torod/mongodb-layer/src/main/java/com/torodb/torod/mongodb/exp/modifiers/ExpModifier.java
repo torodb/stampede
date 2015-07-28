@@ -18,30 +18,14 @@
  *     
  */
 
+package com.torodb.torod.mongodb.exp.modifiers;
 
-package com.torodb.di;
-
-import com.eightkdata.mongowp.mongoserver.MongoServerConfig;
-import com.google.inject.AbstractModule;
-import com.torodb.Config;
-import com.torodb.util.MongoDocumentBuilderFactory;
-import com.torodb.torod.core.annotations.DatabaseName;
-import com.torodb.torod.core.config.DocumentBuilderFactory;
+import java.io.Serializable;
 
 /**
  *
  */
-public class ConfigModule extends AbstractModule {
-    private final Config config;
-
-    public ConfigModule(Config config) {
-        this.config = config;
-    }
+public interface ExpModifier extends Serializable {
     
-    @Override
-    protected void configure() {
-        bind(MongoServerConfig.class).toInstance(config);
-        bind(DocumentBuilderFactory.class).to(MongoDocumentBuilderFactory.class);
-        bind(String.class).annotatedWith(DatabaseName.class).toInstance(config.getDbName());
-    }
+    
 }

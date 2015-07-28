@@ -18,30 +18,28 @@
  *     
  */
 
-
-package com.torodb.di;
-
-import com.eightkdata.mongowp.mongoserver.MongoServerConfig;
-import com.google.inject.AbstractModule;
-import com.torodb.Config;
-import com.torodb.util.MongoDocumentBuilderFactory;
-import com.torodb.torod.core.annotations.DatabaseName;
-import com.torodb.torod.core.config.DocumentBuilderFactory;
+package com.torodb.torod.mongodb.translator;
 
 /**
- *
+ * 
  */
-public class ConfigModule extends AbstractModule {
-    private final Config config;
+public enum QueryEncapsulation {
+	QUERY("query"), 
+	DOLAR_QUERY("$query");
 
-    public ConfigModule(Config config) {
-        this.config = config;
-    }
-    
-    @Override
-    protected void configure() {
-        bind(MongoServerConfig.class).toInstance(config);
-        bind(DocumentBuilderFactory.class).to(MongoDocumentBuilderFactory.class);
-        bind(String.class).annotatedWith(DatabaseName.class).toInstance(config.getDbName());
-    }
+	public static QueryEncapsulation getByKey(String key) {
+		for (QueryEncapsulation sortOrder : QueryEncapsulation.values()) {
+			if (sortOrder.key.equals(key)) {
+				return sortOrder;
+			}
+		}
+
+		return null;
+	}
+
+	private final String key;
+
+	private QueryEncapsulation(String key) {
+		this.key = key;
+	}
 }
