@@ -32,10 +32,15 @@ import com.torodb.torod.mongodb.*;
 import com.torodb.torod.mongodb.annotations.Index;
 import com.torodb.torod.mongodb.annotations.Namespaces;
 import com.torodb.torod.mongodb.annotations.Standard;
+import com.torodb.torod.mongodb.impl.DefaultOpTimeClock;
+import com.torodb.torod.mongodb.repl.ReplicationCoordinator;
+import com.torodb.torod.mongodb.repl.ReplicationCoordinatorImpl;
 import com.torodb.torod.mongodb.standard.StandardCommandsExecutor;
 import com.torodb.torod.mongodb.standard.StandardCommandsLibrary;
 import com.torodb.torod.mongodb.translator.QueryCriteriaTranslator;
 import com.torodb.torod.mongodb.unsafe.ToroQueryCommandProcessor;
+import com.torodb.util.mgl.HierarchicalMultipleGranularityLock;
+import com.torodb.util.mgl.RootLockedMultipleGranularityLock;
 
 /**
  *
@@ -78,5 +83,11 @@ public class MongoLayerModule extends AbstractModule {
         bind(BuildProperties.class).to(DefaultBuildProperties.class).asEagerSingleton();
         bind(QueryCommandProcessor.class).to(ToroQueryCommandProcessor.class);
         bind(QueryCriteriaTranslator.class).toInstance(new QueryCriteriaTranslator());
+
+        bind(OptimeClock.class).to(DefaultOpTimeClock.class).in(Singleton.class);
+
+        bind(ReplicationCoordinator.class).to(ReplicationCoordinatorImpl.class).in(Singleton.class);
+
+        bind(HierarchicalMultipleGranularityLock.class).to(RootLockedMultipleGranularityLock.class).in(Singleton.class);
     }
 }

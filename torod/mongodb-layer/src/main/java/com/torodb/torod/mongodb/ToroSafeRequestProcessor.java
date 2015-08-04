@@ -22,8 +22,8 @@ import com.torodb.torod.core.exceptions.CursorNotFoundException;
 import com.torodb.torod.mongodb.annotations.Index;
 import com.torodb.torod.mongodb.annotations.Namespaces;
 import com.torodb.torod.mongodb.annotations.Standard;
+import com.torodb.torod.mongodb.repl.ReplicationCoordinator;
 import com.torodb.torod.mongodb.translator.ToroToBsonTranslatorFunction;
-import io.netty.util.AttributeKey;
 import io.netty.util.AttributeMap;
 import java.util.List;
 import java.util.concurrent.Future;
@@ -40,10 +40,6 @@ public class ToroSafeRequestProcessor implements SafeRequestProcessor {
 
     private static final Logger LOGGER
             = LoggerFactory.getLogger(ToroSafeRequestProcessor.class);
-    public final static AttributeKey<ToroConnection> CONNECTION =
-			AttributeKey.valueOf("connection");
-    public final static AttributeKey<String> SUPPORTED_DATABASE =
-			AttributeKey.valueOf("supported-database");
 	
     private final Torod torod;
     private final String supportedDatabase;
@@ -51,37 +47,46 @@ public class ToroSafeRequestProcessor implements SafeRequestProcessor {
     private final SubRequestProcessor indexRP;
     private final SubRequestProcessor namespacesRP;
 
+    private final ReplicationCoordinator replCoordinator;
+    private final OptimeClock optimeClock;
+
     @Inject
     public ToroSafeRequestProcessor(
             Torod torod,
             @DatabaseName String supportedDatabase,
             @Standard SubRequestProcessor standardRP,
             @Index SubRequestProcessor indexRP,
-            @Namespaces SubRequestProcessor namespacesRP) {
+            @Namespaces SubRequestProcessor namespacesRP,
+            ReplicationCoordinator replCoordinator,
+            OptimeClock optimeClock) {
         this.torod = torod;
         this.standardRP = standardRP;
         this.indexRP = indexRP;
         this.namespacesRP = namespacesRP;
         this.supportedDatabase = supportedDatabase;
+        this.replCoordinator = replCoordinator;
+        this.optimeClock = optimeClock;
     }
 
     @Override
     public void onConnectionActive(Connection connection) {
         ToroConnection toroConnection = torod.openConnection();
-        AttributeMap attributeMap = connection.getAttributeMap();
-        attributeMap.attr(CONNECTION).set(toroConnection);
-        attributeMap.attr(SUPPORTED_DATABASE).set(supportedDatabase);
+        RequestContext context = new RequestContext(
+                supportedDatabase,
+                toroConnection,
+                replCoordinator,
+                optimeClock
+        );
+        context.setTo(connection.getAttributeMap());
     }
 
     @Override
     public void onConnectionInactive(Connection connection) {
-		ToroConnection toroConnection = connection
-                .getAttributeMap()
-                .attr(CONNECTION)
-                .getAndRemove();
-		if (toroConnection != null) {
-			toroConnection.close();
-		}
+        AttributeMap attMap = connection.getAttributeMap();
+        
+        RequestContext context = RequestContext.getAndRemoveFrom(attMap);
+        
+        context.getToroConnection().close();
     }
 
     @Override
@@ -112,7 +117,7 @@ public class ToroSafeRequestProcessor implements SafeRequestProcessor {
     @Override
     public ReplyMessage getMore(Request req, GetMoreMessage getMoreMessage)
             throws MongoServerException {
-		ToroConnection toroConnection = req.getConnection().getAttributeMap().attr(CONNECTION).get();
+		ToroConnection toroConnection = RequestContext.getFrom(req).getToroConnection();
 
         CursorId cursorId = new CursorId(getMoreMessage.getCursorId());
 
@@ -145,7 +150,7 @@ public class ToroSafeRequestProcessor implements SafeRequestProcessor {
     @Override
     public Future<?> killCursors(Request req, KillCursorsMessage killCursorsMessage)
             throws MongoServerException {
-		ToroConnection toroConnection = req.getConnection().getAttributeMap().attr(CONNECTION).get();
+		ToroConnection toroConnection = RequestContext.getFrom(req).getToroConnection();
 
 		if (toroConnection == null) {
 			throw new MongoServerException("Unexpected state", ErrorCode.INTERNAL_ERROR);

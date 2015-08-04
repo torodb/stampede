@@ -54,6 +54,7 @@
         <module>kvdocument</module>
         <module>torod</module>
         <module>torodb</module>
+        <module>multiple-granularity-locking</module>
     </modules>
 
     <repositories>  

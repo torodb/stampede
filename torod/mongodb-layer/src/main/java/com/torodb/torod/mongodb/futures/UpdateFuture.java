@@ -2,6 +2,7 @@
 package com.torodb.torod.mongodb.futures;
 
 import com.eightkdata.mongowp.mongoserver.api.safe.impl.UpdateOpResult;
+import com.eightkdata.mongowp.mongoserver.pojos.OpTime;
 import com.eightkdata.mongowp.mongoserver.protocol.MongoWP.ErrorCode;
 import com.torodb.torod.core.connection.UpdateResponse;
 import java.util.concurrent.Future;
@@ -11,8 +12,8 @@ import java.util.concurrent.Future;
  */
 public class UpdateFuture extends ActionAndCommitFuture<UpdateOpResult, UpdateResponse>{
 
-    public UpdateFuture(Future<UpdateResponse> actionFuture, Future<?> commitFuture) {
-        super(actionFuture, commitFuture);
+    public UpdateFuture(OpTime optime, Future<UpdateResponse> actionFuture, Future<?> commitFuture) {
+        super(optime, actionFuture, commitFuture);
     }
 
     @Override
@@ -35,7 +36,8 @@ public class UpdateFuture extends ActionAndCommitFuture<UpdateOpResult, UpdateRe
                 error,
                 desc,
                 null,
-                null
+                null,
+                getOptime()
         );
     }
 

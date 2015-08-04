@@ -1,6 +1,7 @@
 
 package com.torodb.torod.mongodb.futures;
 
+import com.eightkdata.mongowp.mongoserver.pojos.OpTime;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -11,12 +12,21 @@ import java.util.concurrent.TimeoutException;
  */
 public abstract class ActionAndCommitFuture<E, O> implements Future<E> {
 
+    private final OpTime optime;
     private final Future<O> actionFuture;
     private final Future<?> commitFuture;
 
-    public ActionAndCommitFuture(Future<O> actionFuture, Future<?> commitFuture) {
+    public ActionAndCommitFuture(
+            OpTime optime,
+            Future<O> actionFuture,
+            Future<?> commitFuture) {
+        this.optime = optime;
         this.actionFuture = actionFuture;
         this.commitFuture = commitFuture;
+    }
+
+    OpTime getOptime() {
+        return optime;
     }
 
     @Override

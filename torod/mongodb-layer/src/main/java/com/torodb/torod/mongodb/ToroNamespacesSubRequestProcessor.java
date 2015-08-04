@@ -22,8 +22,6 @@ import java.util.Collections;
 import java.util.List;
 import javax.inject.Inject;
 
-import static com.torodb.torod.mongodb.ToroSafeRequestProcessor.CONNECTION;
-
 /**
  *
  */
@@ -36,8 +34,9 @@ public class ToroNamespacesSubRequestProcessor extends AbstractMetaSubRequestPro
     public ToroNamespacesSubRequestProcessor(
             @DatabaseName String databaseName,
             BuildProperties buildProperties,
-            QueryCriteriaTranslator queryCriteriaTranslator) {
-        super("system.namespaces", databaseName, queryCriteriaTranslator);
+            QueryCriteriaTranslator queryCriteriaTranslator,
+            OptimeClock optimeClock) {
+        super("system.namespaces", databaseName, queryCriteriaTranslator, optimeClock);
 
         commandsLibrary = new NameBasedCommandsLibrary(
                 "toro-" + buildProperties.getFullVersion() + "-namespaces",
@@ -62,8 +61,9 @@ public class ToroNamespacesSubRequestProcessor extends AbstractMetaSubRequestPro
 
     @Override
     public List<ToroDocument> queryAllDocuments(Connection connection) {
-        ToroConnection toroConnection
-                = connection.getAttributeMap().attr(CONNECTION).get();
+        ToroConnection toroConnection =
+                RequestContext.getFrom(connection.getAttributeMap())
+                .getToroConnection();
 
         Collection<String> allCollections = toroConnection.getCollections();
 

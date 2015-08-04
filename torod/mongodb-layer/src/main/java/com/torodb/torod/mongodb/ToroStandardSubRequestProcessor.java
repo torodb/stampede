@@ -3,13 +3,14 @@ package com.torodb.torod.mongodb;
 
 import com.eightkdata.mongowp.messages.request.*;
 import com.eightkdata.mongowp.messages.response.ReplyMessage;
-import com.eightkdata.mongowp.mongoserver.api.callback.WriteOpResult;
 import com.eightkdata.mongowp.mongoserver.api.safe.*;
 import com.eightkdata.mongowp.mongoserver.api.safe.impl.DeleteOpResult;
 import com.eightkdata.mongowp.mongoserver.api.safe.impl.SimpleWriteOpResult;
 import com.eightkdata.mongowp.mongoserver.api.safe.impl.UpdateOpResult;
 import com.eightkdata.mongowp.mongoserver.api.safe.pojos.QueryRequest;
 import com.eightkdata.mongowp.mongoserver.api.tools.ReplyBuilder;
+import com.eightkdata.mongowp.mongoserver.callback.WriteOpResult;
+import com.eightkdata.mongowp.mongoserver.pojos.OpTime;
 import com.eightkdata.mongowp.mongoserver.protocol.MongoWP;
 import com.eightkdata.mongowp.mongoserver.protocol.MongoWP.ErrorCode;
 import com.eightkdata.mongowp.mongoserver.protocol.exceptions.CommandNotSupportedException;
@@ -36,7 +37,6 @@ import com.torodb.torod.mongodb.futures.InsertFuture;
 import com.torodb.torod.mongodb.futures.UpdateFuture;
 import com.torodb.torod.mongodb.translator.*;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import io.netty.util.AttributeMap;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Future;
@@ -45,9 +45,6 @@ import org.bson.BsonDocument;
 import org.bson.BsonValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import static com.torodb.torod.mongodb.ToroSafeRequestProcessor.CONNECTION;
-import static com.torodb.torod.mongodb.ToroSafeRequestProcessor.SUPPORTED_DATABASE;
 
 /**
  *
@@ -60,15 +57,18 @@ public class ToroStandardSubRequestProcessor implements SafeRequestProcessor.Sub
     private final QueryCriteriaTranslator queryCriteriaTranslator;
     private final CommandsLibrary commandsLibrary;
     private final CommandsExecutor commandsExecutor;
+    private final OptimeClock optimeClock;
 
     @Inject
     public ToroStandardSubRequestProcessor(
             QueryCriteriaTranslator queryCriteriaTranslator,
             @Standard CommandsLibrary commandsLibrary,
-            @Standard CommandsExecutor commandsExecutor) {
+            @Standard CommandsExecutor commandsExecutor,
+            OptimeClock optimeClock) {
         this.queryCriteriaTranslator = queryCriteriaTranslator;
         this.commandsLibrary = commandsLibrary;
         this.commandsExecutor = commandsExecutor;
+        this.optimeClock = optimeClock;
     }
 
     @Override
@@ -76,25 +76,12 @@ public class ToroStandardSubRequestProcessor implements SafeRequestProcessor.Sub
         return commandsLibrary;
     }
 
-    public static ToroConnection getConnection(AttributeMap attMap) {
-        return attMap.attr(CONNECTION).get();
-    }
-
-    public static ToroConnection getConnection(Request req) {
-        return req.getConnection().getAttributeMap().attr(CONNECTION).get();
-    }
-
-    //TODO(gortiz): Right now Torodb only supports a single database, we should remove that in future
-    public static String getSupportedDatabase(Request req) {
-        return req.getConnection().getAttributeMap().attr(SUPPORTED_DATABASE).get();
-    }
-
     @Override
     @SuppressFBWarnings("NP_LOAD_OF_KNOWN_NULL_VALUE")
     public ReplyMessage query(Request req, QueryRequest request)
             throws MongoServerException {
-        ToroConnection toroConnection
-                = req.getConnection().getAttributeMap().attr(CONNECTION).get();
+        ToroConnection toroConnection = RequestContext.getFrom(req)
+                .getToroConnection();
 
         if (request.getProjection() != null) {
             throw new UserToroException("Projections are not supported");
@@ -181,7 +168,8 @@ public class ToroStandardSubRequestProcessor implements SafeRequestProcessor.Sub
     @Override
     public Future<? extends WriteOpResult> insert(Request req, InsertMessage insertMessage)
             throws MongoServerException {
-        ToroConnection toroConnection = req.getConnection().getAttributeMap().attr(CONNECTION).get();
+        ToroConnection toroConnection = RequestContext.getFrom(req)
+                .getToroConnection();
 
 		String collection = insertMessage.getCollection();
         WriteFailMode writeFailMode = getWriteFailMode(insertMessage);
@@ -191,6 +179,9 @@ public class ToroStandardSubRequestProcessor implements SafeRequestProcessor.Sub
                 BsonToToroTranslatorFunction.INSTANCE
         );
         ToroTransaction transaction = null;
+
+        OpTime optime = optimeClock.tick();
+
         try {
             transaction = toroConnection.createTransaction();
 
@@ -198,11 +189,11 @@ public class ToroStandardSubRequestProcessor implements SafeRequestProcessor.Sub
 
             Future<?> futureCommitResponse = transaction.commit();
 
-            return new InsertFuture(futureInsertResponse, futureCommitResponse);
+            return new InsertFuture(optime, futureInsertResponse, futureCommitResponse);
         }
         catch (ImplementationDbException ex) {
             return Futures.immediateFuture(
-                    new SimpleWriteOpResult(ErrorCode.UNKNOWN_ERROR, ex.getLocalizedMessage(), null, null)
+                    new SimpleWriteOpResult(ErrorCode.UNKNOWN_ERROR, ex.getLocalizedMessage(), null, null, optime)
             );
         } finally {
             if (transaction != null) {
@@ -214,11 +205,13 @@ public class ToroStandardSubRequestProcessor implements SafeRequestProcessor.Sub
     @Override
     public Future<? extends WriteOpResult> update(Request req, UpdateMessage updateMessage)
             throws MongoServerException {
-		ToroConnection toroConnection = req.getConnection().getAttributeMap().attr(CONNECTION).get();
+		ToroConnection toroConnection = RequestContext.getFrom(req)
+                .getToroConnection();
 
     	String collection = updateMessage.getCollection();
     	WriteFailMode writeFailMode = WriteFailMode.ORDERED;
     	BsonDocument selector = updateMessage.getSelector();
+
     	for (String key : selector.keySet()) {
     		if (QueryModifier.getByKey(key) != null || QuerySortOrder.getByKey(key) != null) {
                 LOGGER.warn("Detected unsuported modifier {}", key);
@@ -229,7 +222,9 @@ public class ToroStandardSubRequestProcessor implements SafeRequestProcessor.Sub
                                 ErrorCode.OPERATION_FAILED,
                                 "Modifier " + key + " not supported",
                                 null,
-                                null)
+                                null,
+                                optimeClock.tick()
+                        )
                 );
     		}
     	}
@@ -262,6 +257,7 @@ public class ToroStandardSubRequestProcessor implements SafeRequestProcessor.Sub
             Future<?> futureCommitResponse = transaction.commit();
 
             return new UpdateFuture(
+                    optimeClock.tick(),
                     futureUpdateResponse,
                     futureCommitResponse
             );
@@ -274,7 +270,8 @@ public class ToroStandardSubRequestProcessor implements SafeRequestProcessor.Sub
                             ErrorCode.UNKNOWN_ERROR,
                             ex.getLocalizedMessage(),
                             null,
-                            null
+                            null,
+                            optimeClock.tick()
                     )
             );
         } finally {
@@ -287,7 +284,8 @@ public class ToroStandardSubRequestProcessor implements SafeRequestProcessor.Sub
     @Override
     public Future<? extends WriteOpResult> delete(Request req, DeleteMessage deleteMessage)
             throws MongoServerException {
-		ToroConnection toroConnection = req.getConnection().getAttributeMap().attr(CONNECTION).get();
+		ToroConnection toroConnection = RequestContext.getFrom(req)
+                .getToroConnection();
 
     	String collection = deleteMessage.getCollection();
     	WriteFailMode writeFailMode = WriteFailMode.ORDERED;
@@ -301,7 +299,9 @@ public class ToroStandardSubRequestProcessor implements SafeRequestProcessor.Sub
                                 ErrorCode.OPERATION_FAILED,
                                 "Modifier " + key + " not supported",
                                 null,
-                                null)
+                                null,
+                                optimeClock.tick()
+                        )
                 );
     		}
     	}
@@ -329,7 +329,11 @@ public class ToroStandardSubRequestProcessor implements SafeRequestProcessor.Sub
 
             Future<?> futureCommitResponse = transaction.commit();
 
-            return new DeleteFuture(futureDeleteResponse, futureCommitResponse);
+            return new DeleteFuture(
+                    optimeClock.tick(),
+                    futureDeleteResponse,
+                    futureCommitResponse
+            );
 		}
         catch (ImplementationDbException ex) {
             return Futures.immediateFuture(
@@ -338,7 +342,8 @@ public class ToroStandardSubRequestProcessor implements SafeRequestProcessor.Sub
                             ErrorCode.UNKNOWN_ERROR,
                             ex.getLocalizedMessage(),
                             null,
-                            null
+                            null,
+                            optimeClock.tick()
                     )
             );
         } finally {

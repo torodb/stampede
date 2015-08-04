@@ -58,7 +58,7 @@ import com.torodb.torod.core.pojos.Database;
 import com.torodb.torod.core.pojos.IndexedAttributes;
 import com.torodb.torod.core.pojos.NamedToroIndex;
 import com.torodb.torod.core.utils.DocValueQueryCriteriaEvaluator;
-import com.torodb.torod.mongodb.ToroStandardSubRequestProcessor;
+import com.torodb.torod.mongodb.RequestContext;
 import com.torodb.torod.mongodb.translator.QueryCriteriaTranslator;
 import com.torodb.torod.mongodb.translator.UpdateActionTranslator;
 import io.netty.util.AttributeMap;
@@ -89,7 +89,7 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
 	}
 
     private ToroConnection getConnection(AttributeMap attMap) {
-        return ToroStandardSubRequestProcessor.getConnection(attMap);
+        return RequestContext.getFrom(attMap).getToroConnection();
     }
 
     @Override

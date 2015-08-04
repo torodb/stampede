@@ -5,13 +5,13 @@ import com.eightkdata.mongowp.messages.request.DeleteMessage;
 import com.eightkdata.mongowp.messages.request.InsertMessage;
 import com.eightkdata.mongowp.messages.request.UpdateMessage;
 import com.eightkdata.mongowp.messages.response.ReplyMessage;
-import com.eightkdata.mongowp.mongoserver.api.callback.WriteOpResult;
 import com.eightkdata.mongowp.mongoserver.api.safe.*;
 import com.eightkdata.mongowp.mongoserver.api.safe.impl.DeleteOpResult;
 import com.eightkdata.mongowp.mongoserver.api.safe.impl.SimpleWriteOpResult;
 import com.eightkdata.mongowp.mongoserver.api.safe.impl.UpdateOpResult;
 import com.eightkdata.mongowp.mongoserver.api.safe.pojos.QueryRequest;
 import com.eightkdata.mongowp.mongoserver.api.tools.ReplyBuilder;
+import com.eightkdata.mongowp.mongoserver.callback.WriteOpResult;
 import com.eightkdata.mongowp.mongoserver.protocol.MongoWP.ErrorCode;
 import com.eightkdata.mongowp.mongoserver.protocol.exceptions.CommandNotSupportedException;
 import com.eightkdata.mongowp.mongoserver.protocol.exceptions.MongoServerException;
@@ -40,14 +40,17 @@ public abstract class AbstractMetaSubRequestProcessor implements SafeRequestProc
     private final String collectionName;
     private final String databaseName;
     private final @Nonnull QueryCriteriaTranslator queryCriteriaTranslator;
+    private final OptimeClock optimeClock;
 
     public AbstractMetaSubRequestProcessor(
             @Nonnull String collectionName,
             @Nonnull @DatabaseName String databaseName,
-            @Nonnull QueryCriteriaTranslator queryCriteriaTranslator) {
+            @Nonnull QueryCriteriaTranslator queryCriteriaTranslator,
+            @Nonnull OptimeClock optimeClock) {
         this.databaseName = databaseName;
         this.collectionName = collectionName;
         this.queryCriteriaTranslator = queryCriteriaTranslator;
+        this.optimeClock = optimeClock;
     }
 
     public String getDatabaseName() {
@@ -107,7 +110,8 @@ public abstract class AbstractMetaSubRequestProcessor implements SafeRequestProc
                         ErrorCode.OPERATION_FAILED,
                         "Insert on " + collectionName + " collection is not supported",
                         null,
-                        null
+                        null,
+                        optimeClock.tick()
                 )
         );
     }
@@ -122,7 +126,8 @@ public abstract class AbstractMetaSubRequestProcessor implements SafeRequestProc
                         ErrorCode.OPERATION_FAILED,
                         "Update on sys" + collectionName + " collection is not supported",
                         null,
-                        null
+                        null,
+                        optimeClock.tick()
                 )
         );
     }
@@ -136,7 +141,8 @@ public abstract class AbstractMetaSubRequestProcessor implements SafeRequestProc
                         ErrorCode.OPERATION_FAILED,
                         "Delete on " + collectionName + " collection is not supported",
                         null,
-                        null
+                        null,
+                        optimeClock.tick()
                 )
         );
     }

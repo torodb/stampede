@@ -22,7 +22,7 @@ import com.torodb.torod.core.connection.ToroTransaction;
 import com.torodb.torod.core.connection.WriteError;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.subdocument.ToroDocument;
-import com.torodb.torod.mongodb.ToroStandardSubRequestProcessor;
+import com.torodb.torod.mongodb.RequestContext;
 import com.torodb.torod.mongodb.translator.BsonToToroTranslatorFunction;
 import java.util.Collection;
 import java.util.concurrent.ExecutionException;
@@ -40,7 +40,8 @@ public class InsertImplementation implements CommandImplementation<InsertArgumen
 
         InsertArgument arg = req.getCommandArgument();
 
-        String supportedDatabase = ToroStandardSubRequestProcessor.getSupportedDatabase(req);
+        RequestContext context = RequestContext.getFrom(req);
+        String supportedDatabase = context.getSupportedDatabase();
 
         if (!supportedDatabase.equals(req.getDatabase())) {
             throw new CommandFailed(
@@ -49,7 +50,7 @@ public class InsertImplementation implements CommandImplementation<InsertArgumen
                             + "Only '" + supportedDatabase +"' is supported");
         }
 
-        ToroConnection connection = ToroStandardSubRequestProcessor.getConnection(req);
+        ToroConnection connection = context.getToroConnection();
         
         Iterable<ToroDocument> docsToInsert = Iterables.transform(
                 arg.getDocuments(),
@@ -92,7 +93,7 @@ public class InsertImplementation implements CommandImplementation<InsertArgumen
         if (insertResponse.isSuccess()) {
             //TODO: Fill repl info
             //TODO: Fill shard info
-            return new InsertReply(command, n, null, null);
+            return new InsertReply(command, n, null, null, context.getOptimeClock().tick());
         }
         else {
             return new InsertReply(
@@ -103,7 +104,8 @@ public class InsertImplementation implements CommandImplementation<InsertArgumen
                     translateErrors(insertResponse.getErrors()),
                     null,
                     null,
-                    null
+                    null,
+                    context.getOptimeClock().tick()
             );
         }
     }

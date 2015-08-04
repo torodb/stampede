@@ -27,8 +27,6 @@ import java.util.List;
 import java.util.Map;
 import javax.inject.Inject;
 
-import static com.torodb.torod.mongodb.ToroSafeRequestProcessor.CONNECTION;
-
 /**
  *
  */
@@ -41,11 +39,13 @@ public class ToroIndexSubRequestProcessor extends AbstractMetaSubRequestProcesso
     public ToroIndexSubRequestProcessor(
             @DatabaseName String databaseName,
             BuildProperties buildProperties,
-            QueryCriteriaTranslator queryCriteriaTranslator) {
+            QueryCriteriaTranslator queryCriteriaTranslator,
+            OptimeClock optimeClock) {
         super(
                 "system.indexes",
                 databaseName,
-                queryCriteriaTranslator
+                queryCriteriaTranslator,
+                optimeClock
         );
 
         commandsLibrary = new NameBasedCommandsLibrary(
@@ -73,8 +73,9 @@ public class ToroIndexSubRequestProcessor extends AbstractMetaSubRequestProcesso
     public List<ToroDocument> queryAllDocuments(Connection connection)
             throws RuntimeException {
 
-        ToroConnection toroConnection
-                = connection.getAttributeMap().attr(CONNECTION).get();
+        ToroConnection toroConnection =
+                RequestContext.getFrom(connection.getAttributeMap())
+                .getToroConnection();
         Collection<String> allCollections = toroConnection.getCollections();
 
         List<ToroDocument> candidates = Lists.newArrayList();

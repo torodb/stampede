@@ -46,6 +46,7 @@ import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.repl.Re
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.repl.ReplSetSyncFromCommand.ReplSetSyncFromReply;
 import com.google.common.collect.ImmutableList;
 import com.torodb.torod.mongodb.standard.commands.NotImplementedCommandImplementation;
+import com.torodb.torod.mongodb.standard.commands.general.GetLastErrorImplementation;
 import com.torodb.torod.mongodb.standard.commands.general.InsertImplementation;
 import com.torodb.torod.mongodb.unsafe.UnsafeCommandsExecutorAdaptor;
 import javax.inject.Inject;
@@ -105,7 +106,7 @@ public class StandardCommandsExecutor extends GroupedCommandsExecutor {
 
         @Override
         public CommandImplementation<GetLastErrorArgument, GetLastErrorReply> getGetLastErrrorImplementation() {
-            return NotImplementedCommandImplementation.build();
+            return new GetLastErrorImplementation();
         }
 
         @Override

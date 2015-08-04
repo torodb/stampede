@@ -20,17 +20,18 @@
 
 package com.toro.torod.connection;
 
-import com.torodb.torod.core.connection.ToroConnection;
 import com.torodb.torod.core.Torod;
 import com.torodb.torod.core.backend.DbBackend;
 import com.torodb.torod.core.config.DocumentBuilderFactory;
+import com.torodb.torod.core.connection.ToroConnection;
 import com.torodb.torod.core.d2r.D2RTranslator;
 import com.torodb.torod.core.dbMetaInf.DbMetaInformationCache;
 import com.torodb.torod.core.dbWrapper.DbWrapper;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.exceptions.TorodStartupException;
 import com.torodb.torod.core.executor.ExecutorFactory;
-
+import com.torodb.util.mgl.HierarchicalMultipleGranularityLock;
+import com.torodb.util.mgl.MultipleGranularityLock;
 import javax.inject.Inject;
 
 /**
@@ -44,6 +45,7 @@ public class DefaultTorod implements Torod {
     private final DbWrapper dbWrapper;
     private final DocumentBuilderFactory documentBuilderFactory;
     private final DefaultCursorManager cursorManager;
+    private final HierarchicalMultipleGranularityLock lock;
 
     @Inject
     public DefaultTorod(
@@ -52,13 +54,15 @@ public class DefaultTorod implements Torod {
             ExecutorFactory executorFactory,
             DbWrapper dbWrapper,
             DocumentBuilderFactory documentBuilderFactory,
-            DbBackend dbBackend) {
+            DbBackend dbBackend,
+            HierarchicalMultipleGranularityLock lock) {
         this.d2r = d2RTranslator;
         this.cache = cache;
         this.executorFactory = executorFactory;
         this.dbWrapper = dbWrapper;
         this.documentBuilderFactory = documentBuilderFactory;
         this.cursorManager = new DefaultCursorManager(dbBackend, d2r);
+        this.lock = lock;
     }
 
     @Override
@@ -82,6 +86,11 @@ public class DefaultTorod implements Torod {
                 documentBuilderFactory,
                 cache
         );
+    }
+
+    @Override
+    public MultipleGranularityLock getGlobalLock() {
+        return lock;
     }
 
     @Override

@@ -22,7 +22,7 @@ package com.torodb.torod.core;
 
 import com.torodb.torod.core.connection.ToroConnection;
 import com.torodb.torod.core.exceptions.TorodStartupException;
-
+import com.torodb.util.mgl.MultipleGranularityLock;
 import javax.annotation.concurrent.ThreadSafe;
 
 /**
@@ -38,4 +38,6 @@ public interface Torod {
     public void shutdown();
     
     public void shutdownNow();
+
+    public MultipleGranularityLock getGlobalLock();
 }
