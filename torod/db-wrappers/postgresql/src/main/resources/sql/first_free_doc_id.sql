@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION first_free_doc_id(col_schema varchar)
+CREATE OR REPLACE FUNCTION torodb.first_free_doc_id(col_schema varchar)
 RETURNS integer AS $$
 DECLARE
     seq_name varchar := '"' || col_schema || '".root_seq';

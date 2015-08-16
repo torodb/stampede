@@ -33,17 +33,17 @@ public class ReserveDocIds extends org.jooq.impl.AbstractRoutine<java.lang.Integ
 	private static final long serialVersionUID = -566845238;
 
 	/**
-	 * The parameter <code>public.reserve_value_type_id.RETURN_VALUE</code>.
+	 * The parameter <code>torodb.reserve_value_type_id.RETURN_VALUE</code>.
 	 */
 	public static final org.jooq.Parameter<java.lang.Integer> RETURN_VALUE = createParameter("RETURN_VALUE", org.jooq.impl.SQLDataType.INTEGER);
 
 	/**
-	 * The parameter <code>public.reserve_value_type_id.col_schema</code>.
+	 * The parameter <code>torodb.reserve_value_type_id.col_schema</code>.
 	 */
 	public static final org.jooq.Parameter<java.lang.String> COL_SCHEMA = createParameter("col_schema", org.jooq.impl.SQLDataType.VARCHAR);
 
 	/**
-	 * The parameter <code>public.reserve_value_type_id.increment</code>.
+	 * The parameter <code>torodb.reserve_value_type_id.increment</code>.
 	 */
 	public static final org.jooq.Parameter<java.lang.Integer> INCREMENT = createParameter("increment", org.jooq.impl.SQLDataType.INTEGER);
 
@@ -51,7 +51,7 @@ public class ReserveDocIds extends org.jooq.impl.AbstractRoutine<java.lang.Integ
 	 * Create a new routine call instance
 	 */
 	public ReserveDocIds() {
-		super("reserve_doc_ids", com.torodb.torod.db.postgresql.meta.PublicSchema.PUBLIC, org.jooq.impl.SQLDataType.INTEGER);
+		super("reserve_doc_ids", com.torodb.torod.db.postgresql.meta.TorodbSchema.TORODB, org.jooq.impl.SQLDataType.INTEGER);
 
 		setReturnParameter(RETURN_VALUE);
 		addInParameter(COL_SCHEMA);

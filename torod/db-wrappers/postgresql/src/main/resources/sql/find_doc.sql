@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION find_doc(col_schema varchar, did integer, tables integer[])
+CREATE OR REPLACE FUNCTION torodb.find_doc(col_schema varchar, did integer, tables integer[])
 RETURNS SETOF find_doc_type AS $$
 DECLARE
     t integer;

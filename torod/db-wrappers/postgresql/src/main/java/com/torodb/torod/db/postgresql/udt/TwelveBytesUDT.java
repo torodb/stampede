@@ -20,8 +20,9 @@
 
 package com.torodb.torod.db.postgresql.udt;
 
-import com.torodb.torod.db.postgresql.meta.PublicSchema;
+import com.torodb.torod.db.postgresql.meta.TorodbSchema;
 import com.torodb.torod.db.postgresql.udt.records.TwelveBytesRecord;
+
 import org.jooq.impl.UDTImpl;
 
 /**
@@ -35,7 +36,7 @@ public class TwelveBytesUDT extends UDTImpl<TwelveBytesRecord> {
 	private static final long serialVersionUID = -552117608;
 
 	/**
-	 * The singleton instance of <code>public.twelve_bytes</code>
+	 * The singleton instance of <code>torodb.twelve_bytes</code>
 	 */
 	public static final TwelveBytesUDT TWELVE_BYTES = new TwelveBytesUDT();
 
@@ -48,17 +49,17 @@ public class TwelveBytesUDT extends UDTImpl<TwelveBytesRecord> {
 	}
 
 	/**
-	 * The attribute <code>public.twelve_bytes.upper</code>.
+	 * The attribute <code>torodb.twelve_bytes.upper</code>.
 	 */
 	public static final org.jooq.UDTField<TwelveBytesRecord, Integer> UPPPER = createField("upper", org.jooq.impl.SQLDataType.INTEGER, TWELVE_BYTES);
 
 	/**
-	 * The attribute <code>public.twelve_bytes.middle</code>.
+	 * The attribute <code>torodb.twelve_bytes.middle</code>.
 	 */
 	public static final org.jooq.UDTField<TwelveBytesRecord, Integer> MIDDLE = createField("middle", org.jooq.impl.SQLDataType.INTEGER, TWELVE_BYTES);
 
 	/**
-	 * The attribute <code>public.twelve_bytes.lower</code>.
+	 * The attribute <code>torodb.twelve_bytes.lower</code>.
 	 */
 	public static final org.jooq.UDTField<TwelveBytesRecord, Integer> LOWER = createField("lower", org.jooq.impl.SQLDataType.INTEGER, TWELVE_BYTES);
 
@@ -66,7 +67,7 @@ public class TwelveBytesUDT extends UDTImpl<TwelveBytesRecord> {
 	 * No further instances allowed
 	 */
 	private TwelveBytesUDT() {
-		super("twelve_bytes", PublicSchema.PUBLIC);
+		super("twelve_bytes", TorodbSchema.TORODB);
 
 		// Initialise data type
 		getDataType();
