@@ -1,0 +1,19 @@
+
+package com.torodb.torod.mongodb.annotations;
+
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
+import javax.inject.Qualifier;
+
+import static java.lang.annotation.ElementType.FIELD;
+import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.ElementType.PARAMETER;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
+
+/**
+ * Elements qualified by this annotation are replated to replica set.
+ */
+@Qualifier @Target({ FIELD, PARAMETER, METHOD }) @Retention(RUNTIME)
+public @interface ReplSet {
+
+}

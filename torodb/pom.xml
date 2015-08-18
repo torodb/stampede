@@ -114,6 +114,10 @@
             <artifactId>mongodb-layer</artifactId>
             <version>0.23-SNAPSHOT</version>
         </dependency>
+        <dependency>
+            <groupId>javax.inject</groupId>
+            <artifactId>javax.inject</artifactId>
+        </dependency>
     </dependencies>
 
     <build>        

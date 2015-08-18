@@ -16,7 +16,8 @@ import com.eightkdata.mongowp.mongoserver.protocol.exceptions.CommandFailed;
 import com.eightkdata.mongowp.mongoserver.protocol.exceptions.MongoServerException;
 import com.mongodb.WriteConcern;
 import com.torodb.torod.mongodb.RequestContext;
-import com.torodb.torod.mongodb.repl.ReplicationCoordinator;
+import com.torodb.torod.mongodb.repl.ReplCoordinator;
+import com.torodb.torod.mongodb.repl.ReplInterface.MemberStateInterface;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -48,10 +49,11 @@ public class GetLastErrorImplementation implements CommandImplementation<GetLast
 
         WriteOpResult writeOpResult;
         boolean noWriteOpYet;
+        Future<? extends WriteOpResult> lastWriteOpFuture
+                = connection.getAppliedLastWriteOp();
+        OpTime lastRequestedWriteOpTime = connection.getLastRequestedWriteOpTime();
         try {
-            Future<? extends WriteOpResult> lastWriteOpFuture 
-                    = connection.getLastWriteOp();
-            noWriteOpYet = lastWriteOpFuture == null;
+            noWriteOpYet = lastRequestedWriteOpTime != null;
             if (noWriteOpYet) {
                 writeOpResult = new SimpleWriteOpResult(
                         ErrorCode.OK,
@@ -62,7 +64,13 @@ public class GetLastErrorImplementation implements CommandImplementation<GetLast
                 );
             }
             else {
-                writeOpResult = lastWriteOpFuture.get();
+                assert lastWriteOpFuture != null;
+                if (lastWriteOpFuture.isDone()) {
+                    writeOpResult = lastWriteOpFuture.get();
+                }
+                else {
+                    writeOpResult = null;
+                }
             }
         }
         catch (InterruptedException ex) {
@@ -111,16 +119,58 @@ public class GetLastErrorImplementation implements CommandImplementation<GetLast
             );
         }
 
+        WriteConcern wc = arg.getWriteConcern();
         WriteConcernEnforcementResult awaitReplication;
-        if (!noWriteOpYet) {
-            ReplicationCoordinator replCoordinator = context.getReplicationCoordinator();
 
-            awaitReplication = replCoordinator.awaitReplication(
-                    writeOpResult.getOptime(),
-                    arg.getWriteConcern()
-            );
+        if (!noWriteOpYet) {
+            assert lastRequestedWriteOpTime != null;
+            assert wc != null;
+            if (writeOpResult == null && (wc.getFsync() || wc.getJ())) {
+                assert lastWriteOpFuture != null;
+                try {
+                    writeOpResult = lastWriteOpFuture.get();
+                } catch (InterruptedException ex) {
+                    throw new CommandFailed(
+                            command.getCommandName(),
+                            "Error while waiting for last write op",
+                            ex
+                    );
+                } catch (ExecutionException ex) {
+                    throw new CommandFailed(
+                            command.getCommandName(),
+                            "Error while waiting for last write op",
+                            ex
+                    );
+                }
+            }
+            if (writeOpResult == null) {
+                awaitReplication = new WriteConcernEnforcementResult(
+                        wc,
+                        null,
+                        0,
+                        null,
+                        false,
+                        null,
+                        null
+                );
+            }
+            else {
+                ReplCoordinator replCoordinator = context.getReplicationCoordinator();
+
+                MemberStateInterface freezeMemberState = replCoordinator.freezeMemberState(false);
+
+                try {
+                    awaitReplication = freezeMemberState.awaitReplication(
+                            lastRequestedWriteOpTime,
+                            arg.getWriteConcern()
+                    );
+                } finally {
+                    freezeMemberState.close();
+                }
+            }
         }
         else {
+
             awaitReplication = new WriteConcernEnforcementResult(
                     WriteConcern.ACKNOWLEDGED,
                     null,

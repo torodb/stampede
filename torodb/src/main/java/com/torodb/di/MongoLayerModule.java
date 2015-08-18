@@ -24,7 +24,9 @@ import com.eightkdata.mongowp.mongoserver.api.QueryCommandProcessor;
 import com.eightkdata.mongowp.mongoserver.api.safe.*;
 import com.eightkdata.mongowp.mongoserver.api.safe.impl.AtomicConnectionIdFactory;
 import com.eightkdata.mongowp.mongoserver.callback.RequestProcessor;
+import com.google.common.net.HostAndPort;
 import com.google.inject.AbstractModule;
+import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.torodb.DefaultBuildProperties;
 import com.torodb.torod.core.BuildProperties;
@@ -33,14 +35,18 @@ import com.torodb.torod.mongodb.annotations.Index;
 import com.torodb.torod.mongodb.annotations.Namespaces;
 import com.torodb.torod.mongodb.annotations.Standard;
 import com.torodb.torod.mongodb.impl.DefaultOpTimeClock;
-import com.torodb.torod.mongodb.repl.ReplicationCoordinator;
-import com.torodb.torod.mongodb.repl.ReplicationCoordinatorImpl;
+import com.torodb.torod.mongodb.repl.MongoOplogReader;
+import com.torodb.torod.mongodb.repl.OplogReader;
+import com.torodb.torod.mongodb.repl.ReplCoordinator;
+import com.torodb.torod.mongodb.repl.SyncSourceProvider;
 import com.torodb.torod.mongodb.standard.StandardCommandsExecutor;
 import com.torodb.torod.mongodb.standard.StandardCommandsLibrary;
 import com.torodb.torod.mongodb.translator.QueryCriteriaTranslator;
 import com.torodb.torod.mongodb.unsafe.ToroQueryCommandProcessor;
 import com.torodb.util.mgl.HierarchicalMultipleGranularityLock;
 import com.torodb.util.mgl.RootLockedMultipleGranularityLock;
+import java.util.concurrent.Executors;
+import javax.inject.Provider;
 
 /**
  *
@@ -86,8 +92,43 @@ public class MongoLayerModule extends AbstractModule {
 
         bind(OptimeClock.class).to(DefaultOpTimeClock.class).in(Singleton.class);
 
-        bind(ReplicationCoordinator.class).to(ReplicationCoordinatorImpl.class).in(Singleton.class);
-
         bind(HierarchicalMultipleGranularityLock.class).to(RootLockedMultipleGranularityLock.class).in(Singleton.class);
     }
+
+    @Provides
+    ReplCoordinator createCoordinator(Provider<OplogReader> oplogReaderProvider) {
+        ReplCoordinator replCoordinator = new ReplCoordinator(
+                oplogReaderProvider,
+                Executors.newCachedThreadPool()
+        );
+        replCoordinator.startAsync();
+
+        return replCoordinator;
+    }
+
+    @Provides
+    OplogReader createOplogReader(SyncSourceProvider ssp) {
+        return new MongoOplogReader(ssp);
+    }
+
+    @Provides @Singleton
+    SyncSourceProvider createSyncSourceProvider() {
+        return new MySyncSourceProvider();
+    }
+
+    private static class MySyncSourceProvider implements SyncSourceProvider {
+        private final HostAndPort syncSource
+                    = HostAndPort.fromParts("127.0.0.1", 27020);
+
+        @Override
+        public HostAndPort calculateSyncSource(HostAndPort oldSyncSource) {
+            return syncSource;
+        }
+
+        @Override
+        public HostAndPort getLastUsedSyncSource() {
+            return syncSource;
+        }
+    }
+
 }

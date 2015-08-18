@@ -22,7 +22,7 @@ import com.torodb.torod.core.exceptions.CursorNotFoundException;
 import com.torodb.torod.mongodb.annotations.Index;
 import com.torodb.torod.mongodb.annotations.Namespaces;
 import com.torodb.torod.mongodb.annotations.Standard;
-import com.torodb.torod.mongodb.repl.ReplicationCoordinator;
+import com.torodb.torod.mongodb.repl.ReplCoordinator;
 import com.torodb.torod.mongodb.translator.ToroToBsonTranslatorFunction;
 import io.netty.util.AttributeMap;
 import java.util.List;
@@ -47,7 +47,7 @@ public class ToroSafeRequestProcessor implements SafeRequestProcessor {
     private final SubRequestProcessor indexRP;
     private final SubRequestProcessor namespacesRP;
 
-    private final ReplicationCoordinator replCoordinator;
+    private final ReplCoordinator replCoordinator;
     private final OptimeClock optimeClock;
 
     @Inject
@@ -57,7 +57,7 @@ public class ToroSafeRequestProcessor implements SafeRequestProcessor {
             @Standard SubRequestProcessor standardRP,
             @Index SubRequestProcessor indexRP,
             @Namespaces SubRequestProcessor namespacesRP,
-            ReplicationCoordinator replCoordinator,
+            ReplCoordinator replCoordinator,
             OptimeClock optimeClock) {
         this.torod = torod;
         this.standardRP = standardRP;

@@ -3,7 +3,7 @@ package com.torodb.torod.mongodb;
 
 import com.eightkdata.mongowp.mongoserver.api.safe.Request;
 import com.torodb.torod.core.connection.ToroConnection;
-import com.torodb.torod.mongodb.repl.ReplicationCoordinator;
+import com.torodb.torod.mongodb.repl.ReplCoordinator;
 import io.netty.util.AttributeKey;
 import io.netty.util.AttributeMap;
 import javax.annotation.Nonnull;
@@ -17,13 +17,13 @@ public class RequestContext {
 
     private final @Nonnull String supportedDatabase;
     private final @Nonnull ToroConnection toroConnection;
-    private final @Nonnull ReplicationCoordinator replicationCoordinator;
+    private final @Nonnull ReplCoordinator replicationCoordinator;
     private final @Nonnull OptimeClock optimeClock;
 
     public RequestContext(
             String supportedDatabase,
             ToroConnection toroConnection,
-            ReplicationCoordinator replicationCoordinator,
+            ReplCoordinator replicationCoordinator,
             OptimeClock optimeClock) {
         this.supportedDatabase = supportedDatabase;
         this.toroConnection = toroConnection;
@@ -55,7 +55,7 @@ public class RequestContext {
         return toroConnection;
     }
 
-    public ReplicationCoordinator getReplicationCoordinator() {
+    public ReplCoordinator getReplicationCoordinator() {
         return replicationCoordinator;
     }
 

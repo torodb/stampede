@@ -11,4 +11,5 @@
 		<appender-ref ref="STDOUT" />
 	</root>
     <logger name="com.zaxxer.hikari.pool" level="WARN"/>
+    <!--<logger name="org.mongodb.driver" level="WARN"/>-->
 </configuration>
