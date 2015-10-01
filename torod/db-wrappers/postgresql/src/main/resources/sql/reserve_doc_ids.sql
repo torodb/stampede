@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION reserve_doc_ids(col_schema varchar, increment integer)
+CREATE OR REPLACE FUNCTION torodb.reserve_doc_ids(col_schema varchar, increment integer)
 RETURNS integer AS $$
 DECLARE
     seq_name varchar := '"' || col_schema || '".root_seq';

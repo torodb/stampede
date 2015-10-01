@@ -1,1 +1,1 @@
-CREATE DOMAIN twelve_bytes AS bytea;
+CREATE DOMAIN torodb.twelve_bytes AS bytea;

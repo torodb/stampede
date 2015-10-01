@@ -31,12 +31,12 @@ public class FirstFreeDocId extends org.jooq.impl.AbstractRoutine<java.lang.Inte
 	private static final long serialVersionUID = -16798621;
 
 	/**
-	 * The parameter <code>public.first_free_value_type_id.RETURN_VALUE</code>.
+	 * The parameter <code>torodb.first_free_value_type_id.RETURN_VALUE</code>.
 	 */
 	public static final org.jooq.Parameter<java.lang.Integer> RETURN_VALUE = createParameter("RETURN_VALUE", org.jooq.impl.SQLDataType.INTEGER);
 
 	/**
-	 * The parameter <code>public.first_free_value_type_id.col_schema</code>.
+	 * The parameter <code>torodb.first_free_value_type_id.col_schema</code>.
 	 */
 	public static final org.jooq.Parameter<java.lang.String> COL_SCHEMA = createParameter("col_schema", org.jooq.impl.SQLDataType.VARCHAR);
 
@@ -44,7 +44,7 @@ public class FirstFreeDocId extends org.jooq.impl.AbstractRoutine<java.lang.Inte
 	 * Create a new routine call instance
 	 */
 	public FirstFreeDocId() {
-		super("first_free_doc_id", com.torodb.torod.db.postgresql.meta.PublicSchema.PUBLIC, org.jooq.impl.SQLDataType.INTEGER);
+		super("first_free_doc_id", com.torodb.torod.db.postgresql.meta.TorodbSchema.TORODB, org.jooq.impl.SQLDataType.INTEGER);
 
 		setReturnParameter(RETURN_VALUE);
 		addInParameter(COL_SCHEMA);
