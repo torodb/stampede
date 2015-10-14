@@ -30,13 +30,13 @@ import com.torodb.torod.core.language.projection.Projection;
 import com.torodb.torod.core.language.querycriteria.QueryCriteria;
 import com.torodb.torod.core.pojos.CollectionMetainfo;
 import com.torodb.torod.core.subdocument.ToroDocument;
-import javax.annotation.concurrent.NotThreadSafe;
 import java.io.Closeable;
 import java.util.Collection;
 import javax.annotation.Nonnegative;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import javax.json.Json;
+import javax.annotation.concurrent.NotThreadSafe;
+import javax.json.JsonObject;
 
 /**
  *
@@ -119,7 +119,7 @@ public interface ToroConnection extends Closeable {
      * @param otherInfo A JSON document with extra information
      * @return true if the collection was created, false if it already existed
      */
-    public boolean createCollection(@Nonnull String collection, @Nullable Json otherInfo);
+    public boolean createCollection(@Nonnull String collection, @Nullable JsonObject otherInfo);
     
     @Nonnull
     public Collection<String> getCollections();

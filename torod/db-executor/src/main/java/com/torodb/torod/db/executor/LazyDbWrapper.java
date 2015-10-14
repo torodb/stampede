@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Map;
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.NotThreadSafe;
-import javax.json.Json;
+import javax.json.JsonObject;
 
 /**
  *
@@ -106,7 +106,7 @@ public class LazyDbWrapper implements DbWrapper {
         public void createCollection(
                 String collectionName, 
                 String schemaName, 
-                Json other) throws ImplementationDbException {
+                JsonObject other) throws ImplementationDbException {
             getDelegate().createCollection(collectionName, schemaName, other);
         }
 

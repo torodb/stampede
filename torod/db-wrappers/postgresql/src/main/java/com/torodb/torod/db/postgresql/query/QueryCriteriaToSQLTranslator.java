@@ -20,27 +20,8 @@
 
 package com.torodb.torod.db.postgresql.query;
 
-import com.torodb.torod.core.language.querycriteria.OrQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.ModIsQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.IsObjectQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.SizeIsQueryCriteria;
-import com.torodb.torod.core.language.AttributeReference;
-import com.torodb.torod.core.language.querycriteria.InQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.FalseQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.IsGreaterQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.NotQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.ExistsQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.IsGreaterOrEqualQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.ContainsAttributesQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.QueryCriteria;
-import com.torodb.torod.core.language.querycriteria.IsLessQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.AndQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.IsLessOrEqualQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.TrueQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.IsEqualQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.TypeIsQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.AttributeQueryCriteria;
 import com.google.common.base.Preconditions;
+import com.torodb.torod.core.language.AttributeReference;
 import com.torodb.torod.core.language.querycriteria.*;
 import com.torodb.torod.core.language.querycriteria.utils.QueryCriteriaDFW;
 import com.torodb.torod.core.language.querycriteria.utils.QueryCriteriaVisitor;

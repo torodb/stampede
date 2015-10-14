@@ -26,7 +26,7 @@ import java.util.concurrent.Future;
 import javax.annotation.Nonnegative;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import javax.json.Json;
+import javax.json.JsonObject;
 
 /**
  *
@@ -35,7 +35,7 @@ public interface SystemExecutor {
 
     Future<?> createCollection(
             String collection,
-            @Nullable Json other,
+            @Nullable JsonObject other,
             @Nullable CreateCollectionCallback callback)
             throws ToroTaskExecutionException;
     

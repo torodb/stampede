@@ -211,7 +211,7 @@ class PostgresqlDbConnection extends AbstractSqlDbConnection {
 
         PreparedStatement ps = null;
         try {
-            ps = c.prepareStatement("CREATE SCHEMA \"" + escapedSchemaName + "\"");
+            ps = c.prepareStatement("CREATE SCHEMA IF NOT EXISTS \"" + escapedSchemaName + "\"");
             ps.executeUpdate();
         } finally {
             AutoCloser.close(ps);

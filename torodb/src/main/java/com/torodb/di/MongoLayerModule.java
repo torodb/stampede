@@ -24,29 +24,43 @@ import com.eightkdata.mongowp.mongoserver.api.QueryCommandProcessor;
 import com.eightkdata.mongowp.mongoserver.api.safe.*;
 import com.eightkdata.mongowp.mongoserver.api.safe.impl.AtomicConnectionIdFactory;
 import com.eightkdata.mongowp.mongoserver.callback.RequestProcessor;
+import com.eightkdata.mongowp.mongoserver.pojos.OpTime;
 import com.google.common.net.HostAndPort;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.torodb.DefaultBuildProperties;
+import com.torodb.Shutdowner;
 import com.torodb.torod.core.BuildProperties;
 import com.torodb.torod.mongodb.*;
-import com.torodb.torod.mongodb.annotations.Index;
-import com.torodb.torod.mongodb.annotations.Namespaces;
-import com.torodb.torod.mongodb.annotations.Standard;
+import com.torodb.torod.mongodb.annotations.External;
+import com.torodb.torod.mongodb.annotations.Local;
+import com.torodb.torod.mongodb.commands.ToroCommandsExecutor;
+import com.torodb.torod.mongodb.commands.ToroCommandsLibrary;
+import com.torodb.torod.mongodb.commands.WriteConcernToWriteFailModeFunction;
+import com.torodb.torod.mongodb.commands.WriteConcernToWriteFailModeFunction.AlwaysTransactionalWriteFailMode;
+import com.torodb.torod.mongodb.crp.Index;
+import com.torodb.torod.mongodb.crp.MetaCollectionRequestProcessor;
+import com.torodb.torod.mongodb.crp.Namespaces;
 import com.torodb.torod.mongodb.impl.DefaultOpTimeClock;
-import com.torodb.torod.mongodb.repl.MongoOplogReader;
-import com.torodb.torod.mongodb.repl.OplogReader;
+import com.torodb.torod.mongodb.impl.LocalMongoClient;
+import com.torodb.torod.mongodb.meta.IndexesMetaCollection;
+import com.torodb.torod.mongodb.meta.NamespacesMetaCollection;
+import com.torodb.torod.mongodb.repl.OplogManager;
+import com.torodb.torod.mongodb.repl.OplogReaderProvider;
 import com.torodb.torod.mongodb.repl.ReplCoordinator;
+import com.torodb.torod.mongodb.repl.ReplCoordinator.ReplCoordinatorOwnerCallback;
 import com.torodb.torod.mongodb.repl.SyncSourceProvider;
-import com.torodb.torod.mongodb.standard.StandardCommandsExecutor;
-import com.torodb.torod.mongodb.standard.StandardCommandsLibrary;
+import com.torodb.torod.mongodb.repl.exceptions.NoSyncSourceFoundException;
+import com.torodb.torod.mongodb.repl.impl.MongoOplogReaderProvider;
+import com.torodb.torod.mongodb.srp.DatabaseCheckSafeRequestProcessor;
+import com.torodb.torod.mongodb.srp.DatabaseIgnoreSafeRequestProcessor;
+import com.torodb.torod.mongodb.srp.ToroSafeRequestProcessor;
 import com.torodb.torod.mongodb.translator.QueryCriteriaTranslator;
 import com.torodb.torod.mongodb.unsafe.ToroQueryCommandProcessor;
-import com.torodb.util.mgl.HierarchicalMultipleGranularityLock;
-import com.torodb.util.mgl.RootLockedMultipleGranularityLock;
-import java.util.concurrent.Executors;
-import javax.inject.Provider;
+import com.torodb.torod.mongodb.utils.DBCloner;
+import com.torodb.torod.mongodb.utils.MongoClientProvider;
+import com.torodb.torod.mongodb.utils.OplogOperationApplier;
 
 /**
  *
@@ -55,35 +69,24 @@ public class MongoLayerModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(SafeRequestProcessor.SubRequestProcessor.class)
-                .annotatedWith(Standard.class)
-                .to(ToroStandardSubRequestProcessor.class)
-                .asEagerSingleton();
-
-        bind(SafeRequestProcessor.SubRequestProcessor.class)
-                .annotatedWith(Index.class)
-                .to(ToroIndexSubRequestProcessor.class)
-                .asEagerSingleton();
-
-        bind(SafeRequestProcessor.SubRequestProcessor.class)
-                .annotatedWith(Namespaces.class)
-                .to(ToroNamespacesSubRequestProcessor.class)
-                .asEagerSingleton();
-
         bind(CommandsLibrary.class)
-                .annotatedWith(Standard.class)
-                .to(StandardCommandsLibrary.class)
+                .to(ToroCommandsLibrary.class)
                 .asEagerSingleton();
 
         bind(CommandsExecutor.class)
-                .annotatedWith(Standard.class)
-                .to(StandardCommandsExecutor.class)
+                .to(ToroCommandsExecutor.class)
                 .asEagerSingleton();
 
+        bind(ToroSafeRequestProcessor.class);
+        bind(DatabaseIgnoreSafeRequestProcessor.class);
         bind(SafeRequestProcessor.class)
-                .to(ToroSafeRequestProcessor.class);
+                .annotatedWith(Local.class)
+                .to(DatabaseIgnoreSafeRequestProcessor.class);
+        bind(DatabaseCheckSafeRequestProcessor.class);
+        bind(SafeRequestProcessor.class)
+                .annotatedWith(External.class)
+                .to(DatabaseCheckSafeRequestProcessor.class);
 
-        bind(RequestProcessor.class).to(RequestProcessorAdaptor.class);
         bind(ConnectionIdFactory.class).to(AtomicConnectionIdFactory.class).in(Singleton.class);
         bind(ErrorHandler.class).to(ToroErrorHandler.class).in(Singleton.class);
         bind(BuildProperties.class).to(DefaultBuildProperties.class).asEagerSingleton();
@@ -92,28 +95,49 @@ public class MongoLayerModule extends AbstractModule {
 
         bind(OptimeClock.class).to(DefaultOpTimeClock.class).in(Singleton.class);
 
-        bind(HierarchicalMultipleGranularityLock.class).to(RootLockedMultipleGranularityLock.class).in(Singleton.class);
+        bind(OplogReaderProvider.class).to(MongoOplogReaderProvider.class).asEagerSingleton();
+        bind(OplogOperationApplier.class);
+        bind(LocalMongoClient.class);
+        bind(DBCloner.class);
+        bind(MongoClientProvider.class);
+
+        bind(ReplCoordinator.class);
+
+        bind(WriteConcernToWriteFailModeFunction.class).to(AlwaysTransactionalWriteFailMode.class);
+
+        bind(Shutdowner.class).in(Singleton.class);
+        bind(ReplCoordinatorOwnerCallback.class).to(Shutdowner.class);
+
+        bind(OplogManager.class);
     }
 
-    @Provides
-    ReplCoordinator createCoordinator(Provider<OplogReader> oplogReaderProvider) {
-        ReplCoordinator replCoordinator = new ReplCoordinator(
-                oplogReaderProvider,
-                Executors.newCachedThreadPool()
-        );
-        replCoordinator.startAsync();
-
-        return replCoordinator;
-    }
-
-    @Provides
-    OplogReader createOplogReader(SyncSourceProvider ssp) {
-        return new MongoOplogReader(ssp);
+    @Provides @Singleton
+    RequestProcessor createRequestProcessor(
+            ConnectionIdFactory connectionIdFactory,
+            @External SafeRequestProcessor safeRequestProcessor,
+            ErrorHandler errorHandler) {
+        return new RequestProcessorAdaptor(connectionIdFactory, safeRequestProcessor, errorHandler);
     }
 
     @Provides @Singleton
     SyncSourceProvider createSyncSourceProvider() {
         return new MySyncSourceProvider();
+    }
+
+    @Provides @Index @Singleton
+    MetaCollectionRequestProcessor createIndexMetaCollectionRequestProcessor(
+            IndexesMetaCollection indexMetaCollection,
+            QueryCriteriaTranslator qct,
+            OptimeClock optimeClock) {
+        return new MetaCollectionRequestProcessor(indexMetaCollection, qct, optimeClock);
+    }
+
+    @Provides @Namespaces @Singleton
+    MetaCollectionRequestProcessor createNamespacesMetaCollectionRequestProcessor(
+            NamespacesMetaCollection indexMetaCollection,
+            QueryCriteriaTranslator qct,
+            OptimeClock optimeClock) {
+        return new MetaCollectionRequestProcessor(indexMetaCollection, qct, optimeClock);
     }
 
     private static class MySyncSourceProvider implements SyncSourceProvider {
@@ -127,6 +151,12 @@ public class MongoLayerModule extends AbstractModule {
 
         @Override
         public HostAndPort getLastUsedSyncSource() {
+            return syncSource;
+        }
+
+        @Override
+        public HostAndPort getSyncSource(OpTime lastFetchedOpTime) throws
+                NoSyncSourceFoundException {
             return syncSource;
         }
     }

@@ -23,6 +23,7 @@ package com.toro.torod.connection;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.toro.torod.connection.update.Updator;
 import com.torodb.torod.core.WriteFailMode;
 import com.torodb.torod.core.config.DocumentBuilderFactory;
@@ -40,18 +41,17 @@ import com.torodb.torod.core.language.querycriteria.QueryCriteria;
 import com.torodb.torod.core.language.querycriteria.utils.EqualFactory;
 import com.torodb.torod.core.language.update.UpdateAction;
 import com.torodb.torod.core.pojos.Database;
-import com.torodb.torod.core.pojos.NamedToroIndex;
 import com.torodb.torod.core.pojos.IndexedAttributes;
+import com.torodb.torod.core.pojos.NamedToroIndex;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.core.subdocument.ToroDocument;
 import java.util.Collection;
-
-import javax.annotation.Nonnull;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import javax.annotation.Nonnull;
 
 /**
  *
@@ -86,17 +86,17 @@ public class DefaultToroTransaction implements ToroTransaction {
     }
 
     @Override
-    public Future<?> rollback() {
+    public ListenableFuture<?> rollback() {
         return sessionTransaction.rollback();
     }
 
     @Override
-    public Future<?> commit() {
+    public ListenableFuture<?> commit() {
         return sessionTransaction.commit();
     }
 
     @Override
-    public Future<InsertResponse> insertDocuments(
+    public ListenableFuture<InsertResponse> insertDocuments(
             String collection,
             Iterable<ToroDocument> documents,
             WriteFailMode mode
@@ -125,7 +125,7 @@ public class DefaultToroTransaction implements ToroTransaction {
     }
 
     @Override
-    public Future<DeleteResponse> delete(
+    public ListenableFuture<DeleteResponse> delete(
             @Nonnull String collection,
             @Nonnull List<? extends DeleteOperation> deletes,
             @Nonnull WriteFailMode mode) {
@@ -134,7 +134,7 @@ public class DefaultToroTransaction implements ToroTransaction {
     }
 
     @Override
-    public Future<NamedToroIndex> createIndex(
+    public ListenableFuture<NamedToroIndex> createIndex(
             String collection,
             String indexName, 
             IndexedAttributes attributes, 
@@ -151,7 +151,7 @@ public class DefaultToroTransaction implements ToroTransaction {
     }
 
     @Override
-    public Future<Boolean> dropIndex(String collection, String indexName) {
+    public ListenableFuture<Boolean> dropIndex(String collection, String indexName) {
         cache.createCollection(executor, collection, null);
         return sessionTransaction.dropIndex(collection, indexName);
     }
@@ -171,36 +171,36 @@ public class DefaultToroTransaction implements ToroTransaction {
     }
 
     @Override
-    public Future<Long> getIndexSize(String collection, String indexName) {
+    public ListenableFuture<Long> getIndexSize(String collection, String indexName) {
         cache.createCollection(executor, collection, null);
         return sessionTransaction.getIndexSize(collection, indexName);
     }
 
     @Override
-    public Future<Long> getCollectionSize(String collection) {
+    public ListenableFuture<Long> getCollectionSize(String collection) {
         cache.createCollection(executor, collection, null);
         return sessionTransaction.getCollectionSize(collection);
     }
 
     @Override
-    public Future<Long> getDocumentsSize(String collection) {
+    public ListenableFuture<Long> getDocumentsSize(String collection) {
         cache.createCollection(executor, collection, null);
         return sessionTransaction.getDocumentsSize(collection);
     }
 
     @Override
-    public Future<Integer> count(String collection, QueryCriteria query) {
+    public ListenableFuture<Integer> count(String collection, QueryCriteria query) {
         cache.createCollection(executor, collection, null);
         return sessionTransaction.count(collection, query);
     }
     
     @Override
-    public Future<List<? extends Database>> getDatabases() {
+    public ListenableFuture<List<? extends Database>> getDatabases() {
         return sessionTransaction.getDatabases();
     }
 
     @Override
-    public Future<UpdateResponse> update(
+    public ListenableFuture<UpdateResponse> update(
             String collection,
             List<? extends UpdateOperation> updates,
             WriteFailMode mode

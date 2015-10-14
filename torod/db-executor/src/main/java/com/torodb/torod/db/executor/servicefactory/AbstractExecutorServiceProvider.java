@@ -35,7 +35,7 @@ public abstract class AbstractExecutorServiceProvider implements ExecutorService
     protected abstract ExecutorService createExecutorService(String name, int priority);
 
     @Override
-    public ExecutorService consumeSystemExecutorService() {
+    public ListeningExecutorService consumeSystemExecutorService() {
         if (systemExecutorService == null) {
             systemExecutorService = 
                     MoreExecutors.listeningDecorator(
@@ -46,7 +46,7 @@ public abstract class AbstractExecutorServiceProvider implements ExecutorService
     }
 
     @Override
-    public ExecutorService consumeSessionExecutorService(Session session) {
+    public ListeningExecutorService consumeSessionExecutorService(Session session) {
         return MoreExecutors.listeningDecorator(
                 createExecutorService("torod-session", Thread.NORM_PRIORITY)
         );

@@ -9,13 +9,13 @@ import javax.annotation.concurrent.NotThreadSafe;
 import javax.annotation.concurrent.ThreadSafe;
 
 /**
- * This is a trivial implementation of {@linkplain HierarchicalMultipleGranularityLock}
+ * This is a trivial implementation of {@link HierarchicalMGLock}
  * that always lock the root of the hierarchy node.
  *
  * This lock is very unefficient. You should always use another implementation
  */
 @ThreadSafe
-public class RootLockedMultipleGranularityLock<Id> implements HierarchicalMultipleGranularityLock<RootLockedMultipleGranularityLock, Id>{
+public class RootLockedMultipleGranularityLock<Id> implements HierarchicalMGLock<RootLockedMultipleGranularityLock, Id>{
 
     private final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
 
@@ -32,6 +32,11 @@ public class RootLockedMultipleGranularityLock<Id> implements HierarchicalMultip
     @Override
     public RootLockedMultipleGranularityLock getOrCreateChild(Id id) {
         return this;
+    }
+
+    @Override
+    public boolean removeChild(Id id) {
+        return true;
     }
 
     @Override

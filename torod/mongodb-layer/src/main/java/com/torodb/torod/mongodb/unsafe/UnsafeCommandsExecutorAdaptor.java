@@ -7,14 +7,15 @@ import com.eightkdata.mongowp.mongoserver.api.MetaCommandProcessor;
 import com.eightkdata.mongowp.mongoserver.api.QueryCommandProcessor;
 import com.eightkdata.mongowp.mongoserver.api.QueryCommandProcessor.QueryCommand;
 import com.eightkdata.mongowp.mongoserver.api.safe.*;
-import com.eightkdata.mongowp.mongoserver.callback.MessageReplier;
+import com.eightkdata.mongowp.mongoserver.api.safe.impl.DelegateCommandReply;
+import com.eightkdata.mongowp.mongoserver.api.safe.impl.NonWriteCommandResult;
+import com.eightkdata.mongowp.mongoserver.callback.PojoMessageReplier;
 import com.eightkdata.mongowp.mongoserver.protocol.MongoWP.ErrorCode;
 import com.eightkdata.mongowp.mongoserver.protocol.exceptions.CommandNotSupportedException;
-import com.eightkdata.mongowp.mongoserver.protocol.exceptions.MongoServerException;
+import com.eightkdata.mongowp.mongoserver.protocol.exceptions.MongoException;
 import com.torodb.torod.mongodb.unsafe.UnsafeCommand.UnsafeArgument;
 import com.torodb.torod.mongodb.unsafe.UnsafeCommand.UnsafeReply;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import io.netty.util.AttributeMap;
 import javax.inject.Inject;
 
 /**
@@ -34,10 +35,10 @@ public class UnsafeCommandsExecutorAdaptor implements CommandsExecutor {
     @SuppressWarnings("cast") //http://bugs.java.com/view_bug.do?bug_id=6548436
     @SuppressFBWarnings("BC_UNCONFIRMED_CAST")
     @Override
-    public <Arg extends CommandArgument, Rep extends CommandReply> Rep execute(
-            Command<? extends Arg, ? extends Rep> command,
-            CommandRequest<Arg> request)
-            throws MongoServerException, CommandNotSupportedException {
+    public <Arg, Result> CommandReply<Result> execute(
+            Command<? super Arg, ? super Result> command,
+            CommandRequest<Arg> request) throws MongoException,
+            CommandNotSupportedException {
 
 //        if (!(command instanceof UnsafeCommand)) { //There is a bug on jdk 6: //http://bugs.java.com/view_bug.do?bug_id=6548436
         if (!UnsafeCommand.class.isAssignableFrom(command.getClass())) {
@@ -66,9 +67,8 @@ public class UnsafeCommandsExecutorAdaptor implements CommandsExecutor {
                 request.getRequestId()
         );
 
-        FakeMessageReplier fakeMessageReplier = new FakeMessageReplier(
+        PojoMessageReplier fakeMessageReplier = new PojoMessageReplier(
                 request.getRequestId(),
-                request.getConnection().getConnectionId(),
                 request.getConnection().getAttributeMap()
         );
 
@@ -86,49 +86,19 @@ public class UnsafeCommandsExecutorAdaptor implements CommandsExecutor {
 
             ReplyMessage reply = fakeMessageReplier.getReply();
 
-            return (Rep) new UnsafeReply(reply, command);
+            CommandResult<Result> result = new NonWriteCommandResult<Result>(
+                    (Result) new UnsafeReply(reply)
+            );
+
+            return new DelegateCommandReply<Result>(
+                    command,
+                    result
+            );
         }
         catch (Exception ex) {
-            throw new MongoServerException(ex.getLocalizedMessage(), ErrorCode.INTERNAL_ERROR);
+            throw new MongoException(ex.getLocalizedMessage(), ErrorCode.INTERNAL_ERROR);
         }
     }
 
 
-    private static class FakeMessageReplier extends MessageReplier {
-
-        private final int requestId;
-        private final int connectionId;
-        private final AttributeMap attributeMap;
-        private ReplyMessage reply;
-
-        public FakeMessageReplier(int requestId, int connectionId, AttributeMap attributeMap) {
-            this.requestId = requestId;
-            this.connectionId = connectionId;
-            this.attributeMap = attributeMap;
-        }
-
-        public ReplyMessage getReply() {
-            return reply;
-        }
-
-        @Override
-        public void replyMessage(ReplyMessage replyMessage) {
-            reply = replyMessage;
-        }
-
-        @Override
-        public int getRequestId() {
-            return requestId;
-        }
-
-        @Override
-        public int getConnectionId() {
-            return connectionId;
-        }
-
-        @Override
-        public AttributeMap getAttributeMap() {
-            return attributeMap;
-        }
-    }
 }

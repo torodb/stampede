@@ -4,15 +4,15 @@ package com.torodb.torod.mongodb.futures;
 import com.eightkdata.mongowp.mongoserver.api.safe.impl.DeleteOpResult;
 import com.eightkdata.mongowp.mongoserver.pojos.OpTime;
 import com.eightkdata.mongowp.mongoserver.protocol.MongoWP.ErrorCode;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.torodb.torod.core.connection.DeleteResponse;
-import java.util.concurrent.Future;
 
 /**
  *
  */
 public class DeleteFuture extends ActionAndCommitFuture<DeleteOpResult, DeleteResponse>{
 
-    public DeleteFuture(OpTime optime, Future<DeleteResponse> actionFuture, Future<?> commitFuture) {
+    public DeleteFuture(OpTime optime, ListenableFuture<DeleteResponse> actionFuture, ListenableFuture<?> commitFuture) {
         super(optime, actionFuture, commitFuture);
     }
 

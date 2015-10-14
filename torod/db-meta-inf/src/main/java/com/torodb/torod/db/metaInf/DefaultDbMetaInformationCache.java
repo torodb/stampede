@@ -30,11 +30,6 @@ import com.torodb.torod.core.executor.SystemExecutor;
 import com.torodb.torod.core.executor.ToroTaskExecutionException;
 import com.torodb.torod.core.subdocument.SubDocType;
 import java.util.Collections;
-
-import javax.annotation.Nonnegative;
-import javax.annotation.Nonnull;
-import javax.annotation.concurrent.ThreadSafe;
-import javax.inject.Inject;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
@@ -42,8 +37,12 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import javax.annotation.Nonnegative;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import javax.json.Json;
+import javax.annotation.concurrent.ThreadSafe;
+import javax.inject.Inject;
+import javax.json.JsonObject;
 
 /**
  *
@@ -136,7 +135,7 @@ public class DefaultDbMetaInformationCache implements DbMetaInformationCache {
     public boolean createCollection(
             @Nonnull SessionExecutor sessionExecutor, 
             @Nonnull String collectionName, 
-            @Nullable Json other) {
+            @Nullable JsonObject other) {
         if (collectionName == null || collectionName.isEmpty()) {
             throw new IllegalArgumentException("The collection must be non null and non empty");
         }

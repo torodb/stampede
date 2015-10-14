@@ -20,6 +20,7 @@
 
 package com.torodb.torod.core.executor;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import com.torodb.torod.core.WriteFailMode;
 import com.torodb.torod.core.connection.DeleteResponse;
 import com.torodb.torod.core.connection.InsertResponse;
@@ -32,7 +33,6 @@ import com.torodb.torod.core.subdocument.SplitDocument;
 import java.io.Closeable;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.Future;
 import javax.annotation.Nonnull;
 
 /**
@@ -40,9 +40,9 @@ import javax.annotation.Nonnull;
  */
 public interface SessionTransaction extends Closeable {
 
-    Future<?> rollback();
+    ListenableFuture<?> rollback();
     
-    Future<?> commit();
+    ListenableFuture<?> commit();
     
     @Override
     void close();
@@ -60,19 +60,19 @@ public interface SessionTransaction extends Closeable {
      * @return
      * @throws ToroTaskExecutionException 
      */
-    Future<InsertResponse> insertSplitDocuments(
+    ListenableFuture<InsertResponse> insertSplitDocuments(
             String collection,
             Collection<SplitDocument> splitDoc,
             WriteFailMode mode)
             throws ToroTaskExecutionException;
 
-    public Future<DeleteResponse> delete(
+    public ListenableFuture<DeleteResponse> delete(
             @Nonnull String collection, 
             @Nonnull List<? extends DeleteOperation> deletes, 
             @Nonnull WriteFailMode mode
     );
     
-    public Future<NamedToroIndex> createIndex(
+    public ListenableFuture<NamedToroIndex> createIndex(
             @Nonnull String collection,
             @Nonnull String indexName, 
             @Nonnull IndexedAttributes attributes,
@@ -80,22 +80,22 @@ public interface SessionTransaction extends Closeable {
             boolean blocking
     );
     
-    public Future<Boolean> dropIndex(
+    public ListenableFuture<Boolean> dropIndex(
             @Nonnull String collection,
             @Nonnull String indexName
     );
     
-    public Future<Collection<? extends NamedToroIndex>> getIndexes(
+    public ListenableFuture<Collection<? extends NamedToroIndex>> getIndexes(
             @Nonnull String collection
     );
 
-    public Future<List<? extends Database>> getDatabases();
+    public ListenableFuture<List<? extends Database>> getDatabases();
 
-    public Future<Integer> count(String collection, QueryCriteria query);
+    public ListenableFuture<Integer> count(String collection, QueryCriteria query);
 
-    public Future<Long> getIndexSize(String collection, String indexName);
+    public ListenableFuture<Long> getIndexSize(String collection, String indexName);
     
-    public Future<Long> getDocumentsSize(String collection);
+    public ListenableFuture<Long> getDocumentsSize(String collection);
 
-    public Future<Long> getCollectionSize(String collection);
+    public ListenableFuture<Long> getCollectionSize(String collection);
 }

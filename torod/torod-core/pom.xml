@@ -44,10 +44,5 @@
             <artifactId>junit</artifactId>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>com.torodb</groupId>
-            <artifactId>multiple-granularity-locking</artifactId>
-            <version>${project.version}</version>
-        </dependency>
     </dependencies>
 </project>

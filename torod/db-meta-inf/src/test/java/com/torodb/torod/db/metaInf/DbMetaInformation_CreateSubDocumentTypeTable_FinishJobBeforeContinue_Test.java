@@ -32,15 +32,19 @@ import com.torodb.torod.core.subdocument.SubDocType;
 import com.torodb.torod.tools.sequencer.ConcurrentTest;
 import com.torodb.torod.tools.sequencer.Sequencer;
 import com.torodb.torod.tools.sequencer.SequencerTest;
+import java.util.concurrent.Future;
+import javax.json.JsonObject;
 import org.junit.Before;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
-import java.util.concurrent.Future;
-import javax.json.Json;
-
-import static org.mockito.Mockito.*;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 /**
  *
@@ -114,7 +118,7 @@ public class DbMetaInformation_CreateSubDocumentTypeTable_FinishJobBeforeContinu
             public Object answer(InvocationOnMock invocation) throws Throwable {
                 return whenCreateCollection(COLLECTION, (SystemExecutor.CreateCollectionCallback) invocation.getArguments()[2]);
             }
-        }).when(systemExecutor).createCollection(any(String.class), any(Json.class), any(SystemExecutor.CreateCollectionCallback.class));
+        }).when(systemExecutor).createCollection(any(String.class), any(JsonObject.class), any(SystemExecutor.CreateCollectionCallback.class));
         Mockito.doReturn(1l).when(systemExecutor).getTick();
     }
     
@@ -151,7 +155,7 @@ public class DbMetaInformation_CreateSubDocumentTypeTable_FinishJobBeforeContinu
                         eq(type),
                         any(SystemExecutor.CreateSubDocTypeTableCallback.class));
         verify(systemExecutor)
-                .createCollection(eq(COLLECTION), any(Json.class), any(SystemExecutor.CreateCollectionCallback.class));
+                .createCollection(eq(COLLECTION), any(JsonObject.class), any(SystemExecutor.CreateCollectionCallback.class));
         verify(systemExecutor, Mockito.atLeast(1))
                 .getTick();
         verifyNoMoreInteractions(systemExecutor);

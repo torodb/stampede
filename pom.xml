@@ -185,6 +185,21 @@
                 <artifactId>v3m0</artifactId>
                 <version>0.16-SNAPSHOT</version>
             </dependency>
+            <dependency>
+                <groupId>com.8kdata.mongowp.</groupId>
+                <artifactId>mongo-server</artifactId>
+                <version>0.16-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>com.8kdata.mongowp.client</groupId>
+                <artifactId>core</artifactId>
+                <version>0.16-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>com.8kdata.mongowp.client</groupId>
+                <artifactId>driver-wrapper</artifactId>
+                <version>0.16-SNAPSHOT</version>
+            </dependency>
 
             <dependency>
                 <groupId>com.google.code.findbugs</groupId>
@@ -246,7 +261,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-compiler-plugin</artifactId>
-                        <version>3.2</version>
+                        <version>3.3</version>
                         <configuration>
                             <source>1.6</source>
                             <target>1.6</target>
@@ -298,7 +313,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-compiler-plugin</artifactId>
-                        <version>3.2</version>
+                        <version>3.3</version>
                         <configuration>
                             <source>1.6</source>
                             <target>1.6</target>
@@ -320,7 +335,7 @@
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>findbugs-maven-plugin</artifactId>
-                        <version>3.0.0</version>
+                        <version>3.0.1</version>
                         <configuration>
                             <effort>Max</effort>
                             <threshold>Low</threshold>

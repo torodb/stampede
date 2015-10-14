@@ -52,6 +52,20 @@ public interface ReplInterface {
     @ThreadSafe
     public static interface MemberStateInterface extends Closeable {
 
+        MemberState getMemberState();
+
+        boolean canNodeAcceptWrites(String database);
+
+        boolean canNodeAcceptReads(String database);
+
+        boolean canChangeMemberState();
+
+        @Override
+        void close();
+    }
+
+    public static interface PrimaryStateInterface extends MemberStateInterface {
+
         /**
          * Stops the current user thread up to {@linkplain WriteConcern#wtimeout
          * some milliseconds} or until the given optime is replicated to a set
@@ -64,18 +78,6 @@ public interface ReplInterface {
          */
         @Nonnull
         WriteConcernEnforcementResult awaitReplication(OpTime ts, WriteConcern wc);
-
-        boolean hasWritePermission();
-
-        MemberState getMemberState();
-
-        boolean canNodeAcceptWrites(String database);
-
-        @Override
-        void close();
-    }
-
-    public static interface PrimaryStateInterface extends MemberStateInterface {
 
         /**
          * Makes this node relinquish its primary condition for a given number

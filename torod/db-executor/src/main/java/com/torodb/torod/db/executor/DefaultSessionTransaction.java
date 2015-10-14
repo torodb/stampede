@@ -20,6 +20,7 @@
 package com.torodb.torod.db.executor;
 
 import com.google.common.base.Supplier;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.torodb.torod.core.WriteFailMode;
 import com.torodb.torod.core.annotations.DatabaseName;
 import com.torodb.torod.core.connection.DeleteResponse;
@@ -40,7 +41,6 @@ import com.torodb.torod.db.executor.jobs.*;
 import com.torodb.torod.db.executor.report.ReportFactory;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,7 +75,7 @@ public class DefaultSessionTransaction implements SessionTransaction {
     }
 
     @Override
-    public Future<?> rollback() {
+    public ListenableFuture<?> rollback() {
         return submit(
                 new RollbackCallable(
                         dbConnection,
@@ -86,7 +86,7 @@ public class DefaultSessionTransaction implements SessionTransaction {
     }
 
     @Override
-    public Future<?> commit() {
+    public ListenableFuture<?> commit() {
         return submit(
                 new CommitCallable(
                         dbConnection,
@@ -114,7 +114,7 @@ public class DefaultSessionTransaction implements SessionTransaction {
     }
 
     @Override
-    public Future<InsertResponse> insertSplitDocuments(
+    public ListenableFuture<InsertResponse> insertSplitDocuments(
             String collection, 
             Collection<SplitDocument> documents, 
             WriteFailMode mode)
@@ -131,7 +131,7 @@ public class DefaultSessionTransaction implements SessionTransaction {
     }
 
     @Override
-    public Future<DeleteResponse> delete(
+    public ListenableFuture<DeleteResponse> delete(
             String collection, 
             List<? extends DeleteOperation> deletes, 
             WriteFailMode mode) {
@@ -148,7 +148,7 @@ public class DefaultSessionTransaction implements SessionTransaction {
     }
 
     @Override
-    public Future<NamedToroIndex> createIndex(
+    public ListenableFuture<NamedToroIndex> createIndex(
             String collectionName,
             String indexName, 
             IndexedAttributes attributes, 
@@ -169,7 +169,7 @@ public class DefaultSessionTransaction implements SessionTransaction {
     }
 
     @Override
-    public Future<Boolean> dropIndex(String collection, String indexName) {
+    public ListenableFuture<Boolean> dropIndex(String collection, String indexName) {
         return submit(
                 new DropIndexCallable(
                         dbConnection,
@@ -182,7 +182,7 @@ public class DefaultSessionTransaction implements SessionTransaction {
     }
 
     @Override
-    public Future<Collection<? extends NamedToroIndex>> getIndexes(String collection) {
+    public ListenableFuture<Collection<? extends NamedToroIndex>> getIndexes(String collection) {
         return submit(
                 new GetIndexesCallable(
                         dbConnection, 
@@ -193,7 +193,7 @@ public class DefaultSessionTransaction implements SessionTransaction {
     }
 
     @Override
-    public Future<List<? extends Database>> getDatabases() {
+    public ListenableFuture<List<? extends Database>> getDatabases() {
         return submit(
                 new GetDatabasesCallable(
                         dbConnection,
@@ -205,7 +205,7 @@ public class DefaultSessionTransaction implements SessionTransaction {
     }
 
     @Override
-    public Future<Integer> count(String collection, QueryCriteria query) {
+    public ListenableFuture<Integer> count(String collection, QueryCriteria query) {
         return submit(
                 new CountCallable(
                         dbConnection,
@@ -218,7 +218,7 @@ public class DefaultSessionTransaction implements SessionTransaction {
     }
 
     @Override
-    public Future<Long> getIndexSize(String collection, String indexName) {
+    public ListenableFuture<Long> getIndexSize(String collection, String indexName) {
         return submit(
                 new GetIndexSizeCallable(
                         dbConnection, 
@@ -231,7 +231,7 @@ public class DefaultSessionTransaction implements SessionTransaction {
     }
 
     @Override
-    public Future<Long> getCollectionSize(String collection) {
+    public ListenableFuture<Long> getCollectionSize(String collection) {
         return submit(
                 new GetCollectionSizeCallable(
                         dbConnection, 
@@ -243,7 +243,7 @@ public class DefaultSessionTransaction implements SessionTransaction {
     }
 
     @Override
-    public Future<Long> getDocumentsSize(String collection) {
+    public ListenableFuture<Long> getDocumentsSize(String collection) {
         return submit(
                 new GetDocumentsSize(
                         dbConnection,
@@ -254,7 +254,7 @@ public class DefaultSessionTransaction implements SessionTransaction {
         );
     }
 
-    protected <R> Future<R> submit(Job<R> callable) {
+    protected <R> ListenableFuture<R> submit(Job<R> callable) {
         return executor.submit(callable);
     }
 

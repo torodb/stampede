@@ -20,30 +20,30 @@
 
 package com.torodb.torod.core.connection;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import com.torodb.torod.core.WriteFailMode;
 import com.torodb.torod.core.exceptions.ExistentIndexException;
 import com.torodb.torod.core.language.operations.DeleteOperation;
 import com.torodb.torod.core.language.operations.UpdateOperation;
 import com.torodb.torod.core.language.querycriteria.QueryCriteria;
 import com.torodb.torod.core.pojos.Database;
-import com.torodb.torod.core.pojos.NamedToroIndex;
 import com.torodb.torod.core.pojos.IndexedAttributes;
+import com.torodb.torod.core.pojos.NamedToroIndex;
 import com.torodb.torod.core.subdocument.ToroDocument;
-
-import javax.annotation.Nonnull;
 import java.io.Closeable;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Future;
+import javax.annotation.Nonnull;
 
 /**
  *
  */
 public interface ToroTransaction extends Closeable {
 
-    public Future<?> rollback();
+    public ListenableFuture<?> rollback();
 
-    public Future<?> commit();
+    public ListenableFuture<?> commit();
 
     @Override
     public void close();
@@ -56,7 +56,7 @@ public interface ToroTransaction extends Closeable {
      * @param mode
      * @return
      */
-    public Future<InsertResponse> insertDocuments(
+    public ListenableFuture<InsertResponse> insertDocuments(
             @Nonnull String collection,
             @Nonnull Iterable<ToroDocument> documents,
             WriteFailMode mode
@@ -71,19 +71,19 @@ public interface ToroTransaction extends Closeable {
      * @return A {@linkplain Future future} that can be used to wait until the
      *         action is commited.
      */
-    public Future<DeleteResponse> delete(
+    public ListenableFuture<DeleteResponse> delete(
             @Nonnull String collection,
             @Nonnull List<? extends DeleteOperation> deletes,
             @Nonnull WriteFailMode mode
     );
 
-    public Future<UpdateResponse> update(
+    public ListenableFuture<UpdateResponse> update(
             @Nonnull String collection,
             @Nonnull List<? extends UpdateOperation> updates,
             @Nonnull WriteFailMode mode
     );
     
-    public Future<NamedToroIndex> createIndex(
+    public ListenableFuture<NamedToroIndex> createIndex(
             @Nonnull String collection,
             @Nonnull String indexName, 
             @Nonnull IndexedAttributes attributes,
@@ -91,7 +91,7 @@ public interface ToroTransaction extends Closeable {
             boolean blocking
     ) throws ExistentIndexException;
     
-    public Future<Boolean> dropIndex(
+    public ListenableFuture<Boolean> dropIndex(
             @Nonnull String collection,
             @Nonnull String indexName
     );
@@ -104,7 +104,7 @@ public interface ToroTransaction extends Closeable {
      * @param indexName
      * @return the bytes used to store indexes
      */
-    public Future<Long> getIndexSize(String collection, String indexName);
+    public ListenableFuture<Long> getIndexSize(String collection, String indexName);
 
     /**
      * 
@@ -112,7 +112,7 @@ public interface ToroTransaction extends Closeable {
      * @return the bytes used to store a collection. It includes its documents,
      * indexes and metadata
      */
-    public Future<Long> getCollectionSize(String collection);
+    public ListenableFuture<Long> getCollectionSize(String collection);
     
     /**
      * 
@@ -120,9 +120,9 @@ public interface ToroTransaction extends Closeable {
      * @return the bytes used to store all documents in a collection. It does
      * not include indexes or metadata
      */
-    public Future<Long> getDocumentsSize(String collection);
+    public ListenableFuture<Long> getDocumentsSize(String collection);
 
-    public Future<Integer> count(String collection, QueryCriteria query);
+    public ListenableFuture<Integer> count(String collection, QueryCriteria query);
 
-    public Future<List<? extends Database>> getDatabases();
+    public ListenableFuture<List<? extends Database>> getDatabases();
 }

@@ -30,8 +30,6 @@ import com.torodb.torod.core.dbWrapper.DbWrapper;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.exceptions.TorodStartupException;
 import com.torodb.torod.core.executor.ExecutorFactory;
-import com.torodb.util.mgl.HierarchicalMultipleGranularityLock;
-import com.torodb.util.mgl.MultipleGranularityLock;
 import javax.inject.Inject;
 
 /**
@@ -45,7 +43,6 @@ public class DefaultTorod implements Torod {
     private final DbWrapper dbWrapper;
     private final DocumentBuilderFactory documentBuilderFactory;
     private final DefaultCursorManager cursorManager;
-    private final HierarchicalMultipleGranularityLock lock;
 
     @Inject
     public DefaultTorod(
@@ -54,15 +51,13 @@ public class DefaultTorod implements Torod {
             ExecutorFactory executorFactory,
             DbWrapper dbWrapper,
             DocumentBuilderFactory documentBuilderFactory,
-            DbBackend dbBackend,
-            HierarchicalMultipleGranularityLock lock) {
+            DbBackend dbBackend) {
         this.d2r = d2RTranslator;
         this.cache = cache;
         this.executorFactory = executorFactory;
         this.dbWrapper = dbWrapper;
         this.documentBuilderFactory = documentBuilderFactory;
         this.cursorManager = new DefaultCursorManager(dbBackend, d2r);
-        this.lock = lock;
     }
 
     @Override
@@ -86,11 +81,6 @@ public class DefaultTorod implements Torod {
                 documentBuilderFactory,
                 cache
         );
-    }
-
-    @Override
-    public MultipleGranularityLock getGlobalLock() {
-        return lock;
     }
 
     @Override

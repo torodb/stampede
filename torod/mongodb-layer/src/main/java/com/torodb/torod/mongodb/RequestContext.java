@@ -35,7 +35,7 @@ public class RequestContext {
         attMap.attr(USED_ATTRIBUTE).set(this);
     }
     
-    static RequestContext getAndRemoveFrom(AttributeMap attMap) {
+    public static RequestContext getAndRemoveFrom(AttributeMap attMap) {
         return attMap.attr(USED_ATTRIBUTE).getAndRemove();
     }
 

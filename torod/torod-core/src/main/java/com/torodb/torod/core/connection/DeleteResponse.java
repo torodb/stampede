@@ -34,10 +34,10 @@ import javax.json.JsonObjectBuilder;
 public class DeleteResponse {
     
     private final boolean success;
-    private final int deleted;
+    private final long deleted;
     private final Collection<WriteError> errors;
 
-    public DeleteResponse(boolean success, int deleted, @Nullable Collection<WriteError> errors) {
+    public DeleteResponse(boolean success, long deleted, @Nullable Collection<WriteError> errors) {
         this.success = success;
         this.deleted = deleted;
         if (errors == null) {
@@ -51,7 +51,7 @@ public class DeleteResponse {
         return success;
     }
 
-    public int getDeleted() {
+    public long getDeleted() {
         return deleted;
     }
 

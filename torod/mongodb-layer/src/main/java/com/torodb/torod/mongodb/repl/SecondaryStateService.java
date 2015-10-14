@@ -4,7 +4,13 @@ package com.torodb.torod.mongodb.repl;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.MemberState;
 import com.eightkdata.mongowp.mongoserver.api.safe.oplog.OplogOperation;
 import com.eightkdata.mongowp.mongoserver.pojos.OpTime;
+import com.eightkdata.mongowp.mongoserver.protocol.exceptions.MongoException;
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.torodb.torod.mongodb.impl.LocalMongoClient;
+import com.torodb.torod.mongodb.repl.OplogManager.OplogManagerPersistException;
+import com.torodb.torod.mongodb.utils.OplogOperationApplier;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.locks.Condition;
@@ -41,8 +47,11 @@ class SecondaryStateService extends AbstractIdleService {
     private final Callback callback;
     private final OplogManager oplogManager;
     private final Executor executor;
+    private final OplogOperationApplier oplogOpApplier;
+    private final LocalMongoClient localClient;
     private final Condition allApplied;
-    private final OplogReader reader;
+    private final OplogReaderProvider readerProvider;
+    private final SyncSourceProvider syncSourceProvider;
 
     private boolean paused;
     private boolean pauseRequested;
@@ -56,16 +65,22 @@ class SecondaryStateService extends AbstractIdleService {
     SecondaryStateService(
             Callback callback,
             OplogManager oplogManager,
-            OplogReader reader,
+            OplogReaderProvider readerProvider,
+            OplogOperationApplier oplogOpApplier,
+            LocalMongoClient localClient,
+            SyncSourceProvider syncSourceProvider,
             Executor executor) {
         this.callback = callback;
         this.fetchQueue = new MyQueue();
-        this.reader = reader;
+        this.readerProvider = readerProvider;
         this.oplogManager = oplogManager;
+        this.oplogOpApplier = oplogOpApplier;
+        this.localClient = localClient;
         this.executor = executor;
         this.allApplied = mutex.newCondition();
         this.fetcherPausedCond = mutex.newCondition();
         this.fetcherCanContinueCond = mutex.newCondition();
+        this.syncSourceProvider = syncSourceProvider;
     }
 
     @Override
@@ -75,6 +90,7 @@ class SecondaryStateService extends AbstractIdleService {
 
     @Override
     protected void startUp() {
+        LOGGER.info("Starting SECONDARY service");
         paused = false;
         fetcherIsPaused = false;
         pauseRequested = false;
@@ -87,16 +103,27 @@ class SecondaryStateService extends AbstractIdleService {
             fetcherService = new ReplSyncFetcher(
                     executor,
                     new FetcherView(),
-                    reader,
+                    syncSourceProvider,
+                    readerProvider,
                     lastAppliedHash,
                     lastAppliedOptime
             );
             fetcherService.startAsync();
-            applierService = new ReplSyncApplier(executor, new ApplierView());
+            applierService = new ReplSyncApplier(
+                    executor,
+                    oplogOpApplier,
+                    localClient,
+                    oplogManager,
+                    new ApplierView()
+            );
             applierService.startAsync();
+
+            fetcherService.awaitRunning();
+            applierService.awaitRunning();
         } finally {
             oplogReadTrans.close();
         }
+        LOGGER.info("Started SECONDARY service");
     }
 
     @Override
@@ -106,8 +133,6 @@ class SecondaryStateService extends AbstractIdleService {
 
         fetcherService.awaitTerminated();
         applierService.awaitTerminated();
-
-        reader.close();
     }
 
     public boolean isPaused() {
@@ -157,7 +182,9 @@ class SecondaryStateService extends AbstractIdleService {
     interface Callback {
 
         void rollbackRequired();
-   }
+
+        void impossibleToRecoverFromError(Throwable t);
+    }
 
     private final class FetcherView implements ReplSyncFetcher.SyncServiceView {
 
@@ -198,18 +225,97 @@ class SecondaryStateService extends AbstractIdleService {
             return pauseRequested;
         }
 
+        @Override
+        public void awaitUntilAllFetchedAreApplied() {
+            mutex.lock();
+            try {
+                while(!fetchQueue.isEmpty()) {
+                    allApplied.awaitUninterruptibly();
+                }
+            } finally {
+                mutex.unlock();
+            }
+        }
+
+        @Override
+        public void fetchFinished() {
+        }
+
+        @Override
+        public void fetchAborted(final Throwable ex) {
+
+            executor.execute(
+                    new Runnable() {
+
+                        @Override
+                        public void run() {
+                            callback.impossibleToRecoverFromError(ex);
+                        }
+                    }
+            );
+        }
+
     }
 
     private final class ApplierView implements ReplSyncApplier.SyncServiceView {
 
         @Override
-        public OplogOperation takeOp() throws InterruptedException {
-            return fetchQueue.getFirst();
+        public List<OplogOperation> takeOps() throws InterruptedException {
+            //TODO: Improve this class to be able to return more than one action per call!
+            //To do that, some changes must be done to avoid concurrency problems while
+            //the fetcher service is working
+            OplogOperation first = fetchQueue.getFirst();
+            return Collections.singletonList(first);
         }
 
         @Override
         public void markAsApplied(OplogOperation oplogOperation) {
             fetchQueue.removeLast(oplogOperation);
+        }
+
+        @Override
+        public boolean failedToApply(OplogOperation oplogOperation, final MongoException t) {
+            executor.execute(
+                    new Runnable() {
+
+                        @Override
+                        public void run() {
+                            LOGGER.error("Secondary state failed to apply an operation", t);
+                            callback.impossibleToRecoverFromError(t);
+                        }
+                    }
+            );
+            return false;
+        }
+
+        @Override
+        public boolean failedToApply(OplogOperation oplogOperation, final Throwable t) {
+            executor.execute(
+                    new Runnable() {
+
+                        @Override
+                        public void run() {
+                            LOGGER.error("Secondary state failed to apply an operation", t);
+                            callback.impossibleToRecoverFromError(t);
+                        }
+                    }
+            );
+            return false;
+        }
+
+        @Override
+        public boolean failedToApply(OplogOperation oplogOperation, final OplogManagerPersistException t) {
+            executor.execute(
+                    new Runnable() {
+
+                        @Override
+                        public void run() {
+                            LOGGER.error("Secondary state failed to apply an operation", t);
+                            callback.impossibleToRecoverFromError(t);
+                        }
+                    }
+            );
+            return false;
         }
     }
 
@@ -241,7 +347,7 @@ class SecondaryStateService extends AbstractIdleService {
         }
 
         private boolean isEmpty() {
-            return count != 0;
+            return count == 0;
         }
 
         private void addLast(OplogOperation op) throws InterruptedException {
@@ -274,7 +380,7 @@ class SecondaryStateService extends AbstractIdleService {
             final ReentrantLock mutex = SecondaryStateService.this.mutex;
             mutex.lock();
             try {
-                while (!isEmpty()) {
+                while (isEmpty()) {
                     notEmpty.await();
                 }
                 return items[iFirst];

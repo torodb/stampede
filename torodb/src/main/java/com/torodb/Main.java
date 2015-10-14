@@ -31,8 +31,8 @@ import com.google.inject.ProvisionException;
 import com.torodb.di.*;
 import com.torodb.torod.backend.db.postgresql.di.PostgreSQLModule;
 import com.torodb.torod.core.Torod;
-import com.torodb.torod.core.backend.DbBackend;
 import com.torodb.torod.core.exceptions.TorodStartupException;
+import com.torodb.torod.mongodb.repl.ReplCoordinator;
 import java.io.*;
 import java.nio.charset.Charset;
 import org.slf4j.LoggerFactory;
@@ -103,21 +103,22 @@ public class Main {
 				new ExecutorModule(1000, 1000, 0.2),
 				new DbMetaInformationCacheModule(),
 				new D2RModule(),
-				new ConnectionModule()
+				new ConnectionModule(),
+                new ExecutorServiceModule()
 		);
 
-        final DbBackend dbBackend;
         try {
-            dbBackend = injector.getInstance(DbBackend.class);
             final Torod torod = injector.getInstance(Torod.class);
             final MongoServer server = injector.getInstance(MongoServer.class);
             final DefaultBuildProperties buildProperties
                     = injector.getInstance(DefaultBuildProperties.class);
+            final ReplCoordinator replCoord = injector.getInstance(ReplCoordinator.class);
+            final Shutdowner shutdowner = injector.getInstance(Shutdowner.class);
 
             Thread shutdown = new Thread() {
                 @Override
                 public void run() {
-                    shutdown(dbBackend, torod, server);
+                    shutdowner.shutdown();
                 }
             };
 
@@ -131,8 +132,7 @@ public class Main {
                             + buildProperties.getFullVersion()
                             + " listening on port " + config.getPort()
                     );
-                    Main.run(torod, server);
-                    shutdown(dbBackend, torod, server);
+                    Main.run(torod, server, replCoord);
                 }
             };
             serverThread.start();
@@ -150,20 +150,16 @@ public class Main {
         }
     }
 
-	private static void run(final Torod torod, final MongoServer server) {
+	private static void run(final Torod torod, final MongoServer server, final ReplCoordinator replCoord) {
 		try {
 			torod.start();
 		} catch (TorodStartupException e) {
 			LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME).error(e.getMessage());
 			throw new RuntimeException(e.getMessage());
 		}
+        replCoord.startAsync();
+        replCoord.awaitRunning();
 		server.run();
-	}
-
-	private static void shutdown(final DbBackend dbBackend, final Torod torod, final MongoServer server) {
-		server.stop();
-		torod.shutdown();
-		dbBackend.shutdown();
 	}
 
 	private static String readPwd(String text) throws IOException {

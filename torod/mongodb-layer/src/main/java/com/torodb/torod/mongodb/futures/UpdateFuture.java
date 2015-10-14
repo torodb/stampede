@@ -4,15 +4,15 @@ package com.torodb.torod.mongodb.futures;
 import com.eightkdata.mongowp.mongoserver.api.safe.impl.UpdateOpResult;
 import com.eightkdata.mongowp.mongoserver.pojos.OpTime;
 import com.eightkdata.mongowp.mongoserver.protocol.MongoWP.ErrorCode;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.torodb.torod.core.connection.UpdateResponse;
-import java.util.concurrent.Future;
 
 /**
  *
  */
 public class UpdateFuture extends ActionAndCommitFuture<UpdateOpResult, UpdateResponse>{
 
-    public UpdateFuture(OpTime optime, Future<UpdateResponse> actionFuture, Future<?> commitFuture) {
+    public UpdateFuture(OpTime optime, ListenableFuture<UpdateResponse> actionFuture, ListenableFuture<?> commitFuture) {
         super(optime, actionFuture, commitFuture);
     }
 
@@ -26,12 +26,13 @@ public class UpdateFuture extends ActionAndCommitFuture<UpdateOpResult, UpdateRe
             desc = null;
         }
         else {
-            error = ErrorCode.OPERATION_FAILED;  //TODO: modify Toro api to return error type indicator!
+            error = ErrorCode.OPERATION_FAILED;  //TODO: modify Toro api to return an error type indicator!
             desc = "Error while updating";
         }
 
         return new UpdateOpResult(
                 actionResult.getCandidates(),
+                actionResult.getModified(),
                 updateObjects,
                 error,
                 desc,

@@ -20,6 +20,8 @@
 
 package com.torodb.torod.db.executor;
 
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
 import com.torodb.torod.core.Session;
 import com.torodb.torod.core.annotations.DatabaseName;
 import com.torodb.torod.core.cursors.CursorId;
@@ -36,8 +38,6 @@ import com.torodb.torod.db.executor.jobs.*;
 import com.torodb.torod.db.executor.report.ReportFactory;
 import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 import javax.inject.Inject;
 
 /**
@@ -46,7 +46,7 @@ import javax.inject.Inject;
 class DefaultSessionExecutor implements SessionExecutor {
 
     private final LazyDbWrapper wrapper;
-    private final ExecutorService executorService;
+    private final ListeningExecutorService executorService;
     private final Monitor monitor;
     private final ExecutorServiceProvider executorServiceProvider;
     private final ExceptionHandler exceptionHandler;
@@ -89,7 +89,7 @@ class DefaultSessionExecutor implements SessionExecutor {
         });
     }
     
-    protected <R> Future<R> submit(Job<R> job) {
+    protected <R> ListenableFuture<R> submit(Job<R> job) {
         return executorService.submit(new DefaultSessionExecutor.SessionRunnable(job));
     }
 
@@ -104,7 +104,7 @@ class DefaultSessionExecutor implements SessionExecutor {
     }
 
     @Override
-    public Future<Void> query(
+    public ListenableFuture<Void> query(
             String collection, 
             CursorId cursorId,
             QueryCriteria filter,
@@ -124,7 +124,7 @@ class DefaultSessionExecutor implements SessionExecutor {
     }
 
     @Override
-    public Future<List<CollectionMetainfo>> getCollectionsMetainfo() {
+    public ListenableFuture<List<CollectionMetainfo>> getCollectionsMetainfo() {
         return submit(
                 new GetCollectionsMetainfoCallable(
                         wrapper,
@@ -134,7 +134,7 @@ class DefaultSessionExecutor implements SessionExecutor {
     }
 
     @Override
-    public Future<List<? extends SplitDocument>> readCursor(CursorId cursorId, int limit)
+    public ListenableFuture<List<? extends SplitDocument>> readCursor(CursorId cursorId, int limit)
             throws ToroTaskExecutionException {
         return submit(
                 new ReadCursorCallable(
@@ -147,7 +147,7 @@ class DefaultSessionExecutor implements SessionExecutor {
     }
 
     @Override
-    public Future<List<? extends SplitDocument>> readAllCursor(CursorId cursorId)
+    public ListenableFuture<List<? extends SplitDocument>> readAllCursor(CursorId cursorId)
             throws ToroTaskExecutionException {
         return submit(
                 new ReadAllCursorCallable(
@@ -159,7 +159,7 @@ class DefaultSessionExecutor implements SessionExecutor {
     }
 
     @Override
-    public Future<?> closeCursor(CursorId cursorId) throws
+    public ListenableFuture<?> closeCursor(CursorId cursorId) throws
             ToroTaskExecutionException {
         return submit(
                 new CloseCursorCallable(
@@ -171,14 +171,14 @@ class DefaultSessionExecutor implements SessionExecutor {
     }
 
     @Override
-    public Future<Integer> getMaxElements(CursorId cursorId) {
+    public ListenableFuture<Integer> getMaxElements(CursorId cursorId) {
         return submit(
                 new MaxElementsCallable(wrapper, reportFactory.createMaxElementsReport(), cursorId)
         );
     }
 
     @Override
-    public Future<Void> noop() {
+    public ListenableFuture<Void> noop() {
         return submit(new NoopJob());
     }
     

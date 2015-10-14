@@ -4,20 +4,22 @@ package com.torodb.torod.mongodb.unsafe;
 import com.eightkdata.mongowp.messages.response.ReplyMessage;
 import com.eightkdata.mongowp.mongoserver.api.QueryCommandProcessor.QueryCommand;
 import com.eightkdata.mongowp.mongoserver.api.safe.Command;
-import com.eightkdata.mongowp.mongoserver.api.safe.impl.SimpleArgument;
-import com.eightkdata.mongowp.mongoserver.api.safe.impl.SimpleReply;
-import com.eightkdata.mongowp.mongoserver.protocol.MongoWP.ErrorCode;
-import com.eightkdata.mongowp.mongoserver.protocol.exceptions.MongoServerException;
+import com.eightkdata.mongowp.mongoserver.api.safe.MarshalException;
+import com.eightkdata.mongowp.mongoserver.protocol.exceptions.MongoException;
 import com.google.common.collect.ImmutableList;
 import com.torodb.torod.mongodb.unsafe.UnsafeCommand.UnsafeArgument;
 import com.torodb.torod.mongodb.unsafe.UnsafeCommand.UnsafeReply;
 import org.bson.BsonDocument;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
  */
 public class UnsafeCommand implements Command<UnsafeArgument, UnsafeReply> {
 
+    private static final Logger LOGGER
+            = LoggerFactory.getLogger(UnsafeCommand.class);
     private final QueryCommand queryCommand;
 
     public UnsafeCommand(QueryCommand queryCommand) {
@@ -40,7 +42,8 @@ public class UnsafeCommand implements Command<UnsafeArgument, UnsafeReply> {
 
     @Override
     public boolean isSlaveOk() {
-        return false;
+        LOGGER.warn("Command {} will be treated as SlaveOk because there is no safe implementation yet", queryCommand.getKey());
+        return true;
     }
 
     @Override
@@ -59,57 +62,62 @@ public class UnsafeCommand implements Command<UnsafeArgument, UnsafeReply> {
     }
 
     @Override
+    public boolean canChangeReplicationState() {
+        return false;
+    }
+
+    @Override
     public Class<? extends UnsafeArgument> getArgClass() {
         return UnsafeArgument.class;
     }
 
     @Override
-    public UnsafeArgument unmarshallArg(BsonDocument requestDoc) throws
-            MongoServerException {
-        return new UnsafeArgument(requestDoc, this);
+    public UnsafeArgument unmarshallArg(BsonDocument requestDoc) {
+        return new UnsafeArgument(requestDoc);
     }
 
     @Override
-    public BsonDocument marshallArg(UnsafeArgument request) throws
-            MongoServerException, UnsupportedOperationException {
+    public BsonDocument marshallArg(UnsafeArgument request) {
         throw new UnsupportedOperationException("Not supported.");
     }
 
     @Override
-    public Class<? extends UnsafeReply> getReplyClass() {
+    public Class<? extends UnsafeReply> getResultClass() {
         return UnsafeReply.class;
     }
 
     @Override
-    public UnsafeReply unmarshallReply(BsonDocument replyDoc) throws
-            MongoServerException, UnsupportedOperationException {
+    public UnsafeReply unmarshallResult(BsonDocument replyDoc) throws
+            MongoException, UnsupportedOperationException {
         throw new UnsupportedOperationException("Not supported.");
     }
 
     @Override
-    public BsonDocument marshallReply(UnsafeReply reply) throws
-            MongoServerException {
+    public BsonDocument marshallResult(UnsafeReply reply) throws MarshalException {
 
         ImmutableList<BsonDocument> documents = reply.getReply().getDocuments();
 
         if (documents.size() > 1 || documents.isEmpty()) {
-            throw new MongoServerException(
+            throw new MarshalException(
                     "Only one document was expected as reply from '"
                     +queryCommand.getKey()+"', but " + documents.size()
-                    + " were recived",
-                    ErrorCode.INTERNAL_ERROR
+                    + " were recived"
             );
         }
         return documents.get(0);
     }
 
+    @Override
+    public boolean isReadyToReplyResult(UnsafeReply r) {
+        return true;
+    }
 
-    public static class UnsafeArgument extends SimpleArgument {
+
+    public static class UnsafeArgument {
 
         private final BsonDocument argument;
 
-        public UnsafeArgument(BsonDocument argument, Command command) {
-            super(command);
+        public UnsafeArgument(BsonDocument argument) {
             this.argument = argument;
         }
 
@@ -118,21 +126,10 @@ public class UnsafeCommand implements Command<UnsafeArgument, UnsafeReply> {
         }
     }
 
-    public static class UnsafeReply extends SimpleReply {
+    public static class UnsafeReply {
         private final ReplyMessage reply;
 
-        public UnsafeReply(ReplyMessage reply, Command command) {
-            super(command);
-            this.reply = reply;
-        }
-
-        public UnsafeReply(ReplyMessage reply, Command command, ErrorCode errorCode, String errorMessage) {
-            super(command, errorCode, errorMessage);
-            this.reply = reply;
-        }
-
-        public UnsafeReply(ReplyMessage reply, Command command, ErrorCode errorCode, Object... args) {
-            super(command, errorCode, args);
+        public UnsafeReply(ReplyMessage reply) {
             this.reply = reply;
         }
 

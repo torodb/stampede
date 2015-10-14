@@ -21,25 +21,25 @@
 package com.torodb.torod.db.sql;
 
 import com.google.common.collect.*;
-import com.torodb.torod.core.subdocument.SubDocument;
-import com.torodb.torod.core.subdocument.SubDocType;
-import com.torodb.torod.db.postgresql.meta.CollectionSchema;
-import com.torodb.torod.db.postgresql.meta.Routines;
-import com.torodb.torod.db.postgresql.meta.TorodbMeta;
-import com.torodb.torod.db.postgresql.meta.tables.SubDocTable;
-import com.torodb.torod.db.postgresql.meta.tables.records.SubDocTableRecord;
 import com.torodb.torod.core.dbWrapper.DbConnection;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.exceptions.UserToroException;
 import com.torodb.torod.core.language.querycriteria.QueryCriteria;
 import com.torodb.torod.core.pojos.CollectionMetainfo;
-import com.torodb.torod.core.pojos.NamedToroIndex;
 import com.torodb.torod.core.pojos.IndexedAttributes;
+import com.torodb.torod.core.pojos.NamedToroIndex;
+import com.torodb.torod.core.subdocument.SubDocType;
+import com.torodb.torod.core.subdocument.SubDocument;
 import com.torodb.torod.core.subdocument.structure.DocStructure;
 import com.torodb.torod.db.exceptions.InvalidCollectionSchemaException;
 import com.torodb.torod.db.postgresql.IdsFilter;
+import com.torodb.torod.db.postgresql.meta.CollectionSchema;
+import com.torodb.torod.db.postgresql.meta.Routines;
+import com.torodb.torod.db.postgresql.meta.TorodbMeta;
 import com.torodb.torod.db.postgresql.meta.tables.CollectionsTable;
+import com.torodb.torod.db.postgresql.meta.tables.SubDocTable;
 import com.torodb.torod.db.postgresql.meta.tables.records.CollectionsRecord;
+import com.torodb.torod.db.postgresql.meta.tables.records.SubDocTableRecord;
 import com.torodb.torod.db.postgresql.query.QueryEvaluator;
 import com.torodb.torod.db.sql.index.IndexManager;
 import com.torodb.torod.db.sql.index.NamedDbIndex;
@@ -51,6 +51,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.json.Json;
+import javax.json.JsonObject;
 import javax.json.JsonReader;
 import javax.json.JsonStructure;
 import org.jooq.*;
@@ -144,7 +145,7 @@ public abstract class AbstractSqlDbConnection implements
     public void createCollection(
             @Nonnull String collectionName, 
             @Nullable String schemaName,
-            @Nullable Json other) {
+            @Nullable JsonObject other) {
         try {
             if (schemaName == null) {
                 schemaName = collectionName;

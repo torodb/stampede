@@ -26,7 +26,7 @@ import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.executor.SystemExecutor;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
-import javax.json.Json;
+import javax.json.JsonObject;
 
 /**
  *
@@ -35,7 +35,7 @@ public class CreateCollectionCallable extends SystemDbCallable<Void> {
 
     private final String collectionName;
     private final String schemaName;
-    private final Json other;
+    private final JsonObject other;
     @Nullable
     private final SystemExecutor.CreateCollectionCallback callback;
     private final Report report;
@@ -45,7 +45,7 @@ public class CreateCollectionCallable extends SystemDbCallable<Void> {
             DbWrapper dbWrapperPool,
             String collectionName, 
             String schemaName, 
-            Json other,
+            JsonObject other,
             SystemExecutor.CreateCollectionCallback callback, 
             Report report) {
         super(dbWrapperPool);

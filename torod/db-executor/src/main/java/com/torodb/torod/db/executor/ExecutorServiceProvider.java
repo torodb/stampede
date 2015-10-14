@@ -21,18 +21,18 @@
 
 package com.torodb.torod.db.executor;
 
+import com.google.common.util.concurrent.ListeningExecutorService;
 import com.torodb.torod.core.Session;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 
 /**
  *
  */
 public interface ExecutorServiceProvider {
 
-    ExecutorService consumeSystemExecutorService();
+    ListeningExecutorService consumeSystemExecutorService();
     
-    ExecutorService consumeSessionExecutorService(Session session);
+    ListeningExecutorService consumeSessionExecutorService(Session session);
     
     void releaseExecutorService(ExecutorService service);
     

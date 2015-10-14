@@ -64,5 +64,13 @@
             <artifactId>junit</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>com.8kdata.mongowp.client</groupId>
+            <artifactId>core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.8kdata.mongowp.client</groupId>
+            <artifactId>driver-wrapper</artifactId>
+        </dependency>
     </dependencies>
 </project>

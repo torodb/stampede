@@ -1,16 +1,32 @@
 
 package com.torodb.torod.mongodb.repl;
 
+import com.eightkdata.mongowp.messages.request.QueryMessage;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.DeleteCommand;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.DeleteCommand.DeleteArgument;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.DeleteCommand.DeleteStatement;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.GetLastErrorCommand.WriteConcernEnforcementResult;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.InsertCommand;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.InsertCommand.InsertArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.MemberState;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.ReplicaSetConfig;
 import com.eightkdata.mongowp.mongoserver.pojos.OpTime;
+import com.eightkdata.mongowp.mongoserver.protocol.exceptions.MongoException;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.mongodb.WriteConcern;
+import com.torodb.torod.core.annotations.DatabaseName;
 import com.torodb.torod.mongodb.annotations.Locked;
+import com.torodb.torod.mongodb.annotations.MongoDBLayer;
+import com.torodb.torod.mongodb.impl.LocalMongoClient;
+import com.torodb.torod.mongodb.impl.LocalMongoConnection;
+import com.torodb.torod.mongodb.utils.DBCloner;
+import com.torodb.torod.mongodb.utils.MongoClientProvider;
+import com.torodb.torod.mongodb.utils.OplogOperationApplier;
+import java.util.Collections;
+import java.util.EnumSet;
 import java.util.concurrent.Executor;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -18,7 +34,10 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import javax.annotation.concurrent.NotThreadSafe;
 import javax.annotation.concurrent.ThreadSafe;
 import javax.inject.Inject;
-import javax.inject.Provider;
+import javax.inject.Singleton;
+import org.bson.BsonBoolean;
+import org.bson.BsonDocument;
+import org.bson.BsonValue;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,27 +46,45 @@ import org.slf4j.LoggerFactory;
  *
  */
 @ThreadSafe
+@Singleton
 public class ReplCoordinator extends AbstractIdleService implements ReplInterface {
     private static final Logger LOGGER
             = LoggerFactory.getLogger(ReplCoordinator.class);
+    private final ReplCoordinatorOwnerCallback ownerCallback;
     private final ReadWriteLock lock;
-    private final Provider<OplogReader> oplogReaderProvider;
+    private final OplogReaderProvider oplogReaderProvider;
     private volatile MemberState memberState;
     private final Executor executor;
     private final OplogManager oplogManager;
+    private final OplogOperationApplier oplogOpApplier;
+    private final LocalMongoClient localClient;
+    private final SyncSourceProvider syncSourceProvider;
+    private final DBCloner dbCloner;
+    private final MongoClientProvider remoteClientProvider;
     private final ObjectId myRID;
     private final int myId;
+    private final String defaultDatabase;
 
     private RecoveryService recoveryService;
     private SecondaryStateService secondaryService;
+    private boolean consistent;
 
     @Inject
     public ReplCoordinator(
-            Provider<OplogReader> oplogReaderProvider,
-            Executor replExecutor) {
+            ReplCoordinatorOwnerCallback ownerCallback,
+            OplogReaderProvider orpProvider,
+            OplogOperationApplier oplogOpApplier,
+            LocalMongoClient localClient,
+            DBCloner dbCloner,
+            MongoClientProvider remoteClientProvider,
+            SyncSourceProvider syncSourceProvider,
+            OplogManager oplogManager,
+            @DatabaseName String defaultDatabase,
+            @MongoDBLayer Executor replExecutor) {
+        this.ownerCallback = ownerCallback;
         this.executor = replExecutor;
-        this.oplogReaderProvider = oplogReaderProvider;
-        this.oplogManager = new OplogManager();
+        this.oplogReaderProvider = orpProvider;
+        this.oplogManager = oplogManager;
         
         this.lock = new ReentrantReadWriteLock();
 
@@ -57,6 +94,13 @@ public class ReplCoordinator extends AbstractIdleService implements ReplInterfac
 
         this.myId = 123;
         this.myRID = new ObjectId();
+
+        this.dbCloner = dbCloner;
+        this.remoteClientProvider = remoteClientProvider;
+        this.oplogOpApplier = oplogOpApplier;
+        this.localClient = localClient;
+        this.syncSourceProvider = syncSourceProvider;
+        this.defaultDatabase = defaultDatabase;
     }
 
     @Override
@@ -66,20 +110,30 @@ public class ReplCoordinator extends AbstractIdleService implements ReplInterfac
 
     @Override
     protected void startUp() throws Exception {
+        LOGGER.info("Starting replication service");
         Lock writeLock = lock.writeLock();
         writeLock.lock();
         try {
             //TODO: temporal implementation
-
-            startRecoveryMode();
+            loadStoredConfig();
+            oplogManager.startAsync();
+            oplogManager.awaitRunning();
+            loadConsistentState();
+            if (!isConsistent()) {
+                startRecoveryMode();
+            }
+            else {
+                startSecondaryMode();
+            }
         } finally {
             writeLock.unlock();
         }
+        LOGGER.info("Replication service started");
     }
 
     @Override
     protected void shutDown() throws Exception {
-        LOGGER.info("Request to shutdown replication");
+        LOGGER.info("Shutting down replication service");
         Lock writeLock = lock.writeLock();
         writeLock.lock();
         try {
@@ -93,6 +147,8 @@ public class ReplCoordinator extends AbstractIdleService implements ReplInterfac
         } finally {
             writeLock.unlock();
         }
+        LOGGER.info("Replication service shutted down");
+        ownerCallback.replCoordStopped();
     }
 
     @Override
@@ -117,6 +173,9 @@ public class ReplCoordinator extends AbstractIdleService implements ReplInterfac
             }
             case RS_SECONDARY: {
                 return new MySecondaryStateInferface(mutex, toChangeState);
+            }
+            case RS_RECOVERING: {
+                return new MyRecoveryStateInterface(mutex, toChangeState);
             }
             default: {
                 throw new AssertionError("State " + memberState + " is not supported yet");
@@ -158,7 +217,12 @@ public class ReplCoordinator extends AbstractIdleService implements ReplInterfac
         recoveryService = new RecoveryService(
                 new RecoveryServiceCallback(),
                 oplogManager,
-                oplogReaderProvider.get(),
+                syncSourceProvider,
+                oplogReaderProvider,
+                dbCloner,
+                remoteClientProvider,
+                localClient,
+                oplogOpApplier,
                 executor
         );
         recoveryService.startAsync();
@@ -167,6 +231,7 @@ public class ReplCoordinator extends AbstractIdleService implements ReplInterfac
     @Locked(exclusive = true)
     private void stopRecoveryMode() {
         LOGGER.info("Stopping RECOVERY mode");
+        recoveryService.stopAsync();
     }
 
     @Locked(exclusive = true)
@@ -181,7 +246,15 @@ public class ReplCoordinator extends AbstractIdleService implements ReplInterfac
         LOGGER.info("Starting SECONDARY mode");
 
         memberState = MemberState.RS_SECONDARY;
-        secondaryService = new SecondaryStateService(new SecondaryServiceCallback(), oplogManager, oplogReaderProvider.get(), executor);
+        secondaryService = new SecondaryStateService(
+                new SecondaryServiceCallback(),
+                oplogManager,
+                oplogReaderProvider,
+                oplogOpApplier,
+                localClient,
+                syncSourceProvider,
+                executor
+        );
 
         secondaryService.startAsync();
         try {
@@ -199,7 +272,7 @@ public class ReplCoordinator extends AbstractIdleService implements ReplInterfac
         assert secondaryService != null;
 
         LOGGER.info("Stopping SECONDARY mode");
-        secondaryService.shutDown();
+        secondaryService.stopAsync();
         secondaryService.awaitTerminated();
         secondaryService = null;
     }
@@ -210,21 +283,133 @@ public class ReplCoordinator extends AbstractIdleService implements ReplInterfac
         startRecoveryMode();
     }
 
+    @Locked(exclusive = true)
+    private void startUnrecoverableMode() {
+        LOGGER.info("Starting UNRECOVABLE mode");
+        //TODO: Log somewhere
+        memberState = null;
+    }
+
+    public boolean isSelf(HostAndPort origin) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    private boolean isConsistent() {
+        Lock readLock = lock.readLock();
+        readLock.lock();
+        try {
+            return consistent;
+        } finally {
+            readLock.unlock();
+        }
+    }
+
+    private void setConsistentState(boolean consistent) {
+        Lock writeLock = lock.writeLock();
+        writeLock.lock();
+        try {
+            this.consistent = consistent;
+            flushConsistentState();
+            LOGGER.info("Consistent state set to '" + consistent + "'");
+        }
+        catch (Throwable ex) {
+            LOGGER.error("It was impossible to store the consistent state", ex);
+        } finally {
+            writeLock.unlock();
+        }
+    }
+
+    private void flushConsistentState() throws MongoException {
+        LocalMongoConnection connection = localClient.openConnection();
+        try {
+            connection.execute(
+                    DeleteCommand.INSTANCE,
+                    defaultDatabase,
+                    true,
+                    new DeleteArgument(
+                            "torodb",
+                            Collections.singletonList(
+                                    new DeleteStatement(
+                                        new BsonDocument("consistent",
+                                                new BsonDocument("$exists", BsonBoolean.TRUE)),
+                                        true
+                                    )
+                            ),
+                            true,
+                            WriteConcern.FSYNCED
+                    )
+            );
+
+            int numInserted = connection.execute(
+                    InsertCommand.INSTANCE,
+                    defaultDatabase,
+                    true,
+                    new InsertArgument(
+                            "torodb",
+                            Collections.singletonList(
+                                    new BsonDocument("consistent", BsonBoolean.valueOf(consistent))
+                            ),
+                            WriteConcern.FSYNCED,
+                            true,
+                            null
+                    )
+            ).getN();
+            if (numInserted != 1) {
+                throw new AssertionError("An invalid number of documents has been inserted: " + numInserted);
+            }
+        } finally {
+            connection.close();
+        }
+    }
+
+    private void loadConsistentState() throws MongoException {
+        LocalMongoConnection connection = localClient.openConnection();
+        try {
+            EnumSet<QueryMessage.Flag> flags = EnumSet.noneOf(QueryMessage.Flag.class);
+            BsonDocument doc = connection.query(
+                    defaultDatabase,
+                    "torodb",
+                    flags,
+                    new BsonDocument("consistent", new BsonDocument("$exists", BsonBoolean.TRUE)),
+                    0,
+                    0,
+                    null
+            )
+                    .getOne();
+
+            boolean newConsistent;
+            if (doc == null) {
+                newConsistent = false;
+            }
+            else {
+                BsonValue consistentField = doc.get("consistent");
+                newConsistent = consistentField != null && consistentField.isBoolean()
+                        && consistentField.asBoolean().getValue();
+            }
+            consistent = newConsistent;
+        } finally {
+            connection.close();
+        }
+    }
+
+    private void loadStoredConfig() {
+        LOGGER.warn("loadStoredConfig() is not implemented yet");
+    }
+
+    public static interface ReplCoordinatorOwnerCallback {
+        public void replCoordStopped();
+    }
+
     @NotThreadSafe
     private abstract class MyMemberStateInteface implements MemberStateInterface {
         private final Lock lock;
-        private final boolean writePermission;
         private boolean closed;
+        private boolean canChangeState;
 
-        public MyMemberStateInteface(Lock lock, boolean writePermission) {
+        public MyMemberStateInteface(Lock lock, boolean canChangeState) {
             this.lock = lock;
-            this.writePermission = writePermission;
             this.closed = false;
-        }
-
-        @Override
-        public boolean hasWritePermission() {
-            return writePermission;
+            this.canChangeState = true;
         }
 
         @Override
@@ -236,26 +421,16 @@ public class ReplCoordinator extends AbstractIdleService implements ReplInterfac
         }
 
         @Override
-        public WriteConcernEnforcementResult awaitReplication(OpTime ts, WriteConcern wc) {
-            //TODO: trivial implementation
-            return new WriteConcernEnforcementResult(
-                    wc,
-                    null,
-                    0,
-                    null,
-                    false,
-                    null,
-                    ImmutableList.<HostAndPort>of()
-            );
+        public boolean canChangeMemberState() {
+            return canChangeState;
         }
-
     }
 
     @NotThreadSafe
     private class MyPrimaryStateInterface extends MyMemberStateInteface implements PrimaryStateInterface {
 
-        public MyPrimaryStateInterface(Lock lock, boolean writePermission) {
-            super(lock, writePermission);
+        public MyPrimaryStateInterface(Lock lock, boolean canChangeState) {
+            super(lock, canChangeState);
         }
 
         @Override
@@ -278,12 +453,31 @@ public class ReplCoordinator extends AbstractIdleService implements ReplInterfac
             return MemberState.RS_PRIMARY;
         }
 
+        @Override
+        public WriteConcernEnforcementResult awaitReplication(OpTime ts, WriteConcern wc) {
+            //TODO: trivial implementation
+            return new WriteConcernEnforcementResult(
+                    wc,
+                    null,
+                    0,
+                    null,
+                    false,
+                    null,
+                    ImmutableList.<HostAndPort>of()
+            );
+        }
+
+        @Override
+        public boolean canNodeAcceptReads(String database) {
+            return true;
+        }
+
     }
 
     private class MyRecoveryStateInterface extends MyMemberStateInteface implements RecoveryStateInterface {
 
-        public MyRecoveryStateInterface(Lock lock, boolean writePermission) {
-            super(lock, writePermission);
+        public MyRecoveryStateInterface(Lock lock, boolean canChangeState) {
+            super(lock, canChangeState);
         }
 
         @Override
@@ -293,15 +487,22 @@ public class ReplCoordinator extends AbstractIdleService implements ReplInterfac
 
         @Override
         public boolean canNodeAcceptWrites(String database) {
-            return database.startsWith("local.");
+//            TODO: Check if the implementation is correct
+//            return database.startsWith("local.");
+            return false;
+        }
+
+        @Override
+        public boolean canNodeAcceptReads(String database) {
+            return false;
         }
 
     }
 
     @ThreadSafe
     private class MySecondaryStateInferface extends MyMemberStateInteface implements SecondaryStateInferface {
-        public MySecondaryStateInferface(Lock lock, boolean writePermission) {
-            super(lock, writePermission);
+        public MySecondaryStateInferface(Lock lock, boolean canChangeState) {
+            super(lock, canChangeState);
         }
 
         @Override
@@ -312,6 +513,11 @@ public class ReplCoordinator extends AbstractIdleService implements ReplInterfac
         @Override
         public boolean canNodeAcceptWrites(String database) {
             return database.startsWith("local.");
+        }
+
+        @Override
+        public boolean canNodeAcceptReads(String database) {
+            return true;
         }
 
         @Override
@@ -340,7 +546,7 @@ public class ReplCoordinator extends AbstractIdleService implements ReplInterfac
             Lock writeLock = lock.writeLock();
             writeLock.lock();
             try {
-                if (memberState.equals(MemberState.RS_RECOVERING)) {
+                if (memberState != null && memberState.equals(MemberState.RS_RECOVERING)) {
                     stopRecoveryMode();
                     startSecondaryMode();
                 }
@@ -359,6 +565,21 @@ public class ReplCoordinator extends AbstractIdleService implements ReplInterfac
             stopAsync();
         }
 
+        @Override
+        public void recoveryFailed() {
+            LOGGER.error("Fatal error while starting recovery mode");
+            stopAsync();
+        }
+
+        @Override
+        public void setConsistentState(boolean consistent) {
+            ReplCoordinator.this.setConsistentState(consistent);
+        }
+
+        @Override
+        public boolean canAcceptWrites(String database) {
+            return true;
+        }
     }
 
     private class SecondaryServiceCallback implements SecondaryStateService.Callback {
@@ -368,9 +589,28 @@ public class ReplCoordinator extends AbstractIdleService implements ReplInterfac
             Lock writeLock = lock.writeLock();
             writeLock.lock();
             try {
-                if (memberState.equals(MemberState.RS_SECONDARY)) {
+                if (MemberState.RS_SECONDARY.equals(memberState)) {
                     stopSecondaryMode();
                     startRollbackMode();
+                }
+                else {
+                    LOGGER.info("Secondary request a rollback, but before we "
+                            + "can start rollback mode, the state changed to {}",
+                            memberState);
+                }
+            } finally {
+                writeLock.unlock();
+            }
+        }
+
+        @Override
+        public void impossibleToRecoverFromError(Throwable t) {
+            Lock writeLock = lock.writeLock();
+            writeLock.lock();
+            try {
+                if (MemberState.RS_SECONDARY.equals(memberState)) {
+                    stopSecondaryMode();
+                    startUnrecoverableMode();
                 }
                 else {
                     LOGGER.info("Secondary request a rollback, but before we "

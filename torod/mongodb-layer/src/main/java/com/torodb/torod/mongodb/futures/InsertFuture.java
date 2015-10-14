@@ -5,8 +5,8 @@ import com.eightkdata.mongowp.mongoserver.api.safe.impl.SimpleWriteOpResult;
 import com.eightkdata.mongowp.mongoserver.callback.WriteOpResult;
 import com.eightkdata.mongowp.mongoserver.pojos.OpTime;
 import com.eightkdata.mongowp.mongoserver.protocol.MongoWP.ErrorCode;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.torodb.torod.core.connection.InsertResponse;
-import java.util.concurrent.Future;
 
 /**
  *
@@ -15,8 +15,8 @@ public class InsertFuture extends ActionAndCommitFuture<WriteOpResult, InsertRes
 
     public InsertFuture(
             OpTime optime,
-            Future<InsertResponse> insertFuture,
-            Future<?> commitFuture) {
+            ListenableFuture<InsertResponse> insertFuture,
+            ListenableFuture<?> commitFuture) {
         super(optime, insertFuture, commitFuture);
     }
 

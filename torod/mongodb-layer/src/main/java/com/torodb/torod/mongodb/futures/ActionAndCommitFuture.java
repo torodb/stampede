@@ -2,31 +2,58 @@
 package com.torodb.torod.mongodb.futures;
 
 import com.eightkdata.mongowp.mongoserver.pojos.OpTime;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import com.google.common.util.concurrent.ExecutionList;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
+import java.util.concurrent.*;
 
 /**
  *
  */
-public abstract class ActionAndCommitFuture<E, O> implements Future<E> {
+public abstract class ActionAndCommitFuture<E, O> implements ListenableFuture<E> {
 
     private final OpTime optime;
     private final Future<O> actionFuture;
     private final Future<?> commitFuture;
+    private boolean done = false, actionDone = false, commitDone = false;
+    private final ExecutionList executionList = new ExecutionList();
 
     public ActionAndCommitFuture(
             OpTime optime,
-            Future<O> actionFuture,
-            Future<?> commitFuture) {
+            ListenableFuture<O> actionFuture,
+            ListenableFuture<?> commitFuture) {
         this.optime = optime;
         this.actionFuture = actionFuture;
         this.commitFuture = commitFuture;
+
+        Runnable myActionListener = new Runnable() {
+
+            @Override
+            public void run() {
+                eventActionFinished();
+            }
+        };
+        actionFuture.addListener(myActionListener, MoreExecutors.directExecutor());
+
+        Runnable myCommitListener = new Runnable() {
+
+            @Override
+            public void run() {
+                eventCommitFinished();
+            }
+        };
+        commitFuture.addListener(myCommitListener, MoreExecutors.directExecutor());
     }
+
+    public abstract E transform(O actionResult);
 
     OpTime getOptime() {
         return optime;
+    }
+
+    @Override
+    public void addListener(Runnable listener, Executor executor) {
+        executionList.add(listener, executor);
     }
 
     @Override
@@ -56,6 +83,27 @@ public abstract class ActionAndCommitFuture<E, O> implements Future<E> {
         throw new UnsupportedOperationException("Not supported."); //TODO: Decide how to implement the timeout here
     }
 
-    public abstract E transform(O actionResult);
+    private synchronized void eventActionFinished() {
+        actionDone = true;
+        if (!done) {
+            if (commitDone) {
+                eventDone();
+            }
+        }
+    }
 
+    private synchronized void eventCommitFinished() {
+        commitDone = true;
+        if (!done) {
+            if (actionDone) {
+                eventDone();
+            }
+        }
+    }
+
+    private void eventDone() {
+        assert done == false;
+        done = true;
+        executionList.execute();
+    }
 }

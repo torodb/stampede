@@ -48,7 +48,6 @@ import com.torodb.torod.core.cursors.UserCursor;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.exceptions.ExistentIndexException;
 import com.torodb.torod.core.language.AttributeReference;
-import com.torodb.torod.core.language.operations.DeleteOperation;
 import com.torodb.torod.core.language.operations.UpdateOperation;
 import com.torodb.torod.core.language.querycriteria.QueryCriteria;
 import com.torodb.torod.core.language.querycriteria.TrueQueryCriteria;
@@ -183,51 +182,8 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
 	@Override
     public void delete(BsonDocument document, MessageReplier messageReplier)
             throws Exception {
-		ToroConnection connection = getConnection(messageReplier.getAttributeMap());
-		
-        BsonDocument reply = new BsonDocument();
-		
-		String collection = document.get("delete").asString().getValue();
-    	
-    	WriteFailMode writeFailMode = getWriteFailMode(document);
-    	WriteConcern writeConcern = getWriteConcern(document);
-		Iterable<BsonValue> documents = document.get("deletes").asArray();
-    	List<DeleteOperation> deletes = new ArrayList<DeleteOperation>();
-    	Iterator<BsonValue> documentsIterator = documents.iterator();
-    	while(documentsIterator.hasNext()) {
-            BsonDocument object = documentsIterator.next().asDocument();
-    		QueryCriteria queryCriteria = queryCriteriaTranslator.translate(
-                    object.get("q").asDocument()
-            );
-    		boolean singleRemove = BsonReaderTool.getBoolean(object, "limit", false);
-    		deletes.add(new DeleteOperation(queryCriteria, singleRemove));
-    	}
-		
-        ToroTransaction transaction = connection.createTransaction();
-        
-        try {
-        	Future<DeleteResponse> futureDeleteResponse = transaction.delete(collection, deletes, writeFailMode);
-        	
-            Future<?> futureCommitResponse = transaction.commit();
-            
-            if (writeConcern.getW() > 0) {
-	            DeleteResponse deleteResponse = futureDeleteResponse.get();
-	            futureCommitResponse.get();
-				reply.put("n", new BsonInt64(deleteResponse.getDeleted()));
-            }
-            LOGGER.warn("The current implementation of delete command is not registered on GetLastError");
-            reply.put(
-                    "warn",
-                    new BsonString(
-                            "The current implementation of delete command is not registered on GetLastError"
-                    )
-            );
-        } finally {
-           	transaction.close();
-        }
-		
-		reply.put("ok", MongoWP.BSON_OK);
-		messageReplier.replyMessageNoCursor(reply);
+        LOGGER.error("The unsafe version of delete command has been called!");
+        throw new UnknownErrorException("An unexpected command implementation was called");
 	}
 
     @Override

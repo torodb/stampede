@@ -36,7 +36,7 @@ import java.util.Map;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
-import javax.json.Json;
+import javax.json.JsonObject;
 
 /**
  *
@@ -60,7 +60,7 @@ public interface DbConnection {
     public void createCollection(
             @Nonnull String collectionName, 
             @Nullable String schemaName,
-            @Nullable Json other) throws ImplementationDbException;
+            @Nullable JsonObject other) throws ImplementationDbException;
     
     /**
      * Creates a table the table that will store elements of the given {@link SubDocType} in the database.
