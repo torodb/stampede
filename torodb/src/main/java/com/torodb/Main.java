@@ -98,7 +98,7 @@ public class Main {
 				new BackendModule(config),
 				new PostgreSQLModule(),
 				new ConfigModule(config),
-				new MongoLayerModule(),
+				new MongoLayerModule(config.getSyncSource()),
 				new DbWrapperModule(),
 				new ExecutorModule(1000, 1000, 0.2),
 				new DbMetaInformationCacheModule(),

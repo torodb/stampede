@@ -22,6 +22,7 @@ import com.torodb.torod.mongodb.annotations.Locked;
 import com.torodb.torod.mongodb.annotations.MongoDBLayer;
 import com.torodb.torod.mongodb.impl.LocalMongoClient;
 import com.torodb.torod.mongodb.impl.LocalMongoConnection;
+import com.torodb.torod.mongodb.repl.exceptions.NoSyncSourceFoundException;
 import com.torodb.torod.mongodb.utils.DBCloner;
 import com.torodb.torod.mongodb.utils.MongoClientProvider;
 import com.torodb.torod.mongodb.utils.OplogOperationApplier;
@@ -119,11 +120,17 @@ public class ReplCoordinator extends AbstractIdleService implements ReplInterfac
             oplogManager.startAsync();
             oplogManager.awaitRunning();
             loadConsistentState();
-            if (!isConsistent()) {
-                startRecoveryMode();
+
+            if (iAmMaster()) {
+                startPrimaryMode();
             }
             else {
-                startSecondaryMode();
+                if (!isConsistent()) {
+                    startRecoveryMode();
+                }
+                else {
+                    startSecondaryMode();
+                }
             }
         } finally {
             writeLock.unlock();
@@ -290,8 +297,13 @@ public class ReplCoordinator extends AbstractIdleService implements ReplInterfac
         memberState = null;
     }
 
-    public boolean isSelf(HostAndPort origin) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    @Locked(exclusive = true)
+    private void startPrimaryMode() {
+        LOGGER.info("Starting PRIMARY mode");
+        if (!consistent) {
+            throw new IllegalStateException("This node cannot be PRIMARY because it is inconsistent");
+        }
+        memberState = MemberState.RS_PRIMARY;
     }
 
     private boolean isConsistent() {
@@ -394,6 +406,15 @@ public class ReplCoordinator extends AbstractIdleService implements ReplInterfac
 
     private void loadStoredConfig() {
         LOGGER.warn("loadStoredConfig() is not implemented yet");
+    }
+
+    private boolean iAmMaster() {
+        try {
+            syncSourceProvider.calculateSyncSource(null);
+        } catch (NoSyncSourceFoundException ex) {
+            return true;
+        }
+        return false;
     }
 
     public static interface ReplCoordinatorOwnerCallback {

@@ -22,7 +22,9 @@ package com.torodb;
 
 import com.beust.jcommander.Parameter;
 import com.eightkdata.mongowp.mongoserver.MongoServerConfig;
+import com.google.common.net.HostAndPort;
 import com.torodb.torod.backend.db.DbBackendConfiguration;
+import javax.annotation.Nullable;
 
 /**
  *
@@ -55,6 +57,15 @@ public class Config implements DbBackendConfiguration, MongoServerConfig {
     private Integer reservedReadPoolSize = 10;
 	@Parameter(names={"-P", "--mongoport"}, description="Port to listen on for Mongo wire protocol connections")
     private int mongoPort = 27017;
+
+    @Parameter(
+            names={"--syncSource"},
+            description = "If configured as replication node, the host and "
+                    + "port (<host>:<port>) of the node from ToroDB has to "
+                    + "replicate. If this node must run as primary, this "
+                    + "paramenter must not be defined")
+    private String syncSourceAddress;
+
 	@Parameter(names={"--debug"}, description="Change log level to DEBUG")
 	private boolean debug = false;
 	@Parameter(names={"--verbose"}, description="Change log level to TRACE")
@@ -84,6 +95,13 @@ public class Config implements DbBackendConfiguration, MongoServerConfig {
     	return help;
     }
 
+    @Nullable
+    public HostAndPort getSyncSource() {
+        if (syncSourceAddress == null) {
+            return null;
+        }
+        return HostAndPort.fromString(syncSourceAddress);
+    }
 
     // DbBackendConfiguration methods
 

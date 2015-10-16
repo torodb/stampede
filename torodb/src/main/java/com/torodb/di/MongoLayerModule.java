@@ -25,6 +25,7 @@ import com.eightkdata.mongowp.mongoserver.api.safe.*;
 import com.eightkdata.mongowp.mongoserver.api.safe.impl.AtomicConnectionIdFactory;
 import com.eightkdata.mongowp.mongoserver.callback.RequestProcessor;
 import com.eightkdata.mongowp.mongoserver.pojos.OpTime;
+import com.google.common.annotations.Beta;
 import com.google.common.net.HostAndPort;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
@@ -61,11 +62,24 @@ import com.torodb.torod.mongodb.unsafe.ToroQueryCommandProcessor;
 import com.torodb.torod.mongodb.utils.DBCloner;
 import com.torodb.torod.mongodb.utils.MongoClientProvider;
 import com.torodb.torod.mongodb.utils.OplogOperationApplier;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  *
  */
 public class MongoLayerModule extends AbstractModule {
+
+    private final HostAndPort syncSource;
+
+    /**
+     *
+     * @param syncSource the sync source this node is going to replicate from or
+     *                   null if this node must run as primary
+     */
+    public MongoLayerModule(@Nullable HostAndPort syncSource) {
+        this.syncSource = syncSource;
+    }
 
     @Override
     protected void configure() {
@@ -121,7 +135,12 @@ public class MongoLayerModule extends AbstractModule {
 
     @Provides @Singleton
     SyncSourceProvider createSyncSourceProvider() {
-        return new MySyncSourceProvider();
+        if (syncSource != null) {
+            return new FollowerSyncSourceProvider(syncSource);
+        }
+        else {
+            return new PrimarySyncSourceProvider();
+        }
     }
 
     @Provides @Index @Singleton
@@ -140,9 +159,13 @@ public class MongoLayerModule extends AbstractModule {
         return new MetaCollectionRequestProcessor(indexMetaCollection, qct, optimeClock);
     }
 
-    private static class MySyncSourceProvider implements SyncSourceProvider {
-        private final HostAndPort syncSource
-                    = HostAndPort.fromParts("127.0.0.1", 27020);
+    @Beta
+    private static class FollowerSyncSourceProvider implements SyncSourceProvider {
+        private final HostAndPort syncSource;
+
+        public FollowerSyncSourceProvider(@Nonnull HostAndPort syncSource) {
+            this.syncSource = syncSource;
+        }
 
         @Override
         public HostAndPort calculateSyncSource(HostAndPort oldSyncSource) {
@@ -159,6 +182,27 @@ public class MongoLayerModule extends AbstractModule {
                 NoSyncSourceFoundException {
             return syncSource;
         }
+    }
+
+    private static class PrimarySyncSourceProvider implements SyncSourceProvider {
+
+        @Override
+        public HostAndPort calculateSyncSource(HostAndPort oldSyncSource) throws
+                NoSyncSourceFoundException {
+            throw new NoSyncSourceFoundException();
+        }
+
+        @Override
+        public HostAndPort getSyncSource(OpTime lastFetchedOpTime) throws
+                NoSyncSourceFoundException {
+            throw new NoSyncSourceFoundException();
+        }
+
+        @Override
+        public HostAndPort getLastUsedSyncSource() {
+            return null;
+        }
+
     }
 
 }
