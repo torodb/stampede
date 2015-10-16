@@ -9,7 +9,7 @@
     <parent>
         <artifactId>torod-pom</artifactId>
         <groupId>com.torodb.torod</groupId>
-        <version>0.30-SNAPSHOT</version>
+        <version>0.40-SNAPSHOT</version>
     </parent>
 
     <artifactId>backend</artifactId>
