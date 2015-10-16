@@ -277,7 +277,7 @@ public class TorodbMeta {
     ) throws SQLException {
         ResultSet procedures = null;
         try {
-            procedures = jdbcMeta.getProcedures(null, "", procedureName);
+            procedures = jdbcMeta.getProcedures(null, "torodb", procedureName);
             
             return procedures.next();
         } finally {

@@ -40,7 +40,7 @@ import org.jooq.Configuration;
 public class Routines {
 
     /**
-     * Call <code>public.first_free_value_type_id</code>
+     * Call <code>torodb.first_free_value_type_id</code>
      * @param configuration
      * @param colSchema
      * @return 
@@ -54,7 +54,7 @@ public class Routines {
     }
 
     /**
-     * Call <code>public.reserve_value_type_id</code>
+     * Call <code>torodb.reserve_value_type_id</code>
      * @param configuration
      * @param colSchema 
      * @param increment

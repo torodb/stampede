@@ -98,7 +98,7 @@ public class DefaultCursorManager implements ToroCursorManager {
                 id,
                 queryCriteria,
                 projection,
-                0
+                maxResults
         );
         try {
             query.get();

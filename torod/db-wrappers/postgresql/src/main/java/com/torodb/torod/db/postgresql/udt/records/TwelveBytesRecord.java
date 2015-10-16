@@ -38,42 +38,42 @@ public class TwelveBytesRecord extends UDTRecordImpl<TwelveBytesRecord> implemen
 	private static final long serialVersionUID = -103355438;
 
 	/**
-	 * Setter for <code>public.twelve_bytes.upper</code>.
+	 * Setter for <code>torodb.twelve_bytes.upper</code>.
 	 */
 	public void setUpper(Integer value) {
 		setValue(0, value);
 	}
 
 	/**
-	 * Getter for <code>public.twelve_bytes.upper</code>.
+	 * Getter for <code>torodb.twelve_bytes.upper</code>.
 	 */
 	public Integer getUpper() {
 		return (Integer) getValue(0);
 	}
 
 	/**
-	 * Setter for <code>public.twelve_bytes.middle</code>.
+	 * Setter for <code>torodb.twelve_bytes.middle</code>.
 	 */
 	public void setMiddle(Integer value) {
 		setValue(1, value);
 	}
 
 	/**
-	 * Getter for <code>public.twelve_bytes.middle</code>.
+	 * Getter for <code>torodb.twelve_bytes.middle</code>.
 	 */
 	public Integer getMiddle() {
 		return (Integer) getValue(1);
 	}
 
 	/**
-	 * Setter for <code>public.twelve_bytes.lower</code>.
+	 * Setter for <code>torodb.twelve_bytes.lower</code>.
 	 */
 	public void setLower(Integer value) {
 		setValue(2, value);
 	}
 
 	/**
-	 * Getter for <code>public.twelve_bytes.lower</code>.
+	 * Getter for <code>torodb.twelve_bytes.lower</code>.
 	 */
 	public Integer getLower() {
 		return (Integer) getValue(2);

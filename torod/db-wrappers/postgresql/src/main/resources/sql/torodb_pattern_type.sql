@@ -1,1 +1,1 @@
-CREATE DOMAIN torodb_pattern AS varchar;
+CREATE DOMAIN torodb.torodb_pattern AS varchar;

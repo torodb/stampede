@@ -4,3 +4,6 @@ target/
 nbactions.xml
 nb-configuration.xml
 /bin/
+.project
+.classpath
+.settings/

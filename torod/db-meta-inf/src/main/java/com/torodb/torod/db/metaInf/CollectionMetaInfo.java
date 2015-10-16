@@ -131,7 +131,7 @@ class CollectionMetaInfo {
 
         Future<?> blocker = reserveMoreIdsIfNeeded(collection, info);
         if (blocker == null) {
-            LOGGER.debug("I have consumed {} doc ids of collection {}. I didn't need to wait for new ids", neededIds, collection);
+            LOGGER.trace("I have consumed {} doc ids of collection {}. I didn't need to wait for new ids", neededIds, collection);
         } else {
             Long tick = systemExecutor.getTick();
             sessionExecutor.pauseUntil(tick);

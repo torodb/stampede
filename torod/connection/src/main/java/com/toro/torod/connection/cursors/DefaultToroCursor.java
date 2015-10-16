@@ -73,8 +73,10 @@ public abstract class DefaultToroCursor<E> implements ToroCursor<E> {
         try {
             executor.noop().get();
             synchronized (this) {
-                closeImmediately(executor);
-                closed = true;
+                if (!closed) {
+                    closeImmediately(executor);
+                    closed = true;
+                }
             }
         }
         catch (InterruptedException ex) {
