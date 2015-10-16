@@ -180,7 +180,7 @@ class ReplSyncFetcher extends AbstractExecutionThreadService {
                         boolean delivered = false;
                         while (!delivered) {
                             try {
-                                LOGGER.info("Delivered op: {}", nextOp);
+                                LOGGER.debug("Delivered op: {}", nextOp);
                                 callback.deliver(nextOp);
                                 delivered = true;
                                 opsReadCounter++;
