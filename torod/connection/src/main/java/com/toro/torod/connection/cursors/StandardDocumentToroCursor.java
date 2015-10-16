@@ -161,8 +161,6 @@ public class StandardDocumentToroCursor extends DefaultToroCursor<ToroDocument> 
                     + " was recived");
         }
 
-        limit = Math.min(limit, maxElements - position);
-        
         try {
             executor.noop().get();
             
@@ -170,6 +168,7 @@ public class StandardDocumentToroCursor extends DefaultToroCursor<ToroDocument> 
                 if (isClosed()) {
                     throw new ClosedToroCursorException();
                 }
+                limit = Math.min(limit, maxElements - position);
 
                 List<? extends SplitDocument> splitDocs = executor
                         .readCursor(getId(), limit)
