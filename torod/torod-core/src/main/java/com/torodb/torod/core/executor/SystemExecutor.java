@@ -76,7 +76,7 @@ public interface SystemExecutor {
 
     public static interface CreateSubDocTypeTableCallback {
 
-        public void createSubDocTypeTable(String colection, SubDocType type);
+        public void createSubDocTypeTable(String collection, SubDocType type);
     }
 
     public static interface ReserveDocIdsCallback {

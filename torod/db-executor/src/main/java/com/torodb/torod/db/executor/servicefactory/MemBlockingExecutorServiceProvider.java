@@ -46,6 +46,8 @@ public class MemBlockingExecutorServiceProvider extends AbstractExecutorServiceP
     private final SubmitPermissionCallback submitPermissionCallback;
     private final Runnable waitSubmitTask;
 
+    private boolean active = true;
+
     public MemBlockingExecutorServiceProvider(
             double grantedMemPercentage,
             long maxWaitTime,
@@ -174,7 +176,7 @@ public class MemBlockingExecutorServiceProvider extends AbstractExecutorServiceP
         long usedMemory = runtime.totalMemory() - runtime.freeMemory();
 
         double highLevel = maxMemory * maxUsedMemPercentage;
-        return usedMemory >= highLevel;
+        return usedMemory >= highLevel && active;
     }
 
     private static class MyThreadPoolExecutor extends AbstractExecutorService {

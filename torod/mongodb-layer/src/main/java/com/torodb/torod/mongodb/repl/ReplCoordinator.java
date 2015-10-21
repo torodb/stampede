@@ -300,9 +300,6 @@ public class ReplCoordinator extends AbstractIdleService implements ReplInterfac
     @Locked(exclusive = true)
     private void startPrimaryMode() {
         LOGGER.info("Starting PRIMARY mode");
-        if (!consistent) {
-            throw new IllegalStateException("This node cannot be PRIMARY because it is inconsistent");
-        }
         memberState = MemberState.RS_PRIMARY;
     }
 

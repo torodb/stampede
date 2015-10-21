@@ -96,7 +96,7 @@ public class UnsafeCommandsExecutorAdaptor implements CommandsExecutor {
             );
         }
         catch (Exception ex) {
-            throw new MongoException(ex.getLocalizedMessage(), ErrorCode.INTERNAL_ERROR);
+            throw new MongoException(ex.getLocalizedMessage(), ex, ErrorCode.INTERNAL_ERROR);
         }
     }
 

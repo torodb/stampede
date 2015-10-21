@@ -21,6 +21,7 @@
 package com.torodb.torod.db.metaInf;
 
 import com.google.common.collect.MapMaker;
+import com.google.common.util.concurrent.Futures;
 import com.torodb.torod.core.executor.SessionExecutor;
 import com.torodb.torod.core.executor.SystemExecutor;
 import com.torodb.torod.core.executor.ToroTaskExecutionException;
@@ -98,25 +99,35 @@ class CollectionMetaInfo {
                     new SystemExecutor.CreateSubDocTypeTableCallback() {
 
                         @Override
-                        public void createSubDocTypeTable(String colection, SubDocType type) {
-                            creationPendingJobs.remove(type);
+                        public void createSubDocTypeTable(String collection, SubDocType type) {
+//                            lock.lock();
+//                            try {
+//                                creationPendingJobs.remove(type);
+//                                createdSubDocTypes.add(type);
+//                            } finally {
+//                                lock.unlock();
+//                            }
                         }
                     }
             );
-
-            tick = systemExecutor.getTick();
             LOGGER.debug("{}.{} table creation has been scheduled", collection, type);
+            Futures.getUnchecked(future);
+            LOGGER.debug("{}.{} table creation has been executed", collection, type);
+            createdSubDocTypes.add(type);
 
-            creationPendingJobs.put(type, tick);
-
-            if (future.isDone()) { // if the executor executes the table creation before this thread continues
-                /*
-                 * The job could have finished before we added it to the pending map. We need to remove it
-                 */
-                creationPendingJobs.remove(type);
-            } else {
-                sessionExecutor.pauseUntil(tick);
-            }
+//            tick = systemExecutor.getTick();
+//            LOGGER.debug("{}.{} table creation has been scheduled", collection, type);
+//
+//            creationPendingJobs.put(type, tick);
+//
+//            if (future.isDone()) { // if the executor executes the table creation before this thread continues
+//                /*
+//                 * The job could have finished before we added it to the pending map. We need to remove it
+//                 */
+//                creationPendingJobs.remove(type);
+//            } else {
+//                sessionExecutor.pauseUntil(tick);
+//            }
 
         } catch (ToroTaskExecutionException ex) {
             //TODO: Change exception

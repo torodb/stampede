@@ -58,7 +58,7 @@ public class GetLastErrorImplementation implements CommandImplementation<GetLast
                 = connection.getAppliedLastWriteOp();
         OpTime lastRequestedWriteOpTime = connection.getLastRequestedWriteOpTime();
         try {
-            noWriteOpYet = lastRequestedWriteOpTime != null;
+            noWriteOpYet = lastRequestedWriteOpTime == null;
             if (noWriteOpYet) {
                 writeOpResult = new SimpleWriteOpResult(
                         ErrorCode.OK,

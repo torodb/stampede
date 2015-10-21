@@ -26,15 +26,14 @@ import com.eightkdata.mongowp.mongoserver.api.safe.tools.bson.BsonReaderTool;
 import com.eightkdata.mongowp.mongoserver.callback.MessageReplier;
 import com.eightkdata.mongowp.mongoserver.protocol.MongoWP;
 import com.eightkdata.mongowp.mongoserver.protocol.MongoWP.ErrorCode;
-import com.eightkdata.mongowp.mongoserver.protocol.exceptions.BadValueException;
-import com.eightkdata.mongowp.mongoserver.protocol.exceptions.CommandNotSupportedException;
-import com.eightkdata.mongowp.mongoserver.protocol.exceptions.TypesMismatchException;
-import com.eightkdata.mongowp.mongoserver.protocol.exceptions.UnknownErrorException;
+import com.eightkdata.mongowp.mongoserver.protocol.exceptions.*;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+import com.google.common.collect.Sets.SetView;
 import com.google.inject.Inject;
 import com.mongodb.WriteConcern;
 import com.torodb.kvdocument.conversion.mongo.MongoValueConverter;
@@ -234,7 +233,7 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
             return;
         }
         //TODO: Unsafe cast
-        List<BSONObject> uncastedIndexes = (List<BSONObject>) indexesValue;
+        List<BsonDocument> uncastedIndexes = (List<BsonDocument>) indexesValue;
 
         ToroConnection connection = getConnection(messageReplier.getAttributeMap());
 
@@ -246,21 +245,45 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
 
             numIndexesBefore = transaction.getIndexes(collection).size();
             try {
-                for (BSONObject uncastedIndex : uncastedIndexes) {
-                    String name = (String) uncastedIndex.removeField("name");
-                    BSONObject key
-                            = (BSONObject) uncastedIndex.removeField("key");
-                    Boolean unique
-                            = (Boolean) uncastedIndex.removeField("unique");
-                    unique = unique != null ? unique : false;
-                    Boolean sparse
-                            = (Boolean) uncastedIndex.removeField("sparse");
-                    sparse = sparse != null ? sparse : false;
+                final Set<String> supportedFields = Sets.newHashSet("name", "key", "unique", "sparse", "ns");
+                for (BsonDocument uncastedIndex : uncastedIndexes) {
+                    String name = BsonReaderTool.getString(uncastedIndex, "name");
+                    BsonDocument key = BsonReaderTool.getDocument(uncastedIndex, "key");
+                    boolean unique = BsonReaderTool.getBoolean(uncastedIndex, "unique", false);
+                    boolean sparse = BsonReaderTool.getBoolean(uncastedIndex, "sparse", false);
+                    String ns = BsonReaderTool.getString(uncastedIndex, "ns", null);
 
-                    if (!uncastedIndex.keySet().isEmpty()) {
+                    if (ns != null) {
+                        int firstDot = ns.indexOf('.');
+                        if (firstDot < 0 || firstDot == ns.length()) {
+                            LOGGER.warn("The index option 'ns' {} does not conform with the expected '<db>.<col>'. Ignoring the option", ns);
+                        }
+                        else {
+                            String nsDatabase = ns.substring(0, firstDot);
+                            String nsCollection = ns.substring(firstDot + 1);
+                            if (!nsDatabase.equals(databaseName)) {
+                                throw new CommandFailed("createIndex",
+                                        "Trying to create an index whose "
+                                        + "namespace is on the unsupported "
+                                        + "database " + nsDatabase);
+                            }
+                            if (!nsCollection.equals(collection)) {
+                                throw new CommandFailed("createIndex",
+                                        "Trying to create an index whose "
+                                        + "namespace (" + nsCollection
+                                        + ")is on "
+                                        + "different collection than one on "
+                                        + "which the command has been called ("
+                                        + collection + ")");
+                            }
+                        }
+                    }
+
+                    SetView<String> extraOptions = Sets.difference(uncastedIndex.keySet(), supportedFields);
+                    if (!extraOptions.isEmpty()) {
                         reply.put("ok", MongoWP.BSON_KO);
                         String errmsg = "Options "
-                                + uncastedIndex.keySet().toString()
+                                + extraOptions.toString()
                                 + " are not supported";
                         reply.put("errmsg", new BsonString(errmsg));
                         messageReplier.replyMessageNoCursor(reply);
@@ -271,11 +294,9 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
                             = new IndexedAttributes.Builder();
 
                     for (String path : key.keySet()) {
-                        AttributeReference attRef
-                                = parseAttributeReference(path);
+                        AttributeReference attRef = parseAttributeReference(path);
                         //TODO: Check that key.get(path) is a number!!
-                        boolean ascending = ((Number) key.get(path)).intValue()
-                                > 0;
+                        boolean ascending = BsonReaderTool.getNumeric(key, path).longValue() > 0;
 
                         indexedAttsBuilder.addAttribute(attRef, ascending);
                     }

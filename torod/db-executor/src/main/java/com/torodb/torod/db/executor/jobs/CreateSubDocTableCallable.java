@@ -66,6 +66,11 @@ public class CreateSubDocTableCallable extends SystemDbCallable<Void> {
         }
         report.createSubDocTableExecuted(collection, type);
     }
+
+    @Override
+    public String toString() {
+        return "Create subdoc table{" + "col:" + collection +", type:" + type + "'}'";
+    }
     
     public static interface Report {
         public void createSubDocTableExecuted(String collection, SubDocType type);
