@@ -24,6 +24,7 @@ import com.google.common.collect.MapMaker;
 import com.google.common.util.concurrent.Futures;
 import com.torodb.torod.core.executor.SessionExecutor;
 import com.torodb.torod.core.executor.SystemExecutor;
+import com.torodb.torod.core.executor.SystemExecutor.CreateSubDocTypeTableCallback;
 import com.torodb.torod.core.executor.ToroTaskExecutionException;
 import com.torodb.torod.core.subdocument.SubDocType;
 import java.util.Collections;
@@ -52,6 +53,7 @@ class CollectionMetaInfo {
     private final SystemExecutor systemExecutor;
     private final ReservedIdHeuristic heuristic;
     private final Lock lock;
+    private final CreateSubDocTypeTableCallback CREATE_SUB_DOC_TYPE_CALLBACK = new CreateSubDocTypeTableCallbackImpl();
 
     public CollectionMetaInfo(String collection, ReservedIdInfo info, SystemExecutor systemExecutor, ReservedIdHeuristic heuristic) {
         this.info = info;
@@ -93,41 +95,14 @@ class CollectionMetaInfo {
             //this thread has the lock and nobody ordered the creation before it get the lock, so this thread must order the creation
             LOGGER.debug("I will schedule creation of {}.{} table", collection, type);
 
-            Future<?> future = systemExecutor.createSubDocTable(
-                    collection,
+            Future<?> future = systemExecutor.createSubDocTable(collection,
                     type,
-                    new SystemExecutor.CreateSubDocTypeTableCallback() {
-
-                        @Override
-                        public void createSubDocTypeTable(String collection, SubDocType type) {
-//                            lock.lock();
-//                            try {
-//                                creationPendingJobs.remove(type);
-//                                createdSubDocTypes.add(type);
-//                            } finally {
-//                                lock.unlock();
-//                            }
-                        }
-                    }
+                    CREATE_SUB_DOC_TYPE_CALLBACK
             );
             LOGGER.debug("{}.{} table creation has been scheduled", collection, type);
             Futures.getUnchecked(future);
             LOGGER.debug("{}.{} table creation has been executed", collection, type);
             createdSubDocTypes.add(type);
-
-//            tick = systemExecutor.getTick();
-//            LOGGER.debug("{}.{} table creation has been scheduled", collection, type);
-//
-//            creationPendingJobs.put(type, tick);
-//
-//            if (future.isDone()) { // if the executor executes the table creation before this thread continues
-//                /*
-//                 * The job could have finished before we added it to the pending map. We need to remove it
-//                 */
-//                creationPendingJobs.remove(type);
-//            } else {
-//                sessionExecutor.pauseUntil(tick);
-//            }
 
         } catch (ToroTaskExecutionException ex) {
             //TODO: Change exception
@@ -213,5 +188,15 @@ class CollectionMetaInfo {
         }
 
         info.getAndAddLastCachedId(increment);
+    }
+
+    private static class CreateSubDocTypeTableCallbackImpl implements CreateSubDocTypeTableCallback {
+
+        public CreateSubDocTypeTableCallbackImpl() {
+        }
+
+        @Override
+        public void createSubDocTypeTable(String collection, SubDocType type) {
+        }
     }
 }
