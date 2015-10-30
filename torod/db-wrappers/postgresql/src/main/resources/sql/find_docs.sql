@@ -7,7 +7,7 @@ BEGIN
     FOR docid IN 
         EXECUTE 'SELECT did FROM "' || col_schema || '".root WHERE EXISTS (SELECT 1 FROM unnest($1) WHERE unnest = did)' USING dids
     LOOP
-        RETURN QUERY select * from find_doc(col_schema, docid, tables);
+        RETURN QUERY select * from torodb.find_doc(col_schema, docid, tables);
     END LOOP;
 
 END;
