@@ -4,7 +4,7 @@ ToroDB is an open source, document-oriented, JSON database that runs on top of P
 
 ToroDB follows a RERO (Release Early, Release Often) policy. Current version is considered a "developer preview" and hence is not suitable for production use. However, any feedback, contributions, help and/or patches are very welcome. Please join the [torodb-dev][8] mailing list for further discussion.
 
-For more information, please see [ToroDB's website][1], this [latest presentation][7] or this [video recording of a presentation][11] about ToroDB.
+For more information, please see [ToroDB's website][1], this [latest presentation][7] or this [video recording of a presentation][11] about ToroDB. There's also a great [ToroDB introductory video][12] made by [Ernst-Georg Schmid][13], which explains how to start using ToroDB.
 
 
 ## Requisites
@@ -88,3 +88,5 @@ Please see [CONTRIBUTING][10].
 [9]: http://www.postgresql.org/download/
 [10]: https://github.com/torodb/torodb/blob/master/CONTRIBUTING.md
 [11]: http://www.bigdataspain.org/2014/conference/new-open-source-database-a-bridge-between-the-nosql-and-relational-worlds
+[12]: https://youtu.be/kgge0ZZ_lUM
+[13]: https://twitter.com/e_g_schmid
