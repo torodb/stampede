@@ -63,7 +63,7 @@ public class QueryRoutine {
             return Collections.emptyList();
         }
 
-        Connection c;
+        Connection c = null;
         PreparedStatement ps = null;
 
         try {
@@ -77,8 +77,6 @@ public class QueryRoutine {
             Integer[] requiredTables = requiredTables(colSchema, projection);
             ps.setArray(3, c.createArrayOf("integer", requiredTables));
 
-            configuration.connectionProvider().release(c);
-
             return translateDocuments(colSchema, requestedDocs.length, ps.executeQuery());
         } catch (SQLException ex) {
             //TODO: Study exceptions
@@ -91,6 +89,9 @@ public class QueryRoutine {
                     //TODO: Study exceptions
                     throw new RuntimeException(ex1);
                 }
+            }
+            if (c != null) {
+                configuration.connectionProvider().release(c);
             }
         }
     }
