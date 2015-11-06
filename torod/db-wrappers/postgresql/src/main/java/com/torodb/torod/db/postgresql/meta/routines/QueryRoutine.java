@@ -48,7 +48,7 @@ public class QueryRoutine {
             + TYPE_ID + ","
             + INDEX + ","
             + _JSON
-            + " FROM find_docs(?, ?, ?) ORDER BY " + DOC_ID;
+            + " FROM torodb.find_docs(?, ?, ?) ORDER BY " + DOC_ID;
 
     private QueryRoutine() {
     }

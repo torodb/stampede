@@ -30,6 +30,7 @@ import com.torodb.torod.core.executor.SessionExecutor;
 import com.torodb.torod.core.executor.ToroTaskExecutionException;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.core.subdocument.ToroDocument;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import org.slf4j.Logger;
@@ -161,8 +162,6 @@ public class StandardDocumentToroCursor extends DefaultToroCursor<ToroDocument> 
                     + " was recived");
         }
 
-        limit = Math.min(limit, maxElements - position);
-        
         try {
             executor.noop().get();
             
@@ -170,18 +169,25 @@ public class StandardDocumentToroCursor extends DefaultToroCursor<ToroDocument> 
                 if (isClosed()) {
                     throw new ClosedToroCursorException();
                 }
+                limit = Math.min(limit, maxElements - position);
 
-                List<? extends SplitDocument> splitDocs = executor
-                        .readCursor(getId(), limit)
-                        .get();
-                List<ToroDocument> docs = Lists.newArrayListWithCapacity(
-                        splitDocs.size()
-                );
-                for (SplitDocument splitDocument : splitDocs) {
-                    docs.add(d2r.translate(splitDocument));
+                List<ToroDocument> docs;
+                if (limit == 0) {
+                    docs = Collections.emptyList();
                 }
-                position += docs.size();
-                
+                else {
+                    List<? extends SplitDocument> splitDocs = executor
+                            .readCursor(getId(), limit)
+                            .get();
+                    docs = Lists.newArrayListWithCapacity(
+                            splitDocs.size()
+                    );
+                    for (SplitDocument splitDocument : splitDocs) {
+                        docs.add(d2r.translate(splitDocument));
+                    }
+                    position += docs.size();
+                }
+
                 if (isAutoclosable() && position == maxElements) {
                     close(executor);
                 }
