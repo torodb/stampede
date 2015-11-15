@@ -13,5 +13,6 @@
     <packaging>pom</packaging>
     <modules>
         <module>postgresql</module>
+        <module>common</module>
     </modules>
 </project>
