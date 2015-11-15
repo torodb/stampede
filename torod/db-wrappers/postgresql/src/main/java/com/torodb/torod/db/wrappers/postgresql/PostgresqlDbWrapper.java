@@ -31,14 +31,14 @@ import org.jooq.Configuration;
 import org.jooq.ConnectionProvider;
 import org.jooq.DSLContext;
 import org.jooq.SQLDialect;
+import org.jooq.conf.RenderNameStyle;
+import org.jooq.conf.Settings;
 import org.jooq.impl.DefaultConfiguration;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.SQLException;
-import org.jooq.conf.RenderNameStyle;
-import org.jooq.conf.Settings;
 
 /**
  *

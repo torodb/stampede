@@ -92,6 +92,11 @@
             <version>${torod.version}</version>
         </dependency>
         <dependency>
+            <groupId>com.torodb.torod.db-wrappers</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>${torod.version}</version>
+        </dependency>
+        <dependency>
             <groupId>com.google.code.findbugs</groupId>
             <artifactId>annotations</artifactId>
         </dependency>

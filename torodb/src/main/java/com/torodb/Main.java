@@ -32,10 +32,12 @@ import com.torodb.di.*;
 import com.torodb.torod.backend.db.postgresql.di.PostgreSQLModule;
 import com.torodb.torod.core.Torod;
 import com.torodb.torod.core.exceptions.TorodStartupException;
+import com.torodb.torod.db.wrappers.postgresql.di.PostgresqlDbWrapperModule;
 import com.torodb.torod.mongodb.repl.ReplCoordinator;
+import org.slf4j.LoggerFactory;
+
 import java.io.*;
 import java.nio.charset.Charset;
-import org.slf4j.LoggerFactory;
 
 /**
  * ToroDB's entry point
@@ -96,10 +98,10 @@ public class Main {
 
 		Injector injector = Guice.createInjector(
 				new BackendModule(config),
-				new PostgreSQLModule(),
+				new PostgreSQLModule(), 	// TODO: select database depending on selected backend
 				new ConfigModule(config),
 				new MongoLayerModule(config.getSyncSource()),
-				new DbWrapperModule(),
+				new PostgresqlDbWrapperModule(),	// TODO: select database depending on selected backend
 				new ExecutorModule(1000, 1000, 0.2),
 				new DbMetaInformationCacheModule(),
 				new D2RModule(),

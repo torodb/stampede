@@ -17,22 +17,19 @@
  *     Copyright (c) 2014, 8Kdata Technology
  *     
  */
+package com.torodb.torod.db.wrappers.postgresql.di;
 
-package com.torodb.di;
 
 import com.google.inject.AbstractModule;
 import com.torodb.torod.core.dbWrapper.DbWrapper;
 import com.torodb.torod.db.wrappers.postgresql.PostgresqlDbWrapper;
+
 import javax.inject.Singleton;
 
 /**
  *
  */
-public class DbWrapperModule extends AbstractModule {
-
-    public DbWrapperModule() {
-    }
-
+public class PostgresqlDbWrapperModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(DbWrapper.class).to(PostgresqlDbWrapper.class).in(Singleton.class);
