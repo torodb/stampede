@@ -28,20 +28,24 @@ import com.torodb.torod.core.language.querycriteria.utils.QueryCriteriaVisitor;
 import com.torodb.torod.core.subdocument.BasicType;
 import com.torodb.torod.core.subdocument.SubDocType;
 import com.torodb.torod.core.subdocument.structure.DocStructure;
-import com.torodb.torod.core.subdocument.values.*;
+import com.torodb.torod.core.subdocument.values.ArrayValue;
+import com.torodb.torod.core.subdocument.values.Value;
+import com.torodb.torod.db.wrappers.SQLWrapper;
 import com.torodb.torod.db.wrappers.postgresql.converters.PatternConverter;
 import com.torodb.torod.db.wrappers.postgresql.converters.ValueConverter;
 import com.torodb.torod.db.wrappers.postgresql.converters.jooq.SubdocValueConverter;
 import com.torodb.torod.db.wrappers.postgresql.converters.jooq.ValueToJooqConverterProvider;
 import com.torodb.torod.db.wrappers.postgresql.converters.jsonb.ValueToJsonbConverterProvider;
 import com.torodb.torod.db.wrappers.postgresql.meta.CollectionSchema;
+import com.torodb.torod.db.wrappers.postgresql.meta.tables.SubDocHelper;
 import com.torodb.torod.db.wrappers.postgresql.meta.tables.SubDocTable;
-import java.io.Serializable;
-import java.util.List;
-import javax.annotation.Nullable;
-
 import org.jooq.*;
 import org.jooq.impl.DSL;
+
+import javax.annotation.Nullable;
+import javax.inject.Inject;
+import java.io.Serializable;
+import java.util.List;
 
 /**
  *
@@ -52,8 +56,12 @@ public class QueryCriteriaToSQLTranslator {
     private static final CorrectnessChecker CORRECTNESS_CHECKER
             = new CorrectnessChecker();
 
-    public QueryCriteriaToSQLTranslator(CollectionSchema schema) {
+    private final SQLWrapper sqlWrapper;
+
+    @Inject
+    public QueryCriteriaToSQLTranslator(CollectionSchema schema, SQLWrapper sqlWrapper) {
         this.schema = schema;
+        this.sqlWrapper = sqlWrapper;
     }
 
     /**
@@ -113,7 +121,7 @@ public class QueryCriteriaToSQLTranslator {
                         rootSidField.equal(sid)
                 ).and(indexCondition);
 
-        final Translator inDocTranslator = new Translator();
+        final Translator inDocTranslator = new Translator(sqlWrapper);
         Condition condition = queryCriteria.accept(inDocTranslator, false);
 
         select.and(condition);
@@ -158,6 +166,13 @@ public class QueryCriteriaToSQLTranslator {
 
     private static class Translator implements
             QueryCriteriaVisitor<Condition, Boolean> {
+
+        private final SQLWrapper sqlWrapper;
+
+        @Inject
+        public Translator(SQLWrapper sqlWrapper) {
+            this.sqlWrapper = sqlWrapper;
+        }
 
         private String getIteratorVariableName() {
             return "value";
@@ -223,7 +238,7 @@ public class QueryCriteriaToSQLTranslator {
                 String attributeKey
                         = ((AttributeReference.ObjectKey) keys.get(lastObjectKeyIndex)).getKey();
 
-                firstKey = SubDocTable.toColumnName(attributeKey);
+                firstKey = new SubDocHelper(sqlWrapper).toColumnName(attributeKey);
             }
 
             result[0] = firstKey;

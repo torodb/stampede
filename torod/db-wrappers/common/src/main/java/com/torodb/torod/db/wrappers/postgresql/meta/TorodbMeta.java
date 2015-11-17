@@ -23,11 +23,19 @@ package com.torodb.torod.db.wrappers.postgresql.meta;
 import com.google.common.collect.MapMaker;
 import com.google.common.io.CharStreams;
 import com.torodb.torod.core.exceptions.ToroImplementationException;
+import com.torodb.torod.db.wrappers.SQLWrapper;
 import com.torodb.torod.db.wrappers.exceptions.InvalidCollectionSchemaException;
 import com.torodb.torod.db.wrappers.exceptions.InvalidDatabaseException;
 import com.torodb.torod.db.wrappers.postgresql.meta.tables.CollectionsTable;
 import com.torodb.torod.db.wrappers.postgresql.meta.tables.records.CollectionsRecord;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.jooq.DSLContext;
+import org.jooq.Meta;
+import org.jooq.Result;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.inject.Inject;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -37,11 +45,6 @@ import java.sql.*;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.ConcurrentMap;
-import org.jooq.DSLContext;
-import org.jooq.Meta;
-import org.jooq.Result;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -51,10 +54,14 @@ public class TorodbMeta {
     private final String databaseName;
     private final ConcurrentMap<String, CollectionSchema> collectionSchemes;
     private static final Logger LOGGER = LoggerFactory.getLogger(TorodbMeta.class);
-    
+    private final SQLWrapper sqlWrapper;
+
+    @Inject
     public TorodbMeta(
             String databaseName,
-            DSLContext dsl) throws SQLException, IOException, InvalidDatabaseException {
+            DSLContext dsl,
+            SQLWrapper sqlWrapper
+    ) throws SQLException, IOException, InvalidDatabaseException {
         this.databaseName = databaseName;
         Meta jooqMeta = dsl.meta();
         Connection conn = dsl.configuration().connectionProvider().acquire();
@@ -72,6 +79,7 @@ public class TorodbMeta {
 
         dsl.configuration().connectionProvider().release(conn);
 
+        this.sqlWrapper = sqlWrapper;
     }
     
     private void loadAllCollectionSchemas(
@@ -89,7 +97,8 @@ public class TorodbMeta {
                     dsl, 
                     jdbcMeta, 
                     jooqMeta, 
-                    this
+                    this,
+                    sqlWrapper
             );
             collectionSchemes.put(colSchema.getCollection(), colSchema);
         }
@@ -128,7 +137,7 @@ public class TorodbMeta {
             throw new IllegalArgumentException("Collection '" + colName
                     + "' is already associated with a collection schema");
         }
-        CollectionSchema result = new CollectionSchema(schemaName, colName, dsl, this);
+        CollectionSchema result = new CollectionSchema(schemaName, colName, dsl, this, sqlWrapper);
         collectionSchemes.put(colName, result);
 
         return result;
@@ -346,4 +355,5 @@ public class TorodbMeta {
             }
         }
     }
+
 }

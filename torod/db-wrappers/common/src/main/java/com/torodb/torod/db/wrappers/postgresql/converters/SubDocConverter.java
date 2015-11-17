@@ -20,6 +20,7 @@
 
 package com.torodb.torod.db.wrappers.postgresql.converters;
 
+import com.torodb.torod.db.wrappers.postgresql.meta.tables.SubDocHelper;
 import com.torodb.torod.db.wrappers.postgresql.meta.tables.SubDocTable;
 import com.torodb.torod.core.subdocument.SubDocAttribute;
 import com.torodb.torod.core.subdocument.SubDocType;
@@ -73,7 +74,7 @@ public class SubDocConverter {
             return null;
         }
 
-        return SubDocTable.toAttributeName(fieldName);
+        return SubDocHelper.toAttributeName(fieldName);
     }
 
     private void convertAttribute(

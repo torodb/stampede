@@ -17,25 +17,19 @@
  *     Copyright (c) 2014, 8Kdata Technology
  *     
  */
-package com.torodb.torod.db.wrappers.postgresql.di;
 
+package com.torodb.torod.db.wrappers;
 
-import com.google.inject.AbstractModule;
-import com.torodb.torod.core.dbWrapper.DbWrapper;
-import com.torodb.torod.db.wrappers.SQLWrapper;
-import com.torodb.torod.db.wrappers.postgresql.PostgresqlDbWrapper;
-import com.torodb.torod.db.wrappers.postgresql.PostgresqlSQLWrapper;
-
-import javax.inject.Singleton;
+import javax.annotation.Nonnull;
+import java.io.Serializable;
 
 /**
- *
+ * Wrapper interface to define all database-specific SQL code
  */
-public class PostgresqlDbWrapperModule extends AbstractModule {
-    @Override
-    protected void configure() {
-        bind(DbWrapper.class).to(PostgresqlDbWrapper.class).in(Singleton.class);
-        bind(PostgresqlDbWrapper.class).in(Singleton.class);
-        bind(SQLWrapper.class).to(PostgresqlSQLWrapper.class).in(Singleton.class);
-    }
+public interface SQLWrapper extends Serializable {
+
+    @Nonnull String escapeSchemaName(@Nonnull String collection) throws IllegalArgumentException;
+    @Nonnull String escapeAttributeName(@Nonnull String attributeName) throws IllegalArgumentException;
+    @Nonnull String escapeIndexName(@Nonnull String indexName) throws IllegalArgumentException;
+
 }

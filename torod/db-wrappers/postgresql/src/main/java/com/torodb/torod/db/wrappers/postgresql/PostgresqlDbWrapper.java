@@ -25,8 +25,9 @@ import com.torodb.torod.core.annotations.DatabaseName;
 import com.torodb.torod.core.backend.DbBackend;
 import com.torodb.torod.core.dbWrapper.DbConnection;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
+import com.torodb.torod.db.wrappers.SQLWrapper;
 import com.torodb.torod.db.wrappers.postgresql.meta.TorodbMeta;
-import com.torodb.torod.db.wrappers.sql.AbstractSqlDbWrapper;
+import com.torodb.torod.db.wrappers.sql.AbstractDbWrapper;
 import org.jooq.Configuration;
 import org.jooq.ConnectionProvider;
 import org.jooq.DSLContext;
@@ -44,15 +45,20 @@ import java.sql.SQLException;
  *
  */
 @Singleton
-public class PostgresqlDbWrapper extends AbstractSqlDbWrapper {
+public class PostgresqlDbWrapper extends AbstractDbWrapper {
     private static final int DB_SUPPORT_MAJOR = 9;
     private static final int DB_SUPPORT_MINOR = 4;
+
+    private final SQLWrapper sqlWrapper;
 
     @Inject
     public PostgresqlDbWrapper(
             @DatabaseName String databaseName,
-            DbBackend dbBackend) {
-        super(databaseName, dbBackend);
+            DbBackend dbBackend,
+            SQLWrapper sqlWrapper
+    ) {
+        super(databaseName, dbBackend, sqlWrapper);
+        this.sqlWrapper = sqlWrapper;
     }
 
     @Override
@@ -67,7 +73,7 @@ public class PostgresqlDbWrapper extends AbstractSqlDbWrapper {
 
     @Override
     protected DbConnection reserveConnection(DSLContext dsl, TorodbMeta meta) {
-        return new PostgresqlDbConnection(dsl, meta);
+        return new PostgresqlDbConnection(dsl, meta, sqlWrapper);
     }
     
     @Override

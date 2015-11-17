@@ -20,14 +20,18 @@
 
 package com.torodb.torod.db.wrappers.postgresql.meta.tables.records;
 
-import com.torodb.torod.core.subdocument.*;
-import com.torodb.torod.db.wrappers.postgresql.meta.tables.SubDocTable;
+import com.torodb.torod.core.subdocument.SubDocAttribute;
+import com.torodb.torod.core.subdocument.SubDocType;
+import com.torodb.torod.core.subdocument.SubDocument;
 import com.torodb.torod.core.subdocument.values.Value;
-import java.io.Serializable;
-import java.util.Map;
-import javax.annotation.Nullable;
+import com.torodb.torod.db.wrappers.postgresql.meta.tables.SubDocHelper;
+import com.torodb.torod.db.wrappers.postgresql.meta.tables.SubDocTable;
 import org.jooq.Field;
 import org.jooq.impl.TableRecordImpl;
+
+import javax.annotation.Nullable;
+import java.io.Serializable;
+import java.util.Map;
 
 /**
  *
@@ -76,7 +80,7 @@ public class SubDocTableRecord extends TableRecordImpl<SubDocTableRecord> {
         }
 
         for (Map.Entry<String, ? extends SubDocAttribute> entry : subdoc.getAttributes().entrySet()) {
-            String fieldName = SubDocTable.toColumnName(entry.getKey());
+            String fieldName = table.subDocHelper().toColumnName(entry.getKey());
 
             //@gortiz: I think we can not use types here!
             Field f = field(fieldName);
@@ -92,7 +96,7 @@ public class SubDocTableRecord extends TableRecordImpl<SubDocTableRecord> {
         SubDocType subDocType = table.getSubDocType();
 
         for (Field<? extends Value<? extends Serializable>> field : table.getSubDocFields()) {
-            String attName = SubDocTable.toAttributeName(field.getName());
+            String attName = SubDocHelper.toAttributeName(field.getName());
 
             SubDocAttribute att = subDocType.getAttribute(attName);
 

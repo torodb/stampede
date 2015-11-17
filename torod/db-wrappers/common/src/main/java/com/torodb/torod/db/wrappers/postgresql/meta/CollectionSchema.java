@@ -24,18 +24,19 @@ import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Maps;
 import com.torodb.torod.core.subdocument.SubDocType;
+import com.torodb.torod.db.wrappers.SQLWrapper;
 import com.torodb.torod.db.wrappers.exceptions.InvalidCollectionSchemaException;
 import com.torodb.torod.db.wrappers.postgresql.converters.StructureConverter;
 import com.torodb.torod.db.wrappers.postgresql.meta.tables.SubDocTable;
 import com.torodb.torod.db.wrappers.sql.index.IndexManager;
+import org.jooq.*;
+import org.jooq.impl.SchemaImpl;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.sql.DatabaseMetaData;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-
-import org.jooq.*;
-import org.jooq.impl.SchemaImpl;
 
 /**
  *
@@ -53,19 +54,23 @@ public final class CollectionSchema extends SchemaImpl {
     private final StructuresCache structuresCache;
     private final IndexStorage indexStorage;
     private final IndexManager indexManager;
+    private final SQLWrapper sqlWrapper;
 
     CollectionSchema(
             @Nonnull String schemName, 
             @Nonnull String colName, 
             @Nonnull DSLContext dsl, 
-            @Nonnull TorodbMeta torodbMeta) throws InvalidCollectionSchemaException {
+            @Nonnull TorodbMeta torodbMeta,
+            SQLWrapper sqlWrapper
+    ) throws InvalidCollectionSchemaException {
         this(
                 schemName,
                 colName, 
                 dsl,
                 null,
                 null,
-                torodbMeta
+                torodbMeta,
+                sqlWrapper
         );
     }
     
@@ -75,7 +80,9 @@ public final class CollectionSchema extends SchemaImpl {
             @Nonnull DSLContext dsl, 
             @Nullable DatabaseMetaData jdbcMeta, 
             @Nullable Meta jooqMeta, 
-            @Nonnull TorodbMeta torodbMeta) throws InvalidCollectionSchemaException {
+            @Nonnull TorodbMeta torodbMeta,
+            SQLWrapper sqlWrapper
+    ) throws InvalidCollectionSchemaException {
         super(schemaName);
         
         this.collection = colName;
@@ -107,7 +114,8 @@ public final class CollectionSchema extends SchemaImpl {
                     SubDocTable subDocTable = new SubDocTable(
                             table.getName(), 
                             this, 
-                            jdbcMeta
+                            jdbcMeta,
+                            sqlWrapper
                     );
                     int subDocId = subDocTable.getTypeId();
                     SubDocType type = subDocTable.getSubDocType();
@@ -139,6 +147,8 @@ public final class CollectionSchema extends SchemaImpl {
                 indexStorage.getAllToroIndexes(dsl),
                 structuresCache
         );
+
+        this.sqlWrapper = sqlWrapper;
     }
     
     public IndexManager getIndexManager() {
@@ -224,7 +234,7 @@ public final class CollectionSchema extends SchemaImpl {
         int typeId = typeIdProvider.incrementAndGet();
         typesById.put(typeId, type);
 
-        SubDocTable table = new SubDocTable(this, type, typeId);
+        SubDocTable table = new SubDocTable(this, type, typeId, sqlWrapper);
         tables.put(type, table);
 
         return table;
@@ -278,5 +288,9 @@ public final class CollectionSchema extends SchemaImpl {
     @Override
     public boolean equals(Object obj) {
         return super.equals(obj);
+    }
+
+    public SQLWrapper getSqlWrapper() {
+        return sqlWrapper;
     }
 }

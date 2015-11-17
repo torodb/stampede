@@ -20,7 +20,9 @@
 
 package com.torodb.torod.db.wrappers.sql;
 
-import com.google.common.collect.*;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
 import com.torodb.torod.core.dbWrapper.DbConnection;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.exceptions.UserToroException;
@@ -31,8 +33,8 @@ import com.torodb.torod.core.pojos.NamedToroIndex;
 import com.torodb.torod.core.subdocument.SubDocType;
 import com.torodb.torod.core.subdocument.SubDocument;
 import com.torodb.torod.core.subdocument.structure.DocStructure;
+import com.torodb.torod.db.wrappers.SQLWrapper;
 import com.torodb.torod.db.wrappers.exceptions.InvalidCollectionSchemaException;
-import com.torodb.torod.db.wrappers.postgresql.IdsFilter;
 import com.torodb.torod.db.wrappers.postgresql.meta.CollectionSchema;
 import com.torodb.torod.db.wrappers.postgresql.meta.Routines;
 import com.torodb.torod.db.wrappers.postgresql.meta.TorodbMeta;
@@ -44,9 +46,12 @@ import com.torodb.torod.db.wrappers.postgresql.query.QueryEvaluator;
 import com.torodb.torod.db.wrappers.sql.index.IndexManager;
 import com.torodb.torod.db.wrappers.sql.index.NamedDbIndex;
 import com.torodb.torod.db.wrappers.sql.index.UnnamedDbIndex;
-import java.io.StringReader;
-import java.sql.*;
-import java.util.*;
+import org.jooq.*;
+import org.jooq.exception.DataAccessException;
+import org.jooq.impl.DSL;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -54,17 +59,15 @@ import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
 import javax.json.JsonStructure;
-
-import org.jooq.*;
-import org.jooq.exception.DataAccessException;
-import org.jooq.impl.DSL;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.io.StringReader;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.*;
 
 /**
  *
  */
-public abstract class AbstractSqlDbConnection implements 
+public abstract class AbstractDbConnection implements
         DbConnection,
         IndexManager.DbIndexCreator,
         IndexManager.DbIndexDropper,
@@ -72,19 +75,21 @@ public abstract class AbstractSqlDbConnection implements
         IndexManager.ToroIndexDroppedListener {
     
     private static final Logger LOGGER
-            = LoggerFactory.getLogger(AbstractSqlDbConnection.class);
+            = LoggerFactory.getLogger(AbstractDbConnection.class);
 
     private final TorodbMeta meta;
     private final Configuration jooqConf;
     private final DSLContext dsl;
+    private final SQLWrapper sqlWrapper;
 
     @Inject
-    public AbstractSqlDbConnection(
+    public AbstractDbConnection(
             DSLContext dsl,
-            TorodbMeta meta) {
+            TorodbMeta meta, SQLWrapper sqlWrapper) {
         this.jooqConf = dsl.configuration();
         this.meta = meta;
         this.dsl = dsl;
+        this.sqlWrapper = sqlWrapper;
     }
 
     protected abstract String getCreateSubDocTypeTableQuery(SubDocTable table, Configuration conf);
@@ -151,7 +156,7 @@ public abstract class AbstractSqlDbConnection implements
             if (schemaName == null) {
                 schemaName = collectionName;
             }
-            String escapedSchemaName = IdsFilter.escapeSchemaName(schemaName);
+            String escapedSchemaName = sqlWrapper.escapeSchemaName(schemaName);
             createSchema(escapedSchemaName);
             createSequence(escapedSchemaName, getRootSeqName());
             createRootTable(escapedSchemaName);
@@ -331,7 +336,7 @@ public abstract class AbstractSqlDbConnection implements
     @Override
     public int delete(String collection, @Nullable QueryCriteria condition, boolean justOne) {
         CollectionSchema colSchema = meta.getCollectionSchema(collection);
-        QueryEvaluator queryEvaluator = new QueryEvaluator(colSchema);
+        QueryEvaluator queryEvaluator = new QueryEvaluator(colSchema, sqlWrapper);
 
         Multimap<DocStructure, Integer> didsByStructure = queryEvaluator.evaluateDidsByStructure(condition, dsl);
 
@@ -408,7 +413,7 @@ public abstract class AbstractSqlDbConnection implements
     public Integer count(String collection, QueryCriteria query) {
         CollectionSchema colSchema = meta.getCollectionSchema(collection);
 
-        QueryEvaluator queryEvaluator = new QueryEvaluator(colSchema);
+        QueryEvaluator queryEvaluator = new QueryEvaluator(colSchema, sqlWrapper);
 
         Set<Integer> dids = queryEvaluator.evaluateDid(
                 query,

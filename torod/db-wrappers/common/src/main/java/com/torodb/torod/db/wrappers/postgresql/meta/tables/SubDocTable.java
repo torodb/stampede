@@ -22,15 +22,25 @@ package com.torodb.torod.db.wrappers.postgresql.meta.tables;
 
 import com.google.common.collect.AbstractIterator;
 import com.torodb.torod.core.exceptions.ToroImplementationException;
-import com.torodb.torod.core.subdocument.*;
-import com.torodb.torod.db.wrappers.postgresql.IdsFilter;
+import com.torodb.torod.core.subdocument.BasicType;
+import com.torodb.torod.core.subdocument.SubDocAttribute;
+import com.torodb.torod.core.subdocument.SubDocType;
+import com.torodb.torod.core.subdocument.values.Value;
+import com.torodb.torod.db.wrappers.SQLWrapper;
+import com.torodb.torod.db.wrappers.postgresql.converters.BasicTypeToSqlType;
 import com.torodb.torod.db.wrappers.postgresql.converters.jooq.SubdocValueConverter;
 import com.torodb.torod.db.wrappers.postgresql.converters.jooq.ValueToJooqConverterProvider;
 import com.torodb.torod.db.wrappers.postgresql.meta.CollectionSchema;
 import com.torodb.torod.db.wrappers.postgresql.meta.tables.records.SubDocTableRecord;
-import com.torodb.torod.core.subdocument.values.Value;
-import com.torodb.torod.db.wrappers.postgresql.converters.BasicTypeToSqlType;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.jooq.*;
+import org.jooq.impl.AbstractKeys;
+import org.jooq.impl.DSL;
+import org.jooq.impl.SQLDataType;
+import org.jooq.impl.TableImpl;
+
+import javax.annotation.Nonnull;
+import javax.inject.Inject;
 import java.io.Serializable;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
@@ -38,12 +48,6 @@ import java.sql.SQLException;
 import java.util.Iterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.annotation.Nonnull;
-import org.jooq.*;
-import org.jooq.impl.AbstractKeys;
-import org.jooq.impl.DSL;
-import org.jooq.impl.SQLDataType;
-import org.jooq.impl.TableImpl;
 
 /**
  *
@@ -51,10 +55,7 @@ import org.jooq.impl.TableImpl;
 public class SubDocTable extends TableImpl<SubDocTableRecord> {
 
     private static final long serialVersionUID = 1197457693;
-    private static final Pattern TABLE_ID_PATTERN
-            = Pattern.compile("t_([0-9]+)$");
-    private static final Pattern LIKE_DID_PATTERN = Pattern.compile("_*did");
-    private static final Pattern LIKE_INDEX_PATTERN = Pattern.compile("_*index");
+    private static final Pattern TABLE_ID_PATTERN = Pattern.compile("t_([0-9]+)$");
     public static final String DID_COLUMN_NAME = "did";
     public static final String INDEX_COLUMN_NAME = "index";
 
@@ -74,10 +75,14 @@ public class SubDocTable extends TableImpl<SubDocTableRecord> {
     private final TableField<SubDocTableRecord, Integer> indexField
             = createField(INDEX_COLUMN_NAME, SQLDataType.INTEGER.nullable(true), this, "");
 
+    private final SQLWrapper sqlWrapper;
+
+    @Inject
     public SubDocTable(
             String tableName,
             CollectionSchema schema,
-            DatabaseMetaData metadata
+            DatabaseMetaData metadata,
+            SQLWrapper sqlWrapper
     ) {
         this(
                 tableName,
@@ -87,25 +92,35 @@ public class SubDocTable extends TableImpl<SubDocTableRecord> {
                         schema.getName(),
                         tableName,
                         metadata
-                )
+                ),
+                sqlWrapper
         );
     }
 
-    public SubDocTable(CollectionSchema schema, SubDocType type, int typeId) {
-        this(getSubDocTableName(typeId), schema, null, type);
+    @Inject
+    public SubDocTable(CollectionSchema schema, SubDocType type, int typeId, SQLWrapper sqlWrapper) {
+        this(getSubDocTableName(typeId), schema, null, type, sqlWrapper);
     }
 
-    private SubDocTable(String alias, Schema schema, Table<SubDocTableRecord> aliased, @Nonnull SubDocType type) {
-        this(alias, schema, aliased, null, type);
+    @Inject
+    private SubDocTable(
+            String alias, Schema schema, Table<SubDocTableRecord> aliased, @Nonnull SubDocType type,
+            SQLWrapper sqlWrapper
+    ) {
+        this(alias, schema, aliased, null, type, sqlWrapper);
     }
 
-    private SubDocTable(String alias, Schema schema, Table<SubDocTableRecord> aliased, Field<?>[] parameters, @Nonnull SubDocType type) {
+    @Inject
+    private SubDocTable(
+            String alias, Schema schema, Table<SubDocTableRecord> aliased, Field<?>[] parameters,
+            @Nonnull SubDocType type, SQLWrapper sqlWrapper
+    ) {
         super(alias, schema, aliased, parameters, "");
 
         this.erasuredType = type;
 
         for (SubDocAttribute attibute : type.getAttributes()) {
-            String fieldName = toColumnName(attibute.getKey());
+            String fieldName = new SubDocHelper(sqlWrapper).toColumnName(attibute.getKey());
 
             SubdocValueConverter converter
                     = ValueToJooqConverterProvider.getConverter(attibute.getType());
@@ -117,6 +132,7 @@ public class SubDocTable extends TableImpl<SubDocTableRecord> {
                     converter);
         }
 
+        this.sqlWrapper = sqlWrapper;
     }
 
     @SuppressFBWarnings("SIC_INNER_SHOULD_BE_STATIC_ANON")
@@ -185,7 +201,7 @@ public class SubDocTable extends TableImpl<SubDocTableRecord> {
                         intColumnType,
                         stringColumnType
                 );
-                String attName = toAttributeName(columnName);
+                String attName = SubDocHelper.toAttributeName(columnName);
 
                 builder.add(new SubDocAttribute(attName, basicType));
             }
@@ -230,32 +246,6 @@ public class SubDocTable extends TableImpl<SubDocTableRecord> {
                 || columnName.equals(INDEX_COLUMN_NAME);
     }
 
-    public static String toColumnName(String attName) {
-        Matcher matcher = LIKE_DID_PATTERN.matcher(attName);
-        if (matcher.find()) {
-            return "_" + attName;
-        }
-        matcher = LIKE_INDEX_PATTERN.matcher(attName);
-        if (matcher.find()) {
-            return "_" + attName;
-        }
-
-        return IdsFilter.escapeAttributeName(attName);
-    }
-
-    public static String toAttributeName(String fieldName) {
-        Matcher matcher = LIKE_DID_PATTERN.matcher(fieldName);
-        if (matcher.find()) {
-            return fieldName.substring(1);
-        }
-        matcher = LIKE_INDEX_PATTERN.matcher(fieldName);
-        if (matcher.find()) {
-            return fieldName.substring(1);
-        }
-
-        return fieldName;
-    }
-
     /**
      * The class holding records for this type
      * <p>
@@ -289,7 +279,7 @@ public class SubDocTable extends TableImpl<SubDocTableRecord> {
      */
     @Override
     public SubDocTable as(String alias) {
-        return new SubDocTable(alias, getSchema(), this, getSubDocType());
+        return new SubDocTable(alias, getSchema(), this, getSubDocType(), sqlWrapper);
     }
 
     /**
@@ -299,7 +289,7 @@ public class SubDocTable extends TableImpl<SubDocTableRecord> {
      * @return
      */
     public SubDocTable rename(String name) {
-        return new SubDocTable(name, getSchema(), null, getSubDocType());
+        return new SubDocTable(name, getSchema(), null, getSubDocType(), sqlWrapper);
     }
 
     @Override
@@ -317,5 +307,9 @@ public class SubDocTable extends TableImpl<SubDocTableRecord> {
         public static Identity<SubDocTableRecord, Integer> createIdentity(SubDocTable table) {
             return createIdentity(table, table.didField);
         }
+    }
+
+    public SubDocHelper subDocHelper() {
+        return new SubDocHelper(sqlWrapper);
     }
 }

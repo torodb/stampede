@@ -22,24 +22,24 @@ package com.torodb.torod.db.wrappers.postgresql.meta;
 import com.google.common.collect.Sets;
 import com.torodb.torod.core.exceptions.ToroRuntimeException;
 import com.torodb.torod.core.pojos.NamedToroIndex;
-import com.torodb.torod.db.wrappers.postgresql.IdsFilter;
 import com.torodb.torod.db.wrappers.postgresql.converters.jsonb.ToroIndexToJsonbConverter;
 import com.torodb.torod.db.wrappers.postgresql.meta.tables.SubDocTable;
 import com.torodb.torod.db.wrappers.sql.AutoCloser;
 import com.torodb.torod.db.wrappers.sql.index.NamedDbIndex;
 import com.torodb.torod.db.wrappers.sql.index.UnnamedDbIndex;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import java.io.Serializable;
-import java.sql.*;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import org.jooq.*;
 import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.Serializable;
+import java.sql.*;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  *
@@ -191,7 +191,7 @@ public class IndexStorage implements Serializable {
     @SuppressFBWarnings("SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE")
     public NamedDbIndex createIndex(DSLContext dsl, UnnamedDbIndex unnamedDbIndex) {
         String indexName = unnamedDbIndex.getTable() + '_' + unnamedDbIndex.getColumn();
-        indexName = IdsFilter.escapeIndexName(indexName);
+        indexName = colSchema.getSqlWrapper().escapeIndexName(indexName);
         
         ConnectionProvider connectionProvider
                 = dsl.configuration().connectionProvider();

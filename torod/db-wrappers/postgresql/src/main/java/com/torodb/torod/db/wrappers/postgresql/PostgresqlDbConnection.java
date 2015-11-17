@@ -24,13 +24,14 @@ import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.subdocument.BasicType;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.core.subdocument.structure.DocStructure;
+import com.torodb.torod.db.wrappers.SQLWrapper;
 import com.torodb.torod.db.wrappers.postgresql.converters.jooq.SubdocValueConverter;
 import com.torodb.torod.db.wrappers.postgresql.converters.jooq.ValueToJooqConverterProvider;
 import com.torodb.torod.db.wrappers.postgresql.meta.CollectionSchema;
 import com.torodb.torod.db.wrappers.postgresql.meta.StructuresCache;
 import com.torodb.torod.db.wrappers.postgresql.meta.TorodbMeta;
 import com.torodb.torod.db.wrappers.postgresql.meta.tables.SubDocTable;
-import com.torodb.torod.db.wrappers.sql.AbstractSqlDbConnection;
+import com.torodb.torod.db.wrappers.sql.AbstractDbConnection;
 import com.torodb.torod.db.wrappers.sql.AutoCloser;
 import com.torodb.torod.db.wrappers.sql.index.NamedDbIndex;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -48,7 +49,7 @@ import org.jooq.impl.SQLDataType;
 /**
  *
  */
-class PostgresqlDbConnection extends AbstractSqlDbConnection {
+class PostgresqlDbConnection extends AbstractDbConnection {
 
     static final String SUBDOC_TABLE_PK_COLUMN = "pk";
     static final String SUBDOC_TABLE_DOC_ID_COLUMN = "docId";
@@ -59,8 +60,10 @@ class PostgresqlDbConnection extends AbstractSqlDbConnection {
     @Inject
     public PostgresqlDbConnection(
             DSLContext dsl,
-            TorodbMeta meta) {
-        super(dsl, meta);
+            TorodbMeta meta,
+            SQLWrapper sqlWrapper
+    ) {
+        super(dsl, meta, sqlWrapper);
     }
 
     @Override

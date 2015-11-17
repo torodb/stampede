@@ -21,30 +21,37 @@
 
 package com.torodb.torod.db.wrappers.postgresql;
 
+import com.torodb.torod.db.wrappers.SQLWrapper;
+
+import javax.annotation.Nonnull;
+import javax.inject.Singleton;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
  *
  */
-public class IdsFilter {
-    
-    public static String escapeSchemaName(String collection) throws IllegalArgumentException {
-        filter(collection);
-        return collection;
-    }
-    
-    public static String escapeAttributeName(String attributeName) throws IllegalArgumentException {
-        filter(attributeName);
-        return attributeName;
+@Singleton
+public class PostgresqlSQLWrapper implements SQLWrapper {
+
+    private static final long serialVersionUID = 484638503;
+
+    @Override
+    public @Nonnull String escapeSchemaName(@Nonnull String collection) throws IllegalArgumentException {
+        return filter(collection);
     }
 
-    public static String escapeIndexName(String indexName) {
-        filter(indexName);
-        return indexName;
+    @Override
+    public @Nonnull String escapeAttributeName(@Nonnull String attributeName) throws IllegalArgumentException {
+        return filter(attributeName);
     }
-    
-    private static void filter(String str) {
+
+    @Override
+    public @Nonnull String escapeIndexName(@Nonnull String indexName) throws IllegalArgumentException {
+        return filter(indexName);
+    }
+
+    private static String filter(String str) {
         if (str.length() > 63) {
             throw new IllegalArgumentException(str + " is too long to be a "
                     + "valid PostgreSQL name. By default names must be shorter "
@@ -58,6 +65,8 @@ public class IdsFilter {
                         + "illegal because contains an open quote at " + matcher.start());
             }
         }
+
+        return str;
     }
-    
+
 }
