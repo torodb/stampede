@@ -23,6 +23,7 @@ package com.torodb.torod.db.wrappers.postgresql;
 
 import com.torodb.torod.db.wrappers.DatabaseInterface;
 import com.torodb.torod.db.wrappers.converters.BasicTypeToSqlType;
+import com.torodb.torod.db.wrappers.tables.CollectionsTable;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
@@ -81,5 +82,29 @@ public class PostgresqlDatabaseInterface implements DatabaseInterface {
     @Override
     public @Nonnull BasicTypeToSqlType getBasicTypeToSqlType() {
         return basicTypeToSqlType;
+    }
+
+    @Override
+    public @Nonnull String createCollectionsTableStatement(@Nonnull String schemaName, @Nonnull String tableName) {
+        return new StringBuilder()
+                .append("CREATE TABLE ")
+                .append("\"").append(schemaName).append("\"")
+                .append(".")
+                .append("\"").append(tableName).append("\"")
+                .append(" (")
+                .append(CollectionsTable.TableFields.NAME.name()).append("             varchar     PRIMARY KEY     ,")
+                .append(CollectionsTable.TableFields.SCHEMA.name()).append("           varchar     NOT NULL UNIQUE ,")
+                .append(CollectionsTable.TableFields.CAPPED.name()).append("           boolean     NOT NULL        ,")
+                .append(CollectionsTable.TableFields.MAX_SIZE.name()).append("         int         NOT NULL        ,")
+                .append(CollectionsTable.TableFields.MAX_ELEMENTS.name()).append("     int         NOT NULL        ,")
+                .append(CollectionsTable.TableFields.OTHER.name()).append("            jsonb                       ,")
+                .append(CollectionsTable.TableFields.STORAGE_ENGINE.name()).append("   varchar     NOT NULL        ")
+                .append(")")
+                .toString();
+    }
+
+    @Override
+    public @Nonnull String createSchemaStatement(@Nonnull String schemaName) {
+        return new StringBuilder().append("CREATE SCHEMA ").append("\"").append(schemaName).append("\"").toString();
     }
 }

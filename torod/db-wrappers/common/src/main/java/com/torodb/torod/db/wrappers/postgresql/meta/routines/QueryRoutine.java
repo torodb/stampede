@@ -27,7 +27,7 @@ import com.torodb.torod.core.language.projection.Projection;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.db.wrappers.converters.SplitDocumentConverter;
 import com.torodb.torod.db.wrappers.postgresql.meta.CollectionSchema;
-import com.torodb.torod.db.wrappers.postgresql.meta.tables.SubDocTable;
+import com.torodb.torod.db.wrappers.tables.SubDocTable;
 import java.sql.*;
 import java.util.Collection;
 import java.util.Collections;

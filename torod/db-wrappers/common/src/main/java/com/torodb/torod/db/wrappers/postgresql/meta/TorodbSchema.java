@@ -20,10 +20,18 @@
 package com.torodb.torod.db.wrappers.postgresql.meta;
 
 
+import com.torodb.torod.db.wrappers.DatabaseInterface;
 import com.torodb.torod.db.wrappers.exceptions.InvalidDatabaseException;
-import com.torodb.torod.db.wrappers.postgresql.meta.tables.CollectionsTable;
+import com.torodb.torod.db.wrappers.tables.CollectionsTable;
 import com.torodb.torod.db.wrappers.sql.AutoCloser;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.jooq.DSLContext;
+import org.jooq.Meta;
+import org.jooq.Schema;
+import org.jooq.Table;
+import org.jooq.impl.SchemaImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
@@ -32,52 +40,47 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.jooq.DSLContext;
-import org.jooq.Meta;
-import org.jooq.Schema;
-
-import org.jooq.Table;
-import org.jooq.impl.SchemaImpl;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 public class TorodbSchema extends SchemaImpl {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TorodbSchema.class);
 	private static final long serialVersionUID = -1813122131;
 
-	/**
-	 * The reference instance of <code>torodb</code>
-	 */
-	public static final TorodbSchema TORODB = new TorodbSchema();
+    private static final String TORODB_SCHEMA = "torodb";
 
-	/**
-	 * No further instances allowed
-	 */
+    /**
+     * The reference instance of <code>torodb</code>
+     */
+    public static final TorodbSchema TORODB = new TorodbSchema();
+
+    /**
+     * No further instances allowed
+     */
 	private TorodbSchema() {
-		super("torodb");
+		super(TORODB_SCHEMA);
 	}
 
     void checkOrCreate(
             DSLContext dsl, 
             Meta jooqMeta, 
-            DatabaseMetaData jdbcMeta) throws SQLException, InvalidDatabaseException {
+            DatabaseMetaData jdbcMeta,
+            DatabaseInterface databaseInterface
+    ) throws SQLException, InvalidDatabaseException {
         Schema torodbSchema = null;
         for (Schema schema : jooqMeta.getSchemas()) {
-            if (schema.getName().equals("torodb")) {
+            if (TORODB_SCHEMA.equals(schema.getName())) {
                 torodbSchema = schema;
                 break;
             }
         }
         if (torodbSchema == null) {
-            LOGGER.info("Schema 'torodb' not found. Creating it...");
-            createSchema(dsl);
-            LOGGER.info("Schema 'torodb' created");
+            LOGGER.info("Schema '{}' not found. Creating it...", TORODB_SCHEMA);
+            createSchema(dsl, databaseInterface);
+            LOGGER.info("Schema '{}' created", TORODB_SCHEMA);
         }
         else {
-            LOGGER.info("Schema 'torodb' found. Checking it...");
+            LOGGER.info("Schema '{}' found. Checking it...", TORODB_SCHEMA);
             checkSchema(torodbSchema);
-            LOGGER.info("Schema 'torodb' checked");
+            LOGGER.info("Schema '{}' checked", TORODB_SCHEMA);
         }
     }
 
@@ -92,17 +95,16 @@ public class TorodbSchema extends SchemaImpl {
 		return Arrays.<Table<?>>asList(CollectionsTable.COLLECTIONS);
 	}
 
-    @SuppressFBWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
-    private void createSchema(DSLContext dsl) throws SQLException {
+    private void createSchema(DSLContext dsl, DatabaseInterface databaseInterface) throws SQLException {
         Connection c = dsl.configuration().connectionProvider().acquire();
 
         PreparedStatement ps = null;
         try {
-            ps = c.prepareStatement("CREATE SCHEMA \"torodb\"");
+            ps = c.prepareStatement(databaseInterface.createSchemaStatement(TORODB_SCHEMA));
             ps.executeUpdate();
             AutoCloser.close(ps);
             
-            ps = c.prepareStatement(CollectionsTable.COLLECTIONS.getSQLCreationStatement(c));
+            ps = c.prepareStatement(CollectionsTable.COLLECTIONS.getSQLCreationStatement(databaseInterface));
             ps.execute();
         } finally {
             AutoCloser.close(ps);
@@ -126,7 +128,7 @@ public class TorodbSchema extends SchemaImpl {
             }
         }
         if (!collectionsTableFound) {
-            throw new InvalidDatabaseException("The schema torodb " 
+            throw new InvalidDatabaseException("The schema '" + TORODB_SCHEMA + "'"
                     + getName() + " does not contain the expected table '" 
                     + colsTableName +"'");
         }

@@ -20,8 +20,8 @@
 
 package com.torodb.torod.db.wrappers.converters;
 
-import com.torodb.torod.db.wrappers.postgresql.meta.tables.SubDocHelper;
-import com.torodb.torod.db.wrappers.postgresql.meta.tables.SubDocTable;
+import com.torodb.torod.db.wrappers.tables.SubDocHelper;
+import com.torodb.torod.db.wrappers.tables.SubDocTable;
 import com.torodb.torod.core.subdocument.SubDocAttribute;
 import com.torodb.torod.core.subdocument.SubDocType;
 import com.torodb.torod.core.subdocument.SubDocument;

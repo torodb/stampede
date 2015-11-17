@@ -18,14 +18,14 @@
  *     
  */
 
-package com.torodb.torod.db.wrappers.postgresql.meta.tables.records;
+package com.torodb.torod.db.wrappers.tables.records;
 
 import com.torodb.torod.core.subdocument.SubDocAttribute;
 import com.torodb.torod.core.subdocument.SubDocType;
 import com.torodb.torod.core.subdocument.SubDocument;
 import com.torodb.torod.core.subdocument.values.Value;
-import com.torodb.torod.db.wrappers.postgresql.meta.tables.SubDocHelper;
-import com.torodb.torod.db.wrappers.postgresql.meta.tables.SubDocTable;
+import com.torodb.torod.db.wrappers.tables.SubDocHelper;
+import com.torodb.torod.db.wrappers.tables.SubDocTable;
 import org.jooq.Field;
 import org.jooq.impl.TableRecordImpl;
 

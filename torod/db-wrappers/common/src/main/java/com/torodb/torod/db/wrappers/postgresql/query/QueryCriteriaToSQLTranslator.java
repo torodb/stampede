@@ -37,8 +37,8 @@ import com.torodb.torod.db.wrappers.converters.jooq.SubdocValueConverter;
 import com.torodb.torod.db.wrappers.converters.jooq.ValueToJooqConverterProvider;
 import com.torodb.torod.db.wrappers.converters.json.ValueToJsonConverterProvider;
 import com.torodb.torod.db.wrappers.postgresql.meta.CollectionSchema;
-import com.torodb.torod.db.wrappers.postgresql.meta.tables.SubDocHelper;
-import com.torodb.torod.db.wrappers.postgresql.meta.tables.SubDocTable;
+import com.torodb.torod.db.wrappers.tables.SubDocHelper;
+import com.torodb.torod.db.wrappers.tables.SubDocTable;
 import org.jooq.*;
 import org.jooq.impl.DSL;
 

@@ -23,7 +23,7 @@ import com.google.common.collect.Sets;
 import com.torodb.torod.core.exceptions.ToroRuntimeException;
 import com.torodb.torod.core.pojos.NamedToroIndex;
 import com.torodb.torod.db.wrappers.converters.json.ToroIndexToJsonConverter;
-import com.torodb.torod.db.wrappers.postgresql.meta.tables.SubDocTable;
+import com.torodb.torod.db.wrappers.tables.SubDocTable;
 import com.torodb.torod.db.wrappers.sql.AutoCloser;
 import com.torodb.torod.db.wrappers.sql.index.NamedDbIndex;
 import com.torodb.torod.db.wrappers.sql.index.UnnamedDbIndex;

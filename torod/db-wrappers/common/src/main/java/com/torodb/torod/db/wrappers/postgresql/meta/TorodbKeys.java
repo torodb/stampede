@@ -19,8 +19,8 @@
  */
 package com.torodb.torod.db.wrappers.postgresql.meta;
 
-import com.torodb.torod.db.wrappers.postgresql.meta.tables.CollectionsTable;
-import com.torodb.torod.db.wrappers.postgresql.meta.tables.records.CollectionsRecord;
+import com.torodb.torod.db.wrappers.tables.CollectionsTable;
+import com.torodb.torod.db.wrappers.tables.records.CollectionsRecord;
 import javax.annotation.Generated;
 
 import org.jooq.UniqueKey;

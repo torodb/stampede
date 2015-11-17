@@ -18,10 +18,10 @@
  *     
  */
 
-package com.torodb.torod.db.wrappers.postgresql.udt;
+package com.torodb.torod.db.wrappers.udt;
 
 import com.torodb.torod.db.wrappers.postgresql.meta.TorodbSchema;
-import com.torodb.torod.db.wrappers.postgresql.udt.records.TwelveBytesRecord;
+import com.torodb.torod.db.wrappers.udt.records.TwelveBytesRecord;
 
 import org.jooq.impl.UDTImpl;
 

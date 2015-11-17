@@ -18,7 +18,7 @@
  *     
  */
 
-package com.torodb.torod.db.wrappers.postgresql.meta.tables;
+package com.torodb.torod.db.wrappers.tables;
 
 import com.torodb.torod.db.wrappers.DatabaseInterface;
 

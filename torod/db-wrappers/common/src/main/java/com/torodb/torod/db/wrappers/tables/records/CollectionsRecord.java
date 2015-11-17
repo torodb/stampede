@@ -17,9 +17,9 @@
  *     Copyright (c) 2014, 8Kdata Technology
  *     
  */
-package com.torodb.torod.db.wrappers.postgresql.meta.tables.records;
+package com.torodb.torod.db.wrappers.tables.records;
 
-import com.torodb.torod.db.wrappers.postgresql.meta.tables.CollectionsTable;
+import com.torodb.torod.db.wrappers.tables.CollectionsTable;
 import org.jooq.*;
 import org.jooq.impl.UpdatableRecordImpl;
 

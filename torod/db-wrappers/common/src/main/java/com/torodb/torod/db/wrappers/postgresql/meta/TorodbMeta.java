@@ -26,8 +26,8 @@ import com.torodb.torod.core.exceptions.ToroImplementationException;
 import com.torodb.torod.db.wrappers.DatabaseInterface;
 import com.torodb.torod.db.wrappers.exceptions.InvalidCollectionSchemaException;
 import com.torodb.torod.db.wrappers.exceptions.InvalidDatabaseException;
-import com.torodb.torod.db.wrappers.postgresql.meta.tables.CollectionsTable;
-import com.torodb.torod.db.wrappers.postgresql.meta.tables.records.CollectionsRecord;
+import com.torodb.torod.db.wrappers.tables.CollectionsTable;
+import com.torodb.torod.db.wrappers.tables.records.CollectionsRecord;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.jooq.DSLContext;
 import org.jooq.Meta;
@@ -72,7 +72,7 @@ public class TorodbMeta {
         //only system executor thread can update this map
         collectionSchemes = new MapMaker().concurrencyLevel(1).makeMap();
 
-        TorodbSchema.TORODB.checkOrCreate(dsl, jooqMeta, jdbcMeta);
+        TorodbSchema.TORODB.checkOrCreate(dsl, jooqMeta, jdbcMeta, databaseInterface);
         loadAllCollectionSchemas(dsl, jooqMeta, jdbcMeta);
         
         createTypes(conn, jdbcMeta);

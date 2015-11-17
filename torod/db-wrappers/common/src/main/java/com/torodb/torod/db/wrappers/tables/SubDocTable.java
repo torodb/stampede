@@ -18,7 +18,7 @@
  *     
  */
 
-package com.torodb.torod.db.wrappers.postgresql.meta.tables;
+package com.torodb.torod.db.wrappers.tables;
 
 import com.google.common.collect.AbstractIterator;
 import com.torodb.torod.core.exceptions.ToroImplementationException;
@@ -30,7 +30,7 @@ import com.torodb.torod.db.wrappers.DatabaseInterface;
 import com.torodb.torod.db.wrappers.converters.jooq.SubdocValueConverter;
 import com.torodb.torod.db.wrappers.converters.jooq.ValueToJooqConverterProvider;
 import com.torodb.torod.db.wrappers.postgresql.meta.CollectionSchema;
-import com.torodb.torod.db.wrappers.postgresql.meta.tables.records.SubDocTableRecord;
+import com.torodb.torod.db.wrappers.tables.records.SubDocTableRecord;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.jooq.*;
 import org.jooq.impl.AbstractKeys;

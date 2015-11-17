@@ -27,7 +27,7 @@ import com.torodb.torod.core.subdocument.structure.DocStructure;
 import com.torodb.torod.core.subdocument.structure.StructureElement;
 import com.torodb.torod.core.subdocument.structure.StructureElementVisitor;
 import com.torodb.torod.db.wrappers.postgresql.meta.CollectionSchema;
-import com.torodb.torod.db.wrappers.postgresql.meta.tables.SubDocTable;
+import com.torodb.torod.db.wrappers.tables.SubDocTable;
 import com.torodb.torod.db.wrappers.sql.AutoCloser;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.sql.*;

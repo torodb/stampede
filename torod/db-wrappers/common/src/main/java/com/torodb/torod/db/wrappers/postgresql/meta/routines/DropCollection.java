@@ -3,7 +3,7 @@ package com.torodb.torod.db.wrappers.postgresql.meta.routines;
 
 import com.torodb.torod.core.exceptions.ToroImplementationException;
 import com.torodb.torod.db.wrappers.postgresql.meta.CollectionSchema;
-import com.torodb.torod.db.wrappers.postgresql.meta.tables.CollectionsTable;
+import com.torodb.torod.db.wrappers.tables.CollectionsTable;
 import com.torodb.torod.db.wrappers.sql.AutoCloser;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.sql.*;

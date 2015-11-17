@@ -36,4 +36,7 @@ public interface DatabaseInterface extends Serializable {
 
     @Nonnull BasicTypeToSqlType getBasicTypeToSqlType();
 
+    @Nonnull String createSchemaStatement(@Nonnull String schemaName);
+    @Nonnull String createCollectionsTableStatement(@Nonnull String schemaName, @Nonnull String tableName);
+
 }
