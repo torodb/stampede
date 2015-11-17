@@ -18,22 +18,36 @@
  *     
  */
 
-package com.torodb.torod.db.wrappers;
+package com.torodb.torod.db.wrappers.converters.json;
 
-import com.torodb.torod.db.wrappers.converters.BasicTypeToSqlType;
-
-import javax.annotation.Nonnull;
-import java.io.Serializable;
+import com.torodb.torod.db.wrappers.converters.ValueConverter;
+import com.torodb.torod.core.subdocument.values.TimeValue;
+import org.threeten.bp.LocalTime;
 
 /**
- * Wrapper interface to define all database-specific SQL code
+ *
  */
-public interface SQLWrapper extends Serializable {
+public class TimeValueToJsonConverter implements
+        ValueConverter<String, TimeValue> {
 
-    @Nonnull String escapeSchemaName(@Nonnull String collection) throws IllegalArgumentException;
-    @Nonnull String escapeAttributeName(@Nonnull String attributeName) throws IllegalArgumentException;
-    @Nonnull String escapeIndexName(@Nonnull String indexName) throws IllegalArgumentException;
+    @Override
+    public Class<? extends String> getJsonClass() {
+        return String.class;
+    }
 
-    @Nonnull BasicTypeToSqlType getBasicTypeToSqlType();
+    @Override
+    public Class<? extends TimeValue> getValueClass() {
+        return TimeValue.class;
+    }
 
+    @Override
+    public String toJson(TimeValue value) {
+        return value.getValue().toString();
+    }
+
+    @Override
+    public TimeValue toValue(String value) {
+        return new TimeValue(LocalTime.parse(value));
+    }
+    
 }

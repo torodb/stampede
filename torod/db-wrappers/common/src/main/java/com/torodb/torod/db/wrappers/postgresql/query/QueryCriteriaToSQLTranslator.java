@@ -31,11 +31,11 @@ import com.torodb.torod.core.subdocument.structure.DocStructure;
 import com.torodb.torod.core.subdocument.values.ArrayValue;
 import com.torodb.torod.core.subdocument.values.Value;
 import com.torodb.torod.db.wrappers.SQLWrapper;
-import com.torodb.torod.db.wrappers.postgresql.converters.PatternConverter;
-import com.torodb.torod.db.wrappers.postgresql.converters.ValueConverter;
-import com.torodb.torod.db.wrappers.postgresql.converters.jooq.SubdocValueConverter;
-import com.torodb.torod.db.wrappers.postgresql.converters.jooq.ValueToJooqConverterProvider;
-import com.torodb.torod.db.wrappers.postgresql.converters.jsonb.ValueToJsonbConverterProvider;
+import com.torodb.torod.db.wrappers.converters.PatternConverter;
+import com.torodb.torod.db.wrappers.converters.ValueConverter;
+import com.torodb.torod.db.wrappers.converters.jooq.SubdocValueConverter;
+import com.torodb.torod.db.wrappers.converters.jooq.ValueToJooqConverterProvider;
+import com.torodb.torod.db.wrappers.converters.json.ValueToJsonConverterProvider;
 import com.torodb.torod.db.wrappers.postgresql.meta.CollectionSchema;
 import com.torodb.torod.db.wrappers.postgresql.meta.tables.SubDocHelper;
 import com.torodb.torod.db.wrappers.postgresql.meta.tables.SubDocTable;
@@ -694,7 +694,7 @@ public class QueryCriteriaToSQLTranslator {
 
         private String translateValueToJsonb(Value value) {
             ValueConverter converter
-                    = ValueToJsonbConverterProvider.getInstance()
+                    = ValueToJsonConverterProvider.getInstance()
                             .getConverter(value.getType());
             
             Object translatedObject = converter.toJson(value);

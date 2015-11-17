@@ -26,7 +26,7 @@ import com.google.common.collect.Maps;
 import com.torodb.torod.core.subdocument.SubDocType;
 import com.torodb.torod.db.wrappers.SQLWrapper;
 import com.torodb.torod.db.wrappers.exceptions.InvalidCollectionSchemaException;
-import com.torodb.torod.db.wrappers.postgresql.converters.StructureConverter;
+import com.torodb.torod.db.wrappers.converters.StructureConverter;
 import com.torodb.torod.db.wrappers.postgresql.meta.tables.SubDocTable;
 import com.torodb.torod.db.wrappers.sql.index.IndexManager;
 import org.jooq.*;

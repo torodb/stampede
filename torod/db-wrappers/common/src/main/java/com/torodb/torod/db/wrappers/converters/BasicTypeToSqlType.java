@@ -18,22 +18,17 @@
  *     
  */
 
-package com.torodb.torod.db.wrappers;
 
-import com.torodb.torod.db.wrappers.converters.BasicTypeToSqlType;
+package com.torodb.torod.db.wrappers.converters;
 
-import javax.annotation.Nonnull;
-import java.io.Serializable;
+import com.torodb.torod.core.exceptions.ToroImplementationException;
+import com.torodb.torod.core.subdocument.BasicType;
 
 /**
- * Wrapper interface to define all database-specific SQL code
+ *
  */
-public interface SQLWrapper extends Serializable {
+public interface BasicTypeToSqlType {
 
-    @Nonnull String escapeSchemaName(@Nonnull String collection) throws IllegalArgumentException;
-    @Nonnull String escapeAttributeName(@Nonnull String attributeName) throws IllegalArgumentException;
-    @Nonnull String escapeIndexName(@Nonnull String indexName) throws IllegalArgumentException;
+    BasicType toBasicType(String columnName, int jdbcIntType, String jdbcStringType) throws ToroImplementationException;
 
-    @Nonnull BasicTypeToSqlType getBasicTypeToSqlType();
-
-}
+ }

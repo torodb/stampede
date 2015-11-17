@@ -25,7 +25,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Table;
 import com.torodb.torod.core.language.projection.Projection;
 import com.torodb.torod.core.subdocument.SplitDocument;
-import com.torodb.torod.db.wrappers.postgresql.converters.SplitDocumentConverter;
+import com.torodb.torod.db.wrappers.converters.SplitDocumentConverter;
 import com.torodb.torod.db.wrappers.postgresql.meta.CollectionSchema;
 import com.torodb.torod.db.wrappers.postgresql.meta.tables.SubDocTable;
 import java.sql.*;

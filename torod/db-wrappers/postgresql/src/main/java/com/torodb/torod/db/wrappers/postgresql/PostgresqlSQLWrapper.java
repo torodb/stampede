@@ -22,8 +22,10 @@
 package com.torodb.torod.db.wrappers.postgresql;
 
 import com.torodb.torod.db.wrappers.SQLWrapper;
+import com.torodb.torod.db.wrappers.converters.BasicTypeToSqlType;
 
 import javax.annotation.Nonnull;
+import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -35,6 +37,13 @@ import java.util.regex.Pattern;
 public class PostgresqlSQLWrapper implements SQLWrapper {
 
     private static final long serialVersionUID = 484638503;
+
+    private final BasicTypeToSqlType basicTypeToSqlType;
+
+    @Inject
+    public PostgresqlSQLWrapper(BasicTypeToSqlType basicTypeToSqlType) {
+        this.basicTypeToSqlType = basicTypeToSqlType;
+    }
 
     @Override
     public @Nonnull String escapeSchemaName(@Nonnull String collection) throws IllegalArgumentException {
@@ -69,4 +78,8 @@ public class PostgresqlSQLWrapper implements SQLWrapper {
         return str;
     }
 
+    @Override
+    public @Nonnull BasicTypeToSqlType getBasicTypeToSqlType() {
+        return basicTypeToSqlType;
+    }
 }

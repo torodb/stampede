@@ -18,22 +18,24 @@
  *     
  */
 
-package com.torodb.torod.db.wrappers;
 
-import com.torodb.torod.db.wrappers.converters.BasicTypeToSqlType;
+package com.torodb.torod.db.wrappers.converters.jooq;
 
-import javax.annotation.Nonnull;
-import java.io.Serializable;
+import com.torodb.torod.core.subdocument.BasicType;
+import com.torodb.torod.core.subdocument.values.Value;
+import org.jooq.Converter;
+import org.jooq.DataType;
 
 /**
- * Wrapper interface to define all database-specific SQL code
+ *
+ * @param <DBT> data base type
+ * @param <JT> java type
+ * @param <V> a value of the given Java type
  */
-public interface SQLWrapper extends Serializable {
+public abstract interface SubdocValueConverter<DBT, V extends Value<?>> extends Converter<DBT, V> {
+    
+    public abstract DataType<DBT> getDataType();
 
-    @Nonnull String escapeSchemaName(@Nonnull String collection) throws IllegalArgumentException;
-    @Nonnull String escapeAttributeName(@Nonnull String attributeName) throws IllegalArgumentException;
-    @Nonnull String escapeIndexName(@Nonnull String indexName) throws IllegalArgumentException;
-
-    @Nonnull BasicTypeToSqlType getBasicTypeToSqlType();
-
+    public abstract BasicType getErasuredType();
+    
 }

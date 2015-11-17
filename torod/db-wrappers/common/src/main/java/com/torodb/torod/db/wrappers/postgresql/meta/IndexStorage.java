@@ -22,7 +22,7 @@ package com.torodb.torod.db.wrappers.postgresql.meta;
 import com.google.common.collect.Sets;
 import com.torodb.torod.core.exceptions.ToroRuntimeException;
 import com.torodb.torod.core.pojos.NamedToroIndex;
-import com.torodb.torod.db.wrappers.postgresql.converters.jsonb.ToroIndexToJsonbConverter;
+import com.torodb.torod.db.wrappers.converters.json.ToroIndexToJsonConverter;
 import com.torodb.torod.db.wrappers.postgresql.meta.tables.SubDocTable;
 import com.torodb.torod.db.wrappers.sql.AutoCloser;
 import com.torodb.torod.db.wrappers.sql.index.NamedDbIndex;
@@ -48,14 +48,14 @@ public class IndexStorage implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private final ToroIndexTable toroIndexTable;
-    private final ToroIndexToJsonbConverter indexToJsonConverter;
+    private final ToroIndexToJsonConverter indexToJsonConverter;
     private final CollectionSchema colSchema;
     
     private static final Logger LOGGER
             = LoggerFactory.getLogger(IndexStorage.class);
     
     public IndexStorage(String databaseName, CollectionSchema colSchema) {
-        this.indexToJsonConverter = new ToroIndexToJsonbConverter(
+        this.indexToJsonConverter = new ToroIndexToJsonConverter(
                 databaseName,
                 colSchema.getCollection()
         );
@@ -232,7 +232,7 @@ public class IndexStorage implements Serializable {
         final TableField<Record2<String, NamedToroIndex>, String> nameColumn;
         final TableField<Record2<String, NamedToroIndex>, NamedToroIndex> indexColumn;
 
-        public ToroIndexTable(CollectionSchema colSchema, ToroIndexToJsonbConverter indexToJsonConverter) {
+        public ToroIndexTable(CollectionSchema colSchema, ToroIndexToJsonConverter indexToJsonConverter) {
             super("indexes", colSchema);
             nameColumn = createField("name", SQLDataType.VARCHAR, this);
             indexColumn = createField("index", SQLDataType.VARCHAR, this, "", indexToJsonConverter);

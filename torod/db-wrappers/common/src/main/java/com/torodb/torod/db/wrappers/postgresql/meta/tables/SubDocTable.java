@@ -27,9 +27,8 @@ import com.torodb.torod.core.subdocument.SubDocAttribute;
 import com.torodb.torod.core.subdocument.SubDocType;
 import com.torodb.torod.core.subdocument.values.Value;
 import com.torodb.torod.db.wrappers.SQLWrapper;
-import com.torodb.torod.db.wrappers.postgresql.converters.BasicTypeToSqlType;
-import com.torodb.torod.db.wrappers.postgresql.converters.jooq.SubdocValueConverter;
-import com.torodb.torod.db.wrappers.postgresql.converters.jooq.ValueToJooqConverterProvider;
+import com.torodb.torod.db.wrappers.converters.jooq.SubdocValueConverter;
+import com.torodb.torod.db.wrappers.converters.jooq.ValueToJooqConverterProvider;
 import com.torodb.torod.db.wrappers.postgresql.meta.CollectionSchema;
 import com.torodb.torod.db.wrappers.postgresql.meta.tables.records.SubDocTableRecord;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -91,7 +90,8 @@ public class SubDocTable extends TableImpl<SubDocTableRecord> {
                 extractSimpleType(
                         schema.getName(),
                         tableName,
-                        metadata
+                        metadata,
+                        sqlWrapper
                 ),
                 sqlWrapper
         );
@@ -180,7 +180,8 @@ public class SubDocTable extends TableImpl<SubDocTableRecord> {
     private static SubDocType extractSimpleType(
             String schemaName,
             String tableName,
-            DatabaseMetaData metadata
+            DatabaseMetaData metadata,
+            SQLWrapper sqlWrapper
     ) {
         try {
             SubDocType.Builder builder = new SubDocType.Builder();
@@ -196,7 +197,7 @@ public class SubDocTable extends TableImpl<SubDocTableRecord> {
                 int intColumnType = columns.getInt("DATA_TYPE");
                 String stringColumnType = columns.getString("TYPE_NAME");
 
-                BasicType basicType = BasicTypeToSqlType.getInstance().toBasicType(
+                BasicType basicType = sqlWrapper.getBasicTypeToSqlType().toBasicType(
                         columnName,
                         intColumnType,
                         stringColumnType

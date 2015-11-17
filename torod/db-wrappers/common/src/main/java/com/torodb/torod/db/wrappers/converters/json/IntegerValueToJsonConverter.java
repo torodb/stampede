@@ -18,22 +18,35 @@
  *     
  */
 
-package com.torodb.torod.db.wrappers;
+package com.torodb.torod.db.wrappers.converters.json;
 
-import com.torodb.torod.db.wrappers.converters.BasicTypeToSqlType;
-
-import javax.annotation.Nonnull;
-import java.io.Serializable;
+import com.torodb.torod.db.wrappers.converters.ValueConverter;
+import com.torodb.torod.core.subdocument.values.IntegerValue;
 
 /**
- * Wrapper interface to define all database-specific SQL code
+ *
  */
-public interface SQLWrapper extends Serializable {
+public class IntegerValueToJsonConverter implements
+        ValueConverter<Number, IntegerValue> {
 
-    @Nonnull String escapeSchemaName(@Nonnull String collection) throws IllegalArgumentException;
-    @Nonnull String escapeAttributeName(@Nonnull String attributeName) throws IllegalArgumentException;
-    @Nonnull String escapeIndexName(@Nonnull String indexName) throws IllegalArgumentException;
+    @Override
+    public Class<? extends Number> getJsonClass() {
+        return Integer.class;
+    }
 
-    @Nonnull BasicTypeToSqlType getBasicTypeToSqlType();
+    @Override
+    public Class<? extends IntegerValue> getValueClass() {
+        return IntegerValue.class;
+    }
 
+    @Override
+    public Number toJson(IntegerValue value) {
+        return value.getValue();
+    }
+
+    @Override
+    public IntegerValue toValue(Number value) {
+        return new IntegerValue(value.intValue());
+    }
+    
 }

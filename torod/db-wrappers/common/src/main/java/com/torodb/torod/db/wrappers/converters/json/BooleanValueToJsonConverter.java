@@ -18,22 +18,35 @@
  *     
  */
 
-package com.torodb.torod.db.wrappers;
+package com.torodb.torod.db.wrappers.converters.json;
 
-import com.torodb.torod.db.wrappers.converters.BasicTypeToSqlType;
-
-import javax.annotation.Nonnull;
-import java.io.Serializable;
+import com.torodb.torod.db.wrappers.converters.ValueConverter;
+import com.torodb.torod.core.subdocument.values.BooleanValue;
 
 /**
- * Wrapper interface to define all database-specific SQL code
+ *
  */
-public interface SQLWrapper extends Serializable {
+public class BooleanValueToJsonConverter implements
+        ValueConverter<Boolean, BooleanValue> {
 
-    @Nonnull String escapeSchemaName(@Nonnull String collection) throws IllegalArgumentException;
-    @Nonnull String escapeAttributeName(@Nonnull String attributeName) throws IllegalArgumentException;
-    @Nonnull String escapeIndexName(@Nonnull String indexName) throws IllegalArgumentException;
+    @Override
+    public Class<? extends Boolean> getJsonClass() {
+        return Boolean.class;
+    }
 
-    @Nonnull BasicTypeToSqlType getBasicTypeToSqlType();
+    @Override
+    public Class<? extends BooleanValue> getValueClass() {
+        return BooleanValue.class;
+    }
 
+    @Override
+    public Boolean toJson(BooleanValue value) {
+        return value.getValue();
+    }
+
+    @Override
+    public BooleanValue toValue(Boolean value) {
+        return BooleanValue.from(value);
+    }
+    
 }

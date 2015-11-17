@@ -18,22 +18,35 @@
  *     
  */
 
-package com.torodb.torod.db.wrappers;
+package com.torodb.torod.db.wrappers.converters.json;
 
-import com.torodb.torod.db.wrappers.converters.BasicTypeToSqlType;
-
-import javax.annotation.Nonnull;
-import java.io.Serializable;
+import com.torodb.torod.db.wrappers.converters.ValueConverter;
+import com.torodb.torod.core.subdocument.values.NullValue;
 
 /**
- * Wrapper interface to define all database-specific SQL code
+ *
  */
-public interface SQLWrapper extends Serializable {
+public class NullValueToJsonConverter implements
+        ValueConverter<Void, NullValue> {
 
-    @Nonnull String escapeSchemaName(@Nonnull String collection) throws IllegalArgumentException;
-    @Nonnull String escapeAttributeName(@Nonnull String attributeName) throws IllegalArgumentException;
-    @Nonnull String escapeIndexName(@Nonnull String indexName) throws IllegalArgumentException;
+    @Override
+    public Class<? extends Void> getJsonClass() {
+        return Void.class;
+    }
 
-    @Nonnull BasicTypeToSqlType getBasicTypeToSqlType();
+    @Override
+    public Class<? extends NullValue> getValueClass() {
+        return NullValue.class;
+    }
 
+    @Override
+    public Void toJson(NullValue value) {
+        return null;
+    }
+
+    @Override
+    public NullValue toValue(Void value) {
+        return NullValue.INSTANCE;
+    }
+    
 }
