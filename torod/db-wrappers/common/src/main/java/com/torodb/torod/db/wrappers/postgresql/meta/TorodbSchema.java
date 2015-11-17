@@ -22,8 +22,9 @@ package com.torodb.torod.db.wrappers.postgresql.meta;
 
 import com.torodb.torod.db.wrappers.DatabaseInterface;
 import com.torodb.torod.db.wrappers.exceptions.InvalidDatabaseException;
-import com.torodb.torod.db.wrappers.tables.CollectionsTable;
 import com.torodb.torod.db.wrappers.sql.AutoCloser;
+import com.torodb.torod.db.wrappers.tables.CollectionsTable;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.jooq.DSLContext;
 import org.jooq.Meta;
 import org.jooq.Schema;
@@ -95,6 +96,7 @@ public class TorodbSchema extends SchemaImpl {
 		return Arrays.<Table<?>>asList(CollectionsTable.COLLECTIONS);
 	}
 
+    @SuppressFBWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
     private void createSchema(DSLContext dsl, DatabaseInterface databaseInterface) throws SQLException {
         Connection c = dsl.configuration().connectionProvider().acquire();
 
