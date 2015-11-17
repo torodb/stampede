@@ -63,6 +63,8 @@ public class TorodbMeta {
             SQLWrapper sqlWrapper
     ) throws SQLException, IOException, InvalidDatabaseException {
         this.databaseName = databaseName;
+        this.sqlWrapper = sqlWrapper;
+
         Meta jooqMeta = dsl.meta();
         Connection conn = dsl.configuration().connectionProvider().acquire();
         DatabaseMetaData jdbcMeta = conn.getMetaData();
@@ -78,8 +80,6 @@ public class TorodbMeta {
         createCast(conn, jdbcMeta);
 
         dsl.configuration().connectionProvider().release(conn);
-
-        this.sqlWrapper = sqlWrapper;
     }
     
     private void loadAllCollectionSchemas(
