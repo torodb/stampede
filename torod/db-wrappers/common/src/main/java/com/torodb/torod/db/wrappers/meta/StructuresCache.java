@@ -18,22 +18,24 @@
  *     
  */
 
-package com.torodb.torod.db.wrappers.postgresql.meta;
+package com.torodb.torod.db.wrappers.meta;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.ImmutableBiMap;
 import com.torodb.torod.core.subdocument.structure.DocStructure;
 import com.torodb.torod.db.wrappers.converters.StructureConverter;
+import com.torodb.torod.db.wrappers.postgresql.meta.CollectionSchema;
+import org.jooq.*;
+import org.jooq.impl.DSL;
+import org.jooq.impl.SQLDataType;
+
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Logger;
-import javax.annotation.Nullable;
-import org.jooq.*;
-import org.jooq.impl.DSL;
-import org.jooq.impl.SQLDataType;
 
 /**
  *

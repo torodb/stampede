@@ -16,7 +16,7 @@ import com.torodb.torod.core.subdocument.structure.ArrayStructure;
 import com.torodb.torod.core.subdocument.structure.DocStructure;
 import com.torodb.torod.core.subdocument.structure.StructureElement;
 import com.torodb.torod.db.wrappers.postgresql.meta.CollectionSchema;
-import com.torodb.torod.db.wrappers.postgresql.meta.StructuresCache;
+import com.torodb.torod.db.wrappers.meta.StructuresCache;
 import com.torodb.torod.db.wrappers.postgresql.meta.TorodbMeta;
 import com.torodb.torod.db.wrappers.tables.SubDocTable;
 import java.io.Serializable;

@@ -23,7 +23,7 @@ package com.torodb.torod.db.wrappers.postgresql.query;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
 import com.torodb.torod.core.subdocument.structure.DocStructure;
-import com.torodb.torod.db.wrappers.postgresql.meta.StructuresCache;
+import com.torodb.torod.db.wrappers.meta.StructuresCache;
 
 import java.util.Collection;
 

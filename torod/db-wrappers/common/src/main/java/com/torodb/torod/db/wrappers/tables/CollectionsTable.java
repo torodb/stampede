@@ -20,7 +20,7 @@
 package com.torodb.torod.db.wrappers.tables;
 
 import com.torodb.torod.db.wrappers.DatabaseInterface;
-import com.torodb.torod.db.wrappers.postgresql.meta.TorodbKeys;
+import com.torodb.torod.db.wrappers.meta.TorodbKeys;
 import com.torodb.torod.db.wrappers.postgresql.meta.TorodbSchema;
 import com.torodb.torod.db.wrappers.tables.records.CollectionsRecord;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;

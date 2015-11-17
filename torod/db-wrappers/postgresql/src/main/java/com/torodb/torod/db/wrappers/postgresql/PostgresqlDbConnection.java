@@ -28,7 +28,7 @@ import com.torodb.torod.db.wrappers.DatabaseInterface;
 import com.torodb.torod.db.wrappers.converters.jooq.SubdocValueConverter;
 import com.torodb.torod.db.wrappers.converters.jooq.ValueToJooqConverterProvider;
 import com.torodb.torod.db.wrappers.postgresql.meta.CollectionSchema;
-import com.torodb.torod.db.wrappers.postgresql.meta.StructuresCache;
+import com.torodb.torod.db.wrappers.meta.StructuresCache;
 import com.torodb.torod.db.wrappers.postgresql.meta.TorodbMeta;
 import com.torodb.torod.db.wrappers.tables.SubDocTable;
 import com.torodb.torod.db.wrappers.sql.AbstractDbConnection;

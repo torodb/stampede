@@ -18,7 +18,7 @@
  *     
  */
 
-package com.torodb.torod.db.wrappers.postgresql.meta;
+package com.torodb.torod.db.wrappers.meta;
 
 
 /**

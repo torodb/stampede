@@ -36,7 +36,7 @@ import com.torodb.torod.core.subdocument.*;
 import com.torodb.torod.core.subdocument.structure.ArrayStructure;
 import com.torodb.torod.core.subdocument.structure.DocStructure;
 import com.torodb.torod.core.subdocument.values.IntegerValue;
-import com.torodb.torod.db.wrappers.postgresql.meta.StructuresCache;
+import com.torodb.torod.db.wrappers.meta.StructuresCache;
 import com.torodb.torod.db.wrappers.postgresql.query.processors.ProcessorTestUtils;
 import com.torodb.kvdocument.converter.json.JsonValueConverter;
 import java.io.StringReader;
