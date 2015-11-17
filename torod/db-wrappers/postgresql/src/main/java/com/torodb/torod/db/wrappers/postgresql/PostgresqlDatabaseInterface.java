@@ -21,7 +21,7 @@
 
 package com.torodb.torod.db.wrappers.postgresql;
 
-import com.torodb.torod.db.wrappers.SQLWrapper;
+import com.torodb.torod.db.wrappers.DatabaseInterface;
 import com.torodb.torod.db.wrappers.converters.BasicTypeToSqlType;
 
 import javax.annotation.Nonnull;
@@ -34,14 +34,14 @@ import java.util.regex.Pattern;
  *
  */
 @Singleton
-public class PostgresqlSQLWrapper implements SQLWrapper {
+public class PostgresqlDatabaseInterface implements DatabaseInterface {
 
     private static final long serialVersionUID = 484638503;
 
     private final BasicTypeToSqlType basicTypeToSqlType;
 
     @Inject
-    public PostgresqlSQLWrapper(BasicTypeToSqlType basicTypeToSqlType) {
+    public PostgresqlDatabaseInterface(BasicTypeToSqlType basicTypeToSqlType) {
         this.basicTypeToSqlType = basicTypeToSqlType;
     }
 

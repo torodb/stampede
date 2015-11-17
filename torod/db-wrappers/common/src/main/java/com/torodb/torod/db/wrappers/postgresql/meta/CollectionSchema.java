@@ -24,7 +24,7 @@ import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Maps;
 import com.torodb.torod.core.subdocument.SubDocType;
-import com.torodb.torod.db.wrappers.SQLWrapper;
+import com.torodb.torod.db.wrappers.DatabaseInterface;
 import com.torodb.torod.db.wrappers.exceptions.InvalidCollectionSchemaException;
 import com.torodb.torod.db.wrappers.converters.StructureConverter;
 import com.torodb.torod.db.wrappers.postgresql.meta.tables.SubDocTable;
@@ -54,14 +54,14 @@ public final class CollectionSchema extends SchemaImpl {
     private final StructuresCache structuresCache;
     private final IndexStorage indexStorage;
     private final IndexManager indexManager;
-    private final SQLWrapper sqlWrapper;
+    private final DatabaseInterface databaseInterface;
 
     CollectionSchema(
             @Nonnull String schemName, 
             @Nonnull String colName, 
             @Nonnull DSLContext dsl, 
             @Nonnull TorodbMeta torodbMeta,
-            SQLWrapper sqlWrapper
+            DatabaseInterface databaseInterface
     ) throws InvalidCollectionSchemaException {
         this(
                 schemName,
@@ -70,7 +70,7 @@ public final class CollectionSchema extends SchemaImpl {
                 null,
                 null,
                 torodbMeta,
-                sqlWrapper
+                databaseInterface
         );
     }
     
@@ -81,7 +81,7 @@ public final class CollectionSchema extends SchemaImpl {
             @Nullable DatabaseMetaData jdbcMeta, 
             @Nullable Meta jooqMeta, 
             @Nonnull TorodbMeta torodbMeta,
-            SQLWrapper sqlWrapper
+            DatabaseInterface databaseInterface
     ) throws InvalidCollectionSchemaException {
         super(schemaName);
         
@@ -115,7 +115,7 @@ public final class CollectionSchema extends SchemaImpl {
                             table.getName(), 
                             this, 
                             jdbcMeta,
-                            sqlWrapper
+                            databaseInterface
                     );
                     int subDocId = subDocTable.getTypeId();
                     SubDocType type = subDocTable.getSubDocType();
@@ -148,7 +148,7 @@ public final class CollectionSchema extends SchemaImpl {
                 structuresCache
         );
 
-        this.sqlWrapper = sqlWrapper;
+        this.databaseInterface = databaseInterface;
     }
     
     public IndexManager getIndexManager() {
@@ -234,7 +234,7 @@ public final class CollectionSchema extends SchemaImpl {
         int typeId = typeIdProvider.incrementAndGet();
         typesById.put(typeId, type);
 
-        SubDocTable table = new SubDocTable(this, type, typeId, sqlWrapper);
+        SubDocTable table = new SubDocTable(this, type, typeId, databaseInterface);
         tables.put(type, table);
 
         return table;
@@ -290,7 +290,7 @@ public final class CollectionSchema extends SchemaImpl {
         return super.equals(obj);
     }
 
-    public SQLWrapper getSqlWrapper() {
-        return sqlWrapper;
+    public DatabaseInterface getDatabaseInterface() {
+        return databaseInterface;
     }
 }

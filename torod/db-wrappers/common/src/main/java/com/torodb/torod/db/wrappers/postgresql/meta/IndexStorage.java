@@ -191,7 +191,7 @@ public class IndexStorage implements Serializable {
     @SuppressFBWarnings("SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE")
     public NamedDbIndex createIndex(DSLContext dsl, UnnamedDbIndex unnamedDbIndex) {
         String indexName = unnamedDbIndex.getTable() + '_' + unnamedDbIndex.getColumn();
-        indexName = colSchema.getSqlWrapper().escapeIndexName(indexName);
+        indexName = colSchema.getDatabaseInterface().escapeIndexName(indexName);
         
         ConnectionProvider connectionProvider
                 = dsl.configuration().connectionProvider();

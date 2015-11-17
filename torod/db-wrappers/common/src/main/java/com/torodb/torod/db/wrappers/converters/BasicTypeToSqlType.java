@@ -24,10 +24,12 @@ package com.torodb.torod.db.wrappers.converters;
 import com.torodb.torod.core.exceptions.ToroImplementationException;
 import com.torodb.torod.core.subdocument.BasicType;
 
+import java.io.Serializable;
+
 /**
  *
  */
-public interface BasicTypeToSqlType {
+public interface BasicTypeToSqlType extends Serializable {
 
     BasicType toBasicType(String columnName, int jdbcIntType, String jdbcStringType) throws ToroImplementationException;
 

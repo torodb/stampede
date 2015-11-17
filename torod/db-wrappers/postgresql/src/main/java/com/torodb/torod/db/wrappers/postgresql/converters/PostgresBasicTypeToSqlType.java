@@ -32,6 +32,8 @@ import java.sql.Types;
  */
 public class PostgresBasicTypeToSqlType implements BasicTypeToSqlType {
 
+    private static final long serialVersionUID = 385628201;
+
     @Override
     public BasicType toBasicType(
             String columnName,

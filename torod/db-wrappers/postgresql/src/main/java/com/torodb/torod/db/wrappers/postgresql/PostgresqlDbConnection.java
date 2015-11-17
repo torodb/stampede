@@ -24,7 +24,7 @@ import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.subdocument.BasicType;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.core.subdocument.structure.DocStructure;
-import com.torodb.torod.db.wrappers.SQLWrapper;
+import com.torodb.torod.db.wrappers.DatabaseInterface;
 import com.torodb.torod.db.wrappers.converters.jooq.SubdocValueConverter;
 import com.torodb.torod.db.wrappers.converters.jooq.ValueToJooqConverterProvider;
 import com.torodb.torod.db.wrappers.postgresql.meta.CollectionSchema;
@@ -61,9 +61,9 @@ class PostgresqlDbConnection extends AbstractDbConnection {
     public PostgresqlDbConnection(
             DSLContext dsl,
             TorodbMeta meta,
-            SQLWrapper sqlWrapper
+            DatabaseInterface databaseInterface
     ) {
-        super(dsl, meta, sqlWrapper);
+        super(dsl, meta, databaseInterface);
     }
 
     @Override

@@ -22,10 +22,10 @@ package com.torodb.torod.db.wrappers.postgresql.di;
 
 import com.google.inject.AbstractModule;
 import com.torodb.torod.core.dbWrapper.DbWrapper;
-import com.torodb.torod.db.wrappers.SQLWrapper;
+import com.torodb.torod.db.wrappers.DatabaseInterface;
 import com.torodb.torod.db.wrappers.converters.BasicTypeToSqlType;
 import com.torodb.torod.db.wrappers.postgresql.PostgresqlDbWrapper;
-import com.torodb.torod.db.wrappers.postgresql.PostgresqlSQLWrapper;
+import com.torodb.torod.db.wrappers.postgresql.PostgresqlDatabaseInterface;
 import com.torodb.torod.db.wrappers.postgresql.converters.PostgresBasicTypeToSqlType;
 
 import javax.inject.Singleton;
@@ -38,7 +38,7 @@ public class PostgresqlDbWrapperModule extends AbstractModule {
     protected void configure() {
         bind(DbWrapper.class).to(PostgresqlDbWrapper.class).in(Singleton.class);
         bind(PostgresqlDbWrapper.class).in(Singleton.class);
-        bind(SQLWrapper.class).to(PostgresqlSQLWrapper.class).in(Singleton.class);
+        bind(DatabaseInterface.class).to(PostgresqlDatabaseInterface.class).in(Singleton.class);
         bind(BasicTypeToSqlType.class).to(PostgresBasicTypeToSqlType.class).in(Singleton.class);
     }
 }

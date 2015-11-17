@@ -30,7 +30,7 @@ import com.torodb.torod.core.subdocument.SubDocType;
 import com.torodb.torod.core.subdocument.structure.DocStructure;
 import com.torodb.torod.core.subdocument.values.ArrayValue;
 import com.torodb.torod.core.subdocument.values.Value;
-import com.torodb.torod.db.wrappers.SQLWrapper;
+import com.torodb.torod.db.wrappers.DatabaseInterface;
 import com.torodb.torod.db.wrappers.converters.PatternConverter;
 import com.torodb.torod.db.wrappers.converters.ValueConverter;
 import com.torodb.torod.db.wrappers.converters.jooq.SubdocValueConverter;
@@ -56,12 +56,12 @@ public class QueryCriteriaToSQLTranslator {
     private static final CorrectnessChecker CORRECTNESS_CHECKER
             = new CorrectnessChecker();
 
-    private final SQLWrapper sqlWrapper;
+    private final DatabaseInterface databaseInterface;
 
     @Inject
-    public QueryCriteriaToSQLTranslator(CollectionSchema schema, SQLWrapper sqlWrapper) {
+    public QueryCriteriaToSQLTranslator(CollectionSchema schema, DatabaseInterface databaseInterface) {
         this.schema = schema;
-        this.sqlWrapper = sqlWrapper;
+        this.databaseInterface = databaseInterface;
     }
 
     /**
@@ -121,7 +121,7 @@ public class QueryCriteriaToSQLTranslator {
                         rootSidField.equal(sid)
                 ).and(indexCondition);
 
-        final Translator inDocTranslator = new Translator(sqlWrapper);
+        final Translator inDocTranslator = new Translator(databaseInterface);
         Condition condition = queryCriteria.accept(inDocTranslator, false);
 
         select.and(condition);
@@ -167,11 +167,11 @@ public class QueryCriteriaToSQLTranslator {
     private static class Translator implements
             QueryCriteriaVisitor<Condition, Boolean> {
 
-        private final SQLWrapper sqlWrapper;
+        private final DatabaseInterface databaseInterface;
 
         @Inject
-        public Translator(SQLWrapper sqlWrapper) {
-            this.sqlWrapper = sqlWrapper;
+        public Translator(DatabaseInterface databaseInterface) {
+            this.databaseInterface = databaseInterface;
         }
 
         private String getIteratorVariableName() {
@@ -238,7 +238,7 @@ public class QueryCriteriaToSQLTranslator {
                 String attributeKey
                         = ((AttributeReference.ObjectKey) keys.get(lastObjectKeyIndex)).getKey();
 
-                firstKey = new SubDocHelper(sqlWrapper).toColumnName(attributeKey);
+                firstKey = new SubDocHelper(databaseInterface).toColumnName(attributeKey);
             }
 
             result[0] = firstKey;

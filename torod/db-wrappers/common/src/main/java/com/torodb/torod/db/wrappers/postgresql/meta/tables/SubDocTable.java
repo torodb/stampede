@@ -26,7 +26,7 @@ import com.torodb.torod.core.subdocument.BasicType;
 import com.torodb.torod.core.subdocument.SubDocAttribute;
 import com.torodb.torod.core.subdocument.SubDocType;
 import com.torodb.torod.core.subdocument.values.Value;
-import com.torodb.torod.db.wrappers.SQLWrapper;
+import com.torodb.torod.db.wrappers.DatabaseInterface;
 import com.torodb.torod.db.wrappers.converters.jooq.SubdocValueConverter;
 import com.torodb.torod.db.wrappers.converters.jooq.ValueToJooqConverterProvider;
 import com.torodb.torod.db.wrappers.postgresql.meta.CollectionSchema;
@@ -74,14 +74,14 @@ public class SubDocTable extends TableImpl<SubDocTableRecord> {
     private final TableField<SubDocTableRecord, Integer> indexField
             = createField(INDEX_COLUMN_NAME, SQLDataType.INTEGER.nullable(true), this, "");
 
-    private final SQLWrapper sqlWrapper;
+    private final DatabaseInterface databaseInterface;
 
     @Inject
     public SubDocTable(
             String tableName,
             CollectionSchema schema,
             DatabaseMetaData metadata,
-            SQLWrapper sqlWrapper
+            DatabaseInterface databaseInterface
     ) {
         this(
                 tableName,
@@ -91,36 +91,36 @@ public class SubDocTable extends TableImpl<SubDocTableRecord> {
                         schema.getName(),
                         tableName,
                         metadata,
-                        sqlWrapper
+                        databaseInterface
                 ),
-                sqlWrapper
+                databaseInterface
         );
     }
 
     @Inject
-    public SubDocTable(CollectionSchema schema, SubDocType type, int typeId, SQLWrapper sqlWrapper) {
-        this(getSubDocTableName(typeId), schema, null, type, sqlWrapper);
+    public SubDocTable(CollectionSchema schema, SubDocType type, int typeId, DatabaseInterface databaseInterface) {
+        this(getSubDocTableName(typeId), schema, null, type, databaseInterface);
     }
 
     @Inject
     private SubDocTable(
             String alias, Schema schema, Table<SubDocTableRecord> aliased, @Nonnull SubDocType type,
-            SQLWrapper sqlWrapper
+            DatabaseInterface databaseInterface
     ) {
-        this(alias, schema, aliased, null, type, sqlWrapper);
+        this(alias, schema, aliased, null, type, databaseInterface);
     }
 
     @Inject
     private SubDocTable(
             String alias, Schema schema, Table<SubDocTableRecord> aliased, Field<?>[] parameters,
-            @Nonnull SubDocType type, SQLWrapper sqlWrapper
+            @Nonnull SubDocType type, DatabaseInterface databaseInterface
     ) {
         super(alias, schema, aliased, parameters, "");
 
         this.erasuredType = type;
 
         for (SubDocAttribute attibute : type.getAttributes()) {
-            String fieldName = new SubDocHelper(sqlWrapper).toColumnName(attibute.getKey());
+            String fieldName = new SubDocHelper(databaseInterface).toColumnName(attibute.getKey());
 
             SubdocValueConverter converter
                     = ValueToJooqConverterProvider.getConverter(attibute.getType());
@@ -132,7 +132,7 @@ public class SubDocTable extends TableImpl<SubDocTableRecord> {
                     converter);
         }
 
-        this.sqlWrapper = sqlWrapper;
+        this.databaseInterface = databaseInterface;
     }
 
     @SuppressFBWarnings("SIC_INNER_SHOULD_BE_STATIC_ANON")
@@ -181,7 +181,7 @@ public class SubDocTable extends TableImpl<SubDocTableRecord> {
             String schemaName,
             String tableName,
             DatabaseMetaData metadata,
-            SQLWrapper sqlWrapper
+            DatabaseInterface databaseInterface
     ) {
         try {
             SubDocType.Builder builder = new SubDocType.Builder();
@@ -197,7 +197,7 @@ public class SubDocTable extends TableImpl<SubDocTableRecord> {
                 int intColumnType = columns.getInt("DATA_TYPE");
                 String stringColumnType = columns.getString("TYPE_NAME");
 
-                BasicType basicType = sqlWrapper.getBasicTypeToSqlType().toBasicType(
+                BasicType basicType = databaseInterface.getBasicTypeToSqlType().toBasicType(
                         columnName,
                         intColumnType,
                         stringColumnType
@@ -280,7 +280,7 @@ public class SubDocTable extends TableImpl<SubDocTableRecord> {
      */
     @Override
     public SubDocTable as(String alias) {
-        return new SubDocTable(alias, getSchema(), this, getSubDocType(), sqlWrapper);
+        return new SubDocTable(alias, getSchema(), this, getSubDocType(), databaseInterface);
     }
 
     /**
@@ -290,7 +290,7 @@ public class SubDocTable extends TableImpl<SubDocTableRecord> {
      * @return
      */
     public SubDocTable rename(String name) {
-        return new SubDocTable(name, getSchema(), null, getSubDocType(), sqlWrapper);
+        return new SubDocTable(name, getSchema(), null, getSubDocType(), databaseInterface);
     }
 
     @Override
@@ -311,6 +311,6 @@ public class SubDocTable extends TableImpl<SubDocTableRecord> {
     }
 
     public SubDocHelper subDocHelper() {
-        return new SubDocHelper(sqlWrapper);
+        return new SubDocHelper(databaseInterface);
     }
 }

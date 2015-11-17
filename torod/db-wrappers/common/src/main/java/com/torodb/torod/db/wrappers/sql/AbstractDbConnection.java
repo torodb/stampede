@@ -33,7 +33,7 @@ import com.torodb.torod.core.pojos.NamedToroIndex;
 import com.torodb.torod.core.subdocument.SubDocType;
 import com.torodb.torod.core.subdocument.SubDocument;
 import com.torodb.torod.core.subdocument.structure.DocStructure;
-import com.torodb.torod.db.wrappers.SQLWrapper;
+import com.torodb.torod.db.wrappers.DatabaseInterface;
 import com.torodb.torod.db.wrappers.exceptions.InvalidCollectionSchemaException;
 import com.torodb.torod.db.wrappers.postgresql.meta.CollectionSchema;
 import com.torodb.torod.db.wrappers.postgresql.meta.Routines;
@@ -80,16 +80,16 @@ public abstract class AbstractDbConnection implements
     private final TorodbMeta meta;
     private final Configuration jooqConf;
     private final DSLContext dsl;
-    private final SQLWrapper sqlWrapper;
+    private final DatabaseInterface databaseInterface;
 
     @Inject
     public AbstractDbConnection(
             DSLContext dsl,
-            TorodbMeta meta, SQLWrapper sqlWrapper) {
+            TorodbMeta meta, DatabaseInterface databaseInterface) {
         this.jooqConf = dsl.configuration();
         this.meta = meta;
         this.dsl = dsl;
-        this.sqlWrapper = sqlWrapper;
+        this.databaseInterface = databaseInterface;
     }
 
     protected abstract String getCreateSubDocTypeTableQuery(SubDocTable table, Configuration conf);
@@ -156,7 +156,7 @@ public abstract class AbstractDbConnection implements
             if (schemaName == null) {
                 schemaName = collectionName;
             }
-            String escapedSchemaName = sqlWrapper.escapeSchemaName(schemaName);
+            String escapedSchemaName = databaseInterface.escapeSchemaName(schemaName);
             createSchema(escapedSchemaName);
             createSequence(escapedSchemaName, getRootSeqName());
             createRootTable(escapedSchemaName);
@@ -336,7 +336,7 @@ public abstract class AbstractDbConnection implements
     @Override
     public int delete(String collection, @Nullable QueryCriteria condition, boolean justOne) {
         CollectionSchema colSchema = meta.getCollectionSchema(collection);
-        QueryEvaluator queryEvaluator = new QueryEvaluator(colSchema, sqlWrapper);
+        QueryEvaluator queryEvaluator = new QueryEvaluator(colSchema, databaseInterface);
 
         Multimap<DocStructure, Integer> didsByStructure = queryEvaluator.evaluateDidsByStructure(condition, dsl);
 
@@ -413,7 +413,7 @@ public abstract class AbstractDbConnection implements
     public Integer count(String collection, QueryCriteria query) {
         CollectionSchema colSchema = meta.getCollectionSchema(collection);
 
-        QueryEvaluator queryEvaluator = new QueryEvaluator(colSchema, sqlWrapper);
+        QueryEvaluator queryEvaluator = new QueryEvaluator(colSchema, databaseInterface);
 
         Set<Integer> dids = queryEvaluator.evaluateDid(
                 query,

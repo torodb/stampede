@@ -23,7 +23,7 @@ package com.torodb.torod.db.wrappers.postgresql.meta;
 import com.google.common.collect.MapMaker;
 import com.google.common.io.CharStreams;
 import com.torodb.torod.core.exceptions.ToroImplementationException;
-import com.torodb.torod.db.wrappers.SQLWrapper;
+import com.torodb.torod.db.wrappers.DatabaseInterface;
 import com.torodb.torod.db.wrappers.exceptions.InvalidCollectionSchemaException;
 import com.torodb.torod.db.wrappers.exceptions.InvalidDatabaseException;
 import com.torodb.torod.db.wrappers.postgresql.meta.tables.CollectionsTable;
@@ -54,16 +54,16 @@ public class TorodbMeta {
     private final String databaseName;
     private final ConcurrentMap<String, CollectionSchema> collectionSchemes;
     private static final Logger LOGGER = LoggerFactory.getLogger(TorodbMeta.class);
-    private final SQLWrapper sqlWrapper;
+    private final DatabaseInterface databaseInterface;
 
     @Inject
     public TorodbMeta(
             String databaseName,
             DSLContext dsl,
-            SQLWrapper sqlWrapper
+            DatabaseInterface databaseInterface
     ) throws SQLException, IOException, InvalidDatabaseException {
         this.databaseName = databaseName;
-        this.sqlWrapper = sqlWrapper;
+        this.databaseInterface = databaseInterface;
 
         Meta jooqMeta = dsl.meta();
         Connection conn = dsl.configuration().connectionProvider().acquire();
@@ -98,7 +98,7 @@ public class TorodbMeta {
                     jdbcMeta, 
                     jooqMeta, 
                     this,
-                    sqlWrapper
+                    databaseInterface
             );
             collectionSchemes.put(colSchema.getCollection(), colSchema);
         }
@@ -137,7 +137,7 @@ public class TorodbMeta {
             throw new IllegalArgumentException("Collection '" + colName
                     + "' is already associated with a collection schema");
         }
-        CollectionSchema result = new CollectionSchema(schemaName, colName, dsl, this, sqlWrapper);
+        CollectionSchema result = new CollectionSchema(schemaName, colName, dsl, this, databaseInterface);
         collectionSchemes.put(colName, result);
 
         return result;

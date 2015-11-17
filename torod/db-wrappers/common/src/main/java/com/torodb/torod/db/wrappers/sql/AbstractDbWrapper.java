@@ -31,7 +31,7 @@ import com.torodb.torod.core.dbWrapper.exceptions.UserDbException;
 import com.torodb.torod.core.language.projection.Projection;
 import com.torodb.torod.core.language.querycriteria.QueryCriteria;
 import com.torodb.torod.core.subdocument.SplitDocument;
-import com.torodb.torod.db.wrappers.SQLWrapper;
+import com.torodb.torod.db.wrappers.DatabaseInterface;
 import com.torodb.torod.db.wrappers.exceptions.InvalidDatabaseException;
 import com.torodb.torod.db.wrappers.postgresql.meta.CollectionSchema;
 import com.torodb.torod.db.wrappers.postgresql.meta.Routines;
@@ -66,13 +66,13 @@ public abstract class AbstractDbWrapper implements DbWrapper {
     private final ConcurrentMap<CursorId, com.torodb.torod.core.dbWrapper.Cursor> openCursors;
     private final String databaseName;
     private TorodbMeta meta;
-    private final SQLWrapper sqlWrapper;
+    private final DatabaseInterface databaseInterface;
     
     @Inject
     public AbstractDbWrapper(
             @DatabaseName String databaseName,
             DbBackend dbBackend,
-            SQLWrapper sqlWrapper
+            DatabaseInterface databaseInterface
     ) {
         this.sessionDataSource = dbBackend.getSessionDataSource();
         this.systemDataSource = dbBackend.getSystemDataSource();
@@ -81,7 +81,7 @@ public abstract class AbstractDbWrapper implements DbWrapper {
         isInitialized = new AtomicBoolean(false);
         this.openCursors = new MapMaker().makeMap();
         this.databaseName = databaseName;
-        this.sqlWrapper = sqlWrapper;
+        this.databaseInterface = databaseInterface;
     }
 
     protected abstract Configuration getJooqConfiguration(ConnectionProvider connectionProvider);
@@ -107,7 +107,7 @@ public abstract class AbstractDbWrapper implements DbWrapper {
             checkDbSupported(c);
             c.setAutoCommit(false);
             
-            meta = new TorodbMeta(databaseName, getDsl(c), sqlWrapper);
+            meta = new TorodbMeta(databaseName, getDsl(c), databaseInterface);
             c.commit();
 
             isInitialized.set(true);
@@ -193,7 +193,7 @@ public abstract class AbstractDbWrapper implements DbWrapper {
         else {
             CollectionSchema colSchema = meta.getCollectionSchema(collection);
 
-            QueryEvaluator queryEvaluator = new QueryEvaluator(colSchema, sqlWrapper);
+            QueryEvaluator queryEvaluator = new QueryEvaluator(colSchema, databaseInterface);
 
             Connection connection = consumeConnection(globalCursorDataSource);
             DSLContext dsl = getDsl(connection);

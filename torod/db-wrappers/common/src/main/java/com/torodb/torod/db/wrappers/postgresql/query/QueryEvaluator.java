@@ -45,7 +45,7 @@ import com.torodb.torod.core.language.querycriteria.*;
 import com.torodb.torod.core.language.utils.AttributeReferenceResolver;
 import com.torodb.torod.core.language.querycriteria.utils.QueryCriteriaVisitor;
 import com.torodb.torod.core.subdocument.structure.DocStructure;
-import com.torodb.torod.db.wrappers.SQLWrapper;
+import com.torodb.torod.db.wrappers.DatabaseInterface;
 import com.torodb.torod.db.wrappers.postgresql.meta.CollectionSchema;
 import com.torodb.torod.db.wrappers.postgresql.query.dblanguage.AndDatabaseQuery;
 import com.torodb.torod.db.wrappers.postgresql.query.dblanguage.ByStructureDatabaseQuery;
@@ -79,13 +79,13 @@ public class QueryEvaluator {
     );
     private final CollectionSchema colSchema;
     private final QueryCriteriaToSQLTranslator toSQLTranslator;
-    private final SQLWrapper sqlWrapper;
+    private final DatabaseInterface databaseInterface;
 
     @Inject
-    public QueryEvaluator(CollectionSchema colSchema, SQLWrapper sqlWrapper) {
+    public QueryEvaluator(CollectionSchema colSchema, DatabaseInterface databaseInterface) {
         this.colSchema = colSchema;
-        this.toSQLTranslator = new QueryCriteriaToSQLTranslator(colSchema, sqlWrapper);
-        this.sqlWrapper = sqlWrapper;
+        this.toSQLTranslator = new QueryCriteriaToSQLTranslator(colSchema, databaseInterface);
+        this.databaseInterface = databaseInterface;
     }
 
     /**

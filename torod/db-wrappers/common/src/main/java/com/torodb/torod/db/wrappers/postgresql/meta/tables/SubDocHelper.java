@@ -20,7 +20,7 @@
 
 package com.torodb.torod.db.wrappers.postgresql.meta.tables;
 
-import com.torodb.torod.db.wrappers.SQLWrapper;
+import com.torodb.torod.db.wrappers.DatabaseInterface;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
@@ -35,11 +35,11 @@ public class SubDocHelper {
     private static final Pattern LIKE_DID_PATTERN = Pattern.compile("_*" + SubDocTable.DID_COLUMN_NAME);
     private static final Pattern LIKE_INDEX_PATTERN = Pattern.compile("_*" + SubDocTable.INDEX_COLUMN_NAME);
 
-    private final SQLWrapper sqlWrapper;
+    private final DatabaseInterface databaseInterface;
 
     @Inject
-    public SubDocHelper(@Nonnull SQLWrapper sqlWrapper) {
-        this.sqlWrapper = sqlWrapper;
+    public SubDocHelper(@Nonnull DatabaseInterface databaseInterface) {
+        this.databaseInterface = databaseInterface;
     }
 
     public String toColumnName(String attName) {
@@ -52,7 +52,7 @@ public class SubDocHelper {
             return "_" + attName;
         }
 
-        return sqlWrapper.escapeAttributeName(attName);
+        return databaseInterface.escapeAttributeName(attName);
     }
 
     public static String toAttributeName(String fieldName) {

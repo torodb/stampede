@@ -28,7 +28,7 @@ import java.io.Serializable;
 /**
  * Wrapper interface to define all database-specific SQL code
  */
-public interface SQLWrapper extends Serializable {
+public interface DatabaseInterface extends Serializable {
 
     @Nonnull String escapeSchemaName(@Nonnull String collection) throws IllegalArgumentException;
     @Nonnull String escapeAttributeName(@Nonnull String attributeName) throws IllegalArgumentException;
