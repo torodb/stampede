@@ -21,7 +21,7 @@
 
 package com.torodb.torod.db.wrappers.postgresql;
 
-import com.torodb.torod.db.wrappers.ArraySerializator;
+import com.torodb.torod.db.wrappers.ArraySerializer;
 import com.torodb.torod.db.wrappers.DatabaseInterface;
 import com.torodb.torod.db.wrappers.converters.BasicTypeToSqlType;
 import com.torodb.torod.db.wrappers.tables.CollectionsTable;
@@ -43,11 +43,12 @@ public class PostgresqlDatabaseInterface implements DatabaseInterface {
     private final BasicTypeToSqlType basicTypeToSqlType;
 
     private static class ArraySerializatorHolder {
-        private static final ArraySerializator INSTANCE = new JsonbArraySerializator();
+        private static final ArraySerializer INSTANCE = new JsonbArraySerializer();
     }
 
     @Override
-    public @Nonnull ArraySerializator arraySerializator() {
+    public @Nonnull
+    ArraySerializer arraySerializer() {
         return ArraySerializatorHolder.INSTANCE;
     }
 

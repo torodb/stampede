@@ -22,7 +22,7 @@
 package com.torodb.torod.db.wrappers.postgresql;
 
 import com.google.common.base.Preconditions;
-import com.torodb.torod.db.wrappers.ArraySerializator;
+import com.torodb.torod.db.wrappers.ArraySerializer;
 import org.jooq.Condition;
 import org.jooq.Table;
 import org.jooq.impl.DSL;
@@ -34,7 +34,7 @@ import javax.inject.Singleton;
  *
  */
 @Singleton
-public class JsonbArraySerializator implements ArraySerializator {
+public class JsonbArraySerializer implements ArraySerializer {
 
     private static final long serialVersionUID = 946395628;
 

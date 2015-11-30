@@ -29,7 +29,7 @@ import java.io.Serializable;
 /**
  * Interface to abstract database-specific way of array serialization
  */
-public interface ArraySerializator extends Serializable {
+public interface ArraySerializer extends Serializable {
 
     String getFieldName(String[] keys);
 

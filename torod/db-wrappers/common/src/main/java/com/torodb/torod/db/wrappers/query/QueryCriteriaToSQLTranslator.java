@@ -264,8 +264,8 @@ public class QueryCriteriaToSQLTranslator {
             final int lastArrayIndex = keys.length - 1;
 
             for (int i = 0; i < lastArrayIndex; i++) {
-                Condition thisCond = databaseInterface.arraySerializator().typeof(
-                        databaseInterface.arraySerializator().getFieldName(keys, 0, i + 1),
+                Condition thisCond = databaseInterface.arraySerializer().typeof(
+                        databaseInterface.arraySerializer().getFieldName(keys, 0, i + 1),
                         "array"
                 );
                 if (cond == null) {
@@ -338,8 +338,8 @@ public class QueryCriteriaToSQLTranslator {
                     }
                 }
 
-                return databaseInterface.arraySerializator().typeof(
-                        databaseInterface.arraySerializator().getFieldName(translateArrayRef(attRef)),
+                return databaseInterface.arraySerializer().typeof(
+                        databaseInterface.arraySerializer().getFieldName(translateArrayRef(attRef)),
                         getJsonType(expectedType)
                 );
             }
@@ -399,7 +399,7 @@ public class QueryCriteriaToSQLTranslator {
         @Override
         public Condition visit(IsEqualQueryCriteria criteria, Boolean inArray) {
             String[] keys = translateArrayRef(criteria);
-            Field field = DSL.field(databaseInterface.arraySerializator().getFieldName(keys));
+            Field field = DSL.field(databaseInterface.arraySerializer().getFieldName(keys));
             Object value;
 
             Condition criteriaCondition;
@@ -433,7 +433,7 @@ public class QueryCriteriaToSQLTranslator {
         public Condition visit(IsGreaterQueryCriteria criteria, Boolean inArray) {
 
             String[] keys = translateArrayRef(criteria);
-            Field field = DSL.field(databaseInterface.arraySerializator().getFieldName(keys));
+            Field field = DSL.field(databaseInterface.arraySerializer().getFieldName(keys));
             Object value;
             Condition typeCondition = null;
 
@@ -442,7 +442,7 @@ public class QueryCriteriaToSQLTranslator {
             }
             else {
                 value = translateValueToArraySerialization(criteria.getValue());
-                typeCondition = databaseInterface.arraySerializator().typeof(
+                typeCondition = databaseInterface.arraySerializer().typeof(
                         field.getName(),
                         getJsonType(criteria.getValue().getType())
                 );
@@ -461,7 +461,7 @@ public class QueryCriteriaToSQLTranslator {
         public Condition visit(IsGreaterOrEqualQueryCriteria criteria, Boolean inArray) {
 
             String[] keys = translateArrayRef(criteria);
-            Field field = DSL.field(databaseInterface.arraySerializator().getFieldName(keys));
+            Field field = DSL.field(databaseInterface.arraySerializer().getFieldName(keys));
             Object value;
             Condition typeCondition = null;
 
@@ -470,7 +470,7 @@ public class QueryCriteriaToSQLTranslator {
             }
             else {
                 value = translateValueToArraySerialization(criteria.getValue());
-                typeCondition = databaseInterface.arraySerializator().typeof(
+                typeCondition = databaseInterface.arraySerializer().typeof(
                         field.getName(), getJsonType(criteria.getValue().getType())
                 );
             }
@@ -488,7 +488,7 @@ public class QueryCriteriaToSQLTranslator {
         public Condition visit(IsLessQueryCriteria criteria, Boolean inArray) {
 
             String[] keys = translateArrayRef(criteria);
-            Field field = DSL.field(databaseInterface.arraySerializator().getFieldName(keys));
+            Field field = DSL.field(databaseInterface.arraySerializer().getFieldName(keys));
             Object value;
             Condition typeCondition = null;
 
@@ -497,7 +497,7 @@ public class QueryCriteriaToSQLTranslator {
             }
             else {
                 value = translateValueToArraySerialization(criteria.getValue());
-                typeCondition = databaseInterface.arraySerializator().typeof(
+                typeCondition = databaseInterface.arraySerializer().typeof(
                         field.getName(),
                         getJsonType(criteria.getValue().getType())
                 );
@@ -516,7 +516,7 @@ public class QueryCriteriaToSQLTranslator {
         public Condition visit(IsLessOrEqualQueryCriteria criteria, Boolean inArray) {
 
             String[] keys = translateArrayRef(criteria);
-            Field field = DSL.field(databaseInterface.arraySerializator().getFieldName(keys));
+            Field field = DSL.field(databaseInterface.arraySerializer().getFieldName(keys));
             Object value;
             Condition typeCondition = null;
 
@@ -525,7 +525,7 @@ public class QueryCriteriaToSQLTranslator {
             }
             else {
                 value = translateValueToArraySerialization(criteria.getValue());
-                typeCondition = databaseInterface.arraySerializator().typeof(
+                typeCondition = databaseInterface.arraySerializer().typeof(
                         field.getName(),
                         getJsonType(criteria.getValue().getType())
                 );
@@ -543,11 +543,11 @@ public class QueryCriteriaToSQLTranslator {
         @Override
         public Condition visit(MatchPatternQueryCriteria criteria, Boolean inArray) {
             String[] keys = translateArrayRef(criteria);
-            Field field = DSL.field(databaseInterface.arraySerializator().getFieldName(keys));
+            Field field = DSL.field(databaseInterface.arraySerializer().getFieldName(keys));
             Condition typeCondition = null;
 
             if (isInArrayValue(criteria.getAttributeReference(), inArray)) {
-                typeCondition = databaseInterface.arraySerializator().typeof(
+                typeCondition = databaseInterface.arraySerializer().typeof(
                         field.getName(),
                         getJsonType(BasicType.STRING)
                 );
@@ -572,7 +572,7 @@ public class QueryCriteriaToSQLTranslator {
 
             if (!isInArrayValue(criteria.getAttributeReference(), inArray)) {
 
-                Field field = DSL.field(databaseInterface.arraySerializator().getFieldName(keys));
+                Field field = DSL.field(databaseInterface.arraySerializer().getFieldName(keys));
                 Object[] value = toInArgument(criteria.getValue());
 
                 Condition criteriaCondition = field.in(value);
@@ -583,7 +583,7 @@ public class QueryCriteriaToSQLTranslator {
             else {
                 Field valueField
                         = DSL.field(DSL.name(getIteratorVariableName()), String.class);
-                Table subTable = databaseInterface.arraySerializator().arrayElements(
+                Table subTable = databaseInterface.arraySerializer().arrayElements(
                         translateValueToSQL(criteria.getValue()).toString()
                 ).as(getIteratorVariableName());
 
@@ -592,7 +592,7 @@ public class QueryCriteriaToSQLTranslator {
                         .where(
                                 valueField.equal(
                                         DSL.field(
-                                                databaseInterface.arraySerializator().getFieldName(keys),
+                                                databaseInterface.arraySerializer().getFieldName(keys),
                                                 String.class
                                         )
                                 )
@@ -607,7 +607,7 @@ public class QueryCriteriaToSQLTranslator {
         public Condition visit(ModIsQueryCriteria criteria, Boolean inArray) {
 
             String[] keys = translateArrayRef(criteria.getAttributeReference());
-            Field field = DSL.field(databaseInterface.arraySerializator().getFieldName(keys));
+            Field field = DSL.field(databaseInterface.arraySerializer().getFieldName(keys));
 
             Condition criteriaCondition;
             if (!isInArrayValue(criteria.getAttributeReference(), inArray)) {
@@ -632,7 +632,7 @@ public class QueryCriteriaToSQLTranslator {
         public Condition visit(SizeIsQueryCriteria criteria, Boolean inArray) {
 
             String[] keys = translateArrayRef(criteria);
-            Field field = DSL.field(databaseInterface.arraySerializator().getFieldName(keys));
+            Field field = DSL.field(databaseInterface.arraySerializer().getFieldName(keys));
             Object value;
 
             boolean arraySource
@@ -645,13 +645,13 @@ public class QueryCriteriaToSQLTranslator {
                 value = translateValueToArraySerialization(criteria.getValue());
             }
 
-            Condition criteriaCondition = databaseInterface.arraySerializator().arrayLength(
+            Condition criteriaCondition = databaseInterface.arraySerializer().arrayLength(
                     field.getName(),
                     value.toString()
             );
 
             if (arraySource) {
-                criteriaCondition = databaseInterface.arraySerializator().typeof(
+                criteriaCondition = databaseInterface.arraySerializer().typeof(
                         field.getName(),
                         "array",
                         criteriaCondition
@@ -664,10 +664,10 @@ public class QueryCriteriaToSQLTranslator {
         @Override
         public Condition visit(ExistsQueryCriteria criteria, Boolean inArray) {
             String[] keys = translateArrayRef(criteria.getAttributeReference());
-            Field field = DSL.field(databaseInterface.arraySerializator().getFieldName(keys));
+            Field field = DSL.field(databaseInterface.arraySerializer().getFieldName(keys));
 
             Field valueField = DSL.field(DSL.name(getIteratorVariableName()));
-            Table subTable = databaseInterface.arraySerializator().arrayElements(field.getName());
+            Table subTable = databaseInterface.arraySerializer().arrayElements(field.getName());
 
             Condition subCondition
                     = criteria.getBody().accept(this, Boolean.TRUE);
@@ -698,7 +698,7 @@ public class QueryCriteriaToSQLTranslator {
                             .getConverter(value.getType());
 
 
-            return databaseInterface.arraySerializator().translateValue(converter.toJson(value));
+            return databaseInterface.arraySerializer().translateValue(converter.toJson(value));
         }
 
         private Object[] toInArgument(List<Value<?>> values) {
