@@ -24,7 +24,7 @@ import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.torodb.torod.core.language.querycriteria.QueryCriteria;
-import com.torodb.torod.db.wrappers.postgresql.query.ProcessedQueryCriteria;
+import com.torodb.torod.db.wrappers.query.ProcessedQueryCriteria;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;

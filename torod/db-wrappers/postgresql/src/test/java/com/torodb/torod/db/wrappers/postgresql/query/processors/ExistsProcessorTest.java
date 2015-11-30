@@ -28,9 +28,11 @@ import com.torodb.torod.core.language.querycriteria.QueryCriteria;
 import com.torodb.torod.core.language.querycriteria.TypeIsQueryCriteria;
 import com.torodb.torod.core.language.querycriteria.utils.QueryCriteriaVisitor;
 import com.torodb.torod.core.subdocument.BasicType;
-import com.torodb.torod.db.wrappers.postgresql.query.ExistRelation;
-import com.torodb.torod.db.wrappers.postgresql.query.ProcessedQueryCriteria;
+import com.torodb.torod.db.wrappers.query.ExistRelation;
+import com.torodb.torod.db.wrappers.query.ProcessedQueryCriteria;
 import java.util.List;
+
+import com.torodb.torod.db.wrappers.query.processors.ExistsProcessor;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;

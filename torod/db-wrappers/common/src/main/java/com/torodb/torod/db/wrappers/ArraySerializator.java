@@ -20,25 +20,29 @@
 
 package com.torodb.torod.db.wrappers;
 
-import com.torodb.torod.db.wrappers.converters.BasicTypeToSqlType;
+import org.jooq.Condition;
+import org.jooq.Table;
 
 import javax.annotation.Nonnull;
 import java.io.Serializable;
 
 /**
- * Wrapper interface to define all database-specific SQL code
+ * Interface to abstract database-specific way of array serialization
  */
-public interface DatabaseInterface extends Serializable {
+public interface ArraySerializator extends Serializable {
 
-    @Nonnull String escapeSchemaName(@Nonnull String collection) throws IllegalArgumentException;
-    @Nonnull String escapeAttributeName(@Nonnull String attributeName) throws IllegalArgumentException;
-    @Nonnull String escapeIndexName(@Nonnull String indexName) throws IllegalArgumentException;
+    String getFieldName(String[] keys);
 
-    @Nonnull BasicTypeToSqlType getBasicTypeToSqlType();
+    String getFieldName(String[] keys, int from, int to);
 
-    @Nonnull String createSchemaStatement(@Nonnull String schemaName);
-    @Nonnull String createCollectionsTableStatement(@Nonnull String schemaName, @Nonnull String tableName);
+    @Nonnull Condition typeof(String fieldName, String typeName);
 
-    @Nonnull ArraySerializator arraySerializator();
+    @Nonnull Condition typeof(String fieldName, String typeName, Condition condition);
+
+    @Nonnull Condition arrayLength(String fieldName, String value);
+
+    @Nonnull Table arrayElements(String fieldName);
+
+    String translateValue(Object translatedObject);
 
 }

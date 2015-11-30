@@ -42,7 +42,7 @@ import com.torodb.torod.db.wrappers.tables.CollectionsTable;
 import com.torodb.torod.db.wrappers.tables.SubDocTable;
 import com.torodb.torod.db.wrappers.tables.records.CollectionsRecord;
 import com.torodb.torod.db.wrappers.tables.records.SubDocTableRecord;
-import com.torodb.torod.db.wrappers.postgresql.query.QueryEvaluator;
+import com.torodb.torod.db.wrappers.query.QueryEvaluator;
 import com.torodb.torod.db.wrappers.sql.index.IndexManager;
 import com.torodb.torod.db.wrappers.sql.index.NamedDbIndex;
 import com.torodb.torod.db.wrappers.sql.index.UnnamedDbIndex;

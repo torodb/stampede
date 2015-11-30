@@ -47,6 +47,7 @@ import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
 
+import com.torodb.torod.db.wrappers.query.QueryStructureFilter;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mockito;

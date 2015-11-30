@@ -36,7 +36,7 @@ import com.torodb.torod.db.wrappers.exceptions.InvalidDatabaseException;
 import com.torodb.torod.db.wrappers.postgresql.meta.CollectionSchema;
 import com.torodb.torod.db.wrappers.postgresql.meta.Routines;
 import com.torodb.torod.db.wrappers.postgresql.meta.TorodbMeta;
-import com.torodb.torod.db.wrappers.postgresql.query.QueryEvaluator;
+import com.torodb.torod.db.wrappers.query.QueryEvaluator;
 import org.jooq.Configuration;
 import org.jooq.ConnectionProvider;
 import org.jooq.DSLContext;
