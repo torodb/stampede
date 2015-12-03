@@ -33,6 +33,22 @@
             <artifactId>jcommander</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.sun.xsom</groupId>
+            <artifactId>xsom</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-xml</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.codehaus.woodstox</groupId>
+            <artifactId>woodstox-core-asl</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-yaml</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
         </dependency>
@@ -122,6 +138,36 @@
 
     <build>        
         <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>jaxb2-maven-plugin</artifactId>
+                <version>2.2</version>
+                <executions>
+                    <execution>
+                        <id>jaxb2-schemagen</id>
+                        <phase>generate-resources</phase>
+                        <configuration>
+                        	<sources>
+                        		<source>${basedir}/src/main/java/com/torodb/config</source>
+                        	</sources>
+                            <outputDirectory>${basedir}/src/main/resources/</outputDirectory>
+                            <generateEpisode>false</generateEpisode>
+                            <clearOutputDir>false</clearOutputDir>
+                            <createJavaDocAnnotations>true</createJavaDocAnnotations>
+                            <transformSchemas>
+                            	<transformSchema>
+                            		<uri>http://torodb.com/config</uri>
+                            		<toPrefix>torodb</toPrefix>
+                            		<toFile>toroconfig.xsd</toFile>
+                            	</transformSchema>
+                            </transformSchemas>
+                        </configuration>
+                        <goals>
+                            <goal>schemagen</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>

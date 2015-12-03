@@ -224,6 +224,26 @@
                 <artifactId>jcommander</artifactId>
                 <version>1.47</version> <!-- 1.48 requires jdk 7-->
             </dependency>
+            <dependency>
+                <groupId>com.sun.xsom</groupId>
+                <artifactId>xsom</artifactId>
+                <version>20140925</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.dataformat</groupId>
+                <artifactId>jackson-dataformat-xml</artifactId>
+                <version>2.6.3</version>
+            </dependency>
+            <dependency>
+                <groupId>org.codehaus.woodstox</groupId>
+                <artifactId>woodstox-core-asl</artifactId>
+                <version>4.4.1</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.dataformat</groupId>
+                <artifactId>jackson-dataformat-yaml</artifactId>
+                <version>2.6.3</version>
+            </dependency>
 
             <dependency>
                 <groupId>junit</groupId>
@@ -248,6 +268,35 @@
                 <version>5.0.0.RELEASE</version>
             </extension>
         </extensions>
+        <pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.eclipse.m2e</groupId>
+					<artifactId>lifecycle-mapping</artifactId>
+					<version>1.0.0</version>
+					<configuration>
+						<lifecycleMappingMetadata>
+							<pluginExecutions>
+								<pluginExecution>
+									<!-- Workaround for jaxb2-maven-plugin not working for Eclipse Mars -->
+									<pluginExecutionFilter>
+										<groupId>org.codehaus.mojo</groupId>
+										<artifactId>jaxb2-maven-plugin</artifactId>
+										<versionRange>[1.0.0,)</versionRange>
+										<goals>
+											<goal>schemagen</goal>
+										</goals>
+									</pluginExecutionFilter>
+									<action>
+										<ignore />
+									</action>
+								</pluginExecution>
+							</pluginExecutions>
+						</lifecycleMappingMetadata>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
     </build>
 
     <profiles>

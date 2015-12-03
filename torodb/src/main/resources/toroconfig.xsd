@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:torodb="http://torodb.com/config" targetNamespace="http://torodb.com/config" version="1.0">
+
+  <xs:element name="config" type="torodb:config"/>
+
+  <xs:complexType name="config">
+    <xs:sequence>
+      <xs:element form="qualified" name="generic" type="torodb:generic"/>
+      <xs:element form="qualified" name="protocol" type="torodb:protocol"/>
+      <xs:element form="qualified" name="backend" type="torodb:backend">
+        <xs:annotation>
+          <xs:documentation><![CDATA[Backend configuration (only one can be specified)]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="generic">
+    <xs:annotation>
+      <xs:documentation><![CDATA[Generic ToroDB configuration]]></xs:documentation>
+    </xs:annotation>
+    <xs:all>
+      <xs:element form="qualified" name="connectionPoolSize" type="xs:int">
+        <xs:annotation>
+          <xs:documentation><![CDATA[Maximum number of connections to establish to the database. It must be higher or equal than 3]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element form="qualified" minOccurs="0" name="logFile" type="xs:string">
+        <xs:annotation>
+          <xs:documentation><![CDATA[File where log will be written]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element form="qualified" minOccurs="0" name="logLevel" type="torodb:logLevel">
+        <xs:annotation>
+          <xs:documentation><![CDATA[Level of log emitted]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element form="qualified" name="reserverdReadPoolSize" type="xs:int">
+        <xs:annotation>
+          <xs:documentation><![CDATA[Reserved connections that will be reserved to store global cursors. It must be lower than total connections minus 2]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="protocol">
+    <xs:sequence>
+      <xs:element form="qualified" name="mongo" type="torodb:mongo"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="mongo">
+    <xs:annotation>
+      <xs:documentation><![CDATA[MongoDB protocol configuration]]></xs:documentation>
+    </xs:annotation>
+    <xs:all>
+      <xs:element form="qualified" name="net" type="torodb:net"/>
+      <xs:element form="qualified" maxOccurs="unbounded" minOccurs="0" name="replication" type="torodb:replication"/>
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="net">
+    <xs:sequence>
+      <xs:element form="qualified" minOccurs="0" name="bindIp" type="xs:string">
+        <xs:annotation>
+          <xs:documentation><![CDATA[The host or IP associate to the interface where clients will connect to. Use * to specify any interface]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element form="qualified" name="port" type="xs:int">
+        <xs:annotation>
+          <xs:documentation><![CDATA[The port where the clients will connect to]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="replication">
+    <xs:sequence>
+      <xs:element form="qualified" minOccurs="0" name="replSetName" type="xs:string">
+        <xs:annotation>
+          <xs:documentation><![CDATA[The name of the MongoDB Replica Set where this instance will attach]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element form="qualified" minOccurs="0" name="role" type="torodb:role">
+        <xs:annotation>
+          <xs:documentation><![CDATA[The role that this instance will assume in the replica set. When value is HIDDEN_SLAVE the instance will not participate in voting and can not be elected as master.]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element form="qualified" minOccurs="0" name="syncSource" type="xs:string">
+        <xs:annotation>
+          <xs:documentation><![CDATA[The host and port (<host>:<port>) of the node from ToroDB has to replicate. If this node must run as primary, this paramenter must not be defined]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="backend">
+    <xs:choice>
+      <xs:element form="qualified" name="postgres" type="torodb:postgres"/>
+      <xs:element form="qualified" name="greenplum" type="torodb:greenplum"/>
+    </xs:choice>
+  </xs:complexType>
+
+  <xs:complexType name="postgres">
+    <xs:annotation>
+      <xs:documentation><![CDATA[PostgreSQL configuration (default)]]></xs:documentation>
+    </xs:annotation>
+    <xs:complexContent>
+      <xs:extension base="torodb:backendImplementation">
+        <xs:all>
+          <xs:element form="qualified" minOccurs="0" name="applicationName" type="xs:string">
+            <xs:annotation>
+              <xs:documentation><![CDATA[The application name used by driver that will connect to the database]]></xs:documentation>
+            </xs:annotation>
+          </xs:element>
+          <xs:element form="qualified" minOccurs="0" name="database" type="xs:string">
+            <xs:annotation>
+              <xs:documentation><![CDATA[The database that will be used]]></xs:documentation>
+            </xs:annotation>
+          </xs:element>
+          <xs:element form="qualified" minOccurs="0" name="host" type="xs:string">
+            <xs:annotation>
+              <xs:documentation><![CDATA[The host or ip associated to the network interface where clients will connect]]></xs:documentation>
+            </xs:annotation>
+          </xs:element>
+          <xs:element form="qualified" minOccurs="0" name="password" type="xs:string">
+            <xs:annotation>
+              <xs:documentation><![CDATA[Specify password that will be used to connect to the database]]></xs:documentation>
+            </xs:annotation>
+          </xs:element>
+          <xs:element form="qualified" name="port" type="xs:int">
+            <xs:annotation>
+              <xs:documentation><![CDATA[The port where the clients will connect]]></xs:documentation>
+            </xs:annotation>
+          </xs:element>
+          <xs:element form="qualified" minOccurs="0" name="toropassFile" type="xs:string">
+            <xs:annotation>
+              <xs:documentation><![CDATA[You can specify a file that use .pgpass syntax: <host>:<port>:<database>:<user>:<password> (can have multiple lines)]]></xs:documentation>
+            </xs:annotation>
+          </xs:element>
+          <xs:element form="qualified" minOccurs="0" name="user" type="xs:string">
+            <xs:annotation>
+              <xs:documentation><![CDATA[The user that will connect to the database]]></xs:documentation>
+            </xs:annotation>
+          </xs:element>
+        </xs:all>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="backendImplementation">
+    <xs:sequence/>
+  </xs:complexType>
+
+  <xs:complexType name="greenplum">
+    <xs:annotation>
+      <xs:documentation><![CDATA[GreenPlum configuration]]></xs:documentation>
+    </xs:annotation>
+    <xs:complexContent>
+      <xs:extension base="torodb:postgres">
+        <xs:all/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:simpleType name="logLevel">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="INFO"/>
+      <xs:enumeration value="WARNING"/>
+      <xs:enumeration value="NONE"/>
+      <xs:enumeration value="DEBUG"/>
+      <xs:enumeration value="TRACE"/>
+      <xs:enumeration value="ERROR"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="role">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="HIDDEN_SLAVE"/>
+    </xs:restriction>
+  </xs:simpleType>
+</xs:schema>

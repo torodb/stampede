@@ -23,25 +23,25 @@ package com.torodb.di;
 
 import com.eightkdata.mongowp.mongoserver.MongoServerConfig;
 import com.google.inject.AbstractModule;
-import com.torodb.Config;
-import com.torodb.util.MongoDocumentBuilderFactory;
+import com.torodb.ConfigMapper;
 import com.torodb.torod.core.annotations.DatabaseName;
 import com.torodb.torod.core.config.DocumentBuilderFactory;
+import com.torodb.util.MongoDocumentBuilderFactory;
 
 /**
  *
  */
 public class ConfigModule extends AbstractModule {
-    private final Config config;
+    private final ConfigMapper configMapper;
 
-    public ConfigModule(Config config) {
-        this.config = config;
+    public ConfigModule(ConfigMapper configMapper) {
+        this.configMapper = configMapper;
     }
     
     @Override
     protected void configure() {
-        bind(MongoServerConfig.class).toInstance(config);
+        bind(MongoServerConfig.class).toInstance(configMapper);
         bind(DocumentBuilderFactory.class).to(MongoDocumentBuilderFactory.class);
-        bind(String.class).annotatedWith(DatabaseName.class).toInstance(config.getDbName());
+        bind(String.class).annotatedWith(DatabaseName.class).toInstance(configMapper.getDbName());
     }
 }

@@ -30,6 +30,7 @@ import com.google.common.net.HostAndPort;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
+import com.torodb.ConfigMapper;
 import com.torodb.DefaultBuildProperties;
 import com.torodb.Shutdowner;
 import com.torodb.torod.core.BuildProperties;
@@ -77,8 +78,8 @@ public class MongoLayerModule extends AbstractModule {
      * @param syncSource the sync source this node is going to replicate from or
      *                   null if this node must run as primary
      */
-    public MongoLayerModule(@Nullable HostAndPort syncSource) {
-        this.syncSource = syncSource;
+    public MongoLayerModule(ConfigMapper configMapper) {
+        this.syncSource = configMapper.getSyncSource()!=null?HostAndPort.fromString(configMapper.getSyncSource()):null;
     }
 
     @Override
