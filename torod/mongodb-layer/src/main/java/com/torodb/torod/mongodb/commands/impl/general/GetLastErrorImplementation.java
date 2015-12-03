@@ -1,5 +1,5 @@
 
-package com.torodb.torod.mongodb.commands.general;
+package com.torodb.torod.mongodb.commands.impl.general;
 
 import com.eightkdata.mongowp.mongoserver.api.safe.*;
 import com.eightkdata.mongowp.mongoserver.api.safe.impl.NonWriteCommandResult;
