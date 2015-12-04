@@ -98,4 +98,6 @@ public interface SessionTransaction extends Closeable {
     public ListenableFuture<Long> getDocumentsSize(String collection);
 
     public ListenableFuture<Long> getCollectionSize(String collection);
+
+    public ListenableFuture<Integer> createPathViews(String collection);
 }

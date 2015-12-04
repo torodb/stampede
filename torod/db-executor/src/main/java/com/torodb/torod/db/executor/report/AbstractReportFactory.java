@@ -13,6 +13,7 @@ import com.torodb.torod.core.pojos.IndexedAttributes;
 import com.torodb.torod.core.pojos.NamedToroIndex;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.core.subdocument.SubDocType;
+import com.torodb.torod.db.executor.jobs.CreatePathViewsCallable.Report;
 import com.torodb.torod.db.executor.jobs.*;
 import java.util.Collection;
 import java.util.List;
@@ -144,6 +145,11 @@ public class AbstractReportFactory implements ReportFactory {
         return DUMMY_REPORT;
     }
 
+    @Override
+    public Report createCreatePathViewsReport() {
+        return DUMMY_REPORT;
+    }
+
     private static class DummyReport implements CloseConnectionCallable.Report,
             CloseCursorCallable.Report, CommitCallable.Report,
             CreateCollectionCallable.Report, 
@@ -156,7 +162,8 @@ public class AbstractReportFactory implements ReportFactory {
             GetIndexesCallable.Report, GetDatabasesCallable.Report,
             CountCallable.Report, GetIndexSizeCallable.Report, 
             GetCollectionSizeCallable.Report, GetDocumentsSize.Report, 
-            GetCollectionsMetainfoCallable.Report, MaxElementsCallable.Report {
+            GetCollectionsMetainfoCallable.Report, MaxElementsCallable.Report,
+            CreatePathViewsCallable.Report {
 
         public static final DummyReport INSTANCE = new DummyReport();
 
@@ -260,6 +267,10 @@ public class AbstractReportFactory implements ReportFactory {
 
         @Override
         public void maxElementsExecuted(CursorId cursorId, int result) {
+        }
+
+        @Override
+        public void createViewsExecuted(String collection, Integer result) {
         }
 
     }

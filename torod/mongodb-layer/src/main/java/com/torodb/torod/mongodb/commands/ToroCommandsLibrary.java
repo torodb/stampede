@@ -25,7 +25,7 @@ public class ToroCommandsLibrary extends GroupedCommandsLibrary {
     @Inject
     public ToroCommandsLibrary(
             BuildProperties buildProperties,
-            ToroSafeCommandTool toroSafeCommandTool) {
+            ToroV30CommandTool toroSafeCommandTool) {
         super(
             "toro-" + buildProperties.getFullVersion(),
             getSubLibraries(buildProperties.getFullVersion(), toroSafeCommandTool)
@@ -38,7 +38,7 @@ public class ToroCommandsLibrary extends GroupedCommandsLibrary {
 
     public static ImmutableList<CommandsLibrary> getSubLibraries(
             String toroVersion,
-            ToroSafeCommandTool toroSafeCommandTool) {
+            ToroV30CommandTool toroSafeCommandTool) {
 
 
         return ImmutableList.<CommandsLibrary>builder()
@@ -50,7 +50,7 @@ public class ToroCommandsLibrary extends GroupedCommandsLibrary {
 
     public static CommandsLibrary getImplementedSafeLibrary(
             String toroVersion,
-            ToroSafeCommandTool toroSafeCommandTool) {
+            ToroV30CommandTool toroSafeCommandTool) {
         ImmutableMap<Command, CommandImplementation> safeCommandImplementations = toroSafeCommandTool.getMap();
         Collection<Command> implementedSafeCommands = Lists.newArrayList();
         for (Entry<Command, CommandImplementation> entry : safeCommandImplementations.entrySet()) {

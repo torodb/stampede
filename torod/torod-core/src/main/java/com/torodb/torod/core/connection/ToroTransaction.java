@@ -125,4 +125,6 @@ public interface ToroTransaction extends Closeable {
     public ListenableFuture<Integer> count(String collection, QueryCriteria query);
 
     public ListenableFuture<List<? extends Database>> getDatabases();
+
+    public ListenableFuture<Integer> createPathViews(String collection) throws UnsupportedOperationException;
 }

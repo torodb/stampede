@@ -16,13 +16,13 @@ public class ToroCommandsExecutor extends GroupedCommandsExecutor {
 
     @Inject
     public ToroCommandsExecutor(
-            ToroSafeCommandTool toroSafeCommandTool,
+            ToroV30CommandTool toroSafeCommandTool,
             QueryCommandProcessor unsafeCommandProcessor) {
         super(getSubExecutors(toroSafeCommandTool, unsafeCommandProcessor));
     }
 
     public static ImmutableList<CommandsExecutor> getSubExecutors(
-            ToroSafeCommandTool toroSafeCommandTool,
+            ToroV30CommandTool toroSafeCommandTool,
             QueryCommandProcessor unsafeCommandProcessor) {
         return ImmutableList.<CommandsExecutor>builder()
                 .add(createSafeCommandsExecutor(toroSafeCommandTool))
@@ -31,7 +31,7 @@ public class ToroCommandsExecutor extends GroupedCommandsExecutor {
     }
 
     public static CommandsExecutor createSafeCommandsExecutor(
-            ToroSafeCommandTool toroSafeCommandTool) {
+            ToroV30CommandTool toroSafeCommandTool) {
         return MapBasedCommandsExecutor.fromLibraryBuilder(ToroCommandsLibrary.getSafeLibrary())
                 .addImplementations(toroSafeCommandTool.getMap().entrySet())
                 .build();

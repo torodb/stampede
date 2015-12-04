@@ -75,12 +75,12 @@ import javax.inject.Inject;
  * As not all commands are implemented using a real
  * {@linkplain CommandImplementation}, it is needed to cheat the safe framework.
  */
-public class ToroSafeCommandTool {
+public class ToroV30CommandTool {
 
     private final ImmutableMap<Command, CommandImplementation> map;
 
     @Inject
-    ToroSafeCommandTool(MapFactory mapFactory) {
+    ToroV30CommandTool(MapFactory mapFactory) {
         this.map = mapFactory.get();
     }
 
