@@ -39,7 +39,19 @@ public interface DatabaseInterface extends Serializable {
     @Nonnull String createSchemaStatement(@Nonnull String schemaName);
     @Nonnull String createCollectionsTableStatement(@Nonnull String schemaName, @Nonnull String tableName);
 
-    @Nonnull
-    ArraySerializer arraySerializer();
+    @Nonnull String arrayUnnestParametrizedSelectStatement();
+
+    @Nonnull String deleteDidsStatement(
+            @Nonnull String schemaName, @Nonnull String tableName, @Nonnull String didColumnName
+    );
+
+    @Nonnull String dropSchemaStatement(@Nonnull String schemaName);
+
+    @Nonnull String findDocsSelectStatement(
+            @Nonnull String didName, @Nonnull String typeIdName, @Nonnull String indexName,
+            @Nonnull String jsonName
+    );
+
+    @Nonnull ArraySerializer arraySerializer();
 
 }

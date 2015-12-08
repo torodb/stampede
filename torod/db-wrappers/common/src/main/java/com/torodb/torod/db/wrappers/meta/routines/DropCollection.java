@@ -1,14 +1,21 @@
 
-package com.torodb.torod.db.wrappers.postgresql.meta.routines;
+package com.torodb.torod.db.wrappers.meta.routines;
 
 import com.torodb.torod.core.exceptions.ToroImplementationException;
+import com.torodb.torod.db.wrappers.DatabaseInterface;
 import com.torodb.torod.db.wrappers.postgresql.meta.CollectionSchema;
-import com.torodb.torod.db.wrappers.tables.CollectionsTable;
 import com.torodb.torod.db.wrappers.sql.AutoCloser;
+import com.torodb.torod.db.wrappers.tables.CollectionsTable;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import java.sql.*;
-import org.jooq.*;
+import org.jooq.Configuration;
+import org.jooq.ConnectionProvider;
+import org.jooq.DSLContext;
 import org.jooq.impl.DSL;
+
+import javax.annotation.Nonnull;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
 
 /**
  *
@@ -16,14 +23,16 @@ import org.jooq.impl.DSL;
 public class DropCollection {
 
     @SuppressFBWarnings("SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE")
-    public static void execute(Configuration jooqConf, CollectionSchema colSchema) {
+    public static void execute(
+            Configuration jooqConf, CollectionSchema colSchema, @Nonnull DatabaseInterface databaseInterface
+    ) {
         
         ConnectionProvider provider = jooqConf.connectionProvider();
         Connection connection = provider.acquire();
         Statement st = null;
         try {
             st = connection.createStatement();
-            st.executeUpdate("DROP SCHEMA \""+colSchema.getName()+"\" CASCADE");
+            st.executeUpdate(databaseInterface.dropSchemaStatement(colSchema.getName()));
             
             DSLContext dsl = DSL.using(jooqConf);
             int deleted = dsl.deleteFrom(CollectionsTable.COLLECTIONS)

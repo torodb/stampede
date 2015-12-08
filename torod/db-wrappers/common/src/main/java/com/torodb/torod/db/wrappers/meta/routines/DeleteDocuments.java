@@ -17,7 +17,7 @@
  *     Copyright (c) 2014, 8Kdata Technology
  *     
  */
-package com.torodb.torod.db.wrappers.postgresql.meta.routines;
+package com.torodb.torod.db.wrappers.meta.routines;
 
 import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
@@ -26,21 +26,33 @@ import com.torodb.torod.core.subdocument.structure.ArrayStructure;
 import com.torodb.torod.core.subdocument.structure.DocStructure;
 import com.torodb.torod.core.subdocument.structure.StructureElement;
 import com.torodb.torod.core.subdocument.structure.StructureElementVisitor;
+import com.torodb.torod.db.wrappers.DatabaseInterface;
 import com.torodb.torod.db.wrappers.postgresql.meta.CollectionSchema;
-import com.torodb.torod.db.wrappers.tables.SubDocTable;
 import com.torodb.torod.db.wrappers.sql.AutoCloser;
+import com.torodb.torod.db.wrappers.tables.SubDocTable;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import java.sql.*;
-import java.util.*;
 import org.jooq.*;
 import org.jooq.impl.DSL;
+
+import javax.annotation.Nonnull;
+import java.sql.Array;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
 
 /**
  *
  */
 public class DeleteDocuments {
 
-    public static int execute(Configuration configuration, CollectionSchema colSchema, Multimap<DocStructure, Integer> didsByStructure, boolean justOne) {
+    public static int execute(
+            Configuration configuration, CollectionSchema colSchema, Multimap<DocStructure, Integer> didsByStructure,
+            boolean justOne, @Nonnull DatabaseInterface databaseInterface
+    ) {
         Multimap<DocStructure, Integer> didsByStructureToDelete;
         if (didsByStructure.isEmpty()) {
             return 0;
@@ -60,16 +72,16 @@ public class DeleteDocuments {
         }
 
         try {
-            return execute(configuration, colSchema, didsByStructureToDelete);
+            return execute(configuration, colSchema, didsByStructureToDelete, databaseInterface);
         } catch (SQLException ex) {
             throw new RuntimeException(ex);
         }
     }
 
     public static int execute(
-            Configuration configuration, 
-            CollectionSchema colSchema, 
-            Multimap<DocStructure, Integer> didsByStructure) throws SQLException {
+            Configuration configuration, CollectionSchema colSchema, Multimap<DocStructure, Integer> didsByStructure,
+            @Nonnull DatabaseInterface databaseInterface
+    ) throws SQLException {
         TableProvider tableProvider = new TableProvider(colSchema);
 
         DSLContext dsl = DSL.using(configuration);
@@ -79,24 +91,24 @@ public class DeleteDocuments {
             tables.clear();
             structure.accept(tableProvider, tables);
 
-            executeDeleteSubDocuments(dsl, tables, didsByStructure.get(structure));
+            executeDeleteSubDocuments(dsl, tables, didsByStructure.get(structure), databaseInterface);
         }
 
         Set<Integer> dids = Sets.newHashSet(didsByStructure.values());
-        return executeDeleteRoots(dsl, colSchema, dids);
+        return executeDeleteRoots(dsl, colSchema, dids, databaseInterface);
     }
 
     private static void executeDeleteSubDocuments(
-            DSLContext dsl, 
-            Set<SubDocTable> tables, 
-            Collection<Integer> dids) {
+            DSLContext dsl, Set<SubDocTable> tables, Collection<Integer> dids,
+            @Nonnull DatabaseInterface databaseInterface
+    ) {
         
         ConnectionProvider connectionProvider
                 = dsl.configuration().connectionProvider();
         Connection connection = connectionProvider.acquire();
         try {
             for (SubDocTable table : tables) {
-                delete(connection, table.getSchema(), table, dids);
+                delete(connection, table.getSchema(), table, dids, databaseInterface);
             }
         }
         catch (SQLException ex) {
@@ -109,9 +121,9 @@ public class DeleteDocuments {
     }
     
     private static int executeDeleteRoots(
-            DSLContext dsl, 
-            CollectionSchema colSchema, 
-            Collection<Integer> dids) throws SQLException {
+            DSLContext dsl, CollectionSchema colSchema, Collection<Integer> dids,
+            @Nonnull DatabaseInterface databaseInterface
+    ) throws SQLException {
         ConnectionProvider connectionProvider
                 = dsl.configuration().connectionProvider();
         Connection connection = connectionProvider.acquire();
@@ -119,7 +131,7 @@ public class DeleteDocuments {
         try {
             Table<Record> rootTable = DSL.tableByName(colSchema.getName(), "root");
 
-            return delete(connection, colSchema, rootTable, dids);
+            return delete(connection, colSchema, rootTable, dids, databaseInterface);
         } finally {
             connectionProvider.release(connection);
         }
@@ -127,20 +139,19 @@ public class DeleteDocuments {
     
     @SuppressFBWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
     private static int delete(
-            Connection connection, 
-            Schema schema, 
-            Table table, 
-            Collection<Integer> dids) throws SQLException {
+            Connection connection, Schema schema, Table table, Collection<Integer> dids,
+            @Nonnull DatabaseInterface databaseInterface
+    ) throws SQLException {
         final int maxInArray = (2 << 15) - 1; // = 2^16 -1 = 65535
-        
-        final String tableName = "\"" + schema.getName()
-                + "\".\"" + table.getName() + "\"";
+
         PreparedStatement ps = null;
         try {
             ps = connection.prepareStatement(
-                    "DELETE FROM " + tableName + " WHERE (" 
-                    + tableName + "." + SubDocTable.DID_COLUMN_NAME 
-                    + " IN (SELECT unnest(?)))");
+                    databaseInterface.deleteDidsStatement(
+                            schema.getName(), table.getName(), SubDocTable.DID_COLUMN_NAME
+                    )
+            );
+
             Integer[] didsToDelete = dids.toArray(new Integer[dids.size()]);
 
             int i = 0;

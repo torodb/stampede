@@ -18,22 +18,28 @@
  *     
  */
 
-package com.torodb.torod.db.wrappers.postgresql.meta.routines;
+package com.torodb.torod.db.wrappers.meta.routines;
 
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Table;
 import com.torodb.torod.core.language.projection.Projection;
 import com.torodb.torod.core.subdocument.SplitDocument;
+import com.torodb.torod.db.wrappers.DatabaseInterface;
 import com.torodb.torod.db.wrappers.converters.SplitDocumentConverter;
 import com.torodb.torod.db.wrappers.postgresql.meta.CollectionSchema;
 import com.torodb.torod.db.wrappers.tables.SubDocTable;
-import java.sql.*;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.jooq.Configuration;
+
+import javax.annotation.Nonnull;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import javax.annotation.Nonnull;
-import org.jooq.Configuration;
 
 public class QueryRoutine {
 
@@ -42,22 +48,14 @@ public class QueryRoutine {
     public static final String INDEX = "index";
     public static final String _JSON = "_json";
 
-    private static final String QUERY
-            = "SELECT "
-            + DOC_ID + ","
-            + TYPE_ID + ","
-            + INDEX + ","
-            + _JSON
-            + " FROM torodb.find_docs(?, ?, ?) ORDER BY " + DOC_ID;
-
     private QueryRoutine() {
     }
 
+    @SuppressFBWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
     public static List<SplitDocument> execute(
-            Configuration configuration,
-            CollectionSchema colSchema,
-            Integer[] requestedDocs,
-            Projection projection) {
+            Configuration configuration, CollectionSchema colSchema, Integer[] requestedDocs, Projection projection,
+            @Nonnull DatabaseInterface databaseInterface
+    ) {
 
         if (requestedDocs.length == 0) {
             return Collections.emptyList();
@@ -68,7 +66,7 @@ public class QueryRoutine {
 
         try {
             c = configuration.connectionProvider().acquire();
-            ps = c.prepareStatement(QUERY);
+            ps = c.prepareStatement(databaseInterface.findDocsSelectStatement(DOC_ID, TYPE_ID, INDEX, _JSON));
 
             ps.setString(1, colSchema.getName());
 

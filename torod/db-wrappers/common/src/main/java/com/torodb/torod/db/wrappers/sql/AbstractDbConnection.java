@@ -340,13 +340,13 @@ public abstract class AbstractDbConnection implements
 
         Multimap<DocStructure, Integer> didsByStructure = queryEvaluator.evaluateDidsByStructure(condition, dsl);
 
-        return Routines.deleteDocuments(jooqConf, colSchema, didsByStructure, justOne);
+        return Routines.deleteDocuments(jooqConf, colSchema, didsByStructure, justOne, databaseInterface);
     }
 
     @Override
     public void dropCollection(String collection) {
         CollectionSchema colSchema = meta.getCollectionSchema(collection);
-        Routines.dropCollection(jooqConf, colSchema);
+        Routines.dropCollection(jooqConf, colSchema, databaseInterface);
         meta.dropCollectionSchema(collection);
     }
 

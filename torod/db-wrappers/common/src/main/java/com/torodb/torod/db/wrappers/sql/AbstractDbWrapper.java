@@ -276,7 +276,7 @@ public abstract class AbstractDbWrapper implements DbWrapper {
 
         @Override
         public List<SplitDocument> readDocuments(Integer[] documents) {
-            return Routines.readDocuments(configuration, colSchema, documents, projection);
+            return Routines.readDocuments(configuration, colSchema, documents, projection, databaseInterface);
         }
 
         @Override

@@ -95,13 +95,18 @@ public class PostgresqlDatabaseInterface implements DatabaseInterface {
         return basicTypeToSqlType;
     }
 
+    private static @Nonnull StringBuilder fullTableName(@Nonnull String schemaName, @Nonnull String tableName) {
+        return new StringBuilder()
+                .append("\"").append(schemaName).append("\"")
+                .append(".")
+                .append("\"").append(tableName).append("\"");
+    }
+
     @Override
     public @Nonnull String createCollectionsTableStatement(@Nonnull String schemaName, @Nonnull String tableName) {
         return new StringBuilder()
                 .append("CREATE TABLE ")
-                .append("\"").append(schemaName).append("\"")
-                .append(".")
-                .append("\"").append(tableName).append("\"")
+                .append(fullTableName(schemaName, tableName))
                 .append(" (")
                 .append(CollectionsTable.TableFields.NAME.name()).append("             varchar     PRIMARY KEY     ,")
                 .append(CollectionsTable.TableFields.SCHEMA.name()).append("           varchar     NOT NULL UNIQUE ,")
@@ -118,4 +123,53 @@ public class PostgresqlDatabaseInterface implements DatabaseInterface {
     public @Nonnull String createSchemaStatement(@Nonnull String schemaName) {
         return new StringBuilder().append("CREATE SCHEMA ").append("\"").append(schemaName).append("\"").toString();
     }
+
+    @Override
+    public @Nonnull String arrayUnnestParametrizedSelectStatement() {
+        return "SELECT unnest(?)";
+    }
+
+    @Override
+    public @Nonnull String deleteDidsStatement(
+            @Nonnull String schemaName, @Nonnull String tableName,
+            @Nonnull String didColumnName
+    ) {
+        return new StringBuilder()
+                .append("DELETE FROM ")
+                .append(fullTableName(schemaName, tableName))
+                .append(" WHERE (")
+                    .append(fullTableName(schemaName, tableName))
+                    .append(".").append(didColumnName)
+                    .append(" IN (")
+                        .append(arrayUnnestParametrizedSelectStatement())
+                    .append(")")
+                .append(")")
+                .toString();
+    }
+
+    @Override
+    public @Nonnull String dropSchemaStatement(@Nonnull String schemaName) {
+        return new StringBuilder()
+                .append("DROP SCHEMA ")
+                .append("\"").append(schemaName).append("\"")
+                .append(" CASCADE")
+                .toString();
+    }
+
+    @Nonnull
+    @Override
+    public String findDocsSelectStatement(
+            @Nonnull String didName, @Nonnull String typeIdName, @Nonnull String indexName, @Nonnull String jsonName
+    ) {
+        return new StringBuilder()
+                .append("SELECT ")
+                .append(didName).append(", ")
+                .append(typeIdName).append(", ")
+                .append(indexName).append(", ")
+                .append(jsonName)
+                .append(" FROM torodb.find_docs(?, ?, ?) ORDER BY ")
+                .append(didName).append(" ASC")
+                .toString();
+    }
+
 }
