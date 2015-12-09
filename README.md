@@ -1,25 +1,45 @@
 # ToroDB
 
-ToroDB is an open source, document-oriented, JSON database that runs on top of PostgreSQL. JSON documents are stored relationally, not as a blob/jsonb. This leads to significant storage and I/O savings. It speaks natively the MongoDB protocol, meaning that it can be used with any mongo-compatible client.
+ToroDB is an open source, document-oriented, JSON database that runs on top of 
+PostgreSQL. JSON documents are stored relationally, not as a blob/jsonb. This 
+leads to significant storage and I/O savings. It speaks natively the MongoDB 
+protocol, meaning that it can be used with any mongo-compatible client.
 
-ToroDB follows a RERO (Release Early, Release Often) policy. Current version is considered a "developer preview" and hence is not suitable for production use. However, any feedback, contributions, help and/or patches are very welcome. Please join the [torodb-dev][8] mailing list for further discussion.
+ToroDB follows a RERO (Release Early, Release Often) policy. Current version is
+considered a "developer preview" and hence is not suitable for production use. 
+However, any feedback, contributions, help and/or patches are very welcome. 
+Please join the [torodb-dev][8] mailing list for further discussion.
 
-For more information, please see [ToroDB's website][1], this [latest presentation][7] or this [video recording of a presentation][11] about ToroDB.
+For more information, please see [ToroDB's website][1], this 
+[latest presentation][7] or this [video recording of a presentation][11] about 
+ToroDB.
+
+## Code QA
+ * Master branch build status: [![Master branch build status](https://travis-ci.org/torodb/torodb.svg?branch=master)](https://travis-ci.org/torodb/torodb)
+ * Devel branch build status :  [![Devel branch build status](https://travis-ci.org/torodb/torodb.svg?branch=devel)](https://travis-ci.org/torodb/torodb)
 
 
 ## Requisites
 
 ToroDB is written in Java and requires:
 
-* A suitable JRE, version 6 or higher. It has been mainly tested with Oracle JRE 8.
+* A suitable JRE, version 7 or higher. It has been mainly tested with Oracle JRE 8.
 * A [PostgreSQL][2] database, version 9.4 or higher. [Download][9].
 
 
 ## Download/Installation
 
-### Download the compiled jar file
+### Download the compiled file
 
-You may download the [latest version][3] (v. 0.23-SNAPSHOT) of ToroDB from ToroDB's maven repository. See below for instructions on how to run it.
+You may download the latest version (v. 0.40-SNAPSHOT) of ToroDB from 
+[the release page](https://github.com/torodb/torodb/releases/latest) on the 
+following packaging formats:
+ * [tar.bz2](https://github.com/torodb/torodb/releases/latest/torodb.tar.bz2)
+ * [zip](https://github.com/torodb/torodb/releases/latest/torodb.zip)
+
+See below for instructions on how to run it.
+
+You can also find binary files on ToroDB's maven repository[3].
 
 
 ### Compile and install from sources
@@ -28,12 +48,15 @@ You may compile ToroDB yourself. All the project is written in Java and managed 
 
 ToroDB is based on the [Mongo Wire Protocol library][5] (mongowp), which is another library built by [8Kdata][6] to help construct programs that speak the MongoDB protocol. You may also compile this library yourself, or let maven download it from the repository automatically.
 
-Just run `mvn package` on the root directory and find the executable jar file in `torodb/target/torodb-0.23-SNAPSHOT-jar-with-dependencies.jar`.
+Just run `mvn package -Passembler` on the root directory and execute it from 
+`torodb/target/appassembler/bin` or choose your prefered packaging format from
+`torodb/target/dist/`.
 
 
 ## Running ToroDB
 
-Execute with `java -jar <path>/torodb.jar <arguments>`. If you run with `--help`, you will see the required and optional arguments to run ToroDB:
+Execute with `torodb <arguments>` (or `torodb.bat <arguments>` on Windows). If 
+you run with `--help`, you will see the required and optional arguments to run ToroDB:
 
     --ask-for-password
        Force input of PostgreSQL's database user password.
@@ -79,7 +102,7 @@ Please see [CONTRIBUTING][10].
 
 [1]: http://www.torodb.com
 [2]: http://www.postgresql.org
-[3]: http://maven.torodb.com/jar/com/torodb/torodb/0.23-SNAPSHOT/torodb.jar
+[3]: https://oss.sonatype.org/content/groups/public/com/torodb/torodb/
 [4]: http://www.postgresql.org/docs/9.3/static/libpq-pgpass.html
 [5]: https://github.com/8kdata/mongowp
 [6]: http://www.8kdata.com
