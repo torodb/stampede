@@ -3,10 +3,10 @@ jdk:
 - oraclejdk8
 - oraclejdk7
 sudo: false
-before_install:
-- pip install codecov
-after_success:
-- codecov
+#before_install:
+#- pip install codecov
+#after_success:
+#- codecov
 deploy:
   provider: releases
   api_key:
