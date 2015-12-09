@@ -21,9 +21,14 @@
 package com.torodb.torod.db.wrappers;
 
 import com.torodb.torod.db.wrappers.converters.BasicTypeToSqlType;
+import com.torodb.torod.db.wrappers.exceptions.InvalidDatabaseException;
+import com.torodb.torod.db.wrappers.meta.TorodbMeta;
+import org.jooq.DSLContext;
 
 import javax.annotation.Nonnull;
+import java.io.IOException;
 import java.io.Serializable;
+import java.sql.SQLException;
 
 /**
  * Wrapper interface to define all database-specific SQL code
@@ -38,6 +43,9 @@ public interface DatabaseInterface extends Serializable {
 
     @Nonnull String createSchemaStatement(@Nonnull String schemaName);
     @Nonnull String createCollectionsTableStatement(@Nonnull String schemaName, @Nonnull String tableName);
+    @Nonnull String createIndexesTableStatement(
+            @Nonnull String tableName, @Nonnull String indexNameColumn, @Nonnull String indexOptionsColumn
+    );
 
     @Nonnull String arrayUnnestParametrizedSelectStatement();
 
@@ -52,6 +60,15 @@ public interface DatabaseInterface extends Serializable {
             @Nonnull String jsonName
     );
 
+    @Nonnull String createIndexStatement(
+            @Nonnull String fullIndexName, @Nonnull String tableSchema, @Nonnull String tableName,
+            @Nonnull String tableColumnName, boolean isAscending
+    );
+    @Nonnull String dropIndexStatement(@Nonnull String schemaName, @Nonnull String indexName);
+
     @Nonnull ArraySerializer arraySerializer();
+
+    @Nonnull TorodbMeta initializeTorodbMeta(String databaseName, DSLContext dsl, DatabaseInterface databaseInterface)
+    throws SQLException, IOException, InvalidDatabaseException;
 
 }

@@ -36,7 +36,7 @@ import com.torodb.torod.db.wrappers.converters.ValueConverter;
 import com.torodb.torod.db.wrappers.converters.jooq.SubdocValueConverter;
 import com.torodb.torod.db.wrappers.converters.jooq.ValueToJooqConverterProvider;
 import com.torodb.torod.db.wrappers.converters.json.ValueToJsonConverterProvider;
-import com.torodb.torod.db.wrappers.postgresql.meta.CollectionSchema;
+import com.torodb.torod.db.wrappers.meta.IndexStorage;
 import com.torodb.torod.db.wrappers.tables.SubDocHelper;
 import com.torodb.torod.db.wrappers.tables.SubDocTable;
 import org.jooq.*;
@@ -52,14 +52,14 @@ import java.util.List;
  */
 public class QueryCriteriaToSQLTranslator {
 
-    private final CollectionSchema schema;
+    private final IndexStorage.CollectionSchema schema;
     private static final CorrectnessChecker CORRECTNESS_CHECKER
             = new CorrectnessChecker();
 
     private final DatabaseInterface databaseInterface;
 
     @Inject
-    public QueryCriteriaToSQLTranslator(CollectionSchema schema, DatabaseInterface databaseInterface) {
+    public QueryCriteriaToSQLTranslator(IndexStorage.CollectionSchema schema, DatabaseInterface databaseInterface) {
         this.schema = schema;
         this.databaseInterface = databaseInterface;
     }

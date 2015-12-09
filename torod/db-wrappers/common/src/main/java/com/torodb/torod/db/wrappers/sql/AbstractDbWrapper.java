@@ -33,9 +33,9 @@ import com.torodb.torod.core.language.querycriteria.QueryCriteria;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.db.wrappers.DatabaseInterface;
 import com.torodb.torod.db.wrappers.exceptions.InvalidDatabaseException;
-import com.torodb.torod.db.wrappers.postgresql.meta.CollectionSchema;
-import com.torodb.torod.db.wrappers.postgresql.meta.Routines;
-import com.torodb.torod.db.wrappers.postgresql.meta.TorodbMeta;
+import com.torodb.torod.db.wrappers.meta.Routines;
+import com.torodb.torod.db.wrappers.meta.TorodbMeta;
+import com.torodb.torod.db.wrappers.meta.IndexStorage;
 import com.torodb.torod.db.wrappers.query.QueryEvaluator;
 import org.jooq.Configuration;
 import org.jooq.ConnectionProvider;
@@ -57,8 +57,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *
  */
 public abstract class AbstractDbWrapper implements DbWrapper {
-
-
 	private final AtomicBoolean isInitialized;
     private final DataSource sessionDataSource;
     private final DataSource systemDataSource;
@@ -106,8 +104,8 @@ public abstract class AbstractDbWrapper implements DbWrapper {
             c = sessionDataSource.getConnection();
             checkDbSupported(c);
             c.setAutoCommit(false);
-            
-            meta = new TorodbMeta(databaseName, getDsl(c), databaseInterface);
+
+            meta = databaseInterface.initializeTorodbMeta(databaseName, getDsl(c), databaseInterface);
             c.commit();
 
             isInitialized.set(true);
@@ -191,7 +189,7 @@ public abstract class AbstractDbWrapper implements DbWrapper {
             cursor = new EmptyCursor();
         }
         else {
-            CollectionSchema colSchema = meta.getCollectionSchema(collection);
+            IndexStorage.CollectionSchema colSchema = meta.getCollectionSchema(collection);
 
             QueryEvaluator queryEvaluator = new QueryEvaluator(colSchema, databaseInterface);
 
@@ -255,14 +253,14 @@ public abstract class AbstractDbWrapper implements DbWrapper {
 
         private final CursorId cursorId;
         private final Configuration configuration;
-        private final CollectionSchema colSchema;
+        private final IndexStorage.CollectionSchema colSchema;
         private final Connection connection;
         private final Projection projection;
 
         public MyCursorConnectionProvider(
                 CursorId cursorId, 
                 DSLContext dsl, 
-                CollectionSchema colSchema, 
+                IndexStorage.CollectionSchema colSchema,
                 Connection connection,
                 Projection projection) {
             this.cursorId = cursorId;

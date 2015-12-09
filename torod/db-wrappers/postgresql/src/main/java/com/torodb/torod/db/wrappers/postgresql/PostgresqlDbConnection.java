@@ -27,24 +27,28 @@ import com.torodb.torod.core.subdocument.structure.DocStructure;
 import com.torodb.torod.db.wrappers.DatabaseInterface;
 import com.torodb.torod.db.wrappers.converters.jooq.SubdocValueConverter;
 import com.torodb.torod.db.wrappers.converters.jooq.ValueToJooqConverterProvider;
-import com.torodb.torod.db.wrappers.postgresql.meta.CollectionSchema;
 import com.torodb.torod.db.wrappers.meta.StructuresCache;
-import com.torodb.torod.db.wrappers.postgresql.meta.TorodbMeta;
-import com.torodb.torod.db.wrappers.tables.SubDocTable;
+import com.torodb.torod.db.wrappers.meta.TorodbMeta;
+import com.torodb.torod.db.wrappers.meta.IndexStorage;
 import com.torodb.torod.db.wrappers.sql.AbstractDbConnection;
 import com.torodb.torod.db.wrappers.sql.AutoCloser;
 import com.torodb.torod.db.wrappers.sql.index.NamedDbIndex;
+import com.torodb.torod.db.wrappers.tables.SubDocTable;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import java.io.Serializable;
-import java.sql.*;
-import java.util.*;
-import java.util.Comparator;
-import javax.annotation.Nonnull;
-import javax.inject.Inject;
 import org.jooq.*;
 import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
+
+import javax.annotation.Nonnull;
+import javax.inject.Inject;
+import java.io.Serializable;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.*;
+import java.util.Comparator;
 
 /**
  *
@@ -112,7 +116,7 @@ class PostgresqlDbConnection extends AbstractDbConnection {
     ) throws ImplementationDbException {
 
         try {
-            CollectionSchema colSchema = getMeta().getCollectionSchema(collection);
+            IndexStorage.CollectionSchema colSchema = getMeta().getCollectionSchema(collection);
 
             Field<Integer> idField = DSL.field("did", SQLDataType.INTEGER.nullable(false));
             Field<Integer> sidField = DSL.field("sid", SQLDataType.INTEGER.nullable(false));
@@ -172,7 +176,7 @@ class PostgresqlDbConnection extends AbstractDbConnection {
 
     @Override
     public Long getCollectionSize(String collection) {
-        CollectionSchema colSchema = getMeta().getCollectionSchema(collection);
+        IndexStorage.CollectionSchema colSchema = getMeta().getCollectionSchema(collection);
         
         ConnectionProvider connectionProvider 
                 = getDsl().configuration().connectionProvider();
@@ -282,7 +286,7 @@ class PostgresqlDbConnection extends AbstractDbConnection {
 
     @Override
     public Long getDocumentsSize(String collection) {
-        CollectionSchema colSchema = getMeta().getCollectionSchema(collection);
+        IndexStorage.CollectionSchema colSchema = getMeta().getCollectionSchema(collection);
         
         ConnectionProvider connectionProvider 
                 = getDsl().configuration().connectionProvider();
@@ -317,7 +321,7 @@ class PostgresqlDbConnection extends AbstractDbConnection {
 
     @Override
     public Long getIndexSize(String collection, String index) {
-        CollectionSchema colSchema = getMeta().getCollectionSchema(collection);
+        IndexStorage.CollectionSchema colSchema = getMeta().getCollectionSchema(collection);
         
         ConnectionProvider connectionProvider 
                 = getDsl().configuration().connectionProvider();
@@ -442,7 +446,7 @@ class PostgresqlDbConnection extends AbstractDbConnection {
     private class MyStructureListener implements StructuresCache.NewStructureListener {
 
         @Override
-        public void eventNewStructure(CollectionSchema colSchema, DocStructure newStructure) {
+        public void eventNewStructure(IndexStorage.CollectionSchema colSchema, DocStructure newStructure) {
             colSchema.getIndexManager().newStructureDetected(
                     newStructure, 
                     PostgresqlDbConnection.this

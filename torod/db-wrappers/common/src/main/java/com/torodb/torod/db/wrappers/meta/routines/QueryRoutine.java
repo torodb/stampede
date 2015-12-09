@@ -27,7 +27,7 @@ import com.torodb.torod.core.language.projection.Projection;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.db.wrappers.DatabaseInterface;
 import com.torodb.torod.db.wrappers.converters.SplitDocumentConverter;
-import com.torodb.torod.db.wrappers.postgresql.meta.CollectionSchema;
+import com.torodb.torod.db.wrappers.meta.IndexStorage;
 import com.torodb.torod.db.wrappers.tables.SubDocTable;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.jooq.Configuration;
@@ -53,7 +53,7 @@ public class QueryRoutine {
 
     @SuppressFBWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
     public static List<SplitDocument> execute(
-            Configuration configuration, CollectionSchema colSchema, Integer[] requestedDocs, Projection projection,
+            Configuration configuration, IndexStorage.CollectionSchema colSchema, Integer[] requestedDocs, Projection projection,
             @Nonnull DatabaseInterface databaseInterface
     ) {
 
@@ -94,7 +94,7 @@ public class QueryRoutine {
         }
     }
 
-    private static Integer[] requiredTables(CollectionSchema colSchema, Projection projection) {
+    private static Integer[] requiredTables(IndexStorage.CollectionSchema colSchema, Projection projection) {
         Collection<SubDocTable> subDocTables = colSchema.getSubDocTables();
 
         Integer[] result = new Integer[subDocTables.size()];
@@ -107,7 +107,7 @@ public class QueryRoutine {
     }
 
     @Nonnull
-    private static List<SplitDocument> translateDocuments(CollectionSchema colSchema, int expectedDocs, ResultSet rs) {
+    private static List<SplitDocument> translateDocuments(IndexStorage.CollectionSchema colSchema, int expectedDocs, ResultSet rs) {
         try {
             List<SplitDocument> result = Lists.newArrayListWithCapacity(expectedDocs);
 
@@ -161,7 +161,7 @@ public class QueryRoutine {
     }
 
     private static SplitDocument processDocument(
-            CollectionSchema colSchema,
+            IndexStorage.CollectionSchema colSchema,
             int lastDocId,
             Integer structureId,
             Table<Integer, Integer, String> docInfo) {

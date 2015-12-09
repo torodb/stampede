@@ -27,7 +27,7 @@ import com.torodb.torod.core.subdocument.structure.DocStructure;
 import com.torodb.torod.core.subdocument.structure.StructureElement;
 import com.torodb.torod.core.subdocument.structure.StructureElementVisitor;
 import com.torodb.torod.db.wrappers.DatabaseInterface;
-import com.torodb.torod.db.wrappers.postgresql.meta.CollectionSchema;
+import com.torodb.torod.db.wrappers.meta.IndexStorage;
 import com.torodb.torod.db.wrappers.sql.AutoCloser;
 import com.torodb.torod.db.wrappers.tables.SubDocTable;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -50,7 +50,7 @@ import java.util.Set;
 public class DeleteDocuments {
 
     public static int execute(
-            Configuration configuration, CollectionSchema colSchema, Multimap<DocStructure, Integer> didsByStructure,
+            Configuration configuration, IndexStorage.CollectionSchema colSchema, Multimap<DocStructure, Integer> didsByStructure,
             boolean justOne, @Nonnull DatabaseInterface databaseInterface
     ) {
         Multimap<DocStructure, Integer> didsByStructureToDelete;
@@ -79,7 +79,7 @@ public class DeleteDocuments {
     }
 
     public static int execute(
-            Configuration configuration, CollectionSchema colSchema, Multimap<DocStructure, Integer> didsByStructure,
+            Configuration configuration, IndexStorage.CollectionSchema colSchema, Multimap<DocStructure, Integer> didsByStructure,
             @Nonnull DatabaseInterface databaseInterface
     ) throws SQLException {
         TableProvider tableProvider = new TableProvider(colSchema);
@@ -121,7 +121,7 @@ public class DeleteDocuments {
     }
     
     private static int executeDeleteRoots(
-            DSLContext dsl, CollectionSchema colSchema, Collection<Integer> dids,
+            DSLContext dsl, IndexStorage.CollectionSchema colSchema, Collection<Integer> dids,
             @Nonnull DatabaseInterface databaseInterface
     ) throws SQLException {
         ConnectionProvider connectionProvider
@@ -184,9 +184,9 @@ public class DeleteDocuments {
     private static class TableProvider implements
             StructureElementVisitor<Void, Collection<SubDocTable>> {
 
-        private final CollectionSchema colSchema;
+        private final IndexStorage.CollectionSchema colSchema;
 
-        public TableProvider(CollectionSchema colSchema) {
+        public TableProvider(IndexStorage.CollectionSchema colSchema) {
             this.colSchema = colSchema;
         }
 

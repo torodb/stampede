@@ -15,16 +15,20 @@ import com.torodb.torod.core.subdocument.SubDocAttribute;
 import com.torodb.torod.core.subdocument.structure.ArrayStructure;
 import com.torodb.torod.core.subdocument.structure.DocStructure;
 import com.torodb.torod.core.subdocument.structure.StructureElement;
-import com.torodb.torod.db.wrappers.postgresql.meta.CollectionSchema;
 import com.torodb.torod.db.wrappers.meta.StructuresCache;
-import com.torodb.torod.db.wrappers.postgresql.meta.TorodbMeta;
+import com.torodb.torod.db.wrappers.meta.TorodbMeta;
+import com.torodb.torod.db.wrappers.meta.IndexStorage;
 import com.torodb.torod.db.wrappers.tables.SubDocTable;
-import java.io.Serializable;
-import java.util.*;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.io.Serializable;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  *
@@ -35,12 +39,12 @@ public class IndexManager implements Serializable {
             = LoggerFactory.getLogger(IndexManager.class);
     private static final long serialVersionUID = 1L;
 
-    private final CollectionSchema colSchema;
+    private final IndexStorage.CollectionSchema colSchema;
     private final IndexRelationManager indexRelation;
     private final String databaseName;
 
     public IndexManager(
-            CollectionSchema colSchema,
+            IndexStorage.CollectionSchema colSchema,
             TorodbMeta meta) {
         this.colSchema = colSchema;
         this.indexRelation = new IndexRelationManager();
@@ -207,7 +211,7 @@ public class IndexManager implements Serializable {
         }
     }
 
-    private Set<UnnamedDbIndex> toDbIndex(NamedToroIndex index, CollectionSchema colSchema) {
+    private Set<UnnamedDbIndex> toDbIndex(NamedToroIndex index, IndexStorage.CollectionSchema colSchema) {
 
         Set<UnnamedDbIndex> result = Sets.newHashSet();
 
@@ -394,7 +398,7 @@ public class IndexManager implements Serializable {
     public static interface DbIndexCreator {
 
         public NamedDbIndex createIndex(
-                @Nonnull CollectionSchema colSchema,
+                @Nonnull IndexStorage.CollectionSchema colSchema,
                 @Nonnull UnnamedDbIndex unnamedDbIndex
         );
     }
@@ -402,7 +406,7 @@ public class IndexManager implements Serializable {
     public static interface DbIndexDropper {
 
         void dropIndex(
-                @Nonnull CollectionSchema colSchema,
+                @Nonnull IndexStorage.CollectionSchema colSchema,
                 @Nonnull NamedDbIndex index);
     }
 
@@ -414,7 +418,7 @@ public class IndexManager implements Serializable {
     public static interface ToroIndexDroppedListener {
 
         public void eventToroIndexRemoved(
-                @Nonnull CollectionSchema colSchema,
+                @Nonnull IndexStorage.CollectionSchema colSchema,
                 @Nonnull String indexName);
     }
 }

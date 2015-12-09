@@ -3,7 +3,7 @@ package com.torodb.torod.db.wrappers.meta.routines;
 
 import com.torodb.torod.core.exceptions.ToroImplementationException;
 import com.torodb.torod.db.wrappers.DatabaseInterface;
-import com.torodb.torod.db.wrappers.postgresql.meta.CollectionSchema;
+import com.torodb.torod.db.wrappers.meta.IndexStorage;
 import com.torodb.torod.db.wrappers.sql.AutoCloser;
 import com.torodb.torod.db.wrappers.tables.CollectionsTable;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -24,7 +24,7 @@ public class DropCollection {
 
     @SuppressFBWarnings("SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE")
     public static void execute(
-            Configuration jooqConf, CollectionSchema colSchema, @Nonnull DatabaseInterface databaseInterface
+            Configuration jooqConf, IndexStorage.CollectionSchema colSchema, @Nonnull DatabaseInterface databaseInterface
     ) {
         
         ConnectionProvider provider = jooqConf.connectionProvider();

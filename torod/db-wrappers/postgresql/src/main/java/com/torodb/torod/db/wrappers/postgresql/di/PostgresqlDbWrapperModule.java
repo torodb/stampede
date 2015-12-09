@@ -24,8 +24,8 @@ import com.google.inject.AbstractModule;
 import com.torodb.torod.core.dbWrapper.DbWrapper;
 import com.torodb.torod.db.wrappers.DatabaseInterface;
 import com.torodb.torod.db.wrappers.converters.BasicTypeToSqlType;
-import com.torodb.torod.db.wrappers.postgresql.PostgresqlDbWrapper;
 import com.torodb.torod.db.wrappers.postgresql.PostgresqlDatabaseInterface;
+import com.torodb.torod.db.wrappers.postgresql.PostgresqlDbWrapper;
 import com.torodb.torod.db.wrappers.postgresql.converters.PostgresBasicTypeToSqlType;
 
 import javax.inject.Singleton;

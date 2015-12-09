@@ -17,7 +17,7 @@
  *     Copyright (c) 2014, 8Kdata Technology
  *     
  */
-package com.torodb.torod.db.wrappers.postgresql.meta;
+package com.torodb.torod.db.wrappers.meta;
 
 
 import com.torodb.torod.db.wrappers.DatabaseInterface;
@@ -60,7 +60,7 @@ public class TorodbSchema extends SchemaImpl {
 		super(TORODB_SCHEMA);
 	}
 
-    void checkOrCreate(
+    public void checkOrCreate(
             DSLContext dsl, 
             Meta jooqMeta, 
             DatabaseMetaData jdbcMeta,

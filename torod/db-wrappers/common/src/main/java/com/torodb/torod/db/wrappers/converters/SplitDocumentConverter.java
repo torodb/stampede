@@ -21,11 +21,11 @@
 package com.torodb.torod.db.wrappers.converters;
 
 import com.google.common.collect.Table;
-import com.torodb.torod.db.wrappers.postgresql.meta.CollectionSchema;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.core.subdocument.SubDocType;
 import com.torodb.torod.core.subdocument.structure.DocStructure;
 import com.torodb.torod.core.subdocument.structure.StructureElementDFW;
+import com.torodb.torod.db.wrappers.meta.IndexStorage;
 
 import java.io.Serializable;
 
@@ -43,7 +43,7 @@ public class SplitDocumentConverter implements Serializable {
     }
 
     public SplitDocument convert(
-            CollectionSchema colSchema,
+            IndexStorage.CollectionSchema colSchema,
             int docId, 
             int structureId, 
             Table<Integer, Integer, String> databaseInfo
@@ -64,7 +64,7 @@ public class SplitDocumentConverter implements Serializable {
     }
 
     private DocStructure getStructure(
-            CollectionSchema colSchema, 
+            IndexStorage.CollectionSchema colSchema,
             int structureId
     ) {
         DocStructure structure 
@@ -81,12 +81,12 @@ public class SplitDocumentConverter implements Serializable {
 
         private final Table<Integer, Integer, String> databaseInfo;
         private final SplitDocument.Builder splitDocBuilder;
-        private final CollectionSchema colSchema;
+        private final IndexStorage.CollectionSchema colSchema;
 
         public SubDocAdder(
                 Table<Integer, Integer, String> databaseInfo, 
                 SplitDocument.Builder splitDocBuilder, 
-                CollectionSchema colSchema
+                IndexStorage.CollectionSchema colSchema
         ) {
             this.databaseInfo = databaseInfo;
             this.splitDocBuilder = splitDocBuilder;

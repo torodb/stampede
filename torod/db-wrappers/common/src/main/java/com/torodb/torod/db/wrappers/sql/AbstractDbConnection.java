@@ -35,17 +35,17 @@ import com.torodb.torod.core.subdocument.SubDocument;
 import com.torodb.torod.core.subdocument.structure.DocStructure;
 import com.torodb.torod.db.wrappers.DatabaseInterface;
 import com.torodb.torod.db.wrappers.exceptions.InvalidCollectionSchemaException;
-import com.torodb.torod.db.wrappers.postgresql.meta.CollectionSchema;
-import com.torodb.torod.db.wrappers.postgresql.meta.Routines;
-import com.torodb.torod.db.wrappers.postgresql.meta.TorodbMeta;
-import com.torodb.torod.db.wrappers.tables.CollectionsTable;
-import com.torodb.torod.db.wrappers.tables.SubDocTable;
-import com.torodb.torod.db.wrappers.tables.records.CollectionsRecord;
-import com.torodb.torod.db.wrappers.tables.records.SubDocTableRecord;
+import com.torodb.torod.db.wrappers.meta.Routines;
+import com.torodb.torod.db.wrappers.meta.TorodbMeta;
+import com.torodb.torod.db.wrappers.meta.IndexStorage;
 import com.torodb.torod.db.wrappers.query.QueryEvaluator;
 import com.torodb.torod.db.wrappers.sql.index.IndexManager;
 import com.torodb.torod.db.wrappers.sql.index.NamedDbIndex;
 import com.torodb.torod.db.wrappers.sql.index.UnnamedDbIndex;
+import com.torodb.torod.db.wrappers.tables.CollectionsTable;
+import com.torodb.torod.db.wrappers.tables.SubDocTable;
+import com.torodb.torod.db.wrappers.tables.records.CollectionsRecord;
+import com.torodb.torod.db.wrappers.tables.records.SubDocTableRecord;
 import org.jooq.*;
 import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
@@ -192,7 +192,7 @@ public abstract class AbstractDbConnection implements
     @Override
     public void createSubDocTypeTable(String collection, SubDocType type) throws ImplementationDbException {
         try {
-            CollectionSchema collectionSchema = meta.getCollectionSchema(collection);
+            IndexStorage.CollectionSchema collectionSchema = meta.getCollectionSchema(collection);
             if (!collectionSchema.existsSubDocTable(type)) {
                 SubDocTable subDocTable = meta.getCollectionSchema(collection).prepareSubDocTable(type);
 
@@ -213,7 +213,7 @@ public abstract class AbstractDbConnection implements
             return;
         }
 
-        CollectionSchema colSchema = meta.getCollectionSchema(collection);
+        IndexStorage.CollectionSchema colSchema = meta.getCollectionSchema(collection);
         try {
             Routines.reserveDocIds(
                     jooqConf,
@@ -257,7 +257,7 @@ public abstract class AbstractDbConnection implements
     @Override
     public Collection<? extends NamedToroIndex> getIndexes(String collection) {
         try {
-            CollectionSchema colSchema = meta.getCollectionSchema(collection);
+            IndexStorage.CollectionSchema colSchema = meta.getCollectionSchema(collection);
             return colSchema.getIndexManager().getIndexes();
         } catch (IllegalArgumentException ex) {
             throw new UserToroException("Collection '" + collection + "' does no exist", ex);
@@ -271,7 +271,7 @@ public abstract class AbstractDbConnection implements
             IndexedAttributes attributes, 
             boolean unique, 
             boolean blocking) {
-        CollectionSchema colSchema = meta.getCollectionSchema(collection);
+        IndexStorage.CollectionSchema colSchema = meta.getCollectionSchema(collection);
         return colSchema.getIndexManager().createIndex(
                 indexName, 
                 attributes, 
@@ -300,11 +300,11 @@ public abstract class AbstractDbConnection implements
 
     @Override
     public Map<String, Integer> findCollections() {
-        Collection<CollectionSchema> collections = meta.getCollectionSchemes();
+        Collection<IndexStorage.CollectionSchema> collections = meta.getCollectionSchemes();
 
         Map<String, Integer> result = Maps.newHashMapWithExpectedSize(collections.size());
 
-        for (CollectionSchema colSchema : collections) {
+        for (IndexStorage.CollectionSchema colSchema : collections) {
             int firstFree = Routines.firstFreeDocId(jooqConf, colSchema);
             result.put(colSchema.getCollection(), firstFree);
 
@@ -335,7 +335,7 @@ public abstract class AbstractDbConnection implements
 
     @Override
     public int delete(String collection, @Nullable QueryCriteria condition, boolean justOne) {
-        CollectionSchema colSchema = meta.getCollectionSchema(collection);
+        IndexStorage.CollectionSchema colSchema = meta.getCollectionSchema(collection);
         QueryEvaluator queryEvaluator = new QueryEvaluator(colSchema, databaseInterface);
 
         Multimap<DocStructure, Integer> didsByStructure = queryEvaluator.evaluateDidsByStructure(condition, dsl);
@@ -345,20 +345,20 @@ public abstract class AbstractDbConnection implements
 
     @Override
     public void dropCollection(String collection) {
-        CollectionSchema colSchema = meta.getCollectionSchema(collection);
+        IndexStorage.CollectionSchema colSchema = meta.getCollectionSchema(collection);
         Routines.dropCollection(jooqConf, colSchema, databaseInterface);
         meta.dropCollectionSchema(collection);
     }
 
     @Override
-    public NamedDbIndex createIndex(CollectionSchema colSchema, UnnamedDbIndex unnamedDbIndex) {
+    public NamedDbIndex createIndex(IndexStorage.CollectionSchema colSchema, UnnamedDbIndex unnamedDbIndex) {
         return colSchema
                 .getIndexStorage()
                 .createIndex(dsl, unnamedDbIndex);
     }
 
     @Override
-    public void dropIndex(CollectionSchema colSchema, NamedDbIndex index) {
+    public void dropIndex(IndexStorage.CollectionSchema colSchema, NamedDbIndex index) {
         colSchema
                 .getIndexStorage()
                 .dropIndex(dsl, index);
@@ -405,13 +405,13 @@ public abstract class AbstractDbConnection implements
     }
 
     @Override
-    public void eventToroIndexRemoved(CollectionSchema colSchema, String indexName) {
+    public void eventToroIndexRemoved(IndexStorage.CollectionSchema colSchema, String indexName) {
         colSchema.getIndexStorage().eventToroIndexRemoved(dsl, indexName);
     }
     
     @Override
     public Integer count(String collection, QueryCriteria query) {
-        CollectionSchema colSchema = meta.getCollectionSchema(collection);
+        IndexStorage.CollectionSchema colSchema = meta.getCollectionSchema(collection);
 
         QueryEvaluator queryEvaluator = new QueryEvaluator(colSchema, databaseInterface);
 

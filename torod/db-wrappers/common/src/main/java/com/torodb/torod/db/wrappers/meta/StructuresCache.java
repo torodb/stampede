@@ -25,7 +25,6 @@ import com.google.common.collect.HashBiMap;
 import com.google.common.collect.ImmutableBiMap;
 import com.torodb.torod.core.subdocument.structure.DocStructure;
 import com.torodb.torod.db.wrappers.converters.StructureConverter;
-import com.torodb.torod.db.wrappers.postgresql.meta.CollectionSchema;
 import org.jooq.*;
 import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
@@ -46,7 +45,7 @@ public class StructuresCache implements Serializable {
 
     private static final Field<Integer> sidField = DSL.field("sid", SQLDataType.INTEGER);
     private static final Field<String> structuresField = DSL.field("_structure", SQLDataType.VARCHAR);
-    private final CollectionSchema colSchema;
+    private final IndexStorage.CollectionSchema colSchema;
     private final StructureConverter converter;
     private final BiMap<Integer, DocStructure> structures;
     /**
@@ -59,7 +58,7 @@ public class StructuresCache implements Serializable {
             = Logger.getLogger(StructuresCache.class.getName());
 
     public StructuresCache(
-            CollectionSchema colSchema,
+            IndexStorage.CollectionSchema colSchema,
             String schemaName, 
             StructureConverter converter) {
         this.colSchema = colSchema;
@@ -176,6 +175,6 @@ public class StructuresCache implements Serializable {
     }
 
     public static interface NewStructureListener {
-        public void eventNewStructure(CollectionSchema colSchema, DocStructure newStructure);
+        public void eventNewStructure(IndexStorage.CollectionSchema colSchema, DocStructure newStructure);
     }
 }

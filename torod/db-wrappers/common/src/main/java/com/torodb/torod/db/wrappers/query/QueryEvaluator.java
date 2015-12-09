@@ -46,7 +46,7 @@ import com.torodb.torod.core.language.utils.AttributeReferenceResolver;
 import com.torodb.torod.core.language.querycriteria.utils.QueryCriteriaVisitor;
 import com.torodb.torod.core.subdocument.structure.DocStructure;
 import com.torodb.torod.db.wrappers.DatabaseInterface;
-import com.torodb.torod.db.wrappers.postgresql.meta.CollectionSchema;
+import com.torodb.torod.db.wrappers.meta.IndexStorage;
 import com.torodb.torod.db.wrappers.query.dblanguage.AndDatabaseQuery;
 import com.torodb.torod.db.wrappers.query.dblanguage.ByStructureDatabaseQuery;
 import com.torodb.torod.db.wrappers.query.dblanguage.DatabaseQuery;
@@ -77,12 +77,12 @@ public class QueryEvaluator {
     private static final Logger LOGGER = LoggerFactory.getLogger(
             QueryEvaluator.class
     );
-    private final CollectionSchema colSchema;
+    private final IndexStorage.CollectionSchema colSchema;
     private final QueryCriteriaToSQLTranslator toSQLTranslator;
     private final DatabaseInterface databaseInterface;
 
     @Inject
-    public QueryEvaluator(CollectionSchema colSchema, DatabaseInterface databaseInterface) {
+    public QueryEvaluator(IndexStorage.CollectionSchema colSchema, DatabaseInterface databaseInterface) {
         this.colSchema = colSchema;
         this.toSQLTranslator = new QueryCriteriaToSQLTranslator(colSchema, databaseInterface);
         this.databaseInterface = databaseInterface;
@@ -670,10 +670,10 @@ public class QueryEvaluator {
     private static class Evaluator implements
             DatabaseQueryVisitor<Set<Integer>, Void> {
 
-        private final CollectionSchema colSchema;
+        private final IndexStorage.CollectionSchema colSchema;
         private final DSLContext dsl;
 
-        public Evaluator(CollectionSchema colSchema, DSLContext dsl) {
+        public Evaluator(IndexStorage.CollectionSchema colSchema, DSLContext dsl) {
             this.colSchema = colSchema;
             this.dsl = dsl;
         }

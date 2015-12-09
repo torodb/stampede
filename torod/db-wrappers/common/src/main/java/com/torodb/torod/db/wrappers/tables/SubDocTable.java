@@ -29,7 +29,7 @@ import com.torodb.torod.core.subdocument.values.Value;
 import com.torodb.torod.db.wrappers.DatabaseInterface;
 import com.torodb.torod.db.wrappers.converters.jooq.SubdocValueConverter;
 import com.torodb.torod.db.wrappers.converters.jooq.ValueToJooqConverterProvider;
-import com.torodb.torod.db.wrappers.postgresql.meta.CollectionSchema;
+import com.torodb.torod.db.wrappers.meta.IndexStorage;
 import com.torodb.torod.db.wrappers.tables.records.SubDocTableRecord;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.jooq.*;
@@ -79,7 +79,7 @@ public class SubDocTable extends TableImpl<SubDocTableRecord> {
     @Inject
     public SubDocTable(
             String tableName,
-            CollectionSchema schema,
+            IndexStorage.CollectionSchema schema,
             DatabaseMetaData metadata,
             DatabaseInterface databaseInterface
     ) {
@@ -98,7 +98,7 @@ public class SubDocTable extends TableImpl<SubDocTableRecord> {
     }
 
     @Inject
-    public SubDocTable(CollectionSchema schema, SubDocType type, int typeId, DatabaseInterface databaseInterface) {
+    public SubDocTable(IndexStorage.CollectionSchema schema, SubDocType type, int typeId, DatabaseInterface databaseInterface) {
         this(getSubDocTableName(typeId), schema, null, type, databaseInterface);
     }
 

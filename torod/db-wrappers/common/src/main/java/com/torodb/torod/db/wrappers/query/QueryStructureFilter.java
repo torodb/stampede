@@ -50,8 +50,8 @@ import com.torodb.torod.core.subdocument.structure.ArrayStructure;
 import com.torodb.torod.core.subdocument.structure.DocStructure;
 import com.torodb.torod.core.subdocument.structure.StructureElement;
 import com.torodb.torod.core.utils.TriValuedResult;
-import com.torodb.torod.db.wrappers.postgresql.meta.CollectionSchema;
 import com.torodb.torod.db.wrappers.meta.StructuresCache;
+import com.torodb.torod.db.wrappers.meta.IndexStorage;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.*;
 import javax.annotation.Nonnull;
@@ -69,7 +69,7 @@ public class QueryStructureFilter {
     private static final Processor PROCESSOR = new Processor();
 
     public static Multimap<Integer, QueryCriteria> filterStructures(
-            CollectionSchema colSchema,
+            IndexStorage.CollectionSchema colSchema,
             QueryCriteria queryCriteria) throws UndecidableCaseException {
         return filterStructures(colSchema.getStructuresCache(), queryCriteria);
     }

@@ -20,7 +20,7 @@
 
 package com.torodb.torod.db.wrappers.udt;
 
-import com.torodb.torod.db.wrappers.postgresql.meta.TorodbSchema;
+import com.torodb.torod.db.wrappers.meta.TorodbSchema;
 import com.torodb.torod.db.wrappers.udt.records.TwelveBytesRecord;
 
 import org.jooq.impl.UDTImpl;

@@ -24,7 +24,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.torodb.torod.core.exceptions.ToroImplementationException;
 import com.torodb.torod.core.subdocument.structure.*;
-import com.torodb.torod.db.wrappers.postgresql.meta.CollectionSchema;
+import com.torodb.torod.db.wrappers.meta.IndexStorage;
 
 import java.io.Serializable;
 import java.io.StringReader;
@@ -47,11 +47,11 @@ public class StructureConverter implements Serializable {
     private static final Pattern SCAPED_KEY_PATTERN = Pattern.compile("(_+" + TABLE_ID + "|_+" + INDEX_ID + ')');
     private static final long serialVersionUID = 1L;
 
-    private final CollectionSchema colSchema;
+    private final IndexStorage.CollectionSchema colSchema;
     private boolean initialized = false;
     private static final ToJsonVisitor TO_JSON = new ToJsonVisitor();
 
-    public StructureConverter(CollectionSchema colSchema) {
+    public StructureConverter(IndexStorage.CollectionSchema colSchema) {
         this.colSchema = colSchema;
     }
 
@@ -196,10 +196,10 @@ public class StructureConverter implements Serializable {
         return true;
     }
 
-    private static class ToJsonVisitor implements StructureElementVisitor<JsonValue, CollectionSchema> {
+    private static class ToJsonVisitor implements StructureElementVisitor<JsonValue, IndexStorage.CollectionSchema> {
 
         @Override
-        public JsonValue visit(DocStructure structure, CollectionSchema colSchema) {
+        public JsonValue visit(DocStructure structure, IndexStorage.CollectionSchema colSchema) {
 
             int tableId = colSchema.getTypeId(structure.getType());
             
@@ -241,7 +241,7 @@ public class StructureConverter implements Serializable {
         }
 
         @Override
-        public JsonValue visit(ArrayStructure structure, CollectionSchema colSchema) {
+        public JsonValue visit(ArrayStructure structure, IndexStorage.CollectionSchema colSchema) {
             JsonObjectBuilder objBuilder = Json.createObjectBuilder();
 
             for (Map.Entry<Integer, ? extends StructureElement> entry : structure.getElements().entrySet()) {

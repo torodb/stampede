@@ -24,11 +24,16 @@ package com.torodb.torod.db.wrappers.postgresql;
 import com.torodb.torod.db.wrappers.ArraySerializer;
 import com.torodb.torod.db.wrappers.DatabaseInterface;
 import com.torodb.torod.db.wrappers.converters.BasicTypeToSqlType;
+import com.torodb.torod.db.wrappers.exceptions.InvalidDatabaseException;
+import com.torodb.torod.db.wrappers.meta.TorodbMeta;
 import com.torodb.torod.db.wrappers.tables.CollectionsTable;
+import org.jooq.DSLContext;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.io.IOException;
+import java.sql.SQLException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -125,6 +130,20 @@ public class PostgresqlDatabaseInterface implements DatabaseInterface {
     }
 
     @Override
+    public @Nonnull String createIndexesTableStatement(
+            @Nonnull String tableName, @Nonnull String indexNameColumn, @Nonnull String indexOptionsColumn
+    ) {
+        return new StringBuilder()
+                .append("CREATE TABLE ")
+                .append(tableName)
+                .append(" (")
+                .append(indexNameColumn).append("       varchar     PRIMARY KEY,")
+                .append(indexOptionsColumn).append("    jsonb       NOT NULL")
+                .append(")")
+                .toString();
+    }
+
+    @Override
     public @Nonnull String arrayUnnestParametrizedSelectStatement() {
         return "SELECT unnest(?)";
     }
@@ -170,6 +189,44 @@ public class PostgresqlDatabaseInterface implements DatabaseInterface {
                 .append(" FROM torodb.find_docs(?, ?, ?) ORDER BY ")
                 .append(didName).append(" ASC")
                 .toString();
+    }
+
+    @Nonnull
+    @Override
+    public String createIndexStatement(
+            @Nonnull String fullIndexName, @Nonnull String tableSchema, @Nonnull String tableName,
+            @Nonnull String tableColumnName, boolean ascending
+    ) {
+        return new StringBuilder()
+                .append("CREATE INDEX ")
+                .append("\"").append(fullIndexName).append("\"")
+                .append(" ON ")
+                .append("\"").append(tableSchema).append("\"")
+                .append(".")
+                .append("\"").append(tableName).append("\"")
+                .append(" (")
+                    .append("\"").append(tableColumnName).append("\"")
+                    .append(" ").append(ascending ? "ASC" : "DESC")
+                .append(")")
+                .toString();
+    }
+
+    @Nonnull
+    @Override
+    public String dropIndexStatement(@Nonnull String schemaName, @Nonnull String indexName) {
+        return new StringBuilder()
+                .append("DROP INDEX ")
+                .append("\"").append(schemaName).append("\"")
+                .append(".")
+                .append("\"").append(indexName).append("\"")
+                .toString();
+    }
+
+    @Override
+    public @Nonnull TorodbMeta initializeTorodbMeta(
+            String databaseName, DSLContext dsl, DatabaseInterface databaseInterface
+    ) throws SQLException, IOException, InvalidDatabaseException {
+        return new PostgreSQLTorodbMeta(databaseName, dsl, databaseInterface);
     }
 
 }

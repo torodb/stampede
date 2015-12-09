@@ -18,7 +18,7 @@
  *     
  */
 
-package com.torodb.torod.db.wrappers.postgresql.meta;
+package com.torodb.torod.db.wrappers.postgresql;
 
 import com.google.common.collect.MapMaker;
 import com.google.common.io.CharStreams;
@@ -26,6 +26,9 @@ import com.torodb.torod.core.exceptions.ToroImplementationException;
 import com.torodb.torod.db.wrappers.DatabaseInterface;
 import com.torodb.torod.db.wrappers.exceptions.InvalidCollectionSchemaException;
 import com.torodb.torod.db.wrappers.exceptions.InvalidDatabaseException;
+import com.torodb.torod.db.wrappers.meta.TorodbMeta;
+import com.torodb.torod.db.wrappers.meta.IndexStorage;
+import com.torodb.torod.db.wrappers.meta.TorodbSchema;
 import com.torodb.torod.db.wrappers.tables.CollectionsTable;
 import com.torodb.torod.db.wrappers.tables.records.CollectionsRecord;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -35,7 +38,6 @@ import org.jooq.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -49,19 +51,17 @@ import java.util.concurrent.ConcurrentMap;
 /**
  *
  */
-public class TorodbMeta {
+public class PostgreSQLTorodbMeta implements TorodbMeta {
+
+    private static final long serialVersionUID = -4785629402L;
 
     private final String databaseName;
-    private final ConcurrentMap<String, CollectionSchema> collectionSchemes;
-    private static final Logger LOGGER = LoggerFactory.getLogger(TorodbMeta.class);
+    private final ConcurrentMap<String, IndexStorage.CollectionSchema> collectionSchemes;
+    private static final Logger LOGGER = LoggerFactory.getLogger(PostgreSQLTorodbMeta.class);
     private final DatabaseInterface databaseInterface;
 
-    @Inject
-    public TorodbMeta(
-            String databaseName,
-            DSLContext dsl,
-            DatabaseInterface databaseInterface
-    ) throws SQLException, IOException, InvalidDatabaseException {
+    PostgreSQLTorodbMeta(String databaseName, DSLContext dsl, DatabaseInterface databaseInterface)
+    throws SQLException, IOException, InvalidDatabaseException {
         this.databaseName = databaseName;
         this.databaseInterface = databaseInterface;
 
@@ -91,7 +91,7 @@ public class TorodbMeta {
                 = dsl.selectFrom(CollectionsTable.COLLECTIONS).fetch();
         
         for (CollectionsRecord colRecord : records) {
-            CollectionSchema colSchema = new CollectionSchema(
+            IndexStorage.CollectionSchema colSchema = new IndexStorage.CollectionSchema(
                     colRecord.getSchema(), 
                     colRecord.getName(),
                     dsl, 
@@ -104,16 +104,19 @@ public class TorodbMeta {
         }
     }
 
+    @Override
     public String getDatabaseName() {
         return databaseName;
     }
 
+    @Override
     public boolean exists(String collection) {
         return collectionSchemes.containsKey(collection);
     }
 
-    public CollectionSchema getCollectionSchema(String collection) {
-        CollectionSchema schema = collectionSchemes.get(collection);
+    @Override
+    public IndexStorage.CollectionSchema getCollectionSchema(String collection) {
+        IndexStorage.CollectionSchema schema = collectionSchemes.get(collection);
         if (schema == null) {
             throw new IllegalArgumentException("There is no schema associated with collection "
                     + collection);
@@ -121,15 +124,17 @@ public class TorodbMeta {
         return schema;
     }
 
+    @Override
     public void dropCollectionSchema(String collection) {
-        CollectionSchema removed = collectionSchemes.remove(collection);
+        IndexStorage.CollectionSchema removed = collectionSchemes.remove(collection);
         if (removed == null) {
             throw new IllegalArgumentException("Collection " + collection
                     + " didn't exist");
         }
     }
 
-    public CollectionSchema createCollectionSchema(
+    @Override
+    public IndexStorage.CollectionSchema createCollectionSchema(
             String colName,
             String schemaName,
             DSLContext dsl) throws InvalidCollectionSchemaException {
@@ -137,13 +142,16 @@ public class TorodbMeta {
             throw new IllegalArgumentException("Collection '" + colName
                     + "' is already associated with a collection schema");
         }
-        CollectionSchema result = new CollectionSchema(schemaName, colName, dsl, this, databaseInterface);
+        IndexStorage.CollectionSchema result = new IndexStorage.CollectionSchema(
+                schemaName, colName, dsl, this, databaseInterface
+        );
         collectionSchemes.put(colName, result);
 
         return result;
     }
 
-    public Collection<CollectionSchema> getCollectionSchemes() {
+    @Override
+    public Collection<IndexStorage.CollectionSchema> getCollectionSchemes() {
         return Collections.unmodifiableCollection(collectionSchemes.values());
     }
 
@@ -302,7 +310,7 @@ public class TorodbMeta {
             String resourcePath
     ) throws IOException, SQLException {
         InputStream resourceAsStream
-                = TorodbMeta.class.getResourceAsStream(resourcePath);
+                = PostgreSQLTorodbMeta.class.getResourceAsStream(resourcePath);
         if (resourceAsStream == null) {
             throw new ToroImplementationException(
                     "Resource '" + resourcePath + "' does not exist"

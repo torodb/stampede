@@ -18,18 +18,14 @@
  *     
  */
 
-package com.torodb.torod.db.wrappers.postgresql.meta;
+package com.torodb.torod.db.wrappers.meta;
 
 import com.google.common.collect.Multimap;
 import com.torodb.torod.core.language.projection.Projection;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.core.subdocument.structure.DocStructure;
 import com.torodb.torod.db.wrappers.DatabaseInterface;
-import com.torodb.torod.db.wrappers.meta.routines.FirstFreeDocId;
-import com.torodb.torod.db.wrappers.meta.routines.ReserveDocIds;
-import com.torodb.torod.db.wrappers.meta.routines.DeleteDocuments;
-import com.torodb.torod.db.wrappers.meta.routines.DropCollection;
-import com.torodb.torod.db.wrappers.meta.routines.QueryRoutine;
+import com.torodb.torod.db.wrappers.meta.routines.*;
 import org.jooq.Configuration;
 
 import javax.annotation.Nonnull;
@@ -51,7 +47,7 @@ public class Routines {
      * @param colSchema
      * @return 
      */
-    public static Integer firstFreeDocId(Configuration configuration, CollectionSchema colSchema) {
+    public static Integer firstFreeDocId(Configuration configuration, IndexStorage.CollectionSchema colSchema) {
         FirstFreeDocId f = new FirstFreeDocId();
         f.setColSchema(colSchema.getName());
 
@@ -66,7 +62,7 @@ public class Routines {
      * @param increment
      * @return 
      */
-    public static Integer reserveDocIds(Configuration configuration, CollectionSchema colSchema, Integer increment) {
+    public static Integer reserveDocIds(Configuration configuration, IndexStorage.CollectionSchema colSchema, Integer increment) {
         ReserveDocIds f = new ReserveDocIds();
         f.setColSchema(colSchema);
         f.setIncrement(increment);
@@ -76,21 +72,21 @@ public class Routines {
     }
 
     public static List<SplitDocument> readDocuments(
-            Configuration configuration, CollectionSchema colSchema, Integer[] requestedDocs, Projection projection,
+            Configuration configuration, IndexStorage.CollectionSchema colSchema, Integer[] requestedDocs, Projection projection,
             @Nonnull DatabaseInterface databaseInterface
     ) {
         return QueryRoutine.execute(configuration, colSchema, requestedDocs, projection, databaseInterface);
     }
     
     public static int deleteDocuments(
-            Configuration configuration, CollectionSchema colSchema, Multimap<DocStructure, Integer> didsByStructure,
+            Configuration configuration, IndexStorage.CollectionSchema colSchema, Multimap<DocStructure, Integer> didsByStructure,
             boolean justOne, @Nonnull DatabaseInterface databaseInterface
     ) {
         return DeleteDocuments.execute(configuration, colSchema, didsByStructure, justOne, databaseInterface);
     }
 
     public static void dropCollection(
-            Configuration jooqConf, CollectionSchema colSchema, @Nonnull DatabaseInterface databaseInterface
+            Configuration jooqConf, IndexStorage.CollectionSchema colSchema, @Nonnull DatabaseInterface databaseInterface
     ) {
         DropCollection.execute(jooqConf, colSchema, databaseInterface);
     }

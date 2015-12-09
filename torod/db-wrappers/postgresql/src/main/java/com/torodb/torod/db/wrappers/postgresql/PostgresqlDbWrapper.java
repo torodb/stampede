@@ -26,7 +26,7 @@ import com.torodb.torod.core.backend.DbBackend;
 import com.torodb.torod.core.dbWrapper.DbConnection;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.db.wrappers.DatabaseInterface;
-import com.torodb.torod.db.wrappers.postgresql.meta.TorodbMeta;
+import com.torodb.torod.db.wrappers.meta.TorodbMeta;
 import com.torodb.torod.db.wrappers.sql.AbstractDbWrapper;
 import org.jooq.Configuration;
 import org.jooq.ConnectionProvider;
