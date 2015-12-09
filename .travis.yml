@@ -12,6 +12,10 @@ deploy:
   api_key:
     secure: P3gWBmh516lPjW8jT+wUSmOzTrUTB+rgGWujdzZXa+NwhjwaGUckNHHGB/czcyc7JjwaA+v5Q3+js3ygJzcpjEzN2juYuSMD9V9aflhtoH3aH2L6yunkZXQE3rD44/SneoaWZ9tE8Knuj3MyeaetqdJQWQx3AF1gxsERQcnTDVz4bMHpFoY27JqAVYTZ3LAYL0fKP2pvNiCd7Ye1MzuHFDdlBJhFC6GUkfd7+9gq9ZpMZkar6z0kKudiJlG4m79ppx7pxgmrD8hB7DbGQ2Vfl6Jx9YOlZh7mf51uLHpiZqq+lE0UYOQcr3E8uDUAriuu9vzIrCgNHGladlvNvh69SNQwwOEchgLtIw/gZaqCBlDkxtnqGqBw2zGJdZnoPffos/2jKp1wCUij2xbE9ZywyLXf1Kep2WkUrTypD/1FbOAP8ORAdwVB2Ozw/lIwpX0AUvVBiBI7FizYUUal7DOjByAWLvshbVhJcOoEXsFVD1dEVvWIN5XSpHmcV09qBaRzL+qRFd/pTTRKd5rig31clmEC9at4zTCXVrI5v1ntWHOVcB3tiQO8T0BmK87pHHPAgdG91z6U4MBsR9l9rK7OO1uvj7oXSRoW1Bf8rqOV0Wt/BfLXvJUIsaJqaVah6L7ybVFQfgAfkso2VppQkqBH/UtttkNKmQU6VH/Bqxjfgs0=
   skip_cleanup: true
+  file:
+      - torodb/target/dist/torodb-0.40-SNAPSHOT-bin.tar.bz2
+      - torodb/target/dist/torodb-0.40-SNAPSHOT-bin.tar.gz
+      - torodb/target/dist/torodb-0.40-SNAPSHOT-bin.zip
   on:
     repo: gortiz/torodb
-    branch: ci
+    tags: true
