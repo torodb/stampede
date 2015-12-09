@@ -290,38 +290,9 @@
 
     <profiles>
         <profile>
-            <id>env-deploy</id>
-            <activation>
-                <property>
-                    <name>env</name>                    
-                    <value>deploy</value>
-                </property>
-            </activation>
+            <id>deploy</id> <!-- It must be manually turn on when mvn deploy is executed -->
             <build>
                 <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-surefire-plugin</artifactId>
-                        <version>2.19</version>
-                        <configuration>
-                            <skip>true</skip>
-                        </configuration>
-                        <executions>
-                            <execution>
-                                <id>integration-tests</id>
-                                <phase>integration-test</phase>
-                                <goals>
-                                    <goal>test</goal>
-                                </goals>
-                                <configuration>
-                                    <skip>false</skip>
-                                    <includes>
-                                        <include>%regex[.*integration.*]</include>
-                                    </includes>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-source-plugin</artifactId>
@@ -374,7 +345,7 @@
             </build>
         </profile>
         <profile>
-            <id>pre-push</id>
+            <id>safer</id> <!-- Slower but safer profile used to look for errors before pushing to SCM -->
             <build>
                 <plugins>
                     <plugin>
@@ -424,11 +395,40 @@
                             </templates>
                         </configuration>
                     </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <version>2.19</version>
+                        <configuration>
+                            <skip>true</skip>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>integration-tests</id>
+                                <phase>integration-test</phase>
+                                <goals>
+                                    <goal>test</goal>
+                                </goals>
+                                <configuration>
+                                    <skip>false</skip>
+                                    <includes>
+                                        <include>%regex[.*integration.*]</include>
+                                    </includes>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
                 </plugins>
             </build>
         </profile>
         <profile>
             <id>master-branch</id>
+            <activation>
+                <property> <!-- Used by Travis to modify the execution by branch -->
+                    <name>env.GIT_BRANCH</name>
+                    <value>master</value>
+                </property>
+            </activation>
             <build>
                 <plugins>
                     <plugin>
