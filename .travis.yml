@@ -1,11 +1,11 @@
 language: java
-script: mvn -Psafer -Passembler -B -e -T 1C clean install
+script: mvn -Psafer -Passembler -B -e -T 1C verify
 jdk:
 - oraclejdk8
 - oraclejdk7
 
 before_script:
-  - export GIT_BRANCH=$TRAVIS_BRANCH
+- export GIT_BRANCH=$TRAVIS_BRANCH
 
 sudo: false
 
@@ -13,28 +13,29 @@ after_success:
   - echo "<settings><servers><server><id>ossrh-snapshot</id><username>\${env.MAVEN_DEPLOY_USER}</username><password>\${env.MAVEN_DEPLOY_PASS}</password></server><server><id>ossrh-release</id><username>\${env.MAVEN_DEPLOY_USER}</username><password>\${env.MAVEN_DEPLOY_PASS}</password></server></servers></settings>" > ~/settings.xml
 
 deploy:
-  - provider: releases
-    api_key:
-      secure: P3gWBmh516lPjW8jT+wUSmOzTrUTB+rgGWujdzZXa+NwhjwaGUckNHHGB/czcyc7JjwaA+v5Q3+js3ygJzcpjEzN2juYuSMD9V9aflhtoH3aH2L6yunkZXQE3rD44/SneoaWZ9tE8Knuj3MyeaetqdJQWQx3AF1gxsERQcnTDVz4bMHpFoY27JqAVYTZ3LAYL0fKP2pvNiCd7Ye1MzuHFDdlBJhFC6GUkfd7+9gq9ZpMZkar6z0kKudiJlG4m79ppx7pxgmrD8hB7DbGQ2Vfl6Jx9YOlZh7mf51uLHpiZqq+lE0UYOQcr3E8uDUAriuu9vzIrCgNHGladlvNvh69SNQwwOEchgLtIw/gZaqCBlDkxtnqGqBw2zGJdZnoPffos/2jKp1wCUij2xbE9ZywyLXf1Kep2WkUrTypD/1FbOAP8ORAdwVB2Ozw/lIwpX0AUvVBiBI7FizYUUal7DOjByAWLvshbVhJcOoEXsFVD1dEVvWIN5XSpHmcV09qBaRzL+qRFd/pTTRKd5rig31clmEC9at4zTCXVrI5v1ntWHOVcB3tiQO8T0BmK87pHHPAgdG91z6U4MBsR9l9rK7OO1uvj7oXSRoW1Bf8rqOV0Wt/BfLXvJUIsaJqaVah6L7ybVFQfgAfkso2VppQkqBH/UtttkNKmQU6VH/Bqxjfgs0=
-    skip_cleanup: true
-    file:
-    - torodb/target/dist/torodb.tar.bz2
-    - torodb/target/dist/torodb.zip
-    on:
-      repo: gortiz/torodb
-      tags: true
-      jdk: oraclejdk8
-  - provider: script
-    script: mvn -B -e -T 1C -Pdeploy -DskipTests=true deploy --settings ~/settings.xml
-    skip_cleanup: true
-    on:
-      repo: gortiz/torodb
-      tags: true
-      jdk: oraclejdk8
-  - provider: script
-    script: mvn -B -e -T 1C -Pdeploy -DskipTests=true deploy --settings ~/settings.xml
-    skip_cleanup: true
-    on:
-      repo: gortiz/torodb
-      branch: devel
-      jdk: oraclejdk8
+- provider: releases
+  api_key:
+    secure: g2kUTryp5anBi6xzkHT4CfTFJz3K1q1nYYwjtNfreCoEGrjTA6A4ZgU/utVTOJxeNWmKZ1QO4suegKfsRCpiSqNvp85lM49qeXAp/xxuI0ac+J7JJALeGEn0AyLmhuHu/BBm3dIG+6oi+cXRsTKAX8uTqrT9P1tkfaUhEEV1XmA4tU3uEqzHiazPUKXysxAOacqeUfvZh+MoZaqA54p0UjmOilTMGnQvpv2uR7tBnXNGVXkqyonH6HsxAOwKdyZAYwsg2hvCNREJUCgl/OVkQI/H8+SmOfZ4btHxZqX3U5iVLZ9CugsUbqflvVzVd7KIPn4DPXalkSDLsJ2SxBio7Y1t50omDIlb7NsClR4JDAzME5XKw8XR9glmC0uDTMxMuhgXYWLq2JgQUlnD8vWh1SGsdUCNa+aQMlcYdIIMQZG50LgY5s+E2YVEzJ7NrWm66UCqeuxjqWetrGin1eFOY0+y2/+Pe4tr2ZhrbGhlqS11GKWy+tKLM9v7+L2w1gjKJaqcmbtVfja1kehaP7JLhq2S2S7jmcTggy4bx5B9U4rVwWq1cv5sXXXNEsvB/PzifXHV3z38O/ed8ddJpCTkhfubAr6zOKkyGdkPvXbdAmDOVWw5JPbP1fWDojaRgqxumf7MUhAlOGxmj//hgpwh/Q8/QVKCJ+lQRq89H5bT0q4=
+  skip_cleanup: true
+  file:
+  - torodb/target/dist/torodb.tar.bz2
+  - torodb/target/dist/torodb.zip
+  on:
+    repo: torodb/torodb
+    tags: true
+    jdk: oraclejdk8
+- provider: script
+  script: mvn -B -e -T 1C -Pdeploy -DskipTests=true deploy --settings ~/settings.xml
+  skip_cleanup: true
+  on:
+    repo: torodb/torodb
+    tags: true
+    jdk: oraclejdk8
+- provider: script
+  script: mvn -B -e -T 1C -Pdeploy -DskipTests=true deploy --settings ~/settings.xml
+  skip_cleanup: true
+  on:
+    repo: torodb/torodb
+    branch: devel
+    jdk: oraclejdk8
+  
