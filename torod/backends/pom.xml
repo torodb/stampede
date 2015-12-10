@@ -18,5 +18,6 @@
     <modules>
         <module>postgresql</module>
         <module>common</module>
+        <module>drivers</module>
     </modules>
 </project>

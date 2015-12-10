@@ -27,8 +27,8 @@ import com.torodb.torod.db.wrappers.converters.BasicTypeToSqlType;
 import com.torodb.torod.db.wrappers.postgresql.PostgresqlDatabaseInterface;
 import com.torodb.torod.db.wrappers.postgresql.PostgresqlDbWrapper;
 import com.torodb.torod.db.wrappers.postgresql.converters.PostgresBasicTypeToSqlType;
-import com.torodb.torod.db.wrappers.postgresql.driver.OfficialPostgreSQLDriver;
-import com.torodb.torod.db.wrappers.postgresql.driver.PostgreSQLDriverProvider;
+import com.torodb.torod.backends.drivers.postgresql.OfficialPostgreSQLDriver;
+import com.torodb.torod.backends.drivers.postgresql.PostgreSQLDriverProvider;
 
 import javax.inject.Singleton;
 

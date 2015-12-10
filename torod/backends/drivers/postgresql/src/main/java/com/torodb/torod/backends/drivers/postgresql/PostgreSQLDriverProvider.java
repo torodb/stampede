@@ -18,7 +18,7 @@
  *
  */
 
-package com.torodb.torod.db.wrappers.postgresql.driver;
+package com.torodb.torod.backends.drivers.postgresql;
 
 
 import com.torodb.torod.db.wrappers.DbBackendConfiguration;

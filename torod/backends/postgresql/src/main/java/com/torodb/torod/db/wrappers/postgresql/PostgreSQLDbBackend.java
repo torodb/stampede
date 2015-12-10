@@ -23,7 +23,7 @@ package com.torodb.torod.db.wrappers.postgresql;
 
 import com.torodb.torod.db.wrappers.AbstractDbBackend;
 import com.torodb.torod.db.wrappers.DbBackendConfiguration;
-import com.torodb.torod.db.wrappers.postgresql.driver.PostgreSQLDriverProvider;
+import com.torodb.torod.backends.drivers.postgresql.PostgreSQLDriverProvider;
 import com.zaxxer.hikari.HikariDataSource;
 
 import javax.annotation.Nonnull;
