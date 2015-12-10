@@ -18,12 +18,15 @@
  *
  */
 
-package com.torodb.torod.db.wrappers.postgresql.driver;
+package com.torodb.torod.db.wrappers.postgresql;
 
 
-import com.torodb.torod.db.wrappers.driver.AbstractDbBackend;
-import com.torodb.torod.db.wrappers.driver.DbBackendConfiguration;
+import com.torodb.torod.db.wrappers.AbstractDbBackend;
+import com.torodb.torod.db.wrappers.DbBackendConfiguration;
+import com.torodb.torod.db.wrappers.postgresql.driver.PostgreSQLDriverProvider;
+import com.zaxxer.hikari.HikariDataSource;
 
+import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import javax.sql.DataSource;
 
@@ -45,5 +48,10 @@ public class PostgreSQLDbBackend extends AbstractDbBackend {
     @Override
     protected DataSource getConfiguredDataSource(DbBackendConfiguration configuration, String poolName) {
         return driverProvider.getConfiguredDataSource(configuration, poolName);
+    }
+
+    @Override
+    protected void setGlobalCursorTransactionIsolation(@Nonnull HikariDataSource dataSource) {
+        dataSource.setTransactionIsolation("TRANSACTION_REPEATABLE_READ");
     }
 }

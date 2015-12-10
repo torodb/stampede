@@ -18,13 +18,14 @@
  *
  */
 
-package com.torodb.torod.db.wrappers.driver;
+package com.torodb.torod.db.wrappers;
 
 import com.google.common.base.Preconditions;
 import com.torodb.torod.core.backend.DbBackend;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
+import javax.annotation.Nonnull;
 import javax.inject.Singleton;
 import javax.sql.DataSource;
 
@@ -77,6 +78,8 @@ public abstract class AbstractDbBackend implements DbBackend {
         );
     }
 
+    protected abstract void setGlobalCursorTransactionIsolation(@Nonnull HikariDataSource dataSource);
+
     protected synchronized void initialize() {
         if(dataSourcesInitialized) {
             return;
@@ -90,7 +93,7 @@ public abstract class AbstractDbBackend implements DbBackend {
         );
         systemDataSource = createPooledDataSource(configuration, "system", SYSTEM_DATABASE_CONNECTIONS);
         globalCursorDataSource = createPooledDataSource(configuration, "cursors", reservedReadPoolSize);
-        globalCursorDataSource.setTransactionIsolation("TRANSACTION_REPEATABLE_READ");
+        setGlobalCursorTransactionIsolation(globalCursorDataSource);
         globalCursorDataSource.setReadOnly(true);
 
         dataSourcesInitialized = true;

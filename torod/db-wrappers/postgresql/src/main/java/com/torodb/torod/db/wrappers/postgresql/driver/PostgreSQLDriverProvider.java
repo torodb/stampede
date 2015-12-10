@@ -21,7 +21,7 @@
 package com.torodb.torod.db.wrappers.postgresql.driver;
 
 
-import com.torodb.torod.db.wrappers.driver.DbBackendConfiguration;
+import com.torodb.torod.db.wrappers.DbBackendConfiguration;
 
 import javax.sql.DataSource;
 
@@ -30,5 +30,5 @@ import javax.sql.DataSource;
  * A provider for the PostgreSQL driver interface so that it is independent of the driver implementation
  */
 public interface PostgreSQLDriverProvider {
-    public DataSource getConfiguredDataSource(DbBackendConfiguration configuration, String poolName);
+    DataSource getConfiguredDataSource(DbBackendConfiguration configuration, String poolName);
 }

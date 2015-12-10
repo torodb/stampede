@@ -18,7 +18,7 @@
  *
  */
 
-package com.torodb.torod.db.wrappers.driver;
+package com.torodb.torod.db.wrappers;
 
 import javax.annotation.Nonnegative;
 
@@ -26,12 +26,13 @@ import javax.annotation.Nonnegative;
  * Configuration data for the backend
  */
 public interface DbBackendConfiguration {
-    public int getConnectionPoolSize();
-    public int getReservedReadPoolSize();
-    public String getUsername();
-    public String getPassword();
-    public String getDbHost();
-    public String getDbName();
-    @Nonnegative
-    public int getDbPort();
+
+    int getConnectionPoolSize();
+    int getReservedReadPoolSize();
+    String getUsername();
+    String getPassword();
+    String getDbHost();
+    String getDbName();
+    @Nonnegative int getDbPort();
+
 }

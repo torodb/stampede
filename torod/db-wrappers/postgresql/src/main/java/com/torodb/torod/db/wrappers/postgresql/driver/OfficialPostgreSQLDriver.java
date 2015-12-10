@@ -21,7 +21,7 @@
 package com.torodb.torod.db.wrappers.postgresql.driver;
 
 import com.torodb.torod.core.exceptions.ToroRuntimeException;
-import com.torodb.torod.db.wrappers.driver.DbBackendConfiguration;
+import com.torodb.torod.db.wrappers.DbBackendConfiguration;
 import org.postgresql.ds.PGSimpleDataSource;
 
 import javax.sql.DataSource;
