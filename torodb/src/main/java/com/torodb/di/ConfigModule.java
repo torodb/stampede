@@ -23,7 +23,7 @@ package com.torodb.di;
 
 import com.eightkdata.mongowp.mongoserver.MongoServerConfig;
 import com.google.inject.AbstractModule;
-import com.torodb.ConfigMapper;
+import com.torodb.config.model.Config;
 import com.torodb.torod.core.annotations.DatabaseName;
 import com.torodb.torod.core.config.DocumentBuilderFactory;
 import com.torodb.util.MongoDocumentBuilderFactory;
@@ -32,16 +32,35 @@ import com.torodb.util.MongoDocumentBuilderFactory;
  *
  */
 public class ConfigModule extends AbstractModule {
-    private final ConfigMapper configMapper;
+    private final Config config;
+    private final MongoServerConfig mongoServerConfig;
 
-    public ConfigModule(ConfigMapper configMapper) {
-        this.configMapper = configMapper;
+    public ConfigModule(Config config) {
+    	this.config = config;
+        this.mongoServerConfig = new MongoServerConfigMapper(config);
     }
     
     @Override
     protected void configure() {
-        bind(MongoServerConfig.class).toInstance(configMapper);
+        bind(MongoServerConfig.class).toInstance(mongoServerConfig);
         bind(DocumentBuilderFactory.class).to(MongoDocumentBuilderFactory.class);
-        bind(String.class).annotatedWith(DatabaseName.class).toInstance(configMapper.getDbName());
+        if (config.getBackend().isPostgresLike()) {
+        	bind(String.class).annotatedWith(DatabaseName.class).toInstance(config.getBackend().asPostgres().getDatabase());
+        }
+    }
+    
+    private static class MongoServerConfigMapper implements MongoServerConfig {
+    	
+    	private final Config config;
+    	
+		public MongoServerConfigMapper(Config config) {
+			super();
+			this.config = config;
+		}
+
+		@Override
+		public int getPort() {
+			return config.getProtocol().getMongo().getNet().getPort();
+		}
     }
 }

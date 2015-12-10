@@ -20,6 +20,9 @@
 
 package com.torodb;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.util.List;
 
 import com.beust.jcommander.IValueValidator;
@@ -28,23 +31,20 @@ import com.beust.jcommander.ParameterException;
 
 public class CliConfig {
 	
-	@Parameter(names={"-h", "--help"}, description="Print help and exit.")
+	@Parameter(names={"-h", "--help"}, descriptionKey="help")
 	private boolean help = false;
-	@Parameter(names={"-l", "--print-config"}, description="Print the configuration in YAML format and exit.")
+	@Parameter(names={"-l", "--print-config"}, descriptionKey="print-config")
 	private boolean printConfig = false;
-	@Parameter(names={"-lx", "--print-xml-config"}, description="Print the configuration in XML format and exit.")
+	@Parameter(names={"-lx", "--print-xml-config"}, descriptionKey="print-xml-config")
 	private boolean printXmlConfig = false;
-	@Parameter(names={"-c","--conf"}, description="Configuration file in YAML format.")
+	@Parameter(names={"-c","--conf"}, descriptionKey="conf")
 	private String confFile;
-	@Parameter(names={"-x","--xml-conf"}, description="Configuration file in XML format.")
+	@Parameter(names={"-x","--xml-conf"}, descriptionKey="xml-conf")
 	private String xmlConfFile;
-	@Parameter(names={"-p","--param"}, description="Specify a configuration parameter using <path>=<value> syntax.\n\n"
-			+ "<path> follow JSON pointer format (http://tools.ietf.org/html/draft-ietf-appsawg-json-pointer-03) with exception that you can replace '/' characters for '.' characters and omit the first '/' character.\n"
-			+ "<value> have the same syntax as values in YAML 1.1 format (http://yaml.org/spec/1.1/).\n"
-			+ "Possible paths are:\n", descriptionKey="param-description",validateValueWith=ParamValueValidator.class)
-	private List<String> params;
-	@Parameter(names={"-W", "--ask-for-password"}, description="Force input of PostgreSQL's database user password.")
+	@Parameter(names={"-W", "--ask-for-password"}, descriptionKey="ask-for-password")
 	private boolean askForPassword = false;
+	@Parameter(names={"-p","--param"}, descriptionKey="param",validateValueWith=ParamValueValidator.class)
+	private List<String> params;
 
 	public boolean isHelp() {
 		return help;
@@ -58,8 +58,14 @@ public class CliConfig {
 	public String getConfFile() {
 		return confFile;
 	}
+	public InputStream getConfInputStream() throws Exception {
+		return new FileInputStream(confFile);
+	}
 	public String getXmlConfFile() {
 		return xmlConfFile;
+	}
+	public InputStream getXmlConfInputStream() throws Exception {
+		return new FileInputStream(xmlConfFile);
 	}
 	public List<String> getParams() {
 		return params;
@@ -75,7 +81,7 @@ public class CliConfig {
 		@Override
 		public void validate(String name, List<String> value) throws ParameterException {
 			for (String param : value) {
-				if (param.split("=").length != 2) {
+				if (param.indexOf('=') == -1) {
 					throw new ParameterException("Wrong parameter format: " + param);
 				}
 			}

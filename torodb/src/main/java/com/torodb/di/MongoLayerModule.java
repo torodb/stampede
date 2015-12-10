@@ -20,8 +20,15 @@
 
 package com.torodb.di;
 
+import javax.annotation.Nonnull;
+
 import com.eightkdata.mongowp.mongoserver.api.QueryCommandProcessor;
-import com.eightkdata.mongowp.mongoserver.api.safe.*;
+import com.eightkdata.mongowp.mongoserver.api.safe.CommandsExecutor;
+import com.eightkdata.mongowp.mongoserver.api.safe.CommandsLibrary;
+import com.eightkdata.mongowp.mongoserver.api.safe.ConnectionIdFactory;
+import com.eightkdata.mongowp.mongoserver.api.safe.ErrorHandler;
+import com.eightkdata.mongowp.mongoserver.api.safe.RequestProcessorAdaptor;
+import com.eightkdata.mongowp.mongoserver.api.safe.SafeRequestProcessor;
 import com.eightkdata.mongowp.mongoserver.api.safe.impl.AtomicConnectionIdFactory;
 import com.eightkdata.mongowp.mongoserver.callback.RequestProcessor;
 import com.eightkdata.mongowp.mongoserver.pojos.OpTime;
@@ -30,11 +37,12 @@ import com.google.common.net.HostAndPort;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
-import com.torodb.ConfigMapper;
 import com.torodb.DefaultBuildProperties;
 import com.torodb.Shutdowner;
+import com.torodb.config.model.Config;
 import com.torodb.torod.core.BuildProperties;
-import com.torodb.torod.mongodb.*;
+import com.torodb.torod.mongodb.OptimeClock;
+import com.torodb.torod.mongodb.ToroErrorHandler;
 import com.torodb.torod.mongodb.annotations.External;
 import com.torodb.torod.mongodb.annotations.Local;
 import com.torodb.torod.mongodb.commands.ToroCommandsExecutor;
@@ -63,8 +71,6 @@ import com.torodb.torod.mongodb.unsafe.ToroQueryCommandProcessor;
 import com.torodb.torod.mongodb.utils.DBCloner;
 import com.torodb.torod.mongodb.utils.MongoClientProvider;
 import com.torodb.torod.mongodb.utils.OplogOperationApplier;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 /**
  *
@@ -78,8 +84,14 @@ public class MongoLayerModule extends AbstractModule {
      * @param syncSource the sync source this node is going to replicate from or
      *                   null if this node must run as primary
      */
-    public MongoLayerModule(ConfigMapper configMapper) {
-        this.syncSource = configMapper.getSyncSource()!=null?HostAndPort.fromString(configMapper.getSyncSource()):null;
+    public MongoLayerModule(Config config) {
+    	if (config.getProtocol().getMongo().getReplication() != null &&
+    			!config.getProtocol().getMongo().getReplication().isEmpty() &&
+    			config.getProtocol().getMongo().getReplication().get(0).getSyncSource() != null) {
+    		this.syncSource = HostAndPort.fromString(config.getProtocol().getMongo().getReplication().get(0).getSyncSource());
+    	} else {
+    		this.syncSource = null;
+    	}
     }
 
     @Override

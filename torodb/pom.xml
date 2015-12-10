@@ -33,10 +33,6 @@
             <artifactId>jcommander</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.sun.xsom</groupId>
-            <artifactId>xsom</artifactId>
-        </dependency>
-        <dependency>
             <groupId>com.fasterxml.jackson.dataformat</groupId>
             <artifactId>jackson-dataformat-xml</artifactId>
         </dependency>
@@ -47,6 +43,26 @@
         <dependency>
             <groupId>com.fasterxml.jackson.dataformat</groupId>
             <artifactId>jackson-dataformat-yaml</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.module</groupId>
+            <artifactId>jackson-module-jsonSchema</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.github.fge</groupId>
+            <artifactId>json-schema-validator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>javax.validation</groupId>
+            <artifactId>validation-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-validator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish</groupId>
+            <artifactId>javax.el</artifactId>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -138,36 +154,6 @@
 
     <build>        
         <plugins>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>jaxb2-maven-plugin</artifactId>
-                <version>2.2</version>
-                <executions>
-                    <execution>
-                        <id>jaxb2-schemagen</id>
-                        <phase>generate-resources</phase>
-                        <configuration>
-                        	<sources>
-                        		<source>${basedir}/src/main/java/com/torodb/config</source>
-                        	</sources>
-                            <outputDirectory>${basedir}/src/main/resources/</outputDirectory>
-                            <generateEpisode>false</generateEpisode>
-                            <clearOutputDir>false</clearOutputDir>
-                            <createJavaDocAnnotations>true</createJavaDocAnnotations>
-                            <transformSchemas>
-                            	<transformSchema>
-                            		<uri>http://torodb.com/config</uri>
-                            		<toPrefix>torodb</toPrefix>
-                            		<toFile>toroconfig.xsd</toFile>
-                            	</transformSchema>
-                            </transformSchemas>
-                        </configuration>
-                        <goals>
-                            <goal>schemagen</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
