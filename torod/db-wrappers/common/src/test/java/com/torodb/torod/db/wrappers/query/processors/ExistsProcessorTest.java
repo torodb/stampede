@@ -18,7 +18,7 @@
  *     
  */
 
-package com.torodb.torod.db.wrappers.postgresql.query.processors;
+package com.torodb.torod.db.wrappers.query.processors;
 
 import com.google.common.collect.Lists;
 import com.torodb.torod.core.language.querycriteria.AndQueryCriteria;
@@ -32,7 +32,6 @@ import com.torodb.torod.db.wrappers.query.ExistRelation;
 import com.torodb.torod.db.wrappers.query.ProcessedQueryCriteria;
 import java.util.List;
 
-import com.torodb.torod.db.wrappers.query.processors.ExistsProcessor;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;

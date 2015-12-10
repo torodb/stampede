@@ -18,18 +18,18 @@
  *     
  */
 
-package com.torodb.torod.db.wrappers.postgresql.query.processors;
+package com.torodb.torod.db.wrappers.query.processors;
 
+import com.google.common.collect.Lists;
 import com.torodb.torod.core.language.querycriteria.OrQueryCriteria;
 import com.torodb.torod.core.language.querycriteria.QueryCriteria;
-import com.google.common.collect.Lists;
 import com.torodb.torod.core.language.querycriteria.utils.QueryCriteriaVisitor;
 import com.torodb.torod.db.wrappers.query.ProcessedQueryCriteria;
-import java.util.List;
-
-import com.torodb.torod.db.wrappers.query.processors.OrProcessor;
-import org.junit.*;
+import org.junit.Before;
+import org.junit.Test;
 import org.mockito.Mockito;
+
+import java.util.List;
 
 
 /**

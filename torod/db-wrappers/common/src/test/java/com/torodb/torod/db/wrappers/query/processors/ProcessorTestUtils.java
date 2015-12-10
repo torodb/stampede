@@ -18,7 +18,7 @@
  *     
  */
 
-package com.torodb.torod.db.wrappers.postgresql.query.processors;
+package com.torodb.torod.db.wrappers.query.processors;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Iterables;

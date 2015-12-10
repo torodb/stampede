@@ -18,7 +18,7 @@
  *     
  */
 
-package com.torodb.torod.db.wrappers.postgresql.query;
+package com.torodb.torod.db.wrappers.query;
 
 import com.torodb.kvdocument.values.ObjectValue;
 import com.torodb.kvdocument.values.DocValue;
@@ -37,7 +37,7 @@ import com.torodb.torod.core.subdocument.structure.ArrayStructure;
 import com.torodb.torod.core.subdocument.structure.DocStructure;
 import com.torodb.torod.core.subdocument.values.IntegerValue;
 import com.torodb.torod.db.wrappers.meta.StructuresCache;
-import com.torodb.torod.db.wrappers.postgresql.query.processors.ProcessorTestUtils;
+import com.torodb.torod.db.wrappers.query.processors.ProcessorTestUtils;
 import com.torodb.kvdocument.converter.json.JsonValueConverter;
 import java.io.StringReader;
 import java.util.Collections;
@@ -47,7 +47,6 @@ import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
 
-import com.torodb.torod.db.wrappers.query.QueryStructureFilter;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mockito;

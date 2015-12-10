@@ -18,7 +18,7 @@
  *     
  */
 
-package com.torodb.torod.db.wrappers.postgresql.query.processors;
+package com.torodb.torod.db.wrappers.query.processors;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -26,18 +26,12 @@ import com.torodb.torod.core.language.querycriteria.AndQueryCriteria;
 import com.torodb.torod.core.language.querycriteria.QueryCriteria;
 import com.torodb.torod.core.language.querycriteria.utils.QueryCriteriaVisitor;
 import com.torodb.torod.db.wrappers.query.ProcessedQueryCriteria;
+import org.junit.*;
+import org.mockito.Mockito;
 
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-
-import com.torodb.torod.db.wrappers.query.processors.AndProcessor;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.mockito.Mockito;
 
 /**
  *
