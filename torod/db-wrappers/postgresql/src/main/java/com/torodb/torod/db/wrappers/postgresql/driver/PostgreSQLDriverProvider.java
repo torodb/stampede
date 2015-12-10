@@ -18,20 +18,17 @@
  *
  */
 
-package com.torodb.torod.backend.db.postgresql.di;
+package com.torodb.torod.db.wrappers.postgresql.driver;
 
-import com.google.inject.AbstractModule;
-import com.torodb.torod.backend.db.postgresql.OfficialPostgreSQLDriver;
-import com.torodb.torod.backend.db.postgresql.PostgreSQLDriverProvider;
 
-import javax.inject.Singleton;
+import com.torodb.torod.db.wrappers.driver.DbBackendConfiguration;
+
+import javax.sql.DataSource;
 
 /**
  *
+ * A provider for the PostgreSQL driver interface so that it is independent of the driver implementation
  */
-public class PostgreSQLModule extends AbstractModule {
-    @Override
-    protected void configure() {
-        bind(PostgreSQLDriverProvider.class).to(OfficialPostgreSQLDriver.class).in(Singleton.class);
-    }
+public interface PostgreSQLDriverProvider {
+    public DataSource getConfiguredDataSource(DbBackendConfiguration configuration, String poolName);
 }

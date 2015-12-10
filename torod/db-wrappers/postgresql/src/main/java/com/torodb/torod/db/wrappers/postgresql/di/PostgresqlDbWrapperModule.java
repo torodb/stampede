@@ -27,6 +27,8 @@ import com.torodb.torod.db.wrappers.converters.BasicTypeToSqlType;
 import com.torodb.torod.db.wrappers.postgresql.PostgresqlDatabaseInterface;
 import com.torodb.torod.db.wrappers.postgresql.PostgresqlDbWrapper;
 import com.torodb.torod.db.wrappers.postgresql.converters.PostgresBasicTypeToSqlType;
+import com.torodb.torod.db.wrappers.postgresql.driver.OfficialPostgreSQLDriver;
+import com.torodb.torod.db.wrappers.postgresql.driver.PostgreSQLDriverProvider;
 
 import javax.inject.Singleton;
 
@@ -40,5 +42,6 @@ public class PostgresqlDbWrapperModule extends AbstractModule {
         bind(PostgresqlDbWrapper.class).in(Singleton.class);
         bind(DatabaseInterface.class).to(PostgresqlDatabaseInterface.class).in(Singleton.class);
         bind(BasicTypeToSqlType.class).to(PostgresBasicTypeToSqlType.class).in(Singleton.class);
+        bind(PostgreSQLDriverProvider.class).to(OfficialPostgreSQLDriver.class).in(Singleton.class);
     }
 }

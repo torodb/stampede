@@ -18,7 +18,7 @@
  *
  */
 
-package com.torodb.torod.backend.db;
+package com.torodb.torod.db.wrappers.driver;
 
 import com.google.common.base.Preconditions;
 import com.torodb.torod.core.backend.DbBackend;

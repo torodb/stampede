@@ -10,6 +10,7 @@
     
     <name>Torod: PostgreSQL wrapper</name>
     <packaging>jar</packaging>
+
     <dependencies>
         <dependency>
             <groupId>com.torodb.torod</groupId>
@@ -31,15 +32,10 @@
             <artifactId>guice</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-        </dependency>
-        
-        <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <scope>test</scope>
         </dependency>
+
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>

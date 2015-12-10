@@ -18,19 +18,17 @@
  *
  */
 
-package com.torodb.torod.backend.db.postgresql;
+package com.torodb.torod.db.wrappers.postgresql.driver;
 
+import com.torodb.torod.core.exceptions.ToroRuntimeException;
+import com.torodb.torod.db.wrappers.driver.DbBackendConfiguration;
+import org.postgresql.ds.PGSimpleDataSource;
+
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-
-import com.torodb.torod.backend.db.DbBackendConfiguration;
-import com.torodb.torod.core.exceptions.ToroRuntimeException;
-
-import org.postgresql.ds.PGSimpleDataSource;
-
-import javax.sql.DataSource;
 
 /**
  *

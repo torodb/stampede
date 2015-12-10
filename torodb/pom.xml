@@ -87,11 +87,6 @@
             <version>${torod.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.torodb.torod</groupId>
-            <artifactId>backend</artifactId>
-            <version>${torod.version}</version>
-        </dependency>
-        <dependency>
             <groupId>com.torodb.torod.db-wrappers</groupId>
             <artifactId>postgresql</artifactId>
             <version>${torod.version}</version>

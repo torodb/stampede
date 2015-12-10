@@ -18,16 +18,20 @@
  *
  */
 
-package com.torodb.torod.backend.db.postgresql;
+package com.torodb.torod.db.wrappers.driver;
 
-import com.torodb.torod.backend.db.DbBackendConfiguration;
-
-import javax.sql.DataSource;
+import javax.annotation.Nonnegative;
 
 /**
- *
- * A provider for the PostgreSQL driver interface so that it is independent of the driver implementation
+ * Configuration data for the backend
  */
-public interface PostgreSQLDriverProvider {
-    public DataSource getConfiguredDataSource(DbBackendConfiguration configuration, String poolName);
+public interface DbBackendConfiguration {
+    public int getConnectionPoolSize();
+    public int getReservedReadPoolSize();
+    public String getUsername();
+    public String getPassword();
+    public String getDbHost();
+    public String getDbName();
+    @Nonnegative
+    public int getDbPort();
 }

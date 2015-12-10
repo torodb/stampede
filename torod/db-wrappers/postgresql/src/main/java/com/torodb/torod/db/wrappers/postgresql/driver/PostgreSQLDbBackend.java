@@ -18,10 +18,11 @@
  *
  */
 
-package com.torodb.torod.backend.db.postgresql;
+package com.torodb.torod.db.wrappers.postgresql.driver;
 
-import com.torodb.torod.backend.db.AbstractDbBackend;
-import com.torodb.torod.backend.db.DbBackendConfiguration;
+
+import com.torodb.torod.db.wrappers.driver.AbstractDbBackend;
+import com.torodb.torod.db.wrappers.driver.DbBackendConfiguration;
 
 import javax.inject.Inject;
 import javax.sql.DataSource;

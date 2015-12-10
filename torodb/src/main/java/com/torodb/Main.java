@@ -29,7 +29,6 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.ProvisionException;
 import com.torodb.di.*;
-import com.torodb.torod.backend.db.postgresql.di.PostgreSQLModule;
 import com.torodb.torod.core.Torod;
 import com.torodb.torod.core.exceptions.TorodStartupException;
 import com.torodb.torod.db.wrappers.postgresql.di.PostgresqlDbWrapperModule;
@@ -98,7 +97,6 @@ public class Main {
 
 		Injector injector = Guice.createInjector(
 				new BackendModule(config),
-				new PostgreSQLModule(), 	// TODO: select database depending on selected backend
 				new ConfigModule(config),
 				new MongoLayerModule(config.getSyncSource()),
 				new PostgresqlDbWrapperModule(),	// TODO: select database depending on selected backend
