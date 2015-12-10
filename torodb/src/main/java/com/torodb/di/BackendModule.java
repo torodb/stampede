@@ -22,8 +22,8 @@
 package com.torodb.di;
 
 import com.google.inject.AbstractModule;
-import com.torodb.torod.db.wrappers.DbBackendConfiguration;
-import com.torodb.torod.db.wrappers.postgresql.PostgreSQLDbBackend;
+import com.torodb.torod.db.backends.DbBackendConfiguration;
+import com.torodb.torod.db.backends.postgresql.PostgreSQLDbBackend;
 import com.torodb.torod.core.backend.DbBackend;
 
 import javax.inject.Singleton;

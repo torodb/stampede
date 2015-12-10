@@ -23,11 +23,11 @@ package com.torodb.di;
 
 import com.google.inject.AbstractModule;
 import com.torodb.torod.core.dbMetaInf.DbMetaInformationCache;
-import com.torodb.torod.db.wrappers.metaInf.DefaultDbMetaInformationCache;
-import com.torodb.torod.db.wrappers.metaInf.DefaultTableMetaInfoFactory;
-import com.torodb.torod.db.wrappers.metaInf.ReservedIdHeuristic;
-import com.torodb.torod.db.wrappers.metaInf.ReservedIdInfoFactory;
-import com.torodb.torod.db.wrappers.metaInf.idHeuristic.PoolReserveIdHeuristic;
+import com.torodb.torod.db.backends.metaInf.DefaultDbMetaInformationCache;
+import com.torodb.torod.db.backends.metaInf.DefaultTableMetaInfoFactory;
+import com.torodb.torod.db.backends.metaInf.ReservedIdHeuristic;
+import com.torodb.torod.db.backends.metaInf.ReservedIdInfoFactory;
+import com.torodb.torod.db.backends.metaInf.idHeuristic.PoolReserveIdHeuristic;
 import javax.inject.Singleton;
 
 /**

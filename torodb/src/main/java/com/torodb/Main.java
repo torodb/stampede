@@ -31,7 +31,7 @@ import com.google.inject.ProvisionException;
 import com.torodb.di.*;
 import com.torodb.torod.core.Torod;
 import com.torodb.torod.core.exceptions.TorodStartupException;
-import com.torodb.torod.db.wrappers.postgresql.di.PostgresqlDbWrapperModule;
+import com.torodb.torod.db.backends.postgresql.di.PostgresqlDbWrapperModule;
 import com.torodb.torod.mongodb.repl.ReplCoordinator;
 import org.slf4j.LoggerFactory;
 

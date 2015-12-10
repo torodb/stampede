@@ -21,7 +21,7 @@
 package com.torodb.torod.backends.drivers.postgresql;
 
 
-import com.torodb.torod.db.wrappers.DbBackendConfiguration;
+import com.torodb.torod.db.backends.DbBackendConfiguration;
 
 import javax.sql.DataSource;
 
