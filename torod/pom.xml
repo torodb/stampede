@@ -17,7 +17,7 @@
         <module>torod-core</module>
         <module>db-meta-inf</module>
         <module>db-executor</module>
-        <module>db-wrappers</module>
+        <module>backends</module>
         <module>d2r</module>
         <module>connection</module>
         <module>mongodb-layer</module>

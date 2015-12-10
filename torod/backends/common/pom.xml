@@ -7,12 +7,12 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <artifactId>db-wrappers</artifactId>
-        <groupId>com.torodb.torod.db-wrappers</groupId>
+        <artifactId>backends</artifactId>
+        <groupId>com.torodb.torod.backends</groupId>
         <version>0.40-SNAPSHOT</version>
     </parent>
 
-    <groupId>com.torodb.torod.db-wrappers</groupId>
+    <groupId>com.torodb.torod.backends</groupId>
     <artifactId>common</artifactId>
 
     <dependencies>
