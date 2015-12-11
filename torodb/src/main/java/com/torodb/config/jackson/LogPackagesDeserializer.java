@@ -35,21 +35,17 @@ import com.torodb.config.model.generic.LogPackages;
 public class LogPackagesDeserializer extends JsonDeserializer<LogPackages> {
 	@Override
 	public LogPackages deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException, JsonProcessingException {
-		try {
-			LogPackages logPackages = new LogPackages();
-	
-			JsonNode node = jp.getCodec().readTree(jp);
+		LogPackages logPackages = new LogPackages();
+
+		JsonNode node = jp.getCodec().readTree(jp);
+		
+		Iterator<Entry<String, JsonNode>> fieldsIterator = node.fields();
+		while (fieldsIterator.hasNext()) {
+			Entry<String, JsonNode> field = fieldsIterator.next();
 			
-			Iterator<Entry<String, JsonNode>> fieldsIterator = node.fields();
-			while (fieldsIterator.hasNext()) {
-				Entry<String, JsonNode> field = fieldsIterator.next();
-				
-				logPackages.put(field.getKey(), LogLevel.valueOf(field.getValue().asText()));
-			}
-			
-			return logPackages;
-		} catch(Exception exception) {
-			throw new RuntimeException(exception);
+			logPackages.put(field.getKey(), LogLevel.valueOf(field.getValue().asText()));
 		}
+		
+		return logPackages;
 	}
 }

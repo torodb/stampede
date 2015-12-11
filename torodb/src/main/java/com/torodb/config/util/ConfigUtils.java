@@ -28,6 +28,7 @@ import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 import java.util.PropertyResourceBundle;
@@ -73,104 +74,103 @@ public class ConfigUtils {
 
 	public static Config readConfig(final CliConfig cliConfig) throws FileNotFoundException, JsonProcessingException,
 			IOException, JsonParseException, JsonMappingException, Exception {
-		Config config = new Config();
+		ObjectMapper objectMapper = new ObjectMapper();
+		objectMapper.setSerializationInclusion(Include.NON_NULL);
 		
-		if (cliConfig.getConfFile() != null || cliConfig.getXmlConfFile() != null) {
+		JsonNode configNode = objectMapper.valueToTree(new Config());
+		
+		if (cliConfig.hasConfFile() || cliConfig.hasXmlConfFile()) {
 			ObjectMapper mapper = null;
-			InputStream validationInputStream = null;
 			InputStream inputStream = null;
-			if (cliConfig.getConfFile() != null) {
+			if (cliConfig.hasConfFile()) {
 				mapper = new YAMLMapper();
-				validationInputStream = cliConfig.getConfInputStream();
 				inputStream = cliConfig.getConfInputStream();
-			} else 
-			if (cliConfig.getXmlConfFile() != null) {
+			} else if (cliConfig.hasXmlConfFile()) {
 				mapper = new XmlMapper();
-				validationInputStream = cliConfig.getXmlConfInputStream();
 				inputStream = cliConfig.getXmlConfInputStream();
 			}
-			
-			if (inputStream != null) {
-				validateWithJackson(mapper, validationInputStream);
 
-				config = mapper.readValue(inputStream, Config.class);
-				
-				validateBean(config);
+			if (inputStream != null) {
+				configNode = mapper.readTree(inputStream);
 			}
 		}
-		
+
 		if (cliConfig.getParams() != null) {
 			YAMLMapper yamlMapper = new YAMLMapper();
 			yamlMapper.setSerializationInclusion(Include.NON_NULL);
-			JsonNode configNode = yamlMapper.valueToTree(config);
 			for (String paramPathValue : cliConfig.getParams()) {
 				int paramPathValueSeparatorIndex = paramPathValue.indexOf('=');
 				String pathAndProp = paramPathValue.substring(0, paramPathValueSeparatorIndex);
-				
+
 				if (pathAndProp.startsWith("/")) {
 					pathAndProp = pathAndProp.substring(1);
 				}
-				
+
 				pathAndProp = "/" + pathAndProp;
-				
+
 				String value = paramPathValue.substring(paramPathValueSeparatorIndex + 1);
-				
+
 				mergeParam(yamlMapper, configNode, pathAndProp, value);
 			}
-			
-			validateWithJackson(configNode);
-
-			config = yamlMapper.treeToValue(configNode, Config.class);
-			
-			validateBean(config);
 		}
+		
+		configNode = mergeWithDefaults(configNode);
+		
+		validateWithJackson(configNode);
+
+		Config config = objectMapper.treeToValue(configNode, Config.class);
+
+		validateBean(config);
+
 		return config;
 	}
 
 	private static void mergeParam(ObjectMapper objectMapper, JsonNode configRootNode, String pathAndProp, String value)
-					throws Exception {
+			throws Exception {
 		String path = pathAndProp.substring(0, pathAndProp.lastIndexOf("/"));
 		String prop = pathAndProp.substring(pathAndProp.lastIndexOf("/") + 1);
-		
-		JsonPointer pathPointer = JsonPointer.compile(path); 
+
+		JsonPointer pathPointer = JsonPointer.compile(path);
 		JsonNode pathNode = configRootNode.at(pathPointer);
-		
+
 		if (pathNode.isMissingNode() || pathNode.isNull()) {
 			JsonPointer currentPointer = pathPointer;
 			JsonPointer childOfCurrentPointer = null;
 			List<JsonPointer> missingPointers = new ArrayList<JsonPointer>();
 			List<JsonPointer> childOfMissingPointers = new ArrayList<JsonPointer>();
 			do {
-				if(pathNode.isMissingNode() || pathNode.isNull()) {
+				if (pathNode.isMissingNode() || pathNode.isNull()) {
 					missingPointers.add(0, currentPointer);
 					childOfMissingPointers.add(0, childOfCurrentPointer);
 				}
-				
+
 				childOfCurrentPointer = currentPointer;
 				currentPointer = currentPointer.head();
 				pathNode = configRootNode.at(currentPointer);
-			} while(pathNode.isMissingNode() || pathNode.isNull());
-			
+			} while (pathNode.isMissingNode() || pathNode.isNull());
+
 			for (int missingPointerIndex = 0; missingPointerIndex < missingPointers.size(); missingPointerIndex++) {
 				final JsonPointer missingPointer = missingPointers.get(missingPointerIndex);
 				final JsonPointer childOfMissingPointer = childOfMissingPointers.get(missingPointerIndex);
-				
+
 				final List<JsonNode> newNodes = new ArrayList<JsonNode>();
-				
+
 				if (pathNode.isObject()) {
-					((ObjectNode) pathNode).set(missingPointer.last().getMatchingProperty(), createNode(childOfMissingPointer, newNodes));
+					((ObjectNode) pathNode).set(missingPointer.last().getMatchingProperty(),
+							createNode(childOfMissingPointer, newNodes));
 				} else if (pathNode.isArray() && missingPointer.last().mayMatchElement()) {
-					for (int index = ((ArrayNode) pathNode).size(); index < missingPointer.last().getMatchingIndex() + 1; index++) { 
+					for (int index = ((ArrayNode) pathNode).size(); index < missingPointer.last().getMatchingIndex()
+							+ 1; index++) {
 						((ArrayNode) pathNode).add(createNode(childOfMissingPointer, newNodes));
 					}
 				} else {
 					throw new RuntimeException("Cannot set param " + pathAndProp + "=" + value);
 				}
-				
+
 				pathNode = newNodes.get(newNodes.size() - 1);
 			}
 		}
-		
+
 		ObjectNode objectNode = (ObjectNode) pathNode;
 		Object valueAsObject = objectMapper.readValue(value, Object.class);
 		if (valueAsObject != null) {
@@ -180,18 +180,18 @@ public class ConfigUtils {
 			objectNode.remove(prop);
 		}
 	}
-	
+
 	private static JsonNode createNode(JsonPointer childOfPointer, List<JsonNode> newNodes) {
 		JsonNode newNode = null;
-		
+
 		if (childOfPointer == null || !childOfPointer.last().mayMatchElement()) {
 			newNode = JsonNodeFactory.instance.objectNode();
 		} else {
 			newNode = JsonNodeFactory.instance.arrayNode();
 		}
-		
+
 		newNodes.add(newNode);
-		
+
 		return newNode;
 	}
 
@@ -205,7 +205,7 @@ public class ConfigUtils {
 				if (key == null) {
 					throw new NullPointerException();
 				}
-				
+
 				if (properties.containsKey(key)) {
 					return properties.getProperty(key);
 				} else {
@@ -222,6 +222,7 @@ public class ConfigUtils {
 					public boolean hasMoreElements() {
 						return keys.hasMoreElements() || resourceBundleKeys.hasMoreElements();
 					}
+
 					@Override
 					public String nextElement() {
 						Object nextElement = keys.nextElement();
@@ -242,13 +243,13 @@ public class ConfigUtils {
 		};
 		ByteArrayOutputStream paramByteArrayOutputStream = new ByteArrayOutputStream();
 		PrintStream paramPrintStream = new PrintStream(paramByteArrayOutputStream, false, CharEncoding.UTF_8);
-		
+
 		paramPrintStream.println(resourceBundle.getString("param"));
-		
+
 		extractDescription(paramPrintStream);
-		
+
 		properties.setProperty("param", paramByteArrayOutputStream.toString(CharEncoding.UTF_8));
-		
+
 		return bundle;
 	}
 
@@ -259,10 +260,68 @@ public class ConfigUtils {
 		objectMapper.acceptJsonFormatVisitor(objectMapper.constructType(Config.class), visitor);
 	}
 
-	private static void validateWithJackson(ObjectMapper objectMapper, InputStream inputStream)
-			throws JsonProcessingException, IOException {
-		JsonNode configNode = objectMapper.readTree(inputStream);
-		validateJsonSchema(objectMapper, configNode);
+	private static JsonNode mergeWithDefaults(JsonNode configNode) {
+		if (configNode.isObject()) {
+			ObjectMapper objectMapper = new ObjectMapper();
+			objectMapper.setSerializationInclusion(Include.NON_NULL);
+			Config config = new Config();
+			
+			//NOTE: Some defaults can not retrieved for subtypes so we try to read the configuration
+			// and generate those defaults before validation
+			try {
+				config = objectMapper.treeToValue(configNode, Config.class);
+			} catch(JsonProcessingException jsonProcessingException) {
+				
+			} catch(IllegalArgumentException illegalArgumentException) {
+				
+			}
+			
+			ObjectNode mergedConfigNode = (ObjectNode) objectMapper.valueToTree(config);
+			merge(mergedConfigNode, (ObjectNode) configNode);
+			configNode = mergedConfigNode;
+		}
+		
+		return configNode;
+	}
+	
+	private static void merge(ObjectNode primary, ObjectNode backup) {
+		Iterator<String> fieldNames = backup.fieldNames();
+		while (fieldNames.hasNext()) {
+			String fieldName = fieldNames.next();
+			JsonNode primaryValue = primary.get(fieldName);
+			JsonNode backupValue = backup.get(fieldName);
+			
+			if (backupValue.isValueNode() || primaryValue == null ||
+					(backupValue.isObject() && !primaryValue.isObject()) ||
+					(backupValue.isArray()) && !primaryValue.isArray()) {
+				primary.set(fieldName, backupValue.deepCopy());
+			} else if (backupValue.isObject()) {
+				merge((ObjectNode) primaryValue, (ObjectNode) backupValue);
+			} else if (backupValue.isArray()) {
+				merge((ArrayNode) primaryValue, (ArrayNode) backupValue); 
+			}
+		}
+	}
+
+	private static void merge(ArrayNode primary, ArrayNode backup) {
+		for (int index = 0; index < backup.size(); index++) {
+			if (index >= primary.size()) {
+				primary.add(backup.get(index));
+			} else {
+				JsonNode primaryValue = primary.get(index);
+				JsonNode backupValue = backup.get(index);
+				
+				if (backupValue.isValueNode() || 
+						(backupValue.isObject() && !primaryValue.isObject()) ||
+						(backupValue.isArray()) && !primaryValue.isArray()) {
+					primary.set(index, backupValue.deepCopy());
+				} else if (backupValue.isObject()) {
+					merge((ObjectNode) primaryValue, (ObjectNode) backupValue);
+				} else if (backupValue.isArray()) {
+					merge((ArrayNode) primaryValue, (ArrayNode) backupValue); 
+				}
+			}
+		}
 	}
 
 	private static void validateWithJackson(JsonNode configNode) throws JsonProcessingException {
@@ -271,7 +330,8 @@ public class ConfigUtils {
 	}
 
 	private static void validateJsonSchema(ObjectMapper objectMapper, JsonNode configNode) throws JsonMappingException {
-		SchemaFactoryWrapper visitor = new SchemaFactoryWrapper();
+		CustomSchemaFactoryWrapper visitor = new CustomSchemaFactoryWrapper();
+		visitor.setJsonSchemaFactory(new CustomJsonSchemaFactory());
 		objectMapper.acceptJsonFormatVisitor(objectMapper.constructType(Config.class), visitor);
 		JsonSchema jsonSchema = visitor.finalSchema();
 		JsonNode schemaNode = objectMapper.valueToTree(jsonSchema);
@@ -282,7 +342,7 @@ public class ConfigUtils {
 		JsonValidator validator = factory.getValidator();
 		ProcessingReport processingReport = null;
 		try {
-			processingReport = validator.validate(schemaNode, configNode, true);
+			processingReport = validator.validate(schemaNode, configNode);
 		} catch (ProcessingException processingException) {
 			ListProcessingReport listProcessingReport = new ListProcessingReport();
 			listProcessingReport.log(LogLevel.DEBUG, processingException.getProcessingMessage());

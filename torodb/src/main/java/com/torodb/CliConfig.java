@@ -58,11 +58,17 @@ public class CliConfig {
 	public String getConfFile() {
 		return confFile;
 	}
+	public boolean hasConfFile() {
+		return confFile != null;
+	}
 	public InputStream getConfInputStream() throws Exception {
 		return new FileInputStream(confFile);
 	}
 	public String getXmlConfFile() {
 		return xmlConfFile;
+	}
+	public boolean hasXmlConfFile() {
+		return xmlConfFile != null;
 	}
 	public InputStream getXmlConfInputStream() throws Exception {
 		return new FileInputStream(xmlConfFile);
