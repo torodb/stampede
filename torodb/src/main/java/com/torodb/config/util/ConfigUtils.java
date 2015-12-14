@@ -20,6 +20,7 @@
 
 package com.torodb.config.util;
 
+import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -38,6 +39,7 @@ import javax.validation.Validation;
 import javax.validation.Validator;
 import javax.validation.ValidatorFactory;
 
+import com.beust.jcommander.internal.Console;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonParseException;
@@ -65,6 +67,7 @@ import com.github.fge.jsonschema.core.report.ProcessingMessage;
 import com.github.fge.jsonschema.core.report.ProcessingReport;
 import com.github.fge.jsonschema.main.JsonSchemaFactory;
 import com.github.fge.jsonschema.main.JsonValidator;
+import com.google.common.base.Charsets;
 import com.torodb.CliConfig;
 import com.torodb.config.model.Config;
 
@@ -193,15 +196,16 @@ public class ConfigUtils {
 		return newNode;
 	}
 
-	public static void printYamlConfig(Config config, PrintStream printStream)
+	public static void printYamlConfig(Config config, Console console)
 			throws IOException, JsonGenerationException, JsonMappingException {
 		ObjectMapper objectMapper = new YAMLMapper();
 		objectMapper.configure(Feature.ALLOW_COMMENTS, true);
 		objectMapper.configure(Feature.ALLOW_YAML_COMMENTS, true);
-		objectMapper.writeValue(printStream, config);
+		ObjectWriter objectWriter = objectMapper.writer();
+		printConfig(config, console, objectWriter);
 	}
 
-	public static void printXmlConfig(Config config, PrintStream printStream)
+	public static void printXmlConfig(Config config, Console console)
 			throws IOException, JsonGenerationException, JsonMappingException {
 		ObjectMapper objectMapper = new XmlMapper();
 		objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
@@ -209,14 +213,22 @@ public class ConfigUtils {
 		objectMapper.configure(Feature.ALLOW_YAML_COMMENTS, true);
 		ObjectWriter objectWriter = objectMapper.writer();
 		objectWriter = objectWriter.withRootName("config");
-		objectWriter.writeValue(printStream, config);
+		printConfig(config, console, objectWriter);
 	}
 
-	public static void printParamDescriptionFromConfigSchema(PrintStream printStream, int tabs)
+	private static void printConfig(Config config, Console console, ObjectWriter objectWriter)
+			throws IOException, JsonGenerationException, JsonMappingException, UnsupportedEncodingException {
+		ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+		PrintStream printStream = new PrintStream(byteArrayOutputStream, false, Charsets.UTF_8.name());
+		objectWriter.writeValue(printStream, config);
+		console.print(byteArrayOutputStream.toString(Charsets.UTF_8.name()));
+	}
+
+	public static void printParamDescriptionFromConfigSchema(Console console, int tabs)
 			throws UnsupportedEncodingException, JsonMappingException {
 		ObjectMapper objectMapper = new ObjectMapper();
 		ResourceBundle resourceBundle = PropertyResourceBundle.getBundle("ConfigMessages");
-		DescriptionFactoryWrapper visitor = new DescriptionFactoryWrapper(resourceBundle, printStream, tabs);
+		DescriptionFactoryWrapper visitor = new DescriptionFactoryWrapper(resourceBundle, console, tabs);
 		objectMapper.acceptJsonFormatVisitor(objectMapper.constructType(Config.class), visitor);
 	}
 
