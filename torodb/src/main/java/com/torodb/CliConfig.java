@@ -37,6 +37,8 @@ public class CliConfig {
 	private boolean printConfig = false;
 	@Parameter(names={"-lx", "--print-xml-config"}, descriptionKey="print-xml-config")
 	private boolean printXmlConfig = false;
+	@Parameter(names={"-hp", "--help-param"}, descriptionKey="help-param")
+	private boolean helpParam = false;
 	@Parameter(names={"-c","--conf"}, descriptionKey="conf")
 	private String confFile;
 	@Parameter(names={"-x","--xml-conf"}, descriptionKey="xml-conf")
@@ -72,6 +74,9 @@ public class CliConfig {
 	}
 	public InputStream getXmlConfInputStream() throws Exception {
 		return new FileInputStream(xmlConfFile);
+	}
+	public boolean isHelpParam() {
+		return helpParam;
 	}
 	public List<String> getParams() {
 		return params;

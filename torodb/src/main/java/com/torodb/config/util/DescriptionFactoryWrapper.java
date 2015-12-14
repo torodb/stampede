@@ -44,17 +44,20 @@ public class DescriptionFactoryWrapper extends JsonFormatVisitorWrapper.Base {
 	
 	private final ResourceBundle resourceBundle;
 	private final PrintStream printStream;
+	private final int tabs;
 	private final JsonPointer jsonPointer;
 	
-	public DescriptionFactoryWrapper(ResourceBundle resourceBundle, PrintStream printStream) {
+	public DescriptionFactoryWrapper(ResourceBundle resourceBundle, PrintStream printStream, int tabs) {
 		this.resourceBundle = resourceBundle;
 		this.printStream = printStream;
+		this.tabs = tabs;
 		this.jsonPointer = JsonPointer.valueOf(null);
 	}
 	
-	public DescriptionFactoryWrapper(ResourceBundle resourceBundle, PrintStream printStream, JsonPointer jsonPointer, SerializerProvider p) {
-		this.resourceBundle = resourceBundle;
-		this.printStream = printStream;
+	public DescriptionFactoryWrapper(DescriptionFactoryWrapper descriptionFactoryWrapper, JsonPointer jsonPointer, SerializerProvider p) {
+		this.resourceBundle = descriptionFactoryWrapper.resourceBundle;
+		this.printStream = descriptionFactoryWrapper.printStream;
+		this.tabs = descriptionFactoryWrapper.tabs;
 		this.jsonPointer = jsonPointer;
 		setProvider(p);
 	}
@@ -67,7 +70,7 @@ public class DescriptionFactoryWrapper extends JsonFormatVisitorWrapper.Base {
 	public JsonAnyFormatVisitor expectAnyFormat(JavaType type) throws JsonMappingException {
 		SerializerProvider p = getProvider();
 		JsonSerializer<Object> s = p.findValueSerializer(type);
-		s.acceptJsonFormatVisitor(new DescriptionFactoryWrapper(resourceBundle, printStream, getJsonPointer(), p), type);
+		s.acceptJsonFormatVisitor(new DescriptionFactoryWrapper(this, getJsonPointer(), p), type);
 		
 		return super.expectAnyFormat(type);
 	}
@@ -81,7 +84,7 @@ public class DescriptionFactoryWrapper extends JsonFormatVisitorWrapper.Base {
 			public void itemsFormat(JsonFormatVisitable handler, JavaType elementType) throws JsonMappingException {
 				SerializerProvider p = getProvider();
 				JsonSerializer<Object> s = p.findValueSerializer(elementType);
-				s.acceptJsonFormatVisitor(new DescriptionFactoryWrapper(resourceBundle, printStream, jsonPointer.append(JsonPointer.valueOf("/<index>")), p), elementType);
+				s.acceptJsonFormatVisitor(new DescriptionFactoryWrapper(DescriptionFactoryWrapper.this, jsonPointer.append(JsonPointer.valueOf("/<index>")), p), elementType);
 			}
 		};
 	}
@@ -107,7 +110,7 @@ public class DescriptionFactoryWrapper extends JsonFormatVisitorWrapper.Base {
 				document(propPointer, prop);
 				SerializerProvider p = getProvider();
 				JsonSerializer<Object> s = p.findValueSerializer(prop.getType(), prop);
-				s.acceptJsonFormatVisitor(new DescriptionFactoryWrapper(resourceBundle, printStream, propPointer, p), prop.getType());
+				s.acceptJsonFormatVisitor(new DescriptionFactoryWrapper(DescriptionFactoryWrapper.this, propPointer, p), prop.getType());
 			}
 		};
 	}
@@ -119,15 +122,14 @@ public class DescriptionFactoryWrapper extends JsonFormatVisitorWrapper.Base {
 			printStream.println();
 		} else
 		if (isPrimitive(type) || type.isEnumType()) {
+			printTabs();
 			printStream.print(propPointer.toString());
 			printStream.print("=");
 		} else
 		if (type.isMapLikeType()) {
+			printTabs();
 			printStream.print(propPointer.append(JsonPointer.compile("/<string>")).toString());
 			printStream.print("=");
-		}
-		
-		if (type.isMapLikeType()) {
 			type = type.getContentType();
 		}
 		
@@ -135,17 +137,21 @@ public class DescriptionFactoryWrapper extends JsonFormatVisitorWrapper.Base {
 			printStream.print("<");
 			printStream.print(CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_CAMEL, type.getRawClass().getSimpleName()));
 			printStream.print(">");
-		} else if (type.isEnumType() || (type.isMapLikeType() && type.getContentType().isEnumType())) {
+		} else if (type.isEnumType()) {
 			printStream.print("<enum:string>");
+		}
+		
+		if (hasDescription(prop) && !isPrimitive(type) && !type.isEnumType()) {
+			printTabs();
 		}
 		
 		printDescription(prop);
 		
-		if (hasDescription(prop) || isPrimitive(type) || type.isEnumType() || type.isMapLikeType()) {
+		if (hasDescription(prop) || isPrimitive(type) || type.isEnumType()) {
 			printStream.println();
 		}
 		
-		if (hasDescription(prop) && !isPrimitive(type) && !type.isEnumType() && !type.isMapLikeType()) {
+		if (hasDescription(prop) && !isPrimitive(type) && !type.isEnumType()) {
 			printStream.println();
 		}
 		
@@ -155,6 +161,7 @@ public class DescriptionFactoryWrapper extends JsonFormatVisitorWrapper.Base {
 					continue;
 				}
 
+				printTabs();
 				printStream.print(" - ");
 				printStream.print(enumField.getName());
 
@@ -166,6 +173,12 @@ public class DescriptionFactoryWrapper extends JsonFormatVisitorWrapper.Base {
 
 				printStream.println();
 			}
+		}
+	}
+
+	private void printTabs() {
+		for (int tab = 0; tab < tabs; tab++) {
+			printStream.print("\t");
 		}
 	}
 	

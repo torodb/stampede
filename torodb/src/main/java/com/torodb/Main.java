@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
+import java.util.Map.Entry;
 import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
 
@@ -36,16 +37,12 @@ import org.slf4j.LoggerFactory;
 
 import com.beust.jcommander.JCommander;
 import com.eightkdata.mongowp.mongoserver.MongoServer;
-import com.fasterxml.jackson.core.JsonParser.Feature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.ProvisionException;
 import com.torodb.config.model.Config;
 import com.torodb.config.model.backend.postgres.Postgres;
+import com.torodb.config.model.generic.LogLevel;
 import com.torodb.config.util.ConfigUtils;
 import com.torodb.di.BackendModule;
 import com.torodb.di.ConfigModule;
@@ -55,6 +52,7 @@ import com.torodb.di.DbMetaInformationCacheModule;
 import com.torodb.di.DbWrapperModule;
 import com.torodb.di.ExecutorModule;
 import com.torodb.di.ExecutorServiceModule;
+import com.torodb.di.MongoConfigModule;
 import com.torodb.di.MongoLayerModule;
 import com.torodb.torod.backend.db.postgresql.di.PostgreSQLModule;
 import com.torodb.torod.core.Torod;
@@ -70,61 +68,45 @@ import ch.qos.logback.core.FileAppender;
  * ToroDB's entry point
  */
 public class Main {
-	public static void main(String[] args) throws Throwable {
+	public static void main(String[] args) throws Exception {
+		ResourceBundle cliBundle = PropertyResourceBundle.getBundle("CliMessages");
 		final CliConfig cliConfig = new CliConfig();
-		JCommander jCommander = new JCommander(cliConfig, args);
+		JCommander jCommander = new JCommander(cliConfig, cliBundle, args);
 		jCommander.setColumnSize(Integer.MAX_VALUE);
 		
 		if (cliConfig.isHelp()) {
-			ResourceBundle cliMessages = PropertyResourceBundle.getBundle("CliMessages");
-			ResourceBundle bundle = ConfigUtils.extractParamDescriptionFromConfigSchema(cliMessages);
-			JCommander jCommanderForHelp = new JCommander(new CliConfig(), bundle);
-			jCommanderForHelp.setColumnSize(Integer.MAX_VALUE);
-			jCommanderForHelp.usage();
+			jCommander.usage();
 			System.exit(0);
 		}
+		
+		if (cliConfig.isHelpParam()) {
+			System.out.println(cliBundle.getString("help-param-header"));
+			ConfigUtils.printParamDescriptionFromConfigSchema(System.out, 0);
+			System.exit(0);
+		}
+		
 		
 		final Config config = ConfigUtils.readConfig(cliConfig);
 		
 		if (cliConfig.isPrintConfig()) {
-			ObjectMapper objectMapper = new YAMLMapper();
-			objectMapper.configure(Feature.ALLOW_COMMENTS, true);
-			objectMapper.configure(Feature.ALLOW_YAML_COMMENTS, true);
-			objectMapper.writeValue(System.out, config);
+			ConfigUtils.printYamlConfig(config, System.out);
 			
 			System.exit(0);
 		}
 		
 		if (cliConfig.isPrintXmlConfig()) {
-			ObjectMapper objectMapper = new XmlMapper();
-			objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
-			objectMapper.configure(Feature.ALLOW_COMMENTS, true);
-			objectMapper.configure(Feature.ALLOW_YAML_COMMENTS, true);
-			objectMapper.writeValue(System.out, config);
+			ConfigUtils.printXmlConfig(config, System.out);
 			
 			System.exit(0);
 		}
 		
 		Logger root = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
-		switch(config.getGeneric().getLogLevel()) {
-		case NONE:
-			root.setLevel(Level.OFF);
-			break;
-		case INFO:
-			root.setLevel(Level.INFO);
-			break;
-		case ERROR:
-			root.setLevel(Level.ERROR);
-			break;
-		case WARNING:
-			root.setLevel(Level.WARN);
-			break;
-		case DEBUG:
-			root.setLevel(Level.DEBUG);
-			break;
-		case TRACE:
-			root.setLevel(Level.ALL);
-			break;
+		setLoggerLevel(root, config.getGeneric().getLogLevel());
+		
+		if (config.getGeneric().getLogPackages() != null) {
+			for (Entry<String, LogLevel> logPackage : config.getGeneric().getLogPackages().entrySet()) {
+				setLoggerLevel((Logger) LoggerFactory.getLogger(logPackage.getKey()), logPackage.getValue());
+			}
 		}
 		
 		if (config.getGeneric().getLogFile() != null) {
@@ -167,9 +149,10 @@ public class Main {
 		}
 		
 		Injector injector = Guice.createInjector(
+				new ConfigModule(config),
 				new BackendModule(config),
 				new PostgreSQLModule(),
-				new ConfigModule(config),
+				new MongoConfigModule(config),
 				new MongoLayerModule(config),
 				new DbWrapperModule(),
 				new ExecutorModule(1000, 1000, 0.2),
@@ -213,6 +196,29 @@ public class Main {
 			}
 			JCommander.getConsole().println(causeMessage);
 			System.exit(1);
+		}
+	}
+
+	public static void setLoggerLevel(Logger logger, LogLevel logLevel) {
+		switch(logLevel) {
+		case NONE:
+			logger.setLevel(Level.OFF);
+			break;
+		case INFO:
+			logger.setLevel(Level.INFO);
+			break;
+		case ERROR:
+			logger.setLevel(Level.ERROR);
+			break;
+		case WARNING:
+			logger.setLevel(Level.WARN);
+			break;
+		case DEBUG:
+			logger.setLevel(Level.DEBUG);
+			break;
+		case TRACE:
+			logger.setLevel(Level.ALL);
+			break;
 		}
 	}
 

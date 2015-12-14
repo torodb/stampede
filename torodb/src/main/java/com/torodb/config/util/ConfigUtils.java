@@ -20,17 +20,14 @@
 
 package com.torodb.config.util;
 
-import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Properties;
 import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
 import java.util.Set;
@@ -41,22 +38,23 @@ import javax.validation.Validation;
 import javax.validation.Validator;
 import javax.validation.ValidatorFactory;
 
-import org.apache.commons.lang.CharEncoding;
-
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonParser.Feature;
 import com.fasterxml.jackson.core.JsonPointer;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import com.fasterxml.jackson.module.jsonSchema.JsonSchema;
-import com.fasterxml.jackson.module.jsonSchema.factories.SchemaFactoryWrapper;
 import com.github.fge.jsonschema.SchemaVersion;
 import com.github.fge.jsonschema.cfg.ValidationConfiguration;
 import com.github.fge.jsonschema.core.exceptions.ProcessingException;
@@ -195,68 +193,30 @@ public class ConfigUtils {
 		return newNode;
 	}
 
-	public static ResourceBundle extractParamDescriptionFromConfigSchema(final ResourceBundle resourceBundle)
-			throws UnsupportedEncodingException, JsonMappingException {
-		final Properties properties = new Properties();
-		ResourceBundle bundle = new ResourceBundle() {
-
-			@Override
-			protected Object handleGetObject(String key) {
-				if (key == null) {
-					throw new NullPointerException();
-				}
-
-				if (properties.containsKey(key)) {
-					return properties.getProperty(key);
-				} else {
-					return resourceBundle.getObject(key);
-				}
-			}
-
-			@Override
-			public Enumeration<String> getKeys() {
-				final Enumeration<Object> keys = properties.keys();
-				final Enumeration<String> resourceBundleKeys = resourceBundle.getKeys();
-				return new Enumeration<String>() {
-					@Override
-					public boolean hasMoreElements() {
-						return keys.hasMoreElements() || resourceBundleKeys.hasMoreElements();
-					}
-
-					@Override
-					public String nextElement() {
-						Object nextElement = keys.nextElement();
-						if (nextElement == null) {
-							if (keys.hasMoreElements()) {
-								return null;
-							} else {
-								return resourceBundleKeys.nextElement();
-							}
-						}
-						if (nextElement instanceof String) {
-							return (String) keys.nextElement();
-						}
-						return nextElement.toString();
-					}
-				};
-			}
-		};
-		ByteArrayOutputStream paramByteArrayOutputStream = new ByteArrayOutputStream();
-		PrintStream paramPrintStream = new PrintStream(paramByteArrayOutputStream, false, CharEncoding.UTF_8);
-
-		paramPrintStream.println(resourceBundle.getString("param"));
-
-		extractDescription(paramPrintStream);
-
-		properties.setProperty("param", paramByteArrayOutputStream.toString(CharEncoding.UTF_8));
-
-		return bundle;
+	public static void printYamlConfig(Config config, PrintStream printStream)
+			throws IOException, JsonGenerationException, JsonMappingException {
+		ObjectMapper objectMapper = new YAMLMapper();
+		objectMapper.configure(Feature.ALLOW_COMMENTS, true);
+		objectMapper.configure(Feature.ALLOW_YAML_COMMENTS, true);
+		objectMapper.writeValue(printStream, config);
 	}
 
-	private static void extractDescription(PrintStream paramPrintStream) throws JsonMappingException {
+	public static void printXmlConfig(Config config, PrintStream printStream)
+			throws IOException, JsonGenerationException, JsonMappingException {
+		ObjectMapper objectMapper = new XmlMapper();
+		objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
+		objectMapper.configure(Feature.ALLOW_COMMENTS, true);
+		objectMapper.configure(Feature.ALLOW_YAML_COMMENTS, true);
+		ObjectWriter objectWriter = objectMapper.writer();
+		objectWriter = objectWriter.withRootName("config");
+		objectWriter.writeValue(printStream, config);
+	}
+
+	public static void printParamDescriptionFromConfigSchema(PrintStream printStream, int tabs)
+			throws UnsupportedEncodingException, JsonMappingException {
 		ObjectMapper objectMapper = new ObjectMapper();
 		ResourceBundle resourceBundle = PropertyResourceBundle.getBundle("ConfigMessages");
-		DescriptionFactoryWrapper visitor = new DescriptionFactoryWrapper(resourceBundle, paramPrintStream);
+		DescriptionFactoryWrapper visitor = new DescriptionFactoryWrapper(resourceBundle, printStream, tabs);
 		objectMapper.acceptJsonFormatVisitor(objectMapper.constructType(Config.class), visitor);
 	}
 

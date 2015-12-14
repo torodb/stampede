@@ -33,10 +33,10 @@ import javax.validation.ReportAsSingleViolation;
 
 @Target({ TYPE, ANNOTATION_TYPE })
 @Retention(RUNTIME)
-@Constraint(validatedBy = NotNullElementsValidator.class)
+@Constraint(validatedBy = ExistsAnyPasswordValidator.class)
 @ReportAsSingleViolation
-public @interface NotNullElements {
-	String message() default "{com.torodb.config.validation.NotNullElements.message}";
+public @interface ExistsAnyPassword {
+	String message() default "{com.torodb.config.validation.PasswordOrToroPass.message}";
 
 	Class<?>[] groups() default {};
 

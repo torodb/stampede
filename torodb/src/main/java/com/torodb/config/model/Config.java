@@ -52,7 +52,6 @@ public class Config {
 	@JsonProperty(required=true)
 	private Backend backend = new Backend();
 
-
 	public Generic getGeneric() {
 		return generic;
 	}

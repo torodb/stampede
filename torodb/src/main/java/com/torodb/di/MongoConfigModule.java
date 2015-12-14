@@ -21,33 +21,59 @@
 
 package com.torodb.di;
 
+import javax.annotation.concurrent.Immutable;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
+import com.eightkdata.mongowp.mongoserver.MongoServerConfig;
 import com.google.inject.AbstractModule;
 import com.torodb.config.model.Config;
 import com.torodb.config.model.backend.greenplum.Greenplum;
 import com.torodb.config.model.backend.postgres.Postgres;
 import com.torodb.config.visitor.BackendImplementationVisitor;
+import com.torodb.torod.core.annotations.DatabaseName;
+import com.torodb.torod.core.config.DocumentBuilderFactory;
+import com.torodb.util.MongoDocumentBuilderFactory;
 
-public class ConfigModule extends AbstractModule implements BackendImplementationVisitor {
+public class MongoConfigModule extends AbstractModule implements BackendImplementationVisitor {
 	private final Config config;
 
-	public ConfigModule(Config config) {
+	public MongoConfigModule(Config config) {
 		this.config = config;
 	}
 	
 	@Override
 	protected void configure() {
-		bind(Config.class).toInstance(config);
-		
+		bind(MongoServerConfig.class).to(MongoServerConfigMapper.class);
+		bind(DocumentBuilderFactory.class).to(MongoDocumentBuilderFactory.class);
 		config.getBackend().getBackendImplementation().accept(this);
 	}
 
 	@Override
 	public void visit(Postgres value) {
-		bind(Postgres.class).toInstance(value);
+		bind(String.class).annotatedWith(DatabaseName.class).toInstance(value.getDatabase());
 	}
 
 	@Override
 	public void visit(Greenplum value) {
-		bind(Greenplum.class).toInstance(value);
+		bind(String.class).annotatedWith(DatabaseName.class).toInstance(value.getDatabase());
+	}
+	
+	@Immutable
+	@Singleton
+	private static class MongoServerConfigMapper implements MongoServerConfig {
+		
+		private final int port;
+		
+		@Inject
+		public MongoServerConfigMapper(Config config) {
+			super();
+			this.port = config.getProtocol().getMongo().getNet().getPort();
+		}
+
+		@Override
+		public int getPort() {
+			return port;
+		}
 	}
 }

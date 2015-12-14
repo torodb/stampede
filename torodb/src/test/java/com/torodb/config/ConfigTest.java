@@ -1,4 +1,3 @@
-package com.torodb.config;
 /*
  *     This file is part of ToroDB.
  *
@@ -19,7 +18,11 @@ package com.torodb.config;
  *     
  */
 
+package com.torodb.config;
+
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.List;
 
@@ -30,6 +33,8 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import com.torodb.CliConfig;
 import com.torodb.config.model.Config;
 import com.torodb.config.model.backend.greenplum.Greenplum;
@@ -60,6 +65,28 @@ public class ConfigTest {
 
 	@After
 	public void tearDown() {
+	}
+
+	@Test
+	public void testPrintConf() throws Exception {
+		ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+		ConfigUtils.printYamlConfig(new Config(), new PrintStream(byteArrayOutputStream));
+		YAMLMapper yamlMapper = new YAMLMapper();
+		yamlMapper.readValue(byteArrayOutputStream.toByteArray(), Config.class);
+	}
+
+	@Test
+	public void testPrintXmlConf() throws Exception {
+		ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+		ConfigUtils.printXmlConfig(new Config(), new PrintStream(byteArrayOutputStream));
+		XmlMapper xmlMapper = new XmlMapper();
+		xmlMapper.readValue(byteArrayOutputStream.toByteArray(), Config.class);
+	}
+
+	@Test
+	public void testHelpParam() throws Exception {
+		ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+		ConfigUtils.printParamDescriptionFromConfigSchema(new PrintStream(byteArrayOutputStream), 0);
 	}
 
 	@Test

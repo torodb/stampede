@@ -27,7 +27,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.torodb.config.annotation.Description;
 import com.torodb.config.model.backend.BackendImplementation;
 import com.torodb.config.model.backend.Password;
-import com.torodb.config.validation.AnyPassword;
+import com.torodb.config.validation.ExistsAnyPassword;
 import com.torodb.config.validation.Host;
 import com.torodb.config.validation.Port;
 import com.torodb.config.visitor.BackendImplementationVisitor;
@@ -42,7 +42,7 @@ import com.torodb.config.visitor.BackendImplementationVisitor;
 	"toropassFile",
 	"applicationName"
 })
-@AnyPassword
+@ExistsAnyPassword
 public class Postgres implements BackendImplementation, Password {
 	@Description("config.backend.postgres.host")
 	@NotNull
