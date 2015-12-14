@@ -18,36 +18,34 @@
  *     
  */
 
+package com.torodb.config.validation;
 
-package com.torodb.di;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-import com.google.inject.AbstractModule;
-import com.torodb.config.model.Config;
-import com.torodb.config.model.backend.greenplum.Greenplum;
-import com.torodb.config.model.backend.postgres.Postgres;
-import com.torodb.config.visitor.BackendImplementationVisitor;
+import javax.validation.ConstraintValidator;
+import javax.validation.ConstraintValidatorContext;
 
-public class ConfigModule extends AbstractModule implements BackendImplementationVisitor {
-	private final Config config;
+import com.torodb.config.model.protocol.mongo.Replication;
 
-	public ConfigModule(Config config) {
-		this.config = config;
-	}
+public class NoDuplicatedReplNameValidator implements ConstraintValidator<NoDuplicatedReplName, List<Replication>> {
 	
 	@Override
-	protected void configure() {
-		bind(Config.class).toInstance(config);
-		
-		config.getBackend().getBackendImplementation().accept(this);
+	public void initialize(NoDuplicatedReplName constraintAnnotation) {
 	}
 
 	@Override
-	public void visit(Postgres value) {
-		bind(Postgres.class).toInstance(value);
-	}
+	public boolean isValid(List<Replication> value, ConstraintValidatorContext context) {
+		if (value != null) {
+			Set<String> replNameSet = new HashSet<String>();
+			for (Replication replication : value) {
+				if (!replNameSet.add(replication.getReplSetName())) {
+					return false;
+				}
+			}
+		}
 
-	@Override
-	public void visit(Greenplum value) {
-		bind(Greenplum.class).toInstance(value);
+		return true;
 	}
 }

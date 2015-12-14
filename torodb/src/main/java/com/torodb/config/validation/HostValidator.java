@@ -18,36 +18,30 @@
  *     
  */
 
+package com.torodb.config.validation;
 
-package com.torodb.di;
+import java.net.URI;
+import java.net.URISyntaxException;
 
-import com.google.inject.AbstractModule;
-import com.torodb.config.model.Config;
-import com.torodb.config.model.backend.greenplum.Greenplum;
-import com.torodb.config.model.backend.postgres.Postgres;
-import com.torodb.config.visitor.BackendImplementationVisitor;
+import javax.validation.ConstraintValidator;
+import javax.validation.ConstraintValidatorContext;
 
-public class ConfigModule extends AbstractModule implements BackendImplementationVisitor {
-	private final Config config;
+public class HostValidator implements ConstraintValidator<Host, String> {
 
-	public ConfigModule(Config config) {
-		this.config = config;
-	}
-	
 	@Override
-	protected void configure() {
-		bind(Config.class).toInstance(config);
+	public void initialize(Host constraintAnnotation) {
+	}
+
+	@Override
+	public boolean isValid(String value, ConstraintValidatorContext context) {
+		if (value != null) {
+			try {
+				return new URI("my://userinfo@" + value + ":80").getHost() != null;
+			} catch (URISyntaxException e) {
+				return false;
+			}
+		}
 		
-		config.getBackend().getBackendImplementation().accept(this);
-	}
-
-	@Override
-	public void visit(Postgres value) {
-		bind(Postgres.class).toInstance(value);
-	}
-
-	@Override
-	public void visit(Greenplum value) {
-		bind(Greenplum.class).toInstance(value);
+		return true;
 	}
 }

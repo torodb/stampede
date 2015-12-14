@@ -18,36 +18,29 @@
  *     
  */
 
+package com.torodb.config.validation;
 
-package com.torodb.di;
+import java.util.List;
 
-import com.google.inject.AbstractModule;
-import com.torodb.config.model.Config;
-import com.torodb.config.model.backend.greenplum.Greenplum;
-import com.torodb.config.model.backend.postgres.Postgres;
-import com.torodb.config.visitor.BackendImplementationVisitor;
+import javax.validation.ConstraintValidator;
+import javax.validation.ConstraintValidatorContext;
 
-public class ConfigModule extends AbstractModule implements BackendImplementationVisitor {
-	private final Config config;
-
-	public ConfigModule(Config config) {
-		this.config = config;
-	}
+public class NotNullElementsValidator implements ConstraintValidator<NotNullElements, List<?>> {
 	
 	@Override
-	protected void configure() {
-		bind(Config.class).toInstance(config);
-		
-		config.getBackend().getBackendImplementation().accept(this);
+	public void initialize(NotNullElements constraintAnnotation) {
 	}
 
 	@Override
-	public void visit(Postgres value) {
-		bind(Postgres.class).toInstance(value);
-	}
+	public boolean isValid(List<?> value, ConstraintValidatorContext context) {
+		if (value != null) {
+			for (Object element : value) {
+				if (element == null) {
+					return false;
+				}
+			}
+		}
 
-	@Override
-	public void visit(Greenplum value) {
-		bind(Greenplum.class).toInstance(value);
+		return true;
 	}
 }

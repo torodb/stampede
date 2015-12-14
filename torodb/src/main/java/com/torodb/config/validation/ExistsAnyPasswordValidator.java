@@ -18,36 +18,21 @@
  *     
  */
 
+package com.torodb.config.validation;
 
-package com.torodb.di;
+import javax.validation.ConstraintValidator;
+import javax.validation.ConstraintValidatorContext;
 
-import com.google.inject.AbstractModule;
-import com.torodb.config.model.Config;
-import com.torodb.config.model.backend.greenplum.Greenplum;
-import com.torodb.config.model.backend.postgres.Postgres;
-import com.torodb.config.visitor.BackendImplementationVisitor;
+import com.torodb.config.model.backend.Password;
 
-public class ConfigModule extends AbstractModule implements BackendImplementationVisitor {
-	private final Config config;
-
-	public ConfigModule(Config config) {
-		this.config = config;
-	}
+public class ExistsAnyPasswordValidator implements ConstraintValidator<ExistsAnyPassword, Password> {
 	
 	@Override
-	protected void configure() {
-		bind(Config.class).toInstance(config);
-		
-		config.getBackend().getBackendImplementation().accept(this);
+	public void initialize(ExistsAnyPassword constraintAnnotation) {
 	}
 
 	@Override
-	public void visit(Postgres value) {
-		bind(Postgres.class).toInstance(value);
-	}
-
-	@Override
-	public void visit(Greenplum value) {
-		bind(Greenplum.class).toInstance(value);
+	public boolean isValid(Password value, ConstraintValidatorContext context) {
+		return value == null || value.getPassword() != null || value.getToropassFile() != null;
 	}
 }

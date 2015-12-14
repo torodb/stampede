@@ -18,36 +18,10 @@
  *     
  */
 
+package com.torodb.config.model.backend;
 
-package com.torodb.di;
-
-import com.google.inject.AbstractModule;
-import com.torodb.config.model.Config;
-import com.torodb.config.model.backend.greenplum.Greenplum;
-import com.torodb.config.model.backend.postgres.Postgres;
 import com.torodb.config.visitor.BackendImplementationVisitor;
 
-public class ConfigModule extends AbstractModule implements BackendImplementationVisitor {
-	private final Config config;
-
-	public ConfigModule(Config config) {
-		this.config = config;
-	}
-	
-	@Override
-	protected void configure() {
-		bind(Config.class).toInstance(config);
-		
-		config.getBackend().getBackendImplementation().accept(this);
-	}
-
-	@Override
-	public void visit(Postgres value) {
-		bind(Postgres.class).toInstance(value);
-	}
-
-	@Override
-	public void visit(Greenplum value) {
-		bind(Greenplum.class).toInstance(value);
-	}
+public interface BackendImplementation {
+	public void accept(BackendImplementationVisitor visitor);
 }

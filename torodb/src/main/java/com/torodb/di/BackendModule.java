@@ -21,26 +21,99 @@
 
 package com.torodb.di;
 
+import javax.annotation.concurrent.Immutable;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 import com.google.inject.AbstractModule;
+import com.torodb.config.model.Config;
+import com.torodb.config.model.backend.greenplum.Greenplum;
+import com.torodb.config.model.backend.postgres.Postgres;
+import com.torodb.config.visitor.BackendImplementationVisitor;
 import com.torodb.torod.backend.db.DbBackendConfiguration;
 import com.torodb.torod.backend.db.postgresql.PostgreSQLDbBackend;
 import com.torodb.torod.core.backend.DbBackend;
 
-import javax.inject.Singleton;
+public class BackendModule extends AbstractModule implements BackendImplementationVisitor {
+	private final Config config;
 
-/**
- *
- */
-public class BackendModule extends AbstractModule {
-    private final DbBackendConfiguration configuration;
+	public BackendModule(Config config) {
+		this.config = config;
+	}
 
-    public BackendModule(DbBackendConfiguration config) {
-        this.configuration = config;
-    }
+	@Override
+	protected void configure() {
+		config.getBackend().getBackendImplementation().accept(this);
+	}
 
-    @Override
-    protected void configure() {
-        bind(DbBackend.class).to(PostgreSQLDbBackend.class).in(Singleton.class);
-        bind(DbBackendConfiguration.class).toInstance(configuration);
-    }
+	@Override
+	public void visit(Postgres value) {
+		bind(DbBackend.class).to(PostgreSQLDbBackend.class).in(Singleton.class);
+		bind(DbBackendConfiguration.class).to(DbBackendConfigurationMapper.class);
+	}
+
+	@Override
+	public void visit(Greenplum value) {
+		throw new UnsupportedOperationException("Not implemented yet! :(");
+	}
+	
+	@Immutable
+	@Singleton
+	public static class DbBackendConfigurationMapper implements DbBackendConfiguration {
+
+		private final int connectionPoolSize;
+		private final int reservedReadPoolSize;
+		private final String dbHost;
+		private final int dbPort;
+		private final String dbName;
+		private final String username;
+		private final String password;
+		
+		@Inject
+		public DbBackendConfigurationMapper(Config config, Postgres postgres) {
+			super();
+			this.connectionPoolSize = config.getGeneric().getConnectionPoolSize();
+			this.reservedReadPoolSize = config.getGeneric().getReservedReadPoolSize();
+			this.dbHost = postgres.getHost();
+			this.dbPort = postgres.getPort();
+			this.dbName = postgres.getDatabase();
+			this.username = postgres.getUser();
+			this.password = postgres.getPassword();
+		}
+
+		@Override
+		public int getConnectionPoolSize() {
+			return connectionPoolSize;
+		}
+
+		@Override
+		public int getReservedReadPoolSize() {
+			return reservedReadPoolSize;
+		}
+
+		@Override
+		public String getUsername() {
+			return username;
+		}
+
+		@Override
+		public String getPassword() {
+			return password;
+		}
+
+		@Override
+		public String getDbHost() {
+			return dbHost;
+		}
+
+		@Override
+		public String getDbName() {
+			return dbName;
+		}
+
+		@Override
+		public int getDbPort() {
+			return dbPort;
+		}
+	}
 }
