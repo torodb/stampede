@@ -221,7 +221,7 @@ public class ConfigUtils {
 		ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 		PrintStream printStream = new PrintStream(byteArrayOutputStream, false, Charsets.UTF_8.name());
 		objectWriter.writeValue(printStream, config);
-		console.print(byteArrayOutputStream.toString(Charsets.UTF_8.name()));
+		console.println(byteArrayOutputStream.toString(Charsets.UTF_8.name()));
 	}
 
 	public static void printParamDescriptionFromConfigSchema(Console console, int tabs)
@@ -230,6 +230,7 @@ public class ConfigUtils {
 		ResourceBundle resourceBundle = PropertyResourceBundle.getBundle("ConfigMessages");
 		DescriptionFactoryWrapper visitor = new DescriptionFactoryWrapper(resourceBundle, console, tabs);
 		objectMapper.acceptJsonFormatVisitor(objectMapper.constructType(Config.class), visitor);
+		console.println("");
 	}
 
 	private static JsonNode mergeWithDefaults(JsonNode configNode) {
