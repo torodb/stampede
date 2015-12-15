@@ -51,8 +51,8 @@ public class DefaultPathViewHandlerCallback extends PathViewHandler.Callback {
     }
 
     @Override
-    public int dropView(AttributeReference attRef, CollectionSchema colSchema) {
-        return dsl.dropViewIfExists(
+    public void dropView(AttributeReference attRef, CollectionSchema colSchema) {
+        dsl.dropViewIfExists(
                 DSL.name(
                         colSchema.getName(), getViewName(attRef)
                 )

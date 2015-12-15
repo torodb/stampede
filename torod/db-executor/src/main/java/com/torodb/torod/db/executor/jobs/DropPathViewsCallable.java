@@ -8,7 +8,7 @@ import com.torodb.torod.core.exceptions.ToroRuntimeException;
 /**
  *
  */
-public class DropPathViewsCallable extends TransactionalJob<Integer> {
+public class DropPathViewsCallable extends TransactionalJob<Void> {
 
     private final Report report;
     private final String collection;
@@ -24,18 +24,17 @@ public class DropPathViewsCallable extends TransactionalJob<Integer> {
     }
 
     @Override
-    protected Integer failableCall() throws ToroException,
+    protected Void failableCall() throws ToroException,
             ToroRuntimeException {
 
-        Integer result = getConnection().dropPathViews(collection);
-        report.dropViewsExecuted(collection, result);
+        getConnection().dropPathViews(collection);
+        report.dropViewsExecuted(collection);
 
-        return result;
+        return null;
     }
 
     public static interface Report {
         public void dropViewsExecuted(
-            String collection,
-            Integer result);
+            String collection);
     }
 }

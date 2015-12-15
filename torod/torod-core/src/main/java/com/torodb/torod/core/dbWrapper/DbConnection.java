@@ -172,5 +172,5 @@ public interface DbConnection {
     public Integer createPathViews(String collection) throws IllegalPathViewException;
 
     @Beta
-    public Integer dropPathViews(String collection) throws IllegalPathViewException;
+    public void dropPathViews(String collection) throws IllegalPathViewException;
 }

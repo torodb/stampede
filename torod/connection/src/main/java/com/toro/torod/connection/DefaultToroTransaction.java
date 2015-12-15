@@ -205,7 +205,7 @@ public class DefaultToroTransaction implements ToroTransaction {
     }
 
     @Override
-    public ListenableFuture<Integer> dropPathViews(String collection) throws
+    public ListenableFuture<Void> dropPathViews(String collection) throws
             UnsupportedOperationException {
         return sessionTransaction.dropPathViews(collection);
     }

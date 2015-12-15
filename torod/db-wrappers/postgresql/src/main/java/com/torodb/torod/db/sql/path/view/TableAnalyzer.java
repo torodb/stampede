@@ -11,13 +11,21 @@ import com.torodb.torod.core.subdocument.structure.DocStructure;
 import com.torodb.torod.core.subdocument.structure.StructureElement;
 import com.torodb.torod.db.postgresql.meta.CollectionSchema;
 import java.util.Map.Entry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
  */
 class TableAnalyzer {
 
-    public static Table<AttributeReference, Integer, DocStructure> analyzeCollection(CollectionSchema colSchema) throws IllegalPathViewException {
+    private static final Logger LOGGER
+            = LoggerFactory.getLogger(TableAnalyzer.class);
+
+    public static Table<AttributeReference, Integer, DocStructure> analyzeCollection(
+            CollectionSchema colSchema,
+            boolean ignoreArrays
+    ) throws IllegalPathViewException {
         Table<AttributeReference, Integer, DocStructure> table = HashBasedTable.create();
 
         for (Entry<Integer, DocStructure> entry : colSchema.getStructuresCache().getAllStructures().entrySet()) {
@@ -26,6 +34,7 @@ class TableAnalyzer {
                     entry.getValue(),
                     entry.getValue(),
                     table,
+                    ignoreArrays,
                     AttributeReference.EMPTY_REFERENCE
             );
         }
@@ -38,6 +47,7 @@ class TableAnalyzer {
             DocStructure root,
             DocStructure node,
             Table<AttributeReference, Integer, DocStructure> table,
+            boolean ignoreArrays,
             AttributeReference path) throws IllegalPathViewException {
 
         table.put(path, sid, node);
@@ -45,6 +55,10 @@ class TableAnalyzer {
         for (Entry<String, StructureElement> entry : node.getElements().entrySet()) {
             AttributeReference newPath;
             if (entry.getValue() instanceof ArrayStructure) {
+                if (ignoreArrays) {
+                    LOGGER.trace("An array structure with path {}.{}.{} because it points to an array");
+                    continue;
+                }
                 String pathStr;
                 if (path.equals(AttributeReference.EMPTY_REFERENCE)) {
                     pathStr = entry.getKey();
@@ -69,7 +83,7 @@ class TableAnalyzer {
             }
             else {
                 newPath = path.append(new ObjectKey(entry.getKey()));
-                analyzeStructure(sid, root, (DocStructure) entry.getValue(), table, newPath);
+                analyzeStructure(sid, root, (DocStructure) entry.getValue(), table, ignoreArrays, newPath);
             }
         }
     }

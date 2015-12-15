@@ -279,7 +279,7 @@ public class AbstractReportFactory implements ReportFactory {
         }
 
         @Override
-        public void dropViewsExecuted(String collection, Integer result) {
+        public void dropViewsExecuted(String collection) {
         }
 
     }

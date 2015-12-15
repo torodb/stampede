@@ -40,33 +40,31 @@ public class PathViewHandler {
 
         Table<AttributeReference, Integer, DocStructure> table;
 
-        table = TableAnalyzer.analyzeCollection(colSchema);
+        table = TableAnalyzer.analyzeCollection(colSchema, false);
 
         return createPathViews(colSchema, table);
     }
 
-    public int dropPathViews(String collection) throws IllegalPathViewException {
+    public void dropPathViews(String collection) throws IllegalPathViewException {
         if (!meta.exists(collection)) {
-            return 0;
+            return ;
         }
 
         CollectionSchema colSchema = meta.getCollectionSchema(collection);
 
         Table<AttributeReference, Integer, DocStructure> table;
 
-        table = TableAnalyzer.analyzeCollection(colSchema);
+        table = TableAnalyzer.analyzeCollection(colSchema, true);
 
-        return dropPathViews(colSchema, table);
+        dropPathViews(colSchema, table);
     }
 
-    private int dropPathViews(
+    private void dropPathViews(
             CollectionSchema colSchema,
             Table<AttributeReference, Integer, DocStructure> table) {
-        int droppedViewCounter = 0;
         for (AttributeReference attRef : table.rowKeySet()) {
-            droppedViewCounter += callback.dropView(attRef, colSchema);
+            callback.dropView(attRef, colSchema);
         }
-        return droppedViewCounter;
     }
 
     @SuppressWarnings("unchecked")
@@ -243,7 +241,7 @@ public class PathViewHandler {
          * @param colSchema
          * @return the number of views that have been dropped
          */
-        abstract int dropView(AttributeReference attRef, CollectionSchema colSchema);
+        abstract void dropView(AttributeReference attRef, CollectionSchema colSchema);
 
         /**
          * This method is called when view creation is requested on

@@ -7,6 +7,7 @@ import com.eightkdata.mongowp.mongoserver.api.safe.CommandRequest;
 import com.eightkdata.mongowp.mongoserver.api.safe.CommandResult;
 import com.eightkdata.mongowp.mongoserver.api.safe.impl.CollectionCommandArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.impl.NonWriteCommandResult;
+import com.eightkdata.mongowp.mongoserver.api.safe.tools.Empty;
 import com.eightkdata.mongowp.mongoserver.protocol.exceptions.CommandFailed;
 import com.eightkdata.mongowp.mongoserver.protocol.exceptions.InternalErrorException;
 import com.eightkdata.mongowp.mongoserver.protocol.exceptions.MongoException;
@@ -19,11 +20,11 @@ import com.torodb.torod.mongodb.utils.ToroDBThrowables;
 /**
  *
  */
-public class DropPathViewsImplementation implements CommandImplementation<CollectionCommandArgument, Integer> {
+public class DropPathViewsImplementation implements CommandImplementation<CollectionCommandArgument, Empty> {
 
     @Override
-    public CommandResult<Integer> apply(
-            Command<? super CollectionCommandArgument, ? super Integer> command,
+    public CommandResult<Empty> apply(
+            Command<? super CollectionCommandArgument, ? super Empty> command,
             CommandRequest<CollectionCommandArgument> req) throws MongoException {
 
         RequestContext context = RequestContext.getFrom(req);
@@ -44,15 +45,13 @@ public class DropPathViewsImplementation implements CommandImplementation<Collec
 
         try {
             transaction = connection.createTransaction();
-            NonWriteCommandResult<Integer> result = new NonWriteCommandResult<>(
-                    ToroDBThrowables.getFromCommand(
-                            commandName,
-                            transaction.dropPathViews(arg.getCollection())
-                    )
+            ToroDBThrowables.getFromCommand(
+                    commandName,
+                    transaction.dropPathViews(arg.getCollection())
             );
             ToroDBThrowables.getFromCommand(commandName, transaction.commit());
 
-            return result;
+            return new NonWriteCommandResult<>(Empty.getInstance());
         } catch (ImplementationDbException ex) {
             throw new InternalErrorException(command.getCommandName(), ex);
         } finally {

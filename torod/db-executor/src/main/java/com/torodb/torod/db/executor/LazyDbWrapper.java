@@ -264,10 +264,10 @@ public class LazyDbWrapper implements DbWrapper {
         }
 
         @Override
-        public Integer dropPathViews(String collection) throws
+        public void dropPathViews(String collection) throws
                 IllegalPathViewException {
             try {
-                return getDelegate().dropPathViews(collection);
+                getDelegate().dropPathViews(collection);
             } catch (ImplementationDbException ex) {
                 throw new ToroImplementationException(ex);
             }

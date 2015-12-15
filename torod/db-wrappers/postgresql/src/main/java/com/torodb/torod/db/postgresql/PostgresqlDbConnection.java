@@ -376,12 +376,12 @@ class PostgresqlDbConnection extends AbstractSqlDbConnection {
     }
 
     @Override
-    public Integer dropPathViews(String collection) throws
+    public void dropPathViews(String collection) throws
             IllegalPathViewException {
         PathViewHandler.Callback callback = new DefaultPathViewHandlerCallback(getDsl());
         PathViewHandler handler = new PathViewHandler(getMeta(), callback);
 
-        return handler.dropPathViews(collection);
+        handler.dropPathViews(collection);
     }
 
     private String getSqlType(Field<?> field, Configuration conf) {

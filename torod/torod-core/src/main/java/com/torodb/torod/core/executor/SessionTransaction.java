@@ -104,5 +104,5 @@ public interface SessionTransaction extends Closeable {
     public ListenableFuture<Integer> createPathViews(String collection);
 
     @Beta
-    public ListenableFuture<Integer> dropPathViews(String collection);
+    public ListenableFuture<Void> dropPathViews(String collection);
 }

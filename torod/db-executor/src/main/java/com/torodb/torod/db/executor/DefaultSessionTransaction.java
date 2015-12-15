@@ -267,7 +267,7 @@ public class DefaultSessionTransaction implements SessionTransaction {
     }
 
     @Override
-    public ListenableFuture<Integer> dropPathViews(String collection) {
+    public ListenableFuture<Void> dropPathViews(String collection) {
         return submit(
               new DropPathViewsCallable(
                       dbConnection,
