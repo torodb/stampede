@@ -4,7 +4,9 @@ import com.eightkdata.mongowp.mongoserver.api.safe.Command;
 import com.eightkdata.mongowp.mongoserver.api.safe.CommandImplementation;
 import com.google.common.collect.ImmutableMap;
 import com.torodb.torod.mongodb.commands.impl.torodb.CreatePathViewsImplementation;
+import com.torodb.torod.mongodb.commands.impl.torodb.DropPathViewsImplementation;
 import com.torodb.torod.mongodb.commands.torodb.CreatePathViewsCommand;
+import com.torodb.torod.mongodb.commands.torodb.DropPathViewsCommand;
 import javax.inject.Singleton;
 
 /**
@@ -18,6 +20,7 @@ public class ToroDBSpecificCommandTool {
     public ToroDBSpecificCommandTool() {
         this.map = ImmutableMap.<Command, CommandImplementation>builder()
                 .put(CreatePathViewsCommand.INSTANCE, new CreatePathViewsImplementation())
+                .put(DropPathViewsCommand.INSTANCE, new DropPathViewsImplementation())
                 .build();
     }
 

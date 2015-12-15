@@ -170,4 +170,7 @@ public interface DbConnection {
 
     @Beta
     public Integer createPathViews(String collection) throws IllegalPathViewException;
+
+    @Beta
+    public Integer dropPathViews(String collection) throws IllegalPathViewException;
 }

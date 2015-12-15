@@ -56,4 +56,6 @@ public interface ReportFactory {
     public MaxElementsCallable.Report createMaxElementsReport();
 
     public CreatePathViewsCallable.Report createCreatePathViewsReport();
+
+    public DropPathViewsCallable.Report createDropPathViewsReport();
 }

@@ -102,4 +102,7 @@ public interface SessionTransaction extends Closeable {
 
     @Beta
     public ListenableFuture<Integer> createPathViews(String collection);
+
+    @Beta
+    public ListenableFuture<Integer> dropPathViews(String collection);
 }

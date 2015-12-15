@@ -129,4 +129,7 @@ public interface ToroTransaction extends Closeable {
 
     @Beta
     public ListenableFuture<Integer> createPathViews(String collection) throws UnsupportedOperationException;
+
+    @Beta
+    public ListenableFuture<Integer> dropPathViews(String collection) throws UnsupportedOperationException;
 }

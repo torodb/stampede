@@ -266,6 +266,18 @@ public class DefaultSessionTransaction implements SessionTransaction {
         );
     }
 
+    @Override
+    public ListenableFuture<Integer> dropPathViews(String collection) {
+        return submit(
+              new DropPathViewsCallable(
+                      dbConnection,
+                      aborter,
+                      reportFactory.createDropPathViewsReport(),
+                      collection
+              )
+        );
+    }
+
     protected <R> ListenableFuture<R> submit(Job<R> callable) {
         return executor.submit(callable);
     }
