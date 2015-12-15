@@ -33,11 +33,12 @@ import com.google.inject.Singleton;
 import com.torodb.DefaultBuildProperties;
 import com.torodb.Shutdowner;
 import com.torodb.torod.core.BuildProperties;
-import com.torodb.torod.mongodb.*;
+import com.torodb.torod.mongodb.OptimeClock;
+import com.torodb.torod.mongodb.ToroErrorHandler;
 import com.torodb.torod.mongodb.annotations.External;
 import com.torodb.torod.mongodb.annotations.Local;
-import com.torodb.torod.mongodb.commands.ToroCommandsExecutor;
-import com.torodb.torod.mongodb.commands.ToroCommandsLibrary;
+import com.torodb.torod.mongodb.commands.ToroCommandsExecutorProvider;
+import com.torodb.torod.mongodb.commands.ToroCommandsLibraryProvider;
 import com.torodb.torod.mongodb.commands.WriteConcernToWriteFailModeFunction;
 import com.torodb.torod.mongodb.commands.WriteConcernToWriteFailModeFunction.AlwaysTransactionalWriteFailMode;
 import com.torodb.torod.mongodb.crp.Index;
@@ -84,11 +85,11 @@ public class MongoLayerModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(CommandsLibrary.class)
-                .to(ToroCommandsLibrary.class)
+                .toProvider(ToroCommandsLibraryProvider.class)
                 .asEagerSingleton();
 
         bind(CommandsExecutor.class)
-                .to(ToroCommandsExecutor.class)
+                .toProvider(ToroCommandsExecutorProvider.class)
                 .asEagerSingleton();
 
         bind(ToroSafeRequestProcessor.class);

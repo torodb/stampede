@@ -1,9 +1,9 @@
 
 package com.torodb.torod.db.sql.path.view;
 
-import com.torodb.torod.core.exceptions.UnsupportedStructurePathViewException;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
+import com.torodb.torod.core.exceptions.IllegalPathViewException;
 import com.torodb.torod.core.language.AttributeReference;
 import com.torodb.torod.core.language.AttributeReference.ObjectKey;
 import com.torodb.torod.core.subdocument.structure.ArrayStructure;
@@ -17,7 +17,7 @@ import java.util.Map.Entry;
  */
 class TableAnalyzer {
 
-    public static Table<AttributeReference, Integer, DocStructure> analyzeCollection(CollectionSchema colSchema) throws UnsupportedStructurePathViewException {
+    public static Table<AttributeReference, Integer, DocStructure> analyzeCollection(CollectionSchema colSchema) throws IllegalPathViewException {
         Table<AttributeReference, Integer, DocStructure> table = HashBasedTable.create();
 
         for (Entry<Integer, DocStructure> entry : colSchema.getStructuresCache().getAllStructures().entrySet()) {
@@ -38,20 +38,54 @@ class TableAnalyzer {
             DocStructure root,
             DocStructure node,
             Table<AttributeReference, Integer, DocStructure> table,
-            AttributeReference path) throws UnsupportedStructurePathViewException {
+            AttributeReference path) throws IllegalPathViewException {
 
         table.put(path, sid, node);
 
         for (Entry<String, StructureElement> entry : node.getElements().entrySet()) {
             AttributeReference newPath;
             if (entry.getValue() instanceof ArrayStructure) {
-                throw new UnsupportedStructurePathViewException(root, node);
+                String pathStr;
+                if (path.equals(AttributeReference.EMPTY_REFERENCE)) {
+                    pathStr = entry.getKey();
+                }
+                else {
+                    pathStr = path.toString() + '.' + entry.getKey();
+                }
+                if (containsDocuments((ArrayStructure) entry.getValue())) {
+                    throw new IllegalPathViewException("The path \"" + pathStr
+                            + "\" points to an array that cointains documents "
+                            + "on the structure with sid " + sid +". It is not "
+                            + "possible to generate path views for that kind "
+                            + "of structures");
+                }
+                else {
+                    throw new IllegalPathViewException("The path \"" + pathStr
+                            + "\" points to an array on the "
+                            + "structure with sid " + sid +". It is not "
+                            + "possible to generate path views for that kind "
+                            + "of structures");
+                }
             }
             else {
                 newPath = path.append(new ObjectKey(entry.getKey()));
+                analyzeStructure(sid, root, (DocStructure) entry.getValue(), table, newPath);
             }
-            analyzeStructure(sid, root, (DocStructure) entry.getValue(), table, newPath);
         }
     }
 
+    private static boolean containsDocuments(ArrayStructure arrStructure) {
+        for (StructureElement value : arrStructure.getElements().values()) {
+            if (value instanceof DocStructure) {
+                return true;
+            }
+            else if (value instanceof ArrayStructure && containsDocuments((ArrayStructure) value)) {
+                return true;
+            }
+            else {
+                throw new AssertionError("Unexpected structure type");
+            }
+        }
+        return false;
+    }
 }

@@ -1,9 +1,9 @@
 
 package com.torodb.torod.db.sql.path.view;
 
-import com.torodb.torod.core.exceptions.UnsupportedStructurePathViewException;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Table;
+import com.torodb.torod.core.exceptions.IllegalPathViewException;
 import com.torodb.torod.core.language.AttributeReference;
 import com.torodb.torod.core.subdocument.SubDocType;
 import com.torodb.torod.core.subdocument.structure.DocStructure;
@@ -20,32 +20,19 @@ import org.jooq.impl.DSL;
 /**
  *
  */
-public abstract class PathViewHandler {
+public class PathViewHandler {
 
     private final TorodbMeta meta;
-    private final DSLContext dsl;
+    private final Callback callback;
     private final java.util.Comparator<Field<?>> fieldComparator;
 
-    public PathViewHandler(TorodbMeta meta, DSLContext dsl) {
+    public PathViewHandler(TorodbMeta meta, Callback callback) {
         this.meta = meta;
-        this.dsl = dsl;
-        this.fieldComparator = new FieldComparator();
+        this.callback = callback;
+        this.fieldComparator = callback.getFieldComparator();
     }
 
-    public PathViewHandler(TorodbMeta meta, DSLContext dsl, java.util.Comparator<Field<?>> fieldComparator) {
-        this.meta = meta;
-        this.dsl = dsl;
-        this.fieldComparator = fieldComparator;
-    }
-
-    protected abstract void createView(CreateViewFinalStep view);
-    protected abstract int dropView(AttributeReference attRef, CollectionSchema colSchema);
-
-    protected DSLContext getDsl() {
-        return dsl;
-    }
-
-    public int createPathViews(String collection) throws UnsupportedStructurePathViewException {
+    public int createPathViews(String collection) throws IllegalPathViewException {
         if (!meta.exists(collection)) {
             return 0;
         }
@@ -58,7 +45,7 @@ public abstract class PathViewHandler {
         return createPathViews(colSchema, table);
     }
 
-    public int dropPathViews(String collection) throws UnsupportedStructurePathViewException {
+    public int dropPathViews(String collection) throws IllegalPathViewException {
         if (!meta.exists(collection)) {
             return 0;
         }
@@ -72,30 +59,24 @@ public abstract class PathViewHandler {
         return dropPathViews(colSchema, table);
     }
 
-    protected String getViewName(AttributeReference attRef) {
-        if (attRef.equals(AttributeReference.EMPTY_REFERENCE)) {
-            return "rootView";
-        }
-        return attRef.toString();
-    }
-
     private int dropPathViews(
             CollectionSchema colSchema,
             Table<AttributeReference, Integer, DocStructure> table) {
         int droppedViewCounter = 0;
         for (AttributeReference attRef : table.rowKeySet()) {
-            droppedViewCounter += dropView(attRef, colSchema);
+            droppedViewCounter += callback.dropView(attRef, colSchema);
         }
         return droppedViewCounter;
     }
 
+    @SuppressWarnings("unchecked")
     protected int createPathViews(
             CollectionSchema colSchema,
-            Table<AttributeReference, Integer, DocStructure> table) {
+            Table<AttributeReference, Integer, DocStructure> table) throws IllegalPathViewException {
 
         int viewsCounter = 0;
         
-        analyzeTable(table);
+        callback.analyzeTable(table);
         
         String schemaName = colSchema.getName();
 		org.jooq.Table<?> rootTable = DSL.table(DSL.name(schemaName, "root"));
@@ -117,17 +98,28 @@ public abstract class PathViewHandler {
 				org.jooq.Table<?> joinTable = subDocTable.join(rootTable)
 						.on(subDocTable.getDidColumn().eq(rootDidField));
 
-				query = createQuery(dsl, query, fields, joinTable, docStructure, subDocTable, rootSidField, entry);
+				query = createQuery(
+                        callback.getDsl(),
+                        query,
+                        fields,
+                        joinTable,
+                        docStructure,
+                        subDocTable,
+                        rootSidField,
+                        entry
+                );
 			}
 
 			Name[] columnNames = toNameArray(column);
+
+            callback.dropView(attRef, colSchema);
 			
-			CreateViewFinalStep view = dsl.createView(
-                    DSL.name(schemaName, getViewName(attRef)),
+            CreateViewFinalStep view = callback.getDsl().createView(
+                    DSL.name(schemaName, callback.getViewName(attRef)),
                     columnNames
             ).as(query);
 			
-			createView(view);
+			callback.createView(view);
             viewsCounter++;
         }
 
@@ -186,10 +178,7 @@ public abstract class PathViewHandler {
 		return columnNames;
 	}
 
-    private void analyzeTable(Table<AttributeReference, Integer, DocStructure> table) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
+    @SuppressWarnings("unchecked")
     private Select createQuery(
             DSLContext dsl,
             Select query,
@@ -207,15 +196,18 @@ public abstract class PathViewHandler {
 			indexCondition = subDocTable.getIndexColumn().eq(docStructure.getIndex());
 		}
 
-		Select subQuery = dsl.select(fields).from(joinTable).where(rootSidField.eq(DSL.val(entry.getKey()).cast(Integer.class)).and(indexCondition));
+        Select subQuery = dsl.select(fields).from(joinTable).where(
+                rootSidField.eq(DSL.val(entry.getKey()).cast(Integer.class))
+                .and(indexCondition));
 
+        Select newQuery;
 		if (query == null) {
-			query = subQuery;
+			newQuery = subQuery;
 		} else {
-			query = query.unionAll(subQuery);
+			newQuery = query.unionAll(subQuery);
 		}
 
-		return query;
+		return newQuery;
 	}
 
     private static class FieldComparator implements java.util.Comparator<Field<?>>, Serializable {
@@ -238,6 +230,49 @@ public abstract class PathViewHandler {
                 }
                 return fn1.compareTo(fn2);
             }
+        }
+    }
+
+    public static abstract class Callback {
+
+        abstract void createView(CreateViewFinalStep view);
+
+        /**
+         *
+         * @param attRef
+         * @param colSchema
+         * @return the number of views that have been dropped
+         */
+        abstract int dropView(AttributeReference attRef, CollectionSchema colSchema);
+
+        /**
+         * This method is called when view creation is requested on
+         * {@link PathViewHandler} but before
+         * {@link #createView(org.jooq.CreateViewFinalStep) } is called.
+         * <p/>
+         * It is used to stop the process if the views cannot be created.
+         *
+         * @param table
+         * @throws IllegalPathViewException if there process must
+         *                                               be stopped because
+         *                                               there are paths that
+         *                                               cannot be shown as
+         *                                               tables
+         */
+        abstract void analyzeTable(Table<AttributeReference, Integer, DocStructure> table)
+                throws IllegalPathViewException;
+
+        /**
+         *
+         * @param path
+         * @return the name of the view associated with the given path
+         */
+        abstract public String getViewName(AttributeReference path);
+
+        abstract public DSLContext getDsl();
+
+        public java.util.Comparator<Field<?>> getFieldComparator() {
+            return new FieldComparator();
         }
     }
 

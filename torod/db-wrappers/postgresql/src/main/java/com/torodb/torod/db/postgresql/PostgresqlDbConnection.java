@@ -21,7 +21,7 @@ package com.torodb.torod.db.postgresql;
 
 import com.google.common.collect.Lists;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
-import com.torodb.torod.core.exceptions.UnsupportedStructurePathViewException;
+import com.torodb.torod.core.exceptions.IllegalPathViewException;
 import com.torodb.torod.core.subdocument.BasicType;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.core.subdocument.structure.DocStructure;
@@ -34,7 +34,7 @@ import com.torodb.torod.db.postgresql.meta.tables.SubDocTable;
 import com.torodb.torod.db.sql.AbstractSqlDbConnection;
 import com.torodb.torod.db.sql.AutoCloser;
 import com.torodb.torod.db.sql.index.NamedDbIndex;
-import com.torodb.torod.db.sql.path.view.DefaultPathViewHandler;
+import com.torodb.torod.db.sql.path.view.DefaultPathViewHandlerCallback;
 import com.torodb.torod.db.sql.path.view.PathViewHandler;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.Serializable;
@@ -368,8 +368,9 @@ class PostgresqlDbConnection extends AbstractSqlDbConnection {
     }
 
     @Override
-    public Integer createPathViews(String collection) throws UnsupportedStructurePathViewException {
-        PathViewHandler handler = new DefaultPathViewHandler(getMeta(), getDsl());
+    public Integer createPathViews(String collection) throws IllegalPathViewException {
+        PathViewHandler.Callback callback = new DefaultPathViewHandlerCallback(getDsl());
+        PathViewHandler handler = new PathViewHandler(getMeta(), callback);
 
         return handler.createPathViews(collection);
     }

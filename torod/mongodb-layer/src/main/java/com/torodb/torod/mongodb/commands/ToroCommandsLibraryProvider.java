@@ -6,7 +6,6 @@ import com.eightkdata.mongowp.mongoserver.api.safe.CommandImplementation;
 import com.eightkdata.mongowp.mongoserver.api.safe.CommandsLibrary;
 import com.eightkdata.mongowp.mongoserver.api.safe.impl.GroupedCommandsLibrary;
 import com.eightkdata.mongowp.mongoserver.api.safe.impl.NameBasedCommandsLibrary;
-import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.MongoDb30Commands;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -15,42 +14,51 @@ import com.torodb.torod.mongodb.unsafe.UnsafeCommandsLibraryAdaptor;
 import java.util.Collection;
 import java.util.Map.Entry;
 import javax.inject.Inject;
+import javax.inject.Provider;
 
 /**
  *
  */
-public class ToroCommandsLibrary extends GroupedCommandsLibrary {
-    private static final CommandsLibrary SAFE_LIBRARY = new NameBasedCommandsLibrary("mongo-3.0-partial", new MongoDb30Commands());
+public final class ToroCommandsLibraryProvider implements Provider<CommandsLibrary> {
+    private final String toroVersion;
+    private final ToroV30CommandTool toroSafeCommandTool;
+    private final ToroDBSpecificCommandTool toroDBSpecificCommandTool;
 
     @Inject
-    public ToroCommandsLibrary(
+    public ToroCommandsLibraryProvider(
             BuildProperties buildProperties,
-            ToroV30CommandTool toroSafeCommandTool) {
-        super(
-            "toro-" + buildProperties.getFullVersion(),
-            getSubLibraries(buildProperties.getFullVersion(), toroSafeCommandTool)
+            ToroV30CommandTool toroSafeCommandTool,
+            ToroDBSpecificCommandTool toroDBSpecificCommandTool) {
+        this.toroVersion = buildProperties.getFullVersion();
+        this.toroSafeCommandTool = toroSafeCommandTool;
+        this.toroDBSpecificCommandTool = toroDBSpecificCommandTool;
+    }
+
+    @Override
+    public CommandsLibrary get() {
+        String supportedVersion = "toro-" + toroVersion;
+
+        return new GroupedCommandsLibrary(
+                supportedVersion,
+                getSubLibraries(toroSafeCommandTool, toroDBSpecificCommandTool)
         );
     }
 
-    public static CommandsLibrary getSafeLibrary() {
-        return SAFE_LIBRARY;
-    }
-
-    public static ImmutableList<CommandsLibrary> getSubLibraries(
-            String toroVersion,
-            ToroV30CommandTool toroSafeCommandTool) {
+    private ImmutableList<CommandsLibrary> getSubLibraries(
+            ToroV30CommandTool toroSafeCommandTool,
+            ToroDBSpecificCommandTool toroDBSpecificCommandTool) {
 
 
         return ImmutableList.<CommandsLibrary>builder()
-//                .add(SAFE_LIBRARY) //TODO: use this once we implemented all unsafe commands
-                .add(getImplementedSafeLibrary(toroVersion, toroSafeCommandTool))
+                .add(getImplementedSafeLibrary(toroVersion, toroSafeCommandTool, toroDBSpecificCommandTool))
                 .add(new UnsafeCommandsLibraryAdaptor("toro-" + toroVersion + "-standard-unsafe"))
                 .build();
     }
 
-    public static CommandsLibrary getImplementedSafeLibrary(
+    private CommandsLibrary getImplementedSafeLibrary(
             String toroVersion,
-            ToroV30CommandTool toroSafeCommandTool) {
+            ToroV30CommandTool toroSafeCommandTool,
+            ToroDBSpecificCommandTool toroDBSpecificCommandTool) {
         ImmutableMap<Command, CommandImplementation> safeCommandImplementations = toroSafeCommandTool.getMap();
         Collection<Command> implementedSafeCommands = Lists.newArrayList();
         for (Entry<Command, CommandImplementation> entry : safeCommandImplementations.entrySet()) {
@@ -59,6 +67,11 @@ public class ToroCommandsLibrary extends GroupedCommandsLibrary {
             }
             implementedSafeCommands.add(entry.getKey());
         }
+        
+        for (Entry<Command, CommandImplementation> entry : toroDBSpecificCommandTool.getMap().entrySet()) {
+            implementedSafeCommands.add(entry.getKey());
+        }
+
         return new NameBasedCommandsLibrary(toroVersion, implementedSafeCommands);
     }
 

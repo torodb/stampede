@@ -8,15 +8,18 @@ import com.eightkdata.mongowp.mongoserver.api.safe.tools.bson.BsonDocumentBuilde
 import com.eightkdata.mongowp.mongoserver.api.safe.tools.bson.BsonField;
 import com.eightkdata.mongowp.mongoserver.api.safe.tools.bson.BsonReaderTool;
 import com.eightkdata.mongowp.mongoserver.protocol.exceptions.*;
+import com.google.common.annotations.Beta;
 import org.bson.BsonDocument;
 
 /**
  * A backend dependient command that creates easy to use SQL views on the
  * backend database.
  */
+@Beta
 public class CreatePathViewsCommand extends AbstractCommand<CollectionCommandArgument, Integer> {
 
     private static final BsonField<Integer> RESULT_FIELD = BsonField.create("viewsCounter");
+    private static final BsonField<String> BETA_FIELD = BsonField.create("betaCmd");
     public static final CreatePathViewsCommand INSTANCE = new CreatePathViewsCommand();
 
     private CreatePathViewsCommand() {
@@ -56,6 +59,7 @@ public class CreatePathViewsCommand extends AbstractCommand<CollectionCommandArg
     public BsonDocument marshallResult(Integer result) throws MarshalException {
         return new BsonDocumentBuilder()
                 .append(RESULT_FIELD, result)
+                .append(BETA_FIELD, "This is a beta command")
                 .build();
     }
 

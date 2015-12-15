@@ -1,0 +1,29 @@
+package com.torodb.torod.mongodb.commands;
+
+import com.eightkdata.mongowp.mongoserver.api.safe.Command;
+import com.eightkdata.mongowp.mongoserver.api.safe.CommandImplementation;
+import com.google.common.collect.ImmutableMap;
+import com.torodb.torod.mongodb.commands.impl.torodb.CreatePathViewsImplementation;
+import com.torodb.torod.mongodb.commands.torodb.CreatePathViewsCommand;
+import javax.inject.Singleton;
+
+/**
+ *
+ */
+@Singleton
+public class ToroDBSpecificCommandTool {
+
+    private final ImmutableMap<Command, CommandImplementation> map;
+
+    public ToroDBSpecificCommandTool() {
+        this.map = ImmutableMap.<Command, CommandImplementation>builder()
+                .put(CreatePathViewsCommand.INSTANCE, new CreatePathViewsImplementation())
+                .build();
+    }
+
+    @SuppressWarnings("ReturnOfCollectionOrArrayField")
+    public ImmutableMap<Command, CommandImplementation> getMap() {
+        return map;
+    }
+
+}

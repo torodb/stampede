@@ -8,7 +8,7 @@ import com.torodb.torod.core.dbWrapper.DbWrapper;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.dbWrapper.exceptions.UserDbException;
 import com.torodb.torod.core.exceptions.ToroImplementationException;
-import com.torodb.torod.core.exceptions.UnsupportedStructurePathViewException;
+import com.torodb.torod.core.exceptions.IllegalPathViewException;
 import com.torodb.torod.core.language.projection.Projection;
 import com.torodb.torod.core.language.querycriteria.QueryCriteria;
 import com.torodb.torod.core.pojos.CollectionMetainfo;
@@ -255,7 +255,7 @@ public class LazyDbWrapper implements DbWrapper {
         }
 
         @Override
-        public Integer createPathViews(String collection) throws UnsupportedStructurePathViewException {
+        public Integer createPathViews(String collection) throws IllegalPathViewException {
             try {
                 return getDelegate().createPathViews(collection);
             } catch (ImplementationDbException ex) {

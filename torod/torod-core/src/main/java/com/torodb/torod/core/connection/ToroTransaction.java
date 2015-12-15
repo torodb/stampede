@@ -20,6 +20,7 @@
 
 package com.torodb.torod.core.connection;
 
+import com.google.common.annotations.Beta;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.torodb.torod.core.WriteFailMode;
 import com.torodb.torod.core.exceptions.ExistentIndexException;
@@ -126,5 +127,6 @@ public interface ToroTransaction extends Closeable {
 
     public ListenableFuture<List<? extends Database>> getDatabases();
 
+    @Beta
     public ListenableFuture<Integer> createPathViews(String collection) throws UnsupportedOperationException;
 }

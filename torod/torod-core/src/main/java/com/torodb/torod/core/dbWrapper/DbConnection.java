@@ -20,9 +20,10 @@
 
 package com.torodb.torod.core.dbWrapper;
 
+import com.google.common.annotations.Beta;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.dbWrapper.exceptions.UserDbException;
-import com.torodb.torod.core.exceptions.UnsupportedStructurePathViewException;
+import com.torodb.torod.core.exceptions.IllegalPathViewException;
 import com.torodb.torod.core.language.querycriteria.QueryCriteria;
 import com.torodb.torod.core.pojos.CollectionMetainfo;
 import com.torodb.torod.core.pojos.IndexedAttributes;
@@ -167,5 +168,6 @@ public interface DbConnection {
 
     public Long getIndexSize(String collection, String index);
 
-    public Integer createPathViews(String collection) throws UnsupportedStructurePathViewException;
+    @Beta
+    public Integer createPathViews(String collection) throws IllegalPathViewException;
 }
