@@ -1,5 +1,5 @@
 
-package com.torodb.torod.mongodb.commands.diagnostic;
+package com.torodb.torod.mongodb.commands.impl.diagnostic;
 
 import com.eightkdata.mongowp.mongoserver.api.safe.Command;
 import com.eightkdata.mongowp.mongoserver.api.safe.CommandRequest;

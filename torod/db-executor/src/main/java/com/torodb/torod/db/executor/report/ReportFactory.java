@@ -54,4 +54,8 @@ public interface ReportFactory {
     public GetCollectionsMetainfoCallable.Report createGetCollectionsMetainfoReport();
 
     public MaxElementsCallable.Report createMaxElementsReport();
+
+    public CreatePathViewsCallable.Report createCreatePathViewsReport();
+
+    public DropPathViewsCallable.Report createDropPathViewsReport();
 }

@@ -20,6 +20,7 @@
 
 package com.torodb.torod.core.executor;
 
+import com.google.common.annotations.Beta;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.torodb.torod.core.WriteFailMode;
 import com.torodb.torod.core.connection.DeleteResponse;
@@ -98,4 +99,10 @@ public interface SessionTransaction extends Closeable {
     public ListenableFuture<Long> getDocumentsSize(String collection);
 
     public ListenableFuture<Long> getCollectionSize(String collection);
+
+    @Beta
+    public ListenableFuture<Integer> createPathViews(String collection);
+
+    @Beta
+    public ListenableFuture<Void> dropPathViews(String collection);
 }
