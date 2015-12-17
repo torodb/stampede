@@ -39,11 +39,13 @@ public class Generic {
 	@Description("config.generic.logLevel")
 	@NotNull
 	@JsonProperty(required=true)
-	private LogLevel logLevel = LogLevel.WARNING;
+	private LogLevel logLevel = LogLevel.INFO;
 	@Description("config.generic.logPackages")
 	private LogPackages logPackages;
 	@Description("config.generic.logFile")
 	private String logFile;
+	@Description("config.generic.logbackFile")
+	private String logbackFile;
 	@Description("config.generic.connectionPoolSize")
 	@NotNull
 	@Min(3)
@@ -77,6 +79,14 @@ public class Generic {
 
 	public void setLogFile(String logFile) {
 		this.logFile = logFile;
+	}
+
+	public String getLogbackFile() {
+		return logbackFile;
+	}
+
+	public void setLogbackFile(String logbackFile) {
+		this.logbackFile = logbackFile;
 	}
 
 	public Integer getConnectionPoolSize() {
