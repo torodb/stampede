@@ -176,6 +176,10 @@ public class ListCollectionsImplementation extends
 
         @Override
         public BsonDocument getStorageEngine() {
+            if (metainfo.getJson() == null) {
+                return new BsonDocument();
+            }
+            
             Preconditions.checkState(metainfo.getJson() instanceof JsonObject,
                     "Expected a json object as extra info from collection "
                     + metainfo.getName() + " but a "
