@@ -1,6 +1,7 @@
 
 package com.torodb.torod.db.executor;
 
+import com.torodb.torod.core.ValueRow;
 import com.torodb.torod.core.cursors.CursorId;
 import com.torodb.torod.core.dbWrapper.Cursor;
 import com.torodb.torod.core.dbWrapper.DbConnection;
@@ -17,6 +18,7 @@ import com.torodb.torod.core.pojos.NamedToroIndex;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.core.subdocument.SubDocType;
 import com.torodb.torod.core.subdocument.SubDocument;
+import com.torodb.torod.core.subdocument.values.Value;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -268,6 +270,15 @@ public class LazyDbWrapper implements DbWrapper {
                 IllegalPathViewException {
             try {
                 getDelegate().dropPathViews(collection);
+            } catch (ImplementationDbException ex) {
+                throw new ToroImplementationException(ex);
+            }
+        }
+
+        @Override
+        public Iterator<ValueRow<Value>> select(String query) {
+            try {
+                return getDelegate().select(query);
             } catch (ImplementationDbException ex) {
                 throw new ToroImplementationException(ex);
             }

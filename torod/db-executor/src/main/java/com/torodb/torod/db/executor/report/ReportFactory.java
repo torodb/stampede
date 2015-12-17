@@ -58,4 +58,6 @@ public interface ReportFactory {
     public CreatePathViewsCallable.Report createCreatePathViewsReport();
 
     public DropPathViewsCallable.Report createDropPathViewsReport();
+
+    public SqlSelectCallable.Report createSqlSelectReport();
 }

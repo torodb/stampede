@@ -155,6 +155,11 @@ public class AbstractReportFactory implements ReportFactory {
         return DUMMY_REPORT;
     }
 
+    @Override
+    public SqlSelectCallable.Report createSqlSelectReport() {
+        return DUMMY_REPORT;
+    }
+
     private static class DummyReport implements CloseConnectionCallable.Report,
             CloseCursorCallable.Report, CommitCallable.Report,
             CreateCollectionCallable.Report, 
@@ -168,7 +173,8 @@ public class AbstractReportFactory implements ReportFactory {
             CountCallable.Report, GetIndexSizeCallable.Report, 
             GetCollectionSizeCallable.Report, GetDocumentsSize.Report, 
             GetCollectionsMetainfoCallable.Report, MaxElementsCallable.Report,
-            CreatePathViewsCallable.Report, DropPathViewsCallable.Report {
+            CreatePathViewsCallable.Report, DropPathViewsCallable.Report,
+            SqlSelectCallable.Report {
 
         public static final DummyReport INSTANCE = new DummyReport();
 
@@ -280,6 +286,10 @@ public class AbstractReportFactory implements ReportFactory {
 
         @Override
         public void dropViewsExecuted(String collection) {
+        }
+
+        @Override
+        public void sqlSelectExecuted(String query) {
         }
 
     }
