@@ -1,7 +1,9 @@
 
 package com.torodb.torod.mongodb.srp;
 
-import com.eightkdata.mongowp.messages.request.*;
+import com.eightkdata.mongowp.messages.request.DeleteMessage;
+import com.eightkdata.mongowp.messages.request.InsertMessage;
+import com.eightkdata.mongowp.messages.request.UpdateMessage;
 import com.eightkdata.mongowp.messages.response.ReplyMessage;
 import com.eightkdata.mongowp.mongoserver.api.safe.*;
 import com.eightkdata.mongowp.mongoserver.api.safe.impl.UpdateOpResult;
@@ -51,6 +53,7 @@ public class DatabaseCheckSafeRequestProcessor extends DecoratorSafeRequestProce
     private void checkDatabase(String database) throws DatabaseNotFoundException {
         if (!isAllowed(database)) {
             throw new DatabaseNotFoundException(
+                    database,
                     "Database '" + database + "' is not supported. "
                     + "Only '" + supportedDatabase +"' is supported");
         }

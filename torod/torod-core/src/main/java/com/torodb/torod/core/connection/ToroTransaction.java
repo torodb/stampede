@@ -20,9 +20,13 @@
 
 package com.torodb.torod.core.connection;
 
+import com.google.common.annotations.Beta;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.torodb.kvdocument.values.DocValue;
+import com.torodb.torod.core.ValueRow;
 import com.torodb.torod.core.WriteFailMode;
 import com.torodb.torod.core.exceptions.ExistentIndexException;
+import com.torodb.torod.core.exceptions.UserToroException;
 import com.torodb.torod.core.language.operations.DeleteOperation;
 import com.torodb.torod.core.language.operations.UpdateOperation;
 import com.torodb.torod.core.language.querycriteria.QueryCriteria;
@@ -32,6 +36,7 @@ import com.torodb.torod.core.pojos.NamedToroIndex;
 import com.torodb.torod.core.subdocument.ToroDocument;
 import java.io.Closeable;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Future;
 import javax.annotation.Nonnull;
@@ -125,4 +130,13 @@ public interface ToroTransaction extends Closeable {
     public ListenableFuture<Integer> count(String collection, QueryCriteria query);
 
     public ListenableFuture<List<? extends Database>> getDatabases();
+
+    @Beta
+    public ListenableFuture<Integer> createPathViews(String collection) throws UnsupportedOperationException;
+
+    @Beta
+    public ListenableFuture<Void> dropPathViews(String collection) throws UnsupportedOperationException;
+
+    @Beta
+    public ListenableFuture<Iterator<ValueRow<DocValue>>> sqlSelect(String sqlQuery) throws UnsupportedOperationException, UserToroException;
 }
