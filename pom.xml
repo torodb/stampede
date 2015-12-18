@@ -103,17 +103,17 @@
             <dependency>
                 <groupId>org.postgresql</groupId>
                 <artifactId>postgresql</artifactId>
-                <version>9.4-1201-jdbc4</version>
+                <version>9.4-1206-jdbc41</version>
             </dependency>
             <dependency>
                 <groupId>org.jooq</groupId>
                 <artifactId>jooq</artifactId>
-                <version>3.6.1</version>
+                <version>3.6.4</version>
             </dependency>
             <dependency>
                 <groupId>org.jooq</groupId>
                 <artifactId>jooq-meta</artifactId>
-                <version>3.6.1</version>
+                <version>3.6.4</version>
             </dependency>
             <dependency>
                 <groupId>com.zaxxer</groupId>

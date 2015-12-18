@@ -66,7 +66,7 @@ import com.torodb.torod.core.annotations.DatabaseName;
 import com.torodb.torod.mongodb.OptimeClock;
 import com.torodb.torod.mongodb.annotations.Local;
 import com.torodb.torod.mongodb.commands.NotImplementedCommandImplementation;
-import com.torodb.torod.mongodb.commands.ToroSafeCommandTool;
+import com.torodb.torod.mongodb.commands.ToroV30CommandTool;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.Map;
 import javax.annotation.Nonnull;
@@ -94,7 +94,7 @@ public class DatabaseIgnoreSafeRequestProcessor extends DecoratorSafeRequestProc
             ToroSafeRequestProcessor delegate,
             @DatabaseName String supportedDatabase,
             OptimeClock optimeClock,
-            ToroSafeCommandTool toroSafeCommandTool) {
+            ToroV30CommandTool toroSafeCommandTool) {
         super(delegate);
         this.supportedDatabase = supportedDatabase;
         this.optimeClock = optimeClock;

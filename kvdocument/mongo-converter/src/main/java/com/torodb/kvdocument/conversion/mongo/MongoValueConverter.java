@@ -22,13 +22,15 @@ package com.torodb.kvdocument.conversion.mongo;
 
 import com.google.common.primitives.UnsignedInteger;
 import com.torodb.kvdocument.types.GenericType;
-import com.torodb.kvdocument.values.*;
 import com.torodb.kvdocument.values.StringValue;
+import com.torodb.kvdocument.values.*;
 import java.util.Map;
 import java.util.regex.Pattern;
 import org.bson.*;
 import org.bson.types.ObjectId;
-import org.threeten.bp.*;
+import org.threeten.bp.Instant;
+import org.threeten.bp.LocalDateTime;
+import org.threeten.bp.ZoneOffset;
 
 /**
  *
@@ -55,6 +57,10 @@ public class MongoValueConverter {
             builder.setElementType(GenericType.INSTANCE);
         }
         return builder.build();
+    }
+
+    public static BsonValue translateDocValue(DocValue docValue) {
+        return docValue.accept(KV_VALUE_TRANSATOR, null);
     }
 
     public static BsonDocument translateObject(ObjectValue object) {
@@ -125,7 +131,7 @@ public class MongoValueConverter {
     public static String patternFlagsToOptions(int flags) {
         return ""; //TODO: parse regexp options!
     }
-    
+
     private static class KVValueTranslator implements
             DocValueVisitor<BsonValue, Void> {
 
@@ -136,7 +142,7 @@ public class MongoValueConverter {
 
         @Override
         public BsonValue visit(NullValue value, Void arg) {
-            return null;
+            return BsonNull.VALUE;
         }
 
         @Override

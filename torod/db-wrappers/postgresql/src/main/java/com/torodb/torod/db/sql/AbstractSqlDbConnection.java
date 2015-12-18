@@ -20,7 +20,10 @@
 
 package com.torodb.torod.db.sql;
 
-import com.google.common.collect.*;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
+import com.torodb.torod.core.ValueRow;
 import com.torodb.torod.core.dbWrapper.DbConnection;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.exceptions.UserToroException;
@@ -31,6 +34,7 @@ import com.torodb.torod.core.pojos.NamedToroIndex;
 import com.torodb.torod.core.subdocument.SubDocType;
 import com.torodb.torod.core.subdocument.SubDocument;
 import com.torodb.torod.core.subdocument.structure.DocStructure;
+import com.torodb.torod.core.subdocument.values.Value;
 import com.torodb.torod.db.exceptions.InvalidCollectionSchemaException;
 import com.torodb.torod.db.postgresql.IdsFilter;
 import com.torodb.torod.db.postgresql.meta.CollectionSchema;
@@ -44,8 +48,13 @@ import com.torodb.torod.db.postgresql.query.QueryEvaluator;
 import com.torodb.torod.db.sql.index.IndexManager;
 import com.torodb.torod.db.sql.index.NamedDbIndex;
 import com.torodb.torod.db.sql.index.UnnamedDbIndex;
+import com.torodb.torod.db.sql.utils.SqlWindow;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.StringReader;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.*;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -416,6 +425,36 @@ public abstract class AbstractSqlDbConnection implements
         );
         
         return dids.size();
+    }
+
+    @SuppressFBWarnings(
+            value = "SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE",
+            justification = "It is known that this command is unsafe. We need"
+                    + "to improve it as soon as we can")
+    @Override
+    public Iterator<ValueRow<Value>> select(String query) throws UserToroException {
+        Connection connection = jooqConf.connectionProvider().acquire();
+        try {
+            try (Statement st = connection.createStatement()) {
+                //This is executed to force read only executions
+                st.executeUpdate("SET TRANSACTION ISOLATION LEVEL SERIALIZABLE");
+                st.executeUpdate("SET TRANSACTION READ ONLY");
+                st.executeUpdate("SET TRANSACTION DEFERRABLE");
+                //Once the first query is executed, transacion level is immutable
+                ResultSet fakeRS = st.executeQuery("SELECT 1");
+                fakeRS.close();
+
+
+                try (ResultSet rs = st.executeQuery(query)) {
+                    return new SqlWindow(rs);
+                }
+            } catch (SQLException ex) {
+                //TODO: Change exception
+                throw new UserToroException(ex);
+            }
+        } finally {
+            jooqConf.connectionProvider().release(connection);
+        }
     }
 
 }
