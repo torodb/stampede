@@ -53,16 +53,16 @@ import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.net.HostAndPort;
 import com.torodb.torod.core.annotations.DatabaseName;
-import com.torodb.torod.mongodb.commands.admin.CreateCollectionImplementation;
-import com.torodb.torod.mongodb.commands.admin.DropCollectionImplementation;
-import com.torodb.torod.mongodb.commands.admin.DropDatabaseImplementation;
-import com.torodb.torod.mongodb.commands.admin.ListCollectionsImplementation;
-import com.torodb.torod.mongodb.commands.diagnostic.CollStatsImplementation;
-import com.torodb.torod.mongodb.commands.diagnostic.ListDatabasesImplementation;
-import com.torodb.torod.mongodb.commands.general.DeleteImplementation;
-import com.torodb.torod.mongodb.commands.general.GetLastErrorImplementation;
-import com.torodb.torod.mongodb.commands.general.InsertImplementation;
-import com.torodb.torod.mongodb.commands.general.UpdateImplementation;
+import com.torodb.torod.mongodb.commands.impl.admin.CreateCollectionImplementation;
+import com.torodb.torod.mongodb.commands.impl.admin.DropCollectionImplementation;
+import com.torodb.torod.mongodb.commands.impl.admin.DropDatabaseImplementation;
+import com.torodb.torod.mongodb.commands.impl.admin.ListCollectionsImplementation;
+import com.torodb.torod.mongodb.commands.impl.diagnostic.CollStatsImplementation;
+import com.torodb.torod.mongodb.commands.impl.diagnostic.ListDatabasesImplementation;
+import com.torodb.torod.mongodb.commands.impl.general.DeleteImplementation;
+import com.torodb.torod.mongodb.commands.impl.general.GetLastErrorImplementation;
+import com.torodb.torod.mongodb.commands.impl.general.InsertImplementation;
+import com.torodb.torod.mongodb.commands.impl.general.UpdateImplementation;
 import com.torodb.torod.mongodb.meta.MetaCollectionProvider;
 import com.torodb.torod.mongodb.translator.QueryCriteriaTranslator;
 import java.util.Map.Entry;
@@ -75,12 +75,12 @@ import javax.inject.Inject;
  * As not all commands are implemented using a real
  * {@linkplain CommandImplementation}, it is needed to cheat the safe framework.
  */
-public class ToroSafeCommandTool {
+public class ToroV30CommandTool {
 
     private final ImmutableMap<Command, CommandImplementation> map;
 
     @Inject
-    ToroSafeCommandTool(MapFactory mapFactory) {
+    ToroV30CommandTool(MapFactory mapFactory) {
         this.map = mapFactory.get();
     }
 
