@@ -20,9 +20,7 @@
 
 package com.torodb.config;
 
-import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
-import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.List;
 
@@ -31,6 +29,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
@@ -43,9 +42,6 @@ import com.torodb.config.model.generic.LogLevel;
 import com.torodb.config.model.protocol.mongo.Role;
 import com.torodb.config.util.ConfigUtils;
 
-/**
- *
- */
 public class ConfigTest {
 
 	public ConfigTest() {
@@ -69,24 +65,23 @@ public class ConfigTest {
 
 	@Test
 	public void testPrintConf() throws Exception {
-		ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-		ConfigUtils.printYamlConfig(new Config(), new PrintStream(byteArrayOutputStream));
+		ByteArrayConsole byteArrayConsole = new ByteArrayConsole();
+		ConfigUtils.printYamlConfig(new Config(), byteArrayConsole);
 		YAMLMapper yamlMapper = new YAMLMapper();
-		yamlMapper.readValue(byteArrayOutputStream.toByteArray(), Config.class);
+		yamlMapper.readValue(byteArrayConsole.getByteArrayOutputStream().toByteArray(), Config.class);
 	}
 
 	@Test
 	public void testPrintXmlConf() throws Exception {
-		ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-		ConfigUtils.printXmlConfig(new Config(), new PrintStream(byteArrayOutputStream));
+		ByteArrayConsole byteArrayConsole = new ByteArrayConsole();
+		ConfigUtils.printXmlConfig(new Config(), byteArrayConsole);
 		XmlMapper xmlMapper = new XmlMapper();
-		xmlMapper.readValue(byteArrayOutputStream.toByteArray(), Config.class);
+		xmlMapper.readValue(byteArrayConsole.getByteArrayOutputStream().toByteArray(), Config.class);
 	}
 
 	@Test
 	public void testHelpParam() throws Exception {
-		ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-		ConfigUtils.printParamDescriptionFromConfigSchema(new PrintStream(byteArrayOutputStream), 0);
+		ConfigUtils.printParamDescriptionFromConfigSchema(new ByteArrayConsole(), 0);
 	}
 
 	@Test
@@ -222,13 +217,13 @@ public class ConfigTest {
 		Assert.assertEquals("/backend/postgres/host has different value than that specified", config.getBackend().asPostgres().getHost(), "localhost");
 		Assert.assertEquals("/backend/postgres/port has different value than that specified", config.getBackend().asPostgres().getPort(), Integer.valueOf(5432));
 		Assert.assertEquals("/backend/postgres/user has different value than that specified", config.getBackend().asPostgres().getUser(), "root");
-		Assert.assertEquals("/backend/postgres/password has different value than that specified", config.getBackend().asPostgres().getPassword(), "toor");
+		Assert.assertEquals("/backend/postgres/password has different value than that specified", config.getBackend().asPostgres().getPassword(), null);
 	}
 
-	//TODO: This particular test should pass when json schema draft v4 or greater will be used
-	//actually this test does not pass becouse of missing properties
-	//workaround to this behaviour by passing param /backend=null before others params
-	//@Test
+	@Test
+	@Ignore("TODO: This particular test should pass when json schema draft v4 or greater will be used"
+	+ "actually this test does not pass becouse of missing properties"
+	+ "workaround to this behaviour by passing param /backend=null before others params")
 	public void testParseWithYAMLAndReplaceBackendWithParam() throws Exception {
 		CliConfig cliConfig = new CliConfig() {
 			@Override
@@ -283,7 +278,7 @@ public class ConfigTest {
 		Assert.assertEquals("/backend/greenplum/host has different value than that specified", config.getBackend().asGreenplum().getHost(), "localhost");
 		Assert.assertEquals("/backend/greenplum/port has different value than that specified", config.getBackend().asGreenplum().getPort(), Integer.valueOf(5432));
 		Assert.assertEquals("/backend/greenplum/user has different value than that specified", config.getBackend().asGreenplum().getUser(), "root");
-		Assert.assertEquals("/backend/greenplum/password has different value than that specified", config.getBackend().asGreenplum().getPassword(), "toor");
+		Assert.assertEquals("/backend/greenplum/password has different value than that specified", config.getBackend().asGreenplum().getPassword(), null);
 	}
 
 }

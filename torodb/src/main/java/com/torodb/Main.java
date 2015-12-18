@@ -22,21 +22,20 @@ package com.torodb;
 
 
 import java.io.BufferedReader;
-import java.io.Console;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.nio.charset.Charset;
-import java.util.Map.Entry;
 import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
 
 import org.slf4j.LoggerFactory;
 
 import com.beust.jcommander.JCommander;
+import com.beust.jcommander.internal.Console;
 import com.eightkdata.mongowp.mongoserver.MongoServer;
+import com.google.common.base.Charsets;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.ProvisionException;
@@ -58,17 +57,24 @@ import com.torodb.torod.backend.db.postgresql.di.PostgreSQLModule;
 import com.torodb.torod.core.Torod;
 import com.torodb.torod.core.exceptions.TorodStartupException;
 import com.torodb.torod.mongodb.repl.ReplCoordinator;
+import com.torodb.util.LogbackUtils;
 
-import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.FileAppender;
 
 /**
  * ToroDB's entry point
  */
 public class Main {
+	
+	private static final Logger LOGGER = (Logger) LoggerFactory.getLogger(Main.class);
+	
 	public static void main(String[] args) throws Exception {
+		Console console = JCommander.getConsole();
+
+		Logger root = LogbackUtils.getRootLogger();
+		
+		LogbackUtils.setLoggerLevel(root, LogLevel.NONE);
+
 		ResourceBundle cliBundle = PropertyResourceBundle.getBundle("CliMessages");
 		final CliConfig cliConfig = new CliConfig();
 		JCommander jCommander = new JCommander(cliConfig, cliBundle, args);
@@ -78,10 +84,10 @@ public class Main {
 			jCommander.usage();
 			System.exit(0);
 		}
-		
+
 		if (cliConfig.isHelpParam()) {
-			System.out.println(cliBundle.getString("help-param-header"));
-			ConfigUtils.printParamDescriptionFromConfigSchema(System.out, 0);
+			console.println(cliBundle.getString("help-param-header"));
+			ConfigUtils.printParamDescriptionFromConfigSchema(console, 0);
 			System.exit(0);
 		}
 		
@@ -89,30 +95,29 @@ public class Main {
 		final Config config = ConfigUtils.readConfig(cliConfig);
 		
 		if (cliConfig.isPrintConfig()) {
-			ConfigUtils.printYamlConfig(config, System.out);
+			ConfigUtils.printYamlConfig(config, console);
 			
 			System.exit(0);
 		}
 		
 		if (cliConfig.isPrintXmlConfig()) {
-			ConfigUtils.printXmlConfig(config, System.out);
+			ConfigUtils.printXmlConfig(config, console);
 			
 			System.exit(0);
 		}
 		
-		Logger root = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
-		setLoggerLevel(root, config.getGeneric().getLogLevel());
-		
-		if (config.getGeneric().getLogPackages() != null) {
-			for (Entry<String, LogLevel> logPackage : config.getGeneric().getLogPackages().entrySet()) {
-				setLoggerLevel((Logger) LoggerFactory.getLogger(logPackage.getKey()), logPackage.getValue());
+		if (config.getGeneric().getLogbackFile() != null) {
+			LogbackUtils.reconfigure(config.getGeneric().getLogbackFile());
+		} else {
+			LogbackUtils.setLoggerLevel(root, config.getGeneric().getLogLevel());
+			
+			if (config.getGeneric().getLogPackages() != null) {
+				LogbackUtils.setLogPackages(config.getGeneric().getLogPackages());
 			}
-		}
-		
-		if (config.getGeneric().getLogFile() != null) {
-			FileAppender<ILoggingEvent> fileAppender = new FileAppender<ILoggingEvent>();
-			fileAppender.setFile(config.getGeneric().getLogFile());
-			root.addAppender(fileAppender);
+			
+			if (config.getGeneric().getLogFile() != null) {
+				LogbackUtils.appendToLogFile(config.getGeneric().getLogFile());
+			}
 		}
 		
 		if (config.getBackend().isPostgresLike()) {
@@ -121,14 +126,14 @@ public class Main {
 			File toroPass = new File(postgres.getToropassFile());
 			if (toroPass.exists() && toroPass.canRead() && toroPass.isFile()) {
 				BufferedReader br = new BufferedReader(
-						new InputStreamReader(new FileInputStream(toroPass), Charset.forName("UTF-8")));
+						new InputStreamReader(new FileInputStream(toroPass), Charsets.UTF_8));
 				String line;
 				int index = 0;
 				while ((line = br.readLine()) != null) {
 					index++;
 					String[] toroPassChunks = line.split(":");
 					if (toroPassChunks.length != 5) {
-						System.err.println("Wrong format at line " + index + " of file " + postgres.getToropassFile());
+						LOGGER.warn("Wrong format at line " + index + " of file " + postgres.getToropassFile());
 						continue;
 					}
 
@@ -144,7 +149,8 @@ public class Main {
 			}
 
 			if (cliConfig.askForPassword()) {
-				postgres.setPassword(readPwd("Database user password:"));
+				console.print("Database user password:");
+				postgres.setPassword(readPwd());
 			}
 		}
 		
@@ -181,7 +187,7 @@ public class Main {
 			Thread serverThread = new Thread() {
 				@Override
 				public void run() {
-					JCommander.getConsole().println("Starting ToroDB v" + buildProperties.getFullVersion()
+					LOGGER.info("Starting ToroDB v" + buildProperties.getFullVersion()
 							+ " listening on port " + config.getBackend().asPostgres().getPort());
 					Main.run(torod, server, replCoord);
 				}
@@ -199,29 +205,6 @@ public class Main {
 		}
 	}
 
-	public static void setLoggerLevel(Logger logger, LogLevel logLevel) {
-		switch(logLevel) {
-		case NONE:
-			logger.setLevel(Level.OFF);
-			break;
-		case INFO:
-			logger.setLevel(Level.INFO);
-			break;
-		case ERROR:
-			logger.setLevel(Level.ERROR);
-			break;
-		case WARNING:
-			logger.setLevel(Level.WARN);
-			break;
-		case DEBUG:
-			logger.setLevel(Level.DEBUG);
-			break;
-		case TRACE:
-			logger.setLevel(Level.ALL);
-			break;
-		}
-	}
-
 	private static void run(final Torod torod, final MongoServer server, final ReplCoordinator replCoord) {
 		try {
 			torod.start();
@@ -234,10 +217,9 @@ public class Main {
 		server.run();
 	}
 
-	private static String readPwd(String text) throws IOException {
-		Console c = System.console();
-		if (c == null) { // In Eclipse IDE
-			System.out.print(text);
+	private static String readPwd() throws IOException {
+		Console c = JCommander.getConsole();
+		if (System.console() == null) { // In Eclipse IDE
 			InputStream in = System.in;
 			int max = 50;
 			byte[] b = new byte[max];
@@ -247,12 +229,12 @@ public class Main {
 			if (l > 0) {
 				byte[] e = new byte[l];
 				System.arraycopy(b, 0, e, 0, l);
-				return new String(e, Charset.forName("UTF-8"));
+				return new String(e, Charsets.UTF_8);
 			} else {
 				return null;
 			}
 		} else { // Outside Eclipse IDE
-			return new String(c.readPassword(text));
+			return new String(c.readPassword(false));
 		}
 	}
 }

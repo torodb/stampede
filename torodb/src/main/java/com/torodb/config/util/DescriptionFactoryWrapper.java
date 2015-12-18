@@ -20,11 +20,11 @@
 
 package com.torodb.config.util;
 
-import java.io.PrintStream;
 import java.lang.reflect.Field;
 import java.util.Date;
 import java.util.ResourceBundle;
 
+import com.beust.jcommander.internal.Console;
 import com.fasterxml.jackson.core.JsonPointer;
 import com.fasterxml.jackson.databind.BeanProperty;
 import com.fasterxml.jackson.databind.JavaType;
@@ -34,29 +34,29 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.jsonFormatVisitors.JsonAnyFormatVisitor;
 import com.fasterxml.jackson.databind.jsonFormatVisitors.JsonArrayFormatVisitor;
 import com.fasterxml.jackson.databind.jsonFormatVisitors.JsonFormatVisitable;
+import com.fasterxml.jackson.databind.jsonFormatVisitors.JsonFormatVisitorWrapper;
 import com.fasterxml.jackson.databind.jsonFormatVisitors.JsonMapFormatVisitor;
 import com.fasterxml.jackson.databind.jsonFormatVisitors.JsonObjectFormatVisitor;
-import com.fasterxml.jackson.databind.jsonFormatVisitors.JsonFormatVisitorWrapper;
 import com.google.common.base.CaseFormat;
 import com.torodb.config.annotation.Description;
 
 public class DescriptionFactoryWrapper extends JsonFormatVisitorWrapper.Base {
 	
 	private final ResourceBundle resourceBundle;
-	private final PrintStream printStream;
+	private final Console console;
 	private final int tabs;
 	private final JsonPointer jsonPointer;
 	
-	public DescriptionFactoryWrapper(ResourceBundle resourceBundle, PrintStream printStream, int tabs) {
+	public DescriptionFactoryWrapper(ResourceBundle resourceBundle, Console console, int tabs) {
 		this.resourceBundle = resourceBundle;
-		this.printStream = printStream;
+		this.console = console;
 		this.tabs = tabs;
 		this.jsonPointer = JsonPointer.valueOf(null);
 	}
 	
 	public DescriptionFactoryWrapper(DescriptionFactoryWrapper descriptionFactoryWrapper, JsonPointer jsonPointer, SerializerProvider p) {
 		this.resourceBundle = descriptionFactoryWrapper.resourceBundle;
-		this.printStream = descriptionFactoryWrapper.printStream;
+		this.console = descriptionFactoryWrapper.console;
 		this.tabs = descriptionFactoryWrapper.tabs;
 		this.jsonPointer = jsonPointer;
 		setProvider(p);
@@ -119,26 +119,26 @@ public class DescriptionFactoryWrapper extends JsonFormatVisitorWrapper.Base {
 		JavaType type = prop.getType();
 		
 		if (hasDescription(prop) && !isPrimitive(type) && !type.isEnumType() && !type.isMapLikeType()) {
-			printStream.println();
+			console.println("");
 		} else
 		if (isPrimitive(type) || type.isEnumType()) {
 			printTabs();
-			printStream.print(propPointer.toString());
-			printStream.print("=");
+			console.print(propPointer.toString());
+			console.print("=");
 		} else
 		if (type.isMapLikeType()) {
 			printTabs();
-			printStream.print(propPointer.append(JsonPointer.compile("/<string>")).toString());
-			printStream.print("=");
+			console.print(propPointer.append(JsonPointer.compile("/<string>")).toString());
+			console.print("=");
 			type = type.getContentType();
 		}
 		
 		if (isPrimitive(type)) {
-			printStream.print("<");
-			printStream.print(CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_CAMEL, type.getRawClass().getSimpleName()));
-			printStream.print(">");
+			console.print("<");
+			console.print(CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_CAMEL, type.getRawClass().getSimpleName()));
+			console.print(">");
 		} else if (type.isEnumType()) {
-			printStream.print("<enum:string>");
+			console.print("<enum:string>");
 		}
 		
 		if (hasDescription(prop) && !isPrimitive(type) && !type.isEnumType()) {
@@ -148,11 +148,11 @@ public class DescriptionFactoryWrapper extends JsonFormatVisitorWrapper.Base {
 		printDescription(prop);
 		
 		if (hasDescription(prop) || isPrimitive(type) || type.isEnumType()) {
-			printStream.println();
+			console.println("");
 		}
 		
 		if (hasDescription(prop) && !isPrimitive(type) && !type.isEnumType()) {
-			printStream.println();
+			console.println("");
 		}
 		
 		if (type.isEnumType()) {
@@ -162,23 +162,23 @@ public class DescriptionFactoryWrapper extends JsonFormatVisitorWrapper.Base {
 				}
 
 				printTabs();
-				printStream.print(" - ");
-				printStream.print(enumField.getName());
+				console.print(" - ");
+				console.print(enumField.getName());
 
 				Description enumConstantConfigProperty = enumField.getAnnotation(Description.class);
 				if (enumConstantConfigProperty != null && enumConstantConfigProperty.value() != null) {
-					printStream.print(" # ");
-					printStream.print(enumConstantConfigProperty.value());
+					console.print(" # ");
+					console.print(enumConstantConfigProperty.value());
 				}
 
-				printStream.println();
+				console.println("");
 			}
 		}
 	}
 
 	private void printTabs() {
 		for (int tab = 0; tab < tabs; tab++) {
-			printStream.print("\t");
+			console.print("\t");
 		}
 	}
 	
@@ -198,8 +198,8 @@ public class DescriptionFactoryWrapper extends JsonFormatVisitorWrapper.Base {
 	private void printDescription(BeanProperty prop) {
 		Description description = getDescription(prop);
 		if (description != null) {
-			printStream.print(" # ");
-			printStream.print(resourceBundle.getString(description.value()));
+			console.print(" # ");
+			console.print(resourceBundle.getString(description.value()));
 		}
 	}
 	

@@ -51,7 +51,6 @@ public class CollectionMetainfo {
         return maxElements;
     }
 
-    @Nonnull
     public JsonStructure getJson() {
         return json;
     }
