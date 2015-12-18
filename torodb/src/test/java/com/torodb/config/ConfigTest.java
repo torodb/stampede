@@ -29,6 +29,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
@@ -219,10 +220,10 @@ public class ConfigTest {
 		Assert.assertEquals("/backend/postgres/password has different value than that specified", config.getBackend().asPostgres().getPassword(), null);
 	}
 
-	//TODO: This particular test should pass when json schema draft v4 or greater will be used
-	//actually this test does not pass becouse of missing properties
-	//workaround to this behaviour by passing param /backend=null before others params
-	//@Test
+	@Test
+	@Ignore("TODO: This particular test should pass when json schema draft v4 or greater will be used"
+	+ "actually this test does not pass becouse of missing properties"
+	+ "workaround to this behaviour by passing param /backend=null before others params")
 	public void testParseWithYAMLAndReplaceBackendWithParam() throws Exception {
 		CliConfig cliConfig = new CliConfig() {
 			@Override
