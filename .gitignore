@@ -7,3 +7,4 @@ nb-configuration.xml
 .project
 .classpath
 .settings/
+/torodb/dump

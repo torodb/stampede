@@ -23,6 +23,7 @@ package com.torodb.torod.db.postgresql.converters;
 
 import com.torodb.torod.core.exceptions.ToroImplementationException;
 import com.torodb.torod.core.subdocument.BasicType;
+import com.torodb.torod.db.postgresql.udt.TwelveBytesUDT;
 import java.sql.Types;
 
 /**
@@ -69,10 +70,12 @@ public class BasicTypeToSqlType {
                 }
                 break;
             case Types.DISTINCT: {
-                if (jdbcStringType.equals("twelve_bytes")) {
+                if (jdbcStringType.equals("\"torodb\".\"twelve_bytes\"")
+                        || jdbcStringType.equals(TwelveBytesUDT.TWELVE_BYTES.getName())) {
                     return BasicType.TWELVE_BYTES;
                 }
-                if (jdbcStringType.equals("torodb_pattern")) {
+                if (jdbcStringType.equals("\"torodb\".\"torodb_pattern\"")
+                        || jdbcStringType.equals("torodb_pattern")) {
                     return BasicType.PATTERN;
                 }
                 break;

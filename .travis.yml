@@ -1,11 +1,21 @@
 language: java
 script: mvn -Psafer -Passembler -B -e -T 1C verify
 jdk:
-- oraclejdk8
-- oraclejdk7
+  - oraclejdk8
+  - oraclejdk7
+addons:
+  postgresql: "9.4"
+services:
+  - postgresql
 
 before_script:
-- export GIT_BRANCH=$TRAVIS_BRANCH
+  - export GIT_BRANCH=$TRAVIS_BRANCH
+  - psql -c "create user torodb with superuser password 'torodb';" -U postgres
+  - wget http://downloads.mongodb.org/linux/mongodb-linux-x86_64-ubuntu1204-3.0.8.tgz -O /tmp/mongodb.tgz
+  - tar -xvf /tmp/mongodb.tgz
+  - export PATH=$(ls -d $PWD/mongodb-linux-x86_64-ubuntu1204-3.0*)/bin:$PATH
+  - echo $PATH
+  - mongo --version
 
 sudo: false
 
@@ -13,29 +23,29 @@ before_deploy:
   - echo "<settings><servers><server><id>ossrh-snapshot</id><username>\${env.MAVEN_DEPLOY_USER}</username><password>\${env.MAVEN_DEPLOY_PASS}</password></server><server><id>ossrh-release</id><username>\${env.MAVEN_DEPLOY_USER}</username><password>\${env.MAVEN_DEPLOY_PASS}</password></server></servers></settings>" > ~/settings.xml
 
 deploy:
-- provider: releases
-  api_key:
-    secure: g2kUTryp5anBi6xzkHT4CfTFJz3K1q1nYYwjtNfreCoEGrjTA6A4ZgU/utVTOJxeNWmKZ1QO4suegKfsRCpiSqNvp85lM49qeXAp/xxuI0ac+J7JJALeGEn0AyLmhuHu/BBm3dIG+6oi+cXRsTKAX8uTqrT9P1tkfaUhEEV1XmA4tU3uEqzHiazPUKXysxAOacqeUfvZh+MoZaqA54p0UjmOilTMGnQvpv2uR7tBnXNGVXkqyonH6HsxAOwKdyZAYwsg2hvCNREJUCgl/OVkQI/H8+SmOfZ4btHxZqX3U5iVLZ9CugsUbqflvVzVd7KIPn4DPXalkSDLsJ2SxBio7Y1t50omDIlb7NsClR4JDAzME5XKw8XR9glmC0uDTMxMuhgXYWLq2JgQUlnD8vWh1SGsdUCNa+aQMlcYdIIMQZG50LgY5s+E2YVEzJ7NrWm66UCqeuxjqWetrGin1eFOY0+y2/+Pe4tr2ZhrbGhlqS11GKWy+tKLM9v7+L2w1gjKJaqcmbtVfja1kehaP7JLhq2S2S7jmcTggy4bx5B9U4rVwWq1cv5sXXXNEsvB/PzifXHV3z38O/ed8ddJpCTkhfubAr6zOKkyGdkPvXbdAmDOVWw5JPbP1fWDojaRgqxumf7MUhAlOGxmj//hgpwh/Q8/QVKCJ+lQRq89H5bT0q4=
-  skip_cleanup: true
-  file:
-  - torodb/target/dist/torodb.tar.bz2
-  - torodb/target/dist/torodb.zip
-  on:
-    repo: torodb/torodb
-    tags: true
-    jdk: oraclejdk8
-- provider: script
-  script: mvn -B -e -T 1C -Pdeploy -DskipTests=true deploy --settings ~/settings.xml
-  skip_cleanup: true
-  on:
-    repo: torodb/torodb
-    tags: true
-    jdk: oraclejdk8
-- provider: script
-  script: mvn -B -e -T 1C -Pdeploy -DskipTests=true deploy --settings ~/settings.xml
-  skip_cleanup: true
-  on:
-    repo: torodb/torodb
-    branch: devel
-    jdk: oraclejdk8
+  - provider: releases
+    api_key:
+      secure: g2kUTryp5anBi6xzkHT4CfTFJz3K1q1nYYwjtNfreCoEGrjTA6A4ZgU/utVTOJxeNWmKZ1QO4suegKfsRCpiSqNvp85lM49qeXAp/xxuI0ac+J7JJALeGEn0AyLmhuHu/BBm3dIG+6oi+cXRsTKAX8uTqrT9P1tkfaUhEEV1XmA4tU3uEqzHiazPUKXysxAOacqeUfvZh+MoZaqA54p0UjmOilTMGnQvpv2uR7tBnXNGVXkqyonH6HsxAOwKdyZAYwsg2hvCNREJUCgl/OVkQI/H8+SmOfZ4btHxZqX3U5iVLZ9CugsUbqflvVzVd7KIPn4DPXalkSDLsJ2SxBio7Y1t50omDIlb7NsClR4JDAzME5XKw8XR9glmC0uDTMxMuhgXYWLq2JgQUlnD8vWh1SGsdUCNa+aQMlcYdIIMQZG50LgY5s+E2YVEzJ7NrWm66UCqeuxjqWetrGin1eFOY0+y2/+Pe4tr2ZhrbGhlqS11GKWy+tKLM9v7+L2w1gjKJaqcmbtVfja1kehaP7JLhq2S2S7jmcTggy4bx5B9U4rVwWq1cv5sXXXNEsvB/PzifXHV3z38O/ed8ddJpCTkhfubAr6zOKkyGdkPvXbdAmDOVWw5JPbP1fWDojaRgqxumf7MUhAlOGxmj//hgpwh/Q8/QVKCJ+lQRq89H5bT0q4=
+    skip_cleanup: true
+    file:
+      - torodb/target/dist/torodb.tar.bz2
+      - torodb/target/dist/torodb.zip
+    on:
+      repo: torodb/torodb
+      tags: true
+      jdk: oraclejdk8
+  - provider: script
+    script: mvn -B -e -T 1C -Pdeploy -DskipTests=true deploy --settings ~/settings.xml
+    skip_cleanup: true
+    on:
+      repo: torodb/torodb
+      tags: true
+      jdk: oraclejdk8
+  - provider: script
+    script: mvn -B -e -T 1C -Pdeploy -DskipTests=true deploy --settings ~/settings.xml
+    skip_cleanup: true
+    on:
+      repo: torodb/torodb
+      branch: devel
+      jdk: oraclejdk8
   
