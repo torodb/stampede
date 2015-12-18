@@ -43,7 +43,7 @@ import com.torodb.torod.core.subdocument.ToroDocument;
 import java.util.Collection;
 import java.util.List;
 import javax.annotation.concurrent.NotThreadSafe;
-import javax.json.Json;
+import javax.json.JsonObject;
 
 /**
  *
@@ -141,7 +141,7 @@ class DefaultToroConnection implements ToroConnection {
     }
 
     @Override
-    public boolean createCollection(String collection, Json otherInfo) {
+    public boolean createCollection(String collection, JsonObject otherInfo) {
         if(cache.collectionExists(collection)) {
             return false;
         }

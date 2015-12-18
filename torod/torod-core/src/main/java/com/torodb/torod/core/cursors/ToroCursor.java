@@ -105,8 +105,7 @@ public interface ToroCursor<E> {
     /**
      * Close the cursor, releasing the resources associated with it.
      * 
-     * This method do not closeImmediately the cursor until the jobs that are already in
- the given executor have been executed
+     * This method do not return until the crsor is closed
      * @param executor the executor that will execute the action
      */
     public void close(SessionExecutor executor);
