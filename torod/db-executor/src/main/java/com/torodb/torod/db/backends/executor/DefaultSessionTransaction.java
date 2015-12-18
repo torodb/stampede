@@ -21,6 +21,7 @@ package com.torodb.torod.db.backends.executor;
 
 import com.google.common.base.Supplier;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.torodb.torod.core.ValueRow;
 import com.torodb.torod.core.WriteFailMode;
 import com.torodb.torod.core.annotations.DatabaseName;
 import com.torodb.torod.core.connection.DeleteResponse;
@@ -38,7 +39,10 @@ import com.torodb.torod.core.pojos.IndexedAttributes;
 import com.torodb.torod.core.pojos.NamedToroIndex;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.db.backends.executor.report.ReportFactory;
+import com.torodb.torod.core.subdocument.values.Value;
+import com.torodb.torod.db.executor.jobs.*;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -251,6 +255,42 @@ public class DefaultSessionTransaction implements SessionTransaction {
                         aborter,
                         reportFactory.createGetDocumentsSizeReport(),
                         collection
+                )
+        );
+    }
+
+    @Override
+    public ListenableFuture<Integer> createPathViews(String collection) {
+        return submit(
+              new CreatePathViewsCallable(
+                      dbConnection,
+                      aborter,
+                      reportFactory.createCreatePathViewsReport(),
+                      collection
+              )
+        );
+    }
+
+    @Override
+    public ListenableFuture<Void> dropPathViews(String collection) {
+        return submit(
+              new DropPathViewsCallable(
+                      dbConnection,
+                      aborter,
+                      reportFactory.createDropPathViewsReport(),
+                      collection
+              )
+        );
+    }
+
+    @Override
+    public ListenableFuture<Iterator<ValueRow<Value>>> sqlSelect(String sqlQuery) {
+        return submit(
+                new SqlSelectCallable(
+                        dbConnection,
+                        aborter,
+                        reportFactory.createSqlSelectReport(),
+                        sqlQuery
                 )
         );
     }

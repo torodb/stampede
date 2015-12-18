@@ -1,12 +1,14 @@
 
 package com.torodb.torod.db.backends.executor;
 
+import com.torodb.torod.core.ValueRow;
 import com.torodb.torod.core.cursors.CursorId;
 import com.torodb.torod.core.dbWrapper.Cursor;
 import com.torodb.torod.core.dbWrapper.DbConnection;
 import com.torodb.torod.core.dbWrapper.DbWrapper;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.dbWrapper.exceptions.UserDbException;
+import com.torodb.torod.core.exceptions.IllegalPathViewException;
 import com.torodb.torod.core.exceptions.ToroImplementationException;
 import com.torodb.torod.core.language.projection.Projection;
 import com.torodb.torod.core.language.querycriteria.QueryCriteria;
@@ -16,6 +18,7 @@ import com.torodb.torod.core.pojos.NamedToroIndex;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.core.subdocument.SubDocType;
 import com.torodb.torod.core.subdocument.SubDocument;
+import com.torodb.torod.core.subdocument.values.Value;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -249,6 +252,34 @@ public class LazyDbWrapper implements DbWrapper {
                 return getDelegate().getDocumentsSize(collection);
             }
             catch (ImplementationDbException ex) {
+                throw new ToroImplementationException(ex);
+            }
+        }
+
+        @Override
+        public Integer createPathViews(String collection) throws IllegalPathViewException {
+            try {
+                return getDelegate().createPathViews(collection);
+            } catch (ImplementationDbException ex) {
+                throw new ToroImplementationException(ex);
+            }
+        }
+
+        @Override
+        public void dropPathViews(String collection) throws
+                IllegalPathViewException {
+            try {
+                getDelegate().dropPathViews(collection);
+            } catch (ImplementationDbException ex) {
+                throw new ToroImplementationException(ex);
+            }
+        }
+
+        @Override
+        public Iterator<ValueRow<Value>> select(String query) {
+            try {
+                return getDelegate().select(query);
+            } catch (ImplementationDbException ex) {
                 throw new ToroImplementationException(ex);
             }
         }

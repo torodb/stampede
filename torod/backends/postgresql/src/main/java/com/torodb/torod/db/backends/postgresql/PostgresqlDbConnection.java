@@ -21,18 +21,21 @@ package com.torodb.torod.db.backends.postgresql;
 
 import com.google.common.collect.Lists;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
+import com.torodb.torod.core.exceptions.IllegalPathViewException;
 import com.torodb.torod.core.subdocument.BasicType;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.core.subdocument.structure.DocStructure;
 import com.torodb.torod.db.backends.DatabaseInterface;
 import com.torodb.torod.db.backends.converters.jooq.SubdocValueConverter;
 import com.torodb.torod.db.backends.converters.jooq.ValueToJooqConverterProvider;
+import com.torodb.torod.db.backends.meta.IndexStorage;
 import com.torodb.torod.db.backends.meta.StructuresCache;
 import com.torodb.torod.db.backends.meta.TorodbMeta;
-import com.torodb.torod.db.backends.meta.IndexStorage;
 import com.torodb.torod.db.backends.sql.AbstractDbConnection;
 import com.torodb.torod.db.backends.sql.AutoCloser;
 import com.torodb.torod.db.backends.sql.index.NamedDbIndex;
+import com.torodb.torod.db.backends.sql.path.view.DefaultPathViewHandlerCallback;
+import com.torodb.torod.db.backends.sql.path.view.PathViewHandler;
 import com.torodb.torod.db.backends.tables.SubDocTable;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.jooq.*;
@@ -49,6 +52,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.Comparator;
+
 
 /**
  *
@@ -366,6 +370,23 @@ class PostgresqlDbConnection extends AbstractDbConnection {
             AutoCloser.close(ps);
             connectionProvider.release(connection);
         }
+    }
+
+    @Override
+    public Integer createPathViews(String collection) throws IllegalPathViewException {
+        PathViewHandler.Callback callback = new DefaultPathViewHandlerCallback(getDsl());
+        PathViewHandler handler = new PathViewHandler(getMeta(), callback);
+
+        return handler.createPathViews(collection);
+    }
+
+    @Override
+    public void dropPathViews(String collection) throws
+            IllegalPathViewException {
+        PathViewHandler.Callback callback = new DefaultPathViewHandlerCallback(getDsl());
+        PathViewHandler handler = new PathViewHandler(getMeta(), callback);
+
+        handler.dropPathViews(collection);
     }
 
     private String getSqlType(Field<?> field, Configuration conf) {

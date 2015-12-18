@@ -20,23 +20,29 @@
 
 package com.torodb.torod.core.dbWrapper;
 
+import com.google.common.annotations.Beta;
+import com.torodb.torod.core.ValueRow;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.dbWrapper.exceptions.UserDbException;
+import com.torodb.torod.core.exceptions.IllegalPathViewException;
+import com.torodb.torod.core.exceptions.UserToroException;
 import com.torodb.torod.core.language.querycriteria.QueryCriteria;
 import com.torodb.torod.core.pojos.CollectionMetainfo;
-import com.torodb.torod.core.pojos.NamedToroIndex;
 import com.torodb.torod.core.pojos.IndexedAttributes;
+import com.torodb.torod.core.pojos.NamedToroIndex;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.core.subdocument.SubDocType;
 import com.torodb.torod.core.subdocument.SubDocument;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import com.torodb.torod.core.subdocument.values.Value;
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
 import javax.json.JsonObject;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -165,4 +171,12 @@ public interface DbConnection {
     public Long getDocumentsSize(String collection);
 
     public Long getIndexSize(String collection, String index);
+
+    @Beta
+    public Integer createPathViews(String collection) throws IllegalPathViewException;
+
+    @Beta
+    public void dropPathViews(String collection) throws IllegalPathViewException;
+
+    public Iterator<ValueRow<Value>> select(String query) throws UserToroException;
 }

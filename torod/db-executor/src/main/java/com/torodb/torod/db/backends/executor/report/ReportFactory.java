@@ -1,6 +1,9 @@
 package com.torodb.torod.db.backends.executor.report;
 
 import com.torodb.torod.db.backends.executor.jobs.*;
+import com.torodb.torod.db.executor.jobs.CreatePathViewsCallable;
+import com.torodb.torod.db.executor.jobs.DropPathViewsCallable;
+import com.torodb.torod.db.executor.jobs.SqlSelectCallable;
 
 /**
  *
@@ -54,4 +57,10 @@ public interface ReportFactory {
     public GetCollectionsMetainfoCallable.Report createGetCollectionsMetainfoReport();
 
     public MaxElementsCallable.Report createMaxElementsReport();
+
+    public CreatePathViewsCallable.Report createCreatePathViewsReport();
+
+    public DropPathViewsCallable.Report createDropPathViewsReport();
+
+    public SqlSelectCallable.Report createSqlSelectReport();
 }
