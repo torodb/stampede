@@ -23,7 +23,6 @@ package com.torodb.torod.core.connection;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 import javax.json.Json;
@@ -57,7 +56,7 @@ public class InsertResponse implements Serializable {
         return success;
     }
 
-    public int getInsertedSize() {
+    public int getInsertedDocsCounter() {
         return insertedSize;
     }
 

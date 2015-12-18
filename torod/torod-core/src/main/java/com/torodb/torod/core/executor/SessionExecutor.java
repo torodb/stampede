@@ -20,6 +20,7 @@
 
 package com.torodb.torod.core.executor;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import com.torodb.torod.core.cursors.CursorId;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.language.projection.Projection;
@@ -28,7 +29,6 @@ import com.torodb.torod.core.pojos.CollectionMetainfo;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import java.io.Closeable;
 import java.util.List;
-import java.util.concurrent.Future;
 import javax.annotation.Nonnegative;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -68,7 +68,7 @@ public interface SessionExecutor extends Closeable {
      * @param maxResults 0 means no bounds
      * @return 
      */
-    Future<Void> query(
+    ListenableFuture<Void> query(
             @Nonnull String collection,
             @Nonnull CursorId cursorId,
             @Nullable QueryCriteria queryCriteria,
@@ -76,7 +76,7 @@ public interface SessionExecutor extends Closeable {
             @Nonnegative int maxResults
     );
     
-    Future<List<CollectionMetainfo>> getCollectionsMetainfo();
+    ListenableFuture<List<CollectionMetainfo>> getCollectionsMetainfo();
 
     /**
      *
@@ -86,7 +86,7 @@ public interface SessionExecutor extends Closeable {
      *         less than the given limit of documents are returned iff the cursor reach its end.
      * @throws ToroTaskExecutionException
      */
-    Future<List<? extends SplitDocument>> readCursor(
+    ListenableFuture<List<? extends SplitDocument>> readCursor(
             CursorId cursorId,
             int limit
     ) throws ToroTaskExecutionException;
@@ -98,15 +98,15 @@ public interface SessionExecutor extends Closeable {
      * @return a list of split documents retrieved from the cursor.
      * @throws ToroTaskExecutionException
      */
-    Future<List<? extends SplitDocument>> readAllCursor(
+    ListenableFuture<List<? extends SplitDocument>> readAllCursor(
             CursorId cursorId
     ) throws ToroTaskExecutionException;
 
-    Future<?> closeCursor(
+    ListenableFuture<?> closeCursor(
             CursorId cursorId
     ) throws ToroTaskExecutionException;
 
-    public Future<Void> noop();
+    public ListenableFuture<Void> noop();
     
-    public Future<Integer> getMaxElements(CursorId cursorId);
+    public ListenableFuture<Integer> getMaxElements(CursorId cursorId);
 }

@@ -23,12 +23,11 @@ package com.torodb.torod.core.dbMetaInf;
 import com.torodb.torod.core.executor.SessionExecutor;
 import com.torodb.torod.core.subdocument.SubDocType;
 import java.util.Set;
-
 import javax.annotation.Nonnegative;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
-import javax.json.Json;
+import javax.json.JsonObject;
 import javax.json.JsonValue.ValueType;
 
 /**
@@ -92,7 +91,7 @@ public interface DbMetaInformationCache {
     public boolean createCollection(
             @Nonnull SessionExecutor sessionExecutor,
             @Nonnull String collectionName,
-            @Nullable Json other
+            @Nullable JsonObject other
     );
 
     public boolean dropCollection(

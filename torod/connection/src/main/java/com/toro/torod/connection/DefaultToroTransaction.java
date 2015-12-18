@@ -20,10 +20,17 @@
 
 package com.toro.torod.connection;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.toro.torod.connection.update.Updator;
+import com.torodb.kvdocument.values.DocValue;
+import com.torodb.torod.core.ValueRow;
+import com.torodb.torod.core.ValueRow.TranslatorValueRow;
 import com.torodb.torod.core.WriteFailMode;
 import com.torodb.torod.core.config.DocumentBuilderFactory;
 import com.torodb.torod.core.connection.*;
@@ -40,18 +47,16 @@ import com.torodb.torod.core.language.querycriteria.QueryCriteria;
 import com.torodb.torod.core.language.querycriteria.utils.EqualFactory;
 import com.torodb.torod.core.language.update.UpdateAction;
 import com.torodb.torod.core.pojos.Database;
-import com.torodb.torod.core.pojos.NamedToroIndex;
 import com.torodb.torod.core.pojos.IndexedAttributes;
+import com.torodb.torod.core.pojos.NamedToroIndex;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.core.subdocument.ToroDocument;
-import java.util.Collection;
-
-import javax.annotation.Nonnull;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import com.torodb.torod.core.subdocument.values.StringValue;
+import com.torodb.torod.core.subdocument.values.*;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import javax.annotation.Nonnull;
 
 /**
  *
@@ -86,17 +91,17 @@ public class DefaultToroTransaction implements ToroTransaction {
     }
 
     @Override
-    public Future<?> rollback() {
+    public ListenableFuture<?> rollback() {
         return sessionTransaction.rollback();
     }
 
     @Override
-    public Future<?> commit() {
+    public ListenableFuture<?> commit() {
         return sessionTransaction.commit();
     }
 
     @Override
-    public Future<InsertResponse> insertDocuments(
+    public ListenableFuture<InsertResponse> insertDocuments(
             String collection,
             Iterable<ToroDocument> documents,
             WriteFailMode mode
@@ -125,7 +130,7 @@ public class DefaultToroTransaction implements ToroTransaction {
     }
 
     @Override
-    public Future<DeleteResponse> delete(
+    public ListenableFuture<DeleteResponse> delete(
             @Nonnull String collection,
             @Nonnull List<? extends DeleteOperation> deletes,
             @Nonnull WriteFailMode mode) {
@@ -134,7 +139,7 @@ public class DefaultToroTransaction implements ToroTransaction {
     }
 
     @Override
-    public Future<NamedToroIndex> createIndex(
+    public ListenableFuture<NamedToroIndex> createIndex(
             String collection,
             String indexName, 
             IndexedAttributes attributes, 
@@ -151,7 +156,7 @@ public class DefaultToroTransaction implements ToroTransaction {
     }
 
     @Override
-    public Future<Boolean> dropIndex(String collection, String indexName) {
+    public ListenableFuture<Boolean> dropIndex(String collection, String indexName) {
         cache.createCollection(executor, collection, null);
         return sessionTransaction.dropIndex(collection, indexName);
     }
@@ -171,36 +176,65 @@ public class DefaultToroTransaction implements ToroTransaction {
     }
 
     @Override
-    public Future<Long> getIndexSize(String collection, String indexName) {
+    public ListenableFuture<Long> getIndexSize(String collection, String indexName) {
         cache.createCollection(executor, collection, null);
         return sessionTransaction.getIndexSize(collection, indexName);
     }
 
     @Override
-    public Future<Long> getCollectionSize(String collection) {
+    public ListenableFuture<Long> getCollectionSize(String collection) {
         cache.createCollection(executor, collection, null);
         return sessionTransaction.getCollectionSize(collection);
     }
 
     @Override
-    public Future<Long> getDocumentsSize(String collection) {
+    public ListenableFuture<Long> getDocumentsSize(String collection) {
         cache.createCollection(executor, collection, null);
         return sessionTransaction.getDocumentsSize(collection);
     }
 
     @Override
-    public Future<Integer> count(String collection, QueryCriteria query) {
+    public ListenableFuture<Integer> count(String collection, QueryCriteria query) {
         cache.createCollection(executor, collection, null);
         return sessionTransaction.count(collection, query);
     }
     
     @Override
-    public Future<List<? extends Database>> getDatabases() {
+    public ListenableFuture<List<? extends Database>> getDatabases() {
         return sessionTransaction.getDatabases();
     }
 
     @Override
-    public Future<UpdateResponse> update(
+    public ListenableFuture<Integer> createPathViews(String collection) throws UnsupportedOperationException {
+        return sessionTransaction.createPathViews(collection);
+    }
+
+    @Override
+    public ListenableFuture<Void> dropPathViews(String collection) throws
+            UnsupportedOperationException {
+        return sessionTransaction.dropPathViews(collection);
+    }
+
+    @Override
+    public ListenableFuture<Iterator<ValueRow<DocValue>>> sqlSelect(String sqlQuery)
+            throws UnsupportedOperationException {
+        ListenableFuture<Iterator<ValueRow<Value>>> valueFuture
+                = sessionTransaction.sqlSelect(sqlQuery);
+
+        IteratorTranslator<ValueRow<Value>, ValueRow<DocValue>> iteratorTranslator
+                = new IteratorTranslator<>(
+                        TranslatorValueRow.getBuilderFunction(new ToDocValueFunction())
+                );
+
+        return Futures.transform(
+                valueFuture,
+                iteratorTranslator,
+                MoreExecutors.directExecutor()
+        );
+    }
+
+    @Override
+    public ListenableFuture<UpdateResponse> update(
             String collection,
             List<? extends UpdateOperation> updates,
             WriteFailMode mode
@@ -333,10 +367,10 @@ public class DefaultToroTransaction implements ToroTransaction {
                             objectsToInsert,
                             WriteFailMode.TRANSACTIONAL
                     ).get();
-            if (insertResponse.getInsertedSize() != objectsToInsert.size()) {
+            if (insertResponse.getInsertedDocsCounter() != objectsToInsert.size()) {
                 throw new ToroImplementationException("Update: "
                         + objectsToInsert.size() + " should be inserted, but "
-                        + insertResponse.getInsertedSize() + " objects have "
+                        + insertResponse.getInsertedDocsCounter() + " objects have "
                         + "been inserted instead");
             }
         }
@@ -347,4 +381,95 @@ public class DefaultToroTransaction implements ToroTransaction {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
+    private static class IteratorTranslator<I,O> implements Function<Iterator<I>, Iterator<O>> {
+
+        private final Function<I, O> function;
+
+        private IteratorTranslator(Function<I, O> function) {
+            this.function = function;
+        }
+
+        @Override
+        public Iterator<O> apply(@Nonnull Iterator<I> input) {
+            return Iterators.transform(input, function);
+        }
+    }
+
+    private static class ToDocValueFunction implements Function<Value, DocValue>, ValueVisitor<DocValue, Void> {
+
+        @Override
+        public DocValue apply(@Nonnull Value input) {
+            return (DocValue) input.accept(this, null);
+        }
+
+        @Override
+        public DocValue visit(BooleanValue value, Void arg) {
+            if (value.getValue()) {
+                return com.torodb.kvdocument.values.BooleanValue.TRUE;
+            }
+            return com.torodb.kvdocument.values.BooleanValue.FALSE;
+        }
+
+        @Override
+        public DocValue visit(NullValue value, Void arg) {
+            return com.torodb.kvdocument.values.NullValue.INSTANCE;
+        }
+
+        @Override
+        public DocValue visit(ArrayValue value, Void arg) {
+            com.torodb.kvdocument.values.ArrayValue.Builder builder
+                    = new com.torodb.kvdocument.values.ArrayValue.Builder();
+
+            for (Value e : value.getValue()) {
+                builder.add((DocValue) e.accept(this, arg));
+            }
+            return builder.build();
+        }
+
+        @Override
+        public DocValue visit(IntegerValue value, Void arg) {
+            return new com.torodb.kvdocument.values.IntegerValue(value.getValue());
+        }
+
+        @Override
+        public DocValue visit(LongValue value, Void arg) {
+            return new com.torodb.kvdocument.values.LongValue(value.getValue());
+        }
+
+        @Override
+        public DocValue visit(DoubleValue value, Void arg) {
+            return new com.torodb.kvdocument.values.DoubleValue(value.getValue());
+        }
+
+        @Override
+        public DocValue visit(StringValue value, Void arg) {
+            return new com.torodb.kvdocument.values.StringValue(value.getValue());
+        }
+
+        @Override
+        public DocValue visit(TwelveBytesValue value, Void arg) {
+            return new com.torodb.kvdocument.values.TwelveBytesValue(value.getValue());
+        }
+
+        @Override
+        public DocValue visit(DateTimeValue value, Void arg) {
+            return new com.torodb.kvdocument.values.DateTimeValue(value.getValue());
+        }
+
+        @Override
+        public DocValue visit(DateValue value, Void arg) {
+            return new com.torodb.kvdocument.values.DateValue(value.getValue());
+        }
+
+        @Override
+        public DocValue visit(TimeValue value, Void arg) {
+            return new com.torodb.kvdocument.values.TimeValue(value.getValue());
+        }
+
+        @Override
+        public DocValue visit(PatternValue value, Void arg) {
+            return new com.torodb.kvdocument.values.PatternValue(value.getValue());
+        }
+
+    }
 }
