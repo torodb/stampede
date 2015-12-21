@@ -121,8 +121,6 @@ public class ToroRunnerClassRule implements TestRule {
 			case Mongo:
 				config.getProtocol().setMongo(new Mongo());
 				break;
-			case None:
-				break;
 			}
 			
 			

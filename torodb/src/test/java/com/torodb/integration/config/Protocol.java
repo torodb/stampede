@@ -21,8 +21,7 @@
 package com.torodb.integration.config;
 
 public enum Protocol {
-	Mongo(MongoTest.class),
-	None(NoneTest.class);
+	Mongo(MongoTest.class);
 	
 	public static final Protocol CURRENT = currentProtocol();
 	
