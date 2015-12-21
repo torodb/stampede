@@ -21,13 +21,14 @@
 package com.torodb;
 
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.List;
 
 import com.beust.jcommander.IValueValidator;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
+import com.beust.jcommander.converters.IParameterSplitter;
 
 public class CliConfig {
 	
@@ -45,7 +46,8 @@ public class CliConfig {
 	private String xmlConfFile;
 	@Parameter(names={"-W", "--ask-for-password"}, descriptionKey="ask-for-password")
 	private boolean askForPassword = false;
-	@Parameter(names={"-p","--param"}, descriptionKey="param",validateValueWith=ParamValueValidator.class)
+	@Parameter(names={"-p","--param"}, descriptionKey="param",validateValueWith=ParamValueValidator.class,
+			splitter=NoParameterSplitter.class)
 	private List<String> params;
 
 	public boolean isHelp() {
@@ -96,6 +98,13 @@ public class CliConfig {
 					throw new ParameterException("Wrong parameter format: " + param);
 				}
 			}
+		}
+	}
+	
+	public static class NoParameterSplitter implements IParameterSplitter {
+		@Override
+		public List<String> split(String value) {
+			return Arrays.asList(new String[] { value });
 		}
 	}
 }
