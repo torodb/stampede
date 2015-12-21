@@ -8,6 +8,12 @@ addons:
 services:
   - postgresql
 
+env:
+  - com.torodb.integration.config.Protocol=Mongo
+  - com.torodb.integration.config.Protocol=None
+  - com.torodb.integration.config.Backend=Postgres
+  - com.torodb.integration.config.Backend=Greenplum
+
 before_script:
   - export GIT_BRANCH=$TRAVIS_BRANCH
   - psql -c "create user torodb with superuser password 'torodb';" -U postgres

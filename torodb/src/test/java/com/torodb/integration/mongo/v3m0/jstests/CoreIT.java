@@ -22,112 +22,61 @@ package com.torodb.integration.mongo.v3m0.jstests;
 
 import java.util.Collection;
 
-import org.junit.Ignore;
 import org.junit.Test;
-import org.junit.experimental.runners.Enclosed;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
-@RunWith(Enclosed.class)
-public class CoreIT implements JstestsSuiteIT<
-		CoreIT.CoreWorkingIT, 
-		CoreIT.CoreFailingIT, 
-		CoreIT.CoreFalsePositiveIT, 
-		CoreIT.CoreNotImplementedIT, 
-		CoreIT.CoreIgnoredIT
-		> {
-	@Override
-	public String getJstestsPrefixPath() {
-		return "core";
+import com.torodb.integration.config.Backend;
+import com.torodb.integration.mongo.v3m0.jstests.JstestMetaInfo.JstestType;
+
+
+@RunWith(Parameterized.class)
+public class CoreIT extends JstestsIT {
+	public CoreIT(String testResource, String prefix, Jstest jstest) {
+		super(testResource, prefix, jstest);
+	}
+
+	@Test
+	public void testJstest() throws Exception {
+		runJstest();
 	}
 	
-	@RunWith(Parameterized.class)
-	public static class CoreWorkingIT extends JstestsWorkingIT<CoreIT> {
-		public CoreWorkingIT(String test) {
-			super(test);
-		}
-
-		@Test
-		public void testJstest() throws Exception {
-			runJstest(test);
-		}
-		
-		@Parameters(name="{0}")
-		public static Collection<Object[]> parameters() {
-			return parameters(WORKING);
-		}
+	@Parameters(name="{0}")
+	public static Collection<Object[]> parameters() {
+		return parameters(Tests.class, "core");
 	}
-
-	@RunWith(Parameterized.class)
-	public static class CoreFailingIT extends JstestsFailingIT<CoreIT> {
-		public CoreFailingIT(String test) {
-			super(test);
-		}
-
-		@Test
-		@Ignore
-		public void testJstest() throws Exception {
-			runJstest(test);
+	
+	public enum Tests implements Jstest {
+		@JstestMetaInfo(type=JstestType.Working,backends={Backend.Postgres,Backend.Greenplum})
+		working(WORKING),
+		@JstestMetaInfo(type=JstestType.Failing,backends={Backend.Postgres,Backend.Greenplum})
+		failing(FAILING),
+		@JstestMetaInfo(type=JstestType.FalsePositive,backends={Backend.Postgres,Backend.Greenplum})
+		falsePositive(FALSE_POSITIVE),
+		@JstestMetaInfo(type=JstestType.NotImplemented,backends={Backend.Postgres,Backend.Greenplum})
+		notImplemented(NOT_IMPLEMENTED),
+		@JstestMetaInfo(type=JstestType.Ignored,backends={Backend.Postgres,Backend.Greenplum})
+		ignored(IGNORED);
+		
+		private final String[] testResources;
+		
+		private Tests(String testResource) {
+			testResources = new String[] { testResource };
 		}
 		
-		@Parameters(name="{0}")
-		public static Collection<Object[]> parameters() {
-			return parameters(FAILING);
-		}
-	}
-
-	@RunWith(Parameterized.class)
-	public static class CoreFalsePositiveIT extends JstestsFalsePositiveIT<CoreIT> {
-		public CoreFalsePositiveIT(String test) {
-			super(test);
-		}
-
-		@Test(expected=AssertionError.class)
-		@Ignore
-		public void testJstest() throws Exception {
-			runJstest(test);
+		private Tests(String[] testResources) {
+			this.testResources = testResources;
 		}
 		
-		@Parameters(name="{0}")
-		public static Collection<Object[]> parameters() {
-			return parameters(FALSE_POSITIVE);
-		}
-	}
-
-	@RunWith(Parameterized.class)
-	public static class CoreNotImplementedIT extends JstestsNotImplementedIT<CoreIT> {
-		public CoreNotImplementedIT(String test) {
-			super(test);
-		}
-
-		@Test(expected=AssertionError.class)
-		@Ignore
-		public void testJstest() throws Exception {
-			runJstest(test);
+		@Override
+		public String[] getTestResources() {
+			return testResources;
 		}
 		
-		@Parameters(name="{0}")
-		public static Collection<Object[]> parameters() {
-			return parameters(NOT_IMPLEMENTED);
-		}
-	}
-
-	@RunWith(Parameterized.class)
-	public static class CoreIgnoredIT extends JstestsIgnoredIT<CoreIT> {
-		public CoreIgnoredIT(String test) {
-			super(test);
-		}
-
-		@Test(expected=AssertionError.class)
-		@Ignore
-		public void testJstest() throws Exception {
-			runJstest(test);
-		}
-		
-		@Parameters(name="{0}")
-		public static Collection<Object[]> parameters() {
-			return parameters(IGNORED);
+		@Override
+		public JstestMetaInfo getJstestMetaInfoFor(String testResource, Backend backend) {
+			return JstestType.getJstestMetaInfoFor(getClass(), testResource, backend);
 		}
 	}
 	

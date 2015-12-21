@@ -27,6 +27,7 @@ import java.io.PrintStream;
 import java.net.URL;
 import java.sql.Connection;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -34,6 +35,8 @@ import java.util.Set;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.postgresql.ds.PGSimpleDataSource;
 import org.postgresql.util.PSQLException;
 import org.slf4j.LoggerFactory;
@@ -54,6 +57,7 @@ import com.torodb.di.ExecutorModule;
 import com.torodb.di.ExecutorServiceModule;
 import com.torodb.di.MongoConfigModule;
 import com.torodb.di.MongoLayerModule;
+import com.torodb.integration.ToroRunnerClassRule;
 import com.torodb.torod.core.Torod;
 import com.torodb.torod.core.exceptions.TorodStartupException;
 import com.torodb.torod.mongodb.repl.ReplCoordinator;
@@ -66,164 +70,54 @@ import ch.qos.logback.classic.spi.ThrowableProxy;
 import ch.qos.logback.core.Appender;
 import ch.qos.logback.core.AppenderBase;
 
-public abstract class JstestsIT<T extends JstestsSuiteIT<
-		? extends JstestsWorkingIT<T>, 
-		? extends JstestsFailingIT<T>, 
-		? extends JstestsFalsePositiveIT<T>, 
-		? extends JstestsNotImplementedIT<T>, 
-		? extends JstestsIgnoredIT<T>
-		>> extends JstestsDummyIT<T> {
-	private static final int TORO_BOOT_MAX_INTERVAL_MILLIS = 120000;
-	private static final Set<Throwable> UNCAUGHT_EXCEPTIONS = new HashSet<Throwable>();
+public abstract class JstestsIT {
 
-	private static void addUncaughtException(Throwable throwable) {
-		synchronized (UNCAUGHT_EXCEPTIONS) {
-			UNCAUGHT_EXCEPTIONS.add(throwable);
-		};
+	@ClassRule
+	public final static ToroRunnerClassRule toroRunnerClassRule = new ToroRunnerClassRule();
+	@Rule
+	public final MongoJstestIgnoreRule jstestIgnoreRule = new MongoJstestIgnoreRule();
+
+	private final Jstest jstest;
+	private final String testResource;
+	private final String prefix;
+	private final URL testResourceUrl;
+	
+	public JstestsIT(String testResource, String prefix, Jstest jstest) {
+		this.jstest = jstest;
+		this.testResource = testResource;
+		this.prefix = prefix;
+		this.testResourceUrl = Jstest.class.getResource(prefix + testResource);
 	}
 
-	private static List<Throwable> getUcaughtExceptions() {
-		List<Throwable> ucaughtExceptions;
-		synchronized (UNCAUGHT_EXCEPTIONS) {
-			ucaughtExceptions = new ArrayList<Throwable>(UNCAUGHT_EXCEPTIONS);
-			UNCAUGHT_EXCEPTIONS.clear();
-		}
-		return ucaughtExceptions;
+	public Jstest getJstest() {
+		return jstest;
 	}
 
-	private static boolean started = false;
-	private static Shutdowner shutdowner;
-	protected static Config config;
-
-	@BeforeClass
-	public static void setUpClass() throws Exception {
-		if (!started) {
-			started = true;
-			
-			config = new Config();
-			config.getBackend().asPostgres().setPassword("torodb");
-	
-			Thread.setDefaultUncaughtExceptionHandler(
-					new Thread.UncaughtExceptionHandler() {
-						@Override
-						public void uncaughtException(Thread t, Throwable e) {
-							addUncaughtException(e);
-						}
-					});
-			
-			new File("/tmp/data/db").mkdirs();
-			
-			PGSimpleDataSource dataSource = new PGSimpleDataSource();
-	
-			dataSource.setUser(config.getBackend().asPostgres().getUser());
-			dataSource.setPassword(config.getBackend().asPostgres().getPassword());
-			dataSource.setServerName(config.getBackend().asPostgres().getHost());
-			dataSource.setPortNumber(config.getBackend().asPostgres().getPort());
-			dataSource.setDatabaseName("template1");
-	
-			Connection connection = dataSource.getConnection();
-			try {
-				connection.prepareCall("DROP DATABASE torod").execute();
-			} catch(PSQLException psqlException) {
-				
-			}
-			connection.prepareCall("CREATE DATABASE torod OWNER torodb").execute();
-			connection.close();
-			
-			Logger root = LogbackUtils.getRootLogger();
-	
-			LogbackUtils.setLoggerLevel(root, LogLevel.WARNING);
-			
-			Appender<ILoggingEvent> uncaughtExceptionAppender = new AppenderBase<ILoggingEvent>() {
-				@Override
-				protected void append(ILoggingEvent eventObject) {
-					IThrowableProxy throwableProxy = eventObject.getThrowableProxy();
-					if (throwableProxy != null &&
-							throwableProxy instanceof ThrowableProxy) {
-						addUncaughtException(((ThrowableProxy) throwableProxy).getThrowable());
-					}
-					
-				}
-			};
-			uncaughtExceptionAppender.setContext(LogbackUtils.getLoggerContext());
-			uncaughtExceptionAppender.start();
-			root.addAppender(uncaughtExceptionAppender);
-	
-			
-			Injector injector = Guice.createInjector(
-					new ConfigModule(config),
-					new BackendModule(config),
-					new ConfigModule(config),
-					new MongoConfigModule(config),
-					new MongoLayerModule(config),
-					new ExecutorModule(1000, 1000, 0.2),
-					new DbMetaInformationCacheModule(),
-					new D2RModule(),
-					new ConnectionModule(),
-					new ExecutorServiceModule()
-			);
-	
-			final Object TORO_SEMAPHOR = new Object();
-			final Torod torod = injector.getInstance(Torod.class);
-			final MongoServer server = injector.getInstance(MongoServer.class);
-			final ReplCoordinator replCoord = injector.getInstance(ReplCoordinator.class);
-			shutdowner = injector.getInstance(Shutdowner.class);
-	
-			Thread serverThread = new Thread() {
-				@Override
-				public void run() {
-					try {
-						torod.start();
-					} catch (TorodStartupException e) {
-						LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME).error(e.getMessage());
-						throw new RuntimeException(e.getMessage());
-					}
-					replCoord.startAsync();
-					replCoord.awaitRunning();
-					server.run();
-					synchronized (TORO_SEMAPHOR) {
-						TORO_SEMAPHOR.notify();
-					}
-				}
-			};
-			serverThread.start();
-	
-			long start = System.currentTimeMillis();
-			synchronized (TORO_SEMAPHOR) {
-				TORO_SEMAPHOR.wait(TORO_BOOT_MAX_INTERVAL_MILLIS);
-			}
-			if (System.currentTimeMillis() - start >= TORO_BOOT_MAX_INTERVAL_MILLIS) {
-				throw new RuntimeException(
-						"Toro failed to start after waiting for " + TORO_BOOT_MAX_INTERVAL_MILLIS + " milliseconds.");
-			}
-		}
+	public URL getTestResourceUrl() {
+		return testResourceUrl;
 	}
 
-	@AfterClass
-	public static void tearDownClass() {
-		//TODO: Fix shutdown to permit restart inside same JVM
-		//shutdowner.shutdown();
-		//started = false;
+	public String getTestResource() {
+		return testResource;
 	}
 
-	public JstestsIT(String test) {
-		super(test);
+	public String getPrefix() {
+		return prefix;
 	}
 
-	@Override
-	protected void runJstest(String test) throws Exception {
+	protected void runJstest() throws Exception {
+		Config config = toroRunnerClassRule.getConfig();
 		String toroConnectionString = config.getProtocol().getMongo().getNet().getBindIp() + ":"
 				+ config.getProtocol().getMongo().getNet().getPort() + "/"
 				+ config.getBackend().asPostgres().getDatabase();
-		URL mongoMocksUrl = JstestsDummyIT.class.getResource("mongo_mocks.js");
-		URL testUrl = JstestsDummyIT.class.getResource(pathPrefix + "/" + test);
+		URL mongoMocksUrl = Jstest.class.getResource("mongo_mocks.js");
 		
 		Process mongoProcess = Runtime.getRuntime()
 				.exec(new String[] {
 					"mongo",
 					toroConnectionString, 
 					mongoMocksUrl.getPath(),
-					testUrl.getPath(),
+					testResourceUrl.getPath(),
 				});
 		InputStream inputStream = mongoProcess.getInputStream();
 		InputStream erroStream = mongoProcess.getErrorStream();
@@ -231,7 +125,7 @@ public abstract class JstestsIT<T extends JstestsSuiteIT<
 		
 		int result = mongoProcess.waitFor();
 		
-		List<Throwable> uncaughtExceptions = getUcaughtExceptions();
+		List<Throwable> uncaughtExceptions = toroRunnerClassRule.getUcaughtExceptions();
 		
 		if (result != 0) {
 			int read;
@@ -253,8 +147,26 @@ public abstract class JstestsIT<T extends JstestsSuiteIT<
 			}
 		}
 		
-		Assert.assertEquals("Test " + test + " failed:\n" + new String(byteArrayOutputStream.toByteArray(), Charsets.UTF_8), 0, result);
+		Assert.assertEquals("Test " + testResourceUrl.getFile() + " failed:\n" + new String(byteArrayOutputStream.toByteArray(), Charsets.UTF_8), 0, result);
 		
-		Assert.assertTrue("Test " + test + " did not failed but following exception where received:\n" + new String(byteArrayOutputStream.toByteArray(), Charsets.UTF_8), uncaughtExceptions.isEmpty());
+		Assert.assertTrue("Test " + testResourceUrl.getFile() + " did not failed but following exception where received:\n" + new String(byteArrayOutputStream.toByteArray(), Charsets.UTF_8), uncaughtExceptions.isEmpty());
+	}
+
+	protected static Collection<Object[]> parameters(Class<? extends Jstest> jstestsClass, String prefix) {
+		try {
+			prefix = prefix + "/";
+			List<Object[]> parameters = new ArrayList<Object[]>();
+			
+			for (Jstest jstest : (Jstest[]) jstestsClass.getMethod("values").invoke(null)) {
+				String[] testResources = jstest.getTestResources();
+				for (int index = 0; index < testResources.length; index++) {
+					parameters.add(new Object[] { testResources[index], prefix, jstest });
+				}
+			}
+			
+			return parameters;
+		} catch(Exception exception) {
+			throw new RuntimeException(exception);
+		}
 	}
 }
