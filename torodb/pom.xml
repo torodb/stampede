@@ -99,7 +99,7 @@
             <version>${torod.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.torodb.torod.db-wrappers</groupId>
+            <groupId>com.torodb.torod.backends</groupId>
             <artifactId>postgresql</artifactId>
             <version>${torod.version}</version>
         </dependency>
@@ -119,8 +119,8 @@
             <version>${torod.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.torodb.torod</groupId>
-            <artifactId>backend</artifactId>
+            <groupId>com.torodb.torod.backends</groupId>
+            <artifactId>postgresql</artifactId>
             <version>${torod.version}</version>
         </dependency>
         <dependency>

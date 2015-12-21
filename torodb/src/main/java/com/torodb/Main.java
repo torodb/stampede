@@ -48,12 +48,10 @@ import com.torodb.di.ConfigModule;
 import com.torodb.di.ConnectionModule;
 import com.torodb.di.D2RModule;
 import com.torodb.di.DbMetaInformationCacheModule;
-import com.torodb.di.DbWrapperModule;
 import com.torodb.di.ExecutorModule;
 import com.torodb.di.ExecutorServiceModule;
 import com.torodb.di.MongoConfigModule;
 import com.torodb.di.MongoLayerModule;
-import com.torodb.torod.backend.db.postgresql.di.PostgreSQLModule;
 import com.torodb.torod.core.Torod;
 import com.torodb.torod.core.exceptions.TorodStartupException;
 import com.torodb.torod.mongodb.repl.ReplCoordinator;
@@ -157,10 +155,9 @@ public class Main {
 		Injector injector = Guice.createInjector(
 				new ConfigModule(config),
 				new BackendModule(config),
-				new PostgreSQLModule(),
+				new ConfigModule(config),
 				new MongoConfigModule(config),
 				new MongoLayerModule(config),
-				new DbWrapperModule(),
 				new ExecutorModule(1000, 1000, 0.2),
 				new DbMetaInformationCacheModule(),
 				new D2RModule(),

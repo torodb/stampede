@@ -6,6 +6,8 @@ import com.torodb.torod.core.dbWrapper.DbConnection;
 import com.torodb.torod.core.exceptions.ToroException;
 import com.torodb.torod.core.exceptions.ToroRuntimeException;
 import com.torodb.torod.core.subdocument.values.Value;
+import com.torodb.torod.db.backends.executor.jobs.TransactionalJob;
+
 import java.util.Iterator;
 
 /**

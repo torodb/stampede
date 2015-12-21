@@ -50,12 +50,10 @@ import com.torodb.di.ConfigModule;
 import com.torodb.di.ConnectionModule;
 import com.torodb.di.D2RModule;
 import com.torodb.di.DbMetaInformationCacheModule;
-import com.torodb.di.DbWrapperModule;
 import com.torodb.di.ExecutorModule;
 import com.torodb.di.ExecutorServiceModule;
 import com.torodb.di.MongoConfigModule;
 import com.torodb.di.MongoLayerModule;
-import com.torodb.torod.backend.db.postgresql.di.PostgreSQLModule;
 import com.torodb.torod.core.Torod;
 import com.torodb.torod.core.exceptions.TorodStartupException;
 import com.torodb.torod.mongodb.repl.ReplCoordinator;
@@ -151,10 +149,19 @@ public abstract class JstestsIT<T extends JstestsSuiteIT<
 			uncaughtExceptionAppender.start();
 			root.addAppender(uncaughtExceptionAppender);
 	
-			Injector injector = Guice.createInjector(new ConfigModule(config), new BackendModule(config),
-					new PostgreSQLModule(), new MongoConfigModule(config), new MongoLayerModule(config),
-					new DbWrapperModule(), new ExecutorModule(1000, 1000, 0.2), new DbMetaInformationCacheModule(),
-					new D2RModule(), new ConnectionModule(), new ExecutorServiceModule());
+			
+			Injector injector = Guice.createInjector(
+					new ConfigModule(config),
+					new BackendModule(config),
+					new ConfigModule(config),
+					new MongoConfigModule(config),
+					new MongoLayerModule(config),
+					new ExecutorModule(1000, 1000, 0.2),
+					new DbMetaInformationCacheModule(),
+					new D2RModule(),
+					new ConnectionModule(),
+					new ExecutorServiceModule()
+			);
 	
 			final Object TORO_SEMAPHOR = new Object();
 			final Torod torod = injector.getInstance(Torod.class);
