@@ -22,114 +22,63 @@ package com.torodb.integration.mongo.v3m0.jstests;
 
 import java.util.Collection;
 
-import org.junit.Ignore;
 import org.junit.Test;
-import org.junit.experimental.runners.Enclosed;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
-@RunWith(Enclosed.class)
-public class ToolIT implements JstestsSuiteIT<
-		ToolIT.ToolWorkingIT, 
-		ToolIT.ToolFailingIT, 
-		ToolIT.ToolFalsePositiveIT, 
-		ToolIT.ToolNotImplementedIT, 
-		ToolIT.ToolIgnoredIT
-		> {
-	@Override
-	public String getJstestsPrefixPath() {
-		return "tool";
+import com.torodb.integration.config.Backend;
+import com.torodb.integration.mongo.v3m0.jstests.JstestMetaInfo.JstestType;
+
+@RunWith(Parameterized.class)
+public class ToolIT extends JstestsIT {
+	public ToolIT(String testResource, String prefix, Jstest jstest) {
+		super(testResource, prefix, jstest);
+	}
+
+	@Test
+	public void testJstest() throws Exception {
+		runJstest();
 	}
 	
-	@RunWith(Parameterized.class)
-	public static class ToolWorkingIT extends JstestsWorkingIT<ToolIT> {
-		public ToolWorkingIT(String test) {
-			super(test);
-		}
-
-		@Test
-		public void testJstest() throws Exception {
-			runJstest(test);
+	@Parameters(name="{0}")
+	public static Collection<Object[]> parameters() {
+		return parameters(Tests.class, "tool");
+	}
+	
+	public enum Tests implements Jstest {
+		@JstestMetaInfo(type=JstestType.Working,backends={Backend.Postgres,Backend.Greenplum})
+		working(WORKING),
+		@JstestMetaInfo(type=JstestType.Failing,backends={Backend.Postgres,Backend.Greenplum})
+		failing(FAILING),
+		@JstestMetaInfo(type=JstestType.FalsePositive,backends={Backend.Postgres,Backend.Greenplum})
+		falsePositive(FALSE_POSITIVE),
+		@JstestMetaInfo(type=JstestType.NotImplemented,backends={Backend.Postgres,Backend.Greenplum})
+		notImplemented(NOT_IMPLEMENTED),
+		@JstestMetaInfo(type=JstestType.Ignored,backends={Backend.Postgres,Backend.Greenplum})
+		ignored(IGNORED);
+		
+		private final String[] testResources;
+		
+		private Tests(String testResource) {
+			testResources = new String[] { testResource };
 		}
 		
-		@Parameters(name="{0}")
-		public static Collection<Object[]> parameters() {
-			return parameters(WORKING);
+		private Tests(String[] testResources) {
+			this.testResources = testResources;
+		}
+		
+		@Override
+		public String[] getTestResources() {
+			return testResources;
+		}
+		
+		@Override
+		public JstestMetaInfo getJstestMetaInfoFor(String testResource, Backend backend) {
+			return JstestType.getJstestMetaInfoFor(getClass(), testResource, backend);
 		}
 	}
 
-	@RunWith(Parameterized.class)
-	public static class ToolFailingIT extends JstestsFailingIT<ToolIT> {
-		public ToolFailingIT(String test) {
-			super(test);
-		}
-
-		@Test
-		@Ignore
-		public void testJstest() throws Exception {
-			runJstest(test);
-		}
-		
-		@Parameters(name="{0}")
-		public static Collection<Object[]> parameters() {
-			return parameters(FAILING);
-		}
-	}
-
-	@RunWith(Parameterized.class)
-	public static class ToolFalsePositiveIT extends JstestsFalsePositiveIT<ToolIT> {
-		public ToolFalsePositiveIT(String test) {
-			super(test);
-		}
-
-		@Test(expected=AssertionError.class)
-		@Ignore
-		public void testJstest() throws Exception {
-			runJstest(test);
-		}
-		
-		@Parameters(name="{0}")
-		public static Collection<Object[]> parameters() {
-			return parameters(FALSE_POSITIVE);
-		}
-	}
-
-	@RunWith(Parameterized.class)
-	public static class ToolNotImplementedIT extends JstestsNotImplementedIT<ToolIT> {
-		public ToolNotImplementedIT(String test) {
-			super(test);
-		}
-
-		@Test(expected=AssertionError.class)
-		@Ignore
-		public void testJstest() throws Exception {
-			runJstest(test);
-		}
-		
-		@Parameters(name="{0}")
-		public static Collection<Object[]> parameters() {
-			return parameters(NOT_IMPLEMENTED);
-		}
-	}
-
-	@RunWith(Parameterized.class)
-	public static class ToolIgnoredIT extends JstestsIgnoredIT<ToolIT> {
-		public ToolIgnoredIT(String test) {
-			super(test);
-		}
-
-		@Test(expected=AssertionError.class)
-		@Ignore
-		public void testJstest() throws Exception {
-			runJstest(test);
-		}
-		
-		@Parameters(name="{0}")
-		public static Collection<Object[]> parameters() {
-			return parameters(IGNORED);
-		}
-	}
 	
 	private static final String[] WORKING = new String[] {
 			"command_line_quotes.js",

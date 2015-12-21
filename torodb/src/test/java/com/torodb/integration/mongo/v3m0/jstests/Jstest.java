@@ -20,14 +20,9 @@
 
 package com.torodb.integration.mongo.v3m0.jstests;
 
-public abstract class JstestsFalsePositiveIT<T extends JstestsSuiteIT<
-		? extends JstestsWorkingIT<T>, 
-		? extends JstestsFailingIT<T>, 
-		? extends JstestsFalsePositiveIT<T>, 
-		? extends JstestsNotImplementedIT<T>, 
-		? extends JstestsIgnoredIT<T>
-		>> extends JstestsDummyIT<T> {
-	public JstestsFalsePositiveIT(String test) {
-		super(test);
-	}
+import com.torodb.integration.config.Backend;
+
+public interface Jstest {
+	public String[] getTestResources();
+	public JstestMetaInfo getJstestMetaInfoFor(String testResource, Backend backend);
 }

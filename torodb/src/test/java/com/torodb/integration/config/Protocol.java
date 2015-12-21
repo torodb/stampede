@@ -18,17 +18,35 @@
  *     
  */
 
-package com.torodb.integration.mongo.v3m0.jstests;
+package com.torodb.integration.config;
 
-public abstract class JstestsWorkingIT<T extends JstestsSuiteIT<
-		? extends JstestsWorkingIT<T>, 
-		? extends JstestsFailingIT<T>, 
-		? extends JstestsFalsePositiveIT<T>, 
-		? extends JstestsNotImplementedIT<T>, 
-		? extends JstestsIgnoredIT<T>
-		>> extends JstestsIT<T> {
-
-	public JstestsWorkingIT(String test) {
-		super(test);
+public enum Protocol {
+	Mongo(MongoTest.class),
+	None(NoneTest.class);
+	
+	public static final Protocol CURRENT = currentProtocol();
+	
+	private static final Protocol currentProtocol() {
+		Protocol currentProtocol = Protocol.Mongo;
+		
+		String currentProtocolValue = System.getenv(Protocol.class.getSimpleName());
+		if (currentProtocolValue != null) {
+			currentProtocol = Protocol.valueOf(currentProtocolValue);
+		}
+		
+		return currentProtocol;
 	}
+	
+	private final Class<?> interfaceClass;
+	
+	private Protocol(Class<?> interfaceClass) {
+		this.interfaceClass = interfaceClass;
+	}
+	
+	public Class<?> interfaceClass() {
+		return interfaceClass;
+	}
+
+	public interface MongoTest {}
+	public interface NoneTest {}
 }
