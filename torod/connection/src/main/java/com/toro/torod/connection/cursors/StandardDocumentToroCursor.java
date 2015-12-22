@@ -19,6 +19,7 @@
  */
 package com.toro.torod.connection.cursors;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.torodb.torod.core.cursors.CursorId;
 import com.torodb.torod.core.d2r.D2RTranslator;
@@ -172,10 +173,8 @@ public class StandardDocumentToroCursor extends DefaultToroCursor<ToroDocument> 
                 limit = Math.min(limit, maxElements - position);
 
                 List<ToroDocument> docs;
-                if (limit == 0) {
-                    docs = Collections.emptyList();
-                }
-                else {
+                if (limit > 0) {
+
                     List<? extends SplitDocument> splitDocs = executor
                             .readCursor(getId(), limit)
                             .get();
@@ -187,7 +186,10 @@ public class StandardDocumentToroCursor extends DefaultToroCursor<ToroDocument> 
                     }
                     position += docs.size();
                 }
-
+                else {
+                    docs = ImmutableList.of();
+                }
+                
                 if (isAutoclosable() && position == maxElements) {
                     close(executor);
                 }
