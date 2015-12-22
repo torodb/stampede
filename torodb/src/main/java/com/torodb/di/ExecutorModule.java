@@ -22,12 +22,12 @@ package com.torodb.di;
 
 import com.google.inject.AbstractModule;
 import com.torodb.torod.core.executor.ExecutorFactory;
-import com.torodb.torod.db.executor.DefaultExecutorFactory;
-import com.torodb.torod.db.executor.ExecutorServiceProvider;
-import com.torodb.torod.db.executor.report.DummyReportFactory;
-import com.torodb.torod.db.executor.report.ReportFactory;
-import com.torodb.torod.db.executor.servicefactory.LazyBlockingExecutorServiceProvider;
-import com.torodb.torod.db.executor.servicefactory.MemBlockingExecutorServiceProvider;
+import com.torodb.torod.db.backends.executor.DefaultExecutorFactory;
+import com.torodb.torod.db.backends.executor.ExecutorServiceProvider;
+import com.torodb.torod.db.backends.executor.report.DummyReportFactory;
+import com.torodb.torod.db.backends.executor.report.ReportFactory;
+import com.torodb.torod.db.backends.executor.servicefactory.LazyBlockingExecutorServiceProvider;
+import com.torodb.torod.db.backends.executor.servicefactory.MemBlockingExecutorServiceProvider;
 import javax.inject.Singleton;
 
 /**

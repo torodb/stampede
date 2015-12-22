@@ -4,6 +4,7 @@ package com.torodb.torod.db.executor.jobs;
 import com.torodb.torod.core.dbWrapper.DbConnection;
 import com.torodb.torod.core.exceptions.ToroException;
 import com.torodb.torod.core.exceptions.ToroRuntimeException;
+import com.torodb.torod.db.backends.executor.jobs.TransactionalJob;
 
 /**
  *

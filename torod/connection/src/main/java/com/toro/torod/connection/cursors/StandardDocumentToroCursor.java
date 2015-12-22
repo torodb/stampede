@@ -31,6 +31,7 @@ import com.torodb.torod.core.executor.SessionExecutor;
 import com.torodb.torod.core.executor.ToroTaskExecutionException;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.core.subdocument.ToroDocument;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import org.slf4j.Logger;
