@@ -19,6 +19,7 @@
  */
 package com.toro.torod.connection.cursors;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.torodb.torod.core.cursors.CursorId;
 import com.torodb.torod.core.d2r.D2RTranslator;
@@ -30,6 +31,7 @@ import com.torodb.torod.core.executor.SessionExecutor;
 import com.torodb.torod.core.executor.ToroTaskExecutionException;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.core.subdocument.ToroDocument;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import org.slf4j.Logger;
@@ -170,16 +172,23 @@ public class StandardDocumentToroCursor extends DefaultToroCursor<ToroDocument> 
                 }
                 limit = Math.min(limit, maxElements - position);
 
-                List<? extends SplitDocument> splitDocs = executor
-                        .readCursor(getId(), limit)
-                        .get();
-                List<ToroDocument> docs = Lists.newArrayListWithCapacity(
-                        splitDocs.size()
-                );
-                for (SplitDocument splitDocument : splitDocs) {
-                    docs.add(d2r.translate(splitDocument));
+                List<ToroDocument> docs;
+                if (limit > 0) {
+
+                    List<? extends SplitDocument> splitDocs = executor
+                            .readCursor(getId(), limit)
+                            .get();
+                    docs = Lists.newArrayListWithCapacity(
+                            splitDocs.size()
+                    );
+                    for (SplitDocument splitDocument : splitDocs) {
+                        docs.add(d2r.translate(splitDocument));
+                    }
+                    position += docs.size();
                 }
-                position += docs.size();
+                else {
+                    docs = ImmutableList.of();
+                }
                 
                 if (isAutoclosable() && position == maxElements) {
                     close(executor);

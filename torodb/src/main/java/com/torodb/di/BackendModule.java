@@ -26,13 +26,21 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import com.google.inject.AbstractModule;
+import com.torodb.torod.backends.drivers.postgresql.OfficialPostgreSQLDriver;
+import com.torodb.torod.backends.drivers.postgresql.PostgreSQLDriverProvider;
+import com.torodb.torod.core.dbWrapper.DbWrapper;
+import com.torodb.torod.db.backends.DatabaseInterface;
+import com.torodb.torod.db.backends.DbBackendConfiguration;
+import com.torodb.torod.db.backends.converters.BasicTypeToSqlType;
+import com.torodb.torod.db.backends.postgresql.PostgreSQLDbBackend;
 import com.torodb.config.model.Config;
 import com.torodb.config.model.backend.greenplum.Greenplum;
 import com.torodb.config.model.backend.postgres.Postgres;
 import com.torodb.config.visitor.BackendImplementationVisitor;
-import com.torodb.torod.backend.db.DbBackendConfiguration;
-import com.torodb.torod.backend.db.postgresql.PostgreSQLDbBackend;
 import com.torodb.torod.core.backend.DbBackend;
+import com.torodb.torod.db.backends.postgresql.PostgresqlDatabaseInterface;
+import com.torodb.torod.db.backends.postgresql.PostgresqlDbWrapper;
+import com.torodb.torod.db.backends.postgresql.converters.PostgresBasicTypeToSqlType;
 
 public class BackendModule extends AbstractModule implements BackendImplementationVisitor {
 	private final Config config;
@@ -50,6 +58,11 @@ public class BackendModule extends AbstractModule implements BackendImplementati
 	public void visit(Postgres value) {
 		bind(DbBackend.class).to(PostgreSQLDbBackend.class).in(Singleton.class);
 		bind(DbBackendConfiguration.class).to(DbBackendConfigurationMapper.class);
+		bind(DbWrapper.class).to(PostgresqlDbWrapper.class).in(Singleton.class);
+		bind(PostgresqlDbWrapper.class).in(Singleton.class);
+		bind(DatabaseInterface.class).to(PostgresqlDatabaseInterface.class).in(Singleton.class);
+		bind(BasicTypeToSqlType.class).to(PostgresBasicTypeToSqlType.class).in(Singleton.class);
+		bind(PostgreSQLDriverProvider.class).to(OfficialPostgreSQLDriver.class).in(Singleton.class);
 	}
 
 	@Override

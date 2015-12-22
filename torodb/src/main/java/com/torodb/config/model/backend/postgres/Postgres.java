@@ -22,6 +22,7 @@ package com.torodb.config.model.backend.postgres;
 
 import javax.validation.constraints.NotNull;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.torodb.config.annotation.Description;
@@ -63,7 +64,7 @@ public class Postgres implements BackendImplementation, Password {
 	@NotNull
 	@JsonProperty(required=true)
 	private String user = "torodb";
-	@Description("config.backend.postgres.password")
+	@JsonIgnore
 	private String password;
 	@Description("config.backend.postgres.toropassFile")
 	private String toropassFile = System.getProperty("user.home") + "/.toropass";
