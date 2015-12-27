@@ -9,7 +9,7 @@
     <parent>
         <artifactId>backends</artifactId>
         <groupId>com.torodb.torod.backends</groupId>
-        <version>0.40-SNAPSHOT</version>
+        <version>0.40-alpha1</version>
     </parent>
 
     <groupId>com.torodb.torod.backends</groupId>
