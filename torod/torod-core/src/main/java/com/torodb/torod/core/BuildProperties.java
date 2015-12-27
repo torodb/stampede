@@ -45,7 +45,7 @@ public interface BuildProperties {
 
     public String getGitBranch();
 
-    public String getGitRemoteOriginUrl();
+    public String getGitRemoteOriginURL();
 
     public String getJavaVersion();
 
