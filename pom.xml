@@ -1,8 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xmlns="http://maven.apache.org/POM/4.0.0"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+>
+
     <modelVersion>4.0.0</modelVersion>
+
+    <prerequisites>
+        <maven>3.2.2</maven>
+    </prerequisites>
 
     <groupId>com.torodb</groupId>
     <artifactId>torodb-parent</artifactId>
@@ -10,23 +16,27 @@
     <packaging>pom</packaging>
     
     <name>ToroDB parent</name>
-    
-    <prerequisites>
-        <maven>3.2.2</maven>
-    </prerequisites>
-    
+    <description>
+        ToroDB is an open source project that turns your RDBMS into a
+        MongoDB-compatible server, supporting the MongoDB query API and
+        MongoDB's replication, but storing your data into a reliable and trusted
+        ACID database. ToroDB currently supports PostgreSQL as a backend, but
+        others will be added in the future.
+
+        ToroDB natively implements the MongoDB protocol, so you can use it with
+        MongoDB tools and drivers, and features a document-to-relational mapping
+        algorithm that transforms the JSON documents into relational tables.
+        ToroDB also offers a native SQL layer and automatic data normalization
+        and partitioning based on JSON documents' implicit schema.
+    </description>
+    <url>http://www.torodb.com</url>
+    <inceptionYear>2014</inceptionYear>
+
     <organization>
         <name>8Kdata</name>
         <url>www.8kdata.com</url>
     </organization>
-    
-    <url>www.torodb.com</url>
 
-    <scm>
-        <connection>scm:git:https://github.com/torodb/</connection>
-    </scm>
-    <inceptionYear>2014</inceptionYear>
-    
     <licenses>
         <license>
             <name>GNU AFFERO GENERAL PUBLIC LICENSE, Version 3, 19 November 2007</name>
@@ -43,11 +53,28 @@
         </license>
     </licenses>
 
+    <developers>
+        <developer>
+            <id>torodb.8kdata.com</id>
+            <name>ToroDB Project Contributors</name>
+            <email>torodb@8kdata.com</email>
+            <url>https://github.com/torodb/torodb</url>
+            <organization>The ToroDB Project</organization>
+            <organizationUrl>http://torodb.com</organizationUrl>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:https://github.com/torodb/torodb.git</connection>
+        <developerConnection>scm:git:git@github.com:torodb/torodb.git</developerConnection>
+        <url>git@github.com:torodb/torodb.git</url>
+    </scm>
+
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <torod.version>${project.version}</torod.version>
-        
         <jackson.version>2.6.3</jackson.version>
+        <mongowp.version>0.20-SNAPSHOT</mongowp.version>
     </properties>
 
     <modules>
@@ -59,6 +86,42 @@
 
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>com.8kdata.mongowp</groupId>
+                <artifactId>mongo-server</artifactId>
+                <version>${mongowp.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.8kdata.mongowp</groupId>
+                <artifactId>mongo-server-api</artifactId>
+                <version>${mongowp.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.8kdata.mongowp</groupId>
+                <artifactId>mongo-server-api-safe</artifactId>
+                <version>${mongowp.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.8kdata.mongowp.api.safe.library</groupId>
+                <artifactId>v3m0</artifactId>
+                <version>${mongowp.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.8kdata.mongowp.</groupId>
+                <artifactId>mongo-server</artifactId>
+                <version>${mongowp.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.8kdata.mongowp.client</groupId>
+                <artifactId>core</artifactId>
+                <version>${mongowp.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.8kdata.mongowp.client</groupId>
+                <artifactId>driver-wrapper</artifactId>
+                <version>${mongowp.version}</version>
+            </dependency>
+
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-api</artifactId>
@@ -99,7 +162,6 @@
                 <artifactId>commons-configuration</artifactId>
                 <version>1.10</version>
             </dependency>
-            
             <dependency>
                 <groupId>org.postgresql</groupId>
                 <artifactId>postgresql</artifactId>
@@ -120,61 +182,10 @@
                 <artifactId>HikariCP-java6</artifactId>
                 <version>2.3.8</version>
             </dependency>
-            
             <dependency>
                 <groupId>org.threeten</groupId>
                 <artifactId>threetenbp</artifactId>
                 <version>1.3</version>
-            </dependency>
-            
-            <dependency>
-                <groupId>com.8kdata.mongowp</groupId>
-                <artifactId>mongo-server</artifactId>
-                <version>0.20-SNAPSHOT</version>
-            </dependency>
-            <dependency>
-                <groupId>com.8kdata.mongowp</groupId>
-                <artifactId>mongo-server-api</artifactId>
-                <version>0.20-SNAPSHOT</version>
-            </dependency>
-            <dependency>
-                <groupId>com.8kdata.mongowp</groupId>
-                <artifactId>mongo-server-api-safe</artifactId>
-                <version>0.20-SNAPSHOT</version>
-            </dependency>
-            <dependency>
-                <groupId>com.8kdata.mongowp.api.safe.library</groupId>
-                <artifactId>v3m0</artifactId>
-                <version>0.20-SNAPSHOT</version>
-            </dependency>
-            <dependency>
-                <groupId>com.8kdata.mongowp.</groupId>
-                <artifactId>mongo-server</artifactId>
-                <version>0.20-SNAPSHOT</version>
-            </dependency>
-            <dependency>
-                <groupId>com.8kdata.mongowp.client</groupId>
-                <artifactId>core</artifactId>
-                <version>0.20-SNAPSHOT</version>
-            </dependency>
-            <dependency>
-                <groupId>com.8kdata.mongowp.client</groupId>
-                <artifactId>driver-wrapper</artifactId>
-                <version>0.20-SNAPSHOT</version>
-            </dependency>
-
-            <dependency>
-                <groupId>com.google.code.findbugs</groupId>
-                <artifactId>jsr305</artifactId>
-                <version>3.0.0</version>
-                <scope>provided</scope>
-            </dependency>
-            <dependency>
-                <groupId>com.google.code.findbugs</groupId>
-                <artifactId>annotations</artifactId>
-                <version>3.0.0</version>
-                <scope>provided</scope>
-                <type>jar</type>
             </dependency>
             <dependency>
                 <groupId>com.google.inject</groupId>
@@ -202,14 +213,14 @@
                 <version>${jackson.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.codehaus.woodstox</groupId>
-                <artifactId>woodstox-core-asl</artifactId>
-                <version>4.4.1</version>
-            </dependency>
-            <dependency>
                 <groupId>com.fasterxml.jackson.module</groupId>
                 <artifactId>jackson-module-jsonSchema</artifactId>
                 <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.codehaus.woodstox</groupId>
+                <artifactId>woodstox-core-asl</artifactId>
+                <version>4.4.1</version>
             </dependency>
             <dependency>
                 <groupId>com.github.fge</groupId>
@@ -239,6 +250,21 @@
             </dependency>
 
             <dependency>
+                <groupId>com.google.code.findbugs</groupId>
+                <artifactId>jsr305</artifactId>
+                <version>3.0.0</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.google.code.findbugs</groupId>
+                <artifactId>annotations</artifactId>
+                <version>3.0.0</version>
+                <scope>provided</scope>
+                <type>jar</type>
+            </dependency>
+
+
+            <dependency>
                 <groupId>junit</groupId>
                 <artifactId>junit</artifactId>
                 <version>4.12</version>
@@ -257,6 +283,7 @@
                     </exclusion>
                 </exclusions>
             </dependency>
+
         </dependencies>
     </dependencyManagement>
 
@@ -533,5 +560,6 @@
             <name>OSSRH Release repository</name>  
             <url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
         </repository>
-    </distributionManagement> 
+    </distributionManagement>
+
 </project>

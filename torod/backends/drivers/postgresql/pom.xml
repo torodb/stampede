@@ -15,6 +15,14 @@
     <groupId>com.torodb.torod.backends.drivers</groupId>
     <artifactId>postgresql</artifactId>
 
+    <name>PostgreSQL driver</name>
+    <description>
+        PostgreSQL JDBC driver.
+        May be used by more databases than PostgreSQL itself, but provides some database-dependent configuration.
+        It also provides an abstraction to allow usage of several PostgreSQL JDBC drivers,
+        such as the "official" driver (pgjdbc) or the pgjdbc-ng driver.
+    </description>
+
     <dependencies>
         <dependency>
             <groupId>com.torodb.torod</groupId>
