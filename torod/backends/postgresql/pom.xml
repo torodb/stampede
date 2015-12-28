@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+>
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.torodb.torod.backends</groupId>
+        <artifactId>backends</artifactId>
+        <version>0.40-alpha1</version>
+    </parent>
+
+    <artifactId>postgresql</artifactId>
+    
+    <name>Torod: PostgreSQL backend</name>
+    <description>
+        PostgreSQL implementation of a ToroDB backend. This was the original backend implemented in ToroDB, and is
+        also considered as the default ToroDB backend and a reference implementation.
+    </description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.torodb.torod</groupId>
+            <artifactId>torod-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.torodb.torod.backends</groupId>
+            <artifactId>common</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.torodb.torod.backends.drivers</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>javax.inject</groupId>
+            <artifactId>javax.inject</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.google.inject</groupId>
+            <artifactId>guice</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.jooq</groupId>
+            <artifactId>jooq</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.jooq</groupId>
+            <artifactId>jooq-meta</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>jsr305</artifactId>
+            <type>jar</type>
+        </dependency>
+        <dependency>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>annotations</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+        </dependency>
+    </dependencies>
+    
+    <profiles>
+        <profile>
+            <id>postgres-meta-gen</id>
+            <build>
+                <plugins>
+                    <plugin>
+
+                        <!-- Specify the maven code generator plugin -->
+                        <groupId>org.jooq</groupId>
+                        <artifactId>jooq-codegen-maven</artifactId>
+                        <version>3.6.0</version>
+
+                        <!-- The plugin should hook into the generate goal -->
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>generate</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+
+                        <!-- Manage the plugin's dependency. In this example, we'll use a PostgreSQL database -->
+                        <dependencies>
+                            <dependency>
+                                <groupId>org.postgresql</groupId>
+                                <artifactId>postgresql</artifactId>
+                                <version>9.4-1200-jdbc41</version>
+                            </dependency>
+                        </dependencies>
+
+                        <!-- Specify the plugin configuration.
+                        The configuration format is the same as for the standalone code generator -->
+                        <configuration>
+
+                            <!-- JDBC connection parameters -->
+                            <jdbc>
+                                <driver>org.postgresql.Driver</driver>
+                                <url>jdbc:postgresql://localhost:5433/torod</url>
+                                <user>torod</user>
+                                <password>torod</password>
+                            </jdbc>
+
+                            <!-- Generator parameters -->
+                            <generator>
+                                <name>org.jooq.util.DefaultGenerator</name>
+                                <database>
+                                    <name>org.jooq.util.postgres.PostgresDatabase</name>
+                                    <includes>.*</includes>
+                                    <excludes></excludes>
+                                    <inputSchema>torodb</inputSchema>
+                                </database>
+                                <target>
+                                    <packageName>com.torodb.torod.db.meta</packageName>
+                                    <directory>target/generated-sources/jooq</directory>
+                                </target>
+                            </generator>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
+</project>

@@ -20,17 +20,16 @@
 
 package com.toro.torod.connection;
 
-import com.torodb.torod.core.connection.ToroConnection;
 import com.torodb.torod.core.Torod;
 import com.torodb.torod.core.backend.DbBackend;
 import com.torodb.torod.core.config.DocumentBuilderFactory;
+import com.torodb.torod.core.connection.ToroConnection;
 import com.torodb.torod.core.d2r.D2RTranslator;
 import com.torodb.torod.core.dbMetaInf.DbMetaInformationCache;
 import com.torodb.torod.core.dbWrapper.DbWrapper;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.exceptions.TorodStartupException;
 import com.torodb.torod.core.executor.ExecutorFactory;
-
 import javax.inject.Inject;
 
 /**

@@ -22,7 +22,6 @@ package com.torodb.torod.core;
 
 import com.torodb.torod.core.connection.ToroConnection;
 import com.torodb.torod.core.exceptions.TorodStartupException;
-
 import javax.annotation.concurrent.ThreadSafe;
 
 /**

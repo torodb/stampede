@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+>
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.torodb.torod</groupId>
+        <artifactId>torod-pom</artifactId>
+        <version>0.40-alpha1</version>
+    </parent>
+
+    <artifactId>mongodb-layer</artifactId>
+
+    <name>Torod: MongoDB layer</name>
+    <description>
+        MongoDB layer. Implementation of the callbacks provided by MongoWP to provide Mongo-like behavior to ToroDB.
+    </description>
+    
+    <dependencies>
+        <dependency>
+            <groupId>com.torodb.torod</groupId>
+            <artifactId>torod-core</artifactId>
+            <version>${torod.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.torodb.kvdocument</groupId>
+            <artifactId>mongo-converter</artifactId>
+            <version>${torod.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.8kdata.mongowp</groupId>
+            <artifactId>mongo-server-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.8kdata.mongowp</groupId>
+            <artifactId>mongo-server</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.8kdata.mongowp</groupId>
+            <artifactId>mongo-server-api-safe</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.8kdata.mongowp.api.safe.library</groupId>
+            <artifactId>v3m0</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.8kdata.mongowp.client</groupId>
+            <artifactId>core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.8kdata.mongowp.client</groupId>
+            <artifactId>driver-wrapper</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.inject</groupId>
+            <artifactId>guice</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>jsr305</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>annotations</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+</project>

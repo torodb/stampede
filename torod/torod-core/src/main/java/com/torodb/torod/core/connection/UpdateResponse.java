@@ -22,7 +22,6 @@ package com.torodb.torod.core.connection;
 
 import com.google.common.collect.Lists;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -39,6 +38,10 @@ public class UpdateResponse {
         this.modified = modified;
         this.insertedDocuments = insertedDocuments;
         this.errors = errors;
+    }
+
+    public boolean isSuccess() {
+        return errors.isEmpty();
     }
 
     public int getCandidates() {

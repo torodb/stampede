@@ -1,0 +1,18 @@
+generic:
+  logLevel: NONE
+  logPackages:
+    com.torodb: DEBUG
+protocol:
+  mongo:
+    net:
+      port: 27019
+    replication:
+      - replSetName: rs1
+        role: HIDDEN_SLAVE
+        syncSource: localhost:27017
+backend:
+  postgres:
+    host: localhost
+    port: 5432
+    user: root
+    password: toor

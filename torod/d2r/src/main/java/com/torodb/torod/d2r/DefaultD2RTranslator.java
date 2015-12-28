@@ -20,31 +20,23 @@
 
 package com.torodb.torod.d2r;
 
-import com.torodb.torod.core.subdocument.values.BooleanValue;
-import com.torodb.torod.core.subdocument.values.Value;
-import com.torodb.torod.core.subdocument.values.StringValue;
-import com.torodb.torod.core.subdocument.values.ValueVisitor;
-import com.torodb.torod.core.subdocument.values.ArrayValue;
-import com.torodb.torod.core.subdocument.values.IntegerValue;
-import com.torodb.torod.core.subdocument.values.LongValue;
-import com.torodb.torod.core.subdocument.values.DoubleValue;
-import com.torodb.torod.core.subdocument.values.NullValue;
+import com.torodb.kvdocument.types.GenericType;
+import com.torodb.kvdocument.values.DocValue;
+import com.torodb.kvdocument.values.ObjectValue;
 import com.torodb.torod.core.config.DocumentBuilderFactory;
 import com.torodb.torod.core.d2r.D2RTranslator;
 import com.torodb.torod.core.dbMetaInf.DbMetaInformationCache;
 import com.torodb.torod.core.executor.SessionExecutor;
-import com.torodb.torod.core.subdocument.structure.DocStructure;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.core.subdocument.SubDocument;
-import javax.inject.Inject;
 import com.torodb.torod.core.subdocument.ToroDocument;
 import com.torodb.torod.core.subdocument.structure.ArrayStructure;
+import com.torodb.torod.core.subdocument.structure.DocStructure;
 import com.torodb.torod.core.subdocument.structure.StructureElement;
+import com.torodb.torod.core.subdocument.values.StringValue;
 import com.torodb.torod.core.subdocument.values.*;
-import com.torodb.kvdocument.types.GenericType;
-import com.torodb.kvdocument.values.DocValue;
-import com.torodb.kvdocument.values.ObjectValue;
 import java.util.Map;
+import javax.inject.Inject;
 
 /**
  *
