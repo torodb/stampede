@@ -43,7 +43,7 @@ ToroDB is written in Java and requires:
 You may download the latest version (v. 0.40-alpha1) of ToroDB from 
 [the release page](https://github.com/torodb/torodb/releases/latest) on the 
 following packaging formats:
- * [tar.gz](https://github.com/torodb/torodb/releases/download/v0.40-alpha1/torodb.tar.bz2)
+ * [tar.bz2](https://github.com/torodb/torodb/releases/download/v0.40-alpha1/torodb.tar.bz2)
  * [zip](https://github.com/torodb/torodb/releases/download/v0.40-alpha1/torodb.zip)
 
 See below for instructions on how to run it.
