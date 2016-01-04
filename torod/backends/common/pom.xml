@@ -9,7 +9,7 @@
     <parent>
         <artifactId>backends</artifactId>
         <groupId>com.torodb.torod.backends</groupId>
-        <version>0.40-alpha1</version>
+        <version>0.40-alpha2-SNAPSHOT</version>
     </parent>
 
     <groupId>com.torodb.torod.backends</groupId>
@@ -50,7 +50,7 @@
         </dependency>
         <dependency>
             <groupId>com.zaxxer</groupId>
-            <artifactId>HikariCP-java6</artifactId>
+            <artifactId>HikariCP</artifactId>
         </dependency>
 
         <dependency>

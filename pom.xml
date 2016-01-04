@@ -12,7 +12,7 @@
 
     <groupId>com.torodb</groupId>
     <artifactId>torodb-parent</artifactId>
-    <version>0.40-alpha1</version>
+    <version>0.40-alpha2-SNAPSHOT</version>
     <packaging>pom</packaging>
     
     <name>ToroDB parent</name>
@@ -70,6 +70,11 @@
         <url>git@github.com:torodb/torodb.git</url>
     </scm>
 
+    <issueManagement>
+        <system>GitHub</system>
+        <url>https://github.com/torodb/torodb/issues</url>
+    </issueManagement>
+
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <torod.version>${project.version}</torod.version>
@@ -125,7 +130,7 @@
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-api</artifactId>
-                <version>1.7.12</version>
+                <version>1.7.13</version>
             </dependency>
             <dependency>
                 <groupId>ch.qos.logback</groupId>
@@ -135,7 +140,7 @@
             <dependency>
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
-                <version>18.0</version>
+                <version>19.0</version>
             </dependency>
             <dependency>
                 <groupId>javax.json</groupId>
@@ -165,7 +170,7 @@
             <dependency>
                 <groupId>org.postgresql</groupId>
                 <artifactId>postgresql</artifactId>
-                <version>9.4-1206-jdbc41</version>
+                <version>9.4.1207.jre7</version>
             </dependency>
             <dependency>
                 <groupId>org.jooq</groupId>
@@ -179,13 +184,13 @@
             </dependency>
             <dependency>
                 <groupId>com.zaxxer</groupId>
-                <artifactId>HikariCP-java6</artifactId>
-                <version>2.3.8</version>
+                <artifactId>HikariCP</artifactId>
+                <version>2.4.3</version>
             </dependency>
             <dependency>
                 <groupId>org.threeten</groupId>
                 <artifactId>threetenbp</artifactId>
-                <version>1.3</version>
+                <version>1.3.1</version>
             </dependency>
             <dependency>
                 <groupId>com.google.inject</groupId>
@@ -195,7 +200,7 @@
             <dependency>
                 <groupId>com.beust</groupId>
                 <artifactId>jcommander</artifactId>
-                <version>1.47</version> <!-- 1.48 requires jdk 7-->
+                <version>1.48</version>
             </dependency>
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
@@ -252,13 +257,13 @@
             <dependency>
                 <groupId>com.google.code.findbugs</groupId>
                 <artifactId>jsr305</artifactId>
-                <version>3.0.0</version>
+                <version>3.0.1</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>com.google.code.findbugs</groupId>
                 <artifactId>annotations</artifactId>
-                <version>3.0.0</version>
+                <version>3.0.1u2</version>
                 <scope>provided</scope>
                 <type>jar</type>
             </dependency>
