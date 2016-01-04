@@ -23,6 +23,7 @@ matrix:
       env: Protocol=MongoReplSet Backend=Postgres
   allow_failures:
     - env: Protocol=Mongo Backend=Greenplum
+    - env: Protocol=MongoReplSet Backend=Postgres
 
 before_script:
   - export GIT_BRANCH=$TRAVIS_BRANCH
