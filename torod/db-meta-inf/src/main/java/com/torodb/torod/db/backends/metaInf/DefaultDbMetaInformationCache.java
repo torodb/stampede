@@ -101,7 +101,6 @@ public class DefaultDbMetaInformationCache implements DbMetaInformationCache {
 
     @Override
     public void shutdown() {
-        Futures.immediateFuture(null);
     }
 
     @Override
