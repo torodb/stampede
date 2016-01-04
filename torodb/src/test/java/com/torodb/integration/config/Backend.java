@@ -16,4 +16,18 @@ public enum Backend {
 		
 		return currentBackend;
 	}
+	
+	private final Backend baseBackend;
+	
+	private Backend() {
+		this.baseBackend = this;
+	}
+	
+	private Backend(Backend baseBackend) {
+		this.baseBackend = baseBackend;
+	}
+	
+	public Backend baseBackend() {
+		return baseBackend;
+	}
 }

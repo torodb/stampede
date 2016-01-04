@@ -23,6 +23,7 @@ package com.torodb.integration;
 import java.io.File;
 import java.sql.Connection;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -43,6 +44,8 @@ import com.torodb.config.model.backend.greenplum.Greenplum;
 import com.torodb.config.model.backend.postgres.Postgres;
 import com.torodb.config.model.generic.LogLevel;
 import com.torodb.config.model.protocol.mongo.Mongo;
+import com.torodb.config.model.protocol.mongo.Replication;
+import com.torodb.config.util.ConfigUtils;
 import com.torodb.di.BackendModule;
 import com.torodb.di.ConfigModule;
 import com.torodb.di.ConnectionModule;
@@ -90,7 +93,7 @@ public class ToroRunnerClassRule implements TestRule {
 
 	private boolean started = false;
 	private Shutdowner shutdowner;
-	private Config config;
+	private final Config config = new Config();
 
 	public void addUncaughtException(Throwable throwable) {
 		synchronized (UNCAUGHT_EXCEPTIONS) {
@@ -115,25 +118,7 @@ public class ToroRunnerClassRule implements TestRule {
 		if (!started) {
 			started = true;
 			
-			config = new Config();
-			
-			switch(Protocol.CURRENT) {
-			case Mongo:
-				config.getProtocol().setMongo(new Mongo());
-				break;
-			}
-			
-			
-			switch(Backend.CURRENT) {
-			case Postgres:
-				config.getBackend().setBackendImplementation(new Postgres());
-				config.getBackend().asPostgres().setPassword("torodb");
-				break;
-			case Greenplum:
-				config.getBackend().setBackendImplementation(new Greenplum());
-				config.getBackend().asGreenplum().setPassword("torodb");
-				break;
-			}
+			setupConfig();
 			
 			Thread.setDefaultUncaughtExceptionHandler(
 					new Thread.UncaughtExceptionHandler() {
@@ -144,25 +129,6 @@ public class ToroRunnerClassRule implements TestRule {
 					});
 			
 			new File("/tmp/data/db").mkdirs();
-			
-			if (config.getBackend().isPostgresLike()) {
-				PGSimpleDataSource dataSource = new PGSimpleDataSource();
-		
-				dataSource.setUser(config.getBackend().asPostgres().getUser());
-				dataSource.setPassword(config.getBackend().asPostgres().getPassword());
-				dataSource.setServerName(config.getBackend().asPostgres().getHost());
-				dataSource.setPortNumber(config.getBackend().asPostgres().getPort());
-				dataSource.setDatabaseName("template1");
-		
-				Connection connection = dataSource.getConnection();
-				try {
-					connection.prepareCall("DROP DATABASE torod").execute();
-				} catch(PSQLException psqlException) {
-					
-				}
-				connection.prepareCall("CREATE DATABASE torod OWNER torodb").execute();
-				connection.close();
-			}
 			
 			Logger root = LogbackUtils.getRootLogger();
 	
@@ -182,7 +148,25 @@ public class ToroRunnerClassRule implements TestRule {
 			uncaughtExceptionAppender.setContext(LogbackUtils.getLoggerContext());
 			uncaughtExceptionAppender.start();
 			root.addAppender(uncaughtExceptionAppender);
-	
+			
+			if (config.getBackend().isPostgresLike()) {
+				PGSimpleDataSource dataSource = new PGSimpleDataSource();
+		
+				dataSource.setUser(config.getBackend().asPostgres().getUser());
+				dataSource.setPassword(config.getBackend().asPostgres().getPassword());
+				dataSource.setServerName(config.getBackend().asPostgres().getHost());
+				dataSource.setPortNumber(config.getBackend().asPostgres().getPort());
+				dataSource.setDatabaseName("template1");
+		
+				Connection connection = dataSource.getConnection();
+				try {
+					connection.prepareCall("DROP DATABASE torod").execute();
+				} catch(PSQLException psqlException) {
+					
+				}
+				connection.prepareCall("CREATE DATABASE torod OWNER torodb").execute();
+				connection.close();
+			}
 			
 			Injector injector = Guice.createInjector(
 					new ConfigModule(config),
@@ -230,13 +214,53 @@ public class ToroRunnerClassRule implements TestRule {
 				throw new RuntimeException(
 						"Toro failed to start after waiting for " + TORO_BOOT_MAX_INTERVAL_MILLIS + " milliseconds.");
 			}
+			List<Throwable> exceptions = getUcaughtExceptions();
+			if (!exceptions.isEmpty()) {
+				throw new RuntimeException(exceptions.get(0));
+			}
 		}
+	}
+
+	private void setupConfig() {
+		switch(Protocol.CURRENT) {
+		case Mongo:
+			config.getProtocol().setMongo(new Mongo());
+			break;
+		case MongoReplSet:
+			config.getProtocol().setMongo(new Mongo());
+			Replication replication = new Replication();
+			replication.setReplSetName("rs1");
+			replication.setSyncSource("localhost:27020");
+			config.getProtocol().getMongo().setReplication(
+					Arrays.asList(new Replication[] { replication }));
+			break;
+		}
+		
+		
+		switch(Backend.CURRENT) {
+		case Postgres:
+			config.getBackend().setBackendImplementation(new Postgres());
+			config.getBackend().asPostgres().setPassword("torodb");
+			break;
+		case Greenplum:
+			config.getBackend().setBackendImplementation(new Greenplum());
+			config.getBackend().asGreenplum().setPort(6432);
+			config.getBackend().asGreenplum().setPassword("torodb");
+			break;
+		}
+		
+		ConfigUtils.validateBean(config);
 	}
 
 	private void shutdownToro() {
 		//TODO: Fix shutdown to permit restart inside same JVM
 		//shutdowner.shutdown();
 		//started = false;
+		
+		List<Throwable> exceptions = getUcaughtExceptions();
+		if (!exceptions.isEmpty()) {
+			throw new RuntimeException(exceptions.get(0));
+		}
 	}
 
 }

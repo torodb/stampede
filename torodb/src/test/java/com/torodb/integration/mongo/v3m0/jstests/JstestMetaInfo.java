@@ -9,12 +9,15 @@ import java.lang.annotation.Target;
 import javax.inject.Qualifier;
 
 import com.torodb.integration.config.Backend;
+import com.torodb.integration.config.Protocol;
 
 @Qualifier
 @Retention(RetentionPolicy.RUNTIME)
 @Target({FIELD})
 public @interface JstestMetaInfo {
 	JstestType type() default JstestType.Working;
+	
+	Protocol[] protocols();
 	
 	Backend[] backends();
 	
@@ -25,16 +28,15 @@ public @interface JstestMetaInfo {
 		NotImplemented,
 		Ignored;
 		
-		public static <T extends Enum<?> & Jstest> JstestMetaInfo getJstestMetaInfoFor(Class<? extends T> jstestClass, String testResource, Backend backend) {
+		public static <T extends Enum<?> & Jstest> JstestMetaInfo getJstestMetaInfoFor(Class<? extends T> jstestClass, String testResource, Protocol protocol, Backend backend) {
 			try {
 				for (Jstest test : (Jstest[]) jstestClass.getMethod("values").invoke(null)) {
 					for (String testResourceFound : test.getTestResources()) {
 						if (testResourceFound.equals(testResource)) {
 							JstestMetaInfo jstestMetaInfo = jstestClass.getField(test.toString()).getAnnotation(JstestMetaInfo.class);
-							for (Backend backendFound : jstestMetaInfo.backends()) {
-								if (backendFound.equals(Backend.CURRENT)) {
-									return jstestMetaInfo;
-								}
+							if (contains(jstestMetaInfo.backends(), backend) && 
+									contains(jstestMetaInfo.protocols(), protocol)) {
+								return jstestMetaInfo;
 							}
 						}
 					}
@@ -44,6 +46,18 @@ public @interface JstestMetaInfo {
 			}
 
 			throw new RuntimeException("Test " + testResource + " not found in " + jstestClass.getName());
+		}
+
+		private static <T extends Enum<?>> boolean contains(T[] array, T value) {
+			if (array != null) {
+				for (T element : array) {
+					if (element == value) {
+						return true;
+					}
+				}
+			}
+			
+			return false;
 		}
 	}
 }

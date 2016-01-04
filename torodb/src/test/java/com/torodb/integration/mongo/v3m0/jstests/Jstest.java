@@ -21,8 +21,9 @@
 package com.torodb.integration.mongo.v3m0.jstests;
 
 import com.torodb.integration.config.Backend;
+import com.torodb.integration.config.Protocol;
 
 public interface Jstest {
 	public String[] getTestResources();
-	public JstestMetaInfo getJstestMetaInfoFor(String testResource, Backend backend);
+	public JstestMetaInfo getJstestMetaInfoFor(String testResource, Protocol protocol, Backend backend);
 }

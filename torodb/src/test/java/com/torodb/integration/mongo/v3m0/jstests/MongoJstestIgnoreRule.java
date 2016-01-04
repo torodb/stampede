@@ -17,8 +17,9 @@ public class MongoJstestIgnoreRule implements MethodRule {
 			Jstest jstest = ((JstestsIT) target).getJstest();
 			String testResource = ((JstestsIT) target).getTestResource();
 			Backend backend = Backend.CURRENT;
-			JstestMetaInfo jstestMetaInfo = jstest.getJstestMetaInfoFor(testResource, backend);
-			if (Protocol.Mongo != Protocol.CURRENT || 
+			Protocol protocol = Protocol.CURRENT;
+			JstestMetaInfo jstestMetaInfo = jstest.getJstestMetaInfoFor(testResource, protocol, backend);
+			if (Protocol.Mongo != Protocol.CURRENT.baseProtocol() ||
 					jstestMetaInfo.type() != JstestMetaInfo.JstestType.Working) {
 				result = new IgnoreStatement("Ignored becouse " + jstestMetaInfo.type().name());
 			}

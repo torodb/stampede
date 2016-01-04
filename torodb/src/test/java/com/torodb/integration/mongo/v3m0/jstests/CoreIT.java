@@ -20,7 +20,10 @@
 
 package com.torodb.integration.mongo.v3m0.jstests;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -28,6 +31,7 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
 import com.torodb.integration.config.Backend;
+import com.torodb.integration.config.Protocol;
 import com.torodb.integration.mongo.v3m0.jstests.JstestMetaInfo.JstestType;
 
 
@@ -48,25 +52,33 @@ public class CoreIT extends JstestsIT {
 	}
 	
 	public enum Tests implements Jstest {
-		@JstestMetaInfo(type=JstestType.Working,backends={Backend.Postgres,Backend.Greenplum})
+		@JstestMetaInfo(type=JstestType.Working,protocols={Protocol.Mongo},backends={Backend.Postgres})
 		working(WORKING),
-		@JstestMetaInfo(type=JstestType.Failing,backends={Backend.Postgres,Backend.Greenplum})
+		@JstestMetaInfo(type=JstestType.Failing,protocols={Protocol.Mongo},backends={Backend.Greenplum})
+		greenplum_failing(WORKING),
+		@JstestMetaInfo(type=JstestType.Failing,protocols={Protocol.Mongo},backends={Backend.Postgres,Backend.Greenplum})
 		failing(FAILING),
-		@JstestMetaInfo(type=JstestType.FalsePositive,backends={Backend.Postgres,Backend.Greenplum})
+		@JstestMetaInfo(type=JstestType.FalsePositive,protocols={Protocol.Mongo},backends={Backend.Postgres,Backend.Greenplum})
 		falsePositive(FALSE_POSITIVE),
-		@JstestMetaInfo(type=JstestType.NotImplemented,backends={Backend.Postgres,Backend.Greenplum})
+		@JstestMetaInfo(type=JstestType.NotImplemented,protocols={Protocol.Mongo},backends={Backend.Postgres,Backend.Greenplum})
 		notImplemented(NOT_IMPLEMENTED),
-		@JstestMetaInfo(type=JstestType.Ignored,backends={Backend.Postgres,Backend.Greenplum})
-		ignored(IGNORED);
+		@JstestMetaInfo(type=JstestType.Ignored,protocols={Protocol.Mongo},backends={Backend.Postgres,Backend.Greenplum})
+		ignored(IGNORED),
+		@JstestMetaInfo(type=JstestType.Failing,protocols={Protocol.MongoReplSet},backends={Backend.Postgres,Backend.Greenplum})
+		mongo_repl_failing(WORKING, FAILING, FALSE_POSITIVE, NOT_IMPLEMENTED, IGNORED);
 		
 		private final String[] testResources;
 		
-		private Tests(String testResource) {
-			testResources = new String[] { testResource };
+		private Tests(String...testResourceArray) {
+			testResources = testResourceArray;
 		}
 		
-		private Tests(String[] testResources) {
-			this.testResources = testResources;
+		private Tests(String[]...testResourcesArray) {
+			List<String> testResourceList = new ArrayList<String>();
+			for (String[] testResources : testResourcesArray) {
+				testResourceList.addAll(Arrays.asList(testResources));
+			}
+			this.testResources = testResourceList.toArray(new String[testResourceList.size()]);
 		}
 		
 		@Override
@@ -75,8 +87,8 @@ public class CoreIT extends JstestsIT {
 		}
 		
 		@Override
-		public JstestMetaInfo getJstestMetaInfoFor(String testResource, Backend backend) {
-			return JstestType.getJstestMetaInfoFor(getClass(), testResource, backend);
+		public JstestMetaInfo getJstestMetaInfoFor(String testResource, Protocol protocol, Backend backend) {
+			return JstestType.getJstestMetaInfoFor(getClass(), testResource, protocol, backend);
 		}
 	}
 	

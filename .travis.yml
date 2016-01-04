@@ -1,25 +1,35 @@
 language: java
-script: mvn -Psafer -Passembler -B -e -T 1C verify
 jdk:
   - oraclejdk8
   - oraclejdk7
+script: mvn -Psafer -Passembler -B -e -T 1C verify
 addons:
   postgresql: "9.4"
 services:
   - postgresql
 
 env:
-  - Protocol=Mongo Backend=Postgres
-  - Protocol=Mongo Backend=Greenplum
+  matrix:
+    - Protocol=Mongo Backend=Postgres
+    - Protocol=Mongo Backend=Postgres
+    - Protocol=Mongo Backend=Greenplum
+    - Protocol=MongoReplSet Backend=Postgres
+
+matrix:
+  exclude:
+    - jdk: oraclejdk7
+      env: Protocol=Mongo Backend=Greenplum
+    - jdk: oraclejdk7
+      env: Protocol=MongoReplSet Backend=Postgres
+  allow_failures:
+    - env: Protocol=Mongo Backend=Greenplum
 
 before_script:
   - export GIT_BRANCH=$TRAVIS_BRANCH
-  - psql -c "create user torodb with superuser password 'torodb';" -U postgres
-  - wget http://downloads.mongodb.org/linux/mongodb-linux-x86_64-ubuntu1204-3.0.8.tgz -O /tmp/mongodb.tgz
-  - tar -xvf /tmp/mongodb.tgz
-  - export PATH=$(ls -d $PWD/mongodb-linux-x86_64-ubuntu1204-3.0*)/bin:$PATH
+  - source ./.travis/prepare_backend.sh
+  - source ./.travis/prepare_protocol.sh
   - echo $PATH
-  - mongo --version
+  - java -version
 
 sudo: false
 

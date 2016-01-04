@@ -21,7 +21,8 @@
 package com.torodb.integration.config;
 
 public enum Protocol {
-	Mongo(MongoTest.class);
+	Mongo,
+	MongoReplSet(Mongo);
 	
 	public static final Protocol CURRENT = currentProtocol();
 	
@@ -36,16 +37,17 @@ public enum Protocol {
 		return currentProtocol;
 	}
 	
-	private final Class<?> interfaceClass;
+	private final Protocol baseProtocol;
 	
-	private Protocol(Class<?> interfaceClass) {
-		this.interfaceClass = interfaceClass;
+	private Protocol() {
+		this.baseProtocol = this;
 	}
 	
-	public Class<?> interfaceClass() {
-		return interfaceClass;
+	private Protocol(Protocol baseProtocol) {
+		this.baseProtocol = baseProtocol;
 	}
-
-	public interface MongoTest {}
-	public interface NoneTest {}
+	
+	public Protocol baseProtocol() {
+		return baseProtocol;
+	}
 }
