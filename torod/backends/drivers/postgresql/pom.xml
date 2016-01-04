@@ -9,11 +9,19 @@
     <parent>
         <groupId>com.torodb.torod.backends</groupId>
         <artifactId>drivers</artifactId>
-        <version>0.40-SNAPSHOT</version>
+        <version>0.40-alpha1</version>
     </parent>
 
     <groupId>com.torodb.torod.backends.drivers</groupId>
     <artifactId>postgresql</artifactId>
+
+    <name>PostgreSQL driver</name>
+    <description>
+        PostgreSQL JDBC driver.
+        May be used by more databases than PostgreSQL itself, but provides some database-dependent configuration.
+        It also provides an abstraction to allow usage of several PostgreSQL JDBC drivers,
+        such as the "official" driver (pgjdbc) or the pgjdbc-ng driver.
+    </description>
 
     <dependencies>
         <dependency>

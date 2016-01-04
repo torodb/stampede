@@ -22,15 +22,16 @@ package com.torodb;
 
 import com.google.common.io.Resources;
 import com.torodb.torod.core.BuildProperties;
+import org.apache.commons.configuration.ConfigurationException;
+import org.apache.commons.configuration.PropertiesConfiguration;
+import org.apache.commons.lang.time.DateUtils;
+
+import javax.annotation.concurrent.Immutable;
+import javax.inject.Singleton;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.annotation.concurrent.Immutable;
-import javax.inject.Singleton;
-import org.apache.commons.configuration.ConfigurationException;
-import org.apache.commons.configuration.PropertiesConfiguration;
-import org.apache.commons.lang.time.DateUtils;
 
 @Immutable
 @Singleton
@@ -47,7 +48,7 @@ public class DefaultBuildProperties implements BuildProperties {
     private final Date buildTime;
     private final String gitCommitId;
     private final String gitBranch;
-    private final String gitRemoteOriginUrl;
+    private final String gitRemoteOriginURL;
     private final String javaVersion;
     private final String javaVendor;
     private final String javaVMSpecificationVersion;
@@ -80,23 +81,23 @@ public class DefaultBuildProperties implements BuildProperties {
 
         // DateUtils.parseDate may be replaced by SimpleDateFormat if using Java7
         try {
-            buildTime = DateUtils.parseDate(properties.getString("build.timestamp"), new String[]{ ISO8601_FORMAT_STRING });
+            buildTime = DateUtils.parseDate(properties.getString("buildTimestamp"), new String[]{ ISO8601_FORMAT_STRING });
         } catch (ParseException e) {
-            throw new RuntimeException("build.timestamp property not in ISO8601 format");
+            throw new RuntimeException("buildTimestamp property not in ISO8601 format");
         }
 
-        gitCommitId = properties.getString("git.commit.id");
-        gitBranch = properties.getString("git.branch");
-        gitRemoteOriginUrl = properties.getString("git.remote.origin.url");
+        gitCommitId = properties.getString("gitCommitId");
+        gitBranch = properties.getString("gitBranch");
+        gitRemoteOriginURL = properties.getString("gitRemoteOriginURL");
 
-        javaVersion = properties.getString("java.version");
-        javaVendor = properties.getString("java.vendor");
-        javaVMSpecificationVersion = properties.getString("java.vm.specification.version");
-        javaVMVersion = properties.getString("java.vm.version");
+        javaVersion = properties.getString("javaVersion");
+        javaVendor = properties.getString("javaVendor");
+        javaVMSpecificationVersion = properties.getString("javaVMSpecificationVersion");
+        javaVMVersion = properties.getString("javaVMVersion");
 
-        osName = properties.getString("os.name");
-        osArch = properties.getString("os.arch");
-        osVersion = properties.getString("os.version");
+        osName = properties.getString("osName");
+        osArch = properties.getString("osArch");
+        osVersion = properties.getString("osVersion");
     }
 
     @Override
@@ -139,9 +140,8 @@ public class DefaultBuildProperties implements BuildProperties {
         return gitBranch;
     }
 
-    @Override
-    public String getGitRemoteOriginUrl() {
-        return gitRemoteOriginUrl;
+    public String getGitRemoteOriginURL() {
+        return gitRemoteOriginURL;
     }
 
     @Override

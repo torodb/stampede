@@ -1,21 +1,37 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+>
+
     <modelVersion>4.0.0</modelVersion>
+
     <parent>
         <groupId>com.torodb.torod</groupId>
         <artifactId>torod-pom</artifactId>
-        <version>0.40-SNAPSHOT</version>
+        <version>0.40-alpha1</version>
     </parent>
+
     <artifactId>d2r</artifactId>
     
-    <name>Torod: D2M</name>
-    <packaging>jar</packaging>
+    <name>Torod: D2R</name>
+    <description>
+        D2M is Document-to-Relational, a module that implements the algorithm that allows a hierarchical key-value
+        document to be transformed into a relational representation.
+    </description>
+
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>torod-core</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.torodb.kvdocument</groupId>
+            <artifactId>kvdocument-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <dependency>
             <groupId>javax.inject</groupId>
             <artifactId>javax.inject</artifactId>
@@ -29,22 +45,17 @@
             <artifactId>jsr305</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.torodb.kvdocument</groupId>
-            <artifactId>kvdocument-core</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
             <groupId>com.google.code.findbugs</groupId>
             <artifactId>annotations</artifactId>
-            <type>jar</type>
         </dependency>
-        
+
         <dependency>
             <groupId>com.torodb.kvdocument</groupId>
             <artifactId>json-converter</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
+
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
@@ -56,4 +67,5 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
 </project>

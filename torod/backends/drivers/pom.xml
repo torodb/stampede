@@ -5,16 +5,24 @@
 >
 
     <modelVersion>4.0.0</modelVersion>
-    <packaging>pom</packaging>
 
     <parent>
         <groupId>com.torodb.torod.backends</groupId>
         <artifactId>backends</artifactId>
-        <version>0.40-SNAPSHOT</version>
+        <version>0.40-alpha1</version>
     </parent>
 
     <groupId>com.torodb.torod.backends</groupId>
     <artifactId>drivers</artifactId>
+    <packaging>pom</packaging>
+
+    <name>Backends database drivers</name>
+    <description>
+        Parent project for the backend database drivers.
+        Drivers are kept independent of the database implementation as some databases may share the same drivers
+        (for instance, many Postgres-derived databases use the same JDBC drivers, as they implement the same wire
+        protocol). However, database-dependent configuration is possible from the database backend module.
+    </description>
 
     <modules>
         <module>postgresql</module>

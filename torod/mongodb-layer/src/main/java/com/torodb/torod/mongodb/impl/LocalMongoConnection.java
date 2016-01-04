@@ -2,8 +2,8 @@
 package com.torodb.torod.mongodb.impl;
 
 import com.eightkdata.mongowp.client.core.MongoConnection;
-import com.eightkdata.mongowp.messages.request.*;
 import com.eightkdata.mongowp.messages.request.InsertMessage.Flag;
+import com.eightkdata.mongowp.messages.request.*;
 import com.eightkdata.mongowp.messages.response.ReplyMessage;
 import com.eightkdata.mongowp.mongoserver.api.safe.*;
 import com.eightkdata.mongowp.mongoserver.api.safe.pojos.MongoCursor;
@@ -91,14 +91,14 @@ public class LocalMongoConnection implements MongoConnection  {
 
         Request request = newRequest(database);
         QueryRequest queryRequest = new QueryRequest.Builder(database, collection)
-                .setAutoclose(false) //TODO: decide how to set that
+                .setAutoclose(!flags.contains(QueryMessage.Flag.TAILABLE_CURSOR))
                 .setAwaitData(flags.contains(QueryMessage.Flag.AWAIT_DATA))
                 .setExhaust(flags.contains(QueryMessage.Flag.EXHAUST))
                 .setLimit(numberToReturn)
                 .setNoCursorTimeout(flags.contains(QueryMessage.Flag.NO_CURSOR_TIMEOUT))
                 .setNumberToSkip(numberToSkip)
                 .setOplogReplay(flags.contains(QueryMessage.Flag.OPLOG_REPLAY))
-                .setPartial(false) //TODO: decide how to set that
+                .setPartial(flags.contains(QueryMessage.Flag.PARTIAL))
                 .setProjection(projection)
                 .setQuery(query)
                 .setSlaveOk(flags.contains(QueryMessage.Flag.SLAVE_OK))
