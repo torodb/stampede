@@ -21,7 +21,10 @@
 package com.torodb.torod.mongodb.unsafe;
 
 import com.eightkdata.mongowp.mongoserver.api.QueryCommandProcessor;
-import com.eightkdata.mongowp.mongoserver.api.commands.*;
+import com.eightkdata.mongowp.mongoserver.api.commands.CollStatsReply;
+import com.eightkdata.mongowp.mongoserver.api.commands.CollStatsRequest;
+import com.eightkdata.mongowp.mongoserver.api.commands.CountReply;
+import com.eightkdata.mongowp.mongoserver.api.commands.CountRequest;
 import com.eightkdata.mongowp.mongoserver.api.safe.tools.bson.BsonReaderTool;
 import com.eightkdata.mongowp.mongoserver.callback.MessageReplier;
 import com.eightkdata.mongowp.mongoserver.protocol.MongoWP;
@@ -42,7 +45,10 @@ import com.torodb.kvdocument.values.ObjectValue;
 import com.torodb.torod.core.BuildProperties;
 import com.torodb.torod.core.WriteFailMode;
 import com.torodb.torod.core.annotations.DatabaseName;
-import com.torodb.torod.core.connection.*;
+import com.torodb.torod.core.connection.ToroConnection;
+import com.torodb.torod.core.connection.ToroTransaction;
+import com.torodb.torod.core.connection.TransactionMetainfo;
+import com.torodb.torod.core.connection.UpdateResponse;
 import com.torodb.torod.core.cursors.UserCursor;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.exceptions.ExistentIndexException;
@@ -103,17 +109,14 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
             );
         }
         
-        ToroTransaction transaction = connection.createTransaction();
-        
-        try {
+        try (ToroTransaction transaction
+                = connection.createTransaction(TransactionMetainfo.READ_ONLY)) {
             Integer count = transaction.count(
                     request.getCollection(), 
                     queryCriteria
             ).get();
             
             return new CountReply(count);
-        } finally {
-            transaction.close();
         }
 	}
 
@@ -151,9 +154,8 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
     		updates.add(new UpdateOperation(queryCriteria, updateAction, upsert, onlyOne));
     	}
 		
-        ToroTransaction transaction = connection.createTransaction();
-        
-        try {
+        try (ToroTransaction transaction
+                = connection.createTransaction(TransactionMetainfo.READ_ONLY)) {
         	Future<UpdateResponse> futureUpdateResponse = transaction.update(collection, updates, writeFailMode);
         	
             Future<?> futureCommitResponse = transaction.commit();
@@ -170,8 +172,6 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
                             "The current implementation of update command is not registered on GetLastError"
                     )
             );
-        } finally {
-           	transaction.close();
         }
 		
 		result.put("ok", MongoWP.BSON_OK);
@@ -239,9 +239,8 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
 
         int numIndexesBefore;
 
-        ToroTransaction transaction = null;
-        try {
-            transaction = connection.createTransaction();
+        try (ToroTransaction transaction
+                = connection.createTransaction(TransactionMetainfo.READ_ONLY)) {
 
             numIndexesBefore = transaction.getIndexes(collection).size();
             try {
@@ -328,11 +327,6 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
                 }
             }
         }
-        finally {
-            if (transaction != null) {
-                transaction.close();
-            }
-        }
 
     }
 
@@ -362,9 +356,8 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
         
         ToroConnection connection = getConnection(messageReplier.getAttributeMap());
         
-        ToroTransaction transaction = null;
-        try {
-            transaction = connection.createTransaction();
+        try (ToroTransaction transaction
+                = connection.createTransaction(TransactionMetainfo.READ_ONLY)) {
             
             if (indexName.equals("*")) { //TODO: Support * in deleteIndexes
                 reply.put("ok", MongoWP.BSON_KO);
@@ -385,10 +378,6 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
             
             reply.put("ok", MongoWP.BSON_OK);
             messageReplier.replyMessageNoCursor(reply);
-        } finally {
-            if (transaction != null) {
-                transaction.close();
-            }
         }
     }
 	
@@ -635,9 +624,8 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
     public void listDatabases(MessageReplier messageReplier) throws ExecutionException, InterruptedException, ImplementationDbException{
         ToroConnection connection = getConnection(messageReplier.getAttributeMap());
         
-        ToroTransaction transaction = connection.createTransaction();
-        
-        try {
+        try (ToroTransaction transaction
+                = connection.createTransaction(TransactionMetainfo.READ_ONLY)) {
             List<? extends Database> databases
                     = transaction.getDatabases().get();
 
@@ -660,8 +648,6 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
             reply.put("ok", MongoWP.BSON_OK);
 
             messageReplier.replyMessageNoCursor(reply);
-        } finally {
-            transaction.close();
         }
     }
 
@@ -680,9 +666,9 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
                 
         ToroConnection connection = getConnection(request.getAttributes());
         
-        ToroTransaction transaction = connection.createTransaction();
         int scale = replyBuilder.getScale();
-        try {
+        try (ToroTransaction transaction
+                = connection.createTransaction(TransactionMetainfo.READ_ONLY)) {
             Collection<? extends NamedToroIndex> indexes
                     = transaction.getIndexes(request.getCollection());
             Map<String, Long> sizeByMap = Maps.newHashMapWithExpectedSize(indexes.size());
@@ -715,8 +701,6 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
             );
             
             return replyBuilder.build();
-        } finally {
-            transaction.close();
         }
     }
 
@@ -792,12 +776,15 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
     public void listIndexes(MessageReplier messageReplier, String collection)
             throws Exception {
         ToroConnection connection = getConnection(messageReplier.getAttributeMap());
-        ToroTransaction transaction = connection.createTransaction();
-        
-        Collection<? extends NamedToroIndex> indexes = transaction.getIndexes(collection);
-        
+        Collection<? extends NamedToroIndex> indexes;
+        try (ToroTransaction transaction
+                = connection.createTransaction(TransactionMetainfo.READ_ONLY)) {
+
+            indexes = transaction.getIndexes(collection);
+        }
+
         BsonArray firstBatch = new BsonArray();
-        
+
         for (NamedToroIndex index : indexes) {
             String collectionNamespace = databaseName + '.' + collection;
             ObjectValue.Builder objBuider = new ObjectValue.Builder()
@@ -814,12 +801,12 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
                 );
             }
             objBuider.putValue("key", keyBuilder);
-            
+
             firstBatch.add(
                 MongoValueConverter.translateObject(objBuider.build())
             );
         }
-        
+
         BsonDocument root = new BsonDocument();
         root.append("ok", MongoWP.BSON_OK);
         root.append("cursor", new BsonDocument()

@@ -15,7 +15,7 @@
     <groupId>com.torodb.torod.backends</groupId>
     <artifactId>common</artifactId>
 
-    <name>Backends - common</name>
+    <name>Torod: Backends - common</name>
     <description>
         Common infrastructure for database backends. Contains most of the logic to operate database backends, providing
         interfaces for database-specific queries, syntax and behavior.

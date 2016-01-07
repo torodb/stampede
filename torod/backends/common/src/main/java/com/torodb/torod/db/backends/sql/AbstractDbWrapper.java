@@ -25,6 +25,7 @@ import com.torodb.torod.core.annotations.DatabaseName;
 import com.torodb.torod.core.backend.DbBackend;
 import com.torodb.torod.core.cursors.CursorId;
 import com.torodb.torod.core.dbWrapper.DbConnection;
+import com.torodb.torod.core.dbWrapper.DbConnection.Metainfo;
 import com.torodb.torod.core.dbWrapper.DbWrapper;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.dbWrapper.exceptions.UserDbException;
@@ -33,18 +34,10 @@ import com.torodb.torod.core.language.querycriteria.QueryCriteria;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.db.backends.DatabaseInterface;
 import com.torodb.torod.db.backends.exceptions.InvalidDatabaseException;
+import com.torodb.torod.db.backends.meta.IndexStorage;
 import com.torodb.torod.db.backends.meta.Routines;
 import com.torodb.torod.db.backends.meta.TorodbMeta;
-import com.torodb.torod.db.backends.meta.IndexStorage;
 import com.torodb.torod.db.backends.query.QueryEvaluator;
-import org.jooq.Configuration;
-import org.jooq.ConnectionProvider;
-import org.jooq.DSLContext;
-import org.jooq.exception.DataAccessException;
-import org.jooq.impl.DSL;
-
-import javax.inject.Inject;
-import javax.sql.DataSource;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -52,6 +45,13 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import javax.inject.Inject;
+import javax.sql.DataSource;
+import org.jooq.Configuration;
+import org.jooq.ConnectionProvider;
+import org.jooq.DSLContext;
+import org.jooq.exception.DataAccessException;
+import org.jooq.impl.DSL;
 
 /**
  *
@@ -65,6 +65,8 @@ public abstract class AbstractDbWrapper implements DbWrapper {
     private final String databaseName;
     private TorodbMeta meta;
     private final DatabaseInterface databaseInterface;
+
+    private static final DbConnection.Metainfo CURSOR_CONNECTION_METADATA = new Metainfo(true);
     
     @Inject
     public AbstractDbWrapper(
@@ -98,72 +100,67 @@ public abstract class AbstractDbWrapper implements DbWrapper {
             throw new IllegalStateException("The db-wrapper is already initialized");
         }
 
-        Connection c = null;
+        try (Connection c = sessionDataSource.getConnection()) {
+            try {
+                checkDbSupported(c);
+                c.setAutoCommit(false);
 
-        try {
-            c = sessionDataSource.getConnection();
-            checkDbSupported(c);
-            c.setAutoCommit(false);
+                meta = databaseInterface.initializeTorodbMeta(databaseName, getDsl(c), databaseInterface);
+                c.commit();
 
-            meta = databaseInterface.initializeTorodbMeta(databaseName, getDsl(c), databaseInterface);
-            c.commit();
-
-            isInitialized.set(true);
-        } catch (IOException ex) {
-            //TODO: Change exception
-            throw new RuntimeException(ex);
+                isInitialized.set(true);
+            } catch (IOException ex) {
+                //TODO: Change exception
+                c.rollback();
+                throw new RuntimeException(ex);
+            } catch (DataAccessException ex) {
+                //TODO: Change exception
+                c.rollback();
+                throw new RuntimeException(ex);
+            } catch (InvalidDatabaseException ex) {
+                //TODO: Change exception
+                c.rollback();
+                throw new RuntimeException(ex);
+            }
         } catch (SQLException ex) {
             //TODO: Change exception
             throw new RuntimeException(ex);
-        } catch (DataAccessException ex) {
-            //TODO: Change exception
-            throw new RuntimeException(ex);
-        }
-        catch (InvalidDatabaseException ex) {
-            //TODO: Change exception
-            throw new RuntimeException(ex);
-        } finally {
-            try {
-                if (c != null) {
-                    c.close();
-                }
-            } catch (SQLException ex) {
-            }
         }
     }
 
     @Override
-    public DbConnection consumeSessionDbConnection() {
-        return createDbConnection(consumeConnection(sessionDataSource));
+    public DbConnection consumeSessionDbConnection(DbConnection.Metainfo metadata) {
+        return createDbConnection(consumeConnection(sessionDataSource, metadata));
     }
 
     @Override
-    public DbConnection getSystemDbConnection() throws ImplementationDbException {
-        return createDbConnection(consumeConnection(systemDataSource));
+    public DbConnection getSystemDbConnection(DbConnection.Metainfo metadata) throws ImplementationDbException {
+        return createDbConnection(consumeConnection(systemDataSource, metadata));
     }
     
     private DbConnection createDbConnection(Connection c) {
         return reserveConnection(getDsl(c), meta);
     }
+
+    protected void postConsume(Connection c, DbConnection.Metainfo metadata) throws SQLException {
+        c.setReadOnly(metadata.isReadOnly());
+        if (!c.isValid(500)) {
+            throw new RuntimeException("DB connection is not valid");
+        }
+        c.setAutoCommit(false);
+    }
     
-    private Connection consumeConnection(DataSource ds) {
+    private Connection consumeConnection(DataSource ds, DbConnection.Metainfo metadata) {
         if (!isInitialized()) {
             throw new IllegalStateException("The db-wrapper is not initialized");
         }
-        Connection c = null;
         try {
-            c = ds.getConnection();
-            c.setAutoCommit(false);
+            Connection c = ds.getConnection();
+            postConsume(c, metadata);
             //TODO: Set isolation
 
             return c;
         } catch (SQLException ex) {
-            if (c != null) {
-                try {
-                    c.close();
-                } catch (SQLException ex1) {
-                }
-            }
             //TODO: Change exception
             throw new RuntimeException(ex);
         }
@@ -193,7 +190,7 @@ public abstract class AbstractDbWrapper implements DbWrapper {
 
             QueryEvaluator queryEvaluator = new QueryEvaluator(colSchema, databaseInterface);
 
-            Connection connection = consumeConnection(globalCursorDataSource);
+            Connection connection = consumeConnection(globalCursorDataSource, CURSOR_CONNECTION_METADATA);
             DSLContext dsl = getDsl(connection);
             
             Set<Integer> dids = queryEvaluator.evaluateDid(
@@ -279,7 +276,8 @@ public abstract class AbstractDbWrapper implements DbWrapper {
 
         @Override
         public void close() throws SQLException {
-            connection.close();
+            connection.commit();
+            connection.rollback();
             openCursors.remove(cursorId);
         }
 

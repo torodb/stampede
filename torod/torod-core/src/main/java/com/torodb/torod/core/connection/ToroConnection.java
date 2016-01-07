@@ -51,7 +51,7 @@ public interface ToroConnection extends Closeable {
     public void close();
     
     @Nonnull
-    public ToroTransaction createTransaction() throws ImplementationDbException;
+    public ToroTransaction createTransaction(TransactionMetainfo metainfo) throws ImplementationDbException;
 
     @Nonnull
     public UserCursor getCursor(CursorId cursorId) throws CursorNotFoundException;

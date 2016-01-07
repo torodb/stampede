@@ -26,6 +26,7 @@ import com.torodb.torod.core.WriteFailMode;
 import com.torodb.torod.core.annotations.DatabaseName;
 import com.torodb.torod.core.connection.DeleteResponse;
 import com.torodb.torod.core.connection.InsertResponse;
+import com.torodb.torod.core.connection.TransactionMetainfo;
 import com.torodb.torod.core.dbWrapper.DbConnection;
 import com.torodb.torod.core.dbWrapper.DbWrapper;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
@@ -38,15 +39,16 @@ import com.torodb.torod.core.pojos.Database;
 import com.torodb.torod.core.pojos.IndexedAttributes;
 import com.torodb.torod.core.pojos.NamedToroIndex;
 import com.torodb.torod.core.subdocument.SplitDocument;
-import com.torodb.torod.db.backends.executor.report.ReportFactory;
 import com.torodb.torod.core.subdocument.values.Value;
-import com.torodb.torod.db.executor.jobs.*;
+import com.torodb.torod.db.backends.executor.jobs.*;
+import com.torodb.torod.db.backends.executor.report.ReportFactory;
+import com.torodb.torod.db.executor.jobs.CreatePathViewsCallable;
+import com.torodb.torod.db.executor.jobs.DropPathViewsCallable;
+import com.torodb.torod.db.executor.jobs.SqlSelectCallable;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import com.torodb.torod.db.backends.executor.jobs.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,20 +64,23 @@ public class DefaultSessionTransaction implements SessionTransaction {
     private final ReportFactory reportFactory;
     private final MyAborter aborter;
     private final String databaseName;
-    
+    private final TransactionMetainfo metainfo;
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultSessionTransaction.class);
 
     DefaultSessionTransaction(
             DefaultSessionExecutor executor,
             DbConnection dbConnection,
             ReportFactory reportFactory,
-            @DatabaseName String databaseName) {
+            @DatabaseName String databaseName,
+            TransactionMetainfo metainfo) {
         this.aborted = new AtomicBoolean(false);
         this.dbConnection = dbConnection;
         this.executor = executor;
         this.reportFactory = reportFactory;
         this.aborter = new MyAborter();
         this.databaseName = databaseName;
+        this.metainfo = metainfo;
         closed = false;
     }
 
@@ -303,16 +308,18 @@ public class DefaultSessionTransaction implements SessionTransaction {
 
         private final DbWrapper dbWrapper;
         private DbConnection connection;
+        private DbConnection.Metainfo metadata;
 
-        public DbConnectionProvider(DbWrapper dbWrapper) {
+        public DbConnectionProvider(DbWrapper dbWrapper, DbConnection.Metainfo metadata) {
             this.dbWrapper = dbWrapper;
+            this.metadata = metadata;
         }
 
         @Override
         public DbConnection get() {
             if (connection == null) {
                 try {
-                    connection = dbWrapper.consumeSessionDbConnection();
+                    connection = dbWrapper.consumeSessionDbConnection(metadata);
                 }
                 catch (ImplementationDbException ex) {
                     throw new ToroImplementationException(ex);

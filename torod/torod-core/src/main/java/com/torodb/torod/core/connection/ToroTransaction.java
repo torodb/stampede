@@ -34,7 +34,6 @@ import com.torodb.torod.core.pojos.Database;
 import com.torodb.torod.core.pojos.IndexedAttributes;
 import com.torodb.torod.core.pojos.NamedToroIndex;
 import com.torodb.torod.core.subdocument.ToroDocument;
-import java.io.Closeable;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -44,7 +43,7 @@ import javax.annotation.Nonnull;
 /**
  *
  */
-public interface ToroTransaction extends Closeable {
+public interface ToroTransaction extends AutoCloseable {
 
     public ListenableFuture<?> rollback();
 

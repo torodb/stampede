@@ -30,12 +30,19 @@ import com.torodb.torod.db.backends.DatabaseInterface;
 import com.torodb.torod.db.backends.converters.StructureConverter;
 import com.torodb.torod.db.backends.converters.json.ToroIndexToJsonConverter;
 import com.torodb.torod.db.backends.exceptions.InvalidCollectionSchemaException;
-import com.torodb.torod.db.backends.sql.AutoCloser;
 import com.torodb.torod.db.backends.sql.index.IndexManager;
 import com.torodb.torod.db.backends.sql.index.NamedDbIndex;
 import com.torodb.torod.db.backends.sql.index.UnnamedDbIndex;
 import com.torodb.torod.db.backends.tables.SubDocTable;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import java.io.Serializable;
+import java.sql.*;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import org.jooq.*;
 import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
@@ -43,15 +50,6 @@ import org.jooq.impl.SchemaImpl;
 import org.jooq.impl.TableImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import java.io.Serializable;
-import java.sql.*;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  *
@@ -103,7 +101,6 @@ public class IndexStorage implements Serializable {
     public Set<NamedDbIndex> getAllDbIndexes(DSLContext dsl) {
         Connection connection
                 = dsl.configuration().connectionProvider().acquire();
-        ResultSet indexInfo = null;
 
         try {
             Set<NamedDbIndex> result = Sets.newHashSet();
@@ -114,54 +111,53 @@ public class IndexStorage implements Serializable {
             String lastIndexName = null;
 
             for (SubDocTable table : colSchema.getSubDocTables()) {
-                indexInfo = metaData.getIndexInfo(
+                try (ResultSet indexInfo = metaData.getIndexInfo(
                         catalog,
                         schema,
                         table.getName(),
                         false,
                         false
-                );
-                while (indexInfo.next()) {
-                    String indexName = indexInfo.getString("INDEX_NAME");
-                    
-                    if (!isDbIndexName(indexName)) {
-                        LOGGER.trace("{} is not recognized as a db index name", indexInfo);
-                        continue ;
-                    }
-                    String columnName = indexInfo.getString("COLUMN_NAME");
-                    boolean ascending
-                            = indexInfo.getString("ASC_OR_DESC").equals("A");
+                )) {
+                    while (indexInfo.next()) {
+                        String indexName = indexInfo.getString("INDEX_NAME");
 
-                    if (lastIndexName != null && lastIndexName.equals(indexName)) {
-                        LOGGER.warn("Index {} is recognized as a multiple column "
-                                + "index, which are not supported", lastIndexName);
-                        continue;
-                    }
-                    lastIndexName = indexName;
+                        if (!isDbIndexName(indexName)) {
+                            LOGGER.trace("{} is not recognized as a db index name", indexInfo);
+                            continue;
+                        }
+                        String columnName = indexInfo.getString("COLUMN_NAME");
+                        boolean ascending
+                                = indexInfo.getString("ASC_OR_DESC").equals("A");
 
-                    result.add(
-                            new NamedDbIndex(
-                                    indexName,
-                                    new UnnamedDbIndex(
-                                            schema,
-                                            table.getName(),
-                                            columnName,
-                                            ascending
-                                    )
-                            )
-                    );
+                        if (lastIndexName != null
+                                && lastIndexName.equals(indexName)) {
+                            LOGGER.warn("Index {} is recognized as a multiple column "
+                                    + "index, which are not supported", lastIndexName);
+                            continue;
+                        }
+                        lastIndexName = indexName;
+
+                        result.add(
+                                new NamedDbIndex(
+                                        indexName,
+                                        new UnnamedDbIndex(
+                                                schema,
+                                                table.getName(),
+                                                columnName,
+                                                ascending
+                                        )
+                                )
+                        );
+                    }
+
+                    indexInfo.close();
                 }
-
-                indexInfo.close();
             }
 
             return result;
-        }
-        catch (SQLException ex) {
+        } catch (SQLException ex) {
             throw new ToroRuntimeException(ex);
-        }
-        finally {
-            AutoCloser.close(indexInfo);
+        } finally {
             dsl.configuration().connectionProvider().release(connection);
         }
     }
@@ -184,15 +180,12 @@ public class IndexStorage implements Serializable {
         ConnectionProvider connectionProvider
                 = dsl.configuration().connectionProvider();
         Connection connection = connectionProvider.acquire();
-        Statement st = null;
-        try {
+        try (Statement st = connection.createStatement()) {
             String query = colSchema.databaseInterface.dropIndexStatement(colSchema.getName(), index.getName());
-            st = connection.createStatement();
             st.executeUpdate(query);
         } catch (SQLException ex) {
             throw new ToroRuntimeException(ex);
         } finally {
-            AutoCloser.close(st);
             connectionProvider.release(connection);
         }
     }
@@ -211,9 +204,7 @@ public class IndexStorage implements Serializable {
         ConnectionProvider connectionProvider
                 = dsl.configuration().connectionProvider();
         Connection connection = connectionProvider.acquire();
-        Statement st = null;
-        try {
-            st = connection.createStatement();
+        try (Statement st = connection.createStatement()) {
             String query = colSchema.databaseInterface.createIndexStatement(
                     indexName, unnamedDbIndex.getSchema(), unnamedDbIndex.getTable(), unnamedDbIndex.getColumn(),
                     unnamedDbIndex.isAscending()
@@ -223,7 +214,6 @@ public class IndexStorage implements Serializable {
         } catch (SQLException ex) {
             throw new ToroRuntimeException(ex);
         } finally {
-            AutoCloser.close(st);
             connectionProvider.release(connection);
         }
         

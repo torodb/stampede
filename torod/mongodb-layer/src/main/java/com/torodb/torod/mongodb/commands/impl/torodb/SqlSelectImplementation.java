@@ -19,6 +19,7 @@ import com.torodb.torod.core.ValueRow;
 import com.torodb.torod.core.ValueRow.ForEachConsumer;
 import com.torodb.torod.core.connection.ToroConnection;
 import com.torodb.torod.core.connection.ToroTransaction;
+import com.torodb.torod.core.connection.TransactionMetainfo;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.mongodb.RequestContext;
 import com.torodb.torod.mongodb.commands.AbstractToroCommandImplementation;
@@ -57,10 +58,9 @@ public class SqlSelectImplementation extends
         }
 
         ToroConnection connection = context.getToroConnection();
-        ToroTransaction transaction = null;
 
-        try {
-            transaction = connection.createTransaction();
+        try (ToroTransaction transaction
+                = connection.createTransaction(TransactionMetainfo.READ_ONLY)) {
             Iterator<ValueRow<DocValue>> toroQueryResult = ToroDBThrowables.getFromCommand(
                     commandName,
                     transaction.sqlSelect(arg.getQuery())
@@ -85,10 +85,6 @@ public class SqlSelectImplementation extends
             return new NonWriteCommandResult<>(new SqlSelectResult(cursor));
         } catch (ImplementationDbException ex) {
             throw new InternalErrorException(command.getCommandName(), ex);
-        } finally {
-            if (transaction != null) {
-                transaction.close();
-            }
         }
 
     }
