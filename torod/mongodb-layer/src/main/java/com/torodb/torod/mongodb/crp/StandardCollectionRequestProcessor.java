@@ -1,7 +1,6 @@
 
 package com.torodb.torod.mongodb.crp;
 
-import com.torodb.torod.mongodb.crp.CollectionRequestProcessor;
 import com.eightkdata.mongowp.messages.request.DeleteMessage;
 import com.eightkdata.mongowp.messages.request.InsertMessage;
 import com.eightkdata.mongowp.messages.request.UpdateMessage;
@@ -96,6 +95,7 @@ public class StandardCollectionRequestProcessor implements CollectionRequestProc
             throw new UserToroException("TailableCursors are not supported");
         }
 
+        boolean autoclose = request.isAutoclose() || !request.isTailable();
         try {
             if (request.getLimit() == 0) {
                 cursor = toroConnection.openUnlimitedCursor(
@@ -103,7 +103,7 @@ public class StandardCollectionRequestProcessor implements CollectionRequestProc
                         queryCriteria,
                         projection,
                         request.getNumberToSkip(),
-                        request.isAutoclose(),
+                        autoclose,
                         !request.isNoCursorTimeout()
                 );
             }
@@ -114,7 +114,7 @@ public class StandardCollectionRequestProcessor implements CollectionRequestProc
                         projection,
                         request.getNumberToSkip(),
                         request.getLimit(),
-                        request.isAutoclose(),
+                        autoclose,
                         !request.isNoCursorTimeout()
                 );
             }
