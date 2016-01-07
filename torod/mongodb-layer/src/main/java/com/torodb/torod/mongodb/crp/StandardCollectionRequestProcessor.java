@@ -162,12 +162,10 @@ public class StandardCollectionRequestProcessor implements CollectionRequestProc
                 documents,
                 BsonToToroTranslatorFunction.INSTANCE
         );
-        ToroTransaction transaction = null;
-
         OpTime optime = optimeClock.tick();
 
-        try {
-            transaction = toroConnection.createTransaction();
+        try (ToroTransaction transaction
+                = toroConnection.createTransaction(TransactionMetainfo.NOT_READ_ONLY)) {
 
             ListenableFuture<InsertResponse> futureInsertResponse = transaction.insertDocuments(collection, inserts, writeFailMode);
 
@@ -179,10 +177,6 @@ public class StandardCollectionRequestProcessor implements CollectionRequestProc
             return Futures.immediateFuture(
                     new SimpleWriteOpResult(ErrorCode.UNKNOWN_ERROR, ex.getLocalizedMessage(), null, null, optime)
             );
-        } finally {
-            if (transaction != null) {
-                transaction.close();
-            }
         }
     }
 
@@ -233,10 +227,8 @@ public class StandardCollectionRequestProcessor implements CollectionRequestProc
 
     	updates.add(new UpdateOperation(queryCriteria, updateAction, upsert, justOne));
 
-    	ToroTransaction transaction = null;
-
-        try {
-            transaction = toroConnection.createTransaction();
+    	try (ToroTransaction transaction
+                = toroConnection.createTransaction(TransactionMetainfo.NOT_READ_ONLY)) {
 	       	ListenableFuture<UpdateResponse> futureUpdateResponse = transaction.update(collection, updates, writeFailMode);
 
             ListenableFuture<?> futureCommitResponse = transaction.commit();
@@ -260,10 +252,6 @@ public class StandardCollectionRequestProcessor implements CollectionRequestProc
                             optimeClock.tick()
                     )
             );
-        } finally {
-            if (transaction != null) {
-                transaction.close();
-            }
     	}
     }
 
@@ -307,10 +295,8 @@ public class StandardCollectionRequestProcessor implements CollectionRequestProc
 
     	deletes.add(new DeleteOperation(queryCriteria, singleRemove));
 
-    	ToroTransaction transaction = null;
-
-        try {
-            transaction = toroConnection.createTransaction();
+        try (ToroTransaction transaction
+                = toroConnection.createTransaction(TransactionMetainfo.NOT_READ_ONLY)) {
 	       	ListenableFuture<DeleteResponse> futureDeleteResponse = transaction.delete(collection, deletes, writeFailMode);
 
             ListenableFuture<?> futureCommitResponse = transaction.commit();
@@ -332,10 +318,6 @@ public class StandardCollectionRequestProcessor implements CollectionRequestProc
                             optimeClock.tick()
                     )
             );
-        } finally {
-            if (transaction != null) {
-                transaction.close();
-            }
-    	}
+        }
     }
 }

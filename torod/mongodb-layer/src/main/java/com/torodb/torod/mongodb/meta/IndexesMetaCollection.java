@@ -6,6 +6,7 @@ import com.torodb.kvdocument.values.ObjectValue;
 import com.torodb.torod.core.annotations.DatabaseName;
 import com.torodb.torod.core.connection.ToroConnection;
 import com.torodb.torod.core.connection.ToroTransaction;
+import com.torodb.torod.core.connection.TransactionMetainfo;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.language.AttributeReference;
 import com.torodb.torod.core.pojos.NamedToroIndex;
@@ -36,10 +37,9 @@ public class IndexesMetaCollection extends MetaCollection {
         Collection<String> allCollections = toroConnection.getCollections();
 
         List<ToroDocument> candidates = Lists.newArrayList();
-        ToroTransaction transaction = null;
         String databaseName = getDatabaseName();
-        try {
-            transaction = toroConnection.createTransaction();
+        try (ToroTransaction transaction
+                = toroConnection.createTransaction(TransactionMetainfo.READ_ONLY)) {
             for (String collection : allCollections) {
 
                 String collectionNamespace = databaseName + '.' + collection;
@@ -75,21 +75,15 @@ public class IndexesMetaCollection extends MetaCollection {
         catch (ImplementationDbException ex) {
             throw new RuntimeException(ex.getLocalizedMessage(), ex);
         }
-        finally {
-            if (transaction != null) {
-                transaction.close();
-            }
-        }
     }
 
     @Override
     public long count(ToroConnection toroConnection) {
         Collection<String> allCollections = toroConnection.getCollections();
 
-        ToroTransaction transaction = null;
         long count = 0;
-        try {
-            transaction = toroConnection.createTransaction();
+        try (ToroTransaction transaction
+                = toroConnection.createTransaction(TransactionMetainfo.READ_ONLY)) {
             for (String collection : allCollections) {
 
                 count += transaction.getIndexes(collection).size();
@@ -99,11 +93,6 @@ public class IndexesMetaCollection extends MetaCollection {
         }
         catch (ImplementationDbException ex) {
             throw new RuntimeException(ex.getLocalizedMessage(), ex);
-        }
-        finally {
-            if (transaction != null) {
-                transaction.close();
-            }
         }
     }
 

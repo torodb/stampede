@@ -23,6 +23,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.torodb.torod.core.WriteFailMode;
 import com.torodb.torod.core.connection.ToroConnection;
 import com.torodb.torod.core.connection.ToroTransaction;
+import com.torodb.torod.core.connection.TransactionMetainfo;
 import com.torodb.torod.core.connection.UpdateResponse;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.language.operations.UpdateOperation;
@@ -67,14 +68,8 @@ public class UpdateImplementation implements CommandImplementation<UpdateArgumen
 
         ToroConnection connection = context.getToroConnection();
 
-        ToroTransaction transaction;
-        try {
-            transaction = connection.createTransaction();
-        } catch (ImplementationDbException ex) {
-            throw new UnknownErrorException(ex.getLocalizedMessage());
-        }
-
-        try {
+        try (ToroTransaction transaction
+                = connection.createTransaction(TransactionMetainfo.NOT_READ_ONLY)) {
             WriteFailMode writeFailMode = toWriteFailModeFunction.apply(arg.getWriteConcern());
 
             List<UpdateOperation> updates = Lists.newArrayList(
@@ -130,9 +125,9 @@ public class UpdateImplementation implements CommandImplementation<UpdateArgumen
                         optime
                 );
             }
-            return new WriteCommandResult<UpdateResult>(updateResult, writeOpResult);
-        } finally {
-            transaction.close();
+            return new WriteCommandResult<>(updateResult, writeOpResult);
+        } catch (ImplementationDbException ex) {
+            throw new UnknownErrorException(ex);
         }
     }
 

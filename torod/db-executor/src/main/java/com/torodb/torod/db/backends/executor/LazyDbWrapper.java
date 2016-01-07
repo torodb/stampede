@@ -46,14 +46,14 @@ public class LazyDbWrapper implements DbWrapper {
     }
     
     @Override
-    public DbConnection consumeSessionDbConnection() throws
+    public DbConnection consumeSessionDbConnection(DbConnection.Metainfo metainfo) throws
             ImplementationDbException {
-        return new LazySessionDbConnection();
+        return new LazySessionDbConnection(metainfo);
     }
 
     @Override
-    public DbConnection getSystemDbConnection() throws ImplementationDbException {
-        return delegate.getSystemDbConnection();
+    public DbConnection getSystemDbConnection(DbConnection.Metainfo metadata) throws ImplementationDbException {
+        return delegate.getSystemDbConnection(metadata);
     }
 
     @Override
@@ -76,10 +76,15 @@ public class LazyDbWrapper implements DbWrapper {
     @NotThreadSafe
     private class LazySessionDbConnection implements DbConnection {
         private DbConnection delegate = null;
+        private final DbConnection.Metainfo metainfo;
+
+        LazySessionDbConnection(Metainfo metainfo) {
+            this.metainfo = metainfo;
+        }
         
         private DbConnection getDelegate() throws ImplementationDbException {
             if (delegate == null) {
-                delegate = LazyDbWrapper.this.delegate.consumeSessionDbConnection();
+                delegate = LazyDbWrapper.this.delegate.consumeSessionDbConnection(metainfo);
             }
             return delegate;
         }

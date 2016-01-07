@@ -20,6 +20,7 @@
 package com.torodb.torod.db.backends.executor.jobs;
 
 import com.torodb.torod.core.dbWrapper.DbConnection;
+import com.torodb.torod.core.dbWrapper.DbConnection.Metainfo;
 import com.torodb.torod.core.dbWrapper.DbWrapper;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.dbWrapper.exceptions.UserDbException;
@@ -67,7 +68,7 @@ abstract class SystemDbCallable<R> extends Job<R> {
     @Override
     protected R failableCall() throws ToroException, ToroRuntimeException {
         try {
-            connection = dbWrapperPool.getSystemDbConnection();
+            connection = dbWrapperPool.getSystemDbConnection(Metainfo.NOT_READ_ONLY);
             try {
                 R result = call(connection);
 

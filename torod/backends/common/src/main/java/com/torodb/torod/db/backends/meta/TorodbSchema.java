@@ -22,17 +22,8 @@ package com.torodb.torod.db.backends.meta;
 
 import com.torodb.torod.db.backends.DatabaseInterface;
 import com.torodb.torod.db.backends.exceptions.InvalidDatabaseException;
-import com.torodb.torod.db.backends.sql.AutoCloser;
 import com.torodb.torod.db.backends.tables.CollectionsTable;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.jooq.DSLContext;
-import org.jooq.Meta;
-import org.jooq.Schema;
-import org.jooq.Table;
-import org.jooq.impl.SchemaImpl;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
@@ -40,6 +31,13 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import org.jooq.DSLContext;
+import org.jooq.Meta;
+import org.jooq.Schema;
+import org.jooq.Table;
+import org.jooq.impl.SchemaImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TorodbSchema extends SchemaImpl {
 
@@ -99,17 +97,14 @@ public class TorodbSchema extends SchemaImpl {
     @SuppressFBWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
     private void createSchema(DSLContext dsl, DatabaseInterface databaseInterface) throws SQLException {
         Connection c = dsl.configuration().connectionProvider().acquire();
-
-        PreparedStatement ps = null;
-        try {
-            ps = c.prepareStatement(databaseInterface.createSchemaStatement(TORODB_SCHEMA));
+        
+        try (PreparedStatement ps = c.prepareStatement(databaseInterface.createSchemaStatement(TORODB_SCHEMA))) {
             ps.executeUpdate();
-            AutoCloser.close(ps);
-            
-            ps = c.prepareStatement(CollectionsTable.COLLECTIONS.getSQLCreationStatement(databaseInterface));
+        }
+
+        try (PreparedStatement ps = c.prepareStatement(CollectionsTable.COLLECTIONS.getSQLCreationStatement(databaseInterface))) {
             ps.execute();
         } finally {
-            AutoCloser.close(ps);
             dsl.configuration().connectionProvider().release(c);
         }
     }
