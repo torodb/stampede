@@ -79,7 +79,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <torod.version>${project.version}</torod.version>
         <jackson.version>2.6.3</jackson.version>
-        <mongowp.version>0.20</mongowp.version>
+        <mongowp.version>0.40-SNAPSHOT</mongowp.version>
     </properties>
 
     <modules>
@@ -154,9 +154,14 @@
             </dependency>
             <dependency>
                 <groupId>org.mongodb</groupId>
-                <artifactId>mongo-java-driver</artifactId>
-                <version>3.0.1</version>
-            </dependency>        
+                <artifactId>mongodb-driver</artifactId>
+                <version>3.0.4</version>
+            </dependency>
+            <dependency>
+                <groupId>org.mongodb</groupId>
+                <artifactId>bson</artifactId>
+                <version>3.0.4</version>
+            </dependency>
             <dependency>
                 <groupId>javax.inject</groupId>
                 <artifactId>javax.inject</artifactId>
