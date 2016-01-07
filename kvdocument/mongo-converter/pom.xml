@@ -25,10 +25,9 @@
             <artifactId>kvdocument-core</artifactId>
             <version>${project.version}</version>
         </dependency>
-
         <dependency>
             <groupId>org.mongodb</groupId>
-            <artifactId>mongo-java-driver</artifactId>
+            <artifactId>bson</artifactId>
         </dependency>
     </dependencies>
 
