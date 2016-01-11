@@ -28,13 +28,8 @@ import com.torodb.torod.core.subdocument.structure.StructureElement;
 import com.torodb.torod.core.subdocument.structure.StructureElementVisitor;
 import com.torodb.torod.db.backends.DatabaseInterface;
 import com.torodb.torod.db.backends.meta.IndexStorage;
-import com.torodb.torod.db.backends.sql.AutoCloser;
 import com.torodb.torod.db.backends.tables.SubDocTable;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.jooq.*;
-import org.jooq.impl.DSL;
-
-import javax.annotation.Nonnull;
 import java.sql.Array;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -43,6 +38,9 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nonnull;
+import org.jooq.*;
+import org.jooq.impl.DSL;
 
 /**
  *
@@ -144,13 +142,11 @@ public class DeleteDocuments {
     ) throws SQLException {
         final int maxInArray = (2 << 15) - 1; // = 2^16 -1 = 65535
 
-        PreparedStatement ps = null;
-        try {
-            ps = connection.prepareStatement(
+        try (PreparedStatement ps = connection.prepareStatement(
                     databaseInterface.deleteDidsStatement(
                             schema.getName(), table.getName(), SubDocTable.DID_COLUMN_NAME
                     )
-            );
+            )) {
 
             Integer[] didsToDelete = dids.toArray(new Integer[dids.size()]);
 
@@ -176,8 +172,6 @@ public class DeleteDocuments {
                 }
             }
             return result;
-        } finally {
-            AutoCloser.close(ps);
         }
     }
 

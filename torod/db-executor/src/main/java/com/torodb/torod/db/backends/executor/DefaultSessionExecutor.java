@@ -24,7 +24,10 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.torodb.torod.core.Session;
 import com.torodb.torod.core.annotations.DatabaseName;
+import com.torodb.torod.core.connection.TransactionMetainfo;
 import com.torodb.torod.core.cursors.CursorId;
+import com.torodb.torod.core.dbWrapper.DbConnection;
+import com.torodb.torod.core.dbWrapper.DbConnection.Metainfo;
 import com.torodb.torod.core.dbWrapper.DbWrapper;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.executor.SessionExecutor;
@@ -34,17 +37,20 @@ import com.torodb.torod.core.language.projection.Projection;
 import com.torodb.torod.core.language.querycriteria.QueryCriteria;
 import com.torodb.torod.core.pojos.CollectionMetainfo;
 import com.torodb.torod.core.subdocument.SplitDocument;
-import com.torodb.torod.db.backends.executor.report.ReportFactory;
 import com.torodb.torod.db.backends.executor.jobs.*;
-
+import com.torodb.torod.db.backends.executor.report.ReportFactory;
 import java.util.List;
 import java.util.concurrent.Callable;
 import javax.inject.Inject;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
  */
 class DefaultSessionExecutor implements SessionExecutor {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DefaultSessionExecutor.class);
 
     private final LazyDbWrapper wrapper;
     private final ListeningExecutorService executorService;
@@ -95,12 +101,14 @@ class DefaultSessionExecutor implements SessionExecutor {
     }
 
     @Override
-    public SessionTransaction createTransaction() throws ImplementationDbException {
+    public SessionTransaction createTransaction(TransactionMetainfo transactionMetainfo) throws ImplementationDbException {
+        DbConnection.Metainfo connectionMetainfo = new Metainfo(transactionMetainfo.isReadOnly());
         return new DefaultSessionTransaction(
                 this, 
-                wrapper.consumeSessionDbConnection(), 
+                wrapper.consumeSessionDbConnection(connectionMetainfo),
                 reportFactory, 
-                databaseName
+                databaseName,
+                transactionMetainfo
         );
     }
 

@@ -51,11 +51,12 @@ public interface DbWrapper {
      * The calling thread will be blocked until a SQL connection is usable if
      * the connection pooler is blocker.
      * <p>
+     * @param metadata
      * @throws ImplementationDbException
      * @return
      */
     @Nonnull
-    public DbConnection consumeSessionDbConnection() throws
+    public DbConnection consumeSessionDbConnection(DbConnection.Metainfo metadata) throws
             ImplementationDbException;
 
     /**
@@ -64,10 +65,11 @@ public interface DbWrapper {
      * <p>
      * Only a system thread should use this connection.
      * <p>
+     * @param metadata
      * @throws ImplementationDbException
      * @return
      */
-    public DbConnection getSystemDbConnection() throws ImplementationDbException;
+    public DbConnection getSystemDbConnection(DbConnection.Metainfo metadata) throws ImplementationDbException;
 
     /**
      * Executes a openGlobalCursor and return a cursor to the result.

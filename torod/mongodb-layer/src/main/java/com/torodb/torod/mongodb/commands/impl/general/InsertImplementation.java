@@ -23,6 +23,7 @@ import com.torodb.torod.core.WriteFailMode;
 import com.torodb.torod.core.connection.InsertResponse;
 import com.torodb.torod.core.connection.ToroConnection;
 import com.torodb.torod.core.connection.ToroTransaction;
+import com.torodb.torod.core.connection.TransactionMetainfo;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.subdocument.ToroDocument;
 import com.torodb.torod.mongodb.RequestContext;
@@ -70,62 +71,61 @@ public class InsertImplementation implements CommandImplementation<InsertArgumen
                 BsonToToroTranslatorFunction.INSTANCE
         );
 
-        ToroTransaction transaction;
-        try {
-            transaction = connection.createTransaction();
-        }
-        catch (ImplementationDbException ex) {
-            throw new UnknownErrorException(ex.getLocalizedMessage());
-        }
+        try (ToroTransaction transaction
+                = connection.createTransaction(TransactionMetainfo.NOT_READ_ONLY)) {
 
-        WriteFailMode writeFailMode = toWriteFailModeFunction.apply(arg.getWriteConcern());
+            WriteFailMode writeFailMode
+                    = toWriteFailModeFunction.apply(arg.getWriteConcern());
 
-        Future<InsertResponse> insertResponseFuture = transaction.insertDocuments(
-                arg.getCollection(),
-                docsToInsert,
-                writeFailMode
-        );
+            Future<InsertResponse> insertResponseFuture
+                    = transaction.insertDocuments(
+                            arg.getCollection(),
+                            docsToInsert,
+                            writeFailMode
+                    );
 
-        Future<?> commitResponseFuture = transaction.commit();
-        transaction.close();
+            Future<?> commitResponseFuture = transaction.commit();
+            transaction.close();
 
-        //TODO(gortiz): Check how commit fails interact with the error cases responses
-        InsertResponse insertResponse;
-        try {
-            insertResponse = insertResponseFuture.get();
-            commitResponseFuture.get();
-        }
-        catch (InterruptedException ex) {
-            throw new UnknownErrorException(ex.getLocalizedMessage());
-        }
-        catch (ExecutionException ex) {
-            throw new UnknownErrorException(ex.getLocalizedMessage());
-        }
+            //TODO(gortiz): Check how commit fails interact with the error cases responses
+            InsertResponse insertResponse;
+            try {
+                insertResponse = insertResponseFuture.get();
+                commitResponseFuture.get();
+            } catch (InterruptedException ex) {
+                throw new UnknownErrorException(ex.getLocalizedMessage());
+            } catch (ExecutionException ex) {
+                throw new UnknownErrorException(ex.getLocalizedMessage());
+            }
 
-        int n = insertResponse.getInsertedDocsCounter();
+            int n = insertResponse.getInsertedDocsCounter();
 
-        InsertResult result;
-        WriteOpResult writeOpResult;
-        OpTime optime = context.getOptimeClock().tick();
-        if (insertResponse.isSuccess()) {
-            //TODO: Fill repl info
-            //TODO: Fill shard info
-            result = new InsertResult(n);
-            writeOpResult = new SimpleWriteOpResult(ErrorCode.OK, null, null, null, optime);
+            InsertResult result;
+            WriteOpResult writeOpResult;
+            OpTime optime = context.getOptimeClock().tick();
+            if (insertResponse.isSuccess()) {
+                //TODO: Fill repl info
+                //TODO: Fill shard info
+                result = new InsertResult(n);
+                writeOpResult
+                        = new SimpleWriteOpResult(ErrorCode.OK, null, null, null, optime);
+            } else {
+                ErrorCode errorCode = ErrorCode.COMMAND_FAILED;
+                String errMsg = "Something went wrong";
+                result = new InsertResult(
+                        errorCode,
+                        errMsg,
+                        n,
+                        translateErrors(insertResponse.getErrors()),
+                        null
+                );
+                writeOpResult
+                        = new SimpleWriteOpResult(errorCode, errMsg, null, null, optime);
+            }
+            return new WriteCommandResult<>(result, writeOpResult);
+        } catch (ImplementationDbException ex) {
+            throw new UnknownErrorException(ex);
         }
-        else {
-            ErrorCode errorCode = ErrorCode.COMMAND_FAILED;
-            String errMsg = "Something went wrong";
-            result = new InsertResult(
-                    errorCode,
-                    errMsg,
-                    n,
-                    translateErrors(insertResponse.getErrors()),
-                    null
-            );
-            writeOpResult = new SimpleWriteOpResult(errorCode, errMsg, null, null, optime);
-        }
-        return new WriteCommandResult<InsertResult>(result, writeOpResult);
     }
 
     private ImmutableList<WriteError> translateErrors(

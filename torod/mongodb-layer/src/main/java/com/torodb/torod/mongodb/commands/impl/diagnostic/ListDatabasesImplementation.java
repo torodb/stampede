@@ -13,6 +13,7 @@ import com.eightkdata.mongowp.mongoserver.protocol.exceptions.MongoException;
 import com.google.common.collect.Lists;
 import com.torodb.torod.core.connection.ToroConnection;
 import com.torodb.torod.core.connection.ToroTransaction;
+import com.torodb.torod.core.connection.TransactionMetainfo;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.pojos.Database;
 import com.torodb.torod.mongodb.commands.AbstractToroCommandImplementation;
@@ -35,9 +36,7 @@ public class ListDatabasesImplementation extends AbstractToroCommandImplementati
         try {
             ToroConnection connection = getToroConnection(req);
 
-            ToroTransaction transaction = connection.createTransaction();
-
-            try {
+            try (ToroTransaction transaction = connection.createTransaction(TransactionMetainfo.READ_ONLY)) {
                 List<? extends Database> databases = transaction.getDatabases().get();
                 
                 long totalSize = 0;
@@ -62,8 +61,6 @@ public class ListDatabasesImplementation extends AbstractToroCommandImplementati
                 throw new CommandFailed(command.getCommandName(), ex.getMessage(), ex);
             } catch (ExecutionException ex) {
                 throw new CommandFailed(command.getCommandName(), ex.getMessage(), ex);
-            } finally {
-                transaction.close();
             }
             
         } catch (ImplementationDbException ex) {

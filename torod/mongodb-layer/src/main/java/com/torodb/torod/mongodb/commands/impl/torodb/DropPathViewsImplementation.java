@@ -13,6 +13,7 @@ import com.eightkdata.mongowp.mongoserver.protocol.exceptions.InternalErrorExcep
 import com.eightkdata.mongowp.mongoserver.protocol.exceptions.MongoException;
 import com.torodb.torod.core.connection.ToroConnection;
 import com.torodb.torod.core.connection.ToroTransaction;
+import com.torodb.torod.core.connection.TransactionMetainfo;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.mongodb.RequestContext;
 import com.torodb.torod.mongodb.utils.ToroDBThrowables;
@@ -41,10 +42,8 @@ public class DropPathViewsImplementation implements CommandImplementation<Collec
         }
 
         ToroConnection connection = context.getToroConnection();
-        ToroTransaction transaction = null;
-
-        try {
-            transaction = connection.createTransaction();
+        try (ToroTransaction transaction
+                = connection.createTransaction(TransactionMetainfo.NOT_READ_ONLY)) {
             ToroDBThrowables.getFromCommand(
                     commandName,
                     transaction.dropPathViews(arg.getCollection())
@@ -54,10 +53,6 @@ public class DropPathViewsImplementation implements CommandImplementation<Collec
             return new NonWriteCommandResult<>(Empty.getInstance());
         } catch (ImplementationDbException ex) {
             throw new InternalErrorException(command.getCommandName(), ex);
-        } finally {
-            if (transaction != null) {
-                transaction.close();
-            }
         }
 
     }

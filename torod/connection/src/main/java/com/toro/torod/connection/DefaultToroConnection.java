@@ -24,6 +24,7 @@ import com.torodb.torod.core.Session;
 import com.torodb.torod.core.config.DocumentBuilderFactory;
 import com.torodb.torod.core.connection.ToroConnection;
 import com.torodb.torod.core.connection.ToroTransaction;
+import com.torodb.torod.core.connection.TransactionMetainfo;
 import com.torodb.torod.core.cursors.CursorId;
 import com.torodb.torod.core.cursors.ToroCursor;
 import com.torodb.torod.core.cursors.ToroCursorManager;
@@ -160,8 +161,8 @@ class DefaultToroConnection implements ToroConnection {
     }
 
     @Override
-    public ToroTransaction createTransaction() throws ImplementationDbException {
-        SessionTransaction sessionTransaction = executor.createTransaction();
+    public ToroTransaction createTransaction(TransactionMetainfo metainfo) throws ImplementationDbException {
+        SessionTransaction sessionTransaction = executor.createTransaction(metainfo);
         return new DefaultToroTransaction(
                 cache,
                 this, 

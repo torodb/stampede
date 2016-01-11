@@ -53,13 +53,11 @@ public class GetLastErrorImplementation implements CommandImplementation<GetLast
         Connection connection = req.getConnection();
 
         WriteOpResult writeOpResult;
-        boolean noWriteOpYet;
         Future<? extends WriteOpResult> lastWriteOpFuture
                 = connection.getAppliedLastWriteOp();
-        OpTime lastRequestedWriteOpTime = connection.getLastRequestedWriteOpTime();
+        boolean noWriteOpYet = lastWriteOpFuture == null;
         try {
-            noWriteOpYet = lastRequestedWriteOpTime == null;
-            if (noWriteOpYet) {
+            if (lastWriteOpFuture == null) {
                 writeOpResult = new SimpleWriteOpResult(
                         ErrorCode.OK,
                         null,
@@ -69,7 +67,6 @@ public class GetLastErrorImplementation implements CommandImplementation<GetLast
                 );
             }
             else {
-                assert lastWriteOpFuture != null;
                 if (lastWriteOpFuture.isDone()) {
                     writeOpResult = lastWriteOpFuture.get();
                 }
@@ -127,7 +124,6 @@ public class GetLastErrorImplementation implements CommandImplementation<GetLast
         WriteConcernEnforcementResult awaitReplication;
 
         if (!noWriteOpYet) {
-            assert lastRequestedWriteOpTime != null;
             assert wc != null;
             if (writeOpResult == null && (wc.getFsync() || wc.getJ())) {
                 assert lastWriteOpFuture != null;
@@ -168,7 +164,7 @@ public class GetLastErrorImplementation implements CommandImplementation<GetLast
                         PrimaryStateInterface psi = (PrimaryStateInterface) freezeMemberState;
 
                         awaitReplication = psi.awaitReplication(
-                                lastRequestedWriteOpTime,
+                                writeOpResult.getOpTime(),
                                 arg.getWriteConcern()
                         );
                     }

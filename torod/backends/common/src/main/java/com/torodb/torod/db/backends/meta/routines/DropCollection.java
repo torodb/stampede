@@ -4,18 +4,16 @@ package com.torodb.torod.db.backends.meta.routines;
 import com.torodb.torod.core.exceptions.ToroImplementationException;
 import com.torodb.torod.db.backends.DatabaseInterface;
 import com.torodb.torod.db.backends.meta.IndexStorage;
-import com.torodb.torod.db.backends.sql.AutoCloser;
 import com.torodb.torod.db.backends.tables.CollectionsTable;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
+import javax.annotation.Nonnull;
 import org.jooq.Configuration;
 import org.jooq.ConnectionProvider;
 import org.jooq.DSLContext;
 import org.jooq.impl.DSL;
-
-import javax.annotation.Nonnull;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
 
 /**
  *
@@ -29,9 +27,8 @@ public class DropCollection {
         
         ConnectionProvider provider = jooqConf.connectionProvider();
         Connection connection = provider.acquire();
-        Statement st = null;
-        try {
-            st = connection.createStatement();
+
+        try (Statement st = connection.createStatement()) {
             st.executeUpdate(databaseInterface.dropSchemaStatement(colSchema.getName()));
             
             DSLContext dsl = DSL.using(jooqConf);
@@ -44,8 +41,6 @@ public class DropCollection {
         }
         catch (SQLException ex) {
             throw new ToroImplementationException(ex);
-        } finally {
-            AutoCloser.close(st);
         }
     }
 }
