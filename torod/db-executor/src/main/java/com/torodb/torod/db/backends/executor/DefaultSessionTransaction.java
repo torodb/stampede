@@ -108,14 +108,16 @@ public class DefaultSessionTransaction implements SessionTransaction {
 
     @Override
     public void close() {
-        closed = true;
-        submit(
-                new CloseConnectionCallable(
-                        dbConnection,
-                        aborter,
-                        reportFactory.createCloseConnectionReport()
-                )
-        );
+        if (!closed) {
+            submit(
+                    new CloseConnectionCallable(
+                            dbConnection,
+                            aborter,
+                            reportFactory.createCloseConnectionReport()
+                    )
+            );
+            closed = true;
+        }
     }
 
     @Override
