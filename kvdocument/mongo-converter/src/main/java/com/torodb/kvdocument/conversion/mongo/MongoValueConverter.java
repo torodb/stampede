@@ -68,7 +68,7 @@ public class MongoValueConverter {
     }
 
     public static DocValue translateBSON(BsonValue value) {
-        if (value == null || value.isNull()) {
+        if (value == null || value.isNull() || value.getBsonType() == BsonType.UNDEFINED) {
             return NullValue.INSTANCE;
         }
         if (value.isDouble()) {

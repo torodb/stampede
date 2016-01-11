@@ -55,9 +55,7 @@ public class CustomIT extends JstestsIT {
 		@JstestMetaInfo(type=JstestType.Working,protocols={Protocol.Mongo, Protocol.MongoReplSet},backends={Backend.Postgres, Backend.Greenplum})
         dummy("dummy.js"),
         @JstestMetaInfo(type=JstestType.Working,protocols={Protocol.Mongo},backends={Backend.Postgres})
-        binary("binary.js"),
-        @JstestMetaInfo(type=JstestType.Failing,protocols={Protocol.Mongo, Protocol.MongoReplSet},backends={Backend.Postgres, Backend.Greenplum})
-        binary_failing("binary.js");
+        postgresql_working("binary.js", "undefined.js");
 		
 		private final String[] testResources;
 		
