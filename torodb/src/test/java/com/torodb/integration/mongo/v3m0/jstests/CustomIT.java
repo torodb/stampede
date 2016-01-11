@@ -53,7 +53,11 @@ public class CustomIT extends JstestsIT {
 	
 	public enum Tests implements Jstest {
 		@JstestMetaInfo(type=JstestType.Working,protocols={Protocol.Mongo, Protocol.MongoReplSet},backends={Backend.Postgres, Backend.Greenplum})
-		dummy("dummy.js");
+        dummy("dummy.js"),
+        @JstestMetaInfo(type=JstestType.Working,protocols={Protocol.Mongo},backends={Backend.Postgres})
+        binary("binary.js"),
+        @JstestMetaInfo(type=JstestType.Failing,protocols={Protocol.Mongo, Protocol.MongoReplSet},backends={Backend.Postgres, Backend.Greenplum})
+        binary_failing("binary.js");
 		
 		private final String[] testResources;
 		

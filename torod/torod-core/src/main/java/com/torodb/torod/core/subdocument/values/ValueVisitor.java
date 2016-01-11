@@ -49,4 +49,6 @@ public interface ValueVisitor<Result, Arg> {
 
     public Result visit(PatternValue value, Arg arg);
 
+    public Result visit(BinaryValue value, Arg arg);
+
 }

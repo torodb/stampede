@@ -193,6 +193,14 @@ public class EqualFactory {
             );
         }
 
+        @Override
+        public Value<?> visit(BinaryValue value,
+                              Void arg) {
+            return new com.torodb.torod.core.subdocument.values.BinaryValue(
+                    value.getValue()
+            );
+        }
+
     }
 
     private static class EqualityQueryFinder implements
@@ -366,6 +374,13 @@ public class EqualFactory {
         @Override
         public Void visit(
                 PatternValue value,
+                LinkedList<AttributeReference.Key> arg) {
+            return defaultcase(value, arg);
+        }
+
+        @Override
+        public Void visit(
+                BinaryValue value,
                 LinkedList<AttributeReference.Key> arg) {
             return defaultcase(value, arg);
         }

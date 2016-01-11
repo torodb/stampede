@@ -52,6 +52,7 @@ public class ValueToArrayConverterProvider {
     private final ValueConverter<String, TimeValue> timeConverter;
     private final ValueConverter<String, TwelveBytesValue> twelveBytesConverter;
     private final ValueConverter<String, PatternValue> posixPatterConverter;
+    private final ValueConverter<String, BinaryValue> binaryConverter;
 
     private ValueToArrayConverterProvider() {
         arrayConverter = new ArrayValueToJsonConverter();
@@ -66,6 +67,7 @@ public class ValueToArrayConverterProvider {
         timeConverter = new TimeValueToJsonConverter();
         twelveBytesConverter = new TwelveBytesToArrayConverter();
         posixPatterConverter = new PosixPatternValueToJsonConverter();
+        binaryConverter = new BinaryValueToJsonConverter();
 
         converters = Maps.newEnumMap(BasicType.class);
         converters.put(BasicType.ARRAY, arrayConverter);
@@ -80,6 +82,7 @@ public class ValueToArrayConverterProvider {
         converters.put(BasicType.TIME, timeConverter);
         converters.put(BasicType.TWELVE_BYTES, twelveBytesConverter);
         converters.put(BasicType.PATTERN, posixPatterConverter);
+        converters.put(BasicType.BINARY, binaryConverter);
     }
 
     public static ValueToArrayConverterProvider getInstance() {
@@ -184,6 +187,10 @@ public class ValueToArrayConverterProvider {
     
     public ValueConverter<String, PatternValue> getPosixConverter() {
         return posixPatterConverter;
+    }
+    
+    public ValueConverter<String, BinaryValue> getBinaryConverter() {
+        return binaryConverter;
     }
 
     private static class ToArrayConverterHolder {

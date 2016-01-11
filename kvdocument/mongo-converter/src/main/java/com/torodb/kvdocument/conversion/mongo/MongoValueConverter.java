@@ -118,6 +118,9 @@ public class MongoValueConverter {
                     )
             );
         }
+        if (value.isBinary()) {
+            return new BinaryValue(value.asBinary().getData());
+        }
 
         throw new IllegalArgumentException("Arguments of " + value.getClass()
                 + " type are not supported yet");
@@ -206,6 +209,12 @@ public class MongoValueConverter {
                     value.getValue().pattern(),
                     patternFlagsToOptions(value.getValue().flags())
             );
+        }
+
+        @Override
+        public BsonValue visit(BinaryValue value, Void arg) {
+            byte[] kvBytes = value.getArrayValue();
+            return new BsonBinary(kvBytes);
         }
 
         @Override

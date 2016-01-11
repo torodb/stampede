@@ -471,5 +471,10 @@ public class DefaultToroTransaction implements ToroTransaction {
             return new com.torodb.kvdocument.values.PatternValue(value.getValue());
         }
 
+        @Override
+        public DocValue visit(BinaryValue value, Void arg) {
+            return new com.torodb.kvdocument.values.BinaryValue(value.getValue());
+        }
+
     }
 }
