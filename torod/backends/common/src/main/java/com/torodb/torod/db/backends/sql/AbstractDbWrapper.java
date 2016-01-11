@@ -277,7 +277,7 @@ public abstract class AbstractDbWrapper implements DbWrapper {
         @Override
         public void close() throws SQLException {
             connection.commit();
-            connection.rollback();
+            connection.close();
             openCursors.remove(cursorId);
         }
 
