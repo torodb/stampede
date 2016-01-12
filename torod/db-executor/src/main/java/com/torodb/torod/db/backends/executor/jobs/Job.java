@@ -25,7 +25,9 @@ public abstract class Job<R> implements Callable<R> {
             LOGGER.debug("Executed {}", this);
             return result;
         } catch (Throwable t) {
-            LOGGER.trace("Error while executing {}. Calling onFail()", this);
+            if (LOGGER.isTraceEnabled()) {
+                LOGGER.trace("Error while executing " + this + ". Calling onFail()", t);
+            }
             return onFail(t);
         }
     }

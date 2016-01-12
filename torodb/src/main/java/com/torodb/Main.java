@@ -24,6 +24,7 @@ package com.torodb;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -118,33 +119,10 @@ public class Main {
 			}
 		}
 		
-		if (config.getBackend().isPostgresLike()) {
-			Postgres postgres = config.getBackend().asPostgres();
-
-			File toroPass = new File(postgres.getToropassFile());
-			if (toroPass.exists() && toroPass.canRead() && toroPass.isFile()) {
-				BufferedReader br = new BufferedReader(
-						new InputStreamReader(new FileInputStream(toroPass), Charsets.UTF_8));
-				String line;
-				int index = 0;
-				while ((line = br.readLine()) != null) {
-					index++;
-					String[] toroPassChunks = line.split(":");
-					if (toroPassChunks.length != 5) {
-						LOGGER.warn("Wrong format at line " + index + " of file " + postgres.getToropassFile());
-						continue;
-					}
-
-					if ((toroPassChunks[0].equals("*") || toroPassChunks[0].equals(postgres.getHost()))
-							&& (toroPassChunks[1].equals("*")
-									|| toroPassChunks[1].equals(String.valueOf(postgres.getPort())))
-							&& (toroPassChunks[2].equals("*") || toroPassChunks[2].equals(postgres.getDatabase()))
-							&& (toroPassChunks[3].equals("*") || toroPassChunks[3].equals(postgres.getUser()))) {
-						postgres.setPassword(toroPassChunks[4]);
-					}
-				}
-				br.close();
-			}
+		ConfigUtils.parseToropassFile(config);
+		
+        if (config.getBackend().isPostgresLike()) {
+            Postgres postgres = config.getBackend().asPostgres();
 
 			if (cliConfig.askForPassword()) {
 				console.print("Database user password:");

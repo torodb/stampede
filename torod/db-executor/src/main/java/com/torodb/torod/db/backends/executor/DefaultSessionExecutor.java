@@ -43,10 +43,14 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import javax.inject.Inject;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  *
  */
 class DefaultSessionExecutor implements SessionExecutor {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DefaultSessionExecutor.class);
 
     private final LazyDbWrapper wrapper;
     private final ListeningExecutorService executorService;
