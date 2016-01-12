@@ -155,7 +155,7 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
     	}
 		
         try (ToroTransaction transaction
-                = connection.createTransaction(TransactionMetainfo.READ_ONLY)) {
+                = connection.createTransaction(TransactionMetainfo.NOT_READ_ONLY)) {
         	Future<UpdateResponse> futureUpdateResponse = transaction.update(collection, updates, writeFailMode);
         	
             Future<?> futureCommitResponse = transaction.commit();
@@ -240,7 +240,7 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
         int numIndexesBefore;
 
         try (ToroTransaction transaction
-                = connection.createTransaction(TransactionMetainfo.READ_ONLY)) {
+                = connection.createTransaction(TransactionMetainfo.NOT_READ_ONLY)) {
 
             numIndexesBefore = transaction.getIndexes(collection).size();
             try {
@@ -357,7 +357,7 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
         ToroConnection connection = getConnection(messageReplier.getAttributeMap());
         
         try (ToroTransaction transaction
-                = connection.createTransaction(TransactionMetainfo.READ_ONLY)) {
+                = connection.createTransaction(TransactionMetainfo.NOT_READ_ONLY)) {
             
             if (indexName.equals("*")) { //TODO: Support * in deleteIndexes
                 reply.put("ok", MongoWP.BSON_KO);
