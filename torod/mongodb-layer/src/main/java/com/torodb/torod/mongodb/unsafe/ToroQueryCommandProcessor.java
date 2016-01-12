@@ -29,18 +29,17 @@ import com.eightkdata.mongowp.mongoserver.api.safe.tools.bson.BsonReaderTool;
 import com.eightkdata.mongowp.mongoserver.callback.MessageReplier;
 import com.eightkdata.mongowp.mongoserver.protocol.MongoWP;
 import com.eightkdata.mongowp.mongoserver.protocol.MongoWP.ErrorCode;
-import com.eightkdata.mongowp.mongoserver.protocol.exceptions.*;
+import com.eightkdata.mongowp.mongoserver.protocol.exceptions.CommandFailed;
+import com.eightkdata.mongowp.mongoserver.protocol.exceptions.CommandNotSupportedException;
+import com.eightkdata.mongowp.mongoserver.protocol.exceptions.TypesMismatchException;
+import com.eightkdata.mongowp.mongoserver.protocol.exceptions.UnknownErrorException;
 import com.google.common.base.Function;
-import com.google.common.base.Predicate;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Sets.SetView;
 import com.google.inject.Inject;
 import com.mongodb.WriteConcern;
 import com.torodb.kvdocument.conversion.mongo.MongoValueConverter;
-import com.torodb.kvdocument.values.DocValue;
 import com.torodb.kvdocument.values.ObjectValue;
 import com.torodb.torod.core.BuildProperties;
 import com.torodb.torod.core.WriteFailMode;
@@ -48,27 +47,19 @@ import com.torodb.torod.core.annotations.DatabaseName;
 import com.torodb.torod.core.connection.ToroConnection;
 import com.torodb.torod.core.connection.ToroTransaction;
 import com.torodb.torod.core.connection.TransactionMetainfo;
-import com.torodb.torod.core.connection.UpdateResponse;
-import com.torodb.torod.core.cursors.UserCursor;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.exceptions.ExistentIndexException;
 import com.torodb.torod.core.language.AttributeReference;
-import com.torodb.torod.core.language.operations.UpdateOperation;
 import com.torodb.torod.core.language.querycriteria.QueryCriteria;
 import com.torodb.torod.core.language.querycriteria.TrueQueryCriteria;
-import com.torodb.torod.core.language.update.UpdateAction;
 import com.torodb.torod.core.pojos.CollectionMetainfo;
-import com.torodb.torod.core.pojos.Database;
 import com.torodb.torod.core.pojos.IndexedAttributes;
 import com.torodb.torod.core.pojos.NamedToroIndex;
-import com.torodb.torod.core.utils.DocValueQueryCriteriaEvaluator;
 import com.torodb.torod.mongodb.RequestContext;
 import com.torodb.torod.mongodb.translator.QueryCriteriaTranslator;
-import com.torodb.torod.mongodb.translator.UpdateActionTranslator;
 import io.netty.util.AttributeMap;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import org.bson.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -130,52 +121,8 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
     @Override
     public void update(BsonDocument document, MessageReplier messageReplier)
             throws Exception {
-		ToroConnection connection = getConnection(messageReplier.getAttributeMap());
-		
-        BsonDocument result = new BsonDocument();
-		
-		String collection = document.get("update").asString().getValue();
-    	
-    	WriteFailMode writeFailMode = getWriteFailMode(document);
-    	WriteConcern writeConcern = getWriteConcern(document);
-		Iterable<BsonValue> documents = document.get("updates").asArray();
-    	List<UpdateOperation> updates = Lists.newArrayListWithCapacity(document.size());
-    	Iterator<BsonValue> documentsIterator = documents.iterator();
-    	while(documentsIterator.hasNext()) {
-            BsonDocument object = documentsIterator.next().asDocument();
-    		QueryCriteria queryCriteria = queryCriteriaTranslator.translate(
-    				object.get("q").asDocument()
-            );
-    		UpdateAction updateAction = UpdateActionTranslator.translate(
-    				object.get("u").asDocument()
-            );
-    		boolean upsert = BsonReaderTool.getBoolean(object, "upsert", false);
-    		boolean onlyOne = !BsonReaderTool.getBoolean(object, "multi", false);
-    		updates.add(new UpdateOperation(queryCriteria, updateAction, upsert, onlyOne));
-    	}
-		
-        try (ToroTransaction transaction
-                = connection.createTransaction(TransactionMetainfo.NOT_READ_ONLY)) {
-        	Future<UpdateResponse> futureUpdateResponse = transaction.update(collection, updates, writeFailMode);
-        	
-            Future<?> futureCommitResponse = transaction.commit();
-            
-            if (writeConcern.getW() > 0) {
-	            UpdateResponse updateResponse = futureUpdateResponse.get();
-	            futureCommitResponse.get();
-				result.put("n", new BsonInt64(updateResponse.getModified()));
-            }
-            LOGGER.warn("The current implementation of update command is not registered on GetLastError");
-            result.put(
-                    "warn",
-                    new BsonString(
-                            "The current implementation of update command is not registered on GetLastError"
-                    )
-            );
-        }
-		
-		result.put("ok", MongoWP.BSON_OK);
-		messageReplier.replyMessageNoCursor(result);
+        LOGGER.error("The unsafe version of insert command has been called!");
+        throw new UnknownErrorException("An unexpected command implementation was called");
 	}
 
 	@Override
@@ -188,17 +135,8 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
     @Override
     public void drop(BsonDocument document, MessageReplier messageReplier)
             throws Exception {
-		ToroConnection connection = getConnection(messageReplier.getAttributeMap());
-		
-        BsonDocument reply = new BsonDocument();
-		
-		String collection = document.get("drop").asString().getValue();
-
-        connection.dropCollection(collection);
-        
-        reply.put("ok", MongoWP.BSON_OK);
-        messageReplier.replyMessageNoCursor(reply);
-
+        LOGGER.error("The unsafe version of insert command has been called!");
+        throw new UnknownErrorException("An unexpected command implementation was called");
 	}
     
     private AttributeReference parseAttributeReference(String path) {
@@ -621,87 +559,15 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
     }
 
     @Override
-    public void listDatabases(MessageReplier messageReplier) throws ExecutionException, InterruptedException, ImplementationDbException{
-        ToroConnection connection = getConnection(messageReplier.getAttributeMap());
-        
-        try (ToroTransaction transaction
-                = connection.createTransaction(TransactionMetainfo.READ_ONLY)) {
-            List<? extends Database> databases
-                    = transaction.getDatabases().get();
-
-            double totalSize = 0;
-            BsonArray databaseDocs = new BsonArray();
-            for (Database database : databases) {
-                BsonDocument databaseDoc = new BsonDocument();
-                databaseDoc.put("name", new BsonString(database.getName()));
-                databaseDoc.put("sizeOnDisk", new BsonDouble(Long.valueOf(database.getSize()).doubleValue()));
-                //TODO: This is not true, but...
-                databaseDoc.put("empty", BsonBoolean.valueOf(database.getSize() == 0));
-
-                totalSize += database.getSize();
-                databaseDocs.add(databaseDoc);
-            }
-            BsonDocument reply = new BsonDocument();
-
-            reply.put("databases", databaseDocs);
-            reply.put("totalSize", new BsonDouble(totalSize));
-            reply.put("ok", MongoWP.BSON_OK);
-
-            messageReplier.replyMessageNoCursor(reply);
-        }
+    public void listDatabases(MessageReplier messageReplier) throws ExecutionException, InterruptedException, ImplementationDbException, UnknownErrorException{
+        LOGGER.error("The unsafe version of insert command has been called!");
+        throw new UnknownErrorException("An unexpected command implementation was called");
     }
 
     @Override
     public CollStatsReply collStats(CollStatsRequest request) throws Exception {
-        CollStatsReply.Builder replyBuilder = new CollStatsReply.Builder(
-                request.getDatabase(), 
-                request.getCollection());
-        replyBuilder
-                .setCapped(false)
-                .setLastExtentSize(1)
-                .setNumExtents(1)
-                .setPaddingFactor(0)
-                .setScale(request.getScale().intValue())
-                .setUsePowerOf2Sizes(false);
-                
-        ToroConnection connection = getConnection(request.getAttributes());
-        
-        int scale = replyBuilder.getScale();
-        try (ToroTransaction transaction
-                = connection.createTransaction(TransactionMetainfo.READ_ONLY)) {
-            Collection<? extends NamedToroIndex> indexes
-                    = transaction.getIndexes(request.getCollection());
-            Map<String, Long> sizeByMap = Maps.newHashMapWithExpectedSize(indexes.size());
-            for (NamedToroIndex index : indexes) {
-                Long indexSize = transaction.getIndexSize(
-                        request.getCollection(), 
-                        index.getName()
-                ).get();
-                sizeByMap.put(index.getName(), indexSize / scale);
-            }
-            
-            replyBuilder.setSizeByIndex(sizeByMap);
-            
-            replyBuilder.setIdIndexExists(sizeByMap.containsKey("_id"));
-            replyBuilder.setCount(
-                    transaction.count(
-                            request.getCollection(), 
-                            TrueQueryCriteria.getInstance()
-                    ).get()
-            );
-            replyBuilder.setSize(
-                    transaction.getDocumentsSize(
-                            request.getCollection()
-                    ).get() / scale
-            );
-            replyBuilder.setStorageSize(
-                    transaction.getCollectionSize(
-                            request.getCollection()
-                    ).get() / scale
-            );
-            
-            return replyBuilder.build();
-        }
+        LOGGER.error("The unsafe version of insert command has been called!");
+        throw new UnknownErrorException("An unexpected command implementation was called");
     }
 
 	@Override
@@ -724,52 +590,8 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
     @Override
     public void listCollections(MessageReplier messageReplier, BsonDocument query)
             throws Exception {
-        ToroConnection connection = getConnection(messageReplier.getAttributeMap());
-
-        assert query.get("listCollections") != null;
-        BsonValue filterObject = query.get("filter");
-        QueryCriteria filter;
-        if (filterObject == null) {
-            filter = TrueQueryCriteria.getInstance();
-        }
-        else {
-            if (filterObject.isDocument()) {
-                filter = queryCriteriaTranslator.translate(filterObject.asDocument());
-            }
-            else {
-                throw new BadValueException("Filter " + filterObject
-                        + " has not been recognized as a valid filter");
-            }
-        }
-        Predicate<DocValue> predicate
-                = DocValueQueryCriteriaEvaluator.createPredicate(filter);
-
-        UserCursor<CollectionMetainfo> cursor
-                = connection.openCollectionsMetainfoCursor();
-
-        ArrayList<ObjectValue> collectionsInfo = Lists.newArrayList(
-                Iterables.filter(
-                        Iterables.transform(
-                                cursor.readAll(),
-                                new CollectionMetainfoToDocValue()
-                        ),
-                        predicate
-                )
-        );
-        BsonArray firstBatch = new BsonArray();
-        for (ObjectValue colInfo : collectionsInfo) {
-            firstBatch.add(MongoValueConverter.translateObject(colInfo));
-        }
-
-        BsonDocument root = new BsonDocument();
-        root.append("ok", MongoWP.BSON_OK);
-        root.append("cursor", new BsonDocument()
-                .append("id", new BsonInt64(0))
-                .append("ns", new BsonString(databaseName + ".$cmd.listCollections"))
-                .append("firstBatch", firstBatch)
-        );
-
-        messageReplier.replyMessageNoCursor(root);
+        LOGGER.error("The unsafe version of insert command has been called!");
+        throw new UnknownErrorException("An dunexpected command implementation was called");
     }
     
     @Override
