@@ -20,10 +20,15 @@
 
 package com.torodb.config.util;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
@@ -38,6 +43,8 @@ import javax.validation.Path;
 import javax.validation.Validation;
 import javax.validation.Validator;
 import javax.validation.ValidatorFactory;
+
+import org.slf4j.LoggerFactory;
 
 import com.beust.jcommander.internal.Console;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -70,9 +77,14 @@ import com.github.fge.jsonschema.main.JsonValidator;
 import com.google.common.base.Charsets;
 import com.torodb.CliConfig;
 import com.torodb.config.model.Config;
+import com.torodb.config.model.backend.postgres.Postgres;
+
+import ch.qos.logback.classic.Logger;
 
 public class ConfigUtils {
 
+    private static final Logger LOGGER = (Logger) LoggerFactory.getLogger(ConfigUtils.class);
+    
 	public static Config readConfig(final CliConfig cliConfig) throws FileNotFoundException, JsonProcessingException,
 			IOException, JsonParseException, JsonMappingException, Exception {
 		ObjectMapper objectMapper = new ObjectMapper();
@@ -125,6 +137,57 @@ public class ConfigUtils {
 
 		return config;
 	}
+
+	public static Config readConfigFromYaml(String yamlString) throws JsonProcessingException, IOException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.setSerializationInclusion(Include.NON_NULL);
+        YAMLMapper yamlMapper = new YAMLMapper();
+        JsonNode configNode = yamlMapper.readTree(yamlString);
+        
+        configNode = mergeWithDefaults(configNode);
+        
+        validateWithJackson(configNode);
+
+        Config config = objectMapper.treeToValue(configNode, Config.class);
+
+        validateBean(config);
+
+        return config;
+	}
+
+    public static void parseToropassFile(final Config config) throws FileNotFoundException, IOException {
+        if (config.getBackend().isPostgresLike()) {
+            Postgres postgres = config.getBackend().asPostgres();
+
+            File toroPass = new File(postgres.getToropassFile());
+            if (toroPass.exists() && toroPass.canRead() && toroPass.isFile()) {
+                BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(toroPass), Charsets.UTF_8));
+                try {
+                    String line;
+                    int index = 0;
+                    while ((line = br.readLine()) != null) {
+                        index++;
+                        String[] toroPassChunks = line.split(":");
+                        if (toroPassChunks.length != 5) {
+                            LOGGER.warn("Wrong format at line " + index + " of file " + postgres.getToropassFile());
+                            continue;
+                        }
+    
+                        if ((toroPassChunks[0].equals("*") || toroPassChunks[0].equals(postgres.getHost()))
+                                && (toroPassChunks[1].equals("*")
+                                        || toroPassChunks[1].equals(String.valueOf(postgres.getPort())))
+                                && (toroPassChunks[2].equals("*") || toroPassChunks[2].equals(postgres.getDatabase()))
+                                && (toroPassChunks[3].equals("*") || toroPassChunks[3].equals(postgres.getUser()))) {
+                            postgres.setPassword(toroPassChunks[4]);
+                        }
+                    }
+                    br.close();
+                } finally {
+                    br.close();
+                }
+            }
+        }
+    }
 
 	private static void mergeParam(ObjectMapper objectMapper, JsonNode configRootNode, String pathAndProp, String value)
 			throws Exception {

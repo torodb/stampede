@@ -35,6 +35,7 @@ import org.postgresql.ds.PGSimpleDataSource;
 import org.postgresql.util.PSQLException;
 import org.slf4j.LoggerFactory;
 
+import com.beust.jcommander.internal.Console;
 import com.eightkdata.mongowp.mongoserver.MongoServer;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -43,7 +44,6 @@ import com.torodb.config.model.Config;
 import com.torodb.config.model.backend.greenplum.Greenplum;
 import com.torodb.config.model.backend.postgres.Postgres;
 import com.torodb.config.model.generic.LogLevel;
-import com.torodb.config.model.protocol.mongo.Mongo;
 import com.torodb.config.model.protocol.mongo.Replication;
 import com.torodb.config.util.ConfigUtils;
 import com.torodb.di.BackendModule;
@@ -71,6 +71,8 @@ import ch.qos.logback.core.AppenderBase;
 
 public class ToroRunnerClassRule implements TestRule {
 
+    private static final Logger LOGGER = (Logger) LoggerFactory.getLogger(ToroRunnerClassRule.class);
+
 	private static final int TORO_BOOT_MAX_INTERVAL_MILLIS = 2 * 60 * 1000;
 	
 	@Override
@@ -93,9 +95,32 @@ public class ToroRunnerClassRule implements TestRule {
 
 	private boolean started = false;
 	private Shutdowner shutdowner;
-	private final Config config = new Config();
+	private final Config config;
 
-	public void addUncaughtException(Throwable throwable) {
+	public ToroRunnerClassRule() {
+        super();
+        
+        Config config = new Config();
+        
+        String yamlString = System.getProperty("torodb-integration-config-yml");
+        
+        if (yamlString != null && !yamlString.isEmpty()) {
+            LOGGER.info("Reading configuration from property torodb-integration-config-yml:\n" + yamlString);
+            
+            try {
+                config = ConfigUtils.readConfigFromYaml(yamlString);
+            } catch(Throwable throwable) {
+                LOGGER.error("An error occurred while loading config from property torodb-integration-config-yml."
+                        + " Check it in your ~/.m2/settings.xml", throwable);
+                throw new RuntimeException("An error occurred while loading config from property torodb-integration-config-yml."
+                        + " Check it in your ~/.m2/settings.xml", throwable);
+            }
+        }
+        
+        this.config = config;
+    }
+
+    public void addUncaughtException(Throwable throwable) {
 		synchronized (UNCAUGHT_EXCEPTIONS) {
 			UNCAUGHT_EXCEPTIONS.add(throwable);
 		};
@@ -224,32 +249,69 @@ public class ToroRunnerClassRule implements TestRule {
 	private void setupConfig() {
 		switch(Protocol.CURRENT) {
 		case Mongo:
-			config.getProtocol().setMongo(new Mongo());
+            if (config.getProtocol().getMongo().getReplication() != null) {
+                config.getProtocol().getMongo().setReplication(null);
+            }
 			break;
 		case MongoReplSet:
-			config.getProtocol().setMongo(new Mongo());
-			Replication replication = new Replication();
-			replication.setReplSetName("rs1");
-			replication.setSyncSource("localhost:27020");
-			config.getProtocol().getMongo().setReplication(
-					Arrays.asList(new Replication[] { replication }));
+		    if (config.getProtocol().getMongo().getReplication() == null ||
+		            config.getProtocol().getMongo().getReplication().size() != 1) {
+    			Replication replication = new Replication();
+    			replication.setReplSetName("rs1");
+    			replication.setSyncSource("localhost:27020");
+    			config.getProtocol().getMongo().setReplication(
+    					Arrays.asList(new Replication[] { replication }));
+		    }
 			break;
 		}
 		
 		
 		switch(Backend.CURRENT) {
 		case Postgres:
-			config.getBackend().setBackendImplementation(new Postgres());
-			config.getBackend().asPostgres().setPassword("torodb");
+            if (!config.getBackend().isPostgres()) {
+                config.getBackend().setBackendImplementation(new Postgres());
+            }
 			break;
 		case Greenplum:
-			config.getBackend().setBackendImplementation(new Greenplum());
-			config.getBackend().asGreenplum().setPort(6432);
-			config.getBackend().asGreenplum().setPassword("torodb");
+		    if (!config.getBackend().isGreenplum()) {
+		        config.getBackend().setBackendImplementation(new Greenplum());
+		        config.getBackend().asGreenplum().setPort(6432);
+		    }
 			break;
 		}
 		
+		try {
+		    ConfigUtils.parseToropassFile(config);
+		} catch(Exception exception) {
+		    throw new RuntimeException(exception);
+		}
+		
 		ConfigUtils.validateBean(config);
+		
+		final StringBuilder yamlStringBuilder = new StringBuilder();
+		try {
+    		ConfigUtils.printYamlConfig(config, new Console() {
+                @Override
+                public void print(String arg0) {
+                    yamlStringBuilder.append(arg0);
+                }
+    
+                @Override
+                public void println(String arg0) {
+                    yamlStringBuilder.append(arg0);
+                    yamlStringBuilder.append("\n");
+                }
+    
+                @Override
+                public char[] readPassword(boolean arg0) {
+                    return null;
+                }
+            });
+		} catch(Exception exception) {
+		    throw new RuntimeException(exception);
+		}
+		
+		LOGGER.info("Configuration for ToroDB integration tests will be:\n" + yamlStringBuilder.toString());
 	}
 
 	private void shutdownToro() {
