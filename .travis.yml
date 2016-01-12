@@ -1,8 +1,8 @@
 language: java
+script: mvn -Psafer -Pintegration -Passembler -B -e -T 1C verify
 jdk:
   - oraclejdk8
   - oraclejdk7
-script: mvn -Psafer -Passembler -B -e -T 1C verify
 addons:
   postgresql: "9.4"
 services:

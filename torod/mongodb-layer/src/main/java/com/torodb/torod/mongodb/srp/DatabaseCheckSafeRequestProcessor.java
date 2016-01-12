@@ -12,9 +12,11 @@ import com.eightkdata.mongowp.mongoserver.callback.WriteOpResult;
 import com.eightkdata.mongowp.mongoserver.protocol.exceptions.CommandNotSupportedException;
 import com.eightkdata.mongowp.mongoserver.protocol.exceptions.DatabaseNotFoundException;
 import com.eightkdata.mongowp.mongoserver.protocol.exceptions.MongoException;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.torodb.torod.core.annotations.DatabaseName;
 import com.torodb.torod.mongodb.annotations.External;
+import java.util.Locale;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -34,6 +36,10 @@ import javax.inject.Singleton;
 public class DatabaseCheckSafeRequestProcessor extends DecoratorSafeRequestProcessor {
     private static final String ADMIN_DB = "admin";
     private static final String LOCAL_DB = "local";
+    /**
+     * The lower case name of commands that can bypass the database check.
+     */
+    private static final ImmutableSet<String> WHITE_COMMAND_LIST = ImmutableSet.of("ismaster");
 
     private final String supportedDatabase;
 
@@ -99,12 +105,18 @@ public class DatabaseCheckSafeRequestProcessor extends DecoratorSafeRequestProce
         return super.query(request, queryMessage);
     }
 
+    private <Arg, Result>  boolean onWhiteList(Command<? super Arg, ? super Result> command) {
+        return WHITE_COMMAND_LIST.contains(command.getCommandName().toLowerCase(Locale.ENGLISH));
+    }
+
     @Override
     public <Arg, Result> CommandReply<Result> execute(Command<? super Arg, ? super Result> command, CommandRequest<Arg> request)
             throws MongoException, CommandNotSupportedException {
-        String database = request.getDatabase();
-        assert database != null;
-        checkDatabase(database);
+        if (!onWhiteList(command)) {
+            String database = request.getDatabase();
+            assert database != null;
+            checkDatabase(database);
+        }
         return super.execute(command, request);
     }
 }
