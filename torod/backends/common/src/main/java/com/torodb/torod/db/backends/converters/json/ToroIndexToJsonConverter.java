@@ -90,9 +90,9 @@ public class ToroIndexToJsonConverter implements Converter<String, NamedToroInde
             
             if (!entry.getValue()) {
                 descBuilder.add(attPosition);
-                attPosition++;
                 hasDescending = true;
             }
+            attPosition++;
         }
         objectBuilder.add(ATTS_KEY, attsBuilder);
         if (hasDescending) {
