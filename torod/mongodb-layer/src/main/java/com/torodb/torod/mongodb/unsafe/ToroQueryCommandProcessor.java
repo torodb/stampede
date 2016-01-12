@@ -38,11 +38,9 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Sets.SetView;
 import com.google.inject.Inject;
-import com.mongodb.WriteConcern;
 import com.torodb.kvdocument.conversion.mongo.MongoValueConverter;
 import com.torodb.kvdocument.values.ObjectValue;
 import com.torodb.torod.core.BuildProperties;
-import com.torodb.torod.core.WriteFailMode;
 import com.torodb.torod.core.annotations.DatabaseName;
 import com.torodb.torod.core.connection.ToroConnection;
 import com.torodb.torod.core.connection.ToroTransaction;
@@ -341,51 +339,6 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
 		}
 
 		messageReplier.replyMessageNoCursor(reply);
-	}
-
-	private WriteFailMode getWriteFailMode(BsonDocument document) {
-        return WriteFailMode.TRANSACTIONAL;
-	}
-
-	private WriteConcern getWriteConcern(BsonDocument document) {
-		WriteConcern writeConcern = WriteConcern.ACKNOWLEDGED;
-    	if (document.containsKey("writeConcern")) {
-	    	BsonDocument writeConcernObject = document.get("writeConcern").asDocument();
-	    	BsonValue w = writeConcernObject.get("w");
-	        int wtimeout = 0;
-	        boolean fsync = false;
-	        boolean j = false;
-	        boolean continueOnError;
-	        BsonValue jObject = writeConcernObject.get("j");
-	        if (jObject != null && jObject.isBoolean() &&  jObject.asBoolean().getValue()) {
-	        	fsync = true;
-	        	j = true;
-	        	continueOnError = true;
-	        }
-	        BsonValue wtimeoutObject = writeConcernObject.get("wtimneout");
-	        if (wtimeoutObject !=null && wtimeoutObject.isNumber()) {
-	        	wtimeout = wtimeoutObject.asNumber().intValue();
-	        }
-	    	if (w != null) {
-	    		if (w.isNumber()) {
-	    			if (w.asNumber().intValue() <= 1 && wtimeout > 0) {
-	    				throw new IllegalArgumentException("wtimeout cannot be grater than 0 for w <= 1");
-	    			}
-	    			
-	    			writeConcern = new WriteConcern(w.asNumber().intValue(), wtimeout, fsync, j);
-	    		} else
-	       		if (w.isString() && w.asString().getValue().equals("majority")) {
-	       			if (wtimeout > 0) {
-	       				throw new IllegalArgumentException("wtimeout cannot be grater than 0 for w <= 1");
-	       			}
-	       			
-	       			writeConcern = new WriteConcern.Majority(wtimeout, fsync, j);
-	    		} else {
-    				throw new IllegalArgumentException("w:" + w + " is not supported");
-	    		}
-	    	}
-    	}
-		return writeConcern;
 	}
 
 	@Override
