@@ -1,5 +1,5 @@
 language: java
-script: mvn -Psafer -Passembler -B -e -T 1C verify
+script: mvn -Psafer -Pintegration -Passembler -B -e -T 1C verify
 jdk:
 - oraclejdk8
 - oraclejdk7
@@ -20,13 +20,6 @@ deploy:
   file:
   - torodb/target/dist/torodb.tar.bz2
   - torodb/target/dist/torodb.zip
-  on:
-    repo: torodb/torodb
-    tags: true
-    jdk: oraclejdk8
-- provider: script
-  script: mvn -B -e -T 1C -Pdeploy -DskipTests=true deploy --settings ~/settings.xml
-  skip_cleanup: true
   on:
     repo: torodb/torodb
     tags: true
