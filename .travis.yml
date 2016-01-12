@@ -54,13 +54,6 @@ deploy:
     skip_cleanup: true
     on:
       repo: torodb/torodb
-      tags: true
-      jdk: oraclejdk8
-  - provider: script
-    script: mvn -B -e -T 1C -Pdeploy -DskipTests=true deploy --settings ~/settings.xml
-    skip_cleanup: true
-    on:
-      repo: torodb/torodb
       branch: devel
       jdk: oraclejdk8
   
