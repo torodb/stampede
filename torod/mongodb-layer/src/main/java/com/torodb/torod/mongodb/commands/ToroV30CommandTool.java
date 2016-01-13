@@ -1,6 +1,11 @@
 
 package com.torodb.torod.mongodb.commands;
 
+import java.util.Map.Entry;
+
+import javax.inject.Inject;
+
+import com.eightkdata.mongowp.mongoserver.MongoServerConfig;
 import com.eightkdata.mongowp.mongoserver.api.safe.Command;
 import com.eightkdata.mongowp.mongoserver.api.safe.CommandImplementation;
 import com.eightkdata.mongowp.mongoserver.api.safe.impl.CollectionCommandArgument;
@@ -19,6 +24,8 @@ import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.diagnos
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.diagnostic.CollStatsCommand.CollStatsReply;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.diagnostic.DiagnosticCommands.DiagnosticCommandsImplementationsBuilder;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.diagnostic.ListDatabasesCommand.ListDatabasesReply;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.diagnostic.ServerStatusCommand.ServerStatusArgument;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.diagnostic.ServerStatusCommand.ServerStatusReply;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.DeleteCommand.DeleteArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.GeneralCommands.GeneralCommandsImplementationsBuilder;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.GetLastErrorCommand.GetLastErrorArgument;
@@ -59,14 +66,13 @@ import com.torodb.torod.mongodb.commands.impl.admin.DropDatabaseImplementation;
 import com.torodb.torod.mongodb.commands.impl.admin.ListCollectionsImplementation;
 import com.torodb.torod.mongodb.commands.impl.diagnostic.CollStatsImplementation;
 import com.torodb.torod.mongodb.commands.impl.diagnostic.ListDatabasesImplementation;
+import com.torodb.torod.mongodb.commands.impl.diagnostic.ServerStatusImplementation;
 import com.torodb.torod.mongodb.commands.impl.general.DeleteImplementation;
 import com.torodb.torod.mongodb.commands.impl.general.GetLastErrorImplementation;
 import com.torodb.torod.mongodb.commands.impl.general.InsertImplementation;
 import com.torodb.torod.mongodb.commands.impl.general.UpdateImplementation;
 import com.torodb.torod.mongodb.meta.MetaCollectionProvider;
 import com.torodb.torod.mongodb.translator.QueryCriteriaTranslator;
-import java.util.Map.Entry;
-import javax.inject.Inject;
 
 /**
  * This utility class is used to create and list safe implementations of the
@@ -181,10 +187,12 @@ public class ToroV30CommandTool {
     }
 
     static class MyDiagnosticCommandsImplementationBuilder extends DiagnosticCommandsImplementationsBuilder {
+        private final MongoServerConfig mongoServerConfig;
         private final MetaCollectionProvider metaCollectionProvider;
 
         @Inject
-        public MyDiagnosticCommandsImplementationBuilder(MetaCollectionProvider metaCollectionProvider) {
+        public MyDiagnosticCommandsImplementationBuilder(MongoServerConfig mongoServerConfig, MetaCollectionProvider metaCollectionProvider) {
+            this.mongoServerConfig = mongoServerConfig;
             this.metaCollectionProvider = metaCollectionProvider;
         }
 
@@ -201,6 +209,11 @@ public class ToroV30CommandTool {
         @Override
         public CommandImplementation<Empty, BuildInfoResult> getBuildInfoImplementation() {
             return NotImplementedCommandImplementation.build();
+        }
+
+        @Override
+        public CommandImplementation<ServerStatusArgument, ServerStatusReply> getServerStatusImplementation() {
+            return new ServerStatusImplementation(mongoServerConfig);
         }
 
     }
