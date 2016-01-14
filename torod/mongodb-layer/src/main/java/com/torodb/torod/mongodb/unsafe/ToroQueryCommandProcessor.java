@@ -214,13 +214,24 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
 
                     SetView<String> extraOptions = Sets.difference(uncastedIndex.keySet(), supportedFields);
                     if (!extraOptions.isEmpty()) {
-                        reply.put("ok", MongoWP.BSON_KO);
-                        String errmsg = "Options "
-                                + extraOptions.toString()
-                                + " are not supported";
-                        reply.put("errmsg", new BsonString(errmsg));
-                        messageReplier.replyMessageNoCursor(reply);
-                        return;
+                        boolean safeExtraOptions = true;
+                        for (String extraOption : extraOptions) {
+                            if (!extraOption.equals("background") ||
+                                    BsonReaderTool.getBoolean(uncastedIndex, "background", false)) {
+                                safeExtraOptions = false;
+                                break;
+                            }
+                        }
+                        
+                        if (!safeExtraOptions) {
+                            reply.put("ok", MongoWP.BSON_KO);
+                            String errmsg = "Options "
+                                    + extraOptions.toString()
+                                    + " are not supported";
+                            reply.put("errmsg", new BsonString(errmsg));
+                            messageReplier.replyMessageNoCursor(reply);
+                            return;
+                        }
                     }
 
                     IndexedAttributes.Builder indexedAttsBuilder
