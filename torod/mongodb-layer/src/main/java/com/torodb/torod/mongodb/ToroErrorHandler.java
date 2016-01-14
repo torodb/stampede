@@ -1,14 +1,14 @@
 package com.torodb.torod.mongodb;
 
 import com.eightkdata.mongowp.messages.response.ReplyMessage;
+import com.eightkdata.mongowp.messages.utils.IterableDocumentProvider;
 import com.eightkdata.mongowp.mongoserver.api.safe.Connection;
 import com.eightkdata.mongowp.mongoserver.api.safe.ErrorHandler;
 import com.eightkdata.mongowp.mongoserver.api.safe.tools.bson.BsonDocumentBuilder;
 import com.eightkdata.mongowp.mongoserver.api.safe.tools.bson.BsonField;
 import com.eightkdata.mongowp.mongoserver.protocol.MongoWP;
-import com.eightkdata.mongowp.mongoserver.protocol.MongoWP.ErrorCode;
+import com.eightkdata.mongowp.mongoserver.protocol.ErrorCode;
 import com.eightkdata.mongowp.mongoserver.protocol.exceptions.MongoException;
-import java.util.Collections;
 import javax.annotation.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -38,9 +38,13 @@ public class ToroErrorHandler implements ErrorHandler {
             );
             return new ReplyMessage(
                     requestId,
+                    false,
+                    false,
+                    false,
+                    false,
                     0,
                     0,
-                    Collections.singletonList(
+                    IterableDocumentProvider.of(
                             new BsonDocument().append(
                                     "errmsg",
                                     new BsonString("An unexpected error was catched")
@@ -77,9 +81,13 @@ public class ToroErrorHandler implements ErrorHandler {
         if (canReply) {
             return new ReplyMessage(
                     requestId,
+                    false,
+                    false,
+                    false,
+                    false,
                     0,
                     0,
-                    Collections.singletonList(
+                    IterableDocumentProvider.of(
                             new BsonDocumentBuilder()
                                     .append(ERRMSG_FIELD, exception.getMessage())
                                     .append(CODE_FIELD, exception.getErrorCode().getErrorCode())

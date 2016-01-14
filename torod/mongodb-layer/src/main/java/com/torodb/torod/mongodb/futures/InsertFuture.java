@@ -4,7 +4,7 @@ package com.torodb.torod.mongodb.futures;
 import com.eightkdata.mongowp.mongoserver.api.safe.impl.SimpleWriteOpResult;
 import com.eightkdata.mongowp.mongoserver.callback.WriteOpResult;
 import com.eightkdata.mongowp.mongoserver.pojos.OpTime;
-import com.eightkdata.mongowp.mongoserver.protocol.MongoWP.ErrorCode;
+import com.eightkdata.mongowp.mongoserver.protocol.ErrorCode;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.torodb.torod.core.connection.InsertResponse;
 

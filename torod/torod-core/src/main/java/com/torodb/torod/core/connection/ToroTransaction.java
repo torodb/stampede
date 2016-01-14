@@ -21,6 +21,7 @@
 package com.torodb.torod.core.connection;
 
 import com.google.common.annotations.Beta;
+import com.google.common.collect.FluentIterable;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.torodb.kvdocument.values.DocValue;
 import com.torodb.torod.core.ValueRow;
@@ -62,7 +63,7 @@ public interface ToroTransaction extends AutoCloseable {
      */
     public ListenableFuture<InsertResponse> insertDocuments(
             @Nonnull String collection,
-            @Nonnull Iterable<ToroDocument> documents,
+            @Nonnull FluentIterable<ToroDocument> documents,
             WriteFailMode mode
     );
     

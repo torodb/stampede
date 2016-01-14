@@ -2,7 +2,7 @@
 package com.torodb.torod.mongodb.impl;
 
 import com.eightkdata.mongowp.client.core.MongoConnection;
-import com.eightkdata.mongowp.messages.request.InsertMessage.Flag;
+import com.eightkdata.mongowp.messages.request.QueryMessage.QueryOptions;
 import com.eightkdata.mongowp.messages.request.*;
 import com.eightkdata.mongowp.messages.response.ReplyMessage;
 import com.eightkdata.mongowp.mongoserver.api.safe.*;
@@ -19,7 +19,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.torodb.torod.mongodb.annotations.Local;
 import io.netty.util.DefaultAttributeMap;
-import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
 import javax.inject.Inject;
@@ -64,10 +63,15 @@ public class LocalMongoConnection implements MongoConnection  {
         return owner;
     }
 
+    private int consumeRequestCounter() {
+        requestCounter++;
+        return requestCounter;
+    }
+
     private Request newRequest(String database) {
         return new Request(
                 connection,
-                requestCounter++,
+                consumeRequestCounter(),
                 database,
                 null,
                 0
@@ -82,27 +86,27 @@ public class LocalMongoConnection implements MongoConnection  {
     public MongoCursor<BsonDocument> query(
             String database,
             String collection,
-            EnumSet<QueryMessage.Flag> flags,
             BsonDocument query,
             int numberToSkip,
             int numberToReturn,
+            QueryOptions queryOptions,
             BsonDocument projection) throws MongoException {
         Preconditions.checkState(!closed, "This client is closed");
 
         Request request = newRequest(database);
         QueryRequest queryRequest = new QueryRequest.Builder(database, collection)
-                .setAutoclose(!flags.contains(QueryMessage.Flag.TAILABLE_CURSOR))
-                .setAwaitData(flags.contains(QueryMessage.Flag.AWAIT_DATA))
-                .setExhaust(flags.contains(QueryMessage.Flag.EXHAUST))
+                .setAutoclose(!queryOptions.isTailable())
+                .setAwaitData(queryOptions.isAwaitData())
+                .setExhaust(queryOptions.isExhaust())
                 .setLimit(numberToReturn)
-                .setNoCursorTimeout(flags.contains(QueryMessage.Flag.NO_CURSOR_TIMEOUT))
+                .setNoCursorTimeout(queryOptions.isNoCursorTimeout())
                 .setNumberToSkip(numberToSkip)
-                .setOplogReplay(flags.contains(QueryMessage.Flag.OPLOG_REPLAY))
-                .setPartial(flags.contains(QueryMessage.Flag.PARTIAL))
+                .setOplogReplay(queryOptions.isOplogReplay())
+                .setPartial(queryOptions.isPartial())
                 .setProjection(projection)
                 .setQuery(query)
-                .setSlaveOk(flags.contains(QueryMessage.Flag.SLAVE_OK))
-                .setTailable(flags.contains(QueryMessage.Flag.TAILABLE_CURSOR))
+                .setSlaveOk(queryOptions.isSlaveOk())
+                .setTailable(queryOptions.isTailable())
                 .build();
 
 
@@ -112,7 +116,7 @@ public class LocalMongoConnection implements MongoConnection  {
                 database,
                 collection,
                 queryRequest.isTailable(),
-                reply.getDocuments()
+                reply.getDocuments().toList()
         );
     }
 
@@ -124,7 +128,8 @@ public class LocalMongoConnection implements MongoConnection  {
         long[] cursorsArray = new long[lenght];
         int i = 0;
         for (Long cursor : cursors) {
-            cursorsArray[i++] = cursor;
+            cursorsArray[i] = cursor;
+            i++;
         }
         asyncKillCursors(cursorsArray);
     }
@@ -146,9 +151,9 @@ public class LocalMongoConnection implements MongoConnection  {
             boolean isSlaveOk,
             Arg arg) throws MongoException {
         Preconditions.checkState(!closed, "This client is closed");
-        CommandRequest<Arg> request = new CommandRequest<Arg>(
+        CommandRequest<Arg> request = new CommandRequest<>(
                 connection,
-                requestCounter++,
+                consumeRequestCounter(),
                 database,
                 null,
                 0,
@@ -178,11 +183,13 @@ public class LocalMongoConnection implements MongoConnection  {
 
         Request newRequest = newRequest(database);
         RequestBaseMessage baseMessage = new RequestBaseMessage(null, 0, newRequest.getRequestId());
-        EnumSet<InsertMessage.Flag> flags = EnumSet.noneOf(InsertMessage.Flag.class);
-        if (continueOnError) {
-            flags.add(Flag.CONTINUE_ON_ERROR);
-        }
-        InsertMessage message = new InsertMessage(baseMessage, flags, collection, docsToInsert);
+        InsertMessage message = new InsertMessage(
+                baseMessage,
+                database,
+                collection,
+                continueOnError,
+                docsToInsert
+        );
 
         processor.insert(newRequest, message);
     }
@@ -191,14 +198,23 @@ public class LocalMongoConnection implements MongoConnection  {
     public void asyncUpdate(
             String database,
             String collection,
-            EnumSet<UpdateMessage.Flag> flags,
             BsonDocument selector,
-            BsonDocument update) throws MongoException {
+            BsonDocument update,
+            boolean upsert,
+            boolean multiUpdate) throws MongoException {
         Preconditions.checkState(!closed, "This client is closed");
 
         Request newRequest = newRequest(database);
         RequestBaseMessage baseMessage = new RequestBaseMessage(null, 0, newRequest.getRequestId());
-        UpdateMessage message = new UpdateMessage(baseMessage, flags, collection, selector, update);
+        UpdateMessage message = new UpdateMessage(
+                baseMessage,
+                database,
+                collection,
+                selector,
+                update,
+                upsert,
+                multiUpdate
+        );
 
         processor.update(newRequest, message);
     }
@@ -207,13 +223,19 @@ public class LocalMongoConnection implements MongoConnection  {
     public void asyncDelete(
             String database,
             String collection,
-            EnumSet<DeleteMessage.Flag> flags,
+            boolean singleRemove,
             BsonDocument selector) throws MongoException {
         Preconditions.checkState(!closed, "This client is closed");
 
         Request newRequest = newRequest(database);
         RequestBaseMessage baseMessage = new RequestBaseMessage(null, 0, newRequest.getRequestId());
-        DeleteMessage message = new DeleteMessage(baseMessage, flags, collection, selector);
+        DeleteMessage message = new DeleteMessage(
+                baseMessage,
+                database,
+                collection,
+                selector,
+                singleRemove
+        );
 
         processor.delete(newRequest, message);
     }
@@ -233,7 +255,7 @@ public class LocalMongoConnection implements MongoConnection  {
         private final String collection;
         private final boolean tailable;
 
-        private List<BsonDocument> firstBatch;
+        private List<? extends BsonDocument> firstBatch;
         private int maxBatchSize;
         private boolean dead = false;
 
@@ -242,7 +264,7 @@ public class LocalMongoConnection implements MongoConnection  {
                 String database,
                 String collection,
                 boolean tailable,
-                List<BsonDocument> firstBatch) {
+                List<? extends BsonDocument> firstBatch) {
             this.cursorId = cursorId;
             this.maxBatchSize = DEFAULT_MAX_BATCH_SIZE;
             this.database = database;
@@ -295,34 +317,32 @@ public class LocalMongoConnection implements MongoConnection  {
             long fetchTime = System.currentTimeMillis();
 
             if (firstBatch != null) {
-                Batch<BsonDocument> result = new SimpleBatch<BsonDocument>(firstBatch, cursorId);
+                Batch<BsonDocument> result = new SimpleBatch<>(firstBatch, cursorId);
                 firstBatch = null;
                 return result;
             }
             Request request = newRequest(database);
             GetMoreMessage message = new GetMoreMessage(
                     newBaseMessage(request),
-                    database + '.' + collection,
+                    database,
+                    collection,
                     maxBatchSize,
                     cursorId
             );
 
             ReplyMessage more = processor.getMore(request, message);
 
-            EnumSet<ReplyMessage.Flag> flags = more.getFlags();
-            if (flags != null) {
-                if (flags.contains(ReplyMessage.Flag.CURSOR_NOT_FOUND)) {
-                    dead = true;
-                    throw new CursorNotFoundException(more.getCursorId());
-                }
-                if (flags.contains(ReplyMessage.Flag.QUERY_FAILURE)) {
-                    dead = true;
-                    throw new UnknownErrorException("GetMore response: Query failure");
-                }
+            if (more.isCursorNotFound()) {
+                dead = true;
+                throw new CursorNotFoundException(more.getCursorId());
             }
-            ImmutableList<BsonDocument> documents = more.getDocuments();
+            if (more.isQueryFailure()) {
+                dead = true;
+                throw new UnknownErrorException("GetMore response: Query failure");
+            }
+            ImmutableList<? extends BsonDocument> documents = more.getDocuments().toList();
 
-            return new SimpleBatch<BsonDocument>(documents, fetchTime);
+            return new SimpleBatch<>(documents, fetchTime);
         }
 
         @Override
@@ -361,7 +381,7 @@ public class LocalMongoConnection implements MongoConnection  {
 
         @Override
         public Iterator<BsonDocument> iterator() {
-            return new MongoCursorIterator<BsonDocument>(this);
+            return new MongoCursorIterator<>(this);
         }
     }
 }

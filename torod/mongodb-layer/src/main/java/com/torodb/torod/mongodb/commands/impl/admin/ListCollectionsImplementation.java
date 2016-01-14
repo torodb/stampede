@@ -12,6 +12,7 @@ import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.Collection
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.tools.CursorMarshaller.FirstBatchOnlyCursor;
 import com.eightkdata.mongowp.mongoserver.api.safe.pojos.MongoCursor;
 import com.eightkdata.mongowp.mongoserver.protocol.exceptions.CommandFailed;
+import com.eightkdata.mongowp.mongoserver.protocol.exceptions.InternalErrorException;
 import com.eightkdata.mongowp.mongoserver.protocol.exceptions.MongoException;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
@@ -21,8 +22,9 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.torodb.kvdocument.values.DocValue;
 import com.torodb.torod.core.connection.ToroConnection;
-import com.torodb.torod.core.cursors.UserCursor;
 import com.torodb.torod.core.exceptions.ClosedToroCursorException;
+import com.torodb.torod.core.exceptions.ToroException;
+import com.torodb.torod.core.exceptions.UserToroException;
 import com.torodb.torod.core.language.querycriteria.QueryCriteria;
 import com.torodb.torod.core.pojos.CollectionMetainfo;
 import com.torodb.torod.core.subdocument.ToroDocument;
@@ -82,13 +84,11 @@ public class ListCollectionsImplementation extends
                         DocValueQueryCriteriaEvaluator.createPredicate(filter);
                 entryPredicate = new EntryPredicate(docValuePredicate);
             }
-            UserCursor<CollectionMetainfo> cursor
-                    = connection.openCollectionsMetainfoCursor();
-            
+
             ImmutableList<ListCollectionsResult.Entry> firstBatch = ImmutableList.copyOf(
                     Iterables.filter(
                             Iterables.transform(
-                                    cursor.readAll(),
+                                    connection.getCollectionsMetainfoCursor(),
                                     transformation
                             ),
                             entryPredicate
@@ -111,6 +111,10 @@ public class ListCollectionsImplementation extends
                     "The cursor that iterates over the collections has been "
                             + "suddenly closed "
             );
+        } catch (UserToroException ex) {
+            throw new CommandFailed(command.getCommandName(), ex.getLocalizedMessage(), ex);
+        } catch (ToroException ex) {
+            throw new InternalErrorException(ex);
         }
     }
 

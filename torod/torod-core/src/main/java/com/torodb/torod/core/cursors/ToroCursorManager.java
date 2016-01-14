@@ -6,8 +6,6 @@ import com.torodb.torod.core.exceptions.NotAutoclosableCursorException;
 import com.torodb.torod.core.executor.SessionExecutor;
 import com.torodb.torod.core.language.projection.Projection;
 import com.torodb.torod.core.language.querycriteria.QueryCriteria;
-import com.torodb.torod.core.pojos.CollectionMetainfo;
-import com.torodb.torod.core.subdocument.ToroDocument;
 import javax.annotation.Nonnegative;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -28,8 +26,9 @@ public interface ToroCursorManager {
      * @param autoclose
      * @param hasTimeout
      * @return
+     * @throws com.torodb.torod.core.exceptions.NotAutoclosableCursorException
      */
-    public ToroCursor<ToroDocument> openUnlimitedCursor(
+    public ToroCursor openUnlimitedCursor(
             @Nonnull SessionExecutor executor,
             @Nonnull String collection,
             @Nullable QueryCriteria queryCriteria,
@@ -52,7 +51,7 @@ public interface ToroCursorManager {
      * @param hasTimeout
      * @return
      */
-    public ToroCursor<ToroDocument> openLimitedCursor(
+    public ToroCursor openLimitedCursor(
             @Nonnull SessionExecutor executor,
             @Nonnull String collection,
             @Nullable QueryCriteria queryCriteria,
@@ -64,17 +63,6 @@ public interface ToroCursorManager {
     );
     
     /**
-     * Opens a new cursor that iterates over all collection metainformation on
-     * the database.
-     * @param executor the executor that will execute {@linkplain SessionExecutor#getCollectionsMetainfo() }
-     * @return 
-     */
-    @Nonnull
-    public ToroCursor<CollectionMetainfo> openCollectionsMetainfoCursor(
-            @Nonnull SessionExecutor executor
-    );
-    
-    /**
      * Returns the stored cursor with the given id or throws an exception if
      * there is no cursor with that id.
      * @param cursorId
@@ -83,16 +71,4 @@ public interface ToroCursorManager {
      *          there are no cursor with the given id
      */
     public ToroCursor lookForCursor(CursorId cursorId) throws CursorNotFoundException ;
-    
-    /**
-     * Returns the stored cursor with the given id or throws an exception if
-     * there is no cursor with that id.
-     * @param <E>
-     * @param cursorId
-     * @param expectedTypeClass
-     * @return 
-     * @throws com.torodb.torod.core.exceptions.CursorNotFoundException if 
-     *          there are no cursor with the given id
-     */
-    public <E> ToroCursor<E> lookForCursor(CursorId cursorId, Class<E> expectedTypeClass) throws CursorNotFoundException ;
 }

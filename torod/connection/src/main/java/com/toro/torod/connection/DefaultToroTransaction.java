@@ -21,6 +21,7 @@
 package com.toro.torod.connection;
 
 import com.google.common.base.Function;
+import com.google.common.collect.FluentIterable;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -51,7 +52,6 @@ import com.torodb.torod.core.pojos.IndexedAttributes;
 import com.torodb.torod.core.pojos.NamedToroIndex;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.core.subdocument.ToroDocument;
-import com.torodb.torod.core.subdocument.values.StringValue;
 import com.torodb.torod.core.subdocument.values.*;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -103,17 +103,18 @@ public class DefaultToroTransaction implements ToroTransaction {
     @Override
     public ListenableFuture<InsertResponse> insertDocuments(
             String collection,
-            Iterable<ToroDocument> documents,
+            FluentIterable<ToroDocument> documents,
             WriteFailMode mode
     ) {
 
         try {
+
             List<SplitDocument> documentsList = Lists.newArrayList();
 
+            Function<ToroDocument, SplitDocument> toRelationFun
+                    = d2r.getToRelationalFunction(executor, collection);
             for (ToroDocument document : documents) {
-                SplitDocument splitDoc
-                        = d2r.translate(executor, collection, document);
-                documentsList.add(splitDoc);
+                documentsList.add(toRelationFun.apply(document));
             }
 
             return sessionTransaction.insertSplitDocuments(
@@ -167,10 +168,7 @@ public class DefaultToroTransaction implements ToroTransaction {
             cache.createCollection(executor, collection, null);
             return sessionTransaction.getIndexes(collection).get();
         }
-        catch (InterruptedException ex) {
-            throw new ToroRuntimeException(ex);
-        }
-        catch (ExecutionException ex) {
+        catch (InterruptedException | ExecutionException ex) {
             throw new ToroRuntimeException(ex);
         }
     }
@@ -252,10 +250,7 @@ public class DefaultToroTransaction implements ToroTransaction {
             try {
                 update(collection, update, builder);
             }
-            catch (InterruptedException ex) {
-                throw new ToroImplementationException(ex);
-            }
-            catch (ExecutionException ex) {
+            catch (InterruptedException | ExecutionException ex) {
                 throw new ToroImplementationException(ex);
             }
             catch (UserToroException ex) {
@@ -278,7 +273,7 @@ public class DefaultToroTransaction implements ToroTransaction {
             UpdateResponse.Builder responseBuilder
     ) throws InterruptedException, ExecutionException {
 
-        UserCursor<ToroDocument> cursor;
+        UserCursor cursor;
         try {
             cursor = connection.openUnlimitedCursor(
                             collection,
@@ -294,7 +289,7 @@ public class DefaultToroTransaction implements ToroTransaction {
         }
         List<ToroDocument> candidates;
         try {
-            candidates = cursor.readAll();
+            candidates = cursor.readAll().toList();
         }
         catch (ClosedToroCursorException ex) {
             throw new ToroImplementationException(
@@ -309,10 +304,15 @@ public class DefaultToroTransaction implements ToroTransaction {
             if (update.isInsertIfNotFound()) {
                 ToroDocument documentToInsert = documentToInsert(update.
                         getAction());
-                Future<InsertResponse> insertFuture
-                        = insertDocuments(collection, Collections.singleton(
-                                                  documentToInsert),
-                                          WriteFailMode.TRANSACTIONAL);
+                Future<InsertResponse> insertFuture = insertDocuments(
+                        collection,
+                        FluentIterable.from(
+                                Collections.singleton(
+                                        documentToInsert
+                                )
+                        ),
+                        WriteFailMode.TRANSACTIONAL
+                );
                 //as we are using a synchronized update, we need to wait until the insert is executed
                 insertFuture.get();
             }
@@ -364,7 +364,7 @@ public class DefaultToroTransaction implements ToroTransaction {
             InsertResponse insertResponse
                     = insertDocuments(
                             collection,
-                            objectsToInsert,
+                            FluentIterable.from(objectsToInsert),
                             WriteFailMode.TRANSACTIONAL
                     ).get();
             if (insertResponse.getInsertedDocsCounter() != objectsToInsert.size()) {

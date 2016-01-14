@@ -4,17 +4,18 @@ package com.torodb.torod.mongodb.crp;
 import com.eightkdata.mongowp.messages.request.DeleteMessage;
 import com.eightkdata.mongowp.messages.request.InsertMessage;
 import com.eightkdata.mongowp.messages.request.UpdateMessage;
+import com.eightkdata.mongowp.messages.utils.SimpleIterableDocumentsProvider;
 import com.eightkdata.mongowp.mongoserver.api.safe.Request;
 import com.eightkdata.mongowp.mongoserver.api.safe.impl.DeleteOpResult;
 import com.eightkdata.mongowp.mongoserver.api.safe.impl.SimpleWriteOpResult;
 import com.eightkdata.mongowp.mongoserver.api.safe.impl.UpdateOpResult;
 import com.eightkdata.mongowp.mongoserver.api.safe.pojos.QueryRequest;
 import com.eightkdata.mongowp.mongoserver.callback.WriteOpResult;
-import com.eightkdata.mongowp.mongoserver.protocol.MongoWP.ErrorCode;
+import com.eightkdata.mongowp.mongoserver.protocol.ErrorCode;
 import com.eightkdata.mongowp.mongoserver.protocol.exceptions.MongoException;
 import com.eightkdata.mongowp.mongoserver.protocol.exceptions.UnknownErrorException;
 import com.google.common.base.Predicate;
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.FluentIterable;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
@@ -29,6 +30,7 @@ import com.torodb.torod.mongodb.RequestContext;
 import com.torodb.torod.mongodb.meta.MetaCollection;
 import com.torodb.torod.mongodb.translator.QueryCriteriaTranslator;
 import com.torodb.torod.mongodb.translator.ToroToBsonTranslatorFunction;
+import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nonnull;
 import org.bson.BsonDocument;
@@ -57,7 +59,7 @@ public class MetaCollectionRequestProcessor implements CollectionRequestProcesso
 
         int requestId = req.getRequestId();
         if (!queryMessage.getDatabase().equals(metaCollection.getDatabaseName())) {
-            return new QueryResponse(requestId, ImmutableList.<BsonDocument>of());
+            return new QueryResponse(requestId, FluentIterable.from(Collections.<BsonDocument>emptyList()));
         }
         List<ToroDocument> allDocuments;
         try {
@@ -83,7 +85,7 @@ public class MetaCollectionRequestProcessor implements CollectionRequestProcesso
                 ToroToBsonTranslatorFunction.INSTANCE
         );
 
-        return new QueryResponse(0, result);
+        return new QueryResponse(0, new SimpleIterableDocumentsProvider<>(result));
     }
 
     @Override

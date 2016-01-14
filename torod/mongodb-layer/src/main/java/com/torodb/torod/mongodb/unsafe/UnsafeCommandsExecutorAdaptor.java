@@ -10,7 +10,7 @@ import com.eightkdata.mongowp.mongoserver.api.safe.*;
 import com.eightkdata.mongowp.mongoserver.api.safe.impl.DelegateCommandReply;
 import com.eightkdata.mongowp.mongoserver.api.safe.impl.NonWriteCommandResult;
 import com.eightkdata.mongowp.mongoserver.callback.PojoMessageReplier;
-import com.eightkdata.mongowp.mongoserver.protocol.MongoWP.ErrorCode;
+import com.eightkdata.mongowp.mongoserver.protocol.ErrorCode;
 import com.eightkdata.mongowp.mongoserver.protocol.exceptions.CommandNotSupportedException;
 import com.eightkdata.mongowp.mongoserver.protocol.exceptions.MongoException;
 import com.torodb.torod.mongodb.unsafe.UnsafeCommand.UnsafeArgument;

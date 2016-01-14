@@ -2,15 +2,26 @@
 package com.toro.torod.connection;
 
 import com.google.common.base.Ticker;
-import com.google.common.cache.*;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.RemovalListener;
+import com.google.common.cache.RemovalNotification;
+import com.google.common.collect.FluentIterable;
 import com.google.common.collect.Lists;
 import com.google.common.collect.MapMaker;
 import com.torodb.torod.core.backend.DbBackend;
 import com.torodb.torod.core.cursors.CursorId;
 import com.torodb.torod.core.cursors.ToroCursor;
-import com.torodb.torod.core.exceptions.*;
+import com.torodb.torod.core.exceptions.ClosedToroCursorException;
+import com.torodb.torod.core.exceptions.CursorNotFoundException;
+import com.torodb.torod.core.exceptions.ToroImplementationException;
+import com.torodb.torod.core.exceptions.UnknownMaxElementsException;
 import com.torodb.torod.core.executor.SessionExecutor;
-import java.util.*;
+import com.torodb.torod.core.subdocument.ToroDocument;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
@@ -62,7 +73,7 @@ public class ToroCursorStorage {
         );
 
         readElementMap = new MapMaker().makeMap();
-        this.expiredCursors = new ConcurrentLinkedQueue<StoredToroCursorDelegator>();
+        this.expiredCursors = new ConcurrentLinkedQueue<>();
     }
 
     public void setTimeout(long millis) {
@@ -112,12 +123,11 @@ public class ToroCursorStorage {
      * 
      * The cursor returned is the one that has to be used, in other case,
      * memory leaks or unexpected close cursors can happen.
-     * @param <E>
      * @param cursor
      * @param executor
      * @return 
      */
-    public <E> ToroCursor<E> storeCursor(ToroCursor<E> cursor, SessionExecutor executor) {
+    public ToroCursor storeCursor(ToroCursor cursor, SessionExecutor executor) {
         eventAccess(executor);
         
         StoredToroCursorDelegator delegator = new StoredToroCursorDelegator(cursor);
@@ -237,15 +247,15 @@ public class ToroCursorStorage {
         }
     }
     
-    private class StoredToroCursorDelegator<E> implements ToroCursor<E> {
-        private final ToroCursor<E> delegate;
+    private class StoredToroCursorDelegator implements ToroCursor {
+        private final ToroCursor delegate;
 
-        public StoredToroCursorDelegator(ToroCursor<E> delegate) {
+        public StoredToroCursorDelegator(ToroCursor delegate) {
             this.delegate = delegate;
         }
 
         @Override
-        public List<E> readAll(SessionExecutor executor) throws
+        public FluentIterable<ToroDocument> readAll(SessionExecutor executor) throws
                 ClosedToroCursorException {
             try {
                 notifyUse(getId(), executor);
@@ -257,7 +267,7 @@ public class ToroCursorStorage {
         }
 
         @Override
-        public List<E> read(SessionExecutor executor, int limit) throws
+        public FluentIterable<ToroDocument> read(SessionExecutor executor, int limit) throws
                 ClosedToroCursorException {
             try {
                 notifyUse(getId(), executor);
@@ -275,6 +285,11 @@ public class ToroCursorStorage {
         }
 
         @Override
+        public boolean isClosed() {
+            return delegate.isClosed();
+        }
+
+        @Override
         public int getPosition(SessionExecutor executor) throws
                 ClosedToroCursorException {
             try {
@@ -289,11 +304,6 @@ public class ToroCursorStorage {
         @Override
         public int getMaxElements() throws UnknownMaxElementsException {
             return delegate.getMaxElements();
-        }
-
-        @Override
-        public Class<? extends E> getType() {
-            return delegate.getType();
         }
 
         @Override

@@ -19,27 +19,28 @@
  */
 package com.torodb.torod.core.cursors;
 
+import com.google.common.collect.FluentIterable;
 import com.torodb.torod.core.exceptions.ClosedToroCursorException;
 import com.torodb.torod.core.exceptions.ToroImplementationException;
 import com.torodb.torod.core.exceptions.UnknownMaxElementsException;
 import com.torodb.torod.core.executor.SessionExecutor;
-import java.util.List;
+import com.torodb.torod.core.subdocument.ToroDocument;
 import javax.annotation.Nonnegative;
 import javax.annotation.concurrent.ThreadSafe;
 
 /**
+ * This is the internal cursor iterface that is used inside ToroDB to manage
+ * db and memory cursors.
  *
- * @param <E> the type of the elements returned by this document
+ * This class contain some implementation details that the user layers of ToroDB
+ * do not need to know.
+ *
+ * Several users might read from the same ToroCursor, but each request one must
+ * use its own {@link UserCursor} instance.
  */
 @ThreadSafe
-public interface ToroCursor<E> {
+public interface ToroCursor {
 
-    /**
-     * 
-     * @return the class of the type returned by this cursor
-     */
-    public Class<? extends E> getType();
-    
     public CursorId getId();
     
     public boolean hasTimeout();
@@ -84,7 +85,7 @@ public interface ToroCursor<E> {
      * @return 
      * @throws com.torodb.torod.core.exceptions.ClosedToroCursorException 
      */
-    public List<E> readAll(SessionExecutor executor) throws ClosedToroCursorException;
+    public FluentIterable<ToroDocument> readAll(SessionExecutor executor) throws ClosedToroCursorException;
     
     /**
      * Read a maximun number of documents from this cursor.
@@ -100,7 +101,7 @@ public interface ToroCursor<E> {
      * @return
      * @throws com.torodb.torod.core.exceptions.ClosedToroCursorException
      */
-    public List<E> read(SessionExecutor executor, @Nonnegative int limit) throws ClosedToroCursorException;
+    public FluentIterable<ToroDocument> read(SessionExecutor executor, @Nonnegative int limit) throws ClosedToroCursorException;
     
     /**
      * Close the cursor, releasing the resources associated with it.
@@ -109,6 +110,8 @@ public interface ToroCursor<E> {
      * @param executor the executor that will execute the action
      */
     public void close(SessionExecutor executor);
+
+    public boolean isClosed();
     
     /**
      * 

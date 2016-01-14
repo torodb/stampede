@@ -2,7 +2,8 @@ package com.torodb.torod.mongodb.utils;
 
 import com.eightkdata.mongowp.client.core.MongoClient;
 import com.eightkdata.mongowp.client.core.MongoConnection;
-import com.eightkdata.mongowp.messages.request.QueryMessage;
+import com.eightkdata.mongowp.messages.request.QueryMessage.QueryOption;
+import com.eightkdata.mongowp.messages.request.QueryMessage.QueryOptions;
 import com.eightkdata.mongowp.mongoserver.api.safe.impl.CollectionCommandArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.CreateCollectionCommand;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.CreateCollectionCommand.CreateCollectionArgument;
@@ -167,17 +168,17 @@ public class DBCloner {
         String fromDb = opts.getDbToClone();
         LOGGER.info("Clonning {}.{} into {}.{}", fromDb, collection, toDb, collection);
 
-        EnumSet<QueryMessage.Flag> queryFlags = EnumSet.of(QueryMessage.Flag.NO_CURSOR_TIMEOUT); //TODO: enable exhaust?
+        EnumSet<QueryOption> queryFlags = EnumSet.of(QueryOption.NO_CURSOR_TIMEOUT); //TODO: enable exhaust?
         if (opts.slaveOk) {
-            queryFlags.add(QueryMessage.Flag.SLAVE_OK);
+            queryFlags.add(QueryOption.SLAVE_OK);
         }
         MongoCursor<BsonDocument> cursor = remoteConnection.query(
                 opts.getDbToClone(),
                 collection,
-                queryFlags,
                 null,
                 0,
                 0,
+                new QueryOptions(queryFlags),
                 null
         );
         while (!cursor.isDead()) {

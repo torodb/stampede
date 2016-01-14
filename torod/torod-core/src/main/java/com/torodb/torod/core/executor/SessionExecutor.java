@@ -20,6 +20,7 @@
 
 package com.torodb.torod.core.executor;
 
+import com.google.common.collect.FluentIterable;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.torodb.torod.core.connection.TransactionMetainfo;
 import com.torodb.torod.core.cursors.CursorId;
@@ -77,7 +78,7 @@ public interface SessionExecutor extends Closeable {
             @Nonnegative int maxResults
     );
     
-    ListenableFuture<List<CollectionMetainfo>> getCollectionsMetainfo();
+    ListenableFuture<FluentIterable<CollectionMetainfo>> getCollectionsMetainfo();
 
     /**
      *

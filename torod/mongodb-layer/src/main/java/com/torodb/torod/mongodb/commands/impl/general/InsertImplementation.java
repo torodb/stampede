@@ -12,13 +12,13 @@ import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.WriteError;
 import com.eightkdata.mongowp.mongoserver.callback.WriteOpResult;
 import com.eightkdata.mongowp.mongoserver.pojos.OpTime;
-import com.eightkdata.mongowp.mongoserver.protocol.MongoWP.ErrorCode;
+import com.eightkdata.mongowp.mongoserver.protocol.ErrorCode;
 import com.eightkdata.mongowp.mongoserver.protocol.exceptions.CommandFailed;
 import com.eightkdata.mongowp.mongoserver.protocol.exceptions.MongoException;
 import com.eightkdata.mongowp.mongoserver.protocol.exceptions.UnknownErrorException;
+import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
-import com.google.common.collect.Iterables;
 import com.torodb.torod.core.WriteFailMode;
 import com.torodb.torod.core.connection.InsertResponse;
 import com.torodb.torod.core.connection.ToroConnection;
@@ -66,8 +66,7 @@ public class InsertImplementation implements CommandImplementation<InsertArgumen
 
         ToroConnection connection = context.getToroConnection();
         
-        Iterable<ToroDocument> docsToInsert = Iterables.transform(
-                arg.getDocuments(),
+        FluentIterable<ToroDocument> docsToInsert = arg.getDocuments().transform(
                 BsonToToroTranslatorFunction.INSTANCE
         );
 
@@ -77,12 +76,11 @@ public class InsertImplementation implements CommandImplementation<InsertArgumen
             WriteFailMode writeFailMode
                     = toWriteFailModeFunction.apply(arg.getWriteConcern());
 
-            Future<InsertResponse> insertResponseFuture
-                    = transaction.insertDocuments(
-                            arg.getCollection(),
-                            docsToInsert,
-                            writeFailMode
-                    );
+            Future<InsertResponse> insertResponseFuture = transaction.insertDocuments(
+                    arg.getCollection(),
+                    docsToInsert,
+                    writeFailMode
+            );
 
             Future<?> commitResponseFuture = transaction.commit();
             transaction.close();
