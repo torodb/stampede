@@ -22,7 +22,7 @@ public final class MongoLayerConstants {
     );
 
     public static final int MAX_WIRE_VERSION = 3;
-    public static final int MIN_WIRE_VERSION = 3;
+    public static final int MIN_WIRE_VERSION = 0;
 
     /**
      * Obtained from
