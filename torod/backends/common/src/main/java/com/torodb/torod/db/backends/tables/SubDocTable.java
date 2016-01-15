@@ -32,21 +32,18 @@ import com.torodb.torod.db.backends.converters.jooq.ValueToJooqConverterProvider
 import com.torodb.torod.db.backends.meta.IndexStorage;
 import com.torodb.torod.db.backends.tables.records.SubDocTableRecord;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.jooq.*;
-import org.jooq.impl.AbstractKeys;
-import org.jooq.impl.DSL;
-import org.jooq.impl.SQLDataType;
-import org.jooq.impl.TableImpl;
-
-import javax.annotation.Nonnull;
-import javax.inject.Inject;
 import java.io.Serializable;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Iterator;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import javax.annotation.Nonnull;
+import javax.inject.Inject;
+import org.jooq.*;
+import org.jooq.impl.AbstractKeys;
+import org.jooq.impl.DSL;
+import org.jooq.impl.SQLDataType;
+import org.jooq.impl.TableImpl;
 
 /**
  *
@@ -54,7 +51,6 @@ import java.util.regex.Pattern;
 public class SubDocTable extends TableImpl<SubDocTableRecord> {
 
     private static final long serialVersionUID = 1197457693;
-    private static final Pattern TABLE_ID_PATTERN = Pattern.compile("t_([0-9]+)$");
     public static final String DID_COLUMN_NAME = "did";
     public static final String INDEX_COLUMN_NAME = "index";
 
@@ -162,15 +158,26 @@ public class SubDocTable extends TableImpl<SubDocTableRecord> {
     }
 
     public static boolean isSubDocTable(String name) {
-        return getSubDocTypeId(name) != null;
+        try {
+            getSubDocTypeId(name);
+            return true;
+        } catch (NumberFormatException ex) {
+            return false;
+        }
     }
 
-    private static Integer getSubDocTypeId(String name) {
-        Matcher matcher = TABLE_ID_PATTERN.matcher(name);
-        if (matcher.find()) {
-            return Integer.parseInt(matcher.group(1));
+    static int getSubDocTypeId(String name) throws NumberFormatException {
+        if (name.length() < 3 || !name.startsWith("t_")) {
+            throw new NumberFormatException(name + " is not a natural number");
         }
-        return null;
+        if (name.charAt(2) == '+') {
+            throw new NumberFormatException(name.substring(2) + " starts with +, which is not expected");
+        }
+        if (name.charAt(2) == '-') {
+            throw new NumberFormatException(name.substring(2) + " starts with -, which is not expected");
+        }
+        int i = Integer.parseInt(name.substring(2));
+        return i;
     }
 
     private static String getSubDocTableName(int typeId) {
@@ -232,10 +239,8 @@ public class SubDocTable extends TableImpl<SubDocTableRecord> {
         return genericTable;
     }
 
-    public int getTypeId() {
-        Integer id = SubDocTable.getSubDocTypeId(getName());
-        assert id != null;
-        return id;
+    public int getTypeId() throws NumberFormatException {
+        return SubDocTable.getSubDocTypeId(getName());
     }
 
     public SubDocType getSubDocType() {
