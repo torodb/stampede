@@ -11,11 +11,11 @@ import com.eightkdata.mongowp.mongoserver.api.safe.impl.UpdateOpResult;
 import com.eightkdata.mongowp.mongoserver.api.safe.pojos.QueryRequest;
 import com.eightkdata.mongowp.mongoserver.callback.WriteOpResult;
 import com.eightkdata.mongowp.mongoserver.pojos.OpTime;
-import com.eightkdata.mongowp.mongoserver.protocol.MongoWP;
-import com.eightkdata.mongowp.mongoserver.protocol.MongoWP.ErrorCode;
+import com.eightkdata.mongowp.mongoserver.protocol.ErrorCode;
 import com.eightkdata.mongowp.mongoserver.protocol.exceptions.CursorNotFoundException;
 import com.eightkdata.mongowp.mongoserver.protocol.exceptions.MongoException;
 import com.eightkdata.mongowp.mongoserver.protocol.exceptions.UnknownErrorException;
+import com.google.common.collect.FluentIterable;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -33,6 +33,7 @@ import com.torodb.torod.core.language.querycriteria.QueryCriteria;
 import com.torodb.torod.core.language.querycriteria.TrueQueryCriteria;
 import com.torodb.torod.core.language.update.UpdateAction;
 import com.torodb.torod.core.subdocument.ToroDocument;
+import com.torodb.torod.mongodb.MongoLayerConstants;
 import com.torodb.torod.mongodb.OptimeClock;
 import com.torodb.torod.mongodb.RequestContext;
 import com.torodb.torod.mongodb.futures.DeleteFuture;
@@ -88,8 +89,8 @@ public class StandardCollectionRequestProcessor implements CollectionRequestProc
         }
         Projection projection = null;
 
-        UserCursor<ToroDocument> cursor;
-        List<BsonDocument> results;
+        UserCursor cursor;
+        FluentIterable<BsonDocument> results;
 
         if (request.isTailable()) {
             throw new UserToroException("TailableCursors are not supported");
@@ -123,10 +124,8 @@ public class StandardCollectionRequestProcessor implements CollectionRequestProc
         }
 
         try {
-            results = Lists.transform(
-                    cursor.read(MongoWP.MONGO_CURSOR_LIMIT),
-                    ToroToBsonTranslatorFunction.INSTANCE
-            );
+            results = cursor.read(MongoLayerConstants.MONGO_CURSOR_LIMIT)
+                    .transform(ToroToBsonTranslatorFunction.INSTANCE);
         }
         catch (ClosedToroCursorException ex) {
             LOGGER.warn("A newly open cursor was found closed");
@@ -135,11 +134,8 @@ public class StandardCollectionRequestProcessor implements CollectionRequestProc
 
         long cursorIdReturned = 0;
 
-        if (results.size() >= MongoWP.MONGO_CURSOR_LIMIT) {
+        if (!cursor.isClosed()) {
             cursorIdReturned = cursor.getId().getNumericId();
-        }
-        else {
-            cursor.close();
         }
 
         return new QueryResponse(cursorIdReturned, results);
@@ -157,17 +153,18 @@ public class StandardCollectionRequestProcessor implements CollectionRequestProc
 
 		String collection = insertMessage.getCollection();
         WriteFailMode writeFailMode = getWriteFailMode(insertMessage);
-        List<? extends BsonDocument> documents = insertMessage.getDocuments();
-        List<ToroDocument> inserts = Lists.transform(
-                documents,
-                BsonToToroTranslatorFunction.INSTANCE
-        );
+        FluentIterable<ToroDocument> documents = insertMessage.getDocuments().
+                transform(BsonToToroTranslatorFunction.INSTANCE);
         OpTime optime = optimeClock.tick();
 
         try (ToroTransaction transaction
                 = toroConnection.createTransaction(TransactionMetainfo.NOT_READ_ONLY)) {
 
-            ListenableFuture<InsertResponse> futureInsertResponse = transaction.insertDocuments(collection, inserts, writeFailMode);
+            ListenableFuture<InsertResponse> futureInsertResponse = transaction.insertDocuments(
+                    collection,
+                    documents,
+                    writeFailMode
+            );
 
             ListenableFuture<?> futureCommitResponse = transaction.commit();
 
@@ -219,8 +216,8 @@ public class StandardCollectionRequestProcessor implements CollectionRequestProc
     	}
     	QueryCriteria queryCriteria = queryCriteriaTranslator.translate(query);
     	List<UpdateOperation> updates = Lists.newArrayList();
-    	boolean upsert = updateMessage.isFlagSet(UpdateMessage.Flag.UPSERT);
-    	boolean justOne = !updateMessage.isFlagSet(UpdateMessage.Flag.MULTI_UPDATE);
+    	boolean upsert = updateMessage.isUpsert();
+    	boolean justOne = !updateMessage.isMultiUpdate();
 
     	UpdateAction updateAction = UpdateActionTranslator.translate(
                 updateMessage.getUpdate());
@@ -291,7 +288,7 @@ public class StandardCollectionRequestProcessor implements CollectionRequestProc
     	}
     	QueryCriteria queryCriteria = queryCriteriaTranslator.translate(query);
     	List<DeleteOperation> deletes = new ArrayList<DeleteOperation>();
-    	boolean singleRemove = deleteMessage.isFlagSet(DeleteMessage.Flag.SINGLE_REMOVE);
+    	boolean singleRemove = deleteMessage.isSingleRemove();
 
     	deletes.add(new DeleteOperation(queryCriteria, singleRemove));
 

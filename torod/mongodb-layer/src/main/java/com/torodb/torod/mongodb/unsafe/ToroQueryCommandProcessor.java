@@ -28,11 +28,7 @@ import com.eightkdata.mongowp.mongoserver.api.commands.CountRequest;
 import com.eightkdata.mongowp.mongoserver.api.safe.tools.bson.BsonReaderTool;
 import com.eightkdata.mongowp.mongoserver.callback.MessageReplier;
 import com.eightkdata.mongowp.mongoserver.protocol.MongoWP;
-import com.eightkdata.mongowp.mongoserver.protocol.MongoWP.ErrorCode;
-import com.eightkdata.mongowp.mongoserver.protocol.exceptions.CommandFailed;
-import com.eightkdata.mongowp.mongoserver.protocol.exceptions.CommandNotSupportedException;
-import com.eightkdata.mongowp.mongoserver.protocol.exceptions.TypesMismatchException;
-import com.eightkdata.mongowp.mongoserver.protocol.exceptions.UnknownErrorException;
+import com.eightkdata.mongowp.mongoserver.protocol.exceptions.*;
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -53,6 +49,7 @@ import com.torodb.torod.core.language.querycriteria.TrueQueryCriteria;
 import com.torodb.torod.core.pojos.CollectionMetainfo;
 import com.torodb.torod.core.pojos.IndexedAttributes;
 import com.torodb.torod.core.pojos.NamedToroIndex;
+import com.torodb.torod.mongodb.MongoLayerConstants;
 import com.torodb.torod.mongodb.RequestContext;
 import com.torodb.torod.mongodb.translator.QueryCriteriaTranslator;
 import io.netty.util.AttributeMap;
@@ -324,8 +321,7 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
 		boolean capped = BsonReaderTool.getBoolean(document, "capped", true);
 
 		if (capped) { // Other flags silently ignored
-			messageReplier.replyQueryCommandFailure(ErrorCode.UNIMPLEMENTED_FLAG, "capped");
-			return;
+            throw new OperationFailedException("Capped collections are not supported yet");
 		}
 
 		ToroConnection connection = getConnection(messageReplier.getAttributeMap());
@@ -438,12 +434,12 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
 		BsonDocument reply = new BsonDocument();
 		
 		reply.put("ismaster", BsonBoolean.TRUE);
-		reply.put("maxBsonObjectSize", new BsonInt32(MongoWP.MAX_BSON_DOCUMENT_SIZE));
-		reply.put("maxMessageSizeBytes", new BsonInt32(MongoWP.MAX_MESSAGE_SIZE_BYTES));
-		reply.put("maxWriteBatchSize", new BsonInt32(MongoWP.MAX_WRITE_BATCH_SIZE));
-		reply.put("localTime", new BsonInt64(System.currentTimeMillis()));
-		reply.put("maxWireVersion", new BsonInt32(MongoWP.MAX_WIRE_VERSION));
-		reply.put("minWireVersion", new BsonInt32(MongoWP.MIN_WIRE_VERSION));
+		reply.put("maxBsonObjectSize", new BsonInt32(MongoLayerConstants.MAX_BSON_DOCUMENT_SIZE));
+		reply.put("maxMessageSizeBytes", new BsonInt32(MongoLayerConstants.MAX_MESSAGE_SIZE_BYTES));
+		reply.put("maxWriteBatchSize", new BsonInt32(MongoLayerConstants.MAX_WRITE_BATCH_SIZE));
+		reply.put("localTime", new BsonDateTime(System.currentTimeMillis()));
+		reply.put("maxWireVersion", new BsonInt32(MongoLayerConstants.MAX_WIRE_VERSION));
+		reply.put("minWireVersion", new BsonInt32(MongoLayerConstants.MIN_WIRE_VERSION));
 		reply.put("ok", MongoWP.BSON_OK);
 		
 		messageReplier.replyMessageNoCursor(reply);
@@ -455,7 +451,7 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
 		
 		reply.put(
 				"version", 
-                new BsonString(MongoWP.VERSION_STRING + " (compatible; ToroDB " + buildProperties.getFullVersion() + ")")
+                new BsonString(MongoLayerConstants.VERSION_STRING + " (compatible; ToroDB " + buildProperties.getFullVersion() + ")")
 		);
 		reply.put("gitVersion", new BsonString(buildProperties.getGitCommitId()));
 		reply.put(
@@ -477,7 +473,7 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
 		);
 		reply.put("bits", new BsonInt32("amd64".equals(buildProperties.getOsArch()) ? 64 : 32));
 		reply.put("debug", BsonBoolean.FALSE);
-		reply.put("maxBsonObjectSize", new BsonInt32(MongoWP.MAX_BSON_DOCUMENT_SIZE));
+		reply.put("maxBsonObjectSize", new BsonInt32(MongoLayerConstants.MAX_BSON_DOCUMENT_SIZE));
 		reply.put("ok", MongoWP.BSON_OK);
 		
 		messageReplier.replyMessageNoCursor(reply);

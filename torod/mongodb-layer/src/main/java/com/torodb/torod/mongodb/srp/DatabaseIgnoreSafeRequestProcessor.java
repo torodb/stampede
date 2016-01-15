@@ -5,6 +5,7 @@ import com.eightkdata.mongowp.messages.request.DeleteMessage;
 import com.eightkdata.mongowp.messages.request.InsertMessage;
 import com.eightkdata.mongowp.messages.request.UpdateMessage;
 import com.eightkdata.mongowp.messages.response.ReplyMessage;
+import com.eightkdata.mongowp.messages.utils.IterableDocumentProvider;
 import com.eightkdata.mongowp.mongoserver.api.safe.*;
 import com.eightkdata.mongowp.mongoserver.api.safe.impl.*;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.AdminCommands.AdminCommandsImplementationsBuilder;
@@ -53,11 +54,10 @@ import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.ReplicaSet
 import com.eightkdata.mongowp.mongoserver.api.safe.pojos.QueryRequest;
 import com.eightkdata.mongowp.mongoserver.api.safe.tools.Empty;
 import com.eightkdata.mongowp.mongoserver.callback.WriteOpResult;
-import com.eightkdata.mongowp.mongoserver.protocol.MongoWP.ErrorCode;
+import com.eightkdata.mongowp.mongoserver.protocol.ErrorCode;
 import com.eightkdata.mongowp.mongoserver.protocol.exceptions.CommandNotSupportedException;
 import com.eightkdata.mongowp.mongoserver.protocol.exceptions.MongoException;
 import com.google.common.base.Predicate;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.Futures;
@@ -72,7 +72,6 @@ import java.util.Map;
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import org.bson.BsonDocument;
 
 /**
  * This {@linkplain SafeRequestProcessor} ignores requests on not supported databases.
@@ -171,7 +170,16 @@ public class DatabaseIgnoreSafeRequestProcessor extends DecoratorSafeRequestProc
         assert database != null;
         assert database.equals(request.getDatabase());
         if (!isAllowed(database)) {
-            return new ReplyMessage(request.getRequestId(), 0, queryMessage.getNumberToSkip(), ImmutableList.<BsonDocument>of());
+            return new ReplyMessage(
+                    request.getRequestId(),
+                    false,
+                    false,
+                    false,
+                    false,
+                    0,
+                    queryMessage.getNumberToSkip(),
+                    IterableDocumentProvider.of()
+            );
         }
         return super.query(request, queryMessage);
     }

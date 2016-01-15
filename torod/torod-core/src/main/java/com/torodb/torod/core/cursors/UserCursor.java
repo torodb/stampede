@@ -1,23 +1,26 @@
 
 package com.torodb.torod.core.cursors;
 
+import com.google.common.collect.FluentIterable;
 import com.torodb.torod.core.exceptions.ClosedToroCursorException;
 import com.torodb.torod.core.exceptions.ToroImplementationException;
 import com.torodb.torod.core.exceptions.UnknownMaxElementsException;
-import java.util.List;
+import com.torodb.torod.core.executor.SessionExecutor;
+import com.torodb.torod.core.subdocument.ToroDocument;
 import javax.annotation.Nonnegative;
+import javax.annotation.concurrent.NotThreadSafe;
 
 /**
+ * This is the external cursor interface that are provided to the users.
  *
+ * This class is easier to use than a {@link ToroCursor} as it hides
+ * implementation details like {@link SessionExecutor}.
+ *
+ * Each request that reads from a {@link ToroCursor} have its own UserCursor.
  */
-public interface UserCursor<E> {
+@NotThreadSafe
+public interface UserCursor {
 
-    /**
-     * 
-     * @return the class of the type returned by this cursor
-     */
-    public Class<? extends E> getType();
-    
     public CursorId getId();
     
     public boolean hasTimeout();
@@ -61,7 +64,7 @@ public interface UserCursor<E> {
      * @return 
      * @throws com.torodb.torod.core.exceptions.ClosedToroCursorException 
      */
-    public List<E> readAll() throws ClosedToroCursorException;
+    public FluentIterable<ToroDocument> readAll() throws ClosedToroCursorException;
     
     /**
      * Read a maximun number of documents from this cursor.
@@ -76,7 +79,7 @@ public interface UserCursor<E> {
      * @return
      * @throws com.torodb.torod.core.exceptions.ClosedToroCursorException
      */
-    public List<E> read(@Nonnegative int limit) throws ClosedToroCursorException;
+    public FluentIterable<ToroDocument> read(@Nonnegative int limit) throws ClosedToroCursorException;
     
     /**
      * Close the cursor, releasing the resources associated with it.
@@ -107,4 +110,6 @@ public interface UserCursor<E> {
      * @throws UnknownMaxElementsException
      */
     public int getMaxElements() throws UnknownMaxElementsException;
+
+    public boolean isClosed();
 }

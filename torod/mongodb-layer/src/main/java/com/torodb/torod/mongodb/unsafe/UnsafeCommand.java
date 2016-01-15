@@ -95,7 +95,7 @@ public class UnsafeCommand implements Command<UnsafeArgument, UnsafeReply> {
     @Override
     public BsonDocument marshallResult(UnsafeReply reply) throws MarshalException {
 
-        ImmutableList<BsonDocument> documents = reply.getReply().getDocuments();
+        ImmutableList<? extends BsonDocument> documents = reply.getReply().getDocuments().toList();
 
         if (documents.size() > 1 || documents.isEmpty()) {
             throw new MarshalException(

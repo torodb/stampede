@@ -2,7 +2,8 @@
 package com.torodb.torod.mongodb.repl.impl;
 
 import com.eightkdata.mongowp.client.core.MongoConnection;
-import com.eightkdata.mongowp.messages.request.QueryMessage;
+import com.eightkdata.mongowp.messages.request.QueryMessage.QueryOption;
+import com.eightkdata.mongowp.messages.request.QueryMessage.QueryOptions;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.OplogOperationParser;
 import com.eightkdata.mongowp.mongoserver.api.safe.oplog.OplogOperation;
 import com.eightkdata.mongowp.mongoserver.api.safe.pojos.MongoCursor;
@@ -44,9 +45,9 @@ public abstract class AbstractMongoOplogReader implements OplogReader {
                 .append("$query", query)
                 .append("$orderby", NATURAL_ORDER_SORT);
 
-        EnumSet<QueryMessage.Flag> flags = EnumSet.of(
-                QueryMessage.Flag.AWAIT_DATA, 
-                QueryMessage.Flag.TAILABLE_CURSOR
+        EnumSet<QueryOption> flags = EnumSet.of(
+                QueryOption.AWAIT_DATA,
+                QueryOption.TAILABLE_CURSOR
         );
 
         return query(query, flags);
@@ -86,7 +87,7 @@ public abstract class AbstractMongoOplogReader implements OplogReader {
                 .append("$query", new BsonDocument("$and", conditions))
                 .append("$orderby", NATURAL_ORDER_SORT);
 
-        EnumSet<QueryMessage.Flag> flags = EnumSet.noneOf(QueryMessage.Flag.class);
+        EnumSet<QueryOption> flags = EnumSet.noneOf(QueryOption.class);
 
         return query(query, flags);
     }
@@ -96,21 +97,21 @@ public abstract class AbstractMongoOplogReader implements OplogReader {
         return false;
     }
 
-    public MongoCursor<OplogOperation> query(BsonDocument query, EnumSet<QueryMessage.Flag> flags) throws MongoException {
+    public MongoCursor<OplogOperation> query(BsonDocument query, EnumSet<QueryOption> flags) throws MongoException {
         Preconditions.checkState(!isClosed(), "You have to connect this client before");
 
         MongoConnection connection = consumeConnection();
         MongoCursor<BsonDocument> cursor = connection.query(
                 DATABASE,
                 COLLECTION,
-                flags,
                 query,
                 0,
                 0,
+                new QueryOptions(flags),
                 null
         );
 
-        return new MyCursor<OplogOperation>(
+        return new MyCursor<>(
                 connection,
                 TransformationMongoCursor.create(
                         cursor,
@@ -129,7 +130,7 @@ public abstract class AbstractMongoOplogReader implements OplogReader {
                 .append("$query", new BsonDocument())
                 .append("$orderby", first ? NATURAL_ORDER_SORT : INVERSE_ORDER_SORT);
 
-        EnumSet<QueryMessage.Flag> flags = EnumSet.of(QueryMessage.Flag.SLAVE_OK);
+        EnumSet<QueryOption> flags = EnumSet.of(QueryOption.SLAVE_OK);
 
         BsonDocument doc;
         MongoConnection connection = consumeConnection();
@@ -137,10 +138,10 @@ public abstract class AbstractMongoOplogReader implements OplogReader {
             MongoCursor<BsonDocument> cursor = connection.query(
                     DATABASE,
                     COLLECTION,
-                    flags,
                     query,
                     0,
                     1,
+                    new QueryOptions(flags),
                     null
             );
             try {
@@ -159,11 +160,9 @@ public abstract class AbstractMongoOplogReader implements OplogReader {
 
             try {
                 return OplogOperationParser.fromBson(doc);
-            } catch (BadValueException ex) {
-                throw new OplogOperationUnsupported(doc, ex);
-            } catch (TypesMismatchException ex) {
-                throw new OplogOperationUnsupported(doc, ex);
-            } catch (NoSuchKeyException ex) {
+            } catch (BadValueException |
+                    TypesMismatchException |
+                    NoSuchKeyException ex) {
                 throw new OplogOperationUnsupported(doc, ex);
             }
         } finally {
@@ -175,7 +174,7 @@ public abstract class AbstractMongoOplogReader implements OplogReader {
         private final MongoConnection connection;
         private final MongoCursor<T> delegate;
 
-        public MyCursor(MongoConnection connection, MongoCursor<T> delegate) {
+        private MyCursor(MongoConnection connection, MongoCursor<T> delegate) {
             this.connection = connection;
             this.delegate = delegate;
         }

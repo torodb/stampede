@@ -20,6 +20,7 @@
 
 package com.torodb.torod.db.backends.executor;
 
+import com.google.common.collect.FluentIterable;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.torodb.torod.core.Session;
@@ -133,7 +134,7 @@ class DefaultSessionExecutor implements SessionExecutor {
     }
 
     @Override
-    public ListenableFuture<List<CollectionMetainfo>> getCollectionsMetainfo() {
+    public ListenableFuture<FluentIterable<CollectionMetainfo>> getCollectionsMetainfo() {
         return submit(
                 new GetCollectionsMetainfoCallable(
                         wrapper,
@@ -148,8 +149,8 @@ class DefaultSessionExecutor implements SessionExecutor {
         return submit(
                 new ReadCursorCallable(
                         wrapper,
-                        reportFactory.createReadCursorReport(), 
-                        cursorId, 
+                        reportFactory.createReadCursorReport(),
+                        cursorId,
                         limit
                 )
         );

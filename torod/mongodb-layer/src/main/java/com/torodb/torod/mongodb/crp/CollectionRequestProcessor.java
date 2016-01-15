@@ -9,9 +9,8 @@ import com.eightkdata.mongowp.mongoserver.api.safe.impl.UpdateOpResult;
 import com.eightkdata.mongowp.mongoserver.api.safe.pojos.QueryRequest;
 import com.eightkdata.mongowp.mongoserver.callback.WriteOpResult;
 import com.eightkdata.mongowp.mongoserver.protocol.exceptions.MongoException;
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.FluentIterable;
 import com.google.common.util.concurrent.ListenableFuture;
-import java.util.List;
 import javax.annotation.Nonnegative;
 import javax.annotation.Nonnull;
 import org.bson.BsonDocument;
@@ -38,18 +37,18 @@ public interface CollectionRequestProcessor {
         @Nonnegative
         private final long cursorId;
         @Nonnull
-        final private ImmutableList<BsonDocument> documents;
+        final private FluentIterable<BsonDocument> documents;
 
-        public QueryResponse(long cursorId, List<BsonDocument> documents) {
+        public QueryResponse(long cursorId, FluentIterable<BsonDocument> documents) {
             this.cursorId = cursorId;
-            this.documents = ImmutableList.copyOf(documents);
+            this.documents = documents;
         }
 
         public long getCursorId() {
             return cursorId;
         }
 
-        public ImmutableList<BsonDocument> getDocuments() {
+        public FluentIterable<BsonDocument> getDocuments() {
             return documents;
         }
     }

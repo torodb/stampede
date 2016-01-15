@@ -19,8 +19,8 @@
  */
 package com.toro.torod.connection.cursors;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
+import com.google.common.collect.FluentIterable;
+import com.google.common.collect.Iterables;
 import com.torodb.torod.core.cursors.CursorId;
 import com.torodb.torod.core.d2r.D2RTranslator;
 import com.torodb.torod.core.exceptions.ClosedToroCursorException;
@@ -40,7 +40,7 @@ import org.slf4j.LoggerFactory;
 /**
  *
  */
-public class StandardDocumentToroCursor extends DefaultToroCursor<ToroDocument> {
+public class StandardDocumentToroCursor extends DefaultToroCursor {
 
     private static final Logger LOGGER
             = LoggerFactory.getLogger(StandardDocumentToroCursor.class);
@@ -105,14 +105,9 @@ public class StandardDocumentToroCursor extends DefaultToroCursor<ToroDocument> 
         }
         maxElements = maxElementsCopy;
     }
-
-    @Override
-    public Class<? extends ToroDocument> getType() {
-        return ToroDocument.class;
-    }
     
     @Override
-    public List<ToroDocument> readAll(SessionExecutor executor) throws ClosedToroCursorException {
+    public FluentIterable<ToroDocument> readAll(SessionExecutor executor) throws ClosedToroCursorException {
         try {
             executor.noop().get();
             
@@ -120,43 +115,33 @@ public class StandardDocumentToroCursor extends DefaultToroCursor<ToroDocument> 
                 if (isClosed()) {
                     throw new ClosedToroCursorException();
                 }
-
+                
                 List<? extends SplitDocument> splitDocs = executor
                         .readAllCursor(getId())
                         .get();
 
-                List<ToroDocument> docs = Lists.newArrayListWithCapacity(
-                        splitDocs.size()
-                );
-                for (SplitDocument splitDocument : splitDocs) {
-                    docs.add(d2r.translate(splitDocument));
-                }
-
-                position += docs.size();
+                position += splitDocs.size();
                 
                 if (isAutoclosable() && position == maxElements) {
                     close(executor);
                 }
-                
-                return docs;
+
+                return FluentIterable.from(
+                        Iterables.transform(
+                                splitDocs,
+                                d2r.getToDocumentFunction()
+                        )
+                );
             }
         }
-        catch (ToroTaskExecutionException ex) {
-            //TODO: Change exceptions
-            throw new ToroRuntimeException(ex);
-        }
-        catch (InterruptedException ex) {
-            //TODO: Change exceptions
-            throw new ToroRuntimeException(ex);
-        }
-        catch (ExecutionException ex) {
+        catch (ToroTaskExecutionException | InterruptedException | ExecutionException ex) {
             //TODO: Change exceptions
             throw new ToroRuntimeException(ex);
         }
     }
 
     @Override
-    public List<ToroDocument> read(SessionExecutor executor, int limit) throws ClosedToroCursorException {
+    public FluentIterable<ToroDocument> read(SessionExecutor executor, int limit) throws ClosedToroCursorException {
         if (limit <= 0) {
             throw new IllegalArgumentException(
                     "Limit must be a positive numbre, but " + limit
@@ -172,22 +157,23 @@ public class StandardDocumentToroCursor extends DefaultToroCursor<ToroDocument> 
                 }
                 limit = Math.min(limit, maxElements - position);
 
-                List<ToroDocument> docs;
+                FluentIterable<ToroDocument> docs;
                 if (limit > 0) {
 
                     List<? extends SplitDocument> splitDocs = executor
                             .readCursor(getId(), limit)
                             .get();
-                    docs = Lists.newArrayListWithCapacity(
-                            splitDocs.size()
+                    position += splitDocs.size();
+
+                    docs = FluentIterable.from(
+                            Iterables.transform(
+                                    splitDocs,
+                                    d2r.getToDocumentFunction()
+                            )
                     );
-                    for (SplitDocument splitDocument : splitDocs) {
-                        docs.add(d2r.translate(splitDocument));
-                    }
-                    position += docs.size();
                 }
                 else {
-                    docs = ImmutableList.of();
+                    docs = FluentIterable.from(Collections.<ToroDocument>emptyList());
                 }
                 
                 if (isAutoclosable() && position == maxElements) {
@@ -197,15 +183,7 @@ public class StandardDocumentToroCursor extends DefaultToroCursor<ToroDocument> 
                 return docs;
             }
         }
-        catch (ToroTaskExecutionException ex) {
-            //TODO: Change exceptions
-            throw new ToroRuntimeException(ex);
-        }
-        catch (InterruptedException ex) {
-            //TODO: Change exceptions
-            throw new ToroRuntimeException(ex);
-        }
-        catch (ExecutionException ex) {
+        catch (ToroTaskExecutionException | InterruptedException | ExecutionException ex) {
             //TODO: Change exceptions
             throw new ToroRuntimeException(ex);
         }

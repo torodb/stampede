@@ -1,7 +1,8 @@
 
 package com.torodb.torod.mongodb.repl;
 
-import com.eightkdata.mongowp.messages.request.QueryMessage;
+import com.eightkdata.mongowp.messages.request.QueryMessage.QueryOption;
+import com.eightkdata.mongowp.messages.request.QueryMessage.QueryOptions;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.DeleteCommand;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.DeleteCommand.DeleteArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.DeleteCommand.DeleteStatement;
@@ -137,8 +138,16 @@ public class OplogManager extends AbstractIdleService {
     private void loadState() throws OplogManagerPersistException {
         LocalMongoConnection connection = localClient.openConnection();
         try {
-            EnumSet<QueryMessage.Flag> flags = EnumSet.of(QueryMessage.Flag.SLAVE_OK);
-            BsonDocument doc = connection.query(supportedDatabase, "torodb", flags, DOC_QUERY, 0, 0, null)
+            EnumSet<QueryOption> flags = EnumSet.of(QueryOption.SLAVE_OK);
+            BsonDocument doc = connection.query(
+                    supportedDatabase,
+                    "torodb",
+                    DOC_QUERY,
+                    0,
+                    0,
+                    new QueryOptions(flags),
+                    null
+            )
                     .getOne();
             if (doc == null) {
                 lastAppliedHash = 0;

@@ -10,7 +10,7 @@ import java.util.concurrent.ExecutionException;
 /**
  *
  */
-public abstract class DefaultToroCursor<E> implements ToroCursor<E> {
+public abstract class DefaultToroCursor implements ToroCursor {
 
     private final CursorId id;
     private final boolean hasTimeout;
@@ -64,7 +64,8 @@ public abstract class DefaultToroCursor<E> implements ToroCursor<E> {
         return autoclosable;
     }
 
-    protected synchronized boolean isClosed() {
+    @Override
+    public synchronized boolean isClosed() {
         return closed;
     }
     

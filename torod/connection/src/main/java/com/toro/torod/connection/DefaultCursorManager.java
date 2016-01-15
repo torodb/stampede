@@ -1,10 +1,11 @@
 
 package com.toro.torod.connection;
 
-import com.toro.torod.connection.cursors.CollectionMetainfoToroCursor;
 import com.toro.torod.connection.cursors.StandardDocumentToroCursor;
 import com.torodb.torod.core.backend.DbBackend;
-import com.torodb.torod.core.cursors.*;
+import com.torodb.torod.core.cursors.CursorId;
+import com.torodb.torod.core.cursors.ToroCursor;
+import com.torodb.torod.core.cursors.ToroCursorManager;
 import com.torodb.torod.core.d2r.D2RTranslator;
 import com.torodb.torod.core.exceptions.CursorNotFoundException;
 import com.torodb.torod.core.exceptions.NotAutoclosableCursorException;
@@ -12,9 +13,6 @@ import com.torodb.torod.core.exceptions.ToroRuntimeException;
 import com.torodb.torod.core.executor.SessionExecutor;
 import com.torodb.torod.core.language.projection.Projection;
 import com.torodb.torod.core.language.querycriteria.QueryCriteria;
-import com.torodb.torod.core.pojos.CollectionMetainfo;
-import com.torodb.torod.core.subdocument.ToroDocument;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -41,7 +39,7 @@ public class DefaultCursorManager implements ToroCursorManager {
     }
     
     @Override
-    public ToroCursor<ToroDocument> openUnlimitedCursor(
+    public ToroCursor openUnlimitedCursor(
             @Nonnull SessionExecutor sessionExecutor,
             String collection,
             @Nullable QueryCriteria queryCriteria,
@@ -62,10 +60,7 @@ public class DefaultCursorManager implements ToroCursorManager {
         try {
             query.get();
         }
-        catch (InterruptedException ex) {
-            throw new ToroRuntimeException(ex);
-        }
-        catch (ExecutionException ex) {
+        catch (InterruptedException | ExecutionException ex) {
             throw new ToroRuntimeException(ex);
         }
         
@@ -81,7 +76,7 @@ public class DefaultCursorManager implements ToroCursorManager {
     }
 
     @Override
-    public ToroCursor<ToroDocument> openLimitedCursor(
+    public ToroCursor openLimitedCursor(
             @Nonnull SessionExecutor sessionExecutor,
             String collection,
             @Nullable QueryCriteria queryCriteria,
@@ -103,10 +98,7 @@ public class DefaultCursorManager implements ToroCursorManager {
         try {
             query.get();
         }
-        catch (InterruptedException ex) {
-            throw new ToroRuntimeException(ex);
-        }
-        catch (ExecutionException ex) {
+        catch (InterruptedException | ExecutionException ex) {
             throw new ToroRuntimeException(ex);
         }
         
@@ -122,39 +114,9 @@ public class DefaultCursorManager implements ToroCursorManager {
     }
 
     @Override
-    public ToroCursor<CollectionMetainfo> openCollectionsMetainfoCursor(
-            @Nonnull SessionExecutor sessionExecutor) {
-        Future<List<CollectionMetainfo>> futureMetainfo = 
-                sessionExecutor.getCollectionsMetainfo();
-        
-        CursorId id = consumeId();
-        CollectionMetainfoToroCursor cursor = new CollectionMetainfoToroCursor(
-                id, 
-                true, 
-                true, 
-                futureMetainfo
-        );
-        
-        return storage.storeCursor(cursor, sessionExecutor);
-    }
-
-    @Override
-    public ToroCursor lookForCursor(CursorId cursorId) throws
-            CursorNotFoundException {
-        return storage.getCursor(cursorId);
-    }
-
-    @Override
-    public <E> ToroCursor<E> lookForCursor(CursorId cursorId, Class<E> expectedTypeClass)
-            throws CursorNotFoundException {
+    public ToroCursor lookForCursor(CursorId cursorId) throws CursorNotFoundException {
         ToroCursor cursor = storage.getCursor(cursorId);
-        if (expectedTypeClass.isAssignableFrom(cursor.getType())) {
-            return cursor;
-        }
-        throw new CursorNotFoundException(
-                cursorId, 
-                "Cursor with "+ cursorId+" is of a different type ("+cursor.getType()+")"
-        );
+        return cursor;
     }
     
     private CursorId consumeId() {

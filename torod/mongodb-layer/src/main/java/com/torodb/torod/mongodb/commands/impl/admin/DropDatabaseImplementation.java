@@ -7,11 +7,13 @@ import com.eightkdata.mongowp.mongoserver.api.safe.CommandResult;
 import com.eightkdata.mongowp.mongoserver.api.safe.impl.NonWriteCommandResult;
 import com.eightkdata.mongowp.mongoserver.api.safe.tools.Empty;
 import com.eightkdata.mongowp.mongoserver.protocol.exceptions.CommandFailed;
+import com.eightkdata.mongowp.mongoserver.protocol.exceptions.InternalErrorException;
 import com.eightkdata.mongowp.mongoserver.protocol.exceptions.MongoException;
 import com.torodb.torod.core.annotations.DatabaseName;
 import com.torodb.torod.core.connection.ToroConnection;
-import com.torodb.torod.core.cursors.UserCursor;
 import com.torodb.torod.core.exceptions.ClosedToroCursorException;
+import com.torodb.torod.core.exceptions.ToroException;
+import com.torodb.torod.core.exceptions.UserToroException;
 import com.torodb.torod.core.pojos.CollectionMetainfo;
 import com.torodb.torod.mongodb.commands.AbstractToroCommandImplementation;
 import com.torodb.torod.mongodb.utils.NamespaceUtil;
@@ -44,17 +46,18 @@ public class DropDatabaseImplementation extends AbstractToroCommandImplementatio
         else {
             try {
                 ToroConnection connection = getToroConnection(req);
-                UserCursor<CollectionMetainfo> cursor = connection.openCollectionsMetainfoCursor();
 
-                for (CollectionMetainfo collectionMetainfo : cursor.readAll()) {
+                for (CollectionMetainfo collectionMetainfo : connection.getCollectionsMetainfoCursor()) {
                     if (!NamespaceUtil.isTorodbCollection(collectionMetainfo.getName())) {
                         connection.dropCollection(collectionMetainfo.getName());
                     }
                 }
-            } catch (ClosedToroCursorException ex) {
+            } catch (ClosedToroCursorException | UserToroException ex) {
                 throw new CommandFailed(command.getCommandName(), ex.getMessage(), ex);
+            } catch (ToroException ex) {
+                throw new InternalErrorException(ex);
             }
-            return new NonWriteCommandResult<Empty>(Empty.getInstance());
+            return new NonWriteCommandResult<>(Empty.getInstance());
         }
     }
 

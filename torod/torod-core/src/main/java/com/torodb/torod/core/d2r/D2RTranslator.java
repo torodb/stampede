@@ -20,6 +20,7 @@
 
 package com.torodb.torod.core.d2r;
 
+import com.google.common.base.Function;
 import com.torodb.torod.core.executor.SessionExecutor;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.core.subdocument.ToroDocument;
@@ -31,9 +32,13 @@ public interface D2RTranslator {
 
     public void initialize();
 
-    public SplitDocument translate(SessionExecutor sessionExecutor, String collection, ToroDocument document);
+//    public SplitDocument translate(SessionExecutor sessionExecutor, String collection, ToroDocument document);
+//
+//    public ToroDocument translate(SplitDocument splitDocument);
 
-    public ToroDocument translate(SplitDocument splitDocument);
+    public Function<SplitDocument, ToroDocument> getToDocumentFunction();
+
+    public Function<ToroDocument, SplitDocument> getToRelationalFunction(SessionExecutor sessionExecutor, String collection);
     
     public void shutdown();
     
