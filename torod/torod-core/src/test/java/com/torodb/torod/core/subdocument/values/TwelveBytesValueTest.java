@@ -20,62 +20,26 @@
 
 package com.torodb.torod.core.subdocument.values;
 
-import java.util.Arrays;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 
 /**
  *
  */
 public class TwelveBytesValueTest {
-    
-    public TwelveBytesValueTest() {
-    }
-    
-    @BeforeClass
-    public static void setUpClass() {
-    }
-    
-    @AfterClass
-    public static void tearDownClass() {
-    }
-    
-    @Before
-    public void setUp() {
-    }
-    
-    @After
-    public void tearDown() {
-    }
+
+    private static final byte[] SAMPLE_BYTES = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,12};
 
     @Test
     public void testParse() {
-        byte[] bytes = new byte[] {
-            1,
-            2,
-            3,
-            4,
-            5,
-            6,
-            7,
-            8,
-            9,
-            10,
-            11,
-            12
-        };
-        
-        TwelveBytesValue original = new TwelveBytesValue(bytes);
+        TwelveBytesValue original = new TwelveBytesValue(SAMPLE_BYTES);
         TwelveBytesValue copy = new TwelveBytesValue(original.getArrayValue());
-        
-        assert Arrays.equals(original.getArrayValue(), bytes);
-        assert Arrays.equals(copy.getArrayValue(), bytes);
-        assert copy.equals(original);
+
+        assertArrayEquals(original.getArrayValue(), SAMPLE_BYTES);
+        assertArrayEquals(copy.getArrayValue(), SAMPLE_BYTES);
+        assertEquals(copy, original);
     }
-    
+
 }
