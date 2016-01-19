@@ -20,6 +20,7 @@
 
 package com.torodb.torod.mongodb.unsafe;
 
+import com.eightkdata.mongowp.mongoserver.MongoVersion;
 import com.eightkdata.mongowp.mongoserver.api.QueryCommandProcessor;
 import com.eightkdata.mongowp.mongoserver.api.commands.CollStatsReply;
 import com.eightkdata.mongowp.mongoserver.api.commands.CollStatsRequest;
@@ -213,13 +214,24 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
 
                     SetView<String> extraOptions = Sets.difference(uncastedIndex.keySet(), supportedFields);
                     if (!extraOptions.isEmpty()) {
-                        reply.put("ok", MongoWP.BSON_KO);
-                        String errmsg = "Options "
-                                + extraOptions.toString()
-                                + " are not supported";
-                        reply.put("errmsg", new BsonString(errmsg));
-                        messageReplier.replyMessageNoCursor(reply);
-                        return;
+                        boolean safeExtraOptions = true;
+                        for (String extraOption : extraOptions) {
+                            if (!extraOption.equals("background") ||
+                                    BsonReaderTool.getBoolean(uncastedIndex, "background", false)) {
+                                safeExtraOptions = false;
+                                break;
+                            }
+                        }
+                        
+                        if (!safeExtraOptions) {
+                            reply.put("ok", MongoWP.BSON_KO);
+                            String errmsg = "Options "
+                                    + extraOptions.toString()
+                                    + " are not supported";
+                            reply.put("errmsg", new BsonString(errmsg));
+                            messageReplier.replyMessageNoCursor(reply);
+                            return;
+                        }
                     }
 
                     IndexedAttributes.Builder indexedAttsBuilder
@@ -464,9 +476,9 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
 				"versionArray",
                 new BsonArray(
                         Lists.newArrayList(
-                                new BsonInt32(buildProperties.getMajorVersion()),
-                                new BsonInt32(buildProperties.getMinorVersion()),
-                                new BsonInt32(buildProperties.getSubVersion()),
+                                new BsonInt32(MongoVersion.V3_0.getMajor()),
+                                new BsonInt32(MongoVersion.V3_0.getMinor()),
+                                new BsonInt32(0),
                                 new BsonInt32(0)
                         )
                 )

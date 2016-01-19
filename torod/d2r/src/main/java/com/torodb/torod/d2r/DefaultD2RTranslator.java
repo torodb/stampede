@@ -255,6 +255,11 @@ public class DefaultD2RTranslator implements D2RTranslator {
                 return new com.torodb.kvdocument.values.PatternValue(value.getValue());
             }
 
+        @Override
+        public DocValue visit(BinaryValue value, Argument arg) {
+            return new com.torodb.kvdocument.values.BinaryValue(value.getValue());
+        }
+
             public static class Argument {
 
                 private final SplitDocument splitDoc;

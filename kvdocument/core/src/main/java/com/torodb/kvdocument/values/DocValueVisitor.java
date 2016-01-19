@@ -50,5 +50,7 @@ public interface DocValueVisitor<Result, Arg> {
     public Result visit(TimeValue value, Arg arg);
 
     public Result visit(PatternValue value, Arg arg);
+
+    public Result visit(BinaryValue value, Arg arg);
     
 }

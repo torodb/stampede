@@ -265,6 +265,23 @@ public class ValueDFW<Arg> implements DocValueVisitor<Void, Arg> {
         
         return null;
     }
+
+    protected void preBytesValue(BinaryValue value, Arg arg) {
+    }
+    
+    protected void postBytesValue(BinaryValue value, Arg arg) {
+    }
+    
+    @Override
+    public Void visit(BinaryValue value, Arg arg) {
+        preDefaultValue(value, arg);
+        preBytesValue(value, arg);
+        
+        postBytesValue(value, arg);
+        postDefaultValue(value, arg);
+        
+        return null;
+    }
     
     
 }

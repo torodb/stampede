@@ -94,5 +94,10 @@ public class DocValueAdaptor<Result, Arg> implements DocValueVisitor<Result, Arg
     public Result visit(PatternValue value, Arg arg) {
         return defaultCase(value, arg);
     }
+
+    @Override
+    public Result visit(BinaryValue value, Arg arg) {
+        return defaultCase(value, arg);
+    }
     
 }

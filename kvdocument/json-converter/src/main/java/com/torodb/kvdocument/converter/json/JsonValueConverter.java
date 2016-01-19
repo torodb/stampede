@@ -312,6 +312,12 @@ public class JsonValueConverter {
             return null;
         }
 
+        @Override
+        public Void visit(BinaryValue value, ValueConsumer arg) {
+            arg.consume(value.toString());
+            return null;
+        }
+
         public static interface ValueConsumer {
             void consume(JsonValue value);
             void consume(String value);

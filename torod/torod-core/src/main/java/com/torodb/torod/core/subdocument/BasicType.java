@@ -41,7 +41,8 @@ public enum BasicType {
     DATE,
     DATETIME,
     TIME,
-    PATTERN;
+    PATTERN,
+    BINARY;
     
     @Nonnull
     public static BasicType fromDocType(DocType docType) {
@@ -80,6 +81,9 @@ public enum BasicType {
         }
         if (docType instanceof PatternType) {
             return PATTERN;
+        }
+        if (docType instanceof BinaryType) {
+            return BINARY;
         }
         throw new IllegalArgumentException(docType + " does not correspond with a basic type");
     }

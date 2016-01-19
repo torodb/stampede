@@ -26,6 +26,7 @@ import com.torodb.torod.db.backends.ArraySerializer;
 import org.jooq.Condition;
 import org.jooq.Table;
 import org.jooq.impl.DSL;
+import org.jooq.tools.json.JSONValue;
 
 import javax.annotation.Nonnull;
 import javax.inject.Singleton;
@@ -79,13 +80,14 @@ public class JsonbArraySerializer implements ArraySerializer {
     @Nonnull
     @Override
     public Table arrayElements(String fieldName) {
-        return DSL.table("jsonb_array_elements(?)", fieldName);
+        return DSL.table("jsonb_array_elements(" + fieldName + ")");
     }
 
     @Override
     public String translateValue(Object translatedObject) {
-        return (translatedObject instanceof String) ?
-                '\"' + (String) translatedObject + '\"'
-                : translatedObject.toString();
+        if (translatedObject instanceof String) {
+            return '\"' + JSONValue.escape((String) translatedObject) + '\"';
+        }
+        return translatedObject.toString();
     }
 }

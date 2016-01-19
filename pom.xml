@@ -79,7 +79,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <torod.version>${project.version}</torod.version>
         <jackson.version>2.6.3</jackson.version>
-        <mongowp.version>0.40-SNAPSHOT</mongowp.version>
+        <mongowp.version>0.41-SNAPSHOT</mongowp.version>
     </properties>
 
     <modules>

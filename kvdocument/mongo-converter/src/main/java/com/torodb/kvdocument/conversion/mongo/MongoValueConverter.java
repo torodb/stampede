@@ -68,7 +68,7 @@ public class MongoValueConverter {
     }
 
     public static DocValue translateBSON(BsonValue value) {
-        if (value == null || value.isNull()) {
+        if (value == null || value.isNull() || value.getBsonType() == BsonType.UNDEFINED) {
             return NullValue.INSTANCE;
         }
         if (value.isDouble()) {
@@ -117,6 +117,9 @@ public class MongoValueConverter {
                             patternOptionsToFlags(exp.getOptions())
                     )
             );
+        }
+        if (value.isBinary()) {
+            return new BinaryValue(value.asBinary().getData());
         }
 
         throw new IllegalArgumentException("Arguments of " + value.getClass()
@@ -206,6 +209,12 @@ public class MongoValueConverter {
                     value.getValue().pattern(),
                     patternFlagsToOptions(value.getValue().flags())
             );
+        }
+
+        @Override
+        public BsonValue visit(BinaryValue value, Void arg) {
+            byte[] kvBytes = value.getArrayValue();
+            return new BsonBinary(kvBytes);
         }
 
         @Override
