@@ -22,6 +22,8 @@ import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.diagnos
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.diagnostic.CollStatsCommand.CollStatsReply;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.diagnostic.DiagnosticCommands.DiagnosticCommandsImplementationsBuilder;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.diagnostic.ListDatabasesCommand.ListDatabasesReply;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.diagnostic.ServerStatusCommand.ServerStatusArgument;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.diagnostic.ServerStatusCommand.ServerStatusReply;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.DeleteCommand.DeleteArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.GeneralCommands.GeneralCommandsImplementationsBuilder;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.GetLastErrorCommand.GetLastErrorArgument;
@@ -263,6 +265,11 @@ public class DatabaseIgnoreSafeRequestProcessor extends DecoratorSafeRequestProc
 
         @Override
         public CommandImplementation<Empty, BuildInfoResult> getBuildInfoImplementation() {
+            return NotImplementedCommandImplementation.build();
+        }
+
+        @Override
+        public CommandImplementation<ServerStatusArgument, ServerStatusReply> getServerStatusImplementation() {
             return NotImplementedCommandImplementation.build();
         }
 

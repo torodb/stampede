@@ -702,6 +702,13 @@ public class QueryStructureFilterTest {
             return BasicType.PATTERN;
         }
 
+        @Override
+        public BasicType visit(
+                com.torodb.kvdocument.values.BinaryValue value,
+                Void arg) {
+            return BasicType.BINARY;
+        }
+
     }
 
 }

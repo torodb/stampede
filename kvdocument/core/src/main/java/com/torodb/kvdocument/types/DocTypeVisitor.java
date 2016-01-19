@@ -52,6 +52,8 @@ public interface DocTypeVisitor<Result, Arg> {
     public Result visit(DateType type, Arg arg);
     
     public Result visit(TimeType type, Arg arg);
+    
+    public Result visit(BinaryType type, Arg arg);
 
     public Result accept(PatternType type, Arg arg);
 

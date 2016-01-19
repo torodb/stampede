@@ -222,6 +222,11 @@ public class DocumentSplitter {
             return BasicType.PATTERN;
         }
 
+        @Override
+        public BasicType visit(BinaryValue value, Void arg) {
+            return BasicType.BINARY;
+        }
+
     }
 
     private class TypesCollector extends ValueDFW<Map<ObjectValue, SubDocType>> {
@@ -449,6 +454,18 @@ public class DocumentSplitter {
         public Void visit(PatternValue value, TranslatorConsumer arg) {
             arg.consume(
                     new com.torodb.torod.core.subdocument.values.PatternValue(
+                            value.getValue()
+                    )
+            );
+            return null;
+        }
+
+        @Override
+        public Void visit(
+                BinaryValue value,
+                TranslatorConsumer arg) {
+            arg.consume(
+                    new com.torodb.torod.core.subdocument.values.BinaryValue(
                             value.getValue()
                     )
             );

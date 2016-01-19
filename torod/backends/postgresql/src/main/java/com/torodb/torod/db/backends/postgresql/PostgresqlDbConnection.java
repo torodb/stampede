@@ -603,7 +603,8 @@ class PostgresqlDbConnection extends AbstractDbConnection {
                     java.sql.Types.REAL,
                     java.sql.Types.TINYINT,
                     java.sql.Types.CHAR,
-                    java.sql.Types.BIT
+                    java.sql.Types.BIT,
+                    java.sql.Types.BINARY
                 });
         private static final long serialVersionUID = 1L;
 
