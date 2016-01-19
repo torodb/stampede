@@ -22,6 +22,7 @@ package com.torodb.kvdocument.values;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.torodb.common.util.HexUtils;
 import com.torodb.kvdocument.types.TwelveBytesType;
 import java.util.List;
 
@@ -106,11 +107,7 @@ public class TwelveBytesValue implements DocValue {
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder(24);
-        for (Byte aByte : bytes) {
-            sb.append(String.format("%02X", aByte));
-        }
-        return sb.toString();
+        return HexUtils.bytes2Hex(bytes);
     }
 
     @Override

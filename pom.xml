@@ -87,6 +87,7 @@
         <module>torod</module>
         <module>torodb</module>
         <module>multiple-granularity-locking</module>
+        <module>common</module>
     </modules>
 
     <dependencyManagement>
