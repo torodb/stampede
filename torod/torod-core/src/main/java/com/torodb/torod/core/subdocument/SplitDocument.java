@@ -133,7 +133,7 @@ public class SplitDocument {
 
     public static class Builder {
 
-        private static final DocIndexer indexer = new DocIndexer();
+        private static final DocIndexer INDEXER = new DocIndexer();
 
         private int id;
         private DocStructure root;
@@ -164,7 +164,7 @@ public class SplitDocument {
             Preconditions.checkState(!build, "This builder has already been used");
             this.root = root;
             structures.clear();
-            root.accept(indexer, this);
+            root.accept(INDEXER, this);
 
             return this;
         }
