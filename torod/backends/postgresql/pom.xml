@@ -14,7 +14,7 @@
 
     <artifactId>postgresql</artifactId>
     
-    <name>Torod: PostgreSQL backend</name>
+    <name>Torod: Backends - PostgreSQL</name>
     <description>
         PostgreSQL implementation of a ToroDB backend. This was the original backend implemented in ToroDB, and is
         also considered as the default ToroDB backend and a reference implementation.
@@ -69,6 +69,11 @@
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.torodb</groupId>
+            <artifactId>common</artifactId>
+            <version>0.40-alpha2-SNAPSHOT</version>
         </dependency>
     </dependencies>
     
