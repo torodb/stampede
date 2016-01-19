@@ -428,7 +428,7 @@ class PostgresqlDbConnection extends AbstractDbConnection {
             );
 
             if (cappedSize < maxCappedSize) { //there are not enough elements on the insert => fallback
-                LOGGER.info(
+                LOGGER.debug(
                         "The insert window is not big enough to use copy (the "
                                 + "limit is {}, the real size is {}).",
                         maxCappedSize,

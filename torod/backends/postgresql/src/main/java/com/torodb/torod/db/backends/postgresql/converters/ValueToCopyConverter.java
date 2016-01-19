@@ -80,7 +80,7 @@ public class ValueToCopyConverter implements ValueVisitor<Void, StringBuilder> {
 
     @Override
     public Void visit(TwelveBytesValue value, StringBuilder arg) {
-        arg.append("\\x");
+        arg.append("\\\\x");
 
         HexUtils.bytes2Hex(value.getValue(), arg);
 
@@ -89,7 +89,7 @@ public class ValueToCopyConverter implements ValueVisitor<Void, StringBuilder> {
 
     @Override
     public Void visit(BinaryValue value, StringBuilder arg) {
-        arg.append("\\x");
+        arg.append("\\\\x");
 
         HexUtils.bytes2Hex(value.getValue(), arg);
 
