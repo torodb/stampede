@@ -21,7 +21,10 @@
 package com.torodb.torod.db.backends.executor.jobs;
 
 import com.google.common.base.Function;
-import com.google.common.collect.*;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.torodb.torod.core.WriteFailMode;
 import com.torodb.torod.core.connection.InsertResponse;
 import com.torodb.torod.core.connection.WriteError;
@@ -96,7 +99,7 @@ public class InsertCallable extends TransactionalJob<InsertResponse> {
         connection.insertRootDocuments(collection, Collections.singleton(doc));
         
         for (SubDocType type : doc.getSubDocuments().rowKeySet()) {
-            ImmutableCollection<SubDocument> subDocs = doc.getSubDocuments().row(type).values();
+            Collection<SubDocument> subDocs = doc.getSubDocuments().row(type).values();
 
             connection.insertSubdocuments(collection, type, subDocs);
         }
