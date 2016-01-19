@@ -167,6 +167,14 @@ public class ArrayValueToJsonConverter implements
             return null;
         }
 
+        @Override
+        public Void visit(BinaryValue value, JsonArrayBuilder arg) {
+            arg.add(ValueToArrayConverterProvider.getInstance()
+                    .getBinaryConverter().toJson(value)
+            );
+            return null;
+        }
+
     }
 
 }

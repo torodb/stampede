@@ -466,5 +466,10 @@ public class DocValueQueryCriteriaEvaluator {
             return new com.torodb.torod.core.subdocument.values.PatternValue(value.getValue());
         }
 
+        @Override
+        public Value visit(BinaryValue value, Void arg) {
+            return new com.torodb.torod.core.subdocument.values.BinaryValue(value.getValue());
+        }
+
     }
 }
