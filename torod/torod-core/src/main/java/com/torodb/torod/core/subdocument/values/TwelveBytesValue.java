@@ -21,6 +21,7 @@
 package com.torodb.torod.core.subdocument.values;
 
 import com.google.common.collect.ImmutableList;
+import com.torodb.common.util.HexUtils;
 import com.torodb.torod.core.subdocument.BasicType;
 import java.util.Arrays;
 import java.util.List;
@@ -107,11 +108,7 @@ public class TwelveBytesValue implements Value<ImmutableList<Byte>> {
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder(24);
-        for (Byte aByte : bytes) {
-            sb.append(String.format("%02X", aByte));
-        }
-        return sb.toString();
+        return HexUtils.bytes2Hex(bytes);
     }
 
     public static TwelveBytesValue parse(String string) {

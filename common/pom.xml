@@ -7,40 +7,32 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>com.torodb.kvdocument</groupId>
-        <artifactId>kvdocument-pom</artifactId>
+        <groupId>com.torodb</groupId>
+        <artifactId>torodb-parent</artifactId>
         <version>0.40-alpha2-SNAPSHOT</version>
     </parent>
     
-    <artifactId>kvdocument-core</artifactId>
+    <artifactId>common</artifactId>
     
-    <name>KVDocument: Core</name>
+    <name>ToroDB - common</name>
     <description>
-        Core classes of the KVDocument module
+        Common project for ToroDB. Utilities and other useful code belongs here.
     </description>
 
     <dependencies>
         <dependency>
-            <groupId>com.torodb</groupId>
-            <artifactId>common</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
-        <dependency>
             <groupId>com.google.code.findbugs</groupId>
-            <artifactId>jsr305</artifactId>
+            <artifactId>annotations</artifactId>
         </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
         </dependency>
+
         <dependency>
-            <groupId>org.threeten</groupId>
-            <artifactId>threetenbp</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
