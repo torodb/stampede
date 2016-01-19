@@ -20,10 +20,10 @@
 
 package com.torodb.torod.core.subdocument;
 
-import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.torodb.torod.core.subdocument.values.Value;
-import java.util.*;
+import java.util.Collections;
+import java.util.Map;
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.Immutable;
 
@@ -141,7 +141,9 @@ public class SubDocument {
         }
 
         public Builder add(@Nonnull String key, @Nonnull Value value) {
-            Preconditions.checkArgument(!attributes.containsKey(key), "There is another attribute with " + key);
+            if (attributes.containsKey(key)) {
+                throw new IllegalArgumentException("There is another attribute with " + key);
+            }
 
             attributes.put(key, new SubDocAttribute(key, value.getType()));
             values.put(key, value);
