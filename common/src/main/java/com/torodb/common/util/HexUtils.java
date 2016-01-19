@@ -22,6 +22,7 @@
 package com.torodb.common.util;
 
 import javax.annotation.Nonnull;
+import java.util.Collection;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -49,6 +50,22 @@ public class HexUtils {
         int charPos = 0;
         for(int i = 0; i < length; i++) {
             index = (bytes[i] & 0xFF) << 1;
+            chars[charPos++] = BYTE_HEX_VALUES[index++];
+            chars[charPos++] = BYTE_HEX_VALUES[index];
+        }
+
+        return new String(chars);
+    }
+
+    public static String bytes2Hex(@Nonnull Collection<Byte> bytes) {
+        checkNotNull(bytes, "bytes");
+
+        final int length = bytes.size();
+        final char[] chars = new char[length << 1];
+        int index;
+        int charPos = 0;
+        for(Byte b : bytes) {
+            index = (b & 0xFF) << 1;
             chars[charPos++] = BYTE_HEX_VALUES[index++];
             chars[charPos++] = BYTE_HEX_VALUES[index];
         }
