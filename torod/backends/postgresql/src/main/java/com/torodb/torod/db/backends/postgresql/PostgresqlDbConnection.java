@@ -19,30 +19,40 @@
  */
 package com.torodb.torod.db.backends.postgresql;
 
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.torodb.torod.core.ValueRow;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.exceptions.IllegalPathViewException;
+import com.torodb.torod.core.exceptions.ToroRuntimeException;
 import com.torodb.torod.core.exceptions.UserToroException;
 import com.torodb.torod.core.subdocument.BasicType;
 import com.torodb.torod.core.subdocument.SplitDocument;
+import com.torodb.torod.core.subdocument.SubDocType;
+import com.torodb.torod.core.subdocument.SubDocument;
 import com.torodb.torod.core.subdocument.structure.DocStructure;
 import com.torodb.torod.core.subdocument.values.Value;
 import com.torodb.torod.db.backends.DatabaseInterface;
 import com.torodb.torod.db.backends.converters.jooq.SubdocValueConverter;
 import com.torodb.torod.db.backends.converters.jooq.ValueToJooqConverterProvider;
 import com.torodb.torod.db.backends.meta.IndexStorage;
+import com.torodb.torod.db.backends.meta.IndexStorage.CollectionSchema;
 import com.torodb.torod.db.backends.meta.StructuresCache;
 import com.torodb.torod.db.backends.meta.TorodbMeta;
+import com.torodb.torod.db.backends.postgresql.converters.ValueToCopyConverter;
 import com.torodb.torod.db.backends.sql.AbstractDbConnection;
 import com.torodb.torod.db.backends.sql.index.NamedDbIndex;
 import com.torodb.torod.db.backends.sql.path.view.DefaultPathViewHandlerCallback;
 import com.torodb.torod.db.backends.sql.path.view.PathViewHandler;
 import com.torodb.torod.db.backends.sql.utils.SqlWindow;
+import com.torodb.torod.db.backends.tables.SubDocHelper;
 import com.torodb.torod.db.backends.tables.SubDocTable;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import java.io.IOException;
 import java.io.Serializable;
+import java.io.StringReader;
 import java.sql.*;
+import java.text.MessageFormat;
 import java.util.Comparator;
 import java.util.*;
 import javax.annotation.Nonnull;
@@ -51,6 +61,9 @@ import org.jooq.*;
 import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
+import org.postgresql.PGConnection;
+import org.postgresql.copy.CopyManager;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -58,6 +71,9 @@ import org.jooq.impl.SQLDataType;
  */
 class PostgresqlDbConnection extends AbstractDbConnection {
 
+    private static final org.slf4j.Logger LOGGER
+            = LoggerFactory.getLogger(PostgresqlDbConnection.class);
+    private static final Class<byte[]> BYTEA_LIKE_CLASS = byte[].class;
     static final String SUBDOC_TABLE_PK_COLUMN = "pk";
     static final String SUBDOC_TABLE_DOC_ID_COLUMN = "docId";
     static final String SUBDOC_TABLE_KEYS_COLUMN = "keys";
@@ -400,6 +416,150 @@ class PostgresqlDbConnection extends AbstractDbConnection {
         } finally {
             getJooqConf().connectionProvider().release(connection);
         }
+    }
+
+    @Override
+    public void insertSubdocuments(String collection, SubDocType type, Iterable<? extends SubDocument> subDocuments) {
+        Connection connection = getJooqConf().connectionProvider().acquire();
+        try {
+            int maxCappedSize = 50;
+            int cappedSize = Iterables.size(
+                    Iterables.limit(subDocuments, maxCappedSize)
+            );
+
+            if (cappedSize < maxCappedSize) { //there are not enough elements on the insert => fallback
+                LOGGER.info(
+                        "The insert window is not big enough to use copy (the "
+                                + "limit is {}, the real size is {}).",
+                        maxCappedSize,
+                        cappedSize
+                );
+                super.insertSubdocuments(collection, type, subDocuments);
+            }
+            else {
+                if (!connection.isWrapperFor(PGConnection.class)) {
+                    LOGGER.warn("It was impossible to use the PostgreSQL way to "
+                            + "insert documents. Inserting using the standard "
+                            + "implementation");
+                    super.insertSubdocuments(collection, type, subDocuments);
+                }
+                else {
+                    insertSubdocuments(
+                            connection.unwrap(PGConnection.class),
+                            collection,
+                            type,
+                            subDocuments
+                    );
+                }
+            }
+        } catch (SQLException ex) {
+            //TODO: Change exception
+            throw new ToroRuntimeException(ex);
+        } finally {
+            getJooqConf().connectionProvider().release(connection);
+        }
+    }
+
+    private void insertSubdocuments(
+            PGConnection connection,
+            String collection,
+            SubDocType type,
+            Iterable<? extends SubDocument> subDocuments) {
+
+        try {
+            CollectionSchema colSchema = getMeta().getCollectionSchema(collection);
+            SubDocTable table = colSchema.getSubDocTable(type);
+
+            final int maxBatchSize = 1000;
+            final StringBuilder sb = new StringBuilder(512);
+            final String copyStament = MessageFormat.format(
+                    "COPY {0} FROM STDIN ",
+                    DSL.name(colSchema.getName(), table.getName())
+            );
+            final CopyManager copyManager = connection.getCopyAPI();
+
+            Field<?>[] fields = table.fields();
+
+            if (fields.length == 0) {
+                assert false : "Call to insertSubdocuments on a table without fields";
+                LOGGER.warn("Call to insertSubdocuments on a table without fields");
+            }
+
+            String[] orderedFieldNames = new String[fields.length];
+            String[] orderedAttributeNames = new String[fields.length];
+
+            int i = 0;
+            for (Field field : getFieldIterator(fields)) {
+                orderedFieldNames[i] = field.getName();
+                orderedAttributeNames[i] = SubDocHelper.toAttributeName(field.getName());
+                i++;
+            }
+
+            int docCounter = 0;
+            for (SubDocument subDocument : subDocuments) {
+                docCounter++;
+                
+                assert subDocument.getType().equals(type);
+
+                addToCopy(sb, subDocument, orderedFieldNames, orderedAttributeNames);
+                assert sb.length() != 0;
+
+                if (docCounter % maxBatchSize == 0) {
+                    executeCopy(copyManager, copyStament, sb);
+                    assert sb.length() == 0;
+                }
+            }
+            if (sb.length() > 0) {
+                assert docCounter % maxBatchSize != 0;
+                executeCopy(copyManager, copyStament, sb);
+            }
+        } catch (SQLException ex) {
+            //TODO: Change exception
+            throw new UserToroException(ex);
+        } catch (IOException ex) {
+            //TODO: Change exception
+            throw new ToroRuntimeException(ex);
+        }
+
+    }
+
+    @SuppressWarnings("unchecked")
+    private void addToCopy(
+            StringBuilder sb,
+            SubDocument subDocument,
+            String[] orderedFieldNames,
+            String[] orderedAttributeNames) {
+        for (int i = 0; i < orderedFieldNames.length; i++) {
+            String fieldName = orderedFieldNames[i];
+            String attName = orderedAttributeNames[i];
+
+            if (fieldName.equals(SubDocTable.DID_COLUMN_NAME)) {
+                sb.append(subDocument.getDocumentId());
+            }
+            else if (fieldName.equals(SubDocTable.INDEX_COLUMN_NAME)) {
+                Integer index = translateSubDocIndexToDatabase(subDocument.getIndex());
+                if (index == null) {
+                    sb.append("\\N");
+                }
+                else {
+                    sb.append(index);
+                }
+            }
+            else {
+                subDocument.getValue(attName).accept(ValueToCopyConverter.INSTANCE, sb);
+            }
+
+            sb.append('\t');
+        }
+        sb.replace(sb.length() - 1, sb.length(), "\n");
+    }
+
+    private void executeCopy(CopyManager copyManager, String copyStatement, StringBuilder sb) throws SQLException, IOException {
+        String input = sb.toString();
+        StringReader reader = new StringReader(input);
+        copyManager.copyIn(copyStatement, reader);
+
+        sb.delete(0, sb.length());
     }
 
     private String getSqlType(Field<?> field, Configuration conf) {

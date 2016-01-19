@@ -49,7 +49,10 @@ import com.torodb.torod.db.backends.tables.records.SubDocTableRecord;
 import java.io.StringReader;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -235,28 +238,35 @@ public abstract class AbstractDbConnection implements
     }
 
     @Override
-    public void insertSubdocuments(String collection, SubDocType type, Iterator<? extends SubDocument> subDocuments) {
+    public void insertSubdocuments(String collection, SubDocType type, Iterable<? extends SubDocument> subDocuments) {
         try {
-            Collection<Query> inserts = Lists.newLinkedList();
-
             SubDocTable table = meta.getCollectionSchema(collection).getSubDocTable(type);
 
-            while (subDocuments.hasNext()) {
-                SubDocument subDocument = subDocuments.next();
+            InsertSetMoreStep<?> insert = null;
+
+            for (SubDocument subDocument : subDocuments) {
                 assert subDocument.getType().equals(type);
 
                 SubDocTableRecord record = new SubDocTableRecord(table);
                 record.setDid(subDocument.getDocumentId());
                 record.setIndex(translateSubDocIndexToDatabase(subDocument.getIndex()));
                 record.setSubDoc(subDocument);
-                InsertSetMoreStep<?> insert = dsl.insertInto(table)
-                        .set(record);
 
-                inserts.add(insert);
-//                insert.execute();
+                if (insert == null) {
+                    insert = dsl.insertInto(table).set(record);
+                }
+                else {
+                    insert = insert.set(record);
+                }
             }
 
-            dsl.batch(inserts).execute();
+            if (insert != null) {
+                insert.execute();
+            }
+            else {
+                assert false : "Call to insertSubdocuments with an empty set of subdocuments";
+                LOGGER.warn("Call to insertSubdocuments with an empty set of subdocuments");
+            }
         } catch (DataAccessException ex) {
             //TODO: Change exception
             throw new RuntimeException(ex);
@@ -300,7 +310,7 @@ public abstract class AbstractDbConnection implements
         );
     }
 
-    private Integer translateSubDocIndexToDatabase(int index) {
+    protected Integer translateSubDocIndexToDatabase(int index) {
         if (index == 0) {
             return null;
         }

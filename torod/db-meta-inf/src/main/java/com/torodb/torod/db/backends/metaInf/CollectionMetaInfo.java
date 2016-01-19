@@ -68,29 +68,28 @@ class CollectionMetaInfo {
     }
 
     void createSubDocTypeTable(@Nonnull SessionExecutor sessionExecutor, @Nonnull SubDocType type) {
+        if (createdSubDocTypes.contains(type)) { //it was previously created
+            return; //so nothing has to be done
+        }
 
         Long tick = creationPendingJobs.get(type);
         if (tick != null) { //if we are creating the table right now...
             sessionExecutor.pauseUntil(tick); //wait until the table is created
             return;
         }
-
-        if (createdSubDocTypes.contains(type)) { //it was previously created
-            return; //so nothing has to be done
-        }
         LOGGER.debug("{}.{} table was not created", collection, type);
 
         lock.lock();
         try {
+            if (createdSubDocTypes.contains(type)) { //another thread oredered the creation and it has already been executed
+                LOGGER.debug("{}.{} table was created while I was waiting", collection, type);
+                return; //so nothing has to be done
+            }
             tick = creationPendingJobs.get(type);
             if (tick != null) { //another thread ordered the table creation
                 LOGGER.debug("{}.{} table creation has been scheduled while I was waiting", collection, type);
                 sessionExecutor.pauseUntil(tick); //so this thread must wait until the creation is executed
                 return;
-            }
-            if (createdSubDocTypes.contains(type)) { //another thread oredered the creation and it has already been executed
-                LOGGER.debug("{}.{} table was created while I was waiting", collection, type);
-                return; //so nothing has to be done
             }
             //this thread has the lock and nobody ordered the creation before it get the lock, so this thread must order the creation
             LOGGER.debug("I will schedule creation of {}.{} table", collection, type);
