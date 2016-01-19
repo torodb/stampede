@@ -126,8 +126,10 @@ public abstract class AbstractDbConnection implements
     public void close() {
         try {
             Connection connection = jooqConf.connectionProvider().acquire();
-            connection.rollback();
-            connection.close();
+            if (!connection.isClosed()) {
+                connection.rollback();
+                connection.close();
+            }
         } catch (SQLException ex) {
             //TODO: Change exception
             throw new RuntimeException(ex);

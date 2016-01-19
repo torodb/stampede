@@ -62,6 +62,8 @@ public class PostgresBasicTypeToSqlType implements BasicTypeToSqlType {
                 return BasicType.DATETIME;
             case Types.VARCHAR:
                 return BasicType.STRING;
+            case Types.BINARY:
+                return BasicType.BINARY;
             case Types.OTHER:
                 if (jdbcStringType.equals("jsonb")) {
                     return BasicType.ARRAY;

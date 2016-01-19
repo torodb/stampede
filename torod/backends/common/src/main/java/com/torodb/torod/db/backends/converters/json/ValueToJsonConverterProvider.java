@@ -47,6 +47,7 @@ public class ValueToJsonConverterProvider {
     private final ValueConverter<String, TimeValue> timeConverter;
     private final ValueConverter<String, TwelveBytesValue> twelveBytesConverter;
     private final ValueConverter<String, PatternValue> posixPatternConverter;
+    private final ValueConverter<String, BinaryValue> binaryConverter;
 
     private ValueToJsonConverterProvider() {
         arrayConverter = new ArrayValueToJsonConverter();
@@ -61,6 +62,7 @@ public class ValueToJsonConverterProvider {
         timeConverter = new TimeValueToJsonConverter();
         twelveBytesConverter = new TwelveBytesValueToJsonConverter();
         posixPatternConverter = new PosixPatternValueToJsonConverter();
+        binaryConverter = new BinaryValueToJsonConverter();
 
         converters = Maps.newEnumMap(BasicType.class);
         converters.put(BasicType.ARRAY, arrayConverter);
@@ -75,6 +77,7 @@ public class ValueToJsonConverterProvider {
         converters.put(BasicType.TIME, timeConverter);
         converters.put(BasicType.TWELVE_BYTES, twelveBytesConverter);
         converters.put(BasicType.PATTERN, posixPatternConverter);
+        converters.put(BasicType.BINARY, binaryConverter);
 
     }
 
