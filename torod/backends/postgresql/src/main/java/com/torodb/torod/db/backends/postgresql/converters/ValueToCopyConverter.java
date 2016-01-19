@@ -1,6 +1,7 @@
 
 package com.torodb.torod.db.backends.postgresql.converters;
 
+import com.torodb.common.util.HexUtils;
 import com.torodb.torod.core.subdocument.values.*;
 import com.torodb.torod.db.backends.converters.PatternConverter;
 import org.threeten.bp.DateTimeUtils;
@@ -81,10 +82,7 @@ public class ValueToCopyConverter implements ValueVisitor<Void, StringBuilder> {
     public Void visit(TwelveBytesValue value, StringBuilder arg) {
         arg.append("\\x");
 
-        for (byte b : value.getArrayValue()) {
-            arg.append(HEX_CODE[(b >> 4) & 0xF]);
-            arg.append(HEX_CODE[(b & 0xF)]);
-        }
+        HexUtils.bytes2Hex(value.getValue(), arg);
 
         return null;
     }
@@ -215,10 +213,7 @@ public class ValueToCopyConverter implements ValueVisitor<Void, StringBuilder> {
             arg.append('"');
             arg.append("\\\\x");
 
-            for (byte b : value.getArrayValue()) {
-                arg.append(HEX_CODE[(b >> 4) & 0xF]);
-                arg.append(HEX_CODE[(b & 0xF)]);
-            }
+            HexUtils.bytes2Hex(value.getValue(), arg);
 
             arg.append('"');
             
