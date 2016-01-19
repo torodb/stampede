@@ -198,8 +198,8 @@ public class SplitDocument {
             return new SplitDocument(
                     id,
                     root,
-                    ImmutableTable.copyOf(subDocuments),
-                    ImmutableMultimap.copyOf(structures)
+                    subDocuments,
+                    structures
             );
         }
 
