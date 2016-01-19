@@ -88,6 +88,15 @@ public class ValueToCopyConverter implements ValueVisitor<Void, StringBuilder> {
     }
 
     @Override
+    public Void visit(BinaryValue value, StringBuilder arg) {
+        arg.append("\\x");
+
+        HexUtils.bytes2Hex(value.getValue(), arg);
+
+        return null;
+    }
+
+    @Override
     public Void visit(DateTimeValue value, StringBuilder arg) {
         arg.append(DateTimeUtils.toSqlTimestamp(value.getValue()).toString());
         return null;
@@ -217,6 +226,18 @@ public class ValueToCopyConverter implements ValueVisitor<Void, StringBuilder> {
 
             arg.append('"');
             
+            return null;
+        }
+
+        @Override
+        public Void visit(BinaryValue value, StringBuilder arg) {
+            arg.append('"');
+            arg.append("\\\\x");
+
+            HexUtils.bytes2Hex(value.getValue(), arg);
+
+            arg.append('"');
+
             return null;
         }
 
