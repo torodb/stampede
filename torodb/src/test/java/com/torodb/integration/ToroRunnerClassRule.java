@@ -43,7 +43,6 @@ import com.torodb.Shutdowner;
 import com.torodb.config.model.Config;
 import com.torodb.config.model.backend.greenplum.Greenplum;
 import com.torodb.config.model.backend.postgres.Postgres;
-import com.torodb.config.model.generic.LogLevel;
 import com.torodb.config.model.protocol.mongo.Replication;
 import com.torodb.config.util.ConfigUtils;
 import com.torodb.di.BackendModule;
@@ -157,7 +156,7 @@ public class ToroRunnerClassRule implements TestRule {
 			
 			Logger root = LogbackUtils.getRootLogger();
 	
-			LogbackUtils.setLoggerLevel(root, LogLevel.WARNING);
+			LogbackUtils.setLoggerLevel(root, config.getGeneric().getLogLevel());
 			
 			Appender<ILoggingEvent> uncaughtExceptionAppender = new AppenderBase<ILoggingEvent>() {
 				@Override
@@ -175,21 +174,26 @@ public class ToroRunnerClassRule implements TestRule {
 			root.addAppender(uncaughtExceptionAppender);
 			
 			if (config.getBackend().isPostgresLike()) {
+                Postgres postgresBackend = config.getBackend().asPostgres();
+
 				PGSimpleDataSource dataSource = new PGSimpleDataSource();
 		
-				dataSource.setUser(config.getBackend().asPostgres().getUser());
-				dataSource.setPassword(config.getBackend().asPostgres().getPassword());
-				dataSource.setServerName(config.getBackend().asPostgres().getHost());
-				dataSource.setPortNumber(config.getBackend().asPostgres().getPort());
+				dataSource.setUser(postgresBackend.getUser());
+				dataSource.setPassword(postgresBackend.getPassword());
+				dataSource.setServerName(postgresBackend.getHost());
+				dataSource.setPortNumber(postgresBackend.getPort());
 				dataSource.setDatabaseName("template1");
 		
 				Connection connection = dataSource.getConnection();
 				try {
-					connection.prepareCall("DROP DATABASE torod").execute();
+					connection.prepareCall("DROP DATABASE " + postgresBackend.getDatabase()).execute();
 				} catch(PSQLException psqlException) {
 					
 				}
-				connection.prepareCall("CREATE DATABASE torod OWNER torodb").execute();
+				connection.prepareCall("CREATE DATABASE "
+                        + postgresBackend.getDatabase()
+                        + " OWNER " + postgresBackend.getUser()
+                ).execute();
 				connection.close();
 			}
 			
