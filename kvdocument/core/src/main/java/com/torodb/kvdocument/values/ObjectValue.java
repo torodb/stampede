@@ -22,10 +22,9 @@ package com.torodb.kvdocument.values;
 
 import com.google.common.collect.Maps;
 import com.torodb.kvdocument.types.ObjectType;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
+import java.io.Serializable;
+import java.util.*;
+import java.util.Map.Entry;
 import javax.annotation.Nonnull;
 import org.threeten.bp.LocalDate;
 import org.threeten.bp.LocalDateTime;
@@ -36,10 +35,12 @@ import org.threeten.bp.LocalTime;
  */
 public class ObjectValue implements DocValue {
 
-    private final Map<String, DocValue> values;
+    private final @Nonnull Map<String, DocValue> values;
+    private final int hash;
 
     public ObjectValue(Map<String, DocValue> values) {
         this.values = Collections.unmodifiableMap(values);
+        hash = values.hashCode();
     }
 
     @Nonnull
@@ -93,8 +94,6 @@ public class ObjectValue implements DocValue {
 
     @Override
     public int hashCode() {
-        int hash = 7;
-        hash = 29 * hash + (this.values != null ? this.values.hashCode() : 0);
         return hash;
     }
 
@@ -107,9 +106,10 @@ public class ObjectValue implements DocValue {
             return false;
         }
         final ObjectValue other = (ObjectValue) obj;
-        if (
-                this.values != other.values 
-                && (this.values == null || !this.values.equals(other.values))) {
+        if (other.hashCode() != other.hashCode()) {
+            return false;
+        }
+        if (!this.values.equals(other.values)){
             return false;
         }
         return true;
