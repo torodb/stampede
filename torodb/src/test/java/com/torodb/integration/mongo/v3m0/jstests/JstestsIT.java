@@ -31,6 +31,8 @@ import java.util.List;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Rule;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Charsets;
 import com.torodb.config.model.Config;
@@ -42,6 +44,8 @@ public abstract class JstestsIT {
 	public final static ToroRunnerClassRule toroRunnerClassRule = new ToroRunnerClassRule();
 	@Rule
 	public final MongoJstestIgnoreRule jstestIgnoreRule = new MongoJstestIgnoreRule();
+    private static final Logger LOGGER
+            = LoggerFactory.getLogger(JstestsIT.class);
 
 	private final Jstest jstest;
 	private final String testResource;
@@ -77,8 +81,10 @@ public abstract class JstestsIT {
 				+ config.getProtocol().getMongo().getNet().getPort() + "/"
 				+ config.getBackend().asPostgres().getDatabase();
 		URL mongoMocksUrl = Jstest.class.getResource("mongo_mocks.js");
-		
-		Process mongoProcess = Runtime.getRuntime()
+
+        LOGGER.info("Testing {}", testResource);
+
+        Process mongoProcess = Runtime.getRuntime()
 				.exec(new String[] {
 					"mongo",
 					toroConnectionString, 
