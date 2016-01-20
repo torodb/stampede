@@ -258,7 +258,7 @@ public abstract class AbstractDbConnection implements
                     insert = dsl.insertInto(table).set(record);
                 }
                 else {
-                    insert = insert.set(record);
+                    insert = insert.newRecord().set(record);
                 }
             }
 
