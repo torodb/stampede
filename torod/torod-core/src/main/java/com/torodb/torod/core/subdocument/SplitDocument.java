@@ -20,14 +20,9 @@
 
 package com.torodb.torod.core.subdocument;
 
+import com.google.common.base.Preconditions;
+import com.google.common.collect.*;
 import com.torodb.torod.core.subdocument.structure.DocStructure;
-import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.ImmutableTable;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Table;
 import com.torodb.torod.core.subdocument.structure.StructureElementDFW;
 import java.util.Deque;
 import java.util.LinkedList;
@@ -69,18 +64,18 @@ public class SplitDocument {
      * <b>NOT</b> defined!). The subdocument whose type is (owner: object, beneficiary: object, others: array,
      * quantity:int) has its own index whose value is one as there is no other subdocument with the this type.
      */
-    private final ImmutableTable<SubDocType, Integer, SubDocument> subDocuments;
-    private final ImmutableMultimap<SubDocType, DocStructure> structures;
+    private final Table<SubDocType, Integer, SubDocument> subDocuments;
+    private final Multimap<SubDocType, DocStructure> structures;
 
     SplitDocument(
             int id,
             @Nonnull DocStructure structure,
-            @Nonnull ImmutableTable<SubDocType, Integer, SubDocument> subDocuments,
-            @Nonnull ImmutableMultimap<SubDocType, DocStructure> structures) {
+            @Nonnull Table<SubDocType, Integer, SubDocument> subDocuments,
+            @Nonnull Multimap<SubDocType, DocStructure> structures) {
         this.id = id;
         this.root = structure;
-        this.subDocuments = subDocuments;
-        this.structures = structures;
+        this.subDocuments = Tables.unmodifiableTable(subDocuments);
+        this.structures = Multimaps.unmodifiableMultimap(structures);
     }
 
     public DocStructure getRoot() {
@@ -91,11 +86,11 @@ public class SplitDocument {
         return id;
     }
 
-    public ImmutableTable<SubDocType, Integer, SubDocument> getSubDocuments() {
+    public Table<SubDocType, Integer, SubDocument> getSubDocuments() {
         return subDocuments;
     }
 
-    public ImmutableMultimap<SubDocType, DocStructure> getStructures() {
+    public Multimap<SubDocType, DocStructure> getStructures() {
         return structures;
     }
 
@@ -138,38 +133,44 @@ public class SplitDocument {
 
     public static class Builder {
 
-        private static final DocIndexer indexer = new DocIndexer();
+        private static final DocIndexer INDEXER = new DocIndexer();
 
         private int id;
         private DocStructure root;
         private final Table<SubDocType, Integer, SubDocument> subDocuments;
         private final Multimap<SubDocType, DocStructure> structures;
         private final Map<SubDocType, Integer> indexBySubDoc;
+        private boolean build;
 
         public Builder() {
             subDocuments = HashBasedTable.create();
             structures = HashMultimap.create();
             indexBySubDoc = Maps.newHashMap();
+            build = false;
         }
 
         public DocStructure getStructure() {
+            Preconditions.checkState(!build, "This builder has already been used");
             return root;
         }
 
         public Builder setId(int id) {
+            Preconditions.checkState(!build, "This builder has already been used");
             this.id = id;
             return this;
         }
 
         public Builder setRoot(DocStructure root) {
+            Preconditions.checkState(!build, "This builder has already been used");
             this.root = root;
             structures.clear();
-            root.accept(indexer, this);
+            root.accept(INDEXER, this);
 
             return this;
         }
 
         public Builder add(SubDocument subDocument) {
+            Preconditions.checkState(!build, "This builder has already been used");
             SubDocType type = subDocument.getType();
 
             Integer index = indexBySubDoc.get(type);
@@ -185,16 +186,20 @@ public class SplitDocument {
         }
 
         public SplitDocument build() {
+            Preconditions.checkState(!build, "This builder has already been used");
+
             if (root == null) {
                 throw new IllegalStateException("structure must be non null");
             }
             assert checkCorrectness();
 
+            build = true;
+
             return new SplitDocument(
                     id,
                     root,
-                    ImmutableTable.copyOf(subDocuments),
-                    ImmutableMultimap.copyOf(structures)
+                    subDocuments,
+                    structures
             );
         }
 
@@ -212,11 +217,6 @@ public class SplitDocument {
                 }
             }
             return true;
-        }
-
-        public void clear() {
-            root = null;
-            subDocuments.clear();
         }
 
         private static class DocIndexer extends StructureElementDFW<SplitDocument.Builder> {

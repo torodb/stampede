@@ -140,7 +140,7 @@ public class LazyDbWrapper implements DbWrapper {
         public void insertSubdocuments(
                 String collection, 
                 SubDocType subDocType, 
-                Iterator<? extends SubDocument> subDocuments) {
+                Iterable<? extends SubDocument> subDocuments) {
             try {
                 getDelegate().insertSubdocuments(collection, subDocType, subDocuments);
             }

@@ -8,3 +8,5 @@ nb-configuration.xml
 .classpath
 .settings/
 /torodb/dump
+/torod/backends/common/nbproject/
+/torod/backends/postgresql/nbproject/

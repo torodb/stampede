@@ -22,7 +22,6 @@ package com.torodb.torod.core.subdocument;
 
 import java.io.Serializable;
 import java.util.*;
-import javax.annotation.Nonnull;
 import javax.annotation.concurrent.Immutable;
 
 /**
@@ -33,9 +32,11 @@ public class SubDocType implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private final Map<String, SubDocAttribute> attributes;
+    private final int hash;
 
-    private SubDocType(Map<String, SubDocAttribute> attributes) {
+    private SubDocType(Map<String, SubDocAttribute> attributes, int hash) {
         this.attributes = Collections.unmodifiableMap(attributes);
+        this.hash = hash;
     }
 
     public Collection<SubDocAttribute> getAttributes() {
@@ -71,8 +72,6 @@ public class SubDocType implements Serializable {
 
     @Override
     public int hashCode() {
-        int hash = 7;
-        hash = 79 * hash + (this.attributes != null ? this.attributes.hashCode() : 0);
         return hash;
     }
 
@@ -85,14 +84,24 @@ public class SubDocType implements Serializable {
             return false;
         }
         final SubDocType other = (SubDocType) obj;
-        if (this.attributes != other.attributes && (this.attributes == null || !this.attributes.equals(other.attributes))) {
+        if (other.hash != this.hash) {
             return false;
+        }
+        if (other.attributes.size() != this.attributes.size()) {
+            return false;
+        }
+        for (SubDocAttribute thisAtt : this.attributes.values()) {
+            SubDocAttribute otherAtt = other.getAttribute(thisAtt.getKey());
+            if (!otherAtt.equalsWithSameKey(thisAtt)) {
+                return false;
+            }
         }
         return true;
     }
 
     public static class Builder {
 
+        private static final Comparator<SubDocAttribute> SUB_DOC_COMP = new SubDocAttributeComparator();
         private final Map<String, SubDocAttribute> attributes = new HashMap<String, SubDocAttribute>();
         private boolean built;
 
@@ -110,7 +119,35 @@ public class SubDocType implements Serializable {
 
         public SubDocType build() {
             built = true;
-            return new SubDocType(attributes);
+            int hashCode = 1;
+            SortedSet<SubDocAttribute> atts = new TreeSet<>(SUB_DOC_COMP);
+            atts.addAll(attributes.values());
+            for (SubDocAttribute e : atts) {
+                assert e != null;
+                hashCode = 31 * hashCode + e.hashCode();
+            }
+            return new SubDocType(attributes, hashCode);
+        }
+
+        private static class SubDocAttributeComparator implements Comparator<SubDocAttribute>, Serializable {
+
+            private static final long serialVersionUID = 1L;
+
+            private SubDocAttributeComparator() {
+            }
+
+            @Override
+            public int compare(SubDocAttribute o1, SubDocAttribute o2) {
+                int diff = o1.getKey().compareTo(o2.getKey());
+                if (diff != 0) {
+                    return diff;
+                }
+                diff = o1.getType().compareTo(o1.getType());
+                if (diff == 0 && !o1.equals(o2)) {
+                    throw new AssertionError("Expected a strict total comparator, but two different values are considered equal");
+                }
+                return diff;
+            }
         }
     }
 

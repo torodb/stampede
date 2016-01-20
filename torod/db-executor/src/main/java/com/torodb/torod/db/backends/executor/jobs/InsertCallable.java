@@ -21,7 +21,6 @@
 package com.torodb.torod.db.backends.executor.jobs;
 
 import com.google.common.base.Function;
-import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -39,7 +38,10 @@ import com.torodb.torod.core.exceptions.ToroRuntimeException;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.core.subdocument.SubDocType;
 import com.torodb.torod.core.subdocument.SubDocument;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import javax.annotation.Nonnull;
 
 /**
@@ -97,9 +99,9 @@ public class InsertCallable extends TransactionalJob<InsertResponse> {
         connection.insertRootDocuments(collection, Collections.singleton(doc));
         
         for (SubDocType type : doc.getSubDocuments().rowKeySet()) {
-            ImmutableCollection<SubDocument> subDocs = doc.getSubDocuments().row(type).values();
+            Collection<SubDocument> subDocs = doc.getSubDocuments().row(type).values();
 
-            connection.insertSubdocuments(collection, type, subDocs.iterator());
+            connection.insertSubdocuments(collection, type, subDocs);
         }
     }
 
@@ -172,7 +174,7 @@ public class InsertCallable extends TransactionalJob<InsertResponse> {
             for (SubDocType type : types) {
                 Function<SplitDocument, Iterable<SubDocument>> extractor = new SubDocumentExtractorFunction(type);
                 
-                connection.insertSubdocuments(collection, type, Iterables.concat(Iterables.transform(docs, extractor)).iterator());
+                connection.insertSubdocuments(collection, type, Iterables.concat(Iterables.transform(docs, extractor)));
             }
             
             return createResponse(docs.size(), errors);

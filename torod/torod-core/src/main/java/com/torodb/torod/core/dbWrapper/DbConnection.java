@@ -112,7 +112,7 @@ public interface DbConnection extends AutoCloseable {
     public void insertSubdocuments(
             @Nonnull String collection,
             @Nonnull SubDocType subDocType,
-            @Nonnull Iterator<? extends SubDocument> subDocuments);
+            @Nonnull Iterable<? extends SubDocument> subDocuments);
 
     /**
      * Returns a map that contains all collections in the database as keys and the last reserved doc id for each one as
