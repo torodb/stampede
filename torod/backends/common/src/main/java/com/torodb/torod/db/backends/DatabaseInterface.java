@@ -34,6 +34,7 @@ import java.sql.SQLException;
  * Wrapper interface to define all database-specific SQL code
  */
 public interface DatabaseInterface extends Serializable {
+    //TODO: Try to remove make DatabaseInterface not serializable
 
     @Nonnull String escapeSchemaName(@Nonnull String collection) throws IllegalArgumentException;
     @Nonnull String escapeAttributeName(@Nonnull String attributeName) throws IllegalArgumentException;

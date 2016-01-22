@@ -41,7 +41,7 @@ public class MongoValueConverter {
             = new KVValueTranslator();
 
     public static ObjectValue translateObject(BsonDocument document) {
-        ObjectValue.Builder builder = new ObjectValue.Builder();
+        ObjectValue.SimpleBuilder builder = new ObjectValue.SimpleBuilder();
         for (String key : document.keySet()) {
             builder.putValue(key, translateBSON(document.get(key)));
         }
@@ -49,7 +49,7 @@ public class MongoValueConverter {
     }
 
     public static ArrayValue translateArray(BsonArray array) {
-        ArrayValue.Builder builder = new ArrayValue.Builder();
+        ArrayValue.SimpleBuilder builder = new ArrayValue.SimpleBuilder();
         for (BsonValue object : array) {
             builder.add(translateBSON(object));
         }

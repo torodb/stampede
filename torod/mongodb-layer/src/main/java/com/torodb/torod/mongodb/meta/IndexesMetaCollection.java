@@ -47,20 +47,18 @@ public class IndexesMetaCollection extends MetaCollection {
                 Collection<? extends NamedToroIndex> indexes
                         = transaction.getIndexes(collection);
                 for (NamedToroIndex index : indexes) {
-                    ObjectValue.Builder objBuider = new ObjectValue.Builder()
+                    ObjectValue.SimpleBuilder objBuider = new ObjectValue.SimpleBuilder()
                             .putValue("v", 1)
                             .putValue("name", index.getName())
-                            .putValue("ns", collectionNamespace)
-                            .putValue("key", new ObjectValue.Builder()
-                            );
-                    ObjectValue.Builder keyBuilder = new ObjectValue.Builder();
+                            .putValue("ns", collectionNamespace);
+                    ObjectValue.SimpleBuilder keyBuilder = new ObjectValue.SimpleBuilder();
                     for (Map.Entry<AttributeReference, Boolean> entrySet : index.getAttributes().entrySet()) {
                         keyBuilder.putValue(
                                 entrySet.getKey().toString(),
                                 entrySet.getValue() ? 1 : -1
                         );
                     }
-                    objBuider.putValue("key", keyBuilder);
+                    objBuider.putValue("key", keyBuilder.build());
 
                     candidates.add(
                             new KVToroDocument(

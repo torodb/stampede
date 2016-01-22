@@ -28,18 +28,23 @@ import com.torodb.torod.core.subdocument.structure.StructureElementDFW;
 import com.torodb.torod.db.backends.meta.IndexStorage;
 
 import java.io.Serializable;
+import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.inject.Singleton;
 
 /**
  *
  */
+@Singleton
 public class SplitDocumentConverter implements Serializable {
 
-    private static final SubDocConverter SUB_DOC_CONVERTER = new SubDocConverter();
+    private final SubDocConverter subDocConverter;
 
-    public static final SplitDocumentConverter INSTANCE = new SplitDocumentConverter();
     private static final long serialVersionUID = 1L;
 
-    private SplitDocumentConverter() {
+    @Inject
+    public SplitDocumentConverter(SubDocConverter subDocConverter) {
+        this.subDocConverter = subDocConverter;
     }
 
     public SplitDocument convert(
@@ -77,7 +82,7 @@ public class SplitDocumentConverter implements Serializable {
         return structure;
     }
 
-    private static class SubDocAdder extends StructureElementDFW<Void> {
+    private class SubDocAdder extends StructureElementDFW<Void> {
 
         private final Table<Integer, Integer, String> databaseInfo;
         private final SplitDocument.Builder splitDocBuilder;
@@ -103,7 +108,7 @@ public class SplitDocumentConverter implements Serializable {
             
             SubDocType subDocType = colSchema.getSubDocType(typeId);
 
-            splitDocBuilder.add(SUB_DOC_CONVERTER.from(subDocAsJson, subDocType));
+            splitDocBuilder.add(subDocConverter.from(subDocAsJson, subDocType));
         }
 
     }

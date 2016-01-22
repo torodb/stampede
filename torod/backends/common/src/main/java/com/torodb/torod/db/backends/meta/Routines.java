@@ -71,13 +71,6 @@ public class Routines {
         return f.getReturnValue();
     }
 
-    public static List<SplitDocument> readDocuments(
-            Configuration configuration, IndexStorage.CollectionSchema colSchema, Integer[] requestedDocs, Projection projection,
-            @Nonnull DatabaseInterface databaseInterface
-    ) {
-        return QueryRoutine.execute(configuration, colSchema, requestedDocs, projection, databaseInterface);
-    }
-    
     public static int deleteDocuments(
             Configuration configuration, IndexStorage.CollectionSchema colSchema, Multimap<DocStructure, Integer> didsByStructure,
             boolean justOne, @Nonnull DatabaseInterface databaseInterface

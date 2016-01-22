@@ -43,7 +43,7 @@ public class NamespacesMetaCollection extends MetaCollection {
 
                 candidates.add(
                         new KVToroDocument(
-                                new ObjectValue.Builder()
+                                new ObjectValue.SimpleBuilder()
                                 .putValue("name", collectionNamespace)
                                 .build()
                         )
@@ -54,7 +54,7 @@ public class NamespacesMetaCollection extends MetaCollection {
                 for (NamedToroIndex index : indexes) {
                     candidates.add(
                             new KVToroDocument(
-                                    new ObjectValue.Builder()
+                                    new ObjectValue.SimpleBuilder()
                                     .putValue("name", collectionNamespace + ".$"
                                             + index.getName())
                                     .build()
@@ -64,7 +64,7 @@ public class NamespacesMetaCollection extends MetaCollection {
             }
             candidates.add(
                     new KVToroDocument(
-                            new ObjectValue.Builder()
+                            new ObjectValue.SimpleBuilder()
                             .putValue("name", databaseName + ".system.indexes")
                             .build()
                     )

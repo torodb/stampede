@@ -29,6 +29,7 @@ import com.torodb.torod.core.d2r.D2RTranslator;
 import com.torodb.torod.core.dbMetaInf.DbMetaInformationCache;
 import com.torodb.torod.core.executor.SessionExecutor;
 import com.torodb.torod.core.subdocument.SplitDocument;
+import com.torodb.torod.core.subdocument.SubDocType;
 import com.torodb.torod.core.subdocument.SubDocument;
 import com.torodb.torod.core.subdocument.ToroDocument;
 import com.torodb.torod.core.subdocument.structure.ArrayStructure;
@@ -38,6 +39,7 @@ import com.torodb.torod.core.subdocument.values.*;
 import java.util.Map;
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
+import javax.inject.Provider;
 
 /**
  *
@@ -52,9 +54,10 @@ public class DefaultD2RTranslator implements D2RTranslator {
     @Inject
     public DefaultD2RTranslator(
             DbMetaInformationCache cache,
-            DocumentBuilderFactory documentBuilderFactory) {
+            DocumentBuilderFactory documentBuilderFactory,
+            Provider<SubDocType.Builder> subDocTypeBuilderProvider) {
         this.cache = cache;
-        this.splitter = new DocumentSplitter(cache);
+        this.splitter = new DocumentSplitter(cache, subDocTypeBuilderProvider);
         this.toDocFunction = new ToDocFunction(documentBuilderFactory);
     }
 
@@ -119,7 +122,7 @@ public class DefaultD2RTranslator implements D2RTranslator {
             DocStructure structure = (DocStructure) arg.structure;
             SplitDocument splitDocument = arg.splitDoc;
 
-            ObjectValue.Builder objBuilder = new ObjectValue.Builder();
+            ObjectValue.SimpleBuilder objBuilder = new ObjectValue.SimpleBuilder();
             SubDocument subDoc
                     = splitDocument.getSubDocuments().get(structure.getType(), structure.getIndex());
 
@@ -164,8 +167,8 @@ public class DefaultD2RTranslator implements D2RTranslator {
 
             @Override
             public DocValue visit(ArrayValue value, Argument arg) {
-                com.torodb.kvdocument.values.ArrayValue.Builder builder
-                        = new com.torodb.kvdocument.values.ArrayValue.Builder();
+                com.torodb.kvdocument.values.ArrayValue.SimpleBuilder builder
+                        = new com.torodb.kvdocument.values.ArrayValue.SimpleBuilder();
 
                 ArrayStructure structure = (ArrayStructure) arg.structure;
 

@@ -80,6 +80,9 @@ public class SubDocType implements Serializable {
         if (obj == null) {
             return false;
         }
+        if (obj == this) {
+            return true;
+        }
         if (getClass() != obj.getClass()) {
             return false;
         }
@@ -103,6 +106,9 @@ public class SubDocType implements Serializable {
 
         private final Map<String, SubDocAttribute> attributes = new HashMap<String, SubDocAttribute>();
         private boolean built;
+
+        Builder() {
+        }
 
         public Builder add(SubDocAttribute attribute) {
             if (built) {

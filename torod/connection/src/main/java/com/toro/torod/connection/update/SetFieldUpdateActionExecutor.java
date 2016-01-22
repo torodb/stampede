@@ -69,7 +69,7 @@ class SetFieldUpdateActionExecutor implements ResolvedCallback<Boolean> {
     public <K> Boolean objectReferenced(
             BuilderCallback<K> parentBuilder, 
             K key, 
-            ObjectValue.Builder child
+            ObjectValue.MutableBuilder child
     ) {
         parentBuilder.setValue(key, value);
         return true;
@@ -79,7 +79,7 @@ class SetFieldUpdateActionExecutor implements ResolvedCallback<Boolean> {
     public <K> Boolean arrayReferenced(
             BuilderCallback<K> parentBuilder, 
             K key, 
-            ArrayValue.Builder child
+            ArrayValue.MutableBuilder child
     ) {
         parentBuilder.setValue(key, value);
         return true;

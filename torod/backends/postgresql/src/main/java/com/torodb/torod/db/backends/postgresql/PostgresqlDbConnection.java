@@ -29,6 +29,7 @@ import com.torodb.torod.core.exceptions.UserToroException;
 import com.torodb.torod.core.subdocument.BasicType;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.core.subdocument.SubDocType;
+import com.torodb.torod.core.subdocument.SubDocType.Builder;
 import com.torodb.torod.core.subdocument.SubDocument;
 import com.torodb.torod.core.subdocument.structure.DocStructure;
 import com.torodb.torod.core.subdocument.values.Value;
@@ -57,6 +58,7 @@ import java.util.Comparator;
 import java.util.*;
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import org.jooq.*;
 import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
@@ -84,9 +86,9 @@ class PostgresqlDbConnection extends AbstractDbConnection {
     public PostgresqlDbConnection(
             DSLContext dsl,
             TorodbMeta meta,
-            DatabaseInterface databaseInterface
-    ) {
-        super(dsl, meta, databaseInterface);
+            Provider<Builder> subDocTypeBuilderProvider,
+            DatabaseInterface databaseInterface) {
+        super(dsl, meta, subDocTypeBuilderProvider, databaseInterface);
     }
 
     @Override
@@ -422,7 +424,7 @@ class PostgresqlDbConnection extends AbstractDbConnection {
     public void insertSubdocuments(String collection, SubDocType type, Iterable<? extends SubDocument> subDocuments) {
         Connection connection = getJooqConf().connectionProvider().acquire();
         try {
-            int maxCappedSize = 50;
+            int maxCappedSize = 10;
             int cappedSize = Iterables.size(
                     Iterables.limit(subDocuments, maxCappedSize)
             );

@@ -86,8 +86,8 @@ class AttributeReferenceToBuilderCallback {
         }
         K key = builder.getKeyClass().cast(uncastedKey);
 
-        ArrayValue.Builder nextArrayBuilder;
-        ObjectValue.Builder nextObjectBuilder;
+        ArrayValue.MutableBuilder nextArrayBuilder;
+        ObjectValue.MutableBuilder nextObjectBuilder;
         DocValue nextValue;
 
         if (!builder.contains(key)) {

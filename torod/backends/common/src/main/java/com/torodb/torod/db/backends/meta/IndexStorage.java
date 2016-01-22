@@ -43,6 +43,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.inject.Provider;
 import org.jooq.*;
 import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
@@ -302,7 +303,8 @@ public class IndexStorage implements Serializable {
                 @Nonnull String colName,
                 @Nonnull DSLContext dsl,
                 @Nonnull TorodbMeta torodbMeta,
-                @Nonnull DatabaseInterface databaseInterface
+                @Nonnull DatabaseInterface databaseInterface,
+                @Nonnull Provider<SubDocType.Builder> subDocTypeBuilderProvider
         ) throws InvalidCollectionSchemaException {
             this(
                     schemName,
@@ -311,7 +313,8 @@ public class IndexStorage implements Serializable {
                     null,
                     null,
                     torodbMeta,
-                    databaseInterface
+                    databaseInterface,
+                    subDocTypeBuilderProvider
             );
         }
 
@@ -322,7 +325,8 @@ public class IndexStorage implements Serializable {
                 @Nullable DatabaseMetaData jdbcMeta,
                 @Nullable Meta jooqMeta,
                 @Nonnull TorodbMeta torodbMeta,
-                DatabaseInterface databaseInterface
+                DatabaseInterface databaseInterface,
+                @Nonnull Provider<SubDocType.Builder> subDocTypeBuilderProvider
         ) throws InvalidCollectionSchemaException {
             super(schemaName);
 
@@ -359,7 +363,8 @@ public class IndexStorage implements Serializable {
                                 table.getName(),
                                 this,
                                 jdbcMeta,
-                                databaseInterface
+                                databaseInterface,
+                                subDocTypeBuilderProvider
                         );
                         int subDocId = subDocTable.getTypeId();
                         SubDocType type = subDocTable.getSubDocType();

@@ -39,6 +39,7 @@ import java.sql.SQLException;
 import java.util.Iterator;
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import org.jooq.*;
 import org.jooq.impl.AbstractKeys;
 import org.jooq.impl.DSL;
@@ -72,12 +73,12 @@ public class SubDocTable extends TableImpl<SubDocTableRecord> {
 
     private final DatabaseInterface databaseInterface;
 
-    @Inject
     public SubDocTable(
             String tableName,
             IndexStorage.CollectionSchema schema,
             DatabaseMetaData metadata,
-            DatabaseInterface databaseInterface
+            DatabaseInterface databaseInterface,
+            Provider<SubDocType.Builder> subDocTypeBuilderProvider
     ) {
         this(
                 tableName,
@@ -87,18 +88,17 @@ public class SubDocTable extends TableImpl<SubDocTableRecord> {
                         schema.getName(),
                         tableName,
                         metadata,
-                        databaseInterface
+                        databaseInterface,
+                        subDocTypeBuilderProvider
                 ),
                 databaseInterface
         );
     }
 
-    @Inject
     public SubDocTable(IndexStorage.CollectionSchema schema, SubDocType type, int typeId, DatabaseInterface databaseInterface) {
         this(getSubDocTableName(typeId), schema, null, type, databaseInterface);
     }
 
-    @Inject
     private SubDocTable(
             String alias, Schema schema, Table<SubDocTableRecord> aliased, @Nonnull SubDocType type,
             DatabaseInterface databaseInterface
@@ -106,7 +106,6 @@ public class SubDocTable extends TableImpl<SubDocTableRecord> {
         this(alias, schema, aliased, null, type, databaseInterface);
     }
 
-    @Inject
     private SubDocTable(
             String alias, Schema schema, Table<SubDocTableRecord> aliased, Field<?>[] parameters,
             @Nonnull SubDocType type, DatabaseInterface databaseInterface
@@ -188,10 +187,11 @@ public class SubDocTable extends TableImpl<SubDocTableRecord> {
             String schemaName,
             String tableName,
             DatabaseMetaData metadata,
-            DatabaseInterface databaseInterface
+            DatabaseInterface databaseInterface,
+            Provider<SubDocType.Builder> subDocTypeBuiderProvider
     ) {
         try {
-            SubDocType.Builder builder = new SubDocType.Builder();
+            SubDocType.Builder builder = subDocTypeBuiderProvider.get();
 
             ResultSet columns
                     = metadata.getColumns(null, schemaName, tableName, null);

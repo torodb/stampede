@@ -26,6 +26,8 @@ import java.util.Collections;
 import java.util.Map;
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.Immutable;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 /**
  *
@@ -124,10 +126,13 @@ public class SubDocument {
         int index;
         private Map<String, Value<?>> values;
         private Map<String, SubDocAttribute> attributes;
+        private final SubDocType.Builder subDocTypeBuilder;
 
-        public Builder() {
+        @Inject
+        public Builder(Provider<SubDocType.Builder> subDocTypeBuilderProvider) {
             attributes = Maps.newHashMap();
             values = Maps.newHashMap();
+            this.subDocTypeBuilder = subDocTypeBuilderProvider.get();
         }
         
         public Builder setDocumentId(int docId) {
@@ -162,8 +167,6 @@ public class SubDocument {
         }
 
         public SubDocType calculeType() {
-            SubDocType.Builder subDocTypeBuilder = new SubDocType.Builder();
-
             for (SubDocAttribute att : attributes.values()) {
                 subDocTypeBuilder.add(att);
             }

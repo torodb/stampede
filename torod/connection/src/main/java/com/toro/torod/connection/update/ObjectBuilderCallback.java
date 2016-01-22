@@ -28,9 +28,9 @@ import com.torodb.kvdocument.values.ObjectValue;
  *
  */
 class ObjectBuilderCallback implements BuilderCallback<String> {
-    private final ObjectValue.Builder builder;
+    private final ObjectValue.MutableBuilder builder;
 
-    public ObjectBuilderCallback(ObjectValue.Builder builder) {
+    public ObjectBuilderCallback(ObjectValue.MutableBuilder builder) {
         this.builder = builder;
     }
 
@@ -60,7 +60,7 @@ class ObjectBuilderCallback implements BuilderCallback<String> {
     }
 
     @Override
-    public ArrayValue.Builder getArrayBuilder(String key) {
+    public ArrayValue.MutableBuilder getArrayBuilder(String key) {
         return builder.getArrayBuilder(key);
     }
 
@@ -70,17 +70,17 @@ class ObjectBuilderCallback implements BuilderCallback<String> {
     }
 
     @Override
-    public ObjectValue.Builder getObjectBuilder(String key) {
+    public ObjectValue.MutableBuilder getObjectBuilder(String key) {
         return builder.getObjectBuilder(key);
     }
 
     @Override
-    public ArrayValue.Builder newArray(String key) {
+    public ArrayValue.MutableBuilder newArray(String key) {
         return builder.newArray(key);
     }
 
     @Override
-    public ObjectValue.Builder newObject(String key) {
+    public ObjectValue.MutableBuilder newObject(String key) {
         return builder.newObject(key);
     }
 

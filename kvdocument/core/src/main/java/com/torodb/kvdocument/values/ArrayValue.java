@@ -36,6 +36,7 @@ public class ArrayValue implements DocValue, List<DocValue> {
 
     private final DocType elementType;
     private final List<DocValue> value;
+    private int hash;
 
     public ArrayValue(DocType elementType, List<DocValue> value) {
         this.elementType = elementType;
@@ -132,13 +133,29 @@ public class ArrayValue implements DocValue, List<DocValue> {
     }
 
     @Override
-    public boolean equals(Object o) {
-        return value.equals(o);
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final ArrayValue other = (ArrayValue) obj;
+        if (!Objects.equals(this.value, other.value)) {
+            return false;
+        }
+        return true;
     }
 
     @Override
     public int hashCode() {
-        return value.hashCode();
+        if (hash == 0) {
+            hash = value.hashCode();
+        }
+        return hash;
     }
 
     @Override
@@ -186,31 +203,112 @@ public class ArrayValue implements DocValue, List<DocValue> {
         return value.subList(fromIndex, toIndex);
     }
 
-    public static class Builder {
+    public static class SimpleBuilder {
+        private boolean built;
+        private List<DocValue> values = new ArrayList<>();
+        private DocType elementType;
+
+        public ArrayValue build() {
+            checkBuilt();
+            built = true;
+            if (elementType == null) {
+                elementType = calculateElementType();
+            }
+            return new ArrayValue(elementType, values);
+        }
+
+        public SimpleBuilder add(DocValue newVal) {
+            checkBuilt();
+            if (elementType != null
+                    && !elementType.equals(GenericType.INSTANCE)
+                    && !newVal.getType().equals(elementType)) {
+                throw new IllegalArgumentException(
+                        "Element " + newVal + " does not conform to the element "
+                        + "type of the array (" + elementType + ")");
+            }
+            values.add(newVal);
+            return this;
+        }
+
+        public SimpleBuilder setElementType(DocType elementType) {
+            this.elementType = elementType;
+            return this;
+        }
+
+        private void checkBuilt() {
+            if (built) {
+                throw new IllegalStateException("This builder has been already used");
+            }
+        }
+
+        private DocType calculateElementType() {
+            DocType result = null;
+            for (int i = 0; i < values.size(); i++) {
+                DocType iestType = values.get(i).getType();
+                if (result == null) {
+                    result = iestType;
+                } else {
+                    if (!result.equals(iestType)) {
+                        result = GenericType.INSTANCE;
+                        break;
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        public SimpleBuilder setValue(int index, DocValue newValue) {
+            checkBuilt();
+
+            if (elementType != null
+                    && !elementType.equals(GenericType.INSTANCE)
+                    && !newValue.getType().equals(elementType)) {
+                throw new IllegalArgumentException(
+                        "Element " + newValue + " does not conform to the element "
+                        + "type of the array (" + elementType + ")");
+            }
+            prepareSize(index);
+            values.set(index, newValue);
+            return this;
+        }
+
+        private void prepareSize(int minSize) {
+            for (int i = values.size(); i <= minSize; i++) {
+                values.add(NullValue.INSTANCE);
+            }
+        }
+    }
+
+    public static class MutableBuilder {
 
         private boolean built;
         private DocType elementType;
         private List<DocValue> values;
-        private final Map<Integer, ArrayValue.Builder> subArrayBuilders
+        private final Map<Integer, ArrayValue.MutableBuilder> subArrayBuilders
                 = Maps.newHashMap();
-        private final Map<Integer, ObjectValue.Builder> subObjectBuilders
+        private final Map<Integer, ObjectValue.MutableBuilder> subObjectBuilders
                 = Maps.newHashMap();
 
-        public Builder() {
+        private MutableBuilder() {
             built = false;
             values = Lists.newArrayList();
         }
 
-        public Builder(int expectedSize) {
+        public MutableBuilder(int expectedSize) {
             built = false;
             values = Lists.newArrayListWithExpectedSize(expectedSize);
         }
 
-        public static ArrayValue.Builder from(ArrayValue original) {
-            ArrayValue.Builder result = new ArrayValue.Builder();
+        public static ArrayValue.MutableBuilder from(ArrayValue original) {
+            ArrayValue.MutableBuilder result = new ArrayValue.MutableBuilder();
             result.copy(original);
 
             return result;
+        }
+
+        public static ArrayValue.MutableBuilder create() {
+            return new ArrayValue.MutableBuilder();
         }
 
         public boolean contains(int key) {
@@ -238,8 +336,8 @@ public class ArrayValue implements DocValue, List<DocValue> {
         }
 
         @Nonnull
-        public ArrayValue.Builder getArrayBuilder(int index) {
-            ArrayValue.Builder result = subArrayBuilders.get(index);
+        public ArrayValue.MutableBuilder getArrayBuilder(int index) {
+            ArrayValue.MutableBuilder result = subArrayBuilders.get(index);
             if (result == null) {
                 throw new IllegalArgumentException(
                         "There is no array builder associated to '" + index + "' key");
@@ -252,8 +350,8 @@ public class ArrayValue implements DocValue, List<DocValue> {
         }
 
         @Nonnull
-        public ObjectValue.Builder getObjectBuilder(int index) {
-            ObjectValue.Builder result = subObjectBuilders.get(index);
+        public ObjectValue.MutableBuilder getObjectBuilder(int index) {
+            ObjectValue.MutableBuilder result = subObjectBuilders.get(index);
             if (result == null) {
                 throw new IllegalArgumentException(
                         "There is no object builder associated to '" + index + "' key");
@@ -268,33 +366,33 @@ public class ArrayValue implements DocValue, List<DocValue> {
             subArrayBuilders.remove(index);
         }
 
-        private void setArrayBuilder(int index, ArrayValue.Builder builder) {
+        private void setArrayBuilder(int index, ArrayValue.MutableBuilder builder) {
             prepareSize(index);
             values.set(index, null);
             subObjectBuilders.remove(index);
             subArrayBuilders.put(index, builder);
         }
 
-        private void setObjectBuilder(int index, ObjectValue.Builder builder) {
+        private void setObjectBuilder(int index, ObjectValue.MutableBuilder builder) {
             prepareSize(index);
             values.set(index, null);
             subObjectBuilders.put(index, builder);
             subArrayBuilders.remove(index);
         }
 
-        public ArrayValue.Builder newArray(int index) {
+        public ArrayValue.MutableBuilder newArray(int index) {
             checkNewBuild();
 
-            ArrayValue.Builder result = new Builder();
+            ArrayValue.MutableBuilder result = new ArrayValue.MutableBuilder();
             setArrayBuilder(index, result);
 
             return result;
         }
 
-        public ObjectValue.Builder newObject(int index) {
+        public ObjectValue.MutableBuilder newObject(int index) {
             checkNewBuild();
 
-            ObjectValue.Builder result = new ObjectValue.Builder();
+            ObjectValue.MutableBuilder result = ObjectValue.MutableBuilder.create();
             setObjectBuilder(index, result);
 
             return result;
@@ -322,7 +420,7 @@ public class ArrayValue implements DocValue, List<DocValue> {
             return true;
         }
 
-        public Builder add(DocValue newVal) {
+        public MutableBuilder add(DocValue newVal) {
             checkNewBuild();
 
             if (elementType != null
@@ -338,7 +436,7 @@ public class ArrayValue implements DocValue, List<DocValue> {
             return this;
         }
 
-        public Builder setValue(int index, DocValue newValue) {
+        public MutableBuilder setValue(int index, DocValue newValue) {
             checkNewBuild();
 
             if (elementType != null
@@ -364,7 +462,7 @@ public class ArrayValue implements DocValue, List<DocValue> {
             elementType = calculateElementType();
             built = true;
 
-            for (Map.Entry<Integer, ObjectValue.Builder> objectBuilder
+            for (Map.Entry<Integer, ObjectValue.MutableBuilder> objectBuilder
                     : subObjectBuilders.entrySet()) {
 
                 DocValue oldValue
@@ -375,7 +473,7 @@ public class ArrayValue implements DocValue, List<DocValue> {
 
                 assert oldValue == null;
             }
-            for (Map.Entry<Integer, Builder> arrayBuilder
+            for (Map.Entry<Integer, MutableBuilder> arrayBuilder
                     : subArrayBuilders.entrySet()) {
 
                 DocValue oldValue
@@ -432,10 +530,10 @@ public class ArrayValue implements DocValue, List<DocValue> {
                 DocValue value = original.get(i);
 
                 if (value instanceof ArrayValue) {
-                    ArrayValue.Builder childBuilder = newArray(i);
+                    ArrayValue.MutableBuilder childBuilder = newArray(i);
                     childBuilder.copy((ArrayValue) value);
                 } else if (value instanceof ObjectValue) {
-                    ObjectValue.Builder childBuilder = newObject(i);
+                    ObjectValue.MutableBuilder childBuilder = newObject(i);
                     childBuilder.copy((ObjectValue) value);
                 } else {
                     setValue(i, value);

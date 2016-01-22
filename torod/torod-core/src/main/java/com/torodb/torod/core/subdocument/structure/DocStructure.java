@@ -35,8 +35,10 @@ import javax.annotation.concurrent.Immutable;
 public class DocStructure implements StructureElement {
     private static final long serialVersionUID = 1L;
 
+    @Nonnull
     private final SubDocType type;
     private final int index;
+    @Nonnull
     private final Map<String, StructureElement> elements;
 
     public DocStructure(
@@ -69,7 +71,7 @@ public class DocStructure implements StructureElement {
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 37 * hash + (this.type != null ? this.type.hashCode() : 0);
+        hash = 37 * hash + this.type.hashCode();
         hash = 37 * hash + this.index;
         return hash;
     }
@@ -79,17 +81,20 @@ public class DocStructure implements StructureElement {
         if (obj == null) {
             return false;
         }
+        if (obj == this) {
+            return true;
+        }
         if (getClass() != obj.getClass()) {
             return false;
         }
         final DocStructure other = (DocStructure) obj;
-        if (this.type != other.type && (this.type == null || !this.type.equals(other.type))) {
+        if (!this.type.equals(other.type)) {
             return false;
         }
         if (this.index != other.index) {
             return false;
         }
-        if (this.elements != other.elements && (this.elements == null || !this.elements.equals(other.elements))) {
+        if (!this.elements.equals(other.elements)) {
             return false;
         }
         return true;

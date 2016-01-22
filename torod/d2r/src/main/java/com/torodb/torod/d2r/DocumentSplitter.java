@@ -44,6 +44,7 @@ import com.torodb.torod.core.subdocument.structure.DocStructure;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.core.subdocument.SubDocAttribute;
 import com.torodb.torod.core.subdocument.SubDocType;
+import com.torodb.torod.core.subdocument.SubDocType.Builder;
 import com.torodb.torod.core.subdocument.SubDocument;
 import com.torodb.torod.core.subdocument.values.Value;
 import java.util.Map;
@@ -51,6 +52,8 @@ import com.torodb.torod.core.subdocument.ToroDocument;
 import com.torodb.torod.core.subdocument.structure.ArrayStructure;
 import java.util.HashSet;
 import javax.annotation.concurrent.NotThreadSafe;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 /**
  *
@@ -60,9 +63,12 @@ public class DocumentSplitter {
     private final DbMetaInformationCache cache;
     private final TypesCollector typesCollector = new TypesCollector();
     private final static TypeTranslator typeTranslator = new TypeTranslator();
+    private final Provider<SubDocType.Builder> subDocTypeBuilderProvider;
 
-    public DocumentSplitter(DbMetaInformationCache cache) {
+    @Inject
+    public DocumentSplitter(DbMetaInformationCache cache, Provider<Builder> subDocTypeBuilderProvider) {
         this.cache = cache;
+        this.subDocTypeBuilderProvider = subDocTypeBuilderProvider;
     }
 
     /**
@@ -95,7 +101,7 @@ public class DocumentSplitter {
     }
 
     private SubDocType getSubDocType(ObjectValue value) {
-        SubDocType.Builder builder = new SubDocType.Builder();
+        SubDocType.Builder builder = subDocTypeBuilderProvider.get();
 
         for (Map.Entry<String, DocValue> entry : value.getAttributes()) {
             if (!(entry.getValue() instanceof ObjectValue)) {
@@ -117,7 +123,7 @@ public class DocumentSplitter {
         SplitDocument.Builder splitDocBuilder = new SplitDocument.Builder();
 
         ValueTranslator translator = new ValueTranslator(docId, splitDocBuilder,
-                                                         collectedTypes);
+                collectedTypes, subDocTypeBuilderProvider);
 
         RootTranslatorConsumer consumer = new RootTranslatorConsumer();
 
@@ -256,17 +262,20 @@ public class DocumentSplitter {
         private final SplitDocument.Builder splitDocBuilder;
         private final Map<ObjectValue, SubDocType> collectedTypes;
         private final Map<SubDocType, Integer> indixes;
+        private final Provider<SubDocType.Builder> subDocTypeBuilderProvider;
 
         public ValueTranslator(
                 int docId,
                 SplitDocument.Builder splitDocBuilder,
-                Map<ObjectValue, SubDocType> collectedTypes) {
+                Map<ObjectValue, SubDocType> collectedTypes,
+                Provider<SubDocType.Builder> subDocTypeBuilderProvider) {
 
             this.docId = docId;
             this.splitDocBuilder = splitDocBuilder;
             this.collectedTypes = collectedTypes;
             this.indixes = Maps.newHashMapWithExpectedSize(new HashSet(
                     collectedTypes.values()).size());
+            this.subDocTypeBuilderProvider = subDocTypeBuilderProvider;
         }
 
         public int consumeIndex(SubDocType type) {
@@ -283,7 +292,7 @@ public class DocumentSplitter {
                 ObjectValue value,
                 TranslatorConsumer arg) {
             DocStructure.Builder structureBuilder = new DocStructure.Builder();
-            SubDocument.Builder subDocBuilder = new SubDocument.Builder();
+            SubDocument.Builder subDocBuilder = new SubDocument.Builder(subDocTypeBuilderProvider);
 
             SubDocType type = collectedTypes.get(value);
 

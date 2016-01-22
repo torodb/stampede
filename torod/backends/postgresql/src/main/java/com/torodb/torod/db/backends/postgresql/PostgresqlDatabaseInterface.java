@@ -21,6 +21,9 @@
 
 package com.torodb.torod.db.backends.postgresql;
 
+import com.torodb.torod.core.subdocument.SimpleSubDocTypeBuilderProvider;
+import com.torodb.torod.core.subdocument.SubDocType;
+import com.torodb.torod.core.subdocument.SubDocType.Builder;
 import com.torodb.torod.db.backends.ArraySerializer;
 import com.torodb.torod.db.backends.DatabaseInterface;
 import com.torodb.torod.db.backends.converters.BasicTypeToSqlType;
@@ -36,6 +39,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.inject.Provider;
 
 /**
  *
@@ -46,6 +50,7 @@ public class PostgresqlDatabaseInterface implements DatabaseInterface {
     private static final long serialVersionUID = 484638503;
 
     private final BasicTypeToSqlType basicTypeToSqlType;
+    private transient @Nonnull Provider<SubDocType.Builder> subDocTypeBuilderProvider;
 
     private static class ArraySerializatorHolder {
         private static final ArraySerializer INSTANCE = new JsonbArraySerializer();
@@ -58,8 +63,16 @@ public class PostgresqlDatabaseInterface implements DatabaseInterface {
     }
 
     @Inject
-    public PostgresqlDatabaseInterface(BasicTypeToSqlType basicTypeToSqlType) {
+    public PostgresqlDatabaseInterface(BasicTypeToSqlType basicTypeToSqlType, Provider<Builder> subDocTypeBuilderProvider) {
         this.basicTypeToSqlType = basicTypeToSqlType;
+        this.subDocTypeBuilderProvider = subDocTypeBuilderProvider;
+    }
+
+    private void readObject(java.io.ObjectInputStream stream)
+            throws IOException, ClassNotFoundException {
+        //TODO: Try to remove make DatabaseInterface not serializable
+        stream.defaultReadObject();
+        this.subDocTypeBuilderProvider = new SimpleSubDocTypeBuilderProvider();
     }
 
     @Override
@@ -226,7 +239,7 @@ public class PostgresqlDatabaseInterface implements DatabaseInterface {
     public @Nonnull TorodbMeta initializeTorodbMeta(
             String databaseName, DSLContext dsl, DatabaseInterface databaseInterface
     ) throws SQLException, IOException, InvalidDatabaseException {
-        return new PostgreSQLTorodbMeta(databaseName, dsl, databaseInterface);
+        return new PostgreSQLTorodbMeta(databaseName, dsl, databaseInterface, subDocTypeBuilderProvider);
     }
 
 }

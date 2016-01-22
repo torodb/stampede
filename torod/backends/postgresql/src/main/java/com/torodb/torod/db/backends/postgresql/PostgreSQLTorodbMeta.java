@@ -23,6 +23,7 @@ package com.torodb.torod.db.backends.postgresql;
 import com.google.common.collect.MapMaker;
 import com.google.common.io.CharStreams;
 import com.torodb.torod.core.exceptions.ToroImplementationException;
+import com.torodb.torod.core.subdocument.SubDocType;
 import com.torodb.torod.db.backends.DatabaseInterface;
 import com.torodb.torod.db.backends.exceptions.InvalidCollectionSchemaException;
 import com.torodb.torod.db.backends.exceptions.InvalidDatabaseException;
@@ -47,6 +48,8 @@ import java.sql.*;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.ConcurrentMap;
+import javax.annotation.Nonnull;
+import javax.inject.Provider;
 
 /**
  *
@@ -59,11 +62,17 @@ public class PostgreSQLTorodbMeta implements TorodbMeta {
     private final ConcurrentMap<String, IndexStorage.CollectionSchema> collectionSchemes;
     private static final Logger LOGGER = LoggerFactory.getLogger(PostgreSQLTorodbMeta.class);
     private final DatabaseInterface databaseInterface;
+    private final  Provider<SubDocType.Builder> subDocTypeBuilderProvider;
 
-    PostgreSQLTorodbMeta(String databaseName, DSLContext dsl, DatabaseInterface databaseInterface)
+    PostgreSQLTorodbMeta(
+            String databaseName,
+            DSLContext dsl,
+            DatabaseInterface databaseInterface,
+            @Nonnull Provider<SubDocType.Builder> subDocTypeBuilderProvider)
     throws SQLException, IOException, InvalidDatabaseException {
         this.databaseName = databaseName;
         this.databaseInterface = databaseInterface;
+        this.subDocTypeBuilderProvider = subDocTypeBuilderProvider;
 
         Meta jooqMeta = dsl.meta();
         Connection conn = dsl.configuration().connectionProvider().acquire();
@@ -98,7 +107,8 @@ public class PostgreSQLTorodbMeta implements TorodbMeta {
                     jdbcMeta, 
                     jooqMeta, 
                     this,
-                    databaseInterface
+                    databaseInterface,
+                    subDocTypeBuilderProvider
             );
             collectionSchemes.put(colSchema.getCollection(), colSchema);
         }
@@ -143,7 +153,7 @@ public class PostgreSQLTorodbMeta implements TorodbMeta {
                     + "' is already associated with a collection schema");
         }
         IndexStorage.CollectionSchema result = new IndexStorage.CollectionSchema(
-                schemaName, colName, dsl, this, databaseInterface
+                schemaName, colName, dsl, this, databaseInterface, subDocTypeBuilderProvider
         );
         collectionSchemes.put(colName, result);
 
