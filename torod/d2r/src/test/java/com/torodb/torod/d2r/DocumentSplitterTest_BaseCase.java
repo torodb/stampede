@@ -82,7 +82,7 @@ public class DocumentSplitterTest_BaseCase {
 
         SimpleSubDocTypeBuilderProvider subDocTypeBuilderProvider
                 = new SimpleSubDocTypeBuilderProvider();
-        expectedSubDoc = new SubDocument.Builder(subDocTypeBuilderProvider)
+        expectedSubDoc = SubDocument.Builder.withUnknownType(subDocTypeBuilderProvider)
                 .setDocumentId(docId)
                 .setIndex(index)
                 .add("my int", new com.torodb.torod.core.subdocument.values.IntegerValue(1))

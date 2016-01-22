@@ -20,6 +20,7 @@
 
 package com.torodb.torod.core.subdocument;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.torodb.torod.core.subdocument.values.Value;
 import java.util.Collections;
@@ -44,15 +45,13 @@ public class SubDocument {
      */
     private final int index;
     private final Map<String, Value<?>> values;
-    private final Map<String, SubDocAttribute> attributes;
     private final SubDocType type;
 
-    private SubDocument(int documentId, int index, SubDocType type, Map<String, SubDocAttribute> attributes, Map<String, Value<?>> values) {
+    private SubDocument(int documentId, int index, SubDocType type, Map<String, Value<?>> values) {
         this.documentId = documentId;
         this.index = index;
         this.type = type;
 
-        this.attributes = Collections.unmodifiableMap(attributes);
         this.values = Collections.unmodifiableMap(values);
     }
 
@@ -66,10 +65,6 @@ public class SubDocument {
 
     public SubDocType getType() {
         return type;
-    }
-
-    public Map<String, SubDocAttribute> getAttributes() {
-        return attributes;
     }
 
     @Nonnull
@@ -111,28 +106,28 @@ public class SubDocument {
         if (this.values != other.values && (this.values == null || !this.values.equals(other.values))) {
             return false;
         }
-        if (this.attributes != other.attributes && (this.attributes == null || !this.attributes.equals(other.attributes))) {
-            return false;
-        }
         if (this.type != other.type && (this.type == null || !this.type.equals(other.type))) {
             return false;
         }
         return true;
     }
 
-    public static class Builder {
+    public static abstract class Builder {
 
         int documentId;
         int index;
-        private Map<String, Value<?>> values;
-        private Map<String, SubDocAttribute> attributes;
-        private final SubDocType.Builder subDocTypeBuilder;
+        private final Map<String, Value<?>> values;
 
-        @Inject
-        public Builder(Provider<SubDocType.Builder> subDocTypeBuilderProvider) {
-            attributes = Maps.newHashMap();
+        private Builder() {
             values = Maps.newHashMap();
-            this.subDocTypeBuilder = subDocTypeBuilderProvider.get();
+        }
+
+        public static Builder withKnownType(SubDocType expectedType) {
+            return new WithTypeBuilder(expectedType);
+        }
+
+        public static Builder withUnknownType(Provider<SubDocType.Builder> subDocTypeBuilder) {
+            return new WithoutTypeBuilder(subDocTypeBuilder.get());
         }
         
         public Builder setDocumentId(int docId) {
@@ -146,27 +141,75 @@ public class SubDocument {
         }
 
         public Builder add(@Nonnull String key, @Nonnull Value value) {
-            if (attributes.containsKey(key)) {
+            if (values.containsKey(key)) {
                 throw new IllegalArgumentException("There is another attribute with " + key);
             }
 
-            attributes.put(key, new SubDocAttribute(key, value.getType()));
             values.put(key, value);
+
             return this;
         }
 
         public Builder add(@Nonnull SubDocAttribute att, @Nonnull Value value) {
+            if (values.containsKey(att.getKey())) {
+                throw new IllegalArgumentException("There is another attribute with " + att.getKey());
+            }
             if (!att.getType().equals(value.getType())) {
                 throw new IllegalArgumentException("Type of attribute " + att + " is " + att.getType() + " which is different "
                         + "than the type of the given value (value is " + value + " and its type is " + value.getType());
             }
             
-            attributes.put(att.getKey(), att);
             values.put(att.getKey(), value);
+
             return this;
         }
 
-        public SubDocType calculeType() {
+        abstract SubDocType calculeType();
+
+        public SubDocument build() {
+            SubDocument result = new SubDocument(documentId, index, calculeType(), values);
+            
+            return result;
+        }
+    }
+
+    private static class WithTypeBuilder extends Builder {
+        private final SubDocType expectedType;
+
+        public WithTypeBuilder(SubDocType expectedType) {
+            this.expectedType = expectedType;
+        }
+
+        @Override
+        SubDocType calculeType() {
+            return expectedType;
+        }
+
+        @Override
+        public Builder add(SubDocAttribute att, Value value) {
+            String key = att.getKey();
+            Preconditions.checkArgument(att.equals(expectedType.getAttribute(key)));
+            return super.add(att, value);
+        }
+
+        @Override
+        public Builder add(String key, Value value) {
+            Preconditions.checkArgument(expectedType.getAttribute(key) != null);
+            return super.add(key, value);
+        }
+    }
+
+    private static class WithoutTypeBuilder extends Builder {
+        private final Map<String, SubDocAttribute> attributes;
+        private final SubDocType.Builder subDocTypeBuilder;
+
+        public WithoutTypeBuilder(SubDocType.Builder subDocTypeBuilder) {
+            attributes = Maps.newHashMap();
+            this.subDocTypeBuilder = subDocTypeBuilder;
+        }
+
+        @Override
+        SubDocType calculeType() {
             for (SubDocAttribute att : attributes.values()) {
                 subDocTypeBuilder.add(att);
             }
@@ -174,14 +217,20 @@ public class SubDocument {
             return subDocTypeBuilder.build();
         }
 
-        public SubDocument build() {
-            SubDocument result = new SubDocument(documentId, index, calculeType(), attributes, values);
-            
-            values = null;
-            attributes = null;
-            
-            return result;
+        @Override
+        public Builder add(SubDocAttribute att, Value value) {
+            super.add(att, value);
+            attributes.put(att.getKey(), att);
+            return this;
         }
+
+        @Override
+        public Builder add(String key, Value value) {
+            super.add(key, value);
+            attributes.put(key, new SubDocAttribute(key, value.getType()));
+            return this;
+        }
+
     }
 
 }

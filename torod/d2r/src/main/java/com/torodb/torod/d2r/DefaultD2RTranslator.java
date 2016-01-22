@@ -126,7 +126,7 @@ public class DefaultD2RTranslator implements D2RTranslator {
             SubDocument subDoc
                     = splitDocument.getSubDocuments().get(structure.getType(), structure.getIndex());
 
-            for (String keyName : subDoc.getAttributes().keySet()) {
+            for (String keyName : subDoc.getType().getAttributeKeys()) {
                 //childStructure will be null if the child is a scalar
                 StructureElement childStructure
                         = structure.getElements().get(keyName);

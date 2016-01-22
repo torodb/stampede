@@ -46,19 +46,10 @@ public class SubDocConverter implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private transient Provider<SubDocType.Builder> subDocTypeBuilderProvider;
     public static final String ID_COLUMN_NAME = "id";
 
     @Inject
-    public SubDocConverter(Provider<SubDocType.Builder> subDocTypeBuilderProvider) {
-        this.subDocTypeBuilderProvider = subDocTypeBuilderProvider;
-    }
-
-    private void readObject(java.io.ObjectInputStream stream)
-            throws IOException, ClassNotFoundException {
-        //TODO: Try to make this class non-serializable!
-        stream.defaultReadObject();
-        subDocTypeBuilderProvider = new SimpleSubDocTypeBuilderProvider();
+    public SubDocConverter() {
     }
 
     public SubDocument from(String subdocAsJson, SubDocType subDocType) {
@@ -66,7 +57,7 @@ public class SubDocConverter implements Serializable {
 
         JsonObject jsonObject = reader.readObject();
         
-        SubDocument.Builder builder = new SubDocument.Builder(subDocTypeBuilderProvider);
+        SubDocument.Builder builder = SubDocument.Builder.withKnownType(subDocType);
 
         for (Map.Entry<String, JsonValue> entry : jsonObject.entrySet()) {
             Object objectValue = jsonValueToObject(entry.getValue());

@@ -20,19 +20,15 @@
 
 package com.torodb.torod.d2r;
 
-import com.torodb.torod.core.subdocument.ToroDocument;
-import com.torodb.torod.core.subdocument.SubDocType;
-import com.torodb.torod.core.subdocument.BasicType;
-import com.torodb.torod.core.subdocument.SubDocument;
-import com.torodb.torod.core.subdocument.SplitDocument;
-import com.torodb.torod.core.subdocument.SubDocAttribute;
-import com.torodb.torod.core.subdocument.structure.DocStructure;
-import com.torodb.torod.core.dbMetaInf.DbMetaInformationCache;
-import com.torodb.kvdocument.values.ObjectValue;
+
 import com.torodb.kvdocument.converter.json.JsonValueConverter;
+import com.torodb.kvdocument.values.ObjectValue;
+import com.torodb.torod.core.dbMetaInf.DbMetaInformationCache;
 import com.torodb.torod.core.subdocument.*;
-import java.util.*;
-import javax.inject.Provider;
+import com.torodb.torod.core.subdocument.structure.DocStructure;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import javax.json.Json;
 import javax.json.JsonObject;
 import org.junit.Before;
@@ -89,14 +85,14 @@ public class DocumentSplitterTest_RecursiveCase {
 
         cache = mock(DbMetaInformationCache.class);
 
-        expectedSubDoc = new SubDocument.Builder(SSD_BUILLDER_PROVIDER)
+        expectedSubDoc = SubDocument.Builder.withUnknownType(SSD_BUILLDER_PROVIDER)
                 .setDocumentId(docId1)
                 .add("my int", new com.torodb.torod.core.subdocument.values.IntegerValue(1))
                 .add("my string", new com.torodb.torod.core.subdocument.values.StringValue("test"))
                 .add("my double", new com.torodb.torod.core.subdocument.values.DoubleValue(3.1416d))
                 .add("my long", new com.torodb.torod.core.subdocument.values.LongValue(100230203012300l))
                 .build();
-        embeddedSubDoc = new SubDocument.Builder(SSD_BUILLDER_PROVIDER)
+        embeddedSubDoc = SubDocument.Builder.withUnknownType(SSD_BUILLDER_PROVIDER)
                 .setDocumentId(docId2)
                 .build();
         splitter = new DocumentSplitter(cache, SSD_BUILLDER_PROVIDER);

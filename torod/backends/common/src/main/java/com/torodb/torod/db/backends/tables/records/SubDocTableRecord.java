@@ -91,21 +91,20 @@ public class SubDocTableRecord extends TableRecordImpl<SubDocTableRecord> {
                     + "different than the type of the given subdocument (" + subdoc.getType() + ")");
         }
 
-        for (Map.Entry<String, ? extends SubDocAttribute> entry : subdoc.getAttributes().entrySet()) {
-            String fieldName = table.subDocHelper().toColumnName(entry.getKey());
+        for (String key : subdoc.getType().getAttributeKeys()) {
+            String fieldName = table.subDocHelper().toColumnName(key);
 
             //@gortiz: I think we can not use types here!
             Field f = field(fieldName);
-            Value v = subdoc.getValue(entry.getKey());
+            Value v = subdoc.getValue(key);
 
             setValue(f, v);
         }
     }
 
     public SubDocument getSubDoc() {
-        SubDocument.Builder builder = new SubDocument.Builder(subDocTypeBuilderProvider);
-
         SubDocType subDocType = table.getSubDocType();
+        SubDocument.Builder builder = SubDocument.Builder.withKnownType(subDocType);
 
         for (Field<? extends Value<? extends Serializable>> field : table.getSubDocFields()) {
             String attName = SubDocHelper.toAttributeName(field.getName());

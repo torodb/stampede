@@ -291,10 +291,10 @@ public class DocumentSplitter {
         public Void visit(
                 ObjectValue value,
                 TranslatorConsumer arg) {
-            DocStructure.Builder structureBuilder = new DocStructure.Builder();
-            SubDocument.Builder subDocBuilder = new SubDocument.Builder(subDocTypeBuilderProvider);
-
             SubDocType type = collectedTypes.get(value);
+
+            DocStructure.Builder structureBuilder = new DocStructure.Builder();
+            SubDocument.Builder subDocBuilder = SubDocument.Builder.withKnownType(type);
 
             int index = consumeIndex(type);
 
