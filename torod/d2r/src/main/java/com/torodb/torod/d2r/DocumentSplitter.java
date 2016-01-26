@@ -122,8 +122,7 @@ public class DocumentSplitter {
 
         SplitDocument.Builder splitDocBuilder = new SplitDocument.Builder();
 
-        ValueTranslator translator = new ValueTranslator(docId, splitDocBuilder,
-                collectedTypes, subDocTypeBuilderProvider);
+        ValueTranslator translator = new ValueTranslator(docId, splitDocBuilder, collectedTypes);
 
         RootTranslatorConsumer consumer = new RootTranslatorConsumer();
 
@@ -262,20 +261,17 @@ public class DocumentSplitter {
         private final SplitDocument.Builder splitDocBuilder;
         private final Map<ObjectValue, SubDocType> collectedTypes;
         private final Map<SubDocType, Integer> indixes;
-        private final Provider<SubDocType.Builder> subDocTypeBuilderProvider;
 
         public ValueTranslator(
                 int docId,
                 SplitDocument.Builder splitDocBuilder,
-                Map<ObjectValue, SubDocType> collectedTypes,
-                Provider<SubDocType.Builder> subDocTypeBuilderProvider) {
+                Map<ObjectValue, SubDocType> collectedTypes) {
 
             this.docId = docId;
             this.splitDocBuilder = splitDocBuilder;
             this.collectedTypes = collectedTypes;
             this.indixes = Maps.newHashMapWithExpectedSize(new HashSet(
                     collectedTypes.values()).size());
-            this.subDocTypeBuilderProvider = subDocTypeBuilderProvider;
         }
 
         public int consumeIndex(SubDocType type) {
