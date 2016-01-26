@@ -68,7 +68,7 @@ public class JsonValueConverter {
     }
 
     protected static ObjectValue translateObject(JsonObject object) {
-        ObjectValue.Builder builder = new ObjectValue.Builder();
+        ObjectValue.SimpleBuilder builder = new ObjectValue.SimpleBuilder();
         for (Map.Entry<String, JsonValue> entry : object.entrySet()) {
             builder.putValue(entry.getKey(), translate(entry.getValue()));
         }
@@ -131,7 +131,7 @@ public class JsonValueConverter {
     }
 
     private static ArrayValue translateArray(JsonArray array) {
-        ArrayValue.Builder builder = new ArrayValue.Builder();
+        ArrayValue.SimpleBuilder builder = new ArrayValue.SimpleBuilder();
 
         DocType elementType;
         if (array.isEmpty()) {

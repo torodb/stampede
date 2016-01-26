@@ -417,8 +417,8 @@ public class DefaultToroTransaction implements ToroTransaction {
 
         @Override
         public DocValue visit(ArrayValue value, Void arg) {
-            com.torodb.kvdocument.values.ArrayValue.Builder builder
-                    = new com.torodb.kvdocument.values.ArrayValue.Builder();
+            com.torodb.kvdocument.values.ArrayValue.SimpleBuilder builder
+                    = new com.torodb.kvdocument.values.ArrayValue.SimpleBuilder();
 
             for (Value e : value.getValue()) {
                 builder.add((DocValue) e.accept(this, arg));

@@ -79,7 +79,7 @@ class MoveUpdateActionExecutor {
         public <K> Boolean objectReferenced(
                 BuilderCallback<K> parentBuilder, 
                 K key, 
-                ObjectValue.Builder child
+                ObjectValue.MutableBuilder child
         ) {
             parentBuilder.unset(key);
             return AttributeReferenceToBuilderCallback.resolve(
@@ -94,7 +94,7 @@ class MoveUpdateActionExecutor {
         public <K> Boolean arrayReferenced(
                 BuilderCallback<K> parentBuilder, 
                 K key, 
-                ArrayValue.Builder child
+                ArrayValue.MutableBuilder child
         ) {
             parentBuilder.unset(key);
             return AttributeReferenceToBuilderCallback.resolve(
@@ -142,7 +142,7 @@ class MoveUpdateActionExecutor {
         public <K> Boolean objectReferenced(
                 BuilderCallback<K> parentBuilder, 
                 K key, 
-                ObjectValue.Builder child
+                ObjectValue.MutableBuilder child
         ) {
             parentBuilder.setValue(key, newValue);
             return true;
@@ -152,7 +152,7 @@ class MoveUpdateActionExecutor {
         public <K> Boolean arrayReferenced(
                 BuilderCallback<K> parentBuilder, 
                 K key, 
-                ArrayValue.Builder child
+                ArrayValue.MutableBuilder child
         ) {
             parentBuilder.setValue(key, newValue);
             return true;

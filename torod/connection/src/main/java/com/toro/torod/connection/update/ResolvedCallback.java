@@ -32,13 +32,13 @@ public interface ResolvedCallback<R> {
     public <K> R objectReferenced(
             BuilderCallback<K> parentBuilder, 
             K key,
-            ObjectValue.Builder child
+            ObjectValue.MutableBuilder child
     );
     
     public <K> R arrayReferenced(
             BuilderCallback<K> parentBuilder, 
             K key,
-            ArrayValue.Builder child
+            ArrayValue.MutableBuilder child
     );
     
     public <K> R valueReferenced(

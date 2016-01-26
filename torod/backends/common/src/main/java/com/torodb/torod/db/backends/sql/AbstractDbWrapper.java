@@ -32,11 +32,13 @@ import com.torodb.torod.core.dbWrapper.exceptions.UserDbException;
 import com.torodb.torod.core.language.projection.Projection;
 import com.torodb.torod.core.language.querycriteria.QueryCriteria;
 import com.torodb.torod.core.subdocument.SplitDocument;
+import com.torodb.torod.core.subdocument.SubDocType.Builder;
 import com.torodb.torod.db.backends.DatabaseInterface;
 import com.torodb.torod.db.backends.exceptions.InvalidDatabaseException;
 import com.torodb.torod.db.backends.meta.IndexStorage;
 import com.torodb.torod.db.backends.meta.Routines;
 import com.torodb.torod.db.backends.meta.TorodbMeta;
+import com.torodb.torod.db.backends.meta.routines.QueryRoutine;
 import com.torodb.torod.db.backends.query.QueryEvaluator;
 import java.io.IOException;
 import java.sql.Connection;
@@ -46,6 +48,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.sql.DataSource;
 import org.jooq.Configuration;
 import org.jooq.ConnectionProvider;
@@ -65,6 +68,7 @@ public abstract class AbstractDbWrapper implements DbWrapper {
     private final String databaseName;
     private TorodbMeta meta;
     private final DatabaseInterface databaseInterface;
+    private final QueryRoutine queryRoutine;
 
     private static final DbConnection.Metainfo CURSOR_CONNECTION_METADATA = new Metainfo(true);
     
@@ -72,6 +76,7 @@ public abstract class AbstractDbWrapper implements DbWrapper {
     public AbstractDbWrapper(
             @DatabaseName String databaseName,
             DbBackend dbBackend,
+            QueryRoutine queryRoutine,
             DatabaseInterface databaseInterface
     ) {
         this.sessionDataSource = dbBackend.getSessionDataSource();
@@ -81,6 +86,7 @@ public abstract class AbstractDbWrapper implements DbWrapper {
         isInitialized = new AtomicBoolean(false);
         this.openCursors = new MapMaker().makeMap();
         this.databaseName = databaseName;
+        this.queryRoutine = queryRoutine;
         this.databaseInterface = databaseInterface;
     }
 
@@ -271,7 +277,7 @@ public abstract class AbstractDbWrapper implements DbWrapper {
 
         @Override
         public List<SplitDocument> readDocuments(Integer[] documents) {
-            return Routines.readDocuments(configuration, colSchema, documents, projection, databaseInterface);
+            return queryRoutine.execute(configuration, colSchema, documents, projection, databaseInterface);
         }
 
         @Override

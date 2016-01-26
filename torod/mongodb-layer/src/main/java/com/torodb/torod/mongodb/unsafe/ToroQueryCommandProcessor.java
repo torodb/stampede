@@ -570,20 +570,18 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
 
         for (NamedToroIndex index : indexes) {
             String collectionNamespace = databaseName + '.' + collection;
-            ObjectValue.Builder objBuider = new ObjectValue.Builder()
+            ObjectValue.SimpleBuilder objBuider = new ObjectValue.SimpleBuilder()
                     .putValue("v", 1)
                     .putValue("name", index.getName())
-                    .putValue("ns", collectionNamespace)
-                    .putValue("key", new ObjectValue.Builder()
-                    );
-            ObjectValue.Builder keyBuilder = new ObjectValue.Builder();
+                    .putValue("ns", collectionNamespace);
+            ObjectValue.SimpleBuilder keyBuilder = new ObjectValue.SimpleBuilder();
             for (Map.Entry<AttributeReference, Boolean> entrySet : index.getAttributes().entrySet()) {
                 keyBuilder.putValue(
                         entrySet.getKey().toString(),
                         entrySet.getValue() ? 1 : -1
                 );
             }
-            objBuider.putValue("key", keyBuilder);
+            objBuider.putValue("key", keyBuilder.build());
 
             firstBatch.add(
                 MongoValueConverter.translateObject(objBuider.build())
@@ -607,7 +605,7 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
             if (input == null) {
                 return null;
             }
-            ObjectValue.Builder optionsBuider = new ObjectValue.Builder()
+            ObjectValue.SimpleBuilder optionsBuider = new ObjectValue.SimpleBuilder()
                     .putValue("capped", input.isCapped())
                     .putValue("autoIndexId", false)
                     .putValue("flags", 2)
@@ -622,10 +620,10 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
             }
             
             
-            ObjectValue.Builder builder = new ObjectValue.Builder();
+            ObjectValue.SimpleBuilder builder = new ObjectValue.SimpleBuilder();
             return builder
                     .putValue("name", input.getName())
-                    .putValue("options", optionsBuider)
+                    .putValue("options", optionsBuider.build())
                     .build();
         }
     }

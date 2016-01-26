@@ -40,7 +40,10 @@ import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
+@Singleton
 public class QueryRoutine {
 
     public static final String DOC_ID = "did";
@@ -48,11 +51,19 @@ public class QueryRoutine {
     public static final String INDEX = "index";
     public static final String _JSON = "_json";
 
-    private QueryRoutine() {
+    private final SplitDocumentConverter splitDocumentConverter;
+
+    @Inject
+    protected QueryRoutine(SplitDocumentConverter splitDocumentConverter) {
+        this.splitDocumentConverter = splitDocumentConverter;
     }
 
-    @SuppressFBWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
-    public static List<SplitDocument> execute(
+    @SuppressFBWarnings(
+            value = {
+                "SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING",
+                "OBL_UNSATISFIED_OBLIGATION"
+            })
+    public List<SplitDocument> execute(
             Configuration configuration, IndexStorage.CollectionSchema colSchema, Integer[] requestedDocs, Projection projection,
             @Nonnull DatabaseInterface databaseInterface
     ) {
@@ -62,11 +73,13 @@ public class QueryRoutine {
         }
 
         Connection c = null;
-        PreparedStatement ps = null;
 
-        try {
-            c = configuration.connectionProvider().acquire();
-            ps = c.prepareStatement(databaseInterface.findDocsSelectStatement(DOC_ID, TYPE_ID, INDEX, _JSON));
+        c = configuration.connectionProvider().acquire();
+        try (PreparedStatement ps = c.prepareStatement(databaseInterface.findDocsSelectStatement(
+                DOC_ID,
+                TYPE_ID,
+                INDEX,
+                _JSON))) {
 
             ps.setString(1, colSchema.getName());
 
@@ -80,21 +93,11 @@ public class QueryRoutine {
             //TODO: Study exceptions
             throw new RuntimeException(ex);
         } finally {
-            if (ps != null) {
-                try {
-                    ps.close();
-                } catch (SQLException ex1) {
-                    //TODO: Study exceptions
-                    throw new RuntimeException(ex1);
-                }
-            }
-            if (c != null) {
-                configuration.connectionProvider().release(c);
-            }
+            configuration.connectionProvider().release(c);
         }
     }
 
-    private static Integer[] requiredTables(IndexStorage.CollectionSchema colSchema, Projection projection) {
+    private Integer[] requiredTables(IndexStorage.CollectionSchema colSchema, Projection projection) {
         Collection<SubDocTable> subDocTables = colSchema.getSubDocTables();
 
         Integer[] result = new Integer[subDocTables.size()];
@@ -107,7 +110,7 @@ public class QueryRoutine {
     }
 
     @Nonnull
-    private static List<SplitDocument> translateDocuments(IndexStorage.CollectionSchema colSchema, int expectedDocs, ResultSet rs) {
+    private List<SplitDocument> translateDocuments(IndexStorage.CollectionSchema colSchema, int expectedDocs, ResultSet rs) {
         try {
             List<SplitDocument> result = Lists.newArrayListWithCapacity(expectedDocs);
 
@@ -160,7 +163,7 @@ public class QueryRoutine {
         }
     }
 
-    private static SplitDocument processDocument(
+    private SplitDocument processDocument(
             IndexStorage.CollectionSchema colSchema,
             int lastDocId,
             Integer structureId,
@@ -171,8 +174,6 @@ public class QueryRoutine {
             throw new RuntimeException("Structure id was expected");
         }
 
-        SplitDocumentConverter converter = SplitDocumentConverter.INSTANCE;
-
-        return converter.convert(colSchema, lastDocId, structureId, docInfo);
+        return splitDocumentConverter.convert(colSchema, lastDocId, structureId, docInfo);
     }
 }

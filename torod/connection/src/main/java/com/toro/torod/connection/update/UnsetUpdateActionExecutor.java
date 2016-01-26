@@ -66,7 +66,7 @@ class UnsetUpdateActionExecutor implements ResolvedCallback<Boolean> {
     public <K> Boolean objectReferenced(
             BuilderCallback<K> parentBuilder, 
             K key, 
-            ObjectValue.Builder child
+            ObjectValue.MutableBuilder child
     ) {
         parentBuilder.unset(key);
         return true;
@@ -76,7 +76,7 @@ class UnsetUpdateActionExecutor implements ResolvedCallback<Boolean> {
     public <K> Boolean arrayReferenced(
             BuilderCallback<K> parentBuilder, 
             K key, 
-            ArrayValue.Builder child
+            ArrayValue.MutableBuilder child
     ) {
         parentBuilder.unset(key);
         return true;

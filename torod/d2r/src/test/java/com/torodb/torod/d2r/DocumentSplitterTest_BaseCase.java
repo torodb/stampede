@@ -30,6 +30,7 @@ import com.torodb.torod.core.dbMetaInf.DbMetaInformationCache;
 import com.torodb.torod.core.subdocument.structure.DocStructure;
 import com.torodb.kvdocument.values.ObjectValue;
 import com.torodb.kvdocument.converter.json.JsonValueConverter;
+import com.torodb.torod.core.subdocument.*;
 import java.util.*;
 import javax.json.Json;
 import javax.json.JsonObject;
@@ -50,7 +51,7 @@ public class DocumentSplitterTest_BaseCase {
     private DbMetaInformationCache cache;
     private static final int docId = 1000;
     private static final int index = 0;
-    private static final SubDocType subDocumentValueType = new SubDocType.Builder()
+    private static final SubDocType subDocumentValueType = new SimpleSubDocTypeBuilderProvider().get()
             .add(new SubDocAttribute("my int", BasicType.INTEGER))
             .add(new SubDocAttribute("my string", BasicType.STRING))
             .add(new SubDocAttribute("my double", BasicType.DOUBLE))
@@ -79,15 +80,17 @@ public class DocumentSplitterTest_BaseCase {
 
         cache = mock(DbMetaInformationCache.class);
 
-        expectedSubDoc = new SubDocument.Builder()
+        SimpleSubDocTypeBuilderProvider subDocTypeBuilderProvider
+                = new SimpleSubDocTypeBuilderProvider();
+        expectedSubDoc = SubDocument.Builder.withUnknownType(subDocTypeBuilderProvider)
                 .setDocumentId(docId)
                 .setIndex(index)
                 .add("my int", new com.torodb.torod.core.subdocument.values.IntegerValue(1))
                 .add("my string", new com.torodb.torod.core.subdocument.values.StringValue("test"))
-                .add("my double", new com.torodb.torod.core.subdocument.values.DoubleValue(3.1416d))
+                .add("my double", new com.torodb.torod.core.subdocument.values.DoubleValue(Math.PI))
                 .add("my long", new com.torodb.torod.core.subdocument.values.LongValue(100230203012300l))
                 .build();
-        splitter = new DocumentSplitter(cache);
+        splitter = new DocumentSplitter(cache, subDocTypeBuilderProvider);
     }
 
     @Test

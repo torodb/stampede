@@ -42,7 +42,7 @@ public class Updator {
             UpdateResponse.Builder responseBuilder,
             DocumentBuilderFactory documentBuilderFactory
     ) {
-        ObjectValue.Builder copyBuilder = ObjectValue.Builder.from(
+        ObjectValue.MutableBuilder copyBuilder = ObjectValue.MutableBuilder.from(
                 candidate.getRoot()
         );
 
@@ -59,10 +59,10 @@ public class Updator {
         return newDocBuilder.build();
     }
 
-    private static class MyVisitor implements UpdateActionVisitor<Boolean, ObjectValue.Builder> {
+    private static class MyVisitor implements UpdateActionVisitor<Boolean, ObjectValue.MutableBuilder> {
 
         @Override
-        public Boolean visit(CompositeUpdateAction action, ObjectValue.Builder arg) {
+        public Boolean visit(CompositeUpdateAction action, ObjectValue.MutableBuilder arg) {
             boolean result = false;
             for (UpdateAction subAction : action.getActions().values()) {
                 result |= subAction.accept(this, arg);
@@ -71,7 +71,7 @@ public class Updator {
         }
 
         @Override
-        public Boolean visit(IncrementUpdateAction action, ObjectValue.Builder builder) {
+        public Boolean visit(IncrementUpdateAction action, ObjectValue.MutableBuilder builder) {
             return IncrementUpdateActionExecutor.increment(
                     new ObjectBuilderCallback(builder),
                     action.getModifiedField(),
@@ -80,7 +80,7 @@ public class Updator {
         }
 
         @Override
-        public Boolean visit(MultiplyUpdateAction action, ObjectValue.Builder builder) {
+        public Boolean visit(MultiplyUpdateAction action, ObjectValue.MutableBuilder builder) {
             return MultiplyUpdateActionExecutor.multiply(
                     new ObjectBuilderCallback(builder),
                     action.getModifiedField(),
@@ -91,7 +91,7 @@ public class Updator {
         @Override
         public Boolean visit(
                 MoveUpdateAction action,
-                ObjectValue.Builder builder
+                ObjectValue.MutableBuilder builder
         ) {
             return MoveUpdateActionExecutor.move(
                     new ObjectBuilderCallback(builder),
@@ -101,12 +101,12 @@ public class Updator {
         }
 
         @Override
-        public Boolean visit(SetCurrentDateUpdateAction action, ObjectValue.Builder arg) {
+        public Boolean visit(SetCurrentDateUpdateAction action, ObjectValue.MutableBuilder arg) {
             throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
         }
 
         @Override
-        public Boolean visit(SetFieldUpdateAction action, ObjectValue.Builder builder) {
+        public Boolean visit(SetFieldUpdateAction action, ObjectValue.MutableBuilder builder) {
             return SetFieldUpdateActionExecutor.set(
                     new ObjectBuilderCallback(builder),
                     action.getModifiedField(),
@@ -115,7 +115,7 @@ public class Updator {
         }
 
         @Override
-        public Boolean visit(SetDocumentUpdateAction action, ObjectValue.Builder arg) {
+        public Boolean visit(SetDocumentUpdateAction action, ObjectValue.MutableBuilder arg) {
             return SetDocumentUpdateActionExecutor.set(
                     arg,
                     action.getNewValue()
@@ -123,7 +123,7 @@ public class Updator {
         }
 
         @Override
-        public Boolean visit(UnsetFieldUpdateAction action, ObjectValue.Builder builder) {
+        public Boolean visit(UnsetFieldUpdateAction action, ObjectValue.MutableBuilder builder) {
             return UnsetUpdateActionExecutor.unset(
                     new ObjectBuilderCallback(builder),
                     action.getModifiedField()

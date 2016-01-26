@@ -59,6 +59,7 @@ import com.torodb.torod.mongodb.repl.ReplCoordinator;
 import com.torodb.util.LogbackUtils;
 
 import ch.qos.logback.classic.Logger;
+import com.torodb.di.*;
 
 /**
  * ToroDB's entry point
@@ -131,6 +132,7 @@ public class Main {
 		}
 		
 		Injector injector = Guice.createInjector(
+                new CoreModule(),
 				new ConfigModule(config),
 				new BackendModule(config),
 				new ConfigModule(config),

@@ -48,6 +48,7 @@ import com.torodb.torod.core.exceptions.UserToroException;
 import com.torodb.torod.core.language.AttributeReference;
 import com.torodb.kvdocument.values.IntegerValue;
 import com.torodb.kvdocument.values.ObjectValue;
+import com.torodb.kvdocument.values.ObjectValue.MutableBuilder;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -81,7 +82,7 @@ public class IncrementUpdateActionExecutorTest {
 
     @Test
     public void testNormal() {
-        ObjectValue.Builder builder = new ObjectValue.Builder();
+        ObjectValue.MutableBuilder builder = MutableBuilder.create();
         builder.newObject("f1")
                 .newArray("f2")
                 .setValue(3, new IntegerValue(3));
@@ -104,7 +105,7 @@ public class IncrementUpdateActionExecutorTest {
 
     @Test
     public void testNonExistingAttribute() {
-        ObjectValue.Builder builder = new ObjectValue.Builder();
+        ObjectValue.MutableBuilder builder = MutableBuilder.create();
         builder.newObject("f1")
                 .newArray("f2")
                 .setValue(3, new IntegerValue(3));
@@ -132,7 +133,7 @@ public class IncrementUpdateActionExecutorTest {
 
     @Test(expected = UserToroException.class)
     public void testNullAttribute1() {
-        ObjectValue.Builder builder = new ObjectValue.Builder();
+        ObjectValue.MutableBuilder builder = MutableBuilder.create();
         builder.newObject("f1")
                 .newArray("f2")
                 .setValue(3, new IntegerValue(3));
@@ -151,7 +152,7 @@ public class IncrementUpdateActionExecutorTest {
 
     @Test(expected = UserToroException.class)
     public void testIllegalPath() {
-        ObjectValue.Builder builder = new ObjectValue.Builder();
+        ObjectValue.MutableBuilder builder = MutableBuilder.create();
         builder.newObject("f1")
                 .newArray("f2")
                 .setValue(3, new IntegerValue(3));

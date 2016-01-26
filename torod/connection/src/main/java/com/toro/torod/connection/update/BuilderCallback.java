@@ -42,16 +42,16 @@ interface BuilderCallback<K> {
     boolean isArrayBuilder(K key);
 
     @Nonnull
-    ArrayValue.Builder getArrayBuilder(K key);
+    ArrayValue.MutableBuilder getArrayBuilder(K key);
 
     boolean isObjectBuilder(K key);
 
     @Nonnull
-    ObjectValue.Builder getObjectBuilder(K key);
+    ObjectValue.MutableBuilder getObjectBuilder(K key);
 
-    ArrayValue.Builder newArray(K key);
+    ArrayValue.MutableBuilder newArray(K key);
 
-    ObjectValue.Builder newObject(K key);
+    ObjectValue.MutableBuilder newObject(K key);
 
     void setValue(K key, DocValue value);
 

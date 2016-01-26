@@ -27,6 +27,7 @@ import com.torodb.torod.core.executor.SessionExecutor;
 import com.torodb.torod.core.executor.SystemExecutor;
 import com.torodb.torod.core.executor.ToroTaskExecutionException;
 import com.torodb.torod.core.subdocument.BasicType;
+import com.torodb.torod.core.subdocument.SimpleSubDocTypeBuilderProvider;
 import com.torodb.torod.core.subdocument.SubDocAttribute;
 import com.torodb.torod.core.subdocument.SubDocType;
 import com.torodb.torod.tools.sequencer.ConcurrentTest;
@@ -73,7 +74,7 @@ public class DbMetaInformation_CreateSubDocumentTypeTable_FinishJobAfterContinue
         future = Mockito.mock(Future.class);
         Mockito.doReturn(false).when(future).isDone();
 
-        type = new SubDocType.Builder().add(new SubDocAttribute("att1", BasicType.STRING)).build();
+        type = new SimpleSubDocTypeBuilderProvider().get().add(new SubDocAttribute("att1", BasicType.STRING)).build();
 
         createSystemExecutor();
         createExecutorFactory();

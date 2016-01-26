@@ -56,6 +56,7 @@ import java.util.Set;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
@@ -84,14 +85,18 @@ public abstract class AbstractDbConnection implements
     private final Configuration jooqConf;
     private final DSLContext dsl;
     private final DatabaseInterface databaseInterface;
+    private final Provider<SubDocType.Builder> subDocTypeBuilderProvider;
 
     @Inject
     public AbstractDbConnection(
             DSLContext dsl,
-            TorodbMeta meta, DatabaseInterface databaseInterface) {
+            TorodbMeta meta,
+            Provider<SubDocType.Builder> subDocTypeBuilderProvider,
+            DatabaseInterface databaseInterface) {
         this.jooqConf = dsl.configuration();
         this.meta = meta;
         this.dsl = dsl;
+        this.subDocTypeBuilderProvider = subDocTypeBuilderProvider;
         this.databaseInterface = databaseInterface;
     }
 
@@ -249,7 +254,7 @@ public abstract class AbstractDbConnection implements
             for (SubDocument subDocument : subDocuments) {
                 assert subDocument.getType().equals(type);
 
-                SubDocTableRecord record = new SubDocTableRecord(table);
+                SubDocTableRecord record = new SubDocTableRecord(table, subDocTypeBuilderProvider);
                 record.setDid(subDocument.getDocumentId());
                 record.setIndex(translateSubDocIndexToDatabase(subDocument.getIndex()));
                 record.setSubDoc(subDocument);

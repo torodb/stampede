@@ -74,7 +74,7 @@ class IncrementUpdateActionExecutor implements ResolvedCallback<Boolean> {
     public <K> Boolean objectReferenced(
             BuilderCallback<K> parentBuilder,
             K key,
-            ObjectValue.Builder child
+            ObjectValue.MutableBuilder child
     ) {
         throw new UserToroException(
                 "Cannot increment a value of a non-numeric type. "
@@ -86,7 +86,7 @@ class IncrementUpdateActionExecutor implements ResolvedCallback<Boolean> {
     public <K> Boolean arrayReferenced(
             BuilderCallback<K> parentBuilder,
             K key,
-            ArrayValue.Builder child
+            ArrayValue.MutableBuilder child
     ) {
         throw new UserToroException(
                 "Cannot increment a value of a non-numeric type. "

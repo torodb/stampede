@@ -10,3 +10,4 @@ nb-configuration.xml
 /torodb/dump
 /torod/backends/common/nbproject/
 /torod/backends/postgresql/nbproject/
+hs_err*.log

@@ -43,6 +43,7 @@ import java.io.StringReader;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import javax.inject.Provider;
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
@@ -95,7 +96,7 @@ public class QueryStructureFilterTest {
         textMap.put(12, "{\"f1\": [{\"f2\": [1]}]}");
         textMap.put(13, "{\"f1\": [1, 2, 3, [\"a\", \"b\", \"c\"]]}");
 
-        structures = createStructuresFromText(textMap);
+        structures = createStructuresFromText(textMap, new SimpleSubDocTypeBuilderProvider());
 
         cache = createCache(structures);
     }
@@ -517,7 +518,8 @@ public class QueryStructureFilterTest {
     }
 
     private static Map<Integer, DocStructure> createStructuresFromText(
-            Map<Integer, String> objectsAsText) {
+            Map<Integer, String> objectsAsText,
+            Provider<SubDocType.Builder> subDocTypeBuilderProvider) {
         Map<Integer, JsonObject> objects = Maps.newHashMapWithExpectedSize(
                 objectsAsText.size());
 
@@ -528,16 +530,23 @@ public class QueryStructureFilterTest {
             objects.put(entry.getKey(), jsonReader.readObject());
         }
 
-        return createStructures(objects);
+        return createStructures(objects, subDocTypeBuilderProvider);
     }
 
     private static Map<Integer, DocStructure> createStructures(
-            Map<Integer, JsonObject> objects) {
+            Map<Integer, JsonObject> objects,
+            Provider<SubDocType.Builder> subDocTypeBuilderProvider) {
         Map<Integer, DocStructure> structures = Maps.newHashMapWithExpectedSize(
                 objects.size());
 
         for (Map.Entry<Integer, JsonObject> entry : objects.entrySet()) {
-            structures.put(entry.getKey(), toStructure(entry.getValue()));
+            structures.put(
+                    entry.getKey(),
+                    toStructure(
+                            entry.getValue(),
+                            subDocTypeBuilderProvider
+                    )
+            );
         }
 
         return structures;
@@ -557,25 +566,32 @@ public class QueryStructureFilterTest {
         return cache;
     }
 
-    private static DocStructure toStructure(JsonObject object) {
+    private static DocStructure toStructure(JsonObject object,
+            Provider<SubDocType.Builder> subDocTypeBuilderProvider) {
         ObjectValue translated = (ObjectValue) JsonValueConverter.translate(
                 object);
-        return toStructure(translated);
+        return toStructure(translated, subDocTypeBuilderProvider);
     }
 
-    private static DocStructure toStructure(ObjectValue object) {
+    private static DocStructure toStructure(
+            ObjectValue object,
+            Provider<SubDocType.Builder> subDocTypeBuilderProvider) {
         DocStructure.Builder structureBuilder = new DocStructure.Builder();
-        SubDocType.Builder subDocTypeBuilder = new SubDocType.Builder();
+        SubDocType.Builder subDocTypeBuilder = subDocTypeBuilderProvider.get();
 
         for (Map.Entry<String, DocValue> entry : object.getAttributes()) {
             if (entry.getValue() instanceof ObjectValue) {
                 structureBuilder.add(entry.getKey(), toStructure(
-                                     (ObjectValue) entry.getValue()));
+                        (ObjectValue) entry.getValue(),
+                        subDocTypeBuilderProvider
+                ));
             }
             else {
                 if (entry.getValue() instanceof com.torodb.kvdocument.values.ArrayValue) {
-                    structureBuilder.add(entry.getKey(), toStructure((com.torodb.kvdocument.values.ArrayValue) entry
-                                         .getValue()));
+                    structureBuilder.add(entry.getKey(), toStructure(
+                            (com.torodb.kvdocument.values.ArrayValue) entry.getValue(),
+                            subDocTypeBuilderProvider)
+                    );
                 }
 
                 BasicType basicType = entry.getValue().accept(TYPE_TRANSLATOR,
@@ -592,17 +608,18 @@ public class QueryStructureFilterTest {
     }
 
     private static ArrayStructure toStructure(
-            com.torodb.kvdocument.values.ArrayValue array) {
+            com.torodb.kvdocument.values.ArrayValue array,
+            Provider<SubDocType.Builder> subDocTypeBuilderProvider) {
         ArrayStructure.Builder builder = new ArrayStructure.Builder();
 
         for (int i = 0; i < array.getValue().size(); i++) {
             DocValue docValue = array.getValue().get(i);
 
             if (docValue instanceof ObjectValue) {
-                builder.add(i, toStructure((ObjectValue) docValue));
+                builder.add(i, toStructure((ObjectValue) docValue, subDocTypeBuilderProvider));
             }
             else if (docValue instanceof com.torodb.kvdocument.values.ArrayValue) {
-                builder.add(i, toStructure((com.torodb.kvdocument.values.ArrayValue) docValue));
+                builder.add(i, toStructure((com.torodb.kvdocument.values.ArrayValue) docValue, subDocTypeBuilderProvider));
             }
         }
         return builder.built();

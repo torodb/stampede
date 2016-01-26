@@ -22,10 +22,7 @@ package com.torodb.kvdocument.values;
 
 import com.google.common.collect.Maps;
 import com.torodb.kvdocument.types.ObjectType;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import javax.annotation.Nonnull;
 import org.threeten.bp.LocalDate;
 import org.threeten.bp.LocalDateTime;
@@ -36,7 +33,8 @@ import org.threeten.bp.LocalTime;
  */
 public class ObjectValue implements DocValue {
 
-    private final Map<String, DocValue> values;
+    private final @Nonnull Map<String, DocValue> values;
+    private int hash;
 
     public ObjectValue(Map<String, DocValue> values) {
         this.values = Collections.unmodifiableMap(values);
@@ -93,8 +91,9 @@ public class ObjectValue implements DocValue {
 
     @Override
     public int hashCode() {
-        int hash = 7;
-        hash = 29 * hash + (this.values != null ? this.values.hashCode() : 0);
+        if (hash == 0) {
+            hash = values.hashCode();
+        }
         return hash;
     }
 
@@ -106,10 +105,11 @@ public class ObjectValue implements DocValue {
         if (getClass() != obj.getClass()) {
             return false;
         }
+        if (obj == this) {
+            return true;
+        }
         final ObjectValue other = (ObjectValue) obj;
-        if (
-                this.values != other.values 
-                && (this.values == null || !this.values.equals(other.values))) {
+        if (!this.values.equals(other.values)){
             return false;
         }
         return true;
@@ -120,14 +120,77 @@ public class ObjectValue implements DocValue {
         return visitor.visit(this, arg);
     }
 
-    public static class Builder {
+    public static class SimpleBuilder {
+        private final Map<String, DocValue> values = Maps.newHashMap();
+        private boolean built = false;
+
+        public SimpleBuilder putValue(String key, DocValue value) {
+            checkBuilt();
+            values.put(key, value);
+            return this;
+        }
+
+        public ObjectValue build() {
+            checkBuilt();
+            built = true;
+            return new ObjectValue(values);
+        }
+
+        private void checkBuilt() {
+            if (built) {
+                throw new IllegalStateException("This builder has been already used");
+            }
+        }
+
+        public SimpleBuilder putValue(String key, boolean value) {
+            return putValue(key, value ? BooleanValue.TRUE : BooleanValue.FALSE);
+        }
+
+        public SimpleBuilder putValue(String key, LocalDateTime value) {
+            return putValue(key, new DateTimeValue(value));
+        }
+
+        public SimpleBuilder putValue(String key, LocalDate value) {
+            return putValue(key, new DateValue(value));
+        }
+
+        public SimpleBuilder putValue(String key, double value) {
+            return putValue(key, new DoubleValue(value));
+        }
+
+        public SimpleBuilder putValue(String key, int value) {
+            return putValue(key, new IntegerValue(value));
+        }
+
+        public SimpleBuilder putValue(String key, long value) {
+            return putValue(key, new LongValue(value));
+        }
+
+        public SimpleBuilder putNullValue(String key) {
+            return putValue(key, NullValue.INSTANCE);
+        }
+
+        public SimpleBuilder putValue(String key, String value) {
+            return putValue(key, new StringValue(value));
+        }
+
+        public SimpleBuilder putValue(String key, LocalTime value) {
+            return putValue(key, new TimeValue(value));
+        }
+
+    }
+
+    public static class MutableBuilder {
         private Map<String, DocValue> values = Maps.newHashMap();
-        private final Map<String, ArrayValue.Builder> subArrayBuilders = 
+        private final Map<String, ArrayValue.MutableBuilder> subArrayBuilders =
                 Maps.newHashMap();
-        private final Map<String, ObjectValue.Builder> subObjectBuilders = 
+        private final Map<String, ObjectValue.MutableBuilder> subObjectBuilders =
                 Maps.newHashMap();
         private boolean built = false;
-        
+
+        private MutableBuilder() {
+        }
+
         public void clear() {
             if (built) {
                 built = false;
@@ -139,9 +202,13 @@ public class ObjectValue implements DocValue {
             subArrayBuilders.clear();
             subObjectBuilders.clear();
         }
+
+        public static MutableBuilder create() {
+            return new MutableBuilder();
+        }
         
-        public static Builder from(ObjectValue original) {
-            Builder result = new Builder();
+        public static MutableBuilder from(ObjectValue original) {
+            MutableBuilder result = MutableBuilder.create();
             result.copy(original);
             
             return result;
@@ -172,8 +239,8 @@ public class ObjectValue implements DocValue {
         }
         
         @Nonnull
-        public ArrayValue.Builder getArrayBuilder(String key) {
-            ArrayValue.Builder result = subArrayBuilders.get(key);
+        public ArrayValue.MutableBuilder getArrayBuilder(String key) {
+            ArrayValue.MutableBuilder result = subArrayBuilders.get(key);
             if (result == null) {
                 throw new IllegalArgumentException(
                         "There is no array builder associated to '"+key+"' key");
@@ -186,8 +253,8 @@ public class ObjectValue implements DocValue {
         }
         
         @Nonnull
-        public ObjectValue.Builder getObjectBuilder(String key) {
-            ObjectValue.Builder result = subObjectBuilders.get(key);
+        public ObjectValue.MutableBuilder getObjectBuilder(String key) {
+            ObjectValue.MutableBuilder result = subObjectBuilders.get(key);
             if (result == null) {
                 throw new IllegalArgumentException(
                         "There is no object builder associated to '"+key+"' key");
@@ -195,7 +262,7 @@ public class ObjectValue implements DocValue {
             return result;
         }
         
-        public Builder putValue(String key, DocValue value) {
+        public MutableBuilder putValue(String key, DocValue value) {
             checkNewBuild();
             
             if (value instanceof ObjectValue) {
@@ -215,54 +282,54 @@ public class ObjectValue implements DocValue {
             return this;
         }
         
-        public Builder putValue(String key, boolean value) {
+        public MutableBuilder putValue(String key, boolean value) {
             return putValue(key, value ? BooleanValue.TRUE : BooleanValue.FALSE);
         }
         
-        public Builder putValue(String key, LocalDateTime value) {
+        public MutableBuilder putValue(String key, LocalDateTime value) {
             return putValue(key, new DateTimeValue(value));
         }
         
-        public Builder putValue(String key, LocalDate value) {
+        public MutableBuilder putValue(String key, LocalDate value) {
             return putValue(key, new DateValue(value));
         }
         
-        public Builder putValue(String key, double value) {
+        public MutableBuilder putValue(String key, double value) {
             return putValue(key, new DoubleValue(value));
         }
         
-        public Builder putValue(String key, int value) {
+        public MutableBuilder putValue(String key, int value) {
             return putValue(key, new IntegerValue(value));
         }
         
-        public Builder putValue(String key, long value) {
+        public MutableBuilder putValue(String key, long value) {
             return putValue(key, new LongValue(value));
         }
         
-        public Builder putNullValue(String key) {
+        public MutableBuilder putNullValue(String key) {
             return putValue(key, NullValue.INSTANCE);
         }
         
-        public Builder putValue(String key, String value) {
+        public MutableBuilder putValue(String key, String value) {
             return putValue(key, new StringValue(value));
         }
         
-        public Builder putValue(String key, LocalTime value) {
+        public MutableBuilder putValue(String key, LocalTime value) {
             return putValue(key, new TimeValue(value));
         }
         
-        public Builder putValue(String key, ObjectValue.Builder value) {
+        public MutableBuilder putValue(String key, ObjectValue.MutableBuilder value) {
             return putValue(key, value.build());
         }
         
-        public Builder putValue(String key, ArrayValue.Builder value) {
+        public MutableBuilder putValue(String key, ArrayValue.MutableBuilder value) {
             return putValue(key, value.build());
         }
         
-        public ArrayValue.Builder newArray(String key) {
+        public ArrayValue.MutableBuilder newArray(String key) {
             checkNewBuild();
             
-            ArrayValue.Builder result = new ArrayValue.Builder();
+            ArrayValue.MutableBuilder result = ArrayValue.MutableBuilder.create();
             
             values.remove(key);
             subArrayBuilders.put(key, result);
@@ -271,10 +338,10 @@ public class ObjectValue implements DocValue {
             return result;
         }
         
-        public ObjectValue.Builder newObject(String key) {
+        public ObjectValue.MutableBuilder newObject(String key) {
             checkNewBuild();
             
-            ObjectValue.Builder result = new ObjectValue.Builder();
+            ObjectValue.MutableBuilder result = MutableBuilder.create();
             
             values.remove(key);
             subArrayBuilders.remove(key);
@@ -295,7 +362,7 @@ public class ObjectValue implements DocValue {
         public ObjectValue build() {
             built = true;
             
-            for (Map.Entry<String, ObjectValue.Builder> objectBuilder 
+            for (Map.Entry<String, ObjectValue.MutableBuilder> objectBuilder
                     : subObjectBuilders.entrySet()) {
                 
                 DocValue oldValue 
@@ -306,7 +373,7 @@ public class ObjectValue implements DocValue {
                 
                 assert oldValue == null;
             }
-            for (Map.Entry<String, ArrayValue.Builder> arrayBuilder 
+            for (Map.Entry<String, ArrayValue.MutableBuilder> arrayBuilder
                     : subArrayBuilders.entrySet()) {
                 
                 DocValue oldValue 
@@ -333,11 +400,11 @@ public class ObjectValue implements DocValue {
                 
                 DocValue value = attribute.getValue();
                 if (value instanceof ArrayValue) {
-                    ArrayValue.Builder childBuilder = newArray(attribute.getKey());
+                    ArrayValue.MutableBuilder childBuilder = newArray(attribute.getKey());
                     childBuilder.copy((ArrayValue) value);
                 }
                 else if (value instanceof ObjectValue) {
-                    Builder childBuilder = newObject(attribute.getKey());
+                    MutableBuilder childBuilder = newObject(attribute.getKey());
                     childBuilder.copy((ObjectValue) value);
                 }
                 else {

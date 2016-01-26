@@ -30,7 +30,7 @@ import java.util.Map;
 public class SetDocumentUpdateActionExecutor {
     
     static boolean set(
-            ObjectValue.Builder builder,
+            ObjectValue.MutableBuilder builder,
             ObjectValue newValue
     ) {
         builder.clear();

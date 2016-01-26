@@ -20,37 +20,44 @@
 
 package com.torodb.torod.db.backends.converters;
 
-import com.torodb.torod.db.backends.tables.SubDocHelper;
-import com.torodb.torod.db.backends.tables.SubDocTable;
+import com.torodb.torod.core.subdocument.SimpleSubDocTypeBuilderProvider;
 import com.torodb.torod.core.subdocument.SubDocAttribute;
 import com.torodb.torod.core.subdocument.SubDocType;
 import com.torodb.torod.core.subdocument.SubDocument;
 import com.torodb.torod.core.subdocument.values.Value;
 import com.torodb.torod.db.backends.converters.json.ValueToJsonConverterProvider;
+import com.torodb.torod.db.backends.tables.SubDocHelper;
+import com.torodb.torod.db.backends.tables.SubDocTable;
+import java.io.IOException;
+import java.io.Serializable;
 import java.io.StringReader;
 import java.util.Map;
 import javax.annotation.Nullable;
-import javax.json.Json;
-import javax.json.JsonArray;
-import javax.json.JsonNumber;
-import javax.json.JsonObject;
-import javax.json.JsonReader;
-import javax.json.JsonString;
-import javax.json.JsonValue;
+import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.inject.Singleton;
+import javax.json.*;
 
 /**
  *
  */
-public class SubDocConverter {
+@Singleton
+public class SubDocConverter implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     public static final String ID_COLUMN_NAME = "id";
+
+    @Inject
+    public SubDocConverter() {
+    }
 
     public SubDocument from(String subdocAsJson, SubDocType subDocType) {
         JsonReader reader = Json.createReader(new StringReader(subdocAsJson));
 
         JsonObject jsonObject = reader.readObject();
         
-        SubDocument.Builder builder = new SubDocument.Builder();
+        SubDocument.Builder builder = SubDocument.Builder.withKnownType(subDocType);
 
         for (Map.Entry<String, JsonValue> entry : jsonObject.entrySet()) {
             Object objectValue = jsonValueToObject(entry.getValue());
