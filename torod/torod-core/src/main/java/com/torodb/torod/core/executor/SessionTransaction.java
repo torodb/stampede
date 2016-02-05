@@ -33,7 +33,7 @@ import com.torodb.torod.core.pojos.Database;
 import com.torodb.torod.core.pojos.IndexedAttributes;
 import com.torodb.torod.core.pojos.NamedToroIndex;
 import com.torodb.torod.core.subdocument.SplitDocument;
-import com.torodb.torod.core.subdocument.values.Value;
+import com.torodb.torod.core.subdocument.values.ScalarValue;
 import java.io.Closeable;
 import java.util.Collection;
 import java.util.Iterator;
@@ -111,5 +111,5 @@ public interface SessionTransaction extends Closeable {
     public ListenableFuture<Void> dropPathViews(String collection);
 
     @Beta
-    public ListenableFuture<Iterator<ValueRow<Value>>> sqlSelect(String sqlQuery) throws UserToroException;
+    public ListenableFuture<Iterator<ValueRow<ScalarValue<?>>>> sqlSelect(String sqlQuery) throws UserToroException;
 }

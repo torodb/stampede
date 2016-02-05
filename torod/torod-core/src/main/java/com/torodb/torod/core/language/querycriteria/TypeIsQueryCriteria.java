@@ -23,7 +23,7 @@ package com.torodb.torod.core.language.querycriteria;
 
 import com.torodb.torod.core.language.AttributeReference;
 import com.torodb.torod.core.language.querycriteria.utils.QueryCriteriaVisitor;
-import com.torodb.torod.core.subdocument.BasicType;
+import com.torodb.torod.core.subdocument.ScalarType;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.Immutable;
@@ -35,15 +35,15 @@ import javax.annotation.concurrent.Immutable;
 public class TypeIsQueryCriteria extends AttributeQueryCriteria {
     private static final long serialVersionUID = 1L;
     @Nonnull
-    private final BasicType expectedType;
+    private final ScalarType expectedType;
 
-    public TypeIsQueryCriteria(@Nonnull AttributeReference attributeReference, @Nonnull BasicType expectedType) {
+    public TypeIsQueryCriteria(@Nonnull AttributeReference attributeReference, @Nonnull ScalarType expectedType) {
         super(attributeReference);
         this.expectedType = expectedType;
     }
 
     @Nonnull
-    public BasicType getExpectedType() {
+    public ScalarType getExpectedType() {
         return expectedType;
     }
 

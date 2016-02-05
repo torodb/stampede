@@ -3,15 +3,11 @@ package com.torodb.torod.db.backends.postgresql.converters;
 
 import com.torodb.common.util.HexUtils;
 import com.torodb.torod.core.subdocument.values.*;
-import com.torodb.torod.db.backends.converters.PatternConverter;
-import org.threeten.bp.DateTimeUtils;
 
 /**
  *
  */
-public class ValueToCopyConverter implements ValueVisitor<Void, StringBuilder> {
-    private static final char[] HEX_CODE = "0123456789ABCDEF".toCharArray();
-
+public class ValueToCopyConverter implements ScalarValueVisitor<Void, StringBuilder> {
     private static final char ROW_DELIMETER = '\n';
     private static final char COLUMN_DELIMETER = '\t';
     private static final InArrayConverter IN_ARRAY_CONVERTER = new InArrayConverter();
@@ -22,7 +18,7 @@ public class ValueToCopyConverter implements ValueVisitor<Void, StringBuilder> {
     }
 
     @Override
-    public Void visit(BooleanValue value, StringBuilder arg) {
+    public Void visit(ScalarBoolean value, StringBuilder arg) {
         if (value.getValue()) {
             arg.append("true");
         }
@@ -33,15 +29,15 @@ public class ValueToCopyConverter implements ValueVisitor<Void, StringBuilder> {
     }
 
     @Override
-    public Void visit(NullValue value, StringBuilder arg) {
+    public Void visit(ScalarNull value, StringBuilder arg) {
         arg.append("\\N");
         return null;
     }
 
     @Override
-    public Void visit(ArrayValue value, StringBuilder arg) {
+    public Void visit(ScalarArray value, StringBuilder arg) {
         arg.append('[');
-        for (Value<?> child : value) {
+        for (ScalarValue<?> child : value) {
             child.accept(IN_ARRAY_CONVERTER, arg);
             arg.append(',');
         }
@@ -55,68 +51,77 @@ public class ValueToCopyConverter implements ValueVisitor<Void, StringBuilder> {
     }
 
     @Override
-    public Void visit(IntegerValue value, StringBuilder arg) {
+    public Void visit(ScalarInteger value, StringBuilder arg) {
         arg.append(value.getValue().toString());
         return null;
     }
 
     @Override
-    public Void visit(LongValue value, StringBuilder arg) {
+    public Void visit(ScalarLong value, StringBuilder arg) {
         arg.append(value.getValue().toString());
         return null;
     }
 
     @Override
-    public Void visit(DoubleValue value, StringBuilder arg) {
+    public Void visit(ScalarDouble value, StringBuilder arg) {
         arg.append(value.getValue().toString());
         return null;
     }
 
     @Override
-    public Void visit(StringValue value, StringBuilder arg) {
+    public Void visit(ScalarString value, StringBuilder arg) {
         escape(value.getValue(), arg);
         return null;
     }
 
     @Override
-    public Void visit(TwelveBytesValue value, StringBuilder arg) {
+    public Void visit(ScalarMongoObjectId value, StringBuilder arg) {
         arg.append("\\\\x");
 
-        HexUtils.bytes2Hex(value.getValue(), arg);
+        HexUtils.bytes2Hex(value.getArrayValue(), arg);
 
         return null;
     }
 
     @Override
-    public Void visit(BinaryValue value, StringBuilder arg) {
+    public Void visit(ScalarBinary value, StringBuilder arg) {
         arg.append("\\\\x");
 
-        HexUtils.bytes2Hex(value.getValue(), arg);
+        HexUtils.bytes2Hex(value.getByteSource().read(), arg);
 
         return null;
     }
 
     @Override
-    public Void visit(DateTimeValue value, StringBuilder arg) {
-        arg.append(DateTimeUtils.toSqlTimestamp(value.getValue()).toString());
+    public Void visit(ScalarInstant value, StringBuilder arg) {
+        arg.append('\'')
+                //this prints the value on ISO-8601, which is the recommended format on PostgreSQL
+                .append(value.getValue().toString())
+                .append('\'');
         return null;
     }
 
     @Override
-    public Void visit(DateValue value, StringBuilder arg) {
-        arg.append(DateTimeUtils.toSqlDate(value.getValue()).toString());
+    public Void visit(ScalarDate value, StringBuilder arg) {
+        arg.append('\'')
+                //this prints the value on ISO-8601, which is the recommended format on PostgreSQL
+                .append(value.getValue().toString())
+                .append('\'');
         return null;
     }
 
     @Override
-    public Void visit(TimeValue value, StringBuilder arg) {
-        arg.append(DateTimeUtils.toSqlTime(value.getValue()).toString());
+    public Void visit(ScalarTime value, StringBuilder arg) {
+        arg.append('\'')
+                //this prints the value on ISO-8601, which is the recommended format on PostgreSQL
+                .append(value.getValue().toString())
+                .append('\'');
         return null;
     }
 
     @Override
-    public Void visit(PatternValue value, StringBuilder arg) {
-        escape(PatternConverter.toPosixPattern(value), arg);
+    public Void visit(ScalarMongoTimestamp value, StringBuilder arg) {
+        arg.append('(').append(value.getSecondsSinceEpoch()).append(',').append(value.getOrdinal()).append(')');
         return null;
     }
 
@@ -160,10 +165,10 @@ public class ValueToCopyConverter implements ValueVisitor<Void, StringBuilder> {
     }
 
     static class InArrayConverter implements
-            ValueVisitor<Void, StringBuilder> {
+            ScalarValueVisitor<Void, StringBuilder> {
 
         @Override
-        public Void visit(BooleanValue value, StringBuilder arg) {
+        public Void visit(ScalarBoolean value, StringBuilder arg) {
             if (value.getValue()) {
                 arg.append("true");
             } else {
@@ -173,15 +178,15 @@ public class ValueToCopyConverter implements ValueVisitor<Void, StringBuilder> {
         }
 
         @Override
-        public Void visit(NullValue value, StringBuilder arg) {
+        public Void visit(ScalarNull value, StringBuilder arg) {
             arg.append("null");
             return null;
         }
 
         @Override
-        public Void visit(ArrayValue value, StringBuilder arg) {
+        public Void visit(ScalarArray value, StringBuilder arg) {
             arg.append('[');
-            for (Value<?> child : value) {
+            for (ScalarValue<?> child : value) {
                 child.accept(this, arg);
                 arg.append(',');
             }
@@ -192,25 +197,25 @@ public class ValueToCopyConverter implements ValueVisitor<Void, StringBuilder> {
         }
 
         @Override
-        public Void visit(IntegerValue value, StringBuilder arg) {
+        public Void visit(ScalarInteger value, StringBuilder arg) {
             arg.append(value.getValue().toString());
             return null;
         }
 
         @Override
-        public Void visit(LongValue value, StringBuilder arg) {
+        public Void visit(ScalarLong value, StringBuilder arg) {
             arg.append(value.getValue().toString());
             return null;
         }
 
         @Override
-        public Void visit(DoubleValue value, StringBuilder arg) {
+        public Void visit(ScalarDouble value, StringBuilder arg) {
             arg.append(value.getValue().toString());
             return null;
         }
 
         @Override
-        public Void visit(StringValue value, StringBuilder arg) {
+        public Void visit(ScalarString value, StringBuilder arg) {
             arg.append('"');
             escape(value.getValue(), arg);
             arg.append('"');
@@ -218,11 +223,11 @@ public class ValueToCopyConverter implements ValueVisitor<Void, StringBuilder> {
         }
 
         @Override
-        public Void visit(TwelveBytesValue value, StringBuilder arg) {
+        public Void visit(ScalarMongoObjectId value, StringBuilder arg) {
             arg.append('"');
             arg.append("\\\\x");
 
-            HexUtils.bytes2Hex(value.getValue(), arg);
+            HexUtils.bytes2Hex(value.getArrayValue(), arg);
 
             arg.append('"');
             
@@ -230,11 +235,11 @@ public class ValueToCopyConverter implements ValueVisitor<Void, StringBuilder> {
         }
 
         @Override
-        public Void visit(BinaryValue value, StringBuilder arg) {
+        public Void visit(ScalarBinary value, StringBuilder arg) {
             arg.append('"');
             arg.append("\\\\x");
 
-            HexUtils.bytes2Hex(value.getValue(), arg);
+            HexUtils.bytes2Hex(value.getByteSource().read(), arg);
 
             arg.append('"');
 
@@ -242,36 +247,39 @@ public class ValueToCopyConverter implements ValueVisitor<Void, StringBuilder> {
         }
 
         @Override
-        public Void visit(DateTimeValue value, StringBuilder arg) {
+        public Void visit(ScalarInstant value, StringBuilder arg) {
             arg.append('"')
-                    .append(DateTimeUtils.toSqlTimestamp(value.getValue()).toString())
+                    //this prints the value on ISO-8601, which is the recommended format on PostgreSQL
+                    .append(value.getValue().toString())
                     .append('"');
             return null;
         }
 
         @Override
-        public Void visit(DateValue value, StringBuilder arg) {
+        public Void visit(ScalarDate value, StringBuilder arg) {
             arg.append('"')
-                    .append(DateTimeUtils.toSqlDate(value.getValue()).toString())
+                    //this prints the value on ISO-8601, which is the recommended format on PostgreSQL
+                    .append(value.getValue().toString())
                     .append('"');
             return null;
         }
 
         @Override
-        public Void visit(TimeValue value, StringBuilder arg) {
+        public Void visit(ScalarTime value, StringBuilder arg) {
             arg.append('"')
-                    .append(DateTimeUtils.toSqlTime(value.getValue()).toString())
+                    //this prints the value on ISO-8601, which is the recommended format on PostgreSQL
+                    .append(value.getValue().toString())
                     .append('"');
             return null;
         }
 
         @Override
-        public Void visit(PatternValue value, StringBuilder arg) {
-            arg.append('"');
-            escape(PatternConverter.toPosixPattern(value), arg);
-            arg.append('"');
+        public Void visit(ScalarMongoTimestamp value, StringBuilder arg) {
+            arg.append("{\"secs\":").append(value.getSecondsSinceEpoch())
+                    .append(",\"counter\":").append(value.getOrdinal())
+                    .append('}');
+
             return null;
         }
-
     }
 }

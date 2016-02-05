@@ -1,9 +1,17 @@
 
 package com.torodb.torod.mongodb.utils;
 
+import com.eightkdata.mongowp.bson.BsonArray;
+import com.eightkdata.mongowp.bson.BsonDocument;
+import com.eightkdata.mongowp.bson.BsonValue;
+import com.eightkdata.mongowp.bson.utils.DefaultBsonValues;
+import com.eightkdata.mongowp.utils.BsonArrayBuilder;
+import com.eightkdata.mongowp.utils.BsonDocumentBuilder;
 import java.util.Map.Entry;
 import javax.json.*;
-import org.bson.*;
+
+import static com.eightkdata.mongowp.bson.BsonType.*;
+import static com.eightkdata.mongowp.bson.utils.DefaultBsonValues.*;
 
 /**
  *
@@ -12,15 +20,15 @@ public class JsonToBson {
 
     private JsonToBson() {}
 
-    public static BsonValue transform(JsonValue json) {
+    public static BsonValue<?> transform(JsonValue json) {
         switch (json.getValueType()) {
             case ARRAY:
                 assert json instanceof JsonArray;
                 return transform((JsonArray) json);
             case FALSE:
-                return BsonBoolean.FALSE;
+                return DefaultBsonValues.FALSE;
             case NULL:
-                return BsonNull.VALUE;
+                return DefaultBsonValues.NULL;
             case NUMBER:
                 assert json instanceof JsonNumber;
                 JsonNumber number = (JsonNumber) json;
@@ -28,21 +36,21 @@ public class JsonToBson {
                     try {
                         long l = number.longValueExact();
                         if (l < Integer.MIN_VALUE || l > Integer.MAX_VALUE) {
-                            return new BsonInt64(number.longValue());
+                            return newLong(number.longValue());
                         }
-                        return new BsonInt32(number.intValue());
+                        return newInt(number.intValue());
                     } catch (ArithmeticException ex) {
                         throw new AssertionError(json + " is an unrecognized integral number");
                     }
                 }
-                return new BsonDouble(number.doubleValue());
+                return newDouble(number.doubleValue());
             case OBJECT:
                 assert json instanceof JsonObject;
                 return transform((JsonObject) json);
             case STRING:
-                return new BsonString(((JsonString) json).getString());
+                return newString(((JsonString) json).getString());
             case TRUE:
-                return BsonBoolean.TRUE;
+                return DefaultBsonValues.TRUE;
             default:
                 throw new AssertionError("It is not defined how to translate "
                         + "the unexpected JSON type " + json.getValueType());
@@ -61,23 +69,23 @@ public class JsonToBson {
     }
 
     public static BsonArray transform(JsonArray array) {
-        BsonArray result = new BsonArray();
+        BsonArrayBuilder result = new BsonArrayBuilder();
         for (JsonValue val : array) {
             result.add(transform(val));
         }
-        return result;
+        return result.build();
     }
 
     public static BsonDocument transform(JsonObject object) {
-        BsonDocument result = new BsonDocument();
+        BsonDocumentBuilder result = new BsonDocumentBuilder();
         for (Entry<String, JsonValue> entry : object.entrySet()) {
-            result.put(entry.getKey(), transform(entry.getValue()));
+            result.appendUnsafe(entry.getKey(), transform(entry.getValue()));
         }
-        return result;
+        return result.build();
     }
 
     private static void add(JsonBuilderFun builderFun, BsonValue value) {
-        switch (value.getBsonType()) {
+        switch (value.getType()) {
             case ARRAY:
                 builderFun.add(transform(value.asArray()));
                 break;
@@ -102,22 +110,20 @@ public class JsonToBson {
             case STRING:
                 builderFun.add(value.asString().getValue());
                 break;
-            case SYMBOL:
             case TIMESTAMP:
             case UNDEFINED:
-            case DATE_TIME:
+            case DATETIME:
             case DB_POINTER:
-            case END_OF_DOCUMENT:
             case BINARY:
-            case JAVASCRIPT:
+            case JAVA_SCRIPT:
             case OBJECT_ID:
-            case REGULAR_EXPRESSION:
-            case JAVASCRIPT_WITH_SCOPE:
-            case MAX_KEY:
-            case MIN_KEY:
+            case REGEX:
+            case JAVA_SCRIPT_WITH_SCOPE:
+            case MAX:
+            case MIN:
             default:
                 throw new IllegalArgumentException("It is not defined how to "
-                        + "transform a " + value.getBsonType() + " to JSON");
+                        + "transform a " + value.getType() + " to JSON");
         }
     }
 
@@ -131,7 +137,7 @@ public class JsonToBson {
 
     public static JsonObject transform(BsonDocument value) {
         JsonObjectBuilderFun builderFun = new JsonObjectBuilderFun(Json.createObjectBuilder());
-        for (Entry<String, BsonValue> entry : value.entrySet()) {
+        for (com.eightkdata.mongowp.bson.BsonDocument.Entry<?> entry : value) {
             builderFun.setKey(entry.getKey());
             add(builderFun, value);
         }

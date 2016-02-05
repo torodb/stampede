@@ -20,34 +20,33 @@
 
 package com.torodb.torod.db.backends.query;
 
-import com.torodb.kvdocument.values.ObjectValue;
-import com.torodb.kvdocument.values.DocValue;
+import com.eightkdata.mongowp.bson.BsonDocument;
+import com.eightkdata.mongowp.bson.org.bson.utils.MongoBsonTranslator;
 import com.google.common.collect.*;
+import com.torodb.kvdocument.conversion.mongowp.MongoWPConverter;
+import com.torodb.kvdocument.values.KVArray;
+import com.torodb.kvdocument.values.KVDocument;
+import com.torodb.kvdocument.values.KVDocument.DocEntry;
+import com.torodb.kvdocument.values.KVValue;
 import com.torodb.torod.core.language.AttributeReference;
-import com.torodb.torod.core.language.querycriteria.ContainsAttributesQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.ExistsQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.FalseQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.IsEqualQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.QueryCriteria;
-import com.torodb.torod.core.language.querycriteria.TrueQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.TypeIsQueryCriteria;
+import com.torodb.torod.core.language.querycriteria.*;
 import com.torodb.torod.core.language.querycriteria.utils.ConjunctionBuilder;
-import com.torodb.torod.core.subdocument.*;
+import com.torodb.torod.core.subdocument.ScalarType;
+import com.torodb.torod.core.subdocument.SimpleSubDocTypeBuilderProvider;
+import com.torodb.torod.core.subdocument.SubDocAttribute;
+import com.torodb.torod.core.subdocument.SubDocType;
 import com.torodb.torod.core.subdocument.structure.ArrayStructure;
 import com.torodb.torod.core.subdocument.structure.DocStructure;
-import com.torodb.torod.core.subdocument.values.IntegerValue;
+import com.torodb.torod.core.subdocument.values.ScalarInteger;
 import com.torodb.torod.db.backends.meta.StructuresCache;
 import com.torodb.torod.db.backends.query.processors.ProcessorTestUtils;
-import com.torodb.kvdocument.converter.json.JsonValueConverter;
-import java.io.StringReader;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import javax.inject.Provider;
-import javax.json.Json;
-import javax.json.JsonObject;
-import javax.json.JsonReader;
-
+import org.bson.codecs.BsonDocumentCodec;
+import org.bson.codecs.DecoderContext;
+import org.bson.json.JsonReader;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -58,7 +57,8 @@ import org.mockito.internal.stubbing.answers.ThrowsExceptionClass;
  */
 public class QueryStructureFilterTest {
 
-    private static final TypeTranslator TYPE_TRANSLATOR = new TypeTranslator();
+    private static final BsonDocumentCodec BSON_CODEC = new BsonDocumentCodec();
+
     private static Map<Integer, DocStructure> structures;
     private static StructuresCache cache;
 
@@ -125,7 +125,7 @@ public class QueryStructureFilterTest {
         //query = {f1: typeof int}
         QueryCriteria query;
 
-        query = new TypeIsQueryCriteria(f1Ref, BasicType.INTEGER);
+        query = new TypeIsQueryCriteria(f1Ref, ScalarType.INTEGER);
 
         Multimap<Integer, QueryCriteria> result = QueryStructureFilter
                 .filterStructures(cache, query);
@@ -158,13 +158,13 @@ public class QueryStructureFilterTest {
         //query = {f1: 1}
         QueryCriteria query;
 
-        query = new IsEqualQueryCriteria(f1Ref, new IntegerValue(1));
+        query = new IsEqualQueryCriteria(f1Ref, ScalarInteger.of(1));
 
         Multimap<Integer, QueryCriteria> result = QueryStructureFilter
                 .filterStructures(cache, query);
 
         Set<QueryCriteria> expected = Sets.newHashSetWithExpectedSize(1);
-        expected.add(new IsEqualQueryCriteria(f1Ref, new IntegerValue(1)));
+        expected.add(new IsEqualQueryCriteria(f1Ref, ScalarInteger.of(1)));
 
         check(0, Collections.<QueryCriteria>emptySet(), result);
         check(1, expected, result);
@@ -191,7 +191,7 @@ public class QueryStructureFilterTest {
                 f1Ref,
                 new IsEqualQueryCriteria(
                         AttributeReference.EMPTY_REFERENCE,
-                        new IntegerValue(1)
+                        ScalarInteger.of(1)
                 )
         );
 
@@ -204,7 +204,7 @@ public class QueryStructureFilterTest {
                         f1Ref,
                         new IsEqualQueryCriteria(
                                 AttributeReference.EMPTY_REFERENCE,
-                                new IntegerValue(1)
+                                ScalarInteger.of(1)
                         )
                 )
         );
@@ -236,13 +236,13 @@ public class QueryStructureFilterTest {
         //query = {f1.f2: 1}
         QueryCriteria query;
 
-        query = new IsEqualQueryCriteria(f1f2Ref, new IntegerValue(1));
+        query = new IsEqualQueryCriteria(f1f2Ref, ScalarInteger.of(1));
 
         Multimap<Integer, QueryCriteria> result = QueryStructureFilter
                 .filterStructures(cache, query);
 
         Set<QueryCriteria> expected = Sets.newHashSetWithExpectedSize(1);
-        expected.add(new IsEqualQueryCriteria(f1f2Ref, new IntegerValue(1)));
+        expected.add(new IsEqualQueryCriteria(f1f2Ref, ScalarInteger.of(1)));
 
         check(0, Collections.<QueryCriteria>emptySet(), result);
         check(1, Collections.<QueryCriteria>emptySet(), result);
@@ -270,7 +270,7 @@ public class QueryStructureFilterTest {
                 f1f2Ref,
                 new IsEqualQueryCriteria(
                         AttributeReference.EMPTY_REFERENCE,
-                        new IntegerValue(1)
+                        ScalarInteger.of(1)
                 )
         );
 
@@ -283,7 +283,7 @@ public class QueryStructureFilterTest {
                         f1f2Ref,
                         new IsEqualQueryCriteria(
                                 AttributeReference.EMPTY_REFERENCE,
-                                new IntegerValue(1)
+                                ScalarInteger.of(1)
                         )
                 )
         );
@@ -314,7 +314,7 @@ public class QueryStructureFilterTest {
                 f1Ref,
                 new IsEqualQueryCriteria(
                         f2Ref,
-                        new IntegerValue(1)
+                        ScalarInteger.of(1)
                 )
         );
 
@@ -326,7 +326,7 @@ public class QueryStructureFilterTest {
                 new IsEqualQueryCriteria(
                         f1Ref.append(new AttributeReference.ArrayKey(0)).append(
                                 f2Ref),
-                        new IntegerValue(1))
+                        ScalarInteger.of(1))
         );
 
         check(0, Collections.<QueryCriteria>emptySet(), result);
@@ -357,7 +357,7 @@ public class QueryStructureFilterTest {
                         f2Ref,
                         new IsEqualQueryCriteria(
                                 AttributeReference.EMPTY_REFERENCE,
-                                new IntegerValue(1)
+                                ScalarInteger.of(1)
                         )
                 )
         );
@@ -372,7 +372,7 @@ public class QueryStructureFilterTest {
                                 f2Ref),
                         new IsEqualQueryCriteria(
                                 AttributeReference.EMPTY_REFERENCE,
-                                new IntegerValue(1)
+                                ScalarInteger.of(1)
                         )
                 )
         );
@@ -408,7 +408,7 @@ public class QueryStructureFilterTest {
                 .add(
                         new IsEqualQueryCriteria(
                                 f1f2Ref,
-                                new IntegerValue(1)
+                                ScalarInteger.of(1)
                         )
                 )
                 .add(
@@ -434,7 +434,7 @@ public class QueryStructureFilterTest {
         expected.add(
                 new IsEqualQueryCriteria(
                         f1f2Ref,
-                        new IntegerValue(1)
+                        ScalarInteger.of(1)
                 )
         );
 
@@ -466,7 +466,7 @@ public class QueryStructureFilterTest {
                 .add(
                         new IsEqualQueryCriteria(
                                 f2Ref,
-                                new IntegerValue(1)
+                                ScalarInteger.of(1)
                         )
                 )
                 .add(
@@ -487,7 +487,7 @@ public class QueryStructureFilterTest {
                 new IsEqualQueryCriteria(
                         f1Ref.append(new AttributeReference.ArrayKey(0)).append(
                                 f2Ref),
-                        new IntegerValue(1)
+                        ScalarInteger.of(1)
                 )
         );
 
@@ -520,26 +520,33 @@ public class QueryStructureFilterTest {
     private static Map<Integer, DocStructure> createStructuresFromText(
             Map<Integer, String> objectsAsText,
             Provider<SubDocType.Builder> subDocTypeBuilderProvider) {
-        Map<Integer, JsonObject> objects = Maps.newHashMapWithExpectedSize(
+        Map<Integer, BsonDocument> objects = Maps.newHashMapWithExpectedSize(
                 objectsAsText.size());
 
-        StringReader reader;
         for (Map.Entry<Integer, String> entry : objectsAsText.entrySet()) {
-            reader = new StringReader(entry.getValue());
-            JsonReader jsonReader = Json.createReader(reader);
-            objects.put(entry.getKey(), jsonReader.readObject());
+            objects.put(entry.getKey(), parseDocument(entry.getValue()));
         }
 
         return createStructures(objects, subDocTypeBuilderProvider);
     }
 
+    private static BsonDocument parseDocument(String json) {
+        JsonReader reader = new JsonReader(json);
+
+        DecoderContext context = DecoderContext.builder().build();
+
+        org.bson.BsonDocument decoded = BSON_CODEC.decode(reader, context);
+
+        return MongoBsonTranslator.translate(decoded);
+    }
+
     private static Map<Integer, DocStructure> createStructures(
-            Map<Integer, JsonObject> objects,
+            Map<Integer, BsonDocument> objects,
             Provider<SubDocType.Builder> subDocTypeBuilderProvider) {
         Map<Integer, DocStructure> structures = Maps.newHashMapWithExpectedSize(
                 objects.size());
 
-        for (Map.Entry<Integer, JsonObject> entry : objects.entrySet()) {
+        for (Map.Entry<Integer, BsonDocument> entry : objects.entrySet()) {
             structures.put(
                     entry.getKey(),
                     toStructure(
@@ -566,36 +573,33 @@ public class QueryStructureFilterTest {
         return cache;
     }
 
-    private static DocStructure toStructure(JsonObject object,
-            Provider<SubDocType.Builder> subDocTypeBuilderProvider) {
-        ObjectValue translated = (ObjectValue) JsonValueConverter.translate(
-                object);
+    private static DocStructure toStructure(BsonDocument object, Provider<SubDocType.Builder> subDocTypeBuilderProvider) {
+        KVDocument translated = (KVDocument) MongoWPConverter.translate(object);
         return toStructure(translated, subDocTypeBuilderProvider);
     }
 
     private static DocStructure toStructure(
-            ObjectValue object,
+            KVDocument object,
             Provider<SubDocType.Builder> subDocTypeBuilderProvider) {
         DocStructure.Builder structureBuilder = new DocStructure.Builder();
         SubDocType.Builder subDocTypeBuilder = subDocTypeBuilderProvider.get();
 
-        for (Map.Entry<String, DocValue> entry : object.getAttributes()) {
-            if (entry.getValue() instanceof ObjectValue) {
+        for (DocEntry<?> entry : object) {
+            if (entry.getValue() instanceof KVDocument) {
                 structureBuilder.add(entry.getKey(), toStructure(
-                        (ObjectValue) entry.getValue(),
+                        (KVDocument) entry.getValue(),
                         subDocTypeBuilderProvider
                 ));
             }
             else {
-                if (entry.getValue() instanceof com.torodb.kvdocument.values.ArrayValue) {
+                if (entry.getValue() instanceof KVArray) {
                     structureBuilder.add(entry.getKey(), toStructure(
-                            (com.torodb.kvdocument.values.ArrayValue) entry.getValue(),
+                            (KVArray) entry.getValue(),
                             subDocTypeBuilderProvider)
                     );
                 }
 
-                BasicType basicType = entry.getValue().accept(TYPE_TRANSLATOR,
-                                                              null);
+                ScalarType basicType = ScalarType.fromDocType(entry.getValue().getType());
 
                 subDocTypeBuilder.add(new SubDocAttribute(entry.getKey(),
                                                           basicType));
@@ -608,124 +612,21 @@ public class QueryStructureFilterTest {
     }
 
     private static ArrayStructure toStructure(
-            com.torodb.kvdocument.values.ArrayValue array,
+            KVArray array,
             Provider<SubDocType.Builder> subDocTypeBuilderProvider) {
         ArrayStructure.Builder builder = new ArrayStructure.Builder();
 
         for (int i = 0; i < array.getValue().size(); i++) {
-            DocValue docValue = array.getValue().get(i);
+            KVValue<?> docValue = array.getValue().get(i);
 
-            if (docValue instanceof ObjectValue) {
-                builder.add(i, toStructure((ObjectValue) docValue, subDocTypeBuilderProvider));
+            if (docValue instanceof KVDocument) {
+                builder.add(i, toStructure((KVDocument) docValue, subDocTypeBuilderProvider));
             }
-            else if (docValue instanceof com.torodb.kvdocument.values.ArrayValue) {
-                builder.add(i, toStructure((com.torodb.kvdocument.values.ArrayValue) docValue, subDocTypeBuilderProvider));
+            else if (docValue instanceof KVArray) {
+                builder.add(i, toStructure((KVArray) docValue, subDocTypeBuilderProvider));
             }
         }
         return builder.built();
-    }
-
-    private static class TypeTranslator implements
-            com.torodb.kvdocument.values.DocValueVisitor<BasicType, Void> {
-
-        @Override
-        public BasicType visit(
-                com.torodb.kvdocument.values.BooleanValue value,
-                Void arg) {
-            return BasicType.BOOLEAN;
-        }
-
-        @Override
-        public BasicType visit(
-                com.torodb.kvdocument.values.NullValue value,
-                Void arg) {
-            return BasicType.NULL;
-        }
-
-        @Override
-        public BasicType visit(
-                com.torodb.kvdocument.values.ArrayValue value,
-                Void arg) {
-            return BasicType.ARRAY;
-        }
-
-        @Override
-        public BasicType visit(
-                com.torodb.kvdocument.values.IntegerValue value,
-                Void arg) {
-            return BasicType.INTEGER;
-        }
-
-        @Override
-        public BasicType visit(
-                com.torodb.kvdocument.values.LongValue value,
-                Void arg) {
-            return BasicType.LONG;
-        }
-
-        @Override
-        public BasicType visit(
-                com.torodb.kvdocument.values.DoubleValue value,
-                Void arg) {
-            return BasicType.DOUBLE;
-        }
-
-        @Override
-        public BasicType visit(
-                com.torodb.kvdocument.values.StringValue value,
-                Void arg) {
-            return BasicType.STRING;
-        }
-
-        @Override
-        public BasicType visit(
-                com.torodb.kvdocument.values.ObjectValue value,
-                Void arg) {
-            return BasicType.NULL;
-        }
-
-        @Override
-        public BasicType visit(
-                com.torodb.kvdocument.values.TwelveBytesValue value,
-                Void arg) {
-            return BasicType.TWELVE_BYTES;
-        }
-
-        @Override
-        public BasicType visit(
-                com.torodb.kvdocument.values.DateTimeValue value,
-                Void arg) {
-            return BasicType.DATETIME;
-        }
-
-        @Override
-        public BasicType visit(
-                com.torodb.kvdocument.values.DateValue value,
-                Void arg) {
-            return BasicType.DATE;
-        }
-
-        @Override
-        public BasicType visit(
-                com.torodb.kvdocument.values.TimeValue value,
-                Void arg) {
-            return BasicType.TIME;
-        }
-
-        @Override
-        public BasicType visit(
-                com.torodb.kvdocument.values.PatternValue value,
-                Void arg) {
-            return BasicType.PATTERN;
-        }
-
-        @Override
-        public BasicType visit(
-                com.torodb.kvdocument.values.BinaryValue value,
-                Void arg) {
-            return BasicType.BINARY;
-        }
-
     }
 
 }

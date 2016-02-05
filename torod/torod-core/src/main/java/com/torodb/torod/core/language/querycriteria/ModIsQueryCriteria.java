@@ -23,9 +23,9 @@ package com.torodb.torod.core.language.querycriteria;
 
 import com.torodb.torod.core.language.AttributeReference;
 import com.torodb.torod.core.language.querycriteria.utils.QueryCriteriaVisitor;
-import com.torodb.torod.core.subdocument.values.Value;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import javax.annotation.Nonnull;
+import com.torodb.torod.core.subdocument.values.ScalarValue;
 
 /**
  *
@@ -34,23 +34,23 @@ public class ModIsQueryCriteria extends AttributeQueryCriteria {
     private static final long serialVersionUID = 1L;
 
     @Nonnull
-    private final Value<? extends Number> divisor;
+    private final ScalarValue<? extends Number> divisor;
     @Nonnull
-    private final Value<? extends Number> reminder;
+    private final ScalarValue<? extends Number> reminder;
 
-    public ModIsQueryCriteria(AttributeReference attributeReference, Value<? extends Number> divisor, Value<? extends Number> reminder) {
+    public ModIsQueryCriteria(AttributeReference attributeReference, ScalarValue<? extends Number> divisor, ScalarValue<? extends Number> reminder) {
         super(attributeReference);
         this.divisor = divisor;
         this.reminder = reminder;
     }
 
     @Nonnull
-    public Value<? extends Number> getDivisor() {
+    public ScalarValue<? extends Number> getDivisor() {
         return divisor;
     }
 
     @Nonnull
-    public Value<? extends Number> getReminder() {
+    public ScalarValue<? extends Number> getReminder() {
         return reminder;
     }
 

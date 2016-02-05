@@ -25,7 +25,6 @@ import com.torodb.torod.core.language.AttributeReference;
 import com.google.common.collect.ImmutableSet;
 import com.torodb.torod.core.language.querycriteria.utils.QueryCriteriaVisitor;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import java.util.Collection;
 import java.util.Set;
 
 /**
@@ -37,7 +36,7 @@ public class ContainsAttributesQueryCriteria extends AttributeQueryCriteria {
     private final ImmutableSet<String> attributes;
     private final boolean exclusive;
 
-    public ContainsAttributesQueryCriteria(AttributeReference attributeReference, Collection<String> attributes, boolean exclusive) {
+    public ContainsAttributesQueryCriteria(AttributeReference attributeReference, Iterable<String> attributes, boolean exclusive) {
         super(attributeReference);
         this.attributes = ImmutableSet.copyOf(attributes);
         this.exclusive = exclusive;

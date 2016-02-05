@@ -20,41 +20,30 @@
 
 package com.torodb.torod.core.language.querycriteria.utils;
 
-import com.torodb.kvdocument.values.TwelveBytesValue;
-import com.torodb.kvdocument.values.DateTimeValue;
-import com.torodb.kvdocument.values.BooleanValue;
-import com.torodb.kvdocument.values.StringValue;
-import com.torodb.kvdocument.values.DateValue;
-import com.torodb.kvdocument.values.DocValueVisitor;
-import com.torodb.kvdocument.values.NullValue;
-import com.torodb.kvdocument.values.ObjectValue;
-import com.torodb.kvdocument.values.IntegerValue;
-import com.torodb.kvdocument.values.ArrayValue;
-import com.torodb.kvdocument.values.TimeValue;
-import com.torodb.kvdocument.values.DocValue;
-import com.torodb.kvdocument.values.DoubleValue;
-import com.torodb.kvdocument.values.LongValue;
 import com.google.common.collect.Lists;
+import com.torodb.kvdocument.types.ArrayType;
+import com.torodb.kvdocument.types.DocumentType;
+import com.torodb.kvdocument.values.KVArray;
+import com.torodb.kvdocument.values.KVDocument;
+import com.torodb.kvdocument.values.KVDocument.DocEntry;
+import com.torodb.kvdocument.values.KVValue;
+import com.torodb.kvdocument.values.KVValueAdaptor;
 import com.torodb.torod.core.language.AttributeReference;
+import com.torodb.torod.core.language.AttributeReference.Key;
 import com.torodb.torod.core.language.querycriteria.ContainsAttributesQueryCriteria;
 import com.torodb.torod.core.language.querycriteria.IsEqualQueryCriteria;
 import com.torodb.torod.core.language.querycriteria.QueryCriteria;
 import com.torodb.torod.core.subdocument.ToroDocument;
-import com.torodb.torod.core.subdocument.values.Value;
-import com.torodb.kvdocument.types.ArrayType;
-import com.torodb.kvdocument.types.ObjectType;
-import com.torodb.kvdocument.values.*;
+import com.torodb.torod.core.subdocument.values.ScalarValue;
+import com.torodb.torod.core.utils.KVValueToScalarValue;
 import java.util.LinkedList;
-import java.util.Map;
 
 /**
  *
  */
 public class EqualFactory {
 
-    public static QueryCriteria createEquality(
-            AttributeReference attRef,
-            DocValue docValue) {
+    public static QueryCriteria createEquality(AttributeReference attRef, KVValue<?> docValue) {
         EqualityQueryFinder eqf = new EqualityQueryFinder(attRef);
 
         LinkedList<AttributeReference.Key> keys = Lists.newLinkedList();
@@ -76,137 +65,8 @@ public class EqualFactory {
         return createEquality(AttributeReference.EMPTY_REFERENCE, doc.getRoot());
     }
 
-    private static class Converter implements
-            DocValueVisitor<Value<?>, Void> {
+    private static class EqualityQueryFinder extends KVValueAdaptor<Void, LinkedList<AttributeReference.Key>> {
 
-        @Override
-        public Value<?> visit(ObjectValue value,
-                              Void arg) {
-            throw new UnsupportedOperationException("Not supported.");
-        }
-
-        @Override
-        public Value<?> visit(
-                ArrayValue value,
-                Void arg) {
-            com.torodb.torod.core.subdocument.values.ArrayValue.Builder withoutObjectsBuilder
-                    = new com.torodb.torod.core.subdocument.values.ArrayValue.Builder();
-
-            for (DocValue docValue : value) {
-                if (docValue.getType().
-                        equals(ObjectType.INSTANCE)) {
-                    throw new IllegalArgumentException(
-                            value + " contains objects, but arrays with "
-                            + "objects are not directly translatable"
-                    );
-                }
-                else {
-                    Value<?> val = docValue.accept(this, null);
-                    withoutObjectsBuilder.add(val);
-                }
-            }
-
-            return withoutObjectsBuilder.build();
-        }
-
-        @Override
-        public Value<?> visit(BooleanValue value,
-                              Void arg) {
-            if (value.getValue()) {
-                return com.torodb.torod.core.subdocument.values.BooleanValue.TRUE;
-            }
-            else {
-                return com.torodb.torod.core.subdocument.values.BooleanValue.FALSE;
-            }
-        }
-
-        @Override
-        public Value<?> visit(NullValue value,
-                              Void arg) {
-            return com.torodb.torod.core.subdocument.values.NullValue.INSTANCE;
-        }
-
-        @Override
-        public Value<?> visit(IntegerValue value,
-                              Void arg) {
-            return new com.torodb.torod.core.subdocument.values.IntegerValue(
-                    value.getValue());
-        }
-
-        @Override
-        public Value<?> visit(LongValue value,
-                              Void arg) {
-            return new com.torodb.torod.core.subdocument.values.LongValue(value.
-                    getValue());
-        }
-
-        @Override
-        public Value<?> visit(DoubleValue value,
-                              Void arg) {
-            return new com.torodb.torod.core.subdocument.values.DoubleValue(
-                    value.getValue());
-        }
-
-        @Override
-        public Value<?> visit(StringValue value,
-                              Void arg) {
-            return new com.torodb.torod.core.subdocument.values.StringValue(
-                    value.getValue());
-        }
-
-        @Override
-        public Value<?> visit(TwelveBytesValue value,
-                              Void arg) {
-            return new com.torodb.torod.core.subdocument.values.TwelveBytesValue(
-                    value.getValue()
-            );
-        }
-
-        @Override
-        public Value<?> visit(DateTimeValue value,
-                              Void arg) {
-            return new com.torodb.torod.core.subdocument.values.DateTimeValue(
-                    value.getValue()
-            );
-        }
-
-        @Override
-        public Value<?> visit(DateValue value,
-                              Void arg) {
-            return new com.torodb.torod.core.subdocument.values.DateValue(
-                    value.getValue()
-            );
-        }
-
-        @Override
-        public Value<?> visit(TimeValue value,
-                              Void arg) {
-            return new com.torodb.torod.core.subdocument.values.TimeValue(
-                    value.getValue()
-            );
-        }
-
-        @Override
-        public Value<?> visit(PatternValue value, Void arg) {
-            return new com.torodb.torod.core.subdocument.values.PatternValue(
-                    value.getValue()
-            );
-        }
-
-        @Override
-        public Value<?> visit(BinaryValue value,
-                              Void arg) {
-            return new com.torodb.torod.core.subdocument.values.BinaryValue(
-                    value.getValue()
-            );
-        }
-
-    }
-
-    private static class EqualityQueryFinder implements
-            DocValueVisitor<Void, LinkedList<AttributeReference.Key>> {
-
-        private static final Converter converter = new Converter();
         private final ConjunctionBuilder conjunctionBuilder
                 = new ConjunctionBuilder();
         private final AttributeReference basicAttRef;
@@ -220,22 +80,18 @@ public class EqualFactory {
         }
 
         @Override
-        public Void visit(
-                ObjectValue value,
-                LinkedList<AttributeReference.Key> arg) {
-            for (Map.Entry<String, DocValue> entry : value.getAttributes()) {
+        public Void visit(KVDocument value, LinkedList<AttributeReference.Key> arg) {
+            for (DocEntry<?> entry : value) {
                 arg.addLast(new AttributeReference.ObjectKey(entry.getKey()));
 
-                entry.getValue().
-                        accept(this, arg);
+                entry.getValue().accept(this, arg);
 
                 arg.removeLast();
             }
 
-            ContainsAttributesQueryCriteria caqc
-                    = new ContainsAttributesQueryCriteria(
+            ContainsAttributesQueryCriteria caqc = new ContainsAttributesQueryCriteria(
                             basicAttRef.append(arg),
-                            value.keySet(),
+                            value.getKeys(),
                             true);
 
             conjunctionBuilder.add(caqc);
@@ -243,9 +99,9 @@ public class EqualFactory {
             return null;
         }
 
-        private boolean containsObjects(ArrayValue value) {
-            for (DocValue subValue : value) {
-                if (subValue.getType().equals(ObjectType.INSTANCE)) {
+        private boolean containsObjects(KVArray value) {
+            for (KVValue<?> subValue : value) {
+                if (subValue.getType().equals(DocumentType.INSTANCE)) {
                     return true;
                 }
             }
@@ -253,11 +109,9 @@ public class EqualFactory {
         }
 
         @Override
-        public Void visit(
-                ArrayValue value,
-                LinkedList<AttributeReference.Key> arg) {
+        public Void visit(KVArray value, LinkedList<AttributeReference.Key> arg) {
             if (!containsObjects(value)) {
-                Value<?> arrValue = value.accept(converter, null);
+                ScalarValue<?> arrValue = KVValueToScalarValue.fromDocValue(value);
                 conjunctionBuilder.add(
                         new IsEqualQueryCriteria(
                                 basicAttRef.append(arg),
@@ -269,9 +123,9 @@ public class EqualFactory {
             for (int i = 0; i < value.size(); i++) {
                 arg.addLast(new AttributeReference.ArrayKey(i));
 
-                DocValue docValue = value.get(i);
+                KVValue<?> docValue = value.get(i);
 
-                if (docValue.getType().equals(ObjectType.INSTANCE)) {
+                if (docValue.getType().equals(DocumentType.INSTANCE)) {
                     docValue.accept(this, arg);
                 }
                 else if (docValue.getType() instanceof ArrayType) {
@@ -284,12 +138,12 @@ public class EqualFactory {
             return null;
         }
 
-        private Void defaultcase(
-                DocValue value,
-                LinkedList<AttributeReference.Key> arg) {
+        @Override
+        public Void defaultCase(KVValue<?> value, LinkedList<Key> arg) {
+            assert !(value instanceof KVDocument);
 
             AttributeReference attRef = basicAttRef.append(arg);
-            Value<?> converted = value.accept(converter, null);
+            ScalarValue<?> converted = KVValueToScalarValue.fromDocValue(value);
 
             conjunctionBuilder.add(
                     new IsEqualQueryCriteria(
@@ -299,90 +153,6 @@ public class EqualFactory {
             );
 
             return null;
-        }
-
-        @Override
-        public Void visit(
-                BooleanValue value,
-                LinkedList<AttributeReference.Key> arg) {
-            return defaultcase(value, arg);
-        }
-
-        @Override
-        public Void visit(
-                NullValue value,
-                LinkedList<AttributeReference.Key> arg) {
-            return defaultcase(value, arg);
-        }
-
-        @Override
-        public Void visit(
-                IntegerValue value,
-                LinkedList<AttributeReference.Key> arg) {
-            return defaultcase(value, arg);
-        }
-
-        @Override
-        public Void visit(
-                LongValue value,
-                LinkedList<AttributeReference.Key> arg) {
-            return defaultcase(value, arg);
-        }
-
-        @Override
-        public Void visit(
-                DoubleValue value,
-                LinkedList<AttributeReference.Key> arg) {
-            return defaultcase(value, arg);
-        }
-
-        @Override
-        public Void visit(
-                StringValue value,
-                LinkedList<AttributeReference.Key> arg) {
-            return defaultcase(value, arg);
-        }
-
-        @Override
-        public Void visit(
-                TwelveBytesValue value,
-                LinkedList<AttributeReference.Key> arg) {
-            return defaultcase(value, arg);
-        }
-
-        @Override
-        public Void visit(
-                DateTimeValue value,
-                LinkedList<AttributeReference.Key> arg) {
-            return defaultcase(value, arg);
-        }
-
-        @Override
-        public Void visit(
-                DateValue value,
-                LinkedList<AttributeReference.Key> arg) {
-            return defaultcase(value, arg);
-        }
-
-        @Override
-        public Void visit(
-                TimeValue value,
-                LinkedList<AttributeReference.Key> arg) {
-            return defaultcase(value, arg);
-        }
-
-        @Override
-        public Void visit(
-                PatternValue value,
-                LinkedList<AttributeReference.Key> arg) {
-            return defaultcase(value, arg);
-        }
-
-        @Override
-        public Void visit(
-                BinaryValue value,
-                LinkedList<AttributeReference.Key> arg) {
-            return defaultcase(value, arg);
         }
 
     }

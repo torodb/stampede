@@ -1,9 +1,20 @@
 
 package com.torodb.torod.mongodb.utils;
 
+import com.eightkdata.mongowp.server.api.oplog.DbOplogOperation;
+import com.eightkdata.mongowp.server.api.oplog.OplogOperationVisitor;
+import com.eightkdata.mongowp.server.api.oplog.UpdateOplogOperation;
+import com.eightkdata.mongowp.server.api.oplog.DeleteOplogOperation;
+import com.eightkdata.mongowp.server.api.oplog.DbCmdOplogOperation;
+import com.eightkdata.mongowp.server.api.oplog.InsertOplogOperation;
+import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
+import com.eightkdata.mongowp.server.api.oplog.NoopOplogOperation;
+import com.eightkdata.mongowp.WriteConcern;
+import com.eightkdata.mongowp.bson.BsonDocument;
 import com.eightkdata.mongowp.client.core.MongoConnection;
-import com.eightkdata.mongowp.mongoserver.api.safe.Command;
-import com.eightkdata.mongowp.mongoserver.api.safe.CommandsLibrary;
+import com.eightkdata.mongowp.exceptions.*;
+import com.eightkdata.mongowp.server.api.Command;
+import com.eightkdata.mongowp.server.api.CommandsLibrary;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.CreateIndexesCommand;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.CreateIndexesCommand.CreateIndexesArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.DeleteCommand;
@@ -16,17 +27,15 @@ import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.UpdateCommand.UpdateArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.UpdateCommand.UpdateResult;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.UpdateCommand.UpdateStatement;
-import com.eightkdata.mongowp.mongoserver.api.safe.oplog.*;
-import com.eightkdata.mongowp.mongoserver.protocol.exceptions.*;
-import com.mongodb.WriteConcern;
 import com.torodb.torod.mongodb.impl.LocalMongoConnection;
 import com.torodb.torod.mongodb.repl.OplogManager;
 import com.torodb.torod.mongodb.repl.OplogManager.OplogManagerPersistException;
 import java.util.Collections;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import org.bson.BsonDocument;
 import org.slf4j.LoggerFactory;
+
+import static com.eightkdata.mongowp.bson.utils.DefaultBsonValues.*;
 
 /**
  *
@@ -140,7 +149,7 @@ public class OplogOperationApplier {
             if (!DefaultIdUtils.containsDefaultId(docToInsert)) {
                 query = docToInsert;  //as we dont have $_id, we need the whole document to be sure selector is correct
             } else {
-                query = new BsonDocument(
+                query = newDocument(
                         DefaultIdUtils.DEFAULT_ID_KEY,
                         DefaultIdUtils.getDefaultId(docToInsert)
                 );
@@ -158,7 +167,7 @@ public class OplogOperationApplier {
                                         new UpdateStatement(query, docToInsert, false, false)
                                 ),
                                 true,
-                                WriteConcern.FSYNCED
+                                WriteConcern.fsync()
                         )
                 );
                 assert updateResult.getModifiedCounter() <= 1;
@@ -204,7 +213,7 @@ public class OplogOperationApplier {
                                         new UpdateStatement(op.getFilter(), op.getModification(), upsert, true)
                                 ),
                                 true,
-                                WriteConcern.FSYNCED
+                                WriteConcern.fsync()
                         )
                 );
 
@@ -249,7 +258,7 @@ public class OplogOperationApplier {
                                     new DeleteStatement(op.getFilter(), op.isJustOne())
                             ),
                             true,
-                            WriteConcern.FSYNCED
+                            WriteConcern.fsync()
                     )
             );
             return true;
@@ -273,7 +282,7 @@ public class OplogOperationApplier {
                 if (document.isEmpty()) {
                     throw new CommandNotFoundException("Empty document query");
                 }
-                String firstKey = document.keySet().iterator().next();
+                String firstKey = document.getFirstEntry().getKey();
                 throw new CommandNotFoundException(firstKey);
             }
             Object arg = command.unmarshallArg(op.getRequest());

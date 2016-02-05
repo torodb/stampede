@@ -20,12 +20,15 @@
 
 package com.torodb.torod.mongodb.translator;
 
-import com.google.common.collect.*;
-import com.torodb.kvdocument.conversion.mongo.MongoTypeConverter;
-import com.torodb.kvdocument.conversion.mongo.MongoValueConverter;
-import com.torodb.kvdocument.types.DocType;
-import com.torodb.kvdocument.types.ObjectType;
-import com.torodb.kvdocument.values.DocValue;
+import com.eightkdata.mongowp.bson.BsonDocument.Entry;
+import com.eightkdata.mongowp.bson.*;
+import com.google.common.collect.ClassToInstanceMap;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Maps;
+import com.torodb.kvdocument.conversion.mongowp.MongoWPConverter;
+import com.torodb.kvdocument.types.DocumentType;
+import com.torodb.kvdocument.types.KVType;
+import com.torodb.kvdocument.values.*;
 import com.torodb.torod.core.exceptions.ToroImplementationException;
 import com.torodb.torod.core.exceptions.UserToroException;
 import com.torodb.torod.core.language.AttributeReference;
@@ -33,21 +36,19 @@ import com.torodb.torod.core.language.querycriteria.*;
 import com.torodb.torod.core.language.querycriteria.utils.ConjunctionBuilder;
 import com.torodb.torod.core.language.querycriteria.utils.DisjunctionBuilder;
 import com.torodb.torod.core.language.querycriteria.utils.EqualFactory;
-import com.torodb.torod.core.subdocument.BasicType;
-import com.torodb.torod.core.subdocument.values.ArrayValue;
-import com.torodb.torod.core.subdocument.values.IntegerValue;
-import com.torodb.torod.core.subdocument.values.PatternValue;
-import com.torodb.torod.core.subdocument.values.ValueFactory;
+import com.torodb.torod.core.subdocument.ScalarType;
+import com.torodb.torod.core.subdocument.values.ScalarArray;
+import com.torodb.torod.core.subdocument.values.ScalarInteger;
+import com.torodb.torod.core.utils.KVValueToScalarValue;
 import com.torodb.torod.mongodb.exp.modifiers.ExpModifications;
 import com.torodb.torod.mongodb.exp.modifiers.ExpModifier;
 import com.torodb.torod.mongodb.exp.modifiers.RegexExpModifier;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.StringTokenizer;
 import java.util.regex.Pattern;
 import javax.annotation.Nonnull;
-import org.bson.BsonArray;
-import org.bson.BsonDocument;
-import org.bson.BsonRegularExpression;
-import org.bson.BsonValue;
 
 /**
  *
@@ -109,15 +110,14 @@ public class BasicQueryTranslator {
             @Nonnull AttributeReference attRefAcum,
             @Nonnull BsonDocument exp
     ) throws UserToroException {
-        Set<String> keys = exp.keySet();
-        if (keys.isEmpty()) {
+        if (exp.isEmpty()) {
             return TrueQueryCriteria.getInstance();
         }
 
-        if (keys.size() == 1) {
-            String key = keys.iterator().
-                    next();
-            
+        if (exp.size() == 1) {
+            Entry<?> entry = exp.getFirstEntry();
+
+            String key = entry.getKey();
             if (isExpModifier(key)) {
                 ExpModifications newModifiers = new ExpModifications(exp);
                 ClassToInstanceMap<ExpModifier> notConsumedModifiers
@@ -134,12 +134,13 @@ public class BasicQueryTranslator {
 
         ExpModifications newModifiers = new ExpModifications(exp);
         //TODO: Constraint merged ands, ors, nors and subqueries and equalities
-        for (String key : keys) {
+        for (Entry<?> entry : exp) {
+            String key = entry.getKey();
             if (isExpModifier(key)) {
                 continue;
             }
             
-            BsonValue uncastedArg = exp.get(key);
+            BsonValue uncastedArg = entry.getValue();
             conjunctionBuilder.add(
                     translateExp(
                             attRefAcum, 
@@ -219,12 +220,11 @@ public class BasicQueryTranslator {
             return NodeType.EQUALITY;
         }
 
-        Set<String> keySet = uncastedArg.asDocument().keySet();
-
         boolean oneSubQuery = false;
         boolean oneNoSubQuery = false;
 
-        for (String subKey : keySet) {
+        for (Entry<?> entry : uncastedArg.asDocument()) {
+            String subKey = entry.getKey();
             if (isSubQuery(subKey)) {
                 oneSubQuery |= true;
             }
@@ -266,11 +266,12 @@ public class BasicQueryTranslator {
             return false;
         }
 
-        Set<String> keySet = uncastedArg.asDocument().keySet();
-        if (keySet.isEmpty()) {
+        BsonDocument doc = uncastedArg.asDocument();
+        if (doc.isEmpty()) {
             return false;
         }
-        for (String key : keySet) {
+        for (Entry<?> entry : doc) {
+            String key = entry.getKey();
             if (!isSubQuery(key) && !isExpModifier(key)) {
                 return false;
             }
@@ -366,16 +367,15 @@ public class BasicQueryTranslator {
             @Nonnull BsonValue uncastedArg,
             @Nonnull ExpModifications modifications
     ) {
-        DocValue value = MongoValueConverter.translateBSON(uncastedArg);
-        
-        if (value instanceof com.torodb.kvdocument.values.PatternValue) {
-            com.torodb.kvdocument.values.PatternValue castedValue = 
-                    (com.torodb.kvdocument.values.PatternValue) value;
+        if (uncastedArg instanceof BsonRegex) {
+            BsonRegex asRegex = uncastedArg.asRegex();
             return new MatchPatternQueryCriteria(
-                    attRefAcum, 
-                    new PatternValue(castedValue.getValue())
+                    attRefAcum,
+                    Pattern.compile(asRegex.getPattern(), BsonRegex.Options.patternOptionsToFlags(asRegex.getOptions()))
             );
-        } else {
+        }
+        else {
+            KVValue value = MongoWPConverter.translate(uncastedArg);
             return EqualFactory.createEquality(attRefAcum, value);
         }
     }
@@ -389,22 +389,20 @@ public class BasicQueryTranslator {
             throw new ToroImplementationException("A bson object was expected");
         }
         BsonDocument arg = uncastedArg.asDocument();
-        if (arg.keySet().size() == 1) {
-            String key = arg.keySet().
-                    iterator().
-                    next();
-            return translateSubQuery(attRefAcum, key, arg.get(key), modifications);
+        if (arg.size() == 1) {
+            Entry<?> entry = arg.getFirstEntry();
+            return translateSubQuery(attRefAcum, entry.getKey(), entry.getValue(), modifications);
         }
         else {
             ConjunctionBuilder cb = new ConjunctionBuilder();
             ExpModifications newModifiers = new ExpModifications(arg);
             
-            for (String key : arg.keySet()) {
-                if (isExpModifier(key)) {
+            for (Entry<?> entry : arg) {
+                if (isExpModifier(entry.getKey())) {
                     continue;
                 }
                 cb.add(
-                        translateSubQuery(attRefAcum, key, arg.get(key), newModifiers)
+                        translateSubQuery(attRefAcum, entry.getKey(), entry.getValue(), newModifiers)
                 );
             }
             
@@ -483,10 +481,10 @@ public class BasicQueryTranslator {
             @Nonnull AttributeReference attRefAcum,
             @Nonnull BsonValue uncastedArg,
             @Nonnull ExpModifications modifications) {
-        DocValue docValue = MongoValueConverter.translateBSON(uncastedArg);
+        KVValue docValue = MongoWPConverter.translate(uncastedArg);
         return new IsEqualQueryCriteria(
                 attRefAcum,
-                ValueFactory.fromDocValue(docValue)
+                KVValueToScalarValue.fromDocValue(docValue)
         );
     }
 
@@ -494,10 +492,10 @@ public class BasicQueryTranslator {
             @Nonnull AttributeReference attRefAcum,
             @Nonnull BsonValue uncastedArg,
             @Nonnull ExpModifications modifications) {
-        DocValue docValue = MongoValueConverter.translateBSON(uncastedArg);
+        KVValue docValue = MongoWPConverter.translate(uncastedArg);
         return new IsGreaterQueryCriteria(
                 attRefAcum,
-                ValueFactory.fromDocValue(docValue)
+                KVValueToScalarValue.fromDocValue(docValue)
         );
     }
 
@@ -505,10 +503,10 @@ public class BasicQueryTranslator {
             @Nonnull AttributeReference attRefAcum,
             @Nonnull BsonValue uncastedArg,
             @Nonnull ExpModifications modifications) {
-        DocValue docValue = MongoValueConverter.translateBSON(uncastedArg);
+        KVValue docValue = MongoWPConverter.translate(uncastedArg);
         return new IsGreaterOrEqualQueryCriteria(
                 attRefAcum,
-                ValueFactory.fromDocValue(docValue)
+                KVValueToScalarValue.fromDocValue(docValue)
         );
     }
 
@@ -516,10 +514,10 @@ public class BasicQueryTranslator {
             @Nonnull AttributeReference attRefAcum,
             @Nonnull BsonValue uncastedArg,
             @Nonnull ExpModifications modifications) {
-        DocValue docValue = MongoValueConverter.translateBSON(uncastedArg);
+        KVValue docValue = MongoWPConverter.translate(uncastedArg);
         return new IsLessQueryCriteria(
                 attRefAcum,
-                ValueFactory.fromDocValue(docValue)
+                KVValueToScalarValue.fromDocValue(docValue)
         );
     }
 
@@ -527,10 +525,10 @@ public class BasicQueryTranslator {
             @Nonnull AttributeReference attRefAcum,
             @Nonnull BsonValue uncastedArg,
             @Nonnull ExpModifications modifications) {
-        DocValue docValue = MongoValueConverter.translateBSON(uncastedArg);
+        KVValue docValue = MongoWPConverter.translate(uncastedArg);
         return new IsLessOrEqualQueryCriteria(
                 attRefAcum,
-                ValueFactory.fromDocValue(docValue)
+                KVValueToScalarValue.fromDocValue(docValue)
         );
     }
 
@@ -538,7 +536,7 @@ public class BasicQueryTranslator {
             @Nonnull AttributeReference attRefAcum,
             @Nonnull BsonValue uncastedArg,
             @Nonnull ExpModifications modifications) {
-        DocValue docValue = MongoValueConverter.translateBSON(uncastedArg);
+        KVValue docValue = MongoWPConverter.translate(uncastedArg);
         return new NotQueryCriteria(
                 EqualFactory.createEquality(
                         attRefAcum,
@@ -554,10 +552,10 @@ public class BasicQueryTranslator {
         if (!uncastedArg.isArray()) {
             throw new ToroImplementationException("$in needs an array");
         }
-        DocValue docValue = MongoValueConverter.translateBSON(uncastedArg);
+        KVValue docValue = MongoWPConverter.translate(uncastedArg);
         return new InQueryCriteria(
                 attRefAcum,
-                (ArrayValue) ValueFactory.fromDocValue(docValue)
+                (ScalarArray) KVValueToScalarValue.fromDocValue(docValue)
         );
     }
 
@@ -568,11 +566,11 @@ public class BasicQueryTranslator {
         if (!uncastedArg.isArray()) {
             throw new ToroImplementationException("$in needs an array");
         }
-        DocValue docValue = MongoValueConverter.translateBSON(uncastedArg);
+        KVValue docValue = MongoWPConverter.translate(uncastedArg);
         return new NotQueryCriteria(
                 new InQueryCriteria(
                         attRefAcum,
-                        (ArrayValue) ValueFactory.fromDocValue(docValue)
+                        (ScalarArray) KVValueToScalarValue.fromDocValue(docValue)
                 )
         );
     }
@@ -583,7 +581,7 @@ public class BasicQueryTranslator {
             @Nonnull ExpModifications modifications)
             throws UserToroException {
         if (!uncastedArg.isDocument()) {
-            if (uncastedArg.isRegularExpression()) {
+            if (uncastedArg.isRegex()) {
                 throw new ToroImplementationException(
                         "Regex are not supported right now");
             }
@@ -652,13 +650,14 @@ public class BasicQueryTranslator {
         }
 
         Integer value = uncastedArg.asInt32().getValue();
-        DocType dt = MongoTypeConverter.translateType(value);
+        BsonType bsonType = BsonType.fromInt(value);
+        KVType dt = MongoWPConverter.translate(bsonType);
 
-        if (dt.equals(ObjectType.INSTANCE)) {
+        if (dt.equals(DocumentType.INSTANCE)) {
             return new IsObjectQueryCriteria(attRefAcum);
         }
         else {
-            BasicType bt = BasicType.fromDocType(dt);
+            ScalarType bt = ScalarType.fromDocType(dt);
 
             return new TypeIsQueryCriteria(
                     attRefAcum,
@@ -691,32 +690,32 @@ public class BasicQueryTranslator {
             throw new UserToroException("$mod needs a numeric remainder but "
                                                 + value.get(1) + " was found");
         }
-        Number divisor;
+        KVNumeric<?> divisor;
         BsonValue val0 = value.get(0);
         if (val0.isInt32()) {
-            divisor = val0.asInt32().getValue();
+            divisor = KVInteger.of(val0.asInt32().getValue());
         }
         else {
-            divisor = val0.asInt64().getValue();
+            divisor = KVLong.of(val0.asInt64().getValue());
         }
 
-        Number reminder;
+        KVNumeric<?> reminder;
         BsonValue val1 = value.get(1);
         if (val1.isInt32()) {
-            reminder = val1.asInt32().getValue();
+            reminder = KVInteger.of(val1.asInt32().getValue());
         }
         else {
-            reminder = val1.asInt64().getValue();
+            reminder = KVLong.of(val1.asInt64().getValue());
         }
 
-        if (divisor.equals(0)) {
+        if (divisor.longValue() == 0) {
             throw new UserToroException("Divisor cannot be 0");
         }
 
         return new ModIsQueryCriteria(
                 attRefAcum,
-                ValueFactory.fromNumber(divisor),
-                ValueFactory.fromNumber(reminder)
+                KVValueToScalarValue.fromNumber(divisor),
+                KVValueToScalarValue.fromNumber(reminder)
         );
     }
 
@@ -730,10 +729,10 @@ public class BasicQueryTranslator {
             pattern = uncastedArg.asString().getValue();
             flags = 0;
         }
-        else if (uncastedArg.isRegularExpression()) {
-            BsonRegularExpression regExp = uncastedArg.asRegularExpression();
+        else if (uncastedArg.isRegex()) {
+            BsonRegex regExp = uncastedArg.asRegex();
             pattern = regExp.getPattern();
-            flags = MongoValueConverter.patternOptionsToFlags(regExp.getOptions());
+            flags = BsonRegex.Options.patternOptionsToFlags(regExp.getOptions());
         }
         else {
             throw new UserToroException("$regex has to be a string or a pattern");
@@ -747,7 +746,7 @@ public class BasicQueryTranslator {
         else {
             regex = Pattern.compile(pattern, flags);
         }
-        return new MatchPatternQueryCriteria(attRefAcum, new PatternValue(regex));
+        return new MatchPatternQueryCriteria(attRefAcum, regex);
     }
 
     private QueryCriteria translateTextOperand(
@@ -773,8 +772,7 @@ public class BasicQueryTranslator {
             throw new UserToroException("$all needs an array");
         }
 
-        com.torodb.kvdocument.values.ArrayValue value = MongoValueConverter.
-                translateArray(uncastedArg.asArray());
+        KVArray value = (KVArray) MongoWPConverter.translate(uncastedArg.asArray());
 
         if (value.isEmpty()) {
             return FalseQueryCriteria.getInstance();
@@ -786,7 +784,7 @@ public class BasicQueryTranslator {
         }
 
         ConjunctionBuilder builder = new ConjunctionBuilder();
-        for (DocValue child : value) {
+        for (KVValue child : value) {
             builder.add(
                     new ExistsQueryCriteria(
                             attRefAcum,
@@ -846,7 +844,7 @@ public class BasicQueryTranslator {
 
         return new SizeIsQueryCriteria(
                 attRefAcum,
-                (IntegerValue) ValueFactory.fromNumber(uncastedArg.asInt32().intValue())
+                ScalarInteger.of(uncastedArg.asInt32().intValue())
         );
 
     }

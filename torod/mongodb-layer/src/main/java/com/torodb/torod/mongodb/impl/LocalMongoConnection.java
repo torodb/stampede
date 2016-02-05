@@ -1,19 +1,29 @@
 
 package com.torodb.torod.mongodb.impl;
 
+import com.eightkdata.mongowp.server.api.SafeRequestProcessor;
+import com.eightkdata.mongowp.server.api.Connection;
+import com.eightkdata.mongowp.server.api.CommandsExecutor;
+import com.eightkdata.mongowp.server.api.CommandReply;
+import com.eightkdata.mongowp.server.api.Command;
+import com.eightkdata.mongowp.server.api.CommandRequest;
+import com.eightkdata.mongowp.server.api.Request;
+import com.eightkdata.mongowp.bson.BsonDocument;
+import com.eightkdata.mongowp.bson.utils.BsonDocumentReader.AllocationType;
 import com.eightkdata.mongowp.client.core.MongoConnection;
+import com.eightkdata.mongowp.exceptions.CursorNotFoundException;
+import com.eightkdata.mongowp.exceptions.MongoException;
+import com.eightkdata.mongowp.exceptions.UnknownErrorException;
 import com.eightkdata.mongowp.messages.request.QueryMessage.QueryOptions;
 import com.eightkdata.mongowp.messages.request.*;
 import com.eightkdata.mongowp.messages.response.ReplyMessage;
-import com.eightkdata.mongowp.mongoserver.api.safe.*;
-import com.eightkdata.mongowp.mongoserver.api.safe.pojos.MongoCursor;
-import com.eightkdata.mongowp.mongoserver.api.safe.pojos.MongoCursor.Batch;
-import com.eightkdata.mongowp.mongoserver.api.safe.pojos.MongoCursor.MongoCursorIterator;
-import com.eightkdata.mongowp.mongoserver.api.safe.pojos.QueryRequest;
-import com.eightkdata.mongowp.mongoserver.api.safe.pojos.SimpleBatch;
-import com.eightkdata.mongowp.mongoserver.protocol.exceptions.CursorNotFoundException;
-import com.eightkdata.mongowp.mongoserver.protocol.exceptions.MongoException;
-import com.eightkdata.mongowp.mongoserver.protocol.exceptions.UnknownErrorException;
+import com.eightkdata.mongowp.messages.utils.IterableDocumentProvider;
+import com.eightkdata.mongowp.server.api.pojos.MongoCursor;
+import com.eightkdata.mongowp.server.api.pojos.MongoCursor.Batch;
+import com.eightkdata.mongowp.server.api.pojos.MongoCursor.DeadCursorException;
+import com.eightkdata.mongowp.server.api.pojos.MongoCursor.MongoCursorIterator;
+import com.eightkdata.mongowp.server.api.pojos.QueryRequest;
+import com.eightkdata.mongowp.server.api.pojos.SimpleBatch;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
@@ -22,7 +32,6 @@ import io.netty.util.DefaultAttributeMap;
 import java.util.Iterator;
 import java.util.List;
 import javax.inject.Inject;
-import org.bson.BsonDocument;
 import org.slf4j.LoggerFactory;
 
 /**
@@ -116,7 +125,7 @@ public class LocalMongoConnection implements MongoConnection  {
                 database,
                 collection,
                 queryRequest.isTailable(),
-                reply.getDocuments().toList()
+                reply.getDocuments().getIterable(AllocationType.HEAP).toList()
         );
     }
 
@@ -185,10 +194,11 @@ public class LocalMongoConnection implements MongoConnection  {
         RequestBaseMessage baseMessage = new RequestBaseMessage(null, 0, newRequest.getRequestId());
         InsertMessage message = new InsertMessage(
                 baseMessage,
+                EmptyBsonContext.getInstance(),
                 database,
                 collection,
                 continueOnError,
-                docsToInsert
+                IterableDocumentProvider.of(docsToInsert)
         );
 
         processor.insert(newRequest, message);
@@ -208,6 +218,7 @@ public class LocalMongoConnection implements MongoConnection  {
         RequestBaseMessage baseMessage = new RequestBaseMessage(null, 0, newRequest.getRequestId());
         UpdateMessage message = new UpdateMessage(
                 baseMessage,
+                EmptyBsonContext.getInstance(),
                 database,
                 collection,
                 selector,
@@ -231,6 +242,7 @@ public class LocalMongoConnection implements MongoConnection  {
         RequestBaseMessage baseMessage = new RequestBaseMessage(null, 0, newRequest.getRequestId());
         DeleteMessage message = new DeleteMessage(
                 baseMessage,
+                EmptyBsonContext.getInstance(),
                 database,
                 collection,
                 selector,
@@ -340,7 +352,7 @@ public class LocalMongoConnection implements MongoConnection  {
                 dead = true;
                 throw new UnknownErrorException("GetMore response: Query failure");
             }
-            ImmutableList<? extends BsonDocument> documents = more.getDocuments().toList();
+            ImmutableList<? extends BsonDocument> documents = more.getDocuments().getIterable(AllocationType.HEAP).toList();
 
             return new SimpleBatch<>(documents, fetchTime);
         }

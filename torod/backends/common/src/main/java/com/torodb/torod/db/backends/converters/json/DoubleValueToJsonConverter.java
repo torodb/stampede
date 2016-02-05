@@ -20,14 +20,14 @@
 
 package com.torodb.torod.db.backends.converters.json;
 
+import com.torodb.torod.core.subdocument.values.ScalarDouble;
 import com.torodb.torod.db.backends.converters.ValueConverter;
-import com.torodb.torod.core.subdocument.values.DoubleValue;
 
 /**
  *
  */
 public class DoubleValueToJsonConverter implements
-        ValueConverter<Object, DoubleValue> {
+        ValueConverter<Object, ScalarDouble> {
 
     @Override
     public Class<? extends Object> getJsonClass() {
@@ -35,35 +35,35 @@ public class DoubleValueToJsonConverter implements
     }
 
     @Override
-    public Class<? extends DoubleValue> getValueClass() {
-        return DoubleValue.class;
+    public Class<? extends ScalarDouble> getValueClass() {
+        return ScalarDouble.class;
     }
 
     @Override
-    public Number toJson(DoubleValue value) {
+    public Number toJson(ScalarDouble value) {
         return value.getValue();
     }
 
     @Override
-    public DoubleValue toValue(Object value) {
+    public ScalarDouble toValue(Object value) {
         if (value instanceof Number) {
             Number number = (Number) value;
-            return new DoubleValue(number.doubleValue());
+            return ScalarDouble.of(number.doubleValue());
         }
         if (value instanceof String) {
             String string = (String) value;
             if (string.equals("Infinity")) {
-                return new DoubleValue(Double.POSITIVE_INFINITY);
+                return ScalarDouble.of(Double.POSITIVE_INFINITY);
             }
             if (string.equals("-Infinity")) {
-                return new DoubleValue(Double.NEGATIVE_INFINITY);
+                return ScalarDouble.of(Double.NEGATIVE_INFINITY);
             }
             if (string.equals("NaN")) {
-                return new DoubleValue(Double.NaN);
+                return ScalarDouble.of(Double.NaN);
             }
         }
         throw new IllegalArgumentException(
-                "Value "+value+" has not been recognized as double value"
+                "ScalarValue "+value+" has not been recognized as double value"
         );
     }
     

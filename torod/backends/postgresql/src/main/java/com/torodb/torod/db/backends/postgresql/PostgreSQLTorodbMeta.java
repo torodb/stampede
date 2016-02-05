@@ -27,18 +27,12 @@ import com.torodb.torod.core.subdocument.SubDocType;
 import com.torodb.torod.db.backends.DatabaseInterface;
 import com.torodb.torod.db.backends.exceptions.InvalidCollectionSchemaException;
 import com.torodb.torod.db.backends.exceptions.InvalidDatabaseException;
-import com.torodb.torod.db.backends.meta.TorodbMeta;
 import com.torodb.torod.db.backends.meta.IndexStorage;
+import com.torodb.torod.db.backends.meta.TorodbMeta;
 import com.torodb.torod.db.backends.meta.TorodbSchema;
 import com.torodb.torod.db.backends.tables.CollectionsTable;
 import com.torodb.torod.db.backends.tables.records.CollectionsRecord;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.jooq.DSLContext;
-import org.jooq.Meta;
-import org.jooq.Result;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -50,6 +44,11 @@ import java.util.Collections;
 import java.util.concurrent.ConcurrentMap;
 import javax.annotation.Nonnull;
 import javax.inject.Provider;
+import org.jooq.DSLContext;
+import org.jooq.Meta;
+import org.jooq.Result;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -170,31 +169,24 @@ public class PostgreSQLTorodbMeta implements TorodbMeta {
             DatabaseMetaData jdbcMeta
     ) throws SQLException, IOException {
         boolean findDocTypeExists = false;
-        boolean twelveBytesExists = false;
-        boolean torodbPatternExists = false;
+        boolean mongoObjectIdExists = false;
+        boolean mongoTimestampExists = false;
         
-        ResultSet typeInfo = null;
-        try {
+        try (ResultSet typeInfo = jdbcMeta.getTypeInfo()) {
         
-            typeInfo = jdbcMeta.getTypeInfo();
             while (typeInfo.next()) {
                 findDocTypeExists = 
                         findDocTypeExists 
                         || typeInfo.getString("TYPE_NAME").equals("find_doc_type");
-                twelveBytesExists = 
-                        twelveBytesExists
-                        || typeInfo.getString("TYPE_NAME").equals("twelve_bytes");
-                torodbPatternExists = 
-                        torodbPatternExists
-                        || typeInfo.getString("TYPE_NAME").equals("torodb_pattern");
-                
-                if (findDocTypeExists && twelveBytesExists && torodbPatternExists) {
+                mongoObjectIdExists =
+                        mongoObjectIdExists
+                        || typeInfo.getString("TYPE_NAME").equals("mongo_object_id");
+                mongoTimestampExists =
+                        mongoObjectIdExists
+                        || typeInfo.getString("TYPE_NAME").equals("mongo_timestamp");
+                if (findDocTypeExists && mongoObjectIdExists && mongoTimestampExists) {
                     break;
                 }
-            }
-        } finally {
-            if (typeInfo != null) {
-                typeInfo.close();
             }
         }
         
@@ -206,21 +198,21 @@ public class PostgreSQLTorodbMeta implements TorodbMeta {
         else {
             LOGGER.debug("Type find_doc_type found");
         }
-        if (!twelveBytesExists) {
-            LOGGER.debug("Creating type twelve_bytes");
-            createTwelveBytesType(conn);
-            LOGGER.debug("Created type twelve_bytes");
+        if (!mongoObjectIdExists) {
+            LOGGER.debug("Creating type mongo_object_id");
+            createMongoObjectIdType(conn);
+            LOGGER.debug("Created type mongo_object_id");
         }
         else {
-            LOGGER.debug("Type twelve_bytes found");
+            LOGGER.debug("Type mongo_object_id found");
         }
-        if (!torodbPatternExists) {
-            LOGGER.debug("Creating type torodb_pattern");
-            createTorodbPatternType(conn);
-            LOGGER.debug("Created type torodb_pattern");
+        if (!mongoTimestampExists) {
+            LOGGER.debug("Creating type mongo_timestamp");
+            createMongoTimestampType(conn);
+            LOGGER.debug("Created type mongo_timestamp");
         }
         else {
-            LOGGER.debug("Type torodb_pattern found");
+            LOGGER.debug("Type mongo_object_id found");
         }
     }
 
@@ -239,12 +231,12 @@ public class PostgreSQLTorodbMeta implements TorodbMeta {
         executeSql(conn, "/sql/find_doc_type.sql");
     }
 
-    private void createTwelveBytesType(Connection conn) throws IOException, SQLException {
-        executeSql(conn, "/sql/twelve_bytes_type.sql");
+    private void createMongoObjectIdType(Connection conn) throws IOException, SQLException {
+        executeSql(conn, "/sql/mongo_object_id_type.sql");
     }
-
-    private void createTorodbPatternType(Connection conn) throws IOException, SQLException {
-        executeSql(conn, "/sql/torodb_pattern_type.sql");
+    
+    private void createMongoTimestampType(Connection conn) throws IOException, SQLException {
+        executeSql(conn, "/sql/mongo_timestamp_type.sql");
     }
     
     private void createFindDocProcedure(

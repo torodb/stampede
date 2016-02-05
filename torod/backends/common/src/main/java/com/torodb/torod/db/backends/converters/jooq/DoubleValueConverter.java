@@ -20,15 +20,15 @@
 
 package com.torodb.torod.db.backends.converters.jooq;
 
-import com.torodb.torod.core.subdocument.BasicType;
-import com.torodb.torod.core.subdocument.values.DoubleValue;
+import com.torodb.torod.core.subdocument.ScalarType;
+import com.torodb.torod.core.subdocument.values.ScalarDouble;
 import org.jooq.DataType;
 import org.jooq.impl.SQLDataType;
 
 /**
  *
  */
-public class DoubleValueConverter implements SubdocValueConverter<Double, DoubleValue> {
+public class DoubleValueConverter implements SubdocValueConverter<Double, ScalarDouble> {
     private static final long serialVersionUID = 1L;
 
     @Override
@@ -37,17 +37,17 @@ public class DoubleValueConverter implements SubdocValueConverter<Double, Double
     }
 
     @Override
-    public BasicType getErasuredType() {
-        return BasicType.DOUBLE;
+    public ScalarType getErasuredType() {
+        return ScalarType.DOUBLE;
     }
 
     @Override
-    public DoubleValue from(Double databaseObject) {
-        return new DoubleValue(databaseObject);
+    public ScalarDouble from(Double databaseObject) {
+        return ScalarDouble.of(databaseObject);
     }
 
     @Override
-    public Double to(DoubleValue userObject) {
+    public Double to(ScalarDouble userObject) {
         return userObject.getValue();
     }
 
@@ -57,8 +57,8 @@ public class DoubleValueConverter implements SubdocValueConverter<Double, Double
     }
 
     @Override
-    public Class<DoubleValue> toType() {
-        return DoubleValue.class;
+    public Class<ScalarDouble> toType() {
+        return ScalarDouble.class;
     }
 
 }

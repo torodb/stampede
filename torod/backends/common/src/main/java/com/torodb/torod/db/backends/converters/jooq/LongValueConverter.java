@@ -21,15 +21,15 @@
 
 package com.torodb.torod.db.backends.converters.jooq;
 
-import com.torodb.torod.core.subdocument.BasicType;
-import com.torodb.torod.core.subdocument.values.LongValue;
+import com.torodb.torod.core.subdocument.ScalarType;
+import com.torodb.torod.core.subdocument.values.ScalarLong;
 import org.jooq.DataType;
 import org.jooq.impl.SQLDataType;
 
 /**
  *
  */
-public class LongValueConverter implements SubdocValueConverter<Long, LongValue>{
+public class LongValueConverter implements SubdocValueConverter<Long, ScalarLong>{
     private static final long serialVersionUID = 1L;
 
     @Override
@@ -38,17 +38,17 @@ public class LongValueConverter implements SubdocValueConverter<Long, LongValue>
     }
 
     @Override
-    public BasicType getErasuredType() {
-        return BasicType.LONG;
+    public ScalarType getErasuredType() {
+        return ScalarType.LONG;
     }
 
     @Override
-    public LongValue from(Long databaseObject) {
-        return new LongValue(databaseObject);
+    public ScalarLong from(Long databaseObject) {
+        return ScalarLong.of(databaseObject);
     }
 
     @Override
-    public Long to(LongValue userObject) {
+    public Long to(ScalarLong userObject) {
         return userObject.getValue();
     }
 
@@ -58,8 +58,8 @@ public class LongValueConverter implements SubdocValueConverter<Long, LongValue>
     }
 
     @Override
-    public Class<LongValue> toType() {
-        return LongValue.class;
+    public Class<ScalarLong> toType() {
+        return ScalarLong.class;
     }
     
 }

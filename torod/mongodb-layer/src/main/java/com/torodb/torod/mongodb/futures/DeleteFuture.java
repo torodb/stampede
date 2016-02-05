@@ -1,9 +1,9 @@
 
 package com.torodb.torod.mongodb.futures;
 
-import com.eightkdata.mongowp.mongoserver.api.safe.impl.DeleteOpResult;
-import com.eightkdata.mongowp.mongoserver.pojos.OpTime;
-import com.eightkdata.mongowp.mongoserver.protocol.ErrorCode;
+import com.eightkdata.mongowp.ErrorCode;
+import com.eightkdata.mongowp.OpTime;
+import com.eightkdata.mongowp.server.api.impl.DeleteOpResult;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.torodb.torod.core.connection.DeleteResponse;
 

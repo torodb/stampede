@@ -1,20 +1,23 @@
 
 package com.torodb.torod.mongodb.commands.impl.torodb;
 
-import com.eightkdata.mongowp.mongoserver.api.safe.Command;
-import com.eightkdata.mongowp.mongoserver.api.safe.CommandRequest;
-import com.eightkdata.mongowp.mongoserver.api.safe.CommandResult;
-import com.eightkdata.mongowp.mongoserver.api.safe.impl.NonWriteCommandResult;
+import com.eightkdata.mongowp.bson.BsonDocument;
+import com.eightkdata.mongowp.bson.BsonValue;
+import com.eightkdata.mongowp.exceptions.CommandFailed;
+import com.eightkdata.mongowp.exceptions.InternalErrorException;
+import com.eightkdata.mongowp.exceptions.MongoException;
+import com.eightkdata.mongowp.server.api.Command;
+import com.eightkdata.mongowp.server.api.CommandRequest;
+import com.eightkdata.mongowp.server.api.CommandResult;
+import com.eightkdata.mongowp.server.api.impl.NonWriteCommandResult;
+import com.eightkdata.mongowp.server.api.pojos.MongoCursor;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.tools.CursorMarshaller.FirstBatchOnlyCursor;
-import com.eightkdata.mongowp.mongoserver.api.safe.pojos.MongoCursor;
-import com.eightkdata.mongowp.mongoserver.protocol.exceptions.CommandFailed;
-import com.eightkdata.mongowp.mongoserver.protocol.exceptions.InternalErrorException;
-import com.eightkdata.mongowp.mongoserver.protocol.exceptions.MongoException;
+import com.eightkdata.mongowp.utils.BsonDocumentBuilder;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterators;
-import com.torodb.kvdocument.conversion.mongo.MongoValueConverter;
-import com.torodb.kvdocument.values.DocValue;
+import com.torodb.kvdocument.conversion.mongowp.MongoWPConverter;
+import com.torodb.kvdocument.values.KVValue;
 import com.torodb.torod.core.ValueRow;
 import com.torodb.torod.core.ValueRow.ForEachConsumer;
 import com.torodb.torod.core.connection.ToroConnection;
@@ -28,8 +31,6 @@ import com.torodb.torod.mongodb.commands.torodb.SqlSelectCommand.SqlSelectResult
 import com.torodb.torod.mongodb.utils.ToroDBThrowables;
 import java.util.Iterator;
 import javax.annotation.Nonnull;
-import org.bson.BsonDocument;
-import org.bson.BsonValue;
 
 /**
  *
@@ -61,7 +62,7 @@ public class SqlSelectImplementation extends
 
         try (ToroTransaction transaction
                 = connection.createTransaction(TransactionMetainfo.READ_ONLY)) {
-            Iterator<ValueRow<DocValue>> toroQueryResult = ToroDBThrowables.getFromCommand(
+            Iterator<ValueRow<KVValue<?>>> toroQueryResult = ToroDBThrowables.getFromCommand(
                     commandName,
                     transaction.sqlSelect(arg.getQuery())
             );
@@ -90,25 +91,25 @@ public class SqlSelectImplementation extends
     }
 
     private static class ValueRowToBsonDocument implements 
-            Function<ValueRow<DocValue>, BsonDocument> {
+            Function<ValueRow<KVValue<?>>, BsonDocument> {
 
         @Override
-        public BsonDocument apply(@Nonnull ValueRow<DocValue> input) {
+        public BsonDocument apply(@Nonnull ValueRow<KVValue<?>> input) {
 
             Collector collector = new Collector();
 
             input.consume(collector);
-            return collector.doc;
+            return collector.doc.build();
         }
 
-        private static class Collector implements ForEachConsumer<DocValue> {
+        private static class Collector implements ForEachConsumer<KVValue<?>> {
 
-            private final BsonDocument doc = new BsonDocument();
+            private final BsonDocumentBuilder doc = new BsonDocumentBuilder();
 
             @Override
-            public void consume(String key, DocValue value) {
-                BsonValue translated = MongoValueConverter.translateDocValue(value);
-                doc.append(key, translated);
+            public void consume(String key, KVValue<?> value) {
+                BsonValue translated = MongoWPConverter.translate(value);
+                doc.appendUnsafe(key, translated);
             }
         }
 

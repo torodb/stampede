@@ -1,10 +1,10 @@
 
 package com.torodb.torod.mongodb.impl;
 
+import com.eightkdata.mongowp.MongoVersion;
 import com.eightkdata.mongowp.client.core.MongoClient;
-import com.eightkdata.mongowp.mongoserver.MongoVersion;
-import com.eightkdata.mongowp.mongoserver.api.safe.CommandsExecutor;
-import com.eightkdata.mongowp.mongoserver.api.safe.SafeRequestProcessor;
+import com.eightkdata.mongowp.server.api.CommandsExecutor;
+import com.eightkdata.mongowp.server.api.SafeRequestProcessor;
 import com.google.common.base.Preconditions;
 import com.google.common.net.HostAndPort;
 import com.torodb.torod.mongodb.annotations.Local;

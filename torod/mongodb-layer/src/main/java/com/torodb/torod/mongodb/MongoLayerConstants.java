@@ -1,7 +1,6 @@
 
 package com.torodb.torod.mongodb;
 
-import com.eightkdata.mongowp.mongoserver.protocol.MongoWP;
 import com.google.common.collect.ImmutableList;
 
 /**
@@ -39,7 +38,7 @@ public final class MongoLayerConstants {
      * Also explained in the <a href="http://docs.mongodb.org/master/reference/command/isMaster/">isMaster function</a>
      *
      */
-    public static final int MAX_MESSAGE_SIZE_BYTES = MongoWP.MAX_MESSAGE_SIZE_BYTES;
+    public static final int MAX_MESSAGE_SIZE_BYTES = 48 * 1000 * 1000;
 
     /**
      * Obtained from

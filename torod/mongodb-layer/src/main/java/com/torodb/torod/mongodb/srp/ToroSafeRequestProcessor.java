@@ -1,16 +1,24 @@
 
 package com.torodb.torod.mongodb.srp;
 
+import com.eightkdata.mongowp.server.api.SafeRequestProcessor;
+import com.eightkdata.mongowp.server.api.CommandsLibrary;
+import com.eightkdata.mongowp.server.api.Connection;
+import com.eightkdata.mongowp.server.api.CommandsExecutor;
+import com.eightkdata.mongowp.server.api.CommandReply;
+import com.eightkdata.mongowp.server.api.Command;
+import com.eightkdata.mongowp.server.api.CommandRequest;
+import com.eightkdata.mongowp.server.api.Request;
+import com.eightkdata.mongowp.ErrorCode;
+import com.eightkdata.mongowp.bson.BsonDocument;
+import com.eightkdata.mongowp.exceptions.CommandNotSupportedException;
+import com.eightkdata.mongowp.exceptions.MongoException;
 import com.eightkdata.mongowp.messages.request.*;
 import com.eightkdata.mongowp.messages.response.ReplyMessage;
-import com.eightkdata.mongowp.messages.utils.SimpleIterableDocumentsProvider;
-import com.eightkdata.mongowp.mongoserver.api.safe.*;
-import com.eightkdata.mongowp.mongoserver.api.safe.impl.UpdateOpResult;
-import com.eightkdata.mongowp.mongoserver.api.safe.pojos.QueryRequest;
-import com.eightkdata.mongowp.mongoserver.callback.WriteOpResult;
-import com.eightkdata.mongowp.mongoserver.protocol.ErrorCode;
-import com.eightkdata.mongowp.mongoserver.protocol.exceptions.CommandNotSupportedException;
-import com.eightkdata.mongowp.mongoserver.protocol.exceptions.MongoException;
+import com.eightkdata.mongowp.messages.utils.IterableDocumentProvider;
+import com.eightkdata.mongowp.server.api.impl.UpdateOpResult;
+import com.eightkdata.mongowp.server.api.pojos.QueryRequest;
+import com.eightkdata.mongowp.server.callback.WriteOpResult;
 import com.google.common.collect.FluentIterable;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -33,7 +41,6 @@ import io.netty.util.AttributeMap;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
-import org.bson.BsonDocument;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -124,6 +131,7 @@ public class ToroSafeRequestProcessor implements SafeRequestProcessor {
             }
 
             return new ReplyMessage(
+                    EmptyBsonContext.getInstance(),
                     req.getRequestId(),
                     false,
                     false,
@@ -131,11 +139,10 @@ public class ToroSafeRequestProcessor implements SafeRequestProcessor {
                     false,
                     cursorEmptied ? 0 : cursorId.getNumericId(),
                     position,
-                    new SimpleIterableDocumentsProvider<>(results)
+                    IterableDocumentProvider.of(results)
             );
-        } catch (CursorNotFoundException |
-                ClosedToroCursorException ex) {
-            throw new com.eightkdata.mongowp.mongoserver.protocol.exceptions.CursorNotFoundException(cursorId.getNumericId());
+        } catch (CursorNotFoundException | ClosedToroCursorException ex) {
+            throw new com.eightkdata.mongowp.exceptions.CursorNotFoundException(cursorId.getNumericId());
         }
     }
 
@@ -181,6 +188,7 @@ public class ToroSafeRequestProcessor implements SafeRequestProcessor {
         );
         QueryResponse response = colRequestProcessor.query(request, message);
         return new ReplyMessage(
+                EmptyBsonContext.getInstance(),
                 request.getRequestId(),
                 false,
                 false,
@@ -188,7 +196,7 @@ public class ToroSafeRequestProcessor implements SafeRequestProcessor {
                 false,
                 response.getCursorId(),
                 message.getNumberToSkip(),
-                new SimpleIterableDocumentsProvider<>(response.getDocuments())
+                response.getDocuments()
         );
     }
 

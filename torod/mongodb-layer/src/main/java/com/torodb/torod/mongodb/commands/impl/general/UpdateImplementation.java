@@ -1,20 +1,20 @@
 
 package com.torodb.torod.mongodb.commands.impl.general;
 
-import com.eightkdata.mongowp.mongoserver.api.safe.Command;
-import com.eightkdata.mongowp.mongoserver.api.safe.CommandImplementation;
-import com.eightkdata.mongowp.mongoserver.api.safe.CommandRequest;
-import com.eightkdata.mongowp.mongoserver.api.safe.CommandResult;
-import com.eightkdata.mongowp.mongoserver.api.safe.impl.UpdateOpResult;
-import com.eightkdata.mongowp.mongoserver.api.safe.impl.WriteCommandResult;
+import com.eightkdata.mongowp.ErrorCode;
+import com.eightkdata.mongowp.OpTime;
+import com.eightkdata.mongowp.exceptions.CommandFailed;
+import com.eightkdata.mongowp.exceptions.MongoException;
+import com.eightkdata.mongowp.exceptions.UnknownErrorException;
+import com.eightkdata.mongowp.server.api.Command;
+import com.eightkdata.mongowp.server.api.CommandImplementation;
+import com.eightkdata.mongowp.server.api.CommandRequest;
+import com.eightkdata.mongowp.server.api.CommandResult;
+import com.eightkdata.mongowp.server.api.impl.UpdateOpResult;
+import com.eightkdata.mongowp.server.api.impl.WriteCommandResult;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.UpdateCommand.UpdateArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.UpdateCommand.UpdateResult;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.UpdateCommand.UpdateStatement;
-import com.eightkdata.mongowp.mongoserver.pojos.OpTime;
-import com.eightkdata.mongowp.mongoserver.protocol.ErrorCode;
-import com.eightkdata.mongowp.mongoserver.protocol.exceptions.CommandFailed;
-import com.eightkdata.mongowp.mongoserver.protocol.exceptions.MongoException;
-import com.eightkdata.mongowp.mongoserver.protocol.exceptions.UnknownErrorException;
 import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;

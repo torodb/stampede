@@ -26,20 +26,19 @@ import com.torodb.torod.core.subdocument.SubDocType;
 import com.torodb.torod.core.subdocument.SubDocType.Builder;
 import com.torodb.torod.db.backends.ArraySerializer;
 import com.torodb.torod.db.backends.DatabaseInterface;
-import com.torodb.torod.db.backends.converters.BasicTypeToSqlType;
+import com.torodb.torod.db.backends.converters.ScalarTypeToSqlType;
 import com.torodb.torod.db.backends.exceptions.InvalidDatabaseException;
 import com.torodb.torod.db.backends.meta.TorodbMeta;
 import com.torodb.torod.db.backends.tables.CollectionsTable;
-import org.jooq.DSLContext;
-
-import javax.annotation.Nonnull;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.annotation.Nonnull;
+import javax.inject.Inject;
 import javax.inject.Provider;
+import javax.inject.Singleton;
+import org.jooq.DSLContext;
 
 /**
  *
@@ -49,7 +48,7 @@ public class PostgresqlDatabaseInterface implements DatabaseInterface {
 
     private static final long serialVersionUID = 484638503;
 
-    private final BasicTypeToSqlType basicTypeToSqlType;
+    private final ScalarTypeToSqlType scalarTypeToSqlType;
     private transient @Nonnull Provider<SubDocType.Builder> subDocTypeBuilderProvider;
 
     private static class ArraySerializatorHolder {
@@ -63,8 +62,8 @@ public class PostgresqlDatabaseInterface implements DatabaseInterface {
     }
 
     @Inject
-    public PostgresqlDatabaseInterface(BasicTypeToSqlType basicTypeToSqlType, Provider<Builder> subDocTypeBuilderProvider) {
-        this.basicTypeToSqlType = basicTypeToSqlType;
+    public PostgresqlDatabaseInterface(ScalarTypeToSqlType scalarTypeToSqlType, Provider<Builder> subDocTypeBuilderProvider) {
+        this.scalarTypeToSqlType = scalarTypeToSqlType;
         this.subDocTypeBuilderProvider = subDocTypeBuilderProvider;
     }
 
@@ -109,8 +108,8 @@ public class PostgresqlDatabaseInterface implements DatabaseInterface {
     }
 
     @Override
-    public @Nonnull BasicTypeToSqlType getBasicTypeToSqlType() {
-        return basicTypeToSqlType;
+    public ScalarTypeToSqlType getScalarTypeToSqlType() {
+        return scalarTypeToSqlType;
     }
 
     private static @Nonnull StringBuilder fullTableName(@Nonnull String schemaName, @Nonnull String tableName) {

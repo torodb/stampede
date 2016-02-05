@@ -28,14 +28,13 @@ import com.torodb.torod.core.language.querycriteria.InQueryCriteria;
 import com.torodb.torod.core.language.querycriteria.TypeIsQueryCriteria;
 import com.torodb.torod.core.language.querycriteria.utils.DisjunctionBuilder;
 import com.torodb.torod.core.language.querycriteria.utils.QueryCriteriaVisitor;
-import com.torodb.torod.core.subdocument.BasicType;
-import com.torodb.torod.core.subdocument.values.Value;
+import com.torodb.torod.core.subdocument.ScalarType;
+import com.torodb.torod.core.subdocument.values.ScalarValue;
 import com.torodb.torod.db.backends.query.ProcessedQueryCriteria;
-
-import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  *
@@ -52,12 +51,12 @@ public class InProcessor {
             );
         } else {
 
-            Multimap<BasicType, Value<?>> byTypeValues = MultimapBuilder
-                    .enumKeys(BasicType.class)
+            Multimap<ScalarType, ScalarValue<?>> byTypeValues = MultimapBuilder
+                    .enumKeys(ScalarType.class)
                     .hashSetValues()
                     .build();
 
-            for (Value<?> value : criteria.getValue()) {
+            for (ScalarValue<?> value : criteria.getValue()) {
                 byTypeValues.put(value.getType(), value);
             }
 
@@ -75,22 +74,22 @@ public class InProcessor {
                     result.add(typeQuery);
                 }
 
-                typeQuery = getProcessedQuery(criteria, byTypeValues, BasicType.STRING);
+                typeQuery = getProcessedQuery(criteria, byTypeValues, ScalarType.STRING);
                 if (typeQuery != null) {
                     result.add(typeQuery);
                 }
 
-                typeQuery = getProcessedQuery(criteria, byTypeValues, BasicType.ARRAY);
+                typeQuery = getProcessedQuery(criteria, byTypeValues, ScalarType.ARRAY);
                 if (typeQuery != null) {
                     result.add(typeQuery);
                 }
 
-                typeQuery = getProcessedQuery(criteria, byTypeValues, BasicType.BOOLEAN);
+                typeQuery = getProcessedQuery(criteria, byTypeValues, ScalarType.BOOLEAN);
                 if (typeQuery != null) {
                     result.add(typeQuery);
                 }
 
-                typeQuery = getProcessedQuery(criteria, byTypeValues, BasicType.NULL);
+                typeQuery = getProcessedQuery(criteria, byTypeValues, ScalarType.NULL);
                 if (typeQuery != null) {
                     result.add(typeQuery);
                 }
@@ -101,14 +100,14 @@ public class InProcessor {
     }
 
     @Nullable
-    private static ProcessedQueryCriteria getNumericQuery(InQueryCriteria criteria, Multimap<BasicType, Value<?>> byTypeValues) {
-        ImmutableList.Builder<Value<?>> newInBuilder = ImmutableList.builder();
+    private static ProcessedQueryCriteria getNumericQuery(InQueryCriteria criteria, Multimap<ScalarType, ScalarValue<?>> byTypeValues) {
+        ImmutableList.Builder<ScalarValue<?>> newInBuilder = ImmutableList.builder();
 
-        for (Value<?> value : byTypeValues.values()) {
+        for (ScalarValue<?> value : byTypeValues.values()) {
             newInBuilder.add(value);
         }
         
-        ImmutableList<Value<?>> newIn = newInBuilder.build();
+        ImmutableList<ScalarValue<?>> newIn = newInBuilder.build();
 
         if (newIn.isEmpty()) {
             return null;
@@ -116,25 +115,25 @@ public class InProcessor {
         
         DisjunctionBuilder structureBuilder = new DisjunctionBuilder();
 
-        structureBuilder.add(new TypeIsQueryCriteria(criteria.getAttributeReference(), BasicType.DOUBLE));
-        structureBuilder.add(new TypeIsQueryCriteria(criteria.getAttributeReference(), BasicType.INTEGER));
-        structureBuilder.add(new TypeIsQueryCriteria(criteria.getAttributeReference(), BasicType.LONG));
+        structureBuilder.add(new TypeIsQueryCriteria(criteria.getAttributeReference(), ScalarType.DOUBLE));
+        structureBuilder.add(new TypeIsQueryCriteria(criteria.getAttributeReference(), ScalarType.INTEGER));
+        structureBuilder.add(new TypeIsQueryCriteria(criteria.getAttributeReference(), ScalarType.LONG));
 
-        newInBuilder.addAll(byTypeValues.get(BasicType.DOUBLE));
-        newInBuilder.addAll(byTypeValues.get(BasicType.INTEGER));
-        newInBuilder.addAll(byTypeValues.get(BasicType.LONG));
+        newInBuilder.addAll(byTypeValues.get(ScalarType.DOUBLE));
+        newInBuilder.addAll(byTypeValues.get(ScalarType.INTEGER));
+        newInBuilder.addAll(byTypeValues.get(ScalarType.LONG));
 
         return new ProcessedQueryCriteria(structureBuilder.build(), new InQueryCriteria(criteria.getAttributeReference(), newIn));
     }
 
     @Nullable
-    private static ProcessedQueryCriteria getProcessedQuery(InQueryCriteria criteria, Multimap<BasicType, Value<?>> byTypeValues, BasicType type) {
-        Collection<Value<?>> values = byTypeValues.get(type);
+    private static ProcessedQueryCriteria getProcessedQuery(InQueryCriteria criteria, Multimap<ScalarType, ScalarValue<?>> byTypeValues, ScalarType type) {
+        Collection<ScalarValue<?>> values = byTypeValues.get(type);
         if (values.isEmpty()) {
             return null;
         }
-        ImmutableList.Builder<Value<?>> newInBuilder = new ImmutableList.Builder();
-        for (Value<?> value : values) {
+        ImmutableList.Builder<ScalarValue<?>> newInBuilder = new ImmutableList.Builder();
+        for (ScalarValue<?> value : values) {
             newInBuilder.add(value);
         }
 

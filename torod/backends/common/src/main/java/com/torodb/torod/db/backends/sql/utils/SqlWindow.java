@@ -7,14 +7,13 @@ import com.google.common.collect.Iterators;
 import com.google.common.collect.Sets;
 import com.torodb.torod.core.ValueRow;
 import com.torodb.torod.core.exceptions.ToroImplementationException;
-import com.torodb.torod.core.subdocument.BasicType;
-import com.torodb.torod.core.subdocument.values.NullValue;
-import com.torodb.torod.core.subdocument.values.Value;
-import com.torodb.torod.db.backends.converters.BasicTypeToSqlType;
+import com.torodb.torod.core.subdocument.ScalarType;
+import com.torodb.torod.core.subdocument.values.ScalarNull;
+import com.torodb.torod.core.subdocument.values.ScalarValue;
+import com.torodb.torod.db.backends.converters.ScalarTypeToSqlType;
 import com.torodb.torod.db.backends.converters.jooq.SubdocValueConverter;
 import com.torodb.torod.db.backends.converters.jooq.ValueToJooqConverterProvider;
-
-import javax.annotation.Nonnull;
+import com.torodb.torod.db.backends.udt.records.MongoTimestampRecord;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -23,39 +22,40 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nonnull;
 
 /**
  *
  */
-public class SqlWindow implements Iterator<ValueRow<Value>> {
+public class SqlWindow implements Iterator<ValueRow<ScalarValue<?>>> {
 
-    private final Iterator<ValueRow<Value>> rows;
+    private final Iterator<ValueRow<ScalarValue<?>>> rows;
 
-    public SqlWindow(ResultSet rs, BasicTypeToSqlType basicTypeToSqlType) throws SQLException {
+    public SqlWindow(ResultSet rs, ScalarTypeToSqlType scalarTypeToSqlType) throws SQLException {
         ResultSetMetaData metaData = rs.getMetaData();
         final int columnLenght = metaData.getColumnCount();
         
         String[] columns = new String[columnLenght];
-        SubdocValueConverter[] converters = new SubdocValueConverter[columnLenght];
+        SubdocValueConverter<?, ?>[] converters = new SubdocValueConverter[columnLenght];
 
         for (int i = 0; i < columnLenght; i++) {
             
             int jdbcIndex = i + 1; //result sets are 1-based instead of 0-based!
             columns[i] = metaData.getColumnName(jdbcIndex);
 
-            BasicType basicType = getBasicType(metaData, jdbcIndex, basicTypeToSqlType);
+            ScalarType scalarType = getScalarType(metaData, jdbcIndex, scalarTypeToSqlType);
 
-            converters[i] = ValueToJooqConverterProvider.getConverter(basicType);
+            converters[i] = ValueToJooqConverterProvider.getConverter(scalarType);
         }
 
-        ImmutableList.Builder<ValueRow<Value>> builder = ImmutableList.builder();
+        ImmutableList.Builder<ValueRow<ScalarValue<?>>> builder = ImmutableList.builder();
 
         while (rs.next()) {
-            Value[] values = new Value[columns.length];
+            ScalarValue[] values = new ScalarValue[columns.length];
             for (int i = 0; i < columns.length; i++) {
                 int jdbcIndex = i+1;
 
-                Value value = readAndTransform(rs, jdbcIndex, converters[i]);
+                ScalarValue<?> value = readAndTransform(rs, jdbcIndex, converters[i]);
                 Preconditions.checkNotNull(value);
                 values[i] = value;
             }
@@ -70,7 +70,7 @@ public class SqlWindow implements Iterator<ValueRow<Value>> {
     }
 
     @Override
-    public ValueRow<Value> next() {
+    public ValueRow<ScalarValue<?>> next() {
         return rows.next();
     }
 
@@ -80,16 +80,16 @@ public class SqlWindow implements Iterator<ValueRow<Value>> {
     }
 
     @Nonnull
-    private static Value readAndTransform(
+    private static <DBT, V extends ScalarValue<?>> ScalarValue<?> readAndTransform(
             ResultSet rs,
             int jdbcIndex,
-            SubdocValueConverter converter) throws SQLException {
+            SubdocValueConverter<DBT, V> converter) throws SQLException {
         Object value;
         switch (converter.getErasuredType()) {
             case BOOLEAN:
                 value = rs.getBoolean(jdbcIndex);
                 break;
-            case DATETIME:
+            case INSTANT:
                 value = rs.getTimestamp(jdbcIndex);
                 break;
             case DATE:
@@ -105,9 +105,8 @@ public class SqlWindow implements Iterator<ValueRow<Value>> {
                 value = rs.getLong(jdbcIndex);
                 break;
             case NULL:
-                return NullValue.INSTANCE;
+                return ScalarNull.getInstance();
             case ARRAY:
-            case PATTERN:
             case STRING:
                 value = rs.getString(jdbcIndex);
                 break;
@@ -115,34 +114,37 @@ public class SqlWindow implements Iterator<ValueRow<Value>> {
             case TIME:
                 value = rs.getTime(jdbcIndex);
                 break;
-            case TWELVE_BYTES:
+            case MONGO_OBJECT_ID:
                 value = rs.getBytes(jdbcIndex);
                 break;
+            case MONGO_TIMESTAMP:
+                value = rs.getObject(jdbcIndex, MongoTimestampRecord.class);
+                break;
             default:
-                throw new AssertionError("Unexpected basic type " + converter.getErasuredType());
+                throw new AssertionError("Unexpected scalar type " + converter.getErasuredType());
         }
         if (value == null) {
-            return NullValue.INSTANCE;
+            return ScalarNull.getInstance();
         }
-        return (Value) converter.from(value);
+        return converter.from((DBT) value);
     }
 
-    private static BasicType getBasicType(
-            ResultSetMetaData metaData, int jdbcIndex, BasicTypeToSqlType basicTypeToSqlType
+    private static ScalarType getScalarType(
+            ResultSetMetaData metaData, int jdbcIndex, ScalarTypeToSqlType scalarTypeToSqlType
     ) throws SQLException {
         int columnType = metaData.getColumnType(jdbcIndex);
         String columnTypeName = metaData.getColumnTypeName(jdbcIndex);
         String columnName = metaData.getColumnName(jdbcIndex);
 
         try {
-            return basicTypeToSqlType.toBasicType(
+            return scalarTypeToSqlType.toScalarType(
                     columnName,
                     columnType,
                     columnTypeName
             );
         } catch (ToroImplementationException ex) {
             if (columnTypeName.equals("bytea")) {
-                return BasicType.TWELVE_BYTES;
+                return ScalarType.MONGO_OBJECT_ID;
             }
             else {
                 throw ex;
@@ -150,12 +152,12 @@ public class SqlWindow implements Iterator<ValueRow<Value>> {
         }
     }
 
-    private static class WindowValueRow implements ValueRow<Value> {
+    private static class WindowValueRow implements ValueRow<ScalarValue<?>> {
 
         private final String[] columns;
-        private final Value[] values;
+        private final ScalarValue<?>[] values;
 
-        private WindowValueRow(@Nonnull String[] columns, @Nonnull Value[] values) {
+        private WindowValueRow(@Nonnull String[] columns, @Nonnull ScalarValue[] values) {
             this.columns = columns;
             this.values = values;
 
@@ -163,12 +165,12 @@ public class SqlWindow implements Iterator<ValueRow<Value>> {
         }
 
         @Override
-        public Set<Map.Entry<String, Value>> entrySet() {
-            HashSet<Map.Entry<String, Value>> result = new HashSet<>();
+        public Set<Map.Entry<String, ScalarValue<?>>> entrySet() {
+            HashSet<Map.Entry<String, ScalarValue<?>>> result = new HashSet<>();
             for (int i = 0; i < columns.length; i++) {
                 String column = columns[i];
-                Value value = values[i];
-                result.add(new SimpleEntry<>(column, value));
+                ScalarValue<?> value = values[i];
+                result.add(new SimpleEntry<String, ScalarValue<?>>(column, value));
             }
             return result;
         }
@@ -179,12 +181,12 @@ public class SqlWindow implements Iterator<ValueRow<Value>> {
         }
 
         @Override
-        public Set<Value> valueSet() {
+        public Set<ScalarValue<?>> valueSet() {
             return Sets.newHashSet(Iterators.forArray(values));
         }
 
         @Override
-        public Value get(String key) throws IllegalArgumentException {
+        public ScalarValue get(String key) throws IllegalArgumentException {
             int searchResult = -1;
             for (int i = 0; i < columns.length; i++) {
                 if (columns[i].equals(key)) {
@@ -198,10 +200,10 @@ public class SqlWindow implements Iterator<ValueRow<Value>> {
         }
 
         @Override
-        public void consume(ForEachConsumer<Value> consumer) {
+        public void consume(ForEachConsumer<ScalarValue<?>> consumer) {
             for (int i = 0; i < columns.length; i++) {
                 String column = columns[i];
-                Value value = values[i];
+                ScalarValue value = values[i];
 
                 consumer.consume(column, value);
             }

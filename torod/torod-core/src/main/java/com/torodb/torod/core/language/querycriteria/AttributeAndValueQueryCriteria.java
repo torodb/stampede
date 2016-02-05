@@ -21,7 +21,7 @@
 package com.torodb.torod.core.language.querycriteria;
 
 import com.torodb.torod.core.language.AttributeReference;
-import com.torodb.torod.core.subdocument.values.Value;
+import com.torodb.torod.core.subdocument.values.ScalarValue;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import javax.annotation.Nonnull;
 
@@ -31,15 +31,15 @@ import javax.annotation.Nonnull;
 public abstract class AttributeAndValueQueryCriteria extends AttributeQueryCriteria {
     private static final long serialVersionUID = 1L;
 
-    private final Value<?> value;
+    private final ScalarValue<?> value;
 
-    public AttributeAndValueQueryCriteria(@Nonnull AttributeReference attributeReference, @Nonnull Value<?> value) {
+    public AttributeAndValueQueryCriteria(@Nonnull AttributeReference attributeReference, @Nonnull ScalarValue<?> value) {
         super(attributeReference);
         this.value = value;
     }
 
     @Nonnull
-    public Value getValue() {
+    public ScalarValue getValue() {
         return value;
     }
 

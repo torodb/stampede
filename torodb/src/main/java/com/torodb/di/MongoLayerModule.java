@@ -20,18 +20,22 @@
 
 package com.torodb.di;
 
-import javax.annotation.Nonnull;
-
-import com.eightkdata.mongowp.mongoserver.api.QueryCommandProcessor;
-import com.eightkdata.mongowp.mongoserver.api.safe.CommandsExecutor;
-import com.eightkdata.mongowp.mongoserver.api.safe.CommandsLibrary;
-import com.eightkdata.mongowp.mongoserver.api.safe.ConnectionIdFactory;
-import com.eightkdata.mongowp.mongoserver.api.safe.ErrorHandler;
-import com.eightkdata.mongowp.mongoserver.api.safe.RequestProcessorAdaptor;
-import com.eightkdata.mongowp.mongoserver.api.safe.SafeRequestProcessor;
-import com.eightkdata.mongowp.mongoserver.api.safe.impl.AtomicConnectionIdFactory;
-import com.eightkdata.mongowp.mongoserver.callback.RequestProcessor;
-import com.eightkdata.mongowp.mongoserver.pojos.OpTime;
+import com.eightkdata.mongowp.OpTime;
+import com.eightkdata.mongowp.bson.netty.NettyStringReader;
+import com.eightkdata.mongowp.bson.netty.PooledNettyStringReader;
+import com.eightkdata.mongowp.bson.netty.pool.OnlyLikelyStringPoolPolicy;
+import com.eightkdata.mongowp.bson.netty.pool.ShortStringPoolPolicy;
+import com.eightkdata.mongowp.bson.netty.pool.StringPool;
+import com.eightkdata.mongowp.bson.netty.pool.WeakMapStringPool;
+import com.eightkdata.mongowp.client.core.MongoClient;
+import com.eightkdata.mongowp.client.core.UnreachableMongoServerException;
+import com.eightkdata.mongowp.client.wrapper.MongoClientWrapper;
+import com.eightkdata.mongowp.server.api.*;
+import com.eightkdata.mongowp.server.api.deprecated.QueryCommandProcessor;
+import com.eightkdata.mongowp.server.api.impl.AtomicConnectionIdFactory;
+import com.eightkdata.mongowp.server.callback.RequestProcessor;
+import com.eightkdata.mongowp.server.wp.DefaultRequestIdGenerator;
+import com.eightkdata.mongowp.server.wp.RequestIdGenerator;
 import com.google.common.annotations.Beta;
 import com.google.common.net.HostAndPort;
 import com.google.inject.AbstractModule;
@@ -71,6 +75,7 @@ import com.torodb.torod.mongodb.unsafe.ToroQueryCommandProcessor;
 import com.torodb.torod.mongodb.utils.DBCloner;
 import com.torodb.torod.mongodb.utils.MongoClientProvider;
 import com.torodb.torod.mongodb.utils.OplogOperationApplier;
+import javax.annotation.Nonnull;
 
 /**
  *
@@ -79,11 +84,6 @@ public class MongoLayerModule extends AbstractModule {
 
     private final HostAndPort syncSource;
 
-    /**
-     *
-     * @param syncSource the sync source this node is going to replicate from or
-     *                   null if this node must run as primary
-     */
     public MongoLayerModule(Config config) {
     	if (config.getProtocol().getMongo().getReplication() != null &&
     			!config.getProtocol().getMongo().getReplication().isEmpty() &&
@@ -126,7 +126,8 @@ public class MongoLayerModule extends AbstractModule {
         bind(OplogOperationApplier.class);
         bind(LocalMongoClient.class);
         bind(DBCloner.class);
-        bind(MongoClientProvider.class);
+        bind(MongoClientProvider.class)
+                .toInstance(new WrapperMongoClientProvider());
 
         bind(ReplCoordinator.class);
 
@@ -136,6 +137,29 @@ public class MongoLayerModule extends AbstractModule {
         bind(ReplCoordinatorOwnerCallback.class).to(Shutdowner.class);
 
         bind(OplogManager.class);
+
+        bind(StringPool.class)
+//                .toInstance(new InternStringPool(
+//                        OnlyLikelyStringPoolPolicy.getInstance()
+//                                .or(new ShortStringPoolPolicy(5))
+//                ));
+
+//                .toInstance(new GuavaStringPool(
+//                        OnlyLikelyStringPoolPolicy.getInstance()
+//                                .or(new ShortStringPoolPolicy(5)),
+//                        CacheBuilder.newBuilder().maximumSize(100_000)
+//                ));
+                .toInstance(new WeakMapStringPool(
+                        OnlyLikelyStringPoolPolicy.getInstance()
+                                .or(new ShortStringPoolPolicy(5))
+                ));
+
+        bind(NettyStringReader.class)
+                .to(PooledNettyStringReader.class)
+                .in(Singleton.class);
+        bind(RequestIdGenerator.class)
+                .to(DefaultRequestIdGenerator.class)
+                .asEagerSingleton();
     }
 
     @Provides @Singleton
@@ -218,4 +242,12 @@ public class MongoLayerModule extends AbstractModule {
 
     }
 
+    private static class WrapperMongoClientProvider implements MongoClientProvider {
+
+        @Override
+        public MongoClient getClient(HostAndPort hostAndPort) throws UnreachableMongoServerException {
+            return new MongoClientWrapper(hostAndPort);
+        }
+
+    }
 }

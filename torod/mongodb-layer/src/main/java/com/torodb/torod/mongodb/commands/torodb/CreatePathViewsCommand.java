@@ -1,15 +1,16 @@
 
 package com.torodb.torod.mongodb.commands.torodb;
 
-import com.eightkdata.mongowp.mongoserver.api.safe.MarshalException;
-import com.eightkdata.mongowp.mongoserver.api.safe.impl.AbstractCommand;
-import com.eightkdata.mongowp.mongoserver.api.safe.impl.CollectionCommandArgument;
-import com.eightkdata.mongowp.mongoserver.api.safe.tools.bson.BsonDocumentBuilder;
-import com.eightkdata.mongowp.mongoserver.api.safe.tools.bson.BsonField;
-import com.eightkdata.mongowp.mongoserver.api.safe.tools.bson.BsonReaderTool;
-import com.eightkdata.mongowp.mongoserver.protocol.exceptions.*;
+import com.eightkdata.mongowp.bson.BsonDocument;
+import com.eightkdata.mongowp.exceptions.*;
+import com.eightkdata.mongowp.fields.IntField;
+import com.eightkdata.mongowp.fields.StringField;
+import com.eightkdata.mongowp.server.api.MarshalException;
+import com.eightkdata.mongowp.server.api.impl.AbstractCommand;
+import com.eightkdata.mongowp.server.api.impl.CollectionCommandArgument;
+import com.eightkdata.mongowp.utils.BsonDocumentBuilder;
+import com.eightkdata.mongowp.utils.BsonReaderTool;
 import com.google.common.annotations.Beta;
-import org.bson.BsonDocument;
 
 /**
  * A backend dependient command that creates easy to use SQL views on the
@@ -18,8 +19,8 @@ import org.bson.BsonDocument;
 @Beta
 public class CreatePathViewsCommand extends AbstractCommand<CollectionCommandArgument, Integer> {
 
-    private static final BsonField<Integer> RESULT_FIELD = BsonField.create("viewsCounter");
-    private static final BsonField<String> BETA_FIELD = BsonField.create("betaCmd");
+    private static final IntField RESULT_FIELD = new IntField("viewsCounter");
+    private static final StringField BETA_FIELD = new StringField("betaCmd");
     public static final CreatePathViewsCommand INSTANCE = new CreatePathViewsCommand();
 
     private CreatePathViewsCommand() {

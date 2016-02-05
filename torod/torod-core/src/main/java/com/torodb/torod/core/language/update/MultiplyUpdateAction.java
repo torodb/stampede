@@ -22,26 +22,26 @@ package com.torodb.torod.core.language.update;
 
 import com.torodb.torod.core.language.AttributeReference;
 import com.torodb.torod.core.language.update.utils.UpdateActionVisitor;
-import com.torodb.kvdocument.values.NumericDocValue;
 import java.util.Collection;
+import com.torodb.kvdocument.values.KVNumeric;
 
 /**
  *
  */
 public class MultiplyUpdateAction extends SingleFieldUpdateAction {
     
-    private final NumericDocValue multiplier;
+    private final KVNumeric multiplier;
 
     public MultiplyUpdateAction(
             Collection<AttributeReference> modifiedField,
-            NumericDocValue multiplier
+            KVNumeric multiplier
     ) {
         
         super(modifiedField);
         this.multiplier = multiplier;
     }
 
-    public NumericDocValue getMultiplier() {
+    public KVNumeric getMultiplier() {
         return multiplier;
     }
 

@@ -23,7 +23,7 @@ package com.torodb.torod.core.connection;
 import com.google.common.annotations.Beta;
 import com.google.common.collect.FluentIterable;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.torodb.kvdocument.values.DocValue;
+import com.torodb.kvdocument.values.KVValue;
 import com.torodb.torod.core.ValueRow;
 import com.torodb.torod.core.WriteFailMode;
 import com.torodb.torod.core.exceptions.ExistentIndexException;
@@ -138,5 +138,5 @@ public interface ToroTransaction extends AutoCloseable {
     public ListenableFuture<Void> dropPathViews(String collection) throws UnsupportedOperationException;
 
     @Beta
-    public ListenableFuture<Iterator<ValueRow<DocValue>>> sqlSelect(String sqlQuery) throws UnsupportedOperationException, UserToroException;
+    public ListenableFuture<Iterator<ValueRow<KVValue<?>>>> sqlSelect(String sqlQuery) throws UnsupportedOperationException, UserToroException;
 }

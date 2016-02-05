@@ -1,11 +1,11 @@
 
 package com.torodb.torod.mongodb.translator;
 
+import com.eightkdata.mongowp.bson.BsonDocument;
 import com.google.common.base.Function;
-import com.torodb.kvdocument.conversion.mongo.MongoValueConverter;
+import com.torodb.kvdocument.conversion.mongowp.MongoWPConverter;
 import com.torodb.torod.core.subdocument.ToroDocument;
 import javax.annotation.concurrent.Immutable;
-import org.bson.BsonDocument;
 
 /**
  *
@@ -23,7 +23,7 @@ public class ToroToBsonTranslatorFunction implements Function<ToroDocument, Bson
         if (input == null) {
             return null;
         }
-        return MongoValueConverter.translateObject(input.getRoot());
+        return (BsonDocument) MongoWPConverter.translate(input.getRoot());
     }
 
 }

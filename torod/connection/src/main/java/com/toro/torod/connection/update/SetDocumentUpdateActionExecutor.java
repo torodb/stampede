@@ -20,9 +20,8 @@
 
 package com.toro.torod.connection.update;
 
-import com.torodb.kvdocument.values.DocValue;
-import com.torodb.kvdocument.values.ObjectValue;
-import java.util.Map;
+import com.torodb.kvdocument.values.KVDocument;
+import com.torodb.kvdocument.values.KVDocument.DocEntry;
 
 /**
  *
@@ -30,12 +29,12 @@ import java.util.Map;
 public class SetDocumentUpdateActionExecutor {
     
     static boolean set(
-            ObjectValue.MutableBuilder builder,
-            ObjectValue newValue
+            KVDocumentBuilder builder,
+            KVDocument newValue
     ) {
         builder.clear();
-        for (Map.Entry<String, DocValue> attribute : newValue.getAttributes()) {
-            builder.putValue(attribute.getKey(), attribute.getValue());
+        for (DocEntry<?> entry : newValue) {
+            builder.putValue(entry.getKey(), entry.getValue());
         }
         
         return true;

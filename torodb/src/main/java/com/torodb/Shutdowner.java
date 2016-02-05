@@ -20,7 +20,7 @@
 
 package com.torodb;
 
-import com.eightkdata.mongowp.mongoserver.MongoServer;
+import com.eightkdata.mongowp.server.wp.NettyMongoServer;
 import com.google.inject.Provider;
 import com.torodb.torod.core.Torod;
 import com.torodb.torod.core.backend.DbBackend;
@@ -40,12 +40,12 @@ public class Shutdowner implements ReplCoordinatorOwnerCallback {
             = LoggerFactory.getLogger(Shutdowner.class);
     private final Provider<DbBackend> dbBackend;
     private final Provider<Torod> torod;
-    private final Provider<MongoServer> server;
+    private final Provider<NettyMongoServer> server;
     private final Provider<ReplCoordinator> replCoord;
     private final Provider<ExecutorService> executorService;
 
     @Inject
-    public Shutdowner(Provider<DbBackend> dbBackend, Provider<Torod> torod, Provider<MongoServer> server, Provider<ReplCoordinator> replCoord, Provider<ExecutorService> executorService) {
+    public Shutdowner(Provider<DbBackend> dbBackend, Provider<Torod> torod, Provider<NettyMongoServer> server, Provider<ReplCoordinator> replCoord, Provider<ExecutorService> executorService) {
         this.dbBackend = dbBackend;
         this.torod = torod;
         this.server = server;
@@ -54,7 +54,7 @@ public class Shutdowner implements ReplCoordinatorOwnerCallback {
     }
 
     public void shutdown() {
-        server.get().stop();
+        server.get().stopAsync().awaitTerminated();
         torod.get().shutdown();
         dbBackend.get().shutdown();
         ReplCoordinator replCoordinatorInstance = replCoord.get();
@@ -66,7 +66,7 @@ public class Shutdowner implements ReplCoordinatorOwnerCallback {
 
     @Override
     public void replCoordStopped() {
-        server.get().stop();
+        server.get().stopAsync().awaitTerminated();
         torod.get().shutdown();
         dbBackend.get().shutdown();
         

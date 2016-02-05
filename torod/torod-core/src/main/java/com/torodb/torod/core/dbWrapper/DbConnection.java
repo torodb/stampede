@@ -33,7 +33,7 @@ import com.torodb.torod.core.pojos.NamedToroIndex;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.core.subdocument.SubDocType;
 import com.torodb.torod.core.subdocument.SubDocument;
-import com.torodb.torod.core.subdocument.values.Value;
+import com.torodb.torod.core.subdocument.values.ScalarValue;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -179,7 +179,7 @@ public interface DbConnection extends AutoCloseable {
     @Beta
     public void dropPathViews(String collection) throws IllegalPathViewException;
 
-    public Iterator<ValueRow<Value>> select(String query) throws UserToroException;
+    public Iterator<ValueRow<ScalarValue<?>>> select(String query) throws UserToroException;
 
     @Immutable
     public static class Metainfo {

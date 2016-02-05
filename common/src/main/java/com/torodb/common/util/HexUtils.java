@@ -21,10 +21,11 @@
 
 package com.torodb.common.util;
 
+import com.google.common.primitives.UnsignedBytes;
 import java.util.Collection;
 import javax.annotation.Nonnull;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.*;
 
 /**
  *
@@ -73,7 +74,7 @@ public class HexUtils {
         return new String(chars);
     }
 
-    public static void bytes2Hex(@Nonnull Iterable<Byte> bytes, StringBuilder output) {
+    public static void bytes2Hex(@Nonnull byte[] bytes, StringBuilder output) {
         checkNotNull(bytes, "bytes");
 
         int index;
@@ -84,4 +85,21 @@ public class HexUtils {
         }
     }
 
+    public static byte[] hex2Bytes(@Nonnull String value) {
+        checkNotNull(value);
+        checkArgument(value.length() % 2 == 0, "A string with a even lenght was expected");
+
+        int r = 0;
+        byte[] result = new byte[value.length() / 2];
+        for (int i = 0; i < value.length(); i += 2) {
+            assert r == i / 2;
+            
+            String substring = value.substring(i, i+2);
+            assert substring.length() == 2;
+            result[r] = UnsignedBytes.parseUnsignedByte(substring, 16);
+
+            r++;
+        }
+        return result;
+    }
 }

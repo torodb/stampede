@@ -1,17 +1,17 @@
 
 package com.torodb.torod.mongodb.repl;
 
+import com.eightkdata.mongowp.OpTime;
+import com.eightkdata.mongowp.WriteConcern;
+import com.eightkdata.mongowp.bson.BsonObjectId;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.GetLastErrorCommand.WriteConcernEnforcementResult;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.MemberState;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.ReplicaSetConfig;
-import com.eightkdata.mongowp.mongoserver.pojos.OpTime;
-import com.mongodb.WriteConcern;
 import com.torodb.torod.mongodb.annotations.Locked;
 import java.io.Closeable;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
-import org.bson.types.ObjectId;
 
 /**
  *
@@ -38,7 +38,7 @@ public interface ReplInterface {
      * <p>
      * @return
      */
-    public ObjectId getRID();
+    public BsonObjectId getRID();
 
     /**
      * Returns the id that identifies this node on the current
@@ -102,7 +102,7 @@ public interface ReplInterface {
          * @return
          */
         @Nullable
-        public ObjectId getOurElectionId();
+        public BsonObjectId getOurElectionId();
 
     }
 

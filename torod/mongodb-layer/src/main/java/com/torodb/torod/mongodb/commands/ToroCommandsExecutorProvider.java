@@ -1,11 +1,11 @@
 
 package com.torodb.torod.mongodb.commands;
 
-import com.eightkdata.mongowp.mongoserver.api.QueryCommandProcessor;
-import com.eightkdata.mongowp.mongoserver.api.safe.CommandsExecutor;
-import com.eightkdata.mongowp.mongoserver.api.safe.CommandsLibrary;
-import com.eightkdata.mongowp.mongoserver.api.safe.impl.GroupedCommandsExecutor;
-import com.eightkdata.mongowp.mongoserver.api.safe.impl.MapBasedCommandsExecutor;
+import com.eightkdata.mongowp.server.api.CommandsExecutor;
+import com.eightkdata.mongowp.server.api.CommandsLibrary;
+import com.eightkdata.mongowp.server.api.deprecated.QueryCommandProcessor;
+import com.eightkdata.mongowp.server.api.impl.GroupedCommandsExecutor;
+import com.eightkdata.mongowp.server.api.impl.MapBasedCommandsExecutor;
 import com.google.common.collect.ImmutableList;
 import com.torodb.torod.mongodb.unsafe.UnsafeCommandsExecutorAdaptor;
 import javax.inject.Inject;

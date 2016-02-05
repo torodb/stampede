@@ -21,13 +21,13 @@
 package com.torodb.torod.db.backends.converters.json;
 
 import com.torodb.torod.db.backends.converters.ValueConverter;
-import com.torodb.torod.core.subdocument.values.BooleanValue;
+import com.torodb.torod.core.subdocument.values.ScalarBoolean;
 
 /**
  *
  */
 public class BooleanValueToJsonConverter implements
-        ValueConverter<Boolean, BooleanValue> {
+        ValueConverter<Boolean, ScalarBoolean> {
 
     @Override
     public Class<? extends Boolean> getJsonClass() {
@@ -35,18 +35,18 @@ public class BooleanValueToJsonConverter implements
     }
 
     @Override
-    public Class<? extends BooleanValue> getValueClass() {
-        return BooleanValue.class;
+    public Class<? extends ScalarBoolean> getValueClass() {
+        return ScalarBoolean.class;
     }
 
     @Override
-    public Boolean toJson(BooleanValue value) {
+    public Boolean toJson(ScalarBoolean value) {
         return value.getValue();
     }
 
     @Override
-    public BooleanValue toValue(Boolean value) {
-        return BooleanValue.from(value);
+    public ScalarBoolean toValue(Boolean value) {
+        return ScalarBoolean.from(value);
     }
     
 }

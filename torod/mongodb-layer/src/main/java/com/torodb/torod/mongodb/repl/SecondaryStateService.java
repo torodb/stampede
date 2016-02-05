@@ -1,10 +1,10 @@
 
 package com.torodb.torod.mongodb.repl;
 
+import com.eightkdata.mongowp.OpTime;
+import com.eightkdata.mongowp.exceptions.MongoException;
+import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.MemberState;
-import com.eightkdata.mongowp.mongoserver.api.safe.oplog.OplogOperation;
-import com.eightkdata.mongowp.mongoserver.pojos.OpTime;
-import com.eightkdata.mongowp.mongoserver.protocol.exceptions.MongoException;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.torodb.torod.mongodb.impl.LocalMongoClient;
 import com.torodb.torod.mongodb.repl.OplogManager.OplogManagerPersistException;
@@ -95,8 +95,7 @@ class SecondaryStateService extends AbstractIdleService {
         fetcherIsPaused = false;
         pauseRequested = false;
 
-        OplogManager.ReadTransaction oplogReadTrans = oplogManager.createReadTransaction();
-        try {
+        try (OplogManager.ReadTransaction oplogReadTrans = oplogManager.createReadTransaction()) {
             long lastAppliedHash = oplogReadTrans.getLastAppliedHash();
             OpTime lastAppliedOptime = oplogReadTrans.getLastAppliedOptime();
 
@@ -120,8 +119,6 @@ class SecondaryStateService extends AbstractIdleService {
 
             fetcherService.awaitRunning();
             applierService.awaitRunning();
-        } finally {
-            oplogReadTrans.close();
         }
         LOGGER.info("Started SECONDARY service");
     }

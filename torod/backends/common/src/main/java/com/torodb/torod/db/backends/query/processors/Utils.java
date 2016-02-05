@@ -20,14 +20,14 @@
 
 package com.torodb.torod.db.backends.query.processors;
 
+import com.torodb.torod.core.language.AttributeReference;
 import com.torodb.torod.core.language.querycriteria.AndQueryCriteria;
 import com.torodb.torod.core.language.querycriteria.AttributeAndValueQueryCriteria;
-import com.torodb.torod.core.language.AttributeReference;
 import com.torodb.torod.core.language.querycriteria.QueryCriteria;
 import com.torodb.torod.core.language.querycriteria.TypeIsQueryCriteria;
 import com.torodb.torod.core.language.querycriteria.utils.ConjunctionBuilder;
 import com.torodb.torod.core.language.querycriteria.utils.DisjunctionBuilder;
-import com.torodb.torod.core.subdocument.BasicType;
+import com.torodb.torod.core.subdocument.ScalarType;
 import java.util.Collection;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -46,10 +46,10 @@ class Utils {
     }
 
     @Nullable
-    static QueryCriteria getStructureQueryCriteria(AttributeReference attRef, BasicType expectedType) {
+    static QueryCriteria getStructureQueryCriteria(AttributeReference attRef, ScalarType expectedType) {
         QueryCriteria refQuery = getStructureQueryCriteria(attRef);
         
-        if (isTypeKnownInStructure(attRef) || expectedType.equals(BasicType.ARRAY)) {
+        if (isTypeKnownInStructure(attRef) || expectedType.equals(ScalarType.ARRAY)) {
             QueryCriteria typeQuery = new TypeIsQueryCriteria(attRef, expectedType);
             if (refQuery != null) {
                 return new AndQueryCriteria(refQuery, typeQuery);
@@ -66,7 +66,7 @@ class Utils {
      * <p>
      * If the given attribute has an unknown type (see 
      * {@linkplain #isTypeKnownInStructure(com.torodb.torod.core.querycriteria.AttributeReference) }), null is returned
-     * (even if some of the given types, like {@linkplain BasicType#ARRAY} could be evaluated).
+     * (even if some of the given types, like {@linkplain ScalarType#ARRAY} could be evaluated).
      * <p>
      * @param attRef
      * @param expectedTypes
@@ -74,15 +74,15 @@ class Utils {
      *         if it cannot be completely evaluated.
      */
     @Nullable
-    static QueryCriteria getStructureQueryCriteria(AttributeReference attRef, Collection<BasicType> expectedTypes) {
+    static QueryCriteria getStructureQueryCriteria(AttributeReference attRef, Collection<ScalarType> expectedTypes) {
         QueryCriteria refQuery = getStructureQueryCriteria(attRef);
 
         if (isTypeKnownInStructure(attRef) && !expectedTypes.isEmpty()) {
             QueryCriteria typeQuery;
 
             DisjunctionBuilder disjunctionBuilder = new DisjunctionBuilder();
-            for (BasicType basicType : expectedTypes) {
-                disjunctionBuilder.add(new TypeIsQueryCriteria(attRef, basicType));
+            for (ScalarType scalarType : expectedTypes) {
+                disjunctionBuilder.add(new TypeIsQueryCriteria(attRef, scalarType));
             }
             typeQuery = disjunctionBuilder.build();
 
@@ -111,7 +111,7 @@ class Utils {
             if (key instanceof AttributeReference.ArrayKey && i > 0) {
                 //if the ref starts by an array key, it does no give us new information
                 conjunctionBuilder.add(
-                        new TypeIsQueryCriteria(attRef.subReference(0, i), BasicType.ARRAY)
+                        new TypeIsQueryCriteria(attRef.subReference(0, i), ScalarType.ARRAY)
                 );
                 restrictionsFound = true;
             }

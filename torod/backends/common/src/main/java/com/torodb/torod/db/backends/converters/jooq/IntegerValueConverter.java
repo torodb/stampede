@@ -21,8 +21,8 @@
 
 package com.torodb.torod.db.backends.converters.jooq;
 
-import com.torodb.torod.core.subdocument.BasicType;
-import com.torodb.torod.core.subdocument.values.IntegerValue;
+import com.torodb.torod.core.subdocument.ScalarType;
+import com.torodb.torod.core.subdocument.values.ScalarInteger;
 import org.jooq.DataType;
 import org.jooq.impl.SQLDataType;
 
@@ -30,7 +30,7 @@ import org.jooq.impl.SQLDataType;
 /**
  *
  */
-public class IntegerValueConverter implements SubdocValueConverter<Integer, IntegerValue>{
+public class IntegerValueConverter implements SubdocValueConverter<Integer, ScalarInteger>{
     private static final long serialVersionUID = 1L;
 
     @Override
@@ -39,17 +39,17 @@ public class IntegerValueConverter implements SubdocValueConverter<Integer, Inte
     }
 
     @Override
-    public BasicType getErasuredType() {
-        return BasicType.INTEGER;
+    public ScalarType getErasuredType() {
+        return ScalarType.INTEGER;
     }
 
     @Override
-    public IntegerValue from(Integer databaseObject) {
-        return new IntegerValue(databaseObject);
+    public ScalarInteger from(Integer databaseObject) {
+        return ScalarInteger.of(databaseObject);
     }
 
     @Override
-    public Integer to(IntegerValue userObject) {
+    public Integer to(ScalarInteger userObject) {
         return userObject.getValue();
     }
 
@@ -59,8 +59,8 @@ public class IntegerValueConverter implements SubdocValueConverter<Integer, Inte
     }
 
     @Override
-    public Class<IntegerValue> toType() {
-        return IntegerValue.class;
+    public Class<ScalarInteger> toType() {
+        return ScalarInteger.class;
     }
     
 }

@@ -20,15 +20,19 @@
 
 package com.torodb.torod.db.backends.converters.json;
 
+import com.google.common.io.ByteSource;
+import com.torodb.common.util.HexUtils;
+import com.torodb.kvdocument.values.KVBinary.KVBinarySubtype;
 import com.torodb.torod.core.exceptions.ToroImplementationException;
-import com.torodb.torod.core.subdocument.values.BinaryValue;
+import com.torodb.torod.core.subdocument.values.ScalarBinary;
+import com.torodb.torod.core.subdocument.values.heap.ByteSourceScalarBinary;
 import com.torodb.torod.db.backends.converters.ValueConverter;
 
 /**
  *
  */
 public class BinaryValueToJsonConverter implements
-        ValueConverter<String, BinaryValue> {
+        ValueConverter<String, ScalarBinary> {
 
     @Override
     public Class<? extends String> getJsonClass() {
@@ -36,23 +40,27 @@ public class BinaryValueToJsonConverter implements
     }
 
     @Override
-    public Class<? extends BinaryValue> getValueClass() {
-        return BinaryValue.class;
+    public Class<? extends ScalarBinary> getValueClass() {
+        return ScalarBinary.class;
     }
 
     @Override
-    public String toJson(BinaryValue value) {
+    public String toJson(ScalarBinary value) {
         return "\\x" + value.toString();
     }
 
     @Override
-    public BinaryValue toValue(String value) {
+    public ScalarBinary toValue(String value) {
         if (!value.startsWith("\\x")) {
             throw new ToroImplementationException(
                     "A bytea in escape format was expected, but " + value
                     + " was found"
             );
         }
-        return BinaryValue.parse(value.substring(2));
+        return new ByteSourceScalarBinary(
+                KVBinarySubtype.MONGO_GENERIC,
+                (byte) 0,
+                ByteSource.wrap(HexUtils.hex2Bytes(value.substring(2)))
+        );
     }
 }

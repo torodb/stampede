@@ -1,13 +1,16 @@
 
 package com.torodb.torod.mongodb.srp;
 
+import com.eightkdata.mongowp.server.api.CommandReply;
+import com.eightkdata.mongowp.server.api.Command;
+import com.eightkdata.mongowp.server.api.CommandRequest;
+import com.eightkdata.mongowp.server.api.Request;
+import com.eightkdata.mongowp.exceptions.*;
 import com.eightkdata.mongowp.messages.request.*;
 import com.eightkdata.mongowp.messages.response.ReplyMessage;
-import com.eightkdata.mongowp.mongoserver.api.safe.*;
-import com.eightkdata.mongowp.mongoserver.api.safe.impl.UpdateOpResult;
-import com.eightkdata.mongowp.mongoserver.api.safe.pojos.QueryRequest;
-import com.eightkdata.mongowp.mongoserver.callback.WriteOpResult;
-import com.eightkdata.mongowp.mongoserver.protocol.exceptions.*;
+import com.eightkdata.mongowp.server.api.impl.UpdateOpResult;
+import com.eightkdata.mongowp.server.api.pojos.QueryRequest;
+import com.eightkdata.mongowp.server.callback.WriteOpResult;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.torodb.torod.mongodb.repl.ReplCoordinator;
 import com.torodb.torod.mongodb.repl.ReplInterface.MemberStateInterface;
@@ -40,16 +43,13 @@ public final class ReplicationCheckSafeRequestProcessor extends DecoratorSafeReq
     @Override
     public ReplyMessage getMore(Request request, GetMoreMessage getMoreMessage)
             throws MongoException {
-        MemberStateInterface replState = replCoord.freezeMemberState(false);
-        try {
+        try (MemberStateInterface replState = replCoord.freezeMemberState(false)) {
             if (!replState.canNodeAcceptReads(getMoreMessage.getDatabase())) {
                 LOGGER.debug("ReplCheck: GetMore on {} refused", getMoreMessage.getDatabase());
                 throw new NotMasterOrSecondaryException();
             }
             LOGGER.trace("ReplCheck: GetMore on {} accepted", getMoreMessage.getDatabase());
             return getDelegate().getMore(request, getMoreMessage);
-        } finally {
-            replState.close();
         }
     }
 
@@ -65,8 +65,8 @@ public final class ReplicationCheckSafeRequestProcessor extends DecoratorSafeReq
             Command<? super Arg, ? super Result> command,
             CommandRequest<Arg> request)
             throws MongoException, CommandNotSupportedException {
-        MemberStateInterface replState = replCoord.freezeMemberState(command.canChangeReplicationState());
-        try {
+        try (MemberStateInterface replState
+                = replCoord.freezeMemberState(command.canChangeReplicationState())) {
             switch (replState.getMemberState()) {
                 case RS_PRIMARY: {
                     break;
@@ -94,48 +94,39 @@ public final class ReplicationCheckSafeRequestProcessor extends DecoratorSafeReq
             }
             LOGGER.trace("ReplCheck: Command '{}' accepted", command.getCommandName());
             return getDelegate().execute(command, request);
-        } finally {
-            replState.close();
         }
     }
 
     @Override
     public ReplyMessage query(Request request, QueryRequest queryMessage) throws
             MongoException {
-        MemberStateInterface replState = replCoord.freezeMemberState(false);
-        try {
+        try (MemberStateInterface replState = replCoord.freezeMemberState(false)) {
             if (!replState.canNodeAcceptReads(request.getDatabase())) {
                 LOGGER.debug("ReplCheck: Query on {} refused", request.getDatabase());
                 throw new NotMasterOrSecondaryException();
             }
             LOGGER.trace("ReplCheck: Query on {} accepted", request.getDatabase());
             return getDelegate().query(request, queryMessage);
-        } finally {
-            replState.close();
         }
     }
 
     @Override
     public ListenableFuture<? extends WriteOpResult> insert(Request request, InsertMessage insertMessage)
             throws MongoException {
-        MemberStateInterface replState = replCoord.freezeMemberState(false);
-        try {
+        try (MemberStateInterface replState = replCoord.freezeMemberState(false)) {
             if (!replState.canNodeAcceptWrites(request.getDatabase())) {
                 LOGGER.debug("ReplCheck: Insert on {} refused", request.getDatabase());
                 throw new NotMasterException();
             }
             LOGGER.trace("ReplCheck: Insert on {} accepted", request.getDatabase());
             return getDelegate().insert(request, insertMessage);
-        } finally {
-            replState.close();
         }
     }
 
     @Override
     public ListenableFuture<? extends UpdateOpResult> update(Request request, UpdateMessage deleteMessage)
             throws MongoException {
-        MemberStateInterface replState = replCoord.freezeMemberState(false);
-        try {
+        try (MemberStateInterface replState = replCoord.freezeMemberState(false)) {
             if (!replState.canNodeAcceptWrites(request.getDatabase())) {
                 LOGGER.debug("ReplCheck: Update on {} refused", request.getDatabase());
                 throw new NotMasterException();
@@ -143,16 +134,13 @@ public final class ReplicationCheckSafeRequestProcessor extends DecoratorSafeReq
 
             LOGGER.trace("ReplCheck: Update on {} accepted", request.getDatabase());
             return getDelegate().update(request, deleteMessage);
-        } finally {
-            replState.close();
         }
     }
 
     @Override
     public ListenableFuture<? extends WriteOpResult> delete(Request request, DeleteMessage deleteMessage)
             throws MongoException {
-        MemberStateInterface replState = replCoord.freezeMemberState(false);
-        try {
+        try (MemberStateInterface replState = replCoord.freezeMemberState(false)) {
             if (!replState.canNodeAcceptWrites(request.getDatabase())) {
                 LOGGER.debug("ReplCheck: Delete on {} refused", request.getDatabase());
                 throw new NotMasterException();
@@ -160,8 +148,6 @@ public final class ReplicationCheckSafeRequestProcessor extends DecoratorSafeReq
 
             LOGGER.trace("ReplCheck: Delete on {} accepted", request.getDatabase());
             return getDelegate().delete(request, deleteMessage);
-        } finally {
-            replState.close();
         }
     }
 }

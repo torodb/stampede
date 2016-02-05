@@ -1,6 +1,7 @@
 
 package com.torodb.torod.mongodb.exp.modifiers;
 
+import com.eightkdata.mongowp.bson.BsonDocument;
 import com.google.common.collect.ClassToInstanceMap;
 import com.google.common.collect.ImmutableClassToInstanceMap;
 import com.google.common.collect.MutableClassToInstanceMap;
@@ -9,7 +10,6 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
-import org.bson.BsonDocument;
 
 /**
  *

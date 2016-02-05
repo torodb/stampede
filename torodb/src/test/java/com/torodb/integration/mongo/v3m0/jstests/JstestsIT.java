@@ -20,6 +20,9 @@
 
 package com.torodb.integration.mongo.v3m0.jstests;
 
+import com.google.common.base.Charsets;
+import com.torodb.config.model.Config;
+import com.torodb.integration.ToroRunnerClassRule;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.PrintStream;
@@ -27,16 +30,11 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.base.Charsets;
-import com.torodb.config.model.Config;
-import com.torodb.integration.ToroRunnerClassRule;
 
 public abstract class JstestsIT {
 
@@ -94,7 +92,7 @@ public abstract class JstestsIT {
 		InputStream inputStream = mongoProcess.getInputStream();
 		InputStream erroStream = mongoProcess.getErrorStream();
 		ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-		
+
 		int result = mongoProcess.waitFor();
 		
 		List<Throwable> uncaughtExceptions = toroRunnerClassRule.getUcaughtExceptions();

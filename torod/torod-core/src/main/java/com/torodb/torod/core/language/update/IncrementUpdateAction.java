@@ -22,25 +22,25 @@ package com.torodb.torod.core.language.update;
 
 import com.torodb.torod.core.language.AttributeReference;
 import com.torodb.torod.core.language.update.utils.UpdateActionVisitor;
-import com.torodb.kvdocument.values.NumericDocValue;
 import java.util.Collection;
+import com.torodb.kvdocument.values.KVNumeric;
 
 /**
  *
  */
 public class IncrementUpdateAction extends SingleFieldUpdateAction {
 
-    private final NumericDocValue delta;
+    private final KVNumeric delta;
 
     public IncrementUpdateAction(
             Collection<AttributeReference> modifiedField,
-            NumericDocValue delta) {
+            KVNumeric delta) {
         
         super(modifiedField);
         this.delta = delta;
     }
     
-    public NumericDocValue getDelta() {
+    public KVNumeric getDelta() {
         return delta;
     }
 

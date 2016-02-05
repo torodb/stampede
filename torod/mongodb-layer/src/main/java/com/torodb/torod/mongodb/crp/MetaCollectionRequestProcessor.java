@@ -1,21 +1,21 @@
 
 package com.torodb.torod.mongodb.crp;
 
+import com.eightkdata.mongowp.ErrorCode;
+import com.eightkdata.mongowp.bson.BsonDocument;
+import com.eightkdata.mongowp.exceptions.MongoException;
+import com.eightkdata.mongowp.exceptions.UnknownErrorException;
 import com.eightkdata.mongowp.messages.request.DeleteMessage;
 import com.eightkdata.mongowp.messages.request.InsertMessage;
 import com.eightkdata.mongowp.messages.request.UpdateMessage;
-import com.eightkdata.mongowp.messages.utils.SimpleIterableDocumentsProvider;
-import com.eightkdata.mongowp.mongoserver.api.safe.Request;
-import com.eightkdata.mongowp.mongoserver.api.safe.impl.DeleteOpResult;
-import com.eightkdata.mongowp.mongoserver.api.safe.impl.SimpleWriteOpResult;
-import com.eightkdata.mongowp.mongoserver.api.safe.impl.UpdateOpResult;
-import com.eightkdata.mongowp.mongoserver.api.safe.pojos.QueryRequest;
-import com.eightkdata.mongowp.mongoserver.callback.WriteOpResult;
-import com.eightkdata.mongowp.mongoserver.protocol.ErrorCode;
-import com.eightkdata.mongowp.mongoserver.protocol.exceptions.MongoException;
-import com.eightkdata.mongowp.mongoserver.protocol.exceptions.UnknownErrorException;
+import com.eightkdata.mongowp.messages.utils.IterableDocumentProvider;
+import com.eightkdata.mongowp.server.api.Request;
+import com.eightkdata.mongowp.server.api.impl.DeleteOpResult;
+import com.eightkdata.mongowp.server.api.impl.SimpleWriteOpResult;
+import com.eightkdata.mongowp.server.api.impl.UpdateOpResult;
+import com.eightkdata.mongowp.server.api.pojos.QueryRequest;
+import com.eightkdata.mongowp.server.callback.WriteOpResult;
 import com.google.common.base.Predicate;
-import com.google.common.collect.FluentIterable;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
@@ -33,7 +33,6 @@ import com.torodb.torod.mongodb.translator.ToroToBsonTranslatorFunction;
 import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nonnull;
-import org.bson.BsonDocument;
 
 /**
  *
@@ -59,7 +58,7 @@ public class MetaCollectionRequestProcessor implements CollectionRequestProcesso
 
         int requestId = req.getRequestId();
         if (!queryMessage.getDatabase().equals(metaCollection.getDatabaseName())) {
-            return new QueryResponse(requestId, FluentIterable.from(Collections.<BsonDocument>emptyList()));
+            return new QueryResponse(requestId, IterableDocumentProvider.of(Collections.<BsonDocument>emptyList()));
         }
         List<ToroDocument> allDocuments;
         try {
@@ -85,7 +84,7 @@ public class MetaCollectionRequestProcessor implements CollectionRequestProcesso
                 ToroToBsonTranslatorFunction.INSTANCE
         );
 
-        return new QueryResponse(0, new SimpleIterableDocumentsProvider<>(result));
+        return new QueryResponse(0, IterableDocumentProvider.of(result));
     }
 
     @Override

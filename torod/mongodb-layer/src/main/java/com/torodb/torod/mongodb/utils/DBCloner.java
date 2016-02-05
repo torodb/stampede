@@ -1,10 +1,15 @@
 package com.torodb.torod.mongodb.utils;
 
+import com.eightkdata.mongowp.WriteConcern;
+import com.eightkdata.mongowp.bson.BsonDocument;
 import com.eightkdata.mongowp.client.core.MongoClient;
 import com.eightkdata.mongowp.client.core.MongoConnection;
+import com.eightkdata.mongowp.exceptions.MongoException;
+import com.eightkdata.mongowp.exceptions.NotMasterException;
 import com.eightkdata.mongowp.messages.request.QueryMessage.QueryOption;
 import com.eightkdata.mongowp.messages.request.QueryMessage.QueryOptions;
-import com.eightkdata.mongowp.mongoserver.api.safe.impl.CollectionCommandArgument;
+import com.eightkdata.mongowp.server.api.impl.CollectionCommandArgument;
+import com.eightkdata.mongowp.server.api.pojos.MongoCursor;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.CreateCollectionCommand;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.CreateCollectionCommand.CreateCollectionArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.CreateIndexesCommand;
@@ -16,16 +21,11 @@ import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.InsertCommand.InsertResult;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.CollectionOptions;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.IndexOptions;
-import com.eightkdata.mongowp.mongoserver.api.safe.pojos.MongoCursor;
-import com.eightkdata.mongowp.mongoserver.protocol.exceptions.MongoException;
-import com.eightkdata.mongowp.mongoserver.protocol.exceptions.NotMasterException;
 import com.google.common.annotations.Beta;
 import com.google.common.base.Supplier;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.net.HostAndPort;
-import com.mongodb.MongoClientException;
-import com.mongodb.WriteConcern;
 import com.torodb.torod.core.annotations.DatabaseName;
 import com.torodb.torod.mongodb.impl.LocalMongoConnection;
 import java.util.EnumSet;
@@ -35,7 +35,6 @@ import java.util.Set;
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import org.bson.BsonDocument;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -105,7 +104,7 @@ public class DBCloner {
                     fromDb,
                     null
             );
-        } catch (MongoClientException ex) {
+        } catch (MongoException ex) {
             throw new CloningException(
                     "It was impossible to get information from the remote server",
                     ex
@@ -190,7 +189,7 @@ public class DBCloner {
                     true,
                     new InsertArgument.Builder(collection)
                         .addDocuments(docsToInsert)
-                        .setWriteConcern(WriteConcern.FSYNCED)
+                        .setWriteConcern(WriteConcern.fsync())
                         .setOrdered(true)
                         .build()
             );

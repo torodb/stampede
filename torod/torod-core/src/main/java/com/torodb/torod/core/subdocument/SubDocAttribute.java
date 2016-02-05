@@ -34,9 +34,9 @@ public class SubDocAttribute implements Serializable {
     @Nonnull
     private final String key;
     @Nonnull
-    private final BasicType type;
+    private final ScalarType type;
 
-    public SubDocAttribute(String key, BasicType type) {
+    public SubDocAttribute(String key, ScalarType type) {
         this.key = key;
         this.type = type;
     }
@@ -47,7 +47,7 @@ public class SubDocAttribute implements Serializable {
     }
 
     @Nonnull
-    public BasicType getType() {
+    public ScalarType getType() {
         return type;
     }
 

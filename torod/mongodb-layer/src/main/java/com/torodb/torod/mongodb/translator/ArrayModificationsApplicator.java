@@ -368,7 +368,7 @@ public class ArrayModificationsApplicator {
                 disjunctionBuilder.add(
                         new MatchPatternQueryCriteria(
                                 combinedAttRef,
-                                criteria.getValue()
+                                criteria.getPattern()
                         )
                 );
             }
@@ -623,7 +623,7 @@ public class ArrayModificationsApplicator {
 
         @Override
         public QueryCriteria visit(MatchPatternQueryCriteria criteria, List<AttributeReference.Key> arg) {
-            return new MatchPatternQueryCriteria(new AttributeReference(arg), criteria.getValue());
+            return new MatchPatternQueryCriteria(new AttributeReference(arg), criteria.getPattern());
         }
 
         @Override

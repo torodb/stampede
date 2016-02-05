@@ -2,7 +2,6 @@
 package com.torodb.torod.mongodb.meta;
 
 import com.google.common.collect.Lists;
-import com.torodb.kvdocument.values.ObjectValue;
 import com.torodb.torod.core.annotations.DatabaseName;
 import com.torodb.torod.core.connection.ToroConnection;
 import com.torodb.torod.core.connection.ToroTransaction;
@@ -16,6 +15,7 @@ import java.util.Collection;
 import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import com.torodb.kvdocument.values.KVDocument;
 
 /**
  *
@@ -41,9 +41,8 @@ public class NamespacesMetaCollection extends MetaCollection {
             for (String collection : allCollections) {
                 String collectionNamespace = databaseName + '.' + collection;
 
-                candidates.add(
-                        new KVToroDocument(
-                                new ObjectValue.SimpleBuilder()
+                candidates.add(new KVToroDocument(
+                                new KVDocument.Builder()
                                 .putValue("name", collectionNamespace)
                                 .build()
                         )
@@ -52,9 +51,8 @@ public class NamespacesMetaCollection extends MetaCollection {
                 Collection<? extends NamedToroIndex> indexes
                         = transaction.getIndexes(collection);
                 for (NamedToroIndex index : indexes) {
-                    candidates.add(
-                            new KVToroDocument(
-                                    new ObjectValue.SimpleBuilder()
+                    candidates.add(new KVToroDocument(
+                                    new KVDocument.Builder()
                                     .putValue("name", collectionNamespace + ".$"
                                             + index.getName())
                                     .build()
@@ -62,9 +60,8 @@ public class NamespacesMetaCollection extends MetaCollection {
                     );
                 }
             }
-            candidates.add(
-                    new KVToroDocument(
-                            new ObjectValue.SimpleBuilder()
+            candidates.add(new KVToroDocument(
+                            new KVDocument.Builder()
                             .putValue("name", databaseName + ".system.indexes")
                             .build()
                     )

@@ -20,15 +20,14 @@
 
 package com.torodb.torod.db.backends;
 
-import com.torodb.torod.db.backends.converters.BasicTypeToSqlType;
+import com.torodb.torod.db.backends.converters.ScalarTypeToSqlType;
 import com.torodb.torod.db.backends.exceptions.InvalidDatabaseException;
 import com.torodb.torod.db.backends.meta.TorodbMeta;
-import org.jooq.DSLContext;
-
-import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.Serializable;
 import java.sql.SQLException;
+import javax.annotation.Nonnull;
+import org.jooq.DSLContext;
 
 /**
  * Wrapper interface to define all database-specific SQL code
@@ -40,7 +39,7 @@ public interface DatabaseInterface extends Serializable {
     @Nonnull String escapeAttributeName(@Nonnull String attributeName) throws IllegalArgumentException;
     @Nonnull String escapeIndexName(@Nonnull String indexName) throws IllegalArgumentException;
 
-    @Nonnull BasicTypeToSqlType getBasicTypeToSqlType();
+    @Nonnull ScalarTypeToSqlType getScalarTypeToSqlType();
 
     @Nonnull String createSchemaStatement(@Nonnull String schemaName);
     @Nonnull String createCollectionsTableStatement(@Nonnull String schemaName, @Nonnull String tableName);

@@ -20,12 +20,12 @@
 
 package com.torodb.torod.db.backends.query.processors;
 
-import com.torodb.torod.core.language.querycriteria.QueryCriteria;
+import com.google.common.collect.Lists;
 import com.torodb.torod.core.language.AttributeReference;
 import com.torodb.torod.core.language.querycriteria.AttributeAndValueQueryCriteria;
-import com.google.common.collect.Lists;
+import com.torodb.torod.core.language.querycriteria.QueryCriteria;
 import com.torodb.torod.core.language.querycriteria.utils.QueryCriteriaVisitor;
-import com.torodb.torod.core.subdocument.BasicType;
+import com.torodb.torod.core.subdocument.ScalarType;
 import com.torodb.torod.db.backends.query.ProcessedQueryCriteria;
 import java.util.Collections;
 import java.util.List;
@@ -40,9 +40,9 @@ public class CompareProcessor {
             QueryCriteriaVisitor<List<ProcessedQueryCriteria>, Void> visitor) {
 
         //An extra query is added in the structure part that filters all documents that does not have the given key
-        //or it has incompatible type @see CompareProcessor#comparableTypes(BasicType)
+        //or it has incompatible type @see CompareProcessor#comparableTypes(ScalarType)
         AttributeReference attRef = criteria.getAttributeReference();
-        BasicType type = criteria.getValue().getType();
+        ScalarType type = criteria.getValue().getType();
 
         QueryCriteria structureCriteria = Utils.getStructureQueryCriteria(attRef, comparableTypes(type));
 
@@ -54,14 +54,14 @@ public class CompareProcessor {
         );
     }
 
-    private static List<BasicType> comparableTypes(BasicType type) {
+    private static List<ScalarType> comparableTypes(ScalarType type) {
         switch (type) {
             case DOUBLE:
             case INTEGER:
             case LONG:
-                return Lists.newArrayList(BasicType.DOUBLE, BasicType.INTEGER, BasicType.LONG);
+                return Lists.newArrayList(ScalarType.DOUBLE, ScalarType.INTEGER, ScalarType.LONG);
             case STRING:
-                return Collections.singletonList(BasicType.STRING);
+                return Collections.singletonList(ScalarType.STRING);
             default:
                 throw new IllegalArgumentException("Elements of type " + type + " are not comparables");
         }

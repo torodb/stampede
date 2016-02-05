@@ -1,15 +1,15 @@
 
 package com.torodb.torod.mongodb.utils;
 
+import com.eightkdata.mongowp.MongoVersion;
+import com.eightkdata.mongowp.bson.BsonDocument;
 import com.eightkdata.mongowp.client.core.MongoConnection;
-import com.eightkdata.mongowp.mongoserver.MongoVersion;
+import com.eightkdata.mongowp.exceptions.MongoException;
+import com.eightkdata.mongowp.server.api.pojos.MongoCursor;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.ListCollectionsCommand;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.ListCollectionsCommand.ListCollectionsResult;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.ListCollectionsCommand.ListCollectionsResult.Entry;
-import com.eightkdata.mongowp.mongoserver.api.safe.pojos.MongoCursor;
-import com.eightkdata.mongowp.mongoserver.protocol.exceptions.MongoException;
 import javax.annotation.Nullable;
-import org.bson.BsonDocument;
 
 /**
  * Utility class to get the collections metadata in a version independient way.

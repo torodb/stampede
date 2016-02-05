@@ -22,25 +22,25 @@ package com.torodb.torod.core.language.update;
 
 import com.torodb.torod.core.language.AttributeReference;
 import com.torodb.torod.core.language.update.utils.UpdateActionVisitor;
-import com.torodb.kvdocument.values.DocValue;
 import java.util.Collection;
+import com.torodb.kvdocument.values.KVValue;
 
 /**
  *
  */
 public class SetFieldUpdateAction extends SingleFieldUpdateAction {
     
-    private final DocValue newValue;
+    private final KVValue newValue;
 
     public SetFieldUpdateAction(
             Collection<AttributeReference> modifiedField, 
-            DocValue newValue
+            KVValue newValue
     ) {
         super(modifiedField);
         this.newValue = newValue;
     }
 
-    public DocValue getNewValue() {
+    public KVValue getNewValue() {
         return newValue;
     }
 

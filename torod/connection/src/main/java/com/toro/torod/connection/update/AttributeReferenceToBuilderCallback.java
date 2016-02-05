@@ -20,12 +20,10 @@
 
 package com.toro.torod.connection.update;
 
+import com.torodb.kvdocument.values.KVValue;
 import com.torodb.torod.core.exceptions.ToroImplementationException;
 import com.torodb.torod.core.exceptions.UserToroException;
 import com.torodb.torod.core.language.AttributeReference;
-import com.torodb.kvdocument.values.ArrayValue;
-import com.torodb.kvdocument.values.DocValue;
-import com.torodb.kvdocument.values.ObjectValue;
 import java.util.List;
 import javax.annotation.Nullable;
 
@@ -36,14 +34,14 @@ class AttributeReferenceToBuilderCallback {
 
     /**
      * Descends through the value tree associated to the given builder as
-     * following a keys and return the {@linkplain  BuilderCallback callback}
+     * following keys and return the {@linkplain BuilderCallback callback}
      * associated with it.
      * <p>
      * @param <K>               the type of the keys of given builder
      * @param builder           the builder that will be the root of the given
      *                          keys
      * @param keys              the keys path that will be followed
-     * @param createIfNecessary iff true, new child values will be created if
+     * @param createIfNecessary if true, new child values will be created if
      *                          there is no value with the given keys in the
      *                          given builder value tree. If false, null will be
      *                          returned in that case.
@@ -86,9 +84,9 @@ class AttributeReferenceToBuilderCallback {
         }
         K key = builder.getKeyClass().cast(uncastedKey);
 
-        ArrayValue.MutableBuilder nextArrayBuilder;
-        ObjectValue.MutableBuilder nextObjectBuilder;
-        DocValue nextValue;
+        KVArrayBuilder nextArrayBuilder;
+        KVDocumentBuilder nextObjectBuilder;
+        KVValue nextValue;
 
         if (!builder.contains(key)) {
             return nonExistingKeyCase(

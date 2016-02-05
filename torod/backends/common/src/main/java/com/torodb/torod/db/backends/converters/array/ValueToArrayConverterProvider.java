@@ -20,69 +20,68 @@
 
 package com.torodb.torod.db.backends.converters.array;
 
+import com.torodb.torod.db.backends.converters.json.MongoTimestampValueToJsonConverter;
 import com.google.common.collect.Maps;
 import com.torodb.torod.core.exceptions.ToroImplementationException;
-import com.torodb.torod.core.subdocument.BasicType;
+import com.torodb.torod.core.subdocument.ScalarType;
 import com.torodb.torod.core.subdocument.values.*;
 import com.torodb.torod.db.backends.converters.ValueConverter;
 import com.torodb.torod.db.backends.converters.json.*;
-
-import javax.annotation.Nonnull;
-import javax.json.JsonArray;
-import javax.json.JsonNumber;
-import javax.json.JsonString;
-import javax.json.JsonValue;
 import java.util.Map;
+import javax.annotation.Nonnull;
+import javax.json.*;
 
 /**
  *
  */
 public class ValueToArrayConverterProvider {
 
-    private final Map<BasicType, ValueConverter> converters;
-    private final ValueConverter<JsonArray, ArrayValue> arrayConverter;
-    private final ValueConverter<Boolean, BooleanValue> booleanConverter;
-    private final ValueConverter<String, DateValue> dateConverter;
-    private final ValueConverter<String, DateTimeValue> dateTimeConverter;
+    private final Map<ScalarType, ValueConverter> converters;
+    private final ValueConverter<JsonArray, ScalarArray> arrayConverter;
+    private final ValueConverter<Boolean, ScalarBoolean> booleanConverter;
+    private final ValueConverter<String, ScalarDate> dateConverter;
+    private final ValueConverter<String, ScalarInstant> dateTimeConverter;
     private final DoubleValueToJsonConverter doubleConverter;
-    private final ValueConverter<Number, IntegerValue> integerConverter;
-    private final ValueConverter<Number, LongValue> longConverter;
-    private final ValueConverter<Void, NullValue> nullConverter;
-    private final ValueConverter<String, StringValue> stringConverter;
-    private final ValueConverter<String, TimeValue> timeConverter;
-    private final ValueConverter<String, TwelveBytesValue> twelveBytesConverter;
-    private final ValueConverter<String, PatternValue> posixPatterConverter;
-    private final ValueConverter<String, BinaryValue> binaryConverter;
+    private final ValueConverter<Number, ScalarInteger> integerConverter;
+    private final ValueConverter<Number, ScalarLong> longConverter;
+    private final ValueConverter<Void, ScalarNull> nullConverter;
+    private final ValueConverter<String, ScalarString> stringConverter;
+    private final ValueConverter<String, ScalarTime> timeConverter;
+    private final ValueConverter<String, ScalarMongoObjectId> mongoObjectIdConverter;
+    private final MongoTimestampValueToJsonConverter mongoTimestampConverter;
+    private final ValueConverter<String, ScalarBinary> binaryConverter;
 
     private ValueToArrayConverterProvider() {
         arrayConverter = new ArrayValueToJsonConverter();
         booleanConverter = new BooleanValueToJsonConverter();
         dateConverter = new DateValueToJsonConverter();
-        dateTimeConverter = new DateTimeValueToJsonConverter();
+        dateTimeConverter = new InstantValueToJsonConverter();
         doubleConverter = new DoubleValueToJsonConverter();
         integerConverter = new IntegerValueToJsonConverter();
         longConverter = new LongValueToJsonConverter();
         nullConverter = new NullValueToJsonConverter();
         stringConverter = new StringValueToJsonConverter();
         timeConverter = new TimeValueToJsonConverter();
-        twelveBytesConverter = new TwelveBytesToArrayConverter();
-        posixPatterConverter = new PosixPatternValueToJsonConverter();
+        mongoObjectIdConverter = new MongoObjectIdToArrayConverter();
+        mongoTimestampConverter = new MongoTimestampValueToJsonConverter();
         binaryConverter = new BinaryValueToJsonConverter();
 
-        converters = Maps.newEnumMap(BasicType.class);
-        converters.put(BasicType.ARRAY, arrayConverter);
-        converters.put(BasicType.BOOLEAN, booleanConverter);
-        converters.put(BasicType.DATE, dateConverter);
-        converters.put(BasicType.DATETIME, dateTimeConverter);
-        converters.put(BasicType.DOUBLE, doubleConverter);
-        converters.put(BasicType.INTEGER, integerConverter);
-        converters.put(BasicType.LONG, longConverter);
-        converters.put(BasicType.NULL, nullConverter);
-        converters.put(BasicType.STRING, stringConverter);
-        converters.put(BasicType.TIME, timeConverter);
-        converters.put(BasicType.TWELVE_BYTES, twelveBytesConverter);
-        converters.put(BasicType.PATTERN, posixPatterConverter);
-        converters.put(BasicType.BINARY, binaryConverter);
+        converters = Maps.newEnumMap(ScalarType.class);
+        converters.put(ScalarType.ARRAY, arrayConverter);
+        converters.put(ScalarType.BOOLEAN, booleanConverter);
+        converters.put(ScalarType.DATE, dateConverter);
+        converters.put(ScalarType.INSTANT, dateTimeConverter);
+        converters.put(ScalarType.DOUBLE, doubleConverter);
+        converters.put(ScalarType.INTEGER, integerConverter);
+        converters.put(ScalarType.LONG, longConverter);
+        converters.put(ScalarType.NULL, nullConverter);
+        converters.put(ScalarType.STRING, stringConverter);
+        converters.put(ScalarType.TIME, timeConverter);
+        converters.put(ScalarType.MONGO_OBJECT_ID, mongoObjectIdConverter);
+        converters.put(ScalarType.MONGO_TIMESTAMP, mongoTimestampConverter);
+        converters.put(ScalarType.BINARY, binaryConverter);
+
+        
     }
 
     public static ValueToArrayConverterProvider getInstance() {
@@ -90,7 +89,7 @@ public class ValueToArrayConverterProvider {
     }
 
     @Nonnull
-    public ValueConverter getConverter(BasicType valueType) {
+    public ValueConverter getConverter(ScalarType valueType) {
         ValueConverter converter = converters.get(valueType);
         if (converter == null) {
             throw new AssertionError("There is no converter that converts "
@@ -100,7 +99,7 @@ public class ValueToArrayConverterProvider {
     }
 
     @Nonnull
-    public Value<?> convertFromJson(JsonValue jsonValue) {
+    public ScalarValue<?> convertFromJson(JsonValue jsonValue) {
         switch (jsonValue.getValueType()) {
             case ARRAY:
                 assert jsonValue instanceof JsonArray;
@@ -133,7 +132,14 @@ public class ValueToArrayConverterProvider {
             case STRING:
                 assert jsonValue instanceof JsonString;
                 return stringConverter.toValue(((JsonString) jsonValue).getString());
-            case OBJECT:
+            case OBJECT: {
+                JsonObject asObject = ((JsonObject) jsonValue);
+                if (mongoTimestampConverter.isValid(asObject)) {
+                    return mongoTimestampConverter.toValue(asObject);
+                }
+                throw new IllegalArgumentException("Te recived JsonObject " + jsonValue
+                        + " was not recognized as a valid ScalarValue codification");
+            }
             default:
                 throw new IllegalArgumentException("Instances of '"
                         + jsonValue.getClass() + "' like '" + jsonValue
@@ -141,19 +147,19 @@ public class ValueToArrayConverterProvider {
         }
     }
 
-    public ValueConverter<JsonArray, ArrayValue> getArrayConverter() {
+    public ValueConverter<JsonArray, ScalarArray> getArrayConverter() {
         return arrayConverter;
     }
 
-    public ValueConverter<Boolean, BooleanValue> getBooleanConverter() {
+    public ValueConverter<Boolean, ScalarBoolean> getBooleanConverter() {
         return booleanConverter;
     }
 
-    public ValueConverter<String, DateValue> getDateConverter() {
+    public ValueConverter<String, ScalarDate> getDateConverter() {
         return dateConverter;
     }
 
-    public ValueConverter<String, DateTimeValue> getDateTimeConverter() {
+    public ValueConverter<String, ScalarInstant> getInstantConverter() {
         return dateTimeConverter;
     }
 
@@ -161,35 +167,35 @@ public class ValueToArrayConverterProvider {
         return doubleConverter;
     }
 
-    public ValueConverter<Number, IntegerValue> getIntegerConverter() {
+    public ValueConverter<Number, ScalarInteger> getIntegerConverter() {
         return integerConverter;
     }
 
-    public ValueConverter<Number, LongValue> getLongConverter() {
+    public ValueConverter<Number, ScalarLong> getLongConverter() {
         return longConverter;
     }
 
-    public ValueConverter<Void, NullValue> getNullConverter() {
+    public ValueConverter<Void, ScalarNull> getNullConverter() {
         return nullConverter;
     }
 
-    public ValueConverter<String, StringValue> getStringConverter() {
+    public ValueConverter<String, ScalarString> getStringConverter() {
         return stringConverter;
     }
 
-    public ValueConverter<String, TimeValue> getTimeConverter() {
+    public ValueConverter<String, ScalarTime> getTimeConverter() {
         return timeConverter;
     }
 
-    public ValueConverter<String, TwelveBytesValue> getTwelveBytesConverter() {
-        return twelveBytesConverter;
+    public ValueConverter<String, ScalarMongoObjectId> getMongoObjectIdConverter() {
+        return mongoObjectIdConverter;
     }
     
-    public ValueConverter<String, PatternValue> getPosixConverter() {
-        return posixPatterConverter;
+    public ValueConverter<JsonObject, ScalarMongoTimestamp> getMongoTimestampConverter() {
+        return mongoTimestampConverter;
     }
     
-    public ValueConverter<String, BinaryValue> getBinaryConverter() {
+    public ValueConverter<String, ScalarBinary> getBinaryConverter() {
         return binaryConverter;
     }
 

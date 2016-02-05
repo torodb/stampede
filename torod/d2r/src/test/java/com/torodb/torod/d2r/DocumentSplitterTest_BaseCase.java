@@ -20,24 +20,25 @@
 
 package com.torodb.torod.d2r;
 
-import com.torodb.torod.core.subdocument.ToroDocument;
-import com.torodb.torod.core.subdocument.SubDocType;
-import com.torodb.torod.core.subdocument.BasicType;
-import com.torodb.torod.core.subdocument.SubDocument;
-import com.torodb.torod.core.subdocument.SplitDocument;
-import com.torodb.torod.core.subdocument.SubDocAttribute;
+import com.eightkdata.mongowp.bson.BsonDocument;
+import com.eightkdata.mongowp.utils.BsonDocumentBuilder;
+import com.torodb.kvdocument.conversion.mongowp.MongoWPConverter;
+import com.torodb.kvdocument.values.KVDocument;
 import com.torodb.torod.core.dbMetaInf.DbMetaInformationCache;
-import com.torodb.torod.core.subdocument.structure.DocStructure;
-import com.torodb.kvdocument.values.ObjectValue;
-import com.torodb.kvdocument.converter.json.JsonValueConverter;
 import com.torodb.torod.core.subdocument.*;
-import java.util.*;
-import javax.json.Json;
-import javax.json.JsonObject;
+import com.torodb.torod.core.subdocument.structure.DocStructure;
+import com.torodb.torod.core.subdocument.values.ScalarDouble;
+import com.torodb.torod.core.subdocument.values.ScalarInteger;
+import com.torodb.torod.core.subdocument.values.ScalarLong;
+import com.torodb.torod.core.subdocument.values.heap.StringScalarString;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 
+import static com.eightkdata.mongowp.bson.utils.DefaultBsonValues.*;
 import static org.mockito.Mockito.*;
 
 /**
@@ -52,10 +53,10 @@ public class DocumentSplitterTest_BaseCase {
     private static final int docId = 1000;
     private static final int index = 0;
     private static final SubDocType subDocumentValueType = new SimpleSubDocTypeBuilderProvider().get()
-            .add(new SubDocAttribute("my int", BasicType.INTEGER))
-            .add(new SubDocAttribute("my string", BasicType.STRING))
-            .add(new SubDocAttribute("my double", BasicType.DOUBLE))
-            .add(new SubDocAttribute("my long", BasicType.LONG))
+            .add(new SubDocAttribute("my int", ScalarType.INTEGER))
+            .add(new SubDocAttribute("my string", ScalarType.STRING))
+            .add(new SubDocAttribute("my double", ScalarType.DOUBLE))
+            .add(new SubDocAttribute("my long", ScalarType.LONG))
             .build();
     private static final List<String> keys = Arrays.asList(new String[]{
         "my int", "my string", "my double", "my long"
@@ -68,15 +69,15 @@ public class DocumentSplitterTest_BaseCase {
 
     @Before
     public void setUp() {
-        JsonObject docValue = Json.createObjectBuilder()
-                .add("my int", 1)
-                .add("my string", "test")
-                .add("my double", 3.1416d)
-                .add("my long", 100230203012300l)
+        BsonDocument docValue = new BsonDocumentBuilder()
+                .appendUnsafe("my int", newInt(1))
+                .appendUnsafe("my string", newString("test"))
+                .appendUnsafe("my double", newDouble(3.1416d))
+                .appendUnsafe("my long", newLong(100230203012300l))
                 .build();
 
         doc1 = mock(ToroDocument.class);
-        when(doc1.getRoot()).thenReturn((ObjectValue) JsonValueConverter.translate(docValue));
+        when(doc1.getRoot()).thenReturn((KVDocument) MongoWPConverter.translate(docValue));
 
         cache = mock(DbMetaInformationCache.class);
 
@@ -85,10 +86,10 @@ public class DocumentSplitterTest_BaseCase {
         expectedSubDoc = SubDocument.Builder.withUnknownType(subDocTypeBuilderProvider)
                 .setDocumentId(docId)
                 .setIndex(index)
-                .add("my int", new com.torodb.torod.core.subdocument.values.IntegerValue(1))
-                .add("my string", new com.torodb.torod.core.subdocument.values.StringValue("test"))
-                .add("my double", new com.torodb.torod.core.subdocument.values.DoubleValue(Math.PI))
-                .add("my long", new com.torodb.torod.core.subdocument.values.LongValue(100230203012300l))
+                .add("my int", ScalarInteger.of(1))
+                .add("my string", new StringScalarString("test"))
+                .add("my double", ScalarDouble.of(Math.PI))
+                .add("my long", ScalarLong.of(100230203012300l))
                 .build();
         splitter = new DocumentSplitter(cache, subDocTypeBuilderProvider);
     }

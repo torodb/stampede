@@ -1,24 +1,28 @@
 
 package com.torodb.torod.mongodb.repl.impl;
 
+import com.eightkdata.mongowp.OpTime;
+import com.eightkdata.mongowp.bson.BsonArray;
+import com.eightkdata.mongowp.bson.BsonDocument;
+import com.eightkdata.mongowp.bson.BsonInt32;
 import com.eightkdata.mongowp.client.core.MongoConnection;
+import com.eightkdata.mongowp.exceptions.*;
 import com.eightkdata.mongowp.messages.request.QueryMessage.QueryOption;
 import com.eightkdata.mongowp.messages.request.QueryMessage.QueryOptions;
+import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
+import com.eightkdata.mongowp.server.api.pojos.MongoCursor;
+import com.eightkdata.mongowp.server.api.pojos.MongoCursor.Batch;
+import com.eightkdata.mongowp.server.api.pojos.MongoCursor.DeadCursorException;
+import com.eightkdata.mongowp.server.api.pojos.TransformationMongoCursor;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.OplogOperationParser;
-import com.eightkdata.mongowp.mongoserver.api.safe.oplog.OplogOperation;
-import com.eightkdata.mongowp.mongoserver.api.safe.pojos.MongoCursor;
-import com.eightkdata.mongowp.mongoserver.api.safe.pojos.MongoCursor.Batch;
-import com.eightkdata.mongowp.mongoserver.api.safe.pojos.MongoCursor.DeadCursorException;
-import com.eightkdata.mongowp.mongoserver.api.safe.pojos.TransformationMongoCursor;
-import com.eightkdata.mongowp.mongoserver.pojos.OpTime;
-import com.eightkdata.mongowp.mongoserver.protocol.exceptions.*;
+import com.eightkdata.mongowp.utils.BsonArrayBuilder;
+import com.eightkdata.mongowp.utils.BsonDocumentBuilder;
 import com.google.common.base.Preconditions;
 import com.torodb.torod.mongodb.repl.OplogReader;
 import java.util.EnumSet;
 import java.util.Iterator;
-import org.bson.BsonArray;
-import org.bson.BsonDocument;
-import org.bson.BsonInt32;
+
+import static com.eightkdata.mongowp.bson.utils.DefaultBsonValues.*;
 
 /**
  *
@@ -27,23 +31,22 @@ public abstract class AbstractMongoOplogReader implements OplogReader {
     private static final String DATABASE = "local";
     private static final String COLLECTION = "oplog.rs";
 
-    private static final BsonDocument NATURAL_ORDER_SORT = new BsonDocument()
-            .append("$natural", new BsonInt32(1));
-    private static final BsonDocument INVERSE_ORDER_SORT = new BsonDocument()
-            .append("$natural", new BsonInt32(-1));
+    private static final BsonDocument NATURAL_ORDER_SORT = newDocument("$natural", newInt(1));
+    private static final BsonDocument INVERSE_ORDER_SORT = newDocument("$natural", newInt(-1));
 
     protected abstract MongoConnection consumeConnection();
     protected abstract void releaseConnection(MongoConnection connection);
     
     @Override
     public MongoCursor<OplogOperation> queryGTE(OpTime lastFetchedOpTime) throws MongoException {
-        BsonDocument query = new BsonDocument(
+        BsonDocument query = newDocument(
                 "ts",
-                new BsonDocument("$gte", lastFetchedOpTime.asBsonTimestamp())
+                newDocument("$gte", lastFetchedOpTime.asBsonTimestamp())
         );
-        query = new BsonDocument()
-                .append("$query", query)
-                .append("$orderby", NATURAL_ORDER_SORT);
+        query = new BsonDocumentBuilder()
+                .appendUnsafe("$query", query)
+                .appendUnsafe("$orderby", NATURAL_ORDER_SORT)
+                .build();
 
         EnumSet<QueryOption> flags = EnumSet.of(
                 QueryOption.AWAIT_DATA,
@@ -72,20 +75,23 @@ public abstract class AbstractMongoOplogReader implements OplogReader {
     public MongoCursor<OplogOperation> between(
             OpTime from, boolean includeFrom,
             OpTime to, boolean includeTo) throws MongoException {
-        BsonArray conditions = new BsonArray();
-        conditions.add(new BsonDocument()
-                .append("ts", 
-                        new BsonDocument(includeFrom ? "$gte" : "$gt", from.asBsonTimestamp())
+        BsonArrayBuilder conditions = new BsonArrayBuilder();
+        conditions.add(
+                newDocument(
+                        "ts",
+                        newDocument(includeFrom ? "$gte" : "$gt", from.asBsonTimestamp())
                 )
         );
-        conditions.add(new BsonDocument()
-                .append("ts", 
-                        new BsonDocument(includeTo ? "$lte" : "$lt", to.asBsonTimestamp())
+        conditions.add(
+                newDocument(
+                        "ts",
+                        newDocument(includeTo ? "$lte" : "$lt", to.asBsonTimestamp())
                 )
         );
-        BsonDocument query = new BsonDocument()
-                .append("$query", new BsonDocument("$and", conditions))
-                .append("$orderby", NATURAL_ORDER_SORT);
+        BsonDocument query = new BsonDocumentBuilder()
+                .appendUnsafe("$query", newDocument("$and", conditions.build()))
+                .appendUnsafe("$orderby", NATURAL_ORDER_SORT)
+                .build();
 
         EnumSet<QueryOption> flags = EnumSet.noneOf(QueryOption.class);
 
@@ -126,9 +132,10 @@ public abstract class AbstractMongoOplogReader implements OplogReader {
             MongoException {
         Preconditions.checkState(!isClosed(), "You have to connect this client before");
 
-        BsonDocument query = new BsonDocument()
-                .append("$query", new BsonDocument())
-                .append("$orderby", first ? NATURAL_ORDER_SORT : INVERSE_ORDER_SORT);
+        BsonDocument query = new BsonDocumentBuilder()
+                .appendUnsafe("$query", EMPTY_DOC)
+                .appendUnsafe("$orderby", first ? NATURAL_ORDER_SORT : INVERSE_ORDER_SORT)
+                .build();
 
         EnumSet<QueryOption> flags = EnumSet.of(QueryOption.SLAVE_OK);
 

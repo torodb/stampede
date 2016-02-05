@@ -24,7 +24,7 @@ package com.torodb.kvdocument.types;
 /**
  *
  */
-public class BinaryType implements DocType {
+public class BinaryType implements KVType {
 
     public static final BinaryType INSTANCE = new BinaryType();
     private static final long serialVersionUID = 1L;
@@ -36,7 +36,7 @@ public class BinaryType implements DocType {
 
     @Override
     public <Result, Arg> Result accept(
-            DocTypeVisitor<Result, Arg> visitor,
+            KVTypeVisitor<Result, Arg> visitor,
             Arg arg) {
         return visitor.visit(this, arg);
     }

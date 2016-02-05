@@ -1,12 +1,12 @@
 
 package com.torodb.torod.mongodb.unsafe;
 
-import com.eightkdata.mongowp.mongoserver.api.QueryCommandProcessor.QueryCommand;
-import com.eightkdata.mongowp.mongoserver.api.QueryCommandProcessor.QueryCommandGroup;
-import com.eightkdata.mongowp.mongoserver.api.safe.Command;
-import com.eightkdata.mongowp.mongoserver.api.safe.CommandsLibrary;
+import com.eightkdata.mongowp.bson.BsonDocument;
+import com.eightkdata.mongowp.server.api.Command;
+import com.eightkdata.mongowp.server.api.CommandsLibrary;
+import com.eightkdata.mongowp.server.api.deprecated.QueryCommandProcessor.QueryCommand;
+import com.eightkdata.mongowp.server.api.deprecated.QueryCommandProcessor.QueryCommandGroup;
 import java.util.Set;
-import org.bson.BsonDocument;
 
 /**
  *

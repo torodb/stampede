@@ -1,15 +1,16 @@
 
 package com.torodb.torod.mongodb.unsafe;
 
+import com.eightkdata.mongowp.bson.BsonDocument;
+import com.eightkdata.mongowp.bson.utils.BsonDocumentReader.AllocationType;
+import com.eightkdata.mongowp.exceptions.MongoException;
 import com.eightkdata.mongowp.messages.response.ReplyMessage;
-import com.eightkdata.mongowp.mongoserver.api.QueryCommandProcessor.QueryCommand;
-import com.eightkdata.mongowp.mongoserver.api.safe.Command;
-import com.eightkdata.mongowp.mongoserver.api.safe.MarshalException;
-import com.eightkdata.mongowp.mongoserver.protocol.exceptions.MongoException;
+import com.eightkdata.mongowp.server.api.Command;
+import com.eightkdata.mongowp.server.api.MarshalException;
+import com.eightkdata.mongowp.server.api.deprecated.QueryCommandProcessor.QueryCommand;
 import com.google.common.collect.ImmutableList;
 import com.torodb.torod.mongodb.unsafe.UnsafeCommand.UnsafeArgument;
 import com.torodb.torod.mongodb.unsafe.UnsafeCommand.UnsafeReply;
-import org.bson.BsonDocument;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -95,7 +96,7 @@ public class UnsafeCommand implements Command<UnsafeArgument, UnsafeReply> {
     @Override
     public BsonDocument marshallResult(UnsafeReply reply) throws MarshalException {
 
-        ImmutableList<? extends BsonDocument> documents = reply.getReply().getDocuments().toList();
+        ImmutableList<? extends BsonDocument> documents = reply.getReply().getDocuments().getIterable(AllocationType.HEAP).toList();
 
         if (documents.size() > 1 || documents.isEmpty()) {
             throw new MarshalException(

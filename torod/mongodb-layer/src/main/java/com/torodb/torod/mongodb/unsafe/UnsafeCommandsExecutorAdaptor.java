@@ -1,18 +1,22 @@
 
 package com.torodb.torod.mongodb.unsafe;
 
+import com.eightkdata.mongowp.server.api.CommandsExecutor;
+import com.eightkdata.mongowp.server.api.CommandReply;
+import com.eightkdata.mongowp.server.api.CommandResult;
+import com.eightkdata.mongowp.server.api.Command;
+import com.eightkdata.mongowp.server.api.CommandRequest;
+import com.eightkdata.mongowp.ErrorCode;
+import com.eightkdata.mongowp.exceptions.CommandNotSupportedException;
+import com.eightkdata.mongowp.exceptions.MongoException;
 import com.eightkdata.mongowp.messages.request.RequestBaseMessage;
 import com.eightkdata.mongowp.messages.response.ReplyMessage;
-import com.eightkdata.mongowp.mongoserver.api.MetaCommandProcessor;
-import com.eightkdata.mongowp.mongoserver.api.QueryCommandProcessor;
-import com.eightkdata.mongowp.mongoserver.api.QueryCommandProcessor.QueryCommand;
-import com.eightkdata.mongowp.mongoserver.api.safe.*;
-import com.eightkdata.mongowp.mongoserver.api.safe.impl.DelegateCommandReply;
-import com.eightkdata.mongowp.mongoserver.api.safe.impl.NonWriteCommandResult;
-import com.eightkdata.mongowp.mongoserver.callback.PojoMessageReplier;
-import com.eightkdata.mongowp.mongoserver.protocol.ErrorCode;
-import com.eightkdata.mongowp.mongoserver.protocol.exceptions.CommandNotSupportedException;
-import com.eightkdata.mongowp.mongoserver.protocol.exceptions.MongoException;
+import com.eightkdata.mongowp.server.api.deprecated.MetaCommandProcessor;
+import com.eightkdata.mongowp.server.api.deprecated.QueryCommandProcessor;
+import com.eightkdata.mongowp.server.api.deprecated.QueryCommandProcessor.QueryCommand;
+import com.eightkdata.mongowp.server.api.impl.DelegateCommandReply;
+import com.eightkdata.mongowp.server.api.impl.NonWriteCommandResult;
+import com.eightkdata.mongowp.server.callback.PojoMessageReplier;
 import com.torodb.torod.mongodb.unsafe.UnsafeCommand.UnsafeArgument;
 import com.torodb.torod.mongodb.unsafe.UnsafeCommand.UnsafeReply;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -86,11 +90,11 @@ public class UnsafeCommandsExecutorAdaptor implements CommandsExecutor {
 
             ReplyMessage reply = fakeMessageReplier.getReply();
 
-            CommandResult<Result> result = new NonWriteCommandResult<Result>(
+            CommandResult<Result> result = new NonWriteCommandResult<>(
                     (Result) new UnsafeReply(reply)
             );
 
-            return new DelegateCommandReply<Result>(
+            return new DelegateCommandReply<>(
                     command,
                     result
             );

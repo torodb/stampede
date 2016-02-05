@@ -29,7 +29,8 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.toro.torod.connection.update.Updator;
-import com.torodb.kvdocument.values.DocValue;
+import com.torodb.kvdocument.values.*;
+import com.torodb.kvdocument.values.heap.*;
 import com.torodb.torod.core.ValueRow;
 import com.torodb.torod.core.ValueRow.TranslatorValueRow;
 import com.torodb.torod.core.WriteFailMode;
@@ -214,12 +215,12 @@ public class DefaultToroTransaction implements ToroTransaction {
     }
 
     @Override
-    public ListenableFuture<Iterator<ValueRow<DocValue>>> sqlSelect(String sqlQuery)
-            throws UnsupportedOperationException {
-        ListenableFuture<Iterator<ValueRow<Value>>> valueFuture
+    public ListenableFuture<Iterator<ValueRow<KVValue<?>>>> sqlSelect(String sqlQuery) throws
+            UnsupportedOperationException, UserToroException {
+        ListenableFuture<Iterator<ValueRow<ScalarValue<?>>>> valueFuture
                 = sessionTransaction.sqlSelect(sqlQuery);
 
-        IteratorTranslator<ValueRow<Value>, ValueRow<DocValue>> iteratorTranslator
+        IteratorTranslator<ValueRow<ScalarValue<?>>, ValueRow<KVValue<?>>> iteratorTranslator
                 = new IteratorTranslator<>(
                         TranslatorValueRow.getBuilderFunction(new ToDocValueFunction())
                 );
@@ -395,85 +396,79 @@ public class DefaultToroTransaction implements ToroTransaction {
         }
     }
 
-    private static class ToDocValueFunction implements Function<Value, DocValue>, ValueVisitor<DocValue, Void> {
+    private static class ToDocValueFunction implements Function<ScalarValue<?>, KVValue<?>>, ScalarValueVisitor<KVValue<?>, Void> {
 
         @Override
-        public DocValue apply(@Nonnull Value input) {
-            return (DocValue) input.accept(this, null);
+        public KVValue<?> apply(@Nonnull ScalarValue<?> input) {
+            return (KVValue<?>) input.accept(this, null);
         }
 
         @Override
-        public DocValue visit(BooleanValue value, Void arg) {
+        public KVValue<?> visit(ScalarBoolean value, Void arg) {
             if (value.getValue()) {
-                return com.torodb.kvdocument.values.BooleanValue.TRUE;
+                return KVBoolean.TRUE;
             }
-            return com.torodb.kvdocument.values.BooleanValue.FALSE;
+            return KVBoolean.FALSE;
         }
 
         @Override
-        public DocValue visit(NullValue value, Void arg) {
-            return com.torodb.kvdocument.values.NullValue.INSTANCE;
+        public KVValue<?> visit(ScalarNull value, Void arg) {
+            return KVNull.getInstance();
         }
 
         @Override
-        public DocValue visit(ArrayValue value, Void arg) {
-            com.torodb.kvdocument.values.ArrayValue.SimpleBuilder builder
-                    = new com.torodb.kvdocument.values.ArrayValue.SimpleBuilder();
-
-            for (Value e : value.getValue()) {
-                builder.add((DocValue) e.accept(this, arg));
-            }
-            return builder.build();
+        public KVValue<?> visit(ScalarArray value, Void arg) {
+            return new ListKVArray(Lists.newArrayList(Iterators.transform(value.iterator(), this)));
         }
 
         @Override
-        public DocValue visit(IntegerValue value, Void arg) {
-            return new com.torodb.kvdocument.values.IntegerValue(value.getValue());
+        public KVValue<?> visit(ScalarInteger value, Void arg) {
+            return KVInteger.of(value.getValue());
         }
 
         @Override
-        public DocValue visit(LongValue value, Void arg) {
-            return new com.torodb.kvdocument.values.LongValue(value.getValue());
+        public KVValue<?> visit(ScalarLong value, Void arg) {
+            return KVLong.of(value.longValue());
         }
 
         @Override
-        public DocValue visit(DoubleValue value, Void arg) {
-            return new com.torodb.kvdocument.values.DoubleValue(value.getValue());
+        public KVValue<?> visit(ScalarDouble value, Void arg) {
+            return KVDouble.of(value.doubleValue());
         }
 
         @Override
-        public DocValue visit(StringValue value, Void arg) {
-            return new com.torodb.kvdocument.values.StringValue(value.getValue());
+        public KVValue<?> visit(ScalarString value, Void arg) {
+            return new StringKVString(value.getValue());
         }
 
         @Override
-        public DocValue visit(TwelveBytesValue value, Void arg) {
-            return new com.torodb.kvdocument.values.TwelveBytesValue(value.getValue());
+        public KVValue<?> visit(ScalarMongoObjectId value, Void arg) {
+            return new ByteArrayKVMongoObjectId(value.getArrayValue());
         }
 
         @Override
-        public DocValue visit(DateTimeValue value, Void arg) {
-            return new com.torodb.kvdocument.values.DateTimeValue(value.getValue());
+        public KVValue<?> visit(ScalarMongoTimestamp value, Void arg) {
+            return new DefaultKVMongoTimestamp(value.getSecondsSinceEpoch(), value.getOrdinal());
         }
 
         @Override
-        public DocValue visit(DateValue value, Void arg) {
-            return new com.torodb.kvdocument.values.DateValue(value.getValue());
+        public KVValue<?> visit(ScalarInstant value, Void arg) {
+            return new LongKVInstant(value.getMillisFromUnix());
         }
 
         @Override
-        public DocValue visit(TimeValue value, Void arg) {
-            return new com.torodb.kvdocument.values.TimeValue(value.getValue());
+        public KVValue<?> visit(ScalarDate value, Void arg) {
+            return new LocalDateKVDate(value.getValue());
         }
 
         @Override
-        public DocValue visit(PatternValue value, Void arg) {
-            return new com.torodb.kvdocument.values.PatternValue(value.getValue());
+        public KVValue<?> visit(ScalarTime value, Void arg) {
+            return new LocalTimeKVTime(value.getValue());
         }
 
         @Override
-        public DocValue visit(BinaryValue value, Void arg) {
-            return new com.torodb.kvdocument.values.BinaryValue(value.getValue());
+        public KVValue<?> visit(ScalarBinary value, Void arg) {
+            return new ByteSourceKVBinary(value.getSubtype(), value.getCategory(), value.getByteSource());
         }
 
     }

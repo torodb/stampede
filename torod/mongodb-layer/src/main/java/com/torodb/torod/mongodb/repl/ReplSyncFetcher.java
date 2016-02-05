@@ -1,17 +1,16 @@
 
 package com.torodb.torod.mongodb.repl;
 
+import com.eightkdata.mongowp.OpTime;
 import com.eightkdata.mongowp.client.core.UnreachableMongoServerException;
-import com.eightkdata.mongowp.mongoserver.api.safe.oplog.OplogOperation;
-import com.eightkdata.mongowp.mongoserver.api.safe.pojos.MongoCursor;
-import com.eightkdata.mongowp.mongoserver.api.safe.pojos.MongoCursor.Batch;
-import com.eightkdata.mongowp.mongoserver.pojos.OpTime;
-import com.eightkdata.mongowp.mongoserver.protocol.exceptions.MongoException;
-import com.eightkdata.mongowp.mongoserver.protocol.exceptions.OplogOperationUnsupported;
-import com.eightkdata.mongowp.mongoserver.protocol.exceptions.OplogStartMissingException;
+import com.eightkdata.mongowp.exceptions.MongoException;
+import com.eightkdata.mongowp.exceptions.OplogOperationUnsupported;
+import com.eightkdata.mongowp.exceptions.OplogStartMissingException;
+import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
+import com.eightkdata.mongowp.server.api.pojos.MongoCursor;
+import com.eightkdata.mongowp.server.api.pojos.MongoCursor.Batch;
 import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
-import com.mongodb.MongoInterruptedException;
 import com.torodb.torod.mongodb.repl.exceptions.NoSyncSourceFoundException;
 import java.util.concurrent.Executor;
 import javax.annotation.Nonnull;
@@ -114,8 +113,6 @@ class ReplSyncFetcher extends AbstractExecutionThreadService {
 
                     rollbackNeeded = fetch(oplogReader);
                 } catch (InterruptedException ex) {
-                    LOGGER.info("Interrupted fetch process", ex);
-                } catch (MongoInterruptedException ex) {
                     LOGGER.info("Interrupted fetch process", ex);
                 } catch (RestartFetchException ex) {
                     LOGGER.info("Restarting fetch process", ex);

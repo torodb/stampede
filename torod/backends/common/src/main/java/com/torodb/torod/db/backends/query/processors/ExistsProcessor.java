@@ -26,7 +26,7 @@ import com.torodb.torod.core.language.querycriteria.ExistsQueryCriteria;
 import com.torodb.torod.core.language.querycriteria.QueryCriteria;
 import com.torodb.torod.core.language.querycriteria.TypeIsQueryCriteria;
 import com.torodb.torod.core.language.querycriteria.utils.QueryCriteriaVisitor;
-import com.torodb.torod.core.subdocument.BasicType;
+import com.torodb.torod.core.subdocument.ScalarType;
 import com.torodb.torod.db.backends.query.ExistRelation;
 import com.torodb.torod.db.backends.query.ProcessedQueryCriteria;
 import java.util.List;
@@ -73,7 +73,7 @@ public class ExistsProcessor {
         
         ExistsQueryCriteria structureExists = null;
 
-        QueryCriteria arrayTypeCriteria = new TypeIsQueryCriteria(criteria.getAttributeReference(), BasicType.ARRAY);
+        QueryCriteria arrayTypeCriteria = new TypeIsQueryCriteria(criteria.getAttributeReference(), ScalarType.ARRAY);
         if (childResult.getStructureQuery() == null) {
             structureQuery = arrayTypeCriteria;
         } else {

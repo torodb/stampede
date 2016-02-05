@@ -21,17 +21,16 @@
 package com.torodb.torod.db.backends.query.processors;
 
 import com.google.common.collect.Lists;
-import com.torodb.torod.core.language.querycriteria.AndQueryCriteria;
 import com.torodb.torod.core.language.AttributeReference;
+import com.torodb.torod.core.language.querycriteria.AndQueryCriteria;
 import com.torodb.torod.core.language.querycriteria.ExistsQueryCriteria;
 import com.torodb.torod.core.language.querycriteria.QueryCriteria;
 import com.torodb.torod.core.language.querycriteria.TypeIsQueryCriteria;
 import com.torodb.torod.core.language.querycriteria.utils.QueryCriteriaVisitor;
-import com.torodb.torod.core.subdocument.BasicType;
+import com.torodb.torod.core.subdocument.ScalarType;
 import com.torodb.torod.db.backends.query.ExistRelation;
 import com.torodb.torod.db.backends.query.ProcessedQueryCriteria;
 import java.util.List;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -82,7 +81,7 @@ public class ExistsProcessorTest {
 
         List<ProcessedQueryCriteria> expected = Lists.newArrayList(
                 new ProcessedQueryCriteria(
-                        new TypeIsQueryCriteria(attRef, BasicType.ARRAY),
+                        new TypeIsQueryCriteria(attRef, ScalarType.ARRAY),
                         null
                 )
         );
@@ -107,7 +106,7 @@ public class ExistsProcessorTest {
         List<ProcessedQueryCriteria> expected = Lists.newArrayList(
                 new ProcessedQueryCriteria(
                         new AndQueryCriteria(
-                                new TypeIsQueryCriteria(attRef, BasicType.ARRAY),
+                                new TypeIsQueryCriteria(attRef, ScalarType.ARRAY),
                                 new ExistsQueryCriteria(
                                         attRef,
                                         s1
@@ -137,7 +136,7 @@ public class ExistsProcessorTest {
 
         List<ProcessedQueryCriteria> expected = Lists.newArrayList(
                 new ProcessedQueryCriteria(
-                        new TypeIsQueryCriteria(attRef, BasicType.ARRAY),
+                        new TypeIsQueryCriteria(attRef, ScalarType.ARRAY),
                         new ExistsQueryCriteria(attRef, d1)
                 )
         );
@@ -162,7 +161,7 @@ public class ExistsProcessorTest {
         List<ProcessedQueryCriteria> expected = Lists.newArrayList(
                 new ProcessedQueryCriteria(
                         new AndQueryCriteria(
-                                new TypeIsQueryCriteria(attRef, BasicType.ARRAY),
+                                new TypeIsQueryCriteria(attRef, ScalarType.ARRAY),
                                 new ExistsQueryCriteria(
                                         attRef,
                                         s1

@@ -20,15 +20,15 @@
 
 package com.torodb.torod.db.backends.converters.jooq;
 
-import com.torodb.torod.core.subdocument.BasicType;
-import com.torodb.torod.core.subdocument.values.BooleanValue;
+import com.torodb.torod.core.subdocument.ScalarType;
+import com.torodb.torod.core.subdocument.values.ScalarBoolean;
 import org.jooq.DataType;
 import org.jooq.impl.SQLDataType;
 
 /**
  *
  */
-public class BooleanValueConverter implements SubdocValueConverter<Boolean, BooleanValue> {
+public class BooleanValueConverter implements SubdocValueConverter<Boolean, ScalarBoolean> {
     private static final long serialVersionUID = 1L;
 
     @Override
@@ -37,17 +37,17 @@ public class BooleanValueConverter implements SubdocValueConverter<Boolean, Bool
     }
 
     @Override
-    public BasicType getErasuredType() {
-        return BasicType.BOOLEAN;
+    public ScalarType getErasuredType() {
+        return ScalarType.BOOLEAN;
     }
 
     @Override
-    public BooleanValue from(Boolean databaseObject) {
-        return BooleanValue.from(databaseObject);
+    public ScalarBoolean from(Boolean databaseObject) {
+        return ScalarBoolean.from(databaseObject);
     }
 
     @Override
-    public Boolean to(BooleanValue userObject) {
+    public Boolean to(ScalarBoolean userObject) {
         return userObject.getValue();
     }
 
@@ -57,8 +57,8 @@ public class BooleanValueConverter implements SubdocValueConverter<Boolean, Bool
     }
 
     @Override
-    public Class<BooleanValue> toType() {
-        return BooleanValue.class;
+    public Class<ScalarBoolean> toType() {
+        return ScalarBoolean.class;
     }
 
 }

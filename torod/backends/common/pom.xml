@@ -54,13 +54,6 @@
         </dependency>
 
         <dependency>
-            <groupId>com.torodb.kvdocument</groupId>
-            <artifactId>json-converter</artifactId>
-            <version>${project.version}</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <scope>test</scope>
@@ -71,8 +64,19 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.glassfish</groupId>
-            <artifactId>javax.json</artifactId>
+            <groupId>org.mongodb</groupId>
+            <artifactId>bson</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.torodb.kvdocument</groupId>
+            <artifactId>mongowp-converter</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.8kdata.mongowp.bson</groupId>
+            <artifactId>org-bson-utils</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>

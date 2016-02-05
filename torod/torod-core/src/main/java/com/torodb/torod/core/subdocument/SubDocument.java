@@ -22,12 +22,11 @@ package com.torodb.torod.core.subdocument;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
-import com.torodb.torod.core.subdocument.values.Value;
+import com.torodb.torod.core.subdocument.values.ScalarValue;
 import java.util.Collections;
 import java.util.Map;
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.Immutable;
-import javax.inject.Inject;
 import javax.inject.Provider;
 
 /**
@@ -44,10 +43,10 @@ public class SubDocument {
      * The index of this subdocument related to the other subDocuments with the same subDocument type.
      */
     private final int index;
-    private final Map<String, Value<?>> values;
+    private final Map<String, ScalarValue<?>> values;
     private final SubDocType type;
 
-    private SubDocument(int documentId, int index, SubDocType type, Map<String, Value<?>> values) {
+    private SubDocument(int documentId, int index, SubDocType type, Map<String, ScalarValue<?>> values) {
         this.documentId = documentId;
         this.index = index;
         this.type = type;
@@ -68,11 +67,12 @@ public class SubDocument {
     }
 
     @Nonnull
-    public Value<?> getValue(String key) {
-        if (!values.containsKey(key)) {
+    public ScalarValue<?> getValue(String key) {
+        ScalarValue<?> value = values.get(key);
+        if (value == null) {
             throw new IllegalArgumentException(key + " is not a key in this subdocument");
         }
-        return values.get(key);
+        return value;
     }
 
     public int size() {
@@ -116,7 +116,7 @@ public class SubDocument {
 
         int documentId;
         int index;
-        private final Map<String, Value<?>> values;
+        private final Map<String, ScalarValue<?>> values;
 
         private Builder() {
             values = Maps.newHashMap();
@@ -140,7 +140,7 @@ public class SubDocument {
             return this;
         }
 
-        public Builder add(@Nonnull String key, @Nonnull Value value) {
+        public Builder add(@Nonnull String key, @Nonnull ScalarValue value) {
             if (values.containsKey(key)) {
                 throw new IllegalArgumentException("There is another attribute with " + key);
             }
@@ -150,7 +150,7 @@ public class SubDocument {
             return this;
         }
 
-        public Builder add(@Nonnull SubDocAttribute att, @Nonnull Value value) {
+        public Builder add(@Nonnull SubDocAttribute att, @Nonnull ScalarValue value) {
             if (values.containsKey(att.getKey())) {
                 throw new IllegalArgumentException("There is another attribute with " + att.getKey());
             }
@@ -186,14 +186,14 @@ public class SubDocument {
         }
 
         @Override
-        public Builder add(SubDocAttribute att, Value value) {
+        public Builder add(SubDocAttribute att, ScalarValue value) {
             String key = att.getKey();
             Preconditions.checkArgument(att.equals(expectedType.getAttribute(key)));
             return super.add(att, value);
         }
 
         @Override
-        public Builder add(String key, Value value) {
+        public Builder add(String key, ScalarValue value) {
             Preconditions.checkArgument(expectedType.getAttribute(key) != null);
             return super.add(key, value);
         }
@@ -218,14 +218,14 @@ public class SubDocument {
         }
 
         @Override
-        public Builder add(SubDocAttribute att, Value value) {
+        public Builder add(SubDocAttribute att, ScalarValue value) {
             super.add(att, value);
             attributes.put(att.getKey(), att);
             return this;
         }
 
         @Override
-        public Builder add(String key, Value value) {
+        public Builder add(String key, ScalarValue value) {
             super.add(key, value);
             attributes.put(key, new SubDocAttribute(key, value.getType()));
             return this;

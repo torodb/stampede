@@ -23,7 +23,7 @@ package com.torodb.torod.core.language.querycriteria;
 
 import com.torodb.torod.core.language.AttributeReference;
 import com.torodb.torod.core.language.querycriteria.utils.QueryCriteriaVisitor;
-import com.torodb.torod.core.subdocument.values.Value;
+import com.torodb.torod.core.subdocument.values.ScalarValue;
 
 /**
  *
@@ -31,7 +31,7 @@ import com.torodb.torod.core.subdocument.values.Value;
 public class IsGreaterOrEqualQueryCriteria extends AttributeAndValueQueryCriteria {
     private static final long serialVersionUID = 1L;
 
-    public IsGreaterOrEqualQueryCriteria(AttributeReference attributeReference, Value<?> val) {
+    public IsGreaterOrEqualQueryCriteria(AttributeReference attributeReference, ScalarValue<?> val) {
         super(attributeReference, val);
     }
 

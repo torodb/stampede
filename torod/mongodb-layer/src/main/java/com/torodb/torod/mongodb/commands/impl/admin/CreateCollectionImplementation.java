@@ -1,17 +1,17 @@
 
 package com.torodb.torod.mongodb.commands.impl.admin;
 
-import com.eightkdata.mongowp.mongoserver.api.safe.Command;
-import com.eightkdata.mongowp.mongoserver.api.safe.CommandRequest;
-import com.eightkdata.mongowp.mongoserver.api.safe.CommandResult;
-import com.eightkdata.mongowp.mongoserver.api.safe.impl.NonWriteCommandResult;
+import com.eightkdata.mongowp.exceptions.BadValueException;
+import com.eightkdata.mongowp.exceptions.CommandFailed;
+import com.eightkdata.mongowp.exceptions.MongoException;
+import com.eightkdata.mongowp.server.api.Command;
+import com.eightkdata.mongowp.server.api.CommandRequest;
+import com.eightkdata.mongowp.server.api.CommandResult;
+import com.eightkdata.mongowp.server.api.impl.NonWriteCommandResult;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.CreateCollectionCommand.CreateCollectionArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.CollectionOptions;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.CollectionOptions.AutoIndexMode;
-import com.eightkdata.mongowp.mongoserver.api.safe.tools.Empty;
-import com.eightkdata.mongowp.mongoserver.protocol.exceptions.BadValueException;
-import com.eightkdata.mongowp.mongoserver.protocol.exceptions.CommandFailed;
-import com.eightkdata.mongowp.mongoserver.protocol.exceptions.MongoException;
+import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.torodb.torod.core.connection.ToroConnection;
 import com.torodb.torod.mongodb.commands.AbstractToroCommandImplementation;
 import com.torodb.torod.mongodb.utils.JsonToBson;
@@ -61,7 +61,7 @@ public class CreateCollectionImplementation extends AbstractToroCommandImplement
         connection.createCollection(collection, other);
         connection.dropCollection(collection);
 
-        return new NonWriteCommandResult<Empty>(Empty.getInstance());
+        return new NonWriteCommandResult<>(Empty.getInstance());
 
     }
 

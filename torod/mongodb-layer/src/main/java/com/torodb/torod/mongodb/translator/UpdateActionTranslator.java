@@ -20,12 +20,16 @@
 
 package com.torodb.torod.mongodb.translator;
 
+import com.eightkdata.mongowp.bson.BsonDocument;
+import com.eightkdata.mongowp.bson.BsonDocument.Entry;
+import com.eightkdata.mongowp.bson.BsonValue;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.torodb.kvdocument.conversion.mongo.MongoValueConverter;
-import com.torodb.kvdocument.values.DocValue;
-import com.torodb.kvdocument.values.NumericDocValue;
+import com.torodb.kvdocument.conversion.mongowp.MongoWPConverter;
+import com.torodb.kvdocument.values.KVDocument;
+import com.torodb.kvdocument.values.KVNumeric;
+import com.torodb.kvdocument.values.KVValue;
 import com.torodb.torod.core.exceptions.UserToroException;
 import com.torodb.torod.core.language.AttributeReference;
 import com.torodb.torod.core.language.update.*;
@@ -34,8 +38,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
 import javax.annotation.Nonnull;
-import org.bson.BsonDocument;
-import org.bson.BsonValue;
 
 /**
  *
@@ -61,8 +63,8 @@ public class UpdateActionTranslator {
     }
 
     private static boolean isReplaceUpdate(BsonDocument updateObject) {
-        for (String key : updateObject.keySet()) {
-            if (isUpdateOperator(key)) {
+        for (Entry<?> entry : updateObject) {
+            if (isUpdateOperator(entry.getKey())) {
                 return false;
             }
         }
@@ -71,22 +73,22 @@ public class UpdateActionTranslator {
 
     private static UpdateAction translateReplaceObject(BsonDocument updateObject) {
         return new SetDocumentUpdateAction(
-                MongoValueConverter.translateObject(updateObject)
-        );
+                (KVDocument) MongoWPConverter.translate(updateObject));
     }
 
     private static UpdateAction translateComposedUpdate(BsonDocument updateObject) {
         CompositeUpdateAction.Builder builder 
                 = new CompositeUpdateAction.Builder();
-        
-        for (String key : updateObject.keySet()) {
+
+        for (Entry<?> entry : updateObject) {
+            String key = entry.getKey();
             if (!UpdateOperator.isSubQuery(key)) {
                 throw new UserToroException("Unknown modifier: "+key);
             }
             translateSingleOperation(
                     builder,
                     UpdateOperator.fromKey(key), 
-                    updateObject.get(key)
+                    entry.getValue()
             );
         }
         return builder.build();
@@ -180,20 +182,18 @@ public class UpdateActionTranslator {
     
     private static void translateIncrement(
             CompositeUpdateAction.Builder builder, BsonDocument argument) {
-        for (String key : argument.keySet()) {
-            Collection<AttributeReference> attRefs 
-                    = parseAttributeReference(key);
-            DocValue translatedValue 
-                    = MongoValueConverter.translateBSON(argument.get(key));
+        for (Entry<?> entry : argument) {
+            Collection<AttributeReference> attRefs
+                    = parseAttributeReference(entry.getKey());
+            KVValue translatedValue = MongoWPConverter.translate(entry.getValue());
             
-            if (!(translatedValue instanceof NumericDocValue)) {
+            if (!(translatedValue instanceof KVNumeric)) {
                 throw new UserToroException("Cannot increment with a "
                         + "non-numeric argument");
             }
-            builder.add(
-                    new IncrementUpdateAction(
+            builder.add(new IncrementUpdateAction(
                             attRefs,
-                            (NumericDocValue) translatedValue
+                            (KVNumeric) translatedValue
                     )
             );
         }
@@ -201,17 +201,17 @@ public class UpdateActionTranslator {
 
     private static void translateMove(
             CompositeUpdateAction.Builder builder, BsonDocument argument) {
-        for (String key : argument.keySet()) {
+        for (Entry<?> entry : argument) {
             Collection<AttributeReference> attRefs
-                    = parseAttributeReference(key);
-            if (!argument.get(key).isString()) {
+                    = parseAttributeReference(entry.getKey());
+            if (!entry.getValue().isString()) {
                 throw new UserToroException("The 'to' field for $rename must "
-                        + "be a string, but "+argument.get(key)+" were found "
-                        + "with key "+key);
+                        + "be a string, but "+ entry.getValue()+" were found "
+                        + "with key "+entry.getKey());
             }
             AttributeReference newRef
                     = parseAttributReferenceAsObjectReference(
-                            argument.get(key).asString().getValue()
+                            entry.getValue().asString().getValue()
                     );
             
             builder.add(
@@ -225,20 +225,19 @@ public class UpdateActionTranslator {
 
     private static void translateMultiply(
             CompositeUpdateAction.Builder builder, BsonDocument argument) {
-        for (String key : argument.keySet()) {
+        for (Entry<?> entry : argument) {
             Collection<AttributeReference> attRefs
-                    = parseAttributeReference(key);
-            DocValue translatedValue 
-                    = MongoValueConverter.translateBSON(argument.get(key));
+                    = parseAttributeReference(entry.getKey());
+            KVValue translatedValue 
+                    = MongoWPConverter.translate(entry.getValue());
             
-            if (!(translatedValue instanceof NumericDocValue)) {
+            if (!(translatedValue instanceof KVNumeric)) {
                 throw new UserToroException("Cannot multiply with a "
                         + "non-numeric argument");
             }
-            builder.add(
-                    new MultiplyUpdateAction(
+            builder.add(new MultiplyUpdateAction(
                             attRefs,
-                            (NumericDocValue) translatedValue
+                            (KVNumeric) translatedValue
                     )
             );
         }
@@ -251,11 +250,11 @@ public class UpdateActionTranslator {
 
     private static void translateSetField(
             CompositeUpdateAction.Builder builder, BsonDocument argument) {
-        for (String key : argument.keySet()) {
+        for (Entry<?> entry : argument) {
             Collection<AttributeReference> attRefs
-                    = parseAttributeReference(key);
-            DocValue translatedValue 
-                    = MongoValueConverter.translateBSON(argument.get(key));
+                    = parseAttributeReference(entry.getKey());
+            KVValue translatedValue 
+                    = MongoWPConverter.translate(entry.getValue());
             
             builder.add(
                     new SetFieldUpdateAction(
@@ -268,9 +267,9 @@ public class UpdateActionTranslator {
 
     private static void translateUnsetField(
             CompositeUpdateAction.Builder builder, BsonDocument argument) {
-        for (String key : argument.keySet()) {
+        for (Entry<?> entry : argument) {
             Collection<AttributeReference> attRefs
-                    = parseAttributeReference(key);
+                    = parseAttributeReference(entry.getKey());
             
             builder.add(
                     new UnsetFieldUpdateAction(attRefs)

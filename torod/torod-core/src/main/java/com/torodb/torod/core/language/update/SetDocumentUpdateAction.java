@@ -22,20 +22,20 @@ package com.torodb.torod.core.language.update;
 
 import com.torodb.torod.core.language.AttributeReference;
 import com.torodb.torod.core.language.update.utils.UpdateActionVisitor;
-import com.torodb.kvdocument.values.ObjectValue;
+import com.torodb.kvdocument.values.KVDocument;
 
 /**
  *
  */
 public class SetDocumentUpdateAction implements UpdateAction {
     
-    private final ObjectValue newValue;
+    private final KVDocument newValue;
 
-    public SetDocumentUpdateAction(ObjectValue newValue) {
+    public SetDocumentUpdateAction(KVDocument newValue) {
         this.newValue = newValue;
     }
 
-    public ObjectValue getNewValue() {
+    public KVDocument getNewValue() {
         return newValue;
     }
 

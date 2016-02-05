@@ -20,17 +20,15 @@
 
 package com.toro.torod.connection.update;
 
-import com.torodb.kvdocument.values.ArrayValue;
-import com.torodb.kvdocument.values.DocValue;
-import com.torodb.kvdocument.values.ObjectValue;
+import com.torodb.kvdocument.values.KVValue;
 
 /**
  *
  */
 class ObjectBuilderCallback implements BuilderCallback<String> {
-    private final ObjectValue.MutableBuilder builder;
+    private final KVDocumentBuilder builder;
 
-    public ObjectBuilderCallback(ObjectValue.MutableBuilder builder) {
+    public ObjectBuilderCallback(KVDocumentBuilder builder) {
         this.builder = builder;
     }
 
@@ -50,7 +48,7 @@ class ObjectBuilderCallback implements BuilderCallback<String> {
     }
 
     @Override
-    public DocValue getValue(String key) {
+    public KVValue getValue(String key) {
         return builder.getValue(key);
     }
 
@@ -60,7 +58,7 @@ class ObjectBuilderCallback implements BuilderCallback<String> {
     }
 
     @Override
-    public ArrayValue.MutableBuilder getArrayBuilder(String key) {
+    public KVArrayBuilder getArrayBuilder(String key) {
         return builder.getArrayBuilder(key);
     }
 
@@ -70,22 +68,22 @@ class ObjectBuilderCallback implements BuilderCallback<String> {
     }
 
     @Override
-    public ObjectValue.MutableBuilder getObjectBuilder(String key) {
+    public KVDocumentBuilder getObjectBuilder(String key) {
         return builder.getObjectBuilder(key);
     }
 
     @Override
-    public ArrayValue.MutableBuilder newArray(String key) {
+    public KVArrayBuilder newArray(String key) {
         return builder.newArray(key);
     }
 
     @Override
-    public ObjectValue.MutableBuilder newObject(String key) {
+    public KVDocumentBuilder newObject(String key) {
         return builder.newObject(key);
     }
 
     @Override
-    public void setValue(String key, DocValue value) {
+    public void setValue(String key, KVValue value) {
         builder.putValue(key, value);
     }
 

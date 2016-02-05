@@ -2,7 +2,6 @@
 package com.torodb.torod.mongodb.meta;
 
 import com.google.common.collect.Lists;
-import com.torodb.kvdocument.values.ObjectValue;
 import com.torodb.torod.core.annotations.DatabaseName;
 import com.torodb.torod.core.connection.ToroConnection;
 import com.torodb.torod.core.connection.ToroTransaction;
@@ -18,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import com.torodb.kvdocument.values.KVDocument;
 
 /**
  *
@@ -47,11 +47,11 @@ public class IndexesMetaCollection extends MetaCollection {
                 Collection<? extends NamedToroIndex> indexes
                         = transaction.getIndexes(collection);
                 for (NamedToroIndex index : indexes) {
-                    ObjectValue.SimpleBuilder objBuider = new ObjectValue.SimpleBuilder()
+                    KVDocument.Builder objBuider = new KVDocument.Builder()
                             .putValue("v", 1)
                             .putValue("name", index.getName())
                             .putValue("ns", collectionNamespace);
-                    ObjectValue.SimpleBuilder keyBuilder = new ObjectValue.SimpleBuilder();
+                    KVDocument.Builder keyBuilder = new KVDocument.Builder();
                     for (Map.Entry<AttributeReference, Boolean> entrySet : index.getAttributes().entrySet()) {
                         keyBuilder.putValue(
                                 entrySet.getKey().toString(),

@@ -20,23 +20,14 @@
 
 package com.torodb.integration;
 
-import java.io.File;
-import java.sql.Connection;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import org.junit.rules.TestRule;
-import org.junit.runner.Description;
-import org.junit.runners.model.Statement;
-import org.postgresql.ds.PGSimpleDataSource;
-import org.postgresql.util.PSQLException;
-import org.slf4j.LoggerFactory;
-
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.spi.IThrowableProxy;
+import ch.qos.logback.classic.spi.ThrowableProxy;
+import ch.qos.logback.core.Appender;
+import ch.qos.logback.core.AppenderBase;
 import com.beust.jcommander.internal.Console;
-import com.eightkdata.mongowp.mongoserver.MongoServer;
+import com.eightkdata.mongowp.server.wp.NettyMongoServer;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.torodb.Shutdowner;
@@ -45,28 +36,22 @@ import com.torodb.config.model.backend.greenplum.Greenplum;
 import com.torodb.config.model.backend.postgres.Postgres;
 import com.torodb.config.model.protocol.mongo.Replication;
 import com.torodb.config.util.ConfigUtils;
-import com.torodb.di.BackendModule;
-import com.torodb.di.ConfigModule;
-import com.torodb.di.ConnectionModule;
-import com.torodb.di.D2RModule;
-import com.torodb.di.DbMetaInformationCacheModule;
-import com.torodb.di.ExecutorModule;
-import com.torodb.di.ExecutorServiceModule;
-import com.torodb.di.MongoConfigModule;
-import com.torodb.di.MongoLayerModule;
+import com.torodb.di.*;
 import com.torodb.integration.config.Backend;
 import com.torodb.integration.config.Protocol;
 import com.torodb.torod.core.Torod;
-import com.torodb.torod.core.exceptions.TorodStartupException;
 import com.torodb.torod.mongodb.repl.ReplCoordinator;
 import com.torodb.util.LogbackUtils;
-
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.classic.spi.IThrowableProxy;
-import ch.qos.logback.classic.spi.ThrowableProxy;
-import ch.qos.logback.core.Appender;
-import ch.qos.logback.core.AppenderBase;
+import java.io.File;
+import java.sql.Connection;
+import java.util.*;
+import java.util.concurrent.CyclicBarrier;
+import org.junit.rules.TestRule;
+import org.junit.runner.Description;
+import org.junit.runners.model.Statement;
+import org.postgresql.ds.PGSimpleDataSource;
+import org.postgresql.util.PSQLException;
+import org.slf4j.LoggerFactory;
 
 public class ToroRunnerClassRule implements TestRule {
 
@@ -209,36 +194,32 @@ public class ToroRunnerClassRule implements TestRule {
 					new ConnectionModule(),
 					new ExecutorServiceModule()
 			);
-	
-			final Object TORO_SEMAPHOR = new Object();
+
+            final CyclicBarrier barrier = new CyclicBarrier(2);
 			final Torod torod = injector.getInstance(Torod.class);
-			final MongoServer server = injector.getInstance(MongoServer.class);
+			final NettyMongoServer server = injector.getInstance(NettyMongoServer.class);
 			final ReplCoordinator replCoord = injector.getInstance(ReplCoordinator.class);
 			shutdowner = injector.getInstance(Shutdowner.class);
 	
 			Thread serverThread = new Thread() {
 				@Override
 				public void run() {
-					try {
-						torod.start();
-					} catch (TorodStartupException e) {
-						LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME).error(e.getMessage());
-						throw new RuntimeException(e.getMessage());
-					}
-					replCoord.startAsync();
-					replCoord.awaitRunning();
-					server.run();
-					synchronized (TORO_SEMAPHOR) {
-						TORO_SEMAPHOR.notify();
-					}
-				}
-			};
-			serverThread.start();
+                    try {
+                        torod.start();
+                        replCoord.startAsync();
+                        replCoord.awaitRunning();
+                        server.startAsync().awaitRunning();
+                        barrier.await();
+                    } catch (Throwable e) {
+                        LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME).error(e.getMessage(), e);
+                        throw new RuntimeException(e);
+                    }
+                }
+            };
+            serverThread.start();
 	
 			long start = System.currentTimeMillis();
-			synchronized (TORO_SEMAPHOR) {
-				TORO_SEMAPHOR.wait(TORO_BOOT_MAX_INTERVAL_MILLIS);
-			}
+            barrier.await();
 			if (System.currentTimeMillis() - start >= TORO_BOOT_MAX_INTERVAL_MILLIS) {
 				throw new RuntimeException(
 						"Toro failed to start after waiting for " + TORO_BOOT_MAX_INTERVAL_MILLIS + " milliseconds.");

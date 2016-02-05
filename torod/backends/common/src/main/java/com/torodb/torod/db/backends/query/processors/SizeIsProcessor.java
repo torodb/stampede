@@ -23,7 +23,7 @@ package com.torodb.torod.db.backends.query.processors;
 import com.torodb.torod.core.language.querycriteria.SizeIsQueryCriteria;
 import com.torodb.torod.core.language.querycriteria.TypeIsQueryCriteria;
 import com.torodb.torod.core.language.querycriteria.utils.QueryCriteriaVisitor;
-import com.torodb.torod.core.subdocument.BasicType;
+import com.torodb.torod.core.subdocument.ScalarType;
 import com.torodb.torod.db.backends.query.ProcessedQueryCriteria;
 import java.util.Collections;
 import java.util.List;
@@ -41,7 +41,7 @@ public class SizeIsProcessor {
                 new ProcessedQueryCriteria(
                     new TypeIsQueryCriteria(
                             criteria.getAttributeReference(), 
-                            BasicType.ARRAY
+                            ScalarType.ARRAY
                     ),
                     criteria
                 )
