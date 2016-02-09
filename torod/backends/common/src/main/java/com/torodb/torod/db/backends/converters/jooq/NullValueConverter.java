@@ -21,15 +21,15 @@
 
 package com.torodb.torod.db.backends.converters.jooq;
 
-import com.torodb.torod.core.subdocument.BasicType;
-import com.torodb.torod.core.subdocument.values.NullValue;
+import com.torodb.torod.core.subdocument.ScalarType;
+import com.torodb.torod.core.subdocument.values.ScalarNull;
 import org.jooq.DataType;
 import org.jooq.impl.SQLDataType;
 
 /**
  *
  */
-public class NullValueConverter implements SubdocValueConverter<Short, NullValue>{
+public class NullValueConverter implements SubdocValueConverter<Short, ScalarNull>{
     private static final long serialVersionUID = 1L;
 
     @Override
@@ -38,17 +38,17 @@ public class NullValueConverter implements SubdocValueConverter<Short, NullValue
     }
 
     @Override
-    public BasicType getErasuredType() {
-        return BasicType.NULL;
+    public ScalarType getErasuredType() {
+        return ScalarType.NULL;
     }
 
     @Override
-    public NullValue from(Short databaseObject) {
-        return NullValue.INSTANCE;
+    public ScalarNull from(Short databaseObject) {
+        return ScalarNull.getInstance();
     }
 
     @Override
-    public Short to(NullValue userObject) {
+    public Short to(ScalarNull userObject) {
         return null;
     }
 
@@ -58,8 +58,8 @@ public class NullValueConverter implements SubdocValueConverter<Short, NullValue
     }
 
     @Override
-    public Class<NullValue> toType() {
-        return NullValue.class;
+    public Class<ScalarNull> toType() {
+        return ScalarNull.class;
     }
     
 }

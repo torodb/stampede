@@ -1,14 +1,14 @@
 
 package com.torodb.torod.mongodb.commands.impl.admin;
 
-import com.eightkdata.mongowp.mongoserver.api.safe.Command;
-import com.eightkdata.mongowp.mongoserver.api.safe.CommandRequest;
-import com.eightkdata.mongowp.mongoserver.api.safe.CommandResult;
-import com.eightkdata.mongowp.mongoserver.api.safe.impl.CollectionCommandArgument;
-import com.eightkdata.mongowp.mongoserver.api.safe.impl.NonWriteCommandResult;
-import com.eightkdata.mongowp.mongoserver.api.safe.tools.Empty;
-import com.eightkdata.mongowp.mongoserver.protocol.exceptions.BadValueException;
-import com.eightkdata.mongowp.mongoserver.protocol.exceptions.MongoException;
+import com.eightkdata.mongowp.exceptions.BadValueException;
+import com.eightkdata.mongowp.exceptions.MongoException;
+import com.eightkdata.mongowp.server.api.Command;
+import com.eightkdata.mongowp.server.api.CommandRequest;
+import com.eightkdata.mongowp.server.api.CommandResult;
+import com.eightkdata.mongowp.server.api.impl.CollectionCommandArgument;
+import com.eightkdata.mongowp.server.api.impl.NonWriteCommandResult;
+import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.torodb.torod.core.connection.ToroConnection;
 import com.torodb.torod.mongodb.commands.AbstractToroCommandImplementation;
 

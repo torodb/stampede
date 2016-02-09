@@ -1,18 +1,20 @@
 
 package com.torodb.torod.mongodb.repl;
 
+import com.eightkdata.mongowp.OpTime;
+import com.eightkdata.mongowp.bson.BsonDocument;
+import com.eightkdata.mongowp.exceptions.MongoException;
 import com.eightkdata.mongowp.messages.request.QueryMessage.QueryOption;
 import com.eightkdata.mongowp.messages.request.QueryMessage.QueryOptions;
+import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.DeleteCommand;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.DeleteCommand.DeleteArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.DeleteCommand.DeleteStatement;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.InsertCommand;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.InsertCommand.InsertArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.InsertCommand.InsertResult;
-import com.eightkdata.mongowp.mongoserver.api.safe.oplog.OplogOperation;
-import com.eightkdata.mongowp.mongoserver.api.safe.tools.bson.BsonReaderTool;
-import com.eightkdata.mongowp.mongoserver.pojos.OpTime;
-import com.eightkdata.mongowp.mongoserver.protocol.exceptions.MongoException;
+import com.eightkdata.mongowp.utils.BsonDocumentBuilder;
+import com.eightkdata.mongowp.utils.BsonReaderTool;
 import com.google.common.base.Preconditions;
 import com.google.common.primitives.UnsignedInteger;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -31,11 +33,10 @@ import javax.annotation.Nonnull;
 import javax.annotation.concurrent.NotThreadSafe;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import org.bson.BsonBoolean;
-import org.bson.BsonDocument;
-import org.bson.BsonInt64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static com.eightkdata.mongowp.bson.utils.DefaultBsonValues.*;
 
 /**
  *
@@ -46,7 +47,7 @@ public class OplogManager extends AbstractIdleService {
     private static final Logger LOGGER
             = LoggerFactory.getLogger(OplogManager.class);
     private static final String KEY = "lastAppliedOplogEntry";
-    private static final BsonDocument DOC_QUERY = new BsonDocument(KEY, new BsonDocument("$exists", BsonBoolean.TRUE));
+    private static final BsonDocument DOC_QUERY = newDocument(KEY, newDocument("$exists", TRUE));
     
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private long lastAppliedHash;
@@ -99,8 +100,7 @@ public class OplogManager extends AbstractIdleService {
     private void storeState(long hash, OpTime opTime) throws OplogManagerPersistException {
         Preconditions.checkState(isRunning(), "The service is not running");
 
-        LocalMongoConnection connection = localClient.openConnection();
-        try {
+        try (LocalMongoConnection connection = localClient.openConnection()) {
             connection.execute(
                     DeleteCommand.INSTANCE,
                     supportedDatabase,
@@ -109,35 +109,36 @@ public class OplogManager extends AbstractIdleService {
                             .addStatement(new DeleteStatement(DOC_QUERY, false))
                             .build()
             );
+
+
             InsertResult insertResult = connection.execute(
                     InsertCommand.INSTANCE,
                     supportedDatabase,
                     true,
                     new InsertArgument.Builder("torodb")
                         .addDocument(
-                                new BsonDocument(KEY, new BsonDocument()
-                                        .append("hash", new BsonInt64(hash))
-                                        .append("opTime", new BsonDocument() //TODO: torodb does not support the BSON type Timestamp
-                                                .append("t", new BsonInt64(opTime.getSecs().longValue()))
-                                                .append("i", new BsonInt64(opTime.getTerm().longValue()))
-                                        )
-                                )
-                        ).build()
+                                new BsonDocumentBuilder()
+                                        .appendUnsafe(KEY, new BsonDocumentBuilder()
+                                                .appendUnsafe("hash", newLong(hash))
+                                                .appendUnsafe("opTime", new BsonDocumentBuilder()
+                                                        .appendUnsafe("t", newLong(opTime.getSecs().longValue()))
+                                                        .appendUnsafe("i", newLong(opTime.getTerm().longValue()))
+                                                        .build()
+                                                ).build()
+                                        ).build()
+                                    ).build()
             );
             if (insertResult.getN() != 1) {
                 throw new OplogManagerPersistException();
             }
         } catch (MongoException ex) {
             throw new OplogManagerPersistException(ex);
-        } finally {
-            connection.close();
         }
     }
 
     @Locked(exclusive = true)
     private void loadState() throws OplogManagerPersistException {
-        LocalMongoConnection connection = localClient.openConnection();
-        try {
+        try (LocalMongoConnection connection = localClient.openConnection()) {
             EnumSet<QueryOption> flags = EnumSet.of(QueryOption.SLAVE_OK);
             BsonDocument doc = connection.query(
                     supportedDatabase,
@@ -165,8 +166,6 @@ public class OplogManager extends AbstractIdleService {
             }
         } catch (MongoException ex) {
             throw new OplogManagerPersistException(ex);
-        } finally {
-            connection.close();
         }
     }
 

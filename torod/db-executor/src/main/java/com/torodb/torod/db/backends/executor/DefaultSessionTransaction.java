@@ -39,7 +39,7 @@ import com.torodb.torod.core.pojos.Database;
 import com.torodb.torod.core.pojos.IndexedAttributes;
 import com.torodb.torod.core.pojos.NamedToroIndex;
 import com.torodb.torod.core.subdocument.SplitDocument;
-import com.torodb.torod.core.subdocument.values.Value;
+import com.torodb.torod.core.subdocument.values.ScalarValue;
 import com.torodb.torod.db.backends.executor.jobs.*;
 import com.torodb.torod.db.backends.executor.report.ReportFactory;
 import com.torodb.torod.db.executor.jobs.CreatePathViewsCallable;
@@ -291,7 +291,7 @@ public class DefaultSessionTransaction implements SessionTransaction {
     }
 
     @Override
-    public ListenableFuture<Iterator<ValueRow<Value>>> sqlSelect(String sqlQuery) {
+    public ListenableFuture<Iterator<ValueRow<ScalarValue<?>>>> sqlSelect(String sqlQuery) {
         return submit(
                 new SqlSelectCallable(
                         dbConnection,

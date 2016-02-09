@@ -20,12 +20,12 @@
 
 package com.torodb.torod.db.backends.converters;
 
-import com.torodb.torod.core.subdocument.values.Value;
+import com.torodb.torod.core.subdocument.values.ScalarValue;
 
 /**
  *
  */
-public interface ValueConverter<J, V extends Value<?>> {
+public interface ValueConverter<J, V extends ScalarValue<?>> {
     
     Class<? extends J> getJsonClass();
     

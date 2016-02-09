@@ -1,18 +1,18 @@
 package com.torodb.torod.mongodb;
 
+import com.eightkdata.mongowp.ErrorCode;
+import com.eightkdata.mongowp.MongoConstants;
+import com.eightkdata.mongowp.exceptions.MongoException;
+import com.eightkdata.mongowp.fields.DoubleField;
+import com.eightkdata.mongowp.fields.IntField;
+import com.eightkdata.mongowp.fields.StringField;
+import com.eightkdata.mongowp.messages.request.EmptyBsonContext;
 import com.eightkdata.mongowp.messages.response.ReplyMessage;
 import com.eightkdata.mongowp.messages.utils.IterableDocumentProvider;
-import com.eightkdata.mongowp.mongoserver.api.safe.Connection;
-import com.eightkdata.mongowp.mongoserver.api.safe.ErrorHandler;
-import com.eightkdata.mongowp.mongoserver.api.safe.tools.bson.BsonDocumentBuilder;
-import com.eightkdata.mongowp.mongoserver.api.safe.tools.bson.BsonField;
-import com.eightkdata.mongowp.mongoserver.protocol.MongoWP;
-import com.eightkdata.mongowp.mongoserver.protocol.ErrorCode;
-import com.eightkdata.mongowp.mongoserver.protocol.exceptions.MongoException;
+import com.eightkdata.mongowp.server.api.Connection;
+import com.eightkdata.mongowp.server.api.ErrorHandler;
+import com.eightkdata.mongowp.utils.BsonDocumentBuilder;
 import javax.annotation.Nullable;
-import org.bson.BsonDocument;
-import org.bson.BsonInt32;
-import org.bson.BsonString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,6 +20,10 @@ import org.slf4j.LoggerFactory;
  *
  */
 public class ToroErrorHandler implements ErrorHandler {
+
+    private static final StringField ERRMSG_FIELD = new StringField("errmsg");
+    private static final IntField CODE_FIELD = new IntField("code");
+    private static final DoubleField OK_FIELD = new DoubleField("ok");
 
     private static final Logger LOGGER
             = LoggerFactory.getLogger(ToroErrorHandler.class);
@@ -37,6 +41,7 @@ public class ToroErrorHandler implements ErrorHandler {
                     error
             );
             return new ReplyMessage(
+                    EmptyBsonContext.getInstance(),
                     requestId,
                     false,
                     false,
@@ -45,16 +50,11 @@ public class ToroErrorHandler implements ErrorHandler {
                     0,
                     0,
                     IterableDocumentProvider.of(
-                            new BsonDocument().append(
-                                    "errmsg",
-                                    new BsonString("An unexpected error was catched")
-                            ).append(
-                                    "code",
-                                    new BsonInt32(ErrorCode.UNKNOWN_ERROR.getErrorCode())
-                            ).append(
-                                    "ok",
-                                    MongoWP.BSON_KO
-                            )
+                            new BsonDocumentBuilder(3)
+                            .append(ERRMSG_FIELD, "An unexpected error was catched")
+                            .append(CODE_FIELD, ErrorCode.UNKNOWN_ERROR.getErrorCode())
+                            .append(OK_FIELD, MongoConstants.KO)
+                            .build()
                     )
             );
         }
@@ -67,10 +67,6 @@ public class ToroErrorHandler implements ErrorHandler {
         }
     }
 
-    private static final BsonField<String> ERRMSG_FIELD = BsonField.create("errmsg");
-    private static final BsonField<Integer> CODE_FIELD = BsonField.create("code");
-    private static final BsonField<Double> OK_FIELD = BsonField.create("ok");
-
     @Override
     @Nullable
     public ReplyMessage handleMongodbException(
@@ -80,6 +76,7 @@ public class ToroErrorHandler implements ErrorHandler {
             MongoException exception) {
         if (canReply) {
             return new ReplyMessage(
+                    EmptyBsonContext.getInstance(),
                     requestId,
                     false,
                     false,
@@ -91,7 +88,7 @@ public class ToroErrorHandler implements ErrorHandler {
                             new BsonDocumentBuilder()
                                     .append(ERRMSG_FIELD, exception.getMessage())
                                     .append(CODE_FIELD, exception.getErrorCode().getErrorCode())
-                                    .appendUnsafe(OK_FIELD.getFieldName(), MongoWP.BSON_KO)
+                                    .appendUnsafe(OK_FIELD.getFieldName(), MongoConstants.BSON_KO)
                                     .build()
                     )
             );

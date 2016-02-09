@@ -20,14 +20,14 @@
 
 package com.torodb.torod.db.backends.converters.json;
 
+import com.torodb.torod.core.subdocument.values.ScalarNull;
 import com.torodb.torod.db.backends.converters.ValueConverter;
-import com.torodb.torod.core.subdocument.values.NullValue;
 
 /**
  *
  */
 public class NullValueToJsonConverter implements
-        ValueConverter<Void, NullValue> {
+        ValueConverter<Void, ScalarNull> {
 
     @Override
     public Class<? extends Void> getJsonClass() {
@@ -35,18 +35,18 @@ public class NullValueToJsonConverter implements
     }
 
     @Override
-    public Class<? extends NullValue> getValueClass() {
-        return NullValue.class;
+    public Class<? extends ScalarNull> getValueClass() {
+        return ScalarNull.class;
     }
 
     @Override
-    public Void toJson(NullValue value) {
+    public Void toJson(ScalarNull value) {
         return null;
     }
 
     @Override
-    public NullValue toValue(Void value) {
-        return NullValue.INSTANCE;
+    public ScalarNull toValue(Void value) {
+        return ScalarNull.getInstance();
     }
     
 }

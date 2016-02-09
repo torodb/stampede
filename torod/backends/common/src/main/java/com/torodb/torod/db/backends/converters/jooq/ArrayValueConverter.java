@@ -20,12 +20,14 @@
 
 package com.torodb.torod.db.backends.converters.jooq;
 
-import com.torodb.torod.core.subdocument.values.ArrayValue;
-import com.torodb.torod.core.subdocument.BasicType;
+import com.torodb.torod.core.subdocument.ScalarType;
+import com.torodb.torod.core.subdocument.values.ScalarArray;
 import com.torodb.torod.db.backends.converters.array.ValueToArrayConverterProvider;
 import java.io.Serializable;
 import java.io.StringReader;
-import javax.json.*;
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonReader;
 import org.jooq.DataType;
 import org.jooq.impl.SQLDataType;
 
@@ -33,7 +35,7 @@ import org.jooq.impl.SQLDataType;
  *
  */
 public class ArrayValueConverter implements
-        SubdocValueConverter<String, ArrayValue>, Serializable {
+        SubdocValueConverter<String, ScalarArray>, Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -43,12 +45,12 @@ public class ArrayValueConverter implements
     }
 
     @Override
-    public BasicType getErasuredType() {
-        return BasicType.ARRAY;
+    public ScalarType getErasuredType() {
+        return ScalarType.ARRAY;
     }
 
     @Override
-    public ArrayValue from(String databaseObject) {
+    public ScalarArray from(String databaseObject) {
         JsonReader reader = Json.createReader(new StringReader(databaseObject));
         
         JsonArray array = reader.readArray();
@@ -58,7 +60,7 @@ public class ArrayValueConverter implements
     }
 
     @Override
-    public String to(ArrayValue userObject) {
+    public String to(ScalarArray userObject) {
         JsonArray array 
                 = ValueToArrayConverterProvider.getInstance()
                         .getArrayConverter().toJson(userObject);
@@ -72,7 +74,7 @@ public class ArrayValueConverter implements
     }
 
     @Override
-    public Class<ArrayValue> toType() {
-        return ArrayValue.class;
+    public Class<ScalarArray> toType() {
+        return ScalarArray.class;
     }
 }

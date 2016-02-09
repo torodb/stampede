@@ -20,9 +20,7 @@
 
 package com.toro.torod.connection.update;
 
-import com.torodb.kvdocument.values.ArrayValue;
-import com.torodb.kvdocument.values.DocValue;
-import com.torodb.kvdocument.values.ObjectValue;
+import com.torodb.kvdocument.values.KVValue;
 import javax.annotation.Nonnull;
 
 /**
@@ -37,23 +35,23 @@ interface BuilderCallback<K> {
     boolean isValue(K key);
 
     @Nonnull
-    DocValue getValue(K key);
+    KVValue<?> getValue(K key);
 
     boolean isArrayBuilder(K key);
 
     @Nonnull
-    ArrayValue.MutableBuilder getArrayBuilder(K key);
+    KVArrayBuilder getArrayBuilder(K key);
 
     boolean isObjectBuilder(K key);
 
     @Nonnull
-    ObjectValue.MutableBuilder getObjectBuilder(K key);
+    KVDocumentBuilder getObjectBuilder(K key);
 
-    ArrayValue.MutableBuilder newArray(K key);
+    KVArrayBuilder newArray(K key);
 
-    ObjectValue.MutableBuilder newObject(K key);
+    KVDocumentBuilder newObject(K key);
 
-    void setValue(K key, DocValue value);
+    void setValue(K key, KVValue value);
 
     boolean unset(K key);
 

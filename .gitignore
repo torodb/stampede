@@ -11,3 +11,4 @@ nb-configuration.xml
 /torod/backends/common/nbproject/
 /torod/backends/postgresql/nbproject/
 hs_err*.log
+/torod/mongodb-layer/nbproject/

@@ -20,12 +20,9 @@
 
 package com.toro.torod.connection.update;
 
+import com.torodb.kvdocument.values.*;
 import com.torodb.torod.core.exceptions.UserToroException;
 import com.torodb.torod.core.language.AttributeReference;
-import com.torodb.kvdocument.values.ArrayValue;
-import com.torodb.kvdocument.values.DocValue;
-import com.torodb.kvdocument.values.NumericDocValue;
-import com.torodb.kvdocument.values.ObjectValue;
 import java.util.Collection;
 
 /**
@@ -33,16 +30,17 @@ import java.util.Collection;
  */
 class IncrementUpdateActionExecutor implements ResolvedCallback<Boolean> {
 
-    private final NumericDocValue delta;
+    private static final Incrementer INCREMENTER = new Incrementer();
+    private final KVNumeric<?> delta;
 
-    public IncrementUpdateActionExecutor(NumericDocValue delta) {
+    public IncrementUpdateActionExecutor(KVNumeric<?> delta) {
         this.delta = delta;
     }
 
     static <K> boolean increment(
             BuilderCallback<K> builder,
             Collection<AttributeReference> keys,
-            NumericDocValue delta
+            KVNumeric<?> delta
     ) {
 
         for (AttributeReference key : keys) {
@@ -57,7 +55,7 @@ class IncrementUpdateActionExecutor implements ResolvedCallback<Boolean> {
     static <K> boolean increment(
             BuilderCallback<K> builder,
             AttributeReference key,
-            NumericDocValue delta
+            KVNumeric delta
     ) {
         Boolean result = AttributeReferenceToBuilderCallback.resolve(builder,
                 key.getKeys(),
@@ -74,7 +72,7 @@ class IncrementUpdateActionExecutor implements ResolvedCallback<Boolean> {
     public <K> Boolean objectReferenced(
             BuilderCallback<K> parentBuilder,
             K key,
-            ObjectValue.MutableBuilder child
+            KVDocumentBuilder child
     ) {
         throw new UserToroException(
                 "Cannot increment a value of a non-numeric type. "
@@ -86,7 +84,7 @@ class IncrementUpdateActionExecutor implements ResolvedCallback<Boolean> {
     public <K> Boolean arrayReferenced(
             BuilderCallback<K> parentBuilder,
             K key,
-            ArrayValue.MutableBuilder child
+            KVArrayBuilder child
     ) {
         throw new UserToroException(
                 "Cannot increment a value of a non-numeric type. "
@@ -98,16 +96,16 @@ class IncrementUpdateActionExecutor implements ResolvedCallback<Boolean> {
     public <K> Boolean valueReferenced(
             BuilderCallback<K> parentBuilder,
             K key,
-            DocValue child
+            KVValue child
     ) {
-        if (!(child instanceof NumericDocValue)) {
+        if (!(child instanceof KVNumeric)) {
             throw new UserToroException(
                     "Cannot increment a value of a non-numeric type. "
                     + parentBuilder + " has the field '" + key + "' of "
                     + "non-numeric type " + child.getType());
         }
-        NumericDocValue numericChild = (NumericDocValue) child;
-        parentBuilder.setValue(key, numericChild.increment(delta));
+        KVNumeric<?> numericChild = (KVNumeric) child;
+        parentBuilder.setValue(key, numericChild.accept(INCREMENTER, delta));
         return true;
     }
 
@@ -119,5 +117,30 @@ class IncrementUpdateActionExecutor implements ResolvedCallback<Boolean> {
         parentBuilder.setValue(key, delta);
         return true;
     }
+
+    private static class Incrementer extends KVValueAdaptor<KVNumeric<?>, KVNumeric<?>> {
+
+        @Override
+        public KVNumeric<?> visit(KVDouble value, KVNumeric<?> arg) {
+            return KVDouble.of(value.doubleValue() + arg.doubleValue());
+        }
+
+        @Override
+        public KVNumeric<?> visit(KVLong value, KVNumeric<?> arg) {
+            return KVDouble.of(value.doubleValue() + arg.doubleValue());
+        }
+
+        @Override
+        public KVNumeric<?> visit(KVInteger value, KVNumeric<?> arg) {
+            return KVDouble.of(value.doubleValue() + arg.doubleValue());
+        }
+
+        @Override
+        public KVNumeric<?> defaultCase(KVValue<?> value, KVNumeric<?> arg) {
+            throw new AssertionError("Trying to increment a value of type " + value.getType() + " which is not a number");
+        }
+
+    }
+
 
 }

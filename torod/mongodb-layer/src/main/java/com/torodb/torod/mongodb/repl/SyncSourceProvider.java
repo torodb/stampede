@@ -1,7 +1,7 @@
 
 package com.torodb.torod.mongodb.repl;
 
-import com.eightkdata.mongowp.mongoserver.pojos.OpTime;
+import com.eightkdata.mongowp.OpTime;
 import com.google.common.net.HostAndPort;
 import com.torodb.torod.mongodb.repl.exceptions.NoSyncSourceFoundException;
 import javax.annotation.Nullable;

@@ -21,7 +21,7 @@
 package com.torodb;
 
 import com.beust.jcommander.Parameter;
-import com.eightkdata.mongowp.mongoserver.MongoServerConfig;
+import com.eightkdata.mongowp.server.MongoServerConfig;
 import com.google.common.net.HostAndPort;
 import com.torodb.torod.db.backends.DbBackendConfiguration;
 import javax.annotation.Nullable;

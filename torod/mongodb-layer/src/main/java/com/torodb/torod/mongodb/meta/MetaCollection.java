@@ -1,7 +1,7 @@
 
 package com.torodb.torod.mongodb.meta;
 
-import com.eightkdata.mongowp.mongoserver.protocol.exceptions.MongoException;
+import com.eightkdata.mongowp.exceptions.MongoException;
 import com.torodb.torod.core.connection.ToroConnection;
 import com.torodb.torod.core.subdocument.ToroDocument;
 import java.util.List;

@@ -1,7 +1,7 @@
 
 package com.torodb.torod.mongodb;
 
-import com.eightkdata.mongowp.mongoserver.api.safe.Request;
+import com.eightkdata.mongowp.server.api.Request;
 import com.torodb.torod.core.connection.ToroConnection;
 import com.torodb.torod.mongodb.repl.ReplCoordinator;
 import io.netty.util.AttributeKey;

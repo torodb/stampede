@@ -2,13 +2,17 @@
 package com.torodb.torod.core.utils;
 
 import com.google.common.base.Predicate;
-import com.torodb.kvdocument.values.*;
-import com.torodb.torod.core.exceptions.UserToroException;
+import com.google.common.collect.Sets;
+import com.torodb.kvdocument.values.KVArray;
+import com.torodb.kvdocument.values.KVDocument;
+import com.torodb.kvdocument.values.KVString;
+import com.torodb.kvdocument.values.KVValue;
 import com.torodb.torod.core.language.AttributeReference;
 import com.torodb.torod.core.language.querycriteria.*;
 import com.torodb.torod.core.language.querycriteria.utils.QueryCriteriaVisitor;
-import com.torodb.torod.core.subdocument.BasicType;
-import com.torodb.torod.core.subdocument.values.Value;
+import com.torodb.torod.core.subdocument.ScalarType;
+import com.torodb.torod.core.subdocument.values.ScalarValue;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.regex.Matcher;
 import javax.annotation.Nonnull;
@@ -19,22 +23,20 @@ import javax.annotation.Nullable;
  */
 public class DocValueQueryCriteriaEvaluator {
 
-    private static final ValueConverter VALUE_CONVERTER = new ValueConverter();
-    
     private DocValueQueryCriteriaEvaluator()  {}
     
-    public static boolean evaluate(@Nonnull QueryCriteria qc, @Nonnull DocValue value) {
+    public static boolean evaluate(@Nonnull QueryCriteria qc, @Nonnull KVValue<?> value) {
         return qc.accept(
                 new QueryCriteriaEvaluator(), 
                 value
         );
     }
     
-    public static Predicate<DocValue> createPredicate(QueryCriteria query) {
+    public static Predicate<KVValue<?>> createPredicate(QueryCriteria query) {
         return new QueryCriteriaPredicate(query);
     }
     
-    private static class QueryCriteriaPredicate implements Predicate<DocValue> {
+    private static class QueryCriteriaPredicate implements Predicate<KVValue<?>> {
 
         private final QueryCriteria qc;
         private final QueryCriteriaEvaluator evaluator;
@@ -45,30 +47,30 @@ public class DocValueQueryCriteriaEvaluator {
         }
         
         @Override
-        public boolean apply(DocValue value) {
+        public boolean apply(KVValue<?> value) {
             return qc.accept(evaluator, value);
         }
     }
 
     private static class QueryCriteriaEvaluator
-            implements QueryCriteriaVisitor<Boolean, DocValue> {
+            implements QueryCriteriaVisitor<Boolean, KVValue<?>> {
 
         @Nullable
-        private DocValue resolve(AttributeReference attRef, DocValue value) {
+        private KVValue<?> resolve(AttributeReference attRef, KVValue<?> value) {
             if (attRef.getKeys().isEmpty()) {
                 return value;
             }
-            if (value instanceof ObjectValue) {
-                return resolve(attRef.getKeys().iterator(), (ObjectValue) value);
+            if (value instanceof KVDocument) {
+                return resolve(attRef.getKeys().iterator(), (KVDocument) value);
             }
-            if (value instanceof ArrayValue) {
-                return resolve(attRef.getKeys().iterator(), (ArrayValue) value);
+            if (value instanceof KVArray) {
+                return resolve(attRef.getKeys().iterator(), (KVArray) value);
             }
             return null;
         }
 
         @Nullable
-        private DocValue resolve(Iterator<AttributeReference.Key> atts, ObjectValue value) {
+        private KVValue<?> resolve(Iterator<AttributeReference.Key> atts, KVDocument value) {
             if (!atts.hasNext()) {
                 return value;
             }
@@ -80,19 +82,19 @@ public class DocValueQueryCriteriaEvaluator {
                 else {
                     AttributeReference.ObjectKey castedAtt
                             = (AttributeReference.ObjectKey) nextAtt;
-                    if (!value.contains(castedAtt.getKeyValue())) {
+                    if (!value.containsKey(castedAtt.getKeyValue())) {
                         return null;
                     }
-                    DocValue referencedValue
+                    KVValue<?> referencedValue
                             = value.get(castedAtt.getKeyValue());
                     if (!atts.hasNext()) {
                         return referencedValue;
                     }
-                    if (referencedValue instanceof ObjectValue) {
-                        return resolve(atts, (ObjectValue) referencedValue);
+                    if (referencedValue instanceof KVDocument) {
+                        return resolve(atts, (KVDocument) referencedValue);
                     }
-                    if (referencedValue instanceof ArrayValue) {
-                        return resolve(atts, (ArrayValue) referencedValue);
+                    if (referencedValue instanceof KVArray) {
+                        return resolve(atts, (KVArray) referencedValue);
                     }
                     else {
                         return null;
@@ -102,7 +104,7 @@ public class DocValueQueryCriteriaEvaluator {
         }
 
         @Nullable
-        private DocValue resolve(Iterator<AttributeReference.Key> atts, ArrayValue value) {
+        private KVValue<?> resolve(Iterator<AttributeReference.Key> atts, KVArray value) {
             if (!atts.hasNext()) {
                 return value;
             }
@@ -120,16 +122,16 @@ public class DocValueQueryCriteriaEvaluator {
                     if (castedAtt.getIndex() >= value.size()) {
                         return null;
                     }
-                    DocValue referencedValue
+                    KVValue<?> referencedValue
                             = value.get(castedAtt.getKeyValue());
                     if (!atts.hasNext()) {
                         return referencedValue;
                     }
-                    if (referencedValue instanceof ObjectValue) {
-                        return resolve(atts, (ObjectValue) referencedValue);
+                    if (referencedValue instanceof KVDocument) {
+                        return resolve(atts, (KVDocument) referencedValue);
                     }
-                    if (referencedValue instanceof ArrayValue) {
-                        return resolve(atts, (ArrayValue) referencedValue);
+                    if (referencedValue instanceof KVArray) {
+                        return resolve(atts, (KVArray) referencedValue);
                     }
                     else {
                         return null;
@@ -139,57 +141,56 @@ public class DocValueQueryCriteriaEvaluator {
         }
 
         @Override
-        public Boolean visit(TrueQueryCriteria criteria, DocValue arg) {
+        public Boolean visit(TrueQueryCriteria criteria, KVValue<?> arg) {
             return true;
         }
 
         @Override
-        public Boolean visit(FalseQueryCriteria criteria, DocValue arg) {
+        public Boolean visit(FalseQueryCriteria criteria, KVValue<?> arg) {
             return false;
         }
 
         @Override
-        public Boolean visit(AndQueryCriteria criteria, DocValue arg) {
+        public Boolean visit(AndQueryCriteria criteria, KVValue<?> arg) {
             return criteria.getSubQueryCriteria1().accept(this, arg)
                     && criteria.getSubQueryCriteria2().accept(this, arg);
         }
 
         @Override
-        public Boolean visit(OrQueryCriteria criteria, DocValue arg) {
+        public Boolean visit(OrQueryCriteria criteria, KVValue<?> arg) {
             return criteria.getSubQueryCriteria1().accept(this, arg)
                     || criteria.getSubQueryCriteria2().accept(this, arg);
         }
 
         @Override
-        public Boolean visit(NotQueryCriteria criteria, DocValue arg) {
+        public Boolean visit(NotQueryCriteria criteria, KVValue<?> arg) {
             return !criteria.getSubQueryCriteria().accept(this, arg);
         }
 
         @Override
-        public Boolean visit(TypeIsQueryCriteria criteria, DocValue arg) {
-            DocValue referenced = resolve(criteria.getAttributeReference(), arg);
+        public Boolean visit(TypeIsQueryCriteria criteria, KVValue<?> arg) {
+            KVValue<?> referenced = resolve(criteria.getAttributeReference(), arg);
             if (referenced == null) {
                 return false;
             }
 
-            BasicType basicType
-                    = referenced.accept(VALUE_CONVERTER, null).getType();
+            ScalarType basicType = ScalarType.fromDocType(referenced.getType());
             return criteria.getExpectedType().equals(basicType);
         }
 
         @Override
-        public Boolean visit(IsEqualQueryCriteria criteria, DocValue arg) {
-            DocValue referenced = resolve(criteria.getAttributeReference(), arg);
+        public Boolean visit(IsEqualQueryCriteria criteria, KVValue<?> arg) {
+            KVValue<?> referenced = resolve(criteria.getAttributeReference(), arg);
             if (referenced == null) {
                 return false;
             }
 
-            return criteria.getValue().equals(referenced.accept(VALUE_CONVERTER, null));
+            return criteria.getValue().equals(KVValueToScalarValue.fromDocValue(referenced));
         }
 
         @Override
-        public Boolean visit(IsGreaterQueryCriteria criteria, DocValue arg) {
-            DocValue referenced = resolve(criteria.getAttributeReference(), arg);
+        public Boolean visit(IsGreaterQueryCriteria criteria, KVValue<?> arg) {
+            KVValue<?> referenced = resolve(criteria.getAttributeReference(), arg);
             if (referenced == null) {
                 return false;
             }
@@ -213,8 +214,8 @@ public class DocValueQueryCriteriaEvaluator {
         }
 
         @Override
-        public Boolean visit(IsGreaterOrEqualQueryCriteria criteria, DocValue arg) {
-            DocValue referenced = resolve(criteria.getAttributeReference(), arg);
+        public Boolean visit(IsGreaterOrEqualQueryCriteria criteria, KVValue<?> arg) {
+            KVValue<?> referenced = resolve(criteria.getAttributeReference(), arg);
             if (referenced == null) {
                 return false;
             }
@@ -238,8 +239,8 @@ public class DocValueQueryCriteriaEvaluator {
         }
 
         @Override
-        public Boolean visit(IsLessQueryCriteria criteria, DocValue arg) {
-            DocValue referenced = resolve(criteria.getAttributeReference(), arg);
+        public Boolean visit(IsLessQueryCriteria criteria, KVValue<?> arg) {
+            KVValue<?> referenced = resolve(criteria.getAttributeReference(), arg);
             if (referenced == null) {
                 return false;
             }
@@ -263,8 +264,8 @@ public class DocValueQueryCriteriaEvaluator {
         }
 
         @Override
-        public Boolean visit(IsLessOrEqualQueryCriteria criteria, DocValue arg) {
-            DocValue referenced = resolve(criteria.getAttributeReference(), arg);
+        public Boolean visit(IsLessOrEqualQueryCriteria criteria, KVValue<?> arg) {
+            KVValue<?> referenced = resolve(criteria.getAttributeReference(), arg);
             if (referenced == null) {
                 return false;
             }
@@ -288,22 +289,22 @@ public class DocValueQueryCriteriaEvaluator {
         }
 
         @Override
-        public Boolean visit(IsObjectQueryCriteria criteria, DocValue arg) {
-            DocValue referenced = resolve(criteria.getAttributeReference(), arg);
+        public Boolean visit(IsObjectQueryCriteria criteria, KVValue<?> arg) {
+            KVValue<?> referenced = resolve(criteria.getAttributeReference(), arg);
             if (referenced == null) {
                 return false;
             }
-            return referenced instanceof ObjectValue;
+            return referenced instanceof KVDocument;
         }
 
         @Override
-        public Boolean visit(InQueryCriteria criteria, DocValue arg) {
-            DocValue referenced = resolve(criteria.getAttributeReference(), arg);
+        public Boolean visit(InQueryCriteria criteria, KVValue<?> arg) {
+            KVValue<?> referenced = resolve(criteria.getAttributeReference(), arg);
             if (referenced == null) {
                 return false;
             }
-            Value converted = referenced.accept(VALUE_CONVERTER, null);
-            for (Value<?> expectedValue : criteria.getValue()) {
+            ScalarValue<?> converted = KVValueToScalarValue.fromDocValue(referenced);
+            for (ScalarValue<?> expectedValue : criteria.getValue()) {
                 if (converted.equals(expectedValue)) {
                     return true;
                 }
@@ -312,8 +313,8 @@ public class DocValueQueryCriteriaEvaluator {
         }
 
         @Override
-        public Boolean visit(ModIsQueryCriteria criteria, DocValue arg) {
-            DocValue referenced = resolve(criteria.getAttributeReference(), arg);
+        public Boolean visit(ModIsQueryCriteria criteria, KVValue<?> arg) {
+            KVValue<?> referenced = resolve(criteria.getAttributeReference(), arg);
             if (referenced == null) {
                 return false;
             }
@@ -328,50 +329,50 @@ public class DocValueQueryCriteriaEvaluator {
         }
 
         @Override
-        public Boolean visit(SizeIsQueryCriteria criteria, DocValue arg) {
-            DocValue referenced = resolve(criteria.getAttributeReference(), arg);
+        public Boolean visit(SizeIsQueryCriteria criteria, KVValue<?> arg) {
+            KVValue<?> referenced = resolve(criteria.getAttributeReference(), arg);
             if (referenced == null) {
                 return false;
             }
-            if (!(referenced instanceof ArrayValue)) {
+            if (!(referenced instanceof KVArray)) {
                 return false;
             }
-            return ((ArrayValue) referenced).size()
+            return ((KVArray) referenced).size()
                     == criteria.getValue().getValue();
         }
 
         @Override
-        public Boolean visit(ContainsAttributesQueryCriteria criteria, DocValue arg) {
-            DocValue referenced = resolve(criteria.getAttributeReference(), arg);
+        public Boolean visit(ContainsAttributesQueryCriteria criteria, KVValue<?> arg) {
+            KVValue<?> referenced = resolve(criteria.getAttributeReference(), arg);
             if (referenced == null) {
                 return false;
             }
-            if (!(referenced instanceof ObjectValue)) {
+            if (!(referenced instanceof KVDocument)) {
                 return false;
             }
-            ObjectValue refObject = (ObjectValue) referenced;
-            if (criteria.getAttributes().size() > refObject.keySet().size()) {
+            KVDocument refObject = (KVDocument) referenced;
+            HashSet<String> keySet = Sets.newHashSet(refObject.getKeys());
+            if (criteria.getAttributes().size() > keySet.size()) {
                 return false;
             }
-            if (criteria.isExclusive() && criteria.getAttributes().size()
-                    != refObject.keySet().size()) {
+            if (criteria.isExclusive() && criteria.getAttributes().size()!= keySet.size()) {
                 return false;
             }
 
-            return refObject.keySet().containsAll(criteria.getAttributes());
+            return keySet.containsAll(criteria.getAttributes());
         }
 
         @Override
-        public Boolean visit(ExistsQueryCriteria criteria, DocValue arg) {
-            DocValue referenced = resolve(criteria.getAttributeReference(), arg);
+        public Boolean visit(ExistsQueryCriteria criteria, KVValue<?> arg) {
+            KVValue<?> referenced = resolve(criteria.getAttributeReference(), arg);
             if (referenced == null) {
                 return false;
             }
-            if (!(referenced instanceof ArrayValue)) {
+            if (!(referenced instanceof KVArray)) {
                 return false;
             }
             QueryCriteria subQuery = criteria.getBody();
-            for (DocValue docValue : (ArrayValue) referenced) {
+            for (KVValue<?> docValue : (KVArray) referenced) {
                 if (subQuery.accept(this, docValue)) {
                     return true;
                 }
@@ -380,96 +381,17 @@ public class DocValueQueryCriteriaEvaluator {
         }
 
         @Override
-        public Boolean visit(MatchPatternQueryCriteria criteria, DocValue arg) {
-            DocValue referenced = resolve(criteria.getAttributeReference(), arg);
+        public Boolean visit(MatchPatternQueryCriteria criteria, KVValue<?> arg) {
+            KVValue<?> referenced = resolve(criteria.getAttributeReference(), arg);
             if (referenced == null) {
                 return false;
             }
-            if (!(referenced instanceof StringValue)) {
+            if (!(referenced instanceof KVString)) {
                 return false;
             }
-            String valAsString = ((StringValue) referenced).getValue();
-            Matcher matcher = criteria.getValue().getValue().matcher(valAsString);
+            String valAsString = ((KVString) referenced).getValue();
+            Matcher matcher = criteria.getPattern().matcher(valAsString);
             return matcher.matches();
         }
-    }
-
-    private static class ValueConverter implements DocValueVisitor<Value, Void> {
-
-        @Override
-        public Value visit(BooleanValue value, Void arg) {
-            return com.torodb.torod.core.subdocument.values.BooleanValue.from(value.getValue());
-        }
-
-        @Override
-        public Value visit(NullValue value, Void arg) {
-            return com.torodb.torod.core.subdocument.values.NullValue.INSTANCE;
-        }
-
-        @Override
-        public Value visit(ArrayValue value, Void arg) {
-            com.torodb.torod.core.subdocument.values.ArrayValue.Builder builder
-                    = new com.torodb.torod.core.subdocument.values.ArrayValue.Builder();
-            for (DocValue docValue : value) {
-                builder.add(docValue.accept(this, null));
-            }
-            return builder.build();
-        }
-
-        @Override
-        public Value visit(IntegerValue value, Void arg) {
-            return new com.torodb.torod.core.subdocument.values.IntegerValue(value.getValue());
-        }
-
-        @Override
-        public Value visit(LongValue value, Void arg) {
-            return new com.torodb.torod.core.subdocument.values.LongValue(value.getValue());
-        }
-
-        @Override
-        public Value visit(DoubleValue value, Void arg) {
-            return new com.torodb.torod.core.subdocument.values.DoubleValue(value.getValue());
-        }
-
-        @Override
-        public Value visit(StringValue value, Void arg) {
-            return new com.torodb.torod.core.subdocument.values.StringValue(value.getValue());
-        }
-
-        @Override
-        public Value visit(ObjectValue value, Void arg) {
-            throw new UserToroException("Object values are not supported in queries");
-        }
-
-        @Override
-        public Value visit(TwelveBytesValue value, Void arg) {
-            return new com.torodb.torod.core.subdocument.values.TwelveBytesValue(value.getValue());
-        }
-
-        @Override
-        public Value visit(DateTimeValue value, Void arg) {
-            return new com.torodb.torod.core.subdocument.values.DateTimeValue(value.getValue());
-        }
-
-        @Override
-        public Value visit(DateValue value, Void arg) {
-            return new com.torodb.torod.core.subdocument.values.DateValue(value.getValue());
-        }
-
-        @Override
-        public Value visit(TimeValue value, Void arg) {
-            return new com.torodb.torod.core.subdocument.values.TimeValue(value.getValue());
-        }
-
-        @Override
-        public Value visit(PatternValue value, Void arg) {
-            return new com.torodb.torod.core.subdocument.values.PatternValue(value.getValue());
-        }
-
-        @Override
-        public Value visit(BinaryValue value, Void arg) {
-            return new com.torodb.torod.core.subdocument.values.BinaryValue(value.getValue());
-        }
-
     }
 }

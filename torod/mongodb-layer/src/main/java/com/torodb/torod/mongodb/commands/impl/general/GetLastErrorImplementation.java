@@ -1,18 +1,23 @@
 
 package com.torodb.torod.mongodb.commands.impl.general;
 
-import com.eightkdata.mongowp.mongoserver.api.safe.*;
-import com.eightkdata.mongowp.mongoserver.api.safe.impl.NonWriteCommandResult;
-import com.eightkdata.mongowp.mongoserver.api.safe.impl.SimpleWriteOpResult;
+import com.eightkdata.mongowp.server.api.Connection;
+import com.eightkdata.mongowp.server.api.Command;
+import com.eightkdata.mongowp.server.api.CommandResult;
+import com.eightkdata.mongowp.server.api.CommandImplementation;
+import com.eightkdata.mongowp.server.api.CommandRequest;
+import com.eightkdata.mongowp.ErrorCode;
+import com.eightkdata.mongowp.OpTime;
+import com.eightkdata.mongowp.WriteConcern;
+import com.eightkdata.mongowp.WriteConcern.SyncMode;
+import com.eightkdata.mongowp.exceptions.CommandFailed;
+import com.eightkdata.mongowp.exceptions.MongoException;
+import com.eightkdata.mongowp.server.api.impl.NonWriteCommandResult;
+import com.eightkdata.mongowp.server.api.impl.SimpleWriteOpResult;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.GetLastErrorCommand.GetLastErrorArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.GetLastErrorCommand.GetLastErrorReply;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.GetLastErrorCommand.WriteConcernEnforcementResult;
-import com.eightkdata.mongowp.mongoserver.callback.WriteOpResult;
-import com.eightkdata.mongowp.mongoserver.pojos.OpTime;
-import com.eightkdata.mongowp.mongoserver.protocol.ErrorCode;
-import com.eightkdata.mongowp.mongoserver.protocol.exceptions.CommandFailed;
-import com.eightkdata.mongowp.mongoserver.protocol.exceptions.MongoException;
-import com.mongodb.WriteConcern;
+import com.eightkdata.mongowp.server.callback.WriteOpResult;
 import com.torodb.torod.mongodb.RequestContext;
 import com.torodb.torod.mongodb.repl.ReplCoordinator;
 import com.torodb.torod.mongodb.repl.ReplInterface.MemberStateInterface;
@@ -75,21 +80,8 @@ public class GetLastErrorImplementation implements CommandImplementation<GetLast
                 }
             }
         }
-        catch (InterruptedException ex) {
-            throw new CommandFailed(
-                    command.getCommandName(),
-                    "Error while waiting for last write op",
-                    ex
-            );
-        }
-        catch (CancellationException ex) {
-            throw new CommandFailed(
-                    command.getCommandName(),
-                    "Error while waiting for last write op",
-                    ex
-            );
-        }
-        catch (ExecutionException ex) {
+        catch (InterruptedException | CancellationException |
+                ExecutionException ex) {
             throw new CommandFailed(
                     command.getCommandName(),
                     "Error while waiting for last write op",
@@ -125,17 +117,12 @@ public class GetLastErrorImplementation implements CommandImplementation<GetLast
 
         if (!noWriteOpYet) {
             assert wc != null;
-            if (writeOpResult == null && (wc.getFsync() || wc.getJ())) {
+            if (writeOpResult == null && (wc.getSyncMode() == SyncMode.FSYNC || wc.getSyncMode() == SyncMode.JOURNAL)) {
                 assert lastWriteOpFuture != null;
                 try {
                     writeOpResult = lastWriteOpFuture.get();
-                } catch (InterruptedException ex) {
-                    throw new CommandFailed(
-                            command.getCommandName(),
-                            "Error while waiting for last write op",
-                            ex
-                    );
-                } catch (ExecutionException ex) {
+                } catch (InterruptedException |
+                        ExecutionException ex) {
                     throw new CommandFailed(
                             command.getCommandName(),
                             "Error while waiting for last write op",
@@ -157,9 +144,7 @@ public class GetLastErrorImplementation implements CommandImplementation<GetLast
             else {
                 ReplCoordinator replCoordinator = context.getReplicationCoordinator();
 
-                MemberStateInterface freezeMemberState = replCoordinator.freezeMemberState(false);
-
-                try {
+                try (MemberStateInterface freezeMemberState = replCoordinator.freezeMemberState(false)) {
                     if (freezeMemberState instanceof PrimaryStateInterface) {
                         PrimaryStateInterface psi = (PrimaryStateInterface) freezeMemberState;
 
@@ -175,15 +160,13 @@ public class GetLastErrorImplementation implements CommandImplementation<GetLast
                                 "GetLastError is not supported right now on a non primary node"
                         );
                     }
-                } finally {
-                    freezeMemberState.close();
                 }
             }
         }
         else {
 
             awaitReplication = new WriteConcernEnforcementResult(
-                    WriteConcern.ACKNOWLEDGED,
+                    WriteConcern.acknowledged(),
                     null,
                     0,
                     null,

@@ -21,21 +21,20 @@
 
 package com.torodb.torod.db.backends.converters.jooq;
 
-import com.torodb.torod.core.subdocument.BasicType;
-import com.torodb.torod.core.subdocument.values.Value;
+import com.torodb.torod.core.subdocument.ScalarType;
+import com.torodb.torod.core.subdocument.values.ScalarValue;
 import org.jooq.Converter;
 import org.jooq.DataType;
 
 /**
  *
  * @param <DBT> data base type
- * @param <JT> java type
  * @param <V> a value of the given Java type
  */
-public abstract interface SubdocValueConverter<DBT, V extends Value<?>> extends Converter<DBT, V> {
+public abstract interface SubdocValueConverter<DBT, V extends ScalarValue<?>> extends Converter<DBT, V> {
     
     public abstract DataType<DBT> getDataType();
 
-    public abstract BasicType getErasuredType();
+    public abstract ScalarType getErasuredType();
     
 }

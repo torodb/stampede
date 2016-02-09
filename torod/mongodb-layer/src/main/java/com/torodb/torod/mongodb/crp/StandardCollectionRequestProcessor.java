@@ -1,20 +1,24 @@
 
 package com.torodb.torod.mongodb.crp;
 
+import com.eightkdata.mongowp.ErrorCode;
+import com.eightkdata.mongowp.OpTime;
+import com.eightkdata.mongowp.bson.BsonDocument;
+import com.eightkdata.mongowp.bson.BsonDocument.Entry;
+import com.eightkdata.mongowp.bson.BsonValue;
+import com.eightkdata.mongowp.bson.utils.BsonDocumentReader.AllocationType;
+import com.eightkdata.mongowp.exceptions.CursorNotFoundException;
+import com.eightkdata.mongowp.exceptions.MongoException;
+import com.eightkdata.mongowp.exceptions.UnknownErrorException;
 import com.eightkdata.mongowp.messages.request.DeleteMessage;
 import com.eightkdata.mongowp.messages.request.InsertMessage;
 import com.eightkdata.mongowp.messages.request.UpdateMessage;
-import com.eightkdata.mongowp.mongoserver.api.safe.Request;
-import com.eightkdata.mongowp.mongoserver.api.safe.impl.DeleteOpResult;
-import com.eightkdata.mongowp.mongoserver.api.safe.impl.SimpleWriteOpResult;
-import com.eightkdata.mongowp.mongoserver.api.safe.impl.UpdateOpResult;
-import com.eightkdata.mongowp.mongoserver.api.safe.pojos.QueryRequest;
-import com.eightkdata.mongowp.mongoserver.callback.WriteOpResult;
-import com.eightkdata.mongowp.mongoserver.pojos.OpTime;
-import com.eightkdata.mongowp.mongoserver.protocol.ErrorCode;
-import com.eightkdata.mongowp.mongoserver.protocol.exceptions.CursorNotFoundException;
-import com.eightkdata.mongowp.mongoserver.protocol.exceptions.MongoException;
-import com.eightkdata.mongowp.mongoserver.protocol.exceptions.UnknownErrorException;
+import com.eightkdata.mongowp.server.api.Request;
+import com.eightkdata.mongowp.server.api.impl.DeleteOpResult;
+import com.eightkdata.mongowp.server.api.impl.SimpleWriteOpResult;
+import com.eightkdata.mongowp.server.api.impl.UpdateOpResult;
+import com.eightkdata.mongowp.server.api.pojos.QueryRequest;
+import com.eightkdata.mongowp.server.callback.WriteOpResult;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
@@ -44,8 +48,6 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.ArrayList;
 import java.util.List;
 import javax.inject.Inject;
-import org.bson.BsonDocument;
-import org.bson.BsonValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -153,8 +155,10 @@ public class StandardCollectionRequestProcessor implements CollectionRequestProc
 
 		String collection = insertMessage.getCollection();
         WriteFailMode writeFailMode = getWriteFailMode(insertMessage);
-        FluentIterable<ToroDocument> documents = insertMessage.getDocuments().
-                transform(BsonToToroTranslatorFunction.INSTANCE);
+        //TODO: Improve it to use offheap values, which implies to retain the bytebuf
+        FluentIterable<ToroDocument> documents = insertMessage.getDocuments()
+                .getIterable(AllocationType.HEAP)
+                .transform(BsonToToroTranslatorFunction.INSTANCE);
         OpTime optime = optimeClock.tick();
 
         try (ToroTransaction transaction
@@ -187,7 +191,8 @@ public class StandardCollectionRequestProcessor implements CollectionRequestProc
     	WriteFailMode writeFailMode = WriteFailMode.ORDERED;
     	BsonDocument selector = updateMessage.getSelector();
 
-    	for (String key : selector.keySet()) {
+    	for (Entry<?> entry : selector) {
+            String key = entry.getKey();
     		if (QueryModifier.getByKey(key) != null || QuerySortOrder.getByKey(key) != null) {
                 LOGGER.warn("Detected unsuported modifier {}", key);
     			return Futures.immediateFuture(
@@ -205,7 +210,8 @@ public class StandardCollectionRequestProcessor implements CollectionRequestProc
     		}
     	}
     	BsonDocument query = selector;
-    	for (String key : query.keySet()) {
+    	for (Entry<?> entry : query) {
+            String key = entry.getKey();
     		if (QueryEncapsulation.getByKey(key) != null) {
                 BsonValue queryObject = query.get(key);
     			if (queryObject != null && query.isDocument()) {
@@ -261,7 +267,8 @@ public class StandardCollectionRequestProcessor implements CollectionRequestProc
     	String collection = deleteMessage.getCollection();
     	WriteFailMode writeFailMode = WriteFailMode.ORDERED;
     	BsonDocument document = deleteMessage.getDocument();
-    	for (String key : document.keySet()) {
+    	for (Entry entry : document) {
+            String key = entry.getKey();
     		if (QueryModifier.getByKey(key) != null || QuerySortOrder.getByKey(key) != null) {
     			LOGGER.warn("Detected unsuported modifier {}", key);
     			return Futures.immediateFuture(
@@ -277,7 +284,8 @@ public class StandardCollectionRequestProcessor implements CollectionRequestProc
     		}
     	}
     	BsonDocument query = document;
-    	for (String key : query.keySet()) {
+    	for (Entry entry : query) {
+            String key = entry.getKey();
     		if (QueryEncapsulation.getByKey(key) != null) {
     			BsonValue queryObject = query.get(key);
     			if (queryObject != null && queryObject.isDocument()) {

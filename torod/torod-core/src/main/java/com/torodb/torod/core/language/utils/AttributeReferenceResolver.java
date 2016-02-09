@@ -22,7 +22,7 @@ package com.torodb.torod.core.language.utils;
 
 import com.google.common.base.Preconditions;
 import com.torodb.torod.core.language.AttributeReference;
-import com.torodb.torod.core.subdocument.BasicType;
+import com.torodb.torod.core.subdocument.ScalarType;
 import com.torodb.torod.core.subdocument.SubDocAttribute;
 import com.torodb.torod.core.subdocument.structure.ArrayStructure;
 import com.torodb.torod.core.subdocument.structure.DocStructure;
@@ -60,7 +60,7 @@ public class AttributeReferenceResolver {
      * @return
      */
     @Nonnull
-    public static TriValuedResult<? extends BasicType> resolveBasicType(
+    public static TriValuedResult<? extends ScalarType> resolveScalarType(
             AttributeReference attRef,
             StructureElement elem) {
         return elem.accept(basicTypeResolver, new AbstractResolver.Argument(
@@ -116,22 +116,22 @@ public class AttributeReferenceResolver {
         return value.getValue();
     }
 
-    private static class BasicTypeResolver extends AbstractResolver<BasicType> {
+    private static class BasicTypeResolver extends AbstractResolver<ScalarType> {
 
         @Override
-        TriValuedResult<? extends BasicType> emptyCase(DocStructure structure,
+        TriValuedResult<? extends ScalarType> emptyCase(DocStructure structure,
                                                        AbstractResolver.Argument arg) {
             return TriValuedResult.NULL;
         }
 
         @Override
-        TriValuedResult<? extends BasicType> emptyCase(ArrayStructure structure,
+        TriValuedResult<? extends ScalarType> emptyCase(ArrayStructure structure,
                                                        AbstractResolver.Argument arg) {
-            return TriValuedResult.createValue(BasicType.ARRAY);
+            return TriValuedResult.createValue(ScalarType.ARRAY);
         }
 
         @Override
-        TriValuedResult<BasicType> finalStep(DocStructure structure,
+        TriValuedResult<ScalarType> finalStep(DocStructure structure,
                                              AttributeReference.ObjectKey key,
                                              AbstractResolver.Argument arg) {
             SubDocAttribute attribute = structure.getType().getAttribute(key
@@ -143,22 +143,22 @@ public class AttributeReferenceResolver {
         }
 
         @Override
-        TriValuedResult<BasicType> finalStep(ArrayStructure structure,
+        TriValuedResult<ScalarType> finalStep(ArrayStructure structure,
                                              AttributeReference.ArrayKey key,
                                              AbstractResolver.Argument arg) {
             /*
              * As arrays in toro do not have a inner (or element) type, we
              * cannot extract, in general, the type of their elements. But we
              * can recognize if the path points to an element that is an array
-             * (and then return BasicType.ARRAY) or not (and then return
-             * BasicType.GENERIC)
+             * (and then return ScalarType.ARRAY) or not (and then return
+             * ScalarType.GENERIC)
              */
             StructureElement subStructure = structure.get(key.getIndex());
             if (subStructure == null) {
                 return TriValuedResult.UNDECIDABLE;
             }
             if (subStructure instanceof ArrayStructure) {
-                return TriValuedResult.createValue(BasicType.ARRAY);
+                return TriValuedResult.createValue(ScalarType.ARRAY);
             }
             else { //subStructure is a subdocument an subdocuments do not have basic type
                 return TriValuedResult.NULL;

@@ -18,7 +18,7 @@ import com.torodb.torod.core.pojos.NamedToroIndex;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.core.subdocument.SubDocType;
 import com.torodb.torod.core.subdocument.SubDocument;
-import com.torodb.torod.core.subdocument.values.Value;
+import com.torodb.torod.core.subdocument.values.ScalarValue;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -281,7 +281,7 @@ public class LazyDbWrapper implements DbWrapper {
         }
 
         @Override
-        public Iterator<ValueRow<Value>> select(String query) {
+        public Iterator<ValueRow<ScalarValue<?>>> select(String query) {
             try {
                 return getDelegate().select(query);
             } catch (ImplementationDbException ex) {

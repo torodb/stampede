@@ -20,8 +20,9 @@
 
 package com.torodb.torod.db.backends.converters.jooq;
 
-import com.torodb.torod.core.subdocument.BasicType;
-import com.torodb.torod.core.subdocument.values.DateValue;
+import com.torodb.torod.core.subdocument.ScalarType;
+import com.torodb.torod.core.subdocument.values.ScalarDate;
+import com.torodb.torod.core.subdocument.values.heap.LocalDateScalarDate;
 import java.sql.Date;
 import org.jooq.DataType;
 import org.jooq.impl.SQLDataType;
@@ -30,7 +31,7 @@ import org.threeten.bp.DateTimeUtils;
 /**
  *
  */
-public class DateValueConverter implements SubdocValueConverter<Date, DateValue> {
+public class DateValueConverter implements SubdocValueConverter<Date, ScalarDate> {
     private static final long serialVersionUID = 1L;
 
     @Override
@@ -39,19 +40,19 @@ public class DateValueConverter implements SubdocValueConverter<Date, DateValue>
     }
 
     @Override
-    public BasicType getErasuredType() {
-        return BasicType.DATE;
+    public ScalarType getErasuredType() {
+        return ScalarType.DATE;
     }
 
     @Override
-    public DateValue from(Date databaseObject) {
-        return new DateValue(
+    public ScalarDate from(Date databaseObject) {
+        return new LocalDateScalarDate(
                 DateTimeUtils.toLocalDate(databaseObject)
         );
     }
 
     @Override
-    public Date to(DateValue userObject) {
+    public Date to(ScalarDate userObject) {
         return DateTimeUtils.toSqlDate(userObject.getValue());
     }
 
@@ -61,8 +62,8 @@ public class DateValueConverter implements SubdocValueConverter<Date, DateValue>
     }
 
     @Override
-    public Class<DateValue> toType() {
-        return DateValue.class;
+    public Class<ScalarDate> toType() {
+        return ScalarDate.class;
     }
 
 }

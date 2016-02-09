@@ -20,40 +20,26 @@
 
 package com.torodb.torod.d2r;
 
-import com.torodb.kvdocument.values.LongValue;
-import com.torodb.kvdocument.values.StringValue;
-import com.torodb.kvdocument.values.TimeValue;
-import com.torodb.kvdocument.values.DocValue;
-import com.torodb.kvdocument.values.IntegerValue;
-import com.torodb.kvdocument.values.NullValue;
-import com.torodb.kvdocument.values.BooleanValue;
-import com.torodb.kvdocument.values.DoubleValue;
-import com.torodb.kvdocument.values.ArrayValue;
-import com.torodb.kvdocument.values.DocValueVisitor;
-import com.torodb.kvdocument.values.ValueDFW;
-import com.torodb.kvdocument.values.DateValue;
-import com.torodb.kvdocument.values.DateTimeValue;
-import com.torodb.kvdocument.values.ObjectValue;
-import com.torodb.kvdocument.values.TwelveBytesValue;
 import com.google.common.collect.Maps;
+import com.torodb.kvdocument.values.KVDocument.DocEntry;
 import com.torodb.kvdocument.values.*;
 import com.torodb.torod.core.dbMetaInf.DbMetaInformationCache;
 import com.torodb.torod.core.executor.SessionExecutor;
-import com.torodb.torod.core.subdocument.BasicType;
-import com.torodb.torod.core.subdocument.structure.DocStructure;
-import com.torodb.torod.core.subdocument.SplitDocument;
-import com.torodb.torod.core.subdocument.SubDocAttribute;
-import com.torodb.torod.core.subdocument.SubDocType;
 import com.torodb.torod.core.subdocument.SubDocType.Builder;
-import com.torodb.torod.core.subdocument.SubDocument;
-import com.torodb.torod.core.subdocument.values.Value;
-import java.util.Map;
-import com.torodb.torod.core.subdocument.ToroDocument;
+import com.torodb.torod.core.subdocument.*;
 import com.torodb.torod.core.subdocument.structure.ArrayStructure;
-import java.util.HashSet;
+import com.torodb.torod.core.subdocument.structure.DocStructure;
+import com.torodb.torod.core.subdocument.values.ScalarNull;
+import com.torodb.torod.core.subdocument.values.ScalarValue;
+import com.torodb.torod.core.subdocument.values.heap.ListScalarArray;
+import com.torodb.torod.core.utils.KVValueToScalarValue;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import javax.annotation.concurrent.NotThreadSafe;
 import javax.inject.Inject;
 import javax.inject.Provider;
+
 
 /**
  *
@@ -62,7 +48,6 @@ public class DocumentSplitter {
 
     private final DbMetaInformationCache cache;
     private final TypesCollector typesCollector = new TypesCollector();
-    private final static TypeTranslator typeTranslator = new TypeTranslator();
     private final Provider<SubDocType.Builder> subDocTypeBuilderProvider;
 
     @Inject
@@ -83,7 +68,7 @@ public class DocumentSplitter {
                                ToroDocument doc) {
         int docId = cache.reserveDocIds(sessionExecutor, collection, 1);
 
-        Map<ObjectValue, SubDocType> collectedTypes = typesCollector
+        Map<KVDocument, SubDocType> collectedTypes = typesCollector
                 .collectTypes(doc.getRoot());
         prepareValueTypesTables(sessionExecutor, collection, collectedTypes);
 
@@ -93,19 +78,19 @@ public class DocumentSplitter {
     private void prepareValueTypesTables(
             SessionExecutor sessionExecutor,
             String collection,
-            Map<ObjectValue, SubDocType> collectedTypes) {
+            Map<KVDocument, SubDocType> collectedTypes) {
 
         for (SubDocType subDocType : collectedTypes.values()) {
             cache.createSubDocTypeTable(sessionExecutor, collection, subDocType);
         }
     }
 
-    private SubDocType getSubDocType(ObjectValue value) {
+    private SubDocType getSubDocType(KVDocument value) {
         SubDocType.Builder builder = subDocTypeBuilderProvider.get();
 
-        for (Map.Entry<String, DocValue> entry : value.getAttributes()) {
-            if (!(entry.getValue() instanceof ObjectValue)) {
-                BasicType type = entry.getValue().accept(typeTranslator, null);
+        for (DocEntry<?> entry : value) {
+            if (!(entry.getValue() instanceof KVDocument)) {
+                ScalarType type = ScalarType.fromDocType(entry.getValue().getType());
 
                 SubDocAttribute att = new SubDocAttribute(entry.getKey(), type);
                 builder.add(att);
@@ -118,7 +103,7 @@ public class DocumentSplitter {
     private SplitDocument translate(
             ToroDocument doc,
             int docId,
-            Map<ObjectValue, SubDocType> collectedTypes) {
+            Map<KVDocument, SubDocType> collectedTypes) {
 
         SplitDocument.Builder splitDocBuilder = new SplitDocument.Builder();
 
@@ -135,109 +120,10 @@ public class DocumentSplitter {
         return splitDocBuilder.build();
     }
 
-    private static class TypeTranslator implements
-            com.torodb.kvdocument.values.DocValueVisitor<BasicType, Void> {
+    private class TypesCollector extends KVValueDFW<Map<KVDocument, SubDocType>> {
 
-        @Override
-        public BasicType visit(
-                BooleanValue value,
-                Void arg) {
-            return BasicType.BOOLEAN;
-        }
-
-        @Override
-        public BasicType visit(
-                NullValue value,
-                Void arg) {
-            return BasicType.NULL;
-        }
-
-        @Override
-        public BasicType visit(
-                ArrayValue value,
-                Void arg) {
-            return BasicType.ARRAY;
-        }
-
-        @Override
-        public BasicType visit(
-                IntegerValue value,
-                Void arg) {
-            return BasicType.INTEGER;
-        }
-
-        @Override
-        public BasicType visit(
-                LongValue value,
-                Void arg) {
-            return BasicType.LONG;
-        }
-
-        @Override
-        public BasicType visit(
-                DoubleValue value,
-                Void arg) {
-            return BasicType.DOUBLE;
-        }
-
-        @Override
-        public BasicType visit(
-                StringValue value,
-                Void arg) {
-            return BasicType.STRING;
-        }
-
-        @Override
-        public BasicType visit(
-                ObjectValue value,
-                Void arg) {
-            return BasicType.NULL;
-        }
-
-        @Override
-        public BasicType visit(
-                TwelveBytesValue value,
-                Void arg) {
-            return BasicType.TWELVE_BYTES;
-        }
-
-        @Override
-        public BasicType visit(
-                DateTimeValue value,
-                Void arg) {
-            return BasicType.DATETIME;
-        }
-
-        @Override
-        public BasicType visit(
-                DateValue value,
-                Void arg) {
-            return BasicType.DATE;
-        }
-
-        @Override
-        public BasicType visit(
-                TimeValue value,
-                Void arg) {
-            return BasicType.TIME;
-        }
-
-        @Override
-        public BasicType visit(PatternValue value, Void arg) {
-            return BasicType.PATTERN;
-        }
-
-        @Override
-        public BasicType visit(BinaryValue value, Void arg) {
-            return BasicType.BINARY;
-        }
-
-    }
-
-    private class TypesCollector extends ValueDFW<Map<ObjectValue, SubDocType>> {
-
-        public Map<ObjectValue, SubDocType> collectTypes(ObjectValue value) {
-            Map<ObjectValue, SubDocType> calculatedTypes = Maps.newHashMap();
+        public Map<KVDocument, SubDocType> collectTypes(KVDocument value) {
+            Map<KVDocument, SubDocType> calculatedTypes = Maps.newHashMap();
 
             value.accept(this, calculatedTypes);
 
@@ -245,8 +131,7 @@ public class DocumentSplitter {
         }
 
         @Override
-        protected void preObjectValue(ObjectValue value,
-                                      Map<ObjectValue, SubDocType> types) {
+        protected void preDoc(KVDocument value, Map<KVDocument, SubDocType> types) {
             SubDocType subDocType = getSubDocType(value);
 
             types.put(value, subDocType);
@@ -254,24 +139,22 @@ public class DocumentSplitter {
     }
 
     @NotThreadSafe
-    private static class ValueTranslator implements
-            DocValueVisitor<Void, TranslatorConsumer> {
+    private static class ValueTranslator implements KVValueVisitor<Void, TranslatorConsumer> {
 
         private final int docId;
         private final SplitDocument.Builder splitDocBuilder;
-        private final Map<ObjectValue, SubDocType> collectedTypes;
+        private final Map<KVDocument, SubDocType> collectedTypes;
         private final Map<SubDocType, Integer> indixes;
 
         public ValueTranslator(
                 int docId,
                 SplitDocument.Builder splitDocBuilder,
-                Map<ObjectValue, SubDocType> collectedTypes) {
+                Map<KVDocument, SubDocType> collectedTypes) {
 
             this.docId = docId;
             this.splitDocBuilder = splitDocBuilder;
             this.collectedTypes = collectedTypes;
-            this.indixes = Maps.newHashMapWithExpectedSize(new HashSet(
-                    collectedTypes.values()).size());
+            this.indixes = Maps.newHashMapWithExpectedSize(collectedTypes.size());
         }
 
         public int consumeIndex(SubDocType type) {
@@ -284,9 +167,7 @@ public class DocumentSplitter {
         }
 
         @Override
-        public Void visit(
-                ObjectValue value,
-                TranslatorConsumer arg) {
+        public Void visit(KVDocument value, TranslatorConsumer arg) {
             SubDocType type = collectedTypes.get(value);
 
             DocStructure.Builder structureBuilder = new DocStructure.Builder();
@@ -303,7 +184,7 @@ public class DocumentSplitter {
             ObjectTranslatorConsumer consumer = new ObjectTranslatorConsumer(
                     subDocBuilder, structureBuilder);
 
-            for (Map.Entry<String, DocValue> entry : value.getAttributes()) {
+            for (DocEntry<?> entry : value) {
                 consumer.setAttributeName(entry.getKey());
                 entry.getValue().accept(this, consumer);
             }
@@ -315,165 +196,96 @@ public class DocumentSplitter {
         }
 
         @Override
-        public Void visit(
-                ArrayValue value,
-                TranslatorConsumer arg) {
-            com.torodb.torod.core.subdocument.values.ArrayValue.Builder valueBuilder
-                    = new com.torodb.torod.core.subdocument.values.ArrayValue.Builder();
-            com.torodb.torod.core.subdocument.structure.ArrayStructure.Builder structureBuilder
-                    = new com.torodb.torod.core.subdocument.structure.ArrayStructure.Builder();
+        public Void visit(KVArray value, TranslatorConsumer arg) {
+            List<ScalarValue<?>> valueBuilder = new ArrayList<>(value.size());
+            ArrayStructure.Builder structureBuilder = new ArrayStructure.Builder();
 
             ArrayTranslatorConsumer consumer = new ArrayTranslatorConsumer(
                     valueBuilder, structureBuilder);
 
             int i = 0;
-            for (DocValue child : value) {
+            for (KVValue<?> child : value) {
                 consumer.setIndex(i);
                 child.accept(this, consumer);
 
                 i++; //i is 0-based!
             }
 
-            arg.consume(valueBuilder.build());
+            arg.consume(new ListScalarArray(valueBuilder));
             arg.consume(structureBuilder.built());
 
             return null;
         }
 
         @Override
-        public Void visit(
-                BooleanValue value,
-                TranslatorConsumer arg) {
-            arg.consume(com.torodb.torod.core.subdocument.values.BooleanValue
-                    .from(value.getValue()));
+        public Void visit(KVBoolean value, TranslatorConsumer arg) {
+            arg.consume(KVValueToScalarValue.AS_VISITOR.visit(value, null));
             return null;
         }
 
         @Override
-        public Void visit(
-                NullValue value,
-                TranslatorConsumer arg) {
-            arg.consume(
-                    com.torodb.torod.core.subdocument.values.NullValue.INSTANCE
-            );
+        public Void visit(KVNull value, TranslatorConsumer arg) {
+            arg.consume(KVValueToScalarValue.AS_VISITOR.visit(value, null));
             return null;
         }
 
         @Override
-        public Void visit(
-                IntegerValue value,
-                TranslatorConsumer arg) {
-            arg.consume(
-                    new com.torodb.torod.core.subdocument.values.IntegerValue(
-                            value.getValue()
-                    )
-            );
+        public Void visit(KVInteger value, TranslatorConsumer arg) {
+            arg.consume(KVValueToScalarValue.AS_VISITOR.visit(value, null));
             return null;
         }
 
         @Override
-        public Void visit(
-                LongValue value,
-                TranslatorConsumer arg) {
-            arg.consume(new com.torodb.torod.core.subdocument.values.LongValue(
-                    value.getValue()
-            )
-            );
+        public Void visit(KVLong value, TranslatorConsumer arg) {
+            arg.consume(KVValueToScalarValue.AS_VISITOR.visit(value, null));
             return null;
         }
 
         @Override
-        public Void visit(
-                DoubleValue value,
-                TranslatorConsumer arg) {
-            arg.consume(
-                    new com.torodb.torod.core.subdocument.values.DoubleValue(
-                            value.getValue()
-                    )
-            );
+        public Void visit(KVDouble value, TranslatorConsumer arg) {
+            arg.consume(KVValueToScalarValue.AS_VISITOR.visit(value, null));
             return null;
         }
 
         @Override
-        public Void visit(
-                StringValue value,
-                TranslatorConsumer arg) {
-            arg.consume(
-                    new com.torodb.torod.core.subdocument.values.StringValue(
-                            value.getValue()
-                    )
-            );
+        public Void visit(KVString value, TranslatorConsumer arg) {
+            arg.consume(KVValueToScalarValue.AS_VISITOR.visit(value, null));
             return null;
         }
 
         @Override
-        public Void visit(
-                TwelveBytesValue value,
-                TranslatorConsumer arg) {
-            arg.consume(
-                    new com.torodb.torod.core.subdocument.values.TwelveBytesValue(
-                            value.getValue()
-                    )
-            );
+        public Void visit(KVMongoObjectId value, TranslatorConsumer arg) {
+            arg.consume(KVValueToScalarValue.AS_VISITOR.visit(value, null));
             return null;
         }
 
         @Override
-        public Void visit(
-                DateTimeValue value,
-                TranslatorConsumer arg) {
-            arg.consume(
-                    new com.torodb.torod.core.subdocument.values.DateTimeValue(
-                            value.getValue()
-                    )
-            );
+        public Void visit(KVMongoTimestamp value, TranslatorConsumer arg) {
+            arg.consume(KVValueToScalarValue.AS_VISITOR.visit(value, null));
             return null;
         }
 
         @Override
-        public Void visit(
-                DateValue value,
-                TranslatorConsumer arg) {
-            arg.consume(
-                    new com.torodb.torod.core.subdocument.values.DateValue(
-                            value.getValue()
-                    )
-            );
+        public Void visit(KVInstant value, TranslatorConsumer arg) {
+            arg.consume(KVValueToScalarValue.AS_VISITOR.visit(value, null));
             return null;
         }
 
         @Override
-        public Void visit(
-                TimeValue value,
-                TranslatorConsumer arg) {
-
-            arg.consume(
-                    new com.torodb.torod.core.subdocument.values.TimeValue(
-                            value.getValue()
-                    )
-            );
+        public Void visit(KVDate value, TranslatorConsumer arg) {
+            arg.consume(KVValueToScalarValue.AS_VISITOR.visit(value, null));
             return null;
         }
 
         @Override
-        public Void visit(PatternValue value, TranslatorConsumer arg) {
-            arg.consume(
-                    new com.torodb.torod.core.subdocument.values.PatternValue(
-                            value.getValue()
-                    )
-            );
+        public Void visit(KVTime value, TranslatorConsumer arg) {
+            arg.consume(KVValueToScalarValue.AS_VISITOR.visit(value, null));
             return null;
         }
 
         @Override
-        public Void visit(
-                BinaryValue value,
-                TranslatorConsumer arg) {
-            arg.consume(
-                    new com.torodb.torod.core.subdocument.values.BinaryValue(
-                            value.getValue()
-                    )
-            );
+        public Void visit(KVBinary value, TranslatorConsumer arg) {
+            arg.consume(KVValueToScalarValue.AS_VISITOR.visit(value, null));
             return null;
         }
 
@@ -481,7 +293,7 @@ public class DocumentSplitter {
 
     public static interface TranslatorConsumer {
 
-        void consume(Value value);
+        void consume(ScalarValue value);
 
         void consume(DocStructure structure);
 
@@ -490,28 +302,27 @@ public class DocumentSplitter {
 
     private static class ArrayTranslatorConsumer implements TranslatorConsumer {
 
-        private final com.torodb.torod.core.subdocument.values.ArrayValue.Builder valueBuilder;
-        private final com.torodb.torod.core.subdocument.structure.ArrayStructure.Builder structureBuilder;
+        private final List<ScalarValue<?>> valueListBuilder;
+        private final ArrayStructure.Builder structureBuilder;
 
         private int index;
 
         public ArrayTranslatorConsumer(
-                com.torodb.torod.core.subdocument.values.ArrayValue.Builder valueBuilder,
-                com.torodb.torod.core.subdocument.structure.ArrayStructure.Builder structureBuilder) {
-            this.valueBuilder = valueBuilder;
+                List<ScalarValue<?>> valueListBuilder,
+                ArrayStructure.Builder structureBuilder) {
+            this.valueListBuilder = valueListBuilder;
             this.structureBuilder = structureBuilder;
             this.index = 0;
         }
 
         @Override
-        public void consume(Value value) {
-            valueBuilder.add(value);
+        public void consume(ScalarValue value) {
+            valueListBuilder.add(value);
         }
 
         @Override
         public void consume(DocStructure structure) {
-            valueBuilder.add(
-                    com.torodb.torod.core.subdocument.values.NullValue.INSTANCE);
+            valueListBuilder.add(ScalarNull.getInstance());
             structureBuilder.add(index, structure);
         }
 
@@ -543,7 +354,7 @@ public class DocumentSplitter {
         }
 
         @Override
-        public void consume(Value value) {
+        public void consume(ScalarValue value) {
             subDocBuilder.add(attributeName, value);
         }
 
@@ -563,7 +374,7 @@ public class DocumentSplitter {
         private DocStructure root = null;
 
         @Override
-        public void consume(Value value) {
+        public void consume(ScalarValue value) {
             throw new UnsupportedOperationException(
                     "A doc structure was expected.");
         }

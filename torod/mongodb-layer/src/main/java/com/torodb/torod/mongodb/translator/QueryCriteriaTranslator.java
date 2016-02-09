@@ -20,9 +20,9 @@
 
 package com.torodb.torod.mongodb.translator;
 
+import com.eightkdata.mongowp.bson.BsonDocument;
 import com.torodb.torod.core.exceptions.UserToroException;
 import com.torodb.torod.core.language.querycriteria.QueryCriteria;
-import org.bson.BsonDocument;
 
 /**
  *

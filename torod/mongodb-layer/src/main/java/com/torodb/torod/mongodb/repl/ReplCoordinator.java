@@ -1,6 +1,14 @@
 
 package com.torodb.torod.mongodb.repl;
 
+import com.eightkdata.mongowp.OpTime;
+import com.eightkdata.mongowp.WriteConcern;
+import com.eightkdata.mongowp.bson.BsonBoolean;
+import com.eightkdata.mongowp.bson.BsonDocument;
+import com.eightkdata.mongowp.bson.BsonObjectId;
+import com.eightkdata.mongowp.bson.BsonValue;
+import com.eightkdata.mongowp.bson.utils.DefaultBsonValues;
+import com.eightkdata.mongowp.exceptions.MongoException;
 import com.eightkdata.mongowp.messages.request.QueryMessage.QueryOption;
 import com.eightkdata.mongowp.messages.request.QueryMessage.QueryOptions;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.DeleteCommand;
@@ -11,13 +19,10 @@ import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.InsertCommand.InsertArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.MemberState;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.ReplicaSetConfig;
-import com.eightkdata.mongowp.mongoserver.pojos.OpTime;
-import com.eightkdata.mongowp.mongoserver.protocol.exceptions.MongoException;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.mongodb.WriteConcern;
 import com.torodb.torod.core.annotations.DatabaseName;
 import com.torodb.torod.mongodb.annotations.Locked;
 import com.torodb.torod.mongodb.annotations.MongoDBLayer;
@@ -37,12 +42,10 @@ import javax.annotation.concurrent.NotThreadSafe;
 import javax.annotation.concurrent.ThreadSafe;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import org.bson.BsonBoolean;
-import org.bson.BsonDocument;
-import org.bson.BsonValue;
-import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static com.eightkdata.mongowp.bson.utils.DefaultBsonValues.*;
 
 /**
  *
@@ -63,9 +66,10 @@ public class ReplCoordinator extends AbstractIdleService implements ReplInterfac
     private final SyncSourceProvider syncSourceProvider;
     private final DBCloner dbCloner;
     private final MongoClientProvider remoteClientProvider;
-    private final ObjectId myRID;
+    private final BsonObjectId myRID;
     private final int myId;
     private final String defaultDatabase;
+    private final ObjectIdFactory objectIdFactory;
 
     private RecoveryService recoveryService;
     private SecondaryStateService secondaryService;
@@ -82,11 +86,13 @@ public class ReplCoordinator extends AbstractIdleService implements ReplInterfac
             SyncSourceProvider syncSourceProvider,
             OplogManager oplogManager,
             @DatabaseName String defaultDatabase,
-            @MongoDBLayer Executor replExecutor) {
+            @MongoDBLayer Executor replExecutor,
+            ObjectIdFactory objectIdFactory) {
         this.ownerCallback = ownerCallback;
         this.executor = replExecutor;
         this.oplogReaderProvider = orpProvider;
         this.oplogManager = oplogManager;
+        this.objectIdFactory = objectIdFactory;
         
         this.lock = new ReentrantReadWriteLock();
 
@@ -95,7 +101,7 @@ public class ReplCoordinator extends AbstractIdleService implements ReplInterfac
         memberState = null;
 
         this.myId = 123;
-        this.myRID = new ObjectId();
+        this.myRID = objectIdFactory.consumeObjectId();
 
         this.dbCloner = dbCloner;
         this.remoteClientProvider = remoteClientProvider;
@@ -202,7 +208,7 @@ public class ReplCoordinator extends AbstractIdleService implements ReplInterfac
     }
 
     @Override
-    public ObjectId getRID() {
+    public BsonObjectId getRID() {
         return myRID;
     }
 
@@ -330,8 +336,7 @@ public class ReplCoordinator extends AbstractIdleService implements ReplInterfac
     }
 
     private void flushConsistentState() throws MongoException {
-        LocalMongoConnection connection = localClient.openConnection();
-        try {
+        try (LocalMongoConnection connection = localClient.openConnection()) {
             connection.execute(
                     DeleteCommand.INSTANCE,
                     defaultDatabase,
@@ -340,13 +345,17 @@ public class ReplCoordinator extends AbstractIdleService implements ReplInterfac
                             "torodb",
                             Collections.singletonList(
                                     new DeleteStatement(
-                                        new BsonDocument("consistent",
-                                                new BsonDocument("$exists", BsonBoolean.TRUE)),
+                                            newDocument(
+                                                    "consistent",
+                                                    newDocument(
+                                                            "$exists", TRUE
+                                                    )
+                                            ),
                                         true
                                     )
                             ),
                             true,
-                            WriteConcern.FSYNCED
+                            WriteConcern.fsync()
                     )
             );
 
@@ -357,9 +366,9 @@ public class ReplCoordinator extends AbstractIdleService implements ReplInterfac
                     new InsertArgument(
                             "torodb",
                             Collections.singletonList(
-                                    new BsonDocument("consistent", BsonBoolean.valueOf(consistent))
+                                    newDocument("consistent", newBoolean(consistent))
                             ),
-                            WriteConcern.FSYNCED,
+                            WriteConcern.fsync(),
                             true,
                             null
                     )
@@ -367,19 +376,16 @@ public class ReplCoordinator extends AbstractIdleService implements ReplInterfac
             if (numInserted != 1) {
                 throw new AssertionError("An invalid number of documents has been inserted: " + numInserted);
             }
-        } finally {
-            connection.close();
         }
     }
 
     private void loadConsistentState() throws MongoException {
-        LocalMongoConnection connection = localClient.openConnection();
-        try {
+        try (LocalMongoConnection connection = localClient.openConnection()) {
             EnumSet<QueryOption> flags = EnumSet.noneOf(QueryOption.class);
             BsonDocument doc = connection.query(
                     defaultDatabase,
                     "torodb",
-                    new BsonDocument("consistent", new BsonDocument("$exists", BsonBoolean.TRUE)),
+                    newDocument("consistent", newDocument("$exists", TRUE)),
                     0,
                     0,
                     new QueryOptions(flags),
@@ -397,8 +403,6 @@ public class ReplCoordinator extends AbstractIdleService implements ReplInterfac
                         && consistentField.asBoolean().getValue();
             }
             consistent = newConsistent;
-        } finally {
-            connection.close();
         }
     }
 
@@ -423,7 +427,7 @@ public class ReplCoordinator extends AbstractIdleService implements ReplInterfac
     private abstract class MyMemberStateInteface implements MemberStateInterface {
         private final Lock lock;
         private boolean closed;
-        private boolean canChangeState;
+        private final boolean canChangeState;
 
         public MyMemberStateInteface(Lock lock, boolean canChangeState) {
             this.lock = lock;
@@ -463,7 +467,7 @@ public class ReplCoordinator extends AbstractIdleService implements ReplInterfac
         }
 
         @Override
-        public ObjectId getOurElectionId() {
+        public BsonObjectId getOurElectionId() {
             throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
         }
 

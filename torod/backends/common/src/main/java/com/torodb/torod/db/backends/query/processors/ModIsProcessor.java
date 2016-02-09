@@ -20,15 +20,14 @@
 
 package com.torodb.torod.db.backends.query.processors;
 
-import com.torodb.torod.core.language.querycriteria.QueryCriteria;
-import com.torodb.torod.core.language.querycriteria.ModIsQueryCriteria;
 import com.torodb.torod.core.language.AttributeReference;
+import com.torodb.torod.core.language.querycriteria.ModIsQueryCriteria;
+import com.torodb.torod.core.language.querycriteria.QueryCriteria;
 import com.torodb.torod.core.language.querycriteria.TypeIsQueryCriteria;
 import com.torodb.torod.core.language.querycriteria.utils.DisjunctionBuilder;
 import com.torodb.torod.core.language.querycriteria.utils.QueryCriteriaVisitor;
-import com.torodb.torod.core.subdocument.BasicType;
+import com.torodb.torod.core.subdocument.ScalarType;
 import com.torodb.torod.db.backends.query.ProcessedQueryCriteria;
-
 import java.util.Collections;
 import java.util.List;
 
@@ -46,8 +45,8 @@ public class ModIsProcessor {
 
         if (Utils.isTypeKnownInStructure(attRef)) {
             structCriteria = new DisjunctionBuilder()
-                    .add(new TypeIsQueryCriteria(attRef, BasicType.DOUBLE))
-                    .add(new TypeIsQueryCriteria(attRef, BasicType.INTEGER))
+                    .add(new TypeIsQueryCriteria(attRef, ScalarType.DOUBLE))
+                    .add(new TypeIsQueryCriteria(attRef, ScalarType.INTEGER))
                     .build();
         }
         else {

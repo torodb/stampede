@@ -26,7 +26,7 @@ import com.torodb.torod.core.executor.ExecutorFactory;
 import com.torodb.torod.core.executor.SessionExecutor;
 import com.torodb.torod.core.executor.SystemExecutor;
 import com.torodb.torod.core.executor.ToroTaskExecutionException;
-import com.torodb.torod.core.subdocument.BasicType;
+import com.torodb.torod.core.subdocument.ScalarType;
 import com.torodb.torod.core.subdocument.SimpleSubDocTypeBuilderProvider;
 import com.torodb.torod.core.subdocument.SubDocAttribute;
 import com.torodb.torod.core.subdocument.SubDocType;
@@ -40,12 +40,8 @@ import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Matchers.*;
+import static org.mockito.Mockito.*;
 
 /**
  *
@@ -73,7 +69,7 @@ public class DbMetaInformation_CreateSubDocumentTypeTable_FinishJobBeforeContinu
         sequencer = new Sequencer<MySteps>(MySteps.class);
         future = mock(Future.class);
 
-        type = new SimpleSubDocTypeBuilderProvider().get().add(new SubDocAttribute("att1", BasicType.STRING)).build();
+        type = new SimpleSubDocTypeBuilderProvider().get().add(new SubDocAttribute("att1", ScalarType.STRING)).build();
 
         createSystemExecutor();
         createExecutorFactory();

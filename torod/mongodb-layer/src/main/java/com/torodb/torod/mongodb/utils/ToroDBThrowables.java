@@ -1,15 +1,13 @@
 
 package com.torodb.torod.mongodb.utils;
 
-import com.eightkdata.mongowp.mongoserver.protocol.exceptions.CommandFailed;
+import com.eightkdata.mongowp.exceptions.CommandFailed;
 import com.torodb.torod.core.exceptions.ToroException;
 import com.torodb.torod.core.exceptions.UserToroException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import static java.lang.Thread.currentThread;
 
 /**
  *
@@ -25,7 +23,7 @@ public class ToroDBThrowables {
         try {
             return future.get();
         } catch (InterruptedException ex) {
-            currentThread().interrupt();
+            Thread.currentThread().interrupt();
             throw new CommandFailed(commandName, "Interrupted while executing");
         } catch (ExecutionException ex) {
             Throwable cause = ex.getCause();

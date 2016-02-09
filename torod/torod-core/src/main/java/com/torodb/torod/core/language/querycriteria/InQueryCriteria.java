@@ -20,12 +20,12 @@
 
 package com.torodb.torod.core.language.querycriteria;
 
-import com.torodb.torod.core.language.AttributeReference;
 import com.google.common.base.Joiner;
-import com.google.common.collect.ImmutableList;
+import com.torodb.torod.core.language.AttributeReference;
 import com.torodb.torod.core.language.querycriteria.utils.QueryCriteriaVisitor;
-import com.torodb.torod.core.subdocument.values.ArrayValue;
-import com.torodb.torod.core.subdocument.values.Value;
+import com.torodb.torod.core.subdocument.values.ScalarArray;
+import com.torodb.torod.core.subdocument.values.ScalarValue;
+import com.torodb.torod.core.subdocument.values.heap.ListScalarArray;
 import java.util.List;
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.Immutable;
@@ -37,13 +37,11 @@ import javax.annotation.concurrent.Immutable;
 public class InQueryCriteria extends AttributeAndValueQueryCriteria {
     private static final long serialVersionUID = 1L;
     
-    public InQueryCriteria(@Nonnull AttributeReference attributeReference, @Nonnull List<Value<?>> values) {
-        super(attributeReference, new ArrayValue.Builder()
-                .addAll(values)
-                .build());
+    public InQueryCriteria(@Nonnull AttributeReference attributeReference, @Nonnull List<ScalarValue<?>> values) {
+        super(attributeReference, new ListScalarArray(values));
     }
     
-    public InQueryCriteria(@Nonnull AttributeReference attributeReference, @Nonnull ArrayValue values) {
+    public InQueryCriteria(@Nonnull AttributeReference attributeReference, @Nonnull ScalarArray values) {
         super(attributeReference, values);
     }
 
@@ -54,8 +52,8 @@ public class InQueryCriteria extends AttributeAndValueQueryCriteria {
 
     @Override
     @Nonnull
-    public ArrayValue getValue() {
-        return (ArrayValue) super.getValue();
+    public ScalarArray getValue() {
+        return (ScalarArray) super.getValue();
     }
 
     @Override

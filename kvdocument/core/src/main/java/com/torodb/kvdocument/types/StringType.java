@@ -23,7 +23,7 @@ package com.torodb.kvdocument.types;
 /**
  *
  */
-public class StringType implements DocType {
+public class StringType implements KVType {
     private static final long serialVersionUID = 1L;
 
     public static final StringType INSTANCE = new StringType();
@@ -43,7 +43,7 @@ public class StringType implements DocType {
     }
 
     @Override
-    public <Result, Arg> Result accept(DocTypeVisitor<Result, Arg> visitor, Arg arg) {
+    public <Result, Arg> Result accept(KVTypeVisitor<Result, Arg> visitor, Arg arg) {
         return visitor.visit(this, arg);
     }
 

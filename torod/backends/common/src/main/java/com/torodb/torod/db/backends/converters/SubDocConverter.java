@@ -20,21 +20,18 @@
 
 package com.torodb.torod.db.backends.converters;
 
-import com.torodb.torod.core.subdocument.SimpleSubDocTypeBuilderProvider;
 import com.torodb.torod.core.subdocument.SubDocAttribute;
 import com.torodb.torod.core.subdocument.SubDocType;
 import com.torodb.torod.core.subdocument.SubDocument;
-import com.torodb.torod.core.subdocument.values.Value;
+import com.torodb.torod.core.subdocument.values.ScalarValue;
 import com.torodb.torod.db.backends.converters.json.ValueToJsonConverterProvider;
 import com.torodb.torod.db.backends.tables.SubDocHelper;
 import com.torodb.torod.db.backends.tables.SubDocTable;
-import java.io.IOException;
 import java.io.Serializable;
 import java.io.StringReader;
 import java.util.Map;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.json.*;
 
@@ -94,10 +91,9 @@ public class SubDocConverter implements Serializable {
         if (attName != null) { //it is an attribute
             SubDocAttribute attribute = subDocType.getAttribute(attName);
             
-            Value subDocValue
-                    = ValueToJsonConverterProvider.getInstance()
-                            .getConverter(attribute.getType())
-                            .toValue(jsonValue);
+            ScalarValue<?> subDocValue = ValueToJsonConverterProvider.getInstance()
+                    .getConverter(attribute.getType())
+                    .toValue(jsonValue);
             builder.add(attribute, subDocValue);
         } else { //it is a special field
             if (columnName.equals(SubDocTable.DID_COLUMN_NAME)) {

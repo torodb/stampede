@@ -21,11 +21,7 @@
 
 package com.torodb.di;
 
-import javax.annotation.concurrent.Immutable;
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
-import com.eightkdata.mongowp.mongoserver.MongoServerConfig;
+import com.eightkdata.mongowp.server.MongoServerConfig;
 import com.google.inject.AbstractModule;
 import com.torodb.config.model.Config;
 import com.torodb.config.model.backend.greenplum.Greenplum;
@@ -34,6 +30,9 @@ import com.torodb.config.visitor.BackendImplementationVisitor;
 import com.torodb.torod.core.annotations.DatabaseName;
 import com.torodb.torod.core.config.DocumentBuilderFactory;
 import com.torodb.util.MongoDocumentBuilderFactory;
+import javax.annotation.concurrent.Immutable;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 public class MongoConfigModule extends AbstractModule implements BackendImplementationVisitor {
 	private final Config config;

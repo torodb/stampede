@@ -20,14 +20,14 @@
 
 package com.torodb.torod.db.backends.converters.json;
 
+import com.torodb.torod.core.subdocument.values.ScalarInteger;
 import com.torodb.torod.db.backends.converters.ValueConverter;
-import com.torodb.torod.core.subdocument.values.IntegerValue;
 
 /**
  *
  */
 public class IntegerValueToJsonConverter implements
-        ValueConverter<Number, IntegerValue> {
+        ValueConverter<Number, ScalarInteger> {
 
     @Override
     public Class<? extends Number> getJsonClass() {
@@ -35,18 +35,18 @@ public class IntegerValueToJsonConverter implements
     }
 
     @Override
-    public Class<? extends IntegerValue> getValueClass() {
-        return IntegerValue.class;
+    public Class<? extends ScalarInteger> getValueClass() {
+        return ScalarInteger.class;
     }
 
     @Override
-    public Number toJson(IntegerValue value) {
+    public Number toJson(ScalarInteger value) {
         return value.getValue();
     }
 
     @Override
-    public IntegerValue toValue(Number value) {
-        return new IntegerValue(value.intValue());
+    public ScalarInteger toValue(Number value) {
+        return ScalarInteger.of(value.intValue());
     }
     
 }

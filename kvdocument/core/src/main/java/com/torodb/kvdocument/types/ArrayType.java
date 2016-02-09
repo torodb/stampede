@@ -27,16 +27,16 @@ import javax.annotation.concurrent.Immutable;
  *
  */
 @Immutable
-public class ArrayType implements DocType {
+public class ArrayType implements KVType {
     private static final long serialVersionUID = 1L;
     
-    private final DocType elementType;
+    private final KVType elementType;
 
-    public ArrayType(DocType elementType) {
+    public ArrayType(KVType elementType) {
         this.elementType = elementType;
     }
 
-    public DocType getElementType() {
+    public KVType getElementType() {
         return elementType;
     }
 
@@ -66,7 +66,7 @@ public class ArrayType implements DocType {
     }
 
     @Override
-    public <Result, Arg> Result accept(DocTypeVisitor<Result, Arg> visitor, Arg arg) {
+    public <Result, Arg> Result accept(KVTypeVisitor<Result, Arg> visitor, Arg arg) {
         return visitor.visit(this, arg);
     }
 

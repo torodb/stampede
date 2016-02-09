@@ -21,22 +21,22 @@
 package com.torodb.util;
 
 import com.google.common.base.Preconditions;
-import com.torodb.kvdocument.values.ObjectValue;
 import com.torodb.torod.core.subdocument.ToroDocument;
+import com.torodb.kvdocument.values.KVDocument;
 
 /**
  *
  */
 public class KVToroDocument implements ToroDocument {
 
-    private final ObjectValue root;
+    private final KVDocument root;
 
-    public KVToroDocument(ObjectValue root) {
+    public KVToroDocument(KVDocument root) {
         this.root = root;
     }
 
     @Override
-    public ObjectValue getRoot() {
+    public KVDocument getRoot() {
         return root;
     }
 
@@ -68,10 +68,10 @@ public class KVToroDocument implements ToroDocument {
     
     public static class Builder implements ToroDocument.DocumentBuilder {
 
-        private ObjectValue root;
+        private KVDocument root;
 
         @Override
-        public DocumentBuilder setRoot(ObjectValue root) {
+        public DocumentBuilder setRoot(KVDocument root) {
             this.root = root;
             return this;
         }

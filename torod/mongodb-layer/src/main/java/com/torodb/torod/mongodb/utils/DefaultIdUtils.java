@@ -1,8 +1,8 @@
 
 package com.torodb.torod.mongodb.utils;
 
-import org.bson.BsonDocument;
-import org.bson.BsonValue;
+import com.eightkdata.mongowp.bson.BsonDocument;
+import com.eightkdata.mongowp.bson.BsonValue;
 
 /**
  *

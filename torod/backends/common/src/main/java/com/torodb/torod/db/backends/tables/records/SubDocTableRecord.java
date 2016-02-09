@@ -24,17 +24,15 @@ import com.torodb.torod.core.subdocument.SimpleSubDocTypeBuilderProvider;
 import com.torodb.torod.core.subdocument.SubDocAttribute;
 import com.torodb.torod.core.subdocument.SubDocType;
 import com.torodb.torod.core.subdocument.SubDocument;
-import com.torodb.torod.core.subdocument.values.Value;
+import com.torodb.torod.core.subdocument.values.ScalarValue;
 import com.torodb.torod.db.backends.tables.SubDocHelper;
 import com.torodb.torod.db.backends.tables.SubDocTable;
 import java.io.IOException;
+import java.io.Serializable;
+import javax.annotation.Nullable;
+import javax.inject.Provider;
 import org.jooq.Field;
 import org.jooq.impl.TableRecordImpl;
-
-import javax.annotation.Nullable;
-import java.io.Serializable;
-import java.util.Map;
-import javax.inject.Provider;
 
 /**
  *
@@ -96,7 +94,7 @@ public class SubDocTableRecord extends TableRecordImpl<SubDocTableRecord> {
 
             //@gortiz: I think we can not use types here!
             Field f = field(fieldName);
-            Value v = subdoc.getValue(key);
+            ScalarValue<?> v = subdoc.getValue(key);
 
             setValue(f, v);
         }
@@ -106,7 +104,7 @@ public class SubDocTableRecord extends TableRecordImpl<SubDocTableRecord> {
         SubDocType subDocType = table.getSubDocType();
         SubDocument.Builder builder = SubDocument.Builder.withKnownType(subDocType);
 
-        for (Field<? extends Value<? extends Serializable>> field : table.getSubDocFields()) {
+        for (Field<? extends ScalarValue<? extends Serializable>> field : table.getSubDocFields()) {
             String attName = SubDocHelper.toAttributeName(field.getName());
 
             SubDocAttribute att = subDocType.getAttribute(attName);

@@ -20,11 +20,7 @@
 
 package com.toro.torod.connection.update;
 
-import com.torodb.kvdocument.values.ObjectValue;
-import com.torodb.kvdocument.values.DocValue;
-import com.torodb.kvdocument.values.NumericDocValue;
-import com.torodb.kvdocument.values.IntegerValue;
-import com.torodb.kvdocument.values.ArrayValue;
+import com.torodb.kvdocument.values.*;
 import com.torodb.torod.core.exceptions.UserToroException;
 import com.torodb.torod.core.language.AttributeReference;
 import java.util.Collection;
@@ -35,16 +31,17 @@ import java.util.Collection;
  */
 class MultiplyUpdateActionExecutor implements ResolvedCallback<Boolean> {
 
-    private final NumericDocValue multiplier;
+    private static final Multiplicator MULTIPLICATOR = new Multiplicator();
+    private final KVNumeric<?> multiplier;
 
-    private MultiplyUpdateActionExecutor(NumericDocValue multiplier) {
+    private MultiplyUpdateActionExecutor(KVNumeric<?> multiplier) {
         this.multiplier = multiplier;
     }
 
     static <K> boolean multiply(
             BuilderCallback<K> builder,
             Collection<AttributeReference> keys,
-            NumericDocValue multiplier
+            KVNumeric<?> multiplier
     ) {
         for (AttributeReference key : keys) {
             if (multiply(builder, key, multiplier)) {
@@ -57,7 +54,7 @@ class MultiplyUpdateActionExecutor implements ResolvedCallback<Boolean> {
     static <K> boolean multiply(
             BuilderCallback<K> builder,
             AttributeReference key,
-            NumericDocValue multiplier
+            KVNumeric<?> multiplier
     ) {
         Boolean result = AttributeReferenceToBuilderCallback.resolve(
                 builder,
@@ -75,7 +72,7 @@ class MultiplyUpdateActionExecutor implements ResolvedCallback<Boolean> {
     public <K> Boolean objectReferenced(
             BuilderCallback<K> parentBuilder,
             K key,
-            ObjectValue.MutableBuilder child
+            KVDocumentBuilder child
     ) {
         throw new UserToroException(
                 "Cannot multiply a value of a non-numeric type. "
@@ -87,7 +84,7 @@ class MultiplyUpdateActionExecutor implements ResolvedCallback<Boolean> {
     public <K> Boolean arrayReferenced(
             BuilderCallback<K> parentBuilder,
             K key,
-            ArrayValue.MutableBuilder child
+            KVArrayBuilder child
     ) {
         throw new UserToroException(
                 "Cannot multiply a value of a non-numeric type. "
@@ -99,16 +96,16 @@ class MultiplyUpdateActionExecutor implements ResolvedCallback<Boolean> {
     public <K> Boolean valueReferenced(
             BuilderCallback<K> parentBuilder,
             K key,
-            DocValue child
+            KVValue child
     ) {
-        if (!(child instanceof NumericDocValue)) {
+        if (!(child instanceof KVNumeric)) {
             throw new UserToroException(
                     "Cannot increment a value of a non-numeric type. "
                     + parentBuilder + " has the field '" + key + "' of "
                     + "non-numeric type " + child.getType());
         }
-        NumericDocValue numericChild = (NumericDocValue) child;
-        parentBuilder.setValue(key, numericChild.multiply(multiplier));
+        KVNumeric<?> numericChild = (KVNumeric<?>) child;
+        parentBuilder.setValue(key, numericChild.accept(MULTIPLICATOR, multiplier));
         return true;
     }
 
@@ -117,8 +114,32 @@ class MultiplyUpdateActionExecutor implements ResolvedCallback<Boolean> {
             BuilderCallback<K> parentBuilder,
             K key
     ) {
-        parentBuilder.setValue(key, multiplier.multiply(new IntegerValue(0)));
+        parentBuilder.setValue(key, multiplier.accept(MULTIPLICATOR, KVInteger.of(0)));
         return true;
+    }
+
+    private static class Multiplicator extends KVValueAdaptor<KVNumeric<?>, KVNumeric<?>> {
+
+        @Override
+        public KVNumeric<?> visit(KVDouble value, KVNumeric<?> arg) {
+            return KVDouble.of(value.doubleValue() * arg.doubleValue());
+        }
+
+        @Override
+        public KVNumeric<?> visit(KVLong value, KVNumeric<?> arg) {
+            return KVDouble.of(value.doubleValue() * arg.doubleValue());
+        }
+
+        @Override
+        public KVNumeric<?> visit(KVInteger value, KVNumeric<?> arg) {
+            return KVDouble.of(value.doubleValue() * arg.doubleValue());
+        }
+
+        @Override
+        public KVNumeric<?> defaultCase(KVValue<?> value, KVNumeric<?> arg) {
+            throw new AssertionError("Trying to multiply a value of type " + value.getType() + " which is not a number");
+        }
+
     }
 
 }

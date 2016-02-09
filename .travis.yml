@@ -5,9 +5,12 @@ jdk:
   - oraclejdk7
 addons:
   postgresql: "9.4"
+  apt:
+    packages:
+      - oracle-java8-installer
 services:
   - postgresql
-
+  
 env:
   matrix:
     - Protocol=Mongo Backend=Postgres

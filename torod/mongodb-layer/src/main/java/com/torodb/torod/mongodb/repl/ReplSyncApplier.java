@@ -1,8 +1,8 @@
 
 package com.torodb.torod.mongodb.repl;
 
-import com.eightkdata.mongowp.mongoserver.api.safe.oplog.OplogOperation;
-import com.eightkdata.mongowp.mongoserver.protocol.exceptions.MongoException;
+import com.eightkdata.mongowp.exceptions.MongoException;
+import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.torodb.torod.mongodb.impl.LocalMongoClient;
 import com.torodb.torod.mongodb.impl.LocalMongoConnection;

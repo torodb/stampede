@@ -4,20 +4,19 @@ package com.torodb.torod.db.backends.sql.path.view;
 import com.google.common.collect.Table;
 import com.torodb.torod.core.exceptions.IllegalPathViewException;
 import com.torodb.torod.core.language.AttributeReference;
-import com.torodb.torod.core.subdocument.BasicType;
+import com.torodb.torod.core.subdocument.ScalarType;
 import com.torodb.torod.core.subdocument.SubDocAttribute;
 import com.torodb.torod.core.subdocument.SubDocType;
 import com.torodb.torod.core.subdocument.structure.DocStructure;
 import com.torodb.torod.db.backends.meta.IndexStorage;
+import java.util.Collection;
+import java.util.Map;
 import org.jooq.CreateViewFinalStep;
 import org.jooq.DSLContext;
 import org.jooq.conf.ParamType;
 import org.jooq.impl.DSL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Collection;
-import java.util.Map;
 
 /**
  *
@@ -86,16 +85,16 @@ public class DefaultPathViewHandlerCallback extends PathViewHandler.Callback {
 						Collection<SubDocAttribute> attributes2 = type2.getAttributes();
 
 						for (SubDocAttribute att1 : attributes1) {
-							BasicType basicType1 = att1.getType();
+							ScalarType scalarType1 = att1.getType();
 
 							for (SubDocAttribute att2 : attributes2) {
-								BasicType basicType2 = att2.getType();
+								ScalarType scalarType2 = att2.getType();
 
 								if (att1.getKey().equals(att2.getKey())) {
 
-									if (!basicType1.equals(basicType2)
-                                            && basicType1 != BasicType.NULL
-                                            && basicType2 != BasicType.NULL) {
+									if (!scalarType1.equals(scalarType2)
+                                            && scalarType1 != ScalarType.NULL
+                                            && scalarType2 != ScalarType.NULL) {
                                         String path;
                                         if (attRef.equals(AttributeReference.EMPTY_REFERENCE)) {
                                             path = att1.getKey();
@@ -105,9 +104,9 @@ public class DefaultPathViewHandlerCallback extends PathViewHandler.Callback {
                                         }
                                         throw new IllegalPathViewException(
                                                 "Path \"" + path + "\" "
-                                                + "points to a " + basicType1 + " "
+                                                + "points to a " + scalarType1 + " "
                                                 + "on structure with sid " + entry1.getKey()
-                                                + " but to a " + basicType2 + " "
+                                                + " but to a " + scalarType2 + " "
                                                 + "on sid " + entry2.getKey()
                                         );
 									}

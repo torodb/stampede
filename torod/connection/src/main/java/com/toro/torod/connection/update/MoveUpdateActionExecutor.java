@@ -20,10 +20,8 @@
 
 package com.toro.torod.connection.update;
 
+import com.torodb.kvdocument.values.KVValue;
 import com.torodb.torod.core.language.AttributeReference;
-import com.torodb.kvdocument.values.ArrayValue;
-import com.torodb.kvdocument.values.DocValue;
-import com.torodb.kvdocument.values.ObjectValue;
 import java.util.Collection;
 
 /**
@@ -79,7 +77,7 @@ class MoveUpdateActionExecutor {
         public <K> Boolean objectReferenced(
                 BuilderCallback<K> parentBuilder, 
                 K key, 
-                ObjectValue.MutableBuilder child
+                KVDocumentBuilder child
         ) {
             parentBuilder.unset(key);
             return AttributeReferenceToBuilderCallback.resolve(
@@ -94,7 +92,7 @@ class MoveUpdateActionExecutor {
         public <K> Boolean arrayReferenced(
                 BuilderCallback<K> parentBuilder, 
                 K key, 
-                ArrayValue.MutableBuilder child
+                KVArrayBuilder child
         ) {
             parentBuilder.unset(key);
             return AttributeReferenceToBuilderCallback.resolve(
@@ -109,7 +107,7 @@ class MoveUpdateActionExecutor {
         public <K> Boolean valueReferenced(
                 BuilderCallback<K> parentBuilder, 
                 K key, 
-                DocValue child
+                KVValue child
         ) {
             parentBuilder.unset(key);
             return AttributeReferenceToBuilderCallback.resolve(
@@ -132,9 +130,9 @@ class MoveUpdateActionExecutor {
     
     private static class MoveValueCallback implements 
             ResolvedCallback<Boolean> {
-        private final DocValue newValue;
+        private final KVValue newValue;
 
-        public MoveValueCallback(DocValue newValue) {
+        public MoveValueCallback(KVValue newValue) {
             this.newValue = newValue;
         }
 
@@ -142,7 +140,7 @@ class MoveUpdateActionExecutor {
         public <K> Boolean objectReferenced(
                 BuilderCallback<K> parentBuilder, 
                 K key, 
-                ObjectValue.MutableBuilder child
+                KVDocumentBuilder child
         ) {
             parentBuilder.setValue(key, newValue);
             return true;
@@ -152,7 +150,7 @@ class MoveUpdateActionExecutor {
         public <K> Boolean arrayReferenced(
                 BuilderCallback<K> parentBuilder, 
                 K key, 
-                ArrayValue.MutableBuilder child
+                KVArrayBuilder child
         ) {
             parentBuilder.setValue(key, newValue);
             return true;
@@ -162,7 +160,7 @@ class MoveUpdateActionExecutor {
         public <K> Boolean valueReferenced(
                 BuilderCallback<K> parentBuilder, 
                 K key, 
-                DocValue child
+                KVValue child
         ) {
             parentBuilder.setValue(key, newValue);
             return true;

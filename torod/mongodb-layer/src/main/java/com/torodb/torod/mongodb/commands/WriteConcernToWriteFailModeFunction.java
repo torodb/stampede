@@ -1,8 +1,8 @@
 
 package com.torodb.torod.mongodb.commands;
 
+import com.eightkdata.mongowp.WriteConcern;
 import com.google.common.base.Function;
-import com.mongodb.WriteConcern;
 import com.torodb.torod.core.WriteFailMode;
 import javax.inject.Singleton;
 

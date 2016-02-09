@@ -1,21 +1,22 @@
 
 package com.torodb.torod.mongodb.commands.torodb;
 
-import com.eightkdata.mongowp.mongoserver.api.safe.MarshalException;
-import com.eightkdata.mongowp.mongoserver.api.safe.impl.AbstractCommand;
+import com.eightkdata.mongowp.bson.BsonDocument;
+import com.eightkdata.mongowp.bson.BsonValue;
+import com.eightkdata.mongowp.exceptions.*;
+import com.eightkdata.mongowp.fields.DocField;
+import com.eightkdata.mongowp.fields.StringField;
+import com.eightkdata.mongowp.server.api.MarshalException;
+import com.eightkdata.mongowp.server.api.impl.AbstractCommand;
+import com.eightkdata.mongowp.server.api.pojos.MongoCursor;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.tools.CursorMarshaller;
-import com.eightkdata.mongowp.mongoserver.api.safe.pojos.MongoCursor;
-import com.eightkdata.mongowp.mongoserver.api.safe.tools.bson.BsonDocumentBuilder;
-import com.eightkdata.mongowp.mongoserver.api.safe.tools.bson.BsonField;
-import com.eightkdata.mongowp.mongoserver.api.safe.tools.bson.BsonReaderTool;
-import com.eightkdata.mongowp.mongoserver.protocol.exceptions.*;
+import com.eightkdata.mongowp.utils.BsonDocumentBuilder;
+import com.eightkdata.mongowp.utils.BsonReaderTool;
 import com.google.common.annotations.Beta;
 import com.google.common.base.Function;
 import com.torodb.torod.mongodb.commands.torodb.SqlSelectCommand.SqlSelectArgument;
 import com.torodb.torod.mongodb.commands.torodb.SqlSelectCommand.SqlSelectResult;
 import javax.annotation.Nonnull;
-import org.bson.BsonDocument;
-import org.bson.BsonValue;
 
 /**
  *
@@ -67,8 +68,8 @@ public class SqlSelectCommand extends AbstractCommand<SqlSelectArgument, SqlSele
 
     public static class SqlSelectArgument {
 
-        private static final BsonField<String> COLLECTION_FIELD = BsonField.create(COMMAND_NAME);
-        private static final BsonField<String> QUERY_FIELD = BsonField.create("query");
+        private static final StringField COLLECTION_FIELD = new StringField(COMMAND_NAME);
+        private static final StringField QUERY_FIELD = new StringField("query");
 
         private final String collection;
         private final String query;
@@ -104,10 +105,10 @@ public class SqlSelectCommand extends AbstractCommand<SqlSelectArgument, SqlSele
 
     public static class SqlSelectResult {
 
-        private static final BsonField<BsonDocument> CURSOR_FIELD = BsonField.create("cursor");
+        private static final DocField CURSOR_FIELD = new DocField("cursor");
         private static final ToBsonFunction TO_BSON = new ToBsonFunction();
         private static final FromBsonFunction FROM_BSON = new FromBsonFunction();
-        private static final BsonField<String> BETA_FIELD = BsonField.create("betaCmd");
+        private static final StringField BETA_FIELD = new StringField("betaCmd");
 
         private final MongoCursor<BsonDocument> cursor;
 

@@ -24,7 +24,6 @@ import com.google.common.base.Preconditions;
 import com.torodb.torod.core.backend.DbBackend;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
-
 import javax.annotation.Nonnull;
 import javax.inject.Singleton;
 import javax.sql.DataSource;
@@ -165,8 +164,8 @@ public abstract class AbstractDbBackend implements DbBackend {
 
     @Override
     public void shutdown() {
-        commonDataSource.shutdown();
-        systemDataSource.shutdown();
-        globalCursorDataSource.shutdown();
+        commonDataSource.close();
+        systemDataSource.close();
+        globalCursorDataSource.close();
     }
 }

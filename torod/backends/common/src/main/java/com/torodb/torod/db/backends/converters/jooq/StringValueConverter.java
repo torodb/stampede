@@ -21,15 +21,16 @@
 
 package com.torodb.torod.db.backends.converters.jooq;
 
-import com.torodb.torod.core.subdocument.BasicType;
-import com.torodb.torod.core.subdocument.values.StringValue;
+import com.torodb.torod.core.subdocument.ScalarType;
+import com.torodb.torod.core.subdocument.values.ScalarString;
+import com.torodb.torod.core.subdocument.values.heap.StringScalarString;
 import org.jooq.DataType;
 import org.jooq.impl.SQLDataType;
 
 /**
  *
  */
-public class StringValueConverter implements SubdocValueConverter<String, StringValue>{
+public class StringValueConverter implements SubdocValueConverter<String, ScalarString>{
     private static final long serialVersionUID = 1L;
 
     @Override
@@ -38,17 +39,17 @@ public class StringValueConverter implements SubdocValueConverter<String, String
     }
 
     @Override
-    public BasicType getErasuredType() {
-        return BasicType.STRING;
+    public ScalarType getErasuredType() {
+        return ScalarType.STRING;
     }
 
     @Override
-    public StringValue from(String databaseObject) {
-        return new StringValue(databaseObject);
+    public ScalarString from(String databaseObject) {
+        return new StringScalarString(databaseObject);
     }
 
     @Override
-    public String to(StringValue userObject) {
+    public String to(ScalarString userObject) {
         return userObject.getValue();
     }
 
@@ -58,8 +59,8 @@ public class StringValueConverter implements SubdocValueConverter<String, String
     }
 
     @Override
-    public Class<StringValue> toType() {
-        return StringValue.class;
+    public Class<ScalarString> toType() {
+        return ScalarString.class;
     }
     
 }

@@ -23,31 +23,53 @@ package com.torodb.torod.core.language.querycriteria;
 
 import com.torodb.torod.core.language.AttributeReference;
 import com.torodb.torod.core.language.querycriteria.utils.QueryCriteriaVisitor;
-import com.torodb.torod.core.subdocument.values.PatternValue;
+import java.util.regex.Pattern;
+import javax.annotation.Nonnull;
 
 /**
  *
  */
-public class MatchPatternQueryCriteria extends AttributeAndValueQueryCriteria {
+public class MatchPatternQueryCriteria extends AttributeQueryCriteria {
     private static final long serialVersionUID = 1L;
 
-    public MatchPatternQueryCriteria(AttributeReference attributeReference, PatternValue value) {
-        super(attributeReference, value);
+    @Nonnull 
+    private final Pattern pattern;
+
+    public MatchPatternQueryCriteria(@Nonnull AttributeReference attributeReference, @Nonnull Pattern pattern) {
+        super(attributeReference);
+        this.pattern = pattern;
+    }
+
+    public Pattern getPattern() {
+        return pattern;
     }
 
     @Override
-    protected int getBaseHash() {
-        return 23;
+    public boolean semanticEquals(QueryCriteria obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (!(obj instanceof MatchPatternQueryCriteria)) {
+            return false;
+        }
+        final MatchPatternQueryCriteria other = (MatchPatternQueryCriteria) obj;
+        if (!this.pattern.equals(other.pattern)) {
+            return false;
+        }
+        return this.getAttributeReference().equals(other.getAttributeReference());
     }
-    
+
     @Override
-    public PatternValue getValue() {
-        return (PatternValue) super.getValue();
+    public int hashCode() {
+        int hash = 23;
+        hash = 17 * hash + pattern.hashCode();
+        hash = 17 * hash + this.getAttributeReference().hashCode();
+        return hash;
     }
 
     @Override
     public String toString() {
-        return getAttributeReference() + "->matchPattern(" + getValue() + ")";
+        return getAttributeReference() + "->matchPattern(" + pattern + ")";
     }
     
     @Override

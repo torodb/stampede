@@ -1,19 +1,19 @@
 
 package com.torodb.torod.mongodb.repl;
 
+import com.eightkdata.mongowp.OpTime;
 import com.eightkdata.mongowp.client.core.MongoClient;
 import com.eightkdata.mongowp.client.core.MongoConnection;
 import com.eightkdata.mongowp.client.core.UnreachableMongoServerException;
+import com.eightkdata.mongowp.exceptions.MongoException;
+import com.eightkdata.mongowp.exceptions.OplogOperationUnsupported;
+import com.eightkdata.mongowp.exceptions.OplogStartMissingException;
+import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.DropDatabaseCommand;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.diagnostic.ListDatabasesCommand;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.diagnostic.ListDatabasesCommand.ListDatabasesReply;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.diagnostic.ListDatabasesCommand.ListDatabasesReply.DatabaseEntry;
-import com.eightkdata.mongowp.mongoserver.api.safe.oplog.OplogOperation;
-import com.eightkdata.mongowp.mongoserver.api.safe.tools.Empty;
-import com.eightkdata.mongowp.mongoserver.pojos.OpTime;
-import com.eightkdata.mongowp.mongoserver.protocol.exceptions.MongoException;
-import com.eightkdata.mongowp.mongoserver.protocol.exceptions.OplogOperationUnsupported;
-import com.eightkdata.mongowp.mongoserver.protocol.exceptions.OplogStartMissingException;
+import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.google.common.base.Supplier;
 import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
@@ -153,9 +153,8 @@ class RecoveryService extends AbstractExecutionThreadService {
 
             MongoConnection remoteConnection = remoteClient.openConnection();
 
-            WriteTransaction oplogTransaction = oplogManager.createWriteTransaction();
-
-            try {
+            try (WriteTransaction oplogTransaction
+                    = oplogManager.createWriteTransaction()) {
                 OplogReader reader = oplogReaderProvider.newReader(remoteConnection);
 
                 OplogOperation lastClonedOp = reader.getLastOp();
@@ -212,14 +211,10 @@ class RecoveryService extends AbstractExecutionThreadService {
                 throw new TryAgainException(ex);
             } catch (OplogOperationUnsupported ex) {
                 throw new TryAgainException(ex);
-            } catch (MongoException ex) {
-                throw new TryAgainException(ex);
-            } catch (CloningException ex) {
+            } catch (MongoException | CloningException ex) {
                 throw new TryAgainException(ex);
             } catch (OplogManagerPersistException ex) {
                 throw new FatalErrorException();
-            } finally {
-                oplogTransaction.close();
             }
 
             callback.setConsistentState(true);

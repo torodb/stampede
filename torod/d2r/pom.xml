@@ -51,8 +51,13 @@
 
         <dependency>
             <groupId>com.torodb.kvdocument</groupId>
-            <artifactId>json-converter</artifactId>
+            <artifactId>mongowp-converter</artifactId>
             <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.8kdata.mongowp</groupId>
+            <artifactId>mongowp-core</artifactId>
             <scope>test</scope>
         </dependency>
 

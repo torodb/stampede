@@ -1,7 +1,7 @@
 
 package com.torodb.torod.mongodb.meta;
 
-import com.eightkdata.mongowp.mongoserver.protocol.exceptions.DatabaseNotFoundException;
+import com.eightkdata.mongowp.exceptions.DatabaseNotFoundException;
 import com.torodb.torod.core.annotations.DatabaseName;
 import com.torodb.torod.mongodb.utils.NamespaceUtil;
 import javax.inject.Inject;

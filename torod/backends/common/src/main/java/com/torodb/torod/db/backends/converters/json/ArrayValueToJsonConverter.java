@@ -20,10 +20,12 @@
 
 package com.torodb.torod.db.backends.converters.json;
 
-import com.torodb.torod.db.backends.converters.ValueConverter;
 import com.torodb.torod.core.subdocument.values.*;
+import com.torodb.torod.core.subdocument.values.heap.ListScalarArray;
+import com.torodb.torod.db.backends.converters.ValueConverter;
 import com.torodb.torod.db.backends.converters.array.ValueToArrayConverterProvider;
-
+import java.util.ArrayList;
+import java.util.List;
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonArrayBuilder;
@@ -33,7 +35,7 @@ import javax.json.JsonValue;
  *
  */
 public class ArrayValueToJsonConverter implements
-        ValueConverter<JsonArray, ArrayValue> {
+        ValueConverter<JsonArray, ScalarArray> {
 
     private static final ChildToJson TO_JSON = new ChildToJson();
     
@@ -43,35 +45,34 @@ public class ArrayValueToJsonConverter implements
     }
 
     @Override
-    public Class<? extends ArrayValue> getValueClass() {
-        return ArrayValue.class;
+    public Class<? extends ScalarArray> getValueClass() {
+        return ScalarArray.class;
     }
 
     @Override
-    public JsonArray toJson(ArrayValue value) {
+    public JsonArray toJson(ScalarArray value) {
         JsonArrayBuilder builder = Json.createArrayBuilder();
-        for (Value<?> child : value) {
+        for (ScalarValue<?> child : value) {
             child.accept(TO_JSON, builder);
         }
         return builder.build();
     }
 
     @Override
-    public ArrayValue toValue(JsonArray value) {
-        ArrayValue.Builder builder = new ArrayValue.Builder();
-        ValueToArrayConverterProvider converterProvider
-                = ValueToArrayConverterProvider.getInstance();
+    public ScalarArray toValue(JsonArray value) {
+        List<ScalarValue<?>> list = new ArrayList<>(value.size());
+        ValueToArrayConverterProvider converterProvider = ValueToArrayConverterProvider.getInstance();
         for (JsonValue child : value) {
-            builder.add(converterProvider.convertFromJson(child));
+            list.add(converterProvider.convertFromJson(child));
         }
-        return builder.build();
+        return new ListScalarArray(list);
     }
 
     private static class ChildToJson implements
-            ValueVisitor<Void, JsonArrayBuilder> {
+            ScalarValueVisitor<Void, JsonArrayBuilder> {
 
         @Override
-        public Void visit(BooleanValue value, JsonArrayBuilder arg) {
+        public Void visit(ScalarBoolean value, JsonArrayBuilder arg) {
             arg.add(ValueToArrayConverterProvider.getInstance()
                             .getBooleanConverter().toJson(value)
             );
@@ -79,13 +80,13 @@ public class ArrayValueToJsonConverter implements
         }
 
         @Override
-        public Void visit(NullValue value, JsonArrayBuilder arg) {
+        public Void visit(ScalarNull value, JsonArrayBuilder arg) {
             arg.addNull();
             return null;
         }
 
         @Override
-        public Void visit(ArrayValue value, JsonArrayBuilder arg) {
+        public Void visit(ScalarArray value, JsonArrayBuilder arg) {
             arg.add(ValueToArrayConverterProvider.getInstance()
                             .getArrayConverter().toJson(value)
             );
@@ -93,7 +94,7 @@ public class ArrayValueToJsonConverter implements
         }
 
         @Override
-        public Void visit(IntegerValue value, JsonArrayBuilder arg) {
+        public Void visit(ScalarInteger value, JsonArrayBuilder arg) {
             arg.add(ValueToArrayConverterProvider.getInstance()
                             .getIntegerConverter().toJson(value)
                             .intValue()
@@ -102,7 +103,7 @@ public class ArrayValueToJsonConverter implements
         }
 
         @Override
-        public Void visit(LongValue value, JsonArrayBuilder arg) {
+        public Void visit(ScalarLong value, JsonArrayBuilder arg) {
             arg.add(ValueToArrayConverterProvider.getInstance()
                             .getLongConverter().toJson(value)
                             .longValue()
@@ -111,7 +112,7 @@ public class ArrayValueToJsonConverter implements
         }
 
         @Override
-        public Void visit(DoubleValue value, JsonArrayBuilder arg) {
+        public Void visit(ScalarDouble value, JsonArrayBuilder arg) {
             arg.add(ValueToArrayConverterProvider.getInstance()
                             .getDoubleConverter().toJson(value)
                             .doubleValue()
@@ -120,7 +121,7 @@ public class ArrayValueToJsonConverter implements
         }
 
         @Override
-        public Void visit(StringValue value, JsonArrayBuilder arg) {
+        public Void visit(ScalarString value, JsonArrayBuilder arg) {
             arg.add(ValueToArrayConverterProvider.getInstance()
                             .getStringConverter().toJson(value)
             );
@@ -128,23 +129,23 @@ public class ArrayValueToJsonConverter implements
         }
 
         @Override
-        public Void visit(TwelveBytesValue value, JsonArrayBuilder arg) {
+        public Void visit(ScalarMongoObjectId value, JsonArrayBuilder arg) {
             arg.add(ValueToArrayConverterProvider.getInstance()
-                            .getTwelveBytesConverter().toJson(value)
+                            .getMongoObjectIdConverter().toJson(value)
             );
             return null;
         }
 
         @Override
-        public Void visit(DateTimeValue value, JsonArrayBuilder arg) {
+        public Void visit(ScalarInstant value, JsonArrayBuilder arg) {
             arg.add(ValueToArrayConverterProvider.getInstance()
-                            .getDateTimeConverter().toJson(value)
+                            .getInstantConverter().toJson(value)
             );
             return null;
         }
 
         @Override
-        public Void visit(DateValue value, JsonArrayBuilder arg) {
+        public Void visit(ScalarDate value, JsonArrayBuilder arg) {
             arg.add(ValueToArrayConverterProvider.getInstance()
                             .getDateConverter().toJson(value)
             );
@@ -152,7 +153,7 @@ public class ArrayValueToJsonConverter implements
         }
 
         @Override
-        public Void visit(TimeValue value, JsonArrayBuilder arg) {
+        public Void visit(ScalarTime value, JsonArrayBuilder arg) {
             arg.add(ValueToArrayConverterProvider.getInstance()
                             .getTimeConverter().toJson(value)
             );
@@ -160,15 +161,15 @@ public class ArrayValueToJsonConverter implements
         }
 
         @Override
-        public Void visit(PatternValue value, JsonArrayBuilder arg) {
+        public Void visit(ScalarMongoTimestamp value, JsonArrayBuilder arg) {
             arg.add(ValueToArrayConverterProvider.getInstance()
-                    .getPosixConverter().toJson(value)
+                    .getMongoTimestampConverter().toJson(value)
             );
             return null;
         }
 
         @Override
-        public Void visit(BinaryValue value, JsonArrayBuilder arg) {
+        public Void visit(ScalarBinary value, JsonArrayBuilder arg) {
             arg.add(ValueToArrayConverterProvider.getInstance()
                     .getBinaryConverter().toJson(value)
             );

@@ -20,10 +20,8 @@
 
 package com.toro.torod.connection.update;
 
+import com.torodb.kvdocument.values.KVValue;
 import com.torodb.torod.core.language.AttributeReference;
-import com.torodb.kvdocument.values.ArrayValue;
-import com.torodb.kvdocument.values.DocValue;
-import com.torodb.kvdocument.values.ObjectValue;
 import java.util.Collection;
 
 /**
@@ -66,7 +64,7 @@ class UnsetUpdateActionExecutor implements ResolvedCallback<Boolean> {
     public <K> Boolean objectReferenced(
             BuilderCallback<K> parentBuilder, 
             K key, 
-            ObjectValue.MutableBuilder child
+            KVDocumentBuilder child
     ) {
         parentBuilder.unset(key);
         return true;
@@ -76,7 +74,7 @@ class UnsetUpdateActionExecutor implements ResolvedCallback<Boolean> {
     public <K> Boolean arrayReferenced(
             BuilderCallback<K> parentBuilder, 
             K key, 
-            ArrayValue.MutableBuilder child
+            KVArrayBuilder child
     ) {
         parentBuilder.unset(key);
         return true;
@@ -86,7 +84,7 @@ class UnsetUpdateActionExecutor implements ResolvedCallback<Boolean> {
     public <K> Boolean valueReferenced(
             BuilderCallback<K> parentBuilder, 
             K key, 
-            DocValue child
+            KVValue child
     ) {
         parentBuilder.unset(key);
         return true;

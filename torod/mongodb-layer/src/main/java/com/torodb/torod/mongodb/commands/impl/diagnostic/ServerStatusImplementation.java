@@ -1,21 +1,12 @@
 
 package com.torodb.torod.mongodb.commands.impl.diagnostic;
 
-import java.lang.management.ManagementFactory;
-import java.net.InetAddress;
-
-import javax.inject.Inject;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.threeten.bp.Instant;
-
-import com.eightkdata.mongowp.mongoserver.MongoServerConfig;
-import com.eightkdata.mongowp.mongoserver.MongoVersion;
-import com.eightkdata.mongowp.mongoserver.api.safe.Command;
-import com.eightkdata.mongowp.mongoserver.api.safe.CommandRequest;
-import com.eightkdata.mongowp.mongoserver.api.safe.CommandResult;
-import com.eightkdata.mongowp.mongoserver.api.safe.impl.NonWriteCommandResult;
+import com.eightkdata.mongowp.exceptions.MongoException;
+import com.eightkdata.mongowp.server.MongoServerConfig;
+import com.eightkdata.mongowp.server.api.Command;
+import com.eightkdata.mongowp.server.api.CommandRequest;
+import com.eightkdata.mongowp.server.api.CommandResult;
+import com.eightkdata.mongowp.server.api.impl.NonWriteCommandResult;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.diagnostic.ServerStatusCommand.Asserts;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.diagnostic.ServerStatusCommand.BackgroundFlushing;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.diagnostic.ServerStatusCommand.Connections;
@@ -33,9 +24,14 @@ import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.diagnos
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.diagnostic.ServerStatusCommand.ServerStatusArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.diagnostic.ServerStatusCommand.ServerStatusReply;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.diagnostic.ServerStatusCommand.StorageEngine;
-import com.eightkdata.mongowp.mongoserver.protocol.exceptions.MongoException;
 import com.google.common.collect.ImmutableList;
 import com.torodb.torod.mongodb.commands.AbstractToroCommandImplementation;
+import java.lang.management.ManagementFactory;
+import java.net.InetAddress;
+import javax.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.threeten.bp.Instant;
 
 /**
  *
@@ -158,7 +154,7 @@ public class ServerStatusImplementation extends AbstractToroCommandImplementatio
                     new Metrics.Ttl(0, 0)));
         }
         
-        return new NonWriteCommandResult<ServerStatusReply>(replyBuilder.build());
+        return new NonWriteCommandResult<>(replyBuilder.build());
     }
 
 }

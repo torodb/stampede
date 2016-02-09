@@ -20,14 +20,15 @@
 
 package com.torodb.torod.db.backends.converters.json;
 
+import com.torodb.torod.core.subdocument.values.ScalarString;
+import com.torodb.torod.core.subdocument.values.heap.StringScalarString;
 import com.torodb.torod.db.backends.converters.ValueConverter;
-import com.torodb.torod.core.subdocument.values.StringValue;
 
 /**
  *
  */
 public class StringValueToJsonConverter implements
-        ValueConverter<String, StringValue> {
+        ValueConverter<String, ScalarString> {
 
     @Override
     public Class<? extends String> getJsonClass() {
@@ -35,18 +36,18 @@ public class StringValueToJsonConverter implements
     }
 
     @Override
-    public Class<? extends StringValue> getValueClass() {
-        return StringValue.class;
+    public Class<? extends ScalarString> getValueClass() {
+        return ScalarString.class;
     }
 
     @Override
-    public String toJson(StringValue value) {
+    public String toJson(ScalarString value) {
         return value.getValue();
     }
 
     @Override
-    public StringValue toValue(String value) {
-        return new StringValue(value);
+    public ScalarString toValue(String value) {
+        return new StringScalarString(value);
     }
     
 }

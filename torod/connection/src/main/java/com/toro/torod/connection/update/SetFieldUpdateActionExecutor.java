@@ -20,10 +20,8 @@
 
 package com.toro.torod.connection.update;
 
+import com.torodb.kvdocument.values.KVValue;
 import com.torodb.torod.core.language.AttributeReference;
-import com.torodb.kvdocument.values.ArrayValue;
-import com.torodb.kvdocument.values.DocValue;
-import com.torodb.kvdocument.values.ObjectValue;
 import java.util.Collection;
 
 /**
@@ -31,16 +29,16 @@ import java.util.Collection;
  */
 class SetFieldUpdateActionExecutor implements ResolvedCallback<Boolean> {
     
-    private final DocValue value;
+    private final KVValue value;
 
-    private SetFieldUpdateActionExecutor(DocValue value) {
+    private SetFieldUpdateActionExecutor(KVValue value) {
         this.value = value;
     }
     
     static <K> boolean set(
             BuilderCallback<K> builder,
             Collection<AttributeReference> keys,
-            DocValue newValue
+            KVValue newValue
     ) {
         for (AttributeReference key : keys) {
             if (set(builder, key, newValue)) {
@@ -53,7 +51,7 @@ class SetFieldUpdateActionExecutor implements ResolvedCallback<Boolean> {
     static <K> boolean set(
             BuilderCallback<K> builder,
             AttributeReference key,
-            DocValue newValue
+            KVValue newValue
     ) {
         Boolean result = AttributeReferenceToBuilderCallback.resolve(builder, 
                 key.getKeys(), 
@@ -69,7 +67,7 @@ class SetFieldUpdateActionExecutor implements ResolvedCallback<Boolean> {
     public <K> Boolean objectReferenced(
             BuilderCallback<K> parentBuilder, 
             K key, 
-            ObjectValue.MutableBuilder child
+            KVDocumentBuilder child
     ) {
         parentBuilder.setValue(key, value);
         return true;
@@ -79,7 +77,7 @@ class SetFieldUpdateActionExecutor implements ResolvedCallback<Boolean> {
     public <K> Boolean arrayReferenced(
             BuilderCallback<K> parentBuilder, 
             K key, 
-            ArrayValue.MutableBuilder child
+            KVArrayBuilder child
     ) {
         parentBuilder.setValue(key, value);
         return true;
@@ -89,7 +87,7 @@ class SetFieldUpdateActionExecutor implements ResolvedCallback<Boolean> {
     public <K> Boolean valueReferenced(
             BuilderCallback<K> parentBuilder, 
             K key, 
-            DocValue child
+            KVValue child
     ) {
         parentBuilder.setValue(key, value);
         return true;

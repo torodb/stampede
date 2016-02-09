@@ -20,31 +20,29 @@
 
 package com.toro.torod.connection.update;
 
-import com.torodb.kvdocument.values.ArrayValue;
-import com.torodb.kvdocument.values.DocValue;
-import com.torodb.kvdocument.values.ObjectValue;
+import com.torodb.kvdocument.values.KVValue;
 
 /**
  *
  */
-public interface ResolvedCallback<R> {
+interface ResolvedCallback<R> {
     
     public <K> R objectReferenced(
             BuilderCallback<K> parentBuilder, 
             K key,
-            ObjectValue.MutableBuilder child
+            KVDocumentBuilder child
     );
     
     public <K> R arrayReferenced(
             BuilderCallback<K> parentBuilder, 
             K key,
-            ArrayValue.MutableBuilder child
+            KVArrayBuilder child
     );
     
     public <K> R valueReferenced(
             BuilderCallback<K> parentBuilder, 
             K key,
-            DocValue child
+            KVValue child
     );
     
     public <K> R newElementReferenced(

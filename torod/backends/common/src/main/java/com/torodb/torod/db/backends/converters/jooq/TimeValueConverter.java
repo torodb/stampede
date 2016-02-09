@@ -20,8 +20,9 @@
 
 package com.torodb.torod.db.backends.converters.jooq;
 
-import com.torodb.torod.core.subdocument.BasicType;
-import com.torodb.torod.core.subdocument.values.TimeValue;
+import com.torodb.torod.core.subdocument.ScalarType;
+import com.torodb.torod.core.subdocument.values.ScalarTime;
+import com.torodb.torod.core.subdocument.values.heap.LocalTimeScalarTime;
 import java.sql.Time;
 import org.jooq.DataType;
 import org.jooq.impl.SQLDataType;
@@ -30,7 +31,7 @@ import org.threeten.bp.DateTimeUtils;
 /**
  *
  */
-public class TimeValueConverter implements SubdocValueConverter<Time, TimeValue>{
+public class TimeValueConverter implements SubdocValueConverter<Time, ScalarTime>{
     private static final long serialVersionUID = 1L;
 
     @Override
@@ -39,19 +40,19 @@ public class TimeValueConverter implements SubdocValueConverter<Time, TimeValue>
     }
 
     @Override
-    public BasicType getErasuredType() {
-        return BasicType.TIME;
+    public ScalarType getErasuredType() {
+        return ScalarType.TIME;
     }
 
     @Override
-    public TimeValue from(Time databaseObject) {
-        return new TimeValue(
+    public ScalarTime from(Time databaseObject) {
+        return new LocalTimeScalarTime(
                 DateTimeUtils.toLocalTime(databaseObject)
         );
     }
 
     @Override
-    public Time to(TimeValue userObject) {
+    public Time to(ScalarTime userObject) {
         return DateTimeUtils.toSqlTime(userObject.getValue());
     }
 
@@ -61,8 +62,8 @@ public class TimeValueConverter implements SubdocValueConverter<Time, TimeValue>
     }
 
     @Override
-    public Class<TimeValue> toType() {
-        return TimeValue.class;
+    public Class<ScalarTime> toType() {
+        return ScalarTime.class;
     }
     
 }

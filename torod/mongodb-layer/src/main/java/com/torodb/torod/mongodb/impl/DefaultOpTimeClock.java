@@ -1,7 +1,7 @@
 
 package com.torodb.torod.mongodb.impl;
 
-import com.eightkdata.mongowp.mongoserver.pojos.OpTime;
+import com.eightkdata.mongowp.OpTime;
 import com.torodb.torod.mongodb.OptimeClock;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.concurrent.ThreadSafe;

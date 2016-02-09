@@ -1,15 +1,15 @@
 
 package com.torodb.torod.mongodb.commands.torodb;
 
-import com.eightkdata.mongowp.mongoserver.api.safe.MarshalException;
-import com.eightkdata.mongowp.mongoserver.api.safe.impl.AbstractCommand;
-import com.eightkdata.mongowp.mongoserver.api.safe.impl.CollectionCommandArgument;
-import com.eightkdata.mongowp.mongoserver.api.safe.tools.Empty;
-import com.eightkdata.mongowp.mongoserver.api.safe.tools.bson.BsonDocumentBuilder;
-import com.eightkdata.mongowp.mongoserver.api.safe.tools.bson.BsonField;
-import com.eightkdata.mongowp.mongoserver.protocol.exceptions.*;
+import com.eightkdata.mongowp.bson.BsonDocument;
+import com.eightkdata.mongowp.exceptions.*;
+import com.eightkdata.mongowp.fields.StringField;
+import com.eightkdata.mongowp.server.api.MarshalException;
+import com.eightkdata.mongowp.server.api.impl.AbstractCommand;
+import com.eightkdata.mongowp.server.api.impl.CollectionCommandArgument;
+import com.eightkdata.mongowp.server.api.tools.Empty;
+import com.eightkdata.mongowp.utils.BsonDocumentBuilder;
 import com.google.common.annotations.Beta;
-import org.bson.BsonDocument;
 
 /**
  *
@@ -17,7 +17,7 @@ import org.bson.BsonDocument;
 @Beta
 public class DropPathViewsCommand extends AbstractCommand<CollectionCommandArgument, Empty> {
 
-    private static final BsonField<String> BETA_FIELD = BsonField.create("betaCmd");
+    private static final StringField BETA_FIELD = new StringField("betaCmd");
     public static final DropPathViewsCommand INSTANCE = new DropPathViewsCommand();
 
     private DropPathViewsCommand() {

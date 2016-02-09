@@ -20,11 +20,14 @@
 
 package com.torodb.torod.mongodb.exp.modifiers;
 
+import com.eightkdata.mongowp.bson.BsonDocument;
+import com.eightkdata.mongowp.bson.BsonDocument.Entry;
+import com.eightkdata.mongowp.bson.BsonValue;
+import com.eightkdata.mongowp.utils.BsonReaderTool;
 import com.torodb.torod.core.exceptions.UserToroException;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
-import org.bson.BsonDocument;
 
 /**
  *
@@ -81,14 +84,17 @@ public class RegexExpModifier implements ExpModifier {
     
     @Nullable
     public static RegexExpModifier fromBSON(BsonDocument exp) {
-        for (String key : exp.keySet()) {
+        for (Entry entry : exp) {
+            String key = entry.getKey();
             if (!key.equals("$options")) {
                 continue;
             }
-            if (!exp.get(key).isString()) {
+            BsonValue<?> optionsValue = exp.get(key);
+            assert optionsValue != null;
+            if (!optionsValue.isString()) {
                 throw new UserToroException("$options has to be a string");
             }
-            return new RegexExpModifier(exp.getString(key).getValue());
+            return new RegexExpModifier(optionsValue.asString().getValue());
         }
         return null;
     }

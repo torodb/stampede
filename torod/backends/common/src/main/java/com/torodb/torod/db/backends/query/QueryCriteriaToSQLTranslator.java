@@ -25,11 +25,11 @@ import com.torodb.torod.core.language.AttributeReference;
 import com.torodb.torod.core.language.querycriteria.*;
 import com.torodb.torod.core.language.querycriteria.utils.QueryCriteriaDFW;
 import com.torodb.torod.core.language.querycriteria.utils.QueryCriteriaVisitor;
-import com.torodb.torod.core.subdocument.BasicType;
+import com.torodb.torod.core.subdocument.ScalarType;
 import com.torodb.torod.core.subdocument.SubDocType;
 import com.torodb.torod.core.subdocument.structure.DocStructure;
-import com.torodb.torod.core.subdocument.values.ArrayValue;
-import com.torodb.torod.core.subdocument.values.Value;
+import com.torodb.torod.core.subdocument.values.ScalarArray;
+import com.torodb.torod.core.subdocument.values.ScalarValue;
 import com.torodb.torod.db.backends.DatabaseInterface;
 import com.torodb.torod.db.backends.converters.PatternConverter;
 import com.torodb.torod.db.backends.converters.ValueConverter;
@@ -39,13 +39,11 @@ import com.torodb.torod.db.backends.converters.json.ValueToJsonConverterProvider
 import com.torodb.torod.db.backends.meta.IndexStorage;
 import com.torodb.torod.db.backends.tables.SubDocHelper;
 import com.torodb.torod.db.backends.tables.SubDocTable;
-import org.jooq.*;
-import org.jooq.impl.DSL;
-
+import java.util.List;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
-import java.io.Serializable;
-import java.util.List;
+import org.jooq.*;
+import org.jooq.impl.DSL;
 
 /**
  *
@@ -299,7 +297,7 @@ public class QueryCriteriaToSQLTranslator {
             return criteriaCondition;
         }
 
-        private String getJsonType(BasicType type) {
+        private String getJsonType(ScalarType type) {
             switch (type) {
                 case ARRAY:
                     return "array";
@@ -314,7 +312,7 @@ public class QueryCriteriaToSQLTranslator {
                 case STRING:
                     return "string";
                 default:
-                    throw new AssertionError("Unexpected basic type '" + type
+                    throw new AssertionError("Unexpected scalar type '" + type
                             + "'");
             }
         }
@@ -329,7 +327,7 @@ public class QueryCriteriaToSQLTranslator {
             AttributeReference attRef = criteria.getAttributeReference();
 
             if (isInArrayValue(attRef, inArray)) {
-                BasicType expectedType = criteria.getExpectedType();
+                ScalarType expectedType = criteria.getExpectedType();
                 switch (expectedType) {
                     case DOUBLE:
                     case INTEGER:
@@ -404,7 +402,7 @@ public class QueryCriteriaToSQLTranslator {
 
             Condition criteriaCondition;
 
-            if (criteria.getValue().getType().equals(BasicType.NULL)) {
+            if (criteria.getValue().getType().equals(ScalarType.NULL)) {
                 if (!isInArrayValue(criteria.getAttributeReference(), inArray)) {
                     criteriaCondition = field.isNull();
                 }
@@ -549,13 +547,13 @@ public class QueryCriteriaToSQLTranslator {
             if (isInArrayValue(criteria.getAttributeReference(), inArray)) {
                 typeCondition = databaseInterface.arraySerializer().typeof(
                         field.getName(),
-                        getJsonType(BasicType.STRING)
+                        getJsonType(ScalarType.STRING)
                 );
             }
 
             Condition criteriaCondition = field.likeRegex(
                     PatternConverter.toPosixPattern(
-                            criteria.getValue()
+                            criteria.getPattern()
                     )
             );
 
@@ -679,20 +677,20 @@ public class QueryCriteriaToSQLTranslator {
             return DSL.exists(subQuery);
         }
 
-        private Object translateValueToSQL(Value value) {
+        private Object translateValueToSQL(ScalarValue value) {
             SubdocValueConverter converter
                     = ValueToJooqConverterProvider.getConverter(value.getType());
 
             Object result = converter.to(value);
 
-            if (value instanceof ArrayValue) {
+            if (value instanceof ScalarArray) {
                 result = result.toString();
             }
 
             return result;
         }
 
-        private String translateValueToArraySerialization(Value value) {
+        private String translateValueToArraySerialization(ScalarValue value) {
             ValueConverter converter
                     = ValueToJsonConverterProvider.getInstance()
                             .getConverter(value.getType());
@@ -701,12 +699,13 @@ public class QueryCriteriaToSQLTranslator {
             return databaseInterface.arraySerializer().translateValue(converter.toJson(value));
         }
 
-        private Object[] toInArgument(List<Value<?>> values) {
+        private Object[] toInArgument(ScalarArray values) {
             Object[] result = new Object[values.size()];
 
-            for (int i = 0; i < values.size(); i++) {
-                Value<? extends Serializable> value = values.get(i);
+            int i = 0;
+            for (ScalarValue<?> value : values) {
                 result[i] = translateValueToSQL(value);
+                i++;
             }
             return result;
         }

@@ -22,10 +22,10 @@ package com.torodb.torod.db.backends.tables;
 
 import com.google.common.collect.AbstractIterator;
 import com.torodb.torod.core.exceptions.ToroImplementationException;
-import com.torodb.torod.core.subdocument.BasicType;
+import com.torodb.torod.core.subdocument.ScalarType;
 import com.torodb.torod.core.subdocument.SubDocAttribute;
 import com.torodb.torod.core.subdocument.SubDocType;
-import com.torodb.torod.core.subdocument.values.Value;
+import com.torodb.torod.core.subdocument.values.ScalarValue;
 import com.torodb.torod.db.backends.DatabaseInterface;
 import com.torodb.torod.db.backends.converters.jooq.SubdocValueConverter;
 import com.torodb.torod.db.backends.converters.jooq.ValueToJooqConverterProvider;
@@ -38,7 +38,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Iterator;
 import javax.annotation.Nonnull;
-import javax.inject.Inject;
 import javax.inject.Provider;
 import org.jooq.*;
 import org.jooq.impl.AbstractKeys;
@@ -117,8 +116,7 @@ public class SubDocTable extends TableImpl<SubDocTableRecord> {
         for (SubDocAttribute attibute : type.getAttributes()) {
             String fieldName = new SubDocHelper(databaseInterface).toColumnName(attibute.getKey());
 
-            SubdocValueConverter converter
-                    = ValueToJooqConverterProvider.getConverter(attibute.getType());
+            SubdocValueConverter converter = ValueToJooqConverterProvider.getConverter(attibute.getType());
             createField(
                     fieldName,
                     converter.getDataType(),
@@ -131,26 +129,26 @@ public class SubDocTable extends TableImpl<SubDocTableRecord> {
     }
 
     @SuppressFBWarnings("SIC_INNER_SHOULD_BE_STATIC_ANON")
-    public Iterable<Field<? extends Value<? extends Serializable>>> getSubDocFields() {
-        final Iterator<Field<? extends Value<? extends Serializable>>> iterator
-                = new AbstractIterator<Field<? extends Value<? extends Serializable>>>() {
+    public Iterable<Field<? extends ScalarValue<? extends Serializable>>> getSubDocFields() {
+        final Iterator<Field<? extends ScalarValue<? extends Serializable>>> iterator
+                = new AbstractIterator<Field<? extends ScalarValue<? extends Serializable>>>() {
 
                     Iterator<String> attIt
                     = erasuredType.getAttributeKeys().iterator();
 
                     @Override
-                    protected Field<? extends Value<? extends Serializable>> computeNext() {
+                    protected Field<? extends ScalarValue<? extends Serializable>> computeNext() {
                         if (!attIt.hasNext()) {
                             endOfData();
                             return null;
                         }
-                        return (Field<? extends Value<? extends Serializable>>) field(attIt.next());
+                        return (Field<? extends ScalarValue<? extends Serializable>>) field(attIt.next());
                     }
                 };
-        return new Iterable<Field<? extends Value<? extends Serializable>>>() {
+        return new Iterable<Field<? extends ScalarValue<? extends Serializable>>>() {
 
             @Override
-            public Iterator<Field<? extends Value<? extends Serializable>>> iterator() {
+            public Iterator<Field<? extends ScalarValue<? extends Serializable>>> iterator() {
                 return iterator;
             }
         };
@@ -204,14 +202,14 @@ public class SubDocTable extends TableImpl<SubDocTableRecord> {
                 int intColumnType = columns.getInt("DATA_TYPE");
                 String stringColumnType = columns.getString("TYPE_NAME");
 
-                BasicType basicType = databaseInterface.getBasicTypeToSqlType().toBasicType(
+                ScalarType scalarType = databaseInterface.getScalarTypeToSqlType().toScalarType(
                         columnName,
                         intColumnType,
                         stringColumnType
                 );
                 String attName = SubDocHelper.toAttributeName(columnName);
 
-                builder.add(new SubDocAttribute(attName, basicType));
+                builder.add(new SubDocAttribute(attName, scalarType));
             }
 
             return builder.build();

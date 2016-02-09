@@ -20,7 +20,6 @@
 
 package com.toro.torod.connection.update;
 
-import com.torodb.kvdocument.values.ObjectValue;
 import com.torodb.torod.core.config.DocumentBuilderFactory;
 import com.torodb.torod.core.connection.UpdateResponse;
 import com.torodb.torod.core.language.update.*;
@@ -33,7 +32,7 @@ import javax.annotation.Nullable;
  */
 public class Updator {
 
-    private static final MyVisitor visitor = new MyVisitor();
+    private static final MyVisitor VISITOR = new MyVisitor();
     
     @Nullable
     public static ToroDocument update(
@@ -42,11 +41,11 @@ public class Updator {
             UpdateResponse.Builder responseBuilder,
             DocumentBuilderFactory documentBuilderFactory
     ) {
-        ObjectValue.MutableBuilder copyBuilder = ObjectValue.MutableBuilder.from(
+        KVDocumentBuilder copyBuilder = KVDocumentBuilder.from(
                 candidate.getRoot()
         );
 
-        Boolean isUpdated = updateAction.accept(visitor, copyBuilder);
+        Boolean isUpdated = updateAction.accept(VISITOR, copyBuilder);
 
         if (isUpdated == null || !isUpdated) {
             return null;
@@ -59,10 +58,10 @@ public class Updator {
         return newDocBuilder.build();
     }
 
-    private static class MyVisitor implements UpdateActionVisitor<Boolean, ObjectValue.MutableBuilder> {
+    private static class MyVisitor implements UpdateActionVisitor<Boolean, KVDocumentBuilder> {
 
         @Override
-        public Boolean visit(CompositeUpdateAction action, ObjectValue.MutableBuilder arg) {
+        public Boolean visit(CompositeUpdateAction action, KVDocumentBuilder arg) {
             boolean result = false;
             for (UpdateAction subAction : action.getActions().values()) {
                 result |= subAction.accept(this, arg);
@@ -71,7 +70,7 @@ public class Updator {
         }
 
         @Override
-        public Boolean visit(IncrementUpdateAction action, ObjectValue.MutableBuilder builder) {
+        public Boolean visit(IncrementUpdateAction action, KVDocumentBuilder builder) {
             return IncrementUpdateActionExecutor.increment(
                     new ObjectBuilderCallback(builder),
                     action.getModifiedField(),
@@ -80,7 +79,7 @@ public class Updator {
         }
 
         @Override
-        public Boolean visit(MultiplyUpdateAction action, ObjectValue.MutableBuilder builder) {
+        public Boolean visit(MultiplyUpdateAction action, KVDocumentBuilder builder) {
             return MultiplyUpdateActionExecutor.multiply(
                     new ObjectBuilderCallback(builder),
                     action.getModifiedField(),
@@ -91,7 +90,7 @@ public class Updator {
         @Override
         public Boolean visit(
                 MoveUpdateAction action,
-                ObjectValue.MutableBuilder builder
+                KVDocumentBuilder builder
         ) {
             return MoveUpdateActionExecutor.move(
                     new ObjectBuilderCallback(builder),
@@ -101,12 +100,12 @@ public class Updator {
         }
 
         @Override
-        public Boolean visit(SetCurrentDateUpdateAction action, ObjectValue.MutableBuilder arg) {
+        public Boolean visit(SetCurrentDateUpdateAction action, KVDocumentBuilder arg) {
             throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
         }
 
         @Override
-        public Boolean visit(SetFieldUpdateAction action, ObjectValue.MutableBuilder builder) {
+        public Boolean visit(SetFieldUpdateAction action, KVDocumentBuilder builder) {
             return SetFieldUpdateActionExecutor.set(
                     new ObjectBuilderCallback(builder),
                     action.getModifiedField(),
@@ -115,7 +114,7 @@ public class Updator {
         }
 
         @Override
-        public Boolean visit(SetDocumentUpdateAction action, ObjectValue.MutableBuilder arg) {
+        public Boolean visit(SetDocumentUpdateAction action, KVDocumentBuilder arg) {
             return SetDocumentUpdateActionExecutor.set(
                     arg,
                     action.getNewValue()
@@ -123,7 +122,7 @@ public class Updator {
         }
 
         @Override
-        public Boolean visit(UnsetFieldUpdateAction action, ObjectValue.MutableBuilder builder) {
+        public Boolean visit(UnsetFieldUpdateAction action, KVDocumentBuilder builder) {
             return UnsetUpdateActionExecutor.unset(
                     new ObjectBuilderCallback(builder),
                     action.getModifiedField()

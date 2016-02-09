@@ -20,18 +20,18 @@
 
 package com.torodb.torod.core.subdocument;
 
-import com.torodb.kvdocument.values.ObjectValue;
+import com.torodb.kvdocument.values.KVDocument;
 
 /**
  *
  */
 public interface ToroDocument {
 
-    public ObjectValue getRoot();
+    public KVDocument getRoot();
 
     public static interface DocumentBuilder {
         
-        DocumentBuilder setRoot(ObjectValue root);
+        DocumentBuilder setRoot(KVDocument root);
         
         ToroDocument build();
     }

@@ -1,16 +1,13 @@
 
 package com.torodb.torod.mongodb.unsafe;
 
-import com.eightkdata.mongowp.mongoserver.api.MetaCommandProcessor;
-import com.eightkdata.mongowp.mongoserver.api.commands.CollStatsReply;
-import com.eightkdata.mongowp.mongoserver.api.commands.CollStatsRequest;
-import com.eightkdata.mongowp.mongoserver.api.pojos.InsertResponse;
-import com.google.common.base.Supplier;
-import com.mongodb.WriteConcern;
+import com.eightkdata.mongowp.WriteConcern;
+import com.eightkdata.mongowp.bson.BsonDocument;
+import com.eightkdata.mongowp.server.api.deprecated.MetaCommandProcessor;
+import com.eightkdata.mongowp.server.api.deprecated.pojos.InsertResponse;
 import io.netty.util.AttributeMap;
 import java.util.List;
 import java.util.concurrent.Future;
-import org.bson.BsonDocument;
 
 /**
  *
@@ -42,33 +39,27 @@ public class UnsafeMetaCommandProcessor extends MetaCommandProcessor {
     }
 
     @Override
-    public CollStatsReply collStats(String database, CollStatsRequest request, Supplier<Iterable<BsonDocument>> docsSupplier)
-            throws Exception {
-        throw new UnsupportedOperationException("Not supported.");
-    }
-
-    @Override
     public Future<InsertResponse> insertIndex(AttributeMap attributeMap, List<BsonDocument> docsToInsert, boolean ordered, WriteConcern wc)
             throws Exception {
-        throw new UnsupportedOperationException("Not supported.");
+        throw new UnsupportedOperationException("Not supported");
     }
 
     @Override
     public Future<InsertResponse> insertNamespace(AttributeMap attributeMap, List<BsonDocument> docsToInsert, boolean ordered, WriteConcern wc)
             throws Exception {
-        throw new UnsupportedOperationException("Not supported.");
+        throw new UnsupportedOperationException("Not supported");
     }
 
     @Override
     public Future<InsertResponse> insertProfile(AttributeMap attributeMap, List<BsonDocument> docsToInsert, boolean ordered, WriteConcern wc)
             throws Exception {
-        throw new UnsupportedOperationException("Not supported.");
+        throw new UnsupportedOperationException("Not supported");
     }
 
     @Override
     public Future<InsertResponse> insertJS(AttributeMap attributeMap, List<BsonDocument> docsToInsert, boolean ordered, WriteConcern wc)
             throws Exception {
-        throw new UnsupportedOperationException("Not supported.");
+        throw new UnsupportedOperationException("Not supported");
     }
 
 }

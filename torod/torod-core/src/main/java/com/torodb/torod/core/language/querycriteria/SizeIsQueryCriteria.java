@@ -23,7 +23,7 @@ package com.torodb.torod.core.language.querycriteria;
 
 import com.torodb.torod.core.language.AttributeReference;
 import com.torodb.torod.core.language.querycriteria.utils.QueryCriteriaVisitor;
-import com.torodb.torod.core.subdocument.values.IntegerValue;
+import com.torodb.torod.core.subdocument.values.ScalarInteger;
 
 /**
  *
@@ -31,7 +31,7 @@ import com.torodb.torod.core.subdocument.values.IntegerValue;
 public class SizeIsQueryCriteria extends AttributeAndValueQueryCriteria {
     private static final long serialVersionUID = 1L;
 
-    public SizeIsQueryCriteria(AttributeReference attributeReference, IntegerValue val) {
+    public SizeIsQueryCriteria(AttributeReference attributeReference, ScalarInteger val) {
         super(attributeReference, val);
     }
 
@@ -41,8 +41,8 @@ public class SizeIsQueryCriteria extends AttributeAndValueQueryCriteria {
     }
 
     @Override
-    public IntegerValue getValue() {
-        return (IntegerValue) super.getValue();
+    public ScalarInteger getValue() {
+        return (ScalarInteger) super.getValue();
     }
 
     @Override

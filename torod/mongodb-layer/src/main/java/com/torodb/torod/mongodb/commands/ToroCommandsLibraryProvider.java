@@ -1,11 +1,11 @@
 
 package com.torodb.torod.mongodb.commands;
 
-import com.eightkdata.mongowp.mongoserver.api.safe.Command;
-import com.eightkdata.mongowp.mongoserver.api.safe.CommandImplementation;
-import com.eightkdata.mongowp.mongoserver.api.safe.CommandsLibrary;
-import com.eightkdata.mongowp.mongoserver.api.safe.impl.GroupedCommandsLibrary;
-import com.eightkdata.mongowp.mongoserver.api.safe.impl.NameBasedCommandsLibrary;
+import com.eightkdata.mongowp.server.api.Command;
+import com.eightkdata.mongowp.server.api.CommandImplementation;
+import com.eightkdata.mongowp.server.api.CommandsLibrary;
+import com.eightkdata.mongowp.server.api.impl.GroupedCommandsLibrary;
+import com.eightkdata.mongowp.server.api.impl.NameBasedCommandsLibrary;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -59,16 +59,16 @@ public final class ToroCommandsLibraryProvider implements Provider<CommandsLibra
             String toroVersion,
             ToroV30CommandTool toroSafeCommandTool,
             ToroDBSpecificCommandTool toroDBSpecificCommandTool) {
-        ImmutableMap<Command, CommandImplementation> safeCommandImplementations = toroSafeCommandTool.getMap();
+        ImmutableMap<Command<?,?>, CommandImplementation> safeCommandImplementations = toroSafeCommandTool.getMap();
         Collection<Command> implementedSafeCommands = Lists.newArrayList();
-        for (Entry<Command, CommandImplementation> entry : safeCommandImplementations.entrySet()) {
+        for (Entry<Command<?,?>, CommandImplementation> entry : safeCommandImplementations.entrySet()) {
             if (entry.getValue() instanceof NotImplementedCommandImplementation) {
                 continue;
             }
             implementedSafeCommands.add(entry.getKey());
         }
         
-        for (Entry<Command, CommandImplementation> entry : toroDBSpecificCommandTool.getMap().entrySet()) {
+        for (Entry<Command<?,?>, CommandImplementation> entry : toroDBSpecificCommandTool.getMap().entrySet()) {
             implementedSafeCommands.add(entry.getKey());
         }
 

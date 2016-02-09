@@ -21,64 +21,53 @@
 package com.torodb.torod.db.backends.converters.json;
 
 import com.google.common.collect.Maps;
-import com.torodb.torod.core.subdocument.BasicType;
-import com.torodb.torod.core.subdocument.values.*;
+import com.google.common.collect.Sets;
+import com.google.common.collect.Sets.SetView;
+import com.torodb.torod.core.subdocument.ScalarType;
 import com.torodb.torod.db.backends.converters.ValueConverter;
-
-import javax.annotation.Nonnull;
-import javax.json.JsonArray;
+import java.util.EnumSet;
 import java.util.Map;
+import java.util.Set;
+import javax.annotation.Nonnull;
 
 /**
  *
  */
 public class ValueToJsonConverterProvider {
 
-    private final Map<BasicType, ValueConverter> converters;
-    private final ValueConverter<JsonArray, ArrayValue> arrayConverter;
-    private final ValueConverter<Boolean, BooleanValue> booleanConverter;
-    private final ValueConverter<String, DateValue> dateConverter;
-    private final ValueConverter<String, DateTimeValue> dateTimeConverter;
-    private final ValueConverter<Object, DoubleValue> doubleConverter;
-    private final ValueConverter<Number, IntegerValue> integerConverter;
-    private final ValueConverter<Number, LongValue> longConverter;
-    private final ValueConverter<Void, NullValue> nullConverter;
-    private final ValueConverter<String, StringValue> stringConverter;
-    private final ValueConverter<String, TimeValue> timeConverter;
-    private final ValueConverter<String, TwelveBytesValue> twelveBytesConverter;
-    private final ValueConverter<String, PatternValue> posixPatternConverter;
-    private final ValueConverter<String, BinaryValue> binaryConverter;
+    /**
+     * Types that are not supported.
+     */
+    private static final EnumSet<ScalarType> UNSUPPORTED_TYPES
+            = EnumSet.noneOf(ScalarType.class);
+    /**
+     * Types that must be supported.
+     */
+    private static final Set<ScalarType> SUPPORTED_TYPES
+            = Sets.difference(EnumSet.allOf(ScalarType.class), UNSUPPORTED_TYPES);
+    private final Map<ScalarType, ValueConverter> converters;
 
     private ValueToJsonConverterProvider() {
-        arrayConverter = new ArrayValueToJsonConverter();
-        booleanConverter = new BooleanValueToJsonConverter();
-        dateConverter = new DateValueToJsonConverter();
-        dateTimeConverter = new DateTimeValueToJsonConverter();
-        doubleConverter = new DoubleValueToJsonConverter();
-        integerConverter = new IntegerValueToJsonConverter();
-        longConverter = new LongValueToJsonConverter();
-        nullConverter = new NullValueToJsonConverter();
-        stringConverter = new StringValueToJsonConverter();
-        timeConverter = new TimeValueToJsonConverter();
-        twelveBytesConverter = new TwelveBytesValueToJsonConverter();
-        posixPatternConverter = new PosixPatternValueToJsonConverter();
-        binaryConverter = new BinaryValueToJsonConverter();
+        converters = Maps.newEnumMap(ScalarType.class);
+        converters.put(ScalarType.ARRAY, new ArrayValueToJsonConverter());
+        converters.put(ScalarType.BOOLEAN, new BooleanValueToJsonConverter());
+        converters.put(ScalarType.DATE, new DateValueToJsonConverter());
+        converters.put(ScalarType.INSTANT, new InstantValueToJsonConverter());
+        converters.put(ScalarType.DOUBLE, new DoubleValueToJsonConverter());
+        converters.put(ScalarType.INTEGER, new IntegerValueToJsonConverter());
+        converters.put(ScalarType.LONG, new LongValueToJsonConverter());
+        converters.put(ScalarType.NULL, new NullValueToJsonConverter());
+        converters.put(ScalarType.STRING, new StringValueToJsonConverter());
+        converters.put(ScalarType.TIME, new TimeValueToJsonConverter());
+        converters.put(ScalarType.MONGO_OBJECT_ID, new MongoObjectIdValueToJsonConverter());
+        converters.put(ScalarType.MONGO_TIMESTAMP, new MongoTimestampValueToJsonConverter());
+        converters.put(ScalarType.BINARY, new BinaryValueToJsonConverter());
 
-        converters = Maps.newEnumMap(BasicType.class);
-        converters.put(BasicType.ARRAY, arrayConverter);
-        converters.put(BasicType.BOOLEAN, booleanConverter);
-        converters.put(BasicType.DATE, dateConverter);
-        converters.put(BasicType.DATETIME, dateTimeConverter);
-        converters.put(BasicType.DOUBLE, doubleConverter);
-        converters.put(BasicType.INTEGER, integerConverter);
-        converters.put(BasicType.LONG, longConverter);
-        converters.put(BasicType.NULL, nullConverter);
-        converters.put(BasicType.STRING, stringConverter);
-        converters.put(BasicType.TIME, timeConverter);
-        converters.put(BasicType.TWELVE_BYTES, twelveBytesConverter);
-        converters.put(BasicType.PATTERN, posixPatternConverter);
-        converters.put(BasicType.BINARY, binaryConverter);
-
+        SetView<ScalarType> withoutConverter = Sets.difference(converters.keySet(), SUPPORTED_TYPES);
+        if (!withoutConverter.isEmpty()) {
+            throw new AssertionError("It is not defined how to convert from the following scalar "
+                    + "types to json: " + withoutConverter);
+        }
     }
 
     public static ValueToJsonConverterProvider getInstance() {
@@ -86,7 +75,7 @@ public class ValueToJsonConverterProvider {
     }
 
     @Nonnull
-    public ValueConverter getConverter(BasicType valueType) {
+    public ValueConverter getConverter(ScalarType valueType) {
         ValueConverter converter = converters.get(valueType);
         if (converter == null) {
             throw new AssertionError("There is no converter that converts "
