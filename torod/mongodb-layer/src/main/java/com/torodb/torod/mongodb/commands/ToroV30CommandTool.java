@@ -55,7 +55,7 @@ import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.net.HostAndPort;
 import com.torodb.torod.core.annotations.DatabaseName;
-import com.torodb.torod.mongodb.commands.aggregation.CountImplementation;
+import com.torodb.torod.mongodb.commands.impl.aggregation.CountImplementation;
 import com.torodb.torod.mongodb.commands.impl.admin.CreateCollectionImplementation;
 import com.torodb.torod.mongodb.commands.impl.admin.DropCollectionImplementation;
 import com.torodb.torod.mongodb.commands.impl.admin.DropDatabaseImplementation;
