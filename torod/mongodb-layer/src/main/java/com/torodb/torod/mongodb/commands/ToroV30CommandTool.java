@@ -5,6 +5,7 @@ import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.MongoDb30Command
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.AdminCommands.AdminCommandsImplementationsBuilder;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.CreateCollectionCommand.CreateCollectionArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.CreateIndexesCommand.CreateIndexesArgument;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.CreateIndexesCommand.CreateIndexesResult;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.ListCollectionsCommand.ListCollectionsArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.ListCollectionsCommand.ListCollectionsResult;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.ListIndexesCommand.ListIndexesArgument;
@@ -54,12 +55,8 @@ import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.net.HostAndPort;
-import com.torodb.torod.core.annotations.DatabaseName;
+import com.torodb.torod.mongodb.commands.impl.admin.*;
 import com.torodb.torod.mongodb.commands.impl.aggregation.CountImplementation;
-import com.torodb.torod.mongodb.commands.impl.admin.CreateCollectionImplementation;
-import com.torodb.torod.mongodb.commands.impl.admin.DropCollectionImplementation;
-import com.torodb.torod.mongodb.commands.impl.admin.DropDatabaseImplementation;
-import com.torodb.torod.mongodb.commands.impl.admin.ListCollectionsImplementation;
 import com.torodb.torod.mongodb.commands.impl.diagnostic.CollStatsImplementation;
 import com.torodb.torod.mongodb.commands.impl.diagnostic.ListDatabasesImplementation;
 import com.torodb.torod.mongodb.commands.impl.diagnostic.ServerStatusImplementation;
@@ -133,23 +130,28 @@ public class ToroV30CommandTool {
     }
 
     static class MyAdminCommandsImplementationBuilder extends AdminCommandsImplementationsBuilder {
-        private final QueryCriteriaTranslator queryCriteriaTranslator;
-        private final String supportedDatabase;
+        
+        private final ListCollectionsImplementation listCollections;
+        private final DropDatabaseImplementation dropDatabase;
+        private final CreateIndexesImplementation createIndexes;
+        private final ListIndexesImplementation listIndexes;
 
         @Inject
-        MyAdminCommandsImplementationBuilder(@DatabaseName String supportedDatabase, QueryCriteriaTranslator queryCriteriaTranslator) {
-            this.queryCriteriaTranslator = queryCriteriaTranslator;
-            this.supportedDatabase = supportedDatabase;
+        public MyAdminCommandsImplementationBuilder(ListCollectionsImplementation listCollections, DropDatabaseImplementation dropDatabase, CreateIndexesImplementation createIndexes, ListIndexesImplementation listIndexes) {
+            this.listCollections = listCollections;
+            this.dropDatabase = dropDatabase;
+            this.createIndexes = createIndexes;
+            this.listIndexes = listIndexes;
         }
 
         @Override
         public CommandImplementation<ListCollectionsArgument, ListCollectionsResult> getListCollectionsImplementation() {
-            return new ListCollectionsImplementation(queryCriteriaTranslator);
+            return listCollections;
         }
 
         @Override
         public CommandImplementation<Empty, Empty> getDropDatabaseImplementation() {
-            return new DropDatabaseImplementation(supportedDatabase);
+            return dropDatabase;
         }
 
         @Override
@@ -164,12 +166,12 @@ public class ToroV30CommandTool {
 
         @Override
         public CommandImplementation<ListIndexesArgument, ListIndexesResult> getListIndexesImplementation() {
-            return NotImplementedCommandImplementation.build();
+            return listIndexes;
         }
 
         @Override
-        public CommandImplementation<CreateIndexesArgument, Empty> getCreateIndexesImplementation() {
-            return NotImplementedCommandImplementation.build();
+        public CommandImplementation<CreateIndexesArgument, CreateIndexesResult> getCreateIndexesImplementation() {
+            return createIndexes;
         }
 
     }

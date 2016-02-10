@@ -17,6 +17,7 @@ import com.torodb.torod.core.exceptions.UserToroException;
 import com.torodb.torod.core.pojos.CollectionMetainfo;
 import com.torodb.torod.mongodb.commands.AbstractToroCommandImplementation;
 import com.torodb.torod.mongodb.utils.NamespaceUtil;
+import javax.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,6 +31,7 @@ public class DropDatabaseImplementation extends AbstractToroCommandImplementatio
 
     private final String supporteDatabase;
 
+    @Inject
     public DropDatabaseImplementation(@DatabaseName String supporteDatabase) {
         this.supporteDatabase = supporteDatabase;
     }
