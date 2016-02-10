@@ -289,24 +289,8 @@ public class ToroQueryCommandProcessor implements QueryCommandProcessor {
 	@Override
 	public void create(BsonDocument document, MessageReplier messageReplier)
 			throws Exception {
-		String collection = document.get("create").asString().getValue();
-		boolean capped = BsonReaderTool.getBoolean(document, "capped", true);
-
-		if (capped) { // Other flags silently ignored
-            throw new OperationFailedException("Capped collections are not supported yet");
-		}
-
-		ToroConnection connection = getConnection(messageReplier.getAttributeMap());
-
-		BsonDocumentBuilder reply = new BsonDocumentBuilder();
-		if(connection.createCollection(collection, null)) {
-			reply.appendUnsafe("ok", MongoConstants.BSON_OK);
-		} else {
-			reply.appendUnsafe("ok", MongoConstants.BSON_KO);
-			reply.appendUnsafe("errmsg", newString("collection already exists"));
-		}
-
-		messageReplier.replyMessageNoCursor(reply.build());
+        LOGGER.error("The unsafe version of create command has been called!");
+        throw new UnknownErrorException("An unexpected command implementation was called");
 	}
 
 	@Override
