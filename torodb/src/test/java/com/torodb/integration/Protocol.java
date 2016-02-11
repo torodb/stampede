@@ -22,19 +22,5 @@ package com.torodb.integration;
 
 public enum Protocol {
 	MONGO,
-	MONGO_REPL_SET(MONGO);
-	
-	private final Protocol baseProtocol;
-	
-	private Protocol() {
-		this.baseProtocol = this;
-	}
-	
-	private Protocol(Protocol baseProtocol) {
-		this.baseProtocol = baseProtocol;
-	}
-	
-	public Protocol baseProtocol() {
-		return baseProtocol;
-	}
+	MONGO_REPL_SET;
 }
