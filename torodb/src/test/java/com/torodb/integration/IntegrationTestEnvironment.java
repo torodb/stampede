@@ -20,8 +20,7 @@
 
 package com.torodb.integration;
 
-import com.torodb.integration.Backend;
-import com.torodb.integration.Protocol;
+import java.util.Locale;
 import java.util.Objects;
 
 /**
@@ -53,7 +52,7 @@ public class IntegrationTestEnvironment {
 
 		String currentProtocolValue = System.getenv(Protocol.class.getSimpleName());
 		if (currentProtocolValue != null) {
-			currentProtocol = Protocol.valueOf(currentProtocolValue);
+			currentProtocol = Protocol.valueOf(currentProtocolValue.toUpperCase(Locale.ENGLISH));
 		}
 
 		return currentProtocol;
@@ -64,7 +63,7 @@ public class IntegrationTestEnvironment {
 
 		String currentBackendValue = System.getenv(Backend.class.getSimpleName());
 		if (currentBackendValue != null) {
-			currentBackend = Backend.valueOf(currentBackendValue);
+			currentBackend = Backend.valueOf(currentBackendValue.toUpperCase(Locale.ENGLISH));
 		}
 
 		return currentBackend;
