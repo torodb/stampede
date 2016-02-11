@@ -71,7 +71,7 @@ public abstract class AbstractIntegrationTest {
                 exceptionsExpected = false;
                 break;
             case CATASTROPHIC:
-                logger.warn("A catastrophic fail has been found: {}", script);
+                logger.warn("Ignoring the known problematic script: {}", script);
             default:
                 throw new AssumptionViolatedException("Test " + script + " is ignored because its category is " + category);
         }
