@@ -37,8 +37,6 @@ import com.torodb.config.model.backend.postgres.Postgres;
 import com.torodb.config.model.protocol.mongo.Replication;
 import com.torodb.config.util.ConfigUtils;
 import com.torodb.di.*;
-import com.torodb.integration.config.Backend;
-import com.torodb.integration.config.Protocol;
 import com.torodb.torod.core.Torod;
 import com.torodb.torod.mongodb.repl.ReplCoordinator;
 import com.torodb.util.LogbackUtils;
@@ -232,38 +230,39 @@ public class ToroRunnerClassRule implements TestRule {
 	}
 
 	private void setupConfig() {
-		switch(Protocol.CURRENT) {
-		case Mongo:
-            if (config.getProtocol().getMongo().getReplication() != null) {
-                config.getProtocol().getMongo().setReplication(null);
-            }
-			break;
-		case MongoReplSet:
-		    if (config.getProtocol().getMongo().getReplication() == null ||
-		            config.getProtocol().getMongo().getReplication().size() != 1) {
-    			Replication replication = new Replication();
-    			replication.setReplSetName("rs1");
-    			replication.setSyncSource("localhost:27020");
-    			config.getProtocol().getMongo().setReplication(
-    					Arrays.asList(new Replication[] { replication }));
-		    }
-			break;
-		}
+        IntegrationTestEnvironment ite = IntegrationTestEnvironment.CURRENT_INTEGRATION_TEST_ENVIRONMENT;
+		switch(ite.getProtocol()) {
+            case MONGO:
+                if (config.getProtocol().getMongo().getReplication() != null) {
+                    config.getProtocol().getMongo().setReplication(null);
+                }
+                break;
+            case MONGO_REPL_SET:
+                if (config.getProtocol().getMongo().getReplication() == null
+                        || config.getProtocol().getMongo().getReplication().size() != 1) {
+                    Replication replication = new Replication();
+                    replication.setReplSetName("rs1");
+                    replication.setSyncSource("localhost:27020");
+                    config.getProtocol().getMongo().setReplication(
+                            Arrays.asList(new Replication[]{replication}));
+                }
+                break;
+        }
+
 		
-		
-		switch(Backend.CURRENT) {
-		case Postgres:
-            if (!config.getBackend().isPostgres()) {
-                config.getBackend().setBackendImplementation(new Postgres());
-            }
-			break;
-		case Greenplum:
-		    if (!config.getBackend().isGreenplum()) {
-		        config.getBackend().setBackendImplementation(new Greenplum());
-		        config.getBackend().asGreenplum().setPort(6432);
-		    }
-			break;
-		}
+		switch(ite.getBackend()) {
+            case POSTGRES:
+                if (!config.getBackend().isPostgres()) {
+                    config.getBackend().setBackendImplementation(new Postgres());
+                }
+                break;
+            case GREENPLUM:
+                if (!config.getBackend().isGreenplum()) {
+                    config.getBackend().setBackendImplementation(new Greenplum());
+                    config.getBackend().asGreenplum().setPort(6432);
+                }
+                break;
+        }
 		
 		try {
 		    ConfigUtils.parseToropassFile(config);

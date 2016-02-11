@@ -18,24 +18,11 @@
  *     
  */
 
-package com.torodb.integration.config;
+package com.torodb.integration;
 
 public enum Protocol {
-	Mongo,
-	MongoReplSet(Mongo);
-	
-	public static final Protocol CURRENT = currentProtocol();
-	
-	private static final Protocol currentProtocol() {
-		Protocol currentProtocol = Protocol.Mongo;
-		
-		String currentProtocolValue = System.getenv(Protocol.class.getSimpleName());
-		if (currentProtocolValue != null) {
-			currentProtocol = Protocol.valueOf(currentProtocolValue);
-		}
-		
-		return currentProtocol;
-	}
+	MONGO,
+	MONGO_REPL_SET(MONGO);
 	
 	private final Protocol baseProtocol;
 	
