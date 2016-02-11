@@ -1,18 +1,6 @@
 
 package com.torodb.torod.mongodb.srp;
 
-import com.eightkdata.mongowp.server.api.impl.MapBasedCommandsExecutor;
-import com.eightkdata.mongowp.server.api.impl.SimpleWriteOpResult;
-import com.eightkdata.mongowp.server.api.impl.NonWriteCommandResult;
-import com.eightkdata.mongowp.server.api.impl.CollectionCommandArgument;
-import com.eightkdata.mongowp.server.api.impl.UpdateOpResult;
-import com.eightkdata.mongowp.server.api.CommandsExecutor;
-import com.eightkdata.mongowp.server.api.CommandReply;
-import com.eightkdata.mongowp.server.api.CommandResult;
-import com.eightkdata.mongowp.server.api.Command;
-import com.eightkdata.mongowp.server.api.CommandImplementation;
-import com.eightkdata.mongowp.server.api.CommandRequest;
-import com.eightkdata.mongowp.server.api.Request;
 import com.eightkdata.mongowp.ErrorCode;
 import com.eightkdata.mongowp.exceptions.CommandNotSupportedException;
 import com.eightkdata.mongowp.exceptions.MongoException;
@@ -22,10 +10,10 @@ import com.eightkdata.mongowp.messages.request.InsertMessage;
 import com.eightkdata.mongowp.messages.request.UpdateMessage;
 import com.eightkdata.mongowp.messages.response.ReplyMessage;
 import com.eightkdata.mongowp.messages.utils.IterableDocumentProvider;
-import com.eightkdata.mongowp.server.api.pojos.QueryRequest;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.AdminCommands.AdminCommandsImplementationsBuilder;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.CreateCollectionCommand.CreateCollectionArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.CreateIndexesCommand.CreateIndexesArgument;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.CreateIndexesCommand.CreateIndexesResult;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.ListCollectionsCommand.ListCollectionsArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.ListCollectionsCommand.ListCollectionsResult;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.ListIndexesCommand.ListIndexesArgument;
@@ -68,6 +56,9 @@ import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.repl.Re
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.repl.ReplSetStepDownCommand.ReplSetStepDownArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.repl.ReplSetSyncFromCommand.ReplSetSyncFromReply;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.ReplicaSetConfig;
+import com.eightkdata.mongowp.server.api.*;
+import com.eightkdata.mongowp.server.api.impl.*;
+import com.eightkdata.mongowp.server.api.pojos.QueryRequest;
 import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.eightkdata.mongowp.server.callback.WriteOpResult;
 import com.google.common.base.Predicate;
@@ -248,7 +239,7 @@ public class DatabaseIgnoreSafeRequestProcessor extends DecoratorSafeRequestProc
         }
 
         @Override
-        public CommandImplementation<CreateIndexesArgument, Empty> getCreateIndexesImplementation() {
+        public CommandImplementation<CreateIndexesArgument, CreateIndexesResult> getCreateIndexesImplementation() {
             return NotImplementedCommandImplementation.build();
         }
 

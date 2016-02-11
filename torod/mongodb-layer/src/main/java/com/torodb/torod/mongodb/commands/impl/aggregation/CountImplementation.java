@@ -18,7 +18,7 @@
  * 
  */
 
-package com.torodb.torod.mongodb.commands.aggregation;
+package com.torodb.torod.mongodb.commands.impl.aggregation;
 
 import com.eightkdata.mongowp.exceptions.MongoException;
 import com.eightkdata.mongowp.exceptions.UnknownErrorException;
