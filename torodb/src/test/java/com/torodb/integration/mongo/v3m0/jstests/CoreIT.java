@@ -20,79 +20,84 @@
 
 package com.torodb.integration.mongo.v3m0.jstests;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Sets;
+import com.torodb.integration.mongo.v3m0.jstests.ScriptClassifier.Builder;
+import java.net.URL;
 import java.util.Collection;
-import java.util.List;
-
-import org.junit.Test;
+import java.util.HashSet;
+import java.util.Set;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import com.torodb.integration.config.Backend;
-import com.torodb.integration.config.Protocol;
-import com.torodb.integration.mongo.v3m0.jstests.JstestMetaInfo.JstestType;
+import static com.torodb.integration.Backend.*;
+import static com.torodb.integration.Protocol.*;
+import static com.torodb.integration.TestCategory.*;
+import static com.torodb.integration.mongo.v3m0.jstests.AbstractIntegrationTest.parameters;
 
 
 @RunWith(Parameterized.class)
-public class CoreIT extends JstestsIT {
-	public CoreIT(String testResource, String prefix, Jstest jstest) {
-		super(testResource, prefix, jstest);
+public class CoreIT extends AbstractIntegrationTest {
+    private static final Logger LOGGER = LoggerFactory.getLogger(CoreIT.class);
+
+	public CoreIT() {
+		super(LOGGER);
 	}
 
-	@Test
-	public void testJstest() throws Exception {
-		runJstest();
-	}
-	
 	@Parameters(name="{0}")
 	public static Collection<Object[]> parameters() {
-		return parameters(Tests.class, "core");
+		return parameters(createScriptClassifier());
 	}
+    
+    private static ScriptClassifier createScriptClassifier() {
+        Set<Script> workingSet = getWorkingSet(),
+                catastrophicSet = getCatastrophicSet(),
+                falsePositiveSet = getFalsePositiveSet(),
+                notImplementedSet = getNotImplementedSet(),
+                ignoredSet = getIgnoredSet(),
+                allSet = Sets.newHashSet(Iterables.concat(workingSet, catastrophicSet, falsePositiveSet, notImplementedSet, ignoredSet));
+        return new Builder()
+                .addScripts(MONGO, POSTGRES, WORKING, workingSet)
+
+                .addScripts(MONGO, GREENPLUM, CATASTROPHIC, workingSet)
+
+                .addScripts(MONGO, POSTGRES, CATASTROPHIC, catastrophicSet)
+                .addScripts(MONGO, GREENPLUM, CATASTROPHIC, catastrophicSet)
+
+                .addScripts(MONGO, POSTGRES, FALSE_POSITIVE, falsePositiveSet)
+                .addScripts(MONGO, GREENPLUM, FALSE_POSITIVE, falsePositiveSet)
+
+                .addScripts(MONGO, POSTGRES, NOT_IMPLEMENTED, notImplementedSet)
+                .addScripts(MONGO, GREENPLUM, NOT_IMPLEMENTED, notImplementedSet)
+
+                .addScripts(MONGO, POSTGRES, IGNORED, ignoredSet)
+                .addScripts(MONGO, GREENPLUM, IGNORED, ignoredSet)
+
+                .addScripts(MONGO_REPL_SET, POSTGRES, CATASTROPHIC, allSet)
+                .addScripts(MONGO_REPL_SET, GREENPLUM, CATASTROPHIC, allSet)
+
+                .build();
+    }
+
+    private static Set<Script> asScriptSet(String[] scriptNames) {
+        HashSet<Script> result = new HashSet<>(scriptNames.length);
+        for (String scriptName : scriptNames) {
+            String relativePath = "core/" + scriptName;
+            result.add(new Script(relativePath, createURL(relativePath)));
+        }
+
+        return result;
+    }
+
+    private static URL createURL(String relativePath) {
+        return ToolIT.class.getResource(relativePath);
+    }
 	
-	public enum Tests implements Jstest {
-		@JstestMetaInfo(type=JstestType.Working,protocols={Protocol.Mongo},backends={Backend.Postgres})
-		working(WORKING),
-		@JstestMetaInfo(type=JstestType.Failing,protocols={Protocol.Mongo},backends={Backend.Greenplum})
-		greenplum_failing(WORKING),
-		@JstestMetaInfo(type=JstestType.Failing,protocols={Protocol.Mongo},backends={Backend.Postgres,Backend.Greenplum})
-		failing(FAILING),
-		@JstestMetaInfo(type=JstestType.FalsePositive,protocols={Protocol.Mongo},backends={Backend.Postgres,Backend.Greenplum})
-		falsePositive(FALSE_POSITIVE),
-		@JstestMetaInfo(type=JstestType.NotImplemented,protocols={Protocol.Mongo},backends={Backend.Postgres,Backend.Greenplum})
-		notImplemented(NOT_IMPLEMENTED),
-		@JstestMetaInfo(type=JstestType.Ignored,protocols={Protocol.Mongo},backends={Backend.Postgres,Backend.Greenplum})
-		ignored(IGNORED),
-		@JstestMetaInfo(type=JstestType.Failing,protocols={Protocol.MongoReplSet},backends={Backend.Postgres,Backend.Greenplum})
-		mongo_repl_failing(WORKING, FAILING, FALSE_POSITIVE, NOT_IMPLEMENTED, IGNORED);
-		
-		private final String[] testResources;
-		
-		private Tests(String...testResourceArray) {
-			testResources = testResourceArray;
-		}
-		
-		private Tests(String[]...testResourcesArray) {
-			List<String> testResourceList = new ArrayList<String>();
-			for (String[] testResources : testResourcesArray) {
-				testResourceList.addAll(Arrays.asList(testResources));
-			}
-			this.testResources = testResourceList.toArray(new String[testResourceList.size()]);
-		}
-		
-		@Override
-		public String[] getTestResources() {
-			return testResources;
-		}
-		
-		@Override
-		public JstestMetaInfo getJstestMetaInfoFor(String testResource, Protocol protocol, Backend backend) {
-			return JstestType.getJstestMetaInfoFor(getClass(), testResource, protocol, backend);
-		}
-	}
-	
-	private static final String[] WORKING = new String[] {
+	private static final Set<Script> getWorkingSet() {
+        return asScriptSet(new String[]{
 			"andor.js",
 			"array3.js",
 			"basic5.js",
@@ -143,10 +148,12 @@ public class CoreIT extends JstestsIT {
 			"shelltypes.js",
 			"stages_sort.js",
 			"sub1.js",
-			"update_addToSet2.js",
-	};
+			"update_addToSet2.js",}
+        );
+    }
 	
-	private static final String[] FAILING = new String[] {
+	private static final Set<Script> getCatastrophicSet() {
+        return asScriptSet(new String[]{
 			"all.js",
 			"all2.js",
 			"all3.js",
@@ -170,10 +177,12 @@ public class CoreIT extends JstestsIT {
 			"ord.js",
 			"regex8.js",
 			"unset.js",
-			"update_replace.js",
-	};
+			"update_replace.js",}
+        );
+    }
 	
-	private static final String[] FALSE_POSITIVE = new String[] {
+	private static final Set<Script> getFalsePositiveSet() {
+        return asScriptSet(new String[]{
 			"depth_limit.js",
 			"exists3.js",
 			"group_empty.js",
@@ -185,10 +194,12 @@ public class CoreIT extends JstestsIT {
 			"testminmax.js",
 			"update_arraymatch5.js",
 			"where2.js",
-			"where5.js",
-	};
+			"where5.js",}
+        );
+    }
 	
-	private static final String[] NOT_IMPLEMENTED = new String[] {
+	private static final Set<Script> getNotImplementedSet() {
+        return asScriptSet(new String[]{
 			"apitest_db.js",
 			"apitest_dbcollection.js",
 			"apply_ops1.js",
@@ -873,13 +884,16 @@ public class CoreIT extends JstestsIT {
 			"where1.js",
 			"where3.js",
 			"where4.js",
-			"write_result.js",
-	};
+			"write_result.js",}
+        );
+    }
 	
-	private static final String[] IGNORED = new String[] {
-			"bench_test_insert.js",
-			"bench_test1.js",
-			"bench_test2.js",
-			"bench_test3.js",
-	};
+    private static final Set<Script> getIgnoredSet() {
+        return asScriptSet(new String[]{
+            "bench_test_insert.js",
+            "bench_test1.js",
+            "bench_test2.js",
+            "bench_test3.js",}
+        );
+    }
 }

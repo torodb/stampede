@@ -20,65 +20,64 @@
 
 package com.torodb.integration.mongo.v3m0.jstests;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import com.torodb.integration.mongo.v3m0.jstests.ScriptClassifier.Builder;
+import java.net.URL;
 import java.util.Collection;
-import java.util.List;
-
-import org.junit.Test;
+import java.util.HashSet;
+import java.util.Set;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import com.torodb.integration.config.Backend;
-import com.torodb.integration.config.Protocol;
-import com.torodb.integration.mongo.v3m0.jstests.JstestMetaInfo.JstestType;
+import static com.torodb.integration.Backend.*;
+import static com.torodb.integration.Protocol.*;
+import static com.torodb.integration.TestCategory.*;
+import static com.torodb.integration.mongo.v3m0.jstests.AbstractIntegrationTest.parameters;
 
 
 @RunWith(Parameterized.class)
-public class CustomIT extends JstestsIT {
-	public CustomIT(String testResource, String prefix, Jstest jstest) {
-		super(testResource, prefix, jstest);
-	}
+public class CustomIT extends AbstractIntegrationTest {
+    private static final Logger LOGGER = LoggerFactory.getLogger(CustomIT.class);
 
-	@Test
-	public void testJstest() throws Exception {
-		runJstest();
+	public CustomIT() {
+		super(LOGGER);
 	}
 	
 	@Parameters(name="{0}")
 	public static Collection<Object[]> parameters() {
-		return parameters(Tests.class, "custom");
+		return parameters(createScriptClassifier());
 	}
-	
-	public enum Tests implements Jstest {
-		@JstestMetaInfo(type=JstestType.Working,protocols={Protocol.Mongo, Protocol.MongoReplSet},backends={Backend.Postgres, Backend.Greenplum})
-        dummy("dummy.js"),
-        @JstestMetaInfo(type=JstestType.Working,protocols={Protocol.Mongo},backends={Backend.Postgres})
-        postgresql_working("binary.js", "undefined.js");
-		
-		private final String[] testResources;
-		
-		private Tests(String...testResourceArray) {
-			testResources = testResourceArray;
-		}
-		
-		private Tests(String[]...testResourcesArray) {
-			List<String> testResourceList = new ArrayList<String>();
-			for (String[] testResources : testResourcesArray) {
-				testResourceList.addAll(Arrays.asList(testResources));
-			}
-			this.testResources = testResourceList.toArray(new String[testResourceList.size()]);
-		}
-		
-		@Override
-		public String[] getTestResources() {
-			return testResources;
-		}
-		
-		@Override
-		public JstestMetaInfo getJstestMetaInfoFor(String testResource, Protocol protocol, Backend backend) {
-			return JstestType.getJstestMetaInfoFor(getClass(), testResource, protocol, backend);
-		}
-	}
+
+    private static ScriptClassifier createScriptClassifier() {
+        return new Builder()
+                .addScripts(MONGO, POSTGRES, WORKING, asScriptSet("dummy.js"))
+                .addScripts(MONGO_REPL_SET, POSTGRES, WORKING, asScriptSet("dummy.js"))
+                .addScripts(MONGO, GREENPLUM, WORKING, asScriptSet("dummy.js"))
+                .addScripts(MONGO_REPL_SET, GREENPLUM, WORKING, asScriptSet("dummy.js"))
+
+                .addScripts(MONGO, POSTGRES, WORKING, asScriptSet(new String[] {"binary.js", "undefined.js"}))
+
+                .addScripts(MONGO, POSTGRES, FAILING, asScriptSet("alwaysfail.js"))
+                .build();
+    }
+
+    private static Set<Script> asScriptSet(String scriptName) {
+        return asScriptSet(new String[] {scriptName});
+    }
+
+    private static Set<Script> asScriptSet(String[] scriptNames) {
+        HashSet<Script> result = new HashSet<>(scriptNames.length);
+        for (String scriptName : scriptNames) {
+            String relativePath = "custom/" + scriptName;
+            result.add(new Script(relativePath, createURL(relativePath)));
+        }
+
+        return result;
+    }
+
+    private static URL createURL(String relativePath) {
+        return ToolIT.class.getResource(relativePath);
+    }
 }

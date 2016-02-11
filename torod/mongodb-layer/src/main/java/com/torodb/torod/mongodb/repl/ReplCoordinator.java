@@ -3,11 +3,9 @@ package com.torodb.torod.mongodb.repl;
 
 import com.eightkdata.mongowp.OpTime;
 import com.eightkdata.mongowp.WriteConcern;
-import com.eightkdata.mongowp.bson.BsonBoolean;
 import com.eightkdata.mongowp.bson.BsonDocument;
 import com.eightkdata.mongowp.bson.BsonObjectId;
 import com.eightkdata.mongowp.bson.BsonValue;
-import com.eightkdata.mongowp.bson.utils.DefaultBsonValues;
 import com.eightkdata.mongowp.exceptions.MongoException;
 import com.eightkdata.mongowp.messages.request.QueryMessage.QueryOption;
 import com.eightkdata.mongowp.messages.request.QueryMessage.QueryOptions;
