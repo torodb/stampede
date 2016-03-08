@@ -138,7 +138,7 @@ class DefaultSystemExecutor implements SystemExecutor {
 
     private <R> Future<R> submit(Job<R> job) {
         taskCounter.incrementAndGet();
-        return executorService.submit(new SystemRunnable<R>(job));
+        return executorService.submit(new SystemRunnable<>(job));
     }
     
     private class SystemRunnable<R> implements Callable<R> {

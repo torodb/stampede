@@ -47,7 +47,7 @@ public class SequencerTest {
 
     public SequencerTest(long maxExpectedMillis) {
         this.maxExpectedMillis = maxExpectedMillis;
-        this.throwables = new ConcurrentLinkedQueue<Throwable>();
+        this.throwables = new ConcurrentLinkedQueue<>();
     }
 
     @Test
@@ -60,7 +60,7 @@ public class SequencerTest {
     }
 
     public static void test(Object testCase, long maxExpectedMillis, ConcurrentLinkedQueue<Throwable> throwables) throws SequencerTimeoutException, Throwable {
-        Collection<Thread> threads = new LinkedList<Thread>();
+        Collection<Thread> threads = new LinkedList<>();
         Class<?> c = testCase.getClass();
         for (Method method : c.getMethods()) {
             if (method.isAnnotationPresent(ConcurrentTest.class)) {
@@ -123,7 +123,7 @@ public class SequencerTest {
     }
 
     private static void joinThreads(Collection<Thread> threads, boolean previousError) throws SequencerTimeoutException {
-        Collection<Thread> blockedThreads = new LinkedList<Thread>();
+        Collection<Thread> blockedThreads = new LinkedList<>();
 
         for (Thread thread : threads) {
             if (thread.isAlive()) {

@@ -73,7 +73,7 @@ public class ToroRunnerClassRule implements TestRule {
 		};
 	}
 	
-	private final Set<Throwable> UNCAUGHT_EXCEPTIONS = new HashSet<Throwable>();
+	private final Set<Throwable> UNCAUGHT_EXCEPTIONS = new HashSet<>();
 
 	private boolean started = false;
 	private Shutdowner shutdowner;
@@ -111,7 +111,7 @@ public class ToroRunnerClassRule implements TestRule {
 	public List<Throwable> getUcaughtExceptions() {
 		List<Throwable> ucaughtExceptions;
 		synchronized (UNCAUGHT_EXCEPTIONS) {
-			ucaughtExceptions = new ArrayList<Throwable>(UNCAUGHT_EXCEPTIONS);
+			ucaughtExceptions = new ArrayList<>(UNCAUGHT_EXCEPTIONS);
 			UNCAUGHT_EXCEPTIONS.clear();
 		}
 		return ucaughtExceptions;

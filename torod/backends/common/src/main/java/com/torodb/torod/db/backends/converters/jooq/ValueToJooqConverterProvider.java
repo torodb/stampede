@@ -47,7 +47,7 @@ public class ValueToJooqConverterProvider {
     private static final EnumMap<ScalarType, SubdocValueConverter> converters;
 
     static {
-        converters = new EnumMap<ScalarType, SubdocValueConverter>(ScalarType.class);
+        converters = new EnumMap<>(ScalarType.class);
 
         converters.put(ScalarType.ARRAY, new ArrayValueConverter());
         converters.put(ScalarType.BOOLEAN, new BooleanValueConverter());
