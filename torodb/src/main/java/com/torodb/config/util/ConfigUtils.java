@@ -246,7 +246,7 @@ public class ConfigUtils {
 	}
 
 	private static JsonNode createNode(JsonPointer childOfPointer, List<JsonNode> newNodes) {
-		JsonNode newNode = null;
+		JsonNode newNode;
 
 		if (childOfPointer == null || !childOfPointer.last().mayMatchElement()) {
 			newNode = JsonNodeFactory.instance.objectNode();
@@ -376,7 +376,7 @@ public class ConfigUtils {
 						ValidationConfiguration.newBuilder().setDefaultVersion(SchemaVersion.DRAFTV3).freeze())
 				.setReportProvider(new ListReportProvider(LogLevel.DEBUG, LogLevel.NONE)).freeze();
 		JsonValidator validator = factory.getValidator();
-		ProcessingReport processingReport = null;
+		ProcessingReport processingReport;
 		try {
 			processingReport = validator.validate(schemaNode, configNode);
 		} catch (ProcessingException processingException) {

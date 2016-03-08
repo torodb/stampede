@@ -72,7 +72,7 @@ public class QueryRoutine {
             return Collections.emptyList();
         }
 
-        Connection c = null;
+        Connection c;
 
         c = configuration.connectionProvider().acquire();
         try (PreparedStatement ps = c.prepareStatement(databaseInterface.findDocsSelectStatement(

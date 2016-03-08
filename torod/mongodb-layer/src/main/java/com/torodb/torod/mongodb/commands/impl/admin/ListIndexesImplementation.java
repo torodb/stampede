@@ -73,8 +73,6 @@ public class ListIndexesImplementation extends AbstractToroCommandImplementation
             throw new UnknownErrorException(ex);
         }
 
-        BsonArrayBuilder firstBatch = new BsonArrayBuilder();
-
         List<IndexOptions> indexOptions = new ArrayList<>(indexes.size());
 
         for (NamedToroIndex index : indexes) {
