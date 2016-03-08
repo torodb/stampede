@@ -301,22 +301,20 @@ public class DefaultToroTransaction implements ToroTransaction {
 
         responseBuilder.addCandidates(candidates.size());
 
-        if (candidates.isEmpty()) {
-            if (update.isInsertIfNotFound()) {
-                ToroDocument documentToInsert = documentToInsert(update.
-                        getAction());
-                Future<InsertResponse> insertFuture = insertDocuments(
-                        collection,
-                        FluentIterable.from(
-                                Collections.singleton(
-                                        documentToInsert
-                                )
-                        ),
-                        WriteFailMode.TRANSACTIONAL
-                );
-                //as we are using a synchronized update, we need to wait until the insert is executed
-                insertFuture.get();
-            }
+        if (candidates.isEmpty() && update.isInsertIfNotFound()) {
+            ToroDocument documentToInsert = documentToInsert(update.
+                    getAction());
+            Future<InsertResponse> insertFuture = insertDocuments(
+                    collection,
+                    FluentIterable.from(
+                            Collections.singleton(
+                                    documentToInsert
+                            )
+                    ),
+                    WriteFailMode.TRANSACTIONAL
+            );
+            //as we are using a synchronized update, we need to wait until the insert is executed
+            insertFuture.get();
         }
         Set<ToroDocument> objectsToDelete = Sets.newHashSet();
         Set<ToroDocument> objectsToInsert = Sets.newHashSet();

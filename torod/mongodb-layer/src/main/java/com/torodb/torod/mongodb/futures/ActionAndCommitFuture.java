@@ -85,19 +85,15 @@ public abstract class ActionAndCommitFuture<E, O> implements ListenableFuture<E>
 
     private synchronized void eventActionFinished() {
         actionDone = true;
-        if (!done) {
-            if (commitDone) {
-                eventDone();
-            }
+        if (!done && commitDone) {
+            eventDone();
         }
     }
 
     private synchronized void eventCommitFinished() {
         commitDone = true;
-        if (!done) {
-            if (actionDone) {
-                eventDone();
-            }
+        if (!done && actionDone) {
+            eventDone();
         }
     }
 
