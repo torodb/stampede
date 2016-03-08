@@ -47,6 +47,9 @@ public class AttributeReferenceResolver {
     private static final DocStructureResolver docStructureResolver
             = new DocStructureResolver();
 
+    private AttributeReferenceResolver() {
+    }
+
     /**
      * Returns the type associated to the given attribute reference in the given
      * structure element.

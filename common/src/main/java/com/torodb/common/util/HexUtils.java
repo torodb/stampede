@@ -42,6 +42,9 @@ public class HexUtils {
         }
     }
 
+    private HexUtils() {
+    }
+
     public static String bytes2Hex(@Nonnull byte[] bytes) {
         checkNotNull(bytes, "bytes");
 

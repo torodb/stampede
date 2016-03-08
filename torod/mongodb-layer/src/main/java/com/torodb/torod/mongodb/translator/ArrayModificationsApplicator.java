@@ -39,6 +39,9 @@ public class ArrayModificationsApplicator {
     private static final OrExistsCreator OR_EXISTS_CREATOR = new OrExistsCreator();
     private static final QueryCriteriaFactory QUERY_CRITERIA_FACTORY = new QueryCriteriaFactory();
 
+    private ArrayModificationsApplicator() {
+    }
+
     public static QueryCriteria translate(QueryCriteria queryCriteria) {
         QueryCriteria withArrayAlternative = queryCriteria.accept(ARRAY_REFERENCE_CREATOR, null);
 
