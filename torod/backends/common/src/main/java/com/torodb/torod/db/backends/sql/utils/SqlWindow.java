@@ -31,7 +31,7 @@ public class SqlWindow implements Iterator<ValueRow<ScalarValue<?>>> {
 
     private final Iterator<ValueRow<ScalarValue<?>>> rows;
 
-    public SqlWindow(ResultSet rs, ScalarTypeToSqlType scalarTypeToSqlType) throws SQLException {
+    public SqlWindow(ResultSet rs, ValueToJooqConverterProvider valueToJooqConverterProvider, ScalarTypeToSqlType scalarTypeToSqlType) throws SQLException {
         ResultSetMetaData metaData = rs.getMetaData();
         final int columnLenght = metaData.getColumnCount();
         
@@ -45,7 +45,7 @@ public class SqlWindow implements Iterator<ValueRow<ScalarValue<?>>> {
 
             ScalarType scalarType = getScalarType(metaData, jdbcIndex, scalarTypeToSqlType);
 
-            converters[i] = ValueToJooqConverterProvider.getConverter(scalarType);
+            converters[i] = valueToJooqConverterProvider.getConverter(scalarType);
         }
 
         ImmutableList.Builder<ValueRow<ScalarValue<?>>> builder = ImmutableList.builder();

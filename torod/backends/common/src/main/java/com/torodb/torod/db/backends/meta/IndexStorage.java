@@ -106,14 +106,13 @@ public class IndexStorage implements Serializable {
         try {
             Set<NamedDbIndex> result = Sets.newHashSet();
 
-            String catalog = connection.getCatalog();
             String schema = colSchema.getName();
             DatabaseMetaData metaData = connection.getMetaData();
             String lastIndexName = null;
 
             for (SubDocTable table : colSchema.getSubDocTables()) {
                 try (ResultSet indexInfo = metaData.getIndexInfo(
-                        catalog,
+                        "%",
                         schema,
                         table.getName(),
                         false,

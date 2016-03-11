@@ -47,37 +47,45 @@ public class CoreIT extends AbstractIntegrationTest {
 		super(LOGGER);
 	}
 
-	@Parameters(name="{0}")
+	@Parameters(name="{0}-{1}")
 	public static Collection<Object[]> parameters() {
 		return parameters(createScriptClassifier());
 	}
     
     private static ScriptClassifier createScriptClassifier() {
         Set<Script> workingSet = getWorkingSet(),
+                mysqlWorkingSet = getMySQLWorkingSet(),
                 catastrophicSet = getCatastrophicSet(),
                 falsePositiveSet = getFalsePositiveSet(),
                 notImplementedSet = getNotImplementedSet(),
+                mysqlNotImplemented = getMySQLNotImplementedSet(),
                 ignoredSet = getIgnoredSet(),
                 allSet = Sets.newHashSet(Iterables.concat(workingSet, catastrophicSet, falsePositiveSet, notImplementedSet, ignoredSet));
         return new Builder()
-                .addScripts(MONGO, POSTGRES, WORKING, workingSet)
+                .addScripts(Mongo, Postgres, WORKING, workingSet)
+                .addScripts(Mongo, MySQL, WORKING, mysqlWorkingSet)
 
-                .addScripts(MONGO, GREENPLUM, CATASTROPHIC, workingSet)
+                .addScripts(Mongo, Greemplum, CATASTROPHIC, workingSet)
 
-                .addScripts(MONGO, POSTGRES, CATASTROPHIC, catastrophicSet)
-                .addScripts(MONGO, GREENPLUM, CATASTROPHIC, catastrophicSet)
+                .addScripts(Mongo, Postgres, CATASTROPHIC, catastrophicSet)
+                .addScripts(Mongo, Greemplum, CATASTROPHIC, catastrophicSet)
+                .addScripts(Mongo, MySQL, CATASTROPHIC, catastrophicSet)
 
-                .addScripts(MONGO, POSTGRES, FALSE_POSITIVE, falsePositiveSet)
-                .addScripts(MONGO, GREENPLUM, FALSE_POSITIVE, falsePositiveSet)
+                .addScripts(Mongo, Postgres, FALSE_POSITIVE, falsePositiveSet)
+                .addScripts(Mongo, Greemplum, FALSE_POSITIVE, falsePositiveSet)
+                .addScripts(Mongo, MySQL, FALSE_POSITIVE, falsePositiveSet)
 
-                .addScripts(MONGO, POSTGRES, NOT_IMPLEMENTED, notImplementedSet)
-                .addScripts(MONGO, GREENPLUM, NOT_IMPLEMENTED, notImplementedSet)
+                .addScripts(Mongo, Postgres, NOT_IMPLEMENTED, notImplementedSet)
+                .addScripts(Mongo, Greemplum, NOT_IMPLEMENTED, notImplementedSet)
+                .addScripts(Mongo, MySQL, NOT_IMPLEMENTED, mysqlNotImplemented)
 
-                .addScripts(MONGO, POSTGRES, IGNORED, ignoredSet)
-                .addScripts(MONGO, GREENPLUM, IGNORED, ignoredSet)
+                .addScripts(Mongo, Postgres, IGNORED, ignoredSet)
+                .addScripts(Mongo, Greemplum, IGNORED, ignoredSet)
+                .addScripts(Mongo, MySQL, IGNORED, ignoredSet)
 
-                .addScripts(MONGO_REPL_SET, POSTGRES, CATASTROPHIC, allSet)
-                .addScripts(MONGO_REPL_SET, GREENPLUM, CATASTROPHIC, allSet)
+                .addScripts(MongoReplSet, Postgres, CATASTROPHIC, allSet)
+                .addScripts(MongoReplSet, Greemplum, CATASTROPHIC, allSet)
+                .addScripts(MongoReplSet, MySQL, CATASTROPHIC, allSet)
 
                 .build();
     }
@@ -151,6 +159,57 @@ public class CoreIT extends AbstractIntegrationTest {
 			"update_addToSet2.js",}
         );
     }
+    
+    private static final Set<Script> getMySQLWorkingSet() {
+        return asScriptSet(new String[]{
+            "andor.js",
+            "array3.js",
+            "basic5.js",
+            "basic7.js",
+            "basic9.js",
+            "basicb.js",
+            "batch_write_command_wc.js",
+            "binData.js",
+            "block_check_supported.js",
+            "bulk_insert.js",
+            "connection_string_validation.js",
+            "count.js",
+            "coveredIndex3.js",
+            "db.js",
+            "dbref2.js",
+            "error5.js",
+            "fm1.js",
+            "fm2.js",
+            "in2.js",
+            "index6.js",
+            "ismaster.js",
+            "json1.js",
+            "map1.js",
+            "null_field_name.js",
+            "numberlong.js",
+            "numberlong4.js",
+            "objid1.js",
+            "objid4.js",
+            "objid6.js",
+            "objid7.js",
+            "orb.js",
+            "ore.js",
+            "orl.js",
+            "orp.js",
+            "queryoptimizer6.js",
+            "ref2.js",
+            "regex_util.js",
+            "regexa.js",
+            "regexb.js",
+            "removea.js",
+            "run_program1.js",
+            "shellkillop.js",
+            "shellstartparallel.js",
+            "shelltypes.js",
+            "stages_sort.js",
+            "sub1.js",}
+        );
+    }
 	
 	private static final Set<Script> getCatastrophicSet() {
         return asScriptSet(new String[]{
@@ -197,6 +256,17 @@ public class CoreIT extends AbstractIntegrationTest {
 			"where5.js",}
         );
     }
+	
+	private static final Set<Script> getMySQLNotImplementedSet() {
+        return Sets.newHashSet(Iterables.concat(getNotImplementedSet(), 
+        asScriptSet(new String[] {
+                "capped9.js",
+                "indexs.js",
+                "org.js",
+                "remove_justone.js",
+                "update_addToSet2.js",}
+        )));
+	}
 	
 	private static final Set<Script> getNotImplementedSet() {
         return asScriptSet(new String[]{

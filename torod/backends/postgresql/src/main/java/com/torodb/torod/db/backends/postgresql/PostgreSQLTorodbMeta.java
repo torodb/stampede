@@ -228,15 +228,15 @@ public class PostgreSQLTorodbMeta implements TorodbMeta {
     }
 
     private void createFindDocType(Connection conn) throws IOException, SQLException {
-        executeSql(conn, "/sql/find_doc_type.sql");
+        executeSql(conn, "/sql/postgresql/find_doc_type.sql");
     }
 
     private void createMongoObjectIdType(Connection conn) throws IOException, SQLException {
-        executeSql(conn, "/sql/mongo_object_id_type.sql");
+        executeSql(conn, "/sql/postgresql/mongo_object_id_type.sql");
     }
     
     private void createMongoTimestampType(Connection conn) throws IOException, SQLException {
-        executeSql(conn, "/sql/mongo_timestamp_type.sql");
+        executeSql(conn, "/sql/postgresql/mongo_timestamp_type.sql");
     }
     
     private void createFindDocProcedure(
@@ -281,7 +281,7 @@ public class PostgreSQLTorodbMeta implements TorodbMeta {
     ) throws SQLException, IOException {
         if (!checkIfProcedureExists(jdbcMeta, proc)) {
             LOGGER.debug("Creating procedure "+proc);
-            executeSql(conn, "/sql/"+proc+".sql");
+            executeSql(conn, "/sql/postgresql/"+proc+".sql");
             LOGGER.debug("Procedure "+proc+" created");
         }
         else {
@@ -296,7 +296,7 @@ public class PostgreSQLTorodbMeta implements TorodbMeta {
     ) throws SQLException {
         ResultSet procedures = null;
         try {
-            procedures = jdbcMeta.getProcedures(null, "torodb", procedureName);
+            procedures = jdbcMeta.getProcedures("%", TorodbSchema.TORODB_SCHEMA, procedureName);
             
             return procedures.next();
         } finally {
@@ -356,7 +356,7 @@ public class PostgreSQLTorodbMeta implements TorodbMeta {
                 conn.rollback(savepoint);
             }
             LOGGER.debug("Creating new varchar to jsonb cast");
-            executeSql(conn, "/sql/json_cast.sql");
+            executeSql(conn, "/sql/postgresql/json_cast.sql");
             LOGGER.debug("Cast varchar to jsonb cast created");
             
         } finally {

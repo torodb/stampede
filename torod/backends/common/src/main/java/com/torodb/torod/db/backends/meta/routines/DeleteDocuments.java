@@ -140,32 +140,17 @@ public class DeleteDocuments {
             Connection connection, Schema schema, Table table, Collection<Integer> dids,
             @Nonnull DatabaseInterface databaseInterface
     ) throws SQLException {
-        final int maxInArray = (2 << 15) - 1; // = 2^16 -1 = 65535
-
         try (PreparedStatement ps = connection.prepareStatement(
                     databaseInterface.deleteDidsStatement(
                             schema.getName(), table.getName(), SubDocTable.DID_COLUMN_NAME
                     )
             )) {
 
-            Integer[] didsToDelete = dids.toArray(new Integer[dids.size()]);
-
-            int i = 0;
-            while (i < didsToDelete.length) {
-                int toIndex = Math.min(i + maxInArray, didsToDelete.length);
-                Integer[] subDids
-                        = Arrays.copyOfRange(didsToDelete, i, toIndex);
-
-                Array arr
-                    = connection.createArrayOf("integer", subDids);
-                ps.setArray(1, arr);
-                ps.addBatch();
-
-                i = toIndex;
-            }
+            databaseInterface.setDeleteDidsStatementParameters(ps, dids);
+            
             int[] executeResult = ps.executeBatch();
             int result = 0;
-            for (i = 0; i < executeResult.length; i++) {
+            for (int i = 0; i < executeResult.length; i++) {
                 int iestResult = executeResult[i];
                 if (iestResult >= 0) {
                     result += iestResult;

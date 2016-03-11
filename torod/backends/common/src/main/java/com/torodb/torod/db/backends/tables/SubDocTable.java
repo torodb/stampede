@@ -116,7 +116,7 @@ public class SubDocTable extends TableImpl<SubDocTableRecord> {
         for (SubDocAttribute attibute : type.getAttributes()) {
             String fieldName = new SubDocHelper(databaseInterface).toColumnName(attibute.getKey());
 
-            SubdocValueConverter converter = ValueToJooqConverterProvider.getConverter(attibute.getType());
+            SubdocValueConverter converter = databaseInterface.getValueToJooqConverterProvider().getConverter(attibute.getType());
             createField(
                     fieldName,
                     converter.getDataType(),
@@ -192,15 +192,15 @@ public class SubDocTable extends TableImpl<SubDocTableRecord> {
             SubDocType.Builder builder = subDocTypeBuiderProvider.get();
 
             ResultSet columns
-                    = metadata.getColumns(null, schemaName, tableName, null);
+                    = metadata.getColumns("%", schemaName, tableName, null);
 
             while (columns.next()) {
                 String columnName = columns.getString("COLUMN_NAME");
                 if (SubDocTable.isSpecialColumn(columnName)) {
                     continue;
                 }
-                int intColumnType = columns.getInt("DATA_TYPE");
-                String stringColumnType = columns.getString("TYPE_NAME");
+                int intColumnType = databaseInterface.getIntColumnType(columns);
+                String stringColumnType = databaseInterface.getStringColumnType(columns);
 
                 ScalarType scalarType = databaseInterface.getScalarTypeToSqlType().toScalarType(
                         columnName,

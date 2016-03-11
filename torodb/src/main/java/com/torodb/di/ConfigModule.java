@@ -24,6 +24,7 @@ package com.torodb.di;
 import com.google.inject.AbstractModule;
 import com.torodb.config.model.Config;
 import com.torodb.config.model.backend.greenplum.Greenplum;
+import com.torodb.config.model.backend.mysql.MySQL;
 import com.torodb.config.model.backend.postgres.Postgres;
 import com.torodb.config.visitor.BackendImplementationVisitor;
 
@@ -46,8 +47,13 @@ public class ConfigModule extends AbstractModule implements BackendImplementatio
 		bind(Postgres.class).toInstance(value);
 	}
 
-	@Override
-	public void visit(Greenplum value) {
-		bind(Greenplum.class).toInstance(value);
-	}
+    @Override
+    public void visit(Greenplum value) {
+        bind(Greenplum.class).toInstance(value);
+    }
+
+    @Override
+    public void visit(MySQL value) {
+        bind(MySQL.class).toInstance(value);
+    }
 }

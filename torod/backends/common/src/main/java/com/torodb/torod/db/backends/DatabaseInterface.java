@@ -20,14 +20,26 @@
 
 package com.torodb.torod.db.backends;
 
-import com.torodb.torod.db.backends.converters.ScalarTypeToSqlType;
-import com.torodb.torod.db.backends.exceptions.InvalidDatabaseException;
-import com.torodb.torod.db.backends.meta.TorodbMeta;
 import java.io.IOException;
 import java.io.Serializable;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Collection;
+
 import javax.annotation.Nonnull;
+
 import org.jooq.DSLContext;
+
+import com.torodb.torod.core.language.projection.Projection;
+import com.torodb.torod.db.backends.converters.ScalarTypeToSqlType;
+import com.torodb.torod.db.backends.converters.jooq.ValueToJooqConverterProvider;
+import com.torodb.torod.db.backends.converters.json.ValueToJsonConverterProvider;
+import com.torodb.torod.db.backends.exceptions.InvalidDatabaseException;
+import com.torodb.torod.db.backends.meta.IndexStorage;
+import com.torodb.torod.db.backends.meta.TorodbMeta;
+import com.torodb.torod.db.backends.query.QueryCriteriaToSQLTranslator;
 
 /**
  * Wrapper interface to define all database-specific SQL code
@@ -35,10 +47,15 @@ import org.jooq.DSLContext;
 public interface DatabaseInterface extends Serializable {
     //TODO: Try to remove make DatabaseInterface not serializable
 
+    @Nonnull ValueToJooqConverterProvider getValueToJooqConverterProvider();
+    @Nonnull ValueToJsonConverterProvider getValueToJsonConverterProvider();
+    
     @Nonnull String escapeSchemaName(@Nonnull String collection) throws IllegalArgumentException;
     @Nonnull String escapeAttributeName(@Nonnull String attributeName) throws IllegalArgumentException;
     @Nonnull String escapeIndexName(@Nonnull String indexName) throws IllegalArgumentException;
 
+    @Nonnull int getIntColumnType(ResultSet columns) throws SQLException;
+    @Nonnull String getStringColumnType(ResultSet columns) throws SQLException;
     @Nonnull ScalarTypeToSqlType getScalarTypeToSqlType();
 
     @Nonnull String createSchemaStatement(@Nonnull String schemaName);
@@ -52,14 +69,20 @@ public interface DatabaseInterface extends Serializable {
     @Nonnull String deleteDidsStatement(
             @Nonnull String schemaName, @Nonnull String tableName, @Nonnull String didColumnName
     );
+    void setDeleteDidsStatementParameters(PreparedStatement ps,
+            Collection<Integer> dids) throws SQLException;
 
     @Nonnull String dropSchemaStatement(@Nonnull String schemaName);
 
-    @Nonnull String findDocsSelectStatement(
-            @Nonnull String didName, @Nonnull String typeIdName, @Nonnull String indexName,
-            @Nonnull String jsonName
-    );
+    @Nonnull String findDocsSelectStatement();
 
+    void setFindDocsSelectStatementParameters(@Nonnull IndexStorage.CollectionSchema colSchema, @Nonnull Integer[] requestedDocs,
+            @Nonnull Projection projection, @Nonnull Connection c, @Nonnull PreparedStatement ps) throws SQLException;
+
+    @Nonnull ResultSet getFindDocsSelectStatementResultSet(PreparedStatement ps) throws SQLException;
+    
+    @Nonnull FindDocsSelectStatementRow getFindDocsSelectStatementRow(ResultSet rs) throws SQLException;
+    
     @Nonnull String createIndexStatement(
             @Nonnull String fullIndexName, @Nonnull String tableSchema, @Nonnull String tableName,
             @Nonnull String tableColumnName, boolean isAscending
@@ -71,4 +94,12 @@ public interface DatabaseInterface extends Serializable {
     @Nonnull TorodbMeta initializeTorodbMeta(String databaseName, DSLContext dsl, DatabaseInterface databaseInterface)
     throws SQLException, IOException, InvalidDatabaseException;
 
+    public interface FindDocsSelectStatementRow {
+        public int getDocId();
+        public Integer getTypeId();
+        public Integer getindex();
+        public String getJson();
+        public boolean isSubdocument();
+        public boolean isMetainfo();
+    }
 }

@@ -41,7 +41,7 @@ public interface ArraySerializer extends Serializable {
 
     @Nonnull Condition arrayLength(String fieldName, String value);
 
-    @Nonnull Table arrayElements(String fieldName);
+    @Nonnull Table arrayElements(String iteratorVariableName, String fieldName);
 
     String translateValue(Object translatedObject);
 

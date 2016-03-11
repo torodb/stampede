@@ -40,7 +40,9 @@ import com.torodb.torod.db.backends.meta.IndexStorage;
 import com.torodb.torod.db.backends.meta.IndexStorage.CollectionSchema;
 import com.torodb.torod.db.backends.meta.StructuresCache;
 import com.torodb.torod.db.backends.meta.TorodbMeta;
-import com.torodb.torod.db.backends.postgresql.converters.ValueToCopyConverter;
+import com.torodb.torod.db.backends.meta.TorodbSchema;
+import com.torodb.torod.db.backends.postgresql.converters.PostgreSQLScalarTypeToSqlType;
+import com.torodb.torod.db.backends.postgresql.converters.PostgreSQLValueToCopyConverter;
 import com.torodb.torod.db.backends.sql.AbstractDbConnection;
 import com.torodb.torod.db.backends.sql.index.NamedDbIndex;
 import com.torodb.torod.db.backends.sql.path.view.DefaultPathViewHandlerCallback;
@@ -70,10 +72,10 @@ import org.slf4j.LoggerFactory;
 /**
  *
  */
-class PostgresqlDbConnection extends AbstractDbConnection {
+class PostgreSQLDbConnection extends AbstractDbConnection {
 
     private static final org.slf4j.Logger LOGGER
-            = LoggerFactory.getLogger(PostgresqlDbConnection.class);
+            = LoggerFactory.getLogger(PostgreSQLDbConnection.class);
     static final String SUBDOC_TABLE_PK_COLUMN = "pk";
     static final String SUBDOC_TABLE_DOC_ID_COLUMN = "docId";
     static final String SUBDOC_TABLE_KEYS_COLUMN = "keys";
@@ -81,7 +83,7 @@ class PostgresqlDbConnection extends AbstractDbConnection {
     private final MyStructureListener listener = new MyStructureListener();
 
     @Inject
-    public PostgresqlDbConnection(
+    public PostgreSQLDbConnection(
             DSLContext dsl,
             TorodbMeta meta,
             Provider<Builder> subDocTypeBuilderProvider,
@@ -483,7 +485,7 @@ class PostgresqlDbConnection extends AbstractDbConnection {
 
 
                 try (ResultSet rs = st.executeQuery(query)) {
-                    return new SqlWindow(rs, getDatabaseInterface().getScalarTypeToSqlType());
+                    return new SqlWindow(rs, getDatabaseInterface().getValueToJooqConverterProvider(), getDatabaseInterface().getScalarTypeToSqlType());
                 }
             } catch (SQLException ex) {
                 //TODO: Change exception
@@ -620,7 +622,7 @@ class PostgresqlDbConnection extends AbstractDbConnection {
                 }
             }
             else {
-                subDocument.getValue(attName).accept(ValueToCopyConverter.INSTANCE, sb);
+                subDocument.getValue(attName).accept(PostgreSQLValueToCopyConverter.INSTANCE, sb);
             }
 
             sb.append('\t');
@@ -638,20 +640,21 @@ class PostgresqlDbConnection extends AbstractDbConnection {
 
     private String getSqlType(Field<?> field, Configuration conf) {
         if (field.getConverter() != null) {
+            ValueToJooqConverterProvider valueToJooqConverterProvider = getDatabaseInterface().getValueToJooqConverterProvider();
             SubdocValueConverter arrayConverter
-                    = ValueToJooqConverterProvider.getConverter(ScalarType.ARRAY);
+                    = valueToJooqConverterProvider.getConverter(ScalarType.ARRAY);
             if (field.getConverter().getClass().equals(arrayConverter.getClass())) {
-            	return "jsonb";
+            	return PostgreSQLScalarTypeToSqlType.ARRAY_TYPE;
             }
             SubdocValueConverter mongoObjectIdConverter
-                    = ValueToJooqConverterProvider.getConverter(ScalarType.MONGO_OBJECT_ID);
+                    = valueToJooqConverterProvider.getConverter(ScalarType.MONGO_OBJECT_ID);
             if (field.getConverter().getClass().equals(mongoObjectIdConverter.getClass())) {
-            	return "torodb.mongo_object_id";
+            	return TorodbSchema.TORODB_SCHEMA + "." + PostgreSQLScalarTypeToSqlType.MONGO_OBJECT_ID_TYPE;
             }
             SubdocValueConverter mongoTimestampConverter
-                    = ValueToJooqConverterProvider.getConverter(ScalarType.MONGO_TIMESTAMP);
+                    = valueToJooqConverterProvider.getConverter(ScalarType.MONGO_TIMESTAMP);
             if (field.getConverter().getClass().equals(mongoTimestampConverter.getClass())) {
-                return "torodb.mongo_timestamp";
+                return TorodbSchema.TORODB_SCHEMA + "." + PostgreSQLScalarTypeToSqlType.MONGO_TIMESTAMP_TYPE;
             }
         }
         return field.getDataType().getTypeName(conf);
@@ -718,7 +721,7 @@ class PostgresqlDbConnection extends AbstractDbConnection {
         public void eventNewStructure(IndexStorage.CollectionSchema colSchema, DocStructure newStructure) {
             colSchema.getIndexManager().newStructureDetected(
                     newStructure, 
-                    PostgresqlDbConnection.this
+                    PostgreSQLDbConnection.this
             );
         }
         

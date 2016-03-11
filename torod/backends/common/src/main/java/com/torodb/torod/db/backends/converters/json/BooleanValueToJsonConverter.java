@@ -29,6 +29,8 @@ import com.torodb.torod.core.subdocument.values.ScalarBoolean;
 public class BooleanValueToJsonConverter implements
         ValueConverter<Boolean, ScalarBoolean> {
 
+    private static final long serialVersionUID = 1L;
+
     @Override
     public Class<? extends Boolean> getJsonClass() {
         return Boolean.class;

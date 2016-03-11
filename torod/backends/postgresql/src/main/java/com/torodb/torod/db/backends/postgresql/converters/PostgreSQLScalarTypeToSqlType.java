@@ -24,6 +24,7 @@ package com.torodb.torod.db.backends.postgresql.converters;
 import com.torodb.torod.core.exceptions.ToroImplementationException;
 import com.torodb.torod.core.subdocument.ScalarType;
 import com.torodb.torod.db.backends.converters.ScalarTypeToSqlType;
+import com.torodb.torod.db.backends.meta.TorodbSchema;
 import com.torodb.torod.db.backends.udt.MongoObjectIdUDT;
 import com.torodb.torod.db.backends.udt.MongoTimestampUDT;
 import java.sql.Types;
@@ -31,7 +32,11 @@ import java.sql.Types;
 /**
  *
  */
-public class PostgresScalarTypeToSqlType implements ScalarTypeToSqlType {
+public class PostgreSQLScalarTypeToSqlType implements ScalarTypeToSqlType {
+
+    public static final String ARRAY_TYPE = "jsonb";
+    public static final String MONGO_OBJECT_ID_TYPE = "mongo_object_id";
+    public static final String MONGO_TIMESTAMP_TYPE = "mongo_timestamp";
 
     private static final long serialVersionUID = 385628201;
 
@@ -65,16 +70,16 @@ public class PostgresScalarTypeToSqlType implements ScalarTypeToSqlType {
             case Types.BINARY:
                 return ScalarType.BINARY;
             case Types.OTHER:
-                if (jdbcStringType.equals("jsonb")) {
+                if (jdbcStringType.equals(ARRAY_TYPE)) {
                     return ScalarType.ARRAY;
                 }
                 break;
             case Types.DISTINCT: {
-                if (jdbcStringType.equals("\"torodb\".\"mongo_object_id\"")
+                if (jdbcStringType.equals("\"" + TorodbSchema.TORODB_SCHEMA + "\".\"" + MONGO_OBJECT_ID_TYPE + "\"")
                         || jdbcStringType.equals(MongoObjectIdUDT.MONGO_OBJECT_ID.getName())) {
                     return ScalarType.MONGO_OBJECT_ID;
                 }
-                if (jdbcStringType.equals("\"torodb\".\"mongo_timestamp\"")
+                if (jdbcStringType.equals("\"" + TorodbSchema.TORODB_SCHEMA + "\".\"" + MONGO_TIMESTAMP_TYPE + "\"")
                         || jdbcStringType.equals(MongoTimestampUDT.MONGO_TIMESTAMP.getName())) {
                     return ScalarType.MONGO_TIMESTAMP;
                 }

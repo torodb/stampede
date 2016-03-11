@@ -41,6 +41,11 @@
             <version>${torod.version}</version>
         </dependency>
         <dependency>
+            <groupId>com.torodb.torod.backends</groupId>
+            <artifactId>mysql</artifactId>
+            <version>${torod.version}</version>
+        </dependency>
+        <dependency>
             <groupId>com.torodb.torod</groupId>
             <artifactId>db-executor</artifactId>
             <version>${torod.version}</version>

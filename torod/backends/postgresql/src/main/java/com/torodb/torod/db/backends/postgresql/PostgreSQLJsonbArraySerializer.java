@@ -35,7 +35,7 @@ import javax.inject.Singleton;
  *
  */
 @Singleton
-public class JsonbArraySerializer implements ArraySerializer {
+public class PostgreSQLJsonbArraySerializer implements ArraySerializer {
 
     private static final long serialVersionUID = 946395628;
 
@@ -79,7 +79,7 @@ public class JsonbArraySerializer implements ArraySerializer {
 
     @Nonnull
     @Override
-    public Table arrayElements(String fieldName) {
+    public Table arrayElements(String iteratorVariableName, String fieldName) {
         return DSL.table("jsonb_array_elements(" + fieldName + ")");
     }
 

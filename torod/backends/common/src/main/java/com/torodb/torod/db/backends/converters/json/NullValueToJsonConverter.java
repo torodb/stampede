@@ -29,6 +29,8 @@ import com.torodb.torod.db.backends.converters.ValueConverter;
 public class NullValueToJsonConverter implements
         ValueConverter<Void, ScalarNull> {
 
+    private static final long serialVersionUID = 1L;
+
     @Override
     public Class<? extends Void> getJsonClass() {
         return Void.class;

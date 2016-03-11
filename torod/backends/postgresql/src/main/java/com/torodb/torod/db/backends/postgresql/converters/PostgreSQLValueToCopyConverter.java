@@ -7,14 +7,14 @@ import com.torodb.torod.core.subdocument.values.*;
 /**
  *
  */
-public class ValueToCopyConverter implements ScalarValueVisitor<Void, StringBuilder> {
+public class PostgreSQLValueToCopyConverter implements ScalarValueVisitor<Void, StringBuilder> {
     private static final char ROW_DELIMETER = '\n';
     private static final char COLUMN_DELIMETER = '\t';
     private static final InArrayConverter IN_ARRAY_CONVERTER = new InArrayConverter();
 
-    public static final ValueToCopyConverter INSTANCE = new ValueToCopyConverter();
+    public static final PostgreSQLValueToCopyConverter INSTANCE = new PostgreSQLValueToCopyConverter();
 
-    ValueToCopyConverter() {
+    PostgreSQLValueToCopyConverter() {
     }
 
     @Override

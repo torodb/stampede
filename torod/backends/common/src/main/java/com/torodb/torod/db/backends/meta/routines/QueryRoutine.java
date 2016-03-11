@@ -26,6 +26,7 @@ import com.google.common.collect.Table;
 import com.torodb.torod.core.language.projection.Projection;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.db.backends.DatabaseInterface;
+import com.torodb.torod.db.backends.DatabaseInterface.FindDocsSelectStatementRow;
 import com.torodb.torod.db.backends.converters.SplitDocumentConverter;
 import com.torodb.torod.db.backends.meta.IndexStorage;
 import com.torodb.torod.db.backends.tables.SubDocTable;
@@ -45,11 +46,6 @@ import javax.inject.Singleton;
 
 @Singleton
 public class QueryRoutine {
-
-    public static final String DOC_ID = "did";
-    public static final String TYPE_ID = "typeid";
-    public static final String INDEX = "index";
-    public static final String _JSON = "_json";
 
     private final SplitDocumentConverter splitDocumentConverter;
 
@@ -75,20 +71,11 @@ public class QueryRoutine {
         Connection c = null;
 
         c = configuration.connectionProvider().acquire();
-        try (PreparedStatement ps = c.prepareStatement(databaseInterface.findDocsSelectStatement(
-                DOC_ID,
-                TYPE_ID,
-                INDEX,
-                _JSON))) {
+        try (PreparedStatement ps = c.prepareStatement(databaseInterface.findDocsSelectStatement())) {
 
-            ps.setString(1, colSchema.getName());
+            databaseInterface.setFindDocsSelectStatementParameters(colSchema, requestedDocs, projection, c, ps);
 
-            ps.setArray(2, c.createArrayOf("integer", requestedDocs));
-
-            Integer[] requiredTables = requiredTables(colSchema, projection);
-            ps.setArray(3, c.createArrayOf("integer", requiredTables));
-
-            return translateDocuments(colSchema, requestedDocs.length, ps.executeQuery());
+            return translateDocuments(colSchema, requestedDocs.length, ps, databaseInterface);
         } catch (SQLException ex) {
             //TODO: Study exceptions
             throw new RuntimeException(ex);
@@ -97,20 +84,10 @@ public class QueryRoutine {
         }
     }
 
-    private Integer[] requiredTables(IndexStorage.CollectionSchema colSchema, Projection projection) {
-        Collection<SubDocTable> subDocTables = colSchema.getSubDocTables();
-
-        Integer[] result = new Integer[subDocTables.size()];
-        int i = 0;
-        for (SubDocTable subDocTable : subDocTables) {
-            result[i] = subDocTable.getTypeId();
-            i++;
-        }
-        return result;
-    }
-
     @Nonnull
-    private List<SplitDocument> translateDocuments(IndexStorage.CollectionSchema colSchema, int expectedDocs, ResultSet rs) {
+    private List<SplitDocument> translateDocuments(IndexStorage.CollectionSchema colSchema, int expectedDocs, PreparedStatement ps,
+            @Nonnull DatabaseInterface databaseInterface
+            ) {
         try {
             List<SplitDocument> result = Lists.newArrayListWithCapacity(expectedDocs);
 
@@ -118,8 +95,12 @@ public class QueryRoutine {
 
             Integer lastDocId = null;
             Integer structureId = null;
+            
+            ResultSet rs = databaseInterface.getFindDocsSelectStatementResultSet(ps);
+            
             while (rs.next()) {
-                int docId = rs.getInt(DOC_ID);
+                FindDocsSelectStatementRow findDocsSelectStatementRow = databaseInterface.getFindDocsSelectStatementRow(rs);
+                int docId = findDocsSelectStatementRow.getDocId();
                 if (lastDocId == null || lastDocId != docId) {
                     if (lastDocId != null) { //if this is not the first iteration
                         SplitDocument doc = processDocument(colSchema, lastDocId, structureId, docInfo);
@@ -130,24 +111,13 @@ public class QueryRoutine {
                     assert docInfo.isEmpty();
                 }
 
-                Object typeId = rs.getObject(TYPE_ID);
-                Object index = rs.getObject(INDEX);
-                String json = rs.getString(_JSON);
+                Integer typeId = findDocsSelectStatementRow.getTypeId();
+                Integer index = findDocsSelectStatementRow.getindex();
+                String json = findDocsSelectStatementRow.getJson();
 
-                if (typeId != null) { //subdocument
-                    assert typeId instanceof Integer;
-                    assert index == null || index instanceof Integer;
-                    assert json != null;
-
-                    if (index == null) {
-                        index = 0;
-                    }
-
+                if (findDocsSelectStatementRow.isSubdocument()) { //subdocument
                     docInfo.put((Integer) typeId, (Integer) index, json);
                 } else { //metainfo
-                    assert index != null;
-                    assert json == null;
-
                     structureId = (Integer) index;
                 }
             }

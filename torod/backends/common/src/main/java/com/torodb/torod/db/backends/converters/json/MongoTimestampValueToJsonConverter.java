@@ -33,6 +33,8 @@ import javax.json.JsonObject;
 public class MongoTimestampValueToJsonConverter implements
         ValueConverter<JsonObject, ScalarMongoTimestamp> {
 
+    private static final long serialVersionUID = 1L;
+
     private static final String SECS = MongoTimestampUDT.SECS.getName();
     private static final String COUNTER = MongoTimestampUDT.COUNTER.getName();
     

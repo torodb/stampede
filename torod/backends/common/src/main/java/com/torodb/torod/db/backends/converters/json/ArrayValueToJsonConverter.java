@@ -37,6 +37,8 @@ import javax.json.JsonValue;
 public class ArrayValueToJsonConverter implements
         ValueConverter<JsonArray, ScalarArray> {
 
+    private static final long serialVersionUID = 1L;
+    
     private static final ChildToJson TO_JSON = new ChildToJson();
     
     @Override

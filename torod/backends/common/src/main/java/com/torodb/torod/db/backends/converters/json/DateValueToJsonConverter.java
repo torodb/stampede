@@ -30,6 +30,8 @@ import org.threeten.bp.LocalDate;
  */
 public class DateValueToJsonConverter implements ValueConverter<String, ScalarDate> {
 
+    private static final long serialVersionUID = 1L;
+
     @Override
     public Class<? extends String> getJsonClass() {
         return String.class;

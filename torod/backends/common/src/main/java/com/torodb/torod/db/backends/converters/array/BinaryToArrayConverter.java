@@ -33,6 +33,8 @@ import com.torodb.torod.db.backends.converters.ValueConverter;
 public class BinaryToArrayConverter implements
         ValueConverter<String, ScalarBinary> {
 
+    private static final long serialVersionUID = 1L;
+
     @Override
     public Class<? extends String> getJsonClass() {
         return String.class;

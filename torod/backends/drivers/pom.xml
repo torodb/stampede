@@ -26,6 +26,7 @@
 
     <modules>
         <module>postgresql</module>
+        <module>mysql</module>
     </modules>
 
 </project>

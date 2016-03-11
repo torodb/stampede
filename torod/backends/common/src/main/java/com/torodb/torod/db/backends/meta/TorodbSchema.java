@@ -44,7 +44,7 @@ public class TorodbSchema extends SchemaImpl {
     private static final Logger LOGGER = LoggerFactory.getLogger(TorodbSchema.class);
 	private static final long serialVersionUID = -1813122131;
 
-    private static final String TORODB_SCHEMA = "torodb";
+    public static final String TORODB_SCHEMA = "torodb";
 
     /**
      * The reference instance of <code>torodb</code>

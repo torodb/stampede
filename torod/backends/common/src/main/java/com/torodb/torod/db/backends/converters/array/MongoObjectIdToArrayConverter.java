@@ -31,6 +31,8 @@ import com.torodb.torod.db.backends.converters.ValueConverter;
 public class MongoObjectIdToArrayConverter implements
         ValueConverter<String, ScalarMongoObjectId> {
 
+    private static final long serialVersionUID = 1L;
+
     @Override
     public Class<? extends String> getJsonClass() {
         return String.class;

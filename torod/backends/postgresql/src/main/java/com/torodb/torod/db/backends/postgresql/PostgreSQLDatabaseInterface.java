@@ -21,38 +21,56 @@
 
 package com.torodb.torod.db.backends.postgresql;
 
+import java.io.IOException;
+import java.sql.Array;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.annotation.Nonnull;
+import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.inject.Singleton;
+
+import org.jooq.DSLContext;
+
+import com.torodb.torod.core.language.projection.Projection;
 import com.torodb.torod.core.subdocument.SimpleSubDocTypeBuilderProvider;
 import com.torodb.torod.core.subdocument.SubDocType;
 import com.torodb.torod.core.subdocument.SubDocType.Builder;
 import com.torodb.torod.db.backends.ArraySerializer;
 import com.torodb.torod.db.backends.DatabaseInterface;
 import com.torodb.torod.db.backends.converters.ScalarTypeToSqlType;
+import com.torodb.torod.db.backends.converters.jooq.ValueToJooqConverterProvider;
+import com.torodb.torod.db.backends.converters.json.ValueToJsonConverterProvider;
 import com.torodb.torod.db.backends.exceptions.InvalidDatabaseException;
+import com.torodb.torod.db.backends.meta.IndexStorage;
 import com.torodb.torod.db.backends.meta.TorodbMeta;
+import com.torodb.torod.db.backends.postgresql.converters.jooq.PostgreSQLValueToJooqConverterProvider;
+import com.torodb.torod.db.backends.postgresql.converters.json.PostgreSQLValueToJsonConverterProvider;
 import com.torodb.torod.db.backends.tables.CollectionsTable;
-import java.io.IOException;
-import java.sql.SQLException;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import javax.annotation.Nonnull;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
-import org.jooq.DSLContext;
+import com.torodb.torod.db.backends.tables.SubDocTable;
 
 /**
  *
  */
 @Singleton
-public class PostgresqlDatabaseInterface implements DatabaseInterface {
+public class PostgreSQLDatabaseInterface implements DatabaseInterface {
 
     private static final long serialVersionUID = 484638503;
 
+    private final ValueToJooqConverterProvider valueToJooqConverterProvider;
+    private final ValueToJsonConverterProvider valueToJsonConverterProvider;
     private final ScalarTypeToSqlType scalarTypeToSqlType;
     private transient @Nonnull Provider<SubDocType.Builder> subDocTypeBuilderProvider;
 
     private static class ArraySerializatorHolder {
-        private static final ArraySerializer INSTANCE = new JsonbArraySerializer();
+        private static final ArraySerializer INSTANCE = new PostgreSQLJsonbArraySerializer();
     }
 
     @Override
@@ -62,7 +80,9 @@ public class PostgresqlDatabaseInterface implements DatabaseInterface {
     }
 
     @Inject
-    public PostgresqlDatabaseInterface(ScalarTypeToSqlType scalarTypeToSqlType, Provider<Builder> subDocTypeBuilderProvider) {
+    public PostgreSQLDatabaseInterface(ScalarTypeToSqlType scalarTypeToSqlType, Provider<Builder> subDocTypeBuilderProvider) {
+        this.valueToJooqConverterProvider = PostgreSQLValueToJooqConverterProvider.getInstance();
+        this.valueToJsonConverterProvider = PostgreSQLValueToJsonConverterProvider.getInstance();
         this.scalarTypeToSqlType = scalarTypeToSqlType;
         this.subDocTypeBuilderProvider = subDocTypeBuilderProvider;
     }
@@ -72,6 +92,16 @@ public class PostgresqlDatabaseInterface implements DatabaseInterface {
         //TODO: Try to remove make DatabaseInterface not serializable
         stream.defaultReadObject();
         this.subDocTypeBuilderProvider = new SimpleSubDocTypeBuilderProvider();
+    }
+
+    @Override
+    public @Nonnull ValueToJooqConverterProvider getValueToJooqConverterProvider() {
+        return valueToJooqConverterProvider;
+    }
+
+    @Override
+    public @Nonnull ValueToJsonConverterProvider getValueToJsonConverterProvider() {
+        return valueToJsonConverterProvider;
     }
 
     @Override
@@ -105,6 +135,16 @@ public class PostgresqlDatabaseInterface implements DatabaseInterface {
         }
 
         return str;
+    }
+
+    @Override
+    public int getIntColumnType(ResultSet columns) throws SQLException {
+        return columns.getInt("DATA_TYPE");
+    }
+
+    @Override
+    public String getStringColumnType(ResultSet columns) throws SQLException {
+        return columns.getString("TYPE_NAME");
     }
 
     @Override
@@ -178,6 +218,29 @@ public class PostgresqlDatabaseInterface implements DatabaseInterface {
                 .toString();
     }
 
+    public void setDeleteDidsStatementParameters(PreparedStatement ps,
+            Collection<Integer> dids) throws SQLException {
+        Connection connection = ps.getConnection();
+        
+        final int maxInArray = (2 << 15) - 1; // = 2^16 -1 = 65535
+
+        Integer[] didsToDelete = dids.toArray(new Integer[dids.size()]);
+
+        int i = 0;
+        while (i < didsToDelete.length) {
+            int toIndex = Math.min(i + maxInArray, didsToDelete.length);
+            Integer[] subDids
+                    = Arrays.copyOfRange(didsToDelete, i, toIndex);
+
+            Array arr
+                = connection.createArrayOf("integer", subDids);
+            ps.setArray(1, arr);
+            ps.addBatch();
+
+            i = toIndex;
+        }
+    }
+
     @Override
     public @Nonnull String dropSchemaStatement(@Nonnull String schemaName) {
         return new StringBuilder()
@@ -189,18 +252,108 @@ public class PostgresqlDatabaseInterface implements DatabaseInterface {
 
     @Nonnull
     @Override
-    public String findDocsSelectStatement(
-            @Nonnull String didName, @Nonnull String typeIdName, @Nonnull String indexName, @Nonnull String jsonName
-    ) {
+    public String findDocsSelectStatement() {
         return new StringBuilder()
-                .append("SELECT ")
-                .append(didName).append(", ")
-                .append(typeIdName).append(", ")
-                .append(indexName).append(", ")
-                .append(jsonName)
-                .append(" FROM torodb.find_docs(?, ?, ?) ORDER BY ")
-                .append(didName).append(" ASC")
+                .append("SELECT did, typeid, index, _json")
+                .append(" FROM torodb.find_docs(?, ?, ?) ORDER BY did ASC")
                 .toString();
+    }
+
+    @Nonnull
+    @Override
+    public ResultSet getFindDocsSelectStatementResultSet(PreparedStatement ps) throws SQLException {
+        return ps.executeQuery();
+    }
+
+    private static class PostgresSQLFindDocsSelectStatementRow implements FindDocsSelectStatementRow {
+        private final int docid;
+        private final Integer typeId;
+        private final Integer index;
+        private final String json;
+        
+        private PostgresSQLFindDocsSelectStatementRow(ResultSet rs) throws SQLException {
+            docid = rs.getInt(1);
+            Object typeId = rs.getObject(2);
+            Object index = rs.getObject(3);
+            json = rs.getString(4);
+            if (typeId != null) { //subdocument
+                assert typeId instanceof Integer;
+                assert index == null || index instanceof Integer;
+                assert json != null;
+
+                if (index == null) {
+                    index = 0;
+                }
+                
+                this.typeId = (Integer) typeId;
+                this.index = (Integer) index;
+            } else { //metainfo
+                assert index != null;
+                assert json == null;
+                
+                this.typeId = null;
+                this.index = (Integer) index;
+            }
+        }
+        
+        @Override
+        public int getDocId() {
+            return docid;
+        }
+
+        @Override
+        public Integer getTypeId() {
+            return typeId;
+        }
+
+        @Override
+        public Integer getindex() {
+            return index;
+        }
+
+        @Override
+        public String getJson() {
+            return json;
+        }
+
+        @Override
+        public boolean isSubdocument() {
+            return typeId != null;
+        }
+
+        @Override
+        public boolean isMetainfo() {
+            return typeId == null;
+        }
+    };
+
+    @Nonnull
+    @Override
+    public FindDocsSelectStatementRow getFindDocsSelectStatementRow(ResultSet rs) throws SQLException {
+        return new PostgresSQLFindDocsSelectStatementRow(rs);
+    }
+
+    @Override
+    public void setFindDocsSelectStatementParameters(IndexStorage.CollectionSchema colSchema, Integer[] requestedDocs,
+            Projection projection, Connection c, PreparedStatement ps) throws SQLException {
+        ps.setString(1, colSchema.getName());
+
+        ps.setArray(2, c.createArrayOf("integer", requestedDocs));
+
+        Integer[] requiredTables = requiredTables(colSchema, projection);
+        ps.setArray(3, c.createArrayOf("integer", requiredTables));
+    }
+
+    private Integer[] requiredTables(IndexStorage.CollectionSchema colSchema, Projection projection) {
+        Collection<SubDocTable> subDocTables = colSchema.getSubDocTables();
+
+        Integer[] result = new Integer[subDocTables.size()];
+        int i = 0;
+        for (SubDocTable subDocTable : subDocTables) {
+            result[i] = subDocTable.getTypeId();
+            i++;
+        }
+        return result;
     }
 
     @Nonnull

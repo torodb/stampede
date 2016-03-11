@@ -31,6 +31,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.torodb.config.jackson.BackendDeserializer;
 import com.torodb.config.jackson.BackendSerializer;
 import com.torodb.config.model.backend.greenplum.Greenplum;
+import com.torodb.config.model.backend.mysql.MySQL;
 import com.torodb.config.model.backend.postgres.Postgres;
 
 @JsonSerialize(using=BackendSerializer.class)
@@ -41,7 +42,8 @@ public class Backend {
 	@JsonTypeInfo(use=JsonTypeInfo.Id.NAME, include=JsonTypeInfo.As.WRAPPER_OBJECT)
 	@JsonSubTypes({
 		@JsonSubTypes.Type(name="postgres", value=Postgres.class),
-		@JsonSubTypes.Type(name="greenplum", value=Greenplum.class),
+        @JsonSubTypes.Type(name="greenplum", value=Greenplum.class),
+        @JsonSubTypes.Type(name="mysql", value=MySQL.class),
 	})
 	@JsonProperty(required=true)
 	private BackendImplementation backendImplementation = new Postgres();
@@ -72,4 +74,15 @@ public class Backend {
 		
 		return (Greenplum) backendImplementation;
 	}
+    public boolean isMySQLLike() {
+        return backendImplementation instanceof MySQL;
+    }
+    public boolean isMySQL() {
+        return MySQL.class == backendImplementation.getClass();
+    }
+    public MySQL asMySQL() {
+        assert backendImplementation instanceof MySQL;
+        
+        return (MySQL) backendImplementation;
+    }
 }

@@ -25,6 +25,7 @@ import com.eightkdata.mongowp.server.MongoServerConfig;
 import com.google.inject.AbstractModule;
 import com.torodb.config.model.Config;
 import com.torodb.config.model.backend.greenplum.Greenplum;
+import com.torodb.config.model.backend.mysql.MySQL;
 import com.torodb.config.model.backend.postgres.Postgres;
 import com.torodb.config.visitor.BackendImplementationVisitor;
 import com.torodb.torod.core.annotations.DatabaseName;
@@ -53,10 +54,15 @@ public class MongoConfigModule extends AbstractModule implements BackendImplemen
 		bind(String.class).annotatedWith(DatabaseName.class).toInstance(value.getDatabase());
 	}
 
-	@Override
-	public void visit(Greenplum value) {
-		bind(String.class).annotatedWith(DatabaseName.class).toInstance(value.getDatabase());
-	}
+    @Override
+    public void visit(Greenplum value) {
+        bind(String.class).annotatedWith(DatabaseName.class).toInstance(value.getDatabase());
+    }
+
+    @Override
+    public void visit(MySQL value) {
+        bind(String.class).annotatedWith(DatabaseName.class).toInstance(value.getDatabase());
+    }
 	
 	@Immutable
 	@Singleton

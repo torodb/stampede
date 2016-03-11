@@ -49,7 +49,7 @@ import javax.inject.Provider;
  *
  */
 @Singleton
-public class PostgresqlDbWrapper extends AbstractDbWrapper {
+public class PostgreSQLDbWrapper extends AbstractDbWrapper {
     private static final int DB_SUPPORT_MAJOR = 9;
     private static final int DB_SUPPORT_MINOR = 4;
 
@@ -57,7 +57,7 @@ public class PostgresqlDbWrapper extends AbstractDbWrapper {
     private final Provider<SubDocType.Builder> subDocTypeBuilderProvider;
 
     @Inject
-    public PostgresqlDbWrapper(
+    public PostgreSQLDbWrapper(
             @DatabaseName String databaseName,
             DbBackend dbBackend,
             QueryRoutine queryRoutine,
@@ -81,7 +81,7 @@ public class PostgresqlDbWrapper extends AbstractDbWrapper {
 
     @Override
     protected DbConnection reserveConnection(DSLContext dsl, TorodbMeta meta) {
-        return new PostgresqlDbConnection(dsl, meta, subDocTypeBuilderProvider, databaseInterface);
+        return new PostgreSQLDbConnection(dsl, meta, subDocTypeBuilderProvider, databaseInterface);
     }
     
     @Override

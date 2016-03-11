@@ -45,21 +45,25 @@ public class CustomIT extends AbstractIntegrationTest {
 		super(LOGGER);
 	}
 	
-	@Parameters(name="{0}")
+	@Parameters(name="{0}-{1}")
 	public static Collection<Object[]> parameters() {
 		return parameters(createScriptClassifier());
 	}
 
     private static ScriptClassifier createScriptClassifier() {
         return new Builder()
-                .addScripts(MONGO, POSTGRES, WORKING, asScriptSet("dummy.js"))
-                .addScripts(MONGO_REPL_SET, POSTGRES, WORKING, asScriptSet("dummy.js"))
-                .addScripts(MONGO, GREENPLUM, WORKING, asScriptSet("dummy.js"))
-                .addScripts(MONGO_REPL_SET, GREENPLUM, WORKING, asScriptSet("dummy.js"))
+                .addScripts(Mongo, Postgres, WORKING, asScriptSet("dummy.js"))
+                .addScripts(MongoReplSet, Postgres, WORKING, asScriptSet("dummy.js"))
+                .addScripts(Mongo, Greemplum, WORKING, asScriptSet("dummy.js"))
+                .addScripts(MongoReplSet, Greemplum, WORKING, asScriptSet("dummy.js"))
+                .addScripts(Mongo, MySQL, WORKING, asScriptSet("dummy.js"))
+                .addScripts(MongoReplSet, MySQL, WORKING, asScriptSet("dummy.js"))
 
-                .addScripts(MONGO, POSTGRES, WORKING, asScriptSet(new String[] {"binary.js", "undefined.js"}))
+                .addScripts(Mongo, Postgres, WORKING, asScriptSet(new String[] {"binary.js", "undefined.js"}))
+                .addScripts(Mongo, MySQL, WORKING, asScriptSet(new String[] {"binary.js", "undefined.js"}))
 
-                .addScripts(MONGO, POSTGRES, FAILING, asScriptSet("alwaysfail.js"))
+                .addScripts(Mongo, Postgres, FAILING, asScriptSet("alwaysfail.js"))
+                .addScripts(Mongo, MySQL, FAILING, asScriptSet("alwaysfail.js"))
                 .build();
     }
 
