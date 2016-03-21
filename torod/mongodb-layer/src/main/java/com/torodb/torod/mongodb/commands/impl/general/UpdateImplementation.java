@@ -91,8 +91,8 @@ public class UpdateImplementation implements CommandImplementation<UpdateArgumen
             //TODO: add upsert!
             if (response.isSuccess()) {
                 updateResult = new UpdateResult(
-                        response.getCandidates(),
-                        response.getModified()
+                        response.getModified(),
+                        response.getCandidates()
                 );
                 writeOpResult = new UpdateOpResult(
                         response.getCandidates(),
@@ -108,8 +108,8 @@ public class UpdateImplementation implements CommandImplementation<UpdateArgumen
                 String errMsg = "Something went wrong";
                 //TODO: translate write errors and write concern errors
                 updateResult = new UpdateResult(
-                        response.getCandidates(),
                         response.getModified(),
+                        response.getCandidates(),
                         errMsg,
                         null,
                         null

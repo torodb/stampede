@@ -51,6 +51,8 @@ public class Updator {
             return null;
         }
         
+        responseBuilder.incrementModified(1);
+        
         ToroDocument.DocumentBuilder newDocBuilder = documentBuilderFactory.newDocBuilder();
         newDocBuilder.setRoot(candidate.getRoot());
         newDocBuilder.setRoot(copyBuilder.build());
