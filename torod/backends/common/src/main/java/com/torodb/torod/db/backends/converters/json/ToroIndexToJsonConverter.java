@@ -5,6 +5,7 @@ import com.google.common.collect.Sets;
 import com.torodb.torod.core.language.AttributeReference;
 import com.torodb.torod.core.pojos.DefaultNamedToroIndex;
 import com.torodb.torod.core.pojos.IndexedAttributes;
+import com.torodb.torod.core.pojos.IndexedAttributes.IndexType;
 import com.torodb.torod.core.pojos.NamedToroIndex;
 import java.io.StringReader;
 import java.io.StringWriter;
@@ -57,10 +58,10 @@ public class ToroIndexToJsonConverter implements Converter<String, NamedToroInde
             String att = attsArray.getString(i);
             AttributeReference attRef = parseAttRef(att);
             if (descendingAttPos.contains(i)) {
-                builder.addAttribute(attRef, false);
+                builder.addAttribute(attRef, IndexType.desc);
             }
             else {
-                builder.addAttribute(attRef, true);
+                builder.addAttribute(attRef, IndexType.asc);
             }
         }
         
@@ -85,10 +86,10 @@ public class ToroIndexToJsonConverter implements Converter<String, NamedToroInde
         JsonArrayBuilder descBuilder = Json.createArrayBuilder();
         int attPosition = 0;
         boolean hasDescending = false;
-        for (Map.Entry<AttributeReference, Boolean> entry: userObject.getAttributes().entrySet()) {
+        for (Map.Entry<AttributeReference, IndexType> entry: userObject.getAttributes().entrySet()) {
             attsBuilder.add(entry.getKey().toString());
             
-            if (!entry.getValue()) {
+            if (IndexType.desc.equals(entry.getValue())) {
                 descBuilder.add(attPosition);
                 hasDescending = true;
             }
