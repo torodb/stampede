@@ -20,6 +20,16 @@
 
 package com.toro.torod.connection;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+
+import javax.annotation.Nonnull;
+
 import com.google.common.base.Function;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.Iterators;
@@ -29,17 +39,37 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.toro.torod.connection.update.Updator;
-import com.torodb.kvdocument.values.*;
-import com.torodb.kvdocument.values.heap.*;
+import com.torodb.kvdocument.values.KVBoolean;
+import com.torodb.kvdocument.values.KVDouble;
+import com.torodb.kvdocument.values.KVInteger;
+import com.torodb.kvdocument.values.KVLong;
+import com.torodb.kvdocument.values.KVNull;
+import com.torodb.kvdocument.values.KVValue;
+import com.torodb.kvdocument.values.heap.ByteArrayKVMongoObjectId;
+import com.torodb.kvdocument.values.heap.ByteSourceKVBinary;
+import com.torodb.kvdocument.values.heap.DefaultKVMongoTimestamp;
+import com.torodb.kvdocument.values.heap.ListKVArray;
+import com.torodb.kvdocument.values.heap.LocalDateKVDate;
+import com.torodb.kvdocument.values.heap.LocalTimeKVTime;
+import com.torodb.kvdocument.values.heap.LongKVInstant;
+import com.torodb.kvdocument.values.heap.StringKVString;
 import com.torodb.torod.core.ValueRow;
 import com.torodb.torod.core.ValueRow.TranslatorValueRow;
 import com.torodb.torod.core.WriteFailMode;
 import com.torodb.torod.core.config.DocumentBuilderFactory;
-import com.torodb.torod.core.connection.*;
+import com.torodb.torod.core.connection.DeleteResponse;
+import com.torodb.torod.core.connection.InsertResponse;
+import com.torodb.torod.core.connection.ToroTransaction;
+import com.torodb.torod.core.connection.UpdateResponse;
+import com.torodb.torod.core.connection.WriteError;
 import com.torodb.torod.core.cursors.UserCursor;
 import com.torodb.torod.core.d2r.D2RTranslator;
 import com.torodb.torod.core.dbMetaInf.DbMetaInformationCache;
-import com.torodb.torod.core.exceptions.*;
+import com.torodb.torod.core.exceptions.ClosedToroCursorException;
+import com.torodb.torod.core.exceptions.NotAutoclosableCursorException;
+import com.torodb.torod.core.exceptions.ToroImplementationException;
+import com.torodb.torod.core.exceptions.ToroRuntimeException;
+import com.torodb.torod.core.exceptions.UserToroException;
 import com.torodb.torod.core.executor.SessionExecutor;
 import com.torodb.torod.core.executor.SessionTransaction;
 import com.torodb.torod.core.executor.ToroTaskExecutionException;
@@ -47,17 +77,36 @@ import com.torodb.torod.core.language.operations.DeleteOperation;
 import com.torodb.torod.core.language.operations.UpdateOperation;
 import com.torodb.torod.core.language.querycriteria.QueryCriteria;
 import com.torodb.torod.core.language.querycriteria.utils.EqualFactory;
+import com.torodb.torod.core.language.update.CompositeUpdateAction;
+import com.torodb.torod.core.language.update.IncrementUpdateAction;
+import com.torodb.torod.core.language.update.MoveUpdateAction;
+import com.torodb.torod.core.language.update.MultiplyUpdateAction;
+import com.torodb.torod.core.language.update.SetCurrentDateUpdateAction;
+import com.torodb.torod.core.language.update.SetDocumentUpdateAction;
+import com.torodb.torod.core.language.update.SetFieldUpdateAction;
+import com.torodb.torod.core.language.update.UnsetFieldUpdateAction;
 import com.torodb.torod.core.language.update.UpdateAction;
+import com.torodb.torod.core.language.update.utils.UpdateActionVisitor;
 import com.torodb.torod.core.pojos.Database;
 import com.torodb.torod.core.pojos.IndexedAttributes;
 import com.torodb.torod.core.pojos.NamedToroIndex;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.core.subdocument.ToroDocument;
-import com.torodb.torod.core.subdocument.values.*;
-import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import javax.annotation.Nonnull;
+import com.torodb.torod.core.subdocument.values.ScalarArray;
+import com.torodb.torod.core.subdocument.values.ScalarBinary;
+import com.torodb.torod.core.subdocument.values.ScalarBoolean;
+import com.torodb.torod.core.subdocument.values.ScalarDate;
+import com.torodb.torod.core.subdocument.values.ScalarDouble;
+import com.torodb.torod.core.subdocument.values.ScalarInstant;
+import com.torodb.torod.core.subdocument.values.ScalarInteger;
+import com.torodb.torod.core.subdocument.values.ScalarLong;
+import com.torodb.torod.core.subdocument.values.ScalarMongoObjectId;
+import com.torodb.torod.core.subdocument.values.ScalarMongoTimestamp;
+import com.torodb.torod.core.subdocument.values.ScalarNull;
+import com.torodb.torod.core.subdocument.values.ScalarString;
+import com.torodb.torod.core.subdocument.values.ScalarTime;
+import com.torodb.torod.core.subdocument.values.ScalarValue;
+import com.torodb.torod.core.subdocument.values.ScalarValueVisitor;
 
 /**
  *
@@ -238,12 +287,6 @@ public class DefaultToroTransaction implements ToroTransaction {
             List<? extends UpdateOperation> updates,
             WriteFailMode mode
     ) {
-        for (UpdateOperation update : updates) {
-            if (update.isInsertIfNotFound()) {
-                throw new UserToroException("Upsert updates are not supported");
-            }
-        }
-
         UpdateResponse.Builder builder = new UpdateResponse.Builder();
         for (int i = 0; i < updates.size(); i++) {
             UpdateOperation update = updates.get(i);
@@ -379,7 +422,57 @@ public class DefaultToroTransaction implements ToroTransaction {
     }
 
     private ToroDocument documentToInsert(UpdateAction action) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return action.accept(new DocumentToInsertOnUpdateActionVisitor(documentBuilderFactory), null);
+    }
+
+    private static class DocumentToInsertOnUpdateActionVisitor implements UpdateActionVisitor<ToroDocument, Void> {
+        private final DocumentBuilderFactory documentBuilderFactory;
+        
+        private DocumentToInsertOnUpdateActionVisitor(DocumentBuilderFactory documentBuilderFactory) {
+            this.documentBuilderFactory = documentBuilderFactory;
+        }
+        
+        @Override
+        public ToroDocument visit(IncrementUpdateAction action, Void arg) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public ToroDocument visit(MultiplyUpdateAction action, Void arg) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public ToroDocument visit(MoveUpdateAction action, Void arg) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public ToroDocument visit(SetCurrentDateUpdateAction action, Void arg) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public ToroDocument visit(SetFieldUpdateAction action, Void arg) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public ToroDocument visit(SetDocumentUpdateAction action, Void arg) {
+            return documentBuilderFactory.newDocBuilder()
+                    .setRoot(action.getNewValue())
+                    .build();
+        }
+
+        @Override
+        public ToroDocument visit(UnsetFieldUpdateAction action, Void arg) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public ToroDocument visit(CompositeUpdateAction action, Void arg) {
+            throw new UnsupportedOperationException();
+        }
     }
 
     private static class IteratorTranslator<I,O> implements Function<Iterator<I>, Iterator<O>> {
