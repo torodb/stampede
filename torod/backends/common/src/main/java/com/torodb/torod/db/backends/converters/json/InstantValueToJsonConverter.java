@@ -20,51 +20,17 @@
 
 package com.torodb.torod.db.backends.converters.json;
 
-import org.threeten.bp.Instant;
-import org.threeten.bp.ZoneOffset;
-import org.threeten.bp.format.DateTimeFormatter;
-import org.threeten.bp.format.DateTimeFormatterBuilder;
-import org.threeten.bp.format.ResolverStyle;
-
-import static org.threeten.bp.temporal.ChronoField.DAY_OF_MONTH;
-import static org.threeten.bp.temporal.ChronoField.MONTH_OF_YEAR;
-import static org.threeten.bp.temporal.ChronoField.YEAR;
-import static org.threeten.bp.temporal.ChronoField.HOUR_OF_DAY;
-import static org.threeten.bp.temporal.ChronoField.MINUTE_OF_HOUR;
-import static org.threeten.bp.temporal.ChronoField.SECOND_OF_MINUTE;
-import static org.threeten.bp.temporal.ChronoField.MILLI_OF_SECOND;
-
+import com.torodb.torod.db.backends.converters.ValueConverter;
 import com.torodb.torod.core.subdocument.values.ScalarInstant;
 import com.torodb.torod.core.subdocument.values.heap.InstantScalarInstant;
-import com.torodb.torod.db.backends.converters.ValueConverter;
+import org.threeten.bp.Instant;
+import org.threeten.bp.format.DateTimeFormatter;
 
 /**
  *
  */
 public class InstantValueToJsonConverter implements
         ValueConverter<String, ScalarInstant> {
-
-    public static final DateTimeFormatter ISO_INSTANT_UTC;
-    static {
-        ISO_INSTANT_UTC = new DateTimeFormatterBuilder()
-            .parseCaseInsensitive()
-            .appendValue(YEAR, 4)
-            .appendLiteral('-')
-            .appendValue(MONTH_OF_YEAR, 2)
-            .appendLiteral('-')
-            .appendValue(DAY_OF_MONTH, 2)
-            .appendLiteral('T')
-            .appendValue(HOUR_OF_DAY, 2)
-            .appendLiteral(':')
-            .appendValue(MINUTE_OF_HOUR, 2)
-            .appendLiteral(':')
-            .appendValue(SECOND_OF_MINUTE, 2)
-            .appendLiteral('.')
-            .appendValue(MILLI_OF_SECOND, 3)
-            .toFormatter()
-            .withResolverStyle(ResolverStyle.STRICT)
-            .withZone(ZoneOffset.UTC);
-    }
 
     @Override
     public Class<? extends String> getJsonClass() {
@@ -83,8 +49,6 @@ public class InstantValueToJsonConverter implements
 
     @Override
     public ScalarInstant toValue(String value) {
-        return new InstantScalarInstant(Instant.from(ISO_INSTANT_UTC.parse(value)));
+        return new InstantScalarInstant(Instant.from(DateTimeFormatter.ISO_OFFSET_DATE_TIME.parse(value)));
     }
-    
-    
 }
