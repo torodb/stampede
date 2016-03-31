@@ -41,9 +41,6 @@ public abstract class AbstractDbBackend implements DbBackend {
 
     private static final int JOB_DEPENDENCY_STRIPES = 16;
     private static final int CACHE_SUB_DOC_TYPE_STRIPES = 64;
-    private static final long DEFAULT_CURSOR_TIMEOUT = 10 * 60 * 1000;
-
-    private static final long POOL_CONNECTION_TIMEOUT = 10L * 1000;
 
     private final DbBackendConfiguration configuration;
     private HikariDataSource commonDataSource;
@@ -107,7 +104,7 @@ public abstract class AbstractDbBackend implements DbBackend {
         hikariConfig.setDataSource(getConfiguredDataSource(configuration, poolName));
 
         // Apply ToroDB-specific datasource configuration
-        hikariConfig.setConnectionTimeout(POOL_CONNECTION_TIMEOUT);
+        hikariConfig.setConnectionTimeout(configuration.getConnectionPoolTimeout());
         hikariConfig.setPoolName(poolName);
         hikariConfig.setMaximumPoolSize(poolSize);
         /*
@@ -159,7 +156,7 @@ public abstract class AbstractDbBackend implements DbBackend {
 
     @Override
     public long getDefaultCursorTimeout() {
-        return DEFAULT_CURSOR_TIMEOUT;
+        return configuration.getCursorTimeout();
     }
 
     @Override

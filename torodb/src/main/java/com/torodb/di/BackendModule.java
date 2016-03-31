@@ -74,8 +74,10 @@ public class BackendModule extends AbstractModule implements BackendImplementati
 	@Singleton
 	public static class DbBackendConfigurationMapper implements DbBackendConfiguration {
 
-		private final int connectionPoolSize;
-		private final int reservedReadPoolSize;
+        private final long cursorTimeout;
+        private final long connectionPoolTimeout;
+        private final int connectionPoolSize;
+        private final int reservedReadPoolSize;
 		private final String dbHost;
 		private final int dbPort;
 		private final String dbName;
@@ -85,7 +87,9 @@ public class BackendModule extends AbstractModule implements BackendImplementati
 		@Inject
 		public DbBackendConfigurationMapper(Config config, Postgres postgres) {
 			super();
-			this.connectionPoolSize = config.getGeneric().getConnectionPoolSize();
+            this.cursorTimeout = config.getProtocol().getMongo().getCursorTimeout();
+            this.connectionPoolTimeout = config.getGeneric().getConnectionPoolTimeout();
+            this.connectionPoolSize = config.getGeneric().getConnectionPoolSize();
 			this.reservedReadPoolSize = config.getGeneric().getReservedReadPoolSize();
 			this.dbHost = postgres.getHost();
 			this.dbPort = postgres.getPort();
@@ -95,6 +99,16 @@ public class BackendModule extends AbstractModule implements BackendImplementati
 		}
 
 		@Override
+        public long getCursorTimeout() {
+            return cursorTimeout;
+        }
+
+        @Override
+        public long getConnectionPoolTimeout() {
+            return 0;
+        }
+
+        @Override
 		public int getConnectionPoolSize() {
 			return connectionPoolSize;
 		}
