@@ -64,7 +64,7 @@ public class QueryRoutine {
                 "OBL_UNSATISFIED_OBLIGATION"
             })
     public List<SplitDocument> execute(
-            Configuration configuration, IndexStorage.CollectionSchema colSchema, Integer[] requestedDocs, Projection projection,
+            Configuration configuration, IndexStorage.CollectionSchema colSchema, Integer[] requestedDocs, Projection projection, boolean forUpdate,
             @Nonnull DatabaseInterface databaseInterface
     ) {
 
@@ -79,7 +79,8 @@ public class QueryRoutine {
                 DOC_ID,
                 TYPE_ID,
                 INDEX,
-                _JSON))) {
+                _JSON,
+                forUpdate))) {
 
             ps.setString(1, colSchema.getName());
 

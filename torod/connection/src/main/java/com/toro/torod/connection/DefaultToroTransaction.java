@@ -38,7 +38,6 @@ import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
-import com.toro.torod.connection.update.Updator;
 import com.torodb.kvdocument.values.KVBoolean;
 import com.torodb.kvdocument.values.KVDouble;
 import com.torodb.kvdocument.values.KVInteger;
@@ -56,17 +55,13 @@ import com.torodb.kvdocument.values.heap.StringKVString;
 import com.torodb.torod.core.ValueRow;
 import com.torodb.torod.core.ValueRow.TranslatorValueRow;
 import com.torodb.torod.core.WriteFailMode;
-import com.torodb.torod.core.config.DocumentBuilderFactory;
 import com.torodb.torod.core.connection.DeleteResponse;
 import com.torodb.torod.core.connection.InsertResponse;
 import com.torodb.torod.core.connection.ToroTransaction;
 import com.torodb.torod.core.connection.UpdateResponse;
 import com.torodb.torod.core.connection.WriteError;
-import com.torodb.torod.core.cursors.UserCursor;
 import com.torodb.torod.core.d2r.D2RTranslator;
 import com.torodb.torod.core.dbMetaInf.DbMetaInformationCache;
-import com.torodb.torod.core.exceptions.ClosedToroCursorException;
-import com.torodb.torod.core.exceptions.NotAutoclosableCursorException;
 import com.torodb.torod.core.exceptions.ToroImplementationException;
 import com.torodb.torod.core.exceptions.ToroRuntimeException;
 import com.torodb.torod.core.exceptions.UserToroException;
@@ -77,14 +72,6 @@ import com.torodb.torod.core.language.operations.DeleteOperation;
 import com.torodb.torod.core.language.operations.UpdateOperation;
 import com.torodb.torod.core.language.querycriteria.QueryCriteria;
 import com.torodb.torod.core.language.querycriteria.utils.EqualFactory;
-import com.torodb.torod.core.language.update.CompositeUpdateAction;
-import com.torodb.torod.core.language.update.IncrementUpdateAction;
-import com.torodb.torod.core.language.update.MoveUpdateAction;
-import com.torodb.torod.core.language.update.MultiplyUpdateAction;
-import com.torodb.torod.core.language.update.SetCurrentDateUpdateAction;
-import com.torodb.torod.core.language.update.SetDocumentUpdateAction;
-import com.torodb.torod.core.language.update.SetFieldUpdateAction;
-import com.torodb.torod.core.language.update.UnsetFieldUpdateAction;
 import com.torodb.torod.core.language.update.UpdateAction;
 import com.torodb.torod.core.language.update.utils.UpdateActionVisitor;
 import com.torodb.torod.core.pojos.Database;
@@ -117,22 +104,16 @@ public class DefaultToroTransaction implements ToroTransaction {
     private final SessionTransaction sessionTransaction;
     private final D2RTranslator d2r;
     private final SessionExecutor executor;
-    private final DocumentBuilderFactory documentBuilderFactory;
-    private final DefaultToroConnection connection;
     
     DefaultToroTransaction(
             DbMetaInformationCache cache,
-            DefaultToroConnection connection,
             SessionTransaction sessionTransaction,
             D2RTranslator d2r,
-            SessionExecutor executor,
-            DocumentBuilderFactory documentBuilderFactory) {
+            SessionExecutor executor) {
         this.cache = cache;
-        this.connection = connection;
         this.sessionTransaction = sessionTransaction;
         this.d2r = d2r;
         this.executor = executor;
-        this.documentBuilderFactory = documentBuilderFactory;
     }
 
     @Override
@@ -285,14 +266,23 @@ public class DefaultToroTransaction implements ToroTransaction {
     public ListenableFuture<UpdateResponse> update(
             String collection,
             List<? extends UpdateOperation> updates,
-            WriteFailMode mode
+            WriteFailMode mode,
+            UpdateActionVisitor<ToroDocument, Void> updateActionVisitorDocumentToInsert,
+            UpdateActionVisitor<UpdatedToroDocument, ToroDocument> updateActionVisitorDocumentToUpdate
     ) {
+        cache.createCollection(executor, collection, null);
         UpdateResponse.Builder builder = new UpdateResponse.Builder();
-        for (int i = 0; i < updates.size(); i++) {
-            UpdateOperation update = updates.get(i);
+        for (int updateIndex = 0; updateIndex < updates.size(); updateIndex++) {
+            UpdateOperation update = updates.get(updateIndex);
 
             try {
-                update(collection, update, builder);
+                update(
+                        collection, 
+                        update, 
+                        updateIndex, 
+                        updateActionVisitorDocumentToInsert, 
+                        updateActionVisitorDocumentToUpdate, 
+                        builder);
             }
             catch (InterruptedException | ExecutionException ex) {
                 throw new ToroImplementationException(ex);
@@ -300,7 +290,7 @@ public class DefaultToroTransaction implements ToroTransaction {
             catch (UserToroException ex) {
                 builder.addError(
                         new WriteError(
-                                i,
+                                updateIndex,
                                 -1,
                                 ex.getLocalizedMessage()
                         )
@@ -314,40 +304,19 @@ public class DefaultToroTransaction implements ToroTransaction {
     private void update(
             String collection,
             UpdateOperation update,
+            int updateIndex,
+            UpdateActionVisitor<ToroDocument, Void> updateActionVisitorDocumentToInsert,
+            UpdateActionVisitor<UpdatedToroDocument, ToroDocument> updateActionVisitorDocumentToUpdate,
             UpdateResponse.Builder responseBuilder
     ) throws InterruptedException, ExecutionException {
-
-        UserCursor cursor;
-        try {
-            cursor = connection.openUnlimitedCursor(
-                            collection,
-                            update.getQuery(),
-                            null,
-                            0,
-                            true,
-                            false
-                    );
-        }
-        catch (NotAutoclosableCursorException ex) {
-            throw new ToroImplementationException("This should not happen!", ex);
-        }
-        List<ToroDocument> candidates;
-        try {
-            candidates = cursor.readAll().toList();
-        }
-        catch (ClosedToroCursorException ex) {
-            throw new ToroImplementationException(
-                    "The used cursor has been closed before it can be used", 
-                    ex
-            );
-        }
+        List<ToroDocument> candidates = sessionTransaction.readAll(collection, update.getQuery()).get();
 
         responseBuilder.addCandidates(candidates.size());
 
         if (candidates.isEmpty()) {
             if (update.isInsertIfNotFound()) {
                 ToroDocument documentToInsert = documentToInsert(update.
-                        getAction());
+                        getAction(), updateActionVisitorDocumentToInsert);
                 Future<InsertResponse> insertFuture = insertDocuments(
                         collection,
                         FluentIterable.from(
@@ -359,20 +328,19 @@ public class DefaultToroTransaction implements ToroTransaction {
                 );
                 //as we are using a synchronized update, we need to wait until the insert is executed
                 insertFuture.get();
+                responseBuilder.addInsertedDocument(documentToInsert, updateIndex);
+                responseBuilder.addCandidates(1);
             }
         }
         Set<ToroDocument> objectsToDelete = Sets.newHashSet();
         Set<ToroDocument> objectsToInsert = Sets.newHashSet();
         for (ToroDocument candidate : candidates) {
-            ToroDocument newDoc = Updator.update(
-                    candidate,
-                    update.getAction(),
-                    responseBuilder,
-                    documentBuilderFactory
-            );
-            if (newDoc != null) {
+            UpdatedToroDocument documentUpdated = documentUpdated(update.getAction(), candidate, updateActionVisitorDocumentToUpdate);
+            if (documentUpdated.isUpdated()) {
+                responseBuilder.incrementModified(1);
+
                 objectsToDelete.add(candidate);
-                objectsToInsert.add(newDoc);
+                objectsToInsert.add(documentUpdated);
 
                 if (update.isJustOne()) {
                     break;
@@ -421,58 +389,12 @@ public class DefaultToroTransaction implements ToroTransaction {
 
     }
 
-    private ToroDocument documentToInsert(UpdateAction action) {
-        return action.accept(new DocumentToInsertOnUpdateActionVisitor(documentBuilderFactory), null);
+    private ToroDocument documentToInsert(UpdateAction action, UpdateActionVisitor<ToroDocument, Void> updateActionVisitorDocumentToInsert) {
+        return action.accept(updateActionVisitorDocumentToInsert, null);
     }
 
-    private static class DocumentToInsertOnUpdateActionVisitor implements UpdateActionVisitor<ToroDocument, Void> {
-        private final DocumentBuilderFactory documentBuilderFactory;
-        
-        private DocumentToInsertOnUpdateActionVisitor(DocumentBuilderFactory documentBuilderFactory) {
-            this.documentBuilderFactory = documentBuilderFactory;
-        }
-        
-        @Override
-        public ToroDocument visit(IncrementUpdateAction action, Void arg) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public ToroDocument visit(MultiplyUpdateAction action, Void arg) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public ToroDocument visit(MoveUpdateAction action, Void arg) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public ToroDocument visit(SetCurrentDateUpdateAction action, Void arg) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public ToroDocument visit(SetFieldUpdateAction action, Void arg) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public ToroDocument visit(SetDocumentUpdateAction action, Void arg) {
-            return documentBuilderFactory.newDocBuilder()
-                    .setRoot(action.getNewValue())
-                    .build();
-        }
-
-        @Override
-        public ToroDocument visit(UnsetFieldUpdateAction action, Void arg) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public ToroDocument visit(CompositeUpdateAction action, Void arg) {
-            throw new UnsupportedOperationException();
-        }
+    private UpdatedToroDocument documentUpdated(UpdateAction action, ToroDocument candidate, UpdateActionVisitor<UpdatedToroDocument, ToroDocument> updateActionVisitorDocumentToUpdate) {
+        return action.accept(updateActionVisitorDocumentToUpdate, candidate);
     }
 
     private static class IteratorTranslator<I,O> implements Function<Iterator<I>, Iterator<O>> {

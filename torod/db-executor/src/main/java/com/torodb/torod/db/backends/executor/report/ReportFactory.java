@@ -48,6 +48,8 @@ public interface ReportFactory {
 
     public CountCallable.Report createCountReport();
 
+    public ReadAllCallable.Report createReadAllReport();
+
     public GetIndexSizeCallable.Report createGetIndexSizeReport();
 
     public GetCollectionSizeCallable.Report createGetCollectionSizeReport();

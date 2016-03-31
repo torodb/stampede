@@ -57,7 +57,7 @@ public interface DatabaseInterface extends Serializable {
 
     @Nonnull String findDocsSelectStatement(
             @Nonnull String didName, @Nonnull String typeIdName, @Nonnull String indexName,
-            @Nonnull String jsonName
+            @Nonnull String jsonName, boolean forUpdate
     );
 
     @Nonnull String createIndexStatement(

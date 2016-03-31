@@ -18,49 +18,49 @@
  *     
  */
 
-package com.toro.torod.connection.update;
+package com.torodb.torod.mongodb.commands.impl.general.update;
 
 import com.torodb.kvdocument.values.*;
 import com.torodb.torod.core.exceptions.UserToroException;
 import com.torodb.torod.core.language.AttributeReference;
 import java.util.Collection;
 
+
 /**
  *
  */
-class IncrementUpdateActionExecutor implements ResolvedCallback<Boolean> {
+class MultiplyUpdateActionExecutor implements ResolvedCallback<Boolean> {
 
-    private static final Incrementer INCREMENTER = new Incrementer();
-    private final KVNumeric<?> delta;
+    private static final Multiplicator MULTIPLICATOR = new Multiplicator();
+    private final KVNumeric<?> multiplier;
 
-    public IncrementUpdateActionExecutor(KVNumeric<?> delta) {
-        this.delta = delta;
+    private MultiplyUpdateActionExecutor(KVNumeric<?> multiplier) {
+        this.multiplier = multiplier;
     }
 
-    static <K> boolean increment(
+    static <K> boolean multiply(
             BuilderCallback<K> builder,
             Collection<AttributeReference> keys,
-            KVNumeric<?> delta
+            KVNumeric<?> multiplier
     ) {
-
         for (AttributeReference key : keys) {
-            if (increment(builder, key, delta)) {
+            if (multiply(builder, key, multiplier)) {
                 return true;
             }
         }
-
         return false;
     }
 
-    static <K> boolean increment(
+    static <K> boolean multiply(
             BuilderCallback<K> builder,
             AttributeReference key,
-            KVNumeric delta
+            KVNumeric<?> multiplier
     ) {
-        Boolean result = AttributeReferenceToBuilderCallback.resolve(builder,
+        Boolean result = AttributeReferenceToBuilderCallback.resolve(
+                builder,
                 key.getKeys(),
                 true,
-                new IncrementUpdateActionExecutor(delta)
+                new MultiplyUpdateActionExecutor(multiplier)
         );
         if (result == null) {
             return false;
@@ -72,10 +72,10 @@ class IncrementUpdateActionExecutor implements ResolvedCallback<Boolean> {
     public <K> Boolean objectReferenced(
             BuilderCallback<K> parentBuilder,
             K key,
-            KVDocumentBuilder child
+            MongoUpdatedToroDocumentBuilder child
     ) {
         throw new UserToroException(
-                "Cannot increment a value of a non-numeric type. "
+                "Cannot multiply a value of a non-numeric type. "
                 + parentBuilder + " has the field '" + key + "' of "
                 + "non-numeric type object");
     }
@@ -87,7 +87,7 @@ class IncrementUpdateActionExecutor implements ResolvedCallback<Boolean> {
             KVArrayBuilder child
     ) {
         throw new UserToroException(
-                "Cannot increment a value of a non-numeric type. "
+                "Cannot multiply a value of a non-numeric type. "
                 + parentBuilder + " has the field '" + key + "' of "
                 + "non-numeric type array");
     }
@@ -104,8 +104,8 @@ class IncrementUpdateActionExecutor implements ResolvedCallback<Boolean> {
                     + parentBuilder + " has the field '" + key + "' of "
                     + "non-numeric type " + child.getType());
         }
-        KVNumeric<?> numericChild = (KVNumeric) child;
-        parentBuilder.setValue(key, numericChild.accept(INCREMENTER, delta));
+        KVNumeric<?> numericChild = (KVNumeric<?>) child;
+        parentBuilder.setValue(key, numericChild.accept(MULTIPLICATOR, multiplier));
         return true;
     }
 
@@ -114,33 +114,32 @@ class IncrementUpdateActionExecutor implements ResolvedCallback<Boolean> {
             BuilderCallback<K> parentBuilder,
             K key
     ) {
-        parentBuilder.setValue(key, delta);
+        parentBuilder.setValue(key, multiplier.accept(MULTIPLICATOR, KVInteger.of(0)));
         return true;
     }
 
-    private static class Incrementer extends KVValueAdaptor<KVNumeric<?>, KVNumeric<?>> {
+    private static class Multiplicator extends KVValueAdaptor<KVNumeric<?>, KVNumeric<?>> {
 
         @Override
         public KVNumeric<?> visit(KVDouble value, KVNumeric<?> arg) {
-            return KVDouble.of(value.doubleValue() + arg.doubleValue());
+            return KVDouble.of(value.doubleValue() * arg.doubleValue());
         }
 
         @Override
         public KVNumeric<?> visit(KVLong value, KVNumeric<?> arg) {
-            return KVDouble.of(value.doubleValue() + arg.doubleValue());
+            return KVDouble.of(value.doubleValue() * arg.doubleValue());
         }
 
         @Override
         public KVNumeric<?> visit(KVInteger value, KVNumeric<?> arg) {
-            return KVDouble.of(value.doubleValue() + arg.doubleValue());
+            return KVDouble.of(value.doubleValue() * arg.doubleValue());
         }
 
         @Override
         public KVNumeric<?> defaultCase(KVValue<?> value, KVNumeric<?> arg) {
-            throw new AssertionError("Trying to increment a value of type " + value.getType() + " which is not a number");
+            throw new AssertionError("Trying to multiply a value of type " + value.getType() + " which is not a number");
         }
 
     }
-
 
 }

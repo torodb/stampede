@@ -27,6 +27,7 @@ import com.torodb.torod.core.cursors.UserCursor;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.exceptions.CursorNotFoundException;
 import com.torodb.torod.core.exceptions.ToroException;
+import com.torodb.torod.core.executor.SessionTransaction;
 import com.torodb.torod.core.language.projection.Projection;
 import com.torodb.torod.core.language.querycriteria.QueryCriteria;
 import com.torodb.torod.core.pojos.CollectionMetainfo;
@@ -66,6 +67,7 @@ public interface ToroConnection extends Closeable {
      * @param autoclose
      * @param hasTimeout
      * @return
+     * @see SessionTransaction#readAll(String, QueryCriteria)
      * @throws ToroException
      */
     @Nonnull
@@ -89,6 +91,7 @@ public interface ToroConnection extends Closeable {
      * @param autoclose
      * @param hasTimeout
      * @return
+     * @see SessionTransaction#readAll(String, QueryCriteria)
      * @throws ToroException
      */
     @Nonnull

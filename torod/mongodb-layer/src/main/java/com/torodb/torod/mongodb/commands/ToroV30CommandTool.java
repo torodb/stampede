@@ -55,6 +55,7 @@ import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.net.HostAndPort;
+import com.torodb.torod.core.config.DocumentBuilderFactory;
 import com.torodb.torod.mongodb.commands.impl.admin.*;
 import com.torodb.torod.mongodb.commands.impl.aggregation.CountImplementation;
 import com.torodb.torod.mongodb.commands.impl.diagnostic.CollStatsImplementation;
@@ -64,6 +65,7 @@ import com.torodb.torod.mongodb.commands.impl.general.DeleteImplementation;
 import com.torodb.torod.mongodb.commands.impl.general.GetLastErrorImplementation;
 import com.torodb.torod.mongodb.commands.impl.general.InsertImplementation;
 import com.torodb.torod.mongodb.commands.impl.general.UpdateImplementation;
+import com.torodb.torod.mongodb.repl.ObjectIdFactory;
 import com.torodb.torod.mongodb.translator.QueryCriteriaTranslator;
 import java.util.Map.Entry;
 import javax.inject.Inject;
@@ -227,13 +229,19 @@ public class ToroV30CommandTool {
     static class MyGeneralCommandsImplementationBuilder extends GeneralCommandsImplementationsBuilder {
         private final WriteConcernToWriteFailModeFunction toWriteFailModeFunction;
         private final QueryCriteriaTranslator queryCriteriaTranslator;
+        private final DocumentBuilderFactory documentBuilderFactory;
+        private final ObjectIdFactory objectIdFactory;
 
         @Inject
         public MyGeneralCommandsImplementationBuilder(
                 WriteConcernToWriteFailModeFunction toWriteFailModeFunction,
-                QueryCriteriaTranslator queryCriteriaTranslator) {
+                QueryCriteriaTranslator queryCriteriaTranslator,
+                DocumentBuilderFactory documentBuilderFactory, 
+                ObjectIdFactory objectIdFactory) {
             this.toWriteFailModeFunction = toWriteFailModeFunction;
             this.queryCriteriaTranslator = queryCriteriaTranslator;
+            this.documentBuilderFactory = documentBuilderFactory;
+            this.objectIdFactory = objectIdFactory;
         }
 
         @Override
@@ -253,7 +261,7 @@ public class ToroV30CommandTool {
 
         @Override
         public CommandImplementation<UpdateArgument, UpdateResult> getUpdateImplementation() {
-            return new UpdateImplementation(toWriteFailModeFunction, queryCriteriaTranslator);
+            return new UpdateImplementation(toWriteFailModeFunction, queryCriteriaTranslator, documentBuilderFactory, objectIdFactory);
         }
 
     }

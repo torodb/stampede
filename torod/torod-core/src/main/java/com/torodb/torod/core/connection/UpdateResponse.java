@@ -20,9 +20,12 @@
 
 package com.torodb.torod.core.connection;
 
-import com.google.common.collect.Lists;
 import java.util.Collection;
 import java.util.List;
+
+import com.google.common.collect.Lists;
+import com.torodb.torod.core.subdocument.ToroDocument;
+import com.torodb.torod.core.subdocument.values.ScalarValue;
 
 /**
  *
@@ -106,7 +109,7 @@ public class UpdateResponse {
             return this;
         }
 
-        public Builder addInsertedDocument(int docId, int operationIndex) {
+        public Builder addInsertedDocument(ToroDocument docId, int operationIndex) {
             if (built) {
                 throw new IllegalStateException("This builder cannot be reused");
             }
@@ -131,19 +134,19 @@ public class UpdateResponse {
     public static class InsertedDocuments {
 
         private final int operationIndex;
-        private final int docId;
+        private final ToroDocument doc;
 
-        private InsertedDocuments(int docId, int operationIndex) {
+        private InsertedDocuments(ToroDocument doc, int operationIndex) {
             this.operationIndex = operationIndex;
-            this.docId = docId;
+            this.doc = doc;
         }
 
         public int getOperationIndex() {
             return operationIndex;
         }
 
-        public int getDocId() {
-            return docId;
+        public ToroDocument getDoc() {
+            return doc;
         }
     }
     

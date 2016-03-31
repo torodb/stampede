@@ -17,7 +17,7 @@
  * Copyright (C) 2016 8Kdata.
  *
  */
-package com.toro.torod.connection.update;
+package com.torodb.torod.mongodb.commands.impl.general.update;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -29,6 +29,8 @@ import com.torodb.kvdocument.values.KVDocument;
 import com.torodb.kvdocument.values.KVNull;
 import com.torodb.kvdocument.values.KVValue;
 import com.torodb.kvdocument.values.heap.ListKVArray;
+import com.torodb.torod.core.config.DocumentBuilderFactory;
+
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nonnull;
@@ -38,32 +40,35 @@ import javax.annotation.Nonnull;
  */
 class KVArrayBuilder {
 
+    private final DocumentBuilderFactory documentBuilderFactory;
     private boolean built;
     private List<KVValue<?>> values;
     private final Map<Integer, KVArrayBuilder> subArrayBuilders
             = Maps.newHashMap();
-    private final Map<Integer, KVDocumentBuilder> subObjectBuilders
+    private final Map<Integer, MongoUpdatedToroDocumentBuilder> subObjectBuilders
             = Maps.newHashMap();
 
-    private KVArrayBuilder() {
+    private KVArrayBuilder(DocumentBuilderFactory documentBuilderFactory) {
+        this.documentBuilderFactory = documentBuilderFactory;
         built = false;
         values = Lists.newArrayList();
     }
 
-    public KVArrayBuilder(int expectedSize) {
+    public KVArrayBuilder(int expectedSize, DocumentBuilderFactory documentBuilderFactory) {
+        this.documentBuilderFactory = documentBuilderFactory;
         built = false;
         values = Lists.newArrayListWithExpectedSize(expectedSize);
     }
 
-    public static KVArrayBuilder from(KVArray original) {
-        KVArrayBuilder result = new KVArrayBuilder();
+    public static KVArrayBuilder from(KVArray original, DocumentBuilderFactory documentBuilderFactory) {
+        KVArrayBuilder result = new KVArrayBuilder(documentBuilderFactory);
         result.copy(original);
 
         return result;
     }
 
-    public static KVArrayBuilder create() {
-        return new KVArrayBuilder();
+    public static KVArrayBuilder create(DocumentBuilderFactory documentBuilderFactory) {
+        return new KVArrayBuilder(documentBuilderFactory);
     }
 
     public boolean contains(int key) {
@@ -105,8 +110,8 @@ class KVArrayBuilder {
     }
 
     @Nonnull
-    public KVDocumentBuilder getObjectBuilder(int index) {
-        KVDocumentBuilder result = subObjectBuilders.get(index);
+    public MongoUpdatedToroDocumentBuilder getObjectBuilder(int index) {
+        MongoUpdatedToroDocumentBuilder result = subObjectBuilders.get(index);
         if (result == null) {
             throw new IllegalArgumentException(
                     "There is no object builder associated to '" + index + "' key");
@@ -128,7 +133,7 @@ class KVArrayBuilder {
         subArrayBuilders.put(index, builder);
     }
 
-    private void setObjectBuilder(int index, KVDocumentBuilder builder) {
+    private void setObjectBuilder(int index, MongoUpdatedToroDocumentBuilder builder) {
         prepareSize(index);
         values.set(index, null);
         subObjectBuilders.put(index, builder);
@@ -138,16 +143,16 @@ class KVArrayBuilder {
     public KVArrayBuilder newArray(int index) {
         checkNewBuild();
 
-        KVArrayBuilder result = new KVArrayBuilder();
+        KVArrayBuilder result = new KVArrayBuilder(documentBuilderFactory);
         setArrayBuilder(index, result);
 
         return result;
     }
 
-    public KVDocumentBuilder newObject(int index) {
+    public MongoUpdatedToroDocumentBuilder newObject(int index) {
         checkNewBuild();
 
-        KVDocumentBuilder result = KVDocumentBuilder.create();
+        MongoUpdatedToroDocumentBuilder result = MongoUpdatedToroDocumentBuilder.create(documentBuilderFactory);
         setObjectBuilder(index, result);
 
         return result;
@@ -185,13 +190,13 @@ class KVArrayBuilder {
     public KVArray build() {
         built = true;
 
-        for (Map.Entry<Integer, KVDocumentBuilder> objectBuilder
+        for (Map.Entry<Integer, MongoUpdatedToroDocumentBuilder> objectBuilder
                 : subObjectBuilders.entrySet()) {
 
             KVValue oldValue
                     = values.set(
                             objectBuilder.getKey(),
-                            objectBuilder.getValue().build()
+                            objectBuilder.getValue().buildRoot()
                     );
 
             assert oldValue == null;
@@ -254,7 +259,7 @@ class KVArrayBuilder {
                 KVArrayBuilder childBuilder = newArray(i);
                 childBuilder.copy((KVArray) value);
             } else if (value instanceof KVDocument) {
-                KVDocumentBuilder childBuilder = newObject(i);
+                MongoUpdatedToroDocumentBuilder childBuilder = newObject(i);
                 childBuilder.copy((KVDocument) value);
             } else {
                 setValue(i, value);

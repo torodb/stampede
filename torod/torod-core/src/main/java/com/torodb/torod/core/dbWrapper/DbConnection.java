@@ -33,6 +33,7 @@ import com.torodb.torod.core.pojos.NamedToroIndex;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.core.subdocument.SubDocType;
 import com.torodb.torod.core.subdocument.SubDocument;
+import com.torodb.torod.core.subdocument.ToroDocument;
 import com.torodb.torod.core.subdocument.values.ScalarValue;
 import java.util.Collection;
 import java.util.Iterator;
@@ -166,6 +167,8 @@ public interface DbConnection extends AutoCloseable {
     public Collection<? extends NamedToroIndex> getIndexes(String collection);
 
     public Integer count(String collection, QueryCriteria query);
+
+    public List<ToroDocument> readAll(String collection, QueryCriteria query);
 
     public Long getCollectionSize(String collection);
     

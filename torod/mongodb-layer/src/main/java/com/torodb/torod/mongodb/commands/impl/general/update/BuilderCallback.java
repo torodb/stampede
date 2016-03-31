@@ -18,26 +18,41 @@
  *     
  */
 
-package com.toro.torod.connection.update;
+package com.torodb.torod.mongodb.commands.impl.general.update;
 
-import com.torodb.kvdocument.values.KVDocument;
-import com.torodb.kvdocument.values.KVDocument.DocEntry;
+import com.torodb.kvdocument.values.KVValue;
+import javax.annotation.Nonnull;
 
 /**
  *
  */
-public class SetDocumentUpdateActionExecutor {
+interface BuilderCallback<K> {
+
+    Class<K> getKeyClass();
     
-    static boolean set(
-            KVDocumentBuilder builder,
-            KVDocument newValue
-    ) {
-        builder.clear();
-        for (DocEntry<?> entry : newValue) {
-            builder.putValue(entry.getKey(), entry.getValue());
-        }
-        
-        return true;
-    }
-    
+    boolean contains(K key);
+
+    boolean isValue(K key);
+
+    @Nonnull
+    KVValue<?> getValue(K key);
+
+    boolean isArrayBuilder(K key);
+
+    @Nonnull
+    KVArrayBuilder getArrayBuilder(K key);
+
+    boolean isObjectBuilder(K key);
+
+    @Nonnull
+    MongoUpdatedToroDocumentBuilder getObjectBuilder(K key);
+
+    KVArrayBuilder newArray(K key);
+
+    MongoUpdatedToroDocumentBuilder newObject(K key);
+
+    void setValue(K key, KVValue value);
+
+    boolean unset(K key);
+
 }

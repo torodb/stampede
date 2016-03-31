@@ -18,41 +18,36 @@
  *     
  */
 
-package com.toro.torod.connection.update;
+package com.torodb.torod.mongodb.commands.impl.general.update;
 
 import com.torodb.kvdocument.values.KVValue;
-import javax.annotation.Nonnull;
 
 /**
  *
  */
-interface BuilderCallback<K> {
-
-    Class<K> getKeyClass();
+interface ResolvedCallback<R> {
     
-    boolean contains(K key);
-
-    boolean isValue(K key);
-
-    @Nonnull
-    KVValue<?> getValue(K key);
-
-    boolean isArrayBuilder(K key);
-
-    @Nonnull
-    KVArrayBuilder getArrayBuilder(K key);
-
-    boolean isObjectBuilder(K key);
-
-    @Nonnull
-    KVDocumentBuilder getObjectBuilder(K key);
-
-    KVArrayBuilder newArray(K key);
-
-    KVDocumentBuilder newObject(K key);
-
-    void setValue(K key, KVValue value);
-
-    boolean unset(K key);
+    public <K> R objectReferenced(
+            BuilderCallback<K> parentBuilder, 
+            K key,
+            MongoUpdatedToroDocumentBuilder child
+    );
+    
+    public <K> R arrayReferenced(
+            BuilderCallback<K> parentBuilder, 
+            K key,
+            KVArrayBuilder child
+    );
+    
+    public <K> R valueReferenced(
+            BuilderCallback<K> parentBuilder, 
+            K key,
+            KVValue child
+    );
+    
+    public <K> R newElementReferenced(
+            BuilderCallback<K> parentBuilder, 
+            K key
+    );
 
 }
