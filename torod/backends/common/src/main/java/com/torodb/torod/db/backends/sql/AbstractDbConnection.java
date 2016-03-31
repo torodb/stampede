@@ -20,32 +20,6 @@
 
 package com.torodb.torod.db.backends.sql;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Multimap;
-import com.torodb.torod.core.dbWrapper.DbConnection;
-import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
-import com.torodb.torod.core.exceptions.UserToroException;
-import com.torodb.torod.core.language.querycriteria.QueryCriteria;
-import com.torodb.torod.core.pojos.CollectionMetainfo;
-import com.torodb.torod.core.pojos.IndexedAttributes;
-import com.torodb.torod.core.pojos.NamedToroIndex;
-import com.torodb.torod.core.subdocument.SubDocType;
-import com.torodb.torod.core.subdocument.SubDocument;
-import com.torodb.torod.core.subdocument.structure.DocStructure;
-import com.torodb.torod.db.backends.DatabaseInterface;
-import com.torodb.torod.db.backends.exceptions.InvalidCollectionSchemaException;
-import com.torodb.torod.db.backends.meta.IndexStorage;
-import com.torodb.torod.db.backends.meta.Routines;
-import com.torodb.torod.db.backends.meta.TorodbMeta;
-import com.torodb.torod.db.backends.query.QueryEvaluator;
-import com.torodb.torod.db.backends.sql.index.IndexManager;
-import com.torodb.torod.db.backends.sql.index.NamedDbIndex;
-import com.torodb.torod.db.backends.sql.index.UnnamedDbIndex;
-import com.torodb.torod.db.backends.tables.CollectionsTable;
-import com.torodb.torod.db.backends.tables.SubDocTable;
-import com.torodb.torod.db.backends.tables.records.CollectionsRecord;
-import com.torodb.torod.db.backends.tables.records.SubDocTableRecord;
 import java.io.StringReader;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -53,6 +27,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -61,11 +36,49 @@ import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
 import javax.json.JsonStructure;
-import org.jooq.*;
+
+import org.jooq.Configuration;
+import org.jooq.DSLContext;
+import org.jooq.Field;
+import org.jooq.InsertSetMoreStep;
+import org.jooq.Result;
 import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.collect.FluentIterable;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
+import com.torodb.torod.core.d2r.D2RTranslator;
+import com.torodb.torod.core.dbWrapper.DbConnection;
+import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
+import com.torodb.torod.core.exceptions.UserToroException;
+import com.torodb.torod.core.language.querycriteria.QueryCriteria;
+import com.torodb.torod.core.pojos.CollectionMetainfo;
+import com.torodb.torod.core.pojos.IndexedAttributes;
+import com.torodb.torod.core.pojos.NamedToroIndex;
+import com.torodb.torod.core.subdocument.SplitDocument;
+import com.torodb.torod.core.subdocument.SubDocType;
+import com.torodb.torod.core.subdocument.SubDocument;
+import com.torodb.torod.core.subdocument.ToroDocument;
+import com.torodb.torod.core.subdocument.structure.DocStructure;
+import com.torodb.torod.db.backends.DatabaseInterface;
+import com.torodb.torod.db.backends.exceptions.InvalidCollectionSchemaException;
+import com.torodb.torod.db.backends.meta.IndexStorage;
+import com.torodb.torod.db.backends.meta.Routines;
+import com.torodb.torod.db.backends.meta.TorodbMeta;
+import com.torodb.torod.db.backends.meta.routines.QueryRoutine;
+import com.torodb.torod.db.backends.query.QueryEvaluator;
+import com.torodb.torod.db.backends.sql.index.IndexManager;
+import com.torodb.torod.db.backends.sql.index.NamedDbIndex;
+import com.torodb.torod.db.backends.sql.index.UnnamedDbIndex;
+import com.torodb.torod.db.backends.tables.CollectionsTable;
+import com.torodb.torod.db.backends.tables.SubDocTable;
+import com.torodb.torod.db.backends.tables.records.CollectionsRecord;
+import com.torodb.torod.db.backends.tables.records.SubDocTableRecord;
 
 
 /**
@@ -84,6 +97,8 @@ public abstract class AbstractDbConnection implements
     private final TorodbMeta meta;
     private final Configuration jooqConf;
     private final DSLContext dsl;
+    private final D2RTranslator d2r;
+    private final QueryRoutine queryRoutine;
     private final DatabaseInterface databaseInterface;
     private final Provider<SubDocType.Builder> subDocTypeBuilderProvider;
 
@@ -92,11 +107,15 @@ public abstract class AbstractDbConnection implements
             DSLContext dsl,
             TorodbMeta meta,
             Provider<SubDocType.Builder> subDocTypeBuilderProvider,
+            D2RTranslator d2r,
+            QueryRoutine queryRoutine,
             DatabaseInterface databaseInterface) {
         this.jooqConf = dsl.configuration();
         this.meta = meta;
         this.dsl = dsl;
         this.subDocTypeBuilderProvider = subDocTypeBuilderProvider;
+        this.d2r = d2r;
+        this.queryRoutine = queryRoutine;
         this.databaseInterface = databaseInterface;
     }
 
@@ -448,6 +467,28 @@ public abstract class AbstractDbConnection implements
         );
         
         return dids.size();
+    }
+    
+    @Override
+    public List<ToroDocument> readAll(String collection, QueryCriteria query) {
+        IndexStorage.CollectionSchema colSchema = meta.getCollectionSchema(collection);
+
+        QueryEvaluator queryEvaluator = new QueryEvaluator(colSchema, databaseInterface);
+
+        Set<Integer> dids = queryEvaluator.evaluateDid(
+                query,
+                dsl,
+                0
+        );
+        
+        List<SplitDocument> splitDocs = queryRoutine.execute(getJooqConf(), colSchema, dids.toArray(new Integer[dids.size()]), null, true, databaseInterface);
+        
+        List<ToroDocument> toroDocuments = FluentIterable.from(Iterables.transform(
+                    splitDocs,
+                    d2r.getToDocumentFunction()
+                )).toList();
+        
+        return toroDocuments;
     }
 
 }

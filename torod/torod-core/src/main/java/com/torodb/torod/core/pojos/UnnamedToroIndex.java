@@ -2,6 +2,7 @@
 package com.torodb.torod.core.pojos;
 
 import com.torodb.torod.core.language.AttributeReference;
+import com.torodb.torod.core.pojos.IndexedAttributes.IndexType;
 
 /**
  *
@@ -140,7 +141,7 @@ public final class UnnamedToroIndex implements ToroIndex {
         
         public Builder addIndexedAttribute(
                 AttributeReference attRef, 
-                boolean ascendingOrder) {
+                IndexType ascendingOrder) {
             this.attributesBuilder.addAttribute(attRef, ascendingOrder);
             return this;
         }

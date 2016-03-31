@@ -39,6 +39,7 @@ import com.torodb.torod.core.pojos.Database;
 import com.torodb.torod.core.pojos.IndexedAttributes;
 import com.torodb.torod.core.pojos.NamedToroIndex;
 import com.torodb.torod.core.subdocument.SplitDocument;
+import com.torodb.torod.core.subdocument.ToroDocument;
 import com.torodb.torod.core.subdocument.values.ScalarValue;
 import com.torodb.torod.db.backends.executor.jobs.*;
 import com.torodb.torod.db.backends.executor.report.ReportFactory;
@@ -223,6 +224,19 @@ public class DefaultSessionTransaction implements SessionTransaction {
                         dbConnection,
                         aborter,
                         reportFactory.createCountReport(), 
+                        collection, 
+                        query
+                )
+        );
+    }
+
+    @Override
+    public ListenableFuture<List<ToroDocument>> readAll(String collection, QueryCriteria query) {
+        return submit(
+                new ReadAllCallable(
+                        dbConnection,
+                        aborter,
+                        reportFactory.createReadAllReport(), 
                         collection, 
                         query
                 )

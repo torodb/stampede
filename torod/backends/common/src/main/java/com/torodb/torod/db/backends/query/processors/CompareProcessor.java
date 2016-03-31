@@ -62,6 +62,8 @@ public class CompareProcessor {
                 return Lists.newArrayList(ScalarType.DOUBLE, ScalarType.INTEGER, ScalarType.LONG);
             case STRING:
                 return Collections.singletonList(ScalarType.STRING);
+            case INSTANT:
+                return Collections.singletonList(ScalarType.INSTANT);
             default:
                 throw new IllegalArgumentException("Elements of type " + type + " are not comparables");
         }

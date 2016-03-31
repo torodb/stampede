@@ -9,6 +9,7 @@ import com.torodb.torod.core.exceptions.UserToroException;
 import com.torodb.torod.core.language.AttributeReference;
 import com.torodb.torod.core.pojos.DefaultNamedToroIndex;
 import com.torodb.torod.core.pojos.IndexedAttributes;
+import com.torodb.torod.core.pojos.IndexedAttributes.IndexType;
 import com.torodb.torod.core.pojos.NamedToroIndex;
 import com.torodb.torod.core.pojos.UnnamedToroIndex;
 import com.torodb.torod.core.subdocument.SubDocAttribute;
@@ -235,7 +236,7 @@ public class IndexManager implements Serializable {
         List<UnnamedDbIndex> result
                 = Lists.newArrayListWithCapacity(indexedAtts.size());
 
-        for (Map.Entry<AttributeReference, Boolean> entrySet : indexedAtts.entrySet()) {
+        for (Map.Entry<AttributeReference, IndexType> entrySet : indexedAtts.entrySet()) {
             String tableName = getRelativeIndexedColumnInfo(
                     root,
                     entrySet.getKey()
@@ -246,14 +247,32 @@ public class IndexManager implements Serializable {
 
             List<AttributeReference.Key> keys = entrySet.getKey().getKeys();
 
-            result.add(
-                    new UnnamedDbIndex(
-                            colSchema.getName(),
-                            tableName,
-                            keys.get(keys.size() - 1).toString(),
-                            entrySet.getValue()
-                    )
-            );
+            switch (entrySet.getValue()) {
+            case asc:
+                result.add(
+                        new UnnamedDbIndex(
+                                colSchema.getName(),
+                                tableName,
+                                keys.get(keys.size() - 1).toString(),
+                                true
+                        )
+                );
+                break;
+            case desc:
+                result.add(
+                        new UnnamedDbIndex(
+                                colSchema.getName(),
+                                tableName,
+                                keys.get(keys.size() - 1).toString(),
+                                false
+                        )
+                );
+                break;
+            case text:
+            case geospatial:
+            case hashed:
+                throw new UnsupportedOperationException("Index of type " + entrySet.getValue() + " is not supported.");
+            }
         }
         return result;
     }

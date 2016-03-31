@@ -18,6 +18,7 @@ import com.torodb.torod.core.pojos.NamedToroIndex;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.core.subdocument.SubDocType;
 import com.torodb.torod.core.subdocument.SubDocument;
+import com.torodb.torod.core.subdocument.ToroDocument;
 import com.torodb.torod.core.subdocument.values.ScalarValue;
 import java.util.Collection;
 import java.util.Iterator;
@@ -225,6 +226,16 @@ public class LazyDbWrapper implements DbWrapper {
         public Integer count(String collection, QueryCriteria query) {
             try {
                 return getDelegate().count(collection, query);
+            }
+            catch (ImplementationDbException ex) {
+                throw new ToroImplementationException(ex);
+            }
+        }
+
+        @Override
+        public List<ToroDocument> readAll(String collection, QueryCriteria query) {
+            try {
+                return getDelegate().readAll(collection, query);
             }
             catch (ImplementationDbException ex) {
                 throw new ToroImplementationException(ex);

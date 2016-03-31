@@ -18,7 +18,7 @@
  *     
  */
 
-package com.toro.torod.connection.update;
+package com.torodb.torod.mongodb.commands.impl.general.update;
 
 import com.torodb.kvdocument.values.KVValue;
 import com.torodb.torod.core.language.AttributeReference;
@@ -77,14 +77,14 @@ class MoveUpdateActionExecutor {
         public <K> Boolean objectReferenced(
                 BuilderCallback<K> parentBuilder, 
                 K key, 
-                KVDocumentBuilder child
+                MongoUpdatedToroDocumentBuilder child
         ) {
             parentBuilder.unset(key);
             return AttributeReferenceToBuilderCallback.resolve(
                     rootBuilder, 
                     newKeys.getKeys(), 
                     true, 
-                    new MoveValueCallback(child.build())
+                    new MoveValueCallback(child.buildRoot())
             );
         }
 
@@ -140,7 +140,7 @@ class MoveUpdateActionExecutor {
         public <K> Boolean objectReferenced(
                 BuilderCallback<K> parentBuilder, 
                 K key, 
-                KVDocumentBuilder child
+                MongoUpdatedToroDocumentBuilder child
         ) {
             parentBuilder.setValue(key, newValue);
             return true;

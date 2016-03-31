@@ -20,6 +20,14 @@
 
 package com.torodb.torod.mongodb.commands.impl.admin;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
+
+import javax.inject.Inject;
+
 import com.eightkdata.mongowp.bson.BsonDocument.Entry;
 import com.eightkdata.mongowp.exceptions.CommandFailed;
 import com.eightkdata.mongowp.exceptions.DatabaseNotFoundException;
@@ -44,12 +52,7 @@ import com.torodb.torod.core.language.AttributeReference;
 import com.torodb.torod.core.language.AttributeReference.Builder;
 import com.torodb.torod.core.pojos.IndexedAttributes;
 import com.torodb.torod.mongodb.commands.AbstractToroCommandImplementation;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ExecutionException;
-import javax.inject.Inject;
+import com.torodb.torod.mongodb.utils.IndexTypeUtils;
 
 /**
  *
@@ -83,7 +86,7 @@ public class CreateIndexesImplementation extends AbstractToroCommandImplementati
 
             for (IndexOptions indexOptions : arg.getIndexesToCreate()) {
                 String name = indexOptions.getName();
-                Map<List<String>, Boolean> key = indexOptions.getKeys();
+                Map<List<String>, IndexOptions.IndexType> key = indexOptions.getKeys();
                 boolean unique = indexOptions.isUnique();
                 boolean sparse = indexOptions.isSparse();
 
@@ -124,10 +127,10 @@ public class CreateIndexesImplementation extends AbstractToroCommandImplementati
                 IndexedAttributes.Builder indexedAttsBuilder
                         = new IndexedAttributes.Builder();
 
-                for (java.util.Map.Entry<List<String>, Boolean> entry : key.entrySet()) {
+                for (java.util.Map.Entry<List<String>, IndexOptions.IndexType> entry : key.entrySet()) {
                     AttributeReference attRef = parseAttributeReference(entry.getKey());
 
-                    indexedAttsBuilder.addAttribute(attRef, entry.getValue());
+                    indexedAttsBuilder.addAttribute(attRef, IndexTypeUtils.toIndexType(entry.getValue()));
                 }
 
                 transaction.createIndex(collection, name, indexedAttsBuilder.build(), unique, sparse).get();

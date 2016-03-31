@@ -18,77 +18,77 @@
  *     
  */
 
-package com.toro.torod.connection.update;
+package com.torodb.torod.mongodb.commands.impl.general.update;
 
 import com.torodb.kvdocument.values.KVValue;
 
 /**
  *
  */
-class ArrayBuilderCallback implements BuilderCallback<Integer> {
-    private final KVArrayBuilder builder;
+class ObjectBuilderCallback implements BuilderCallback<String> {
+    private final MongoUpdatedToroDocumentBuilder builder;
 
-    public ArrayBuilderCallback(KVArrayBuilder builder) {
+    public ObjectBuilderCallback(MongoUpdatedToroDocumentBuilder builder) {
         this.builder = builder;
     }
 
     @Override
-    public Class<Integer> getKeyClass() {
-        return Integer.class;
+    public Class<String> getKeyClass() {
+        return String.class;
     }
 
     @Override
-    public boolean contains(Integer key) {
+    public boolean contains(String key) {
         return builder.contains(key);
     }
 
     @Override
-    public boolean isValue(Integer key) {
+    public boolean isValue(String key) {
         return builder.isValue(key);
     }
 
     @Override
-    public KVValue getValue(Integer key) {
+    public KVValue getValue(String key) {
         return builder.getValue(key);
     }
 
     @Override
-    public boolean isArrayBuilder(Integer key) {
+    public boolean isArrayBuilder(String key) {
         return builder.isArrayBuilder(key);
     }
 
     @Override
-    public KVArrayBuilder getArrayBuilder(Integer key) {
+    public KVArrayBuilder getArrayBuilder(String key) {
         return builder.getArrayBuilder(key);
     }
 
     @Override
-    public boolean isObjectBuilder(Integer key) {
+    public boolean isObjectBuilder(String key) {
         return builder.isObjectBuilder(key);
     }
 
     @Override
-    public KVDocumentBuilder getObjectBuilder(Integer key) {
+    public MongoUpdatedToroDocumentBuilder getObjectBuilder(String key) {
         return builder.getObjectBuilder(key);
     }
 
     @Override
-    public KVArrayBuilder newArray(Integer key) {
+    public KVArrayBuilder newArray(String key) {
         return builder.newArray(key);
     }
 
     @Override
-    public KVDocumentBuilder newObject(Integer key) {
+    public MongoUpdatedToroDocumentBuilder newObject(String key) {
         return builder.newObject(key);
     }
 
     @Override
-    public void setValue(Integer key, KVValue value) {
-        builder.setValue(key, value);
+    public void setValue(String key, KVValue value) {
+        builder.putValue(key, value);
     }
 
     @Override
-    public boolean unset(Integer key) {
+    public boolean unset(String key) {
         return builder.unset(key);
     }
     

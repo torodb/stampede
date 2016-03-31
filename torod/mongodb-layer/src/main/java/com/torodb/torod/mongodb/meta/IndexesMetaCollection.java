@@ -8,6 +8,7 @@ import com.torodb.torod.core.connection.ToroTransaction;
 import com.torodb.torod.core.connection.TransactionMetainfo;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.language.AttributeReference;
+import com.torodb.torod.core.pojos.IndexedAttributes.IndexType;
 import com.torodb.torod.core.pojos.NamedToroIndex;
 import com.torodb.torod.core.subdocument.ToroDocument;
 import com.torodb.torod.mongodb.translator.KVToroDocument;
@@ -47,22 +48,22 @@ public class IndexesMetaCollection extends MetaCollection {
                 Collection<? extends NamedToroIndex> indexes
                         = transaction.getIndexes(collection);
                 for (NamedToroIndex index : indexes) {
-                    KVDocument.Builder objBuider = new KVDocument.Builder()
+                    KVDocument.Builder objBuilder = new KVDocument.Builder()
                             .putValue("v", 1)
                             .putValue("name", index.getName())
                             .putValue("ns", collectionNamespace);
                     KVDocument.Builder keyBuilder = new KVDocument.Builder();
-                    for (Map.Entry<AttributeReference, Boolean> entrySet : index.getAttributes().entrySet()) {
+                    for (Map.Entry<AttributeReference, IndexType> entrySet : index.getAttributes().entrySet()) {
                         keyBuilder.putValue(
                                 entrySet.getKey().toString(),
-                                entrySet.getValue() ? 1 : -1
+                                entrySet.getValue().name()
                         );
                     }
-                    objBuider.putValue("key", keyBuilder.build());
+                    objBuilder.putValue("key", keyBuilder.build());
 
                     candidates.add(
                             new KVToroDocument(
-                                    objBuider.build()
+                                    objBuilder.build()
                             )
                     );
                 }

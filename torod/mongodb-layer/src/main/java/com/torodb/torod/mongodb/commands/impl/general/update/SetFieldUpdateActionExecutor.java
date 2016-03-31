@@ -18,7 +18,7 @@
  *     
  */
 
-package com.toro.torod.connection.update;
+package com.torodb.torod.mongodb.commands.impl.general.update;
 
 import com.torodb.kvdocument.values.KVValue;
 import com.torodb.torod.core.language.AttributeReference;
@@ -67,7 +67,7 @@ class SetFieldUpdateActionExecutor implements ResolvedCallback<Boolean> {
     public <K> Boolean objectReferenced(
             BuilderCallback<K> parentBuilder, 
             K key, 
-            KVDocumentBuilder child
+            MongoUpdatedToroDocumentBuilder child
     ) {
         parentBuilder.setValue(key, value);
         return true;

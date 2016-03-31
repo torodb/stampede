@@ -17,7 +17,12 @@
  * Copyright (C) 2016 8Kdata.
  *
  */
-package com.toro.torod.connection.update;
+package com.torodb.torod.mongodb.commands.impl.general.update;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+import javax.annotation.Nonnull;
 
 import com.google.common.collect.Maps;
 import com.torodb.kvdocument.values.KVArray;
@@ -25,21 +30,25 @@ import com.torodb.kvdocument.values.KVDocument;
 import com.torodb.kvdocument.values.KVDocument.DocEntry;
 import com.torodb.kvdocument.values.KVValue;
 import com.torodb.kvdocument.values.heap.MapKVDocument;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import javax.annotation.Nonnull;
+import com.torodb.torod.core.config.DocumentBuilderFactory;
+import com.torodb.torod.core.connection.ToroTransaction.UpdatedToroDocument;
+import com.torodb.torod.core.subdocument.ToroDocument;
 
 /**
  *
  */
-class KVDocumentBuilder {
+class MongoUpdatedToroDocumentBuilder {
 
+    private final DocumentBuilderFactory documentBuilderFactory;
     private LinkedHashMap<String, KVValue<?>> values = Maps.newLinkedHashMap();
     private final Map<String, KVArrayBuilder> subArrayBuilders = Maps.newHashMap();
-    private final Map<String, KVDocumentBuilder> subObjectBuilders = Maps.newHashMap();
+    private final Map<String, MongoUpdatedToroDocumentBuilder> subObjectBuilders = Maps.newHashMap();
     private boolean built = false;
+    private boolean updated = false;
+    private int assignedCount = 0;
 
-    private KVDocumentBuilder() {
+    private MongoUpdatedToroDocumentBuilder(DocumentBuilderFactory documentBuilderFactory) {
+        this.documentBuilderFactory = documentBuilderFactory;
     }
 
     public void clear() {
@@ -53,12 +62,12 @@ class KVDocumentBuilder {
         subObjectBuilders.clear();
     }
 
-    public static KVDocumentBuilder create() {
-        return new KVDocumentBuilder();
+    public static MongoUpdatedToroDocumentBuilder create(DocumentBuilderFactory documentBuilderFactory) {
+        return new MongoUpdatedToroDocumentBuilder(documentBuilderFactory);
     }
 
-    public static KVDocumentBuilder from(KVDocument original) {
-        KVDocumentBuilder result = KVDocumentBuilder.create();
+    public static MongoUpdatedToroDocumentBuilder from(KVDocument original, DocumentBuilderFactory documentBuilderFactory) {
+        MongoUpdatedToroDocumentBuilder result = MongoUpdatedToroDocumentBuilder.create(documentBuilderFactory);
         result.copy(original);
 
         return result;
@@ -103,8 +112,8 @@ class KVDocumentBuilder {
     }
 
     @Nonnull
-    public KVDocumentBuilder getObjectBuilder(String key) {
-        KVDocumentBuilder result = subObjectBuilders.get(key);
+    public MongoUpdatedToroDocumentBuilder getObjectBuilder(String key) {
+        MongoUpdatedToroDocumentBuilder result = subObjectBuilders.get(key);
         if (result == null) {
             throw new IllegalArgumentException(
                     "There is no object builder associated to '" + key + "' key");
@@ -112,7 +121,7 @@ class KVDocumentBuilder {
         return result;
     }
 
-    public KVDocumentBuilder putValue(String key, KVValue<?> value) {
+    public MongoUpdatedToroDocumentBuilder putValue(String key, KVValue<?> value) {
         checkNewBuild();
 
         if (value instanceof KVDocument) {
@@ -131,7 +140,7 @@ class KVDocumentBuilder {
     public KVArrayBuilder newArray(String key) {
         checkNewBuild();
 
-        KVArrayBuilder result = KVArrayBuilder.create();
+        KVArrayBuilder result = KVArrayBuilder.create(documentBuilderFactory);
 
         values.remove(key);
         subArrayBuilders.put(key, result);
@@ -140,10 +149,10 @@ class KVDocumentBuilder {
         return result;
     }
 
-    public KVDocumentBuilder newObject(String key) {
+    public MongoUpdatedToroDocumentBuilder newObject(String key) {
         checkNewBuild();
 
-        KVDocumentBuilder result = KVDocumentBuilder.create();
+        MongoUpdatedToroDocumentBuilder result = MongoUpdatedToroDocumentBuilder.create(documentBuilderFactory);
 
         values.remove(key);
         subArrayBuilders.remove(key);
@@ -161,16 +170,16 @@ class KVDocumentBuilder {
         return result;
     }
 
-    public KVDocument build() {
+    public KVDocument buildRoot() {
         built = true;
 
-        for (Map.Entry<String, KVDocumentBuilder> objectBuilder
+        for (Map.Entry<String, MongoUpdatedToroDocumentBuilder> objectBuilder
                 : subObjectBuilders.entrySet()) {
 
             KVValue<?> oldValue
                     = values.put(
                             objectBuilder.getKey(),
-                            objectBuilder.getValue().build()
+                            objectBuilder.getValue().buildRoot()
                     );
 
             assert oldValue == null;
@@ -203,7 +212,7 @@ class KVDocumentBuilder {
                 KVArrayBuilder childBuilder = newArray(entry.getKey());
                 childBuilder.copy((KVArray) value);
             } else if (value instanceof KVDocument) {
-                KVDocumentBuilder childBuilder = newObject(entry.getKey());
+                MongoUpdatedToroDocumentBuilder childBuilder = newObject(entry.getKey());
                 childBuilder.copy((KVDocument) value);
             } else {
                 putValue(entry.getKey(), value);
@@ -215,6 +224,47 @@ class KVDocumentBuilder {
         if (built) {
             values = Maps.newLinkedHashMap();
             built = false;
+        }
+    }
+    
+    public MongoUpdatedToroDocumentBuilder mergeUpdated(boolean updated) {
+        this.updated = this.updated | updated;
+        return this;
+    }
+    
+    public void assign(ToroDocument candidate) {
+        if (assignedCount == 0) {
+            copy(candidate.getRoot());
+        }
+        assignedCount++;
+    }
+    
+    public UpdatedToroDocument build() {
+        if (assignedCount == 1) {
+            return new MongoUpdatedToroDocument(documentBuilderFactory.newDocBuilder().setRoot(buildRoot()).build(), updated);
+        }
+        assignedCount--;
+        return null;
+    }
+    
+    private static class MongoUpdatedToroDocument implements UpdatedToroDocument {
+        private final ToroDocument doc;
+        private final boolean updated;
+
+        public MongoUpdatedToroDocument(ToroDocument doc, boolean updated) {
+            super();
+            this.doc = doc;
+            this.updated = updated;
+        }
+
+        @Override
+        public KVDocument getRoot() {
+            return doc.getRoot();
+        }
+
+        @Override
+        public boolean isUpdated() {
+            return updated;
         }
     }
 }

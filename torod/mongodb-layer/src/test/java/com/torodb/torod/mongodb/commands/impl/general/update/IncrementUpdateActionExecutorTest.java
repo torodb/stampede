@@ -18,13 +18,16 @@
  *     
  */
 
-package com.toro.torod.connection.update;
+package com.torodb.torod.mongodb.commands.impl.general.update;
 
 import com.google.common.collect.Lists;
 import com.torodb.kvdocument.values.KVDouble;
 import com.torodb.kvdocument.values.KVInteger;
+import com.torodb.torod.core.config.DocumentBuilderFactory;
 import com.torodb.torod.core.exceptions.UserToroException;
 import com.torodb.torod.core.language.AttributeReference;
+import com.torodb.torod.core.subdocument.ToroDocument.DocumentBuilder;
+
 import org.junit.*;
 
 
@@ -33,7 +36,10 @@ import org.junit.*;
  */
 public class IncrementUpdateActionExecutorTest {
     
+    private final DocumentBuilderFactory documentBuilderFactory;
+    
     public IncrementUpdateActionExecutorTest() {
+        documentBuilderFactory = new MongoDocumentBuilderFactory();
     }
     
     @BeforeClass
@@ -54,7 +60,7 @@ public class IncrementUpdateActionExecutorTest {
 
     @Test
     public void testNormal() {
-        KVDocumentBuilder builder = KVDocumentBuilder.create();
+        MongoUpdatedToroDocumentBuilder builder = MongoUpdatedToroDocumentBuilder.create(documentBuilderFactory);
         builder.newObject("f1")
                 .newArray("f2")
                 .setValue(3, KVInteger.of(3));
@@ -77,7 +83,7 @@ public class IncrementUpdateActionExecutorTest {
 
     @Test
     public void testNonExistingAttribute() {
-        KVDocumentBuilder builder = KVDocumentBuilder.create();
+        MongoUpdatedToroDocumentBuilder builder = MongoUpdatedToroDocumentBuilder.create(documentBuilderFactory);
         builder.newObject("f1")
                 .newArray("f2")
                 .setValue(3, KVInteger.of(3));
@@ -105,7 +111,7 @@ public class IncrementUpdateActionExecutorTest {
 
     @Test(expected = UserToroException.class)
     public void testNullAttribute1() {
-        KVDocumentBuilder builder = KVDocumentBuilder.create();
+        MongoUpdatedToroDocumentBuilder builder = MongoUpdatedToroDocumentBuilder.create(documentBuilderFactory);
         builder.newObject("f1")
                 .newArray("f2")
                 .setValue(3, KVInteger.of(3));
@@ -124,7 +130,7 @@ public class IncrementUpdateActionExecutorTest {
 
     @Test(expected = UserToroException.class)
     public void testIllegalPath() {
-        KVDocumentBuilder builder = KVDocumentBuilder.create();
+        MongoUpdatedToroDocumentBuilder builder = MongoUpdatedToroDocumentBuilder.create(documentBuilderFactory);
         builder.newObject("f1")
                 .newArray("f2")
                 .setValue(3, KVInteger.of(3));

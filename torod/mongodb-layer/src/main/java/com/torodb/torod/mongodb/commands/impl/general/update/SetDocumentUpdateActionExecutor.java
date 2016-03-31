@@ -18,36 +18,36 @@
  *     
  */
 
-package com.toro.torod.connection.update;
+package com.torodb.torod.mongodb.commands.impl.general.update;
 
+import com.torodb.kvdocument.values.KVDocument;
+import com.torodb.kvdocument.values.KVDocument.DocEntry;
 import com.torodb.kvdocument.values.KVValue;
 
 /**
  *
  */
-interface ResolvedCallback<R> {
+public class SetDocumentUpdateActionExecutor {
     
-    public <K> R objectReferenced(
-            BuilderCallback<K> parentBuilder, 
-            K key,
-            KVDocumentBuilder child
-    );
+    static boolean set(
+            MongoUpdatedToroDocumentBuilder builder,
+            KVDocument newValue
+    ) {
+        KVValue<?> objectId = null;
+        if (builder.contains("_id")) {
+            objectId = builder.getValue("_id");
+        }
+        
+        builder.clear();
+        for (DocEntry<?> entry : newValue) {
+            builder.putValue(entry.getKey(), entry.getValue());
+        }
+        
+        if (objectId != null) {
+            builder.putValue("_id", objectId);
+        }
+        
+        return true;
+    }
     
-    public <K> R arrayReferenced(
-            BuilderCallback<K> parentBuilder, 
-            K key,
-            KVArrayBuilder child
-    );
-    
-    public <K> R valueReferenced(
-            BuilderCallback<K> parentBuilder, 
-            K key,
-            KVValue child
-    );
-    
-    public <K> R newElementReferenced(
-            BuilderCallback<K> parentBuilder, 
-            K key
-    );
-
 }

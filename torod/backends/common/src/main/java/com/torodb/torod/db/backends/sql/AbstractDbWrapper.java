@@ -20,6 +20,23 @@
 
 package com.torodb.torod.db.backends.sql;
 
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import javax.inject.Inject;
+import javax.sql.DataSource;
+
+import org.jooq.Configuration;
+import org.jooq.ConnectionProvider;
+import org.jooq.DSLContext;
+import org.jooq.exception.DataAccessException;
+import org.jooq.impl.DSL;
+
 import com.google.common.collect.MapMaker;
 import com.torodb.torod.core.annotations.DatabaseName;
 import com.torodb.torod.core.backend.DbBackend;
@@ -32,29 +49,12 @@ import com.torodb.torod.core.dbWrapper.exceptions.UserDbException;
 import com.torodb.torod.core.language.projection.Projection;
 import com.torodb.torod.core.language.querycriteria.QueryCriteria;
 import com.torodb.torod.core.subdocument.SplitDocument;
-import com.torodb.torod.core.subdocument.SubDocType.Builder;
 import com.torodb.torod.db.backends.DatabaseInterface;
 import com.torodb.torod.db.backends.exceptions.InvalidDatabaseException;
 import com.torodb.torod.db.backends.meta.IndexStorage;
-import com.torodb.torod.db.backends.meta.Routines;
 import com.torodb.torod.db.backends.meta.TorodbMeta;
 import com.torodb.torod.db.backends.meta.routines.QueryRoutine;
 import com.torodb.torod.db.backends.query.QueryEvaluator;
-import java.io.IOException;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicBoolean;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.sql.DataSource;
-import org.jooq.Configuration;
-import org.jooq.ConnectionProvider;
-import org.jooq.DSLContext;
-import org.jooq.exception.DataAccessException;
-import org.jooq.impl.DSL;
 
 /**
  *
@@ -277,7 +277,7 @@ public abstract class AbstractDbWrapper implements DbWrapper {
 
         @Override
         public List<SplitDocument> readDocuments(Integer[] documents) {
-            return queryRoutine.execute(configuration, colSchema, documents, projection, databaseInterface);
+            return queryRoutine.execute(configuration, colSchema, documents, projection, false, databaseInterface);
         }
 
         @Override

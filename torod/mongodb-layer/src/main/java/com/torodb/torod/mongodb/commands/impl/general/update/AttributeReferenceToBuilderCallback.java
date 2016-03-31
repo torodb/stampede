@@ -18,7 +18,7 @@
  *     
  */
 
-package com.toro.torod.connection.update;
+package com.torodb.torod.mongodb.commands.impl.general.update;
 
 import com.torodb.kvdocument.values.KVValue;
 import com.torodb.torod.core.exceptions.ToroImplementationException;
@@ -85,7 +85,7 @@ class AttributeReferenceToBuilderCallback {
         K key = builder.getKeyClass().cast(uncastedKey);
 
         KVArrayBuilder nextArrayBuilder;
-        KVDocumentBuilder nextObjectBuilder;
+        MongoUpdatedToroDocumentBuilder nextObjectBuilder;
         KVValue nextValue;
 
         if (!builder.contains(key)) {

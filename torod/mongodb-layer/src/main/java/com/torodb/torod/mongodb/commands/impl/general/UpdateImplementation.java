@@ -1,38 +1,51 @@
 
 package com.torodb.torod.mongodb.commands.impl.general;
 
+import java.util.List;
+
 import com.eightkdata.mongowp.ErrorCode;
 import com.eightkdata.mongowp.OpTime;
 import com.eightkdata.mongowp.exceptions.CommandFailed;
 import com.eightkdata.mongowp.exceptions.MongoException;
 import com.eightkdata.mongowp.exceptions.UnknownErrorException;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.UpdateCommand.UpdateArgument;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.UpdateCommand.UpdateResult;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.UpdateCommand.UpdateStatement;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.UpdateCommand.UpsertResult;
 import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.CommandImplementation;
 import com.eightkdata.mongowp.server.api.CommandRequest;
 import com.eightkdata.mongowp.server.api.CommandResult;
 import com.eightkdata.mongowp.server.api.impl.UpdateOpResult;
 import com.eightkdata.mongowp.server.api.impl.WriteCommandResult;
-import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.UpdateCommand.UpdateArgument;
-import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.UpdateCommand.UpdateResult;
-import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.UpdateCommand.UpdateStatement;
 import com.google.common.base.Function;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.torodb.kvdocument.conversion.mongowp.MongoWPConverter;
 import com.torodb.torod.core.WriteFailMode;
+import com.torodb.torod.core.config.DocumentBuilderFactory;
 import com.torodb.torod.core.connection.ToroConnection;
 import com.torodb.torod.core.connection.ToroTransaction;
 import com.torodb.torod.core.connection.TransactionMetainfo;
 import com.torodb.torod.core.connection.UpdateResponse;
+import com.torodb.torod.core.connection.UpdateResponse.InsertedDocuments;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
+import com.torodb.torod.core.exceptions.ToroRuntimeException;
 import com.torodb.torod.core.language.operations.UpdateOperation;
+import com.torodb.torod.core.language.update.SetDocumentUpdateAction;
 import com.torodb.torod.core.language.update.UpdateAction;
+import com.torodb.torod.core.language.update.utils.UpdateActionVisitorAdaptor;
+import com.torodb.torod.core.subdocument.ToroDocument;
 import com.torodb.torod.mongodb.RequestContext;
 import com.torodb.torod.mongodb.commands.WriteConcernToWriteFailModeFunction;
+import com.torodb.torod.mongodb.commands.impl.general.update.UpdateActionVisitorDocumentToInsert;
+import com.torodb.torod.mongodb.commands.impl.general.update.UpdateActionVisitorDocumentToUpdate;
+import com.torodb.torod.mongodb.repl.ObjectIdFactory;
 import com.torodb.torod.mongodb.translator.QueryCriteriaTranslator;
 import com.torodb.torod.mongodb.translator.UpdateActionTranslator;
-import java.util.List;
 
 /**
  *
@@ -41,11 +54,15 @@ public class UpdateImplementation implements CommandImplementation<UpdateArgumen
 
     private final WriteConcernToWriteFailModeFunction toWriteFailModeFunction;
     private final QueryCriteriaTranslator queryCriteriaTranslator;
+    private final DocumentBuilderFactory documentBuilderFactory;
+    private final ObjectIdFactory objectIdFactory;
     private final Function<UpdateStatement, UpdateOperation> toUpdateOperation;
 
-    public UpdateImplementation(WriteConcernToWriteFailModeFunction toWriteFailModeFunction, QueryCriteriaTranslator queryCriteriaTranslator) {
+    public UpdateImplementation(WriteConcernToWriteFailModeFunction toWriteFailModeFunction, QueryCriteriaTranslator queryCriteriaTranslator, DocumentBuilderFactory documentBuilderFactory, ObjectIdFactory objectIdFactory) {
         this.toWriteFailModeFunction = toWriteFailModeFunction;
         this.queryCriteriaTranslator = queryCriteriaTranslator;
+        this.documentBuilderFactory = documentBuilderFactory;
+        this.objectIdFactory = objectIdFactory;
         this.toUpdateOperation = new ToUpdateOperationFunction();
     }
 
@@ -79,7 +96,9 @@ public class UpdateImplementation implements CommandImplementation<UpdateArgumen
             ListenableFuture<UpdateResponse> updateFuture = transaction.update(
                     arg.getCollection(),
                     updates,
-                    writeFailMode
+                    writeFailMode,
+                    new UpdateActionVisitorDocumentToInsert(documentBuilderFactory, objectIdFactory),
+                    new UpdateActionVisitorDocumentToUpdate(documentBuilderFactory)
             );
             ListenableFuture<?> commitFuture = transaction.commit();
 
@@ -88,11 +107,19 @@ public class UpdateImplementation implements CommandImplementation<UpdateArgumen
             OpTime optime = context.getOptimeClock().tick();
             UpdateResult updateResult;
             UpdateOpResult writeOpResult;
-            //TODO: add upsert!
+            ImmutableList.Builder<UpsertResult> upsertResultsBuilder =
+                    ImmutableList.builder();
+            for (InsertedDocuments insertedDocuments : response.getInsertedDocuments()) {
+                upsertResultsBuilder.add(updates.get(insertedDocuments.getOperationIndex())
+                        .getAction().accept(new UpdataActionVisitorUpsertResult(
+                                insertedDocuments.getOperationIndex(), 
+                                insertedDocuments.getDoc()), null));
+            }
             if (response.isSuccess()) {
                 updateResult = new UpdateResult(
                         response.getModified(),
-                        response.getCandidates()
+                        response.getCandidates(),
+                        upsertResultsBuilder.build()
                 );
                 writeOpResult = new UpdateOpResult(
                         response.getCandidates(),
@@ -110,6 +137,7 @@ public class UpdateImplementation implements CommandImplementation<UpdateArgumen
                 updateResult = new UpdateResult(
                         response.getModified(),
                         response.getCandidates(),
+                        upsertResultsBuilder.build(),
                         errMsg,
                         null,
                         null
@@ -130,7 +158,30 @@ public class UpdateImplementation implements CommandImplementation<UpdateArgumen
             throw new UnknownErrorException(ex);
         }
     }
-
+    
+    private static class UpdataActionVisitorUpsertResult extends UpdateActionVisitorAdaptor<UpsertResult, Void> {
+        
+        private final int operationIndex;
+        private final ToroDocument doc;
+        
+        private UpdataActionVisitorUpsertResult(int operationIndex, ToroDocument doc) {
+            super();
+            this.operationIndex = operationIndex;
+            this.doc = doc;
+        }
+        
+        @Override
+        public UpsertResult defaultCase(UpdateAction action, Void arg) {
+            throw new ToroRuntimeException();
+        }
+        @Override
+        public UpsertResult visit(SetDocumentUpdateAction action, Void arg) {
+            return new UpsertResult(
+                    operationIndex, 
+                    MongoWPConverter.translate(doc.getRoot().get("_id")));
+        }
+    }
+    
     private class ToUpdateOperationFunction implements Function<UpdateStatement, UpdateOperation> {
 
             @Override

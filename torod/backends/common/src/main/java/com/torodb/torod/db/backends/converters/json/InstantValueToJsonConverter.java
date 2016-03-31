@@ -24,6 +24,7 @@ import com.torodb.torod.db.backends.converters.ValueConverter;
 import com.torodb.torod.core.subdocument.values.ScalarInstant;
 import com.torodb.torod.core.subdocument.values.heap.InstantScalarInstant;
 import org.threeten.bp.Instant;
+import org.threeten.bp.format.DateTimeFormatter;
 
 /**
  *
@@ -48,8 +49,6 @@ public class InstantValueToJsonConverter implements
 
     @Override
     public ScalarInstant toValue(String value) {
-        return new InstantScalarInstant(Instant.parse(value));
+        return new InstantScalarInstant(Instant.from(DateTimeFormatter.ISO_OFFSET_DATE_TIME.parse(value)));
     }
-    
-    
 }

@@ -23,6 +23,7 @@ package com.torodb.config.model.protocol.mongo;
 import java.util.List;
 
 import javax.validation.Valid;
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -43,6 +44,10 @@ public class Mongo {
 	@Valid
 	@NoDuplicatedReplName
 	private List<Replication> replication;
+    @Description("config.protocol.mongo.cursorTimeout")
+    @NotNull
+    @JsonProperty(required=true)
+    private Long cursorTimeout = 10L * 60 * 1000;
 
 	public Net getNet() {
 		return net;
@@ -56,4 +61,10 @@ public class Mongo {
 	public void setReplication(List<Replication> replication) {
 		this.replication = replication;
 	}
+    public Long getCursorTimeout() {
+        return cursorTimeout;
+    }
+    public void setCursorTimeout(Long cursorTimeout) {
+        this.cursorTimeout = cursorTimeout;
+    }
 }
