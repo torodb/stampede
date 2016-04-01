@@ -21,11 +21,11 @@
 
 package com.torodb.torod.db.backends.converters.jooq;
 
+import org.jooq.impl.SQLDataType;
+
 import com.torodb.torod.core.subdocument.ScalarType;
 import com.torodb.torod.core.subdocument.values.ScalarString;
 import com.torodb.torod.core.subdocument.values.heap.StringScalarString;
-import org.jooq.DataType;
-import org.jooq.impl.SQLDataType;
 
 /**
  *
@@ -33,10 +33,7 @@ import org.jooq.impl.SQLDataType;
 public class StringValueConverter implements SubdocValueConverter<String, ScalarString>{
     private static final long serialVersionUID = 1L;
 
-    @Override
-    public DataType<String> getDataType() {
-        return SQLDataType.VARCHAR;
-    }
+    public static final DataTypeForScalar<ScalarString> TYPE = DataTypeForScalar.from(SQLDataType.VARCHAR, new StringValueConverter());
 
     @Override
     public ScalarType getErasuredType() {

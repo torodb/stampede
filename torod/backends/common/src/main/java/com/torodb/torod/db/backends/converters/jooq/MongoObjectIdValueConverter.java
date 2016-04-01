@@ -20,11 +20,11 @@
 
 package com.torodb.torod.db.backends.converters.jooq;
 
+import org.jooq.impl.SQLDataType;
+
 import com.torodb.torod.core.subdocument.ScalarType;
 import com.torodb.torod.core.subdocument.values.ScalarMongoObjectId;
 import com.torodb.torod.core.subdocument.values.heap.ByteArrayScalarMongoObjectId;
-import org.jooq.DataType;
-import org.jooq.impl.SQLDataType;
 
 /**
  *
@@ -32,10 +32,7 @@ import org.jooq.impl.SQLDataType;
 public class MongoObjectIdValueConverter implements SubdocValueConverter<byte[], ScalarMongoObjectId> {
     private static final long serialVersionUID = 1L;
 
-    @Override
-    public DataType<byte[]> getDataType() {
-        return SQLDataType.BINARY;
-    }
+    public static final DataTypeForScalar<ScalarMongoObjectId> TYPE = DataTypeForScalar.from(SQLDataType.BINARY, new MongoObjectIdValueConverter());
 
     @Override
     public ScalarType getErasuredType() {

@@ -1,1 +1,0 @@
-CREATE CAST (varchar AS jsonb) WITH FUNCTION torodb.varchar_to_jsonb(varchar) AS IMPLICIT;

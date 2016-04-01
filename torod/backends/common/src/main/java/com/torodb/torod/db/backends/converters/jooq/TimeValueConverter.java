@@ -20,13 +20,14 @@
 
 package com.torodb.torod.db.backends.converters.jooq;
 
+import java.sql.Time;
+
+import org.jooq.impl.SQLDataType;
+import org.threeten.bp.DateTimeUtils;
+
 import com.torodb.torod.core.subdocument.ScalarType;
 import com.torodb.torod.core.subdocument.values.ScalarTime;
 import com.torodb.torod.core.subdocument.values.heap.LocalTimeScalarTime;
-import java.sql.Time;
-import org.jooq.DataType;
-import org.jooq.impl.SQLDataType;
-import org.threeten.bp.DateTimeUtils;
 
 /**
  *
@@ -34,10 +35,7 @@ import org.threeten.bp.DateTimeUtils;
 public class TimeValueConverter implements SubdocValueConverter<Time, ScalarTime>{
     private static final long serialVersionUID = 1L;
 
-    @Override
-    public DataType<Time> getDataType() {
-        return SQLDataType.TIME;
-    }
+    public static final DataTypeForScalar<ScalarTime> TYPE = DataTypeForScalar.from(SQLDataType.TIME, new TimeValueConverter());
 
     @Override
     public ScalarType getErasuredType() {

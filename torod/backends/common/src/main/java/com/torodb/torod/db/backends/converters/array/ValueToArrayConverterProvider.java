@@ -20,51 +20,64 @@
 
 package com.torodb.torod.db.backends.converters.array;
 
-import com.torodb.torod.db.backends.converters.json.MongoTimestampValueToJsonConverter;
+import java.util.Map;
+
+import javax.annotation.Nonnull;
+import javax.json.JsonArray;
+import javax.json.JsonNumber;
+import javax.json.JsonObject;
+import javax.json.JsonString;
+import javax.json.JsonValue;
+
 import com.google.common.collect.Maps;
 import com.torodb.torod.core.exceptions.ToroImplementationException;
 import com.torodb.torod.core.subdocument.ScalarType;
-import com.torodb.torod.core.subdocument.values.*;
-import com.torodb.torod.db.backends.converters.ValueConverter;
-import com.torodb.torod.db.backends.converters.json.*;
-import java.util.Map;
-import javax.annotation.Nonnull;
-import javax.json.*;
+import com.torodb.torod.core.subdocument.values.ScalarArray;
+import com.torodb.torod.core.subdocument.values.ScalarBinary;
+import com.torodb.torod.core.subdocument.values.ScalarBoolean;
+import com.torodb.torod.core.subdocument.values.ScalarDate;
+import com.torodb.torod.core.subdocument.values.ScalarInstant;
+import com.torodb.torod.core.subdocument.values.ScalarInteger;
+import com.torodb.torod.core.subdocument.values.ScalarLong;
+import com.torodb.torod.core.subdocument.values.ScalarMongoObjectId;
+import com.torodb.torod.core.subdocument.values.ScalarNull;
+import com.torodb.torod.core.subdocument.values.ScalarString;
+import com.torodb.torod.core.subdocument.values.ScalarTime;
 
 /**
  *
  */
 public class ValueToArrayConverterProvider {
 
-    private final Map<ScalarType, ValueConverter> converters;
-    private final ValueConverter<JsonArray, ScalarArray> arrayConverter;
-    private final ValueConverter<Boolean, ScalarBoolean> booleanConverter;
-    private final ValueConverter<String, ScalarDate> dateConverter;
-    private final ValueConverter<String, ScalarInstant> dateTimeConverter;
-    private final DoubleValueToJsonConverter doubleConverter;
-    private final ValueConverter<Number, ScalarInteger> integerConverter;
-    private final ValueConverter<Number, ScalarLong> longConverter;
-    private final ValueConverter<Void, ScalarNull> nullConverter;
-    private final ValueConverter<String, ScalarString> stringConverter;
-    private final ValueConverter<String, ScalarTime> timeConverter;
-    private final ValueConverter<String, ScalarMongoObjectId> mongoObjectIdConverter;
-    private final MongoTimestampValueToJsonConverter mongoTimestampConverter;
-    private final ValueConverter<String, ScalarBinary> binaryConverter;
+    private final Map<ScalarType, ArrayConverter> converters;
+    private final ArrayConverter<JsonArray, ScalarArray> arrayConverter;
+    private final ArrayConverter<JsonValue, ScalarBoolean> booleanConverter;
+    private final ArrayConverter<JsonString, ScalarDate> dateConverter;
+    private final ArrayConverter<JsonString, ScalarInstant> dateTimeConverter;
+    private final DoubleToArrayConverter doubleConverter;
+    private final ArrayConverter<JsonNumber, ScalarInteger> integerConverter;
+    private final ArrayConverter<JsonNumber, ScalarLong> longConverter;
+    private final ArrayConverter<JsonValue, ScalarNull> nullConverter;
+    private final ArrayConverter<JsonString, ScalarString> stringConverter;
+    private final ArrayConverter<JsonString, ScalarTime> timeConverter;
+    private final ArrayConverter<JsonString, ScalarMongoObjectId> mongoObjectIdConverter;
+    private final MongoTimestampToArrayConverter mongoTimestampConverter;
+    private final ArrayConverter<JsonString, ScalarBinary> binaryConverter;
 
     private ValueToArrayConverterProvider() {
-        arrayConverter = new ArrayValueToJsonConverter();
-        booleanConverter = new BooleanValueToJsonConverter();
-        dateConverter = new DateValueToJsonConverter();
-        dateTimeConverter = new InstantValueToJsonConverter();
-        doubleConverter = new DoubleValueToJsonConverter();
-        integerConverter = new IntegerValueToJsonConverter();
-        longConverter = new LongValueToJsonConverter();
-        nullConverter = new NullValueToJsonConverter();
-        stringConverter = new StringValueToJsonConverter();
-        timeConverter = new TimeValueToJsonConverter();
+        arrayConverter = new ArrayToArrayConverter();
+        booleanConverter = new BooleanToArrayConverter();
+        dateConverter = new DateToArrayConverter();
+        dateTimeConverter = new InstantToArrayConverter();
+        doubleConverter = new DoubleToArrayConverter();
+        integerConverter = new IntegerToArrayConverter();
+        longConverter = new LongToArrayConverter();
+        nullConverter = new NullToArrayConverter();
+        stringConverter = new StringToArrayConverter();
+        timeConverter = new TimeToArrayConverter();
         mongoObjectIdConverter = new MongoObjectIdToArrayConverter();
-        mongoTimestampConverter = new MongoTimestampValueToJsonConverter();
-        binaryConverter = new BinaryValueToJsonConverter();
+        mongoTimestampConverter = new MongoTimestampToArrayConverter();
+        binaryConverter = new BinaryToArrayConverter();
 
         converters = Maps.newEnumMap(ScalarType.class);
         converters.put(ScalarType.ARRAY, arrayConverter);
@@ -89,27 +102,26 @@ public class ValueToArrayConverterProvider {
     }
 
     @Nonnull
-    public ValueConverter getConverter(ScalarType valueType) {
-        ValueConverter converter = converters.get(valueType);
+    public ArrayConverter getConverter(ScalarType valueType) {
+        ArrayConverter converter = converters.get(valueType);
         if (converter == null) {
             throw new AssertionError("There is no converter that converts "
                     + "elements of type " + valueType);
         }
         return converter;
     }
-
+    
     @Nonnull
-    public ScalarValue<?> convertFromJson(JsonValue jsonValue) {
+    public ArrayConverter fromJsonValue(JsonValue jsonValue) {
         switch (jsonValue.getValueType()) {
             case ARRAY:
                 assert jsonValue instanceof JsonArray;
-                return arrayConverter.toValue((JsonArray) jsonValue);
+                return arrayConverter;
             case TRUE:
-                return booleanConverter.toValue(true);
             case FALSE:
-                return booleanConverter.toValue(false);
+                return booleanConverter;
             case NULL:
-                return nullConverter.toValue(null);
+                return nullConverter;
             case NUMBER:
                 assert jsonValue instanceof JsonNumber;
                 JsonNumber number = (JsonNumber) jsonValue;
@@ -117,9 +129,9 @@ public class ValueToArrayConverterProvider {
                     try {
                         long l = number.longValueExact();
                         if (l < Integer.MIN_VALUE || l > Integer.MAX_VALUE) {
-                            return longConverter.toValue(number.longValueExact());
+                            return longConverter;
                         }
-                        return integerConverter.toValue(number.intValueExact());
+                        return integerConverter;
                     }
                     catch (ArithmeticException ex) {
                         throw new ToroImplementationException(
@@ -128,14 +140,14 @@ public class ValueToArrayConverterProvider {
                         );
                     }
                 }
-                return doubleConverter.toValue(number.doubleValue());
+                return doubleConverter;
             case STRING:
                 assert jsonValue instanceof JsonString;
-                return stringConverter.toValue(((JsonString) jsonValue).getString());
+                return stringConverter;
             case OBJECT: {
                 JsonObject asObject = ((JsonObject) jsonValue);
                 if (mongoTimestampConverter.isValid(asObject)) {
-                    return mongoTimestampConverter.toValue(asObject);
+                    return mongoTimestampConverter;
                 }
                 throw new IllegalArgumentException("Te recived JsonObject " + jsonValue
                         + " was not recognized as a valid ScalarValue codification");
@@ -147,55 +159,55 @@ public class ValueToArrayConverterProvider {
         }
     }
 
-    public ValueConverter<JsonArray, ScalarArray> getArrayConverter() {
+    public ArrayConverter<JsonArray, ScalarArray> getArrayConverter() {
         return arrayConverter;
     }
 
-    public ValueConverter<Boolean, ScalarBoolean> getBooleanConverter() {
+    public ArrayConverter<JsonValue, ScalarBoolean> getBooleanConverter() {
         return booleanConverter;
     }
 
-    public ValueConverter<String, ScalarDate> getDateConverter() {
+    public ArrayConverter<JsonString, ScalarDate> getDateConverter() {
         return dateConverter;
     }
 
-    public ValueConverter<String, ScalarInstant> getInstantConverter() {
+    public ArrayConverter<JsonString, ScalarInstant> getInstantConverter() {
         return dateTimeConverter;
     }
 
-    public DoubleValueToJsonConverter getDoubleConverter() {
+    public DoubleToArrayConverter getDoubleConverter() {
         return doubleConverter;
     }
 
-    public ValueConverter<Number, ScalarInteger> getIntegerConverter() {
+    public ArrayConverter<JsonNumber, ScalarInteger> getIntegerConverter() {
         return integerConverter;
     }
 
-    public ValueConverter<Number, ScalarLong> getLongConverter() {
+    public ArrayConverter<JsonNumber, ScalarLong> getLongConverter() {
         return longConverter;
     }
 
-    public ValueConverter<Void, ScalarNull> getNullConverter() {
+    public ArrayConverter<JsonValue, ScalarNull> getNullConverter() {
         return nullConverter;
     }
 
-    public ValueConverter<String, ScalarString> getStringConverter() {
+    public ArrayConverter<JsonString, ScalarString> getStringConverter() {
         return stringConverter;
     }
 
-    public ValueConverter<String, ScalarTime> getTimeConverter() {
+    public ArrayConverter<JsonString, ScalarTime> getTimeConverter() {
         return timeConverter;
     }
 
-    public ValueConverter<String, ScalarMongoObjectId> getMongoObjectIdConverter() {
+    public ArrayConverter<JsonString, ScalarMongoObjectId> getMongoObjectIdConverter() {
         return mongoObjectIdConverter;
     }
     
-    public ValueConverter<JsonObject, ScalarMongoTimestamp> getMongoTimestampConverter() {
+    public MongoTimestampToArrayConverter getMongoTimestampConverter() {
         return mongoTimestampConverter;
     }
     
-    public ValueConverter<String, ScalarBinary> getBinaryConverter() {
+    public ArrayConverter<JsonString, ScalarBinary> getBinaryConverter() {
         return binaryConverter;
     }
 

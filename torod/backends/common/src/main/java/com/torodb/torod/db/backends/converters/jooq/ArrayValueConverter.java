@@ -20,16 +20,16 @@
 
 package com.torodb.torod.db.backends.converters.jooq;
 
-import com.torodb.torod.core.subdocument.ScalarType;
-import com.torodb.torod.core.subdocument.values.ScalarArray;
-import com.torodb.torod.db.backends.converters.array.ValueToArrayConverterProvider;
 import java.io.Serializable;
 import java.io.StringReader;
+
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonReader;
-import org.jooq.DataType;
-import org.jooq.impl.SQLDataType;
+
+import com.torodb.torod.core.subdocument.ScalarType;
+import com.torodb.torod.core.subdocument.values.ScalarArray;
+import com.torodb.torod.db.backends.converters.array.ValueToArrayConverterProvider;
 
 /**
  *
@@ -39,10 +39,7 @@ public class ArrayValueConverter implements
 
     private static final long serialVersionUID = 1L;
 
-    @Override
-    public DataType<String> getDataType() {
-        return SQLDataType.VARCHAR;
-    }
+    public static final DataTypeForScalar<ScalarArray> TYPE = JSONBBinding.fromScalarValue(ScalarArray.class, new ArrayValueConverter());
 
     @Override
     public ScalarType getErasuredType() {
@@ -56,16 +53,13 @@ public class ArrayValueConverter implements
         JsonArray array = reader.readArray();
         
         return ValueToArrayConverterProvider.getInstance()
-                .getArrayConverter().toValue(array);
+                .getArrayConverter().fromJsonValue(array);
     }
 
     @Override
     public String to(ScalarArray userObject) {
-        JsonArray array 
-                = ValueToArrayConverterProvider.getInstance()
-                        .getArrayConverter().toJson(userObject);
-
-        return array.toString();
+        return ValueToArrayConverterProvider.getInstance()
+                        .getArrayConverter().toJsonLiteral(userObject);
     }
 
     @Override

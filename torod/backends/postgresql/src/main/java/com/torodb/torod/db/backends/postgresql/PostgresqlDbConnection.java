@@ -42,6 +42,7 @@ import javax.inject.Provider;
 import org.jooq.Configuration;
 import org.jooq.ConnectionProvider;
 import org.jooq.DSLContext;
+import org.jooq.DataType;
 import org.jooq.Field;
 import org.jooq.InsertValuesStep2;
 import org.jooq.Record;
@@ -68,8 +69,7 @@ import com.torodb.torod.core.subdocument.SubDocument;
 import com.torodb.torod.core.subdocument.structure.DocStructure;
 import com.torodb.torod.core.subdocument.values.ScalarValue;
 import com.torodb.torod.db.backends.DatabaseInterface;
-import com.torodb.torod.db.backends.converters.jooq.SubdocValueConverter;
-import com.torodb.torod.db.backends.converters.jooq.ValueToJooqConverterProvider;
+import com.torodb.torod.db.backends.converters.jooq.ValueToJooqDataTypeProvider;
 import com.torodb.torod.db.backends.meta.IndexStorage;
 import com.torodb.torod.db.backends.meta.IndexStorage.CollectionSchema;
 import com.torodb.torod.db.backends.meta.StructuresCache;
@@ -660,19 +660,19 @@ class PostgresqlDbConnection extends AbstractDbConnection {
 
     private String getSqlType(Field<?> field, Configuration conf) {
         if (field.getConverter() != null) {
-            SubdocValueConverter arrayConverter
-                    = ValueToJooqConverterProvider.getConverter(ScalarType.ARRAY);
-            if (field.getConverter().getClass().equals(arrayConverter.getClass())) {
+            DataType<?> arrayDataType
+                    = ValueToJooqDataTypeProvider.getDataType(ScalarType.ARRAY);
+            if (field.getDataType().getClass().equals(arrayDataType.getClass())) {
             	return "jsonb";
             }
-            SubdocValueConverter mongoObjectIdConverter
-                    = ValueToJooqConverterProvider.getConverter(ScalarType.MONGO_OBJECT_ID);
-            if (field.getConverter().getClass().equals(mongoObjectIdConverter.getClass())) {
+            DataType<?> mongoObjectIdDataType
+                    = ValueToJooqDataTypeProvider.getDataType(ScalarType.MONGO_OBJECT_ID);
+            if (field.getDataType().getClass().equals(mongoObjectIdDataType.getClass())) {
             	return "torodb.mongo_object_id";
             }
-            SubdocValueConverter mongoTimestampConverter
-                    = ValueToJooqConverterProvider.getConverter(ScalarType.MONGO_TIMESTAMP);
-            if (field.getConverter().getClass().equals(mongoTimestampConverter.getClass())) {
+            DataType<?> mongoTimestampDataType
+                    = ValueToJooqDataTypeProvider.getDataType(ScalarType.MONGO_TIMESTAMP);
+            if (field.getDataType().getClass().equals(mongoTimestampDataType.getClass())) {
                 return "torodb.mongo_timestamp";
             }
         }

@@ -18,7 +18,7 @@
  *     
  */
 
-package com.torodb.torod.db.backends.converters.json;
+package com.torodb.torod.db.backends.converters.array;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,28 +29,31 @@ import javax.json.JsonValue;
 import com.torodb.torod.core.subdocument.values.ScalarArray;
 import com.torodb.torod.core.subdocument.values.ScalarValue;
 import com.torodb.torod.core.subdocument.values.heap.ListScalarArray;
-import com.torodb.torod.db.backends.converters.ValueConverter;
-import com.torodb.torod.db.backends.converters.array.ArrayConverter;
-import com.torodb.torod.db.backends.converters.array.ValueToArrayConverterProvider;
 
 /**
  *
  */
-public class ArrayValueToJsonConverter implements
-        ValueConverter<JsonArray, ScalarArray> {
+public class ArrayToArrayConverter implements ArrayConverter<JsonArray, ScalarArray> {
+    private static final long serialVersionUID = 1L;
 
     @Override
-    public Class<? extends JsonArray> getJsonClass() {
-        return JsonArray.class;
+    public String toJsonLiteral(ScalarArray value) {
+        final ValueToArrayConverterProvider converterProvider = ValueToArrayConverterProvider.getInstance();
+        StringBuilder sb = new StringBuilder(value.size() * 20);
+        sb.append("[");
+        for (ScalarValue<?> child : value) {
+            sb.append(converterProvider.getConverter(child.getType()).toJsonLiteral(child));
+            sb.append(",");
+        }
+        if (!value.isEmpty()) {
+            sb.delete(sb.length()-1, sb.length());
+        }
+        sb.append("]");
+        return sb.toString();
     }
 
     @Override
-    public Class<? extends ScalarArray> getValueClass() {
-        return ScalarArray.class;
-    }
-
-    @Override
-    public ScalarArray toValue(JsonArray value) {
+    public ScalarArray fromJsonValue(JsonArray value) {
         List<ScalarValue<?>> list = new ArrayList<>(value.size());
         ValueToArrayConverterProvider converterProvider = ValueToArrayConverterProvider.getInstance();
         for (JsonValue child : value) {

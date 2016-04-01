@@ -1,20 +1,29 @@
 
 package com.torodb.torod.db.backends.converters.json;
 
-import com.google.common.collect.Sets;
-import com.torodb.torod.core.language.AttributeReference;
-import com.torodb.torod.core.pojos.DefaultNamedToroIndex;
-import com.torodb.torod.core.pojos.IndexedAttributes;
-import com.torodb.torod.core.pojos.IndexedAttributes.IndexType;
-import com.torodb.torod.core.pojos.NamedToroIndex;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
-import javax.json.*;
+
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonArrayBuilder;
+import javax.json.JsonObject;
+import javax.json.JsonObjectBuilder;
+import javax.json.JsonReader;
+import javax.json.JsonWriter;
+
 import org.jooq.Converter;
+
+import com.google.common.collect.Sets;
+import com.torodb.torod.core.language.AttributeReference;
+import com.torodb.torod.core.pojos.DefaultNamedToroIndex;
+import com.torodb.torod.core.pojos.IndexedAttributes;
+import com.torodb.torod.core.pojos.IndexedAttributes.IndexType;
+import com.torodb.torod.core.pojos.NamedToroIndex;
 
 /**
  *

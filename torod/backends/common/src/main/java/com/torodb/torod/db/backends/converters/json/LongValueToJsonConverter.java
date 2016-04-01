@@ -40,11 +40,6 @@ public class LongValueToJsonConverter implements
     }
 
     @Override
-    public Number toJson(ScalarLong value) {
-        return value.getValue();
-    }
-
-    @Override
     public ScalarLong toValue(Number value) {
         return ScalarLong.of(value.longValue());
     }

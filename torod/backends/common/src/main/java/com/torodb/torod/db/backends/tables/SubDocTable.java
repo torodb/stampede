@@ -28,7 +28,7 @@ import com.torodb.torod.core.subdocument.SubDocType;
 import com.torodb.torod.core.subdocument.values.ScalarValue;
 import com.torodb.torod.db.backends.DatabaseInterface;
 import com.torodb.torod.db.backends.converters.jooq.SubdocValueConverter;
-import com.torodb.torod.db.backends.converters.jooq.ValueToJooqConverterProvider;
+import com.torodb.torod.db.backends.converters.jooq.ValueToJooqDataTypeProvider;
 import com.torodb.torod.db.backends.meta.IndexStorage;
 import com.torodb.torod.db.backends.tables.records.SubDocTableRecord;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -116,13 +116,12 @@ public class SubDocTable extends TableImpl<SubDocTableRecord> {
         for (SubDocAttribute attibute : type.getAttributes()) {
             String fieldName = new SubDocHelper(databaseInterface).toColumnName(attibute.getKey());
 
-            SubdocValueConverter converter = ValueToJooqConverterProvider.getConverter(attibute.getType());
+            DataType<?> dataType = ValueToJooqDataTypeProvider.getDataType(attibute.getType());
             createField(
                     fieldName,
-                    converter.getDataType(),
+                    dataType,
                     this,
-                    "",
-                    converter);
+                    "");
         }
 
         this.databaseInterface = databaseInterface;
