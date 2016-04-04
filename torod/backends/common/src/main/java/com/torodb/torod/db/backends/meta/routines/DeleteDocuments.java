@@ -19,6 +19,25 @@
  */
 package com.torodb.torod.db.backends.meta.routines;
 
+import java.sql.Array;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
+
+import javax.annotation.Nonnull;
+
+import org.jooq.Configuration;
+import org.jooq.ConnectionProvider;
+import org.jooq.DSLContext;
+import org.jooq.Record;
+import org.jooq.Schema;
+import org.jooq.Table;
+import org.jooq.impl.DSL;
+
 import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
 import com.google.common.collect.Sets;
@@ -29,18 +48,8 @@ import com.torodb.torod.core.subdocument.structure.StructureElementVisitor;
 import com.torodb.torod.db.backends.DatabaseInterface;
 import com.torodb.torod.db.backends.meta.IndexStorage;
 import com.torodb.torod.db.backends.tables.SubDocTable;
+
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import java.sql.Array;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
-import javax.annotation.Nonnull;
-import org.jooq.*;
-import org.jooq.impl.DSL;
 
 /**
  *
@@ -81,7 +90,7 @@ public class DeleteDocuments {
             @Nonnull DatabaseInterface databaseInterface
     ) throws SQLException {
         TableProvider tableProvider = new TableProvider(colSchema);
-
+        
         DSLContext dsl = DSL.using(configuration);
 
         Set<SubDocTable> tables = Sets.newHashSet();

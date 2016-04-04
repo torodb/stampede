@@ -1,6 +1,7 @@
 
 package com.torodb.torod.db.backends.executor.report;
 
+import java.sql.Savepoint;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +27,7 @@ import com.torodb.torod.db.backends.executor.jobs.CreateCollectionCallable;
 import com.torodb.torod.db.backends.executor.jobs.CreateIndexCallable;
 import com.torodb.torod.db.backends.executor.jobs.CreateSubDocTableCallable;
 import com.torodb.torod.db.backends.executor.jobs.DeleteCallable;
+import com.torodb.torod.db.backends.executor.jobs.ReleaseSavepointCallable;
 import com.torodb.torod.db.backends.executor.jobs.DropCollectionCallable;
 import com.torodb.torod.db.backends.executor.jobs.DropIndexCallable;
 import com.torodb.torod.db.backends.executor.jobs.FindCollectionsCallable;
@@ -43,6 +45,8 @@ import com.torodb.torod.db.backends.executor.jobs.ReadAllCursorCallable;
 import com.torodb.torod.db.backends.executor.jobs.ReadCursorCallable;
 import com.torodb.torod.db.backends.executor.jobs.ReserveSubDocIdsCallable;
 import com.torodb.torod.db.backends.executor.jobs.RollbackCallable;
+import com.torodb.torod.db.backends.executor.jobs.RollbackSavepointCallable;
+import com.torodb.torod.db.backends.executor.jobs.SetSavepointCallable;
 import com.torodb.torod.db.executor.jobs.CreatePathViewsCallable;
 import com.torodb.torod.db.executor.jobs.DropPathViewsCallable;
 import com.torodb.torod.db.executor.jobs.SqlSelectCallable;
@@ -115,6 +119,21 @@ public class AbstractReportFactory implements ReportFactory {
 
     @Override
     public RollbackCallable.Report createRollbackReport() {
+        return DUMMY_REPORT;
+    }
+
+    @Override
+    public RollbackSavepointCallable.Report createRollbackSavepointReport() {
+        return DUMMY_REPORT;
+    }
+
+    @Override
+    public ReleaseSavepointCallable.Report createReleaseSavepointReport() {
+        return DUMMY_REPORT;
+    }
+
+    @Override
+    public SetSavepointCallable.Report createSetSavepointReport() {
         return DUMMY_REPORT;
     }
 
@@ -207,7 +226,9 @@ public class AbstractReportFactory implements ReportFactory {
             GetCollectionSizeCallable.Report, GetDocumentsSize.Report, 
             GetCollectionsMetainfoCallable.Report, MaxElementsCallable.Report,
             CreatePathViewsCallable.Report, DropPathViewsCallable.Report,
-            SqlSelectCallable.Report, ReadAllCallable.Report {
+            SqlSelectCallable.Report, ReadAllCallable.Report,
+            SetSavepointCallable.Report, RollbackSavepointCallable.Report,
+            ReleaseSavepointCallable.Report {
 
         public static final DummyReport INSTANCE = new DummyReport();
 
@@ -261,6 +282,18 @@ public class AbstractReportFactory implements ReportFactory {
 
         @Override
         public void rollbackExecuted() {
+        }
+
+        @Override
+        public void setSavepointExecuted(Savepoint savepoint) {
+        }
+
+        @Override
+        public void rollbackSavepointExecuted() {
+        }
+
+        @Override
+        public void releaseSavepointExecuted() {
         }
 
         @Override

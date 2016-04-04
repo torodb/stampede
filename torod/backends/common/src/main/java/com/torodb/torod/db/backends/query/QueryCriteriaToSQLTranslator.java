@@ -33,6 +33,7 @@ import org.jooq.Param;
 import org.jooq.Record1;
 import org.jooq.Select;
 import org.jooq.SelectConditionStep;
+import org.jooq.SelectForUpdateStep;
 import org.jooq.Table;
 import org.jooq.impl.DSL;
 
@@ -105,7 +106,7 @@ public class QueryCriteriaToSQLTranslator {
      * @param queryCriteria
      * @return
      */
-    public Select<Record1<Integer>> translate(
+    public SelectForUpdateStep<Record1<Integer>> translate(
             DSLContext dsl,
             int sid,
             DocStructure subDocStructure,

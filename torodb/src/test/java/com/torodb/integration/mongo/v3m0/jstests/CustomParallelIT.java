@@ -24,8 +24,9 @@ import static com.torodb.integration.Backend.GREENPLUM;
 import static com.torodb.integration.Backend.POSTGRES;
 import static com.torodb.integration.Protocol.MONGO;
 import static com.torodb.integration.Protocol.MONGO_REPL_SET;
-import static com.torodb.integration.TestCategory.FAILING;
 import static com.torodb.integration.TestCategory.WORKING;
+import static com.torodb.integration.TestCategory.FAILING;
+import static com.torodb.integration.TestCategory.CATASTROPHIC;
 
 import java.net.URL;
 import java.util.Collection;
@@ -38,14 +39,15 @@ import org.junit.runners.Parameterized.Parameters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.torodb.integration.TestCategory;
 import com.torodb.integration.mongo.v3m0.jstests.ScriptClassifier.Builder;
 
 
 @RunWith(Parameterized.class)
-public class CustomIT extends AbstractIntegrationTest {
-    private static final Logger LOGGER = LoggerFactory.getLogger(CustomIT.class);
+public class CustomParallelIT extends AbstractIntegrationParallelTest {
+    private static final Logger LOGGER = LoggerFactory.getLogger(CustomParallelIT.class);
 
-	public CustomIT() {
+	public CustomParallelIT() {
 		super(LOGGER);
 	}
 	
@@ -56,26 +58,24 @@ public class CustomIT extends AbstractIntegrationTest {
 
     private static ScriptClassifier createScriptClassifier() {
         return new Builder()
-                .addScripts(MONGO, POSTGRES, WORKING, asScriptSet("dummy.js"))
-                .addScripts(MONGO_REPL_SET, POSTGRES, WORKING, asScriptSet("dummy.js"))
-                .addScripts(MONGO, GREENPLUM, WORKING, asScriptSet("dummy.js"))
-                .addScripts(MONGO_REPL_SET, GREENPLUM, WORKING, asScriptSet("dummy.js"))
-
-                .addScripts(MONGO, POSTGRES, WORKING, asScriptSet(new String[] {"binary.js", "undefined.js"}))
-
-                .addScripts(MONGO, POSTGRES, FAILING, asScriptSet("alwaysfail.js"))
+                .addScripts(MONGO, POSTGRES, CATASTROPHIC, asScriptSet("updaterace.js", 8))
+                
+                .addScripts(MONGO, GREENPLUM, CATASTROPHIC, asScriptSet("updaterace.js", 8))
+                
+                .addScripts(MONGO_REPL_SET, POSTGRES, CATASTROPHIC, asScriptSet("updaterace.js", 8))
+                
                 .build();
     }
 
-    private static Set<Script> asScriptSet(String scriptName) {
-        return asScriptSet(new String[] {scriptName});
+    private static Set<Script> asScriptSet(String scriptName, int threads) {
+        return asScriptSet(new String[] {scriptName}, threads);
     }
 
-    private static Set<Script> asScriptSet(String[] scriptNames) {
+    private static Set<Script> asScriptSet(String[] scriptNames, int threads) {
         HashSet<Script> result = new HashSet<>(scriptNames.length);
         for (String scriptName : scriptNames) {
-            String relativePath = "custom/" + scriptName;
-            result.add(new Script(relativePath, createURL(relativePath)));
+            String relativePath = "custom_parallel/" + scriptName;
+            result.add(new Script(relativePath, createURL(relativePath), threads));
         }
 
         return result;
