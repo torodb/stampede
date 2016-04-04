@@ -25,6 +25,8 @@ import com.google.common.collect.HashBiMap;
 import com.google.common.collect.ImmutableBiMap;
 import com.torodb.torod.core.subdocument.structure.DocStructure;
 import com.torodb.torod.db.backends.converters.StructureConverter;
+import com.torodb.torod.db.backends.converters.jooq.JSONBBinding;
+
 import org.jooq.*;
 import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
@@ -44,7 +46,7 @@ public class StructuresCache implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private static final Field<Integer> sidField = DSL.field("sid", SQLDataType.INTEGER);
-    private static final Field<String> structuresField = DSL.field("_structure", SQLDataType.VARCHAR);
+    private static final Field<String> structuresField = DSL.field("_structure", JSONBBinding.fromType(String.class, Converters.identity(String.class)));
     private final IndexStorage.CollectionSchema colSchema;
     private final StructureConverter converter;
     private final BiMap<Integer, DocStructure> structures;

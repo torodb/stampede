@@ -18,40 +18,38 @@
  * 
  */
 
-package com.torodb.torod.db.backends.converters.json;
+package com.torodb.torod.db.backends.converters.array;
 
+import javax.json.Json;
 import javax.json.JsonObject;
 
 import com.torodb.torod.core.subdocument.values.ScalarMongoTimestamp;
 import com.torodb.torod.core.subdocument.values.heap.DefaultScalarMongoTimestamp;
-import com.torodb.torod.db.backends.converters.ValueConverter;
 import com.torodb.torod.db.backends.udt.MongoTimestampUDT;
 
 /**
  *
  */
-public class MongoTimestampValueToJsonConverter implements
-        ValueConverter<JsonObject, ScalarMongoTimestamp> {
+public class MongoTimestampToArrayConverter implements ArrayConverter<JsonObject, ScalarMongoTimestamp> {
+    private static final long serialVersionUID = 1L;
 
     private static final String SECS = MongoTimestampUDT.SECS.getName();
     private static final String COUNTER = MongoTimestampUDT.COUNTER.getName();
-    
+
     @Override
-    public Class<? extends JsonObject> getJsonClass() {
-        return JsonObject.class;
+    public String toJsonLiteral(ScalarMongoTimestamp value) {
+        return Json.createObjectBuilder()
+                .add(SECS, value.getSecondsSinceEpoch())
+                .add(COUNTER, value.getOrdinal())
+                .build().toString();
     }
 
     @Override
-    public Class<? extends ScalarMongoTimestamp> getValueClass() {
-        return ScalarMongoTimestamp.class;
-    }
-
-    @Override
-    public ScalarMongoTimestamp toValue(JsonObject value) {
+    public ScalarMongoTimestamp fromJsonValue(JsonObject value) {
         assert isValid(value);
         return new DefaultScalarMongoTimestamp(value.getInt(SECS), value.getInt(COUNTER));
     }
-
+    
     public boolean isValid(JsonObject object) {
         try {
             object.getInt(SECS);

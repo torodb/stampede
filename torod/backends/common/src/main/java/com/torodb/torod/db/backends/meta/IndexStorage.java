@@ -28,6 +28,7 @@ import com.torodb.torod.core.pojos.NamedToroIndex;
 import com.torodb.torod.core.subdocument.SubDocType;
 import com.torodb.torod.db.backends.DatabaseInterface;
 import com.torodb.torod.db.backends.converters.StructureConverter;
+import com.torodb.torod.db.backends.converters.jooq.JSONBBinding;
 import com.torodb.torod.db.backends.converters.json.ToroIndexToJsonConverter;
 import com.torodb.torod.db.backends.exceptions.InvalidCollectionSchemaException;
 import com.torodb.torod.db.backends.sql.index.IndexManager;
@@ -46,6 +47,7 @@ import javax.annotation.Nullable;
 import javax.inject.Provider;
 import org.jooq.*;
 import org.jooq.impl.DSL;
+import org.jooq.impl.DefaultDataType;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.SchemaImpl;
 import org.jooq.impl.TableImpl;
@@ -233,7 +235,6 @@ public class IndexStorage implements Serializable {
     }
 
     private static class ToroIndexTable extends TableImpl<Record2<String, NamedToroIndex>> {
-
         private static final long serialVersionUID = 1L;
         final TableField<Record2<String, NamedToroIndex>, String> nameColumn;
         final TableField<Record2<String, NamedToroIndex>, NamedToroIndex> indexColumn;
@@ -241,7 +242,8 @@ public class IndexStorage implements Serializable {
         public ToroIndexTable(CollectionSchema colSchema, ToroIndexToJsonConverter indexToJsonConverter) {
             super("indexes", colSchema);
             nameColumn = createField("name", SQLDataType.VARCHAR, this);
-            indexColumn = createField("index", SQLDataType.VARCHAR, this, "", indexToJsonConverter);
+            indexColumn = createField("index", new DefaultDataType<String>(null, String.class, "jsonb")
+                    .asConvertedDataType(new JSONBBinding<NamedToroIndex>(indexToJsonConverter)), this, "");
         }
 
         @Override

@@ -20,36 +20,27 @@
 
 package com.torodb.torod.db.backends.converters.array;
 
+import javax.json.JsonString;
+
 import com.torodb.common.util.HexUtils;
 import com.torodb.torod.core.subdocument.values.ScalarMongoObjectId;
 import com.torodb.torod.core.subdocument.values.heap.ByteArrayScalarMongoObjectId;
-import com.torodb.torod.db.backends.converters.ValueConverter;
 
 /**
  *
  */
-public class MongoObjectIdToArrayConverter implements
-        ValueConverter<String, ScalarMongoObjectId> {
+public class MongoObjectIdToArrayConverter implements ArrayConverter<JsonString, ScalarMongoObjectId> {
+    private static final long serialVersionUID = 1L;
 
     @Override
-    public Class<? extends String> getJsonClass() {
-        return String.class;
+    public String toJsonLiteral(ScalarMongoObjectId value) {
+        return StringToArrayConverter.toJsonString(value.toString());
     }
 
     @Override
-    public Class<? extends ScalarMongoObjectId> getValueClass() {
-        return ScalarMongoObjectId.class;
-    }
-
-    @Override
-    public String toJson(ScalarMongoObjectId value) {
-        return value.toString();
-    }
-
-    @Override
-    public ScalarMongoObjectId toValue(String value) {
-        byte[] bytes = HexUtils.hex2Bytes(value);
+    public ScalarMongoObjectId fromJsonValue(JsonString value) {
+        byte[] bytes = HexUtils.hex2Bytes(value.toString());
         return new ByteArrayScalarMongoObjectId(bytes);
+
     }
-    
 }

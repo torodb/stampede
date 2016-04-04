@@ -33,8 +33,6 @@ import org.jooq.DataType;
  */
 public abstract interface SubdocValueConverter<DBT, V extends ScalarValue<?>> extends Converter<DBT, V> {
     
-    public abstract DataType<DBT> getDataType();
-
     public abstract ScalarType getErasuredType();
     
 }

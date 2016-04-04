@@ -18,32 +18,30 @@
  *     
  */
 
-package com.torodb.torod.db.backends.converters.json;
+package com.torodb.torod.db.backends.converters.array;
 
-import org.threeten.bp.LocalDate;
+import javax.json.JsonValue;
 
-import com.torodb.torod.core.subdocument.values.ScalarDate;
-import com.torodb.torod.core.subdocument.values.heap.LocalDateScalarDate;
-import com.torodb.torod.db.backends.converters.ValueConverter;
+import com.torodb.torod.core.exceptions.ToroImplementationException;
+import com.torodb.torod.core.subdocument.values.ScalarNull;
 
 /**
  *
  */
-public class DateValueToJsonConverter implements ValueConverter<String, ScalarDate> {
+public class NullToArrayConverter implements ArrayConverter<JsonValue, ScalarNull> {
+    private static final long serialVersionUID = 1L;
 
     @Override
-    public Class<? extends String> getJsonClass() {
-        return String.class;
+    public String toJsonLiteral(ScalarNull value) {
+        return "null";
     }
 
     @Override
-    public Class<? extends ScalarDate> getValueClass() {
-        return ScalarDate.class;
+    public ScalarNull fromJsonValue(JsonValue value) {
+        if (value != JsonValue.NULL) {
+            throw new ToroImplementationException(value + " is not null value");
+        }
+        
+        return ScalarNull.getInstance();
     }
-
-    @Override
-    public ScalarDate toValue(String value) {
-        return new LocalDateScalarDate(LocalDate.parse(value));
-    }
-    
 }

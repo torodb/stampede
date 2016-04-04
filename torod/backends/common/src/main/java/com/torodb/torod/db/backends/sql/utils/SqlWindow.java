@@ -12,7 +12,7 @@ import com.torodb.torod.core.subdocument.values.ScalarNull;
 import com.torodb.torod.core.subdocument.values.ScalarValue;
 import com.torodb.torod.db.backends.converters.ScalarTypeToSqlType;
 import com.torodb.torod.db.backends.converters.jooq.SubdocValueConverter;
-import com.torodb.torod.db.backends.converters.jooq.ValueToJooqConverterProvider;
+import com.torodb.torod.db.backends.converters.jooq.ValueToJooqDataTypeProvider;
 import com.torodb.torod.db.backends.udt.records.MongoTimestampRecord;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -45,7 +45,7 @@ public class SqlWindow implements Iterator<ValueRow<ScalarValue<?>>> {
 
             ScalarType scalarType = getScalarType(metaData, jdbcIndex, scalarTypeToSqlType);
 
-            converters[i] = ValueToJooqConverterProvider.getConverter(scalarType);
+            converters[i] = ValueToJooqDataTypeProvider.getDataType(scalarType).getSubdocValueConverter();
         }
 
         ImmutableList.Builder<ValueRow<ScalarValue<?>>> builder = ImmutableList.builder();

@@ -20,6 +20,29 @@
 
 package com.torodb.torod.db.backends.postgresql;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.Charset;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.concurrent.ConcurrentMap;
+
+import javax.annotation.Nonnull;
+import javax.inject.Provider;
+
+import org.jooq.DSLContext;
+import org.jooq.Meta;
+import org.jooq.Result;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.common.collect.MapMaker;
 import com.google.common.io.CharStreams;
 import com.torodb.torod.core.exceptions.ToroImplementationException;
@@ -32,23 +55,8 @@ import com.torodb.torod.db.backends.meta.TorodbMeta;
 import com.torodb.torod.db.backends.meta.TorodbSchema;
 import com.torodb.torod.db.backends.tables.CollectionsTable;
 import com.torodb.torod.db.backends.tables.records.CollectionsRecord;
+
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.Charset;
-import java.sql.*;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.concurrent.ConcurrentMap;
-import javax.annotation.Nonnull;
-import javax.inject.Provider;
-import org.jooq.DSLContext;
-import org.jooq.Meta;
-import org.jooq.Result;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -85,7 +93,6 @@ public class PostgreSQLTorodbMeta implements TorodbMeta {
         
         createTypes(conn, jdbcMeta);
         createProcedures(conn, jdbcMeta);
-        createCast(conn, jdbcMeta);
 
         dsl.configuration().connectionProvider().release(conn);
     }
@@ -338,32 +345,4 @@ public class PostgreSQLTorodbMeta implements TorodbMeta {
             resourceAsStream.close();
         }
     }
-
-    private void createCast(
-            Connection conn, 
-            DatabaseMetaData jdbcMeta
-    ) throws SQLException, IOException {
-        Statement st = null;
-        try {
-            st = conn.createStatement();
-            
-            LOGGER.debug("Removing previous varchar to jsonb cast");
-            Savepoint savepoint = conn.setSavepoint();
-            try {
-                st.executeUpdate("DROP CAST (varchar AS jsonb)");
-            } catch (SQLException ex) {
-                LOGGER.debug("Old varchar to jsonb cast does not exist");
-                conn.rollback(savepoint);
-            }
-            LOGGER.debug("Creating new varchar to jsonb cast");
-            executeSql(conn, "/sql/json_cast.sql");
-            LOGGER.debug("Cast varchar to jsonb cast created");
-            
-        } finally {
-            if (st != null) {
-                st.close();
-            }
-        }
-    }
-
 }

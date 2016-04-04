@@ -21,10 +21,10 @@
 
 package com.torodb.torod.db.backends.converters.jooq;
 
+import org.jooq.impl.SQLDataType;
+
 import com.torodb.torod.core.subdocument.ScalarType;
 import com.torodb.torod.core.subdocument.values.ScalarNull;
-import org.jooq.DataType;
-import org.jooq.impl.SQLDataType;
 
 /**
  *
@@ -32,10 +32,7 @@ import org.jooq.impl.SQLDataType;
 public class NullValueConverter implements SubdocValueConverter<Short, ScalarNull>{
     private static final long serialVersionUID = 1L;
 
-    @Override
-    public DataType<Short> getDataType() {
-        return SQLDataType.SMALLINT.nullable(true);
-    }
+    public static final DataTypeForScalar<ScalarNull> TYPE = DataTypeForScalar.from(SQLDataType.SMALLINT.nullable(true), new NullValueConverter());
 
     @Override
     public ScalarType getErasuredType() {

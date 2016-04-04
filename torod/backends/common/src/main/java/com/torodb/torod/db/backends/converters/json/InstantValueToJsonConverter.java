@@ -20,11 +20,12 @@
 
 package com.torodb.torod.db.backends.converters.json;
 
-import com.torodb.torod.db.backends.converters.ValueConverter;
-import com.torodb.torod.core.subdocument.values.ScalarInstant;
-import com.torodb.torod.core.subdocument.values.heap.InstantScalarInstant;
 import org.threeten.bp.Instant;
 import org.threeten.bp.format.DateTimeFormatter;
+
+import com.torodb.torod.core.subdocument.values.ScalarInstant;
+import com.torodb.torod.core.subdocument.values.heap.InstantScalarInstant;
+import com.torodb.torod.db.backends.converters.ValueConverter;
 
 /**
  *
@@ -40,11 +41,6 @@ public class InstantValueToJsonConverter implements
     @Override
     public Class<? extends ScalarInstant> getValueClass() {
         return ScalarInstant.class;
-    }
-
-    @Override
-    public String toJson(ScalarInstant value) {
-        return value.getValue().toString();
     }
 
     @Override

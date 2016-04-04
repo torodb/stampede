@@ -40,11 +40,6 @@ public class NullValueToJsonConverter implements
     }
 
     @Override
-    public Void toJson(ScalarNull value) {
-        return null;
-    }
-
-    @Override
     public ScalarNull toValue(Void value) {
         return ScalarNull.getInstance();
     }

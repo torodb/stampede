@@ -19,20 +19,38 @@
  */
 package com.torodb.torod.db.backends.tables;
 
-import com.torodb.torod.db.backends.DatabaseInterface;
-import com.torodb.torod.db.backends.meta.TorodbKeys;
-import com.torodb.torod.db.backends.meta.TorodbSchema;
-import com.torodb.torod.db.backends.tables.records.CollectionsRecord;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
+import java.sql.Types;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+
+import org.jooq.Binding;
+import org.jooq.BindingGetResultSetContext;
+import org.jooq.BindingGetSQLInputContext;
+import org.jooq.BindingGetStatementContext;
+import org.jooq.BindingRegisterContext;
+import org.jooq.BindingSQLContext;
+import org.jooq.BindingSetSQLOutputContext;
+import org.jooq.BindingSetStatementContext;
+import org.jooq.Converter;
+import org.jooq.Converters;
 import org.jooq.Field;
 import org.jooq.Table;
 import org.jooq.TableField;
 import org.jooq.UniqueKey;
+import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
-import java.util.Arrays;
-import java.util.List;
+import com.torodb.torod.db.backends.DatabaseInterface;
+import com.torodb.torod.db.backends.converters.jooq.JSONBBinding;
+import com.torodb.torod.db.backends.meta.TorodbKeys;
+import com.torodb.torod.db.backends.meta.TorodbSchema;
+import com.torodb.torod.db.backends.tables.records.CollectionsRecord;
+
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 @SuppressFBWarnings("EQ_DOESNT_OVERRIDE_EQUALS")
 public class CollectionsTable extends TableImpl<CollectionsRecord> {
@@ -111,8 +129,8 @@ public class CollectionsTable extends TableImpl<CollectionsRecord> {
 	 * The column <code>torodb.collections.other</code>.
 	 */
 	public final TableField<CollectionsRecord, String> OTHER 
-            = createField(TableFields.OTHER.fieldName, SQLDataType.VARCHAR, this, "");
-    
+            = createField(TableFields.OTHER.fieldName, JSONBBinding.fromType(String.class, Converters.identity(String.class)), this, "");
+	
     public final TableField<CollectionsRecord, String> STORAGE_ENGINE 
             = createField(TableFields.STORAGE_ENGINE.fieldName, SQLDataType.VARCHAR.nullable(false), this, "");
 

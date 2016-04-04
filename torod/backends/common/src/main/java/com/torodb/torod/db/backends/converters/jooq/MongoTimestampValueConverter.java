@@ -25,7 +25,6 @@ import com.torodb.torod.core.subdocument.values.ScalarMongoTimestamp;
 import com.torodb.torod.core.subdocument.values.heap.DefaultScalarMongoTimestamp;
 import com.torodb.torod.db.backends.udt.MongoTimestampUDT;
 import com.torodb.torod.db.backends.udt.records.MongoTimestampRecord;
-import org.jooq.DataType;
 
 /**
  *
@@ -35,10 +34,7 @@ public class MongoTimestampValueConverter implements
 
     private static final long serialVersionUID = 1251948867583783920L;
 
-    @Override
-    public DataType<MongoTimestampRecord> getDataType() {
-        return MongoTimestampUDT.MONGO_TIMESTAMP.getDataType();
-    }
+    public static final DataTypeForScalar<ScalarMongoTimestamp> TYPE = DataTypeForScalar.from(MongoTimestampUDT.MONGO_TIMESTAMP.getDataType(), new MongoTimestampValueConverter());
 
     @Override
     public ScalarType getErasuredType() {
