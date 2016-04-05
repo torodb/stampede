@@ -20,6 +20,7 @@
 
 package com.toro.torod.connection;
 
+import java.sql.Savepoint;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
@@ -59,7 +60,9 @@ import com.torodb.torod.core.connection.DeleteResponse;
 import com.torodb.torod.core.connection.InsertResponse;
 import com.torodb.torod.core.connection.ToroTransaction;
 import com.torodb.torod.core.connection.UpdateResponse;
+import com.torodb.torod.core.connection.UpdateResponse.InsertedDocuments;
 import com.torodb.torod.core.connection.WriteError;
+import com.torodb.torod.core.connection.exceptions.RetryTransactionException;
 import com.torodb.torod.core.d2r.D2RTranslator;
 import com.torodb.torod.core.dbMetaInf.DbMetaInformationCache;
 import com.torodb.torod.core.exceptions.ToroImplementationException;
@@ -100,6 +103,8 @@ import com.torodb.torod.core.subdocument.values.ScalarValueVisitor;
  */
 public class DefaultToroTransaction implements ToroTransaction {
 
+    private static final int UPDATE_RETRY_COUNT_LIMIT = 64;
+    
     private final DbMetaInformationCache cache;
     private final SessionTransaction sessionTransaction;
     private final D2RTranslator d2r;
@@ -274,15 +279,39 @@ public class DefaultToroTransaction implements ToroTransaction {
         UpdateResponse.Builder builder = new UpdateResponse.Builder();
         for (int updateIndex = 0; updateIndex < updates.size(); updateIndex++) {
             UpdateOperation update = updates.get(updateIndex);
-
+            
             try {
-                update(
-                        collection, 
-                        update, 
-                        updateIndex, 
-                        updateActionVisitorDocumentToInsert, 
-                        updateActionVisitorDocumentToUpdate, 
-                        builder);
+                int retryCount = 0;
+                boolean retry;
+                do {
+                    Savepoint savepoint = sessionTransaction.setSavepoint().get();
+                    try {
+                        UpdateResponse.Builder partialBuilder = new UpdateResponse.Builder();
+                        update(
+                                collection, 
+                                update, 
+                                updateIndex, 
+                                updateActionVisitorDocumentToInsert, 
+                                updateActionVisitorDocumentToUpdate,
+                                partialBuilder);
+                        retry = false;
+                        sessionTransaction.releaseSavepoint(savepoint);
+                        UpdateResponse partialResponse = partialBuilder.build();
+                        builder.addCandidates(partialResponse.getCandidates());
+                        builder.incrementModified(partialResponse.getModified());
+                        for (InsertedDocuments insertedDocuments : partialResponse.getInsertedDocuments()) {
+                            builder.addInsertedDocument(insertedDocuments.getDoc(), insertedDocuments.getOperationIndex());
+                        }
+                    } catch (RetryTransactionException retryTransactionException) {
+                        sessionTransaction.rollback(savepoint);
+                        retry = true;
+                        retryCount++;
+                        
+                        if (retryCount > UPDATE_RETRY_COUNT_LIMIT) {
+                            throw new ToroImplementationException("update retry count limit of " + UPDATE_RETRY_COUNT_LIMIT + " reached");
+                        }
+                    }
+                } while(retry);
             }
             catch (InterruptedException | ExecutionException ex) {
                 throw new ToroImplementationException(ex);
@@ -308,9 +337,9 @@ public class DefaultToroTransaction implements ToroTransaction {
             UpdateActionVisitor<ToroDocument, Void> updateActionVisitorDocumentToInsert,
             UpdateActionVisitor<UpdatedToroDocument, ToroDocument> updateActionVisitorDocumentToUpdate,
             UpdateResponse.Builder responseBuilder
-    ) throws InterruptedException, ExecutionException {
+    ) throws InterruptedException, ExecutionException, RetryTransactionException {
         List<ToroDocument> candidates = sessionTransaction.readAll(collection, update.getQuery()).get();
-
+        
         responseBuilder.addCandidates(candidates.size());
 
         if (candidates.isEmpty()) {
@@ -366,7 +395,7 @@ public class DefaultToroTransaction implements ToroTransaction {
                             WriteFailMode.TRANSACTIONAL
                     ).get();
             if (deleteResponse.getDeleted() != objectsToDelete.size()) {
-                throw new ToroImplementationException("Update: "
+                throw new RetryTransactionException("Update: "
                         + objectsToDelete.size() + " should be deleted, but "
                         + deleteResponse.getDeleted() + " objects have been "
                         + "deleted instead");

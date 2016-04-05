@@ -23,6 +23,7 @@ package com.torodb.torod.db.backends.sql;
 import java.io.StringReader;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Savepoint;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -179,6 +180,39 @@ public abstract class AbstractDbConnection implements
         try {
             Connection connection = jooqConf.connectionProvider().acquire();
             connection.commit();
+        } catch (SQLException ex) {
+            //TODO: Change exception
+            throw new RuntimeException(ex);
+        }
+    }
+
+    @Override
+    public Savepoint setSavepoint() {
+        try {
+            Connection connection = jooqConf.connectionProvider().acquire();
+            return connection.setSavepoint();
+        } catch (SQLException ex) {
+            //TODO: Change exception
+            throw new RuntimeException(ex);
+        }
+    }
+
+    @Override
+    public void rollback(Savepoint savepoint) {
+        try {
+            Connection connection = jooqConf.connectionProvider().acquire();
+            connection.rollback(savepoint);
+        } catch (SQLException ex) {
+            //TODO: Change exception
+            throw new RuntimeException(ex);
+        }
+    }
+
+    @Override
+    public void releaseSavepoint(Savepoint savepoint) {
+        try {
+            Connection connection = jooqConf.connectionProvider().acquire();
+            connection.releaseSavepoint(savepoint);
         } catch (SQLException ex) {
             //TODO: Change exception
             throw new RuntimeException(ex);
@@ -481,7 +515,7 @@ public abstract class AbstractDbConnection implements
                 0
         );
         
-        List<SplitDocument> splitDocs = queryRoutine.execute(getJooqConf(), colSchema, dids.toArray(new Integer[dids.size()]), null, true, databaseInterface);
+        List<SplitDocument> splitDocs = queryRoutine.execute(getJooqConf(), colSchema, dids.toArray(new Integer[dids.size()]), null, databaseInterface);
         
         List<ToroDocument> toroDocuments = FluentIterable.from(Iterables.transform(
                     splitDocs,

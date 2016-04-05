@@ -190,7 +190,7 @@ public class PostgresqlDatabaseInterface implements DatabaseInterface {
     @Nonnull
     @Override
     public String findDocsSelectStatement(
-            @Nonnull String didName, @Nonnull String typeIdName, @Nonnull String indexName, @Nonnull String jsonName, boolean forUpdate
+            @Nonnull String didName, @Nonnull String typeIdName, @Nonnull String indexName, @Nonnull String jsonName
     ) {
         StringBuilder stringBuilder = new StringBuilder()
                 .append("SELECT ")
@@ -200,10 +200,6 @@ public class PostgresqlDatabaseInterface implements DatabaseInterface {
                 .append(jsonName)
                 .append(" FROM torodb.find_docs(?, ?, ?) ORDER BY ")
                 .append(didName).append(" ASC");
-        
-        if (forUpdate) {
-            stringBuilder.append(" FOR UPDATE");
-        }
         
         return stringBuilder.toString();
     }

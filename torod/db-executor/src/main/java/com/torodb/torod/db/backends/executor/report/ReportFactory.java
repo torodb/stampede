@@ -36,6 +36,12 @@ public interface ReportFactory {
 
     public RollbackCallable.Report createRollbackReport();
 
+    public SetSavepointCallable.Report createSetSavepointReport();
+
+    public RollbackSavepointCallable.Report createRollbackSavepointReport();
+
+    public ReleaseSavepointCallable.Report createReleaseSavepointReport();
+
     public DropCollectionCallable.Report createDropCollectionReport();
 
     public CreateIndexCallable.Report createIndexReport();

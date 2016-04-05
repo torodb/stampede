@@ -54,6 +54,7 @@ class MongoUpdatedToroDocumentBuilder {
     public void clear() {
         if (built) {
             built = false;
+            updated = false;
             values = Maps.newLinkedHashMap();
         } else {
             values.clear();
@@ -241,7 +242,11 @@ class MongoUpdatedToroDocumentBuilder {
     
     public UpdatedToroDocument build() {
         if (assignedCount == 1) {
-            return new MongoUpdatedToroDocument(documentBuilderFactory.newDocBuilder().setRoot(buildRoot()).build(), updated);
+            MongoUpdatedToroDocument updatedToroDocument = new MongoUpdatedToroDocument(
+                    documentBuilderFactory.newDocBuilder().setRoot(buildRoot()).build(), updated);
+            clear();
+            assignedCount = 0;
+            return updatedToroDocument;
         }
         assignedCount--;
         return null;

@@ -30,15 +30,28 @@ public class Script {
 
     private final String scriptName;
 	private final URL testResourceUrl;
+	private final Integer threads;
 
     public Script(String scriptName, URL testResourceUrl) {
         Preconditions.checkArgument(testResourceUrl != null, "Illegal construction of script %s. Its resource is null", scriptName);
         this.scriptName = scriptName;
         this.testResourceUrl = testResourceUrl;
+        this.threads = null;
+    }
+
+    public Script(String scriptName, URL testResourceUrl, Integer threads) {
+        Preconditions.checkArgument(testResourceUrl != null, "Illegal construction of script %s. Its resource is null", scriptName);
+        this.scriptName = scriptName;
+        this.testResourceUrl = testResourceUrl;
+        this.threads = threads;
     }
 
     URL getURL() {
         return testResourceUrl;
+    }
+
+    Integer getThreads() {
+        return threads;
     }
 
     @Override

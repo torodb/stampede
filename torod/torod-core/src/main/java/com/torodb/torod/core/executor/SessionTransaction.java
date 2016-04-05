@@ -20,6 +20,14 @@
 
 package com.torodb.torod.core.executor;
 
+import java.io.Closeable;
+import java.sql.Savepoint;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+
+import javax.annotation.Nonnull;
+
 import com.google.common.annotations.Beta;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.torodb.torod.core.ValueRow;
@@ -36,11 +44,6 @@ import com.torodb.torod.core.pojos.NamedToroIndex;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.core.subdocument.ToroDocument;
 import com.torodb.torod.core.subdocument.values.ScalarValue;
-import java.io.Closeable;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import javax.annotation.Nonnull;
 
 /**
  *
@@ -48,6 +51,13 @@ import javax.annotation.Nonnull;
 public interface SessionTransaction extends Closeable {
 
     ListenableFuture<?> rollback();
+    
+
+    ListenableFuture<Savepoint> setSavepoint();
+
+    ListenableFuture<?> rollback(Savepoint savepoint);
+    
+    ListenableFuture<?> releaseSavepoint(Savepoint savepoint);
     
     ListenableFuture<?> commit();
     

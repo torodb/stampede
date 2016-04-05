@@ -64,7 +64,7 @@ public class QueryRoutine {
                 "OBL_UNSATISFIED_OBLIGATION"
             })
     public List<SplitDocument> execute(
-            Configuration configuration, IndexStorage.CollectionSchema colSchema, Integer[] requestedDocs, Projection projection, boolean forUpdate,
+            Configuration configuration, IndexStorage.CollectionSchema colSchema, Integer[] requestedDocs, Projection projection,
             @Nonnull DatabaseInterface databaseInterface
     ) {
 
@@ -79,8 +79,7 @@ public class QueryRoutine {
                 DOC_ID,
                 TYPE_ID,
                 INDEX,
-                _JSON,
-                forUpdate))) {
+                _JSON))) {
 
             ps.setString(1, colSchema.getName());
 
@@ -88,7 +87,7 @@ public class QueryRoutine {
 
             Integer[] requiredTables = requiredTables(colSchema, projection);
             ps.setArray(3, c.createArrayOf("integer", requiredTables));
-
+            
             return translateDocuments(colSchema, requestedDocs.length, ps.executeQuery());
         } catch (SQLException ex) {
             //TODO: Study exceptions
