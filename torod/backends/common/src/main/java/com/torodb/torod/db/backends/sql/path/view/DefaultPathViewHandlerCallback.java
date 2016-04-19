@@ -1,6 +1,16 @@
 
 package com.torodb.torod.db.backends.sql.path.view;
 
+import java.util.Collection;
+import java.util.Map;
+
+import org.jooq.CreateViewFinalStep;
+import org.jooq.DSLContext;
+import org.jooq.conf.ParamType;
+import org.jooq.impl.DSL;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.common.collect.Table;
 import com.torodb.torod.core.exceptions.IllegalPathViewException;
 import com.torodb.torod.core.language.AttributeReference;
@@ -8,15 +18,7 @@ import com.torodb.torod.core.subdocument.ScalarType;
 import com.torodb.torod.core.subdocument.SubDocAttribute;
 import com.torodb.torod.core.subdocument.SubDocType;
 import com.torodb.torod.core.subdocument.structure.DocStructure;
-import com.torodb.torod.db.backends.meta.IndexStorage;
-import java.util.Collection;
-import java.util.Map;
-import org.jooq.CreateViewFinalStep;
-import org.jooq.DSLContext;
-import org.jooq.conf.ParamType;
-import org.jooq.impl.DSL;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.torodb.torod.db.backends.meta.CollectionSchema;
 
 /**
  *
@@ -51,7 +53,7 @@ public class DefaultPathViewHandlerCallback extends PathViewHandler.Callback {
     }
 
     @Override
-    public void dropView(AttributeReference attRef, IndexStorage.CollectionSchema colSchema) {
+    public void dropView(AttributeReference attRef, CollectionSchema colSchema) {
         dsl.dropViewIfExists(
                 DSL.name(
                         colSchema.getName(), getViewName(attRef)

@@ -93,7 +93,9 @@ public class BackendModule extends AbstractModule implements BackendImplementati
     public static class PostgresDbBackendConfigurationMapper extends DbBackendConfigurationMapper {
         @Inject
         public PostgresDbBackendConfigurationMapper(Config config, Postgres postgres) {
-            super(config.getGeneric().getConnectionPoolSize(),
+            super(config.getProtocol().getMongo().getCursorTimeout(),
+                    config.getGeneric().getConnectionPoolTimeout(),
+                    config.getGeneric().getConnectionPoolSize(),
                     config.getGeneric().getReservedReadPoolSize(),
                     postgres.getHost(),
                     postgres.getPort(),
@@ -108,7 +110,9 @@ public class BackendModule extends AbstractModule implements BackendImplementati
     public static class MySQLDbBackendConfigurationMapper extends DbBackendConfigurationMapper {
         @Inject
         public MySQLDbBackendConfigurationMapper(Config config, MySQL mysql) {
-            super(config.getGeneric().getConnectionPoolSize(),
+            super(config.getProtocol().getMongo().getCursorTimeout(),
+                    config.getGeneric().getConnectionPoolTimeout(),
+                    config.getGeneric().getConnectionPoolSize(),
                     config.getGeneric().getReservedReadPoolSize(),
                     mysql.getHost(),
                     mysql.getPort(),
@@ -120,17 +124,22 @@ public class BackendModule extends AbstractModule implements BackendImplementati
 	
 	public static abstract class DbBackendConfigurationMapper implements DbBackendConfiguration {
 
-		private final int connectionPoolSize;
-		private final int reservedReadPoolSize;
+        private final long cursorTimeout;
+        private final long connectionPoolTimeout;
+        private final int connectionPoolSize;
+        private final int reservedReadPoolSize;
 		private final String dbHost;
 		private final int dbPort;
 		private final String dbName;
 		private final String username;
 		private final String password;
-
-		public DbBackendConfigurationMapper(int connectionPoolSize, int reservedReadPoolSize, String dbHost, int dbPort,
-                String dbName, String username, String password) {
+		
+		@Inject
+        public DbBackendConfigurationMapper(long cursorTimeout, long connectionPoolTimeout, int connectionPoolSize,
+                int reservedReadPoolSize, String dbHost, int dbPort, String dbName, String username, String password) {
             super();
+            this.cursorTimeout = cursorTimeout;
+            this.connectionPoolTimeout = connectionPoolTimeout;
             this.connectionPoolSize = connectionPoolSize;
             this.reservedReadPoolSize = reservedReadPoolSize;
             this.dbHost = dbHost;
@@ -138,6 +147,16 @@ public class BackendModule extends AbstractModule implements BackendImplementati
             this.dbName = dbName;
             this.username = username;
             this.password = password;
+        }
+
+		@Override
+        public long getCursorTimeout() {
+            return cursorTimeout;
+        }
+
+        @Override
+        public long getConnectionPoolTimeout() {
+            return connectionPoolTimeout;
         }
 
         @Override

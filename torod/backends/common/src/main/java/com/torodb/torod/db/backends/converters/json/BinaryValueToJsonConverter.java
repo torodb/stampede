@@ -47,11 +47,6 @@ public class BinaryValueToJsonConverter implements
     }
 
     @Override
-    public String toJson(ScalarBinary value) {
-        return "\\x" + value.toString();
-    }
-
-    @Override
     public ScalarBinary toValue(String value) {
         if (!value.startsWith("\\x")) {
             throw new ToroImplementationException(

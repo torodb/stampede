@@ -19,9 +19,44 @@
  */
 package com.torodb.torod.db.backends.postgresql;
 
+import java.io.IOException;
+import java.io.Reader;
+import java.io.Serializable;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+
+import javax.annotation.Nonnull;
+import javax.inject.Inject;
+import javax.inject.Provider;
+
+import org.jooq.Configuration;
+import org.jooq.ConnectionProvider;
+import org.jooq.DSLContext;
+import org.jooq.DataType;
+import org.jooq.Field;
+import org.jooq.InsertValuesStep2;
+import org.jooq.Record;
+import org.jooq.exception.DataAccessException;
+import org.jooq.impl.DSL;
+import org.jooq.impl.SQLDataType;
+import org.postgresql.PGConnection;
+import org.postgresql.copy.CopyManager;
+import org.slf4j.LoggerFactory;
+
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.torodb.torod.core.ValueRow;
+import com.torodb.torod.core.d2r.D2RTranslator;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.exceptions.IllegalPathViewException;
 import com.torodb.torod.core.exceptions.ToroRuntimeException;
@@ -34,14 +69,11 @@ import com.torodb.torod.core.subdocument.SubDocument;
 import com.torodb.torod.core.subdocument.structure.DocStructure;
 import com.torodb.torod.core.subdocument.values.ScalarValue;
 import com.torodb.torod.db.backends.DatabaseInterface;
-import com.torodb.torod.db.backends.converters.jooq.SubdocValueConverter;
-import com.torodb.torod.db.backends.converters.jooq.ValueToJooqConverterProvider;
 import com.torodb.torod.db.backends.meta.IndexStorage;
-import com.torodb.torod.db.backends.meta.IndexStorage.CollectionSchema;
+import com.torodb.torod.db.backends.meta.CollectionSchema;
 import com.torodb.torod.db.backends.meta.StructuresCache;
 import com.torodb.torod.db.backends.meta.TorodbMeta;
-import com.torodb.torod.db.backends.meta.TorodbSchema;
-import com.torodb.torod.db.backends.postgresql.converters.PostgreSQLScalarTypeToSqlType;
+import com.torodb.torod.db.backends.meta.routines.QueryRoutine;
 import com.torodb.torod.db.backends.postgresql.converters.PostgreSQLValueToCopyConverter;
 import com.torodb.torod.db.backends.sql.AbstractDbConnection;
 import com.torodb.torod.db.backends.sql.index.NamedDbIndex;
@@ -50,23 +82,8 @@ import com.torodb.torod.db.backends.sql.path.view.PathViewHandler;
 import com.torodb.torod.db.backends.sql.utils.SqlWindow;
 import com.torodb.torod.db.backends.tables.SubDocHelper;
 import com.torodb.torod.db.backends.tables.SubDocTable;
+
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import java.io.IOException;
-import java.io.Reader;
-import java.io.Serializable;
-import java.sql.*;
-import java.util.Comparator;
-import java.util.*;
-import javax.annotation.Nonnull;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import org.jooq.*;
-import org.jooq.exception.DataAccessException;
-import org.jooq.impl.DSL;
-import org.jooq.impl.SQLDataType;
-import org.postgresql.PGConnection;
-import org.postgresql.copy.CopyManager;
-import org.slf4j.LoggerFactory;
 
 
 /**
@@ -81,14 +98,19 @@ class PostgreSQLDbConnection extends AbstractDbConnection {
     static final String SUBDOC_TABLE_KEYS_COLUMN = "keys";
     private final FieldComparator fieldComparator = new FieldComparator();
     private final MyStructureListener listener = new MyStructureListener();
+    private final DatabaseInterface databaseInterface;
 
     @Inject
     public PostgreSQLDbConnection(
             DSLContext dsl,
             TorodbMeta meta,
             Provider<Builder> subDocTypeBuilderProvider,
+            D2RTranslator d2r,
+            QueryRoutine queryRoutine,
             DatabaseInterface databaseInterface) {
-        super(dsl, meta, subDocTypeBuilderProvider, databaseInterface);
+        super(dsl, meta, subDocTypeBuilderProvider, d2r, queryRoutine, databaseInterface);
+        
+        this.databaseInterface = databaseInterface;
     }
 
     @Override
@@ -175,7 +197,7 @@ class PostgreSQLDbConnection extends AbstractDbConnection {
             @Nonnull String collection,
             @Nonnull Collection<SplitDocument> docs) {
 
-        IndexStorage.CollectionSchema colSchema = getMeta().getCollectionSchema(collection);
+        CollectionSchema colSchema = getMeta().getCollectionSchema(collection);
 
         Field<Integer> idField = DSL.field("did", SQLDataType.INTEGER.nullable(false));
         Field<Integer> sidField = DSL.field("sid", SQLDataType.INTEGER.nullable(false));
@@ -274,7 +296,7 @@ class PostgreSQLDbConnection extends AbstractDbConnection {
             value = "OBL_UNSATISFIED_OBLIGATION",
             justification = "False positive: https://sourceforge.net/p/findbugs/bugs/1021/")
     public Long getCollectionSize(String collection) {
-        IndexStorage.CollectionSchema colSchema = getMeta().getCollectionSchema(collection);
+        CollectionSchema colSchema = getMeta().getCollectionSchema(collection);
         
         ConnectionProvider connectionProvider 
                 = getDsl().configuration().connectionProvider();
@@ -375,7 +397,7 @@ class PostgreSQLDbConnection extends AbstractDbConnection {
             value = "OBL_UNSATISFIED_OBLIGATION",
             justification = "False positive: https://sourceforge.net/p/findbugs/bugs/1021/")
     public Long getDocumentsSize(String collection) {
-        IndexStorage.CollectionSchema colSchema = getMeta().getCollectionSchema(collection);
+        CollectionSchema colSchema = getMeta().getCollectionSchema(collection);
         
         ConnectionProvider connectionProvider 
                 = getDsl().configuration().connectionProvider();
@@ -405,7 +427,7 @@ class PostgreSQLDbConnection extends AbstractDbConnection {
 
     @Override
     public Long getIndexSize(String collection, String index) {
-        IndexStorage.CollectionSchema colSchema = getMeta().getCollectionSchema(collection);
+        CollectionSchema colSchema = getMeta().getCollectionSchema(collection);
         
         ConnectionProvider connectionProvider 
                 = getDsl().configuration().connectionProvider();
@@ -485,7 +507,10 @@ class PostgreSQLDbConnection extends AbstractDbConnection {
 
 
                 try (ResultSet rs = st.executeQuery(query)) {
-                    return new SqlWindow(rs, getDatabaseInterface().getValueToJooqConverterProvider(), getDatabaseInterface().getScalarTypeToSqlType());
+                    return new SqlWindow(rs, 
+                            getDatabaseInterface().getValueToJooqConverterProvider(), 
+                            getDatabaseInterface().getValueToJooqDataTypeProvider(), 
+                            getDatabaseInterface().getScalarTypeToSqlType());
                 }
             } catch (SQLException ex) {
                 //TODO: Change exception
@@ -640,21 +665,20 @@ class PostgreSQLDbConnection extends AbstractDbConnection {
 
     private String getSqlType(Field<?> field, Configuration conf) {
         if (field.getConverter() != null) {
-            ValueToJooqConverterProvider valueToJooqConverterProvider = getDatabaseInterface().getValueToJooqConverterProvider();
-            SubdocValueConverter arrayConverter
-                    = valueToJooqConverterProvider.getConverter(ScalarType.ARRAY);
-            if (field.getConverter().getClass().equals(arrayConverter.getClass())) {
-            	return PostgreSQLScalarTypeToSqlType.ARRAY_TYPE;
+            DataType<?> arrayDataType
+                = databaseInterface.getValueToJooqDataTypeProvider().getDataType(ScalarType.ARRAY);
+            if (field.getDataType().getClass().equals(arrayDataType.getClass())) {
+                return "jsonb";
             }
-            SubdocValueConverter mongoObjectIdConverter
-                    = valueToJooqConverterProvider.getConverter(ScalarType.MONGO_OBJECT_ID);
-            if (field.getConverter().getClass().equals(mongoObjectIdConverter.getClass())) {
-            	return TorodbSchema.TORODB_SCHEMA + "." + PostgreSQLScalarTypeToSqlType.MONGO_OBJECT_ID_TYPE;
+            DataType<?> mongoObjectIdDataType
+                    = databaseInterface.getValueToJooqDataTypeProvider().getDataType(ScalarType.MONGO_OBJECT_ID);
+            if (field.getDataType().getClass().equals(mongoObjectIdDataType.getClass())) {
+                return "torodb.mongo_object_id";
             }
-            SubdocValueConverter mongoTimestampConverter
-                    = valueToJooqConverterProvider.getConverter(ScalarType.MONGO_TIMESTAMP);
-            if (field.getConverter().getClass().equals(mongoTimestampConverter.getClass())) {
-                return TorodbSchema.TORODB_SCHEMA + "." + PostgreSQLScalarTypeToSqlType.MONGO_TIMESTAMP_TYPE;
+            DataType<?> mongoTimestampDataType
+                    = databaseInterface.getValueToJooqDataTypeProvider().getDataType(ScalarType.MONGO_TIMESTAMP);
+            if (field.getDataType().getClass().equals(mongoTimestampDataType.getClass())) {
+                return "torodb.mongo_timestamp";
             }
         }
         return field.getDataType().getTypeName(conf);
@@ -718,7 +742,7 @@ class PostgreSQLDbConnection extends AbstractDbConnection {
     private class MyStructureListener implements StructuresCache.NewStructureListener {
 
         @Override
-        public void eventNewStructure(IndexStorage.CollectionSchema colSchema, DocStructure newStructure) {
+        public void eventNewStructure(CollectionSchema colSchema, DocStructure newStructure) {
             colSchema.getIndexManager().newStructureDetected(
                     newStructure, 
                     PostgreSQLDbConnection.this

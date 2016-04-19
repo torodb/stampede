@@ -29,7 +29,6 @@ import com.google.common.collect.Sets;
 import com.google.common.collect.Sets.SetView;
 import com.torodb.torod.core.subdocument.ScalarType;
 import com.torodb.torod.core.subdocument.values.ScalarValue;
-import com.torodb.torod.db.backends.converters.jooq.ArrayValueConverter;
 import com.torodb.torod.db.backends.converters.jooq.BooleanValueConverter;
 import com.torodb.torod.db.backends.converters.jooq.DateValueConverter;
 import com.torodb.torod.db.backends.converters.jooq.DoubleValueConverter;
@@ -39,6 +38,7 @@ import com.torodb.torod.db.backends.converters.jooq.NullValueConverter;
 import com.torodb.torod.db.backends.converters.jooq.SubdocValueConverter;
 import com.torodb.torod.db.backends.converters.jooq.TimeValueConverter;
 import com.torodb.torod.db.backends.converters.jooq.ValueToJooqConverterProvider;
+import com.torodb.torod.db.backends.mysql.converters.array.MySQLValueToArrayConverterProvider;
 
 /**
  *
@@ -62,19 +62,19 @@ public class MySQLValueToJooqConverterProvider implements ValueToJooqConverterPr
     static {
         converters = new EnumMap<ScalarType, SubdocValueConverter>(ScalarType.class);
 
-        converters.put(ScalarType.ARRAY, new ArrayValueConverter());
+        converters.put(ScalarType.ARRAY, new ArrayValueConverter(MySQLValueToArrayConverterProvider.getInstance()));
         converters.put(ScalarType.BOOLEAN, new BooleanValueConverter());
         converters.put(ScalarType.DOUBLE, new DoubleValueConverter());
         converters.put(ScalarType.INTEGER, new IntegerValueConverter());
         converters.put(ScalarType.LONG, new LongValueConverter());
         converters.put(ScalarType.NULL, new NullValueConverter());
-        converters.put(ScalarType.STRING, new MySQLStringValueConverter());
+        converters.put(ScalarType.STRING, new StringValueConverter());
         converters.put(ScalarType.DATE, new DateValueConverter());
-        converters.put(ScalarType.INSTANT, new MySQLInstantValueConverter());
+        converters.put(ScalarType.INSTANT, new InstantValueConverter());
         converters.put(ScalarType.TIME, new TimeValueConverter());
-        converters.put(ScalarType.MONGO_OBJECT_ID, new MySQLMongoObjectIdValueConverter());
-        converters.put(ScalarType.MONGO_TIMESTAMP, new MySQLMongoTimestampValueConverter());
-        converters.put(ScalarType.BINARY, new MySQLBinaryValueConverter());
+        converters.put(ScalarType.MONGO_OBJECT_ID, new MongoObjectIdValueConverter());
+        converters.put(ScalarType.MONGO_TIMESTAMP, new MongoTimestampValueConverter());
+        converters.put(ScalarType.BINARY, new BinaryValueConverter());
 
         SetView<ScalarType> withoutConverter = Sets.difference(converters.keySet(), SUPPORTED_TYPES);
         if (!withoutConverter.isEmpty()) {

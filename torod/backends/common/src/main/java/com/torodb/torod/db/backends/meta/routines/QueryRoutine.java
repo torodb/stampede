@@ -20,6 +20,19 @@
 
 package com.torodb.torod.db.backends.meta.routines;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Collections;
+import java.util.List;
+
+import javax.annotation.Nonnull;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
+import org.jooq.Configuration;
+
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Table;
@@ -28,21 +41,9 @@ import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.db.backends.DatabaseInterface;
 import com.torodb.torod.db.backends.DatabaseInterface.FindDocsSelectStatementRow;
 import com.torodb.torod.db.backends.converters.SplitDocumentConverter;
-import com.torodb.torod.db.backends.meta.IndexStorage;
-import com.torodb.torod.db.backends.tables.SubDocTable;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.jooq.Configuration;
+import com.torodb.torod.db.backends.meta.CollectionSchema;
 
-import javax.annotation.Nonnull;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 @Singleton
 public class QueryRoutine {
@@ -60,7 +61,7 @@ public class QueryRoutine {
                 "OBL_UNSATISFIED_OBLIGATION"
             })
     public List<SplitDocument> execute(
-            Configuration configuration, IndexStorage.CollectionSchema colSchema, Integer[] requestedDocs, Projection projection,
+            Configuration configuration, CollectionSchema colSchema, Integer[] requestedDocs, Projection projection,
             @Nonnull DatabaseInterface databaseInterface
     ) {
 
@@ -85,7 +86,7 @@ public class QueryRoutine {
     }
 
     @Nonnull
-    private List<SplitDocument> translateDocuments(IndexStorage.CollectionSchema colSchema, int expectedDocs, PreparedStatement ps,
+    private List<SplitDocument> translateDocuments(CollectionSchema colSchema, int expectedDocs, PreparedStatement ps,
             @Nonnull DatabaseInterface databaseInterface
             ) {
         try {
@@ -134,7 +135,7 @@ public class QueryRoutine {
     }
 
     private SplitDocument processDocument(
-            IndexStorage.CollectionSchema colSchema,
+            CollectionSchema colSchema,
             int lastDocId,
             Integer structureId,
             Table<Integer, Integer, String> docInfo) {

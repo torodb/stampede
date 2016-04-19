@@ -45,11 +45,6 @@ public class MongoObjectIdValueToJsonConverter implements
     }
 
     @Override
-    public String toJson(ScalarMongoObjectId value) {
-        return "\\x" + value.toString();
-    }
-
-    @Override
     public ScalarMongoObjectId toValue(String value) {
         if (!value.startsWith("\\x")) {
             throw new ToroImplementationException(

@@ -31,7 +31,6 @@ import com.google.common.collect.Sets;
 import com.google.common.collect.Sets.SetView;
 import com.torodb.torod.core.subdocument.ScalarType;
 import com.torodb.torod.db.backends.converters.ValueConverter;
-import com.torodb.torod.db.backends.converters.json.ArrayValueToJsonConverter;
 import com.torodb.torod.db.backends.converters.json.BinaryValueToJsonConverter;
 import com.torodb.torod.db.backends.converters.json.BooleanValueToJsonConverter;
 import com.torodb.torod.db.backends.converters.json.DateValueToJsonConverter;
@@ -45,6 +44,7 @@ import com.torodb.torod.db.backends.converters.json.NullValueToJsonConverter;
 import com.torodb.torod.db.backends.converters.json.StringValueToJsonConverter;
 import com.torodb.torod.db.backends.converters.json.TimeValueToJsonConverter;
 import com.torodb.torod.db.backends.converters.json.ValueToJsonConverterProvider;
+import com.torodb.torod.db.backends.postgresql.converters.array.PostgreSQLValueToArrayConverterProvider;
 
 /**
  *
@@ -67,7 +67,7 @@ public class PostgreSQLValueToJsonConverterProvider implements ValueToJsonConver
 
     private PostgreSQLValueToJsonConverterProvider() {
         converters = Maps.newEnumMap(ScalarType.class);
-        converters.put(ScalarType.ARRAY, new ArrayValueToJsonConverter());
+        converters.put(ScalarType.ARRAY, new ArrayValueToJsonConverter(PostgreSQLValueToArrayConverterProvider.getInstance()));
         converters.put(ScalarType.BOOLEAN, new BooleanValueToJsonConverter());
         converters.put(ScalarType.DATE, new DateValueToJsonConverter());
         converters.put(ScalarType.INSTANT, new InstantValueToJsonConverter());

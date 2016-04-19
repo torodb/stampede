@@ -32,5 +32,5 @@ import com.torodb.torod.core.subdocument.values.ScalarValue;
  */
 public interface ValueToJooqConverterProvider extends Serializable {
 
-    @Nonnull SubdocValueConverter<?, ? extends ScalarValue<? extends Serializable>> getConverter(ScalarType type);
+    @Nonnull SubdocValueConverter<?, ? extends ScalarValue<? extends Serializable>> getConverter(@Nonnull ScalarType type);
 }

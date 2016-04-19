@@ -51,6 +51,7 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.torodb.torod.core.ValueRow;
+import com.torodb.torod.core.d2r.D2RTranslator;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.exceptions.IllegalPathViewException;
 import com.torodb.torod.core.exceptions.UserToroException;
@@ -64,10 +65,11 @@ import com.torodb.torod.core.subdocument.values.ScalarValue;
 import com.torodb.torod.db.backends.DatabaseInterface;
 import com.torodb.torod.db.backends.converters.jooq.SubdocValueConverter;
 import com.torodb.torod.db.backends.converters.jooq.ValueToJooqConverterProvider;
-import com.torodb.torod.db.backends.meta.IndexStorage;
+import com.torodb.torod.db.backends.meta.CollectionSchema;
 import com.torodb.torod.db.backends.meta.StructuresCache;
 import com.torodb.torod.db.backends.meta.TorodbMeta;
 import com.torodb.torod.db.backends.meta.TorodbSchema;
+import com.torodb.torod.db.backends.meta.routines.QueryRoutine;
 import com.torodb.torod.db.backends.mysql.converters.MySQLScalarTypeToSqlType;
 import com.torodb.torod.db.backends.sql.AbstractDbConnection;
 import com.torodb.torod.db.backends.sql.index.NamedDbIndex;
@@ -97,8 +99,10 @@ class MySQLDbConnection extends AbstractDbConnection {
             DSLContext dsl,
             TorodbMeta meta,
             Provider<Builder> subDocTypeBuilderProvider,
+            D2RTranslator d2r,
+            QueryRoutine queryRoutine,
             DatabaseInterface databaseInterface) {
-        super(dsl, meta, subDocTypeBuilderProvider, databaseInterface);
+        super(dsl, meta, subDocTypeBuilderProvider, d2r, queryRoutine, databaseInterface);
     }
 
     @Override
@@ -179,7 +183,7 @@ class MySQLDbConnection extends AbstractDbConnection {
             @Nonnull String collection,
             @Nonnull Collection<SplitDocument> docs) {
 
-        IndexStorage.CollectionSchema colSchema = getMeta().getCollectionSchema(collection);
+        CollectionSchema colSchema = getMeta().getCollectionSchema(collection);
 
         Field<Integer> idField = DSL.field("did", SQLDataType.INTEGER.nullable(false));
         Field<Integer> sidField = DSL.field("sid", SQLDataType.INTEGER.nullable(false));
@@ -233,7 +237,7 @@ class MySQLDbConnection extends AbstractDbConnection {
             value = "OBL_UNSATISFIED_OBLIGATION",
             justification = "False positive: https://sourceforge.net/p/findbugs/bugs/1021/")
     public Long getCollectionSize(String collection) {
-        IndexStorage.CollectionSchema colSchema = getMeta().getCollectionSchema(collection);
+        CollectionSchema colSchema = getMeta().getCollectionSchema(collection);
         
         ConnectionProvider connectionProvider 
                 = getDsl().configuration().connectionProvider();
@@ -329,7 +333,7 @@ class MySQLDbConnection extends AbstractDbConnection {
             value = "OBL_UNSATISFIED_OBLIGATION",
             justification = "False positive: https://sourceforge.net/p/findbugs/bugs/1021/")
     public Long getDocumentsSize(String collection) {
-        IndexStorage.CollectionSchema colSchema = getMeta().getCollectionSchema(collection);
+        CollectionSchema colSchema = getMeta().getCollectionSchema(collection);
         
         ConnectionProvider connectionProvider 
                 = getDsl().configuration().connectionProvider();
@@ -357,7 +361,7 @@ class MySQLDbConnection extends AbstractDbConnection {
 
     @Override
     public Long getIndexSize(String collection, String index) {
-        IndexStorage.CollectionSchema colSchema = getMeta().getCollectionSchema(collection);
+        CollectionSchema colSchema = getMeta().getCollectionSchema(collection);
         
         ConnectionProvider connectionProvider 
                 = getDsl().configuration().connectionProvider();
@@ -433,7 +437,10 @@ class MySQLDbConnection extends AbstractDbConnection {
 
 
                 try (ResultSet rs = st.executeQuery(query)) {
-                    return new SqlWindow(rs, getDatabaseInterface().getValueToJooqConverterProvider(), getDatabaseInterface().getScalarTypeToSqlType());
+                    return new SqlWindow(rs, 
+                            getDatabaseInterface().getValueToJooqConverterProvider(), 
+                            getDatabaseInterface().getValueToJooqDataTypeProvider(),
+                            getDatabaseInterface().getScalarTypeToSqlType());
                 }
             } catch (SQLException ex) {
                 //TODO: Change exception
@@ -594,7 +601,7 @@ class MySQLDbConnection extends AbstractDbConnection {
     private class MyStructureListener implements StructuresCache.NewStructureListener {
 
         @Override
-        public void eventNewStructure(IndexStorage.CollectionSchema colSchema, DocStructure newStructure) {
+        public void eventNewStructure(CollectionSchema colSchema, DocStructure newStructure) {
             colSchema.getIndexManager().newStructureDetected(
                     newStructure, 
                     MySQLDbConnection.this

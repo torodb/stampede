@@ -1,6 +1,16 @@
 
 package com.torodb.torod.db.backends.executor;
 
+import java.sql.Savepoint;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import javax.annotation.Nonnull;
+import javax.annotation.concurrent.NotThreadSafe;
+import javax.json.JsonObject;
+
 import com.torodb.torod.core.ValueRow;
 import com.torodb.torod.core.cursors.CursorId;
 import com.torodb.torod.core.dbWrapper.Cursor;
@@ -18,14 +28,8 @@ import com.torodb.torod.core.pojos.NamedToroIndex;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.core.subdocument.SubDocType;
 import com.torodb.torod.core.subdocument.SubDocument;
+import com.torodb.torod.core.subdocument.ToroDocument;
 import com.torodb.torod.core.subdocument.values.ScalarValue;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import javax.annotation.Nonnull;
-import javax.annotation.concurrent.NotThreadSafe;
-import javax.json.JsonObject;
 
 /**
  *
@@ -107,6 +111,25 @@ public class LazyDbWrapper implements DbWrapper {
         public void rollback() throws ImplementationDbException {
             if (delegate != null) {
                 delegate.rollback();
+            }
+        }
+
+        @Override
+        public Savepoint setSavepoint() throws ImplementationDbException {
+            return getDelegate().setSavepoint();
+        }
+
+        @Override
+        public void rollback(Savepoint savepoint) throws ImplementationDbException {
+            if (delegate != null) {
+                delegate.rollback(savepoint);
+            }
+        }
+
+        @Override
+        public void releaseSavepoint(Savepoint savepoint) throws ImplementationDbException {
+            if (delegate != null) {
+                delegate.releaseSavepoint(savepoint);
             }
         }
 
@@ -225,6 +248,16 @@ public class LazyDbWrapper implements DbWrapper {
         public Integer count(String collection, QueryCriteria query) {
             try {
                 return getDelegate().count(collection, query);
+            }
+            catch (ImplementationDbException ex) {
+                throw new ToroImplementationException(ex);
+            }
+        }
+
+        @Override
+        public List<ToroDocument> readAll(String collection, QueryCriteria query) {
+            try {
+                return getDelegate().readAll(collection, query);
             }
             catch (ImplementationDbException ex) {
                 throw new ToroImplementationException(ex);

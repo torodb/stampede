@@ -20,23 +20,31 @@
 
 package com.torodb.integration.mongo.v3m0.jstests;
 
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Sets;
-import com.torodb.integration.mongo.v3m0.jstests.ScriptClassifier.Builder;
+import static com.torodb.integration.Backend.Greenplum;
+import static com.torodb.integration.Backend.MySQL;
+import static com.torodb.integration.Backend.Postgres;
+import static com.torodb.integration.Protocol.Mongo;
+import static com.torodb.integration.Protocol.MongoReplSet;
+import static com.torodb.integration.TestCategory.CATASTROPHIC;
+import static com.torodb.integration.TestCategory.FALSE_POSITIVE;
+import static com.torodb.integration.TestCategory.IGNORED;
+import static com.torodb.integration.TestCategory.NOT_IMPLEMENTED;
+import static com.torodb.integration.TestCategory.WORKING;
+
 import java.net.URL;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
+
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.torodb.integration.Backend.*;
-import static com.torodb.integration.Protocol.*;
-import static com.torodb.integration.TestCategory.*;
-import static com.torodb.integration.mongo.v3m0.jstests.AbstractIntegrationTest.parameters;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Sets;
+import com.torodb.integration.mongo.v3m0.jstests.ScriptClassifier.Builder;
 
 
 @RunWith(Parameterized.class)
@@ -60,38 +68,35 @@ public class CoreIT extends AbstractIntegrationTest {
                 notImplementedSet = getNotImplementedSet(),
                 mysqlNotImplemented = getMySQLNotImplementedSet(),
                 ignoredSet = getIgnoredSet(),
-                allSet = Sets.newHashSet(Iterables.concat(workingSet, catastrophicSet, falsePositiveSet, notImplementedSet, ignoredSet));
+                allSet = Sets.newLinkedHashSet(Iterables.concat(workingSet, catastrophicSet, falsePositiveSet, notImplementedSet, ignoredSet));
         return new Builder()
                 .addScripts(Mongo, Postgres, WORKING, workingSet)
-                .addScripts(Mongo, MySQL, WORKING, mysqlWorkingSet)
-
-                .addScripts(Mongo, Greemplum, CATASTROPHIC, workingSet)
-
-                .addScripts(Mongo, Postgres, CATASTROPHIC, catastrophicSet)
-                .addScripts(Mongo, Greemplum, CATASTROPHIC, catastrophicSet)
-                .addScripts(Mongo, MySQL, CATASTROPHIC, catastrophicSet)
-
-                .addScripts(Mongo, Postgres, FALSE_POSITIVE, falsePositiveSet)
-                .addScripts(Mongo, Greemplum, FALSE_POSITIVE, falsePositiveSet)
-                .addScripts(Mongo, MySQL, FALSE_POSITIVE, falsePositiveSet)
-
                 .addScripts(Mongo, Postgres, NOT_IMPLEMENTED, notImplementedSet)
-                .addScripts(Mongo, Greemplum, NOT_IMPLEMENTED, notImplementedSet)
-                .addScripts(Mongo, MySQL, NOT_IMPLEMENTED, mysqlNotImplemented)
-
+                .addScripts(Mongo, Postgres, FALSE_POSITIVE, falsePositiveSet)
+                .addScripts(Mongo, Postgres, CATASTROPHIC, catastrophicSet)
                 .addScripts(Mongo, Postgres, IGNORED, ignoredSet)
-                .addScripts(Mongo, Greemplum, IGNORED, ignoredSet)
+
+                .addScripts(Mongo, MySQL, WORKING, mysqlWorkingSet)
+                .addScripts(Mongo, MySQL, NOT_IMPLEMENTED, mysqlNotImplemented)
+                .addScripts(Mongo, MySQL, FALSE_POSITIVE, falsePositiveSet)
+                .addScripts(Mongo, MySQL, CATASTROPHIC, catastrophicSet)
                 .addScripts(Mongo, MySQL, IGNORED, ignoredSet)
 
+                .addScripts(Mongo, Greenplum, CATASTROPHIC, workingSet)
+                .addScripts(Mongo, Greenplum, NOT_IMPLEMENTED, notImplementedSet)
+                .addScripts(Mongo, Greenplum, FALSE_POSITIVE, falsePositiveSet)
+                .addScripts(Mongo, Greenplum, CATASTROPHIC, catastrophicSet)
+                .addScripts(Mongo, Greenplum, IGNORED, ignoredSet)
+
                 .addScripts(MongoReplSet, Postgres, CATASTROPHIC, allSet)
-                .addScripts(MongoReplSet, Greemplum, CATASTROPHIC, allSet)
+                .addScripts(MongoReplSet, Greenplum, CATASTROPHIC, allSet)
                 .addScripts(MongoReplSet, MySQL, CATASTROPHIC, allSet)
 
                 .build();
     }
 
     private static Set<Script> asScriptSet(String[] scriptNames) {
-        HashSet<Script> result = new HashSet<>(scriptNames.length);
+        Set<Script> result = new LinkedHashSet<>(scriptNames.length);
         for (String scriptName : scriptNames) {
             String relativePath = "core/" + scriptName;
             result.add(new Script(relativePath, createURL(relativePath)));
@@ -108,8 +113,11 @@ public class CoreIT extends AbstractIntegrationTest {
         return asScriptSet(new String[]{
 			"andor.js",
 			"array3.js",
+            "autoid.js",
+            "basic4.js",
 			"basic5.js",
 			"basic7.js",
+            "basic8.js",
 			"basic9.js",
 			"basicb.js",
 			"batch_write_command_wc.js",
@@ -117,24 +125,33 @@ public class CoreIT extends AbstractIntegrationTest {
 			"block_check_supported.js",
 			"bulk_insert.js",
 			"capped9.js",
+            "collection_info_cache_race.js",
 			"connection_string_validation.js",
 			"count.js",
+            "count9.js",
 			"coveredIndex3.js",
+            "date1.js",
 			"db.js",
 			"dbref2.js",
 			"error5.js",
+            "eval8.js",
 			"fm1.js",
 			"fm2.js",
+            "hint1.js",
 			"in2.js",
+            "inc1.js",
 			"index6.js",
 			"indexs.js",
+            "insert1.js",
 			"ismaster.js",
 			"json1.js",
 			"map1.js",
 			"null_field_name.js",
 			"numberlong.js",
+            "numberlong3.js",
 			"numberlong4.js",
 			"objid1.js",
+            "objid2.js",
 			"objid4.js",
 			"objid6.js",
 			"objid7.js",
@@ -145,18 +162,27 @@ public class CoreIT extends AbstractIntegrationTest {
 			"orp.js",
 			"queryoptimizer6.js",
 			"ref2.js",
+            "ref3.js",
 			"regex_util.js",
 			"regexa.js",
 			"regexb.js",
 			"remove_justone.js",
+            "remove_undefined.js",
+            "remove3.js",
 			"removea.js",
 			"run_program1.js",
+            "set2.js",
+            "shell1.js",
 			"shellkillop.js",
 			"shellstartparallel.js",
 			"shelltypes.js",
+            "showdiskloc.js",
 			"stages_sort.js",
 			"sub1.js",
-			"update_addToSet2.js",}
+			"update_addToSet2.js",
+            "update2.js",
+            "updatek.js",
+			}
         );
     }
     
@@ -164,31 +190,41 @@ public class CoreIT extends AbstractIntegrationTest {
         return asScriptSet(new String[]{
             "andor.js",
             "array3.js",
+            "autoid.js",
+            "basic4.js",
             "basic5.js",
             "basic7.js",
+            "basic8.js",
             "basic9.js",
             "basicb.js",
             "batch_write_command_wc.js",
             "binData.js",
             "block_check_supported.js",
             "bulk_insert.js",
+            "collection_info_cache_race.js",
             "connection_string_validation.js",
             "count.js",
             "coveredIndex3.js",
             "db.js",
             "dbref2.js",
             "error5.js",
+            "eval8.js",
             "fm1.js",
             "fm2.js",
+            "hint1.js",
             "in2.js",
+            "inc1.js",
             "index6.js",
+            "insert1.js",
             "ismaster.js",
             "json1.js",
             "map1.js",
             "null_field_name.js",
             "numberlong.js",
+            "numberlong3.js",
             "numberlong4.js",
             "objid1.js",
+            "objid2.js",
             "objid4.js",
             "objid6.js",
             "objid7.js",
@@ -198,16 +234,25 @@ public class CoreIT extends AbstractIntegrationTest {
             "orp.js",
             "queryoptimizer6.js",
             "ref2.js",
+            "ref3.js",
+            "remove_undefined.js",
+            "remove3.js",
             "regex_util.js",
             "regexa.js",
             "regexb.js",
             "removea.js",
             "run_program1.js",
+            "set2.js",
+            "shell1.js",
             "shellkillop.js",
             "shellstartparallel.js",
             "shelltypes.js",
+            "showdiskloc.js",
             "stages_sort.js",
-            "sub1.js",}
+            "sub1.js",
+            "update2.js",
+            "updatek.js",
+            }
         );
     }
 	

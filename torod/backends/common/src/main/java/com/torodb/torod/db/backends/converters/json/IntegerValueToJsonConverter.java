@@ -42,11 +42,6 @@ public class IntegerValueToJsonConverter implements
     }
 
     @Override
-    public Number toJson(ScalarInteger value) {
-        return value.getValue();
-    }
-
-    @Override
     public ScalarInteger toValue(Number value) {
         return ScalarInteger.of(value.intValue());
     }

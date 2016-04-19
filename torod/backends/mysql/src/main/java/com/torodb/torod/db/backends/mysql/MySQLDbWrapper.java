@@ -23,6 +23,7 @@ package com.torodb.torod.db.backends.mysql;
 
 import com.torodb.torod.core.annotations.DatabaseName;
 import com.torodb.torod.core.backend.DbBackend;
+import com.torodb.torod.core.d2r.D2RTranslator;
 import com.torodb.torod.core.dbWrapper.DbConnection;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.subdocument.SubDocType;
@@ -53,6 +54,8 @@ public class MySQLDbWrapper extends AbstractDbWrapper {
     private static final int DB_SUPPORT_MAJOR = 5;
     private static final int DB_SUPPORT_MINOR = 7;
 
+    private final D2RTranslator d2r;
+    private final QueryRoutine queryRoutine;
     private final DatabaseInterface databaseInterface;
     private final Provider<SubDocType.Builder> subDocTypeBuilderProvider;
 
@@ -60,11 +63,14 @@ public class MySQLDbWrapper extends AbstractDbWrapper {
     public MySQLDbWrapper(
             @DatabaseName String databaseName,
             DbBackend dbBackend,
+            D2RTranslator d2r,
             QueryRoutine queryRoutine,
             DatabaseInterface databaseInterface,
             Provider<SubDocType.Builder> subDocTypeBuilderProvider
     ) {
         super(databaseName, dbBackend, queryRoutine, databaseInterface);
+        this.d2r = d2r;
+        this.queryRoutine = queryRoutine;
         this.databaseInterface = databaseInterface;
         this.subDocTypeBuilderProvider = subDocTypeBuilderProvider;
     }
@@ -90,7 +96,7 @@ public class MySQLDbWrapper extends AbstractDbWrapper {
 
     @Override
     protected DbConnection reserveConnection(DSLContext dsl, TorodbMeta meta) {
-        return new MySQLDbConnection(dsl, meta, subDocTypeBuilderProvider, databaseInterface);
+        return new MySQLDbConnection(dsl, meta, subDocTypeBuilderProvider, d2r, queryRoutine, databaseInterface);
     }
     
     @Override

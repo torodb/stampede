@@ -21,10 +21,10 @@
 
 package com.torodb.torod.db.backends.converters.jooq;
 
+import org.jooq.impl.SQLDataType;
+
 import com.torodb.torod.core.subdocument.ScalarType;
 import com.torodb.torod.core.subdocument.values.ScalarLong;
-import org.jooq.DataType;
-import org.jooq.impl.SQLDataType;
 
 /**
  *
@@ -32,10 +32,7 @@ import org.jooq.impl.SQLDataType;
 public class LongValueConverter implements SubdocValueConverter<Long, ScalarLong>{
     private static final long serialVersionUID = 1L;
 
-    @Override
-    public DataType<Long> getDataType() {
-        return SQLDataType.BIGINT;
-    }
+    public static final DataTypeForScalar<ScalarLong> TYPE = DataTypeForScalar.from(SQLDataType.BIGINT, new LongValueConverter());
 
     @Override
     public ScalarType getErasuredType() {

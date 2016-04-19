@@ -33,9 +33,6 @@ public interface ValueConverter<J, V extends ScalarValue<?>> extends Serializabl
     
     Class<? extends V> getValueClass();
     
-    J toJson(V value);
-    
     V toValue(J value);
-    
     
 }

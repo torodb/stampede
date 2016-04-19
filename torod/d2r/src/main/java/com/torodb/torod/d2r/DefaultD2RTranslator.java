@@ -88,7 +88,6 @@ public class DefaultD2RTranslator implements D2RTranslator {
             @Override
             public SplitDocument apply(@Nonnull ToroDocument input) {
                 cache.createCollection(sessionExecutor, collection, null);
-
                 final SplitDocument splitDocument = splitter.split(
                         sessionExecutor,
                         collection,

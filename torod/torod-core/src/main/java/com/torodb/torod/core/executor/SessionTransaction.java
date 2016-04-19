@@ -20,12 +20,21 @@
 
 package com.torodb.torod.core.executor;
 
+import java.io.Closeable;
+import java.sql.Savepoint;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+
+import javax.annotation.Nonnull;
+
 import com.google.common.annotations.Beta;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.torodb.torod.core.ValueRow;
 import com.torodb.torod.core.WriteFailMode;
 import com.torodb.torod.core.connection.DeleteResponse;
 import com.torodb.torod.core.connection.InsertResponse;
+import com.torodb.torod.core.connection.ToroConnection;
 import com.torodb.torod.core.exceptions.UserToroException;
 import com.torodb.torod.core.language.operations.DeleteOperation;
 import com.torodb.torod.core.language.querycriteria.QueryCriteria;
@@ -33,12 +42,8 @@ import com.torodb.torod.core.pojos.Database;
 import com.torodb.torod.core.pojos.IndexedAttributes;
 import com.torodb.torod.core.pojos.NamedToroIndex;
 import com.torodb.torod.core.subdocument.SplitDocument;
+import com.torodb.torod.core.subdocument.ToroDocument;
 import com.torodb.torod.core.subdocument.values.ScalarValue;
-import java.io.Closeable;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import javax.annotation.Nonnull;
 
 /**
  *
@@ -46,6 +51,13 @@ import javax.annotation.Nonnull;
 public interface SessionTransaction extends Closeable {
 
     ListenableFuture<?> rollback();
+    
+
+    ListenableFuture<Savepoint> setSavepoint();
+
+    ListenableFuture<?> rollback(Savepoint savepoint);
+    
+    ListenableFuture<?> releaseSavepoint(Savepoint savepoint);
     
     ListenableFuture<?> commit();
     
@@ -97,6 +109,18 @@ public interface SessionTransaction extends Closeable {
     public ListenableFuture<List<? extends Database>> getDatabases();
 
     public ListenableFuture<Integer> count(String collection, QueryCriteria query);
+
+    /**
+     * This method read all document in the same transaction
+     * 
+     * @param collection
+     * @param query
+     * @return
+     * 
+     * @see ToroConnection#openLimitedCursor(String, QueryCriteria, com.torodb.torod.core.language.projection.Projection, int, int, boolean, boolean)
+     * @see ToroConnection#openUnlimitedCursor(String, QueryCriteria, com.torodb.torod.core.language.projection.Projection, int, boolean, boolean)
+     */
+    public ListenableFuture<List<ToroDocument>> readAll(String collection, QueryCriteria query);
 
     public ListenableFuture<Long> getIndexSize(String collection, String indexName);
     

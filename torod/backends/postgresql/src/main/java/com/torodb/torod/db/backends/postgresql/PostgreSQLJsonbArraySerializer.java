@@ -21,15 +21,18 @@
 
 package com.torodb.torod.db.backends.postgresql;
 
-import com.google.common.base.Preconditions;
-import com.torodb.torod.db.backends.ArraySerializer;
+import javax.annotation.Nonnull;
+import javax.inject.Singleton;
+
 import org.jooq.Condition;
+import org.jooq.Field;
+import org.jooq.Param;
 import org.jooq.Table;
 import org.jooq.impl.DSL;
 import org.jooq.tools.json.JSONValue;
 
-import javax.annotation.Nonnull;
-import javax.inject.Singleton;
+import com.google.common.base.Preconditions;
+import com.torodb.torod.db.backends.ArraySerializer;
 
 /**
  *
@@ -73,21 +76,14 @@ public class PostgreSQLJsonbArraySerializer implements ArraySerializer {
 
     @Nonnull
     @Override
-    public Condition arrayLength(String fieldName, String value) {
+    public Condition arrayLength(String fieldName, Param<?> value) {
         return DSL.condition("jsonb_array_length(?) = '?'", fieldName, value);
     }
 
     @Nonnull
     @Override
-    public Table arrayElements(String iteratorVariableName, String fieldName) {
-        return DSL.table("jsonb_array_elements(" + fieldName + ")");
+    public Table arrayElements(Field<?> iteratorVariable, Field<?> field) {
+        return DSL.table("jsonb_array_elements(" + field.toString() + ")").as(iteratorVariable.toString());
     }
 
-    @Override
-    public String translateValue(Object translatedObject) {
-        if (translatedObject instanceof String) {
-            return '\"' + JSONValue.escape((String) translatedObject) + '\"';
-        }
-        return translatedObject.toString();
-    }
 }

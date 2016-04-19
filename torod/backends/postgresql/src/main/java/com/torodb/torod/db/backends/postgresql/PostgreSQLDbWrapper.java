@@ -23,6 +23,7 @@ package com.torodb.torod.db.backends.postgresql;
 
 import com.torodb.torod.core.annotations.DatabaseName;
 import com.torodb.torod.core.backend.DbBackend;
+import com.torodb.torod.core.d2r.D2RTranslator;
 import com.torodb.torod.core.dbWrapper.DbConnection;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.subdocument.SubDocType;
@@ -53,6 +54,8 @@ public class PostgreSQLDbWrapper extends AbstractDbWrapper {
     private static final int DB_SUPPORT_MAJOR = 9;
     private static final int DB_SUPPORT_MINOR = 4;
 
+    private final D2RTranslator d2r;
+    private final QueryRoutine queryRoutine;
     private final DatabaseInterface databaseInterface;
     private final Provider<SubDocType.Builder> subDocTypeBuilderProvider;
 
@@ -60,11 +63,14 @@ public class PostgreSQLDbWrapper extends AbstractDbWrapper {
     public PostgreSQLDbWrapper(
             @DatabaseName String databaseName,
             DbBackend dbBackend,
+            D2RTranslator d2r,
             QueryRoutine queryRoutine,
             DatabaseInterface databaseInterface,
             Provider<SubDocType.Builder> subDocTypeBuilderProvider
     ) {
         super(databaseName, dbBackend, queryRoutine, databaseInterface);
+        this.d2r = d2r;
+        this.queryRoutine = queryRoutine;
         this.databaseInterface = databaseInterface;
         this.subDocTypeBuilderProvider = subDocTypeBuilderProvider;
     }
@@ -81,7 +87,7 @@ public class PostgreSQLDbWrapper extends AbstractDbWrapper {
 
     @Override
     protected DbConnection reserveConnection(DSLContext dsl, TorodbMeta meta) {
-        return new PostgreSQLDbConnection(dsl, meta, subDocTypeBuilderProvider, databaseInterface);
+        return new PostgreSQLDbConnection(dsl, meta, subDocTypeBuilderProvider, d2r, queryRoutine, databaseInterface);
     }
     
     @Override

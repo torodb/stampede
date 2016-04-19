@@ -23,6 +23,8 @@ package com.torodb.config.jackson;
 import java.io.IOException;
 import java.util.Iterator;
 
+import org.bson.json.JsonParseException;
+
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationContext;
@@ -46,16 +48,18 @@ public class BackendDeserializer extends JsonDeserializer<Backend> {
 		Iterator<String> fieldNamesIterator = node.fieldNames();
 		while (fieldNamesIterator.hasNext()) {
 			String fieldName = fieldNamesIterator.next();
+			
+			if (backendImplementationClass != null) {
+                throw new JsonParseException("Found multiples backend implementations but only one is allowed");
+			}
+			
 			backendImplementationNode = node.get(fieldName);
 			if ("postgres".equals(fieldName)) {
 				backendImplementationClass = Postgres.class;
-				break;
             } else if ("greenplum".equals(fieldName)) {
                 backendImplementationClass = Greenplum.class;
-                break;
             } else if ("mysql".equals(fieldName)) {
                 backendImplementationClass = MySQL.class;
-                break;
 			} else {
 			    throw new ToroRuntimeException("Backend " + fieldName + " is not valid.");
 			}

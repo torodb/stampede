@@ -20,11 +20,13 @@
 
 package com.torodb.torod.db.backends.meta;
 
-import com.torodb.torod.db.backends.exceptions.InvalidCollectionSchemaException;
-import org.jooq.DSLContext;
+import java.util.Collection;
 
 import javax.annotation.Nonnull;
-import java.util.Collection;
+
+import org.jooq.DSLContext;
+
+import com.torodb.torod.db.backends.exceptions.InvalidCollectionSchemaException;
 
 /**
  *
@@ -35,14 +37,14 @@ public interface TorodbMeta {
 
     boolean exists(String collection);
 
-    IndexStorage.CollectionSchema getCollectionSchema(String collection);
+    CollectionSchema getCollectionSchema(String collection);
 
     void dropCollectionSchema(String collection);
 
-    IndexStorage.CollectionSchema createCollectionSchema(
+    CollectionSchema createCollectionSchema(
             String colName, String schemaName, DSLContext dsl
     ) throws InvalidCollectionSchemaException;
 
-    Collection<IndexStorage.CollectionSchema> getCollectionSchemes();
+    Collection<CollectionSchema> getCollectionSchemes();
 
 }

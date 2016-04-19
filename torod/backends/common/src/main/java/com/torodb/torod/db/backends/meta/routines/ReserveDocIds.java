@@ -20,7 +20,7 @@
 
 package com.torodb.torod.db.backends.meta.routines;
 
-import com.torodb.torod.db.backends.meta.IndexStorage;
+import com.torodb.torod.db.backends.meta.CollectionSchema;
 import com.torodb.torod.db.backends.meta.TorodbSchema;
 
 /**
@@ -62,7 +62,7 @@ public class ReserveDocIds extends org.jooq.impl.AbstractRoutine<java.lang.Integ
 	/**
 	 * Set the <code>col_schema</code> parameter IN value to the routine
 	 */
-	public void setColSchema(IndexStorage.CollectionSchema colSchema) {
+	public void setColSchema(CollectionSchema colSchema) {
 		setValue(ReserveDocIds.COL_SCHEMA, colSchema.getName());
 	}
 

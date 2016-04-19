@@ -31,7 +31,6 @@ import com.google.common.collect.Sets;
 import com.google.common.collect.Sets.SetView;
 import com.torodb.torod.core.subdocument.ScalarType;
 import com.torodb.torod.db.backends.converters.ValueConverter;
-import com.torodb.torod.db.backends.converters.json.ArrayValueToJsonConverter;
 import com.torodb.torod.db.backends.converters.json.DateValueToJsonConverter;
 import com.torodb.torod.db.backends.converters.json.DoubleValueToJsonConverter;
 import com.torodb.torod.db.backends.converters.json.IntegerValueToJsonConverter;
@@ -40,6 +39,7 @@ import com.torodb.torod.db.backends.converters.json.NullValueToJsonConverter;
 import com.torodb.torod.db.backends.converters.json.StringValueToJsonConverter;
 import com.torodb.torod.db.backends.converters.json.TimeValueToJsonConverter;
 import com.torodb.torod.db.backends.converters.json.ValueToJsonConverterProvider;
+import com.torodb.torod.db.backends.mysql.converters.array.MySQLValueToArrayConverterProvider;
 
 /**
  *
@@ -62,19 +62,19 @@ public class MySQLValueToJsonConverterProvider implements ValueToJsonConverterPr
 
     private MySQLValueToJsonConverterProvider() {
         converters = Maps.newEnumMap(ScalarType.class);
-        converters.put(ScalarType.ARRAY, new ArrayValueToJsonConverter());
-        converters.put(ScalarType.BOOLEAN, new MySQLBooleanValueToJsonConverter());
+        converters.put(ScalarType.ARRAY, new ArrayValueToJsonConverter(MySQLValueToArrayConverterProvider.getInstance()));
+        converters.put(ScalarType.BOOLEAN, new BooleanValueToJsonConverter());
         converters.put(ScalarType.DATE, new DateValueToJsonConverter());
-        converters.put(ScalarType.INSTANT, new MySQLInstantValueToJsonConverter());
+        converters.put(ScalarType.INSTANT, new InstantValueToJsonConverter());
         converters.put(ScalarType.DOUBLE, new DoubleValueToJsonConverter());
         converters.put(ScalarType.INTEGER, new IntegerValueToJsonConverter());
         converters.put(ScalarType.LONG, new LongValueToJsonConverter());
         converters.put(ScalarType.NULL, new NullValueToJsonConverter());
         converters.put(ScalarType.STRING, new StringValueToJsonConverter());
         converters.put(ScalarType.TIME, new TimeValueToJsonConverter());
-        converters.put(ScalarType.MONGO_OBJECT_ID, new MySQLMongoObjectIdValueToJsonConverter());
-        converters.put(ScalarType.MONGO_TIMESTAMP, new MySQLMongoTimestampValueToJsonConverter());
-        converters.put(ScalarType.BINARY, new MySQLBinaryValueToJsonConverter());
+        converters.put(ScalarType.MONGO_OBJECT_ID, new MongoObjectIdValueToJsonConverter());
+        converters.put(ScalarType.MONGO_TIMESTAMP, new MongoTimestampValueToJsonConverter());
+        converters.put(ScalarType.BINARY, new BinaryValueToJsonConverter());
 
         SetView<ScalarType> withoutConverter = Sets.difference(converters.keySet(), SUPPORTED_TYPES);
         if (!withoutConverter.isEmpty()) {

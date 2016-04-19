@@ -1,13 +1,15 @@
 
 package com.torodb.torod.core.pojos;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.torodb.torod.core.language.AttributeReference;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
+
 import javax.annotation.concurrent.Immutable;
+
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.torodb.torod.core.language.AttributeReference;
 
 /**
  *
@@ -16,11 +18,11 @@ import javax.annotation.concurrent.Immutable;
 public class IndexedAttributes implements Serializable {
     private static final long serialVersionUID = 1L;
     private final ImmutableList<AttributeReference> attributes;
-    private final ImmutableMap<AttributeReference, Boolean> orderingInfo;
+    private final ImmutableMap<AttributeReference, IndexType> orderingInfo;
 
     private IndexedAttributes(
             ImmutableList<AttributeReference> attributes,
-            ImmutableMap<AttributeReference, Boolean> attToIndex) {
+            ImmutableMap<AttributeReference, IndexType> attToIndex) {
         this.orderingInfo = attToIndex;
         this.attributes = attributes;
     }
@@ -29,8 +31,8 @@ public class IndexedAttributes implements Serializable {
         return attributes;
     }
 
-    public boolean ascendingOrdered(AttributeReference attRef) {
-        Boolean ascendigOrdered = orderingInfo.get(attRef);
+    public IndexType ascendingOrdered(AttributeReference attRef) {
+        IndexType ascendigOrdered = orderingInfo.get(attRef);
         if (ascendigOrdered == null) {
             throw new IllegalArgumentException("Attribute " + attRef +
                     " is not indexed by this index");
@@ -42,7 +44,7 @@ public class IndexedAttributes implements Serializable {
         return orderingInfo.containsKey(attRef);
     }
 
-    public Iterable<Map.Entry<AttributeReference, Boolean>> entrySet() {
+    public Iterable<Map.Entry<AttributeReference, IndexType>> entrySet() {
         return orderingInfo.entrySet();
     }
 
@@ -85,12 +87,9 @@ public class IndexedAttributes implements Serializable {
         StringBuilder sb = new StringBuilder();
         for (AttributeReference attribute : attributes) {
             sb.append(attribute).append(' ');
-            if (orderingInfo.get(attribute)) {
-                sb.append("(asc)");
-            }
-            else {
-                sb.append("(desc)");
-            }
+            sb.append("(");
+            sb.append(orderingInfo.get(attribute).name());
+            sb.append(")");
             sb.append(", ");
         }
         sb.delete(sb.length() - 2, sb.length());
@@ -101,14 +100,14 @@ public class IndexedAttributes implements Serializable {
     public static class Builder {
 
         private final ImmutableList.Builder<AttributeReference> attributes;
-        private final ImmutableMap.Builder<AttributeReference, Boolean> orderingInfo;
+        private final ImmutableMap.Builder<AttributeReference, IndexType> orderingInfo;
 
         public Builder() {
             attributes = ImmutableList.builder();
             orderingInfo = ImmutableMap.builder();
         }
 
-        public Builder addAttribute(AttributeReference attRef, boolean ascendingOrder) {
+        public Builder addAttribute(AttributeReference attRef, IndexType ascendingOrder) {
             attributes.add(attRef);
             orderingInfo.put(attRef, ascendingOrder);
             return this;
@@ -122,4 +121,11 @@ public class IndexedAttributes implements Serializable {
         }
     }
 
+    public enum IndexType {
+        asc, 
+        desc,
+        text,
+        geospatial,
+        hashed; 
+    }
 }

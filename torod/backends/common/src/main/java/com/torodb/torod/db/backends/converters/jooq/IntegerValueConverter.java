@@ -21,10 +21,10 @@
 
 package com.torodb.torod.db.backends.converters.jooq;
 
+import org.jooq.impl.SQLDataType;
+
 import com.torodb.torod.core.subdocument.ScalarType;
 import com.torodb.torod.core.subdocument.values.ScalarInteger;
-import org.jooq.DataType;
-import org.jooq.impl.SQLDataType;
 
 
 /**
@@ -33,10 +33,7 @@ import org.jooq.impl.SQLDataType;
 public class IntegerValueConverter implements SubdocValueConverter<Integer, ScalarInteger>{
     private static final long serialVersionUID = 1L;
 
-    @Override
-    public DataType<Integer> getDataType() {
-        return SQLDataType.INTEGER;
-    }
+    public static final DataTypeForScalar<ScalarInteger> TYPE = DataTypeForScalar.from(SQLDataType.INTEGER, new IntegerValueConverter());
 
     @Override
     public ScalarType getErasuredType() {

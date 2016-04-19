@@ -55,11 +55,11 @@ import com.torodb.torod.core.subdocument.SubDocType;
 import com.torodb.torod.db.backends.DatabaseInterface;
 import com.torodb.torod.db.backends.exceptions.InvalidCollectionSchemaException;
 import com.torodb.torod.db.backends.exceptions.InvalidDatabaseException;
-import com.torodb.torod.db.backends.meta.IndexStorage;
+import com.torodb.torod.db.backends.meta.CollectionSchema;
 import com.torodb.torod.db.backends.meta.TorodbMeta;
 import com.torodb.torod.db.backends.meta.TorodbSchema;
-import com.torodb.torod.db.backends.tables.CollectionsTable;
-import com.torodb.torod.db.backends.tables.records.CollectionsRecord;
+import com.torodb.torod.db.backends.tables.AbstractCollectionsTable;
+import com.torodb.torod.db.backends.tables.records.AbstractCollectionsRecord;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -69,7 +69,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 public class MySQLTorodbMeta implements TorodbMeta {
 
     private final String databaseName;
-    private final ConcurrentMap<String, IndexStorage.CollectionSchema> collectionSchemes;
+    private final ConcurrentMap<String, CollectionSchema> collectionSchemes;
     private static final Logger LOGGER = LoggerFactory.getLogger(MySQLTorodbMeta.class);
     private final DatabaseInterface databaseInterface;
     private final  Provider<SubDocType.Builder> subDocTypeBuilderProvider;
@@ -105,11 +105,11 @@ public class MySQLTorodbMeta implements TorodbMeta {
             Meta jooqMeta,
             DatabaseMetaData jdbcMeta) throws InvalidCollectionSchemaException {
         
-        Result<CollectionsRecord> records
-                = dsl.selectFrom(CollectionsTable.COLLECTIONS).fetch();
+        Result<AbstractCollectionsRecord> records
+                = dsl.selectFrom(databaseInterface.getCollectionsTable()).fetch();
         
-        for (CollectionsRecord colRecord : records) {
-            IndexStorage.CollectionSchema colSchema = new IndexStorage.CollectionSchema(
+        for (AbstractCollectionsRecord colRecord : records) {
+            CollectionSchema colSchema = new CollectionSchema(
                     colRecord.getSchema(), 
                     colRecord.getName(),
                     dsl, 
@@ -134,8 +134,8 @@ public class MySQLTorodbMeta implements TorodbMeta {
     }
 
     @Override
-    public IndexStorage.CollectionSchema getCollectionSchema(String collection) {
-        IndexStorage.CollectionSchema schema = collectionSchemes.get(collection);
+    public CollectionSchema getCollectionSchema(String collection) {
+        CollectionSchema schema = collectionSchemes.get(collection);
         if (schema == null) {
             throw new IllegalArgumentException("There is no schema associated with collection "
                     + collection);
@@ -145,7 +145,7 @@ public class MySQLTorodbMeta implements TorodbMeta {
 
     @Override
     public void dropCollectionSchema(String collection) {
-        IndexStorage.CollectionSchema removed = collectionSchemes.remove(collection);
+        CollectionSchema removed = collectionSchemes.remove(collection);
         if (removed == null) {
             throw new IllegalArgumentException("Collection " + collection
                     + " didn't exist");
@@ -153,7 +153,7 @@ public class MySQLTorodbMeta implements TorodbMeta {
     }
 
     @Override
-    public IndexStorage.CollectionSchema createCollectionSchema(
+    public CollectionSchema createCollectionSchema(
             String colName,
             String schemaName,
             DSLContext dsl) throws InvalidCollectionSchemaException {
@@ -161,7 +161,7 @@ public class MySQLTorodbMeta implements TorodbMeta {
             throw new IllegalArgumentException("Collection '" + colName
                     + "' is already associated with a collection schema");
         }
-        IndexStorage.CollectionSchema result = new IndexStorage.CollectionSchema(
+        CollectionSchema result = new CollectionSchema(
                 schemaName, colName, dsl, this, databaseInterface, subDocTypeBuilderProvider
         );
         collectionSchemes.put(colName, result);
@@ -170,7 +170,7 @@ public class MySQLTorodbMeta implements TorodbMeta {
     }
 
     @Override
-    public Collection<IndexStorage.CollectionSchema> getCollectionSchemes() {
+    public Collection<CollectionSchema> getCollectionSchemes() {
         return Collections.unmodifiableCollection(collectionSchemes.values());
     }
 

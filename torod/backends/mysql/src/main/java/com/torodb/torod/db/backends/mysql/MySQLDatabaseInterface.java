@@ -51,14 +51,26 @@ import com.torodb.torod.core.subdocument.SubDocType.Builder;
 import com.torodb.torod.db.backends.ArraySerializer;
 import com.torodb.torod.db.backends.DatabaseInterface;
 import com.torodb.torod.db.backends.converters.ScalarTypeToSqlType;
+import com.torodb.torod.db.backends.converters.StructureConverter;
+import com.torodb.torod.db.backends.converters.array.ValueToArrayConverterProvider;
+import com.torodb.torod.db.backends.converters.array.ValueToArrayDataTypeProvider;
 import com.torodb.torod.db.backends.converters.jooq.ValueToJooqConverterProvider;
+import com.torodb.torod.db.backends.converters.jooq.ValueToJooqDataTypeProvider;
 import com.torodb.torod.db.backends.converters.json.ValueToJsonConverterProvider;
 import com.torodb.torod.db.backends.exceptions.InvalidDatabaseException;
+import com.torodb.torod.db.backends.meta.CollectionSchema;
 import com.torodb.torod.db.backends.meta.IndexStorage;
+import com.torodb.torod.db.backends.meta.StructuresCache;
 import com.torodb.torod.db.backends.meta.TorodbMeta;
+import com.torodb.torod.db.backends.mysql.converters.array.MySQLValueToArrayConverterProvider;
+import com.torodb.torod.db.backends.mysql.converters.array.MySQLValueToArrayDataTypeProvider;
 import com.torodb.torod.db.backends.mysql.converters.jooq.MySQLValueToJooqConverterProvider;
+import com.torodb.torod.db.backends.mysql.converters.jooq.MySQLValueToJooqDataTypeProvider;
 import com.torodb.torod.db.backends.mysql.converters.json.MySQLValueToJsonConverterProvider;
-import com.torodb.torod.db.backends.tables.CollectionsTable;
+import com.torodb.torod.db.backends.mysql.meta.MySQLIndexStorage;
+import com.torodb.torod.db.backends.mysql.meta.MySQLStructuresCache;
+import com.torodb.torod.db.backends.mysql.tables.MySQLCollectionsTable;
+import com.torodb.torod.db.backends.tables.AbstractCollectionsTable;
 import com.torodb.torod.db.backends.tables.SubDocTable;
 
 /**
@@ -69,13 +81,16 @@ public class MySQLDatabaseInterface implements DatabaseInterface {
 
     private static final long serialVersionUID = 484638503;
 
+    private final ValueToArrayConverterProvider valueToArrayConverterProvider;
+    private final ValueToArrayDataTypeProvider valueToArrayDataTypeProvider;
     private final ValueToJooqConverterProvider valueToJooqConverterProvider;
+    private final ValueToJooqDataTypeProvider valueToJooqDataTypeProvider;
     private final ValueToJsonConverterProvider valueToJsonConverterProvider;
     private final ScalarTypeToSqlType scalarTypeToSqlType;
     private transient @Nonnull Provider<SubDocType.Builder> subDocTypeBuilderProvider;
 
     private static class ArraySerializatorHolder {
-        private static final ArraySerializer INSTANCE = new MySQLJsonbArraySerializer();
+        private static final ArraySerializer INSTANCE = new MySQLJsonArraySerializer();
     }
 
     @Override
@@ -86,7 +101,10 @@ public class MySQLDatabaseInterface implements DatabaseInterface {
 
     @Inject
     public MySQLDatabaseInterface(ScalarTypeToSqlType scalarTypeToSqlType, Provider<Builder> subDocTypeBuilderProvider) {
+        this.valueToArrayConverterProvider = MySQLValueToArrayConverterProvider.getInstance();
+        this.valueToArrayDataTypeProvider = MySQLValueToArrayDataTypeProvider.getInstance();
         this.valueToJooqConverterProvider = MySQLValueToJooqConverterProvider.getInstance();
+        this.valueToJooqDataTypeProvider = MySQLValueToJooqDataTypeProvider.getInstance();
         this.valueToJsonConverterProvider = MySQLValueToJsonConverterProvider.getInstance();
         this.scalarTypeToSqlType = scalarTypeToSqlType;
         this.subDocTypeBuilderProvider = subDocTypeBuilderProvider;
@@ -100,8 +118,39 @@ public class MySQLDatabaseInterface implements DatabaseInterface {
     }
 
     @Override
+    public MySQLCollectionsTable getCollectionsTable() {
+        return MySQLCollectionsTable.COLLECTIONS;
+    }
+
+    @Override
+    public IndexStorage createIndexStorage(String databaseName, CollectionSchema colSchema) {
+        return new MySQLIndexStorage(databaseName, colSchema, this);
+    }
+
+    @Override
+    public StructuresCache createStructuresCache(CollectionSchema colSchema, String schemaName,
+            StructureConverter converter) {
+        return new MySQLStructuresCache(colSchema, schemaName, converter);
+    }
+
+    @Override
+    public @Nonnull ValueToArrayConverterProvider getValueToArrayConverterProvider() {
+        return valueToArrayConverterProvider;
+    }
+
+    @Override
+    public ValueToArrayDataTypeProvider getValueToArrayDataTypeProvider() {
+        return valueToArrayDataTypeProvider;
+    }
+
+    @Override
     public @Nonnull ValueToJooqConverterProvider getValueToJooqConverterProvider() {
         return valueToJooqConverterProvider;
+    }
+
+    @Override
+    public @Nonnull ValueToJooqDataTypeProvider getValueToJooqDataTypeProvider() {
+        return valueToJooqDataTypeProvider;
     }
 
     @Override
@@ -182,13 +231,13 @@ public class MySQLDatabaseInterface implements DatabaseInterface {
                 .append("CREATE TABLE ")
                 .append(fullTableName(schemaName, tableName))
                 .append(" (")
-                .append(CollectionsTable.TableFields.NAME.name()).append("             varchar(3072)    PRIMARY KEY     ,")
-                .append("`").append(CollectionsTable.TableFields.SCHEMA.name()).append("`").append("           varchar(64)      NOT NULL UNIQUE ,")
-                .append(CollectionsTable.TableFields.CAPPED.name()).append("           boolean          NOT NULL        ,")
-                .append(CollectionsTable.TableFields.MAX_SIZE.name()).append("         int              NOT NULL        ,")
-                .append(CollectionsTable.TableFields.MAX_ELEMENTS.name()).append("     int              NOT NULL        ,")
-                .append(CollectionsTable.TableFields.OTHER.name()).append("            json                             ,")
-                .append(CollectionsTable.TableFields.STORAGE_ENGINE.name()).append("   varchar(3072)    NOT NULL         ")
+                .append(AbstractCollectionsTable.TableFields.NAME.name()).append("             varchar(3072)    PRIMARY KEY     ,")
+                .append("`").append(AbstractCollectionsTable.TableFields.SCHEMA.name()).append("`").append("           varchar(64)      NOT NULL UNIQUE ,")
+                .append(AbstractCollectionsTable.TableFields.CAPPED.name()).append("           boolean          NOT NULL        ,")
+                .append(AbstractCollectionsTable.TableFields.MAX_SIZE.name()).append("         int              NOT NULL        ,")
+                .append(AbstractCollectionsTable.TableFields.MAX_ELEMENTS.name()).append("     int              NOT NULL        ,")
+                .append(AbstractCollectionsTable.TableFields.OTHER.name()).append("            json                             ,")
+                .append(AbstractCollectionsTable.TableFields.STORAGE_ENGINE.name()).append("   varchar(3072)    NOT NULL         ")
                 .append(")")
                 .toString();
     }
@@ -278,7 +327,7 @@ public class MySQLDatabaseInterface implements DatabaseInterface {
     }
 
     @Override
-    public void setFindDocsSelectStatementParameters(IndexStorage.CollectionSchema colSchema, Integer[] requestedDocs,
+    public void setFindDocsSelectStatementParameters(CollectionSchema colSchema, Integer[] requestedDocs,
             Projection projection, Connection c, PreparedStatement ps) throws SQLException {
         ps.setString(1, colSchema.getName());
 
@@ -368,7 +417,7 @@ public class MySQLDatabaseInterface implements DatabaseInterface {
         return new MySQLFindDocsSelectStatementRow(rs);
     }
 
-    private Integer[] requiredTables(IndexStorage.CollectionSchema colSchema, Projection projection) {
+    private Integer[] requiredTables(CollectionSchema colSchema, Projection projection) {
         Collection<SubDocTable> subDocTables = colSchema.getSubDocTables();
 
         Integer[] result = new Integer[subDocTables.size()];

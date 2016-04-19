@@ -102,17 +102,17 @@ public class ToroRunnerClassRule implements TestRule {
         
         Config config = new Config();
         
-        String yamlString = System.getProperty("torodb-integration-config-yml");
+        String yamlString = System.getProperty("torodbIntegrationConfigYml");
         
         if (yamlString != null && !yamlString.isEmpty()) {
-            LOGGER.info("Reading configuration from property torodb-integration-config-yml:\n" + yamlString);
+            LOGGER.info("Reading configuration from property torodbIntegrationConfigYml:\n" + yamlString);
             
             try {
                 config = ConfigUtils.readConfigFromYaml(yamlString);
             } catch(Throwable throwable) {
-                LOGGER.error("An error occurred while loading config from property torodb-integration-config-yml."
+                LOGGER.error("An error occurred while loading config from property torodbIntegrationConfigYml."
                         + " Check it in your ~/.m2/settings.xml", throwable);
-                throw new RuntimeException("An error occurred while loading config from property torodb-integration-config-yml."
+                throw new RuntimeException("An error occurred while loading config from property torodbIntegrationConfigYml."
                         + " Check it in your ~/.m2/settings.xml", throwable);
             }
         }
@@ -308,7 +308,7 @@ public class ToroRunnerClassRule implements TestRule {
                     config.getBackend().setBackendImplementation(new Postgres());
                 }
                 break;
-            case Greemplum:
+            case Greenplum:
                 if (!config.getBackend().isGreenplum()) {
                     config.getBackend().setBackendImplementation(new Greenplum());
                     config.getBackend().asGreenplum().setPort(6432);

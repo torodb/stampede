@@ -61,26 +61,26 @@ public class ToolIT extends AbstractIntegrationTest {
                 .addScripts(Mongo, Postgres, WORKING, workingSet)
                 .addScripts(Mongo, MySQL, WORKING, workingSet)
 
-                .addScripts(Mongo, Greemplum, CATASTROPHIC, workingSet)
+                .addScripts(Mongo, Greenplum, CATASTROPHIC, workingSet)
 
                 .addScripts(Mongo, Postgres, CATASTROPHIC, catastrophicSet)
-                .addScripts(Mongo, Greemplum, CATASTROPHIC, catastrophicSet)
+                .addScripts(Mongo, Greenplum, CATASTROPHIC, catastrophicSet)
                 .addScripts(Mongo, MySQL, CATASTROPHIC, catastrophicSet)
 
                 .addScripts(Mongo, Postgres, FALSE_POSITIVE, falsePositiveSet)
-                .addScripts(Mongo, Greemplum, FALSE_POSITIVE, falsePositiveSet)
+                .addScripts(Mongo, Greenplum, FALSE_POSITIVE, falsePositiveSet)
                 .addScripts(Mongo, MySQL, FALSE_POSITIVE, falsePositiveSet)
 
                 .addScripts(Mongo, Postgres, NOT_IMPLEMENTED, notImplementedSet)
-                .addScripts(Mongo, Greemplum, NOT_IMPLEMENTED, notImplementedSet)
+                .addScripts(Mongo, Greenplum, NOT_IMPLEMENTED, notImplementedSet)
                 .addScripts(Mongo, MySQL, NOT_IMPLEMENTED, notImplementedSet)
 
                 .addScripts(Mongo, Postgres, IGNORED, ignoredSet)
-                .addScripts(Mongo, Greemplum, IGNORED, ignoredSet)
+                .addScripts(Mongo, Greenplum, IGNORED, ignoredSet)
                 .addScripts(Mongo, MySQL, IGNORED, ignoredSet)
 
                 .addScripts(MongoReplSet, Postgres, CATASTROPHIC, allSet)
-                .addScripts(MongoReplSet, Greemplum, CATASTROPHIC, allSet)
+                .addScripts(MongoReplSet, Greenplum, CATASTROPHIC, allSet)
                 .addScripts(MongoReplSet, MySQL, CATASTROPHIC, allSet)
 
                 .build();

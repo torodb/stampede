@@ -43,11 +43,6 @@ public class StringValueToJsonConverter implements
     }
 
     @Override
-    public String toJson(ScalarString value) {
-        return value.getValue();
-    }
-
-    @Override
     public ScalarString toValue(String value) {
         return new StringScalarString(value);
     }

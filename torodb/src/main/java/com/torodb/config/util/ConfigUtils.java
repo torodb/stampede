@@ -31,7 +31,6 @@ import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
@@ -52,7 +51,9 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser.Feature;
 import com.fasterxml.jackson.core.JsonPointer;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.JsonMappingException.Reference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
@@ -62,17 +63,6 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
-import com.fasterxml.jackson.module.jsonSchema.JsonSchema;
-import com.github.fge.jsonschema.SchemaVersion;
-import com.github.fge.jsonschema.cfg.ValidationConfiguration;
-import com.github.fge.jsonschema.core.exceptions.ProcessingException;
-import com.github.fge.jsonschema.core.report.ListProcessingReport;
-import com.github.fge.jsonschema.core.report.ListReportProvider;
-import com.github.fge.jsonschema.core.report.LogLevel;
-import com.github.fge.jsonschema.core.report.ProcessingMessage;
-import com.github.fge.jsonschema.core.report.ProcessingReport;
-import com.github.fge.jsonschema.main.JsonSchemaFactory;
-import com.github.fge.jsonschema.main.JsonValidator;
 import com.google.common.base.Charsets;
 import com.torodb.CliConfig;
 import com.torodb.config.model.Config;
@@ -85,10 +75,52 @@ public class ConfigUtils {
 
     private static final Logger LOGGER = (Logger) LoggerFactory.getLogger(ConfigUtils.class);
     
-	public static Config readConfig(final CliConfig cliConfig) throws FileNotFoundException, JsonProcessingException,
+    public static Config readConfig(CliConfig cliConfig) throws FileNotFoundException, JsonProcessingException,
+            IOException, JsonParseException, IllegalArgumentException, Exception {
+        try {
+            return ConfigUtils.uncatchedReadConfig(cliConfig);
+        } catch(JsonMappingException jsonMappingException) {
+            throw ConfigUtils.transformJsonMappingException(jsonMappingException);
+        }
+    }
+    
+    private static ObjectMapper mapper() {
+        ObjectMapper objectMapper = new ObjectMapper();
+        
+        configMapper(objectMapper);
+        
+        return objectMapper;
+    }
+    
+    private static YAMLMapper yamlMapper() {
+        YAMLMapper yamlMapper = new YAMLMapper();
+        
+        configMapper(yamlMapper);
+        
+        return yamlMapper;
+    }
+    
+    private static XmlMapper xmlMapper() {
+        XmlMapper xmlMapper = new XmlMapper();
+        
+        configMapper(xmlMapper);
+        
+        return xmlMapper;
+    }
+    
+    private static void configMapper(ObjectMapper objectMapper) {
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
+        objectMapper.configure(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES, true);
+        objectMapper.configure(Feature.ALLOW_COMMENTS, true);
+        objectMapper.configure(Feature.ALLOW_YAML_COMMENTS, true);
+        objectMapper.setSerializationInclusion(Include.NON_NULL);
+        objectMapper.setSerializationInclusion(Include.NON_NULL);
+        objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
+    }
+    
+	private static Config uncatchedReadConfig(final CliConfig cliConfig) throws FileNotFoundException, JsonProcessingException,
 			IOException, JsonParseException, JsonMappingException, Exception {
-		ObjectMapper objectMapper = new ObjectMapper();
-		objectMapper.setSerializationInclusion(Include.NON_NULL);
+		ObjectMapper objectMapper = mapper();
 		
 		JsonNode configNode = objectMapper.valueToTree(new Config());
 		
@@ -96,21 +128,21 @@ public class ConfigUtils {
 			ObjectMapper mapper = null;
 			InputStream inputStream = null;
 			if (cliConfig.hasConfFile()) {
-				mapper = new YAMLMapper();
+				mapper = yamlMapper();
 				inputStream = cliConfig.getConfInputStream();
 			} else if (cliConfig.hasXmlConfFile()) {
-				mapper = new XmlMapper();
+				mapper = xmlMapper();
 				inputStream = cliConfig.getXmlConfInputStream();
 			}
 
 			if (inputStream != null) {
-				configNode = mapper.readTree(inputStream);
+		        Config config = mapper.readValue(inputStream, Config.class);
+		        configNode = mapper.valueToTree(config);
 			}
 		}
 
 		if (cliConfig.getParams() != null) {
-			YAMLMapper yamlMapper = new YAMLMapper();
-			yamlMapper.setSerializationInclusion(Include.NON_NULL);
+			YAMLMapper yamlMapper = yamlMapper();
 			for (String paramPathValue : cliConfig.getParams()) {
 				int paramPathValueSeparatorIndex = paramPathValue.indexOf('=');
 				String pathAndProp = paramPathValue.substring(0, paramPathValueSeparatorIndex);
@@ -126,10 +158,6 @@ public class ConfigUtils {
 				mergeParam(yamlMapper, configNode, pathAndProp, value);
 			}
 		}
-		
-		configNode = mergeWithDefaults(configNode);
-		
-		validateWithJackson(configNode);
 
 		Config config = objectMapper.treeToValue(configNode, Config.class);
 
@@ -138,22 +166,39 @@ public class ConfigUtils {
 		return config;
 	}
 
-	public static Config readConfigFromYaml(String yamlString) throws JsonProcessingException, IOException {
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.setSerializationInclusion(Include.NON_NULL);
-        YAMLMapper yamlMapper = new YAMLMapper();
+    public static IllegalArgumentException transformJsonMappingException(JsonMappingException jsonMappingException) {
+        JsonPointer jsonPointer = JsonPointer.compile("/config");
+        for (Reference reference : jsonMappingException.getPath()) {
+            jsonPointer = jsonPointer.append(JsonPointer.compile("/" + reference.getFieldName()));
+        }
+        return new IllegalArgumentException("Validation error at " + jsonPointer + ": " + jsonMappingException.getMessage());
+    }
+
+    public static Config readConfigFromYaml(String yamlString) throws JsonProcessingException, IOException {
+        ObjectMapper objectMapper = mapper();
+        YAMLMapper yamlMapper = yamlMapper();
+        
         JsonNode configNode = yamlMapper.readTree(yamlString);
-        
-        configNode = mergeWithDefaults(configNode);
-        
-        validateWithJackson(configNode);
 
         Config config = objectMapper.treeToValue(configNode, Config.class);
 
         validateBean(config);
 
         return config;
-	}
+    }
+
+    public static Config readConfigFromXml(String xmlString) throws JsonProcessingException, IOException {
+        ObjectMapper objectMapper = mapper();
+        XmlMapper xmlMapper = xmlMapper();
+        
+        JsonNode configNode = xmlMapper.readTree(xmlString);
+
+        Config config = objectMapper.treeToValue(configNode, Config.class);
+
+        validateBean(config);
+
+        return config;
+    }
 
     public static void parseToropassFile(final Config config) throws FileNotFoundException, IOException {
         if (config.getBackend().isPostgresLike()) {
@@ -280,19 +325,14 @@ public class ConfigUtils {
 
 	public static void printYamlConfig(Config config, Console console)
 			throws IOException, JsonGenerationException, JsonMappingException {
-		ObjectMapper objectMapper = new YAMLMapper();
-		objectMapper.configure(Feature.ALLOW_COMMENTS, true);
-		objectMapper.configure(Feature.ALLOW_YAML_COMMENTS, true);
+		ObjectMapper objectMapper = yamlMapper();
 		ObjectWriter objectWriter = objectMapper.writer();
 		printConfig(config, console, objectWriter);
 	}
 
 	public static void printXmlConfig(Config config, Console console)
 			throws IOException, JsonGenerationException, JsonMappingException {
-		ObjectMapper objectMapper = new XmlMapper();
-		objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
-		objectMapper.configure(Feature.ALLOW_COMMENTS, true);
-		objectMapper.configure(Feature.ALLOW_YAML_COMMENTS, true);
+		ObjectMapper objectMapper = xmlMapper();
 		ObjectWriter objectWriter = objectMapper.writer();
 		objectWriter = objectWriter.withRootName("config");
 		printConfig(config, console, objectWriter);
@@ -308,121 +348,13 @@ public class ConfigUtils {
 
 	public static void printParamDescriptionFromConfigSchema(Console console, int tabs)
 			throws UnsupportedEncodingException, JsonMappingException {
-		ObjectMapper objectMapper = new ObjectMapper();
+		ObjectMapper objectMapper = mapper();
 		ResourceBundle resourceBundle = PropertyResourceBundle.getBundle("ConfigMessages");
 		DescriptionFactoryWrapper visitor = new DescriptionFactoryWrapper(resourceBundle, console, tabs);
 		objectMapper.acceptJsonFormatVisitor(objectMapper.constructType(Config.class), visitor);
 		console.println("");
 	}
-
-	private static JsonNode mergeWithDefaults(JsonNode configNode) {
-		if (configNode.isObject()) {
-			ObjectMapper objectMapper = new ObjectMapper();
-			objectMapper.setSerializationInclusion(Include.NON_NULL);
-			Config config = new Config();
-			
-			//NOTE: Some defaults can not retrieved for subtypes so we try to read the configuration
-			// and generate those defaults before validation
-			try {
-				config = objectMapper.treeToValue(configNode, Config.class);
-			} catch(JsonProcessingException jsonProcessingException) {
-				
-			} catch(IllegalArgumentException illegalArgumentException) {
-				
-			}
-			
-			ObjectNode mergedConfigNode = (ObjectNode) objectMapper.valueToTree(config);
-			merge(mergedConfigNode, (ObjectNode) configNode);
-			configNode = mergedConfigNode;
-		}
-		
-		return configNode;
-	}
 	
-	private static void merge(ObjectNode primary, ObjectNode backup) {
-		Iterator<String> fieldNames = backup.fieldNames();
-		while (fieldNames.hasNext()) {
-			String fieldName = fieldNames.next();
-			JsonNode primaryValue = primary.get(fieldName);
-			JsonNode backupValue = backup.get(fieldName);
-			
-			if (backupValue.isValueNode() || primaryValue == null ||
-					(backupValue.isObject() && !primaryValue.isObject()) ||
-					(backupValue.isArray()) && !primaryValue.isArray()) {
-				primary.set(fieldName, backupValue.deepCopy());
-			} else if (backupValue.isObject()) {
-				merge((ObjectNode) primaryValue, (ObjectNode) backupValue);
-			} else if (backupValue.isArray()) {
-				merge((ArrayNode) primaryValue, (ArrayNode) backupValue); 
-			}
-		}
-	}
-
-	private static void merge(ArrayNode primary, ArrayNode backup) {
-		for (int index = 0; index < backup.size(); index++) {
-			if (index >= primary.size()) {
-				primary.add(backup.get(index));
-			} else {
-				JsonNode primaryValue = primary.get(index);
-				JsonNode backupValue = backup.get(index);
-				
-				if (backupValue.isValueNode() || 
-						(backupValue.isObject() && !primaryValue.isObject()) ||
-						(backupValue.isArray()) && !primaryValue.isArray()) {
-					primary.set(index, backupValue.deepCopy());
-				} else if (backupValue.isObject()) {
-					merge((ObjectNode) primaryValue, (ObjectNode) backupValue);
-				} else if (backupValue.isArray()) {
-					merge((ArrayNode) primaryValue, (ArrayNode) backupValue); 
-				}
-			}
-		}
-	}
-
-	private static void validateWithJackson(JsonNode configNode) throws JsonProcessingException {
-		ObjectMapper objectMapper = new ObjectMapper();
-		validateJsonSchema(objectMapper, configNode);
-	}
-
-	private static void validateJsonSchema(ObjectMapper objectMapper, JsonNode configNode) throws JsonMappingException {
-		CustomSchemaFactoryWrapper visitor = new CustomSchemaFactoryWrapper();
-		visitor.setJsonSchemaFactory(new CustomJsonSchemaFactory());
-		objectMapper.acceptJsonFormatVisitor(objectMapper.constructType(Config.class), visitor);
-		JsonSchema jsonSchema = visitor.finalSchema();
-		JsonNode schemaNode = objectMapper.valueToTree(jsonSchema);
-		JsonSchemaFactory factory = JsonSchemaFactory.newBuilder()
-				.setValidationConfiguration(
-						ValidationConfiguration.newBuilder().setDefaultVersion(SchemaVersion.DRAFTV3).freeze())
-				.setReportProvider(new ListReportProvider(LogLevel.DEBUG, LogLevel.NONE)).freeze();
-		JsonValidator validator = factory.getValidator();
-		ProcessingReport processingReport = null;
-		try {
-			processingReport = validator.validate(schemaNode, configNode);
-		} catch (ProcessingException processingException) {
-			ListProcessingReport listProcessingReport = new ListProcessingReport();
-			listProcessingReport.log(LogLevel.DEBUG, processingException.getProcessingMessage());
-			processingReport = listProcessingReport;
-		}
-
-		if (!processingReport.isSuccess()) {
-			StringBuilder constraintViolationExceptionMessageBuilder = new StringBuilder();
-			for (ProcessingMessage processingMessage : processingReport) {
-				JsonNode messageNode = processingMessage.asJson();
-				String message = messageNode.has("message") ? messageNode.get("message").textValue() : "unknown";
-				String pointer = messageNode.has("instance") && messageNode.get("instance").isObject()
-						&& ((ObjectNode) messageNode.get("instance")).has("pointer")
-								? ((ObjectNode) messageNode.get("instance")).get("pointer").textValue() : "?";
-				if (constraintViolationExceptionMessageBuilder.length() > 0) {
-					constraintViolationExceptionMessageBuilder.append(", ");
-				}
-				constraintViolationExceptionMessageBuilder.append(pointer);
-				constraintViolationExceptionMessageBuilder.append(": ");
-				constraintViolationExceptionMessageBuilder.append(message);
-			}
-			throw new IllegalArgumentException(constraintViolationExceptionMessageBuilder.toString());
-		}
-	}
-
 	public static void validateBean(Config config) {
 		ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
 		Validator validator = factory.getValidator();

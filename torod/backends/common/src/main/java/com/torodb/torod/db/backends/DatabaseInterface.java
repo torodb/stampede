@@ -34,12 +34,18 @@ import org.jooq.DSLContext;
 
 import com.torodb.torod.core.language.projection.Projection;
 import com.torodb.torod.db.backends.converters.ScalarTypeToSqlType;
+import com.torodb.torod.db.backends.converters.StructureConverter;
+import com.torodb.torod.db.backends.converters.array.ValueToArrayConverterProvider;
+import com.torodb.torod.db.backends.converters.array.ValueToArrayDataTypeProvider;
 import com.torodb.torod.db.backends.converters.jooq.ValueToJooqConverterProvider;
+import com.torodb.torod.db.backends.converters.jooq.ValueToJooqDataTypeProvider;
 import com.torodb.torod.db.backends.converters.json.ValueToJsonConverterProvider;
 import com.torodb.torod.db.backends.exceptions.InvalidDatabaseException;
+import com.torodb.torod.db.backends.meta.CollectionSchema;
 import com.torodb.torod.db.backends.meta.IndexStorage;
+import com.torodb.torod.db.backends.meta.StructuresCache;
 import com.torodb.torod.db.backends.meta.TorodbMeta;
-import com.torodb.torod.db.backends.query.QueryCriteriaToSQLTranslator;
+import com.torodb.torod.db.backends.tables.AbstractCollectionsTable;
 
 /**
  * Wrapper interface to define all database-specific SQL code
@@ -47,7 +53,17 @@ import com.torodb.torod.db.backends.query.QueryCriteriaToSQLTranslator;
 public interface DatabaseInterface extends Serializable {
     //TODO: Try to remove make DatabaseInterface not serializable
 
+    @Nonnull AbstractCollectionsTable getCollectionsTable();
+    
+    @Nonnull IndexStorage createIndexStorage(String databaseName, CollectionSchema colSchema);
+    @Nonnull StructuresCache createStructuresCache(CollectionSchema colSchema,
+            String schemaName, 
+            StructureConverter converter);
+    
+    @Nonnull ValueToArrayConverterProvider getValueToArrayConverterProvider();
+    @Nonnull ValueToArrayDataTypeProvider getValueToArrayDataTypeProvider();
     @Nonnull ValueToJooqConverterProvider getValueToJooqConverterProvider();
+    @Nonnull ValueToJooqDataTypeProvider getValueToJooqDataTypeProvider();
     @Nonnull ValueToJsonConverterProvider getValueToJsonConverterProvider();
     
     @Nonnull String escapeSchemaName(@Nonnull String collection) throws IllegalArgumentException;
@@ -76,7 +92,7 @@ public interface DatabaseInterface extends Serializable {
 
     @Nonnull String findDocsSelectStatement();
 
-    void setFindDocsSelectStatementParameters(@Nonnull IndexStorage.CollectionSchema colSchema, @Nonnull Integer[] requestedDocs,
+    void setFindDocsSelectStatementParameters(@Nonnull CollectionSchema colSchema, @Nonnull Integer[] requestedDocs,
             @Nonnull Projection projection, @Nonnull Connection c, @Nonnull PreparedStatement ps) throws SQLException;
 
     @Nonnull ResultSet getFindDocsSelectStatementResultSet(PreparedStatement ps) throws SQLException;

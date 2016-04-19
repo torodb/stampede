@@ -29,7 +29,6 @@ import com.google.common.collect.Sets;
 import com.google.common.collect.Sets.SetView;
 import com.torodb.torod.core.subdocument.ScalarType;
 import com.torodb.torod.core.subdocument.values.ScalarValue;
-import com.torodb.torod.db.backends.converters.jooq.ArrayValueConverter;
 import com.torodb.torod.db.backends.converters.jooq.BinaryValueConverter;
 import com.torodb.torod.db.backends.converters.jooq.BooleanValueConverter;
 import com.torodb.torod.db.backends.converters.jooq.DateValueConverter;
@@ -44,6 +43,7 @@ import com.torodb.torod.db.backends.converters.jooq.StringValueConverter;
 import com.torodb.torod.db.backends.converters.jooq.SubdocValueConverter;
 import com.torodb.torod.db.backends.converters.jooq.TimeValueConverter;
 import com.torodb.torod.db.backends.converters.jooq.ValueToJooqConverterProvider;
+import com.torodb.torod.db.backends.postgresql.converters.array.PostgreSQLValueToArrayConverterProvider;
 
 /**
  *
@@ -67,7 +67,7 @@ public class PostgreSQLValueToJooqConverterProvider implements ValueToJooqConver
     static {
         converters = new EnumMap<ScalarType, SubdocValueConverter>(ScalarType.class);
 
-        converters.put(ScalarType.ARRAY, new ArrayValueConverter());
+        converters.put(ScalarType.ARRAY, new ArrayValueConverter(PostgreSQLValueToArrayConverterProvider.getInstance()));
         converters.put(ScalarType.BOOLEAN, new BooleanValueConverter());
         converters.put(ScalarType.DOUBLE, new DoubleValueConverter());
         converters.put(ScalarType.INTEGER, new IntegerValueConverter());

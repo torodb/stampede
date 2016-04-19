@@ -9,7 +9,7 @@
     <parent>
         <groupId>com.torodb</groupId>
         <artifactId>torodb-parent</artifactId>
-        <version>0.40-alpha3-SNAPSHOT</version>
+        <version>0.40-alpha4-SNAPSHOT</version>
     </parent>
 
     <artifactId>torodb</artifactId>
@@ -109,14 +109,6 @@
             <artifactId>jackson-dataformat-yaml</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.fasterxml.jackson.module</groupId>
-            <artifactId>jackson-module-jsonSchema</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.github.fge</groupId>
-            <artifactId>json-schema-validator</artifactId>
-        </dependency>
-        <dependency>
             <groupId>javax.validation</groupId>
             <artifactId>validation-api</artifactId>
         </dependency>
@@ -191,7 +183,7 @@
                             <phase>integration-test</phase>
                             <configuration>
                                 <systemProperties>
-                                    <torodb-integration-config-yml>${torodb-integration-config-yml}</torodb-integration-config-yml>
+                                    <torodbIntegrationConfigYml>${torodbIntegrationConfigYml}</torodbIntegrationConfigYml>
                                 </systemProperties>
                             </configuration>
                         </execution>

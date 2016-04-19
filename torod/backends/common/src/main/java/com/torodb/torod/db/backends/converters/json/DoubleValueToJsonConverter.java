@@ -42,11 +42,6 @@ public class DoubleValueToJsonConverter implements
     }
 
     @Override
-    public Number toJson(ScalarDouble value) {
-        return value.getValue();
-    }
-
-    @Override
     public ScalarDouble toValue(Object value) {
         if (value instanceof Number) {
             Number number = (Number) value;
