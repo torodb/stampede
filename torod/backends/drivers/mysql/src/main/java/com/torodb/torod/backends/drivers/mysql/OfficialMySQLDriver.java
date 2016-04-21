@@ -40,6 +40,7 @@ public class OfficialMySQLDriver implements MySQLDriverProvider {
         dataSource.setConnectionAttributes("program_name:" + "torodb-" + poolName);
         dataSource.setUseInformationSchema(true);
         
+        //TODO
 //        Statement stat = null;
 //        ResultSet rs = null;
 //        Connection conn = null;

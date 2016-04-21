@@ -18,8 +18,9 @@
  *     
  */
 
-package com.torodb.torod.db.backends.postgresql.converters.jooq;
+package com.torodb.torod.db.backends.greenplum.converters.jooq;
 
+import java.io.Serializable;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.Set;
@@ -27,9 +28,9 @@ import java.util.Set;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Sets.SetView;
 import com.torodb.torod.core.subdocument.ScalarType;
+import com.torodb.torod.core.subdocument.values.ScalarValue;
 import com.torodb.torod.db.backends.converters.jooq.BinaryValueConverter;
 import com.torodb.torod.db.backends.converters.jooq.BooleanValueConverter;
-import com.torodb.torod.db.backends.converters.jooq.DataTypeForScalar;
 import com.torodb.torod.db.backends.converters.jooq.DateValueConverter;
 import com.torodb.torod.db.backends.converters.jooq.DoubleValueConverter;
 import com.torodb.torod.db.backends.converters.jooq.InstantValueConverter;
@@ -39,13 +40,15 @@ import com.torodb.torod.db.backends.converters.jooq.MongoObjectIdValueConverter;
 import com.torodb.torod.db.backends.converters.jooq.MongoTimestampValueConverter;
 import com.torodb.torod.db.backends.converters.jooq.NullValueConverter;
 import com.torodb.torod.db.backends.converters.jooq.StringValueConverter;
+import com.torodb.torod.db.backends.converters.jooq.SubdocValueConverter;
 import com.torodb.torod.db.backends.converters.jooq.TimeValueConverter;
-import com.torodb.torod.db.backends.converters.jooq.ValueToJooqDataTypeProvider;
+import com.torodb.torod.db.backends.converters.jooq.ValueToJooqConverterProvider;
+import com.torodb.torod.db.backends.greenplum.converters.array.GreenplumValueToArrayConverterProvider;
 
 /**
  *
  */
-public class PostgreSQLValueToJooqDataTypeProvider implements ValueToJooqDataTypeProvider {
+public class GreenplumValueToJooqConverterProvider implements ValueToJooqConverterProvider {
 
     private static final long serialVersionUID = 1L;
 
@@ -59,53 +62,52 @@ public class PostgreSQLValueToJooqDataTypeProvider implements ValueToJooqDataTyp
      */
     private static final Set<ScalarType> SUPPORTED_TYPES
             = Sets.difference(EnumSet.allOf(ScalarType.class), UNSUPPORTED_TYPES);
-    private static final EnumMap<ScalarType, DataTypeForScalar<?>> dataTypes;
+    private static final EnumMap<ScalarType, SubdocValueConverter> converters;
 
     static {
-        dataTypes = new EnumMap<ScalarType, DataTypeForScalar<?>>(ScalarType.class);
+        converters = new EnumMap<ScalarType, SubdocValueConverter>(ScalarType.class);
 
-        dataTypes.put(ScalarType.ARRAY, ArrayValueConverter.TYPE);
-        dataTypes.put(ScalarType.BOOLEAN, BooleanValueConverter.TYPE);
-        dataTypes.put(ScalarType.DOUBLE, DoubleValueConverter.TYPE);
-        dataTypes.put(ScalarType.INTEGER, IntegerValueConverter.TYPE);
-        dataTypes.put(ScalarType.LONG, LongValueConverter.TYPE);
-        dataTypes.put(ScalarType.NULL, NullValueConverter.TYPE);
-        dataTypes.put(ScalarType.STRING, StringValueConverter.TYPE);
-        dataTypes.put(ScalarType.DATE, DateValueConverter.TYPE);
-        dataTypes.put(ScalarType.INSTANT, InstantValueConverter.TYPE);
-        dataTypes.put(ScalarType.TIME, TimeValueConverter.TYPE);
-        dataTypes.put(ScalarType.MONGO_OBJECT_ID, MongoObjectIdValueConverter.TYPE);
-        dataTypes.put(ScalarType.MONGO_TIMESTAMP, MongoTimestampValueConverter.TYPE);
-        dataTypes.put(ScalarType.BINARY, BinaryValueConverter.TYPE);
+        converters.put(ScalarType.ARRAY, new ArrayValueConverter(GreenplumValueToArrayConverterProvider.getInstance()));
+        converters.put(ScalarType.BOOLEAN, new BooleanValueConverter());
+        converters.put(ScalarType.DOUBLE, new DoubleValueConverter());
+        converters.put(ScalarType.INTEGER, new IntegerValueConverter());
+        converters.put(ScalarType.LONG, new LongValueConverter());
+        converters.put(ScalarType.NULL, new NullValueConverter());
+        converters.put(ScalarType.STRING, new StringValueConverter());
+        converters.put(ScalarType.DATE, new DateValueConverter());
+        converters.put(ScalarType.INSTANT, new InstantValueConverter());
+        converters.put(ScalarType.TIME, new TimeValueConverter());
+        converters.put(ScalarType.MONGO_OBJECT_ID, new MongoObjectIdValueConverter());
+        converters.put(ScalarType.MONGO_TIMESTAMP, new MongoTimestampValueConverter());
+        converters.put(ScalarType.BINARY, new BinaryValueConverter());
 
-        SetView<ScalarType> withoutConverter = Sets.difference(dataTypes.keySet(), SUPPORTED_TYPES);
+        SetView<ScalarType> withoutConverter = Sets.difference(converters.keySet(), SUPPORTED_TYPES);
         if (!withoutConverter.isEmpty()) {
             throw new AssertionError("It is not defined how to convert from the following scalar "
                     + "types to json: " + withoutConverter);
         }
     }
 
-    @Override
-    public DataTypeForScalar<?> getDataType(ScalarType type) {
-        DataTypeForScalar<?> dataType = dataTypes.get(type);
-        if (dataType == null) {
+    public SubdocValueConverter<?, ? extends ScalarValue<? extends Serializable>> getConverter(ScalarType type) {
+        SubdocValueConverter converter = converters.get(type);
+        if (converter == null) {
             throw new IllegalArgumentException("It is not defined how to map elements of type " + type + " to SQL");
         }
-        return dataType;
+        return converter;
     }
 
-    public static PostgreSQLValueToJooqDataTypeProvider getInstance() {
-        return ValueToJooqDataTypeProviderHolder.INSTANCE;
+    public static GreenplumValueToJooqConverterProvider getInstance() {
+        return ValueToJooqConverterProviderHolder.INSTANCE;
     }
 
-    private static class ValueToJooqDataTypeProviderHolder {
+    private static class ValueToJooqConverterProviderHolder {
 
-        private static final PostgreSQLValueToJooqDataTypeProvider INSTANCE
-                = new PostgreSQLValueToJooqDataTypeProvider();
+        private static final GreenplumValueToJooqConverterProvider INSTANCE
+                = new GreenplumValueToJooqConverterProvider();
     }
 
     //@edu.umd.cs.findbugs.annotations.SuppressFBWarnings(value = "UPM_UNCALLED_PRIVATE_METHOD")
     private Object readResolve() {
-        return PostgreSQLValueToJooqDataTypeProvider.getInstance();
+        return GreenplumValueToJooqConverterProvider.getInstance();
     }
 }

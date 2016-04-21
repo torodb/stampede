@@ -17,7 +17,7 @@
  *     Copyright (c) 2014, 8Kdata Technology
  *     
  */
-package com.torodb.torod.db.backends.postgresql.meta;
+package com.torodb.torod.db.backends.greenplum.meta;
 
 import org.jooq.Record2;
 import org.jooq.TableField;
@@ -26,7 +26,6 @@ import org.jooq.impl.SQLDataType;
 
 import com.torodb.torod.core.pojos.NamedToroIndex;
 import com.torodb.torod.db.backends.DatabaseInterface;
-import com.torodb.torod.db.backends.converters.jooq.JSONBBinding;
 import com.torodb.torod.db.backends.converters.json.ToroIndexToJsonConverter;
 import com.torodb.torod.db.backends.meta.AbstractIndexStorage;
 import com.torodb.torod.db.backends.meta.CollectionSchema;
@@ -34,10 +33,10 @@ import com.torodb.torod.db.backends.meta.CollectionSchema;
 /**
  *
  */
-public class PostgreSQLIndexStorage extends AbstractIndexStorage {
+public class GreenplumIndexStorage extends AbstractIndexStorage {
     private static final long serialVersionUID = 1L;
 
-    public PostgreSQLIndexStorage(String databaseName, CollectionSchema colSchema, DatabaseInterface databaseInterface) {
+    public GreenplumIndexStorage(String databaseName, CollectionSchema colSchema, DatabaseInterface databaseInterface) {
         super(databaseName, colSchema, databaseInterface);
     }
 
@@ -61,8 +60,8 @@ public class PostgreSQLIndexStorage extends AbstractIndexStorage {
 
         @Override
         protected TableField<Record2<String, NamedToroIndex>, NamedToroIndex> createIndexField(ToroIndexToJsonConverter indexToJsonConverter) {
-            return createField("index", new DefaultDataType<String>(null, String.class, "jsonb")
-                    .asConvertedDataType(new JSONBBinding<NamedToroIndex>(indexToJsonConverter)), this, "");
+            return createField("index", new DefaultDataType<String>(null, String.class, "text")
+                    .asConvertedDataType(indexToJsonConverter));
         }
     }
 }

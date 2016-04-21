@@ -40,12 +40,16 @@ import com.torodb.torod.core.dbWrapper.DbWrapper;
 import com.torodb.torod.db.backends.DatabaseInterface;
 import com.torodb.torod.db.backends.DbBackendConfiguration;
 import com.torodb.torod.db.backends.converters.ScalarTypeToSqlType;
+import com.torodb.torod.db.backends.greenplum.GreenplumDatabaseInterface;
+import com.torodb.torod.db.backends.greenplum.GreenplumDbBackend;
+import com.torodb.torod.db.backends.greenplum.GreenplumDbWrapper;
+import com.torodb.torod.db.backends.greenplum.converters.GreenplumScalarTypeToSqlType;
 import com.torodb.torod.db.backends.mysql.MySQLDatabaseInterface;
 import com.torodb.torod.db.backends.mysql.MySQLDbBackend;
 import com.torodb.torod.db.backends.mysql.MySQLDbWrapper;
 import com.torodb.torod.db.backends.mysql.converters.MySQLScalarTypeToSqlType;
-import com.torodb.torod.db.backends.postgresql.PostgreSQLDbBackend;
 import com.torodb.torod.db.backends.postgresql.PostgreSQLDatabaseInterface;
+import com.torodb.torod.db.backends.postgresql.PostgreSQLDbBackend;
 import com.torodb.torod.db.backends.postgresql.PostgreSQLDbWrapper;
 import com.torodb.torod.db.backends.postgresql.converters.PostgreSQLScalarTypeToSqlType;
 
@@ -74,7 +78,13 @@ public class BackendModule extends AbstractModule implements BackendImplementati
 
 	@Override
 	public void visit(Greenplum value) {
-		throw new UnsupportedOperationException("Not implemented yet! :(");
+        bind(DbBackend.class).to(GreenplumDbBackend.class).in(Singleton.class);
+        bind(DbBackendConfiguration.class).to(GreenplumBackendConfigurationMapper.class);
+        bind(DbWrapper.class).to(GreenplumDbWrapper.class).in(Singleton.class);
+        bind(GreenplumDbWrapper.class).in(Singleton.class);
+        bind(DatabaseInterface.class).to(GreenplumDatabaseInterface.class).in(Singleton.class);
+        bind(ScalarTypeToSqlType.class).to(GreenplumScalarTypeToSqlType.class).in(Singleton.class);
+        bind(PostgreSQLDriverProvider.class).to(OfficialPostgreSQLDriver.class).in(Singleton.class);
 	}
 
     @Override
@@ -86,6 +96,23 @@ public class BackendModule extends AbstractModule implements BackendImplementati
         bind(DatabaseInterface.class).to(MySQLDatabaseInterface.class).in(Singleton.class);
         bind(ScalarTypeToSqlType.class).to(MySQLScalarTypeToSqlType.class).in(Singleton.class);
         bind(MySQLDriverProvider.class).to(OfficialMySQLDriver.class).in(Singleton.class);
+    }
+    
+    @Immutable
+    @Singleton
+    public static class GreenplumBackendConfigurationMapper extends DbBackendConfigurationMapper {
+        @Inject
+        public GreenplumBackendConfigurationMapper(Config config, Greenplum greenplum) {
+            super(config.getProtocol().getMongo().getCursorTimeout(),
+                    config.getGeneric().getConnectionPoolTimeout(),
+                    config.getGeneric().getConnectionPoolSize(),
+                    config.getGeneric().getReservedReadPoolSize(),
+                    greenplum.getHost(),
+                    greenplum.getPort(),
+                    greenplum.getDatabase(),
+                    greenplum.getUser(),
+                    greenplum.getPassword());
+        }
     }
     
     @Immutable

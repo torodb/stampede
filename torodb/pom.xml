@@ -42,6 +42,11 @@
         </dependency>
         <dependency>
             <groupId>com.torodb.torod.backends</groupId>
+            <artifactId>greenplum</artifactId>
+            <version>${torod.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.torodb.torod.backends</groupId>
             <artifactId>mysql</artifactId>
             <version>${torod.version}</version>
         </dependency>

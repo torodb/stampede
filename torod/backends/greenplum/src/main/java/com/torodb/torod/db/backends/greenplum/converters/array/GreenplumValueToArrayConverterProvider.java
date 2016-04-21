@@ -18,7 +18,7 @@
  *     
  */
 
-package com.torodb.torod.db.backends.postgresql.converters.array;
+package com.torodb.torod.db.backends.greenplum.converters.array;
 
 import java.util.Map;
 
@@ -61,7 +61,7 @@ import com.torodb.torod.db.backends.converters.array.ValueToArrayConverterProvid
 /**
  *
  */
-public class PostgreSQLValueToArrayConverterProvider implements ValueToArrayConverterProvider {
+public class GreenplumValueToArrayConverterProvider implements ValueToArrayConverterProvider {
 
     private static final long serialVersionUID = 1L;
 
@@ -80,7 +80,7 @@ public class PostgreSQLValueToArrayConverterProvider implements ValueToArrayConv
     private final MongoTimestampToArrayConverter mongoTimestampConverter;
     private final ArrayConverter<JsonString, ScalarBinary> binaryConverter;
 
-    private PostgreSQLValueToArrayConverterProvider() {
+    private GreenplumValueToArrayConverterProvider() {
         arrayConverter = new ArrayToArrayConverter(this);
         booleanConverter = new BooleanToArrayConverter();
         dateConverter = new DateToArrayConverter();
@@ -113,7 +113,7 @@ public class PostgreSQLValueToArrayConverterProvider implements ValueToArrayConv
         
     }
 
-    public static PostgreSQLValueToArrayConverterProvider getInstance() {
+    public static GreenplumValueToArrayConverterProvider getInstance() {
         return ToArrayConverterHolder.INSTANCE;
     }
 
@@ -229,13 +229,13 @@ public class PostgreSQLValueToArrayConverterProvider implements ValueToArrayConv
 
     private static class ToArrayConverterHolder {
 
-        private static final PostgreSQLValueToArrayConverterProvider INSTANCE
-                = new PostgreSQLValueToArrayConverterProvider();
+        private static final GreenplumValueToArrayConverterProvider INSTANCE
+                = new GreenplumValueToArrayConverterProvider();
     }
 
     //@edu.umd.cs.findbugs.annotations.SuppressFBWarnings(value = "UPM_UNCALLED_PRIVATE_METHOD")
     private Object readResolve() {
-        return PostgreSQLValueToArrayConverterProvider.getInstance();
+        return GreenplumValueToArrayConverterProvider.getInstance();
     }
 
 }

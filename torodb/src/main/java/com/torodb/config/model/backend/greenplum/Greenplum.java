@@ -27,6 +27,10 @@ import com.torodb.config.visitor.BackendImplementationVisitor;
 @Description("config.backend.greenplum")
 public class Greenplum extends Postgres {
 
+    public Greenplum() {
+        this.port = 6432;
+    }
+
 	@Override
 	public void accept(BackendImplementationVisitor visitor) {
 		visitor.visit(this);

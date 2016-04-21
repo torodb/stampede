@@ -20,17 +20,13 @@
 
 package com.torodb.torod.db.backends.postgresql.converters.array;
 
-import javax.json.JsonArray;
-
-import com.torodb.torod.core.subdocument.values.ScalarArray;
-import com.torodb.torod.db.backends.converters.array.ArrayConverter;
 import com.torodb.torod.db.backends.converters.array.BaseArrayToArrayConverter;
 import com.torodb.torod.db.backends.converters.array.ValueToArrayConverterProvider;
 
 /**
  *
  */
-public class ArrayToArrayConverter extends BaseArrayToArrayConverter implements ArrayConverter<JsonArray, ScalarArray> {
+public class ArrayToArrayConverter extends BaseArrayToArrayConverter {
     private static final long serialVersionUID = 1L;
 
     public ArrayToArrayConverter(ValueToArrayConverterProvider valueToArrayConverterProvider) {

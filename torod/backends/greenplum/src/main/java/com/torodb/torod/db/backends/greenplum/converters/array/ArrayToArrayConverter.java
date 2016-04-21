@@ -18,24 +18,19 @@
  *     
  */
 
-package com.torodb.torod.db.backends.postgresql.converters.jooq;
+package com.torodb.torod.db.backends.greenplum.converters.array;
 
-import com.torodb.torod.core.subdocument.values.ScalarArray;
+import com.torodb.torod.db.backends.converters.array.BaseArrayToArrayConverter;
 import com.torodb.torod.db.backends.converters.array.ValueToArrayConverterProvider;
-import com.torodb.torod.db.backends.converters.jooq.BaseArrayValueConverter;
-import com.torodb.torod.db.backends.converters.jooq.DataTypeForScalar;
-import com.torodb.torod.db.backends.converters.jooq.JSONBBinding;
-import com.torodb.torod.db.backends.postgresql.converters.array.PostgreSQLValueToArrayConverterProvider;
 
 /**
  *
  */
-public class ArrayValueConverter extends BaseArrayValueConverter {
+public class ArrayToArrayConverter extends BaseArrayToArrayConverter {
     private static final long serialVersionUID = 1L;
 
-    public static final DataTypeForScalar<ScalarArray> TYPE = JSONBBinding.fromScalarValue(ScalarArray.class, new ArrayValueConverter(PostgreSQLValueToArrayConverterProvider.getInstance()));
-    
-    public ArrayValueConverter(ValueToArrayConverterProvider valueToArrayConverterProvider) {
+    public ArrayToArrayConverter(ValueToArrayConverterProvider valueToArrayConverterProvider) {
         super(valueToArrayConverterProvider);
+        // TODO Auto-generated constructor stub
     }
 }

@@ -25,6 +25,7 @@
 
     <modules>
         <module>postgresql</module>
+        <module>greenplum</module>
         <module>mysql</module>
         <module>common</module>
         <module>drivers</module>

@@ -49,6 +49,8 @@ import com.torodb.torod.db.backends.converters.jooq.JSONBBinding;
  */
 public class PostgreSQLValueToArrayDataTypeProvider implements ValueToArrayDataTypeProvider {
 
+    private static final long serialVersionUID = 1L;
+
     private final Map<ScalarType, DataType<?>> converters;
 
     private PostgreSQLValueToArrayDataTypeProvider() {

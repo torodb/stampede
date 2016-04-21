@@ -18,7 +18,7 @@
  *     
  */
 
-package com.torodb.torod.db.backends.postgresql.converters.jooq;
+package com.torodb.torod.db.backends.greenplum.converters.jooq;
 
 import java.util.EnumMap;
 import java.util.EnumSet;
@@ -45,7 +45,7 @@ import com.torodb.torod.db.backends.converters.jooq.ValueToJooqDataTypeProvider;
 /**
  *
  */
-public class PostgreSQLValueToJooqDataTypeProvider implements ValueToJooqDataTypeProvider {
+public class GreenplumValueToJooqDataTypeProvider implements ValueToJooqDataTypeProvider {
 
     private static final long serialVersionUID = 1L;
 
@@ -94,18 +94,18 @@ public class PostgreSQLValueToJooqDataTypeProvider implements ValueToJooqDataTyp
         return dataType;
     }
 
-    public static PostgreSQLValueToJooqDataTypeProvider getInstance() {
+    public static GreenplumValueToJooqDataTypeProvider getInstance() {
         return ValueToJooqDataTypeProviderHolder.INSTANCE;
     }
 
     private static class ValueToJooqDataTypeProviderHolder {
 
-        private static final PostgreSQLValueToJooqDataTypeProvider INSTANCE
-                = new PostgreSQLValueToJooqDataTypeProvider();
+        private static final GreenplumValueToJooqDataTypeProvider INSTANCE
+                = new GreenplumValueToJooqDataTypeProvider();
     }
 
     //@edu.umd.cs.findbugs.annotations.SuppressFBWarnings(value = "UPM_UNCALLED_PRIVATE_METHOD")
     private Object readResolve() {
-        return PostgreSQLValueToJooqDataTypeProvider.getInstance();
+        return GreenplumValueToJooqDataTypeProvider.getInstance();
     }
 }

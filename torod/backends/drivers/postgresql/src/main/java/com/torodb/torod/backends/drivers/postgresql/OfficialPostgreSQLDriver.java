@@ -20,10 +20,19 @@
 
 package com.torodb.torod.backends.drivers.postgresql;
 
-import com.torodb.torod.db.backends.DbBackendConfiguration;
-import org.postgresql.ds.PGSimpleDataSource;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 
 import javax.sql.DataSource;
+
+import org.postgresql.ds.PGSimpleDataSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.torodb.torod.core.exceptions.ToroRuntimeException;
+import com.torodb.torod.db.backends.DbBackendConfiguration;
 
 /**
  *
@@ -43,30 +52,41 @@ public class OfficialPostgreSQLDriver implements PostgreSQLDriverProvider {
 
         dataSource.setApplicationName("torodb-" + poolName);
 
-//        Statement stat = null;
-//        ResultSet rs = null;
-//        Connection conn = null;
-//        try {
-//            conn = dataSource.getConnection();
-//            stat = conn.createStatement();
-//            rs = stat.executeQuery("SELECT 1");
-//            rs.next();
-//        } catch (SQLException ex) {
-//            throw new ToroRuntimeException(ex.getLocalizedMessage());
-//        } finally {
-//	            try {
-//		            if (rs != null) rs.close();
-//	            } catch (SQLException ex) {
-//	            }
-//	            try {
-//		            if (stat != null) stat.close();
-//	        	} catch (SQLException ex) {
-//	            }
-//	            try {
-//	                if (conn != null) conn.close();
-//	            } catch (SQLException ex) {
-//	            }
-//        }     
+        //TODO
+        Statement stat = null;
+        ResultSet rs = null;
+        Connection conn = null;
+        try {
+            conn = dataSource.getConnection();
+            stat = conn.createStatement();
+            rs = stat.executeQuery("SELECT 1");
+            rs.next();
+            char a = 'í';
+            int high = a >>> 8;
+            int low = a & 0xFF;
+            Logger LOGGER = LoggerFactory.getLogger(getClass());
+            rs = stat.executeQuery("SHOW SERVER_ENCODING;");
+            rs.next();
+            LOGGER.info("Server encoding: " + rs.getString(1));
+            rs = stat.executeQuery("SHOW CLIENT_ENCODING;");
+            rs.next();
+            LOGGER.info("Client encoding: " + rs.getString(1));
+        } catch (SQLException ex) {
+            throw new ToroRuntimeException(ex.getLocalizedMessage());
+        } finally {
+	            try {
+		            if (rs != null) rs.close();
+	            } catch (SQLException ex) {
+	            }
+	            try {
+		            if (stat != null) stat.close();
+	        	} catch (SQLException ex) {
+	            }
+	            try {
+	                if (conn != null) conn.close();
+	            } catch (SQLException ex) {
+	            }
+        }     
         return dataSource;
     }
 }
