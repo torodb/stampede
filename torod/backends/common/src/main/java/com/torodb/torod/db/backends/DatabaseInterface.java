@@ -32,6 +32,7 @@ import javax.annotation.Nonnull;
 
 import org.jooq.DSLContext;
 
+import com.torodb.torod.core.connection.exceptions.RetryTransactionException;
 import com.torodb.torod.core.language.projection.Projection;
 import com.torodb.torod.db.backends.converters.ScalarTypeToSqlType;
 import com.torodb.torod.db.backends.converters.StructureConverter;
@@ -109,6 +110,8 @@ public interface DatabaseInterface extends Serializable {
 
     @Nonnull TorodbMeta initializeTorodbMeta(String databaseName, DSLContext dsl, DatabaseInterface databaseInterface)
     throws SQLException, IOException, InvalidDatabaseException;
+    
+    void handleRetryException(SQLException sqlException) throws RetryTransactionException;
 
     public interface FindDocsSelectStatementRow {
         public int getDocId();

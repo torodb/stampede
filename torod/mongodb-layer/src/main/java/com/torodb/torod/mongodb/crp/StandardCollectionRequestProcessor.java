@@ -249,11 +249,11 @@ public class StandardCollectionRequestProcessor implements CollectionRequestProc
     	List<UpdateOperation> updates = Lists.newArrayList();
     	boolean upsert = updateMessage.isUpsert();
     	boolean justOne = !updateMessage.isMultiUpdate();
-
-    UpdateAction updateAction = UpdateActionTranslator.translate(
-                updateMessage.getUpdate());
-
-    updates.add(new UpdateOperation(queryCriteria, updateAction, upsert, justOne));
+    
+        UpdateAction updateAction = UpdateActionTranslator.translate(
+                    updateMessage.getUpdate());
+    
+        updates.add(new UpdateOperation(queryCriteria, updateAction, upsert, justOne));
 
         try (ToroTransaction transaction
                 = toroConnection.createTransaction(TransactionMetainfo.NOT_READ_ONLY)) {
@@ -271,8 +271,7 @@ public class StandardCollectionRequestProcessor implements CollectionRequestProc
                     futureUpdateResponse,
                     futureCommitResponse
             );
-		}
-        catch (ImplementationDbException ex) {
+        } catch (ImplementationDbException ex) {
             return Futures.immediateFuture(
                     new UpdateOpResult(
                             0,
@@ -341,8 +340,7 @@ public class StandardCollectionRequestProcessor implements CollectionRequestProc
                     futureDeleteResponse,
                     futureCommitResponse
             );
-		}
-        catch (ImplementationDbException ex) {
+		} catch (ImplementationDbException ex) {
             return Futures.immediateFuture(
                     new DeleteOpResult(
                             0,

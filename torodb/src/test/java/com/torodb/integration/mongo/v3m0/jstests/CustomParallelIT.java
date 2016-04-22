@@ -56,9 +56,9 @@ public class CustomParallelIT extends AbstractIntegrationParallelTest {
 
     private static ScriptClassifier createScriptClassifier() {
         return new Builder()
-                .addScripts(Mongo, Postgres, CATASTROPHIC, asScriptSet("updaterace.js", 8))
-                
-                .addScripts(Mongo, Greenplum, CATASTROPHIC, asScriptSet("updaterace.js", 8))
+                .addScripts(Mongo, Postgres, WORKING, asScriptSet("updaterace.js", 8))
+                .addScripts(Mongo, Greenplum, WORKING, asScriptSet("updaterace.js", 8))
+                .addScripts(Mongo, MySQL, WORKING, asScriptSet("updaterace.js", 8))
                 
                 .addScripts(MongoReplSet, Postgres, CATASTROPHIC, asScriptSet("updaterace.js", 8))
                 

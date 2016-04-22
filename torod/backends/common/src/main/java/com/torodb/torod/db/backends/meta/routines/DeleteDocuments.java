@@ -39,6 +39,7 @@ import org.jooq.impl.DSL;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
 import com.google.common.collect.Sets;
+import com.torodb.torod.core.connection.exceptions.RetryTransactionException;
 import com.torodb.torod.core.subdocument.structure.ArrayStructure;
 import com.torodb.torod.core.subdocument.structure.DocStructure;
 import com.torodb.torod.core.subdocument.structure.StructureElement;
@@ -57,7 +58,7 @@ public class DeleteDocuments {
     public static int execute(
             Configuration configuration, CollectionSchema colSchema, Multimap<DocStructure, Integer> didsByStructure,
             boolean justOne, @Nonnull DatabaseInterface databaseInterface
-    ) {
+    ) throws RetryTransactionException {
         Multimap<DocStructure, Integer> didsByStructureToDelete;
         if (didsByStructure.isEmpty()) {
             return 0;
@@ -86,7 +87,7 @@ public class DeleteDocuments {
     public static int execute(
             Configuration configuration, CollectionSchema colSchema, Multimap<DocStructure, Integer> didsByStructure,
             @Nonnull DatabaseInterface databaseInterface
-    ) throws SQLException {
+    ) throws SQLException, RetryTransactionException {
         TableProvider tableProvider = new TableProvider(colSchema);
         
         DSLContext dsl = DSL.using(configuration);
@@ -106,7 +107,7 @@ public class DeleteDocuments {
     private static void executeDeleteSubDocuments(
             DSLContext dsl, Set<SubDocTable> tables, Collection<Integer> dids,
             @Nonnull DatabaseInterface databaseInterface
-    ) {
+    ) throws RetryTransactionException {
         
         ConnectionProvider connectionProvider
                 = dsl.configuration().connectionProvider();
@@ -128,7 +129,7 @@ public class DeleteDocuments {
     private static int executeDeleteRoots(
             DSLContext dsl, CollectionSchema colSchema, Collection<Integer> dids,
             @Nonnull DatabaseInterface databaseInterface
-    ) throws SQLException {
+    ) throws SQLException, RetryTransactionException {
         ConnectionProvider connectionProvider
                 = dsl.configuration().connectionProvider();
         Connection connection = connectionProvider.acquire();
@@ -146,7 +147,7 @@ public class DeleteDocuments {
     private static int delete(
             Connection connection, Schema schema, Table table, Collection<Integer> dids,
             @Nonnull DatabaseInterface databaseInterface
-    ) throws SQLException {
+    ) throws SQLException, RetryTransactionException {
         try (PreparedStatement ps = connection.prepareStatement(
                     databaseInterface.deleteDidsStatement(
                             schema.getName(), table.getName(), SubDocTable.DID_COLUMN_NAME
@@ -164,6 +165,10 @@ public class DeleteDocuments {
                 }
             }
             return result;
+        } catch(SQLException sqlException) {
+            databaseInterface.handleRetryException(sqlException);
+            
+            throw sqlException;
         }
     }
 

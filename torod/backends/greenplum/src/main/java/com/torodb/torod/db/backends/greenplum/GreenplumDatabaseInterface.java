@@ -23,6 +23,7 @@ package com.torodb.torod.db.backends.greenplum;
 
 import java.io.IOException;
 import java.sql.Array;
+import java.sql.BatchUpdateException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -39,6 +40,7 @@ import javax.inject.Singleton;
 
 import org.jooq.DSLContext;
 
+import com.torodb.torod.core.connection.exceptions.RetryTransactionException;
 import com.torodb.torod.core.language.projection.Projection;
 import com.torodb.torod.core.subdocument.SimpleSubDocTypeBuilderProvider;
 import com.torodb.torod.core.subdocument.SubDocType;
@@ -441,6 +443,14 @@ public class GreenplumDatabaseInterface implements DatabaseInterface {
             String databaseName, DSLContext dsl, DatabaseInterface databaseInterface
     ) throws SQLException, IOException, InvalidDatabaseException {
         return new GreenplumTorodbMeta(databaseName, dsl, databaseInterface, subDocTypeBuilderProvider);
+    }
+
+    @Override
+    public void handleRetryException(SQLException sqlException) throws RetryTransactionException {
+        if (sqlException instanceof BatchUpdateException && 
+                sqlException.getErrorCode() == 0x0000) {
+            throw new RetryTransactionException(sqlException);
+        }
     }
 
 }

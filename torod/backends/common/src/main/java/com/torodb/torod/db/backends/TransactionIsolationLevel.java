@@ -18,29 +18,24 @@
  *     
  */
 
+package com.torodb.torod.db.backends;
 
-package com.torodb.torod.core.connection.exceptions;
+import java.sql.Connection;
 
-import com.torodb.torod.core.exceptions.ToroException;
-
-/**
- *
- */
-public class RetryTransactionException extends ToroException {
-    private static final long serialVersionUID = 1L;
+public enum TransactionIsolationLevel {
+    TRANSACTION_NONE(Connection.TRANSACTION_NONE),
+    TRANSACTION_READ_UNCOMMITTED(Connection.TRANSACTION_READ_UNCOMMITTED),
+    TRANSACTION_READ_COMMITTED(Connection.TRANSACTION_READ_COMMITTED),
+    TRANSACTION_REPEATABLE_READ(Connection.TRANSACTION_REPEATABLE_READ),
+    TRANSACTION_SERIALIZABLE(Connection.TRANSACTION_SERIALIZABLE);
     
-    public RetryTransactionException() {
+    private final int level;
+    
+    private TransactionIsolationLevel(int level) {
+        this.level = level;
     }
-
-    public RetryTransactionException(String message) {
-        super(message);
-    }
-
-    public RetryTransactionException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
-    public RetryTransactionException(Throwable cause) {
-        super(cause);
+    
+    public int level() {
+        return level;
     }
 }

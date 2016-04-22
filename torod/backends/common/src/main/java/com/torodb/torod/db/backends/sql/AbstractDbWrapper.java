@@ -163,7 +163,6 @@ public abstract class AbstractDbWrapper implements DbWrapper {
         try {
             Connection c = ds.getConnection();
             postConsume(c, metadata);
-            //TODO: Set isolation
 
             return c;
         } catch (SQLException ex) {

@@ -53,6 +53,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
+import com.torodb.torod.core.connection.exceptions.RetryTransactionException;
 import com.torodb.torod.core.d2r.D2RTranslator;
 import com.torodb.torod.core.dbWrapper.DbConnection;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
@@ -76,7 +77,6 @@ import com.torodb.torod.db.backends.query.QueryEvaluator;
 import com.torodb.torod.db.backends.sql.index.IndexManager;
 import com.torodb.torod.db.backends.sql.index.NamedDbIndex;
 import com.torodb.torod.db.backends.sql.index.UnnamedDbIndex;
-import com.torodb.torod.db.backends.tables.AbstractCollectionsTable;
 import com.torodb.torod.db.backends.tables.SubDocTable;
 import com.torodb.torod.db.backends.tables.records.AbstractCollectionsRecord;
 import com.torodb.torod.db.backends.tables.records.SubDocTableRecord;
@@ -413,7 +413,7 @@ public abstract class AbstractDbConnection implements
     }
 
     @Override
-    public int delete(String collection, @Nullable QueryCriteria condition, boolean justOne) {
+    public int delete(String collection, @Nullable QueryCriteria condition, boolean justOne) throws RetryTransactionException {
         CollectionSchema colSchema = meta.getCollectionSchema(collection);
         QueryEvaluator queryEvaluator = new QueryEvaluator(colSchema, databaseInterface);
 

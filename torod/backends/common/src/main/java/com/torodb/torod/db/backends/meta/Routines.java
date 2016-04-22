@@ -25,6 +25,7 @@ import javax.annotation.Nonnull;
 import org.jooq.Configuration;
 
 import com.google.common.collect.Multimap;
+import com.torodb.torod.core.connection.exceptions.RetryTransactionException;
 import com.torodb.torod.core.subdocument.structure.DocStructure;
 import com.torodb.torod.db.backends.DatabaseInterface;
 import com.torodb.torod.db.backends.meta.routines.DeleteDocuments;
@@ -75,7 +76,7 @@ public class Routines {
     public static int deleteDocuments(
             Configuration configuration, CollectionSchema colSchema, Multimap<DocStructure, Integer> didsByStructure,
             boolean justOne, @Nonnull DatabaseInterface databaseInterface
-    ) {
+    ) throws RetryTransactionException {
         return DeleteDocuments.execute(configuration, colSchema, didsByStructure, justOne, databaseInterface);
     }
 

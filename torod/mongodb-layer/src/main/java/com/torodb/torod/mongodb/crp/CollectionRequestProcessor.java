@@ -27,7 +27,7 @@ public interface CollectionRequestProcessor {
     public ListenableFuture<? extends WriteOpResult> insert(Request request, InsertMessage insertMessage)
             throws MongoException;
 
-    public ListenableFuture<? extends UpdateOpResult> update(Request request, UpdateMessage deleteMessage)
+    public ListenableFuture<? extends UpdateOpResult> update(Request request, UpdateMessage updateMessage)
             throws MongoException;
 
     public ListenableFuture<? extends WriteOpResult> delete(Request request, DeleteMessage deleteMessage)

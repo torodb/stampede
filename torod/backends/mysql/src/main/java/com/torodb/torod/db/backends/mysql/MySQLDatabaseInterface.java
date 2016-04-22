@@ -23,6 +23,7 @@ package com.torodb.torod.db.backends.mysql;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.sql.BatchUpdateException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -43,6 +44,7 @@ import javax.json.JsonArrayBuilder;
 import org.jooq.DSLContext;
 import org.jooq.tools.json.JSONArray;
 
+import com.torodb.torod.core.connection.exceptions.RetryTransactionException;
 import com.torodb.torod.core.exceptions.ToroRuntimeException;
 import com.torodb.torod.core.language.projection.Projection;
 import com.torodb.torod.core.subdocument.SimpleSubDocTypeBuilderProvider;
@@ -465,6 +467,10 @@ public class MySQLDatabaseInterface implements DatabaseInterface {
             String databaseName, DSLContext dsl, DatabaseInterface databaseInterface
     ) throws SQLException, IOException, InvalidDatabaseException {
         return new MySQLTorodbMeta(databaseName, dsl, databaseInterface, subDocTypeBuilderProvider);
+    }
+
+    @Override
+    public void handleRetryException(SQLException sqlException) throws RetryTransactionException {
     }
 
 }

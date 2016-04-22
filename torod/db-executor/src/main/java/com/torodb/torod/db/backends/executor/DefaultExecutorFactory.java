@@ -21,6 +21,7 @@ package com.torodb.torod.db.backends.executor;
 
 import com.torodb.torod.core.Session;
 import com.torodb.torod.core.annotations.DatabaseName;
+import com.torodb.torod.core.connection.exceptions.RetryTransactionException;
 import com.torodb.torod.core.dbWrapper.DbWrapper;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.exceptions.ToroException;
@@ -135,6 +136,9 @@ public class DefaultExecutorFactory implements ExecutorFactory {
         @Override
         public <R> R catchSessionException(Throwable t, Callable<R> task, Session s)
                 throws Exception {
+            if (t instanceof RetryTransactionException) {
+                throw (RetryTransactionException) t;
+            }
             LOGGER.error("Session executor exception", t);
             if (t instanceof ToroException) {
                 throw (ToroException) t;
