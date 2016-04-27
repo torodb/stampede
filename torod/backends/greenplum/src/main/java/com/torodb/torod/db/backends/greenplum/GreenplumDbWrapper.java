@@ -53,7 +53,7 @@ import com.torodb.torod.db.backends.sql.AbstractDbWrapper;
 @Singleton
 public class GreenplumDbWrapper extends AbstractDbWrapper {
     private static final int DB_SUPPORT_MAJOR = 8;
-    private static final int DB_SUPPORT_MINOR = 3;
+    private static final int DB_SUPPORT_MINOR = 2;
 
     private final D2RTranslator d2r;
     private final QueryRoutine queryRoutine;

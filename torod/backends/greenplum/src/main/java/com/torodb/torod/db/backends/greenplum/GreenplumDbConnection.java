@@ -51,6 +51,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Lists;
 import com.torodb.torod.core.ValueRow;
+import com.torodb.torod.core.connection.exceptions.RetryTransactionException;
 import com.torodb.torod.core.d2r.D2RTranslator;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.exceptions.IllegalPathViewException;
@@ -141,7 +142,9 @@ class GreenplumDbConnection extends AbstractDbConnection {
         if (table.fields().length > 0) {
             sb.delete(sb.length() - 1, sb.length());
         }
-        sb.append(')');
+        sb.append(") DISTRIBUTED BY (")
+            .append('"').append(SubDocTable.DID_COLUMN_NAME)
+            .append("\")");
         return sb.toString();
     }
 
@@ -149,11 +152,15 @@ class GreenplumDbConnection extends AbstractDbConnection {
     public void insertRootDocuments(
             @Nonnull String collection,
             @Nonnull Collection<SplitDocument> docs
-    ) throws ImplementationDbException {
+    ) throws ImplementationDbException, RetryTransactionException {
 
         try {
             standardInsertRootDocuments(collection, docs);
         } catch (DataAccessException ex) {
+            Throwable cause = ex.getCause();
+            if (cause instanceof SQLException) {
+                databaseInterface.handleRetryException((SQLException) cause);
+            }
             //TODO: Change exception
             throw new RuntimeException(ex);
         }
@@ -285,7 +292,7 @@ class GreenplumDbConnection extends AbstractDbConnection {
         String query = "CREATE TABLE \""+ escapedSchemaName + "\".root("
                     + "did int PRIMARY KEY DEFAULT nextval('\"" + escapedSchemaName + "\".root_seq'),"
                     + "sid int NOT NULL"
-                    + ")";
+                    + ") DISTRIBUTED BY (did)";
         try (PreparedStatement ps = c.prepareStatement(query)) {
             ps.executeUpdate();
         } finally {

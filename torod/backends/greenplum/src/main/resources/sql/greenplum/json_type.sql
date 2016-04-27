@@ -1,0 +1,1 @@
+CREATE DOMAIN json AS text;

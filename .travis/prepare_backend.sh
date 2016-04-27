@@ -75,7 +75,7 @@ then
 	pip install --user psi
 	pip install --user lockfile
 	greenplum_bin="$PWD/gp.tar.bz2"
-	greenplum_home="$PWD/greenplum"
+	greenplum_home="$PWD/greenplum-db"
 	if [ ! -f "$greenplum_bin" ]
 	then
 		wget "https://github.com/teoincontatto/gpdb/blob/builds/gp.tar.bz2?raw=true" -O "$greenplum_bin"
@@ -84,7 +84,8 @@ then
     if [ ! -d "$greenplum_home" ]
     then
         tar xjf "$greenplum_bin"
-        mv "gp" "$greenplum_home"
+		ln -s $PWD/gp /tmp/gp
+		ln -s $PWD/gp $greenplum_home
     fi;
 	
 	echo '
@@ -120,10 +121,10 @@ then
 	ln -s /bin/echo $greenplum_home/bin/netstat
 	ln -s /bin/echo $greenplum_home/bin/ping
 	ln -s /bin/echo $greenplum_home/bin/ping6
-	ln -s /bin/echo $greenplum_home/ifconfig
-	ln -s /bin/echo $greenplum_home/netstat
-	ln -s /bin/echo $greenplum_home/ping
-	ln -s /bin/echo $greenplum_home/ping6
+	ln -s /bin/echo /tmp/gp/ifconfig
+	ln -s /bin/echo /tmp/gp/netstat
+	ln -s /bin/echo /tmp/gp/ping
+	ln -s /bin/echo /tmp/gp/ping6
 	
 	#fix path
 	sed -i 's#CMDPATH=(/usr/kerberos/bin /usr/sfw/bin /opt/sfw/bin /usr/local/bin /bin /usr/bin /sbin /usr/sbin /usr/ucb /sw/bin)#CMDPATH=('$greenplum_home/bin' /usr/kerberos/bin /usr/sfw/bin /opt/sfw/bin /usr/local/bin /bin /usr/bin /sbin /usr/sbin /usr/ucb /sw/bin)#' $greenplum_home/bin/lib/gp_bash_functions.sh
@@ -148,8 +149,6 @@ then
 	
 	export MASTER_DATA_DIRECTORY=$greenplum_home/gpmaster/gpsne-1
     gpstop -a -r
-    gpstart -a
-    wait_backend_on_port 6432
 	
 	psql -p 6432 template1 -c "CREATE USER torodb WITH SUPERUSER PASSWORD 'torodb'";
 fi

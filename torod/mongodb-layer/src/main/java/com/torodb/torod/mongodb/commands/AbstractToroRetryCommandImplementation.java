@@ -21,6 +21,8 @@ import com.torodb.common.util.RetryHelper.ExceptionHandler;
 import com.torodb.common.util.RetryHelper.RetryCallback;
 import com.torodb.torod.core.connection.exceptions.RetryTransactionException;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 /**
  *
  */
@@ -63,6 +65,8 @@ public abstract class AbstractToroRetryCommandImplementation<Arg, Rep> extends A
             super(delegate);
         }
 
+        @SuppressFBWarnings(value = "BC_UNCONFIRMED_CAST",
+                justification="The cast is enforced by a precondition")
         @Override
         public void handleException(RetryCallback<Result> callback, Exception t, int attempts) throws MongoException {
             Preconditions.checkArgument(t instanceof MongoException);

@@ -57,7 +57,8 @@ public class JSONBinding<T> implements Binding<String, T> {
 
     @Override
     public void sql(BindingSQLContext<T> ctx) throws SQLException {
-        ctx.render().sql("json_in(textout(").visit(DSL.val(ctx.convert(converter()).value())).sql("))");
+        //ctx.render().sql("json_in(textout(").visit(DSL.val(ctx.convert(converter()).value())).sql("))");
+        ctx.render().visit(DSL.val(ctx.convert(converter()).value())).sql("::json");
     }
 
     @Override

@@ -63,7 +63,9 @@ public class CoreIT extends AbstractIntegrationTest {
     private static ScriptClassifier createScriptClassifier() {
         Set<Script> workingSet = getWorkingSet(),
                 noArraysWorkingSet = getNoArraysWorkingSet(),
+                greenplumWorkingSet = getGreenplumWorkingSet(),
                 catastrophicSet = getCatastrophicSet(),
+                greenplumCatastrophicSet = Sets.newLinkedHashSet(Iterables.concat(getCatastrophicSet(), getGreenplumCatastrophicSet())),
                 falsePositiveSet = getFalsePositiveSet(),
                 notImplementedSet = getNotImplementedSet(),
                 noArraysNotImplemented = getNoArraysNotImplementedSet(),
@@ -82,10 +84,10 @@ public class CoreIT extends AbstractIntegrationTest {
                 .addScripts(Mongo, MySQL, CATASTROPHIC, catastrophicSet)
                 .addScripts(Mongo, MySQL, IGNORED, ignoredSet)
 
-                .addScripts(Mongo, Greenplum, WORKING, noArraysWorkingSet)
+                .addScripts(Mongo, Greenplum, WORKING, greenplumWorkingSet)
                 .addScripts(Mongo, Greenplum, NOT_IMPLEMENTED, noArraysNotImplemented)
                 .addScripts(Mongo, Greenplum, FALSE_POSITIVE, falsePositiveSet)
-                .addScripts(Mongo, Greenplum, CATASTROPHIC, catastrophicSet)
+                .addScripts(Mongo, Greenplum, CATASTROPHIC, greenplumCatastrophicSet)
                 .addScripts(Mongo, Greenplum, IGNORED, ignoredSet)
 
                 .addScripts(MongoReplSet, Postgres, CATASTROPHIC, allSet)
@@ -315,6 +317,80 @@ public class CoreIT extends AbstractIntegrationTest {
         )));
 	}
 	
+    private static final Set<Script> getGreenplumCatastrophicSet() {
+        return asScriptSet(new String[]{
+                "in2.js",
+                "orp.js",
+                "removea.js",
+            }
+        );
+    }
+    
+    private static final Set<Script> getGreenplumWorkingSet() {
+        return asScriptSet(new String[]{
+            "autoid.js",
+            "basic4.js",
+            "basic5.js",
+            "basic7.js",
+            "basic8.js",
+            "basic9.js",
+            "basicb.js",
+            "batch_write_command_wc.js",
+            "binData.js",
+            "block_check_supported.js",
+            "bulk_insert.js",
+            "collection_info_cache_race.js",
+            "connection_string_validation.js",
+            "count.js",
+            "coveredIndex3.js",
+            "db.js",
+            "dbref2.js",
+            "error5.js",
+            "eval8.js",
+            "fm1.js",
+            "fm2.js",
+            "hint1.js",
+            "inc1.js",
+            "index6.js",
+            "insert1.js",
+            "ismaster.js",
+            "json1.js",
+            "map1.js",
+            "null_field_name.js",
+            "numberlong.js",
+            "numberlong3.js",
+            "numberlong4.js",
+            "objid1.js",
+            "objid2.js",
+            "objid4.js",
+            "objid6.js",
+            "objid7.js",
+            "orb.js",
+            "ore.js",
+            "orl.js",
+            "queryoptimizer6.js",
+            "ref2.js",
+            "ref3.js",
+            "remove_undefined.js",
+            "remove3.js",
+            "regex_util.js",
+            "regexa.js",
+            "regexb.js",
+            "run_program1.js",
+            "set2.js",
+            "shell1.js",
+            "shellkillop.js",
+            "shellstartparallel.js",
+            "shelltypes.js",
+            "showdiskloc.js",
+            "stages_sort.js",
+            "sub1.js",
+            "update2.js",
+            "updatek.js",
+            }
+        );
+    }
+    
 	private static final Set<Script> getNotImplementedSet() {
         return asScriptSet(new String[]{
     			"apitest_db.js",

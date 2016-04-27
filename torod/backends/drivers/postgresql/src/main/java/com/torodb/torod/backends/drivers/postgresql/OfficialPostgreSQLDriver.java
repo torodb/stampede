@@ -20,13 +20,18 @@
 
 package com.torodb.torod.backends.drivers.postgresql;
 
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.Writer;
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
 import javax.sql.DataSource;
 
+import org.postgresql.Driver;
 import org.postgresql.ds.PGSimpleDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,6 +45,16 @@ import com.torodb.torod.db.backends.DbBackendConfiguration;
  * @see <a href="http://jdbc.postgresql.org/">PostgreSQL JDBC Driver</a>
  */
 public class OfficialPostgreSQLDriver implements PostgreSQLDriverProvider {
+    private static final Logger LOGGER = LoggerFactory.getLogger(
+            OfficialPostgreSQLDriver.class
+    );
+    private static final PrintWriter LOGGER_WRITER = new PrintWriter(new LoggerWriter());
+    {
+        if (LOGGER.isTraceEnabled()) {
+            DriverManager.setLogWriter(LOGGER_WRITER);
+        }
+    }
+    
     @Override
     public DataSource getConfiguredDataSource(DbBackendConfiguration configuration, String poolName) {
         PGSimpleDataSource dataSource = new PGSimpleDataSource();
@@ -51,6 +66,11 @@ public class OfficialPostgreSQLDriver implements PostgreSQLDriverProvider {
         dataSource.setDatabaseName(configuration.getDbName());
 
         dataSource.setApplicationName("torodb-" + poolName);
+        
+        if (LOGGER.isTraceEnabled()) {
+            dataSource.setLogLevel(Driver.DEBUG);
+            dataSource.setLogWriter(LOGGER_WRITER);
+        }
 
         //TODO
         Statement stat = null;
@@ -61,16 +81,6 @@ public class OfficialPostgreSQLDriver implements PostgreSQLDriverProvider {
             stat = conn.createStatement();
             rs = stat.executeQuery("SELECT 1");
             rs.next();
-            char a = 'í';
-            int high = a >>> 8;
-            int low = a & 0xFF;
-            Logger LOGGER = LoggerFactory.getLogger(getClass());
-            rs = stat.executeQuery("SHOW SERVER_ENCODING;");
-            rs.next();
-            LOGGER.info("Server encoding: " + rs.getString(1));
-            rs = stat.executeQuery("SHOW CLIENT_ENCODING;");
-            rs.next();
-            LOGGER.info("Client encoding: " + rs.getString(1));
         } catch (SQLException ex) {
             throw new ToroRuntimeException(ex.getLocalizedMessage());
         } finally {
@@ -88,5 +98,23 @@ public class OfficialPostgreSQLDriver implements PostgreSQLDriverProvider {
 	            }
         }     
         return dataSource;
+    }
+    
+    private static class LoggerWriter extends Writer {
+        @Override
+        public void write(char[] cbuf, int off, int len) throws IOException {
+            final StringBuilder messageBuilder = new StringBuilder();
+            messageBuilder.append(cbuf, off, len);
+            String message = messageBuilder.toString().replaceAll("(\r\n|\r|\n)$", "");
+            if (!message.isEmpty()) {
+                LOGGER.debug(message);
+            }
+        }
+        @Override
+        public void flush() throws IOException {
+        }
+        @Override
+        public void close() throws IOException {
+        }
     }
 }

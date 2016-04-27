@@ -176,6 +176,7 @@ public class GreenplumTorodbMeta implements TorodbMeta {
             DatabaseMetaData jdbcMeta
     ) throws SQLException, IOException {
         boolean findDocTypeExists = false;
+        boolean jsonTypeExists = false;
         boolean mongoObjectIdExists = false;
         boolean mongoTimestampExists = false;
         
@@ -185,6 +186,9 @@ public class GreenplumTorodbMeta implements TorodbMeta {
                 findDocTypeExists = 
                         findDocTypeExists 
                         || typeInfo.getString("TYPE_NAME").equals("find_doc_type");
+                jsonTypeExists = 
+                        jsonTypeExists 
+                        || typeInfo.getString("TYPE_NAME").equals("json");
                 mongoObjectIdExists =
                         mongoObjectIdExists
                         || typeInfo.getString("TYPE_NAME").equals("mongo_object_id");
@@ -200,6 +204,15 @@ public class GreenplumTorodbMeta implements TorodbMeta {
         if (!findDocTypeExists) {
             LOGGER.debug("Creating type find_doc_type");
             createFindDocType(conn);
+            LOGGER.debug("Created type find_doc_type");
+        }
+        else {
+            LOGGER.debug("Type find_doc_type found");
+        }
+        
+        if (!jsonTypeExists) {
+            LOGGER.debug("Creating type find_doc_type");
+            createJsonType(conn);
             LOGGER.debug("Created type find_doc_type");
         }
         else {
@@ -227,6 +240,7 @@ public class GreenplumTorodbMeta implements TorodbMeta {
             Connection conn,
             DatabaseMetaData jdbcMeta
     ) throws SQLException, IOException {
+        createFindDocQueryProcedure(conn, jdbcMeta);
         createFindDocProcedure(conn, jdbcMeta);
         createFindDocsProcedure(conn, jdbcMeta);
         createFirstFreeDocIdProcedure(conn, jdbcMeta);
@@ -238,12 +252,23 @@ public class GreenplumTorodbMeta implements TorodbMeta {
         executeSql(conn, "/sql/greenplum/find_doc_type.sql");
     }
 
+    private void createJsonType(Connection conn) throws IOException, SQLException {
+        executeSql(conn, "/sql/greenplum/json_type.sql");
+    }
+
     private void createMongoObjectIdType(Connection conn) throws IOException, SQLException {
         executeSql(conn, "/sql/greenplum/mongo_object_id_type.sql");
     }
     
     private void createMongoTimestampType(Connection conn) throws IOException, SQLException {
         executeSql(conn, "/sql/greenplum/mongo_timestamp_type.sql");
+    }
+    
+    private void createFindDocQueryProcedure(
+            Connection conn, 
+            DatabaseMetaData jdbcMeta
+    ) throws SQLException, IOException {
+        createProcedure(conn, jdbcMeta, "find_doc_query");
     }
     
     private void createFindDocProcedure(

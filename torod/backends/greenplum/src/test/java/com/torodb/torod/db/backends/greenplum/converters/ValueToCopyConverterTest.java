@@ -146,7 +146,7 @@ public class ValueToCopyConverterTest {
                 new byte[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 0xa, 0xb, 0xc}
         );
         mongoObjectIdValue.accept(visitor, sb);
-        assertEquals("\\\\x0102030405060708090A0B0C", sb.toString());
+        assertEquals("\\001\\002\\003\\004\\005\\006\\007\\010\\011\\012\\013\\014", sb.toString());
     }
 
     @Test

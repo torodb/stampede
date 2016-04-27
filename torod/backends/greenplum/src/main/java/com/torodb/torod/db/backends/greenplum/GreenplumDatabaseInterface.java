@@ -422,7 +422,6 @@ public class GreenplumDatabaseInterface implements DatabaseInterface {
                 .append("\"").append(tableName).append("\"")
                 .append(" (")
                     .append("\"").append(tableColumnName).append("\"")
-                    .append(" ").append(ascending ? "ASC" : "DESC")
                 .append(")")
                 .toString();
     }
@@ -447,8 +446,10 @@ public class GreenplumDatabaseInterface implements DatabaseInterface {
 
     @Override
     public void handleRetryException(SQLException sqlException) throws RetryTransactionException {
-        if (sqlException instanceof BatchUpdateException && 
-                sqlException.getErrorCode() == 0x0000) {
+        if ("42P01".equals(sqlException.getSQLState()) && sqlException.getMessage().startsWith("ERROR: relation not found")) {
+            throw new RetryTransactionException(sqlException);
+        }
+        if (sqlException instanceof BatchUpdateException && "40001".equals(sqlException.getSQLState())) {
             throw new RetryTransactionException(sqlException);
         }
     }
