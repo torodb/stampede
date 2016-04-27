@@ -40,7 +40,7 @@ public class StringToArrayConverter implements ArrayConverter<JsonString, Scalar
 
     @Override
     public ScalarString fromJsonValue(JsonString value) {
-        return new StringScalarString(value.toString());
+        return new StringScalarString(value.getString());
 
     }
 
