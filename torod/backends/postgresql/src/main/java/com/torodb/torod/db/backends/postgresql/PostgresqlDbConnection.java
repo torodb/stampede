@@ -67,6 +67,8 @@ import com.torodb.torod.core.subdocument.SubDocType;
 import com.torodb.torod.core.subdocument.SubDocType.Builder;
 import com.torodb.torod.core.subdocument.SubDocument;
 import com.torodb.torod.core.subdocument.structure.DocStructure;
+import com.torodb.torod.core.subdocument.values.ScalarMongoObjectId;
+import com.torodb.torod.core.subdocument.values.ScalarMongoTimestamp;
 import com.torodb.torod.core.subdocument.values.ScalarValue;
 import com.torodb.torod.db.backends.DatabaseInterface;
 import com.torodb.torod.db.backends.converters.jooq.ValueToJooqDataTypeProvider;
@@ -134,7 +136,7 @@ class PostgresqlDbConnection extends AbstractDbConnection {
                 .append(table.getName())
                 .append("\"(");
 
-        for (Field field : getFieldIterator(table.fields())) {
+        for (Field field : getFieldsAsCollection(table.fields())) {
             sb
                     .append('"')
                     .append(field.getName())
@@ -585,7 +587,7 @@ class PostgresqlDbConnection extends AbstractDbConnection {
             String[] orderedAttributeNames = new String[fields.length];
 
             int i = 0;
-            for (Field field : getFieldIterator(fields)) {
+            for (Field field : getFieldsAsCollection(fields)) {
                 orderedFieldNames[i] = field.getName();
                 orderedAttributeNames[i] = SubDocHelper.toAttributeName(field.getName());
                 i++;
@@ -661,25 +663,22 @@ class PostgresqlDbConnection extends AbstractDbConnection {
     private String getSqlType(Field<?> field, Configuration conf) {
         if (field.getConverter() != null) {
             DataType<?> arrayDataType
-                    = ValueToJooqDataTypeProvider.getDataType(ScalarType.ARRAY);
+            	      = ValueToJooqDataTypeProvider.getDataType(ScalarType.ARRAY);
             if (field.getDataType().getClass().equals(arrayDataType.getClass())) {
             	return "jsonb";
             }
-            DataType<?> mongoObjectIdDataType
-                    = ValueToJooqDataTypeProvider.getDataType(ScalarType.MONGO_OBJECT_ID);
-            if (field.getDataType().getClass().equals(mongoObjectIdDataType.getClass())) {
+            Class<?> fieldType = field.getDataType().getType();
+            if (fieldType.equals(ScalarMongoObjectId.class)) {
             	return "torodb.mongo_object_id";
             }
-            DataType<?> mongoTimestampDataType
-                    = ValueToJooqDataTypeProvider.getDataType(ScalarType.MONGO_TIMESTAMP);
-            if (field.getDataType().getClass().equals(mongoTimestampDataType.getClass())) {
+            if (fieldType.equals(ScalarMongoTimestamp.class)) {
                 return "torodb.mongo_timestamp";
             }
         }
         return field.getDataType().getTypeName(conf);
     }
 
-    private Iterable<Field> getFieldIterator(Field[] fields) {
+    private Collection<Field> getFieldsAsCollection(Field[] fields) {
         List<Field> fieldList = Lists.newArrayList(fields);
         Collections.sort(fieldList, fieldComparator);
 
