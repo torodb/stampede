@@ -14,8 +14,8 @@ services:
 env:
   matrix:
     - Protocol=Mongo Backend=Postgres
-    - Protocol=Mongo Backend=MySQL
-    - Protocol=Mongo Backend=Greenplum
+#    - Protocol=Mongo Backend=MySQL
+#    - Protocol=Mongo Backend=Greenplum
 #    - Protocol=MongoReplSet Backend=Postgres
 
 matrix:

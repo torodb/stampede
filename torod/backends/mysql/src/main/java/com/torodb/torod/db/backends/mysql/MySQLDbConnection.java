@@ -61,6 +61,9 @@ import com.torodb.torod.core.subdocument.SubDocType;
 import com.torodb.torod.core.subdocument.SubDocType.Builder;
 import com.torodb.torod.core.subdocument.SubDocument;
 import com.torodb.torod.core.subdocument.structure.DocStructure;
+import com.torodb.torod.core.subdocument.values.ScalarArray;
+import com.torodb.torod.core.subdocument.values.ScalarMongoObjectId;
+import com.torodb.torod.core.subdocument.values.ScalarMongoTimestamp;
 import com.torodb.torod.core.subdocument.values.ScalarValue;
 import com.torodb.torod.db.backends.DatabaseInterface;
 import com.torodb.torod.db.backends.converters.jooq.SubdocValueConverter;
@@ -479,20 +482,14 @@ class MySQLDbConnection extends AbstractDbConnection {
 
     private String getSqlType(Field<?> field, Configuration conf) {
         if (field.getConverter() != null) {
-            ValueToJooqConverterProvider valueToJooqConverterProvider = getDatabaseInterface().getValueToJooqConverterProvider();
-            SubdocValueConverter arrayConverter
-                    = valueToJooqConverterProvider.getConverter(ScalarType.ARRAY);
-            if (field.getConverter().getClass().equals(arrayConverter.getClass())) {
+            Class<?> fieldType = field.getDataType().getType();
+            if (fieldType.equals(ScalarArray.class)) {
                 return MySQLScalarTypeToSqlType.ARRAY_TYPE;
             }
-            SubdocValueConverter mongoObjectIdConverter
-                    = valueToJooqConverterProvider.getConverter(ScalarType.MONGO_OBJECT_ID);
-            if (field.getConverter().getClass().equals(mongoObjectIdConverter.getClass())) {
+            if (fieldType.equals(ScalarMongoObjectId.class)) {
                 return MySQLScalarTypeToSqlType.MONGO_OBJECT_ID_TYPE;
             }
-            SubdocValueConverter mongoTimestampConverter
-                    = valueToJooqConverterProvider.getConverter(ScalarType.MONGO_TIMESTAMP);
-            if (field.getConverter().getClass().equals(mongoTimestampConverter.getClass())) {
+            if (fieldType.equals(ScalarMongoTimestamp.class)) {
                 return MySQLScalarTypeToSqlType.MONGO_TIMESTAMP_TYPE;
             }
         }
@@ -501,20 +498,14 @@ class MySQLDbConnection extends AbstractDbConnection {
 
     private boolean hasSqlTypeComment(Field<?> field, Configuration conf) {
         if (field.getConverter() != null) {
-            ValueToJooqConverterProvider valueToJooqConverterProvider = getDatabaseInterface().getValueToJooqConverterProvider();
-            SubdocValueConverter arrayConverter
-                    = valueToJooqConverterProvider.getConverter(ScalarType.ARRAY);
-            if (field.getConverter().getClass().equals(arrayConverter.getClass())) {
+            Class<?> fieldType = field.getDataType().getType();
+            if (fieldType.equals(ScalarArray.class)) {
                 return true;
             }
-            SubdocValueConverter mongoObjectIdConverter
-                    = valueToJooqConverterProvider.getConverter(ScalarType.MONGO_OBJECT_ID);
-            if (field.getConverter().getClass().equals(mongoObjectIdConverter.getClass())) {
+            if (fieldType.equals(ScalarMongoObjectId.class)) {
                 return true;
             }
-            SubdocValueConverter mongoTimestampConverter
-                    = valueToJooqConverterProvider.getConverter(ScalarType.MONGO_TIMESTAMP);
-            if (field.getConverter().getClass().equals(mongoTimestampConverter.getClass())) {
+            if (fieldType.equals(ScalarMongoTimestamp.class)) {
                 return true;
             }
         }
@@ -523,20 +514,14 @@ class MySQLDbConnection extends AbstractDbConnection {
 
     private String getSqlTypeComment(Field<?> field, Configuration conf) {
         if (field.getConverter() != null) {
-            ValueToJooqConverterProvider valueToJooqConverterProvider = getDatabaseInterface().getValueToJooqConverterProvider();
-            SubdocValueConverter arrayConverter
-                    = valueToJooqConverterProvider.getConverter(ScalarType.ARRAY);
-            if (field.getConverter().getClass().equals(arrayConverter.getClass())) {
+            Class<?> fieldType = field.getDataType().getType();
+            if (fieldType.equals(ScalarArray.class)) {
                 return MySQLScalarTypeToSqlType.ARRAY_SIGNATURE;
             }
-            SubdocValueConverter mongoObjectIdConverter
-                    = valueToJooqConverterProvider.getConverter(ScalarType.MONGO_OBJECT_ID);
-            if (field.getConverter().getClass().equals(mongoObjectIdConverter.getClass())) {
+            if (fieldType.equals(ScalarMongoObjectId.class)) {
                 return MySQLScalarTypeToSqlType.MONGO_OBJECT_ID_SIGNATURE;
             }
-            SubdocValueConverter mongoTimestampConverter
-                    = valueToJooqConverterProvider.getConverter(ScalarType.MONGO_TIMESTAMP);
-            if (field.getConverter().getClass().equals(mongoTimestampConverter.getClass())) {
+            if (fieldType.equals(ScalarMongoTimestamp.class)) {
                 return MySQLScalarTypeToSqlType.MONGO_TIMESTAMP_SIGNATURE;
             }
         }

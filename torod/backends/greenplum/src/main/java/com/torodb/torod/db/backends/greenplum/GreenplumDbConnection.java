@@ -60,8 +60,12 @@ import com.torodb.torod.core.subdocument.ScalarType;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.core.subdocument.SubDocType.Builder;
 import com.torodb.torod.core.subdocument.structure.DocStructure;
+import com.torodb.torod.core.subdocument.values.ScalarArray;
+import com.torodb.torod.core.subdocument.values.ScalarMongoObjectId;
+import com.torodb.torod.core.subdocument.values.ScalarMongoTimestamp;
 import com.torodb.torod.core.subdocument.values.ScalarValue;
 import com.torodb.torod.db.backends.DatabaseInterface;
+import com.torodb.torod.db.backends.greenplum.converters.GreenplumScalarTypeToSqlType;
 import com.torodb.torod.db.backends.meta.CollectionSchema;
 import com.torodb.torod.db.backends.meta.StructuresCache;
 import com.torodb.torod.db.backends.meta.TorodbMeta;
@@ -451,20 +455,15 @@ class GreenplumDbConnection extends AbstractDbConnection {
 
     private String getSqlType(Field<?> field, Configuration conf) {
         if (field.getConverter() != null) {
-            DataType<?> arrayDataType
-                = databaseInterface.getValueToJooqDataTypeProvider().getDataType(ScalarType.ARRAY);
-            if (field.getDataType().getClass().equals(arrayDataType.getClass())) {
-                return "json";
+            Class<?> fieldType = field.getDataType().getType();
+            if (fieldType.equals(ScalarArray.class)) {
+                return GreenplumScalarTypeToSqlType.ARRAY_TYPE;
             }
-            DataType<?> mongoObjectIdDataType
-                    = databaseInterface.getValueToJooqDataTypeProvider().getDataType(ScalarType.MONGO_OBJECT_ID);
-            if (field.getDataType().getClass().equals(mongoObjectIdDataType.getClass())) {
-                return "torodb.mongo_object_id";
+            if (fieldType.equals(ScalarMongoObjectId.class)) {
+                return GreenplumScalarTypeToSqlType.MONGO_OBJECT_ID_TYPE;
             }
-            DataType<?> mongoTimestampDataType
-                    = databaseInterface.getValueToJooqDataTypeProvider().getDataType(ScalarType.MONGO_TIMESTAMP);
-            if (field.getDataType().getClass().equals(mongoTimestampDataType.getClass())) {
-                return "torodb.mongo_timestamp";
+            if (fieldType.equals(ScalarMongoTimestamp.class)) {
+                return GreenplumScalarTypeToSqlType.MONGO_TIMESTAMP_TYPE;
             }
         }
         return field.getDataType().getTypeName(conf);

@@ -42,7 +42,6 @@ import javax.inject.Provider;
 import org.jooq.Configuration;
 import org.jooq.ConnectionProvider;
 import org.jooq.DSLContext;
-import org.jooq.DataType;
 import org.jooq.Field;
 import org.jooq.InsertValuesStep2;
 import org.jooq.Record;
@@ -61,19 +60,21 @@ import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.exceptions.IllegalPathViewException;
 import com.torodb.torod.core.exceptions.ToroRuntimeException;
 import com.torodb.torod.core.exceptions.UserToroException;
-import com.torodb.torod.core.subdocument.ScalarType;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.core.subdocument.SubDocType;
 import com.torodb.torod.core.subdocument.SubDocType.Builder;
 import com.torodb.torod.core.subdocument.SubDocument;
 import com.torodb.torod.core.subdocument.structure.DocStructure;
+import com.torodb.torod.core.subdocument.values.ScalarArray;
+import com.torodb.torod.core.subdocument.values.ScalarMongoObjectId;
+import com.torodb.torod.core.subdocument.values.ScalarMongoTimestamp;
 import com.torodb.torod.core.subdocument.values.ScalarValue;
 import com.torodb.torod.db.backends.DatabaseInterface;
-import com.torodb.torod.db.backends.meta.IndexStorage;
 import com.torodb.torod.db.backends.meta.CollectionSchema;
 import com.torodb.torod.db.backends.meta.StructuresCache;
 import com.torodb.torod.db.backends.meta.TorodbMeta;
 import com.torodb.torod.db.backends.meta.routines.QueryRoutine;
+import com.torodb.torod.db.backends.postgresql.converters.PostgreSQLScalarTypeToSqlType;
 import com.torodb.torod.db.backends.postgresql.converters.PostgreSQLValueToCopyConverter;
 import com.torodb.torod.db.backends.sql.AbstractDbConnection;
 import com.torodb.torod.db.backends.sql.index.NamedDbIndex;
@@ -665,20 +666,15 @@ class PostgreSQLDbConnection extends AbstractDbConnection {
 
     private String getSqlType(Field<?> field, Configuration conf) {
         if (field.getConverter() != null) {
-            DataType<?> arrayDataType
-                = databaseInterface.getValueToJooqDataTypeProvider().getDataType(ScalarType.ARRAY);
-            if (field.getDataType().getClass().equals(arrayDataType.getClass())) {
-                return "jsonb";
+            Class<?> fieldType = field.getDataType().getType();
+            if (fieldType.equals(ScalarArray.class)) {
+                return PostgreSQLScalarTypeToSqlType.ARRAY_TYPE;
             }
-            DataType<?> mongoObjectIdDataType
-                    = databaseInterface.getValueToJooqDataTypeProvider().getDataType(ScalarType.MONGO_OBJECT_ID);
-            if (field.getDataType().getClass().equals(mongoObjectIdDataType.getClass())) {
-                return "torodb.mongo_object_id";
+            if (fieldType.equals(ScalarMongoObjectId.class)) {
+                return PostgreSQLScalarTypeToSqlType.MONGO_OBJECT_ID_TYPE;
             }
-            DataType<?> mongoTimestampDataType
-                    = databaseInterface.getValueToJooqDataTypeProvider().getDataType(ScalarType.MONGO_TIMESTAMP);
-            if (field.getDataType().getClass().equals(mongoTimestampDataType.getClass())) {
-                return "torodb.mongo_timestamp";
+            if (fieldType.equals(ScalarMongoTimestamp.class)) {
+                return PostgreSQLScalarTypeToSqlType.MONGO_TIMESTAMP_TYPE;
             }
         }
         return field.getDataType().getTypeName(conf);
