@@ -25,12 +25,15 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.sql.BatchUpdateException;
 import java.sql.Connection;
+import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -46,7 +49,9 @@ import org.jooq.tools.json.JSONArray;
 
 import com.torodb.torod.core.connection.exceptions.RetryTransactionException;
 import com.torodb.torod.core.exceptions.ToroRuntimeException;
+import com.torodb.torod.core.language.AttributeReference;
 import com.torodb.torod.core.language.projection.Projection;
+import com.torodb.torod.core.pojos.IndexedAttributes.IndexType;
 import com.torodb.torod.core.subdocument.SimpleSubDocTypeBuilderProvider;
 import com.torodb.torod.core.subdocument.SubDocType;
 import com.torodb.torod.core.subdocument.SubDocType.Builder;
@@ -72,6 +77,7 @@ import com.torodb.torod.db.backends.mysql.converters.json.MySQLValueToJsonConver
 import com.torodb.torod.db.backends.mysql.meta.MySQLIndexStorage;
 import com.torodb.torod.db.backends.mysql.meta.MySQLStructuresCache;
 import com.torodb.torod.db.backends.mysql.tables.MySQLCollectionsTable;
+import com.torodb.torod.db.backends.sql.index.UnnamedDbIndex;
 import com.torodb.torod.db.backends.tables.AbstractCollectionsTable;
 import com.torodb.torod.db.backends.tables.SubDocTable;
 
@@ -193,6 +199,45 @@ public class MySQLDatabaseInterface implements DatabaseInterface {
         return str;
     }
 
+    @Override
+    @Nonnull
+    public ResultSet getColumns(DatabaseMetaData metadata, String schemaName, String tableName) throws SQLException {
+        return metadata.getColumns(schemaName, schemaName, tableName, null);
+    }
+    
+    @Override
+    @Nonnull
+    public ResultSet getIndexes(DatabaseMetaData metadata, String schemaName, String tableName) throws SQLException {
+        return metadata.getIndexInfo(
+                schemaName,
+                schemaName,
+                tableName,
+                false,
+                false
+        );
+    }
+
+    @Override
+    @Nonnull
+    public UnnamedDbIndex getDbIndex(String colSchema, String tableName, Map.Entry<AttributeReference, IndexType> entrySet) {
+        List<AttributeReference.Key> keys = entrySet.getKey().getKeys();
+
+        switch (entrySet.getValue()) {
+        case asc:
+        case desc:
+            return new UnnamedDbIndex(
+                            colSchema,
+                            tableName,
+                            keys.get(keys.size() - 1).toString(),
+                            true
+                    );
+        case text:
+        case geospatial:
+        case hashed:
+        }
+        throw new UnsupportedOperationException("Index of type " + entrySet.getValue() + " is not supported.");
+    }
+    
     @Override
     public int getIntColumnType(ResultSet columns) throws SQLException {
         String remarks = columns.getString("REMARKS");

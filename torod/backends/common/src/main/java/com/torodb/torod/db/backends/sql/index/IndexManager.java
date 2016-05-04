@@ -28,6 +28,7 @@ import com.torodb.torod.core.subdocument.SubDocAttribute;
 import com.torodb.torod.core.subdocument.structure.ArrayStructure;
 import com.torodb.torod.core.subdocument.structure.DocStructure;
 import com.torodb.torod.core.subdocument.structure.StructureElement;
+import com.torodb.torod.db.backends.DatabaseInterface;
 import com.torodb.torod.db.backends.meta.CollectionSchema;
 import com.torodb.torod.db.backends.meta.StructuresCache;
 import com.torodb.torod.db.backends.meta.TorodbMeta;
@@ -45,11 +46,14 @@ public class IndexManager implements Serializable {
     private final CollectionSchema colSchema;
     private final IndexRelationManager indexRelation;
     private final String databaseName;
+    private final DatabaseInterface databaseInterface;
 
     public IndexManager(
             CollectionSchema colSchema,
-            TorodbMeta meta) {
+            TorodbMeta meta,
+            DatabaseInterface databaseInterface) {
         this.colSchema = colSchema;
+        this.databaseInterface = databaseInterface;
         this.indexRelation = new IndexRelationManager();
         this.databaseName = meta.getDatabaseName();
     }
@@ -247,34 +251,7 @@ public class IndexManager implements Serializable {
                 return null;
             }
 
-            List<AttributeReference.Key> keys = entrySet.getKey().getKeys();
-
-            switch (entrySet.getValue()) {
-            case asc:
-                result.add(
-                        new UnnamedDbIndex(
-                                colSchema.getName(),
-                                tableName,
-                                keys.get(keys.size() - 1).toString(),
-                                true
-                        )
-                );
-                break;
-            case desc:
-                result.add(
-                        new UnnamedDbIndex(
-                                colSchema.getName(),
-                                tableName,
-                                keys.get(keys.size() - 1).toString(),
-                                false
-                        )
-                );
-                break;
-            case text:
-            case geospatial:
-            case hashed:
-                throw new UnsupportedOperationException("Index of type " + entrySet.getValue() + " is not supported.");
-            }
+            result.add(databaseInterface.getDbIndex(colSchema.getName(), tableName, entrySet));
         }
         return result;
     }

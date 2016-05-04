@@ -23,17 +23,21 @@ package com.torodb.torod.db.backends;
 import java.io.IOException;
 import java.io.Serializable;
 import java.sql.Connection;
+import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.Map;
 
 import javax.annotation.Nonnull;
 
 import org.jooq.DSLContext;
 
 import com.torodb.torod.core.connection.exceptions.RetryTransactionException;
+import com.torodb.torod.core.language.AttributeReference;
 import com.torodb.torod.core.language.projection.Projection;
+import com.torodb.torod.core.pojos.IndexedAttributes.IndexType;
 import com.torodb.torod.db.backends.converters.ScalarTypeToSqlType;
 import com.torodb.torod.db.backends.converters.StructureConverter;
 import com.torodb.torod.db.backends.converters.array.ValueToArrayConverterProvider;
@@ -46,6 +50,7 @@ import com.torodb.torod.db.backends.meta.CollectionSchema;
 import com.torodb.torod.db.backends.meta.IndexStorage;
 import com.torodb.torod.db.backends.meta.StructuresCache;
 import com.torodb.torod.db.backends.meta.TorodbMeta;
+import com.torodb.torod.db.backends.sql.index.UnnamedDbIndex;
 import com.torodb.torod.db.backends.tables.AbstractCollectionsTable;
 
 /**
@@ -81,6 +86,11 @@ public interface DatabaseInterface extends Serializable {
             @Nonnull String tableName, @Nonnull String indexNameColumn, @Nonnull String indexOptionsColumn
     );
 
+    @Nonnull ResultSet getColumns(DatabaseMetaData metadata, String schemaName, String tableName) throws SQLException;
+    @Nonnull ResultSet getIndexes(DatabaseMetaData metadata, String schemaName, String tableName) throws SQLException;
+    
+    @Nonnull UnnamedDbIndex getDbIndex(String colSchema, String tableName, Map.Entry<AttributeReference, IndexType> entrySet);
+    
     @Nonnull String arrayUnnestParametrizedSelectStatement();
 
     @Nonnull String deleteDidsStatement(

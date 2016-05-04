@@ -70,11 +70,11 @@ public class GreenplumScalarTypeToSqlType implements ScalarTypeToSqlType {
             case Types.BINARY:
                 return ScalarType.BINARY;
             case Types.OTHER:
+                break;
+            case Types.DISTINCT: {
                 if (jdbcStringType.equals(ARRAY_TYPE)) {
                     return ScalarType.ARRAY;
                 }
-                break;
-            case Types.DISTINCT: {
                 if (jdbcStringType.equals("\"" + TorodbSchema.TORODB_SCHEMA + "\".\"" + MONGO_OBJECT_ID_TYPE + "\"")
                         || jdbcStringType.equals(MongoObjectIdUDT.MONGO_OBJECT_ID.getName())) {
                     return ScalarType.MONGO_OBJECT_ID;

@@ -139,7 +139,7 @@ public final class CollectionSchema extends SchemaImpl {
         this.indexStorage = databaseInterface.createIndexStorage(torodbMeta.getDatabaseName(), this);
         indexStorage.initialize(dsl, schemaName, this);
 
-        this.indexManager = new IndexManager(this, torodbMeta);
+        this.indexManager = new IndexManager(this, torodbMeta, databaseInterface);
         indexManager.initialize(
                 indexStorage.getAllDbIndexes(dsl),
                 indexStorage.getAllToroIndexes(dsl),

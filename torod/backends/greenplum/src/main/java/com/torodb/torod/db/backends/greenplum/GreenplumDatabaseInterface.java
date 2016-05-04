@@ -25,11 +25,14 @@ import java.io.IOException;
 import java.sql.Array;
 import java.sql.BatchUpdateException;
 import java.sql.Connection;
+import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -41,7 +44,9 @@ import javax.inject.Singleton;
 import org.jooq.DSLContext;
 
 import com.torodb.torod.core.connection.exceptions.RetryTransactionException;
+import com.torodb.torod.core.language.AttributeReference;
 import com.torodb.torod.core.language.projection.Projection;
+import com.torodb.torod.core.pojos.IndexedAttributes.IndexType;
 import com.torodb.torod.core.subdocument.SimpleSubDocTypeBuilderProvider;
 import com.torodb.torod.core.subdocument.SubDocType;
 import com.torodb.torod.core.subdocument.SubDocType.Builder;
@@ -67,6 +72,7 @@ import com.torodb.torod.db.backends.meta.CollectionSchema;
 import com.torodb.torod.db.backends.meta.IndexStorage;
 import com.torodb.torod.db.backends.meta.StructuresCache;
 import com.torodb.torod.db.backends.meta.TorodbMeta;
+import com.torodb.torod.db.backends.sql.index.UnnamedDbIndex;
 import com.torodb.torod.db.backends.tables.AbstractCollectionsTable;
 import com.torodb.torod.db.backends.tables.SubDocTable;
 
@@ -210,6 +216,45 @@ public class GreenplumDatabaseInterface implements DatabaseInterface {
                 .append("\"").append(tableName).append("\"");
     }
 
+    @Override
+    @Nonnull
+    public ResultSet getColumns(DatabaseMetaData metadata, String schemaName, String tableName) throws SQLException {
+        return metadata.getColumns("%", schemaName, tableName, null);
+    }
+    
+    @Override
+    @Nonnull
+    public ResultSet getIndexes(DatabaseMetaData metadata, String schemaName, String tableName) throws SQLException {
+        return metadata.getIndexInfo(
+                "%",
+                schemaName,
+                tableName,
+                false,
+                false
+        );
+    }
+
+    @Override
+    @Nonnull
+    public UnnamedDbIndex getDbIndex(String colSchema, String tableName, Map.Entry<AttributeReference, IndexType> entrySet) {
+        List<AttributeReference.Key> keys = entrySet.getKey().getKeys();
+
+        switch (entrySet.getValue()) {
+        case asc:
+        case desc:
+            return new UnnamedDbIndex(
+                            colSchema,
+                            tableName,
+                            keys.get(keys.size() - 1).toString(),
+                            true
+                    );
+        case text:
+        case geospatial:
+        case hashed:
+        }
+        throw new UnsupportedOperationException("Index of type " + entrySet.getValue() + " is not supported.");
+    }
+    
     @Override
     public @Nonnull String createCollectionsTableStatement(@Nonnull String schemaName, @Nonnull String tableName) {
         return new StringBuilder()

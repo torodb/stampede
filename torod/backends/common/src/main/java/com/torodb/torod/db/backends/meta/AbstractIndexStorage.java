@@ -95,13 +95,7 @@ public abstract class AbstractIndexStorage implements IndexStorage {
             String lastIndexName = null;
 
             for (SubDocTable table : colSchema.getSubDocTables()) {
-                try (ResultSet indexInfo = metaData.getIndexInfo(
-                        "%",
-                        schema,
-                        table.getName(),
-                        false,
-                        false
-                )) {
+                try (ResultSet indexInfo = databaseInterface.getIndexes(metaData, schema, table.getName())) {
                     while (indexInfo.next()) {
                         String indexName = indexInfo.getString("INDEX_NAME");
 
@@ -111,7 +105,8 @@ public abstract class AbstractIndexStorage implements IndexStorage {
                         }
                         String columnName = indexInfo.getString("COLUMN_NAME");
                         boolean ascending
-                                = indexInfo.getString("ASC_OR_DESC").equals("A");
+                                = indexInfo.getString("ASC_OR_DESC") == null ||
+                                indexInfo.getString("ASC_OR_DESC").equals("A");
 
                         if (lastIndexName != null
                                 && lastIndexName.equals(indexName)) {

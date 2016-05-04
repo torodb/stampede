@@ -201,7 +201,7 @@ public class SubDocTable extends TableImpl<SubDocTableRecord> {
             SubDocType.Builder builder = subDocTypeBuiderProvider.get();
 
             ResultSet columns
-                    = metadata.getColumns("%", schemaName, tableName, null);
+                    = databaseInterface.getColumns(metadata, schemaName, tableName);
 
             while (columns.next()) {
                 String columnName = columns.getString("COLUMN_NAME");
