@@ -22,6 +22,8 @@ package com.torodb.torod.db.backends.converters.array;
 
 import javax.json.JsonString;
 
+import org.jooq.tools.json.JSONValue;
+
 import com.torodb.common.util.HexUtils;
 import com.torodb.torod.core.subdocument.values.ScalarMongoObjectId;
 import com.torodb.torod.core.subdocument.values.heap.ByteArrayScalarMongoObjectId;
@@ -34,7 +36,7 @@ public class MongoObjectIdToArrayConverter implements ArrayConverter<JsonString,
 
     @Override
     public String toJsonLiteral(ScalarMongoObjectId value) {
-        return StringToArrayConverter.toJsonString(value.toString());
+        return JSONValue.toJSONString(value.toString());
     }
 
     @Override

@@ -9,7 +9,7 @@ import com.eightkdata.mongowp.bson.BsonValue;
  */
 public class DefaultIdUtils {
 
-    public static final String DEFAULT_ID_KEY = "$_id";
+    public static final String DEFAULT_ID_KEY = "_id";
 
     private DefaultIdUtils() {}
 

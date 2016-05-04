@@ -22,6 +22,7 @@ package com.torodb.torod.db.backends.converters.array;
 
 import javax.json.JsonString;
 
+import org.jooq.tools.json.JSONValue;
 import org.threeten.bp.Instant;
 import org.threeten.bp.format.DateTimeFormatter;
 
@@ -36,7 +37,7 @@ public class InstantToArrayConverter implements ArrayConverter<JsonString, Scala
 
     @Override
     public String toJsonLiteral(ScalarInstant value) {
-        return StringToArrayConverter.toJsonString(value.toString());
+        return JSONValue.toJSONString(value.toString());
     }
 
     @Override
