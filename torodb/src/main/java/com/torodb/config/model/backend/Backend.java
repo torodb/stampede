@@ -28,6 +28,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.google.common.collect.ImmutableList;
 import com.torodb.config.jackson.BackendDeserializer;
 import com.torodb.config.jackson.BackendSerializer;
 import com.torodb.config.model.backend.greenplum.Greenplum;
@@ -37,10 +38,20 @@ import com.torodb.config.model.backend.postgres.Postgres;
 @JsonSerialize(using=BackendSerializer.class)
 @JsonDeserialize(using=BackendDeserializer.class)
 public class Backend {
+    
+    public static final ImmutableList<Class<? extends BackendImplementation>> BACKEND_CLASSES = 
+            ImmutableList
+                .<Class<? extends BackendImplementation>>builder()
+                .add(Postgres.class)
+                .add(Greenplum.class)
+                .add(MySQL.class)
+                .build();
+    
 	@NotNull
 	@Valid
 	@JsonTypeInfo(use=JsonTypeInfo.Id.NAME, include=JsonTypeInfo.As.WRAPPER_OBJECT)
 	@JsonSubTypes({
+	    //@JsonSubTypes.Type.name must be equals to <? extends BackendImplementation>.class.getSimpleName.toLowerCase(Locale.US)
 		@JsonSubTypes.Type(name="postgres", value=Postgres.class),
         @JsonSubTypes.Type(name="greenplum", value=Greenplum.class),
         @JsonSubTypes.Type(name="mysql", value=MySQL.class),

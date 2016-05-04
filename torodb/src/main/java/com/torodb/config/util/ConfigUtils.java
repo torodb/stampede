@@ -118,11 +118,15 @@ public class ConfigUtils {
         objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
     }
     
-	private static Config uncatchedReadConfig(final CliConfig cliConfig) throws FileNotFoundException, JsonProcessingException,
-			IOException, JsonParseException, JsonMappingException, Exception {
+	private static Config uncatchedReadConfig(final CliConfig cliConfig) throws Exception {
 		ObjectMapper objectMapper = mapper();
 		
-		JsonNode configNode = objectMapper.valueToTree(new Config());
+		Config defaultConfig = new Config();
+		if (cliConfig.getBackend() != null) {
+		    defaultConfig.getBackend().setBackendImplementation(
+		            CliConfig.getBackendClass(cliConfig.getBackend()).newInstance());
+		}
+		JsonNode configNode = objectMapper.valueToTree(defaultConfig);
 		
 		if (cliConfig.hasConfFile() || cliConfig.hasXmlConfFile()) {
 			ObjectMapper mapper = null;

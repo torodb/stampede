@@ -108,7 +108,7 @@ public class Main {
         if (config.getBackend().isPostgresLike()) {
             Postgres postgres = config.getBackend().asPostgres();
 
-			if (cliConfig.askForPassword()) {
+			if (cliConfig.isAskForPassword()) {
 				console.print("Database user password:");
 				postgres.setPassword(readPwd());
 			}
