@@ -22,6 +22,7 @@ package com.torodb.torod.core.dbWrapper;
 
 import com.google.common.annotations.Beta;
 import com.torodb.torod.core.ValueRow;
+import com.torodb.torod.core.connection.exceptions.RetryTransactionException;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.dbWrapper.exceptions.UserDbException;
 import com.torodb.torod.core.exceptions.IllegalPathViewException;
@@ -112,7 +113,7 @@ public interface DbConnection extends AutoCloseable {
      */
     public void insertRootDocuments(
             @Nonnull String collection, 
-            @Nonnull Collection<SplitDocument> docs) throws ImplementationDbException, UserDbException;
+            @Nonnull Collection<SplitDocument> docs) throws ImplementationDbException, UserDbException, RetryTransactionException;
 
     /**
      * Inserts all subdocuments of the given subtype contained in the given doc.
@@ -137,7 +138,7 @@ public interface DbConnection extends AutoCloseable {
             @Nonnull String collection, 
             @Nonnull QueryCriteria condition, 
             boolean justOne
-    ) throws ImplementationDbException, UserDbException;
+    ) throws ImplementationDbException, UserDbException, RetryTransactionException;
 
     /**
      * @return the size (in bytes) of the database this connection is connected with.

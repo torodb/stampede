@@ -20,60 +20,16 @@
 
 package com.torodb.torod.db.backends.converters.jooq;
 
-import java.util.EnumMap;
-import java.util.EnumSet;
-import java.util.Set;
+import java.io.Serializable;
 
-import com.google.common.collect.Sets;
-import com.google.common.collect.Sets.SetView;
+import javax.annotation.Nonnull;
+
 import com.torodb.torod.core.subdocument.ScalarType;
 
 /**
  *
  */
-public class ValueToJooqDataTypeProvider {
+public interface ValueToJooqDataTypeProvider extends Serializable {
 
-    /**
-     * Types that are not supported.
-     */
-    private static final EnumSet<ScalarType> UNSUPPORTED_TYPES
-            = EnumSet.noneOf(ScalarType.class);
-    /**
-     * Types that must be supported.
-     */
-    private static final Set<ScalarType> SUPPORTED_TYPES
-            = Sets.difference(EnumSet.allOf(ScalarType.class), UNSUPPORTED_TYPES);
-    private static final EnumMap<ScalarType, DataTypeForScalar<?>> dataTypes;
-
-    static {
-        dataTypes = new EnumMap<ScalarType, DataTypeForScalar<?>>(ScalarType.class);
-
-        dataTypes.put(ScalarType.ARRAY, ArrayValueConverter.TYPE);
-        dataTypes.put(ScalarType.BOOLEAN, BooleanValueConverter.TYPE);
-        dataTypes.put(ScalarType.DOUBLE, DoubleValueConverter.TYPE);
-        dataTypes.put(ScalarType.INTEGER, IntegerValueConverter.TYPE);
-        dataTypes.put(ScalarType.LONG, LongValueConverter.TYPE);
-        dataTypes.put(ScalarType.NULL, NullValueConverter.TYPE);
-        dataTypes.put(ScalarType.STRING, StringValueConverter.TYPE);
-        dataTypes.put(ScalarType.DATE, DateValueConverter.TYPE);
-        dataTypes.put(ScalarType.INSTANT, InstantValueConverter.TYPE);
-        dataTypes.put(ScalarType.TIME, TimeValueConverter.TYPE);
-        dataTypes.put(ScalarType.MONGO_OBJECT_ID, MongoObjectIdValueConverter.TYPE);
-        dataTypes.put(ScalarType.MONGO_TIMESTAMP, MongoTimestampValueConverter.TYPE);
-        dataTypes.put(ScalarType.BINARY, BinaryValueConverter.TYPE);
-
-        SetView<ScalarType> withoutConverter = Sets.difference(dataTypes.keySet(), SUPPORTED_TYPES);
-        if (!withoutConverter.isEmpty()) {
-            throw new AssertionError("It is not defined how to convert from the following scalar "
-                    + "types to json: " + withoutConverter);
-        }
-    }
-
-    public static DataTypeForScalar<?> getDataType(ScalarType type) {
-        DataTypeForScalar<?> dataType = dataTypes.get(type);
-        if (dataType == null) {
-            throw new IllegalArgumentException("It is not defined how to map elements of type " + type + " to SQL");
-        }
-        return dataType;
-    }
+    @Nonnull public DataTypeForScalar<?> getDataType(@Nonnull ScalarType type);
 }

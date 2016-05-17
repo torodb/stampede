@@ -49,29 +49,29 @@ public class Postgres implements BackendImplementation, Password {
 	@NotNull
 	@Host
 	@JsonProperty(required=true)
-	private String host = "localhost";
+	protected String host = "localhost";
 	@Description("config.backend.postgres.port")
 	@NotNull
 	@Port
 	@JsonProperty(required=true)
-	private Integer port = 5432;
+	protected Integer port = 5432;
 	@Description("config.backend.postgres.database")
 	@Deprecated
 	@NotNull
 	@JsonProperty(required=true)
-	private String database = "torod";
+	protected String database = "torod";
 	@Description("config.backend.postgres.user")
 	@NotNull
 	@JsonProperty(required=true)
-	private String user = "torodb";
+	protected String user = "torodb";
 	@JsonIgnore
-	private String password;
+	protected String password;
 	@Description("config.backend.postgres.toropassFile")
-	private String toropassFile = System.getProperty("user.home") + "/.toropass";
+	protected String toropassFile = System.getProperty("user.home") + "/.toropass";
 	@Description("config.backend.postgres.applicationName")
 	@NotNull
 	@JsonProperty(required=true)
-	private String applicationName = "toro";
+	protected String applicationName = "toro";
 	
 	public String getHost() {
 		return host;

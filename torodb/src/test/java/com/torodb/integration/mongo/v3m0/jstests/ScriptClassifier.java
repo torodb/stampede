@@ -67,7 +67,8 @@ public class ScriptClassifier {
                 Backend backend,
                 TestCategory testCategory,
                 Collection<? extends Script> scripts) {
-            IntegrationTestEnvironment ite = new IntegrationTestEnvironment(protocol, backend);
+            IntegrationTestEnvironment ite = new IntegrationTestEnvironment(protocol, backend, 
+                    IntegrationTestEnvironment.CURRENT_INTEGRATION_TEST_ENVIRONMENT.getLogLevel());
             
             return addScripts(ite, testCategory, scripts);
         }

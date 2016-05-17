@@ -51,7 +51,7 @@ import com.torodb.torod.core.language.querycriteria.QueryCriteria;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.db.backends.DatabaseInterface;
 import com.torodb.torod.db.backends.exceptions.InvalidDatabaseException;
-import com.torodb.torod.db.backends.meta.IndexStorage;
+import com.torodb.torod.db.backends.meta.CollectionSchema;
 import com.torodb.torod.db.backends.meta.TorodbMeta;
 import com.torodb.torod.db.backends.meta.routines.QueryRoutine;
 import com.torodb.torod.db.backends.query.QueryEvaluator;
@@ -163,7 +163,6 @@ public abstract class AbstractDbWrapper implements DbWrapper {
         try {
             Connection c = ds.getConnection();
             postConsume(c, metadata);
-            //TODO: Set isolation
 
             return c;
         } catch (SQLException ex) {
@@ -192,7 +191,7 @@ public abstract class AbstractDbWrapper implements DbWrapper {
             cursor = new EmptyCursor();
         }
         else {
-            IndexStorage.CollectionSchema colSchema = meta.getCollectionSchema(collection);
+            CollectionSchema colSchema = meta.getCollectionSchema(collection);
 
             QueryEvaluator queryEvaluator = new QueryEvaluator(colSchema, databaseInterface);
 
@@ -256,14 +255,14 @@ public abstract class AbstractDbWrapper implements DbWrapper {
 
         private final CursorId cursorId;
         private final Configuration configuration;
-        private final IndexStorage.CollectionSchema colSchema;
+        private final CollectionSchema colSchema;
         private final Connection connection;
         private final Projection projection;
 
         public MyCursorConnectionProvider(
                 CursorId cursorId, 
                 DSLContext dsl, 
-                IndexStorage.CollectionSchema colSchema,
+                CollectionSchema colSchema,
                 Connection connection,
                 Projection projection) {
             this.cursorId = cursorId;

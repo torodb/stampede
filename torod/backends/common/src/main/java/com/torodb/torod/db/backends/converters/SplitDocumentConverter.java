@@ -20,17 +20,17 @@
 
 package com.torodb.torod.db.backends.converters;
 
+import java.io.Serializable;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 import com.google.common.collect.Table;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.core.subdocument.SubDocType;
 import com.torodb.torod.core.subdocument.structure.DocStructure;
 import com.torodb.torod.core.subdocument.structure.StructureElementDFW;
-import com.torodb.torod.db.backends.meta.IndexStorage;
-
-import java.io.Serializable;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
+import com.torodb.torod.db.backends.meta.CollectionSchema;
 
 /**
  *
@@ -48,7 +48,7 @@ public class SplitDocumentConverter implements Serializable {
     }
 
     public SplitDocument convert(
-            IndexStorage.CollectionSchema colSchema,
+            CollectionSchema colSchema,
             int docId, 
             int structureId, 
             Table<Integer, Integer, String> databaseInfo
@@ -69,7 +69,7 @@ public class SplitDocumentConverter implements Serializable {
     }
 
     private DocStructure getStructure(
-            IndexStorage.CollectionSchema colSchema,
+            CollectionSchema colSchema,
             int structureId
     ) {
         DocStructure structure 
@@ -86,12 +86,12 @@ public class SplitDocumentConverter implements Serializable {
 
         private final Table<Integer, Integer, String> databaseInfo;
         private final SplitDocument.Builder splitDocBuilder;
-        private final IndexStorage.CollectionSchema colSchema;
+        private final CollectionSchema colSchema;
 
         public SubDocAdder(
                 Table<Integer, Integer, String> databaseInfo, 
                 SplitDocument.Builder splitDocBuilder, 
-                IndexStorage.CollectionSchema colSchema
+                CollectionSchema colSchema
         ) {
             this.databaseInfo = databaseInfo;
             this.splitDocBuilder = splitDocBuilder;

@@ -18,7 +18,7 @@ import static org.junit.Assert.assertEquals;
  */
 public class ValueToCopyConverterTest {
 
-    private static final ValueToCopyConverter visitor = ValueToCopyConverter.INSTANCE;
+    private static final PostgreSQLValueToCopyConverter visitor = PostgreSQLValueToCopyConverter.INSTANCE;
     private StringBuilder sb = new StringBuilder();
 
     public ValueToCopyConverterTest() {

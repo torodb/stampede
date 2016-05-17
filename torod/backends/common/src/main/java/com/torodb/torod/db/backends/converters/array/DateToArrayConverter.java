@@ -22,6 +22,7 @@ package com.torodb.torod.db.backends.converters.array;
 
 import javax.json.JsonString;
 
+import org.jooq.tools.json.JSONValue;
 import org.threeten.bp.LocalDate;
 
 import com.torodb.torod.core.subdocument.values.ScalarDate;
@@ -35,12 +36,11 @@ public class DateToArrayConverter implements ArrayConverter<JsonString, ScalarDa
 
     @Override
     public String toJsonLiteral(ScalarDate value) {
-        return StringToArrayConverter.toJsonString(value.toString());
+        return JSONValue.toJSONString(value.toString());
     }
 
     @Override
     public ScalarDate fromJsonValue(JsonString value) {
         return new LocalDateScalarDate(LocalDate.parse(value.getString()));
-
     }
 }

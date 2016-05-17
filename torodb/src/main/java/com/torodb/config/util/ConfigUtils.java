@@ -66,6 +66,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import com.google.common.base.Charsets;
 import com.torodb.CliConfig;
 import com.torodb.config.model.Config;
+import com.torodb.config.model.backend.mysql.MySQL;
 import com.torodb.config.model.backend.postgres.Postgres;
 
 import ch.qos.logback.classic.Logger;
@@ -117,11 +118,15 @@ public class ConfigUtils {
         objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
     }
     
-	private static Config uncatchedReadConfig(final CliConfig cliConfig) throws FileNotFoundException, JsonProcessingException,
-			IOException, JsonParseException, JsonMappingException, Exception {
+	private static Config uncatchedReadConfig(final CliConfig cliConfig) throws Exception {
 		ObjectMapper objectMapper = mapper();
 		
-		JsonNode configNode = objectMapper.valueToTree(new Config());
+		Config defaultConfig = new Config();
+		if (cliConfig.getBackend() != null) {
+		    defaultConfig.getBackend().setBackendImplementation(
+		            CliConfig.getBackendClass(cliConfig.getBackend()).newInstance());
+		}
+		JsonNode configNode = objectMapper.valueToTree(defaultConfig);
 		
 		if (cliConfig.hasConfFile() || cliConfig.hasXmlConfFile()) {
 			ObjectMapper mapper = null;
@@ -202,35 +207,54 @@ public class ConfigUtils {
     public static void parseToropassFile(final Config config) throws FileNotFoundException, IOException {
         if (config.getBackend().isPostgresLike()) {
             Postgres postgres = config.getBackend().asPostgres();
+            postgres.setPassword(getPasswordFromToropassFile(
+                    postgres.getToropassFile(), 
+                    postgres.getHost(), 
+                    postgres.getPort(), 
+                    postgres.getDatabase(), 
+                    postgres.getUser()));
+        } else if(config.getBackend().isMySQLLike()) {
+            MySQL mysql = config.getBackend().asMySQL();
+            mysql.setPassword(getPasswordFromToropassFile(
+                    mysql.getToropassFile(), 
+                    mysql.getHost(), 
+                    mysql.getPort(), 
+                    mysql.getDatabase(), 
+                    mysql.getUser()));
+        }
+    }
 
-            File toroPass = new File(postgres.getToropassFile());
-            if (toroPass.exists() && toroPass.canRead() && toroPass.isFile()) {
-                BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(toroPass), Charsets.UTF_8));
-                try {
-                    String line;
-                    int index = 0;
-                    while ((line = br.readLine()) != null) {
-                        index++;
-                        String[] toroPassChunks = line.split(":");
-                        if (toroPassChunks.length != 5) {
-                            LOGGER.warn("Wrong format at line " + index + " of file " + postgres.getToropassFile());
-                            continue;
-                        }
-    
-                        if ((toroPassChunks[0].equals("*") || toroPassChunks[0].equals(postgres.getHost()))
-                                && (toroPassChunks[1].equals("*")
-                                        || toroPassChunks[1].equals(String.valueOf(postgres.getPort())))
-                                && (toroPassChunks[2].equals("*") || toroPassChunks[2].equals(postgres.getDatabase()))
-                                && (toroPassChunks[3].equals("*") || toroPassChunks[3].equals(postgres.getUser()))) {
-                            postgres.setPassword(toroPassChunks[4]);
-                        }
+    private static String getPasswordFromToropassFile(String toropassFile, String host, int port, String database,
+            String user) throws FileNotFoundException, IOException {
+        File toroPass = new File(toropassFile);
+        if (toroPass.exists() && toroPass.canRead() && toroPass.isFile()) {
+            BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(toroPass), Charsets.UTF_8));
+            try {
+                String line;
+                int index = 0;
+                while ((line = br.readLine()) != null) {
+                    index++;
+                    String[] toroPassChunks = line.split(":");
+                    if (toroPassChunks.length != 5) {
+                        LOGGER.warn("Wrong format at line " + index + " of file " + toropassFile);
+                        continue;
                     }
-                    br.close();
-                } finally {
-                    br.close();
+
+                    if ((toroPassChunks[0].equals("*") || toroPassChunks[0].equals(host))
+                            && (toroPassChunks[1].equals("*")
+                                    || toroPassChunks[1].equals(String.valueOf(port)))
+                            && (toroPassChunks[2].equals("*") || toroPassChunks[2].equals(database))
+                            && (toroPassChunks[3].equals("*") || toroPassChunks[3].equals(user))) {
+                        return toroPassChunks[4];
+                    }
                 }
+                br.close();
+            } finally {
+                br.close();
             }
         }
+        
+        return null;
     }
 
 	private static void mergeParam(ObjectMapper objectMapper, JsonNode configRootNode, String pathAndProp, String value)

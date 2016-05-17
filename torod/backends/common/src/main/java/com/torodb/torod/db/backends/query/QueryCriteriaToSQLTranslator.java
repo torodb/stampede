@@ -68,9 +68,7 @@ import com.torodb.torod.core.subdocument.values.ScalarArray;
 import com.torodb.torod.core.subdocument.values.ScalarValue;
 import com.torodb.torod.db.backends.DatabaseInterface;
 import com.torodb.torod.db.backends.converters.PatternConverter;
-import com.torodb.torod.db.backends.converters.array.ValueToArrayDataTypeProvider;
-import com.torodb.torod.db.backends.converters.jooq.ValueToJooqDataTypeProvider;
-import com.torodb.torod.db.backends.meta.IndexStorage;
+import com.torodb.torod.db.backends.meta.CollectionSchema;
 import com.torodb.torod.db.backends.tables.SubDocHelper;
 import com.torodb.torod.db.backends.tables.SubDocTable;
 
@@ -79,14 +77,14 @@ import com.torodb.torod.db.backends.tables.SubDocTable;
  */
 public class QueryCriteriaToSQLTranslator {
 
-    private final IndexStorage.CollectionSchema schema;
+    private final CollectionSchema schema;
     private static final CorrectnessChecker CORRECTNESS_CHECKER
             = new CorrectnessChecker();
 
     private final DatabaseInterface databaseInterface;
 
     @Inject
-    public QueryCriteriaToSQLTranslator(IndexStorage.CollectionSchema schema, DatabaseInterface databaseInterface) {
+    public QueryCriteriaToSQLTranslator(CollectionSchema schema, DatabaseInterface databaseInterface) {
         this.schema = schema;
         this.databaseInterface = databaseInterface;
     }
@@ -148,7 +146,7 @@ public class QueryCriteriaToSQLTranslator {
                         rootSidField.equal(sid)
                 ).and(indexCondition);
 
-        final Translator inDocTranslator = new Translator(databaseInterface);
+        final Translator inDocTranslator = createTranslator();
         Condition condition = queryCriteria.accept(inDocTranslator, false);
 
         select.and(condition);
@@ -156,7 +154,11 @@ public class QueryCriteriaToSQLTranslator {
         return select;
     }
 
-    private static class CorrectnessChecker extends QueryCriteriaDFW<Boolean> {
+    protected Translator createTranslator() {
+        return new Translator(databaseInterface);
+    }
+
+    protected static class CorrectnessChecker extends QueryCriteriaDFW<Boolean> {
 
         @Override
         public Void visit(ExistsQueryCriteria criteria, Boolean inArray) {
@@ -191,21 +193,21 @@ public class QueryCriteriaToSQLTranslator {
         }
     }
 
-    private static class Translator implements
+    protected static class Translator implements
             QueryCriteriaVisitor<Condition, Boolean> {
 
-        private final DatabaseInterface databaseInterface;
+        protected final DatabaseInterface databaseInterface;
 
         @Inject
         public Translator(DatabaseInterface databaseInterface) {
             this.databaseInterface = databaseInterface;
         }
 
-        private String getIteratorVariableName() {
+        protected String getIteratorVariableName() {
             return "value";
         }
 
-        private String[] translateArrayRef(AttributeQueryCriteria criteria)
+        protected String[] translateArrayRef(AttributeQueryCriteria criteria)
                 throws UnexpectedQuery {
             try {
                 return translateArrayRef(criteria.getAttributeReference());
@@ -234,7 +236,7 @@ public class QueryCriteriaToSQLTranslator {
          * @param attRef
          * @return
          */
-        private String[] translateArrayRef(AttributeReference attRef) throws
+        protected String[] translateArrayRef(AttributeReference attRef) throws
                 IllegalArgumentException {
             String[] result;
 
@@ -285,7 +287,7 @@ public class QueryCriteriaToSQLTranslator {
         }
 
         @Nullable
-        private Condition getArrayFieldCondition(String[] keys) {
+        protected Condition getArrayFieldCondition(String[] keys) {
             Preconditions.checkArgument(keys.length > 0, "A non empty array was expected");
             Condition cond = null;
             final int lastArrayIndex = keys.length - 1;
@@ -305,7 +307,7 @@ public class QueryCriteriaToSQLTranslator {
             return cond;
         }
 
-        private Condition addArrayCondition(
+        protected Condition addArrayCondition(
                 AttributeQueryCriteria criteria, 
                 Condition criteriaCondition, 
                 String[] keys, 
@@ -326,7 +328,7 @@ public class QueryCriteriaToSQLTranslator {
             return criteriaCondition;
         }
 
-        private String getJsonType(ScalarType type) {
+        protected String getJsonType(ScalarType type) {
             switch (type) {
                 case ARRAY:
                     return "array";
@@ -346,7 +348,7 @@ public class QueryCriteriaToSQLTranslator {
             }
         }
 
-        private boolean isInArrayValue(AttributeReference attRef, boolean inArrayQuery) {
+        protected boolean isInArrayValue(AttributeReference attRef, boolean inArrayQuery) {
             return inArrayQuery
                     || !(attRef.getKeys().get(attRef.getKeys().size() - 1) instanceof AttributeReference.ObjectKey);
         }
@@ -610,7 +612,7 @@ public class QueryCriteriaToSQLTranslator {
             else {
                 Field valueField
                         = DSL.field(DSL.name(getIteratorVariableName()), String.class);
-                Table subTable = databaseInterface.arraySerializer().arrayElements(
+                Table subTable = databaseInterface.arraySerializer().arrayElements(valueField,
                         translateValueToSQL(criteria.getValue())
                 ).as(getIteratorVariableName());
 
@@ -694,7 +696,7 @@ public class QueryCriteriaToSQLTranslator {
             Field field = DSL.field(databaseInterface.arraySerializer().getFieldName(keys));
 
             Field valueField = DSL.field(DSL.name(getIteratorVariableName()));
-            Table subTable = databaseInterface.arraySerializer().arrayElements(field);
+            Table subTable = databaseInterface.arraySerializer().arrayElements(valueField, field);
 
             Condition subCondition
                     = criteria.getBody().accept(this, Boolean.TRUE);
@@ -706,23 +708,23 @@ public class QueryCriteriaToSQLTranslator {
             return DSL.exists(subQuery);
         }
 
-        private Param<?> translateValueToSQL(ScalarValue value) {
+        protected Param<?> translateValueToSQL(ScalarValue value) {
             DataType<?> dataType
-                    = ValueToJooqDataTypeProvider.getDataType(value.getType());
+                    = databaseInterface.getValueToJooqDataTypeProvider().getDataType(value.getType());
 
             return DSL.value(value, dataType);
         }
 
-        private Param<?> translateValueToArraySerialization(ScalarValue value) {
+        protected Param<?> translateValueToArraySerialization(ScalarValue value) {
             DataType<?> dataType
-                    = ValueToArrayDataTypeProvider.getInstance()
+                    = databaseInterface.getValueToArrayDataTypeProvider()
                             .getDataType(value.getType());
 
 
             return DSL.value(value, dataType);
         }
 
-        private Param<?>[] toInArgument(ScalarArray values) {
+        protected Param<?>[] toInArgument(ScalarArray values) {
             Param<?>[] result = new Param<?>[values.size()];
 
             int i = 0;

@@ -29,6 +29,8 @@ import com.torodb.torod.db.backends.converters.ValueConverter;
 public class IntegerValueToJsonConverter implements
         ValueConverter<Number, ScalarInteger> {
 
+    private static final long serialVersionUID = 1L;
+
     @Override
     public Class<? extends Number> getJsonClass() {
         return Integer.class;

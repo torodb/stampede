@@ -1,22 +1,29 @@
 
 package com.torodb.torod.db.backends.sql.path.view;
 
+import java.io.Serializable;
+import java.util.Map;
+import java.util.Set;
+import java.util.SortedSet;
+
+import org.jooq.Condition;
+import org.jooq.CreateViewFinalStep;
+import org.jooq.DSLContext;
+import org.jooq.Field;
+import org.jooq.Name;
+import org.jooq.Select;
+import org.jooq.impl.DSL;
+
 import com.google.common.collect.Sets;
 import com.google.common.collect.Table;
 import com.torodb.torod.core.exceptions.IllegalPathViewException;
 import com.torodb.torod.core.language.AttributeReference;
 import com.torodb.torod.core.subdocument.SubDocType;
 import com.torodb.torod.core.subdocument.structure.DocStructure;
+import com.torodb.torod.db.backends.meta.CollectionSchema;
 import com.torodb.torod.db.backends.meta.IndexStorage;
 import com.torodb.torod.db.backends.meta.TorodbMeta;
 import com.torodb.torod.db.backends.tables.SubDocTable;
-import org.jooq.*;
-import org.jooq.impl.DSL;
-
-import java.io.Serializable;
-import java.util.Map;
-import java.util.Set;
-import java.util.SortedSet;
 
 /**
  *
@@ -37,7 +44,7 @@ public class PathViewHandler {
         if (!meta.exists(collection)) {
             return 0;
         }
-        IndexStorage.CollectionSchema colSchema = meta.getCollectionSchema(collection);
+        CollectionSchema colSchema = meta.getCollectionSchema(collection);
 
         Table<AttributeReference, Integer, DocStructure> table;
 
@@ -51,7 +58,7 @@ public class PathViewHandler {
             return ;
         }
 
-        IndexStorage.CollectionSchema colSchema = meta.getCollectionSchema(collection);
+        CollectionSchema colSchema = meta.getCollectionSchema(collection);
 
         Table<AttributeReference, Integer, DocStructure> table;
 
@@ -61,7 +68,7 @@ public class PathViewHandler {
     }
 
     private void dropPathViews(
-            IndexStorage.CollectionSchema colSchema,
+            CollectionSchema colSchema,
             Table<AttributeReference, Integer, DocStructure> table) {
         for (AttributeReference attRef : table.rowKeySet()) {
             callback.dropView(attRef, colSchema);
@@ -70,7 +77,7 @@ public class PathViewHandler {
 
     @SuppressWarnings("unchecked")
     protected int createPathViews(
-            IndexStorage.CollectionSchema colSchema,
+            CollectionSchema colSchema,
             Table<AttributeReference, Integer, DocStructure> table) throws IllegalPathViewException {
 
         int viewsCounter = 0;
@@ -143,7 +150,7 @@ public class PathViewHandler {
     private SortedSet<Field<?>> getPathFieldSet(
             AttributeReference attRef,
 			Table<AttributeReference, Integer, DocStructure> table,
-            IndexStorage.CollectionSchema colSchema) {
+            CollectionSchema colSchema) {
 
 		SortedSet<Field<?>> fieldSet = Sets.newTreeSet(fieldComparator);
 
@@ -242,7 +249,7 @@ public class PathViewHandler {
          * @param colSchema
          * @return the number of views that have been dropped
          */
-        abstract void dropView(AttributeReference attRef, IndexStorage.CollectionSchema colSchema);
+        abstract void dropView(AttributeReference attRef, CollectionSchema colSchema);
 
         /**
          * This method is called when view creation is requested on

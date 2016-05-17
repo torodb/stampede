@@ -31,7 +31,6 @@ import javax.inject.Inject;
 import org.jooq.DSLContext;
 import org.jooq.Record1;
 import org.jooq.Result;
-import org.jooq.Select;
 import org.jooq.SelectConditionStep;
 import org.jooq.SelectForUpdateStep;
 import org.jooq.SelectJoinStep;
@@ -68,7 +67,7 @@ import com.torodb.torod.core.language.querycriteria.utils.QueryCriteriaVisitor;
 import com.torodb.torod.core.language.utils.AttributeReferenceResolver;
 import com.torodb.torod.core.subdocument.structure.DocStructure;
 import com.torodb.torod.db.backends.DatabaseInterface;
-import com.torodb.torod.db.backends.meta.IndexStorage;
+import com.torodb.torod.db.backends.meta.CollectionSchema;
 import com.torodb.torod.db.backends.query.dblanguage.AndDatabaseQuery;
 import com.torodb.torod.db.backends.query.dblanguage.ByStructureDatabaseQuery;
 import com.torodb.torod.db.backends.query.dblanguage.DatabaseQuery;
@@ -86,12 +85,12 @@ public class QueryEvaluator {
     private static final Logger LOGGER = LoggerFactory.getLogger(
             QueryEvaluator.class
     );
-    private final IndexStorage.CollectionSchema colSchema;
+    private final CollectionSchema colSchema;
     private final QueryCriteriaToSQLTranslator toSQLTranslator;
     private final DatabaseInterface databaseInterface;
 
     @Inject
-    public QueryEvaluator(IndexStorage.CollectionSchema colSchema, DatabaseInterface databaseInterface) {
+    public QueryEvaluator(CollectionSchema colSchema, DatabaseInterface databaseInterface) {
         this.colSchema = colSchema;
         this.toSQLTranslator = new QueryCriteriaToSQLTranslator(colSchema, databaseInterface);
         this.databaseInterface = databaseInterface;
@@ -435,7 +434,7 @@ public class QueryEvaluator {
             }
 
             if (s2 != null) {
-                assert r1.getDatabaseQuery() == null;
+                assert r2.getDatabaseQuery() == null;
                 dq2
                         = createSelectDatabaseQuery(criteria.getSubQueryCriteria2(), sid, s2, dsl);
             }
@@ -710,10 +709,10 @@ public class QueryEvaluator {
     private static class Evaluator implements
             DatabaseQueryVisitor<Set<Integer>, Boolean> {
 
-        private final IndexStorage.CollectionSchema colSchema;
+        private final CollectionSchema colSchema;
         private final DSLContext dsl;
 
-        public Evaluator(IndexStorage.CollectionSchema colSchema, DSLContext dsl) {
+        public Evaluator(CollectionSchema colSchema, DSLContext dsl) {
             this.colSchema = colSchema;
             this.dsl = dsl;
         }

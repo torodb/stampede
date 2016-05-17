@@ -33,6 +33,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.torodb.kvdocument.values.KVValue;
 import com.torodb.torod.core.ValueRow;
 import com.torodb.torod.core.WriteFailMode;
+import com.torodb.torod.core.connection.exceptions.RetryTransactionException;
 import com.torodb.torod.core.exceptions.ExistentIndexException;
 import com.torodb.torod.core.exceptions.UserToroException;
 import com.torodb.torod.core.language.operations.DeleteOperation;

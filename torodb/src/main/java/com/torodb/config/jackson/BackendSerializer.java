@@ -39,6 +39,11 @@ import com.fasterxml.jackson.databind.jsonFormatVisitors.JsonFormatVisitorWrappe
 import com.fasterxml.jackson.databind.jsonFormatVisitors.JsonObjectFormatVisitor;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.torodb.config.model.backend.Backend;
+import com.torodb.config.model.backend.greenplum.Greenplum;
+import com.torodb.config.model.backend.mysql.MySQL;
+import com.torodb.config.model.backend.postgres.Postgres;
+import com.torodb.config.visitor.BackendImplementationVisitor;
+import com.torodb.torod.core.exceptions.ToroRuntimeException;
 
 public class BackendSerializer extends JsonSerializer<Backend> {
 	@Override
@@ -46,16 +51,7 @@ public class BackendSerializer extends JsonSerializer<Backend> {
 			throws IOException, JsonProcessingException {
 		jgen.writeStartObject();
 
-		String fieldName = null;
-		if (value.isPostgres()) {
-			fieldName = "postgres";
-		} else if (value.isGreenplum()) {
-			fieldName = "greenplum";
-		}
-
-		if (fieldName != null) {
-			jgen.writeObjectField(fieldName, value.getBackendImplementation());
-		}
+		value.getBackendImplementation().accept(new BackendImplementationSerializerVisitor(jgen));
 
 		jgen.writeEndObject();
 	}
@@ -109,5 +105,41 @@ public class BackendSerializer extends JsonSerializer<Backend> {
 			}
 		};
 		prop.depositSchemaProperty(v);
+	}
+	
+	private static class BackendImplementationSerializerVisitor implements BackendImplementationVisitor {
+	    
+	    private final JsonGenerator jgen;
+	    
+	    private BackendImplementationSerializerVisitor(JsonGenerator jgen) {
+	        this.jgen = jgen;
+	    }
+	    
+        @Override
+        public void visit(Postgres value) {
+            try {
+                jgen.writeObjectField("postgres", value);
+            } catch(Exception exception) {
+                throw new ToroRuntimeException(exception);
+            }
+        }
+
+        @Override
+        public void visit(Greenplum value) {
+            try {
+                jgen.writeObjectField("greenplum", value);
+            } catch(Exception exception) {
+                throw new ToroRuntimeException(exception);
+            }
+        }
+
+        @Override
+        public void visit(MySQL value) {
+            try {
+                jgen.writeObjectField("mysql", value);
+            } catch(Exception exception) {
+                throw new ToroRuntimeException(exception);
+            }
+        }
 	}
 }

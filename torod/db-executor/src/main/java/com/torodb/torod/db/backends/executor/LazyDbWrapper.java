@@ -12,6 +12,7 @@ import javax.annotation.concurrent.NotThreadSafe;
 import javax.json.JsonObject;
 
 import com.torodb.torod.core.ValueRow;
+import com.torodb.torod.core.connection.exceptions.RetryTransactionException;
 import com.torodb.torod.core.cursors.CursorId;
 import com.torodb.torod.core.dbWrapper.Cursor;
 import com.torodb.torod.core.dbWrapper.DbConnection;
@@ -155,7 +156,7 @@ public class LazyDbWrapper implements DbWrapper {
 
         @Override
         public void insertRootDocuments(String collection, Collection<SplitDocument> docs)
-                throws ImplementationDbException, UserDbException {
+                throws ImplementationDbException, UserDbException, RetryTransactionException {
             getDelegate().insertRootDocuments(collection, docs);
         }
 
@@ -180,7 +181,7 @@ public class LazyDbWrapper implements DbWrapper {
 
         @Override
         public int delete(String collection, QueryCriteria condition, boolean justOne)
-                throws ImplementationDbException, UserDbException {
+                throws ImplementationDbException, UserDbException, RetryTransactionException {
             return getDelegate().delete(collection, condition, justOne);
         }
 

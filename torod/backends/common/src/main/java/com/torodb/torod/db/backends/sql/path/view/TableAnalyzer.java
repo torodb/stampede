@@ -1,6 +1,11 @@
 
 package com.torodb.torod.db.backends.sql.path.view;
 
+import java.util.Map.Entry;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 import com.torodb.torod.core.exceptions.IllegalPathViewException;
@@ -9,11 +14,7 @@ import com.torodb.torod.core.language.AttributeReference.ObjectKey;
 import com.torodb.torod.core.subdocument.structure.ArrayStructure;
 import com.torodb.torod.core.subdocument.structure.DocStructure;
 import com.torodb.torod.core.subdocument.structure.StructureElement;
-import com.torodb.torod.db.backends.meta.IndexStorage;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.Map.Entry;
+import com.torodb.torod.db.backends.meta.CollectionSchema;
 
 /**
  *
@@ -24,7 +25,7 @@ class TableAnalyzer {
             = LoggerFactory.getLogger(TableAnalyzer.class);
 
     public static Table<AttributeReference, Integer, DocStructure> analyzeCollection(
-            IndexStorage.CollectionSchema colSchema,
+            CollectionSchema colSchema,
             boolean ignoreArrays
     ) throws IllegalPathViewException {
         Table<AttributeReference, Integer, DocStructure> table = HashBasedTable.create();

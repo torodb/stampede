@@ -29,6 +29,7 @@ import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.language.operations.DeleteOperation;
 import com.torodb.torod.core.language.querycriteria.QueryCriteria;
 import com.torodb.torod.mongodb.RequestContext;
+import com.torodb.torod.mongodb.commands.AbstractToroRetryCommandImplementation;
 import com.torodb.torod.mongodb.commands.WriteConcernToWriteFailModeFunction;
 import com.torodb.torod.mongodb.translator.QueryCriteriaTranslator;
 import java.util.List;
@@ -37,7 +38,7 @@ import javax.inject.Inject;
 /**
  *
  */
-public class DeleteImplementation implements CommandImplementation<DeleteArgument, Long> {
+public class DeleteImplementation extends AbstractToroRetryCommandImplementation<DeleteArgument, Long> {
 
     private final WriteConcernToWriteFailModeFunction toWriteFailModeFunction;
     private final QueryCriteriaTranslator queryCriteriaTranslator;
@@ -53,7 +54,7 @@ public class DeleteImplementation implements CommandImplementation<DeleteArgumen
     }
     
     @Override
-    public CommandResult<Long> apply(
+    public CommandResult<Long> tryApply(
             Command<? super DeleteArgument, ? super Long> command,
             CommandRequest<DeleteArgument> req) throws MongoException {
 

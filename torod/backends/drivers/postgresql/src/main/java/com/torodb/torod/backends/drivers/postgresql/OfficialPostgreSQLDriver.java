@@ -20,10 +20,24 @@
 
 package com.torodb.torod.backends.drivers.postgresql;
 
-import com.torodb.torod.db.backends.DbBackendConfiguration;
-import org.postgresql.ds.PGSimpleDataSource;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.Writer;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 
 import javax.sql.DataSource;
+
+import org.postgresql.Driver;
+import org.postgresql.ds.PGSimpleDataSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.torodb.torod.core.exceptions.ToroRuntimeException;
+import com.torodb.torod.db.backends.DbBackendConfiguration;
 
 /**
  *
@@ -31,6 +45,16 @@ import javax.sql.DataSource;
  * @see <a href="http://jdbc.postgresql.org/">PostgreSQL JDBC Driver</a>
  */
 public class OfficialPostgreSQLDriver implements PostgreSQLDriverProvider {
+    private static final Logger LOGGER = LoggerFactory.getLogger(
+            OfficialPostgreSQLDriver.class
+    );
+    private static final PrintWriter LOGGER_WRITER = new PrintWriter(new LoggerWriter());
+    {
+        if (LOGGER.isTraceEnabled()) {
+            DriverManager.setLogWriter(LOGGER_WRITER);
+        }
+    }
+    
     @Override
     public DataSource getConfiguredDataSource(DbBackendConfiguration configuration, String poolName) {
         PGSimpleDataSource dataSource = new PGSimpleDataSource();
@@ -42,31 +66,55 @@ public class OfficialPostgreSQLDriver implements PostgreSQLDriverProvider {
         dataSource.setDatabaseName(configuration.getDbName());
 
         dataSource.setApplicationName("torodb-" + poolName);
+        
+        if (LOGGER.isTraceEnabled()) {
+            dataSource.setLogLevel(Driver.DEBUG);
+            dataSource.setLogWriter(LOGGER_WRITER);
+        }
 
-//        Statement stat = null;
-//        ResultSet rs = null;
-//        Connection conn = null;
-//        try {
-//            conn = dataSource.getConnection();
-//            stat = conn.createStatement();
-//            rs = stat.executeQuery("SELECT 1");
-//            rs.next();
-//        } catch (SQLException ex) {
-//            throw new ToroRuntimeException(ex.getLocalizedMessage());
-//        } finally {
-//	            try {
-//		            if (rs != null) rs.close();
-//	            } catch (SQLException ex) {
-//	            }
-//	            try {
-//		            if (stat != null) stat.close();
-//	        	} catch (SQLException ex) {
-//	            }
-//	            try {
-//	                if (conn != null) conn.close();
-//	            } catch (SQLException ex) {
-//	            }
-//        }     
+        //TODO
+        Statement stat = null;
+        ResultSet rs = null;
+        Connection conn = null;
+        try {
+            conn = dataSource.getConnection();
+            stat = conn.createStatement();
+            rs = stat.executeQuery("SELECT 1");
+            rs.next();
+        } catch (SQLException ex) {
+            throw new ToroRuntimeException(ex.getLocalizedMessage());
+        } finally {
+	            try {
+		            if (rs != null) rs.close();
+	            } catch (SQLException ex) {
+	            }
+	            try {
+		            if (stat != null) stat.close();
+	        	} catch (SQLException ex) {
+	            }
+	            try {
+	                if (conn != null) conn.close();
+	            } catch (SQLException ex) {
+	            }
+        }     
         return dataSource;
+    }
+    
+    private static class LoggerWriter extends Writer {
+        @Override
+        public void write(char[] cbuf, int off, int len) throws IOException {
+            final StringBuilder messageBuilder = new StringBuilder();
+            messageBuilder.append(cbuf, off, len);
+            String message = messageBuilder.toString().replaceAll("(\r\n|\r|\n)$", "");
+            if (!message.isEmpty()) {
+                LOGGER.debug(message);
+            }
+        }
+        @Override
+        public void flush() throws IOException {
+        }
+        @Override
+        public void close() throws IOException {
+        }
     }
 }

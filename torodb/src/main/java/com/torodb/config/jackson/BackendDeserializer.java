@@ -33,7 +33,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.torodb.config.model.backend.Backend;
 import com.torodb.config.model.backend.BackendImplementation;
 import com.torodb.config.model.backend.greenplum.Greenplum;
+import com.torodb.config.model.backend.mysql.MySQL;
 import com.torodb.config.model.backend.postgres.Postgres;
+import com.torodb.torod.core.exceptions.ToroRuntimeException;
 
 public class BackendDeserializer extends JsonDeserializer<Backend> {
 	@Override
@@ -54,10 +56,12 @@ public class BackendDeserializer extends JsonDeserializer<Backend> {
 			backendImplementationNode = node.get(fieldName);
 			if ("postgres".equals(fieldName)) {
 				backendImplementationClass = Postgres.class;
-			} else if ("greenplum".equals(fieldName)) {
-				backendImplementationClass = Greenplum.class;
+            } else if ("greenplum".equals(fieldName)) {
+                backendImplementationClass = Greenplum.class;
+            } else if ("mysql".equals(fieldName)) {
+                backendImplementationClass = MySQL.class;
 			} else {
-			    throw new JsonParseException("Backend specified is not valid");
+			    throw new ToroRuntimeException("Backend " + fieldName + " is not valid.");
 			}
 		}
 		

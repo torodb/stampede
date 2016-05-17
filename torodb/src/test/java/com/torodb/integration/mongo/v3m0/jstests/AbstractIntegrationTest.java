@@ -44,6 +44,7 @@ import com.torodb.config.model.Config;
 import com.torodb.integration.IntegrationTestEnvironment;
 import com.torodb.integration.TestCategory;
 import com.torodb.integration.ToroRunnerClassRule;
+import com.torodb.torod.core.exceptions.ToroRuntimeException;
 
 public abstract class AbstractIntegrationTest {
 
@@ -84,8 +85,15 @@ public abstract class AbstractIntegrationTest {
 		Config config = TORO_RUNNER_CLASS_RULE.getConfig();
 
 		String toroConnectionString = config.getProtocol().getMongo().getNet().getBindIp() + ":"
-				+ config.getProtocol().getMongo().getNet().getPort() + "/"
-				+ config.getBackend().asPostgres().getDatabase();
+				+ config.getProtocol().getMongo().getNet().getPort() + "/";
+		if (config.getBackend().isPostgresLike()) {
+		    toroConnectionString = toroConnectionString + config.getBackend().asPostgres().getDatabase();
+		} else if (config.getBackend().isMySQLLike()) {
+            toroConnectionString = toroConnectionString + config.getBackend().asMySQL().getDatabase();
+		} else {
+		    throw new ToroRuntimeException("Backend " + config.getBackend().getBackendImplementation() + " is not supported");
+		}
+		
 		URL mongoMocksUrl = AbstractIntegrationTest.class.getResource("mongo_mocks.js");
 
         logger.info("Testing {}", script);

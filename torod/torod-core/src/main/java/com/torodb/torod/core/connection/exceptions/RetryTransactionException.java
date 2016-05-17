@@ -21,10 +21,12 @@
 
 package com.torodb.torod.core.connection.exceptions;
 
+import com.torodb.torod.core.exceptions.ToroException;
+
 /**
  *
  */
-public class RetryTransactionException extends Exception {
+public class RetryTransactionException extends ToroException {
     private static final long serialVersionUID = 1L;
     
     public RetryTransactionException() {

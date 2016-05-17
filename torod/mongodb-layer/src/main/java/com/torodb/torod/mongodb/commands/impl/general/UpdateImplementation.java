@@ -13,7 +13,6 @@ import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.UpdateCommand.UpdateStatement;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.UpdateCommand.UpsertResult;
 import com.eightkdata.mongowp.server.api.Command;
-import com.eightkdata.mongowp.server.api.CommandImplementation;
 import com.eightkdata.mongowp.server.api.CommandRequest;
 import com.eightkdata.mongowp.server.api.CommandResult;
 import com.eightkdata.mongowp.server.api.impl.UpdateOpResult;
@@ -32,6 +31,7 @@ import com.torodb.torod.core.connection.ToroTransaction;
 import com.torodb.torod.core.connection.TransactionMetainfo;
 import com.torodb.torod.core.connection.UpdateResponse;
 import com.torodb.torod.core.connection.UpdateResponse.InsertedDocuments;
+import com.torodb.torod.core.connection.exceptions.RetryTransactionException;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.exceptions.ToroRuntimeException;
 import com.torodb.torod.core.language.operations.UpdateOperation;
@@ -40,6 +40,8 @@ import com.torodb.torod.core.language.update.UpdateAction;
 import com.torodb.torod.core.language.update.utils.UpdateActionVisitorAdaptor;
 import com.torodb.torod.core.subdocument.ToroDocument;
 import com.torodb.torod.mongodb.RequestContext;
+import com.torodb.torod.mongodb.RetryException;
+import com.torodb.torod.mongodb.commands.AbstractToroRetryCommandImplementation;
 import com.torodb.torod.mongodb.commands.WriteConcernToWriteFailModeFunction;
 import com.torodb.torod.mongodb.commands.impl.general.update.UpdateActionVisitorDocumentToInsert;
 import com.torodb.torod.mongodb.commands.impl.general.update.UpdateActionVisitorDocumentToUpdate;
@@ -50,8 +52,10 @@ import com.torodb.torod.mongodb.translator.UpdateActionTranslator;
 /**
  *
  */
-public class UpdateImplementation implements CommandImplementation<UpdateArgument, UpdateResult>{
+public class UpdateImplementation extends AbstractToroRetryCommandImplementation<UpdateArgument, UpdateResult>{
 
+    public static final int MAX_RETRY_COUNT = 64;
+    
     private final WriteConcernToWriteFailModeFunction toWriteFailModeFunction;
     private final QueryCriteriaTranslator queryCriteriaTranslator;
     private final DocumentBuilderFactory documentBuilderFactory;
@@ -67,7 +71,7 @@ public class UpdateImplementation implements CommandImplementation<UpdateArgumen
     }
 
     @Override
-    public CommandResult<UpdateResult> apply(
+    public CommandResult<UpdateResult> tryApply(
             Command<? super UpdateArgument, ? super UpdateResult> command,
             CommandRequest<UpdateArgument> req) throws MongoException {
 

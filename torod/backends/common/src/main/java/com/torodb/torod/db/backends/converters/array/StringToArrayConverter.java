@@ -35,17 +35,11 @@ public class StringToArrayConverter implements ArrayConverter<JsonString, Scalar
 
     @Override
     public String toJsonLiteral(ScalarString value) {
-        return StringToArrayConverter.toJsonString(value.toString());
+        return JSONValue.toJSONString(value.getValue());
     }
 
     @Override
     public ScalarString fromJsonValue(JsonString value) {
         return new StringScalarString(value.getString());
-
     }
-
-    public static String toJsonString(String text) {
-        return '\"' + JSONValue.escape((String) text) + '\"';
-    }
-
 }

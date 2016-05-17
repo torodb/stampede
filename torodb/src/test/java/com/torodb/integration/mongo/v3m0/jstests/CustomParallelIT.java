@@ -20,10 +20,8 @@
 
 package com.torodb.integration.mongo.v3m0.jstests;
 
-import static com.torodb.integration.Backend.GREENPLUM;
-import static com.torodb.integration.Backend.POSTGRES;
-import static com.torodb.integration.Protocol.MONGO;
-import static com.torodb.integration.Protocol.MONGO_REPL_SET;
+import static com.torodb.integration.Backend.*;
+import static com.torodb.integration.Protocol.*;
 import static com.torodb.integration.TestCategory.WORKING;
 import static com.torodb.integration.TestCategory.FAILING;
 import static com.torodb.integration.TestCategory.CATASTROPHIC;
@@ -58,11 +56,11 @@ public class CustomParallelIT extends AbstractIntegrationParallelTest {
 
     private static ScriptClassifier createScriptClassifier() {
         return new Builder()
-                .addScripts(MONGO, POSTGRES, CATASTROPHIC, asScriptSet("updaterace.js", 8))
+                .addScripts(Mongo, Postgres, WORKING, asScriptSet("updaterace.js", 8))
+                .addScripts(Mongo, Greenplum, CATASTROPHIC, asScriptSet("updaterace.js", 4))
+                .addScripts(Mongo, MySQL, WORKING, asScriptSet("updaterace.js", 8))
                 
-                .addScripts(MONGO, GREENPLUM, CATASTROPHIC, asScriptSet("updaterace.js", 8))
-                
-                .addScripts(MONGO_REPL_SET, POSTGRES, CATASTROPHIC, asScriptSet("updaterace.js", 8))
+                .addScripts(MongoReplSet, Postgres, CATASTROPHIC, asScriptSet("updaterace.js", 8))
                 
                 .build();
     }

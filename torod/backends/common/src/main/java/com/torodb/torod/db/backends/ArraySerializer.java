@@ -43,6 +43,6 @@ public interface ArraySerializer extends Serializable {
 
     @Nonnull Condition arrayLength(String fieldName, Param<?> value);
 
-    @Nonnull Table arrayElements(Field<?> fieldName);
+    @Nonnull Table arrayElements(Field<?> iteratorVariable, Field<?> field);
 
 }

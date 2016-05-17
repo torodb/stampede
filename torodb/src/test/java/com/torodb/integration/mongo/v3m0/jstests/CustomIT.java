@@ -20,10 +20,8 @@
 
 package com.torodb.integration.mongo.v3m0.jstests;
 
-import static com.torodb.integration.Backend.GREENPLUM;
-import static com.torodb.integration.Backend.POSTGRES;
-import static com.torodb.integration.Protocol.MONGO;
-import static com.torodb.integration.Protocol.MONGO_REPL_SET;
+import static com.torodb.integration.Backend.*;
+import static com.torodb.integration.Protocol.*;
 import static com.torodb.integration.TestCategory.FAILING;
 import static com.torodb.integration.TestCategory.WORKING;
 
@@ -56,14 +54,18 @@ public class CustomIT extends AbstractIntegrationTest {
 
     private static ScriptClassifier createScriptClassifier() {
         return new Builder()
-                .addScripts(MONGO, POSTGRES, WORKING, asScriptSet("dummy.js"))
-                .addScripts(MONGO_REPL_SET, POSTGRES, WORKING, asScriptSet("dummy.js"))
-                .addScripts(MONGO, GREENPLUM, WORKING, asScriptSet("dummy.js"))
-                .addScripts(MONGO_REPL_SET, GREENPLUM, WORKING, asScriptSet("dummy.js"))
+                .addScripts(Mongo, Postgres, WORKING, asScriptSet("dummy.js"))
+                .addScripts(MongoReplSet, Postgres, WORKING, asScriptSet("dummy.js"))
+                .addScripts(Mongo, Greenplum, WORKING, asScriptSet("dummy.js"))
+                .addScripts(MongoReplSet, Greenplum, WORKING, asScriptSet("dummy.js"))
+                .addScripts(Mongo, MySQL, WORKING, asScriptSet("dummy.js"))
+                .addScripts(MongoReplSet, MySQL, WORKING, asScriptSet("dummy.js"))
 
-                .addScripts(MONGO, POSTGRES, WORKING, asScriptSet(new String[] {"binary.js", "undefined.js"}))
+                .addScripts(Mongo, Postgres, WORKING, asScriptSet(new String[] {"binary.js", "undefined.js"}))
+                .addScripts(Mongo, MySQL, WORKING, asScriptSet(new String[] {"binary.js", "undefined.js"}))
 
-                .addScripts(MONGO, POSTGRES, FAILING, asScriptSet("alwaysfail.js"))
+                .addScripts(Mongo, Postgres, FAILING, asScriptSet("alwaysfail.js"))
+                .addScripts(Mongo, MySQL, FAILING, asScriptSet("alwaysfail.js"))
                 .build();
     }
 

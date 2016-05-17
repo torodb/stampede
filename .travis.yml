@@ -14,19 +14,20 @@ services:
 env:
   matrix:
     - Protocol=Mongo Backend=Postgres
-#    - Protocol=Mongo Backend=Postgres
+#    - Protocol=Mongo Backend=MySQL
 #    - Protocol=Mongo Backend=Greenplum
 #    - Protocol=MongoReplSet Backend=Postgres
 
-#matrix:
-#  exclude:
-#    - jdk: oraclejdk7
-#      env: Protocol=Mongo Backend=Greenplum
-#    - jdk: oraclejdk7
-#      env: Protocol=MongoReplSet Backend=Postgres
-#  allow_failures:
-#    - env: Protocol=Mongo Backend=Greenplum
-#    - env: Protocol=MongoReplSet Backend=Postgres
+matrix:
+  exclude:
+    - jdk: oraclejdk7
+      env: Protocol=Mongo Backend=Greenplum
+    - jdk: oraclejdk7
+      env: Protocol=Mongo Backend=MySQL
+    - jdk: oraclejdk7
+      env: Protocol=MongoReplSet Backend=Postgres
+  allow_failures:
+    - env: Protocol=MongoReplSet Backend=Postgres
 
 before_script:
   - export GIT_BRANCH=$TRAVIS_BRANCH

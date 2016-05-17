@@ -20,10 +20,6 @@
 package com.torodb.torod.db.backends.meta;
 
 
-import com.torodb.torod.db.backends.DatabaseInterface;
-import com.torodb.torod.db.backends.exceptions.InvalidDatabaseException;
-import com.torodb.torod.db.backends.tables.CollectionsTable;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
@@ -31,6 +27,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
 import org.jooq.DSLContext;
 import org.jooq.Meta;
 import org.jooq.Schema;
@@ -39,12 +36,19 @@ import org.jooq.impl.SchemaImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.torodb.torod.core.exceptions.ToroRuntimeException;
+import com.torodb.torod.db.backends.DatabaseInterface;
+import com.torodb.torod.db.backends.exceptions.InvalidDatabaseException;
+import com.torodb.torod.db.backends.tables.AbstractCollectionsTable;
+
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 public class TorodbSchema extends SchemaImpl {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TorodbSchema.class);
 	private static final long serialVersionUID = -1813122131;
 
-    private static final String TORODB_SCHEMA = "torodb";
+    public static final String TORODB_SCHEMA = "torodb";
 
     /**
      * The reference instance of <code>torodb</code>
@@ -54,7 +58,7 @@ public class TorodbSchema extends SchemaImpl {
     /**
      * No further instances allowed
      */
-	private TorodbSchema() {
+	protected TorodbSchema() {
 		super(TORODB_SCHEMA);
 	}
 
@@ -78,21 +82,25 @@ public class TorodbSchema extends SchemaImpl {
         }
         else {
             LOGGER.info("Schema '{}' found. Checking it...", TORODB_SCHEMA);
-            checkSchema(torodbSchema);
+            checkSchema(torodbSchema, databaseInterface);
             LOGGER.info("Schema '{}' checked", TORODB_SCHEMA);
         }
     }
 
 	@Override
 	public final List<Table<?>> getTables() {
-		List result = new ArrayList();
-		result.addAll(getTables0());
-		return result;
+	    throw new ToroRuntimeException("operation not permitted");
 	}
 
-	private final List<Table<?>> getTables0() {
-		return Arrays.<Table<?>>asList(CollectionsTable.COLLECTIONS);
-	}
+    public final List<Table<?>> getTables(DatabaseInterface databaseInterface) {
+        List result = new ArrayList();
+        result.addAll(getTables0(databaseInterface));
+        return result;
+    }
+
+    private final List<Table<?>> getTables0(DatabaseInterface databaseInterface) {
+        return Arrays.<Table<?>>asList(databaseInterface.getCollectionsTable());
+    }
 
     @SuppressFBWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
     private void createSchema(DSLContext dsl, DatabaseInterface databaseInterface) throws SQLException {
@@ -102,15 +110,15 @@ public class TorodbSchema extends SchemaImpl {
             ps.executeUpdate();
         }
 
-        try (PreparedStatement ps = c.prepareStatement(CollectionsTable.COLLECTIONS.getSQLCreationStatement(databaseInterface))) {
+        try (PreparedStatement ps = c.prepareStatement(databaseInterface.getCollectionsTable().getSQLCreationStatement(databaseInterface))) {
             ps.execute();
         } finally {
             dsl.configuration().connectionProvider().release(c);
         }
     }
 
-    private void checkSchema(Schema torodbSchema) throws InvalidDatabaseException {
-        CollectionsTable colsTable = CollectionsTable.COLLECTIONS;
+    private void checkSchema(Schema torodbSchema, DatabaseInterface databaseInterface) throws InvalidDatabaseException {
+        AbstractCollectionsTable colsTable = databaseInterface.getCollectionsTable();
         String colsTableName = colsTable.getName();
         boolean collectionsTableFound = false;
         for (Table<?> table : torodbSchema.getTables()) {

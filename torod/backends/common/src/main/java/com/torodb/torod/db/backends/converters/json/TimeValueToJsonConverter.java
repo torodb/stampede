@@ -32,6 +32,8 @@ import com.torodb.torod.db.backends.converters.ValueConverter;
 public class TimeValueToJsonConverter implements
         ValueConverter<String, ScalarTime> {
 
+    private static final long serialVersionUID = 1L;
+
     @Override
     public Class<? extends String> getJsonClass() {
         return String.class;

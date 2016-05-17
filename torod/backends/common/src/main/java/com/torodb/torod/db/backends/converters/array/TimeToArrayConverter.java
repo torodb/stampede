@@ -22,6 +22,7 @@ package com.torodb.torod.db.backends.converters.array;
 
 import javax.json.JsonString;
 
+import org.jooq.tools.json.JSONValue;
 import org.threeten.bp.LocalTime;
 
 import com.torodb.torod.core.subdocument.values.ScalarTime;
@@ -35,12 +36,11 @@ public class TimeToArrayConverter implements ArrayConverter<JsonString, ScalarTi
 
     @Override
     public String toJsonLiteral(ScalarTime value) {
-        return StringToArrayConverter.toJsonString(value.toString());
+        return JSONValue.toJSONString(value.toString());
     }
 
     @Override
     public ScalarTime fromJsonValue(JsonString value) {
         return new LocalTimeScalarTime(LocalTime.parse(value.toString()));
-
     }
 }
