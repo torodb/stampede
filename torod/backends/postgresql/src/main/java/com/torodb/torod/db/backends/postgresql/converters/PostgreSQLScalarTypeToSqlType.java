@@ -37,6 +37,8 @@ public class PostgreSQLScalarTypeToSqlType implements ScalarTypeToSqlType {
     public static final String ARRAY_TYPE = "jsonb";
     public static final String MONGO_OBJECT_ID_TYPE = "mongo_object_id";
     public static final String MONGO_TIMESTAMP_TYPE = "mongo_timestamp";
+    public static final String FULL_MONGO_OBJECT_ID_TYPE = "\"" + TorodbSchema.TORODB_SCHEMA + "\".\"" + MONGO_OBJECT_ID_TYPE + "\"";
+    public static final String FULL_MONGO_TIMESTAMP_TYPE = "\"" + TorodbSchema.TORODB_SCHEMA + "\".\"" + MONGO_TIMESTAMP_TYPE + "\"";
 
     private static final long serialVersionUID = 385628201;
 
@@ -75,11 +77,11 @@ public class PostgreSQLScalarTypeToSqlType implements ScalarTypeToSqlType {
                 }
                 break;
             case Types.DISTINCT: {
-                if (jdbcStringType.equals("\"" + TorodbSchema.TORODB_SCHEMA + "\".\"" + MONGO_OBJECT_ID_TYPE + "\"")
+                if (jdbcStringType.equals(FULL_MONGO_OBJECT_ID_TYPE)
                         || jdbcStringType.equals(MongoObjectIdUDT.MONGO_OBJECT_ID.getName())) {
                     return ScalarType.MONGO_OBJECT_ID;
                 }
-                if (jdbcStringType.equals("\"" + TorodbSchema.TORODB_SCHEMA + "\".\"" + MONGO_TIMESTAMP_TYPE + "\"")
+                if (jdbcStringType.equals(FULL_MONGO_TIMESTAMP_TYPE)
                         || jdbcStringType.equals(MongoTimestampUDT.MONGO_TIMESTAMP.getName())) {
                     return ScalarType.MONGO_TIMESTAMP;
                 }
