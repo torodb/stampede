@@ -69,7 +69,9 @@ public abstract class AbstractToroRetryCommandImplementation<Arg, Rep> extends A
                 justification="The cast is enforced by a precondition")
         @Override
         public void handleException(RetryCallback<Result> callback, Exception t, int attempts) throws MongoException {
-            Preconditions.checkArgument(t instanceof MongoException);
+            if (!(t instanceof MongoException)) {
+                throw new IllegalArgumentException(t);
+            }
             
             boolean isRetryException = false;
             String retryExceptionMessage = null;

@@ -460,10 +460,10 @@ class GreenplumDbConnection extends AbstractDbConnection {
                 return GreenplumScalarTypeToSqlType.ARRAY_TYPE;
             }
             if (fieldType.equals(ScalarMongoObjectId.class)) {
-                return GreenplumScalarTypeToSqlType.MONGO_OBJECT_ID_TYPE;
+                return GreenplumScalarTypeToSqlType.FULL_MONGO_OBJECT_ID_TYPE;
             }
             if (fieldType.equals(ScalarMongoTimestamp.class)) {
-                return GreenplumScalarTypeToSqlType.MONGO_TIMESTAMP_TYPE;
+                return GreenplumScalarTypeToSqlType.FULL_MONGO_TIMESTAMP_TYPE;
             }
         }
         return field.getDataType().getTypeName(conf);

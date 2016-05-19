@@ -671,10 +671,10 @@ class PostgreSQLDbConnection extends AbstractDbConnection {
                 return PostgreSQLScalarTypeToSqlType.ARRAY_TYPE;
             }
             if (fieldType.equals(ScalarMongoObjectId.class)) {
-                return PostgreSQLScalarTypeToSqlType.MONGO_OBJECT_ID_TYPE;
+                return PostgreSQLScalarTypeToSqlType.FULL_MONGO_OBJECT_ID_TYPE;
             }
             if (fieldType.equals(ScalarMongoTimestamp.class)) {
-                return PostgreSQLScalarTypeToSqlType.MONGO_TIMESTAMP_TYPE;
+                return PostgreSQLScalarTypeToSqlType.FULL_MONGO_TIMESTAMP_TYPE;
             }
         }
         return field.getDataType().getTypeName(conf);
