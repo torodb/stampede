@@ -84,6 +84,7 @@
 
     <modules>
         <module>query</module>
+        <module>backend</module>
     </modules>
 
     <dependencyManagement>
