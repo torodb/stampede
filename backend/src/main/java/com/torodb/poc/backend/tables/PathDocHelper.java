@@ -65,6 +65,10 @@ public class PathDocHelper {
         return isDid(fieldName, i) || isRid(fieldName, i) || isPid(fieldName, i) || isSeq(fieldName, i);
     }
 
+    public boolean isSpecialColumn(String attName) {
+        return needsToByEscaped(attName);
+    }
+
     private boolean needsToByEscaped(String attName) {
         int i = getFirstRelevantCharIndex(attName);
         if (i == -1) {

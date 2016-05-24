@@ -42,6 +42,9 @@ import com.torodb.poc.backend.converters.jooq.ValueToJooqConverterProvider;
 import com.torodb.poc.backend.converters.jooq.ValueToJooqDataTypeProvider;
 import com.torodb.poc.backend.sql.index.NamedDbIndex;
 import com.torodb.poc.backend.tables.CollectionTable;
+import com.torodb.poc.backend.tables.ContainerTable;
+import com.torodb.poc.backend.tables.DatabaseTable;
+import com.torodb.poc.backend.tables.FieldTable;
 import com.torodb.poc.backend.tables.PathDocTable;
 import com.torodb.poc.backend.tables.records.FieldRecord;
 import com.torodb.torod.core.connection.exceptions.RetryTransactionException;
@@ -52,7 +55,10 @@ import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
  */
 public interface DatabaseInterface extends Serializable {
     //TODO: Try to remove make DatabaseInterface not serializable
+    @Nonnull DatabaseTable<?> getDatabaseTable();
     @Nonnull CollectionTable<?> getCollectionTable();
+    @Nonnull ContainerTable<?> getContainerTable();
+    @Nonnull FieldTable<?> getFieldTable();
 
     @Nonnull ValueToJooqConverterProvider getValueToJooqConverterProvider();
     @Nonnull ValueToJooqDataTypeProvider getValueToJooqDataTypeProvider();

@@ -39,6 +39,7 @@ import org.jooq.impl.TableImpl;
 
 import com.google.common.collect.AbstractIterator;
 import com.torodb.poc.backend.DatabaseInterface;
+import com.torodb.poc.backend.meta.DatabaseSchema;
 import com.torodb.poc.backend.tables.records.FieldRecord;
 import com.torodb.poc.backend.tables.records.PathDocTableRecord;
 import com.torodb.torod.core.subdocument.values.ScalarValue;
@@ -87,10 +88,6 @@ public class PathDocTable extends TableImpl<PathDocTableRecord> {
             = createField(SEQ_COLUMN_NAME, SQLDataType.INTEGER.nullable(true), this, "");
 
     private final DatabaseInterface databaseInterface;
-    
-    private interface DatabaseSchema extends Schema {
-        
-    }
     
     private final String database;
     private final String collection;

@@ -71,6 +71,9 @@ import com.torodb.poc.backend.postgresql.converters.PostgreSQLValueToCopyConvert
 import com.torodb.poc.backend.postgresql.converters.jooq.PostgreSQLValueToJooqConverterProvider;
 import com.torodb.poc.backend.postgresql.converters.jooq.PostgreSQLValueToJooqDataTypeProvider;
 import com.torodb.poc.backend.postgresql.tables.PostgreSQLCollectionTable;
+import com.torodb.poc.backend.postgresql.tables.PostgreSQLContainerTable;
+import com.torodb.poc.backend.postgresql.tables.PostgreSQLDatabaseTable;
+import com.torodb.poc.backend.postgresql.tables.PostgreSQLFieldTable;
 import com.torodb.poc.backend.sql.index.NamedDbIndex;
 import com.torodb.poc.backend.tables.CollectionTable;
 import com.torodb.poc.backend.tables.ContainerTable;
@@ -118,8 +121,26 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
 
     @Nonnull
     @Override
+    public DatabaseTable<?> getDatabaseTable() {
+        return new PostgreSQLDatabaseTable();
+    }
+
+    @Nonnull
+    @Override
     public CollectionTable<?> getCollectionTable() {
         return new PostgreSQLCollectionTable();
+    }
+
+    @Nonnull
+    @Override
+    public ContainerTable<?> getContainerTable() {
+        return new PostgreSQLContainerTable();
+    }
+
+    @Nonnull
+    @Override
+    public FieldTable<?> getFieldTable() {
+        return new PostgreSQLFieldTable();
     }
 
     @Override
