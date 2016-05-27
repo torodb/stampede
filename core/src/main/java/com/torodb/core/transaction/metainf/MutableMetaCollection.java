@@ -28,8 +28,6 @@ import com.torodb.core.TableRef;
  */
 public interface MutableMetaCollection<MDP extends MutableMetaDocPart> extends MetaCollection<MDP> {
 
-    public abstract void addMetaDocPart(MDP docPart) throws IllegalArgumentException;
-
     public MDP addMetaDocPart(TableRef tableRef, String identifier) throws IllegalArgumentException;
 
 }

@@ -26,8 +26,6 @@ package com.torodb.core.transaction.metainf;
  */
 public interface MutableMetaDatabase<MMC extends MutableMetaCollection> extends MetaDatabase<MutableMetaCollection> {
 
-    public abstract void addMetaCollection(MMC collection) throws IllegalArgumentException;
-
     public abstract MMC addMetaCollection(String colName, String colId) throws IllegalArgumentException;
 
 }
