@@ -27,7 +27,7 @@ import java.util.Collections;
  *
  * @param <MDP>
  */
-public interface MutableMetaCollection<MDP extends MutableDocPart> extends MetaCollection<MetaDocPart> {
+public interface MutableMetaCollection<MDP extends MutableMetaDocPart> extends MetaCollection<MetaDocPart> {
 
     public default MDP addDocPart(TableRef tableRef, String identifier) {
         return addDocPart(tableRef, identifier, Collections.emptyList());

@@ -6,7 +6,7 @@ import com.torodb.kvdocument.types.KVType;
 /**
  *
  */
-public interface MutableDocPart extends MetaDocPart<ImmutableMetaField> {
+public interface MutableMetaDocPart extends MetaDocPart<ImmutableMetaField> {
 
     /**
      * Adds a new field to this table.
