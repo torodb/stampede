@@ -12,8 +12,8 @@ public interface MetaSnapshot<MD extends MetaDatabase> {
     public Stream<MD> streamDatabases();
 
     @Nullable
-    public MD getDatabaseByName(String dbName);
+    public MD getMetaDatabaseByName(String dbName);
 
     @Nullable
-    public MD getDatabaseByIdentifier(String dbIdentifier);
+    public MD getMetaDatabaseByIdentifier(String dbIdentifier);
 }

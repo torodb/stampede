@@ -4,14 +4,14 @@ package com.torodb.metainfo.cache.mvcc;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
+import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetainfoRepository;
+import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import com.torodb.core.transaction.metainf.MetaCollection;
-import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
 
 /**
  *

@@ -38,9 +38,9 @@ public class ImmutableMetaCollection implements MetaCollection<ImmutableMetaDocP
     private final Map<TableRef, ImmutableMetaDocPart> docPartsByTableRef;
     private final Map<String, ImmutableMetaDocPart> docPartsByIdentifier;
 
-    public ImmutableMetaCollection(String docName, String dbName, Iterable<ImmutableMetaDocPart> docParts) {
-        this.name = docName;
-        this.identifier = dbName;
+    public ImmutableMetaCollection(String colName, String colId, Iterable<ImmutableMetaDocPart> docParts) {
+        this.name = colName;
+        this.identifier = colId;
 
         HashMap<TableRef, ImmutableMetaDocPart> byTableRef = new HashMap<>();
         HashMap<String, ImmutableMetaDocPart> byDbName = new HashMap<>();
