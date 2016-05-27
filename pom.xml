@@ -84,6 +84,8 @@
 
     <modules>
         <module>query</module>
+        <module>metainfo-cache</module>
+        <module>core</module>
     </modules>
 
     <dependencyManagement>
@@ -135,14 +137,14 @@
             </dependency>
 
             <dependency>
-                <groupId>org.slf4j</groupId>
-                <artifactId>slf4j-api</artifactId>
-                <version>1.7.21</version>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-api</artifactId>
+                <version>2.5</version>
             </dependency>
             <dependency>
-                <groupId>ch.qos.logback</groupId>
-                <artifactId>logback-classic</artifactId>
-                <version>1.1.7</version>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-core</artifactId>
+                <version>2.5</version>
             </dependency>
             <dependency>
                 <groupId>com.google.guava</groupId>
