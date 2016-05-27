@@ -29,29 +29,29 @@ public interface MetaDocPart<MF extends MetaField> {
 
     /**
      *
-     * @param columnDbName
+     * @param fieldId
      * @return the contained column whose {@link MetaField#getDbName() db name} is the given or null
      *         if there is no one that match that condition
      */
     @Nullable
-    public abstract MF getMetaFieldByIdentifier(String columnDbName);
+    public abstract MF getMetaFieldByIdentifier(String fieldId);
 
     /**
      *
-     * @param columnDocName
+     * @param fieldName
      * @return the contained columns whose {@link MetaField#getDocName() db name} is the given or an
      *         empty list if there is no one that match that condition
      */
-    public abstract Stream<MF> streamMetaFieldByName(String columnDocName);
+    public abstract Stream<MF> streamMetaFieldByName(String fieldName);
 
     /**
      * 
-     * @param columnDocName
+     * @param fieldName
      * @param type
      * @return the contained column whose {@link MetaField#getDocName() db name} and whose
      *         {@link MetaField#getType() type} is the given or null if there is no one that match
      *         that condition
      */
     @Nullable
-    public abstract MF getMetaFieldByNameAndType(String columnDocName, KVType type);
+    public abstract MF getMetaFieldByNameAndType(String fieldName, KVType type);
 }

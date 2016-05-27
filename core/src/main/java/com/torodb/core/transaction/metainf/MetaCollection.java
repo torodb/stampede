@@ -28,7 +28,7 @@ public interface MetaCollection<MDP extends MetaDocPart> {
     public abstract Stream<MDP> streamContainedMetaDocParts();
 
     @Nullable
-    public abstract MDP getMetaDocPartByIdentifier(String tableDbName);
+    public abstract MDP getMetaDocPartByIdentifier(String docPartId);
 
     @Nullable
     public abstract MDP getMetaDocPartByTableRef(TableRef tableRef);
