@@ -8,6 +8,7 @@ import com.torodb.core.TableRef;
 import com.torodb.core.annotations.DoNotChange;
 import com.torodb.kvdocument.types.KVType;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.stream.Stream;
 
 /**
@@ -18,7 +19,7 @@ public class ImmutableMetaDocPart implements MetaDocPart<ImmutableMetaField> {
     private final TableRef tableRef;
     private final String identifier;
     private final Table<String, KVType, ImmutableMetaField> fieldsByNameAndType;
-    private final HashMap<String, ImmutableMetaField> fieldsByIdentifier;
+    private final Map<String, ImmutableMetaField> fieldsByIdentifier;
 
     public ImmutableMetaDocPart(TableRef tableRef, String dbName, @DoNotChange Table<String, KVType, ImmutableMetaField> columns) {
         this.tableRef = tableRef;
@@ -28,7 +29,7 @@ public class ImmutableMetaDocPart implements MetaDocPart<ImmutableMetaField> {
         columns.values().forEach((column) -> fieldsByIdentifier.put(column.getIdentifier(), column));
     }
 
-    public ImmutableMetaDocPart(TableRef tableRef, String dbName, @DoNotChange HashMap<String, ImmutableMetaField> columns) {
+    public ImmutableMetaDocPart(TableRef tableRef, String dbName, @DoNotChange Map<String, ImmutableMetaField> columns) {
         this.tableRef = tableRef;
         this.identifier = dbName;
         this.fieldsByIdentifier = columns;

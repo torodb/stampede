@@ -6,7 +6,7 @@ import com.torodb.kvdocument.types.KVType;
 /**
  *
  */
-public interface MutableMetaDocPart extends MetaDocPart<ImmutableMetaField> {
+public interface MutableMetaDocPart extends MetaDocPart<MetaField> {
 
     /**
      * Adds a new field to this table.
@@ -20,6 +20,6 @@ public interface MutableMetaDocPart extends MetaDocPart<ImmutableMetaField> {
      *                                  {@link DbColumn#getName() name} and
      *                                  {@link DbColumn#getType() type}.
      */
-    public abstract ImmutableMetaField addField(String name, String identifier, KVType type) throws IllegalArgumentException;
+    public abstract ImmutableMetaField addMetaField(String name, String identifier, KVType type) throws IllegalArgumentException;
 
 }

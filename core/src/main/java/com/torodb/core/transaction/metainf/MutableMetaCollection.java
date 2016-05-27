@@ -21,27 +21,15 @@
 package com.torodb.core.transaction.metainf;
 
 import com.torodb.core.TableRef;
-import java.util.Collections;
 
 /**
  *
  * @param <MDP>
  */
-public interface MutableMetaCollection<MDP extends MutableMetaDocPart> extends MetaCollection<MetaDocPart> {
+public interface MutableMetaCollection<MDP extends MutableMetaDocPart> extends MetaCollection<MDP> {
 
-    public default MDP addDocPart(TableRef tableRef, String identifier) {
-        return addDocPart(tableRef, identifier, Collections.emptyList());
-    }
+    public abstract void addMetaDocPart(MDP docPart) throws IllegalArgumentException;
 
-    public abstract MDP addDocPart(TableRef tableRef, String identifier, Iterable<ImmutableMetaField> fields);
-
-    /**
-     *
-     * @param tableRef
-     * @return
-     * @throws IllegalArgumentException if {@link #getMetaDocPartByTableRef(com.torodb.core.TableRef)}
-     *                                  returns null using the same reference
-     */
-    public abstract MDP asMutableDocPart(TableRef tableRef) throws IllegalArgumentException;
+    public MDP addMetaDocPart(TableRef tableRef, String identifier) throws IllegalArgumentException;
 
 }

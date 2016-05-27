@@ -20,26 +20,14 @@
 
 package com.torodb.core.transaction.metainf;
 
-import java.util.Collections;
-
 /**
  *
+ * @param <MMC>
  */
-public interface MutableMetaDatabase<MMD extends MutableMetaDatabase> extends MetaDatabase<MetaCollection> {
+public interface MutableMetaDatabase<MMC extends MutableMetaCollection> extends MetaDatabase<MutableMetaCollection> {
 
-    public default MMD addCollection(String colName, String colId) {
-        return addCollection(colName, colId, Collections.emptyList());
-    }
+    public abstract void addMetaCollection(MMC collection) throws IllegalArgumentException;
 
-    public abstract MMD addCollection(String colName, String colId, Iterable<ImmutableMetaField> fields);
-
-    /**
-     *
-     * @param colName
-     * @return
-     * @throws IllegalArgumentException if {@link #getMetaCollectionByName(java.lang.String)}
-     *                                  returns null using the same name
-     */
-    public abstract MMD asMutableCollection(String colName) throws IllegalArgumentException;
+    public abstract MMC addMetaCollection(String colName, String colId) throws IllegalArgumentException;
 
 }
