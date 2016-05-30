@@ -34,6 +34,7 @@ import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.torodb.core.TableRef;
+import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.MetaField;
 import com.torodb.core.transaction.metainf.MutableMetaCollection;
 import com.torodb.core.transaction.metainf.MutableMetaDocPart;
@@ -80,8 +81,6 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
             Maps.newHashMap();
     private static final AppendValueVisitor objectAppendValueVisitor = new ObjectAppendValueVisitor();
     private static final AppendValueVisitor arrayAppendValueVisitor = new ArrayAppendValueVisitor();
-    private static final TypeIdVisitor typeIdVisitor = new TypeIdVisitor();
-    private static final TypeIdentifierVisitor typeIdentifierVisitor = new TypeIdentifierVisitor();
     
     private final Map<String, CollectionMaterializer> collectionMaterializerMap = Maps.newHashMap();
     
@@ -244,7 +243,8 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
         public CollectionMaterializer(MutableMetaCollection<MutableMetaDocPart> metaCollection) {
             super();
             TableRef rootTableRef = TableRefImpl.createRoot();
-            this.rootPartMaterializer = new PartMaterializer(metaCollection.getName(), new DocPartMaterializer(metaCollection, rootTableRef, null, null));
+            this.rootPartMaterializer = new PartMaterializer(metaCollection.getName(), 0, 
+                    new DocPartMaterializer(metaCollection, rootTableRef, null, null));
         }
         
         public PartMaterializer getRootPartMaterializer() {
@@ -291,11 +291,13 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
     
     public class PartMaterializer implements Materializer {
         private final String key;
+        private final int dimension;
         private final DocPartMaterializer docPartMaterializer;
         
-        public PartMaterializer(String key, DocPartMaterializer docPartMaterializer) {
+        public PartMaterializer(String key, int dimension, DocPartMaterializer docPartMaterializer) {
             super();
             this.key = key;
+            this.dimension = dimension;
             this.docPartMaterializer = docPartMaterializer;
         }
 
@@ -303,12 +305,17 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
             return key;
         }
 
+        public int getDimension() {
+            return dimension;
+        }
+        
         public DocPartMaterializer getDocPartMaterializer() {
             return docPartMaterializer;
         }
         
         public Materializer beginAppendObject() {
-            return new PartMaterializer(key, docPartMaterializer.beginAppendObject(key));
+            docPartMaterializer.beginAppendObject(key);
+            return this;
         }
         
         public void endAppendObject() {
@@ -316,7 +323,8 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
         }
         
         public Materializer beginAppendArray() {
-            return new PartMaterializer(key, docPartMaterializer.beginAppendArray());
+            docPartMaterializer.beginAppendArray();
+            return this;
         }
         
         public void endAppendArray() {
@@ -329,8 +337,9 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
         }
         
         public Materializer appendValueFromObject(String key, KVValue<?> value) {
-            value.accept(objectAppendValueVisitor, this);
-            return new PartMaterializer(key, docPartMaterializer);
+            PartMaterializer partMaterializer = new PartMaterializer(key, dimension, docPartMaterializer);
+            value.accept(objectAppendValueVisitor, partMaterializer);
+            return partMaterializer;
         }
         
         public Materializer appendValueFromArray(KVValue<?> value) {
@@ -431,7 +440,9 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
         
         public void endAppendObject() {
             if (!childMap.isEmpty()) {
-                appendKeyValue("has_child", KVBoolean.TRUE);
+                for (Map.Entry<KeyDimension, DocPartMaterializer> child : childMap.entrySet()) {
+                    appendColumnValue(child.getKey().getIdentifier(), FieldType.CHILD, /* TODO: child.getValue().lastWasArray() */ false ? KVBoolean.TRUE : KVBoolean.FALSE);
+                }
             }
         }
         
@@ -446,15 +457,15 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
         }
         
         private DocPartMaterializer append(KeyDimension keyDimension) {
-            DocPartMaterializer child = childMap.get(keyDimension);
+            DocPartMaterializer childDocPartMaterializer = childMap.get(keyDimension);
             
-            if (child == null) {
+            if (childDocPartMaterializer == null) {
                 TableRef tableRef = TableRefImpl.createChild(this.tableRef, keyDimension.getIdentifier());
-                child = new DocPartMaterializer(metaCollection, tableRef, this, keyDimension);
-                childMap.put(keyDimension, child);
+                childDocPartMaterializer = new DocPartMaterializer(metaCollection, tableRef, this, keyDimension);
+                childMap.put(keyDimension, childDocPartMaterializer);
             }
             
-            return child;
+            return childDocPartMaterializer;
         }
         
         public void appendElement(int seq) {
@@ -462,55 +473,21 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
         }
         
         public void appendKeyValue(String key, KVValue<?> value) {
-            MetaField metaField = metaDocPart.getMetaFieldByNameAndType(key, value.getType());
-            if (metaField == null) {
-                String identifier = generateColumnName(key, value.getType());
-                metaField = metaDocPart.addMetaField(key, identifier, value.getType());
-            }
-            appendColumnValue(metaField, value);
+            FieldType fieldType = FieldType.from(value.getType());
+            appendColumnValue(key, fieldType, value);
         }
         
         public void appendScalarValue(KVValue<?> value) {
             appendKeyValue("v", value);
         }
         
-        private void appendColumnValue(MetaField metaField, KVValue<?> value) {
-            docPartData.appendColumnValue(metaField.getName(), metaField.getIdentifier(), value);
-        }
-    }
-    
-    public static class TableRefImpl extends TableRef {
-        private final Optional<TableRef> parent;
-        private final String name;
-        
-        public static TableRef createRoot() {
-            return new TableRefImpl();
-        }
-        
-        public static TableRef createChild(TableRef tableRef, String name) {
-            return new TableRefImpl(tableRef, name);
-        }
-        
-        private TableRefImpl() {
-            super();
-            this.parent = Optional.empty();
-            this.name = "";
-        }
-        
-        private TableRefImpl(@Nonnull TableRef parent, @Nonnull String name) {
-            super();
-            this.parent = Optional.of(parent);
-            this.name = name;
-        }
-        
-        @Override
-        public Optional<TableRef> getParent() {
-            return parent;
-        }
-
-        @Override
-        public String getName() {
-            return name;
+        private void appendColumnValue(String key, FieldType fieldType, KVValue<?> value) {
+            MetaField metaField = metaDocPart.getMetaFieldByNameAndType(key, fieldType);
+            if (metaField == null) {
+                String identifier = generateColumnName(key, fieldType);
+                metaField = metaDocPart.addMetaField(key, identifier, fieldType);
+            }
+            docPartData.appendColumnValue(metaField.getName(), metaField.getIdentifier(), fieldType, value);
         }
     }
     
@@ -622,8 +599,8 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
             return currentRow;
         }
         
-        public void appendColumnValue(String key, String identifier, KVValue<?> value) {
-            KeyTypeId keyTypeId = new KeyTypeId(key, value.getType().accept(typeIdVisitor, null));
+        public void appendColumnValue(String key, String identifier, FieldType fieldType, KVValue<?> value) {
+            KeyTypeId keyTypeId = new KeyTypeId(key, fieldType.ordinal());
             Integer index = columnIndexMap.get(keyTypeId);
             if (index == null) {
                 index = currentIndex++;
@@ -741,19 +718,38 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
             tableNameBuilder.append('_');
         }
         
+        //TODO: Check internal and system table names and conflicts among existing metadata
+        
         return tableName;
     }
     
+    /*
+    0 BINARY,
+    1 BOOLEAN,
+    2 DATE,
+    3 DOUBLE,
+    4 INSTANT,
+    5 INTEGER,
+    6 LONG,
+    7 MONGO_OBJECT_ID,
+    8 MONGO_TIME_STAMP,
+    9 NULL,
+    10 STRING,
+    11 TIME,
+    12 CHILD;
+    */
+    private static final char[] FIELD_TYPE_IDENTIFIERS = new char[] {'r', 'b', 't', 'd', 'k', 'i', 'l', 'x', 'y', 'n', 's', 'c', 'e'};
+
     //TODO: Move and refactor
-    private static String generateColumnName(String key, KVType type) {
-        Character typeIdentifier = type.accept(typeIdentifierVisitor, null);
+    private static String generateColumnName(String key, FieldType fieldType) {
+        char typeIdentifier = FIELD_TYPE_IDENTIFIERS[fieldType.ordinal()];
         String columnName = key.toLowerCase(Locale.US).replaceAll("[^a-z0-9$]", "_") + typeIdentifier;
         if (columnName.charAt(0) == '$' || (columnName.charAt(0) >= '0' && columnName.charAt(0) <= '9')) {
             columnName = '_' + columnName;
         }
         columnName = columnName.replaceAll("_+", "_");
         
-        //TODO: Check system column names
+        //TODO: Check internal and system column names and conflicts among existing metadata
         
         return columnName;
     }
@@ -877,170 +873,6 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
         @Override
         public Void visit(KVArray value, Materializer arg) {
             return null;
-        }
-    }
-    
-    public static class TypeIdentifierVisitor implements KVTypeVisitor<Character, Void> {
-        @Override
-        public Character visit(ArrayType type, Void arg) {
-            throw new ToroImplementationException("Cannot identify type " + type.getClass());
-        }
-
-        @Override
-        public Character visit(BooleanType type, Void arg) {
-            return 'b';
-        }
-
-        @Override
-        public Character visit(DoubleType type, Void arg) {
-            return 'd';
-        }
-
-        @Override
-        public Character visit(IntegerType type, Void arg) {
-            return 'i';
-        }
-
-        @Override
-        public Character visit(LongType type, Void arg) {
-            return 'l';
-        }
-
-        @Override
-        public Character visit(NullType type, Void arg) {
-            return 'n';
-        }
-
-        @Override
-        public Character visit(DocumentType type, Void arg) {
-            throw new ToroImplementationException("Cannot identify type " + type.getClass());
-        }
-
-        @Override
-        public Character visit(StringType type, Void arg) {
-            return 's';
-        }
-
-        @Override
-        public Character visit(GenericType type, Void arg) {
-            throw new ToroImplementationException("Cannot identify type " + type.getClass());
-        }
-
-        @Override
-        public Character visit(MongoObjectIdType type, Void arg) {
-            return 'x';
-        }
-
-        @Override
-        public Character visit(InstantType type, Void arg) {
-            return 'k';
-        }
-
-        @Override
-        public Character visit(DateType type, Void arg) {
-            return 't';
-        }
-
-        @Override
-        public Character visit(TimeType type, Void arg) {
-            return 'c';
-        }
-
-        @Override
-        public Character visit(BinaryType type, Void arg) {
-            return 'r';
-        }
-
-        @Override
-        public Character visit(NonExistentType type, Void arg) {
-            throw new ToroImplementationException("Cannot identify type " + type.getClass());
-        }
-
-        @Override
-        public Character visit(MongoTimestampType type, Void arg) {
-            return 'y';
-        }
-    }
-    
-    public static class TypeIdVisitor implements KVTypeVisitor<Integer, Void> {
-        @Override
-        public Integer visit(ArrayType type, Void arg) {
-            return 0;
-        }
-
-        @Override
-        public Integer visit(BooleanType type, Void arg) {
-            return 1;
-        }
-
-        @Override
-        public Integer visit(DoubleType type, Void arg) {
-            return 2;
-        }
-
-        @Override
-        public Integer visit(IntegerType type, Void arg) {
-            return 3;
-        }
-
-        @Override
-        public Integer visit(LongType type, Void arg) {
-            return 4;
-        }
-
-        @Override
-        public Integer visit(NullType type, Void arg) {
-            return 5;
-        }
-
-        @Override
-        public Integer visit(DocumentType type, Void arg) {
-            return 6;
-        }
-
-        @Override
-        public Integer visit(StringType type, Void arg) {
-            return 7;
-        }
-
-        @Override
-        public Integer visit(GenericType type, Void arg) {
-            return 8;
-        }
-
-        @Override
-        public Integer visit(MongoObjectIdType type, Void arg) {
-            return 9;
-        }
-
-        @Override
-        public Integer visit(InstantType type, Void arg) {
-            return 10;
-        }
-
-        @Override
-        public Integer visit(DateType type, Void arg) {
-            return 11;
-        }
-
-        @Override
-        public Integer visit(TimeType type, Void arg) {
-            return 12;
-        }
-
-        @Override
-        public Integer visit(BinaryType type, Void arg) {
-            return 13;
-        }
-
-        @Override
-        public Integer visit(NonExistentType type, Void arg) {
-            return 14;
-        }
-
-        @Override
-        public Integer visit(MongoTimestampType type, Void arg) {
-            return 15;
         }
     }
 }

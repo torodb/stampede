@@ -13,11 +13,6 @@
     <packaging>jar</packaging>
     <dependencies>
         <dependency>
-            <groupId>com.torodb.kvdocument</groupId>
-            <artifactId>kvdocument-core</artifactId>
-            <version>0.40-alpha2-SNAPSHOT</version>
-        </dependency>
-        <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>core</artifactId>
             <version>${project.version}</version>

@@ -24,12 +24,8 @@ import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 import com.torodb.core.TableRef;
 import com.torodb.core.annotations.DoNotChange;
-import com.torodb.core.transaction.metainf.ImmutableMetaDocPart;
 import com.torodb.core.transaction.metainf.ImmutableMetaDocPart.Builder;
-import com.torodb.core.transaction.metainf.ImmutableMetaField;
-import com.torodb.core.transaction.metainf.MetaField;
-import com.torodb.core.transaction.metainf.MutableMetaDocPart;
-import com.torodb.kvdocument.types.KVType;
+import com.torodb.core.transaction.metainf.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -41,7 +37,7 @@ import java.util.stream.Stream;
 public class WrapperMutableMetaDocPart implements MutableMetaDocPart {
 
     private final ImmutableMetaDocPart wrapped;
-    private final Table<String, KVType, MetaField> newFields;
+    private final Table<String, FieldType, MetaField> newFields;
     private final List<ImmutableMetaField> addedFields;
     private final Consumer<WrapperMutableMetaDocPart> changeConsumer;
 
@@ -59,7 +55,7 @@ public class WrapperMutableMetaDocPart implements MutableMetaDocPart {
     }
 
     @Override
-    public ImmutableMetaField addMetaField(String name, String identifier, KVType type) throws
+    public ImmutableMetaField addMetaField(String name, String identifier, FieldType type) throws
             IllegalArgumentException {
         if (getMetaFieldByNameAndType(name, type) != null) {
             throw new IllegalArgumentException("There is another column with the name " + name +
@@ -116,7 +112,7 @@ public class WrapperMutableMetaDocPart implements MutableMetaDocPart {
     }
 
     @Override
-    public ImmutableMetaField getMetaFieldByNameAndType(String fieldName, KVType type) {
+    public ImmutableMetaField getMetaFieldByNameAndType(String fieldName, FieldType type) {
         return (ImmutableMetaField) newFields.get(fieldName, type);
     }
 
