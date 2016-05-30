@@ -414,23 +414,17 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
             return rootDocPartData;
         }
         
-        public Iterator<DocPartMaterializer> docPartMaterializerIterator() {
+        public Iterator<DocPartMaterializer> getChildDocPartMaterializerIterator() {
             return new Iterator<DocumentMaterializerVisitor.DocPartMaterializer>() {
                 private final Iterator<Map.Entry<KeyDimension, DocPartMaterializer>> iterator = childMap.entrySet().iterator();
-                private boolean rootAvailable = true;
                 
                 @Override
                 public boolean hasNext() {
-                    return rootAvailable || iterator.hasNext();
+                    return iterator.hasNext();
                 }
 
                 @Override
                 public DocPartMaterializer next() {
-                    if (rootAvailable) {
-                        rootAvailable = false;
-                        return DocPartMaterializer.this;
-                    }
-                    
                     return iterator.next().getValue();
                 }
             };
@@ -442,16 +436,14 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
         }
         
         public DocPartMaterializer beginAppendObject(KeyDimension keyDimension) {
-            DocPartMaterializer docPartMaterializer = append(this, keyDimension);
+            DocPartMaterializer docPartMaterializer = append(null, keyDimension);
             docPartMaterializer.docPartData.appendObjectRow();
             return docPartMaterializer;
         }
         
         public void endAppendObject() {
-            if (!childMap.isEmpty()) {
-                for (Map.Entry<KeyDimension, DocPartMaterializer> child : childMap.entrySet()) {
-                    appendColumnValue(child.getKey().getIdentifier(), FieldType.CHILD, /* TODO: child.getValue().lastWasArray() */ false ? KVBoolean.TRUE : KVBoolean.FALSE);
-                }
+            if (!isRoot()) {
+                getParentDocPartMaterializer().appendColumnValue(keyDimension.getIdentifier(), FieldType.CHILD, KVBoolean.FALSE);
             }
         }
         
@@ -461,16 +453,18 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
         }
         
         public void endAppendArray() {
-            endAppendObject();
+            if (!isRoot()) {
+                getParentDocPartMaterializer().appendColumnValue(keyDimension.getIdentifier(), FieldType.CHILD, KVBoolean.TRUE);
+            }
         }
         
         private DocPartMaterializer append(DocPartMaterializer keyDimensionParentDocPartMaterializer, KeyDimension keyDimension) {
-            DocPartMaterializer childDocPartMaterializer = keyDimensionParentDocPartMaterializer.childMap.get(keyDimension);
+            DocPartMaterializer childDocPartMaterializer = getKeyDimensionParentDocPartMaterializer().childMap.get(keyDimension);
             
             if (childDocPartMaterializer == null) {
-                TableRef tableRef = TableRefImpl.createChild(keyDimensionParentDocPartMaterializer.tableRef, keyDimension.getIdentifier());
+                TableRef tableRef = TableRefImpl.createChild(this.tableRef, keyDimension.getIdentifier());
                 childDocPartMaterializer = new DocPartMaterializer(metaCollection, tableRef, this, keyDimensionParentDocPartMaterializer, keyDimension);
-                keyDimensionParentDocPartMaterializer.childMap.put(keyDimension, childDocPartMaterializer);
+                getKeyDimensionParentDocPartMaterializer().childMap.put(keyDimension, childDocPartMaterializer);
             }
             
             return childDocPartMaterializer;
@@ -552,6 +546,7 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
     public class DocPartData extends ArrayList<DocPartRow> {
         private static final long serialVersionUID = 1L;
         
+        private final DocPartMaterializer docPartMaterializer;
         private final DocPartRidGenerator docPartRidGenerator;
         private final DocPartData parentDocPartData;
         private final DocPartData rootDocPartData;
@@ -562,6 +557,7 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
         
         public DocPartData(DocPartMaterializer docPartMaterializer) {
             super();
+            this.docPartMaterializer = docPartMaterializer;
             this.docPartRidGenerator = new DocPartRidGenerator(docPartMaterializer);
             this.parentDocPartData = docPartMaterializer.isRoot() ? null : docPartMaterializer.getParentDocPartMaterializer().getDocPartData();
             this.rootDocPartData = docPartMaterializer.getRootDocPartData();
@@ -575,8 +571,8 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
             return columnIndexMap.size();
         }
         
-        public Iterator<KeyFieldType> orderedKeyFieldTypeIterator() {
-            return new Iterator<DocumentMaterializerVisitor.KeyFieldType>() {
+        public Iterator<MetaField> orderedMetaFieldIterator() {
+            return new Iterator<MetaField>() {
                 private final int count = columnCount();
                 private int index = 0;
                 
@@ -586,8 +582,9 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
                 }
                 
                 @Override
-                public KeyFieldType next() {
-                    return columnIndexMap.inverse().get(index++);
+                public MetaField next() {
+                    KeyFieldType keyFieldType = columnIndexMap.inverse().get(index++);
+                    return docPartMaterializer.getMetaDocPart().getMetaFieldByNameAndType(keyFieldType.getKey(), keyFieldType.getFieldType());
                 }
             };
         }
