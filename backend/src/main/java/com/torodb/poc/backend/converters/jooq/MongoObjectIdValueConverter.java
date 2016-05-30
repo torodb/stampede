@@ -22,30 +22,31 @@ package com.torodb.poc.backend.converters.jooq;
 
 import org.jooq.impl.SQLDataType;
 
-import com.torodb.torod.core.subdocument.ScalarType;
-import com.torodb.torod.core.subdocument.values.ScalarMongoObjectId;
-import com.torodb.torod.core.subdocument.values.heap.ByteArrayScalarMongoObjectId;
+import com.torodb.kvdocument.types.KVType;
+import com.torodb.kvdocument.types.MongoObjectIdType;
+import com.torodb.kvdocument.values.KVMongoObjectId;
+import com.torodb.kvdocument.values.heap.ByteArrayKVMongoObjectId;
 
 /**
  *
  */
-public class MongoObjectIdValueConverter implements SubdocValueConverter<byte[], ScalarMongoObjectId> {
+public class MongoObjectIdValueConverter implements KVValueConverter<byte[], KVMongoObjectId> {
     private static final long serialVersionUID = 1L;
 
-    public static final DataTypeForScalar<ScalarMongoObjectId> TYPE = DataTypeForScalar.from(SQLDataType.BINARY, new MongoObjectIdValueConverter());
+    public static final DataTypeForKV<KVMongoObjectId> TYPE = DataTypeForKV.from(SQLDataType.BINARY, new MongoObjectIdValueConverter());
 
     @Override
-    public ScalarType getErasuredType() {
-        return ScalarType.MONGO_OBJECT_ID;
+    public KVType getErasuredType() {
+        return MongoObjectIdType.INSTANCE;
     }
 
     @Override
-    public ScalarMongoObjectId from(byte[] databaseObject) {
-        return new ByteArrayScalarMongoObjectId(databaseObject);
+    public KVMongoObjectId from(byte[] databaseObject) {
+        return new ByteArrayKVMongoObjectId(databaseObject);
     }
 
     @Override
-    public byte[] to(ScalarMongoObjectId userObject) {
+    public byte[] to(KVMongoObjectId userObject) {
         return userObject.getArrayValue();
     }
 
@@ -55,8 +56,8 @@ public class MongoObjectIdValueConverter implements SubdocValueConverter<byte[],
     }
 
     @Override
-    public Class<ScalarMongoObjectId> toType() {
-        return ScalarMongoObjectId.class;
+    public Class<KVMongoObjectId> toType() {
+        return KVMongoObjectId.class;
     }
 
 }

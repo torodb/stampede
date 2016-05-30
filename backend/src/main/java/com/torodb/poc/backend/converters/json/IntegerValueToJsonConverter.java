@@ -20,14 +20,14 @@
 
 package com.torodb.poc.backend.converters.json;
 
+import com.torodb.kvdocument.values.KVInteger;
 import com.torodb.poc.backend.converters.ValueConverter;
-import com.torodb.torod.core.subdocument.values.ScalarInteger;
 
 /**
  *
  */
 public class IntegerValueToJsonConverter implements
-        ValueConverter<Number, ScalarInteger> {
+        ValueConverter<Number, KVInteger> {
 
     private static final long serialVersionUID = 1L;
 
@@ -37,13 +37,13 @@ public class IntegerValueToJsonConverter implements
     }
 
     @Override
-    public Class<? extends ScalarInteger> getValueClass() {
-        return ScalarInteger.class;
+    public Class<? extends KVInteger> getValueClass() {
+        return KVInteger.class;
     }
 
     @Override
-    public ScalarInteger toValue(Number value) {
-        return ScalarInteger.of(value.intValue());
+    public KVInteger toValue(Number value) {
+        return KVInteger.of(value.intValue());
     }
     
 }

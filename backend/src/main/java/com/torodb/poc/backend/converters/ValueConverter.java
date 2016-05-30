@@ -22,12 +22,12 @@ package com.torodb.poc.backend.converters;
 
 import java.io.Serializable;
 
-import com.torodb.torod.core.subdocument.values.ScalarValue;
+import com.torodb.kvdocument.values.KVValue;
 
 /**
  *
  */
-public interface ValueConverter<J, V extends ScalarValue<?>> extends Serializable {
+public interface ValueConverter<J, V extends KVValue<?>> extends Serializable {
     
     Class<? extends J> getJsonClass();
     

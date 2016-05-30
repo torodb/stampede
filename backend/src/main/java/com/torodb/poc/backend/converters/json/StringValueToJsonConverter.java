@@ -20,15 +20,15 @@
 
 package com.torodb.poc.backend.converters.json;
 
+import com.torodb.kvdocument.values.KVString;
+import com.torodb.kvdocument.values.heap.StringKVString;
 import com.torodb.poc.backend.converters.ValueConverter;
-import com.torodb.torod.core.subdocument.values.ScalarString;
-import com.torodb.torod.core.subdocument.values.heap.StringScalarString;
 
 /**
  *
  */
 public class StringValueToJsonConverter implements
-        ValueConverter<String, ScalarString> {
+        ValueConverter<String, KVString> {
 
     private static final long serialVersionUID = 1L;
 
@@ -38,13 +38,13 @@ public class StringValueToJsonConverter implements
     }
 
     @Override
-    public Class<? extends ScalarString> getValueClass() {
-        return ScalarString.class;
+    public Class<? extends KVString> getValueClass() {
+        return KVString.class;
     }
 
     @Override
-    public ScalarString toValue(String value) {
-        return new StringScalarString(value);
+    public KVString toValue(String value) {
+        return new StringKVString(value);
     }
     
 }

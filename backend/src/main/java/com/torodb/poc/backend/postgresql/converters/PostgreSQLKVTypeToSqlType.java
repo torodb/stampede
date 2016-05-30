@@ -23,17 +23,29 @@ package com.torodb.poc.backend.postgresql.converters;
 
 import java.sql.Types;
 
-import com.torodb.poc.backend.ScalarTypeToSqlType;
+import com.torodb.kvdocument.types.BinaryType;
+import com.torodb.kvdocument.types.BooleanType;
+import com.torodb.kvdocument.types.DateType;
+import com.torodb.kvdocument.types.DoubleType;
+import com.torodb.kvdocument.types.InstantType;
+import com.torodb.kvdocument.types.IntegerType;
+import com.torodb.kvdocument.types.KVType;
+import com.torodb.kvdocument.types.LongType;
+import com.torodb.kvdocument.types.MongoObjectIdType;
+import com.torodb.kvdocument.types.MongoTimestampType;
+import com.torodb.kvdocument.types.NullType;
+import com.torodb.kvdocument.types.StringType;
+import com.torodb.kvdocument.types.TimeType;
 import com.torodb.poc.backend.meta.TorodbSchema;
+import com.torodb.poc.backend.mocks.KVTypeToSqlType;
+import com.torodb.poc.backend.mocks.ToroImplementationException;
 import com.torodb.poc.backend.udt.MongoObjectIdUDT;
 import com.torodb.poc.backend.udt.MongoTimestampUDT;
-import com.torodb.torod.core.exceptions.ToroImplementationException;
-import com.torodb.torod.core.subdocument.ScalarType;
 
 /**
  *
  */
-public class PostgreSQLScalarTypeToSqlType implements ScalarTypeToSqlType {
+public class PostgreSQLKVTypeToSqlType implements KVTypeToSqlType {
 
     public static final String MONGO_OBJECT_ID_TYPE = "mongo_object_id";
     public static final String MONGO_TIMESTAMP_TYPE = "mongo_timestamp";
@@ -41,44 +53,44 @@ public class PostgreSQLScalarTypeToSqlType implements ScalarTypeToSqlType {
     private static final long serialVersionUID = 385628201;
 
     @Override
-    public ScalarType toScalarType(
+    public KVType toKVType(
             String columnName,
             int jdbcIntType,
             String jdbcStringType
     ) {
         switch (jdbcIntType) {
             case Types.BIGINT:
-                return ScalarType.LONG;
+                return LongType.INSTANCE;
             case Types.BOOLEAN:
             case Types.BIT:
-                return ScalarType.BOOLEAN;
+                return BooleanType.INSTANCE;
             case Types.DATE:
-                return ScalarType.DATE;
+                return DateType.INSTANCE;
             case Types.DOUBLE:
-                return ScalarType.DOUBLE;
+                return DoubleType.INSTANCE;
             case Types.INTEGER:
-                return ScalarType.INTEGER;
+                return IntegerType.INSTANCE;
             case Types.SMALLINT:
             case Types.NULL:
-                return ScalarType.NULL;
+                return NullType.INSTANCE;
             case Types.TIME:
-                return ScalarType.TIME;
+                return TimeType.INSTANCE;
             case Types.TIMESTAMP:
-                return ScalarType.INSTANT;
+                return InstantType.INSTANCE;
             case Types.VARCHAR:
-                return ScalarType.STRING;
+                return StringType.INSTANCE;
             case Types.BINARY:
-                return ScalarType.BINARY;
+                return BinaryType.INSTANCE;
             case Types.OTHER:
                 break;
             case Types.DISTINCT: {
                 if (jdbcStringType.equals("\"" + TorodbSchema.TORODB_SCHEMA + "\".\"" + MONGO_OBJECT_ID_TYPE + "\"")
                         || jdbcStringType.equals(MongoObjectIdUDT.MONGO_OBJECT_ID.getName())) {
-                    return ScalarType.MONGO_OBJECT_ID;
+                    return MongoObjectIdType.INSTANCE;
                 }
                 if (jdbcStringType.equals("\"" + TorodbSchema.TORODB_SCHEMA + "\".\"" + MONGO_TIMESTAMP_TYPE + "\"")
                         || jdbcStringType.equals(MongoTimestampUDT.MONGO_TIMESTAMP.getName())) {
-                    return ScalarType.MONGO_TIMESTAMP;
+                    return MongoTimestampType.INSTANCE;
                 }
                 break;
             }

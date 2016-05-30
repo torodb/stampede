@@ -2,15 +2,30 @@
 package com.torodb.poc.backend.postgresql.converters;
 
 import com.torodb.common.util.HexUtils;
-import com.torodb.torod.core.subdocument.values.*;
+import com.torodb.kvdocument.values.KVArray;
+import com.torodb.kvdocument.values.KVBinary;
+import com.torodb.kvdocument.values.KVBoolean;
+import com.torodb.kvdocument.values.KVDate;
+import com.torodb.kvdocument.values.KVDocument;
+import com.torodb.kvdocument.values.KVDouble;
+import com.torodb.kvdocument.values.KVInstant;
+import com.torodb.kvdocument.values.KVInteger;
+import com.torodb.kvdocument.values.KVLong;
+import com.torodb.kvdocument.values.KVMongoObjectId;
+import com.torodb.kvdocument.values.KVMongoTimestamp;
+import com.torodb.kvdocument.values.KVNull;
+import com.torodb.kvdocument.values.KVString;
+import com.torodb.kvdocument.values.KVTime;
+import com.torodb.kvdocument.values.KVValue;
+import com.torodb.kvdocument.values.KVValueVisitor;
+import com.torodb.poc.backend.mocks.ToroImplementationException;
 
 /**
  *
  */
-public class PostgreSQLValueToCopyConverter implements ScalarValueVisitor<Void, StringBuilder> {
+public class PostgreSQLValueToCopyConverter implements KVValueVisitor<Void, StringBuilder> {
     private static final char ROW_DELIMETER = '\n';
     private static final char COLUMN_DELIMETER = '\t';
-    private static final InArrayConverter IN_ARRAY_CONVERTER = new InArrayConverter();
 
     public static final PostgreSQLValueToCopyConverter INSTANCE = new PostgreSQLValueToCopyConverter();
 
@@ -18,7 +33,7 @@ public class PostgreSQLValueToCopyConverter implements ScalarValueVisitor<Void, 
     }
 
     @Override
-    public Void visit(ScalarBoolean value, StringBuilder arg) {
+    public Void visit(KVBoolean value, StringBuilder arg) {
         if (value.getValue()) {
             arg.append("true");
         }
@@ -29,53 +44,42 @@ public class PostgreSQLValueToCopyConverter implements ScalarValueVisitor<Void, 
     }
 
     @Override
-    public Void visit(ScalarNull value, StringBuilder arg) {
+    public Void visit(KVNull value, StringBuilder arg) {
         arg.append("\\N");
         return null;
     }
 
     @Override
-    public Void visit(ScalarArray value, StringBuilder arg) {
-        arg.append('[');
-        for (ScalarValue<?> child : value) {
-            child.accept(IN_ARRAY_CONVERTER, arg);
-            arg.append(',');
-        }
-        if (!value.isEmpty()) {
-            arg.replace(arg.length() - 1, arg.length(), "]");
-        }
-        else {
-            arg.append(']');
-        }
-        return null;
+    public Void visit(KVArray value, StringBuilder arg) {
+        throw new ToroImplementationException("Ouch this should not occur");
     }
 
     @Override
-    public Void visit(ScalarInteger value, StringBuilder arg) {
+    public Void visit(KVInteger value, StringBuilder arg) {
         arg.append(value.getValue().toString());
         return null;
     }
 
     @Override
-    public Void visit(ScalarLong value, StringBuilder arg) {
+    public Void visit(KVLong value, StringBuilder arg) {
         arg.append(value.getValue().toString());
         return null;
     }
 
     @Override
-    public Void visit(ScalarDouble value, StringBuilder arg) {
+    public Void visit(KVDouble value, StringBuilder arg) {
         arg.append(value.getValue().toString());
         return null;
     }
 
     @Override
-    public Void visit(ScalarString value, StringBuilder arg) {
+    public Void visit(KVString value, StringBuilder arg) {
         escape(value.getValue(), arg);
         return null;
     }
 
     @Override
-    public Void visit(ScalarMongoObjectId value, StringBuilder arg) {
+    public Void visit(KVMongoObjectId value, StringBuilder arg) {
         arg.append("\\\\x");
 
         HexUtils.bytes2Hex(value.getArrayValue(), arg);
@@ -84,7 +88,7 @@ public class PostgreSQLValueToCopyConverter implements ScalarValueVisitor<Void, 
     }
 
     @Override
-    public Void visit(ScalarBinary value, StringBuilder arg) {
+    public Void visit(KVBinary value, StringBuilder arg) {
         arg.append("\\\\x");
 
         HexUtils.bytes2Hex(value.getByteSource().read(), arg);
@@ -93,7 +97,7 @@ public class PostgreSQLValueToCopyConverter implements ScalarValueVisitor<Void, 
     }
 
     @Override
-    public Void visit(ScalarInstant value, StringBuilder arg) {
+    public Void visit(KVInstant value, StringBuilder arg) {
         arg.append('\'')
                 //this prints the value on ISO-8601, which is the recommended format on PostgreSQL
                 .append(value.getValue().toString())
@@ -102,7 +106,7 @@ public class PostgreSQLValueToCopyConverter implements ScalarValueVisitor<Void, 
     }
 
     @Override
-    public Void visit(ScalarDate value, StringBuilder arg) {
+    public Void visit(KVDate value, StringBuilder arg) {
         arg.append('\'')
                 //this prints the value on ISO-8601, which is the recommended format on PostgreSQL
                 .append(value.getValue().toString())
@@ -111,7 +115,7 @@ public class PostgreSQLValueToCopyConverter implements ScalarValueVisitor<Void, 
     }
 
     @Override
-    public Void visit(ScalarTime value, StringBuilder arg) {
+    public Void visit(KVTime value, StringBuilder arg) {
         arg.append('\'')
                 //this prints the value on ISO-8601, which is the recommended format on PostgreSQL
                 .append(value.getValue().toString())
@@ -120,7 +124,7 @@ public class PostgreSQLValueToCopyConverter implements ScalarValueVisitor<Void, 
     }
 
     @Override
-    public Void visit(ScalarMongoTimestamp value, StringBuilder arg) {
+    public Void visit(KVMongoTimestamp value, StringBuilder arg) {
         arg.append('(').append(value.getSecondsSinceEpoch()).append(',').append(value.getOrdinal()).append(')');
         return null;
     }
@@ -164,122 +168,8 @@ public class PostgreSQLValueToCopyConverter implements ScalarValueVisitor<Void, 
         return false;
     }
 
-    static class InArrayConverter implements
-            ScalarValueVisitor<Void, StringBuilder> {
-
-        @Override
-        public Void visit(ScalarBoolean value, StringBuilder arg) {
-            if (value.getValue()) {
-                arg.append("true");
-            } else {
-                arg.append("false");
-            }
-            return null;
-        }
-
-        @Override
-        public Void visit(ScalarNull value, StringBuilder arg) {
-            arg.append("null");
-            return null;
-        }
-
-        @Override
-        public Void visit(ScalarArray value, StringBuilder arg) {
-            arg.append('[');
-            for (ScalarValue<?> child : value) {
-                child.accept(this, arg);
-                arg.append(',');
-            }
-            if (!value.isEmpty()) {
-                arg.replace(arg.length() - 1, arg.length(), "]");
-            }
-            return null;
-        }
-
-        @Override
-        public Void visit(ScalarInteger value, StringBuilder arg) {
-            arg.append(value.getValue().toString());
-            return null;
-        }
-
-        @Override
-        public Void visit(ScalarLong value, StringBuilder arg) {
-            arg.append(value.getValue().toString());
-            return null;
-        }
-
-        @Override
-        public Void visit(ScalarDouble value, StringBuilder arg) {
-            arg.append(value.getValue().toString());
-            return null;
-        }
-
-        @Override
-        public Void visit(ScalarString value, StringBuilder arg) {
-            arg.append('"');
-            escape(value.getValue(), arg);
-            arg.append('"');
-            return null;
-        }
-
-        @Override
-        public Void visit(ScalarMongoObjectId value, StringBuilder arg) {
-            arg.append('"');
-            arg.append("\\\\x");
-
-            HexUtils.bytes2Hex(value.getArrayValue(), arg);
-
-            arg.append('"');
-            
-            return null;
-        }
-
-        @Override
-        public Void visit(ScalarBinary value, StringBuilder arg) {
-            arg.append('"');
-            arg.append("\\\\x");
-
-            HexUtils.bytes2Hex(value.getByteSource().read(), arg);
-
-            arg.append('"');
-
-            return null;
-        }
-
-        @Override
-        public Void visit(ScalarInstant value, StringBuilder arg) {
-            arg.append('"')
-                    //this prints the value on ISO-8601, which is the recommended format on PostgreSQL
-                    .append(value.getValue().toString())
-                    .append('"');
-            return null;
-        }
-
-        @Override
-        public Void visit(ScalarDate value, StringBuilder arg) {
-            arg.append('"')
-                    //this prints the value on ISO-8601, which is the recommended format on PostgreSQL
-                    .append(value.getValue().toString())
-                    .append('"');
-            return null;
-        }
-
-        @Override
-        public Void visit(ScalarTime value, StringBuilder arg) {
-            arg.append('"')
-                    //this prints the value on ISO-8601, which is the recommended format on PostgreSQL
-                    .append(value.getValue().toString())
-                    .append('"');
-            return null;
-        }
-
-        @Override
-        public Void visit(ScalarMongoTimestamp value, StringBuilder arg) {
-            arg.append("{\"secs\":").append(value.getSecondsSinceEpoch())
-                    .append(",\"counter\":").append(value.getOrdinal())
-                    .append('}');
-
-            return null;
-        }
+    @Override
+    public Void visit(KVDocument value, StringBuilder arg) {
+        throw new ToroImplementationException("Ouch this should not occur");
     }
 }

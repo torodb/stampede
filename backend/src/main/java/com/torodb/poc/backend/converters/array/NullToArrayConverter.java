@@ -22,26 +22,26 @@ package com.torodb.poc.backend.converters.array;
 
 import javax.json.JsonValue;
 
-import com.torodb.torod.core.exceptions.ToroImplementationException;
-import com.torodb.torod.core.subdocument.values.ScalarNull;
+import com.torodb.kvdocument.values.KVNull;
+import com.torodb.poc.backend.mocks.ToroImplementationException;
 
 /**
  *
  */
-public class NullToArrayConverter implements ArrayConverter<JsonValue, ScalarNull> {
+public class NullToArrayConverter implements ArrayConverter<JsonValue, KVNull> {
     private static final long serialVersionUID = 1L;
 
     @Override
-    public String toJsonLiteral(ScalarNull value) {
+    public String toJsonLiteral(KVNull value) {
         return "null";
     }
 
     @Override
-    public ScalarNull fromJsonValue(JsonValue value) {
+    public KVNull fromJsonValue(JsonValue value) {
         if (value != JsonValue.NULL) {
             throw new ToroImplementationException(value + " is not null value");
         }
         
-        return ScalarNull.getInstance();
+        return KVNull.getInstance();
     }
 }

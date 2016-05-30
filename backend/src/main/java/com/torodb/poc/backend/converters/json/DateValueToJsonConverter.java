@@ -22,14 +22,14 @@ package com.torodb.poc.backend.converters.json;
 
 import org.threeten.bp.LocalDate;
 
+import com.torodb.kvdocument.values.KVDate;
+import com.torodb.kvdocument.values.heap.LocalDateKVDate;
 import com.torodb.poc.backend.converters.ValueConverter;
-import com.torodb.torod.core.subdocument.values.ScalarDate;
-import com.torodb.torod.core.subdocument.values.heap.LocalDateScalarDate;
 
 /**
  *
  */
-public class DateValueToJsonConverter implements ValueConverter<String, ScalarDate> {
+public class DateValueToJsonConverter implements ValueConverter<String, KVDate> {
 
     private static final long serialVersionUID = 1L;
 
@@ -39,13 +39,13 @@ public class DateValueToJsonConverter implements ValueConverter<String, ScalarDa
     }
 
     @Override
-    public Class<? extends ScalarDate> getValueClass() {
-        return ScalarDate.class;
+    public Class<? extends KVDate> getValueClass() {
+        return KVDate.class;
     }
 
     @Override
-    public ScalarDate toValue(String value) {
-        return new LocalDateScalarDate(LocalDate.parse(value));
+    public KVDate toValue(String value) {
+        return new LocalDateKVDate(LocalDate.parse(value));
     }
     
 }

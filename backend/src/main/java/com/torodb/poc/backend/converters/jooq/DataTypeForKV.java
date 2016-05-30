@@ -31,34 +31,34 @@ import org.jooq.EnumType;
 import org.jooq.Field;
 import org.jooq.SQLDialect;
 
-import com.torodb.torod.core.subdocument.values.ScalarValue;
+import com.torodb.kvdocument.values.KVValue;
 
 /**
  *
  */
-public class DataTypeForScalar<T extends ScalarValue<?>> implements DataType<T> {
+public class DataTypeForKV<T extends KVValue<?>> implements DataType<T> {
     
     private static final long serialVersionUID = 1L;
     
-    public static <DT, T extends ScalarValue<?>> DataTypeForScalar<T> from(DataType<DT> dataType, SubdocValueConverter<DT, T> converter) {
-        return new DataTypeForScalar<>(dataType.asConvertedDataType(converter), converter);
+    public static <DT, T extends KVValue<?>> DataTypeForKV<T> from(DataType<DT> dataType, KVValueConverter<DT, T> converter) {
+        return new DataTypeForKV<>(dataType.asConvertedDataType(converter), converter);
     }
     
-    public static <DT, T extends ScalarValue<?>> DataTypeForScalar<T> from(DataType<DT> dataType, SubdocValueConverter<DT, T> converter, Binding<DT, T> binding) {
-        return new DataTypeForScalar<>(dataType.asConvertedDataType(binding), converter);
+    public static <DT, T extends KVValue<?>> DataTypeForKV<T> from(DataType<DT> dataType, KVValueConverter<DT, T> converter, Binding<DT, T> binding) {
+        return new DataTypeForKV<>(dataType.asConvertedDataType(binding), converter);
     }
     
     private final DataType<T> dataType;
-    private final SubdocValueConverter<?, T> subdocValueConverter;
+    private final KVValueConverter<?, T> kVValueConverter;
     
-    private DataTypeForScalar(DataType<T> dataType, SubdocValueConverter<?, T> subdocValueConverter) {
+    private DataTypeForKV(DataType<T> dataType, KVValueConverter<?, T> subdocValueConverter) {
         super();
         this.dataType = dataType;
-        this.subdocValueConverter = subdocValueConverter;
+        this.kVValueConverter = subdocValueConverter;
     }
 
-    public SubdocValueConverter<?, T> getSubdocValueConverter() {
-        return subdocValueConverter;
+    public KVValueConverter<?, T> getSubdocValueConverter() {
+        return kVValueConverter;
     }
     
     public DataType<T> getSQLDataType() {

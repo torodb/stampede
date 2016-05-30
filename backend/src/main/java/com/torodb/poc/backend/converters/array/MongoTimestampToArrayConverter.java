@@ -23,21 +23,21 @@ package com.torodb.poc.backend.converters.array;
 import javax.json.Json;
 import javax.json.JsonObject;
 
+import com.torodb.kvdocument.values.KVMongoTimestamp;
+import com.torodb.kvdocument.values.heap.DefaultKVMongoTimestamp;
 import com.torodb.poc.backend.udt.MongoTimestampUDT;
-import com.torodb.torod.core.subdocument.values.ScalarMongoTimestamp;
-import com.torodb.torod.core.subdocument.values.heap.DefaultScalarMongoTimestamp;
 
 /**
  *
  */
-public class MongoTimestampToArrayConverter implements ArrayConverter<JsonObject, ScalarMongoTimestamp> {
+public class MongoTimestampToArrayConverter implements ArrayConverter<JsonObject, KVMongoTimestamp> {
     private static final long serialVersionUID = 1L;
 
     private static final String SECS = MongoTimestampUDT.SECS.getName();
     private static final String COUNTER = MongoTimestampUDT.COUNTER.getName();
 
     @Override
-    public String toJsonLiteral(ScalarMongoTimestamp value) {
+    public String toJsonLiteral(KVMongoTimestamp value) {
         return Json.createObjectBuilder()
                 .add(SECS, value.getSecondsSinceEpoch())
                 .add(COUNTER, value.getOrdinal())
@@ -45,9 +45,9 @@ public class MongoTimestampToArrayConverter implements ArrayConverter<JsonObject
     }
 
     @Override
-    public ScalarMongoTimestamp fromJsonValue(JsonObject value) {
+    public KVMongoTimestamp fromJsonValue(JsonObject value) {
         assert isValid(value);
-        return new DefaultScalarMongoTimestamp(value.getInt(SECS), value.getInt(COUNTER));
+        return new DefaultKVMongoTimestamp(value.getInt(SECS), value.getInt(COUNTER));
     }
     
     public boolean isValid(JsonObject object) {

@@ -21,104 +21,23 @@
 package com.torodb.poc.backend;
 
 import java.io.Serializable;
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
-import javax.annotation.Nonnull;
-
-import org.jooq.Configuration;
-import org.jooq.DSLContext;
-import org.jooq.DataType;
-import org.jooq.Field;
-
-import com.torodb.poc.backend.converters.jooq.ValueToJooqConverterProvider;
-import com.torodb.poc.backend.converters.jooq.ValueToJooqDataTypeProvider;
-import com.torodb.poc.backend.sql.index.NamedDbIndex;
-import com.torodb.poc.backend.tables.CollectionTable;
-import com.torodb.poc.backend.tables.ContainerTable;
-import com.torodb.poc.backend.tables.DatabaseTable;
-import com.torodb.poc.backend.tables.FieldTable;
-import com.torodb.poc.backend.tables.PathDocTable;
-import com.torodb.poc.backend.tables.records.FieldRecord;
-import com.torodb.torod.core.connection.exceptions.RetryTransactionException;
-import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
+import com.torodb.poc.backend.interfaces.DataTypeInterface;
+import com.torodb.poc.backend.interfaces.ErrorHandlerInterface;
+import com.torodb.poc.backend.interfaces.ReadInterface;
+import com.torodb.poc.backend.interfaces.ReadMetaDataInterface;
+import com.torodb.poc.backend.interfaces.SQLInterface;
+import com.torodb.poc.backend.interfaces.StructureInterface;
+import com.torodb.poc.backend.interfaces.WriteInterface;
+import com.torodb.poc.backend.interfaces.WriteMetaDataInterface;
 
 /**
  * Wrapper interface to define all database-specific SQL code
  */
-public interface DatabaseInterface extends Serializable {
+public interface DatabaseInterface extends 
+    ReadMetaDataInterface, WriteMetaDataInterface, 
+    DataTypeInterface, StructureInterface, ReadInterface, WriteInterface, 
+    SQLInterface, ErrorHandlerInterface, Serializable {
     //TODO: Try to remove make DatabaseInterface not serializable
-    @Nonnull DatabaseTable<?> getDatabaseTable();
-    @Nonnull CollectionTable<?> getCollectionTable();
-    @Nonnull ContainerTable<?> getContainerTable();
-    @Nonnull FieldTable<?> getFieldTable();
-
-    @Nonnull ValueToJooqConverterProvider getValueToJooqConverterProvider();
-    @Nonnull ValueToJooqDataTypeProvider getValueToJooqDataTypeProvider();
     
-    @Nonnull String escapeSchemaName(@Nonnull String collection) throws IllegalArgumentException;
-    @Nonnull String escapeAttributeName(@Nonnull String attributeName) throws IllegalArgumentException;
-    @Nonnull String escapeIndexName(@Nonnull String indexName) throws IllegalArgumentException;
-
-    @Nonnull Iterable<FieldRecord> getFields(String database, String collection, String path);
-    @Nonnull DataType<?> getDataType(String type);
-    
-    @Nonnull ResultSet getColumns(DatabaseMetaData metadata, String schemaName, String tableName) throws SQLException;
-    @Nonnull ResultSet getIndexes(DatabaseMetaData metadata, String schemaName, String tableName) throws SQLException;
-    @Nonnull int getIntColumnType(ResultSet columns) throws SQLException;
-    @Nonnull String getStringColumnType(ResultSet columns) throws SQLException;
-    @Nonnull ScalarTypeToSqlType getScalarTypeToSqlType();
-
-    @Nonnull String createSchemaStatement(@Nonnull String schemaName);
-    @Nonnull String dropSchemaStatement(@Nonnull String schemaName);
-    @Nonnull String createDatabaseTableStatement(@Nonnull String schemaName, @Nonnull String tableName);
-    @Nonnull String createCollectionTableStatement(@Nonnull String schemaName, @Nonnull String tableName);
-    @Nonnull String createContainerTableStatement(@Nonnull String schemaName, @Nonnull String tableName);
-    @Nonnull String createFieldTableStatement(@Nonnull String schemaName, @Nonnull String tableName);
-    @Nonnull String createIndexesTableStatement(@Nonnull String schemaName, @Nonnull String tableName, @Nonnull String indexNameColumn, @Nonnull String indexOptionsColumn);
-    @Nonnull String addColumnsToTableStatement(@Nonnull String schemaName, @Nonnull String tableName, @Nonnull List<Field<?>> fields, @Nonnull Configuration conf);
-    
-    @Nonnull String getCreateIndexQuery(PathDocTable table, Field<?> field, Configuration conf);
-    @Nonnull String getCreateSubDocTypeTableQuery(String schemaName, String tableName, List<Field<?>> fields, Configuration conf);
-    
-    void insertRootDocuments(@Nonnull DSLContext dsl, @Nonnull String schema, @Nonnull String collection, @Nonnull Collection<SplitDocument> docs, Configuration conf) throws ImplementationDbException;
-    long getDatabaseSize(@Nonnull DSLContext dsl, @Nonnull String databaseName);
-    Long getCollectionSize(@Nonnull DSLContext dsl, @Nonnull String schema, @Nonnull String collection);
-    Long getDocumentsSize(@Nonnull DSLContext dsl, @Nonnull String schema, String collection);
-    Long getIndexSize(@Nonnull DSLContext dsl, @Nonnull String schema, String collection, String index, Set<NamedDbIndex> relatedDbIndexes, Map<String, Integer> relatedToroIndexes);
-    void insertPathDocuments(DSLContext dsl, String schema, PathDocTable table, List<Field<?>> fields, Iterable<PathDocument> pathDocuments, Configuration conf);
-    
-    @Nonnull String arrayUnnestParametrizedSelectStatement();
-
-    @Nonnull String deleteDidsStatement(@Nonnull String schemaName, @Nonnull String tableName, @Nonnull String didColumnName);
-    void setDeleteDidsStatementParameters(PreparedStatement ps, Collection<Integer> dids) throws SQLException;
-    
-    @Nonnull String createIndexStatement(@Nonnull String fullIndexName, @Nonnull String tableSchema, 
-            @Nonnull String tableName, @Nonnull String tableColumnName, boolean isAscending);
-    @Nonnull String dropIndexStatement(@Nonnull String schemaName, @Nonnull String indexName);
-
-    @Nonnull String findDocsSelectStatement();
-    void setFindDocsSelectStatementParameters(@Nonnull String schema, @Nonnull Integer[] requestedDocs,
-            @Nonnull String[] paths, @Nonnull Connection c, @Nonnull PreparedStatement ps) throws SQLException;
-    @Nonnull ResultSet getFindDocsSelectStatementResultSet(PreparedStatement ps) throws SQLException;
-    @Nonnull FindDocsSelectStatementRow getFindDocsSelectStatementRow(ResultSet rs) throws SQLException;
-    
-    public interface FindDocsSelectStatementRow {
-        public int getDocId();
-        public Integer getRowId();
-        public Integer getParentRowId();
-        public Integer getSequence();
-        public String getJson();
-        public boolean isRoot();
-        public boolean isObject();
-    }
-
-    void handleRetryException(SQLException sqlException) throws RetryTransactionException;
 }

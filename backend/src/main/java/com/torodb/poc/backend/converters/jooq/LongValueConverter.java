@@ -23,29 +23,30 @@ package com.torodb.poc.backend.converters.jooq;
 
 import org.jooq.impl.SQLDataType;
 
-import com.torodb.torod.core.subdocument.ScalarType;
-import com.torodb.torod.core.subdocument.values.ScalarLong;
+import com.torodb.kvdocument.types.KVType;
+import com.torodb.kvdocument.types.LongType;
+import com.torodb.kvdocument.values.KVLong;
 
 /**
  *
  */
-public class LongValueConverter implements SubdocValueConverter<Long, ScalarLong>{
+public class LongValueConverter implements KVValueConverter<Long, KVLong>{
     private static final long serialVersionUID = 1L;
 
-    public static final DataTypeForScalar<ScalarLong> TYPE = DataTypeForScalar.from(SQLDataType.BIGINT, new LongValueConverter());
+    public static final DataTypeForKV<KVLong> TYPE = DataTypeForKV.from(SQLDataType.BIGINT, new LongValueConverter());
 
     @Override
-    public ScalarType getErasuredType() {
-        return ScalarType.LONG;
+    public KVType getErasuredType() {
+        return LongType.INSTANCE;
     }
 
     @Override
-    public ScalarLong from(Long databaseObject) {
-        return ScalarLong.of(databaseObject);
+    public KVLong from(Long databaseObject) {
+        return KVLong.of(databaseObject);
     }
 
     @Override
-    public Long to(ScalarLong userObject) {
+    public Long to(KVLong userObject) {
         return userObject.getValue();
     }
 
@@ -55,8 +56,8 @@ public class LongValueConverter implements SubdocValueConverter<Long, ScalarLong
     }
 
     @Override
-    public Class<ScalarLong> toType() {
-        return ScalarLong.class;
+    public Class<KVLong> toType() {
+        return KVLong.class;
     }
     
 }

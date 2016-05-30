@@ -21,14 +21,14 @@ package com.torodb.poc.backend.tables.records;
 
 import org.jooq.Field;
 import org.jooq.Record3;
-import org.jooq.Record5;
-import org.jooq.Row5;
+import org.jooq.Record6;
+import org.jooq.Row6;
 import org.jooq.impl.UpdatableRecordImpl;
 
 import com.torodb.poc.backend.tables.ContainerTable;
 
 public abstract class ContainerRecord extends UpdatableRecordImpl<ContainerRecord> 
-        implements Record5<String, String, String, String, Integer> {
+        implements Record6<String, String, String, String, String, Integer> {
 // database, name, original_name, last_did
 	private static final long serialVersionUID = -2107968478;
 
@@ -89,17 +89,31 @@ public abstract class ContainerRecord extends UpdatableRecordImpl<ContainerRecor
     }
 
     /**
+     * Setter for <code>torodb.container.table_name</code>.
+     */
+    public void setParentTableName(String value) {
+        setValue(4, value);
+    }
+
+    /**
+     * Getter for <code>torodb.container.table_name</code>.
+     */
+    public String getParentTableName() {
+        return (String) getValue(4);
+    }
+
+    /**
      * Setter for <code>torodb.container.last_rid</code>.
      */
     public void setLastRid(Integer value) {
-        setValue(4, value);
+        setValue(5, value);
     }
 
     /**
      * Getter for <code>torodb.container.last_rid</code>.
      */
     public Integer getLastRid() {
-        return (Integer) getValue(4);
+        return (Integer) getValue(5);
     }
 
 	// -------------------------------------------------------------------------
@@ -122,16 +136,16 @@ public abstract class ContainerRecord extends UpdatableRecordImpl<ContainerRecor
 	 * {@inheritDoc}
 	 */
 	@Override
-	public Row5<String, String, String, String, Integer> fieldsRow() {
-		return (Row5) super.fieldsRow();
+	public Row6<String, String, String, String, String, Integer> fieldsRow() {
+		return (Row6) super.fieldsRow();
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
 	@Override
-	public Row5<String, String, String, String, Integer> valuesRow() {
-		return (Row5) super.valuesRow();
+	public Row6<String, String, String, String, String, Integer> valuesRow() {
+		return (Row6) super.valuesRow();
 	}
 
     /**
@@ -166,13 +180,21 @@ public abstract class ContainerRecord extends UpdatableRecordImpl<ContainerRecor
 		return containerTable.TABLE;
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public Field<Integer> field5() {
-		return containerTable.LAST_RID;
-	}
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Field<String> field5() {
+        return containerTable.PARENT_TABLE;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Field<Integer> field6() {
+        return containerTable.LAST_RID;
+    }
 
     /**
      * {@inheritDoc}
@@ -206,11 +228,19 @@ public abstract class ContainerRecord extends UpdatableRecordImpl<ContainerRecor
         return getTableName();
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String value5() {
+        return getParentTableName();
+    }
+
 	/**
 	 * {@inheritDoc}
 	 */
 	@Override
-	public Integer value5() {
+	public Integer value6() {
 		return getLastRid();
 	}
 
@@ -250,11 +280,20 @@ public abstract class ContainerRecord extends UpdatableRecordImpl<ContainerRecor
         return this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ContainerRecord value5(String value) {
+        setParentTableName(value);
+        return this;
+    }
+
 	/**
 	 * {@inheritDoc}
 	 */
 	@Override
-	public ContainerRecord value5(Integer value) {
+	public ContainerRecord value6(Integer value) {
 		setLastRid(value);
 		return this;
 	}
@@ -263,7 +302,7 @@ public abstract class ContainerRecord extends UpdatableRecordImpl<ContainerRecor
 	 * {@inheritDoc}
 	 */
 	@Override
-	public ContainerRecord values(String value1, String value2, String value3, String value4, Integer value5) {
+	public ContainerRecord values(String value1, String value2, String value3, String value4, String value5, Integer value6) {
 		return this;
 	}
 

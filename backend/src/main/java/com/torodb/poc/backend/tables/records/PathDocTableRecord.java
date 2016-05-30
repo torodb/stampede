@@ -28,9 +28,9 @@ import javax.annotation.Nullable;
 import org.jooq.Field;
 import org.jooq.impl.TableRecordImpl;
 
-import com.torodb.poc.backend.PathDocument;
+import com.torodb.kvdocument.values.KVValue;
+import com.torodb.poc.backend.mocks.PathDocument;
 import com.torodb.poc.backend.tables.PathDocTable;
-import com.torodb.torod.core.subdocument.values.ScalarValue;
 
 /**
  *
@@ -100,10 +100,10 @@ public class PathDocTableRecord extends TableRecordImpl<PathDocTableRecord> {
                     + "different than the type of the given subdocument (" + pathdoc.getPath() + ")");
         }
 
-        for (Map.Entry<String, ScalarValue<?>> entry : pathdoc.getValues().entrySet()) {
+        for (Map.Entry<String, KVValue<?>> entry : pathdoc.getValues().entrySet()) {
             //@gortiz: I think we can not use types here!
             Field f = field(entry.getKey());
-            ScalarValue<?> v = entry.getValue();
+            KVValue<?> v = entry.getValue();
 
             setValue(f, v);
         }

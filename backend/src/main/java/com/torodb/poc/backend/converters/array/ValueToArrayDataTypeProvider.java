@@ -26,7 +26,7 @@ import javax.annotation.Nonnull;
 
 import org.jooq.DataType;
 
-import com.torodb.torod.core.subdocument.ScalarType;
+import com.torodb.kvdocument.types.KVType;
 
 /**
  *
@@ -34,6 +34,6 @@ import com.torodb.torod.core.subdocument.ScalarType;
 public interface ValueToArrayDataTypeProvider extends Serializable {
 
     @Nonnull
-    public DataType<?> getDataType(ScalarType valueType);
+    public DataType<?> getDataType(KVType valueType);
 
 }

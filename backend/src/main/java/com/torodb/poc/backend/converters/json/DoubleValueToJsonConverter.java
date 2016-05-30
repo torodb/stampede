@@ -20,14 +20,14 @@
 
 package com.torodb.poc.backend.converters.json;
 
+import com.torodb.kvdocument.values.KVDouble;
 import com.torodb.poc.backend.converters.ValueConverter;
-import com.torodb.torod.core.subdocument.values.ScalarDouble;
 
 /**
  *
  */
 public class DoubleValueToJsonConverter implements
-        ValueConverter<Object, ScalarDouble> {
+        ValueConverter<Object, KVDouble> {
 
     private static final long serialVersionUID = 1L;
 
@@ -37,30 +37,30 @@ public class DoubleValueToJsonConverter implements
     }
 
     @Override
-    public Class<? extends ScalarDouble> getValueClass() {
-        return ScalarDouble.class;
+    public Class<? extends KVDouble> getValueClass() {
+        return KVDouble.class;
     }
 
     @Override
-    public ScalarDouble toValue(Object value) {
+    public KVDouble toValue(Object value) {
         if (value instanceof Number) {
             Number number = (Number) value;
-            return ScalarDouble.of(number.doubleValue());
+            return KVDouble.of(number.doubleValue());
         }
         if (value instanceof String) {
             String string = (String) value;
             if (string.equals("Infinity")) {
-                return ScalarDouble.of(Double.POSITIVE_INFINITY);
+                return KVDouble.of(Double.POSITIVE_INFINITY);
             }
             if (string.equals("-Infinity")) {
-                return ScalarDouble.of(Double.NEGATIVE_INFINITY);
+                return KVDouble.of(Double.NEGATIVE_INFINITY);
             }
             if (string.equals("NaN")) {
-                return ScalarDouble.of(Double.NaN);
+                return KVDouble.of(Double.NaN);
             }
         }
         throw new IllegalArgumentException(
-                "ScalarValue "+value+" has not been recognized as double value"
+                "KVValue "+value+" has not been recognized as double value"
         );
     }
     

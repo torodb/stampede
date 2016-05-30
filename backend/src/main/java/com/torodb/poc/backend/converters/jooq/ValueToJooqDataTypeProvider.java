@@ -24,12 +24,12 @@ import java.io.Serializable;
 
 import javax.annotation.Nonnull;
 
-import com.torodb.torod.core.subdocument.ScalarType;
+import com.torodb.kvdocument.types.KVType;
 
 /**
  *
  */
 public interface ValueToJooqDataTypeProvider extends Serializable {
 
-    @Nonnull public DataTypeForScalar<?> getDataType(@Nonnull ScalarType type);
+    @Nonnull public DataTypeForKV<?> getDataType(@Nonnull KVType type);
 }

@@ -20,15 +20,27 @@
 
 package com.torodb.poc.backend.postgresql.converters.jooq;
 
-import java.util.EnumMap;
-import java.util.EnumSet;
-import java.util.Set;
+import java.util.Map;
 
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Sets.SetView;
+import com.torodb.kvdocument.types.BinaryType;
+import com.torodb.kvdocument.types.BooleanType;
+import com.torodb.kvdocument.types.DateType;
+import com.torodb.kvdocument.types.DoubleType;
+import com.torodb.kvdocument.types.InstantType;
+import com.torodb.kvdocument.types.IntegerType;
+import com.torodb.kvdocument.types.KVType;
+import com.torodb.kvdocument.types.LongType;
+import com.torodb.kvdocument.types.MongoObjectIdType;
+import com.torodb.kvdocument.types.MongoTimestampType;
+import com.torodb.kvdocument.types.NullType;
+import com.torodb.kvdocument.types.StringType;
+import com.torodb.kvdocument.types.TimeType;
 import com.torodb.poc.backend.converters.jooq.BinaryValueConverter;
 import com.torodb.poc.backend.converters.jooq.BooleanValueConverter;
-import com.torodb.poc.backend.converters.jooq.DataTypeForScalar;
+import com.torodb.poc.backend.converters.jooq.DataTypeForKV;
 import com.torodb.poc.backend.converters.jooq.DateValueConverter;
 import com.torodb.poc.backend.converters.jooq.DoubleValueConverter;
 import com.torodb.poc.backend.converters.jooq.InstantValueConverter;
@@ -40,7 +52,6 @@ import com.torodb.poc.backend.converters.jooq.NullValueConverter;
 import com.torodb.poc.backend.converters.jooq.StringValueConverter;
 import com.torodb.poc.backend.converters.jooq.TimeValueConverter;
 import com.torodb.poc.backend.converters.jooq.ValueToJooqDataTypeProvider;
-import com.torodb.torod.core.subdocument.ScalarType;
 
 /**
  *
@@ -49,44 +60,28 @@ public class PostgreSQLValueToJooqDataTypeProvider implements ValueToJooqDataTyp
 
     private static final long serialVersionUID = 1L;
 
-    /**
-     * Types that are not supported.
-     */
-    private static final EnumSet<ScalarType> UNSUPPORTED_TYPES
-            = EnumSet.noneOf(ScalarType.class);
-    /**
-     * Types that must be supported.
-     */
-    private static final Set<ScalarType> SUPPORTED_TYPES
-            = Sets.difference(EnumSet.allOf(ScalarType.class), UNSUPPORTED_TYPES);
-    private static final EnumMap<ScalarType, DataTypeForScalar<?>> dataTypes;
+    private static final Map<KVType, DataTypeForKV<?>> dataTypes;
 
     static {
-        dataTypes = new EnumMap<ScalarType, DataTypeForScalar<?>>(ScalarType.class);
+        dataTypes = Maps.newHashMap();
 
-        dataTypes.put(ScalarType.BOOLEAN, BooleanValueConverter.TYPE);
-        dataTypes.put(ScalarType.DOUBLE, DoubleValueConverter.TYPE);
-        dataTypes.put(ScalarType.INTEGER, IntegerValueConverter.TYPE);
-        dataTypes.put(ScalarType.LONG, LongValueConverter.TYPE);
-        dataTypes.put(ScalarType.NULL, NullValueConverter.TYPE);
-        dataTypes.put(ScalarType.STRING, StringValueConverter.TYPE);
-        dataTypes.put(ScalarType.DATE, DateValueConverter.TYPE);
-        dataTypes.put(ScalarType.INSTANT, InstantValueConverter.TYPE);
-        dataTypes.put(ScalarType.TIME, TimeValueConverter.TYPE);
-        dataTypes.put(ScalarType.MONGO_OBJECT_ID, MongoObjectIdValueConverter.TYPE);
-        dataTypes.put(ScalarType.MONGO_TIMESTAMP, MongoTimestampValueConverter.TYPE);
-        dataTypes.put(ScalarType.BINARY, BinaryValueConverter.TYPE);
-
-        SetView<ScalarType> withoutConverter = Sets.difference(dataTypes.keySet(), SUPPORTED_TYPES);
-        if (!withoutConverter.isEmpty()) {
-            throw new AssertionError("It is not defined how to convert from the following scalar "
-                    + "types to json: " + withoutConverter);
-        }
+        dataTypes.put(BooleanType.INSTANCE, BooleanValueConverter.TYPE);
+        dataTypes.put(DoubleType.INSTANCE, DoubleValueConverter.TYPE);
+        dataTypes.put(IntegerType.INSTANCE, IntegerValueConverter.TYPE);
+        dataTypes.put(LongType.INSTANCE, LongValueConverter.TYPE);
+        dataTypes.put(NullType.INSTANCE, NullValueConverter.TYPE);
+        dataTypes.put(StringType.INSTANCE, StringValueConverter.TYPE);
+        dataTypes.put(DateType.INSTANCE, DateValueConverter.TYPE);
+        dataTypes.put(InstantType.INSTANCE, InstantValueConverter.TYPE);
+        dataTypes.put(TimeType.INSTANCE, TimeValueConverter.TYPE);
+        dataTypes.put(MongoObjectIdType.INSTANCE, MongoObjectIdValueConverter.TYPE);
+        dataTypes.put(MongoTimestampType.INSTANCE, MongoTimestampValueConverter.TYPE);
+        dataTypes.put(BinaryType.INSTANCE, BinaryValueConverter.TYPE);
     }
 
     @Override
-    public DataTypeForScalar<?> getDataType(ScalarType type) {
-        DataTypeForScalar<?> dataType = dataTypes.get(type);
+    public DataTypeForKV<?> getDataType(KVType type) {
+        DataTypeForKV<?> dataType = dataTypes.get(type);
         if (dataType == null) {
             throw new IllegalArgumentException("It is not defined how to map elements of type " + type + " to SQL");
         }

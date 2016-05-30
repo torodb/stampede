@@ -25,32 +25,33 @@ import java.sql.Time;
 import org.jooq.impl.SQLDataType;
 import org.threeten.bp.DateTimeUtils;
 
-import com.torodb.torod.core.subdocument.ScalarType;
-import com.torodb.torod.core.subdocument.values.ScalarTime;
-import com.torodb.torod.core.subdocument.values.heap.LocalTimeScalarTime;
+import com.torodb.kvdocument.types.KVType;
+import com.torodb.kvdocument.types.TimeType;
+import com.torodb.kvdocument.values.KVTime;
+import com.torodb.kvdocument.values.heap.LocalTimeKVTime;
 
 /**
  *
  */
-public class TimeValueConverter implements SubdocValueConverter<Time, ScalarTime>{
+public class TimeValueConverter implements KVValueConverter<Time, KVTime>{
     private static final long serialVersionUID = 1L;
 
-    public static final DataTypeForScalar<ScalarTime> TYPE = DataTypeForScalar.from(SQLDataType.TIME, new TimeValueConverter());
+    public static final DataTypeForKV<KVTime> TYPE = DataTypeForKV.from(SQLDataType.TIME, new TimeValueConverter());
 
     @Override
-    public ScalarType getErasuredType() {
-        return ScalarType.TIME;
+    public KVType getErasuredType() {
+        return TimeType.INSTANCE;
     }
 
     @Override
-    public ScalarTime from(Time databaseObject) {
-        return new LocalTimeScalarTime(
+    public KVTime from(Time databaseObject) {
+        return new LocalTimeKVTime(
                 DateTimeUtils.toLocalTime(databaseObject)
         );
     }
 
     @Override
-    public Time to(ScalarTime userObject) {
+    public Time to(KVTime userObject) {
         return DateTimeUtils.toSqlTime(userObject.getValue());
     }
 
@@ -60,8 +61,8 @@ public class TimeValueConverter implements SubdocValueConverter<Time, ScalarTime
     }
 
     @Override
-    public Class<ScalarTime> toType() {
-        return ScalarTime.class;
+    public Class<KVTime> toType() {
+        return KVTime.class;
     }
     
 }

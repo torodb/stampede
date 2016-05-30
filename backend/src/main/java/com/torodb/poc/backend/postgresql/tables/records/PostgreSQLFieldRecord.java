@@ -39,11 +39,17 @@ public class PostgreSQLFieldRecord extends FieldRecord {
 	public PostgreSQLFieldRecord(String database, String collection, String path, String name, String columnName, String columnType) {
 		super(PostgreSQLFieldTable.FIELD);
 		
-		setValue(0, database);
-		setValue(1, collection);
+		values(database, collection, path, name, columnName, columnType);
+	}
+
+    @Override
+    public FieldRecord values(String database, String collection, String path, String name, String columnName, String columnType) {
+        setValue(0, database);
+        setValue(1, collection);
         setValue(2, path);
         setValue(3, name);
         setValue(4, columnName);
         setValue(5, columnType);
-	}
+        return this;
+    }
 }

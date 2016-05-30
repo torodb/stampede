@@ -22,9 +22,19 @@
             <version>3.0.1u2</version>
         </dependency>
         <dependency>
-            <groupId>com.torodb.torod</groupId>
-            <artifactId>torod-core</artifactId>
+            <groupId>com.torodb.kvdocument</groupId>
+            <artifactId>kvdocument-core</artifactId>
             <version>0.40-alpha4-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>javax.json</groupId>
+            <artifactId>javax.json-api</artifactId>
+            <version>1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>javax.inject</groupId>
+            <artifactId>javax.inject</artifactId>
+            <version>1</version>
         </dependency>
     </dependencies>
     <properties>

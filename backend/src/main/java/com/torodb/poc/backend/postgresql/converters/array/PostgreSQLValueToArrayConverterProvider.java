@@ -30,6 +30,30 @@ import javax.json.JsonString;
 import javax.json.JsonValue;
 
 import com.google.common.collect.Maps;
+import com.torodb.kvdocument.types.BinaryType;
+import com.torodb.kvdocument.types.BooleanType;
+import com.torodb.kvdocument.types.DateType;
+import com.torodb.kvdocument.types.DoubleType;
+import com.torodb.kvdocument.types.InstantType;
+import com.torodb.kvdocument.types.IntegerType;
+import com.torodb.kvdocument.types.KVType;
+import com.torodb.kvdocument.types.LongType;
+import com.torodb.kvdocument.types.MongoObjectIdType;
+import com.torodb.kvdocument.types.MongoTimestampType;
+import com.torodb.kvdocument.types.NullType;
+import com.torodb.kvdocument.types.StringType;
+import com.torodb.kvdocument.types.TimeType;
+import com.torodb.kvdocument.values.KVArray;
+import com.torodb.kvdocument.values.KVBinary;
+import com.torodb.kvdocument.values.KVBoolean;
+import com.torodb.kvdocument.values.KVDate;
+import com.torodb.kvdocument.values.KVInstant;
+import com.torodb.kvdocument.values.KVInteger;
+import com.torodb.kvdocument.values.KVLong;
+import com.torodb.kvdocument.values.KVMongoObjectId;
+import com.torodb.kvdocument.values.KVNull;
+import com.torodb.kvdocument.values.KVString;
+import com.torodb.kvdocument.values.KVTime;
 import com.torodb.poc.backend.converters.array.ArrayConverter;
 import com.torodb.poc.backend.converters.array.BinaryToArrayConverter;
 import com.torodb.poc.backend.converters.array.BooleanToArrayConverter;
@@ -44,19 +68,8 @@ import com.torodb.poc.backend.converters.array.NullToArrayConverter;
 import com.torodb.poc.backend.converters.array.StringToArrayConverter;
 import com.torodb.poc.backend.converters.array.TimeToArrayConverter;
 import com.torodb.poc.backend.converters.array.ValueToArrayConverterProvider;
-import com.torodb.torod.core.exceptions.ToroImplementationException;
-import com.torodb.torod.core.subdocument.ScalarType;
-import com.torodb.torod.core.subdocument.values.ScalarArray;
-import com.torodb.torod.core.subdocument.values.ScalarBinary;
-import com.torodb.torod.core.subdocument.values.ScalarBoolean;
-import com.torodb.torod.core.subdocument.values.ScalarDate;
-import com.torodb.torod.core.subdocument.values.ScalarInstant;
-import com.torodb.torod.core.subdocument.values.ScalarInteger;
-import com.torodb.torod.core.subdocument.values.ScalarLong;
-import com.torodb.torod.core.subdocument.values.ScalarMongoObjectId;
-import com.torodb.torod.core.subdocument.values.ScalarNull;
-import com.torodb.torod.core.subdocument.values.ScalarString;
-import com.torodb.torod.core.subdocument.values.ScalarTime;
+import com.torodb.poc.backend.mocks.ArrayTypeInstance;
+import com.torodb.poc.backend.mocks.ToroImplementationException;
 
 /**
  *
@@ -65,20 +78,20 @@ public class PostgreSQLValueToArrayConverterProvider implements ValueToArrayConv
 
     private static final long serialVersionUID = 1L;
 
-    private final Map<ScalarType, ArrayConverter> converters;
-    private final ArrayConverter<JsonArray, ScalarArray> arrayConverter;
-    private final ArrayConverter<JsonValue, ScalarBoolean> booleanConverter;
-    private final ArrayConverter<JsonString, ScalarDate> dateConverter;
-    private final ArrayConverter<JsonString, ScalarInstant> dateTimeConverter;
+    private final Map<KVType, ArrayConverter> converters;
+    private final ArrayConverter<JsonArray, KVArray> arrayConverter;
+    private final ArrayConverter<JsonValue, KVBoolean> booleanConverter;
+    private final ArrayConverter<JsonString, KVDate> dateConverter;
+    private final ArrayConverter<JsonString, KVInstant> dateTimeConverter;
     private final DoubleToArrayConverter doubleConverter;
-    private final ArrayConverter<JsonNumber, ScalarInteger> integerConverter;
-    private final ArrayConverter<JsonNumber, ScalarLong> longConverter;
-    private final ArrayConverter<JsonValue, ScalarNull> nullConverter;
-    private final ArrayConverter<JsonString, ScalarString> stringConverter;
-    private final ArrayConverter<JsonString, ScalarTime> timeConverter;
-    private final ArrayConverter<JsonString, ScalarMongoObjectId> mongoObjectIdConverter;
+    private final ArrayConverter<JsonNumber, KVInteger> integerConverter;
+    private final ArrayConverter<JsonNumber, KVLong> longConverter;
+    private final ArrayConverter<JsonValue, KVNull> nullConverter;
+    private final ArrayConverter<JsonString, KVString> stringConverter;
+    private final ArrayConverter<JsonString, KVTime> timeConverter;
+    private final ArrayConverter<JsonString, KVMongoObjectId> mongoObjectIdConverter;
     private final MongoTimestampToArrayConverter mongoTimestampConverter;
-    private final ArrayConverter<JsonString, ScalarBinary> binaryConverter;
+    private final ArrayConverter<JsonString, KVBinary> binaryConverter;
 
     private PostgreSQLValueToArrayConverterProvider() {
         arrayConverter = new ArrayToArrayConverter(this);
@@ -95,20 +108,20 @@ public class PostgreSQLValueToArrayConverterProvider implements ValueToArrayConv
         mongoTimestampConverter = new MongoTimestampToArrayConverter();
         binaryConverter = new BinaryToArrayConverter();
 
-        converters = Maps.newEnumMap(ScalarType.class);
-        converters.put(ScalarType.ARRAY, arrayConverter);
-        converters.put(ScalarType.BOOLEAN, booleanConverter);
-        converters.put(ScalarType.DATE, dateConverter);
-        converters.put(ScalarType.INSTANT, dateTimeConverter);
-        converters.put(ScalarType.DOUBLE, doubleConverter);
-        converters.put(ScalarType.INTEGER, integerConverter);
-        converters.put(ScalarType.LONG, longConverter);
-        converters.put(ScalarType.NULL, nullConverter);
-        converters.put(ScalarType.STRING, stringConverter);
-        converters.put(ScalarType.TIME, timeConverter);
-        converters.put(ScalarType.MONGO_OBJECT_ID, mongoObjectIdConverter);
-        converters.put(ScalarType.MONGO_TIMESTAMP, mongoTimestampConverter);
-        converters.put(ScalarType.BINARY, binaryConverter);
+        converters = Maps.newHashMap();
+        converters.put(ArrayTypeInstance.GENERIC, arrayConverter);
+        converters.put(BooleanType.INSTANCE, booleanConverter);
+        converters.put(DateType.INSTANCE, dateConverter);
+        converters.put(InstantType.INSTANCE, dateTimeConverter);
+        converters.put(DoubleType.INSTANCE, doubleConverter);
+        converters.put(IntegerType.INSTANCE, integerConverter);
+        converters.put(LongType.INSTANCE, longConverter);
+        converters.put(NullType.INSTANCE, nullConverter);
+        converters.put(StringType.INSTANCE, stringConverter);
+        converters.put(TimeType.INSTANCE, timeConverter);
+        converters.put(MongoObjectIdType.INSTANCE, mongoObjectIdConverter);
+        converters.put(MongoTimestampType.INSTANCE, mongoTimestampConverter);
+        converters.put(BinaryType.INSTANCE, binaryConverter);
 
         
     }
@@ -118,7 +131,7 @@ public class PostgreSQLValueToArrayConverterProvider implements ValueToArrayConv
     }
 
     @Override
-    public @Nonnull ArrayConverter getConverter(ScalarType valueType) {
+    public @Nonnull ArrayConverter getConverter(KVType valueType) {
         ArrayConverter converter = converters.get(valueType);
         if (converter == null) {
             throw new AssertionError("There is no converter that converts "
@@ -166,7 +179,7 @@ public class PostgreSQLValueToArrayConverterProvider implements ValueToArrayConv
                     return mongoTimestampConverter;
                 }
                 throw new IllegalArgumentException("Te recived JsonObject " + jsonValue
-                        + " was not recognized as a valid ScalarValue codification");
+                        + " was not recognized as a valid KVValue codification");
             }
             default:
                 throw new IllegalArgumentException("Instances of '"
@@ -175,19 +188,19 @@ public class PostgreSQLValueToArrayConverterProvider implements ValueToArrayConv
         }
     }
 
-    public ArrayConverter<JsonArray, ScalarArray> getArrayConverter() {
+    public ArrayConverter<JsonArray, KVArray> getArrayConverter() {
         return arrayConverter;
     }
 
-    public ArrayConverter<JsonValue, ScalarBoolean> getBooleanConverter() {
+    public ArrayConverter<JsonValue, KVBoolean> getBooleanConverter() {
         return booleanConverter;
     }
 
-    public ArrayConverter<JsonString, ScalarDate> getDateConverter() {
+    public ArrayConverter<JsonString, KVDate> getDateConverter() {
         return dateConverter;
     }
 
-    public ArrayConverter<JsonString, ScalarInstant> getInstantConverter() {
+    public ArrayConverter<JsonString, KVInstant> getInstantConverter() {
         return dateTimeConverter;
     }
 
@@ -195,27 +208,27 @@ public class PostgreSQLValueToArrayConverterProvider implements ValueToArrayConv
         return doubleConverter;
     }
 
-    public ArrayConverter<JsonNumber, ScalarInteger> getIntegerConverter() {
+    public ArrayConverter<JsonNumber, KVInteger> getIntegerConverter() {
         return integerConverter;
     }
 
-    public ArrayConverter<JsonNumber, ScalarLong> getLongConverter() {
+    public ArrayConverter<JsonNumber, KVLong> getLongConverter() {
         return longConverter;
     }
 
-    public ArrayConverter<JsonValue, ScalarNull> getNullConverter() {
+    public ArrayConverter<JsonValue, KVNull> getNullConverter() {
         return nullConverter;
     }
 
-    public ArrayConverter<JsonString, ScalarString> getStringConverter() {
+    public ArrayConverter<JsonString, KVString> getStringConverter() {
         return stringConverter;
     }
 
-    public ArrayConverter<JsonString, ScalarTime> getTimeConverter() {
+    public ArrayConverter<JsonString, KVTime> getTimeConverter() {
         return timeConverter;
     }
 
-    public ArrayConverter<JsonString, ScalarMongoObjectId> getMongoObjectIdConverter() {
+    public ArrayConverter<JsonString, KVMongoObjectId> getMongoObjectIdConverter() {
         return mongoObjectIdConverter;
     }
     
@@ -223,7 +236,7 @@ public class PostgreSQLValueToArrayConverterProvider implements ValueToArrayConv
         return mongoTimestampConverter;
     }
     
-    public ArrayConverter<JsonString, ScalarBinary> getBinaryConverter() {
+    public ArrayConverter<JsonString, KVBinary> getBinaryConverter() {
         return binaryConverter;
     }
 

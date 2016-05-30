@@ -26,22 +26,22 @@ import org.jooq.tools.json.JSONValue;
 import org.threeten.bp.Instant;
 import org.threeten.bp.format.DateTimeFormatter;
 
-import com.torodb.torod.core.subdocument.values.ScalarInstant;
-import com.torodb.torod.core.subdocument.values.heap.InstantScalarInstant;
+import com.torodb.kvdocument.values.KVInstant;
+import com.torodb.kvdocument.values.heap.InstantKVInstant;
 
 /**
  *
  */
-public class InstantToArrayConverter implements ArrayConverter<JsonString, ScalarInstant> {
+public class InstantToArrayConverter implements ArrayConverter<JsonString, KVInstant> {
     private static final long serialVersionUID = 1L;
 
     @Override
-    public String toJsonLiteral(ScalarInstant value) {
+    public String toJsonLiteral(KVInstant value) {
         return JSONValue.toJSONString(value.toString());
     }
 
     @Override
-    public ScalarInstant fromJsonValue(JsonString value) {
-        return new InstantScalarInstant(Instant.from(DateTimeFormatter.ISO_OFFSET_DATE_TIME.parse(value.getString())));
+    public KVInstant fromJsonValue(JsonString value) {
+        return new InstantKVInstant(Instant.from(DateTimeFormatter.ISO_OFFSET_DATE_TIME.parse(value.getString())));
     }
 }

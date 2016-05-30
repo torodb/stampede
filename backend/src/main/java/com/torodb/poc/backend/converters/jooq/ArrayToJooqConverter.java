@@ -6,15 +6,14 @@ import org.jooq.Converter;
 import org.jooq.DataType;
 import org.jooq.impl.DefaultDataType;
 
+import com.torodb.kvdocument.values.KVValue;
 import com.torodb.poc.backend.converters.array.ArrayConverter;
-import com.torodb.torod.core.exceptions.ToroRuntimeException;
-import com.torodb.torod.core.subdocument.values.ScalarValue;
 
-public class ArrayToJooqConverter<UT extends ScalarValue<?>> implements Converter<String, UT> {
+public class ArrayToJooqConverter<UT extends KVValue<?>> implements Converter<String, UT> {
     
     private static final long serialVersionUID = 1L;
 
-    public static <UT extends ScalarValue<?>, V extends JsonValue> DataType<UT> fromScalarValue(final Class<UT> type, final ArrayConverter<V, UT> arrayConverter, String typeName) {
+    public static <UT extends KVValue<?>, V extends JsonValue> DataType<UT> fromScalarValue(final Class<UT> type, final ArrayConverter<V, UT> arrayConverter, String typeName) {
         Converter<String, UT> converter = new ArrayToJooqConverter<>(type, arrayConverter);
         return new DefaultDataType<String>(null, String.class, typeName).asConvertedDataType(converter);
     }
@@ -28,7 +27,7 @@ public class ArrayToJooqConverter<UT extends ScalarValue<?>> implements Converte
         this.arrayConverter = arrayConverter;
     }
     public UT from(String databaseObject) {
-        throw new ToroRuntimeException("This conversor should not be used to convert from a database object");
+        throw new RuntimeException("This conversor should not be used to convert from a database object");
     }
     public String to(UT userObject) {
         return arrayConverter.toJsonLiteral(userObject);

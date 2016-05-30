@@ -18,18 +18,12 @@
  *     
  */
 
-package com.torodb.poc.backend;
+package com.torodb.poc.backend.mocks;
 
-import java.util.Map;
+import com.torodb.kvdocument.types.ArrayType;
+import com.torodb.kvdocument.types.GenericType;
 
-import com.torodb.torod.core.subdocument.values.ScalarValue;
+public class ArrayTypeInstance {
+    public static final ArrayType GENERIC = new ArrayType(GenericType.INSTANCE);
 
-public interface PathDocument {
-    public String getPath();
-    public String getTableName();
-    public int getDocumentId();
-    public Integer getRowId();
-    public Integer getParentRowId();
-    public Integer getSequence();
-    public Map<String, ScalarValue<?>> getValues();
 }

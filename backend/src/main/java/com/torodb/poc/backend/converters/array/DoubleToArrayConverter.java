@@ -24,21 +24,21 @@ import javax.json.JsonNumber;
 
 import org.jooq.tools.json.JSONValue;
 
-import com.torodb.torod.core.subdocument.values.ScalarDouble;
+import com.torodb.kvdocument.values.KVDouble;
 
 /**
  *
  */
-public class DoubleToArrayConverter implements ArrayConverter<JsonNumber, ScalarDouble> {
+public class DoubleToArrayConverter implements ArrayConverter<JsonNumber, KVDouble> {
     private static final long serialVersionUID = 1L;
 
     @Override
-    public String toJsonLiteral(ScalarDouble value) {
+    public String toJsonLiteral(KVDouble value) {
         return JSONValue.toJSONString(value.getValue());
     }
 
     @Override
-    public ScalarDouble fromJsonValue(JsonNumber value) {
-        return ScalarDouble.of(value.doubleValue());
+    public KVDouble fromJsonValue(JsonNumber value) {
+        return KVDouble.of(value.doubleValue());
     }
 }

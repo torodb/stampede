@@ -20,15 +20,26 @@
 
 package com.torodb.poc.backend.postgresql.converters.json;
 
-import java.util.EnumSet;
 import java.util.Map;
-import java.util.Set;
 
 import javax.annotation.Nonnull;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Sets.SetView;
+import com.torodb.kvdocument.types.BinaryType;
+import com.torodb.kvdocument.types.BooleanType;
+import com.torodb.kvdocument.types.DateType;
+import com.torodb.kvdocument.types.DoubleType;
+import com.torodb.kvdocument.types.InstantType;
+import com.torodb.kvdocument.types.IntegerType;
+import com.torodb.kvdocument.types.KVType;
+import com.torodb.kvdocument.types.LongType;
+import com.torodb.kvdocument.types.MongoObjectIdType;
+import com.torodb.kvdocument.types.MongoTimestampType;
+import com.torodb.kvdocument.types.NullType;
+import com.torodb.kvdocument.types.StringType;
+import com.torodb.kvdocument.types.TimeType;
 import com.torodb.poc.backend.converters.ValueConverter;
 import com.torodb.poc.backend.converters.json.BinaryValueToJsonConverter;
 import com.torodb.poc.backend.converters.json.BooleanValueToJsonConverter;
@@ -43,8 +54,8 @@ import com.torodb.poc.backend.converters.json.NullValueToJsonConverter;
 import com.torodb.poc.backend.converters.json.StringValueToJsonConverter;
 import com.torodb.poc.backend.converters.json.TimeValueToJsonConverter;
 import com.torodb.poc.backend.converters.json.ValueToJsonConverterProvider;
+import com.torodb.poc.backend.mocks.ArrayTypeInstance;
 import com.torodb.poc.backend.postgresql.converters.array.PostgreSQLValueToArrayConverterProvider;
-import com.torodb.torod.core.subdocument.ScalarType;
 
 /**
  *
@@ -53,39 +64,23 @@ public class PostgreSQLValueToJsonConverterProvider implements ValueToJsonConver
 
     private static final long serialVersionUID = 1L;
 
-    /**
-     * Types that are not supported.
-     */
-    private static final EnumSet<ScalarType> UNSUPPORTED_TYPES
-            = EnumSet.noneOf(ScalarType.class);
-    /**
-     * Types that must be supported.
-     */
-    private static final Set<ScalarType> SUPPORTED_TYPES
-            = Sets.difference(EnumSet.allOf(ScalarType.class), UNSUPPORTED_TYPES);
-    private final Map<ScalarType, ValueConverter> converters;
+    private final Map<KVType, ValueConverter> converters;
 
     private PostgreSQLValueToJsonConverterProvider() {
-        converters = Maps.newEnumMap(ScalarType.class);
-        converters.put(ScalarType.ARRAY, new ArrayValueToJsonConverter(PostgreSQLValueToArrayConverterProvider.getInstance()));
-        converters.put(ScalarType.BOOLEAN, new BooleanValueToJsonConverter());
-        converters.put(ScalarType.DATE, new DateValueToJsonConverter());
-        converters.put(ScalarType.INSTANT, new InstantValueToJsonConverter());
-        converters.put(ScalarType.DOUBLE, new DoubleValueToJsonConverter());
-        converters.put(ScalarType.INTEGER, new IntegerValueToJsonConverter());
-        converters.put(ScalarType.LONG, new LongValueToJsonConverter());
-        converters.put(ScalarType.NULL, new NullValueToJsonConverter());
-        converters.put(ScalarType.STRING, new StringValueToJsonConverter());
-        converters.put(ScalarType.TIME, new TimeValueToJsonConverter());
-        converters.put(ScalarType.MONGO_OBJECT_ID, new MongoObjectIdValueToJsonConverter());
-        converters.put(ScalarType.MONGO_TIMESTAMP, new MongoTimestampValueToJsonConverter());
-        converters.put(ScalarType.BINARY, new BinaryValueToJsonConverter());
-
-        SetView<ScalarType> withoutConverter = Sets.difference(converters.keySet(), SUPPORTED_TYPES);
-        if (!withoutConverter.isEmpty()) {
-            throw new AssertionError("It is not defined how to convert from the following scalar "
-                    + "types to json: " + withoutConverter);
-        }
+        converters = Maps.newHashMap();
+        converters.put(ArrayTypeInstance.GENERIC, new ArrayValueToJsonConverter(PostgreSQLValueToArrayConverterProvider.getInstance()));
+        converters.put(BooleanType.INSTANCE, new BooleanValueToJsonConverter());
+        converters.put(DateType.INSTANCE, new DateValueToJsonConverter());
+        converters.put(InstantType.INSTANCE, new InstantValueToJsonConverter());
+        converters.put(DoubleType.INSTANCE, new DoubleValueToJsonConverter());
+        converters.put(IntegerType.INSTANCE, new IntegerValueToJsonConverter());
+        converters.put(LongType.INSTANCE, new LongValueToJsonConverter());
+        converters.put(NullType.INSTANCE, new NullValueToJsonConverter());
+        converters.put(StringType.INSTANCE, new StringValueToJsonConverter());
+        converters.put(TimeType.INSTANCE, new TimeValueToJsonConverter());
+        converters.put(MongoObjectIdType.INSTANCE, new MongoObjectIdValueToJsonConverter());
+        converters.put(MongoTimestampType.INSTANCE, new MongoTimestampValueToJsonConverter());
+        converters.put(BinaryType.INSTANCE, new BinaryValueToJsonConverter());
     }
 
     public static PostgreSQLValueToJsonConverterProvider getInstance() {
@@ -94,7 +89,7 @@ public class PostgreSQLValueToJsonConverterProvider implements ValueToJsonConver
 
     @Nonnull
     @Override
-    public ValueConverter getConverter(ScalarType valueType) {
+    public ValueConverter getConverter(KVType valueType) {
         ValueConverter converter = converters.get(valueType);
         if (converter == null) {
             throw new AssertionError("There is no converter that converts "

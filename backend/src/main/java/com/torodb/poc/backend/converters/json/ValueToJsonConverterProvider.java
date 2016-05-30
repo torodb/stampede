@@ -24,13 +24,13 @@ import java.io.Serializable;
 
 import javax.annotation.Nonnull;
 
+import com.torodb.kvdocument.types.KVType;
 import com.torodb.poc.backend.converters.ValueConverter;
-import com.torodb.torod.core.subdocument.ScalarType;
 
 /**
  *
  */
 public interface ValueToJsonConverterProvider extends Serializable {
 
-    @Nonnull ValueConverter getConverter(ScalarType valueType);
+    @Nonnull ValueConverter getConverter(KVType valueType);
 }

@@ -23,29 +23,30 @@ package com.torodb.poc.backend.converters.jooq;
 
 import org.jooq.impl.SQLDataType;
 
-import com.torodb.torod.core.subdocument.ScalarType;
-import com.torodb.torod.core.subdocument.values.ScalarNull;
+import com.torodb.kvdocument.types.KVType;
+import com.torodb.kvdocument.types.NullType;
+import com.torodb.kvdocument.values.KVNull;
 
 /**
  *
  */
-public class NullValueConverter implements SubdocValueConverter<Short, ScalarNull>{
+public class NullValueConverter implements KVValueConverter<Short, KVNull>{
     private static final long serialVersionUID = 1L;
 
-    public static final DataTypeForScalar<ScalarNull> TYPE = DataTypeForScalar.from(SQLDataType.SMALLINT.nullable(true), new NullValueConverter());
+    public static final DataTypeForKV<KVNull> TYPE = DataTypeForKV.from(SQLDataType.SMALLINT.nullable(true), new NullValueConverter());
 
     @Override
-    public ScalarType getErasuredType() {
-        return ScalarType.NULL;
+    public KVType getErasuredType() {
+        return NullType.INSTANCE;
     }
 
     @Override
-    public ScalarNull from(Short databaseObject) {
-        return ScalarNull.getInstance();
+    public KVNull from(Short databaseObject) {
+        return KVNull.getInstance();
     }
 
     @Override
-    public Short to(ScalarNull userObject) {
+    public Short to(KVNull userObject) {
         return null;
     }
 
@@ -55,8 +56,8 @@ public class NullValueConverter implements SubdocValueConverter<Short, ScalarNul
     }
 
     @Override
-    public Class<ScalarNull> toType() {
-        return ScalarNull.class;
+    public Class<KVNull> toType() {
+        return KVNull.class;
     }
     
 }

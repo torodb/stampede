@@ -25,22 +25,22 @@ import javax.json.JsonString;
 import org.jooq.tools.json.JSONValue;
 import org.threeten.bp.LocalTime;
 
-import com.torodb.torod.core.subdocument.values.ScalarTime;
-import com.torodb.torod.core.subdocument.values.heap.LocalTimeScalarTime;
+import com.torodb.kvdocument.values.KVTime;
+import com.torodb.kvdocument.values.heap.LocalTimeKVTime;
 
 /**
  *
  */
-public class TimeToArrayConverter implements ArrayConverter<JsonString, ScalarTime> {
+public class TimeToArrayConverter implements ArrayConverter<JsonString, KVTime> {
     private static final long serialVersionUID = 1L;
 
     @Override
-    public String toJsonLiteral(ScalarTime value) {
+    public String toJsonLiteral(KVTime value) {
         return JSONValue.toJSONString(value.toString());
     }
 
     @Override
-    public ScalarTime fromJsonValue(JsonString value) {
-        return new LocalTimeScalarTime(LocalTime.parse(value.toString()));
+    public KVTime fromJsonValue(JsonString value) {
+        return new LocalTimeKVTime(LocalTime.parse(value.toString()));
     }
 }

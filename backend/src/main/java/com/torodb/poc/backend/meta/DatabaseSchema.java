@@ -4,6 +4,7 @@ import java.sql.DatabaseMetaData;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -25,20 +26,25 @@ import org.jooq.impl.SchemaImpl;
 import com.google.common.collect.HashBasedTable;
 import com.torodb.poc.backend.DatabaseInterface;
 import com.torodb.poc.backend.exceptions.InvalidDatabaseSchemaException;
+import com.torodb.poc.backend.mocks.Path;
+import com.torodb.poc.backend.mocks.PathDocStructure;
 import com.torodb.poc.backend.tables.CollectionTable;
 import com.torodb.poc.backend.tables.ContainerTable;
 import com.torodb.poc.backend.tables.FieldTable;
 import com.torodb.poc.backend.tables.PathDocHelper;
 import com.torodb.poc.backend.tables.PathDocTable;
+import com.torodb.poc.backend.tables.RootDocTable;
 import com.torodb.poc.backend.tables.records.CollectionRecord;
 import com.torodb.poc.backend.tables.records.ContainerRecord;
+import com.torodb.poc.backend.tables.records.FieldRecord;
 
 public final class DatabaseSchema extends SchemaImpl {
 
     private static final long serialVersionUID = 577805060;
 
     private final String database;
-    private final com.google.common.collect.Table<String, String, PathDocTable> tables;
+    private final Map<String, RootDocTable> roots;
+    private final com.google.common.collect.Table<String, Path, PathDocTable> containers;
     private final DatabaseInterface databaseInterface;
 
     public DatabaseSchema(
@@ -71,7 +77,8 @@ public final class DatabaseSchema extends SchemaImpl {
         // This has to be fixed, as we are publishing partially initialized objects
 
         this.database = database;
-        this.tables = HashBasedTable.create();
+        this.roots = new HashMap<>();
+        this.containers = HashBasedTable.create();
 
         if (jooqMeta != null) {
             Schema standardSchema = null;
@@ -98,12 +105,13 @@ public final class DatabaseSchema extends SchemaImpl {
                     .where(collectionTable.DATABASE.eq(database))
                     .fetchMap(collectionTable.TABLE, CollectionRecord.class);
             Map<String, ContainerRecord> containers = dsl
-                    .select(containerTable.COLLECTION, containerTable.TABLE)
+                    .select(containerTable.COLLECTION, containerTable.TABLE, containerTable.PARENT_TABLE)
                     .from(containerTable)
                     .where(containerTable.DATABASE.eq(database))
                     .fetchMap(containerTable.TABLE, ContainerRecord.class);
             Map<String, Result<Record6<String, String, String, String, String, String>>> fields = dsl
-                    .select(fieldTable.COLLECTION, fieldTable.PATH, fieldTable.NAME, containerTable.TABLE, fieldTable.COLUMN_NAME, fieldTable.COLUMN_TYPE)
+                    .select(fieldTable.COLLECTION, fieldTable.PATH, fieldTable.NAME, 
+                            containerTable.TABLE, fieldTable.COLUMN_NAME, fieldTable.COLUMN_TYPE)
                     .from(containerTable)
                     .naturalJoin(fieldTable)
                     .where(fieldTable.DATABASE.eq(database))
@@ -147,34 +155,58 @@ public final class DatabaseSchema extends SchemaImpl {
             
             PathDocHelper pathDocHelper = new PathDocHelper(databaseInterface);
             for (Table<?> table : existingTables) {
-                if (!containers.containsKey(table.getName())) {
+                if (!collections.containsKey(table) && !containers.containsKey(table.getName())) {
                     throw new InvalidDatabaseSchemaException(schemaName, "Table "+schemaName+"."+table.getName()
                             +" has no container associated for database "+database);
                 }
-                ContainerRecord container = containers.get(table.getName());
-                Result<Record6<String, String, String, String, String, String>> tableFields = fields.get(table.getName());
-                for (Field<?> existingField : table.fields()) {
-                    if (pathDocHelper.isSpecialColumn(existingField.getName())) {
-                        continue;
+                if (containers.containsKey(table.getName())) {
+                    ContainerRecord container = containers.get(table.getName());
+                    Result<Record6<String, String, String, String, String, String>> tableFields = fields.get(table.getName());
+                    for (Field<?> existingField : table.fields()) {
+                        if (pathDocHelper.isSpecialColumn(existingField.getName())) {
+                            continue;
+                        }
+                        if (!containsField(existingField, tableFields)) {
+                            throw new InvalidDatabaseSchemaException(schemaName, "Column "+schemaName+"."+table.getName()
+                            +"."+existingField.getName()+" has no field associated for database "+database);
+                        }
                     }
-                    if (!containsField(existingField, tableFields)) {
-                        throw new InvalidDatabaseSchemaException(schemaName, "Column "+schemaName+"."+table.getName()
-                        +"."+existingField.getName()+" has no field associated for database "+database);
-                    }
+                    Path path = Path.fromString(container.getPath());
+                    PathDocStructure pathDocStructure = pathDocStructureFromTableFields(tableFields);
+                    PathDocTable pathDocTable = new PathDocTable(
+                            database,
+                            container.getCollection(),
+                            path,
+                            this,
+                            container.getTableName(),
+                            container.getParentTableName(),
+                            pathDocStructure,
+                            databaseInterface
+                    );
+                    this.containers.put(container.getCollection(), path, pathDocTable);
                 }
-                PathDocTable pathDocTable = new PathDocTable(
-                        database,
-                        container.getCollection(),
-                        container.getPath(),
-                        this,
-                        table.getName(),
-                        databaseInterface
-                );
-                this.tables.put(container.getCollection(), container.getPath(), pathDocTable);
+                if (collections.containsKey(table.getName())) {
+                    
+                }
             }
         }
 
         this.databaseInterface = databaseInterface;
+    }
+    
+    private PathDocStructure pathDocStructureFromTableFields(Result<Record6<String, String, String, String, String, String>> tableFields) {
+        List<FieldRecord> tableFieldRecords = new ArrayList<>();
+        for (Record6<String, String, String, String, String, String> tableFieldRecord : tableFieldRecords) {
+            FieldRecord field = databaseInterface.getFieldTable().newRecord();
+            field.setDatabase(database);
+            field.setCollection(tableFieldRecord.value1());
+            field.setPath(tableFieldRecord.value2());
+            field.setName(tableFieldRecord.value3());
+            field.setColumnName(tableFieldRecord.value5());
+            field.setColumnType(tableFieldRecord.value6());
+            tableFieldRecords.add(field);
+        }
+        return PathDocStructure.fromTableFields(tableFieldRecords);
     }
 
     private boolean existsTable(String tableName, Iterable<? extends Table<?>> tables) {
@@ -246,7 +278,7 @@ public final class DatabaseSchema extends SchemaImpl {
      * @throws IllegalArgumentException if there is no table registered with the given path
      */
     public PathDocTable getPathDocTable(String collection, String path) throws IllegalArgumentException {
-        PathDocTable table = tables.get(collection, path);
+        PathDocTable table = containers.get(collection, path);
         if (table == null) {
             throw new IllegalArgumentException("There is no table that represents path " + path + " for collection " + collection);
         }
@@ -254,7 +286,7 @@ public final class DatabaseSchema extends SchemaImpl {
     }
 
     public boolean existsPathDocTable(String collection, String path) {
-        return tables.contains(collection, path);
+        return containers.contains(collection, path);
     }
 
     /**
@@ -263,13 +295,15 @@ public final class DatabaseSchema extends SchemaImpl {
      * @return
      * @throws IllegalArgumentException if the given type is already represented by a table
      */
-    public PathDocTable preparePathDocTable(String collection, String path, String tableName) throws IllegalArgumentException {
-        if (tables.contains(collection, path)) {
+    public PathDocTable preparePathDocTable(String collection, Path path, String tableName, 
+            String parentTableName, PathDocStructure pathDocStructure) throws IllegalArgumentException {
+        if (containers.contains(collection, path)) {
             throw new IllegalArgumentException("There is no table that represents path " + path + " for collection " + collection);
         }
 
-        PathDocTable table = new PathDocTable(database, collection, path, this, tableName, databaseInterface);
-        tables.put(collection, path, table);
+        PathDocTable table = new PathDocTable(database, collection, path, this, 
+                tableName, parentTableName, pathDocStructure, databaseInterface);
+        containers.put(collection, path, table);
 
         return table;
     }
@@ -303,7 +337,7 @@ public final class DatabaseSchema extends SchemaImpl {
     }
 
     public Collection<PathDocTable> getPathDocTables() {
-        return Collections.unmodifiableCollection(tables.values());
+        return Collections.unmodifiableCollection(containers.values());
     }
 
     @Override

@@ -23,26 +23,33 @@ package com.torodb.poc.backend.tables;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 import org.jooq.DataType;
 import org.jooq.Field;
+import org.jooq.ForeignKey;
 import org.jooq.Identity;
 import org.jooq.Record;
 import org.jooq.RecordMapper;
 import org.jooq.Schema;
 import org.jooq.Table;
 import org.jooq.TableField;
+import org.jooq.UniqueKey;
 import org.jooq.impl.AbstractKeys;
 import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
 import com.google.common.collect.AbstractIterator;
+import com.google.common.collect.ImmutableList;
+import com.torodb.kvdocument.types.KVType;
+import com.torodb.kvdocument.values.KVValue;
 import com.torodb.poc.backend.DatabaseInterface;
 import com.torodb.poc.backend.meta.DatabaseSchema;
-import com.torodb.poc.backend.tables.records.FieldRecord;
+import com.torodb.poc.backend.mocks.Path;
+import com.torodb.poc.backend.mocks.PathDocStructure;
 import com.torodb.poc.backend.tables.records.PathDocTableRecord;
-import com.torodb.torod.core.subdocument.values.ScalarValue;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -81,45 +88,54 @@ public class PathDocTable extends TableImpl<PathDocTableRecord> {
     private final TableField<PathDocTableRecord, Integer> didField
             = createField(DID_COLUMN_NAME, SQLDataType.INTEGER.nullable(false), this, "");
     private final TableField<PathDocTableRecord, Integer> ridField
-            = createField(DID_COLUMN_NAME, SQLDataType.INTEGER.nullable(false), this, "");
+            = createField(RID_COLUMN_NAME, SQLDataType.INTEGER.nullable(false), this, "");
     private final TableField<PathDocTableRecord, Integer> pidField
-            = createField(DID_COLUMN_NAME, SQLDataType.INTEGER.nullable(false), this, "");
+            = createField(PID_COLUMN_NAME, SQLDataType.INTEGER.nullable(false), this, "");
     private final TableField<PathDocTableRecord, Integer> seqField
             = createField(SEQ_COLUMN_NAME, SQLDataType.INTEGER.nullable(true), this, "");
 
     private final DatabaseInterface databaseInterface;
+    private final PathDocStructure pathDocStructure;
     
     private final String database;
     private final String collection;
-    private final String path;
+    private final Path path;
+    private final String parentTableName;
     
     public PathDocTable(
             String database,
             String collection,
-            String path,
+            Path path,
             DatabaseSchema schema,
             String tableName,
+            String parentTableName,
+            PathDocStructure pathDocStructure,
             DatabaseInterface databaseInterface
     ) {
-        this(database, collection, path, (Schema) schema, tableName, databaseInterface);
+        this(database, collection, path, 
+                (Schema) schema, tableName, parentTableName, 
+                pathDocStructure, databaseInterface);
     }
     
     private PathDocTable(
             String database,
             String collection,
-            String path,
+            Path path,
             Schema schema,
             String tableName,
+            String parentTableName,
+            PathDocStructure pathDocStructure,
             DatabaseInterface databaseInterface
     ) {
         super(tableName, schema);
         this.database = database;
         this.collection = collection;
         this.path = path;
-        for (FieldRecord fieldRecord : databaseInterface.getFields(database, collection, path)) {
-            String fieldName = fieldRecord.getColumnName();
+        this.parentTableName = parentTableName;
+        for (Map.Entry<String, KVType> field : pathDocStructure.getFields().entrySet()) {
+            String fieldName = field.getKey();
 
-            DataType<?> dataType = databaseInterface.getDataType(fieldRecord.getColumnType());
+            DataType<?> dataType = databaseInterface.getDataType(field.getValue());
             
             createField(
                     fieldName,
@@ -129,22 +145,23 @@ public class PathDocTable extends TableImpl<PathDocTableRecord> {
         }
 
         this.databaseInterface = databaseInterface;
+        this.pathDocStructure = pathDocStructure;
     }
     
-    public String getPath() {
+    public Path getPath() {
         return path;
     }
 
     @SuppressFBWarnings("SIC_INNER_SHOULD_BE_STATIC_ANON")
-    public Iterable<Field<? extends ScalarValue<? extends Serializable>>> getPathDocFields() {
-        final Iterator<Field<? extends ScalarValue<? extends Serializable>>> iterator
-                = new AbstractIterator<Field<? extends ScalarValue<? extends Serializable>>>() {
+    public Iterable<Field<? extends KVValue<? extends Serializable>>> getPathDocFields() {
+        final Iterator<Field<? extends KVValue<? extends Serializable>>> iterator
+                = new AbstractIterator<Field<? extends KVValue<? extends Serializable>>>() {
 
                     Field[] fields = fields();
                     int index = 0;
 
                     @Override
-                    protected Field<? extends ScalarValue<? extends Serializable>> computeNext() {
+                    protected Field<? extends KVValue<? extends Serializable>> computeNext() {
                         while(isSpecialColumn(fields[index].getName())) {
                             index++;
                         }
@@ -152,12 +169,12 @@ public class PathDocTable extends TableImpl<PathDocTableRecord> {
                             endOfData();
                             return null;
                         }
-                        return (Field<? extends ScalarValue<? extends Serializable>>) field(fields[index++]);
+                        return (Field<? extends KVValue<? extends Serializable>>) field(fields[index++]);
                     }
                 };
-        return new Iterable<Field<? extends ScalarValue<? extends Serializable>>>() {
+        return new Iterable<Field<? extends KVValue<? extends Serializable>>>() {
             @Override
-            public Iterator<Field<? extends ScalarValue<? extends Serializable>>> iterator() {
+            public Iterator<Field<? extends KVValue<? extends Serializable>>> iterator() {
                 return iterator;
             }
         };
@@ -215,6 +232,26 @@ public class PathDocTable extends TableImpl<PathDocTableRecord> {
         return identityRoot;
     }
 
+    @Override
+    public List<ForeignKey<PathDocTableRecord, ?>> getReferences() {
+        ImmutableList.Builder<ForeignKey<PathDocTableRecord,?>> referencesBuilder =
+                ImmutableList.builder();
+        if(path.getLevel() > 0) {
+            referencesBuilder.add(ForeignKeyFactory.createForeignKeyToParent(this));
+        } else {
+            referencesBuilder.add(ForeignKeyFactory.createForeignKeyToRoot(this));
+        }
+        return referencesBuilder.build();
+    }
+
+    @Override
+    public List<UniqueKey<PathDocTableRecord>> getKeys() {
+        ImmutableList.Builder<UniqueKey<PathDocTableRecord>> keysBuilder =
+                ImmutableList.builder();
+        keysBuilder.add(UniqueKeyFactory.createDidUniqueKey(this));
+        return keysBuilder.build();
+    }
+
     /**
      * {@inheritDoc}
      * <p>
@@ -223,7 +260,8 @@ public class PathDocTable extends TableImpl<PathDocTableRecord> {
      */
     @Override
     public PathDocTable as(String alias) {
-        return new PathDocTable(database, collection, path, getSchema(), alias, databaseInterface);
+        return new PathDocTable(database, collection, path, getSchema(), 
+                alias, parentTableName, pathDocStructure, databaseInterface);
     }
 
     /**
@@ -233,7 +271,8 @@ public class PathDocTable extends TableImpl<PathDocTableRecord> {
      * @return
      */
     public PathDocTable rename(String name) {
-        return new PathDocTable(database, collection, path, getSchema(), name, databaseInterface);
+        return new PathDocTable(database, collection, path, getSchema(), 
+                name, parentTableName, pathDocStructure, databaseInterface);
     }
 
     @Override
@@ -247,9 +286,26 @@ public class PathDocTable extends TableImpl<PathDocTableRecord> {
     }
 
     private static class IdentityFactory extends AbstractKeys {
-
         public static Identity<PathDocTableRecord, Integer> createIdentity(PathDocTable table) {
-            return createIdentity(table, table.didField);
+            return createIdentity(table, table.ridField);
+        }
+    }
+
+    private static class ForeignKeyFactory extends AbstractKeys {
+        public static ForeignKey<PathDocTableRecord, PathDocTableRecord> createForeignKeyToParent(PathDocTable table) {
+            return createForeignKey(UniqueKeyFactory.createPidUniqueKey(table), table, table.parentTableName, table.ridField);
+        }
+        public static ForeignKey<PathDocTableRecord, PathDocTableRecord> createForeignKeyToRoot(PathDocTable table) {
+            return createForeignKey(UniqueKeyFactory.createDidUniqueKey(table), table, table.parentTableName, table.didField);
+        }
+    }
+
+    private static class UniqueKeyFactory extends AbstractKeys {
+        public static UniqueKey<PathDocTableRecord> createDidUniqueKey(PathDocTable table) {
+            return createUniqueKey(table, table.didField);
+        }
+        public static UniqueKey<PathDocTableRecord> createPidUniqueKey(PathDocTable table) {
+            return createUniqueKey(table, table.pidField);
         }
     }
 }

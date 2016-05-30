@@ -23,32 +23,33 @@ package com.torodb.poc.backend.converters.jooq;
 import org.jooq.impl.SQLDataType;
 
 import com.google.common.io.ByteSource;
+import com.torodb.kvdocument.types.BinaryType;
+import com.torodb.kvdocument.types.KVType;
+import com.torodb.kvdocument.values.KVBinary;
 import com.torodb.kvdocument.values.KVBinary.KVBinarySubtype;
-import com.torodb.torod.core.subdocument.ScalarType;
-import com.torodb.torod.core.subdocument.values.ScalarBinary;
-import com.torodb.torod.core.subdocument.values.heap.ByteSourceScalarBinary;
+import com.torodb.kvdocument.values.heap.ByteSourceKVBinary;
 
 /**
  *
  */
 public class BinaryValueConverter implements
-        SubdocValueConverter<byte[], ScalarBinary> {
+        KVValueConverter<byte[], KVBinary> {
     private static final long serialVersionUID = 1L;
 
-    public static final DataTypeForScalar<ScalarBinary> TYPE = DataTypeForScalar.from(SQLDataType.BINARY, new BinaryValueConverter());
+    public static final DataTypeForKV<KVBinary> TYPE = DataTypeForKV.from(SQLDataType.BINARY, new BinaryValueConverter());
 
     @Override
-    public ScalarType getErasuredType() {
-        return ScalarType.BINARY;
+    public KVType getErasuredType() {
+        return BinaryType.INSTANCE;
     }
 
     @Override
-    public ScalarBinary from(byte[] databaseObject) {
-        return new ByteSourceScalarBinary(KVBinarySubtype.MONGO_GENERIC, (byte) 0, ByteSource.wrap(databaseObject));
+    public KVBinary from(byte[] databaseObject) {
+        return new ByteSourceKVBinary(KVBinarySubtype.MONGO_GENERIC, (byte) 0, ByteSource.wrap(databaseObject));
     }
 
     @Override
-    public byte[] to(ScalarBinary userObject) {
+    public byte[] to(KVBinary userObject) {
         return userObject.getByteSource().read();
     }
 
@@ -58,8 +59,8 @@ public class BinaryValueConverter implements
     }
 
     @Override
-    public Class<ScalarBinary> toType() {
-        return ScalarBinary.class;
+    public Class<KVBinary> toType() {
+        return KVBinary.class;
     }
 
 }

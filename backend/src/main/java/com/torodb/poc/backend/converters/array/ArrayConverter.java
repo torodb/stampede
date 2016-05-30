@@ -24,9 +24,9 @@ import java.io.Serializable;
 
 import javax.json.JsonValue;
 
-import com.torodb.torod.core.subdocument.values.ScalarValue;
+import com.torodb.kvdocument.values.KVValue;
 
-public interface ArrayConverter<J extends JsonValue, V extends ScalarValue<?>> extends Serializable {
+public interface ArrayConverter<J extends JsonValue, V extends KVValue<?>> extends Serializable {
 
     String toJsonLiteral(V scalarValue);
     

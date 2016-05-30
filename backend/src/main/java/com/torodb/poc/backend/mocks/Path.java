@@ -18,18 +18,15 @@
  *     
  */
 
+package com.torodb.poc.backend.mocks;
 
-package com.torodb.poc.backend;
-
-import com.torodb.torod.core.exceptions.ToroImplementationException;
-import com.torodb.torod.core.subdocument.ScalarType;
-import java.io.Serializable;
-
-/**
- *
- */
-public interface ScalarTypeToSqlType extends Serializable {
-
-    ScalarType toScalarType(String columnName, int jdbcIntType, String jdbcStringType) throws ToroImplementationException;
-
- }
+public interface Path {
+    public static Path fromString(String path) {
+        throw new RuntimeException("Not implemented yet");
+    }
+    
+    public String getTableName();
+    public String getParentTableName();
+    public int getLevel();
+    public boolean isRoot();
+}
