@@ -23,11 +23,16 @@ package com.torodb.metainfo.cache;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 import com.torodb.core.TableRef;
+import com.torodb.core.annotations.DoNotChange;
+import com.torodb.core.transaction.metainf.ImmutableMetaDocPart;
+import com.torodb.core.transaction.metainf.ImmutableMetaDocPart.Builder;
 import com.torodb.core.transaction.metainf.ImmutableMetaField;
-import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetaField;
 import com.torodb.core.transaction.metainf.MutableMetaDocPart;
 import com.torodb.kvdocument.types.KVType;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 /**
@@ -35,19 +40,22 @@ import java.util.stream.Stream;
  */
 public class WrapperMutableMetaDocPart implements MutableMetaDocPart {
 
-    private final TableRef tableRef;
-    private final String identifier;
+    private final ImmutableMetaDocPart wrapped;
     private final Table<String, KVType, MetaField> newFields;
+    private final List<ImmutableMetaField> addedFields;
+    private final Consumer<WrapperMutableMetaDocPart> changeConsumer;
 
-    public WrapperMutableMetaDocPart(MetaDocPart<ImmutableMetaField> originaLDocPart) {
-        this.tableRef = originaLDocPart.getTableRef();
-        this.identifier = originaLDocPart.getIdentifier();
-
+    public WrapperMutableMetaDocPart(ImmutableMetaDocPart wrapped,
+            Consumer<WrapperMutableMetaDocPart> changeConsumer) {
+        this.wrapped = wrapped;
+        
         newFields = HashBasedTable.create();
 
-        originaLDocPart.streamFields().forEach((field) ->
+        wrapped.streamFields().forEach((field) ->
             newFields.put(field.getName(), field.getType(), field)
         );
+        addedFields = new ArrayList<>();
+        this.changeConsumer = changeConsumer;
     }
 
     @Override
@@ -62,17 +70,39 @@ public class WrapperMutableMetaDocPart implements MutableMetaDocPart {
 
         ImmutableMetaField newField = new ImmutableMetaField(name, identifier, type);
         newFields.put(name, type, newField);
+        addedFields.add(newField);
+        changeConsumer.accept(this);
         return newField;
     }
 
     @Override
+    @DoNotChange
+    public Iterable<ImmutableMetaField> getAddedMetaFields() {
+        return addedFields;
+    }
+
+    @Override
+    public ImmutableMetaDocPart immutableCopy() {
+        if (addedFields.isEmpty()) {
+            return wrapped;
+        }
+        else {
+            ImmutableMetaDocPart.Builder builder = new Builder(wrapped);
+            for (ImmutableMetaField addedField : addedFields) {
+                builder.add(addedField);
+            }
+            return builder.build();
+        }
+    }
+
+    @Override
     public TableRef getTableRef() {
-        return tableRef;
+        return wrapped.getTableRef();
     }
 
     @Override
     public String getIdentifier() {
-        return identifier;
+        return wrapped.getIdentifier();
     }
 
     @Override

@@ -101,6 +101,12 @@ public class ImmutableMetaDatabase implements MetaDatabase<ImmutableMetaCollecti
             collectionsById = new HashMap<>(expectedCollections);
         }
 
+        public Builder(ImmutableMetaDatabase other) {
+            this.name = other.name;
+            this.identifier = other.identifier;
+            this.collectionsById = new HashMap<>(other.collectionsById);
+        }
+
         public Builder add(ImmutableMetaCollection collection) {
             Preconditions.checkState(!built, "This builder has already been built");
             collectionsById.put(collection.getIdentifier(), collection);

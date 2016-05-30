@@ -20,13 +20,13 @@
 
 package com.torodb.metainfo.cache;
 
+import com.torodb.core.annotations.DoNotChange;
 import com.torodb.core.transaction.metainf.ImmutableMetaDatabase;
-import com.torodb.core.transaction.metainf.MetaSnapshot;
+import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
 import com.torodb.core.transaction.metainf.MutableMetaDatabase;
 import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 /**
@@ -34,14 +34,21 @@ import java.util.stream.Stream;
  */
 public class WrapperMutableMetaSnapshot implements MutableMetaSnapshot<MutableMetaDatabase>{
 
+    private final ImmutableMetaSnapshot wrapped;
     private final Map<String, MutableMetaDatabase> newDatabases;
+    private final Set<MutableMetaDatabase> changedDatabases;
 
-    public WrapperMutableMetaSnapshot(MetaSnapshot<?> originalSnapshot) {
+    public WrapperMutableMetaSnapshot(ImmutableMetaSnapshot wrapped) {
+        this.wrapped = wrapped;
         this.newDatabases = new HashMap<>();
 
-        originalSnapshot.streamDatabases().forEach((db) -> {
+        changedDatabases = new HashSet<>();
+
+        Consumer<WrapperMutableMetaDatabase> changeConsumer = this::onMetaDatabaseChange;
+
+        wrapped.streamMetaDatabases().forEach((db) -> {
                 @SuppressWarnings("unchecked")
-                MutableMetaDatabase mutable = new WrapperMutableMetaDatabase(db);
+                MutableMetaDatabase mutable = new WrapperMutableMetaDatabase(db, changeConsumer);
                 newDatabases.put(db.getName(), mutable);
         });
     }
@@ -55,17 +62,37 @@ public class WrapperMutableMetaSnapshot implements MutableMetaSnapshot<MutableMe
 
         assert getMetaDatabaseByIdentifier(dbId) == null : "There is another database whose id is " + dbId;
 
-        MutableMetaDatabase result = new WrapperMutableMetaDatabase(
-                new ImmutableMetaDatabase(dbName, dbId, Collections.emptyList())
+        WrapperMutableMetaDatabase result = new WrapperMutableMetaDatabase(
+                new ImmutableMetaDatabase(dbName, dbId, Collections.emptyList()), this::onMetaDatabaseChange
         );
 
         newDatabases.put(dbName, result);
+        onMetaDatabaseChange(result);
 
         return result;
     }
 
+    @DoNotChange
     @Override
-    public Stream<MutableMetaDatabase> streamDatabases() {
+    public Iterable<MutableMetaDatabase> getModifiedDatabases() {
+        return changedDatabases;
+    }
+
+    @Override
+    public ImmutableMetaSnapshot immutableCopy() {
+        if (changedDatabases.isEmpty()) {
+            return wrapped;
+        } else {
+            ImmutableMetaSnapshot.Builder builder = new ImmutableMetaSnapshot.Builder(wrapped);
+            for (MutableMetaDatabase changedDatabase : changedDatabases) {
+                builder.add(changedDatabase.immutableCopy());
+            }
+            return builder.build();
+        }
+    }
+
+    @Override
+    public Stream<MutableMetaDatabase> streamMetaDatabases() {
         return newDatabases.values().stream();
     }
 
@@ -82,5 +109,8 @@ public class WrapperMutableMetaSnapshot implements MutableMetaSnapshot<MutableMe
                 .orElse(null);
     }
 
+    private void onMetaDatabaseChange(WrapperMutableMetaDatabase changed) {
+        changedDatabases.add(changed);
+    }
 
 }

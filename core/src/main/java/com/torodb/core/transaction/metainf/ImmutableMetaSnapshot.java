@@ -15,10 +15,10 @@ public class ImmutableMetaSnapshot implements MetaSnapshot<ImmutableMetaDatabase
     private final Map<String, ImmutableMetaDatabase> dbsByIdentifier;
     private final Map<String, ImmutableMetaDatabase> bdsByName;
 
-    public ImmutableMetaSnapshot(Iterable<ImmutableMetaDatabase> schemes) {
+    public ImmutableMetaSnapshot(Iterable<ImmutableMetaDatabase> dbs) {
         Map<String, ImmutableMetaDatabase> byName = new HashMap<>();
         Map<String, ImmutableMetaDatabase> byId = new HashMap<>();
-        for (ImmutableMetaDatabase database : schemes) {
+        for (ImmutableMetaDatabase database : dbs) {
             byName.put(database.getName(), database);
             byId.put(database.getIdentifier(), database);
         }
@@ -35,7 +35,7 @@ public class ImmutableMetaSnapshot implements MetaSnapshot<ImmutableMetaDatabase
     }
 
     @Override
-    public Stream<ImmutableMetaDatabase> streamDatabases() {
+    public Stream<ImmutableMetaDatabase> streamMetaDatabases() {
         return bdsByName.values().stream();
     }
 
@@ -59,6 +59,10 @@ public class ImmutableMetaSnapshot implements MetaSnapshot<ImmutableMetaDatabase
 
         public Builder(int expectedDbs) {
             dbsByIdentifier = new HashMap<>(expectedDbs);
+        }
+
+        public Builder(ImmutableMetaSnapshot other) {
+            this.dbsByIdentifier = new HashMap<>(other.dbsByIdentifier);
         }
         
         public Builder add(ImmutableMetaDatabase.Builder dbBuilder) {

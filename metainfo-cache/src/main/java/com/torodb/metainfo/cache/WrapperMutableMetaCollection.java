@@ -21,29 +21,39 @@
 package com.torodb.metainfo.cache;
 
 import com.torodb.core.TableRef;
-import com.torodb.core.transaction.metainf.*;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Optional;
+import com.torodb.core.annotations.DoNotChange;
+import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
+import com.torodb.core.transaction.metainf.ImmutableMetaDocPart;
+import com.torodb.core.transaction.metainf.MutableMetaCollection;
+import com.torodb.core.transaction.metainf.MutableMetaDocPart;
+import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 /**
  *
  */
 public class WrapperMutableMetaCollection implements MutableMetaCollection<MutableMetaDocPart> {
-    
-    private final String name;
-    private final String identifier;
-    private final HashMap<TableRef, MutableMetaDocPart> newDocParts;
 
-    public WrapperMutableMetaCollection(MetaCollection<? extends MetaDocPart> originalCollection) {
-        this.name = originalCollection.getName();
-        this.identifier = originalCollection.getIdentifier();
+    private final ImmutableMetaCollection wrapped;
+    private final HashMap<TableRef, MutableMetaDocPart> newDocParts;
+    private final Set<MutableMetaDocPart> modifiedMetaDocParts;
+    private final Consumer<WrapperMutableMetaCollection> changeConsumer;
+
+    public WrapperMutableMetaCollection(ImmutableMetaCollection wrappedCollection,
+            Consumer<WrapperMutableMetaCollection> changeConsumer) {
+        this.wrapped = wrappedCollection;
+        this.changeConsumer = changeConsumer;
         
         this.newDocParts = new HashMap<>();
-        originalCollection.streamContainedMetaDocParts().forEach((docPart) -> {
+
+        modifiedMetaDocParts = new HashSet<>();
+
+        Consumer<WrapperMutableMetaDocPart> childChangeConsumer = this::onDocPartChange;
+
+        wrappedCollection.streamContainedMetaDocParts().forEach((docPart) -> {
             @SuppressWarnings("unchecked")
-            MutableMetaDocPart mutable = new WrapperMutableMetaDocPart(docPart);
+            MutableMetaDocPart mutable = new WrapperMutableMetaDocPart(docPart, childChangeConsumer);
             newDocParts.put(mutable.getTableRef(), mutable);
         });
     }
@@ -57,23 +67,43 @@ public class WrapperMutableMetaCollection implements MutableMetaCollection<Mutab
 
         assert getMetaDocPartByIdentifier(tableId) == null : "There is another doc part whose id is " + tableRef;
 
-        MutableMetaDocPart result = new WrapperMutableMetaDocPart(
-                new ImmutableMetaDocPart(tableRef, tableId, Collections.emptyMap())
+        WrapperMutableMetaDocPart result = new WrapperMutableMetaDocPart(
+                new ImmutableMetaDocPart(tableRef, tableId, Collections.emptyMap()), this::onDocPartChange
         );
 
         newDocParts.put(tableRef, result);
+        onDocPartChange(result);
 
         return result;
     }
 
     @Override
+    @DoNotChange
+    public Iterable<MutableMetaDocPart> getModifiedMetaDocParts() {
+        return modifiedMetaDocParts;
+    }
+
+    @Override
+    public ImmutableMetaCollection immutableCopy() {
+        if (modifiedMetaDocParts.isEmpty()) {
+            return wrapped;
+        } else {
+            ImmutableMetaCollection.Builder builder = new ImmutableMetaCollection.Builder(wrapped);
+            for (MutableMetaDocPart modifiedMetaDocPart : modifiedMetaDocParts) {
+                builder.add(modifiedMetaDocPart.immutableCopy());
+            }
+            return builder.build();
+        }
+    }
+
+    @Override
     public String getName() {
-        return name;
+        return wrapped.getName();
     }
 
     @Override
     public String getIdentifier() {
-        return identifier;
+        return wrapped.getIdentifier();
     }
 
     @Override
@@ -93,6 +123,11 @@ public class WrapperMutableMetaCollection implements MutableMetaCollection<Mutab
     @Override
     public MutableMetaDocPart getMetaDocPartByTableRef(TableRef tableRef) {
         return newDocParts.get(tableRef);
+    }
+
+    private void onDocPartChange(WrapperMutableMetaDocPart changedDocPart) {
+        modifiedMetaDocParts.add(changedDocPart);
+        changeConsumer.accept(this);
     }
 
 }

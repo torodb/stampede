@@ -20,6 +20,8 @@
 
 package com.torodb.core.transaction.metainf;
 
+import com.torodb.core.annotations.DoNotChange;
+
 /**
  *
  * @param <MMC>
@@ -27,5 +29,10 @@ package com.torodb.core.transaction.metainf;
 public interface MutableMetaDatabase<MMC extends MutableMetaCollection> extends MetaDatabase<MutableMetaCollection> {
 
     public abstract MMC addMetaCollection(String colName, String colId) throws IllegalArgumentException;
+
+    @DoNotChange
+    public abstract Iterable<MMC> getModifiedCollections();
+
+    public abstract ImmutableMetaDatabase immutableCopy();
 
 }

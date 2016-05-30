@@ -106,6 +106,13 @@ public class ImmutableMetaCollection implements MetaCollection<ImmutableMetaDocP
             this.docPartsByDbName = new HashMap<>(expectedDocParts);
         }
 
+        public Builder(ImmutableMetaCollection other) {
+            this.name = other.getName();
+            this.identifier = other.getIdentifier();
+
+            docPartsByDbName = new HashMap<>(other.docPartsByIdentifier);
+        }
+
         public Builder add(ImmutableMetaDocPart.Builder tableBuilder) {
             return add(tableBuilder.build());
         }
