@@ -21,11 +21,12 @@ public abstract class ContainerTable<Record extends ContainerRecord> extends Tab
     public static final String TABLE_NAME = "container";
 
     public enum TableFields {
-        DATABASE        (   "database"          ),
-        COLLECTION      (   "collection"        ),
-        PATH            (   "path"              ),
-        TABLE_NAME      (   "table_name"        ),
-        LAST_RID        (   "last_rid"          )
+        DATABASE               (   "database"          ),
+        COLLECTION             (   "collection"        ),
+        PATH                   (   "path"              ),
+        TABLE_NAME             (   "table_name"        ),
+        PARENT_TABLE_NAME      (   "parent_table_name" ),
+        LAST_RID               (   "last_rid"          )
         ;
 
         public final String fieldName;
@@ -68,6 +69,12 @@ public abstract class ContainerTable<Record extends ContainerRecord> extends Tab
     /**
      * The column <code>torodb.container.table_name</code>.
      */
+    public final TableField<Record, String> PARENT_TABLE 
+            = createParentTableNameField();
+
+    /**
+     * The column <code>torodb.container.table_name</code>.
+     */
     public final TableField<Record, String> TABLE 
             = createTableNameField();
 
@@ -81,6 +88,7 @@ public abstract class ContainerTable<Record extends ContainerRecord> extends Tab
     protected abstract TableField<Record, String> createCollectionField();
     protected abstract TableField<Record, String> createPathField();
     protected abstract TableField<Record, String> createTableNameField();
+    protected abstract TableField<Record, String> createParentTableNameField();
     protected abstract TableField<Record, Integer> createLastRidField();
 
     private final UniqueKeys<Record> uniqueKeys;

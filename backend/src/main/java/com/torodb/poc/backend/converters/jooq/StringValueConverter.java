@@ -23,30 +23,31 @@ package com.torodb.poc.backend.converters.jooq;
 
 import org.jooq.impl.SQLDataType;
 
-import com.torodb.torod.core.subdocument.ScalarType;
-import com.torodb.torod.core.subdocument.values.ScalarString;
-import com.torodb.torod.core.subdocument.values.heap.StringScalarString;
+import com.torodb.kvdocument.types.KVType;
+import com.torodb.kvdocument.types.StringType;
+import com.torodb.kvdocument.values.KVString;
+import com.torodb.kvdocument.values.heap.StringKVString;
 
 /**
  *
  */
-public class StringValueConverter implements SubdocValueConverter<String, ScalarString>{
+public class StringValueConverter implements KVValueConverter<String, KVString>{
     private static final long serialVersionUID = 1L;
 
-    public static final DataTypeForScalar<ScalarString> TYPE = DataTypeForScalar.from(SQLDataType.VARCHAR, new StringValueConverter());
+    public static final DataTypeForKV<KVString> TYPE = DataTypeForKV.from(SQLDataType.VARCHAR, new StringValueConverter());
 
     @Override
-    public ScalarType getErasuredType() {
-        return ScalarType.STRING;
+    public KVType getErasuredType() {
+        return StringType.INSTANCE;
     }
 
     @Override
-    public ScalarString from(String databaseObject) {
-        return new StringScalarString(databaseObject);
+    public KVString from(String databaseObject) {
+        return new StringKVString(databaseObject);
     }
 
     @Override
-    public String to(ScalarString userObject) {
+    public String to(KVString userObject) {
         return userObject.getValue();
     }
 
@@ -56,8 +57,8 @@ public class StringValueConverter implements SubdocValueConverter<String, Scalar
     }
 
     @Override
-    public Class<ScalarString> toType() {
-        return ScalarString.class;
+    public Class<KVString> toType() {
+        return KVString.class;
     }
     
 }

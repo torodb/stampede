@@ -21,16 +21,15 @@
 package com.torodb.poc.backend.converters.json;
 
 import com.torodb.common.util.HexUtils;
+import com.torodb.kvdocument.values.KVMongoObjectId;
+import com.torodb.kvdocument.values.heap.ByteArrayKVMongoObjectId;
 import com.torodb.poc.backend.converters.ValueConverter;
-import com.torodb.torod.core.exceptions.ToroImplementationException;
-import com.torodb.torod.core.subdocument.values.ScalarMongoObjectId;
-import com.torodb.torod.core.subdocument.values.heap.ByteArrayScalarMongoObjectId;
 
 /**
  *
  */
 public class MongoObjectIdValueToJsonConverter implements
-        ValueConverter<String, ScalarMongoObjectId> {
+        ValueConverter<String, KVMongoObjectId> {
 
     private static final long serialVersionUID = 1L;
 
@@ -40,18 +39,18 @@ public class MongoObjectIdValueToJsonConverter implements
     }
 
     @Override
-    public Class<? extends ScalarMongoObjectId> getValueClass() {
-        return ScalarMongoObjectId.class;
+    public Class<? extends KVMongoObjectId> getValueClass() {
+        return KVMongoObjectId.class;
     }
 
     @Override
-    public ScalarMongoObjectId toValue(String value) {
+    public KVMongoObjectId toValue(String value) {
         if (!value.startsWith("\\x")) {
-            throw new ToroImplementationException(
+            throw new RuntimeException(
                     "A bytea in escape format was expected, but " + value
                     + " was found"
             );
         }
-        return new ByteArrayScalarMongoObjectId(HexUtils.hex2Bytes(value.substring(2)));
+        return new ByteArrayKVMongoObjectId(HexUtils.hex2Bytes(value.substring(2)));
     }
 }

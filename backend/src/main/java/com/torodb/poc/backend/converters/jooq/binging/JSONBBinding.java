@@ -20,21 +20,21 @@ import org.jooq.DataType;
 import org.jooq.impl.DSL;
 import org.jooq.impl.DefaultDataType;
 
+import com.torodb.kvdocument.values.KVValue;
 import com.torodb.poc.backend.converters.array.ArrayConverter;
 import com.torodb.poc.backend.converters.jooq.ArrayToJooqConverter;
-import com.torodb.poc.backend.converters.jooq.DataTypeForScalar;
-import com.torodb.poc.backend.converters.jooq.SubdocValueConverter;
-import com.torodb.torod.core.subdocument.values.ScalarValue;
+import com.torodb.poc.backend.converters.jooq.DataTypeForKV;
+import com.torodb.poc.backend.converters.jooq.KVValueConverter;
 
 public class JSONBBinding<T> implements Binding<String, T> {
 
     private static final long serialVersionUID = 1L;
 
-    public static <UT extends ScalarValue<?>> DataTypeForScalar<UT> fromScalarValue(Class<UT> type, SubdocValueConverter<String, UT> converter) {
-        return DataTypeForScalar.from(new DefaultDataType<String>(null, String.class, "jsonb"), converter, new JSONBBinding<UT>(converter));
+    public static <UT extends KVValue<?>> DataTypeForKV<UT> fromKVValue(Class<UT> type, KVValueConverter<String, UT> converter) {
+        return DataTypeForKV.from(new DefaultDataType<String>(null, String.class, "jsonb"), converter, new JSONBBinding<UT>(converter));
     }
     
-    public static <UT extends ScalarValue<?>, V extends JsonValue> DataType<UT> fromScalarValue(final Class<UT> type, final ArrayConverter<V, UT> arrayConverter) {
+    public static <UT extends KVValue<?>, V extends JsonValue> DataType<UT> fromKVValue(final Class<UT> type, final ArrayConverter<V, UT> arrayConverter) {
         Converter<String, UT> converter = new ArrayToJooqConverter<>(type, arrayConverter);
         return new DefaultDataType<String>(null, String.class, "jsonb").asConvertedDataType(new JSONBBinding<UT>(converter));
     }

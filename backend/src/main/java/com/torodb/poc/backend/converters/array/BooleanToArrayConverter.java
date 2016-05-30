@@ -22,26 +22,26 @@ package com.torodb.poc.backend.converters.array;
 
 import javax.json.JsonValue;
 
-import com.torodb.torod.core.exceptions.ToroImplementationException;
-import com.torodb.torod.core.subdocument.values.ScalarBoolean;
+import com.torodb.kvdocument.values.KVBoolean;
+import com.torodb.poc.backend.mocks.ToroImplementationException;
 
 /**
  *
  */
-public class BooleanToArrayConverter implements ArrayConverter<JsonValue, ScalarBoolean> {
+public class BooleanToArrayConverter implements ArrayConverter<JsonValue, KVBoolean> {
     private static final long serialVersionUID = 1L;
 
     @Override
-    public String toJsonLiteral(ScalarBoolean value) {
+    public String toJsonLiteral(KVBoolean value) {
         return value.getValue()?"true":"false";
     }
 
     @Override
-    public ScalarBoolean fromJsonValue(JsonValue value) {
+    public KVBoolean fromJsonValue(JsonValue value) {
         if (value != JsonValue.TRUE && value != JsonValue.FALSE) {
             throw new ToroImplementationException(value + " is not boolean value");
         }
         
-        return ScalarBoolean.from(value == JsonValue.TRUE);
+        return KVBoolean.from(value == JsonValue.TRUE);
     }
 }

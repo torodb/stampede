@@ -25,14 +25,14 @@ import java.io.Serializable;
 import javax.annotation.Nonnull;
 import javax.json.JsonValue;
 
-import com.torodb.torod.core.subdocument.ScalarType;
+import com.torodb.kvdocument.types.KVType;
 
 /**
  *
  */
 public interface ValueToArrayConverterProvider extends Serializable {
 
-    @Nonnull public ArrayConverter getConverter(ScalarType valueType);
+    @Nonnull public ArrayConverter getConverter(KVType valueType);
 
     @Nonnull public ArrayConverter fromJsonValue(JsonValue jsonValue);
 

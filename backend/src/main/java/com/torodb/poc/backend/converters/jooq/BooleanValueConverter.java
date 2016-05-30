@@ -22,29 +22,30 @@ package com.torodb.poc.backend.converters.jooq;
 
 import org.jooq.impl.SQLDataType;
 
-import com.torodb.torod.core.subdocument.ScalarType;
-import com.torodb.torod.core.subdocument.values.ScalarBoolean;
+import com.torodb.kvdocument.types.BooleanType;
+import com.torodb.kvdocument.types.KVType;
+import com.torodb.kvdocument.values.KVBoolean;
 
 /**
  *
  */
-public class BooleanValueConverter implements SubdocValueConverter<Boolean, ScalarBoolean> {
+public class BooleanValueConverter implements KVValueConverter<Boolean, KVBoolean> {
     private static final long serialVersionUID = 1L;
 
-    public static final DataTypeForScalar<ScalarBoolean> TYPE = DataTypeForScalar.from(SQLDataType.BOOLEAN, new BooleanValueConverter());
+    public static final DataTypeForKV<KVBoolean> TYPE = DataTypeForKV.from(SQLDataType.BOOLEAN, new BooleanValueConverter());
 
     @Override
-    public ScalarType getErasuredType() {
-        return ScalarType.BOOLEAN;
+    public KVType getErasuredType() {
+        return BooleanType.INSTANCE;
     }
 
     @Override
-    public ScalarBoolean from(Boolean databaseObject) {
-        return ScalarBoolean.from(databaseObject);
+    public KVBoolean from(Boolean databaseObject) {
+        return KVBoolean.from(databaseObject);
     }
 
     @Override
-    public Boolean to(ScalarBoolean userObject) {
+    public Boolean to(KVBoolean userObject) {
         return userObject.getValue();
     }
 
@@ -54,8 +55,8 @@ public class BooleanValueConverter implements SubdocValueConverter<Boolean, Scal
     }
 
     @Override
-    public Class<ScalarBoolean> toType() {
-        return ScalarBoolean.class;
+    public Class<KVBoolean> toType() {
+        return KVBoolean.class;
     }
 
 }

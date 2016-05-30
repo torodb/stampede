@@ -20,14 +20,14 @@
 
 package com.torodb.poc.backend.converters.json;
 
+import com.torodb.kvdocument.values.KVNull;
 import com.torodb.poc.backend.converters.ValueConverter;
-import com.torodb.torod.core.subdocument.values.ScalarNull;
 
 /**
  *
  */
 public class NullValueToJsonConverter implements
-        ValueConverter<Void, ScalarNull> {
+        ValueConverter<Void, KVNull> {
 
     private static final long serialVersionUID = 1L;
 
@@ -37,13 +37,13 @@ public class NullValueToJsonConverter implements
     }
 
     @Override
-    public Class<? extends ScalarNull> getValueClass() {
-        return ScalarNull.class;
+    public Class<? extends KVNull> getValueClass() {
+        return KVNull.class;
     }
 
     @Override
-    public ScalarNull toValue(Void value) {
-        return ScalarNull.getInstance();
+    public KVNull toValue(Void value) {
+        return KVNull.getInstance();
     }
     
 }

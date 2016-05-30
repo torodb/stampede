@@ -24,22 +24,22 @@ import javax.json.JsonString;
 
 import org.jooq.tools.json.JSONValue;
 
-import com.torodb.torod.core.subdocument.values.ScalarString;
-import com.torodb.torod.core.subdocument.values.heap.StringScalarString;
+import com.torodb.kvdocument.values.KVString;
+import com.torodb.kvdocument.values.heap.StringKVString;
 
 /**
  *
  */
-public class StringToArrayConverter implements ArrayConverter<JsonString, ScalarString> {
+public class StringToArrayConverter implements ArrayConverter<JsonString, KVString> {
     private static final long serialVersionUID = 1L;
 
     @Override
-    public String toJsonLiteral(ScalarString value) {
+    public String toJsonLiteral(KVString value) {
         return JSONValue.toJSONString(value.getValue());
     }
 
     @Override
-    public ScalarString fromJsonValue(JsonString value) {
-        return new StringScalarString(value.getString());
+    public KVString fromJsonValue(JsonString value) {
+        return new StringKVString(value.getString());
     }
 }

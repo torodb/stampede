@@ -20,14 +20,14 @@
 
 package com.torodb.poc.backend.converters.json;
 
+import com.torodb.kvdocument.values.KVBoolean;
 import com.torodb.poc.backend.converters.ValueConverter;
-import com.torodb.torod.core.subdocument.values.ScalarBoolean;
 
 /**
  *
  */
 public class BooleanValueToJsonConverter implements
-        ValueConverter<Boolean, ScalarBoolean> {
+        ValueConverter<Boolean, KVBoolean> {
 
     private static final long serialVersionUID = 1L;
 
@@ -37,13 +37,13 @@ public class BooleanValueToJsonConverter implements
     }
 
     @Override
-    public Class<? extends ScalarBoolean> getValueClass() {
-        return ScalarBoolean.class;
+    public Class<? extends KVBoolean> getValueClass() {
+        return KVBoolean.class;
     }
 
     @Override
-    public ScalarBoolean toValue(Boolean value) {
-        return ScalarBoolean.from(value);
+    public KVBoolean toValue(Boolean value) {
+        return KVBoolean.from(value);
     }
     
 }

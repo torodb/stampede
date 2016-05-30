@@ -20,18 +20,18 @@
 
 package com.torodb.poc.backend.converters.json;
 
-import org.threeten.bp.Instant;
-import org.threeten.bp.format.DateTimeFormatter;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 
+import com.torodb.kvdocument.values.KVInstant;
+import com.torodb.kvdocument.values.heap.InstantKVInstant;
 import com.torodb.poc.backend.converters.ValueConverter;
-import com.torodb.torod.core.subdocument.values.ScalarInstant;
-import com.torodb.torod.core.subdocument.values.heap.InstantScalarInstant;
 
 /**
  *
  */
 public class InstantValueToJsonConverter implements
-        ValueConverter<String, ScalarInstant> {
+        ValueConverter<String, KVInstant> {
 
     private static final long serialVersionUID = 1L;
 
@@ -41,12 +41,12 @@ public class InstantValueToJsonConverter implements
     }
 
     @Override
-    public Class<? extends ScalarInstant> getValueClass() {
-        return ScalarInstant.class;
+    public Class<? extends KVInstant> getValueClass() {
+        return KVInstant.class;
     }
 
     @Override
-    public ScalarInstant toValue(String value) {
-        return new InstantScalarInstant(Instant.from(DateTimeFormatter.ISO_OFFSET_DATE_TIME.parse(value)));
+    public KVInstant toValue(String value) {
+        return new InstantKVInstant(Instant.from(DateTimeFormatter.ISO_OFFSET_DATE_TIME.parse(value)));
     }
 }

@@ -36,13 +36,14 @@ public class PostgreSQLContainerRecord extends ContainerRecord {
 	/**
 	 * Create a detached, initialised ContainerRecord
 	 */
-	public PostgreSQLContainerRecord(String database, String collection, String path, String tableName, Integer lastRid) {
+	public PostgreSQLContainerRecord(String database, String collection, String path, String tableName, String parentTableName, Integer lastRid) {
 		super(PostgreSQLContainerTable.CONTAINER);
 		
 		setValue(0, database);
 		setValue(1, collection);
         setValue(2, path);
         setValue(3, tableName);
-		setValue(4, lastRid);
+        setValue(4, parentTableName);
+		setValue(5, lastRid);
 	}
 }

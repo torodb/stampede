@@ -27,22 +27,35 @@ import javax.annotation.Nonnull;
 import org.jooq.DataType;
 
 import com.google.common.collect.Maps;
+import com.torodb.kvdocument.types.BinaryType;
+import com.torodb.kvdocument.types.BooleanType;
+import com.torodb.kvdocument.types.DateType;
+import com.torodb.kvdocument.types.DoubleType;
+import com.torodb.kvdocument.types.InstantType;
+import com.torodb.kvdocument.types.IntegerType;
+import com.torodb.kvdocument.types.KVType;
+import com.torodb.kvdocument.types.LongType;
+import com.torodb.kvdocument.types.MongoObjectIdType;
+import com.torodb.kvdocument.types.MongoTimestampType;
+import com.torodb.kvdocument.types.NullType;
+import com.torodb.kvdocument.types.StringType;
+import com.torodb.kvdocument.types.TimeType;
+import com.torodb.kvdocument.values.KVArray;
+import com.torodb.kvdocument.values.KVBinary;
+import com.torodb.kvdocument.values.KVBoolean;
+import com.torodb.kvdocument.values.KVDate;
+import com.torodb.kvdocument.values.KVDouble;
+import com.torodb.kvdocument.values.KVInstant;
+import com.torodb.kvdocument.values.KVInteger;
+import com.torodb.kvdocument.values.KVLong;
+import com.torodb.kvdocument.values.KVMongoObjectId;
+import com.torodb.kvdocument.values.KVMongoTimestamp;
+import com.torodb.kvdocument.values.KVNull;
+import com.torodb.kvdocument.values.KVString;
+import com.torodb.kvdocument.values.KVTime;
 import com.torodb.poc.backend.converters.array.ValueToArrayDataTypeProvider;
 import com.torodb.poc.backend.converters.jooq.binging.JSONBBinding;
-import com.torodb.torod.core.subdocument.ScalarType;
-import com.torodb.torod.core.subdocument.values.ScalarArray;
-import com.torodb.torod.core.subdocument.values.ScalarBinary;
-import com.torodb.torod.core.subdocument.values.ScalarBoolean;
-import com.torodb.torod.core.subdocument.values.ScalarDate;
-import com.torodb.torod.core.subdocument.values.ScalarDouble;
-import com.torodb.torod.core.subdocument.values.ScalarInstant;
-import com.torodb.torod.core.subdocument.values.ScalarInteger;
-import com.torodb.torod.core.subdocument.values.ScalarLong;
-import com.torodb.torod.core.subdocument.values.ScalarMongoObjectId;
-import com.torodb.torod.core.subdocument.values.ScalarMongoTimestamp;
-import com.torodb.torod.core.subdocument.values.ScalarNull;
-import com.torodb.torod.core.subdocument.values.ScalarString;
-import com.torodb.torod.core.subdocument.values.ScalarTime;
+import com.torodb.poc.backend.mocks.ArrayTypeInstance;
 
 /**
  *
@@ -51,25 +64,25 @@ public class PostgreSQLValueToArrayDataTypeProvider implements ValueToArrayDataT
 
     private static final long serialVersionUID = 1L;
 
-    private final Map<ScalarType, DataType<?>> converters;
+    private final Map<KVType, DataType<?>> converters;
 
     private PostgreSQLValueToArrayDataTypeProvider() {
         PostgreSQLValueToArrayConverterProvider postgreSQLValueToArrayConverterProvider = PostgreSQLValueToArrayConverterProvider.getInstance();
         
-        converters = Maps.newEnumMap(ScalarType.class);
-        converters.put(ScalarType.ARRAY, JSONBBinding.fromScalarValue(ScalarArray.class, postgreSQLValueToArrayConverterProvider.getArrayConverter()));
-        converters.put(ScalarType.BOOLEAN, JSONBBinding.fromScalarValue(ScalarBoolean.class, postgreSQLValueToArrayConverterProvider.getBooleanConverter()));
-        converters.put(ScalarType.DATE, JSONBBinding.fromScalarValue(ScalarDate.class, postgreSQLValueToArrayConverterProvider.getDateConverter()));
-        converters.put(ScalarType.INSTANT, JSONBBinding.fromScalarValue(ScalarInstant.class, postgreSQLValueToArrayConverterProvider.getInstantConverter()));
-        converters.put(ScalarType.DOUBLE, JSONBBinding.fromScalarValue(ScalarDouble.class, postgreSQLValueToArrayConverterProvider.getDoubleConverter()));
-        converters.put(ScalarType.INTEGER, JSONBBinding.fromScalarValue(ScalarInteger.class, postgreSQLValueToArrayConverterProvider.getIntegerConverter()));
-        converters.put(ScalarType.LONG, JSONBBinding.fromScalarValue(ScalarLong.class, postgreSQLValueToArrayConverterProvider.getLongConverter()));
-        converters.put(ScalarType.NULL, JSONBBinding.fromScalarValue(ScalarNull.class, postgreSQLValueToArrayConverterProvider.getNullConverter()));
-        converters.put(ScalarType.STRING, JSONBBinding.fromScalarValue(ScalarString.class, postgreSQLValueToArrayConverterProvider.getStringConverter()));
-        converters.put(ScalarType.TIME, JSONBBinding.fromScalarValue(ScalarTime.class, postgreSQLValueToArrayConverterProvider.getTimeConverter()));
-        converters.put(ScalarType.MONGO_OBJECT_ID, JSONBBinding.fromScalarValue(ScalarMongoObjectId.class, postgreSQLValueToArrayConverterProvider.getMongoObjectIdConverter()));
-        converters.put(ScalarType.MONGO_TIMESTAMP, JSONBBinding.fromScalarValue(ScalarMongoTimestamp.class, postgreSQLValueToArrayConverterProvider.getMongoTimestampConverter()));
-        converters.put(ScalarType.BINARY, JSONBBinding.fromScalarValue(ScalarBinary.class, postgreSQLValueToArrayConverterProvider.getBinaryConverter()));
+        converters = Maps.newHashMap();
+        converters.put(ArrayTypeInstance.GENERIC, JSONBBinding.fromKVValue(KVArray.class, postgreSQLValueToArrayConverterProvider.getArrayConverter()));
+        converters.put(BooleanType.INSTANCE, JSONBBinding.fromKVValue(KVBoolean.class, postgreSQLValueToArrayConverterProvider.getBooleanConverter()));
+        converters.put(DateType.INSTANCE, JSONBBinding.fromKVValue(KVDate.class, postgreSQLValueToArrayConverterProvider.getDateConverter()));
+        converters.put(InstantType.INSTANCE, JSONBBinding.fromKVValue(KVInstant.class, postgreSQLValueToArrayConverterProvider.getInstantConverter()));
+        converters.put(DoubleType.INSTANCE, JSONBBinding.fromKVValue(KVDouble.class, postgreSQLValueToArrayConverterProvider.getDoubleConverter()));
+        converters.put(IntegerType.INSTANCE, JSONBBinding.fromKVValue(KVInteger.class, postgreSQLValueToArrayConverterProvider.getIntegerConverter()));
+        converters.put(LongType.INSTANCE, JSONBBinding.fromKVValue(KVLong.class, postgreSQLValueToArrayConverterProvider.getLongConverter()));
+        converters.put(NullType.INSTANCE, JSONBBinding.fromKVValue(KVNull.class, postgreSQLValueToArrayConverterProvider.getNullConverter()));
+        converters.put(StringType.INSTANCE, JSONBBinding.fromKVValue(KVString.class, postgreSQLValueToArrayConverterProvider.getStringConverter()));
+        converters.put(TimeType.INSTANCE, JSONBBinding.fromKVValue(KVTime.class, postgreSQLValueToArrayConverterProvider.getTimeConverter()));
+        converters.put(MongoObjectIdType.INSTANCE, JSONBBinding.fromKVValue(KVMongoObjectId.class, postgreSQLValueToArrayConverterProvider.getMongoObjectIdConverter()));
+        converters.put(MongoTimestampType.INSTANCE, JSONBBinding.fromKVValue(KVMongoTimestamp.class, postgreSQLValueToArrayConverterProvider.getMongoTimestampConverter()));
+        converters.put(BinaryType.INSTANCE, JSONBBinding.fromKVValue(KVBinary.class, postgreSQLValueToArrayConverterProvider.getBinaryConverter()));
     }
 
     public static PostgreSQLValueToArrayDataTypeProvider getInstance() {
@@ -77,7 +90,7 @@ public class PostgreSQLValueToArrayDataTypeProvider implements ValueToArrayDataT
     }
 
     @Nonnull
-    public DataType<?> getDataType(ScalarType valueType) {
+    public DataType<?> getDataType(KVType valueType) {
         DataType<?> converter = converters.get(valueType);
         if (converter == null) {
             throw new AssertionError("There is no data type for "

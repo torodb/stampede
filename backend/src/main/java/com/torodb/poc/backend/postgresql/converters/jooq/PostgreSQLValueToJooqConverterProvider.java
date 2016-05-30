@@ -21,28 +21,40 @@
 package com.torodb.poc.backend.postgresql.converters.jooq;
 
 import java.io.Serializable;
-import java.util.EnumMap;
-import java.util.EnumSet;
+import java.util.Map;
 import java.util.Set;
 
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Sets.SetView;
+import com.torodb.kvdocument.types.BinaryType;
+import com.torodb.kvdocument.types.BooleanType;
+import com.torodb.kvdocument.types.DateType;
+import com.torodb.kvdocument.types.DoubleType;
+import com.torodb.kvdocument.types.InstantType;
+import com.torodb.kvdocument.types.IntegerType;
+import com.torodb.kvdocument.types.KVType;
+import com.torodb.kvdocument.types.LongType;
+import com.torodb.kvdocument.types.MongoObjectIdType;
+import com.torodb.kvdocument.types.MongoTimestampType;
+import com.torodb.kvdocument.types.NullType;
+import com.torodb.kvdocument.types.StringType;
+import com.torodb.kvdocument.types.TimeType;
+import com.torodb.kvdocument.values.KVValue;
 import com.torodb.poc.backend.converters.jooq.BinaryValueConverter;
 import com.torodb.poc.backend.converters.jooq.BooleanValueConverter;
 import com.torodb.poc.backend.converters.jooq.DateValueConverter;
 import com.torodb.poc.backend.converters.jooq.DoubleValueConverter;
 import com.torodb.poc.backend.converters.jooq.InstantValueConverter;
 import com.torodb.poc.backend.converters.jooq.IntegerValueConverter;
+import com.torodb.poc.backend.converters.jooq.KVValueConverter;
 import com.torodb.poc.backend.converters.jooq.LongValueConverter;
 import com.torodb.poc.backend.converters.jooq.MongoObjectIdValueConverter;
 import com.torodb.poc.backend.converters.jooq.MongoTimestampValueConverter;
 import com.torodb.poc.backend.converters.jooq.NullValueConverter;
 import com.torodb.poc.backend.converters.jooq.StringValueConverter;
-import com.torodb.poc.backend.converters.jooq.SubdocValueConverter;
 import com.torodb.poc.backend.converters.jooq.TimeValueConverter;
 import com.torodb.poc.backend.converters.jooq.ValueToJooqConverterProvider;
-import com.torodb.torod.core.subdocument.ScalarType;
-import com.torodb.torod.core.subdocument.values.ScalarValue;
 
 /**
  *
@@ -52,42 +64,29 @@ public class PostgreSQLValueToJooqConverterProvider implements ValueToJooqConver
     private static final long serialVersionUID = 1L;
 
     /**
-     * Types that are not supported.
-     */
-    private static final EnumSet<ScalarType> UNSUPPORTED_TYPES
-            = EnumSet.noneOf(ScalarType.class);
-    /**
      * Types that must be supported.
      */
-    private static final Set<ScalarType> SUPPORTED_TYPES
-            = Sets.difference(EnumSet.allOf(ScalarType.class), UNSUPPORTED_TYPES);
-    private static final EnumMap<ScalarType, SubdocValueConverter> converters;
+    private static final Map<KVType, KVValueConverter> converters;
 
     static {
-        converters = new EnumMap<ScalarType, SubdocValueConverter>(ScalarType.class);
+        converters = Maps.newHashMap();
 
-        converters.put(ScalarType.BOOLEAN, new BooleanValueConverter());
-        converters.put(ScalarType.DOUBLE, new DoubleValueConverter());
-        converters.put(ScalarType.INTEGER, new IntegerValueConverter());
-        converters.put(ScalarType.LONG, new LongValueConverter());
-        converters.put(ScalarType.NULL, new NullValueConverter());
-        converters.put(ScalarType.STRING, new StringValueConverter());
-        converters.put(ScalarType.DATE, new DateValueConverter());
-        converters.put(ScalarType.INSTANT, new InstantValueConverter());
-        converters.put(ScalarType.TIME, new TimeValueConverter());
-        converters.put(ScalarType.MONGO_OBJECT_ID, new MongoObjectIdValueConverter());
-        converters.put(ScalarType.MONGO_TIMESTAMP, new MongoTimestampValueConverter());
-        converters.put(ScalarType.BINARY, new BinaryValueConverter());
-
-        SetView<ScalarType> withoutConverter = Sets.difference(converters.keySet(), SUPPORTED_TYPES);
-        if (!withoutConverter.isEmpty()) {
-            throw new AssertionError("It is not defined how to convert from the following scalar "
-                    + "types to json: " + withoutConverter);
-        }
+        converters.put(BooleanType.INSTANCE, new BooleanValueConverter());
+        converters.put(DoubleType.INSTANCE, new DoubleValueConverter());
+        converters.put(IntegerType.INSTANCE, new IntegerValueConverter());
+        converters.put(LongType.INSTANCE, new LongValueConverter());
+        converters.put(NullType.INSTANCE, new NullValueConverter());
+        converters.put(StringType.INSTANCE, new StringValueConverter());
+        converters.put(DateType.INSTANCE, new DateValueConverter());
+        converters.put(InstantType.INSTANCE, new InstantValueConverter());
+        converters.put(TimeType.INSTANCE, new TimeValueConverter());
+        converters.put(MongoObjectIdType.INSTANCE, new MongoObjectIdValueConverter());
+        converters.put(MongoTimestampType.INSTANCE, new MongoTimestampValueConverter());
+        converters.put(BinaryType.INSTANCE, new BinaryValueConverter());
     }
 
-    public SubdocValueConverter<?, ? extends ScalarValue<? extends Serializable>> getConverter(ScalarType type) {
-        SubdocValueConverter converter = converters.get(type);
+    public KVValueConverter<?, ? extends KVValue<? extends Serializable>> getConverter(KVType type) {
+        KVValueConverter converter = converters.get(type);
         if (converter == null) {
             throw new IllegalArgumentException("It is not defined how to map elements of type " + type + " to SQL");
         }

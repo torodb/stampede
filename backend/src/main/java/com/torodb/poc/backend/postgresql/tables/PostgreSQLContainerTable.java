@@ -101,6 +101,11 @@ public class PostgreSQLContainerTable extends ContainerTable<PostgreSQLContainer
     }
 
     @Override
+    protected TableField<PostgreSQLContainerRecord, String> createParentTableNameField() {
+        return createField(TableFields.PARENT_TABLE_NAME.fieldName, SQLDataType.VARCHAR.nullable(false), this, "");
+    }
+
+    @Override
     protected TableField<PostgreSQLContainerRecord, Integer> createLastRidField() {
         return createField(TableFields.LAST_RID.fieldName, SQLDataType.INTEGER.nullable(false), this, "");
     }

@@ -50,7 +50,6 @@ import org.jooq.ConnectionProvider;
 import org.jooq.DSLContext;
 import org.jooq.DataType;
 import org.jooq.Field;
-import org.jooq.InsertSetMoreStep;
 import org.jooq.InsertValuesStep1;
 import org.jooq.Record;
 import org.jooq.exception.DataAccessException;
@@ -58,15 +57,27 @@ import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.torodb.kvdocument.types.KVType;
+import com.torodb.kvdocument.values.KVMongoObjectId;
+import com.torodb.kvdocument.values.KVMongoTimestamp;
+import com.torodb.kvdocument.values.KVValue;
 import com.torodb.poc.backend.DatabaseInterface;
-import com.torodb.poc.backend.PathDocument;
-import com.torodb.poc.backend.ScalarTypeToSqlType;
-import com.torodb.poc.backend.SplitDocument;
+import com.torodb.poc.backend.TableToDDL.PathSnapshot;
+import com.torodb.poc.backend.TableToDDL.TableColumn;
+import com.torodb.poc.backend.TableToDDL.TableData;
+import com.torodb.poc.backend.TableToDDL.TableRow;
 import com.torodb.poc.backend.converters.jooq.ValueToJooqConverterProvider;
 import com.torodb.poc.backend.converters.jooq.ValueToJooqDataTypeProvider;
-import com.torodb.poc.backend.postgresql.converters.PostgreSQLScalarTypeToSqlType;
+import com.torodb.poc.backend.mocks.KVTypeToSqlType;
+import com.torodb.poc.backend.mocks.Path;
+import com.torodb.poc.backend.mocks.RetryTransactionException;
+import com.torodb.poc.backend.mocks.SplitDocument;
+import com.torodb.poc.backend.mocks.ToroImplementationException;
+import com.torodb.poc.backend.mocks.ToroRuntimeException;
+import com.torodb.poc.backend.postgresql.converters.PostgreSQLKVTypeToSqlType;
 import com.torodb.poc.backend.postgresql.converters.PostgreSQLValueToCopyConverter;
 import com.torodb.poc.backend.postgresql.converters.jooq.PostgreSQLValueToJooqConverterProvider;
 import com.torodb.poc.backend.postgresql.converters.jooq.PostgreSQLValueToJooqDataTypeProvider;
@@ -80,14 +91,10 @@ import com.torodb.poc.backend.tables.ContainerTable;
 import com.torodb.poc.backend.tables.DatabaseTable;
 import com.torodb.poc.backend.tables.FieldTable;
 import com.torodb.poc.backend.tables.PathDocTable;
+import com.torodb.poc.backend.tables.records.CollectionRecord;
+import com.torodb.poc.backend.tables.records.ContainerRecord;
+import com.torodb.poc.backend.tables.records.DatabaseRecord;
 import com.torodb.poc.backend.tables.records.FieldRecord;
-import com.torodb.poc.backend.tables.records.PathDocTableRecord;
-import com.torodb.torod.core.connection.exceptions.RetryTransactionException;
-import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
-import com.torodb.torod.core.exceptions.ToroRuntimeException;
-import com.torodb.torod.core.exceptions.UserToroException;
-import com.torodb.torod.core.subdocument.values.ScalarMongoObjectId;
-import com.torodb.torod.core.subdocument.values.ScalarMongoTimestamp;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -103,14 +110,14 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
 
     private final ValueToJooqConverterProvider valueToJooqConverterProvider;
     private final ValueToJooqDataTypeProvider valueToJooqDataTypeProvider;
-    private final ScalarTypeToSqlType scalarTypeToSqlType;
+    private final KVTypeToSqlType kVTypeToSqlType;
     private final FieldComparator fieldComparator = new FieldComparator();
 
     @Inject
-    public PostgreSQLDatabaseInterface(ScalarTypeToSqlType scalarTypeToSqlType) {
+    public PostgreSQLDatabaseInterface(KVTypeToSqlType kVTypeToSqlType) {
         this.valueToJooqConverterProvider = PostgreSQLValueToJooqConverterProvider.getInstance();
         this.valueToJooqDataTypeProvider = PostgreSQLValueToJooqDataTypeProvider.getInstance();
-        this.scalarTypeToSqlType = scalarTypeToSqlType;
+        this.kVTypeToSqlType = kVTypeToSqlType;
     }
 
     private void readObject(java.io.ObjectInputStream stream)
@@ -154,7 +161,7 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
     }
 
     @Override
-    public String getCreateIndexQuery(PathDocTable table, Field<?> field, Configuration conf) {
+    public String createIndexStatement(PathDocTable table, Field<?> field, Configuration conf) {
         StringBuilder sb = new StringBuilder();
         sb.append("CREATE INDEX ON \"")
                 .append(table.getSchema().getName())
@@ -168,7 +175,7 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
     }
 
     @Override
-    public String getCreateSubDocTypeTableQuery(String schemaName, String tableName, List<Field<?>> fields, Configuration conf) {
+    public String createPathDocTableStatement(String schemaName, String tableName, List<Field<?>> fields, Configuration conf) {
         StringBuilder sb = new StringBuilder();
         sb.append("CREATE TABLE ")
                 .append(fullTableName(schemaName, tableName))
@@ -215,17 +222,17 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
     private String getSqlType(Field<?> field, Configuration conf) {
         if (field.getConverter() != null) {
             Class<?> fieldType = field.getDataType().getType();
-            if (fieldType.equals(ScalarMongoObjectId.class)) {
-                return PostgreSQLScalarTypeToSqlType.MONGO_OBJECT_ID_TYPE;
+            if (fieldType.equals(KVMongoObjectId.class)) {
+                return PostgreSQLKVTypeToSqlType.MONGO_OBJECT_ID_TYPE;
             }
-            if (fieldType.equals(ScalarMongoTimestamp.class)) {
-                return PostgreSQLScalarTypeToSqlType.MONGO_TIMESTAMP_TYPE;
+            if (fieldType.equals(KVMongoTimestamp.class)) {
+                return PostgreSQLKVTypeToSqlType.MONGO_TIMESTAMP_TYPE;
             }
         }
         return field.getDataType().getTypeName(conf);
     }
 
-    private Iterable<Field<?>> getFieldIterator(List<Field<?>> fields) {
+    private Iterable<Field<?>> getFieldIterator(Iterable<Field<?>> fields) {
         List<Field<?>> fieldList = Lists.newArrayList(fields);
         Collections.sort(fieldList, fieldComparator);
 
@@ -352,8 +359,8 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
     }
 
     @Override
-    public ScalarTypeToSqlType getScalarTypeToSqlType() {
-        return scalarTypeToSqlType;
+    public KVTypeToSqlType getKVTypeToSqlType() {
+        return kVTypeToSqlType;
     }
 
     @Override
@@ -484,8 +491,9 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
                 .toString();
     }
 
-    public void setDeleteDidsStatementParameters(PreparedStatement ps,
-            Collection<Integer> dids) throws SQLException {
+    @Override
+    public void setDeleteDidsStatementParameters(@Nonnull PreparedStatement ps,
+            @Nonnull Collection<Integer> dids) throws SQLException {
         Connection connection = ps.getConnection();
         
         final int maxInArray = (2 << 15) - 1; // = 2^16 -1 = 65535
@@ -598,12 +606,12 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
 
     @Override
     public void setFindDocsSelectStatementParameters(String schema, Integer[] requestedDocs,
-            String[] paths, Connection c, PreparedStatement ps) throws SQLException {
+            String[] paths, Connection connection, PreparedStatement ps) throws SQLException {
         ps.setString(1, schema);
 
-        ps.setArray(2, c.createArrayOf("integer", requestedDocs));
+        ps.setArray(2, connection.createArrayOf("integer", requestedDocs));
 
-        ps.setArray(3, c.createArrayOf("text", paths));
+        ps.setArray(3, connection.createArrayOf("text", paths));
     }
 
     @Nonnull
@@ -635,116 +643,6 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
                 .append(".")
                 .append("\"").append(indexName).append("\"")
                 .toString();
-    }
-
-    @Override
-    public void handleRetryException(SQLException sqlException) throws RetryTransactionException {
-        if (sqlException instanceof BatchUpdateException && "40001".equals(sqlException.getSQLState())) {
-            throw new RetryTransactionException(sqlException);
-        }
-    }
-
-    @Override
-    public void insertRootDocuments(
-            @Nonnull DSLContext dsl,
-            @Nonnull String schema,
-            @Nonnull String collection,
-            @Nonnull Collection<SplitDocument> docs,
-            Configuration conf
-    ) throws ImplementationDbException {
-
-        try {
-            final int maxCappedSize = 10;
-            if (docs.size() < maxCappedSize) {
-                LOGGER.debug("The insert window is not big enough to use copy (the limit is {}, "
-                        + "the real size is {}).",
-                        maxCappedSize,
-                        docs.size()
-                );
-                standardInsertRootDocuments(dsl, schema, collection, docs);
-            }
-            else {
-                Connection connection = conf.connectionProvider().acquire();
-                try {
-                    if (!connection.isWrapperFor(PGConnection.class)) {
-                        LOGGER.warn("It was impossible to use the PostgreSQL way to insert roots. "
-                                + "Using the standard implementation");
-                        standardInsertRootDocuments(dsl, schema, collection, docs);
-                    }
-                    else {
-                        copyInsertRootDocuments(connection.unwrap(PGConnection.class), dsl, schema, collection, docs);
-                    }
-                } catch (SQLException ex) {
-                    //TODO: Change exception
-                    throw new ToroRuntimeException(ex);
-                } finally {
-                    conf.connectionProvider().release(connection);
-                }
-
-            }
-        } catch (DataAccessException ex) {
-            //TODO: Change exception
-            throw new RuntimeException(ex);
-        }
-    }
-
-    private void standardInsertRootDocuments(
-            @Nonnull DSLContext dsl,
-            @Nonnull String schema,
-            @Nonnull String collection,
-            @Nonnull Collection<SplitDocument> docs) {
-        Field<Integer> idField = DSL.field("did", SQLDataType.INTEGER.nullable(false));
-
-        InsertValuesStep1<Record, Integer> insertInto = dsl
-                .insertInto(
-                        DSL.table(DSL.name(schema, "root")),
-                        idField
-                );
-
-        for (SplitDocument splitDocument : docs) {
-            insertInto = insertInto.values(splitDocument.getDocumentId());
-        }
-
-        insertInto.execute();
-    }
-
-    private void copyInsertRootDocuments(
-            PGConnection connection,
-            DSLContext dsl,
-            String schema,
-            String collection,
-            Collection<SplitDocument> docs) {
-
-        try {
-            final int maxBatchSize = 1000;
-            final StringBuilder sb = new StringBuilder(512);
-            final String copyStament = "COPY " + DSL.name(schema) +".root FROM STDIN ";
-            final CopyManager copyManager = connection.getCopyAPI();
-
-            int docCounter = 0;
-            for (SplitDocument doc : docs) {
-                docCounter++;
-
-                sb.append(doc.getDocumentId())
-                        .append('\n');
-
-                if (docCounter % maxBatchSize == 0) {
-                    executeCopy(copyManager, copyStament, sb);
-                    assert sb.length() == 0;
-                }
-            }
-            if (sb.length() > 0) {
-                assert docCounter % maxBatchSize != 0;
-                executeCopy(copyManager, copyStament, sb);
-            }
-        } catch (SQLException ex) {
-            //TODO: Change exception
-            throw new UserToroException(ex);
-        } catch (IOException ex) {
-            //TODO: Change exception
-            throw new ToroRuntimeException(ex);
-        }
-
     }
 
     @Override
@@ -943,12 +841,15 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
     }
 
     @Override
-    public void insertPathDocuments(DSLContext dsl, String schema, PathDocTable table, List<Field<?>> fields, Iterable<PathDocument> pathDocuments, Configuration conf) {
-        Connection connection = conf.connectionProvider().acquire();
+    public void insertPathDocuments(DSLContext dsl, String schemaName, PathSnapshot pathSnapshot, TableData tableData) throws RetryTransactionException {
+        Preconditions.checkArgument(tableData.size() != 0, "Called insert with 0 documents");
+        Preconditions.checkArgument(tableData.iterator().next().size() != 0, "Called insert with 0 documents");
+        
+        Connection connection = dsl.configuration().connectionProvider().acquire();
         try {
             int maxCappedSize = 10;
             int cappedSize = Iterables.size(
-                    Iterables.limit(pathDocuments, maxCappedSize)
+                    Iterables.limit(tableData, maxCappedSize)
             );
 
             if (cappedSize < maxCappedSize) { //there are not enough elements on the insert => fallback
@@ -958,152 +859,130 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
                         maxCappedSize,
                         cappedSize
                 );
-                insertPathDocuments(dsl, table, pathDocuments);
+                standardInsertPathDocuments(dsl, schemaName, pathSnapshot, tableData);
             }
             else {
                 if (!connection.isWrapperFor(PGConnection.class)) {
                     LOGGER.warn("It was impossible to use the PostgreSQL way to "
                             + "insert documents. Inserting using the standard "
                             + "implementation");
-                    insertPathDocuments(dsl, table, pathDocuments);
+                    standardInsertPathDocuments(dsl, schemaName, pathSnapshot, tableData);
                 }
                 else {
                     copyInsertPathDocuments(
                             connection.unwrap(PGConnection.class),
-                            schema,
-                            table,
-                            fields,
-                            pathDocuments
+                            schemaName,
+                            pathSnapshot,
+                            tableData
                     );
                 }
             }
+        } catch (DataAccessException ex) {
+            handleRetryException(Context.insert, ex);
+            throw new ToroRuntimeException(ex);
         } catch (SQLException ex) {
-            //TODO: Change exception
+            handleRetryException(Context.insert, ex);
+            throw new ToroImplementationException(ex);
+        } catch (IOException ex) {
             throw new ToroRuntimeException(ex);
         } finally {
-            conf.connectionProvider().release(connection);
+            dsl.configuration().connectionProvider().release(connection);
         }
     }
 
-    protected void insertPathDocuments(DSLContext dsl, PathDocTable table, Iterable<PathDocument> pathDocuments) {
-        try {
-            InsertSetMoreStep<?> insert = null;
-
-            for (PathDocument pathDocument : pathDocuments) {
-                PathDocTableRecord record = new PathDocTableRecord(table);
-                record.setDid(pathDocument.getDocumentId());
-                record.setRid(translateSubDocIndexToDatabase(pathDocument.getRowId()));
-                record.setPid(translateSubDocIndexToDatabase(pathDocument.getParentRowId()));
-                record.setSeq(translateSubDocIndexToDatabase(pathDocument.getSequence()));
-                record.setPathDoc(pathDocument);
-
-                if (insert == null) {
-                    insert = dsl.insertInto(table).set(record);
+    protected void standardInsertPathDocuments(DSLContext dsl, String schemaName, PathSnapshot pathSnapshot, TableData tableData) {
+        final int maxBatchSize = 1000;
+        final StringBuilder sb = new StringBuilder(2048);
+        int docCounter = 0;
+        for (TableRow tableRow : tableData) {
+            docCounter++;
+            if (sb.length() == 0) {
+                sb.append("INSERT INTO \"")
+                    .append(schemaName)
+                    .append("\".\"")
+                    .append(pathSnapshot.getTableName())
+                    .append("\" (");
+                
+                StringBuilder values = new StringBuilder();
+                for (TableColumn tableColumn : tableRow) {
+                    sb.append("\"")
+                        .append(pathSnapshot.getColumnName(tableColumn.getName()))
+                        .append("\",");
+                    values.append(getSqlValue(tableColumn))
+                        .append(",");
                 }
-                else {
-                    insert = insert.newRecord().set(record);
-                }
-            }
-
-            if (insert != null) {
-                insert.execute();
+                sb.setCharAt(sb.length() - 1, ')');
+                values.setCharAt(values.length() - 1, ')');
+                sb.append(" VALUES (")
+                    .append(values)
+                    .append(",");
             }
             else {
-                assert false : "Call to insertSubdocuments with an empty set of subdocuments";
-                LOGGER.warn("Call to insertSubdocuments with an empty set of subdocuments");
+                sb.append("(");
+                for (TableColumn tableColumn : tableRow) {
+                    sb.append(getSqlValue(tableColumn))
+                        .append(",");
+                }
+                sb.setCharAt(sb.length() - 1, ')');
+                sb.append(",");
             }
-        } catch (DataAccessException ex) {
-            //TODO: Change exception
-            throw new RuntimeException(ex);
+            if (docCounter % maxBatchSize == 0) {
+                dsl.execute(sb.substring(0, sb.length() - 2));
+                sb.delete(0, sb.length());
+                assert sb.length() == 0;
+            }
         }
+    }
+    
+    private String getSqlValue(TableColumn tableColumn) {
+        final KVValue<? extends Serializable> value = tableColumn.getValue();
+        return DSL.value(value, valueToJooqDataTypeProvider.getDataType(value.getType())).toString();
     }
     
     private void copyInsertPathDocuments(
             PGConnection connection,
-            String schema,
-            PathDocTable table,
-            List<Field<?>> fields,
-            Iterable<PathDocument> pathDocuments) {
+            String schemaName,
+            PathSnapshot pathSnapshot,
+            TableData tableData) throws RetryTransactionException, SQLException, IOException {
 
-        try {
-            final int maxBatchSize = 1000;
-            final StringBuilder sb = new StringBuilder(2048);
-            final String copyStament = "COPY " + DSL.name(schema, table.getName())
-                    + " FROM STDIN ";
-            final CopyManager copyManager = connection.getCopyAPI();
+        final int maxBatchSize = 1000;
+        final StringBuilder sb = new StringBuilder(2048);
+        final StringBuilder copyStamentBuilder = new StringBuilder();
+        final CopyManager copyManager = connection.getCopyAPI();
+        copyStamentBuilder.append("COPY \"")
+            .append(schemaName).append("\".\"").append(pathSnapshot.getTableName())
+            .append("(");
+        TableRow firstTableRow = tableData.iterator().next();
+        copyStamentBuilder.append(") FROM STDIN ");
+        final String copyStatement = copyStamentBuilder.toString();
+        
+        int docCounter = 0;
+        for (TableRow tableRow : tableData) {
+            docCounter++;
 
-            if (fields.size() == 0) {
-                assert false : "Call to insertSubdocuments on a table without fields";
-                LOGGER.warn("Call to insertSubdocuments on a table without fields");
+            addToCopy(sb, tableRow);
+            assert sb.length() != 0;
+
+            if (docCounter % maxBatchSize == 0) {
+                executeCopy(copyManager, copyStatement, sb);
+                assert sb.length() == 0;
             }
-
-            String[] orderedFieldNames = new String[fields.size()];
-            String[] orderedAttributeNames = new String[fields.size()];
-
-            int i = 0;
-            for (Field<?> field : getFieldIterator(fields)) {
-                orderedFieldNames[i] = field.getName();
-                orderedAttributeNames[i] = field.getName();
-                i++;
-            }
-
-            int docCounter = 0;
-            for (PathDocument pathDocument : pathDocuments) {
-                docCounter++;
-
-                addToCopy(sb, pathDocument, orderedFieldNames, orderedAttributeNames);
-                assert sb.length() != 0;
-
-                if (docCounter % maxBatchSize == 0) {
-                    executeCopy(copyManager, copyStament, sb);
-                    assert sb.length() == 0;
-                }
-            }
-            if (sb.length() > 0) {
-                assert docCounter % maxBatchSize != 0;
-                executeCopy(copyManager, copyStament, sb);
-            }
-        } catch (SQLException ex) {
-            //TODO: Change exception
-            throw new UserToroException(ex);
-        } catch (IOException ex) {
-            //TODO: Change exception
-            throw new ToroRuntimeException(ex);
         }
-
+        if (sb.length() > 0) {
+            assert docCounter % maxBatchSize != 0;
+            executeCopy(copyManager, copyStatement, sb);
+        }
     }
 
     @SuppressWarnings("unchecked")
     private void addToCopy(
             StringBuilder sb,
-            PathDocument pathDocument,
-            String[] orderedFieldNames,
-            String[] orderedAttributeNames) {
-        for (int i = 0; i < orderedFieldNames.length; i++) {
-            String fieldName = orderedFieldNames[i];
-            String attName = orderedAttributeNames[i];
-
-            if (fieldName.equals(PathDocTable.DID_COLUMN_NAME)) {
-                sb.append(pathDocument.getDocumentId());
-            } else if (fieldName.equals(PathDocTable.RID_COLUMN_NAME)) {
-                sb.append(translateSubDocIndexToDatabase(pathDocument.getRowId()));
-            } else if (fieldName.equals(PathDocTable.PID_COLUMN_NAME)) {
-                sb.append(translateSubDocIndexToDatabase(pathDocument.getParentRowId()));
-            } else if (fieldName.equals(PathDocTable.SEQ_COLUMN_NAME)) {
-                Integer seq = translateSubDocIndexToDatabase(pathDocument.getSequence());
-                if (seq == null) {
-                    sb.append("\\N");
-                }
-                else {
-                    sb.append(seq);
-                }
-            } else {
-                pathDocument.getValues().get(attName).accept(PostgreSQLValueToCopyConverter.INSTANCE, sb);
-            }
-
+            TableRow tableRow) {
+        for (TableColumn tableColumn : tableRow) {
+            tableColumn.getValue().accept(PostgreSQLValueToCopyConverter.INSTANCE, sb);
             sb.append('\t');
         }
-        sb.replace(sb.length() - 1, sb.length(), "\n");
+        sb.setCharAt(sb.length() - 1, '\n');
     }
 
     protected Integer translateSubDocIndexToDatabase(int index) {
@@ -1157,15 +1036,60 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
     }
 
     @Override
-    public Iterable<FieldRecord> getFields(String database, String collection, String path) {
+    public DataType<?> getDataType(String type) {
+        throw new ToroImplementationException("Not implemented yet");
+    }
+
+    @Override
+    public int reserveDids(DSLContext dsl, String database, String collection, int count) {
+        throw new ToroImplementationException("Not implemented yet");
+    }
+
+    @Override
+    public int reserveRids(DSLContext dsl, String database, String collection, Path path, int count) {
+        throw new ToroImplementationException("Not implemented yet");
+    }
+
+    @Override
+    public Iterable<DatabaseRecord> getDatabases(DSLContext dsl) {
         // TODO Auto-generated method stub
         return null;
     }
 
     @Override
-    public DataType<?> getDataType(String type) {
+    public Iterable<CollectionRecord> getCollections(DSLContext dsl, String database) {
         // TODO Auto-generated method stub
         return null;
     }
 
+    @Override
+    public Iterable<ContainerRecord> getContainers(DSLContext dsl, String database, String collection) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Iterable<FieldRecord> getFields(DSLContext dsl, String database, String collection, Path path) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public DataType<?> getDataType(KVType type) {
+        return valueToJooqDataTypeProvider.getDataType(type);
+    }
+
+    @Override
+    public void handleRetryException(Context context, SQLException sqlException) throws RetryTransactionException {
+        if (context == Context.batchUpdate && "40001".equals(sqlException.getSQLState())) {
+            throw new RetryTransactionException(sqlException);
+        }
+    }
+
+    @Override
+    public void handleRetryException(Context context, DataAccessException dataAccessException) throws RetryTransactionException {
+        if (context == Context.batchUpdate && "40001".equals(dataAccessException.sqlState())) {
+            throw new RetryTransactionException(dataAccessException);
+        }
+    }
 }

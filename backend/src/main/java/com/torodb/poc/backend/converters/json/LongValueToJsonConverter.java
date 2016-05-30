@@ -20,14 +20,14 @@
 
 package com.torodb.poc.backend.converters.json;
 
+import com.torodb.kvdocument.values.KVLong;
 import com.torodb.poc.backend.converters.ValueConverter;
-import com.torodb.torod.core.subdocument.values.ScalarLong;
 
 /**
  *
  */
 public class LongValueToJsonConverter implements
-        ValueConverter<Number, ScalarLong> {
+        ValueConverter<Number, KVLong> {
 
     private static final long serialVersionUID = 1L;
 
@@ -37,13 +37,13 @@ public class LongValueToJsonConverter implements
     }
 
     @Override
-    public Class<? extends ScalarLong> getValueClass() {
-        return ScalarLong.class;
+    public Class<? extends KVLong> getValueClass() {
+        return KVLong.class;
     }
 
     @Override
-    public ScalarLong toValue(Number value) {
-        return ScalarLong.of(value.longValue());
+    public KVLong toValue(Number value) {
+        return KVLong.of(value.longValue());
     }
     
 }

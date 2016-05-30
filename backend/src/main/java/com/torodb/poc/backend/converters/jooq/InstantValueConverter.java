@@ -21,40 +21,48 @@
 package com.torodb.poc.backend.converters.jooq;
 
 import java.sql.Timestamp;
+import java.time.Instant;
 
 import org.jooq.DataType;
 import org.jooq.impl.DefaultDataType;
-import org.threeten.bp.DateTimeUtils;
 
-import com.torodb.torod.core.subdocument.ScalarType;
-import com.torodb.torod.core.subdocument.values.ScalarInstant;
-import com.torodb.torod.core.subdocument.values.heap.InstantScalarInstant;
+import com.torodb.kvdocument.types.InstantType;
+import com.torodb.kvdocument.types.KVType;
+import com.torodb.kvdocument.values.KVInstant;
+import com.torodb.kvdocument.values.heap.InstantKVInstant;
 
 /**
  *
  */
-public class InstantValueConverter implements SubdocValueConverter<Timestamp, ScalarInstant>{
+public class InstantValueConverter implements KVValueConverter<Timestamp, KVInstant>{
     private static final long serialVersionUID = 1L;
 
     private static final DataType<Timestamp> TIMESTAMPTZ = new DefaultDataType<Timestamp>(null, Timestamp.class, "timestamptz");
     
-    public static final DataTypeForScalar<ScalarInstant> TYPE = DataTypeForScalar.from(TIMESTAMPTZ, new InstantValueConverter());
+    public static final DataTypeForKV<KVInstant> TYPE = DataTypeForKV.from(TIMESTAMPTZ, new InstantValueConverter());
 
     @Override
-    public ScalarType getErasuredType() {
-        return ScalarType.DATE;
+    public KVType getErasuredType() {
+        return InstantType.INSTANCE;
     }
 
     @Override
-    public ScalarInstant from(Timestamp databaseObject) {
-        return new InstantScalarInstant(
-                DateTimeUtils.toInstant(databaseObject)
-        );
+    public KVInstant from(Timestamp databaseObject) {
+        return new InstantKVInstant(
+                Instant.ofEpochSecond(databaseObject.getTime() / 1000, databaseObject.getNanos())
+            );
     }
 
     @Override
-    public Timestamp to(ScalarInstant userObject) {
-        return DateTimeUtils.toSqlTimestamp(userObject.getValue());
+    public Timestamp to(KVInstant userObject) {
+        Instant instant = userObject.getValue();
+        try {
+            Timestamp ts = new Timestamp(instant.getEpochSecond() * 1000);
+            ts.setNanos(instant.getNano());
+            return ts;
+        } catch (ArithmeticException ex) {
+            throw new IllegalArgumentException(ex);
+        }
     }
 
     @Override
@@ -63,8 +71,8 @@ public class InstantValueConverter implements SubdocValueConverter<Timestamp, Sc
     }
 
     @Override
-    public Class<ScalarInstant> toType() {
-        return ScalarInstant.class;
+    public Class<KVInstant> toType() {
+        return KVInstant.class;
     }
     
 }

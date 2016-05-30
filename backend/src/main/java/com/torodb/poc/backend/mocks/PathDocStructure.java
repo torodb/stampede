@@ -18,21 +18,16 @@
  *     
  */
 
+package com.torodb.poc.backend.mocks;
 
-package com.torodb.poc.backend.converters.jooq;
+import java.util.Map;
 
-import org.jooq.Converter;
+import com.torodb.kvdocument.types.KVType;
+import com.torodb.poc.backend.tables.records.FieldRecord;
 
-import com.torodb.torod.core.subdocument.ScalarType;
-import com.torodb.torod.core.subdocument.values.ScalarValue;
-
-/**
- *
- * @param <DBT> data base type
- * @param <V> a value of the given Java type
- */
-public abstract interface SubdocValueConverter<DBT, V extends ScalarValue<?>> extends Converter<DBT, V> {
-    
-    public abstract ScalarType getErasuredType();
-    
+public interface PathDocStructure {
+    public Map<String, KVType> getFields();
+    public static PathDocStructure fromTableFields(Iterable<? extends FieldRecord> fieldRrecords) {
+        throw new RuntimeException("Not implemented yet");
+    }
 }

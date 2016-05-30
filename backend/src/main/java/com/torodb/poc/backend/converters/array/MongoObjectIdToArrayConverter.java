@@ -25,23 +25,23 @@ import javax.json.JsonString;
 import org.jooq.tools.json.JSONValue;
 
 import com.torodb.common.util.HexUtils;
-import com.torodb.torod.core.subdocument.values.ScalarMongoObjectId;
-import com.torodb.torod.core.subdocument.values.heap.ByteArrayScalarMongoObjectId;
+import com.torodb.kvdocument.values.KVMongoObjectId;
+import com.torodb.kvdocument.values.heap.ByteArrayKVMongoObjectId;
 
 /**
  *
  */
-public class MongoObjectIdToArrayConverter implements ArrayConverter<JsonString, ScalarMongoObjectId> {
+public class MongoObjectIdToArrayConverter implements ArrayConverter<JsonString, KVMongoObjectId> {
     private static final long serialVersionUID = 1L;
 
     @Override
-    public String toJsonLiteral(ScalarMongoObjectId value) {
+    public String toJsonLiteral(KVMongoObjectId value) {
         return JSONValue.toJSONString(value.toString());
     }
 
     @Override
-    public ScalarMongoObjectId fromJsonValue(JsonString value) {
+    public KVMongoObjectId fromJsonValue(JsonString value) {
         byte[] bytes = HexUtils.hex2Bytes(value.toString());
-        return new ByteArrayScalarMongoObjectId(bytes);
+        return new ByteArrayKVMongoObjectId(bytes);
     }
 }

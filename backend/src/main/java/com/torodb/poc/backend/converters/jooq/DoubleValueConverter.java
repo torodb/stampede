@@ -22,29 +22,30 @@ package com.torodb.poc.backend.converters.jooq;
 
 import org.jooq.impl.SQLDataType;
 
-import com.torodb.torod.core.subdocument.ScalarType;
-import com.torodb.torod.core.subdocument.values.ScalarDouble;
+import com.torodb.kvdocument.types.DoubleType;
+import com.torodb.kvdocument.types.KVType;
+import com.torodb.kvdocument.values.KVDouble;
 
 /**
  *
  */
-public class DoubleValueConverter implements SubdocValueConverter<Double, ScalarDouble> {
+public class DoubleValueConverter implements KVValueConverter<Double, KVDouble> {
     private static final long serialVersionUID = 1L;
 
-    public static final DataTypeForScalar<ScalarDouble> TYPE = DataTypeForScalar.from(SQLDataType.DOUBLE, new DoubleValueConverter());
+    public static final DataTypeForKV<KVDouble> TYPE = DataTypeForKV.from(SQLDataType.DOUBLE, new DoubleValueConverter());
 
     @Override
-    public ScalarType getErasuredType() {
-        return ScalarType.DOUBLE;
+    public KVType getErasuredType() {
+        return DoubleType.INSTANCE;
     }
 
     @Override
-    public ScalarDouble from(Double databaseObject) {
-        return ScalarDouble.of(databaseObject);
+    public KVDouble from(Double databaseObject) {
+        return KVDouble.of(databaseObject);
     }
 
     @Override
-    public Double to(ScalarDouble userObject) {
+    public Double to(KVDouble userObject) {
         return userObject.getValue();
     }
 
@@ -54,8 +55,8 @@ public class DoubleValueConverter implements SubdocValueConverter<Double, Scalar
     }
 
     @Override
-    public Class<ScalarDouble> toType() {
-        return ScalarDouble.class;
+    public Class<KVDouble> toType() {
+        return KVDouble.class;
     }
 
 }

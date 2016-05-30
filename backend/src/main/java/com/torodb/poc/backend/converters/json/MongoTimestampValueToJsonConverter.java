@@ -22,16 +22,16 @@ package com.torodb.poc.backend.converters.json;
 
 import javax.json.JsonObject;
 
+import com.torodb.kvdocument.values.KVMongoTimestamp;
+import com.torodb.kvdocument.values.heap.DefaultKVMongoTimestamp;
 import com.torodb.poc.backend.converters.ValueConverter;
 import com.torodb.poc.backend.udt.MongoTimestampUDT;
-import com.torodb.torod.core.subdocument.values.ScalarMongoTimestamp;
-import com.torodb.torod.core.subdocument.values.heap.DefaultScalarMongoTimestamp;
 
 /**
  *
  */
 public class MongoTimestampValueToJsonConverter implements
-        ValueConverter<JsonObject, ScalarMongoTimestamp> {
+        ValueConverter<JsonObject, KVMongoTimestamp> {
 
     private static final long serialVersionUID = 1L;
 
@@ -44,14 +44,14 @@ public class MongoTimestampValueToJsonConverter implements
     }
 
     @Override
-    public Class<? extends ScalarMongoTimestamp> getValueClass() {
-        return ScalarMongoTimestamp.class;
+    public Class<? extends KVMongoTimestamp> getValueClass() {
+        return KVMongoTimestamp.class;
     }
 
     @Override
-    public ScalarMongoTimestamp toValue(JsonObject value) {
+    public KVMongoTimestamp toValue(JsonObject value) {
         assert isValid(value);
-        return new DefaultScalarMongoTimestamp(value.getInt(SECS), value.getInt(COUNTER));
+        return new DefaultKVMongoTimestamp(value.getInt(SECS), value.getInt(COUNTER));
     }
 
     public boolean isValid(JsonObject object) {

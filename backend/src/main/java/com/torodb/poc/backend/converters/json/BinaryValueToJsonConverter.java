@@ -22,17 +22,16 @@ package com.torodb.poc.backend.converters.json;
 
 import com.google.common.io.ByteSource;
 import com.torodb.common.util.HexUtils;
+import com.torodb.kvdocument.values.KVBinary;
 import com.torodb.kvdocument.values.KVBinary.KVBinarySubtype;
+import com.torodb.kvdocument.values.heap.ByteSourceKVBinary;
 import com.torodb.poc.backend.converters.ValueConverter;
-import com.torodb.torod.core.exceptions.ToroImplementationException;
-import com.torodb.torod.core.subdocument.values.ScalarBinary;
-import com.torodb.torod.core.subdocument.values.heap.ByteSourceScalarBinary;
 
 /**
  *
  */
 public class BinaryValueToJsonConverter implements
-        ValueConverter<String, ScalarBinary> {
+        ValueConverter<String, KVBinary> {
 
     private static final long serialVersionUID = 1L;
 
@@ -42,19 +41,19 @@ public class BinaryValueToJsonConverter implements
     }
 
     @Override
-    public Class<? extends ScalarBinary> getValueClass() {
-        return ScalarBinary.class;
+    public Class<? extends KVBinary> getValueClass() {
+        return KVBinary.class;
     }
 
     @Override
-    public ScalarBinary toValue(String value) {
+    public KVBinary toValue(String value) {
         if (!value.startsWith("\\x")) {
-            throw new ToroImplementationException(
+            throw new RuntimeException(
                     "A bytea in escape format was expected, but " + value
                     + " was found"
             );
         }
-        return new ByteSourceScalarBinary(
+        return new ByteSourceKVBinary(
                 KVBinarySubtype.MONGO_GENERIC,
                 (byte) 0,
                 ByteSource.wrap(HexUtils.hex2Bytes(value.substring(2)))

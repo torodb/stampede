@@ -23,30 +23,31 @@ package com.torodb.poc.backend.converters.jooq;
 
 import org.jooq.impl.SQLDataType;
 
-import com.torodb.torod.core.subdocument.ScalarType;
-import com.torodb.torod.core.subdocument.values.ScalarInteger;
+import com.torodb.kvdocument.types.IntegerType;
+import com.torodb.kvdocument.types.KVType;
+import com.torodb.kvdocument.values.KVInteger;
 
 
 /**
  *
  */
-public class IntegerValueConverter implements SubdocValueConverter<Integer, ScalarInteger>{
+public class IntegerValueConverter implements KVValueConverter<Integer, KVInteger>{
     private static final long serialVersionUID = 1L;
 
-    public static final DataTypeForScalar<ScalarInteger> TYPE = DataTypeForScalar.from(SQLDataType.INTEGER, new IntegerValueConverter());
+    public static final DataTypeForKV<KVInteger> TYPE = DataTypeForKV.from(SQLDataType.INTEGER, new IntegerValueConverter());
 
     @Override
-    public ScalarType getErasuredType() {
-        return ScalarType.INTEGER;
+    public KVType getErasuredType() {
+        return IntegerType.INSTANCE;
     }
 
     @Override
-    public ScalarInteger from(Integer databaseObject) {
-        return ScalarInteger.of(databaseObject);
+    public KVInteger from(Integer databaseObject) {
+        return KVInteger.of(databaseObject);
     }
 
     @Override
-    public Integer to(ScalarInteger userObject) {
+    public Integer to(KVInteger userObject) {
         return userObject.getValue();
     }
 
@@ -56,8 +57,8 @@ public class IntegerValueConverter implements SubdocValueConverter<Integer, Scal
     }
 
     @Override
-    public Class<ScalarInteger> toType() {
-        return ScalarInteger.class;
+    public Class<KVInteger> toType() {
+        return KVInteger.class;
     }
     
 }

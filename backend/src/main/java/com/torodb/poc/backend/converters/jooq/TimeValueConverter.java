@@ -21,37 +21,40 @@
 package com.torodb.poc.backend.converters.jooq;
 
 import java.sql.Time;
+import java.time.LocalTime;
 
 import org.jooq.impl.SQLDataType;
-import org.threeten.bp.DateTimeUtils;
 
-import com.torodb.torod.core.subdocument.ScalarType;
-import com.torodb.torod.core.subdocument.values.ScalarTime;
-import com.torodb.torod.core.subdocument.values.heap.LocalTimeScalarTime;
+import com.torodb.kvdocument.types.KVType;
+import com.torodb.kvdocument.types.TimeType;
+import com.torodb.kvdocument.values.KVTime;
+import com.torodb.kvdocument.values.heap.LocalTimeKVTime;
 
 /**
  *
  */
-public class TimeValueConverter implements SubdocValueConverter<Time, ScalarTime>{
+public class TimeValueConverter implements KVValueConverter<Time, KVTime>{
     private static final long serialVersionUID = 1L;
 
-    public static final DataTypeForScalar<ScalarTime> TYPE = DataTypeForScalar.from(SQLDataType.TIME, new TimeValueConverter());
+    public static final DataTypeForKV<KVTime> TYPE = DataTypeForKV.from(SQLDataType.TIME, new TimeValueConverter());
 
     @Override
-    public ScalarType getErasuredType() {
-        return ScalarType.TIME;
+    public KVType getErasuredType() {
+        return TimeType.INSTANCE;
     }
 
     @Override
-    public ScalarTime from(Time databaseObject) {
-        return new LocalTimeScalarTime(
-                DateTimeUtils.toLocalTime(databaseObject)
+    public KVTime from(Time databaseObject) {
+        return new LocalTimeKVTime(
+                LocalTime.of(databaseObject.getHours(), databaseObject.getMinutes(), databaseObject.getSeconds())
         );
     }
 
     @Override
-    public Time to(ScalarTime userObject) {
-        return DateTimeUtils.toSqlTime(userObject.getValue());
+    public Time to(KVTime userObject) {
+        LocalTime time = userObject.getValue();
+        return new Time(
+                time.getHour(), time.getMinute(), time.getSecond());
     }
 
     @Override
@@ -60,8 +63,8 @@ public class TimeValueConverter implements SubdocValueConverter<Time, ScalarTime
     }
 
     @Override
-    public Class<ScalarTime> toType() {
-        return ScalarTime.class;
+    public Class<KVTime> toType() {
+        return KVTime.class;
     }
     
 }

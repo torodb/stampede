@@ -21,37 +21,39 @@
 package com.torodb.poc.backend.converters.jooq;
 
 import java.sql.Date;
+import java.time.LocalDate;
 
 import org.jooq.impl.SQLDataType;
-import org.threeten.bp.DateTimeUtils;
 
-import com.torodb.torod.core.subdocument.ScalarType;
-import com.torodb.torod.core.subdocument.values.ScalarDate;
-import com.torodb.torod.core.subdocument.values.heap.LocalDateScalarDate;
+import com.torodb.kvdocument.types.DateType;
+import com.torodb.kvdocument.types.KVType;
+import com.torodb.kvdocument.values.KVDate;
+import com.torodb.kvdocument.values.heap.LocalDateKVDate;
 
 /**
  *
  */
-public class DateValueConverter implements SubdocValueConverter<Date, ScalarDate> {
+public class DateValueConverter implements KVValueConverter<Date, KVDate> {
     private static final long serialVersionUID = 1L;
 
-    public static final DataTypeForScalar<ScalarDate> TYPE = DataTypeForScalar.from(SQLDataType.DATE, new DateValueConverter());
+    public static final DataTypeForKV<KVDate> TYPE = DataTypeForKV.from(SQLDataType.DATE, new DateValueConverter());
 
     @Override
-    public ScalarType getErasuredType() {
-        return ScalarType.DATE;
+    public KVType getErasuredType() {
+        return DateType.INSTANCE;
     }
 
     @Override
-    public ScalarDate from(Date databaseObject) {
-        return new LocalDateScalarDate(
-                DateTimeUtils.toLocalDate(databaseObject)
+    public KVDate from(Date databaseObject) {
+        return new LocalDateKVDate(
+                LocalDate.of(databaseObject.getYear() + 1900, databaseObject.getMonth() + 1, databaseObject.getDate())
         );
     }
 
     @Override
-    public Date to(ScalarDate userObject) {
-        return DateTimeUtils.toSqlDate(userObject.getValue());
+    public Date to(KVDate userObject) {
+        LocalDate date = userObject.getValue();
+        return new Date(date.getYear() - 1900, date.getMonthValue() -1, date.getDayOfMonth());
     }
 
     @Override
@@ -60,8 +62,8 @@ public class DateValueConverter implements SubdocValueConverter<Date, ScalarDate
     }
 
     @Override
-    public Class<ScalarDate> toType() {
-        return ScalarDate.class;
+    public Class<KVDate> toType() {
+        return KVDate.class;
     }
 
 }

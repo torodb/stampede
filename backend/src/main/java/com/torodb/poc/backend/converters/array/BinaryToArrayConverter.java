@@ -24,25 +24,25 @@ import javax.json.JsonString;
 
 import com.google.common.io.ByteSource;
 import com.torodb.common.util.HexUtils;
+import com.torodb.kvdocument.values.KVBinary;
 import com.torodb.kvdocument.values.KVBinary.KVBinarySubtype;
-import com.torodb.torod.core.subdocument.values.ScalarBinary;
-import com.torodb.torod.core.subdocument.values.heap.ByteSourceScalarBinary;
+import com.torodb.kvdocument.values.heap.ByteSourceKVBinary;
 
 /**
  *
  */
-public class BinaryToArrayConverter implements ArrayConverter<JsonString, ScalarBinary> {
+public class BinaryToArrayConverter implements ArrayConverter<JsonString, KVBinary> {
     private static final long serialVersionUID = 1L;
 
     @Override
-    public String toJsonLiteral(ScalarBinary value) {
+    public String toJsonLiteral(KVBinary value) {
         return value.toString();
     }
 
     @Override
-    public ScalarBinary fromJsonValue(JsonString value) {
+    public KVBinary fromJsonValue(JsonString value) {
         byte[] bytes = HexUtils.hex2Bytes(value.getString());
-        return new ByteSourceScalarBinary(
+        return new ByteSourceKVBinary(
                 KVBinarySubtype.MONGO_GENERIC,
                 (byte) 0,
                 ByteSource.wrap(bytes)

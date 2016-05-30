@@ -301,10 +301,8 @@ public abstract class FieldRecord extends UpdatableRecordImpl<FieldRecord>
 	/**
 	 * {@inheritDoc}
 	 */
-	@Override
-	public FieldRecord values(String value1, String value2, String value3, String value4, String value5, String value6) {
-		return this;
-	}
+    @Override
+    public abstract FieldRecord values(String value1, String value2, String value3, String value4, String value5, String value6);
 
     // -------------------------------------------------------------------------
     // Constructors

@@ -26,18 +26,18 @@ import java.util.List;
 import javax.json.JsonArray;
 import javax.json.JsonValue;
 
+import com.torodb.kvdocument.values.KVArray;
+import com.torodb.kvdocument.values.KVValue;
+import com.torodb.kvdocument.values.heap.ListKVArray;
 import com.torodb.poc.backend.converters.ValueConverter;
 import com.torodb.poc.backend.converters.array.ArrayConverter;
 import com.torodb.poc.backend.converters.array.ValueToArrayConverterProvider;
-import com.torodb.torod.core.subdocument.values.ScalarArray;
-import com.torodb.torod.core.subdocument.values.ScalarValue;
-import com.torodb.torod.core.subdocument.values.heap.ListScalarArray;
 
 /**
  *
  */
 public abstract class BaseArrayValueToJsonConverter implements
-        ValueConverter<JsonArray, ScalarArray> {
+        ValueConverter<JsonArray, KVArray> {
     private static final long serialVersionUID = 1L;
     
     private final ValueToArrayConverterProvider valueToArrayConverterProvider;
@@ -53,17 +53,17 @@ public abstract class BaseArrayValueToJsonConverter implements
     }
 
     @Override
-    public Class<? extends ScalarArray> getValueClass() {
-        return ScalarArray.class;
+    public Class<? extends KVArray> getValueClass() {
+        return KVArray.class;
     }
 
     @Override
-    public ScalarArray toValue(JsonArray value) {
-        List<ScalarValue<?>> list = new ArrayList<>(value.size());
+    public KVArray toValue(JsonArray value) {
+        List<KVValue<?>> list = new ArrayList<>(value.size());
         for (JsonValue child : value) {
             ArrayConverter converter = valueToArrayConverterProvider.fromJsonValue(child);
             list.add(converter.fromJsonValue(child));
         }
-        return new ListScalarArray(list);
+        return new ListKVArray(list);
     }
 }

@@ -18,7 +18,7 @@
  *     
  */
 
-package com.torodb.poc.backend;
+package com.torodb.poc.backend.mocks;
 
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.Immutable;
@@ -27,7 +27,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
-import com.torodb.torod.core.subdocument.structure.DocStructure;
 
 /**
  *
@@ -37,12 +36,12 @@ public class SplitDocument {
 
     private final int id;
     private final DocStructure root;
-    private final Multimap<String, PathDocument> pathDocuments;
+    private final Multimap<Path, PathDocument> pathDocuments;
 
     SplitDocument(
             int id,
             @Nonnull DocStructure structure,
-            @Nonnull Multimap<String, PathDocument> pathDocuments) {
+            @Nonnull Multimap<Path, PathDocument> pathDocuments) {
         this.id = id;
         this.root = structure;
         this.pathDocuments = Multimaps.unmodifiableMultimap(pathDocuments);
@@ -56,7 +55,7 @@ public class SplitDocument {
         return id;
     }
 
-    public Multimap<String, PathDocument> getPathDocuments() {
+    public Multimap<Path, PathDocument> getPathDocuments() {
         return pathDocuments;
     }
 
@@ -96,11 +95,11 @@ public class SplitDocument {
 
         private int id;
         private DocStructure root;
-        private final Multimap<String, PathDocument> subDocuments;
+        private final Multimap<Path, PathDocument> pathDocuments;
         private boolean build;
 
         public Builder() {
-            subDocuments = HashMultimap.create();
+            pathDocuments = HashMultimap.create();
             build = false;
         }
 
@@ -124,9 +123,9 @@ public class SplitDocument {
 
         public Builder add(PathDocument pathDocument) {
             Preconditions.checkState(!build, "This builder has already been used");
-            String path = pathDocument.getPath();
+            Path path = pathDocument.getPath();
 
-            subDocuments.put(path, pathDocument);
+            pathDocuments.put(path, pathDocument);
             return this;
         }
 
@@ -143,7 +142,7 @@ public class SplitDocument {
             return new SplitDocument(
                     id,
                     root,
-                    subDocuments
+                    pathDocuments
             );
         }
 

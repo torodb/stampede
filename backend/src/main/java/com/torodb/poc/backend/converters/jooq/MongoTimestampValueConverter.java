@@ -20,34 +20,35 @@
 
 package com.torodb.poc.backend.converters.jooq;
 
+import com.torodb.kvdocument.types.KVType;
+import com.torodb.kvdocument.types.MongoTimestampType;
+import com.torodb.kvdocument.values.KVMongoTimestamp;
+import com.torodb.kvdocument.values.heap.DefaultKVMongoTimestamp;
 import com.torodb.poc.backend.udt.MongoTimestampUDT;
 import com.torodb.poc.backend.udt.record.MongoTimestampRecord;
-import com.torodb.torod.core.subdocument.ScalarType;
-import com.torodb.torod.core.subdocument.values.ScalarMongoTimestamp;
-import com.torodb.torod.core.subdocument.values.heap.DefaultScalarMongoTimestamp;
 
 /**
  *
  */
 public class MongoTimestampValueConverter implements
-        SubdocValueConverter<MongoTimestampRecord, ScalarMongoTimestamp> {
+        KVValueConverter<MongoTimestampRecord, KVMongoTimestamp> {
 
     private static final long serialVersionUID = 1251948867583783920L;
 
-    public static final DataTypeForScalar<ScalarMongoTimestamp> TYPE = DataTypeForScalar.from(MongoTimestampUDT.MONGO_TIMESTAMP.getDataType(), new MongoTimestampValueConverter());
+    public static final DataTypeForKV<KVMongoTimestamp> TYPE = DataTypeForKV.from(MongoTimestampUDT.MONGO_TIMESTAMP.getDataType(), new MongoTimestampValueConverter());
 
     @Override
-    public ScalarType getErasuredType() {
-        return ScalarType.MONGO_TIMESTAMP;
+    public KVType getErasuredType() {
+        return MongoTimestampType.INSTANCE;
     }
 
     @Override
-    public ScalarMongoTimestamp from(MongoTimestampRecord databaseObject) {
-        return new DefaultScalarMongoTimestamp(databaseObject.getSecs(), databaseObject.getCounter());
+    public KVMongoTimestamp from(MongoTimestampRecord databaseObject) {
+        return new DefaultKVMongoTimestamp(databaseObject.getSecs(), databaseObject.getCounter());
     }
 
     @Override
-    public MongoTimestampRecord to(ScalarMongoTimestamp userObject) {
+    public MongoTimestampRecord to(KVMongoTimestamp userObject) {
         return new MongoTimestampRecord(userObject.getSecondsSinceEpoch(), userObject.getOrdinal());
     }
 
@@ -57,7 +58,7 @@ public class MongoTimestampValueConverter implements
     }
 
     @Override
-    public Class<ScalarMongoTimestamp> toType() {
-        return ScalarMongoTimestamp.class;
+    public Class<KVMongoTimestamp> toType() {
+        return KVMongoTimestamp.class;
     }
 }

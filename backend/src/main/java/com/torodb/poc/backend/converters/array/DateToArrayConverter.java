@@ -20,27 +20,28 @@
 
 package com.torodb.poc.backend.converters.array;
 
+import java.time.LocalDate;
+
 import javax.json.JsonString;
 
 import org.jooq.tools.json.JSONValue;
-import org.threeten.bp.LocalDate;
 
-import com.torodb.torod.core.subdocument.values.ScalarDate;
-import com.torodb.torod.core.subdocument.values.heap.LocalDateScalarDate;
+import com.torodb.kvdocument.values.KVDate;
+import com.torodb.kvdocument.values.heap.LocalDateKVDate;
 
 /**
  *
  */
-public class DateToArrayConverter implements ArrayConverter<JsonString, ScalarDate> {
+public class DateToArrayConverter implements ArrayConverter<JsonString, KVDate> {
     private static final long serialVersionUID = 1L;
 
     @Override
-    public String toJsonLiteral(ScalarDate value) {
+    public String toJsonLiteral(KVDate value) {
         return JSONValue.toJSONString(value.toString());
     }
 
     @Override
-    public ScalarDate fromJsonValue(JsonString value) {
-        return new LocalDateScalarDate(LocalDate.parse(value.getString()));
+    public KVDate fromJsonValue(JsonString value) {
+        return new LocalDateKVDate(LocalDate.parse(value.getString()));
     }
 }

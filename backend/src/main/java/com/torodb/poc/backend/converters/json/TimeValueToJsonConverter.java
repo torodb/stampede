@@ -20,17 +20,17 @@
 
 package com.torodb.poc.backend.converters.json;
 
-import org.threeten.bp.LocalTime;
+import java.time.LocalTime;
 
+import com.torodb.kvdocument.values.KVTime;
+import com.torodb.kvdocument.values.heap.LocalTimeKVTime;
 import com.torodb.poc.backend.converters.ValueConverter;
-import com.torodb.torod.core.subdocument.values.ScalarTime;
-import com.torodb.torod.core.subdocument.values.heap.LocalTimeScalarTime;
 
 /**
  *
  */
 public class TimeValueToJsonConverter implements
-        ValueConverter<String, ScalarTime> {
+        ValueConverter<String, KVTime> {
 
     private static final long serialVersionUID = 1L;
 
@@ -40,13 +40,13 @@ public class TimeValueToJsonConverter implements
     }
 
     @Override
-    public Class<? extends ScalarTime> getValueClass() {
-        return ScalarTime.class;
+    public Class<? extends KVTime> getValueClass() {
+        return KVTime.class;
     }
 
     @Override
-    public ScalarTime toValue(String value) {
-        return new LocalTimeScalarTime(LocalTime.parse(value));
+    public KVTime toValue(String value) {
+        return new LocalTimeKVTime(LocalTime.parse(value));
     }
     
 }

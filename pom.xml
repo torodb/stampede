@@ -89,6 +89,7 @@
         <module>backend</module>
         <module>metainfo-cache</module>
         <module>core</module>
+        <module>metainfo-cache</module>
     </modules>
 
     <dependencyManagement>
