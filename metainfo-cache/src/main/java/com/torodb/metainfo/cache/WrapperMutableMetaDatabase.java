@@ -20,10 +20,13 @@
 
 package com.torodb.metainfo.cache;
 
-import com.torodb.core.transaction.metainf.*;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import com.torodb.core.annotations.DoNotChange;
+import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
+import com.torodb.core.transaction.metainf.ImmutableMetaDatabase;
+import com.torodb.core.transaction.metainf.MutableMetaCollection;
+import com.torodb.core.transaction.metainf.MutableMetaDatabase;
+import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 /**
@@ -31,18 +34,23 @@ import java.util.stream.Stream;
  */
 public class WrapperMutableMetaDatabase implements MutableMetaDatabase<MutableMetaCollection> {
 
-    private final String name;
-    private final String identifier;
+    private final ImmutableMetaDatabase wrapped;
     private final Map<String, MutableMetaCollection> newCollections;
+    private final Set<MutableMetaCollection> modifiedMetaCollections;
+    private final Consumer<WrapperMutableMetaDatabase> changeConsumer;
 
-    public WrapperMutableMetaDatabase(MetaDatabase<? extends MetaCollection> originalDatabase) {
-        this.name = originalDatabase.getName();
-        this.identifier = originalDatabase.getIdentifier();
+    public WrapperMutableMetaDatabase(ImmutableMetaDatabase wrapped,
+            Consumer<WrapperMutableMetaDatabase> changeConsumer) {
+        this.wrapped = wrapped;
+        this.changeConsumer = changeConsumer;
 
         this.newCollections = new HashMap<>();
-        originalDatabase.streamMetaCollections().forEach((collection) -> {
+        this.modifiedMetaCollections = new HashSet<>();
+        Consumer<WrapperMutableMetaCollection> childChangeConsumer = this::onMetaCollectionChange;
+
+        wrapped.streamMetaCollections().forEach((collection) -> {
             @SuppressWarnings("unchecked")
-            MutableMetaCollection mutable = new WrapperMutableMetaCollection(collection);
+            MutableMetaCollection mutable = new WrapperMutableMetaCollection(collection, childChangeConsumer);
                     
             newCollections.put(collection.getName(), mutable);
         });
@@ -57,23 +65,43 @@ public class WrapperMutableMetaDatabase implements MutableMetaDatabase<MutableMe
 
         assert getMetaCollectionByIdentifier(colId) == null : "There is another collection whose id is " + colId;
 
-        MutableMetaCollection result = new WrapperMutableMetaCollection(
-                new ImmutableMetaCollection(colName, identifier, Collections.emptyMap())
+        WrapperMutableMetaCollection result = new WrapperMutableMetaCollection(
+                new ImmutableMetaCollection(colName, colId, Collections.emptyMap()), this::onMetaCollectionChange
         );
 
         newCollections.put(colName, result);
+        onMetaCollectionChange(result);
 
         return result;
     }
 
+    @DoNotChange
+    @Override
+    public Iterable<MutableMetaCollection> getModifiedCollections() {
+        return modifiedMetaCollections;
+    }
+
+    @Override
+    public ImmutableMetaDatabase immutableCopy() {
+        if (modifiedMetaCollections.isEmpty()) {
+            return wrapped;
+        } else {
+            ImmutableMetaDatabase.Builder builder = new ImmutableMetaDatabase.Builder(wrapped);
+            for (MutableMetaCollection modifiedMetaCollection : modifiedMetaCollections) {
+                builder.add(modifiedMetaCollection.immutableCopy());
+            }
+            return builder.build();
+        }
+    }
+
     @Override
     public String getName() {
-        return name;
+        return wrapped.getName();
     }
 
     @Override
     public String getIdentifier() {
-        return identifier;
+        return wrapped.getIdentifier();
     }
 
     @Override
@@ -92,6 +120,11 @@ public class WrapperMutableMetaDatabase implements MutableMetaDatabase<MutableMe
                 .filter((collection) -> collection.getIdentifier().equals(collectionIdentifier))
                 .findAny()
                 .orElse(null);
+    }
+
+    private void onMetaCollectionChange(WrapperMutableMetaCollection changed) {
+        modifiedMetaCollections.add(changed);
+        changeConsumer.accept(this);
     }
 
 }

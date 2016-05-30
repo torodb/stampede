@@ -20,8 +20,8 @@
 
 package com.torodb.poc.backend.converters.json;
 
-import org.threeten.bp.Instant;
-import org.threeten.bp.format.DateTimeFormatter;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 
 import com.torodb.kvdocument.values.KVInstant;
 import com.torodb.kvdocument.values.heap.InstantKVInstant;

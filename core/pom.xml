@@ -18,7 +18,11 @@
         <dependency>
             <groupId>com.torodb.kvdocument</groupId>
             <artifactId>kvdocument-core</artifactId>
-            <version>0.40-alpha2-SNAPSHOT</version>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
         </dependency>
     </dependencies>
 </project>

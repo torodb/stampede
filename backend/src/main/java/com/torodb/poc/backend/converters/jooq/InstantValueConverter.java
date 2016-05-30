@@ -21,10 +21,10 @@
 package com.torodb.poc.backend.converters.jooq;
 
 import java.sql.Timestamp;
+import java.time.Instant;
 
 import org.jooq.DataType;
 import org.jooq.impl.DefaultDataType;
-import org.threeten.bp.DateTimeUtils;
 
 import com.torodb.kvdocument.types.InstantType;
 import com.torodb.kvdocument.types.KVType;
@@ -49,13 +49,20 @@ public class InstantValueConverter implements KVValueConverter<Timestamp, KVInst
     @Override
     public KVInstant from(Timestamp databaseObject) {
         return new InstantKVInstant(
-                DateTimeUtils.toInstant(databaseObject)
-        );
+                Instant.ofEpochSecond(databaseObject.getTime() / 1000, databaseObject.getNanos())
+            );
     }
 
     @Override
     public Timestamp to(KVInstant userObject) {
-        return DateTimeUtils.toSqlTimestamp(userObject.getValue());
+        Instant instant = userObject.getValue();
+        try {
+            Timestamp ts = new Timestamp(instant.getEpochSecond() * 1000);
+            ts.setNanos(instant.getNano());
+            return ts;
+        } catch (ArithmeticException ex) {
+            throw new IllegalArgumentException(ex);
+        }
     }
 
     @Override

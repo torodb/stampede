@@ -20,11 +20,12 @@
 
 package com.torodb.poc.backend.converters.array;
 
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
+
 import javax.json.JsonString;
 
 import org.jooq.tools.json.JSONValue;
-import org.threeten.bp.Instant;
-import org.threeten.bp.format.DateTimeFormatter;
 
 import com.torodb.kvdocument.values.KVInstant;
 import com.torodb.kvdocument.values.heap.InstantKVInstant;

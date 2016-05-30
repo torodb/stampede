@@ -1,6 +1,7 @@
 
 package com.torodb.core.transaction.metainf;
 
+import com.torodb.core.annotations.DoNotChange;
 import com.torodb.kvdocument.types.KVType;
 
 /**
@@ -22,4 +23,8 @@ public interface MutableMetaDocPart extends MetaDocPart<MetaField> {
      */
     public abstract ImmutableMetaField addMetaField(String name, String identifier, KVType type) throws IllegalArgumentException;
 
+    @DoNotChange
+    public abstract Iterable<ImmutableMetaField> getAddedMetaFields();
+
+    public abstract ImmutableMetaDocPart immutableCopy();
 }

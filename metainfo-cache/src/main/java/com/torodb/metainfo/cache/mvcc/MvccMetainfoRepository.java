@@ -2,11 +2,10 @@
 package com.torodb.metainfo.cache.mvcc;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Iterables;
 import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
-import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetainfoRepository;
 import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
+import com.torodb.metainfo.cache.WrapperMutableMetaSnapshot;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
@@ -20,10 +19,10 @@ public class MvccMetainfoRepository implements MetainfoRepository {
 
     private static final Logger LOGGER = LogManager.getLogger(MvccMetainfoRepository.class);
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
-    private final ImmutableMetaSnapshot currentView;
+    private ImmutableMetaSnapshot currentSnapshot;
 
     public MvccMetainfoRepository(ImmutableMetaSnapshot currentView) {
-        this.currentView = currentView;
+        this.currentSnapshot = currentView;
     }
 
     @Override
@@ -46,15 +45,12 @@ public class MvccMetainfoRepository implements MetainfoRepository {
     }
 
     @Override
-    public MergerStage startMerge(MutableMetaSnapshot view) {
-        if (view.getOwner() != this) {
-            throw new IllegalArgumentException("The given view does not belong to this " + MetainfoRepository.class.getName());
-        }
+    public MergerStage startMerge(MutableMetaSnapshot stage) {
         LOGGER.trace("Trying to create a {}", MvccMergerStage.class);
         lock.writeLock().lock();
         MvccMergerStage mergeStage = null;
         try {
-            mergeStage = new MvccMergerStage(view, lock.writeLock());
+            mergeStage = new MvccMergerStage(stage, lock.writeLock());
             LOGGER.trace("{} created", MvccMergerStage.class);
         } finally {
             if (mergeStage == null) {
@@ -64,18 +60,6 @@ public class MvccMetainfoRepository implements MetainfoRepository {
         }
         assert mergeStage != null;
         return mergeStage;
-    }
-
-    private void applyChanges(MutableMetaSnapshot changes) {
-        Preconditions.checkState(lock.writeLock().isHeldByCurrentThread(), "Trying to apply changes "
-                + "without holding the write lock");
-
-        Iterable<MetaCollection> modifiedSchemas = changes.getModifiedSchemas();
-        LOGGER.debug("Applying changes on {} schemas", () -> Iterables.size(modifiedSchemas));
-
-        for (MetaCollection modifiedSchema : modifiedSchemas) {
-            mod
-        }
     }
 
     private class MvccSnapshotStage implements SnapshotStage {
@@ -90,13 +74,13 @@ public class MvccMetainfoRepository implements MetainfoRepository {
         @Override
         public ImmutableMetaSnapshot createImmutableSnapshot() {
             Preconditions.checkState(open, "This stage is closed");
-            return currentView;
+            return currentSnapshot;
         }
 
         @Override
         public MutableMetaSnapshot createMutableSnapshot() {
             Preconditions.checkState(open, "This stage is closed");
-            return new MutableMetaSnapshot(createImmutableSnapshot());
+            return new WrapperMutableMetaSnapshot(createImmutableSnapshot());
         }
 
         @Override
@@ -111,14 +95,18 @@ public class MvccMetainfoRepository implements MetainfoRepository {
 
     private class MvccMergerStage implements MergerStage {
 
-        private final MutableMetaSnapshot changedView;
+        private final MutableMetaSnapshot changedSnapshot;
         private final ReentrantReadWriteLock.WriteLock writeLock;
         private boolean open = true;
         private boolean cancelled = false;
 
         public MvccMergerStage(MutableMetaSnapshot changedView, WriteLock writeLock) {
-            this.changedView = changedView;
+            this.changedSnapshot = changedView;
             this.writeLock = writeLock;
+        }
+
+        private MvccMetainfoRepository getOwner() {
+            return MvccMetainfoRepository.this;
         }
 
         @Override
@@ -137,7 +125,13 @@ public class MvccMetainfoRepository implements MetainfoRepository {
         public void close() {
             if (open) {
                 open = false;
-                applyChanges(changedView);
+                if (!cancelled) {
+                    Preconditions.checkState(lock.writeLock().isHeldByCurrentThread(), "Trying to "
+                            + "apply changes without holding the write lock");
+
+                    MvccMetainfoRepository.this.currentSnapshot = changedSnapshot.immutableCopy();
+                }
+
                 writeLock.unlock();
             }
         }

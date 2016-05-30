@@ -20,10 +20,11 @@
 
 package com.torodb.poc.backend.converters.array;
 
+import java.time.LocalTime;
+
 import javax.json.JsonString;
 
 import org.jooq.tools.json.JSONValue;
-import org.threeten.bp.LocalTime;
 
 import com.torodb.kvdocument.values.KVTime;
 import com.torodb.kvdocument.values.heap.LocalTimeKVTime;

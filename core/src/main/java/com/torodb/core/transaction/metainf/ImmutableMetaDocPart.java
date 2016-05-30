@@ -80,6 +80,12 @@ public class ImmutableMetaDocPart implements MetaDocPart<ImmutableMetaField> {
             this.fields = new HashMap<>();
         }
 
+        public Builder(ImmutableMetaDocPart other) {
+            this.tableRef = other.getTableRef();
+            this.identifier = other.getIdentifier();
+            this.fields = new HashMap<>(other.fieldsByIdentifier);
+        }
+
         public Builder(TableRef tableRef, String identifier, int expectedColumns) {
             this.tableRef = tableRef;
             this.identifier = identifier;

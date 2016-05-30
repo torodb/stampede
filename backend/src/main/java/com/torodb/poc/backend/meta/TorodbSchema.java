@@ -26,13 +26,13 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.List;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jooq.DSLContext;
 import org.jooq.Meta;
 import org.jooq.Schema;
 import org.jooq.Table;
 import org.jooq.impl.SchemaImpl;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.torodb.poc.backend.DatabaseInterface;
 import com.torodb.poc.backend.exceptions.InvalidDatabaseException;
@@ -42,7 +42,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 public class TorodbSchema extends SchemaImpl {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TorodbSchema.class);
+    private static final Logger LOGGER = LogManager.getLogger(TorodbSchema.class);
 	private static final long serialVersionUID = -1813122131;
 
     public static final String TORODB_SCHEMA = "torodb";

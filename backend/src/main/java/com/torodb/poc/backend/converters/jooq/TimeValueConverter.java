@@ -21,9 +21,9 @@
 package com.torodb.poc.backend.converters.jooq;
 
 import java.sql.Time;
+import java.time.LocalTime;
 
 import org.jooq.impl.SQLDataType;
-import org.threeten.bp.DateTimeUtils;
 
 import com.torodb.kvdocument.types.KVType;
 import com.torodb.kvdocument.types.TimeType;
@@ -46,13 +46,15 @@ public class TimeValueConverter implements KVValueConverter<Time, KVTime>{
     @Override
     public KVTime from(Time databaseObject) {
         return new LocalTimeKVTime(
-                DateTimeUtils.toLocalTime(databaseObject)
+                LocalTime.of(databaseObject.getHours(), databaseObject.getMinutes(), databaseObject.getSeconds())
         );
     }
 
     @Override
     public Time to(KVTime userObject) {
-        return DateTimeUtils.toSqlTime(userObject.getValue());
+        LocalTime time = userObject.getValue();
+        return new Time(
+                time.getHour(), time.getMinute(), time.getSecond());
     }
 
     @Override

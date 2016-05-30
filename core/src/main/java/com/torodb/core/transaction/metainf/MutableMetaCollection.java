@@ -21,6 +21,7 @@
 package com.torodb.core.transaction.metainf;
 
 import com.torodb.core.TableRef;
+import com.torodb.core.annotations.DoNotChange;
 
 /**
  *
@@ -30,4 +31,8 @@ public interface MutableMetaCollection<MDP extends MutableMetaDocPart> extends M
 
     public MDP addMetaDocPart(TableRef tableRef, String identifier) throws IllegalArgumentException;
 
+    @DoNotChange
+    public Iterable<MDP> getModifiedMetaDocParts();
+
+    public abstract ImmutableMetaCollection immutableCopy();
 }

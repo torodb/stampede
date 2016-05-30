@@ -20,7 +20,7 @@
 
 package com.torodb.poc.backend.converters.json;
 
-import org.threeten.bp.LocalTime;
+import java.time.LocalTime;
 
 import com.torodb.kvdocument.values.KVTime;
 import com.torodb.kvdocument.values.heap.LocalTimeKVTime;

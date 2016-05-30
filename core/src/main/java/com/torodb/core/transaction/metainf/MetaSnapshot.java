@@ -9,7 +9,7 @@ import javax.annotation.Nullable;
  */
 public interface MetaSnapshot<MD extends MetaDatabase> {
 
-    public Stream<MD> streamDatabases();
+    public Stream<MD> streamMetaDatabases();
 
     @Nullable
     public MD getMetaDatabaseByName(String dbName);
