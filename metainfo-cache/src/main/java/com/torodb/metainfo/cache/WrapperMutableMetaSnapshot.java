@@ -32,11 +32,11 @@ import java.util.stream.Stream;
 /**
  *
  */
-public class WrapperMutableMetaSnapshot implements MutableMetaSnapshot<MutableMetaDatabase>{
+public class WrapperMutableMetaSnapshot implements MutableMetaSnapshot {
 
     private final ImmutableMetaSnapshot wrapped;
-    private final Map<String, MutableMetaDatabase> newDatabases;
-    private final Set<MutableMetaDatabase> changedDatabases;
+    private final Map<String, WrapperMutableMetaDatabase> newDatabases;
+    private final Set<WrapperMutableMetaDatabase> changedDatabases;
 
     public WrapperMutableMetaSnapshot(ImmutableMetaSnapshot wrapped) {
         this.wrapped = wrapped;
@@ -48,7 +48,7 @@ public class WrapperMutableMetaSnapshot implements MutableMetaSnapshot<MutableMe
 
         wrapped.streamMetaDatabases().forEach((db) -> {
                 @SuppressWarnings("unchecked")
-                MutableMetaDatabase mutable = new WrapperMutableMetaDatabase(db, changeConsumer);
+                WrapperMutableMetaDatabase mutable = new WrapperMutableMetaDatabase(db, changeConsumer);
                 newDatabases.put(db.getName(), mutable);
         });
     }
@@ -74,7 +74,7 @@ public class WrapperMutableMetaSnapshot implements MutableMetaSnapshot<MutableMe
 
     @DoNotChange
     @Override
-    public Iterable<MutableMetaDatabase> getModifiedDatabases() {
+    public Iterable<? extends WrapperMutableMetaDatabase> getModifiedDatabases() {
         return changedDatabases;
     }
 
@@ -92,17 +92,17 @@ public class WrapperMutableMetaSnapshot implements MutableMetaSnapshot<MutableMe
     }
 
     @Override
-    public Stream<MutableMetaDatabase> streamMetaDatabases() {
+    public Stream<? extends WrapperMutableMetaDatabase> streamMetaDatabases() {
         return newDatabases.values().stream();
     }
 
     @Override
-    public MutableMetaDatabase getMetaDatabaseByName(String dbName) {
+    public WrapperMutableMetaDatabase getMetaDatabaseByName(String dbName) {
         return newDatabases.get(dbName);
     }
 
     @Override
-    public MutableMetaDatabase getMetaDatabaseByIdentifier(String dbIdentifier) {
+    public WrapperMutableMetaDatabase getMetaDatabaseByIdentifier(String dbIdentifier) {
         return newDatabases.values().stream()
                 .filter((db) -> db.getIdentifier().equals(dbIdentifier))
                 .findAny()

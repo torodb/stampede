@@ -7,9 +7,8 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 /**
- * @param <MDP>
  */
-public interface MetaCollection<MDP extends MetaDocPart> {
+public interface MetaCollection {
 
     /**
      * The name of the collection on the doc model.
@@ -25,12 +24,12 @@ public interface MetaCollection<MDP extends MetaDocPart> {
     @Nonnull
     public abstract String getIdentifier();
 
-    public abstract Stream<MDP> streamContainedMetaDocParts();
+    public abstract Stream<? extends MetaDocPart> streamContainedMetaDocParts();
 
     @Nullable
-    public abstract MDP getMetaDocPartByIdentifier(String docPartId);
+    public abstract MetaDocPart getMetaDocPartByIdentifier(String docPartId);
 
     @Nullable
-    public abstract MDP getMetaDocPartByTableRef(TableRef tableRef);
+    public abstract MetaDocPart getMetaDocPartByTableRef(TableRef tableRef);
     
 }

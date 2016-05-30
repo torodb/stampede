@@ -13,7 +13,7 @@ import java.util.stream.Stream;
 /**
  *
  */
-public class ImmutableMetaDocPart implements MetaDocPart<ImmutableMetaField> {
+public class ImmutableMetaDocPart implements MetaDocPart {
 
     private final TableRef tableRef;
     private final String identifier;

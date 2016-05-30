@@ -31,7 +31,7 @@ import java.util.stream.Stream;
 /**
  *
  */
-public class ImmutableMetaCollection implements MetaCollection<ImmutableMetaDocPart> {
+public class ImmutableMetaCollection implements MetaCollection {
 
     private final String name;
     private final String identifier;

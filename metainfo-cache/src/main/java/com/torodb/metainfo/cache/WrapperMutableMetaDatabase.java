@@ -32,11 +32,11 @@ import java.util.stream.Stream;
 /**
  *
  */
-public class WrapperMutableMetaDatabase implements MutableMetaDatabase<MutableMetaCollection> {
+public class WrapperMutableMetaDatabase implements MutableMetaDatabase {
 
     private final ImmutableMetaDatabase wrapped;
-    private final Map<String, MutableMetaCollection> newCollections;
-    private final Set<MutableMetaCollection> modifiedMetaCollections;
+    private final Map<String, WrapperMutableMetaCollection> newCollections;
+    private final Set<WrapperMutableMetaCollection> modifiedMetaCollections;
     private final Consumer<WrapperMutableMetaDatabase> changeConsumer;
 
     public WrapperMutableMetaDatabase(ImmutableMetaDatabase wrapped,
@@ -50,14 +50,14 @@ public class WrapperMutableMetaDatabase implements MutableMetaDatabase<MutableMe
 
         wrapped.streamMetaCollections().forEach((collection) -> {
             @SuppressWarnings("unchecked")
-            MutableMetaCollection mutable = new WrapperMutableMetaCollection(collection, childChangeConsumer);
+            WrapperMutableMetaCollection mutable = new WrapperMutableMetaCollection(collection, childChangeConsumer);
                     
             newCollections.put(collection.getName(), mutable);
         });
     }
 
     @Override
-    public MutableMetaCollection addMetaCollection(String colName, String colId) throws
+    public WrapperMutableMetaCollection addMetaCollection(String colName, String colId) throws
             IllegalArgumentException {
         if (getMetaCollectionByName(colName) != null) {
             throw new IllegalArgumentException("There is another collection whose name is " + colName);
@@ -77,7 +77,7 @@ public class WrapperMutableMetaDatabase implements MutableMetaDatabase<MutableMe
 
     @DoNotChange
     @Override
-    public Iterable<MutableMetaCollection> getModifiedCollections() {
+    public Iterable<? extends WrapperMutableMetaCollection> getModifiedCollections() {
         return modifiedMetaCollections;
     }
 
@@ -105,17 +105,17 @@ public class WrapperMutableMetaDatabase implements MutableMetaDatabase<MutableMe
     }
 
     @Override
-    public Stream<MutableMetaCollection> streamMetaCollections() {
+    public Stream<? extends WrapperMutableMetaCollection> streamMetaCollections() {
         return newCollections.values().stream();
     }
 
     @Override
-    public MutableMetaCollection getMetaCollectionByName(String collectionName) {
+    public WrapperMutableMetaCollection getMetaCollectionByName(String collectionName) {
         return newCollections.get(collectionName);
     }
 
     @Override
-    public MutableMetaCollection getMetaCollectionByIdentifier(String collectionIdentifier) {
+    public WrapperMutableMetaCollection getMetaCollectionByIdentifier(String collectionIdentifier) {
         return newCollections.values().stream()
                 .filter((collection) -> collection.getIdentifier().equals(collectionIdentifier))
                 .findAny()

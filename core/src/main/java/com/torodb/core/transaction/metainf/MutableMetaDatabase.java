@@ -21,17 +21,26 @@
 package com.torodb.core.transaction.metainf;
 
 import com.torodb.core.annotations.DoNotChange;
+import java.util.stream.Stream;
 
 /**
  *
- * @param <MMC>
  */
-public interface MutableMetaDatabase<MMC extends MutableMetaCollection> extends MetaDatabase<MutableMetaCollection> {
+public interface MutableMetaDatabase extends MetaDatabase {
 
-    public abstract MMC addMetaCollection(String colName, String colId) throws IllegalArgumentException;
+    @Override
+    public MutableMetaCollection getMetaCollectionByIdentifier(String collectionIdentifier);
+
+    @Override
+    public MutableMetaCollection getMetaCollectionByName(String collectionName);
+
+    @Override
+    public Stream<? extends MutableMetaCollection> streamMetaCollections();
+
+    public abstract MutableMetaCollection addMetaCollection(String colName, String colId) throws IllegalArgumentException;
 
     @DoNotChange
-    public abstract Iterable<MMC> getModifiedCollections();
+    public abstract Iterable<? extends MutableMetaCollection> getModifiedCollections();
 
     public abstract ImmutableMetaDatabase immutableCopy();
 

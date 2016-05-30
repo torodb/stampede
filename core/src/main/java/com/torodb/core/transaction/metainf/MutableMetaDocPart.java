@@ -2,11 +2,24 @@
 package com.torodb.core.transaction.metainf;
 
 import com.torodb.core.annotations.DoNotChange;
+import java.util.stream.Stream;
 
 /**
  *
  */
-public interface MutableMetaDocPart extends MetaDocPart<MetaField> {
+public interface MutableMetaDocPart extends MetaDocPart {
+
+    @Override
+    public ImmutableMetaField getMetaFieldByNameAndType(String fieldName, FieldType type);
+
+    @Override
+    public Stream<? extends ImmutableMetaField> streamMetaFieldByName(String fieldName);
+
+    @Override
+    public ImmutableMetaField getMetaFieldByIdentifier(String fieldId);
+
+    @Override
+    public Stream<? extends ImmutableMetaField> streamFields();
 
     /**
      * Adds a new field to this table.
@@ -23,7 +36,7 @@ public interface MutableMetaDocPart extends MetaDocPart<MetaField> {
     public abstract ImmutableMetaField addMetaField(String name, String identifier, FieldType type) throws IllegalArgumentException;
 
     @DoNotChange
-    public abstract Iterable<ImmutableMetaField> getAddedMetaFields();
+    public abstract Iterable<? extends ImmutableMetaField> getAddedMetaFields();
 
     public abstract ImmutableMetaDocPart immutableCopy();
 }
