@@ -242,7 +242,7 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
             TableRef rootTableRef = TableRefImpl.createRoot();
             KeyDimension keyDimension = new KeyDimension(metaCollection.getName());
             this.rootPartMaterializer = new PartMaterializer(keyDimension, 
-                    new DocPartMaterializer(metaCollection, rootTableRef, null, keyDimension));
+                    new DocPartMaterializer(metaCollection, rootTableRef, null, null, keyDimension));
         }
         
         public PartMaterializer getRootPartMaterializer() {
@@ -357,23 +357,25 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
         private final MutableMetaDocPart metaDocPart;
         private final TableRef tableRef;
         private final DocPartMaterializer parentDocPartMaterializer;
+        private final DocPartMaterializer keyDimensionParentDocPartMaterializer;
         private final int level;
         private final KeyDimension keyDimension;
         private final DocPartData docPartData;
         private final DocPartData rootDocPartData;
         private final Map<KeyDimension, DocPartMaterializer> childMap = Maps.newHashMap();
         
-        private DocPartMaterializer(MutableMetaCollection metaCollection, TableRef tableRef, DocPartMaterializer parentDocPartMaterializer, KeyDimension keyDimension) {
+        private DocPartMaterializer(MutableMetaCollection metaCollection, TableRef tableRef, DocPartMaterializer parentDocPartMaterializer, DocPartMaterializer keyDimensionParentDocPartMaterializer, KeyDimension keyDimension) {
             super();
             this.metaCollection = metaCollection;
+            this.tableRef = tableRef;
+            this.parentDocPartMaterializer = parentDocPartMaterializer;
+            this.keyDimensionParentDocPartMaterializer = keyDimensionParentDocPartMaterializer == null ? this : keyDimensionParentDocPartMaterializer;
             MutableMetaDocPart metaDocPart = metaCollection.getMetaDocPartByTableRef(tableRef);
             if (metaDocPart == null) {
                 String identifier = generateTableName(parentDocPartMaterializer, keyDimension);
                 metaDocPart = metaCollection.addMetaDocPart(tableRef, identifier);
             }
             this.metaDocPart = metaDocPart;
-            this.tableRef = tableRef;
-            this.parentDocPartMaterializer = parentDocPartMaterializer;
             this.level = parentDocPartMaterializer == null ? 0 : parentDocPartMaterializer.level + 1;
             this.keyDimension = keyDimension;
             this.rootDocPartData = parentDocPartMaterializer == null ? new DocPartData(this) : parentDocPartMaterializer.getRootDocPartData();
@@ -388,16 +390,16 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
             return metaDocPart;
         }
         
+        public DocPartMaterializer getKeyDimensionParentDocPartMaterializer() {
+            return keyDimensionParentDocPartMaterializer;
+        }
+        
         public DocPartMaterializer getParentDocPartMaterializer() {
             return parentDocPartMaterializer;
         }
-
-        public String getKey() {
-            return keyDimension.key;
-        }
-
-        public int getDimension() {
-            return keyDimension.dimension;
+        
+        public KeyDimension getKeyDimension() {
+            return keyDimension;
         }
         
         public boolean isRoot() {
@@ -440,7 +442,7 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
         }
         
         public DocPartMaterializer beginAppendObject(KeyDimension keyDimension) {
-            DocPartMaterializer docPartMaterializer = append(keyDimension);
+            DocPartMaterializer docPartMaterializer = append(this, keyDimension);
             docPartMaterializer.docPartData.appendObjectRow();
             return docPartMaterializer;
         }
@@ -454,7 +456,7 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
         }
         
         public DocPartMaterializer beginAppendArray(KeyDimension keyDimension) {
-            DocPartMaterializer docPartMaterializer = append(keyDimension);
+            DocPartMaterializer docPartMaterializer = append(getKeyDimensionParentDocPartMaterializer(), keyDimension);
             return docPartMaterializer;
         }
         
@@ -462,13 +464,13 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
             endAppendObject();
         }
         
-        private DocPartMaterializer append(KeyDimension keyDimension) {
-            DocPartMaterializer childDocPartMaterializer = childMap.get(keyDimension);
+        private DocPartMaterializer append(DocPartMaterializer keyDimensionParentDocPartMaterializer, KeyDimension keyDimension) {
+            DocPartMaterializer childDocPartMaterializer = keyDimensionParentDocPartMaterializer.childMap.get(keyDimension);
             
             if (childDocPartMaterializer == null) {
-                TableRef tableRef = TableRefImpl.createChild(this.tableRef, keyDimension.getIdentifier());
-                childDocPartMaterializer = new DocPartMaterializer(metaCollection, tableRef, this, keyDimension);
-                childMap.put(keyDimension, childDocPartMaterializer);
+                TableRef tableRef = TableRefImpl.createChild(keyDimensionParentDocPartMaterializer.tableRef, keyDimension.getIdentifier());
+                childDocPartMaterializer = new DocPartMaterializer(metaCollection, tableRef, this, keyDimensionParentDocPartMaterializer, keyDimension);
+                keyDimensionParentDocPartMaterializer.childMap.put(keyDimension, childDocPartMaterializer);
             }
             
             return childDocPartMaterializer;
@@ -714,14 +716,27 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
     }
     
     //TODO: Move and refactor
-    private static String generateTableName(DocPartMaterializer docPart, KeyDimension keyDimension) {
+    private static String generateTableName(DocPartMaterializer docPart, KeyDimension newKeyDimension) {
         StringBuilder tableNameBuilder = new StringBuilder();
         List<String> translatedKeys = Lists.newArrayList();
-        while(translatedKeys.isEmpty() || docPart != null) {
-            String name = translatedKeys.isEmpty() ? keyDimension.getIdentifier() : 
-                docPart.isRoot() ? docPart.getMetaCollection().getName() : docPart.keyDimension.getIdentifier();
-            docPart = translatedKeys.isEmpty() ? docPart : docPart.parentDocPartMaterializer;
+        List<KeyDimension> keyDimensions = Lists.newArrayList();
+        keyDimensions.add(newKeyDimension);
+        while(docPart != null) {
+            keyDimensions.add(docPart.getKeyDimension());
+            docPart = docPart.getParentDocPartMaterializer();
+        }
+        Iterator<KeyDimension> keyDimensionIterator = keyDimensions.iterator();
+        while (keyDimensionIterator.hasNext()) {
+            KeyDimension keyDimension = keyDimensionIterator.next();
+            
+            String name = keyDimension.getIdentifier();
             translatedKeys.add(0, name.toLowerCase(Locale.US).replaceAll("[^a-z0-9$]", "_"));
+            
+            if (keyDimension.dimension > 1) {
+                for (int dimension = keyDimension.dimension; dimension > 1; dimension--) {
+                    keyDimensionIterator.next();
+                }
+            }
         }
         for (String translatedKey : translatedKeys) {
             tableNameBuilder.append(translatedKey);

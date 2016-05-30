@@ -60,12 +60,30 @@ public class DocumentMaterializerTest {
                         .put("b", KVLong.of(1))
                         .put("c", KVDouble.of(1))
                         .put("d", new StringKVString("Lorem ipsum"))
+                        .put("f", new ListKVArray(ImmutableList.<KVValue<?>>builder()
+                                .add(KVInteger.of(1))
+                                .add(KVLong.of(1))
+                                .add(KVDouble.of(1))
+                                .add(new StringKVString("Lorem ipsum"))
+                                .add(new ListKVArray(ImmutableList.<KVValue<?>>builder()
+                                        .add(KVInteger.of(1))
+                                        .add(KVLong.of(1))
+                                        .add(KVDouble.of(1))
+                                        .add(new StringKVString("Lorem ipsum"))
+                                        .build()))
+                                .build()))
                         .build())))
                 .put("f", new ListKVArray(ImmutableList.<KVValue<?>>builder()
                         .add(KVInteger.of(1))
                         .add(KVLong.of(1))
                         .add(KVDouble.of(1))
                         .add(new StringKVString("Lorem ipsum"))
+                        .add(new ListKVArray(ImmutableList.<KVValue<?>>builder()
+                                .add(KVInteger.of(1))
+                                .add(KVLong.of(1))
+                                .add(KVDouble.of(1))
+                                .add(new StringKVString("Lorem ipsum"))
+                                .build()))
                         .build()))
                 .build()));
         DocumentMaterializerVisitor documentMaterializerVisitor = new DocumentMaterializerVisitor();
@@ -85,6 +103,7 @@ public class DocumentMaterializerTest {
                 mutableSnapshot.getMetaDatabaseByName("test").getMetaCollectionByName("test");
         CollectionMaterializer collectionMaterializer = documentMaterializerVisitor.getCollectionMaterializer(mutableMetaCollection);
         
+        doc.accept(documentMaterializerVisitor, collectionMaterializer);
         doc.accept(documentMaterializerVisitor, collectionMaterializer);
         
         Iterator<DocPartMaterializer> docPartMaterializerIterator = collectionMaterializer.getRootPartMaterializer().getDocPartMaterializer().docPartMaterializerIterator();
