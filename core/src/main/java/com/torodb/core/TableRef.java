@@ -24,7 +24,7 @@ public abstract class TableRef {
     public abstract String getName();
 
     public boolean isRoot() {
-        return getName().isEmpty();
+        return !getParent().isPresent();
     }
 
     @Override
