@@ -8,9 +8,8 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 /**
- * @param <MF>
  */
-public interface MetaDocPart<MF extends MetaField> {
+public interface MetaDocPart {
 
     @Nonnull
     public abstract TableRef getTableRef();
@@ -24,7 +23,7 @@ public interface MetaDocPart<MF extends MetaField> {
 
     @Nonnull
     @DoNotChange
-    public abstract Stream<MF> streamFields();
+    public abstract Stream<? extends MetaField> streamFields();
 
     /**
      *
@@ -33,7 +32,7 @@ public interface MetaDocPart<MF extends MetaField> {
      *         if there is no one that match that condition
      */
     @Nullable
-    public abstract MF getMetaFieldByIdentifier(String fieldId);
+    public abstract MetaField getMetaFieldByIdentifier(String fieldId);
 
     /**
      *
@@ -41,7 +40,7 @@ public interface MetaDocPart<MF extends MetaField> {
      * @return the contained columns whose {@link MetaField#getDocName() db name} is the given or an
      *         empty list if there is no one that match that condition
      */
-    public abstract Stream<MF> streamMetaFieldByName(String fieldName);
+    public abstract Stream<? extends MetaField> streamMetaFieldByName(String fieldName);
 
     /**
      * 
@@ -52,5 +51,5 @@ public interface MetaDocPart<MF extends MetaField> {
      *         that condition
      */
     @Nullable
-    public abstract MF getMetaFieldByNameAndType(String fieldName, FieldType type);
+    public abstract MetaField getMetaFieldByNameAndType(String fieldName, FieldType type);
 }

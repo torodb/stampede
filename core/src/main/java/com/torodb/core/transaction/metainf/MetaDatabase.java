@@ -27,7 +27,7 @@ import javax.annotation.Nullable;
 /**
  *
  */
-public interface MetaDatabase<MC extends MetaCollection> {
+public interface MetaDatabase {
 
     /**
      * The name of the database on the document model.
@@ -43,12 +43,12 @@ public interface MetaDatabase<MC extends MetaCollection> {
     @Nonnull
     public String getIdentifier();
 
-    public Stream<MC> streamMetaCollections();
+    public Stream<? extends MetaCollection> streamMetaCollections();
 
     @Nullable
-    public MC getMetaCollectionByName(String collectionName);
+    public MetaCollection getMetaCollectionByName(String collectionName);
 
     @Nullable
-    public MC getMetaCollectionByIdentifier(String collectionIdentifier);
+    public MetaCollection getMetaCollectionByIdentifier(String collectionIdentifier);
 
 }

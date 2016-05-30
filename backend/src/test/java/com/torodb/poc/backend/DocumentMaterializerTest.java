@@ -27,13 +27,11 @@ import org.junit.Test;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.UnmodifiableIterator;
 import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
 import com.torodb.core.transaction.metainf.ImmutableMetaDatabase;
 import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
 import com.torodb.core.transaction.metainf.MetainfoRepository.SnapshotStage;
 import com.torodb.core.transaction.metainf.MutableMetaCollection;
-import com.torodb.core.transaction.metainf.MutableMetaDocPart;
 import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
 import com.torodb.kvdocument.values.KVDouble;
 import com.torodb.kvdocument.values.KVInteger;
@@ -83,7 +81,7 @@ public class DocumentMaterializerTest {
             mutableSnapshot = snapshot.createMutableSnapshot();
         }
         
-        MutableMetaCollection<MutableMetaDocPart> mutableMetaCollection = (MutableMetaCollection<MutableMetaDocPart>)
+        MutableMetaCollection mutableMetaCollection = 
                 mutableSnapshot.getMetaDatabaseByName("test").getMetaCollectionByName("test");
         CollectionMaterializer collectionMaterializer = documentMaterializerVisitor.getCollectionMaterializer(mutableMetaCollection);
         

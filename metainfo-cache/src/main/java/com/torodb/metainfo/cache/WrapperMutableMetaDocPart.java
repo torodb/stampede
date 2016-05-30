@@ -24,8 +24,11 @@ import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 import com.torodb.core.TableRef;
 import com.torodb.core.annotations.DoNotChange;
+import com.torodb.core.transaction.metainf.FieldType;
+import com.torodb.core.transaction.metainf.ImmutableMetaDocPart;
 import com.torodb.core.transaction.metainf.ImmutableMetaDocPart.Builder;
-import com.torodb.core.transaction.metainf.*;
+import com.torodb.core.transaction.metainf.ImmutableMetaField;
+import com.torodb.core.transaction.metainf.MutableMetaDocPart;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -37,7 +40,7 @@ import java.util.stream.Stream;
 public class WrapperMutableMetaDocPart implements MutableMetaDocPart {
 
     private final ImmutableMetaDocPart wrapped;
-    private final Table<String, FieldType, MetaField> newFields;
+    private final Table<String, FieldType, ImmutableMetaField> newFields;
     private final List<ImmutableMetaField> addedFields;
     private final Consumer<WrapperMutableMetaDocPart> changeConsumer;
 
@@ -102,23 +105,23 @@ public class WrapperMutableMetaDocPart implements MutableMetaDocPart {
     }
 
     @Override
-    public Stream<MetaField> streamFields() {
+    public Stream<? extends ImmutableMetaField> streamFields() {
         return newFields.values().stream();
     }
 
     @Override
-    public Stream<MetaField> streamMetaFieldByName(String columnName) {
+    public Stream<? extends ImmutableMetaField> streamMetaFieldByName(String columnName) {
         return newFields.row(columnName).values().stream();
     }
 
     @Override
     public ImmutableMetaField getMetaFieldByNameAndType(String fieldName, FieldType type) {
-        return (ImmutableMetaField) newFields.get(fieldName, type);
+        return newFields.get(fieldName, type);
     }
 
     @Override
     public ImmutableMetaField getMetaFieldByIdentifier(String fieldId) {
-        return (ImmutableMetaField) newFields.values().stream()
+        return newFields.values().stream()
                 .filter((field) -> field.getIdentifier().equals(fieldId))
                 .findAny()
                 .orElse(null);

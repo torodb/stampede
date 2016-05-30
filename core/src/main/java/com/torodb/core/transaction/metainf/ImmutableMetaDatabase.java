@@ -28,7 +28,7 @@ import java.util.stream.Stream;
 /**
  *
  */
-public class ImmutableMetaDatabase implements MetaDatabase<ImmutableMetaCollection> {
+public class ImmutableMetaDatabase implements MetaDatabase {
 
     private final String name;
     private final String identifier;

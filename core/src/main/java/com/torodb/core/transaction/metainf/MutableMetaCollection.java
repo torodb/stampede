@@ -22,17 +22,26 @@ package com.torodb.core.transaction.metainf;
 
 import com.torodb.core.TableRef;
 import com.torodb.core.annotations.DoNotChange;
+import java.util.stream.Stream;
 
 /**
  *
- * @param <MDP>
  */
-public interface MutableMetaCollection<MDP extends MutableMetaDocPart> extends MetaCollection<MDP> {
+public interface MutableMetaCollection extends MetaCollection {
 
-    public MDP addMetaDocPart(TableRef tableRef, String identifier) throws IllegalArgumentException;
+    @Override
+    public MutableMetaDocPart getMetaDocPartByTableRef(TableRef tableRef);
+
+    @Override
+    public MutableMetaDocPart getMetaDocPartByIdentifier(String docPartId);
+
+    @Override
+    public Stream<? extends MutableMetaDocPart> streamContainedMetaDocParts();
+
+    public MutableMetaDocPart addMetaDocPart(TableRef tableRef, String identifier) throws IllegalArgumentException;
 
     @DoNotChange
-    public Iterable<MDP> getModifiedMetaDocParts();
+    public Iterable<? extends MutableMetaDocPart> getModifiedMetaDocParts();
 
     public abstract ImmutableMetaCollection immutableCopy();
 }

@@ -10,7 +10,7 @@ import java.util.stream.Stream;
 /**
  *
  */
-public class ImmutableMetaSnapshot implements MetaSnapshot<ImmutableMetaDatabase> {
+public class ImmutableMetaSnapshot implements MetaSnapshot {
 
     private final Map<String, ImmutableMetaDatabase> dbsByIdentifier;
     private final Map<String, ImmutableMetaDatabase> bdsByName;

@@ -87,6 +87,7 @@
         <module>kvdocument</module>
         <!--<module>query</module>-->
         <module>backend</module>
+        <module>metainfo-cache</module>
         <module>core</module>
         <module>metainfo-cache</module>
     </modules>

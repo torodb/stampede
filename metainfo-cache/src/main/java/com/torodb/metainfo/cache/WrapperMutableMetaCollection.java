@@ -33,11 +33,11 @@ import java.util.stream.Stream;
 /**
  *
  */
-public class WrapperMutableMetaCollection implements MutableMetaCollection<MutableMetaDocPart> {
+public class WrapperMutableMetaCollection implements MutableMetaCollection {
 
     private final ImmutableMetaCollection wrapped;
-    private final HashMap<TableRef, MutableMetaDocPart> newDocParts;
-    private final Set<MutableMetaDocPart> modifiedMetaDocParts;
+    private final HashMap<TableRef, WrapperMutableMetaDocPart> newDocParts;
+    private final Set<WrapperMutableMetaDocPart> modifiedMetaDocParts;
     private final Consumer<WrapperMutableMetaCollection> changeConsumer;
 
     public WrapperMutableMetaCollection(ImmutableMetaCollection wrappedCollection,
@@ -53,13 +53,13 @@ public class WrapperMutableMetaCollection implements MutableMetaCollection<Mutab
 
         wrappedCollection.streamContainedMetaDocParts().forEach((docPart) -> {
             @SuppressWarnings("unchecked")
-            MutableMetaDocPart mutable = new WrapperMutableMetaDocPart(docPart, childChangeConsumer);
+            WrapperMutableMetaDocPart mutable = new WrapperMutableMetaDocPart(docPart, childChangeConsumer);
             newDocParts.put(mutable.getTableRef(), mutable);
         });
     }
 
     @Override
-    public MutableMetaDocPart addMetaDocPart(TableRef tableRef, String tableId) throws
+    public WrapperMutableMetaDocPart addMetaDocPart(TableRef tableRef, String tableId) throws
             IllegalArgumentException {
         if (getMetaDocPartByTableRef(tableRef) != null) {
             throw new IllegalArgumentException("There is another doc part whose table ref is " + tableRef);
@@ -79,7 +79,7 @@ public class WrapperMutableMetaCollection implements MutableMetaCollection<Mutab
 
     @Override
     @DoNotChange
-    public Iterable<MutableMetaDocPart> getModifiedMetaDocParts() {
+    public Iterable<? extends WrapperMutableMetaDocPart> getModifiedMetaDocParts() {
         return modifiedMetaDocParts;
     }
 
@@ -107,13 +107,13 @@ public class WrapperMutableMetaCollection implements MutableMetaCollection<Mutab
     }
 
     @Override
-    public Stream<MutableMetaDocPart> streamContainedMetaDocParts() {
+    public Stream<? extends WrapperMutableMetaDocPart> streamContainedMetaDocParts() {
         return newDocParts.values().stream();
     }
 
     @Override
-    public MutableMetaDocPart getMetaDocPartByIdentifier(String docPartId) {
-        Optional<MutableMetaDocPart> newDocPart = newDocParts.values().stream()
+    public WrapperMutableMetaDocPart getMetaDocPartByIdentifier(String docPartId) {
+        Optional<WrapperMutableMetaDocPart> newDocPart = newDocParts.values().stream()
                 .filter((docPart) -> docPart.getIdentifier().equals(docPartId))
                 .findAny();
 
@@ -121,7 +121,7 @@ public class WrapperMutableMetaCollection implements MutableMetaCollection<Mutab
     }
 
     @Override
-    public MutableMetaDocPart getMetaDocPartByTableRef(TableRef tableRef) {
+    public WrapperMutableMetaDocPart getMetaDocPartByTableRef(TableRef tableRef) {
         return newDocParts.get(tableRef);
     }
 

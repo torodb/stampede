@@ -153,7 +153,7 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
         return null;
     }
 
-    public CollectionMaterializer getCollectionMaterializer(MutableMetaCollection<MutableMetaDocPart> metaCollection) {
+    public CollectionMaterializer getCollectionMaterializer(MutableMetaCollection metaCollection) {
         CollectionMaterializer collectionMaterializer = collectionMaterializerMap.get(metaCollection.getName());
         if (collectionMaterializer == null) {
             collectionMaterializer = new CollectionMaterializer(metaCollection);
@@ -237,7 +237,7 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
     public class CollectionMaterializer implements Materializer {
         private final PartMaterializer rootPartMaterializer;
         
-        public CollectionMaterializer(MutableMetaCollection<MutableMetaDocPart> metaCollection) {
+        public CollectionMaterializer(MutableMetaCollection metaCollection) {
             super();
             TableRef rootTableRef = TableRefImpl.createRoot();
             KeyDimension keyDimension = new KeyDimension(metaCollection.getName());
@@ -353,7 +353,7 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
     }
     
     public class DocPartMaterializer {
-        private final MutableMetaCollection<MutableMetaDocPart> metaCollection;
+        private final MutableMetaCollection metaCollection;
         private final MutableMetaDocPart metaDocPart;
         private final TableRef tableRef;
         private final DocPartMaterializer parentDocPartMaterializer;
@@ -363,7 +363,7 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
         private final DocPartData rootDocPartData;
         private final Map<KeyDimension, DocPartMaterializer> childMap = Maps.newHashMap();
         
-        private DocPartMaterializer(MutableMetaCollection<MutableMetaDocPart> metaCollection, TableRef tableRef, DocPartMaterializer parentDocPartMaterializer, KeyDimension keyDimension) {
+        private DocPartMaterializer(MutableMetaCollection metaCollection, TableRef tableRef, DocPartMaterializer parentDocPartMaterializer, KeyDimension keyDimension) {
             super();
             this.metaCollection = metaCollection;
             MutableMetaDocPart metaDocPart = metaCollection.getMetaDocPartByTableRef(tableRef);
@@ -380,7 +380,7 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
             this.docPartData = parentDocPartMaterializer == null ? this.rootDocPartData : new DocPartData(this);
         }
         
-        public MutableMetaCollection<MutableMetaDocPart> getMetaCollection() {
+        public MutableMetaCollection getMetaCollection() {
             return metaCollection;
         }
         
