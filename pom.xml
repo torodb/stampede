@@ -79,13 +79,15 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <torod.version>${project.version}</torod.version>
         <jackson.version>2.6.3</jackson.version>
-        <mongowp.version>0.42-alpha1-SNAPSHOT</mongowp.version>
+        <mongowp.version>0.40-alpha4-SNAPSHOT</mongowp.version>
     </properties>
 
     <modules>
-        <module>query</module>
+        <module>common</module>
+        <module>kvdocument</module>
+        <!--<module>query</module>-->
         <module>backend</module>
-        <module>metainfo-cache</module>
+        <!--<module>metainfo-cache</module>-->
         <module>core</module>
     </modules>
 
