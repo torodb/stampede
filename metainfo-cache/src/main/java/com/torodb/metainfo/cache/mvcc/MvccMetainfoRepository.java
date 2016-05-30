@@ -21,6 +21,10 @@ public class MvccMetainfoRepository implements MetainfoRepository {
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
     private ImmutableMetaSnapshot currentSnapshot;
 
+    public MvccMetainfoRepository() {
+        this.currentSnapshot = new ImmutableMetaSnapshot.Builder().build();
+    }
+
     public MvccMetainfoRepository(ImmutableMetaSnapshot currentView) {
         this.currentSnapshot = currentView;
     }
