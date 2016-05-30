@@ -6,7 +6,6 @@ import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 import com.torodb.core.TableRef;
 import com.torodb.core.annotations.DoNotChange;
-import com.torodb.kvdocument.types.KVType;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -18,10 +17,10 @@ public class ImmutableMetaDocPart implements MetaDocPart<ImmutableMetaField> {
 
     private final TableRef tableRef;
     private final String identifier;
-    private final Table<String, KVType, ImmutableMetaField> fieldsByNameAndType;
+    private final Table<String, FieldType, ImmutableMetaField> fieldsByNameAndType;
     private final Map<String, ImmutableMetaField> fieldsByIdentifier;
 
-    public ImmutableMetaDocPart(TableRef tableRef, String dbName, @DoNotChange Table<String, KVType, ImmutableMetaField> columns) {
+    public ImmutableMetaDocPart(TableRef tableRef, String dbName, @DoNotChange Table<String, FieldType, ImmutableMetaField> columns) {
         this.tableRef = tableRef;
         this.identifier = dbName;
         this.fieldsByNameAndType = columns;
@@ -63,7 +62,7 @@ public class ImmutableMetaDocPart implements MetaDocPart<ImmutableMetaField> {
     }
 
     @Override
-    public ImmutableMetaField getMetaFieldByNameAndType(String columnDocName, KVType type) {
+    public ImmutableMetaField getMetaFieldByNameAndType(String columnDocName, FieldType type) {
         return fieldsByNameAndType.get(columnDocName, type);
     }
     
@@ -98,7 +97,7 @@ public class ImmutableMetaDocPart implements MetaDocPart<ImmutableMetaField> {
             return this;
         }
 
-        public Builder addColumn(String name, String identifier, KVType type) {
+        public Builder addColumn(String name, String identifier, FieldType type) {
             return add(new ImmutableMetaField(name, identifier, type));
         }
 

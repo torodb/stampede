@@ -1,7 +1,6 @@
 
 package com.torodb.core.transaction.metainf;
 
-import com.torodb.kvdocument.types.KVType;
 import javax.annotation.Nonnull;
 
 /**
@@ -24,5 +23,5 @@ public interface MetaField {
     public abstract String getIdentifier();
 
     @Nonnull
-    public abstract KVType getType();
+    public abstract FieldType getType();
 }

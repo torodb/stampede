@@ -3,7 +3,6 @@ package com.torodb.core.transaction.metainf;
 
 import com.torodb.core.TableRef;
 import com.torodb.core.annotations.DoNotChange;
-import com.torodb.kvdocument.types.KVType;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -53,5 +52,5 @@ public interface MetaDocPart<MF extends MetaField> {
      *         that condition
      */
     @Nullable
-    public abstract MF getMetaFieldByNameAndType(String fieldName, KVType type);
+    public abstract MF getMetaFieldByNameAndType(String fieldName, FieldType type);
 }
