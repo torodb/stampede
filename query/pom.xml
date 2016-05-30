@@ -4,6 +4,8 @@
     <groupId>com.torodb.poc</groupId>
     <artifactId>query</artifactId>
     <version>0.5-SNAPSHOT</version>
+    
+    <name>ToroDB-poc: Query</name>
     <packaging>jar</packaging>
     <dependencies>
         <dependency>
