@@ -25,7 +25,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Optional;
 
 import javax.annotation.Nonnull;
 
@@ -34,28 +33,11 @@ import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.torodb.core.TableRef;
+import com.torodb.core.impl.TableRefImpl;
 import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.MetaField;
 import com.torodb.core.transaction.metainf.MutableMetaCollection;
 import com.torodb.core.transaction.metainf.MutableMetaDocPart;
-import com.torodb.kvdocument.types.ArrayType;
-import com.torodb.kvdocument.types.BinaryType;
-import com.torodb.kvdocument.types.BooleanType;
-import com.torodb.kvdocument.types.DateType;
-import com.torodb.kvdocument.types.DocumentType;
-import com.torodb.kvdocument.types.DoubleType;
-import com.torodb.kvdocument.types.GenericType;
-import com.torodb.kvdocument.types.InstantType;
-import com.torodb.kvdocument.types.IntegerType;
-import com.torodb.kvdocument.types.KVType;
-import com.torodb.kvdocument.types.KVTypeVisitor;
-import com.torodb.kvdocument.types.LongType;
-import com.torodb.kvdocument.types.MongoObjectIdType;
-import com.torodb.kvdocument.types.MongoTimestampType;
-import com.torodb.kvdocument.types.NonExistentType;
-import com.torodb.kvdocument.types.NullType;
-import com.torodb.kvdocument.types.StringType;
-import com.torodb.kvdocument.types.TimeType;
 import com.torodb.kvdocument.values.KVArray;
 import com.torodb.kvdocument.values.KVBinary;
 import com.torodb.kvdocument.values.KVBoolean;
@@ -187,8 +169,18 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
         public final int dimension;
         public final String identifier;
         
-        public KeyDimension(@Nonnull String key, int dimension) {
+        public KeyDimension(@Nonnull String key) {
             super();
+            this.key = key;
+            this.dimension = 0;
+            this.identifier = key;
+        }
+        
+        public KeyDimension incrementDimension() {
+            return new KeyDimension(key, dimension+1);
+        }
+        
+        private KeyDimension(@Nonnull String key, int dimension) {
             this.key = key;
             this.dimension = dimension;
             this.identifier = dimension < 2 ? key : key + '$' + dimension;
@@ -223,6 +215,11 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
         public String getIdentifier() {
             return identifier;
         }
+
+        @Override
+        public String toString() {
+            return key + ':' + dimension + " <" + identifier + '>';
+        }
     }
     
     public interface Materializer {
@@ -243,8 +240,9 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
         public CollectionMaterializer(MutableMetaCollection<MutableMetaDocPart> metaCollection) {
             super();
             TableRef rootTableRef = TableRefImpl.createRoot();
-            this.rootPartMaterializer = new PartMaterializer(metaCollection.getName(), 0, 
-                    new DocPartMaterializer(metaCollection, rootTableRef, null, null));
+            KeyDimension keyDimension = new KeyDimension(metaCollection.getName());
+            this.rootPartMaterializer = new PartMaterializer(keyDimension, 
+                    new DocPartMaterializer(metaCollection, rootTableRef, null, keyDimension));
         }
         
         public PartMaterializer getRootPartMaterializer() {
@@ -252,7 +250,7 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
         }
 
         public Materializer beginAppendObject() {
-            rootPartMaterializer.beginAppendObject();
+            rootPartMaterializer.beginAppendRootObject();
             return rootPartMaterializer;
         }
         
@@ -290,32 +288,30 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
     }
     
     public class PartMaterializer implements Materializer {
-        private final String key;
-        private final int dimension;
+        private final KeyDimension keyDimension;
         private final DocPartMaterializer docPartMaterializer;
         
-        public PartMaterializer(String key, int dimension, DocPartMaterializer docPartMaterializer) {
+        public PartMaterializer(KeyDimension keyDimension, DocPartMaterializer docPartMaterializer) {
             super();
-            this.key = key;
-            this.dimension = dimension;
+            this.keyDimension = keyDimension;
             this.docPartMaterializer = docPartMaterializer;
         }
 
-        public String getKey() {
-            return key;
-        }
-
-        public int getDimension() {
-            return dimension;
+        public KeyDimension getKeyDimension() {
+            return keyDimension;
         }
         
         public DocPartMaterializer getDocPartMaterializer() {
             return docPartMaterializer;
         }
         
-        public Materializer beginAppendObject() {
-            docPartMaterializer.beginAppendObject(key);
+        public Materializer beginAppendRootObject() {
+            docPartMaterializer.beginAppendRootObject();
             return this;
+        }
+        
+        public Materializer beginAppendObject() {
+            return new PartMaterializer(keyDimension, docPartMaterializer.beginAppendObject(keyDimension));
         }
         
         public void endAppendObject() {
@@ -323,8 +319,8 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
         }
         
         public Materializer beginAppendArray() {
-            docPartMaterializer.beginAppendArray();
-            return this;
+            KeyDimension keyDimension = this.keyDimension.incrementDimension();
+            return new PartMaterializer(keyDimension, docPartMaterializer.beginAppendArray(keyDimension));
         }
         
         public void endAppendArray() {
@@ -337,7 +333,7 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
         }
         
         public Materializer appendValueFromObject(String key, KVValue<?> value) {
-            PartMaterializer partMaterializer = new PartMaterializer(key, dimension, docPartMaterializer);
+            PartMaterializer partMaterializer = new PartMaterializer(new KeyDimension(key), docPartMaterializer);
             value.accept(objectAppendValueVisitor, partMaterializer);
             return partMaterializer;
         }
@@ -348,7 +344,7 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
         }
         
         public void appendKeyValue(KVValue<?> value) {
-            docPartMaterializer.appendKeyValue(key, value);
+            docPartMaterializer.appendKeyValue(keyDimension.key, value);
         }
         
         public void appendScalarValue(KVValue<?> value) {
@@ -380,8 +376,8 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
             this.parentDocPartMaterializer = parentDocPartMaterializer;
             this.level = parentDocPartMaterializer == null ? 0 : parentDocPartMaterializer.level + 1;
             this.keyDimension = keyDimension;
-            this.docPartData = new DocPartData(this);
-            this.rootDocPartData = parentDocPartMaterializer == null ? this.docPartData : parentDocPartMaterializer.getDocPartData();
+            this.rootDocPartData = parentDocPartMaterializer == null ? new DocPartData(this) : parentDocPartMaterializer.getRootDocPartData();
+            this.docPartData = parentDocPartMaterializer == null ? this.rootDocPartData : new DocPartData(this);
         }
         
         public MutableMetaCollection<MutableMetaDocPart> getMetaCollection() {
@@ -416,25 +412,36 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
             return rootDocPartData;
         }
         
-        public Iterator<DocPartMaterializer> childDocPartMaterializerIterator() {
+        public Iterator<DocPartMaterializer> docPartMaterializerIterator() {
             return new Iterator<DocumentMaterializerVisitor.DocPartMaterializer>() {
                 private final Iterator<Map.Entry<KeyDimension, DocPartMaterializer>> iterator = childMap.entrySet().iterator();
+                private boolean rootAvailable = true;
                 
                 @Override
                 public boolean hasNext() {
-                    return iterator.hasNext();
+                    return rootAvailable || iterator.hasNext();
                 }
 
                 @Override
                 public DocPartMaterializer next() {
+                    if (rootAvailable) {
+                        rootAvailable = false;
+                        return DocPartMaterializer.this;
+                    }
+                    
                     return iterator.next().getValue();
                 }
             };
         }
         
-        public DocPartMaterializer beginAppendObject(String key) {
-            KeyDimension keyDimension = new KeyDimension(key, 0);
+        public DocPartMaterializer beginAppendRootObject() {
+            docPartData.appendRootRow();
+            return this;
+        }
+        
+        public DocPartMaterializer beginAppendObject(KeyDimension keyDimension) {
             DocPartMaterializer docPartMaterializer = append(keyDimension);
+            docPartMaterializer.docPartData.appendObjectRow();
             return docPartMaterializer;
         }
         
@@ -446,8 +453,7 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
             }
         }
         
-        public DocPartMaterializer beginAppendArray() {
-            KeyDimension keyDimension = new KeyDimension(getKey(), getDimension() + 1);
+        public DocPartMaterializer beginAppendArray(KeyDimension keyDimension) {
             DocPartMaterializer docPartMaterializer = append(keyDimension);
             return docPartMaterializer;
         }
@@ -491,22 +497,30 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
         }
     }
     
-    public class KeyTypeId {
+    public class KeyFieldType {
         private final String key;
-        private final int typeId;
+        private final FieldType fieldType;
         
-        public KeyTypeId(@Nonnull String key, int typeId) {
+        public KeyFieldType(@Nonnull String key, @Nonnull FieldType fieldType) {
             super();
             this.key = key;
-            this.typeId = typeId;
+            this.fieldType = fieldType;
+        }
+        
+        public String getKey() {
+            return key;
+        }
+
+        public FieldType getFieldType() {
+            return fieldType;
         }
 
         @Override
         public int hashCode() {
             final int prime = 31;
             int result = 1;
+            result = prime * result + fieldType.ordinal();
             result = prime * result + key.hashCode();
-            result = prime * result + typeId;
             return result;
         }
 
@@ -516,15 +530,20 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
                 return true;
             if (obj == null)
                 return false;
-            KeyTypeId other = (KeyTypeId) obj;
+            KeyFieldType other = (KeyFieldType) obj;
+            if (fieldType != other.fieldType)
+                return false;
             if (key == null) {
                 if (other.key != null)
                     return false;
             } else if (!key.equals(other.key))
                 return false;
-            if (typeId != other.typeId)
-                return false;
             return true;
+        }
+
+        @Override
+        public String toString() {
+            return key + ':' + fieldType.name();
         }
     }
     
@@ -534,7 +553,7 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
         private final DocPartRidGenerator docPartRidGenerator;
         private final DocPartData parentDocPartData;
         private final DocPartData rootDocPartData;
-        private final BiMap<KeyTypeId, Integer> columnIndexMap = HashBiMap.create();
+        private final BiMap<KeyFieldType, Integer> columnIndexMap = HashBiMap.create();
         
         private int currentIndex = 0;
         private DocPartRow currentRow = null;
@@ -542,7 +561,7 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
         public DocPartData(DocPartMaterializer docPartMaterializer) {
             super();
             this.docPartRidGenerator = new DocPartRidGenerator(docPartMaterializer);
-            this.parentDocPartData = docPartMaterializer.getDocPartData();
+            this.parentDocPartData = docPartMaterializer.isRoot() ? null : docPartMaterializer.getParentDocPartMaterializer().getDocPartData();
             this.rootDocPartData = docPartMaterializer.getRootDocPartData();
         }
 
@@ -554,8 +573,8 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
             return columnIndexMap.size();
         }
         
-        public Iterator<KeyTypeId> orderedKeyTypeIdIterator() {
-            return new Iterator<DocumentMaterializerVisitor.KeyTypeId>() {
+        public Iterator<KeyFieldType> orderedKeyFieldTypeIterator() {
+            return new Iterator<DocumentMaterializerVisitor.KeyFieldType>() {
                 private final int count = columnCount();
                 private int index = 0;
                 
@@ -565,7 +584,7 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
                 }
                 
                 @Override
-                public KeyTypeId next() {
+                public KeyFieldType next() {
                     return columnIndexMap.inverse().get(index++);
                 }
             };
@@ -578,8 +597,6 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
         
         public void appendObjectRow() {
             appendRow(new DocPartRow(this, 
-                    rootDocPartData.currentRow().getDid(), 
-                    parentDocPartData.currentRow().getRid(), 
                     docPartRidGenerator.nextRid()));
         }
         
@@ -600,11 +617,11 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
         }
         
         public void appendColumnValue(String key, String identifier, FieldType fieldType, KVValue<?> value) {
-            KeyTypeId keyTypeId = new KeyTypeId(key, fieldType.ordinal());
-            Integer index = columnIndexMap.get(keyTypeId);
+            KeyFieldType keyFieldType = new KeyFieldType(key, fieldType);
+            Integer index = columnIndexMap.get(keyFieldType);
             if (index == null) {
                 index = currentIndex++;
-                columnIndexMap.put(keyTypeId, index);
+                columnIndexMap.put(keyFieldType, index);
             }
             currentRow.appendColumnValue(identifier, value, index);
         }
@@ -662,7 +679,7 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
         public Iterator<String> iterator() {
             return new Iterator<String>() {
                 private final int globalCount = docPartData.columnCount();
-                private final int count = docPartData.columnCount();
+                private final int count = size();
                 private int index = 0;
                 
                 @Override
@@ -672,7 +689,13 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
 
                 @Override
                 public String next() {
-                    return index < count ? get(index) : null;
+                    if (index < count) {
+                        return get(index++);
+                    }
+                    
+                    index++;
+                    
+                    return null;
                 }
             };
         }
@@ -743,7 +766,7 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
     //TODO: Move and refactor
     private static String generateColumnName(String key, FieldType fieldType) {
         char typeIdentifier = FIELD_TYPE_IDENTIFIERS[fieldType.ordinal()];
-        String columnName = key.toLowerCase(Locale.US).replaceAll("[^a-z0-9$]", "_") + typeIdentifier;
+        String columnName = key.toLowerCase(Locale.US).replaceAll("[^a-z0-9$]", "_") + '_' + typeIdentifier;
         if (columnName.charAt(0) == '$' || (columnName.charAt(0) >= '0' && columnName.charAt(0) <= '9')) {
             columnName = '_' + columnName;
         }

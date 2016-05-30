@@ -28,11 +28,21 @@
 			<groupId>com.google.code.findbugs</groupId>
 			<artifactId>annotations</artifactId>
 		</dependency>
-		<dependency>
-			<groupId>com.torodb.kvdocument</groupId>
-			<artifactId>kvdocument-core</artifactId>
-			<version>${project.version}</version>
-		</dependency>
+        <dependency>
+            <groupId>com.torodb.kvdocument</groupId>
+            <artifactId>kvdocument-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.torodb</groupId>
+            <artifactId>metainfo-cache</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.torodb</groupId>
+            <artifactId>core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 		<dependency>
 			<groupId>javax.json</groupId>
 			<artifactId>javax.json-api</artifactId>
@@ -40,11 +50,6 @@
 		<dependency>
 			<groupId>javax.inject</groupId>
 			<artifactId>javax.inject</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.torodb</groupId>
-			<artifactId>core</artifactId>
-			<version>${project.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
