@@ -28,14 +28,14 @@ import com.google.common.hash.Hashing;
 import com.torodb.kvdocument.types.DocumentType;
 import com.torodb.kvdocument.values.KVDocument.DocEntry;
 import com.torodb.kvdocument.values.heap.*;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import org.threeten.bp.Instant;
-import org.threeten.bp.LocalDate;
-import org.threeten.bp.LocalTime;
 
 /**
  *

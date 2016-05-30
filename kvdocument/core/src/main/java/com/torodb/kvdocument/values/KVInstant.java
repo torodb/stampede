@@ -21,7 +21,7 @@
 package com.torodb.kvdocument.values;
 
 import com.torodb.kvdocument.types.InstantType;
-import org.threeten.bp.Instant;
+import java.time.Instant;
 
 /**
  *

@@ -21,7 +21,7 @@
 package com.torodb.kvdocument.values;
 
 import com.torodb.kvdocument.types.TimeType;
-import org.threeten.bp.LocalTime;
+import java.time.LocalTime;
 
 /**
  *

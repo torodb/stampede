@@ -21,7 +21,7 @@
 package com.torodb.kvdocument.values.heap;
 
 import com.torodb.kvdocument.values.KVTime;
-import org.threeten.bp.LocalTime;
+import java.time.LocalTime;
 
 /**
  *

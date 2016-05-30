@@ -32,9 +32,9 @@ import com.eightkdata.mongowp.bson.impl.DefaultBsonTimestamp;
 import com.eightkdata.mongowp.bson.impl.LongBsonDateTime;
 import com.torodb.kvdocument.values.KVDocument.DocEntry;
 import com.torodb.kvdocument.values.*;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import org.threeten.bp.format.DateTimeFormatter;
 
 import static com.eightkdata.mongowp.bson.utils.DefaultBsonValues.*;
 

@@ -20,7 +20,7 @@
 package com.torodb.kvdocument.values;
 
 import com.torodb.kvdocument.types.DateType;
-import org.threeten.bp.LocalDate;
+import java.time.LocalDate;
 
 /**
  *
