@@ -18,17 +18,13 @@
  * 
  */
 
-package com.torodb.metainfo.cache;
+package com.torodb.core.transaction.metainf;
 
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 import com.torodb.core.TableRef;
 import com.torodb.core.annotations.DoNotChange;
-import com.torodb.core.transaction.metainf.FieldType;
-import com.torodb.core.transaction.metainf.ImmutableMetaDocPart;
 import com.torodb.core.transaction.metainf.ImmutableMetaDocPart.Builder;
-import com.torodb.core.transaction.metainf.ImmutableMetaField;
-import com.torodb.core.transaction.metainf.MutableMetaDocPart;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -61,11 +57,11 @@ public class WrapperMutableMetaDocPart implements MutableMetaDocPart {
     public ImmutableMetaField addMetaField(String name, String identifier, FieldType type) throws
             IllegalArgumentException {
         if (getMetaFieldByNameAndType(name, type) != null) {
-            throw new IllegalArgumentException("There is another column with the name " + name +
+            throw new IllegalArgumentException("There is another field with the name " + name +
                     " whose type is " + type);
         }
 
-        assert getMetaFieldByIdentifier(identifier) != null : "There is another column with the identifier " + identifier;
+        assert getMetaFieldByIdentifier(identifier) == null : "There is another field with the identifier " + identifier;
 
         ImmutableMetaField newField = new ImmutableMetaField(name, identifier, type);
         newFields.put(name, type, newField);

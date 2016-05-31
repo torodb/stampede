@@ -125,6 +125,10 @@ public class ImmutableMetaCollection implements MetaCollection {
 
         public ImmutableMetaCollection build() {
             Preconditions.checkState(!built, "This builder has already been built");
+            Preconditions.checkState(
+                    docPartsByDbName.values().stream().anyMatch((dp) -> dp.getTableRef().isRoot()),
+                    "Tryng to create a MetaCollection without a root doc part"
+            );
             built = true;
             return new ImmutableMetaCollection(name, identifier, docPartsByDbName);
         }

@@ -24,6 +24,7 @@ import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
 import com.torodb.core.transaction.metainf.MetainfoRepository.MergerStage;
 import com.torodb.core.transaction.metainf.MetainfoRepository.SnapshotStage;
 import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
+import com.torodb.core.transaction.metainf.UnmergeableException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
@@ -55,7 +56,7 @@ public class MvccMetainfoRepositoryTest {
     }
 
     @Test
-    public void testSingleThread() {
+    public void testSingleThread() throws UnmergeableException {
         MutableMetaSnapshot mutableSnapshot;
 
         try (SnapshotStage snapshotStage = repository.startSnapshotStage()) {
@@ -100,7 +101,7 @@ public class MvccMetainfoRepositoryTest {
             }
 
             @Override
-            protected void postMerge() {
+            protected void postMerge(MutableMetaSnapshot snapshot) {
                 readerSequencer.notify(ReaderRunnable.ReaderPhase.values());
             }
             
@@ -130,8 +131,7 @@ public class MvccMetainfoRepositoryTest {
         writerSequencer.notify(WriterRunnable.WriterPhase.POST_SNAPSHOT);
         writerSequencer.notify(WriterRunnable.WriterPhase.POST_MERGE);
 
-        //Reader will wait until writer modifies its snapshot
-        
+        //Reader will wait until writer modifies its snapshot        
         WriterRunnable writerRunnable = new WriterRunnable(repository, writerSequencer) {
 
             @Override
@@ -154,6 +154,151 @@ public class MvccMetainfoRepositoryTest {
         };
 
         executeConcurrent(MILLIS_TO_WAIT, readerRunnable, writerRunnable);
+    }
+
+    /**
+     * Test whether a transaction can see changes from a merge that happens after the read (it
+     * should not).
+     * transaction starts.
+     * @throws Throwable
+     */
+    @Test
+    public void testRepeatableRead() throws Throwable {
+        final Sequencer<ReaderRunnable.ReaderPhase> readerSequencer = new Sequencer<>(ReaderRunnable.ReaderPhase.class);
+        final Sequencer<WriterRunnable.WriterPhase> writerSequencer = new Sequencer<>(WriterRunnable.WriterPhase.class);
+
+        //Writer MERGE will wait reader get the snapshot
+        writerSequencer.notify(WriterRunnable.WriterPhase.PRE_SNAPSHOT);
+        writerSequencer.notify(WriterRunnable.WriterPhase.POST_SNAPSHOT);
+        writerSequencer.notify(WriterRunnable.WriterPhase.POST_MERGE);
+
+        //Reader will wait on an unorthodox way. It wont on its sequencer, but on the writer's one
+        //and it will wait on the callback method
+        readerSequencer.notify(ReaderRunnable.ReaderPhase.PRE_SNAPSHOT);
+        readerSequencer.notify(ReaderRunnable.ReaderPhase.PRE_CALLBACK);
+
+        WriterRunnable writerRunnable = new WriterRunnable(repository, writerSequencer) {
+
+            @Override
+            protected void postSnapshot(MutableMetaSnapshot snapshot) {
+                snapshot.addMetaDatabase(dbName, dbId)
+                        .addMetaCollection(colName, colId);
+
+                Assert.assertNotNull(snapshot.getMetaDatabaseByName(dbName));
+                Assert.assertNotNull(snapshot.getMetaDatabaseByName(dbName).getMetaCollectionByIdentifier(colId));
+            }
+
+            @Override
+            protected void postMerge(MutableMetaSnapshot snapshot) {
+                //after merge, we should see the changes
+                Assert.assertNotNull(snapshot.getMetaDatabaseByName(dbName));
+                Assert.assertNotNull(snapshot.getMetaDatabaseByName(dbName).getMetaCollectionByIdentifier(colId));
+            }
+        };
+        ReaderRunnable readerRunnable = new ReaderRunnable(repository, readerSequencer) {
+            @Override
+            protected void callback(ImmutableMetaSnapshot snapshot) {
+                //first we check the initial state
+                Assert.assertNull(snapshot.getMetaDatabaseByName(dbName));
+
+                //after reader asserts, writer can merge
+                writerSequencer.notify(WriterRunnable.WriterPhase.PRE_MERGE);
+                //wait until writer merges
+                writerSequencer.waitFor(WriterRunnable.WriterPhase.POST_MERGE);
+
+                //after merge, we should not see the changes
+                Assert.assertNull(snapshot.getMetaDatabaseByName(dbName));
+            }
+        };
+
+        executeConcurrent(MILLIS_TO_WAIT, readerRunnable, writerRunnable);
+    }
+
+    /**
+     * Tests whether two concurrent merges results on the union of changes.
+     */
+    @Test
+    public void testTwoMerges() throws Throwable {
+        final String colName2 = colName + "2";
+        final String colId2 = colName + "2";
+
+        final Sequencer<WriterRunnable.WriterPhase> writerSequencer1 = new Sequencer<>(WriterRunnable.WriterPhase.class);
+        final Sequencer<WriterRunnable.WriterPhase> writerSequencer2 = new Sequencer<>(WriterRunnable.WriterPhase.class);
+        final Sequencer<ReaderRunnable.ReaderPhase> readerSequencer = new Sequencer<>(ReaderRunnable.ReaderPhase.class);
+
+        //Writer1 will wait for merge until writer2 is ready to merge. Then writer1 will merge and
+        //after that, writer2 will merge.
+        writerSequencer1.notify(WriterRunnable.WriterPhase.PRE_SNAPSHOT);
+        writerSequencer1.notify(WriterRunnable.WriterPhase.POST_SNAPSHOT);
+        writerSequencer1.notify(WriterRunnable.WriterPhase.POST_MERGE);
+
+        writerSequencer2.notify(WriterRunnable.WriterPhase.PRE_SNAPSHOT);
+        writerSequencer2.notify(WriterRunnable.WriterPhase.POST_SNAPSHOT);
+        writerSequencer2.notify(WriterRunnable.WriterPhase.POST_MERGE);
+
+        readerSequencer.notify(ReaderRunnable.ReaderPhase.PRE_CALLBACK);
+
+        WriterRunnable writerRunnable1 = new WriterRunnable(repository, writerSequencer1) {
+            @Override
+            protected void postSnapshot(MutableMetaSnapshot snapshot) {
+                snapshot.addMetaDatabase(dbName, dbId)
+                        .addMetaCollection(colName, colId);
+
+                //it can see its changes
+                Assert.assertNotNull(snapshot.getMetaDatabaseByName(dbName));
+                Assert.assertNotNull(snapshot.getMetaDatabaseByName(dbName).getMetaCollectionByIdentifier(colId));
+
+                //but not changes executed by the other thread
+                Assert.assertNull(snapshot.getMetaDatabaseByName(dbName).getMetaCollectionByIdentifier(colId2));
+            }
+
+            @Override
+            protected void postMerge(MutableMetaSnapshot snapshot) {
+                //writer1 has finished its merge, so writer2 can start its own merge
+                writerSequencer2.notify(WriterRunnable.WriterPhase.PRE_MERGE);
+            }
+        };
+
+        WriterRunnable writerRunnable2 = new WriterRunnable(repository, writerSequencer2) {
+            @Override
+            protected void postSnapshot(MutableMetaSnapshot snapshot) {
+                snapshot.addMetaDatabase(dbName, dbId)
+                        .addMetaCollection(colName2, colId2);
+
+                //it can see its changes
+                Assert.assertNotNull(snapshot.getMetaDatabaseByName(dbName));
+                Assert.assertNotNull(snapshot.getMetaDatabaseByName(dbName).getMetaCollectionByIdentifier(colId2));
+
+                //but not changes executed by the other thread
+                Assert.assertNull(snapshot.getMetaDatabaseByName(dbName).getMetaCollectionByIdentifier(colId));
+
+                //writer2 has finished its modificiations, so writer1 can start its own merge
+                writerSequencer1.notify(WriterRunnable.WriterPhase.PRE_MERGE);
+            }
+
+            @Override
+            protected void postMerge(MutableMetaSnapshot snapshot) {
+                //writer2 has finished his merge, so reader can start
+                readerSequencer.notify(ReaderRunnable.ReaderPhase.PRE_SNAPSHOT);
+            }
+
+        };
+
+        ReaderRunnable readerRunnable = new ReaderRunnable(repository, readerSequencer) {
+            @Override
+            protected void callback(ImmutableMetaSnapshot snapshot) {
+                //lets check that both changes are seen after merge
+                Assert.assertNotNull(snapshot.getMetaDatabaseByName(dbName));
+                Assert.assertNotNull("Changes from writer1 are not seen",
+                        snapshot.getMetaDatabaseByName(dbName).getMetaCollectionByIdentifier(colId));
+
+                Assert.assertNotNull("Changes from writer2 are not seen",
+                        snapshot.getMetaDatabaseByName(dbName).getMetaCollectionByIdentifier(colId2));
+            }
+
+        };
+
+        executeConcurrent(MILLIS_TO_WAIT, writerRunnable1, writerRunnable2, readerRunnable);
     }
 
     private void executeConcurrent(long maxMillis, Runnable... runnables) throws TimeoutException, Throwable {
@@ -227,7 +372,7 @@ public class MvccMetainfoRepositoryTest {
         protected void preSnapshot() {}
         protected void postSnapshot(MutableMetaSnapshot snapshot) {}
         protected void preMerge() {}
-        protected void postMerge() {}
+        protected void postMerge(MutableMetaSnapshot snapshot) {}
 
 
         @Override
@@ -253,11 +398,13 @@ public class MvccMetainfoRepositoryTest {
             preMerge();
 
             try (MergerStage mergeStage = repository.startMerge(mutableSnapshot)) {
+            } catch (UnmergeableException ex) {
+                throw new AssertionError("Unmergeable changes", ex);
             }
 
             sequencer.waitFor(WriterPhase.POST_MERGE);
             
-            postMerge();
+            postMerge(mutableSnapshot);
         }
 
         private static enum WriterPhase {
