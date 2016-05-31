@@ -20,15 +20,18 @@
 
 package com.torodb.poc.backend;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.List;
+
+import javax.inject.Provider;
 
 import org.junit.Test;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.torodb.core.TableRef;
+import com.torodb.core.d2r.DocPartData;
+import com.torodb.core.d2r.DocPartRow;
 import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
 import com.torodb.core.transaction.metainf.ImmutableMetaDatabase;
 import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
@@ -44,10 +47,6 @@ import com.torodb.kvdocument.values.heap.ListKVArray;
 import com.torodb.kvdocument.values.heap.MapKVDocument;
 import com.torodb.kvdocument.values.heap.StringKVString;
 import com.torodb.metainfo.cache.mvcc.MvccMetainfoRepository;
-import com.torodb.poc.backend.DocumentMaterializerVisitor.CollectionMaterializer;
-import com.torodb.poc.backend.DocumentMaterializerVisitor.DocPartData;
-import com.torodb.poc.backend.DocumentMaterializerVisitor.DocPartMaterializer;
-import com.torodb.poc.backend.DocumentMaterializerVisitor.DocPartRow;
 
 public class DocumentMaterializerTest {
     @Test
@@ -100,7 +99,6 @@ public class DocumentMaterializerTest {
                                 .build()))
                         .build()))
                 .build()));
-        DocumentMaterializerVisitor documentMaterializerVisitor = new DocumentMaterializerVisitor();
         ImmutableMetaSnapshot currentView = new ImmutableMetaSnapshot.Builder()
                 .add(new ImmutableMetaDatabase.Builder("test", "test")
                         .add(new ImmutableMetaCollection.Builder("test", "test")
@@ -115,93 +113,90 @@ public class DocumentMaterializerTest {
         
         MutableMetaCollection mutableMetaCollection = 
                 mutableSnapshot.getMetaDatabaseByName("test").getMetaCollectionByName("test");
-        CollectionMaterializer collectionMaterializer = documentMaterializerVisitor.getCollectionMaterializer(mutableMetaCollection);
+        D2RVisitorCallbackImpl callback = new D2RVisitorCallbackImpl(mutableMetaCollection, new Provider<DocPartRidGenerator>() {
+            @Override
+            public DocPartRidGenerator get() {
+                return new DocPartRidGenerator();
+            }
+        });
+        D2RVisitor documentMaterializerVisitor = new D2RVisitor(callback);
         
-        doc.accept(documentMaterializerVisitor, collectionMaterializer);
-        doc.accept(documentMaterializerVisitor, collectionMaterializer);
+        documentMaterializerVisitor.visit(doc);
+        documentMaterializerVisitor.visit(doc);
         
-        List<DocPartMaterializer> nextDocPartMaterializer = new ArrayList<>();
-        nextDocPartMaterializer.add(collectionMaterializer.getRootPartMaterializer().getDocPartMaterializer());
-        while (!nextDocPartMaterializer.isEmpty()) {
-            List<DocPartMaterializer> currentDocPartMaterializer = new ArrayList<>(nextDocPartMaterializer);
-            nextDocPartMaterializer.clear();
-            for (DocPartMaterializer docPartMaterializer : currentDocPartMaterializer) {
-                Iterator<DocPartMaterializer> docPartMaterializerIterator = docPartMaterializer.getChildDocPartMaterializerIterator();
-                while (docPartMaterializerIterator.hasNext()) {
-                    nextDocPartMaterializer.add(docPartMaterializerIterator.next());
+        Iterator<DocPartData> docPartDataIterator = callback.iterator();
+        while (docPartDataIterator.hasNext()) {
+            DocPartData docPartData = docPartDataIterator.next();
+            TableRef tableRef = docPartData.getMetaDocPart().getTableRef();
+            System.out.println("INSERT INTO " + docPartData.getMetaDocPart().getIdentifier());
+            Iterator<MetaField> orderedMetaFieldIterator = docPartData.orderedMetaFieldIterator();
+            if (!tableRef.getParent().isPresent()) {
+                System.out.print("\t(did");
+                if (orderedMetaFieldIterator.hasNext()) {
+                    System.out.print(",\t\t");
                 }
-                
-                DocPartData docPartData = docPartMaterializer.getDocPartData();
-                System.out.println("INSERT INTO " + docPartMaterializer.getMetaDocPart().getIdentifier());
-                Iterator<MetaField> orderedMetaFieldIterator = docPartData.orderedMetaFieldIterator();
-                if (docPartMaterializer.isRoot()) {
-                    System.out.print("\t(did");
-                    if (orderedMetaFieldIterator.hasNext()) {
-                        System.out.print(", ");
+            } else if (!tableRef.getParent().get().getParent().isPresent()) {
+                System.out.print("\t(did,\t\trid,\t\tseq");
+                if (orderedMetaFieldIterator.hasNext()) {
+                    System.out.print(",\t\t");
+                }
+            } else {
+                System.out.print("\t(did,\t\trid,\t\tpid,\t\tseq");
+                if (orderedMetaFieldIterator.hasNext()) {
+                    System.out.print(",\t\t");
+                }
+            }
+            while (orderedMetaFieldIterator.hasNext()) {
+                MetaField metaField = orderedMetaFieldIterator.next();
+                System.out.print(metaField.getIdentifier());
+                if (orderedMetaFieldIterator.hasNext()) {
+                    System.out.print(",\t\t");
+                }
+            }
+            System.out.println(") VALUES ");
+            Iterator<DocPartRow> docPartRowIterator = docPartData.iterator();
+            while (docPartRowIterator.hasNext()) {
+                DocPartRow docPartRow = docPartRowIterator.next();
+                System.out.print("\t(");
+                Iterator<KVValue<?>> valueIterator = docPartRow.iterator();
+                if (!tableRef.getParent().isPresent()) {
+                    System.out.print(docPartRow.getDid());
+                    if (valueIterator.hasNext()) {
+                        System.out.print(",\t\t");
                     }
-                } else if (docPartMaterializer.getParentDocPartMaterializer().isRoot()) {
-                    System.out.print("\t(did, rid, seq");
-                    if (orderedMetaFieldIterator.hasNext()) {
-                        System.out.print(", ");
+                } else if (!tableRef.getParent().get().getParent().isPresent()) {
+                    System.out.print(docPartRow.getDid());
+                    System.out.print(",\t\t");
+                    System.out.print(docPartRow.getRid());
+                    System.out.print(",\t\t");
+                    System.out.print(docPartRow.getSeq());
+                    if (valueIterator.hasNext()) {
+                        System.out.print(",\t\t");
                     }
                 } else {
-                    System.out.print("\t(did, rid, pid, seq");
-                    if (orderedMetaFieldIterator.hasNext()) {
-                        System.out.print(", ");
+                    System.out.print(docPartRow.getDid());
+                    System.out.print(",\t\t");
+                    System.out.print(docPartRow.getRid());
+                    System.out.print(",\t\t");
+                    System.out.print(docPartRow.getPid());
+                    System.out.print(",\t\t");
+                    System.out.print(docPartRow.getSeq());
+                    if (valueIterator.hasNext()) {
+                        System.out.print(",\t\t");
                     }
                 }
-                while (orderedMetaFieldIterator.hasNext()) {
-                    MetaField metaField = orderedMetaFieldIterator.next();
-                    System.out.print(metaField.getIdentifier());
-                    if (orderedMetaFieldIterator.hasNext()) {
-                        System.out.print(", ");
+                while (valueIterator.hasNext()) {
+                    System.out.print(valueIterator.next());
+                    if (valueIterator.hasNext()) {
+                        System.out.print(",\t\t");
                     }
                 }
-                System.out.println(") VALUES ");
-                Iterator<DocPartRow> docPartRowIterator = docPartData.iterator();
-                while (docPartRowIterator.hasNext()) {
-                    DocPartRow docPartRow = docPartRowIterator.next();
-                    System.out.print("\t(");
-                    Iterator<String> valueIterator = docPartRow.iterator();
-                    if (docPartMaterializer.isRoot()) {
-                        System.out.print(docPartRow.getDid());
-                        if (valueIterator.hasNext()) {
-                            System.out.print(", ");
-                        }
-                    } else if (docPartMaterializer.getParentDocPartMaterializer().isRoot()) {
-                        System.out.print(docPartRow.getDid());
-                        System.out.print(", ");
-                        System.out.print(docPartRow.getRid());
-                        System.out.print(", ");
-                        System.out.print(docPartRow.getSeq());
-                        if (valueIterator.hasNext()) {
-                            System.out.print(", ");
-                        }
-                    } else {
-                        System.out.print(docPartRow.getDid());
-                        System.out.print(", ");
-                        System.out.print(docPartRow.getRid());
-                        System.out.print(", ");
-                        System.out.print(docPartRow.getPid());
-                        System.out.print(", ");
-                        System.out.print(docPartRow.getSeq());
-                        if (valueIterator.hasNext()) {
-                            System.out.print(", ");
-                        }
-                    }
-                    while (valueIterator.hasNext()) {
-                        System.out.print(valueIterator.next());
-                        if (valueIterator.hasNext()) {
-                            System.out.print(", ");
-                        }
-                    }
-                    System.out.print(")");
-                    if (docPartRowIterator.hasNext()) {
-                        System.out.println(",");
-                    }
+                System.out.print(")");
+                if (docPartRowIterator.hasNext()) {
+                    System.out.println(",");
                 }
-                System.out.println();
             }
+            System.out.println();
         }
     }
 }

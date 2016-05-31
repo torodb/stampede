@@ -459,12 +459,12 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
         }
         
         private DocPartMaterializer append(DocPartMaterializer keyDimensionParentDocPartMaterializer, KeyDimension keyDimension) {
-            DocPartMaterializer childDocPartMaterializer = getKeyDimensionParentDocPartMaterializer().childMap.get(keyDimension);
+            DocPartMaterializer childDocPartMaterializer = this.keyDimensionParentDocPartMaterializer.childMap.get(keyDimension);
             
             if (childDocPartMaterializer == null) {
                 TableRef tableRef = TableRefImpl.createChild(this.tableRef, keyDimension.getIdentifier());
                 childDocPartMaterializer = new DocPartMaterializer(metaCollection, tableRef, this, keyDimensionParentDocPartMaterializer, keyDimension);
-                getKeyDimensionParentDocPartMaterializer().childMap.put(keyDimension, childDocPartMaterializer);
+                this.keyDimensionParentDocPartMaterializer.childMap.put(keyDimension, childDocPartMaterializer);
             }
             
             return childDocPartMaterializer;
