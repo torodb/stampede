@@ -20,18 +20,16 @@
 
 package com.torodb.core.transaction;
 
-import com.torodb.kvdocument.values.KVDocument;
-import java.util.stream.Stream;
-import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
+import com.torodb.core.transaction.metainf.MetaSnapshot;
 
 /**
  *
  */
-public interface WriteTransaction extends ReadTransaction {
+public interface InternalReadTransaction extends AutoCloseable {
 
-    public void insert(Stream<KVDocument> docsToInsert);
+    public MetaSnapshot getMetainfoView();
 
     @Override
-    public MutableMetaSnapshot getMetainfoView();
+    public void close() throws ToroTransactionException;
 
 }
