@@ -26,6 +26,7 @@
     <modules>
         <module>core</module>
         <module>mongowp-converter</module>
+        <module>json-converter</module>
     </modules>
 
 </project>

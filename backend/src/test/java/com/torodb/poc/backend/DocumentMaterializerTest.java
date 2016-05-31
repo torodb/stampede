@@ -20,8 +20,10 @@
 
 package com.torodb.poc.backend;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.List;
 
 import org.junit.Test;
 
@@ -30,6 +32,7 @@ import com.google.common.collect.ImmutableMap;
 import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
 import com.torodb.core.transaction.metainf.ImmutableMetaDatabase;
 import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
+import com.torodb.core.transaction.metainf.MetaField;
 import com.torodb.core.transaction.metainf.MetainfoRepository.SnapshotStage;
 import com.torodb.core.transaction.metainf.MutableMetaCollection;
 import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
@@ -45,7 +48,6 @@ import com.torodb.poc.backend.DocumentMaterializerVisitor.CollectionMaterializer
 import com.torodb.poc.backend.DocumentMaterializerVisitor.DocPartData;
 import com.torodb.poc.backend.DocumentMaterializerVisitor.DocPartMaterializer;
 import com.torodb.poc.backend.DocumentMaterializerVisitor.DocPartRow;
-import com.torodb.poc.backend.DocumentMaterializerVisitor.KeyFieldType;
 
 public class DocumentMaterializerTest {
     @Test
@@ -60,12 +62,42 @@ public class DocumentMaterializerTest {
                         .put("b", KVLong.of(1))
                         .put("c", KVDouble.of(1))
                         .put("d", new StringKVString("Lorem ipsum"))
+                        .put("f", new ListKVArray(ImmutableList.<KVValue<?>>builder()
+                                .add(KVInteger.of(1))
+                                .add(KVLong.of(1))
+                                .add(KVDouble.of(1))
+                                .add(new StringKVString("Lorem ipsum"))
+                                .add(new MapKVDocument(new LinkedHashMap<>(ImmutableMap.<String, KVValue<?>>builder()
+                                        .put("a", KVInteger.of(1))
+                                        .put("b", KVLong.of(1))
+                                        .put("c", KVDouble.of(1))
+                                        .put("d", new StringKVString("Lorem ipsum"))
+                                        .build())))
+                                .add(new ListKVArray(ImmutableList.<KVValue<?>>builder()
+                                        .add(KVInteger.of(1))
+                                        .add(KVLong.of(1))
+                                        .add(KVDouble.of(1))
+                                        .add(new StringKVString("Lorem ipsum"))
+                                        .build()))
+                                .build()))
                         .build())))
                 .put("f", new ListKVArray(ImmutableList.<KVValue<?>>builder()
                         .add(KVInteger.of(1))
                         .add(KVLong.of(1))
                         .add(KVDouble.of(1))
                         .add(new StringKVString("Lorem ipsum"))
+                        .add(new MapKVDocument(new LinkedHashMap<>(ImmutableMap.<String, KVValue<?>>builder()
+                                .put("a", KVInteger.of(1))
+                                .put("b", KVLong.of(1))
+                                .put("c", KVDouble.of(1))
+                                .put("d", new StringKVString("Lorem ipsum"))
+                                .build())))
+                        .add(new ListKVArray(ImmutableList.<KVValue<?>>builder()
+                                .add(KVInteger.of(1))
+                                .add(KVLong.of(1))
+                                .add(KVDouble.of(1))
+                                .add(new StringKVString("Lorem ipsum"))
+                                .build()))
                         .build()))
                 .build()));
         DocumentMaterializerVisitor documentMaterializerVisitor = new DocumentMaterializerVisitor();
@@ -86,80 +118,90 @@ public class DocumentMaterializerTest {
         CollectionMaterializer collectionMaterializer = documentMaterializerVisitor.getCollectionMaterializer(mutableMetaCollection);
         
         doc.accept(documentMaterializerVisitor, collectionMaterializer);
+        doc.accept(documentMaterializerVisitor, collectionMaterializer);
         
-        Iterator<DocPartMaterializer> docPartMaterializerIterator = collectionMaterializer.getRootPartMaterializer().getDocPartMaterializer().docPartMaterializerIterator();
-        while (docPartMaterializerIterator.hasNext()) {
-            DocPartMaterializer docPartMaterializer = docPartMaterializerIterator.next();
-            DocPartData docPartData = docPartMaterializer.getDocPartData();
-            System.out.println("INSERT INTO " + docPartMaterializer.getMetaDocPart().getIdentifier());
-            Iterator<KeyFieldType> orderedKeyTypeIdIterator = docPartData.orderedKeyFieldTypeIterator();
-            if (docPartMaterializer.isRoot()) {
-                System.out.print("\t(did");
-                if (orderedKeyTypeIdIterator.hasNext()) {
-                    System.out.print(", ");
+        List<DocPartMaterializer> nextDocPartMaterializer = new ArrayList<>();
+        nextDocPartMaterializer.add(collectionMaterializer.getRootPartMaterializer().getDocPartMaterializer());
+        while (!nextDocPartMaterializer.isEmpty()) {
+            List<DocPartMaterializer> currentDocPartMaterializer = new ArrayList<>(nextDocPartMaterializer);
+            nextDocPartMaterializer.clear();
+            for (DocPartMaterializer docPartMaterializer : currentDocPartMaterializer) {
+                Iterator<DocPartMaterializer> docPartMaterializerIterator = docPartMaterializer.getChildDocPartMaterializerIterator();
+                while (docPartMaterializerIterator.hasNext()) {
+                    nextDocPartMaterializer.add(docPartMaterializerIterator.next());
                 }
-            } else if (docPartMaterializer.getParentDocPartMaterializer().isRoot()) {
-                System.out.print("\t(did, rid, seq");
-                if (orderedKeyTypeIdIterator.hasNext()) {
-                    System.out.print(", ");
-                }
-            } else {
-                System.out.print("\t(did, rid, pid, seq");
-                if (orderedKeyTypeIdIterator.hasNext()) {
-                    System.out.print(", ");
-                }
-            }
-            while (orderedKeyTypeIdIterator.hasNext()) {
-                KeyFieldType keyFieldType = orderedKeyTypeIdIterator.next();
-                System.out.print(keyFieldType);
-                if (orderedKeyTypeIdIterator.hasNext()) {
-                    System.out.print(", ");
-                }
-            }
-            System.out.println(") VALUES ");
-            Iterator<DocPartRow> docPartRowIterator = docPartData.iterator();
-            while (docPartRowIterator.hasNext()) {
-                DocPartRow docPartRow = docPartRowIterator.next();
-                System.out.print("\t(");
-                Iterator<String> valueIterator = docPartRow.iterator();
+                
+                DocPartData docPartData = docPartMaterializer.getDocPartData();
+                System.out.println("INSERT INTO " + docPartMaterializer.getMetaDocPart().getIdentifier());
+                Iterator<MetaField> orderedMetaFieldIterator = docPartData.orderedMetaFieldIterator();
                 if (docPartMaterializer.isRoot()) {
-                    System.out.print(docPartRow.getDid());
-                    if (valueIterator.hasNext()) {
+                    System.out.print("\t(did");
+                    if (orderedMetaFieldIterator.hasNext()) {
                         System.out.print(", ");
                     }
                 } else if (docPartMaterializer.getParentDocPartMaterializer().isRoot()) {
-                    System.out.print(docPartRow.getDid());
-                    System.out.print(", ");
-                    System.out.print(docPartRow.getRid());
-                    System.out.print(", ");
-                    System.out.print(docPartRow.getSeq());
-                    if (valueIterator.hasNext()) {
+                    System.out.print("\t(did, rid, seq");
+                    if (orderedMetaFieldIterator.hasNext()) {
                         System.out.print(", ");
                     }
                 } else {
-                    System.out.print(docPartRow.getDid());
-                    System.out.print(", ");
-                    System.out.print(docPartRow.getRid());
-                    System.out.print(", ");
-                    System.out.print(docPartRow.getPid());
-                    System.out.print(", ");
-                    System.out.print(docPartRow.getSeq());
-                    if (valueIterator.hasNext()) {
+                    System.out.print("\t(did, rid, pid, seq");
+                    if (orderedMetaFieldIterator.hasNext()) {
                         System.out.print(", ");
                     }
                 }
-                while (valueIterator.hasNext()) {
-                    System.out.print(valueIterator.next());
-                    if (valueIterator.hasNext()) {
+                while (orderedMetaFieldIterator.hasNext()) {
+                    MetaField metaField = orderedMetaFieldIterator.next();
+                    System.out.print(metaField.getIdentifier());
+                    if (orderedMetaFieldIterator.hasNext()) {
                         System.out.print(", ");
                     }
                 }
-                System.out.print(")");
-                if (docPartRowIterator.hasNext()) {
-                    System.out.println(",");
+                System.out.println(") VALUES ");
+                Iterator<DocPartRow> docPartRowIterator = docPartData.iterator();
+                while (docPartRowIterator.hasNext()) {
+                    DocPartRow docPartRow = docPartRowIterator.next();
+                    System.out.print("\t(");
+                    Iterator<String> valueIterator = docPartRow.iterator();
+                    if (docPartMaterializer.isRoot()) {
+                        System.out.print(docPartRow.getDid());
+                        if (valueIterator.hasNext()) {
+                            System.out.print(", ");
+                        }
+                    } else if (docPartMaterializer.getParentDocPartMaterializer().isRoot()) {
+                        System.out.print(docPartRow.getDid());
+                        System.out.print(", ");
+                        System.out.print(docPartRow.getRid());
+                        System.out.print(", ");
+                        System.out.print(docPartRow.getSeq());
+                        if (valueIterator.hasNext()) {
+                            System.out.print(", ");
+                        }
+                    } else {
+                        System.out.print(docPartRow.getDid());
+                        System.out.print(", ");
+                        System.out.print(docPartRow.getRid());
+                        System.out.print(", ");
+                        System.out.print(docPartRow.getPid());
+                        System.out.print(", ");
+                        System.out.print(docPartRow.getSeq());
+                        if (valueIterator.hasNext()) {
+                            System.out.print(", ");
+                        }
+                    }
+                    while (valueIterator.hasNext()) {
+                        System.out.print(valueIterator.next());
+                        if (valueIterator.hasNext()) {
+                            System.out.print(", ");
+                        }
+                    }
+                    System.out.print(")");
+                    if (docPartRowIterator.hasNext()) {
+                        System.out.println(",");
+                    }
                 }
+                System.out.println();
             }
-            System.out.println();
         }
     }
 }
