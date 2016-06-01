@@ -84,10 +84,7 @@ import ch.qos.logback.classic.Logger;
 public class ConfigUtils {
 
     private static final Logger LOGGER = (Logger) LoggerFactory.getLogger(ConfigUtils.class);
-
-	private ConfigUtils() {
-	}
-
+    
 	public static Config readConfig(final CliConfig cliConfig) throws FileNotFoundException, JsonProcessingException,
 			IOException, JsonParseException, JsonMappingException, Exception {
 		ObjectMapper objectMapper = new ObjectMapper();

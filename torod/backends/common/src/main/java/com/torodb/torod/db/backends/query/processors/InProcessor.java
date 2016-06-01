@@ -41,9 +41,6 @@ import javax.annotation.Nullable;
  */
 public class InProcessor {
 
-    private InProcessor() {
-    }
-
     public static List<ProcessedQueryCriteria> process(
             InQueryCriteria criteria,
             QueryCriteriaVisitor<List<ProcessedQueryCriteria>, Void> visitor) {

@@ -11,9 +11,6 @@ public class NamespaceUtil {
     public static final String JS_COLLECTION = "system.js";
     public static final String LIST_COLLECTIONS_GET_MORE_COLLECTION = "$cmd.listCollections";
 
-    private NamespaceUtil() {
-    }
-
     public static boolean isNamespacesMetaCollection(String collection) {
         return collection.equals(NAMESPACES_COLLECTION);
     }

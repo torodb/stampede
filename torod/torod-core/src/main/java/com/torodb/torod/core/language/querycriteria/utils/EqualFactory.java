@@ -43,9 +43,6 @@ import java.util.LinkedList;
  */
 public class EqualFactory {
 
-    private EqualFactory() {
-    }
-
     public static QueryCriteria createEquality(AttributeReference attRef, KVValue<?> docValue) {
         EqualityQueryFinder eqf = new EqualityQueryFinder(attRef);
 
