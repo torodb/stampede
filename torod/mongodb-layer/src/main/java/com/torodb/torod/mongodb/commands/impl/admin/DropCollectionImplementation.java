@@ -33,7 +33,7 @@ public class DropCollectionImplementation extends
         }
         connection.dropCollection(collection);
 
-        return new NonWriteCommandResult<Empty>(Empty.getInstance());
+        return new NonWriteCommandResult<>(Empty.getInstance());
 
     }
 

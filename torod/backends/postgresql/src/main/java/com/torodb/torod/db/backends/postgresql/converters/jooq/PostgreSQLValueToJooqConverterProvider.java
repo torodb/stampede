@@ -65,7 +65,7 @@ public class PostgreSQLValueToJooqConverterProvider implements ValueToJooqConver
     private static final EnumMap<ScalarType, SubdocValueConverter> converters;
 
     static {
-        converters = new EnumMap<ScalarType, SubdocValueConverter>(ScalarType.class);
+        converters = new EnumMap<>(ScalarType.class);
 
         converters.put(ScalarType.ARRAY, new ArrayValueConverter(PostgreSQLValueToArrayConverterProvider.getInstance()));
         converters.put(ScalarType.BOOLEAN, new BooleanValueConverter());

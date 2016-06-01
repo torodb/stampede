@@ -61,8 +61,8 @@ public class PostgreSQLIndexStorage extends AbstractIndexStorage {
 
         @Override
         protected TableField<Record2<String, NamedToroIndex>, NamedToroIndex> createIndexField(ToroIndexToJsonConverter indexToJsonConverter) {
-            return createField("index", new DefaultDataType<String>(null, String.class, "jsonb")
-                    .asConvertedDataType(new JSONBBinding<NamedToroIndex>(indexToJsonConverter)), this, "");
+            return createField("index", new DefaultDataType<>(null, String.class, "jsonb")
+                    .asConvertedDataType(new JSONBBinding<>(indexToJsonConverter)), this, "");
         }
     }
 }

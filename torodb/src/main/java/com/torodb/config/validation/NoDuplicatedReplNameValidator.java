@@ -38,7 +38,7 @@ public class NoDuplicatedReplNameValidator implements ConstraintValidator<NoDupl
 	@Override
 	public boolean isValid(List<Replication> value, ConstraintValidatorContext context) {
 		if (value != null) {
-			Set<String> replNameSet = new HashSet<String>();
+			Set<String> replNameSet = new HashSet<>();
 			for (Replication replication : value) {
 				if (!replNameSet.add(replication.getReplSetName())) {
 					return false;

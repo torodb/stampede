@@ -324,7 +324,7 @@ public class StandardCollectionRequestProcessor implements CollectionRequestProc
     		}
     	}
     	QueryCriteria queryCriteria = queryCriteriaTranslator.translate(query);
-    	List<DeleteOperation> deletes = new ArrayList<DeleteOperation>();
+    	List<DeleteOperation> deletes = new ArrayList<>();
     	boolean singleRemove = deleteMessage.isSingleRemove();
 
     	deletes.add(new DeleteOperation(queryCriteria, singleRemove));

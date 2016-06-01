@@ -62,7 +62,7 @@ public class PostgreSQLValueToJooqDataTypeProvider implements ValueToJooqDataTyp
     private static final EnumMap<ScalarType, DataTypeForScalar<?>> dataTypes;
 
     static {
-        dataTypes = new EnumMap<ScalarType, DataTypeForScalar<?>>(ScalarType.class);
+        dataTypes = new EnumMap<>(ScalarType.class);
 
         dataTypes.put(ScalarType.ARRAY, ArrayValueConverter.TYPE);
         dataTypes.put(ScalarType.BOOLEAN, BooleanValueConverter.TYPE);
