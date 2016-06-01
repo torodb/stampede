@@ -42,6 +42,9 @@ import ch.qos.logback.core.joran.spi.JoranException;
 
 public class LogbackUtils {
 
+	private LogbackUtils() {
+	}
+
 	public static void appendToLogFile(String logFile) {
 		LoggerContext loggerContext = getLoggerContext();
 		Logger root = getRootLogger();
