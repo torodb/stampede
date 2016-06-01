@@ -20,26 +20,32 @@
 package com.torodb.poc.backend.postgresql.tables.records;
 
 import com.torodb.poc.backend.postgresql.tables.PostgreSQLDatabaseTable;
-import com.torodb.poc.backend.tables.records.DatabaseRecord;
+import com.torodb.poc.backend.tables.records.MetaDatabaseRecord;
 
-public class PostgreSQLDatabaseRecord extends DatabaseRecord {
+public class PostgreSQLDatabaseRecord extends MetaDatabaseRecord {
 
     private static final long serialVersionUID = -7220623531622958067L;
 
     /**
-	 * Create a detached CollectionRecord
+	 * Create a detached MetaCollectionRecord
 	 */
 	public PostgreSQLDatabaseRecord() {
 		super(PostgreSQLDatabaseTable.DATABASE);
 	}
 
 	/**
-	 * Create a detached, initialised CollectionRecord
+	 * Create a detached, initialised MetaCollectionRecord
 	 */
-	public PostgreSQLDatabaseRecord(String name, String schemaName) {
+	public PostgreSQLDatabaseRecord(String name, String identifier) {
 		super(PostgreSQLDatabaseTable.DATABASE);
 		
-		setValue(0, name);
-        setValue(1, schemaName);
+		values(name, identifier);
 	}
+
+    @Override
+    public MetaDatabaseRecord values(String name, String identifier) {
+        setName(name);
+        setIdentifier(identifier);
+        return this;
+    }
 }

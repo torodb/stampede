@@ -1,3 +1,5 @@
+package com.torodb.poc.backend.postgresql;
+
 /*
  *     This file is part of ToroDB.
  *
@@ -18,14 +20,11 @@
  *     
  */
 
-
-package com.torodb.poc.backend.postgresql;
-
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Serializable;
+import java.nio.file.Path;
 import java.sql.Array;
-import java.sql.BatchUpdateException;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
@@ -35,6 +34,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -45,36 +45,33 @@ import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jooq.Configuration;
 import org.jooq.ConnectionProvider;
 import org.jooq.DSLContext;
 import org.jooq.DataType;
 import org.jooq.Field;
-import org.jooq.InsertValuesStep1;
-import org.jooq.Record;
 import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
-import org.jooq.impl.SQLDataType;
-import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.torodb.kvdocument.types.KVType;
+import com.torodb.core.TableRef;
+import com.torodb.core.d2r.DocPartData;
+import com.torodb.core.d2r.DocPartRow;
+import com.torodb.core.impl.TableRefImpl;
+import com.torodb.core.transaction.metainf.FieldType;
+import com.torodb.core.transaction.metainf.MetaDocPart;
+import com.torodb.core.transaction.metainf.MetaField;
 import com.torodb.kvdocument.values.KVMongoObjectId;
 import com.torodb.kvdocument.values.KVMongoTimestamp;
 import com.torodb.kvdocument.values.KVValue;
 import com.torodb.poc.backend.DatabaseInterface;
-import com.torodb.poc.backend.TableToDDL.PathSnapshot;
-import com.torodb.poc.backend.TableToDDL.TableColumn;
-import com.torodb.poc.backend.TableToDDL.TableData;
-import com.torodb.poc.backend.TableToDDL.TableRow;
 import com.torodb.poc.backend.converters.jooq.ValueToJooqConverterProvider;
 import com.torodb.poc.backend.converters.jooq.ValueToJooqDataTypeProvider;
 import com.torodb.poc.backend.mocks.KVTypeToSqlType;
-import com.torodb.poc.backend.mocks.Path;
 import com.torodb.poc.backend.mocks.RetryTransactionException;
-import com.torodb.poc.backend.mocks.SplitDocument;
 import com.torodb.poc.backend.mocks.ToroImplementationException;
 import com.torodb.poc.backend.mocks.ToroRuntimeException;
 import com.torodb.poc.backend.postgresql.converters.PostgreSQLKVTypeToSqlType;
@@ -82,19 +79,19 @@ import com.torodb.poc.backend.postgresql.converters.PostgreSQLValueToCopyConvert
 import com.torodb.poc.backend.postgresql.converters.jooq.PostgreSQLValueToJooqConverterProvider;
 import com.torodb.poc.backend.postgresql.converters.jooq.PostgreSQLValueToJooqDataTypeProvider;
 import com.torodb.poc.backend.postgresql.tables.PostgreSQLCollectionTable;
-import com.torodb.poc.backend.postgresql.tables.PostgreSQLContainerTable;
+import com.torodb.poc.backend.postgresql.tables.PostgreSQLDocPartTable;
 import com.torodb.poc.backend.postgresql.tables.PostgreSQLDatabaseTable;
 import com.torodb.poc.backend.postgresql.tables.PostgreSQLFieldTable;
 import com.torodb.poc.backend.sql.index.NamedDbIndex;
-import com.torodb.poc.backend.tables.CollectionTable;
-import com.torodb.poc.backend.tables.ContainerTable;
-import com.torodb.poc.backend.tables.DatabaseTable;
-import com.torodb.poc.backend.tables.FieldTable;
-import com.torodb.poc.backend.tables.PathDocTable;
-import com.torodb.poc.backend.tables.records.CollectionRecord;
-import com.torodb.poc.backend.tables.records.ContainerRecord;
-import com.torodb.poc.backend.tables.records.DatabaseRecord;
-import com.torodb.poc.backend.tables.records.FieldRecord;
+import com.torodb.poc.backend.tables.DocPartTable;
+import com.torodb.poc.backend.tables.MetaCollectionTable;
+import com.torodb.poc.backend.tables.MetaDatabaseTable;
+import com.torodb.poc.backend.tables.MetaDocPartTable;
+import com.torodb.poc.backend.tables.MetaFieldTable;
+import com.torodb.poc.backend.tables.records.MetaCollectionRecord;
+import com.torodb.poc.backend.tables.records.MetaDatabaseRecord;
+import com.torodb.poc.backend.tables.records.MetaDocPartRecord;
+import com.torodb.poc.backend.tables.records.MetaFieldRecord;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -103,8 +100,8 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  */
 @Singleton
 public class PostgreSQLDatabaseInterface implements DatabaseInterface {
-    private static final org.slf4j.Logger LOGGER
-        = LoggerFactory.getLogger(PostgreSQLDatabaseInterface.class);
+    private static final Logger LOGGER
+        = LogManager.getLogger(PostgreSQLDatabaseInterface.class);
 
     private static final long serialVersionUID = 484638503;
 
@@ -128,25 +125,25 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
 
     @Nonnull
     @Override
-    public DatabaseTable<?> getDatabaseTable() {
+    public PostgreSQLDatabaseTable getMetaDatabaseTable() {
         return new PostgreSQLDatabaseTable();
     }
 
     @Nonnull
     @Override
-    public CollectionTable<?> getCollectionTable() {
+    public PostgreSQLCollectionTable getMetaCollectionTable() {
         return new PostgreSQLCollectionTable();
     }
 
     @Nonnull
     @Override
-    public ContainerTable<?> getContainerTable() {
-        return new PostgreSQLContainerTable();
+    public PostgreSQLDocPartTable getMetaDocPartTable() {
+        return new PostgreSQLDocPartTable();
     }
 
     @Nonnull
     @Override
-    public FieldTable<?> getFieldTable() {
+    public PostgreSQLFieldTable getMetaFieldTable() {
         return new PostgreSQLFieldTable();
     }
 
@@ -161,7 +158,7 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
     }
 
     @Override
-    public String createIndexStatement(PathDocTable table, Field<?> field, Configuration conf) {
+    public String createIndexStatement(DocPartTable table, Field<?> field, Configuration conf) {
         StringBuilder sb = new StringBuilder();
         sb.append("CREATE INDEX ON \"")
                 .append(table.getSchema().getName())
@@ -259,24 +256,24 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
 
         @Override
         public int compare(Field o1, Field o2) {
-            if (o1.getName().equals(PathDocTable.DID_COLUMN_NAME)) {
+            if (o1.getName().equals(DocPartTable.DID_COLUMN_NAME)) {
                 return -1;
-            } else if (o2.getName().equals(PathDocTable.DID_COLUMN_NAME)) {
+            } else if (o2.getName().equals(DocPartTable.DID_COLUMN_NAME)) {
                 return 1;
             }
-            if (o1.getName().equals(PathDocTable.RID_COLUMN_NAME)) {
+            if (o1.getName().equals(DocPartTable.RID_COLUMN_NAME)) {
                 return -1;
-            } else if (o2.getName().equals(PathDocTable.RID_COLUMN_NAME)) {
+            } else if (o2.getName().equals(DocPartTable.RID_COLUMN_NAME)) {
                 return 1;
             }
-            if (o1.getName().equals(PathDocTable.PID_COLUMN_NAME)) {
+            if (o1.getName().equals(DocPartTable.PID_COLUMN_NAME)) {
                 return -1;
-            } else if (o2.getName().equals(PathDocTable.PID_COLUMN_NAME)) {
+            } else if (o2.getName().equals(DocPartTable.PID_COLUMN_NAME)) {
                 return 1;
             }
-            if (o1.getName().equals(PathDocTable.SEQ_COLUMN_NAME)) {
+            if (o1.getName().equals(DocPartTable.SEQ_COLUMN_NAME)) {
                 return -1;
-            } else if (o2.getName().equals(PathDocTable.SEQ_COLUMN_NAME)) {
+            } else if (o2.getName().equals(DocPartTable.SEQ_COLUMN_NAME)) {
                 return 1;
             }
 
@@ -374,8 +371,8 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
                 .append("CREATE TABLE ")
                 .append(fullTableName(schemaName, tableName))
                 .append(" (")
-                .append(DatabaseTable.TableFields.NAME.name()).append("             varchar     PRIMARY KEY     ,")
-                .append(DatabaseTable.TableFields.SCHEMA_NAME.name()).append("      varchar     NOT NULL UNIQUE ")
+                .append(MetaDatabaseTable.TableFields.NAME.name()).append("             varchar     PRIMARY KEY     ,")
+                .append(MetaDatabaseTable.TableFields.IDENTIFIER.name()).append("       varchar     NOT NULL UNIQUE ")
                 .append(")")
                 .toString();
     }
@@ -386,19 +383,10 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
                 .append("CREATE TABLE ")
                 .append(fullTableName(schemaName, tableName))
                 .append(" (")
-                .append(CollectionTable.TableFields.DATABASE.name()).append("         varchar     NOT NULL        ,")
-                .append(CollectionTable.TableFields.NAME.name()).append("             varchar     NOT NULL        ,")
-                .append(CollectionTable.TableFields.TABLE_NAME.name()).append("       varchar     NOT NULL        ,")
-                .append(CollectionTable.TableFields.CAPPED.name()).append("           boolean     NOT NULL        ,")
-                .append(CollectionTable.TableFields.MAX_SIZE.name()).append("         int         NOT NULL        ,")
-                .append(CollectionTable.TableFields.MAX_ELEMENTS.name()).append("     int         NOT NULL        ,")
-                .append(CollectionTable.TableFields.OTHER.name()).append("            jsonb                       ,")
-                .append(CollectionTable.TableFields.STORAGE_ENGINE.name()).append("   varchar     NOT NULL        ")
-                .append(CollectionTable.TableFields.LAST_DID.name()).append("         int         NOT NULL        ,")
-                .append("    PRIMARY KEY (").append(CollectionTable.TableFields.DATABASE.name()).append(",")
-                    .append(CollectionTable.TableFields.NAME.name()).append("),")
-                .append("    UNIQUE KEY (").append(CollectionTable.TableFields.DATABASE.name()).append(",")
-                    .append(CollectionTable.TableFields.TABLE_NAME.name()).append(")")
+                .append(MetaCollectionTable.TableFields.DATABASE.name()).append("         varchar     NOT NULL        ,")
+                .append(MetaCollectionTable.TableFields.NAME.name()).append("             varchar     NOT NULL        ,")
+                .append("    PRIMARY KEY (").append(MetaCollectionTable.TableFields.DATABASE.name()).append(",")
+                    .append(MetaCollectionTable.TableFields.NAME.name()).append("),")
                 .append(")")
                 .toString();
     }
@@ -409,16 +397,16 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
                 .append("CREATE TABLE ")
                 .append(fullTableName(schemaName, tableName))
                 .append(" (")
-                .append(ContainerTable.TableFields.DATABASE.name()).append("         varchar     NOT NULL        ,")
-                .append(ContainerTable.TableFields.COLLECTION.name()).append("       varchar     NOT NULL        ,")
-                .append(ContainerTable.TableFields.PATH.name()).append("             varchar     NOT NULL        ,")
-                .append(ContainerTable.TableFields.TABLE_NAME.name()).append("       varchar     NOT NULL        ,")
-                .append(ContainerTable.TableFields.LAST_RID.name()).append("         int         NOT NULL        ,")
-                .append("    PRIMARY KEY (").append(ContainerTable.TableFields.DATABASE.name()).append(",")
-                    .append(ContainerTable.TableFields.COLLECTION.name()).append(",")
-                    .append(ContainerTable.TableFields.PATH.name()).append("),")
-                .append("    UNIQUE KEY (").append(ContainerTable.TableFields.DATABASE.name()).append(",")
-                    .append(ContainerTable.TableFields.TABLE_NAME.name()).append(")")
+                .append(MetaDocPartTable.TableFields.DATABASE.name()).append("         varchar     NOT NULL        ,")
+                .append(MetaDocPartTable.TableFields.COLLECTION.name()).append("       varchar     NOT NULL        ,")
+                .append(MetaDocPartTable.TableFields.TABLE_REF.name()).append("        varchar[]   NOT NULL        ,")
+                .append(MetaDocPartTable.TableFields.IDENTIFIER.name()).append("       varchar     NOT NULL        ,")
+                .append(MetaDocPartTable.TableFields.LAST_RID.name()).append("         int         NOT NULL        ,")
+                .append("    PRIMARY KEY (").append(MetaDocPartTable.TableFields.DATABASE.name()).append(",")
+                    .append(MetaDocPartTable.TableFields.COLLECTION.name()).append(",")
+                    .append(MetaDocPartTable.TableFields.TABLE_REF.name()).append("),")
+                .append("    UNIQUE KEY (").append(MetaDocPartTable.TableFields.DATABASE.name()).append(",")
+                    .append(MetaDocPartTable.TableFields.IDENTIFIER.name()).append(")")
                 .append(")")
                 .toString();
     }
@@ -429,20 +417,20 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
                 .append("CREATE TABLE ")
                 .append(fullTableName(schemaName, tableName))
                 .append(" (")
-                .append(FieldTable.TableFields.DATABASE.name()).append("         varchar     NOT NULL        ,")
-                .append(FieldTable.TableFields.COLLECTION.name()).append("       varchar     NOT NULL        ,")
-                .append(FieldTable.TableFields.PATH.name()).append("             varchar     NOT NULL        ,")
-                .append(FieldTable.TableFields.NAME.name()).append("             varchar     NOT NULL        ,")
-                .append(FieldTable.TableFields.COLUMN_NAME.name()).append("      varchar     NOT NULL        ,")
-                .append(FieldTable.TableFields.COLUMN_TYPE.name()).append("      varchar     NOT NULL        ,")
-                .append("    PRIMARY KEY (").append(FieldTable.TableFields.DATABASE.name()).append(",")
-                .append(FieldTable.TableFields.COLLECTION.name()).append(",")
-                .append(FieldTable.TableFields.PATH.name()).append(",")
-                    .append(FieldTable.TableFields.NAME.name()).append("),")
-                .append("    UNIQUE KEY (").append(FieldTable.TableFields.DATABASE.name()).append(",")
-                    .append(FieldTable.TableFields.COLLECTION.name()).append(",")
-                    .append(FieldTable.TableFields.PATH.name()).append(",")
-                    .append(FieldTable.TableFields.COLUMN_NAME.name()).append(")")
+                .append(MetaFieldTable.TableFields.DATABASE.name()).append("         varchar     NOT NULL        ,")
+                .append(MetaFieldTable.TableFields.COLLECTION.name()).append("       varchar     NOT NULL        ,")
+                .append(MetaFieldTable.TableFields.TABLE_REF.name()).append("        varchar[]   NOT NULL        ,")
+                .append(MetaFieldTable.TableFields.NAME.name()).append("             varchar     NOT NULL        ,")
+                .append(MetaFieldTable.TableFields.IDENTIFIER.name()).append("       varchar     NOT NULL        ,")
+                .append(MetaFieldTable.TableFields.TYPE.name()).append("             varchar     NOT NULL        ,")
+                .append("    PRIMARY KEY (").append(MetaFieldTable.TableFields.DATABASE.name()).append(",")
+                .append(MetaFieldTable.TableFields.COLLECTION.name()).append(",")
+                .append(MetaFieldTable.TableFields.TABLE_REF.name()).append(",")
+                    .append(MetaFieldTable.TableFields.NAME.name()).append("),")
+                .append("    UNIQUE KEY (").append(MetaFieldTable.TableFields.DATABASE.name()).append(",")
+                    .append(MetaFieldTable.TableFields.COLLECTION.name()).append(",")
+                    .append(MetaFieldTable.TableFields.TABLE_REF.name()).append(",")
+                    .append(MetaFieldTable.TableFields.IDENTIFIER.name()).append(")")
                 .append(")")
                 .toString();
     }
@@ -841,16 +829,13 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
     }
 
     @Override
-    public void insertPathDocuments(DSLContext dsl, String schemaName, PathSnapshot pathSnapshot, TableData tableData) throws RetryTransactionException {
-        Preconditions.checkArgument(tableData.size() != 0, "Called insert with 0 documents");
-        Preconditions.checkArgument(tableData.iterator().next().size() != 0, "Called insert with 0 documents");
+    public void insertPathDocuments(DSLContext dsl, String schemaName, DocPartData docPartData) throws RetryTransactionException {
+        Preconditions.checkArgument(docPartData.rowCount() != 0, "Called insert with 0 documents");
         
         Connection connection = dsl.configuration().connectionProvider().acquire();
         try {
             int maxCappedSize = 10;
-            int cappedSize = Iterables.size(
-                    Iterables.limit(tableData, maxCappedSize)
-            );
+            int cappedSize = Math.min(docPartData.rowCount(), maxCappedSize);
 
             if (cappedSize < maxCappedSize) { //there are not enough elements on the insert => fallback
                 LOGGER.debug(
@@ -859,21 +844,20 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
                         maxCappedSize,
                         cappedSize
                 );
-                standardInsertPathDocuments(dsl, schemaName, pathSnapshot, tableData);
+                standardInsertPathDocuments(dsl, schemaName, docPartData);
             }
             else {
                 if (!connection.isWrapperFor(PGConnection.class)) {
                     LOGGER.warn("It was impossible to use the PostgreSQL way to "
                             + "insert documents. Inserting using the standard "
                             + "implementation");
-                    standardInsertPathDocuments(dsl, schemaName, pathSnapshot, tableData);
+                    standardInsertPathDocuments(dsl, schemaName, docPartData);
                 }
                 else {
                     copyInsertPathDocuments(
                             connection.unwrap(PGConnection.class),
                             schemaName,
-                            pathSnapshot,
-                            tableData
+                            docPartData
                     );
                 }
             }
@@ -890,80 +874,92 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
         }
     }
 
-    protected void standardInsertPathDocuments(DSLContext dsl, String schemaName, PathSnapshot pathSnapshot, TableData tableData) {
+    protected void standardInsertPathDocuments(DSLContext dsl, String schemaName, DocPartData docPartData) {
         final int maxBatchSize = 1000;
-        final StringBuilder sb = new StringBuilder(2048);
+        final StringBuilder insertStatementBuilder = new StringBuilder(2048);
+        final StringBuilder insertStatementHeaderBuilder = new StringBuilder(2048);
         int docCounter = 0;
-        for (TableRow tableRow : tableData) {
+        MetaDocPart metaDocPart = docPartData.getMetaDocPart();
+        insertStatementHeaderBuilder.append("INSERT INTO \"")
+            .append(schemaName)
+            .append("\".\"")
+            .append(metaDocPart.getIdentifier())
+            .append("\" (");
+        
+        Iterator<MetaField> metaFieldIterator = docPartData.orderedMetaFieldIterator();
+        while (metaFieldIterator.hasNext()) {
+            MetaField metaField = metaFieldIterator.next();
+            insertStatementHeaderBuilder.append("\"")
+                .append(metaField.getIdentifier())
+                .append("\",")
+                .append(",");
+        }
+        insertStatementHeaderBuilder.setCharAt(insertStatementHeaderBuilder.length() - 1, ')');
+        insertStatementHeaderBuilder.append(" VALUES ");
+        
+        Iterator<DocPartRow> docPartRowIterator = docPartData.iterator();
+        while (docPartRowIterator.hasNext()) {
+            DocPartRow docPartRow = docPartRowIterator.next();
             docCounter++;
-            if (sb.length() == 0) {
-                sb.append("INSERT INTO \"")
-                    .append(schemaName)
-                    .append("\".\"")
-                    .append(pathSnapshot.getTableName())
-                    .append("\" (");
-                
-                StringBuilder values = new StringBuilder();
-                for (TableColumn tableColumn : tableRow) {
-                    sb.append("\"")
-                        .append(pathSnapshot.getColumnName(tableColumn.getName()))
-                        .append("\",");
-                    values.append(getSqlValue(tableColumn))
-                        .append(",");
-                }
-                sb.setCharAt(sb.length() - 1, ')');
-                values.setCharAt(values.length() - 1, ')');
-                sb.append(" VALUES (")
-                    .append(values)
+            if (insertStatementBuilder.length() == 0) {
+                insertStatementBuilder.append(insertStatementHeaderBuilder);
+            }
+            insertStatementBuilder.append("(");
+            for (KVValue<?> value : docPartRow) {
+                insertStatementBuilder.append(getSqlValue(value))
                     .append(",");
             }
-            else {
-                sb.append("(");
-                for (TableColumn tableColumn : tableRow) {
-                    sb.append(getSqlValue(tableColumn))
-                        .append(",");
+            insertStatementBuilder.setCharAt(insertStatementBuilder.length() - 1, ')');
+            insertStatementBuilder.append(",");
+            if (docCounter % maxBatchSize == 0 || !docPartRowIterator.hasNext()) {
+                dsl.execute(insertStatementBuilder.substring(0, insertStatementBuilder.length() - 1));
+                if (docPartRowIterator.hasNext()) {
+                    insertStatementBuilder.delete(0, insertStatementBuilder.length());
                 }
-                sb.setCharAt(sb.length() - 1, ')');
-                sb.append(",");
-            }
-            if (docCounter % maxBatchSize == 0) {
-                dsl.execute(sb.substring(0, sb.length() - 2));
-                sb.delete(0, sb.length());
-                assert sb.length() == 0;
             }
         }
     }
     
-    private String getSqlValue(TableColumn tableColumn) {
-        final KVValue<? extends Serializable> value = tableColumn.getValue();
-        return DSL.value(value, valueToJooqDataTypeProvider.getDataType(value.getType())).toString();
+    private String getSqlValue(KVValue<?> value) {
+        return DSL.value(value, valueToJooqDataTypeProvider.getDataType(FieldType.from(value.getType()))).toString();
     }
     
     private void copyInsertPathDocuments(
             PGConnection connection,
             String schemaName,
-            PathSnapshot pathSnapshot,
-            TableData tableData) throws RetryTransactionException, SQLException, IOException {
+            DocPartData docPartData) throws RetryTransactionException, SQLException, IOException {
 
         final int maxBatchSize = 1000;
         final StringBuilder sb = new StringBuilder(2048);
-        final StringBuilder copyStamentBuilder = new StringBuilder();
+        final StringBuilder copyStatementBuilder = new StringBuilder();
         final CopyManager copyManager = connection.getCopyAPI();
-        copyStamentBuilder.append("COPY \"")
-            .append(schemaName).append("\".\"").append(pathSnapshot.getTableName())
+        final MetaDocPart metaDocPart = docPartData.getMetaDocPart();
+        copyStatementBuilder.append("COPY \"")
+            .append(schemaName).append("\".\"").append(metaDocPart.getIdentifier())
             .append("(");
-        TableRow firstTableRow = tableData.iterator().next();
-        copyStamentBuilder.append(") FROM STDIN ");
-        final String copyStatement = copyStamentBuilder.toString();
         
+        Iterator<MetaField> metaFieldIterator = docPartData.orderedMetaFieldIterator();
+        while (metaFieldIterator.hasNext()) {
+            MetaField metaField = metaFieldIterator.next();
+            copyStatementBuilder.append("\"")
+                .append(metaField.getIdentifier())
+                .append("\",")
+                .append(",");
+        }
+        copyStatementBuilder.setCharAt(copyStatementBuilder.length() - 1, ')');
+        copyStatementBuilder.append(" FROM STDIN");
+        final String copyStatement = copyStatementBuilder.toString();
+        
+        Iterator<DocPartRow> docPartRowIterator = docPartData.iterator();
         int docCounter = 0;
-        for (TableRow tableRow : tableData) {
+        while (docPartRowIterator.hasNext()) {
+            DocPartRow tableRow = docPartRowIterator.next();
             docCounter++;
 
             addToCopy(sb, tableRow);
             assert sb.length() != 0;
 
-            if (docCounter % maxBatchSize == 0) {
+            if (docCounter % maxBatchSize == 0 || !docPartRowIterator.hasNext()) {
                 executeCopy(copyManager, copyStatement, sb);
                 assert sb.length() == 0;
             }
@@ -971,15 +967,19 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
         if (sb.length() > 0) {
             assert docCounter % maxBatchSize != 0;
             executeCopy(copyManager, copyStatement, sb);
+            
+            if (docPartRowIterator.hasNext()) {
+                sb.delete(0, sb.length());
+            }
         }
     }
 
     @SuppressWarnings("unchecked")
     private void addToCopy(
             StringBuilder sb,
-            TableRow tableRow) {
-        for (TableColumn tableColumn : tableRow) {
-            tableColumn.getValue().accept(PostgreSQLValueToCopyConverter.INSTANCE, sb);
+            DocPartRow docPartRow) {
+        for (KVValue<?> value : docPartRow) {
+            value.accept(PostgreSQLValueToCopyConverter.INSTANCE, sb);
             sb.append('\t');
         }
         sb.setCharAt(sb.length() - 1, '\n');
@@ -996,8 +996,6 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
         Reader reader = new StringBuilderReader(sb);
         
         copyManager.copyIn(copyStatement, reader);
-
-        sb.delete(0, sb.length());
     }
     
     public interface PGConnection extends Connection {
@@ -1041,41 +1039,22 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
     }
 
     @Override
-    public int reserveDids(DSLContext dsl, String database, String collection, int count) {
+    public int reserveRids(DSLContext dsl, String database, String collection, TableRef tableRef, int count) {
         throw new ToroImplementationException("Not implemented yet");
     }
 
     @Override
-    public int reserveRids(DSLContext dsl, String database, String collection, Path path, int count) {
+    public Iterable<MetaDatabaseRecord> getDatabases(DSLContext dsl) {
         throw new ToroImplementationException("Not implemented yet");
     }
 
     @Override
-    public Iterable<DatabaseRecord> getDatabases(DSLContext dsl) {
-        // TODO Auto-generated method stub
-        return null;
+    public Iterable<MetaCollectionRecord> getCollections(DSLContext dsl, String database) {
+        throw new ToroImplementationException("Not implemented yet");
     }
 
     @Override
-    public Iterable<CollectionRecord> getCollections(DSLContext dsl, String database) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public Iterable<ContainerRecord> getContainers(DSLContext dsl, String database, String collection) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public Iterable<FieldRecord> getFields(DSLContext dsl, String database, String collection, Path path) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public DataType<?> getDataType(KVType type) {
+    public DataType<?> getDataType(FieldType type) {
         return valueToJooqDataTypeProvider.getDataType(type);
     }
 
@@ -1091,5 +1070,26 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
         if (context == Context.batchUpdate && "40001".equals(dataAccessException.sqlState())) {
             throw new RetryTransactionException(dataAccessException);
         }
+    }
+
+    @Override
+    public TableRef toTableRef(Object tableRefObject) {
+        TableRef tableRef = TableRefImpl.createRoot();
+        String[] tableRefStrings = (String[]) tableRefObject;
+        for (String tableRefString : tableRefStrings) {
+            tableRef = TableRefImpl.createChild(tableRef, tableRefString.intern());
+        }
+        return tableRef;
+    }
+
+    @Override
+    public Map<String, MetaDocPartRecord<?>> getContainersByTable(DSLContext dsl, String database, String collection) {
+        throw new ToroImplementationException("Not implemented yet");
+    }
+
+    @Override
+    public Map<String, MetaFieldRecord<?>> getFieldsByColumn(DSLContext dsl, String database, String collection,
+            TableRef tableRef) {
+        throw new ToroImplementationException("Not implemented yet");
     }
 }

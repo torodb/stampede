@@ -27,12 +27,12 @@ import org.jooq.impl.SQLDataType;
 
 import com.torodb.poc.backend.converters.jooq.binging.JSONBBinding;
 import com.torodb.poc.backend.postgresql.tables.records.PostgreSQLCollectionRecord;
-import com.torodb.poc.backend.tables.CollectionTable;
+import com.torodb.poc.backend.tables.MetaCollectionTable;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 @SuppressFBWarnings("EQ_DOESNT_OVERRIDE_EQUALS")
-public class PostgreSQLCollectionTable extends CollectionTable<PostgreSQLCollectionRecord> {
+public class PostgreSQLCollectionTable extends MetaCollectionTable<PostgreSQLCollectionRecord> {
 
     private static final long serialVersionUID = 304258902776870571L;
     /**
@@ -90,40 +90,5 @@ public class PostgreSQLCollectionTable extends CollectionTable<PostgreSQLCollect
     @Override
     protected TableField<PostgreSQLCollectionRecord, String> createNameField() {
         return createField(TableFields.NAME.fieldName, SQLDataType.VARCHAR.nullable(false), this, "");
-    }
-
-    @Override
-    protected TableField<PostgreSQLCollectionRecord, String> createTableNameField() {
-        return createField(TableFields.TABLE_NAME.fieldName, SQLDataType.VARCHAR.nullable(false), this, "");
-    }
-
-    @Override
-    protected TableField<PostgreSQLCollectionRecord, Boolean> createCappedField() {
-        return createField(TableFields.CAPPED.fieldName, SQLDataType.BOOLEAN.nullable(false), this, "");
-    }
-
-    @Override
-    protected TableField<PostgreSQLCollectionRecord, Integer> createMaxSizeField() {
-        return createField(TableFields.MAX_SIZE.fieldName, SQLDataType.INTEGER.nullable(false), this, "");
-    }
-
-    @Override
-    protected TableField<PostgreSQLCollectionRecord, Integer> createMaxElementsField() {
-        return createField(TableFields.MAX_ELEMENTS.fieldName, SQLDataType.INTEGER.nullable(false), this, "");
-    }
-
-    @Override
-    protected TableField<PostgreSQLCollectionRecord, String> createOtherField() {
-        return createField(TableFields.OTHER.fieldName, JSONBBinding.fromType(String.class, Converters.identity(String.class)), this, "");
-    }
-
-    @Override
-    protected TableField<PostgreSQLCollectionRecord, String> createStorageEngineField() {
-        return createField(TableFields.STORAGE_ENGINE.fieldName, SQLDataType.VARCHAR.nullable(false), this, "");
-    }
-
-    @Override
-    protected TableField<PostgreSQLCollectionRecord, Integer> createLastDidField() {
-        return createField(TableFields.LAST_DID.fieldName, SQLDataType.INTEGER.nullable(false), this, "");
     }
 }

@@ -7,27 +7,27 @@ import javax.annotation.Nonnull;
 
 import org.jooq.DSLContext;
 
-import com.torodb.poc.backend.mocks.Path;
+import com.torodb.core.TableRef;
 import com.torodb.poc.backend.sql.index.NamedDbIndex;
-import com.torodb.poc.backend.tables.CollectionTable;
-import com.torodb.poc.backend.tables.ContainerTable;
-import com.torodb.poc.backend.tables.DatabaseTable;
-import com.torodb.poc.backend.tables.FieldTable;
-import com.torodb.poc.backend.tables.records.CollectionRecord;
-import com.torodb.poc.backend.tables.records.ContainerRecord;
-import com.torodb.poc.backend.tables.records.DatabaseRecord;
-import com.torodb.poc.backend.tables.records.FieldRecord;
+import com.torodb.poc.backend.tables.MetaCollectionTable;
+import com.torodb.poc.backend.tables.MetaDatabaseTable;
+import com.torodb.poc.backend.tables.MetaDocPartTable;
+import com.torodb.poc.backend.tables.MetaFieldTable;
+import com.torodb.poc.backend.tables.records.MetaCollectionRecord;
+import com.torodb.poc.backend.tables.records.MetaDatabaseRecord;
+import com.torodb.poc.backend.tables.records.MetaDocPartRecord;
+import com.torodb.poc.backend.tables.records.MetaFieldRecord;
 
 public interface ReadMetaDataInterface {
-    @Nonnull DatabaseTable<?> getDatabaseTable();
-    @Nonnull CollectionTable<?> getCollectionTable();
-    @Nonnull ContainerTable<?> getContainerTable();
-    @Nonnull FieldTable<?> getFieldTable();
+    @Nonnull MetaDatabaseTable<?> getMetaDatabaseTable();
+    @Nonnull MetaCollectionTable<?> getMetaCollectionTable();
+    @Nonnull MetaDocPartTable<?, ?> getMetaDocPartTable();
+    @Nonnull MetaFieldTable<?, ?> getMetaFieldTable();
     
-    @Nonnull Iterable<DatabaseRecord> getDatabases(@Nonnull DSLContext dsl);
-    @Nonnull Iterable<CollectionRecord> getCollections(@Nonnull DSLContext dsl, @Nonnull String database);
-    @Nonnull Map<String, ContainerRecord> getContainersByTable(@Nonnull DSLContext dsl, @Nonnull String database, @Nonnull String collection);
-    @Nonnull Map<String, FieldRecord> getFieldsByColumn(@Nonnull DSLContext dsl, @Nonnull String database, @Nonnull String collection, @Nonnull Path path);
+    @Nonnull Iterable<MetaDatabaseRecord> getDatabases(@Nonnull DSLContext dsl);
+    @Nonnull Iterable<MetaCollectionRecord> getCollections(@Nonnull DSLContext dsl, @Nonnull String database);
+    @Nonnull Map<String, MetaDocPartRecord<?>> getContainersByTable(@Nonnull DSLContext dsl, @Nonnull String database, @Nonnull String collection);
+    @Nonnull Map<String, MetaFieldRecord<?>> getFieldsByColumn(@Nonnull DSLContext dsl, @Nonnull String database, @Nonnull String collection, @Nonnull TableRef tableRef);
     
     long getDatabaseSize(@Nonnull DSLContext dsl, @Nonnull String databaseName);
     Long getCollectionSize(@Nonnull DSLContext dsl, @Nonnull String schema, @Nonnull String collection);

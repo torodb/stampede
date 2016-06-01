@@ -19,31 +19,35 @@
  */
 package com.torodb.poc.backend.postgresql.tables.records;
 
-import com.torodb.poc.backend.postgresql.tables.PostgreSQLContainerTable;
-import com.torodb.poc.backend.tables.records.ContainerRecord;
+import com.torodb.poc.backend.postgresql.tables.PostgreSQLDocPartTable;
+import com.torodb.poc.backend.tables.records.MetaDocPartRecord;
 
-public class PostgreSQLContainerRecord extends ContainerRecord {
+public class PostgreSQLDocPartRecord extends MetaDocPartRecord<String[]> {
 
     private static final long serialVersionUID = 4525720333148409410L;
 
     /**
-	 * Create a detached ContainerRecord
+	 * Create a detached MetaDocPartRecord
 	 */
-	public PostgreSQLContainerRecord() {
-		super(PostgreSQLContainerTable.CONTAINER);
+	public PostgreSQLDocPartRecord() {
+		super(PostgreSQLDocPartTable.CONTAINER);
 	}
 
 	/**
-	 * Create a detached, initialised ContainerRecord
+	 * Create a detached, initialised MetaDocPartRecord
 	 */
-	public PostgreSQLContainerRecord(String database, String collection, String path, String tableName, String parentTableName, Integer lastRid) {
-		super(PostgreSQLContainerTable.CONTAINER);
+	public PostgreSQLDocPartRecord(String database, String collection, String[] tableRef, String identifierName, Integer lastRid) {
+		super(PostgreSQLDocPartTable.CONTAINER);
 		
-		setValue(0, database);
-		setValue(1, collection);
-        setValue(2, path);
-        setValue(3, tableName);
-        setValue(4, parentTableName);
-		setValue(5, lastRid);
 	}
+
+    @Override
+    public PostgreSQLDocPartRecord values(String database, String collection, String[] tableRef, String identifier, Integer lastRid) {
+        setDatabase(database);
+        setCollection(collection);
+        setTableRef(tableRef);
+        setIdentifier(identifier);
+        setLastRid(lastRid);
+        return this;
+    }
 }

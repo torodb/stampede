@@ -25,10 +25,10 @@ import org.jooq.Record6;
 import org.jooq.Row6;
 import org.jooq.impl.UpdatableRecordImpl;
 
-import com.torodb.poc.backend.tables.FieldTable;
+import com.torodb.poc.backend.tables.MetaFieldTable;
 
-public abstract class FieldRecord extends UpdatableRecordImpl<FieldRecord> 
-        implements Record6<String, String, String, String, String, String> {
+public abstract class MetaFieldRecord<TableRefType> extends UpdatableRecordImpl<MetaFieldRecord<TableRefType>> 
+        implements Record6<String, String, TableRefType, String, String, String> {
 // database, name, original_name, last_did
 	private static final long serialVersionUID = -2107968478;
 
@@ -61,17 +61,17 @@ public abstract class FieldRecord extends UpdatableRecordImpl<FieldRecord>
     }
 
     /**
-     * Setter for <code>torodb.field.path</code>.
+     * Setter for <code>torodb.field.tableRef</code>.
      */
-    public void setPath(String value) {
+    public void setTableRef(TableRefType value) {
         setValue(2, value);
     }
 
     /**
-     * Getter for <code>torodb.field.path</code>.
+     * Getter for <code>torodb.field.tableRef</code>.
      */
-    public String getPath() {
-        return (String) getValue(2);
+    public TableRefType getTableRef() {
+        return (TableRefType) getValue(2);
     }
 
     /**
@@ -89,30 +89,30 @@ public abstract class FieldRecord extends UpdatableRecordImpl<FieldRecord>
     }
 
     /**
-     * Setter for <code>torodb.field.column_name</code>.
+     * Setter for <code>torodb.field.idenftifier</code>.
      */
-    public void setColumnName(String value) {
+    public void setIdentifier(String value) {
         setValue(4, value);
     }
 
     /**
-     * Getter for <code>torodb.field.column_name</code>.
+     * Getter for <code>torodb.field.idenftifier</code>.
      */
-    public String getColumnName() {
+    public String getIdentifier() {
         return (String) getValue(4);
     }
 
     /**
-     * Setter for <code>torodb.field.column_type</code>.
+     * Setter for <code>torodb.field.type</code>.
      */
-    public void setColumnType(String value) {
+    public void setType(String value) {
         setValue(5, value);
     }
 
     /**
-     * Getter for <code>torodb.field.column_type</code>.
+     * Getter for <code>torodb.field.type</code>.
      */
-    public String getColumnType() {
+    public String getType() {
         return (String) getValue(5);
     }
 
@@ -136,7 +136,7 @@ public abstract class FieldRecord extends UpdatableRecordImpl<FieldRecord>
 	 * {@inheritDoc}
 	 */
 	@Override
-	public Row6<String, String, String, String, String, String> fieldsRow() {
+	public Row6<String, String, TableRefType, String, String, String> fieldsRow() {
 		return (Row6) super.fieldsRow();
 	}
 
@@ -144,7 +144,7 @@ public abstract class FieldRecord extends UpdatableRecordImpl<FieldRecord>
 	 * {@inheritDoc}
 	 */
 	@Override
-	public Row6<String, String, String, String, String, String> valuesRow() {
+	public Row6<String, String, TableRefType, String, String, String> valuesRow() {
 		return (Row6) super.valuesRow();
 	}
 
@@ -153,7 +153,7 @@ public abstract class FieldRecord extends UpdatableRecordImpl<FieldRecord>
      */
     @Override
     public Field<String> field1() {
-        return fieldTable.DATABASE;
+        return metaFieldTable.DATABASE;
     }
 
     /**
@@ -161,15 +161,15 @@ public abstract class FieldRecord extends UpdatableRecordImpl<FieldRecord>
      */
     @Override
     public Field<String> field2() {
-        return fieldTable.COLLECTION;
+        return metaFieldTable.COLLECTION;
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public Field<String> field3() {
-        return fieldTable.PATH;
+    public Field<TableRefType> field3() {
+        return metaFieldTable.TABLE_REF;
     }
 
     /**
@@ -177,7 +177,7 @@ public abstract class FieldRecord extends UpdatableRecordImpl<FieldRecord>
      */
     @Override
     public Field<String> field4() {
-        return fieldTable.NAME;
+        return metaFieldTable.NAME;
     }
 
     /**
@@ -185,7 +185,7 @@ public abstract class FieldRecord extends UpdatableRecordImpl<FieldRecord>
      */
     @Override
     public Field<String> field5() {
-        return fieldTable.COLUMN_NAME;
+        return metaFieldTable.IDENTIFIER;
     }
 
     /**
@@ -193,7 +193,7 @@ public abstract class FieldRecord extends UpdatableRecordImpl<FieldRecord>
      */
     @Override
     public Field<String> field6() {
-        return fieldTable.COLUMN_TYPE;
+        return metaFieldTable.TYPE;
     }
 
     /**
@@ -216,8 +216,8 @@ public abstract class FieldRecord extends UpdatableRecordImpl<FieldRecord>
      * {@inheritDoc}
      */
     @Override
-    public String value3() {
-        return getPath();
+    public TableRefType value3() {
+        return getTableRef();
     }
 
     /**
@@ -233,7 +233,7 @@ public abstract class FieldRecord extends UpdatableRecordImpl<FieldRecord>
      */
     @Override
     public String value5() {
-        return getColumnName();
+        return getIdentifier();
     }
 
     /**
@@ -241,14 +241,14 @@ public abstract class FieldRecord extends UpdatableRecordImpl<FieldRecord>
      */
     @Override
     public String value6() {
-        return getColumnType();
+        return getType();
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public FieldRecord value1(String value) {
+    public MetaFieldRecord value1(String value) {
         setDatabase(value);
         return this;
     }
@@ -257,7 +257,7 @@ public abstract class FieldRecord extends UpdatableRecordImpl<FieldRecord>
      * {@inheritDoc}
      */
     @Override
-    public FieldRecord value2(String value) {
+    public MetaFieldRecord value2(String value) {
         setCollection(value);
         return this;
     }
@@ -266,8 +266,8 @@ public abstract class FieldRecord extends UpdatableRecordImpl<FieldRecord>
      * {@inheritDoc}
      */
     @Override
-    public FieldRecord value3(String value) {
-        setPath(value);
+    public MetaFieldRecord value3(TableRefType value) {
+        setTableRef(value);
         return this;
     }
 
@@ -275,7 +275,7 @@ public abstract class FieldRecord extends UpdatableRecordImpl<FieldRecord>
      * {@inheritDoc}
      */
     @Override
-    public FieldRecord value4(String value) {
+    public MetaFieldRecord value4(String value) {
         setName(value);
         return this;
     }
@@ -284,8 +284,8 @@ public abstract class FieldRecord extends UpdatableRecordImpl<FieldRecord>
      * {@inheritDoc}
      */
     @Override
-    public FieldRecord value5(String value) {
-        setColumnName(value);
+    public MetaFieldRecord value5(String value) {
+        setIdentifier(value);
         return this;
     }
 
@@ -293,8 +293,8 @@ public abstract class FieldRecord extends UpdatableRecordImpl<FieldRecord>
      * {@inheritDoc}
      */
     @Override
-    public FieldRecord value6(String value) {
-        setColumnType(value);
+    public MetaFieldRecord value6(String value) {
+        setType(value);
         return this;
     }
 
@@ -302,20 +302,20 @@ public abstract class FieldRecord extends UpdatableRecordImpl<FieldRecord>
 	 * {@inheritDoc}
 	 */
     @Override
-    public abstract FieldRecord values(String value1, String value2, String value3, String value4, String value5, String value6);
+    public abstract MetaFieldRecord values(String value1, String value2, TableRefType value3, String value4, String value5, String value6);
 
     // -------------------------------------------------------------------------
     // Constructors
     // -------------------------------------------------------------------------
 
-    private final FieldTable fieldTable;
+    private final MetaFieldTable metaFieldTable;
     
     /**
-     * Create a detached FieldRecord
+     * Create a detached MetaFieldRecord
      */
-    public FieldRecord(FieldTable fieldTable) {
-        super(fieldTable);
+    public MetaFieldRecord(MetaFieldTable metaFieldTable) {
+        super(metaFieldTable);
         
-        this.fieldTable = fieldTable;
+        this.metaFieldTable = metaFieldTable;
     }
 }

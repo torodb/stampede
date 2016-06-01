@@ -20,36 +20,36 @@
 package com.torodb.poc.backend.postgresql.tables.records;
 
 import com.torodb.poc.backend.postgresql.tables.PostgreSQLFieldTable;
-import com.torodb.poc.backend.tables.records.FieldRecord;
+import com.torodb.poc.backend.tables.records.MetaFieldRecord;
 
-public class PostgreSQLFieldRecord extends FieldRecord {
+public class PostgreSQLFieldRecord extends MetaFieldRecord<String[]> {
 
     private static final long serialVersionUID = -7296241344455399566L;
 
     /**
-	 * Create a detached FieldRecord
+	 * Create a detached MetaFieldRecord
 	 */
 	public PostgreSQLFieldRecord() {
 		super(PostgreSQLFieldTable.FIELD);
 	}
 
 	/**
-	 * Create a detached, initialised FieldRecord
+	 * Create a detached, initialised MetaFieldRecord
 	 */
-	public PostgreSQLFieldRecord(String database, String collection, String path, String name, String columnName, String columnType) {
+	public PostgreSQLFieldRecord(String database, String collection, String[] tableRef, String name, String identifier, String type) {
 		super(PostgreSQLFieldTable.FIELD);
 		
-		values(database, collection, path, name, columnName, columnType);
+		values(database, collection, tableRef, name, identifier, type);
 	}
 
     @Override
-    public FieldRecord values(String database, String collection, String path, String name, String columnName, String columnType) {
-        setValue(0, database);
-        setValue(1, collection);
-        setValue(2, path);
-        setValue(3, name);
-        setValue(4, columnName);
-        setValue(5, columnType);
+    public MetaFieldRecord values(String database, String collection, String[] tableRef, String name, String identifier, String type) {
+        setDatabase(database);
+        setCollection(collection);
+        setTableRef(tableRef);
+        setName(name);
+        setIdentifier(identifier);
+        setType(type);
         return this;
     }
 }

@@ -23,7 +23,6 @@ package com.torodb.poc.backend.tables;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Iterator;
-import java.util.Map;
 
 import org.jooq.DataType;
 import org.jooq.Field;
@@ -32,33 +31,37 @@ import org.jooq.Record;
 import org.jooq.RecordMapper;
 import org.jooq.Schema;
 import org.jooq.Table;
-import org.jooq.TableField;
-import org.jooq.impl.AbstractKeys;
 import org.jooq.impl.DSL;
-import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
 import com.google.common.collect.AbstractIterator;
-import com.torodb.kvdocument.types.KVType;
+import com.torodb.core.TableRef;
+import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.kvdocument.values.KVValue;
 import com.torodb.poc.backend.DatabaseInterface;
 import com.torodb.poc.backend.meta.DatabaseSchema;
-import com.torodb.poc.backend.mocks.PathDocStructure;
-import com.torodb.poc.backend.tables.records.PathDocTableRecord;
+import com.torodb.poc.backend.tables.records.AbstractDocPartTableRecord;
+import com.torodb.poc.backend.tables.records.RootDocPartTableRecord;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  *
  */
-public class RootDocTable extends TableImpl<PathDocTableRecord> {
-    
-    private static final long serialVersionUID = 2532216259252881711L;
+public abstract class AbstractDocPartTable<DocPartTableRecord extends AbstractDocPartTableRecord<DocPartTableRecord>> extends TableImpl<DocPartTableRecord> {
 
+    private static final long serialVersionUID = 1L;
+    
     public static final String DID_COLUMN_NAME = "did";
+    public static final String RID_COLUMN_NAME = "rid";
+    public static final String PID_COLUMN_NAME = "pid";
+    public static final String SEQ_COLUMN_NAME = "seq";
     
     private static final String[] SPECIAL_COLUMN_NAMES = new String[] {
-            DID_COLUMN_NAME
+            DID_COLUMN_NAME,
+            RID_COLUMN_NAME,
+            PID_COLUMN_NAME,
+            SEQ_COLUMN_NAME
     };
     {
         Arrays.sort(SPECIAL_COLUMN_NAMES);
@@ -66,61 +69,66 @@ public class RootDocTable extends TableImpl<PathDocTableRecord> {
 
     /**
      * JOOQ cannot fetch tables whose records don't have default constructor, so
-     * {@link PathDocTableRecord} cannot be fetched. We use this generic table as
+     * {@link RootDocPartTableRecord} cannot be fetched. We use this generic table as
      * a table with the same name but a generic record and a
      * {@link RecordMapper} to fetch elements of PathDocTables.
      */
-    private Table<Record> genericTable;
+    protected Table<Record> genericTable;
 
-    private Identity<PathDocTableRecord, Integer> identityRoot;
+    protected Identity<DocPartTableRecord, Integer> identityRoot;
 
-    private final TableField<PathDocTableRecord, Integer> didField
-            = createField(DID_COLUMN_NAME, SQLDataType.INTEGER.nullable(false), this, "");
-
-    private final DatabaseInterface databaseInterface;
-    private final PathDocStructure pathDocStructure;
+    protected final DatabaseInterface databaseInterface;
+    protected final MetaDocPart metaDocPart;
     
-    private final String database;
-    private final String collection;
+    protected final String database;
+    protected final String collection;
+    protected final TableRef tableRef;
     
-    public RootDocTable(
+    public AbstractDocPartTable(
             String database,
             String collection,
+            TableRef tableRef,
             DatabaseSchema schema,
             String tableName,
-            PathDocStructure pathDocStructure,
+            MetaDocPart metaDocPart,
             DatabaseInterface databaseInterface
     ) {
-        this(database, collection, 
+        this(database, collection, tableRef,
                 (Schema) schema, tableName, 
-                pathDocStructure, databaseInterface);
+                metaDocPart, databaseInterface);
     }
     
-    private RootDocTable(
+    private AbstractDocPartTable(
             String database,
             String collection,
+            TableRef tableRef,
             Schema schema,
             String tableName,
-            PathDocStructure pathDocStructure,
+            MetaDocPart metaDocPart,
             DatabaseInterface databaseInterface
     ) {
         super(tableName, schema);
         this.database = database;
         this.collection = collection;
-        for (Map.Entry<String, KVType> field : pathDocStructure.getFields().entrySet()) {
-            String fieldName = field.getKey();
+        this.tableRef = tableRef;
+        metaDocPart.streamFields().forEach(field -> {
+            String fieldName = field.getIdentifier();
 
-            DataType<?> dataType = databaseInterface.getDataType(field.getValue());
+            DataType<?> dataType = databaseInterface.getDataType(field.getType());
             
             createField(
                     fieldName,
                     dataType,
                     this,
                     "");
-        }
+        });
 
         this.databaseInterface = databaseInterface;
-        this.pathDocStructure = pathDocStructure;
+        this.metaDocPart = metaDocPart;
+    }
+    
+    public TableRef getTableRef() {
+        return tableRef;
     }
     
     @SuppressFBWarnings("SIC_INNER_SHOULD_BE_STATIC_ANON")
@@ -151,10 +159,6 @@ public class RootDocTable extends TableImpl<PathDocTableRecord> {
         };
     }
 
-    public TableField<PathDocTableRecord, Integer> getDidColumn() {
-        return didField;
-    }
-
     public Table<Record> getGenericTable() {
         if (genericTable == null) {
             genericTable = DSL.tableByName(getSchema().getName(), getName());
@@ -165,16 +169,19 @@ public class RootDocTable extends TableImpl<PathDocTableRecord> {
     private static boolean isSpecialColumn(String columnName) {
         return Arrays.binarySearch(SPECIAL_COLUMN_NAMES, columnName) >= 0;
     }
-
+    
+    @Override
+    public DatabaseSchema getSchema() {
+        return (DatabaseSchema) super.getSchema();
+    }
+    
     /**
      * The class holding records for this type
      * <p>
      * @return
      */
     @Override
-    public Class<PathDocTableRecord> getRecordType() {
-        return PathDocTableRecord.class;
-    }
+    public abstract Class<DocPartTableRecord> getRecordType();
 
     /**
      * {@inheritDoc}
@@ -182,14 +189,7 @@ public class RootDocTable extends TableImpl<PathDocTableRecord> {
      * @return
      */
     @Override
-    public Identity<PathDocTableRecord, Integer> getIdentity() {
-        if (identityRoot == null) {
-            synchronized (this) {
-                identityRoot = IdentityFactory.createIdentity(this);
-            }
-        }
-        return identityRoot;
-    }
+    public abstract Identity<DocPartTableRecord, Integer> getIdentity();
 
     /**
      * {@inheritDoc}
@@ -198,10 +198,7 @@ public class RootDocTable extends TableImpl<PathDocTableRecord> {
      * @return
      */
     @Override
-    public RootDocTable as(String alias) {
-        return new RootDocTable(database, collection, getSchema(), 
-                alias, pathDocStructure, databaseInterface);
-    }
+    public abstract AbstractDocPartTable<DocPartTableRecord> as(String alias);
 
     /**
      * Rename this table
@@ -209,10 +206,7 @@ public class RootDocTable extends TableImpl<PathDocTableRecord> {
      * @param name
      * @return
      */
-    public RootDocTable rename(String name) {
-        return new RootDocTable(database, collection, getSchema(), 
-                name, pathDocStructure, databaseInterface);
-    }
+    public abstract AbstractDocPartTable<DocPartTableRecord> rename(String name);
 
     @Override
     public int hashCode() {
@@ -222,11 +216,5 @@ public class RootDocTable extends TableImpl<PathDocTableRecord> {
     @Override
     public boolean equals(Object obj) {
         return super.equals(obj);
-    }
-
-    private static class IdentityFactory extends AbstractKeys {
-        public static Identity<PathDocTableRecord, Integer> createIdentity(RootDocTable table) {
-            return createIdentity(table, table.didField);
-        }
     }
 }

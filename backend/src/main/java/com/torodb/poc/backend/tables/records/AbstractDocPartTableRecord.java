@@ -21,25 +21,25 @@
 package com.torodb.poc.backend.tables.records;
 
 import java.io.IOException;
-import java.util.Map;
-
-import javax.annotation.Nullable;
+import java.util.Iterator;
 
 import org.jooq.Field;
 import org.jooq.impl.TableRecordImpl;
 
+import com.torodb.core.d2r.DocPartData;
+import com.torodb.core.d2r.DocPartRow;
+import com.torodb.core.transaction.metainf.MetaField;
 import com.torodb.kvdocument.values.KVValue;
-import com.torodb.poc.backend.mocks.PathDocument;
-import com.torodb.poc.backend.tables.PathDocTable;
+import com.torodb.poc.backend.tables.AbstractDocPartTable;
 
 /**
  *
  */
-public class PathDocTableRecord extends TableRecordImpl<PathDocTableRecord> {
+public class AbstractDocPartTableRecord<Record extends AbstractDocPartTableRecord<Record>> extends TableRecordImpl<Record> {
 
-    private static final long serialVersionUID = -556457916;
+    private static final long serialVersionUID = 1;
 
-    private final PathDocTable table;
+    private final AbstractDocPartTable<Record> table;
 
     // -------------------------------------------------------------------------
     // Constructors
@@ -49,7 +49,7 @@ public class PathDocTableRecord extends TableRecordImpl<PathDocTableRecord> {
      * <p>
      * @param table
      */
-    public PathDocTableRecord(PathDocTable table) {
+    public AbstractDocPartTableRecord(AbstractDocPartTable<Record> table) {
         super(table);
         this.table = table;
     }
@@ -68,48 +68,25 @@ public class PathDocTableRecord extends TableRecordImpl<PathDocTableRecord> {
         return (Integer) getValue(0);
     }
 
-    public void setRid(Integer value) {
-        set(1, value);
-    }
-
-    public Integer getRid() {
-        return (Integer) getValue(1);
-    }
-
-    public void setPid(Integer value) {
-        set(2, value);
-    }
-
-    public Integer getPid() {
-        return (Integer) getValue(2);
-    }
-
-    public void setSeq(Integer value) {
-        set(3, value);
-    }
-
-    @Nullable
-    public Integer getSequence() {
-        return (Integer) getValue(3);
-    }
-
-    public void setPathDoc(PathDocument pathdoc) throws IllegalArgumentException {
-
-        if (!table.getPath().equals(pathdoc.getPath())) {
-            throw new IllegalArgumentException("Path of table " + table + " is " + table.getPath() + " which is "
-                    + "different than the type of the given subdocument (" + pathdoc.getPath() + ")");
+    public void setPathDoc(DocPartRow docPartRow) throws IllegalArgumentException {
+        DocPartData docPartData = docPartRow.getDocPartData();
+        if (!table.getTableRef().equals(docPartData.getMetaDocPart().getTableRef())) {
+            throw new IllegalArgumentException("Path of table " + table + " is " + table.getTableRef() + " which is "
+                    + "different than the type of the given subdocument (" + docPartData.getMetaDocPart().getTableRef() + ")");
         }
 
-        for (Map.Entry<String, KVValue<?>> entry : pathdoc.getValues().entrySet()) {
-            //@gortiz: I think we can not use types here!
-            Field f = field(entry.getKey());
-            KVValue<?> v = entry.getValue();
+        Iterator<MetaField> metaFieldIterator = docPartData.orderedMetaFieldIterator();
+        for (KVValue<?> value : docPartRow) {
+            MetaField metaField = metaFieldIterator.next();
+            if (value != null) {
+                Field field = field(metaField.getIdentifier());
 
-            setValue(f, v);
+                setValue(field, value);
+            }
         }
     }
 
-    public PathDocument getPathDoc() {
+    public DocPartRow getDocPartRow() {
         throw new RuntimeException("Not implemented yet");
     }
 

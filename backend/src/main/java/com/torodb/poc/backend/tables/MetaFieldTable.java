@@ -12,9 +12,9 @@ import org.jooq.impl.TableImpl;
 
 import com.torodb.poc.backend.DatabaseInterface;
 import com.torodb.poc.backend.meta.TorodbSchema;
-import com.torodb.poc.backend.tables.records.FieldRecord;
+import com.torodb.poc.backend.tables.records.MetaFieldRecord;
 
-public abstract class FieldTable<Record extends FieldRecord> extends TableImpl<Record> {
+public abstract class MetaFieldTable<TableRefType, Record extends MetaFieldRecord<TableRefType>> extends TableImpl<Record> {
 
     private static final long serialVersionUID = -3500177946436569355L;
 
@@ -23,10 +23,10 @@ public abstract class FieldTable<Record extends FieldRecord> extends TableImpl<R
     public enum TableFields {
         DATABASE        (   "database"          ),
         COLLECTION      (   "collection"        ),
-        PATH            (   "path"              ),
+        TABLE_REF       (   "tableRef"          ),
         NAME            (   "name"              ),
-        COLUMN_NAME     (   "column_name"       ),
-        COLUMN_TYPE     (   "column_type"       )
+        IDENTIFIER      (   "identifier"        ),
+        TYPE            (   "type"              )
         ;
 
         public final String fieldName;
@@ -63,8 +63,8 @@ public abstract class FieldTable<Record extends FieldRecord> extends TableImpl<R
     /**
      * The column <code>torodb.container.path</code>.
      */
-    public final TableField<Record, String> PATH 
-            = createPathField();
+    public final TableField<Record, TableRefType> TABLE_REF 
+            = createTableRefField();
 
     /**
      * The column <code>torodb.container.name</code>.
@@ -75,39 +75,39 @@ public abstract class FieldTable<Record extends FieldRecord> extends TableImpl<R
     /**
      * The column <code>torodb.container.column_name</code>.
      */
-    public final TableField<Record, String> COLUMN_NAME 
-            = createColumnNameField();
+    public final TableField<Record, String> IDENTIFIER 
+            = createIdentifierField();
 
     /**
      * The column <code>torodb.container.column_type</code>.
      */
-    public final TableField<Record, String> COLUMN_TYPE 
-            = createColumnTypeField();
+    public final TableField<Record, String> TYPE 
+            = createTypeField();
 
     protected abstract TableField<Record, String> createDatabaseField();
     protected abstract TableField<Record, String> createCollectionField();
-    protected abstract TableField<Record, String> createPathField();
+    protected abstract TableField<Record, TableRefType> createTableRefField();
     protected abstract TableField<Record, String> createNameField();
-    protected abstract TableField<Record, String> createColumnNameField();
-    protected abstract TableField<Record, String> createColumnTypeField();
+    protected abstract TableField<Record, String> createIdentifierField();
+    protected abstract TableField<Record, String> createTypeField();
 
-    private final UniqueKeys<Record> uniqueKeys;
+    private final UniqueKeys<TableRefType, Record> uniqueKeys;
     
     /**
      * Create a <code>torodb.collections</code> table reference
      */
-    public FieldTable() {
+    public MetaFieldTable() {
         this(TABLE_NAME, null);
     }
 
-    protected FieldTable(String alias, Table<Record> aliased) {
+    protected MetaFieldTable(String alias, Table<Record> aliased) {
         this(alias, aliased, null);
     }
 
-    protected FieldTable(String alias, Table<Record> aliased, Field<?>[] parameters) {
+    protected MetaFieldTable(String alias, Table<Record> aliased, Field<?>[] parameters) {
         super(alias, TorodbSchema.TORODB, aliased, parameters, "");
         
-        this.uniqueKeys = new UniqueKeys<Record>(this);
+        this.uniqueKeys = new UniqueKeys<TableRefType, Record>(this);
     }
     
     public String getSQLCreationStatement(DatabaseInterface databaseInterface) {
@@ -134,12 +134,12 @@ public abstract class FieldTable<Record extends FieldRecord> extends TableImpl<R
      * {@inheritDoc}
      */
     @Override
-    public abstract FieldTable<Record> as(String alias);
+    public abstract MetaFieldTable<TableRefType, Record> as(String alias);
 
     /**
      * Rename this table
      */
-    public abstract FieldTable<Record> rename(String name);
+    public abstract MetaFieldTable<TableRefType, Record> rename(String name);
 
     public boolean isSemanticallyEquals(Table<Record> table) {
         if (!table.getName().equals(getName())) {
@@ -154,17 +154,17 @@ public abstract class FieldTable<Record extends FieldRecord> extends TableImpl<R
         return true; //TODO: improve the check
     }
     
-    public UniqueKeys<Record> getUniqueKeys() {
+    public UniqueKeys<TableRefType, Record> getUniqueKeys() {
         return uniqueKeys;
     }
     
-    public static class UniqueKeys<KeyRecord extends FieldRecord> extends AbstractKeys {
+    public static class UniqueKeys<TableRefType, KeyRecord extends MetaFieldRecord<TableRefType>> extends AbstractKeys {
         private final UniqueKey<KeyRecord> FIELD_PKEY;
         private final UniqueKey<KeyRecord> FIELD_COLUMN_NAME_UNIQUE_PKEY;
         
-        private UniqueKeys(FieldTable<KeyRecord> fieldTable) {
-            FIELD_PKEY = createUniqueKey(fieldTable, fieldTable.DATABASE, fieldTable.COLLECTION, fieldTable.PATH, fieldTable.NAME);
-            FIELD_COLUMN_NAME_UNIQUE_PKEY = createUniqueKey(fieldTable, fieldTable.DATABASE, fieldTable.COLLECTION, fieldTable.PATH, fieldTable.COLUMN_NAME);
+        private UniqueKeys(MetaFieldTable<TableRefType, KeyRecord> fieldTable) {
+            FIELD_PKEY = createUniqueKey(fieldTable, fieldTable.DATABASE, fieldTable.COLLECTION, fieldTable.TABLE_REF, fieldTable.NAME);
+            FIELD_COLUMN_NAME_UNIQUE_PKEY = createUniqueKey(fieldTable, fieldTable.DATABASE, fieldTable.COLLECTION, fieldTable.TABLE_REF, fieldTable.IDENTIFIER);
         }
     }
 }

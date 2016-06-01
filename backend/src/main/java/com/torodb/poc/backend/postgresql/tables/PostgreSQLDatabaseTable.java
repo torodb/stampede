@@ -19,21 +19,18 @@
  */
 package com.torodb.poc.backend.postgresql.tables;
 
-import org.jooq.Converters;
 import org.jooq.Field;
 import org.jooq.Table;
 import org.jooq.TableField;
 import org.jooq.impl.SQLDataType;
 
-import com.torodb.poc.backend.converters.jooq.binging.JSONBBinding;
 import com.torodb.poc.backend.postgresql.tables.records.PostgreSQLDatabaseRecord;
-import com.torodb.poc.backend.tables.CollectionTable.TableFields;
-import com.torodb.poc.backend.tables.DatabaseTable;
+import com.torodb.poc.backend.tables.MetaDatabaseTable;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 @SuppressFBWarnings("EQ_DOESNT_OVERRIDE_EQUALS")
-public class PostgreSQLDatabaseTable extends DatabaseTable<PostgreSQLDatabaseRecord> {
+public class PostgreSQLDatabaseTable extends MetaDatabaseTable<PostgreSQLDatabaseRecord> {
 
     private static final long serialVersionUID = -5506554761865128847L;
     /**
@@ -89,7 +86,7 @@ public class PostgreSQLDatabaseTable extends DatabaseTable<PostgreSQLDatabaseRec
     }
 
     @Override
-    protected TableField<PostgreSQLDatabaseRecord, String> createSchemaNameField() {
-        return createField(TableFields.SCHEMA_NAME.fieldName, SQLDataType.VARCHAR.nullable(false), this, "");
+    protected TableField<PostgreSQLDatabaseRecord, String> createIdentifierField() {
+        return createField(TableFields.IDENTIFIER.fieldName, SQLDataType.VARCHAR.nullable(false), this, "");
     }
 }

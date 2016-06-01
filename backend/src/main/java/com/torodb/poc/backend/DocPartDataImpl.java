@@ -42,6 +42,11 @@ public class DocPartDataImpl extends ArrayList<DocPartRow> implements DocPartDat
         }
         
         @Override
+        public int rowCount() {
+            return size();
+        }
+        
+        @Override
         public Iterator<MetaField> orderedMetaFieldIterator() {
             return new Iterator<MetaField>() {
                 private final int count = columnCount();

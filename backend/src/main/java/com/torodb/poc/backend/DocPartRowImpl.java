@@ -48,6 +48,11 @@ public class DocPartRowImpl extends ArrayList<KVValue<?>> implements DocPartRow 
         }
         
         @Override
+        public DocPartData getDocPartData() {
+            return docPartData;
+        }
+        
+        @Override
         public int getDid() {
             return did;
         }

@@ -20,33 +20,33 @@
 package com.torodb.poc.backend.postgresql.tables.records;
 
 import com.torodb.poc.backend.postgresql.tables.PostgreSQLCollectionTable;
-import com.torodb.poc.backend.tables.records.CollectionRecord;
+import com.torodb.poc.backend.tables.records.MetaCollectionRecord;
 
-public class PostgreSQLCollectionRecord extends CollectionRecord {
+public class PostgreSQLCollectionRecord extends MetaCollectionRecord {
 
     private static final long serialVersionUID = -6808738482552131596L;
 
 	/**
-	 * Create a detached CollectionRecord
+	 * Create a detached MetaCollectionRecord
 	 */
 	public PostgreSQLCollectionRecord() {
 		super(PostgreSQLCollectionTable.COLLECTION);
 	}
 
+    @Override
+    public MetaCollectionRecord values(String database, String name) {
+        
+        setValue(0, database);
+        setValue(1, name);
+        return this;
+    }
+
 	/**
-	 * Create a detached, initialised CollectionRecord
+	 * Create a detached, initialised MetaCollectionRecord
 	 */
-	public PostgreSQLCollectionRecord(String database, String name, String tableName, Boolean capped, Integer maxSize, Integer maxElementes, String other, String storageEngine, Integer lastDid) {
+	public PostgreSQLCollectionRecord(String database, String name) {
 		super(PostgreSQLCollectionTable.COLLECTION);
 		
-		setValue(0, database);
-		setValue(1, name);
-        setValue(2, capped);
-        setValue(3, capped);
-		setValue(4, maxSize);
-		setValue(5, maxElementes);
-		setValue(6, other);
-        setValue(7, storageEngine);
-        setValue(8, lastDid);
+		values(database, name);
 	}
 }

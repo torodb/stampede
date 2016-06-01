@@ -21,14 +21,14 @@ package com.torodb.poc.backend.tables.records;
 
 import org.jooq.Field;
 import org.jooq.Record3;
-import org.jooq.Record6;
-import org.jooq.Row6;
+import org.jooq.Record5;
+import org.jooq.Row5;
 import org.jooq.impl.UpdatableRecordImpl;
 
-import com.torodb.poc.backend.tables.ContainerTable;
+import com.torodb.poc.backend.tables.MetaDocPartTable;
 
-public abstract class ContainerRecord extends UpdatableRecordImpl<ContainerRecord> 
-        implements Record6<String, String, String, String, String, Integer> {
+public abstract class MetaDocPartRecord<TableRefType> extends UpdatableRecordImpl<MetaDocPartRecord<TableRefType>> 
+        implements Record5<String, String, TableRefType, String, Integer> {
 // database, name, original_name, last_did
 	private static final long serialVersionUID = -2107968478;
 
@@ -61,59 +61,45 @@ public abstract class ContainerRecord extends UpdatableRecordImpl<ContainerRecor
     }
 
     /**
-     * Setter for <code>torodb.container.path</code>.
+     * Setter for <code>torodb.container.tableRef</code>.
      */
-    public void setPath(String value) {
+    public void setTableRef(TableRefType value) {
         setValue(2, value);
     }
 
     /**
-     * Getter for <code>torodb.container.path</code>.
+     * Getter for <code>torodb.container.tableRef</code>.
      */
-    public String getPath() {
-        return (String) getValue(2);
+    public TableRefType getTableRef() {
+        return (TableRefType) getValue(2);
     }
 
     /**
-     * Setter for <code>torodb.container.table_name</code>.
+     * Setter for <code>torodb.container.identifier</code>.
      */
-    public void setTableName(String value) {
+    public void setIdentifier(String value) {
         setValue(3, value);
     }
 
     /**
-     * Getter for <code>torodb.container.table_name</code>.
+     * Getter for <code>torodb.container.identifier</code>.
      */
-    public String getTableName() {
+    public String getIdentifier() {
         return (String) getValue(3);
-    }
-
-    /**
-     * Setter for <code>torodb.container.table_name</code>.
-     */
-    public void setParentTableName(String value) {
-        setValue(4, value);
-    }
-
-    /**
-     * Getter for <code>torodb.container.table_name</code>.
-     */
-    public String getParentTableName() {
-        return (String) getValue(4);
     }
 
     /**
      * Setter for <code>torodb.container.last_rid</code>.
      */
     public void setLastRid(Integer value) {
-        setValue(5, value);
+        setValue(4, value);
     }
 
     /**
      * Getter for <code>torodb.container.last_rid</code>.
      */
     public Integer getLastRid() {
-        return (Integer) getValue(5);
+        return (Integer) getValue(4);
     }
 
 	// -------------------------------------------------------------------------
@@ -136,16 +122,16 @@ public abstract class ContainerRecord extends UpdatableRecordImpl<ContainerRecor
 	 * {@inheritDoc}
 	 */
 	@Override
-	public Row6<String, String, String, String, String, Integer> fieldsRow() {
-		return (Row6) super.fieldsRow();
+	public Row5<String, String, TableRefType, String, Integer> fieldsRow() {
+		return (Row5) super.fieldsRow();
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
 	@Override
-	public Row6<String, String, String, String, String, Integer> valuesRow() {
-		return (Row6) super.valuesRow();
+	public Row5<String, String, TableRefType, String, Integer> valuesRow() {
+		return (Row5) super.valuesRow();
 	}
 
     /**
@@ -153,7 +139,7 @@ public abstract class ContainerRecord extends UpdatableRecordImpl<ContainerRecor
      */
     @Override
     public Field<String> field1() {
-        return containerTable.DATABASE;
+        return metaDocPartTable.DATABASE;
     }
 
     /**
@@ -161,15 +147,15 @@ public abstract class ContainerRecord extends UpdatableRecordImpl<ContainerRecor
      */
     @Override
     public Field<String> field2() {
-        return containerTable.COLLECTION;
+        return metaDocPartTable.COLLECTION;
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public Field<String> field3() {
-        return containerTable.PATH;
+    public Field<TableRefType> field3() {
+        return metaDocPartTable.TABLE_REF;
     }
 
 	/**
@@ -177,23 +163,15 @@ public abstract class ContainerRecord extends UpdatableRecordImpl<ContainerRecor
 	 */
 	@Override
 	public Field<String> field4() {
-		return containerTable.TABLE;
+		return metaDocPartTable.IDENTIFIER;
 	}
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public Field<String> field5() {
-        return containerTable.PARENT_TABLE;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Field<Integer> field6() {
-        return containerTable.LAST_RID;
+    public Field<Integer> field5() {
+        return metaDocPartTable.LAST_RID;
     }
 
     /**
@@ -216,8 +194,8 @@ public abstract class ContainerRecord extends UpdatableRecordImpl<ContainerRecor
      * {@inheritDoc}
      */
     @Override
-    public String value3() {
-        return getPath();
+    public TableRefType value3() {
+        return getTableRef();
     }
 
     /**
@@ -225,22 +203,14 @@ public abstract class ContainerRecord extends UpdatableRecordImpl<ContainerRecor
      */
     @Override
     public String value4() {
-        return getTableName();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public String value5() {
-        return getParentTableName();
+        return getIdentifier();
     }
 
 	/**
 	 * {@inheritDoc}
 	 */
 	@Override
-	public Integer value6() {
+	public Integer value5() {
 		return getLastRid();
 	}
 
@@ -248,7 +218,7 @@ public abstract class ContainerRecord extends UpdatableRecordImpl<ContainerRecor
      * {@inheritDoc}
      */
     @Override
-    public ContainerRecord value1(String value) {
+    public MetaDocPartRecord value1(String value) {
         setDatabase(value);
         return this;
     }
@@ -257,7 +227,7 @@ public abstract class ContainerRecord extends UpdatableRecordImpl<ContainerRecor
      * {@inheritDoc}
      */
     @Override
-    public ContainerRecord value2(String value) {
+    public MetaDocPartRecord value2(String value) {
         setCollection(value);
         return this;
     }
@@ -266,8 +236,8 @@ public abstract class ContainerRecord extends UpdatableRecordImpl<ContainerRecor
      * {@inheritDoc}
      */
     @Override
-    public ContainerRecord value3(String value) {
-        setPath(value);
+    public MetaDocPartRecord value3(TableRefType value) {
+        setTableRef(value);
         return this;
     }
 
@@ -275,17 +245,8 @@ public abstract class ContainerRecord extends UpdatableRecordImpl<ContainerRecor
      * {@inheritDoc}
      */
     @Override
-    public ContainerRecord value4(String value) {
-        setTableName(value);
-        return this;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public ContainerRecord value5(String value) {
-        setParentTableName(value);
+    public MetaDocPartRecord value4(String value) {
+        setIdentifier(value);
         return this;
     }
 
@@ -293,7 +254,7 @@ public abstract class ContainerRecord extends UpdatableRecordImpl<ContainerRecor
 	 * {@inheritDoc}
 	 */
 	@Override
-	public ContainerRecord value6(Integer value) {
+	public MetaDocPartRecord value5(Integer value) {
 		setLastRid(value);
 		return this;
 	}
@@ -302,22 +263,20 @@ public abstract class ContainerRecord extends UpdatableRecordImpl<ContainerRecor
 	 * {@inheritDoc}
 	 */
 	@Override
-	public ContainerRecord values(String value1, String value2, String value3, String value4, String value5, Integer value6) {
-		return this;
-	}
+	public abstract MetaDocPartRecord values(String value1, String value2, TableRefType value3, String value4, Integer value5);
 
     // -------------------------------------------------------------------------
     // Constructors
     // -------------------------------------------------------------------------
 
-    private final ContainerTable containerTable;
+    private final MetaDocPartTable metaDocPartTable;
     
     /**
-     * Create a detached ContainerRecord
+     * Create a detached MetaDocPartRecord
      */
-    public ContainerRecord(ContainerTable containerTable) {
-        super(containerTable);
+    public MetaDocPartRecord(MetaDocPartTable metaDocPartTable) {
+        super(metaDocPartTable);
         
-        this.containerTable = containerTable;
+        this.metaDocPartTable = metaDocPartTable;
     }
 }

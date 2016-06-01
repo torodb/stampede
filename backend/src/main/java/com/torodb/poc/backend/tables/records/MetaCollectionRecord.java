@@ -20,43 +20,42 @@
 package com.torodb.poc.backend.tables.records;
 
 import org.jooq.Field;
-import org.jooq.Record1;
 import org.jooq.Record2;
 import org.jooq.Row2;
 import org.jooq.impl.UpdatableRecordImpl;
 
-import com.torodb.poc.backend.tables.DatabaseTable;
+import com.torodb.poc.backend.tables.MetaCollectionTable;
 
-public abstract class DatabaseRecord extends UpdatableRecordImpl<DatabaseRecord> 
+public abstract class MetaCollectionRecord extends UpdatableRecordImpl<MetaCollectionRecord> 
         implements Record2<String, String> {
-    
-    private static final long serialVersionUID = -3134779659016002480L;
+// database, name
+	private static final long serialVersionUID = -2107968478;
 
     /**
-     * Setter for <code>torodb.database.name</code>.
+     * Setter for <code>torodb.collection.database</code>.
      */
-    public void setName(String value) {
+    public void setDatabase(String value) {
         setValue(0, value);
     }
 
     /**
-     * Getter for <code>torodb.database.name</code>.
+     * Getter for <code>torodb.collection.database</code>.
      */
-    public String getName() {
+    public String getDatabase() {
         return (String) getValue(0);
     }
 
     /**
-     * Setter for <code>torodb.database.schema_name</code>.
+     * Setter for <code>torodb.collection.name</code>.
      */
-    public void setSchemaName(String value) {
+    public void setName(String value) {
         setValue(1, value);
     }
 
     /**
-     * Getter for <code>torodb.database.schema_name</code>.
+     * Getter for <code>torodb.collection.name</code>.
      */
-    public String getSchemaName() {
+    public String getName() {
         return (String) getValue(1);
     }
 
@@ -68,8 +67,8 @@ public abstract class DatabaseRecord extends UpdatableRecordImpl<DatabaseRecord>
 	 * {@inheritDoc}
 	 */
 	@Override
-	public Record1<String> key() {
-		return (Record1) super.key();
+	public Record2<String, String> key() {
+		return (Record2) super.key();
 	}
 
 	// -------------------------------------------------------------------------
@@ -97,7 +96,7 @@ public abstract class DatabaseRecord extends UpdatableRecordImpl<DatabaseRecord>
      */
     @Override
     public Field<String> field1() {
-        return databaseTable.NAME;
+        return metaCollectionTable.DATABASE;
     }
 
     /**
@@ -105,7 +104,7 @@ public abstract class DatabaseRecord extends UpdatableRecordImpl<DatabaseRecord>
      */
     @Override
     public Field<String> field2() {
-        return databaseTable.SCHEMA_NAME;
+        return metaCollectionTable.NAME;
     }
 
     /**
@@ -113,7 +112,7 @@ public abstract class DatabaseRecord extends UpdatableRecordImpl<DatabaseRecord>
      */
     @Override
     public String value1() {
-        return getName();
+        return getDatabase();
     }
 
     /**
@@ -121,14 +120,14 @@ public abstract class DatabaseRecord extends UpdatableRecordImpl<DatabaseRecord>
      */
     @Override
     public String value2() {
-        return getSchemaName();
+        return getName();
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public DatabaseRecord value1(String value) {
+    public MetaCollectionRecord value1(String value) {
         setName(value);
         return this;
     }
@@ -137,32 +136,29 @@ public abstract class DatabaseRecord extends UpdatableRecordImpl<DatabaseRecord>
      * {@inheritDoc}
      */
     @Override
-    public DatabaseRecord value2(String value) {
-        setSchemaName(value);
+    public MetaCollectionRecord value2(String value) {
+        setName(value);
         return this;
     }
-
 
 	/**
 	 * {@inheritDoc}
 	 */
 	@Override
-	public DatabaseRecord values(String value1, String value2) {
-		return this;
-	}
+	public abstract MetaCollectionRecord values(String value1, String value2);
 
     // -------------------------------------------------------------------------
     // Constructors
     // -------------------------------------------------------------------------
 
-    private final DatabaseTable databaseTable;
+    private final MetaCollectionTable metaCollectionTable;
     
     /**
-     * Create a detached DatabaseRecord
+     * Create a detached MetaCollectionRecord
      */
-    public DatabaseRecord(DatabaseTable databaseTable) {
-        super(databaseTable);
+    public MetaCollectionRecord(MetaCollectionTable metaCollectionTable) {
+        super(metaCollectionTable);
         
-        this.databaseTable = databaseTable;
+        this.metaCollectionTable = metaCollectionTable;
     }
 }

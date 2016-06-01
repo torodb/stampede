@@ -25,12 +25,12 @@ import org.jooq.TableField;
 import org.jooq.impl.SQLDataType;
 
 import com.torodb.poc.backend.postgresql.tables.records.PostgreSQLFieldRecord;
-import com.torodb.poc.backend.tables.FieldTable;
+import com.torodb.poc.backend.tables.MetaFieldTable;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 @SuppressFBWarnings("EQ_DOESNT_OVERRIDE_EQUALS")
-public class PostgreSQLFieldTable extends FieldTable<PostgreSQLFieldRecord> {
+public class PostgreSQLFieldTable extends MetaFieldTable<String[], PostgreSQLFieldRecord> {
 
     private static final long serialVersionUID = 2305519627765737325L;
     /**
@@ -91,8 +91,8 @@ public class PostgreSQLFieldTable extends FieldTable<PostgreSQLFieldRecord> {
     }
 
     @Override
-    protected TableField<PostgreSQLFieldRecord, String> createPathField() {
-        return createField(TableFields.PATH.fieldName, SQLDataType.VARCHAR.nullable(false), this, "");
+    protected TableField<PostgreSQLFieldRecord, String[]> createTableRefField() {
+        return createField(TableFields.TABLE_REF.fieldName, SQLDataType.VARCHAR.getArrayDataType().nullable(false), this, "");
     }
 
     @Override
@@ -101,12 +101,12 @@ public class PostgreSQLFieldTable extends FieldTable<PostgreSQLFieldRecord> {
     }
 
     @Override
-    protected TableField<PostgreSQLFieldRecord, String> createColumnNameField() {
-        return createField(TableFields.COLUMN_NAME.fieldName, SQLDataType.VARCHAR.nullable(false), this, "");
+    protected TableField<PostgreSQLFieldRecord, String> createIdentifierField() {
+        return createField(TableFields.IDENTIFIER.fieldName, SQLDataType.VARCHAR.nullable(false), this, "");
     }
 
     @Override
-    protected TableField<PostgreSQLFieldRecord, String> createColumnTypeField() {
-        return createField(TableFields.COLUMN_TYPE.fieldName, SQLDataType.VARCHAR.nullable(false), this, "");
+    protected TableField<PostgreSQLFieldRecord, String> createTypeField() {
+        return createField(TableFields.TYPE.fieldName, SQLDataType.VARCHAR.nullable(false), this, "");
     }
 }

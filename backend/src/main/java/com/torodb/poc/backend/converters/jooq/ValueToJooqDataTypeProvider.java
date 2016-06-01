@@ -24,12 +24,12 @@ import java.io.Serializable;
 
 import javax.annotation.Nonnull;
 
-import com.torodb.kvdocument.types.KVType;
+import com.torodb.core.transaction.metainf.FieldType;
 
 /**
  *
  */
 public interface ValueToJooqDataTypeProvider extends Serializable {
 
-    @Nonnull public DataTypeForKV<?> getDataType(@Nonnull KVType type);
+    @Nonnull public DataTypeForKV<?> getDataType(@Nonnull FieldType type);
 }

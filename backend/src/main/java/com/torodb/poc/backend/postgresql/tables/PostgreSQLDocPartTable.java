@@ -24,44 +24,44 @@ import org.jooq.Table;
 import org.jooq.TableField;
 import org.jooq.impl.SQLDataType;
 
-import com.torodb.poc.backend.postgresql.tables.records.PostgreSQLContainerRecord;
-import com.torodb.poc.backend.tables.ContainerTable;
+import com.torodb.poc.backend.postgresql.tables.records.PostgreSQLDocPartRecord;
+import com.torodb.poc.backend.tables.MetaDocPartTable;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 @SuppressFBWarnings("EQ_DOESNT_OVERRIDE_EQUALS")
-public class PostgreSQLContainerTable extends ContainerTable<PostgreSQLContainerRecord> {
+public class PostgreSQLDocPartTable extends MetaDocPartTable<String[], PostgreSQLDocPartRecord> {
 
     private static final long serialVersionUID = -550698624070753099L;
     /**
 	 * The singleton instance of <code>torodb.collections</code>
 	 */
-	public static final PostgreSQLContainerTable CONTAINER = new PostgreSQLContainerTable();
+	public static final PostgreSQLDocPartTable CONTAINER = new PostgreSQLDocPartTable();
 
 	@Override
-    public Class<PostgreSQLContainerRecord> getRecordType() {
-        return PostgreSQLContainerRecord.class;
+    public Class<PostgreSQLDocPartRecord> getRecordType() {
+        return PostgreSQLDocPartRecord.class;
     }
 	
 	/**
 	 * Create a <code>torodb.collections</code> table reference
 	 */
-	public PostgreSQLContainerTable() {
+	public PostgreSQLDocPartTable() {
 		this(TABLE_NAME, null);
 	}
 
 	/**
 	 * Create an aliased <code>torodb.collections</code> table reference
 	 */
-	public PostgreSQLContainerTable(String alias) {
-	    this(alias, PostgreSQLContainerTable.CONTAINER);
+	public PostgreSQLDocPartTable(String alias) {
+	    this(alias, PostgreSQLDocPartTable.CONTAINER);
 	}
 
-	private PostgreSQLContainerTable(String alias, Table<PostgreSQLContainerRecord> aliased) {
+	private PostgreSQLDocPartTable(String alias, Table<PostgreSQLDocPartRecord> aliased) {
 		this(alias, aliased, null);
 	}
 
-	private PostgreSQLContainerTable(String alias, Table<PostgreSQLContainerRecord> aliased, Field<?>[] parameters) {
+	private PostgreSQLDocPartTable(String alias, Table<PostgreSQLDocPartRecord> aliased, Field<?>[] parameters) {
 		super(alias, aliased, parameters);
 	}
     
@@ -69,44 +69,39 @@ public class PostgreSQLContainerTable extends ContainerTable<PostgreSQLContainer
 	 * {@inheritDoc}
 	 */
 	@Override
-	public PostgreSQLContainerTable as(String alias) {
-		return new PostgreSQLContainerTable(alias, this);
+	public PostgreSQLDocPartTable as(String alias) {
+		return new PostgreSQLDocPartTable(alias, this);
 	}
 
 	/**
 	 * Rename this table
 	 */
-	public PostgreSQLContainerTable rename(String name) {
-		return new PostgreSQLContainerTable(name, null);
+	public PostgreSQLDocPartTable rename(String name) {
+		return new PostgreSQLDocPartTable(name, null);
 	}
 
     @Override
-    protected TableField<PostgreSQLContainerRecord, String> createDatabaseField() {
+    protected TableField<PostgreSQLDocPartRecord, String> createDatabaseField() {
         return createField(TableFields.DATABASE.fieldName, SQLDataType.VARCHAR.nullable(false), this, "");
     }
 
     @Override
-    protected TableField<PostgreSQLContainerRecord, String> createCollectionField() {
+    protected TableField<PostgreSQLDocPartRecord, String> createCollectionField() {
         return createField(TableFields.COLLECTION.fieldName, SQLDataType.VARCHAR.nullable(false), this, "");
     }
 
     @Override
-    protected TableField<PostgreSQLContainerRecord, String> createPathField() {
-        return createField(TableFields.PATH.fieldName, SQLDataType.VARCHAR.nullable(false), this, "");
+    protected TableField<PostgreSQLDocPartRecord, String[]> createTableRefField() {
+        return createField(TableFields.TABLE_REF.fieldName, SQLDataType.VARCHAR.getArrayDataType().nullable(false), this, "");
     }
 
     @Override
-    protected TableField<PostgreSQLContainerRecord, String> createTableNameField() {
-        return createField(TableFields.TABLE_NAME.fieldName, SQLDataType.VARCHAR.nullable(false), this, "");
+    protected TableField<PostgreSQLDocPartRecord, String> createIdentifierField() {
+        return createField(TableFields.IDENTIFIER.fieldName, SQLDataType.VARCHAR.nullable(false), this, "");
     }
 
     @Override
-    protected TableField<PostgreSQLContainerRecord, String> createParentTableNameField() {
-        return createField(TableFields.PARENT_TABLE_NAME.fieldName, SQLDataType.VARCHAR.nullable(false), this, "");
-    }
-
-    @Override
-    protected TableField<PostgreSQLContainerRecord, Integer> createLastRidField() {
+    protected TableField<PostgreSQLDocPartRecord, Integer> createLastRidField() {
         return createField(TableFields.LAST_RID.fieldName, SQLDataType.INTEGER.nullable(false), this, "");
     }
 }

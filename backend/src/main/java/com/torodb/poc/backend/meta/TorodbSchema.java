@@ -36,7 +36,7 @@ import org.jooq.impl.SchemaImpl;
 
 import com.torodb.poc.backend.DatabaseInterface;
 import com.torodb.poc.backend.exceptions.InvalidDatabaseException;
-import com.torodb.poc.backend.tables.CollectionTable;
+import com.torodb.poc.backend.tables.MetaCollectionTable;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -97,7 +97,7 @@ public class TorodbSchema extends SchemaImpl {
             ps.executeUpdate();
         }
 
-        try (PreparedStatement ps = c.prepareStatement(databaseInterface.getCollectionTable().getSQLCreationStatement(databaseInterface))) {
+        try (PreparedStatement ps = c.prepareStatement(databaseInterface.getMetaCollectionTable().getSQLCreationStatement(databaseInterface))) {
             ps.execute();
         } finally {
             dsl.configuration().connectionProvider().release(c);
@@ -105,7 +105,7 @@ public class TorodbSchema extends SchemaImpl {
     }
     
     private void checkSchema(Schema torodbSchema, DatabaseInterface databaseInterface) throws InvalidDatabaseException {
-        CollectionTable<?> colsTable = databaseInterface.getCollectionTable();
+        MetaCollectionTable<?> colsTable = databaseInterface.getMetaCollectionTable();
         String colsTableName = colsTable.getName();
         boolean collectionsTableFound = false;
         for (Table table : torodbSchema.getTables()) {

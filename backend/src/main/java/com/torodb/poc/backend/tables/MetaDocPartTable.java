@@ -12,9 +12,9 @@ import org.jooq.impl.TableImpl;
 
 import com.torodb.poc.backend.DatabaseInterface;
 import com.torodb.poc.backend.meta.TorodbSchema;
-import com.torodb.poc.backend.tables.records.ContainerRecord;
+import com.torodb.poc.backend.tables.records.MetaDocPartRecord;
 
-public abstract class ContainerTable<Record extends ContainerRecord> extends TableImpl<Record> {
+public abstract class MetaDocPartTable<TableRefType, Record extends MetaDocPartRecord<TableRefType>> extends TableImpl<Record> {
 
     private static final long serialVersionUID = 1664366669485866827L;
 
@@ -23,9 +23,8 @@ public abstract class ContainerTable<Record extends ContainerRecord> extends Tab
     public enum TableFields {
         DATABASE               (   "database"          ),
         COLLECTION             (   "collection"        ),
-        PATH                   (   "path"              ),
-        TABLE_NAME             (   "table_name"        ),
-        PARENT_TABLE_NAME      (   "parent_table_name" ),
+        TABLE_REF              (   "tableRef"          ),
+        IDENTIFIER             (   "identifier"        ),
         LAST_RID               (   "last_rid"          )
         ;
 
@@ -63,20 +62,14 @@ public abstract class ContainerTable<Record extends ContainerRecord> extends Tab
     /**
      * The column <code>torodb.container.path</code>.
      */
-    public final TableField<Record, String> PATH 
-            = createPathField();
+    public final TableField<Record, TableRefType> TABLE_REF 
+            = createTableRefField();
 
     /**
      * The column <code>torodb.container.table_name</code>.
      */
-    public final TableField<Record, String> PARENT_TABLE 
-            = createParentTableNameField();
-
-    /**
-     * The column <code>torodb.container.table_name</code>.
-     */
-    public final TableField<Record, String> TABLE 
-            = createTableNameField();
+    public final TableField<Record, String> IDENTIFIER 
+            = createIdentifierField();
 
     /**
      * The column <code>torodb.container.last_rid</code>.
@@ -86,28 +79,27 @@ public abstract class ContainerTable<Record extends ContainerRecord> extends Tab
 
     protected abstract TableField<Record, String> createDatabaseField();
     protected abstract TableField<Record, String> createCollectionField();
-    protected abstract TableField<Record, String> createPathField();
-    protected abstract TableField<Record, String> createTableNameField();
-    protected abstract TableField<Record, String> createParentTableNameField();
+    protected abstract TableField<Record, TableRefType> createTableRefField();
+    protected abstract TableField<Record, String> createIdentifierField();
     protected abstract TableField<Record, Integer> createLastRidField();
 
-    private final UniqueKeys<Record> uniqueKeys;
+    private final UniqueKeys<TableRefType, Record> uniqueKeys;
     
     /**
      * Create a <code>torodb.collections</code> table reference
      */
-    public ContainerTable() {
+    public MetaDocPartTable() {
         this(TABLE_NAME, null);
     }
 
-    protected ContainerTable(String alias, Table<Record> aliased) {
+    protected MetaDocPartTable(String alias, Table<Record> aliased) {
         this(alias, aliased, null);
     }
 
-    protected ContainerTable(String alias, Table<Record> aliased, Field<?>[] parameters) {
+    protected MetaDocPartTable(String alias, Table<Record> aliased, Field<?>[] parameters) {
         super(alias, TorodbSchema.TORODB, aliased, parameters, "");
         
-        this.uniqueKeys = new UniqueKeys<Record>(this);
+        this.uniqueKeys = new UniqueKeys<TableRefType, Record>(this);
     }
     
     public String getSQLCreationStatement(DatabaseInterface databaseInterface) {
@@ -134,12 +126,12 @@ public abstract class ContainerTable<Record extends ContainerRecord> extends Tab
      * {@inheritDoc}
      */
     @Override
-    public abstract ContainerTable<Record> as(String alias);
+    public abstract MetaDocPartTable<TableRefType, Record> as(String alias);
 
     /**
      * Rename this table
      */
-    public abstract ContainerTable<Record> rename(String name);
+    public abstract MetaDocPartTable<TableRefType, Record> rename(String name);
 
     public boolean isSemanticallyEquals(Table<Record> table) {
         if (!table.getName().equals(getName())) {
@@ -154,17 +146,17 @@ public abstract class ContainerTable<Record extends ContainerRecord> extends Tab
         return true; //TODO: improve the check
     }
     
-    public UniqueKeys<Record> getUniqueKeys() {
+    public UniqueKeys<TableRefType, Record> getUniqueKeys() {
         return uniqueKeys;
     }
     
-    public static class UniqueKeys<KeyRecord extends ContainerRecord> extends AbstractKeys {
+    public static class UniqueKeys<TableRefType, KeyRecord extends MetaDocPartRecord<TableRefType>> extends AbstractKeys {
         private final UniqueKey<KeyRecord> CONTAINER_PKEY;
         private final UniqueKey<KeyRecord> CONTAINER_TABLE_NAME_UNIQUE;
         
-        private UniqueKeys(ContainerTable<KeyRecord> containerTable) {
-            CONTAINER_PKEY = createUniqueKey(containerTable, containerTable.DATABASE, containerTable.COLLECTION, containerTable.PATH);
-            CONTAINER_TABLE_NAME_UNIQUE = createUniqueKey(containerTable, containerTable.DATABASE, containerTable.COLLECTION, containerTable.TABLE);
+        private UniqueKeys(MetaDocPartTable<TableRefType, KeyRecord> containerTable) {
+            CONTAINER_PKEY = createUniqueKey(containerTable, containerTable.DATABASE, containerTable.COLLECTION, containerTable.TABLE_REF);
+            CONTAINER_TABLE_NAME_UNIQUE = createUniqueKey(containerTable, containerTable.DATABASE, containerTable.COLLECTION, containerTable.IDENTIFIER);
         }
     }
 }
