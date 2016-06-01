@@ -23,9 +23,6 @@ class TableAnalyzer {
     private static final Logger LOGGER
             = LoggerFactory.getLogger(TableAnalyzer.class);
 
-    private TableAnalyzer() {
-    }
-
     public static Table<AttributeReference, Integer, DocStructure> analyzeCollection(
             IndexStorage.CollectionSchema colSchema,
             boolean ignoreArrays

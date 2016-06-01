@@ -34,9 +34,6 @@ import java.util.Set;
  */
 public class ProcessorTestUtils {
 
-    private ProcessorTestUtils() {
-    }
-
     public static void testQueryCriteriaDifference(Set<QueryCriteria> result, Set<QueryCriteria> expected) {
         Set<QueryCriteriaWrapper> difference;
 
