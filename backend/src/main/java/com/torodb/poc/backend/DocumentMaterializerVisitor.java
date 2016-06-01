@@ -21,8 +21,10 @@
 package com.torodb.poc.backend;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Locale;
 import java.util.Map;
 
@@ -33,8 +35,12 @@ import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.torodb.core.TableRef;
+import com.torodb.core.d2r.CollectionData;
+import com.torodb.core.d2r.DocPartData;
+import com.torodb.core.d2r.DocPartRow;
 import com.torodb.core.impl.TableRefImpl;
 import com.torodb.core.transaction.metainf.FieldType;
+import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetaField;
 import com.torodb.core.transaction.metainf.MutableMetaCollection;
 import com.torodb.core.transaction.metainf.MutableMetaDocPart;
@@ -352,7 +358,7 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
         }
     }
     
-    public class DocPartMaterializer {
+    public class DocPartMaterializer implements CollectionData {
         private final MutableMetaCollection metaCollection;
         private final MutableMetaDocPart metaDocPart;
         private final TableRef tableRef;
@@ -360,8 +366,8 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
         private final DocPartMaterializer keyDimensionParentDocPartMaterializer;
         private final int level;
         private final KeyDimension keyDimension;
-        private final DocPartData docPartData;
-        private final DocPartData rootDocPartData;
+        private final DocPartDataImpl docPartData;
+        private final DocPartDataImpl rootDocPartData;
         private final Map<KeyDimension, DocPartMaterializer> childMap = Maps.newHashMap();
         
         private DocPartMaterializer(MutableMetaCollection metaCollection, TableRef tableRef, DocPartMaterializer parentDocPartMaterializer, DocPartMaterializer keyDimensionParentDocPartMaterializer, KeyDimension keyDimension) {
@@ -378,8 +384,8 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
             this.metaDocPart = metaDocPart;
             this.level = parentDocPartMaterializer == null ? 0 : parentDocPartMaterializer.level + 1;
             this.keyDimension = keyDimension;
-            this.rootDocPartData = parentDocPartMaterializer == null ? new DocPartData(this) : parentDocPartMaterializer.getRootDocPartData();
-            this.docPartData = parentDocPartMaterializer == null ? this.rootDocPartData : new DocPartData(this);
+            this.rootDocPartData = parentDocPartMaterializer == null ? new DocPartDataImpl(this) : parentDocPartMaterializer.getRootDocPartData();
+            this.docPartData = parentDocPartMaterializer == null ? this.rootDocPartData : new DocPartDataImpl(this);
         }
         
         public MutableMetaCollection getMetaCollection() {
@@ -406,26 +412,46 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
             return parentDocPartMaterializer == null;
         }
         
-        public DocPartData getDocPartData() {
+        public DocPartDataImpl getDocPartData() {
             return docPartData;
         }
         
-        public DocPartData getRootDocPartData() {
+        public DocPartDataImpl getRootDocPartData() {
             return rootDocPartData;
         }
         
-        public Iterator<DocPartMaterializer> getChildDocPartMaterializerIterator() {
-            return new Iterator<DocumentMaterializerVisitor.DocPartMaterializer>() {
-                private final Iterator<Map.Entry<KeyDimension, DocPartMaterializer>> iterator = childMap.entrySet().iterator();
+        public Iterator<DocPartData> iterator() {
+            return new Iterator<DocPartData>() {
+                private final List<Iterator<Map.Entry<KeyDimension, DocPartMaterializer>>> iteratorList = createIteratorList();
+                
+                private List<Iterator<Map.Entry<KeyDimension, DocPartMaterializer>>> createIteratorList() {
+                    List<Iterator<Map.Entry<KeyDimension, DocPartMaterializer>>> iteratorList =
+                        new ArrayList<Iterator<Map.Entry<KeyDimension, DocPartMaterializer>>>();
+                    Map<KeyDimension, DocPartMaterializer> selfMap = new HashMap<KeyDimension, DocPartMaterializer>();
+                    selfMap.put(null, DocPartMaterializer.this);
+                    iteratorList.add(selfMap.entrySet().iterator());
+                    return iteratorList;
+                }
                 
                 @Override
                 public boolean hasNext() {
-                    return iterator.hasNext();
+                    ListIterator<Iterator<Map.Entry<KeyDimension, DocPartMaterializer>>> iteratorIterator =
+                            iteratorList.listIterator();
+                    while (iteratorIterator.hasNext()) {
+                        Iterator<Map.Entry<KeyDimension, DocPartMaterializer>> iterator = iteratorIterator.next();
+                        if (iterator.hasNext()) {
+                            return true;
+                        }
+                        iteratorIterator.remove();
+                    }
+                    return false;
                 }
 
                 @Override
-                public DocPartMaterializer next() {
-                    return iterator.next().getValue();
+                public DocPartData next() {
+                    DocPartMaterializer docPartMaterializer = iteratorList.get(0).next().getValue();
+                    iteratorList.add(docPartMaterializer.childMap.entrySet().iterator());
+                    return docPartMaterializer.getDocPartData();
                 }
             };
         }
@@ -543,19 +569,19 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
         }
     }
     
-    public class DocPartData extends ArrayList<DocPartRow> {
+    public class DocPartDataImpl extends ArrayList<DocPartRow> implements DocPartData {
         private static final long serialVersionUID = 1L;
         
         private final DocPartMaterializer docPartMaterializer;
         private final DocPartRidGenerator docPartRidGenerator;
-        private final DocPartData parentDocPartData;
-        private final DocPartData rootDocPartData;
+        private final DocPartDataImpl parentDocPartData;
+        private final DocPartDataImpl rootDocPartData;
         private final BiMap<KeyFieldType, Integer> columnIndexMap = HashBiMap.create();
         
         private int currentIndex = 0;
-        private DocPartRow currentRow = null;
+        private DocPartRowImpl currentRow = null;
         
-        public DocPartData(DocPartMaterializer docPartMaterializer) {
+        public DocPartDataImpl(DocPartMaterializer docPartMaterializer) {
             super();
             this.docPartMaterializer = docPartMaterializer;
             this.docPartRidGenerator = new DocPartRidGenerator(docPartMaterializer);
@@ -563,7 +589,12 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
             this.rootDocPartData = docPartMaterializer.getRootDocPartData();
         }
 
-        public DocPartRow currentRow() {
+        @Override
+        public MetaDocPart getMetaDocPart() {
+            return docPartMaterializer.getMetaDocPart();
+        }
+
+        public DocPartRowImpl currentRow() {
             return currentRow;
         }
         
@@ -590,28 +621,28 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
         }
         
         public void appendRootRow() {
-            appendRow(new DocPartRow(this, 
+            appendRow(new DocPartRowImpl(this, 
                     docPartRidGenerator.nextRid()));
         }
         
         public void appendObjectRow() {
-            appendRow(new DocPartRow(this, 
+            appendRow(new DocPartRowImpl(this, 
                     docPartRidGenerator.nextRid()));
         }
         
         public void appendArrayRow(int seq) {
-            appendRow(new DocPartRow(this, 
+            appendRow(new DocPartRowImpl(this, 
                     rootDocPartData.currentRow().getDid(), 
                     parentDocPartData.currentRow().getRid(), 
                     docPartRidGenerator.nextRid(), seq));
         }
 
-        private void appendRow(DocPartRow row) {
+        private void appendRow(DocPartRowImpl row) {
             currentRow = row;
             add(row);
         }
         
-        public DocPartRow getCurrentRow() {
+        public DocPartRowImpl getCurrentRow() {
             return currentRow;
         }
         
@@ -626,23 +657,23 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
         }
     }
     
-    public class DocPartRow extends ArrayList<String> {
+    public class DocPartRowImpl extends ArrayList<KVValue<?>> implements DocPartRow {
         private static final long serialVersionUID = 1L;
         
-        private final DocPartData docPartData;
+        private final DocPartDataImpl docPartData;
         private final int did;
         private final int rid;
         private final Integer pid;
         private final Integer seq;
         
-        public DocPartRow(DocPartData docPartData, int did) {
+        public DocPartRowImpl(DocPartDataImpl docPartData, int did) {
             this.docPartData = docPartData;
             this.did = this.rid = did;
             this.pid = null;
             this.seq = null;
         }
         
-        public DocPartRow(DocPartData docPartData, int did, int rid, int pid) {
+        public DocPartRowImpl(DocPartDataImpl docPartData, int did, int rid, int pid) {
             this.docPartData = docPartData;
             this.did = did;
             this.rid = rid;
@@ -650,7 +681,7 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
             this.seq = null;
         }
         
-        public DocPartRow(DocPartData docPartData, int did, int rid, int pid, int index) {
+        public DocPartRowImpl(DocPartDataImpl docPartData, int did, int rid, int pid, int index) {
             this.docPartData = docPartData;
             this.did = did;
             this.rid = rid;
@@ -675,8 +706,8 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
         }
         
         @Override
-        public Iterator<String> iterator() {
-            return new Iterator<String>() {
+        public Iterator<KVValue<?>> iterator() {
+            return new Iterator<KVValue<?>>() {
                 private final int globalCount = docPartData.columnCount();
                 private final int count = size();
                 private int index = 0;
@@ -687,7 +718,7 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
                 }
 
                 @Override
-                public String next() {
+                public KVValue<?> next() {
                     if (index < count) {
                         return get(index++);
                     }
@@ -701,13 +732,15 @@ public class DocumentMaterializerVisitor implements KVValueVisitor<Void, Documen
         
         public void appendColumnValue(String identifier, KVValue<?> value, int index) {
             final int size = size();
-            if (index < size) {
-                add(index, value.toString());
+            if (index == size) {
+                add(value);
+            } else if (index < size) {
+                set(index, value);
             } else {
                 for (int offset = size; offset < index; offset++) {
                     add(null);
                 }
-                add(value.toString());
+                add(value);
             }
         }
     }
