@@ -2,13 +2,13 @@
 package com.torodb.metainfo.cache.mvcc;
 
 import com.google.common.base.Preconditions;
-import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
-import com.torodb.core.transaction.metainf.MetainfoRepository;
-import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
-import com.torodb.metainfo.cache.WrapperMutableMetaSnapshot;
+import com.torodb.core.transaction.metainf.*;
+import com.torodb.core.transaction.metainf.utils.DefaultMergeChecker;
+import com.torodb.core.transaction.metainf.WrapperMutableMetaSnapshot;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
+import javax.annotation.concurrent.NotThreadSafe;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -20,13 +20,16 @@ public class MvccMetainfoRepository implements MetainfoRepository {
     private static final Logger LOGGER = LogManager.getLogger(MvccMetainfoRepository.class);
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
     private ImmutableMetaSnapshot currentSnapshot;
+    private final MergeChecker mergeChecker;
 
     public MvccMetainfoRepository() {
         this.currentSnapshot = new ImmutableMetaSnapshot.Builder().build();
+        mergeChecker = DefaultMergeChecker::checkMerge;
     }
 
     public MvccMetainfoRepository(ImmutableMetaSnapshot currentView) {
         this.currentSnapshot = currentView;
+        mergeChecker = DefaultMergeChecker::checkMerge;
     }
 
     @Override
@@ -49,12 +52,13 @@ public class MvccMetainfoRepository implements MetainfoRepository {
     }
 
     @Override
-    public MergerStage startMerge(MutableMetaSnapshot stage) {
+    public MergerStage startMerge(MutableMetaSnapshot newSnapshot) throws UnmergeableException {
         LOGGER.trace("Trying to create a {}", MvccMergerStage.class);
         lock.writeLock().lock();
         MvccMergerStage mergeStage = null;
         try {
-            mergeStage = new MvccMergerStage(stage, lock.writeLock());
+            mergeChecker.checkMerge(currentSnapshot, newSnapshot);
+            mergeStage = new MvccMergerStage(newSnapshot, lock.writeLock());
             LOGGER.trace("{} created", MvccMergerStage.class);
         } finally {
             if (mergeStage == null) {
@@ -133,13 +137,35 @@ public class MvccMetainfoRepository implements MetainfoRepository {
                     Preconditions.checkState(lock.writeLock().isHeldByCurrentThread(), "Trying to "
                             + "apply changes without holding the write lock");
 
-                    MvccMetainfoRepository.this.currentSnapshot = changedSnapshot.immutableCopy();
+                    assertCheck(currentSnapshot, changedSnapshot);
+
+                    MetaSnapshotMergeBuilder merger = new MetaSnapshotMergeBuilder(currentSnapshot);
+                    for (MutableMetaDatabase modifiedDatabase : changedSnapshot.getModifiedDatabases()) {
+                        merger.addModifiedDatabase(modifiedDatabase);
+                    }
+                    MvccMetainfoRepository.this.currentSnapshot = merger.build();
                 }
 
                 writeLock.unlock();
             }
         }
 
+        private void assertCheck(ImmutableMetaSnapshot currentSnapshot, MutableMetaSnapshot newSnapshot) {
+            try {
+                boolean assertsEnabled = false;
+                assert assertsEnabled = true; // Intentional side effect!!!
+                if (assertsEnabled) {
+                    mergeChecker.checkMerge(currentSnapshot, newSnapshot);
+                }
+            } catch (UnmergeableException ex) {
+                throw new AssertionError("Unmergeable changes", ex);
+            }
+        }
+
     }
 
+    @NotThreadSafe
+    public static interface MergeChecker {
+        public void checkMerge(ImmutableMetaSnapshot currentSnapshot, MutableMetaSnapshot newSnapshot) throws UnmergeableException;
+    }
 }

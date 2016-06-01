@@ -24,8 +24,9 @@ public interface MetainfoRepository {
      * @param snapshot a mutable snapshot whose changes will be added to metainfo managed by this object.
      * @return
      * @throws IllegalArgumentException if the given snapshot is not related with this object.
+     * @throws UnmergeableException if the given snapshot is incompatible with the current snapshot
      */
-    public MergerStage startMerge(MutableMetaSnapshot snapshot) throws IllegalArgumentException;
+    public MergerStage startMerge(MutableMetaSnapshot snapshot) throws IllegalArgumentException, UnmergeableException;
 
     @NotThreadSafe
     public static interface SnapshotStage extends AutoCloseable {

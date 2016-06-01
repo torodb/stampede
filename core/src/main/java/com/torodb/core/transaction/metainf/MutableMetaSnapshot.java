@@ -31,4 +31,12 @@ public interface MutableMetaSnapshot extends MetaSnapshot {
 
     @Nonnull
     public abstract ImmutableMetaSnapshot immutableCopy();
+
+    public default boolean containsMetaDatabaseByName(String dbName) {
+        return getMetaDatabaseByName(dbName) != null;
+    }
+
+    public default boolean containsMetaDatabaseByIdentifier(String dbId) {
+        return getMetaDatabaseByIdentifier(dbId) != null;
+    }
 }

@@ -1,6 +1,7 @@
 
 package com.torodb.core;
 
+import com.google.common.base.Objects;
 import java.util.Optional;
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.Immutable;
@@ -62,7 +63,7 @@ public abstract class TableRef {
         }
         TableRef otherRef = (TableRef) other;
 
-        return getName().equals(otherRef.getName()) && getParent().equals(otherRef.getParent());
+        return getName().equals(otherRef.getName()) && Objects.equal(getParent(), otherRef.getParent());
     }
 
 }

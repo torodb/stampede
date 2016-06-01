@@ -18,7 +18,7 @@
  * 
  */
 
-package com.torodb.metainfo.cache;
+package com.torodb.core.transaction.metainf;
 
 import com.torodb.core.annotations.DoNotChange;
 import com.torodb.core.transaction.metainf.ImmutableMetaCollection;

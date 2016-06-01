@@ -22,7 +22,8 @@ package com.torodb.common.util;
 
 
 
-import java.util.EnumMap;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 import java.util.EnumSet;
 
 /**
@@ -38,24 +39,22 @@ public class Sequencer<E extends Enum<E>> {
 
     private final Class<E> messagesClass;
     private final EnumSet<E> sentMessages;
-    private final EnumMap<E, Thread> reservedMessages;
+    private final Multimap<E, Thread> reservedMessages;
 
     public Sequencer(Class<E> messageClass) {
         this.messagesClass = messageClass;
         sentMessages = EnumSet.noneOf(messageClass);
-        reservedMessages = new EnumMap<>(messageClass);
+        reservedMessages = HashMultimap.create();
     }
     
     public void waitFor(E message) {
         synchronized (message) {
-            assert !reservedMessages.containsKey(message) : 
-                    "Thread '" + reservedMessages.get(message) + "' already reserved this message";
-            reservedMessages.put(message, java.lang.Thread.currentThread());
+            reservedMessages.put(message, Thread.currentThread());
             while (!sentMessages.contains(message)) {
                 try {
                     message.wait();
                 } catch (InterruptedException ex) {
-                    throw new InterruptedExceptionRuntimeException(ex);
+                    Thread.currentThread().interrupt();
                 }
             }
         }
@@ -63,7 +62,6 @@ public class Sequencer<E extends Enum<E>> {
     
     public void notify(E message) {
         synchronized (message) {
-            assert !sentMessages.contains(message) : "Message '"+message+"' has already been sent";
             sentMessages.add(message);
             message.notifyAll();
         }
@@ -73,22 +71,5 @@ public class Sequencer<E extends Enum<E>> {
         for (E e : message) {
             notify(e);
         }
-    }
-
-    public static class InterruptedExceptionRuntimeException extends RuntimeException {
-
-        private static final long serialVersionUID = 1L;
-        private final InterruptedException ex;
-
-        public InterruptedExceptionRuntimeException(InterruptedException ex) {
-            super(ex);
-            this.ex = ex;
-        }
-
-        public InterruptedExceptionRuntimeException(InterruptedException ex, String message) {
-            super(message, ex);
-            this.ex = ex;
-        }
-
     }
 }
