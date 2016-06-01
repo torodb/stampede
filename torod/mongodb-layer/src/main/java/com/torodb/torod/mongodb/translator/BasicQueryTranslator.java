@@ -849,14 +849,14 @@ public class BasicQueryTranslator {
 
     }
 
-    private static enum NodeType {
+    private enum NodeType {
         EQUALITY,
         SUB_EXP,
         AND_OR_NOR,
         INVALID
     }
 
-    private static enum QueryOperator {
+    private enum QueryOperator {
 
         EQ_KEY("$eq"),
         GT_KEY("$gt"),

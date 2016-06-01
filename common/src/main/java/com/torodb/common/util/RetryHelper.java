@@ -75,7 +75,7 @@ public class RetryHelper {
 
     }
 
-    private static enum RetryAction {
+    private enum RetryAction {
         RETRY,
         RETURN;
     }
