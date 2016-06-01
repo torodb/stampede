@@ -314,7 +314,7 @@ public class ConfigUtils {
 	}
 
 	private static JsonNode createNode(JsonPointer childOfPointer, List<JsonNode> newNodes) {
-		JsonNode newNode = null;
+		JsonNode newNode;
 
 		if (childOfPointer == null || !childOfPointer.last().mayMatchElement()) {
 			newNode = JsonNodeFactory.instance.objectNode();
