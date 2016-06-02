@@ -17,51 +17,51 @@
  *     Copyright (c) 2014, 8Kdata Technology
  *     
  */
-package com.torodb.backend.derby.tables;
+package com.torodb.backend.postgresql.tables;
 
 import org.jooq.Field;
 import org.jooq.Table;
 import org.jooq.TableField;
 import org.jooq.impl.SQLDataType;
 
-import com.torodb.backend.postgresql.tables.records.PostgreSQLDocPartRecord;
-import com.torodb.backend.tables.MetaDocPartTable;
+import com.torodb.backend.postgresql.tables.records.PostgreSQLMetaFieldRecord;
+import com.torodb.backend.tables.MetaFieldTable;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 @SuppressFBWarnings("EQ_DOESNT_OVERRIDE_EQUALS")
-public class DerbyDocPartTable extends MetaDocPartTable<String[], PostgreSQLDocPartRecord> {
+public class PostgreSQLMetaFieldTable extends MetaFieldTable<String[], PostgreSQLMetaFieldRecord> {
 
-    private static final long serialVersionUID = -550698624070753099L;
+    private static final long serialVersionUID = 2305519627765737325L;
     /**
 	 * The singleton instance of <code>torodb.collections</code>
 	 */
-	public static final DerbyDocPartTable CONTAINER = new DerbyDocPartTable();
+	public static final PostgreSQLMetaFieldTable FIELD = new PostgreSQLMetaFieldTable();
 
 	@Override
-    public Class<PostgreSQLDocPartRecord> getRecordType() {
-        return PostgreSQLDocPartRecord.class;
+    public Class<PostgreSQLMetaFieldRecord> getRecordType() {
+        return PostgreSQLMetaFieldRecord.class;
     }
 	
 	/**
 	 * Create a <code>torodb.collections</code> table reference
 	 */
-	public DerbyDocPartTable() {
+	public PostgreSQLMetaFieldTable() {
 		this(TABLE_NAME, null);
 	}
 
 	/**
 	 * Create an aliased <code>torodb.collections</code> table reference
 	 */
-	public DerbyDocPartTable(String alias) {
-	    this(alias, DerbyDocPartTable.CONTAINER);
+	public PostgreSQLMetaFieldTable(String alias) {
+	    this(alias, PostgreSQLMetaFieldTable.FIELD);
 	}
 
-	private DerbyDocPartTable(String alias, Table<PostgreSQLDocPartRecord> aliased) {
+	private PostgreSQLMetaFieldTable(String alias, Table<PostgreSQLMetaFieldRecord> aliased) {
 		this(alias, aliased, null);
 	}
 
-	private DerbyDocPartTable(String alias, Table<PostgreSQLDocPartRecord> aliased, Field<?>[] parameters) {
+	private PostgreSQLMetaFieldTable(String alias, Table<PostgreSQLMetaFieldRecord> aliased, Field<?>[] parameters) {
 		super(alias, aliased, parameters);
 	}
     
@@ -69,39 +69,44 @@ public class DerbyDocPartTable extends MetaDocPartTable<String[], PostgreSQLDocP
 	 * {@inheritDoc}
 	 */
 	@Override
-	public DerbyDocPartTable as(String alias) {
-		return new DerbyDocPartTable(alias, this);
+	public PostgreSQLMetaFieldTable as(String alias) {
+		return new PostgreSQLMetaFieldTable(alias, this);
 	}
 
 	/**
 	 * Rename this table
 	 */
-	public DerbyDocPartTable rename(String name) {
-		return new DerbyDocPartTable(name, null);
+	public PostgreSQLMetaFieldTable rename(String name) {
+		return new PostgreSQLMetaFieldTable(name, null);
 	}
 
     @Override
-    protected TableField<PostgreSQLDocPartRecord, String> createDatabaseField() {
+    protected TableField<PostgreSQLMetaFieldRecord, String> createDatabaseField() {
         return createField(TableFields.DATABASE.fieldName, SQLDataType.VARCHAR.nullable(false), this, "");
     }
 
     @Override
-    protected TableField<PostgreSQLDocPartRecord, String> createCollectionField() {
+    protected TableField<PostgreSQLMetaFieldRecord, String> createCollectionField() {
         return createField(TableFields.COLLECTION.fieldName, SQLDataType.VARCHAR.nullable(false), this, "");
     }
 
     @Override
-    protected TableField<PostgreSQLDocPartRecord, String[]> createTableRefField() {
+    protected TableField<PostgreSQLMetaFieldRecord, String[]> createTableRefField() {
         return createField(TableFields.TABLE_REF.fieldName, SQLDataType.VARCHAR.getArrayDataType().nullable(false), this, "");
     }
 
     @Override
-    protected TableField<PostgreSQLDocPartRecord, String> createIdentifierField() {
+    protected TableField<PostgreSQLMetaFieldRecord, String> createNameField() {
+        return createField(TableFields.NAME.fieldName, SQLDataType.VARCHAR.nullable(false), this, "");
+    }
+
+    @Override
+    protected TableField<PostgreSQLMetaFieldRecord, String> createIdentifierField() {
         return createField(TableFields.IDENTIFIER.fieldName, SQLDataType.VARCHAR.nullable(false), this, "");
     }
 
     @Override
-    protected TableField<PostgreSQLDocPartRecord, Integer> createLastRidField() {
-        return createField(TableFields.LAST_RID.fieldName, SQLDataType.INTEGER.nullable(false), this, "");
+    protected TableField<PostgreSQLMetaFieldRecord, String> createTypeField() {
+        return createField(TableFields.TYPE.fieldName, SQLDataType.VARCHAR.nullable(false), this, "");
     }
 }

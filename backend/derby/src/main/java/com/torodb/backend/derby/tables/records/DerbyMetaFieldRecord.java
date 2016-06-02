@@ -17,27 +17,27 @@
  *     Copyright (c) 2014, 8Kdata Technology
  *     
  */
-package com.torodb.backend.postgresql.tables.records;
+package com.torodb.backend.derby.tables.records;
 
-import com.torodb.backend.postgresql.tables.PostgreSQLFieldTable;
+import com.torodb.backend.derby.tables.DerbyMetaFieldTable;
 import com.torodb.backend.tables.records.MetaFieldRecord;
 
-public class PostgreSQLFieldRecord extends MetaFieldRecord<String[]> {
+public class DerbyMetaFieldRecord extends MetaFieldRecord<String[]> {
 
     private static final long serialVersionUID = -7296241344455399566L;
 
     /**
 	 * Create a detached MetaFieldRecord
 	 */
-	public PostgreSQLFieldRecord() {
-		super(PostgreSQLFieldTable.FIELD);
+	public DerbyMetaFieldRecord() {
+		super(DerbyMetaFieldTable.FIELD);
 	}
 
 	/**
 	 * Create a detached, initialised MetaFieldRecord
 	 */
-	public PostgreSQLFieldRecord(String database, String collection, String[] tableRef, String name, String identifier, String type) {
-		super(PostgreSQLFieldTable.FIELD);
+	public DerbyMetaFieldRecord(String database, String collection, String[] tableRef, String name, String identifier, String type) {
+		super(DerbyMetaFieldTable.FIELD);
 		
 		values(database, collection, tableRef, name, identifier, type);
 	}

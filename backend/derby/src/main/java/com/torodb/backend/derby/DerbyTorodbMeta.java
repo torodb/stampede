@@ -30,12 +30,10 @@ import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.List;
 
 import org.jooq.DSLContext;
 import org.jooq.Meta;
-import org.jooq.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -88,8 +86,10 @@ public class DerbyTorodbMeta implements TorodbMeta {
             Meta jooqMeta) throws InvalidDatabaseSchemaException {
         
         MetaDatabaseTable metaDatabaseTable = databaseInterface.getMetaDatabaseTable();
-        Result<MetaDatabaseRecord> records
-                = dsl.selectFrom(metaDatabaseTable).fetch();
+        List<MetaDatabaseRecord> records
+                = dsl.select(metaDatabaseTable.NAME, metaDatabaseTable.IDENTIFIER)
+                    .from(metaDatabaseTable)
+                    .fetchInto(MetaDatabaseRecord.class);
         
         ImmutableMetaSnapshot.Builder metaSnapshotBuilder = new ImmutableMetaSnapshot.Builder();
         for (MetaDatabaseRecord colRecord : records) {

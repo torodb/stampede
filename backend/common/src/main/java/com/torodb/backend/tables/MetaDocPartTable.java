@@ -14,7 +14,7 @@ import com.torodb.backend.DatabaseInterface;
 import com.torodb.backend.meta.TorodbSchema;
 import com.torodb.backend.tables.records.MetaDocPartRecord;
 
-public abstract class MetaDocPartTable<TableRefType, Record extends MetaDocPartRecord<TableRefType>> extends TableImpl<Record> {
+public abstract class MetaDocPartTable<TableRefType, R extends MetaDocPartRecord<TableRefType>> extends SemanticTableImpl<R> {
 
     private static final long serialVersionUID = 1664366669485866827L;
 
@@ -45,45 +45,45 @@ public abstract class MetaDocPartTable<TableRefType, Record extends MetaDocPartR
      * @return 
      */
     @Override
-    public abstract Class<Record> getRecordType();
+    public abstract Class<R> getRecordType();
 
     /**
      * The column <code>torodb.container.database</code>.
      */
-    public final TableField<Record, String> DATABASE 
+    public final TableField<R, String> DATABASE 
             = createDatabaseField();
 
     /**
      * The column <code>torodb.container.collection</code>.
      */
-    public final TableField<Record, String> COLLECTION 
+    public final TableField<R, String> COLLECTION 
             = createCollectionField();
 
     /**
      * The column <code>torodb.container.path</code>.
      */
-    public final TableField<Record, TableRefType> TABLE_REF 
+    public final TableField<R, TableRefType> TABLE_REF 
             = createTableRefField();
 
     /**
      * The column <code>torodb.container.table_name</code>.
      */
-    public final TableField<Record, String> IDENTIFIER 
+    public final TableField<R, String> IDENTIFIER 
             = createIdentifierField();
 
     /**
      * The column <code>torodb.container.last_rid</code>.
      */
-    public final TableField<Record, Integer> LAST_RID 
+    public final TableField<R, Integer> LAST_RID 
             = createLastRidField();
 
-    protected abstract TableField<Record, String> createDatabaseField();
-    protected abstract TableField<Record, String> createCollectionField();
-    protected abstract TableField<Record, TableRefType> createTableRefField();
-    protected abstract TableField<Record, String> createIdentifierField();
-    protected abstract TableField<Record, Integer> createLastRidField();
+    protected abstract TableField<R, String> createDatabaseField();
+    protected abstract TableField<R, String> createCollectionField();
+    protected abstract TableField<R, TableRefType> createTableRefField();
+    protected abstract TableField<R, String> createIdentifierField();
+    protected abstract TableField<R, Integer> createLastRidField();
 
-    private final UniqueKeys<TableRefType, Record> uniqueKeys;
+    private final UniqueKeys<TableRefType, R> uniqueKeys;
     
     /**
      * Create a <code>torodb.collections</code> table reference
@@ -92,25 +92,25 @@ public abstract class MetaDocPartTable<TableRefType, Record extends MetaDocPartR
         this(TABLE_NAME, null);
     }
 
-    protected MetaDocPartTable(String alias, Table<Record> aliased) {
+    protected MetaDocPartTable(String alias, Table<R> aliased) {
         this(alias, aliased, null);
     }
 
-    protected MetaDocPartTable(String alias, Table<Record> aliased, Field<?>[] parameters) {
+    protected MetaDocPartTable(String alias, Table<R> aliased, Field<?>[] parameters) {
         super(alias, TorodbSchema.TORODB, aliased, parameters, "");
         
-        this.uniqueKeys = new UniqueKeys<TableRefType, Record>(this);
+        this.uniqueKeys = new UniqueKeys<TableRefType, R>(this);
     }
     
     public String getSQLCreationStatement(DatabaseInterface databaseInterface) {
-        return databaseInterface.createContainerTableStatement(getSchema().getName(), getName());
+        return databaseInterface.createMetaDocPartTableStatement(getSchema().getName(), getName());
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public UniqueKey<Record> getPrimaryKey() {
+    public UniqueKey<R> getPrimaryKey() {
         return uniqueKeys.CONTAINER_PKEY;
     }
 
@@ -118,35 +118,22 @@ public abstract class MetaDocPartTable<TableRefType, Record extends MetaDocPartR
      * {@inheritDoc}
      */
     @Override
-    public List<UniqueKey<Record>> getKeys() {
-        return Arrays.<UniqueKey<Record>>asList(uniqueKeys.CONTAINER_PKEY, uniqueKeys.CONTAINER_TABLE_NAME_UNIQUE);
+    public List<UniqueKey<R>> getKeys() {
+        return Arrays.<UniqueKey<R>>asList(uniqueKeys.CONTAINER_PKEY, uniqueKeys.CONTAINER_TABLE_NAME_UNIQUE);
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public abstract MetaDocPartTable<TableRefType, Record> as(String alias);
+    public abstract MetaDocPartTable<TableRefType, R> as(String alias);
 
     /**
      * Rename this table
      */
-    public abstract MetaDocPartTable<TableRefType, Record> rename(String name);
+    public abstract MetaDocPartTable<TableRefType, R> rename(String name);
 
-    public boolean isSemanticallyEquals(Table<Record> table) {
-        if (!table.getName().equals(getName())) {
-            return false;
-        }
-        if (table.getSchema() == null || !getSchema().getName().equals(table.getSchema().getName())) {
-            return false;
-        }
-        if (table.fields().length != 5) {
-            return false;
-        }
-        return true; //TODO: improve the check
-    }
-    
-    public UniqueKeys<TableRefType, Record> getUniqueKeys() {
+    public UniqueKeys<TableRefType, R> getUniqueKeys() {
         return uniqueKeys;
     }
     

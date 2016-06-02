@@ -24,9 +24,12 @@ import javax.sql.DataSource;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jooq.SQLDialect;
+import org.jooq.impl.DSL;
 import org.junit.Test;
 
-import com.torodb.backend.DbBackendConfiguration;
+import com.torodb.backend.derby.converters.DerbyKVTypeToSqlType;
+import com.torodb.backend.driver.derby.DerbyDbBackendConfiguration;
 import com.torodb.backend.driver.derby.OfficialDerbyDriver;
 
 public class BackendDerbyTest {
@@ -39,7 +42,7 @@ public class BackendDerbyTest {
         LOGGER.warn("Test message");
         
         OfficialDerbyDriver derbyDriver = new OfficialDerbyDriver();
-        DataSource dataSource = derbyDriver.getConfiguredDataSource(new DbBackendConfiguration() {
+        DataSource derbyDataSource = derbyDriver.getConfiguredDataSource(new DerbyDbBackendConfiguration() {
             @Override
             public String getUsername() {
                 return null;
@@ -84,6 +87,14 @@ public class BackendDerbyTest {
             public int getConnectionPoolSize() {
                 return 0;
             }
+
+            @Override
+            public boolean isInMemory() {
+                return true;
+            }
         }, "torod");
+        DerbyDatabaseInterface derbyDatabaseInterface = new DerbyDatabaseInterface(new DerbyKVTypeToSqlType());
+        
+        DerbyTorodbMeta derbyTorodbMeta = new DerbyTorodbMeta(DSL.using(derbyDataSource.getConnection(), SQLDialect.DERBY), derbyDatabaseInterface);
     }
 }

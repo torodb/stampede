@@ -20,6 +20,7 @@ public interface DataTypeInterface {
     @Nonnull String escapeSchemaName(@Nonnull String collection) throws IllegalArgumentException;
     @Nonnull String escapeAttributeName(@Nonnull String attributeName) throws IllegalArgumentException;
     @Nonnull String escapeIndexName(@Nonnull String indexName) throws IllegalArgumentException;
+    boolean isSameIdentifier(@Nonnull String leftIdentifier, @Nonnull String rightIdentifier);
 
     @Nonnull TableRef toTableRef(Object tableRefObject);
     @Nonnull int getIntColumnType(ResultSet columns) throws SQLException;

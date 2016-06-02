@@ -19,33 +19,34 @@
  */
 package com.torodb.backend.postgresql.tables.records;
 
-import com.torodb.backend.postgresql.tables.PostgreSQLDatabaseTable;
-import com.torodb.backend.tables.records.MetaDatabaseRecord;
+import com.torodb.backend.postgresql.tables.PostgreSQLMetaCollectionTable;
+import com.torodb.backend.tables.records.MetaCollectionRecord;
 
-public class PostgreSQLDatabaseRecord extends MetaDatabaseRecord {
+public class PostgreSQLMetaCollectionRecord extends MetaCollectionRecord {
 
-    private static final long serialVersionUID = -7220623531622958067L;
+    private static final long serialVersionUID = -6808738482552131596L;
 
-    /**
+	/**
 	 * Create a detached MetaCollectionRecord
 	 */
-	public PostgreSQLDatabaseRecord() {
-		super(PostgreSQLDatabaseTable.DATABASE);
+	public PostgreSQLMetaCollectionRecord() {
+		super(PostgreSQLMetaCollectionTable.COLLECTION);
 	}
+
+    @Override
+    public MetaCollectionRecord values(String database, String name) {
+        
+        setValue(0, database);
+        setValue(1, name);
+        return this;
+    }
 
 	/**
 	 * Create a detached, initialised MetaCollectionRecord
 	 */
-	public PostgreSQLDatabaseRecord(String name, String identifier) {
-		super(PostgreSQLDatabaseTable.DATABASE);
+	public PostgreSQLMetaCollectionRecord(String database, String name) {
+		super(PostgreSQLMetaCollectionTable.COLLECTION);
 		
-		values(name, identifier);
+		values(database, name);
 	}
-
-    @Override
-    public MetaDatabaseRecord values(String name, String identifier) {
-        setName(name);
-        setIdentifier(identifier);
-        return this;
-    }
 }

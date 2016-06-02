@@ -32,14 +32,14 @@ import com.zaxxer.hikari.HikariDataSource;
  *
  */
 @Singleton
-public abstract class AbstractDbBackend implements DbBackend {
+public abstract class AbstractDbBackend<Configuration extends DbBackendConfiguration> implements DbBackend {
     public static final int SYSTEM_DATABASE_CONNECTIONS = 1;
     public static final int MIN_READ_CONNECTIONS_DATABASE = 1;
     public static final int MIN_SESSION_CONNECTIONS_DATABASE = 2;
     public static final int MIN_CONNECTIONS_DATABASE = SYSTEM_DATABASE_CONNECTIONS + MIN_READ_CONNECTIONS_DATABASE
             + MIN_SESSION_CONNECTIONS_DATABASE;
 
-    private final DbBackendConfiguration configuration;
+    private final Configuration configuration;
     private HikariDataSource commonDataSource;
     private HikariDataSource systemDataSource;
     private HikariDataSource globalCursorDataSource;
@@ -51,7 +51,7 @@ public abstract class AbstractDbBackend implements DbBackend {
      *
      * @param configuration
      */
-    public AbstractDbBackend(DbBackendConfiguration configuration) {
+    public AbstractDbBackend(Configuration configuration) {
         this.configuration = configuration;
 
         int connectionPoolSize = configuration.getConnectionPoolSize();
@@ -108,7 +108,7 @@ public abstract class AbstractDbBackend implements DbBackend {
     protected abstract TransactionIsolationLevel getGlobalCursorTransactionIsolation();
 
     private HikariDataSource createPooledDataSource(
-            DbBackendConfiguration configuration, String poolName, int poolSize,
+            Configuration configuration, String poolName, int poolSize,
             TransactionIsolationLevel transactionIsolationLevel,
             boolean readOnly
     ) {
@@ -131,7 +131,7 @@ public abstract class AbstractDbBackend implements DbBackend {
         return new HikariDataSource(hikariConfig);
     }
 
-    protected abstract DataSource getConfiguredDataSource(DbBackendConfiguration configuration, String poolName);
+    protected abstract DataSource getConfiguredDataSource(Configuration configuration, String poolName);
 
     private void checkDataSourcesInitialized() {
         if(! dataSourcesInitialized) {

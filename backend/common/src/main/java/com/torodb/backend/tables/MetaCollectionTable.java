@@ -9,13 +9,12 @@ import org.jooq.Table;
 import org.jooq.TableField;
 import org.jooq.UniqueKey;
 import org.jooq.impl.AbstractKeys;
-import org.jooq.impl.TableImpl;
 
 import com.torodb.backend.DatabaseInterface;
 import com.torodb.backend.meta.TorodbSchema;
 import com.torodb.backend.tables.records.MetaCollectionRecord;
 
-public abstract class MetaCollectionTable<Record extends MetaCollectionRecord> extends TableImpl<Record> {
+public abstract class MetaCollectionTable<R extends MetaCollectionRecord> extends SemanticTableImpl<R> {
 
     private static final long serialVersionUID = 740755688;
 
@@ -43,24 +42,24 @@ public abstract class MetaCollectionTable<Record extends MetaCollectionRecord> e
      * @return 
      */
     @Override
-    public abstract Class<Record> getRecordType();
+    public abstract Class<R> getRecordType();
 
     /**
      * The column <code>torodb.collection.database</code>.
      */
-    public final TableField<Record, String> DATABASE 
+    public final TableField<R, String> DATABASE 
             = createDatabaseField();
 
     /**
      * The column <code>torodb.collection.name</code>.
      */
-    public final TableField<Record, String> NAME 
+    public final TableField<R, String> NAME 
             = createNameField();
 
-    protected abstract TableField<Record, String> createDatabaseField();
-    protected abstract TableField<Record, String> createNameField();
+    protected abstract TableField<R, String> createDatabaseField();
+    protected abstract TableField<R, String> createNameField();
 
-    private final UniqueKeys<Record> uniqueKeys;
+    private final UniqueKeys<R> uniqueKeys;
     
     /**
      * Create a <code>torodb.collections</code> table reference
@@ -69,25 +68,25 @@ public abstract class MetaCollectionTable<Record extends MetaCollectionRecord> e
         this(TABLE_NAME, null);
     }
 
-    protected MetaCollectionTable(String alias, Table<Record> aliased) {
+    protected MetaCollectionTable(String alias, Table<R> aliased) {
         this(alias, aliased, null);
     }
 
-    protected MetaCollectionTable(String alias, Table<Record> aliased, Field<?>[] parameters) {
+    protected MetaCollectionTable(String alias, Table<R> aliased, Field<?>[] parameters) {
         super(alias, TorodbSchema.TORODB, aliased, parameters, "");
         
-        this.uniqueKeys = new UniqueKeys<Record>(this);
+        this.uniqueKeys = new UniqueKeys<R>(this);
     }
     
     public String getSQLCreationStatement(DatabaseInterface databaseInterface) {
-        return databaseInterface.createCollectionTableStatement(getSchema().getName(), getName());
+        return databaseInterface.createMetaCollectionTableStatement(getSchema().getName(), getName());
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public UniqueKey<Record> getPrimaryKey() {
+    public UniqueKey<R> getPrimaryKey() {
         return uniqueKeys.COLLECTION_PKEY;
     }
 
@@ -95,35 +94,22 @@ public abstract class MetaCollectionTable<Record extends MetaCollectionRecord> e
      * {@inheritDoc}
      */
     @Override
-    public List<UniqueKey<Record>> getKeys() {
-        return Arrays.<UniqueKey<Record>>asList(uniqueKeys.COLLECTION_PKEY);
+    public List<UniqueKey<R>> getKeys() {
+        return Arrays.<UniqueKey<R>>asList(uniqueKeys.COLLECTION_PKEY);
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public abstract MetaCollectionTable<Record> as(String alias);
+    public abstract MetaCollectionTable<R> as(String alias);
 
     /**
      * Rename this table
      */
-    public abstract MetaCollectionTable<Record> rename(String name);
-
-    public boolean isSemanticallyEquals(Table<Record> table) {
-        if (!table.getName().equals(getName())) {
-            return false;
-        }
-        if (table.getSchema() == null || !getSchema().getName().equals(table.getSchema().getName())) {
-            return false;
-        }
-        if (table.fields().length != 10) {
-            return false;
-        }
-        return true; //TODO: improve the check
-    }
+    public abstract MetaCollectionTable<R> rename(String name);
     
-    public UniqueKeys<Record> getUniqueKeys() {
+    public UniqueKeys<R> getUniqueKeys() {
         return uniqueKeys;
     }
     

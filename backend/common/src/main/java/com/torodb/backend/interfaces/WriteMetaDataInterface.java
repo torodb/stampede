@@ -7,11 +7,11 @@ import org.jooq.DSLContext;
 import com.torodb.core.TableRef;
 
 public interface WriteMetaDataInterface {
-    @Nonnull String createDatabaseTableStatement(@Nonnull String schemaName, @Nonnull String tableName);
-    @Nonnull String createCollectionTableStatement(@Nonnull String schemaName, @Nonnull String tableName);
-    @Nonnull String createContainerTableStatement(@Nonnull String schemaName, @Nonnull String tableName);
-    @Nonnull String createFieldTableStatement(@Nonnull String schemaName, @Nonnull String tableName);
-    @Nonnull String createIndexesTableStatement(@Nonnull String schemaName, @Nonnull String tableName, @Nonnull String indexNameColumn, @Nonnull String indexOptionsColumn);
+    @Nonnull String createMetaDatabaseTableStatement(@Nonnull String schemaName, @Nonnull String tableName);
+    @Nonnull String createMetaCollectionTableStatement(@Nonnull String schemaName, @Nonnull String tableName);
+    @Nonnull String createMetaDocPartTableStatement(@Nonnull String schemaName, @Nonnull String tableName);
+    @Nonnull String createMetaFieldTableStatement(@Nonnull String schemaName, @Nonnull String tableName);
+    @Nonnull String createMetaIndexesTableStatement(@Nonnull String schemaName, @Nonnull String tableName, @Nonnull String indexNameColumn, @Nonnull String indexOptionsColumn);
     
     int reserveRids(@Nonnull DSLContext dsl, @Nonnull String database, @Nonnull String collection, @Nonnull TableRef tableRef, int count);
     

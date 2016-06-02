@@ -17,20 +17,20 @@
  *     Copyright (c) 2014, 8Kdata Technology
  *     
  */
-package com.torodb.backend.postgresql.tables.records;
+package com.torodb.backend.derby.tables.records;
 
-import com.torodb.backend.postgresql.tables.PostgreSQLCollectionTable;
+import com.torodb.backend.derby.tables.DerbyMetaCollectionTable;
 import com.torodb.backend.tables.records.MetaCollectionRecord;
 
-public class PostgreSQLCollectionRecord extends MetaCollectionRecord {
+public class DerbyMetaCollectionRecord extends MetaCollectionRecord {
 
     private static final long serialVersionUID = -6808738482552131596L;
 
 	/**
 	 * Create a detached MetaCollectionRecord
 	 */
-	public PostgreSQLCollectionRecord() {
-		super(PostgreSQLCollectionTable.COLLECTION);
+	public DerbyMetaCollectionRecord() {
+		super(DerbyMetaCollectionTable.COLLECTION);
 	}
 
     @Override
@@ -44,8 +44,8 @@ public class PostgreSQLCollectionRecord extends MetaCollectionRecord {
 	/**
 	 * Create a detached, initialised MetaCollectionRecord
 	 */
-	public PostgreSQLCollectionRecord(String database, String name) {
-		super(PostgreSQLCollectionTable.COLLECTION);
+	public DerbyMetaCollectionRecord(String database, String name) {
+		super(DerbyMetaCollectionTable.COLLECTION);
 		
 		values(database, name);
 	}

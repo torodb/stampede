@@ -24,44 +24,44 @@ import org.jooq.Table;
 import org.jooq.TableField;
 import org.jooq.impl.SQLDataType;
 
-import com.torodb.backend.postgresql.tables.records.PostgreSQLDatabaseRecord;
+import com.torodb.backend.derby.tables.records.DerbyMetaDatabaseRecord;
 import com.torodb.backend.tables.MetaDatabaseTable;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 @SuppressFBWarnings("EQ_DOESNT_OVERRIDE_EQUALS")
-public class DerbyDatabaseTable extends MetaDatabaseTable<PostgreSQLDatabaseRecord> {
+public class DerbyMetaDatabaseTable extends MetaDatabaseTable<DerbyMetaDatabaseRecord> {
 
     private static final long serialVersionUID = -5506554761865128847L;
     /**
 	 * The singleton instance of <code>torodb.collections</code>
 	 */
-	public static final DerbyDatabaseTable DATABASE = new DerbyDatabaseTable();
+	public static final DerbyMetaDatabaseTable DATABASE = new DerbyMetaDatabaseTable();
 
 	@Override
-    public Class<PostgreSQLDatabaseRecord> getRecordType() {
-        return PostgreSQLDatabaseRecord.class;
+    public Class<DerbyMetaDatabaseRecord> getRecordType() {
+        return DerbyMetaDatabaseRecord.class;
     }
 	
 	/**
 	 * Create a <code>torodb.collections</code> table reference
 	 */
-	public DerbyDatabaseTable() {
+	public DerbyMetaDatabaseTable() {
 		this(TABLE_NAME, null);
 	}
 
 	/**
 	 * Create an aliased <code>torodb.collections</code> table reference
 	 */
-	public DerbyDatabaseTable(String alias) {
-	    this(alias, DerbyDatabaseTable.DATABASE);
+	public DerbyMetaDatabaseTable(String alias) {
+	    this(alias, DerbyMetaDatabaseTable.DATABASE);
 	}
 
-	private DerbyDatabaseTable(String alias, Table<PostgreSQLDatabaseRecord> aliased) {
+	private DerbyMetaDatabaseTable(String alias, Table<DerbyMetaDatabaseRecord> aliased) {
 		this(alias, aliased, null);
 	}
 
-	private DerbyDatabaseTable(String alias, Table<PostgreSQLDatabaseRecord> aliased, Field<?>[] parameters) {
+	private DerbyMetaDatabaseTable(String alias, Table<DerbyMetaDatabaseRecord> aliased, Field<?>[] parameters) {
 		super(alias, aliased, parameters);
 	}
     
@@ -69,24 +69,24 @@ public class DerbyDatabaseTable extends MetaDatabaseTable<PostgreSQLDatabaseReco
 	 * {@inheritDoc}
 	 */
 	@Override
-	public DerbyDatabaseTable as(String alias) {
-		return new DerbyDatabaseTable(alias, this);
+	public DerbyMetaDatabaseTable as(String alias) {
+		return new DerbyMetaDatabaseTable(alias, this);
 	}
 
 	/**
 	 * Rename this table
 	 */
-	public DerbyDatabaseTable rename(String name) {
-		return new DerbyDatabaseTable(name, null);
+	public DerbyMetaDatabaseTable rename(String name) {
+		return new DerbyMetaDatabaseTable(name, null);
 	}
 
     @Override
-    protected TableField<PostgreSQLDatabaseRecord, String> createNameField() {
+    protected TableField<DerbyMetaDatabaseRecord, String> createNameField() {
         return createField(TableFields.NAME.fieldName, SQLDataType.VARCHAR.nullable(false), this, "");
     }
 
     @Override
-    protected TableField<PostgreSQLDatabaseRecord, String> createIdentifierField() {
+    protected TableField<DerbyMetaDatabaseRecord, String> createIdentifierField() {
         return createField(TableFields.IDENTIFIER.fieldName, SQLDataType.VARCHAR.nullable(false), this, "");
     }
 }
