@@ -88,7 +88,6 @@
         <module>kvdocument</module>
         <!--<module>query</module>-->
         <module>backend</module>
-        <module>metainfo-cache</module>
         <module>core</module>
         <module>metainfo-cache</module>
     </modules>
@@ -283,7 +282,6 @@
 	        <dependency>
 	            <groupId>org.apache.derby</groupId>
 	            <artifactId>derby</artifactId>
-	            <scope>test</scope>
 	            <version>10.12.1.1</version>
 	        </dependency>
             

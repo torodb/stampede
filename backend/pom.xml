@@ -23,9 +23,8 @@ Parent project for the database backends module.
     </description>
 
     <modules>
-	   <module>driver</module>
-	   <module>common</module>
-        <module>postgresql</module>
+	<module>driver</module>
+	<module>common</module>
         <module>derby</module>
     </modules>
 

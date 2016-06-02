@@ -13,7 +13,7 @@
 	<groupId>com.torodb</groupId>
 	<artifactId>driver-derby</artifactId>
 
-	<name>ToroDB-poc: derby driver</name>
+	<name>ToroDB-poc: Derby driver</name>
 	<description>
         Derby JDBC driver.
         May be used by more databases than Derby itself, but provides some database-dependent configuration.

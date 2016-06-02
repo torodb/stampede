@@ -96,12 +96,12 @@ public final class DatabaseSchema extends SchemaImpl {
                     .from(collectionTable)
                     .where(collectionTable.DATABASE.eq(database))
                     .fetchInto(MetaCollectionRecord.class);
-            Map<String, MetaDocPartRecord<?>> docParts = dsl
+            Map<String, MetaDocPartRecord> docParts = dsl
                     .select(docPartTable.COLLECTION, docPartTable.TABLE_REF, docPartTable.IDENTIFIER)
                     .from(docPartTable)
                     .where(docPartTable.DATABASE.eq(database))
                     .fetchMap(docPartTable.IDENTIFIER, MetaDocPartRecord.class);
-            List<MetaFieldRecord<?>> fields = dsl
+            List<MetaFieldRecord> fields = dsl
                     .select(fieldTable.COLLECTION, fieldTable.TABLE_REF, fieldTable.NAME, 
                             docPartTable.IDENTIFIER, fieldTable.IDENTIFIER, fieldTable.TYPE)
                     .from(docPartTable)
@@ -112,7 +112,7 @@ public final class DatabaseSchema extends SchemaImpl {
             Iterable<? extends Table<?>> existingTables = standardSchema.getTables();
             for (MetaCollectionRecord collection : collections) {
                 MetaDocPartRecord<?> rootMetaDocPartRecord = null;
-                for (Map.Entry<String, MetaDocPartRecord<?>> container : docParts.entrySet()) {
+                for (Map.Entry<String, MetaDocPartRecord> container : docParts.entrySet()) {
                     if (!container.getValue().getCollection().equals(collection.getName())) {
                         continue;
                     }
@@ -133,7 +133,7 @@ public final class DatabaseSchema extends SchemaImpl {
                                 collection.getName(), 
                                 rootMetaDocPartRecord.getIdentifier());
                 
-                for (Map.Entry<String, MetaDocPartRecord<?>> container : docParts.entrySet()) {
+                for (Map.Entry<String, MetaDocPartRecord> container : docParts.entrySet()) {
                     if (!container.getValue().getCollection().equals(collection.getName())) {
                         continue;
                     }
@@ -253,7 +253,7 @@ public final class DatabaseSchema extends SchemaImpl {
         return null;
     }
     
-    private boolean containsField(Field<?> existingField, String tableName, Iterable<MetaFieldRecord<?>> fields) {
+    private boolean containsField(Field<?> existingField, String tableName, Iterable<MetaFieldRecord> fields) {
         for (MetaFieldRecord<?> field : fields) {
             if (field.getIdentifier().equals(tableName) &&
                     existingField.getName().equals(field.getIdentifier())) {
