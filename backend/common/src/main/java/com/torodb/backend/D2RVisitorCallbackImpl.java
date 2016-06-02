@@ -77,10 +77,6 @@ public class D2RVisitorCallbackImpl implements Callback<DocPartRowImpl>, Collect
     
     public void visit(KVArray array, AttributeReference attributeReference, TableRef tableRef,
             DocPartRowImpl parentRow) {
-        if (array.isEmpty()) {
-            return;
-        }
-        
         attributeReference = attributeReference.append(new ArrayKey(0));
         tableRef = attributeReferenceTranslator.toTableRef(attributeReference);
         DocPartDataImpl docPartData = getDocPartData(attributeReference, tableRef);
