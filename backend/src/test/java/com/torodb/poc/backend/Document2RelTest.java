@@ -1,6 +1,7 @@
 package com.torodb.poc.backend;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -37,10 +38,11 @@ import com.torodb.metainfo.cache.mvcc.MvccMetainfoRepository;
 public class Document2RelTest {
 	
 	//TODO: Change to final implementation code
-	private static final String ARRAY_VALUE_NAME="v";
-	private static final boolean IS_ARRAY=true;
-	private static final boolean IS_SUBDOCUMENT=false;
+	private static final String ARRAY_VALUE_NAME = "v";
+	private static final boolean IS_ARRAY = true;
+	private static final boolean IS_SUBDOCUMENT = false;
 	private static final Integer NO_SEQ = null;
+	private static final String ROOT_DOC_NAME = "";
 
 	private JsonParser parser = new JacksonJsonParser();
 
@@ -76,14 +78,30 @@ public class Document2RelTest {
 	}
 
 	@Test
+	public void emptyDocumentMapsToTable() {
+		CollectionData collectionData = parseDocument("EmptyDocument.json");
+		assertNotNull(findRootDocPart(collectionData));
+	}
+	
+	@Test
+	public void emptyDocumentCreatesARow() {
+		CollectionData collectionData = parseDocument("EmptyDocument.json");
+		DocPartData rootDocPart = findRootDocPart(collectionData);
+		assertTrue(rootDocPart.iterator().hasNext());
+		DocPartRow firstRow = rootDocPart.iterator().next();
+		assertNotNull(firstRow);
+		assertFalse(firstRow.iterator().hasNext());
+	}
+	
+	@Test
 	public void rootDocMapsToATableWithEmptyName() {
-		CollectionData collectionData = parseDocument("docs/OneField.json");
-		assertNotNull(findDocPart(collectionData, ""));
+		CollectionData collectionData = parseDocument("OneField.json");
+		assertNotNull(findDocPart(collectionData, ROOT_DOC_NAME));
 	}
 	
 	@Test
 	public void aFieldMapsToAColumn() {
-		CollectionData collectionData = parseDocument("docs/OneField.json");
+		CollectionData collectionData = parseDocument("OneField.json");
 
 		DocPartData rootDocPart = findRootDocPart(collectionData);
 		DocPartRow firstRow = rootDocPart.iterator().next();
@@ -96,7 +114,7 @@ public class Document2RelTest {
 	
 	@Test
 	public void multipleFieldsMapsToMultipleColumns() {
-		CollectionData collectionData = parseDocument("docs/MultipleFields.json");
+		CollectionData collectionData = parseDocument("MultipleFields.json");
 		
 		DocPartData rootDocPart = findRootDocPart(collectionData);
 		DocPartRow firstRow = rootDocPart.iterator().next();
@@ -107,7 +125,7 @@ public class Document2RelTest {
 
 	@Test
 	public void nullFieldMapsToNullColumn() {
-		CollectionData collectionData = parseDocument("docs/NullField.json");
+		CollectionData collectionData = parseDocument("NullField.json");
 		
 		DocPartData rootDocPart = findRootDocPart(collectionData);
 		DocPartRow firstRow = rootDocPart.iterator().next();
@@ -117,7 +135,7 @@ public class Document2RelTest {
 	
 	@Test
 	public void emptyArrayMapsToChildColumn() {
-		CollectionData collectionData = parseDocument("docs/EmptyArray.json");
+		CollectionData collectionData = parseDocument("EmptyArray.json");
 		
 		DocPartData rootDocPart = findRootDocPart(collectionData);
 		DocPartRow firstRow = rootDocPart.iterator().next();
@@ -127,7 +145,7 @@ public class Document2RelTest {
 	
 	@Test
 	public void arrayCreatesRowInParentTable() {
-		CollectionData collectionData = parseDocument("docs/ArrayWithScalar.json");
+		CollectionData collectionData = parseDocument("ArrayWithScalar.json");
 		
 		DocPartData rootDocPart = findRootDocPart(collectionData);
 		DocPartRow firstRow = rootDocPart.iterator().next();
@@ -137,13 +155,13 @@ public class Document2RelTest {
 	
 	@Test
 	public void arrayMapsToNewTable() {
-		CollectionData collectionData = parseDocument("docs/ArrayWithScalar.json");
+		CollectionData collectionData = parseDocument("ArrayWithScalar.json");
 		assertNotNull(findDocPart(collectionData, "months"));
 	}
 	
 	@Test
 	public void scalarInArrayMapsToColumnWithValue() {
-		CollectionData collectionData = parseDocument("docs/ArrayWithScalar.json");
+		CollectionData collectionData = parseDocument("ArrayWithScalar.json");
 		DocPartData monthsDocPart = findDocPart(collectionData, "months");
 		DocPartRow firstRow = monthsDocPart.iterator().next();
 		
@@ -152,7 +170,7 @@ public class Document2RelTest {
 	
 	@Test
 	public void subDocumentCreatesRowInParentTable() {
-		CollectionData collectionData = parseDocument("docs/SubDocument.json");
+		CollectionData collectionData = parseDocument("SubDocument.json");
 		
 		DocPartData rootDocPart = findRootDocPart(collectionData);
 		DocPartRow firstRow = rootDocPart.iterator().next();
@@ -161,14 +179,24 @@ public class Document2RelTest {
 	}
 	
 	@Test
+	public void arrayWithEmptySubdocumentCreatesRow() {
+		CollectionData collectionData = parseDocument("ArrayWithEmptyDocument.json");
+		
+		DocPartData departmentDocPart = findDocPart(collectionData,"department");
+		DocPartRow firstRow = departmentDocPart.iterator().next();
+		assertNotNull(firstRow);
+		assertFalse(firstRow.iterator().hasNext());
+	}
+	
+	@Test
 	public void subDocumentMapsToNewTable() {
-		CollectionData collectionData = parseDocument("docs/SubDocument.json");
+		CollectionData collectionData = parseDocument("SubDocument.json");
 		assertNotNull(findDocPart(collectionData, "address"));
 	}
 	
 	@Test
 	public void subDocumentFiledsMapsIntoNewTable() {
-		CollectionData collectionData = parseDocument("docs/SubDocument.json");
+		CollectionData collectionData = parseDocument("SubDocument.json");
 		
 		DocPartData addressDocPart = findDocPart(collectionData, "address");
 		DocPartRow firstRow = addressDocPart.iterator().next();
@@ -179,7 +207,7 @@ public class Document2RelTest {
 	
 	@Test
 	public void subDocumentInArrayMapsToNewTable() {
-		CollectionData collectionData = parseDocument("docs/ArrayWithDocument.json");
+		CollectionData collectionData = parseDocument("ArrayWithDocument.json");
 		
 		DocPartData departmentDocPart = findDocPart(collectionData, "department");
 		DocPartRow firstRow = departmentDocPart.iterator().next();
@@ -189,7 +217,7 @@ public class Document2RelTest {
 	
 	@Test
 	public void subDocumentHeterogeneousInArrayMapsToSameTable() {
-		CollectionData collectionData = parseDocument("docs/ArrayWithHeteroDocument.json");
+		CollectionData collectionData = parseDocument("ArrayWithHeteroDocument.json");
 		
 		DocPartData rootDocPart = findRootDocPart(collectionData);
 		DocPartRow rootRow = rootDocPart.iterator().next();
@@ -205,7 +233,7 @@ public class Document2RelTest {
 	
 	@Test
 	public void subDocumentAndArrayCanMapToSameTable() {
-		CollectionData collectionData = parseDocument("docs/ArrayAndObjectCollision.json");
+		CollectionData collectionData = parseDocument("ArrayAndObjectCollision.json");
 
 		DocPartData departmentsDocPart = findDocPart(collectionData, "departments");
 		
@@ -230,7 +258,7 @@ public class Document2RelTest {
 	
 	@Test
 	public void arrayInArrayMapsToNewTable() {
-		CollectionData collectionData = parseDocument("docs/MultiArray.json");
+		CollectionData collectionData = parseDocument("MultiArray.json");
 		
 		DocPartData monthsDocPart = findDocPart(collectionData, "months");
 		DocPartRow firstRow = monthsDocPart.iterator().next();
@@ -248,7 +276,7 @@ public class Document2RelTest {
 	
 	@Test
 	public void emptyArrayInArrayMapsToATable() {
-		CollectionData collectionData = parseDocument("docs/MultiArrayEmpty.json");
+		CollectionData collectionData = parseDocument("MultiArrayEmpty.json");
 		
 		DocPartData monthsDocPart = findDocPart(collectionData, "months");
 		DocPartRow firstRow = monthsDocPart.iterator().next();
@@ -260,13 +288,13 @@ public class Document2RelTest {
 	}
 	
 	private DocPartData findRootDocPart(CollectionData collectionData){
-		return findDocPart(collectionData,"");
+		return findDocPart(collectionData,ROOT_DOC_NAME);
 	}
 	
 	private DocPartData findDocPart(CollectionData collectionData, String path){
 		ArrayList<String> pathList=new ArrayList<>(Arrays.asList(path.split("\\.")));
 		Collections.reverse(pathList);
-		pathList.add("");
+		pathList.add(ROOT_DOC_NAME);
 		String name = pathList.get(0); 
 		for(DocPartData docPartData :collectionData){
 			MetaDocPart metaDocPart = docPartData.getMetaDocPart();
@@ -345,7 +373,7 @@ public class Document2RelTest {
 
 	private CollectionData parseDocument(String docName) {
 		D2RTranslator translator = new D2RTranslatorImpl(mutableMetaCollection);
-		KVDocument document = parser.createFromResource(docName);
+		KVDocument document = parser.createFromResource("docs/"+docName);
 		translator.translate(document);
 		return translator.getCollectionDataAccumulator();
 	}
