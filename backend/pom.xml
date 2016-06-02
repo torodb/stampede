@@ -1,61 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+>
 
-	<parent>
-		<groupId>com.torodb</groupId>
-		<artifactId>torodb-parent</artifactId>
-		<version>0.50.0-SNAPSHOT</version>
-	</parent>
+    <modelVersion>4.0.0</modelVersion>
 
-	<artifactId>backend</artifactId>
-    <name>ToroDB-poc: Backend</name>
-	<packaging>jar</packaging>
-	<dependencies>
-		<dependency>
-			<groupId>org.apache.logging.log4j</groupId>
-			<artifactId>log4j-api</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.jooq</groupId>
-			<artifactId>jooq</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.google.guava</groupId>
-			<artifactId>guava</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.google.code.findbugs</groupId>
-			<artifactId>annotations</artifactId>
-		</dependency>
-        <dependency>
-            <groupId>com.torodb.kvdocument</groupId>
-            <artifactId>kvdocument-core</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.torodb</groupId>
-            <artifactId>metainfo-cache</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.torodb</groupId>
-            <artifactId>core</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-		<dependency>
-			<groupId>javax.json</groupId>
-			<artifactId>javax.json-api</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>javax.inject</groupId>
-			<artifactId>javax.inject</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<scope>test</scope>
-		</dependency>
-	</dependencies>
+    <parent>
+        <groupId>com.torodb</groupId>
+        <artifactId>torodb-parent</artifactId>
+        <version>0.50.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>backend-parent</artifactId>
+    <packaging>pom</packaging>
+
+    <name>ToroDB-poc: DB backends</name>
+    <description>
+Parent project for the database backends module.
+        ToroDB is designed to support multiple possible backends (databases). User configuration would select which
+        one to use at a given time. Different backends may offer different capabilities and user features.
+    </description>
+
+    <modules>
+	<module>driver</module>
+	<module>common</module>
+        <module>derby</module>
+    </modules>
+
 </project>

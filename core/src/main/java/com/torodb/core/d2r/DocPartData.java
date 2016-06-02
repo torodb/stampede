@@ -7,5 +7,6 @@ import java.util.Iterator;
 public interface DocPartData<MDP extends MetaDocPart> extends Iterable<DocPartRow> {
     public MDP getMetaDocPart();
     public int columnCount();
+    public int rowCount();
     public Iterator<MetaField> orderedMetaFieldIterator();
 }
