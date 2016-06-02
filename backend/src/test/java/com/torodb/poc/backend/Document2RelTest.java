@@ -101,15 +101,10 @@ public class Document2RelTest {
 		DocPartData rootDocPart = findRootDocPart(collectionData);
 		DocPartRow firstRow = rootDocPart.iterator().next();
 		
-		int fieldName = findFieldPosition(rootDocPart, "name", FieldType.STRING);
-		assertTrue(fieldName>=0);
-		assertExistValueInPosition(firstRow, fieldName, "John");
-		
-		int fieldAge= findFieldPosition(rootDocPart, "age", FieldType.INTEGER);
-		assertTrue(fieldAge>=0);
-		assertExistValueInPosition(firstRow, fieldAge, 34);
+		assertFieldWithValueExists(rootDocPart, firstRow, "name", FieldType.STRING, "John");
+		assertFieldWithValueExists(rootDocPart, firstRow, "age", FieldType.INTEGER, 34);
 	}
-	
+
 	@Test
 	public void nullFieldMapsToNullColumn() {
 		CollectionData collectionData = parseDocument("docs/NullField.json");
@@ -117,10 +112,7 @@ public class Document2RelTest {
 		DocPartData rootDocPart = findRootDocPart(collectionData);
 		DocPartRow firstRow = rootDocPart.iterator().next();
 		
-		int fieldAge= findFieldPosition(rootDocPart, "age", FieldType.NULL);
-		assertTrue(fieldAge>=0);
-		assertExistValueInPosition(firstRow, fieldAge, null);
-		
+		assertFieldWithValueExists(rootDocPart, firstRow, "age", FieldType.NULL, null);
 	}
 	
 	@Test
@@ -130,9 +122,7 @@ public class Document2RelTest {
 		DocPartData rootDocPart = findRootDocPart(collectionData);
 		DocPartRow firstRow = rootDocPart.iterator().next();
 		
-		int fieldDepartment= findFieldPosition(rootDocPart, "department", FieldType.CHILD);
-		assertTrue(fieldDepartment>=0);
-		assertExistValueInPosition(firstRow, fieldDepartment, true);
+		assertFieldWithValueExists(rootDocPart, firstRow, "department", FieldType.CHILD, IS_ARRAY);
 	}
 	
 	@Test
@@ -142,9 +132,7 @@ public class Document2RelTest {
 		DocPartData rootDocPart = findRootDocPart(collectionData);
 		DocPartRow firstRow = rootDocPart.iterator().next();
 		
-		int fieldMonths= findFieldPosition(rootDocPart, "months", FieldType.CHILD);
-		assertTrue(fieldMonths>=0);
-		assertExistValueInPosition(firstRow, fieldMonths, IS_ARRAY);
+		assertFieldWithValueExists(rootDocPart, firstRow, "months", FieldType.CHILD, IS_ARRAY);
 	}
 	
 	@Test
@@ -159,9 +147,7 @@ public class Document2RelTest {
 		DocPartData monthsDocPart = findDocPart(collectionData, "months");
 		DocPartRow firstRow = monthsDocPart.iterator().next();
 		
-		int fieldScalar= findFieldPosition(monthsDocPart, ARRAY_VALUE_NAME, FieldType.INTEGER);
-		assertTrue(fieldScalar>=0);
-		assertExistValueInPosition(firstRow, fieldScalar, 1);
+		assertFieldWithValueExists(monthsDocPart, firstRow, ARRAY_VALUE_NAME, FieldType.INTEGER, 1);
 	}
 	
 	@Test
@@ -171,9 +157,7 @@ public class Document2RelTest {
 		DocPartData rootDocPart = findRootDocPart(collectionData);
 		DocPartRow firstRow = rootDocPart.iterator().next();
 		
-		int fieldAddress= findFieldPosition(rootDocPart, "address", FieldType.CHILD);
-		assertTrue(fieldAddress>=0);
-		assertExistValueInPosition(firstRow, fieldAddress, IS_SUBDOCUMENT);
+		assertFieldWithValueExists(rootDocPart, firstRow, "address", FieldType.CHILD, IS_SUBDOCUMENT);
 	}
 	
 	@Test
@@ -189,13 +173,8 @@ public class Document2RelTest {
 		DocPartData addressDocPart = findDocPart(collectionData, "address");
 		DocPartRow firstRow = addressDocPart.iterator().next();
 		
-		int fieldStreet = findFieldPosition(addressDocPart, "street", FieldType.STRING);
-		assertTrue(fieldStreet>=0);
-		assertExistValueInPosition(firstRow, fieldStreet, "My Home");
-		
-		int fieldZip= findFieldPosition(addressDocPart, "zip", FieldType.INTEGER);
-		assertTrue(fieldZip>=0);
-		assertExistValueInPosition(firstRow, fieldZip, 28034);
+		assertFieldWithValueExists(addressDocPart, firstRow, "street", FieldType.STRING, "My Home");
+		assertFieldWithValueExists(addressDocPart, firstRow, "zip", FieldType.INTEGER, 28034);
 	}
 	
 	@Test
@@ -205,9 +184,7 @@ public class Document2RelTest {
 		DocPartData departmentDocPart = findDocPart(collectionData, "department");
 		DocPartRow firstRow = departmentDocPart.iterator().next();
 
-		int fieldName = findFieldPosition(departmentDocPart, "name", FieldType.STRING);
-		assertTrue(fieldName>=0);
-		assertExistValueInPosition(firstRow, fieldName, "dept1");
+		assertFieldWithValueExists(departmentDocPart, firstRow, "name", FieldType.STRING, "dept1");
 	}
 	
 	@Test
@@ -220,14 +197,10 @@ public class Document2RelTest {
 		DocPartData departmentDocPart = findDocPart(collectionData, "department");
 
 		DocPartRow firstRow = findRowSeq(departmentDocPart, rootRow.getRid(), 0);
-		int fieldName = findFieldPosition(departmentDocPart, "name", FieldType.STRING);
-		assertTrue(fieldName>=0);
-		assertExistValueInPosition(firstRow, fieldName, "dept1");
+		assertFieldWithValueExists(departmentDocPart, firstRow, "name", FieldType.STRING, "dept1");
 		
 		DocPartRow secondRow = findRowSeq(departmentDocPart, rootRow.getRid(), 1);
-		int fieldCode = findFieldPosition(departmentDocPart, "code", FieldType.INTEGER);
-		assertTrue(fieldCode>=0);
-		assertExistValueInPosition(secondRow, fieldCode, 54);
+		assertFieldWithValueExists(departmentDocPart, secondRow, "code", FieldType.INTEGER, 54);
 	}
 	
 	@Test
@@ -235,32 +208,23 @@ public class Document2RelTest {
 		CollectionData collectionData = parseDocument("docs/ArrayAndObjectCollision.json");
 
 		DocPartData departmentsDocPart = findDocPart(collectionData, "departments");
-		int fieldDept = findFieldPosition(departmentsDocPart, "dept", FieldType.CHILD);
-		assertTrue(fieldDept >= 0);
-
+		
 		DocPartRow row4Document = findRowSeq(departmentsDocPart, 0);
-		assertNotNull(row4Document);
-		assertExistValueInPosition(row4Document, fieldDept, IS_SUBDOCUMENT);
+		assertFieldWithValueExists(departmentsDocPart, row4Document, "dept", FieldType.CHILD, IS_SUBDOCUMENT);
 
 		DocPartRow row4Array = findRowSeq(departmentsDocPart, 1);
-		assertNotNull(row4Array);
-		assertExistValueInPosition(row4Array, fieldDept, IS_ARRAY);
+		assertFieldWithValueExists(departmentsDocPart, row4Array, "dept", FieldType.CHILD, IS_ARRAY);
 
 		DocPartData deptDocPart = findDocPart(collectionData, "departments.dept");
-		int fieldName = findFieldPosition(deptDocPart, "name", FieldType.STRING);
-		assertTrue(fieldName >= 0);
 
 		DocPartRow rowDocument = findRowSeq(deptDocPart, row4Document.getRid(), NO_SEQ);
-		assertNotNull(rowDocument);
-		assertExistValueInPosition(rowDocument, fieldName, "dept1");
+		assertFieldWithValueExists(deptDocPart, rowDocument, "name", FieldType.STRING, "dept1");
 
 		DocPartRow firstRowArray = findRowSeq(deptDocPart, row4Array.getRid(), 0);
-		assertNotNull(firstRowArray);
-		assertExistValueInPosition(firstRowArray, fieldName, "dept2");
+		assertFieldWithValueExists(deptDocPart, firstRowArray, "name", FieldType.STRING, "dept2");
 
 		DocPartRow secondRowArray = findRowSeq(deptDocPart, row4Array.getRid(), 1);
-		assertNotNull(secondRowArray);
-		assertExistValueInPosition(secondRowArray, fieldName, "dept3");
+		assertFieldWithValueExists(deptDocPart, secondRowArray, "name", FieldType.STRING, "dept3");
 	}
 	
 	
@@ -270,9 +234,7 @@ public class Document2RelTest {
 		
 		DocPartData monthsDocPart = findDocPart(collectionData, "months");
 		DocPartRow firstRow = monthsDocPart.iterator().next();
-		int fieldArray= findFieldPosition(monthsDocPart, ARRAY_VALUE_NAME, FieldType.CHILD);
-		assertTrue(fieldArray >= 0);
-		assertExistValueInPosition(firstRow, fieldArray, IS_ARRAY);
+		assertFieldWithValueExists(monthsDocPart, firstRow, ARRAY_VALUE_NAME, FieldType.CHILD, IS_ARRAY);
 		
 		DocPartData subArrayDocPart = findDocPart(collectionData, "months.$2");
 		assertNotNull(subArrayDocPart);
@@ -284,7 +246,18 @@ public class Document2RelTest {
 		assertExistValueInPosition(firstRowSubArray, fieldSubArray, 1);
 	}
 	
-
+	@Test
+	public void emptyArrayInArrayMapsToATable() {
+		CollectionData collectionData = parseDocument("docs/MultiArrayEmpty.json");
+		
+		DocPartData monthsDocPart = findDocPart(collectionData, "months");
+		DocPartRow firstRow = monthsDocPart.iterator().next();
+		
+		assertFieldWithValueExists(monthsDocPart, firstRow, ARRAY_VALUE_NAME, FieldType.CHILD, IS_ARRAY);
+		
+		DocPartData subArrayDocPart = findDocPart(collectionData, "months.$2");
+		assertNotNull(subArrayDocPart);
+	}
 	
 	private DocPartData findRootDocPart(CollectionData collectionData){
 		return findDocPart(collectionData,"");
@@ -305,7 +278,13 @@ public class Document2RelTest {
 		}
 		return null;
 	}
-	
+
+	private void assertFieldWithValueExists(DocPartData rootDocPart, DocPartRow firstRow, String fieldName, FieldType fieldType, Object fieldValue) {
+		int fieldOrder = findFieldPosition(rootDocPart, fieldName, fieldType);
+		assertTrue(fieldOrder>=0);
+		assertExistValueInPosition(firstRow, fieldOrder, fieldValue);
+	}
+
 	private boolean isSamePath(ArrayList<String> pathList, TableRef tableRef){
 		int idx=0;
 		Optional<TableRef> table = Optional.of(tableRef);
@@ -317,7 +296,6 @@ public class Document2RelTest {
 			table=table.get().getParent();
 		}
 		return true;
-		
 	}
 	
 	private DocPartRow findRowSeq(DocPartData docPartData, Integer seq){
