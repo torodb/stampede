@@ -8,23 +8,22 @@
 
     <parent>
         <groupId>com.torodb</groupId>
-        <artifactId>torodb-parent</artifactId>
+        <artifactId>backend-parent</artifactId>
         <version>0.50.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>backend-parent</artifactId>
+    <artifactId>driver-parent</artifactId>
     <packaging>pom</packaging>
 
-    <name>ToroDB-poc: DB backends</name>
+    <name>Backends database drivers</name>
     <description>
-Parent project for the database backends module.
-        ToroDB is designed to support multiple possible backends (databases). User configuration would select which
-        one to use at a given time. Different backends may offer different capabilities and user features.
+        Parent project for the backend database drivers.
+        Drivers are kept independent of the database implementation as some databases may share the same drivers
+        (for instance, many Postgres-derived databases use the same JDBC drivers, as they implement the same wire
+        protocol). However, database-dependent configuration is possible from the database backend module.
     </description>
 
     <modules>
-	   <module>driver</module>
-	   <module>common</module>
         <module>postgresql</module>
         <module>derby</module>
     </modules>
