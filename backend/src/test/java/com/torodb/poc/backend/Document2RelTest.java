@@ -4,7 +4,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertArrayEquals;
 
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -14,6 +17,7 @@ import java.util.Optional;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.torodb.common.util.HexUtils;
 import com.torodb.core.TableRef;
 import com.torodb.core.d2r.CollectionData;
 import com.torodb.core.d2r.D2RTranslator;
@@ -30,8 +34,10 @@ import com.torodb.core.transaction.metainf.MutableMetaCollection;
 import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
 import com.torodb.kvdocument.conversion.json.JacksonJsonParser;
 import com.torodb.kvdocument.conversion.json.JsonParser;
+import com.torodb.kvdocument.types.MongoObjectIdType;
 import com.torodb.kvdocument.types.NullType;
 import com.torodb.kvdocument.values.KVDocument;
+import com.torodb.kvdocument.values.KVMongoObjectId;
 import com.torodb.kvdocument.values.KVValue;
 import com.torodb.metainfo.cache.mvcc.MvccMetainfoRepository;
 
@@ -287,6 +293,24 @@ public class Document2RelTest {
 		assertNotNull(subArrayDocPart);
 	}
 	
+	@Test
+	public void mapFieldTypes() {
+		CollectionData collectionData = parseDocument("FieldTypes.json");
+		DocPartData rootDocPart = findRootDocPart(collectionData);
+		DocPartRow firstRow = rootDocPart.iterator().next();
+		
+		assertFieldWithValueExists(rootDocPart, firstRow, "_id", FieldType.MONGO_OBJECT_ID, HexUtils.hex2Bytes("5298a5a03b3f4220588fe57c"));
+		assertFieldWithValueExists(rootDocPart, firstRow, "null", FieldType.NULL, null);
+		assertFieldWithValueExists(rootDocPart, firstRow, "boolean", FieldType.BOOLEAN, true);
+		assertFieldWithValueExists(rootDocPart, firstRow, "integer", FieldType.INTEGER, 10);
+		assertFieldWithValueExists(rootDocPart, firstRow, "double", FieldType.DOUBLE, 10.2);
+		assertFieldWithValueExists(rootDocPart, firstRow, "string", FieldType.STRING, "john");
+		assertFieldWithValueExists(rootDocPart, firstRow, "long", FieldType.LONG, 10020202020L);
+//		DateTimeFormatter sdf = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSX");
+//		assertFieldWithValueExists(rootDocPart, firstRow, "date", FieldType.DATE, sdf.parse("2015-06-18T16:43:58.967Z"));
+	}
+	
+	
 	private DocPartData findRootDocPart(CollectionData collectionData){
 		return findDocPart(collectionData,ROOT_DOC_NAME);
 	}
@@ -365,6 +389,8 @@ public class Document2RelTest {
 		}
 		if (kv.getType()==NullType.INSTANCE){
 			assertEquals(value,null);
+		}else if (kv.getType()==MongoObjectIdType.INSTANCE){
+			assertArrayEquals((byte[]) value,((KVMongoObjectId) kv).getArrayValue());
 		}else{
 			assertEquals(value,kv.getValue());
 		}
