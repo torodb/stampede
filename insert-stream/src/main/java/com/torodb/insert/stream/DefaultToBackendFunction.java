@@ -14,7 +14,7 @@ import java.util.function.Function;
  *
  */
 public class DefaultToBackendFunction implements
-        Function<CollectionData<BatchMetaDocPart>, Iterable<BackendConnectionJob>> {
+        Function<CollectionData, Iterable<BackendConnectionJob>> {
 
     private final BackendConnectionJobFactory factory;
     private final MetaDatabase database;
@@ -26,10 +26,12 @@ public class DefaultToBackendFunction implements
         this.collection = collection;
     }
 
-    public Iterable<BackendConnectionJob> apply(CollectionData<BatchMetaDocPart> collectionData) {
+    public Iterable<BackendConnectionJob> apply(CollectionData collectionData) {
         ArrayList<BackendConnectionJob> jobs = new ArrayList<>();
-        for (DocPartData<BatchMetaDocPart> docPartData : collectionData) {
-            BatchMetaDocPart metaDocPart = docPartData.getMetaDocPart();
+        for (DocPartData docPartData : collectionData) {
+            assert docPartData.getMetaDocPart() instanceof BatchMetaDocPart
+                    : "This function can only use inputs whose meta doc part information is an instance of " + BatchMetaDocPart.class;
+            BatchMetaDocPart metaDocPart = (BatchMetaDocPart) docPartData.getMetaDocPart();
             if (metaDocPart.isCreatedOnCurrentBatch()) {
                 jobs.add(factory.createAddDocPartDDLJob(database, collection, metaDocPart));
                 metaDocPart.streamFields()
