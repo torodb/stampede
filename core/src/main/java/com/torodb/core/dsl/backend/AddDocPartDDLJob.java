@@ -15,14 +15,22 @@
  * along with core. If not, see <http://www.gnu.org/licenses/>.
  *
  * Copyright (C) 2016 8Kdata.
- * 
+ *
  */
+package com.torodb.core.dsl.backend;
 
-package com.torodb.core.dsl.projection;
+import com.torodb.core.transaction.metainf.MetaCollection;
+import com.torodb.core.transaction.metainf.MetaDatabase;
+import com.torodb.core.transaction.metainf.MetaDocPart;
 
 /**
  *
  */
-public interface ToroProjection {
+public interface AddDocPartDDLJob extends DDLBackendConnectionJob {
 
+    public MetaDatabase getDatabase();
+
+    public MetaCollection getCollection();
+
+    public MetaDocPart getDocPart();
 }

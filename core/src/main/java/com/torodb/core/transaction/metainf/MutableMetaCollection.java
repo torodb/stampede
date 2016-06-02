@@ -42,6 +42,6 @@ public interface MutableMetaCollection extends MetaCollection {
 
     @DoNotChange
     public Iterable<? extends MutableMetaDocPart> getModifiedMetaDocParts();
-
+    
     public abstract ImmutableMetaCollection immutableCopy();
 }

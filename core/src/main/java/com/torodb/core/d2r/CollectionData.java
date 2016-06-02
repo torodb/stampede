@@ -1,4 +1,6 @@
 package com.torodb.core.d2r;
 
-public interface CollectionData extends Iterable<DocPartData> {
+import com.torodb.core.transaction.metainf.MetaDocPart;
+
+public interface CollectionData<MDP extends MetaDocPart> extends Iterable<DocPartData<MDP>> {
 }

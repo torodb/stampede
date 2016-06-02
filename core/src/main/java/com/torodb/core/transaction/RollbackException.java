@@ -21,7 +21,12 @@
 package com.torodb.core.transaction;
 
 /**
+ * This exception is thrown when something wrong happen but it is possible that it won't happen if
+ * the transaction is executed again.
  *
+ * As an example, when two sql connections try to write some changes on repeatable read isolation
+ * level using optimistic locks, one of the two connections may be rollbacked with an exception, but
+ * if it is repeated, it will probably work.
  */
 public class RollbackException extends ToroTransactionException {
 
