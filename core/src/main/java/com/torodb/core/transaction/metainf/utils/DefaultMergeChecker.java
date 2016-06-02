@@ -53,7 +53,6 @@ public class DefaultMergeChecker {
         if (idObject != null) {
             return CheckCase.DIFFERENT_ID;
         }
-        assert nameObject == null && idObject == null; //it should return on the first condition
         throw new AssertionError();
     }
 
@@ -78,6 +77,11 @@ public class DefaultMergeChecker {
                                 + byId.getName() + " and the new one is " + change.getName());
         }
 
+        if (byId == null && byName == null) {
+            return ;
+        }
+        assert byId != null && byName != null;
+        
         for (MutableMetaCollection modifiedCollection : change.getModifiedCollections()) {
             checkMerge(currentSnapshot, newSnapshot, byName, modifiedCollection);
         }
@@ -108,6 +112,11 @@ public class DefaultMergeChecker {
                                 + changed.getIdentifier());
         }
 
+        if (byId == null && byName == null) {
+            return ;
+        }
+        assert byId != null && byName != null;
+
         for (MutableMetaDocPart modifiedDocPart : changed.getModifiedMetaDocParts()) {
             checkMerge(currentSnapshot, newSnapshot, db, byName, modifiedDocPart);
         }
@@ -137,6 +146,11 @@ public class DefaultMergeChecker {
                                 + "element ref is " + byId.getTableRef() + " and the new one is "
                                 + changed.getTableRef());
         }
+
+        if (byId == null && byRef == null) {
+            return ;
+        }
+        assert byId != null && byRef != null;
 
         for (ImmutableMetaField addedMetaField : changed.getAddedMetaFields()) {
             checkMerge(currentSnapshot, newSnapshot, db, col, byRef, addedMetaField);
