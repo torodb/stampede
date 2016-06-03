@@ -35,7 +35,7 @@ import org.jooq.impl.SchemaImpl;
 
 import com.torodb.backend.DatabaseInterface;
 import com.torodb.backend.exceptions.InvalidDatabaseException;
-import com.torodb.backend.tables.MetaCollectionTable;
+import com.torodb.backend.tables.SemanticTableImpl;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -65,7 +65,7 @@ public class TorodbSchema extends SchemaImpl {
     ) throws SQLException, InvalidDatabaseException {
         Schema torodbSchema = null;
         for (Schema schema : jooqMeta.getSchemas()) {
-            if (TORODB_SCHEMA.equals(schema.getName())) {
+            if (databaseInterface.isSameIdentifier(TORODB_SCHEMA, schema.getName())) {
                 torodbSchema = schema;
                 break;
             }
@@ -95,7 +95,25 @@ public class TorodbSchema extends SchemaImpl {
             ps.executeUpdate();
         }
 
+        try (PreparedStatement ps = c.prepareStatement(databaseInterface.getMetaDatabaseTable().getSQLCreationStatement(databaseInterface))) {
+            ps.execute();
+        } finally {
+            dsl.configuration().connectionProvider().release(c);
+        }
+
         try (PreparedStatement ps = c.prepareStatement(databaseInterface.getMetaCollectionTable().getSQLCreationStatement(databaseInterface))) {
+            ps.execute();
+        } finally {
+            dsl.configuration().connectionProvider().release(c);
+        }
+
+        try (PreparedStatement ps = c.prepareStatement(databaseInterface.getMetaDocPartTable().getSQLCreationStatement(databaseInterface))) {
+            ps.execute();
+        } finally {
+            dsl.configuration().connectionProvider().release(c);
+        }
+
+        try (PreparedStatement ps = c.prepareStatement(databaseInterface.getMetaFieldTable().getSQLCreationStatement(databaseInterface))) {
             ps.execute();
         } finally {
             dsl.configuration().connectionProvider().release(c);
@@ -103,24 +121,27 @@ public class TorodbSchema extends SchemaImpl {
     }
     
     private void checkSchema(Schema torodbSchema, DatabaseInterface databaseInterface) throws InvalidDatabaseException {
-        MetaCollectionTable<?> colsTable = databaseInterface.getMetaCollectionTable();
-        String colsTableName = colsTable.getName();
-        boolean collectionsTableFound = false;
-        for (Table table : torodbSchema.getTables()) {
-            if (table.getName().equals(colsTableName)) {
-                if (!colsTable.isSemanticallyEquals(table)) {
-                    throw new InvalidDatabaseException("It was expected that "
-                            + "the table " + table + " was the collection table, "
-                            + "but they are not semantically equals");
+        SemanticTableImpl[] metaTables = new SemanticTableImpl[] {
+            databaseInterface.getMetaDatabaseTable(),
+            databaseInterface.getMetaCollectionTable(),
+            databaseInterface.getMetaDocPartTable(),
+            databaseInterface.getMetaFieldTable()
+        };
+        for (SemanticTableImpl metaTable : metaTables) {
+            String metaTableName = metaTable.getName();
+            boolean metaTableFound = false;
+            for (Table table : torodbSchema.getTables()) {
+                if (databaseInterface.isSameIdentifier(table.getName(), metaTableName)) {
+                    metaTable.checkSemanticallyEquals(table);
+                    metaTableFound = true;
+                    LOGGER.info(table + " found and check");
                 }
-                collectionsTableFound = true;
-                LOGGER.info(table + " found and check");
             }
-        }
-        if (!collectionsTableFound) {
-            throw new InvalidDatabaseException("The schema '" + TORODB_SCHEMA + "'"
-                    + getName() + " does not contain the expected table '" 
-                    + colsTableName +"'");
+            if (!metaTableFound) {
+                throw new InvalidDatabaseException("The schema '" + getName() + "'"
+                        + " does not contain the expected meta table '" 
+                        + metaTableName +"'");
+            }
         }
     }
 }

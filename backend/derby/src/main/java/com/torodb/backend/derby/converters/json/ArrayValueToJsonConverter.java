@@ -15,20 +15,22 @@
  *     along with ToroDB. If not, see <http://www.gnu.org/licenses/>.
  *
  *     Copyright (c) 2014, 8Kdata Technology
- *
+ *     
  */
 
-package com.torodb.backend.driver.derby;
+package com.torodb.backend.derby.converters.json;
 
-
-import javax.sql.DataSource;
-
-import com.torodb.backend.DbBackendConfiguration;
+import com.torodb.backend.converters.array.ValueToArrayConverterProvider;
+import com.torodb.backend.converters.json.BaseArrayValueToJsonConverter;
 
 /**
  *
- * A provider for the PostgreSQL driver interface so that it is independent of the driver implementation
  */
-public interface DerbyDriverProvider {
-    DataSource getConfiguredDataSource(DerbyDbBackendConfiguration configuration, String poolName);
+public class ArrayValueToJsonConverter extends BaseArrayValueToJsonConverter {
+
+    private static final long serialVersionUID = 1L;
+
+    public ArrayValueToJsonConverter(ValueToArrayConverterProvider valueToArrayConverterProvider) {
+        super(valueToArrayConverterProvider);
+    }
 }

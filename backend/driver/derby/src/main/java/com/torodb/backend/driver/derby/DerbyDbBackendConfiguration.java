@@ -20,15 +20,11 @@
 
 package com.torodb.backend.driver.derby;
 
-
-import javax.sql.DataSource;
-
 import com.torodb.backend.DbBackendConfiguration;
 
 /**
- *
- * A provider for the PostgreSQL driver interface so that it is independent of the driver implementation
+ * Configuration data for the backend
  */
-public interface DerbyDriverProvider {
-    DataSource getConfiguredDataSource(DerbyDbBackendConfiguration configuration, String poolName);
+public interface DerbyDbBackendConfiguration extends DbBackendConfiguration {
+    public boolean isInMemory();
 }

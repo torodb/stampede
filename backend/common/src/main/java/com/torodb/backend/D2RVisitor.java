@@ -20,35 +20,12 @@
 
 package com.torodb.backend;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import javax.annotation.Nonnull;
-
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Maps;
 import com.torodb.backend.AttributeReference.ArrayKey;
-import com.torodb.backend.AttributeReference.Key;
 import com.torodb.backend.AttributeReference.ObjectKey;
 import com.torodb.core.TableRef;
-import com.torodb.core.d2r.CollectionData;
-import com.torodb.core.d2r.DocPartData;
-import com.torodb.core.d2r.DocPartRow;
 import com.torodb.core.impl.TableRefImpl;
-import com.torodb.core.transaction.metainf.FieldType;
-import com.torodb.core.transaction.metainf.MetaDocPart;
-import com.torodb.core.transaction.metainf.MetaField;
-import com.torodb.core.transaction.metainf.MutableMetaCollection;
-import com.torodb.core.transaction.metainf.MutableMetaDocPart;
 import com.torodb.kvdocument.values.KVArray;
-import com.torodb.kvdocument.values.KVBoolean;
 import com.torodb.kvdocument.values.KVDocument;
 import com.torodb.kvdocument.values.KVDocument.DocEntry;
 import com.torodb.kvdocument.values.KVValue;
@@ -56,10 +33,11 @@ import com.torodb.kvdocument.values.KVValue;
 public class D2RVisitor<Row> {
     
     private final Callback<Row> callback;
-    private final AttributeReferenceTranslator attributeReferenceTranslator = new AttributeReferenceTranslator();
+    private final AttributeReferenceTranslator attrRefTranslator;
     
-    public D2RVisitor(Callback<Row> callback) {
+    public D2RVisitor(AttributeReferenceTranslator attrRefTranslator, Callback<Row> callback) {
         this.callback = callback;
+		this.attrRefTranslator = attrRefTranslator;
     }
     
     public void visit(KVDocument document) {
@@ -71,7 +49,7 @@ public class D2RVisitor<Row> {
         
         for (DocEntry<?> entry : document) {
             AttributeReference attributeReference = arg.attributeReference.append(new ObjectKey(entry.getKey()));
-            TableRef tableRef = attributeReferenceTranslator.toTableRef(attributeReference);
+            TableRef tableRef = attrRefTranslator.toTableRef(attributeReference);
             Argument<Row> entryArg = new Argument<Row>(attributeReference, tableRef, newRow);
             
             KVValue<?> value = entry.getValue();
@@ -86,7 +64,7 @@ public class D2RVisitor<Row> {
     private void visit(KVArray array, Argument<Row> arg) {
         callback.visit(array, arg.attributeReference, arg.tableRef, arg.parentRow);
         AttributeReference attributeReference = arg.attributeReference.append(new ArrayKey(0));
-        TableRef tableRef = attributeReferenceTranslator.toTableRef(attributeReference);
+        TableRef tableRef = attrRefTranslator.toTableRef(attributeReference);
         int index = 0;
         for (KVValue<?> element : array) {
             attributeReference = arg.attributeReference.append(new ArrayKey(index));

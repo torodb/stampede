@@ -36,7 +36,6 @@ import org.apache.derby.jdbc.EmbeddedDataSource;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.torodb.backend.DbBackendConfiguration;
 import com.torodb.backend.mocks.ToroRuntimeException;
 
 /**
@@ -69,10 +68,14 @@ public class OfficialDerbyDriver implements DerbyDriverProvider {
     }
     
     @Override
-    public DataSource getConfiguredDataSource(DbBackendConfiguration configuration, String poolName) {
+    public DataSource getConfiguredDataSource(DerbyDbBackendConfiguration configuration, String poolName) {
         EmbeddedDataSource dataSource = new EmbeddedDataSource();
         dataSource.setCreateDatabase("create");
-        dataSource.setDatabaseName("memory:" + configuration.getDbName());
+        if (configuration.isInMemory()) {
+            dataSource.setDatabaseName("memory:" + configuration.getDbName());
+        } else {
+            dataSource.setDatabaseName(configuration.getDbName());
+        }
         
         if (LOGGER.isTraceEnabled()) {
             try {

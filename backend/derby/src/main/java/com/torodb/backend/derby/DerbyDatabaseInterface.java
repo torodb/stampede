@@ -35,6 +35,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -61,16 +62,16 @@ import com.torodb.backend.converters.jooq.ValueToJooqConverterProvider;
 import com.torodb.backend.converters.jooq.ValueToJooqDataTypeProvider;
 import com.torodb.backend.derby.converters.DerbyKVTypeToSqlType;
 import com.torodb.backend.derby.converters.DerbyValueToCopyConverter;
-import com.torodb.backend.derby.tables.DerbyCollectionTable;
-import com.torodb.backend.derby.tables.DerbyDatabaseTable;
-import com.torodb.backend.derby.tables.DerbyDocPartTable;
-import com.torodb.backend.derby.tables.DerbyFieldTable;
+import com.torodb.backend.derby.converters.jooq.DerbyValueToJooqConverterProvider;
+import com.torodb.backend.derby.converters.jooq.DerbyValueToJooqDataTypeProvider;
+import com.torodb.backend.derby.tables.DerbyMetaCollectionTable;
+import com.torodb.backend.derby.tables.DerbyMetaDatabaseTable;
+import com.torodb.backend.derby.tables.DerbyMetaDocPartTable;
+import com.torodb.backend.derby.tables.DerbyMetaFieldTable;
 import com.torodb.backend.mocks.KVTypeToSqlType;
 import com.torodb.backend.mocks.RetryTransactionException;
 import com.torodb.backend.mocks.ToroImplementationException;
 import com.torodb.backend.mocks.ToroRuntimeException;
-import com.torodb.backend.postgresql.converters.jooq.PostgreSQLValueToJooqConverterProvider;
-import com.torodb.backend.postgresql.converters.jooq.PostgreSQLValueToJooqDataTypeProvider;
 import com.torodb.backend.sql.index.NamedDbIndex;
 import com.torodb.backend.tables.DocPartTable;
 import com.torodb.backend.tables.MetaCollectionTable;
@@ -111,8 +112,8 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
 
     @Inject
     public DerbyDatabaseInterface(KVTypeToSqlType kVTypeToSqlType) {
-        this.valueToJooqConverterProvider = PostgreSQLValueToJooqConverterProvider.getInstance();
-        this.valueToJooqDataTypeProvider = PostgreSQLValueToJooqDataTypeProvider.getInstance();
+        this.valueToJooqConverterProvider = DerbyValueToJooqConverterProvider.getInstance();
+        this.valueToJooqDataTypeProvider = DerbyValueToJooqDataTypeProvider.getInstance();
         this.kVTypeToSqlType = kVTypeToSqlType;
     }
 
@@ -124,26 +125,26 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
 
     @Nonnull
     @Override
-    public DerbyDatabaseTable getMetaDatabaseTable() {
-        return new DerbyDatabaseTable();
+    public DerbyMetaDatabaseTable getMetaDatabaseTable() {
+        return new DerbyMetaDatabaseTable();
     }
 
     @Nonnull
     @Override
-    public DerbyCollectionTable getMetaCollectionTable() {
-        return new DerbyCollectionTable();
+    public DerbyMetaCollectionTable getMetaCollectionTable() {
+        return new DerbyMetaCollectionTable();
     }
 
     @Nonnull
     @Override
-    public DerbyDocPartTable getMetaDocPartTable() {
-        return new DerbyDocPartTable();
+    public DerbyMetaDocPartTable getMetaDocPartTable() {
+        return new DerbyMetaDocPartTable();
     }
 
     @Nonnull
     @Override
-    public DerbyFieldTable getMetaFieldTable() {
-        return new DerbyFieldTable();
+    public DerbyMetaFieldTable getMetaFieldTable() {
+        return new DerbyMetaFieldTable();
     }
 
     @Override
@@ -309,10 +310,10 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
     }
 
     private static String filter(String str) {
-        if (str.length() > 63) {
+        if (str.length() > 128) {
             throw new IllegalArgumentException(str + " is too long to be a "
-                    + "valid PostgreSQL name. By default names must be shorter "
-                    + "than 64, but it has " + str.length() + " characters");
+                    + "valid Derby name. By default names must be shorter "
+                    + "than 129, but it has " + str.length() + " characters");
         }
         Pattern quotesPattern = Pattern.compile("(\"+)");
         Matcher matcher = quotesPattern.matcher(str);
@@ -365,94 +366,94 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
     }
 
     @Override
-    public @Nonnull String createDatabaseTableStatement(@Nonnull String schemaName, @Nonnull String tableName) {
+    public @Nonnull String createMetaDatabaseTableStatement(@Nonnull String schemaName, @Nonnull String tableName) {
         return new StringBuilder()
                 .append("CREATE TABLE ")
                 .append(fullTableName(schemaName, tableName))
                 .append(" (")
-                .append(MetaDatabaseTable.TableFields.NAME.name()).append("             varchar     PRIMARY KEY     ,")
-                .append(MetaDatabaseTable.TableFields.IDENTIFIER.name()).append("       varchar     NOT NULL UNIQUE ")
+                .append('"').append(MetaDatabaseTable.TableFields.NAME.toString()).append('"').append("             varchar(4192)     PRIMARY KEY     ,")
+                .append('"').append(MetaDatabaseTable.TableFields.IDENTIFIER.toString()).append('"').append("       varchar(128)      NOT NULL UNIQUE ")
                 .append(")")
                 .toString();
     }
 
     @Override
-    public @Nonnull String createCollectionTableStatement(@Nonnull String schemaName, @Nonnull String tableName) {
+    public @Nonnull String createMetaCollectionTableStatement(@Nonnull String schemaName, @Nonnull String tableName) {
         return new StringBuilder()
                 .append("CREATE TABLE ")
                 .append(fullTableName(schemaName, tableName))
                 .append(" (")
-                .append(MetaCollectionTable.TableFields.DATABASE.name()).append("         varchar     NOT NULL        ,")
-                .append(MetaCollectionTable.TableFields.NAME.name()).append("             varchar     NOT NULL        ,")
-                .append("    PRIMARY KEY (").append(MetaCollectionTable.TableFields.DATABASE.name()).append(",")
-                    .append(MetaCollectionTable.TableFields.NAME.name()).append("),")
+                .append('"').append(MetaCollectionTable.TableFields.DATABASE.toString()).append('"').append("         varchar(4192)     NOT NULL        ,")
+                .append('"').append(MetaCollectionTable.TableFields.NAME.toString()).append('"').append("             varchar(4192)     NOT NULL        ,")
+                .append("    PRIMARY KEY (").append('"').append(MetaCollectionTable.TableFields.DATABASE.toString()).append('"').append(",")
+                    .append('"').append(MetaCollectionTable.TableFields.NAME.toString()).append('"').append(")")
                 .append(")")
                 .toString();
     }
 
     @Override
-    public @Nonnull String createContainerTableStatement(@Nonnull String schemaName, @Nonnull String tableName) {
+    public @Nonnull String createMetaDocPartTableStatement(@Nonnull String schemaName, @Nonnull String tableName) {
         return new StringBuilder()
                 .append("CREATE TABLE ")
                 .append(fullTableName(schemaName, tableName))
                 .append(" (")
-                .append(MetaDocPartTable.TableFields.DATABASE.name()).append("         varchar     NOT NULL        ,")
-                .append(MetaDocPartTable.TableFields.COLLECTION.name()).append("       varchar     NOT NULL        ,")
-                .append(MetaDocPartTable.TableFields.TABLE_REF.name()).append("        varchar[]   NOT NULL        ,")
-                .append(MetaDocPartTable.TableFields.IDENTIFIER.name()).append("       varchar     NOT NULL        ,")
-                .append(MetaDocPartTable.TableFields.LAST_RID.name()).append("         int         NOT NULL        ,")
-                .append("    PRIMARY KEY (").append(MetaDocPartTable.TableFields.DATABASE.name()).append(",")
-                    .append(MetaDocPartTable.TableFields.COLLECTION.name()).append(",")
-                    .append(MetaDocPartTable.TableFields.TABLE_REF.name()).append("),")
-                .append("    UNIQUE KEY (").append(MetaDocPartTable.TableFields.DATABASE.name()).append(",")
-                    .append(MetaDocPartTable.TableFields.IDENTIFIER.name()).append(")")
+                .append('"').append(MetaDocPartTable.TableFields.DATABASE.toString()).append('"').append("         varchar(4192)     NOT NULL        ,")
+                .append('"').append(MetaDocPartTable.TableFields.COLLECTION.toString()).append('"').append("       varchar(4192)     NOT NULL        ,")
+                .append('"').append(MetaDocPartTable.TableFields.TABLE_REF.toString()).append('"').append("        varchar(32672)    NOT NULL        ,")
+                .append('"').append(MetaDocPartTable.TableFields.IDENTIFIER.toString()).append('"').append("       varchar(128)      NOT NULL        ,")
+                .append('"').append(MetaDocPartTable.TableFields.LAST_RID.toString()).append('"').append("         integer           NOT NULL        ,")
+                .append("    PRIMARY KEY (").append('"').append(MetaDocPartTable.TableFields.DATABASE.toString()).append('"').append(",")
+                    .append('"').append(MetaDocPartTable.TableFields.COLLECTION.toString()).append('"').append(",")
+                    .append('"').append(MetaDocPartTable.TableFields.TABLE_REF.toString()).append('"').append("),")
+                .append("    UNIQUE (").append('"').append(MetaDocPartTable.TableFields.DATABASE.toString()).append('"').append(",")
+                    .append('"').append(MetaDocPartTable.TableFields.IDENTIFIER.toString()).append('"').append(")")
                 .append(")")
                 .toString();
     }
 
     @Override
-    public @Nonnull String createFieldTableStatement(@Nonnull String schemaName, @Nonnull String tableName) {
+    public @Nonnull String createMetaFieldTableStatement(@Nonnull String schemaName, @Nonnull String tableName) {
         return new StringBuilder()
                 .append("CREATE TABLE ")
                 .append(fullTableName(schemaName, tableName))
                 .append(" (")
-                .append(MetaFieldTable.TableFields.DATABASE.name()).append("         varchar     NOT NULL        ,")
-                .append(MetaFieldTable.TableFields.COLLECTION.name()).append("       varchar     NOT NULL        ,")
-                .append(MetaFieldTable.TableFields.TABLE_REF.name()).append("        varchar[]   NOT NULL        ,")
-                .append(MetaFieldTable.TableFields.NAME.name()).append("             varchar     NOT NULL        ,")
-                .append(MetaFieldTable.TableFields.IDENTIFIER.name()).append("       varchar     NOT NULL        ,")
-                .append(MetaFieldTable.TableFields.TYPE.name()).append("             varchar     NOT NULL        ,")
-                .append("    PRIMARY KEY (").append(MetaFieldTable.TableFields.DATABASE.name()).append(",")
-                .append(MetaFieldTable.TableFields.COLLECTION.name()).append(",")
-                .append(MetaFieldTable.TableFields.TABLE_REF.name()).append(",")
-                    .append(MetaFieldTable.TableFields.NAME.name()).append("),")
-                .append("    UNIQUE KEY (").append(MetaFieldTable.TableFields.DATABASE.name()).append(",")
-                    .append(MetaFieldTable.TableFields.COLLECTION.name()).append(",")
-                    .append(MetaFieldTable.TableFields.TABLE_REF.name()).append(",")
-                    .append(MetaFieldTable.TableFields.IDENTIFIER.name()).append(")")
+                .append('"').append(MetaFieldTable.TableFields.DATABASE.toString()).append('"').append("         varchar(4192)    NOT NULL        ,")
+                .append('"').append(MetaFieldTable.TableFields.COLLECTION.toString()).append('"').append("       varchar(4192)    NOT NULL        ,")
+                .append('"').append(MetaFieldTable.TableFields.TABLE_REF.toString()).append('"').append("        varchar(32672)   NOT NULL        ,")
+                .append('"').append(MetaFieldTable.TableFields.NAME.toString()).append('"').append("             varchar(4192)    NOT NULL        ,")
+                .append('"').append(MetaFieldTable.TableFields.IDENTIFIER.toString()).append('"').append("       varchar(128)     NOT NULL        ,")
+                .append('"').append(MetaFieldTable.TableFields.TYPE.toString()).append('"').append("             varchar(128)     NOT NULL        ,")
+                .append("    PRIMARY KEY (").append('"').append(MetaFieldTable.TableFields.DATABASE.toString()).append('"').append(",")
+                .append('"').append(MetaFieldTable.TableFields.COLLECTION.toString()).append('"').append(",")
+                .append('"').append(MetaFieldTable.TableFields.TABLE_REF.toString()).append('"').append(",")
+                    .append('"').append(MetaFieldTable.TableFields.NAME.toString()).append('"').append("),")
+                .append("    UNIQUE (").append('"').append(MetaFieldTable.TableFields.DATABASE.toString()).append('"').append(",")
+                    .append('"').append(MetaFieldTable.TableFields.COLLECTION.toString()).append('"').append(",")
+                    .append('"').append(MetaFieldTable.TableFields.TABLE_REF.toString()).append('"').append(",")
+                    .append('"').append(MetaFieldTable.TableFields.IDENTIFIER.toString()).append('"').append(")")
                 .append(")")
                 .toString();
     }
 
     @Override
-    public @Nonnull String createIndexesTableStatement(
+    public @Nonnull String createMetaIndexesTableStatement(
             @Nonnull String schemaName, @Nonnull String tableName, @Nonnull String indexNameColumn, @Nonnull String indexOptionsColumn
     ) {
         return new StringBuilder()
                 .append("CREATE TABLE ")
                 .append(fullTableName(schemaName, tableName))
                 .append(" (")
-                .append(indexNameColumn).append("       varchar     PRIMARY KEY,")
-                .append(indexOptionsColumn).append("    jsonb       NOT NULL")
+                .append('"').append(indexNameColumn).append('"').append("       varchar(4192)     PRIMARY KEY,")
+                .append('"').append(indexOptionsColumn).append('"').append("    varchar(23672)    NOT NULL")
                 .append(")")
                 .toString();
     }
 
     private static @Nonnull StringBuilder fullTableName(@Nonnull String schemaName, @Nonnull String tableName) {
         return new StringBuilder()
-                .append("\"").append(schemaName).append("\"")
+                .append('"').append(schemaName).append('"')
                 .append(".")
-                .append("\"").append(tableName).append("\"");
+                .append('"').append(tableName).append('"');
     }
 
     @Override
@@ -847,7 +848,7 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
             }
             else {
                 if (!connection.isWrapperFor(PGConnection.class)) {
-                    LOGGER.warn("It was impossible to use the PostgreSQL way to "
+                    LOGGER.warn("It was impossible to use the Derby way to "
                             + "insert documents. Inserting using the standard "
                             + "implementation");
                     standardInsertPathDocuments(dsl, schemaName, docPartData);
@@ -1090,5 +1091,10 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
     public Map<String, MetaFieldRecord<?>> getFieldsByColumn(DSLContext dsl, String database, String collection,
             TableRef tableRef) {
         throw new ToroImplementationException("Not implemented yet");
+    }
+
+    @Override
+    public boolean isSameIdentifier(@Nonnull String leftIdentifier, @Nonnull String rightIdentifier) {
+        return leftIdentifier.equals(rightIdentifier); //leftIdentifier.toLowerCase(Locale.US).equals(rightIdentifier.toLowerCase(Locale.US));
     }
 }

@@ -68,10 +68,10 @@ import com.torodb.backend.postgresql.converters.PostgreSQLKVTypeToSqlType;
 import com.torodb.backend.postgresql.converters.PostgreSQLValueToCopyConverter;
 import com.torodb.backend.postgresql.converters.jooq.PostgreSQLValueToJooqConverterProvider;
 import com.torodb.backend.postgresql.converters.jooq.PostgreSQLValueToJooqDataTypeProvider;
-import com.torodb.backend.postgresql.tables.PostgreSQLCollectionTable;
-import com.torodb.backend.postgresql.tables.PostgreSQLDatabaseTable;
-import com.torodb.backend.postgresql.tables.PostgreSQLDocPartTable;
-import com.torodb.backend.postgresql.tables.PostgreSQLFieldTable;
+import com.torodb.backend.postgresql.tables.PostgreSQLMetaCollectionTable;
+import com.torodb.backend.postgresql.tables.PostgreSQLMetaDatabaseTable;
+import com.torodb.backend.postgresql.tables.PostgreSQLMetaDocPartTable;
+import com.torodb.backend.postgresql.tables.PostgreSQLMetaFieldTable;
 import com.torodb.backend.sql.index.NamedDbIndex;
 import com.torodb.backend.tables.DocPartTable;
 import com.torodb.backend.tables.MetaCollectionTable;
@@ -125,26 +125,26 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
 
     @Nonnull
     @Override
-    public PostgreSQLDatabaseTable getMetaDatabaseTable() {
-        return new PostgreSQLDatabaseTable();
+    public PostgreSQLMetaDatabaseTable getMetaDatabaseTable() {
+        return new PostgreSQLMetaDatabaseTable();
     }
 
     @Nonnull
     @Override
-    public PostgreSQLCollectionTable getMetaCollectionTable() {
-        return new PostgreSQLCollectionTable();
+    public PostgreSQLMetaCollectionTable getMetaCollectionTable() {
+        return new PostgreSQLMetaCollectionTable();
     }
 
     @Nonnull
     @Override
-    public PostgreSQLDocPartTable getMetaDocPartTable() {
-        return new PostgreSQLDocPartTable();
+    public PostgreSQLMetaDocPartTable getMetaDocPartTable() {
+        return new PostgreSQLMetaDocPartTable();
     }
 
     @Nonnull
     @Override
-    public PostgreSQLFieldTable getMetaFieldTable() {
-        return new PostgreSQLFieldTable();
+    public PostgreSQLMetaFieldTable getMetaFieldTable() {
+        return new PostgreSQLMetaFieldTable();
     }
 
     @Override
@@ -366,7 +366,7 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
     }
 
     @Override
-    public @Nonnull String createDatabaseTableStatement(@Nonnull String schemaName, @Nonnull String tableName) {
+    public @Nonnull String createMetaDatabaseTableStatement(@Nonnull String schemaName, @Nonnull String tableName) {
         return new StringBuilder()
                 .append("CREATE TABLE ")
                 .append(fullTableName(schemaName, tableName))
@@ -378,7 +378,7 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
     }
 
     @Override
-    public @Nonnull String createCollectionTableStatement(@Nonnull String schemaName, @Nonnull String tableName) {
+    public @Nonnull String createMetaCollectionTableStatement(@Nonnull String schemaName, @Nonnull String tableName) {
         return new StringBuilder()
                 .append("CREATE TABLE ")
                 .append(fullTableName(schemaName, tableName))
@@ -392,7 +392,7 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
     }
 
     @Override
-    public @Nonnull String createContainerTableStatement(@Nonnull String schemaName, @Nonnull String tableName) {
+    public @Nonnull String createMetaDocPartTableStatement(@Nonnull String schemaName, @Nonnull String tableName) {
         return new StringBuilder()
                 .append("CREATE TABLE ")
                 .append(fullTableName(schemaName, tableName))
@@ -412,7 +412,7 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
     }
 
     @Override
-    public @Nonnull String createFieldTableStatement(@Nonnull String schemaName, @Nonnull String tableName) {
+    public @Nonnull String createMetaFieldTableStatement(@Nonnull String schemaName, @Nonnull String tableName) {
         return new StringBuilder()
                 .append("CREATE TABLE ")
                 .append(fullTableName(schemaName, tableName))
@@ -436,7 +436,7 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
     }
 
     @Override
-    public @Nonnull String createIndexesTableStatement(
+    public @Nonnull String createMetaIndexesTableStatement(
             @Nonnull String schemaName, @Nonnull String tableName, @Nonnull String indexNameColumn, @Nonnull String indexOptionsColumn
     ) {
         return new StringBuilder()
@@ -1091,5 +1091,11 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
     public Map<String, MetaFieldRecord<?>> getFieldsByColumn(DSLContext dsl, String database, String collection,
             TableRef tableRef) {
         throw new ToroImplementationException("Not implemented yet");
+    }
+
+    @Override
+    public boolean isSameIdentifier(String leftIdentifier, String rightIdentifier) {
+        // TODO Auto-generated method stub
+        return false;
     }
 }

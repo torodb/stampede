@@ -17,51 +17,51 @@
  *     Copyright (c) 2014, 8Kdata Technology
  *     
  */
-package com.torodb.backend.derby.tables;
+package com.torodb.backend.postgresql.tables;
 
 import org.jooq.Field;
 import org.jooq.Table;
 import org.jooq.TableField;
 import org.jooq.impl.SQLDataType;
 
-import com.torodb.backend.postgresql.tables.records.PostgreSQLDatabaseRecord;
+import com.torodb.backend.postgresql.tables.records.PostgreSQLMetaDatabaseRecord;
 import com.torodb.backend.tables.MetaDatabaseTable;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 @SuppressFBWarnings("EQ_DOESNT_OVERRIDE_EQUALS")
-public class PostgreSQLDatabaseTable extends MetaDatabaseTable<PostgreSQLDatabaseRecord> {
+public class PostgreSQLMetaDatabaseTable extends MetaDatabaseTable<PostgreSQLMetaDatabaseRecord> {
 
     private static final long serialVersionUID = -5506554761865128847L;
     /**
 	 * The singleton instance of <code>torodb.collections</code>
 	 */
-	public static final PostgreSQLDatabaseTable DATABASE = new PostgreSQLDatabaseTable();
+	public static final PostgreSQLMetaDatabaseTable DATABASE = new PostgreSQLMetaDatabaseTable();
 
 	@Override
-    public Class<PostgreSQLDatabaseRecord> getRecordType() {
-        return PostgreSQLDatabaseRecord.class;
+    public Class<PostgreSQLMetaDatabaseRecord> getRecordType() {
+        return PostgreSQLMetaDatabaseRecord.class;
     }
 	
 	/**
 	 * Create a <code>torodb.collections</code> table reference
 	 */
-	public PostgreSQLDatabaseTable() {
+	public PostgreSQLMetaDatabaseTable() {
 		this(TABLE_NAME, null);
 	}
 
 	/**
 	 * Create an aliased <code>torodb.collections</code> table reference
 	 */
-	public PostgreSQLDatabaseTable(String alias) {
-	    this(alias, PostgreSQLDatabaseTable.DATABASE);
+	public PostgreSQLMetaDatabaseTable(String alias) {
+	    this(alias, PostgreSQLMetaDatabaseTable.DATABASE);
 	}
 
-	private PostgreSQLDatabaseTable(String alias, Table<PostgreSQLDatabaseRecord> aliased) {
+	private PostgreSQLMetaDatabaseTable(String alias, Table<PostgreSQLMetaDatabaseRecord> aliased) {
 		this(alias, aliased, null);
 	}
 
-	private PostgreSQLDatabaseTable(String alias, Table<PostgreSQLDatabaseRecord> aliased, Field<?>[] parameters) {
+	private PostgreSQLMetaDatabaseTable(String alias, Table<PostgreSQLMetaDatabaseRecord> aliased, Field<?>[] parameters) {
 		super(alias, aliased, parameters);
 	}
     
@@ -69,24 +69,24 @@ public class PostgreSQLDatabaseTable extends MetaDatabaseTable<PostgreSQLDatabas
 	 * {@inheritDoc}
 	 */
 	@Override
-	public PostgreSQLDatabaseTable as(String alias) {
-		return new PostgreSQLDatabaseTable(alias, this);
+	public PostgreSQLMetaDatabaseTable as(String alias) {
+		return new PostgreSQLMetaDatabaseTable(alias, this);
 	}
 
 	/**
 	 * Rename this table
 	 */
-	public PostgreSQLDatabaseTable rename(String name) {
-		return new PostgreSQLDatabaseTable(name, null);
+	public PostgreSQLMetaDatabaseTable rename(String name) {
+		return new PostgreSQLMetaDatabaseTable(name, null);
 	}
 
     @Override
-    protected TableField<PostgreSQLDatabaseRecord, String> createNameField() {
+    protected TableField<PostgreSQLMetaDatabaseRecord, String> createNameField() {
         return createField(TableFields.NAME.fieldName, SQLDataType.VARCHAR.nullable(false), this, "");
     }
 
     @Override
-    protected TableField<PostgreSQLDatabaseRecord, String> createIdentifierField() {
+    protected TableField<PostgreSQLMetaDatabaseRecord, String> createIdentifierField() {
         return createField(TableFields.IDENTIFIER.fieldName, SQLDataType.VARCHAR.nullable(false), this, "");
     }
 }

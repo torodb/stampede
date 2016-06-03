@@ -26,8 +26,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
-import com.torodb.backend.DbBackendConfiguration;
-
 public class DriverDerbyTest {
     private static final Logger LOGGER = LogManager.getLogger(
             DriverDerbyTest.class
@@ -38,7 +36,7 @@ public class DriverDerbyTest {
         LOGGER.warn("Test message");
         
         OfficialDerbyDriver derbyDriver = new OfficialDerbyDriver();
-        DataSource dataSource = derbyDriver.getConfiguredDataSource(new DbBackendConfiguration() {
+        DataSource dataSource = derbyDriver.getConfiguredDataSource(new DerbyDbBackendConfiguration() {
             @Override
             public String getUsername() {
                 return null;
@@ -82,6 +80,11 @@ public class DriverDerbyTest {
             @Override
             public int getConnectionPoolSize() {
                 return 0;
+            }
+
+            @Override
+            public boolean isInMemory() {
+                return true;
             }
         }, "torod");
     }

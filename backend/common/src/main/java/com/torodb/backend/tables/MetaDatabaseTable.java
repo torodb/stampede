@@ -8,13 +8,12 @@ import org.jooq.Table;
 import org.jooq.TableField;
 import org.jooq.UniqueKey;
 import org.jooq.impl.AbstractKeys;
-import org.jooq.impl.TableImpl;
 
 import com.torodb.backend.DatabaseInterface;
 import com.torodb.backend.meta.TorodbSchema;
 import com.torodb.backend.tables.records.MetaDatabaseRecord;
 
-public abstract class MetaDatabaseTable<Record extends MetaDatabaseRecord> extends TableImpl<Record> {
+public abstract class MetaDatabaseTable<R extends MetaDatabaseRecord> extends SemanticTableImpl<R> {
 
     private static final long serialVersionUID = -8840058751911188345L;
 
@@ -42,24 +41,24 @@ public abstract class MetaDatabaseTable<Record extends MetaDatabaseRecord> exten
      * @return 
      */
     @Override
-    public abstract Class<Record> getRecordType();
+    public abstract Class<R> getRecordType();
 
     /**
      * The column <code>torodb.database.name</code>.
      */
-    public final TableField<Record, String> NAME 
+    public final TableField<R, String> NAME 
             = createNameField();
 
     /**
      * The column <code>torodb.database.schema</code>.
      */
-    public final TableField<Record, String> IDENTIFIER 
+    public final TableField<R, String> IDENTIFIER 
             = createIdentifierField();
 
-    protected abstract TableField<Record, String> createNameField();
-    protected abstract TableField<Record, String> createIdentifierField();
+    protected abstract TableField<R, String> createNameField();
+    protected abstract TableField<R, String> createIdentifierField();
     
-    private final UniqueKeys<Record> uniqueKeys;
+    private final UniqueKeys<R> uniqueKeys;
     
     /**
      * Create a <code>torodb.database</code> table reference
@@ -68,25 +67,25 @@ public abstract class MetaDatabaseTable<Record extends MetaDatabaseRecord> exten
         this(TABLE_NAME, null);
     }
 
-    protected MetaDatabaseTable(String alias, Table<Record> aliased) {
+    protected MetaDatabaseTable(String alias, Table<R> aliased) {
         this(alias, aliased, null);
     }
 
-    protected MetaDatabaseTable(String alias, Table<Record> aliased, Field<?>[] parameters) {
+    protected MetaDatabaseTable(String alias, Table<R> aliased, Field<?>[] parameters) {
         super(alias, TorodbSchema.TORODB, aliased, parameters, "");
         
-        this.uniqueKeys = new UniqueKeys<Record>(this);
+        this.uniqueKeys = new UniqueKeys<R>(this);
     }
     
     public String getSQLCreationStatement(DatabaseInterface databaseInterface) {
-        return databaseInterface.createDatabaseTableStatement(getSchema().getName(), getName());
+        return databaseInterface.createMetaDatabaseTableStatement(getSchema().getName(), getName());
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public UniqueKey<Record> getPrimaryKey() {
+    public UniqueKey<R> getPrimaryKey() {
         return uniqueKeys.DATABASE_PKEY;
     }
 
@@ -94,8 +93,8 @@ public abstract class MetaDatabaseTable<Record extends MetaDatabaseRecord> exten
      * {@inheritDoc}
      */
     @Override
-    public List<UniqueKey<Record>> getKeys() {
-        return Arrays.<UniqueKey<Record>>asList(uniqueKeys.DATABASE_PKEY, 
+    public List<UniqueKey<R>> getKeys() {
+        return Arrays.<UniqueKey<R>>asList(uniqueKeys.DATABASE_PKEY, 
                 uniqueKeys.DATABASE_SCHEMA_UNIQUE
         );
     }
@@ -104,27 +103,14 @@ public abstract class MetaDatabaseTable<Record extends MetaDatabaseRecord> exten
      * {@inheritDoc}
      */
     @Override
-    public abstract MetaDatabaseTable<Record> as(String alias);
+    public abstract MetaDatabaseTable<R> as(String alias);
 
     /**
      * Rename this table
      */
-    public abstract MetaDatabaseTable<Record> rename(String name);
-
-    public boolean isSemanticallyEquals(Table<Record> table) {
-        if (!table.getName().equals(getName())) {
-            return false;
-        }
-        if (table.getSchema() == null || !getSchema().getName().equals(table.getSchema().getName())) {
-            return false;
-        }
-        if (table.fields().length != 2) {
-            return false;
-        }
-        return true; //TODO: improve the check
-    }
+    public abstract MetaDatabaseTable<R> rename(String name);
     
-    public UniqueKeys<Record> getUniqueKeys() {
+    public UniqueKeys<R> getUniqueKeys() {
         return uniqueKeys;
     }
     

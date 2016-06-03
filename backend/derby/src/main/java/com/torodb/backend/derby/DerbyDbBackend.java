@@ -26,19 +26,19 @@ import javax.inject.Inject;
 import javax.sql.DataSource;
 
 import com.torodb.backend.AbstractDbBackend;
-import com.torodb.backend.DbBackendConfiguration;
 import com.torodb.backend.TransactionIsolationLevel;
+import com.torodb.backend.driver.derby.DerbyDbBackendConfiguration;
 import com.torodb.backend.driver.derby.DerbyDriverProvider;
 
 /**
  *
  * PostgreSQL-based backend
  */
-public class DerbyDbBackend extends AbstractDbBackend {
+public class DerbyDbBackend extends AbstractDbBackend<DerbyDbBackendConfiguration> {
     private final DerbyDriverProvider driverProvider;
 
     @Inject
-    public DerbyDbBackend(DbBackendConfiguration configuration, DerbyDriverProvider driverProvider) {
+    public DerbyDbBackend(DerbyDbBackendConfiguration configuration, DerbyDriverProvider driverProvider) {
         super(configuration);
         this.driverProvider = driverProvider;
 
@@ -46,7 +46,7 @@ public class DerbyDbBackend extends AbstractDbBackend {
     }
 
     @Override
-    protected DataSource getConfiguredDataSource(DbBackendConfiguration configuration, String poolName) {
+    protected DataSource getConfiguredDataSource(DerbyDbBackendConfiguration configuration, String poolName) {
         return driverProvider.getConfiguredDataSource(configuration, poolName);
     }
 

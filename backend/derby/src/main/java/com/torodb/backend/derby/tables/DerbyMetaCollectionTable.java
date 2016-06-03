@@ -17,53 +17,51 @@
  *     Copyright (c) 2014, 8Kdata Technology
  *     
  */
-package com.torodb.backend.postgresql.tables;
+package com.torodb.backend.derby.tables;
 
-import org.jooq.Converters;
 import org.jooq.Field;
 import org.jooq.Table;
 import org.jooq.TableField;
 import org.jooq.impl.SQLDataType;
 
-import com.torodb.backend.converters.jooq.binging.JSONBBinding;
-import com.torodb.backend.postgresql.tables.records.PostgreSQLCollectionRecord;
+import com.torodb.backend.derby.tables.records.DerbyMetaCollectionRecord;
 import com.torodb.backend.tables.MetaCollectionTable;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 @SuppressFBWarnings("EQ_DOESNT_OVERRIDE_EQUALS")
-public class PostgreSQLCollectionTable extends MetaCollectionTable<PostgreSQLCollectionRecord> {
+public class DerbyMetaCollectionTable extends MetaCollectionTable<DerbyMetaCollectionRecord> {
 
     private static final long serialVersionUID = 304258902776870571L;
     /**
 	 * The singleton instance of <code>torodb.collections</code>
 	 */
-	public static final PostgreSQLCollectionTable COLLECTION = new PostgreSQLCollectionTable();
+	public static final DerbyMetaCollectionTable COLLECTION = new DerbyMetaCollectionTable();
 
 	@Override
-    public Class<PostgreSQLCollectionRecord> getRecordType() {
-        return PostgreSQLCollectionRecord.class;
+    public Class<DerbyMetaCollectionRecord> getRecordType() {
+        return DerbyMetaCollectionRecord.class;
     }
 	
 	/**
 	 * Create a <code>torodb.collections</code> table reference
 	 */
-	public PostgreSQLCollectionTable() {
+	public DerbyMetaCollectionTable() {
 		this(TABLE_NAME, null);
 	}
 
 	/**
 	 * Create an aliased <code>torodb.collections</code> table reference
 	 */
-	public PostgreSQLCollectionTable(String alias) {
-	    this(alias, PostgreSQLCollectionTable.COLLECTION);
+	public DerbyMetaCollectionTable(String alias) {
+	    this(alias, DerbyMetaCollectionTable.COLLECTION);
 	}
 
-	private PostgreSQLCollectionTable(String alias, Table<PostgreSQLCollectionRecord> aliased) {
+	private DerbyMetaCollectionTable(String alias, Table<DerbyMetaCollectionRecord> aliased) {
 		this(alias, aliased, null);
 	}
 
-	private PostgreSQLCollectionTable(String alias, Table<PostgreSQLCollectionRecord> aliased, Field<?>[] parameters) {
+	private DerbyMetaCollectionTable(String alias, Table<DerbyMetaCollectionRecord> aliased, Field<?>[] parameters) {
 		super(alias, aliased, parameters);
 	}
     
@@ -71,24 +69,24 @@ public class PostgreSQLCollectionTable extends MetaCollectionTable<PostgreSQLCol
 	 * {@inheritDoc}
 	 */
 	@Override
-	public PostgreSQLCollectionTable as(String alias) {
-		return new PostgreSQLCollectionTable(alias, this);
+	public DerbyMetaCollectionTable as(String alias) {
+		return new DerbyMetaCollectionTable(alias, this);
 	}
 
 	/**
 	 * Rename this table
 	 */
-	public PostgreSQLCollectionTable rename(String name) {
-		return new PostgreSQLCollectionTable(name, null);
+	public DerbyMetaCollectionTable rename(String name) {
+		return new DerbyMetaCollectionTable(name, null);
 	}
 
     @Override
-    protected TableField<PostgreSQLCollectionRecord, String> createDatabaseField() {
+    protected TableField<DerbyMetaCollectionRecord, String> createDatabaseField() {
         return createField(TableFields.DATABASE.fieldName, SQLDataType.VARCHAR.nullable(false), this, "");
     }
 
     @Override
-    protected TableField<PostgreSQLCollectionRecord, String> createNameField() {
+    protected TableField<DerbyMetaCollectionRecord, String> createNameField() {
         return createField(TableFields.NAME.fieldName, SQLDataType.VARCHAR.nullable(false), this, "");
     }
 }

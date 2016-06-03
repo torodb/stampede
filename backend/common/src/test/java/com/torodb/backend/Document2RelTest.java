@@ -1,13 +1,13 @@
 package com.torodb.backend;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertArrayEquals;
 
+import java.time.Instant;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -30,7 +30,6 @@ import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetaField;
 import com.torodb.core.transaction.metainf.MetainfoRepository.SnapshotStage;
-import com.torodb.core.transaction.metainf.MutableMetaCollection;
 import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
 import com.torodb.kvdocument.conversion.json.JacksonJsonParser;
 import com.torodb.kvdocument.conversion.json.JsonParser;
@@ -52,35 +51,32 @@ public class Document2RelTest {
 
 	private JsonParser parser = new JacksonJsonParser();
 
-	private MutableMetaCollection mutableMetaCollection;
-
 	private static final String DB1 = "test1";
-	private static final String COLL1 = "coll1Test1";
-	private static final String COLL2 = "coll2Test1";
+	private static final String COLLA = "collA";
+	private static final String COLLB = "collB";
 
 	private static final String DB2 = "test2";
-	private static final String COLL3 = "coll1Test2";
-	private static final String COLL4 = "coll2Test2";
+	private static final String COLLC = "collC";
+	private static final String COLLD = "collD";
 
 	private static ImmutableMetaSnapshot currentView = new ImmutableMetaSnapshot.Builder()
 			.add(new ImmutableMetaDatabase.Builder(DB1, DB1)
-					.add(new ImmutableMetaCollection.Builder(COLL1, COLL1).build())
-					.add(new ImmutableMetaCollection.Builder(COLL2, COLL2).build()).build())
+					.add(new ImmutableMetaCollection.Builder(COLLA, COLLA).build())
+					.add(new ImmutableMetaCollection.Builder(COLLB, COLLB).build()).build())
 			.add(new ImmutableMetaDatabase.Builder(DB2, DB2)
-					.add(new ImmutableMetaCollection.Builder(COLL3, COLL3).build())
-					.add(new ImmutableMetaCollection.Builder(COLL4, COLL4).build()).build())
+					.add(new ImmutableMetaCollection.Builder(COLLC, COLLC).build())
+					.add(new ImmutableMetaCollection.Builder(COLLD, COLLD).build()).build())
 			.build();
-
+	private MutableMetaSnapshot mutableSnapshot;
+	
 	@Before
 	public void setup() {
 		MvccMetainfoRepository mvccMetainfoRepository = new MvccMetainfoRepository(currentView);
 
-		MutableMetaSnapshot mutableSnapshot;
 		try (SnapshotStage snapshot = mvccMetainfoRepository.startSnapshotStage()) {
 			mutableSnapshot = snapshot.createMutableSnapshot();
 		}
 
-		mutableMetaCollection = mutableSnapshot.getMetaDatabaseByName(DB1).getMetaCollectionByName(COLL1);
 	}
 
 	@Test
@@ -306,8 +302,8 @@ public class Document2RelTest {
 		assertFieldWithValueExists(rootDocPart, firstRow, "double", FieldType.DOUBLE, 10.2);
 		assertFieldWithValueExists(rootDocPart, firstRow, "string", FieldType.STRING, "john");
 		assertFieldWithValueExists(rootDocPart, firstRow, "long", FieldType.LONG, 10020202020L);
-//		DateTimeFormatter sdf = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSX");
-//		assertFieldWithValueExists(rootDocPart, firstRow, "date", FieldType.DATE, sdf.parse("2015-06-18T16:43:58.967Z"));
+		DateTimeFormatter sdf = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSX");
+		assertFieldWithValueExists(rootDocPart, firstRow, "date", FieldType.INSTANT, Instant.from(sdf.parse("2015-06-18T16:43:58.967Z")));
 	}
 	
 	
@@ -398,7 +394,8 @@ public class Document2RelTest {
 	}
 
 	private CollectionData parseDocument(String docName) {
-		D2RTranslator translator = new D2RTranslatorImpl(mutableMetaCollection);
+		MockRidGenerator ridGenerator = new MockRidGenerator();
+		D2RTranslator translator = new D2RTranslatorImpl(ridGenerator, mutableSnapshot, DB1, COLLA);
 		KVDocument document = parser.createFromResource("docs/"+docName);
 		translator.translate(document);
 		return translator.getCollectionDataAccumulator();
