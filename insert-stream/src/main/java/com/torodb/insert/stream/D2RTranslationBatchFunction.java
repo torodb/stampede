@@ -5,33 +5,30 @@ import com.torodb.core.d2r.CollectionData;
 import com.torodb.core.d2r.D2RTranslator;
 import com.torodb.core.transaction.metainf.MutableMetaCollection;
 import com.torodb.kvdocument.values.KVDocument;
+import java.util.List;
 import java.util.function.Function;
 
 /**
  *
  */
-public class D2RTranslationBatchFunction implements Function<Iterable<KVDocument>, CollectionData>{
+public class D2RTranslationBatchFunction implements Function<List<KVDocument>, CollectionData>{
 
-    private int docBatchSize;
     private final D2RTranslatorFactory translatorFactory;
     private final BatchMetaCollection metaDocCollection;
 
     public D2RTranslationBatchFunction(D2RTranslatorFactory translatorFactory,
             MutableMetaCollection metaCol) {
         this.translatorFactory = translatorFactory;
-        this.metaDocCollection = new BatchMetaCollection(metaCol);
+        this.metaDocCollection = createMetaDocCollection(metaCol);
     }
 
-    public int getDocBatchSize() {
-        return docBatchSize;
-    }
-
-    public void setDocBatchSize(int docBatchSize) {
-        this.docBatchSize = docBatchSize;
+    //For testing purpose
+    protected BatchMetaCollection createMetaDocCollection(MutableMetaCollection metaCol) {
+        return new BatchMetaCollection(metaCol);
     }
 
     @Override
-    public CollectionData apply(Iterable<KVDocument> docs) {
+    public CollectionData apply(List<KVDocument> docs) {
         metaDocCollection.newBatch();
         D2RTranslator translator = translatorFactory.createTranslator(metaDocCollection);
 
