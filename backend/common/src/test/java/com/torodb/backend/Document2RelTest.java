@@ -52,20 +52,20 @@ public class Document2RelTest {
 	private JsonParser parser = new JacksonJsonParser();
 
 	private static final String DB1 = "test1";
-	private static final String COLL1 = "coll1Test1";
-	private static final String COLL2 = "coll2Test1";
+	private static final String COLLA = "collA";
+	private static final String COLLB = "collB";
 
 	private static final String DB2 = "test2";
-	private static final String COLL3 = "coll1Test2";
-	private static final String COLL4 = "coll2Test2";
+	private static final String COLLC = "collC";
+	private static final String COLLD = "collD";
 
 	private static ImmutableMetaSnapshot currentView = new ImmutableMetaSnapshot.Builder()
 			.add(new ImmutableMetaDatabase.Builder(DB1, DB1)
-					.add(new ImmutableMetaCollection.Builder(COLL1, COLL1).build())
-					.add(new ImmutableMetaCollection.Builder(COLL2, COLL2).build()).build())
+					.add(new ImmutableMetaCollection.Builder(COLLA, COLLA).build())
+					.add(new ImmutableMetaCollection.Builder(COLLB, COLLB).build()).build())
 			.add(new ImmutableMetaDatabase.Builder(DB2, DB2)
-					.add(new ImmutableMetaCollection.Builder(COLL3, COLL3).build())
-					.add(new ImmutableMetaCollection.Builder(COLL4, COLL4).build()).build())
+					.add(new ImmutableMetaCollection.Builder(COLLC, COLLC).build())
+					.add(new ImmutableMetaCollection.Builder(COLLD, COLLD).build()).build())
 			.build();
 	private MutableMetaSnapshot mutableSnapshot;
 	
@@ -395,7 +395,7 @@ public class Document2RelTest {
 
 	private CollectionData parseDocument(String docName) {
 		MockRidGenerator ridGenerator = new MockRidGenerator();
-		D2RTranslator translator = new D2RTranslatorImpl(ridGenerator, mutableSnapshot, DB1, COLL1);
+		D2RTranslator translator = new D2RTranslatorImpl(ridGenerator, mutableSnapshot, DB1, COLLA);
 		KVDocument document = parser.createFromResource("docs/"+docName);
 		translator.translate(document);
 		return translator.getCollectionDataAccumulator();
