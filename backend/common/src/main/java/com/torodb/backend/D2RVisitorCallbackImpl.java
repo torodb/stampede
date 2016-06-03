@@ -4,8 +4,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import javax.inject.Provider;
-
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.torodb.backend.AttributeReference.ArrayKey;
@@ -26,16 +24,15 @@ import com.torodb.kvdocument.values.KVDocument.DocEntry;
 import com.torodb.kvdocument.values.KVValue;
 
 public class D2RVisitorCallbackImpl implements Callback<DocPartRowImpl>, CollectionData {
+	
     private final MutableMetaCollection metaCollection;
-    private final Provider<DocPartRidGenerator> docPartRidGeneratorProvider;
+    private final DocPartRidGenerator docPartRidGenerator;
     private final AttributeReferenceTranslator attributeReferenceTranslator = new AttributeReferenceTranslator();
-    private final Map<TableRef, DocPartDataImpl> docPartDataMap =
-            Maps.newHashMap();
+    private final Map<TableRef, DocPartDataImpl> docPartDataMap = Maps.newHashMap();
     
-    public D2RVisitorCallbackImpl(MutableMetaCollection metaCollection, Provider<DocPartRidGenerator> docPartRidGeneratorProvider) {
-        super();
+    public D2RVisitorCallbackImpl(MutableMetaCollection metaCollection, DocPartRidGenerator docPartRidGenerator) {
         this.metaCollection = metaCollection;
-        this.docPartRidGeneratorProvider = docPartRidGeneratorProvider;
+        this.docPartRidGenerator = docPartRidGenerator;
     }
     
     @Override
@@ -109,7 +106,7 @@ public class D2RVisitorCallbackImpl implements Callback<DocPartRowImpl>, Collect
                 String identifier = attributeReferenceTranslator.toTableName(attributeReference, metaCollection.getName());
                 metaDocPart = metaCollection.addMetaDocPart(tableRef, identifier);
             }
-            docPartData = new DocPartDataImpl(metaDocPart, docPartRidGeneratorProvider.get());
+            docPartData = new DocPartDataImpl(metaDocPart, docPartRidGenerator);
             docPartDataMap.put(tableRef, docPartData);
         }
         return docPartData;

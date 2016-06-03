@@ -66,19 +66,20 @@ public class DocPartDataImpl extends ArrayList<DocPartRow> implements DocPartDat
         }
         
         public DocPartRowImpl appendRootRow() {
-            return appendRow(new DocPartRowImpl(this, docPartRidGenerator.nextRid()));
+        	
+            return appendRow(new DocPartRowImpl(this, docPartRidGenerator.nextRid(metaDocPart.getTableRef())));
         }
         
         public DocPartRowImpl appendObjectRow(int did) {
-            return appendRow(new DocPartRowImpl(this, did, docPartRidGenerator.nextRid()));
+            return appendRow(new DocPartRowImpl(this, did, docPartRidGenerator.nextRid(metaDocPart.getTableRef())));
         }
         
         public DocPartRowImpl appendObjectRow(int did, int pid) {
-            return appendRow(new DocPartRowImpl(this, did, docPartRidGenerator.nextRid(), pid));
+            return appendRow(new DocPartRowImpl(this, did, docPartRidGenerator.nextRid(metaDocPart.getTableRef()), pid));
         }
         
         public DocPartRowImpl appendArrayRow(int did, int pid, int seq) {
-            return appendRow(new DocPartRowImpl(this, did, docPartRidGenerator.nextRid(), pid, seq));
+            return appendRow(new DocPartRowImpl(this, did, docPartRidGenerator.nextRid(metaDocPart.getTableRef()), pid, seq));
         }
 
         private DocPartRowImpl appendRow(DocPartRowImpl row) {

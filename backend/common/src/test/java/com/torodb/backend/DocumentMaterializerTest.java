@@ -23,15 +23,10 @@ package com.torodb.backend;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 
-import javax.inject.Provider;
-
 import org.junit.Test;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.torodb.backend.D2RVisitor;
-import com.torodb.backend.D2RVisitorCallbackImpl;
-import com.torodb.backend.DocPartRidGenerator;
 import com.torodb.core.TableRef;
 import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.d2r.DocPartRow;
@@ -40,7 +35,6 @@ import com.torodb.core.transaction.metainf.ImmutableMetaDatabase;
 import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
 import com.torodb.core.transaction.metainf.MetaField;
 import com.torodb.core.transaction.metainf.MetainfoRepository.SnapshotStage;
-import com.torodb.core.transaction.metainf.MutableMetaCollection;
 import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
 import com.torodb.kvdocument.values.KVDouble;
 import com.torodb.kvdocument.values.KVInteger;
@@ -114,20 +108,14 @@ public class DocumentMaterializerTest {
             mutableSnapshot = snapshot.createMutableSnapshot();
         }
         
-        MutableMetaCollection mutableMetaCollection = 
-                mutableSnapshot.getMetaDatabaseByName("test").getMetaCollectionByName("test");
-        D2RVisitorCallbackImpl callback = new D2RVisitorCallbackImpl(mutableMetaCollection, new Provider<DocPartRidGenerator>() {
-            @Override
-            public DocPartRidGenerator get() {
-                return new DocPartRidGenerator();
-            }
-        });
-        D2RVisitor documentMaterializerVisitor = new D2RVisitor(callback);
         
-        documentMaterializerVisitor.visit(doc);
-        documentMaterializerVisitor.visit(doc);
+        D2RTranslatorImpl d2rTranslator=new D2RTranslatorImpl(new MockRidGenerator(), mutableSnapshot, "test", "test");
         
-        Iterator<DocPartData> docPartDataIterator = callback.iterator();
+        d2rTranslator.translate(doc);
+        d2rTranslator.translate(doc);
+        
+        
+        Iterator<DocPartData> docPartDataIterator = d2rTranslator.getCollectionDataAccumulator().iterator();
         while (docPartDataIterator.hasNext()) {
             DocPartData docPartData = docPartDataIterator.next();
             TableRef tableRef = docPartData.getMetaDocPart().getTableRef();

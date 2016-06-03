@@ -1,12 +1,21 @@
 package com.torodb.backend;
 
-import java.util.concurrent.atomic.AtomicInteger;
+import com.torodb.core.TableRef;
 
 public class DocPartRidGenerator {
-    private final AtomicInteger lastRid = new AtomicInteger(0);
-    
-    //TODO: Move and refactor
-    public int nextRid() {
-        return lastRid.getAndIncrement();
-    }
+
+	private final String dbName;
+	private final String collectionName;
+	private final RidGenerator ridGenerator;
+
+	public DocPartRidGenerator(String dbName, String collectionName, RidGenerator ridGenerator) {
+		this.dbName = dbName;
+		this.collectionName = collectionName;
+		this.ridGenerator = ridGenerator;
+	}
+
+	public int nextRid(TableRef tableRef) {
+		return ridGenerator.nextRid(dbName, collectionName, tableRef);
+	}
+	
 }
