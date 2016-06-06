@@ -43,7 +43,7 @@ public class DropDatabaseImplementation extends AbstractToroCommandImplementatio
 
         if (!supporteDatabase.equals(database)) {
             LOGGER.warn("Ignoring drop database command with database {}. Only {} is supported", database, supporteDatabase);
-            return new NonWriteCommandResult<Empty>(Empty.getInstance());
+            return new NonWriteCommandResult<>(Empty.getInstance());
         }
         else {
             try {

@@ -268,8 +268,8 @@ public class ConfigUtils {
 		if (pathNode.isMissingNode() || pathNode.isNull()) {
 			JsonPointer currentPointer = pathPointer;
 			JsonPointer childOfCurrentPointer = null;
-			List<JsonPointer> missingPointers = new ArrayList<JsonPointer>();
-			List<JsonPointer> childOfMissingPointers = new ArrayList<JsonPointer>();
+			List<JsonPointer> missingPointers = new ArrayList<>();
+			List<JsonPointer> childOfMissingPointers = new ArrayList<>();
 			do {
 				if (pathNode.isMissingNode() || pathNode.isNull()) {
 					missingPointers.add(0, currentPointer);
@@ -285,7 +285,7 @@ public class ConfigUtils {
 				final JsonPointer missingPointer = missingPointers.get(missingPointerIndex);
 				final JsonPointer childOfMissingPointer = childOfMissingPointers.get(missingPointerIndex);
 
-				final List<JsonNode> newNodes = new ArrayList<JsonNode>();
+				final List<JsonNode> newNodes = new ArrayList<>();
 
 				if (pathNode.isObject()) {
 					((ObjectNode) pathNode).set(missingPointer.last().getMatchingProperty(),

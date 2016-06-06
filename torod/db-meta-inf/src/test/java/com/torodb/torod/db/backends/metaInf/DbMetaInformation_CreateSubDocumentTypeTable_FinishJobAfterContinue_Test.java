@@ -66,7 +66,7 @@ public class DbMetaInformation_CreateSubDocumentTypeTable_FinishJobAfterContinue
 
     @Before
     public void setUp() throws ToroTaskExecutionException, ImplementationDbException {
-        sequencer = new Sequencer<MySteps>(MySteps.class);
+        sequencer = new Sequencer<>(MySteps.class);
         future = Mockito.mock(Future.class);
         Mockito.doReturn(false).when(future).isDone();
 

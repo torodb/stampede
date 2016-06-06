@@ -36,7 +36,7 @@ import com.torodb.torod.core.subdocument.values.heap.InstantScalarInstant;
 public class InstantValueConverter implements SubdocValueConverter<Timestamp, ScalarInstant>{
     private static final long serialVersionUID = 1L;
 
-    private static final DataType<Timestamp> TIMESTAMPTZ = new DefaultDataType<Timestamp>(null, Timestamp.class, "timestamptz");
+    private static final DataType<Timestamp> TIMESTAMPTZ = new DefaultDataType<>(null, Timestamp.class, "timestamptz");
     
     public static final DataTypeForScalar<ScalarInstant> TYPE = DataTypeForScalar.from(TIMESTAMPTZ, new InstantValueConverter());
 

@@ -134,7 +134,7 @@ public abstract class AbstractCollectionsTable<Record extends AbstractCollection
 	protected AbstractCollectionsTable(String alias, Table<Record> aliased, Field<?>[] parameters) {
 		super(alias, TorodbSchema.TORODB, aliased, parameters, "");
 		
-		this.uniqueKeys = new UniqueKeys<Record>(this);
+		this.uniqueKeys = new UniqueKeys<>(this);
 	}
     
     public String getSQLCreationStatement(DatabaseInterface databaseInterface) {

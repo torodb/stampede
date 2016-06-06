@@ -104,7 +104,7 @@ public class SubDocType implements Serializable {
 
     public static class Builder {
 
-        private final Map<String, SubDocAttribute> attributes = new HashMap<String, SubDocAttribute>();
+        private final Map<String, SubDocAttribute> attributes = new HashMap<>();
         private boolean built;
 
         Builder() {

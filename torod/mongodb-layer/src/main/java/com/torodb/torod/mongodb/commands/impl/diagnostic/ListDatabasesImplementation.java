@@ -51,7 +51,7 @@ public class ListDatabasesImplementation extends AbstractToroCommandImplementati
                     );
                     totalSize += database.getSize();
                 }
-                return new NonWriteCommandResult<ListDatabasesReply>(
+                return new NonWriteCommandResult<>(
                         new ListDatabasesReply(
                                 databaseEntries,
                                 totalSize

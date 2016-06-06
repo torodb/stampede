@@ -16,7 +16,7 @@ public class ArrayToJooqConverter<UT extends ScalarValue<?>> implements Converte
 
     public static <UT extends ScalarValue<?>, V extends JsonValue> DataType<UT> fromScalarValue(final Class<UT> type, final ArrayConverter<V, UT> arrayConverter, String typeName) {
         Converter<String, UT> converter = new ArrayToJooqConverter<>(type, arrayConverter);
-        return new DefaultDataType<String>(null, String.class, typeName).asConvertedDataType(converter);
+        return new DefaultDataType<>(null, String.class, typeName).asConvertedDataType(converter);
     }
     
     private final Class<UT> type;
