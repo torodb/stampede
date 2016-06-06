@@ -95,6 +95,7 @@ public class BackendDerbyTest {
         }, "torod");
         DerbyDatabaseInterface derbyDatabaseInterface = new DerbyDatabaseInterface(new DerbyKVTypeToSqlType());
         
-        DerbyTorodbMeta derbyTorodbMeta = new DerbyTorodbMeta(DSL.using(derbyDataSource.getConnection(), SQLDialect.DERBY), derbyDatabaseInterface);
+        new DerbyTorodbMeta(DSL.using(derbyDataSource.getConnection(), SQLDialect.DERBY), derbyDatabaseInterface);
+        new DerbyTorodbMeta(DSL.using(derbyDataSource.getConnection(), SQLDialect.DERBY), derbyDatabaseInterface);
     }
 }
