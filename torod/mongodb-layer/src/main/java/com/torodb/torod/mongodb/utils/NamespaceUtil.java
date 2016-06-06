@@ -82,10 +82,8 @@ public class NamespaceUtil {
         if (!isSystem(collection)) {
             return true;
         }
-        if (database.equals("local")) {
-            if (collection.equals("system.replset")) {
-                return true;
-            }
+        if (database.equals("local") && collection.equals("system.replset")) {
+            return true;
         }
 
         if (collection.equals("system.users")) {

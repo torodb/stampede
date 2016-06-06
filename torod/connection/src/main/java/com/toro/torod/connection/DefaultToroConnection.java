@@ -137,10 +137,8 @@ class DefaultToroConnection implements ToroConnection {
         try {
             return executor.getCollectionsMetainfo().get();
         } catch (ExecutionException ex) {
-            if (ex.getCause() != null) {
-                if (ex.getCause() instanceof ToroException) {
-                    throw new ToroException(ex.getCause());
-                }
+            if (ex.getCause() != null && ex.getCause() instanceof ToroException) {
+                throw new ToroException(ex.getCause());
             }
             throw new ToroRuntimeException(ex);
         } catch (InterruptedException ex) {
