@@ -14,7 +14,7 @@
     
     <artifactId>common</artifactId>
     
-    <name>ToroDB: common</name>
+    <name>ToroDB-poc: common</name>
     <description>
         Common project for ToroDB. Utilities and other useful code belongs here.
     </description>

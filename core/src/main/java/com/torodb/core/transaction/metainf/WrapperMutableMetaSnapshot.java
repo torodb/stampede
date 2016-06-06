@@ -21,12 +21,7 @@
 package com.torodb.core.transaction.metainf;
 
 import com.torodb.core.annotations.DoNotChange;
-import com.torodb.core.transaction.metainf.ImmutableMetaDatabase;
-import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
-import com.torodb.core.transaction.metainf.MutableMetaDatabase;
-import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
 import java.util.*;
-import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 /**
@@ -44,13 +39,15 @@ public class WrapperMutableMetaSnapshot implements MutableMetaSnapshot {
 
         changedDatabases = new HashSet<>();
 
-        Consumer<WrapperMutableMetaDatabase> changeConsumer = this::onMetaDatabaseChange;
-
         wrapped.streamMetaDatabases().forEach((db) -> {
                 @SuppressWarnings("unchecked")
-                WrapperMutableMetaDatabase mutable = new WrapperMutableMetaDatabase(db, changeConsumer);
+                WrapperMutableMetaDatabase mutable = createMetaDatabase(db, false);
                 newDatabases.put(db.getName(), mutable);
         });
+    }
+
+    protected WrapperMutableMetaDatabase createMetaDatabase(ImmutableMetaDatabase immutable, boolean isNew) {
+        return new WrapperMutableMetaDatabase(immutable, this::onMetaDatabaseChange, isNew);
     }
 
     @Override
@@ -62,8 +59,9 @@ public class WrapperMutableMetaSnapshot implements MutableMetaSnapshot {
 
         assert getMetaDatabaseByIdentifier(dbId) == null : "There is another database whose id is " + dbId;
 
-        WrapperMutableMetaDatabase result = new WrapperMutableMetaDatabase(
-                new ImmutableMetaDatabase(dbName, dbId, Collections.emptyList()), this::onMetaDatabaseChange
+        WrapperMutableMetaDatabase result = createMetaDatabase(
+                new ImmutableMetaDatabase(dbName, dbId, Collections.emptyList()), 
+                true
         );
 
         newDatabases.put(dbName, result);

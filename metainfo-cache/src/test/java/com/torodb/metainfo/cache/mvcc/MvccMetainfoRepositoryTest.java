@@ -45,7 +45,7 @@ public class MvccMetainfoRepositoryTest {
     private final String colName = "colName";
     private final String colId = "colId";
 
-    private static final long MILLIS_TO_WAIT = 10_000;
+    private static final long MILLIS_TO_WAIT = 1_000;
 
     public MvccMetainfoRepositoryTest() {
     }
@@ -87,7 +87,7 @@ public class MvccMetainfoRepositoryTest {
      * @throws Throwable
      */
     @Test
-    public void testSimpleReadWriter() throws Throwable {
+    public void testReadCommited() throws Throwable {
         final Sequencer<ReaderRunnable.ReaderPhase> readerSequencer = new Sequencer<>(ReaderRunnable.ReaderPhase.class);
         final Sequencer<WriterRunnable.WriterPhase> writerSequencer = new Sequencer<>(WriterRunnable.WriterPhase.class);
 
@@ -122,7 +122,7 @@ public class MvccMetainfoRepositoryTest {
      * @throws Throwable
      */
     @Test
-    public void testReadCommited() throws Throwable {
+    public void testReadUncommited() throws Throwable {
         final Sequencer<ReaderRunnable.ReaderPhase> readerSequencer = new Sequencer<>(ReaderRunnable.ReaderPhase.class);
         final Sequencer<WriterRunnable.WriterPhase> writerSequencer = new Sequencer<>(WriterRunnable.WriterPhase.class);
 

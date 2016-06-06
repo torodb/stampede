@@ -4,8 +4,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import javax.inject.Provider;
-
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.torodb.backend.AttributeReference.ArrayKey;
@@ -26,16 +24,16 @@ import com.torodb.kvdocument.values.KVDocument.DocEntry;
 import com.torodb.kvdocument.values.KVValue;
 
 public class D2RVisitorCallbackImpl implements Callback<DocPartRowImpl>, CollectionData {
+	
     private final MutableMetaCollection metaCollection;
-    private final Provider<DocPartRidGenerator> docPartRidGeneratorProvider;
-    private final AttributeReferenceTranslator attributeReferenceTranslator = new AttributeReferenceTranslator();
-    private final Map<TableRef, DocPartDataImpl> docPartDataMap =
-            Maps.newHashMap();
+    private final DocPartRidGenerator docPartRidGenerator;
+    private final AttributeReferenceTranslator attrRefTranslator;
+    private final Map<TableRef, DocPartDataImpl> docPartDataMap = Maps.newHashMap();
     
-    public D2RVisitorCallbackImpl(MutableMetaCollection metaCollection, Provider<DocPartRidGenerator> docPartRidGeneratorProvider) {
-        super();
+    public D2RVisitorCallbackImpl(MutableMetaCollection metaCollection, DocPartRidGenerator docPartRidGenerator, AttributeReferenceTranslator attrRefTranslator) {
         this.metaCollection = metaCollection;
-        this.docPartRidGeneratorProvider = docPartRidGeneratorProvider;
+        this.docPartRidGenerator = docPartRidGenerator;
+		this.attrRefTranslator = attrRefTranslator;
     }
     
     @Override
@@ -75,10 +73,9 @@ public class D2RVisitorCallbackImpl implements Callback<DocPartRowImpl>, Collect
         return newRow;
     }
     
-    public void visit(KVArray array, AttributeReference attributeReference, TableRef tableRef,
-            DocPartRowImpl parentRow) {
+    public void visit(KVArray array, AttributeReference attributeReference, TableRef tableRef, DocPartRowImpl parentRow) {
         attributeReference = attributeReference.append(new ArrayKey(0));
-        tableRef = attributeReferenceTranslator.toTableRef(attributeReference);
+        tableRef = attrRefTranslator.toTableRef(attributeReference);
         DocPartDataImpl docPartData = getDocPartData(attributeReference, tableRef);
         
         int index = 0;
@@ -106,10 +103,10 @@ public class D2RVisitorCallbackImpl implements Callback<DocPartRowImpl>, Collect
         if (docPartData == null) {
             MutableMetaDocPart metaDocPart = metaCollection.getMetaDocPartByTableRef(tableRef);
             if (metaDocPart == null) {
-                String identifier = attributeReferenceTranslator.toTableName(attributeReference, metaCollection.getName());
+                String identifier = attrRefTranslator.toTableIdentifier(attributeReference, metaCollection.getName());
                 metaDocPart = metaCollection.addMetaDocPart(tableRef, identifier);
             }
-            docPartData = new DocPartDataImpl(metaDocPart, docPartRidGeneratorProvider.get());
+            docPartData = new DocPartDataImpl(metaDocPart, docPartRidGenerator);
             docPartDataMap.put(tableRef, docPartData);
         }
         return docPartData;
@@ -167,7 +164,7 @@ public class D2RVisitorCallbackImpl implements Callback<DocPartRowImpl>, Collect
     private MetaField getMetaField(MutableMetaDocPart metaDocPart, FieldType fieldType, String key, AttributeReference attributeReference) {
         MetaField metaField = metaDocPart.getMetaFieldByNameAndType(key, fieldType);
         if (metaField == null) {
-            String identifier = attributeReferenceTranslator.toColumnName(attributeReference, fieldType);
+            String identifier = attrRefTranslator.toColumnName(attributeReference, fieldType);
             metaField = metaDocPart.addMetaField(key, identifier, fieldType);
         }
         return metaField;

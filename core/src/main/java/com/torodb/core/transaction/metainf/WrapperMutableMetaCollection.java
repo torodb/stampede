@@ -22,10 +22,6 @@ package com.torodb.core.transaction.metainf;
 
 import com.torodb.core.TableRef;
 import com.torodb.core.annotations.DoNotChange;
-import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
-import com.torodb.core.transaction.metainf.ImmutableMetaDocPart;
-import com.torodb.core.transaction.metainf.MutableMetaCollection;
-import com.torodb.core.transaction.metainf.MutableMetaDocPart;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
@@ -49,13 +45,15 @@ public class WrapperMutableMetaCollection implements MutableMetaCollection {
 
         modifiedMetaDocParts = new HashSet<>();
 
-        Consumer<WrapperMutableMetaDocPart> childChangeConsumer = this::onDocPartChange;
-
         wrappedCollection.streamContainedMetaDocParts().forEach((docPart) -> {
             @SuppressWarnings("unchecked")
-            WrapperMutableMetaDocPart mutable = new WrapperMutableMetaDocPart(docPart, childChangeConsumer);
+            WrapperMutableMetaDocPart mutable = createMetaDocPart(docPart);
             newDocParts.put(mutable.getTableRef(), mutable);
         });
+    }
+
+    protected WrapperMutableMetaDocPart createMetaDocPart(ImmutableMetaDocPart immutable) {
+        return new WrapperMutableMetaDocPart(immutable, this::onDocPartChange);
     }
 
     @Override
@@ -67,9 +65,8 @@ public class WrapperMutableMetaCollection implements MutableMetaCollection {
 
         assert getMetaDocPartByIdentifier(tableId) == null : "There is another doc part whose id is " + tableRef;
 
-        WrapperMutableMetaDocPart result = new WrapperMutableMetaDocPart(
-                new ImmutableMetaDocPart(tableRef, tableId, Collections.emptyMap()), this::onDocPartChange
-        );
+        WrapperMutableMetaDocPart result = createMetaDocPart(
+                new ImmutableMetaDocPart(tableRef, tableId, Collections.emptyMap()));
 
         newDocParts.put(tableRef, result);
         onDocPartChange(result);
@@ -125,7 +122,7 @@ public class WrapperMutableMetaCollection implements MutableMetaCollection {
         return newDocParts.get(tableRef);
     }
 
-    private void onDocPartChange(WrapperMutableMetaDocPart changedDocPart) {
+    protected void onDocPartChange(WrapperMutableMetaDocPart changedDocPart) {
         modifiedMetaDocParts.add(changedDocPart);
         changeConsumer.accept(this);
     }

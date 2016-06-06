@@ -21,10 +21,6 @@
 package com.torodb.core.transaction.metainf;
 
 import com.torodb.core.annotations.DoNotChange;
-import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
-import com.torodb.core.transaction.metainf.ImmutableMetaDatabase;
-import com.torodb.core.transaction.metainf.MutableMetaCollection;
-import com.torodb.core.transaction.metainf.MutableMetaDatabase;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
@@ -38,22 +34,27 @@ public class WrapperMutableMetaDatabase implements MutableMetaDatabase {
     private final Map<String, WrapperMutableMetaCollection> newCollections;
     private final Set<WrapperMutableMetaCollection> modifiedMetaCollections;
     private final Consumer<WrapperMutableMetaDatabase> changeConsumer;
+    private final boolean isNew;
 
     public WrapperMutableMetaDatabase(ImmutableMetaDatabase wrapped,
-            Consumer<WrapperMutableMetaDatabase> changeConsumer) {
+            Consumer<WrapperMutableMetaDatabase> changeConsumer, boolean isNew) {
+        this.isNew = isNew;
         this.wrapped = wrapped;
         this.changeConsumer = changeConsumer;
 
         this.newCollections = new HashMap<>();
         this.modifiedMetaCollections = new HashSet<>();
-        Consumer<WrapperMutableMetaCollection> childChangeConsumer = this::onMetaCollectionChange;
-
+        
         wrapped.streamMetaCollections().forEach((collection) -> {
             @SuppressWarnings("unchecked")
-            WrapperMutableMetaCollection mutable = new WrapperMutableMetaCollection(collection, childChangeConsumer);
+            WrapperMutableMetaCollection mutable = createMetaColletion(collection);
                     
             newCollections.put(collection.getName(), mutable);
         });
+    }
+
+    protected WrapperMutableMetaCollection createMetaColletion(ImmutableMetaCollection immutable) {
+        return new WrapperMutableMetaCollection(immutable, this::onMetaCollectionChange);
     }
 
     @Override
@@ -65,9 +66,8 @@ public class WrapperMutableMetaDatabase implements MutableMetaDatabase {
 
         assert getMetaCollectionByIdentifier(colId) == null : "There is another collection whose id is " + colId;
 
-        WrapperMutableMetaCollection result = new WrapperMutableMetaCollection(
-                new ImmutableMetaCollection(colName, colId, Collections.emptyMap()), this::onMetaCollectionChange
-        );
+        WrapperMutableMetaCollection result = createMetaColletion(
+                new ImmutableMetaCollection(colName, colId, Collections.emptyMap()));
 
         newCollections.put(colName, result);
         onMetaCollectionChange(result);

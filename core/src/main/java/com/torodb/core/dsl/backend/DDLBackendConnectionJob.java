@@ -18,11 +18,11 @@
  * 
  */
 
-package com.torodb.core.dsl.query;
+package com.torodb.core.dsl.backend;
 
 /**
  *
  */
-public interface ToroQuery {
+public interface DDLBackendConnectionJob extends BackendConnectionJob {
 
 }
