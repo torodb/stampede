@@ -8,11 +8,11 @@ import org.jooq.Table;
 import org.jooq.TableField;
 import org.jooq.UniqueKey;
 import org.jooq.impl.AbstractKeys;
-import org.jooq.impl.TableImpl;
 
 import com.torodb.backend.DatabaseInterface;
 import com.torodb.backend.meta.TorodbSchema;
 import com.torodb.backend.tables.records.MetaFieldRecord;
+import com.torodb.core.transaction.metainf.FieldType;
 
 public abstract class MetaFieldTable<TableRefType, R extends MetaFieldRecord<TableRefType>> extends SemanticTableImpl<R> {
 
@@ -81,7 +81,7 @@ public abstract class MetaFieldTable<TableRefType, R extends MetaFieldRecord<Tab
     /**
      * The column <code>torodb.container.column_type</code>.
      */
-    public final TableField<R, String> TYPE 
+    public final TableField<R, FieldType> TYPE 
             = createTypeField();
 
     protected abstract TableField<R, String> createDatabaseField();
@@ -89,7 +89,7 @@ public abstract class MetaFieldTable<TableRefType, R extends MetaFieldRecord<Tab
     protected abstract TableField<R, TableRefType> createTableRefField();
     protected abstract TableField<R, String> createNameField();
     protected abstract TableField<R, String> createIdentifierField();
-    protected abstract TableField<R, String> createTypeField();
+    protected abstract TableField<R, FieldType> createTypeField();
 
     private final UniqueKeys<TableRefType, R> uniqueKeys;
     

@@ -19,18 +19,23 @@
  */
 package com.torodb.backend.derby.tables;
 
+import javax.json.JsonArray;
+
 import org.jooq.Field;
 import org.jooq.Table;
 import org.jooq.TableField;
 import org.jooq.impl.SQLDataType;
 
+import com.torodb.backend.derby.converters.jooq.JsonArrayConverter;
 import com.torodb.backend.derby.tables.records.DerbyMetaFieldRecord;
+import com.torodb.backend.tables.FieldTypeConverter;
 import com.torodb.backend.tables.MetaFieldTable;
+import com.torodb.core.transaction.metainf.FieldType;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 @SuppressFBWarnings("EQ_DOESNT_OVERRIDE_EQUALS")
-public class DerbyMetaFieldTable extends MetaFieldTable<String[], DerbyMetaFieldRecord> {
+public class DerbyMetaFieldTable extends MetaFieldTable<JsonArray, DerbyMetaFieldRecord> {
 
     private static final long serialVersionUID = 2305519627765737325L;
     /**
@@ -91,8 +96,8 @@ public class DerbyMetaFieldTable extends MetaFieldTable<String[], DerbyMetaField
     }
 
     @Override
-    protected TableField<DerbyMetaFieldRecord, String[]> createTableRefField() {
-        return createField(TableFields.TABLE_REF.fieldName, SQLDataType.VARCHAR.getArrayDataType().nullable(false), this, "");
+    protected TableField<DerbyMetaFieldRecord, JsonArray> createTableRefField() {
+        return createField(TableFields.TABLE_REF.fieldName, JsonArrayConverter.TYPE.nullable(false), this, "");
     }
 
     @Override
@@ -106,7 +111,7 @@ public class DerbyMetaFieldTable extends MetaFieldTable<String[], DerbyMetaField
     }
 
     @Override
-    protected TableField<DerbyMetaFieldRecord, String> createTypeField() {
-        return createField(TableFields.TYPE.fieldName, SQLDataType.VARCHAR.nullable(false), this, "");
+    protected TableField<DerbyMetaFieldRecord, FieldType> createTypeField() {
+        return createField(TableFields.TYPE.fieldName, FieldTypeConverter.TYPE.nullable(false), this, "");
     }
 }

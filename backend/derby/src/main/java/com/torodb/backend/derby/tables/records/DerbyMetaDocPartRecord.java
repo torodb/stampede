@@ -19,10 +19,14 @@
  */
 package com.torodb.backend.derby.tables.records;
 
+import javax.json.JsonArray;
+
+import com.torodb.backend.converters.TableRefConverter;
 import com.torodb.backend.derby.tables.DerbyMetaDocPartTable;
 import com.torodb.backend.tables.records.MetaDocPartRecord;
+import com.torodb.core.TableRef;
 
-public class DerbyMetaDocPartRecord extends MetaDocPartRecord<String[]> {
+public class DerbyMetaDocPartRecord extends MetaDocPartRecord<JsonArray> {
 
     private static final long serialVersionUID = 4525720333148409410L;
 
@@ -30,24 +34,34 @@ public class DerbyMetaDocPartRecord extends MetaDocPartRecord<String[]> {
 	 * Create a detached MetaDocPartRecord
 	 */
 	public DerbyMetaDocPartRecord() {
-		super(DerbyMetaDocPartTable.CONTAINER);
+		super(DerbyMetaDocPartTable.DOC_PART);
 	}
 
 	/**
 	 * Create a detached, initialised MetaDocPartRecord
 	 */
-	public DerbyMetaDocPartRecord(String database, String collection, String[] tableRef, String identifierName, Integer lastRid) {
-		super(DerbyMetaDocPartTable.CONTAINER);
-		
+	public DerbyMetaDocPartRecord(String database, String collection, JsonArray tableRef, String identifier, Integer lastRid) {
+		super(DerbyMetaDocPartTable.DOC_PART);
+		values(database, collection, tableRef, identifier, lastRid);
 	}
 
     @Override
-    public DerbyMetaDocPartRecord values(String database, String collection, String[] tableRef, String identifier, Integer lastRid) {
+    public DerbyMetaDocPartRecord values(String database, String collection, JsonArray tableRef, String identifier, Integer lastRid) {
         setDatabase(database);
         setCollection(collection);
         setTableRef(tableRef);
         setIdentifier(identifier);
         setLastRid(lastRid);
         return this;
+    }
+
+    @Override
+    protected JsonArray toTableRefType(TableRef tableRef) {
+        return TableRefConverter.toJsonArray(tableRef);
+    }
+
+    @Override
+    public TableRef getTableRefValue() {
+        return TableRefConverter.fromJsonArray(getTableRef());
     }
 }

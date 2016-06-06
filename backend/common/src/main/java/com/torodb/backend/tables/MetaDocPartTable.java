@@ -18,7 +18,7 @@ public abstract class MetaDocPartTable<TableRefType, R extends MetaDocPartRecord
 
     private static final long serialVersionUID = 1664366669485866827L;
 
-    public static final String TABLE_NAME = "container";
+    public static final String TABLE_NAME = "doc_part";
 
     public enum TableFields {
         DATABASE               (   "database"          ),

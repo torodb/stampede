@@ -35,7 +35,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -50,7 +49,6 @@ import org.apache.logging.log4j.Logger;
 import org.jooq.Configuration;
 import org.jooq.ConnectionProvider;
 import org.jooq.DSLContext;
-import org.jooq.DataType;
 import org.jooq.Field;
 import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
@@ -58,16 +56,16 @@ import org.jooq.impl.DSL;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.torodb.backend.DatabaseInterface;
-import com.torodb.backend.converters.jooq.ValueToJooqConverterProvider;
+import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.backend.converters.jooq.ValueToJooqDataTypeProvider;
 import com.torodb.backend.derby.converters.DerbyKVTypeToSqlType;
 import com.torodb.backend.derby.converters.DerbyValueToCopyConverter;
-import com.torodb.backend.derby.converters.jooq.DerbyValueToJooqConverterProvider;
 import com.torodb.backend.derby.converters.jooq.DerbyValueToJooqDataTypeProvider;
 import com.torodb.backend.derby.tables.DerbyMetaCollectionTable;
 import com.torodb.backend.derby.tables.DerbyMetaDatabaseTable;
 import com.torodb.backend.derby.tables.DerbyMetaDocPartTable;
 import com.torodb.backend.derby.tables.DerbyMetaFieldTable;
+import com.torodb.backend.meta.TorodbSchema;
 import com.torodb.backend.mocks.KVTypeToSqlType;
 import com.torodb.backend.mocks.RetryTransactionException;
 import com.torodb.backend.mocks.ToroImplementationException;
@@ -78,10 +76,6 @@ import com.torodb.backend.tables.MetaCollectionTable;
 import com.torodb.backend.tables.MetaDatabaseTable;
 import com.torodb.backend.tables.MetaDocPartTable;
 import com.torodb.backend.tables.MetaFieldTable;
-import com.torodb.backend.tables.records.MetaCollectionRecord;
-import com.torodb.backend.tables.records.MetaDatabaseRecord;
-import com.torodb.backend.tables.records.MetaDocPartRecord;
-import com.torodb.backend.tables.records.MetaFieldRecord;
 import com.torodb.core.TableRef;
 import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.d2r.DocPartRow;
@@ -89,8 +83,6 @@ import com.torodb.core.impl.TableRefImpl;
 import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetaField;
-import com.torodb.kvdocument.values.KVMongoObjectId;
-import com.torodb.kvdocument.values.KVMongoTimestamp;
 import com.torodb.kvdocument.values.KVValue;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -105,16 +97,37 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
 
     private static final long serialVersionUID = 484638503;
 
-    private final ValueToJooqConverterProvider valueToJooqConverterProvider;
+    private static final String[] RESTRICTED_SCHEMA_NAMES = new String[] {
+            TorodbSchema.TORODB_SCHEMA,
+            "NULLID",
+            "SQLJ",
+            "SYS",
+            "SYSCAT",
+            "SYSCS_DIAG",
+            "SYSCS_UTIL",
+            "SYSFUN",
+            "SYSIBM",
+            "SYSPROC",
+            "SYSSTAT",
+    };
+    {
+        Arrays.sort(RESTRICTED_SCHEMA_NAMES);
+    }
+
+    private static final String[] RESTRICTED_COLUMN_NAMES = new String[] {
+    };
+    {
+        Arrays.sort(RESTRICTED_COLUMN_NAMES);
+    }
+    
     private final ValueToJooqDataTypeProvider valueToJooqDataTypeProvider;
     private final KVTypeToSqlType kVTypeToSqlType;
     private final FieldComparator fieldComparator = new FieldComparator();
 
     @Inject
-    public DerbyDatabaseInterface(KVTypeToSqlType kVTypeToSqlType) {
-        this.valueToJooqConverterProvider = DerbyValueToJooqConverterProvider.getInstance();
+    public DerbyDatabaseInterface() {
         this.valueToJooqDataTypeProvider = DerbyValueToJooqDataTypeProvider.getInstance();
-        this.kVTypeToSqlType = kVTypeToSqlType;
+        this.kVTypeToSqlType = new DerbyKVTypeToSqlType();
     }
 
     private void readObject(java.io.ObjectInputStream stream)
@@ -148,31 +161,26 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
     }
 
     @Override
-    public @Nonnull ValueToJooqConverterProvider getValueToJooqConverterProvider() {
-        return valueToJooqConverterProvider;
-    }
-
-    @Override
     public @Nonnull ValueToJooqDataTypeProvider getValueToJooqDataTypeProvider() {
         return valueToJooqDataTypeProvider;
     }
 
     @Override
-    public String createIndexStatement(DocPartTable table, Field<?> field, Configuration conf) {
+    public String createIndexStatement(Configuration conf, String schemaName, String tableName, String fieldName) {
         StringBuilder sb = new StringBuilder();
         sb.append("CREATE INDEX ON \"")
-                .append(table.getSchema().getName())
+                .append(schemaName)
                 .append("\".\"")
-                .append(table.getName())
+                .append(tableName)
                 .append("\" (\"")
-                .append(field.getName())
+                .append(fieldName)
                 .append("\")");
 
         return sb.toString();
     }
 
     @Override
-    public String createPathDocTableStatement(String schemaName, String tableName, List<Field<?>> fields, Configuration conf) {
+    public String createDocPartTableStatement(Configuration conf, String schemaName, String tableName, List<Field<?>> fields) {
         StringBuilder sb = new StringBuilder();
         sb.append("CREATE TABLE ")
                 .append(fullTableName(schemaName, tableName))
@@ -195,7 +203,7 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
     }
 
     @Override
-    public String addColumnsToTableStatement(String schemaName, String tableName, List<Field<?>> fields, Configuration conf) {
+    public String addColumnsToDocPartTableStatement(Configuration conf, String schemaName, String tableName, List<Field<?>> fields) {
         StringBuilder sb = new StringBuilder();
         sb.append("ALTER TABLE ")
                 .append(fullTableName(schemaName, tableName));
@@ -217,16 +225,7 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
     }
 
     private String getSqlType(Field<?> field, Configuration conf) {
-        if (field.getConverter() != null) {
-            Class<?> fieldType = field.getDataType().getType();
-            if (fieldType.equals(KVMongoObjectId.class)) {
-                return DerbyKVTypeToSqlType.MONGO_OBJECT_ID_TYPE;
-            }
-            if (fieldType.equals(KVMongoTimestamp.class)) {
-                return DerbyKVTypeToSqlType.MONGO_TIMESTAMP_TYPE;
-            }
-        }
-        return field.getDataType().getTypeName(conf);
+        return field.getDataType().getCastTypeName(conf);
     }
 
     private Iterable<Field<?>> getFieldIterator(Iterable<Field<?>> fields) {
@@ -325,6 +324,16 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
         }
 
         return str;
+    }
+
+    @Override
+    public boolean isRestrictedSchemaName(@Nonnull String schemaName) {
+        return Arrays.binarySearch(RESTRICTED_SCHEMA_NAMES, schemaName) >= 0;
+    }
+    
+    @Override
+    public boolean isRestrictedColumnName(@Nonnull String columnName) {
+        return Arrays.binarySearch(RESTRICTED_COLUMN_NAMES, columnName) >= 0;
     }
 
     @Override
@@ -1034,27 +1043,12 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
     }
 
     @Override
-    public DataType<?> getDataType(String type) {
-        throw new ToroImplementationException("Not implemented yet");
-    }
-
-    @Override
     public int reserveRids(DSLContext dsl, String database, String collection, TableRef tableRef, int count) {
         throw new ToroImplementationException("Not implemented yet");
     }
 
     @Override
-    public Iterable<MetaDatabaseRecord> getDatabases(DSLContext dsl) {
-        throw new ToroImplementationException("Not implemented yet");
-    }
-
-    @Override
-    public Iterable<MetaCollectionRecord> getCollections(DSLContext dsl, String database) {
-        throw new ToroImplementationException("Not implemented yet");
-    }
-
-    @Override
-    public DataType<?> getDataType(FieldType type) {
+    public DataTypeForKV<?> getDataType(FieldType type) {
         return valueToJooqDataTypeProvider.getDataType(type);
     }
 
@@ -1070,27 +1064,6 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
         if (context == Context.batchUpdate && "40001".equals(dataAccessException.sqlState())) {
             throw new RetryTransactionException(dataAccessException);
         }
-    }
-
-    @Override
-    public TableRef toTableRef(Object tableRefObject) {
-        TableRef tableRef = TableRefImpl.createRoot();
-        String[] tableRefStrings = (String[]) tableRefObject;
-        for (String tableRefString : tableRefStrings) {
-            tableRef = TableRefImpl.createChild(tableRef, tableRefString.intern());
-        }
-        return tableRef;
-    }
-
-    @Override
-    public Map<String, MetaDocPartRecord<?>> getContainersByTable(DSLContext dsl, String database, String collection) {
-        throw new ToroImplementationException("Not implemented yet");
-    }
-
-    @Override
-    public Map<String, MetaFieldRecord<?>> getFieldsByColumn(DSLContext dsl, String database, String collection,
-            TableRef tableRef) {
-        throw new ToroImplementationException("Not implemented yet");
     }
 
     @Override

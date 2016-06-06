@@ -7,12 +7,10 @@ import javax.annotation.Nonnull;
 import org.jooq.Configuration;
 import org.jooq.Field;
 
-import com.torodb.backend.tables.DocPartTable;
-
 public interface StructureInterface {
     @Nonnull String createSchemaStatement(@Nonnull String schemaName);
     @Nonnull String dropSchemaStatement(@Nonnull String schemaName);
-    @Nonnull String createIndexStatement(DocPartTable table, Field<?> field, Configuration conf);
-    @Nonnull String createPathDocTableStatement(String schemaName, String tableName, List<Field<?>> fields, Configuration conf);
-    @Nonnull String addColumnsToTableStatement(@Nonnull String schemaName, @Nonnull String tableName, @Nonnull List<Field<?>> fields, @Nonnull Configuration conf);
+    @Nonnull String createIndexStatement(@Nonnull Configuration conf, @Nonnull String schemaName, @Nonnull String tableName, @Nonnull String fieldName);
+    @Nonnull String createDocPartTableStatement(@Nonnull Configuration conf, @Nonnull String schemaName, @Nonnull String tableName, @Nonnull List<Field<?>> fields);
+    @Nonnull String addColumnsToDocPartTableStatement(@Nonnull Configuration conf, @Nonnull String schemaName, @Nonnull String tableName, @Nonnull List<Field<?>> fields);
 }

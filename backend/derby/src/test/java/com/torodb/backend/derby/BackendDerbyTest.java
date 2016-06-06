@@ -20,29 +20,40 @@
 
 package com.torodb.backend.derby;
 
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.Arrays;
+import java.util.List;
+
 import javax.sql.DataSource;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.jooq.DSLContext;
+import org.jooq.Field;
 import org.jooq.SQLDialect;
 import org.jooq.impl.DSL;
+import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
-import com.torodb.backend.derby.converters.DerbyKVTypeToSqlType;
+import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.backend.driver.derby.DerbyDbBackendConfiguration;
 import com.torodb.backend.driver.derby.OfficialDerbyDriver;
+import com.torodb.backend.meta.TorodbSchema;
+import com.torodb.core.TableRef;
+import com.torodb.core.impl.TableRefImpl;
+import com.torodb.core.transaction.metainf.FieldType;
 
 public class BackendDerbyTest {
-    private static final Logger LOGGER = LogManager.getLogger(
-            BackendDerbyTest.class
-    );
     
-    @Test
-    public void testTorodbMeta() throws Exception {
-        LOGGER.warn("Test message");
-        
+    private DerbyDatabaseInterface databaseInterface;
+    private DataSource dataSource;
+    
+    @Before
+    public void before() throws Exception {
         OfficialDerbyDriver derbyDriver = new OfficialDerbyDriver();
-        DataSource derbyDataSource = derbyDriver.getConfiguredDataSource(new DerbyDbBackendConfiguration() {
+        dataSource = derbyDriver.getConfiguredDataSource(new DerbyDbBackendConfiguration() {
             @Override
             public String getUsername() {
                 return null;
@@ -90,12 +101,133 @@ public class BackendDerbyTest {
 
             @Override
             public boolean isInMemory() {
-                return true;
+                return false;
             }
         }, "torod");
-        DerbyDatabaseInterface derbyDatabaseInterface = new DerbyDatabaseInterface(new DerbyKVTypeToSqlType());
+        databaseInterface = new DerbyDatabaseInterface();
+        try (Connection connection = dataSource.getConnection()) {
+            DatabaseMetaData metaData = connection.getMetaData();
+            ResultSet tables = metaData.getTables("%", "%", "%", null);
+            while (tables.next()) {
+                String schemaName = tables.getString("TABLE_SCHEM");
+                String tableName = tables.getString("TABLE_NAME");
+                if (!databaseInterface.isRestrictedSchemaName(schemaName) || schemaName.equals(TorodbSchema.TORODB_SCHEMA)) {
+                    try (PreparedStatement preparedStatement = connection.prepareStatement("DROP TABLE \"" + schemaName + "\".\"" + tableName + "\"")) {
+                        preparedStatement.executeUpdate();
+                    }
+                }
+            }
+            ResultSet schemas = metaData.getSchemas();
+            while (schemas.next()) {
+                String schemaName = schemas.getString("TABLE_SCHEM");
+                if (!databaseInterface.isRestrictedSchemaName(schemaName) || schemaName.equals(TorodbSchema.TORODB_SCHEMA)) {
+                    try (PreparedStatement preparedStatement = connection.prepareStatement("DROP SCHEMA \"" + schemaName + "\" RESTRICT")) {
+                        preparedStatement.executeUpdate();
+                    }
+                }
+            }
+            connection.commit();
+        }
+    }
+    
+    @Test
+    public void testTorodbMeta() throws Exception {
+        try (Connection connection = dataSource.getConnection()) {
+            new DerbyTorodbMeta(DSL.using(connection, SQLDialect.DERBY), databaseInterface);
+            connection.commit();
+        }
+        try (Connection connection = dataSource.getConnection()) {
+            new DerbyTorodbMeta(DSL.using(connection, SQLDialect.DERBY), databaseInterface);
+            connection.commit();
+        }
+    }
+    
+    @Test
+    public void testTorodbMetaStoreAndReload() throws Exception {
+        String databaseName = "databaseName";
+        String databaseSchema = "database_schema";
+        String collectionName = "collectionName";
+        TableRef rootDocPartTableRef = TableRefImpl.createRoot();
+        String rootDocPartTableName = "rootDocPartTableName";
+        List<Field<?>> rootDocPartFields = Arrays.asList(new Field[] {
+                DSL.field("nullRootField", databaseInterface.getDataType(FieldType.NULL)),
+                DSL.field("booleanRootField", databaseInterface.getDataType(FieldType.BOOLEAN)),
+                DSL.field("integerRootField", databaseInterface.getDataType(FieldType.INTEGER)),
+                DSL.field("longRootField", databaseInterface.getDataType(FieldType.LONG)),
+                DSL.field("doubleRootField", databaseInterface.getDataType(FieldType.DOUBLE)),
+                DSL.field("stringRootField", databaseInterface.getDataType(FieldType.STRING)),
+                DSL.field("dateRootField", databaseInterface.getDataType(FieldType.DATE)),
+                DSL.field("timeRootField", databaseInterface.getDataType(FieldType.TIME)),
+                DSL.field("mongoObjectIdRootField", databaseInterface.getDataType(FieldType.MONGO_OBJECT_ID)),
+                DSL.field("mongoTimeStampRootField", databaseInterface.getDataType(FieldType.MONGO_TIME_STAMP)),
+                DSL.field("instantRootField", databaseInterface.getDataType(FieldType.INSTANT)),
+                DSL.field("subDocPart", databaseInterface.getDataType(FieldType.CHILD)),
+        });
+        TableRef subDocPartTableRef = TableRefImpl.createChild(rootDocPartTableRef, "subDocPart");
+        String subDocPartTableName = "subDocPartTableName";
+        List<Field<?>> subDocPartFields = Arrays.asList(new Field[] {
+                DSL.field("nullSubField", databaseInterface.getDataType(FieldType.NULL)),
+                DSL.field("booleanSubField", databaseInterface.getDataType(FieldType.BOOLEAN)),
+                DSL.field("integerSubField", databaseInterface.getDataType(FieldType.INTEGER)),
+                DSL.field("longSubField", databaseInterface.getDataType(FieldType.LONG)),
+                DSL.field("doubleSubField", databaseInterface.getDataType(FieldType.DOUBLE)),
+                DSL.field("stringSubField", databaseInterface.getDataType(FieldType.STRING)),
+                DSL.field("dateSubField", databaseInterface.getDataType(FieldType.DATE)),
+                DSL.field("timeSubField", databaseInterface.getDataType(FieldType.TIME)),
+                DSL.field("mongoObjectIdSubField", databaseInterface.getDataType(FieldType.MONGO_OBJECT_ID)),
+                DSL.field("mongoTimeStampSubField", databaseInterface.getDataType(FieldType.MONGO_TIME_STAMP)),
+                DSL.field("instantSubField", databaseInterface.getDataType(FieldType.INSTANT)),
+        });
         
-        new DerbyTorodbMeta(DSL.using(derbyDataSource.getConnection(), SQLDialect.DERBY), derbyDatabaseInterface);
-        new DerbyTorodbMeta(DSL.using(derbyDataSource.getConnection(), SQLDialect.DERBY), derbyDatabaseInterface);
+        try (Connection connection = dataSource.getConnection()) {
+            new DerbyTorodbMeta(DSL.using(connection, SQLDialect.DERBY), databaseInterface);
+            connection.commit();
+        }
+        try (Connection connection = dataSource.getConnection()) {
+            try {
+                DSLContext dsl = DSL.using(connection, SQLDialect.DERBY);
+                dsl.insertInto(databaseInterface.getMetaDatabaseTable())
+                    .set(databaseInterface.getMetaDatabaseTable().newRecord().values(databaseName, databaseSchema))
+                    .execute();
+                dsl.execute(databaseInterface.createSchemaStatement(databaseSchema));
+                dsl.insertInto(databaseInterface.getMetaCollectionTable())
+                    .set(databaseInterface.getMetaCollectionTable().newRecord().values(databaseName, collectionName))
+                    .execute();
+                dsl.insertInto(databaseInterface.getMetaDocPartTable())
+                    .set(databaseInterface.getMetaDocPartTable().newRecord().values(databaseName, collectionName, rootDocPartTableRef, rootDocPartTableName))
+                    .execute();
+                for (Field field : rootDocPartFields) {
+                    dsl.insertInto(databaseInterface.getMetaFieldTable())
+                        .set(databaseInterface.getMetaFieldTable().newRecord().values(databaseName, collectionName, rootDocPartTableRef, 
+                                field.getName(), field.getName(), 
+                                FieldType.from(((DataTypeForKV<?>) field.getDataType()).getKVValueConverter().getErasuredType())))
+                        .execute();
+                }
+                dsl.execute(databaseInterface.createDocPartTableStatement(dsl.configuration(), databaseSchema, rootDocPartTableName, rootDocPartFields));
+                dsl.insertInto(databaseInterface.getMetaDocPartTable())
+                    .set(databaseInterface.getMetaDocPartTable().newRecord().values(databaseName, collectionName, subDocPartTableRef, subDocPartTableName))
+                    .execute();
+                for (Field field : subDocPartFields) {
+                    dsl.insertInto(databaseInterface.getMetaFieldTable())
+                        .set(databaseInterface.getMetaFieldTable().newRecord().values(databaseName, collectionName, subDocPartTableRef, 
+                                field.getName(), field.getName(), 
+                                FieldType.from(((DataTypeForKV<?>) field.getDataType()).getKVValueConverter().getErasuredType())))
+                        .execute();
+                }
+                dsl.execute(databaseInterface.createDocPartTableStatement(dsl.configuration(), databaseSchema, subDocPartTableName, subDocPartFields));
+                connection.commit();
+            } catch(Exception exception) {
+                connection.rollback();
+                
+                throw exception;
+            }
+        }
+        DerbyTorodbMeta derbyTorodbMeta;
+        try (Connection connection = dataSource.getConnection()) {
+            derbyTorodbMeta = new DerbyTorodbMeta(DSL.using(connection, SQLDialect.DERBY), databaseInterface);
+            connection.commit();
+        }
+        Assert.assertNotNull(derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName));
+        Assert.assertEquals(derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getIdentifier(), databaseSchema);
     }
 }

@@ -30,6 +30,7 @@ import org.jooq.DSLContext;
 import org.jooq.DataType;
 import org.jooq.Field;
 import org.jooq.Meta;
+import org.jooq.Result;
 import org.jooq.Schema;
 import org.jooq.Table;
 
@@ -48,7 +49,6 @@ import com.torodb.backend.tables.records.MetaDatabaseRecord;
 import com.torodb.backend.tables.records.MetaDocPartRecord;
 import com.torodb.backend.tables.records.MetaFieldRecord;
 import com.torodb.core.TableRef;
-import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
 import com.torodb.core.transaction.metainf.ImmutableMetaDatabase;
 import com.torodb.core.transaction.metainf.ImmutableMetaDocPart;
@@ -86,11 +86,10 @@ public class DerbyTorodbMeta implements TorodbMeta {
             DSLContext dsl,
             Meta jooqMeta) throws InvalidDatabaseSchemaException {
         
-        MetaDatabaseTable<?> metaDatabaseTable = databaseInterface.getMetaDatabaseTable();
-        List<MetaDatabaseRecord> records
-                = dsl.select(metaDatabaseTable.NAME, metaDatabaseTable.IDENTIFIER)
-                    .from(metaDatabaseTable)
-                    .fetchInto(MetaDatabaseRecord.class);
+        MetaDatabaseTable<MetaDatabaseRecord> metaDatabaseTable = databaseInterface.getMetaDatabaseTable();
+        Result<MetaDatabaseRecord> records
+                = dsl.selectFrom(metaDatabaseTable)
+                    .fetch();
         
         ImmutableMetaSnapshot.Builder metaSnapshotBuilder = new ImmutableMetaSnapshot.Builder();
         for (MetaDatabaseRecord databaseRecord : records) {
@@ -114,38 +113,30 @@ public class DerbyTorodbMeta implements TorodbMeta {
 
             checkDatabaseSchema(standardSchema);
             
-            MetaCollectionTable<?> collectionTable = databaseInterface.getMetaCollectionTable();
-            MetaDocPartTable<?, ?> docPartTable = databaseInterface.getMetaDocPartTable();
-            MetaFieldTable<?, ?> fieldTable = databaseInterface.getMetaFieldTable();
-            List<MetaCollectionRecord> collections = dsl
-                    .select(collectionTable.NAME)
-                    .from(collectionTable)
+            MetaCollectionTable<MetaCollectionRecord> collectionTable = databaseInterface.getMetaCollectionTable();
+            MetaDocPartTable<Object, MetaDocPartRecord<Object>> docPartTable = databaseInterface.getMetaDocPartTable();
+            MetaFieldTable<Object, MetaFieldRecord<Object>> fieldTable = databaseInterface.getMetaFieldTable();
+            Result<MetaCollectionRecord> collections = dsl
+                    .selectFrom(collectionTable)
                     .where(collectionTable.DATABASE.eq(database))
-                    .fetchInto(MetaCollectionRecord.class);
-            Map<String, MetaDocPartRecord> docParts = dsl
-                    .select(docPartTable.COLLECTION, docPartTable.TABLE_REF, docPartTable.IDENTIFIER)
-                    .from(docPartTable)
-                    .where(docPartTable.DATABASE.eq(database))
-                    .fetchMap(docPartTable.IDENTIFIER, MetaDocPartRecord.class);
-            List<MetaFieldRecord> fields = dsl
-                    .select(fieldTable.COLLECTION, fieldTable.TABLE_REF, fieldTable.NAME, 
-                            docPartTable.IDENTIFIER, fieldTable.IDENTIFIER, fieldTable.TYPE)
-                    .from(docPartTable)
-                    .naturalJoin(fieldTable)
-                    .where(fieldTable.DATABASE.eq(database))
-                    .fetchInto(MetaFieldRecord.class);
+                    .fetch();
             
             Iterable<? extends Table<?>> existingTables = standardSchema.getTables();
             for (MetaCollectionRecord collection : collections) {
                 MetaDocPartRecord<?> rootMetaDocPartRecord = null;
-                for (Map.Entry<String, MetaDocPartRecord> container : docParts.entrySet()) {
-                    if (!container.getValue().getCollection().equals(collection.getName())) {
+                List<MetaDocPartRecord<Object>> docParts = dsl
+                        .selectFrom(docPartTable)
+                        .where(docPartTable.DATABASE.eq(database)
+                            .and(docPartTable.COLLECTION.eq(collection.getName())))
+                        .fetch();
+                for (MetaDocPartRecord<Object> docPart : docParts) {
+                    if (!docPart.getCollection().equals(collection.getName())) {
                         continue;
                     }
                     
-                    TableRef tableRef = databaseInterface.toTableRef(container.getValue().getTableRef());
+                    TableRef tableRef = docPart.getTableRefValue();
                     if (tableRef.isRoot()) {
-                        rootMetaDocPartRecord = container.getValue();
+                        rootMetaDocPartRecord = docPart;
                         break;
                     }
                 }
@@ -159,23 +150,29 @@ public class DerbyTorodbMeta implements TorodbMeta {
                                 collection.getName(), 
                                 rootMetaDocPartRecord.getIdentifier());
                 
-                for (Map.Entry<String, MetaDocPartRecord> container : docParts.entrySet()) {
-                    if (!container.getValue().getCollection().equals(collection.getName())) {
+                for (MetaDocPartRecord<Object> docPart : docParts) {
+                    if (!docPart.getCollection().equals(collection.getName())) {
                         continue;
                     }
                     
-                    TableRef tableRef = databaseInterface.toTableRef(container.getValue().getTableRef());
+                    TableRef tableRef = docPart.getTableRefValue();
                     ImmutableMetaDocPart.Builder metaDocPartBuilder = new ImmutableMetaDocPart.Builder(
                             tableRef, 
-                            container.getValue().getIdentifier());
-                    if (!existsTable(container.getValue().getIdentifier(), existingTables)) {
-                        throw new InvalidDatabaseSchemaException(schemaName, "Container "+databaseInterface.toTableRef(container.getValue().getTableRef())
+                            docPart.getIdentifier());
+                    if (!existsTable(docPart.getIdentifier(), existingTables)) {
+                        throw new InvalidDatabaseSchemaException(schemaName, "Doc part "+tableRef
                                 +" in database "+database
-                                +" is associated with table "+container.getValue().getIdentifier()
+                                +" is associated with table "+docPart.getIdentifier()
                                 +" but there is no table with that name in schema "+schemaName);
                     }
+                    List<MetaFieldRecord<Object>> fields = dsl
+                            .selectFrom(fieldTable)
+                            .where(fieldTable.DATABASE.eq(database)
+                                .and(fieldTable.COLLECTION.eq(collection.getName()))
+                                .and(fieldTable.TABLE_REF.eq(docPart.getTableRef())))
+                            .fetch();
                     for (MetaFieldRecord<?> field : fields) {
-                        TableRef fieldTableRef = databaseInterface.toTableRef(field.getTableRef());
+                        TableRef fieldTableRef = field.getTableRefValue();
                         if (!tableRef.equals(fieldTableRef)) {
                             continue;
                         }
@@ -183,21 +180,22 @@ public class DerbyTorodbMeta implements TorodbMeta {
                         ImmutableMetaField metaField = new ImmutableMetaField(
                                 field.getName(), 
                                 field.getIdentifier(), 
-                                FieldType.valueOf(field.getType()));
+                                field.getType());
                         
-                        if (!existsColumn(field.value4(), field.value5(), existingTables)) {
-                            throw new InvalidDatabaseSchemaException(schemaName, "Field "+field.value2()+"."
-                                    +field.value3()+" in database "+database+" is associated with field "+field.field4()
-                                    +"."+field.field5()+" but there is no field with that name in table "
-                                    +schemaName+"."+field.field4());
+                        if (!existsColumn(docPart.getIdentifier(), field.getIdentifier(), existingTables)) {
+                            throw new InvalidDatabaseSchemaException(schemaName, "Field "+field.getCollection()+"."
+                                    +field.getTableRefValue()+"."+field.getName()+" in database "+database+" is associated with field "+field.getIdentifier()
+                                    +" but there is no field with that name in table "
+                                    +schemaName+"."+docPart.getIdentifier());
                         }
-                        if (!existsColumnWithType(field.value4(), field.value5(), 
-                                databaseInterface.getDataType(field.value6()), existingTables)) {
-                            throw new InvalidDatabaseSchemaException(schemaName, "Field "+field.value2()+"."
-                                    +field.value3()+" in database "+database+" is associated with field "+field.field4()
-                                    +"."+field.field5()+" and type "+databaseInterface.getDataType(field.value6()).getTypeName()
-                                    +" but the field "+schemaName+"."+field.field4()+"."+field.field5()
-                                    +" has a different type "+getColumnType(field.value4(), field.value5(), existingTables).getTypeName());
+                        if (!existsColumnWithType(docPart.getIdentifier(), field.getIdentifier(), 
+                                databaseInterface.getDataType(field.getType()), existingTables)) {
+                            //TODO: some types can not be recognized using meta data
+                            //throw new InvalidDatabaseSchemaException(schemaName, "Field "+field.getCollection()+"."
+                            //        +field.getTableRefValue()+"."+field.getName()+" in database "+database+" is associated with field "+field.getIdentifier()
+                            //        +" and type "+databaseInterface.getDataType(field.getType()).getTypeName()
+                            //        +" but the field "+schemaName+"."+docPart.getIdentifier()+"."+field.getIdentifier()
+                            //        +" has a different type "+getColumnType(docPart.getIdentifier(), field.getIdentifier(), existingTables).getTypeName());
                         }
                         metaDocPartBuilder.add(metaField);
                     }
@@ -207,21 +205,29 @@ public class DerbyTorodbMeta implements TorodbMeta {
                 metaDatabaseBuilder.add(metaCollectionBuilder.build());
             }
             
+            Map<String, MetaDocPartRecord<Object>> docParts = dsl
+                    .selectFrom(docPartTable)
+                    .where(docPartTable.DATABASE.eq(database))
+                    .fetchMap(docPartTable.IDENTIFIER);
+            List<MetaFieldRecord<Object>> fields = dsl
+                    .selectFrom(fieldTable)
+                    .where(fieldTable.DATABASE.eq(database))
+                    .fetch();
             DocPartHelper docPartHelper = new DocPartHelper(databaseInterface);
             for (Table<?> table : existingTables) {
                 if (!docParts.containsKey(table.getName())) {
                     throw new InvalidDatabaseSchemaException(schemaName, "Table "+schemaName+"."+table.getName()
                             +" has no container associated for database "+database);
                 }
-                if (docParts.containsKey(table.getName())) {
-                    for (Field<?> existingField : table.fields()) {
-                        if (docPartHelper.isSpecialColumn(existingField.getName())) {
-                            continue;
-                        }
-                        if (!containsField(existingField, table.getName(), fields)) {
-                            throw new InvalidDatabaseSchemaException(schemaName, "Column "+schemaName+"."+table.getName()
-                            +"."+existingField.getName()+" has no field associated for database "+database);
-                        }
+                
+                MetaDocPartRecord<Object> docPart = docParts.get(table.getName());
+                for (Field<?> existingField : table.fields()) {
+                    if (docPartHelper.isSpecialColumn(existingField.getName())) {
+                        continue;
+                    }
+                    if (!containsField(existingField, docPart.getCollection(), docPart.getTableRefValue(), fields)) {
+                        throw new InvalidDatabaseSchemaException(schemaName, "Column "+schemaName+"."+table.getName()
+                        +"."+existingField.getName()+" has no field associated for database "+database);
                     }
                 }
             }
@@ -258,9 +264,13 @@ public class DerbyTorodbMeta implements TorodbMeta {
         for (Table<?> table : tables) {
             if (table.getName().equals(tableName)) {
                 for (Field<?> field : table.fields()) {
-                    if (field.getName().equals(columnName) &&
-                            field.getDataType().equals(columnType)) {
-                        return true;
+                    if (field.getName().equals(columnName)) {
+                        if (field.getDataType().getSQLType() == columnType.getSQLType() &&
+                            field.getDataType().getCastTypeName().equals(columnType.getCastTypeName())) {
+                            return true;
+                        } else {
+                            return false;
+                        }
                     }
                 }
             }
@@ -281,9 +291,10 @@ public class DerbyTorodbMeta implements TorodbMeta {
         return null;
     }
     
-    private boolean containsField(Field<?> existingField, String tableName, Iterable<MetaFieldRecord> fields) {
+    private boolean containsField(Field<?> existingField, String collection, TableRef tableRef, Iterable<MetaFieldRecord<Object>> fields) {
         for (MetaFieldRecord<?> field : fields) {
-            if (field.getIdentifier().equals(tableName) &&
+            if (collection.equals(field.getCollection()) &&
+                    tableRef.equals(field.getTableRefValue()) &&
                     existingField.getName().equals(field.getIdentifier())) {
                 return true;
             }
