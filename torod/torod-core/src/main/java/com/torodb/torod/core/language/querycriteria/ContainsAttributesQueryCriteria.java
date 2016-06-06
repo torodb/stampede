@@ -66,7 +66,7 @@ public class ContainsAttributesQueryCriteria extends AttributeQueryCriteria {
 
     @Override
     public int hashCode() {
-        int hash = 7;
+        int hash;
         hash = 37 * getAttributeReference().hashCode();
         hash = 37 * hash + (this.exclusive ? 1 : 0);
         return hash;
