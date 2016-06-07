@@ -157,7 +157,7 @@ public class AttributeReferenceTranslator {
 		@Override
 		public String getTransformation() {
 			columnNameBuilder.append(FIELD_TYPE_IDENTIFIERS[fieldType.ordinal()]);
-			return columnNameBuilder.toString().replaceAll("_+", "_");
+			return columnNameBuilder.toString();
 		}
 	}
 }
