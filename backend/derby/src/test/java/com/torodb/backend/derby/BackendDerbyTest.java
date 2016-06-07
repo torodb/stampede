@@ -24,8 +24,7 @@ import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.util.Arrays;
-import java.util.List;
+import java.util.Map;
 
 import javax.sql.DataSource;
 
@@ -37,6 +36,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.google.common.collect.ImmutableMap;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.backend.driver.derby.DerbyDbBackendConfiguration;
 import com.torodb.backend.driver.derby.OfficialDerbyDriver;
@@ -154,35 +154,35 @@ public class BackendDerbyTest {
         String collectionName = "collectionName";
         TableRef rootDocPartTableRef = TableRefImpl.createRoot();
         String rootDocPartTableName = "rootDocPartTableName";
-        List<Field<?>> rootDocPartFields = Arrays.asList(new Field[] {
-                DSL.field("nullRootField", databaseInterface.getDataType(FieldType.NULL)),
-                DSL.field("booleanRootField", databaseInterface.getDataType(FieldType.BOOLEAN)),
-                DSL.field("integerRootField", databaseInterface.getDataType(FieldType.INTEGER)),
-                DSL.field("longRootField", databaseInterface.getDataType(FieldType.LONG)),
-                DSL.field("doubleRootField", databaseInterface.getDataType(FieldType.DOUBLE)),
-                DSL.field("stringRootField", databaseInterface.getDataType(FieldType.STRING)),
-                DSL.field("dateRootField", databaseInterface.getDataType(FieldType.DATE)),
-                DSL.field("timeRootField", databaseInterface.getDataType(FieldType.TIME)),
-                DSL.field("mongoObjectIdRootField", databaseInterface.getDataType(FieldType.MONGO_OBJECT_ID)),
-                DSL.field("mongoTimeStampRootField", databaseInterface.getDataType(FieldType.MONGO_TIME_STAMP)),
-                DSL.field("instantRootField", databaseInterface.getDataType(FieldType.INSTANT)),
-                DSL.field("subDocPart", databaseInterface.getDataType(FieldType.CHILD)),
-        });
+        ImmutableMap<String, Field<?>> rootDocPartFields = ImmutableMap.<String, Field<?>>builder()
+                .put("nullRoot", DSL.field("nullRootField", databaseInterface.getDataType(FieldType.NULL)))
+                .put("booleanRoot", DSL.field("booleanRootField", databaseInterface.getDataType(FieldType.BOOLEAN)))
+                .put("integerRoot", DSL.field("integerRootField", databaseInterface.getDataType(FieldType.INTEGER)))
+                .put("longRoot", DSL.field("longRootField", databaseInterface.getDataType(FieldType.LONG)))
+                .put("doubleRoot", DSL.field("doubleRootField", databaseInterface.getDataType(FieldType.DOUBLE)))
+                .put("stringRoot", DSL.field("stringRootField", databaseInterface.getDataType(FieldType.STRING)))
+                .put("dateRoot", DSL.field("dateRootField", databaseInterface.getDataType(FieldType.DATE)))
+                .put("timeRoot", DSL.field("timeRootField", databaseInterface.getDataType(FieldType.TIME)))
+                .put("mongoObjectIdRoot", DSL.field("mongoObjectIdRootField", databaseInterface.getDataType(FieldType.MONGO_OBJECT_ID)))
+                .put("mongoTimeStampRoot", DSL.field("mongoTimeStampRootField", databaseInterface.getDataType(FieldType.MONGO_TIME_STAMP)))
+                .put("instantRoot", DSL.field("instantRootField", databaseInterface.getDataType(FieldType.INSTANT)))
+                .put("subDocPart", DSL.field("subDocPartField", databaseInterface.getDataType(FieldType.CHILD)))
+                .build();
         TableRef subDocPartTableRef = TableRefImpl.createChild(rootDocPartTableRef, "subDocPart");
         String subDocPartTableName = "subDocPartTableName";
-        List<Field<?>> subDocPartFields = Arrays.asList(new Field[] {
-                DSL.field("nullSubField", databaseInterface.getDataType(FieldType.NULL)),
-                DSL.field("booleanSubField", databaseInterface.getDataType(FieldType.BOOLEAN)),
-                DSL.field("integerSubField", databaseInterface.getDataType(FieldType.INTEGER)),
-                DSL.field("longSubField", databaseInterface.getDataType(FieldType.LONG)),
-                DSL.field("doubleSubField", databaseInterface.getDataType(FieldType.DOUBLE)),
-                DSL.field("stringSubField", databaseInterface.getDataType(FieldType.STRING)),
-                DSL.field("dateSubField", databaseInterface.getDataType(FieldType.DATE)),
-                DSL.field("timeSubField", databaseInterface.getDataType(FieldType.TIME)),
-                DSL.field("mongoObjectIdSubField", databaseInterface.getDataType(FieldType.MONGO_OBJECT_ID)),
-                DSL.field("mongoTimeStampSubField", databaseInterface.getDataType(FieldType.MONGO_TIME_STAMP)),
-                DSL.field("instantSubField", databaseInterface.getDataType(FieldType.INSTANT)),
-        });
+        ImmutableMap<String, Field<?>> subDocPartFields = ImmutableMap.<String, Field<?>>builder()
+                .put("nullSub", DSL.field("nullSubField", databaseInterface.getDataType(FieldType.NULL)))
+                .put("booleanSub", DSL.field("booleanSubField", databaseInterface.getDataType(FieldType.BOOLEAN)))
+                .put("integerSub", DSL.field("integerSubField", databaseInterface.getDataType(FieldType.INTEGER)))
+                .put("longSub", DSL.field("longSubField", databaseInterface.getDataType(FieldType.LONG)))
+                .put("doubleSub", DSL.field("doubleSubField", databaseInterface.getDataType(FieldType.DOUBLE)))
+                .put("stringSub", DSL.field("stringSubField", databaseInterface.getDataType(FieldType.STRING)))
+                .put("dateSub", DSL.field("dateSubField", databaseInterface.getDataType(FieldType.DATE)))
+                .put("timeSub", DSL.field("timeSubField", databaseInterface.getDataType(FieldType.TIME)))
+                .put("mongoObjectIdSub", DSL.field("mongoObjectIdSubField", databaseInterface.getDataType(FieldType.MONGO_OBJECT_ID)))
+                .put("mongoTimeStampSub", DSL.field("mongoTimeStampSubField", databaseInterface.getDataType(FieldType.MONGO_TIME_STAMP)))
+                .put("instantSub", DSL.field("instantSubField", databaseInterface.getDataType(FieldType.INSTANT)))
+                .build();
         
         try (Connection connection = dataSource.getConnection()) {
             new DerbyTorodbMeta(DSL.using(connection, SQLDialect.DERBY), databaseInterface);
@@ -201,25 +201,25 @@ public class BackendDerbyTest {
                 dsl.insertInto(databaseInterface.getMetaDocPartTable())
                     .set(databaseInterface.getMetaDocPartTable().newRecord().values(databaseName, collectionName, rootDocPartTableRef, rootDocPartTableName))
                     .execute();
-                for (Field field : rootDocPartFields) {
+                for (Map.Entry<String, Field<?>> field : rootDocPartFields.entrySet()) {
                     dsl.insertInto(databaseInterface.getMetaFieldTable())
                         .set(databaseInterface.getMetaFieldTable().newRecord().values(databaseName, collectionName, rootDocPartTableRef, 
-                                field.getName(), field.getName(), 
-                                FieldType.from(((DataTypeForKV<?>) field.getDataType()).getKVValueConverter().getErasuredType())))
+                                field.getKey(), field.getValue().getName(), 
+                                FieldType.from(((DataTypeForKV<?>) field.getValue().getDataType()).getKVValueConverter().getErasuredType())))
                         .execute();
                 }
-                dsl.execute(databaseInterface.createDocPartTableStatement(dsl.configuration(), databaseSchema, rootDocPartTableName, rootDocPartFields));
+                dsl.execute(databaseInterface.createDocPartTableStatement(dsl.configuration(), databaseSchema, rootDocPartTableName, rootDocPartFields.values()));
                 dsl.insertInto(databaseInterface.getMetaDocPartTable())
                     .set(databaseInterface.getMetaDocPartTable().newRecord().values(databaseName, collectionName, subDocPartTableRef, subDocPartTableName))
                     .execute();
-                for (Field field : subDocPartFields) {
+                for (Map.Entry<String, Field<?>> field : subDocPartFields.entrySet()) {
                     dsl.insertInto(databaseInterface.getMetaFieldTable())
                         .set(databaseInterface.getMetaFieldTable().newRecord().values(databaseName, collectionName, subDocPartTableRef, 
-                                field.getName(), field.getName(), 
-                                FieldType.from(((DataTypeForKV<?>) field.getDataType()).getKVValueConverter().getErasuredType())))
+                                field.getKey(), field.getValue().getName(), 
+                                FieldType.from(((DataTypeForKV<?>) field.getValue().getDataType()).getKVValueConverter().getErasuredType())))
                         .execute();
                 }
-                dsl.execute(databaseInterface.createDocPartTableStatement(dsl.configuration(), databaseSchema, subDocPartTableName, subDocPartFields));
+                dsl.execute(databaseInterface.createDocPartTableStatement(dsl.configuration(), databaseSchema, subDocPartTableName, subDocPartFields.values()));
                 connection.commit();
             } catch(Exception exception) {
                 connection.rollback();
@@ -241,9 +241,27 @@ public class BackendDerbyTest {
                 .getMetaDocPartByTableRef(rootDocPartTableRef));
         Assert.assertEquals(derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getMetaCollectionByName(collectionName)
                 .getMetaDocPartByTableRef(rootDocPartTableRef).getIdentifier(), rootDocPartTableName);
+        for (Map.Entry<String, Field<?>> field : rootDocPartFields.entrySet()) {
+            Assert.assertNotNull(derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getMetaCollectionByName(collectionName)
+                    .getMetaDocPartByTableRef(rootDocPartTableRef).getMetaFieldByNameAndType(field.getKey(), 
+                            FieldType.from(((DataTypeForKV<?>) field.getValue().getDataType()).getKVValueConverter().getErasuredType())));
+            Assert.assertEquals(derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getMetaCollectionByName(collectionName)
+                    .getMetaDocPartByTableRef(rootDocPartTableRef).getMetaFieldByNameAndType(field.getKey(), 
+                            FieldType.from(((DataTypeForKV<?>) field.getValue().getDataType()).getKVValueConverter().getErasuredType())).getIdentifier(), 
+                    field.getValue().getName());
+        }
         Assert.assertNotNull(derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getMetaCollectionByName(collectionName)
                 .getMetaDocPartByTableRef(subDocPartTableRef));
         Assert.assertEquals(derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getMetaCollectionByName(collectionName)
                 .getMetaDocPartByTableRef(subDocPartTableRef).getIdentifier(), subDocPartTableName);
+        for (Map.Entry<String, Field<?>> field : subDocPartFields.entrySet()) {
+            Assert.assertNotNull(derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getMetaCollectionByName(collectionName)
+                    .getMetaDocPartByTableRef(subDocPartTableRef).getMetaFieldByNameAndType(field.getKey(), 
+                            FieldType.from(((DataTypeForKV<?>) field.getValue().getDataType()).getKVValueConverter().getErasuredType())));
+            Assert.assertEquals(derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getMetaCollectionByName(collectionName)
+                    .getMetaDocPartByTableRef(subDocPartTableRef).getMetaFieldByNameAndType(field.getKey(), 
+                            FieldType.from(((DataTypeForKV<?>) field.getValue().getDataType()).getKVValueConverter().getErasuredType())).getIdentifier(), 
+                    field.getValue().getName());
+        }
     }
 }

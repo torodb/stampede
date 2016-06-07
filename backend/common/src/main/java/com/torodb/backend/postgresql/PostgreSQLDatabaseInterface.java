@@ -180,7 +180,7 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
     }
 
     @Override
-    public String createDocPartTableStatement(Configuration conf, String schemaName, String tableName, List<Field<?>> fields) {
+    public String createDocPartTableStatement(Configuration conf, String schemaName, String tableName, Collection<Field<?>> fields) {
         StringBuilder sb = new StringBuilder();
         sb.append("CREATE TABLE ")
                 .append(fullTableName(schemaName, tableName))
@@ -203,7 +203,7 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
     }
 
     @Override
-    public String addColumnsToDocPartTableStatement(Configuration conf, String schemaName, String tableName, List<Field<?>> fields) {
+    public String addColumnsToDocPartTableStatement(Configuration conf, String schemaName, String tableName, Collection<Field<?>> fields) {
         StringBuilder sb = new StringBuilder();
         sb.append("ALTER TABLE ")
                 .append(fullTableName(schemaName, tableName));
@@ -234,7 +234,7 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
                 return PostgreSQLKVTypeToSqlType.MONGO_TIMESTAMP_TYPE;
             }
         }
-        return field.getDataType().getTypeName(conf);
+        return field.getDataType().getCastTypeName(conf);
     }
 
     private Iterable<Field<?>> getFieldIterator(Iterable<Field<?>> fields) {

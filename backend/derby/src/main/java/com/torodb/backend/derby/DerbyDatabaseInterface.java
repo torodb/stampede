@@ -79,7 +79,6 @@ import com.torodb.backend.tables.MetaFieldTable;
 import com.torodb.core.TableRef;
 import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.d2r.DocPartRow;
-import com.torodb.core.impl.TableRefImpl;
 import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetaField;
@@ -180,7 +179,7 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
     }
 
     @Override
-    public String createDocPartTableStatement(Configuration conf, String schemaName, String tableName, List<Field<?>> fields) {
+    public String createDocPartTableStatement(Configuration conf, String schemaName, String tableName, Collection<Field<?>> fields) {
         StringBuilder sb = new StringBuilder();
         sb.append("CREATE TABLE ")
                 .append(fullTableName(schemaName, tableName))
@@ -203,7 +202,7 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
     }
 
     @Override
-    public String addColumnsToDocPartTableStatement(Configuration conf, String schemaName, String tableName, List<Field<?>> fields) {
+    public String addColumnsToDocPartTableStatement(Configuration conf, String schemaName, String tableName, Collection<Field<?>> fields) {
         StringBuilder sb = new StringBuilder();
         sb.append("ALTER TABLE ")
                 .append(fullTableName(schemaName, tableName));
