@@ -27,6 +27,7 @@ import org.jooq.impl.SQLDataType;
 
 import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.backend.converters.jooq.KVValueConverter;
+import com.torodb.backend.derby.converters.jooq.binding.TimestampBinding;
 import com.torodb.kvdocument.types.InstantType;
 import com.torodb.kvdocument.types.KVType;
 import com.torodb.kvdocument.values.KVInstant;
@@ -38,7 +39,7 @@ import com.torodb.kvdocument.values.heap.InstantKVInstant;
 public class InstantValueConverter implements KVValueConverter<Timestamp, KVInstant>{
     private static final long serialVersionUID = 1L;
 
-    public static final DataTypeForKV<KVInstant> TYPE = DataTypeForKV.from(SQLDataType.TIMESTAMP, new InstantValueConverter());
+    public static final DataTypeForKV<KVInstant> TYPE = TimestampBinding.fromKVValue(KVInstant.class, new InstantValueConverter());
 
     @Override
     public KVType getErasuredType() {

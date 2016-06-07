@@ -24,7 +24,10 @@ import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.Map;
+import java.util.Optional;
 
 import javax.sql.DataSource;
 
@@ -36,7 +39,12 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.torodb.backend.DocPartDataImpl;
+import com.torodb.backend.DocPartRidGenerator;
+import com.torodb.backend.DocPartRowImpl;
+import com.torodb.backend.MockRidGenerator;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.backend.driver.derby.DerbyDbBackendConfiguration;
 import com.torodb.backend.driver.derby.OfficialDerbyDriver;
@@ -44,14 +52,120 @@ import com.torodb.backend.meta.TorodbSchema;
 import com.torodb.core.TableRef;
 import com.torodb.core.impl.TableRefImpl;
 import com.torodb.core.transaction.metainf.FieldType;
+import com.torodb.core.transaction.metainf.ImmutableMetaDocPart;
+import com.torodb.core.transaction.metainf.ImmutableMetaField;
+import com.torodb.core.transaction.metainf.WrapperMutableMetaDocPart;
+import com.torodb.kvdocument.values.KVBoolean;
+import com.torodb.kvdocument.values.KVDouble;
+import com.torodb.kvdocument.values.KVInteger;
+import com.torodb.kvdocument.values.KVLong;
+import com.torodb.kvdocument.values.KVNull;
+import com.torodb.kvdocument.values.KVValue;
+import com.torodb.kvdocument.values.heap.ByteArrayKVMongoObjectId;
+import com.torodb.kvdocument.values.heap.DefaultKVMongoTimestamp;
+import com.torodb.kvdocument.values.heap.LocalDateKVDate;
+import com.torodb.kvdocument.values.heap.LocalTimeKVTime;
+import com.torodb.kvdocument.values.heap.LongKVInstant;
+import com.torodb.kvdocument.values.heap.StringKVString;
 
 public class BackendDerbyTest {
+    
+    String databaseName;
+    String databaseSchema;
+    String collectionName;
+    TableRef rootDocPartTableRef;
+    String rootDocPartTableName;
+    ImmutableMap<String, Field<?>> rootDocPartFields;
+    TableRef subDocPartTableRef;
+    String subDocPartTableName;
+    ImmutableMap<String, Field<?>> subDocPartFields;
+    ImmutableMap<String, Field<?>> newSubDocPartFields;
+    ImmutableList<ImmutableMap<String, Optional<KVValue<?>>>> rootDocPartValues;
     
     private DerbyDatabaseInterface databaseInterface;
     private DataSource dataSource;
     
     @Before
     public void setUp() throws Exception {
+        databaseInterface = new DerbyDatabaseInterface();
+        databaseName = "databaseName";
+        databaseSchema = "databaseSchemaName";
+        collectionName = "collectionName";
+        rootDocPartTableRef = TableRefImpl.createRoot();
+        rootDocPartTableName = "rootDocPartTableName";
+        rootDocPartFields = ImmutableMap.<String, Field<?>>builder()
+                .put("nullRoot", DSL.field("nullRootField", databaseInterface.getDataType(FieldType.NULL)))
+                .put("booleanRoot", DSL.field("booleanRootField", databaseInterface.getDataType(FieldType.BOOLEAN)))
+                .put("integerRoot", DSL.field("integerRootField", databaseInterface.getDataType(FieldType.INTEGER)))
+                .put("longRoot", DSL.field("longRootField", databaseInterface.getDataType(FieldType.LONG)))
+                .put("doubleRoot", DSL.field("doubleRootField", databaseInterface.getDataType(FieldType.DOUBLE)))
+                .put("stringRoot", DSL.field("stringRootField", databaseInterface.getDataType(FieldType.STRING)))
+                .put("dateRoot", DSL.field("dateRootField", databaseInterface.getDataType(FieldType.DATE)))
+                .put("timeRoot", DSL.field("timeRootField", databaseInterface.getDataType(FieldType.TIME)))
+                .put("mongoObjectIdRoot", DSL.field("mongoObjectIdRootField", databaseInterface.getDataType(FieldType.MONGO_OBJECT_ID)))
+                .put("mongoTimeStampRoot", DSL.field("mongoTimeStampRootField", databaseInterface.getDataType(FieldType.MONGO_TIME_STAMP)))
+                .put("instantRoot", DSL.field("instantRootField", databaseInterface.getDataType(FieldType.INSTANT)))
+                .put("subDocPart", DSL.field("subDocPartField", databaseInterface.getDataType(FieldType.CHILD)))
+                .build();
+        subDocPartTableRef = TableRefImpl.createChild(rootDocPartTableRef, "subDocPart");
+        subDocPartTableName = "subDocPartTableName";
+        subDocPartFields = ImmutableMap.<String, Field<?>>builder()
+                .put("nullSub", DSL.field("nullSubField", databaseInterface.getDataType(FieldType.NULL)))
+                .put("booleanSub", DSL.field("booleanSubField", databaseInterface.getDataType(FieldType.BOOLEAN)))
+                .put("integerSub", DSL.field("integerSubField", databaseInterface.getDataType(FieldType.INTEGER)))
+                .put("longSub", DSL.field("longSubField", databaseInterface.getDataType(FieldType.LONG)))
+                .put("doubleSub", DSL.field("doubleSubField", databaseInterface.getDataType(FieldType.DOUBLE)))
+                .put("stringSub", DSL.field("stringSubField", databaseInterface.getDataType(FieldType.STRING)))
+                .put("dateSub", DSL.field("dateSubField", databaseInterface.getDataType(FieldType.DATE)))
+                .put("timeSub", DSL.field("timeSubField", databaseInterface.getDataType(FieldType.TIME)))
+                .put("mongoObjectIdSub", DSL.field("mongoObjectIdSubField", databaseInterface.getDataType(FieldType.MONGO_OBJECT_ID)))
+                .put("mongoTimeStampSub", DSL.field("mongoTimeStampSubField", databaseInterface.getDataType(FieldType.MONGO_TIME_STAMP)))
+                .put("instantSub", DSL.field("instantSubField", databaseInterface.getDataType(FieldType.INSTANT)))
+                .build();
+        newSubDocPartFields = ImmutableMap.<String, Field<?>>builder()
+                .put("newNullSub", DSL.field("newNullSubField", databaseInterface.getDataType(FieldType.NULL)))
+                .put("newBooleanSub", DSL.field("newBooleanSubField", databaseInterface.getDataType(FieldType.BOOLEAN)))
+                .put("newIntegerSub", DSL.field("newIntegerSubField", databaseInterface.getDataType(FieldType.INTEGER)))
+                .put("newLongSub", DSL.field("newLongSubField", databaseInterface.getDataType(FieldType.LONG)))
+                .put("newDoubleSub", DSL.field("newDoubleSubField", databaseInterface.getDataType(FieldType.DOUBLE)))
+                .put("newStringSub", DSL.field("newStringSubField", databaseInterface.getDataType(FieldType.STRING)))
+                .put("newDateSub", DSL.field("newDateSubField", databaseInterface.getDataType(FieldType.DATE)))
+                .put("newTimeSub", DSL.field("newTimeSubField", databaseInterface.getDataType(FieldType.TIME)))
+                .put("newMongoObjectIdSub", DSL.field("newMongoObjectIdSubField", databaseInterface.getDataType(FieldType.MONGO_OBJECT_ID)))
+                .put("newMongoTimeStampSub", DSL.field("newMongoTimeStampSubField", databaseInterface.getDataType(FieldType.MONGO_TIME_STAMP)))
+                .put("newInstantSub", DSL.field("newInstantSubField", databaseInterface.getDataType(FieldType.INSTANT)))
+                .build();
+        rootDocPartValues = ImmutableList.<ImmutableMap<String, Optional<KVValue<?>>>>builder()
+                .add(ImmutableMap.<String, Optional<KVValue<?>>>builder()
+                        .put("nullRoot", Optional.of(KVNull.getInstance()))
+                        .put("booleanRoot", Optional.of(KVBoolean.TRUE))
+                        .put("integerRoot", Optional.of(KVInteger.of(1)))
+                        .put("longRoot", Optional.of(KVLong.of(2)))
+                        .put("doubleRoot", Optional.of(KVDouble.of(3.3)))
+                        .put("stringRoot", Optional.of(new StringKVString("Lorem ipsum")))
+                        .put("dateRoot", Optional.of(new LocalDateKVDate(LocalDate.of(2016, 06, 7))))
+                        .put("timeRoot", Optional.of(new LocalTimeKVTime(LocalTime.of(17, 29, 00))))
+                        .put("mongoObjectIdRoot", Optional.of(new ByteArrayKVMongoObjectId(
+                                new byte[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12})))
+                        .put("mongoTimeStampRoot", Optional.of(new DefaultKVMongoTimestamp(0, 0)))
+                        .put("instantRoot", Optional.of(new LongKVInstant(0)))
+                        .put("subDocPart", Optional.of(KVBoolean.FALSE))
+                        .build())
+                .add(ImmutableMap.<String, Optional<KVValue<?>>>builder()
+                        .put("nullRoot", Optional.empty())
+                        .put("booleanRoot", Optional.empty())
+                        .put("integerRoot", Optional.empty())
+                        .put("longRoot", Optional.empty())
+                        .put("doubleRoot", Optional.empty())
+                        .put("stringRoot", Optional.empty())
+                        .put("dateRoot", Optional.empty())
+                        .put("timeRoot", Optional.empty())
+                        .put("mongoObjectIdRoot", Optional.empty())
+                        .put("mongoTimeStampRoot", Optional.empty())
+                        .put("instantRoot", Optional.empty())
+                        .put("subDocPart", Optional.empty())
+                        .build())
+                .build();
         OfficialDerbyDriver derbyDriver = new OfficialDerbyDriver();
         dataSource = derbyDriver.getConfiguredDataSource(new DerbyDbBackendConfiguration() {
             @Override
@@ -109,7 +223,6 @@ public class BackendDerbyTest {
                 return true;
             }
         }, "torod");
-        databaseInterface = new DerbyDatabaseInterface();
         try (Connection connection = dataSource.getConnection()) {
             DatabaseMetaData metaData = connection.getMetaData();
             ResultSet tables = metaData.getTables("%", "%", "%", null);
@@ -149,83 +262,42 @@ public class BackendDerbyTest {
     
     @Test
     public void testTorodbMetaStoreAndReload() throws Exception {
-        String databaseName = "databaseName";
-        String databaseSchema = "database_schema";
-        String collectionName = "collectionName";
-        TableRef rootDocPartTableRef = TableRefImpl.createRoot();
-        String rootDocPartTableName = "rootDocPartTableName";
-        ImmutableMap<String, Field<?>> rootDocPartFields = ImmutableMap.<String, Field<?>>builder()
-                .put("nullRoot", DSL.field("nullRootField", databaseInterface.getDataType(FieldType.NULL)))
-                .put("booleanRoot", DSL.field("booleanRootField", databaseInterface.getDataType(FieldType.BOOLEAN)))
-                .put("integerRoot", DSL.field("integerRootField", databaseInterface.getDataType(FieldType.INTEGER)))
-                .put("longRoot", DSL.field("longRootField", databaseInterface.getDataType(FieldType.LONG)))
-                .put("doubleRoot", DSL.field("doubleRootField", databaseInterface.getDataType(FieldType.DOUBLE)))
-                .put("stringRoot", DSL.field("stringRootField", databaseInterface.getDataType(FieldType.STRING)))
-                .put("dateRoot", DSL.field("dateRootField", databaseInterface.getDataType(FieldType.DATE)))
-                .put("timeRoot", DSL.field("timeRootField", databaseInterface.getDataType(FieldType.TIME)))
-                .put("mongoObjectIdRoot", DSL.field("mongoObjectIdRootField", databaseInterface.getDataType(FieldType.MONGO_OBJECT_ID)))
-                .put("mongoTimeStampRoot", DSL.field("mongoTimeStampRootField", databaseInterface.getDataType(FieldType.MONGO_TIME_STAMP)))
-                .put("instantRoot", DSL.field("instantRootField", databaseInterface.getDataType(FieldType.INSTANT)))
-                .put("subDocPart", DSL.field("subDocPartField", databaseInterface.getDataType(FieldType.CHILD)))
-                .build();
-        TableRef subDocPartTableRef = TableRefImpl.createChild(rootDocPartTableRef, "subDocPart");
-        String subDocPartTableName = "subDocPartTableName";
-        ImmutableMap<String, Field<?>> subDocPartFields = ImmutableMap.<String, Field<?>>builder()
-                .put("nullSub", DSL.field("nullSubField", databaseInterface.getDataType(FieldType.NULL)))
-                .put("booleanSub", DSL.field("booleanSubField", databaseInterface.getDataType(FieldType.BOOLEAN)))
-                .put("integerSub", DSL.field("integerSubField", databaseInterface.getDataType(FieldType.INTEGER)))
-                .put("longSub", DSL.field("longSubField", databaseInterface.getDataType(FieldType.LONG)))
-                .put("doubleSub", DSL.field("doubleSubField", databaseInterface.getDataType(FieldType.DOUBLE)))
-                .put("stringSub", DSL.field("stringSubField", databaseInterface.getDataType(FieldType.STRING)))
-                .put("dateSub", DSL.field("dateSubField", databaseInterface.getDataType(FieldType.DATE)))
-                .put("timeSub", DSL.field("timeSubField", databaseInterface.getDataType(FieldType.TIME)))
-                .put("mongoObjectIdSub", DSL.field("mongoObjectIdSubField", databaseInterface.getDataType(FieldType.MONGO_OBJECT_ID)))
-                .put("mongoTimeStampSub", DSL.field("mongoTimeStampSubField", databaseInterface.getDataType(FieldType.MONGO_TIME_STAMP)))
-                .put("instantSub", DSL.field("instantSubField", databaseInterface.getDataType(FieldType.INSTANT)))
-                .build();
-        
         try (Connection connection = dataSource.getConnection()) {
             new DerbyTorodbMeta(DSL.using(connection, SQLDialect.DERBY), databaseInterface);
             connection.commit();
         }
         try (Connection connection = dataSource.getConnection()) {
-            try {
-                DSLContext dsl = DSL.using(connection, SQLDialect.DERBY);
-                dsl.insertInto(databaseInterface.getMetaDatabaseTable())
-                    .set(databaseInterface.getMetaDatabaseTable().newRecord().values(databaseName, databaseSchema))
+            DSLContext dsl = DSL.using(connection, SQLDialect.DERBY);
+            dsl.insertInto(databaseInterface.getMetaDatabaseTable())
+                .set(databaseInterface.getMetaDatabaseTable().newRecord().values(databaseName, databaseSchema))
+                .execute();
+            dsl.execute(databaseInterface.createSchemaStatement(databaseSchema));
+            dsl.insertInto(databaseInterface.getMetaCollectionTable())
+                .set(databaseInterface.getMetaCollectionTable().newRecord().values(databaseName, collectionName))
+                .execute();
+            dsl.insertInto(databaseInterface.getMetaDocPartTable())
+                .set(databaseInterface.getMetaDocPartTable().newRecord().values(databaseName, collectionName, rootDocPartTableRef, rootDocPartTableName))
+                .execute();
+            for (Map.Entry<String, Field<?>> field : rootDocPartFields.entrySet()) {
+                dsl.insertInto(databaseInterface.getMetaFieldTable())
+                    .set(databaseInterface.getMetaFieldTable().newRecord().values(databaseName, collectionName, rootDocPartTableRef, 
+                            field.getKey(), field.getValue().getName(), 
+                            FieldType.from(((DataTypeForKV<?>) field.getValue().getDataType()).getKVValueConverter().getErasuredType())))
                     .execute();
-                dsl.execute(databaseInterface.createSchemaStatement(databaseSchema));
-                dsl.insertInto(databaseInterface.getMetaCollectionTable())
-                    .set(databaseInterface.getMetaCollectionTable().newRecord().values(databaseName, collectionName))
-                    .execute();
-                dsl.insertInto(databaseInterface.getMetaDocPartTable())
-                    .set(databaseInterface.getMetaDocPartTable().newRecord().values(databaseName, collectionName, rootDocPartTableRef, rootDocPartTableName))
-                    .execute();
-                for (Map.Entry<String, Field<?>> field : rootDocPartFields.entrySet()) {
-                    dsl.insertInto(databaseInterface.getMetaFieldTable())
-                        .set(databaseInterface.getMetaFieldTable().newRecord().values(databaseName, collectionName, rootDocPartTableRef, 
-                                field.getKey(), field.getValue().getName(), 
-                                FieldType.from(((DataTypeForKV<?>) field.getValue().getDataType()).getKVValueConverter().getErasuredType())))
-                        .execute();
-                }
-                dsl.execute(databaseInterface.createDocPartTableStatement(dsl.configuration(), databaseSchema, rootDocPartTableName, rootDocPartFields.values()));
-                dsl.insertInto(databaseInterface.getMetaDocPartTable())
-                    .set(databaseInterface.getMetaDocPartTable().newRecord().values(databaseName, collectionName, subDocPartTableRef, subDocPartTableName))
-                    .execute();
-                for (Map.Entry<String, Field<?>> field : subDocPartFields.entrySet()) {
-                    dsl.insertInto(databaseInterface.getMetaFieldTable())
-                        .set(databaseInterface.getMetaFieldTable().newRecord().values(databaseName, collectionName, subDocPartTableRef, 
-                                field.getKey(), field.getValue().getName(), 
-                                FieldType.from(((DataTypeForKV<?>) field.getValue().getDataType()).getKVValueConverter().getErasuredType())))
-                        .execute();
-                }
-                dsl.execute(databaseInterface.createDocPartTableStatement(dsl.configuration(), databaseSchema, subDocPartTableName, subDocPartFields.values()));
-                connection.commit();
-            } catch(Exception exception) {
-                connection.rollback();
-                
-                throw exception;
             }
+            dsl.execute(databaseInterface.createDocPartTableStatement(dsl.configuration(), databaseSchema, rootDocPartTableName, rootDocPartFields.values()));
+            dsl.insertInto(databaseInterface.getMetaDocPartTable())
+                .set(databaseInterface.getMetaDocPartTable().newRecord().values(databaseName, collectionName, subDocPartTableRef, subDocPartTableName))
+                .execute();
+            for (Map.Entry<String, Field<?>> field : subDocPartFields.entrySet()) {
+                dsl.insertInto(databaseInterface.getMetaFieldTable())
+                    .set(databaseInterface.getMetaFieldTable().newRecord().values(databaseName, collectionName, subDocPartTableRef, 
+                            field.getKey(), field.getValue().getName(), 
+                            FieldType.from(((DataTypeForKV<?>) field.getValue().getDataType()).getKVValueConverter().getErasuredType())))
+                    .execute();
+            }
+            dsl.execute(databaseInterface.createDocPartTableStatement(dsl.configuration(), databaseSchema, subDocPartTableName, subDocPartFields.values()));
+            connection.commit();
         }
         DerbyTorodbMeta derbyTorodbMeta;
         try (Connection connection = dataSource.getConnection()) {
@@ -262,6 +334,80 @@ public class BackendDerbyTest {
                     .getMetaDocPartByTableRef(subDocPartTableRef).getMetaFieldByNameAndType(field.getKey(), 
                             FieldType.from(((DataTypeForKV<?>) field.getValue().getDataType()).getKVValueConverter().getErasuredType())).getIdentifier(), 
                     field.getValue().getName());
+        }
+    }
+    
+    @Test
+    public void testTorodbInsertDocPart() throws Exception {
+        try (Connection connection = dataSource.getConnection()) {
+            DSLContext dsl = DSL.using(connection, SQLDialect.DERBY);
+            dsl.execute(databaseInterface.createDocPartTableStatement(dsl.configuration(), databaseSchema, rootDocPartTableName, rootDocPartFields.values()));
+            ImmutableMetaDocPart.Builder metaDocPartBuilder = new ImmutableMetaDocPart.Builder(rootDocPartTableRef, rootDocPartTableName);
+            for (Map.Entry<String, Field<?>> field : rootDocPartFields.entrySet()) {
+                metaDocPartBuilder.add(new ImmutableMetaField(field.getKey(), field.getValue().getName(), 
+                        FieldType.from(((DataTypeForKV<?>) field.getValue().getDataType()).getKVValueConverter().getErasuredType())));
+            }
+            DocPartDataImpl docPartData = new DocPartDataImpl(new WrapperMutableMetaDocPart(metaDocPartBuilder.build(), w -> {}), 
+                    new DocPartRidGenerator(databaseName, collectionName, new MockRidGenerator()));
+            for (Map<String, Optional<KVValue<?>>> rootDocPartValueMap : rootDocPartValues) {
+                DocPartRowImpl row = docPartData.appendRootRow();
+                for (Map.Entry<String, Optional<KVValue<?>>> rootDocPartValue : rootDocPartValueMap.entrySet()) {
+                    if (rootDocPartValue.getValue().isPresent()) {
+                        Field<?> field = rootDocPartFields.get(rootDocPartValue.getKey());
+                        docPartData.appendColumnValue(row, rootDocPartValue.getKey(), field.getName(), 
+                            FieldType.from(((DataTypeForKV<?>) field.getDataType()).getKVValueConverter().getErasuredType()), 
+                            rootDocPartValue.getValue().get());
+                    }
+                }
+            }
+            databaseInterface.insertPathDocuments(dsl, databaseSchema, docPartData);
+            connection.commit();
+            StringBuilder rootDocPartSelectStatementBuilder = new StringBuilder("SELECT ");
+            for (Map.Entry<String, Field<?>> field : rootDocPartFields.entrySet()) {
+                rootDocPartSelectStatementBuilder.append('"')
+                    .append(field.getValue().getName())
+                    .append("\",");
+            }
+            rootDocPartSelectStatementBuilder.setCharAt(rootDocPartSelectStatementBuilder.length() - 1, ' ');
+            rootDocPartSelectStatementBuilder.append("FROM \")")
+                    .append(databaseSchema)
+                    .append("\".\"")
+                    .append(rootDocPartTableName)
+                    .append('"');
+            try (PreparedStatement preparedStatement = connection.prepareStatement(rootDocPartSelectStatementBuilder.toString())) {
+                ResultSet resultSet = preparedStatement.executeQuery();
+                while (resultSet.next()) {
+                    boolean rowFound = true;
+                    for (Map<String, Optional<KVValue<?>>> rootDocPartValueMap : rootDocPartValues) {
+                        int columnIndex = 1;
+                        for (Map.Entry<String, Field<?>> field : rootDocPartFields.entrySet()) {
+                            Optional<KVValue<?>> value = rootDocPartValueMap.get(field.getKey());
+                            DataTypeForKV<?> dataTypeForKV = (DataTypeForKV<?>) field.getValue().getDataType();
+                            KVValue<?> databaseConvertedValue = dataTypeForKV.convert(resultSet.getObject(columnIndex));
+                            columnIndex++;
+                            
+                            if (!value.isPresent()) {
+                                if (databaseConvertedValue != null) {
+                                    rowFound = false;
+                                    break;
+                                }
+                            } else if (databaseConvertedValue == null) {
+                                rowFound = false;
+                                break;
+                            } else if (!value.get().equals(databaseConvertedValue)) {
+                                rowFound = false;
+                                break;
+                            }
+                        }
+                        
+                        if (rowFound) {
+                            break;
+                        }
+                    }
+                    
+                    Assert.assertTrue(rowFound);
+                }
+            }
         }
     }
 }

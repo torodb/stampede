@@ -78,6 +78,13 @@
             <artifactId>javax.json</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>com.torodb</groupId>
+            <artifactId>backend-common</artifactId>
+            <version>${project.version}</version>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
 	</dependencies>
 	<description>Derby implementation of a ToroDB backend.</description>
 </project>

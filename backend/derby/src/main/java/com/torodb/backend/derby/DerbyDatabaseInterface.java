@@ -899,8 +899,7 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
             MetaField metaField = metaFieldIterator.next();
             insertStatementHeaderBuilder.append("\"")
                 .append(metaField.getIdentifier())
-                .append("\",")
-                .append(",");
+                .append("\",");
         }
         insertStatementHeaderBuilder.setCharAt(insertStatementHeaderBuilder.length() - 1, ')');
         insertStatementHeaderBuilder.append(" VALUES ");
@@ -912,10 +911,14 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
             if (insertStatementBuilder.length() == 0) {
                 insertStatementBuilder.append(insertStatementHeaderBuilder);
             }
-            insertStatementBuilder.append("(");
+            insertStatementBuilder.append('(');
             for (KVValue<?> value : docPartRow) {
-                insertStatementBuilder.append(getSqlValue(value))
-                    .append(",");
+                if (value != null) {
+                    insertStatementBuilder.append(getSqlValue(value))
+                        .append(',');
+                } else {
+                    insertStatementBuilder.append("NULL,");
+                }
             }
             insertStatementBuilder.setCharAt(insertStatementBuilder.length() - 1, ')');
             insertStatementBuilder.append(",");

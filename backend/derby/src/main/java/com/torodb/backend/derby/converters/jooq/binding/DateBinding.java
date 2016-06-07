@@ -1,11 +1,10 @@
 package com.torodb.backend.derby.converters.jooq.binding;
 
+import java.sql.Date;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 import java.sql.Types;
 import java.util.Objects;
-
-import javax.json.JsonValue;
 
 import org.jooq.Binding;
 import org.jooq.BindingGetResultSetContext;
@@ -19,50 +18,44 @@ import org.jooq.Converter;
 import org.jooq.DataType;
 import org.jooq.impl.DSL;
 import org.jooq.impl.DefaultDataType;
+import org.jooq.util.derby.DerbyDataType;
 
-import com.torodb.backend.converters.array.ArrayConverter;
-import com.torodb.backend.converters.jooq.ArrayToJooqConverter;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.backend.converters.jooq.KVValueConverter;
 import com.torodb.kvdocument.values.KVValue;
 
-public class VarcharBinding<T> implements Binding<String, T> {
+public class DateBinding<T> implements Binding<Date, T> {
 
     private static final long serialVersionUID = 1L;
 
-    public static <UT extends KVValue<?>> DataTypeForKV<UT> fromKVValue(Class<UT> type, KVValueConverter<String, UT> converter) {
-        return DataTypeForKV.from(new DefaultDataType<String>(null, String.class, "varchar"), converter, new VarcharBinding<UT>(converter));
+    public static <UT extends KVValue<?>> DataTypeForKV<UT> fromKVValue(Class<UT> type, KVValueConverter<Date, UT> converter) {
+        return DataTypeForKV.from(new DefaultDataType<Date>(null, Date.class, "date"), converter, new DateBinding<UT>(converter));
     }
     
-    public static <UT extends KVValue<?>, V extends JsonValue> DataType<UT> fromKVValue(final Class<UT> type, final ArrayConverter<V, UT> arrayConverter) {
-        Converter<String, UT> converter = new ArrayToJooqConverter<>(type, arrayConverter);
-        return new DefaultDataType<String>(null, String.class, "varchar").asConvertedDataType(new VarcharBinding<UT>(converter));
-    }
-    
-    public static <UT> DataType<UT> fromType(Class<UT> type, Converter<String, UT> converter) {
-        return new DefaultDataType<String>(null, String.class, "varchar").asConvertedDataType(new VarcharBinding<UT>(converter));
+    public static <UT> DataType<UT> fromType(Class<UT> type, Converter<Date, UT> converter) {
+        return new DefaultDataType<Date>(null, Date.class, "date").asConvertedDataType(new DateBinding<UT>(converter));
     }
 
-    private final Converter<String, T> converter;
+    private final Converter<Date, T> converter;
     
-    public VarcharBinding(Converter<String, T> converter) {
+    public DateBinding(Converter<Date, T> converter) {
         super();
         this.converter = converter;
     }
 
     @Override
-    public Converter<String, T> converter() {
+    public Converter<Date, T> converter() {
         return converter;
     }
 
     @Override
     public void sql(BindingSQLContext<T> ctx) throws SQLException {
-        ctx.render().visit(DSL.val(ctx.convert(converter()).value()));
+        ctx.render().sql("date(").visit(DSL.val(ctx.convert(converter()).value(), DerbyDataType.VARCHAR)).sql(')');
     }
 
     @Override
     public void register(BindingRegisterContext<T> ctx) throws SQLException {
-        ctx.statement().registerOutParameter(ctx.index(), Types.VARCHAR);
+        ctx.statement().registerOutParameter(ctx.index(), Types.DATE);
     }
 
     @Override
@@ -72,12 +65,12 @@ public class VarcharBinding<T> implements Binding<String, T> {
 
     @Override
     public void get(BindingGetResultSetContext<T> ctx) throws SQLException {
-        ctx.convert(converter()).value(ctx.resultSet().getString(ctx.index()));
+        ctx.convert(converter()).value(ctx.resultSet().getDate(ctx.index()));
     }
 
     @Override
     public void get(BindingGetStatementContext<T> ctx) throws SQLException {
-        ctx.convert(converter()).value(ctx.statement().getString(ctx.index()));
+        ctx.convert(converter()).value(ctx.statement().getDate(ctx.index()));
     }
 
     @Override

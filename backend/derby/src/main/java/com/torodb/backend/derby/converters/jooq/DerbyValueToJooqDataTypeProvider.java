@@ -25,12 +25,10 @@ import java.util.Map;
 import com.google.common.collect.Maps;
 import com.torodb.backend.converters.jooq.BooleanValueConverter;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
-import com.torodb.backend.converters.jooq.DateValueConverter;
 import com.torodb.backend.converters.jooq.DoubleValueConverter;
 import com.torodb.backend.converters.jooq.IntegerValueConverter;
 import com.torodb.backend.converters.jooq.LongValueConverter;
 import com.torodb.backend.converters.jooq.NullValueConverter;
-import com.torodb.backend.converters.jooq.TimeValueConverter;
 import com.torodb.backend.converters.jooq.ValueToJooqDataTypeProvider;
 import com.torodb.core.transaction.metainf.FieldType;
 
