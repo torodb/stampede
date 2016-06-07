@@ -32,6 +32,7 @@ import java.sql.Statement;
 
 import javax.sql.DataSource;
 
+import org.apache.derby.jdbc.ClientDataSource;
 import org.apache.derby.jdbc.EmbeddedDataSource;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -69,12 +70,34 @@ public class OfficialDerbyDriver implements DerbyDriverProvider {
     
     @Override
     public DataSource getConfiguredDataSource(DerbyDbBackendConfiguration configuration, String poolName) {
-        EmbeddedDataSource dataSource = new EmbeddedDataSource();
-        dataSource.setCreateDatabase("create");
-        if (configuration.isInMemory()) {
-            dataSource.setDatabaseName("memory:" + configuration.getDbName());
+        DataSource dataSource;
+        if (configuration.embedded()) {
+            EmbeddedDataSource embeddedDataSource = new EmbeddedDataSource();
+            embeddedDataSource.setCreateDatabase("create");
+            if (configuration.inMemory()) {
+                embeddedDataSource.setDatabaseName("memory:" + configuration.getDbName());
+            } else {
+                embeddedDataSource.setDatabaseName(configuration.getDbName());
+            }
+            try {
+                embeddedDataSource.getConnection();
+            } catch (SQLException ex) {
+                throw new ToroRuntimeException(ex);
+            }
+            embeddedDataSource.setCreateDatabase(null);
+            dataSource = embeddedDataSource;
         } else {
-            dataSource.setDatabaseName(configuration.getDbName());
+            ClientDataSource clientDataSource = new ClientDataSource();
+            clientDataSource.setServerName(configuration.getDbHost());
+            clientDataSource.setPortNumber(configuration.getDbPort());
+            clientDataSource.setUser(configuration.getUsername());
+            clientDataSource.setPassword(configuration.getPassword());
+            if (configuration.inMemory()) {
+                clientDataSource.setDatabaseName("memory:" + configuration.getDbName());
+            } else {
+                clientDataSource.setDatabaseName(configuration.getDbName());
+            }
+            dataSource = clientDataSource;
         }
         
         if (LOGGER.isTraceEnabled()) {

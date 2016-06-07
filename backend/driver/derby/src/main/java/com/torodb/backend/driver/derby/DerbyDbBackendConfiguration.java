@@ -26,5 +26,6 @@ import com.torodb.backend.DbBackendConfiguration;
  * Configuration data for the backend
  */
 public interface DerbyDbBackendConfiguration extends DbBackendConfiguration {
-    public boolean isInMemory();
+    public boolean inMemory();
+    public boolean embedded();
 }

@@ -51,7 +51,7 @@ public class BackendDerbyTest {
     private DataSource dataSource;
     
     @Before
-    public void before() throws Exception {
+    public void setUp() throws Exception {
         OfficialDerbyDriver derbyDriver = new OfficialDerbyDriver();
         dataSource = derbyDriver.getConfiguredDataSource(new DerbyDbBackendConfiguration() {
             @Override
@@ -100,8 +100,13 @@ public class BackendDerbyTest {
             }
 
             @Override
-            public boolean isInMemory() {
+            public boolean inMemory() {
                 return false;
+            }
+
+            @Override
+            public boolean embedded() {
+                return true;
             }
         }, "torod");
         databaseInterface = new DerbyDatabaseInterface();
@@ -229,5 +234,16 @@ public class BackendDerbyTest {
         }
         Assert.assertNotNull(derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName));
         Assert.assertEquals(derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getIdentifier(), databaseSchema);
+        Assert.assertNotNull(derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getMetaCollectionByName(collectionName));
+        Assert.assertEquals(derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName)
+                .getMetaCollectionByName(collectionName).getIdentifier(), rootDocPartTableName);
+        Assert.assertNotNull(derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getMetaCollectionByName(collectionName)
+                .getMetaDocPartByTableRef(rootDocPartTableRef));
+        Assert.assertEquals(derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getMetaCollectionByName(collectionName)
+                .getMetaDocPartByTableRef(rootDocPartTableRef).getIdentifier(), rootDocPartTableName);
+        Assert.assertNotNull(derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getMetaCollectionByName(collectionName)
+                .getMetaDocPartByTableRef(subDocPartTableRef));
+        Assert.assertEquals(derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getMetaCollectionByName(collectionName)
+                .getMetaDocPartByTableRef(subDocPartTableRef).getIdentifier(), subDocPartTableName);
     }
 }
