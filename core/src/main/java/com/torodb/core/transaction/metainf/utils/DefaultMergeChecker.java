@@ -177,7 +177,7 @@ public class DefaultMergeChecker {
             case DIFFERENT_ID:
                 assert byId != null;
                 throw new UnmergeableException(currentSnapshot, newSnapshot,
-                        "There is a previous field on " + db + "." + col + "." + docPart +" whose "
+                        "There is a previous field on " + db.getIdentifier() + "." + col.getIdentifier() + "." + docPart.getIdentifier() +" whose "
                                 + "id is " + byId.getIdentifier()+ " that has a different name or "
                                 + "type. The previous element name is " + byId.getName()+ " and its "
                                 + "type is " + byId.getType() + ". The name of the one is "
