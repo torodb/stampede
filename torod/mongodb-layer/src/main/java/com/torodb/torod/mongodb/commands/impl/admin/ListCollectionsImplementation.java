@@ -96,7 +96,7 @@ public class ListCollectionsImplementation extends
                     )
             );
 
-            MongoCursor<ListCollectionsResult.Entry> resultCursor = new FirstBatchOnlyCursor<Entry>(
+            MongoCursor<ListCollectionsResult.Entry> resultCursor = new FirstBatchOnlyCursor<>(
                     0,
                     req.getDatabase(),
                     NamespaceUtil.LIST_COLLECTIONS_GET_MORE_COLLECTION,
@@ -105,7 +105,7 @@ public class ListCollectionsImplementation extends
             );
             ListCollectionsResult result = new ListCollectionsResult(resultCursor);
 
-            return new NonWriteCommandResult<ListCollectionsResult>(result);
+            return new NonWriteCommandResult<>(result);
         } catch (ClosedToroCursorException ex) {
             throw new CommandFailed(
                     command.getCommandName(),

@@ -62,7 +62,7 @@ public class LogbackUtils {
 		patternLayoutEncoder.setPattern(pattern);
 		patternLayoutEncoder.start();
 		
-		FileAppender<ILoggingEvent> fileAppender = new FileAppender<ILoggingEvent>();
+		FileAppender<ILoggingEvent> fileAppender = new FileAppender<>();
 		fileAppender.setFile(logFile);
 		fileAppender.setContext(loggerContext);
 		fileAppender.setEncoder(patternLayoutEncoder);

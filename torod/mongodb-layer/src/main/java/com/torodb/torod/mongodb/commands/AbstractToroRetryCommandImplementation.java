@@ -31,9 +31,9 @@ public abstract class AbstractToroRetryCommandImplementation<Arg, Rep> extends A
     private static final Logger LOGGER
             = LoggerFactory.getLogger(AbstractToroRetryCommandImplementation.class);
 
-    private final RetryTransactionHandler<CommandResult<Rep>> retryTransactionHandler = 
-            new RetryTransactionHandler<CommandResult<Rep>>(
-                    RetryHelper.<CommandResult<Rep>, MongoException>retryUntilHandler(64, 
+    private final RetryTransactionHandler<CommandResult<Rep>> retryTransactionHandler =
+            new RetryTransactionHandler<>(
+                    RetryHelper.<CommandResult<Rep>, MongoException>retryUntilHandler(64,
                             RetryHelper.<CommandResult<Rep>, MongoException>throwHandler()));
     
     @Nonnull

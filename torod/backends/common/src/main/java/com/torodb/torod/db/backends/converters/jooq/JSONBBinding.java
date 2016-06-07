@@ -28,16 +28,16 @@ public class JSONBBinding<T> implements Binding<String, T> {
     private static final long serialVersionUID = 1L;
 
     public static <UT extends ScalarValue<?>> DataTypeForScalar<UT> fromScalarValue(Class<UT> type, SubdocValueConverter<String, UT> converter) {
-        return DataTypeForScalar.from(new DefaultDataType<String>(null, String.class, "jsonb"), converter, new JSONBBinding<UT>(converter));
+        return DataTypeForScalar.from(new DefaultDataType<>(null, String.class, "jsonb"), converter, new JSONBBinding<>(converter));
     }
     
     public static <UT extends ScalarValue<?>, V extends JsonValue> DataType<UT> fromScalarValue(final Class<UT> type, final ArrayConverter<V, UT> arrayConverter) {
         Converter<String, UT> converter = new ArrayToJooqConverter<>(type, arrayConverter);
-        return new DefaultDataType<String>(null, String.class, "jsonb").asConvertedDataType(new JSONBBinding<UT>(converter));
+        return new DefaultDataType<>(null, String.class, "jsonb").asConvertedDataType(new JSONBBinding<>(converter));
     }
     
     public static <UT> DataType<UT> fromType(Class<UT> type, Converter<String, UT> converter) {
-        return new DefaultDataType<String>(null, String.class, "jsonb").asConvertedDataType(new JSONBBinding<UT>(converter));
+        return new DefaultDataType<>(null, String.class, "jsonb").asConvertedDataType(new JSONBBinding<>(converter));
     }
 
     private final Converter<String, T> converter;

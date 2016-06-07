@@ -204,7 +204,7 @@ public class SplitDocument {
         }
 
         private boolean checkCorrectness() {
-            Deque<DocStructure> structuresToCheck = new LinkedList<DocStructure>();
+            Deque<DocStructure> structuresToCheck = new LinkedList<>();
             structuresToCheck.add(root);
             while (!structuresToCheck.isEmpty()) {
                 DocStructure docStructure = structuresToCheck.removeLast();

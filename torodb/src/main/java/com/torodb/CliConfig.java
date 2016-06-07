@@ -125,14 +125,12 @@ public class CliConfig {
     public static class BackendValueValidator implements IValueValidator<String> {
         @Override
         public void validate(String name, String value) throws ParameterException {
-            if (value != null) {
-                if (getBackendClass(value) == null) {
-                    List<String> possibleValues = new ArrayList<>();
-                    for (Class<? extends BackendImplementation> backendClass : Backend.BACKEND_CLASSES) {
-                        possibleValues.add(backendClass.getSimpleName().toLowerCase(Locale.US));
-                    }
-                    throw new ParameterException("Unknown backend: " + value + " (possible values are: " + possibleValues + ")");
+            if (value != null && getBackendClass(value) == null) {
+                List<String> possibleValues = new ArrayList<>();
+                for (Class<? extends BackendImplementation> backendClass : Backend.BACKEND_CLASSES) {
+                    possibleValues.add(backendClass.getSimpleName().toLowerCase(Locale.US));
                 }
+                throw new ParameterException("Unknown backend: " + value + " (possible values are: " + possibleValues + ")");
             }
         }
     }

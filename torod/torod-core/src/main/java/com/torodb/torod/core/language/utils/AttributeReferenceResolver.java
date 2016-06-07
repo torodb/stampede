@@ -370,8 +370,8 @@ public class AttributeReferenceResolver {
             public Argument(List<AttributeReference.Key> keys) {
                 this.keys = keys;
                 depth = 0;
-                docStructureStack = new LinkedList<DocStructure>();
-                docStructureDepthStack = new LinkedList<Integer>();
+                docStructureStack = new LinkedList<>();
+                docStructureDepthStack = new LinkedList<>();
             }
 
             public void addDocStructure(DocStructure structure) {

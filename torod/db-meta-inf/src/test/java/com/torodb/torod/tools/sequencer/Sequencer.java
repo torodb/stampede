@@ -37,7 +37,7 @@ public class Sequencer<E extends Enum<E>> {
 
     public Sequencer(Class<E> messagesEnum) {
         sentMessages = EnumSet.noneOf(messagesEnum);
-        reservedMessages = new EnumMap<E, java.lang.Thread>(messagesEnum);
+        reservedMessages = new EnumMap<>(messagesEnum);
     }
     
     public void waitFor(E message) {
