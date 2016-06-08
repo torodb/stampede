@@ -201,7 +201,7 @@ public class UpdateImplementation extends AbstractToroRetryCommandImplementation
                     queryCriteriaTranslator.translate(input.getQuery()),
                     updateAction,
                     input.isUpsert(),
-                    input.isMulti()
+                    !input.isMulti()
             );
         }
     }
