@@ -89,4 +89,9 @@ public class DerbyMetaCollectionTable extends MetaCollectionTable<DerbyMetaColle
     protected TableField<DerbyMetaCollectionRecord, String> createNameField() {
         return createField(TableFields.NAME.fieldName, SQLDataType.VARCHAR.nullable(false), this, "");
     }
+
+    @Override
+    protected TableField<DerbyMetaCollectionRecord, String> createIdentifierField() {
+        return createField(TableFields.IDENTIFIER.fieldName, SQLDataType.VARCHAR.nullable(false), this, "");
+    }
 }

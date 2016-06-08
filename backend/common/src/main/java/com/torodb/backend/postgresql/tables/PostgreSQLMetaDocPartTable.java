@@ -104,4 +104,24 @@ public class PostgreSQLMetaDocPartTable extends MetaDocPartTable<String[], Postg
     protected TableField<PostgreSQLMetaDocPartRecord, Integer> createLastRidField() {
         return createField(TableFields.LAST_RID.fieldName, SQLDataType.INTEGER.nullable(false), this, "");
     }
+
+    @Override
+    protected Field<?> createDidField() {
+        return field(DocPartTableFields.DID.fieldName, SQLDataType.INTEGER.nullable(false));
+    }
+
+    @Override
+    protected Field<?> createRidField() {
+        return field(DocPartTableFields.RID.fieldName, SQLDataType.INTEGER.nullable(false));
+    }
+
+    @Override
+    protected Field<?> createPidField() {
+        return field(DocPartTableFields.PID.fieldName, SQLDataType.INTEGER.nullable(false));
+    }
+
+    @Override
+    protected Field<?> createSeqField() {
+        return field(DocPartTableFields.SEQ.fieldName, SQLDataType.INTEGER.nullable(false));
+    }
 }

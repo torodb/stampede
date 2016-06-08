@@ -264,10 +264,10 @@ public abstract class MetaDocPartRecord<TableRefType> extends UpdatableRecordImp
 	 * {@inheritDoc}
 	 */
 	@Override
-	public abstract MetaDocPartRecord values(String value1, String value2, TableRefType value3, String value4, Integer value5);
+	public abstract MetaDocPartRecord values(String database, String collection, TableRefType tableRef, String identifier, Integer lastRid);
 
-    public MetaDocPartRecord values(String value1, String value2, TableRef value3, String value4) {
-        return values(value1, value2, toTableRefType(value3), value4, 0);
+    public MetaDocPartRecord values(String database, String collection, TableRef tableRef, String identifier) {
+        return values(database, collection, toTableRefType(tableRef), identifier, 0);
     }
     
     protected abstract TableRefType toTableRefType(TableRef tableRef);

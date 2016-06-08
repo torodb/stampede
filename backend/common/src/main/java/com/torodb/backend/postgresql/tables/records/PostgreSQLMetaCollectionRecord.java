@@ -34,19 +34,20 @@ public class PostgreSQLMetaCollectionRecord extends MetaCollectionRecord {
 	}
 
     @Override
-    public MetaCollectionRecord values(String database, String name) {
+    public MetaCollectionRecord values(String database, String name, String identifier) {
         
         setValue(0, database);
         setValue(1, name);
+        setValue(2, identifier);
         return this;
     }
 
 	/**
 	 * Create a detached, initialised MetaCollectionRecord
 	 */
-	public PostgreSQLMetaCollectionRecord(String database, String name) {
+	public PostgreSQLMetaCollectionRecord(String database, String name, String identifier) {
 		super(PostgreSQLMetaCollectionTable.COLLECTION);
 		
-		values(database, name);
+		values(database, name, identifier);
 	}
 }

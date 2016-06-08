@@ -147,7 +147,7 @@ public abstract class MetaDatabaseRecord extends UpdatableRecordImpl<MetaDatabas
 	 * {@inheritDoc}
 	 */
 	@Override
-	public abstract MetaDatabaseRecord values(String value1, String value2);
+	public abstract MetaDatabaseRecord values(String name, String identifier);
 
     // -------------------------------------------------------------------------
     // Constructors

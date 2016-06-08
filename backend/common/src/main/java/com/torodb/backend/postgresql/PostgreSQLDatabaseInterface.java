@@ -60,7 +60,6 @@ import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.backend.converters.jooq.ValueToJooqDataTypeProvider;
 import com.torodb.backend.meta.TorodbSchema;
 import com.torodb.backend.mocks.KVTypeToSqlType;
-import com.torodb.backend.mocks.RetryTransactionException;
 import com.torodb.backend.mocks.ToroImplementationException;
 import com.torodb.backend.mocks.ToroRuntimeException;
 import com.torodb.backend.postgresql.converters.PostgreSQLKVTypeToSqlType;
@@ -71,14 +70,15 @@ import com.torodb.backend.postgresql.tables.PostgreSQLMetaDatabaseTable;
 import com.torodb.backend.postgresql.tables.PostgreSQLMetaDocPartTable;
 import com.torodb.backend.postgresql.tables.PostgreSQLMetaFieldTable;
 import com.torodb.backend.sql.index.NamedDbIndex;
-import com.torodb.backend.tables.DocPartTable;
 import com.torodb.backend.tables.MetaCollectionTable;
 import com.torodb.backend.tables.MetaDatabaseTable;
 import com.torodb.backend.tables.MetaDocPartTable;
+import com.torodb.backend.tables.MetaDocPartTable.DocPartTableFields;
 import com.torodb.backend.tables.MetaFieldTable;
 import com.torodb.core.TableRef;
 import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.d2r.DocPartRow;
+import com.torodb.core.transaction.RollbackException;
 import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetaField;
@@ -123,6 +123,10 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
     private final ValueToJooqDataTypeProvider valueToJooqDataTypeProvider;
     private final KVTypeToSqlType kVTypeToSqlType;
     private final FieldComparator fieldComparator = new FieldComparator();
+    private final PostgreSQLMetaDatabaseTable metaDatabaseTable = new PostgreSQLMetaDatabaseTable();
+    private final PostgreSQLMetaCollectionTable metaCollectionTable = new PostgreSQLMetaCollectionTable();
+    private final PostgreSQLMetaDocPartTable metaDocPartTable = new PostgreSQLMetaDocPartTable();
+    private final PostgreSQLMetaFieldTable metaFieldTable = new PostgreSQLMetaFieldTable();
 
     @Inject
     public PostgreSQLDatabaseInterface(KVTypeToSqlType kVTypeToSqlType) {
@@ -139,25 +143,25 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
     @Nonnull
     @Override
     public PostgreSQLMetaDatabaseTable getMetaDatabaseTable() {
-        return new PostgreSQLMetaDatabaseTable();
+        return metaDatabaseTable;
     }
 
     @Nonnull
     @Override
     public PostgreSQLMetaCollectionTable getMetaCollectionTable() {
-        return new PostgreSQLMetaCollectionTable();
+        return metaCollectionTable;
     }
 
     @Nonnull
     @Override
     public PostgreSQLMetaDocPartTable getMetaDocPartTable() {
-        return new PostgreSQLMetaDocPartTable();
+        return metaDocPartTable;
     }
 
     @Nonnull
     @Override
     public PostgreSQLMetaFieldTable getMetaFieldTable() {
-        return new PostgreSQLMetaFieldTable();
+        return metaFieldTable;
     }
 
     @Override
@@ -257,24 +261,24 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
 
         @Override
         public int compare(Field o1, Field o2) {
-            if (o1.getName().equals(DocPartTable.DID_COLUMN_NAME)) {
+            if (o1.getName().equals(DocPartTableFields.DID)) {
                 return -1;
-            } else if (o2.getName().equals(DocPartTable.DID_COLUMN_NAME)) {
+            } else if (o2.getName().equals(DocPartTableFields.DID)) {
                 return 1;
             }
-            if (o1.getName().equals(DocPartTable.RID_COLUMN_NAME)) {
+            if (o1.getName().equals(DocPartTableFields.RID)) {
                 return -1;
-            } else if (o2.getName().equals(DocPartTable.RID_COLUMN_NAME)) {
+            } else if (o2.getName().equals(DocPartTableFields.RID)) {
                 return 1;
             }
-            if (o1.getName().equals(DocPartTable.PID_COLUMN_NAME)) {
+            if (o1.getName().equals(DocPartTableFields.PID)) {
                 return -1;
-            } else if (o2.getName().equals(DocPartTable.PID_COLUMN_NAME)) {
+            } else if (o2.getName().equals(DocPartTableFields.PID)) {
                 return 1;
             }
-            if (o1.getName().equals(DocPartTable.SEQ_COLUMN_NAME)) {
+            if (o1.getName().equals(DocPartTableFields.SEQ)) {
                 return -1;
-            } else if (o2.getName().equals(DocPartTable.SEQ_COLUMN_NAME)) {
+            } else if (o2.getName().equals(DocPartTableFields.SEQ)) {
                 return 1;
             }
 
@@ -830,7 +834,7 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
     }
 
     @Override
-    public void insertPathDocuments(DSLContext dsl, String schemaName, DocPartData docPartData) throws RetryTransactionException {
+    public void insertPathDocuments(DSLContext dsl, String schemaName, DocPartData docPartData) throws RollbackException {
         Preconditions.checkArgument(docPartData.rowCount() != 0, "Called insert with 0 documents");
         
         Connection connection = dsl.configuration().connectionProvider().acquire();
@@ -928,7 +932,7 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
     private void copyInsertPathDocuments(
             PGConnection connection,
             String schemaName,
-            DocPartData docPartData) throws RetryTransactionException, SQLException, IOException {
+            DocPartData docPartData) throws RollbackException, SQLException, IOException {
 
         final int maxBatchSize = 1000;
         final StringBuilder sb = new StringBuilder(2048);
@@ -975,7 +979,6 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
         }
     }
 
-    @SuppressWarnings("unchecked")
     private void addToCopy(
             StringBuilder sb,
             DocPartRow docPartRow) {
@@ -1035,7 +1038,7 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
     }
 
     @Override
-    public int reserveRids(DSLContext dsl, String database, String collection, TableRef tableRef, int count) {
+    public int consumeRids(DSLContext dsl, String database, String collection, TableRef tableRef, int count) {
         throw new ToroImplementationException("Not implemented yet");
     }
 
@@ -1045,16 +1048,16 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
     }
 
     @Override
-    public void handleRetryException(Context context, SQLException sqlException) throws RetryTransactionException {
+    public void handleRetryException(Context context, SQLException sqlException) throws RollbackException {
         if (context == Context.batchUpdate && "40001".equals(sqlException.getSQLState())) {
-            throw new RetryTransactionException(sqlException);
+            throw new RollbackException(sqlException);
         }
     }
 
     @Override
-    public void handleRetryException(Context context, DataAccessException dataAccessException) throws RetryTransactionException {
+    public void handleRetryException(Context context, DataAccessException dataAccessException) throws RollbackException {
         if (context == Context.batchUpdate && "40001".equals(dataAccessException.sqlState())) {
-            throw new RetryTransactionException(dataAccessException);
+            throw new RollbackException(dataAccessException);
         }
     }
 
@@ -1071,5 +1074,25 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
     @Override
     public boolean isRestrictedColumnName(@Nonnull String columnName) {
         return Arrays.binarySearch(RESTRICTED_COLUMN_NAMES, columnName) >= 0;
+    }
+
+    @Override
+    public Field<?> getDidColumn() {
+        return getMetaDocPartTable().DID;
+    }
+
+    @Override
+    public Field<?> getRidColumn() {
+        return getMetaDocPartTable().RID;
+    }
+
+    @Override
+    public Field<?> getPidColumn() {
+        return getMetaDocPartTable().PID;
+    }
+
+    @Override
+    public Field<?> getSeqColumn() {
+        return getMetaDocPartTable().SEQ;
     }
 }

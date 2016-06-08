@@ -123,32 +123,15 @@ public class DerbyTorodbMeta implements TorodbMeta {
             
             Iterable<? extends Table<?>> existingTables = standardSchema.getTables();
             for (MetaCollectionRecord collection : collections) {
-                MetaDocPartRecord<?> rootMetaDocPartRecord = null;
                 List<MetaDocPartRecord<Object>> docParts = dsl
                         .selectFrom(docPartTable)
                         .where(docPartTable.DATABASE.eq(database)
                             .and(docPartTable.COLLECTION.eq(collection.getName())))
                         .fetch();
-                for (MetaDocPartRecord<Object> docPart : docParts) {
-                    if (!docPart.getCollection().equals(collection.getName())) {
-                        continue;
-                    }
-                    
-                    TableRef tableRef = docPart.getTableRefValue();
-                    if (tableRef.isRoot()) {
-                        rootMetaDocPartRecord = docPart;
-                        break;
-                    }
-                }
-                if (rootMetaDocPartRecord == null) {
-                    throw new InvalidDatabaseSchemaException(schemaName, "Collection "+collection.getName()
-                            +" in database "+database
-                            +" has no root table in meta data");
-                }
                 ImmutableMetaCollection.Builder metaCollectionBuilder = 
                         new ImmutableMetaCollection.Builder(
                                 collection.getName(), 
-                                rootMetaDocPartRecord.getIdentifier());
+                                collection.getIdentifier());
                 
                 for (MetaDocPartRecord<Object> docPart : docParts) {
                     if (!docPart.getCollection().equals(collection.getName())) {
