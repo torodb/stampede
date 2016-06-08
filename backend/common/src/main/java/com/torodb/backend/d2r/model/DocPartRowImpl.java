@@ -11,7 +11,7 @@ import com.torodb.kvdocument.values.KVBoolean;
 import com.torodb.kvdocument.values.KVDocument;
 import com.torodb.kvdocument.values.KVValue;
 
-public class RowInfo implements DocPartRow{
+public class DocPartRowImpl implements DocPartRow{
 
 	private final int did;
 	private final int rid;
@@ -20,9 +20,9 @@ public class RowInfo implements DocPartRow{
 	
 	private final ArrayList<KVValue<?>> attributes;
 	private final TableMetadata tableMetadata;
-	private final TableInfo tableInfo;
+	private final DocPartDataImpl tableInfo;
 
-	public RowInfo(TableMetadata tableMetadata, Integer seq, RowInfo parentRow, TableInfo tableInfo) {
+	public DocPartRowImpl(TableMetadata tableMetadata, Integer seq, DocPartRowImpl parentRow, DocPartDataImpl tableInfo) {
 		this.tableInfo=tableInfo;
 		this.rid = tableMetadata.getNextRowId();
 		this.seq = seq;

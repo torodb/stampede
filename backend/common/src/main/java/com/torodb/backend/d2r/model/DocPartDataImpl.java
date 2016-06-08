@@ -9,19 +9,19 @@ import com.torodb.core.d2r.DocPartRow;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetaField;
 
-public class TableInfo implements DocPartData{
+public class DocPartDataImpl implements DocPartData{
 
-	private List<DocPartRow> rows = new ArrayList<>();
+	private List<DocPartRow> docPartRows = new ArrayList<>();
 	private TableMetadata metadata;
 
-	public TableInfo(TableMetadata metadata) {
+	public DocPartDataImpl(TableMetadata metadata) {
 		this.metadata = metadata;
 	}
 
-	public RowInfo newRowObject(Integer index, RowInfo parentRow) {
-		RowInfo rowInfo = new RowInfo(metadata, index, parentRow, this);
-		rows.add(rowInfo);
-		return rowInfo;
+	public DocPartRowImpl newRowObject(Integer index, DocPartRowImpl parentRow) {
+		DocPartRowImpl docPartRow = new DocPartRowImpl(metadata, index, parentRow, this);
+		docPartRows.add(docPartRow);
+		return docPartRow;
 	}
 
 	public MetaDocPart getMetaDocPart(){
@@ -35,7 +35,7 @@ public class TableInfo implements DocPartData{
 
 	@Override
 	public Iterator<DocPartRow> iterator() {
-		return rows.iterator();
+		return docPartRows.iterator();
 	}
 
 	@Override
@@ -45,7 +45,7 @@ public class TableInfo implements DocPartData{
 
 	@Override
 	public int rowCount() {
-		return rows.size();
+		return docPartRows.size();
 	}
 
 	@Override
