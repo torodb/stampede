@@ -76,6 +76,7 @@ public class BackendDerbyTest {
     private String databaseName;
     private String databaseSchema;
     private String collectionName;
+    private String collectionIdentifierName;
     private TableRef rootDocPartTableRef;
     private String rootDocPartTableName;
     private ImmutableMap<String, Field<?>> rootDocPartFields;
@@ -93,6 +94,7 @@ public class BackendDerbyTest {
         databaseName = "databaseName";
         databaseSchema = "databaseSchemaName";
         collectionName = "collectionName";
+        collectionIdentifierName = "collectionIdentifierName";
         rootDocPartTableRef = TableRefImpl.createRoot();
         rootDocPartTableName = "rootDocPartTableName";
         rootDocPartFields = ImmutableMap.<String, Field<?>>builder()
@@ -275,7 +277,7 @@ public class BackendDerbyTest {
                 .execute();
             dsl.execute(databaseInterface.createSchemaStatement(databaseSchema));
             dsl.insertInto(databaseInterface.getMetaCollectionTable())
-                .set(databaseInterface.getMetaCollectionTable().newRecord().values(databaseName, collectionName))
+                .set(databaseInterface.getMetaCollectionTable().newRecord().values(databaseName, collectionName, collectionIdentifierName))
                 .execute();
             dsl.insertInto(databaseInterface.getMetaDocPartTable())
                 .set(databaseInterface.getMetaDocPartTable().newRecord().values(databaseName, collectionName, rootDocPartTableRef, rootDocPartTableName))
@@ -307,35 +309,33 @@ public class BackendDerbyTest {
             connection.commit();
         }
         Assert.assertNotNull(derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName));
-        Assert.assertEquals(derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getIdentifier(), databaseSchema);
+        Assert.assertEquals(databaseSchema, derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getIdentifier());
         Assert.assertNotNull(derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getMetaCollectionByName(collectionName));
-        Assert.assertEquals(derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName)
-                .getMetaCollectionByName(collectionName).getIdentifier(), rootDocPartTableName);
+        Assert.assertEquals(collectionIdentifierName, derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName)
+                .getMetaCollectionByName(collectionName).getIdentifier());
         Assert.assertNotNull(derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getMetaCollectionByName(collectionName)
                 .getMetaDocPartByTableRef(rootDocPartTableRef));
-        Assert.assertEquals(derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getMetaCollectionByName(collectionName)
-                .getMetaDocPartByTableRef(rootDocPartTableRef).getIdentifier(), rootDocPartTableName);
+        Assert.assertEquals(rootDocPartTableName, derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getMetaCollectionByName(collectionName)
+                .getMetaDocPartByTableRef(rootDocPartTableRef).getIdentifier());
         for (Map.Entry<String, Field<?>> field : rootDocPartFields.entrySet()) {
             Assert.assertNotNull(derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getMetaCollectionByName(collectionName)
                     .getMetaDocPartByTableRef(rootDocPartTableRef).getMetaFieldByNameAndType(field.getKey(), 
                             FieldType.from(((DataTypeForKV<?>) field.getValue().getDataType()).getKVValueConverter().getErasuredType())));
-            Assert.assertEquals(derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getMetaCollectionByName(collectionName)
+            Assert.assertEquals(field.getValue().getName(), derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getMetaCollectionByName(collectionName)
                     .getMetaDocPartByTableRef(rootDocPartTableRef).getMetaFieldByNameAndType(field.getKey(), 
-                            FieldType.from(((DataTypeForKV<?>) field.getValue().getDataType()).getKVValueConverter().getErasuredType())).getIdentifier(), 
-                    field.getValue().getName());
+                            FieldType.from(((DataTypeForKV<?>) field.getValue().getDataType()).getKVValueConverter().getErasuredType())).getIdentifier());
         }
         Assert.assertNotNull(derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getMetaCollectionByName(collectionName)
                 .getMetaDocPartByTableRef(subDocPartTableRef));
-        Assert.assertEquals(derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getMetaCollectionByName(collectionName)
-                .getMetaDocPartByTableRef(subDocPartTableRef).getIdentifier(), subDocPartTableName);
+        Assert.assertEquals(subDocPartTableName, derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getMetaCollectionByName(collectionName)
+                .getMetaDocPartByTableRef(subDocPartTableRef).getIdentifier());
         for (Map.Entry<String, Field<?>> field : subDocPartFields.entrySet()) {
             Assert.assertNotNull(derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getMetaCollectionByName(collectionName)
                     .getMetaDocPartByTableRef(subDocPartTableRef).getMetaFieldByNameAndType(field.getKey(), 
                             FieldType.from(((DataTypeForKV<?>) field.getValue().getDataType()).getKVValueConverter().getErasuredType())));
-            Assert.assertEquals(derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getMetaCollectionByName(collectionName)
+            Assert.assertEquals(field.getValue().getName(), derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getMetaCollectionByName(collectionName)
                     .getMetaDocPartByTableRef(subDocPartTableRef).getMetaFieldByNameAndType(field.getKey(), 
-                            FieldType.from(((DataTypeForKV<?>) field.getValue().getDataType()).getKVValueConverter().getErasuredType())).getIdentifier(), 
-                    field.getValue().getName());
+                            FieldType.from(((DataTypeForKV<?>) field.getValue().getDataType()).getKVValueConverter().getErasuredType())).getIdentifier());
         }
         
         try (Connection connection = dataSource.getConnection()) {
@@ -356,44 +356,41 @@ public class BackendDerbyTest {
             connection.commit();
         }
         Assert.assertNotNull(derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName));
-        Assert.assertEquals(derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getIdentifier(), databaseSchema);
+        Assert.assertEquals(databaseSchema, derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getIdentifier());
         Assert.assertNotNull(derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getMetaCollectionByName(collectionName));
-        Assert.assertEquals(derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName)
-                .getMetaCollectionByName(collectionName).getIdentifier(), rootDocPartTableName);
+        Assert.assertEquals(collectionIdentifierName, derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName)
+                .getMetaCollectionByName(collectionName).getIdentifier());
         Assert.assertNotNull(derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getMetaCollectionByName(collectionName)
                 .getMetaDocPartByTableRef(rootDocPartTableRef));
-        Assert.assertEquals(derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getMetaCollectionByName(collectionName)
-                .getMetaDocPartByTableRef(rootDocPartTableRef).getIdentifier(), rootDocPartTableName);
+        Assert.assertEquals(rootDocPartTableName, derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getMetaCollectionByName(collectionName)
+                .getMetaDocPartByTableRef(rootDocPartTableRef).getIdentifier());
         for (Map.Entry<String, Field<?>> field : rootDocPartFields.entrySet()) {
             Assert.assertNotNull(derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getMetaCollectionByName(collectionName)
                     .getMetaDocPartByTableRef(rootDocPartTableRef).getMetaFieldByNameAndType(field.getKey(), 
                             FieldType.from(((DataTypeForKV<?>) field.getValue().getDataType()).getKVValueConverter().getErasuredType())));
-            Assert.assertEquals(derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getMetaCollectionByName(collectionName)
+            Assert.assertEquals(field.getValue().getName(), derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getMetaCollectionByName(collectionName)
                     .getMetaDocPartByTableRef(rootDocPartTableRef).getMetaFieldByNameAndType(field.getKey(), 
-                            FieldType.from(((DataTypeForKV<?>) field.getValue().getDataType()).getKVValueConverter().getErasuredType())).getIdentifier(), 
-                    field.getValue().getName());
+                            FieldType.from(((DataTypeForKV<?>) field.getValue().getDataType()).getKVValueConverter().getErasuredType())).getIdentifier());
         }
         Assert.assertNotNull(derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getMetaCollectionByName(collectionName)
                 .getMetaDocPartByTableRef(subDocPartTableRef));
-        Assert.assertEquals(derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getMetaCollectionByName(collectionName)
-                .getMetaDocPartByTableRef(subDocPartTableRef).getIdentifier(), subDocPartTableName);
+        Assert.assertEquals(subDocPartTableName, derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getMetaCollectionByName(collectionName)
+                .getMetaDocPartByTableRef(subDocPartTableRef).getIdentifier());
         for (Map.Entry<String, Field<?>> field : subDocPartFields.entrySet()) {
             Assert.assertNotNull(derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getMetaCollectionByName(collectionName)
                     .getMetaDocPartByTableRef(subDocPartTableRef).getMetaFieldByNameAndType(field.getKey(), 
                             FieldType.from(((DataTypeForKV<?>) field.getValue().getDataType()).getKVValueConverter().getErasuredType())));
-            Assert.assertEquals(derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getMetaCollectionByName(collectionName)
+            Assert.assertEquals(field.getValue().getName(), derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getMetaCollectionByName(collectionName)
                     .getMetaDocPartByTableRef(subDocPartTableRef).getMetaFieldByNameAndType(field.getKey(), 
-                            FieldType.from(((DataTypeForKV<?>) field.getValue().getDataType()).getKVValueConverter().getErasuredType())).getIdentifier(), 
-                    field.getValue().getName());
+                            FieldType.from(((DataTypeForKV<?>) field.getValue().getDataType()).getKVValueConverter().getErasuredType())).getIdentifier());
         }
         for (Map.Entry<String, Field<?>> field : newSubDocPartFields.entrySet()) {
             Assert.assertNotNull(derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getMetaCollectionByName(collectionName)
                     .getMetaDocPartByTableRef(subDocPartTableRef).getMetaFieldByNameAndType(field.getKey(), 
                             FieldType.from(((DataTypeForKV<?>) field.getValue().getDataType()).getKVValueConverter().getErasuredType())));
-            Assert.assertEquals(derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getMetaCollectionByName(collectionName)
+            Assert.assertEquals(field.getValue().getName(), derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getMetaCollectionByName(collectionName)
                     .getMetaDocPartByTableRef(subDocPartTableRef).getMetaFieldByNameAndType(field.getKey(), 
-                            FieldType.from(((DataTypeForKV<?>) field.getValue().getDataType()).getKVValueConverter().getErasuredType())).getIdentifier(), 
-                    field.getValue().getName());
+                            FieldType.from(((DataTypeForKV<?>) field.getValue().getDataType()).getKVValueConverter().getErasuredType())).getIdentifier());
         }
     }
     

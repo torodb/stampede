@@ -6,6 +6,7 @@ import java.util.Set;
 import javax.annotation.Nonnull;
 
 import org.jooq.DSLContext;
+import org.jooq.Field;
 
 import com.torodb.backend.sql.index.NamedDbIndex;
 import com.torodb.backend.tables.MetaCollectionTable;
@@ -22,6 +23,11 @@ public interface ReadMetaDataInterface {
     @Nonnull <R extends MetaCollectionRecord> MetaCollectionTable<R> getMetaCollectionTable();
     @Nonnull <T, R extends MetaDocPartRecord<T>> MetaDocPartTable<T, R> getMetaDocPartTable();
     @Nonnull <T, R extends MetaFieldRecord<T>> MetaFieldTable<T, R> getMetaFieldTable();
+    
+    @Nonnull Field<?> getDidColumn();
+    @Nonnull Field<?> getRidColumn();
+    @Nonnull Field<?> getPidColumn();
+    @Nonnull Field<?> getSeqColumn();
     
     long getDatabaseSize(@Nonnull DSLContext dsl, @Nonnull String databaseName);
     Long getCollectionSize(@Nonnull DSLContext dsl, @Nonnull String schema, @Nonnull String collection);

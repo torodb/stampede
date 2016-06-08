@@ -21,13 +21,14 @@ package com.torodb.backend.tables.records;
 
 import org.jooq.Field;
 import org.jooq.Record2;
-import org.jooq.Row2;
+import org.jooq.Record3;
+import org.jooq.Row3;
 import org.jooq.impl.UpdatableRecordImpl;
 
 import com.torodb.backend.tables.MetaCollectionTable;
 
 public abstract class MetaCollectionRecord extends UpdatableRecordImpl<MetaCollectionRecord> 
-        implements Record2<String, String> {
+        implements Record3<String, String, String> {
 // database, name
 	private static final long serialVersionUID = -2107968478;
 
@@ -59,6 +60,20 @@ public abstract class MetaCollectionRecord extends UpdatableRecordImpl<MetaColle
         return (String) getValue(1);
     }
 
+    /**
+     * Getter for <code>torodb.collection.identifier</code>.
+     */
+    public String getIdentifier() {
+        return (String) getValue(2);
+    }
+
+    /**
+     * Setter for <code>torodb.collection.identifier</code>.
+     */
+    public void setIdentifier(String value) {
+        setValue(2, value);
+    }
+
 	// -------------------------------------------------------------------------
 	// Primary key information
 	// -------------------------------------------------------------------------
@@ -79,16 +94,16 @@ public abstract class MetaCollectionRecord extends UpdatableRecordImpl<MetaColle
 	 * {@inheritDoc}
 	 */
 	@Override
-	public Row2<String, String> fieldsRow() {
-		return (Row2) super.fieldsRow();
+	public Row3<String, String, String> fieldsRow() {
+		return (Row3) super.fieldsRow();
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
 	@Override
-	public Row2<String, String> valuesRow() {
-		return (Row2) super.valuesRow();
+	public Row3<String, String, String> valuesRow() {
+		return (Row3) super.valuesRow();
 	}
 
     /**
@@ -111,6 +126,14 @@ public abstract class MetaCollectionRecord extends UpdatableRecordImpl<MetaColle
      * {@inheritDoc}
      */
     @Override
+    public Field<String> field3() {
+        return metaCollectionTable.IDENTIFIER;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public String value1() {
         return getDatabase();
     }
@@ -127,8 +150,16 @@ public abstract class MetaCollectionRecord extends UpdatableRecordImpl<MetaColle
      * {@inheritDoc}
      */
     @Override
+    public String value3() {
+        return getIdentifier();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public MetaCollectionRecord value1(String value) {
-        setName(value);
+        setDatabase(value);
         return this;
     }
 
@@ -141,11 +172,20 @@ public abstract class MetaCollectionRecord extends UpdatableRecordImpl<MetaColle
         return this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public MetaCollectionRecord value3(String value) {
+        setIdentifier(value);
+        return this;
+    }
+
 	/**
 	 * {@inheritDoc}
 	 */
 	@Override
-	public abstract MetaCollectionRecord values(String value1, String value2);
+	public abstract MetaCollectionRecord values(String database, String name, String identifier);
 
     // -------------------------------------------------------------------------
     // Constructors

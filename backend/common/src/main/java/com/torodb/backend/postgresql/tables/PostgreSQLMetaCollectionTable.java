@@ -91,4 +91,9 @@ public class PostgreSQLMetaCollectionTable extends MetaCollectionTable<PostgreSQ
     protected TableField<PostgreSQLMetaCollectionRecord, String> createNameField() {
         return createField(TableFields.NAME.fieldName, SQLDataType.VARCHAR.nullable(false), this, "");
     }
+
+    @Override
+    protected TableField<PostgreSQLMetaCollectionRecord, String> createIdentifierField() {
+        return createField(TableFields.IDENTIFIER.fieldName, SQLDataType.VARCHAR.nullable(false), this, "");
+    }
 }

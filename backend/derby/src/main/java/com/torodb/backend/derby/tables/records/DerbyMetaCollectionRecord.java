@@ -34,19 +34,20 @@ public class DerbyMetaCollectionRecord extends MetaCollectionRecord {
 	}
 
     @Override
-    public MetaCollectionRecord values(String database, String name) {
+    public MetaCollectionRecord values(String database, String name, String identifier) {
         
-        setValue(0, database);
-        setValue(1, name);
+        setDatabase(database);
+        setName(name);
+        setIdentifier(identifier);
         return this;
     }
 
 	/**
 	 * Create a detached, initialised MetaCollectionRecord
 	 */
-	public DerbyMetaCollectionRecord(String database, String name) {
+	public DerbyMetaCollectionRecord(String database, String name, String identifier) {
 		super(DerbyMetaCollectionTable.COLLECTION);
 		
-		values(database, name);
+		values(database, name, identifier);
 	}
 }

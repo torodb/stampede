@@ -4,7 +4,7 @@ import java.sql.SQLException;
 
 import org.jooq.exception.DataAccessException;
 
-import com.torodb.backend.mocks.RetryTransactionException;
+import com.torodb.core.transaction.RollbackException;
 
 public interface ErrorHandlerInterface {
     public enum Context {
@@ -19,6 +19,6 @@ public interface ErrorHandlerInterface {
         commit
     }
     
-    void handleRetryException(Context context, SQLException sqlException) throws RetryTransactionException;
-    void handleRetryException(Context context, DataAccessException sqlException) throws RetryTransactionException;
+    void handleRetryException(Context context, SQLException sqlException) throws RollbackException;
+    void handleRetryException(Context context, DataAccessException sqlException) throws RollbackException;
 }
