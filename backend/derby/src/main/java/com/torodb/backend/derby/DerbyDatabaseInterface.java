@@ -202,24 +202,17 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
     }
 
     @Override
-    public String addColumnsToDocPartTableStatement(Configuration conf, String schemaName, String tableName, Collection<Field<?>> fields) {
+    public String addColumnToDocPartTableStatement(Configuration conf, String schemaName, String tableName, Field<?> field) {
         StringBuilder sb = new StringBuilder();
         sb.append("ALTER TABLE ")
                 .append(fullTableName(schemaName, tableName));
 
-        for (Field<?> field : getFieldIterator(fields)) {
-            sb
-                    .append(" ADD COLUMN \"")
-                    .append(field.getName())
-                    .append("\" ")
-                    .append(getSqlType(field, conf));
-
-            sb.append(',');
-        }
-        if (fields.size() > 0) {
-            sb.delete(sb.length() - 1, sb.length());
-        }
-        sb.append(')');
+        sb
+                .append(" ADD COLUMN \"")
+                .append(field.getName())
+                .append("\" ")
+                .append(getSqlType(field, conf));
+        
         return sb.toString();
     }
 
