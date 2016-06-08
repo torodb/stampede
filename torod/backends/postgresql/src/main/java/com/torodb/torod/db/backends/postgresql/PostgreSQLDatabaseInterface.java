@@ -496,9 +496,16 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
         return new PostgreSQLTorodbMeta(databaseName, dsl, databaseInterface, subDocTypeBuilderProvider);
     }
 
+    private static final String[] BATCH_UPDATE_RETRY_CODES = new String[] {
+		"40001", "40P01"
+    };
+    {
+    	Arrays.sort(BATCH_UPDATE_RETRY_CODES);
+    }
+    
     @Override
     public void handleRetryException(SQLException sqlException) throws RetryTransactionException {
-        if (sqlException instanceof BatchUpdateException && "40001".equals(sqlException.getSQLState())) {
+        if (sqlException instanceof BatchUpdateException && Arrays.binarySearch(BATCH_UPDATE_RETRY_CODES, sqlException.getSQLState()) >= 0) {
             throw new RetryTransactionException(sqlException);
         }
     }
