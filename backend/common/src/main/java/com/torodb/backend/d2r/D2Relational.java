@@ -4,8 +4,8 @@ import com.torodb.backend.d2r.model.PathStack;
 import com.torodb.backend.d2r.model.PathStack.PathArrayIdx;
 import com.torodb.backend.d2r.model.PathStack.PathInfo;
 import com.torodb.backend.d2r.model.PathStack.PathNodeType;
-import com.torodb.backend.d2r.model.RowInfo;
-import com.torodb.backend.d2r.model.TableInfo;
+import com.torodb.backend.d2r.model.DocPartRowImpl;
+import com.torodb.backend.d2r.model.DocPartDataImpl;
 import com.torodb.kvdocument.types.ArrayType;
 import com.torodb.kvdocument.types.DocumentType;
 import com.torodb.kvdocument.types.KVType;
@@ -21,10 +21,10 @@ public class D2Relational {
 	private final ConsumerFromArrayIdx fromArrayIdx = new ConsumerFromArrayIdx();
 	private final DocConsumer docComsumer = new DocConsumer();
 	private final PathStack pathStack = new PathStack();
-	private final TableRepository tableRepository;
+	private final DocPartDataCollection docPartDataCollection;
 
-	public D2Relational(TableRepository tableRepository) {
-		this.tableRepository = tableRepository;
+	public D2Relational(DocPartDataCollection docPartDataCollection) {
+		this.docPartDataCollection = docPartDataCollection;
 	}
 
 	public void translate(KVDocument document) {
@@ -35,16 +35,16 @@ public class D2Relational {
 		
 		public void consume(KVDocument value) {
 			PathInfo parentPath = pathStack.peek();
-			TableInfo table = tableRepository.findTable(parentPath);
-			RowInfo rowInfo = table.newRowObject(getDocumentIndex(parentPath), parentPath.findParentRowInfo()); 
-			pathStack.pushObject(rowInfo);
+			DocPartDataImpl docPartData = docPartDataCollection.findDocPartData(parentPath);
+			DocPartRowImpl docPartRow = docPartData.newRowObject(getDocumentIndex(parentPath), parentPath.findParentRowInfo()); 
+			pathStack.pushObject(docPartRow);
 			for (DocEntry<?> entry : value) {
 				String key = entry.getKey();
 				KVValue<?> entryValue = entry.getValue();
 				if (isScalar(entryValue.getType())) {
-					rowInfo.addScalar(key, entryValue);
+					docPartRow.addScalar(key, entryValue);
 				} else {
-					rowInfo.addChild(key, entryValue);
+					docPartRow.addChild(key, entryValue);
 					pathStack.pushField(key);
 					entryValue.accept(visitor, docComsumer);
 					pathStack.pop();
@@ -57,10 +57,10 @@ public class D2Relational {
 			int i = 0;
 			pathStack.pushArray();
 			PathInfo current = pathStack.peek();
-			TableInfo table = tableRepository.findTable(current);
+			DocPartDataImpl table = docPartDataCollection.findDocPartData(current);
 			for (KVValue<?> val : value) {
 				if (isScalar(val.getType())) {
-					RowInfo rowInfo = table.newRowObject(i++, current.findParentRowInfo());
+					DocPartRowImpl rowInfo = table.newRowObject(i++, current.findParentRowInfo());
 					rowInfo.addArrayItem(val);
 				}else{
 					pathStack.pushArrayIdx(i++);
@@ -78,10 +78,10 @@ public class D2Relational {
 		@Override
 		public void consume(KVArray value) {
 			PathArrayIdx current = (PathArrayIdx) pathStack.pop();
-			TableInfo table = tableRepository.findTable(current);
-			RowInfo rowInfo = table.newRowObject(current.getIdx(), pathStack.peek().findParentRowInfo());
-			rowInfo.addChildToArray(value);
-			pathStack.pushArrayIdx(current.getIdx(), rowInfo);
+			DocPartDataImpl docPartData = docPartDataCollection.findDocPartData(current);
+			DocPartRowImpl docPartRow = docPartData.newRowObject(current.getIdx(), pathStack.peek().findParentRowInfo());
+			docPartRow.addChildToArray(value);
+			pathStack.pushArrayIdx(current.getIdx(), docPartRow);
 			super.consume(value);
 		}
 

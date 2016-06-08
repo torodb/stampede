@@ -27,7 +27,7 @@ public class PathStack {
 		top = top.appendField(name);
 	}
 
-	public void pushObject(RowInfo rowInfo) {
+	public void pushObject(DocPartRowImpl rowInfo) {
 		top = top.appendObject(rowInfo);
 	}
 
@@ -47,7 +47,7 @@ public class PathStack {
 		top = ((PathArray) top).appendIdx(idx);
 	}
 
-	public void pushArrayIdx(int idx, RowInfo rowInfo) {
+	public void pushArrayIdx(int idx, DocPartRowImpl rowInfo) {
 		if (top == null) {
 			throw new IllegalArgumentException("Building an array index on root document");
 		} else if (top.getNodeType() != PathNodeType.Array) {
@@ -65,7 +65,7 @@ public class PathStack {
 			this.parent = parent;
 		}
 
-		PathObject appendObject(RowInfo rowInfo) {
+		PathObject appendObject(DocPartRowImpl rowInfo) {
 			return new PathObject(this, rowInfo);
 		}
 
@@ -106,7 +106,7 @@ public class PathStack {
 			return getNodeType().equals(type);
 		}
 
-		public abstract RowInfo findParentRowInfo();
+		public abstract DocPartRowImpl findParentRowInfo();
 		
 		public abstract String getPath();
 
@@ -164,7 +164,7 @@ public class PathStack {
 		}
 		
 		@Override
-		public RowInfo findParentRowInfo() {
+		public DocPartRowImpl findParentRowInfo() {
 			if (parent!=null){
 				return parent.findParentRowInfo();
 			}
@@ -174,9 +174,9 @@ public class PathStack {
 
 	public class PathObject extends PathInfo {
 
-		private RowInfo rowInfo;
+		private DocPartRowImpl rowInfo;
 
-		private PathObject(PathInfo parent, RowInfo rowInfo) {
+		private PathObject(PathInfo parent, DocPartRowImpl rowInfo) {
 			super(parent);
 			this.rowInfo = rowInfo;
 			this.tableRef = parent.getTableRef();
@@ -197,7 +197,7 @@ public class PathStack {
 			return parent.toString();
 		}
 		
-		public RowInfo findParentRowInfo() {
+		public DocPartRowImpl findParentRowInfo() {
 			return rowInfo;
 		}		
 	}
@@ -222,7 +222,7 @@ public class PathStack {
 			return new PathArrayIdx(idx, this);
 		}
 
-		PathArrayIdx appendIdx(int idx, RowInfo rowInfo) {
+		PathArrayIdx appendIdx(int idx, DocPartRowImpl rowInfo) {
 			return new PathArrayIdx(idx, this, rowInfo);
 		}
 
@@ -252,7 +252,7 @@ public class PathStack {
 			return PathNodeType.Array;
 		}
 		
-		public RowInfo findParentRowInfo() {
+		public DocPartRowImpl findParentRowInfo() {
 			if (parent!=null){
 				return parent.findParentRowInfo();
 			}
@@ -264,13 +264,13 @@ public class PathStack {
 	public class PathArrayIdx extends PathInfo {
 
 		private int idx;
-		private RowInfo rowInfo;
+		private DocPartRowImpl rowInfo;
 
 		private PathArrayIdx(int idx, PathInfo parent) {
 			this(idx, parent, null);
 		}
 
-		private PathArrayIdx(int idx, PathInfo parent, RowInfo rowInfo) {
+		private PathArrayIdx(int idx, PathInfo parent, DocPartRowImpl rowInfo) {
 			super(parent);
 			assert parent.getNodeType() == PathNodeType.Array;
 			this.idx = idx;
@@ -301,7 +301,7 @@ public class PathStack {
 			return idx;
 		}
 
-		public RowInfo findParentRowInfo() {
+		public DocPartRowImpl findParentRowInfo() {
 			if (rowInfo != null) {
 				return rowInfo;
 			}
