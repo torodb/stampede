@@ -3,6 +3,7 @@ package com.torodb.backend.d2r.model;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import com.google.common.collect.Iterators;
 import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.d2r.DocPartRow;
 import com.torodb.core.transaction.metainf.FieldType;
@@ -23,18 +24,18 @@ public class DocPartRowImpl implements DocPartRow{
 	private final DocPartDataImpl tableInfo;
 
 	public DocPartRowImpl(TableMetadata tableMetadata, Integer seq, DocPartRowImpl parentRow, DocPartDataImpl tableInfo) {
-		this.tableInfo=tableInfo;
+		this.tableInfo = tableInfo;
 		this.rid = tableMetadata.getNextRowId();
 		this.seq = seq;
-		if (parentRow==null){
+		if (parentRow == null) {
 			this.did = this.rid;
 			this.pid = null;
-		}else{
+		} else {
 			this.did = parentRow.did;
 			this.pid = parentRow.rid;
 		}
 		this.tableMetadata = tableMetadata;
-		this.attributes=new ArrayList<KVValue<?>>(); //initialize with metadata current size?
+		this.attributes = new ArrayList<KVValue<?>>(); //initialize with metadata current size?
 	}
 
 	//TODO: review name for array values
@@ -103,7 +104,35 @@ public class DocPartRowImpl implements DocPartRow{
 
 	@Override
 	public Iterator<KVValue<?>> iterator() {
-		return attributes.iterator();
+		int columns = this.getDocPartData().columnCount();
+		int attrs = this.attributes.size();
+		if (columns==attrs){
+			return attributes.iterator();
+		}
+		NumberNullIterator<KVValue<?>> itTail=new NumberNullIterator<>(columns-attrs);
+		return Iterators.concat(attributes.iterator(),itTail);
 	}
 
+	private static class NumberNullIterator<R> implements Iterator<R>{
+
+		private int n;
+		private int idx;
+		
+		public NumberNullIterator(int n){
+			this.n=n;
+			this.idx=0;
+		}
+		
+		@Override
+		public boolean hasNext() {
+			return idx<n;
+		}
+
+		@Override
+		public R next() {
+			idx++;
+			return null;
+		}
+		
+	}
 }
