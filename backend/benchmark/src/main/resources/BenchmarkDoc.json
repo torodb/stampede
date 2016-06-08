@@ -1,0 +1,11 @@
+{
+	"_id" : {"$oid":"5298a5a03b3f4220588fe57c"},
+    "created_on" : {"$date": 1299715200000},
+    "value" : 0.1647851116706831,
+    "by" : "john",
+    "to" : "peter",
+    "from" : "smith",
+    "subdoc" : {
+    	"name" : "lopez"
+    }
+}
