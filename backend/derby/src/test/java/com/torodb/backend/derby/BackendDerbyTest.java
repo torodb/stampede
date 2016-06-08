@@ -26,6 +26,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -70,19 +72,19 @@ import com.torodb.kvdocument.values.heap.StringKVString;
 
 public class BackendDerbyTest {
     
-    String databaseName;
-    String databaseSchema;
-    String collectionName;
-    TableRef rootDocPartTableRef;
-    String rootDocPartTableName;
-    ImmutableMap<String, Field<?>> rootDocPartFields;
-    TableRef subDocPartTableRef;
-    String subDocPartTableName;
-    ImmutableMap<String, Field<?>> subDocPartFields;
-    ImmutableMap<String, Field<?>> newSubDocPartFields;
-    ImmutableList<ImmutableMap<String, Optional<KVValue<?>>>> rootDocPartValues;
-    
     private DerbyDatabaseInterface databaseInterface;
+    private String databaseName;
+    private String databaseSchema;
+    private String collectionName;
+    private TableRef rootDocPartTableRef;
+    private String rootDocPartTableName;
+    private ImmutableMap<String, Field<?>> rootDocPartFields;
+    private TableRef subDocPartTableRef;
+    private String subDocPartTableName;
+    private ImmutableMap<String, Field<?>> subDocPartFields;
+    private ImmutableMap<String, Field<?>> newSubDocPartFields;
+    private ImmutableList<ImmutableMap<String, Optional<KVValue<?>>>> rootDocPartValues;
+    
     private DataSource dataSource;
     
     @Before
@@ -369,43 +371,64 @@ public class BackendDerbyTest {
                     .append("\",");
             }
             rootDocPartSelectStatementBuilder.setCharAt(rootDocPartSelectStatementBuilder.length() - 1, ' ');
-            rootDocPartSelectStatementBuilder.append("FROM \")")
+            rootDocPartSelectStatementBuilder.append("FROM \"")
                     .append(databaseSchema)
                     .append("\".\"")
                     .append(rootDocPartTableName)
                     .append('"');
             try (PreparedStatement preparedStatement = connection.prepareStatement(rootDocPartSelectStatementBuilder.toString())) {
                 ResultSet resultSet = preparedStatement.executeQuery();
+                List<Integer> foundRowIndexes = new ArrayList<>();
                 while (resultSet.next()) {
+                    Integer index = 0;
                     boolean rowFound = true;
                     for (Map<String, Optional<KVValue<?>>> rootDocPartValueMap : rootDocPartValues) {
+                        rowFound = true;
                         int columnIndex = 1;
                         for (Map.Entry<String, Field<?>> field : rootDocPartFields.entrySet()) {
                             Optional<KVValue<?>> value = rootDocPartValueMap.get(field.getKey());
                             DataTypeForKV<?> dataTypeForKV = (DataTypeForKV<?>) field.getValue().getDataType();
-                            KVValue<?> databaseConvertedValue = dataTypeForKV.convert(resultSet.getObject(columnIndex));
+                            Object databaseValue = resultSet.getObject(columnIndex);
+                            Optional<KVValue<?>> databaseConvertedValue;
+                            if (resultSet.wasNull()) {
+                                databaseConvertedValue = Optional.empty();
+                            } else {
+                                databaseConvertedValue = Optional.of(dataTypeForKV.convert(databaseValue));
+                            }
                             columnIndex++;
                             
                             if (!value.isPresent()) {
-                                if (databaseConvertedValue != null) {
+                                if (databaseConvertedValue.isPresent()) {
                                     rowFound = false;
                                     break;
                                 }
-                            } else if (databaseConvertedValue == null) {
+                            } else if (!databaseConvertedValue.isPresent()) {
                                 rowFound = false;
                                 break;
-                            } else if (!value.get().equals(databaseConvertedValue)) {
+                            } else if (!value.get().equals(databaseConvertedValue.get())) {
                                 rowFound = false;
                                 break;
                             }
                         }
                         
-                        if (rowFound) {
+                        if (rowFound && !foundRowIndexes.contains(index)) {
+                            foundRowIndexes.add(index);
                             break;
                         }
+                        
+                        index++;
                     }
                     
-                    Assert.assertTrue(rowFound);
+                    
+                    if (!rowFound) {
+                        StringBuilder resultSetRowBuilder = new StringBuilder();
+                        final int columnCount = resultSet.getMetaData().getColumnCount();
+                        for (int columnIndex = 1; columnIndex <= columnCount; columnIndex++) {
+                            resultSetRowBuilder.append(resultSet.getObject(columnIndex))
+                                .append(", ");
+                        }
+                        Assert.fail("Row " + resultSetRowBuilder.toString() + " not found");
+                    }
                 }
             }
         }

@@ -50,7 +50,7 @@ public class TimestampBinding<T> implements Binding<Timestamp, T> {
 
     @Override
     public void sql(BindingSQLContext<T> ctx) throws SQLException {
-        ctx.render().sql("time(").visit(DSL.val(ctx.convert(converter()).value(), DerbyDataType.VARCHAR)).sql(')');
+        ctx.render().sql("timestamp(").visit(DSL.val(ctx.convert(converter()).value(), DerbyDataType.VARCHAR)).sql(')');
     }
 
     @Override
