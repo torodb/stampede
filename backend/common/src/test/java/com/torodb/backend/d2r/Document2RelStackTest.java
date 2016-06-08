@@ -263,21 +263,21 @@ public class Document2RelStackTest {
 	@Test
 	public void arrayInArrayMapsToNewTable() {
 		CollectionData collectionData = parseDocument("MultiArray.json");
-		
+
 		DocPartData rootDocPart = findRootDocPart(collectionData);
 		DocPartRow firstRow = rootDocPart.iterator().next();
 		assertFieldWithValueExists(rootDocPart, firstRow, "months", FieldType.CHILD, IS_ARRAY);
-		
+
 		DocPartData monthsDocPart = findDocPart(collectionData, "months");
 		DocPartRow firstRowMonths = monthsDocPart.iterator().next();
 		assertFieldWithValueExists(monthsDocPart, firstRowMonths, ARRAY_VALUE_NAME, FieldType.CHILD, IS_ARRAY);
-		
+
 		DocPartData subArrayDocPart = findDocPart(collectionData, "months.$2");
 		assertNotNull(subArrayDocPart);
 
 		DocPartRow firstRowSubArray = findRowSeq(subArrayDocPart, firstRow.getRid(), 0);
 		assertNotNull(firstRowSubArray);
-		int fieldSubArray= findFieldPosition(subArrayDocPart, ARRAY_VALUE_NAME, FieldType.INTEGER);
+		int fieldSubArray = findFieldPosition(subArrayDocPart, ARRAY_VALUE_NAME, FieldType.INTEGER);
 		assertTrue(fieldSubArray >= 0);
 		assertExistValueInPosition(firstRowSubArray, fieldSubArray, 1);
 	}
@@ -285,12 +285,12 @@ public class Document2RelStackTest {
 	@Test
 	public void emptyArrayInArrayMapsToATable() {
 		CollectionData collectionData = parseDocument("MultiArrayEmpty.json");
-		
+
 		DocPartData monthsDocPart = findDocPart(collectionData, "months");
 		DocPartRow firstRow = monthsDocPart.iterator().next();
-		
+
 		assertFieldWithValueExists(monthsDocPart, firstRow, ARRAY_VALUE_NAME, FieldType.CHILD, IS_ARRAY);
-		
+
 		DocPartData subArrayDocPart = findDocPart(collectionData, "months.$2");
 		assertNotNull(subArrayDocPart);
 	}
@@ -310,6 +310,29 @@ public class Document2RelStackTest {
 		assertFieldWithValueExists(rootDocPart, firstRow, "long", FieldType.LONG, 10020202020L);
 		DateTimeFormatter sdf = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSX");
 		assertFieldWithValueExists(rootDocPart, firstRow, "date", FieldType.INSTANT, Instant.from(sdf.parse("2015-06-18T16:43:58.967Z")));
+	}
+	
+	
+	@Test
+	public void nodesWithDifferentFieldsHasSameNumberOfFieldsInDocPartRow() {
+		CollectionData collectionData = parseDocument("NodesWithDifferentFields.json");
+		DocPartData docPart = findDocPart(collectionData, "department");
+		int fieldsNumber = (int) docPart.getMetaDocPart().streamFields().count();
+		Iterator<DocPartRow> it = docPart.iterator();
+		DocPartRow first = it.next();
+		DocPartRow second = it.next();
+		assertEquals(fieldsNumber, countFields(second));
+		assertEquals(countFields(first), countFields(second));
+	}
+	
+	private int countFields(DocPartRow row) {
+		Iterator<KVValue<?>> it = row.iterator();
+		int cont = 0;
+		while (it.hasNext()) {
+			cont++;
+			it.next();
+		}
+		return cont;
 	}
 	
 	

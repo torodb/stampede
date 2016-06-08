@@ -41,8 +41,8 @@ import com.torodb.kvdocument.values.KVValue;
 import com.torodb.metainfo.cache.mvcc.MvccMetainfoRepository;
 
 public class Document2RelTest {
-	
-	//TODO: Change to final implementation code
+
+	// TODO: Change to final implementation code
 	private static final String ARRAY_VALUE_NAME = "v";
 	private static final boolean IS_ARRAY = true;
 	private static final boolean IS_SUBDOCUMENT = false;
@@ -68,7 +68,7 @@ public class Document2RelTest {
 					.add(new ImmutableMetaCollection.Builder(COLLD, COLLD).build()).build())
 			.build();
 	private MutableMetaSnapshot mutableSnapshot;
-	
+
 	@Before
 	public void setup() {
 		MvccMetainfoRepository mvccMetainfoRepository = new MvccMetainfoRepository(currentView);
@@ -84,7 +84,7 @@ public class Document2RelTest {
 		CollectionData collectionData = parseDocument("EmptyDocument.json");
 		assertNotNull(findRootDocPart(collectionData));
 	}
-	
+
 	@Test
 	public void emptyDocumentCreatesARow() {
 		CollectionData collectionData = parseDocument("EmptyDocument.json");
@@ -94,33 +94,33 @@ public class Document2RelTest {
 		assertNotNull(firstRow);
 		assertFalse(firstRow.iterator().hasNext());
 	}
-	
+
 	@Test
 	public void rootDocMapsToATableWithEmptyName() {
 		CollectionData collectionData = parseDocument("OneField.json");
 		assertNotNull(findDocPart(collectionData, ROOT_DOC_NAME));
 	}
-	
+
 	@Test
 	public void aFieldMapsToAColumn() {
 		CollectionData collectionData = parseDocument("OneField.json");
 
 		DocPartData rootDocPart = findRootDocPart(collectionData);
 		DocPartRow firstRow = rootDocPart.iterator().next();
-		
+
 		int fieldPosition = findFieldPosition(rootDocPart, "name", FieldType.STRING);
-		assertTrue(fieldPosition>=0);
+		assertTrue(fieldPosition >= 0);
 		assertTrue(rootDocPart.iterator().hasNext());
 		assertExistValueInPosition(firstRow, 0, "John");
 	}
-	
+
 	@Test
 	public void multipleFieldsMapsToMultipleColumns() {
 		CollectionData collectionData = parseDocument("MultipleFields.json");
-		
+
 		DocPartData rootDocPart = findRootDocPart(collectionData);
 		DocPartRow firstRow = rootDocPart.iterator().next();
-		
+
 		assertFieldWithValueExists(rootDocPart, firstRow, "name", FieldType.STRING, "John");
 		assertFieldWithValueExists(rootDocPart, firstRow, "age", FieldType.INTEGER, 34);
 	}
@@ -128,117 +128,117 @@ public class Document2RelTest {
 	@Test
 	public void nullFieldMapsToNullColumn() {
 		CollectionData collectionData = parseDocument("NullField.json");
-		
+
 		DocPartData rootDocPart = findRootDocPart(collectionData);
 		DocPartRow firstRow = rootDocPart.iterator().next();
-		
+
 		assertFieldWithValueExists(rootDocPart, firstRow, "age", FieldType.NULL, null);
 	}
-	
+
 	@Test
 	public void emptyArrayMapsToChildColumn() {
 		CollectionData collectionData = parseDocument("EmptyArray.json");
-		
+
 		DocPartData rootDocPart = findRootDocPart(collectionData);
 		DocPartRow firstRow = rootDocPart.iterator().next();
-		
+
 		assertFieldWithValueExists(rootDocPart, firstRow, "department", FieldType.CHILD, IS_ARRAY);
 	}
-	
+
 	@Test
 	public void arrayCreatesRowInParentTable() {
 		CollectionData collectionData = parseDocument("ArrayWithScalar.json");
-		
+
 		DocPartData rootDocPart = findRootDocPart(collectionData);
 		DocPartRow firstRow = rootDocPart.iterator().next();
-		
+
 		assertFieldWithValueExists(rootDocPart, firstRow, "months", FieldType.CHILD, IS_ARRAY);
 	}
-	
+
 	@Test
 	public void arrayMapsToNewTable() {
 		CollectionData collectionData = parseDocument("ArrayWithScalar.json");
 		assertNotNull(findDocPart(collectionData, "months"));
 	}
-	
+
 	@Test
 	public void scalarInArrayMapsToColumnWithValue() {
 		CollectionData collectionData = parseDocument("ArrayWithScalar.json");
 		DocPartData monthsDocPart = findDocPart(collectionData, "months");
 		DocPartRow firstRow = monthsDocPart.iterator().next();
-		
+
 		assertFieldWithValueExists(monthsDocPart, firstRow, ARRAY_VALUE_NAME, FieldType.INTEGER, 1);
 	}
-	
+
 	@Test
 	public void subDocumentCreatesRowInParentTable() {
 		CollectionData collectionData = parseDocument("SubDocument.json");
-		
+
 		DocPartData rootDocPart = findRootDocPart(collectionData);
 		DocPartRow firstRow = rootDocPart.iterator().next();
-		
+
 		assertFieldWithValueExists(rootDocPart, firstRow, "address", FieldType.CHILD, IS_SUBDOCUMENT);
 	}
-	
+
 	@Test
 	public void arrayWithEmptySubdocumentCreatesRow() {
 		CollectionData collectionData = parseDocument("ArrayWithEmptyDocument.json");
-		
-		DocPartData departmentDocPart = findDocPart(collectionData,"department");
+
+		DocPartData departmentDocPart = findDocPart(collectionData, "department");
 		DocPartRow firstRow = departmentDocPart.iterator().next();
 		assertNotNull(firstRow);
 		assertFalse(firstRow.iterator().hasNext());
 	}
-	
+
 	@Test
 	public void subDocumentMapsToNewTable() {
 		CollectionData collectionData = parseDocument("SubDocument.json");
 		assertNotNull(findDocPart(collectionData, "address"));
 	}
-	
+
 	@Test
 	public void subDocumentFiledsMapsIntoNewTable() {
 		CollectionData collectionData = parseDocument("SubDocument.json");
-		
+
 		DocPartData addressDocPart = findDocPart(collectionData, "address");
 		DocPartRow firstRow = addressDocPart.iterator().next();
-		
+
 		assertFieldWithValueExists(addressDocPart, firstRow, "street", FieldType.STRING, "My Home");
 		assertFieldWithValueExists(addressDocPart, firstRow, "zip", FieldType.INTEGER, 28034);
 	}
-	
+
 	@Test
 	public void subDocumentInArrayMapsToNewTable() {
 		CollectionData collectionData = parseDocument("ArrayWithDocument.json");
-		
+
 		DocPartData departmentDocPart = findDocPart(collectionData, "department");
 		DocPartRow firstRow = departmentDocPart.iterator().next();
 
 		assertFieldWithValueExists(departmentDocPart, firstRow, "name", FieldType.STRING, "dept1");
 	}
-	
+
 	@Test
 	public void subDocumentHeterogeneousInArrayMapsToSameTable() {
 		CollectionData collectionData = parseDocument("ArrayWithHeteroDocument.json");
-		
+
 		DocPartData rootDocPart = findRootDocPart(collectionData);
 		DocPartRow rootRow = rootDocPart.iterator().next();
-		
+
 		DocPartData departmentDocPart = findDocPart(collectionData, "department");
 
 		DocPartRow firstRow = findRowSeq(departmentDocPart, rootRow.getRid(), 0);
 		assertFieldWithValueExists(departmentDocPart, firstRow, "name", FieldType.STRING, "dept1");
-		
+
 		DocPartRow secondRow = findRowSeq(departmentDocPart, rootRow.getRid(), 1);
 		assertFieldWithValueExists(departmentDocPart, secondRow, "code", FieldType.INTEGER, 54);
 	}
-	
+
 	@Test
 	public void subDocumentAndArrayCanMapToSameTable() {
 		CollectionData collectionData = parseDocument("ArrayAndObjectCollision.json");
 
 		DocPartData departmentsDocPart = findDocPart(collectionData, "departments");
-		
+
 		DocPartRow row4Document = findRowSeq(departmentsDocPart, 0);
 		assertFieldWithValueExists(departmentsDocPart, row4Document, "dept", FieldType.CHILD, IS_SUBDOCUMENT);
 
@@ -256,45 +256,44 @@ public class Document2RelTest {
 		DocPartRow secondRowArray = findRowSeq(deptDocPart, row4Array.getRid(), 1);
 		assertFieldWithValueExists(deptDocPart, secondRowArray, "name", FieldType.STRING, "dept3");
 	}
-	
-	
+
 	@Test
 	public void arrayInArrayMapsToNewTable() {
 		CollectionData collectionData = parseDocument("MultiArray.json");
-		
+
 		DocPartData monthsDocPart = findDocPart(collectionData, "months");
 		DocPartRow firstRow = monthsDocPart.iterator().next();
 		assertFieldWithValueExists(monthsDocPart, firstRow, ARRAY_VALUE_NAME, FieldType.CHILD, IS_ARRAY);
-		
+
 		DocPartData subArrayDocPart = findDocPart(collectionData, "months.$2");
 		assertNotNull(subArrayDocPart);
 
 		DocPartRow firstRowSubArray = findRowSeq(subArrayDocPart, firstRow.getRid(), 0);
 		assertNotNull(firstRowSubArray);
-		int fieldSubArray= findFieldPosition(subArrayDocPart, ARRAY_VALUE_NAME, FieldType.INTEGER);
+		int fieldSubArray = findFieldPosition(subArrayDocPart, ARRAY_VALUE_NAME, FieldType.INTEGER);
 		assertTrue(fieldSubArray >= 0);
 		assertExistValueInPosition(firstRowSubArray, fieldSubArray, 1);
 	}
-	
+
 	@Test
 	public void emptyArrayInArrayMapsToATable() {
 		CollectionData collectionData = parseDocument("MultiArrayEmpty.json");
-		
+
 		DocPartData monthsDocPart = findDocPart(collectionData, "months");
 		DocPartRow firstRow = monthsDocPart.iterator().next();
-		
+
 		assertFieldWithValueExists(monthsDocPart, firstRow, ARRAY_VALUE_NAME, FieldType.CHILD, IS_ARRAY);
-		
+
 		DocPartData subArrayDocPart = findDocPart(collectionData, "months.$2");
 		assertNotNull(subArrayDocPart);
 	}
-	
+
 	@Test
 	public void mapFieldTypes() {
 		CollectionData collectionData = parseDocument("FieldTypes.json");
 		DocPartData rootDocPart = findRootDocPart(collectionData);
 		DocPartRow firstRow = rootDocPart.iterator().next();
-		
+
 		assertFieldWithValueExists(rootDocPart, firstRow, "_id", FieldType.MONGO_OBJECT_ID, HexUtils.hex2Bytes("5298a5a03b3f4220588fe57c"));
 		assertFieldWithValueExists(rootDocPart, firstRow, "null", FieldType.NULL, null);
 		assertFieldWithValueExists(rootDocPart, firstRow, "boolean", FieldType.BOOLEAN, true);
@@ -305,21 +304,42 @@ public class Document2RelTest {
 		DateTimeFormatter sdf = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSX");
 		assertFieldWithValueExists(rootDocPart, firstRow, "date", FieldType.INSTANT, Instant.from(sdf.parse("2015-06-18T16:43:58.967Z")));
 	}
-	
-	
-	private DocPartData findRootDocPart(CollectionData collectionData){
-		return findDocPart(collectionData,ROOT_DOC_NAME);
+
+	@Test
+	public void nodesWithDifferentFieldsHasSameNumberOfFieldsInDocPartRow() {
+		CollectionData collectionData = parseDocument("NodesWithDifferentFields.json");
+		DocPartData docPart = findDocPart(collectionData, "department");
+		int fieldsNumber = (int) docPart.getMetaDocPart().streamFields().count();
+		Iterator<DocPartRow> it = docPart.iterator();
+		DocPartRow first = it.next();
+		DocPartRow second = it.next();
+		assertEquals(fieldsNumber, countFields(second));
+		assertEquals(countFields(first), countFields(second));
 	}
-	
-	private DocPartData findDocPart(CollectionData collectionData, String path){
-		ArrayList<String> pathList=new ArrayList<>(Arrays.asList(path.split("\\.")));
+
+	private int countFields(DocPartRow row) {
+		Iterator<KVValue<?>> it = row.iterator();
+		int cont = 0;
+		while (it.hasNext()) {
+			cont++;
+			it.next();
+		}
+		return cont;
+	}
+
+	private DocPartData findRootDocPart(CollectionData collectionData) {
+		return findDocPart(collectionData, ROOT_DOC_NAME);
+	}
+
+	private DocPartData findDocPart(CollectionData collectionData, String path) {
+		ArrayList<String> pathList = new ArrayList<>(Arrays.asList(path.split("\\.")));
 		Collections.reverse(pathList);
 		pathList.add(ROOT_DOC_NAME);
-		String name = pathList.get(0); 
-		for(DocPartData docPartData :collectionData){
+		String name = pathList.get(0);
+		for (DocPartData docPartData : collectionData) {
 			MetaDocPart metaDocPart = docPartData.getMetaDocPart();
-			if (name.equals(metaDocPart.getTableRef().getName())){
-				if (isSamePath(pathList, metaDocPart.getTableRef())){
+			if (name.equals(metaDocPart.getTableRef().getName())) {
+				if (isSamePath(pathList, metaDocPart.getTableRef())) {
 					return docPartData;
 				}
 			}
@@ -327,68 +347,69 @@ public class Document2RelTest {
 		return null;
 	}
 
-	private void assertFieldWithValueExists(DocPartData rootDocPart, DocPartRow firstRow, String fieldName, FieldType fieldType, Object fieldValue) {
+	private void assertFieldWithValueExists(DocPartData rootDocPart, DocPartRow firstRow, String fieldName,
+			FieldType fieldType, Object fieldValue) {
 		int fieldOrder = findFieldPosition(rootDocPart, fieldName, fieldType);
-		assertTrue(fieldOrder>=0);
+		assertTrue(fieldOrder >= 0);
 		assertExistValueInPosition(firstRow, fieldOrder, fieldValue);
 	}
 
-	private boolean isSamePath(ArrayList<String> pathList, TableRef tableRef){
-		int idx=0;
+	private boolean isSamePath(ArrayList<String> pathList, TableRef tableRef) {
+		int idx = 0;
 		Optional<TableRef> table = Optional.of(tableRef);
-		while (table.isPresent()){
-			if (!pathList.get(idx).equals(table.get().getName())){
+		while (table.isPresent()) {
+			if (!pathList.get(idx).equals(table.get().getName())) {
 				return false;
 			}
 			idx++;
-			table=table.get().getParent();
+			table = table.get().getParent();
 		}
 		return true;
 	}
-	
-	private DocPartRow findRowSeq(DocPartData docPartData, Integer seq){
-		for(DocPartRow row: docPartData){
-			if (row.getSeq()==seq){
+
+	private DocPartRow findRowSeq(DocPartData docPartData, Integer seq) {
+		for (DocPartRow row : docPartData) {
+			if (row.getSeq() == seq) {
 				return row;
 			}
 		}
 		return null;
 	}
-	
-	private DocPartRow findRowSeq(DocPartData docPartData, int parentId, Integer seq){
-		for(DocPartRow row: docPartData){
-			if (row.getPid()==parentId && row.getSeq()==seq){
+
+	private DocPartRow findRowSeq(DocPartData docPartData, int parentId, Integer seq) {
+		for (DocPartRow row : docPartData) {
+			if (row.getPid() == parentId && row.getSeq() == seq) {
 				return row;
 			}
 		}
 		return null;
 	}
-	
+
 	private int findFieldPosition(DocPartData docPartData, String name, FieldType type) {
 		int idx = 0;
 		Iterator<? extends MetaField> iterator = docPartData.orderedMetaFieldIterator();
 		while (iterator.hasNext()) {
 			MetaField field = iterator.next();
-			if (field.getName().equals(name) && field.getType()==type){
-				return idx; 
+			if (field.getName().equals(name) && field.getType() == type) {
+				return idx;
 			}
 			idx++;
 		}
 		return -1;
 	}
-	
-	private boolean assertExistValueInPosition(DocPartRow row,int order, Object value){
+
+	private boolean assertExistValueInPosition(DocPartRow row, int order, Object value) {
 		KVValue<?> kv = null;
 		Iterator<KVValue<?>> iterator = row.iterator();
-		for (int i=0;i<=order;i++){
+		for (int i = 0; i <= order; i++) {
 			kv = iterator.next();
 		}
-		if (kv.getType()==NullType.INSTANCE){
-			assertEquals(value,null);
-		}else if (kv.getType()==MongoObjectIdType.INSTANCE){
-			assertArrayEquals((byte[]) value,((KVMongoObjectId) kv).getArrayValue());
-		}else{
-			assertEquals(value,kv.getValue());
+		if (kv.getType() == NullType.INSTANCE) {
+			assertEquals(value, null);
+		} else if (kv.getType() == MongoObjectIdType.INSTANCE) {
+			assertArrayEquals((byte[]) value, ((KVMongoObjectId) kv).getArrayValue());
+		} else {
+			assertEquals(value, kv.getValue());
 		}
 		return true;
 	}
@@ -396,7 +417,7 @@ public class Document2RelTest {
 	private CollectionData parseDocument(String docName) {
 		MockRidGenerator ridGenerator = new MockRidGenerator();
 		D2RTranslator translator = new D2RTranslatorImpl(ridGenerator, mutableSnapshot, DB1, COLLA);
-		KVDocument document = parser.createFromResource("docs/"+docName);
+		KVDocument document = parser.createFromResource("docs/" + docName);
 		translator.translate(document);
 		return translator.getCollectionDataAccumulator();
 	}
