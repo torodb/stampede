@@ -395,6 +395,40 @@ public class BackendDerbyTest {
     }
     
     @Test
+    public void testConsumeRids() throws Exception {
+        try (Connection connection = dataSource.getConnection()) {
+            new DerbyTorodbMeta(DSL.using(connection, SQLDialect.DERBY), databaseInterface);
+            connection.commit();
+        }
+        try (Connection connection = dataSource.getConnection()) {
+            DSLContext dsl = DSL.using(connection, SQLDialect.DERBY);
+            dsl.insertInto(databaseInterface.getMetaDatabaseTable())
+                .set(databaseInterface.getMetaDatabaseTable().newRecord().values(databaseName, databaseSchema))
+                .execute();
+            dsl.execute(databaseInterface.createSchemaStatement(databaseSchema));
+            dsl.insertInto(databaseInterface.getMetaCollectionTable())
+                .set(databaseInterface.getMetaCollectionTable().newRecord().values(databaseName, collectionName, collectionIdentifierName))
+                .execute();
+            dsl.insertInto(databaseInterface.getMetaDocPartTable())
+                .set(databaseInterface.getMetaDocPartTable().newRecord().values(databaseName, collectionName, rootDocPartTableRef, rootDocPartTableName))
+                .execute();
+            int first100RootRid = databaseInterface.consumeRids(dsl, databaseName, collectionName, rootDocPartTableRef, 100);
+            Assert.assertEquals(0, first100RootRid);
+            int next100RootRid = databaseInterface.consumeRids(dsl, databaseName, collectionName, rootDocPartTableRef, 100);
+            Assert.assertEquals(100, next100RootRid);
+            dsl.execute(databaseInterface.createDocPartTableStatement(dsl.configuration(), databaseSchema, rootDocPartTableName, rootDocPartFields.values()));
+            dsl.insertInto(databaseInterface.getMetaDocPartTable())
+                .set(databaseInterface.getMetaDocPartTable().newRecord().values(databaseName, collectionName, subDocPartTableRef, subDocPartTableName))
+                .execute();
+            int first100SubRid = databaseInterface.consumeRids(dsl, databaseName, collectionName, subDocPartTableRef, 100);
+            Assert.assertEquals(0, first100SubRid);
+            int next100SubRid = databaseInterface.consumeRids(dsl, databaseName, collectionName, subDocPartTableRef, 100);
+            Assert.assertEquals(100, next100SubRid);
+            connection.commit();
+        }
+    }
+    
+    @Test
     public void testTorodbInsertDocPart() throws Exception {
         try (Connection connection = dataSource.getConnection()) {
             DSLContext dsl = DSL.using(connection, SQLDialect.DERBY);
@@ -473,7 +507,6 @@ public class BackendDerbyTest {
                         
                         index++;
                     }
-                    
                     
                     if (!rowFound) {
                         StringBuilder resultSetRowBuilder = new StringBuilder();
