@@ -11,8 +11,10 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Optional;
+import java.util.Set;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -325,6 +327,22 @@ public class Document2RelStackTest {
 		assertEquals(countFields(first), countFields(second));
 	}
 	
+	@Test
+	public void collectionDataIsSortedByParentRelationship() {
+		CollectionData collectionData = parseDocument("DocPartLevelSorted1.json","DocPartLevelSorted2.json");
+
+		Set<TableRef> parsed = new HashSet<>();		
+		for (DocPartData docPartData : collectionData) {
+			TableRef tableRef = docPartData.getMetaDocPart().getTableRef();
+			if (!tableRef.isRoot()){
+				TableRef parent = tableRef.getParent().get();
+				assertTrue(parsed.contains(parent));
+			}
+			parsed.add(tableRef);
+		}
+		
+	}
+	
 	private int countFields(DocPartRow row) {
 		Iterator<KVValue<?>> it = row.iterator();
 		int cont = 0;
@@ -422,12 +440,14 @@ public class Document2RelStackTest {
 		return true;
 	}
 
-	private CollectionData parseDocument(String docName) {
+	private CollectionData parseDocument(String ...docNames) {
 		MockRidGenerator ridGenerator = new MockRidGenerator();
 		IdentifierFactory identifierFactory = new IdentifierFactory();
 		D2RTranslator translator = new D2RTranslatorStack(identifierFactory, ridGenerator, mutableSnapshot, DB1, COLLA);
-		KVDocument document = parser.createFromResource("docs/"+docName);
-		translator.translate(document);
+		for (String doc: docNames){
+			KVDocument document = parser.createFromResource("docs/"+doc);
+			translator.translate(document);
+		}
 		return translator.getCollectionDataAccumulator();
 	}
 

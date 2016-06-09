@@ -19,6 +19,12 @@ public class SimpleDocumentFeed {
 	public SimpleDocumentFeed(int times) {
 		this.times = times;
 	}
+	
+	public static KVDocument loadDocument(String name) {
+		String document = getDocument(name);
+		GsonJsonParser parser = new GsonJsonParser();
+		return parser.createFromJson(document);
+	}
 
 	public Stream<KVDocument> getFeed(String name) {
 		String document = getDocument(name);
@@ -31,11 +37,10 @@ public class SimpleDocumentFeed {
 			documents++;
 			return parser.createFromJson(document);
 		});
-
 	}
 
-	private String getDocument(String name) {
-		try (InputStream is = this.getClass().getClassLoader().getResourceAsStream(name)) {
+	private static String getDocument(String name) {
+		try (InputStream is = SimpleDocumentFeed.class.getClassLoader().getResourceAsStream(name)) {
 			try (BufferedReader reader = new BufferedReader(new InputStreamReader(is))) {
 				StringBuffer sb = new StringBuffer();
 				String line = null;

@@ -13,9 +13,15 @@ public class DocPartDataImpl implements DocPartData{
 
 	private List<DocPartRow> docPartRows = new ArrayList<>();
 	private TableMetadata metadata;
+	private DocPartDataImpl parent;
+	private List<DocPartDataImpl> childs = null;
 
-	public DocPartDataImpl(TableMetadata metadata) {
+	public DocPartDataImpl(TableMetadata metadata, DocPartDataImpl parent) {
 		this.metadata = metadata;
+		this.parent= parent;
+		if (parent!=null){
+			this.parent.addChild(this);
+		}
 	}
 
 	public DocPartRowImpl newRowObject(Integer index, DocPartRowImpl parentRow) {
@@ -27,7 +33,22 @@ public class DocPartDataImpl implements DocPartData{
 	public MetaDocPart getMetaDocPart(){
 		return metadata.getMetaDocPart();
 	}
+	
+	public DocPartDataImpl getParentDocPartRow() {
+		return parent;
+	}
+	
+	public List<DocPartDataImpl> getChilds(){
+		return childs;
+	}
 
+	private void addChild(DocPartDataImpl child) {
+		if (childs == null) {
+			childs = new ArrayList<>();
+		}
+		childs.add(child);
+	}
+	
 	@Override
 	public String toString() {
 		return metadata.getMetaDocPart().getTableRef().toString();
