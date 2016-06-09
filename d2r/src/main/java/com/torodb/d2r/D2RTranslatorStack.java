@@ -1,9 +1,9 @@
-package com.torodb.backend.d2r;
+package com.torodb.d2r;
 
-import com.torodb.backend.IdentifierFactory;
-import com.torodb.backend.RidGenerator;
 import com.torodb.core.d2r.CollectionData;
 import com.torodb.core.d2r.D2RTranslator;
+import com.torodb.core.d2r.IdentifierFactory;
+import com.torodb.core.d2r.RidGenerator;
 import com.torodb.core.transaction.metainf.MutableMetaCollection;
 import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
 import com.torodb.kvdocument.values.KVDocument;

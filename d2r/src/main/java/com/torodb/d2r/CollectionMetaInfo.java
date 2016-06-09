@@ -1,8 +1,8 @@
-package com.torodb.backend.d2r;
+package com.torodb.d2r;
 
-import com.torodb.backend.IdentifierFactory;
-import com.torodb.backend.RidGenerator;
 import com.torodb.core.TableRef;
+import com.torodb.core.d2r.IdentifierFactory;
+import com.torodb.core.d2r.RidGenerator;
 import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.MutableMetaCollection;
 import com.torodb.core.transaction.metainf.MutableMetaDocPart;

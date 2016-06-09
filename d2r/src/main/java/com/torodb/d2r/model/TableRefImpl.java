@@ -1,4 +1,4 @@
-package com.torodb.backend.d2r.model;
+package com.torodb.d2r.model;
 
 import java.util.Optional;
 

@@ -1,6 +1,6 @@
-package com.torodb.backend.d2r;
+package com.torodb.d2r;
 
-import com.torodb.backend.d2r.D2Relational.DocConsumer;
+import com.torodb.d2r.D2Relational.DocConsumer;
 import com.torodb.kvdocument.values.KVArray;
 import com.torodb.kvdocument.values.KVBinary;
 import com.torodb.kvdocument.values.KVBoolean;

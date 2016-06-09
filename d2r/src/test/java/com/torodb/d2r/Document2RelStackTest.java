@@ -1,4 +1,4 @@
-package com.torodb.backend.d2r;
+package com.torodb.d2r;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -19,14 +19,13 @@ import java.util.Set;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.torodb.backend.IdentifierFactory;
-import com.torodb.backend.MockRidGenerator;
 import com.torodb.common.util.HexUtils;
 import com.torodb.core.TableRef;
 import com.torodb.core.d2r.CollectionData;
 import com.torodb.core.d2r.D2RTranslator;
 import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.d2r.DocPartRow;
+import com.torodb.core.d2r.IdentifierFactory;
 import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
 import com.torodb.core.transaction.metainf.ImmutableMetaDatabase;
@@ -34,6 +33,7 @@ import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetaField;
 import com.torodb.core.transaction.metainf.MetainfoRepository.SnapshotStage;
+import com.torodb.d2r.D2RTranslatorStack;
 import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
 import com.torodb.kvdocument.conversion.json.JacksonJsonParser;
 import com.torodb.kvdocument.conversion.json.JsonParser;
@@ -442,7 +442,7 @@ public class Document2RelStackTest {
 
 	private CollectionData parseDocument(String ...docNames) {
 		MockRidGenerator ridGenerator = new MockRidGenerator();
-		IdentifierFactory identifierFactory = new IdentifierFactory();
+		IdentifierFactory identifierFactory = new IdentifierFactoryImpl();
 		D2RTranslator translator = new D2RTranslatorStack(identifierFactory, ridGenerator, mutableSnapshot, DB1, COLLA);
 		for (String doc: docNames){
 			KVDocument document = parser.createFromResource("docs/"+doc);

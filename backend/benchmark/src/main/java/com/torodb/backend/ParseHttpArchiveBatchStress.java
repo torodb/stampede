@@ -14,6 +14,7 @@ import com.torodb.backend.util.InMemoryRidGenerator;
 import com.torodb.backend.util.JsonArchiveFeed;
 import com.torodb.core.d2r.D2RTranslator;
 import com.torodb.core.d2r.DocPartData;
+import com.torodb.core.d2r.RidGenerator;
 import com.torodb.metainfo.cache.mvcc.MvccMetainfoRepository;
 
 /**

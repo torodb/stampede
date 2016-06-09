@@ -18,18 +18,6 @@
 			<artifactId>log4j-api</artifactId>
 		</dependency>
         <dependency>
-            <groupId>javax.json</groupId>
-            <artifactId>javax.json-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>javax.inject</groupId>
-            <artifactId>javax.inject</artifactId>
-        </dependency>
-		<dependency>
-			<groupId>com.google.guava</groupId>
-			<artifactId>guava</artifactId>
-		</dependency>
-        <dependency>
             <groupId>org.jooq</groupId>
             <artifactId>jooq</artifactId>
         </dependency>
@@ -59,11 +47,6 @@
         </dependency>
         <dependency>
             <groupId>com.torodb</groupId>
-            <artifactId>backend-common</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.torodb</groupId>
             <artifactId>driver-derby</artifactId>
             <version>${project.version}</version>
         </dependency>
@@ -80,7 +63,13 @@
         </dependency>
         <dependency>
             <groupId>com.torodb</groupId>
-            <artifactId>backend-common</artifactId>
+            <artifactId>d2r</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>        
+        <dependency>
+            <groupId>com.torodb</groupId>
+            <artifactId>d2r</artifactId>
             <version>${project.version}</version>
             <type>test-jar</type>
             <scope>test</scope>

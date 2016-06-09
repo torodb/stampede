@@ -1,14 +1,15 @@
-package com.torodb.backend;
+package com.torodb.d2r;
 
 import java.util.Locale;
 
 import com.torodb.core.TableRef;
+import com.torodb.core.d2r.IdentifierFactory;
 import com.torodb.core.transaction.metainf.FieldType;
-import com.torodb.core.transaction.metainf.ImmutableMetaField;
-import com.torodb.core.transaction.metainf.MutableMetaCollection;
-import com.torodb.core.transaction.metainf.MutableMetaDocPart;
+import com.torodb.core.transaction.metainf.MetaCollection;
+import com.torodb.core.transaction.metainf.MetaDocPart;
+import com.torodb.core.transaction.metainf.MetaField;
 
-public class IdentifierFactory {
+public class IdentifierFactoryImpl implements IdentifierFactory {
 
 	/*
 	 * 0 BINARY, 1 BOOLEAN, 2 DATE, 3 DOUBLE, 4 INSTANT, 5 INTEGER, 6 LONG,
@@ -33,13 +34,17 @@ public class IdentifierFactory {
 		FIELD_TYPE_IDENTIFIERS[FieldType.CHILD.ordinal()]='e';
 	}
 	
-	public String toTableIdentifier(MutableMetaCollection mutableMetaCollection, String collection, TableRef tableRef) {
+	/* (non-Javadoc)
+	 * @see com.torodb.backend.IdentifierFact#toTableIdentifier(com.torodb.core.transaction.metainf.MutableMetaCollection, java.lang.String, com.torodb.core.TableRef)
+	 */
+	@Override
+	public String toTableIdentifier(MetaCollection mutableMetaCollection, String collection, TableRef tableRef) {
 		StringBuilder sb=new StringBuilder(collection);
 		buildTableName(sb, tableRef);
 		String id = sb.toString();
 		while (true){
 			//TODO: Add Database conditions and restrictions: maxlenght, reserved keywords. Inject it
-			MutableMetaDocPart metaDocPartByIdentifier = mutableMetaCollection.getMetaDocPartByIdentifier(id);
+			MetaDocPart metaDocPartByIdentifier = mutableMetaCollection.getMetaDocPartByIdentifier(id);
 			if (metaDocPartByIdentifier==null){
 				return id;
 			}
@@ -47,11 +52,15 @@ public class IdentifierFactory {
 		}
 	}
 	
-	public String toFieldIdentifier(MutableMetaDocPart metaDocPart, FieldType fieldType, String field){
+	/* (non-Javadoc)
+	 * @see com.torodb.backend.IdentifierFact#toFieldIdentifier(com.torodb.core.transaction.metainf.MutableMetaDocPart, com.torodb.core.transaction.metainf.FieldType, java.lang.String)
+	 */
+	@Override
+	public String toFieldIdentifier(MetaDocPart metaDocPart, FieldType fieldType, String field){
 		String value=normalize(field)+"_"+FIELD_TYPE_IDENTIFIERS[fieldType.ordinal()];
 		while (true){
 			//TODO: Add Database conditions and restrictions: maxlenght, reserved keywords. Inject it
-			ImmutableMetaField metaFieldByIdentifier = metaDocPart.getMetaFieldByIdentifier(value);
+			MetaField metaFieldByIdentifier = metaDocPart.getMetaFieldByIdentifier(value);
 			if (metaFieldByIdentifier==null){
 				return value;
 			}

@@ -1,16 +1,16 @@
-package com.torodb.backend.d2r.model;
+package com.torodb.d2r.model;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
-import com.torodb.backend.d2r.CollectionMetaInfo;
 import com.torodb.core.TableRef;
 import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.ImmutableMetaField;
 import com.torodb.core.transaction.metainf.MetaField;
 import com.torodb.core.transaction.metainf.MutableMetaDocPart;
+import com.torodb.d2r.CollectionMetaInfo;
 
 public class TableMetadata {
 

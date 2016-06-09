@@ -1,6 +1,7 @@
 package com.torodb.backend;
 
 import com.torodb.core.TableRef;
+import com.torodb.core.d2r.RidGenerator;
 
 public class DocPartRidGenerator {
 

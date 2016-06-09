@@ -1,10 +1,11 @@
-package com.torodb.backend;
+package com.torodb.d2r;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.torodb.core.TableRef;
+import com.torodb.core.d2r.RidGenerator;
 
 public class MockRidGenerator implements RidGenerator {
 	

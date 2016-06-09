@@ -2,8 +2,8 @@ package com.torodb.backend.util;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.torodb.backend.RidGenerator;
 import com.torodb.core.TableRef;
+import com.torodb.core.d2r.RidGenerator;
 
 public class InMemoryRidGenerator implements RidGenerator {
 	

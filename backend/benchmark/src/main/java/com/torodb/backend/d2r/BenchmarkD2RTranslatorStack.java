@@ -19,19 +19,21 @@ import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.Warmup;
 import org.openjdk.jmh.infra.Blackhole;
 
-import com.torodb.backend.IdentifierFactory;
 import com.torodb.backend.util.InMemoryRidGenerator;
 import com.torodb.backend.util.TestDataFactory;
 import com.torodb.core.d2r.D2RTranslator;
+import com.torodb.core.d2r.IdentifierFactory;
 import com.torodb.core.transaction.metainf.MetainfoRepository.SnapshotStage;
 import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
+import com.torodb.d2r.D2RTranslatorStack;
+import com.torodb.d2r.IdentifierFactoryImpl;
 import com.torodb.kvdocument.values.KVDocument;
 import com.torodb.metainfo.cache.mvcc.MvccMetainfoRepository;
 
 public class BenchmarkD2RTranslatorStack {
 
 	private static InMemoryRidGenerator ridGenerator = new InMemoryRidGenerator();
-	private static IdentifierFactory identifierFactory=new IdentifierFactory();
+	private static IdentifierFactory identifierFactory=new IdentifierFactoryImpl();
 	
 	@State(Scope.Thread)
 	public static class TranslateState {

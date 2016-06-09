@@ -1,4 +1,4 @@
-package com.torodb.backend;
+package com.torodb.core.d2r;
 
 import com.torodb.core.TableRef;
 

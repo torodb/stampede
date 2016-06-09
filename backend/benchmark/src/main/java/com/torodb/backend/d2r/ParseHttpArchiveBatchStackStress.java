@@ -10,12 +10,14 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.google.common.base.Stopwatch;
-import com.torodb.backend.IdentifierFactory;
-import com.torodb.backend.RidGenerator;
 import com.torodb.backend.util.InMemoryRidGenerator;
 import com.torodb.backend.util.JsonArchiveFeed;
 import com.torodb.core.d2r.D2RTranslator;
 import com.torodb.core.d2r.DocPartData;
+import com.torodb.core.d2r.IdentifierFactory;
+import com.torodb.core.d2r.RidGenerator;
+import com.torodb.d2r.D2RTranslatorStack;
+import com.torodb.d2r.IdentifierFactoryImpl;
 import com.torodb.metainfo.cache.mvcc.MvccMetainfoRepository;
 
 /**
@@ -33,7 +35,7 @@ public class ParseHttpArchiveBatchStackStress {
 
 		MvccMetainfoRepository mvccMetainfoRepository = new MvccMetainfoRepository(InitialView);
 		RidGenerator ridGenerator = new InMemoryRidGenerator();
-		IdentifierFactory identifierFactory = new IdentifierFactory();
+		IdentifierFactory identifierFactory = new IdentifierFactoryImpl();
 
 		AtomicLong cont=new AtomicLong(0);
 		Stopwatch toroTimer = Stopwatch.createUnstarted();

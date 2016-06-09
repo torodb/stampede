@@ -1,11 +1,11 @@
-package com.torodb.backend.d2r;
+package com.torodb.d2r;
 
-import com.torodb.backend.d2r.model.PathStack;
-import com.torodb.backend.d2r.model.PathStack.PathArrayIdx;
-import com.torodb.backend.d2r.model.PathStack.PathInfo;
-import com.torodb.backend.d2r.model.PathStack.PathNodeType;
-import com.torodb.backend.d2r.model.DocPartRowImpl;
-import com.torodb.backend.d2r.model.DocPartDataImpl;
+import com.torodb.d2r.model.DocPartDataImpl;
+import com.torodb.d2r.model.DocPartRowImpl;
+import com.torodb.d2r.model.PathStack;
+import com.torodb.d2r.model.PathStack.PathArrayIdx;
+import com.torodb.d2r.model.PathStack.PathInfo;
+import com.torodb.d2r.model.PathStack.PathNodeType;
 import com.torodb.kvdocument.types.ArrayType;
 import com.torodb.kvdocument.types.DocumentType;
 import com.torodb.kvdocument.types.KVType;
