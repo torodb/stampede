@@ -20,12 +20,6 @@
 
 package com.torodb.torod.db.backends.converters;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
-import com.torodb.torod.core.exceptions.ToroImplementationException;
-import com.torodb.torod.core.subdocument.structure.*;
-import com.torodb.torod.db.backends.meta.IndexStorage;
-
 import java.io.Serializable;
 import java.io.StringReader;
 import java.io.StringWriter;
@@ -35,7 +29,22 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.json.*;
+
+import javax.json.Json;
+import javax.json.JsonObject;
+import javax.json.JsonObjectBuilder;
+import javax.json.JsonReader;
+import javax.json.JsonValue;
+import javax.json.JsonWriter;
+
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
+import com.torodb.torod.core.exceptions.ToroImplementationException;
+import com.torodb.torod.core.subdocument.structure.ArrayStructure;
+import com.torodb.torod.core.subdocument.structure.DocStructure;
+import com.torodb.torod.core.subdocument.structure.StructureElement;
+import com.torodb.torod.core.subdocument.structure.StructureElementVisitor;
+import com.torodb.torod.db.backends.meta.CollectionSchema;
 
 /**
  *
@@ -47,11 +56,11 @@ public class StructureConverter implements Serializable {
     private static final Pattern SCAPED_KEY_PATTERN = Pattern.compile("(_+" + TABLE_ID + "|_+" + INDEX_ID + ')');
     private static final long serialVersionUID = 1L;
 
-    private final IndexStorage.CollectionSchema colSchema;
+    private final CollectionSchema colSchema;
     private boolean initialized = false;
     private static final ToJsonVisitor TO_JSON = new ToJsonVisitor();
 
-    public StructureConverter(IndexStorage.CollectionSchema colSchema) {
+    public StructureConverter(CollectionSchema colSchema) {
         this.colSchema = colSchema;
     }
 
@@ -196,10 +205,10 @@ public class StructureConverter implements Serializable {
         return true;
     }
 
-    private static class ToJsonVisitor implements StructureElementVisitor<JsonValue, IndexStorage.CollectionSchema> {
+    private static class ToJsonVisitor implements StructureElementVisitor<JsonValue, CollectionSchema> {
 
         @Override
-        public JsonValue visit(DocStructure structure, IndexStorage.CollectionSchema colSchema) {
+        public JsonValue visit(DocStructure structure, CollectionSchema colSchema) {
 
             int tableId = colSchema.getTypeId(structure.getType());
             
@@ -241,7 +250,7 @@ public class StructureConverter implements Serializable {
         }
 
         @Override
-        public JsonValue visit(ArrayStructure structure, IndexStorage.CollectionSchema colSchema) {
+        public JsonValue visit(ArrayStructure structure, CollectionSchema colSchema) {
             JsonObjectBuilder objBuilder = Json.createObjectBuilder();
 
             for (Map.Entry<Integer, ? extends StructureElement> entry : structure.getElements().entrySet()) {

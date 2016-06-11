@@ -46,11 +46,15 @@ public class Generic {
 	private String logFile;
 	@Description("config.generic.logbackFile")
 	private String logbackFile;
-	@Description("config.generic.connectionPoolSize")
-	@NotNull
-	@Min(3)
-	@JsonProperty(required=true)
-	private Integer connectionPoolSize = 30;
+    @Description("config.generic.connectionPoolTimeout")
+    @NotNull
+    @JsonProperty(required=true)
+    private Long connectionPoolTimeout = 10L * 1000;
+    @Description("config.generic.connectionPoolSize")
+    @NotNull
+    @Min(3)
+    @JsonProperty(required=true)
+    private Integer connectionPoolSize = 30;
 	@Description("config.generic.reservedReadPoolSize")
 	@NotNull
 	@Min(1)
@@ -89,7 +93,15 @@ public class Generic {
 		this.logbackFile = logbackFile;
 	}
 
-	public Integer getConnectionPoolSize() {
+	public Long getConnectionPoolTimeout() {
+        return connectionPoolTimeout;
+    }
+
+    public void setConnectionPoolTimeout(Long connectionPoolTimeout) {
+        this.connectionPoolTimeout = connectionPoolTimeout;
+    }
+
+    public Integer getConnectionPoolSize() {
 		return connectionPoolSize;
 	}
 

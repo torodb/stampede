@@ -20,10 +20,10 @@
 
 package com.torodb.torod.db.backends.converters.jooq;
 
+import org.jooq.impl.SQLDataType;
+
 import com.torodb.torod.core.subdocument.ScalarType;
 import com.torodb.torod.core.subdocument.values.ScalarBoolean;
-import org.jooq.DataType;
-import org.jooq.impl.SQLDataType;
 
 /**
  *
@@ -31,10 +31,7 @@ import org.jooq.impl.SQLDataType;
 public class BooleanValueConverter implements SubdocValueConverter<Boolean, ScalarBoolean> {
     private static final long serialVersionUID = 1L;
 
-    @Override
-    public DataType<Boolean> getDataType() {
-        return SQLDataType.BOOLEAN;
-    }
+    public static final DataTypeForScalar<ScalarBoolean> TYPE = DataTypeForScalar.from(SQLDataType.BOOLEAN, new BooleanValueConverter());
 
     @Override
     public ScalarType getErasuredType() {

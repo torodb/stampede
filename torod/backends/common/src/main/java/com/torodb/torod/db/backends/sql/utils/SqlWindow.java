@@ -1,6 +1,17 @@
 
 package com.torodb.torod.db.backends.sql.utils;
 
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.util.AbstractMap.SimpleEntry;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+
+import javax.annotation.Nonnull;
+
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterators;
@@ -13,16 +24,8 @@ import com.torodb.torod.core.subdocument.values.ScalarValue;
 import com.torodb.torod.db.backends.converters.ScalarTypeToSqlType;
 import com.torodb.torod.db.backends.converters.jooq.SubdocValueConverter;
 import com.torodb.torod.db.backends.converters.jooq.ValueToJooqConverterProvider;
+import com.torodb.torod.db.backends.converters.jooq.ValueToJooqDataTypeProvider;
 import com.torodb.torod.db.backends.udt.records.MongoTimestampRecord;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
-import java.util.AbstractMap.SimpleEntry;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
-import javax.annotation.Nonnull;
 
 /**
  *
@@ -31,7 +34,10 @@ public class SqlWindow implements Iterator<ValueRow<ScalarValue<?>>> {
 
     private final Iterator<ValueRow<ScalarValue<?>>> rows;
 
-    public SqlWindow(ResultSet rs, ScalarTypeToSqlType scalarTypeToSqlType) throws SQLException {
+    public SqlWindow(ResultSet rs, 
+            ValueToJooqConverterProvider valueToJooqConverterProvider, 
+            ValueToJooqDataTypeProvider valueToJooqDataTypeProvider, 
+            ScalarTypeToSqlType scalarTypeToSqlType) throws SQLException {
         ResultSetMetaData metaData = rs.getMetaData();
         final int columnLenght = metaData.getColumnCount();
         
@@ -45,7 +51,7 @@ public class SqlWindow implements Iterator<ValueRow<ScalarValue<?>>> {
 
             ScalarType scalarType = getScalarType(metaData, jdbcIndex, scalarTypeToSqlType);
 
-            converters[i] = ValueToJooqConverterProvider.getConverter(scalarType);
+            converters[i] = valueToJooqDataTypeProvider.getDataType(scalarType).getSubdocValueConverter();
         }
 
         ImmutableList.Builder<ValueRow<ScalarValue<?>>> builder = ImmutableList.builder();

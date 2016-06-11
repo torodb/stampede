@@ -9,7 +9,7 @@
     <parent>
         <groupId>com.torodb</groupId>
         <artifactId>torodb-parent</artifactId>
-        <version>0.40-alpha3</version>
+        <version>0.40</version>
     </parent>
 
     <artifactId>torodb</artifactId>
@@ -38,6 +38,16 @@
         <dependency>
             <groupId>com.torodb.torod.backends</groupId>
             <artifactId>postgresql</artifactId>
+            <version>${torod.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.torodb.torod.backends</groupId>
+            <artifactId>greenplum</artifactId>
+            <version>${torod.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.torodb.torod.backends</groupId>
+            <artifactId>mysql</artifactId>
             <version>${torod.version}</version>
         </dependency>
         <dependency>
@@ -102,14 +112,6 @@
         <dependency>
             <groupId>com.fasterxml.jackson.dataformat</groupId>
             <artifactId>jackson-dataformat-yaml</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.module</groupId>
-            <artifactId>jackson-module-jsonSchema</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.github.fge</groupId>
-            <artifactId>json-schema-validator</artifactId>
         </dependency>
         <dependency>
             <groupId>javax.validation</groupId>
@@ -186,7 +188,7 @@
                             <phase>integration-test</phase>
                             <configuration>
                                 <systemProperties>
-                                    <torodb-integration-config-yml>${torodb-integration-config-yml}</torodb-integration-config-yml>
+                                    <torodbIntegrationConfigYml>${torodbIntegrationConfigYml}</torodbIntegrationConfigYml>
                                 </systemProperties>
                             </configuration>
                         </execution>

@@ -20,32 +20,38 @@
 
 package com.torodb.integration.mongo.v3m0.jstests;
 
-import com.google.common.base.Charsets;
-import com.google.common.collect.Multimap;
-import com.torodb.config.model.Config;
-import com.torodb.integration.IntegrationTestEnvironment;
-import com.torodb.integration.TestCategory;
-import com.torodb.integration.ToroRunnerClassRule;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map.Entry;
+
+import org.apache.commons.lang.ArrayUtils;
 import org.junit.AssumptionViolatedException;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runners.Parameterized.Parameter;
 import org.slf4j.Logger;
 
+import com.google.common.base.Charsets;
+import com.google.common.collect.Multimap;
+import com.torodb.config.model.Config;
+import com.torodb.integration.IntegrationTestEnvironment;
+import com.torodb.integration.TestCategory;
+import com.torodb.integration.ToroRunnerClassRule;
+import com.torodb.torod.core.exceptions.ToroRuntimeException;
+
 public abstract class AbstractIntegrationTest {
 
 	@ClassRule
 	public final static ToroRunnerClassRule TORO_RUNNER_CLASS_RULE = new ToroRunnerClassRule();
 
-    private final Logger logger;
+    protected final Logger logger;
 
     @Parameter(0)
     public TestCategory category;
@@ -79,27 +85,53 @@ public abstract class AbstractIntegrationTest {
 		Config config = TORO_RUNNER_CLASS_RULE.getConfig();
 
 		String toroConnectionString = config.getProtocol().getMongo().getNet().getBindIp() + ":"
-				+ config.getProtocol().getMongo().getNet().getPort() + "/"
-				+ config.getBackend().asPostgres().getDatabase();
+				+ config.getProtocol().getMongo().getNet().getPort() + "/";
+		if (config.getBackend().isPostgresLike()) {
+		    toroConnectionString = toroConnectionString + config.getBackend().asPostgres().getDatabase();
+		} else if (config.getBackend().isMySQLLike()) {
+            toroConnectionString = toroConnectionString + config.getBackend().asMySQL().getDatabase();
+		} else {
+		    throw new ToroRuntimeException("Backend " + config.getBackend().getBackendImplementation() + " is not supported");
+		}
+		
 		URL mongoMocksUrl = AbstractIntegrationTest.class.getResource("mongo_mocks.js");
 
         logger.info("Testing {}", script);
 
-        Process mongoProcess = Runtime.getRuntime()
-				.exec(new String[] {
-					"mongo",
-					toroConnectionString, 
-					mongoMocksUrl.getPath(),
-					script.getURL().getPath(),
-				});
-		InputStream inputStream = mongoProcess.getInputStream();
-		InputStream erroStream = mongoProcess.getErrorStream();
-		ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        runMongoTest(toroConnectionString, mongoMocksUrl, expectedZeroResult, exceptionsExpected);
+	}
 
+    protected void runMongoTest(String toroConnectionString, URL mongoMocksUrl, boolean expectedZeroResult,
+            boolean exceptionsExpected, String...parameters)
+            throws IOException, InterruptedException, UnsupportedEncodingException, AssertionError {
+        Process mongoProcess = runMongoProcess(toroConnectionString, mongoMocksUrl, parameters);
+        
 		int result = mongoProcess.waitFor();
 		
 		List<Throwable> uncaughtExceptions = TORO_RUNNER_CLASS_RULE.getUcaughtExceptions();
 		
+        ByteArrayOutputStream byteArrayOutputStream = readOutput(result, mongoProcess);
+		
+		checkResults(expectedZeroResult, exceptionsExpected, result, uncaughtExceptions, byteArrayOutputStream);
+    }
+
+    protected Process runMongoProcess(String toroConnectionString, URL mongoMocksUrl, String... parameters)
+            throws IOException {
+        Process mongoProcess = Runtime.getRuntime()
+				.exec((String[]) ArrayUtils.addAll(new String[] {
+					"mongo",
+					toroConnectionString, 
+					mongoMocksUrl.getPath(),
+					script.getURL().getPath(),
+				}, parameters));
+        return mongoProcess;
+    }
+
+    protected ByteArrayOutputStream readOutput(int result, Process mongoProcess)
+            throws IOException {
+        InputStream inputStream = mongoProcess.getInputStream();
+        InputStream erroStream = mongoProcess.getErrorStream();
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 		if (result != 0) {
 			int read;
 			
@@ -111,8 +143,13 @@ public abstract class AbstractIntegrationTest {
 				byteArrayOutputStream.write(read);
 			}
 		}
-		
-		if (!uncaughtExceptions.isEmpty()) {
+        return byteArrayOutputStream;
+    }
+
+    protected void checkResults(boolean expectedZeroResult, boolean exceptionsExpected, int result,
+            List<Throwable> uncaughtExceptions, ByteArrayOutputStream byteArrayOutputStream)
+            throws UnsupportedEncodingException, AssertionError {
+        if (!uncaughtExceptions.isEmpty()) {
 			PrintStream printStream = new PrintStream(byteArrayOutputStream, true, Charsets.UTF_8.name());
 			
 			for (Throwable throwable : uncaughtExceptions) {
@@ -133,11 +170,11 @@ public abstract class AbstractIntegrationTest {
         }
 
         if (!exceptionsExpected && !uncaughtExceptions.isEmpty()) {
-            String exceptions = new String(byteArrayOutputStream.toByteArray(), Charsets.UTF_8);
+            String reason = new String(byteArrayOutputStream.toByteArray(), Charsets.UTF_8);
             throw new AssertionError("Test " + script + " did not failed but "
-                    + "following exception where received:\n" + exceptions);
+                    + "following exception where received:\n" + reason);
         }
-	}
+    }
 
     protected static Collection<Object[]> parameters(ScriptClassifier classifier) {
         IntegrationTestEnvironment ite = IntegrationTestEnvironment.CURRENT_INTEGRATION_TEST_ENVIRONMENT;

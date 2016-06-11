@@ -20,6 +20,14 @@
 
 package com.toro.torod.connection;
 
+import static java.lang.Thread.currentThread;
+
+import java.util.Collection;
+import java.util.concurrent.ExecutionException;
+
+import javax.annotation.concurrent.NotThreadSafe;
+import javax.json.JsonObject;
+
 import com.google.common.collect.FluentIterable;
 import com.torodb.torod.core.Session;
 import com.torodb.torod.core.config.DocumentBuilderFactory;
@@ -34,7 +42,13 @@ import com.torodb.torod.core.d2r.D2RTranslator;
 import com.torodb.torod.core.dbMetaInf.DbMetaInformationCache;
 import com.torodb.torod.core.dbWrapper.DbWrapper;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
-import com.torodb.torod.core.exceptions.*;
+import com.torodb.torod.core.exceptions.ClosedToroCursorException;
+import com.torodb.torod.core.exceptions.CursorNotFoundException;
+import com.torodb.torod.core.exceptions.NotAutoclosableCursorException;
+import com.torodb.torod.core.exceptions.ToroException;
+import com.torodb.torod.core.exceptions.ToroImplementationException;
+import com.torodb.torod.core.exceptions.ToroRuntimeException;
+import com.torodb.torod.core.exceptions.UnknownMaxElementsException;
 import com.torodb.torod.core.executor.ExecutorFactory;
 import com.torodb.torod.core.executor.SessionExecutor;
 import com.torodb.torod.core.executor.SessionTransaction;
@@ -42,12 +56,6 @@ import com.torodb.torod.core.language.projection.Projection;
 import com.torodb.torod.core.language.querycriteria.QueryCriteria;
 import com.torodb.torod.core.pojos.CollectionMetainfo;
 import com.torodb.torod.core.subdocument.ToroDocument;
-import java.util.Collection;
-import java.util.concurrent.ExecutionException;
-import javax.annotation.concurrent.NotThreadSafe;
-import javax.json.JsonObject;
-
-import static java.lang.Thread.currentThread;
 
 /**
  *
@@ -58,7 +66,6 @@ class DefaultToroConnection implements ToroConnection {
     private final Session session;
     private final D2RTranslator d2r;
     private final SessionExecutor executor;
-    private final DocumentBuilderFactory documentBuilderFactory;
     private final DbMetaInformationCache cache;
     private final ToroCursorManager cursorManager;
 
@@ -67,13 +74,11 @@ class DefaultToroConnection implements ToroConnection {
             D2RTranslator d2RTranslator,
             ExecutorFactory executorFactory,
             DbWrapper dbWrapper,
-            DocumentBuilderFactory documentBuilderFactory,
             DbMetaInformationCache cache) {
         this.session = new DefaultSession();
         this.d2r = d2RTranslator;
 
         this.executor = executorFactory.createSessionExecutor(session);
-        this.documentBuilderFactory = documentBuilderFactory;
         this.cache = cache;
         this.cursorManager = cursorManager;
     }
@@ -132,10 +137,8 @@ class DefaultToroConnection implements ToroConnection {
         try {
             return executor.getCollectionsMetainfo().get();
         } catch (ExecutionException ex) {
-            if (ex.getCause() != null) {
-                if (ex.getCause() instanceof ToroException) {
-                    throw new ToroException(ex.getCause());
-                }
+            if (ex.getCause() != null && ex.getCause() instanceof ToroException) {
+                throw new ToroException(ex.getCause());
             }
             throw new ToroRuntimeException(ex);
         } catch (InterruptedException ex) {
@@ -178,11 +181,9 @@ class DefaultToroConnection implements ToroConnection {
         SessionTransaction sessionTransaction = executor.createTransaction(metainfo);
         return new DefaultToroTransaction(
                 cache,
-                this, 
                 sessionTransaction, 
                 d2r, 
-                executor, 
-                documentBuilderFactory
+                executor
         );
     }
 

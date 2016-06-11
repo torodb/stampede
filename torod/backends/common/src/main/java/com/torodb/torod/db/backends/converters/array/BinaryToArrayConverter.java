@@ -20,42 +20,32 @@
 
 package com.torodb.torod.db.backends.converters.array;
 
+import javax.json.JsonString;
+
 import com.google.common.io.ByteSource;
 import com.torodb.common.util.HexUtils;
 import com.torodb.kvdocument.values.KVBinary.KVBinarySubtype;
 import com.torodb.torod.core.subdocument.values.ScalarBinary;
 import com.torodb.torod.core.subdocument.values.heap.ByteSourceScalarBinary;
-import com.torodb.torod.db.backends.converters.ValueConverter;
 
 /**
  *
  */
-public class BinaryToArrayConverter implements
-        ValueConverter<String, ScalarBinary> {
+public class BinaryToArrayConverter implements ArrayConverter<JsonString, ScalarBinary> {
+    private static final long serialVersionUID = 1L;
 
     @Override
-    public Class<? extends String> getJsonClass() {
-        return String.class;
-    }
-
-    @Override
-    public Class<? extends ScalarBinary> getValueClass() {
-        return ScalarBinary.class;
-    }
-
-    @Override
-    public String toJson(ScalarBinary value) {
+    public String toJsonLiteral(ScalarBinary value) {
         return value.toString();
     }
 
     @Override
-    public ScalarBinary toValue(String value) {
-        byte[] bytes = HexUtils.hex2Bytes(value);
+    public ScalarBinary fromJsonValue(JsonString value) {
+        byte[] bytes = HexUtils.hex2Bytes(value.getString());
         return new ByteSourceScalarBinary(
                 KVBinarySubtype.MONGO_GENERIC,
                 (byte) 0,
                 ByteSource.wrap(bytes)
         );
     }
-    
 }

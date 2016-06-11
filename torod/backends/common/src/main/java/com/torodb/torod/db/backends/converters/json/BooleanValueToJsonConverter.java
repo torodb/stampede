@@ -20,14 +20,16 @@
 
 package com.torodb.torod.db.backends.converters.json;
 
-import com.torodb.torod.db.backends.converters.ValueConverter;
 import com.torodb.torod.core.subdocument.values.ScalarBoolean;
+import com.torodb.torod.db.backends.converters.ValueConverter;
 
 /**
  *
  */
 public class BooleanValueToJsonConverter implements
         ValueConverter<Boolean, ScalarBoolean> {
+
+    private static final long serialVersionUID = 1L;
 
     @Override
     public Class<? extends Boolean> getJsonClass() {
@@ -37,11 +39,6 @@ public class BooleanValueToJsonConverter implements
     @Override
     public Class<? extends ScalarBoolean> getValueClass() {
         return ScalarBoolean.class;
-    }
-
-    @Override
-    public Boolean toJson(ScalarBoolean value) {
-        return value.getValue();
     }
 
     @Override

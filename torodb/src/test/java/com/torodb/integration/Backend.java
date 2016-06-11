@@ -1,6 +1,7 @@
 package com.torodb.integration;
 
 public enum Backend {
-	POSTGRES,
-	GREENPLUM;
+	Postgres,
+	Greenplum,
+	MySQL;
 }

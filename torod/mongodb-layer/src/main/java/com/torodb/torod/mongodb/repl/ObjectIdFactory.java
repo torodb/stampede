@@ -44,7 +44,7 @@ public class ObjectIdFactory {
 
     private static final int MACHINE_ID = createMachineId();
     private static final int PROCESS_ID = createProcessId();
-    private static final AtomicInteger COUNTER = new AtomicInteger();
+    private static final AtomicInteger COUNTER = new AtomicInteger(new SecureRandom().nextInt());
 
     public BsonObjectId consumeObjectId() {
         long secs = System.currentTimeMillis() / 1000;

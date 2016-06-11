@@ -27,6 +27,8 @@ import javax.annotation.Nonnegative;
  */
 public interface DbBackendConfiguration {
 
+    long getCursorTimeout();
+    long getConnectionPoolTimeout();
     int getConnectionPoolSize();
     int getReservedReadPoolSize();
     String getUsername();

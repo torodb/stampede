@@ -43,6 +43,9 @@ public class Replication {
 	@JsonProperty(required=true)
 	private Role role = Role.HIDDEN_SLAVE;
 	@Description("config.protocol.mongo.replication.syncSource")
+	/**
+	 * @deprecated kept for backward compatibility
+	 */
 	@Deprecated
 	private String syncSource;
 	
@@ -58,10 +61,20 @@ public class Replication {
 	public void setRole(Role role) {
 		this.role = role;
 	}
+
+	/**
+	 * @deprecated kept for backward compatibility
+	 * @return
+     */
 	@Deprecated
 	public String getSyncSource() {
 		return syncSource;
 	}
+
+	/**
+	 * @deprecated kept for backward compatibility
+	 * @param syncSource
+     */
 	@Deprecated
 	public void setSyncSource(String syncSource) {
 		this.syncSource = syncSource;

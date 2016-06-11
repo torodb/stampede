@@ -1,6 +1,14 @@
 
 package com.torodb.torod.mongodb.crp;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.inject.Inject;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.eightkdata.mongowp.ErrorCode;
 import com.eightkdata.mongowp.OpTime;
 import com.eightkdata.mongowp.bson.BsonDocument;
@@ -24,7 +32,13 @@ import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.torodb.torod.core.WriteFailMode;
-import com.torodb.torod.core.connection.*;
+import com.torodb.torod.core.config.DocumentBuilderFactory;
+import com.torodb.torod.core.connection.DeleteResponse;
+import com.torodb.torod.core.connection.InsertResponse;
+import com.torodb.torod.core.connection.ToroConnection;
+import com.torodb.torod.core.connection.ToroTransaction;
+import com.torodb.torod.core.connection.TransactionMetainfo;
+import com.torodb.torod.core.connection.UpdateResponse;
 import com.torodb.torod.core.cursors.UserCursor;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.exceptions.ClosedToroCursorException;
@@ -40,16 +54,21 @@ import com.torodb.torod.core.subdocument.ToroDocument;
 import com.torodb.torod.mongodb.MongoLayerConstants;
 import com.torodb.torod.mongodb.OptimeClock;
 import com.torodb.torod.mongodb.RequestContext;
+import com.torodb.torod.mongodb.commands.impl.general.update.UpdateActionVisitorDocumentToInsert;
+import com.torodb.torod.mongodb.commands.impl.general.update.UpdateActionVisitorDocumentToUpdate;
 import com.torodb.torod.mongodb.futures.DeleteFuture;
 import com.torodb.torod.mongodb.futures.InsertFuture;
 import com.torodb.torod.mongodb.futures.UpdateFuture;
-import com.torodb.torod.mongodb.translator.*;
+import com.torodb.torod.mongodb.repl.ObjectIdFactory;
+import com.torodb.torod.mongodb.translator.BsonToToroTranslatorFunction;
+import com.torodb.torod.mongodb.translator.QueryCriteriaTranslator;
+import com.torodb.torod.mongodb.translator.QueryEncapsulation;
+import com.torodb.torod.mongodb.translator.QueryModifier;
+import com.torodb.torod.mongodb.translator.QuerySortOrder;
+import com.torodb.torod.mongodb.translator.ToroToBsonTranslatorFunction;
+import com.torodb.torod.mongodb.translator.UpdateActionTranslator;
+
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import java.util.ArrayList;
-import java.util.List;
-import javax.inject.Inject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -61,13 +80,19 @@ public class StandardCollectionRequestProcessor implements CollectionRequestProc
 
     private final QueryCriteriaTranslator queryCriteriaTranslator;
     private final OptimeClock optimeClock;
+    private final DocumentBuilderFactory documentBuilderFactory;
+    private final ObjectIdFactory objectIdFactory;
 
     @Inject
     public StandardCollectionRequestProcessor(
             QueryCriteriaTranslator queryCriteriaTranslator,
-            OptimeClock optimeClock) {
+            OptimeClock optimeClock, 
+            DocumentBuilderFactory documentBuilderFactory, 
+            ObjectIdFactory objectIdFactory) {
         this.queryCriteriaTranslator = queryCriteriaTranslator;
         this.optimeClock = optimeClock;
+        this.documentBuilderFactory = documentBuilderFactory;
+        this.objectIdFactory = objectIdFactory;
     }
 
     @Override
@@ -224,15 +249,20 @@ public class StandardCollectionRequestProcessor implements CollectionRequestProc
     	List<UpdateOperation> updates = Lists.newArrayList();
     	boolean upsert = updateMessage.isUpsert();
     	boolean justOne = !updateMessage.isMultiUpdate();
+    
+        UpdateAction updateAction = UpdateActionTranslator.translate(
+                    updateMessage.getUpdate());
+    
+        updates.add(new UpdateOperation(queryCriteria, updateAction, upsert, justOne));
 
-    	UpdateAction updateAction = UpdateActionTranslator.translate(
-                updateMessage.getUpdate());
-
-    	updates.add(new UpdateOperation(queryCriteria, updateAction, upsert, justOne));
-
-    	try (ToroTransaction transaction
+        try (ToroTransaction transaction
                 = toroConnection.createTransaction(TransactionMetainfo.NOT_READ_ONLY)) {
-	       	ListenableFuture<UpdateResponse> futureUpdateResponse = transaction.update(collection, updates, writeFailMode);
+            ListenableFuture<UpdateResponse> futureUpdateResponse = transaction.update(
+                    collection, 
+                    updates, 
+                    writeFailMode,
+                    new UpdateActionVisitorDocumentToInsert(documentBuilderFactory, objectIdFactory),
+                    new UpdateActionVisitorDocumentToUpdate(documentBuilderFactory));
 
             ListenableFuture<?> futureCommitResponse = transaction.commit();
 
@@ -241,8 +271,7 @@ public class StandardCollectionRequestProcessor implements CollectionRequestProc
                     futureUpdateResponse,
                     futureCommitResponse
             );
-		}
-        catch (ImplementationDbException ex) {
+        } catch (ImplementationDbException ex) {
             return Futures.immediateFuture(
                     new UpdateOpResult(
                             0,
@@ -295,7 +324,7 @@ public class StandardCollectionRequestProcessor implements CollectionRequestProc
     		}
     	}
     	QueryCriteria queryCriteria = queryCriteriaTranslator.translate(query);
-    	List<DeleteOperation> deletes = new ArrayList<DeleteOperation>();
+    	List<DeleteOperation> deletes = new ArrayList<>();
     	boolean singleRemove = deleteMessage.isSingleRemove();
 
     	deletes.add(new DeleteOperation(queryCriteria, singleRemove));
@@ -311,8 +340,7 @@ public class StandardCollectionRequestProcessor implements CollectionRequestProc
                     futureDeleteResponse,
                     futureCommitResponse
             );
-		}
-        catch (ImplementationDbException ex) {
+		} catch (ImplementationDbException ex) {
             return Futures.immediateFuture(
                     new DeleteOpResult(
                             0,

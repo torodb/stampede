@@ -20,21 +20,23 @@
 
 package com.torodb.integration.mongo.v3m0.jstests;
 
-import com.torodb.integration.mongo.v3m0.jstests.ScriptClassifier.Builder;
+import static com.torodb.integration.Backend.*;
+import static com.torodb.integration.Protocol.*;
+import static com.torodb.integration.TestCategory.FAILING;
+import static com.torodb.integration.TestCategory.WORKING;
+
 import java.net.URL;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.torodb.integration.Backend.*;
-import static com.torodb.integration.Protocol.*;
-import static com.torodb.integration.TestCategory.*;
-import static com.torodb.integration.mongo.v3m0.jstests.AbstractIntegrationTest.parameters;
+import com.torodb.integration.mongo.v3m0.jstests.ScriptClassifier.Builder;
 
 
 @RunWith(Parameterized.class)
@@ -45,21 +47,25 @@ public class CustomIT extends AbstractIntegrationTest {
 		super(LOGGER);
 	}
 	
-	@Parameters(name="{0}")
+	@Parameters(name="{0}-{1}")
 	public static Collection<Object[]> parameters() {
 		return parameters(createScriptClassifier());
 	}
 
     private static ScriptClassifier createScriptClassifier() {
         return new Builder()
-                .addScripts(MONGO, POSTGRES, WORKING, asScriptSet("dummy.js"))
-                .addScripts(MONGO_REPL_SET, POSTGRES, WORKING, asScriptSet("dummy.js"))
-                .addScripts(MONGO, GREENPLUM, WORKING, asScriptSet("dummy.js"))
-                .addScripts(MONGO_REPL_SET, GREENPLUM, WORKING, asScriptSet("dummy.js"))
+                .addScripts(Mongo, Postgres, WORKING, asScriptSet("dummy.js"))
+                .addScripts(MongoReplSet, Postgres, WORKING, asScriptSet("dummy.js"))
+                .addScripts(Mongo, Greenplum, WORKING, asScriptSet("dummy.js"))
+                .addScripts(MongoReplSet, Greenplum, WORKING, asScriptSet("dummy.js"))
+                .addScripts(Mongo, MySQL, WORKING, asScriptSet("dummy.js"))
+                .addScripts(MongoReplSet, MySQL, WORKING, asScriptSet("dummy.js"))
 
-                .addScripts(MONGO, POSTGRES, WORKING, asScriptSet(new String[] {"binary.js", "undefined.js"}))
+                .addScripts(Mongo, Postgres, WORKING, asScriptSet(new String[] {"binary.js", "undefined.js"}))
+                .addScripts(Mongo, MySQL, WORKING, asScriptSet(new String[] {"binary.js", "undefined.js"}))
 
-                .addScripts(MONGO, POSTGRES, FAILING, asScriptSet("alwaysfail.js"))
+                .addScripts(Mongo, Postgres, FAILING, asScriptSet("alwaysfail.js"))
+                .addScripts(Mongo, MySQL, FAILING, asScriptSet("alwaysfail.js"))
                 .build();
     }
 

@@ -41,7 +41,6 @@ public class DefaultTorod implements Torod {
     private final DbMetaInformationCache cache;
     private final ExecutorFactory executorFactory;
     private final DbWrapper dbWrapper;
-    private final DocumentBuilderFactory documentBuilderFactory;
     private final DefaultCursorManager cursorManager;
 
     @Inject
@@ -56,7 +55,6 @@ public class DefaultTorod implements Torod {
         this.cache = cache;
         this.executorFactory = executorFactory;
         this.dbWrapper = dbWrapper;
-        this.documentBuilderFactory = documentBuilderFactory;
         this.cursorManager = new DefaultCursorManager(dbBackend, d2r);
     }
 
@@ -78,7 +76,6 @@ public class DefaultTorod implements Torod {
                 d2r, 
                 executorFactory, 
                 dbWrapper,
-                documentBuilderFactory,
                 cache
         );
     }

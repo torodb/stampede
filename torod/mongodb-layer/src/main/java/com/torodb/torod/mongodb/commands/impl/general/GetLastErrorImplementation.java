@@ -35,7 +35,7 @@ public class GetLastErrorImplementation implements CommandImplementation<GetLast
     public CommandResult<GetLastErrorReply> apply(
             Command<? super GetLastErrorArgument, ? super GetLastErrorReply> command,
             CommandRequest<GetLastErrorArgument> req) throws MongoException {
-        return new NonWriteCommandResult<GetLastErrorReply>(getResult(command, req));
+        return new NonWriteCommandResult<>(getResult(command, req));
     }
 
     public GetLastErrorReply getResult(

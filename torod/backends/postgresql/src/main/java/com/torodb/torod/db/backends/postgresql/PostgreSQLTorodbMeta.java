@@ -20,6 +20,29 @@
 
 package com.torodb.torod.db.backends.postgresql;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.Charset;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.concurrent.ConcurrentMap;
+
+import javax.annotation.Nonnull;
+import javax.inject.Provider;
+
+import org.jooq.DSLContext;
+import org.jooq.Meta;
+import org.jooq.Result;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.common.collect.MapMaker;
 import com.google.common.io.CharStreams;
 import com.torodb.torod.core.exceptions.ToroImplementationException;
@@ -27,28 +50,13 @@ import com.torodb.torod.core.subdocument.SubDocType;
 import com.torodb.torod.db.backends.DatabaseInterface;
 import com.torodb.torod.db.backends.exceptions.InvalidCollectionSchemaException;
 import com.torodb.torod.db.backends.exceptions.InvalidDatabaseException;
-import com.torodb.torod.db.backends.meta.IndexStorage;
+import com.torodb.torod.db.backends.meta.CollectionSchema;
 import com.torodb.torod.db.backends.meta.TorodbMeta;
 import com.torodb.torod.db.backends.meta.TorodbSchema;
-import com.torodb.torod.db.backends.tables.CollectionsTable;
-import com.torodb.torod.db.backends.tables.records.CollectionsRecord;
+import com.torodb.torod.db.backends.tables.AbstractCollectionsTable;
+import com.torodb.torod.db.backends.tables.records.AbstractCollectionsRecord;
+
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.Charset;
-import java.sql.*;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.concurrent.ConcurrentMap;
-import javax.annotation.Nonnull;
-import javax.inject.Provider;
-import org.jooq.DSLContext;
-import org.jooq.Meta;
-import org.jooq.Result;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -58,7 +66,7 @@ public class PostgreSQLTorodbMeta implements TorodbMeta {
     private static final long serialVersionUID = -4785629402L;
 
     private final String databaseName;
-    private final ConcurrentMap<String, IndexStorage.CollectionSchema> collectionSchemes;
+    private final ConcurrentMap<String, CollectionSchema> collectionSchemes;
     private static final Logger LOGGER = LoggerFactory.getLogger(PostgreSQLTorodbMeta.class);
     private final DatabaseInterface databaseInterface;
     private final  Provider<SubDocType.Builder> subDocTypeBuilderProvider;
@@ -85,7 +93,6 @@ public class PostgreSQLTorodbMeta implements TorodbMeta {
         
         createTypes(conn, jdbcMeta);
         createProcedures(conn, jdbcMeta);
-        createCast(conn, jdbcMeta);
 
         dsl.configuration().connectionProvider().release(conn);
     }
@@ -95,11 +102,11 @@ public class PostgreSQLTorodbMeta implements TorodbMeta {
             Meta jooqMeta,
             DatabaseMetaData jdbcMeta) throws InvalidCollectionSchemaException {
         
-        Result<CollectionsRecord> records
-                = dsl.selectFrom(CollectionsTable.COLLECTIONS).fetch();
+        Result<AbstractCollectionsRecord> records
+                = dsl.selectFrom(databaseInterface.getCollectionsTable()).fetch();
         
-        for (CollectionsRecord colRecord : records) {
-            IndexStorage.CollectionSchema colSchema = new IndexStorage.CollectionSchema(
+        for (AbstractCollectionsRecord colRecord : records) {
+            CollectionSchema colSchema = new CollectionSchema(
                     colRecord.getSchema(), 
                     colRecord.getName(),
                     dsl, 
@@ -124,8 +131,8 @@ public class PostgreSQLTorodbMeta implements TorodbMeta {
     }
 
     @Override
-    public IndexStorage.CollectionSchema getCollectionSchema(String collection) {
-        IndexStorage.CollectionSchema schema = collectionSchemes.get(collection);
+    public CollectionSchema getCollectionSchema(String collection) {
+        CollectionSchema schema = collectionSchemes.get(collection);
         if (schema == null) {
             throw new IllegalArgumentException("There is no schema associated with collection "
                     + collection);
@@ -135,7 +142,7 @@ public class PostgreSQLTorodbMeta implements TorodbMeta {
 
     @Override
     public void dropCollectionSchema(String collection) {
-        IndexStorage.CollectionSchema removed = collectionSchemes.remove(collection);
+        CollectionSchema removed = collectionSchemes.remove(collection);
         if (removed == null) {
             throw new IllegalArgumentException("Collection " + collection
                     + " didn't exist");
@@ -143,7 +150,7 @@ public class PostgreSQLTorodbMeta implements TorodbMeta {
     }
 
     @Override
-    public IndexStorage.CollectionSchema createCollectionSchema(
+    public CollectionSchema createCollectionSchema(
             String colName,
             String schemaName,
             DSLContext dsl) throws InvalidCollectionSchemaException {
@@ -151,7 +158,7 @@ public class PostgreSQLTorodbMeta implements TorodbMeta {
             throw new IllegalArgumentException("Collection '" + colName
                     + "' is already associated with a collection schema");
         }
-        IndexStorage.CollectionSchema result = new IndexStorage.CollectionSchema(
+        CollectionSchema result = new CollectionSchema(
                 schemaName, colName, dsl, this, databaseInterface, subDocTypeBuilderProvider
         );
         collectionSchemes.put(colName, result);
@@ -160,7 +167,7 @@ public class PostgreSQLTorodbMeta implements TorodbMeta {
     }
 
     @Override
-    public Collection<IndexStorage.CollectionSchema> getCollectionSchemes() {
+    public Collection<CollectionSchema> getCollectionSchemes() {
         return Collections.unmodifiableCollection(collectionSchemes.values());
     }
 
@@ -228,15 +235,15 @@ public class PostgreSQLTorodbMeta implements TorodbMeta {
     }
 
     private void createFindDocType(Connection conn) throws IOException, SQLException {
-        executeSql(conn, "/sql/find_doc_type.sql");
+        executeSql(conn, "/sql/postgresql/find_doc_type.sql");
     }
 
     private void createMongoObjectIdType(Connection conn) throws IOException, SQLException {
-        executeSql(conn, "/sql/mongo_object_id_type.sql");
+        executeSql(conn, "/sql/postgresql/mongo_object_id_type.sql");
     }
     
     private void createMongoTimestampType(Connection conn) throws IOException, SQLException {
-        executeSql(conn, "/sql/mongo_timestamp_type.sql");
+        executeSql(conn, "/sql/postgresql/mongo_timestamp_type.sql");
     }
     
     private void createFindDocProcedure(
@@ -281,7 +288,7 @@ public class PostgreSQLTorodbMeta implements TorodbMeta {
     ) throws SQLException, IOException {
         if (!checkIfProcedureExists(jdbcMeta, proc)) {
             LOGGER.debug("Creating procedure "+proc);
-            executeSql(conn, "/sql/"+proc+".sql");
+            executeSql(conn, "/sql/postgresql/"+proc+".sql");
             LOGGER.debug("Procedure "+proc+" created");
         }
         else {
@@ -296,7 +303,7 @@ public class PostgreSQLTorodbMeta implements TorodbMeta {
     ) throws SQLException {
         ResultSet procedures = null;
         try {
-            procedures = jdbcMeta.getProcedures(null, "torodb", procedureName);
+            procedures = jdbcMeta.getProcedures("%", TorodbSchema.TORODB_SCHEMA, procedureName);
             
             return procedures.next();
         } finally {
@@ -338,32 +345,4 @@ public class PostgreSQLTorodbMeta implements TorodbMeta {
             resourceAsStream.close();
         }
     }
-
-    private void createCast(
-            Connection conn, 
-            DatabaseMetaData jdbcMeta
-    ) throws SQLException, IOException {
-        Statement st = null;
-        try {
-            st = conn.createStatement();
-            
-            LOGGER.debug("Removing previous varchar to jsonb cast");
-            Savepoint savepoint = conn.setSavepoint();
-            try {
-                st.executeUpdate("DROP CAST (varchar AS jsonb)");
-            } catch (SQLException ex) {
-                LOGGER.debug("Old varchar to jsonb cast does not exist");
-                conn.rollback(savepoint);
-            }
-            LOGGER.debug("Creating new varchar to jsonb cast");
-            executeSql(conn, "/sql/json_cast.sql");
-            LOGGER.debug("Cast varchar to jsonb cast created");
-            
-        } finally {
-            if (st != null) {
-                st.close();
-            }
-        }
-    }
-
 }

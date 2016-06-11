@@ -22,13 +22,20 @@ package com.torodb;
 
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 
 import com.beust.jcommander.IValueValidator;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.converters.IParameterSplitter;
+import com.torodb.config.model.backend.Backend;
+import com.torodb.config.model.backend.BackendImplementation;
+import com.torodb.config.model.backend.greenplum.Greenplum;
+import com.torodb.config.model.backend.mysql.MySQL;
+import com.torodb.config.model.backend.postgres.Postgres;
 
 public class CliConfig {
 	
@@ -46,6 +53,8 @@ public class CliConfig {
 	private String xmlConfFile;
 	@Parameter(names={"-W", "--ask-for-password"}, descriptionKey="ask-for-password")
 	private boolean askForPassword = false;
+    @Parameter(names={"-b","--backend"}, descriptionKey="backend",validateValueWith=BackendValueValidator.class)
+    private String backend;
 	@Parameter(names={"-p","--param"}, descriptionKey="param",validateValueWith=ParamValueValidator.class,
 			splitter=NoParameterSplitter.class)
 	private List<String> params;
@@ -80,26 +89,51 @@ public class CliConfig {
 	public boolean isHelpParam() {
 		return helpParam;
 	}
-	public List<String> getParams() {
-		return params;
-	}
 	public boolean isAskForPassword() {
 		return askForPassword;
 	}
-	public boolean askForPassword() {
-    	return askForPassword;
+    public List<String> getParams() {
+        return params;
     }
-	
-	public static class ParamValueValidator implements IValueValidator<List<String>> {
-		@Override
-		public void validate(String name, List<String> value) throws ParameterException {
-			for (String param : value) {
-				if (param.indexOf('=') == -1) {
-					throw new ParameterException("Wrong parameter format: " + param);
-				}
-			}
-		}
-	}
+    public String getBackend() {
+        return backend;
+    }
+    
+    public static class ParamValueValidator implements IValueValidator<List<String>> {
+        @Override
+        public void validate(String name, List<String> value) throws ParameterException {
+            for (String param : value) {
+                if (param.indexOf('=') == -1) {
+                    throw new ParameterException("Wrong parameter format: " + param);
+                }
+            }
+        }
+    }
+    
+    public static Class<? extends BackendImplementation> getBackendClass(String backend) {
+        backend = backend.toLowerCase(Locale.US);
+        
+        for (Class<? extends BackendImplementation> backendClass : Backend.BACKEND_CLASSES) {
+            String backendClassLabel = backendClass.getSimpleName().toLowerCase(Locale.US);
+            if (backend.equals(backendClassLabel)) {
+                return backendClass;
+            }
+        }
+        
+        return null;
+    }
+    public static class BackendValueValidator implements IValueValidator<String> {
+        @Override
+        public void validate(String name, String value) throws ParameterException {
+            if (value != null && getBackendClass(value) == null) {
+                List<String> possibleValues = new ArrayList<>();
+                for (Class<? extends BackendImplementation> backendClass : Backend.BACKEND_CLASSES) {
+                    possibleValues.add(backendClass.getSimpleName().toLowerCase(Locale.US));
+                }
+                throw new ParameterException("Unknown backend: " + value + " (possible values are: " + possibleValues + ")");
+            }
+        }
+    }
 	
 	public static class NoParameterSplitter implements IParameterSplitter {
 		@Override

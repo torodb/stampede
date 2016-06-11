@@ -1,5 +1,17 @@
 package com.torodb.torod.db.backends.sql.index;
 
+import java.io.Serializable;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.torodb.torod.core.exceptions.ExistentIndexException;
@@ -9,26 +21,18 @@ import com.torodb.torod.core.exceptions.UserToroException;
 import com.torodb.torod.core.language.AttributeReference;
 import com.torodb.torod.core.pojos.DefaultNamedToroIndex;
 import com.torodb.torod.core.pojos.IndexedAttributes;
+import com.torodb.torod.core.pojos.IndexedAttributes.IndexType;
 import com.torodb.torod.core.pojos.NamedToroIndex;
 import com.torodb.torod.core.pojos.UnnamedToroIndex;
 import com.torodb.torod.core.subdocument.SubDocAttribute;
 import com.torodb.torod.core.subdocument.structure.ArrayStructure;
 import com.torodb.torod.core.subdocument.structure.DocStructure;
 import com.torodb.torod.core.subdocument.structure.StructureElement;
+import com.torodb.torod.db.backends.DatabaseInterface;
+import com.torodb.torod.db.backends.meta.CollectionSchema;
 import com.torodb.torod.db.backends.meta.StructuresCache;
 import com.torodb.torod.db.backends.meta.TorodbMeta;
-import com.torodb.torod.db.backends.meta.IndexStorage;
 import com.torodb.torod.db.backends.tables.SubDocTable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import java.io.Serializable;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  *
@@ -39,14 +43,17 @@ public class IndexManager implements Serializable {
             = LoggerFactory.getLogger(IndexManager.class);
     private static final long serialVersionUID = 1L;
 
-    private final IndexStorage.CollectionSchema colSchema;
+    private final CollectionSchema colSchema;
     private final IndexRelationManager indexRelation;
     private final String databaseName;
+    private final DatabaseInterface databaseInterface;
 
     public IndexManager(
-            IndexStorage.CollectionSchema colSchema,
-            TorodbMeta meta) {
+            CollectionSchema colSchema,
+            TorodbMeta meta,
+            DatabaseInterface databaseInterface) {
         this.colSchema = colSchema;
+        this.databaseInterface = databaseInterface;
         this.indexRelation = new IndexRelationManager();
         this.databaseName = meta.getDatabaseName();
     }
@@ -211,7 +218,7 @@ public class IndexManager implements Serializable {
         }
     }
 
-    private Set<UnnamedDbIndex> toDbIndex(NamedToroIndex index, IndexStorage.CollectionSchema colSchema) {
+    private Set<UnnamedDbIndex> toDbIndex(NamedToroIndex index, CollectionSchema colSchema) {
 
         Set<UnnamedDbIndex> result = Sets.newHashSet();
 
@@ -235,7 +242,7 @@ public class IndexManager implements Serializable {
         List<UnnamedDbIndex> result
                 = Lists.newArrayListWithCapacity(indexedAtts.size());
 
-        for (Map.Entry<AttributeReference, Boolean> entrySet : indexedAtts.entrySet()) {
+        for (Map.Entry<AttributeReference, IndexType> entrySet : indexedAtts.entrySet()) {
             String tableName = getRelativeIndexedColumnInfo(
                     root,
                     entrySet.getKey()
@@ -244,16 +251,7 @@ public class IndexManager implements Serializable {
                 return null;
             }
 
-            List<AttributeReference.Key> keys = entrySet.getKey().getKeys();
-
-            result.add(
-                    new UnnamedDbIndex(
-                            colSchema.getName(),
-                            tableName,
-                            keys.get(keys.size() - 1).toString(),
-                            entrySet.getValue()
-                    )
-            );
+            result.add(databaseInterface.getDbIndex(colSchema.getName(), tableName, entrySet));
         }
         return result;
     }
@@ -398,7 +396,7 @@ public class IndexManager implements Serializable {
     public static interface DbIndexCreator {
 
         public NamedDbIndex createIndex(
-                @Nonnull IndexStorage.CollectionSchema colSchema,
+                @Nonnull CollectionSchema colSchema,
                 @Nonnull UnnamedDbIndex unnamedDbIndex
         );
     }
@@ -406,7 +404,7 @@ public class IndexManager implements Serializable {
     public static interface DbIndexDropper {
 
         void dropIndex(
-                @Nonnull IndexStorage.CollectionSchema colSchema,
+                @Nonnull CollectionSchema colSchema,
                 @Nonnull NamedDbIndex index);
     }
 
@@ -418,7 +416,7 @@ public class IndexManager implements Serializable {
     public static interface ToroIndexDroppedListener {
 
         public void eventToroIndexRemoved(
-                @Nonnull IndexStorage.CollectionSchema colSchema,
+                @Nonnull CollectionSchema colSchema,
                 @Nonnull String indexName);
     }
 }

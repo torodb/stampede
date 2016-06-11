@@ -20,6 +20,28 @@
 
 package com.torodb.torod.db.backends.tables;
 
+import java.io.Serializable;
+import java.sql.DatabaseMetaData;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Iterator;
+
+import javax.annotation.Nonnull;
+import javax.inject.Provider;
+
+import org.jooq.DataType;
+import org.jooq.Field;
+import org.jooq.Identity;
+import org.jooq.Record;
+import org.jooq.RecordMapper;
+import org.jooq.Schema;
+import org.jooq.Table;
+import org.jooq.TableField;
+import org.jooq.impl.AbstractKeys;
+import org.jooq.impl.DSL;
+import org.jooq.impl.SQLDataType;
+import org.jooq.impl.TableImpl;
+
 import com.google.common.collect.AbstractIterator;
 import com.torodb.torod.core.exceptions.ToroImplementationException;
 import com.torodb.torod.core.subdocument.ScalarType;
@@ -27,23 +49,10 @@ import com.torodb.torod.core.subdocument.SubDocAttribute;
 import com.torodb.torod.core.subdocument.SubDocType;
 import com.torodb.torod.core.subdocument.values.ScalarValue;
 import com.torodb.torod.db.backends.DatabaseInterface;
-import com.torodb.torod.db.backends.converters.jooq.SubdocValueConverter;
-import com.torodb.torod.db.backends.converters.jooq.ValueToJooqConverterProvider;
-import com.torodb.torod.db.backends.meta.IndexStorage;
+import com.torodb.torod.db.backends.meta.CollectionSchema;
 import com.torodb.torod.db.backends.tables.records.SubDocTableRecord;
+
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import java.io.Serializable;
-import java.sql.DatabaseMetaData;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Iterator;
-import javax.annotation.Nonnull;
-import javax.inject.Provider;
-import org.jooq.*;
-import org.jooq.impl.AbstractKeys;
-import org.jooq.impl.DSL;
-import org.jooq.impl.SQLDataType;
-import org.jooq.impl.TableImpl;
 
 /**
  *
@@ -74,7 +83,7 @@ public class SubDocTable extends TableImpl<SubDocTableRecord> {
 
     public SubDocTable(
             String tableName,
-            IndexStorage.CollectionSchema schema,
+            CollectionSchema schema,
             DatabaseMetaData metadata,
             DatabaseInterface databaseInterface,
             Provider<SubDocType.Builder> subDocTypeBuilderProvider
@@ -94,7 +103,7 @@ public class SubDocTable extends TableImpl<SubDocTableRecord> {
         );
     }
 
-    public SubDocTable(IndexStorage.CollectionSchema schema, SubDocType type, int typeId, DatabaseInterface databaseInterface) {
+    public SubDocTable(CollectionSchema schema, SubDocType type, int typeId, DatabaseInterface databaseInterface) {
         this(getSubDocTableName(typeId), schema, null, type, databaseInterface);
     }
 
@@ -116,13 +125,13 @@ public class SubDocTable extends TableImpl<SubDocTableRecord> {
         for (SubDocAttribute attibute : type.getAttributes()) {
             String fieldName = new SubDocHelper(databaseInterface).toColumnName(attibute.getKey());
 
-            SubdocValueConverter converter = ValueToJooqConverterProvider.getConverter(attibute.getType());
+            DataType<?> dataType = databaseInterface.getValueToJooqDataTypeProvider().getDataType(attibute.getType());
+            
             createField(
                     fieldName,
-                    converter.getDataType(),
+                    dataType,
                     this,
-                    "",
-                    converter);
+                    "");
         }
 
         this.databaseInterface = databaseInterface;
@@ -192,15 +201,15 @@ public class SubDocTable extends TableImpl<SubDocTableRecord> {
             SubDocType.Builder builder = subDocTypeBuiderProvider.get();
 
             ResultSet columns
-                    = metadata.getColumns(null, schemaName, tableName, null);
+                    = databaseInterface.getColumns(metadata, schemaName, tableName);
 
             while (columns.next()) {
                 String columnName = columns.getString("COLUMN_NAME");
                 if (SubDocTable.isSpecialColumn(columnName)) {
                     continue;
                 }
-                int intColumnType = columns.getInt("DATA_TYPE");
-                String stringColumnType = columns.getString("TYPE_NAME");
+                int intColumnType = databaseInterface.getIntColumnType(columns);
+                String stringColumnType = databaseInterface.getStringColumnType(columns);
 
                 ScalarType scalarType = databaseInterface.getScalarTypeToSqlType().toScalarType(
                         columnName,

@@ -1,6 +1,7 @@
 
 package com.torodb.torod.db.backends.executor.jobs;
 
+import com.torodb.torod.core.connection.exceptions.RetryTransactionException;
 import com.torodb.torod.core.dbWrapper.DbConnection;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.exceptions.ToroException;
@@ -30,6 +31,9 @@ public abstract class TransactionalJob<R> extends Job<R> {
 
     @Override
     protected final R onFail(Throwable t) throws ToroException, ToroRuntimeException {
+        if (t instanceof RetryTransactionException) {
+            throw (RetryTransactionException) t;
+        }
         if (abortCallback.isAborted()) {
             throw new AbortedSessionTransactionException();
         }

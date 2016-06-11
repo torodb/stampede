@@ -50,7 +50,7 @@ public class TriValuedResult<E> {
     }
 
     public static <E> TriValuedResult<E> createValue(E value) {
-        return new TriValuedResult<E>(value);
+        return new TriValuedResult<>(value);
     }
     
     public boolean isUndecidable() {

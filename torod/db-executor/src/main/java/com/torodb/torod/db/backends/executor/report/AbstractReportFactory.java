@@ -1,6 +1,11 @@
 
 package com.torodb.torod.db.backends.executor.report;
 
+import java.sql.Savepoint;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+
 import com.torodb.torod.core.WriteFailMode;
 import com.torodb.torod.core.connection.InsertResponse;
 import com.torodb.torod.core.cursors.CursorId;
@@ -13,12 +18,38 @@ import com.torodb.torod.core.pojos.IndexedAttributes;
 import com.torodb.torod.core.pojos.NamedToroIndex;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.core.subdocument.SubDocType;
-import com.torodb.torod.db.backends.executor.jobs.*;
-
-import com.torodb.torod.db.executor.jobs.*;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import com.torodb.torod.core.subdocument.ToroDocument;
+import com.torodb.torod.db.backends.executor.jobs.CloseConnectionCallable;
+import com.torodb.torod.db.backends.executor.jobs.CloseCursorCallable;
+import com.torodb.torod.db.backends.executor.jobs.CommitCallable;
+import com.torodb.torod.db.backends.executor.jobs.CountCallable;
+import com.torodb.torod.db.backends.executor.jobs.CreateCollectionCallable;
+import com.torodb.torod.db.backends.executor.jobs.CreateIndexCallable;
+import com.torodb.torod.db.backends.executor.jobs.CreateSubDocTableCallable;
+import com.torodb.torod.db.backends.executor.jobs.DeleteCallable;
+import com.torodb.torod.db.backends.executor.jobs.ReleaseSavepointCallable;
+import com.torodb.torod.db.backends.executor.jobs.DropCollectionCallable;
+import com.torodb.torod.db.backends.executor.jobs.DropIndexCallable;
+import com.torodb.torod.db.backends.executor.jobs.FindCollectionsCallable;
+import com.torodb.torod.db.backends.executor.jobs.GetCollectionSizeCallable;
+import com.torodb.torod.db.backends.executor.jobs.GetCollectionsMetainfoCallable;
+import com.torodb.torod.db.backends.executor.jobs.GetDatabasesCallable;
+import com.torodb.torod.db.backends.executor.jobs.GetDocumentsSize;
+import com.torodb.torod.db.backends.executor.jobs.GetIndexSizeCallable;
+import com.torodb.torod.db.backends.executor.jobs.GetIndexesCallable;
+import com.torodb.torod.db.backends.executor.jobs.InsertCallable;
+import com.torodb.torod.db.backends.executor.jobs.MaxElementsCallable;
+import com.torodb.torod.db.backends.executor.jobs.QueryCallable;
+import com.torodb.torod.db.backends.executor.jobs.ReadAllCallable;
+import com.torodb.torod.db.backends.executor.jobs.ReadAllCursorCallable;
+import com.torodb.torod.db.backends.executor.jobs.ReadCursorCallable;
+import com.torodb.torod.db.backends.executor.jobs.ReserveSubDocIdsCallable;
+import com.torodb.torod.db.backends.executor.jobs.RollbackCallable;
+import com.torodb.torod.db.backends.executor.jobs.RollbackSavepointCallable;
+import com.torodb.torod.db.backends.executor.jobs.SetSavepointCallable;
+import com.torodb.torod.db.executor.jobs.CreatePathViewsCallable;
+import com.torodb.torod.db.executor.jobs.DropPathViewsCallable;
+import com.torodb.torod.db.executor.jobs.SqlSelectCallable;
 
 /**
  *
@@ -92,6 +123,21 @@ public class AbstractReportFactory implements ReportFactory {
     }
 
     @Override
+    public RollbackSavepointCallable.Report createRollbackSavepointReport() {
+        return DUMMY_REPORT;
+    }
+
+    @Override
+    public ReleaseSavepointCallable.Report createReleaseSavepointReport() {
+        return DUMMY_REPORT;
+    }
+
+    @Override
+    public SetSavepointCallable.Report createSetSavepointReport() {
+        return DUMMY_REPORT;
+    }
+
+    @Override
     public DropCollectionCallable.Report createDropCollectionReport() {
         return DUMMY_REPORT;
     }
@@ -118,6 +164,11 @@ public class AbstractReportFactory implements ReportFactory {
 
     @Override
     public CountCallable.Report createCountReport() {
+        return DUMMY_REPORT;
+    }
+
+    @Override
+    public ReadAllCallable.Report createReadAllReport() {
         return DUMMY_REPORT;
     }
 
@@ -175,7 +226,9 @@ public class AbstractReportFactory implements ReportFactory {
             GetCollectionSizeCallable.Report, GetDocumentsSize.Report, 
             GetCollectionsMetainfoCallable.Report, MaxElementsCallable.Report,
             CreatePathViewsCallable.Report, DropPathViewsCallable.Report,
-            SqlSelectCallable.Report {
+            SqlSelectCallable.Report, ReadAllCallable.Report,
+            SetSavepointCallable.Report, RollbackSavepointCallable.Report,
+            ReleaseSavepointCallable.Report {
 
         public static final DummyReport INSTANCE = new DummyReport();
 
@@ -232,6 +285,18 @@ public class AbstractReportFactory implements ReportFactory {
         }
 
         @Override
+        public void setSavepointExecuted(Savepoint savepoint) {
+        }
+
+        @Override
+        public void rollbackSavepointExecuted() {
+        }
+
+        @Override
+        public void releaseSavepointExecuted() {
+        }
+
+        @Override
         public void dropCollectionExecuted(String collection) {
         }
 
@@ -259,6 +324,10 @@ public class AbstractReportFactory implements ReportFactory {
 
         @Override
         public void countExecuted(String collection, QueryCriteria query, int count) {
+        }
+
+        @Override
+        public void readAllExecuted(String collection, QueryCriteria query, List<ToroDocument> docs) {
         }
 
         @Override

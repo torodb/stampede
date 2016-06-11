@@ -20,15 +20,18 @@
 
 package com.torodb.torod.db.backends.converters.json;
 
+import org.threeten.bp.LocalDate;
+
 import com.torodb.torod.core.subdocument.values.ScalarDate;
 import com.torodb.torod.core.subdocument.values.heap.LocalDateScalarDate;
 import com.torodb.torod.db.backends.converters.ValueConverter;
-import org.threeten.bp.LocalDate;
 
 /**
  *
  */
 public class DateValueToJsonConverter implements ValueConverter<String, ScalarDate> {
+
+    private static final long serialVersionUID = 1L;
 
     @Override
     public Class<? extends String> getJsonClass() {
@@ -38,11 +41,6 @@ public class DateValueToJsonConverter implements ValueConverter<String, ScalarDa
     @Override
     public Class<? extends ScalarDate> getValueClass() {
         return ScalarDate.class;
-    }
-
-    @Override
-    public String toJson(ScalarDate value) {
-        return value.getValue().toString();
     }
 
     @Override

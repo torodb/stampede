@@ -21,6 +21,8 @@
 package com.torodb.torod.db.backends;
 
 import org.jooq.Condition;
+import org.jooq.Field;
+import org.jooq.Param;
 import org.jooq.Table;
 
 import javax.annotation.Nonnull;
@@ -39,10 +41,8 @@ public interface ArraySerializer extends Serializable {
 
     @Nonnull Condition typeof(String fieldName, String typeName, Condition condition);
 
-    @Nonnull Condition arrayLength(String fieldName, String value);
+    @Nonnull Condition arrayLength(String fieldName, Param<?> value);
 
-    @Nonnull Table arrayElements(String fieldName);
-
-    String translateValue(Object translatedObject);
+    @Nonnull Table arrayElements(Field<?> iteratorVariable, Field<?> field);
 
 }

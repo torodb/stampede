@@ -41,9 +41,6 @@ public abstract class AbstractDbBackend implements DbBackend {
 
     private static final int JOB_DEPENDENCY_STRIPES = 16;
     private static final int CACHE_SUB_DOC_TYPE_STRIPES = 64;
-    private static final long DEFAULT_CURSOR_TIMEOUT = 10 * 60 * 1000;
-
-    private static final long POOL_CONNECTION_TIMEOUT = 10L * 1000;
 
     private final DbBackendConfiguration configuration;
     private HikariDataSource commonDataSource;
@@ -77,8 +74,6 @@ public abstract class AbstractDbBackend implements DbBackend {
         );
     }
 
-    protected abstract void setGlobalCursorTransactionIsolation(@Nonnull HikariDataSource dataSource);
-
     protected synchronized void initialize() {
         if(dataSourcesInitialized) {
             return;
@@ -88,18 +83,37 @@ public abstract class AbstractDbBackend implements DbBackend {
 
         commonDataSource = createPooledDataSource(
                 configuration, "session",
-                configuration.getConnectionPoolSize() - reservedReadPoolSize - SYSTEM_DATABASE_CONNECTIONS
+                configuration.getConnectionPoolSize() - reservedReadPoolSize - SYSTEM_DATABASE_CONNECTIONS,
+                getCommonTransactionIsolation(),
+                false
         );
-        systemDataSource = createPooledDataSource(configuration, "system", SYSTEM_DATABASE_CONNECTIONS);
-        globalCursorDataSource = createPooledDataSource(configuration, "cursors", reservedReadPoolSize);
-        setGlobalCursorTransactionIsolation(globalCursorDataSource);
-        globalCursorDataSource.setReadOnly(true);
+        systemDataSource = createPooledDataSource(
+                configuration, "system", 
+                SYSTEM_DATABASE_CONNECTIONS,
+                getSystemTransactionIsolation(),
+                false);
+        globalCursorDataSource = createPooledDataSource(
+                configuration, "cursors", 
+                reservedReadPoolSize,
+                getGlobalCursorTransactionIsolation(),
+                true);
 
         dataSourcesInitialized = true;
     }
 
+    @Nonnull
+    protected abstract TransactionIsolationLevel getCommonTransactionIsolation();
+
+    @Nonnull
+    protected abstract TransactionIsolationLevel getSystemTransactionIsolation();
+
+    @Nonnull
+    protected abstract TransactionIsolationLevel getGlobalCursorTransactionIsolation();
+
     private HikariDataSource createPooledDataSource(
-            DbBackendConfiguration configuration, String poolName, int poolSize
+            DbBackendConfiguration configuration, String poolName, int poolSize,
+            TransactionIsolationLevel transactionIsolationLevel,
+            boolean readOnly
     ) {
         HikariConfig hikariConfig = new HikariConfig();
 
@@ -107,9 +121,11 @@ public abstract class AbstractDbBackend implements DbBackend {
         hikariConfig.setDataSource(getConfiguredDataSource(configuration, poolName));
 
         // Apply ToroDB-specific datasource configuration
-        hikariConfig.setConnectionTimeout(POOL_CONNECTION_TIMEOUT);
+        hikariConfig.setConnectionTimeout(configuration.getConnectionPoolTimeout());
         hikariConfig.setPoolName(poolName);
         hikariConfig.setMaximumPoolSize(poolSize);
+        hikariConfig.setTransactionIsolation(transactionIsolationLevel.name());
+        hikariConfig.setReadOnly(readOnly);
         /*
          * TODO: implement to add metric support. See https://github.com/brettwooldridge/HikariCP/wiki/Codahale-Metrics
          * hikariConfig.setMetricRegistry(...);
@@ -159,7 +175,7 @@ public abstract class AbstractDbBackend implements DbBackend {
 
     @Override
     public long getDefaultCursorTimeout() {
-        return DEFAULT_CURSOR_TIMEOUT;
+        return configuration.getCursorTimeout();
     }
 
     @Override

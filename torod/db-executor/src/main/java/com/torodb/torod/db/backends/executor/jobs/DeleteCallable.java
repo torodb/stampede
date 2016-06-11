@@ -24,6 +24,7 @@ import com.google.common.collect.Lists;
 import com.torodb.torod.core.WriteFailMode;
 import com.torodb.torod.core.connection.DeleteResponse;
 import com.torodb.torod.core.connection.WriteError;
+import com.torodb.torod.core.connection.exceptions.RetryTransactionException;
 import com.torodb.torod.core.dbWrapper.DbConnection;
 import com.torodb.torod.core.dbWrapper.exceptions.DbException;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
@@ -89,7 +90,7 @@ public class DeleteCallable extends TransactionalJob<DeleteResponse> {
         }
     }
 
-    private DeleteResponse isolatedDelete() throws ImplementationDbException {
+    private DeleteResponse isolatedDelete() throws ImplementationDbException, RetryTransactionException {
         DbConnection connection = getConnection();
         int deleted = 0;
         List<WriteError> errors = Lists.newLinkedList();
@@ -107,7 +108,7 @@ public class DeleteCallable extends TransactionalJob<DeleteResponse> {
         return createResponse(deleted, errors);
     }
 
-    private DeleteResponse orderedDelete() throws ImplementationDbException, UserDbException {
+    private DeleteResponse orderedDelete() throws ImplementationDbException, UserDbException, RetryTransactionException {
         DbConnection connection = getConnection();
         int deleted = 0;
         List<WriteError> errors = Lists.newLinkedList();
@@ -127,7 +128,7 @@ public class DeleteCallable extends TransactionalJob<DeleteResponse> {
         return createResponse(deleted, errors);
     }
 
-    private DeleteResponse transactionalDelete() throws ImplementationDbException, UserDbException {
+    private DeleteResponse transactionalDelete() throws ImplementationDbException, UserDbException, RetryTransactionException {
         DbConnection connection = getConnection();
         int deleted = 0;
         List<WriteError> errors = Lists.newLinkedList();

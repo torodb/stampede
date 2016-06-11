@@ -20,26 +20,30 @@
 
 package com.torodb.torod.core.connection;
 
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.concurrent.Future;
+
+import javax.annotation.Nonnull;
+
 import com.google.common.annotations.Beta;
 import com.google.common.collect.FluentIterable;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.torodb.kvdocument.values.KVValue;
 import com.torodb.torod.core.ValueRow;
 import com.torodb.torod.core.WriteFailMode;
+import com.torodb.torod.core.connection.exceptions.RetryTransactionException;
 import com.torodb.torod.core.exceptions.ExistentIndexException;
 import com.torodb.torod.core.exceptions.UserToroException;
 import com.torodb.torod.core.language.operations.DeleteOperation;
 import com.torodb.torod.core.language.operations.UpdateOperation;
 import com.torodb.torod.core.language.querycriteria.QueryCriteria;
+import com.torodb.torod.core.language.update.utils.UpdateActionVisitor;
 import com.torodb.torod.core.pojos.Database;
 import com.torodb.torod.core.pojos.IndexedAttributes;
 import com.torodb.torod.core.pojos.NamedToroIndex;
 import com.torodb.torod.core.subdocument.ToroDocument;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.concurrent.Future;
-import javax.annotation.Nonnull;
 
 /**
  *
@@ -85,7 +89,9 @@ public interface ToroTransaction extends AutoCloseable {
     public ListenableFuture<UpdateResponse> update(
             @Nonnull String collection,
             @Nonnull List<? extends UpdateOperation> updates,
-            @Nonnull WriteFailMode mode
+            @Nonnull WriteFailMode mode,
+            @Nonnull UpdateActionVisitor<ToroDocument, Void> updateActionVisitorDocumentToInsert,
+            @Nonnull UpdateActionVisitor<UpdatedToroDocument, ToroDocument> updateActionVisitorDocumentToUpdate
     );
     
     public ListenableFuture<NamedToroIndex> createIndex(
@@ -139,4 +145,8 @@ public interface ToroTransaction extends AutoCloseable {
 
     @Beta
     public ListenableFuture<Iterator<ValueRow<KVValue<?>>>> sqlSelect(String sqlQuery) throws UnsupportedOperationException, UserToroException;
+    
+    public interface UpdatedToroDocument extends ToroDocument {
+        public boolean isUpdated();
+    }
 }

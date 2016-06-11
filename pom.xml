@@ -12,7 +12,7 @@
 
     <groupId>com.torodb</groupId>
     <artifactId>torodb-parent</artifactId>
-    <version>0.40-alpha3</version>
+    <version>0.40</version>
     <packaging>pom</packaging>
     
     <name>ToroDB parent</name>
@@ -79,7 +79,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <torod.version>${project.version}</torod.version>
         <jackson.version>2.6.3</jackson.version>
-        <mongowp.version>0.40-alpha3</mongowp.version>
+        <mongowp.version>0.40</mongowp.version>
     </properties>
 
     <modules>
@@ -188,6 +188,11 @@
                 <artifactId>postgresql</artifactId>
                 <version>9.4.1207.jre7</version>
             </dependency>
+	        <dependency>
+	            <groupId>mysql</groupId>
+	            <artifactId>mysql-connector-java</artifactId>
+                <version>5.1.38</version>
+	        </dependency>
             <dependency>
                 <groupId>org.jooq</groupId>
                 <artifactId>jooq</artifactId>

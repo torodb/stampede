@@ -20,13 +20,15 @@
 
 package com.torodb.torod.db.backends.converters.jooq;
 
+import java.sql.Timestamp;
+
+import org.jooq.DataType;
+import org.jooq.impl.DefaultDataType;
+import org.threeten.bp.DateTimeUtils;
+
 import com.torodb.torod.core.subdocument.ScalarType;
 import com.torodb.torod.core.subdocument.values.ScalarInstant;
 import com.torodb.torod.core.subdocument.values.heap.InstantScalarInstant;
-import java.sql.Timestamp;
-import org.jooq.DataType;
-import org.jooq.impl.SQLDataType;
-import org.threeten.bp.DateTimeUtils;
 
 /**
  *
@@ -34,10 +36,9 @@ import org.threeten.bp.DateTimeUtils;
 public class InstantValueConverter implements SubdocValueConverter<Timestamp, ScalarInstant>{
     private static final long serialVersionUID = 1L;
 
-    @Override
-    public DataType<Timestamp> getDataType() {
-        return SQLDataType.TIMESTAMP;
-    }
+    private static final DataType<Timestamp> TIMESTAMPTZ = new DefaultDataType<>(null, Timestamp.class, "timestamptz");
+    
+    public static final DataTypeForScalar<ScalarInstant> TYPE = DataTypeForScalar.from(TIMESTAMPTZ, new InstantValueConverter());
 
     @Override
     public ScalarType getErasuredType() {

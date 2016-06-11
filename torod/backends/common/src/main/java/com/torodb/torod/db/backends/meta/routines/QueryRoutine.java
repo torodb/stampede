@@ -20,36 +20,33 @@
 
 package com.torodb.torod.db.backends.meta.routines;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Collections;
+import java.util.List;
+
+import javax.annotation.Nonnull;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
+import org.jooq.Configuration;
+
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Table;
 import com.torodb.torod.core.language.projection.Projection;
 import com.torodb.torod.core.subdocument.SplitDocument;
 import com.torodb.torod.db.backends.DatabaseInterface;
+import com.torodb.torod.db.backends.DatabaseInterface.FindDocsSelectStatementRow;
 import com.torodb.torod.db.backends.converters.SplitDocumentConverter;
-import com.torodb.torod.db.backends.meta.IndexStorage;
-import com.torodb.torod.db.backends.tables.SubDocTable;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.jooq.Configuration;
+import com.torodb.torod.db.backends.meta.CollectionSchema;
 
-import javax.annotation.Nonnull;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 @Singleton
 public class QueryRoutine {
-
-    public static final String DOC_ID = "did";
-    public static final String TYPE_ID = "typeid";
-    public static final String INDEX = "index";
-    public static final String _JSON = "_json";
 
     private final SplitDocumentConverter splitDocumentConverter;
 
@@ -64,7 +61,7 @@ public class QueryRoutine {
                 "OBL_UNSATISFIED_OBLIGATION"
             })
     public List<SplitDocument> execute(
-            Configuration configuration, IndexStorage.CollectionSchema colSchema, Integer[] requestedDocs, Projection projection,
+            Configuration configuration, CollectionSchema colSchema, Integer[] requestedDocs, Projection projection,
             @Nonnull DatabaseInterface databaseInterface
     ) {
 
@@ -72,23 +69,14 @@ public class QueryRoutine {
             return Collections.emptyList();
         }
 
-        Connection c = null;
+        Connection c;
 
         c = configuration.connectionProvider().acquire();
-        try (PreparedStatement ps = c.prepareStatement(databaseInterface.findDocsSelectStatement(
-                DOC_ID,
-                TYPE_ID,
-                INDEX,
-                _JSON))) {
+        try (PreparedStatement ps = c.prepareStatement(databaseInterface.findDocsSelectStatement())) {
 
-            ps.setString(1, colSchema.getName());
+            databaseInterface.setFindDocsSelectStatementParameters(colSchema, requestedDocs, projection, c, ps);
 
-            ps.setArray(2, c.createArrayOf("integer", requestedDocs));
-
-            Integer[] requiredTables = requiredTables(colSchema, projection);
-            ps.setArray(3, c.createArrayOf("integer", requiredTables));
-
-            return translateDocuments(colSchema, requestedDocs.length, ps.executeQuery());
+            return translateDocuments(colSchema, requestedDocs.length, ps, databaseInterface);
         } catch (SQLException ex) {
             //TODO: Study exceptions
             throw new RuntimeException(ex);
@@ -97,20 +85,10 @@ public class QueryRoutine {
         }
     }
 
-    private Integer[] requiredTables(IndexStorage.CollectionSchema colSchema, Projection projection) {
-        Collection<SubDocTable> subDocTables = colSchema.getSubDocTables();
-
-        Integer[] result = new Integer[subDocTables.size()];
-        int i = 0;
-        for (SubDocTable subDocTable : subDocTables) {
-            result[i] = subDocTable.getTypeId();
-            i++;
-        }
-        return result;
-    }
-
     @Nonnull
-    private List<SplitDocument> translateDocuments(IndexStorage.CollectionSchema colSchema, int expectedDocs, ResultSet rs) {
+    private List<SplitDocument> translateDocuments(CollectionSchema colSchema, int expectedDocs, PreparedStatement ps,
+            @Nonnull DatabaseInterface databaseInterface
+            ) {
         try {
             List<SplitDocument> result = Lists.newArrayListWithCapacity(expectedDocs);
 
@@ -118,8 +96,12 @@ public class QueryRoutine {
 
             Integer lastDocId = null;
             Integer structureId = null;
+            
+            ResultSet rs = databaseInterface.getFindDocsSelectStatementResultSet(ps);
+            
             while (rs.next()) {
-                int docId = rs.getInt(DOC_ID);
+                FindDocsSelectStatementRow findDocsSelectStatementRow = databaseInterface.getFindDocsSelectStatementRow(rs);
+                int docId = findDocsSelectStatementRow.getDocId();
                 if (lastDocId == null || lastDocId != docId) {
                     if (lastDocId != null) { //if this is not the first iteration
                         SplitDocument doc = processDocument(colSchema, lastDocId, structureId, docInfo);
@@ -130,24 +112,13 @@ public class QueryRoutine {
                     assert docInfo.isEmpty();
                 }
 
-                Object typeId = rs.getObject(TYPE_ID);
-                Object index = rs.getObject(INDEX);
-                String json = rs.getString(_JSON);
+                Integer typeId = findDocsSelectStatementRow.getTypeId();
+                Integer index = findDocsSelectStatementRow.getindex();
+                String json = findDocsSelectStatementRow.getJson();
 
-                if (typeId != null) { //subdocument
-                    assert typeId instanceof Integer;
-                    assert index == null || index instanceof Integer;
-                    assert json != null;
-
-                    if (index == null) {
-                        index = 0;
-                    }
-
+                if (findDocsSelectStatementRow.isSubdocument()) { //subdocument
                     docInfo.put((Integer) typeId, (Integer) index, json);
                 } else { //metainfo
-                    assert index != null;
-                    assert json == null;
-
                     structureId = (Integer) index;
                 }
             }
@@ -164,7 +135,7 @@ public class QueryRoutine {
     }
 
     private SplitDocument processDocument(
-            IndexStorage.CollectionSchema colSchema,
+            CollectionSchema colSchema,
             int lastDocId,
             Integer structureId,
             Table<Integer, Integer, String> docInfo) {

@@ -19,6 +19,15 @@
  */
 package com.torodb.torod.db.backends.executor;
 
+import java.sql.Savepoint;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.common.base.Supplier;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.torodb.torod.core.ValueRow;
@@ -39,18 +48,31 @@ import com.torodb.torod.core.pojos.Database;
 import com.torodb.torod.core.pojos.IndexedAttributes;
 import com.torodb.torod.core.pojos.NamedToroIndex;
 import com.torodb.torod.core.subdocument.SplitDocument;
+import com.torodb.torod.core.subdocument.ToroDocument;
 import com.torodb.torod.core.subdocument.values.ScalarValue;
-import com.torodb.torod.db.backends.executor.jobs.*;
+import com.torodb.torod.db.backends.executor.jobs.CloseConnectionCallable;
+import com.torodb.torod.db.backends.executor.jobs.CommitCallable;
+import com.torodb.torod.db.backends.executor.jobs.CountCallable;
+import com.torodb.torod.db.backends.executor.jobs.CreateIndexCallable;
+import com.torodb.torod.db.backends.executor.jobs.DeleteCallable;
+import com.torodb.torod.db.backends.executor.jobs.ReleaseSavepointCallable;
+import com.torodb.torod.db.backends.executor.jobs.DropIndexCallable;
+import com.torodb.torod.db.backends.executor.jobs.GetCollectionSizeCallable;
+import com.torodb.torod.db.backends.executor.jobs.GetDatabasesCallable;
+import com.torodb.torod.db.backends.executor.jobs.GetDocumentsSize;
+import com.torodb.torod.db.backends.executor.jobs.GetIndexSizeCallable;
+import com.torodb.torod.db.backends.executor.jobs.GetIndexesCallable;
+import com.torodb.torod.db.backends.executor.jobs.InsertCallable;
+import com.torodb.torod.db.backends.executor.jobs.Job;
+import com.torodb.torod.db.backends.executor.jobs.ReadAllCallable;
+import com.torodb.torod.db.backends.executor.jobs.RollbackCallable;
+import com.torodb.torod.db.backends.executor.jobs.RollbackSavepointCallable;
+import com.torodb.torod.db.backends.executor.jobs.SetSavepointCallable;
+import com.torodb.torod.db.backends.executor.jobs.TransactionalJob;
 import com.torodb.torod.db.backends.executor.report.ReportFactory;
 import com.torodb.torod.db.executor.jobs.CreatePathViewsCallable;
 import com.torodb.torod.db.executor.jobs.DropPathViewsCallable;
 import com.torodb.torod.db.executor.jobs.SqlSelectCallable;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -91,6 +113,41 @@ public class DefaultSessionTransaction implements SessionTransaction {
                         dbConnection,
                         aborter, 
                         reportFactory.createRollbackReport()
+                )
+        );
+    }
+
+    @Override
+    public ListenableFuture<Savepoint> setSavepoint() {
+        return submit(
+                new SetSavepointCallable(
+                        dbConnection,
+                        aborter, 
+                        reportFactory.createSetSavepointReport()
+                )
+        );
+    }
+
+    @Override
+    public ListenableFuture<?> rollback(Savepoint savepoint) {
+        return submit(
+                new RollbackSavepointCallable(
+                        dbConnection,
+                        aborter, 
+                        reportFactory.createRollbackSavepointReport(),
+                        savepoint
+                )
+        );
+    }
+
+    @Override
+    public ListenableFuture<?> releaseSavepoint(Savepoint savepoint) {
+        return submit(
+                new ReleaseSavepointCallable(
+                        dbConnection,
+                        aborter, 
+                        reportFactory.createReleaseSavepointReport(),
+                        savepoint
                 )
         );
     }
@@ -223,6 +280,19 @@ public class DefaultSessionTransaction implements SessionTransaction {
                         dbConnection,
                         aborter,
                         reportFactory.createCountReport(), 
+                        collection, 
+                        query
+                )
+        );
+    }
+
+    @Override
+    public ListenableFuture<List<ToroDocument>> readAll(String collection, QueryCriteria query) {
+        return submit(
+                new ReadAllCallable(
+                        dbConnection,
+                        aborter,
+                        reportFactory.createReadAllReport(), 
                         collection, 
                         query
                 )

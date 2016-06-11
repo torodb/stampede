@@ -19,28 +19,36 @@
  */
 package com.torodb.torod.db.backends.meta.routines;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
+
+import javax.annotation.Nonnull;
+
+import org.jooq.Configuration;
+import org.jooq.ConnectionProvider;
+import org.jooq.DSLContext;
+import org.jooq.Record;
+import org.jooq.Schema;
+import org.jooq.Table;
+import org.jooq.impl.DSL;
+
 import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
 import com.google.common.collect.Sets;
+import com.torodb.torod.core.connection.exceptions.RetryTransactionException;
 import com.torodb.torod.core.subdocument.structure.ArrayStructure;
 import com.torodb.torod.core.subdocument.structure.DocStructure;
 import com.torodb.torod.core.subdocument.structure.StructureElement;
 import com.torodb.torod.core.subdocument.structure.StructureElementVisitor;
 import com.torodb.torod.db.backends.DatabaseInterface;
-import com.torodb.torod.db.backends.meta.IndexStorage;
+import com.torodb.torod.db.backends.meta.CollectionSchema;
 import com.torodb.torod.db.backends.tables.SubDocTable;
+
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import java.sql.Array;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
-import javax.annotation.Nonnull;
-import org.jooq.*;
-import org.jooq.impl.DSL;
 
 /**
  *
@@ -48,9 +56,9 @@ import org.jooq.impl.DSL;
 public class DeleteDocuments {
 
     public static int execute(
-            Configuration configuration, IndexStorage.CollectionSchema colSchema, Multimap<DocStructure, Integer> didsByStructure,
+            Configuration configuration, CollectionSchema colSchema, Multimap<DocStructure, Integer> didsByStructure,
             boolean justOne, @Nonnull DatabaseInterface databaseInterface
-    ) {
+    ) throws RetryTransactionException {
         Multimap<DocStructure, Integer> didsByStructureToDelete;
         if (didsByStructure.isEmpty()) {
             return 0;
@@ -77,11 +85,11 @@ public class DeleteDocuments {
     }
 
     public static int execute(
-            Configuration configuration, IndexStorage.CollectionSchema colSchema, Multimap<DocStructure, Integer> didsByStructure,
+            Configuration configuration, CollectionSchema colSchema, Multimap<DocStructure, Integer> didsByStructure,
             @Nonnull DatabaseInterface databaseInterface
-    ) throws SQLException {
+    ) throws SQLException, RetryTransactionException {
         TableProvider tableProvider = new TableProvider(colSchema);
-
+        
         DSLContext dsl = DSL.using(configuration);
 
         Set<SubDocTable> tables = Sets.newHashSet();
@@ -99,7 +107,7 @@ public class DeleteDocuments {
     private static void executeDeleteSubDocuments(
             DSLContext dsl, Set<SubDocTable> tables, Collection<Integer> dids,
             @Nonnull DatabaseInterface databaseInterface
-    ) {
+    ) throws RetryTransactionException {
         
         ConnectionProvider connectionProvider
                 = dsl.configuration().connectionProvider();
@@ -119,9 +127,9 @@ public class DeleteDocuments {
     }
     
     private static int executeDeleteRoots(
-            DSLContext dsl, IndexStorage.CollectionSchema colSchema, Collection<Integer> dids,
+            DSLContext dsl, CollectionSchema colSchema, Collection<Integer> dids,
             @Nonnull DatabaseInterface databaseInterface
-    ) throws SQLException {
+    ) throws SQLException, RetryTransactionException {
         ConnectionProvider connectionProvider
                 = dsl.configuration().connectionProvider();
         Connection connection = connectionProvider.acquire();
@@ -139,48 +147,37 @@ public class DeleteDocuments {
     private static int delete(
             Connection connection, Schema schema, Table table, Collection<Integer> dids,
             @Nonnull DatabaseInterface databaseInterface
-    ) throws SQLException {
-        final int maxInArray = (2 << 15) - 1; // = 2^16 -1 = 65535
-
+    ) throws SQLException, RetryTransactionException {
         try (PreparedStatement ps = connection.prepareStatement(
                     databaseInterface.deleteDidsStatement(
                             schema.getName(), table.getName(), SubDocTable.DID_COLUMN_NAME
                     )
             )) {
 
-            Integer[] didsToDelete = dids.toArray(new Integer[dids.size()]);
-
-            int i = 0;
-            while (i < didsToDelete.length) {
-                int toIndex = Math.min(i + maxInArray, didsToDelete.length);
-                Integer[] subDids
-                        = Arrays.copyOfRange(didsToDelete, i, toIndex);
-
-                Array arr
-                    = connection.createArrayOf("integer", subDids);
-                ps.setArray(1, arr);
-                ps.addBatch();
-
-                i = toIndex;
-            }
+            databaseInterface.setDeleteDidsStatementParameters(ps, dids);
+            
             int[] executeResult = ps.executeBatch();
             int result = 0;
-            for (i = 0; i < executeResult.length; i++) {
+            for (int i = 0; i < executeResult.length; i++) {
                 int iestResult = executeResult[i];
                 if (iestResult >= 0) {
                     result += iestResult;
                 }
             }
             return result;
+        } catch(SQLException sqlException) {
+            databaseInterface.handleRetryException(sqlException);
+            
+            throw sqlException;
         }
     }
 
     private static class TableProvider implements
             StructureElementVisitor<Void, Collection<SubDocTable>> {
 
-        private final IndexStorage.CollectionSchema colSchema;
+        private final CollectionSchema colSchema;
 
-        public TableProvider(IndexStorage.CollectionSchema colSchema) {
+        public TableProvider(CollectionSchema colSchema) {
             this.colSchema = colSchema;
         }
 

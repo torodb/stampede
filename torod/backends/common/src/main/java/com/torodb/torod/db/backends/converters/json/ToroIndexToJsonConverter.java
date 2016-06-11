@@ -1,19 +1,29 @@
 
 package com.torodb.torod.db.backends.converters.json;
 
-import com.google.common.collect.Sets;
-import com.torodb.torod.core.language.AttributeReference;
-import com.torodb.torod.core.pojos.DefaultNamedToroIndex;
-import com.torodb.torod.core.pojos.IndexedAttributes;
-import com.torodb.torod.core.pojos.NamedToroIndex;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
-import javax.json.*;
+
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonArrayBuilder;
+import javax.json.JsonObject;
+import javax.json.JsonObjectBuilder;
+import javax.json.JsonReader;
+import javax.json.JsonWriter;
+
 import org.jooq.Converter;
+
+import com.google.common.collect.Sets;
+import com.torodb.torod.core.language.AttributeReference;
+import com.torodb.torod.core.pojos.DefaultNamedToroIndex;
+import com.torodb.torod.core.pojos.IndexedAttributes;
+import com.torodb.torod.core.pojos.IndexedAttributes.IndexType;
+import com.torodb.torod.core.pojos.NamedToroIndex;
 
 /**
  *
@@ -57,10 +67,10 @@ public class ToroIndexToJsonConverter implements Converter<String, NamedToroInde
             String att = attsArray.getString(i);
             AttributeReference attRef = parseAttRef(att);
             if (descendingAttPos.contains(i)) {
-                builder.addAttribute(attRef, false);
+                builder.addAttribute(attRef, IndexType.desc);
             }
             else {
-                builder.addAttribute(attRef, true);
+                builder.addAttribute(attRef, IndexType.asc);
             }
         }
         
@@ -85,10 +95,10 @@ public class ToroIndexToJsonConverter implements Converter<String, NamedToroInde
         JsonArrayBuilder descBuilder = Json.createArrayBuilder();
         int attPosition = 0;
         boolean hasDescending = false;
-        for (Map.Entry<AttributeReference, Boolean> entry: userObject.getAttributes().entrySet()) {
+        for (Map.Entry<AttributeReference, IndexType> entry: userObject.getAttributes().entrySet()) {
             attsBuilder.add(entry.getKey().toString());
             
-            if (!entry.getValue()) {
+            if (IndexType.desc.equals(entry.getValue())) {
                 descBuilder.add(attPosition);
                 hasDescending = true;
             }

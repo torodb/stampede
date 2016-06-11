@@ -20,33 +20,54 @@
 
 package com.torodb.torod.db.backends.query;
 
-import com.torodb.torod.core.language.querycriteria.OrQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.ModIsQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.IsObjectQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.SizeIsQueryCriteria;
-import com.torodb.torod.core.language.AttributeReference;
-import com.torodb.torod.core.language.querycriteria.InQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.FalseQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.IsGreaterQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.NotQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.ExistsQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.IsGreaterOrEqualQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.ContainsAttributesQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.QueryCriteria;
-import com.torodb.torod.core.language.querycriteria.IsLessQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.AndQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.IsLessOrEqualQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.TrueQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.IsEqualQueryCriteria;
-import com.torodb.torod.core.language.querycriteria.TypeIsQueryCriteria;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import javax.inject.Inject;
+
+import org.jooq.DSLContext;
+import org.jooq.Record1;
+import org.jooq.Result;
+import org.jooq.SelectConditionStep;
+import org.jooq.SelectForUpdateStep;
+import org.jooq.SelectJoinStep;
+import org.jooq.impl.DSL;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.common.base.Preconditions;
-import com.google.common.collect.*;
-import com.torodb.torod.core.language.querycriteria.*;
-import com.torodb.torod.core.language.utils.AttributeReferenceResolver;
+import com.google.common.collect.BiMap;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Sets;
+import com.torodb.torod.core.language.AttributeReference;
+import com.torodb.torod.core.language.querycriteria.AndQueryCriteria;
+import com.torodb.torod.core.language.querycriteria.ContainsAttributesQueryCriteria;
+import com.torodb.torod.core.language.querycriteria.ExistsQueryCriteria;
+import com.torodb.torod.core.language.querycriteria.FalseQueryCriteria;
+import com.torodb.torod.core.language.querycriteria.InQueryCriteria;
+import com.torodb.torod.core.language.querycriteria.IsEqualQueryCriteria;
+import com.torodb.torod.core.language.querycriteria.IsGreaterOrEqualQueryCriteria;
+import com.torodb.torod.core.language.querycriteria.IsGreaterQueryCriteria;
+import com.torodb.torod.core.language.querycriteria.IsLessOrEqualQueryCriteria;
+import com.torodb.torod.core.language.querycriteria.IsLessQueryCriteria;
+import com.torodb.torod.core.language.querycriteria.IsObjectQueryCriteria;
+import com.torodb.torod.core.language.querycriteria.MatchPatternQueryCriteria;
+import com.torodb.torod.core.language.querycriteria.ModIsQueryCriteria;
+import com.torodb.torod.core.language.querycriteria.NotQueryCriteria;
+import com.torodb.torod.core.language.querycriteria.OrQueryCriteria;
+import com.torodb.torod.core.language.querycriteria.QueryCriteria;
+import com.torodb.torod.core.language.querycriteria.SizeIsQueryCriteria;
+import com.torodb.torod.core.language.querycriteria.TrueQueryCriteria;
+import com.torodb.torod.core.language.querycriteria.TypeIsQueryCriteria;
 import com.torodb.torod.core.language.querycriteria.utils.QueryCriteriaVisitor;
+import com.torodb.torod.core.language.utils.AttributeReferenceResolver;
 import com.torodb.torod.core.subdocument.structure.DocStructure;
 import com.torodb.torod.db.backends.DatabaseInterface;
-import com.torodb.torod.db.backends.meta.IndexStorage;
+import com.torodb.torod.db.backends.meta.CollectionSchema;
 import com.torodb.torod.db.backends.query.dblanguage.AndDatabaseQuery;
 import com.torodb.torod.db.backends.query.dblanguage.ByStructureDatabaseQuery;
 import com.torodb.torod.db.backends.query.dblanguage.DatabaseQuery;
@@ -55,19 +76,6 @@ import com.torodb.torod.db.backends.query.dblanguage.FalseDatabaseQuery;
 import com.torodb.torod.db.backends.query.dblanguage.OrDatabaseQuery;
 import com.torodb.torod.db.backends.query.dblanguage.SelectAllDatabaseQuery;
 import com.torodb.torod.db.backends.query.dblanguage.SelectDatabaseQuery;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import javax.inject.Inject;
-
-import org.jooq.DSLContext;
-import org.jooq.Record1;
-import org.jooq.Result;
-import org.jooq.impl.DSL;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -77,12 +85,12 @@ public class QueryEvaluator {
     private static final Logger LOGGER = LoggerFactory.getLogger(
             QueryEvaluator.class
     );
-    private final IndexStorage.CollectionSchema colSchema;
+    private final CollectionSchema colSchema;
     private final QueryCriteriaToSQLTranslator toSQLTranslator;
     private final DatabaseInterface databaseInterface;
 
     @Inject
-    public QueryEvaluator(IndexStorage.CollectionSchema colSchema, DatabaseInterface databaseInterface) {
+    public QueryEvaluator(CollectionSchema colSchema, DatabaseInterface databaseInterface) {
         this.colSchema = colSchema;
         this.toSQLTranslator = new QueryCriteriaToSQLTranslator(colSchema, databaseInterface);
         this.databaseInterface = databaseInterface;
@@ -95,6 +103,31 @@ public class QueryEvaluator {
      * @param criteria
      * @param dsl
      * @param maxResults 0 means no bounds. This param is ignored right now.
+     * @param forUpdate
+     * @return 
+     */
+    //TODO: maxResults is ignored!
+    public Set<Integer> evaluateDidForUpdate(
+            @Nullable QueryCriteria criteria, 
+            DSLContext dsl,
+            int maxResults
+    ) {
+        DidsQueryEvaluatorCollector collector
+                = new DidsQueryEvaluatorCollector();
+
+        evaluate(criteria, dsl, collector, true);
+
+        return collector.getDids();
+    }
+
+    /**
+     * Given a {@linkplain QueryCriteria query} and a {@linkplain DSLContext SQL
+     * context}, returns the document id of the documents that matchs the query.
+     * <p>
+     * @param criteria
+     * @param dsl
+     * @param maxResults 0 means no bounds. This param is ignored right now.
+     * @param forUpdate
      * @return 
      */
     //TODO: maxResults is ignored!
@@ -106,7 +139,7 @@ public class QueryEvaluator {
         DidsQueryEvaluatorCollector collector
                 = new DidsQueryEvaluatorCollector();
 
-        evaluate(criteria, dsl, collector);
+        evaluate(criteria, dsl, collector, false);
 
         return collector.getDids();
     }
@@ -127,7 +160,7 @@ public class QueryEvaluator {
         DidsByStructureQueryEvaluatorCollector collector
                 = new DidsByStructureQueryEvaluatorCollector(colSchema.getStructuresCache());
 
-        evaluate(criteria, dsl, collector);
+        evaluate(criteria, dsl, collector, false);
 
         return collector.getDidsByStructure();
     }
@@ -148,7 +181,7 @@ public class QueryEvaluator {
         DidsBySidQueryEvaluatorCollector collector
                 = new DidsBySidQueryEvaluatorCollector();
 
-        evaluate(criteria, dsl, collector);
+        evaluate(criteria, dsl, collector, false);
 
         return collector.getDidsBySid();
     }
@@ -160,16 +193,18 @@ public class QueryEvaluator {
      * @param criteria
      * @param dsl
      * @param collector
+     * @param forUpdate
      */
-    public void evaluate(
+    private void evaluate(
             @Nullable QueryCriteria criteria, 
             DSLContext dsl, 
-            QueryEvaluatorCollector collector
+            QueryEvaluatorCollector collector,
+            boolean forUpdate
     ) {
         Map<Integer, DatabaseQuery> databaseQueryByStructure
                 = createDatabaseQueryByStructure(criteria, dsl);
 
-        evaluate(databaseQueryByStructure, dsl, collector);
+        evaluate(databaseQueryByStructure, dsl, collector, forUpdate);
         
         LOGGER.debug("Query {} fulfiled by {}", criteria, collector);
     }
@@ -177,12 +212,13 @@ public class QueryEvaluator {
     private void evaluate(
             Map<Integer, DatabaseQuery> databaseQueryByStructure, 
             DSLContext dsl, 
-            QueryEvaluatorCollector collector
+            QueryEvaluatorCollector collector,
+            boolean forUpdate
     ) {
         Evaluator evaluator = new Evaluator(colSchema, dsl);
 
         for (Map.Entry<Integer, DatabaseQuery> entrySet : databaseQueryByStructure.entrySet()) {
-            Set<Integer> dids = entrySet.getValue().accept(evaluator, null);
+            Set<Integer> dids = entrySet.getValue().accept(evaluator, forUpdate);
             collector.addAll(entrySet.getKey(), dids);
         }
     }
@@ -199,9 +235,11 @@ public class QueryEvaluator {
             BiMap<Integer, DocStructure> allStructures
                     = colSchema.getStructuresCache().getAllStructures();
             result = Maps.newHashMapWithExpectedSize(allStructures.size());
-
+            
+            DatabaseQuery databaseQuery = SelectAllDatabaseQuery.getInstance();
+            
             for (Integer sid : colSchema.getStructuresCache().getAllStructures().keySet()) {
-                result.put(sid, SelectAllDatabaseQuery.getInstance());
+                result.put(sid, databaseQuery);
             }
         }
         else {
@@ -222,6 +260,7 @@ public class QueryEvaluator {
 
                     DatabaseQuery databaseQuery
                             = createDatabaseQuery(entry.getValue(), sid, rootStructure, dsl);
+                    
                     if (!(databaseQuery instanceof FalseDatabaseQuery)) {
                         result.put(sid, databaseQuery);
                     }
@@ -395,7 +434,7 @@ public class QueryEvaluator {
             }
 
             if (s2 != null) {
-                assert r1.getDatabaseQuery() == null;
+                assert r2.getDatabaseQuery() == null;
                 dq2
                         = createSelectDatabaseQuery(criteria.getSubQueryCriteria2(), sid, s2, dsl);
             }
@@ -668,21 +707,21 @@ public class QueryEvaluator {
     }
 
     private static class Evaluator implements
-            DatabaseQueryVisitor<Set<Integer>, Void> {
+            DatabaseQueryVisitor<Set<Integer>, Boolean> {
 
-        private final IndexStorage.CollectionSchema colSchema;
+        private final CollectionSchema colSchema;
         private final DSLContext dsl;
 
-        public Evaluator(IndexStorage.CollectionSchema colSchema, DSLContext dsl) {
+        public Evaluator(CollectionSchema colSchema, DSLContext dsl) {
             this.colSchema = colSchema;
             this.dsl = dsl;
         }
 
         @Override
-        public Set<Integer> visit(AndDatabaseQuery databaseQuery, Void argument) {
+        public Set<Integer> visit(AndDatabaseQuery databaseQuery, Boolean forUpdate) {
             Set<Integer> result = null;
             for (DatabaseQuery child : databaseQuery.getChildren()) {
-                Set<Integer> childResult = child.accept(this, argument);
+                Set<Integer> childResult = child.accept(this, forUpdate);
                 if (result == null) {
                     result = childResult;
                 }
@@ -694,24 +733,30 @@ public class QueryEvaluator {
         }
 
         @Override
-        public Set<Integer> visit(OrDatabaseQuery databaseQuery, Void argument) {
+        public Set<Integer> visit(OrDatabaseQuery databaseQuery, Boolean forUpdate) {
             Set<Integer> result = Sets.newHashSet();
             for (DatabaseQuery child : databaseQuery.getChildren()) {
-                Set<Integer> childResult = child.accept(this, argument);
+                Set<Integer> childResult = child.accept(this, forUpdate);
                 result.addAll(childResult);
             }
             return result;
         }
 
         @Override
-        public Set<Integer> visit(ByStructureDatabaseQuery databaseQuery, Void argument) {
-            Result<Record1<Integer>> fetched
-                    = dsl.select(DSL.field("did", Integer.class))
+        public Set<Integer> visit(ByStructureDatabaseQuery databaseQuery, Boolean forUpdate) {
+            SelectConditionStep<Record1<Integer>> select = dsl.select(DSL.field("did", Integer.class))
                     .from(DSL.tableByName(colSchema.getName(), "root"))
                     .where(
                             DSL.field("sid", Integer.class).equal(databaseQuery.getSid())
-                    )
-                    .fetch();
+                    );
+            
+            Result<Record1<Integer>> fetched;
+            
+            if (forUpdate) {
+                fetched = select.forUpdate().fetch();
+            } else {
+                fetched = select.fetch();
+            }
 
             Set<Integer> result
                     = Sets.newHashSetWithExpectedSize(fetched.size());
@@ -722,13 +767,21 @@ public class QueryEvaluator {
         }
 
         @Override
-        public Set<Integer> visit(FalseDatabaseQuery databaseQuery, Void argument) {
+        public Set<Integer> visit(FalseDatabaseQuery databaseQuery, Boolean forUpdate) {
             return Collections.emptySet();
         }
 
         @Override
-        public Set<Integer> visit(SelectDatabaseQuery databaseQuery, Void argument) {
-            Result<Record1<Integer>> fetched = databaseQuery.getQuery().fetch();
+        public Set<Integer> visit(SelectDatabaseQuery databaseQuery, Boolean forUpdate) {
+            SelectForUpdateStep<Record1<Integer>> select = databaseQuery.getQuery();
+            
+            Result<Record1<Integer>> fetched;
+            
+            if (forUpdate) {
+                fetched = select.forUpdate().fetch();
+            } else {
+                fetched = select.fetch();
+            }
 
             Set<Integer> result
                     = Sets.newHashSetWithExpectedSize(fetched.size());
@@ -739,11 +792,18 @@ public class QueryEvaluator {
         }
 
         @Override
-        public Set<Integer> visit(SelectAllDatabaseQuery databaseQuery, Void argument) {
-            Result<Record1<Integer>> fetched
-                    = dsl.select(DSL.field("did", Integer.class))
-                    .from(DSL.tableByName(colSchema.getName(), "root"))
-                    .fetch();
+        public Set<Integer> visit(SelectAllDatabaseQuery databaseQuery, Boolean forUpdate) {
+            SelectJoinStep<Record1<Integer>> select
+                = dsl.select(DSL.field("did", Integer.class))
+                    .from(DSL.tableByName(colSchema.getName(), "root"));
+            
+            Result<Record1<Integer>> fetched;
+            
+            if (forUpdate) {
+                fetched = select.forUpdate().fetch();
+            } else {
+                fetched = select.fetch();
+            }
 
             Set<Integer> result
                     = Sets.newHashSetWithExpectedSize(fetched.size());
@@ -752,6 +812,5 @@ public class QueryEvaluator {
             }
             return result;
         }
-
     }
 }

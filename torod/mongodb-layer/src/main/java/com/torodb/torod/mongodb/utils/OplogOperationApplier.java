@@ -147,7 +147,7 @@ public class OplogOperationApplier {
             //Inserts must be executed as upserts to be idempotent
             BsonDocument query;
             if (!DefaultIdUtils.containsDefaultId(docToInsert)) {
-                query = docToInsert;  //as we dont have $_id, we need the whole document to be sure selector is correct
+                query = docToInsert;  //as we dont have _id, we need the whole document to be sure selector is correct
             } else {
                 query = newDocument(
                         DefaultIdUtils.DEFAULT_ID_KEY,

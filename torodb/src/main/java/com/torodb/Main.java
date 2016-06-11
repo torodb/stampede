@@ -25,6 +25,7 @@ import ch.qos.logback.classic.Logger;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.internal.Console;
 import com.eightkdata.mongowp.server.wp.NettyMongoServer;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.google.common.base.Charsets;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -74,7 +75,6 @@ public class Main {
 			System.exit(0);
 		}
 		
-		
 		final Config config = ConfigUtils.readConfig(cliConfig);
 		
 		if (cliConfig.isPrintConfig()) {
@@ -108,7 +108,7 @@ public class Main {
         if (config.getBackend().isPostgresLike()) {
             Postgres postgres = config.getBackend().asPostgres();
 
-			if (cliConfig.askForPassword()) {
+			if (cliConfig.isAskForPassword()) {
 				console.print("Database user password:");
 				postgres.setPassword(readPwd());
 			}

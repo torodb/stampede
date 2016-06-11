@@ -21,6 +21,6 @@
 package com.torodb.integration;
 
 public enum Protocol {
-	MONGO,
-	MONGO_REPL_SET;
+	Mongo,
+	MongoReplSet;
 }

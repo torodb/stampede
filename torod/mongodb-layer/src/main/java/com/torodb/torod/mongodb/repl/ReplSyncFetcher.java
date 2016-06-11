@@ -231,10 +231,8 @@ class ReplSyncFetcher extends AbstractExecutionThreadService {
         }
         infrequentChecks(reader);
         
-        if (!newBatch.hasNext()) {
-            if (cursor.isDead()) {
-                throw new RestartFetchException();
-            }
+        if (!newBatch.hasNext() && cursor.isDead()) {
+            throw new RestartFetchException();
         }
         //TODO: log stats
     }

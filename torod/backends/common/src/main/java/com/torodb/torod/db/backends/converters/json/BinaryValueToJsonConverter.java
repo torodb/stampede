@@ -34,6 +34,8 @@ import com.torodb.torod.db.backends.converters.ValueConverter;
 public class BinaryValueToJsonConverter implements
         ValueConverter<String, ScalarBinary> {
 
+    private static final long serialVersionUID = 1L;
+
     @Override
     public Class<? extends String> getJsonClass() {
         return String.class;
@@ -42,11 +44,6 @@ public class BinaryValueToJsonConverter implements
     @Override
     public Class<? extends ScalarBinary> getValueClass() {
         return ScalarBinary.class;
-    }
-
-    @Override
-    public String toJson(ScalarBinary value) {
-        return "\\x" + value.toString();
     }
 
     @Override

@@ -20,16 +20,19 @@
 
 package com.torodb.torod.db.backends.converters.json;
 
+import org.threeten.bp.LocalTime;
+
 import com.torodb.torod.core.subdocument.values.ScalarTime;
 import com.torodb.torod.core.subdocument.values.heap.LocalTimeScalarTime;
 import com.torodb.torod.db.backends.converters.ValueConverter;
-import org.threeten.bp.LocalTime;
 
 /**
  *
  */
 public class TimeValueToJsonConverter implements
         ValueConverter<String, ScalarTime> {
+
+    private static final long serialVersionUID = 1L;
 
     @Override
     public Class<? extends String> getJsonClass() {
@@ -39,11 +42,6 @@ public class TimeValueToJsonConverter implements
     @Override
     public Class<? extends ScalarTime> getValueClass() {
         return ScalarTime.class;
-    }
-
-    @Override
-    public String toJson(ScalarTime value) {
-        return value.getValue().toString();
     }
 
     @Override

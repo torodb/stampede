@@ -28,6 +28,7 @@ import com.google.common.collect.Sets;
 import com.torodb.torod.core.WriteFailMode;
 import com.torodb.torod.core.connection.InsertResponse;
 import com.torodb.torod.core.connection.WriteError;
+import com.torodb.torod.core.connection.exceptions.RetryTransactionException;
 import com.torodb.torod.core.dbWrapper.DbConnection;
 import com.torodb.torod.core.dbWrapper.exceptions.DbException;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
@@ -94,7 +95,7 @@ public class InsertCallable extends TransactionalJob<InsertResponse> {
         }
     }
 
-    private void insertSingleDoc(SplitDocument doc) throws ImplementationDbException, UserDbException {
+    private void insertSingleDoc(SplitDocument doc) throws ImplementationDbException, UserDbException, RetryTransactionException {
         DbConnection connection = getConnection();
         connection.insertRootDocuments(collection, Collections.singleton(doc));
         
@@ -105,7 +106,7 @@ public class InsertCallable extends TransactionalJob<InsertResponse> {
         }
     }
 
-    private InsertResponse isolatedInsert() throws ImplementationDbException {
+    private InsertResponse isolatedInsert() throws ImplementationDbException, RetryTransactionException {
         int index = 0;
         List<WriteError> errors = Lists.newLinkedList();
         for (SplitDocument doc : docs) {
@@ -121,7 +122,7 @@ public class InsertCallable extends TransactionalJob<InsertResponse> {
         return createResponse(docs.size(), errors);
     }
 
-    private InsertResponse orderedInsert() throws ImplementationDbException {
+    private InsertResponse orderedInsert() throws ImplementationDbException, RetryTransactionException {
         int index = 0;
         List<WriteError> errors = Lists.newLinkedList();
         try {
@@ -137,7 +138,7 @@ public class InsertCallable extends TransactionalJob<InsertResponse> {
         return createResponse(docs.size(), errors);
     }
 
-    private InsertResponse transactionalInsert() throws ImplementationDbException {
+    private InsertResponse transactionalInsert() throws ImplementationDbException, RetryTransactionException {
         DbConnection connection = getConnection();
         List<WriteError> errors = Lists.newLinkedList();
         

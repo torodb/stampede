@@ -128,7 +128,7 @@ public class CollStatsImplementation extends AbstractToroCommandImplementation<C
             }
         }
         
-        return new NonWriteCommandResult<CollStatsReply>(replyBuilder.build());
+        return new NonWriteCommandResult<>(replyBuilder.build());
     }
 
 }

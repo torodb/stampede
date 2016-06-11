@@ -20,18 +20,20 @@
 
 package com.torodb.torod.db.backends.converters.json;
 
+import javax.json.JsonObject;
+
 import com.torodb.torod.core.subdocument.values.ScalarMongoTimestamp;
 import com.torodb.torod.core.subdocument.values.heap.DefaultScalarMongoTimestamp;
 import com.torodb.torod.db.backends.converters.ValueConverter;
 import com.torodb.torod.db.backends.udt.MongoTimestampUDT;
-import javax.json.Json;
-import javax.json.JsonObject;
 
 /**
  *
  */
 public class MongoTimestampValueToJsonConverter implements
         ValueConverter<JsonObject, ScalarMongoTimestamp> {
+
+    private static final long serialVersionUID = 1L;
 
     private static final String SECS = MongoTimestampUDT.SECS.getName();
     private static final String COUNTER = MongoTimestampUDT.COUNTER.getName();
@@ -44,14 +46,6 @@ public class MongoTimestampValueToJsonConverter implements
     @Override
     public Class<? extends ScalarMongoTimestamp> getValueClass() {
         return ScalarMongoTimestamp.class;
-    }
-
-    @Override
-    public JsonObject toJson(ScalarMongoTimestamp value) {
-        return Json.createObjectBuilder()
-                .add(SECS, value.getSecondsSinceEpoch())
-                .add(COUNTER, value.getOrdinal())
-                .build();
     }
 
     @Override

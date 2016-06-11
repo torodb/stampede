@@ -20,18 +20,20 @@
 
 package com.torodb.integration.mongo.v3m0.jstests;
 
-import com.torodb.integration.IntegrationTestEnvironment;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+import javax.annotation.Nonnull;
+
 import com.google.common.base.Preconditions;
-import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableSetMultimap;
+import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Multimap;
 import com.torodb.integration.Backend;
+import com.torodb.integration.IntegrationTestEnvironment;
 import com.torodb.integration.Protocol;
 import com.torodb.integration.TestCategory;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import javax.annotation.Nonnull;
 
 /**
  *
@@ -57,7 +59,7 @@ public class ScriptClassifier {
         private final Map<IntegrationTestEnvironment, Multimap<TestCategory, Script>> scriptMap;
 
         public Builder() {
-            scriptMap = new HashMap<>(20);
+            scriptMap = new LinkedHashMap<>(20);
         }
 
         public Builder addScripts(
@@ -65,7 +67,8 @@ public class ScriptClassifier {
                 Backend backend,
                 TestCategory testCategory,
                 Collection<? extends Script> scripts) {
-            IntegrationTestEnvironment ite = new IntegrationTestEnvironment(protocol, backend);
+            IntegrationTestEnvironment ite = new IntegrationTestEnvironment(protocol, backend, 
+                    IntegrationTestEnvironment.CURRENT_INTEGRATION_TEST_ENVIRONMENT.getLogLevel());
             
             return addScripts(ite, testCategory, scripts);
         }
@@ -73,7 +76,7 @@ public class ScriptClassifier {
         public Builder addScripts(IntegrationTestEnvironment ite, TestCategory testCategory, Collection<? extends Script> scripts) {
             Multimap<TestCategory, Script> multimap = scriptMap.get(ite);
             if (multimap == null) {
-                multimap = HashMultimap.create(TestCategory.values().length, 200);
+                multimap = LinkedHashMultimap.create(TestCategory.values().length, 200);
                 scriptMap.put(ite, multimap);
             }
 

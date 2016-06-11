@@ -21,14 +21,14 @@
 package com.torodb.torod.db.backends.postgresql;
 
 
-import com.torodb.torod.db.backends.AbstractDbBackend;
-import com.torodb.torod.db.backends.DbBackendConfiguration;
-import com.torodb.torod.backends.drivers.postgresql.PostgreSQLDriverProvider;
-import com.zaxxer.hikari.HikariDataSource;
-
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import javax.sql.DataSource;
+
+import com.torodb.torod.backends.drivers.postgresql.PostgreSQLDriverProvider;
+import com.torodb.torod.db.backends.AbstractDbBackend;
+import com.torodb.torod.db.backends.DbBackendConfiguration;
+import com.torodb.torod.db.backends.TransactionIsolationLevel;
 
 /**
  *
@@ -51,7 +51,20 @@ public class PostgreSQLDbBackend extends AbstractDbBackend {
     }
 
     @Override
-    protected void setGlobalCursorTransactionIsolation(@Nonnull HikariDataSource dataSource) {
-        dataSource.setTransactionIsolation("TRANSACTION_REPEATABLE_READ");
+    @Nonnull
+    protected TransactionIsolationLevel getCommonTransactionIsolation() {
+        return TransactionIsolationLevel.TRANSACTION_REPEATABLE_READ;
+    }
+
+    @Override
+    @Nonnull
+    protected TransactionIsolationLevel getSystemTransactionIsolation() {
+        return TransactionIsolationLevel.TRANSACTION_REPEATABLE_READ;
+    }
+
+    @Override
+    @Nonnull
+    protected TransactionIsolationLevel getGlobalCursorTransactionIsolation() {
+        return TransactionIsolationLevel.TRANSACTION_REPEATABLE_READ;
     }
 }

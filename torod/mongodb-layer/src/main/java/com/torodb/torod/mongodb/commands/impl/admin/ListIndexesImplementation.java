@@ -20,6 +20,14 @@
 
 package com.torodb.torod.mongodb.commands.impl.admin;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.inject.Inject;
+
 import com.eightkdata.mongowp.exceptions.MongoException;
 import com.eightkdata.mongowp.exceptions.UnknownErrorException;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.ListIndexesCommand.ListIndexesArgument;
@@ -40,10 +48,10 @@ import com.torodb.torod.core.connection.TransactionMetainfo;
 import com.torodb.torod.core.dbWrapper.exceptions.ImplementationDbException;
 import com.torodb.torod.core.language.AttributeReference;
 import com.torodb.torod.core.language.AttributeReference.Key;
+import com.torodb.torod.core.pojos.IndexedAttributes.IndexType;
 import com.torodb.torod.core.pojos.NamedToroIndex;
 import com.torodb.torod.mongodb.commands.AbstractToroCommandImplementation;
-import java.util.*;
-import javax.inject.Inject;
+import com.torodb.torod.mongodb.utils.IndexTypeUtils;
 
 /**
  *
@@ -73,8 +81,6 @@ public class ListIndexesImplementation extends AbstractToroCommandImplementation
             throw new UnknownErrorException(ex);
         }
 
-        BsonArrayBuilder firstBatch = new BsonArrayBuilder();
-
         List<IndexOptions> indexOptions = new ArrayList<>(indexes.size());
 
         for (NamedToroIndex index : indexes) {
@@ -91,13 +97,13 @@ public class ListIndexesImplementation extends AbstractToroCommandImplementation
     }
 
     private IndexOptions translate(NamedToroIndex index) {
-        Map<List<String>, Boolean> keysMap = new HashMap<>(index.getAttributes().size());
-        for (java.util.Map.Entry<AttributeReference, Boolean> entry : index.getAttributes().entrySet()) {
+        Map<List<String>, IndexOptions.IndexType> keysMap = new HashMap<>(index.getAttributes().size());
+        for (java.util.Map.Entry<AttributeReference, IndexType> entry : index.getAttributes().entrySet()) {
             ArrayList<String> keyPath = new ArrayList<>(entry.getKey().getKeys().size());
             for (Key key : entry.getKey().getKeys()) {
                 keyPath.add(key.getKeyValue().toString());
             }
-            keysMap.put(keyPath, entry.getValue());
+            keysMap.put(keyPath, IndexTypeUtils.fromIndexType(entry.getValue()));
         }
 
         return new IndexOptions(

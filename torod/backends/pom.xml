@@ -9,7 +9,7 @@
     <parent>
         <groupId>com.torodb.torod</groupId>
         <artifactId>torod-pom</artifactId>
-        <version>0.40-alpha3</version>
+        <version>0.40</version>
     </parent>
 
     <groupId>com.torodb.torod.backends</groupId>
@@ -25,6 +25,8 @@
 
     <modules>
         <module>postgresql</module>
+        <module>greenplum</module>
+        <module>mysql</module>
         <module>common</module>
         <module>drivers</module>
     </modules>

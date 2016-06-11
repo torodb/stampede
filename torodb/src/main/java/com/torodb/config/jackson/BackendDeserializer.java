@@ -23,6 +23,8 @@ package com.torodb.config.jackson;
 import java.io.IOException;
 import java.util.Iterator;
 
+import org.bson.json.JsonParseException;
+
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationContext;
@@ -31,7 +33,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.torodb.config.model.backend.Backend;
 import com.torodb.config.model.backend.BackendImplementation;
 import com.torodb.config.model.backend.greenplum.Greenplum;
+import com.torodb.config.model.backend.mysql.MySQL;
 import com.torodb.config.model.backend.postgres.Postgres;
+import com.torodb.torod.core.exceptions.ToroRuntimeException;
 
 public class BackendDeserializer extends JsonDeserializer<Backend> {
 	@Override
@@ -44,13 +48,20 @@ public class BackendDeserializer extends JsonDeserializer<Backend> {
 		Iterator<String> fieldNamesIterator = node.fieldNames();
 		while (fieldNamesIterator.hasNext()) {
 			String fieldName = fieldNamesIterator.next();
+			
+			if (backendImplementationClass != null) {
+                throw new JsonParseException("Found multiples backend implementations but only one is allowed");
+			}
+			
 			backendImplementationNode = node.get(fieldName);
 			if ("postgres".equals(fieldName)) {
 				backendImplementationClass = Postgres.class;
-				break;
-			} else if ("greenplum".equals(fieldName)) {
-				backendImplementationClass = Greenplum.class;
-				break;
+            } else if ("greenplum".equals(fieldName)) {
+                backendImplementationClass = Greenplum.class;
+            } else if ("mysql".equals(fieldName)) {
+                backendImplementationClass = MySQL.class;
+			} else {
+			    throw new ToroRuntimeException("Backend " + fieldName + " is not valid.");
 			}
 		}
 		

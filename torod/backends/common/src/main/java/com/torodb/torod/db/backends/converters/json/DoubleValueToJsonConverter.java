@@ -29,6 +29,8 @@ import com.torodb.torod.db.backends.converters.ValueConverter;
 public class DoubleValueToJsonConverter implements
         ValueConverter<Object, ScalarDouble> {
 
+    private static final long serialVersionUID = 1L;
+
     @Override
     public Class<? extends Object> getJsonClass() {
         return Double.class;
@@ -37,11 +39,6 @@ public class DoubleValueToJsonConverter implements
     @Override
     public Class<? extends ScalarDouble> getValueClass() {
         return ScalarDouble.class;
-    }
-
-    @Override
-    public Number toJson(ScalarDouble value) {
-        return value.getValue();
     }
 
     @Override

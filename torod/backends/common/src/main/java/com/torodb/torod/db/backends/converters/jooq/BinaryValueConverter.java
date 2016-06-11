@@ -20,13 +20,13 @@
 
 package com.torodb.torod.db.backends.converters.jooq;
 
+import org.jooq.impl.SQLDataType;
+
 import com.google.common.io.ByteSource;
 import com.torodb.kvdocument.values.KVBinary.KVBinarySubtype;
 import com.torodb.torod.core.subdocument.ScalarType;
 import com.torodb.torod.core.subdocument.values.ScalarBinary;
 import com.torodb.torod.core.subdocument.values.heap.ByteSourceScalarBinary;
-import org.jooq.DataType;
-import org.jooq.impl.SQLDataType;
 
 /**
  *
@@ -35,10 +35,7 @@ public class BinaryValueConverter implements
         SubdocValueConverter<byte[], ScalarBinary> {
     private static final long serialVersionUID = 1L;
 
-    @Override
-    public DataType<byte[]> getDataType() {
-        return SQLDataType.BINARY;
-    }
+    public static final DataTypeForScalar<ScalarBinary> TYPE = DataTypeForScalar.from(SQLDataType.BINARY, new BinaryValueConverter());
 
     @Override
     public ScalarType getErasuredType() {

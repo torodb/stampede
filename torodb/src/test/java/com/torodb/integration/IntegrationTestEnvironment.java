@@ -20,8 +20,12 @@
 
 package com.torodb.integration;
 
+import java.lang.reflect.Method;
 import java.util.Locale;
 import java.util.Objects;
+
+import com.torodb.config.model.generic.LogLevel;
+import com.torodb.torod.core.exceptions.ToroRuntimeException;
 
 /**
  * Represents the state where the integration test want to be executed.
@@ -30,13 +34,15 @@ public class IntegrationTestEnvironment {
 
     private final Protocol protocol;
     private final Backend backend;
+    private final LogLevel logLevel;
 
     public static final IntegrationTestEnvironment CURRENT_INTEGRATION_TEST_ENVIRONMENT =
-            new IntegrationTestEnvironment(currentProtocol(), currentBackend());
+            new IntegrationTestEnvironment(currentProtocol(), currentBackend(), currentLogLevel());
 
-    public IntegrationTestEnvironment(Protocol protocol, Backend backend) {
+    public IntegrationTestEnvironment(Protocol protocol, Backend backend, LogLevel logLevel) {
         this.protocol = protocol;
         this.backend = backend;
+        this.logLevel = logLevel;
     }
 
     public Protocol getProtocol() {
@@ -47,27 +53,63 @@ public class IntegrationTestEnvironment {
         return backend;
     }
 
+    public LogLevel getLogLevel() {
+        return logLevel;
+    }
+
 	private static Protocol currentProtocol() {
-		Protocol currentProtocol = Protocol.MONGO;
+		Protocol currentProtocol = Protocol.Mongo;
 
 		String currentProtocolValue = System.getenv(Protocol.class.getSimpleName());
 		if (currentProtocolValue != null) {
-			currentProtocol = Protocol.valueOf(currentProtocolValue.toUpperCase(Locale.ENGLISH));
+			currentProtocol = valueOf(Protocol.class, currentProtocolValue);
 		}
 
 		return currentProtocol;
 	}
 
-	private static Backend currentBackend() {
-		Backend currentBackend = Backend.POSTGRES;
+    private static Backend currentBackend() {
+        Backend currentBackend = Backend.Postgres;
 
-		String currentBackendValue = System.getenv(Backend.class.getSimpleName());
-		if (currentBackendValue != null) {
-			currentBackend = Backend.valueOf(currentBackendValue.toUpperCase(Locale.ENGLISH));
-		}
+        String currentBackendValue = System.getenv(Backend.class.getSimpleName());
+        if (currentBackendValue != null) {
+            currentBackend = valueOf(Backend.class, currentBackendValue);
+        }
 
-		return currentBackend;
-	}
+        return currentBackend;
+    }
+
+    private static LogLevel currentLogLevel() {
+        LogLevel currentLogLevel = LogLevel.INFO;
+
+        String currentLogLevelValue = System.getenv(LogLevel.class.getSimpleName());
+        if (currentLogLevelValue != null) {
+            currentLogLevel = valueOf(LogLevel.class, currentLogLevelValue);
+        }
+
+        return currentLogLevel;
+    }
+
+    private static <E extends Enum<?>> E valueOf(Class<E> enumClass, String value) {
+        value = value.toUpperCase(Locale.ENGLISH);
+        
+        try {
+            Method values = enumClass.getMethod("values");
+            
+            Object[] enumValues = Object[].class.cast(values.invoke(null));
+            
+            for (Object enumObject : enumValues) {
+                E enumValue = enumClass.cast(enumObject);
+                if (enumValue.name().toUpperCase(Locale.ENGLISH).equals(value)) {
+                    return enumValue;
+                }
+            }
+        } catch(Exception exception) {
+            throw new ToroRuntimeException(exception);
+        }
+        
+        throw new IllegalArgumentException("Value " + value + " is not a valid " + enumClass.getSimpleName());
+    }
 
     @Override
     public int hashCode() {

@@ -21,6 +21,7 @@
 package com.torodb.config.visitor;
 
 import com.torodb.config.model.backend.greenplum.Greenplum;
+import com.torodb.config.model.backend.mysql.MySQL;
 import com.torodb.config.model.backend.postgres.Postgres;
 
 public interface BackendImplementationVisitor {
@@ -28,5 +29,7 @@ public interface BackendImplementationVisitor {
     public void visit(Postgres value);
 
     public void visit(Greenplum value);
+
+    public void visit(MySQL value);
 
 }

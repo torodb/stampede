@@ -22,20 +22,20 @@
 package com.torodb.torod.db.backends.query.dblanguage;
 
 import org.jooq.Record1;
-import org.jooq.Select;
+import org.jooq.SelectForUpdateStep;
 
 /**
  *
  */
 public class SelectDatabaseQuery implements DatabaseQuery {
     
-    private final Select<Record1<Integer>> query;
+    private final SelectForUpdateStep<Record1<Integer>> query;
 
-    public SelectDatabaseQuery(Select<Record1<Integer>> query) {
+    public SelectDatabaseQuery(SelectForUpdateStep<Record1<Integer>> query) {
         this.query = query;
     }
 
-    public Select<Record1<Integer>> getQuery() {
+    public SelectForUpdateStep<Record1<Integer>> getQuery() {
         return query;
     }
 

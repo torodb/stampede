@@ -20,20 +20,28 @@
 
 package com.torodb.torod.db.backends.converters;
 
+import java.io.Serializable;
+import java.io.StringReader;
+import java.util.Map;
+
+import javax.annotation.Nullable;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonNumber;
+import javax.json.JsonObject;
+import javax.json.JsonReader;
+import javax.json.JsonString;
+import javax.json.JsonValue;
+
 import com.torodb.torod.core.subdocument.SubDocAttribute;
 import com.torodb.torod.core.subdocument.SubDocType;
 import com.torodb.torod.core.subdocument.SubDocument;
 import com.torodb.torod.core.subdocument.values.ScalarValue;
-import com.torodb.torod.db.backends.converters.json.ValueToJsonConverterProvider;
+import com.torodb.torod.db.backends.DatabaseInterface;
 import com.torodb.torod.db.backends.tables.SubDocHelper;
 import com.torodb.torod.db.backends.tables.SubDocTable;
-import java.io.Serializable;
-import java.io.StringReader;
-import java.util.Map;
-import javax.annotation.Nullable;
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import javax.json.*;
 
 /**
  *
@@ -45,8 +53,11 @@ public class SubDocConverter implements Serializable {
 
     public static final String ID_COLUMN_NAME = "id";
 
+    private final DatabaseInterface databaseInterface;
+
     @Inject
-    public SubDocConverter() {
+    public SubDocConverter(DatabaseInterface databaseInterface) {
+        this.databaseInterface = databaseInterface;
     }
 
     public SubDocument from(String subdocAsJson, SubDocType subDocType) {
@@ -91,7 +102,7 @@ public class SubDocConverter implements Serializable {
         if (attName != null) { //it is an attribute
             SubDocAttribute attribute = subDocType.getAttribute(attName);
             
-            ScalarValue<?> subDocValue = ValueToJsonConverterProvider.getInstance()
+            ScalarValue<?> subDocValue = databaseInterface.getValueToJsonConverterProvider()
                     .getConverter(attribute.getType())
                     .toValue(jsonValue);
             builder.add(attribute, subDocValue);
