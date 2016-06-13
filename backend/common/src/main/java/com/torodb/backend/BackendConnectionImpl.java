@@ -35,6 +35,7 @@ import com.torodb.backend.tables.records.MetaDocPartRecord;
 import com.torodb.backend.tables.records.MetaFieldRecord;
 import com.torodb.core.backend.BackendConnection;
 import com.torodb.core.d2r.DocPartData;
+import com.torodb.core.transaction.BackendException;
 import com.torodb.core.transaction.RollbackException;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
@@ -110,7 +111,7 @@ public class BackendConnectionImpl implements BackendConnection {
     }
 
     @Override
-    public void insert(MetaDatabase db, MetaCollection col, DocPartData data) throws RollbackException {
+    public void insert(MetaDatabase db, MetaCollection col, DocPartData data) throws BackendException, RollbackException {
         databaseInterface.insertDocPartData(dsl, db.getIdentifier(), data);
     }
 

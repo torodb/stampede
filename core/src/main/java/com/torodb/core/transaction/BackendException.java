@@ -15,31 +15,34 @@
  * along with core. If not, see <http://www.gnu.org/licenses/>.
  *
  * Copyright (C) 2016 8Kdata.
- *
+ * 
  */
-package com.torodb.core.d2r;
 
-import java.util.Collection;
-
-import javax.annotation.Nonnull;
-
-import com.torodb.core.transaction.BackendException;
-import com.torodb.core.transaction.RollbackException;
-import com.torodb.kvdocument.values.KVDocument;
+package com.torodb.core.transaction;
 
 /**
+ * This exception is thrown when something wrong happened in the backend and a specific action to
+ * hadle the situation is not defined.
  *
+ * As an example, when a sql connection fail at some point during a query, it will probably work.
  */
-public interface R2DTranslator<Result> {
+public class BackendException extends ToroTransactionException {
 
-    /**
-     * Translates from relational model to the document model the given doc part results.
-     *
-     * @return a collection that contains the translation of all doc part results that have been translated.
-     * @throws BackendException
-     * @throws RollbackException
-     */
-    @Nonnull
-    public Collection<KVDocument> translate(@Nonnull DocPartResults<Result> docPartResults) throws BackendException, RollbackException;
+    private static final long serialVersionUID = -5565671405367606971L;
+
+    public BackendException() {
+    }
+
+    public BackendException(String message) {
+        super(message);
+    }
+
+    public BackendException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public BackendException(Throwable cause) {
+        super(cause);
+    }
 
 }

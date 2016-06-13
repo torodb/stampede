@@ -9,13 +9,10 @@ import com.torodb.core.transaction.RollbackException;
 public interface ErrorHandlerInterface {
     public enum Context {
         unknown,
-        select,
+        fetch,
         insert,
         update,
         delete,
-        batchInsert,
-        batchUpdate,
-        batchDelete,
         commit
     }
     

@@ -76,7 +76,9 @@ import com.torodb.backend.tables.MetaDocPartTable.DocPartTableFields;
 import com.torodb.backend.tables.MetaFieldTable;
 import com.torodb.core.TableRef;
 import com.torodb.core.d2r.DocPartData;
+import com.torodb.core.d2r.DocPartResults;
 import com.torodb.core.d2r.DocPartRow;
+import com.torodb.core.transaction.BackendException;
 import com.torodb.core.transaction.RollbackException;
 import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.MetaCollection;
@@ -502,7 +504,7 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
 
     @Nonnull
     @Override
-    public Collection<DocPartResultSet> getCollectionResultSets(@Nonnull DSLContext dsl, @Nonnull MetaDatabase metaDatabase, @Nonnull MetaCollection metaCollection, @Nonnull Integer[] requestedDocs) {
+    public DocPartResults<ResultSet> getCollectionResultSets(@Nonnull DSLContext dsl, @Nonnull MetaDatabase metaDatabase, @Nonnull MetaCollection metaCollection, @Nonnull Integer[] requestedDocs) {
         throw new ToroImplementationException("Not implemented yet");
     }
 
@@ -733,7 +735,7 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
     }
 
     @Override
-    public void insertDocPartData(DSLContext dsl, String schemaName, DocPartData docPartData) throws RollbackException {
+    public void insertDocPartData(DSLContext dsl, String schemaName, DocPartData docPartData) throws BackendException, RollbackException {
         Preconditions.checkArgument(docPartData.rowCount() != 0, "Called insert with 0 documents");
         
         Connection connection = dsl.configuration().connectionProvider().acquire();
@@ -946,16 +948,21 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
         return valueToJooqDataTypeProvider.getDataType(type);
     }
 
+    private static final String[] ROLLBACK_EXCEPTIONS = new String[] { "40001", "40P01" };
+    {
+        Arrays.sort(ROLLBACK_EXCEPTIONS);
+    }
+    
     @Override
     public void handleRetryException(Context context, SQLException sqlException) throws RollbackException {
-        if (context == Context.batchUpdate && "40001".equals(sqlException.getSQLState())) {
+        if (Arrays.binarySearch(ROLLBACK_EXCEPTIONS, sqlException.getSQLState()) >= 0) {
             throw new RollbackException(sqlException);
         }
     }
 
     @Override
     public void handleRetryException(Context context, DataAccessException dataAccessException) throws RollbackException {
-        if (context == Context.batchUpdate && "40001".equals(dataAccessException.sqlState())) {
+        if (Arrays.binarySearch(ROLLBACK_EXCEPTIONS, dataAccessException.sqlState()) >= 0) {
             throw new RollbackException(dataAccessException);
         }
     }

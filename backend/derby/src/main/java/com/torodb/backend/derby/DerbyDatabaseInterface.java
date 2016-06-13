@@ -67,6 +67,7 @@ import com.torodb.backend.derby.tables.DerbyMetaCollectionTable;
 import com.torodb.backend.derby.tables.DerbyMetaDatabaseTable;
 import com.torodb.backend.derby.tables.DerbyMetaDocPartTable;
 import com.torodb.backend.derby.tables.DerbyMetaFieldTable;
+import com.torodb.backend.interfaces.ErrorHandlerInterface.Context;
 import com.torodb.backend.meta.TorodbSchema;
 import com.torodb.backend.mocks.ToroRuntimeException;
 import com.torodb.backend.sql.index.NamedDbIndex;
@@ -78,6 +79,8 @@ import com.torodb.backend.tables.MetaFieldTable;
 import com.torodb.core.TableRef;
 import com.torodb.core.TableRefFactory;
 import com.torodb.core.d2r.DocPartData;
+import com.torodb.core.d2r.DocPartResult;
+import com.torodb.core.d2r.DocPartResults;
 import com.torodb.core.d2r.DocPartRow;
 import com.torodb.core.transaction.RollbackException;
 import com.torodb.core.transaction.metainf.FieldType;
@@ -524,9 +527,9 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
 
     @Nonnull
     @Override
-    public Collection<DocPartResultSet> getCollectionResultSets(@Nonnull DSLContext dsl, @Nonnull MetaDatabase metaDatabase, @Nonnull MetaCollection metaCollection, 
+    public DocPartResults<ResultSet> getCollectionResultSets(@Nonnull DSLContext dsl, @Nonnull MetaDatabase metaDatabase, @Nonnull MetaCollection metaCollection, 
             @Nonnull Integer[] requestedDocs) throws SQLException {
-        ImmutableList.Builder<DocPartResultSet> collectionResultSetsBuilder = ImmutableList.builder();
+        ImmutableList.Builder<DocPartResult<ResultSet>> docPartResultSetsBuilder = ImmutableList.builder();
         Connection connection = dsl.configuration().connectionProvider().acquire();
         Iterator<? extends MetaDocPart> metaDocPartIterator = metaCollection
                 .streamContainedMetaDocParts()
@@ -575,9 +578,9 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
             }
 
             PreparedStatement preparedStatement = connection.prepareStatement(sb.toString());
-            collectionResultSetsBuilder.add(new DocPartResultSet(metaDocPart, preparedStatement.executeQuery()));
+            docPartResultSetsBuilder.add(new DocPartResult<ResultSet>(metaDocPart, preparedStatement.executeQuery()));
         }
-        return collectionResultSetsBuilder.build();
+        return new DocPartResults<ResultSet>(docPartResultSetsBuilder.build());
     }
     
     @Nonnull
@@ -909,12 +912,23 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
         return valueToJooqDataTypeProvider.getDataType(type);
     }
 
+    private static final String[] ROLLBACK_EXCEPTIONS = new String[] { "40001", "40P01" };
+    {
+        Arrays.sort(ROLLBACK_EXCEPTIONS);
+    }
+    
     @Override
     public void handleRetryException(Context context, SQLException sqlException) throws RollbackException {
+        if (Arrays.binarySearch(ROLLBACK_EXCEPTIONS, sqlException.getSQLState()) >= 0) {
+            throw new RollbackException(sqlException);
+        }
     }
 
     @Override
     public void handleRetryException(Context context, DataAccessException dataAccessException) throws RollbackException {
+        if (Arrays.binarySearch(ROLLBACK_EXCEPTIONS, dataAccessException.sqlState()) >= 0) {
+            throw new RollbackException(dataAccessException);
+        }
     }
 
     @Override

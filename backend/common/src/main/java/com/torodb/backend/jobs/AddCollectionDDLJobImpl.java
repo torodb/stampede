@@ -22,6 +22,7 @@ package com.torodb.backend.jobs;
 
 import com.torodb.core.backend.BackendConnection;
 import com.torodb.core.dsl.backend.AddCollectionDDLJob;
+import com.torodb.core.transaction.BackendException;
 import com.torodb.core.transaction.RollbackException;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
@@ -38,7 +39,7 @@ public class AddCollectionDDLJobImpl implements AddCollectionDDLJob {
     }
     
     @Override
-    public void execute(BackendConnection connection) throws RollbackException {
+    public void execute(BackendConnection connection) throws BackendException, RollbackException {
         connection.addCollection(db, newCol);
     }
 

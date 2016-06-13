@@ -21,6 +21,7 @@
 package com.torodb.core.dsl.backend;
 
 import com.torodb.core.backend.BackendConnection;
+import com.torodb.core.transaction.BackendException;
 import com.torodb.core.transaction.RollbackException;
 
 /**
@@ -28,6 +29,6 @@ import com.torodb.core.transaction.RollbackException;
  */
 public interface BackendConnectionJob {
 
-    public void execute(BackendConnection connection) throws RollbackException;
+    public void execute(BackendConnection connection) throws BackendException, RollbackException;
 
 }

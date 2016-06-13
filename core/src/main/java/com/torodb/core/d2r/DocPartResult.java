@@ -20,20 +20,23 @@
 
 package com.torodb.core.d2r;
 
-import java.util.Iterator;
+import com.torodb.core.transaction.metainf.MetaDocPart;
 
-import com.google.common.collect.ImmutableList;
-
-public class DocPartResults<Result> implements Iterable<DocPartResult<Result>> {
-    private final ImmutableList<DocPartResult<Result>> docPartResults;
-
-    public DocPartResults(ImmutableList<DocPartResult<Result>> docPartResults) {
+public class DocPartResult<Result> {
+    private final MetaDocPart metaDocPart;
+    private final Result result;
+    
+    public DocPartResult(MetaDocPart metaDocPart, Result result) {
         super();
-        this.docPartResults = docPartResults;
+        this.metaDocPart = metaDocPart;
+        this.result = result;
     }
-
-    @Override
-    public Iterator<DocPartResult<Result>> iterator() {
-        return docPartResults.iterator();
+    
+    public MetaDocPart getMetaDocPart() {
+        return metaDocPart;
+    }
+    
+    public Result getResult() {
+        return result;
     }
 }

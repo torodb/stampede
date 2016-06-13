@@ -58,10 +58,10 @@ import com.torodb.backend.DocPartRidGenerator;
 import com.torodb.backend.DocPartRowImpl;
 import com.torodb.backend.InternalField;
 import com.torodb.backend.TableRefComparator;
+import com.torodb.backend.TableRefComparator.DocPartResultSet;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.backend.driver.derby.DerbyDbBackendConfiguration;
 import com.torodb.backend.driver.derby.OfficialDerbyDriver;
-import com.torodb.backend.interfaces.ReadInterface.DocPartResultSet;
 import com.torodb.backend.meta.TorodbSchema;
 import com.torodb.backend.mocks.ToroImplementationException;
 import com.torodb.backend.tables.MetaDocPartTable;
@@ -70,6 +70,8 @@ import com.torodb.core.TableRefFactory;
 import com.torodb.core.d2r.CollectionData;
 import com.torodb.core.d2r.D2RTranslator;
 import com.torodb.core.d2r.DocPartData;
+import com.torodb.core.d2r.DocPartResult;
+import com.torodb.core.d2r.DocPartResults;
 import com.torodb.core.d2r.IdentifierFactory;
 import com.torodb.core.impl.TableRefFactoryImpl;
 import com.torodb.core.transaction.metainf.FieldType;
@@ -623,7 +625,7 @@ public class BackendDerbyTest {
             MetaCollection metaCollection = metaDatabase
                     .getMetaCollectionByName(collectionName);
             
-            Collection<DocPartResultSet> colelctionResultSets = databaseInterface.getCollectionResultSets(
+            DocPartResults<ResultSet> docPartResultSets = databaseInterface.getCollectionResultSets(
                     dsl, metaDatabase, metaCollection, 
                     generatedDids.toArray(new Integer[generatedDids.size()]));
             
@@ -636,10 +638,9 @@ public class BackendDerbyTest {
             Table<TableRef, String, Map<Integer, List<KVValue<?>>>> childDocPartTable = 
                     HashBasedTable.<TableRef, String, Map<Integer, List<KVValue<?>>>>create();
             int previousLevel = -1;
-            Iterator<DocPartResultSet> docPartResultSetIterator = colelctionResultSets.stream()
-                    .sorted(TableRefComparator.DocPartResultSet.DESC).iterator();
+            Iterator<DocPartResult<ResultSet>> docPartResultSetIterator = docPartResultSets.iterator();
             while(docPartResultSetIterator.hasNext()) {
-                DocPartResultSet docPartResultSet = docPartResultSetIterator.next();
+                DocPartResult<ResultSet> docPartResultSet = docPartResultSetIterator.next();
                 MetaDocPart metaDocPart = docPartResultSet.getMetaDocPart();
                 TableRef tableRef = metaDocPart.getTableRef();
                 
@@ -655,7 +656,7 @@ public class BackendDerbyTest {
                 Map<String, Map<Integer, List<KVValue<?>>>> childDocPartRow = 
                         childDocPartTable.row(tableRef);
                 
-                ResultSet resultSet = docPartResultSet.getResultSet();
+                ResultSet resultSet = docPartResultSet.getResult();
                 while (resultSet.next()) {
                     Integer did = null;
                     Integer pid = null;
