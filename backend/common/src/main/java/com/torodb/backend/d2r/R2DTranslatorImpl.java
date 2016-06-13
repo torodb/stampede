@@ -153,10 +153,11 @@ public class R2DTranslatorImpl implements R2DTranslator<ResultSet> {
                         KVBoolean child = (KVBoolean) value;
                         Map<Integer, List<KVValue<?>>> childDocPartCell = childDocPartRow.get(metaField.getName());
                         if (child.getValue()) {
-                            if (childDocPartCell == null) {
+                            List<KVValue<?>> elements;
+                            if (childDocPartCell == null || (elements = childDocPartCell.get(rid)) == null) {
                                 value = new ListKVArray(ImmutableList.of());
                             } else {
-                                value = new ListKVArray(childDocPartCell.get(rid));
+                                value = new ListKVArray(elements);
                             }
                         } else {
                             value = childDocPartCell.get(rid).get(0);

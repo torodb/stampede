@@ -20,8 +20,6 @@
 
 package com.torodb.backend.derby;
 
-import static org.junit.Assert.assertFalse;
-
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
@@ -29,8 +27,8 @@ import java.sql.ResultSet;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -39,7 +37,6 @@ import java.util.stream.StreamSupport;
 
 import javax.sql.DataSource;
 
-import org.jooq.Converter;
 import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.SQLDialect;
@@ -48,32 +45,27 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Table;
 import com.torodb.backend.DocPartDataImpl;
 import com.torodb.backend.DocPartRidGenerator;
 import com.torodb.backend.DocPartRowImpl;
-import com.torodb.backend.InternalField;
 import com.torodb.backend.TableRefComparator;
-import com.torodb.backend.TableRefComparator.DocPartResultSet;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
+import com.torodb.backend.d2r.R2DTranslatorImpl;
 import com.torodb.backend.driver.derby.DerbyDbBackendConfiguration;
 import com.torodb.backend.driver.derby.OfficialDerbyDriver;
 import com.torodb.backend.meta.TorodbSchema;
-import com.torodb.backend.mocks.ToroImplementationException;
-import com.torodb.backend.tables.MetaDocPartTable;
 import com.torodb.core.TableRef;
 import com.torodb.core.TableRefFactory;
 import com.torodb.core.d2r.CollectionData;
 import com.torodb.core.d2r.D2RTranslator;
 import com.torodb.core.d2r.DocPartData;
-import com.torodb.core.d2r.DocPartResult;
 import com.torodb.core.d2r.DocPartResults;
 import com.torodb.core.d2r.IdentifierFactory;
+import com.torodb.core.d2r.R2DTranslator;
 import com.torodb.core.impl.TableRefFactoryImpl;
+import com.torodb.core.transaction.RollbackException;
 import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.ImmutableMetaDocPart;
 import com.torodb.core.transaction.metainf.ImmutableMetaField;
@@ -81,7 +73,6 @@ import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
-import com.torodb.core.transaction.metainf.MetaField;
 import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
 import com.torodb.core.transaction.metainf.WrapperMutableMetaDocPart;
 import com.torodb.core.transaction.metainf.WrapperMutableMetaSnapshot;
@@ -108,6 +99,8 @@ import com.torodb.kvdocument.values.heap.StringKVString;
 public class BackendDerbyTest {
     
     private static final TableRefFactory tableRefFactory = new TableRefFactoryImpl();
+    private static final MockRidGenerator ridGenerator = new MockRidGenerator();
+    private static final IdentifierFactory identifierFactory = new IdentifierFactoryImpl();
     
     private DerbyDatabaseInterface databaseInterface;
     private String databaseName;
@@ -290,30 +283,18 @@ public class BackendDerbyTest {
         }
     }
     
-    protected KVDocument parseFromJson(String jsonFileName) throws Exception {
-        return parser.createFromResource("docs/" + jsonFileName);
-    }
-    
-    protected CollectionData readDataFromDocument(Connection connection, String database, String collection, KVDocument document, MutableMetaSnapshot mutableSnapshot) throws Exception {
-        MockRidGenerator ridGenerator = new MockRidGenerator();
-        IdentifierFactory identifierFactory = new IdentifierFactoryImpl();
-        D2RTranslator translator = new D2RTranslatorStack(tableRefFactory, identifierFactory, ridGenerator, mutableSnapshot, database, collection);
-        translator.translate(document);
-        return translator.getCollectionDataAccumulator();
-    }
-    
     @Test
     public void testTorodbMeta() throws Exception {
         try (Connection connection = dataSource.getConnection()) {
             DerbyTorodbMeta tododbMeta = new DerbyTorodbMeta(DSL.using(connection, SQLDialect.DERBY), tableRefFactory, databaseInterface);
             connection.commit();
-            assertFalse(tododbMeta.getCurrentMetaSnapshot().streamMetaDatabases().iterator().hasNext());
+            Assert.assertFalse(tododbMeta.getCurrentMetaSnapshot().streamMetaDatabases().iterator().hasNext());
         }
         
         try (Connection connection = dataSource.getConnection()) {
         	DerbyTorodbMeta tododbMeta = new DerbyTorodbMeta(DSL.using(connection, SQLDialect.DERBY), tableRefFactory, databaseInterface);
             connection.commit();
-            assertFalse(tododbMeta.getCurrentMetaSnapshot().streamMetaDatabases().iterator().hasNext());
+            Assert.assertFalse(tododbMeta.getCurrentMetaSnapshot().streamMetaDatabases().iterator().hasNext());
         }
     }
     
@@ -586,39 +567,16 @@ public class BackendDerbyTest {
     }
     
     @Test
-    public void testTorodbReadDocPart() throws Exception {
+    public void testTorodbReadCollectionResultSets() throws Exception {
         KVDocument document = parseFromJson("testTorodbReadDocPart.json");
         MutableMetaSnapshot mutableSnapshot = new WrapperMutableMetaSnapshot(new ImmutableMetaSnapshot.Builder().build());
         mutableSnapshot.addMetaDatabase(databaseName, databaseSchemaName).addMetaCollection(collectionName, collectionIdentifierName);
         try (Connection connection = dataSource.getConnection()) {
             DSLContext dsl = DSL.using(connection, SQLDialect.DERBY);
-            CollectionData collectionData = readDataFromDocument(connection, databaseName, collectionName, document, mutableSnapshot);
             dsl.execute(databaseInterface.createSchemaStatement(databaseSchemaName));
-            mutableSnapshot.streamMetaDatabases().forEachOrdered(metaDatabase -> {
-                metaDatabase.streamMetaCollections().forEachOrdered(metaCollection -> {
-                    metaCollection.streamContainedMetaDocParts().sorted(TableRefComparator.MetaDocPart.ASC).forEachOrdered(metaDocPartObject -> {
-                        MetaDocPart metaDocPart = (MetaDocPart) metaDocPartObject;
-                        List<Field<?>> fields = new ArrayList<>(databaseInterface.getDocPartTableInternalFields(metaDocPart));
-                        metaDocPart.streamFields().forEachOrdered(metaField -> {
-                            fields.add(DSL.field(metaField.getIdentifier(), databaseInterface.getDataType(metaField.getType())));
-                        });
-                        dsl.execute(databaseInterface.createDocPartTableStatement(dsl.configuration(), databaseSchemaName, metaDocPart.getIdentifier(), fields));
-                    });
-                });
-            });
+            CollectionData collectionData = writeDocumentMeta(mutableSnapshot, dsl, document);
             
-            Iterator<DocPartData> docPartDataIterator = StreamSupport.stream(collectionData.spliterator(), false)
-                    .iterator();
-            List<Integer> generatedDids = new ArrayList<>();
-            while (docPartDataIterator.hasNext()) {
-                DocPartData docPartData = docPartDataIterator.next();
-                if (docPartData.getMetaDocPart().getTableRef().isRoot()) {
-                    docPartData.forEach(docPartRow -> {
-                        generatedDids.add(docPartRow.getDid());
-                    });
-                }
-                databaseInterface.insertDocPartData(dsl, databaseSchemaName, docPartData);
-            }
+            List<Integer> generatedDids = writeDocument(dsl, collectionData);
             
             MetaDatabase metaDatabase = mutableSnapshot
                     .getMetaDatabaseByName(databaseName);
@@ -629,181 +587,209 @@ public class BackendDerbyTest {
                     dsl, metaDatabase, metaCollection, 
                     generatedDids.toArray(new Integer[generatedDids.size()]));
             
-            Converter<Object, Integer> didConverter = (Converter<Object, Integer>) 
-                    databaseInterface.getMetaDocPartTable().DID.getConverter();
+            R2DTranslator<ResultSet> r2dTranslator = new R2DTranslatorImpl(databaseInterface, mutableSnapshot, databaseName, collectionName);
+            Collection<KVDocument> readedDocuments = r2dTranslator.translate(docPartResultSets);
             
-            Map<Integer, KVDocument> readedDocuments = Maps.newHashMap();
-            Table<TableRef, String, Map<Integer, List<KVValue<?>>>> currentDocPartTable = 
-                    HashBasedTable.<TableRef, String, Map<Integer, List<KVValue<?>>>>create();
-            Table<TableRef, String, Map<Integer, List<KVValue<?>>>> childDocPartTable = 
-                    HashBasedTable.<TableRef, String, Map<Integer, List<KVValue<?>>>>create();
-            int previousLevel = -1;
-            Iterator<DocPartResult<ResultSet>> docPartResultSetIterator = docPartResultSets.iterator();
-            while(docPartResultSetIterator.hasNext()) {
-                DocPartResult<ResultSet> docPartResultSet = docPartResultSetIterator.next();
-                MetaDocPart metaDocPart = docPartResultSet.getMetaDocPart();
-                TableRef tableRef = metaDocPart.getTableRef();
-                
-                if (previousLevel == -1 || previousLevel != tableRef.getDepth()) {
-                    Table<TableRef, String, Map<Integer, List<KVValue<?>>>> 
-                        previousChildDocPartTable = childDocPartTable;
-                    childDocPartTable = currentDocPartTable;
-                    currentDocPartTable = previousChildDocPartTable;
-                    currentDocPartTable.clear();
-                }
-                previousLevel = tableRef.getDepth();
-                
-                Map<String, Map<Integer, List<KVValue<?>>>> childDocPartRow = 
-                        childDocPartTable.row(tableRef);
-                
-                ResultSet resultSet = docPartResultSet.getResult();
-                while (resultSet.next()) {
-                    Integer did = null;
-                    Integer pid = null;
-                    Integer rid = null;
-                    Integer seq = null;
-                    Collection<InternalField<?>> internalFields = databaseInterface.getDocPartTableInternalFields(
-                            metaDocPart);
-                    int columnIndex = 1;
-                    for (InternalField<?> internalField : internalFields) {
-                        if (internalField.isDid()) {
-                            did = didConverter.from(resultSet.getObject(columnIndex));
-                        } else if (internalField.isRid()) {
-                            rid = didConverter.from(resultSet.getObject(columnIndex));
-                        } else if (internalField.isPid()) {
-                            pid = didConverter.from(resultSet.getObject(columnIndex));
-                        } else if (internalField.isSeq()) {
-                            seq = didConverter.from(resultSet.getObject(columnIndex));
-                        }
-                        columnIndex++;
-                    }
-                    if (did == null) {
-                        throw new ToroImplementationException("did was not found for doc part " + tableRef 
-                                + " in collection " + collectionName + " and database " + databaseName);
-                    }
-                    
-                    if (rid == null) {
-                        rid = did;
-                    }
-                    
-                    if (pid == null) {
-                        pid = did;
-                    }
-                    
-                    KVDocument.Builder documentBuilder = new KVDocument.Builder();
-                    //TODO: ensure MetaField order using ResultSet meta data
-                    Iterator<? extends MetaField> metaFieldIterator = metaDocPart
-                            .streamFields().iterator();
-                    boolean wasScalar = false;
-                    while (metaFieldIterator.hasNext()) {
-                        MetaField metaField = metaFieldIterator.next();
-                        Object databaseValue = resultSet.getObject(columnIndex);
-                        columnIndex++;
-                        
-                        if (databaseValue == null) {
-                            continue;
-                        }
-                        
-                        DataTypeForKV<?> dataType = databaseInterface.getDataType(metaField.getType());
-                        Converter<Object, KVValue<?>> converter = (Converter<Object, KVValue<?>>) dataType.getConverter();
-                        KVValue<?> value = converter.from(databaseValue);
-                        
-                        if (metaField.getType() == FieldType.CHILD) {
-                            KVBoolean child = (KVBoolean) value;
-                            Map<Integer, List<KVValue<?>>> childDocPartCell = childDocPartRow.get(metaField.getName());
-                            if (child.getValue()) {
-                                if (childDocPartCell == null) {
-                                    value = new ListKVArray(ImmutableList.of());
-                                } else {
-                                    value = new ListKVArray(childDocPartCell.get(rid));
-                                }
-                            } else {
-                                value = childDocPartCell.get(rid).get(0);
-                            }
-                        }
-                        
-                        if(metaField.getIdentifier().indexOf(MetaDocPartTable.DocPartTableFields.SCALAR.fieldName) == 0
-                                && metaField.getIdentifier().length() == MetaDocPartTable.DocPartTableFields.SCALAR.fieldName.length() + 2) {
-                            assert !tableRef.isRoot() : "found scalar value in root doc part";
-                            Map<Integer, List<KVValue<?>>> currentDocPartCell = getDocPartCell(
-                                    currentDocPartTable, tableRef, seq);
-                            if (seq == null) {
-                                currentDocPartCell.put(pid, ImmutableList.of(value));
-                            } else {
-                                List<KVValue<?>> elements = getCellElements(currentDocPartCell, pid);
-                                setElementValue(elements, seq, value);
-                            }
-                            wasScalar = true;
-                            break;
-                        } else {
-                            documentBuilder.putValue(metaField.getName(), value);
-                        }
-                    }
-                    
-                    if (wasScalar) {
-                        continue;
-                    }
-                    
-                    if (tableRef.isRoot()) {
-                        readedDocuments.put(did, documentBuilder.build());
-                    } else {
-                        Map<Integer, List<KVValue<?>>> currentDocPartCell = getDocPartCell(
-                                currentDocPartTable, tableRef, seq);
-                        if (seq == null) {
-                            currentDocPartCell.put(pid, ImmutableList.of(documentBuilder.build()));
-                        } else {
-                            List<KVValue<?>> elements = getCellElements(currentDocPartCell, pid);
-                            setElementValue(elements, seq, documentBuilder.build());
-                        }
-                    }
-                }
-            }
-            
-            KVDocument readedDocument = readedDocuments.values().iterator().next();
+            KVDocument readedDocument = readedDocuments.iterator().next();
             System.out.println(document);
             System.out.println(readedDocument);
             Assert.assertEquals(document, readedDocument);
         }
     }
-
-    private Map<Integer, List<KVValue<?>>> getDocPartCell(
-            Table<TableRef, String, Map<Integer, List<KVValue<?>>>> docPartTable, TableRef tableRef, Integer seq) {
-        String name = tableRef.getName();
-        
-        if (seq != null && tableRef.isInArray()) {
-            name = MetaDocPartTable.DocPartTableFields.SCALAR.fieldName;
-        }
-        
-        return getDocPartCell(docPartTable, tableRef, name);
-    }
-
-    private Map<Integer, List<KVValue<?>>> getDocPartCell(
-            Table<TableRef, String, Map<Integer, List<KVValue<?>>>> docPartTable, TableRef tableRef, String name) {
-        Map<Integer, List<KVValue<?>>> docPartCell = 
-                docPartTable.get(tableRef.getParent().get(), name);
-        if (docPartCell == null) {
-            docPartCell = new HashMap<>();
-            docPartTable.put(tableRef.getParent().get(), name, docPartCell);
-        }
-        return docPartCell;
-    }
-
-    private List<KVValue<?>> getCellElements(Map<Integer, List<KVValue<?>>> docPartCell, Integer pid) {
-        List<KVValue<?>> elements = docPartCell.get(pid);
-        if (elements == null) {
-            elements = new ArrayList<>();
-            docPartCell.put(pid, elements);
-        }
-        return elements;
-    }
-
-    private void setElementValue(List<KVValue<?>> elements, Integer seq, KVValue<?> value) {
-        if (seq >= elements.size()) {
-            for (int i=elements.size(); i<=seq; i++) {
-                elements.add(null);
+    
+    @Test
+    public void testTorodbReadCollectionResultSetsWithStructures() throws Exception {
+        try (Connection connection = dataSource.getConnection()) {
+            DSLContext dsl = DSL.using(connection, SQLDialect.DERBY);
+            MutableMetaSnapshot mutableSnapshot = new WrapperMutableMetaSnapshot(new ImmutableMetaSnapshot.Builder().build());
+            mutableSnapshot.addMetaDatabase(databaseName, databaseSchemaName).addMetaCollection(collectionName, collectionIdentifierName);
+            dsl.execute(databaseInterface.createSchemaStatement(databaseSchemaName));
+            
+            List<KVDocument> documents = new ArrayList<>();
+            for (int current_size = 0; current_size < 5; current_size++) {
+                int[] array_scalars_values = new int[] { 0 };
+                if (current_size > 0) {
+                    array_scalars_values = new int[] { 0, 1, 2 };
+                }
+                for (int array_scalars : array_scalars_values) {
+                    for (int object_size=0; object_size < 4; object_size++) {
+                        int[] object_index_values=new int[] { 0 };
+                        if (object_size > 0 && current_size > 0) {
+                            object_index_values=new int[0];
+                            for (int i=1; i<current_size; i++) {
+                                object_index_values=Arrays.copyOf(object_index_values, object_index_values.length + 1);
+                                object_index_values[object_index_values.length - 1]=i;
+                            }
+                        }
+                        for (int object_index : object_index_values) {
+                            KVDocument.Builder documentBuilder = new KVDocument.Builder();
+                            int current_index = 0;
+                            if (object_index == current_index) {
+                               if (object_size == 0)
+                                   documentBuilder = documentBuilder;
+                               else if (object_size == 1)
+                                   documentBuilder.putValue("k", new KVDocument.Builder().build());
+                               else if (object_size == 2)
+                                   documentBuilder.putValue("k", new KVDocument.Builder()
+                                           .putValue("k", KVInteger.of(1))
+                                           .build());
+                               else
+                                   continue;
+                            }
+                            if (current_size > 0) {
+                                current_index = current_index + 1;
+                                List<KVValue<?>> array_value = new ArrayList<>();
+                                if (object_index == current_index) {
+                                    if (object_size == 0)
+                                        array_value = array_value;
+                                    else if (object_size == 1) 
+                                       array_value.add(new KVDocument.Builder().build());
+                                    else if (object_size == 2)
+                                       array_value.add(new KVDocument.Builder()
+                                               .putValue("k", KVInteger.of(1))
+                                               .build());
+                                    else
+                                       continue;
+                                }
+                                if (array_scalars > 0) {
+                                    if (array_scalars == 1)
+                                       array_value.add(new ListKVArray(Arrays.asList(new KVValue<?>[] { KVInteger.of(1) })));
+                                   else
+                                       array_value.add(new ListKVArray(Arrays.asList(new KVValue<?>[] { KVInteger.of(1), KVInteger.of(2) })));
+                                }
+                                if (current_size > 1) {
+                                    int[] size_values=new int[0];
+                                    for (int i=current_size; i>=2; i--) {
+                                        size_values=Arrays.copyOf(size_values, size_values.length + 1);
+                                        size_values[size_values.length - 1]=i;
+                                    }
+                                    for (int size : size_values) {
+                                        current_index = current_index + 1;
+                                        array_value = new ArrayList<>(Arrays.asList(new KVValue<?>[] { new ListKVArray(array_value) }));
+                                        if (object_index == current_index) {
+                                            if (object_size == 0)
+                                                array_value = array_value;
+                                            else if (object_size == 1)
+                                                array_value.add(new ListKVArray(Arrays.asList(new KVValue<?>[] { new KVDocument.Builder().build() })));
+                                            else if (object_size == 2)
+                                                array_value.add(new ListKVArray(Arrays.asList(new KVValue<?>[] { new KVDocument.Builder()
+                                                    .putValue("k", KVInteger.of(1))
+                                                    .build() })));
+                                            else
+                                                array_value = new ArrayList<>(Arrays.asList(new KVValue<?>[] { new KVDocument.Builder()
+                                                    .putValue("k", new ListKVArray(array_value))
+                                                    .build() }));
+                                        }
+                                        if (array_scalars > 0) {
+                                            if (array_scalars == 1)
+                                               array_value.add(new ListKVArray(Arrays.asList(new KVValue<?>[] { KVInteger.of(1) })));
+                                           else
+                                               array_value.add(new ListKVArray(Arrays.asList(new KVValue<?>[] { KVInteger.of(1), KVInteger.of(2) })));
+                                        }
+                                    }
+                                }
+                                documentBuilder.putValue("k", new ListKVArray(array_value));;
+                            }
+                            documents.add(documentBuilder.build());
+                        }
+                    }
+                }
+            }
+            
+            writeDocumentsMeta(mutableSnapshot, dsl, documents);
+            
+            for (KVDocument document : documents) {
+                CollectionData collectionData = readDataFromDocument(databaseName, collectionName, document, mutableSnapshot);
+                
+                List<Integer> generatedDids = writeDocument(dsl, collectionData);
+                
+                MetaDatabase metaDatabase = mutableSnapshot
+                        .getMetaDatabaseByName(databaseName);
+                MetaCollection metaCollection = metaDatabase
+                        .getMetaCollectionByName(collectionName);
+                
+                DocPartResults<ResultSet> docPartResultSets = databaseInterface.getCollectionResultSets(
+                        dsl, metaDatabase, metaCollection, 
+                        generatedDids.toArray(new Integer[generatedDids.size()]));
+                
+                R2DTranslator<ResultSet> r2dTranslator = new R2DTranslatorImpl(databaseInterface, mutableSnapshot, databaseName, collectionName);
+                Collection<KVDocument> readedDocuments = r2dTranslator.translate(docPartResultSets);
+                
+                KVDocument readedDocument = readedDocuments.iterator().next();
+                System.out.println(document);
+                System.out.println(readedDocument);
+                Assert.assertEquals(document, readedDocument);
             }
         }
-        elements.set(seq, value);
+    }
+
+    private List<Integer> writeDocument(DSLContext dsl, CollectionData collectionData) throws RollbackException {
+        Iterator<DocPartData> docPartDataIterator = StreamSupport.stream(collectionData.spliterator(), false)
+                .iterator();
+        List<Integer> generatedDids = new ArrayList<>();
+        while (docPartDataIterator.hasNext()) {
+            DocPartData docPartData = docPartDataIterator.next();
+            if (docPartData.getMetaDocPart().getTableRef().isRoot()) {
+                docPartData.forEach(docPartRow -> {
+                    generatedDids.add(docPartRow.getDid());
+                });
+            }
+            databaseInterface.insertDocPartData(dsl, databaseSchemaName, docPartData);
+        }
+        return generatedDids;
+    }
+
+    private CollectionData writeDocumentMeta(MutableMetaSnapshot mutableSnapshot, DSLContext dsl, KVDocument document)
+            throws Exception {
+        CollectionData collectionData = readDataFromDocument(databaseName, collectionName, document, mutableSnapshot);
+        mutableSnapshot.streamMetaDatabases().forEachOrdered(metaDatabase -> {
+            metaDatabase.streamMetaCollections().forEachOrdered(metaCollection -> {
+                metaCollection.streamContainedMetaDocParts().sorted(TableRefComparator.MetaDocPart.ASC).forEachOrdered(metaDocPartObject -> {
+                    MetaDocPart metaDocPart = (MetaDocPart) metaDocPartObject;
+                    List<Field<?>> fields = new ArrayList<>(databaseInterface.getDocPartTableInternalFields(metaDocPart));
+                    metaDocPart.streamFields().forEachOrdered(metaField -> {
+                        fields.add(DSL.field(metaField.getIdentifier(), databaseInterface.getDataType(metaField.getType())));
+                    });
+                    dsl.execute(databaseInterface.createDocPartTableStatement(dsl.configuration(), databaseSchemaName, metaDocPart.getIdentifier(), fields));
+                });
+            });
+        });
+        return collectionData;
+    }
+
+    private CollectionData writeDocumentsMeta(MutableMetaSnapshot mutableSnapshot, DSLContext dsl, List<KVDocument> documents)
+            throws Exception {
+        CollectionData collectionData = readDataFromDocuments(databaseName, collectionName, documents, mutableSnapshot);
+        mutableSnapshot.streamMetaDatabases().forEachOrdered(metaDatabase -> {
+            metaDatabase.streamMetaCollections().forEachOrdered(metaCollection -> {
+                metaCollection.streamContainedMetaDocParts().sorted(TableRefComparator.MetaDocPart.ASC).forEachOrdered(metaDocPartObject -> {
+                    MetaDocPart metaDocPart = (MetaDocPart) metaDocPartObject;
+                    List<Field<?>> fields = new ArrayList<>(databaseInterface.getDocPartTableInternalFields(metaDocPart));
+                    metaDocPart.streamFields().forEachOrdered(metaField -> {
+                        fields.add(DSL.field(metaField.getIdentifier(), databaseInterface.getDataType(metaField.getType())));
+                    });
+                    dsl.execute(databaseInterface.createDocPartTableStatement(dsl.configuration(), databaseSchemaName, metaDocPart.getIdentifier(), fields));
+                });
+            });
+        });
+        return collectionData;
     }
     
+    protected KVDocument parseFromJson(String jsonFileName) throws Exception {
+        return parser.createFromResource("docs/" + jsonFileName);
+    }
+    
+    protected CollectionData readDataFromDocument(String database, String collection, KVDocument document, MutableMetaSnapshot mutableSnapshot) throws Exception {
+        D2RTranslator translator = new D2RTranslatorStack(tableRefFactory, identifierFactory, ridGenerator, mutableSnapshot, database, collection);
+        translator.translate(document);
+        return translator.getCollectionDataAccumulator();
+    }
+    
+    protected CollectionData readDataFromDocuments(String database, String collection, List<KVDocument> documents, MutableMetaSnapshot mutableSnapshot) throws Exception {
+        D2RTranslator translator = new D2RTranslatorStack(tableRefFactory, identifierFactory, ridGenerator, mutableSnapshot, database, collection);
+        for (KVDocument document : documents) {
+            translator.translate(document);
+        }
+        return translator.getCollectionDataAccumulator();
+    }
 }
