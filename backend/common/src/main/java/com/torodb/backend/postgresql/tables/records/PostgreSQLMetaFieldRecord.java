@@ -23,6 +23,7 @@ import com.torodb.backend.converters.TableRefConverter;
 import com.torodb.backend.postgresql.tables.PostgreSQLMetaFieldTable;
 import com.torodb.backend.tables.records.MetaFieldRecord;
 import com.torodb.core.TableRef;
+import com.torodb.core.TableRefFactory;
 import com.torodb.core.transaction.metainf.FieldType;
 
 public class PostgreSQLMetaFieldRecord extends MetaFieldRecord<String[]> {
@@ -39,7 +40,7 @@ public class PostgreSQLMetaFieldRecord extends MetaFieldRecord<String[]> {
 	/**
 	 * Create a detached, initialised MetaFieldRecord
 	 */
-	public PostgreSQLMetaFieldRecord(String database, String collection, String[] tableRef, String name, String identifier, FieldType type) {
+	public PostgreSQLMetaFieldRecord(TableRefConverter tableRefConverter, String database, String collection, String[] tableRef, String name, String identifier, FieldType type) {
 		super(PostgreSQLMetaFieldTable.FIELD);
 		
 		values(database, collection, tableRef, name, identifier, type);
@@ -62,7 +63,7 @@ public class PostgreSQLMetaFieldRecord extends MetaFieldRecord<String[]> {
     }
 
     @Override
-    public TableRef getTableRefValue() {
-        return TableRefConverter.fromStringArray(getTableRef());
+    public TableRef getTableRefValue(TableRefFactory tableRefFactory) {
+        return TableRefConverter.fromStringArray(tableRefFactory, getTableRef());
     }
 }

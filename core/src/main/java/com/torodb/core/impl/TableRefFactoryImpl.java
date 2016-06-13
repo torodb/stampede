@@ -18,18 +18,24 @@
  *     
  */
 
+package com.torodb.core.impl;
 
-package com.torodb.backend.mocks;
+import com.torodb.core.TableRef;
+import com.torodb.core.TableRefFactory;
 
-import java.io.Serializable;
+public class TableRefFactoryImpl implements TableRefFactory {
+    @Override
+    public TableRef createRoot() {
+        return TableRefImpl.createRoot();
+    }
 
-import com.torodb.kvdocument.types.KVType;
+    @Override
+    public TableRef createChild(TableRef parent, String name) {
+        return TableRefImpl.createChild(parent, name);
+    }
 
-/**
- *
- */
-public interface KVTypeToSqlType extends Serializable {
-
-    KVType toKVType(String columnName, int jdbcIntType, String jdbcStringType) throws ToroImplementationException;
-
- }
+    @Override
+    public TableRef createChild(TableRef parent, int arrayDepth) {
+        return TableRefImpl.createChild(parent, arrayDepth);
+    }
+}

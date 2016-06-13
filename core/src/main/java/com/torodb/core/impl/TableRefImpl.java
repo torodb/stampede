@@ -9,27 +9,44 @@ import com.torodb.core.TableRef;
 public class TableRefImpl extends TableRef {
     private final static TableRef ROOT = new TableRefImpl();
     
-    private final Optional<TableRef> parent;
-    private final String name;
-    
-    public static TableRef createRoot() {
+    protected static TableRef createRoot() {
         return ROOT;
     }
-    
-    public static TableRef createChild(TableRef tableRef, String name) {
-        return new TableRefImpl(tableRef, name);
+
+    protected static TableRef createChild(TableRef parent, String name) {
+        return new TableRefImpl(parent, name, false);
+    }
+
+    protected static TableRef createChild(TableRef parent, int arrayDepth) {
+        String name = "$" + arrayDepth;
+        name = name.intern();
+        return new TableRefImpl(parent, name, true);
     }
     
-    private TableRefImpl() {
+    private final Optional<TableRef> parent;
+    private final String name;
+    private final int dimension;
+    private final boolean isInArray;
+    
+    protected TableRefImpl() {
         super();
         this.parent = Optional.empty();
         this.name = "";
+        this.dimension = 0;
+        this.isInArray = false;
     }
     
-    private TableRefImpl(@Nonnull TableRef parent, @Nonnull String name) {
+    protected TableRefImpl(@Nonnull TableRef parent, @Nonnull String name, boolean isInArray) {
         super();
         this.parent = Optional.of(parent);
         this.name = name;
+        this.dimension = parent.getDepth() + 1;
+        this.isInArray = isInArray;
+    }
+    
+    @Override
+    public boolean isInArray() {
+        return isInArray;
     }
     
     @Override
@@ -40,6 +57,11 @@ public class TableRefImpl extends TableRef {
     @Override
     public String getName() {
         return name;
+    }
+
+    @Override
+    public int getDepth() {
+        return dimension;
     }
 
     @Override

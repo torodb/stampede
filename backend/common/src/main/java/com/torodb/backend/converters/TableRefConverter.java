@@ -30,9 +30,12 @@ import javax.json.JsonString;
 import javax.json.JsonValue;
 
 import com.torodb.core.TableRef;
-import com.torodb.core.impl.TableRefImpl;
+import com.torodb.core.TableRefFactory;
 
 public class TableRefConverter {
+    private TableRefConverter() {
+    }
+
     public static String[] toStringArray(TableRef tableRef) {
         List<String> tableRefArray = new ArrayList<>();
         
@@ -44,11 +47,18 @@ public class TableRefConverter {
         return tableRefArray.toArray(new String[tableRefArray.size()]);
     }
     
-    public static TableRef fromStringArray(String[] tableRefArray) {
-        TableRef tableRef = TableRefImpl.createRoot();
+    public static TableRef fromStringArray(TableRefFactory tableRefFactory, String[] tableRefArray) {
+        TableRef tableRef = tableRefFactory.createRoot();
         
         for (String tableRefName : tableRefArray) {
-            tableRef = TableRefImpl.createChild(tableRef, tableRefName.intern());
+            if (isArrayDimension(tableRefName)) {
+                int dimension = Integer.valueOf(tableRefName.substring(1));
+                tableRef = tableRefFactory.createChild(tableRef, 
+                        dimension);
+            } else {
+                tableRef = tableRefFactory.createChild(tableRef, 
+                        tableRefName.intern());
+            }
         }
         
         return tableRef;
@@ -64,14 +74,33 @@ public class TableRefConverter {
         return tableRefJsonArrayBuilder.build();
     }
     
-    public static TableRef fromJsonArray(JsonArray tableRefJsonArray) {
-        TableRef tableRef = TableRefImpl.createRoot();
+    public static TableRef fromJsonArray(TableRefFactory tableRefFactory, JsonArray tableRefJsonArray) {
+        TableRef tableRef = tableRefFactory.createRoot();
         
-        for (JsonValue tableRefName : tableRefJsonArray) {
-            tableRef = TableRefImpl.createChild(tableRef, 
-                    ((JsonString) tableRefName).getString().intern());
+        for (JsonValue tableRefNameValue : tableRefJsonArray) {
+            String tableRefName = ((JsonString) tableRefNameValue).getString();
+            if (isArrayDimension(tableRefName)) {
+                int dimension = Integer.valueOf(tableRefName.substring(1));
+                tableRef = tableRefFactory.createChild(tableRef, 
+                        dimension);
+            } else {
+                tableRef = tableRefFactory.createChild(tableRef, 
+                        tableRefName.intern());
+            }
         }
         
         return tableRef;
+    }
+    
+    private static boolean isArrayDimension(String name) {
+        if (name.charAt(0) == '$') {
+            for (int index = 1; index < name.length(); index++) {
+                char charAt = name.charAt(index);
+                if (charAt >= '0' && charAt <= '9') {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }

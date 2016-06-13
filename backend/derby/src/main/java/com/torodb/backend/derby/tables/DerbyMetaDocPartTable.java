@@ -24,12 +24,12 @@ import javax.json.JsonArray;
 import org.jooq.Field;
 import org.jooq.Table;
 import org.jooq.TableField;
+import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 
 import com.torodb.backend.derby.converters.jooq.JsonArrayConverter;
 import com.torodb.backend.derby.tables.records.DerbyMetaDocPartRecord;
 import com.torodb.backend.tables.MetaDocPartTable;
-import com.torodb.backend.tables.MetaDocPartTable.DocPartTableFields;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -110,22 +110,22 @@ public class DerbyMetaDocPartTable extends MetaDocPartTable<JsonArray, DerbyMeta
     }
 
     @Override
-    protected Field<?> createDidField() {
-        return field(DocPartTableFields.DID.fieldName, SQLDataType.INTEGER.nullable(false));
+    protected Field<Integer> createDidField() {
+        return DSL.field(DocPartTableFields.DID.fieldName, SQLDataType.INTEGER.nullable(false));
     }
 
     @Override
-    protected Field<?> createRidField() {
-        return field(DocPartTableFields.RID.fieldName, SQLDataType.INTEGER.nullable(false));
+    protected Field<Integer> createRidField() {
+        return DSL.field(DocPartTableFields.RID.fieldName, SQLDataType.INTEGER.nullable(false));
     }
 
     @Override
-    protected Field<?> createPidField() {
-        return field(DocPartTableFields.PID.fieldName, SQLDataType.INTEGER.nullable(false));
+    protected Field<Integer> createPidField() {
+        return DSL.field(DocPartTableFields.PID.fieldName, SQLDataType.INTEGER.nullable(false));
     }
 
     @Override
-    protected Field<?> createSeqField() {
-        return field(DocPartTableFields.SEQ.fieldName, SQLDataType.INTEGER.nullable(false));
+    protected Field<Integer> createSeqField() {
+        return DSL.field(DocPartTableFields.SEQ.fieldName, SQLDataType.INTEGER.nullable(false));
     }
 }

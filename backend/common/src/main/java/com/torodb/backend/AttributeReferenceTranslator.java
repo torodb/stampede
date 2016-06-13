@@ -8,13 +8,20 @@ import java.util.Locale;
 import com.torodb.backend.AttributeReference.Key;
 import com.torodb.backend.AttributeReference.ObjectKey;
 import com.torodb.core.TableRef;
-import com.torodb.core.impl.TableRefImpl;
+import com.torodb.core.TableRefFactory;
 import com.torodb.core.transaction.metainf.FieldType;
 
 public class AttributeReferenceTranslator {
+    
+    private final TableRefFactory tableRefFactory;
+    
+	public AttributeReferenceTranslator(TableRefFactory tableRefFactory) {
+        super();
+        this.tableRefFactory = tableRefFactory;
+    }
 
-	public TableRef toTableRef(AttributeReference attributeReference) {
-		return transform(attributeReference, new TableRefTransformer());
+    public TableRef toTableRef(AttributeReference attributeReference) {
+		return transform(attributeReference, new TableRefTransformer(tableRefFactory));
 	}
 
 	public String toTableIdentifier(AttributeReference attributeReference, String collection) {
@@ -76,16 +83,24 @@ public class AttributeReferenceTranslator {
 	}
 
 	private static class TableRefTransformer implements Transformer<TableRef> {
-		private TableRef tableRef = TableRefImpl.createRoot();
+
+	    private final TableRefFactory tableRefFactory;
+        private TableRef tableRef;
+	    
+		public TableRefTransformer(TableRefFactory tableRefFactory) {
+            super();
+            this.tableRefFactory = tableRefFactory;
+            this.tableRef = tableRefFactory.createRoot();
+        }
 
 		@Override
 		public void append(String key) {
-			tableRef = TableRefImpl.createChild(tableRef, key);
+			tableRef = tableRefFactory.createChild(tableRef, key);
 		}
 
 		@Override
 		public void append(int level) {
-			tableRef = TableRefImpl.createChild(tableRef, "$" + level);
+			tableRef = tableRefFactory.createChild(tableRef, level);
 		}
 
 		@Override

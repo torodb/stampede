@@ -1,5 +1,8 @@
 package com.torodb.backend.d2r.model;
 
+import com.torodb.core.TableRef;
+import com.torodb.core.TableRefFactory;
+
 //TODO: Add constraint annotations and asserts
 public class PathStack {
 
@@ -9,8 +12,8 @@ public class PathStack {
 		Field, Object, Array, Idx
 	};
 
-	public PathStack() {
-		this.top = new PathField("", null);
+	public PathStack(TableRefFactory tableRefFactory) {
+		this.top = new PathField(tableRefFactory, "", null);
 	}
 
 	public PathInfo peek() {
@@ -58,26 +61,28 @@ public class PathStack {
 
 	public abstract class PathInfo {
 
+	    private final TableRefFactory tableRefFactory;
 		protected PathInfo parent;
-		protected TableRefImpl tableRef;
+		protected TableRef tableRef;
 
-		private PathInfo(PathInfo parent) {
+		private PathInfo(TableRefFactory tableRefFactory, PathInfo parent) {
+		    this.tableRefFactory = tableRefFactory;
 			this.parent = parent;
 		}
 
 		PathObject appendObject(DocPartRowImpl rowInfo) {
-			return new PathObject(this, rowInfo);
+			return new PathObject(tableRefFactory, this, rowInfo);
 		}
 
 		PathField appendField(String name) {
-			return new PathField(name, this);
+			return new PathField(tableRefFactory, name, this);
 		}
 
 		PathArray appendArray() {
-			return new PathArray(1, this);
+			return new PathArray(tableRefFactory, 1, this);
 		}
 
-		public TableRefImpl getTableRef(){
+		public TableRef getTableRef(){
 			return tableRef;
 		}
 		
@@ -119,14 +124,14 @@ public class PathStack {
 		private String fieldName;
 		private String path;
 
-		private PathField(String fieldName, PathInfo parent) {
-			super(parent);
+		private PathField(TableRefFactory tableRefFactory, String fieldName, PathInfo parent) {
+			super(tableRefFactory, parent);
 			this.fieldName = fieldName;
 			this.path = calcPath();
 			if (parent==null){
-				this.tableRef = TableRefImpl.createRoot();
+				this.tableRef = tableRefFactory.createRoot();
 			}else{
-				this.tableRef = parent.getTableRef().createChild(fieldName);
+				this.tableRef = tableRefFactory.createChild(parent.getTableRef(), fieldName);
 			}
 		}
 
@@ -176,8 +181,8 @@ public class PathStack {
 
 		private DocPartRowImpl rowInfo;
 
-		private PathObject(PathInfo parent, DocPartRowImpl rowInfo) {
-			super(parent);
+		private PathObject(TableRefFactory tableRefFactory, PathInfo parent, DocPartRowImpl rowInfo) {
+			super(tableRefFactory, parent);
 			this.rowInfo = rowInfo;
 			this.tableRef = parent.getTableRef();
 		}
@@ -204,26 +209,28 @@ public class PathStack {
 
 	public class PathArray extends PathInfo {
 
+	    private final TableRefFactory tableRefFactory;
 		private int level;
 		private String path;
 
-		private PathArray(int level, PathInfo parent) {
-			super(parent);
+		private PathArray(TableRefFactory tableRefFactory, int level, PathInfo parent) {
+			super(tableRefFactory, parent);
+			this.tableRefFactory = tableRefFactory;
 			this.level = level;
 			this.path = calcPath();
 			if (level==1){
 				this.tableRef = parent.getTableRef();
 			}else{
-				this.tableRef = parent.tableRef.createChild("$" + level);
+				this.tableRef = tableRefFactory.createChild(parent.tableRef, level);
 			}
 		}
 
 		PathArrayIdx appendIdx(int idx) {
-			return new PathArrayIdx(idx, this);
+			return new PathArrayIdx(tableRefFactory, idx, this);
 		}
 
 		PathArrayIdx appendIdx(int idx, DocPartRowImpl rowInfo) {
-			return new PathArrayIdx(idx, this, rowInfo);
+			return new PathArrayIdx(tableRefFactory, idx, this, rowInfo);
 		}
 
 		@Override
@@ -263,23 +270,26 @@ public class PathStack {
 	// TODO maybe create to types: with and without rowinfo
 	public class PathArrayIdx extends PathInfo {
 
+	    private final TableRefFactory tableRefFactory;
+	    
 		private int idx;
 		private DocPartRowImpl rowInfo;
 
-		private PathArrayIdx(int idx, PathInfo parent) {
-			this(idx, parent, null);
+		private PathArrayIdx(TableRefFactory tableRefFactory, int idx, PathInfo parent) {
+			this(tableRefFactory, idx, parent, null);
 		}
 
-		private PathArrayIdx(int idx, PathInfo parent, DocPartRowImpl rowInfo) {
-			super(parent);
+		private PathArrayIdx(TableRefFactory tableRefFactory, int idx, PathInfo parent, DocPartRowImpl rowInfo) {
+			super(tableRefFactory, parent);
 			assert parent.getNodeType() == PathNodeType.Array;
+			this.tableRefFactory = tableRefFactory;
 			this.idx = idx;
 			this.rowInfo = rowInfo;
 			this.tableRef = parent.tableRef;
 		}
 
 		PathArray appendArray() {
-			return new PathArray(((PathArray) parent).level + 1, this);
+			return new PathArray(tableRefFactory, ((PathArray) parent).level + 1, this);
 		}
 
 		@Override

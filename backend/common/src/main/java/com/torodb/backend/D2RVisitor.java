@@ -24,6 +24,7 @@ import com.google.common.collect.ImmutableList;
 import com.torodb.backend.AttributeReference.ArrayKey;
 import com.torodb.backend.AttributeReference.ObjectKey;
 import com.torodb.core.TableRef;
+import com.torodb.core.TableRefFactory;
 import com.torodb.core.impl.TableRefImpl;
 import com.torodb.kvdocument.values.KVArray;
 import com.torodb.kvdocument.values.KVDocument;
@@ -32,16 +33,18 @@ import com.torodb.kvdocument.values.KVValue;
 
 public class D2RVisitor<Row> {
     
+    private final TableRefFactory tableRefFactory;
     private final Callback<Row> callback;
     private final AttributeReferenceTranslator attrRefTranslator;
     
-    public D2RVisitor(AttributeReferenceTranslator attrRefTranslator, Callback<Row> callback) {
+    public D2RVisitor(TableRefFactory tableRefFactory, AttributeReferenceTranslator attrRefTranslator, Callback<Row> callback) {
+        this.tableRefFactory = tableRefFactory;
         this.callback = callback;
 		this.attrRefTranslator = attrRefTranslator;
     }
     
     public void visit(KVDocument document) {
-        visit(document, new Argument<>());
+        visit(document, new Argument<>(tableRefFactory));
     }
     
     private void visit(KVDocument document, Argument<Row> arg) {
@@ -93,10 +96,10 @@ public class D2RVisitor<Row> {
         public final TableRef tableRef;
         public final Row parentRow;
         
-        public Argument() {
+        public Argument(TableRefFactory tableRefFactory) {
             super();
             this.attributeReference = new AttributeReference(ImmutableList.of());
-            this.tableRef = TableRefImpl.createRoot();
+            this.tableRef = tableRefFactory.createRoot();
             this.parentRow = null;
         }
         

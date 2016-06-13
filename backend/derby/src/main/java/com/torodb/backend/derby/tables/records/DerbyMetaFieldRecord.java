@@ -25,6 +25,7 @@ import com.torodb.backend.converters.TableRefConverter;
 import com.torodb.backend.derby.tables.DerbyMetaFieldTable;
 import com.torodb.backend.tables.records.MetaFieldRecord;
 import com.torodb.core.TableRef;
+import com.torodb.core.TableRefFactory;
 import com.torodb.core.transaction.metainf.FieldType;
 
 public class DerbyMetaFieldRecord extends MetaFieldRecord<JsonArray> {
@@ -64,7 +65,7 @@ public class DerbyMetaFieldRecord extends MetaFieldRecord<JsonArray> {
     }
 
     @Override
-    public TableRef getTableRefValue() {
-        return TableRefConverter.fromJsonArray(getTableRef());
+    public TableRef getTableRefValue(TableRefFactory tableRefFactory) {
+        return TableRefConverter.fromJsonArray(tableRefFactory, getTableRef());
     }
 }

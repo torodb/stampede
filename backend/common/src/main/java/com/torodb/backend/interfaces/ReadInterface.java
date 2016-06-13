@@ -1,26 +1,37 @@
 package com.torodb.backend.interfaces;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Collection;
+import java.util.Comparator;
 
 import javax.annotation.Nonnull;
 
+import org.jooq.DSLContext;
+
+import com.torodb.core.transaction.metainf.MetaCollection;
+import com.torodb.core.transaction.metainf.MetaDatabase;
+import com.torodb.core.transaction.metainf.MetaDocPart;
+
 public interface ReadInterface {
-    @Nonnull String findDocsSelectStatement();
-    void setFindDocsSelectStatementParameters(@Nonnull String schema, @Nonnull Integer[] requestedDocs,
-            @Nonnull String[] paths, @Nonnull Connection connection, @Nonnull PreparedStatement ps) throws SQLException;
-    @Nonnull ResultSet getFindDocsSelectStatementResultSet(PreparedStatement ps) throws SQLException;
-    @Nonnull FindDocsSelectStatementRow getFindDocsSelectStatementRow(ResultSet rs) throws SQLException;
+    @Nonnull Collection<DocPartResultSet> getCollectionResultSets(@Nonnull DSLContext dsl, @Nonnull MetaDatabase metaDatabase, @Nonnull MetaCollection metaCollection, 
+            @Nonnull Integer[] requestedDocs) throws SQLException;
     
-    public interface FindDocsSelectStatementRow {
-        public int getDocId();
-        public Integer getRowId();
-        public Integer getParentRowId();
-        public Integer getSequence();
-        public String getJson();
-        public boolean isRoot();
-        public boolean isObject();
+    public static class DocPartResultSet {
+        private final MetaDocPart metaDocPart;
+        private final ResultSet resultSet;
+        
+        public DocPartResultSet(MetaDocPart metaDocPart, ResultSet resultSet) {
+            super();
+            this.metaDocPart = metaDocPart;
+            this.resultSet = resultSet;
+        }
+        
+        public MetaDocPart getMetaDocPart() {
+            return metaDocPart;
+        }
+        public ResultSet getResultSet() {
+            return resultSet;
+        }
     }
 }

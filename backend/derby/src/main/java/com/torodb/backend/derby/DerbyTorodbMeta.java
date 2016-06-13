@@ -39,7 +39,7 @@ import com.torodb.backend.exceptions.InvalidDatabaseException;
 import com.torodb.backend.exceptions.InvalidDatabaseSchemaException;
 import com.torodb.backend.meta.TorodbMeta;
 import com.torodb.backend.meta.TorodbSchema;
-import com.torodb.backend.tables.DocPartHelper;
+import com.torodb.backend.tables.IdentifierHelper;
 import com.torodb.backend.tables.MetaCollectionTable;
 import com.torodb.backend.tables.MetaDatabaseTable;
 import com.torodb.backend.tables.MetaDocPartTable;
@@ -49,6 +49,7 @@ import com.torodb.backend.tables.records.MetaDatabaseRecord;
 import com.torodb.backend.tables.records.MetaDocPartRecord;
 import com.torodb.backend.tables.records.MetaFieldRecord;
 import com.torodb.core.TableRef;
+import com.torodb.core.TableRefFactory;
 import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
 import com.torodb.core.transaction.metainf.ImmutableMetaDatabase;
 import com.torodb.core.transaction.metainf.ImmutableMetaDocPart;
@@ -65,6 +66,7 @@ public class DerbyTorodbMeta implements TorodbMeta {
 
     DerbyTorodbMeta(
             DSLContext dsl,
+            TableRefFactory tableRefFactory,
             DatabaseInterface databaseInterface)
     throws SQLException, IOException, InvalidDatabaseException {
         this.databaseInterface = databaseInterface;
@@ -73,7 +75,7 @@ public class DerbyTorodbMeta implements TorodbMeta {
         Connection conn = dsl.configuration().connectionProvider().acquire();
 
         TorodbSchema.TORODB.checkOrCreate(dsl, jooqMeta, databaseInterface);
-        metaSnapshot = loadMetaSnapshot(dsl, jooqMeta);
+        metaSnapshot = loadMetaSnapshot(dsl, jooqMeta, tableRefFactory);
         
         dsl.configuration().connectionProvider().release(conn);
     }
@@ -84,7 +86,8 @@ public class DerbyTorodbMeta implements TorodbMeta {
     
     private ImmutableMetaSnapshot loadMetaSnapshot(
             DSLContext dsl,
-            Meta jooqMeta) throws InvalidDatabaseSchemaException {
+            Meta jooqMeta,
+            TableRefFactory tableRefFactory) throws InvalidDatabaseSchemaException {
         
         MetaDatabaseTable<MetaDatabaseRecord> metaDatabaseTable = databaseInterface.getMetaDatabaseTable();
         Result<MetaDatabaseRecord> records
@@ -138,7 +141,7 @@ public class DerbyTorodbMeta implements TorodbMeta {
                         continue;
                     }
                     
-                    TableRef tableRef = docPart.getTableRefValue();
+                    TableRef tableRef = docPart.getTableRefValue(tableRefFactory);
                     ImmutableMetaDocPart.Builder metaDocPartBuilder = new ImmutableMetaDocPart.Builder(
                             tableRef, 
                             docPart.getIdentifier());
@@ -155,7 +158,7 @@ public class DerbyTorodbMeta implements TorodbMeta {
                                 .and(fieldTable.TABLE_REF.eq(docPart.getTableRef())))
                             .fetch();
                     for (MetaFieldRecord<?> field : fields) {
-                        TableRef fieldTableRef = field.getTableRefValue();
+                        TableRef fieldTableRef = field.getTableRefValue(tableRefFactory);
                         if (!tableRef.equals(fieldTableRef)) {
                             continue;
                         }
@@ -167,7 +170,7 @@ public class DerbyTorodbMeta implements TorodbMeta {
                         
                         if (!existsColumn(docPart.getIdentifier(), field.getIdentifier(), existingTables)) {
                             throw new InvalidDatabaseSchemaException(schemaName, "Field "+field.getCollection()+"."
-                                    +field.getTableRefValue()+"."+field.getName()+" in database "+database+" is associated with field "+field.getIdentifier()
+                                    +field.getTableRefValue(tableRefFactory)+"."+field.getName()+" in database "+database+" is associated with field "+field.getIdentifier()
                                     +" but there is no field with that name in table "
                                     +schemaName+"."+docPart.getIdentifier());
                         }
@@ -196,7 +199,7 @@ public class DerbyTorodbMeta implements TorodbMeta {
                     .selectFrom(fieldTable)
                     .where(fieldTable.DATABASE.eq(database))
                     .fetch();
-            DocPartHelper docPartHelper = new DocPartHelper(databaseInterface);
+            IdentifierHelper identifierHelper = new IdentifierHelper(databaseInterface);
             for (Table<?> table : existingTables) {
                 if (!docParts.containsKey(table.getName())) {
                     throw new InvalidDatabaseSchemaException(schemaName, "Table "+schemaName+"."+table.getName()
@@ -205,10 +208,10 @@ public class DerbyTorodbMeta implements TorodbMeta {
                 
                 MetaDocPartRecord<Object> docPart = docParts.get(table.getName());
                 for (Field<?> existingField : table.fields()) {
-                    if (docPartHelper.isSpecialColumn(existingField.getName())) {
+                    if (identifierHelper.isSpecialColumn(existingField.getName())) {
                         continue;
                     }
-                    if (!containsField(existingField, docPart.getCollection(), docPart.getTableRefValue(), fields)) {
+                    if (!containsField(existingField, docPart.getCollection(), docPart.getTableRefValue(tableRefFactory), fields, tableRefFactory)) {
                         throw new InvalidDatabaseSchemaException(schemaName, "Column "+schemaName+"."+table.getName()
                         +"."+existingField.getName()+" has no field associated for database "+database);
                     }
@@ -274,10 +277,10 @@ public class DerbyTorodbMeta implements TorodbMeta {
         return null;
     }
     
-    private boolean containsField(Field<?> existingField, String collection, TableRef tableRef, Iterable<MetaFieldRecord<Object>> fields) {
+    private boolean containsField(Field<?> existingField, String collection, TableRef tableRef, Iterable<MetaFieldRecord<Object>> fields, TableRefFactory tableRefFactory) {
         for (MetaFieldRecord<?> field : fields) {
             if (collection.equals(field.getCollection()) &&
-                    tableRef.equals(field.getTableRefValue()) &&
+                    tableRef.equals(field.getTableRefValue(tableRefFactory)) &&
                     existingField.getName().equals(field.getIdentifier())) {
                 return true;
             }

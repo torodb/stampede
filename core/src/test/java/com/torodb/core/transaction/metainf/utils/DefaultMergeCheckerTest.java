@@ -19,12 +19,24 @@
  */
 package com.torodb.core.transaction.metainf.utils;
 
-import com.torodb.core.impl.TableRefImpl;
-import com.torodb.core.transaction.metainf.*;
 import java.util.Collections;
+
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import com.torodb.core.TableRefFactory;
+import com.torodb.core.impl.TableRefFactoryImpl;
+import com.torodb.core.impl.TableRefImpl;
+import com.torodb.core.transaction.metainf.FieldType;
+import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
+import com.torodb.core.transaction.metainf.ImmutableMetaDatabase;
+import com.torodb.core.transaction.metainf.ImmutableMetaDocPart;
+import com.torodb.core.transaction.metainf.ImmutableMetaField;
+import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
+import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
+import com.torodb.core.transaction.metainf.UnmergeableException;
+import com.torodb.core.transaction.metainf.WrapperMutableMetaSnapshot;
 
 /**
  *
@@ -32,6 +44,7 @@ import org.junit.Test;
  */
 public class DefaultMergeCheckerTest {
 
+    private static final TableRefFactory tableRefFactory = new TableRefFactoryImpl();
     private static ImmutableMetaSnapshot currentSnapshot;
 
     public DefaultMergeCheckerTest() {
@@ -42,7 +55,7 @@ public class DefaultMergeCheckerTest {
         currentSnapshot = new ImmutableMetaSnapshot.Builder()
                 .add(new ImmutableMetaDatabase.Builder("dbName1", "dbId1")
                         .add(new ImmutableMetaCollection.Builder("colName1", "colId1")
-                                .add(new ImmutableMetaDocPart.Builder(TableRefImpl.createRoot(), "docPartId1")
+                                .add(new ImmutableMetaDocPart.Builder(tableRefFactory.createRoot(), "docPartId1")
                                         .add(new ImmutableMetaField("fieldName1", "fieldId1", FieldType.INTEGER))
                                 ).build()
                         ).build()
@@ -58,7 +71,7 @@ public class DefaultMergeCheckerTest {
         MutableMetaSnapshot changedSnapshot = new WrapperMutableMetaSnapshot(new ImmutableMetaSnapshot(Collections.emptyMap()));
         changedSnapshot.addMetaDatabase("dbName1", "dbId1")
                 .addMetaCollection("colName1", "colId1")
-                .addMetaDocPart(TableRefImpl.createRoot(), "docPartId1")
+                .addMetaDocPart(tableRefFactory.createRoot(), "docPartId1")
                 .addMetaField("fieldName1", "fieldId1", FieldType.INTEGER);
 
         DefaultMergeChecker.checkMerge(currentSnapshot, changedSnapshot);
@@ -143,7 +156,7 @@ public class DefaultMergeCheckerTest {
         MutableMetaSnapshot changedSnapshot = new WrapperMutableMetaSnapshot(new ImmutableMetaSnapshot(Collections.emptyMap()));
         changedSnapshot.addMetaDatabase("dbName1", "dbId1")
                 .addMetaCollection("colName1", "colId1")
-                .addMetaDocPart(TableRefImpl.createChild(TableRefImpl.createRoot(), "anotherTRef"), "docPartId1");
+                .addMetaDocPart(tableRefFactory.createChild(tableRefFactory.createRoot(), "anotherTRef"), "docPartId1");
 
         try {
             DefaultMergeChecker.checkMerge(currentSnapshot, changedSnapshot);
@@ -162,7 +175,7 @@ public class DefaultMergeCheckerTest {
         MutableMetaSnapshot changedSnapshot = new WrapperMutableMetaSnapshot(new ImmutableMetaSnapshot(Collections.emptyMap()));
         changedSnapshot.addMetaDatabase("dbName1", "dbId1")
                 .addMetaCollection("colName1", "colId1")
-                .addMetaDocPart(TableRefImpl.createRoot(), "docPartId2");
+                .addMetaDocPart(tableRefFactory.createRoot(), "docPartId2");
 
         try {
             DefaultMergeChecker.checkMerge(currentSnapshot, changedSnapshot);
@@ -181,7 +194,7 @@ public class DefaultMergeCheckerTest {
         MutableMetaSnapshot changedSnapshot = new WrapperMutableMetaSnapshot(new ImmutableMetaSnapshot(Collections.emptyMap()));
         changedSnapshot.addMetaDatabase("dbName1", "dbId1")
                 .addMetaCollection("colName1", "colId1")
-                .addMetaDocPart(TableRefImpl.createRoot(), "docPartId1")
+                .addMetaDocPart(tableRefFactory.createRoot(), "docPartId1")
                 .addMetaField("fieldName1", "fieldId1", FieldType.TIME);
 
         try {
@@ -194,7 +207,7 @@ public class DefaultMergeCheckerTest {
         changedSnapshot = new WrapperMutableMetaSnapshot(new ImmutableMetaSnapshot(Collections.emptyMap()));
         changedSnapshot.addMetaDatabase("dbName1", "dbId1")
                 .addMetaCollection("colName1", "colId1")
-                .addMetaDocPart(TableRefImpl.createRoot(), "docPartId1")
+                .addMetaDocPart(tableRefFactory.createRoot(), "docPartId1")
                 .addMetaField("fieldName2", "fieldId1", FieldType.INTEGER);
 
         try {
@@ -214,7 +227,7 @@ public class DefaultMergeCheckerTest {
         MutableMetaSnapshot changedSnapshot = new WrapperMutableMetaSnapshot(new ImmutableMetaSnapshot(Collections.emptyMap()));
         changedSnapshot.addMetaDatabase("dbName1", "dbId1")
                 .addMetaCollection("colName1", "colId1")
-                .addMetaDocPart(TableRefImpl.createRoot(), "docPartId1")
+                .addMetaDocPart(tableRefFactory.createRoot(), "docPartId1")
                 .addMetaField("fieldName1", "fieldId2", FieldType.INTEGER);
 
         try {
@@ -236,7 +249,7 @@ public class DefaultMergeCheckerTest {
         MutableMetaSnapshot changedSnapshot = new WrapperMutableMetaSnapshot(new ImmutableMetaSnapshot(Collections.emptyMap()));
         changedSnapshot.addMetaDatabase("dbName1", "dbId1")
                 .addMetaCollection("colName1", "colId1")
-                .addMetaDocPart(TableRefImpl.createRoot(), "docPartId1")
+                .addMetaDocPart(tableRefFactory.createRoot(), "docPartId1")
                 .addMetaField("fieldName2", "fieldId4", FieldType.INTEGER);
 
         DefaultMergeChecker.checkMerge(currentSnapshot, changedSnapshot);
@@ -253,7 +266,7 @@ public class DefaultMergeCheckerTest {
         MutableMetaSnapshot changedSnapshot = new WrapperMutableMetaSnapshot(new ImmutableMetaSnapshot(Collections.emptyMap()));
         changedSnapshot.addMetaDatabase("dbName1", "dbId1")
                 .addMetaCollection("colName1", "colId1")
-                .addMetaDocPart(TableRefImpl.createRoot(), "docPartId1")
+                .addMetaDocPart(tableRefFactory.createRoot(), "docPartId1")
                 .addMetaField("fieldName1", "fieldId4", FieldType.TIME);
 
         DefaultMergeChecker.checkMerge(currentSnapshot, changedSnapshot);
@@ -268,7 +281,7 @@ public class DefaultMergeCheckerTest {
         MutableMetaSnapshot changedSnapshot = new WrapperMutableMetaSnapshot(new ImmutableMetaSnapshot(Collections.emptyMap()));
         changedSnapshot.addMetaDatabase("dbName1", "dbId1")
                 .addMetaCollection("colName1", "colId1")
-                .addMetaDocPart(TableRefImpl.createRoot(), "docPartId1")
+                .addMetaDocPart(tableRefFactory.createRoot(), "docPartId1")
                 .addMetaField("fieldName10", "fieldId20", FieldType.CHILD);
 
         DefaultMergeChecker.checkMerge(currentSnapshot, changedSnapshot);

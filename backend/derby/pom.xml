@@ -79,6 +79,12 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>com.torodb.kvdocument</groupId>
+            <artifactId>json-converter</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>com.torodb</groupId>
             <artifactId>backend-common</artifactId>
             <version>${project.version}</version>

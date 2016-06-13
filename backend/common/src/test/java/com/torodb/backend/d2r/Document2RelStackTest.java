@@ -21,10 +21,12 @@ import com.torodb.backend.IdentifierFactory;
 import com.torodb.backend.MockRidGenerator;
 import com.torodb.common.util.HexUtils;
 import com.torodb.core.TableRef;
+import com.torodb.core.TableRefFactory;
 import com.torodb.core.d2r.CollectionData;
 import com.torodb.core.d2r.D2RTranslator;
 import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.d2r.DocPartRow;
+import com.torodb.core.impl.TableRefFactoryImpl;
 import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
 import com.torodb.core.transaction.metainf.ImmutableMetaDatabase;
@@ -44,6 +46,8 @@ import com.torodb.metainfo.cache.mvcc.MvccMetainfoRepository;
 
 public class Document2RelStackTest {
 	
+    private static final TableRefFactory tableRefFactory = new TableRefFactoryImpl();
+    
 	//TODO: Change to final implementation code
 	private static final String ARRAY_VALUE_NAME = "v";
 	private static final boolean IS_ARRAY = true;
@@ -425,7 +429,7 @@ public class Document2RelStackTest {
 	private CollectionData parseDocument(String docName) {
 		MockRidGenerator ridGenerator = new MockRidGenerator();
 		IdentifierFactory identifierFactory = new IdentifierFactory();
-		D2RTranslator translator = new D2RTranslatorStack(identifierFactory, ridGenerator, mutableSnapshot, DB1, COLLA);
+		D2RTranslator translator = new D2RTranslatorStack(tableRefFactory, identifierFactory, ridGenerator, mutableSnapshot, DB1, COLLA);
 		KVDocument document = parser.createFromResource("docs/"+docName);
 		translator.translate(document);
 		return translator.getCollectionDataAccumulator();

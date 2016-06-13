@@ -25,6 +25,7 @@ import com.torodb.backend.converters.TableRefConverter;
 import com.torodb.backend.derby.tables.DerbyMetaDocPartTable;
 import com.torodb.backend.tables.records.MetaDocPartRecord;
 import com.torodb.core.TableRef;
+import com.torodb.core.TableRefFactory;
 
 public class DerbyMetaDocPartRecord extends MetaDocPartRecord<JsonArray> {
 
@@ -61,7 +62,7 @@ public class DerbyMetaDocPartRecord extends MetaDocPartRecord<JsonArray> {
     }
 
     @Override
-    public TableRef getTableRefValue() {
-        return TableRefConverter.fromJsonArray(getTableRef());
+    public TableRef getTableRefValue(TableRefFactory tableRefFactory) {
+        return TableRefConverter.fromJsonArray(tableRefFactory, getTableRef());
     }
 }
