@@ -10,8 +10,10 @@ import com.torodb.backend.util.SimpleDocumentFeed;
 import static com.torodb.backend.util.MetaInfoOperation.executeMetaOperation;
 import static com.torodb.backend.util.TestDataFactory.*;
 
+import com.torodb.core.TableRefFactory;
 import com.torodb.core.d2r.D2RTranslator;
 import com.torodb.core.d2r.DocPartData;
+import com.torodb.core.impl.TableRefFactoryImpl;
 import com.torodb.d2r.D2RTranslatorStack;
 import com.torodb.d2r.IdentifierFactoryImpl;
 import com.torodb.metainfo.cache.mvcc.MvccMetainfoRepository;
@@ -29,7 +31,7 @@ public class SimpleDocumentTraslationStackStress {
 			timer.start();
 			
 			executeMetaOperation(mvccMetainfoRepository, (mutableSnapshot)->{
-				D2RTranslator translator = new D2RTranslatorStack(new IdentifierFactoryImpl(), new InMemoryRidGenerator(), mutableSnapshot, DB1, COLL1);
+				D2RTranslator translator = new D2RTranslatorStack(new TableRefFactoryImpl(), new IdentifierFactoryImpl(), new InMemoryRidGenerator(), mutableSnapshot, DB1, COLL1);
 				translator.translate(doc);
 				for (DocPartData table : translator.getCollectionDataAccumulator()) {
 					cont.addAndGet(table.rowCount());

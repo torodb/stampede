@@ -24,8 +24,8 @@ import org.jooq.Table;
 import org.jooq.TableField;
 import org.jooq.impl.SQLDataType;
 
+import com.torodb.backend.converters.jooq.FieldTypeConverter;
 import com.torodb.backend.postgresql.tables.records.PostgreSQLMetaFieldRecord;
-import com.torodb.backend.tables.FieldTypeConverter;
 import com.torodb.backend.tables.MetaFieldTable;
 import com.torodb.core.transaction.metainf.FieldType;
 

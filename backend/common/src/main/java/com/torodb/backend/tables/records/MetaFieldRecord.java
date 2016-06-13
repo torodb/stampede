@@ -27,6 +27,7 @@ import org.jooq.impl.UpdatableRecordImpl;
 
 import com.torodb.backend.tables.MetaFieldTable;
 import com.torodb.core.TableRef;
+import com.torodb.core.TableRefFactory;
 import com.torodb.core.transaction.metainf.FieldType;
 
 public abstract class MetaFieldRecord<TableRefType> extends UpdatableRecordImpl<MetaFieldRecord<TableRefType>> 
@@ -312,7 +313,7 @@ public abstract class MetaFieldRecord<TableRefType> extends UpdatableRecordImpl<
     
     protected abstract TableRefType toTableRefType(TableRef tableRef);
     
-    public abstract TableRef getTableRefValue();
+    public abstract TableRef getTableRefValue(TableRefFactory tableRefFactory);
 
     // -------------------------------------------------------------------------
     // Constructors

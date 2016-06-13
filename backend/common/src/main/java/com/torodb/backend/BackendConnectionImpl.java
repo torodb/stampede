@@ -20,12 +20,11 @@
 
 package com.torodb.backend;
 
-import java.util.Arrays;
-
 import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.impl.DSL;
 
+import com.google.common.collect.ImmutableList;
 import com.torodb.backend.tables.MetaCollectionTable;
 import com.torodb.backend.tables.MetaDatabaseTable;
 import com.torodb.backend.tables.MetaDocPartTable;
@@ -80,27 +79,14 @@ public class BackendConnectionImpl implements BackendConnection {
             .values(db.getName(), col.getName(), 
                     newDocPart.getTableRef(), newDocPart.getIdentifier()))
             .execute();
-        if (newDocPart.getTableRef().isRoot()) {
-            dsl.execute(databaseInterface.createDocPartTableStatement(dsl.configuration(), db.getIdentifier(), 
-                newDocPart.getIdentifier(), 
-                Arrays.asList(new Field<?>[] { 
-                    databaseInterface.getDidColumn() })));
-        } else if (newDocPart.getTableRef().getParent().get().isRoot()) {
-            dsl.execute(databaseInterface.createDocPartTableStatement(dsl.configuration(), db.getIdentifier(), 
-                newDocPart.getIdentifier(), 
-                Arrays.asList(new Field<?>[] { 
-                    databaseInterface.getDidColumn(), 
-                    databaseInterface.getRidColumn(), 
-                    databaseInterface.getSeqColumn() })));
-        } else {
-            dsl.execute(databaseInterface.createDocPartTableStatement(dsl.configuration(), db.getIdentifier(), 
-                newDocPart.getIdentifier(), 
-                Arrays.asList(new Field<?>[] { 
-                    databaseInterface.getDidColumn(), 
-                    databaseInterface.getRidColumn(), 
-                    databaseInterface.getPidColumn(), 
-                    databaseInterface.getSeqColumn() })));
-        }
+        ImmutableList.Builder<Field<?>> docPartFieldsBuilder = ImmutableList.<Field<?>>builder()
+            .addAll(databaseInterface.getDocPartTableInternalFields(newDocPart));
+        newDocPart.streamFields().forEach(field -> {
+            docPartFieldsBuilder.add(DSL.field(field.getIdentifier(), databaseInterface.getDataType(field.getType())));
+        });
+        dsl.execute(databaseInterface.createDocPartTableStatement(dsl.configuration(), db.getIdentifier(), 
+            newDocPart.getIdentifier(), 
+            docPartFieldsBuilder.build()));
     }
 
     @Override
@@ -125,7 +111,7 @@ public class BackendConnectionImpl implements BackendConnection {
 
     @Override
     public void insert(MetaDatabase db, MetaCollection col, DocPartData data) throws RollbackException {
-        databaseInterface.insertPathDocuments(dsl, db.getIdentifier(), data);
+        databaseInterface.insertDocPartData(dsl, db.getIdentifier(), data);
     }
 
 }

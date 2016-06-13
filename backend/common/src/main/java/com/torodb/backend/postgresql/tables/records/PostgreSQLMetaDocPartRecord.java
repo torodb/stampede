@@ -23,6 +23,7 @@ import com.torodb.backend.converters.TableRefConverter;
 import com.torodb.backend.postgresql.tables.PostgreSQLMetaDocPartTable;
 import com.torodb.backend.tables.records.MetaDocPartRecord;
 import com.torodb.core.TableRef;
+import com.torodb.core.TableRefFactory;
 
 public class PostgreSQLMetaDocPartRecord extends MetaDocPartRecord<String[]> {
 
@@ -38,9 +39,10 @@ public class PostgreSQLMetaDocPartRecord extends MetaDocPartRecord<String[]> {
 	/**
 	 * Create a detached, initialised MetaDocPartRecord
 	 */
-	public PostgreSQLMetaDocPartRecord(String database, String collection, String[] tableRef, String identifierName, Integer lastRid) {
+	public PostgreSQLMetaDocPartRecord(String database, String collection, String[] tableRef, String identifier, Integer lastRid) {
 		super(PostgreSQLMetaDocPartTable.CONTAINER);
-		
+        
+        values(database, collection, tableRef, identifier, lastRid);
 	}
 
     @Override
@@ -59,7 +61,7 @@ public class PostgreSQLMetaDocPartRecord extends MetaDocPartRecord<String[]> {
     }
 
     @Override
-    public TableRef getTableRefValue() {
-        return TableRefConverter.fromStringArray(getTableRef());
+    public TableRef getTableRefValue(TableRefFactory tableRefFactory) {
+        return TableRefConverter.fromStringArray(tableRefFactory, getTableRef());
     }
 }

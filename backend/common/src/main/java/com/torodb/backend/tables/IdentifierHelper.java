@@ -28,13 +28,13 @@ import com.torodb.backend.DatabaseInterface;
 /**
  *
  */
-public class DocPartHelper {
+public class IdentifierHelper {
 
     private static final char ESCAPE_CHARACTER = '_';
     private final DatabaseInterface databaseInterface;
 
     @Inject
-    public DocPartHelper(@Nonnull DatabaseInterface databaseInterface) {
+    public IdentifierHelper(@Nonnull DatabaseInterface databaseInterface) {
         this.databaseInterface = databaseInterface;
     }
 

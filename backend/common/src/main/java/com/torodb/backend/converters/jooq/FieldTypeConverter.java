@@ -19,7 +19,7 @@
  */
 
 
-package com.torodb.backend.tables;
+package com.torodb.backend.converters.jooq;
 
 import org.jooq.Converter;
 import org.jooq.DataType;

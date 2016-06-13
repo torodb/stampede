@@ -1,10 +1,12 @@
 
 package com.torodb.core;
 
-import com.google.common.base.Objects;
 import java.util.Optional;
+
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.Immutable;
+
+import com.google.common.base.Objects;
 
 /**
  *
@@ -24,6 +26,24 @@ public abstract class TableRef {
     @Nonnull
     public abstract String getName();
 
+    /**
+     * The depth of this TableRef on the document model.
+     *
+     * For example, the table referenced by "a.b.c" should have the level 3. On any collection, the
+     * root TableRef has the depth 0.
+     * @return
+     */
+    @Nonnull
+    public abstract int getDepth();
+
+    /**
+     * Indicates if this TableRef has is contained by an array.
+     *
+     * @return
+     */
+    @Nonnull
+    public abstract boolean isInArray();
+    
     public boolean isRoot() {
         return !getParent().isPresent();
     }

@@ -22,6 +22,7 @@ package com.torodb.backend.postgresql.tables;
 import org.jooq.Field;
 import org.jooq.Table;
 import org.jooq.TableField;
+import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 
 import com.torodb.backend.postgresql.tables.records.PostgreSQLMetaDocPartRecord;
@@ -106,22 +107,22 @@ public class PostgreSQLMetaDocPartTable extends MetaDocPartTable<String[], Postg
     }
 
     @Override
-    protected Field<?> createDidField() {
-        return field(DocPartTableFields.DID.fieldName, SQLDataType.INTEGER.nullable(false));
+    protected Field<Integer> createDidField() {
+        return DSL.field(DocPartTableFields.DID.fieldName, SQLDataType.INTEGER.nullable(false));
     }
 
     @Override
-    protected Field<?> createRidField() {
-        return field(DocPartTableFields.RID.fieldName, SQLDataType.INTEGER.nullable(false));
+    protected Field<Integer> createRidField() {
+        return DSL.field(DocPartTableFields.RID.fieldName, SQLDataType.INTEGER.nullable(false));
     }
 
     @Override
-    protected Field<?> createPidField() {
-        return field(DocPartTableFields.PID.fieldName, SQLDataType.INTEGER.nullable(false));
+    protected Field<Integer> createPidField() {
+        return DSL.field(DocPartTableFields.PID.fieldName, SQLDataType.INTEGER.nullable(false));
     }
 
     @Override
-    protected Field<?> createSeqField() {
-        return field(DocPartTableFields.SEQ.fieldName, SQLDataType.INTEGER.nullable(false));
+    protected Field<Integer> createSeqField() {
+        return DSL.field(DocPartTableFields.SEQ.fieldName, SQLDataType.INTEGER.nullable(false));
     }
 }

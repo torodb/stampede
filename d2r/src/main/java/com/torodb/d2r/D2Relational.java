@@ -1,5 +1,6 @@
 package com.torodb.d2r;
 
+import com.torodb.core.TableRefFactory;
 import com.torodb.d2r.model.DocPartDataImpl;
 import com.torodb.d2r.model.DocPartRowImpl;
 import com.torodb.d2r.model.PathStack;
@@ -20,10 +21,11 @@ public class D2Relational {
 	
 	private final ConsumerFromArrayIdx fromArrayIdx = new ConsumerFromArrayIdx();
 	private final DocConsumer docComsumer = new DocConsumer();
-	private final PathStack pathStack = new PathStack();
+	private final PathStack pathStack;
 	private final DocPartDataCollection docPartDataCollection;
 
-	public D2Relational(DocPartDataCollection docPartDataCollection) {
+	public D2Relational(TableRefFactory tableRefFactory, DocPartDataCollection docPartDataCollection) {
+	    this.pathStack = new PathStack(tableRefFactory);
 		this.docPartDataCollection = docPartDataCollection;
 	}
 

@@ -1,0 +1,65 @@
+/*
+ *     This file is part of ToroDB.
+ *
+ *     ToroDB is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU Affero General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     (at your option) any later version.
+ *
+ *     ToroDB is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU Affero General Public License for more details.
+ *
+ *     You should have received a copy of the GNU Affero General Public License
+ *     along with ToroDB. If not, see <http://www.gnu.org/licenses/>.
+ *
+ *     Copyright (c) 2014, 8Kdata Technology
+ *     
+ */
+
+package com.torodb.backend;
+
+import java.util.Comparator;
+
+public class TableRefComparator {
+    public static class MetaDocPart<T extends com.torodb.core.transaction.metainf.MetaDocPart> implements Comparator<T> {
+        public static final MetaDocPart ASC = new MetaDocPart<>();
+        public static final DescMetaDocPart DESC = new DescMetaDocPart<>();
+        
+        private MetaDocPart() {
+        }
+        
+        @Override
+        public int compare(com.torodb.core.transaction.metainf.MetaDocPart leftMetaDocPart, 
+                com.torodb.core.transaction.metainf.MetaDocPart rightMetaDocPart) {
+            return leftMetaDocPart.getTableRef().getDepth() -
+                    rightMetaDocPart.getTableRef().getDepth();
+        }
+    }
+    private static class DescMetaDocPart<T extends com.torodb.core.transaction.metainf.MetaDocPart> implements Comparator<T> {
+        private DescMetaDocPart() {
+        }
+        
+        @Override
+        public int compare(com.torodb.core.transaction.metainf.MetaDocPart leftMetaDocPart, 
+                com.torodb.core.transaction.metainf.MetaDocPart rightMetaDocPart) {
+            return rightMetaDocPart.getTableRef().getDepth() -
+                    leftMetaDocPart.getTableRef().getDepth();
+        }
+    }
+    
+    public static class DocPartResultSet implements Comparator<com.torodb.backend.interfaces.ReadInterface.DocPartResultSet> {
+        public static final DocPartResultSet DESC = new DocPartResultSet();
+    
+        private DocPartResultSet() {
+        }
+        
+        @Override
+        public int compare(com.torodb.backend.interfaces.ReadInterface.DocPartResultSet leftDocPartResultSet, 
+                com.torodb.backend.interfaces.ReadInterface.DocPartResultSet rightDocPartResultSet) {
+            return rightDocPartResultSet.getMetaDocPart().getTableRef().getDepth() -
+                    leftDocPartResultSet.getMetaDocPart().getTableRef().getDepth();
+        }
+    }
+}

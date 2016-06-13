@@ -1,15 +1,21 @@
 package com.torodb.d2r.model;
 
+import com.torodb.core.TableRef;
+import com.torodb.core.TableRefFactory;
+
 //TODO: Add constraint annotations and asserts
 public class PathStack {
 
+    private final TableRefFactory tableRefFactory;
+    
 	private PathInfo top = null;
 
 	public enum PathNodeType {
 		Field, Object, Array, Idx
 	};
 
-	public PathStack() {
+	public PathStack(TableRefFactory tableRefFactory) {
+	    this.tableRefFactory = tableRefFactory;
 		this.top = new PathField("", null);
 	}
 
@@ -59,7 +65,7 @@ public class PathStack {
 	public abstract class PathInfo {
 
 		protected PathInfo parent;
-		protected TableRefImpl tableRef;
+		protected TableRef tableRef;
 
 		private PathInfo(PathInfo parent) {
 			this.parent = parent;
@@ -77,7 +83,7 @@ public class PathStack {
 			return new PathArray(1, this);
 		}
 
-		public TableRefImpl getTableRef(){
+		public TableRef getTableRef(){
 			return tableRef;
 		}
 		
@@ -124,9 +130,9 @@ public class PathStack {
 			this.fieldName = fieldName;
 			this.path = calcPath();
 			if (parent==null){
-				this.tableRef = TableRefImpl.createRoot();
+				this.tableRef = tableRefFactory.createRoot();
 			}else{
-				this.tableRef = parent.getTableRef().createChild(fieldName);
+				this.tableRef = tableRefFactory.createChild(parent.getTableRef(), fieldName);
 			}
 		}
 
@@ -203,18 +209,17 @@ public class PathStack {
 	}
 
 	public class PathArray extends PathInfo {
-
-		private int level;
+		private int dimension;
 		private String path;
 
-		private PathArray(int level, PathInfo parent) {
+		private PathArray(int dimension, PathInfo parent) {
 			super(parent);
-			this.level = level;
+			this.dimension = dimension;
 			this.path = calcPath();
-			if (level==1){
+			if (dimension==1){
 				this.tableRef = parent.getTableRef();
 			}else{
-				this.tableRef = parent.tableRef.createChild("$" + level);
+				this.tableRef = tableRefFactory.createChild(parent.tableRef, dimension);
 			}
 		}
 
@@ -232,14 +237,14 @@ public class PathStack {
 		}
 
 		private String calcPath() {
-			if (level == 1) {
+			if (dimension == 1) {
 				return parent.getPath();
 			}
 			PathInfo noArray = parent;
 			while (noArray.getNodeType() == PathNodeType.Array || noArray.getNodeType() == PathNodeType.Idx) {
 				noArray = noArray.getParent();
 			}
-			return noArray.getPath() + "$" + level;
+			return noArray.getPath() + "$" + dimension;
 		}
 
 		@Override
@@ -279,7 +284,7 @@ public class PathStack {
 		}
 
 		PathArray appendArray() {
-			return new PathArray(((PathArray) parent).level + 1, this);
+			return new PathArray(((PathArray) parent).dimension + 1, this);
 		}
 
 		@Override

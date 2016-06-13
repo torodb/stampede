@@ -56,13 +56,12 @@ import org.jooq.impl.DSL;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.torodb.backend.DatabaseInterface;
+import com.torodb.backend.InternalField;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.backend.converters.jooq.ValueToJooqDataTypeProvider;
 import com.torodb.backend.meta.TorodbSchema;
-import com.torodb.backend.mocks.KVTypeToSqlType;
 import com.torodb.backend.mocks.ToroImplementationException;
 import com.torodb.backend.mocks.ToroRuntimeException;
-import com.torodb.backend.postgresql.converters.PostgreSQLKVTypeToSqlType;
 import com.torodb.backend.postgresql.converters.PostgreSQLValueToCopyConverter;
 import com.torodb.backend.postgresql.converters.jooq.PostgreSQLValueToJooqDataTypeProvider;
 import com.torodb.backend.postgresql.tables.PostgreSQLMetaCollectionTable;
@@ -80,10 +79,10 @@ import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.d2r.DocPartRow;
 import com.torodb.core.transaction.RollbackException;
 import com.torodb.core.transaction.metainf.FieldType;
+import com.torodb.core.transaction.metainf.MetaCollection;
+import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetaField;
-import com.torodb.kvdocument.values.KVMongoObjectId;
-import com.torodb.kvdocument.values.KVMongoTimestamp;
 import com.torodb.kvdocument.values.KVValue;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -108,6 +107,10 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
     }
 
     private static final String[] RESTRICTED_COLUMN_NAMES = new String[] {
+            DocPartTableFields.DID.fieldName,
+            DocPartTableFields.RID.fieldName,
+            DocPartTableFields.PID.fieldName,
+            DocPartTableFields.SEQ.fieldName,
             "oid",
             "tableoid",
             "xmin",
@@ -121,7 +124,6 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
     }
 
     private final ValueToJooqDataTypeProvider valueToJooqDataTypeProvider;
-    private final KVTypeToSqlType kVTypeToSqlType;
     private final FieldComparator fieldComparator = new FieldComparator();
     private final PostgreSQLMetaDatabaseTable metaDatabaseTable = new PostgreSQLMetaDatabaseTable();
     private final PostgreSQLMetaCollectionTable metaCollectionTable = new PostgreSQLMetaCollectionTable();
@@ -129,9 +131,8 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
     private final PostgreSQLMetaFieldTable metaFieldTable = new PostgreSQLMetaFieldTable();
 
     @Inject
-    public PostgreSQLDatabaseInterface(KVTypeToSqlType kVTypeToSqlType) {
+    public PostgreSQLDatabaseInterface() {
         this.valueToJooqDataTypeProvider = PostgreSQLValueToJooqDataTypeProvider.getInstance();
-        this.kVTypeToSqlType = kVTypeToSqlType;
     }
 
     private void readObject(java.io.ObjectInputStream stream)
@@ -195,7 +196,7 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
                     .append('"')
                     .append(field.getName())
                     .append("\" ")
-                    .append(getSqlType(field, conf));
+                    .append(field.getDataType().getCastTypeName(conf));
 
             sb.append(',');
         }
@@ -216,22 +217,9 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
                 .append(" ADD COLUMN \"")
                 .append(field.getName())
                 .append("\" ")
-                .append(getSqlType(field, conf));
+                .append(field.getDataType().getCastTypeName(conf));
 
         return sb.toString();
-    }
-
-    private String getSqlType(Field<?> field, Configuration conf) {
-        if (field.getConverter() != null) {
-            Class<?> fieldType = field.getDataType().getType();
-            if (fieldType.equals(KVMongoObjectId.class)) {
-                return PostgreSQLKVTypeToSqlType.MONGO_OBJECT_ID_TYPE;
-            }
-            if (fieldType.equals(KVMongoTimestamp.class)) {
-                return PostgreSQLKVTypeToSqlType.MONGO_TIMESTAMP_TYPE;
-            }
-        }
-        return field.getDataType().getCastTypeName(conf);
     }
 
     private Iterable<Field<?>> getFieldIterator(Iterable<Field<?>> fields) {
@@ -358,11 +346,6 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
     @Override
     public String getStringColumnType(ResultSet columns) throws SQLException {
         return columns.getString("TYPE_NAME");
-    }
-
-    @Override
-    public KVTypeToSqlType getKVTypeToSqlType() {
-        return kVTypeToSqlType;
     }
 
     @Override
@@ -519,92 +502,8 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
 
     @Nonnull
     @Override
-    public String findDocsSelectStatement() {
-        return new StringBuilder()
-                .append("SELECT did, typeid, index, _json")
-                .append(" FROM torodb.find_docs(?, ?, ?) ORDER BY did ASC")
-                .toString();
-    }
-
-    @Nonnull
-    @Override
-    public ResultSet getFindDocsSelectStatementResultSet(PreparedStatement ps) throws SQLException {
-        return ps.executeQuery();
-    }
-
-    private static class PostgresSQLFindDocsSelectStatementRow implements FindDocsSelectStatementRow {
-        private final int docid;
-        private final Integer rid;
-        private final Integer pid;
-        private final Integer seq;
-        private final String json;
-        
-        private PostgresSQLFindDocsSelectStatementRow(ResultSet rs) throws SQLException {
-            docid = rs.getInt(1);
-            Object rid = rs.getObject(2);
-            Object pid = rs.getObject(3);
-            Object seq = rs.getObject(4);
-            json = rs.getString(5);
-            assert rid == null || rid instanceof Integer;
-            assert pid == null || pid instanceof Integer;
-            assert seq == null || seq instanceof Integer;
-            assert json != null;
-
-            this.rid = (Integer) rid;
-            this.pid = (Integer) pid;
-            this.seq = (Integer) seq;
-        }
-        
-        @Override
-        public int getDocId() {
-            return docid;
-        }
-
-        @Override
-        public Integer getRowId() {
-            return rid;
-        }
-
-        @Override
-        public Integer getParentRowId() {
-            return pid;
-        }
-
-        @Override
-        public Integer getSequence() {
-            return seq;
-        }
-
-        @Override
-        public String getJson() {
-            return json;
-        }
-
-        @Override
-        public boolean isRoot() {
-            return rid == null;
-        }
-
-        @Override
-        public boolean isObject() {
-            return seq == null;
-        }
-    };
-
-    @Nonnull
-    @Override
-    public FindDocsSelectStatementRow getFindDocsSelectStatementRow(ResultSet rs) throws SQLException {
-        return new PostgresSQLFindDocsSelectStatementRow(rs);
-    }
-
-    @Override
-    public void setFindDocsSelectStatementParameters(String schema, Integer[] requestedDocs,
-            String[] paths, Connection connection, PreparedStatement ps) throws SQLException {
-        ps.setString(1, schema);
-
-        ps.setArray(2, connection.createArrayOf("integer", requestedDocs));
-
-        ps.setArray(3, connection.createArrayOf("text", paths));
+    public Collection<DocPartResultSet> getCollectionResultSets(@Nonnull DSLContext dsl, @Nonnull MetaDatabase metaDatabase, @Nonnull MetaCollection metaCollection, @Nonnull Integer[] requestedDocs) {
+        throw new ToroImplementationException("Not implemented yet");
     }
 
     @Nonnull
@@ -834,7 +733,7 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
     }
 
     @Override
-    public void insertPathDocuments(DSLContext dsl, String schemaName, DocPartData docPartData) throws RollbackException {
+    public void insertDocPartData(DSLContext dsl, String schemaName, DocPartData docPartData) throws RollbackException {
         Preconditions.checkArgument(docPartData.rowCount() != 0, "Called insert with 0 documents");
         
         Connection connection = dsl.configuration().connectionProvider().acquire();
@@ -1075,24 +974,16 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
     public boolean isRestrictedColumnName(@Nonnull String columnName) {
         return Arrays.binarySearch(RESTRICTED_COLUMN_NAMES, columnName) >= 0;
     }
-
+    
     @Override
-    public Field<?> getDidColumn() {
-        return getMetaDocPartTable().DID;
-    }
-
-    @Override
-    public Field<?> getRidColumn() {
-        return getMetaDocPartTable().RID;
-    }
-
-    @Override
-    public Field<?> getPidColumn() {
-        return getMetaDocPartTable().PID;
-    }
-
-    @Override
-    public Field<?> getSeqColumn() {
-        return getMetaDocPartTable().SEQ;
+    public Collection<InternalField<?>> getDocPartTableInternalFields(MetaDocPart metaDocPart) {
+        TableRef tableRef = metaDocPart.getTableRef();
+        if (tableRef.isRoot()) {
+            return metaDocPartTable.ROOT_FIELDS;
+        } else if (tableRef.getParent().get().isRoot()) {
+            return metaDocPartTable.FIRST_FIELDS;
+        }
+        
+        return metaDocPartTable.FIELDS;
     }
 }

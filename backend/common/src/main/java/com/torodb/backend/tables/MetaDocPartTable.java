@@ -9,7 +9,13 @@ import org.jooq.TableField;
 import org.jooq.UniqueKey;
 import org.jooq.impl.AbstractKeys;
 
+import com.google.common.collect.ImmutableList;
 import com.torodb.backend.DatabaseInterface;
+import com.torodb.backend.InternalField;
+import com.torodb.backend.InternalField.DidInternalField;
+import com.torodb.backend.InternalField.PidInternalField;
+import com.torodb.backend.InternalField.RidInternalField;
+import com.torodb.backend.InternalField.SeqInternalField;
 import com.torodb.backend.meta.TorodbSchema;
 import com.torodb.backend.tables.records.MetaDocPartRecord;
 
@@ -44,6 +50,7 @@ public abstract class MetaDocPartTable<TableRefType, R extends MetaDocPartRecord
         RID               (   "rid"        ),
         PID               (   "pid"        ),
         SEQ               (   "seq"        ),
+        SCALAR            (   "v"          ),
         ;
 
         public final String fieldName;
@@ -95,14 +102,29 @@ public abstract class MetaDocPartTable<TableRefType, R extends MetaDocPartRecord
     public final TableField<R, Integer> LAST_RID 
             = createLastRidField();
 
-    public final Field<?> DID
-        = createDidField();
-    public final Field<?> RID
-        = createRidField();
-    public final Field<?> PID
-        = createPidField();
-    public final Field<?> SEQ
-        = createSeqField();
+    public final InternalField<Integer> DID
+        = new DidInternalField(createDidField());
+    public final InternalField<Integer> RID
+        = new RidInternalField(createRidField());
+    public final InternalField<Integer> PID
+        = new PidInternalField(createPidField());
+    public final InternalField<Integer> SEQ
+        = new SeqInternalField(createSeqField());
+    
+    public final ImmutableList<InternalField<?>> ROOT_FIELDS = ImmutableList.<InternalField<?>>builder()
+            .add(DID)
+            .build();
+    public final ImmutableList<InternalField<?>> FIRST_FIELDS = ImmutableList.<InternalField<?>>builder()
+            .add(DID)
+            .add(RID)
+            .add(SEQ)
+            .build();
+    public final ImmutableList<InternalField<?>> FIELDS = ImmutableList.<InternalField<?>>builder()
+            .add(DID)
+            .add(RID)
+            .add(PID)
+            .add(SEQ)
+            .build();
     
     protected abstract TableField<R, String> createDatabaseField();
     protected abstract TableField<R, String> createCollectionField();
@@ -110,10 +132,10 @@ public abstract class MetaDocPartTable<TableRefType, R extends MetaDocPartRecord
     protected abstract TableField<R, String> createIdentifierField();
     protected abstract TableField<R, Integer> createLastRidField();
 
-    protected abstract Field<?> createDidField();
-    protected abstract Field<?> createRidField();
-    protected abstract Field<?> createPidField();
-    protected abstract Field<?> createSeqField();
+    protected abstract Field<Integer> createDidField();
+    protected abstract Field<Integer> createRidField();
+    protected abstract Field<Integer> createPidField();
+    protected abstract Field<Integer> createSeqField();
     
     private final UniqueKeys<TableRefType, R> uniqueKeys;
     
