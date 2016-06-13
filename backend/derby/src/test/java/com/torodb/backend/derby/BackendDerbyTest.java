@@ -20,6 +20,10 @@
 
 package com.torodb.backend.derby;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
@@ -37,20 +41,17 @@ import java.util.stream.StreamSupport;
 
 import javax.sql.DataSource;
 
-import org.jooq.Binding;
-import org.jooq.BindingGetResultSetContext;
-import org.jooq.Configuration;
 import org.jooq.Converter;
 import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.SQLDialect;
-import org.jooq.conf.Settings;
 import org.jooq.impl.DSL;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -58,12 +59,9 @@ import com.google.common.collect.Table;
 import com.torodb.backend.DocPartDataImpl;
 import com.torodb.backend.DocPartRidGenerator;
 import com.torodb.backend.DocPartRowImpl;
-import com.torodb.backend.IdentifierFactory;
 import com.torodb.backend.InternalField;
-import com.torodb.backend.MockRidGenerator;
 import com.torodb.backend.TableRefComparator;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
-import com.torodb.backend.d2r.D2RTranslatorStack;
 import com.torodb.backend.driver.derby.DerbyDbBackendConfiguration;
 import com.torodb.backend.driver.derby.OfficialDerbyDriver;
 import com.torodb.backend.interfaces.ReadInterface.DocPartResultSet;
@@ -75,6 +73,7 @@ import com.torodb.core.TableRefFactory;
 import com.torodb.core.d2r.CollectionData;
 import com.torodb.core.d2r.D2RTranslator;
 import com.torodb.core.d2r.DocPartData;
+import com.torodb.core.d2r.IdentifierFactory;
 import com.torodb.core.impl.TableRefFactoryImpl;
 import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.ImmutableMetaDocPart;
@@ -87,6 +86,9 @@ import com.torodb.core.transaction.metainf.MetaField;
 import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
 import com.torodb.core.transaction.metainf.WrapperMutableMetaDocPart;
 import com.torodb.core.transaction.metainf.WrapperMutableMetaSnapshot;
+import com.torodb.d2r.D2RTranslatorStack;
+import com.torodb.d2r.IdentifierFactoryImpl;
+import com.torodb.d2r.MockRidGenerator;
 import com.torodb.kvdocument.conversion.json.JacksonJsonParser;
 import com.torodb.kvdocument.conversion.json.JsonParser;
 import com.torodb.kvdocument.values.KVBoolean;
@@ -295,7 +297,7 @@ public class BackendDerbyTest {
     
     protected CollectionData readDataFromDocument(Connection connection, String database, String collection, KVDocument document, MutableMetaSnapshot mutableSnapshot) throws Exception {
         MockRidGenerator ridGenerator = new MockRidGenerator();
-        IdentifierFactory identifierFactory = new IdentifierFactory();
+        IdentifierFactory identifierFactory = new IdentifierFactoryImpl();
         D2RTranslator translator = new D2RTranslatorStack(tableRefFactory, identifierFactory, ridGenerator, mutableSnapshot, database, collection);
         translator.translate(document);
         return translator.getCollectionDataAccumulator();
@@ -304,12 +306,15 @@ public class BackendDerbyTest {
     @Test
     public void testTorodbMeta() throws Exception {
         try (Connection connection = dataSource.getConnection()) {
-            new DerbyTorodbMeta(DSL.using(connection, SQLDialect.DERBY), tableRefFactory, databaseInterface);
+            DerbyTorodbMeta tododbMeta = new DerbyTorodbMeta(DSL.using(connection, SQLDialect.DERBY), tableRefFactory, databaseInterface);
             connection.commit();
+            assertFalse(tododbMeta.getCurrentMetaSnapshot().streamMetaDatabases().iterator().hasNext());
         }
+        
         try (Connection connection = dataSource.getConnection()) {
-            new DerbyTorodbMeta(DSL.using(connection, SQLDialect.DERBY), tableRefFactory, databaseInterface);
+        	DerbyTorodbMeta tododbMeta = new DerbyTorodbMeta(DSL.using(connection, SQLDialect.DERBY), tableRefFactory, databaseInterface);
             connection.commit();
+            assertFalse(tododbMeta.getCurrentMetaSnapshot().streamMetaDatabases().iterator().hasNext());
         }
     }
     
@@ -486,14 +491,19 @@ public class BackendDerbyTest {
         try (Connection connection = dataSource.getConnection()) {
             DSLContext dsl = DSL.using(connection, SQLDialect.DERBY);
             dsl.execute(databaseInterface.createSchemaStatement(databaseSchemaName));
-            dsl.execute(databaseInterface.createDocPartTableStatement(dsl.configuration(), databaseSchemaName, rootDocPartTableName, rootDocPartFields.values()));
             ImmutableMetaDocPart.Builder rootMetaDocPartBuilder = new ImmutableMetaDocPart.Builder(rootDocPartTableRef, rootDocPartTableName);
             for (Map.Entry<String, Field<?>> field : rootDocPartFields.entrySet()) {
                 rootMetaDocPartBuilder.add(new ImmutableMetaField(field.getKey(), field.getValue().getName(), 
                         FieldType.from(((DataTypeForKV<?>) field.getValue().getDataType()).getKVValueConverter().getErasuredType())));
             }
-            DocPartDataImpl docPartData = new DocPartDataImpl(new WrapperMutableMetaDocPart(rootMetaDocPartBuilder.build(), w -> {}), 
+            ImmutableMetaDocPart rootMetaDocPart = rootMetaDocPartBuilder.build();
+            DocPartDataImpl docPartData = new DocPartDataImpl(new WrapperMutableMetaDocPart(rootMetaDocPart, w -> {}), 
                     new DocPartRidGenerator(databaseName, collectionName, new MockRidGenerator()));
+            dsl.execute(databaseInterface.createDocPartTableStatement(dsl.configuration(), databaseSchemaName, rootDocPartTableName, 
+                    ImmutableList.<Field<?>>builder()
+                        .addAll(databaseInterface.getDocPartTableInternalFields(rootMetaDocPart))
+                        .addAll(rootDocPartFields.values())
+                        .build()));
             for (Map<String, Optional<KVValue<?>>> rootDocPartValueMap : rootDocPartValues) {
                 DocPartRowImpl row = docPartData.appendRootRow();
                 for (Map.Entry<String, Optional<KVValue<?>>> rootDocPartValue : rootDocPartValueMap.entrySet()) {

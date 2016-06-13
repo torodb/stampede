@@ -9,15 +9,15 @@ import com.torodb.core.TableRef;
 public class TableRefImpl extends TableRef {
     private final static TableRef ROOT = new TableRefImpl();
     
-    protected static TableRef createRoot() {
+    public static TableRef createRoot() {
         return ROOT;
     }
 
-    protected static TableRef createChild(TableRef parent, String name) {
+    public static TableRef createChild(TableRef parent, String name) {
         return new TableRefImpl(parent, name, false);
     }
 
-    protected static TableRef createChild(TableRef parent, int arrayDepth) {
+    public static TableRef createChild(TableRef parent, int arrayDepth) {
         String name = "$" + arrayDepth;
         name = name.intern();
         return new TableRefImpl(parent, name, true);
