@@ -18,24 +18,8 @@
  *     
  */
 
-package com.torodb.core.impl;
+package com.torodb.core.d2r;
 
-import com.torodb.core.TableRef;
-import com.torodb.core.TableRefFactory;
+public interface DocPartResults {
 
-public class TableRefFactoryImpl implements TableRefFactory {
-    @Override
-    public TableRef createRoot() {
-        return TableRefImpl.ROOT;
-    }
-
-    @Override
-    public TableRef createChild(TableRef parent, String name) {
-        return new TableRefImpl(parent, name);
-    }
-
-    @Override
-    public TableRef createChild(TableRef parent, int arrayDimension) {
-        return new TableRefImpl(parent, arrayDimension);
-    }
 }

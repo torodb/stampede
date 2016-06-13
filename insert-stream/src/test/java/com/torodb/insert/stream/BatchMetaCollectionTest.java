@@ -1,18 +1,24 @@
 package com.torodb.insert.stream;
 
-import com.google.common.collect.Iterables;
-import com.torodb.core.TableRef;
-import com.torodb.core.impl.TableRefImpl;
-import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
-import com.torodb.core.transaction.metainf.ImmutableMetaDocPart;
-import com.torodb.core.transaction.metainf.WrapperMutableMetaCollection;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.verify;
+
 import java.util.Collections;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.verify;
+import com.google.common.collect.Iterables;
+import com.torodb.core.TableRef;
+import com.torodb.core.TableRefFactory;
+import com.torodb.core.impl.TableRefFactoryImpl;
+import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
+import com.torodb.core.transaction.metainf.ImmutableMetaDocPart;
+import com.torodb.core.transaction.metainf.WrapperMutableMetaCollection;
 
 /**
  *
@@ -20,6 +26,7 @@ import static org.mockito.Mockito.verify;
  */
 public class BatchMetaCollectionTest {
 
+    private final TableRefFactory tableRefFactory = new TableRefFactoryImpl();
     private BatchMetaCollection collection;
     private WrapperMutableMetaCollection delegate;
 
@@ -29,7 +36,7 @@ public class BatchMetaCollectionTest {
     @Before
     public void setUp() {
         ImmutableMetaCollection immutableCollection = new ImmutableMetaCollection.Builder("colName", "colId")
-                .add(new ImmutableMetaDocPart(TableRefImpl.createRoot(), "docPartName", Collections.emptyMap()))
+                .add(new ImmutableMetaDocPart(tableRefFactory.createRoot(), "docPartName", Collections.emptyMap()))
                 .build();
         delegate = Mockito.spy(new WrapperMutableMetaCollection(immutableCollection, (o) -> {}));
 
@@ -55,7 +62,7 @@ public class BatchMetaCollectionTest {
 
     @Test
     public void testNewBatch() {
-        TableRef tableRef = TableRefImpl.createChild(TableRefImpl.createRoot(), "aPath");
+        TableRef tableRef = tableRefFactory.createChild(tableRefFactory.createRoot(), "aPath");
         String tableId = "aTableId";
 
         BatchMetaDocPart newDocPart = collection.addMetaDocPart(tableRef, tableId);
@@ -72,7 +79,7 @@ public class BatchMetaCollectionTest {
 
     @Test
     public void testAddMetaDocPart() {
-        TableRef tableRef = TableRefImpl.createChild(TableRefImpl.createRoot(), "aPath");
+        TableRef tableRef = tableRefFactory.createChild(tableRefFactory.createRoot(), "aPath");
         String tableId = "aTableId";
 
         BatchMetaDocPart newDocPart = collection.addMetaDocPart(tableRef, tableId);

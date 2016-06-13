@@ -2,10 +2,12 @@ package com.torodb.insert.stream;
 
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.torodb.core.TableRefFactory;
 import com.torodb.core.backend.BackendConnection;
 import com.torodb.core.d2r.CollectionData;
 import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.dsl.backend.*;
+import com.torodb.core.impl.TableRefFactoryImpl;
 import com.torodb.core.impl.TableRefImpl;
 import com.torodb.core.transaction.RollbackException;
 import com.torodb.core.transaction.metainf.*;
@@ -27,6 +29,7 @@ import static org.mockito.Mockito.*;
  */
 public class DefaultToBackendFunctionTest {
 
+    private final TableRefFactory tableRefFactory = new TableRefFactoryImpl();
     private BackendConnectionJobFactory factory;
     private ImmutableMetaCollection collection = new ImmutableMetaCollection("aColName", "aColId", Collections.emptyList());
     private MetaDatabase database = new ImmutableMetaDatabase("aDb", "aId", Collections.singletonList(collection));
@@ -193,7 +196,7 @@ public class DefaultToBackendFunctionTest {
         given(data1.getMetaDocPart())
                 .willReturn(
                         new WrapperMutableMetaDocPart(
-                                new ImmutableMetaDocPart(TableRefImpl.createRoot(), "aDocPartName", Collections.emptyMap()),
+                                new ImmutableMetaDocPart(tableRefFactory.createRoot(), "aDocPartName", Collections.emptyMap()),
                                 (o) -> {
                         }
                         )

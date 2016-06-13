@@ -11,8 +11,10 @@ import java.util.concurrent.atomic.AtomicLong;
 import com.google.common.base.Stopwatch;
 import com.torodb.backend.util.InMemoryRidGenerator;
 import com.torodb.backend.util.SimpleDocumentFeed;
+import com.torodb.core.TableRefFactory;
 import com.torodb.core.d2r.D2RTranslator;
 import com.torodb.core.d2r.DocPartData;
+import com.torodb.core.impl.TableRefFactoryImpl;
 import com.torodb.metainfo.cache.mvcc.MvccMetainfoRepository;
 
 public class SimpleDocumentTraslationStress {
@@ -28,7 +30,7 @@ public class SimpleDocumentTraslationStress {
 			timer.start();
 			
 			executeMetaOperation(mvccMetainfoRepository, (mutableSnapshot)->{
-				D2RTranslator translator = new D2RTranslatorImpl(new InMemoryRidGenerator(), mutableSnapshot,  DB1, COLL1);
+				D2RTranslator translator = new D2RTranslatorImpl(new TableRefFactoryImpl(), new InMemoryRidGenerator(), mutableSnapshot,  DB1, COLL1);
 				translator.translate(doc);
 				for (DocPartData table : translator.getCollectionDataAccumulator()) {
 					cont.addAndGet(table.rowCount());

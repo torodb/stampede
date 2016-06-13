@@ -9,7 +9,8 @@ import org.openjdk.jmh.annotations.Warmup;
 import org.openjdk.jmh.infra.Blackhole;
 
 import com.torodb.core.TableRef;
-import com.torodb.core.impl.TableRefImpl;
+import com.torodb.core.TableRefFactory;
+import com.torodb.core.impl.TableRefFactoryImpl;
 import com.torodb.core.transaction.metainf.MetainfoRepository.MergerStage;
 import com.torodb.core.transaction.metainf.MetainfoRepository.SnapshotStage;
 import com.torodb.metainfo.cache.mvcc.MvccMetainfoRepository;
@@ -20,6 +21,7 @@ import com.torodb.metainfo.cache.mvcc.MvccMetainfoRepository;
 @BenchmarkMode(value = Mode.Throughput)
 public class MetainfBenchmark {
 
+    private static final TableRefFactory tableRefFactory = new TableRefFactoryImpl();
 	private static final String DB = "test";
 	private static final String COLL = "colltest";
 	private static final String T1 = "t1";
@@ -30,8 +32,8 @@ public class MetainfBenchmark {
 		MutableMetaSnapshot meta = new WrapperMutableMetaSnapshot(new ImmutableMetaSnapshot.Builder().build());
 		MutableMetaDatabase database = meta.addMetaDatabase(DB, DB);
 		MutableMetaCollection collection = database.addMetaCollection(COLL, COLL);
-		
-		TableRef t1=TableRefImpl.createRoot();
+
+		TableRef t1=tableRefFactory.createRoot();
 		MutableMetaDocPart docPartT1 = collection.addMetaDocPart(t1, T1);
 			docPartT1.addMetaField("field1", "field1_s", FieldType.STRING);
 			docPartT1.addMetaField("field2", "field2_i", FieldType.INTEGER);
@@ -39,7 +41,7 @@ public class MetainfBenchmark {
 			docPartT1.addMetaField("field4", "field4_l", FieldType.LONG);
 			docPartT1.addMetaField("field5", "field5_c", FieldType.CHILD);
 			
-		TableRef t2=TableRefImpl.createChild(t1, T2);
+		TableRef t2=tableRefFactory.createChild(t1, T2);
 		MutableMetaDocPart docPartT2 = collection.addMetaDocPart(t2, T2);
 			docPartT2.addMetaField("field1", "field1_s", FieldType.STRING);
 			docPartT2.addMetaField("field2", "field2_i", FieldType.INTEGER);
@@ -47,7 +49,7 @@ public class MetainfBenchmark {
 			docPartT2.addMetaField("field4", "field4_l", FieldType.LONG);
 			docPartT2.addMetaField("field5", "field5_c", FieldType.CHILD);
 		
-		TableRef t3=TableRefImpl.createChild(t2, T3);
+		TableRef t3=tableRefFactory.createChild(t2, T3);
 			MutableMetaDocPart docPartT3 = collection.addMetaDocPart(t3, T3);
 			docPartT3.addMetaField("field1", "field1_s", FieldType.STRING);
 			docPartT3.addMetaField("field2", "field2_i", FieldType.INTEGER);

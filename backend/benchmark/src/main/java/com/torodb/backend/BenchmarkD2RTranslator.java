@@ -21,7 +21,9 @@ import org.openjdk.jmh.infra.Blackhole;
 
 import com.torodb.backend.util.InMemoryRidGenerator;
 import com.torodb.backend.util.TestDataFactory;
+import com.torodb.core.TableRefFactory;
 import com.torodb.core.d2r.D2RTranslator;
+import com.torodb.core.impl.TableRefFactoryImpl;
 import com.torodb.core.transaction.metainf.MetainfoRepository.SnapshotStage;
 import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
 import com.torodb.kvdocument.values.KVDocument;
@@ -29,7 +31,8 @@ import com.torodb.metainfo.cache.mvcc.MvccMetainfoRepository;
 
 public class BenchmarkD2RTranslator {
 
-	private static InMemoryRidGenerator ridGenerator = new InMemoryRidGenerator();
+    private static TableRefFactory tableRefFactory = new TableRefFactoryImpl();
+    private static InMemoryRidGenerator ridGenerator = new InMemoryRidGenerator();
 	
 	@State(Scope.Thread)
 	public static class TranslateState {
@@ -57,7 +60,7 @@ public class BenchmarkD2RTranslator {
 		try (SnapshotStage snapshot = mvccMetainfoRepository.startSnapshotStage()) {
 			mutableSnapshot = snapshot.createMutableSnapshot();
 		}
-		D2RTranslator translator = new D2RTranslatorImpl(ridGenerator, mutableSnapshot, DB1, COLL1);
+		D2RTranslator translator = new D2RTranslatorImpl(tableRefFactory, ridGenerator, mutableSnapshot, DB1, COLL1);
 		for(KVDocument doc: state.document){
 			translator.translate(doc);
 		}

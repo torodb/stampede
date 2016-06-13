@@ -20,9 +20,7 @@
 
 package com.torodb.backend.derby;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
 
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
@@ -51,7 +49,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -595,11 +592,12 @@ public class BackendDerbyTest {
             DSLContext dsl = DSL.using(connection, SQLDialect.DERBY);
             CollectionData collectionData = readDataFromDocument(connection, databaseName, collectionName, document, mutableSnapshot);
             dsl.execute(databaseInterface.createSchemaStatement(databaseSchemaName));
-            mutableSnapshot.streamMetaDatabases().forEach(metaDatabase -> {
-                metaDatabase.streamMetaCollections().forEach(metaCollection -> {
-                    metaCollection.streamContainedMetaDocParts().sorted(TableRefComparator.MetaDocPart.ASC).forEach(metaDocPart -> {
+            mutableSnapshot.streamMetaDatabases().forEachOrdered(metaDatabase -> {
+                metaDatabase.streamMetaCollections().forEachOrdered(metaCollection -> {
+                    metaCollection.streamContainedMetaDocParts().sorted(TableRefComparator.MetaDocPart.ASC).forEachOrdered(metaDocPartObject -> {
+                        MetaDocPart metaDocPart = (MetaDocPart) metaDocPartObject;
                         List<Field<?>> fields = new ArrayList<>(databaseInterface.getDocPartTableInternalFields(metaDocPart));
-                        metaDocPart.streamFields().forEach(metaField -> {
+                        metaDocPart.streamFields().forEachOrdered(metaField -> {
                             fields.add(DSL.field(metaField.getIdentifier(), databaseInterface.getDataType(metaField.getType())));
                         });
                         dsl.execute(databaseInterface.createDocPartTableStatement(dsl.configuration(), databaseSchemaName, metaDocPart.getIdentifier(), fields));
@@ -625,12 +623,12 @@ public class BackendDerbyTest {
             MetaCollection metaCollection = metaDatabase
                     .getMetaCollectionByName(collectionName);
             
-            Converter<Object, Integer> didConverter = (Converter<Object, Integer>) 
-                    databaseInterface.getMetaDocPartTable().DID.getConverter();
-            
             Collection<DocPartResultSet> colelctionResultSets = databaseInterface.getCollectionResultSets(
                     dsl, metaDatabase, metaCollection, 
                     generatedDids.toArray(new Integer[generatedDids.size()]));
+            
+            Converter<Object, Integer> didConverter = (Converter<Object, Integer>) 
+                    databaseInterface.getMetaDocPartTable().DID.getConverter();
             
             Map<Integer, KVDocument> readedDocuments = Maps.newHashMap();
             Table<TableRef, String, Map<Integer, List<KVValue<?>>>> currentDocPartTable = 
@@ -806,4 +804,5 @@ public class BackendDerbyTest {
         }
         elements.set(seq, value);
     }
+    
 }

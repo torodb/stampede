@@ -7,46 +7,49 @@ import javax.annotation.Nonnull;
 import com.torodb.core.TableRef;
 
 public class TableRefImpl extends TableRef {
-    private final static TableRef ROOT = new TableRefImpl();
-    
-    public static TableRef createRoot() {
-        return ROOT;
-    }
-
-    public static TableRef createChild(TableRef parent, String name) {
-        return new TableRefImpl(parent, name, false);
-    }
-
-    public static TableRef createChild(TableRef parent, int arrayDepth) {
-        String name = "$" + arrayDepth;
-        name = name.intern();
-        return new TableRefImpl(parent, name, true);
-    }
+    protected final static TableRef ROOT = new TableRefImpl();
     
     private final Optional<TableRef> parent;
     private final String name;
-    private final int dimension;
-    private final boolean isInArray;
+    private final int depth;
+    private final int arrayDimension;
     
     protected TableRefImpl() {
         super();
         this.parent = Optional.empty();
         this.name = "";
-        this.dimension = 0;
-        this.isInArray = false;
+        this.depth = 0;
+        this.arrayDimension = 0;
     }
     
-    protected TableRefImpl(@Nonnull TableRef parent, @Nonnull String name, boolean isInArray) {
+    protected TableRefImpl(@Nonnull TableRef parent, @Nonnull String name) {
         super();
         this.parent = Optional.of(parent);
         this.name = name;
-        this.dimension = parent.getDepth() + 1;
-        this.isInArray = isInArray;
+        this.depth = parent.getDepth() + 1;
+        this.arrayDimension = 0;
+    }
+    
+    protected TableRefImpl(@Nonnull TableRef parent, int arrayDimension) {
+        super();
+        
+        if (arrayDimension < 2) {
+            throw new IllegalArgumentException("array dimension should be greather than 1");
+        } else {
+            if (arrayDimension > 2 && parent.getArrayDimension() + 1 != arrayDimension) {
+                throw new IllegalArgumentException("array dimension should be " + (parent.getArrayDimension() + 1));
+            }
+        }
+
+        this.parent = Optional.of(parent);
+        this.name = ("$" + arrayDimension).intern();
+        this.depth = parent.getDepth() + 1;
+        this.arrayDimension = arrayDimension;
     }
     
     @Override
     public boolean isInArray() {
-        return isInArray;
+        return arrayDimension > 1;
     }
     
     @Override
@@ -61,13 +64,20 @@ public class TableRefImpl extends TableRef {
 
     @Override
     public int getDepth() {
-        return dimension;
+        return depth;
+    }
+
+    @Override
+    public int getArrayDimension() {
+        return arrayDimension;
     }
 
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = super.hashCode();
+        result = prime * result + arrayDimension;
+        result = prime * result + depth;
         result = prime * result + ((name == null) ? 0 : name.hashCode());
         result = prime * result + ((parent == null) ? 0 : parent.hashCode());
         return result;
@@ -82,6 +92,10 @@ public class TableRefImpl extends TableRef {
         if (getClass() != obj.getClass())
             return false;
         TableRefImpl other = (TableRefImpl) obj;
+        if (arrayDimension != other.arrayDimension)
+            return false;
+        if (depth != other.depth)
+            return false;
         if (name == null) {
             if (other.name != null)
                 return false;
