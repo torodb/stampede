@@ -90,6 +90,9 @@
         <module>backend</module>
         <module>core</module>
         <module>insert-stream</module>
+        <module>mongodb-layer</module>
+        <module>torod</module>
+        <module>mongodb</module>
     </modules>
 
     <dependencyManagement>

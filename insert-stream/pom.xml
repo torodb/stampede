@@ -40,12 +40,7 @@
             <scope>test</scope>
         </dependency>
         
-        <dependency>
-            <groupId>io.reactivex</groupId>
-            <artifactId>rxjava-reactive-streams</artifactId>
-            <version>1.0.1</version>
-            <classifier>benchmarks</classifier>
-        </dependency>
+        
         <dependency>
             <groupId>org.scala-lang</groupId>
             <artifactId>scala-library</artifactId>
@@ -70,6 +65,11 @@
                     <artifactId>config</artifactId>
                 </exclusion>
             </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>io.reactivex</groupId>
+            <artifactId>rxjava-reactive-streams</artifactId>
+            <version>1.0.1</version>
         </dependency>
     </dependencies>
 </project>
