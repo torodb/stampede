@@ -35,7 +35,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -50,47 +49,41 @@ import org.apache.logging.log4j.Logger;
 import org.jooq.Configuration;
 import org.jooq.ConnectionProvider;
 import org.jooq.DSLContext;
-import org.jooq.DataType;
 import org.jooq.Field;
+import org.jooq.Record1;
 import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.torodb.backend.DatabaseInterface;
-import com.torodb.backend.converters.jooq.ValueToJooqConverterProvider;
+import com.torodb.backend.converters.TableRefConverter;
+import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.backend.converters.jooq.ValueToJooqDataTypeProvider;
 import com.torodb.backend.derby.converters.DerbyKVTypeToSqlType;
 import com.torodb.backend.derby.converters.DerbyValueToCopyConverter;
-import com.torodb.backend.derby.converters.jooq.DerbyValueToJooqConverterProvider;
 import com.torodb.backend.derby.converters.jooq.DerbyValueToJooqDataTypeProvider;
 import com.torodb.backend.derby.tables.DerbyMetaCollectionTable;
 import com.torodb.backend.derby.tables.DerbyMetaDatabaseTable;
 import com.torodb.backend.derby.tables.DerbyMetaDocPartTable;
 import com.torodb.backend.derby.tables.DerbyMetaFieldTable;
+import com.torodb.backend.meta.TorodbSchema;
 import com.torodb.backend.mocks.KVTypeToSqlType;
-import com.torodb.backend.mocks.RetryTransactionException;
 import com.torodb.backend.mocks.ToroImplementationException;
 import com.torodb.backend.mocks.ToroRuntimeException;
 import com.torodb.backend.sql.index.NamedDbIndex;
-import com.torodb.backend.tables.DocPartTable;
 import com.torodb.backend.tables.MetaCollectionTable;
 import com.torodb.backend.tables.MetaDatabaseTable;
 import com.torodb.backend.tables.MetaDocPartTable;
+import com.torodb.backend.tables.MetaDocPartTable.DocPartTableFields;
 import com.torodb.backend.tables.MetaFieldTable;
-import com.torodb.backend.tables.records.MetaCollectionRecord;
-import com.torodb.backend.tables.records.MetaDatabaseRecord;
-import com.torodb.backend.tables.records.MetaDocPartRecord;
-import com.torodb.backend.tables.records.MetaFieldRecord;
 import com.torodb.core.TableRef;
 import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.d2r.DocPartRow;
-import com.torodb.core.impl.TableRefImpl;
+import com.torodb.core.transaction.RollbackException;
 import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetaField;
-import com.torodb.kvdocument.values.KVMongoObjectId;
-import com.torodb.kvdocument.values.KVMongoTimestamp;
 import com.torodb.kvdocument.values.KVValue;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -105,16 +98,41 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
 
     private static final long serialVersionUID = 484638503;
 
-    private final ValueToJooqConverterProvider valueToJooqConverterProvider;
+    private static final String[] RESTRICTED_SCHEMA_NAMES = new String[] {
+            TorodbSchema.TORODB_SCHEMA,
+            "NULLID",
+            "SQLJ",
+            "SYS",
+            "SYSCAT",
+            "SYSCS_DIAG",
+            "SYSCS_UTIL",
+            "SYSFUN",
+            "SYSIBM",
+            "SYSPROC",
+            "SYSSTAT",
+    };
+    {
+        Arrays.sort(RESTRICTED_SCHEMA_NAMES);
+    }
+
+    private static final String[] RESTRICTED_COLUMN_NAMES = new String[] {
+    };
+    {
+        Arrays.sort(RESTRICTED_COLUMN_NAMES);
+    }
+    
     private final ValueToJooqDataTypeProvider valueToJooqDataTypeProvider;
     private final KVTypeToSqlType kVTypeToSqlType;
     private final FieldComparator fieldComparator = new FieldComparator();
+    private final DerbyMetaDatabaseTable metaDatabaseTable = new DerbyMetaDatabaseTable();
+    private final DerbyMetaCollectionTable metaCollectionTable = new DerbyMetaCollectionTable();
+    private final DerbyMetaDocPartTable metaDocPartTable = new DerbyMetaDocPartTable();
+    private final DerbyMetaFieldTable metaFieldTable = new DerbyMetaFieldTable();
 
     @Inject
-    public DerbyDatabaseInterface(KVTypeToSqlType kVTypeToSqlType) {
-        this.valueToJooqConverterProvider = DerbyValueToJooqConverterProvider.getInstance();
+    public DerbyDatabaseInterface() {
         this.valueToJooqDataTypeProvider = DerbyValueToJooqDataTypeProvider.getInstance();
-        this.kVTypeToSqlType = kVTypeToSqlType;
+        this.kVTypeToSqlType = new DerbyKVTypeToSqlType();
     }
 
     private void readObject(java.io.ObjectInputStream stream)
@@ -126,30 +144,25 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
     @Nonnull
     @Override
     public DerbyMetaDatabaseTable getMetaDatabaseTable() {
-        return new DerbyMetaDatabaseTable();
+        return metaDatabaseTable;
     }
 
     @Nonnull
     @Override
     public DerbyMetaCollectionTable getMetaCollectionTable() {
-        return new DerbyMetaCollectionTable();
+        return metaCollectionTable;
     }
 
     @Nonnull
     @Override
     public DerbyMetaDocPartTable getMetaDocPartTable() {
-        return new DerbyMetaDocPartTable();
+        return metaDocPartTable;
     }
 
     @Nonnull
     @Override
     public DerbyMetaFieldTable getMetaFieldTable() {
-        return new DerbyMetaFieldTable();
-    }
-
-    @Override
-    public @Nonnull ValueToJooqConverterProvider getValueToJooqConverterProvider() {
-        return valueToJooqConverterProvider;
+        return metaFieldTable;
     }
 
     @Override
@@ -158,21 +171,21 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
     }
 
     @Override
-    public String createIndexStatement(DocPartTable table, Field<?> field, Configuration conf) {
+    public String createIndexStatement(Configuration conf, String schemaName, String tableName, String fieldName) {
         StringBuilder sb = new StringBuilder();
         sb.append("CREATE INDEX ON \"")
-                .append(table.getSchema().getName())
+                .append(schemaName)
                 .append("\".\"")
-                .append(table.getName())
+                .append(tableName)
                 .append("\" (\"")
-                .append(field.getName())
+                .append(fieldName)
                 .append("\")");
 
         return sb.toString();
     }
 
     @Override
-    public String createPathDocTableStatement(String schemaName, String tableName, List<Field<?>> fields, Configuration conf) {
+    public String createDocPartTableStatement(Configuration conf, String schemaName, String tableName, Collection<Field<?>> fields) {
         StringBuilder sb = new StringBuilder();
         sb.append("CREATE TABLE ")
                 .append(fullTableName(schemaName, tableName))
@@ -195,38 +208,22 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
     }
 
     @Override
-    public String addColumnsToTableStatement(String schemaName, String tableName, List<Field<?>> fields, Configuration conf) {
+    public String addColumnToDocPartTableStatement(Configuration conf, String schemaName, String tableName, Field<?> field) {
         StringBuilder sb = new StringBuilder();
         sb.append("ALTER TABLE ")
                 .append(fullTableName(schemaName, tableName));
 
-        for (Field<?> field : getFieldIterator(fields)) {
-            sb
-                    .append(" ADD COLUMN \"")
-                    .append(field.getName())
-                    .append("\" ")
-                    .append(getSqlType(field, conf));
-
-            sb.append(',');
-        }
-        if (fields.size() > 0) {
-            sb.delete(sb.length() - 1, sb.length());
-        }
-        sb.append(')');
+        sb
+                .append(" ADD COLUMN \"")
+                .append(field.getName())
+                .append("\" ")
+                .append(getSqlType(field, conf));
+        
         return sb.toString();
     }
 
     private String getSqlType(Field<?> field, Configuration conf) {
-        if (field.getConverter() != null) {
-            Class<?> fieldType = field.getDataType().getType();
-            if (fieldType.equals(KVMongoObjectId.class)) {
-                return DerbyKVTypeToSqlType.MONGO_OBJECT_ID_TYPE;
-            }
-            if (fieldType.equals(KVMongoTimestamp.class)) {
-                return DerbyKVTypeToSqlType.MONGO_TIMESTAMP_TYPE;
-            }
-        }
-        return field.getDataType().getTypeName(conf);
+        return field.getDataType().getCastTypeName(conf);
     }
 
     private Iterable<Field<?>> getFieldIterator(Iterable<Field<?>> fields) {
@@ -256,24 +253,24 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
 
         @Override
         public int compare(Field o1, Field o2) {
-            if (o1.getName().equals(DocPartTable.DID_COLUMN_NAME)) {
+            if (o1.getName().equals(DocPartTableFields.DID)) {
                 return -1;
-            } else if (o2.getName().equals(DocPartTable.DID_COLUMN_NAME)) {
+            } else if (o2.getName().equals(DocPartTableFields.DID)) {
                 return 1;
             }
-            if (o1.getName().equals(DocPartTable.RID_COLUMN_NAME)) {
+            if (o1.getName().equals(DocPartTableFields.RID)) {
                 return -1;
-            } else if (o2.getName().equals(DocPartTable.RID_COLUMN_NAME)) {
+            } else if (o2.getName().equals(DocPartTableFields.RID)) {
                 return 1;
             }
-            if (o1.getName().equals(DocPartTable.PID_COLUMN_NAME)) {
+            if (o1.getName().equals(DocPartTableFields.PID)) {
                 return -1;
-            } else if (o2.getName().equals(DocPartTable.PID_COLUMN_NAME)) {
+            } else if (o2.getName().equals(DocPartTableFields.PID)) {
                 return 1;
             }
-            if (o1.getName().equals(DocPartTable.SEQ_COLUMN_NAME)) {
+            if (o1.getName().equals(DocPartTableFields.SEQ)) {
                 return -1;
-            } else if (o2.getName().equals(DocPartTable.SEQ_COLUMN_NAME)) {
+            } else if (o2.getName().equals(DocPartTableFields.SEQ)) {
                 return 1;
             }
 
@@ -328,6 +325,16 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
     }
 
     @Override
+    public boolean isRestrictedSchemaName(@Nonnull String schemaName) {
+        return Arrays.binarySearch(RESTRICTED_SCHEMA_NAMES, schemaName) >= 0;
+    }
+    
+    @Override
+    public boolean isRestrictedColumnName(@Nonnull String columnName) {
+        return Arrays.binarySearch(RESTRICTED_COLUMN_NAMES, columnName) >= 0;
+    }
+
+    @Override
     @Nonnull
     public ResultSet getColumns(DatabaseMetaData metadata, String schemaName, String tableName) throws SQLException {
         return metadata.getColumns("%", schemaName, tableName, null);
@@ -371,7 +378,7 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
                 .append("CREATE TABLE ")
                 .append(fullTableName(schemaName, tableName))
                 .append(" (")
-                .append('"').append(MetaDatabaseTable.TableFields.NAME.toString()).append('"').append("             varchar(4192)     PRIMARY KEY     ,")
+                .append('"').append(MetaDatabaseTable.TableFields.NAME.toString()).append('"').append("             varchar(32672)    PRIMARY KEY     ,")
                 .append('"').append(MetaDatabaseTable.TableFields.IDENTIFIER.toString()).append('"').append("       varchar(128)      NOT NULL UNIQUE ")
                 .append(")")
                 .toString();
@@ -383,8 +390,9 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
                 .append("CREATE TABLE ")
                 .append(fullTableName(schemaName, tableName))
                 .append(" (")
-                .append('"').append(MetaCollectionTable.TableFields.DATABASE.toString()).append('"').append("         varchar(4192)     NOT NULL        ,")
-                .append('"').append(MetaCollectionTable.TableFields.NAME.toString()).append('"').append("             varchar(4192)     NOT NULL        ,")
+                .append('"').append(MetaCollectionTable.TableFields.DATABASE.toString()).append('"').append("         varchar(32672)    NOT NULL        ,")
+                .append('"').append(MetaCollectionTable.TableFields.NAME.toString()).append('"').append("             varchar(32672)    NOT NULL        ,")
+                .append('"').append(MetaDatabaseTable.TableFields.IDENTIFIER.toString()).append('"').append("         varchar(128)      NOT NULL UNIQUE ,")
                 .append("    PRIMARY KEY (").append('"').append(MetaCollectionTable.TableFields.DATABASE.toString()).append('"').append(",")
                     .append('"').append(MetaCollectionTable.TableFields.NAME.toString()).append('"').append(")")
                 .append(")")
@@ -397,8 +405,8 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
                 .append("CREATE TABLE ")
                 .append(fullTableName(schemaName, tableName))
                 .append(" (")
-                .append('"').append(MetaDocPartTable.TableFields.DATABASE.toString()).append('"').append("         varchar(4192)     NOT NULL        ,")
-                .append('"').append(MetaDocPartTable.TableFields.COLLECTION.toString()).append('"').append("       varchar(4192)     NOT NULL        ,")
+                .append('"').append(MetaDocPartTable.TableFields.DATABASE.toString()).append('"').append("         varchar(32672)    NOT NULL        ,")
+                .append('"').append(MetaDocPartTable.TableFields.COLLECTION.toString()).append('"').append("       varchar(32672)    NOT NULL        ,")
                 .append('"').append(MetaDocPartTable.TableFields.TABLE_REF.toString()).append('"').append("        varchar(32672)    NOT NULL        ,")
                 .append('"').append(MetaDocPartTable.TableFields.IDENTIFIER.toString()).append('"').append("       varchar(128)      NOT NULL        ,")
                 .append('"').append(MetaDocPartTable.TableFields.LAST_RID.toString()).append('"').append("         integer           NOT NULL        ,")
@@ -417,10 +425,10 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
                 .append("CREATE TABLE ")
                 .append(fullTableName(schemaName, tableName))
                 .append(" (")
-                .append('"').append(MetaFieldTable.TableFields.DATABASE.toString()).append('"').append("         varchar(4192)    NOT NULL        ,")
-                .append('"').append(MetaFieldTable.TableFields.COLLECTION.toString()).append('"').append("       varchar(4192)    NOT NULL        ,")
+                .append('"').append(MetaFieldTable.TableFields.DATABASE.toString()).append('"').append("         varchar(32672)   NOT NULL        ,")
+                .append('"').append(MetaFieldTable.TableFields.COLLECTION.toString()).append('"').append("       varchar(32672)   NOT NULL        ,")
                 .append('"').append(MetaFieldTable.TableFields.TABLE_REF.toString()).append('"').append("        varchar(32672)   NOT NULL        ,")
-                .append('"').append(MetaFieldTable.TableFields.NAME.toString()).append('"').append("             varchar(4192)    NOT NULL        ,")
+                .append('"').append(MetaFieldTable.TableFields.NAME.toString()).append('"').append("             varchar(32672)   NOT NULL        ,")
                 .append('"').append(MetaFieldTable.TableFields.IDENTIFIER.toString()).append('"').append("       varchar(128)     NOT NULL        ,")
                 .append('"').append(MetaFieldTable.TableFields.TYPE.toString()).append('"').append("             varchar(128)     NOT NULL        ,")
                 .append("    PRIMARY KEY (").append('"').append(MetaFieldTable.TableFields.DATABASE.toString()).append('"').append(",")
@@ -443,7 +451,7 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
                 .append("CREATE TABLE ")
                 .append(fullTableName(schemaName, tableName))
                 .append(" (")
-                .append('"').append(indexNameColumn).append('"').append("       varchar(4192)     PRIMARY KEY,")
+                .append('"').append(indexNameColumn).append('"').append("       varchar(32672)    PRIMARY KEY,")
                 .append('"').append(indexOptionsColumn).append('"').append("    varchar(23672)    NOT NULL")
                 .append(")")
                 .toString();
@@ -829,7 +837,7 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
     }
 
     @Override
-    public void insertPathDocuments(DSLContext dsl, String schemaName, DocPartData docPartData) throws RetryTransactionException {
+    public void insertPathDocuments(DSLContext dsl, String schemaName, DocPartData docPartData) throws RollbackException {
         Preconditions.checkArgument(docPartData.rowCount() != 0, "Called insert with 0 documents");
         
         Connection connection = dsl.configuration().connectionProvider().acquire();
@@ -891,8 +899,7 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
             MetaField metaField = metaFieldIterator.next();
             insertStatementHeaderBuilder.append("\"")
                 .append(metaField.getIdentifier())
-                .append("\",")
-                .append(",");
+                .append("\",");
         }
         insertStatementHeaderBuilder.setCharAt(insertStatementHeaderBuilder.length() - 1, ')');
         insertStatementHeaderBuilder.append(" VALUES ");
@@ -904,10 +911,14 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
             if (insertStatementBuilder.length() == 0) {
                 insertStatementBuilder.append(insertStatementHeaderBuilder);
             }
-            insertStatementBuilder.append("(");
+            insertStatementBuilder.append('(');
             for (KVValue<?> value : docPartRow) {
-                insertStatementBuilder.append(getSqlValue(value))
-                    .append(",");
+                if (value != null) {
+                    insertStatementBuilder.append(getSqlValue(value))
+                        .append(',');
+                } else {
+                    insertStatementBuilder.append("NULL,");
+                }
             }
             insertStatementBuilder.setCharAt(insertStatementBuilder.length() - 1, ')');
             insertStatementBuilder.append(",");
@@ -927,7 +938,7 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
     private void copyInsertPathDocuments(
             PGConnection connection,
             String schemaName,
-            DocPartData docPartData) throws RetryTransactionException, SQLException, IOException {
+            DocPartData docPartData) throws RollbackException, SQLException, IOException {
 
         final int maxBatchSize = 1000;
         final StringBuilder sb = new StringBuilder(2048);
@@ -974,7 +985,6 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
         }
     }
 
-    @SuppressWarnings("unchecked")
     private void addToCopy(
             StringBuilder sb,
             DocPartRow docPartRow) {
@@ -1034,67 +1044,52 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
     }
 
     @Override
-    public DataType<?> getDataType(String type) {
-        throw new ToroImplementationException("Not implemented yet");
+    public int consumeRids(DSLContext dsl, String database, String collection, TableRef tableRef, int count) {
+        DerbyMetaDocPartTable metaDocPartTable = getMetaDocPartTable();
+        Record1<Integer> lastRid = dsl.select(metaDocPartTable.LAST_RID).from(metaDocPartTable).where(
+                metaDocPartTable.DATABASE.eq(database)
+                .and(metaDocPartTable.COLLECTION.eq(collection))
+                .and(metaDocPartTable.TABLE_REF.eq(TableRefConverter.toJsonArray(tableRef))))
+            .fetchOne();
+        dsl.update(metaDocPartTable).set(metaDocPartTable.LAST_RID, metaDocPartTable.LAST_RID.plus(count)).execute();
+        return lastRid.value1();
     }
 
     @Override
-    public int reserveRids(DSLContext dsl, String database, String collection, TableRef tableRef, int count) {
-        throw new ToroImplementationException("Not implemented yet");
-    }
-
-    @Override
-    public Iterable<MetaDatabaseRecord> getDatabases(DSLContext dsl) {
-        throw new ToroImplementationException("Not implemented yet");
-    }
-
-    @Override
-    public Iterable<MetaCollectionRecord> getCollections(DSLContext dsl, String database) {
-        throw new ToroImplementationException("Not implemented yet");
-    }
-
-    @Override
-    public DataType<?> getDataType(FieldType type) {
+    public DataTypeForKV<?> getDataType(FieldType type) {
         return valueToJooqDataTypeProvider.getDataType(type);
     }
 
     @Override
-    public void handleRetryException(Context context, SQLException sqlException) throws RetryTransactionException {
-        if (context == Context.batchUpdate && "40001".equals(sqlException.getSQLState())) {
-            throw new RetryTransactionException(sqlException);
-        }
+    public void handleRetryException(Context context, SQLException sqlException) throws RollbackException {
     }
 
     @Override
-    public void handleRetryException(Context context, DataAccessException dataAccessException) throws RetryTransactionException {
-        if (context == Context.batchUpdate && "40001".equals(dataAccessException.sqlState())) {
-            throw new RetryTransactionException(dataAccessException);
-        }
-    }
-
-    @Override
-    public TableRef toTableRef(Object tableRefObject) {
-        TableRef tableRef = TableRefImpl.createRoot();
-        String[] tableRefStrings = (String[]) tableRefObject;
-        for (String tableRefString : tableRefStrings) {
-            tableRef = TableRefImpl.createChild(tableRef, tableRefString.intern());
-        }
-        return tableRef;
-    }
-
-    @Override
-    public Map<String, MetaDocPartRecord<?>> getContainersByTable(DSLContext dsl, String database, String collection) {
-        throw new ToroImplementationException("Not implemented yet");
-    }
-
-    @Override
-    public Map<String, MetaFieldRecord<?>> getFieldsByColumn(DSLContext dsl, String database, String collection,
-            TableRef tableRef) {
-        throw new ToroImplementationException("Not implemented yet");
+    public void handleRetryException(Context context, DataAccessException dataAccessException) throws RollbackException {
     }
 
     @Override
     public boolean isSameIdentifier(@Nonnull String leftIdentifier, @Nonnull String rightIdentifier) {
         return leftIdentifier.equals(rightIdentifier); //leftIdentifier.toLowerCase(Locale.US).equals(rightIdentifier.toLowerCase(Locale.US));
+    }
+
+    @Override
+    public Field<?> getDidColumn() {
+        return getMetaDocPartTable().DID;
+    }
+
+    @Override
+    public Field<?> getRidColumn() {
+        return getMetaDocPartTable().RID;
+    }
+
+    @Override
+    public Field<?> getPidColumn() {
+        return getMetaDocPartTable().PID;
+    }
+
+    @Override
+    public Field<?> getSeqColumn() {
+        return getMetaDocPartTable().SEQ;
     }
 }

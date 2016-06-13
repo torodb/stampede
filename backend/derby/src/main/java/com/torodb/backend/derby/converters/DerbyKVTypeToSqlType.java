@@ -78,12 +78,6 @@ public class DerbyKVTypeToSqlType implements KVTypeToSqlType {
             case Types.TIMESTAMP:
                 return InstantType.INSTANCE;
             case Types.VARCHAR:
-                return StringType.INSTANCE;
-            case Types.BINARY:
-                return BinaryType.INSTANCE;
-            case Types.OTHER:
-                break;
-            case Types.DISTINCT: {
                 if (jdbcStringType.equals("\"" + TorodbSchema.TORODB_SCHEMA + "\".\"" + MONGO_OBJECT_ID_TYPE + "\"")
                         || jdbcStringType.equals(MongoObjectIdUDT.MONGO_OBJECT_ID.getName())) {
                     return MongoObjectIdType.INSTANCE;
@@ -92,6 +86,12 @@ public class DerbyKVTypeToSqlType implements KVTypeToSqlType {
                         || jdbcStringType.equals(MongoTimestampUDT.MONGO_TIMESTAMP.getName())) {
                     return MongoTimestampType.INSTANCE;
                 }
+                return StringType.INSTANCE;
+            case Types.BINARY:
+                return BinaryType.INSTANCE;
+            case Types.OTHER:
+                break;
+            case Types.DISTINCT: {
                 break;
             }
         }

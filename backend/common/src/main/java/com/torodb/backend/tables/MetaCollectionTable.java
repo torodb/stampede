@@ -4,7 +4,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.jooq.Field;
-import org.jooq.Record;
 import org.jooq.Table;
 import org.jooq.TableField;
 import org.jooq.UniqueKey;
@@ -23,6 +22,7 @@ public abstract class MetaCollectionTable<R extends MetaCollectionRecord> extend
     public enum TableFields {
         DATABASE        (   "database"          ),
         NAME            (   "name"              ),
+        IDENTIFIER      (   "identifier"        ),
         ;
 
         public final String fieldName;
@@ -56,8 +56,15 @@ public abstract class MetaCollectionTable<R extends MetaCollectionRecord> extend
     public final TableField<R, String> NAME 
             = createNameField();
 
+    /**
+     * The column <code>torodb.collection.identifier</code>.
+     */
+    public final TableField<R, String> IDENTIFIER 
+            = createIdentifierField();
+
     protected abstract TableField<R, String> createDatabaseField();
     protected abstract TableField<R, String> createNameField();
+    protected abstract TableField<R, String> createIdentifierField();
 
     private final UniqueKeys<R> uniqueKeys;
     

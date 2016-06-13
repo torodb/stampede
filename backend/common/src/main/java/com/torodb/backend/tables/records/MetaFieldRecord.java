@@ -26,9 +26,11 @@ import org.jooq.Row6;
 import org.jooq.impl.UpdatableRecordImpl;
 
 import com.torodb.backend.tables.MetaFieldTable;
+import com.torodb.core.TableRef;
+import com.torodb.core.transaction.metainf.FieldType;
 
 public abstract class MetaFieldRecord<TableRefType> extends UpdatableRecordImpl<MetaFieldRecord<TableRefType>> 
-        implements Record6<String, String, TableRefType, String, String, String> {
+        implements Record6<String, String, TableRefType, String, String, FieldType> {
 // database, name, original_name, last_did
 	private static final long serialVersionUID = -2107968478;
 
@@ -105,15 +107,15 @@ public abstract class MetaFieldRecord<TableRefType> extends UpdatableRecordImpl<
     /**
      * Setter for <code>torodb.field.type</code>.
      */
-    public void setType(String value) {
+    public void setType(FieldType value) {
         setValue(5, value);
     }
 
     /**
      * Getter for <code>torodb.field.type</code>.
      */
-    public String getType() {
-        return (String) getValue(5);
+    public FieldType getType() {
+        return (FieldType) getValue(5);
     }
 
 	// -------------------------------------------------------------------------
@@ -136,7 +138,7 @@ public abstract class MetaFieldRecord<TableRefType> extends UpdatableRecordImpl<
 	 * {@inheritDoc}
 	 */
 	@Override
-	public Row6<String, String, TableRefType, String, String, String> fieldsRow() {
+	public Row6<String, String, TableRefType, String, String, FieldType> fieldsRow() {
 		return (Row6) super.fieldsRow();
 	}
 
@@ -144,7 +146,7 @@ public abstract class MetaFieldRecord<TableRefType> extends UpdatableRecordImpl<
 	 * {@inheritDoc}
 	 */
 	@Override
-	public Row6<String, String, TableRefType, String, String, String> valuesRow() {
+	public Row6<String, String, TableRefType, String, String, FieldType> valuesRow() {
 		return (Row6) super.valuesRow();
 	}
 
@@ -192,7 +194,7 @@ public abstract class MetaFieldRecord<TableRefType> extends UpdatableRecordImpl<
      * {@inheritDoc}
      */
     @Override
-    public Field<String> field6() {
+    public Field<FieldType> field6() {
         return metaFieldTable.TYPE;
     }
 
@@ -240,7 +242,7 @@ public abstract class MetaFieldRecord<TableRefType> extends UpdatableRecordImpl<
      * {@inheritDoc}
      */
     @Override
-    public String value6() {
+    public FieldType value6() {
         return getType();
     }
 
@@ -293,7 +295,7 @@ public abstract class MetaFieldRecord<TableRefType> extends UpdatableRecordImpl<
      * {@inheritDoc}
      */
     @Override
-    public MetaFieldRecord value6(String value) {
+    public MetaFieldRecord value6(FieldType value) {
         setType(value);
         return this;
     }
@@ -302,7 +304,15 @@ public abstract class MetaFieldRecord<TableRefType> extends UpdatableRecordImpl<
 	 * {@inheritDoc}
 	 */
     @Override
-    public abstract MetaFieldRecord values(String value1, String value2, TableRefType value3, String value4, String value5, String value6);
+    public abstract MetaFieldRecord values(String database, String collection, TableRefType tableRef, String name, String identifier, FieldType type);
+
+    public MetaFieldRecord values(String database, String collection, TableRef tableRef, String name, String identifier, FieldType type) {
+        return values(database, collection, toTableRefType(tableRef), name, identifier, type);
+    }
+    
+    protected abstract TableRefType toTableRefType(TableRef tableRef);
+    
+    public abstract TableRef getTableRefValue();
 
     // -------------------------------------------------------------------------
     // Constructors

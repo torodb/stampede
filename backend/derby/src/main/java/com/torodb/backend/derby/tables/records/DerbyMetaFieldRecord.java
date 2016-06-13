@@ -19,10 +19,15 @@
  */
 package com.torodb.backend.derby.tables.records;
 
+import javax.json.JsonArray;
+
+import com.torodb.backend.converters.TableRefConverter;
 import com.torodb.backend.derby.tables.DerbyMetaFieldTable;
 import com.torodb.backend.tables.records.MetaFieldRecord;
+import com.torodb.core.TableRef;
+import com.torodb.core.transaction.metainf.FieldType;
 
-public class DerbyMetaFieldRecord extends MetaFieldRecord<String[]> {
+public class DerbyMetaFieldRecord extends MetaFieldRecord<JsonArray> {
 
     private static final long serialVersionUID = -7296241344455399566L;
 
@@ -36,14 +41,14 @@ public class DerbyMetaFieldRecord extends MetaFieldRecord<String[]> {
 	/**
 	 * Create a detached, initialised MetaFieldRecord
 	 */
-	public DerbyMetaFieldRecord(String database, String collection, String[] tableRef, String name, String identifier, String type) {
+	public DerbyMetaFieldRecord(String database, String collection, JsonArray tableRef, String name, String identifier, FieldType type) {
 		super(DerbyMetaFieldTable.FIELD);
 		
 		values(database, collection, tableRef, name, identifier, type);
 	}
 
     @Override
-    public MetaFieldRecord values(String database, String collection, String[] tableRef, String name, String identifier, String type) {
+    public MetaFieldRecord values(String database, String collection, JsonArray tableRef, String name, String identifier, FieldType type) {
         setDatabase(database);
         setCollection(collection);
         setTableRef(tableRef);
@@ -51,5 +56,15 @@ public class DerbyMetaFieldRecord extends MetaFieldRecord<String[]> {
         setIdentifier(identifier);
         setType(type);
         return this;
+    }
+
+    @Override
+    protected JsonArray toTableRefType(TableRef tableRef) {
+        return TableRefConverter.toJsonArray(tableRef);
+    }
+
+    @Override
+    public TableRef getTableRefValue() {
+        return TableRefConverter.fromJsonArray(getTableRef());
     }
 }

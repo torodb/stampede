@@ -92,6 +92,7 @@ public interface BackendConnection {
      * @param col  the collection that contains the given data
      * @param data the rows to be inserted
      * @throws RollbackException
+     * @throws RetryTransactionException
      */
     public void insert(MetaDatabase db, MetaCollection col, DocPartData data) throws RollbackException;
 }

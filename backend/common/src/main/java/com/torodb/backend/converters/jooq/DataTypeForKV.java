@@ -49,16 +49,16 @@ public class DataTypeForKV<T extends KVValue<?>> implements DataType<T> {
     }
     
     private final DataType<T> dataType;
-    private final KVValueConverter<?, T> kVValueConverter;
+    private final KVValueConverter<?, T> kvValueConverter;
     
-    private DataTypeForKV(DataType<T> dataType, KVValueConverter<?, T> subdocValueConverter) {
+    private DataTypeForKV(DataType<T> dataType, KVValueConverter<?, T> kvValueConverter) {
         super();
         this.dataType = dataType;
-        this.kVValueConverter = subdocValueConverter;
+        this.kvValueConverter = kvValueConverter;
     }
 
-    public KVValueConverter<?, T> getSubdocValueConverter() {
-        return kVValueConverter;
+    public KVValueConverter<?, T> getKVValueConverter() {
+        return kvValueConverter;
     }
     
     public DataType<T> getSQLDataType() {
@@ -94,15 +94,15 @@ public class DataTypeForKV<T extends KVValue<?>> implements DataType<T> {
     }
 
     public <E extends EnumType> DataType<E> asEnumDataType(Class<E> enumDataType) {
-        return dataType.asEnumDataType(enumDataType);
+        return new DataTypeForKV(dataType.asEnumDataType(enumDataType), kvValueConverter);
     }
 
     public <U> DataType<U> asConvertedDataType(Converter<? super T, U> converter) {
-        return dataType.asConvertedDataType(converter);
+        return new DataTypeForKV(dataType.asConvertedDataType(converter), kvValueConverter);
     }
 
     public <U> DataType<U> asConvertedDataType(Binding<? super T, U> binding) {
-        return dataType.asConvertedDataType(binding);
+        return new DataTypeForKV(dataType.asConvertedDataType(binding), kvValueConverter);
     }
 
     public String getTypeName() {
@@ -138,7 +138,7 @@ public class DataTypeForKV<T extends KVValue<?>> implements DataType<T> {
     }
 
     public DataType<T> nullable(boolean nullable) {
-        return dataType.nullable(nullable);
+        return new DataTypeForKV(dataType.nullable(nullable), kvValueConverter);
     }
 
     public boolean nullable() {
@@ -155,11 +155,11 @@ public class DataTypeForKV<T extends KVValue<?>> implements DataType<T> {
     }
 
     public DataType<T> precision(int precision) {
-        return dataType.precision(precision);
+        return new DataTypeForKV(dataType.precision(precision), kvValueConverter);
     }
 
     public DataType<T> precision(int precision, int scale) {
-        return dataType.precision(precision, scale);
+        return new DataTypeForKV(dataType.precision(precision, scale), kvValueConverter);
     }
 
     public int precision() {
@@ -171,7 +171,7 @@ public class DataTypeForKV<T extends KVValue<?>> implements DataType<T> {
     }
 
     public DataType<T> scale(int scale) {
-        return dataType.scale(scale);
+        return new DataTypeForKV(dataType.scale(scale), kvValueConverter);
     }
 
     public int scale() {
@@ -183,7 +183,7 @@ public class DataTypeForKV<T extends KVValue<?>> implements DataType<T> {
     }
 
     public DataType<T> length(int length) {
-        return dataType.length(length);
+        return new DataTypeForKV(dataType.length(length), kvValueConverter);
     }
 
     public int length() {
@@ -228,16 +228,16 @@ public class DataTypeForKV<T extends KVValue<?>> implements DataType<T> {
 
     @Override
     public DataType<T> defaultValue(T defaultValue) {
-        return dataType.defaultValue(defaultValue);
+        return new DataTypeForKV(dataType.defaultValue(defaultValue), kvValueConverter);
     }
 
     @Override
     public DataType<T> defaultValue(Field<T> defaultValue) {
-        return dataType.defaultValue(defaultValue);
+        return new DataTypeForKV(dataType.defaultValue(defaultValue), kvValueConverter);
     }
 
     @Override
     public Field<T> defaultValue() {
-        return defaultValue();
+        return dataType.defaultValue();
     }
 }

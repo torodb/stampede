@@ -6,6 +6,7 @@ import java.util.Set;
 import javax.annotation.Nonnull;
 
 import org.jooq.DSLContext;
+import org.jooq.Field;
 
 import com.torodb.backend.sql.index.NamedDbIndex;
 import com.torodb.backend.tables.MetaCollectionTable;
@@ -16,18 +17,17 @@ import com.torodb.backend.tables.records.MetaCollectionRecord;
 import com.torodb.backend.tables.records.MetaDatabaseRecord;
 import com.torodb.backend.tables.records.MetaDocPartRecord;
 import com.torodb.backend.tables.records.MetaFieldRecord;
-import com.torodb.core.TableRef;
 
 public interface ReadMetaDataInterface {
-    @Nonnull MetaDatabaseTable<?> getMetaDatabaseTable();
-    @Nonnull MetaCollectionTable<?> getMetaCollectionTable();
-    @Nonnull MetaDocPartTable<?, ?> getMetaDocPartTable();
-    @Nonnull MetaFieldTable<?, ?> getMetaFieldTable();
+    @Nonnull <R extends MetaDatabaseRecord> MetaDatabaseTable<R> getMetaDatabaseTable();
+    @Nonnull <R extends MetaCollectionRecord> MetaCollectionTable<R> getMetaCollectionTable();
+    @Nonnull <T, R extends MetaDocPartRecord<T>> MetaDocPartTable<T, R> getMetaDocPartTable();
+    @Nonnull <T, R extends MetaFieldRecord<T>> MetaFieldTable<T, R> getMetaFieldTable();
     
-    @Nonnull Iterable<MetaDatabaseRecord> getDatabases(@Nonnull DSLContext dsl);
-    @Nonnull Iterable<MetaCollectionRecord> getCollections(@Nonnull DSLContext dsl, @Nonnull String database);
-    @Nonnull Map<String, MetaDocPartRecord<?>> getContainersByTable(@Nonnull DSLContext dsl, @Nonnull String database, @Nonnull String collection);
-    @Nonnull Map<String, MetaFieldRecord<?>> getFieldsByColumn(@Nonnull DSLContext dsl, @Nonnull String database, @Nonnull String collection, @Nonnull TableRef tableRef);
+    @Nonnull Field<?> getDidColumn();
+    @Nonnull Field<?> getRidColumn();
+    @Nonnull Field<?> getPidColumn();
+    @Nonnull Field<?> getSeqColumn();
     
     long getDatabaseSize(@Nonnull DSLContext dsl, @Nonnull String databaseName);
     Long getCollectionSize(@Nonnull DSLContext dsl, @Nonnull String schema, @Nonnull String collection);

@@ -23,7 +23,6 @@ package com.torodb.backend.postgresql;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Serializable;
-import java.nio.file.Path;
 import java.sql.Array;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
@@ -50,7 +49,6 @@ import org.apache.logging.log4j.Logger;
 import org.jooq.Configuration;
 import org.jooq.ConnectionProvider;
 import org.jooq.DSLContext;
-import org.jooq.DataType;
 import org.jooq.Field;
 import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
@@ -58,34 +56,29 @@ import org.jooq.impl.DSL;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.torodb.backend.DatabaseInterface;
-import com.torodb.backend.converters.jooq.ValueToJooqConverterProvider;
+import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.backend.converters.jooq.ValueToJooqDataTypeProvider;
+import com.torodb.backend.meta.TorodbSchema;
 import com.torodb.backend.mocks.KVTypeToSqlType;
-import com.torodb.backend.mocks.RetryTransactionException;
 import com.torodb.backend.mocks.ToroImplementationException;
 import com.torodb.backend.mocks.ToroRuntimeException;
 import com.torodb.backend.postgresql.converters.PostgreSQLKVTypeToSqlType;
 import com.torodb.backend.postgresql.converters.PostgreSQLValueToCopyConverter;
-import com.torodb.backend.postgresql.converters.jooq.PostgreSQLValueToJooqConverterProvider;
 import com.torodb.backend.postgresql.converters.jooq.PostgreSQLValueToJooqDataTypeProvider;
 import com.torodb.backend.postgresql.tables.PostgreSQLMetaCollectionTable;
 import com.torodb.backend.postgresql.tables.PostgreSQLMetaDatabaseTable;
 import com.torodb.backend.postgresql.tables.PostgreSQLMetaDocPartTable;
 import com.torodb.backend.postgresql.tables.PostgreSQLMetaFieldTable;
 import com.torodb.backend.sql.index.NamedDbIndex;
-import com.torodb.backend.tables.DocPartTable;
 import com.torodb.backend.tables.MetaCollectionTable;
 import com.torodb.backend.tables.MetaDatabaseTable;
 import com.torodb.backend.tables.MetaDocPartTable;
+import com.torodb.backend.tables.MetaDocPartTable.DocPartTableFields;
 import com.torodb.backend.tables.MetaFieldTable;
-import com.torodb.backend.tables.records.MetaCollectionRecord;
-import com.torodb.backend.tables.records.MetaDatabaseRecord;
-import com.torodb.backend.tables.records.MetaDocPartRecord;
-import com.torodb.backend.tables.records.MetaFieldRecord;
 import com.torodb.core.TableRef;
 import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.d2r.DocPartRow;
-import com.torodb.core.impl.TableRefImpl;
+import com.torodb.core.transaction.RollbackException;
 import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetaField;
@@ -103,16 +96,40 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
     private static final Logger LOGGER
         = LogManager.getLogger(PostgreSQLDatabaseInterface.class);
 
-    private static final long serialVersionUID = 484638503;
+    private static final long serialVersionUID = 784618502;
 
-    private final ValueToJooqConverterProvider valueToJooqConverterProvider;
+    private static final String[] RESTRICTED_SCHEMA_NAMES = new String[] {
+            TorodbSchema.TORODB_SCHEMA,
+            "pg_catalog",
+            "information_schema",
+    };
+    {
+        Arrays.sort(RESTRICTED_SCHEMA_NAMES);
+    }
+
+    private static final String[] RESTRICTED_COLUMN_NAMES = new String[] {
+            "oid",
+            "tableoid",
+            "xmin",
+            "xmax",
+            "cmin",
+            "cmax",
+            "ctid",
+    };
+    {
+        Arrays.sort(RESTRICTED_COLUMN_NAMES);
+    }
+
     private final ValueToJooqDataTypeProvider valueToJooqDataTypeProvider;
     private final KVTypeToSqlType kVTypeToSqlType;
     private final FieldComparator fieldComparator = new FieldComparator();
+    private final PostgreSQLMetaDatabaseTable metaDatabaseTable = new PostgreSQLMetaDatabaseTable();
+    private final PostgreSQLMetaCollectionTable metaCollectionTable = new PostgreSQLMetaCollectionTable();
+    private final PostgreSQLMetaDocPartTable metaDocPartTable = new PostgreSQLMetaDocPartTable();
+    private final PostgreSQLMetaFieldTable metaFieldTable = new PostgreSQLMetaFieldTable();
 
     @Inject
     public PostgreSQLDatabaseInterface(KVTypeToSqlType kVTypeToSqlType) {
-        this.valueToJooqConverterProvider = PostgreSQLValueToJooqConverterProvider.getInstance();
         this.valueToJooqDataTypeProvider = PostgreSQLValueToJooqDataTypeProvider.getInstance();
         this.kVTypeToSqlType = kVTypeToSqlType;
     }
@@ -126,30 +143,25 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
     @Nonnull
     @Override
     public PostgreSQLMetaDatabaseTable getMetaDatabaseTable() {
-        return new PostgreSQLMetaDatabaseTable();
+        return metaDatabaseTable;
     }
 
     @Nonnull
     @Override
     public PostgreSQLMetaCollectionTable getMetaCollectionTable() {
-        return new PostgreSQLMetaCollectionTable();
+        return metaCollectionTable;
     }
 
     @Nonnull
     @Override
     public PostgreSQLMetaDocPartTable getMetaDocPartTable() {
-        return new PostgreSQLMetaDocPartTable();
+        return metaDocPartTable;
     }
 
     @Nonnull
     @Override
     public PostgreSQLMetaFieldTable getMetaFieldTable() {
-        return new PostgreSQLMetaFieldTable();
-    }
-
-    @Override
-    public @Nonnull ValueToJooqConverterProvider getValueToJooqConverterProvider() {
-        return valueToJooqConverterProvider;
+        return metaFieldTable;
     }
 
     @Override
@@ -158,21 +170,21 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
     }
 
     @Override
-    public String createIndexStatement(DocPartTable table, Field<?> field, Configuration conf) {
+    public String createIndexStatement(Configuration conf, String schemaName, String tableName, String fieldName) {
         StringBuilder sb = new StringBuilder();
         sb.append("CREATE INDEX ON \"")
-                .append(table.getSchema().getName())
+                .append(schemaName)
                 .append("\".\"")
-                .append(table.getName())
+                .append(tableName)
                 .append("\" (\"")
-                .append(field.getName())
+                .append(fieldName)
                 .append("\")");
 
         return sb.toString();
     }
 
     @Override
-    public String createPathDocTableStatement(String schemaName, String tableName, List<Field<?>> fields, Configuration conf) {
+    public String createDocPartTableStatement(Configuration conf, String schemaName, String tableName, Collection<Field<?>> fields) {
         StringBuilder sb = new StringBuilder();
         sb.append("CREATE TABLE ")
                 .append(fullTableName(schemaName, tableName))
@@ -195,24 +207,17 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
     }
 
     @Override
-    public String addColumnsToTableStatement(String schemaName, String tableName, List<Field<?>> fields, Configuration conf) {
+    public String addColumnToDocPartTableStatement(Configuration conf, String schemaName, String tableName, Field<?> field) {
         StringBuilder sb = new StringBuilder();
         sb.append("ALTER TABLE ")
                 .append(fullTableName(schemaName, tableName));
 
-        for (Field<?> field : getFieldIterator(fields)) {
-            sb
-                    .append(" ADD COLUMN \"")
-                    .append(field.getName())
-                    .append("\" ")
-                    .append(getSqlType(field, conf));
+        sb
+                .append(" ADD COLUMN \"")
+                .append(field.getName())
+                .append("\" ")
+                .append(getSqlType(field, conf));
 
-            sb.append(',');
-        }
-        if (fields.size() > 0) {
-            sb.delete(sb.length() - 1, sb.length());
-        }
-        sb.append(')');
         return sb.toString();
     }
 
@@ -226,7 +231,7 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
                 return PostgreSQLKVTypeToSqlType.MONGO_TIMESTAMP_TYPE;
             }
         }
-        return field.getDataType().getTypeName(conf);
+        return field.getDataType().getCastTypeName(conf);
     }
 
     private Iterable<Field<?>> getFieldIterator(Iterable<Field<?>> fields) {
@@ -256,24 +261,24 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
 
         @Override
         public int compare(Field o1, Field o2) {
-            if (o1.getName().equals(DocPartTable.DID_COLUMN_NAME)) {
+            if (o1.getName().equals(DocPartTableFields.DID)) {
                 return -1;
-            } else if (o2.getName().equals(DocPartTable.DID_COLUMN_NAME)) {
+            } else if (o2.getName().equals(DocPartTableFields.DID)) {
                 return 1;
             }
-            if (o1.getName().equals(DocPartTable.RID_COLUMN_NAME)) {
+            if (o1.getName().equals(DocPartTableFields.RID)) {
                 return -1;
-            } else if (o2.getName().equals(DocPartTable.RID_COLUMN_NAME)) {
+            } else if (o2.getName().equals(DocPartTableFields.RID)) {
                 return 1;
             }
-            if (o1.getName().equals(DocPartTable.PID_COLUMN_NAME)) {
+            if (o1.getName().equals(DocPartTableFields.PID)) {
                 return -1;
-            } else if (o2.getName().equals(DocPartTable.PID_COLUMN_NAME)) {
+            } else if (o2.getName().equals(DocPartTableFields.PID)) {
                 return 1;
             }
-            if (o1.getName().equals(DocPartTable.SEQ_COLUMN_NAME)) {
+            if (o1.getName().equals(DocPartTableFields.SEQ)) {
                 return -1;
-            } else if (o2.getName().equals(DocPartTable.SEQ_COLUMN_NAME)) {
+            } else if (o2.getName().equals(DocPartTableFields.SEQ)) {
                 return 1;
             }
 
@@ -829,7 +834,7 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
     }
 
     @Override
-    public void insertPathDocuments(DSLContext dsl, String schemaName, DocPartData docPartData) throws RetryTransactionException {
+    public void insertPathDocuments(DSLContext dsl, String schemaName, DocPartData docPartData) throws RollbackException {
         Preconditions.checkArgument(docPartData.rowCount() != 0, "Called insert with 0 documents");
         
         Connection connection = dsl.configuration().connectionProvider().acquire();
@@ -927,7 +932,7 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
     private void copyInsertPathDocuments(
             PGConnection connection,
             String schemaName,
-            DocPartData docPartData) throws RetryTransactionException, SQLException, IOException {
+            DocPartData docPartData) throws RollbackException, SQLException, IOException {
 
         final int maxBatchSize = 1000;
         final StringBuilder sb = new StringBuilder(2048);
@@ -974,7 +979,6 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
         }
     }
 
-    @SuppressWarnings("unchecked")
     private void addToCopy(
             StringBuilder sb,
             DocPartRow docPartRow) {
@@ -1034,68 +1038,61 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
     }
 
     @Override
-    public DataType<?> getDataType(String type) {
+    public int consumeRids(DSLContext dsl, String database, String collection, TableRef tableRef, int count) {
         throw new ToroImplementationException("Not implemented yet");
     }
 
     @Override
-    public int reserveRids(DSLContext dsl, String database, String collection, TableRef tableRef, int count) {
-        throw new ToroImplementationException("Not implemented yet");
-    }
-
-    @Override
-    public Iterable<MetaDatabaseRecord> getDatabases(DSLContext dsl) {
-        throw new ToroImplementationException("Not implemented yet");
-    }
-
-    @Override
-    public Iterable<MetaCollectionRecord> getCollections(DSLContext dsl, String database) {
-        throw new ToroImplementationException("Not implemented yet");
-    }
-
-    @Override
-    public DataType<?> getDataType(FieldType type) {
+    public DataTypeForKV<?> getDataType(FieldType type) {
         return valueToJooqDataTypeProvider.getDataType(type);
     }
 
     @Override
-    public void handleRetryException(Context context, SQLException sqlException) throws RetryTransactionException {
+    public void handleRetryException(Context context, SQLException sqlException) throws RollbackException {
         if (context == Context.batchUpdate && "40001".equals(sqlException.getSQLState())) {
-            throw new RetryTransactionException(sqlException);
+            throw new RollbackException(sqlException);
         }
     }
 
     @Override
-    public void handleRetryException(Context context, DataAccessException dataAccessException) throws RetryTransactionException {
+    public void handleRetryException(Context context, DataAccessException dataAccessException) throws RollbackException {
         if (context == Context.batchUpdate && "40001".equals(dataAccessException.sqlState())) {
-            throw new RetryTransactionException(dataAccessException);
+            throw new RollbackException(dataAccessException);
         }
-    }
-
-    @Override
-    public TableRef toTableRef(Object tableRefObject) {
-        TableRef tableRef = TableRefImpl.createRoot();
-        String[] tableRefStrings = (String[]) tableRefObject;
-        for (String tableRefString : tableRefStrings) {
-            tableRef = TableRefImpl.createChild(tableRef, tableRefString.intern());
-        }
-        return tableRef;
-    }
-
-    @Override
-    public Map<String, MetaDocPartRecord<?>> getContainersByTable(DSLContext dsl, String database, String collection) {
-        throw new ToroImplementationException("Not implemented yet");
-    }
-
-    @Override
-    public Map<String, MetaFieldRecord<?>> getFieldsByColumn(DSLContext dsl, String database, String collection,
-            TableRef tableRef) {
-        throw new ToroImplementationException("Not implemented yet");
     }
 
     @Override
     public boolean isSameIdentifier(String leftIdentifier, String rightIdentifier) {
-        // TODO Auto-generated method stub
-        return false;
+        return leftIdentifier.equals(rightIdentifier);
+    }
+
+    @Override
+    public boolean isRestrictedSchemaName(@Nonnull String schemaName) {
+        return Arrays.binarySearch(RESTRICTED_SCHEMA_NAMES, schemaName) >= 0;
+    }
+    
+    @Override
+    public boolean isRestrictedColumnName(@Nonnull String columnName) {
+        return Arrays.binarySearch(RESTRICTED_COLUMN_NAMES, columnName) >= 0;
+    }
+
+    @Override
+    public Field<?> getDidColumn() {
+        return getMetaDocPartTable().DID;
+    }
+
+    @Override
+    public Field<?> getRidColumn() {
+        return getMetaDocPartTable().RID;
+    }
+
+    @Override
+    public Field<?> getPidColumn() {
+        return getMetaDocPartTable().PID;
+    }
+
+    @Override
+    public Field<?> getSeqColumn() {
+        return getMetaDocPartTable().SEQ;
     }
 }

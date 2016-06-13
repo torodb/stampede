@@ -19,8 +19,10 @@
  */
 package com.torodb.backend.postgresql.tables.records;
 
+import com.torodb.backend.converters.TableRefConverter;
 import com.torodb.backend.postgresql.tables.PostgreSQLMetaDocPartTable;
 import com.torodb.backend.tables.records.MetaDocPartRecord;
+import com.torodb.core.TableRef;
 
 public class PostgreSQLMetaDocPartRecord extends MetaDocPartRecord<String[]> {
 
@@ -49,5 +51,15 @@ public class PostgreSQLMetaDocPartRecord extends MetaDocPartRecord<String[]> {
         setIdentifier(identifier);
         setLastRid(lastRid);
         return this;
+    }
+
+    @Override
+    protected String[] toTableRefType(TableRef tableRef) {
+        return TableRefConverter.toStringArray(tableRef);
+    }
+
+    @Override
+    public TableRef getTableRefValue() {
+        return TableRefConverter.fromStringArray(getTableRef());
     }
 }

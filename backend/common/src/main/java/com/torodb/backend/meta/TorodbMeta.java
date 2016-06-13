@@ -20,8 +20,11 @@
 
 package com.torodb.backend.meta;
 
+import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
+
 /**
  *
  */
 public interface TorodbMeta {
+        public ImmutableMetaSnapshot getCurrentMetaSnapshot();
 }

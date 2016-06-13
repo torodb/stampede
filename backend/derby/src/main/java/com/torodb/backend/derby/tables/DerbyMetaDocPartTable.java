@@ -19,24 +19,28 @@
  */
 package com.torodb.backend.derby.tables;
 
+import javax.json.JsonArray;
+
 import org.jooq.Field;
 import org.jooq.Table;
 import org.jooq.TableField;
 import org.jooq.impl.SQLDataType;
 
+import com.torodb.backend.derby.converters.jooq.JsonArrayConverter;
 import com.torodb.backend.derby.tables.records.DerbyMetaDocPartRecord;
 import com.torodb.backend.tables.MetaDocPartTable;
+import com.torodb.backend.tables.MetaDocPartTable.DocPartTableFields;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 @SuppressFBWarnings("EQ_DOESNT_OVERRIDE_EQUALS")
-public class DerbyMetaDocPartTable extends MetaDocPartTable<String[], DerbyMetaDocPartRecord> {
+public class DerbyMetaDocPartTable extends MetaDocPartTable<JsonArray, DerbyMetaDocPartRecord> {
 
     private static final long serialVersionUID = -550698624070753099L;
     /**
 	 * The singleton instance of <code>torodb.collections</code>
 	 */
-	public static final DerbyMetaDocPartTable CONTAINER = new DerbyMetaDocPartTable();
+	public static final DerbyMetaDocPartTable DOC_PART = new DerbyMetaDocPartTable();
 
 	@Override
     public Class<DerbyMetaDocPartRecord> getRecordType() {
@@ -54,7 +58,7 @@ public class DerbyMetaDocPartTable extends MetaDocPartTable<String[], DerbyMetaD
 	 * Create an aliased <code>torodb.collections</code> table reference
 	 */
 	public DerbyMetaDocPartTable(String alias) {
-	    this(alias, DerbyMetaDocPartTable.CONTAINER);
+	    this(alias, DerbyMetaDocPartTable.DOC_PART);
 	}
 
 	private DerbyMetaDocPartTable(String alias, Table<DerbyMetaDocPartRecord> aliased) {
@@ -91,8 +95,8 @@ public class DerbyMetaDocPartTable extends MetaDocPartTable<String[], DerbyMetaD
     }
 
     @Override
-    protected TableField<DerbyMetaDocPartRecord, String[]> createTableRefField() {
-        return createField(TableFields.TABLE_REF.fieldName, SQLDataType.VARCHAR.getArrayDataType().nullable(false), this, "");
+    protected TableField<DerbyMetaDocPartRecord, JsonArray> createTableRefField() {
+        return createField(TableFields.TABLE_REF.fieldName, JsonArrayConverter.TYPE.nullable(false), this, "");
     }
 
     @Override
@@ -103,5 +107,25 @@ public class DerbyMetaDocPartTable extends MetaDocPartTable<String[], DerbyMetaD
     @Override
     protected TableField<DerbyMetaDocPartRecord, Integer> createLastRidField() {
         return createField(TableFields.LAST_RID.fieldName, SQLDataType.INTEGER.nullable(false), this, "");
+    }
+
+    @Override
+    protected Field<?> createDidField() {
+        return field(DocPartTableFields.DID.fieldName, SQLDataType.INTEGER.nullable(false));
+    }
+
+    @Override
+    protected Field<?> createRidField() {
+        return field(DocPartTableFields.RID.fieldName, SQLDataType.INTEGER.nullable(false));
+    }
+
+    @Override
+    protected Field<?> createPidField() {
+        return field(DocPartTableFields.PID.fieldName, SQLDataType.INTEGER.nullable(false));
+    }
+
+    @Override
+    protected Field<?> createSeqField() {
+        return field(DocPartTableFields.SEQ.fieldName, SQLDataType.INTEGER.nullable(false));
     }
 }

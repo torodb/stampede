@@ -23,21 +23,13 @@ package com.torodb.backend.derby.converters.jooq;
 import java.util.Map;
 
 import com.google.common.collect.Maps;
-import com.torodb.backend.converters.jooq.BinaryValueConverter;
 import com.torodb.backend.converters.jooq.BooleanValueConverter;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
-import com.torodb.backend.converters.jooq.DateValueConverter;
 import com.torodb.backend.converters.jooq.DoubleValueConverter;
-import com.torodb.backend.converters.jooq.InstantValueConverter;
 import com.torodb.backend.converters.jooq.IntegerValueConverter;
 import com.torodb.backend.converters.jooq.LongValueConverter;
-import com.torodb.backend.converters.jooq.MongoObjectIdValueConverter;
-import com.torodb.backend.converters.jooq.MongoTimestampValueConverter;
 import com.torodb.backend.converters.jooq.NullValueConverter;
-import com.torodb.backend.converters.jooq.StringValueConverter;
-import com.torodb.backend.converters.jooq.TimeValueConverter;
 import com.torodb.backend.converters.jooq.ValueToJooqDataTypeProvider;
-import com.torodb.backend.postgresql.converters.jooq.PostgreSQLValueToJooqDataTypeProvider;
 import com.torodb.core.transaction.metainf.FieldType;
 
 /**
@@ -53,6 +45,7 @@ public class DerbyValueToJooqDataTypeProvider implements ValueToJooqDataTypeProv
         dataTypes = Maps.newHashMap();
 
         dataTypes.put(FieldType.BOOLEAN, BooleanValueConverter.TYPE);
+        dataTypes.put(FieldType.CHILD, BooleanValueConverter.TYPE);
         dataTypes.put(FieldType.DOUBLE, DoubleValueConverter.TYPE);
         dataTypes.put(FieldType.INTEGER, IntegerValueConverter.TYPE);
         dataTypes.put(FieldType.LONG, LongValueConverter.TYPE);

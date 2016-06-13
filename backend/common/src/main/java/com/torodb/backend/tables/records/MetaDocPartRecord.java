@@ -26,6 +26,7 @@ import org.jooq.Row5;
 import org.jooq.impl.UpdatableRecordImpl;
 
 import com.torodb.backend.tables.MetaDocPartTable;
+import com.torodb.core.TableRef;
 
 public abstract class MetaDocPartRecord<TableRefType> extends UpdatableRecordImpl<MetaDocPartRecord<TableRefType>> 
         implements Record5<String, String, TableRefType, String, Integer> {
@@ -263,8 +264,16 @@ public abstract class MetaDocPartRecord<TableRefType> extends UpdatableRecordImp
 	 * {@inheritDoc}
 	 */
 	@Override
-	public abstract MetaDocPartRecord values(String value1, String value2, TableRefType value3, String value4, Integer value5);
+	public abstract MetaDocPartRecord values(String database, String collection, TableRefType tableRef, String identifier, Integer lastRid);
 
+    public MetaDocPartRecord values(String database, String collection, TableRef tableRef, String identifier) {
+        return values(database, collection, toTableRefType(tableRef), identifier, 0);
+    }
+    
+    protected abstract TableRefType toTableRefType(TableRef tableRef);
+    
+    public abstract TableRef getTableRefValue();
+	
     // -------------------------------------------------------------------------
     // Constructors
     // -------------------------------------------------------------------------

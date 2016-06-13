@@ -20,10 +20,17 @@
 
 package com.torodb.backend.driver.derby;
 
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+
 import javax.sql.DataSource;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 public class DriverDerbyTest {
@@ -31,12 +38,12 @@ public class DriverDerbyTest {
             DriverDerbyTest.class
     );
     
-    @Test
-    public void testDerbySetup() throws Exception {
-        LOGGER.warn("Test message");
-        
+    private DataSource dataSource;
+    
+    @Before
+    public void setUp() throws Exception {
         OfficialDerbyDriver derbyDriver = new OfficialDerbyDriver();
-        DataSource dataSource = derbyDriver.getConfiguredDataSource(new DerbyDbBackendConfiguration() {
+        dataSource = derbyDriver.getConfiguredDataSource(new DerbyDbBackendConfiguration() {
             @Override
             public String getUsername() {
                 return null;
@@ -83,9 +90,70 @@ public class DriverDerbyTest {
             }
 
             @Override
-            public boolean isInMemory() {
+            public boolean inMemory() {
+                return true;
+            }
+
+            @Override
+            public boolean embedded() {
                 return true;
             }
         }, "torod");
+    }
+    
+    @Test
+    public void testDDLRollback() throws Exception {
+        try (Connection connection = dataSource.getConnection()) {
+            connection.setAutoCommit(false);
+            connection.setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ);
+            try (PreparedStatement preparedStatement = connection.prepareStatement("CREATE TABLE test (a int)")) {
+                preparedStatement.executeUpdate();
+            }
+            connection.commit();
+            try (PreparedStatement preparedStatement = connection.prepareStatement("INSERT INTO test VALUES (1)")) {
+                preparedStatement.executeUpdate();
+            }
+            try (PreparedStatement preparedStatement = connection.prepareStatement("SELECT * FROM test")) {
+                try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                    Assert.assertTrue(resultSet.next());
+                    Assert.assertFalse(resultSet.next());
+                }
+            }
+            connection.rollback();
+            try (PreparedStatement preparedStatement = connection.prepareStatement("SELECT * FROM test")) {
+                try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                    Assert.assertFalse(resultSet.next());
+                }
+            }
+            try (PreparedStatement preparedStatement = connection.prepareStatement("INSERT INTO test VALUES (1)")) {
+                preparedStatement.executeUpdate();
+            }
+            try (PreparedStatement preparedStatement = connection.prepareStatement("CREATE TABLE test2 (b varchar(128))")) {
+                preparedStatement.executeUpdate();
+            }
+            try (PreparedStatement preparedStatement = connection.prepareStatement("ALTER TABLE test ADD COLUMN b varchar(128)")) {
+                preparedStatement.executeUpdate();
+            }
+            try (PreparedStatement preparedStatement = connection.prepareStatement("SELECT * FROM test")) {
+                try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                    Assert.assertTrue(resultSet.next());
+                    Assert.assertFalse(resultSet.next());
+                }
+            }
+            connection.rollback();
+            try (PreparedStatement preparedStatement = connection.prepareStatement("SELECT * FROM test")) {
+                try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                    Assert.assertFalse(resultSet.next());
+                }
+            }
+            try (ResultSet resultSet = connection.getMetaData().getTables("%", "%", "test2", null)) {
+                Assert.assertFalse(resultSet.next());
+            }
+            try (ResultSet resultSet = connection.getMetaData().getColumns("%", "%", "test", "b")) {
+                Assert.assertFalse(resultSet.next());
+            }
+            connection.rollback();
+            connection.setAutoCommit(true);
+        }
     }
 }

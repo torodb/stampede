@@ -30,10 +30,10 @@ import com.torodb.kvdocument.values.KVNull;
 /**
  *
  */
-public class NullValueConverter implements KVValueConverter<Short, KVNull>{
+public class NullValueConverter implements KVValueConverter<Boolean, KVNull>{
     private static final long serialVersionUID = 1L;
 
-    public static final DataTypeForKV<KVNull> TYPE = DataTypeForKV.from(SQLDataType.SMALLINT.nullable(true), new NullValueConverter());
+    public static final DataTypeForKV<KVNull> TYPE = DataTypeForKV.from(SQLDataType.BOOLEAN.nullable(true), new NullValueConverter());
 
     @Override
     public KVType getErasuredType() {
@@ -41,18 +41,18 @@ public class NullValueConverter implements KVValueConverter<Short, KVNull>{
     }
 
     @Override
-    public KVNull from(Short databaseObject) {
+    public KVNull from(Boolean databaseObject) {
         return KVNull.getInstance();
     }
 
     @Override
-    public Short to(KVNull userObject) {
-        return null;
+    public Boolean to(KVNull userObject) {
+        return Boolean.TRUE;
     }
 
     @Override
-    public Class<Short> fromType() {
-        return Short.class;
+    public Class<Boolean> fromType() {
+        return Boolean.class;
     }
 
     @Override

@@ -8,7 +8,6 @@ import org.jooq.Table;
 import org.jooq.TableField;
 import org.jooq.UniqueKey;
 import org.jooq.impl.AbstractKeys;
-import org.jooq.impl.TableImpl;
 
 import com.torodb.backend.DatabaseInterface;
 import com.torodb.backend.meta.TorodbSchema;
@@ -18,7 +17,7 @@ public abstract class MetaDocPartTable<TableRefType, R extends MetaDocPartRecord
 
     private static final long serialVersionUID = 1664366669485866827L;
 
-    public static final String TABLE_NAME = "container";
+    public static final String TABLE_NAME = "doc_part";
 
     public enum TableFields {
         DATABASE               (   "database"          ),
@@ -31,6 +30,25 @@ public abstract class MetaDocPartTable<TableRefType, R extends MetaDocPartRecord
         public final String fieldName;
 
         TableFields(String fieldName) {
+            this.fieldName = fieldName;
+        }
+
+        @Override
+        public String toString() {
+            return fieldName;
+        }
+    }
+
+    public enum DocPartTableFields {
+        DID               (   "did"        ),
+        RID               (   "rid"        ),
+        PID               (   "pid"        ),
+        SEQ               (   "seq"        ),
+        ;
+
+        public final String fieldName;
+
+        DocPartTableFields(String fieldName) {
             this.fieldName = fieldName;
         }
 
@@ -77,12 +95,26 @@ public abstract class MetaDocPartTable<TableRefType, R extends MetaDocPartRecord
     public final TableField<R, Integer> LAST_RID 
             = createLastRidField();
 
+    public final Field<?> DID
+        = createDidField();
+    public final Field<?> RID
+        = createRidField();
+    public final Field<?> PID
+        = createPidField();
+    public final Field<?> SEQ
+        = createSeqField();
+    
     protected abstract TableField<R, String> createDatabaseField();
     protected abstract TableField<R, String> createCollectionField();
     protected abstract TableField<R, TableRefType> createTableRefField();
     protected abstract TableField<R, String> createIdentifierField();
     protected abstract TableField<R, Integer> createLastRidField();
 
+    protected abstract Field<?> createDidField();
+    protected abstract Field<?> createRidField();
+    protected abstract Field<?> createPidField();
+    protected abstract Field<?> createSeqField();
+    
     private final UniqueKeys<TableRefType, R> uniqueKeys;
     
     /**
