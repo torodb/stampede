@@ -14,7 +14,7 @@ import com.torodb.backend.meta.TorodbSchema;
 import com.torodb.backend.tables.records.MetaFieldRecord;
 import com.torodb.core.transaction.metainf.FieldType;
 
-public abstract class MetaFieldTable<TableRefType, R extends MetaFieldRecord<TableRefType>> extends SemanticTableImpl<R> {
+public abstract class MetaFieldTable<TableRefType, R extends MetaFieldRecord<TableRefType>> extends SemanticTable<R> {
 
     private static final long serialVersionUID = -3500177946436569355L;
 

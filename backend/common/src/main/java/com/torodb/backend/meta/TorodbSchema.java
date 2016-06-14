@@ -35,7 +35,7 @@ import org.jooq.impl.SchemaImpl;
 
 import com.torodb.backend.DatabaseInterface;
 import com.torodb.backend.exceptions.InvalidDatabaseException;
-import com.torodb.backend.tables.SemanticTableImpl;
+import com.torodb.backend.tables.SemanticTable;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -121,16 +121,16 @@ public class TorodbSchema extends SchemaImpl {
     }
     
     private void checkSchema(Schema torodbSchema, DatabaseInterface databaseInterface) throws InvalidDatabaseException {
-        SemanticTableImpl[] metaTables = new SemanticTableImpl[] {
+        SemanticTable<?>[] metaTables = new SemanticTable[] {
             databaseInterface.getMetaDatabaseTable(),
             databaseInterface.getMetaCollectionTable(),
             databaseInterface.getMetaDocPartTable(),
             databaseInterface.getMetaFieldTable()
         };
-        for (SemanticTableImpl metaTable : metaTables) {
+        for (SemanticTable metaTable : metaTables) {
             String metaTableName = metaTable.getName();
             boolean metaTableFound = false;
-            for (Table table : torodbSchema.getTables()) {
+            for (Table<?> table : torodbSchema.getTables()) {
                 if (databaseInterface.isSameIdentifier(table.getName(), metaTableName)) {
                     metaTable.checkSemanticallyEquals(table);
                     metaTableFound = true;

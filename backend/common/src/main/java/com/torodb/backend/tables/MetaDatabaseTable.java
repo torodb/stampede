@@ -13,7 +13,7 @@ import com.torodb.backend.DatabaseInterface;
 import com.torodb.backend.meta.TorodbSchema;
 import com.torodb.backend.tables.records.MetaDatabaseRecord;
 
-public abstract class MetaDatabaseTable<R extends MetaDatabaseRecord> extends SemanticTableImpl<R> {
+public abstract class MetaDatabaseTable<R extends MetaDatabaseRecord> extends SemanticTable<R> {
 
     private static final long serialVersionUID = -8840058751911188345L;
 

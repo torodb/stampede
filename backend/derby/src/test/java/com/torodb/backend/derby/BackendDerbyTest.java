@@ -52,7 +52,7 @@ import com.torodb.backend.DocPartRidGenerator;
 import com.torodb.backend.DocPartRowImpl;
 import com.torodb.backend.TableRefComparator;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
-import com.torodb.backend.d2r.R2DTranslatorImpl;
+import com.torodb.backend.d2r.R2DBackendTranslatorImpl;
 import com.torodb.backend.driver.derby.DerbyDbBackendConfiguration;
 import com.torodb.backend.driver.derby.OfficialDerbyDriver;
 import com.torodb.backend.meta.TorodbSchema;
@@ -65,6 +65,7 @@ import com.torodb.core.d2r.DocPartResults;
 import com.torodb.core.d2r.IdentifierFactory;
 import com.torodb.core.d2r.R2DTranslator;
 import com.torodb.core.impl.TableRefFactoryImpl;
+import com.torodb.core.transaction.BackendException;
 import com.torodb.core.transaction.RollbackException;
 import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.ImmutableMetaDocPart;
@@ -79,6 +80,7 @@ import com.torodb.core.transaction.metainf.WrapperMutableMetaSnapshot;
 import com.torodb.d2r.D2RTranslatorStack;
 import com.torodb.d2r.IdentifierFactoryImpl;
 import com.torodb.d2r.MockRidGenerator;
+import com.torodb.d2r.R2DBackedTranslator;
 import com.torodb.kvdocument.conversion.json.JacksonJsonParser;
 import com.torodb.kvdocument.conversion.json.JsonParser;
 import com.torodb.kvdocument.values.KVBoolean;
@@ -576,7 +578,7 @@ public class BackendDerbyTest {
             dsl.execute(databaseInterface.createSchemaStatement(databaseSchemaName));
             CollectionData collectionData = writeDocumentMeta(mutableSnapshot, dsl, document);
             
-            List<Integer> generatedDids = writeDocument(dsl, collectionData);
+            List<Integer> generatedDids = writeCollectionData(dsl, collectionData);
             
             MetaDatabase metaDatabase = mutableSnapshot
                     .getMetaDatabaseByName(databaseName);
@@ -587,8 +589,7 @@ public class BackendDerbyTest {
                     dsl, metaDatabase, metaCollection, 
                     generatedDids.toArray(new Integer[generatedDids.size()]));
             
-            R2DTranslator<ResultSet> r2dTranslator = new R2DTranslatorImpl(databaseInterface, mutableSnapshot, databaseName, collectionName);
-            Collection<KVDocument> readedDocuments = r2dTranslator.translate(docPartResultSets);
+            Collection<KVDocument> readedDocuments = readDocuments(metaDatabase, metaCollection, docPartResultSets);
             
             KVDocument readedDocument = readedDocuments.iterator().next();
             System.out.println(document);
@@ -625,30 +626,26 @@ public class BackendDerbyTest {
                             KVDocument.Builder documentBuilder = new KVDocument.Builder();
                             int current_index = 0;
                             if (object_index == current_index) {
-                               if (object_size == 0)
-                                   documentBuilder = documentBuilder;
-                               else if (object_size == 1)
+                               if (object_size == 1)
                                    documentBuilder.putValue("k", new KVDocument.Builder().build());
                                else if (object_size == 2)
                                    documentBuilder.putValue("k", new KVDocument.Builder()
                                            .putValue("k", KVInteger.of(1))
                                            .build());
-                               else
+                               else if (object_size != 0)
                                    continue;
                             }
                             if (current_size > 0) {
                                 current_index = current_index + 1;
                                 List<KVValue<?>> array_value = new ArrayList<>();
                                 if (object_index == current_index) {
-                                    if (object_size == 0)
-                                        array_value = array_value;
-                                    else if (object_size == 1) 
+                                    if (object_size == 1) 
                                        array_value.add(new KVDocument.Builder().build());
                                     else if (object_size == 2)
                                        array_value.add(new KVDocument.Builder()
                                                .putValue("k", KVInteger.of(1))
                                                .build());
-                                    else
+                                    else if (object_size != 0)
                                        continue;
                                 }
                                 if (array_scalars > 0) {
@@ -667,15 +664,13 @@ public class BackendDerbyTest {
                                         current_index = current_index + 1;
                                         array_value = new ArrayList<>(Arrays.asList(new KVValue<?>[] { new ListKVArray(array_value) }));
                                         if (object_index == current_index) {
-                                            if (object_size == 0)
-                                                array_value = array_value;
-                                            else if (object_size == 1)
+                                            if (object_size == 1)
                                                 array_value.add(new ListKVArray(Arrays.asList(new KVValue<?>[] { new KVDocument.Builder().build() })));
                                             else if (object_size == 2)
                                                 array_value.add(new ListKVArray(Arrays.asList(new KVValue<?>[] { new KVDocument.Builder()
                                                     .putValue("k", KVInteger.of(1))
                                                     .build() })));
-                                            else
+                                            else if (object_size != 0)
                                                 array_value = new ArrayList<>(Arrays.asList(new KVValue<?>[] { new KVDocument.Builder()
                                                     .putValue("k", new ListKVArray(array_value))
                                                     .build() }));
@@ -701,7 +696,7 @@ public class BackendDerbyTest {
             for (KVDocument document : documents) {
                 CollectionData collectionData = readDataFromDocument(databaseName, collectionName, document, mutableSnapshot);
                 
-                List<Integer> generatedDids = writeDocument(dsl, collectionData);
+                List<Integer> generatedDids = writeCollectionData(dsl, collectionData);
                 
                 MetaDatabase metaDatabase = mutableSnapshot
                         .getMetaDatabaseByName(databaseName);
@@ -712,18 +707,41 @@ public class BackendDerbyTest {
                         dsl, metaDatabase, metaCollection, 
                         generatedDids.toArray(new Integer[generatedDids.size()]));
                 
-                R2DTranslator<ResultSet> r2dTranslator = new R2DTranslatorImpl(databaseInterface, mutableSnapshot, databaseName, collectionName);
-                Collection<KVDocument> readedDocuments = r2dTranslator.translate(docPartResultSets);
+                Collection<KVDocument> readedDocuments = readDocuments(metaDatabase, metaCollection, docPartResultSets);
                 
                 KVDocument readedDocument = readedDocuments.iterator().next();
-                System.out.println(document);
-                System.out.println(readedDocument);
+                System.out.println("Written :" + document);
+                System.out.println("Readed: " + readedDocument);
                 Assert.assertEquals(document, readedDocument);
             }
+            CollectionData collectionData = readDataFromDocuments(databaseName, collectionName, documents, mutableSnapshot);
+            
+            List<Integer> generatedDids = writeCollectionData(dsl, collectionData);
+            
+            MetaDatabase metaDatabase = mutableSnapshot
+                    .getMetaDatabaseByName(databaseName);
+            MetaCollection metaCollection = metaDatabase
+                    .getMetaCollectionByName(collectionName);
+            
+            DocPartResults<ResultSet> docPartResultSets = databaseInterface.getCollectionResultSets(
+                    dsl, metaDatabase, metaCollection, 
+                    generatedDids.toArray(new Integer[generatedDids.size()]));
+            
+            Collection<KVDocument> readedDocuments = readDocuments(metaDatabase, metaCollection, docPartResultSets);
+            System.out.println("Written :" + documents);
+            System.out.println("Readed: " + readedDocuments);
+            Assert.assertEquals(documents.size(), readedDocuments.size());
         }
     }
 
-    private List<Integer> writeDocument(DSLContext dsl, CollectionData collectionData) throws RollbackException {
+    private Collection<KVDocument> readDocuments(MetaDatabase metaDatabase, MetaCollection metaCollection,
+            DocPartResults<ResultSet> docPartResultSets) throws BackendException, RollbackException {
+        R2DBackedTranslator r2dTranslator = new R2DBackedTranslator(new R2DBackendTranslatorImpl(databaseInterface, metaDatabase, metaCollection));
+        Collection<KVDocument> readedDocuments = r2dTranslator.translate(docPartResultSets);
+        return readedDocuments;
+    }
+
+    private List<Integer> writeCollectionData(DSLContext dsl, CollectionData collectionData) throws RollbackException {
         Iterator<DocPartData> docPartDataIterator = StreamSupport.stream(collectionData.spliterator(), false)
                 .iterator();
         List<Integer> generatedDids = new ArrayList<>();

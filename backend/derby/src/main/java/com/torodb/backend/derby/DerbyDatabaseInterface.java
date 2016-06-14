@@ -54,6 +54,7 @@ import org.jooq.Record1;
 import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.torodb.backend.DatabaseInterface;
@@ -67,7 +68,6 @@ import com.torodb.backend.derby.tables.DerbyMetaCollectionTable;
 import com.torodb.backend.derby.tables.DerbyMetaDatabaseTable;
 import com.torodb.backend.derby.tables.DerbyMetaDocPartTable;
 import com.torodb.backend.derby.tables.DerbyMetaFieldTable;
-import com.torodb.backend.interfaces.ErrorHandlerInterface.Context;
 import com.torodb.backend.meta.TorodbSchema;
 import com.torodb.backend.mocks.ToroRuntimeException;
 import com.torodb.backend.sql.index.NamedDbIndex;
@@ -528,7 +528,9 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
     @Nonnull
     @Override
     public DocPartResults<ResultSet> getCollectionResultSets(@Nonnull DSLContext dsl, @Nonnull MetaDatabase metaDatabase, @Nonnull MetaCollection metaCollection, 
-            @Nonnull Integer[] requestedDocs) throws SQLException {
+            @Nonnull Integer[] dids) throws SQLException {
+        Preconditions.checkArgument(dids.length > 0, "You should specify at least 1 did");
+        
         ImmutableList.Builder<DocPartResult<ResultSet>> docPartResultSetsBuilder = ImmutableList.builder();
         Connection connection = dsl.configuration().connectionProvider().acquire();
         Iterator<? extends MetaDocPart> metaDocPartIterator = metaCollection
@@ -561,13 +563,13 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
                 .append("\" IN (");
             Converter<?, Integer> converter = 
                     metaDocPartTable.DID.getDataType().getConverter();
-            for (Integer requestedDoc : requestedDocs) {
-                sb.append(converter.to(requestedDoc));
+            for (Integer requestedDoc : dids) {
+                sb.append(converter.to(requestedDoc))
+                    .append(',');
             }
-            if (metaDocPart.getTableRef().isRoot()) {
-                sb.append(')');
-            } else {
-                sb.append(") ORDER BY ");
+            sb.setCharAt(sb.length() - 1, ')');
+            if (!metaDocPart.getTableRef().isRoot()) {
+                sb.append(" ORDER BY ");
                 for (InternalField<?> internalField : internalFields) {
                     sb
                         .append('"')

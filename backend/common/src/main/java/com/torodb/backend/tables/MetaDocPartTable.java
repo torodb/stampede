@@ -19,7 +19,7 @@ import com.torodb.backend.InternalField.SeqInternalField;
 import com.torodb.backend.meta.TorodbSchema;
 import com.torodb.backend.tables.records.MetaDocPartRecord;
 
-public abstract class MetaDocPartTable<TableRefType, R extends MetaDocPartRecord<TableRefType>> extends SemanticTableImpl<R> {
+public abstract class MetaDocPartTable<TableRefType, R extends MetaDocPartRecord<TableRefType>> extends SemanticTable<R> {
 
     private static final long serialVersionUID = 1664366669485866827L;
 
