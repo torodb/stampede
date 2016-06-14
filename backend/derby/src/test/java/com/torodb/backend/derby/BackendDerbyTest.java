@@ -44,7 +44,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.google.common.collect.ImmutableList;
-import com.torodb.backend.AbstractBackendDerbyTest;
+import com.torodb.backend.AbstractBackendTest;
 import com.torodb.backend.DatabaseInterface;
 import com.torodb.backend.DocPartDataImpl;
 import com.torodb.backend.DocPartRowImpl;
@@ -69,7 +69,7 @@ import com.torodb.kvdocument.values.KVInteger;
 import com.torodb.kvdocument.values.KVValue;
 import com.torodb.kvdocument.values.heap.ListKVArray;
 
-public class BackendDerbyTest extends AbstractBackendDerbyTest {
+public class BackendDerbyTest extends AbstractBackendTest {
     
     @Test
     public void testTorodbMeta() throws Exception {
