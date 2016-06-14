@@ -45,25 +45,23 @@ import org.junit.Test;
 
 import com.google.common.collect.ImmutableList;
 import com.torodb.backend.AbstractBackendTest;
+import com.torodb.backend.BackendHelper;
 import com.torodb.backend.DatabaseInterface;
-import com.torodb.backend.DocPartDataImpl;
-import com.torodb.backend.DocPartRowImpl;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.backend.driver.derby.DerbyDbBackendConfiguration;
 import com.torodb.backend.driver.derby.OfficialDerbyDriver;
 import com.torodb.core.d2r.CollectionData;
 import com.torodb.core.d2r.DocPartResults;
-import com.torodb.core.d2r.RidGenerator;
 import com.torodb.core.transaction.metainf.FieldType;
+import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
+import com.torodb.core.transaction.metainf.ImmutableMetaDatabase;
 import com.torodb.core.transaction.metainf.ImmutableMetaDocPart;
 import com.torodb.core.transaction.metainf.ImmutableMetaField;
 import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
-import com.torodb.core.transaction.metainf.WrapperMutableMetaDocPart;
 import com.torodb.core.transaction.metainf.WrapperMutableMetaSnapshot;
-import com.torodb.d2r.MockRidGenerator;
 import com.torodb.kvdocument.values.KVDocument;
 import com.torodb.kvdocument.values.KVInteger;
 import com.torodb.kvdocument.values.KVValue;
@@ -94,35 +92,12 @@ public class BackendDerbyTest extends AbstractBackendTest {
         }
         try (Connection connection = dataSource.getConnection()) {
             DSLContext dsl = DSL.using(connection, SQLDialect.DERBY);
-            dsl.insertInto(databaseInterface.getMetaDatabaseTable())
-                .set(databaseInterface.getMetaDatabaseTable().newRecord().values(databaseName, databaseSchemaName))
-                .execute();
-            dsl.execute(databaseInterface.createSchemaStatement(databaseSchemaName));
-            dsl.insertInto(databaseInterface.getMetaCollectionTable())
-                .set(databaseInterface.getMetaCollectionTable().newRecord().values(databaseName, collectionName, collectionIdentifierName))
-                .execute();
-            dsl.insertInto(databaseInterface.getMetaDocPartTable())
-                .set(databaseInterface.getMetaDocPartTable().newRecord().values(databaseName, collectionName, rootDocPartTableRef, rootDocPartTableName))
-                .execute();
-            for (Map.Entry<String, Field<?>> field : rootDocPartFields.entrySet()) {
-                dsl.insertInto(databaseInterface.getMetaFieldTable())
-                    .set(databaseInterface.getMetaFieldTable().newRecord().values(databaseName, collectionName, rootDocPartTableRef, 
-                            field.getKey(), field.getValue().getName(), 
-                            FieldType.from(((DataTypeForKV<?>) field.getValue().getDataType()).getKVValueConverter().getErasuredType())))
-                    .execute();
-            }
-            dsl.execute(databaseInterface.createDocPartTableStatement(dsl.configuration(), databaseSchemaName, rootDocPartTableName, rootDocPartFields.values()));
-            dsl.insertInto(databaseInterface.getMetaDocPartTable())
-                .set(databaseInterface.getMetaDocPartTable().newRecord().values(databaseName, collectionName, subDocPartTableRef, subDocPartTableName))
-                .execute();
-            for (Map.Entry<String, Field<?>> field : subDocPartFields.entrySet()) {
-                dsl.insertInto(databaseInterface.getMetaFieldTable())
-                    .set(databaseInterface.getMetaFieldTable().newRecord().values(databaseName, collectionName, subDocPartTableRef, 
-                            field.getKey(), field.getValue().getName(), 
-                            FieldType.from(((DataTypeForKV<?>) field.getValue().getDataType()).getKVValueConverter().getErasuredType())))
-                    .execute();
-            }
-            dsl.execute(databaseInterface.createDocPartTableStatement(dsl.configuration(), databaseSchemaName, subDocPartTableName, subDocPartFields.values()));
+            BackendHelper helper = new BackendHelper(databaseInterface, dsl, schema);
+            helper.createMetaModel();
+            helper.insertMetaFields(schema.rootDocPartTableRef, schema.rootDocPartFields);
+            helper.createDocPartTable(schema.rootDocPartTableName, databaseInterface.getMetaDocPartTable().ROOT_FIELDS, schema.rootDocPartFields.values());
+            helper.insertMetaFields(schema.subDocPartTableRef, schema.subDocPartFields);
+            helper.createDocPartTable(schema.subDocPartTableName, databaseInterface.getMetaDocPartTable().FIRST_FIELDS, schema.subDocPartFields.values());
             connection.commit();
         }
         DerbyTorodbMeta derbyTorodbMeta;
@@ -130,45 +105,44 @@ public class BackendDerbyTest extends AbstractBackendTest {
             derbyTorodbMeta = new DerbyTorodbMeta(DSL.using(connection, SQLDialect.DERBY), tableRefFactory, databaseInterface);
             connection.commit();
         }
-        assertNotNull(derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName));
-        assertEquals(databaseSchemaName, derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getIdentifier());
-        assertNotNull(derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getMetaCollectionByName(collectionName));
-        assertEquals(collectionIdentifierName, derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName)
-                .getMetaCollectionByName(collectionName).getIdentifier());
-        assertNotNull(derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getMetaCollectionByName(collectionName)
-                .getMetaDocPartByTableRef(rootDocPartTableRef));
-        assertEquals(rootDocPartTableName, derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getMetaCollectionByName(collectionName)
-                .getMetaDocPartByTableRef(rootDocPartTableRef).getIdentifier());
-        for (Map.Entry<String, Field<?>> field : rootDocPartFields.entrySet()) {
-            assertNotNull(derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getMetaCollectionByName(collectionName)
-                    .getMetaDocPartByTableRef(rootDocPartTableRef).getMetaFieldByNameAndType(field.getKey(), 
-                            FieldType.from(((DataTypeForKV<?>) field.getValue().getDataType()).getKVValueConverter().getErasuredType())));
-            assertEquals(field.getValue().getName(), derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getMetaCollectionByName(collectionName)
-                    .getMetaDocPartByTableRef(rootDocPartTableRef).getMetaFieldByNameAndType(field.getKey(), 
-                            FieldType.from(((DataTypeForKV<?>) field.getValue().getDataType()).getKVValueConverter().getErasuredType())).getIdentifier());
+        
+        ImmutableMetaSnapshot metaSnapshot = derbyTorodbMeta.getCurrentMetaSnapshot();
+        ImmutableMetaDatabase metaDatabase = metaSnapshot.getMetaDatabaseByName(schema.databaseName);
+        
+        assertNotNull(metaDatabase);
+        assertEquals(schema.databaseSchemaName, metaDatabase.getIdentifier());
+        
+        ImmutableMetaCollection metaCollection = metaDatabase.getMetaCollectionByName(schema.collectionName);
+        assertNotNull(metaCollection);
+        assertEquals(schema.collectionIdentifierName, metaCollection.getIdentifier());
+        
+        ImmutableMetaDocPart rootMetaDocPart = metaCollection.getMetaDocPartByTableRef(schema.rootDocPartTableRef);
+        assertNotNull(rootMetaDocPart);
+        assertEquals(schema.rootDocPartTableName, rootMetaDocPart.getIdentifier());
+        for (Map.Entry<String, Field<?>> field : schema.rootDocPartFields.entrySet()) {
+            ImmutableMetaField metaField = rootMetaDocPart.getMetaFieldByNameAndType(field.getKey(), fieldType(field));
+			assertNotNull(metaField);
+            assertEquals(field.getValue().getName(), metaField.getIdentifier());
         }
-        assertNotNull(derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getMetaCollectionByName(collectionName)
-                .getMetaDocPartByTableRef(subDocPartTableRef));
-        assertEquals(subDocPartTableName, derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getMetaCollectionByName(collectionName)
-                .getMetaDocPartByTableRef(subDocPartTableRef).getIdentifier());
-        for (Map.Entry<String, Field<?>> field : subDocPartFields.entrySet()) {
-            assertNotNull(derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getMetaCollectionByName(collectionName)
-                    .getMetaDocPartByTableRef(subDocPartTableRef).getMetaFieldByNameAndType(field.getKey(), 
-                            FieldType.from(((DataTypeForKV<?>) field.getValue().getDataType()).getKVValueConverter().getErasuredType())));
-            assertEquals(field.getValue().getName(), derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getMetaCollectionByName(collectionName)
-                    .getMetaDocPartByTableRef(subDocPartTableRef).getMetaFieldByNameAndType(field.getKey(), 
-                            FieldType.from(((DataTypeForKV<?>) field.getValue().getDataType()).getKVValueConverter().getErasuredType())).getIdentifier());
+        
+        ImmutableMetaDocPart subDocMetaDocPart = metaCollection.getMetaDocPartByTableRef(schema.subDocPartTableRef);
+        assertNotNull(subDocMetaDocPart);
+        assertEquals(schema.subDocPartTableName, subDocMetaDocPart.getIdentifier());
+        for (Map.Entry<String, Field<?>> field : schema.subDocPartFields.entrySet()) {
+        	ImmutableMetaField metaField = subDocMetaDocPart.getMetaFieldByNameAndType(field.getKey(), fieldType(field));
+        	assertNotNull(metaField);
+        	assertEquals(field.getValue().getName(), metaField.getIdentifier());
         }
         
         try (Connection connection = dataSource.getConnection()) {
             DSLContext dsl = DSL.using(connection, SQLDialect.DERBY);
-            for (Map.Entry<String, Field<?>> field : newSubDocPartFields.entrySet()) {
+            for (Map.Entry<String, Field<?>> field : schema.newSubDocPartFields.entrySet()) {
                 dsl.insertInto(databaseInterface.getMetaFieldTable())
-                    .set(databaseInterface.getMetaFieldTable().newRecord().values(databaseName, collectionName, subDocPartTableRef, 
+                    .set(databaseInterface.getMetaFieldTable().newRecord().values(schema.databaseName, schema.collectionName, schema.subDocPartTableRef, 
                             field.getKey(), field.getValue().getName(), 
                             FieldType.from(((DataTypeForKV<?>) field.getValue().getDataType()).getKVValueConverter().getErasuredType())))
                     .execute();
-                dsl.execute(databaseInterface.addColumnToDocPartTableStatement(dsl.configuration(), databaseSchemaName, subDocPartTableName, field.getValue()));
+                dsl.execute(databaseInterface.addColumnToDocPartTableStatement(dsl.configuration(), schema.databaseSchemaName, schema.subDocPartTableName, field.getValue()));
             }
             connection.commit();
         }
@@ -177,79 +151,66 @@ public class BackendDerbyTest extends AbstractBackendTest {
             derbyTorodbMeta = new DerbyTorodbMeta(DSL.using(connection, SQLDialect.DERBY), tableRefFactory, databaseInterface);
             connection.commit();
         }
-        assertNotNull(derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName));
-        assertEquals(databaseSchemaName, derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getIdentifier());
-        assertNotNull(derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getMetaCollectionByName(collectionName));
-        assertEquals(collectionIdentifierName, derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName)
-                .getMetaCollectionByName(collectionName).getIdentifier());
-        assertNotNull(derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getMetaCollectionByName(collectionName)
-                .getMetaDocPartByTableRef(rootDocPartTableRef));
-        assertEquals(rootDocPartTableName, derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getMetaCollectionByName(collectionName)
-                .getMetaDocPartByTableRef(rootDocPartTableRef).getIdentifier());
-        for (Map.Entry<String, Field<?>> field : rootDocPartFields.entrySet()) {
-            assertNotNull(derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getMetaCollectionByName(collectionName)
-                    .getMetaDocPartByTableRef(rootDocPartTableRef).getMetaFieldByNameAndType(field.getKey(), 
-                            FieldType.from(((DataTypeForKV<?>) field.getValue().getDataType()).getKVValueConverter().getErasuredType())));
-            assertEquals(field.getValue().getName(), derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getMetaCollectionByName(collectionName)
-                    .getMetaDocPartByTableRef(rootDocPartTableRef).getMetaFieldByNameAndType(field.getKey(), 
-                            FieldType.from(((DataTypeForKV<?>) field.getValue().getDataType()).getKVValueConverter().getErasuredType())).getIdentifier());
+        
+        metaSnapshot = derbyTorodbMeta.getCurrentMetaSnapshot();
+        metaDatabase = metaSnapshot.getMetaDatabaseByName(schema.databaseName);
+        
+        assertNotNull(metaDatabase);
+        assertEquals(schema.databaseSchemaName, metaDatabase.getIdentifier());
+        
+        metaCollection = metaDatabase.getMetaCollectionByName(schema.collectionName);
+        assertNotNull(metaCollection);
+        assertEquals(schema.collectionIdentifierName, metaCollection.getIdentifier());
+        
+        rootMetaDocPart = metaCollection.getMetaDocPartByTableRef(schema.rootDocPartTableRef);
+        assertNotNull(rootMetaDocPart);
+        assertEquals(schema.rootDocPartTableName, rootMetaDocPart.getIdentifier());
+        
+        for (Map.Entry<String, Field<?>> field : schema.rootDocPartFields.entrySet()) {
+        	ImmutableMetaField metaField = rootMetaDocPart.getMetaFieldByNameAndType(field.getKey(), fieldType(field));
+			assertNotNull(metaField);
+            assertEquals(field.getValue().getName(), metaField.getIdentifier());
         }
-        assertNotNull(derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getMetaCollectionByName(collectionName)
-                .getMetaDocPartByTableRef(subDocPartTableRef));
-        assertEquals(subDocPartTableName, derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getMetaCollectionByName(collectionName)
-                .getMetaDocPartByTableRef(subDocPartTableRef).getIdentifier());
-        for (Map.Entry<String, Field<?>> field : subDocPartFields.entrySet()) {
-            assertNotNull(derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getMetaCollectionByName(collectionName)
-                    .getMetaDocPartByTableRef(subDocPartTableRef).getMetaFieldByNameAndType(field.getKey(), 
-                            FieldType.from(((DataTypeForKV<?>) field.getValue().getDataType()).getKVValueConverter().getErasuredType())));
-            assertEquals(field.getValue().getName(), derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getMetaCollectionByName(collectionName)
-                    .getMetaDocPartByTableRef(subDocPartTableRef).getMetaFieldByNameAndType(field.getKey(), 
-                            FieldType.from(((DataTypeForKV<?>) field.getValue().getDataType()).getKVValueConverter().getErasuredType())).getIdentifier());
+        
+        subDocMetaDocPart = metaCollection.getMetaDocPartByTableRef(schema.subDocPartTableRef);
+        assertNotNull(subDocMetaDocPart);
+        assertEquals(schema.subDocPartTableName, subDocMetaDocPart.getIdentifier());
+        
+        for (Map.Entry<String, Field<?>> field : schema.subDocPartFields.entrySet()) {
+        	ImmutableMetaField metaField = subDocMetaDocPart.getMetaFieldByNameAndType(field.getKey(), fieldType(field));
+        	assertNotNull(metaField);
+        	assertEquals(field.getValue().getName(), metaField.getIdentifier());
         }
-        for (Map.Entry<String, Field<?>> field : newSubDocPartFields.entrySet()) {
-            assertNotNull(derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getMetaCollectionByName(collectionName)
-                    .getMetaDocPartByTableRef(subDocPartTableRef).getMetaFieldByNameAndType(field.getKey(), 
-                            FieldType.from(((DataTypeForKV<?>) field.getValue().getDataType()).getKVValueConverter().getErasuredType())));
-            assertEquals(field.getValue().getName(), derbyTorodbMeta.getCurrentMetaSnapshot().getMetaDatabaseByName(databaseName).getMetaCollectionByName(collectionName)
-                    .getMetaDocPartByTableRef(subDocPartTableRef).getMetaFieldByNameAndType(field.getKey(), 
-                            FieldType.from(((DataTypeForKV<?>) field.getValue().getDataType()).getKVValueConverter().getErasuredType())).getIdentifier());
+        for (Map.Entry<String, Field<?>> field : schema.newSubDocPartFields.entrySet()) {
+        	ImmutableMetaField metaField = subDocMetaDocPart.getMetaFieldByNameAndType(field.getKey(), fieldType(field));
+        	assertNotNull(metaField);
+        	assertEquals(field.getValue().getName(), metaField.getIdentifier());
         }
     }
-    
+  
     @Test
     public void testConsumeRids() throws Exception {
-        try (Connection connection = dataSource.getConnection()) {
-            new DerbyTorodbMeta(DSL.using(connection, SQLDialect.DERBY), tableRefFactory, databaseInterface);
-            connection.commit();
-        }
-        try (Connection connection = dataSource.getConnection()) {
-            DSLContext dsl = DSL.using(connection, SQLDialect.DERBY);
-            dsl.insertInto(databaseInterface.getMetaDatabaseTable())
-                .set(databaseInterface.getMetaDatabaseTable().newRecord().values(databaseName, databaseSchemaName))
-                .execute();
-            dsl.execute(databaseInterface.createSchemaStatement(databaseSchemaName));
-            dsl.insertInto(databaseInterface.getMetaCollectionTable())
-                .set(databaseInterface.getMetaCollectionTable().newRecord().values(databaseName, collectionName, collectionIdentifierName))
-                .execute();
-            dsl.insertInto(databaseInterface.getMetaDocPartTable())
-                .set(databaseInterface.getMetaDocPartTable().newRecord().values(databaseName, collectionName, rootDocPartTableRef, rootDocPartTableName))
-                .execute();
-            int first100RootRid = databaseInterface.consumeRids(dsl, databaseName, collectionName, rootDocPartTableRef, 100);
-            assertEquals(0, first100RootRid);
-            int next100RootRid = databaseInterface.consumeRids(dsl, databaseName, collectionName, rootDocPartTableRef, 100);
-            assertEquals(100, next100RootRid);
-            dsl.execute(databaseInterface.createDocPartTableStatement(dsl.configuration(), databaseSchemaName, rootDocPartTableName, rootDocPartFields.values()));
-            dsl.insertInto(databaseInterface.getMetaDocPartTable())
-                .set(databaseInterface.getMetaDocPartTable().newRecord().values(databaseName, collectionName, subDocPartTableRef, subDocPartTableName))
-                .execute();
-            int first100SubRid = databaseInterface.consumeRids(dsl, databaseName, collectionName, subDocPartTableRef, 100);
-            assertEquals(0, first100SubRid);
-            int next100SubRid = databaseInterface.consumeRids(dsl, databaseName, collectionName, subDocPartTableRef, 100);
-            assertEquals(100, next100SubRid);
-            connection.commit();
-        }
+    	 try (Connection connection = dataSource.getConnection()) {
+             new DerbyTorodbMeta(DSL.using(connection, SQLDialect.DERBY), tableRefFactory, databaseInterface);
+             connection.commit();
+         }
+         try (Connection connection = dataSource.getConnection()) {
+             DSLContext dsl = DSL.using(connection, SQLDialect.DERBY);
+             BackendHelper helper = new BackendHelper(databaseInterface, dsl, schema);
+             helper.createMetaModel();
+             int first100RootRid = databaseInterface.consumeRids(dsl, schema.databaseName, schema.collectionName, schema.rootDocPartTableRef, 100);
+             assertEquals(0, first100RootRid);
+             int next100RootRid = databaseInterface.consumeRids(dsl, schema.databaseName, schema.collectionName, schema.rootDocPartTableRef, 100);
+             assertEquals(100, next100RootRid);
+             helper.createDocPartTable(schema.rootDocPartTableName, databaseInterface.getMetaDocPartTable().ROOT_FIELDS, schema.rootDocPartFields.values());
+             int first100SubRid = databaseInterface.consumeRids(dsl, schema.databaseName, schema.collectionName, schema.subDocPartTableRef, 100);
+             assertEquals(0, first100SubRid);
+             int next100SubRid = databaseInterface.consumeRids(dsl, schema.databaseName, schema.collectionName, schema.subDocPartTableRef, 100);
+             assertEquals(100, next100SubRid);
+             connection.commit();
+         }
     }
-    
+     
     @Test
     public void testTorodbInsertDocPart() throws Exception {
         try (Connection connection = dataSource.getConnection()) {
@@ -258,45 +219,35 @@ public class BackendDerbyTest extends AbstractBackendTest {
         }
         try (Connection connection = dataSource.getConnection()) {
             DSLContext dsl = DSL.using(connection, SQLDialect.DERBY);
-            dsl.execute(databaseInterface.createSchemaStatement(databaseSchemaName));
-            ImmutableMetaDocPart.Builder rootMetaDocPartBuilder = new ImmutableMetaDocPart.Builder(rootDocPartTableRef, rootDocPartTableName);
-            for (Map.Entry<String, Field<?>> field : rootDocPartFields.entrySet()) {
+            BackendHelper helper = new BackendHelper(databaseInterface, dsl, schema);
+            
+            dsl.execute(databaseInterface.createSchemaStatement(schema.databaseSchemaName));
+            
+            ImmutableMetaDocPart.Builder rootMetaDocPartBuilder = new ImmutableMetaDocPart.Builder(schema.rootDocPartTableRef, schema.rootDocPartTableName);
+            for (Map.Entry<String, Field<?>> field : schema.rootDocPartFields.entrySet()) {
                 rootMetaDocPartBuilder.add(new ImmutableMetaField(field.getKey(), field.getValue().getName(), 
                         FieldType.from(((DataTypeForKV<?>) field.getValue().getDataType()).getKVValueConverter().getErasuredType())));
             }
             ImmutableMetaDocPart rootMetaDocPart = rootMetaDocPartBuilder.build();
-        	RidGenerator ridGenerator = new MockRidGenerator();
-            DocPartDataImpl docPartData = new DocPartDataImpl(new WrapperMutableMetaDocPart(rootMetaDocPart, w -> {}), 
-            		ridGenerator.getDocPartRidGenerator(databaseName, collectionName));
-            dsl.execute(databaseInterface.createDocPartTableStatement(dsl.configuration(), databaseSchemaName, rootDocPartTableName, 
+            dsl.execute(databaseInterface.createDocPartTableStatement(dsl.configuration(), schema.databaseSchemaName, schema.rootDocPartTableName, 
                     ImmutableList.<Field<?>>builder()
                         .addAll(databaseInterface.getDocPartTableInternalFields(rootMetaDocPart))
-                        .addAll(rootDocPartFields.values())
+                        .addAll(schema.rootDocPartFields.values())
                         .build()));
-            for (Map<String, Optional<KVValue<?>>> rootDocPartValueMap : rootDocPartValues) {
-                DocPartRowImpl row = docPartData.appendRootRow();
-                for (Map.Entry<String, Optional<KVValue<?>>> rootDocPartValue : rootDocPartValueMap.entrySet()) {
-                    if (rootDocPartValue.getValue().isPresent()) {
-                        Field<?> field = rootDocPartFields.get(rootDocPartValue.getKey());
-                        docPartData.appendColumnValue(row, rootDocPartValue.getKey(), field.getName(), 
-                            FieldType.from(((DataTypeForKV<?>) field.getDataType()).getKVValueConverter().getErasuredType()), 
-                            rootDocPartValue.getValue().get());
-                    }
-                }
-            }
-            databaseInterface.insertDocPartData(dsl, databaseSchemaName, docPartData);
+            helper.insertDocPartData(rootMetaDocPart, schema.rootDocPartValues, schema.rootDocPartFields);
             connection.commit();
+            
             StringBuilder rootDocPartSelectStatementBuilder = new StringBuilder("SELECT ");
-            for (Map.Entry<String, Field<?>> field : rootDocPartFields.entrySet()) {
+            for (Map.Entry<String, Field<?>> field : schema.rootDocPartFields.entrySet()) {
                 rootDocPartSelectStatementBuilder.append('"')
                     .append(field.getValue().getName())
                     .append("\",");
             }
             rootDocPartSelectStatementBuilder.setCharAt(rootDocPartSelectStatementBuilder.length() - 1, ' ');
             rootDocPartSelectStatementBuilder.append("FROM \"")
-                    .append(databaseSchemaName)
+                    .append(schema.databaseSchemaName)
                     .append("\".\"")
-                    .append(rootDocPartTableName)
+                    .append(schema.rootDocPartTableName)
                     .append('"');
             try (PreparedStatement preparedStatement = connection.prepareStatement(rootDocPartSelectStatementBuilder.toString())) {
                 ResultSet resultSet = preparedStatement.executeQuery();
@@ -304,10 +255,10 @@ public class BackendDerbyTest extends AbstractBackendTest {
                 while (resultSet.next()) {
                     Integer index = 0;
                     boolean rowFound = true;
-                    for (Map<String, Optional<KVValue<?>>> rootDocPartValueMap : rootDocPartValues) {
+                    for (Map<String, Optional<KVValue<?>>> rootDocPartValueMap : schema.rootDocPartValues) {
                         rowFound = true;
                         int columnIndex = 1;
-                        for (Map.Entry<String, Field<?>> field : rootDocPartFields.entrySet()) {
+                        for (Map.Entry<String, Field<?>> field : schema.rootDocPartFields.entrySet()) {
                             Optional<KVValue<?>> value = rootDocPartValueMap.get(field.getKey());
                             DataTypeForKV<?> dataTypeForKV = (DataTypeForKV<?>) field.getValue().getDataType();
                             Object databaseValue = resultSet.getObject(columnIndex);
@@ -355,22 +306,23 @@ public class BackendDerbyTest extends AbstractBackendTest {
         }
     }
     
+
     @Test
     public void testTorodbReadCollectionResultSets() throws Exception {
         KVDocument document = parseFromJson("testTorodbReadDocPart.json");
         MutableMetaSnapshot mutableSnapshot = new WrapperMutableMetaSnapshot(new ImmutableMetaSnapshot.Builder().build());
-        mutableSnapshot.addMetaDatabase(databaseName, databaseSchemaName).addMetaCollection(collectionName, collectionIdentifierName);
+        mutableSnapshot.addMetaDatabase(schema.databaseName, schema.databaseSchemaName).addMetaCollection(schema.collectionName, schema.collectionIdentifierName);
         try (Connection connection = dataSource.getConnection()) {
             DSLContext dsl = DSL.using(connection, SQLDialect.DERBY);
-            dsl.execute(databaseInterface.createSchemaStatement(databaseSchemaName));
+            dsl.execute(databaseInterface.createSchemaStatement(schema.databaseSchemaName));
             CollectionData collectionData = writeDocumentMeta(mutableSnapshot, dsl, document);
             
             List<Integer> generatedDids = writeCollectionData(dsl, collectionData);
             
             MetaDatabase metaDatabase = mutableSnapshot
-                    .getMetaDatabaseByName(databaseName);
+                    .getMetaDatabaseByName(schema.databaseName);
             MetaCollection metaCollection = metaDatabase
-                    .getMetaCollectionByName(collectionName);
+                    .getMetaCollectionByName(schema.collectionName);
             
             DocPartResults<ResultSet> docPartResultSets = databaseInterface.getCollectionResultSets(
                     dsl, metaDatabase, metaCollection, 
@@ -390,8 +342,8 @@ public class BackendDerbyTest extends AbstractBackendTest {
         try (Connection connection = dataSource.getConnection()) {
             DSLContext dsl = DSL.using(connection, SQLDialect.DERBY);
             MutableMetaSnapshot mutableSnapshot = new WrapperMutableMetaSnapshot(new ImmutableMetaSnapshot.Builder().build());
-            mutableSnapshot.addMetaDatabase(databaseName, databaseSchemaName).addMetaCollection(collectionName, collectionIdentifierName);
-            dsl.execute(databaseInterface.createSchemaStatement(databaseSchemaName));
+            mutableSnapshot.addMetaDatabase(schema.databaseName, schema.databaseSchemaName).addMetaCollection(schema.collectionName, schema.collectionIdentifierName);
+            dsl.execute(databaseInterface.createSchemaStatement(schema.databaseSchemaName));
             
             List<KVDocument> documents = new ArrayList<>();
             for (int current_size = 0; current_size < 5; current_size++) {
@@ -481,14 +433,14 @@ public class BackendDerbyTest extends AbstractBackendTest {
             writeDocumentsMeta(mutableSnapshot, dsl, documents);
             
             for (KVDocument document : documents) {
-                CollectionData collectionData = readDataFromDocument(databaseName, collectionName, document, mutableSnapshot);
+                CollectionData collectionData = readDataFromDocument(schema.databaseName, schema.collectionName, document, mutableSnapshot);
                 
                 List<Integer> generatedDids = writeCollectionData(dsl, collectionData);
                 
                 MetaDatabase metaDatabase = mutableSnapshot
-                        .getMetaDatabaseByName(databaseName);
+                        .getMetaDatabaseByName(schema.databaseName);
                 MetaCollection metaCollection = metaDatabase
-                        .getMetaCollectionByName(collectionName);
+                        .getMetaCollectionByName(schema.collectionName);
                 
                 DocPartResults<ResultSet> docPartResultSets = databaseInterface.getCollectionResultSets(
                         dsl, metaDatabase, metaCollection, 
@@ -501,14 +453,14 @@ public class BackendDerbyTest extends AbstractBackendTest {
                 System.out.println("Readed: " + readedDocument);
                 assertEquals(document, readedDocument);
             }
-            CollectionData collectionData = readDataFromDocuments(databaseName, collectionName, documents, mutableSnapshot);
+            CollectionData collectionData = readDataFromDocuments(schema.databaseName, schema.collectionName, documents, mutableSnapshot);
             
             List<Integer> generatedDids = writeCollectionData(dsl, collectionData);
             
             MetaDatabase metaDatabase = mutableSnapshot
-                    .getMetaDatabaseByName(databaseName);
+                    .getMetaDatabaseByName(schema.databaseName);
             MetaCollection metaCollection = metaDatabase
-                    .getMetaCollectionByName(collectionName);
+                    .getMetaCollectionByName(schema.collectionName);
             
             DocPartResults<ResultSet> docPartResultSets = databaseInterface.getCollectionResultSets(
                     dsl, metaDatabase, metaCollection, 
@@ -585,5 +537,9 @@ public class BackendDerbyTest extends AbstractBackendTest {
                 return true;
             }
         }, "torod");
+    }
+    
+    private FieldType fieldType(Map.Entry<String, Field<?>> field){
+    	return FieldType.from(((DataTypeForKV<?>) field.getValue().getDataType()).getKVValueConverter().getErasuredType());
     }
 }
