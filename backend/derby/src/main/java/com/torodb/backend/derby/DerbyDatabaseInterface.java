@@ -529,7 +529,7 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
     @Override
     public DocPartResults<ResultSet> getCollectionResultSets(@Nonnull DSLContext dsl, @Nonnull MetaDatabase metaDatabase, @Nonnull MetaCollection metaCollection, 
             @Nonnull Integer[] dids) throws SQLException {
-        Preconditions.checkArgument(dids.length > 0, "You should specify at least 1 did");
+        Preconditions.checkArgument(dids.length > 0, "At least 1 did must be specified");
         
         ImmutableList.Builder<DocPartResult<ResultSet>> docPartResultSetsBuilder = ImmutableList.builder();
         Connection connection = dsl.configuration().connectionProvider().acquire();
