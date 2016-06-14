@@ -905,7 +905,10 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
                 .and(metaDocPartTable.COLLECTION.eq(collection))
                 .and(metaDocPartTable.TABLE_REF.eq(TableRefConverter.toJsonArray(tableRef))))
             .fetchOne();
-        dsl.update(metaDocPartTable).set(metaDocPartTable.LAST_RID, metaDocPartTable.LAST_RID.plus(count)).execute();
+        dsl.update(metaDocPartTable).set(metaDocPartTable.LAST_RID, metaDocPartTable.LAST_RID.plus(count)).where(
+                metaDocPartTable.DATABASE.eq(database)
+                .and(metaDocPartTable.COLLECTION.eq(collection))
+                .and(metaDocPartTable.TABLE_REF.eq(TableRefConverter.toJsonArray(tableRef)))).execute();
         return lastRid.value1();
     }
 
