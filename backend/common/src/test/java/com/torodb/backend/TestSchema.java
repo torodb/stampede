@@ -11,6 +11,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.torodb.core.TableRef;
 import com.torodb.core.TableRefFactory;
+import com.torodb.core.impl.TableRefFactoryImpl;
 import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.kvdocument.values.KVBoolean;
 import com.torodb.kvdocument.values.KVDouble;
