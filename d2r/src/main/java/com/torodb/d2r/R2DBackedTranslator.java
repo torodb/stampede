@@ -38,10 +38,10 @@ public class R2DBackedTranslator<Result, BackendInternalFields extends InternalF
     @Override
     public Collection<KVDocument> translate(DocPartResults<Result> docPartResultSets) throws BackendException, RollbackException {
         ImmutableList.Builder<KVDocument> readedDocuments = ImmutableList.builder();
-        Table<TableRef, String, Map<Integer, List<KVValue<?>>>> currentDocPartTable = 
-                HashBasedTable.<TableRef, String, Map<Integer, List<KVValue<?>>>>create();
-        Table<TableRef, String, Map<Integer, List<KVValue<?>>>> childDocPartTable = 
-                HashBasedTable.<TableRef, String, Map<Integer, List<KVValue<?>>>>create();
+        Table<TableRef, Integer, Map<String, List<KVValue<?>>>> currentDocPartTable = 
+                HashBasedTable.<TableRef, Integer, Map<String, List<KVValue<?>>>>create();
+        Table<TableRef, Integer, Map<String, List<KVValue<?>>>> childDocPartTable = 
+                HashBasedTable.<TableRef, Integer, Map<String, List<KVValue<?>>>>create();
         int previousDepth = -1;
         Iterator<DocPartResult<Result>> docPartResultSetIterator = docPartResultSets.iterator();
         while(docPartResultSetIterator.hasNext()) {
@@ -50,7 +50,7 @@ public class R2DBackedTranslator<Result, BackendInternalFields extends InternalF
             TableRef tableRef = metaDocPart.getTableRef();
             
             if (previousDepth != -1 && previousDepth != tableRef.getDepth()) {
-                Table<TableRef, String, Map<Integer, List<KVValue<?>>>> 
+                Table<TableRef, Integer, Map<String, List<KVValue<?>>>> 
                     previousChildDocPartTable = childDocPartTable;
                 childDocPartTable = currentDocPartTable;
                 currentDocPartTable = previousChildDocPartTable;
@@ -60,12 +60,19 @@ public class R2DBackedTranslator<Result, BackendInternalFields extends InternalF
             }
             previousDepth = tableRef.getDepth();
             
-            Map<String, Map<Integer, List<KVValue<?>>>> childDocPartRow = 
+            Map<Integer, Map<String, List<KVValue<?>>>> childDocPartRow = 
                     childDocPartTable.row(tableRef);
+            Map<Integer, Map<String, List<KVValue<?>>>> currentDocPartRow;
+            
+            if (tableRef.isRoot()) {
+                currentDocPartRow = null;
+            } else {
+                currentDocPartRow = currentDocPartTable.row(tableRef.getParent().get());
+            }
             
             Result result = docPartResultSet.getResult();
             
-            readResult(metaDocPart, tableRef, result, currentDocPartTable, childDocPartRow, readedDocuments);
+            readResult(metaDocPart, tableRef, result, currentDocPartRow, childDocPartRow, readedDocuments);
         }
         
         
@@ -73,16 +80,17 @@ public class R2DBackedTranslator<Result, BackendInternalFields extends InternalF
     }
     
     protected void readResult(MetaDocPart metaDocPart, TableRef tableRef, Result result,
-            Table<TableRef, String, Map<Integer, List<KVValue<?>>>> currentDocPartTable,
-            Map<String, Map<Integer, List<KVValue<?>>>> childDocPartRow,
+            Map<Integer, Map<String, List<KVValue<?>>>> currentDocPartRow,
+            Map<Integer, Map<String, List<KVValue<?>>>> childDocPartRow,
             ImmutableList.Builder<KVDocument> readedDocuments) throws BackendException, RollbackException {
+        KVDocument.Builder documentBuilder = new KVDocument.Builder();
         while (backendTranslator.next(result)) {
             BackendInternalFields internalFields = backendTranslator.readInternalFields(metaDocPart, result);
             Integer rid = internalFields.getRid();
             Integer pid = internalFields.getPid();
             Integer seq = internalFields.getSeq();
             
-            KVDocument.Builder documentBuilder = new KVDocument.Builder();
+            Map<String, List<KVValue<?>>> childDocPartCell = childDocPartRow.get(rid);
             //TODO: ensure MetaField order using ResultSet meta data
             Iterator<? extends MetaField> metaFieldIterator = metaDocPart
                     .streamFields().iterator();
@@ -101,29 +109,25 @@ public class R2DBackedTranslator<Result, BackendInternalFields extends InternalF
                 
                 if (metaField.getType() == FieldType.CHILD) {
                     KVBoolean child = (KVBoolean) value;
-                    Map<Integer, List<KVValue<?>>> childDocPartCell = childDocPartRow.get(metaField.getName());
                     if (child.getValue()) {
                         List<KVValue<?>> elements;
-                        if (childDocPartCell == null || (elements = childDocPartCell.get(rid)) == null) {
+                        if (childDocPartCell == null || (elements = childDocPartCell.get(metaField.getName())) == null) {
                             value = new ListKVArray(ImmutableList.of());
                         } else {
                             value = new ListKVArray(elements);
                         }
                     } else {
-                        value = childDocPartCell.get(rid).get(0);
+                        value = childDocPartCell.get(metaField.getName()).get(0);
                     }
                 }
                 
                 if(metaField.getIdentifier().indexOf(backendTranslator.getScalarName()) == 0
                         && metaField.getIdentifier().length() == backendTranslator.getScalarName().length() + 2) {
                     assert !tableRef.isRoot() : "found scalar value in root doc part";
-                    Map<Integer, List<KVValue<?>>> currentDocPartCell = getDocPartCell(
-                            currentDocPartTable, tableRef, seq);
                     if (seq == null) {
-                        currentDocPartCell.put(pid, ImmutableList.of(value));
+                        setDocPartRowValue(currentDocPartRow, tableRef, pid, seq, ImmutableList.of(value));
                     } else {
-                        List<KVValue<?>> elements = getCellElements(currentDocPartCell, pid);
-                        setElementValue(elements, seq, value);
+                        addToDocPartRow(currentDocPartRow, tableRef, pid, seq, value);
                     }
                     wasScalar = true;
                     break;
@@ -139,50 +143,38 @@ public class R2DBackedTranslator<Result, BackendInternalFields extends InternalF
             if (tableRef.isRoot()) {
                 readedDocuments.add(documentBuilder.build());
             } else {
-                Map<Integer, List<KVValue<?>>> currentDocPartCell = getDocPartCell(
-                        currentDocPartTable, tableRef, seq);
                 if (seq == null) {
-                    currentDocPartCell.put(pid, ImmutableList.of(documentBuilder.build()));
+                    setDocPartRowValue(currentDocPartRow, tableRef, pid, seq, ImmutableList.of(documentBuilder.build()));
                 } else {
-                    List<KVValue<?>> elements = getCellElements(currentDocPartCell, pid);
-                    setElementValue(elements, seq, documentBuilder.build());
+                    addToDocPartRow(currentDocPartRow, tableRef, pid, seq, documentBuilder.build());
                 }
             }
+            
+            documentBuilder = new KVDocument.Builder();
         }
     }
 
-    private Map<Integer, List<KVValue<?>>> getDocPartCell(
-            Table<TableRef, String, Map<Integer, List<KVValue<?>>>> docPartTable, TableRef tableRef, Integer seq) {
-        String name = tableRef.getName();
+    private void setDocPartRowValue(
+            Map<Integer, Map<String, List<KVValue<?>>>> docPartRow, TableRef tableRef, Integer pid, Integer seq, ImmutableList<KVValue<?>> elements) {
+        String name = getDocPartCellName(tableRef, seq);
         
-        if (seq != null && tableRef.isInArray()) {
-            name = backendTranslator.getScalarName();
-        }
+        Map<String, List<KVValue<?>>> docPartCell = getDocPartCell(docPartRow, pid);
         
-        return getDocPartCell(docPartTable, tableRef, name);
+        docPartCell.put(name, elements);
     }
 
-    private Map<Integer, List<KVValue<?>>> getDocPartCell(
-            Table<TableRef, String, Map<Integer, List<KVValue<?>>>> docPartTable, TableRef tableRef, String name) {
-        Map<Integer, List<KVValue<?>>> docPartCell = 
-                docPartTable.get(tableRef.getParent().get(), name);
-        if (docPartCell == null) {
-            docPartCell = new HashMap<>();
-            docPartTable.put(tableRef.getParent().get(), name, docPartCell);
-        }
-        return docPartCell;
-    }
-
-    private List<KVValue<?>> getCellElements(Map<Integer, List<KVValue<?>>> docPartCell, Integer pid) {
-        List<KVValue<?>> elements = docPartCell.get(pid);
+    private void addToDocPartRow(
+            Map<Integer, Map<String, List<KVValue<?>>>> docPartRow, TableRef tableRef, Integer pid, Integer seq, KVValue<?> value) {
+        String name = getDocPartCellName(tableRef, seq);
+        
+        Map<String, List<KVValue<?>>> docPartCell = getDocPartCell(docPartRow, pid);
+        
+        List<KVValue<?>> elements = docPartCell.get(name);
         if (elements == null) {
             elements = new ArrayList<>();
-            docPartCell.put(pid, elements);
+            docPartCell.put(name, elements);
         }
-        return elements;
-    }
-
-    private void setElementValue(List<KVValue<?>> elements, Integer seq, KVValue<?> value) {
+        
         final int size = elements.size();
         if (seq < size) {
             elements.set(seq, value);
@@ -192,5 +184,25 @@ public class R2DBackedTranslator<Result, BackendInternalFields extends InternalF
             }
             elements.add(value);
         }
+    }
+
+    private String getDocPartCellName(TableRef tableRef, Integer seq) {
+        String name = tableRef.getName();
+        
+        if (seq != null && tableRef.isInArray()) {
+            name = backendTranslator.getScalarName();
+        }
+        return name;
+    }
+
+    private Map<String, List<KVValue<?>>> getDocPartCell(Map<Integer, Map<String, List<KVValue<?>>>> docPartRow,
+            Integer pid) {
+        Map<String, List<KVValue<?>>> docPartCell = 
+                docPartRow.get(pid);
+        if (docPartCell == null) {
+            docPartCell = new HashMap<>();
+            docPartRow.put(pid, docPartCell);
+        }
+        return docPartCell;
     }
 }
