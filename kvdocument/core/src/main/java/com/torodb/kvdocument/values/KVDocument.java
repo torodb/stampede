@@ -64,7 +64,13 @@ public abstract class KVDocument extends KVValue<KVDocument> implements Iterable
 
     @Override
     public String toString() {
-        return Iterables.toString(this);
+        StringBuilder toStringBuilder = new StringBuilder(
+                Iterables.toString(this));
+        
+        toStringBuilder.setCharAt(0, '{');
+        toStringBuilder.setCharAt(toStringBuilder.length() - 1, '}');
+
+        return toStringBuilder.toString();
     }
 
     /**
