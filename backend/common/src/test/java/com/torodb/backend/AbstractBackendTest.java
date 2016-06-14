@@ -80,7 +80,7 @@ import com.torodb.kvdocument.values.heap.LocalTimeKVTime;
 import com.torodb.kvdocument.values.heap.LongKVInstant;
 import com.torodb.kvdocument.values.heap.StringKVString;
 
-public abstract class AbstractBackendDerbyTest {
+public abstract class AbstractBackendTest {
     
     protected static final TableRefFactory tableRefFactory = new TableRefFactoryImpl();
     protected static final MockRidGenerator ridGenerator = new MockRidGenerator();
@@ -113,46 +113,46 @@ public abstract class AbstractBackendDerbyTest {
         rootDocPartTableRef = tableRefFactory.createRoot();
         rootDocPartTableName = "rootDocPartTableName";
         rootDocPartFields = ImmutableMap.<String, Field<?>>builder()
-                .put("nullRoot", DSL.field("nullRootField", databaseInterface.getDataType(FieldType.NULL)))
-                .put("booleanRoot", DSL.field("booleanRootField", databaseInterface.getDataType(FieldType.BOOLEAN)))
-                .put("integerRoot", DSL.field("integerRootField", databaseInterface.getDataType(FieldType.INTEGER)))
-                .put("longRoot", DSL.field("longRootField", databaseInterface.getDataType(FieldType.LONG)))
-                .put("doubleRoot", DSL.field("doubleRootField", databaseInterface.getDataType(FieldType.DOUBLE)))
-                .put("stringRoot", DSL.field("stringRootField", databaseInterface.getDataType(FieldType.STRING)))
-                .put("dateRoot", DSL.field("dateRootField", databaseInterface.getDataType(FieldType.DATE)))
-                .put("timeRoot", DSL.field("timeRootField", databaseInterface.getDataType(FieldType.TIME)))
-                .put("mongoObjectIdRoot", DSL.field("mongoObjectIdRootField", databaseInterface.getDataType(FieldType.MONGO_OBJECT_ID)))
-                .put("mongoTimeStampRoot", DSL.field("mongoTimeStampRootField", databaseInterface.getDataType(FieldType.MONGO_TIME_STAMP)))
-                .put("instantRoot", DSL.field("instantRootField", databaseInterface.getDataType(FieldType.INSTANT)))
-                .put("subDocPart", DSL.field("subDocPartField", databaseInterface.getDataType(FieldType.CHILD)))
+                .put("nullRoot", field("nullRootField", FieldType.NULL))
+                .put("booleanRoot", field("booleanRootField", FieldType.BOOLEAN))
+                .put("integerRoot", field("integerRootField", FieldType.INTEGER))
+                .put("longRoot", field("longRootField", FieldType.LONG))
+                .put("doubleRoot", field("doubleRootField", FieldType.DOUBLE))
+                .put("stringRoot", field("stringRootField", FieldType.STRING))
+                .put("dateRoot", field("dateRootField", FieldType.DATE))
+                .put("timeRoot", field("timeRootField", FieldType.TIME))
+                .put("mongoObjectIdRoot", field("mongoObjectIdRootField", FieldType.MONGO_OBJECT_ID))
+                .put("mongoTimeStampRoot", field("mongoTimeStampRootField", FieldType.MONGO_TIME_STAMP))
+                .put("instantRoot", field("instantRootField", FieldType.INSTANT))
+                .put("subDocPart", field("subDocPartField", FieldType.CHILD))
                 .build();
         subDocPartTableRef = tableRefFactory.createChild(rootDocPartTableRef, "subDocPart");
         subDocPartTableName = "subDocPartTableName";
         subDocPartFields = ImmutableMap.<String, Field<?>>builder()
-                .put("nullSub", DSL.field("nullSubField", databaseInterface.getDataType(FieldType.NULL)))
-                .put("booleanSub", DSL.field("booleanSubField", databaseInterface.getDataType(FieldType.BOOLEAN)))
-                .put("integerSub", DSL.field("integerSubField", databaseInterface.getDataType(FieldType.INTEGER)))
-                .put("longSub", DSL.field("longSubField", databaseInterface.getDataType(FieldType.LONG)))
-                .put("doubleSub", DSL.field("doubleSubField", databaseInterface.getDataType(FieldType.DOUBLE)))
-                .put("stringSub", DSL.field("stringSubField", databaseInterface.getDataType(FieldType.STRING)))
-                .put("dateSub", DSL.field("dateSubField", databaseInterface.getDataType(FieldType.DATE)))
-                .put("timeSub", DSL.field("timeSubField", databaseInterface.getDataType(FieldType.TIME)))
-                .put("mongoObjectIdSub", DSL.field("mongoObjectIdSubField", databaseInterface.getDataType(FieldType.MONGO_OBJECT_ID)))
-                .put("mongoTimeStampSub", DSL.field("mongoTimeStampSubField", databaseInterface.getDataType(FieldType.MONGO_TIME_STAMP)))
-                .put("instantSub", DSL.field("instantSubField", databaseInterface.getDataType(FieldType.INSTANT)))
+                .put("nullSub", field("nullSubField", FieldType.NULL))
+                .put("booleanSub", field("booleanSubField", FieldType.BOOLEAN))
+                .put("integerSub", field("integerSubField", FieldType.INTEGER))
+                .put("longSub", field("longSubField", FieldType.LONG))
+                .put("doubleSub", field("doubleSubField", FieldType.DOUBLE))
+                .put("stringSub", field("stringSubField", FieldType.STRING))
+                .put("dateSub", field("dateSubField", FieldType.DATE))
+                .put("timeSub", field("timeSubField", FieldType.TIME))
+                .put("mongoObjectIdSub", field("mongoObjectIdSubField", FieldType.MONGO_OBJECT_ID))
+                .put("mongoTimeStampSub", field("mongoTimeStampSubField", FieldType.MONGO_TIME_STAMP))
+                .put("instantSub", field("instantSubField", FieldType.INSTANT))
                 .build();
         newSubDocPartFields = ImmutableMap.<String, Field<?>>builder()
-                .put("newNullSub", DSL.field("newNullSubField", databaseInterface.getDataType(FieldType.NULL)))
-                .put("newBooleanSub", DSL.field("newBooleanSubField", databaseInterface.getDataType(FieldType.BOOLEAN)))
-                .put("newIntegerSub", DSL.field("newIntegerSubField", databaseInterface.getDataType(FieldType.INTEGER)))
-                .put("newLongSub", DSL.field("newLongSubField", databaseInterface.getDataType(FieldType.LONG)))
-                .put("newDoubleSub", DSL.field("newDoubleSubField", databaseInterface.getDataType(FieldType.DOUBLE)))
-                .put("newStringSub", DSL.field("newStringSubField", databaseInterface.getDataType(FieldType.STRING)))
-                .put("newDateSub", DSL.field("newDateSubField", databaseInterface.getDataType(FieldType.DATE)))
-                .put("newTimeSub", DSL.field("newTimeSubField", databaseInterface.getDataType(FieldType.TIME)))
-                .put("newMongoObjectIdSub", DSL.field("newMongoObjectIdSubField", databaseInterface.getDataType(FieldType.MONGO_OBJECT_ID)))
-                .put("newMongoTimeStampSub", DSL.field("newMongoTimeStampSubField", databaseInterface.getDataType(FieldType.MONGO_TIME_STAMP)))
-                .put("newInstantSub", DSL.field("newInstantSubField", databaseInterface.getDataType(FieldType.INSTANT)))
+                .put("newNullSub", field("newNullSubField", FieldType.NULL))
+                .put("newBooleanSub", field("newBooleanSubField", FieldType.BOOLEAN))
+                .put("newIntegerSub", field("newIntegerSubField", FieldType.INTEGER))
+                .put("newLongSub", field("newLongSubField", FieldType.LONG))
+                .put("newDoubleSub", field("newDoubleSubField", FieldType.DOUBLE))
+                .put("newStringSub", field("newStringSubField", FieldType.STRING))
+                .put("newDateSub", field("newDateSubField", FieldType.DATE))
+                .put("newTimeSub", field("newTimeSubField", FieldType.TIME))
+                .put("newMongoObjectIdSub", field("newMongoObjectIdSubField", FieldType.MONGO_OBJECT_ID))
+                .put("newMongoTimeStampSub", field("newMongoTimeStampSubField", FieldType.MONGO_TIME_STAMP))
+                .put("newInstantSub", field("newInstantSubField", FieldType.INSTANT))
                 .build();
         rootDocPartValues = ImmutableList.<ImmutableMap<String, Optional<KVValue<?>>>>builder()
                 .add(ImmutableMap.<String, Optional<KVValue<?>>>builder()
@@ -291,5 +291,9 @@ public abstract class AbstractBackendDerbyTest {
             translator.translate(document);
         }
         return translator.getCollectionDataAccumulator();
+    }
+    
+    private Field<?> field(String name, FieldType type){
+    	return DSL.field(name, databaseInterface.getDataType(type));
     }
 }

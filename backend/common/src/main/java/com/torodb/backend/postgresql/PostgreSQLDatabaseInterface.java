@@ -993,4 +993,29 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
         
         return metaDocPartTable.FIELDS;
     }
+    
+	@Override
+	public Integer getLastRowIUsed(@Nonnull DSLContext dsl, @Nonnull MetaDatabase metaDatabase, @Nonnull MetaCollection metaCollection, @Nonnull MetaDocPart metaDocPart) throws SQLException {
+		Connection connection = dsl.configuration().connectionProvider().acquire();
+        try {
+            StringBuilder sb = new StringBuilder();
+            sb.append("SELECT max(\"")
+            .append(DocPartTableFields.RID.fieldName)
+            .append("\" FROM \"")
+            .append(metaDatabase.getIdentifier())
+            .append("\".\"")
+            .append(metaDocPart.getIdentifier());
+            
+            try (PreparedStatement preparedStatement = connection.prepareStatement(sb.toString())){
+            	ResultSet rs = preparedStatement.executeQuery();
+            	if (!rs.next()){
+            		return -1;
+            	}
+            	return rs.getInt(1);
+            }
+        } finally {
+            dsl.configuration().connectionProvider().release(connection);
+        }
+	}
+	
 }

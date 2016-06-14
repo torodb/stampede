@@ -20,6 +20,9 @@
 
 package com.torodb.backend.meta;
 
+import java.util.Map;
+
+import com.torodb.core.TableRef;
 import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
 
 /**
@@ -27,4 +30,5 @@ import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
  */
 public interface TorodbMeta {
         public ImmutableMetaSnapshot getCurrentMetaSnapshot();
+        public Map<String,Map<String,Map<TableRef,Integer>>> getLastIds();
 }
