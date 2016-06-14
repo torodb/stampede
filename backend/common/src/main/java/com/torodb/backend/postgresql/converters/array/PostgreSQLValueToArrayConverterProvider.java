@@ -44,8 +44,8 @@ import com.torodb.backend.converters.array.NullToArrayConverter;
 import com.torodb.backend.converters.array.StringToArrayConverter;
 import com.torodb.backend.converters.array.TimeToArrayConverter;
 import com.torodb.backend.converters.array.ValueToArrayConverterProvider;
-import com.torodb.backend.mocks.ArrayTypeInstance;
-import com.torodb.backend.mocks.ToroImplementationException;
+import com.torodb.core.exceptions.SystemException;
+import com.torodb.kvdocument.types.ArrayType;
 import com.torodb.kvdocument.types.BinaryType;
 import com.torodb.kvdocument.types.BooleanType;
 import com.torodb.kvdocument.types.DateType;
@@ -78,7 +78,7 @@ public class PostgreSQLValueToArrayConverterProvider implements ValueToArrayConv
 
     private static final long serialVersionUID = 1L;
 
-    private final Map<KVType, ArrayConverter> converters;
+    private final Map<Class<? extends KVType>, ArrayConverter> converters;
     private final ArrayConverter<JsonArray, KVArray> arrayConverter;
     private final ArrayConverter<JsonValue, KVBoolean> booleanConverter;
     private final ArrayConverter<JsonString, KVDate> dateConverter;
@@ -109,19 +109,19 @@ public class PostgreSQLValueToArrayConverterProvider implements ValueToArrayConv
         binaryConverter = new BinaryToArrayConverter();
 
         converters = Maps.newHashMap();
-        converters.put(ArrayTypeInstance.GENERIC, arrayConverter);
-        converters.put(BooleanType.INSTANCE, booleanConverter);
-        converters.put(DateType.INSTANCE, dateConverter);
-        converters.put(InstantType.INSTANCE, dateTimeConverter);
-        converters.put(DoubleType.INSTANCE, doubleConverter);
-        converters.put(IntegerType.INSTANCE, integerConverter);
-        converters.put(LongType.INSTANCE, longConverter);
-        converters.put(NullType.INSTANCE, nullConverter);
-        converters.put(StringType.INSTANCE, stringConverter);
-        converters.put(TimeType.INSTANCE, timeConverter);
-        converters.put(MongoObjectIdType.INSTANCE, mongoObjectIdConverter);
-        converters.put(MongoTimestampType.INSTANCE, mongoTimestampConverter);
-        converters.put(BinaryType.INSTANCE, binaryConverter);
+        converters.put(ArrayType.class, arrayConverter);
+        converters.put(BooleanType.class, booleanConverter);
+        converters.put(DateType.class, dateConverter);
+        converters.put(InstantType.class, dateTimeConverter);
+        converters.put(DoubleType.class, doubleConverter);
+        converters.put(IntegerType.class, integerConverter);
+        converters.put(LongType.class, longConverter);
+        converters.put(NullType.class, nullConverter);
+        converters.put(StringType.class, stringConverter);
+        converters.put(TimeType.class, timeConverter);
+        converters.put(MongoObjectIdType.class, mongoObjectIdConverter);
+        converters.put(MongoTimestampType.class, mongoTimestampConverter);
+        converters.put(BinaryType.class, binaryConverter);
 
         
     }
@@ -132,7 +132,7 @@ public class PostgreSQLValueToArrayConverterProvider implements ValueToArrayConv
 
     @Override
     public @Nonnull ArrayConverter getConverter(KVType valueType) {
-        ArrayConverter converter = converters.get(valueType);
+        ArrayConverter converter = converters.get(valueType.getClass());
         if (converter == null) {
             throw new AssertionError("There is no converter that converts "
                     + "elements of type " + valueType);
@@ -163,7 +163,7 @@ public class PostgreSQLValueToArrayConverterProvider implements ValueToArrayConv
                         return integerConverter;
                     }
                     catch (ArithmeticException ex) {
-                        throw new ToroImplementationException(
+                        throw new SystemException(
                                 "Unexpected integral value. " + number + " is "
                                 + "bigger than long values"
                         );

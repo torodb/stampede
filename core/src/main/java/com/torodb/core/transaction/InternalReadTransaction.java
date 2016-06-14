@@ -30,6 +30,6 @@ public interface InternalReadTransaction extends AutoCloseable {
     public MetaSnapshot getMetainfoView();
 
     @Override
-    public void close() throws ToroTransactionException;
+    public void close();
 
 }

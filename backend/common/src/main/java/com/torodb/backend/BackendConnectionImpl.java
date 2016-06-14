@@ -35,8 +35,6 @@ import com.torodb.backend.tables.records.MetaDocPartRecord;
 import com.torodb.backend.tables.records.MetaFieldRecord;
 import com.torodb.core.backend.BackendConnection;
 import com.torodb.core.d2r.DocPartData;
-import com.torodb.core.transaction.BackendException;
-import com.torodb.core.transaction.RollbackException;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
@@ -54,7 +52,7 @@ public class BackendConnectionImpl implements BackendConnection {
     }
     
     @Override
-    public void addDatabase(MetaDatabase db) throws RollbackException {
+    public void addDatabase(MetaDatabase db) {
         MetaDatabaseTable<MetaDatabaseRecord> metaDatabaseTable = databaseInterface.getMetaDatabaseTable();
         dsl.insertInto(metaDatabaseTable)
             .set(metaDatabaseTable.newRecord()
@@ -64,7 +62,7 @@ public class BackendConnectionImpl implements BackendConnection {
     }
 
     @Override
-    public void addCollection(MetaDatabase db, MetaCollection newCol) throws RollbackException {
+    public void addCollection(MetaDatabase db, MetaCollection newCol) {
         MetaCollectionTable<MetaCollectionRecord> metaCollectionTable = databaseInterface.getMetaCollectionTable();
         dsl.insertInto(metaCollectionTable)
             .set(metaCollectionTable.newRecord()
@@ -73,7 +71,7 @@ public class BackendConnectionImpl implements BackendConnection {
     }
 
     @Override
-    public void addDocPart(MetaDatabase db, MetaCollection col, MetaDocPart newDocPart) throws RollbackException {
+    public void addDocPart(MetaDatabase db, MetaCollection col, MetaDocPart newDocPart) {
         MetaDocPartTable<Object, MetaDocPartRecord<Object>> metaDocPartTable = databaseInterface.getMetaDocPartTable();
         dsl.insertInto(metaDocPartTable)
             .set(metaDocPartTable.newRecord()
@@ -91,8 +89,7 @@ public class BackendConnectionImpl implements BackendConnection {
     }
 
     @Override
-    public void addField(MetaDatabase db, MetaCollection col, MetaDocPart docPart, MetaField newField)
-            throws RollbackException {
+    public void addField(MetaDatabase db, MetaCollection col, MetaDocPart docPart, MetaField newField){
         MetaFieldTable<Object, MetaFieldRecord<Object>> metaFieldTable = databaseInterface.getMetaFieldTable();
         dsl.insertInto(metaFieldTable)
             .set(metaFieldTable.newRecord()
@@ -105,13 +102,12 @@ public class BackendConnectionImpl implements BackendConnection {
     }
 
     @Override
-    public int consumeRids(MetaDatabase db, MetaCollection col, MetaDocPart docPart, int howMany)
-            throws RollbackException {
+    public int consumeRids(MetaDatabase db, MetaCollection col, MetaDocPart docPart, int howMany) {
         return databaseInterface.consumeRids(dsl, db.getName(), col.getName(), docPart.getTableRef(), howMany);
     }
 
     @Override
-    public void insert(MetaDatabase db, MetaCollection col, DocPartData data) throws BackendException, RollbackException {
+    public void insert(MetaDatabase db, MetaCollection col, DocPartData data) {
         databaseInterface.insertDocPartData(dsl, db.getIdentifier(), data);
     }
 

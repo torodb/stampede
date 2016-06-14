@@ -23,8 +23,6 @@ import java.util.Collection;
 
 import javax.annotation.Nonnull;
 
-import com.torodb.core.transaction.BackendException;
-import com.torodb.core.transaction.RollbackException;
 import com.torodb.kvdocument.values.KVDocument;
 
 /**
@@ -36,10 +34,8 @@ public interface R2DTranslator<Result> {
      * Translates from relational model to the document model the given doc part results.
      *
      * @return a collection that contains the translation of all doc part results that have been translated.
-     * @throws BackendException
-     * @throws RollbackException
      */
     @Nonnull
-    public Collection<KVDocument> translate(@Nonnull DocPartResults<Result> docPartResults) throws BackendException, RollbackException;
+    public Collection<KVDocument> translate(@Nonnull DocPartResults<Result> docPartResults);
 
 }

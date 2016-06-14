@@ -69,7 +69,6 @@ import com.torodb.backend.derby.tables.DerbyMetaDatabaseTable;
 import com.torodb.backend.derby.tables.DerbyMetaDocPartTable;
 import com.torodb.backend.derby.tables.DerbyMetaFieldTable;
 import com.torodb.backend.meta.TorodbSchema;
-import com.torodb.backend.mocks.ToroRuntimeException;
 import com.torodb.backend.sql.index.NamedDbIndex;
 import com.torodb.backend.tables.MetaCollectionTable;
 import com.torodb.backend.tables.MetaDatabaseTable;
@@ -82,6 +81,7 @@ import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.d2r.DocPartResult;
 import com.torodb.core.d2r.DocPartResults;
 import com.torodb.core.d2r.DocPartRow;
+import com.torodb.core.exceptions.SystemException;
 import com.torodb.core.transaction.RollbackException;
 import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.MetaCollection;
@@ -635,8 +635,7 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
             return rs.getLong(1);
         }
         catch (SQLException ex) {
-            //TODO: Change exception
-            throw new RuntimeException(ex);
+            throw new SystemException(ex);
         }
         finally {
             connectionProvider.release(connection);
@@ -673,7 +672,7 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
             return rs.getLong(1);
         }
         catch (SQLException ex) {
-            throw new RuntimeException(ex);
+            throw new SystemException(ex);
         }
         finally {
             connectionProvider.release(connection);
@@ -758,7 +757,7 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
             return rs.getLong(1);
         }
         catch (SQLException ex) {
-            throw new RuntimeException(ex);
+            throw new SystemException(ex);
         }
         finally {
             connectionProvider.release(connection);
@@ -804,7 +803,7 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
             return result;
         }
         catch (SQLException ex) {
-            throw new RuntimeException(ex);
+            throw new SystemException(ex);
         }
         finally {
             connectionProvider.release(connection);
@@ -812,7 +811,7 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
     }
 
     @Override
-    public void insertDocPartData(DSLContext dsl, String schemaName, DocPartData docPartData) throws RollbackException {
+    public void insertDocPartData(DSLContext dsl, String schemaName, DocPartData docPartData) {
         Iterator<DocPartRow> docPartRowIterator = docPartData.iterator();
         if (!docPartRowIterator.hasNext()) {
             return;
@@ -825,7 +824,7 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
             standardInsertPathDocuments(dsl, schemaName, metaDocPart, metaFieldIterator, docPartRowIterator);
         } catch (DataAccessException ex) {
             handleRetryException(Context.insert, ex);
-            throw new ToroRuntimeException(ex);
+            throw new SystemException(ex);
         } finally {
             dsl.configuration().connectionProvider().release(connection);
         }
@@ -923,14 +922,14 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
     }
     
     @Override
-    public void handleRetryException(Context context, SQLException sqlException) throws RollbackException {
+    public void handleRetryException(Context context, SQLException sqlException) {
         if (Arrays.binarySearch(ROLLBACK_EXCEPTIONS, sqlException.getSQLState()) >= 0) {
             throw new RollbackException(sqlException);
         }
     }
 
     @Override
-    public void handleRetryException(Context context, DataAccessException dataAccessException) throws RollbackException {
+    public void handleRetryException(Context context, DataAccessException dataAccessException) {
         if (Arrays.binarySearch(ROLLBACK_EXCEPTIONS, dataAccessException.sqlState()) >= 0) {
             throw new RollbackException(dataAccessException);
         }

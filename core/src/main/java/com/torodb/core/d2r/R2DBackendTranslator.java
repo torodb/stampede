@@ -22,7 +22,6 @@ package com.torodb.core.d2r;
 
 import javax.annotation.Nonnull;
 
-import com.torodb.core.transaction.BackendException;
 import com.torodb.core.transaction.RollbackException;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetaField;
@@ -35,7 +34,7 @@ public interface R2DBackendTranslator<Result, BackendInternalFields extends Inte
      * @throws BackendException
      * @throws RollbackException
      */
-    @Nonnull boolean next(@Nonnull Result result) throws BackendException, RollbackException;
+    @Nonnull boolean next(@Nonnull Result result);
     
     /**
      * Read internal fields did, rid, pid and seq from result. Fields did, rid and pid must always contain a non null value.
@@ -45,7 +44,7 @@ public interface R2DBackendTranslator<Result, BackendInternalFields extends Inte
      * @throws BackendException
      * @throws RollbackException
      */
-    @Nonnull BackendInternalFields readInternalFields(@Nonnull MetaDocPart metaDocPart, @Nonnull Result result) throws BackendException, RollbackException;
+    @Nonnull BackendInternalFields readInternalFields(@Nonnull MetaDocPart metaDocPart, @Nonnull Result result);
 
     /**
      * Read the value of a metaField from result.
@@ -58,7 +57,7 @@ public interface R2DBackendTranslator<Result, BackendInternalFields extends Inte
      * @throws RollbackException
      */
     @Nonnull FieldValue getFieldValue(@Nonnull MetaField metaField, @Nonnull Result result, @Nonnull BackendInternalFields internalFields,
-            int fieldIndex) throws BackendException, RollbackException;
+            int fieldIndex);
 
     /**
      * Return the internal name of the scalar value.

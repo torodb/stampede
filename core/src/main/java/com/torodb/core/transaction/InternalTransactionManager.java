@@ -38,11 +38,11 @@ public class InternalTransactionManager {
         this.metainfoRepository = metainfoRepository;
     }
 
-    public ReadOnlyInternalTransaction openReadTransaction() throws ToroTransactionException {
+    public ReadOnlyInternalTransaction openReadTransaction() {
         return ReadOnlyInternalTransaction.createReadOnlyTransaction(ds, metainfoRepository);
     }
 
-    public WriteInternalTransaction openWriteTransaction() throws ToroTransactionException {
+    public WriteInternalTransaction openWriteTransaction() {
         return WriteInternalTransaction.createWriteTransaction(ds, metainfoRepository);
     }
 

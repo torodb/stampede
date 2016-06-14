@@ -60,8 +60,6 @@ import com.torodb.backend.InternalField;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.backend.converters.jooq.ValueToJooqDataTypeProvider;
 import com.torodb.backend.meta.TorodbSchema;
-import com.torodb.backend.mocks.ToroImplementationException;
-import com.torodb.backend.mocks.ToroRuntimeException;
 import com.torodb.backend.postgresql.converters.PostgreSQLValueToCopyConverter;
 import com.torodb.backend.postgresql.converters.jooq.PostgreSQLValueToJooqDataTypeProvider;
 import com.torodb.backend.postgresql.tables.PostgreSQLMetaCollectionTable;
@@ -78,7 +76,7 @@ import com.torodb.core.TableRef;
 import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.d2r.DocPartResults;
 import com.torodb.core.d2r.DocPartRow;
-import com.torodb.core.transaction.BackendException;
+import com.torodb.core.exceptions.SystemException;
 import com.torodb.core.transaction.RollbackException;
 import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.MetaCollection;
@@ -505,7 +503,7 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
     @Nonnull
     @Override
     public DocPartResults<ResultSet> getCollectionResultSets(@Nonnull DSLContext dsl, @Nonnull MetaDatabase metaDatabase, @Nonnull MetaCollection metaCollection, @Nonnull Integer[] requestedDocs) {
-        throw new ToroImplementationException("Not implemented yet");
+        throw new UnsupportedOperationException("Not implemented yet");
     }
 
     @Nonnull
@@ -735,7 +733,7 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
     }
 
     @Override
-    public void insertDocPartData(DSLContext dsl, String schemaName, DocPartData docPartData) throws BackendException, RollbackException {
+    public void insertDocPartData(DSLContext dsl, String schemaName, DocPartData docPartData) {
         Preconditions.checkArgument(docPartData.rowCount() != 0, "Called insert with 0 documents");
         
         Connection connection = dsl.configuration().connectionProvider().acquire();
@@ -769,12 +767,12 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
             }
         } catch (DataAccessException ex) {
             handleRetryException(Context.insert, ex);
-            throw new ToroRuntimeException(ex);
+            throw new SystemException(ex);
         } catch (SQLException ex) {
             handleRetryException(Context.insert, ex);
-            throw new ToroImplementationException(ex);
+            throw new SystemException(ex);
         } catch (IOException ex) {
-            throw new ToroRuntimeException(ex);
+            throw new SystemException(ex);
         } finally {
             dsl.configuration().connectionProvider().release(connection);
         }
@@ -833,7 +831,7 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
     private void copyInsertPathDocuments(
             PGConnection connection,
             String schemaName,
-            DocPartData docPartData) throws RollbackException, SQLException, IOException {
+            DocPartData docPartData) throws SQLException, IOException {
 
         final int maxBatchSize = 1000;
         final StringBuilder sb = new StringBuilder(2048);
@@ -940,7 +938,7 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
 
     @Override
     public int consumeRids(DSLContext dsl, String database, String collection, TableRef tableRef, int count) {
-        throw new ToroImplementationException("Not implemented yet");
+        throw new UnsupportedOperationException("Not implemented yet");
     }
 
     @Override
@@ -954,14 +952,14 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
     }
     
     @Override
-    public void handleRetryException(Context context, SQLException sqlException) throws RollbackException {
+    public void handleRetryException(Context context, SQLException sqlException) {
         if (Arrays.binarySearch(ROLLBACK_EXCEPTIONS, sqlException.getSQLState()) >= 0) {
             throw new RollbackException(sqlException);
         }
     }
 
     @Override
-    public void handleRetryException(Context context, DataAccessException dataAccessException) throws RollbackException {
+    public void handleRetryException(Context context, DataAccessException dataAccessException) {
         if (Arrays.binarySearch(ROLLBACK_EXCEPTIONS, dataAccessException.sqlState()) >= 0) {
             throw new RollbackException(dataAccessException);
         }

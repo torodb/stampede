@@ -18,29 +18,50 @@
  *     
  */
 
-package com.torodb.backend.converters.array;
 
-import javax.json.JsonValue;
+package com.torodb.core.cursors;
 
-import com.torodb.kvdocument.values.KVNull;
+import java.io.Serializable;
+
+import javax.annotation.concurrent.Immutable;
 
 /**
  *
  */
-public class NullToArrayConverter implements ArrayConverter<JsonValue, KVNull> {
+@Immutable
+public class CursorId implements Serializable {
     private static final long serialVersionUID = 1L;
+    
+    private final long id;
 
-    @Override
-    public String toJsonLiteral(KVNull value) {
-        return "null";
+    public CursorId(long id) {
+        this.id = id;
+    }
+    
+    public long getNumericId() {
+        return id;
     }
 
     @Override
-    public KVNull fromJsonValue(JsonValue value) {
-        if (value != JsonValue.NULL) {
-            throw new AssertionError(value + " is not null value");
+    public int hashCode() {
+        int hash = 5;
+        hash = 67 * hash + (int) (this.id ^ (this.id >>> 32));
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
         }
-        
-        return KVNull.getInstance();
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final CursorId other = (CursorId) obj;
+        if (this.id != other.id) {
+            return false;
+        }
+        return true;
     }
+    
 }

@@ -449,7 +449,7 @@ public class BackendDerbyTest extends AbstractBackendTest {
                 Collection<KVDocument> readedDocuments = readDocuments(metaDatabase, metaCollection, docPartResultSets);
                 
                 KVDocument readedDocument = readedDocuments.iterator().next();
-                System.out.println("Written :" + document);
+                System.out.println("Written: " + document);
                 System.out.println("Readed: " + readedDocument);
                 assertEquals(document, readedDocument);
             }
@@ -467,7 +467,7 @@ public class BackendDerbyTest extends AbstractBackendTest {
                     generatedDids.toArray(new Integer[generatedDids.size()]));
             
             Collection<KVDocument> readedDocuments = readDocuments(metaDatabase, metaCollection, docPartResultSets);
-            System.out.println("Written :" + documents);
+            System.out.println("Written: " + documents);
             System.out.println("Readed: " + readedDocuments);
             assertEquals(documents.size(), readedDocuments.size());
         }

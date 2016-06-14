@@ -21,7 +21,6 @@
 package com.torodb.core.backend;
 
 import com.torodb.core.d2r.DocPartData;
-import com.torodb.core.transaction.BackendException;
 import com.torodb.core.transaction.RollbackException;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
@@ -37,7 +36,7 @@ public interface BackendConnection {
      * @throws BackendException
      * @throws RollbackException
      */
-    public void addDatabase(MetaDatabase db) throws BackendException, RollbackException;
+    public void addDatabase(MetaDatabase db);
 
     /**
      * Adds a collection to a database.
@@ -48,8 +47,7 @@ public interface BackendConnection {
      * @throws BackendException
      * @throws RollbackException
      */
-    public void addCollection(MetaDatabase db, MetaCollection newCol) 
-            throws BackendException, RollbackException;
+    public void addCollection(MetaDatabase db, MetaCollection newCol);
 
     /**
      * Adds a docPart to a collection.
@@ -62,8 +60,7 @@ public interface BackendConnection {
      * @throws BackendException
      * @throws RollbackException
      */
-    public void addDocPart(MetaDatabase db, MetaCollection col, MetaDocPart newDocPart) 
-            throws BackendException, RollbackException;
+    public void addDocPart(MetaDatabase db, MetaCollection col, MetaDocPart newDocPart);
 
     /**
      * Adds a field to a table.
@@ -77,8 +74,7 @@ public interface BackendConnection {
      * @throws BackendException
      * @throws RollbackException
      */
-    public void addField(MetaDatabase db, MetaCollection col, MetaDocPart docPart, MetaField newField)
-            throws BackendException, RollbackException;
+    public void addField(MetaDatabase db, MetaCollection col, MetaDocPart docPart, MetaField newField);
 
     /**
      * Reserves a given number of rids on the given doc part.
@@ -91,8 +87,7 @@ public interface BackendConnection {
      * @throws BackendException
      * @throws RollbackException
      */
-    public int consumeRids(MetaDatabase db, MetaCollection col, MetaDocPart docPart, int howMany)
-            throws BackendException, RollbackException;
+    public int consumeRids(MetaDatabase db, MetaCollection col, MetaDocPart docPart, int howMany);
 
     /**
      *
@@ -102,5 +97,5 @@ public interface BackendConnection {
      * @throws BackendException
      * @throws RollbackException
      */
-    public void insert(MetaDatabase db, MetaCollection col, DocPartData data) throws BackendException, RollbackException;
+    public void insert(MetaDatabase db, MetaCollection col, DocPartData data);
 }

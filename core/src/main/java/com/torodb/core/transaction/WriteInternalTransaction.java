@@ -20,13 +20,16 @@
 
 package com.torodb.core.transaction;
 
+import java.sql.Connection;
+import java.sql.SQLException;
+
+import javax.sql.DataSource;
+
+import com.torodb.core.exceptions.SystemException;
 import com.torodb.core.transaction.metainf.MetainfoRepository;
 import com.torodb.core.transaction.metainf.MetainfoRepository.MergerStage;
 import com.torodb.core.transaction.metainf.MetainfoRepository.SnapshotStage;
 import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
-import java.sql.Connection;
-import java.sql.SQLException;
-import javax.sql.DataSource;
 
 /**
  *
@@ -42,14 +45,14 @@ public class WriteInternalTransaction implements InternalReadTransaction {
         this.connection = connection;
     }
 
-    static WriteInternalTransaction createWriteTransaction(DataSource ds, MetainfoRepository metainfoRepository) throws ToroTransactionException {
+    static WriteInternalTransaction createWriteTransaction(DataSource ds, MetainfoRepository metainfoRepository) {
         try (SnapshotStage snapshotStage = metainfoRepository.startSnapshotStage()) {
             Connection conn = ds.getConnection();
             MutableMetaSnapshot snapshot = snapshotStage.createMutableSnapshot();
 
             return new WriteInternalTransaction(metainfoRepository, snapshot, conn);
         } catch (SQLException ex) {
-            throw new ToroTransactionException(ex);
+            throw new SystemException(ex);
         }
     }
 
@@ -59,13 +62,13 @@ public class WriteInternalTransaction implements InternalReadTransaction {
     }
 
     @Override
-    public void close() throws ToroTransactionException {
+    public void close() {
         try (MergerStage mergeStage = metainfoRepository.startMerge(metaSnapshot)) {
             connection.commit();
             connection.close();
         } catch (SQLException ex) {
             //TODO: Decide if we should
-            throw new ToroTransactionException(ex);
+            throw new SystemException(ex);
         }
     }
 

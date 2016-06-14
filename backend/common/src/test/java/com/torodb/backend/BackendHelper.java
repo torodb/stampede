@@ -13,8 +13,6 @@ import com.google.common.collect.ImmutableMap;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.core.TableRef;
 import com.torodb.core.d2r.RidGenerator;
-import com.torodb.core.transaction.BackendException;
-import com.torodb.core.transaction.RollbackException;
 import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.ImmutableMetaDocPart;
 import com.torodb.core.transaction.metainf.WrapperMutableMetaDocPart;
@@ -73,7 +71,7 @@ public class BackendHelper {
 	public void insertDocPartData(ImmutableMetaDocPart rootMetaDocPart, 
 								  ImmutableList<ImmutableMap<String, Optional<KVValue<?>>>> values,
 								  ImmutableMap<String, Field<?>> rootDocPartFields
-			) throws RollbackException, BackendException {
+			) {
 		RidGenerator ridGenerator = new MockRidGenerator();
 		DocPartDataImpl docPartData = new DocPartDataImpl(new WrapperMutableMetaDocPart(rootMetaDocPart, w -> {}), 
 				ridGenerator.getDocPartRidGenerator(schema.databaseName, schema.collectionName));

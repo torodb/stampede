@@ -47,8 +47,6 @@ import com.torodb.core.d2r.DocPartResults;
 import com.torodb.core.d2r.IdentifierFactory;
 import com.torodb.core.d2r.R2DTranslator;
 import com.torodb.core.impl.TableRefFactoryImpl;
-import com.torodb.core.transaction.BackendException;
-import com.torodb.core.transaction.RollbackException;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetainfoRepository.SnapshotStage;
 import com.torodb.core.transaction.metainf.MutableMetaCollection;
@@ -162,7 +160,7 @@ public class BenchmarkDerbyR2DBackedTranslator {
 	}
     
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    protected static Collection<KVDocument> readDocuments(TranslateState state, Blackhole blackhole) throws BackendException, RollbackException {
+    protected static Collection<KVDocument> readDocuments(TranslateState state, Blackhole blackhole) {
         Collection<KVDocument> readedDocuments = state.r2dTranslator.translate(state.docPartResultSets);
         return readedDocuments;
     }
@@ -185,7 +183,7 @@ public class BenchmarkDerbyR2DBackedTranslator {
         return collectionData;
     }
 
-    protected static List<Integer> writeCollectionData(TranslateState state, Blackhole blackhole, CollectionData collectionData) throws BackendException, RollbackException {
+    protected static List<Integer> writeCollectionData(TranslateState state, Blackhole blackhole, CollectionData collectionData) {
         Iterator<DocPartData> docPartDataIterator = StreamSupport.stream(collectionData.spliterator(), false)
                 .iterator();
         List<Integer> generatedDids = new ArrayList<>();

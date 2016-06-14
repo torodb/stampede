@@ -10,12 +10,11 @@ import com.torodb.backend.DatabaseInterface;
 import com.torodb.backend.InternalField;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.backend.interfaces.ErrorHandlerInterface.Context;
-import com.torodb.backend.mocks.ToroImplementationException;
 import com.torodb.backend.tables.MetaDocPartTable;
 import com.torodb.core.d2r.FieldValue;
 import com.torodb.core.d2r.InternalFields;
 import com.torodb.core.d2r.R2DBackendTranslator;
-import com.torodb.core.transaction.BackendException;
+import com.torodb.core.exceptions.SystemException;
 import com.torodb.core.transaction.RollbackException;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
@@ -62,7 +61,7 @@ public class R2DBackendTranslatorImpl implements R2DBackendTranslator<ResultSet,
     }
     
     @Override
-    public ResultSetInternalFields readInternalFields(MetaDocPart metaDocPart, ResultSet resultSet) throws BackendException, RollbackException {
+    public ResultSetInternalFields readInternalFields(MetaDocPart metaDocPart, ResultSet resultSet) {
         Integer did = null;
         Integer pid = null;
         Integer rid = null;
@@ -84,12 +83,12 @@ public class R2DBackendTranslatorImpl implements R2DBackendTranslator<ResultSet,
             } catch (SQLException sqlException) {
                 databaseInterface.handleRetryException(Context.fetch, sqlException);
                 
-                throw new BackendException(sqlException);
+                throw new SystemException(sqlException);
             }
             columnIndex++;
         }
         if (did == null) {
-            throw new ToroImplementationException("did was not found for doc part " + metaDocPart.getTableRef() 
+            throw new AssertionError("did was not found for doc part " + metaDocPart.getTableRef() 
                     + " in collection " + metaCollection.getName() + " and database " + metaDatabase.getName());
         }
         
@@ -111,14 +110,14 @@ public class R2DBackendTranslatorImpl implements R2DBackendTranslator<ResultSet,
 
     @Override
     public FieldValue getFieldValue(MetaField metaField, ResultSet resultSet, ResultSetInternalFields internalFields,
-            int fieldIndex) throws BackendException, RollbackException {
+            int fieldIndex) {
         Object databaseValue;
         try {
             databaseValue = resultSet.getObject(fieldIndex + internalFields.columnIndex);
         } catch (SQLException sqlException) {
             databaseInterface.handleRetryException(Context.fetch, sqlException);
             
-            throw new BackendException(sqlException);
+            throw new SystemException(sqlException);
         }
         
         if (databaseValue == null) {
@@ -133,13 +132,13 @@ public class R2DBackendTranslatorImpl implements R2DBackendTranslator<ResultSet,
     }
 
     @Override
-    public boolean next(ResultSet resultSet) throws BackendException, RollbackException {
+    public boolean next(ResultSet resultSet) {
         try {
             return resultSet.next();
         } catch (SQLException sqlException) {
             databaseInterface.handleRetryException(Context.fetch, sqlException);
             
-            throw new BackendException(sqlException);
+            throw new SystemException(sqlException);
         }
     }
 }

@@ -1,8 +1,12 @@
 
-package com.torodb.backend.mocks;
+package com.torodb.core.model;
 
 import java.io.Serializable;
+
 import javax.annotation.Nonnull;
+
+import com.torodb.core.language.AttributeReference;
+import com.torodb.core.model.IndexedAttributes.IndexType;
 
 /**
  *

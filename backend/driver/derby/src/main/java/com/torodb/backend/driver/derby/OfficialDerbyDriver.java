@@ -37,7 +37,7 @@ import org.apache.derby.jdbc.EmbeddedDataSource;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.torodb.backend.mocks.ToroRuntimeException;
+import com.torodb.core.exceptions.SystemException;
 
 /**
  *
@@ -82,7 +82,7 @@ public class OfficialDerbyDriver implements DerbyDriverProvider {
             try {
                 embeddedDataSource.getConnection();
             } catch (SQLException ex) {
-                throw new ToroRuntimeException(ex);
+                throw new SystemException(ex);
             }
             embeddedDataSource.setCreateDatabase(null);
             dataSource = embeddedDataSource;
@@ -104,7 +104,7 @@ public class OfficialDerbyDriver implements DerbyDriverProvider {
             try {
                 dataSource.setLogWriter(LOGGER_WRITER);
             } catch(SQLException sqlException) {
-                throw new ToroRuntimeException(sqlException);
+                throw new SystemException(sqlException);
             }
         }
 
@@ -118,7 +118,7 @@ public class OfficialDerbyDriver implements DerbyDriverProvider {
             rs = stat.executeQuery("SELECT 1 FROM SYSIBM.SYSDUMMY1");
             rs.next();
         } catch (SQLException ex) {
-            throw new ToroRuntimeException(ex);
+            throw new SystemException(ex);
         } finally {
 	            try {
 		            if (rs != null) rs.close();

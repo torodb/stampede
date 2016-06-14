@@ -37,7 +37,7 @@ import org.postgresql.Driver;
 import org.postgresql.ds.PGSimpleDataSource;
 
 import com.torodb.backend.DbBackendConfiguration;
-import com.torodb.backend.mocks.ToroRuntimeException;
+import com.torodb.core.exceptions.SystemException;
 
 /**
  *
@@ -82,7 +82,7 @@ public class OfficialPostgreSQLDriver implements PostgreSQLDriverProvider {
             rs = stat.executeQuery("SELECT 1");
             rs.next();
         } catch (SQLException ex) {
-            throw new ToroRuntimeException(ex.getLocalizedMessage());
+            throw new SystemException(ex.getLocalizedMessage());
         } finally {
 	            try {
 		            if (rs != null) rs.close();

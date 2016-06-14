@@ -47,8 +47,6 @@ import com.torodb.core.d2r.DocPartResults;
 import com.torodb.core.d2r.IdentifierFactory;
 import com.torodb.core.d2r.R2DTranslator;
 import com.torodb.core.impl.TableRefFactoryImpl;
-import com.torodb.core.transaction.BackendException;
-import com.torodb.core.transaction.RollbackException;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
@@ -111,13 +109,13 @@ public abstract class AbstractBackendTest {
     
     @SuppressWarnings({ "unchecked", "rawtypes" })
     protected Collection<KVDocument> readDocuments(MetaDatabase metaDatabase, MetaCollection metaCollection,
-            DocPartResults<ResultSet> docPartResultSets) throws BackendException, RollbackException {
+            DocPartResults<ResultSet> docPartResultSets) {
         R2DTranslator r2dTranslator = new R2DBackedTranslator(new R2DBackendTranslatorImpl(databaseInterface, metaDatabase, metaCollection));
         Collection<KVDocument> readedDocuments = r2dTranslator.translate(docPartResultSets);
         return readedDocuments;
     }
 
-    protected List<Integer> writeCollectionData(DSLContext dsl, CollectionData collectionData) throws BackendException, RollbackException {
+    protected List<Integer> writeCollectionData(DSLContext dsl, CollectionData collectionData) {
         Iterator<DocPartData> docPartDataIterator = StreamSupport.stream(collectionData.spliterator(), false)
                 .iterator();
         List<Integer> generatedDids = new ArrayList<>();

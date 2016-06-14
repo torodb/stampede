@@ -18,29 +18,28 @@
  *     
  */
 
-package com.torodb.backend.converters.array;
 
-import javax.json.JsonValue;
-
-import com.torodb.kvdocument.values.KVNull;
+package com.torodb.core.exceptions;
 
 /**
  *
  */
-public class NullToArrayConverter implements ArrayConverter<JsonValue, KVNull> {
+public class ToroException extends Exception {
     private static final long serialVersionUID = 1L;
 
-    @Override
-    public String toJsonLiteral(KVNull value) {
-        return "null";
+    public ToroException() {
     }
 
-    @Override
-    public KVNull fromJsonValue(JsonValue value) {
-        if (value != JsonValue.NULL) {
-            throw new AssertionError(value + " is not null value");
-        }
-        
-        return KVNull.getInstance();
+    public ToroException(String message) {
+        super(message);
     }
+
+    public ToroException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public ToroException(Throwable cause) {
+        super(cause);
+    }
+    
 }

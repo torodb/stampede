@@ -3,8 +3,7 @@ package com.torodb.backend.converters.json;
 
 import org.jooq.Converter;
 
-import com.torodb.backend.mocks.NamedToroIndex;
-import com.torodb.backend.mocks.ToroImplementationException;
+import com.torodb.core.model.NamedToroIndex;
 
 /**
  *
@@ -27,12 +26,12 @@ public class ToroIndexToJsonConverter implements Converter<String, NamedToroInde
 
     @Override
     public NamedToroIndex from(String databaseObject) {
-        throw new ToroImplementationException("Not implemented yet");
+        throw new UnsupportedOperationException("Not implemented yet");
     }
 
     @Override
     public String to(NamedToroIndex userObject) {
-        throw new ToroImplementationException("Not implemented yet");
+        throw new UnsupportedOperationException("Not implemented yet");
     }
 
     @Override

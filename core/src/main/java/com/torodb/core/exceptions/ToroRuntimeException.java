@@ -18,12 +18,28 @@
  *     
  */
 
-package com.torodb.backend.mocks;
 
-import com.torodb.kvdocument.types.ArrayType;
-import com.torodb.kvdocument.types.GenericType;
+package com.torodb.core.exceptions;
 
-public class ArrayTypeInstance {
-    public static final ArrayType GENERIC = new ArrayType(GenericType.INSTANCE);
+/**
+ *
+ */
+public class ToroRuntimeException extends RuntimeException {
+    private static final long serialVersionUID = 1L;
 
+    public ToroRuntimeException() {
+    }
+
+    public ToroRuntimeException(String message) {
+        super(message);
+    }
+
+    public ToroRuntimeException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public ToroRuntimeException(Throwable cause) {
+        super(cause);
+    }
+    
 }
