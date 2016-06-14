@@ -261,8 +261,9 @@ public class BackendDerbyTest extends AbstractBackendDerbyTest {
                         FieldType.from(((DataTypeForKV<?>) field.getValue().getDataType()).getKVValueConverter().getErasuredType())));
             }
             ImmutableMetaDocPart rootMetaDocPart = rootMetaDocPartBuilder.build();
+        	RidGenerator ridGenerator = new MockRidGenerator();
             DocPartDataImpl docPartData = new DocPartDataImpl(new WrapperMutableMetaDocPart(rootMetaDocPart, w -> {}), 
-                    new DocPartRidGenerator(databaseName, collectionName, new MockRidGenerator()));
+            		ridGenerator.getDocPartRidGenerator(databaseName, collectionName));
             dsl.execute(databaseInterface.createDocPartTableStatement(dsl.configuration(), databaseSchemaName, rootDocPartTableName, 
                     ImmutableList.<Field<?>>builder()
                         .addAll(databaseInterface.getDocPartTableInternalFields(rootMetaDocPart))

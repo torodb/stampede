@@ -952,4 +952,37 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
         
         return metaDocPartTable.FIELDS;
     }
+
+	@Override
+	public Integer getLastRowIUsed(@Nonnull DSLContext dsl, @Nonnull MetaDatabase metaDatabase, @Nonnull MetaCollection metaCollection, @Nonnull MetaDocPart metaDocPart) throws SQLException {
+		Connection connection = dsl.configuration().connectionProvider().acquire();
+		TableRef tableRef = metaDocPart.getTableRef();
+		
+        try {
+            StringBuilder sb = new StringBuilder();
+            sb.append("SELECT max(\"")
+            .append(getColumnIdByTableRefLevel(tableRef))
+            .append("\") FROM \"")
+            .append(metaDatabase.getIdentifier())
+            .append("\".\"")
+            .append(metaDocPart.getIdentifier())
+            .append("\"");
+            try (PreparedStatement preparedStatement = connection.prepareStatement(sb.toString())){
+            	ResultSet rs = preparedStatement.executeQuery();
+            	if (!rs.next()){
+            		return -1;
+            	}
+            	return rs.getInt(1);
+            }
+        } finally {
+            dsl.configuration().connectionProvider().release(connection);
+        }
+	}
+	
+	private String getColumnIdByTableRefLevel(TableRef tableRef){
+		 if (tableRef.isRoot()){
+			 return DocPartTableFields.DID.fieldName;
+         }
+		 return DocPartTableFields.RID.fieldName;
+	}
 }
