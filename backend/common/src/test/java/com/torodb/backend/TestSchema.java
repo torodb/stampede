@@ -11,7 +11,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.torodb.core.TableRef;
 import com.torodb.core.TableRefFactory;
-import com.torodb.core.impl.TableRefFactoryImpl;
 import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.kvdocument.values.KVBoolean;
 import com.torodb.kvdocument.values.KVDouble;
@@ -28,18 +27,18 @@ import com.torodb.kvdocument.values.heap.StringKVString;
 
 public class TestSchema {
 
-    public String databaseName;
-    public String databaseSchemaName;
-    public String collectionName;
-    public String collectionIdentifierName;
-    public TableRef rootDocPartTableRef;
-    public String rootDocPartTableName;
-    public ImmutableMap<String, Field<?>> rootDocPartFields;
-    public TableRef subDocPartTableRef;
-    public String subDocPartTableName;
-    public ImmutableMap<String, Field<?>> subDocPartFields;
-    public ImmutableMap<String, Field<?>> newSubDocPartFields;
-    public ImmutableList<ImmutableMap<String, Optional<KVValue<?>>>> rootDocPartValues;
+    public final String databaseName;
+    public final String databaseSchemaName;
+    public final String collectionName;
+    public final String collectionIdentifierName;
+    public final TableRef rootDocPartTableRef;
+    public final String rootDocPartTableName;
+    public final ImmutableMap<String, Field<?>> rootDocPartFields;
+    public final TableRef subDocPartTableRef;
+    public final String subDocPartTableName;
+    public final ImmutableMap<String, Field<?>> subDocPartFields;
+    public final ImmutableMap<String, Field<?>> newSubDocPartFields;
+    public final ImmutableList<ImmutableMap<String, Optional<KVValue<?>>>> rootDocPartValues;
     
     private DatabaseInterface databaseInterface;
     
