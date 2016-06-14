@@ -46,6 +46,7 @@ import org.junit.Test;
 
 import com.google.common.collect.ImmutableList;
 import com.torodb.backend.AbstractBackendTest;
+import com.torodb.backend.BackendDocumentTestHelper;
 import com.torodb.backend.BackendTestHelper;
 import com.torodb.backend.DatabaseInterface;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
@@ -209,6 +210,41 @@ public class BackendDerbyTest extends AbstractBackendTest {
              connection.commit();
          }
     }
+    
+
+    @Test
+    public void testTorodbLastRowId() throws Exception {
+    	 try (Connection connection = dataSource.getConnection()) {
+             new DerbyTorodbMeta(DSL.using(connection, SQLDialect.DERBY), tableRefFactory, databaseInterface);
+             connection.commit();
+         }
+    	 
+        try (Connection connection = dataSource.getConnection()) {
+        	DSLContext dsl = DSL.using(connection, SQLDialect.DERBY);
+        	BackendTestHelper helper = new BackendTestHelper(databaseInterface, dsl, schema);
+        	helper.createMetaModel();
+            helper.insertMetaFields(schema.rootDocPartTableRef, schema.rootDocPartFields);
+            helper.createDocPartTable(schema.rootDocPartTableName, databaseInterface.getMetaDocPartTable().ROOT_FIELDS, schema.rootDocPartFields.values());
+            helper.insertMetaFields(schema.subDocPartTableRef, schema.subDocPartFields);
+            helper.createDocPartTable(schema.subDocPartTableName, databaseInterface.getMetaDocPartTable().FIRST_FIELDS, schema.subDocPartFields.values());
+
+            DerbyTorodbMeta torodbMeta = new DerbyTorodbMeta(dsl, tableRefFactory, databaseInterface);
+            ImmutableMetaSnapshot snapshot = torodbMeta.getCurrentMetaSnapshot();
+            
+            ImmutableMetaDatabase metaDatabase = snapshot.getMetaDatabaseByName(schema.databaseName);
+        	ImmutableMetaCollection metaCollection = metaDatabase.getMetaCollectionByName(schema.collectionName);
+        	ImmutableMetaDocPart rootMetaDocPart = metaCollection.getMetaDocPartByTableRef(schema.rootDocPartTableRef);
+        	int lastRootRowIUsed = databaseInterface.getLastRowIUsed(dsl, metaDatabase, metaCollection, rootMetaDocPart);
+        	assertEquals(0, lastRootRowIUsed);
+        	
+        	helper.insertDocPartData(rootMetaDocPart, schema.rootDocPartValues, schema.rootDocPartFields);
+        	
+        	lastRootRowIUsed = databaseInterface.getLastRowIUsed(dsl, metaDatabase, metaCollection, rootMetaDocPart);
+        	assertEquals(1, lastRootRowIUsed);
+        	
+        }
+       
+    }
      
     @Test
     public void testTorodbInsertDocPart() throws Exception {
@@ -312,15 +348,16 @@ public class BackendDerbyTest extends AbstractBackendTest {
 
     @Test
     public void testTorodbReadCollectionResultSets() throws Exception {
-        KVDocument document = parseFromJson("testTorodbReadDocPart.json");
+    	BackendDocumentTestHelper helper = new BackendDocumentTestHelper(databaseInterface, tableRefFactory, schema);
+        KVDocument document = helper.parseFromJson("testTorodbReadDocPart.json");
         MutableMetaSnapshot mutableSnapshot = new WrapperMutableMetaSnapshot(new ImmutableMetaSnapshot.Builder().build());
         mutableSnapshot.addMetaDatabase(schema.databaseName, schema.databaseSchemaName).addMetaCollection(schema.collectionName, schema.collectionIdentifierName);
         try (Connection connection = dataSource.getConnection()) {
             DSLContext dsl = DSL.using(connection, SQLDialect.DERBY);
             dsl.execute(databaseInterface.createSchemaStatement(schema.databaseSchemaName));
-            CollectionData collectionData = writeDocumentMeta(mutableSnapshot, dsl, document);
+            CollectionData collectionData = helper.writeDocumentMeta(mutableSnapshot, dsl, document);
             
-            List<Integer> generatedDids = writeCollectionData(dsl, collectionData);
+            List<Integer> generatedDids = helper.writeCollectionData(dsl, collectionData);
             
             MetaDatabase metaDatabase = mutableSnapshot.getMetaDatabaseByName(schema.databaseName);
             MetaCollection metaCollection = metaDatabase.getMetaCollectionByName(schema.collectionName);
@@ -329,7 +366,7 @@ public class BackendDerbyTest extends AbstractBackendTest {
                     dsl, metaDatabase, metaCollection, 
                     generatedDids.toArray(new Integer[generatedDids.size()]));
             
-            Collection<KVDocument> readedDocuments = readDocuments(metaDatabase, metaCollection, docPartResultSets);
+            Collection<KVDocument> readedDocuments = helper.readDocuments(metaDatabase, metaCollection, docPartResultSets);
             
             KVDocument readedDocument = readedDocuments.iterator().next();
             System.out.println(document);
@@ -431,12 +468,13 @@ public class BackendDerbyTest extends AbstractBackendTest {
                 }
             }
             
-            writeDocumentsMeta(mutableSnapshot, dsl, documents);
+            BackendDocumentTestHelper helper = new BackendDocumentTestHelper(databaseInterface, tableRefFactory, schema);
+            helper.writeDocumentsMeta(mutableSnapshot, dsl, documents);
             
             for (KVDocument document : documents) {
-                CollectionData collectionData = readDataFromDocuments(schema.databaseName, schema.collectionName, Arrays.asList(document), mutableSnapshot);
+                CollectionData collectionData = helper.readDataFromDocuments(schema.databaseName, schema.collectionName, Arrays.asList(document), mutableSnapshot);
                 
-                List<Integer> generatedDids = writeCollectionData(dsl, collectionData);
+                List<Integer> generatedDids = helper.writeCollectionData(dsl, collectionData);
                 
                 MetaDatabase metaDatabase = mutableSnapshot.getMetaDatabaseByName(schema.databaseName);
                 MetaCollection metaCollection = metaDatabase.getMetaCollectionByName(schema.collectionName);
@@ -445,16 +483,16 @@ public class BackendDerbyTest extends AbstractBackendTest {
                         dsl, metaDatabase, metaCollection, 
                         generatedDids.toArray(new Integer[generatedDids.size()]));
                 
-                Collection<KVDocument> readedDocuments = readDocuments(metaDatabase, metaCollection, docPartResultSets);
+                Collection<KVDocument> readedDocuments = helper.readDocuments(metaDatabase, metaCollection, docPartResultSets);
                 
                 KVDocument readedDocument = readedDocuments.iterator().next();
                 System.out.println("Written :" + document);
                 System.out.println("Readed: " + readedDocument);
                 assertEquals(document, readedDocument);
             }
-            CollectionData collectionData = readDataFromDocuments(schema.databaseName, schema.collectionName, documents, mutableSnapshot);
+            CollectionData collectionData = helper.readDataFromDocuments(schema.databaseName, schema.collectionName, documents, mutableSnapshot);
             
-            List<Integer> generatedDids = writeCollectionData(dsl, collectionData);
+            List<Integer> generatedDids = helper.writeCollectionData(dsl, collectionData);
             
             MetaDatabase metaDatabase = mutableSnapshot.getMetaDatabaseByName(schema.databaseName);
             MetaCollection metaCollection = metaDatabase.getMetaCollectionByName(schema.collectionName);
@@ -463,7 +501,7 @@ public class BackendDerbyTest extends AbstractBackendTest {
                     dsl, metaDatabase, metaCollection, 
                     generatedDids.toArray(new Integer[generatedDids.size()]));
             
-            Collection<KVDocument> readedDocuments = readDocuments(metaDatabase, metaCollection, docPartResultSets);
+            Collection<KVDocument> readedDocuments = helper.readDocuments(metaDatabase, metaCollection, docPartResultSets);
             System.out.println("Written :" + documents);
             System.out.println("Readed: " + readedDocuments);
             assertEquals(documents.size(), readedDocuments.size());
