@@ -27,6 +27,7 @@ import static org.junit.Assert.assertNotNull;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -45,11 +46,9 @@ import org.junit.Test;
 
 import com.google.common.collect.ImmutableList;
 import com.torodb.backend.AbstractBackendTest;
-import com.torodb.backend.BackendHelper;
+import com.torodb.backend.BackendTestHelper;
 import com.torodb.backend.DatabaseInterface;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
-import com.torodb.backend.driver.derby.DerbyDbBackendConfiguration;
-import com.torodb.backend.driver.derby.OfficialDerbyDriver;
 import com.torodb.core.d2r.CollectionData;
 import com.torodb.core.d2r.DocPartResults;
 import com.torodb.core.transaction.metainf.FieldType;
@@ -92,7 +91,7 @@ public class BackendDerbyTest extends AbstractBackendTest {
         }
         try (Connection connection = dataSource.getConnection()) {
             DSLContext dsl = DSL.using(connection, SQLDialect.DERBY);
-            BackendHelper helper = new BackendHelper(databaseInterface, dsl, schema);
+            BackendTestHelper helper = new BackendTestHelper(databaseInterface, dsl, schema);
             helper.createMetaModel();
             helper.insertMetaFields(schema.rootDocPartTableRef, schema.rootDocPartFields);
             helper.createDocPartTable(schema.rootDocPartTableName, databaseInterface.getMetaDocPartTable().ROOT_FIELDS, schema.rootDocPartFields.values());
@@ -196,7 +195,7 @@ public class BackendDerbyTest extends AbstractBackendTest {
          }
          try (Connection connection = dataSource.getConnection()) {
              DSLContext dsl = DSL.using(connection, SQLDialect.DERBY);
-             BackendHelper helper = new BackendHelper(databaseInterface, dsl, schema);
+             BackendTestHelper helper = new BackendTestHelper(databaseInterface, dsl, schema);
              helper.createMetaModel();
              int first100RootRid = databaseInterface.consumeRids(dsl, schema.databaseName, schema.collectionName, schema.rootDocPartTableRef, 100);
              assertEquals(0, first100RootRid);
@@ -219,7 +218,7 @@ public class BackendDerbyTest extends AbstractBackendTest {
         }
         try (Connection connection = dataSource.getConnection()) {
             DSLContext dsl = DSL.using(connection, SQLDialect.DERBY);
-            BackendHelper helper = new BackendHelper(databaseInterface, dsl, schema);
+            BackendTestHelper helper = new BackendTestHelper(databaseInterface, dsl, schema);
             
             dsl.execute(databaseInterface.createSchemaStatement(schema.databaseSchemaName));
             
@@ -253,45 +252,7 @@ public class BackendDerbyTest extends AbstractBackendTest {
                 ResultSet resultSet = preparedStatement.executeQuery();
                 List<Integer> foundRowIndexes = new ArrayList<>();
                 while (resultSet.next()) {
-                    Integer index = 0;
-                    boolean rowFound = true;
-                    for (Map<String, Optional<KVValue<?>>> rootDocPartValueMap : schema.rootDocPartValues) {
-                        rowFound = true;
-                        int columnIndex = 1;
-                        for (Map.Entry<String, Field<?>> field : schema.rootDocPartFields.entrySet()) {
-                            Optional<KVValue<?>> value = rootDocPartValueMap.get(field.getKey());
-                            DataTypeForKV<?> dataTypeForKV = (DataTypeForKV<?>) field.getValue().getDataType();
-                            Object databaseValue = resultSet.getObject(columnIndex);
-                            Optional<KVValue<?>> databaseConvertedValue;
-                            if (resultSet.wasNull()) {
-                                databaseConvertedValue = Optional.empty();
-                            } else {
-                                databaseConvertedValue = Optional.of(dataTypeForKV.convert(databaseValue));
-                            }
-                            columnIndex++;
-                            
-                            if (!value.isPresent()) {
-                                if (databaseConvertedValue.isPresent()) {
-                                    rowFound = false;
-                                    break;
-                                }
-                            } else if (!databaseConvertedValue.isPresent()) {
-                                rowFound = false;
-                                break;
-                            } else if (!value.get().equals(databaseConvertedValue.get())) {
-                                rowFound = false;
-                                break;
-                            }
-                        }
-                        
-                        if (rowFound && !foundRowIndexes.contains(index)) {
-                            foundRowIndexes.add(index);
-                            break;
-                        }
-                        
-                        index++;
-                    }
-                    
+                    boolean rowFound = findRow(resultSet, foundRowIndexes);
                     if (!rowFound) {
                         StringBuilder resultSetRowBuilder = new StringBuilder();
                         final int columnCount = resultSet.getMetaData().getColumnCount();
@@ -305,6 +266,48 @@ public class BackendDerbyTest extends AbstractBackendTest {
             }
         }
     }
+
+	private boolean findRow(ResultSet resultSet, List<Integer> foundRowIndexes) throws SQLException {
+		Integer index = 0;
+		boolean rowFound = true;
+		for (Map<String, Optional<KVValue<?>>> rootDocPartValueMap : schema.rootDocPartValues) {
+		    rowFound = true;
+		    int columnIndex = 1;
+		    for (Map.Entry<String, Field<?>> field : schema.rootDocPartFields.entrySet()) {
+		        Optional<KVValue<?>> value = rootDocPartValueMap.get(field.getKey());
+		        DataTypeForKV<?> dataTypeForKV = (DataTypeForKV<?>) field.getValue().getDataType();
+		        Object databaseValue = resultSet.getObject(columnIndex);
+		        Optional<KVValue<?>> databaseConvertedValue;
+		        if (resultSet.wasNull()) {
+		            databaseConvertedValue = Optional.empty();
+		        } else {
+		            databaseConvertedValue = Optional.of(dataTypeForKV.convert(databaseValue));
+		        }
+		        columnIndex++;
+		        
+		        if (!value.isPresent()) {
+		            if (databaseConvertedValue.isPresent()) {
+		                rowFound = false;
+		                break;
+		            }
+		        } else if (!databaseConvertedValue.isPresent()) {
+		            rowFound = false;
+		            break;
+		        } else if (!value.get().equals(databaseConvertedValue.get())) {
+		            rowFound = false;
+		            break;
+		        }
+		    }
+		    
+		    if (rowFound && !foundRowIndexes.contains(index)) {
+		        foundRowIndexes.add(index);
+		        break;
+		    }
+		    
+		    index++;
+		}
+		return rowFound;
+	}
     
 
     @Test
@@ -319,10 +322,8 @@ public class BackendDerbyTest extends AbstractBackendTest {
             
             List<Integer> generatedDids = writeCollectionData(dsl, collectionData);
             
-            MetaDatabase metaDatabase = mutableSnapshot
-                    .getMetaDatabaseByName(schema.databaseName);
-            MetaCollection metaCollection = metaDatabase
-                    .getMetaCollectionByName(schema.collectionName);
+            MetaDatabase metaDatabase = mutableSnapshot.getMetaDatabaseByName(schema.databaseName);
+            MetaCollection metaCollection = metaDatabase.getMetaCollectionByName(schema.collectionName);
             
             DocPartResults<ResultSet> docPartResultSets = databaseInterface.getCollectionResultSets(
                     dsl, metaDatabase, metaCollection, 
@@ -433,14 +434,12 @@ public class BackendDerbyTest extends AbstractBackendTest {
             writeDocumentsMeta(mutableSnapshot, dsl, documents);
             
             for (KVDocument document : documents) {
-                CollectionData collectionData = readDataFromDocument(schema.databaseName, schema.collectionName, document, mutableSnapshot);
+                CollectionData collectionData = readDataFromDocuments(schema.databaseName, schema.collectionName, Arrays.asList(document), mutableSnapshot);
                 
                 List<Integer> generatedDids = writeCollectionData(dsl, collectionData);
                 
-                MetaDatabase metaDatabase = mutableSnapshot
-                        .getMetaDatabaseByName(schema.databaseName);
-                MetaCollection metaCollection = metaDatabase
-                        .getMetaCollectionByName(schema.collectionName);
+                MetaDatabase metaDatabase = mutableSnapshot.getMetaDatabaseByName(schema.databaseName);
+                MetaCollection metaCollection = metaDatabase.getMetaCollectionByName(schema.collectionName);
                 
                 DocPartResults<ResultSet> docPartResultSets = databaseInterface.getCollectionResultSets(
                         dsl, metaDatabase, metaCollection, 
@@ -457,10 +456,8 @@ public class BackendDerbyTest extends AbstractBackendTest {
             
             List<Integer> generatedDids = writeCollectionData(dsl, collectionData);
             
-            MetaDatabase metaDatabase = mutableSnapshot
-                    .getMetaDatabaseByName(schema.databaseName);
-            MetaCollection metaCollection = metaDatabase
-                    .getMetaCollectionByName(schema.collectionName);
+            MetaDatabase metaDatabase = mutableSnapshot.getMetaDatabaseByName(schema.databaseName);
+            MetaCollection metaCollection = metaDatabase.getMetaCollectionByName(schema.collectionName);
             
             DocPartResults<ResultSet> docPartResultSets = databaseInterface.getCollectionResultSets(
                     dsl, metaDatabase, metaCollection, 
@@ -480,66 +477,16 @@ public class BackendDerbyTest extends AbstractBackendTest {
 
     @Override
     protected DataSource createDataSource()  {
-        OfficialDerbyDriver derbyDriver = new OfficialDerbyDriver();
-        return derbyDriver.getConfiguredDataSource(new DerbyDbBackendConfiguration() {
-            @Override
-            public String getUsername() {
-                return null;
-            }
-            
-            @Override
-            public int getReservedReadPoolSize() {
-                return 0;
-            }
-            
-            @Override
-            public String getPassword() {
-                return null;
-            }
-            
-            @Override
-            public int getDbPort() {
-                return 0;
-            }
-            
-            @Override
-            public String getDbName() {
-                return "torodb";
-            }
-            
-            @Override
-            public String getDbHost() {
-                return null;
-            }
-            
-            @Override
-            public long getCursorTimeout() {
-                return 0;
-            }
-            
-            @Override
-            public long getConnectionPoolTimeout() {
-                return 0;
-            }
-            
-            @Override
-            public int getConnectionPoolSize() {
-                return 0;
-            }
-
-            @Override
-            public boolean inMemory() {
-                return false;
-            }
-
-            @Override
-            public boolean embedded() {
-                return true;
-            }
-        }, "torod");
+    	return Derby.getDatasource();
     }
+    
+	@Override
+	protected void cleanDatabase(DatabaseInterface databaseInterface, DataSource dataSource) throws SQLException {
+		Derby.cleanDatabase(databaseInterface, dataSource);
+	}
     
     private FieldType fieldType(Map.Entry<String, Field<?>> field){
     	return FieldType.from(((DataTypeForKV<?>) field.getValue().getDataType()).getKVValueConverter().getErasuredType());
     }
+
 }

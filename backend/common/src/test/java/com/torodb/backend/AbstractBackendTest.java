@@ -20,11 +20,10 @@
 
 package com.torodb.backend;
 
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -38,7 +37,6 @@ import org.jooq.impl.DSL;
 import org.junit.Before;
 
 import com.torodb.backend.d2r.R2DBackendTranslatorImpl;
-import com.torodb.backend.meta.TorodbSchema;
 import com.torodb.core.TableRefFactory;
 import com.torodb.core.d2r.CollectionData;
 import com.torodb.core.d2r.D2RTranslator;
@@ -64,8 +62,6 @@ import com.torodb.kvdocument.values.KVDocument;
 public abstract class AbstractBackendTest {
     
     protected static final TableRefFactory tableRefFactory = new TableRefFactoryImpl();
-    protected static final MockRidGenerator ridGenerator = new MockRidGenerator();
-    protected static final IdentifierFactory identifierFactory = new IdentifierFactoryImpl();
     
     protected TestSchema schema;
     protected DatabaseInterface databaseInterface;
@@ -80,34 +76,14 @@ public abstract class AbstractBackendTest {
         schema = new TestSchema(tableRefFactory, databaseInterface);
 
         dataSource = createDataSource();
-        try (Connection connection = dataSource.getConnection()) {
-            DatabaseMetaData metaData = connection.getMetaData();
-            ResultSet tables = metaData.getTables("%", "%", "%", null);
-            while (tables.next()) {
-                String schemaName = tables.getString("TABLE_SCHEM");
-                String tableName = tables.getString("TABLE_NAME");
-                if (!databaseInterface.isRestrictedSchemaName(schemaName) || schemaName.equals(TorodbSchema.TORODB_SCHEMA)) {
-                    try (PreparedStatement preparedStatement = connection.prepareStatement("DROP TABLE \"" + schemaName + "\".\"" + tableName + "\"")) {
-                        preparedStatement.executeUpdate();
-                    }
-                }
-            }
-            ResultSet schemas = metaData.getSchemas();
-            while (schemas.next()) {
-                String schemaName = schemas.getString("TABLE_SCHEM");
-                if (!databaseInterface.isRestrictedSchemaName(schemaName) || schemaName.equals(TorodbSchema.TORODB_SCHEMA)) {
-                    try (PreparedStatement preparedStatement = connection.prepareStatement("DROP SCHEMA \"" + schemaName + "\" RESTRICT")) {
-                        preparedStatement.executeUpdate();
-                    }
-                }
-            }
-            connection.commit();
-        }
+        cleanDatabase(databaseInterface, dataSource);
     }
 
     protected abstract DataSource createDataSource();
 
     protected abstract DatabaseInterface createDatabaseInterface();
+    
+    protected abstract void cleanDatabase(DatabaseInterface databaseInterface, DataSource dataSource) throws SQLException;
     
     @SuppressWarnings({ "unchecked", "rawtypes" })
     protected Collection<KVDocument> readDocuments(MetaDatabase metaDatabase, MetaCollection metaCollection,
@@ -135,20 +111,7 @@ public abstract class AbstractBackendTest {
 
     protected CollectionData writeDocumentMeta(MutableMetaSnapshot mutableSnapshot, DSLContext dsl, KVDocument document)
             throws Exception {
-        CollectionData collectionData = readDataFromDocument(schema.databaseName, schema.collectionName, document, mutableSnapshot);
-        mutableSnapshot.streamMetaDatabases().forEachOrdered(metaDatabase -> {
-            metaDatabase.streamMetaCollections().forEachOrdered(metaCollection -> {
-                metaCollection.streamContainedMetaDocParts().sorted(TableRefComparator.MetaDocPart.ASC).forEachOrdered(metaDocPartObject -> {
-                    MetaDocPart metaDocPart = (MetaDocPart) metaDocPartObject;
-                    List<Field<?>> fields = new ArrayList<>(databaseInterface.getDocPartTableInternalFields(metaDocPart));
-                    metaDocPart.streamFields().forEachOrdered(metaField -> {
-                        fields.add(DSL.field(metaField.getIdentifier(), databaseInterface.getDataType(metaField.getType())));
-                    });
-                    dsl.execute(databaseInterface.createDocPartTableStatement(dsl.configuration(), schema.databaseSchemaName, metaDocPart.getIdentifier(), fields));
-                });
-            });
-        });
-        return collectionData;
+    	return writeDocumentsMeta(mutableSnapshot, dsl, Arrays.asList(document));
     }
 
     protected CollectionData writeDocumentsMeta(MutableMetaSnapshot mutableSnapshot, DSLContext dsl, List<KVDocument> documents)
@@ -173,13 +136,10 @@ public abstract class AbstractBackendTest {
         return parser.createFromResource("docs/" + jsonFileName);
     }
     
-    protected CollectionData readDataFromDocument(String database, String collection, KVDocument document, MutableMetaSnapshot mutableSnapshot) throws Exception {
-        D2RTranslator translator = new D2RTranslatorStack(tableRefFactory, identifierFactory, ridGenerator, mutableSnapshot, database, collection);
-        translator.translate(document);
-        return translator.getCollectionDataAccumulator();
-    }
-    
     protected CollectionData readDataFromDocuments(String database, String collection, List<KVDocument> documents, MutableMetaSnapshot mutableSnapshot) throws Exception {
+        MockRidGenerator ridGenerator = new MockRidGenerator();
+        IdentifierFactory identifierFactory = new IdentifierFactoryImpl();
+        
         D2RTranslator translator = new D2RTranslatorStack(tableRefFactory, identifierFactory, ridGenerator, mutableSnapshot, database, collection);
         for (KVDocument document : documents) {
             translator.translate(document);

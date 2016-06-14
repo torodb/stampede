@@ -21,13 +21,13 @@ import com.torodb.core.transaction.metainf.WrapperMutableMetaDocPart;
 import com.torodb.d2r.MockRidGenerator;
 import com.torodb.kvdocument.values.KVValue;
 
-public class BackendHelper {
+public class BackendTestHelper {
 
 	private DSLContext dsl;
 	private TestSchema schema;
 	private DatabaseInterface databaseInterface;
 	
-	public BackendHelper(DatabaseInterface databaseInterface, DSLContext dsl, TestSchema schema){
+	public BackendTestHelper(DatabaseInterface databaseInterface, DSLContext dsl, TestSchema schema){
 		this.databaseInterface = databaseInterface;
 		this.dsl = dsl;
 		this.schema = schema;
