@@ -2,6 +2,7 @@ package com.torodb.backend.interfaces;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Collection;
 
 import javax.annotation.Nonnull;
 
@@ -14,7 +15,7 @@ import com.torodb.core.transaction.metainf.MetaDocPart;
 
 public interface ReadInterface {
     @Nonnull DocPartResults<ResultSet> getCollectionResultSets(@Nonnull DSLContext dsl, @Nonnull MetaDatabase metaDatabase, @Nonnull MetaCollection metaCollection, 
-            @Nonnull Integer[] requestedDocs) throws SQLException;
+            @Nonnull Collection<Integer> requestedDocs) throws SQLException;
     
     
     Integer getLastRowIUsed(@Nonnull DSLContext dsl, @Nonnull MetaDatabase metaDatabase, @Nonnull MetaCollection metaCollection, @Nonnull MetaDocPart metaDocPart) throws SQLException;

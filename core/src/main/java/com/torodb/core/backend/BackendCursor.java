@@ -18,7 +18,29 @@
  *     
  */
 
-package com.torodb.core.exceptions.user;
 
-public interface UserExceptionVisitor<Result, Argument> {
+package com.torodb.core.backend;
+
+import java.io.Closeable;
+import java.util.Collection;
+
+import javax.annotation.Nonnull;
+
+import com.torodb.core.document.ToroDocument;
+
+/**
+ *
+ */
+public interface BackendCursor extends Closeable {
+    
+    public Collection<ToroDocument> readDocuments(int maxResults);
+    
+    @Nonnull
+    public Collection<ToroDocument> readAllDocuments();
+    
+    /**
+     * Close the cursor and the connection that created it.
+     */
+    @Override
+    public void close();
 }

@@ -59,6 +59,7 @@ import com.torodb.backend.DatabaseInterface;
 import com.torodb.backend.InternalField;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.backend.converters.jooq.ValueToJooqDataTypeProvider;
+import com.torodb.backend.index.NamedDbIndex;
 import com.torodb.backend.meta.TorodbSchema;
 import com.torodb.backend.postgresql.converters.PostgreSQLValueToCopyConverter;
 import com.torodb.backend.postgresql.converters.jooq.PostgreSQLValueToJooqDataTypeProvider;
@@ -66,7 +67,6 @@ import com.torodb.backend.postgresql.tables.PostgreSQLMetaCollectionTable;
 import com.torodb.backend.postgresql.tables.PostgreSQLMetaDatabaseTable;
 import com.torodb.backend.postgresql.tables.PostgreSQLMetaDocPartTable;
 import com.torodb.backend.postgresql.tables.PostgreSQLMetaFieldTable;
-import com.torodb.backend.sql.index.NamedDbIndex;
 import com.torodb.backend.tables.MetaCollectionTable;
 import com.torodb.backend.tables.MetaDatabaseTable;
 import com.torodb.backend.tables.MetaDocPartTable;
@@ -502,7 +502,7 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
 
     @Nonnull
     @Override
-    public DocPartResults<ResultSet> getCollectionResultSets(@Nonnull DSLContext dsl, @Nonnull MetaDatabase metaDatabase, @Nonnull MetaCollection metaCollection, @Nonnull Integer[] requestedDocs) {
+    public DocPartResults<ResultSet> getCollectionResultSets(@Nonnull DSLContext dsl, @Nonnull MetaDatabase metaDatabase, @Nonnull MetaCollection metaCollection, @Nonnull Collection<Integer> requestedDocs) {
         throw new UnsupportedOperationException("Not implemented yet");
     }
 
