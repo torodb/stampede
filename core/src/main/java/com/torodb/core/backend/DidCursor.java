@@ -23,26 +23,6 @@ package com.torodb.core.backend;
 public interface DidCursor {
     
     /**
-     * Retrieves whether the cursor is after the last did in
-     * this <code>DidCursor</code> object.
-     *
-     * @return <code>true</code> if the cursor is after the last did;
-     * <code>false</code> if the cursor is at any other position or the
-     * cursor contains no dids
-     */
-    boolean isAfterLast();
-    
-    /**
-     * Retrieves whether the cursor is before the first did in
-     * this <code>DidCursor</code> object.
-     *
-     * @return <code>true</code> if the cursor is before the first did;
-     * <code>false</code> if the cursor is at any other position or the
-     * cursor contains no dids
-     */
-    boolean isBeforeFirst();
-    
-    /**
      * Moves the cursor forward one did from its current position.
      * A <code>DidCursor</code> cursor is initially positioned
      * before the first did; the first call to the method

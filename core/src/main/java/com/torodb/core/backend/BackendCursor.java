@@ -33,42 +33,14 @@ import com.torodb.core.document.ToroDocument;
  */
 public interface BackendCursor extends Closeable {
     
-    public Collection<ToroDocument> readDocuments(int maxResults) throws CursorException;
+    public Collection<ToroDocument> readDocuments(int maxResults);
     
     @Nonnull
-    public Collection<ToroDocument> readAllDocuments() throws CursorException;
+    public Collection<ToroDocument> readAllDocuments();
     
     /**
      * Close the cursor and the connection that created it.
      */
     @Override
     public void close();
-
-    public static class CursorException extends RuntimeException {
-        private static final long serialVersionUID = 1L;
-        private transient final BackendCursor backendCursor;
-
-        public CursorException(BackendCursor backendCursor) {
-            this.backendCursor = backendCursor;
-        }
-
-        public CursorException(BackendCursor backendCursor, String message) {
-            super(message);
-            this.backendCursor = backendCursor;
-        }
-
-        public CursorException(BackendCursor backendCursor, String message, Throwable cause) {
-            super(message, cause);
-            this.backendCursor = backendCursor;
-        }
-
-        public CursorException(BackendCursor backendCursor, Throwable cause) {
-            super(cause);
-            this.backendCursor = backendCursor;
-        }
-
-        public BackendCursor getCursor() {
-            return backendCursor;
-        }
-    }
 }
