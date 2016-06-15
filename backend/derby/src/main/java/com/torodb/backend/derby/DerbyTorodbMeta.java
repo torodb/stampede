@@ -27,7 +27,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.derby.client.am.SqlException;
 import org.jooq.DSLContext;
 import org.jooq.DataType;
 import org.jooq.Field;
