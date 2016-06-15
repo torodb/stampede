@@ -74,7 +74,6 @@ import com.torodb.backend.tables.MetaCollectionTable;
 import com.torodb.backend.tables.MetaDatabaseTable;
 import com.torodb.backend.tables.MetaDocPartTable;
 import com.torodb.backend.tables.MetaDocPartTable.DocPartTableFields;
-import com.torodb.backend.tables.records.MetaDatabaseRecord;
 import com.torodb.backend.tables.MetaFieldTable;
 import com.torodb.core.TableRef;
 import com.torodb.core.TableRefFactory;
@@ -992,6 +991,15 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
 		DerbyMetaDatabaseTable metaDatabaseTable = getMetaDatabaseTable();
         dsl.insertInto(metaDatabaseTable)
             .set(metaDatabaseTable.newRecord().values(databaseName, databaseIdentifier))
+            .execute();		
+	}
+
+	@Override
+	public void addMetaCollection(DSLContext dsl, String databaseName, String collectionName, String collectionIdentifier) {
+		DerbyMetaCollectionTable metaCollectionTable = getMetaCollectionTable();
+        dsl.insertInto(metaCollectionTable)
+            .set(metaCollectionTable.newRecord()
+            .values(databaseName, collectionName, collectionIdentifier))
             .execute();		
 	}
 }

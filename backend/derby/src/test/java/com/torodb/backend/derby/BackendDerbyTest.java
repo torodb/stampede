@@ -261,7 +261,7 @@ public class BackendDerbyTest extends AbstractBackendTest {
             DSLContext dsl = dsl(connection);
             BackendTestHelper helper = new BackendTestHelper(databaseInterface, dsl, schema);
             
-            helper.createSchema();
+            databaseInterface.createSchema(dsl, schema.databaseSchemaName);
             
             ImmutableMetaDocPart.Builder rootMetaDocPartBuilder = new ImmutableMetaDocPart.Builder(schema.rootDocPartTableRef, schema.rootDocPartTableName);
             schema.rootDocPartFields.forEach( (key, field) ->{

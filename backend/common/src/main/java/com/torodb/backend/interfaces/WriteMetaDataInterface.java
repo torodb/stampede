@@ -14,6 +14,7 @@ public interface WriteMetaDataInterface {
     @Nonnull String createMetaIndexesTableStatement(@Nonnull String schemaName, @Nonnull String tableName, @Nonnull String indexNameColumn, @Nonnull String indexOptionsColumn);
     
     void addMetaDatabase(@Nonnull DSLContext dsl, @Nonnull String databaseName, @Nonnull String databaseIdentifier);
+    void addMetaCollection(@Nonnull DSLContext dsl, @Nonnull String databaseName, @Nonnull String collectionName, @Nonnull String collectionIdentifier);
     
     int consumeRids(@Nonnull DSLContext dsl, @Nonnull String database, @Nonnull String collection, @Nonnull TableRef tableRef, int count);
     

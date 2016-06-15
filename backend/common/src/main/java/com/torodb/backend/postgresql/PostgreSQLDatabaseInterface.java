@@ -1025,4 +1025,12 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
             .execute();		
 	}
 
+	@Override
+	public void addMetaCollection(DSLContext dsl, String databaseName, String collectionName, String collectionIdentifier) {
+		PostgreSQLMetaCollectionTable metaCollectionTable = getMetaCollectionTable();
+        dsl.insertInto(metaCollectionTable)
+            .set(metaCollectionTable.newRecord()
+            .values(databaseName, collectionName, collectionIdentifier))
+            .execute();		
+	}
 }

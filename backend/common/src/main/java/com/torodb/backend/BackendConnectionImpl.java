@@ -25,10 +25,8 @@ import org.jooq.Field;
 import org.jooq.impl.DSL;
 
 import com.google.common.collect.ImmutableList;
-import com.torodb.backend.tables.MetaCollectionTable;
 import com.torodb.backend.tables.MetaDocPartTable;
 import com.torodb.backend.tables.MetaFieldTable;
-import com.torodb.backend.tables.records.MetaCollectionRecord;
 import com.torodb.backend.tables.records.MetaDocPartRecord;
 import com.torodb.backend.tables.records.MetaFieldRecord;
 import com.torodb.core.backend.BackendConnection;
@@ -57,11 +55,7 @@ public class BackendConnectionImpl implements BackendConnection {
 
     @Override
     public void addCollection(MetaDatabase db, MetaCollection newCol) {
-        MetaCollectionTable<MetaCollectionRecord> metaCollectionTable = databaseInterface.getMetaCollectionTable();
-        dsl.insertInto(metaCollectionTable)
-            .set(metaCollectionTable.newRecord()
-            .values(db.getName(), newCol.getName(), newCol.getIdentifier()))
-            .execute();
+    	databaseInterface.addMetaCollection(dsl, db.getName(), newCol.getName(), newCol.getIdentifier());
     }
 
     @Override

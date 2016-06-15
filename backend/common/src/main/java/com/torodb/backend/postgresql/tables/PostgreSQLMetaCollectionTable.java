@@ -19,13 +19,11 @@
  */
 package com.torodb.backend.postgresql.tables;
 
-import org.jooq.Converters;
 import org.jooq.Field;
 import org.jooq.Table;
 import org.jooq.TableField;
 import org.jooq.impl.SQLDataType;
 
-import com.torodb.backend.converters.jooq.binging.JSONBBinding;
 import com.torodb.backend.postgresql.tables.records.PostgreSQLMetaCollectionRecord;
 import com.torodb.backend.tables.MetaCollectionTable;
 
