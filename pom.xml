@@ -554,7 +554,7 @@
                             <encoding>UTF-8</encoding>
                             <context>
                                 ---
-                                latestVersion: ${project.version}
+                                latestVersion: "${project.version}"
                             </context>
                             <templates>
                                 <template>
