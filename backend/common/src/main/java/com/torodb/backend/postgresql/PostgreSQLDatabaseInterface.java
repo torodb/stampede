@@ -1017,4 +1017,12 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
         }
 	}
 	
+	@Override
+	public void addMetaDatabase(DSLContext dsl, String databaseName, String databaseIdentifier) {
+		PostgreSQLMetaDatabaseTable metaDatabaseTable = getMetaDatabaseTable();
+        dsl.insertInto(metaDatabaseTable)
+            .set(metaDatabaseTable.newRecord().values(databaseName, databaseIdentifier))
+            .execute();		
+	}
+
 }

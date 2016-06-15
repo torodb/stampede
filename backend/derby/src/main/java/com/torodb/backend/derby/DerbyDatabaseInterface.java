@@ -74,6 +74,7 @@ import com.torodb.backend.tables.MetaCollectionTable;
 import com.torodb.backend.tables.MetaDatabaseTable;
 import com.torodb.backend.tables.MetaDocPartTable;
 import com.torodb.backend.tables.MetaDocPartTable.DocPartTableFields;
+import com.torodb.backend.tables.records.MetaDatabaseRecord;
 import com.torodb.backend.tables.MetaFieldTable;
 import com.torodb.core.TableRef;
 import com.torodb.core.TableRefFactory;
@@ -682,7 +683,7 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
     @Override
     public void createSchema(@Nonnull DSLContext dsl, @Nonnull String schemaName){
         Connection c = dsl.configuration().connectionProvider().acquire();
-        String query = "CREATE SCHEMA IF NOT EXISTS \"" + schemaName + "\"";
+        String query = "CREATE SCHEMA \"" + schemaName + "\"";
         try (PreparedStatement ps = c.prepareStatement(query)) {
             ps.executeUpdate();
         } catch (SQLException e) {
@@ -984,5 +985,13 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
 			 return DocPartTableFields.DID.fieldName;
          }
 		 return DocPartTableFields.RID.fieldName;
+	}
+
+	@Override
+	public void addMetaDatabase(DSLContext dsl, String databaseName, String databaseIdentifier) {
+		DerbyMetaDatabaseTable metaDatabaseTable = getMetaDatabaseTable();
+        dsl.insertInto(metaDatabaseTable)
+            .set(metaDatabaseTable.newRecord().values(databaseName, databaseIdentifier))
+            .execute();		
 	}
 }

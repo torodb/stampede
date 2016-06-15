@@ -41,9 +41,7 @@ public class BackendTestHelper {
 		String databaseSchemaName = schema.databaseSchemaName;
 		String collectionName = schema.collectionName;
 		
-		dsl.insertInto(databaseInterface.getMetaDatabaseTable())
-		    .set(databaseInterface.getMetaDatabaseTable().newRecord().values(databaseName, databaseSchemaName))
-		    .execute();
+		databaseInterface.addMetaDatabase(dsl, databaseName, databaseSchemaName);
 		createSchema();
 		dsl.insertInto(databaseInterface.getMetaCollectionTable())
 		    .set(databaseInterface.getMetaCollectionTable().newRecord().values(databaseName, collectionName, schema.collectionIdentifierName))
