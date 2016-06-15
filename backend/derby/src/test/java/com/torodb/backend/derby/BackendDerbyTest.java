@@ -35,6 +35,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import javax.sql.DataSource;
 
@@ -245,7 +248,7 @@ public class BackendDerbyTest extends AbstractBackendTest {
             DSLContext dsl = dsl(connection);
             BackendTestHelper helper = new BackendTestHelper(databaseInterface, dsl, schema);
             
-            dsl.execute(databaseInterface.createSchemaStatement(schema.databaseSchemaName));
+            helper.createSchema();
             
             ImmutableMetaDocPart.Builder rootMetaDocPartBuilder = new ImmutableMetaDocPart.Builder(schema.rootDocPartTableRef, schema.rootDocPartTableName);
             schema.rootDocPartFields.forEach( (key, field) ->{
@@ -372,90 +375,7 @@ public class BackendDerbyTest extends AbstractBackendTest {
             	.addMetaCollection(schema.collectionName, schema.collectionIdentifierName);
             dsl.execute(databaseInterface.createSchemaStatement(schema.databaseSchemaName));
             
-            List<KVDocument> documents = new ArrayList<>();
-            for (int current_size = 0; current_size < 5; current_size++) {
-                int[] array_scalars_values = new int[] { 0 };
-                if (current_size > 0) {
-                    array_scalars_values = new int[] { 0, 1, 2 };
-                }
-                for (int array_scalars : array_scalars_values) {
-                    for (int object_size=0; object_size < 4; object_size++) {
-                        int[] object_index_values=new int[] { 0 };
-                        if (object_size > 0 && current_size > 0) {
-                            object_index_values=new int[0];
-                            for (int i=1; i<current_size; i++) {
-                                object_index_values=Arrays.copyOf(object_index_values, object_index_values.length + 1);
-                                object_index_values[object_index_values.length - 1] = i;
-                            }
-                        }
-                        for (int object_index : object_index_values) {
-                            KVDocument.Builder documentBuilder = new KVDocument.Builder();
-                            int current_index = 0;
-                            if (object_index == current_index) {
-                               if (object_size == 1)
-                                   documentBuilder.putValue("k", new KVDocument.Builder().build());
-                               else if (object_size == 2)
-                                   documentBuilder.putValue("k", new KVDocument.Builder()
-                                           .putValue("k", KVInteger.of(1))
-                                           .build());
-                               else if (object_size != 0)
-                                   continue;
-                            }
-                            if (current_size > 0) {
-                                current_index = current_index + 1;
-                                List<KVValue<?>> array_value = new ArrayList<>();
-                                if (object_index == current_index) {
-                                    if (object_size == 1) 
-                                       array_value.add(new KVDocument.Builder().build());
-                                    else if (object_size == 2)
-                                       array_value.add(new KVDocument.Builder()
-                                               .putValue("k", KVInteger.of(1))
-                                               .build());
-                                    else if (object_size != 0)
-                                       continue;
-                                }
-                                if (array_scalars > 0) {
-                                    if (array_scalars == 1)
-                                       array_value.add(new ListKVArray(Arrays.asList(new KVValue<?>[] { KVInteger.of(1) })));
-                                   else
-                                       array_value.add(new ListKVArray(Arrays.asList(new KVValue<?>[] { KVInteger.of(1), KVInteger.of(2) })));
-                                }
-                                if (current_size > 1) {
-                                    int[] size_values=new int[0];
-                                    for (int i=current_size; i>=2; i--) {
-                                        size_values=Arrays.copyOf(size_values, size_values.length + 1);
-                                        size_values[size_values.length - 1] = i;
-                                    }
-                                    for (@SuppressWarnings("unused") int size : size_values) {
-                                        current_index = current_index + 1;
-                                        array_value = new ArrayList<>(Arrays.asList(new KVValue<?>[] { new ListKVArray(array_value) }));
-                                        if (object_index == current_index) {
-                                            if (object_size == 1)
-                                                array_value.add(new ListKVArray(Arrays.asList(new KVValue<?>[] { new KVDocument.Builder().build() })));
-                                            else if (object_size == 2)
-                                                array_value.add(new ListKVArray(Arrays.asList(new KVValue<?>[] { new KVDocument.Builder()
-                                                    .putValue("k", KVInteger.of(1))
-                                                    .build() })));
-                                            else if (object_size != 0)
-                                                array_value = new ArrayList<>(Arrays.asList(new KVValue<?>[] { new KVDocument.Builder()
-                                                    .putValue("k", new ListKVArray(array_value))
-                                                    .build() }));
-                                        }
-                                        if (array_scalars > 0) {
-                                            if (array_scalars == 1)
-                                               array_value.add(new ListKVArray(Arrays.asList(new KVValue<?>[] { KVInteger.of(1) })));
-                                           else
-                                               array_value.add(new ListKVArray(Arrays.asList(new KVValue<?>[] { KVInteger.of(1), KVInteger.of(2) })));
-                                        }
-                                    }
-                                }
-                                documentBuilder.putValue("k", new ListKVArray(array_value));;
-                            }
-                            documents.add(documentBuilder.build());
-                        }
-                    }
-                }
-            }
+            List<KVDocument> documents = createDocumentsWithStructures();
             
             BackendDocumentTestHelper helper = new BackendDocumentTestHelper(databaseInterface, tableRefFactory, schema);
             helper.parseDocumentsAndCreateDocPartDataTables(mutableSnapshot, dsl, documents);
@@ -496,6 +416,107 @@ public class BackendDerbyTest extends AbstractBackendTest {
             assertEquals(documents.size(), readedDocuments.size());
         }
     }
+
+	private List<KVDocument> createDocumentsWithStructures() {
+		List<KVDocument> documents = new ArrayList<>();
+		for (int current_size = 0; current_size < 5; current_size++) {
+		    int[] array_scalars_values = new int[] { 0 };
+		    if (current_size > 0) {
+		        array_scalars_values = new int[] { 0, 1, 2 };
+		    }
+		    for (int array_scalars : array_scalars_values) {
+		        for (int object_size=0; object_size < 4; object_size++) {
+		            int[] object_index_values=new int[] { 0 };
+		            if (object_size > 0 && current_size > 0) {
+		                object_index_values=new int[0];
+		                for (int i=1; i<current_size; i++) {
+		                    object_index_values=Arrays.copyOf(object_index_values, object_index_values.length + 1);
+		                    object_index_values[object_index_values.length - 1] = i;
+		                }
+		            }
+		            for (int object_index : object_index_values) {
+		                KVDocument.Builder documentBuilder = new KVDocument.Builder();
+		                int current_index = 0;
+		                if (object_index == current_index) {
+		                   if (object_size == 1)
+		                       documentBuilder.putValue("k", emptyDocument());
+		                   else if (object_size == 2)
+		                       documentBuilder.putValue("k", singleDocument());
+		                   else if (object_size != 0)
+		                       continue;
+		                }
+		                if (current_size > 0) {
+		                    current_index = current_index + 1;
+		                    List<KVValue<?>> array_value = new ArrayList<>();
+		                    if (object_index == current_index) {
+		                        if (object_size == 1) 
+		                           array_value.add(emptyDocument());
+		                        else if (object_size == 2)
+		                           array_value.add(singleDocument());
+		                        else if (object_size != 0)
+		                           continue;
+		                    }
+							if (array_scalars > 0) {
+								if (array_scalars == 1)
+									array_value.add(buildArray(1));
+								else
+									array_value.add(buildArray(1, 2));
+							}
+		                    if (current_size > 1) {
+		                        int[] size_values=new int[0];
+		                        for (int i=current_size; i>=2; i--) {
+		                            size_values=Arrays.copyOf(size_values, size_values.length + 1);
+		                            size_values[size_values.length - 1] = i;
+		                        }
+		                        for (@SuppressWarnings("unused") int size : size_values) {
+		                            current_index = current_index + 1;
+		                            array_value = new ArrayList<>(Arrays.asList(new KVValue<?>[] { new ListKVArray(array_value) }));
+		                            if (object_index == current_index) {
+		                                if (object_size == 1)
+		                                    array_value.add(buildArray(emptyDocument()));
+		                                else if (object_size == 2)
+		                                    array_value.add(buildArray(singleDocument()));
+		                                else if (object_size != 0)
+		                                    array_value = new ArrayList<>(Arrays.asList(new KVValue<?>[] { new KVDocument.Builder()
+		                                        .putValue("k", new ListKVArray(array_value))
+		                                        .build() }));
+		                            }
+		                            if (array_scalars > 0) {
+		                                if (array_scalars == 1)
+		                                   array_value.add(buildArray(1));
+		                                else
+		                                   array_value.add(buildArray(1, 2));
+		                            }
+		                        }
+		                    }
+		                    documentBuilder.putValue("k", new ListKVArray(array_value));;
+		                }
+		                documents.add(documentBuilder.build());
+		            }
+		        }
+		    }
+		}
+		return documents;
+	}
+	
+	private ListKVArray buildArray(KVValue<?> ... values){
+		return new ListKVArray(Arrays.asList(values));
+	}
+	
+	private ListKVArray buildArray(int ... values){
+		List<KVValue<?>> ids = IntStream.of(values).mapToObj(i->KVInteger.of(i)).collect(Collectors.toList());
+		return new ListKVArray(ids);
+	}
+	
+	private KVDocument emptyDocument(){
+		return new KVDocument.Builder().build();
+	}
+	
+	private KVDocument singleDocument(){
+		return new KVDocument.Builder()
+				.putValue("k", KVInteger.of(1))
+				.build();
+	}
 
     @Override
     protected DatabaseInterface createDatabaseInterface() {

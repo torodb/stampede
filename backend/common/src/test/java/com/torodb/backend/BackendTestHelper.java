@@ -31,6 +31,10 @@ public class BackendTestHelper {
 		this.schema = schema;
 	}
 	
+	public void createSchema(){
+		dsl.execute(databaseInterface.createSchemaStatement(schema.databaseSchemaName));
+	}
+	
 	public void createMetaModel() {
 		String databaseName = schema.databaseName;
 		String databaseSchemaName = schema.databaseSchemaName;
@@ -39,7 +43,7 @@ public class BackendTestHelper {
 		dsl.insertInto(databaseInterface.getMetaDatabaseTable())
 		    .set(databaseInterface.getMetaDatabaseTable().newRecord().values(databaseName, databaseSchemaName))
 		    .execute();
-		dsl.execute(databaseInterface.createSchemaStatement(databaseSchemaName));
+		createSchema();
 		dsl.insertInto(databaseInterface.getMetaCollectionTable())
 		    .set(databaseInterface.getMetaCollectionTable().newRecord().values(databaseName, collectionName, schema.collectionIdentifierName))
 		    .execute();
