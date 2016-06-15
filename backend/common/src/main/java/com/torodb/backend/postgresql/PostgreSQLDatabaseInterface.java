@@ -60,8 +60,6 @@ import com.torodb.backend.InternalField;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.backend.converters.jooq.ValueToJooqDataTypeProvider;
 import com.torodb.backend.meta.TorodbSchema;
-import com.torodb.backend.mocks.ToroImplementationException;
-import com.torodb.backend.mocks.ToroRuntimeException;
 import com.torodb.backend.postgresql.converters.PostgreSQLValueToCopyConverter;
 import com.torodb.backend.postgresql.converters.jooq.PostgreSQLValueToJooqDataTypeProvider;
 import com.torodb.backend.postgresql.tables.PostgreSQLMetaCollectionTable;
@@ -76,7 +74,9 @@ import com.torodb.backend.tables.MetaDocPartTable.DocPartTableFields;
 import com.torodb.backend.tables.MetaFieldTable;
 import com.torodb.core.TableRef;
 import com.torodb.core.d2r.DocPartData;
+import com.torodb.core.d2r.DocPartResults;
 import com.torodb.core.d2r.DocPartRow;
+import com.torodb.core.exceptions.SystemException;
 import com.torodb.core.transaction.RollbackException;
 import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.MetaCollection;
@@ -502,8 +502,8 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
 
     @Nonnull
     @Override
-    public Collection<DocPartResultSet> getCollectionResultSets(@Nonnull DSLContext dsl, @Nonnull MetaDatabase metaDatabase, @Nonnull MetaCollection metaCollection, @Nonnull Integer[] requestedDocs) {
-        throw new ToroImplementationException("Not implemented yet");
+    public DocPartResults<ResultSet> getCollectionResultSets(@Nonnull DSLContext dsl, @Nonnull MetaDatabase metaDatabase, @Nonnull MetaCollection metaCollection, @Nonnull Integer[] requestedDocs) {
+        throw new UnsupportedOperationException("Not implemented yet");
     }
 
     @Nonnull
@@ -733,7 +733,7 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
     }
 
     @Override
-    public void insertDocPartData(DSLContext dsl, String schemaName, DocPartData docPartData) throws RollbackException {
+    public void insertDocPartData(DSLContext dsl, String schemaName, DocPartData docPartData) {
         Preconditions.checkArgument(docPartData.rowCount() != 0, "Called insert with 0 documents");
         
         Connection connection = dsl.configuration().connectionProvider().acquire();
@@ -767,12 +767,12 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
             }
         } catch (DataAccessException ex) {
             handleRetryException(Context.insert, ex);
-            throw new ToroRuntimeException(ex);
+            throw new SystemException(ex);
         } catch (SQLException ex) {
             handleRetryException(Context.insert, ex);
-            throw new ToroImplementationException(ex);
+            throw new SystemException(ex);
         } catch (IOException ex) {
-            throw new ToroRuntimeException(ex);
+            throw new SystemException(ex);
         } finally {
             dsl.configuration().connectionProvider().release(connection);
         }
@@ -831,7 +831,7 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
     private void copyInsertPathDocuments(
             PGConnection connection,
             String schemaName,
-            DocPartData docPartData) throws RollbackException, SQLException, IOException {
+            DocPartData docPartData) throws SQLException, IOException {
 
         final int maxBatchSize = 1000;
         final StringBuilder sb = new StringBuilder(2048);
@@ -938,7 +938,7 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
 
     @Override
     public int consumeRids(DSLContext dsl, String database, String collection, TableRef tableRef, int count) {
-        throw new ToroImplementationException("Not implemented yet");
+        throw new UnsupportedOperationException("Not implemented yet");
     }
 
     @Override
@@ -946,16 +946,21 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
         return valueToJooqDataTypeProvider.getDataType(type);
     }
 
+    private static final String[] ROLLBACK_EXCEPTIONS = new String[] { "40001", "40P01" };
+    {
+        Arrays.sort(ROLLBACK_EXCEPTIONS);
+    }
+    
     @Override
-    public void handleRetryException(Context context, SQLException sqlException) throws RollbackException {
-        if (context == Context.batchUpdate && "40001".equals(sqlException.getSQLState())) {
+    public void handleRetryException(Context context, SQLException sqlException) {
+        if (Arrays.binarySearch(ROLLBACK_EXCEPTIONS, sqlException.getSQLState()) >= 0) {
             throw new RollbackException(sqlException);
         }
     }
 
     @Override
-    public void handleRetryException(Context context, DataAccessException dataAccessException) throws RollbackException {
-        if (context == Context.batchUpdate && "40001".equals(dataAccessException.sqlState())) {
+    public void handleRetryException(Context context, DataAccessException dataAccessException) {
+        if (Arrays.binarySearch(ROLLBACK_EXCEPTIONS, dataAccessException.sqlState()) >= 0) {
             throw new RollbackException(dataAccessException);
         }
     }
@@ -986,4 +991,29 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
         
         return metaDocPartTable.FIELDS;
     }
+    
+	@Override
+	public Integer getLastRowIUsed(@Nonnull DSLContext dsl, @Nonnull MetaDatabase metaDatabase, @Nonnull MetaCollection metaCollection, @Nonnull MetaDocPart metaDocPart) throws SQLException {
+		Connection connection = dsl.configuration().connectionProvider().acquire();
+        try {
+            StringBuilder sb = new StringBuilder();
+            sb.append("SELECT max(\"")
+            .append(DocPartTableFields.RID.fieldName)
+            .append("\" FROM \"")
+            .append(metaDatabase.getIdentifier())
+            .append("\".\"")
+            .append(metaDocPart.getIdentifier());
+            
+            try (PreparedStatement preparedStatement = connection.prepareStatement(sb.toString())){
+            	ResultSet rs = preparedStatement.executeQuery();
+            	if (!rs.next()){
+            		return -1;
+            	}
+            	return rs.getInt(1);
+            }
+        } finally {
+            dsl.configuration().connectionProvider().release(connection);
+        }
+	}
+	
 }

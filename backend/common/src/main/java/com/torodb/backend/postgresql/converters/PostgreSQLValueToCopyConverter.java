@@ -1,7 +1,6 @@
 
 package com.torodb.backend.postgresql.converters;
 
-import com.torodb.backend.mocks.ToroImplementationException;
 import com.torodb.common.util.HexUtils;
 import com.torodb.kvdocument.values.KVArray;
 import com.torodb.kvdocument.values.KVBinary;
@@ -17,7 +16,6 @@ import com.torodb.kvdocument.values.KVMongoTimestamp;
 import com.torodb.kvdocument.values.KVNull;
 import com.torodb.kvdocument.values.KVString;
 import com.torodb.kvdocument.values.KVTime;
-import com.torodb.kvdocument.values.KVValue;
 import com.torodb.kvdocument.values.KVValueVisitor;
 
 /**
@@ -51,7 +49,7 @@ public class PostgreSQLValueToCopyConverter implements KVValueVisitor<Void, Stri
 
     @Override
     public Void visit(KVArray value, StringBuilder arg) {
-        throw new ToroImplementationException("Ouch this should not occur");
+        throw new UnsupportedOperationException("Ouch this should not occur");
     }
 
     @Override
@@ -170,6 +168,6 @@ public class PostgreSQLValueToCopyConverter implements KVValueVisitor<Void, Stri
 
     @Override
     public Void visit(KVDocument value, StringBuilder arg) {
-        throw new ToroImplementationException("Ouch this should not occur");
+        throw new UnsupportedOperationException("Ouch this should not occur");
     }
 }

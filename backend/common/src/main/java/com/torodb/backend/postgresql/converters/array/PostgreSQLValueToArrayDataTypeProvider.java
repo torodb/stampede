@@ -29,7 +29,7 @@ import org.jooq.DataType;
 import com.google.common.collect.Maps;
 import com.torodb.backend.converters.array.ValueToArrayDataTypeProvider;
 import com.torodb.backend.converters.jooq.binging.JSONBBinding;
-import com.torodb.backend.mocks.ArrayTypeInstance;
+import com.torodb.kvdocument.types.ArrayType;
 import com.torodb.kvdocument.types.BinaryType;
 import com.torodb.kvdocument.types.BooleanType;
 import com.torodb.kvdocument.types.DateType;
@@ -64,25 +64,25 @@ public class PostgreSQLValueToArrayDataTypeProvider implements ValueToArrayDataT
 
     private static final long serialVersionUID = 1L;
 
-    private final Map<KVType, DataType<?>> converters;
+    private final Map<Class<? extends KVType>, DataType<?>> converters;
 
     private PostgreSQLValueToArrayDataTypeProvider() {
         PostgreSQLValueToArrayConverterProvider postgreSQLValueToArrayConverterProvider = PostgreSQLValueToArrayConverterProvider.getInstance();
         
         converters = Maps.newHashMap();
-        converters.put(ArrayTypeInstance.GENERIC, JSONBBinding.fromKVValue(KVArray.class, postgreSQLValueToArrayConverterProvider.getArrayConverter()));
-        converters.put(BooleanType.INSTANCE, JSONBBinding.fromKVValue(KVBoolean.class, postgreSQLValueToArrayConverterProvider.getBooleanConverter()));
-        converters.put(DateType.INSTANCE, JSONBBinding.fromKVValue(KVDate.class, postgreSQLValueToArrayConverterProvider.getDateConverter()));
-        converters.put(InstantType.INSTANCE, JSONBBinding.fromKVValue(KVInstant.class, postgreSQLValueToArrayConverterProvider.getInstantConverter()));
-        converters.put(DoubleType.INSTANCE, JSONBBinding.fromKVValue(KVDouble.class, postgreSQLValueToArrayConverterProvider.getDoubleConverter()));
-        converters.put(IntegerType.INSTANCE, JSONBBinding.fromKVValue(KVInteger.class, postgreSQLValueToArrayConverterProvider.getIntegerConverter()));
-        converters.put(LongType.INSTANCE, JSONBBinding.fromKVValue(KVLong.class, postgreSQLValueToArrayConverterProvider.getLongConverter()));
-        converters.put(NullType.INSTANCE, JSONBBinding.fromKVValue(KVNull.class, postgreSQLValueToArrayConverterProvider.getNullConverter()));
-        converters.put(StringType.INSTANCE, JSONBBinding.fromKVValue(KVString.class, postgreSQLValueToArrayConverterProvider.getStringConverter()));
-        converters.put(TimeType.INSTANCE, JSONBBinding.fromKVValue(KVTime.class, postgreSQLValueToArrayConverterProvider.getTimeConverter()));
-        converters.put(MongoObjectIdType.INSTANCE, JSONBBinding.fromKVValue(KVMongoObjectId.class, postgreSQLValueToArrayConverterProvider.getMongoObjectIdConverter()));
-        converters.put(MongoTimestampType.INSTANCE, JSONBBinding.fromKVValue(KVMongoTimestamp.class, postgreSQLValueToArrayConverterProvider.getMongoTimestampConverter()));
-        converters.put(BinaryType.INSTANCE, JSONBBinding.fromKVValue(KVBinary.class, postgreSQLValueToArrayConverterProvider.getBinaryConverter()));
+        converters.put(ArrayType.class, JSONBBinding.fromKVValue(KVArray.class, postgreSQLValueToArrayConverterProvider.getArrayConverter()));
+        converters.put(BooleanType.class, JSONBBinding.fromKVValue(KVBoolean.class, postgreSQLValueToArrayConverterProvider.getBooleanConverter()));
+        converters.put(DateType.class, JSONBBinding.fromKVValue(KVDate.class, postgreSQLValueToArrayConverterProvider.getDateConverter()));
+        converters.put(InstantType.class, JSONBBinding.fromKVValue(KVInstant.class, postgreSQLValueToArrayConverterProvider.getInstantConverter()));
+        converters.put(DoubleType.class, JSONBBinding.fromKVValue(KVDouble.class, postgreSQLValueToArrayConverterProvider.getDoubleConverter()));
+        converters.put(IntegerType.class, JSONBBinding.fromKVValue(KVInteger.class, postgreSQLValueToArrayConverterProvider.getIntegerConverter()));
+        converters.put(LongType.class, JSONBBinding.fromKVValue(KVLong.class, postgreSQLValueToArrayConverterProvider.getLongConverter()));
+        converters.put(NullType.class, JSONBBinding.fromKVValue(KVNull.class, postgreSQLValueToArrayConverterProvider.getNullConverter()));
+        converters.put(StringType.class, JSONBBinding.fromKVValue(KVString.class, postgreSQLValueToArrayConverterProvider.getStringConverter()));
+        converters.put(TimeType.class, JSONBBinding.fromKVValue(KVTime.class, postgreSQLValueToArrayConverterProvider.getTimeConverter()));
+        converters.put(MongoObjectIdType.class, JSONBBinding.fromKVValue(KVMongoObjectId.class, postgreSQLValueToArrayConverterProvider.getMongoObjectIdConverter()));
+        converters.put(MongoTimestampType.class, JSONBBinding.fromKVValue(KVMongoTimestamp.class, postgreSQLValueToArrayConverterProvider.getMongoTimestampConverter()));
+        converters.put(BinaryType.class, JSONBBinding.fromKVValue(KVBinary.class, postgreSQLValueToArrayConverterProvider.getBinaryConverter()));
     }
 
     public static PostgreSQLValueToArrayDataTypeProvider getInstance() {
@@ -91,7 +91,7 @@ public class PostgreSQLValueToArrayDataTypeProvider implements ValueToArrayDataT
 
     @Nonnull
     public DataType<?> getDataType(KVType valueType) {
-        DataType<?> converter = converters.get(valueType);
+        DataType<?> converter = converters.get(valueType.getClass());
         if (converter == null) {
             throw new AssertionError("There is no data type for "
                     + "elements of type " + valueType);

@@ -1,4 +1,4 @@
-package com.torodb.backend.mocks;
+package com.torodb.core.model;
 
 import javax.annotation.Nonnull;
 

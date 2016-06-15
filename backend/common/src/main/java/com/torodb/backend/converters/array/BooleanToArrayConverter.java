@@ -22,7 +22,6 @@ package com.torodb.backend.converters.array;
 
 import javax.json.JsonValue;
 
-import com.torodb.backend.mocks.ToroImplementationException;
 import com.torodb.kvdocument.values.KVBoolean;
 
 /**
@@ -39,7 +38,7 @@ public class BooleanToArrayConverter implements ArrayConverter<JsonValue, KVBool
     @Override
     public KVBoolean fromJsonValue(JsonValue value) {
         if (value != JsonValue.TRUE && value != JsonValue.FALSE) {
-            throw new ToroImplementationException(value + " is not boolean value");
+            throw new AssertionError(value + " is not boolean value");
         }
         
         return KVBoolean.from(value == JsonValue.TRUE);

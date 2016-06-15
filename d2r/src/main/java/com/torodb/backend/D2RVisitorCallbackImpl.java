@@ -11,8 +11,10 @@ import com.torodb.backend.AttributeReference.Key;
 import com.torodb.backend.AttributeReference.ObjectKey;
 import com.torodb.backend.D2RVisitor.Callback;
 import com.torodb.core.TableRef;
+import com.torodb.core.TableRefFactory;
 import com.torodb.core.d2r.CollectionData;
 import com.torodb.core.d2r.DocPartData;
+import com.torodb.core.d2r.RidGenerator.DocPartRidGenerator;
 import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.MetaField;
 import com.torodb.core.transaction.metainf.MutableMetaCollection;
@@ -25,12 +27,14 @@ import com.torodb.kvdocument.values.KVValue;
 
 public class D2RVisitorCallbackImpl implements Callback<DocPartRowImpl>, CollectionData {
 	
+    private final TableRefFactory tableRefFactory;
     private final MutableMetaCollection metaCollection;
     private final DocPartRidGenerator docPartRidGenerator;
     private final AttributeReferenceTranslator attrRefTranslator;
     private final Map<TableRef, DocPartDataImpl> docPartDataMap = Maps.newHashMap();
     
-    public D2RVisitorCallbackImpl(MutableMetaCollection metaCollection, DocPartRidGenerator docPartRidGenerator, AttributeReferenceTranslator attrRefTranslator) {
+    public D2RVisitorCallbackImpl(TableRefFactory tableRefFactory, MutableMetaCollection metaCollection, DocPartRidGenerator docPartRidGenerator, AttributeReferenceTranslator attrRefTranslator) {
+        this.tableRefFactory = tableRefFactory;
         this.metaCollection = metaCollection;
         this.docPartRidGenerator = docPartRidGenerator;
 		this.attrRefTranslator = attrRefTranslator;
@@ -75,7 +79,7 @@ public class D2RVisitorCallbackImpl implements Callback<DocPartRowImpl>, Collect
     
     public void visit(KVArray array, AttributeReference attributeReference, TableRef tableRef, DocPartRowImpl parentRow) {
         attributeReference = attributeReference.append(new ArrayKey(0));
-        tableRef = attrRefTranslator.toTableRef(attributeReference);
+        tableRef = attrRefTranslator.toTableRef(tableRefFactory, attributeReference);
         DocPartDataImpl docPartData = getDocPartData(attributeReference, tableRef);
         
         int index = 0;

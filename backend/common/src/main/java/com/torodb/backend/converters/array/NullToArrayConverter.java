@@ -22,7 +22,6 @@ package com.torodb.backend.converters.array;
 
 import javax.json.JsonValue;
 
-import com.torodb.backend.mocks.ToroImplementationException;
 import com.torodb.kvdocument.values.KVNull;
 
 /**
@@ -39,7 +38,7 @@ public class NullToArrayConverter implements ArrayConverter<JsonValue, KVNull> {
     @Override
     public KVNull fromJsonValue(JsonValue value) {
         if (value != JsonValue.NULL) {
-            throw new ToroImplementationException(value + " is not null value");
+            throw new AssertionError(value + " is not null value");
         }
         
         return KVNull.getInstance();

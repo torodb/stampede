@@ -25,8 +25,6 @@ import java.util.Map;
 import javax.annotation.Nonnull;
 
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
-import com.google.common.collect.Sets.SetView;
 import com.torodb.backend.converters.ValueConverter;
 import com.torodb.backend.converters.json.BinaryValueToJsonConverter;
 import com.torodb.backend.converters.json.BooleanValueToJsonConverter;
@@ -42,9 +40,8 @@ import com.torodb.backend.converters.json.StringValueToJsonConverter;
 import com.torodb.backend.converters.json.TimeValueToJsonConverter;
 import com.torodb.backend.converters.json.ValueToJsonConverterProvider;
 import com.torodb.backend.derby.converters.array.DerbyValueToArrayConverterProvider;
-import com.torodb.backend.mocks.ArrayTypeInstance;
 import com.torodb.backend.postgresql.converters.json.ArrayValueToJsonConverter;
-import com.torodb.backend.postgresql.converters.json.PostgreSQLValueToJsonConverterProvider;
+import com.torodb.kvdocument.types.ArrayType;
 import com.torodb.kvdocument.types.BinaryType;
 import com.torodb.kvdocument.types.BooleanType;
 import com.torodb.kvdocument.types.DateType;
@@ -66,23 +63,23 @@ public class DerbyValueToJsonConverterProvider implements ValueToJsonConverterPr
 
     private static final long serialVersionUID = 1L;
 
-    private final Map<KVType, ValueConverter> converters;
+    private final Map<Class<? extends KVType>, ValueConverter> converters;
 
     private DerbyValueToJsonConverterProvider() {
         converters = Maps.newHashMap();
-        converters.put(ArrayTypeInstance.GENERIC, new ArrayValueToJsonConverter(DerbyValueToArrayConverterProvider.getInstance()));
-        converters.put(BooleanType.INSTANCE, new BooleanValueToJsonConverter());
-        converters.put(DateType.INSTANCE, new DateValueToJsonConverter());
-        converters.put(InstantType.INSTANCE, new InstantValueToJsonConverter());
-        converters.put(DoubleType.INSTANCE, new DoubleValueToJsonConverter());
-        converters.put(IntegerType.INSTANCE, new IntegerValueToJsonConverter());
-        converters.put(LongType.INSTANCE, new LongValueToJsonConverter());
-        converters.put(NullType.INSTANCE, new NullValueToJsonConverter());
-        converters.put(StringType.INSTANCE, new StringValueToJsonConverter());
-        converters.put(TimeType.INSTANCE, new TimeValueToJsonConverter());
-        converters.put(MongoObjectIdType.INSTANCE, new MongoObjectIdValueToJsonConverter());
-        converters.put(MongoTimestampType.INSTANCE, new MongoTimestampValueToJsonConverter());
-        converters.put(BinaryType.INSTANCE, new BinaryValueToJsonConverter());
+        converters.put(ArrayType.class, new ArrayValueToJsonConverter(DerbyValueToArrayConverterProvider.getInstance()));
+        converters.put(BooleanType.class, new BooleanValueToJsonConverter());
+        converters.put(DateType.class, new DateValueToJsonConverter());
+        converters.put(InstantType.class, new InstantValueToJsonConverter());
+        converters.put(DoubleType.class, new DoubleValueToJsonConverter());
+        converters.put(IntegerType.class, new IntegerValueToJsonConverter());
+        converters.put(LongType.class, new LongValueToJsonConverter());
+        converters.put(NullType.class, new NullValueToJsonConverter());
+        converters.put(StringType.class, new StringValueToJsonConverter());
+        converters.put(TimeType.class, new TimeValueToJsonConverter());
+        converters.put(MongoObjectIdType.class, new MongoObjectIdValueToJsonConverter());
+        converters.put(MongoTimestampType.class, new MongoTimestampValueToJsonConverter());
+        converters.put(BinaryType.class, new BinaryValueToJsonConverter());
     }
 
     public static DerbyValueToJsonConverterProvider getInstance() {
@@ -92,7 +89,7 @@ public class DerbyValueToJsonConverterProvider implements ValueToJsonConverterPr
     @Nonnull
     @Override
     public ValueConverter getConverter(KVType valueType) {
-        ValueConverter converter = converters.get(valueType);
+        ValueConverter converter = converters.get(valueType.getClass());
         if (converter == null) {
             throw new AssertionError("There is no converter that converts "
                     + "elements of type " + valueType);

@@ -24,7 +24,7 @@ import com.google.common.collect.ImmutableList;
 import com.torodb.backend.AttributeReference.ArrayKey;
 import com.torodb.backend.AttributeReference.ObjectKey;
 import com.torodb.core.TableRef;
-import com.torodb.core.impl.TableRefImpl;
+import com.torodb.core.TableRefFactory;
 import com.torodb.kvdocument.values.KVArray;
 import com.torodb.kvdocument.values.KVDocument;
 import com.torodb.kvdocument.values.KVDocument.DocEntry;
@@ -32,16 +32,18 @@ import com.torodb.kvdocument.values.KVValue;
 
 public class D2RVisitor<Row> {
     
+    private final TableRefFactory tableRefFactory;
     private final Callback<Row> callback;
     private final AttributeReferenceTranslator attrRefTranslator;
     
-    public D2RVisitor(AttributeReferenceTranslator attrRefTranslator, Callback<Row> callback) {
+    public D2RVisitor(TableRefFactory tableRefFactory, AttributeReferenceTranslator attrRefTranslator, Callback<Row> callback) {
+        this.tableRefFactory = tableRefFactory;
         this.callback = callback;
 		this.attrRefTranslator = attrRefTranslator;
     }
     
     public void visit(KVDocument document) {
-        visit(document, new Argument<>());
+        visit(document, new Argument<>(tableRefFactory));
     }
     
     private void visit(KVDocument document, Argument<Row> arg) {
@@ -49,7 +51,7 @@ public class D2RVisitor<Row> {
         
         for (DocEntry<?> entry : document) {
             AttributeReference attributeReference = arg.attributeReference.append(new ObjectKey(entry.getKey()));
-            TableRef tableRef = attrRefTranslator.toTableRef(attributeReference);
+            TableRef tableRef = attrRefTranslator.toTableRef(tableRefFactory, attributeReference);
             Argument<Row> entryArg = new Argument<Row>(attributeReference, tableRef, newRow);
             
             KVValue<?> value = entry.getValue();
@@ -64,7 +66,7 @@ public class D2RVisitor<Row> {
     private void visit(KVArray array, Argument<Row> arg) {
         callback.visit(array, arg.attributeReference, arg.tableRef, arg.parentRow);
         AttributeReference attributeReference = arg.attributeReference.append(new ArrayKey(0));
-        TableRef tableRef = attrRefTranslator.toTableRef(attributeReference);
+        TableRef tableRef = attrRefTranslator.toTableRef(tableRefFactory, attributeReference);
         int index = 0;
         for (KVValue<?> element : array) {
             attributeReference = arg.attributeReference.append(new ArrayKey(index));
@@ -93,10 +95,10 @@ public class D2RVisitor<Row> {
         public final TableRef tableRef;
         public final Row parentRow;
         
-        public Argument() {
+        public Argument(TableRefFactory tableRefFactory) {
             super();
             this.attributeReference = new AttributeReference(ImmutableList.of());
-            this.tableRef = TableRefImpl.createRoot();
+            this.tableRef = tableRefFactory.createRoot();
             this.parentRow = null;
         }
         

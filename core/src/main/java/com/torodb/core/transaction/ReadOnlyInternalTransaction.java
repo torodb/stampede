@@ -20,12 +20,15 @@
 
 package com.torodb.core.transaction;
 
+import java.sql.Connection;
+import java.sql.SQLException;
+
+import javax.sql.DataSource;
+
+import com.torodb.core.exceptions.SystemException;
 import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
 import com.torodb.core.transaction.metainf.MetainfoRepository;
 import com.torodb.core.transaction.metainf.MetainfoRepository.SnapshotStage;
-import java.sql.Connection;
-import java.sql.SQLException;
-import javax.sql.DataSource;
 
 /**
  *
@@ -40,7 +43,7 @@ public class ReadOnlyInternalTransaction implements InternalReadTransaction {
         this.connection = connection;
     }
 
-    static ReadOnlyInternalTransaction createReadOnlyTransaction(DataSource ds, MetainfoRepository metainfoRepository) throws ToroTransactionException {
+    static ReadOnlyInternalTransaction createReadOnlyTransaction(DataSource ds, MetainfoRepository metainfoRepository) {
         try (SnapshotStage snapshotStage = metainfoRepository.startSnapshotStage()) {
             Connection conn = ds.getConnection();
             ImmutableMetaSnapshot snapshot = snapshotStage.createImmutableSnapshot();
@@ -48,7 +51,7 @@ public class ReadOnlyInternalTransaction implements InternalReadTransaction {
             return new ReadOnlyInternalTransaction(snapshot, conn);
         } catch (SQLException ex) {
             //TODO: Decide if we should
-            throw new ToroTransactionException(ex);
+            throw new SystemException(ex);
         }
     }
 
@@ -58,13 +61,13 @@ public class ReadOnlyInternalTransaction implements InternalReadTransaction {
     }
 
     @Override
-    public void close() throws ToroTransactionException {
+    public void close() {
         try {
             connection.commit();
             connection.close();
         } catch (SQLException ex) {
             //TODO: Decide if we should
-            throw new ToroTransactionException(ex);
+            throw new SystemException(ex);
         }
     }
 

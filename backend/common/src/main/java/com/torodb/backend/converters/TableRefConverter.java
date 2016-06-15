@@ -40,7 +40,8 @@ public class TableRefConverter {
         List<String> tableRefArray = new ArrayList<>();
         
         while(!tableRef.isRoot()) {
-            tableRefArray.add(0, tableRef.getName());
+            String name = escapeTableRef(tableRef);
+            tableRefArray.add(0, name);
             tableRef = tableRef.getParent().get();
         }
         
@@ -51,14 +52,7 @@ public class TableRefConverter {
         TableRef tableRef = tableRefFactory.createRoot();
         
         for (String tableRefName : tableRefArray) {
-            if (isArrayDimension(tableRefName)) {
-                int dimension = Integer.valueOf(tableRefName.substring(1));
-                tableRef = tableRefFactory.createChild(tableRef, 
-                        dimension);
-            } else {
-                tableRef = tableRefFactory.createChild(tableRef, 
-                        tableRefName.intern());
-            }
+            tableRef = createChild(tableRefFactory, tableRef, tableRefName);
         }
         
         return tableRef;
@@ -79,17 +73,36 @@ public class TableRefConverter {
         
         for (JsonValue tableRefNameValue : tableRefJsonArray) {
             String tableRefName = ((JsonString) tableRefNameValue).getString();
-            if (isArrayDimension(tableRefName)) {
-                int dimension = Integer.valueOf(tableRefName.substring(1));
-                tableRef = tableRefFactory.createChild(tableRef, 
-                        dimension);
-            } else {
-                tableRef = tableRefFactory.createChild(tableRef, 
-                        tableRefName.intern());
-            }
+            tableRef = createChild(tableRefFactory, tableRef, tableRefName);
         }
         
         return tableRef;
+    }
+
+    private static String escapeTableRef(TableRef tableRef) {
+        String name;
+        if (tableRef.isInArray()) {
+            name = "$" + tableRef.getArrayDimension();
+        } else {
+            name = tableRef.getName().replace("$", "\\$");
+        }
+        return name;
+    }
+
+    private static TableRef createChild(TableRefFactory tableRefFactory, TableRef tableRef, String tableRefName) {
+        if (isArrayDimension(tableRefName)) {
+            int dimension = Integer.valueOf(tableRefName.substring(1));
+            tableRef = tableRefFactory.createChild(tableRef, 
+                    dimension);
+        } else {
+            tableRef = tableRefFactory.createChild(tableRef, 
+                    unescapeTableRefName(tableRefName).intern());
+        }
+        return tableRef;
+    }
+
+    private static String unescapeTableRefName(String tableRefName) {
+        return tableRefName.replace("\\$", "$");
     }
     
     private static boolean isArrayDimension(String name) {

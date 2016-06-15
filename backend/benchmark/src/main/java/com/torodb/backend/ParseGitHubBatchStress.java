@@ -12,9 +12,11 @@ import java.util.concurrent.atomic.AtomicLong;
 import com.google.common.base.Stopwatch;
 import com.torodb.backend.util.InMemoryRidGenerator;
 import com.torodb.backend.util.JsonArchiveFeed;
+import com.torodb.core.TableRefFactory;
 import com.torodb.core.d2r.D2RTranslator;
 import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.d2r.RidGenerator;
+import com.torodb.core.impl.TableRefFactoryImpl;
 import com.torodb.metainfo.cache.mvcc.MvccMetainfoRepository;
 
 /**
@@ -30,6 +32,7 @@ public class ParseGitHubBatchStress {
 	public static void main(String[] args) throws IOException {
 
 		MvccMetainfoRepository mvccMetainfoRepository = new MvccMetainfoRepository(InitialView);
+	    TableRefFactory tableRefFactory = new TableRefFactoryImpl();
 		RidGenerator ridGenerator = new InMemoryRidGenerator();
 
 		
@@ -39,7 +42,7 @@ public class ParseGitHubBatchStress {
 		feed.getGroupedFeedForLines(line -> line.length() < 1024, 50).forEach(docStream -> {
 			toroTimer.start();
 			executeMetaOperation(mvccMetainfoRepository, (mutableSnapshot) -> {
-				D2RTranslator translator = new D2RTranslatorImpl(ridGenerator, mutableSnapshot, DB1, COLL1);
+				D2RTranslator translator = new D2RTranslatorImpl(tableRefFactory, ridGenerator, mutableSnapshot, DB1, COLL1);
 				docStream.forEach(doc -> {
 					translator.translate(doc);	
 				});

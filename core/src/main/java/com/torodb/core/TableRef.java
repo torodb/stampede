@@ -29,12 +29,22 @@ public abstract class TableRef {
     /**
      * The depth of this TableRef on the document model.
      *
-     * For example, the table referenced by "a.b.c" should have the level 3. On any collection, the
+     * For example, the table referenced by "a.b.c" should have depth 3. On any collection, the
      * root TableRef has the depth 0.
      * @return
      */
     @Nonnull
     public abstract int getDepth();
+
+    /**
+     * The array dimension of this TableRef on the document model.
+     *
+     * For example, the table referenced by "a.b.c.$2.$3" should have array dimension 3. On any collection, the
+     * root TableRef has array dimension 0.
+     * @return
+     */
+    @Nonnull
+    public abstract int getArrayDimension();
 
     /**
      * Indicates if this TableRef has is contained by an array.

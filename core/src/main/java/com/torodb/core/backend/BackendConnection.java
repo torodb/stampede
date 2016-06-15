@@ -33,9 +33,10 @@ public interface BackendConnection {
      * Adds a new database.
      *
      * @param db         the database to add.
+     * @throws BackendException
      * @throws RollbackException
      */
-    public void addDatabase(MetaDatabase db) throws RollbackException;
+    public void addDatabase(MetaDatabase db);
 
     /**
      * Adds a collection to a database.
@@ -43,9 +44,10 @@ public interface BackendConnection {
      * @param db         the database where the collection will be added. It must have been added
      *                   before.
      * @param newCol     the collection to add
+     * @throws BackendException
      * @throws RollbackException
      */
-    public void addCollection(MetaDatabase db, MetaCollection newCol) throws RollbackException;
+    public void addCollection(MetaDatabase db, MetaCollection newCol);
 
     /**
      * Adds a docPart to a collection.
@@ -55,9 +57,10 @@ public interface BackendConnection {
      * @param col        the collection where the doc part will be added. It must have been added
      *                   before
      * @param newDocPart the docPart to add
+     * @throws BackendException
      * @throws RollbackException
      */
-    public void addDocPart(MetaDatabase db, MetaCollection col, MetaDocPart newDocPart) throws RollbackException;
+    public void addDocPart(MetaDatabase db, MetaCollection col, MetaDocPart newDocPart);
 
     /**
      * Adds a field to a table.
@@ -68,10 +71,10 @@ public interface BackendConnection {
      *                 before
      * @param docPart  the docPart where the field will be added. It must have been added before
      * @param newField the field to add
+     * @throws BackendException
      * @throws RollbackException
      */
-    public void addField(MetaDatabase db, MetaCollection col, MetaDocPart docPart, MetaField newField)
-            throws RollbackException;
+    public void addField(MetaDatabase db, MetaCollection col, MetaDocPart docPart, MetaField newField);
 
     /**
      * Reserves a given number of rids on the given doc part.
@@ -81,18 +84,18 @@ public interface BackendConnection {
      * @param docPart the doc part where rid want to be consumed
      * @param howMany how many rids want to be consumed.
      * @return the first rid that can be used.
+     * @throws BackendException
      * @throws RollbackException
      */
-    public int consumeRids(MetaDatabase db, MetaCollection col, MetaDocPart docPart, int howMany)
-            throws RollbackException;
+    public int consumeRids(MetaDatabase db, MetaCollection col, MetaDocPart docPart, int howMany);
 
     /**
      *
      * @param db   the database that contains the given collection
      * @param col  the collection that contains the given data
      * @param data the rows to be inserted
+     * @throws BackendException
      * @throws RollbackException
-     * @throws RetryTransactionException
      */
-    public void insert(MetaDatabase db, MetaCollection col, DocPartData data) throws RollbackException;
+    public void insert(MetaDatabase db, MetaCollection col, DocPartData data);
 }

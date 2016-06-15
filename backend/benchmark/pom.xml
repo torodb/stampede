@@ -11,12 +11,10 @@
 		<dependency>
 			<groupId>org.openjdk.jmh</groupId>
 			<artifactId>jmh-core</artifactId>
-			<version>${jmh.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.openjdk.jmh</groupId>
 			<artifactId>jmh-generator-annprocess</artifactId>
-			<version>${jmh.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
@@ -33,11 +31,16 @@
 			<groupId>com.google.code.findbugs</groupId>
 			<artifactId>jsr305</artifactId>
 		</dependency>
-		<dependency>
-			<groupId>com.torodb</groupId>
-			<artifactId>backend-common</artifactId>
-			<version>${project.version}</version>
-		</dependency>
+        <dependency>
+            <groupId>com.torodb</groupId>
+            <artifactId>backend-common</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.torodb</groupId>
+            <artifactId>backend-derby</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 		<dependency>
 			<groupId>com.torodb.kvdocument</groupId>
 			<artifactId>json-converter</artifactId>

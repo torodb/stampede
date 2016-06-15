@@ -20,12 +20,15 @@
 
 package com.torodb.backend;
 
+import java.sql.ResultSet;
 import java.util.Comparator;
 
+import com.torodb.core.d2r.DocPartResult;
+
 public class TableRefComparator {
-    public static class MetaDocPart<T extends com.torodb.core.transaction.metainf.MetaDocPart> implements Comparator<T> {
-        public static final MetaDocPart ASC = new MetaDocPart<>();
-        public static final DescMetaDocPart DESC = new DescMetaDocPart<>();
+    public static class MetaDocPart implements Comparator<com.torodb.core.transaction.metainf.MetaDocPart> {
+        public static final MetaDocPart ASC = new MetaDocPart();
+        public static final DescMetaDocPart DESC = new DescMetaDocPart();
         
         private MetaDocPart() {
         }
@@ -37,7 +40,7 @@ public class TableRefComparator {
                     rightMetaDocPart.getTableRef().getDepth();
         }
     }
-    private static class DescMetaDocPart<T extends com.torodb.core.transaction.metainf.MetaDocPart> implements Comparator<T> {
+    private static class DescMetaDocPart implements Comparator<com.torodb.core.transaction.metainf.MetaDocPart> {
         private DescMetaDocPart() {
         }
         
@@ -48,16 +51,41 @@ public class TableRefComparator {
                     leftMetaDocPart.getTableRef().getDepth();
         }
     }
+    public static class MutableMetaDocPart implements Comparator<com.torodb.core.transaction.metainf.MetaDocPart> {
+        public static final MutableMetaDocPart ASC = new MutableMetaDocPart();
+        public static final DescMutableMetaDocPart DESC = new DescMutableMetaDocPart();
+        
+        private MutableMetaDocPart() {
+        }
+        
+        @Override
+        public int compare(com.torodb.core.transaction.metainf.MetaDocPart leftMetaDocPart, 
+                com.torodb.core.transaction.metainf.MetaDocPart rightMetaDocPart) {
+            return leftMetaDocPart.getTableRef().getDepth() -
+                    rightMetaDocPart.getTableRef().getDepth();
+        }
+    }
+    private static class DescMutableMetaDocPart implements Comparator<com.torodb.core.transaction.metainf.MetaDocPart> {
+        private DescMutableMetaDocPart() {
+        }
+        
+        @Override
+        public int compare(com.torodb.core.transaction.metainf.MetaDocPart leftMetaDocPart, 
+                com.torodb.core.transaction.metainf.MetaDocPart rightMetaDocPart) {
+            return rightMetaDocPart.getTableRef().getDepth() -
+                    leftMetaDocPart.getTableRef().getDepth();
+        }
+    }
     
-    public static class DocPartResultSet implements Comparator<com.torodb.backend.interfaces.ReadInterface.DocPartResultSet> {
+    public static class DocPartResultSet implements Comparator<DocPartResult<ResultSet>> {
         public static final DocPartResultSet DESC = new DocPartResultSet();
     
         private DocPartResultSet() {
         }
         
         @Override
-        public int compare(com.torodb.backend.interfaces.ReadInterface.DocPartResultSet leftDocPartResultSet, 
-                com.torodb.backend.interfaces.ReadInterface.DocPartResultSet rightDocPartResultSet) {
+        public int compare(DocPartResult<ResultSet> leftDocPartResultSet, 
+                DocPartResult<ResultSet> rightDocPartResultSet) {
             return rightDocPartResultSet.getMetaDocPart().getTableRef().getDepth() -
                     leftDocPartResultSet.getMetaDocPart().getTableRef().getDepth();
         }

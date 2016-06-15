@@ -28,8 +28,10 @@ import org.junit.Test;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.torodb.core.TableRef;
+import com.torodb.core.TableRefFactory;
 import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.d2r.DocPartRow;
+import com.torodb.core.impl.TableRefFactoryImpl;
 import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
 import com.torodb.core.transaction.metainf.ImmutableMetaDatabase;
 import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
@@ -110,7 +112,7 @@ public class DocumentMaterializerTest {
         }
         
         
-        D2RTranslatorImpl d2rTranslator=new D2RTranslatorImpl(new MockRidGenerator(), mutableSnapshot, "test", "test");
+        D2RTranslatorImpl d2rTranslator=new D2RTranslatorImpl(new TableRefFactoryImpl(), new MockRidGenerator(), mutableSnapshot, "test", "test");
         
         d2rTranslator.translate(doc);
         d2rTranslator.translate(doc);

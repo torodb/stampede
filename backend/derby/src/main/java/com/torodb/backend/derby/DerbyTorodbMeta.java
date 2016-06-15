@@ -23,6 +23,7 @@ package com.torodb.backend.derby;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -55,6 +56,7 @@ import com.torodb.core.transaction.metainf.ImmutableMetaDatabase;
 import com.torodb.core.transaction.metainf.ImmutableMetaDocPart;
 import com.torodb.core.transaction.metainf.ImmutableMetaField;
 import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
+import com.torodb.core.transaction.metainf.MetaSnapshot;
 
 /**
  *
@@ -63,6 +65,7 @@ public class DerbyTorodbMeta implements TorodbMeta {
 
     private final DatabaseInterface databaseInterface;
     private final ImmutableMetaSnapshot metaSnapshot;
+    private final Map<String,Map<String,Map<TableRef,Integer>>> lastIds;
 
     DerbyTorodbMeta(
             DSLContext dsl,
@@ -76,12 +79,17 @@ public class DerbyTorodbMeta implements TorodbMeta {
 
         TorodbSchema.TORODB.checkOrCreate(dsl, jooqMeta, databaseInterface);
         metaSnapshot = loadMetaSnapshot(dsl, jooqMeta, tableRefFactory);
+        lastIds = loadRowIds(dsl, metaSnapshot);
         
         dsl.configuration().connectionProvider().release(conn);
     }
     
     public ImmutableMetaSnapshot getCurrentMetaSnapshot() {
         return metaSnapshot;
+    }
+    
+    public Map<String,Map<String,Map<TableRef,Integer>>> getLastIds() {
+    	return lastIds;
     }
     
     private ImmutableMetaSnapshot loadMetaSnapshot(
@@ -291,4 +299,28 @@ public class DerbyTorodbMeta implements TorodbMeta {
     public static void checkDatabaseSchema(Schema schema) throws InvalidDatabaseSchemaException {
         //TODO: improve checks
     }
+    
+	private Map<String,Map<String,Map<TableRef,Integer>>> loadRowIds(DSLContext dsl, MetaSnapshot snapshot) {
+		Map<String,Map<String,Map<TableRef,Integer>>> megaMap = new HashMap<>();
+		snapshot.streamMetaDatabases().forEach(db -> {
+			Map<String,Map<TableRef,Integer>> collMap = new HashMap<>();
+			megaMap.put(db.getName(), collMap);
+			db.streamMetaCollections().forEach(collection -> {
+				Map<TableRef,Integer> tableRefMap = new HashMap<>();
+				collMap.put(collection.getName(), tableRefMap);
+				collection.streamContainedMetaDocParts().forEach(metaDocPart -> {
+					TableRef tableRef = metaDocPart.getTableRef();
+					try {
+						Integer lastRowIUsed = databaseInterface.getLastRowIUsed(dsl, db, collection, metaDocPart);
+						tableRefMap.put(tableRef, lastRowIUsed);
+					} catch (Exception e) {
+						//TODO: process the exception
+						e.printStackTrace();
+					}
+					
+				});
+			});
+		});
+		return megaMap;
+	}
 }

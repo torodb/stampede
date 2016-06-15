@@ -28,27 +28,27 @@ import org.jooq.impl.TableImpl;
 
 import com.torodb.backend.exceptions.InvalidDatabaseException;
 
-public abstract class SemanticTableImpl<R extends Record> extends TableImpl<R> {
+public abstract class SemanticTable<R extends Record> extends TableImpl<R> {
     
     private static final long serialVersionUID = 1;
 
-    public SemanticTableImpl(String name, Schema schema, Table<R> aliased, Field<?>[] parameters, String comment) {
+    public SemanticTable(String name, Schema schema, Table<R> aliased, Field<?>[] parameters, String comment) {
         super(name, schema, aliased, parameters, comment);
     }
 
-    public SemanticTableImpl(String name, Schema schema, Table<R> aliased, Field<?>[] parameters) {
+    public SemanticTable(String name, Schema schema, Table<R> aliased, Field<?>[] parameters) {
         super(name, schema, aliased, parameters);
     }
 
-    public SemanticTableImpl(String name, Schema schema, Table<R> aliased) {
+    public SemanticTable(String name, Schema schema, Table<R> aliased) {
         super(name, schema, aliased);
     }
 
-    public SemanticTableImpl(String name, Schema schema) {
+    public SemanticTable(String name, Schema schema) {
         super(name, schema);
     }
 
-    public SemanticTableImpl(String name) {
+    public SemanticTable(String name) {
         super(name);
     }
 
@@ -68,9 +68,9 @@ public abstract class SemanticTableImpl<R extends Record> extends TableImpl<R> {
                     + "the table " + table + " was the " + getName() + " table, "
                     + "but they are not semantically equals");
         }
-        for (Field field : fields()) {
+        for (Field<?> field : fields()) {
             boolean fieldFound = false;
-            for (Field tableField : table.fields()) {
+            for (Field<?> tableField : table.fields()) {
                 if (field.getName().equals(tableField.getName())) {
                     fieldFound = true;
                     break;

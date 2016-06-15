@@ -1,7 +1,8 @@
 
-package com.torodb.backend.mocks;
+package com.torodb.core.model;
 
 import java.io.Serializable;
+
 import javax.annotation.Nonnull;
 
 /**

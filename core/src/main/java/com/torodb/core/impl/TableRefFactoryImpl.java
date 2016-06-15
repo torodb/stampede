@@ -26,16 +26,16 @@ import com.torodb.core.TableRefFactory;
 public class TableRefFactoryImpl implements TableRefFactory {
     @Override
     public TableRef createRoot() {
-        return TableRefImpl.createRoot();
+        return TableRefImpl.ROOT;
     }
 
     @Override
     public TableRef createChild(TableRef parent, String name) {
-        return TableRefImpl.createChild(parent, name);
+        return new TableRefImpl(parent, name);
     }
 
     @Override
-    public TableRef createChild(TableRef parent, int arrayDepth) {
-        return TableRefImpl.createChild(parent, arrayDepth);
+    public TableRef createChild(TableRef parent, int arrayDimension) {
+        return new TableRefImpl(parent, arrayDimension);
     }
 }

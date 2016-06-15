@@ -20,6 +20,8 @@
 
 package com.torodb.core.transaction;
 
+import com.torodb.core.exceptions.ToroRuntimeException;
+
 /**
  * This exception is thrown when something wrong happen but it is possible that it won't happen if
  * the transaction is executed again.
@@ -28,7 +30,7 @@ package com.torodb.core.transaction;
  * level using optimistic locks, one of the two connections may be rollbacked with an exception, but
  * if it is repeated, it will probably work.
  */
-public class RollbackException extends ToroTransactionException {
+public class RollbackException extends ToroRuntimeException {
 
     private static final long serialVersionUID = 8570701795687384298L;
 
