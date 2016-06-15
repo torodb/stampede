@@ -40,15 +40,16 @@ sudo: false
 
 before_deploy:
   - echo "<settings><servers><server><id>ossrh-snapshot</id><username>\${env.MAVEN_DEPLOY_USER}</username><password>\${env.MAVEN_DEPLOY_PASS}</password></server><server><id>ossrh-release</id><username>\${env.MAVEN_DEPLOY_USER}</username><password>\${env.MAVEN_DEPLOY_PASS}</password></server></servers></settings>" > ~/settings.xml
-
+  - export RELEASE_TAR_BZ2_FILE=$(ls torodb/target/dist/torodb-*-release.tar.bz2)
+  - export RELEASE_ZIP_FILE=$(ls torodb/target/dist/torodb-*-release.zip)
 deploy:
   - provider: releases
     api_key:
       secure: g2kUTryp5anBi6xzkHT4CfTFJz3K1q1nYYwjtNfreCoEGrjTA6A4ZgU/utVTOJxeNWmKZ1QO4suegKfsRCpiSqNvp85lM49qeXAp/xxuI0ac+J7JJALeGEn0AyLmhuHu/BBm3dIG+6oi+cXRsTKAX8uTqrT9P1tkfaUhEEV1XmA4tU3uEqzHiazPUKXysxAOacqeUfvZh+MoZaqA54p0UjmOilTMGnQvpv2uR7tBnXNGVXkqyonH6HsxAOwKdyZAYwsg2hvCNREJUCgl/OVkQI/H8+SmOfZ4btHxZqX3U5iVLZ9CugsUbqflvVzVd7KIPn4DPXalkSDLsJ2SxBio7Y1t50omDIlb7NsClR4JDAzME5XKw8XR9glmC0uDTMxMuhgXYWLq2JgQUlnD8vWh1SGsdUCNa+aQMlcYdIIMQZG50LgY5s+E2YVEzJ7NrWm66UCqeuxjqWetrGin1eFOY0+y2/+Pe4tr2ZhrbGhlqS11GKWy+tKLM9v7+L2w1gjKJaqcmbtVfja1kehaP7JLhq2S2S7jmcTggy4bx5B9U4rVwWq1cv5sXXXNEsvB/PzifXHV3z38O/ed8ddJpCTkhfubAr6zOKkyGdkPvXbdAmDOVWw5JPbP1fWDojaRgqxumf7MUhAlOGxmj//hgpwh/Q8/QVKCJ+lQRq89H5bT0q4=
     skip_cleanup: true
     file:
-      - torodb/target/dist/torodb.tar.bz2
-      - torodb/target/dist/torodb.zip
+      - "${RELEASE_TAR_BZ2_FILE}"
+      - "${RELEASE_ZIP_FILE}"
     on:
       repo: torodb/torodb
       tags: true

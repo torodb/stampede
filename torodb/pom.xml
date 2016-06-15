@@ -217,7 +217,7 @@
                             <descriptors>
                                 <descriptor>src/main/assembly/assembly.xml</descriptor>
                             </descriptors>
-                            <finalName>torodb</finalName>
+                            <finalName>torodb-${project.version}</finalName>
                             <outputDirectory>${project.build.directory}/dist</outputDirectory>
                         </configuration>
                         <executions>
