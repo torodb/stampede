@@ -833,9 +833,7 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
     protected void standardInsertPathDocuments(DSLContext dsl, String schemaName, MetaDocPart metaDocPart, 
             Iterator<MetaField> metaFieldIterator, Iterator<DocPartRow> docPartRowIterator) {
         final int maxBatchSize = 1000;
-        final StringBuilder insertStatementBuilder = new StringBuilder(2048);
         final StringBuilder insertStatementHeaderBuilder = new StringBuilder(2048);
-        int docCounter = 0;
         insertStatementHeaderBuilder.append("INSERT INTO \"")
             .append(schemaName)
             .append("\".\"")
@@ -857,6 +855,8 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
         insertStatementHeaderBuilder.setCharAt(insertStatementHeaderBuilder.length() - 1, ')');
         insertStatementHeaderBuilder.append(" VALUES ");
         
+        final StringBuilder insertStatementBuilder = new StringBuilder(2048);
+        int docCounter = 0;
         while (docPartRowIterator.hasNext()) {
             DocPartRow docPartRow = docPartRowIterator.next();
             docCounter++;
@@ -968,10 +968,12 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
             .append("\"");
             try (PreparedStatement preparedStatement = connection.prepareStatement(sb.toString())){
             	ResultSet rs = preparedStatement.executeQuery();
-            	if (!rs.next()){
+            	rs.next();
+            	int maxId = rs.getInt(1);
+            	if (rs.wasNull()){
             		return -1;
             	}
-            	return rs.getInt(1);
+            	return maxId;
             }
         } finally {
             dsl.configuration().connectionProvider().release(connection);

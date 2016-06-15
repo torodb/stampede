@@ -37,7 +37,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 import javax.sql.DataSource;
 
@@ -228,13 +227,26 @@ public class BackendDerbyTest extends AbstractBackendTest {
             ImmutableMetaDatabase metaDatabase = snapshot.getMetaDatabaseByName(schema.databaseName);
         	ImmutableMetaCollection metaCollection = metaDatabase.getMetaCollectionByName(schema.collectionName);
         	ImmutableMetaDocPart rootMetaDocPart = metaCollection.getMetaDocPartByTableRef(schema.rootDocPartTableRef);
+        	ImmutableMetaDocPart subDocMetaDocPart = metaCollection.getMetaDocPartByTableRef(schema.subDocPartTableRef);
+        	
         	int lastRootRowIUsed = databaseInterface.getLastRowIUsed(dsl, metaDatabase, metaCollection, rootMetaDocPart);
-        	assertEquals(0, lastRootRowIUsed);
+        	int lastSubDocRowIUsed = databaseInterface.getLastRowIUsed(dsl, metaDatabase, metaCollection, subDocMetaDocPart);
+        	assertEquals(-1, lastRootRowIUsed);
+        	assertEquals(-1, lastSubDocRowIUsed);
         	
         	helper.insertDocPartData(rootMetaDocPart, schema.rootDocPartValues, schema.rootDocPartFields);
-        	
+        	helper.insertDocPartData(subDocMetaDocPart, schema.subDocPartValues, schema.subDocPartFields);
         	lastRootRowIUsed = databaseInterface.getLastRowIUsed(dsl, metaDatabase, metaCollection, rootMetaDocPart);
+        	lastSubDocRowIUsed = databaseInterface.getLastRowIUsed(dsl, metaDatabase, metaCollection, subDocMetaDocPart);
         	assertEquals(1, lastRootRowIUsed);
+        	assertEquals(0, lastSubDocRowIUsed);
+        	
+        	helper.insertDocPartData(rootMetaDocPart, schema.getMoreRootDocPartValues(), schema.rootDocPartFields);
+        	helper.insertDocPartData(subDocMetaDocPart, schema.getMoreSubDocPartValues(), schema.subDocPartFields);
+        	lastRootRowIUsed = databaseInterface.getLastRowIUsed(dsl, metaDatabase, metaCollection, rootMetaDocPart);
+        	lastSubDocRowIUsed = databaseInterface.getLastRowIUsed(dsl, metaDatabase, metaCollection, subDocMetaDocPart);
+        	assertEquals(2, lastRootRowIUsed);
+        	assertEquals(1, lastSubDocRowIUsed);
         }
     }
     

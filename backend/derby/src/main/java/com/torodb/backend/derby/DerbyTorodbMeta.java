@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.derby.client.am.SqlException;
 import org.jooq.DSLContext;
 import org.jooq.DataType;
 import org.jooq.Field;
@@ -51,6 +52,7 @@ import com.torodb.backend.tables.records.MetaDocPartRecord;
 import com.torodb.backend.tables.records.MetaFieldRecord;
 import com.torodb.core.TableRef;
 import com.torodb.core.TableRefFactory;
+import com.torodb.core.exceptions.SystemException;
 import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
 import com.torodb.core.transaction.metainf.ImmutableMetaDatabase;
 import com.torodb.core.transaction.metainf.ImmutableMetaDocPart;
@@ -313,9 +315,8 @@ public class DerbyTorodbMeta implements TorodbMeta {
 					try {
 						Integer lastRowIUsed = databaseInterface.getLastRowIUsed(dsl, db, collection, metaDocPart);
 						tableRefMap.put(tableRef, lastRowIUsed);
-					} catch (Exception e) {
-						//TODO: process the exception
-						e.printStackTrace();
+					} catch (SQLException e) {
+						throw new SystemException(e);
 					}
 					
 				});
