@@ -1,5 +1,5 @@
 
-package com.torodb.backend.sql.index;
+package com.torodb.backend.index;
 
 import javax.annotation.concurrent.Immutable;
 

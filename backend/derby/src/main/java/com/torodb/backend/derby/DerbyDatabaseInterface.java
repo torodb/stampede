@@ -68,8 +68,8 @@ import com.torodb.backend.derby.tables.DerbyMetaCollectionTable;
 import com.torodb.backend.derby.tables.DerbyMetaDatabaseTable;
 import com.torodb.backend.derby.tables.DerbyMetaDocPartTable;
 import com.torodb.backend.derby.tables.DerbyMetaFieldTable;
+import com.torodb.backend.index.NamedDbIndex;
 import com.torodb.backend.meta.TorodbSchema;
-import com.torodb.backend.sql.index.NamedDbIndex;
 import com.torodb.backend.tables.MetaCollectionTable;
 import com.torodb.backend.tables.MetaDatabaseTable;
 import com.torodb.backend.tables.MetaDocPartTable;
@@ -528,8 +528,8 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
     @Nonnull
     @Override
     public DocPartResults<ResultSet> getCollectionResultSets(@Nonnull DSLContext dsl, @Nonnull MetaDatabase metaDatabase, @Nonnull MetaCollection metaCollection, 
-            @Nonnull Integer[] dids) throws SQLException {
-        Preconditions.checkArgument(dids.length > 0, "At least 1 did must be specified");
+            @Nonnull Collection<Integer> dids) throws SQLException {
+        Preconditions.checkArgument(dids.size() > 0, "At least 1 did must be specified");
         
         ImmutableList.Builder<DocPartResult<ResultSet>> docPartResultSetsBuilder = ImmutableList.builder();
         Connection connection = dsl.configuration().connectionProvider().acquire();

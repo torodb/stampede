@@ -54,6 +54,7 @@ import com.torodb.backend.exceptions.InvalidDatabaseException;
 import com.torodb.backend.meta.TorodbMeta;
 import com.torodb.core.d2r.CollectionData;
 import com.torodb.core.d2r.DocPartResults;
+import com.torodb.core.document.ToroDocument;
 import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
 import com.torodb.core.transaction.metainf.ImmutableMetaDatabase;
@@ -351,11 +352,11 @@ public class BackendDerbyTest extends AbstractBackendTest {
             
             DocPartResults<ResultSet> docPartResultSets = databaseInterface.getCollectionResultSets(
                     dsl, metaDatabase, metaCollection, 
-                    generatedDids.toArray(new Integer[generatedDids.size()]));
+                    generatedDids);
             
-            Collection<KVDocument> readedDocuments = helper.readDocuments(metaDatabase, metaCollection, docPartResultSets);
+            Collection<ToroDocument> readedDocuments = helper.readDocuments(metaDatabase, metaCollection, docPartResultSets);
             
-            KVDocument readedDocument = readedDocuments.iterator().next();
+            KVDocument readedDocument = readedDocuments.iterator().next().getRoot();
             System.out.println(document);
             System.out.println(readedDocument);
             assertEquals(document, readedDocument);
@@ -470,11 +471,11 @@ public class BackendDerbyTest extends AbstractBackendTest {
                 
                 DocPartResults<ResultSet> docPartResultSets = databaseInterface.getCollectionResultSets(
                         dsl, metaDatabase, metaCollection, 
-                        generatedDids.toArray(new Integer[generatedDids.size()]));
+                        generatedDids);
                 
-                Collection<KVDocument> readedDocuments = helper.readDocuments(metaDatabase, metaCollection, docPartResultSets);
+                Collection<ToroDocument> readedDocuments = helper.readDocuments(metaDatabase, metaCollection, docPartResultSets);
                 
-                KVDocument readedDocument = readedDocuments.iterator().next();
+                KVDocument readedDocument = readedDocuments.iterator().next().getRoot();
                 System.out.println("Written :" + document);
                 System.out.println("Readed: " + readedDocument);
                 assertEquals(document, readedDocument);
@@ -488,9 +489,9 @@ public class BackendDerbyTest extends AbstractBackendTest {
             
             DocPartResults<ResultSet> docPartResultSets = databaseInterface.getCollectionResultSets(
                     dsl, metaDatabase, metaCollection, 
-                    generatedDids.toArray(new Integer[generatedDids.size()]));
+                    generatedDids);
             
-            Collection<KVDocument> readedDocuments = helper.readDocuments(metaDatabase, metaCollection, docPartResultSets);
+            Collection<ToroDocument> readedDocuments = helper.readDocuments(metaDatabase, metaCollection, docPartResultSets);
             System.out.println("Written :" + documents);
             System.out.println("Readed: " + readedDocuments);
             assertEquals(documents.size(), readedDocuments.size());

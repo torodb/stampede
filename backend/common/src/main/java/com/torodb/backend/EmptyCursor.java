@@ -18,31 +18,39 @@
  *     
  */
 
+package com.torodb.backend;
 
-package com.torodb.core.exceptions.user;
+import java.util.Collection;
+import java.util.Collections;
 
-import com.torodb.core.exceptions.ToroException;
+import com.torodb.core.backend.BackendCursor;
+import com.torodb.core.document.ToroDocument;
 
 /**
  *
  */
-public abstract class UserException extends ToroException {
-    private static final long serialVersionUID = 1L;
+public class EmptyCursor implements BackendCursor {
 
-    public UserException() {
-    }
-
-    public UserException(String message) {
-        super(message);
-    }
-
-    public UserException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
-    public UserException(Throwable cause) {
-        super(cause);
-    }
+    private boolean closed = false;
     
-    public abstract <Result, Argument> Result accept(UserExceptionVisitor<Result, Argument> visitor, Argument arg);
+    @Override
+    public Collection<ToroDocument> readDocuments(int maxResults) {
+        if (closed) {
+            throw new IllegalArgumentException("Closed cursor");
+        }
+        return Collections.emptyList();
+    }
+
+    @Override
+    public Collection<ToroDocument> readAllDocuments() {
+        if (closed) {
+            throw new IllegalArgumentException("Closed cursor");
+        }
+        return Collections.emptyList();
+    }
+
+    @Override
+    public void close() {
+        closed = true;
+    }
 }

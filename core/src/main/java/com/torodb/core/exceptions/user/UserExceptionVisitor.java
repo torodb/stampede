@@ -20,6 +20,5 @@
 
 package com.torodb.core.exceptions.user;
 
-public interface UserExceptionVisitor {
-
+public interface UserExceptionVisitor<Result, Argument> {
 }

@@ -23,7 +23,7 @@ import java.util.Collection;
 
 import javax.annotation.Nonnull;
 
-import com.torodb.kvdocument.values.KVDocument;
+import com.torodb.core.document.ToroDocument;
 
 /**
  *
@@ -36,6 +36,6 @@ public interface R2DTranslator<Result> {
      * @return a collection that contains the translation of all doc part results that have been translated.
      */
     @Nonnull
-    public Collection<KVDocument> translate(@Nonnull DocPartResults<Result> docPartResults);
+    public Collection<ToroDocument> translate(@Nonnull DocPartResults<Result> docPartResults);
 
 }
