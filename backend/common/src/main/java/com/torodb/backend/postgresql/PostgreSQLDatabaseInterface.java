@@ -487,12 +487,17 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
     }
 
     @Override
-    public @Nonnull String dropSchemaStatement(@Nonnull String schemaName) {
-        return new StringBuilder()
-                .append("DROP SCHEMA ")
-                .append("\"").append(schemaName).append("\"")
-                .append(" CASCADE")
-                .toString();
+    public void dropSchema(@Nonnull DSLContext dsl, @Nonnull String schemaName) {
+        Connection c = dsl.configuration().connectionProvider().acquire();
+        String query = "DROP SCHEMA \"" + schemaName + "\" CASCADE";
+        try (PreparedStatement ps = c.prepareStatement(query)) {
+            ps.executeUpdate();
+        } catch (SQLException e) {
+        	handleRetryException(Context.ddl, e);
+        	throw new SystemException(e);
+		} finally {
+            dsl.configuration().connectionProvider().release(c);
+        }
     }
 
     @Nonnull
