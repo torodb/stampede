@@ -58,7 +58,7 @@ public class BackendConnectionImpl implements BackendConnection {
             .set(metaDatabaseTable.newRecord()
             .values(db.getName(), db.getIdentifier()))
             .execute();
-        dsl.execute(databaseInterface.createSchemaStatement(db.getIdentifier()));
+        databaseInterface.createSchema(dsl, db.getIdentifier());
     }
 
     @Override

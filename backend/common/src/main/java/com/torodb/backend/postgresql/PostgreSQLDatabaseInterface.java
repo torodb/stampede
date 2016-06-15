@@ -349,11 +349,6 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
     }
 
     @Override
-    public @Nonnull String createSchemaStatement(@Nonnull String schemaName) {
-        return new StringBuilder().append("CREATE SCHEMA ").append("\"").append(schemaName).append("\"").toString();
-    }
-
-    @Override
     public @Nonnull String createMetaDatabaseTableStatement(@Nonnull String schemaName, @Nonnull String tableName) {
         return new StringBuilder()
                 .append("CREATE TABLE ")
@@ -601,17 +596,16 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
         }
     }
 
-    @SuppressFBWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
-    protected void createSchema(
-            DSLContext dsl,
-            String escapedSchemaName
-            ) throws SQLException {
+    @Override
+    public void createSchema(@Nonnull DSLContext dsl, @Nonnull String schemaName){
         Connection c = dsl.configuration().connectionProvider().acquire();
-
-        String query = "CREATE SCHEMA IF NOT EXISTS \"" + escapedSchemaName + "\"";
+        String query = "CREATE SCHEMA IF NOT EXISTS \"" + schemaName + "\"";
         try (PreparedStatement ps = c.prepareStatement(query)) {
             ps.executeUpdate();
-        } finally {
+        } catch (SQLException e) {
+        	handleRetryException(Context.ddl, e);
+        	throw new SystemException(e);
+		} finally {
             dsl.configuration().connectionProvider().release(c);
         }
     }
@@ -1006,10 +1000,12 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
             
             try (PreparedStatement preparedStatement = connection.prepareStatement(sb.toString())){
             	ResultSet rs = preparedStatement.executeQuery();
-            	if (!rs.next()){
+            	rs.next();
+            	int maxId = rs.getInt(1);
+            	if (rs.wasNull()){
             		return -1;
             	}
-            	return rs.getInt(1);
+            	return maxId;
             }
         } finally {
             dsl.configuration().connectionProvider().release(connection);

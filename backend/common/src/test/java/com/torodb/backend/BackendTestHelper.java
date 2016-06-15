@@ -33,7 +33,7 @@ public class BackendTestHelper {
 	}
 	
 	public void createSchema(){
-		dsl.execute(databaseInterface.createSchemaStatement(schema.databaseSchemaName));
+		databaseInterface.createSchema(dsl, schema.databaseSchemaName);
 	}
 	
 	public void createMetaModel() {

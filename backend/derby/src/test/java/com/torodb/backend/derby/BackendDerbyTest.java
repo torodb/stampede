@@ -356,7 +356,7 @@ public class BackendDerbyTest extends AbstractBackendTest {
         	mutableSnapshot
         		.addMetaDatabase(schema.databaseName, schema.databaseSchemaName)
         		.addMetaCollection(schema.collectionName, schema.collectionIdentifierName);
-            dsl.execute(databaseInterface.createSchemaStatement(schema.databaseSchemaName));
+        	databaseInterface.createSchema(dsl, schema.databaseSchemaName);
             CollectionData collectionData = helper.parseDocumentAndCreateDocPartDataTables(mutableSnapshot, dsl, document);
             
             List<Integer> generatedDids = helper.writeCollectionData(dsl, collectionData);
@@ -385,7 +385,7 @@ public class BackendDerbyTest extends AbstractBackendTest {
             mutableSnapshot
             	.addMetaDatabase(schema.databaseName, schema.databaseSchemaName)
             	.addMetaCollection(schema.collectionName, schema.collectionIdentifierName);
-            dsl.execute(databaseInterface.createSchemaStatement(schema.databaseSchemaName));
+            databaseInterface.createSchema(dsl, schema.databaseSchemaName);
             
             List<KVDocument> documents = createDocumentsWithStructures();
             

@@ -89,12 +89,9 @@ public class TorodbSchema extends SchemaImpl {
 
     @SuppressFBWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
     private void createSchema(DSLContext dsl, DatabaseInterface databaseInterface) throws SQLException {
-        Connection c = dsl.configuration().connectionProvider().acquire();
-        
-        try (PreparedStatement ps = c.prepareStatement(databaseInterface.createSchemaStatement(TORODB_SCHEMA))) {
-            ps.executeUpdate();
-        }
+    	databaseInterface.createSchema(dsl, TORODB_SCHEMA);
 
+    	Connection c = dsl.configuration().connectionProvider().acquire();
         try (PreparedStatement ps = c.prepareStatement(databaseInterface.getMetaDatabaseTable().getSQLCreationStatement(databaseInterface))) {
             ps.execute();
         } finally {
