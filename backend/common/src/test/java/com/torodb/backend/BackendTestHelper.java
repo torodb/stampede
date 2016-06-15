@@ -59,10 +59,9 @@ public class BackendTestHelper {
 	}
 	
 	public void createDocPartTable(String tableName, Collection<? extends Field<?>> headerFields, Collection<Field<?>> fields){
-		ArrayList<Field<?>> toAdd = new ArrayList<>();
-		toAdd.addAll(headerFields);
+		ArrayList<Field<?>> toAdd = new ArrayList<>(headerFields);
 		toAdd.addAll(fields);
-		dsl.execute(databaseInterface.createDocPartTableStatement(dsl.configuration(), schema.databaseSchemaName, tableName, toAdd));
+		databaseInterface.createDocPartTable(dsl, schema.databaseSchemaName, tableName, toAdd);
 	}
 	
 	public void insertDocPartData(ImmutableMetaDocPart metaDocPart, 

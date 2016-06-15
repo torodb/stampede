@@ -199,30 +199,6 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
     }
 
     @Override
-    public String createDocPartTableStatement(Configuration conf, String schemaName, String tableName, Collection<Field<?>> fields) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("CREATE TABLE ")
-                .append(fullTableName(schemaName, tableName))
-                .append(" (");
-
-        for (Field<?> field : getFieldIterator(fields)) {
-            sb
-                    .append('"')
-                    .append(field.getName())
-                    .append("\" ")
-                    .append(field.getDataType().getCastTypeName(conf));
-
-            sb.append(',');
-        }
-        if (fields.size() > 0) {
-            sb.setCharAt(sb.length() - 1, ')');
-        } else {
-            sb.append(')');
-        }
-        return sb.toString();
-    }
-
-    @Override
     public String addColumnToDocPartTableStatement(Configuration conf, String schemaName, String tableName, Field<?> field) {
         StringBuilder sb = new StringBuilder();
         sb.append("ALTER TABLE ")
@@ -1001,5 +977,34 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
             .set(metaCollectionTable.newRecord()
             .values(databaseName, collectionName, collectionIdentifier))
             .execute();		
+	}
+
+	@Override
+	public void addMetaDocPart(DSLContext dsl, String databaseName, String collectionName, TableRef tableRef,
+			String docPartIdentifier) {
+		DerbyMetaDocPartTable metaDocPartTable = getMetaDocPartTable();
+        dsl.insertInto(metaDocPartTable)
+            .set(metaDocPartTable.newRecord()
+            .values(databaseName, collectionName, tableRef, docPartIdentifier))
+            .execute();		
+	}
+
+	@Override
+	public void createDocPartTable(DSLContext dsl, String schemaName, String tableName, Collection<Field<?>> fields) {
+		StringBuilder sb = new StringBuilder();
+		sb.append("CREATE TABLE ")
+		  .append(fullTableName(schemaName, tableName))
+		  .append(" (");
+		Configuration conf = dsl.configuration();
+		int cont = 0;
+		for (Field<?> field : getFieldIterator(fields)) {
+			if (cont > 0) {
+				sb.append(',');
+			}
+			sb.append('"').append(field.getName()).append("\" ").append(field.getDataType().getCastTypeName(conf));
+			cont++;
+		}
+		sb.append(')');
+		dsl.execute(sb.toString());
 	}
 }
