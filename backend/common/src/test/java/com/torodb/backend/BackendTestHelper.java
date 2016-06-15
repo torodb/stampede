@@ -40,22 +40,15 @@ public class BackendTestHelper {
 		databaseInterface.addMetaDatabase(dsl, databaseName, databaseSchemaName);
 		databaseInterface.createSchema(dsl, schema.databaseSchemaName);
 		databaseInterface.addMetaCollection(dsl, databaseName, collectionName, schema.collectionIdentifierName);
-		dsl.insertInto(databaseInterface.getMetaDocPartTable())
-		    .set(databaseInterface.getMetaDocPartTable().newRecord().values(databaseName, collectionName, schema.rootDocPartTableRef, schema.rootDocPartTableName))
-		    .execute();
-		dsl.insertInto(databaseInterface.getMetaDocPartTable())
-         	.set(databaseInterface.getMetaDocPartTable().newRecord().values(databaseName, collectionName, schema.subDocPartTableRef, schema.subDocPartTableName))
-         	.execute();		
+		databaseInterface.addMetaDocPart(dsl, databaseName, collectionName, schema.rootDocPartTableRef, schema.rootDocPartTableName);
+		databaseInterface.addMetaDocPart(dsl, databaseName, collectionName, schema.subDocPartTableRef, schema.subDocPartTableName);
 	}
 	
-	public void insertMetaFields(TableRef tableRef, ImmutableMap<String, Field<?>> fields){
-        for (Map.Entry<String, Field<?>> field : fields.entrySet()) {
-            dsl.insertInto(databaseInterface.getMetaFieldTable())
-                .set(databaseInterface.getMetaFieldTable().newRecord().values(schema.databaseName, schema.collectionName, tableRef, 
-                        field.getKey(), field.getValue().getName(), 
-                        FieldType.from(((DataTypeForKV<?>) field.getValue().getDataType()).getKVValueConverter().getErasuredType())))
-                .execute();
-        }
+	public void insertMetaFields(TableRef tableRef, Map<String, Field<?>> fields){
+		fields.forEach((key,value)->
+			databaseInterface.addMetaField(dsl, schema.databaseName, schema.collectionName, tableRef, 
+                    key, value.getName(), getType(value))
+		);
 	}
 	
 	public void createDocPartTable(String tableName, Collection<? extends Field<?>> headerFields, Collection<Field<?>> fields){
@@ -77,12 +70,15 @@ public class BackendTestHelper {
 		            String key = docPartValue.getKey();
 					Field<?> field = docPartFields.get(key);
 		            docPartData.appendColumnValue(row, key, field.getName(), 
-		                FieldType.from(((DataTypeForKV<?>) field.getDataType()).getKVValueConverter().getErasuredType()), 
-		                docPartValue.getValue().get());
+		                getType(field),docPartValue.getValue().get());
 		        }
 		    }
 		}
 		databaseInterface.insertDocPartData(dsl, schema.databaseSchemaName, docPartData);
+	}
+	
+	private FieldType getType(Field<?> field){
+		return FieldType.from(((DataTypeForKV<?>) field.getDataType()).getKVValueConverter().getErasuredType());
 	}
 	
 }

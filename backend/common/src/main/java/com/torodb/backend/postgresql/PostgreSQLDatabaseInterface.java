@@ -184,21 +184,6 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
         return sb.toString();
     }
 
-    @Override
-    public String addColumnToDocPartTableStatement(Configuration conf, String schemaName, String tableName, Field<?> field) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("ALTER TABLE ")
-                .append(fullTableName(schemaName, tableName));
-
-        sb
-                .append(" ADD COLUMN \"")
-                .append(field.getName())
-                .append("\" ")
-                .append(field.getDataType().getCastTypeName(conf));
-
-        return sb.toString();
-    }
-
     private Iterable<Field<?>> getFieldIterator(Iterable<Field<?>> fields) {
         List<Field<?>> fieldList = Lists.newArrayList(fields);
         Collections.sort(fieldList, fieldComparator);
@@ -996,7 +981,6 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
 	
 	@Override
 	public void addMetaDatabase(DSLContext dsl, String databaseName, String databaseIdentifier) {
-		PostgreSQLMetaDatabaseTable metaDatabaseTable = getMetaDatabaseTable();
         dsl.insertInto(metaDatabaseTable)
             .set(metaDatabaseTable.newRecord().values(databaseName, databaseIdentifier))
             .execute();		
@@ -1004,7 +988,6 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
 
 	@Override
 	public void addMetaCollection(DSLContext dsl, String databaseName, String collectionName, String collectionIdentifier) {
-		PostgreSQLMetaCollectionTable metaCollectionTable = getMetaCollectionTable();
         dsl.insertInto(metaCollectionTable)
             .set(metaCollectionTable.newRecord()
             .values(databaseName, collectionName, collectionIdentifier))
@@ -1014,7 +997,6 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
 	@Override
 	public void addMetaDocPart(DSLContext dsl, String databaseName, String collectionName, TableRef tableRef,
 			String docPartIdentifier) {
-		PostgreSQLMetaDocPartTable metaDocPartTable = getMetaDocPartTable();
         dsl.insertInto(metaDocPartTable)
             .set(metaDocPartTable.newRecord()
             .values(databaseName, collectionName, tableRef, docPartIdentifier))
@@ -1039,4 +1021,25 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
 		sb.append(')');
 		dsl.execute(sb.toString());
 	}
+
+	@Override
+	public void addMetaField(DSLContext dsl, String databaseName, String collectionName, TableRef tableRef,
+			String fieldName, String fieldIdentifier, FieldType type) {
+        dsl.insertInto(metaFieldTable)
+            .set(metaFieldTable.newRecord()
+            	.values(databaseName, collectionName, tableRef, fieldName, fieldIdentifier, type))
+            .execute();
+	}
+	
+	@Override
+    public void addColumnToDocPartTable(DSLContext dsl, String schemaName, String tableName, Field<?> field) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("ALTER TABLE ")
+	        .append(fullTableName(schemaName, tableName))
+	        .append(" ADD COLUMN \"")
+	        .append(field.getName())
+	        .append("\" ")
+            .append(field.getDataType().getCastTypeName(dsl.configuration()));
+        dsl.execute(sb.toString());
+    }
 }

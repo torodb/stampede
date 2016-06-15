@@ -74,6 +74,7 @@ import com.torodb.backend.tables.MetaCollectionTable;
 import com.torodb.backend.tables.MetaDatabaseTable;
 import com.torodb.backend.tables.MetaDocPartTable;
 import com.torodb.backend.tables.MetaDocPartTable.DocPartTableFields;
+import com.torodb.backend.tables.records.MetaFieldRecord;
 import com.torodb.backend.tables.MetaFieldTable;
 import com.torodb.core.TableRef;
 import com.torodb.core.TableRefFactory;
@@ -195,21 +196,6 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
                 .append(fieldName)
                 .append("\")");
 
-        return sb.toString();
-    }
-
-    @Override
-    public String addColumnToDocPartTableStatement(Configuration conf, String schemaName, String tableName, Field<?> field) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("ALTER TABLE ")
-                .append(fullTableName(schemaName, tableName));
-
-        sb
-                .append(" ADD COLUMN \"")
-                .append(field.getName())
-                .append("\" ")
-                .append(field.getDataType().getCastTypeName(conf));
-        
         return sb.toString();
     }
 
@@ -873,7 +859,6 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
 
     @Override
     public int consumeRids(DSLContext dsl, String database, String collection, TableRef tableRef, int count) {
-        DerbyMetaDocPartTable metaDocPartTable = getMetaDocPartTable();
         Record1<Integer> lastRid = dsl.select(metaDocPartTable.LAST_RID).from(metaDocPartTable).where(
                 metaDocPartTable.DATABASE.eq(database)
                 .and(metaDocPartTable.COLLECTION.eq(collection))
@@ -964,7 +949,6 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
 
 	@Override
 	public void addMetaDatabase(DSLContext dsl, String databaseName, String databaseIdentifier) {
-		DerbyMetaDatabaseTable metaDatabaseTable = getMetaDatabaseTable();
         dsl.insertInto(metaDatabaseTable)
             .set(metaDatabaseTable.newRecord().values(databaseName, databaseIdentifier))
             .execute();		
@@ -972,7 +956,6 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
 
 	@Override
 	public void addMetaCollection(DSLContext dsl, String databaseName, String collectionName, String collectionIdentifier) {
-		DerbyMetaCollectionTable metaCollectionTable = getMetaCollectionTable();
         dsl.insertInto(metaCollectionTable)
             .set(metaCollectionTable.newRecord()
             .values(databaseName, collectionName, collectionIdentifier))
@@ -982,7 +965,6 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
 	@Override
 	public void addMetaDocPart(DSLContext dsl, String databaseName, String collectionName, TableRef tableRef,
 			String docPartIdentifier) {
-		DerbyMetaDocPartTable metaDocPartTable = getMetaDocPartTable();
         dsl.insertInto(metaDocPartTable)
             .set(metaDocPartTable.newRecord()
             .values(databaseName, collectionName, tableRef, docPartIdentifier))
@@ -1007,4 +989,26 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
 		sb.append(')');
 		dsl.execute(sb.toString());
 	}
+	
+	@Override
+	public void addMetaField(DSLContext dsl, String databaseName, String collectionName, TableRef tableRef,
+			String fieldName, String fieldIdentifier, FieldType type) {
+        dsl.insertInto(metaFieldTable)
+            .set(metaFieldTable.newRecord()
+            	.values(databaseName, collectionName, tableRef, fieldName, fieldIdentifier, type))
+            .execute();
+	}
+	
+    @Override
+    public void addColumnToDocPartTable(DSLContext dsl, String schemaName, String tableName, Field<?> field) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("ALTER TABLE ")
+                .append(fullTableName(schemaName, tableName))
+                .append(" ADD COLUMN \"")
+                .append(field.getName())
+                .append("\" ")
+                .append(field.getDataType().getCastTypeName(dsl.configuration()));
+        dsl.execute(sb.toString());
+    }
+
 }

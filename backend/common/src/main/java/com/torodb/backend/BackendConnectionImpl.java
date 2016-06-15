@@ -27,8 +27,6 @@ import org.jooq.Field;
 import org.jooq.impl.DSL;
 
 import com.google.common.collect.ImmutableList;
-import com.torodb.backend.tables.MetaFieldTable;
-import com.torodb.backend.tables.records.MetaFieldRecord;
 import com.torodb.core.backend.BackendConnection;
 import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.transaction.metainf.MetaCollection;
@@ -72,15 +70,10 @@ public class BackendConnectionImpl implements BackendConnection {
 
     @Override
     public void addField(MetaDatabase db, MetaCollection col, MetaDocPart docPart, MetaField newField){
-        MetaFieldTable<Object, MetaFieldRecord<Object>> metaFieldTable = databaseInterface.getMetaFieldTable();
-        dsl.insertInto(metaFieldTable)
-            .set(metaFieldTable.newRecord()
-            .values(db.getName(), col.getName(), docPart.getTableRef(), 
-                    newField.getName(), newField.getIdentifier(), newField.getType()))
-            .execute();
-        dsl.execute(databaseInterface.addColumnToDocPartTableStatement(dsl.configuration(), db.getIdentifier(), 
-                docPart.getIdentifier(),
-                buildField(newField)));
+    	databaseInterface.addMetaField(dsl, db.getName(), col.getName(), docPart.getTableRef(), 
+                newField.getName(), newField.getIdentifier(), newField.getType());
+        databaseInterface.addColumnToDocPartTable(dsl, db.getIdentifier(), 
+                docPart.getIdentifier(),buildField(newField));
     }
 
 	private Field<?> buildField(MetaField newField) {

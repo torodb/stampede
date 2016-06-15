@@ -138,7 +138,7 @@ public class BackendDerbyTest extends AbstractBackendTest {
         	BackendTestHelper helper = new BackendTestHelper(databaseInterface, dsl, schema);
             helper.insertMetaFields(schema.subDocPartTableRef, schema.newSubDocPartFields);
             for (Field<?> field: schema.newSubDocPartFields.values()){
-            	dsl.execute(databaseInterface.addColumnToDocPartTableStatement(dsl.configuration(), schema.databaseSchemaName, schema.subDocPartTableName, field));
+            	databaseInterface.addColumnToDocPartTable(dsl, schema.databaseSchemaName, schema.subDocPartTableName, field);
             }
             connection.commit();
         }
