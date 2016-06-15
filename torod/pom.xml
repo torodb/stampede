@@ -9,7 +9,7 @@
     <parent>
         <groupId>com.torodb</groupId>
         <artifactId>torodb-parent</artifactId>
-        <version>0.40</version>
+        <version>0.41-SNAPSHOT</version>
     </parent>
     
     <groupId>com.torodb.torod</groupId>
