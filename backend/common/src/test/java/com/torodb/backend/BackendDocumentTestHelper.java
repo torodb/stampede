@@ -22,7 +22,6 @@ import com.torodb.core.d2r.IdentifierFactory;
 import com.torodb.core.d2r.R2DTranslator;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
-import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
 import com.torodb.d2r.D2RTranslatorStack;
 import com.torodb.d2r.IdentifierFactoryImpl;
@@ -62,27 +61,24 @@ public class BackendDocumentTestHelper {
         while (docPartDataIterator.hasNext()) {
             DocPartData docPartData = docPartDataIterator.next();
             if (docPartData.getMetaDocPart().getTableRef().isRoot()) {
-                docPartData.forEach(docPartRow -> {
-                    generatedDids.add(docPartRow.getDid());
-                });
+                docPartData.forEach(docPartRow ->generatedDids.add(docPartRow.getDid()));
             }
             databaseInterface.insertDocPartData(dsl, schema.databaseSchemaName, docPartData);
         }
         return generatedDids;
     }
 
-    public CollectionData writeDocumentMeta(MutableMetaSnapshot mutableSnapshot, DSLContext dsl, KVDocument document)
+    public CollectionData parseDocumentAndCreateDocPartDataTables(MutableMetaSnapshot mutableSnapshot, DSLContext dsl, KVDocument document)
             throws Exception {
-    	return writeDocumentsMeta(mutableSnapshot, dsl, Arrays.asList(document));
+    	return parseDocumentsAndCreateDocPartDataTables(mutableSnapshot, dsl, Arrays.asList(document));
     }
 
-    public CollectionData writeDocumentsMeta(MutableMetaSnapshot mutableSnapshot, DSLContext dsl, List<KVDocument> documents)
+    public CollectionData parseDocumentsAndCreateDocPartDataTables(MutableMetaSnapshot mutableSnapshot, DSLContext dsl, List<KVDocument> documents)
             throws Exception {
         CollectionData collectionData = readDataFromDocuments(schema.databaseName, schema.collectionName, documents, mutableSnapshot);
         mutableSnapshot.streamMetaDatabases().forEachOrdered(metaDatabase -> {
             metaDatabase.streamMetaCollections().forEachOrdered(metaCollection -> {
-                metaCollection.streamContainedMetaDocParts().sorted(TableRefComparator.MetaDocPart.ASC).forEachOrdered(metaDocPartObject -> {
-                    MetaDocPart metaDocPart = (MetaDocPart) metaDocPartObject;
+                metaCollection.streamContainedMetaDocParts().sorted(TableRefComparator.MetaDocPart.ASC).forEachOrdered(metaDocPart -> {
                     List<Field<?>> fields = new ArrayList<>(databaseInterface.getDocPartTableInternalFields(metaDocPart));
                     metaDocPart.streamFields().forEachOrdered(metaField -> {
                         fields.add(DSL.field(metaField.getIdentifier(), databaseInterface.getDataType(metaField.getType())));
@@ -101,9 +97,8 @@ public class BackendDocumentTestHelper {
     
     public CollectionData readDataFromDocuments(String database, String collection, List<KVDocument> documents, MutableMetaSnapshot mutableSnapshot) throws Exception {
         D2RTranslator translator = new D2RTranslatorStack(tableRefFactory, identifierFactory, ridGenerator, mutableSnapshot, database, collection);
-        for (KVDocument document : documents) {
-            translator.translate(document);
-        }
+        documents.forEach(translator::translate);
         return translator.getCollectionDataAccumulator();
     }
+    
 }
