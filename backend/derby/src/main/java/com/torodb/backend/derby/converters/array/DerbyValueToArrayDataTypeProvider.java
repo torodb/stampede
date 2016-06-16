@@ -29,7 +29,6 @@ import org.jooq.DataType;
 import com.google.common.collect.Maps;
 import com.torodb.backend.converters.array.ValueToArrayDataTypeProvider;
 import com.torodb.backend.converters.jooq.binging.JSONBBinding;
-import com.torodb.backend.postgresql.converters.array.PostgreSQLValueToArrayConverterProvider;
 import com.torodb.kvdocument.types.ArrayType;
 import com.torodb.kvdocument.types.BinaryType;
 import com.torodb.kvdocument.types.BooleanType;
@@ -68,7 +67,7 @@ public class DerbyValueToArrayDataTypeProvider implements ValueToArrayDataTypePr
     private final Map<Class<? extends KVType>, DataType<?>> converters;
 
     private DerbyValueToArrayDataTypeProvider() {
-        PostgreSQLValueToArrayConverterProvider postgreSQLValueToArrayConverterProvider = PostgreSQLValueToArrayConverterProvider.getInstance();
+        DerbyValueToArrayConverterProvider postgreSQLValueToArrayConverterProvider = DerbyValueToArrayConverterProvider.getInstance();
         
         converters = Maps.newHashMap();
         converters.put(ArrayType.class, JSONBBinding.fromKVValue(KVArray.class, postgreSQLValueToArrayConverterProvider.getArrayConverter()));

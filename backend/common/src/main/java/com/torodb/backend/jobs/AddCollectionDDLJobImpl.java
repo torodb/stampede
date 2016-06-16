@@ -20,10 +20,10 @@
 
 package com.torodb.backend.jobs;
 
-import com.torodb.core.backend.BackendConnection;
 import com.torodb.core.dsl.backend.AddCollectionDDLJob;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
+import com.torodb.core.backend.WriteBackendTransaction;
 
 public class AddCollectionDDLJobImpl implements AddCollectionDDLJob {
 
@@ -37,7 +37,7 @@ public class AddCollectionDDLJobImpl implements AddCollectionDDLJob {
     }
     
     @Override
-    public void execute(BackendConnection connection) {
+    public void execute(WriteBackendTransaction connection) {
         connection.addCollection(db, newCol);
     }
 

@@ -44,7 +44,6 @@ import com.torodb.backend.converters.array.NullToArrayConverter;
 import com.torodb.backend.converters.array.StringToArrayConverter;
 import com.torodb.backend.converters.array.TimeToArrayConverter;
 import com.torodb.backend.converters.array.ValueToArrayConverterProvider;
-import com.torodb.backend.postgresql.converters.array.ArrayToArrayConverter;
 import com.torodb.core.exceptions.SystemException;
 import com.torodb.kvdocument.types.ArrayType;
 import com.torodb.kvdocument.types.BinaryType;

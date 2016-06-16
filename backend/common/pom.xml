@@ -10,7 +10,7 @@
 	</parent>
 
 	<artifactId>backend-common</artifactId>
-	<name>ToroDB-poc: Backend</name>
+	<name>ToroDB-poc: Backend common</name>
 	<packaging>jar</packaging>
 	<dependencies>
 		<dependency>

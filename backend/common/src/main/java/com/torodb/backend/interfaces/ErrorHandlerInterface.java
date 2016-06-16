@@ -7,6 +7,7 @@ import org.jooq.exception.DataAccessException;
 public interface ErrorHandlerInterface {
     public enum Context {
         unknown,
+        ddl,
         fetch,
         insert,
         update,

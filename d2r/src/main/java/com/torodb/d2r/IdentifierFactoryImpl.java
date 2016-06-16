@@ -24,54 +24,54 @@ import com.torodb.core.transaction.metainf.MetaSnapshot;
 
 public class IdentifierFactoryImpl implements IdentifierFactory {
 
-	private static final int MAX_GENERATION_TIME = 10;
+    private static final int MAX_GENERATION_TIME = 10;
     private static final char SEPARATOR = '_';
     private static final String SEPARATOR_STRING = String.valueOf('_');
-	private static final char[] FIELD_TYPE_IDENTIFIERS = new char[FieldType.values().length];
-	static {
-		FIELD_TYPE_IDENTIFIERS[FieldType.BINARY.ordinal()]='r'; // [r]aw
-		FIELD_TYPE_IDENTIFIERS[FieldType.BOOLEAN.ordinal()]='b'; // [b]inary
-		FIELD_TYPE_IDENTIFIERS[FieldType.DATE.ordinal()]='c'; // [c]alendar
-		FIELD_TYPE_IDENTIFIERS[FieldType.DOUBLE.ordinal()]='d'; // [d]ouble
-		FIELD_TYPE_IDENTIFIERS[FieldType.INSTANT.ordinal()]='g'; // [G]eorge Gamow or Admiral [G]race Hopper that were the earliest users of the term nanosecond
-		FIELD_TYPE_IDENTIFIERS[FieldType.INTEGER.ordinal()]='i'; // [i]nteger
-		FIELD_TYPE_IDENTIFIERS[FieldType.LONG.ordinal()]='l'; // [l]ong
-		FIELD_TYPE_IDENTIFIERS[FieldType.MONGO_OBJECT_ID.ordinal()]='x';
-		FIELD_TYPE_IDENTIFIERS[FieldType.MONGO_TIME_STAMP.ordinal()]='y';
-		FIELD_TYPE_IDENTIFIERS[FieldType.NULL.ordinal()]='n'; // [n]ull
-		FIELD_TYPE_IDENTIFIERS[FieldType.STRING.ordinal()]='s'; // [s]tring
-		FIELD_TYPE_IDENTIFIERS[FieldType.TIME.ordinal()]='t'; // [t]ime
-		FIELD_TYPE_IDENTIFIERS[FieldType.CHILD.ordinal()]='e'; // [e]lement
-		
-		Set<Character> fieldTypeIdentifierSet = new HashSet<>();
-		for (FieldType fieldType : FieldType.values()) {
-		    if (FIELD_TYPE_IDENTIFIERS.length <= fieldType.ordinal()) {
-		        throw new SystemException("FieldType " + fieldType + " has not been mapped to an identifier.");
-		    }
-		    
-		    char identifier = FIELD_TYPE_IDENTIFIERS[fieldType.ordinal()];
-		    
+    private static final char[] FIELD_TYPE_IDENTIFIERS = new char[FieldType.values().length];
+    static {
+        FIELD_TYPE_IDENTIFIERS[FieldType.BINARY.ordinal()]='r'; // [r]aw
+        FIELD_TYPE_IDENTIFIERS[FieldType.BOOLEAN.ordinal()]='b'; // [b]inary
+        FIELD_TYPE_IDENTIFIERS[FieldType.DATE.ordinal()]='c'; // [c]alendar
+        FIELD_TYPE_IDENTIFIERS[FieldType.DOUBLE.ordinal()]='d'; // [d]ouble
+        FIELD_TYPE_IDENTIFIERS[FieldType.INSTANT.ordinal()]='g'; // [G]eorge Gamow or Admiral [G]race Hopper that were the earliest users of the term nanosecond
+        FIELD_TYPE_IDENTIFIERS[FieldType.INTEGER.ordinal()]='i'; // [i]nteger
+        FIELD_TYPE_IDENTIFIERS[FieldType.LONG.ordinal()]='l'; // [l]ong
+        FIELD_TYPE_IDENTIFIERS[FieldType.MONGO_OBJECT_ID.ordinal()]='x';
+        FIELD_TYPE_IDENTIFIERS[FieldType.MONGO_TIME_STAMP.ordinal()]='y';
+        FIELD_TYPE_IDENTIFIERS[FieldType.NULL.ordinal()]='n'; // [n]ull
+        FIELD_TYPE_IDENTIFIERS[FieldType.STRING.ordinal()]='s'; // [s]tring
+        FIELD_TYPE_IDENTIFIERS[FieldType.TIME.ordinal()]='t'; // [t]ime
+        FIELD_TYPE_IDENTIFIERS[FieldType.CHILD.ordinal()]='e'; // [e]lement
+        
+        Set<Character> fieldTypeIdentifierSet = new HashSet<>();
+        for (FieldType fieldType : FieldType.values()) {
+            if (FIELD_TYPE_IDENTIFIERS.length <= fieldType.ordinal()) {
+                throw new SystemException("FieldType " + fieldType + " has not been mapped to an identifier.");
+            }
+            
+            char identifier = FIELD_TYPE_IDENTIFIERS[fieldType.ordinal()];
+            
             if ((identifier < 'a' || identifier > 'z') &&
                     (identifier < '0' || identifier > '9')) {
                 throw new SystemException("FieldType " + fieldType + " has an unallowed identifier " 
                         + identifier);
             }
-		    
-		    if (fieldTypeIdentifierSet.contains(identifier)) {
+            
+            if (fieldTypeIdentifierSet.contains(identifier)) {
                 throw new SystemException("FieldType " + fieldType + " identifier " 
                         + identifier + " was used by another FieldType.");
-		    }
-		    
-		    fieldTypeIdentifierSet.add(identifier);
-		}
-	}
+            }
+            
+            fieldTypeIdentifierSet.add(identifier);
+        }
+    }
 
-	private final IdentifierInterface identifierInterface;
-	
-	public IdentifierFactoryImpl(IdentifierInterface identifierInterface) {
-	    this.identifierInterface = identifierInterface;
-	}
-	
+    private final IdentifierInterface identifierInterface;
+    
+    public IdentifierFactoryImpl(IdentifierInterface identifierInterface) {
+        this.identifierInterface = identifierInterface;
+    }
+    
     @Override
     public String toSchemaIdentifier(MetaSnapshot metaSnapshot, String database) {
         NameChain nameChain = new NameChain();
@@ -81,32 +81,32 @@ public class IdentifierFactoryImpl implements IdentifierFactory {
         
         return generateUniqueIdentifier(nameChain, uniqueIdentifierChecker);
     }
-	
-	@Override
-	public String toTableIdentifier(MetaDatabase metaDatabase, String collection, TableRef tableRef) {
-	    NameChain nameChain = new NameChain();
-	    nameChain.add(collection);
-		append(nameChain, tableRef);
-		
-		IdentifierChecker uniqueIdentifierChecker = new TableIdentifierChecker(metaDatabase);
-		
-		return generateUniqueIdentifier(nameChain, uniqueIdentifierChecker);
-	}
-	
-	@Override
-	public String toFieldIdentifier(MetaDocPart metaDocPart, FieldType fieldType, String field) {
-	    NameChain nameChain = new NameChain();
+    
+    @Override
+    public String toTableIdentifier(MetaDatabase metaDatabase, String collection, TableRef tableRef) {
+        NameChain nameChain = new NameChain();
+        nameChain.add(collection);
+        append(nameChain, tableRef);
+        
+        IdentifierChecker uniqueIdentifierChecker = new TableIdentifierChecker(metaDatabase);
+        
+        return generateUniqueIdentifier(nameChain, uniqueIdentifierChecker);
+    }
+    
+    @Override
+    public String toFieldIdentifier(MetaDocPart metaDocPart, FieldType fieldType, String field) {
+        NameChain nameChain = new NameChain();
         nameChain.add(field);
         
         IdentifierChecker uniqueIdentifierChecker = new FieldIdentifierChecker(metaDocPart);
         
         return generateUniqueIdentifier(nameChain, uniqueIdentifierChecker, String.valueOf(FIELD_TYPE_IDENTIFIERS[fieldType.ordinal()]));
-	}
+    }
 
     private String generateUniqueIdentifier(NameChain nameChain, IdentifierChecker uniqueIdentifierChecker) {
         return generateUniqueIdentifier(nameChain, uniqueIdentifierChecker, null);
     }
-	
+    
     private String generateUniqueIdentifier(NameChain nameChain, IdentifierChecker identifierChecker, String extraImmutableName) {
         final Instant beginInstant = Instant.now();
         final int maxSize = identifierInterface.identifierMaxSize();
@@ -147,58 +147,58 @@ public class IdentifierFactoryImpl implements IdentifierFactory {
         
         throw new SystemException("Can not generate a valid identifier. Name chain: " + nameChain);
     }
-	
-	private void append(NameChain nameChain, TableRef tableRef){
-		if (tableRef.isRoot()){
-			return;
-		}
-		
-		TableRef parentTableRef = tableRef.getParent().get();
-		String name = tableRef.getName();
-		if (tableRef.isInArray()) {
+    
+    private void append(NameChain nameChain, TableRef tableRef){
+        if (tableRef.isRoot()){
+            return;
+        }
+        
+        TableRef parentTableRef = tableRef.getParent().get();
+        String name = tableRef.getName();
+        if (tableRef.isInArray()) {
             while (parentTableRef.isInArray()) {
                 parentTableRef = parentTableRef.getParent().get();
             }
             name = parentTableRef.getName() + name;
             
             parentTableRef = parentTableRef.getParent().get();
-		}
-		
-		append(nameChain, parentTableRef);
-		
-		nameChain.add(name);
-	}
-	
-	private String buildIdentifier(NameChain nameChain, NameConverter[] converters, int maxSize, Counter counter, IdentifierChecker identifierChecker, String extraImmutableName) {
-	    final int nameMaxSize = extraImmutableName != null ? maxSize - extraImmutableName.length() - 1 : maxSize;
+        }
+        
+        append(nameChain, parentTableRef);
+        
+        nameChain.add(name);
+    }
+    
+    private String buildIdentifier(NameChain nameChain, NameConverter[] converters, int maxSize, Counter counter, IdentifierChecker identifierChecker, String extraImmutableName) {
+        final int nameMaxSize = extraImmutableName != null ? maxSize - extraImmutableName.length() - 1 : maxSize;
         StringBuilder middleIdentifierBuilder = new StringBuilder();
-	    
-	    final int size = nameChain.size();
-	    int index = 1;
-	    for (; index < size - 1; index++) {
-	        if (converters[1].convertWhole()) {
-	            middleIdentifierBuilder.append(nameChain.get(index));
-	        } else {
-	            middleIdentifierBuilder.append(converters[1].convert(nameChain.get(index), nameMaxSize, counter));
-	        }
+        
+        final int size = nameChain.size();
+        int index = 1;
+        for (; index < size - 1; index++) {
+            if (converters[1].convertWhole()) {
+                middleIdentifierBuilder.append(nameChain.get(index));
+            } else {
+                middleIdentifierBuilder.append(converters[1].convert(nameChain.get(index), nameMaxSize, counter));
+            }
             middleIdentifierBuilder.append('_');
-	    }
-	    
-	    StringBuilder identifierBuilder = new StringBuilder();
-	    
-	    if (converters[0].convertWhole()) {
-	        if (converters[0] == converters[1] && converters[0] == converters[2]) {
-	            StringBuilder intermediateIdentifierBuilder = new StringBuilder();
-	            intermediateIdentifierBuilder.append(nameChain.get(0));
-	            if (middleIdentifierBuilder.length() > 0) {
+        }
+        
+        StringBuilder identifierBuilder = new StringBuilder();
+        
+        if (converters[0].convertWhole()) {
+            if (converters[0] == converters[1] && converters[0] == converters[2]) {
+                StringBuilder intermediateIdentifierBuilder = new StringBuilder();
+                intermediateIdentifierBuilder.append(nameChain.get(0));
+                if (middleIdentifierBuilder.length() > 0) {
                     intermediateIdentifierBuilder.append(SEPARATOR);
-	                intermediateIdentifierBuilder.append(middleIdentifierBuilder);
-	            }
-	            if (index < size) {
+                    intermediateIdentifierBuilder.append(middleIdentifierBuilder);
+                }
+                if (index < size) {
                     intermediateIdentifierBuilder.append(SEPARATOR);
-	                intermediateIdentifierBuilder.append(nameChain.get(size - 1));
-	            }
-	            identifierBuilder.append(converters[0].convert(intermediateIdentifierBuilder.toString(), nameMaxSize, counter));
+                    intermediateIdentifierBuilder.append(nameChain.get(size - 1));
+                }
+                identifierBuilder.append(converters[0].convert(intermediateIdentifierBuilder.toString(), nameMaxSize, counter));
             } else if (converters[0] == converters[1]) {
                 StringBuilder intermediateIdentifierBuilder = new StringBuilder();
                 intermediateIdentifierBuilder.append(nameChain.get(0));
@@ -211,8 +211,8 @@ public class IdentifierFactoryImpl implements IdentifierFactory {
                     identifierBuilder.append(SEPARATOR);
                     identifierBuilder.append(converters[2].convert(nameChain.get(size - 1), nameMaxSize, counter));
                 }
-	        } else {
-	            identifierBuilder.append(converters[0].convert(nameChain.get(0), nameMaxSize, counter));
+            } else {
+                identifierBuilder.append(converters[0].convert(nameChain.get(0), nameMaxSize, counter));
                 if (middleIdentifierBuilder.length() > 0) {
                     identifierBuilder.append(SEPARATOR);
                     identifierBuilder.append(middleIdentifierBuilder);
@@ -221,8 +221,8 @@ public class IdentifierFactoryImpl implements IdentifierFactory {
                     identifierBuilder.append(SEPARATOR);
                     identifierBuilder.append(converters[2].convert(nameChain.get(size - 1), nameMaxSize, counter));
                 }
-	        }
-	    } else if (converters[1].convertWhole()) {
+            }
+        } else if (converters[1].convertWhole()) {
             if (converters[1] == converters[2]) {
                 identifierBuilder.append(converters[0].convert(nameChain.get(0), nameMaxSize, counter));
                 StringBuilder intermediateIdentifierBuilder = new StringBuilder();
@@ -263,19 +263,19 @@ public class IdentifierFactoryImpl implements IdentifierFactory {
         if (extraImmutableName != null) {
             identifierBuilder.append(SEPARATOR).append(extraImmutableName);
         }
-	    
-	    String identifier = identifierBuilder.toString();
-	    
-	    if (!identifierChecker.isAllowed(identifierInterface, identifier)) {
-	        identifier = SEPARATOR + identifier;
-	    }
-	    
-	    return identifier;
-	}
-	
-	private static class NameChain {
+        
+        String identifier = identifierBuilder.toString();
+        
+        if (!identifierChecker.isAllowed(identifierInterface, identifier)) {
+            identifier = SEPARATOR + identifier;
+        }
+        
+        return identifier;
+    }
+    
+    private static class NameChain {
         private final static Pattern NO_ALLOWED_CHAR_PATTERN = Pattern.compile("[^0-9a-z_]");
-	    private final ArrayList<String> names;
+        private final ArrayList<String> names;
         
         public NameChain() {
             names = new ArrayList<>();
@@ -297,22 +297,22 @@ public class IdentifierFactoryImpl implements IdentifierFactory {
         public int size() {
             return names.size();
         }
-	}
-	
-	private static enum ChainConverterFactory {
-	    straight(NameConverterFactory.straight),
-	    straight_cutvowels(NameConverterFactory.straight, NameConverterFactory.cutvowels, NameConverterFactory.straight),
-	    straight_singlechar(NameConverterFactory.straight, NameConverterFactory.singlechar, NameConverterFactory.straight),
-	    straight_hash(NameConverterFactory.straight, NameConverterFactory.hash, NameConverterFactory.straight),
-	    first_straight_hash(NameConverterFactory.straight, NameConverterFactory.hash),
-	    cutvowels(NameConverterFactory.cutvowels),
-	    cutvowels_singlechar(NameConverterFactory.cutvowels, NameConverterFactory.singlechar, NameConverterFactory.cutvowels),
-	    cutvowels_hash(NameConverterFactory.cutvowels, NameConverterFactory.hash, NameConverterFactory.cutvowels),
-	    first_cutvowels_hash(NameConverterFactory.cutvowels, NameConverterFactory.hash),
+    }
+    
+    private static enum ChainConverterFactory {
+        straight(NameConverterFactory.straight),
+        straight_cutvowels(NameConverterFactory.straight, NameConverterFactory.cutvowels, NameConverterFactory.straight),
+        straight_singlechar(NameConverterFactory.straight, NameConverterFactory.singlechar, NameConverterFactory.straight),
+        straight_hash(NameConverterFactory.straight, NameConverterFactory.hash, NameConverterFactory.straight),
+        first_straight_hash(NameConverterFactory.straight, NameConverterFactory.hash),
+        cutvowels(NameConverterFactory.cutvowels),
+        cutvowels_singlechar(NameConverterFactory.cutvowels, NameConverterFactory.singlechar, NameConverterFactory.cutvowels),
+        cutvowels_hash(NameConverterFactory.cutvowels, NameConverterFactory.hash, NameConverterFactory.cutvowels),
+        first_cutvowels_hash(NameConverterFactory.cutvowels, NameConverterFactory.hash),
         hash(NameConverterFactory.hash),
         hash_and_random(NameConverterFactory.hash_and_random),
         counter(NameConverterFactory.counter);
-	    
+        
         private final NameConverterFactory[] converterFactories;
         
         private ChainConverterFactory(NameConverterFactory...nameConverterFactories) {
@@ -348,21 +348,21 @@ public class IdentifierFactoryImpl implements IdentifierFactory {
             
             return converters;
         }
-	}
-	
-	private static enum NameConverterFactory {
-	    straight {
-	        private final NameConverter nameConverter = new NameConverter() {
+    }
+    
+    private static enum NameConverterFactory {
+        straight {
+            private final NameConverter nameConverter = new NameConverter() {
                 @Override
                 public String convert(String name, int maxSize, Counter counter) {
                     return name;
                 }
-	        };
-	        
-	        public NameConverter create() {
-	            return nameConverter;
-	        }
-	    },
+            };
+            
+            public NameConverter create() {
+                return nameConverter;
+            }
+        },
         cutvowels {
             public NameConverter create() {
                 return new NameConverter() {
@@ -391,7 +391,7 @@ public class IdentifierFactoryImpl implements IdentifierFactory {
                 return nameConverter;
             }
         },
-	    hash {
+        hash {
             private final NameConverter nameConverter = new NameConverter() {
                 @Override
                 public String convert(String name, int maxSize, Counter counter) {
@@ -472,9 +472,9 @@ public class IdentifierFactoryImpl implements IdentifierFactory {
                 return nameConverter;
             }
         };
-	    
-	    public abstract NameConverter create();
-	}
+        
+        public abstract NameConverter create();
+    }
     
     private abstract static class NameConverter {
         public abstract String convert(String name, int maxSize, Counter counter);
@@ -565,11 +565,11 @@ public class IdentifierFactoryImpl implements IdentifierFactory {
             return identifierInterface.isAllowedColumnIdentifier(identifier);
         }
     }
-	
-	public interface IdentifierInterface {
+    
+    public interface IdentifierInterface {
         @Nonnull int identifierMaxSize();
         @Nonnull boolean isAllowedSchemaIdentifier(@Nonnull String identifier);
         @Nonnull boolean isAllowedTableIdentifier(@Nonnull String identifier);
         @Nonnull boolean isAllowedColumnIdentifier(@Nonnull String identifier);
-	}
+    }
 }

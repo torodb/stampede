@@ -177,7 +177,7 @@ public class BenchmarkDerbyR2DBackedTranslator {
                     metaDocPart.streamFields().forEachOrdered(metaField -> {
                         fields.add(DSL.field(metaField.getIdentifier(), state.databaseInterface.getDataType(metaField.getType())));
                     });
-                    state.dsl.execute(state.databaseInterface.createDocPartTableStatement(state.dsl.configuration(), metaDatabase.getIdentifier(), metaDocPart.getIdentifier(), fields));
+                    state.databaseInterface.createDocPartTable(state.dsl, metaDatabase.getIdentifier(), metaDocPart.getIdentifier(), fields);
                 });
             });
         });

@@ -9,7 +9,6 @@ import org.jooq.TableField;
 import org.jooq.UniqueKey;
 import org.jooq.impl.AbstractKeys;
 
-import com.torodb.backend.DatabaseInterface;
 import com.torodb.backend.meta.TorodbSchema;
 import com.torodb.backend.tables.records.MetaFieldRecord;
 import com.torodb.core.transaction.metainf.FieldType;
@@ -110,10 +109,6 @@ public abstract class MetaFieldTable<TableRefType, R extends MetaFieldRecord<Tab
         this.uniqueKeys = new UniqueKeys<TableRefType, R>(this);
     }
     
-    public String getSQLCreationStatement(DatabaseInterface databaseInterface) {
-        return databaseInterface.createMetaFieldTableStatement(getSchema().getName(), getName());
-    }
-
     /**
      * {@inheritDoc}
      */

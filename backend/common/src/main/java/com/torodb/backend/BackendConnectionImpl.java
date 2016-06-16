@@ -20,27 +20,19 @@
 
 package com.torodb.backend;
 
-import org.jooq.DSLContext;
-import org.jooq.Field;
-import org.jooq.impl.DSL;
-
 import com.google.common.collect.ImmutableList;
-import com.torodb.backend.tables.MetaCollectionTable;
-import com.torodb.backend.tables.MetaDatabaseTable;
-import com.torodb.backend.tables.MetaDocPartTable;
-import com.torodb.backend.tables.MetaFieldTable;
-import com.torodb.backend.tables.records.MetaCollectionRecord;
-import com.torodb.backend.tables.records.MetaDatabaseRecord;
-import com.torodb.backend.tables.records.MetaDocPartRecord;
-import com.torodb.backend.tables.records.MetaFieldRecord;
-import com.torodb.core.backend.BackendConnection;
+import com.torodb.core.backend.WriteBackendTransaction;
 import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetaField;
+import java.util.List;
+import org.jooq.DSLContext;
+import org.jooq.Field;
+import org.jooq.impl.DSL;
 
-public class BackendConnectionImpl implements BackendConnection {
+public class BackendConnectionImpl implements WriteBackendTransaction {
     
     private final DSLContext dsl;
     private final DatabaseInterface databaseInterface;
@@ -53,53 +45,38 @@ public class BackendConnectionImpl implements BackendConnection {
     
     @Override
     public void addDatabase(MetaDatabase db) {
-        MetaDatabaseTable<MetaDatabaseRecord> metaDatabaseTable = databaseInterface.getMetaDatabaseTable();
-        dsl.insertInto(metaDatabaseTable)
-            .set(metaDatabaseTable.newRecord()
-            .values(db.getName(), db.getIdentifier()))
-            .execute();
-        dsl.execute(databaseInterface.createSchemaStatement(db.getIdentifier()));
+    	databaseInterface.addMetaDatabase(dsl, db.getName(), db.getIdentifier());
+        databaseInterface.createSchema(dsl, db.getIdentifier());
     }
 
     @Override
     public void addCollection(MetaDatabase db, MetaCollection newCol) {
-        MetaCollectionTable<MetaCollectionRecord> metaCollectionTable = databaseInterface.getMetaCollectionTable();
-        dsl.insertInto(metaCollectionTable)
-            .set(metaCollectionTable.newRecord()
-            .values(db.getName(), newCol.getName(), newCol.getIdentifier()))
-            .execute();
+    	databaseInterface.addMetaCollection(dsl, db.getName(), newCol.getName(), newCol.getIdentifier());
     }
 
     @Override
     public void addDocPart(MetaDatabase db, MetaCollection col, MetaDocPart newDocPart) {
-        MetaDocPartTable<Object, MetaDocPartRecord<Object>> metaDocPartTable = databaseInterface.getMetaDocPartTable();
-        dsl.insertInto(metaDocPartTable)
-            .set(metaDocPartTable.newRecord()
-            .values(db.getName(), col.getName(), 
-                    newDocPart.getTableRef(), newDocPart.getIdentifier()))
-            .execute();
+    	databaseInterface.addMetaDocPart(dsl, db.getName(), col.getName(), 
+                newDocPart.getTableRef(), newDocPart.getIdentifier());
+    	
         ImmutableList.Builder<Field<?>> docPartFieldsBuilder = ImmutableList.<Field<?>>builder()
             .addAll(databaseInterface.getDocPartTableInternalFields(newDocPart));
-        newDocPart.streamFields().forEach(field -> {
-            docPartFieldsBuilder.add(DSL.field(field.getIdentifier(), databaseInterface.getDataType(field.getType())));
-        });
-        dsl.execute(databaseInterface.createDocPartTableStatement(dsl.configuration(), db.getIdentifier(), 
-            newDocPart.getIdentifier(), 
-            docPartFieldsBuilder.build()));
+        newDocPart.streamFields().map(this::buildField).forEach(docPartFieldsBuilder::add);
+        List<Field<?>> fields = docPartFieldsBuilder.build();
+        databaseInterface.createDocPartTable(dsl, db.getIdentifier(), newDocPart.getIdentifier(), fields);
     }
 
     @Override
     public void addField(MetaDatabase db, MetaCollection col, MetaDocPart docPart, MetaField newField){
-        MetaFieldTable<Object, MetaFieldRecord<Object>> metaFieldTable = databaseInterface.getMetaFieldTable();
-        dsl.insertInto(metaFieldTable)
-            .set(metaFieldTable.newRecord()
-            .values(db.getName(), col.getName(), docPart.getTableRef(), 
-                    newField.getName(), newField.getIdentifier(), newField.getType()))
-            .execute();
-        dsl.execute(databaseInterface.addColumnToDocPartTableStatement(dsl.configuration(), db.getIdentifier(), 
-                docPart.getIdentifier(),
-                DSL.field(newField.getIdentifier(), databaseInterface.getDataType(newField.getType()))));
+    	databaseInterface.addMetaField(dsl, db.getName(), col.getName(), docPart.getTableRef(), 
+                newField.getName(), newField.getIdentifier(), newField.getType());
+        databaseInterface.addColumnToDocPartTable(dsl, db.getIdentifier(), 
+                docPart.getIdentifier(),buildField(newField));
     }
+
+	private Field<?> buildField(MetaField newField) {
+		return DSL.field(newField.getIdentifier(), databaseInterface.getDataType(newField.getType()));
+	}
 
     @Override
     public int consumeRids(MetaDatabase db, MetaCollection col, MetaDocPart docPart, int howMany) {
