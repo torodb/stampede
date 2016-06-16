@@ -20,30 +20,28 @@
 
 package com.torodb.core.transaction;
 
+import com.torodb.core.backend.BackendConnection;
 import com.torodb.core.transaction.metainf.MetainfoRepository;
 import javax.inject.Inject;
-import javax.sql.DataSource;
 
 /**
  *
  */
 public class InternalTransactionManager {
 
-    private final DataSource ds;
     private final MetainfoRepository metainfoRepository;
 
     @Inject
-    public InternalTransactionManager(DataSource ds, MetainfoRepository metainfoRepository) {
-        this.ds = ds;
+    public InternalTransactionManager(MetainfoRepository metainfoRepository) {
         this.metainfoRepository = metainfoRepository;
     }
 
-    public ReadOnlyInternalTransaction openReadTransaction() {
-        return ReadOnlyInternalTransaction.createReadOnlyTransaction(ds, metainfoRepository);
+    public ReadOnlyInternalTransaction openReadTransaction(BackendConnection backendConnection) {
+        return ReadOnlyInternalTransaction.createReadOnlyTransaction(backendConnection, metainfoRepository);
     }
 
-    public WriteInternalTransaction openWriteTransaction() {
-        return WriteInternalTransaction.createWriteTransaction(ds, metainfoRepository);
+    public WriteInternalTransaction openWriteTransaction(BackendConnection backendConnection) {
+        return WriteInternalTransaction.createWriteTransaction(backendConnection, metainfoRepository);
     }
 
 }

@@ -9,7 +9,7 @@
 	</parent>
 	<artifactId>d2r</artifactId>
 
-	<name>Document To Relational Implementation</name>
+	<name>ToroDB-poc: D2R Implementation</name>
 	<packaging>jar</packaging>
 	<dependencies>
 		<dependency>

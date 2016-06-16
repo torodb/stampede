@@ -20,6 +20,7 @@
 
 package com.torodb.core.transaction;
 
+import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.transaction.metainf.MetaSnapshot;
 
 /**
@@ -27,9 +28,9 @@ import com.torodb.core.transaction.metainf.MetaSnapshot;
  */
 public interface InternalReadTransaction extends AutoCloseable {
 
-    public MetaSnapshot getMetainfoView();
+    public MetaSnapshot getMetaSnapshot();
 
     @Override
-    public void close();
+    public void close() throws UserException, RollbackException;
 
 }

@@ -144,7 +144,7 @@ public class BenchmarkDerbyR2DBackedTranslator {
 	        CollectionData collectionData = readDataFromDocuments(this, null);
 	        List<Integer> writtenDocs = writeCollectionData(this, null, collectionData);
 	        docPartResultSets = databaseInterface.getCollectionResultSets(
-	                dsl, metaDatabase, metaCollection, writtenDocs.toArray(new Integer[writtenDocs.size()]));
+	                dsl, metaDatabase, metaCollection, writtenDocs);
 	        r2dTranslator = new R2DBackedTranslator(new R2DBackendTranslatorImpl(databaseInterface, metaDatabase, metaCollection));
 		}
 	}
@@ -176,7 +176,7 @@ public class BenchmarkDerbyR2DBackedTranslator {
                     metaDocPart.streamFields().forEachOrdered(metaField -> {
                         fields.add(DSL.field(metaField.getIdentifier(), state.databaseInterface.getDataType(metaField.getType())));
                     });
-                    state.dsl.execute(state.databaseInterface.createDocPartTableStatement(state.dsl.configuration(), metaDatabase.getIdentifier(), metaDocPart.getIdentifier(), fields));
+                    state.databaseInterface.createDocPartTable(state.dsl, metaDatabase.getIdentifier(), metaDocPart.getIdentifier(), fields);
                 });
             });
         });

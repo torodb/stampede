@@ -9,7 +9,6 @@ import org.jooq.TableField;
 import org.jooq.UniqueKey;
 import org.jooq.impl.AbstractKeys;
 
-import com.torodb.backend.DatabaseInterface;
 import com.torodb.backend.meta.TorodbSchema;
 import com.torodb.backend.tables.records.MetaDatabaseRecord;
 
@@ -77,10 +76,6 @@ public abstract class MetaDatabaseTable<R extends MetaDatabaseRecord> extends Se
         this.uniqueKeys = new UniqueKeys<R>(this);
     }
     
-    public String getSQLCreationStatement(DatabaseInterface databaseInterface) {
-        return databaseInterface.createMetaDatabaseTableStatement(getSchema().getName(), getName());
-    }
-
     /**
      * {@inheritDoc}
      */

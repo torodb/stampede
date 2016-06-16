@@ -20,8 +20,6 @@
 package com.torodb.backend.meta;
 
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.List;
 
@@ -36,8 +34,6 @@ import org.jooq.impl.SchemaImpl;
 import com.torodb.backend.DatabaseInterface;
 import com.torodb.backend.exceptions.InvalidDatabaseException;
 import com.torodb.backend.tables.SemanticTable;
-
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 public class TorodbSchema extends SchemaImpl {
 
@@ -87,37 +83,12 @@ public class TorodbSchema extends SchemaImpl {
 	    throw new RuntimeException("operation not permitted");
 	}
 
-    @SuppressFBWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
     private void createSchema(DSLContext dsl, DatabaseInterface databaseInterface) throws SQLException {
-        Connection c = dsl.configuration().connectionProvider().acquire();
-        
-        try (PreparedStatement ps = c.prepareStatement(databaseInterface.createSchemaStatement(TORODB_SCHEMA))) {
-            ps.executeUpdate();
-        }
-
-        try (PreparedStatement ps = c.prepareStatement(databaseInterface.getMetaDatabaseTable().getSQLCreationStatement(databaseInterface))) {
-            ps.execute();
-        } finally {
-            dsl.configuration().connectionProvider().release(c);
-        }
-
-        try (PreparedStatement ps = c.prepareStatement(databaseInterface.getMetaCollectionTable().getSQLCreationStatement(databaseInterface))) {
-            ps.execute();
-        } finally {
-            dsl.configuration().connectionProvider().release(c);
-        }
-
-        try (PreparedStatement ps = c.prepareStatement(databaseInterface.getMetaDocPartTable().getSQLCreationStatement(databaseInterface))) {
-            ps.execute();
-        } finally {
-            dsl.configuration().connectionProvider().release(c);
-        }
-
-        try (PreparedStatement ps = c.prepareStatement(databaseInterface.getMetaFieldTable().getSQLCreationStatement(databaseInterface))) {
-            ps.execute();
-        } finally {
-            dsl.configuration().connectionProvider().release(c);
-        }
+    	databaseInterface.createSchema(dsl, TORODB_SCHEMA);
+    	databaseInterface.createMetaDatabaseTable(dsl);
+    	databaseInterface.createMetaCollectionTable(dsl);
+    	databaseInterface.createMetaDocPartTable(dsl);
+    	databaseInterface.createMetaFieldTable(dsl);
     }
     
     private void checkSchema(Schema torodbSchema, DatabaseInterface databaseInterface) throws InvalidDatabaseException {

@@ -50,6 +50,7 @@ import org.jooq.Configuration;
 import org.jooq.ConnectionProvider;
 import org.jooq.DSLContext;
 import org.jooq.Field;
+import org.jooq.Query;
 import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
 
@@ -59,6 +60,7 @@ import com.torodb.backend.DatabaseInterface;
 import com.torodb.backend.InternalField;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.backend.converters.jooq.ValueToJooqDataTypeProvider;
+import com.torodb.backend.index.NamedDbIndex;
 import com.torodb.backend.meta.TorodbSchema;
 import com.torodb.backend.postgresql.converters.PostgreSQLValueToCopyConverter;
 import com.torodb.backend.postgresql.converters.jooq.PostgreSQLValueToJooqDataTypeProvider;
@@ -66,7 +68,6 @@ import com.torodb.backend.postgresql.tables.PostgreSQLMetaCollectionTable;
 import com.torodb.backend.postgresql.tables.PostgreSQLMetaDatabaseTable;
 import com.torodb.backend.postgresql.tables.PostgreSQLMetaDocPartTable;
 import com.torodb.backend.postgresql.tables.PostgreSQLMetaFieldTable;
-import com.torodb.backend.sql.index.NamedDbIndex;
 import com.torodb.backend.tables.MetaCollectionTable;
 import com.torodb.backend.tables.MetaDatabaseTable;
 import com.torodb.backend.tables.MetaDocPartTable;
@@ -180,44 +181,6 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
                 .append("\" (\"")
                 .append(fieldName)
                 .append("\")");
-
-        return sb.toString();
-    }
-
-    @Override
-    public String createDocPartTableStatement(Configuration conf, String schemaName, String tableName, Collection<Field<?>> fields) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("CREATE TABLE ")
-                .append(fullTableName(schemaName, tableName))
-                .append(" (");
-
-        for (Field<?> field : getFieldIterator(fields)) {
-            sb
-                    .append('"')
-                    .append(field.getName())
-                    .append("\" ")
-                    .append(field.getDataType().getCastTypeName(conf));
-
-            sb.append(',');
-        }
-        if (fields.size() > 0) {
-            sb.delete(sb.length() - 1, sb.length());
-        }
-        sb.append(')');
-        return sb.toString();
-    }
-
-    @Override
-    public String addColumnToDocPartTableStatement(Configuration conf, String schemaName, String tableName, Field<?> field) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("ALTER TABLE ")
-                .append(fullTableName(schemaName, tableName));
-
-        sb
-                .append(" ADD COLUMN \"")
-                .append(field.getName())
-                .append("\" ")
-                .append(field.getDataType().getCastTypeName(conf));
 
         return sb.toString();
     }
@@ -349,40 +312,44 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
     }
 
     @Override
-    public @Nonnull String createSchemaStatement(@Nonnull String schemaName) {
-        return new StringBuilder().append("CREATE SCHEMA ").append("\"").append(schemaName).append("\"").toString();
-    }
-
-    @Override
-    public @Nonnull String createMetaDatabaseTableStatement(@Nonnull String schemaName, @Nonnull String tableName) {
-        return new StringBuilder()
-                .append("CREATE TABLE ")
-                .append(fullTableName(schemaName, tableName))
-                .append(" (")
-                .append(MetaDatabaseTable.TableFields.NAME.name()).append("             varchar     PRIMARY KEY     ,")
-                .append(MetaDatabaseTable.TableFields.IDENTIFIER.name()).append("       varchar     NOT NULL UNIQUE ")
-                .append(")")
+    public void createMetaDatabaseTable(DSLContext dsl) {
+    	String schemaName = metaDatabaseTable.getSchema().getName();
+    	String tableName = metaDatabaseTable.getName();
+    	
+        String statement = new StringBuilder()
+        		 .append("CREATE TABLE ")
+                 .append(fullTableName(schemaName, tableName))
+                 .append(" (")
+                 .append(MetaDatabaseTable.TableFields.NAME.name()).append("             varchar     PRIMARY KEY     ,")
+                 .append(MetaDatabaseTable.TableFields.IDENTIFIER.name()).append("       varchar     NOT NULL UNIQUE ")
+                 .append(")")
                 .toString();
+        executeStatement(dsl, statement, Context.ddl);
+    }
+    
+    @Override
+    public void createMetaCollectionTable(DSLContext dsl) {
+    	String schemaName = metaCollectionTable.getSchema().getName();
+    	String tableName = metaCollectionTable.getName();
+    	String statement = new StringBuilder()
+    			 .append("CREATE TABLE ")
+                 .append(fullTableName(schemaName, tableName))
+                 .append(" (")
+                 .append(MetaCollectionTable.TableFields.DATABASE.name()).append("         varchar     NOT NULL        ,")
+                 .append(MetaCollectionTable.TableFields.NAME.name()).append("             varchar     NOT NULL        ,")
+                 .append("    PRIMARY KEY (").append(MetaCollectionTable.TableFields.DATABASE.name()).append(",")
+                     .append(MetaCollectionTable.TableFields.NAME.name()).append("),")
+                 .append(")")
+                 .toString();
+    	executeStatement(dsl, statement, Context.ddl);
     }
 
     @Override
-    public @Nonnull String createMetaCollectionTableStatement(@Nonnull String schemaName, @Nonnull String tableName) {
-        return new StringBuilder()
-                .append("CREATE TABLE ")
-                .append(fullTableName(schemaName, tableName))
-                .append(" (")
-                .append(MetaCollectionTable.TableFields.DATABASE.name()).append("         varchar     NOT NULL        ,")
-                .append(MetaCollectionTable.TableFields.NAME.name()).append("             varchar     NOT NULL        ,")
-                .append("    PRIMARY KEY (").append(MetaCollectionTable.TableFields.DATABASE.name()).append(",")
-                    .append(MetaCollectionTable.TableFields.NAME.name()).append("),")
-                .append(")")
-                .toString();
-    }
-
-    @Override
-    public @Nonnull String createMetaDocPartTableStatement(@Nonnull String schemaName, @Nonnull String tableName) {
-        return new StringBuilder()
-                .append("CREATE TABLE ")
+    public void createMetaDocPartTable(DSLContext dsl) {
+    	String schemaName = metaDocPartTable.getSchema().getName();
+    	String tableName = metaDocPartTable.getName();
+    	String statement = new StringBuilder()
+    			.append("CREATE TABLE ")
                 .append(fullTableName(schemaName, tableName))
                 .append(" (")
                 .append(MetaDocPartTable.TableFields.DATABASE.name()).append("         varchar     NOT NULL        ,")
@@ -397,12 +364,15 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
                     .append(MetaDocPartTable.TableFields.IDENTIFIER.name()).append(")")
                 .append(")")
                 .toString();
+    	executeStatement(dsl, statement, Context.ddl);    	
     }
 
     @Override
-    public @Nonnull String createMetaFieldTableStatement(@Nonnull String schemaName, @Nonnull String tableName) {
-        return new StringBuilder()
-                .append("CREATE TABLE ")
+    public void createMetaFieldTable(DSLContext dsl) {
+    	String schemaName = metaFieldTable.getSchema().getName();
+    	String tableName = metaFieldTable.getName();
+    	String statement = new StringBuilder()
+    			.append("CREATE TABLE ")
                 .append(fullTableName(schemaName, tableName))
                 .append(" (")
                 .append(MetaFieldTable.TableFields.DATABASE.name()).append("         varchar     NOT NULL        ,")
@@ -421,6 +391,7 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
                     .append(MetaFieldTable.TableFields.IDENTIFIER.name()).append(")")
                 .append(")")
                 .toString();
+        executeStatement(dsl, statement, Context.ddl);    	
     }
 
     @Override
@@ -492,17 +463,14 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
     }
 
     @Override
-    public @Nonnull String dropSchemaStatement(@Nonnull String schemaName) {
-        return new StringBuilder()
-                .append("DROP SCHEMA ")
-                .append("\"").append(schemaName).append("\"")
-                .append(" CASCADE")
-                .toString();
+    public void dropSchema(@Nonnull DSLContext dsl, @Nonnull String schemaName) {
+        String query = "DROP SCHEMA \"" + schemaName + "\" CASCADE";
+        executeUpdate(dsl, query, Context.ddl);
     }
 
     @Nonnull
     @Override
-    public DocPartResults<ResultSet> getCollectionResultSets(@Nonnull DSLContext dsl, @Nonnull MetaDatabase metaDatabase, @Nonnull MetaCollection metaCollection, @Nonnull Integer[] requestedDocs) {
+    public DocPartResults<ResultSet> getCollectionResultSets(@Nonnull DSLContext dsl, @Nonnull MetaDatabase metaDatabase, @Nonnull MetaCollection metaCollection, @Nonnull Collection<Integer> requestedDocs) {
         throw new UnsupportedOperationException("Not implemented yet");
     }
 
@@ -601,54 +569,10 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
         }
     }
 
-    @SuppressFBWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
-    protected void createSchema(
-            DSLContext dsl,
-            String escapedSchemaName
-            ) throws SQLException {
-        Connection c = dsl.configuration().connectionProvider().acquire();
-
-        String query = "CREATE SCHEMA IF NOT EXISTS \"" + escapedSchemaName + "\"";
-        try (PreparedStatement ps = c.prepareStatement(query)) {
-            ps.executeUpdate();
-        } finally {
-            dsl.configuration().connectionProvider().release(c);
-        }
-    }
-
-    @SuppressFBWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
-    protected void createRootTable(
-            DSLContext dsl,
-            String escapedSchemaName
-            ) throws SQLException {
-        Connection c = dsl.configuration().connectionProvider().acquire();
-
-        String query = "CREATE TABLE \""+ escapedSchemaName + "\".root("
-                    + "did int PRIMARY KEY DEFAULT nextval('\"" + escapedSchemaName + "\".root_seq'),"
-                    + "sid int NOT NULL"
-                    + ")";
-        try (PreparedStatement ps = c.prepareStatement(query)) {
-            ps.executeUpdate();
-        } finally {
-            dsl.configuration().connectionProvider().release(c);
-        }
-    }
-
-    @SuppressFBWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
-    protected void createSequence(
-            DSLContext dsl,
-            String escapedSchemaName, String seqName
-            ) throws SQLException {
-        Connection c = dsl.configuration().connectionProvider().acquire();
-
-        String query = "CREATE SEQUENCE "
-                    + "\""+ escapedSchemaName +"\".\"" + seqName + "\" "
-                    + "MINVALUE 0 START 0";
-        try (PreparedStatement ps = c.prepareStatement(query)) {
-            ps.executeUpdate();
-        } finally {
-            dsl.configuration().connectionProvider().release(c);
-        }
+    @Override
+    public void createSchema(@Nonnull DSLContext dsl, @Nonnull String schemaName){
+    	String query = "CREATE SCHEMA IF NOT EXISTS \"" + schemaName + "\"";
+    	executeUpdate(dsl, query, Context.ddl);
     }
 
     @Override
@@ -988,32 +912,142 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
         } else if (tableRef.getParent().get().isRoot()) {
             return metaDocPartTable.FIRST_FIELDS;
         }
-        
         return metaDocPartTable.FIELDS;
     }
     
 	@Override
-	public Integer getLastRowIUsed(@Nonnull DSLContext dsl, @Nonnull MetaDatabase metaDatabase, @Nonnull MetaCollection metaCollection, @Nonnull MetaDocPart metaDocPart) throws SQLException {
+	public int getLastRowIUsed(@Nonnull DSLContext dsl, @Nonnull MetaDatabase metaDatabase, @Nonnull MetaCollection metaCollection, @Nonnull MetaDocPart metaDocPart) {
+		
+		TableRef tableRef = metaDocPart.getTableRef();
+		
+		StringBuilder sb = new StringBuilder();
+		sb.append("SELECT max(\"")
+		  .append(getColumnIdByTableRefLevel(tableRef))
+		  .append("\") FROM \"")
+		  .append(metaDatabase.getIdentifier())
+		  .append("\".\"")
+		  .append(metaDocPart.getIdentifier())
+		  .append("\"");
+		
 		Connection connection = dsl.configuration().connectionProvider().acquire();
-        try {
-            StringBuilder sb = new StringBuilder();
-            sb.append("SELECT max(\"")
-            .append(DocPartTableFields.RID.fieldName)
-            .append("\" FROM \"")
-            .append(metaDatabase.getIdentifier())
-            .append("\".\"")
-            .append(metaDocPart.getIdentifier());
-            
-            try (PreparedStatement preparedStatement = connection.prepareStatement(sb.toString())){
-            	ResultSet rs = preparedStatement.executeQuery();
-            	if (!rs.next()){
-            		return -1;
-            	}
-            	return rs.getInt(1);
-            }
+        try (PreparedStatement preparedStatement = connection.prepareStatement(sb.toString())){
+        	ResultSet rs = preparedStatement.executeQuery();
+        	rs.next();
+        	int maxId = rs.getInt(1);
+        	if (rs.wasNull()){
+        		return -1;
+        	}
+        	return maxId;
+        } catch (SQLException ex){
+        	handleRetryException(Context.ddl, ex);
+            throw new SystemException(ex);
         } finally {
             dsl.configuration().connectionProvider().release(connection);
         }
 	}
 	
+	private String getColumnIdByTableRefLevel(TableRef tableRef){
+		 if (tableRef.isRoot()){
+			 return DocPartTableFields.DID.fieldName;
+        }
+		 return DocPartTableFields.RID.fieldName;
+	}
+	
+	@Override
+	public void addMetaDatabase(DSLContext dsl, String databaseName, String databaseIdentifier) {
+		Query query = dsl.insertInto(metaDatabaseTable)
+	            .set(metaDatabaseTable.newRecord().values(databaseName, databaseIdentifier));
+	        executeQuery(query, Context.ddl);
+	}
+
+	@Override
+	public void addMetaCollection(DSLContext dsl, String databaseName, String collectionName, String collectionIdentifier) {
+		Query query = dsl.insertInto(metaCollectionTable)
+	            .set(metaCollectionTable.newRecord()
+	            .values(databaseName, collectionName, collectionIdentifier));
+	        executeQuery(query, Context.ddl);
+	}
+	
+	@Override
+	public void addMetaDocPart(DSLContext dsl, String databaseName, String collectionName, TableRef tableRef,
+			String docPartIdentifier) {
+		Query query = dsl.insertInto(metaDocPartTable)
+	            .set(metaDocPartTable.newRecord()
+	            .values(databaseName, collectionName, tableRef, docPartIdentifier));
+			executeQuery(query, Context.ddl);
+	}
+	
+    @Override
+	public void createDocPartTable(DSLContext dsl, String schemaName, String tableName, Collection<Field<?>> fields) {
+		StringBuilder sb = new StringBuilder();
+		sb.append("CREATE TABLE ")
+		  .append(fullTableName(schemaName, tableName))
+		  .append(" (");
+		Configuration conf = dsl.configuration();
+		int cont = 0;
+		for (Field<?> field : getFieldIterator(fields)) {
+			if (cont > 0) {
+				sb.append(',');
+			}
+			sb.append('"').append(field.getName()).append("\" ").append(field.getDataType().getCastTypeName(conf));
+			cont++;
+		}
+		sb.append(')');
+		executeStatement(dsl, sb.toString(), Context.ddl);
+	}
+
+	@Override
+	public void addMetaField(DSLContext dsl, String databaseName, String collectionName, TableRef tableRef,
+			String fieldName, String fieldIdentifier, FieldType type) {
+		Query query = dsl.insertInto(metaFieldTable)
+				.set(metaFieldTable.newRecord()
+				.values(databaseName, collectionName, tableRef, fieldName, fieldIdentifier, type));
+		executeQuery(query, Context.ddl);
+	}
+	
+	@Override
+    public void addColumnToDocPartTable(DSLContext dsl, String schemaName, String tableName, Field<?> field) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("ALTER TABLE ")
+	        .append(fullTableName(schemaName, tableName))
+	        .append(" ADD COLUMN \"")
+	        .append(field.getName())
+	        .append("\" ")
+            .append(field.getDataType().getCastTypeName(dsl.configuration()));
+        executeStatement(dsl, sb.toString(), Context.ddl);
+    }
+	
+    private void executeStatement(DSLContext dsl, String statement, Context context){
+    	Connection c = dsl.configuration().connectionProvider().acquire();
+        try (PreparedStatement ps = c.prepareStatement(statement)) {
+            ps.execute();
+        } catch (SQLException ex) {
+        	handleRetryException(context, ex);
+            throw new SystemException(ex);
+		} finally {
+            dsl.configuration().connectionProvider().release(c);
+        }    	
+    }
+    
+    private void executeUpdate(DSLContext dsl, String statement, Context context){
+    	Connection c = dsl.configuration().connectionProvider().acquire();
+        try (PreparedStatement ps = c.prepareStatement(statement)) {
+            ps.execute();
+        } catch (SQLException ex) {
+        	handleRetryException(context, ex);
+            throw new SystemException(ex);
+		} finally {
+            dsl.configuration().connectionProvider().release(c);
+        }    	
+    }
+    
+    private void executeQuery(Query query, Context context){
+        try {
+            query.execute();
+        } catch (DataAccessException ex) {
+        	handleRetryException(context, ex);
+            throw new SystemException(ex);
+        }    	
+    }
+
 }

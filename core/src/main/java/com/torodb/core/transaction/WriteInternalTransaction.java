@@ -20,12 +20,9 @@
 
 package com.torodb.core.transaction;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-
-import javax.sql.DataSource;
-
-import com.torodb.core.exceptions.SystemException;
+import com.torodb.core.backend.BackendConnection;
+import com.torodb.core.backend.WriteBackendTransaction;
+import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.transaction.metainf.MetainfoRepository;
 import com.torodb.core.transaction.metainf.MetainfoRepository.MergerStage;
 import com.torodb.core.transaction.metainf.MetainfoRepository.SnapshotStage;
@@ -37,39 +34,42 @@ import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
 public class WriteInternalTransaction implements InternalReadTransaction {
     private final MetainfoRepository metainfoRepository;
     private final MutableMetaSnapshot metaSnapshot;
-    private final Connection connection;
+    private final WriteBackendTransaction backendTransaction;
 
-    private WriteInternalTransaction(MetainfoRepository metainfoRepository, MutableMetaSnapshot metaSnapshot, Connection connection) {
+    private WriteInternalTransaction(MetainfoRepository metainfoRepository, MutableMetaSnapshot metaSnapshot, WriteBackendTransaction backendConnection) {
         this.metainfoRepository = metainfoRepository;
         this.metaSnapshot = metaSnapshot;
-        this.connection = connection;
+        this.backendTransaction = backendConnection;
     }
 
-    static WriteInternalTransaction createWriteTransaction(DataSource ds, MetainfoRepository metainfoRepository) {
+    static WriteInternalTransaction createWriteTransaction(BackendConnection backendConnection, MetainfoRepository metainfoRepository) {
         try (SnapshotStage snapshotStage = metainfoRepository.startSnapshotStage()) {
-            Connection conn = ds.getConnection();
+            
             MutableMetaSnapshot snapshot = snapshotStage.createMutableSnapshot();
 
-            return new WriteInternalTransaction(metainfoRepository, snapshot, conn);
-        } catch (SQLException ex) {
-            throw new SystemException(ex);
+            return new WriteInternalTransaction(metainfoRepository, snapshot, backendConnection.openWriteTransaction());
         }
     }
 
+    public WriteBackendTransaction getBackendConnection() {
+        return backendTransaction;
+    }
+
     @Override
-    public MutableMetaSnapshot getMetainfoView() {
+    public MutableMetaSnapshot getMetaSnapshot() {
         return metaSnapshot;
+    }
+
+    public void commit() throws RollbackException, UserException {
+        try (MergerStage mergeStage = metainfoRepository.startMerge(metaSnapshot)) {
+            backendTransaction.commit();
+            backendTransaction.close();
+        }
     }
 
     @Override
     public void close() {
-        try (MergerStage mergeStage = metainfoRepository.startMerge(metaSnapshot)) {
-            connection.commit();
-            connection.close();
-        } catch (SQLException ex) {
-            //TODO: Decide if we should
-            throw new SystemException(ex);
-        }
+        backendTransaction.close();
     }
 
 }

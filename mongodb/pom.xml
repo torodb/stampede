@@ -12,5 +12,7 @@
     <name>ToroDB-poc: MongoDB (pom)</name>
     <packaging>pom</packaging>
     
-    <modules></modules>
+    <modules>
+        <module>mongodb-core</module>
+    </modules>
 </project>

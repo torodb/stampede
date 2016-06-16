@@ -1,15 +1,12 @@
 
 package com.torodb.torod;
 
-import com.torodb.core.transaction.RollbackException;
-
 /**
  *
  */
-public class TorodTransaction implements AutoCloseable {
+public interface TorodTransaction extends AutoCloseable {
 
     @Override
-    public void close() throws RollbackException {
-    }
+    public void close();
 
 }

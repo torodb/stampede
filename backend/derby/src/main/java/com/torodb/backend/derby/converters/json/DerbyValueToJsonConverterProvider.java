@@ -40,7 +40,6 @@ import com.torodb.backend.converters.json.StringValueToJsonConverter;
 import com.torodb.backend.converters.json.TimeValueToJsonConverter;
 import com.torodb.backend.converters.json.ValueToJsonConverterProvider;
 import com.torodb.backend.derby.converters.array.DerbyValueToArrayConverterProvider;
-import com.torodb.backend.postgresql.converters.json.ArrayValueToJsonConverter;
 import com.torodb.kvdocument.types.ArrayType;
 import com.torodb.kvdocument.types.BinaryType;
 import com.torodb.kvdocument.types.BooleanType;

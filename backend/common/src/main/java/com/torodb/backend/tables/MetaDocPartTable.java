@@ -10,7 +10,6 @@ import org.jooq.UniqueKey;
 import org.jooq.impl.AbstractKeys;
 
 import com.google.common.collect.ImmutableList;
-import com.torodb.backend.DatabaseInterface;
 import com.torodb.backend.InternalField;
 import com.torodb.backend.InternalField.DidInternalField;
 import com.torodb.backend.InternalField.PidInternalField;
@@ -156,10 +155,6 @@ public abstract class MetaDocPartTable<TableRefType, R extends MetaDocPartRecord
         this.uniqueKeys = new UniqueKeys<TableRefType, R>(this);
     }
     
-    public String getSQLCreationStatement(DatabaseInterface databaseInterface) {
-        return databaseInterface.createMetaDocPartTableStatement(getSchema().getName(), getName());
-    }
-
     /**
      * {@inheritDoc}
      */

@@ -1,13 +1,12 @@
 package com.torodb.d2r;
 
-import java.util.Locale;
-
 import com.torodb.core.TableRef;
 import com.torodb.core.d2r.IdentifierFactory;
 import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetaField;
+import java.util.Locale;
 
 public class IdentifierFactoryImpl implements IdentifierFactory {
 
@@ -38,8 +37,8 @@ public class IdentifierFactoryImpl implements IdentifierFactory {
 	 * @see com.torodb.backend.IdentifierFact#toTableIdentifier(com.torodb.core.transaction.metainf.MutableMetaCollection, java.lang.String, com.torodb.core.TableRef)
 	 */
 	@Override
-	public String toTableIdentifier(MetaCollection mutableMetaCollection, String collection, TableRef tableRef) {
-		StringBuilder sb=new StringBuilder(collection);
+	public String toTableIdentifier(MetaCollection mutableMetaCollection, TableRef tableRef) {
+		StringBuilder sb=new StringBuilder(mutableMetaCollection.getName());
 		buildTableName(sb, tableRef);
 		String id = sb.toString();
 		while (true){

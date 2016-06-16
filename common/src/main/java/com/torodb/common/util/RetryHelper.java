@@ -73,9 +73,17 @@ public class RetryHelper {
             action = RetryAction.RETURN;
         }
 
+        public RetryAction getAction() {
+            return action;
+        }
+
+        public Result getResult() {
+            return result;
+        }
+
     }
 
-    private static enum RetryAction {
+    public static enum RetryAction {
         RETRY,
         RETURN;
     }

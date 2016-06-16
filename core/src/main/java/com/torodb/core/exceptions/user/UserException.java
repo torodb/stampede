@@ -44,5 +44,5 @@ public abstract class UserException extends ToroException {
         super(cause);
     }
     
-    public abstract <Result, Argument> Result accept(UserExceptionVisitor visitor, Argument arg);
+    public abstract <Result, Argument> Result accept(UserExceptionVisitor<Result, Argument> visitor, Argument arg);
 }

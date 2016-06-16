@@ -20,13 +20,13 @@
 
 package com.torodb.core.dsl.backend;
 
-import com.torodb.core.backend.BackendConnection;
+import com.torodb.core.backend.WriteBackendTransaction;
 
 /**
  *
  */
 public interface BackendConnectionJob {
 
-    public void execute(BackendConnection connection);
+    public void execute(WriteBackendTransaction connection);
 
 }

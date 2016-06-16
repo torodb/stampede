@@ -20,12 +20,8 @@
 
 package com.torodb.core.transaction;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-
-import javax.sql.DataSource;
-
-import com.torodb.core.exceptions.SystemException;
+import com.torodb.core.backend.BackendConnection;
+import com.torodb.core.backend.ReadOnlyBackendTransaction;
 import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
 import com.torodb.core.transaction.metainf.MetainfoRepository;
 import com.torodb.core.transaction.metainf.MetainfoRepository.SnapshotStage;
@@ -35,40 +31,30 @@ import com.torodb.core.transaction.metainf.MetainfoRepository.SnapshotStage;
  */
 public class ReadOnlyInternalTransaction implements InternalReadTransaction {
 
-    private final Connection connection;
+    private final ReadOnlyBackendTransaction backendTransaction;
     private final ImmutableMetaSnapshot metaSnapshot;
 
-    private ReadOnlyInternalTransaction(ImmutableMetaSnapshot metaSnapshot, Connection connection) {
+    private ReadOnlyInternalTransaction(ImmutableMetaSnapshot metaSnapshot, ReadOnlyBackendTransaction backendTransaction) {
         this.metaSnapshot = metaSnapshot;
-        this.connection = connection;
+        this.backendTransaction = backendTransaction;
     }
 
-    static ReadOnlyInternalTransaction createReadOnlyTransaction(DataSource ds, MetainfoRepository metainfoRepository) {
+    static ReadOnlyInternalTransaction createReadOnlyTransaction(BackendConnection backendConnection, MetainfoRepository metainfoRepository) {
         try (SnapshotStage snapshotStage = metainfoRepository.startSnapshotStage()) {
-            Connection conn = ds.getConnection();
             ImmutableMetaSnapshot snapshot = snapshotStage.createImmutableSnapshot();
 
-            return new ReadOnlyInternalTransaction(snapshot, conn);
-        } catch (SQLException ex) {
-            //TODO: Decide if we should
-            throw new SystemException(ex);
+            return new ReadOnlyInternalTransaction(snapshot, backendConnection.openReadOnlyTransaction());
         }
     }
 
     @Override
-    public ImmutableMetaSnapshot getMetainfoView() {
+    public ImmutableMetaSnapshot getMetaSnapshot() {
         return metaSnapshot;
     }
 
     @Override
     public void close() {
-        try {
-            connection.commit();
-            connection.close();
-        } catch (SQLException ex) {
-            //TODO: Decide if we should
-            throw new SystemException(ex);
-        }
+        backendTransaction.close();
     }
 
 }

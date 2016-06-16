@@ -18,29 +18,39 @@
  *     
  */
 
-package com.torodb.backend.jobs;
+package com.torodb.backend;
 
-import com.torodb.core.dsl.backend.AddDatabaseDDLJob;
-import com.torodb.core.transaction.metainf.MetaDatabase;
-import com.torodb.core.backend.WriteBackendTransaction;
+import java.util.Collection;
+import java.util.Collections;
 
-public class AddDatabaseDDLJobImpl implements AddDatabaseDDLJob {
+import com.torodb.core.backend.BackendCursor;
+import com.torodb.core.document.ToroDocument;
 
-    private final MetaDatabase db;
+/**
+ *
+ */
+public class EmptyCursor implements BackendCursor {
 
-    public AddDatabaseDDLJobImpl(MetaDatabase db) {
-        super();
-        this.db = db;
+    private boolean closed = false;
+    
+    @Override
+    public Collection<ToroDocument> readDocuments(int maxResults) {
+        if (closed) {
+            throw new IllegalArgumentException("Closed cursor");
+        }
+        return Collections.emptyList();
     }
 
     @Override
-    public void execute(WriteBackendTransaction connection) {
-        connection.addDatabase(db);
+    public Collection<ToroDocument> readAllDocuments() {
+        if (closed) {
+            throw new IllegalArgumentException("Closed cursor");
+        }
+        return Collections.emptyList();
     }
 
     @Override
-    public MetaDatabase getDatabase() {
-        return db;
+    public void close() {
+        closed = true;
     }
-
 }

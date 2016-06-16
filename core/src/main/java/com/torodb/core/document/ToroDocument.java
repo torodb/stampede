@@ -70,4 +70,8 @@ public class ToroDocument {
             return false;
         return true;
     }
+    
+    public String toString(){
+    	return id+" -> "+ root.toString();
+    }
 }

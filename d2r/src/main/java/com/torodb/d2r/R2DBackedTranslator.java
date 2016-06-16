@@ -17,6 +17,7 @@ import com.torodb.core.d2r.FieldValue;
 import com.torodb.core.d2r.InternalFields;
 import com.torodb.core.d2r.R2DBackendTranslator;
 import com.torodb.core.d2r.R2DTranslator;
+import com.torodb.core.document.ToroDocument;
 import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetaField;
@@ -34,8 +35,8 @@ public class R2DBackedTranslator<Result, BackendInternalFields extends InternalF
 	}
 
     @Override
-    public Collection<KVDocument> translate(DocPartResults<Result> docPartResults) {
-        ImmutableList.Builder<KVDocument> readedDocuments = ImmutableList.builder();
+    public Collection<ToroDocument> translate(DocPartResults<Result> docPartResults) {
+        ImmutableList.Builder<ToroDocument> readedDocuments = ImmutableList.builder();
         Table<TableRef, Integer, Map<String, List<KVValue<?>>>> currentDocPartTable = 
                 HashBasedTable.<TableRef, Integer, Map<String, List<KVValue<?>>>>create();
         Table<TableRef, Integer, Map<String, List<KVValue<?>>>> childDocPartTable = 
@@ -80,10 +81,11 @@ public class R2DBackedTranslator<Result, BackendInternalFields extends InternalF
     private void readResult(MetaDocPart metaDocPart, TableRef tableRef, Result result,
             Map<Integer, Map<String, List<KVValue<?>>>> currentDocPartRow,
             Map<Integer, Map<String, List<KVValue<?>>>> childDocPartRow,
-            ImmutableList.Builder<KVDocument> readedDocuments) {
+            ImmutableList.Builder<ToroDocument> readedDocuments) {
         KVDocument.Builder documentBuilder = new KVDocument.Builder();
         while (backendTranslator.next(result)) {
             BackendInternalFields internalFields = backendTranslator.readInternalFields(metaDocPart, result);
+            Integer did = internalFields.getDid();
             Integer rid = internalFields.getRid();
             Integer pid = internalFields.getPid();
             Integer seq = internalFields.getSeq();
@@ -125,7 +127,7 @@ public class R2DBackedTranslator<Result, BackendInternalFields extends InternalF
             }
             
             if (tableRef.isRoot()) {
-                readedDocuments.add(documentBuilder.build());
+                readedDocuments.add(new ToroDocument(did, documentBuilder.build()));
             } else {
                 addValueToDocPartRow(currentDocPartRow, tableRef, pid, seq, documentBuilder.build());
             }

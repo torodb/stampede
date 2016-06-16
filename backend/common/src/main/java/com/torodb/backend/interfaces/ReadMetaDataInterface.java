@@ -9,7 +9,7 @@ import javax.annotation.Nonnull;
 import org.jooq.DSLContext;
 
 import com.torodb.backend.InternalField;
-import com.torodb.backend.sql.index.NamedDbIndex;
+import com.torodb.backend.index.NamedDbIndex;
 import com.torodb.backend.tables.MetaCollectionTable;
 import com.torodb.backend.tables.MetaDatabaseTable;
 import com.torodb.backend.tables.MetaDocPartTable;

@@ -26,6 +26,7 @@ Parent project for the database backends module.
 		<module>driver</module>
 		<module>common</module>
 	    <module>derby</module>
+	    <module>postgresql</module>
 	    <module>benchmark</module>
     </modules>
 

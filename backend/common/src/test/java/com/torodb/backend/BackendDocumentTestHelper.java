@@ -20,6 +20,7 @@ import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.d2r.DocPartResults;
 import com.torodb.core.d2r.IdentifierFactory;
 import com.torodb.core.d2r.R2DTranslator;
+import com.torodb.core.document.ToroDocument;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
@@ -47,10 +48,10 @@ public class BackendDocumentTestHelper {
 	}
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    public Collection<KVDocument> readDocuments(MetaDatabase metaDatabase, MetaCollection metaCollection,
+    public Collection<ToroDocument> readDocuments(MetaDatabase metaDatabase, MetaCollection metaCollection,
             DocPartResults<ResultSet> docPartResultSets) {
         R2DTranslator r2dTranslator = new R2DBackedTranslator(new R2DBackendTranslatorImpl(databaseInterface, metaDatabase, metaCollection));
-        Collection<KVDocument> readedDocuments = r2dTranslator.translate(docPartResultSets);
+        Collection<ToroDocument> readedDocuments = r2dTranslator.translate(docPartResultSets);
         return readedDocuments;
     }
 
@@ -83,7 +84,7 @@ public class BackendDocumentTestHelper {
                     metaDocPart.streamFields().forEachOrdered(metaField -> {
                         fields.add(DSL.field(metaField.getIdentifier(), databaseInterface.getDataType(metaField.getType())));
                     });
-                    dsl.execute(databaseInterface.createDocPartTableStatement(dsl.configuration(), schema.databaseSchemaName, metaDocPart.getIdentifier(), fields));
+                    databaseInterface.createDocPartTable(dsl, schema.databaseSchemaName, metaDocPart.getIdentifier(), fields);
                 });
             });
         });
