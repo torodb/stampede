@@ -311,13 +311,8 @@ public class DerbyTorodbMeta implements TorodbMeta {
 				collMap.put(collection.getName(), tableRefMap);
 				collection.streamContainedMetaDocParts().forEach(metaDocPart -> {
 					TableRef tableRef = metaDocPart.getTableRef();
-					try {
-						Integer lastRowIUsed = databaseInterface.getLastRowIUsed(dsl, db, collection, metaDocPart);
-						tableRefMap.put(tableRef, lastRowIUsed);
-					} catch (SQLException e) {
-						throw new SystemException(e);
-					}
-					
+					Integer lastRowIUsed = databaseInterface.getLastRowIUsed(dsl, db, collection, metaDocPart);
+					tableRefMap.put(tableRef, lastRowIUsed);
 				});
 			});
 		});

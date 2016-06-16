@@ -50,6 +50,7 @@ import org.jooq.Configuration;
 import org.jooq.ConnectionProvider;
 import org.jooq.DSLContext;
 import org.jooq.Field;
+import org.jooq.Query;
 import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
 
@@ -962,58 +963,69 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
         } else if (tableRef.getParent().get().isRoot()) {
             return metaDocPartTable.FIRST_FIELDS;
         }
-        
         return metaDocPartTable.FIELDS;
     }
     
 	@Override
-	public Integer getLastRowIUsed(@Nonnull DSLContext dsl, @Nonnull MetaDatabase metaDatabase, @Nonnull MetaCollection metaCollection, @Nonnull MetaDocPart metaDocPart) throws SQLException {
+	public int getLastRowIUsed(@Nonnull DSLContext dsl, @Nonnull MetaDatabase metaDatabase, @Nonnull MetaCollection metaCollection, @Nonnull MetaDocPart metaDocPart) {
+		
+		TableRef tableRef = metaDocPart.getTableRef();
+		
+		StringBuilder sb = new StringBuilder();
+		sb.append("SELECT max(\"")
+		  .append(getColumnIdByTableRefLevel(tableRef))
+		  .append("\") FROM \"")
+		  .append(metaDatabase.getIdentifier())
+		  .append("\".\"")
+		  .append(metaDocPart.getIdentifier())
+		  .append("\"");
+		
 		Connection connection = dsl.configuration().connectionProvider().acquire();
-        try {
-            StringBuilder sb = new StringBuilder();
-            sb.append("SELECT max(\"")
-            .append(DocPartTableFields.RID.fieldName)
-            .append("\" FROM \"")
-            .append(metaDatabase.getIdentifier())
-            .append("\".\"")
-            .append(metaDocPart.getIdentifier());
-            
-            try (PreparedStatement preparedStatement = connection.prepareStatement(sb.toString())){
-            	ResultSet rs = preparedStatement.executeQuery();
-            	rs.next();
-            	int maxId = rs.getInt(1);
-            	if (rs.wasNull()){
-            		return -1;
-            	}
-            	return maxId;
-            }
+        try (PreparedStatement preparedStatement = connection.prepareStatement(sb.toString())){
+        	ResultSet rs = preparedStatement.executeQuery();
+        	rs.next();
+        	int maxId = rs.getInt(1);
+        	if (rs.wasNull()){
+        		return -1;
+        	}
+        	return maxId;
+        } catch (SQLException ex){
+        	handleRetryException(Context.ddl, ex);
+            throw new SystemException(ex);
         } finally {
             dsl.configuration().connectionProvider().release(connection);
         }
 	}
 	
+	private String getColumnIdByTableRefLevel(TableRef tableRef){
+		 if (tableRef.isRoot()){
+			 return DocPartTableFields.DID.fieldName;
+        }
+		 return DocPartTableFields.RID.fieldName;
+	}
+	
 	@Override
 	public void addMetaDatabase(DSLContext dsl, String databaseName, String databaseIdentifier) {
-        dsl.insertInto(metaDatabaseTable)
-            .set(metaDatabaseTable.newRecord().values(databaseName, databaseIdentifier))
-            .execute();		
+		Query query = dsl.insertInto(metaDatabaseTable)
+	            .set(metaDatabaseTable.newRecord().values(databaseName, databaseIdentifier));
+	        executeQuery(query, Context.ddl);
 	}
 
 	@Override
 	public void addMetaCollection(DSLContext dsl, String databaseName, String collectionName, String collectionIdentifier) {
-        dsl.insertInto(metaCollectionTable)
-            .set(metaCollectionTable.newRecord()
-            .values(databaseName, collectionName, collectionIdentifier))
-            .execute();		
+		Query query = dsl.insertInto(metaCollectionTable)
+	            .set(metaCollectionTable.newRecord()
+	            .values(databaseName, collectionName, collectionIdentifier));
+	        executeQuery(query, Context.ddl);
 	}
 	
 	@Override
 	public void addMetaDocPart(DSLContext dsl, String databaseName, String collectionName, TableRef tableRef,
 			String docPartIdentifier) {
-        dsl.insertInto(metaDocPartTable)
-            .set(metaDocPartTable.newRecord()
-            .values(databaseName, collectionName, tableRef, docPartIdentifier))
-            .execute();		
+		Query query = dsl.insertInto(metaDocPartTable)
+	            .set(metaDocPartTable.newRecord()
+	            .values(databaseName, collectionName, tableRef, docPartIdentifier));
+			executeQuery(query, Context.ddl);
 	}
 	
     @Override
@@ -1032,16 +1044,16 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
 			cont++;
 		}
 		sb.append(')');
-		dsl.execute(sb.toString());
+		executeStatement(dsl, sb.toString(), Context.ddl);
 	}
 
 	@Override
 	public void addMetaField(DSLContext dsl, String databaseName, String collectionName, TableRef tableRef,
 			String fieldName, String fieldIdentifier, FieldType type) {
-        dsl.insertInto(metaFieldTable)
-            .set(metaFieldTable.newRecord()
-            	.values(databaseName, collectionName, tableRef, fieldName, fieldIdentifier, type))
-            .execute();
+		Query query = dsl.insertInto(metaFieldTable)
+				.set(metaFieldTable.newRecord()
+				.values(databaseName, collectionName, tableRef, fieldName, fieldIdentifier, type));
+		executeQuery(query, Context.ddl);
 	}
 	
 	@Override
@@ -1053,7 +1065,7 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
 	        .append(field.getName())
 	        .append("\" ")
             .append(field.getDataType().getCastTypeName(dsl.configuration()));
-        dsl.execute(sb.toString());
+        executeStatement(dsl, sb.toString(), Context.ddl);
     }
 	
     private void executeStatement(DSLContext dsl, String statement, Context context){
@@ -1067,4 +1079,26 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
             dsl.configuration().connectionProvider().release(c);
         }    	
     }
+    
+    private void executeUpdate(DSLContext dsl, String statement, Context context){
+    	Connection c = dsl.configuration().connectionProvider().acquire();
+        try (PreparedStatement ps = c.prepareStatement(statement)) {
+            ps.execute();
+        } catch (SQLException ex) {
+        	handleRetryException(context, ex);
+            throw new SystemException(ex);
+		} finally {
+            dsl.configuration().connectionProvider().release(c);
+        }    	
+    }
+    
+    private void executeQuery(Query query, Context context){
+        try {
+            query.execute();
+        } catch (DataAccessException ex) {
+        	handleRetryException(context, ex);
+            throw new SystemException(ex);
+        }    	
+    }
+
 }

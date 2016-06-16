@@ -50,6 +50,7 @@ import org.jooq.ConnectionProvider;
 import org.jooq.Converter;
 import org.jooq.DSLContext;
 import org.jooq.Field;
+import org.jooq.Query;
 import org.jooq.Record1;
 import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
@@ -486,16 +487,8 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
 
     @Override
     public void dropSchema(@Nonnull DSLContext dsl, @Nonnull String schemaName) {
-        Connection c = dsl.configuration().connectionProvider().acquire();
-        String query = "DROP SCHEMA \"" + schemaName + "\" CASCADE";
-        try (PreparedStatement ps = c.prepareStatement(query)) {
-            ps.executeUpdate();
-        } catch (SQLException e) {
-        	handleRetryException(Context.ddl, e);
-        	throw new SystemException(e);
-		} finally {
-            dsl.configuration().connectionProvider().release(c);
-        }
+    	String query = "DROP SCHEMA \"" + schemaName + "\" CASCADE";
+    	executeUpdate(dsl, query, Context.ddl);
     }
 
     @Nonnull
@@ -654,16 +647,8 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
 
     @Override
     public void createSchema(@Nonnull DSLContext dsl, @Nonnull String schemaName){
-        Connection c = dsl.configuration().connectionProvider().acquire();
-        String query = "CREATE SCHEMA \"" + schemaName + "\"";
-        try (PreparedStatement ps = c.prepareStatement(query)) {
-            ps.executeUpdate();
-        } catch (SQLException e) {
-        	handleRetryException(Context.ddl, e);
-        	throw new SystemException(e);
-		} finally {
-            dsl.configuration().connectionProvider().release(c);
-        }
+    	String query = "CREATE SCHEMA \"" + schemaName + "\"";
+    	executeUpdate(dsl, query, Context.ddl);
     }
 
     @SuppressFBWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
@@ -916,33 +901,35 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
         } else if (tableRef.getParent().get().isRoot()) {
             return metaDocPartTable.FIRST_FIELDS;
         }
-        
         return metaDocPartTable.FIELDS;
     }
 
 	@Override
-	public Integer getLastRowIUsed(@Nonnull DSLContext dsl, @Nonnull MetaDatabase metaDatabase, @Nonnull MetaCollection metaCollection, @Nonnull MetaDocPart metaDocPart) throws SQLException {
-		Connection connection = dsl.configuration().connectionProvider().acquire();
+	public int getLastRowIUsed(@Nonnull DSLContext dsl, @Nonnull MetaDatabase metaDatabase, @Nonnull MetaCollection metaCollection, @Nonnull MetaDocPart metaDocPart) {
+		
 		TableRef tableRef = metaDocPart.getTableRef();
 		
-        try {
-            StringBuilder sb = new StringBuilder();
-            sb.append("SELECT max(\"")
-            .append(getColumnIdByTableRefLevel(tableRef))
-            .append("\") FROM \"")
-            .append(metaDatabase.getIdentifier())
-            .append("\".\"")
-            .append(metaDocPart.getIdentifier())
-            .append("\"");
-            try (PreparedStatement preparedStatement = connection.prepareStatement(sb.toString())){
-            	ResultSet rs = preparedStatement.executeQuery();
-            	rs.next();
-            	int maxId = rs.getInt(1);
-            	if (rs.wasNull()){
-            		return -1;
-            	}
-            	return maxId;
-            }
+		StringBuilder sb = new StringBuilder();
+		sb.append("SELECT max(\"")
+		  .append(getColumnIdByTableRefLevel(tableRef))
+		  .append("\") FROM \"")
+		  .append(metaDatabase.getIdentifier())
+		  .append("\".\"")
+		  .append(metaDocPart.getIdentifier())
+		  .append("\"");
+		
+		Connection connection = dsl.configuration().connectionProvider().acquire();
+        try (PreparedStatement preparedStatement = connection.prepareStatement(sb.toString())){
+        	ResultSet rs = preparedStatement.executeQuery();
+        	rs.next();
+        	int maxId = rs.getInt(1);
+        	if (rs.wasNull()){
+        		return -1;
+        	}
+        	return maxId;
+        } catch (SQLException ex){
+        	handleRetryException(Context.ddl, ex);
+            throw new SystemException(ex);
         } finally {
             dsl.configuration().connectionProvider().release(connection);
         }
@@ -957,26 +944,26 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
 
 	@Override
 	public void addMetaDatabase(DSLContext dsl, String databaseName, String databaseIdentifier) {
-        dsl.insertInto(metaDatabaseTable)
-            .set(metaDatabaseTable.newRecord().values(databaseName, databaseIdentifier))
-            .execute();		
+        Query query = dsl.insertInto(metaDatabaseTable)
+            .set(metaDatabaseTable.newRecord().values(databaseName, databaseIdentifier));
+        executeQuery(query, Context.ddl);
 	}
 
 	@Override
 	public void addMetaCollection(DSLContext dsl, String databaseName, String collectionName, String collectionIdentifier) {
-        dsl.insertInto(metaCollectionTable)
+        Query query = dsl.insertInto(metaCollectionTable)
             .set(metaCollectionTable.newRecord()
-            .values(databaseName, collectionName, collectionIdentifier))
-            .execute();		
+            .values(databaseName, collectionName, collectionIdentifier));
+        executeQuery(query, Context.ddl);
 	}
 
 	@Override
 	public void addMetaDocPart(DSLContext dsl, String databaseName, String collectionName, TableRef tableRef,
 			String docPartIdentifier) {
-        dsl.insertInto(metaDocPartTable)
+		Query query = dsl.insertInto(metaDocPartTable)
             .set(metaDocPartTable.newRecord()
-            .values(databaseName, collectionName, tableRef, docPartIdentifier))
-            .execute();		
+            .values(databaseName, collectionName, tableRef, docPartIdentifier));
+		executeQuery(query, Context.ddl);
 	}
 
 	@Override
@@ -995,16 +982,16 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
 			cont++;
 		}
 		sb.append(')');
-		dsl.execute(sb.toString());
+		executeStatement(dsl, sb.toString(), Context.ddl);
 	}
 	
 	@Override
 	public void addMetaField(DSLContext dsl, String databaseName, String collectionName, TableRef tableRef,
 			String fieldName, String fieldIdentifier, FieldType type) {
-        dsl.insertInto(metaFieldTable)
-            .set(metaFieldTable.newRecord()
-            	.values(databaseName, collectionName, tableRef, fieldName, fieldIdentifier, type))
-            .execute();
+		Query query = dsl.insertInto(metaFieldTable)
+				.set(metaFieldTable.newRecord()
+				.values(databaseName, collectionName, tableRef, fieldName, fieldIdentifier, type));
+		executeQuery(query, Context.ddl);
 	}
 	
     @Override
@@ -1016,7 +1003,7 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
                 .append(field.getName())
                 .append("\" ")
                 .append(field.getDataType().getCastTypeName(dsl.configuration()));
-        dsl.execute(sb.toString());
+        executeStatement(dsl, sb.toString(), Context.ddl);
     }
 
     private void executeStatement(DSLContext dsl, String statement, Context context){
@@ -1028,6 +1015,27 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
             throw new SystemException(ex);
 		} finally {
             dsl.configuration().connectionProvider().release(c);
+        }    	
+    }
+    
+    private void executeUpdate(DSLContext dsl, String statement, Context context){
+    	Connection c = dsl.configuration().connectionProvider().acquire();
+        try (PreparedStatement ps = c.prepareStatement(statement)) {
+            ps.execute();
+        } catch (SQLException ex) {
+        	handleRetryException(context, ex);
+            throw new SystemException(ex);
+		} finally {
+            dsl.configuration().connectionProvider().release(c);
+        }    	
+    }
+    
+    private void executeQuery(Query query, Context context){
+        try {
+            query.execute();
+        } catch (DataAccessException ex) {
+        	handleRetryException(context, ex);
+            throw new SystemException(ex);
         }    	
     }
 }
