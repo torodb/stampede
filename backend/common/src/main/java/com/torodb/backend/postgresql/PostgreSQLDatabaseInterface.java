@@ -367,9 +367,11 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
     }
 
     @Override
-    public @Nonnull String createMetaFieldTableStatement(@Nonnull String schemaName, @Nonnull String tableName) {
-        return new StringBuilder()
-                .append("CREATE TABLE ")
+    public void createMetaFieldTable(DSLContext dsl) {
+    	String schemaName = metaFieldTable.getSchema().getName();
+    	String tableName = metaFieldTable.getName();
+    	String statement = new StringBuilder()
+    			.append("CREATE TABLE ")
                 .append(fullTableName(schemaName, tableName))
                 .append(" (")
                 .append(MetaFieldTable.TableFields.DATABASE.name()).append("         varchar     NOT NULL        ,")
@@ -388,6 +390,7 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
                     .append(MetaFieldTable.TableFields.IDENTIFIER.name()).append(")")
                 .append(")")
                 .toString();
+        executeStatement(dsl, statement, Context.ddl);    	
     }
 
     @Override

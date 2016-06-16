@@ -20,8 +20,6 @@
 package com.torodb.backend.meta;
 
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.List;
 
@@ -87,18 +85,10 @@ public class TorodbSchema extends SchemaImpl {
 
     private void createSchema(DSLContext dsl, DatabaseInterface databaseInterface) throws SQLException {
     	databaseInterface.createSchema(dsl, TORODB_SCHEMA);
-
     	databaseInterface.createMetaDatabaseTable(dsl);
     	databaseInterface.createMetaCollectionTable(dsl);
     	databaseInterface.createMetaDocPartTable(dsl);
-    	Connection c = dsl.configuration().connectionProvider().acquire();
-    	try{
-	        try (PreparedStatement ps = c.prepareStatement(databaseInterface.getMetaFieldTable().getSQLCreationStatement(databaseInterface))) {
-	            ps.execute();
-	        }
-        } finally {
-            dsl.configuration().connectionProvider().release(c);
-        }
+    	databaseInterface.createMetaFieldTable(dsl);
     }
     
     private void checkSchema(Schema torodbSchema, DatabaseInterface databaseInterface) throws InvalidDatabaseException {

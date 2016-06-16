@@ -10,7 +10,6 @@ import org.jooq.UniqueKey;
 import org.jooq.impl.AbstractKeys;
 
 import com.google.common.collect.ImmutableList;
-import com.torodb.backend.DatabaseInterface;
 import com.torodb.backend.InternalField;
 import com.torodb.backend.InternalField.DidInternalField;
 import com.torodb.backend.InternalField.PidInternalField;

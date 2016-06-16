@@ -390,8 +390,10 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
     }
 
     @Override
-    public @Nonnull String createMetaFieldTableStatement(@Nonnull String schemaName, @Nonnull String tableName) {
-        return new StringBuilder()
+    public void createMetaFieldTable(DSLContext dsl) {
+    	String schemaName = metaFieldTable.getSchema().getName();
+    	String tableName = metaFieldTable.getName();
+    	String statement = new StringBuilder()
                 .append("CREATE TABLE ")
                 .append(fullTableName(schemaName, tableName))
                 .append(" (")
@@ -411,6 +413,7 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
                     .append('"').append(MetaFieldTable.TableFields.IDENTIFIER.toString()).append('"').append(")")
                 .append(")")
                 .toString();
+        executeStatement(dsl, statement, Context.ddl);    	
     }
 
     @Override
