@@ -215,7 +215,7 @@ public class BenchmarkDerbyR2DBackedTranslator {
         while (tables.next()) {
             String schemaName = tables.getString("TABLE_SCHEM");
             String tableName = tables.getString("TABLE_NAME");
-            if (!state.databaseInterface.isRestrictedSchemaName(schemaName) || schemaName.equals(TorodbSchema.TORODB_SCHEMA)) {
+            if (!state.databaseInterface.isAllowedSchemaIdentifier(schemaName) || schemaName.equals(TorodbSchema.TORODB_SCHEMA)) {
                 try (PreparedStatement preparedStatement = state.connection.prepareStatement("DROP TABLE \"" + schemaName + "\".\"" + tableName + "\"")) {
                     preparedStatement.executeUpdate();
                 }
@@ -224,7 +224,7 @@ public class BenchmarkDerbyR2DBackedTranslator {
         ResultSet schemas = metaData.getSchemas();
         while (schemas.next()) {
             String schemaName = schemas.getString("TABLE_SCHEM");
-            if (!state.databaseInterface.isRestrictedSchemaName(schemaName) || schemaName.equals(TorodbSchema.TORODB_SCHEMA)) {
+            if (!state.databaseInterface.isAllowedSchemaIdentifier(schemaName) || schemaName.equals(TorodbSchema.TORODB_SCHEMA)) {
                 try (PreparedStatement preparedStatement = state.connection.prepareStatement("DROP SCHEMA \"" + schemaName + "\" RESTRICT")) {
                     preparedStatement.executeUpdate();
                 }

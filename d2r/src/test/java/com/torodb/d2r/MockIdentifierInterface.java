@@ -20,7 +20,7 @@
 
 package com.torodb.d2r;
 
-import com.torodb.d2r.IdentifierFactoryImpl.IdentifierInterface;
+import com.torodb.core.backend.IdentifierInterface;
 
 public class MockIdentifierInterface implements IdentifierInterface {
 

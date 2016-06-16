@@ -82,7 +82,7 @@ public class Derby {
             while (tables.next()) {
                 String schemaName = tables.getString("TABLE_SCHEM");
                 String tableName = tables.getString("TABLE_NAME");
-                if (!databaseInterface.isRestrictedSchemaName(schemaName) || schemaName.equals(TorodbSchema.TORODB_SCHEMA)) {
+                if (!databaseInterface.isAllowedSchemaIdentifier(schemaName) || schemaName.equals(TorodbSchema.TORODB_SCHEMA)) {
                     try (PreparedStatement preparedStatement = connection.prepareStatement("DROP TABLE \"" + schemaName + "\".\"" + tableName + "\"")) {
                         preparedStatement.executeUpdate();
                     }
@@ -91,7 +91,7 @@ public class Derby {
             ResultSet schemas = metaData.getSchemas();
             while (schemas.next()) {
                 String schemaName = schemas.getString("TABLE_SCHEM");
-                if (!databaseInterface.isRestrictedSchemaName(schemaName) || schemaName.equals(TorodbSchema.TORODB_SCHEMA)) {
+                if (!databaseInterface.isAllowedSchemaIdentifier(schemaName) || schemaName.equals(TorodbSchema.TORODB_SCHEMA)) {
                     try (PreparedStatement preparedStatement = connection.prepareStatement("DROP SCHEMA \"" + schemaName + "\" RESTRICT")) {
                         preparedStatement.executeUpdate();
                     }

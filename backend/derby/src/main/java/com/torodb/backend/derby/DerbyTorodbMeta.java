@@ -40,7 +40,6 @@ import com.torodb.backend.exceptions.InvalidDatabaseException;
 import com.torodb.backend.exceptions.InvalidDatabaseSchemaException;
 import com.torodb.backend.meta.TorodbMeta;
 import com.torodb.backend.meta.TorodbSchema;
-import com.torodb.backend.tables.IdentifierHelper;
 import com.torodb.backend.tables.MetaCollectionTable;
 import com.torodb.backend.tables.MetaDatabaseTable;
 import com.torodb.backend.tables.MetaDocPartTable;
@@ -207,7 +206,6 @@ public class DerbyTorodbMeta implements TorodbMeta {
                     .selectFrom(fieldTable)
                     .where(fieldTable.DATABASE.eq(database))
                     .fetch();
-            IdentifierHelper identifierHelper = new IdentifierHelper(databaseInterface);
             for (Table<?> table : existingTables) {
                 if (!docParts.containsKey(table.getName())) {
                     throw new InvalidDatabaseSchemaException(schemaName, "Table "+schemaName+"."+table.getName()
@@ -216,7 +214,7 @@ public class DerbyTorodbMeta implements TorodbMeta {
                 
                 MetaDocPartRecord<Object> docPart = docParts.get(table.getName());
                 for (Field<?> existingField : table.fields()) {
-                    if (identifierHelper.isSpecialColumn(existingField.getName())) {
+                    if (databaseInterface.isAllowedColumnIdentifier(existingField.getName())) {
                         continue;
                     }
                     if (!containsField(existingField, docPart.getCollection(), docPart.getTableRefValue(tableRefFactory), fields, tableRefFactory)) {

@@ -11,9 +11,8 @@ import java.util.Random;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-import javax.annotation.Nonnull;
-
 import com.torodb.core.TableRef;
+import com.torodb.core.backend.IdentifierInterface;
 import com.torodb.core.d2r.IdentifierFactory;
 import com.torodb.core.exceptions.SystemException;
 import com.torodb.core.transaction.metainf.FieldType;
@@ -574,12 +573,5 @@ public class IdentifierFactoryImpl implements IdentifierFactory {
         public boolean isAllowed(IdentifierInterface identifierInterface, String identifier) {
             return identifierInterface.isAllowedColumnIdentifier(identifier);
         }
-    }
-    
-    public interface IdentifierInterface {
-        @Nonnull int identifierMaxSize();
-        @Nonnull boolean isAllowedSchemaIdentifier(@Nonnull String identifier);
-        @Nonnull boolean isAllowedTableIdentifier(@Nonnull String identifier);
-        @Nonnull boolean isAllowedColumnIdentifier(@Nonnull String identifier);
     }
 }
