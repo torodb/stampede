@@ -464,16 +464,8 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
 
     @Override
     public void dropSchema(@Nonnull DSLContext dsl, @Nonnull String schemaName) {
-        Connection c = dsl.configuration().connectionProvider().acquire();
         String query = "DROP SCHEMA \"" + schemaName + "\" CASCADE";
-        try (PreparedStatement ps = c.prepareStatement(query)) {
-            ps.executeUpdate();
-        } catch (SQLException e) {
-        	handleRetryException(Context.ddl, e);
-        	throw new SystemException(e);
-		} finally {
-            dsl.configuration().connectionProvider().release(c);
-        }
+        executeUpdate(dsl, query, Context.ddl);
     }
 
     @Nonnull
@@ -579,51 +571,8 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
 
     @Override
     public void createSchema(@Nonnull DSLContext dsl, @Nonnull String schemaName){
-        Connection c = dsl.configuration().connectionProvider().acquire();
-        String query = "CREATE SCHEMA IF NOT EXISTS \"" + schemaName + "\"";
-        try (PreparedStatement ps = c.prepareStatement(query)) {
-            ps.executeUpdate();
-        } catch (SQLException e) {
-        	handleRetryException(Context.ddl, e);
-        	throw new SystemException(e);
-		} finally {
-            dsl.configuration().connectionProvider().release(c);
-        }
-    }
-
-    @SuppressFBWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
-    protected void createRootTable(
-            DSLContext dsl,
-            String escapedSchemaName
-            ) throws SQLException {
-        Connection c = dsl.configuration().connectionProvider().acquire();
-
-        String query = "CREATE TABLE \""+ escapedSchemaName + "\".root("
-                    + "did int PRIMARY KEY DEFAULT nextval('\"" + escapedSchemaName + "\".root_seq'),"
-                    + "sid int NOT NULL"
-                    + ")";
-        try (PreparedStatement ps = c.prepareStatement(query)) {
-            ps.executeUpdate();
-        } finally {
-            dsl.configuration().connectionProvider().release(c);
-        }
-    }
-
-    @SuppressFBWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
-    protected void createSequence(
-            DSLContext dsl,
-            String escapedSchemaName, String seqName
-            ) throws SQLException {
-        Connection c = dsl.configuration().connectionProvider().acquire();
-
-        String query = "CREATE SEQUENCE "
-                    + "\""+ escapedSchemaName +"\".\"" + seqName + "\" "
-                    + "MINVALUE 0 START 0";
-        try (PreparedStatement ps = c.prepareStatement(query)) {
-            ps.executeUpdate();
-        } finally {
-            dsl.configuration().connectionProvider().release(c);
-        }
+    	String query = "CREATE SCHEMA IF NOT EXISTS \"" + schemaName + "\"";
+    	executeUpdate(dsl, query, Context.ddl);
     }
 
     @Override

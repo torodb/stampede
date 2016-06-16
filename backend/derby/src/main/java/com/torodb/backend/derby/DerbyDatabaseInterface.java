@@ -46,7 +46,6 @@ import javax.inject.Singleton;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jooq.Configuration;
-import org.jooq.ConnectionProvider;
 import org.jooq.Converter;
 import org.jooq.DSLContext;
 import org.jooq.Field;
@@ -90,8 +89,6 @@ import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetaField;
 import com.torodb.kvdocument.values.KVValue;
-
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  *
@@ -583,66 +580,20 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
     }
 
     @Override
-    @SuppressFBWarnings(
-            value = "OBL_UNSATISFIED_OBLIGATION",
-            justification = "False positive: https://sourceforge.net/p/findbugs/bugs/1021/")
     public long getDatabaseSize(
             @Nonnull DSLContext dsl,
             @Nonnull String databaseName
             ) {
-        ConnectionProvider connectionProvider
-                = dsl.configuration().connectionProvider();
-        Connection connection = connectionProvider.acquire();
-        
-        try (PreparedStatement ps = connection.prepareStatement("SELECT * from pg_database_size(?)")) {
-            ps.setString(1, databaseName);
-            ResultSet rs = ps.executeQuery();
-            rs.next();
-            return rs.getLong(1);
-        }
-        catch (SQLException ex) {
-            throw new SystemException(ex);
-        }
-        finally {
-            connectionProvider.release(connection);
-        }
+    	throw new UnsupportedOperationException();
     }
 
     @Override
-    @SuppressFBWarnings(
-            value = "OBL_UNSATISFIED_OBLIGATION",
-            justification = "False positive: https://sourceforge.net/p/findbugs/bugs/1021/")
     public Long getCollectionSize(
             @Nonnull DSLContext dsl,
             @Nonnull String schema,
             @Nonnull String collection
             ) {
-        ConnectionProvider connectionProvider 
-                = dsl.configuration().connectionProvider();
-        
-        Connection connection = connectionProvider.acquire();
-
-        String query = "SELECT sum(table_size)::bigint "
-                + "FROM ("
-                + "  SELECT "
-                + "    pg_relation_size(pg_catalog.pg_class.oid) as table_size "
-                + "  FROM pg_catalog.pg_class "
-                + "    JOIN pg_catalog.pg_namespace "
-                + "       ON relnamespace = pg_catalog.pg_namespace.oid "
-                + "    WHERE pg_catalog.pg_namespace.nspname = ?"
-                + ") AS t";
-        try (PreparedStatement ps = connection.prepareStatement(query)) {
-            ps.setString(1, schema);
-            ResultSet rs = ps.executeQuery();
-            rs.next();
-            return rs.getLong(1);
-        }
-        catch (SQLException ex) {
-            throw new SystemException(ex);
-        }
-        finally {
-            connectionProvider.release(connection);
-        }
+    	throw new UnsupportedOperationException();
     }
 
     @Override
@@ -651,74 +602,13 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
     	executeUpdate(dsl, query, Context.ddl);
     }
 
-    @SuppressFBWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
-    protected void createRootTable(
-            DSLContext dsl,
-            String escapedSchemaName
-            ) throws SQLException {
-        Connection c = dsl.configuration().connectionProvider().acquire();
-
-        String query = "CREATE TABLE \""+ escapedSchemaName + "\".root("
-                    + "did int PRIMARY KEY DEFAULT nextval('\"" + escapedSchemaName + "\".root_seq'),"
-                    + "sid int NOT NULL"
-                    + ")";
-        try (PreparedStatement ps = c.prepareStatement(query)) {
-            ps.executeUpdate();
-        } finally {
-            dsl.configuration().connectionProvider().release(c);
-        }
-    }
-
-    @SuppressFBWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
-    protected void createSequence(
-            DSLContext dsl,
-            String escapedSchemaName, String seqName
-            ) throws SQLException {
-        Connection c = dsl.configuration().connectionProvider().acquire();
-
-        String query = "CREATE SEQUENCE "
-                    + "\""+ escapedSchemaName +"\".\"" + seqName + "\" "
-                    + "MINVALUE 0 START 0";
-        try (PreparedStatement ps = c.prepareStatement(query)) {
-            ps.executeUpdate();
-        } finally {
-            dsl.configuration().connectionProvider().release(c);
-        }
-    }
-
     @Override
-    @SuppressFBWarnings(
-            value = "OBL_UNSATISFIED_OBLIGATION",
-            justification = "False positive: https://sourceforge.net/p/findbugs/bugs/1021/")
     public Long getDocumentsSize(
             @Nonnull DSLContext dsl,
             @Nonnull String schema,
             String collection
             ) {
-        ConnectionProvider connectionProvider 
-                = dsl.configuration().connectionProvider();
-        
-        Connection connection = connectionProvider.acquire();
-        String query = "SELECT sum(table_size)::bigint from ("
-                    + "SELECT pg_relation_size(pg_class.oid) AS table_size "
-                    + "FROM pg_class join pg_tables on pg_class.relname = pg_tables.tablename "
-                    + "where pg_tables.schemaname = ? "
-                    + "   and pg_tables.tablename LIKE 't_%'"
-                    + ") as t";
-        
-        try (PreparedStatement ps = connection.prepareStatement(query)) {
-            ps.setString(1, schema);
-            ResultSet rs = ps.executeQuery();
-            rs.next();
-            
-            return rs.getLong(1);
-        }
-        catch (SQLException ex) {
-            throw new SystemException(ex);
-        }
-        finally {
-            connectionProvider.release(connection);
-        }
+    	throw new UnsupportedOperationException();
     }
 
     @Override
@@ -729,42 +619,7 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
             Set<NamedDbIndex> relatedDbIndexes,
             Map<String, Integer> relatedToroIndexes
             ) {
-        ConnectionProvider connectionProvider 
-                = dsl.configuration().connectionProvider();
-        
-        Connection connection = connectionProvider.acquire();
-        
-        String query = "SELECT sum(table_size)::bigint from ("
-                + "SELECT pg_relation_size(pg_class.oid) AS table_size "
-                + "FROM pg_class join pg_indexes "
-                + "  on pg_class.relname = pg_indexes.tablename "
-                + "WHERE pg_indexes.schemaname = ? "
-                + "  and pg_indexes.indexname = ?"
-                + ") as t";
-
-        long result = 0;
-        try {
-            
-            for (NamedDbIndex dbIndex : relatedDbIndexes) {
-                try (PreparedStatement ps = connection.prepareStatement(query)) {
-                    ps.setString(1, schema);
-                    ps.setString(2, dbIndex.getName());
-                    ResultSet rs = ps.executeQuery();
-                    assert relatedToroIndexes.containsKey(dbIndex.getName());
-                    int usedBy = relatedToroIndexes.get(dbIndex.getName());
-                    assert usedBy != 0;
-                    rs.next();
-                    result += rs.getLong(1) / usedBy;
-                }
-            }
-            return result;
-        }
-        catch (SQLException ex) {
-            throw new SystemException(ex);
-        }
-        finally {
-            connectionProvider.release(connection);
-        }
+    	throw new UnsupportedOperationException();
     }
 
     @Override
