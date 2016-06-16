@@ -367,8 +367,10 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
     }
     
     @Override
-    public @Nonnull String createMetaDocPartTableStatement(@Nonnull String schemaName, @Nonnull String tableName) {
-        return new StringBuilder()
+    public void createMetaDocPartTable(DSLContext dsl) {
+    	String schemaName = metaDocPartTable.getSchema().getName();
+    	String tableName = metaDocPartTable.getName();
+    	String statement = new StringBuilder()
                 .append("CREATE TABLE ")
                 .append(fullTableName(schemaName, tableName))
                 .append(" (")
@@ -384,6 +386,7 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
                     .append('"').append(MetaDocPartTable.TableFields.IDENTIFIER.toString()).append('"').append(")")
                 .append(")")
                 .toString();
+    	executeStatement(dsl, statement, Context.ddl);    	
     }
 
     @Override

@@ -90,12 +90,9 @@ public class TorodbSchema extends SchemaImpl {
 
     	databaseInterface.createMetaDatabaseTable(dsl);
     	databaseInterface.createMetaCollectionTable(dsl);
+    	databaseInterface.createMetaDocPartTable(dsl);
     	Connection c = dsl.configuration().connectionProvider().acquire();
     	try{
-	        try (PreparedStatement ps = c.prepareStatement(databaseInterface.getMetaDocPartTable().getSQLCreationStatement(databaseInterface))) {
-	            ps.execute();
-	        }
-	
 	        try (PreparedStatement ps = c.prepareStatement(databaseInterface.getMetaFieldTable().getSQLCreationStatement(databaseInterface))) {
 	            ps.execute();
 	        }

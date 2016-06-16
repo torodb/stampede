@@ -60,7 +60,6 @@ import com.torodb.backend.InternalField;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.backend.converters.jooq.ValueToJooqDataTypeProvider;
 import com.torodb.backend.index.NamedDbIndex;
-import com.torodb.backend.interfaces.ErrorHandlerInterface.Context;
 import com.torodb.backend.meta.TorodbSchema;
 import com.torodb.backend.postgresql.converters.PostgreSQLValueToCopyConverter;
 import com.torodb.backend.postgresql.converters.jooq.PostgreSQLValueToJooqDataTypeProvider;
@@ -345,9 +344,11 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
     }
 
     @Override
-    public @Nonnull String createMetaDocPartTableStatement(@Nonnull String schemaName, @Nonnull String tableName) {
-        return new StringBuilder()
-                .append("CREATE TABLE ")
+    public void createMetaDocPartTable(DSLContext dsl) {
+    	String schemaName = metaDocPartTable.getSchema().getName();
+    	String tableName = metaDocPartTable.getName();
+    	String statement = new StringBuilder()
+    			.append("CREATE TABLE ")
                 .append(fullTableName(schemaName, tableName))
                 .append(" (")
                 .append(MetaDocPartTable.TableFields.DATABASE.name()).append("         varchar     NOT NULL        ,")
@@ -362,6 +363,7 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
                     .append(MetaDocPartTable.TableFields.IDENTIFIER.name()).append(")")
                 .append(")")
                 .toString();
+    	executeStatement(dsl, statement, Context.ddl);    	
     }
 
     @Override

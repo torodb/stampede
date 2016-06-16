@@ -156,10 +156,6 @@ public abstract class MetaDocPartTable<TableRefType, R extends MetaDocPartRecord
         this.uniqueKeys = new UniqueKeys<TableRefType, R>(this);
     }
     
-    public String getSQLCreationStatement(DatabaseInterface databaseInterface) {
-        return databaseInterface.createMetaDocPartTableStatement(getSchema().getName(), getName());
-    }
-
     /**
      * {@inheritDoc}
      */
