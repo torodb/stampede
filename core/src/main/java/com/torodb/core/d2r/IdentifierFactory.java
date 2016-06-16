@@ -8,9 +8,11 @@ import com.torodb.core.transaction.metainf.MetaSnapshot;
 
 public interface IdentifierFactory {
 
-    String toSchemaIdentifier(MetaSnapshot metaSnapshot, String database);
+    String toDatabaseIdentifier(MetaSnapshot metaSnapshot, String database);
 
-    String toTableIdentifier(MetaDatabase metaDatabase, String collection, TableRef tableRef);
+    String toCollectionIdentifier(MetaDatabase metaDatabase, String collection);
+
+    String toDocPartIdentifier(MetaDatabase metaDatabase, String collection, TableRef tableRef);
 
 	String toFieldIdentifier(MetaDocPart metaDocPart, FieldType fieldType, String field);
 

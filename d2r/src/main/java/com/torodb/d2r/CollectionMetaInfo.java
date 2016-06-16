@@ -30,8 +30,8 @@ public class CollectionMetaInfo {
 	public MutableMetaDocPart findMetaDocPart(TableRef tableRef){
 		MutableMetaDocPart metaDocPart = metaCollection.getMetaDocPartByTableRef(tableRef);
 		if (metaDocPart==null){
-			String tableIdentifier = identifierFactory.toTableIdentifier(metaDatabase, metaCollection.getName(), tableRef);
-			metaDocPart = metaCollection.addMetaDocPart(tableRef, tableIdentifier);
+			String docPartIdentifier = identifierFactory.toDocPartIdentifier(metaDatabase, metaCollection.getName(), tableRef);
+			metaDocPart = metaCollection.addMetaDocPart(tableRef, docPartIdentifier);
 		}
 		return metaDocPart;
 	}

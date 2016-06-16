@@ -73,7 +73,7 @@ public class IdentifierFactoryImpl implements IdentifierFactory {
     }
     
     @Override
-    public String toSchemaIdentifier(MetaSnapshot metaSnapshot, String database) {
+    public String toDatabaseIdentifier(MetaSnapshot metaSnapshot, String database) {
         NameChain nameChain = new NameChain();
         nameChain.add(database);
         
@@ -83,7 +83,17 @@ public class IdentifierFactoryImpl implements IdentifierFactory {
     }
     
     @Override
-    public String toTableIdentifier(MetaDatabase metaDatabase, String collection, TableRef tableRef) {
+    public String toCollectionIdentifier(MetaDatabase metaDatabase, String collection) {
+        NameChain nameChain = new NameChain();
+        nameChain.add(collection);
+        
+        IdentifierChecker uniqueIdentifierChecker = new TableIdentifierChecker(metaDatabase);
+        
+        return generateUniqueIdentifier(nameChain, uniqueIdentifierChecker);
+    }
+    
+    @Override
+    public String toDocPartIdentifier(MetaDatabase metaDatabase, String collection, TableRef tableRef) {
         NameChain nameChain = new NameChain();
         nameChain.add(collection);
         append(nameChain, tableRef);

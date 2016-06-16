@@ -26,28 +26,28 @@ public class IdentifierFactoryImplTest {
     @Test
     public void emptyDatabaseToIdentifierTest() {
         ImmutableMetaSnapshot metaSnapshot = new ImmutableMetaSnapshot.Builder().build();
-        String identifier = identifierFactory.toSchemaIdentifier(metaSnapshot, "");
+        String identifier = identifierFactory.toDatabaseIdentifier(metaSnapshot, "");
         Assert.assertEquals("", identifier);
     }
     
     @Test
     public void unallowedDatabaseToIdentifierTest() {
         ImmutableMetaSnapshot metaSnapshot = new ImmutableMetaSnapshot.Builder().build();
-        String identifier = identifierFactory.toSchemaIdentifier(metaSnapshot, "unallowed_schema");
+        String identifier = identifierFactory.toDatabaseIdentifier(metaSnapshot, "unallowed_schema");
         Assert.assertEquals("_unallowed_schema", identifier);
     }
     
     @Test
     public void databaseToIdentifierTest() {
         ImmutableMetaSnapshot metaSnapshot = new ImmutableMetaSnapshot.Builder().build();
-        String identifier = identifierFactory.toSchemaIdentifier(metaSnapshot, "database");
+        String identifier = identifierFactory.toDatabaseIdentifier(metaSnapshot, "database");
         Assert.assertEquals("database", identifier);
     }
     
     @Test
     public void long128DatabaseToIdentifierTest() {
         ImmutableMetaSnapshot metaSnapshot = new ImmutableMetaSnapshot.Builder().build();
-        String identifier = identifierFactory.toSchemaIdentifier(metaSnapshot, 
+        String identifier = identifierFactory.toDatabaseIdentifier(metaSnapshot, 
                   "database_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long");
         Assert.assertEquals("database_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long", identifier);
     }
@@ -55,7 +55,7 @@ public class IdentifierFactoryImplTest {
     @Test
     public void longForCounterDatabaseToIdentifierTest() {
         ImmutableMetaSnapshot metaSnapshot = new ImmutableMetaSnapshot.Builder().build();
-        String identifier = identifierFactory.toSchemaIdentifier(metaSnapshot, 
+        String identifier = identifierFactory.toDatabaseIdentifier(metaSnapshot, 
                   "database_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long");
         Assert.assertEquals("database_long_long_long_long_long_long_long_long_long_long_longong_long_long_long_long_long_long_long_long_long_long_long_long_1", identifier);
     }
@@ -66,7 +66,7 @@ public class IdentifierFactoryImplTest {
                 .add(new ImmutableMetaDatabase.Builder("database_collider", 
                         "database_long_long_long_long_long_long_long_long_long_long_longong_long_long_long_long_long_long_long_long_long_long_long_long_1"))
                 .build();
-        String identifier = identifierFactory.toSchemaIdentifier(metaSnapshot, 
+        String identifier = identifierFactory.toDatabaseIdentifier(metaSnapshot, 
                 "database_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long");
         Assert.assertEquals("database_long_long_long_long_long_long_long_long_long_long_longong_long_long_long_long_long_long_long_long_long_long_long_long_2", identifier);
     }
@@ -75,7 +75,7 @@ public class IdentifierFactoryImplTest {
     public void emptyCollectionDocPartRootToIdentifierTest() {
         ImmutableMetaDatabase metaDatabase = new ImmutableMetaDatabase.Builder("database", "database")
                 .build();
-        String identifier = identifierFactory.toTableIdentifier(metaDatabase, "", tableRefFactory.createRoot());
+        String identifier = identifierFactory.toDocPartIdentifier(metaDatabase, "", tableRefFactory.createRoot());
         Assert.assertEquals("", identifier);
     }
     
@@ -83,7 +83,7 @@ public class IdentifierFactoryImplTest {
     public void unallowedCollectionDocPartRootToIdentifierTest() {
         ImmutableMetaDatabase metaDatabase = new ImmutableMetaDatabase.Builder("database", "database")
                 .build();
-        String identifier = identifierFactory.toTableIdentifier(metaDatabase, "unallowed_table", tableRefFactory.createRoot());
+        String identifier = identifierFactory.toDocPartIdentifier(metaDatabase, "unallowed_table", tableRefFactory.createRoot());
         Assert.assertEquals("_unallowed_table", identifier);
     }
     
@@ -91,7 +91,7 @@ public class IdentifierFactoryImplTest {
     public void docPartRootToIdentifierTest() {
         ImmutableMetaDatabase metaDatabase = new ImmutableMetaDatabase.Builder("database", "database")
                 .build();
-        String identifier = identifierFactory.toTableIdentifier(metaDatabase, "collecti", tableRefFactory.createRoot());
+        String identifier = identifierFactory.toDocPartIdentifier(metaDatabase, "collecti", tableRefFactory.createRoot());
         Assert.assertEquals("collecti", identifier);
     }
     
@@ -99,7 +99,7 @@ public class IdentifierFactoryImplTest {
     public void emptyDocPartToIdentifierTest() {
         ImmutableMetaDatabase metaDatabase = new ImmutableMetaDatabase.Builder("database", "database")
                 .build();
-        String identifier = identifierFactory.toTableIdentifier(metaDatabase, "collecti", tableRefFactory.createChild(tableRefFactory.createRoot(), ""));
+        String identifier = identifierFactory.toDocPartIdentifier(metaDatabase, "collecti", tableRefFactory.createChild(tableRefFactory.createRoot(), ""));
         Assert.assertEquals("collecti_", identifier);
     }
     
@@ -107,7 +107,7 @@ public class IdentifierFactoryImplTest {
     public void long128DocPartToIdentifierTest() {
         ImmutableMetaDatabase metaDatabase = new ImmutableMetaDatabase.Builder("database", "database")
                 .build();
-        String identifier = identifierFactory.toTableIdentifier(metaDatabase, 
+        String identifier = identifierFactory.toDocPartIdentifier(metaDatabase, 
                 "collecti", 
                 tableRefFactory.createChild(
                         tableRefFactory.createRoot(), 
@@ -119,7 +119,7 @@ public class IdentifierFactoryImplTest {
     public void longForCounterDocPartToIdentifierTest() {
         ImmutableMetaDatabase metaDatabase = new ImmutableMetaDatabase.Builder("database", "database")
                 .build();
-        String identifier = identifierFactory.toTableIdentifier(metaDatabase, 
+        String identifier = identifierFactory.toDocPartIdentifier(metaDatabase, 
                 "collecti", 
                 tableRefFactory.createChild(
                         tableRefFactory.createRoot(), 
@@ -136,7 +136,7 @@ public class IdentifierFactoryImplTest {
                                 .build())
                         .build())
                 .build();
-        String identifier = identifierFactory.toTableIdentifier(metaDatabase, 
+        String identifier = identifierFactory.toDocPartIdentifier(metaDatabase, 
                 "collecti", 
                 tableRefFactory.createChild(
                         tableRefFactory.createRoot(), 
