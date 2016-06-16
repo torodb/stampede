@@ -35,7 +35,9 @@ import org.jooq.impl.SchemaImpl;
 
 import com.torodb.backend.DatabaseInterface;
 import com.torodb.backend.exceptions.InvalidDatabaseException;
+import com.torodb.backend.tables.MetaDatabaseTable;
 import com.torodb.backend.tables.SemanticTable;
+import com.torodb.backend.tables.records.MetaDatabaseRecord;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -87,31 +89,23 @@ public class TorodbSchema extends SchemaImpl {
 	    throw new RuntimeException("operation not permitted");
 	}
 
-    @SuppressFBWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
     private void createSchema(DSLContext dsl, DatabaseInterface databaseInterface) throws SQLException {
     	databaseInterface.createSchema(dsl, TORODB_SCHEMA);
 
+    	databaseInterface.createMetaDatabaseTable(dsl);
     	Connection c = dsl.configuration().connectionProvider().acquire();
-        try (PreparedStatement ps = c.prepareStatement(databaseInterface.getMetaDatabaseTable().getSQLCreationStatement(databaseInterface))) {
-            ps.execute();
-        } finally {
-            dsl.configuration().connectionProvider().release(c);
-        }
-
-        try (PreparedStatement ps = c.prepareStatement(databaseInterface.getMetaCollectionTable().getSQLCreationStatement(databaseInterface))) {
-            ps.execute();
-        } finally {
-            dsl.configuration().connectionProvider().release(c);
-        }
-
-        try (PreparedStatement ps = c.prepareStatement(databaseInterface.getMetaDocPartTable().getSQLCreationStatement(databaseInterface))) {
-            ps.execute();
-        } finally {
-            dsl.configuration().connectionProvider().release(c);
-        }
-
-        try (PreparedStatement ps = c.prepareStatement(databaseInterface.getMetaFieldTable().getSQLCreationStatement(databaseInterface))) {
-            ps.execute();
+    	try{
+	        try (PreparedStatement ps = c.prepareStatement(databaseInterface.getMetaCollectionTable().getSQLCreationStatement(databaseInterface))) {
+	            ps.execute();
+	        }
+	
+	        try (PreparedStatement ps = c.prepareStatement(databaseInterface.getMetaDocPartTable().getSQLCreationStatement(databaseInterface))) {
+	            ps.execute();
+	        }
+	
+	        try (PreparedStatement ps = c.prepareStatement(databaseInterface.getMetaFieldTable().getSQLCreationStatement(databaseInterface))) {
+	            ps.execute();
+	        }
         } finally {
             dsl.configuration().connectionProvider().release(c);
         }

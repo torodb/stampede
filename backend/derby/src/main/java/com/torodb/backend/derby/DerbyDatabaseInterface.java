@@ -335,8 +335,10 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
     }
 
     @Override
-    public @Nonnull String createMetaDatabaseTableStatement(@Nonnull String schemaName, @Nonnull String tableName) {
-        return new StringBuilder()
+    public void createMetaDatabaseTable(DSLContext dsl) {
+    	String schemaName = metaDatabaseTable.getSchema().getName();
+    	String tableName = metaDatabaseTable.getName();
+        String statement = new StringBuilder()
                 .append("CREATE TABLE ")
                 .append(fullTableName(schemaName, tableName))
                 .append(" (")
@@ -344,6 +346,15 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
                 .append('"').append(MetaDatabaseTable.TableFields.IDENTIFIER.toString()).append('"').append("       varchar(128)      NOT NULL UNIQUE ")
                 .append(")")
                 .toString();
+        Connection c = dsl.configuration().connectionProvider().acquire();
+        try (PreparedStatement ps = c.prepareStatement(statement)) {
+            ps.execute();
+        } catch (SQLException ex) {
+        	handleRetryException(Context.insert, ex);
+            throw new SystemException(ex);
+		} finally {
+            dsl.configuration().connectionProvider().release(c);
+        }
     }
 
     @Override
@@ -778,20 +789,17 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
             return;
         }
         
-        Connection connection = dsl.configuration().connectionProvider().acquire();
         try {
             MetaDocPart metaDocPart = docPartData.getMetaDocPart();
             Iterator<MetaField> metaFieldIterator = docPartData.orderedMetaFieldIterator();
-            standardInsertPathDocuments(dsl, schemaName, metaDocPart, metaFieldIterator, docPartRowIterator);
+            standardInsertDocPartData(dsl, schemaName, metaDocPart, metaFieldIterator, docPartRowIterator);
         } catch (DataAccessException ex) {
             handleRetryException(Context.insert, ex);
             throw new SystemException(ex);
-        } finally {
-            dsl.configuration().connectionProvider().release(connection);
         }
     }
 
-    protected void standardInsertPathDocuments(DSLContext dsl, String schemaName, MetaDocPart metaDocPart, 
+    protected void standardInsertDocPartData(DSLContext dsl, String schemaName, MetaDocPart metaDocPart, 
             Iterator<MetaField> metaFieldIterator, Iterator<DocPartRow> docPartRowIterator) {
         final int maxBatchSize = 1000;
         final StringBuilder insertStatementHeaderBuilder = new StringBuilder(2048);

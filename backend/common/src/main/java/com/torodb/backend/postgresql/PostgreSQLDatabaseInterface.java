@@ -311,15 +311,27 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
     }
 
     @Override
-    public @Nonnull String createMetaDatabaseTableStatement(@Nonnull String schemaName, @Nonnull String tableName) {
-        return new StringBuilder()
-                .append("CREATE TABLE ")
-                .append(fullTableName(schemaName, tableName))
-                .append(" (")
-                .append(MetaDatabaseTable.TableFields.NAME.name()).append("             varchar     PRIMARY KEY     ,")
-                .append(MetaDatabaseTable.TableFields.IDENTIFIER.name()).append("       varchar     NOT NULL UNIQUE ")
-                .append(")")
+    public void createMetaDatabaseTable(DSLContext dsl) {
+    	String schemaName = metaDatabaseTable.getSchema().getName();
+    	String tableName = metaDatabaseTable.getName();
+    	
+        String statement = new StringBuilder()
+        		 .append("CREATE TABLE ")
+                 .append(fullTableName(schemaName, tableName))
+                 .append(" (")
+                 .append(MetaDatabaseTable.TableFields.NAME.name()).append("             varchar     PRIMARY KEY     ,")
+                 .append(MetaDatabaseTable.TableFields.IDENTIFIER.name()).append("       varchar     NOT NULL UNIQUE ")
+                 .append(")")
                 .toString();
+        Connection c = dsl.configuration().connectionProvider().acquire();
+        try (PreparedStatement ps = c.prepareStatement(statement)) {
+            ps.execute();
+        } catch (SQLException ex) {
+        	handleRetryException(Context.insert, ex);
+            throw new SystemException(ex);
+    	} finally {
+            dsl.configuration().connectionProvider().release(c);
+        }
     }
 
     @Override
