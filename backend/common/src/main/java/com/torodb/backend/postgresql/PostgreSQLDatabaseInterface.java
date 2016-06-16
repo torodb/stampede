@@ -60,6 +60,7 @@ import com.torodb.backend.InternalField;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.backend.converters.jooq.ValueToJooqDataTypeProvider;
 import com.torodb.backend.index.NamedDbIndex;
+import com.torodb.backend.interfaces.ErrorHandlerInterface.Context;
 import com.torodb.backend.meta.TorodbSchema;
 import com.torodb.backend.postgresql.converters.PostgreSQLValueToCopyConverter;
 import com.torodb.backend.postgresql.converters.jooq.PostgreSQLValueToJooqDataTypeProvider;
@@ -323,29 +324,24 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
                  .append(MetaDatabaseTable.TableFields.IDENTIFIER.name()).append("       varchar     NOT NULL UNIQUE ")
                  .append(")")
                 .toString();
-        Connection c = dsl.configuration().connectionProvider().acquire();
-        try (PreparedStatement ps = c.prepareStatement(statement)) {
-            ps.execute();
-        } catch (SQLException ex) {
-        	handleRetryException(Context.insert, ex);
-            throw new SystemException(ex);
-    	} finally {
-            dsl.configuration().connectionProvider().release(c);
-        }
+        executeStatement(dsl, statement, Context.ddl);
     }
-
+    
     @Override
-    public @Nonnull String createMetaCollectionTableStatement(@Nonnull String schemaName, @Nonnull String tableName) {
-        return new StringBuilder()
-                .append("CREATE TABLE ")
-                .append(fullTableName(schemaName, tableName))
-                .append(" (")
-                .append(MetaCollectionTable.TableFields.DATABASE.name()).append("         varchar     NOT NULL        ,")
-                .append(MetaCollectionTable.TableFields.NAME.name()).append("             varchar     NOT NULL        ,")
-                .append("    PRIMARY KEY (").append(MetaCollectionTable.TableFields.DATABASE.name()).append(",")
-                    .append(MetaCollectionTable.TableFields.NAME.name()).append("),")
-                .append(")")
-                .toString();
+    public void createMetaCollectionTable(DSLContext dsl) {
+    	String schemaName = metaCollectionTable.getSchema().getName();
+    	String tableName = metaCollectionTable.getName();
+    	String statement = new StringBuilder()
+    			 .append("CREATE TABLE ")
+                 .append(fullTableName(schemaName, tableName))
+                 .append(" (")
+                 .append(MetaCollectionTable.TableFields.DATABASE.name()).append("         varchar     NOT NULL        ,")
+                 .append(MetaCollectionTable.TableFields.NAME.name()).append("             varchar     NOT NULL        ,")
+                 .append("    PRIMARY KEY (").append(MetaCollectionTable.TableFields.DATABASE.name()).append(",")
+                     .append(MetaCollectionTable.TableFields.NAME.name()).append("),")
+                 .append(")")
+                 .toString();
+    	executeStatement(dsl, statement, Context.ddl);
     }
 
     @Override
@@ -1053,5 +1049,17 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
 	        .append("\" ")
             .append(field.getDataType().getCastTypeName(dsl.configuration()));
         dsl.execute(sb.toString());
+    }
+	
+    private void executeStatement(DSLContext dsl, String statement, Context context){
+    	Connection c = dsl.configuration().connectionProvider().acquire();
+        try (PreparedStatement ps = c.prepareStatement(statement)) {
+            ps.execute();
+        } catch (SQLException ex) {
+        	handleRetryException(context, ex);
+            throw new SystemException(ex);
+		} finally {
+            dsl.configuration().connectionProvider().release(c);
+        }    	
     }
 }

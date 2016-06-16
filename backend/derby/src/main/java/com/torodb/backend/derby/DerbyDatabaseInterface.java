@@ -74,7 +74,6 @@ import com.torodb.backend.tables.MetaCollectionTable;
 import com.torodb.backend.tables.MetaDatabaseTable;
 import com.torodb.backend.tables.MetaDocPartTable;
 import com.torodb.backend.tables.MetaDocPartTable.DocPartTableFields;
-import com.torodb.backend.tables.records.MetaFieldRecord;
 import com.torodb.backend.tables.MetaFieldTable;
 import com.torodb.core.TableRef;
 import com.torodb.core.TableRefFactory;
@@ -346,32 +345,27 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
                 .append('"').append(MetaDatabaseTable.TableFields.IDENTIFIER.toString()).append('"').append("       varchar(128)      NOT NULL UNIQUE ")
                 .append(")")
                 .toString();
-        Connection c = dsl.configuration().connectionProvider().acquire();
-        try (PreparedStatement ps = c.prepareStatement(statement)) {
-            ps.execute();
-        } catch (SQLException ex) {
-        	handleRetryException(Context.insert, ex);
-            throw new SystemException(ex);
-		} finally {
-            dsl.configuration().connectionProvider().release(c);
-        }
+        executeStatement(dsl, statement, Context.ddl);
     }
-
+    
     @Override
-    public @Nonnull String createMetaCollectionTableStatement(@Nonnull String schemaName, @Nonnull String tableName) {
-        return new StringBuilder()
-                .append("CREATE TABLE ")
-                .append(fullTableName(schemaName, tableName))
-                .append(" (")
-                .append('"').append(MetaCollectionTable.TableFields.DATABASE.toString()).append('"').append("         varchar(32672)    NOT NULL        ,")
-                .append('"').append(MetaCollectionTable.TableFields.NAME.toString()).append('"').append("             varchar(32672)    NOT NULL        ,")
-                .append('"').append(MetaDatabaseTable.TableFields.IDENTIFIER.toString()).append('"').append("         varchar(128)      NOT NULL UNIQUE ,")
-                .append("    PRIMARY KEY (").append('"').append(MetaCollectionTable.TableFields.DATABASE.toString()).append('"').append(",")
-                    .append('"').append(MetaCollectionTable.TableFields.NAME.toString()).append('"').append(")")
-                .append(")")
-                .toString();
+    public void createMetaCollectionTable(DSLContext dsl) {
+    	String schemaName = metaCollectionTable.getSchema().getName();
+    	String tableName = metaCollectionTable.getName();
+    	String statement = new StringBuilder()
+                 .append("CREATE TABLE ")
+                 .append(fullTableName(schemaName, tableName))
+                 .append(" (")
+                 .append('"').append(MetaCollectionTable.TableFields.DATABASE.toString()).append('"').append("         varchar(32672)    NOT NULL        ,")
+                 .append('"').append(MetaCollectionTable.TableFields.NAME.toString()).append('"').append("             varchar(32672)    NOT NULL        ,")
+                 .append('"').append(MetaDatabaseTable.TableFields.IDENTIFIER.toString()).append('"').append("         varchar(128)      NOT NULL UNIQUE ,")
+                 .append("    PRIMARY KEY (").append('"').append(MetaCollectionTable.TableFields.DATABASE.toString()).append('"').append(",")
+                     .append('"').append(MetaCollectionTable.TableFields.NAME.toString()).append('"').append(")")
+                 .append(")")
+                 .toString();
+    	executeStatement(dsl, statement, Context.ddl);
     }
-
+    
     @Override
     public @Nonnull String createMetaDocPartTableStatement(@Nonnull String schemaName, @Nonnull String tableName) {
         return new StringBuilder()
@@ -1019,4 +1013,15 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
         dsl.execute(sb.toString());
     }
 
+    private void executeStatement(DSLContext dsl, String statement, Context context){
+    	Connection c = dsl.configuration().connectionProvider().acquire();
+        try (PreparedStatement ps = c.prepareStatement(statement)) {
+            ps.execute();
+        } catch (SQLException ex) {
+        	handleRetryException(context, ex);
+            throw new SystemException(ex);
+		} finally {
+            dsl.configuration().connectionProvider().release(c);
+        }    	
+    }
 }

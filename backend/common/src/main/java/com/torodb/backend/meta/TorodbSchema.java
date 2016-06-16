@@ -35,11 +35,7 @@ import org.jooq.impl.SchemaImpl;
 
 import com.torodb.backend.DatabaseInterface;
 import com.torodb.backend.exceptions.InvalidDatabaseException;
-import com.torodb.backend.tables.MetaDatabaseTable;
 import com.torodb.backend.tables.SemanticTable;
-import com.torodb.backend.tables.records.MetaDatabaseRecord;
-
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 public class TorodbSchema extends SchemaImpl {
 
@@ -93,12 +89,9 @@ public class TorodbSchema extends SchemaImpl {
     	databaseInterface.createSchema(dsl, TORODB_SCHEMA);
 
     	databaseInterface.createMetaDatabaseTable(dsl);
+    	databaseInterface.createMetaCollectionTable(dsl);
     	Connection c = dsl.configuration().connectionProvider().acquire();
     	try{
-	        try (PreparedStatement ps = c.prepareStatement(databaseInterface.getMetaCollectionTable().getSQLCreationStatement(databaseInterface))) {
-	            ps.execute();
-	        }
-	
 	        try (PreparedStatement ps = c.prepareStatement(databaseInterface.getMetaDocPartTable().getSQLCreationStatement(databaseInterface))) {
 	            ps.execute();
 	        }

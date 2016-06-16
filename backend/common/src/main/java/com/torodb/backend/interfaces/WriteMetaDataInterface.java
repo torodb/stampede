@@ -8,12 +8,12 @@ import com.torodb.core.TableRef;
 import com.torodb.core.transaction.metainf.FieldType;
 
 public interface WriteMetaDataInterface {
-    @Nonnull String createMetaCollectionTableStatement(@Nonnull String schemaName, @Nonnull String tableName);
     @Nonnull String createMetaDocPartTableStatement(@Nonnull String schemaName, @Nonnull String tableName);
     @Nonnull String createMetaFieldTableStatement(@Nonnull String schemaName, @Nonnull String tableName);
     @Nonnull String createMetaIndexesTableStatement(@Nonnull String schemaName, @Nonnull String tableName, @Nonnull String indexNameColumn, @Nonnull String indexOptionsColumn);
     
     void createMetaDatabaseTable(@Nonnull DSLContext dsl);
+    void createMetaCollectionTable(@Nonnull DSLContext dsl);
     
     void addMetaDatabase(@Nonnull DSLContext dsl, @Nonnull String databaseName, @Nonnull String databaseIdentifier);
     void addMetaCollection(@Nonnull DSLContext dsl, @Nonnull String databaseName, @Nonnull String collectionName, @Nonnull String collectionIdentifier);
