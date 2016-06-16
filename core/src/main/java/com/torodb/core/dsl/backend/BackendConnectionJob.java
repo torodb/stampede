@@ -21,12 +21,13 @@
 package com.torodb.core.dsl.backend;
 
 import com.torodb.core.backend.WriteBackendTransaction;
+import com.torodb.core.exceptions.user.UserException;
 
 /**
  *
  */
 public interface BackendConnectionJob {
 
-    public void execute(WriteBackendTransaction connection);
+    public void execute(WriteBackendTransaction connection) throws UserException;
 
 }
