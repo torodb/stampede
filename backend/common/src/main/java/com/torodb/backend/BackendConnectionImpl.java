@@ -20,10 +20,6 @@
 
 package com.torodb.backend;
 
-import org.jooq.DSLContext;
-import org.jooq.Field;
-import org.jooq.impl.DSL;
-
 import com.google.common.collect.ImmutableList;
 import com.torodb.backend.tables.MetaCollectionTable;
 import com.torodb.backend.tables.MetaDatabaseTable;
@@ -33,14 +29,17 @@ import com.torodb.backend.tables.records.MetaCollectionRecord;
 import com.torodb.backend.tables.records.MetaDatabaseRecord;
 import com.torodb.backend.tables.records.MetaDocPartRecord;
 import com.torodb.backend.tables.records.MetaFieldRecord;
-import com.torodb.core.backend.BackendConnection;
 import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetaField;
+import org.jooq.DSLContext;
+import org.jooq.Field;
+import org.jooq.impl.DSL;
+import com.torodb.core.backend.WriteBackendTransaction;
 
-public class BackendConnectionImpl implements BackendConnection {
+public class BackendConnectionImpl implements WriteBackendTransaction {
     
     private final DSLContext dsl;
     private final DatabaseInterface databaseInterface;
