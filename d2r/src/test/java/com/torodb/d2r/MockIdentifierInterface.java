@@ -44,4 +44,9 @@ public class MockIdentifierInterface implements IdentifierInterface {
         return !identifier.equals("unallowed_column_s");
     }
 
+    @Override
+    public boolean isSameIdentifier(String leftIdentifier, String rightIdentifier) {
+        return leftIdentifier.equals(rightIdentifier);
+    }
+
 }

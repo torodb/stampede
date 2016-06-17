@@ -25,6 +25,7 @@ public class IdentifierFactoryImpl implements IdentifierFactory {
 
     private static final int MAX_GENERATION_TIME = 10;
     private static final char SEPARATOR = '_';
+    private static final char ARRAY_DIMENSION_SEPARATOR = '$';
     private static final String SEPARATOR_STRING = String.valueOf('_');
     private static final char[] FIELD_TYPE_IDENTIFIERS = new char[FieldType.values().length];
     static {
@@ -168,7 +169,7 @@ public class IdentifierFactoryImpl implements IdentifierFactory {
             while (parentTableRef.isInArray()) {
                 parentTableRef = parentTableRef.getParent().get();
             }
-            name = parentTableRef.getName() + name;
+            name = parentTableRef.getName() + ARRAY_DIMENSION_SEPARATOR + tableRef.getArrayDimension();
             
             parentTableRef = parentTableRef.getParent().get();
         }
@@ -184,13 +185,21 @@ public class IdentifierFactoryImpl implements IdentifierFactory {
         
         final int size = nameChain.size();
         int index = 1;
-        for (; index < size - 1; index++) {
+        for (; index < size - 2; index++) {
             if (converters[1].convertWhole()) {
                 middleIdentifierBuilder.append(nameChain.get(index));
             } else {
                 middleIdentifierBuilder.append(converters[1].convert(nameChain.get(index), nameMaxSize, counter));
             }
             middleIdentifierBuilder.append('_');
+        }
+        if (index < size - 1) {
+            if (converters[1].convertWhole()) {
+                middleIdentifierBuilder.append(nameChain.get(index));
+            } else {
+                middleIdentifierBuilder.append(converters[1].convert(nameChain.get(index), nameMaxSize, counter));
+            }
+            index++;
         }
         
         StringBuilder identifierBuilder = new StringBuilder();
@@ -283,7 +292,7 @@ public class IdentifierFactoryImpl implements IdentifierFactory {
     }
     
     private static class NameChain {
-        private final static Pattern NO_ALLOWED_CHAR_PATTERN = Pattern.compile("[^0-9a-z_]");
+        private final static Pattern NO_ALLOWED_CHAR_PATTERN = Pattern.compile("[^0-9a-z_$]");
         private final ArrayList<String> names;
         
         public NameChain() {

@@ -37,7 +37,7 @@ public abstract class TableRef {
     public abstract int getDepth();
 
     /**
-     * The array dimension of this TableRef on the document model.
+     * The array dimension of this TableRef on the document model if the array dimension is greather than 2 or 0 otherwise.
      *
      * For example, the table referenced by "a.b.c.$2.$3" should have array dimension 3. On any collection, the
      * root TableRef has array dimension 0.
