@@ -34,11 +34,9 @@ public class WrapperMutableMetaDatabase implements MutableMetaDatabase {
     private final Map<String, WrapperMutableMetaCollection> newCollections;
     private final Set<WrapperMutableMetaCollection> modifiedMetaCollections;
     private final Consumer<WrapperMutableMetaDatabase> changeConsumer;
-    private final boolean isNew;
 
     public WrapperMutableMetaDatabase(ImmutableMetaDatabase wrapped,
-            Consumer<WrapperMutableMetaDatabase> changeConsumer, boolean isNew) {
-        this.isNew = isNew;
+            Consumer<WrapperMutableMetaDatabase> changeConsumer) {
         this.wrapped = wrapped;
         this.changeConsumer = changeConsumer;
 

@@ -37,12 +37,10 @@ import java.util.EnumSet;
  */
 public class Sequencer<E extends Enum<E>> {
 
-    private final Class<E> messagesClass;
     private final EnumSet<E> sentMessages;
     private final Multimap<E, Thread> reservedMessages;
 
     public Sequencer(Class<E> messageClass) {
-        this.messagesClass = messageClass;
         sentMessages = EnumSet.noneOf(messageClass);
         reservedMessages = HashMultimap.create();
     }

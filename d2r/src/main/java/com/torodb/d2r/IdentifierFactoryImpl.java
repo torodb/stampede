@@ -1,5 +1,10 @@
 package com.torodb.d2r;
 
+import com.torodb.core.TableRef;
+import com.torodb.core.backend.IdentifierConstraints;
+import com.torodb.core.d2r.IdentifierFactory;
+import com.torodb.core.exceptions.SystemException;
+import com.torodb.core.transaction.metainf.*;
 import java.text.Normalizer;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -9,30 +14,20 @@ import java.util.Locale;
 import java.util.Random;
 import java.util.regex.Pattern;
 
-import com.torodb.core.TableRef;
-import com.torodb.core.backend.IdentifierInterface;
-import com.torodb.core.d2r.IdentifierFactory;
-import com.torodb.core.exceptions.SystemException;
-import com.torodb.core.transaction.metainf.FieldType;
-import com.torodb.core.transaction.metainf.MetaCollection;
-import com.torodb.core.transaction.metainf.MetaDatabase;
-import com.torodb.core.transaction.metainf.MetaDocPart;
-import com.torodb.core.transaction.metainf.MetaSnapshot;
-
 public class IdentifierFactoryImpl implements IdentifierFactory {
 
     private static final int MAX_GENERATION_TIME = 10;
 
-    private final IdentifierInterface identifierInterface;
+    private final IdentifierConstraints identifierConstraints;
     private final char separator;
     private final String separatorString;
     private final char arrayDimensionSeparator;
     
-    public IdentifierFactoryImpl(IdentifierInterface identifierInterface) {
-        this.identifierInterface = identifierInterface;
-        this.separator = identifierInterface.getSeparator();
+    public IdentifierFactoryImpl(IdentifierConstraints identifierConstraints) {
+        this.identifierConstraints = identifierConstraints;
+        this.separator = identifierConstraints.getSeparator();
         this.separatorString = String.valueOf(separator);
-        this.arrayDimensionSeparator = identifierInterface.getArrayDimensionSeparator();
+        this.arrayDimensionSeparator = identifierConstraints.getArrayDimensionSeparator();
     }
     
     @Override
@@ -73,12 +68,12 @@ public class IdentifierFactoryImpl implements IdentifierFactory {
         
         IdentifierChecker uniqueIdentifierChecker = new FieldIdentifierChecker(metaDocPart);
         
-        return generateUniqueIdentifier(nameChain, uniqueIdentifierChecker, String.valueOf(identifierInterface.getFieldTypeIdentifier(fieldType)));
+        return generateUniqueIdentifier(nameChain, uniqueIdentifierChecker, String.valueOf(identifierConstraints.getFieldTypeIdentifier(fieldType)));
     }
     
     @Override
     public String toFieldIdentifierForScalar(FieldType fieldType) {
-        return identifierInterface.getScalarIdentifier(fieldType);
+        return identifierConstraints.getScalarIdentifier(fieldType);
     }
 
     private String generateUniqueIdentifier(NameChain nameChain, IdentifierChecker uniqueIdentifierChecker) {
@@ -87,7 +82,7 @@ public class IdentifierFactoryImpl implements IdentifierFactory {
     
     private String generateUniqueIdentifier(NameChain nameChain, IdentifierChecker identifierChecker, String extraImmutableName) {
         final Instant beginInstant = Instant.now();
-        final int maxSize = identifierInterface.identifierMaxSize();
+        final int maxSize = identifierConstraints.identifierMaxSize();
         String lastCollision = null;
         ChainConverterFactory chainConverterFactory = ChainConverterFactory.straight;
         Counter counter = new Counter();
@@ -252,7 +247,7 @@ public class IdentifierFactoryImpl implements IdentifierFactory {
         
         String identifier = identifierBuilder.toString();
         
-        if (!identifierChecker.isAllowed(identifierInterface, identifier)) {
+        if (!identifierChecker.isAllowed(identifierConstraints, identifier)) {
             identifier = separator + identifier;
         }
         
@@ -485,7 +480,7 @@ public class IdentifierFactoryImpl implements IdentifierFactory {
     
     private static interface IdentifierChecker {
         boolean isUnique(String identifier);
-        boolean isAllowed(IdentifierInterface identifierInterface, String identifier);
+        boolean isAllowed(IdentifierConstraints identifierInterface, String identifier);
     }
     
     private static class DatabaseIdentifierChecker implements IdentifierChecker {
@@ -502,7 +497,7 @@ public class IdentifierFactoryImpl implements IdentifierFactory {
         }
 
         @Override
-        public boolean isAllowed(IdentifierInterface identifierInterface, String identifier) {
+        public boolean isAllowed(IdentifierConstraints identifierInterface, String identifier) {
             return identifierInterface.isAllowedSchemaIdentifier(identifier);
         }
     }
@@ -530,7 +525,7 @@ public class IdentifierFactoryImpl implements IdentifierFactory {
         }
 
         @Override
-        public boolean isAllowed(IdentifierInterface identifierInterface, String identifier) {
+        public boolean isAllowed(IdentifierConstraints identifierInterface, String identifier) {
             return identifierInterface.isAllowedTableIdentifier(identifier);
         }
     }
@@ -549,7 +544,7 @@ public class IdentifierFactoryImpl implements IdentifierFactory {
         }
 
         @Override
-        public boolean isAllowed(IdentifierInterface identifierInterface, String identifier) {
+        public boolean isAllowed(IdentifierConstraints identifierInterface, String identifier) {
             return identifierInterface.isAllowedColumnIdentifier(identifier);
         }
     }

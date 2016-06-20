@@ -18,11 +18,30 @@
  * 
  */
 
-package com.torodb.core.backend;
+package com.torodb.core.guice;
+
+import com.google.inject.AbstractModule;
+import com.google.inject.Singleton;
+import com.torodb.core.Retrier;
+import com.torodb.core.TableRefFactory;
+import com.torodb.core.impl.RetrierImpl;
+import com.torodb.core.impl.TableRefFactoryImpl;
 
 /**
  *
  */
-public interface ReadOnlyBackendTransaction extends BackendTransaction {
-    
+public class CoreModule extends AbstractModule {
+
+    @Override
+    protected void configure() {
+        bind(TableRefFactory.class)
+                .to(TableRefFactoryImpl.class)
+                .asEagerSingleton();
+
+        bind(Retrier.class)
+                .to(RetrierImpl.class)
+                .in(Singleton.class);
+
+    }
+
 }

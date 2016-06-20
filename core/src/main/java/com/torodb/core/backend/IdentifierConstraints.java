@@ -1,10 +1,9 @@
 package com.torodb.core.backend;
 
+import com.torodb.core.transaction.metainf.FieldType;
 import javax.annotation.Nonnull;
 
-import com.torodb.core.transaction.metainf.FieldType;
-
-public interface IdentifierInterface {
+public interface IdentifierConstraints {
     int identifierMaxSize();
     boolean isAllowedSchemaIdentifier(@Nonnull String identifier);
     boolean isAllowedTableIdentifier(@Nonnull String identifier);
@@ -12,6 +11,6 @@ public interface IdentifierInterface {
     boolean isSameIdentifier(@Nonnull String leftIdentifier, @Nonnull String rightIdentifier);
     char getSeparator();
     char getArrayDimensionSeparator();
-    @Nonnull char getFieldTypeIdentifier(@Nonnull FieldType fieldType);
-    @Nonnull String getScalarIdentifier(@Nonnull FieldType fieldType);
+    char getFieldTypeIdentifier(FieldType fieldType);
+    String getScalarIdentifier(FieldType fieldType);
 }

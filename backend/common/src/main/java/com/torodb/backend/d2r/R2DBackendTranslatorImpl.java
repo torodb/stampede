@@ -6,7 +6,6 @@ import java.util.Collection;
 
 import org.jooq.Converter;
 
-import com.torodb.backend.DatabaseInterface;
 import com.torodb.backend.InternalField;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.backend.interfaces.ErrorHandlerInterface.Context;
@@ -21,10 +20,11 @@ import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetaField;
 import com.torodb.kvdocument.values.KVValue;
+import com.torodb.backend.SqlInterface;
 
 public class R2DBackendTranslatorImpl implements R2DBackendTranslator<ResultSet, R2DBackendTranslatorImpl.ResultSetInternalFields> {
 
-    private final DatabaseInterface databaseInterface;
+    private final SqlInterface databaseInterface;
     private final MetaDatabase metaDatabase;
     private final MetaCollection metaCollection;
     private final Converter<Object, Integer> didConverter;
@@ -33,7 +33,7 @@ public class R2DBackendTranslatorImpl implements R2DBackendTranslator<ResultSet,
     private final Converter<Object, Integer> seqConverter;
 	
 	@SuppressWarnings("unchecked")
-    public R2DBackendTranslatorImpl(DatabaseInterface databaseInterface, MetaDatabase metaDatabase, MetaCollection metaCollection) {
+    public R2DBackendTranslatorImpl(SqlInterface databaseInterface, MetaDatabase metaDatabase, MetaCollection metaCollection) {
         this.databaseInterface = databaseInterface;
         this.metaDatabase = metaDatabase;
         this.metaCollection = metaCollection;

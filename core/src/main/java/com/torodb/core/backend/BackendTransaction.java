@@ -23,6 +23,8 @@ package com.torodb.core.backend;
 /**
  *
  */
-public interface ReadOnlyBackendTransaction extends BackendTransaction {
-    
+public interface BackendTransaction extends AutoCloseable {
+
+    @Override
+    public void close();
 }

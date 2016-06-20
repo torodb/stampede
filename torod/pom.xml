@@ -69,5 +69,9 @@
             <artifactId>rxjava-reactive-streams</artifactId>
             <version>1.0.1</version>
         </dependency>
+        <dependency>
+            <groupId>com.google.inject</groupId>
+            <artifactId>guice</artifactId>
+        </dependency>
     </dependencies>
 </project>

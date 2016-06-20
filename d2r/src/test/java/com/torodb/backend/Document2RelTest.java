@@ -1,22 +1,5 @@
 package com.torodb.backend;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-
-import java.time.Instant;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.Optional;
-
-import org.junit.Before;
-import org.junit.Test;
-
 import com.torodb.common.util.HexUtils;
 import com.torodb.core.TableRef;
 import com.torodb.core.TableRefFactory;
@@ -25,14 +8,8 @@ import com.torodb.core.d2r.D2RTranslator;
 import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.d2r.DocPartRow;
 import com.torodb.core.impl.TableRefFactoryImpl;
-import com.torodb.core.transaction.metainf.FieldType;
-import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
-import com.torodb.core.transaction.metainf.ImmutableMetaDatabase;
-import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
-import com.torodb.core.transaction.metainf.MetaDocPart;
-import com.torodb.core.transaction.metainf.MetaField;
 import com.torodb.core.transaction.metainf.MetainfoRepository.SnapshotStage;
-import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
+import com.torodb.core.transaction.metainf.*;
 import com.torodb.d2r.MockRidGenerator;
 import com.torodb.kvdocument.conversion.json.JacksonJsonParser;
 import com.torodb.kvdocument.conversion.json.JsonParser;
@@ -42,6 +19,13 @@ import com.torodb.kvdocument.values.KVDocument;
 import com.torodb.kvdocument.values.KVMongoObjectId;
 import com.torodb.kvdocument.values.KVValue;
 import com.torodb.metainfo.cache.mvcc.MvccMetainfoRepository;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import org.junit.Before;
+import org.junit.Test;
+
+import static org.junit.Assert.*;
 
 public class Document2RelTest {
 
@@ -420,7 +404,10 @@ public class Document2RelTest {
 	private CollectionData parseDocument(String docName) {
 	    TableRefFactory tableRefFactory = new TableRefFactoryImpl();
 		MockRidGenerator ridGenerator = new MockRidGenerator();
-		D2RTranslator translator = new D2RTranslatorImpl(tableRefFactory, ridGenerator, mutableSnapshot, DB1, COLLA);
+
+        MutableMetaDatabase metaDatabaseByName = mutableSnapshot.getMetaDatabaseByName(DB1);
+
+		D2RTranslator translator = new D2RTranslatorImpl(tableRefFactory, ridGenerator, mutableSnapshot.getMetaDatabaseByName(DB1), metaDatabaseByName.getMetaCollectionByName(COLLA));
 		KVDocument document = parser.createFromResource("docs/" + docName);
 		translator.translate(document);
 		return translator.getCollectionDataAccumulator();

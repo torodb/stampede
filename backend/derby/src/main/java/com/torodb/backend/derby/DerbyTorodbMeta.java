@@ -33,7 +33,6 @@ import org.jooq.Meta;
 import org.jooq.Result;
 import org.jooq.Table;
 
-import com.torodb.backend.DatabaseInterface;
 import com.torodb.backend.exceptions.InvalidDatabaseException;
 import com.torodb.backend.exceptions.InvalidDatabaseSchemaException;
 import com.torodb.backend.meta.TorodbMeta;
@@ -56,20 +55,21 @@ import com.torodb.core.transaction.metainf.ImmutableMetaDocPart;
 import com.torodb.core.transaction.metainf.ImmutableMetaField;
 import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
 import com.torodb.core.transaction.metainf.MetaSnapshot;
+import com.torodb.backend.SqlInterface;
 
 /**
  *
  */
 public class DerbyTorodbMeta implements TorodbMeta {
 
-    private final DatabaseInterface databaseInterface;
+    private final SqlInterface databaseInterface;
     private final ImmutableMetaSnapshot metaSnapshot;
     private final Map<String,Map<String,Map<TableRef,Integer>>> lastIds;
 
     DerbyTorodbMeta(
             DSLContext dsl,
             TableRefFactory tableRefFactory,
-            DatabaseInterface databaseInterface)
+            SqlInterface databaseInterface)
     throws SQLException, IOException, InvalidDatabaseException {
         this.databaseInterface = databaseInterface;
 

@@ -20,10 +20,10 @@
 
 package com.torodb.d2r;
 
-import com.torodb.core.backend.IdentifierInterface;
+import com.torodb.core.backend.IdentifierConstraints;
 import com.torodb.core.transaction.metainf.FieldType;
 
-public class MockIdentifierInterface implements IdentifierInterface {
+public class MockIdentifierInterface implements IdentifierConstraints {
 
     @Override
     public int identifierMaxSize() {

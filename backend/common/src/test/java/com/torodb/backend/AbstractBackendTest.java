@@ -20,37 +20,34 @@
 
 package com.torodb.backend;
 
-import java.sql.SQLException;
-
-import javax.sql.DataSource;
-
-import org.junit.Before;
-
 import com.torodb.core.TableRefFactory;
 import com.torodb.core.impl.TableRefFactoryImpl;
+import java.sql.SQLException;
+import javax.sql.DataSource;
+import org.junit.Before;
 
 public abstract class AbstractBackendTest {
     
     protected static final TableRefFactory tableRefFactory = new TableRefFactoryImpl();
     
     protected TestSchema schema;
-    protected DatabaseInterface databaseInterface;
+    protected SqlInterface sqlInterface;
     protected DataSource dataSource;
     
     @Before
     public void setUp() throws Exception {
-        databaseInterface = createDatabaseInterface();
-        schema = new TestSchema(tableRefFactory, databaseInterface);
-
         dataSource = createDataSource();
-        cleanDatabase(databaseInterface, dataSource);
+        sqlInterface = createDatabaseInterface();
+        schema = new TestSchema(tableRefFactory, sqlInterface);
+
+        cleanDatabase(sqlInterface, dataSource);
     }
 
     protected abstract DataSource createDataSource();
 
-    protected abstract DatabaseInterface createDatabaseInterface();
+    protected abstract SqlInterface createDatabaseInterface();
     
-    protected abstract void cleanDatabase(DatabaseInterface databaseInterface, DataSource dataSource) throws SQLException;
+    protected abstract void cleanDatabase(SqlInterface databaseInterface, DataSource dataSource) throws SQLException;
     
 
     

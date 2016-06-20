@@ -30,33 +30,33 @@ public class AkkaInsertSubscriberFactory implements InsertPipelineFactory {
 
     private final Materializer materializer;
     private final BackendConnectionJobFactory factory;
-    private final MetaDatabase database;
     private final int docBatch = 100;
 
     @Inject
-    public AkkaInsertSubscriberFactory(Materializer materializer,
-            BackendConnectionJobFactory factory, MetaDatabase database) {
+    public AkkaInsertSubscriberFactory(Materializer materializer, BackendConnectionJobFactory factory) {
         this.materializer = materializer;
         this.factory = factory;
-        this.database = database;
     }
 
     @Override
-    public InsertPipeline createInsertSubscriber(
+    public InsertPipeline createInsertPipeline(
             D2RTranslatorFactory translatorFactory,
+            MetaDatabase metaDb,
             MutableMetaCollection mutableMetaCollection,
             WriteBackendTransaction backendConnection) {
-        return new AkkaInsertPipeline(translatorFactory, mutableMetaCollection, backendConnection);
+        return new AkkaInsertPipeline(translatorFactory, metaDb, mutableMetaCollection, backendConnection);
     }
 
     private class AkkaInsertPipeline implements InsertPipeline {
         private final D2RTranslatorFactory translatorFactory;
+        private final MetaDatabase metaDb;
         private final MutableMetaCollection mutableMetaCollection;
         private final WriteBackendTransaction backendConnection;
 
-        public AkkaInsertPipeline(D2RTranslatorFactory translatorFactory,
+        public AkkaInsertPipeline(D2RTranslatorFactory translatorFactory, MetaDatabase metaDb,
                 MutableMetaCollection mutableMetaCollection, WriteBackendTransaction backendConnection) {
             this.translatorFactory = translatorFactory;
+            this.metaDb = metaDb;
             this.mutableMetaCollection = mutableMetaCollection;
             this.backendConnection = backendConnection;
         }
@@ -65,9 +65,9 @@ public class AkkaInsertSubscriberFactory implements InsertPipelineFactory {
         public void insert(Stream<KVDocument> docs) throws UserException {
 
             D2RTranslationBatchFunction d2rFun
-                    = new D2RTranslationBatchFunction(translatorFactory, mutableMetaCollection);
+                    = new D2RTranslationBatchFunction(translatorFactory, metaDb, mutableMetaCollection);
             DefaultToBackendFunction r2BackendFun
-                    = new DefaultToBackendFunction(factory, database, mutableMetaCollection);
+                    = new DefaultToBackendFunction(factory, metaDb, mutableMetaCollection);
             try {
                 Source.fromIterator(() -> docs.iterator())
                         .grouped(docBatch)

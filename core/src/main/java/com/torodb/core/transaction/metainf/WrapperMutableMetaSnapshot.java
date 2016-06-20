@@ -41,13 +41,13 @@ public class WrapperMutableMetaSnapshot implements MutableMetaSnapshot {
 
         wrapped.streamMetaDatabases().forEach((db) -> {
                 @SuppressWarnings("unchecked")
-                WrapperMutableMetaDatabase mutable = createMetaDatabase(db, false);
+                WrapperMutableMetaDatabase mutable = createMetaDatabase(db);
                 newDatabases.put(db.getName(), mutable);
         });
     }
 
-    protected WrapperMutableMetaDatabase createMetaDatabase(ImmutableMetaDatabase immutable, boolean isNew) {
-        return new WrapperMutableMetaDatabase(immutable, this::onMetaDatabaseChange, isNew);
+    protected WrapperMutableMetaDatabase createMetaDatabase(ImmutableMetaDatabase immutable) {
+        return new WrapperMutableMetaDatabase(immutable, this::onMetaDatabaseChange);
     }
 
     @Override
@@ -60,8 +60,7 @@ public class WrapperMutableMetaSnapshot implements MutableMetaSnapshot {
         assert getMetaDatabaseByIdentifier(dbId) == null : "There is another database whose id is " + dbId;
 
         WrapperMutableMetaDatabase result = createMetaDatabase(
-                new ImmutableMetaDatabase(dbName, dbId, Collections.emptyList()), 
-                true
+                new ImmutableMetaDatabase(dbName, dbId, Collections.emptyList())
         );
 
         newDatabases.put(dbName, result);
