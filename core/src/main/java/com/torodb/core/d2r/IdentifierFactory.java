@@ -1,5 +1,7 @@
 package com.torodb.core.d2r;
 
+import javax.annotation.Nonnull;
+
 import com.torodb.core.TableRef;
 import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.MetaDatabase;
@@ -8,12 +10,13 @@ import com.torodb.core.transaction.metainf.MetaSnapshot;
 
 public interface IdentifierFactory {
 
-    String toDatabaseIdentifier(MetaSnapshot metaSnapshot, String database);
+    @Nonnull String toDatabaseIdentifier(@Nonnull MetaSnapshot metaSnapshot, @Nonnull String database);
 
-    String toCollectionIdentifier(MetaDatabase metaDatabase, String collection);
+    @Nonnull String toCollectionIdentifier(@Nonnull MetaDatabase metaDatabase, @Nonnull String collection);
 
-    String toDocPartIdentifier(MetaDatabase metaDatabase, String collection, TableRef tableRef);
+    @Nonnull String toDocPartIdentifier(@Nonnull MetaDatabase metaDatabase, @Nonnull String collection, @Nonnull TableRef tableRef);
 
-	String toFieldIdentifier(MetaDocPart metaDocPart, FieldType fieldType, String field);
+    @Nonnull String toFieldIdentifier(@Nonnull MetaDocPart metaDocPart, @Nonnull FieldType fieldType, @Nonnull String field);
 
+    @Nonnull String toFieldIdentifierForScalar(@Nonnull FieldType fieldType);
 }
