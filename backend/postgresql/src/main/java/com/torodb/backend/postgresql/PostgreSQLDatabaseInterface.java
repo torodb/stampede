@@ -72,11 +72,13 @@ import com.torodb.backend.postgresql.tables.PostgreSQLMetaCollectionTable;
 import com.torodb.backend.postgresql.tables.PostgreSQLMetaDatabaseTable;
 import com.torodb.backend.postgresql.tables.PostgreSQLMetaDocPartTable;
 import com.torodb.backend.postgresql.tables.PostgreSQLMetaFieldTable;
+import com.torodb.backend.postgresql.tables.PostgreSQLMetaScalarTable;
 import com.torodb.backend.tables.MetaCollectionTable;
 import com.torodb.backend.tables.MetaDatabaseTable;
 import com.torodb.backend.tables.MetaDocPartTable;
 import com.torodb.backend.tables.MetaDocPartTable.DocPartTableFields;
 import com.torodb.backend.tables.MetaFieldTable;
+import com.torodb.backend.tables.MetaScalarTable;
 import com.torodb.core.TableRef;
 import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.d2r.DocPartResult;
@@ -191,13 +193,19 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
 
     private final ValueToJooqDataTypeProvider valueToJooqDataTypeProvider;
     private final FieldComparator fieldComparator = new FieldComparator();
-    private final PostgreSQLMetaDatabaseTable metaDatabaseTable = new PostgreSQLMetaDatabaseTable();
-    private final PostgreSQLMetaCollectionTable metaCollectionTable = new PostgreSQLMetaCollectionTable();
-    private final PostgreSQLMetaDocPartTable metaDocPartTable = new PostgreSQLMetaDocPartTable();
-    private final PostgreSQLMetaFieldTable metaFieldTable = new PostgreSQLMetaFieldTable();
+    private final PostgreSQLMetaDatabaseTable metaDatabaseTable;
+    private final PostgreSQLMetaCollectionTable metaCollectionTable;
+    private final PostgreSQLMetaDocPartTable metaDocPartTable;
+    private final PostgreSQLMetaFieldTable metaFieldTable;
+    private final PostgreSQLMetaScalarTable metaScalarTable;
     
     @Inject
     public PostgreSQLDatabaseInterface() {
+        metaDatabaseTable = PostgreSQLMetaDatabaseTable.DATABASE;
+        metaCollectionTable = PostgreSQLMetaCollectionTable.COLLECTION;
+        metaDocPartTable = PostgreSQLMetaDocPartTable.DOC_PART;
+        metaFieldTable = PostgreSQLMetaFieldTable.FIELD;
+        metaScalarTable = PostgreSQLMetaScalarTable.SCALAR;
         this.valueToJooqDataTypeProvider = PostgreSQLValueToJooqDataTypeProvider.getInstance();
     }
 
@@ -229,6 +237,12 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
     @Override
     public PostgreSQLMetaFieldTable getMetaFieldTable() {
         return metaFieldTable;
+    }
+
+    @Nonnull
+    @Override
+    public PostgreSQLMetaScalarTable getMetaScalarTable() {
+        return metaScalarTable;
     }
 
     private Iterable<Field<?>> getFieldIterator(Iterable<Field<?>> fields) {
@@ -375,18 +389,18 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
 
     @Override
     public void createMetaFieldTable(DSLContext dsl) {
-    	String schemaName = metaFieldTable.getSchema().getName();
-    	String tableName = metaFieldTable.getName();
-    	String statement = new StringBuilder()
-    			.append("CREATE TABLE ")
+        String schemaName = metaFieldTable.getSchema().getName();
+        String tableName = metaFieldTable.getName();
+        String statement = new StringBuilder()
+                .append("CREATE TABLE ")
                 .append(fullTableName(schemaName, tableName))
                 .append(" (")
                 .append(MetaFieldTable.TableFields.DATABASE.name()).append("         varchar     NOT NULL        ,")
                 .append(MetaFieldTable.TableFields.COLLECTION.name()).append("       varchar     NOT NULL        ,")
                 .append(MetaFieldTable.TableFields.TABLE_REF.name()).append("        varchar[]   NOT NULL        ,")
                 .append(MetaFieldTable.TableFields.NAME.name()).append("             varchar     NOT NULL        ,")
-                .append(MetaFieldTable.TableFields.IDENTIFIER.name()).append("       varchar     NOT NULL        ,")
                 .append(MetaFieldTable.TableFields.TYPE.name()).append("             varchar     NOT NULL        ,")
+                .append(MetaFieldTable.TableFields.IDENTIFIER.name()).append("       varchar     NOT NULL        ,")
                 .append("    PRIMARY KEY (").append(MetaFieldTable.TableFields.DATABASE.name()).append(",")
                 .append(MetaFieldTable.TableFields.COLLECTION.name()).append(",")
                 .append(MetaFieldTable.TableFields.TABLE_REF.name()).append(",")
@@ -398,7 +412,33 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
                     .append(MetaFieldTable.TableFields.IDENTIFIER.name()).append(")")
                 .append(")")
                 .toString();
-        executeStatement(dsl, statement, Context.ddl);    	
+        executeStatement(dsl, statement, Context.ddl);      
+    }
+
+    @Override
+    public void createMetaScalarTable(DSLContext dsl) {
+        String schemaName = metaScalarTable.getSchema().getName();
+        String tableName = metaScalarTable.getName();
+        String statement = new StringBuilder()
+                .append("CREATE TABLE ")
+                .append(fullTableName(schemaName, tableName))
+                .append(" (")
+                .append(MetaScalarTable.TableFields.DATABASE.name()).append("         varchar     NOT NULL        ,")
+                .append(MetaScalarTable.TableFields.COLLECTION.name()).append("       varchar     NOT NULL        ,")
+                .append(MetaScalarTable.TableFields.TABLE_REF.name()).append("        varchar[]   NOT NULL        ,")
+                .append(MetaScalarTable.TableFields.TYPE.name()).append("             varchar     NOT NULL        ,")
+                .append(MetaScalarTable.TableFields.IDENTIFIER.name()).append("       varchar     NOT NULL        ,")
+                .append("    PRIMARY KEY (").append(MetaScalarTable.TableFields.DATABASE.name()).append(",")
+                .append(MetaScalarTable.TableFields.COLLECTION.name()).append(",")
+                .append(MetaScalarTable.TableFields.TABLE_REF.name()).append(",")
+                .append(MetaScalarTable.TableFields.TYPE.name()).append("),")
+                .append("    UNIQUE (").append(MetaScalarTable.TableFields.DATABASE.name()).append(",")
+                    .append(MetaScalarTable.TableFields.COLLECTION.name()).append(",")
+                    .append(MetaScalarTable.TableFields.TABLE_REF.name()).append(",")
+                    .append(MetaScalarTable.TableFields.IDENTIFIER.name()).append(")")
+                .append(")")
+                .toString();
+        executeStatement(dsl, statement, Context.ddl);      
     }
 
     @Override
@@ -1074,7 +1114,7 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
 			String fieldName, String fieldIdentifier, FieldType type) {
 		Query query = dsl.insertInto(metaFieldTable)
 				.set(metaFieldTable.newRecord()
-				.values(databaseName, collectionName, tableRef, fieldName, fieldIdentifier, type));
+				.values(databaseName, collectionName, tableRef, fieldName, type, fieldIdentifier));
 		executeQuery(query, Context.ddl);
 	}
 	

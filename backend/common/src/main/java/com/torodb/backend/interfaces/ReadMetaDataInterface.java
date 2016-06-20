@@ -14,10 +14,12 @@ import com.torodb.backend.tables.MetaCollectionTable;
 import com.torodb.backend.tables.MetaDatabaseTable;
 import com.torodb.backend.tables.MetaDocPartTable;
 import com.torodb.backend.tables.MetaFieldTable;
+import com.torodb.backend.tables.MetaScalarTable;
 import com.torodb.backend.tables.records.MetaCollectionRecord;
 import com.torodb.backend.tables.records.MetaDatabaseRecord;
 import com.torodb.backend.tables.records.MetaDocPartRecord;
 import com.torodb.backend.tables.records.MetaFieldRecord;
+import com.torodb.backend.tables.records.MetaScalarRecord;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 
 public interface ReadMetaDataInterface {
@@ -25,6 +27,7 @@ public interface ReadMetaDataInterface {
     @Nonnull <R extends MetaCollectionRecord> MetaCollectionTable<R> getMetaCollectionTable();
     @Nonnull <T, R extends MetaDocPartRecord<T>> MetaDocPartTable<T, R> getMetaDocPartTable();
     @Nonnull <T, R extends MetaFieldRecord<T>> MetaFieldTable<T, R> getMetaFieldTable();
+    @Nonnull <T, R extends MetaScalarRecord<T>> MetaScalarTable<T, R> getMetaScalarTable();
     
     @Nonnull Collection<InternalField<?>> getDocPartTableInternalFields(@Nonnull MetaDocPart metaDocPart);
     

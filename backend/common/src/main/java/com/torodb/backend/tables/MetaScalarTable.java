@@ -10,20 +10,19 @@ import org.jooq.UniqueKey;
 import org.jooq.impl.AbstractKeys;
 
 import com.torodb.backend.meta.TorodbSchema;
-import com.torodb.backend.tables.records.MetaFieldRecord;
+import com.torodb.backend.tables.records.MetaScalarRecord;
 import com.torodb.core.transaction.metainf.FieldType;
 
-public abstract class MetaFieldTable<TableRefType, R extends MetaFieldRecord<TableRefType>> extends SemanticTable<R> {
+public abstract class MetaScalarTable<TableRefType, R extends MetaScalarRecord<TableRefType>> extends SemanticTable<R> {
 
-    private static final long serialVersionUID = -3500177946436569355L;
+    private static final long serialVersionUID = -1500177946436569355L;
 
-    public static final String TABLE_NAME = "field";
+    public static final String TABLE_NAME = "scalar";
 
     public enum TableFields {
         DATABASE        (   "database"          ),
         COLLECTION      (   "collection"        ),
         TABLE_REF       (   "table_ref"         ),
-        NAME            (   "name"              ),
         TYPE            (   "type"              ),
         IDENTIFIER      (   "identifier"        )
         ;
@@ -48,37 +47,31 @@ public abstract class MetaFieldTable<TableRefType, R extends MetaFieldRecord<Tab
     public abstract Class<R> getRecordType();
 
     /**
-     * The column <code>torodb.field.database</code>.
+     * The column <code>torodb.scalar.database</code>.
      */
     public final TableField<R, String> DATABASE 
             = createDatabaseField();
 
     /**
-     * The column <code>torodb.field.collection</code>.
+     * The column <code>torodb.scalar.collection</code>.
      */
     public final TableField<R, String> COLLECTION 
             = createCollectionField();
 
     /**
-     * The column <code>torodb.field.path</code>.
+     * The column <code>torodb.scalar.path</code>.
      */
     public final TableField<R, TableRefType> TABLE_REF 
             = createTableRefField();
 
     /**
-     * The column <code>torodb.field.name</code>.
-     */
-    public final TableField<R, String> NAME 
-            = createNameField();
-
-    /**
-     * The column <code>torodb.field.type</code>.
+     * The column <code>torodb.scalar.type</code>.
      */
     public final TableField<R, FieldType> TYPE 
             = createTypeField();
 
     /**
-     * The column <code>torodb.field.identifier</code>.
+     * The column <code>torodb.scalar.identifier</code>.
      */
     public final TableField<R, String> IDENTIFIER 
             = createIdentifierField();
@@ -86,24 +79,23 @@ public abstract class MetaFieldTable<TableRefType, R extends MetaFieldRecord<Tab
     protected abstract TableField<R, String> createDatabaseField();
     protected abstract TableField<R, String> createCollectionField();
     protected abstract TableField<R, TableRefType> createTableRefField();
-    protected abstract TableField<R, String> createNameField();
     protected abstract TableField<R, FieldType> createTypeField();
     protected abstract TableField<R, String> createIdentifierField();
 
     private final UniqueKeys<TableRefType, R> uniqueKeys;
     
     /**
-     * Create a <code>torodb.field</code> table reference
+     * Create a <code>torodb.scalar</code> table reference
      */
-    public MetaFieldTable() {
+    public MetaScalarTable() {
         this(TABLE_NAME, null);
     }
 
-    protected MetaFieldTable(String alias, Table<R> aliased) {
+    protected MetaScalarTable(String alias, Table<R> aliased) {
         this(alias, aliased, null);
     }
 
-    protected MetaFieldTable(String alias, Table<R> aliased, Field<?>[] parameters) {
+    protected MetaScalarTable(String alias, Table<R> aliased, Field<?>[] parameters) {
         super(alias, TorodbSchema.TORODB, aliased, parameters, "");
         
         this.uniqueKeys = new UniqueKeys<TableRefType, R>(this);
@@ -129,23 +121,23 @@ public abstract class MetaFieldTable<TableRefType, R extends MetaFieldRecord<Tab
      * {@inheritDoc}
      */
     @Override
-    public abstract MetaFieldTable<TableRefType, R> as(String alias);
+    public abstract MetaScalarTable<TableRefType, R> as(String alias);
 
     /**
      * Rename this table
      */
-    public abstract MetaFieldTable<TableRefType, R> rename(String name);
+    public abstract MetaScalarTable<TableRefType, R> rename(String name);
 
     public UniqueKeys<TableRefType, R> getUniqueKeys() {
         return uniqueKeys;
     }
     
-    public static class UniqueKeys<TableRefType, KeyRecord extends MetaFieldRecord<TableRefType>> extends AbstractKeys {
+    public static class UniqueKeys<TableRefType, KeyRecord extends MetaScalarRecord<TableRefType>> extends AbstractKeys {
         private final UniqueKey<KeyRecord> FIELD_PKEY;
         private final UniqueKey<KeyRecord> FIELD_COLUMN_NAME_UNIQUE_PKEY;
         
-        private UniqueKeys(MetaFieldTable<TableRefType, KeyRecord> fieldTable) {
-            FIELD_PKEY = createUniqueKey(fieldTable, fieldTable.DATABASE, fieldTable.COLLECTION, fieldTable.TABLE_REF, fieldTable.NAME, fieldTable.TYPE);
+        private UniqueKeys(MetaScalarTable<TableRefType, KeyRecord> fieldTable) {
+            FIELD_PKEY = createUniqueKey(fieldTable, fieldTable.DATABASE, fieldTable.COLLECTION, fieldTable.TABLE_REF, fieldTable.TYPE);
             FIELD_COLUMN_NAME_UNIQUE_PKEY = createUniqueKey(fieldTable, fieldTable.DATABASE, fieldTable.COLLECTION, fieldTable.TABLE_REF, fieldTable.IDENTIFIER);
         }
     }

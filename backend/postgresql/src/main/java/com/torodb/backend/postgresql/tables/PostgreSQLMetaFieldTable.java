@@ -103,12 +103,12 @@ public class PostgreSQLMetaFieldTable extends MetaFieldTable<String[], PostgreSQ
     }
 
     @Override
-    protected TableField<PostgreSQLMetaFieldRecord, String> createIdentifierField() {
-        return createField(TableFields.IDENTIFIER.fieldName, SQLDataType.VARCHAR.nullable(false), this, "");
+    protected TableField<PostgreSQLMetaFieldRecord, FieldType> createTypeField() {
+        return createField(TableFields.TYPE.fieldName, FieldTypeConverter.TYPE.nullable(false), this, "");
     }
 
     @Override
-    protected TableField<PostgreSQLMetaFieldRecord, FieldType> createTypeField() {
-        return createField(TableFields.TYPE.fieldName, FieldTypeConverter.TYPE.nullable(false), this, "");
+    protected TableField<PostgreSQLMetaFieldRecord, String> createIdentifierField() {
+        return createField(TableFields.IDENTIFIER.fieldName, SQLDataType.VARCHAR.nullable(false), this, "");
     }
 }

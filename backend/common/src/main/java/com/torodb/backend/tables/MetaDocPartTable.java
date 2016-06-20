@@ -139,7 +139,7 @@ public abstract class MetaDocPartTable<TableRefType, R extends MetaDocPartRecord
     private final UniqueKeys<TableRefType, R> uniqueKeys;
     
     /**
-     * Create a <code>torodb.collections</code> table reference
+     * Create a <code>torodb.doc_part</code> table reference
      */
     public MetaDocPartTable() {
         this(TABLE_NAME, null);

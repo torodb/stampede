@@ -37,7 +37,7 @@ public class PostgreSQLMetaDocPartTable extends MetaDocPartTable<String[], Postg
     /**
 	 * The singleton instance of <code>torodb.collections</code>
 	 */
-	public static final PostgreSQLMetaDocPartTable CONTAINER = new PostgreSQLMetaDocPartTable();
+	public static final PostgreSQLMetaDocPartTable DOC_PART = new PostgreSQLMetaDocPartTable();
 
 	@Override
     public Class<PostgreSQLMetaDocPartRecord> getRecordType() {
@@ -55,7 +55,7 @@ public class PostgreSQLMetaDocPartTable extends MetaDocPartTable<String[], Postg
 	 * Create an aliased <code>torodb.collections</code> table reference
 	 */
 	public PostgreSQLMetaDocPartTable(String alias) {
-	    this(alias, PostgreSQLMetaDocPartTable.CONTAINER);
+	    this(alias, PostgreSQLMetaDocPartTable.DOC_PART);
 	}
 
 	private PostgreSQLMetaDocPartTable(String alias, Table<PostgreSQLMetaDocPartRecord> aliased) {

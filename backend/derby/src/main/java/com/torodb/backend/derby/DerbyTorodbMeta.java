@@ -42,10 +42,12 @@ import com.torodb.backend.tables.MetaCollectionTable;
 import com.torodb.backend.tables.MetaDatabaseTable;
 import com.torodb.backend.tables.MetaDocPartTable;
 import com.torodb.backend.tables.MetaFieldTable;
+import com.torodb.backend.tables.MetaScalarTable;
 import com.torodb.backend.tables.records.MetaCollectionRecord;
 import com.torodb.backend.tables.records.MetaDatabaseRecord;
 import com.torodb.backend.tables.records.MetaDocPartRecord;
 import com.torodb.backend.tables.records.MetaFieldRecord;
+import com.torodb.backend.tables.records.MetaScalarRecord;
 import com.torodb.core.TableRef;
 import com.torodb.core.TableRefFactory;
 import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
@@ -102,6 +104,7 @@ public class DerbyTorodbMeta implements TorodbMeta {
         MetaCollectionTable<MetaCollectionRecord> collectionTable = databaseInterface.getMetaCollectionTable();
         MetaDocPartTable<Object, MetaDocPartRecord<Object>> docPartTable = databaseInterface.getMetaDocPartTable();
         MetaFieldTable<Object, MetaFieldRecord<Object>> fieldTable = databaseInterface.getMetaFieldTable();
+        MetaScalarTable<Object, MetaScalarRecord<Object>> scalarTable = databaseInterface.getMetaScalarTable();
 
         ImmutableMetaSnapshot.Builder metaSnapshotBuilder = new ImmutableMetaSnapshot.Builder();
         for (MetaDatabaseRecord databaseRecord : records) {
@@ -167,7 +170,8 @@ public class DerbyTorodbMeta implements TorodbMeta {
                         
                         if (!schemaValidator.existsColumn(docPartIdentifier, field.getIdentifier())) {
                             throw new InvalidDatabaseSchemaException(schemaName, "Field "+field.getCollection()+"."
-                                    +field.getTableRefValue(tableRefFactory)+"."+field.getName()+" in database "+database+" is associated with field "+field.getIdentifier()
+                                    +field.getTableRefValue(tableRefFactory)+"."+field.getName()+" of type "+field.getType()
+                                    +" in database "+database+" is associated with field "+field.getIdentifier()
                                     +" but there is no field with that name in table "
                                     +schemaName+"."+docPartIdentifier);
                         }
@@ -182,6 +186,41 @@ public class DerbyTorodbMeta implements TorodbMeta {
                         }
                         metaDocPartBuilder.add(metaField);
                     }
+                    List<MetaScalarRecord<Object>> scalars = dsl
+                            .selectFrom(scalarTable)
+                            .where(scalarTable.DATABASE.eq(database)
+                                .and(scalarTable.COLLECTION.eq(collectionName))
+                                .and(scalarTable.TABLE_REF.eq(docPart.getTableRef())))
+                            .fetch();
+                    
+                    for (MetaScalarRecord<?> scalar : scalars) {
+                        TableRef fieldTableRef = scalar.getTableRefValue(tableRefFactory);
+                        if (!tableRef.equals(fieldTableRef)) {
+                            continue;
+                        }
+                        
+                        ImmutableMetaScalar metaScalar = new ImmutableMetaScalar(
+                                scalar.getIdentifier(), 
+                                scalar.getType());
+                        
+                        if (!schemaValidator.existsColumn(docPartIdentifier, scalar.getIdentifier())) {
+                            throw new InvalidDatabaseSchemaException(schemaName, "Scalar "+scalar.getCollection()+"."
+                                    +scalar.getTableRefValue(tableRefFactory)+" of type "+scalar.getType()
+                                    +" in database "+database+" is associated with scalar "+scalar.getIdentifier()
+                                    +" but there is no scalar with that name in table "
+                                    +schemaName+"."+docPartIdentifier);
+                        }
+                        if (!schemaValidator.existsColumnWithType(docPartIdentifier, scalar.getIdentifier(), 
+                                databaseInterface.getDataType(scalar.getType()))) {
+                            //TODO: some types can not be recognized using meta data
+                            //throw new InvalidDatabaseSchemaException(schemaName, "Field "+field.getCollection()+"."
+                            //        +field.getTableRefValue()+"."+field.getName()+" in database "+database+" is associated with field "+field.getIdentifier()
+                            //        +" and type "+databaseInterface.getDataType(field.getType()).getTypeName()
+                            //        +" but the field "+schemaName+"."+docPartIdentifier+"."+field.getIdentifier()
+                            //        +" has a different type "+getColumnType(docPartIdentifier, field.getIdentifier(), existingTables).getTypeName());
+                        }
+                        metaDocPartBuilder.add(metaScalar);
+                    }
                     metaCollectionBuilder.add(metaDocPartBuilder.build());
                 }
                 metaDatabaseBuilder.add(metaCollectionBuilder.build());
@@ -193,10 +232,14 @@ public class DerbyTorodbMeta implements TorodbMeta {
 	        		.selectFrom(docPartTable)
 	        		.where(docPartTable.DATABASE.eq(database))
 	        		.fetchMap(docPartTable.IDENTIFIER);
-	        List<MetaFieldRecord<Object>> fields = dsl
-	        		.selectFrom(fieldTable)
-	        		.where(fieldTable.DATABASE.eq(database))
-	        		.fetch();
+            List<MetaFieldRecord<Object>> fields = dsl
+                    .selectFrom(fieldTable)
+                    .where(fieldTable.DATABASE.eq(database))
+                    .fetch();
+            List<MetaScalarRecord<Object>> scalars = dsl
+                    .selectFrom(scalarTable)
+                    .where(scalarTable.DATABASE.eq(database))
+                    .fetch();
 	        for (Table<?> table : schemaValidator.getExistingTables()) {
 	        	if (!docParts.containsKey(table.getName())) {
 	        		throw new InvalidDatabaseSchemaException(schemaName, "Table "+schemaName+"."+table.getName()
@@ -209,7 +252,7 @@ public class DerbyTorodbMeta implements TorodbMeta {
 	        			continue;
 	        		}
 	        		if (!DerbySchemaValidator.containsField(existingField, docPart.getCollection(), 
-	        				docPart.getTableRefValue(tableRefFactory), fields, tableRefFactory)) {
+	        				docPart.getTableRefValue(tableRefFactory), fields, scalars, tableRefFactory)) {
 	        			throw new InvalidDatabaseSchemaException(schemaName, "Column "+schemaName+"."+table.getName()
 	        			+"."+existingField.getName()+" has no field associated for database "+database);
 	        		}

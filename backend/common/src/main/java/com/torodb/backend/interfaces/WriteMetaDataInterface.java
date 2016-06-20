@@ -14,6 +14,7 @@ public interface WriteMetaDataInterface {
     void createMetaCollectionTable(@Nonnull DSLContext dsl);
     void createMetaDocPartTable(@Nonnull DSLContext dsl);
     void createMetaFieldTable(@Nonnull DSLContext dsl);
+    void createMetaScalarTable(@Nonnull DSLContext dsl);
     
     void addMetaDatabase(@Nonnull DSLContext dsl, @Nonnull String databaseName, @Nonnull String databaseIdentifier);
     void addMetaCollection(@Nonnull DSLContext dsl, @Nonnull String databaseName, @Nonnull String collectionName, @Nonnull String collectionIdentifier);

@@ -17,55 +17,52 @@
  *     Copyright (c) 2014, 8Kdata Technology
  *     
  */
-package com.torodb.backend.derby.tables.records;
-
-import javax.json.JsonArray;
+package com.torodb.backend.postgresql.tables.records;
 
 import com.torodb.backend.converters.TableRefConverter;
-import com.torodb.backend.derby.tables.DerbyMetaFieldTable;
-import com.torodb.backend.tables.records.MetaFieldRecord;
+import com.torodb.backend.postgresql.tables.PostgreSQLMetaScalarTable;
+import com.torodb.backend.tables.records.MetaScalarRecord;
 import com.torodb.core.TableRef;
 import com.torodb.core.TableRefFactory;
 import com.torodb.core.transaction.metainf.FieldType;
 
-public class DerbyMetaFieldRecord extends MetaFieldRecord<JsonArray> {
+public class PostgreSQLMetaScalarRecord extends MetaScalarRecord<String[]> {
 
     private static final long serialVersionUID = -7296241344455399566L;
 
     /**
 	 * Create a detached MetaFieldRecord
 	 */
-	public DerbyMetaFieldRecord() {
-		super(DerbyMetaFieldTable.FIELD);
+	public PostgreSQLMetaScalarRecord() {
+		super(PostgreSQLMetaScalarTable.SCALAR);
 	}
 
 	/**
 	 * Create a detached, initialised MetaFieldRecord
 	 */
-	public DerbyMetaFieldRecord(String database, String collection, JsonArray tableRef, String name, FieldType type, String identifier) {
-		super(DerbyMetaFieldTable.FIELD);
+	public PostgreSQLMetaScalarRecord(String database, String collection, String[] tableRef, FieldType type, String identifier) {
+		super(PostgreSQLMetaScalarTable.SCALAR);
 		
-		values(database, collection, tableRef, name, type, identifier);
+		values(database, collection, tableRef, type, identifier);
 	}
 
     @Override
-    public MetaFieldRecord values(String database, String collection, JsonArray tableRef, String name, FieldType type, String identifier) {
+    public MetaScalarRecord values(String database, String collection, String[] tableRef, FieldType type, String identifier) {
         setDatabase(database);
         setCollection(collection);
         setTableRef(tableRef);
-        setName(name);
         setType(type);
         setIdentifier(identifier);
         return this;
     }
 
     @Override
-    protected JsonArray toTableRefType(TableRef tableRef) {
-        return TableRefConverter.toJsonArray(tableRef);
+    protected String[] toTableRefType(TableRef tableRef) {
+        return TableRefConverter.toStringArray(tableRef);
     }
 
     @Override
     public TableRef getTableRefValue(TableRefFactory tableRefFactory) {
-        return TableRefConverter.fromJsonArray(tableRefFactory, getTableRef());
+        return TableRefConverter.fromStringArray(tableRefFactory, getTableRef());
     }
 }

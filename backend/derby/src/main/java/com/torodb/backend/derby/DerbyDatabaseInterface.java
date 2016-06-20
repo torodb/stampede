@@ -65,6 +65,7 @@ import com.torodb.backend.derby.tables.DerbyMetaCollectionTable;
 import com.torodb.backend.derby.tables.DerbyMetaDatabaseTable;
 import com.torodb.backend.derby.tables.DerbyMetaDocPartTable;
 import com.torodb.backend.derby.tables.DerbyMetaFieldTable;
+import com.torodb.backend.derby.tables.DerbyMetaScalarTable;
 import com.torodb.backend.index.NamedDbIndex;
 import com.torodb.backend.meta.TorodbSchema;
 import com.torodb.backend.tables.MetaCollectionTable;
@@ -72,6 +73,7 @@ import com.torodb.backend.tables.MetaDatabaseTable;
 import com.torodb.backend.tables.MetaDocPartTable;
 import com.torodb.backend.tables.MetaDocPartTable.DocPartTableFields;
 import com.torodb.backend.tables.MetaFieldTable;
+import com.torodb.backend.tables.MetaScalarTable;
 import com.torodb.core.TableRef;
 import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.d2r.DocPartResult;
@@ -187,13 +189,15 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
     private final DerbyMetaCollectionTable metaCollectionTable;
     private final DerbyMetaDocPartTable metaDocPartTable;
     private final DerbyMetaFieldTable metaFieldTable;
+    private final DerbyMetaScalarTable metaScalarTable;
 
     @Inject
     public DerbyDatabaseInterface() {
-        this.metaDatabaseTable = new DerbyMetaDatabaseTable();
-        this.metaCollectionTable = new DerbyMetaCollectionTable();
-        this.metaDocPartTable = new DerbyMetaDocPartTable();
-        this.metaFieldTable = new DerbyMetaFieldTable();
+        this.metaDatabaseTable = DerbyMetaDatabaseTable.DATABASE;
+        this.metaCollectionTable = DerbyMetaCollectionTable.COLLECTION;
+        this.metaDocPartTable = DerbyMetaDocPartTable.DOC_PART;
+        this.metaFieldTable = DerbyMetaFieldTable.FIELD;
+        this.metaScalarTable = DerbyMetaScalarTable.SCALAR;
         this.valueToJooqDataTypeProvider = DerbyValueToJooqDataTypeProvider.getInstance();
     }
 
@@ -229,6 +233,13 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
     @SuppressWarnings("unchecked")
     public DerbyMetaFieldTable getMetaFieldTable() {
         return metaFieldTable;
+    }
+
+    @Nonnull
+    @Override
+    @SuppressWarnings("unchecked")
+    public DerbyMetaScalarTable getMetaScalarTable() {
+        return metaScalarTable;
     }
 
     private Iterable<Field<?>> getFieldIterator(Iterable<Field<?>> fields) {
@@ -373,9 +384,9 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
 
     @Override
     public void createMetaFieldTable(DSLContext dsl) {
-    	String schemaName = metaFieldTable.getSchema().getName();
-    	String tableName = metaFieldTable.getName();
-    	String statement = new StringBuilder()
+        String schemaName = metaFieldTable.getSchema().getName();
+        String tableName = metaFieldTable.getName();
+        String statement = new StringBuilder()
                 .append("CREATE TABLE ")
                 .append(fullTableName(schemaName, tableName))
                 .append(" (")
@@ -383,8 +394,8 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
                 .append('"').append(MetaFieldTable.TableFields.COLLECTION.toString()).append('"').append("       varchar(32672)   NOT NULL        ,")
                 .append('"').append(MetaFieldTable.TableFields.TABLE_REF.toString()).append('"').append("        varchar(32672)   NOT NULL        ,")
                 .append('"').append(MetaFieldTable.TableFields.NAME.toString()).append('"').append("             varchar(32672)   NOT NULL        ,")
-                .append('"').append(MetaFieldTable.TableFields.IDENTIFIER.toString()).append('"').append("       varchar(128)     NOT NULL        ,")
                 .append('"').append(MetaFieldTable.TableFields.TYPE.toString()).append('"').append("             varchar(128)     NOT NULL        ,")
+                .append('"').append(MetaFieldTable.TableFields.IDENTIFIER.toString()).append('"').append("       varchar(128)     NOT NULL        ,")
                 .append("    PRIMARY KEY (").append('"').append(MetaFieldTable.TableFields.DATABASE.toString()).append('"').append(",")
                 .append('"').append(MetaFieldTable.TableFields.COLLECTION.toString()).append('"').append(",")
                 .append('"').append(MetaFieldTable.TableFields.TABLE_REF.toString()).append('"').append(",")
@@ -396,7 +407,33 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
                     .append('"').append(MetaFieldTable.TableFields.IDENTIFIER.toString()).append('"').append(")")
                 .append(")")
                 .toString();
-        executeStatement(dsl, statement, Context.ddl);    	
+        executeStatement(dsl, statement, Context.ddl);      
+    }
+
+    @Override
+    public void createMetaScalarTable(DSLContext dsl) {
+        String schemaName = metaScalarTable.getSchema().getName();
+        String tableName = metaScalarTable.getName();
+        String statement = new StringBuilder()
+                .append("CREATE TABLE ")
+                .append(fullTableName(schemaName, tableName))
+                .append(" (")
+                .append('"').append(MetaScalarTable.TableFields.DATABASE.toString()).append('"').append("         varchar(32672)   NOT NULL        ,")
+                .append('"').append(MetaScalarTable.TableFields.COLLECTION.toString()).append('"').append("       varchar(32672)   NOT NULL        ,")
+                .append('"').append(MetaScalarTable.TableFields.TABLE_REF.toString()).append('"').append("        varchar(32672)   NOT NULL        ,")
+                .append('"').append(MetaScalarTable.TableFields.TYPE.toString()).append('"').append("             varchar(128)     NOT NULL        ,")
+                .append('"').append(MetaScalarTable.TableFields.IDENTIFIER.toString()).append('"').append("       varchar(128)     NOT NULL        ,")
+                .append("    PRIMARY KEY (").append('"').append(MetaScalarTable.TableFields.DATABASE.toString()).append('"').append(",")
+                .append('"').append(MetaScalarTable.TableFields.COLLECTION.toString()).append('"').append(",")
+                .append('"').append(MetaScalarTable.TableFields.TABLE_REF.toString()).append('"').append(",")
+                .append('"').append(MetaScalarTable.TableFields.TYPE.toString()).append('"').append("),")
+                .append("    UNIQUE (").append('"').append(MetaScalarTable.TableFields.DATABASE.toString()).append('"').append(",")
+                    .append('"').append(MetaScalarTable.TableFields.COLLECTION.toString()).append('"').append(",")
+                    .append('"').append(MetaScalarTable.TableFields.TABLE_REF.toString()).append('"').append(",")
+                    .append('"').append(MetaScalarTable.TableFields.IDENTIFIER.toString()).append('"').append(")")
+                .append(")")
+                .toString();
+        executeStatement(dsl, statement, Context.ddl);
     }
 
     @Override
@@ -805,7 +842,7 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
 			String fieldName, String fieldIdentifier, FieldType type) {
 		Query query = dsl.insertInto(metaFieldTable)
 				.set(metaFieldTable.newRecord()
-				.values(databaseName, collectionName, tableRef, fieldName, fieldIdentifier, type));
+				.values(databaseName, collectionName, tableRef, fieldName, type, fieldIdentifier));
 		executeQuery(query, Context.ddl);
 	}
 	

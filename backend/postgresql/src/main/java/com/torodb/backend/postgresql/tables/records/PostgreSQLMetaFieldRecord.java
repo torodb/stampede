@@ -40,20 +40,20 @@ public class PostgreSQLMetaFieldRecord extends MetaFieldRecord<String[]> {
 	/**
 	 * Create a detached, initialised MetaFieldRecord
 	 */
-	public PostgreSQLMetaFieldRecord(TableRefConverter tableRefConverter, String database, String collection, String[] tableRef, String name, String identifier, FieldType type) {
+	public PostgreSQLMetaFieldRecord(String database, String collection, String[] tableRef, String name, FieldType type, String identifier) {
 		super(PostgreSQLMetaFieldTable.FIELD);
 		
-		values(database, collection, tableRef, name, identifier, type);
+		values(database, collection, tableRef, name, type, identifier);
 	}
 
     @Override
-    public MetaFieldRecord values(String database, String collection, String[] tableRef, String name, String identifier, FieldType type) {
+    public MetaFieldRecord values(String database, String collection, String[] tableRef, String name, FieldType type, String identifier) {
         setDatabase(database);
         setCollection(collection);
         setTableRef(tableRef);
         setName(name);
-        setIdentifier(identifier);
         setType(type);
+        setIdentifier(identifier);
         return this;
     }
 

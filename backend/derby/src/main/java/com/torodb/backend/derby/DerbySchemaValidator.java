@@ -8,6 +8,7 @@ import org.jooq.Table;
 
 import com.torodb.backend.exceptions.InvalidDatabaseSchemaException;
 import com.torodb.backend.tables.records.MetaFieldRecord;
+import com.torodb.backend.tables.records.MetaScalarRecord;
 import com.torodb.core.TableRef;
 import com.torodb.core.TableRefFactory;
 
@@ -83,9 +84,10 @@ public class DerbySchemaValidator {
     public static boolean containsField(Field<?> existingField, 
     		String collection, 
     		TableRef tableRef, 
-    		Iterable<MetaFieldRecord<Object>> fields, 
+            Iterable<MetaFieldRecord<Object>> fields, 
+            Iterable<MetaScalarRecord<Object>> scalars, 
     		TableRefFactory tableRefFactory) {
-    	
+        
         for (MetaFieldRecord<?> field : fields) {
             if (collection.equals(field.getCollection()) &&
                     tableRef.equals(field.getTableRefValue(tableRefFactory)) &&
@@ -93,6 +95,15 @@ public class DerbySchemaValidator {
                 return true;
             }
         }
+        
+        for (MetaScalarRecord<?> scalar : scalars) {
+            if (collection.equals(scalar.getCollection()) &&
+                    tableRef.equals(scalar.getTableRefValue(tableRefFactory)) &&
+                    existingField.getName().equals(scalar.getIdentifier())) {
+                return true;
+            }
+        }
+        
         return false;
     }
     

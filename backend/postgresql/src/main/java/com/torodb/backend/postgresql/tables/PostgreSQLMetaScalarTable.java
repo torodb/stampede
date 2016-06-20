@@ -17,9 +17,7 @@
  *     Copyright (c) 2014, 8Kdata Technology
  *     
  */
-package com.torodb.backend.derby.tables;
-
-import javax.json.JsonArray;
+package com.torodb.backend.postgresql.tables;
 
 import org.jooq.Field;
 import org.jooq.Table;
@@ -27,46 +25,45 @@ import org.jooq.TableField;
 import org.jooq.impl.SQLDataType;
 
 import com.torodb.backend.converters.jooq.FieldTypeConverter;
-import com.torodb.backend.derby.converters.jooq.JsonArrayConverter;
-import com.torodb.backend.derby.tables.records.DerbyMetaFieldRecord;
-import com.torodb.backend.tables.MetaFieldTable;
+import com.torodb.backend.postgresql.tables.records.PostgreSQLMetaScalarRecord;
+import com.torodb.backend.tables.MetaScalarTable;
 import com.torodb.core.transaction.metainf.FieldType;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 @SuppressFBWarnings("EQ_DOESNT_OVERRIDE_EQUALS")
-public class DerbyMetaFieldTable extends MetaFieldTable<JsonArray, DerbyMetaFieldRecord> {
+public class PostgreSQLMetaScalarTable extends MetaScalarTable<String[], PostgreSQLMetaScalarRecord> {
 
     private static final long serialVersionUID = 2305519627765737325L;
     /**
 	 * The singleton instance of <code>torodb.collections</code>
 	 */
-	public static final DerbyMetaFieldTable FIELD = new DerbyMetaFieldTable();
+	public static final PostgreSQLMetaScalarTable SCALAR = new PostgreSQLMetaScalarTable();
 
 	@Override
-    public Class<DerbyMetaFieldRecord> getRecordType() {
-        return DerbyMetaFieldRecord.class;
+    public Class<PostgreSQLMetaScalarRecord> getRecordType() {
+        return PostgreSQLMetaScalarRecord.class;
     }
 	
 	/**
 	 * Create a <code>torodb.collections</code> table reference
 	 */
-	public DerbyMetaFieldTable() {
+	public PostgreSQLMetaScalarTable() {
 		this(TABLE_NAME, null);
 	}
 
 	/**
 	 * Create an aliased <code>torodb.collections</code> table reference
 	 */
-	public DerbyMetaFieldTable(String alias) {
-	    this(alias, DerbyMetaFieldTable.FIELD);
+	public PostgreSQLMetaScalarTable(String alias) {
+	    this(alias, PostgreSQLMetaScalarTable.SCALAR);
 	}
 
-	private DerbyMetaFieldTable(String alias, Table<DerbyMetaFieldRecord> aliased) {
+	private PostgreSQLMetaScalarTable(String alias, Table<PostgreSQLMetaScalarRecord> aliased) {
 		this(alias, aliased, null);
 	}
 
-	private DerbyMetaFieldTable(String alias, Table<DerbyMetaFieldRecord> aliased, Field<?>[] parameters) {
+	private PostgreSQLMetaScalarTable(String alias, Table<PostgreSQLMetaScalarRecord> aliased, Field<?>[] parameters) {
 		super(alias, aliased, parameters);
 	}
     
@@ -74,44 +71,39 @@ public class DerbyMetaFieldTable extends MetaFieldTable<JsonArray, DerbyMetaFiel
 	 * {@inheritDoc}
 	 */
 	@Override
-	public DerbyMetaFieldTable as(String alias) {
-		return new DerbyMetaFieldTable(alias, this);
+	public PostgreSQLMetaScalarTable as(String alias) {
+		return new PostgreSQLMetaScalarTable(alias, this);
 	}
 
 	/**
 	 * Rename this table
 	 */
-	public DerbyMetaFieldTable rename(String name) {
-		return new DerbyMetaFieldTable(name, null);
+	public PostgreSQLMetaScalarTable rename(String name) {
+		return new PostgreSQLMetaScalarTable(name, null);
 	}
 
     @Override
-    protected TableField<DerbyMetaFieldRecord, String> createDatabaseField() {
+    protected TableField<PostgreSQLMetaScalarRecord, String> createDatabaseField() {
         return createField(TableFields.DATABASE.fieldName, SQLDataType.VARCHAR.nullable(false), this, "");
     }
 
     @Override
-    protected TableField<DerbyMetaFieldRecord, String> createCollectionField() {
+    protected TableField<PostgreSQLMetaScalarRecord, String> createCollectionField() {
         return createField(TableFields.COLLECTION.fieldName, SQLDataType.VARCHAR.nullable(false), this, "");
     }
 
     @Override
-    protected TableField<DerbyMetaFieldRecord, JsonArray> createTableRefField() {
-        return createField(TableFields.TABLE_REF.fieldName, JsonArrayConverter.TYPE.nullable(false), this, "");
+    protected TableField<PostgreSQLMetaScalarRecord, String[]> createTableRefField() {
+        return createField(TableFields.TABLE_REF.fieldName, SQLDataType.VARCHAR.getArrayDataType().nullable(false), this, "");
     }
 
     @Override
-    protected TableField<DerbyMetaFieldRecord, String> createNameField() {
-        return createField(TableFields.NAME.fieldName, SQLDataType.VARCHAR.nullable(false), this, "");
-    }
-
-    @Override
-    protected TableField<DerbyMetaFieldRecord, FieldType> createTypeField() {
+    protected TableField<PostgreSQLMetaScalarRecord, FieldType> createTypeField() {
         return createField(TableFields.TYPE.fieldName, FieldTypeConverter.TYPE.nullable(false), this, "");
     }
 
     @Override
-    protected TableField<DerbyMetaFieldRecord, String> createIdentifierField() {
+    protected TableField<PostgreSQLMetaScalarRecord, String> createIdentifierField() {
         return createField(TableFields.IDENTIFIER.fieldName, SQLDataType.VARCHAR.nullable(false), this, "");
     }
 }

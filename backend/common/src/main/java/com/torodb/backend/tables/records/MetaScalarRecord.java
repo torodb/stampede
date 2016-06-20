@@ -21,99 +21,85 @@ package com.torodb.backend.tables.records;
 
 import org.jooq.Field;
 import org.jooq.Record4;
-import org.jooq.Record6;
-import org.jooq.Row6;
+import org.jooq.Record5;
+import org.jooq.Row5;
 import org.jooq.impl.UpdatableRecordImpl;
 
-import com.torodb.backend.tables.MetaFieldTable;
+import com.torodb.backend.tables.MetaScalarTable;
 import com.torodb.core.TableRef;
 import com.torodb.core.TableRefFactory;
 import com.torodb.core.transaction.metainf.FieldType;
 
-public abstract class MetaFieldRecord<TableRefType> extends UpdatableRecordImpl<MetaFieldRecord<TableRefType>> 
-        implements Record6<String, String, TableRefType, String, FieldType, String> {
+public abstract class MetaScalarRecord<TableRefType> extends UpdatableRecordImpl<MetaScalarRecord<TableRefType>> 
+        implements Record5<String, String, TableRefType, FieldType, String> {
 // database, name, original_name, last_did
-	private static final long serialVersionUID = -2107968478;
+	private static final long serialVersionUID = -1107968478;
 
     /**
-     * Setter for <code>torodb.field.database</code>.
+     * Setter for <code>torodb.scalar.database</code>.
      */
     public void setDatabase(String value) {
         setValue(0, value);
     }
 
     /**
-     * Getter for <code>torodb.field.database</code>.
+     * Getter for <code>torodb.scalar.database</code>.
      */
     public String getDatabase() {
         return (String) getValue(0);
     }
 
     /**
-     * Setter for <code>torodb.field.collection</code>.
+     * Setter for <code>torodb.scalar.collection</code>.
      */
     public void setCollection(String value) {
         setValue(1, value);
     }
 
     /**
-     * Getter for <code>torodb.field.collection</code>.
+     * Getter for <code>torodb.scalar.collection</code>.
      */
     public String getCollection() {
         return (String) getValue(1);
     }
 
     /**
-     * Setter for <code>torodb.field.tableRef</code>.
+     * Setter for <code>torodb.scalar.tableRef</code>.
      */
     public void setTableRef(TableRefType value) {
         setValue(2, value);
     }
 
     /**
-     * Getter for <code>torodb.field.tableRef</code>.
+     * Getter for <code>torodb.scalar.tableRef</code>.
      */
     public TableRefType getTableRef() {
         return (TableRefType) getValue(2);
     }
 
     /**
-     * Setter for <code>torodb.field.name</code>.
-     */
-    public void setName(String value) {
-        setValue(3, value);
-    }
-
-    /**
-     * Getter for <code>torodb.field.name</code>.
-     */
-    public String getName() {
-        return (String) getValue(3);
-    }
-
-    /**
-     * Setter for <code>torodb.field.type</code>.
+     * Setter for <code>torodb.scalar.type</code>.
      */
     public void setType(FieldType value) {
         setValue(4, value);
     }
 
     /**
-     * Getter for <code>torodb.field.type</code>.
+     * Getter for <code>torodb.scalar.type</code>.
      */
     public FieldType getType() {
         return (FieldType) getValue(4);
     }
 
     /**
-     * Setter for <code>torodb.field.idenftifier</code>.
+     * Setter for <code>torodb.scalar.idenftifier</code>.
      */
     public void setIdentifier(String value) {
         setValue(5, value);
     }
 
     /**
-     * Getter for <code>torodb.field.idenftifier</code>.
+     * Getter for <code>torodb.scalar.idenftifier</code>.
      */
     public String getIdentifier() {
         return (String) getValue(5);
@@ -139,16 +125,16 @@ public abstract class MetaFieldRecord<TableRefType> extends UpdatableRecordImpl<
 	 * {@inheritDoc}
 	 */
 	@Override
-	public Row6<String, String, TableRefType, String, FieldType, String> fieldsRow() {
-		return (Row6) super.fieldsRow();
+	public Row5<String, String, TableRefType, FieldType, String> fieldsRow() {
+		return (Row5) super.fieldsRow();
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
 	@Override
-	public Row6<String, String, TableRefType, String, FieldType, String> valuesRow() {
-		return (Row6) super.valuesRow();
+	public Row5<String, String, TableRefType, FieldType, String> valuesRow() {
+		return (Row5) super.valuesRow();
 	}
 
     /**
@@ -156,7 +142,7 @@ public abstract class MetaFieldRecord<TableRefType> extends UpdatableRecordImpl<
      */
     @Override
     public Field<String> field1() {
-        return metaFieldTable.DATABASE;
+        return metaScalarTable.DATABASE;
     }
 
     /**
@@ -164,7 +150,7 @@ public abstract class MetaFieldRecord<TableRefType> extends UpdatableRecordImpl<
      */
     @Override
     public Field<String> field2() {
-        return metaFieldTable.COLLECTION;
+        return metaScalarTable.COLLECTION;
     }
 
     /**
@@ -172,31 +158,23 @@ public abstract class MetaFieldRecord<TableRefType> extends UpdatableRecordImpl<
      */
     @Override
     public Field<TableRefType> field3() {
-        return metaFieldTable.TABLE_REF;
+        return metaScalarTable.TABLE_REF;
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public Field<String> field4() {
-        return metaFieldTable.NAME;
+    public Field<FieldType> field4() {
+        return metaScalarTable.TYPE;
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public Field<FieldType> field5() {
-        return metaFieldTable.TYPE;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Field<String> field6() {
-        return metaFieldTable.IDENTIFIER;
+    public Field<String> field5() {
+        return metaScalarTable.IDENTIFIER;
     }
 
     /**
@@ -227,15 +205,7 @@ public abstract class MetaFieldRecord<TableRefType> extends UpdatableRecordImpl<
      * {@inheritDoc}
      */
     @Override
-    public String value4() {
-        return getName();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public FieldType value5() {
+    public FieldType value4() {
         return getType();
     }
 
@@ -243,7 +213,7 @@ public abstract class MetaFieldRecord<TableRefType> extends UpdatableRecordImpl<
      * {@inheritDoc}
      */
     @Override
-    public String value6() {
+    public String value5() {
         return getIdentifier();
     }
 
@@ -251,7 +221,7 @@ public abstract class MetaFieldRecord<TableRefType> extends UpdatableRecordImpl<
      * {@inheritDoc}
      */
     @Override
-    public MetaFieldRecord value1(String value) {
+    public MetaScalarRecord value1(String value) {
         setDatabase(value);
         return this;
     }
@@ -260,7 +230,7 @@ public abstract class MetaFieldRecord<TableRefType> extends UpdatableRecordImpl<
      * {@inheritDoc}
      */
     @Override
-    public MetaFieldRecord value2(String value) {
+    public MetaScalarRecord value2(String value) {
         setCollection(value);
         return this;
     }
@@ -269,7 +239,7 @@ public abstract class MetaFieldRecord<TableRefType> extends UpdatableRecordImpl<
      * {@inheritDoc}
      */
     @Override
-    public MetaFieldRecord value3(TableRefType value) {
+    public MetaScalarRecord value3(TableRefType value) {
         setTableRef(value);
         return this;
     }
@@ -278,16 +248,7 @@ public abstract class MetaFieldRecord<TableRefType> extends UpdatableRecordImpl<
      * {@inheritDoc}
      */
     @Override
-    public MetaFieldRecord value4(String value) {
-        setName(value);
-        return this;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public MetaFieldRecord value5(FieldType value) {
+    public MetaScalarRecord value4(FieldType value) {
         setType(value);
         return this;
     }
@@ -296,7 +257,7 @@ public abstract class MetaFieldRecord<TableRefType> extends UpdatableRecordImpl<
      * {@inheritDoc}
      */
     @Override
-    public MetaFieldRecord value6(String value) {
+    public MetaScalarRecord value5(String value) {
         setIdentifier(value);
         return this;
     }
@@ -305,10 +266,10 @@ public abstract class MetaFieldRecord<TableRefType> extends UpdatableRecordImpl<
 	 * {@inheritDoc}
 	 */
     @Override
-    public abstract MetaFieldRecord values(String database, String collection, TableRefType tableRef, String name, FieldType type, String identifier);
+    public abstract MetaScalarRecord values(String database, String collection, TableRefType tableRef, FieldType type, String identifier);
 
-    public MetaFieldRecord values(String database, String collection, TableRef tableRef, String name, FieldType type, String identifier) {
-        return values(database, collection, toTableRefType(tableRef), name, type, identifier);
+    public MetaScalarRecord values(String database, String collection, TableRef tableRef, FieldType type, String identifier) {
+        return values(database, collection, toTableRefType(tableRef), type, identifier);
     }
     
     protected abstract TableRefType toTableRefType(TableRef tableRef);
@@ -319,14 +280,14 @@ public abstract class MetaFieldRecord<TableRefType> extends UpdatableRecordImpl<
     // Constructors
     // -------------------------------------------------------------------------
 
-    private final MetaFieldTable metaFieldTable;
+    private final MetaScalarTable metaScalarTable;
     
     /**
-     * Create a detached MetaFieldRecord
+     * Create a detached MetaScalarRecord
      */
-    public MetaFieldRecord(MetaFieldTable metaFieldTable) {
-        super(metaFieldTable);
+    public MetaScalarRecord(MetaScalarTable metaScalarTable) {
+        super(metaScalarTable);
         
-        this.metaFieldTable = metaFieldTable;
+        this.metaScalarTable = metaScalarTable;
     }
 }

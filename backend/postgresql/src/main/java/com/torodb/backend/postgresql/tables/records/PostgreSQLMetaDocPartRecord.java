@@ -33,14 +33,14 @@ public class PostgreSQLMetaDocPartRecord extends MetaDocPartRecord<String[]> {
 	 * Create a detached MetaDocPartRecord
 	 */
 	public PostgreSQLMetaDocPartRecord() {
-		super(PostgreSQLMetaDocPartTable.CONTAINER);
+		super(PostgreSQLMetaDocPartTable.DOC_PART);
 	}
 
 	/**
 	 * Create a detached, initialised MetaDocPartRecord
 	 */
 	public PostgreSQLMetaDocPartRecord(String database, String collection, String[] tableRef, String identifier, Integer lastRid) {
-		super(PostgreSQLMetaDocPartTable.CONTAINER);
+		super(PostgreSQLMetaDocPartTable.DOC_PART);
         
         values(database, collection, tableRef, identifier, lastRid);
 	}

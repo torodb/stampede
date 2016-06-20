@@ -68,7 +68,7 @@ public abstract class MetaCollectionTable<R extends MetaCollectionRecord> extend
     private final UniqueKeys<R> uniqueKeys;
     
     /**
-     * Create a <code>torodb.collections</code> table reference
+     * Create a <code>torodb.collection</code> table reference
      */
     public MetaCollectionTable() {
         this(TABLE_NAME, null);
