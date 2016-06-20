@@ -6,6 +6,9 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.RemovalNotification;
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.torodb.mongodb.mongowp.ConnectionCommandsExecutor;
+import com.torodb.mongodb.mongowp.ReadOnlyTransactionCommandsExecutor;
+import com.torodb.mongodb.mongowp.WriteTransactionCommandsExecutor;
 import com.torodb.torod.TorodServer;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -17,16 +20,23 @@ import javax.inject.Singleton;
 public class MongodServer extends AbstractIdleService {
     private final TorodServer torodServer;
     private final Cache<Integer, MongodConnection> openConnections;
-    private final CommandsExecutor commandsExecutor;
+    private final WriteTransactionCommandsExecutor writeCommandsExecutor;
+    private final ReadOnlyTransactionCommandsExecutor readOnlyCommandsExecutor;
+    private final ConnectionCommandsExecutor connectionCommandsExecutor;
 
     @Inject
-    public MongodServer(TorodServer torodServer, CommandsExecutor commandsExecutor) {
+    public MongodServer(TorodServer torodServer, 
+            WriteTransactionCommandsExecutor writeCommandsExecutor,
+            ReadOnlyTransactionCommandsExecutor readOnlyCommandsExecutor,
+            ConnectionCommandsExecutor connectionCommandsExecutor) {
         this.torodServer = torodServer;
         openConnections = CacheBuilder.newBuilder()
                 .weakValues()
                 .removalListener(this::onConnectionInvalidated)
                 .build();
-        this.commandsExecutor = commandsExecutor;
+        this.writeCommandsExecutor = writeCommandsExecutor;
+        this.readOnlyCommandsExecutor = readOnlyCommandsExecutor;
+        this.connectionCommandsExecutor = connectionCommandsExecutor;
     }
 
     public TorodServer getTorodServer() {
@@ -50,8 +60,16 @@ public class MongodServer extends AbstractIdleService {
         openConnections.invalidateAll();
     }
 
-    public CommandsExecutor getCommandsExecutor() {
-        return commandsExecutor;
+    CommandsExecutor<WriteMongodTransaction> getWriteCommandsExecutor() {
+        return writeCommandsExecutor;
+    }
+
+    CommandsExecutor<ReadOnlyMongodTransaction> getReadOnlyCommandsExecutor() {
+        return readOnlyCommandsExecutor;
+    }
+
+    CommandsExecutor<MongodConnection> getConnectionCommandsExecutor() {
+        return connectionCommandsExecutor;
     }
 
     void onConnectionClose(MongodConnection connection) {

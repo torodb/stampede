@@ -1,6 +1,7 @@
 
 package com.torodb.mongodb.core;
 
+import com.eightkdata.mongowp.server.api.CommandsExecutor;
 import com.eightkdata.mongowp.server.api.Connection;
 import com.google.common.base.Preconditions;
 import com.torodb.torod.TorodConnection;
@@ -20,6 +21,7 @@ public class MongodConnection implements Connection, AutoCloseable {
     private final MongodServer server;
     private final TorodConnection torodConnection;
     private final LastErrorManager lastErrorManager;
+    private final CommandsExecutor<MongodConnection> commandsExecutor;
     private MongodTransaction currentTransaction;
     private boolean closed = false;
 
@@ -27,6 +29,7 @@ public class MongodConnection implements Connection, AutoCloseable {
         this.server = server;
         this.torodConnection = server.getTorodServer().openConnection();
         this.lastErrorManager = new LastErrorManager();
+        this.commandsExecutor = server.getConnectionCommandsExecutor();
     }
 
     public MongodServer getServer() {
@@ -41,11 +44,20 @@ public class MongodConnection implements Connection, AutoCloseable {
         return lastErrorManager;
     }
 
-    public MongodTransaction openTransaction(boolean readOnly) {
+    public ReadOnlyMongodTransaction openReadOnlyTransaction() {
         Preconditions.checkState(!closed, "This connection is closed");
         Preconditions.checkState(currentTransaction == null, "Another transaction is currently under execution. Transaction is " + currentTransaction);
-        currentTransaction = new MongodTransaction(this, readOnly);
-        return currentTransaction;
+        ReadOnlyMongodTransaction trans = new ReadOnlyMongodTransaction(this);
+        currentTransaction = trans;
+        return trans;
+    }
+
+    public WriteMongodTransaction openWriteTransaction() {
+        Preconditions.checkState(!closed, "This connection is closed");
+        Preconditions.checkState(currentTransaction == null, "Another transaction is currently under execution. Transaction is " + currentTransaction);
+        WriteMongodTransaction trans = new WriteMongodTransaction(this);
+        currentTransaction = trans;
+        return trans;
     }
 
     @Nullable
@@ -53,8 +65,13 @@ public class MongodConnection implements Connection, AutoCloseable {
         return currentTransaction;
     }
 
+    @Override
     public int getConnectionId() {
         return torodConnection.getConnectionId();
+    }
+
+    public CommandsExecutor<MongodConnection> getCommandsExecutor() {
+        return commandsExecutor;
     }
 
     @Override

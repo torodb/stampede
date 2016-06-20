@@ -2,9 +2,7 @@
 package com.torodb.mongodb.core;
 
 import com.eightkdata.mongowp.Status;
-import com.eightkdata.mongowp.exceptions.MongoException;
 import com.eightkdata.mongowp.server.api.Command;
-import com.eightkdata.mongowp.server.api.CommandsExecutor;
 import com.eightkdata.mongowp.server.api.Request;
 import com.google.common.base.Preconditions;
 import com.torodb.torod.TorodTransaction;
@@ -14,30 +12,34 @@ import org.apache.logging.log4j.Logger;
 /**
  *
  */
-public final class MongodTransaction implements AutoCloseable {
+public abstract class MongodTransaction implements AutoCloseable {
     private static final Logger LOGGER = LogManager.getLogger(MongodTransaction.class);
 
     private final MongodConnection connection;
-    private Request<?> currentRequest;
-    private final CommandsExecutor executor;
+    private Request currentRequest;
     private boolean closed = false;
 
-    public MongodTransaction(MongodConnection connection) {
+    MongodTransaction(MongodConnection connection) {
         this.connection = connection;
-        this.executor = connection.getServer().getCommandsExecutor();
     }
+
+    public abstract TorodTransaction getTorodTransaction();
+
+    protected abstract <Arg, Result> Status<Result> executeProtected(Request req, Command<? super Arg, ? super Result> command, Arg arg);
 
     public MongodConnection getConnection() {
         return connection;
     }
-    
-    public <C extends Command<? super A, ? super R>, A, R> Status<R> execute(C command, A arg, Request<MongodConnection> request) throws MongoException {
+
+    public <Arg, Result> Status<Result> execute(Request req, Command<? super Arg, ? super Result> command, Arg arg) {
         Preconditions.checkState(currentRequest == null, "Another request is currently under execution. Request is " + currentRequest);
-        this.currentRequest = request;
-        return executor.execute(command, arg, request);
+        this.currentRequest = req;
+        return executeProtected(req, command, arg);
     }
 
-    public abstract TorodTransaction getTorodTransaction();
+    public Request getCurrentRequest() {
+        return currentRequest;
+    }
 
     @Override
     public void close() {

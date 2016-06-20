@@ -7,7 +7,7 @@ import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.Request;
 import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.google.common.net.HostAndPort;
-import com.torodb.mongodb.commands.impl.AbstractTorodbCommandImplementation;
+import com.torodb.mongodb.commands.impl.ConnectionTorodbCommandImpl;
 import com.torodb.mongodb.core.MongoLayerConstants;
 import com.torodb.mongodb.core.MongodConnection;
 import java.time.Clock;
@@ -18,20 +18,19 @@ import javax.inject.Singleton;
  *
  */
 @Singleton
-public class IsMasterCommandImplementation extends AbstractTorodbCommandImplementation<Empty, IsMasterReply> {
+public class IsMasterImplementation extends ConnectionTorodbCommandImpl<Empty, IsMasterReply> {
 
     private final Clock clock;
     private final HostAndPort me;
 
     @Inject
-    public IsMasterCommandImplementation(Clock clock, HostAndPort me) {
+    public IsMasterImplementation(Clock clock, HostAndPort me) {
         this.clock = clock;
         this.me = me;
     }
 
     @Override
-    public Status<IsMasterReply> apply(Command<? super Empty, ? super IsMasterReply> command, Request<Empty> req, MongodConnection connection) {
-
+    public Status<IsMasterReply> apply(Request req, Command<? super Empty, ? super IsMasterReply> command, Empty arg, MongodConnection context) {
         return Status.ok(
                 new IsMasterReply(
                         true,
