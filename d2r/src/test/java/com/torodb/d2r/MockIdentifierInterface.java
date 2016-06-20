@@ -21,6 +21,7 @@
 package com.torodb.d2r;
 
 import com.torodb.core.backend.IdentifierInterface;
+import com.torodb.core.transaction.metainf.FieldType;
 
 public class MockIdentifierInterface implements IdentifierInterface {
 
@@ -47,6 +48,43 @@ public class MockIdentifierInterface implements IdentifierInterface {
     @Override
     public boolean isSameIdentifier(String leftIdentifier, String rightIdentifier) {
         return leftIdentifier.equals(rightIdentifier);
+    }
+
+    @Override
+    public char getSeparator() {
+        return '_';
+    }
+
+    @Override
+    public char getArrayDimensionSeparator() {
+        return '$';
+    }
+
+    private static final char[] FIELD_TYPE_IDENTIFIERS = new char[FieldType.values().length];
+    static {
+        FIELD_TYPE_IDENTIFIERS[FieldType.BINARY.ordinal()]='r'; // [r]aw
+        FIELD_TYPE_IDENTIFIERS[FieldType.BOOLEAN.ordinal()]='b'; // [b]inary
+        FIELD_TYPE_IDENTIFIERS[FieldType.DATE.ordinal()]='c'; // [c]alendar
+        FIELD_TYPE_IDENTIFIERS[FieldType.DOUBLE.ordinal()]='d'; // [d]ouble
+        FIELD_TYPE_IDENTIFIERS[FieldType.INSTANT.ordinal()]='g'; // [G]eorge Gamow or Admiral [G]race Hopper that were the earliest users of the term nanosecond
+        FIELD_TYPE_IDENTIFIERS[FieldType.INTEGER.ordinal()]='i'; // [i]nteger
+        FIELD_TYPE_IDENTIFIERS[FieldType.LONG.ordinal()]='l'; // [l]ong
+        FIELD_TYPE_IDENTIFIERS[FieldType.MONGO_OBJECT_ID.ordinal()]='x';
+        FIELD_TYPE_IDENTIFIERS[FieldType.MONGO_TIME_STAMP.ordinal()]='y';
+        FIELD_TYPE_IDENTIFIERS[FieldType.NULL.ordinal()]='n'; // [n]ull
+        FIELD_TYPE_IDENTIFIERS[FieldType.STRING.ordinal()]='s'; // [s]tring
+        FIELD_TYPE_IDENTIFIERS[FieldType.TIME.ordinal()]='t'; // [t]ime
+        FIELD_TYPE_IDENTIFIERS[FieldType.CHILD.ordinal()]='e'; // [e]lement
+    }
+    
+    @Override
+    public char getFieldTypeIdentifier(FieldType fieldType) {
+        return FIELD_TYPE_IDENTIFIERS[fieldType.ordinal()];
+    }
+
+    @Override
+    public String getScalarIdentifier(FieldType fieldType) {
+        return "v_" + FIELD_TYPE_IDENTIFIERS[fieldType.ordinal()];
     }
 
 }

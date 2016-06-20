@@ -113,7 +113,7 @@ public class R2DBackedTranslator<Result, BackendInternalFields extends InternalF
                 
                 if(metaField.getIdentifier().indexOf(backendTranslator.getScalarName()) == 0
                         && metaField.getIdentifier().length() == backendTranslator.getScalarName().length() + 2) {
-                    assert !tableRef.isRoot() : "found scalar value in root doc part";
+                    assert seq != null : "found scalar value outside of an array";
                     addValueToDocPartRow(currentDocPartRow, tableRef, pid, seq, value);
                     wasScalar = true;
                     break;

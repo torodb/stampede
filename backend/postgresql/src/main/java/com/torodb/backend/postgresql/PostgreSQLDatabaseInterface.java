@@ -31,6 +31,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -95,6 +96,50 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
 
     private static final long serialVersionUID = 784618502;
 
+    private static final char SEPARATOR = '_';
+    private static final char ARRAY_DIMENSION_SEPARATOR = '$';
+    private static final char[] FIELD_TYPE_IDENTIFIERS = new char[FieldType.values().length];
+    private static final String[] SCALAR_FIELD_TYPE_IDENTIFIERS = new String[FieldType.values().length];
+    static {
+        FIELD_TYPE_IDENTIFIERS[FieldType.BINARY.ordinal()]='r'; // [r]aw
+        FIELD_TYPE_IDENTIFIERS[FieldType.BOOLEAN.ordinal()]='b'; // [b]inary
+        FIELD_TYPE_IDENTIFIERS[FieldType.DATE.ordinal()]='c'; // [c]alendar
+        FIELD_TYPE_IDENTIFIERS[FieldType.DOUBLE.ordinal()]='d'; // [d]ouble
+        FIELD_TYPE_IDENTIFIERS[FieldType.INSTANT.ordinal()]='g'; // [G]eorge Gamow or Admiral [G]race Hopper that were the earliest users of the term nanosecond
+        FIELD_TYPE_IDENTIFIERS[FieldType.INTEGER.ordinal()]='i'; // [i]nteger
+        FIELD_TYPE_IDENTIFIERS[FieldType.LONG.ordinal()]='l'; // [l]ong
+        FIELD_TYPE_IDENTIFIERS[FieldType.MONGO_OBJECT_ID.ordinal()]='x';
+        FIELD_TYPE_IDENTIFIERS[FieldType.MONGO_TIME_STAMP.ordinal()]='y';
+        FIELD_TYPE_IDENTIFIERS[FieldType.NULL.ordinal()]='n'; // [n]ull
+        FIELD_TYPE_IDENTIFIERS[FieldType.STRING.ordinal()]='s'; // [s]tring
+        FIELD_TYPE_IDENTIFIERS[FieldType.TIME.ordinal()]='t'; // [t]ime
+        FIELD_TYPE_IDENTIFIERS[FieldType.CHILD.ordinal()]='e'; // [e]lement
+        
+        Set<Character> fieldTypeIdentifierSet = new HashSet<>();
+        for (FieldType fieldType : FieldType.values()) {
+            if (FIELD_TYPE_IDENTIFIERS.length <= fieldType.ordinal()) {
+                throw new SystemException("FieldType " + fieldType + " has not been mapped to an identifier.");
+            }
+            
+            char identifier = FIELD_TYPE_IDENTIFIERS[fieldType.ordinal()];
+            
+            if ((identifier < 'a' || identifier > 'z') &&
+                    (identifier < '0' || identifier > '9')) {
+                throw new SystemException("FieldType " + fieldType + " has an unallowed identifier " 
+                        + identifier);
+            }
+            
+            if (fieldTypeIdentifierSet.contains(identifier)) {
+                throw new SystemException("FieldType " + fieldType + " identifier " 
+                        + identifier + " was used by another FieldType.");
+            }
+            
+            fieldTypeIdentifierSet.add(identifier);
+            
+            SCALAR_FIELD_TYPE_IDENTIFIERS[fieldType.ordinal()] = DocPartTableFields.SCALAR.fieldName + SEPARATOR + identifier;
+        }
+    }
+
     private static final String[] RESTRICTED_SCHEMA_NAMES = new String[] {
             TorodbSchema.TORODB_SCHEMA,
             "pg_catalog",
@@ -109,6 +154,19 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
             DocPartTableFields.RID.fieldName,
             DocPartTableFields.PID.fieldName,
             DocPartTableFields.SEQ.fieldName,
+            SCALAR_FIELD_TYPE_IDENTIFIERS[FieldType.BINARY.ordinal()],
+            SCALAR_FIELD_TYPE_IDENTIFIERS[FieldType.BOOLEAN.ordinal()],
+            SCALAR_FIELD_TYPE_IDENTIFIERS[FieldType.DATE.ordinal()],
+            SCALAR_FIELD_TYPE_IDENTIFIERS[FieldType.DOUBLE.ordinal()],
+            SCALAR_FIELD_TYPE_IDENTIFIERS[FieldType.INSTANT.ordinal()],
+            SCALAR_FIELD_TYPE_IDENTIFIERS[FieldType.INTEGER.ordinal()],
+            SCALAR_FIELD_TYPE_IDENTIFIERS[FieldType.LONG.ordinal()],
+            SCALAR_FIELD_TYPE_IDENTIFIERS[FieldType.MONGO_OBJECT_ID.ordinal()],
+            SCALAR_FIELD_TYPE_IDENTIFIERS[FieldType.MONGO_TIME_STAMP.ordinal()],
+            SCALAR_FIELD_TYPE_IDENTIFIERS[FieldType.NULL.ordinal()],
+            SCALAR_FIELD_TYPE_IDENTIFIERS[FieldType.STRING.ordinal()],
+            SCALAR_FIELD_TYPE_IDENTIFIERS[FieldType.TIME.ordinal()],
+            SCALAR_FIELD_TYPE_IDENTIFIERS[FieldType.CHILD.ordinal()],
             "oid",
             "tableoid",
             "xmin",
@@ -976,4 +1034,23 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
         handleRollbackException(context, dataAccessException);
     }
 
+    @Override
+    public char getSeparator() {
+        return SEPARATOR;
+    }
+
+    @Override
+    public char getArrayDimensionSeparator() {
+        return ARRAY_DIMENSION_SEPARATOR;
+    }
+
+    @Override
+    public char getFieldTypeIdentifier(FieldType fieldType) {
+        return FIELD_TYPE_IDENTIFIERS[fieldType.ordinal()];
+    }
+
+    @Override
+    public String getScalarIdentifier(FieldType fieldType) {
+        return SCALAR_FIELD_TYPE_IDENTIFIERS[fieldType.ordinal()];
+    }
 }
