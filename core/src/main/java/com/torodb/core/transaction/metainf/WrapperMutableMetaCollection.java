@@ -22,7 +22,10 @@ package com.torodb.core.transaction.metainf;
 
 import com.torodb.core.TableRef;
 import com.torodb.core.annotations.DoNotChange;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -66,7 +69,7 @@ public class WrapperMutableMetaCollection implements MutableMetaCollection {
         assert getMetaDocPartByIdentifier(tableId) == null : "There is another doc part whose id is " + tableRef;
 
         WrapperMutableMetaDocPart result = createMetaDocPart(
-                new ImmutableMetaDocPart(tableRef, tableId, Collections.emptyMap()));
+                new ImmutableMetaDocPart(tableRef, tableId));
 
         newDocParts.put(tableRef, result);
         onDocPartChange(result);

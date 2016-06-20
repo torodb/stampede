@@ -3,10 +3,7 @@ package com.torodb.torod.pipeline;
 
 import com.torodb.core.TableRef;
 import com.torodb.core.annotations.DoNotChange;
-import com.torodb.core.transaction.metainf.FieldType;
-import com.torodb.core.transaction.metainf.ImmutableMetaDocPart;
-import com.torodb.core.transaction.metainf.ImmutableMetaField;
-import com.torodb.core.transaction.metainf.MutableMetaDocPart;
+import com.torodb.core.transaction.metainf.*;
 import java.util.ArrayList;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
@@ -17,7 +14,8 @@ import java.util.stream.Stream;
 public class BatchMetaDocPart implements MutableMetaDocPart {
 
     private final MutableMetaDocPart delegate;
-    private final ArrayList<ImmutableMetaField> changesOnBatch = new ArrayList<>();
+    private final ArrayList<ImmutableMetaField> fieldsChangesOnBatch = new ArrayList<>();
+    private final ArrayList<ImmutableMetaScalar> scalarChangesOnBatch = new ArrayList<>();
     private final Consumer<BatchMetaDocPart> changeConsumer;
     private boolean createdOnCurrentBatch;
 
@@ -28,7 +26,8 @@ public class BatchMetaDocPart implements MutableMetaDocPart {
     }
 
     public void newBatch() {
-        changesOnBatch.clear();
+        fieldsChangesOnBatch.clear();
+        scalarChangesOnBatch.clear();
         createdOnCurrentBatch = false;
     }
 
@@ -42,7 +41,12 @@ public class BatchMetaDocPart implements MutableMetaDocPart {
 
     @DoNotChange
     public Iterable<ImmutableMetaField> getOnBatchModifiedMetaFields() {
-        return changesOnBatch;
+        return fieldsChangesOnBatch;
+    }
+
+    @DoNotChange
+    public Iterable<ImmutableMetaScalar> getOnBatchModifiedMetaScalars() {
+        return scalarChangesOnBatch;
     }
 
     @Override
@@ -50,10 +54,21 @@ public class BatchMetaDocPart implements MutableMetaDocPart {
             IllegalArgumentException {
         ImmutableMetaField newMetaField = delegate.addMetaField(name, identifier, type);
 
-        changesOnBatch.add(newMetaField);
+        fieldsChangesOnBatch.add(newMetaField);
         changeConsumer.accept(this);
 
         return newMetaField;
+    }
+
+    @Override
+    public ImmutableMetaScalar addMetaScalar(String identifier, FieldType type) throws
+            IllegalArgumentException {
+        ImmutableMetaScalar newMetaScalar = delegate.addMetaScalar(identifier, type);
+
+        scalarChangesOnBatch.add(newMetaScalar);
+        changeConsumer.accept(this);
+
+        return newMetaScalar;
     }
 
     @Override
@@ -94,5 +109,15 @@ public class BatchMetaDocPart implements MutableMetaDocPart {
     @Override
     public String getIdentifier() {
         return delegate.getIdentifier();
+    }
+
+    @Override
+    public Iterable<? extends MetaScalar> getAddedMetaScalars() {
+        return delegate.getAddedMetaScalars();
+    }
+
+    @Override
+    public Stream<? extends MetaScalar> streamScalars() {
+        return delegate.streamScalars();
     }
 }

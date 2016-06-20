@@ -1,27 +1,17 @@
 package com.torodb.torod.pipeline;
 
-import com.torodb.torod.pipeline.BatchMetaDocPart;
-
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-
-import java.util.Collections;
-import java.util.function.Consumer;
-
-import org.junit.Before;
-import org.junit.Test;
-
 import com.google.common.collect.Iterables;
 import com.torodb.core.TableRefFactory;
 import com.torodb.core.impl.TableRefFactoryImpl;
 import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.ImmutableMetaDocPart;
 import com.torodb.core.transaction.metainf.WrapperMutableMetaDocPart;
+import java.util.function.Consumer;
+import org.junit.Before;
+import org.junit.Test;
+
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
 
 /**
  *
@@ -45,7 +35,7 @@ public class BatchMetaDocPartTest {
         delegateChangeConsumer = mock(Consumer.class);
 
         delegate = new WrapperMutableMetaDocPart(
-                new ImmutableMetaDocPart(tableRefFactory.createRoot(), "docPartId", Collections.emptyMap()),
+                new ImmutableMetaDocPart(tableRefFactory.createRoot(), "docPartId"),
                 delegateChangeConsumer
         );
         docPart = new BatchMetaDocPart(delegate, testChangeConsumer, true);

@@ -26,6 +26,7 @@ import com.torodb.core.TableRef;
 import com.torodb.core.annotations.DoNotChange;
 import com.torodb.core.transaction.metainf.ImmutableMetaDocPart.Builder;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
@@ -36,9 +37,17 @@ import java.util.stream.Stream;
 public class WrapperMutableMetaDocPart implements MutableMetaDocPart {
 
     private final ImmutableMetaDocPart wrapped;
+    /**
+     * This table contains all fields contained by wrapper and all new fields
+     */
     private final Table<String, FieldType, ImmutableMetaField> newFields;
+    /**
+     * This list just contains the fields that have been added on this wrapper but not on the
+     * wrapped object.
+     */
     private final List<ImmutableMetaField> addedFields;
     private final Consumer<WrapperMutableMetaDocPart> changeConsumer;
+    private final EnumMap<FieldType, ImmutableMetaScalar> newScalars;
 
     public WrapperMutableMetaDocPart(ImmutableMetaDocPart wrapped,
             Consumer<WrapperMutableMetaDocPart> changeConsumer) {
@@ -51,6 +60,7 @@ public class WrapperMutableMetaDocPart implements MutableMetaDocPart {
         );
         addedFields = new ArrayList<>();
         this.changeConsumer = changeConsumer;
+        this.newScalars = new EnumMap<>(FieldType.class);
     }
 
     @Override
@@ -71,20 +81,55 @@ public class WrapperMutableMetaDocPart implements MutableMetaDocPart {
     }
 
     @Override
+    public Stream<? extends MetaScalar> streamScalars() {
+        return Stream.concat(newScalars.values().stream(), wrapped.streamScalars());
+    }
+
+    @Override
+    public MetaScalar getScalar(FieldType type) {
+        ImmutableMetaScalar scalar = newScalars.get(type);
+        if (scalar != null) {
+            return scalar;
+        }
+        return wrapped.getScalar(type);
+    }
+
+    @Override
+    public ImmutableMetaScalar addMetaScalar(String identifier, FieldType type) throws
+            IllegalArgumentException {
+        if (getScalar(type) != null) {
+            throw new IllegalArgumentException("There is another scalar with type " + type + ", "
+                    + "whose identifier is " + identifier);
+        }
+        ImmutableMetaScalar scalar = new ImmutableMetaScalar(identifier, type);
+        newScalars.put(type, scalar);
+        changeConsumer.accept(this);
+        return scalar;
+    }
+
+    @Override
     @DoNotChange
     public Iterable<ImmutableMetaField> getAddedMetaFields() {
         return addedFields;
     }
 
     @Override
+    public Iterable<? extends MetaScalar> getAddedMetaScalars() {
+        return newScalars.values();
+    }
+
+    @Override
     public ImmutableMetaDocPart immutableCopy() {
-        if (addedFields.isEmpty()) {
+        if (addedFields.isEmpty() && newScalars.isEmpty()) {
             return wrapped;
         }
         else {
             ImmutableMetaDocPart.Builder builder = new Builder(wrapped);
             for (ImmutableMetaField addedField : addedFields) {
                 builder.add(addedField);
+            }
+            for (ImmutableMetaScalar value : newScalars.values()) {
+                builder.add(value);
             }
             return builder.build();
         }
