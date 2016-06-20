@@ -81,7 +81,7 @@ public class R2DBackendTranslatorImpl implements R2DBackendTranslator<ResultSet,
                     seq = seqConverter.from(resultSet.getInt(columnIndex));
                 }
             } catch (SQLException sqlException) {
-                databaseInterface.handleRetryException(Context.fetch, sqlException);
+                databaseInterface.handleRollbackException(Context.fetch, sqlException);
                 
                 throw new SystemException(sqlException);
             }
@@ -115,7 +115,7 @@ public class R2DBackendTranslatorImpl implements R2DBackendTranslator<ResultSet,
         try {
             databaseValue = resultSet.getObject(fieldIndex + internalFields.columnIndex);
         } catch (SQLException sqlException) {
-            databaseInterface.handleRetryException(Context.fetch, sqlException);
+            databaseInterface.handleRollbackException(Context.fetch, sqlException);
             
             throw new SystemException(sqlException);
         }
@@ -136,7 +136,7 @@ public class R2DBackendTranslatorImpl implements R2DBackendTranslator<ResultSet,
         try {
             return resultSet.next();
         } catch (SQLException sqlException) {
-            databaseInterface.handleRetryException(Context.fetch, sqlException);
+            databaseInterface.handleRollbackException(Context.fetch, sqlException);
             
             throw new SystemException(sqlException);
         }

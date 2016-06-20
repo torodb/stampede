@@ -4,6 +4,8 @@ import java.sql.SQLException;
 
 import org.jooq.exception.DataAccessException;
 
+import com.torodb.core.exceptions.user.UserException;
+
 public interface ErrorHandlerInterface {
     public enum Context {
         unknown,
@@ -15,6 +17,9 @@ public interface ErrorHandlerInterface {
         commit
     }
     
-    void handleRetryException(Context context, SQLException sqlException);
-    void handleRetryException(Context context, DataAccessException sqlException);
+    void handleRollbackException(Context context, SQLException sqlException);
+    void handleRollbackException(Context context, DataAccessException dataAccessException);
+    
+    void handleUserAndRetryException(Context context, SQLException sqlException) throws UserException;
+    void handleUserAndRetryException(Context context, DataAccessException dataAccessException) throws UserException;
 }

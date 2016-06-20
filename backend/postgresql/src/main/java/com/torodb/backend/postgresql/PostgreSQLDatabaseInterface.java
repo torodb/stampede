@@ -74,6 +74,7 @@ import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.d2r.DocPartResults;
 import com.torodb.core.d2r.DocPartRow;
 import com.torodb.core.exceptions.SystemException;
+import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.transaction.RollbackException;
 import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.MetaCollection;
@@ -162,25 +163,6 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
         return metaFieldTable;
     }
 
-    @Override
-    public @Nonnull ValueToJooqDataTypeProvider getValueToJooqDataTypeProvider() {
-        return valueToJooqDataTypeProvider;
-    }
-
-    @Override
-    public String createIndexStatement(Configuration conf, String schemaName, String tableName, String fieldName) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("CREATE INDEX ON \"")
-                .append(schemaName)
-                .append("\".\"")
-                .append(tableName)
-                .append("\" (\"")
-                .append(fieldName)
-                .append("\")");
-
-        return sb.toString();
-    }
-
     private Iterable<Field<?>> getFieldIterator(Iterable<Field<?>> fields) {
         List<Field<?>> fieldList = Lists.newArrayList(fields);
         Collections.sort(fieldList, fieldComparator);
@@ -264,16 +246,6 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
     @Override
     public boolean isAllowedColumnIdentifier(@Nonnull String columnName) {
         return Arrays.binarySearch(RESTRICTED_COLUMN_NAMES, columnName) >= 0;
-    }
-
-    @Override
-    public int getIntColumnType(ResultSet columns) throws SQLException {
-        return columns.getInt("DATA_TYPE");
-    }
-
-    @Override
-    public String getStringColumnType(ResultSet columns) throws SQLException {
-        return columns.getString("TYPE_NAME");
     }
 
     @Override
@@ -406,7 +378,7 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
                 preparedStatement.executeUpdate();
             }
         } catch(SQLException ex) {
-            handleRetryException(Context.delete, ex);
+            handleRollbackException(Context.delete, ex);
             
             throw new SystemException(ex);
         } finally {
@@ -417,6 +389,7 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
     @Override
     public void dropSchema(@Nonnull DSLContext dsl, @Nonnull String schemaName) {
         String query = "DROP SCHEMA \"" + schemaName + "\" CASCADE";
+        
         executeUpdate(dsl, query, Context.ddl);
     }
 
@@ -426,35 +399,35 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
         throw new UnsupportedOperationException("Not implemented yet");
     }
 
-    @Nonnull
     @Override
-    public String createIndexStatement(
-            @Nonnull String fullIndexName, @Nonnull String tableSchema, @Nonnull String tableName,
-            @Nonnull String tableColumnName, boolean ascending
+    public void createIndex(@Nonnull DSLContext dsl,
+            @Nonnull String indexName, @Nonnull String schemaName, @Nonnull String tableName,
+            @Nonnull String columnName, boolean ascending
     ) {
-        return new StringBuilder()
+        StringBuilder sb = new StringBuilder()
                 .append("CREATE INDEX ")
-                .append("\"").append(fullIndexName).append("\"")
+                .append("\"").append(indexName).append("\"")
                 .append(" ON ")
-                .append("\"").append(tableSchema).append("\"")
+                .append("\"").append(schemaName).append("\"")
                 .append(".")
                 .append("\"").append(tableName).append("\"")
                 .append(" (")
-                    .append("\"").append(tableColumnName).append("\"")
+                    .append("\"").append(columnName).append("\"")
                     .append(" ").append(ascending ? "ASC" : "DESC")
-                .append(")")
-                .toString();
+                .append(")");
+        
+        executeUpdate(dsl, sb.toString(), Context.ddl);
     }
 
-    @Nonnull
     @Override
-    public String dropIndexStatement(@Nonnull String schemaName, @Nonnull String indexName) {
-        return new StringBuilder()
+    public void dropIndex(@Nonnull DSLContext dsl, @Nonnull String schemaName, @Nonnull String indexName) {
+        StringBuilder sb = new StringBuilder()
                 .append("DROP INDEX ")
                 .append("\"").append(schemaName).append("\"")
                 .append(".")
-                .append("\"").append(indexName).append("\"")
-                .toString();
+                .append("\"").append(indexName).append("\"");
+        
+        executeUpdate(dsl, sb.toString(), Context.ddl);
     }
 
     @Override
@@ -642,10 +615,10 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
                 }
             }
         } catch (DataAccessException ex) {
-            handleRetryException(Context.insert, ex);
+            handleRollbackException(Context.insert, ex);
             throw new SystemException(ex);
         } catch (SQLException ex) {
-            handleRetryException(Context.insert, ex);
+            handleRollbackException(Context.insert, ex);
             throw new SystemException(ex);
         } catch (IOException ex) {
             throw new SystemException(ex);
@@ -828,14 +801,14 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
     }
     
     @Override
-    public void handleRetryException(Context context, SQLException sqlException) {
+    public void handleRollbackException(Context context, SQLException sqlException) {
         if (Arrays.binarySearch(ROLLBACK_EXCEPTIONS, sqlException.getSQLState()) >= 0) {
             throw new RollbackException(sqlException);
         }
     }
 
     @Override
-    public void handleRetryException(Context context, DataAccessException dataAccessException) {
+    public void handleRollbackException(Context context, DataAccessException dataAccessException) {
         if (Arrays.binarySearch(ROLLBACK_EXCEPTIONS, dataAccessException.sqlState()) >= 0) {
             throw new RollbackException(dataAccessException);
         }
@@ -858,7 +831,7 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
     }
     
 	@Override
-	public int getLastRowIUsed(@Nonnull DSLContext dsl, @Nonnull MetaDatabase metaDatabase, @Nonnull MetaCollection metaCollection, @Nonnull MetaDocPart metaDocPart) {
+	public int getLastRowIdUsed(@Nonnull DSLContext dsl, @Nonnull MetaDatabase metaDatabase, @Nonnull MetaCollection metaCollection, @Nonnull MetaDocPart metaDocPart) {
 		
 		TableRef tableRef = metaDocPart.getTableRef();
 		
@@ -881,7 +854,7 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
         	}
         	return maxId;
         } catch (SQLException ex){
-        	handleRetryException(Context.ddl, ex);
+        	handleRollbackException(Context.ddl, ex);
             throw new SystemException(ex);
         } finally {
             dsl.configuration().connectionProvider().release(connection);
@@ -964,7 +937,7 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
         try (PreparedStatement ps = c.prepareStatement(statement)) {
             ps.execute();
         } catch (SQLException ex) {
-        	handleRetryException(context, ex);
+        	handleRollbackException(context, ex);
             throw new SystemException(ex);
 		} finally {
             dsl.configuration().connectionProvider().release(c);
@@ -976,7 +949,7 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
         try (PreparedStatement ps = c.prepareStatement(statement)) {
             ps.execute();
         } catch (SQLException ex) {
-        	handleRetryException(context, ex);
+        	handleRollbackException(context, ex);
             throw new SystemException(ex);
 		} finally {
             dsl.configuration().connectionProvider().release(c);
@@ -987,9 +960,20 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
         try {
             query.execute();
         } catch (DataAccessException ex) {
-        	handleRetryException(context, ex);
+        	handleRollbackException(context, ex);
             throw new SystemException(ex);
         }    	
+    }
+
+    @Override
+    public void handleUserAndRetryException(Context context, SQLException sqlException) throws UserException {
+        handleRollbackException(context, sqlException);
+    }
+
+    @Override
+    public void handleUserAndRetryException(Context context, DataAccessException dataAccessException)
+            throws UserException {
+        handleRollbackException(context, dataAccessException);
     }
 
 }

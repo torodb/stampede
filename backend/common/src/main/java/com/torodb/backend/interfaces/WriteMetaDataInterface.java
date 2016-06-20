@@ -21,8 +21,4 @@ public interface WriteMetaDataInterface {
     void addMetaField(@Nonnull DSLContext dsl, @Nonnull String databaseName, @Nonnull String collectionName, @Nonnull TableRef tableRef, @Nonnull String fieldName, String fieldIdentifier, FieldType type);
     
     int consumeRids(@Nonnull DSLContext dsl, @Nonnull String database, @Nonnull String collection, @Nonnull TableRef tableRef, int count);
-    
-    @Nonnull String createIndexStatement(@Nonnull String fullIndexName, @Nonnull String tableSchema, 
-            @Nonnull String tableName, @Nonnull String tableColumnName, boolean isAscending);
-    @Nonnull String dropIndexStatement(@Nonnull String schemaName, @Nonnull String indexName);
 }

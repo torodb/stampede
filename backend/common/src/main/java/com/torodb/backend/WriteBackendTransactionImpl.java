@@ -101,7 +101,7 @@ public class WriteBackendTransactionImpl implements WriteBackendTransaction {
         try {
             connection.commit();
         } catch(SQLException ex) {
-            databaseInterface.handleRetryException(Context.commit, ex);
+            databaseInterface.handleRollbackException(Context.commit, ex);
         } finally {
             dsl.configuration().connectionProvider().release(connection);
         }
