@@ -1,72 +1,38 @@
 package com.torodb.d2r;
 
-import com.google.inject.Inject;
 import com.torodb.core.TableRef;
+import com.torodb.core.backend.IdentifierConstraints;
 import com.torodb.core.d2r.IdentifierFactory;
 import com.torodb.core.exceptions.SystemException;
 import com.torodb.core.transaction.metainf.*;
 import java.text.Normalizer;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.Locale;
+import java.util.Random;
 import java.util.regex.Pattern;
-import com.torodb.core.backend.IdentifierConstraints;
 
 public class IdentifierFactoryImpl implements IdentifierFactory {
 
     private static final int MAX_GENERATION_TIME = 10;
-    private static final char SEPARATOR = '_';
-    private static final char ARRAY_DIMENSION_SEPARATOR = '$';
-    private static final String SEPARATOR_STRING = String.valueOf('_');
-    private static final char[] FIELD_TYPE_IDENTIFIERS = new char[FieldType.values().length];
-    static {
-        FIELD_TYPE_IDENTIFIERS[FieldType.BINARY.ordinal()]='r'; // [r]aw
-        FIELD_TYPE_IDENTIFIERS[FieldType.BOOLEAN.ordinal()]='b'; // [b]inary
-        FIELD_TYPE_IDENTIFIERS[FieldType.DATE.ordinal()]='c'; // [c]alendar
-        FIELD_TYPE_IDENTIFIERS[FieldType.DOUBLE.ordinal()]='d'; // [d]ouble
-        FIELD_TYPE_IDENTIFIERS[FieldType.INSTANT.ordinal()]='g'; // [G]eorge Gamow or Admiral [G]race Hopper that were the earliest users of the term nanosecond
-        FIELD_TYPE_IDENTIFIERS[FieldType.INTEGER.ordinal()]='i'; // [i]nteger
-        FIELD_TYPE_IDENTIFIERS[FieldType.LONG.ordinal()]='l'; // [l]ong
-        FIELD_TYPE_IDENTIFIERS[FieldType.MONGO_OBJECT_ID.ordinal()]='x';
-        FIELD_TYPE_IDENTIFIERS[FieldType.MONGO_TIME_STAMP.ordinal()]='y';
-        FIELD_TYPE_IDENTIFIERS[FieldType.NULL.ordinal()]='n'; // [n]ull
-        FIELD_TYPE_IDENTIFIERS[FieldType.STRING.ordinal()]='s'; // [s]tring
-        FIELD_TYPE_IDENTIFIERS[FieldType.TIME.ordinal()]='t'; // [t]ime
-        FIELD_TYPE_IDENTIFIERS[FieldType.CHILD.ordinal()]='e'; // [e]lement
-        
-        Set<Character> fieldTypeIdentifierSet = new HashSet<>();
-        for (FieldType fieldType : FieldType.values()) {
-            if (FIELD_TYPE_IDENTIFIERS.length <= fieldType.ordinal()) {
-                throw new SystemException("FieldType " + fieldType + " has not been mapped to an identifier.");
-            }
-            
-            char identifier = FIELD_TYPE_IDENTIFIERS[fieldType.ordinal()];
-            
-            if ((identifier < 'a' || identifier > 'z') &&
-                    (identifier < '0' || identifier > '9')) {
-                throw new SystemException("FieldType " + fieldType + " has an unallowed identifier " 
-                        + identifier);
-            }
-            
-            if (fieldTypeIdentifierSet.contains(identifier)) {
-                throw new SystemException("FieldType " + fieldType + " identifier " 
-                        + identifier + " was used by another FieldType.");
-            }
-            
-            fieldTypeIdentifierSet.add(identifier);
-        }
-    }
 
-    private final IdentifierConstraints identifierInterface;
-
-    @Inject
-    public IdentifierFactoryImpl(IdentifierConstraints identifierInterface) {
-        this.identifierInterface = identifierInterface;
+    private final IdentifierConstraints identifierConstraints;
+    private final char separator;
+    private final String separatorString;
+    private final char arrayDimensionSeparator;
+    
+    public IdentifierFactoryImpl(IdentifierConstraints identifierConstraints) {
+        this.identifierConstraints = identifierConstraints;
+        this.separator = identifierConstraints.getSeparator();
+        this.separatorString = String.valueOf(separator);
+        this.arrayDimensionSeparator = identifierConstraints.getArrayDimensionSeparator();
     }
     
     @Override
     public String toDatabaseIdentifier(MetaSnapshot metaSnapshot, String database) {
-        NameChain nameChain = new NameChain();
+        NameChain nameChain = new NameChain(separatorString);
         nameChain.add(database);
         
         IdentifierChecker uniqueIdentifierChecker = new DatabaseIdentifierChecker(metaSnapshot);
@@ -76,7 +42,7 @@ public class IdentifierFactoryImpl implements IdentifierFactory {
     
     @Override
     public String toCollectionIdentifier(MetaDatabase metaDatabase, String collection) {
-        NameChain nameChain = new NameChain();
+        NameChain nameChain = new NameChain(separatorString);
         nameChain.add(collection);
         
         IdentifierChecker uniqueIdentifierChecker = new TableIdentifierChecker(metaDatabase);
@@ -86,7 +52,7 @@ public class IdentifierFactoryImpl implements IdentifierFactory {
     
     @Override
     public String toDocPartIdentifier(MetaDatabase metaDatabase, String collection, TableRef tableRef) {
-        NameChain nameChain = new NameChain();
+        NameChain nameChain = new NameChain(separatorString);
         nameChain.add(collection);
         append(nameChain, tableRef);
         
@@ -97,12 +63,17 @@ public class IdentifierFactoryImpl implements IdentifierFactory {
     
     @Override
     public String toFieldIdentifier(MetaDocPart metaDocPart, FieldType fieldType, String field) {
-        NameChain nameChain = new NameChain();
+        NameChain nameChain = new NameChain(separatorString);
         nameChain.add(field);
         
         IdentifierChecker uniqueIdentifierChecker = new FieldIdentifierChecker(metaDocPart);
         
-        return generateUniqueIdentifier(nameChain, uniqueIdentifierChecker, String.valueOf(FIELD_TYPE_IDENTIFIERS[fieldType.ordinal()]));
+        return generateUniqueIdentifier(nameChain, uniqueIdentifierChecker, String.valueOf(identifierConstraints.getFieldTypeIdentifier(fieldType)));
+    }
+    
+    @Override
+    public String toFieldIdentifierForScalar(FieldType fieldType) {
+        return identifierConstraints.getScalarIdentifier(fieldType);
     }
 
     private String generateUniqueIdentifier(NameChain nameChain, IdentifierChecker uniqueIdentifierChecker) {
@@ -111,7 +82,7 @@ public class IdentifierFactoryImpl implements IdentifierFactory {
     
     private String generateUniqueIdentifier(NameChain nameChain, IdentifierChecker identifierChecker, String extraImmutableName) {
         final Instant beginInstant = Instant.now();
-        final int maxSize = identifierInterface.identifierMaxSize();
+        final int maxSize = identifierConstraints.identifierMaxSize();
         String lastCollision = null;
         ChainConverterFactory chainConverterFactory = ChainConverterFactory.straight;
         Counter counter = new Counter();
@@ -161,7 +132,7 @@ public class IdentifierFactoryImpl implements IdentifierFactory {
             while (parentTableRef.isInArray()) {
                 parentTableRef = parentTableRef.getParent().get();
             }
-            name = parentTableRef.getName() + ARRAY_DIMENSION_SEPARATOR + tableRef.getArrayDimension();
+            name = parentTableRef.getName() + arrayDimensionSeparator + tableRef.getArrayDimension();
             
             parentTableRef = parentTableRef.getParent().get();
         }
@@ -181,7 +152,7 @@ public class IdentifierFactoryImpl implements IdentifierFactory {
             if (converters[1].convertWhole()) {
                 middleIdentifierBuilder.append(nameChain.get(index));
             } else {
-                middleIdentifierBuilder.append(converters[1].convert(nameChain.get(index), nameMaxSize, counter));
+                middleIdentifierBuilder.append(converters[1].convert(nameChain.get(index), separator, nameMaxSize, counter));
             }
             middleIdentifierBuilder.append('_');
         }
@@ -189,7 +160,7 @@ public class IdentifierFactoryImpl implements IdentifierFactory {
             if (converters[1].convertWhole()) {
                 middleIdentifierBuilder.append(nameChain.get(index));
             } else {
-                middleIdentifierBuilder.append(converters[1].convert(nameChain.get(index), nameMaxSize, counter));
+                middleIdentifierBuilder.append(converters[1].convert(nameChain.get(index), separator, nameMaxSize, counter));
             }
             index++;
         }
@@ -201,83 +172,83 @@ public class IdentifierFactoryImpl implements IdentifierFactory {
                 StringBuilder intermediateIdentifierBuilder = new StringBuilder();
                 intermediateIdentifierBuilder.append(nameChain.get(0));
                 if (middleIdentifierBuilder.length() > 0) {
-                    intermediateIdentifierBuilder.append(SEPARATOR);
+                    intermediateIdentifierBuilder.append(separator);
                     intermediateIdentifierBuilder.append(middleIdentifierBuilder);
                 }
                 if (index < size) {
-                    intermediateIdentifierBuilder.append(SEPARATOR);
+                    intermediateIdentifierBuilder.append(separator);
                     intermediateIdentifierBuilder.append(nameChain.get(size - 1));
                 }
-                identifierBuilder.append(converters[0].convert(intermediateIdentifierBuilder.toString(), nameMaxSize, counter));
+                identifierBuilder.append(converters[0].convert(intermediateIdentifierBuilder.toString(), separator, nameMaxSize, counter));
             } else if (converters[0] == converters[1]) {
                 StringBuilder intermediateIdentifierBuilder = new StringBuilder();
                 intermediateIdentifierBuilder.append(nameChain.get(0));
                 if (middleIdentifierBuilder.length() > 0) {
-                    intermediateIdentifierBuilder.append(SEPARATOR);
+                    intermediateIdentifierBuilder.append(separator);
                     intermediateIdentifierBuilder.append(middleIdentifierBuilder);
                 }
-                identifierBuilder.append(converters[0].convert(intermediateIdentifierBuilder.toString(), nameMaxSize, counter));
+                identifierBuilder.append(converters[0].convert(intermediateIdentifierBuilder.toString(), separator, nameMaxSize, counter));
                 if (index < size) {
-                    identifierBuilder.append(SEPARATOR);
-                    identifierBuilder.append(converters[2].convert(nameChain.get(size - 1), nameMaxSize, counter));
+                    identifierBuilder.append(separator);
+                    identifierBuilder.append(converters[2].convert(nameChain.get(size - 1), separator, nameMaxSize, counter));
                 }
             } else {
-                identifierBuilder.append(converters[0].convert(nameChain.get(0), nameMaxSize, counter));
+                identifierBuilder.append(converters[0].convert(nameChain.get(0), separator, nameMaxSize, counter));
                 if (middleIdentifierBuilder.length() > 0) {
-                    identifierBuilder.append(SEPARATOR);
+                    identifierBuilder.append(separator);
                     identifierBuilder.append(middleIdentifierBuilder);
                 }
                 if (index < size) {
-                    identifierBuilder.append(SEPARATOR);
-                    identifierBuilder.append(converters[2].convert(nameChain.get(size - 1), nameMaxSize, counter));
+                    identifierBuilder.append(separator);
+                    identifierBuilder.append(converters[2].convert(nameChain.get(size - 1), separator, nameMaxSize, counter));
                 }
             }
         } else if (converters[1].convertWhole()) {
             if (converters[1] == converters[2]) {
-                identifierBuilder.append(converters[0].convert(nameChain.get(0), nameMaxSize, counter));
+                identifierBuilder.append(converters[0].convert(nameChain.get(0), separator, nameMaxSize, counter));
                 StringBuilder intermediateIdentifierBuilder = new StringBuilder();
                 if (middleIdentifierBuilder.length() > 0) {
                     intermediateIdentifierBuilder.append(middleIdentifierBuilder);
                 }
                 if (index < size) {
-                    intermediateIdentifierBuilder.append(SEPARATOR);
+                    intermediateIdentifierBuilder.append(separator);
                     intermediateIdentifierBuilder.append(nameChain.get(size - 1));
                 }
                 if (intermediateIdentifierBuilder.length() > 0) {
-                    identifierBuilder.append(SEPARATOR);
-                    identifierBuilder.append(converters[1].convert(intermediateIdentifierBuilder.toString(), nameMaxSize, counter));
+                    identifierBuilder.append(separator);
+                    identifierBuilder.append(converters[1].convert(intermediateIdentifierBuilder.toString(), separator, nameMaxSize, counter));
                 }
             } else {
-                identifierBuilder.append(converters[0].convert(nameChain.get(0), nameMaxSize, counter));
+                identifierBuilder.append(converters[0].convert(nameChain.get(0), separator, nameMaxSize, counter));
                 if (middleIdentifierBuilder.length() > 0) {
-                    identifierBuilder.append(SEPARATOR);
-                    identifierBuilder.append(converters[1].convert(middleIdentifierBuilder.toString(), nameMaxSize, counter));
+                    identifierBuilder.append(separator);
+                    identifierBuilder.append(converters[1].convert(middleIdentifierBuilder.toString(), separator, nameMaxSize, counter));
                 }
                 if (index < size) {
-                    identifierBuilder.append(SEPARATOR);
+                    identifierBuilder.append(separator);
                     identifierBuilder.append(nameChain.get(size - 1));
                 }
             }
         } else {
-            identifierBuilder.append(converters[0].convert(nameChain.get(0), nameMaxSize, counter));
+            identifierBuilder.append(converters[0].convert(nameChain.get(0), separator, nameMaxSize, counter));
             if (middleIdentifierBuilder.length() > 0) {
-                identifierBuilder.append(SEPARATOR);
+                identifierBuilder.append(separator);
                 identifierBuilder.append(middleIdentifierBuilder);
             }
             if (index < size) {
-                identifierBuilder.append(SEPARATOR);
+                identifierBuilder.append(separator);
                 identifierBuilder.append(nameChain.get(size - 1));
             }
         }
         
         if (extraImmutableName != null) {
-            identifierBuilder.append(SEPARATOR).append(extraImmutableName);
+            identifierBuilder.append(separator).append(extraImmutableName);
         }
         
         String identifier = identifierBuilder.toString();
         
-        if (!identifierChecker.isAllowed(identifierInterface, identifier)) {
-            identifier = SEPARATOR + identifier;
+        if (!identifierChecker.isAllowed(identifierConstraints, identifier)) {
+            identifier = separator + identifier;
         }
         
         return identifier;
@@ -285,9 +256,11 @@ public class IdentifierFactoryImpl implements IdentifierFactory {
     
     private static class NameChain {
         private final static Pattern NO_ALLOWED_CHAR_PATTERN = Pattern.compile("[^0-9a-z_$]");
+        private final String separatorString;
         private final ArrayList<String> names;
         
-        public NameChain() {
+        public NameChain(String separatorString) {
+            this.separatorString = separatorString;
             names = new ArrayList<>();
         }
         
@@ -295,7 +268,7 @@ public class IdentifierFactoryImpl implements IdentifierFactory {
             e = Normalizer.normalize(e, Normalizer.Form.NFD);
             e = NO_ALLOWED_CHAR_PATTERN.matcher(e
                 .toLowerCase(Locale.US))
-                    .replaceAll(SEPARATOR_STRING);
+                    .replaceAll(separatorString);
             
             names.add(e);
         }
@@ -364,7 +337,7 @@ public class IdentifierFactoryImpl implements IdentifierFactory {
         straight {
             private final NameConverter nameConverter = new NameConverter() {
                 @Override
-                public String convert(String name, int maxSize, Counter counter) {
+                public String convert(String name, char separator, int maxSize, Counter counter) {
                     return name;
                 }
             };
@@ -379,7 +352,7 @@ public class IdentifierFactoryImpl implements IdentifierFactory {
                     private final Pattern pattern = Pattern.compile("([a-z])[aeiou]+");
                     
                     @Override
-                    public String convert(String name, int maxSize, Counter counter) {
+                    public String convert(String name, char separator, int maxSize, Counter counter) {
                         return pattern.matcher(name).replaceAll("$1");
                     }
                 };
@@ -388,7 +361,7 @@ public class IdentifierFactoryImpl implements IdentifierFactory {
         singlechar {
             private final NameConverter nameConverter = new NameConverter() {
                 @Override
-                public String convert(String name, int maxSize, Counter counter) {
+                public String convert(String name, char separator, int maxSize, Counter counter) {
                     if (name.isEmpty()) {
                         return name;
                     }
@@ -404,8 +377,8 @@ public class IdentifierFactoryImpl implements IdentifierFactory {
         hash {
             private final NameConverter nameConverter = new NameConverter() {
                 @Override
-                public String convert(String name, int maxSize, Counter counter) {
-                    String value = SEPARATOR + 'x' + Integer.toHexString(name.hashCode());
+                public String convert(String name, char separator, int maxSize, Counter counter) {
+                    String value = separator + 'x' + Integer.toHexString(name.hashCode());
                     
                     if (name.length() + value.length() < maxSize) {
                         return name + value;
@@ -432,9 +405,9 @@ public class IdentifierFactoryImpl implements IdentifierFactory {
                 private final Random random = new Random();
                 
                 @Override
-                public String convert(String name, int maxSize, Counter counter) {
-                    String value = SEPARATOR + 'x' + Integer.toHexString(name.hashCode())
-                        + SEPARATOR + 'r' + Integer.toHexString(random.nextInt());
+                public String convert(String name, char separator, int maxSize, Counter counter) {
+                    String value = separator + 'x' + Integer.toHexString(name.hashCode())
+                        + separator + 'r' + Integer.toHexString(random.nextInt());
                     
                     if (name.length() + value.length() < maxSize) {
                         return name + value;
@@ -459,8 +432,8 @@ public class IdentifierFactoryImpl implements IdentifierFactory {
         counter {
             private final NameConverter nameConverter = new NameConverter() {
                 @Override
-                public String convert(String name, int maxSize, Counter counter) {
-                    String value = SEPARATOR + String.valueOf(counter.get());
+                public String convert(String name, char separator, int maxSize, Counter counter) {
+                    String value = separator + String.valueOf(counter.get());
                     
                     if (name.length() + value.length() < maxSize) {
                         return name + value;
@@ -487,7 +460,7 @@ public class IdentifierFactoryImpl implements IdentifierFactory {
     }
     
     private abstract static class NameConverter {
-        public abstract String convert(String name, int maxSize, Counter counter);
+        public abstract String convert(String name, char separator, int maxSize, Counter counter);
         public boolean convertWhole() {
             return false;
         }

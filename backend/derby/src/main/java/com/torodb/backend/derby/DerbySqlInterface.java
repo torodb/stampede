@@ -20,44 +20,11 @@ package com.torodb.backend.derby;
  *     
  */
 
-import java.io.IOException;
-import java.io.Serializable;
-import java.sql.Array;
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import javax.annotation.Nonnull;
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.jooq.Configuration;
-import org.jooq.Converter;
-import org.jooq.DSLContext;
-import org.jooq.Field;
-import org.jooq.Query;
-import org.jooq.Record1;
-import org.jooq.exception.DataAccessException;
-import org.jooq.impl.DSL;
-
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.torodb.backend.InternalField;
+import com.torodb.backend.SqlInterface;
 import com.torodb.backend.TableRefComparator;
 import com.torodb.backend.converters.TableRefConverter;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
@@ -75,7 +42,6 @@ import com.torodb.backend.tables.MetaDocPartTable;
 import com.torodb.backend.tables.MetaDocPartTable.DocPartTableFields;
 import com.torodb.backend.tables.MetaFieldTable;
 import com.torodb.core.TableRef;
-import com.torodb.core.TableRefFactory;
 import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.d2r.DocPartResult;
 import com.torodb.core.d2r.DocPartResults;
@@ -83,24 +49,80 @@ import com.torodb.core.d2r.DocPartRow;
 import com.torodb.core.exceptions.SystemException;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.transaction.RollbackException;
-import com.torodb.core.transaction.metainf.FieldType;
-import com.torodb.core.transaction.metainf.MetaCollection;
-import com.torodb.core.transaction.metainf.MetaDatabase;
-import com.torodb.core.transaction.metainf.MetaDocPart;
-import com.torodb.core.transaction.metainf.MetaField;
+import com.torodb.core.transaction.metainf.*;
 import com.torodb.kvdocument.values.KVValue;
-import com.torodb.backend.SqlInterface;
+import java.io.IOException;
+import java.io.Serializable;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Comparator;
+import java.util.*;
+import javax.annotation.Nonnull;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import javax.sql.DataSource;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.jooq.*;
+import org.jooq.exception.DataAccessException;
+import org.jooq.impl.DSL;
 
 /**
  *
  */
 @Singleton
-public class DerbyDatabaseInterface implements SqlInterface {
+public class DerbySqlInterface implements SqlInterface {
     private static final Logger LOGGER
-        = LogManager.getLogger(DerbyDatabaseInterface.class);
+        = LogManager.getLogger(DerbySqlInterface.class);
 
     private static final long serialVersionUID = 484638503;
 
+    private static final char SEPARATOR = '_';
+    private static final char ARRAY_DIMENSION_SEPARATOR = '$';
+    private static final char[] FIELD_TYPE_IDENTIFIERS = new char[FieldType.values().length];
+    private static final String[] SCALAR_FIELD_TYPE_IDENTIFIERS = new String[FieldType.values().length];
+    static {
+        FIELD_TYPE_IDENTIFIERS[FieldType.BINARY.ordinal()]='r'; // [r]aw
+        FIELD_TYPE_IDENTIFIERS[FieldType.BOOLEAN.ordinal()]='b'; // [b]inary
+        FIELD_TYPE_IDENTIFIERS[FieldType.DATE.ordinal()]='c'; // [c]alendar
+        FIELD_TYPE_IDENTIFIERS[FieldType.DOUBLE.ordinal()]='d'; // [d]ouble
+        FIELD_TYPE_IDENTIFIERS[FieldType.INSTANT.ordinal()]='g'; // [G]eorge Gamow or Admiral [G]race Hopper that were the earliest users of the term nanosecond
+        FIELD_TYPE_IDENTIFIERS[FieldType.INTEGER.ordinal()]='i'; // [i]nteger
+        FIELD_TYPE_IDENTIFIERS[FieldType.LONG.ordinal()]='l'; // [l]ong
+        FIELD_TYPE_IDENTIFIERS[FieldType.MONGO_OBJECT_ID.ordinal()]='x';
+        FIELD_TYPE_IDENTIFIERS[FieldType.MONGO_TIME_STAMP.ordinal()]='y';
+        FIELD_TYPE_IDENTIFIERS[FieldType.NULL.ordinal()]='n'; // [n]ull
+        FIELD_TYPE_IDENTIFIERS[FieldType.STRING.ordinal()]='s'; // [s]tring
+        FIELD_TYPE_IDENTIFIERS[FieldType.TIME.ordinal()]='t'; // [t]ime
+        FIELD_TYPE_IDENTIFIERS[FieldType.CHILD.ordinal()]='e'; // [e]lement
+        
+        Set<Character> fieldTypeIdentifierSet = new HashSet<>();
+        for (FieldType fieldType : FieldType.values()) {
+            if (FIELD_TYPE_IDENTIFIERS.length <= fieldType.ordinal()) {
+                throw new SystemException("FieldType " + fieldType + " has not been mapped to an identifier.");
+            }
+            
+            char identifier = FIELD_TYPE_IDENTIFIERS[fieldType.ordinal()];
+            
+            if ((identifier < 'a' || identifier > 'z') &&
+                    (identifier < '0' || identifier > '9')) {
+                throw new SystemException("FieldType " + fieldType + " has an unallowed identifier " 
+                        + identifier);
+            }
+            
+            if (fieldTypeIdentifierSet.contains(identifier)) {
+                throw new SystemException("FieldType " + fieldType + " identifier " 
+                        + identifier + " was used by another FieldType.");
+            }
+            
+            fieldTypeIdentifierSet.add(identifier);
+            
+            SCALAR_FIELD_TYPE_IDENTIFIERS[fieldType.ordinal()] = DocPartTableFields.SCALAR.fieldName + SEPARATOR + identifier;
+        }
+    }
+    
     private static final String[] RESTRICTED_SCHEMA_NAMES = new String[] {
             TorodbSchema.TORODB_SCHEMA,
             "NULLID",
@@ -123,6 +145,19 @@ public class DerbyDatabaseInterface implements SqlInterface {
             DocPartTableFields.RID.fieldName,
             DocPartTableFields.PID.fieldName,
             DocPartTableFields.SEQ.fieldName,
+            SCALAR_FIELD_TYPE_IDENTIFIERS[FieldType.BINARY.ordinal()],
+            SCALAR_FIELD_TYPE_IDENTIFIERS[FieldType.BOOLEAN.ordinal()],
+            SCALAR_FIELD_TYPE_IDENTIFIERS[FieldType.DATE.ordinal()],
+            SCALAR_FIELD_TYPE_IDENTIFIERS[FieldType.DOUBLE.ordinal()],
+            SCALAR_FIELD_TYPE_IDENTIFIERS[FieldType.INSTANT.ordinal()],
+            SCALAR_FIELD_TYPE_IDENTIFIERS[FieldType.INTEGER.ordinal()],
+            SCALAR_FIELD_TYPE_IDENTIFIERS[FieldType.LONG.ordinal()],
+            SCALAR_FIELD_TYPE_IDENTIFIERS[FieldType.MONGO_OBJECT_ID.ordinal()],
+            SCALAR_FIELD_TYPE_IDENTIFIERS[FieldType.MONGO_TIME_STAMP.ordinal()],
+            SCALAR_FIELD_TYPE_IDENTIFIERS[FieldType.NULL.ordinal()],
+            SCALAR_FIELD_TYPE_IDENTIFIERS[FieldType.STRING.ordinal()],
+            SCALAR_FIELD_TYPE_IDENTIFIERS[FieldType.TIME.ordinal()],
+            SCALAR_FIELD_TYPE_IDENTIFIERS[FieldType.CHILD.ordinal()],
     };
     {
         Arrays.sort(RESTRICTED_COLUMN_NAMES);
@@ -134,9 +169,11 @@ public class DerbyDatabaseInterface implements SqlInterface {
     private final DerbyMetaCollectionTable metaCollectionTable;
     private final DerbyMetaDocPartTable metaDocPartTable;
     private final DerbyMetaFieldTable metaFieldTable;
+    private final DataSource ds;
 
     @Inject
-    public DerbyDatabaseInterface(TableRefFactory tableRefFactory) {
+    public DerbySqlInterface(DataSource ds) {
+        this.ds = ds;
         this.metaDatabaseTable = new DerbyMetaDatabaseTable();
         this.metaCollectionTable = new DerbyMetaCollectionTable();
         this.metaDocPartTable = new DerbyMetaDocPartTable();
@@ -335,7 +372,8 @@ public class DerbyDatabaseInterface implements SqlInterface {
                 .append("    PRIMARY KEY (").append('"').append(MetaFieldTable.TableFields.DATABASE.toString()).append('"').append(",")
                 .append('"').append(MetaFieldTable.TableFields.COLLECTION.toString()).append('"').append(",")
                 .append('"').append(MetaFieldTable.TableFields.TABLE_REF.toString()).append('"').append(",")
-                    .append('"').append(MetaFieldTable.TableFields.NAME.toString()).append('"').append("),")
+                .append('"').append(MetaFieldTable.TableFields.NAME.toString()).append('"').append(",")
+                .append('"').append(MetaFieldTable.TableFields.TYPE.toString()).append('"').append("),")
                 .append("    UNIQUE (").append('"').append(MetaFieldTable.TableFields.DATABASE.toString()).append('"').append(",")
                     .append('"').append(MetaFieldTable.TableFields.COLLECTION.toString()).append('"').append(",")
                     .append('"').append(MetaFieldTable.TableFields.TABLE_REF.toString()).append('"').append(",")
@@ -808,5 +846,56 @@ public class DerbyDatabaseInterface implements SqlInterface {
     @Override
     public void handleUserAndRetryException(Context context, DataAccessException dataAccessException) throws UserException {
         handleRollbackException(context, dataAccessException);
+    }
+
+    @Override
+    public char getSeparator() {
+        return SEPARATOR;
+    }
+
+    @Override
+    public char getArrayDimensionSeparator() {
+        return ARRAY_DIMENSION_SEPARATOR;
+    }
+
+    @Override
+    public char getFieldTypeIdentifier(FieldType fieldType) {
+        return FIELD_TYPE_IDENTIFIERS[fieldType.ordinal()];
+    }
+
+    @Override
+    public String getScalarIdentifier(FieldType fieldType) {
+        return SCALAR_FIELD_TYPE_IDENTIFIERS[fieldType.ordinal()];
+    }
+
+    @Override
+    public Connection createReadOnlyConnection() {
+        try {
+            Connection connection = ds.getConnection();
+            connection.setReadOnly(true);
+            connection.setAutoCommit(false);
+            return connection;
+        } catch (SQLException ex) {
+            //TODO: Improve exception thrown
+            throw new SystemException("It was impossible to create a read only connection", ex);
+        }
+    }
+
+    @Override
+    public Connection createWriteConnection() {
+        try {
+            Connection connection = ds.getConnection();
+            connection.setReadOnly(false);
+            connection.setAutoCommit(false);
+            return connection;
+        } catch (SQLException ex) {
+            //TODO: Improve exception thrown
+            throw new SystemException("It was impossible to create a write connection", ex);
+        }
+    }
+    
+    @Override
+    public DSLContext createDSLContext(Connection connection) {
+        return DSL.using(connection, SQLDialect.DERBY);
     }
 }

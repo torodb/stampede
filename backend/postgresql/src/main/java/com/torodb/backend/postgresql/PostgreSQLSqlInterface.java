@@ -20,39 +20,13 @@ package com.torodb.backend.postgresql;
  *     
  */
 
-import java.io.IOException;
-import java.io.Reader;
-import java.io.Serializable;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import javax.annotation.Nonnull;
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.jooq.Configuration;
-import org.jooq.ConnectionProvider;
-import org.jooq.DSLContext;
-import org.jooq.Field;
-import org.jooq.Query;
-import org.jooq.exception.DataAccessException;
-import org.jooq.impl.DSL;
-
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.torodb.backend.InternalField;
+import com.torodb.backend.SqlInterface;
+import com.torodb.backend.TableRefComparator;
+import com.torodb.backend.converters.TableRefConverter;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.backend.converters.jooq.ValueToJooqDataTypeProvider;
 import com.torodb.backend.index.NamedDbIndex;
@@ -70,35 +44,96 @@ import com.torodb.backend.tables.MetaDocPartTable.DocPartTableFields;
 import com.torodb.backend.tables.MetaFieldTable;
 import com.torodb.core.TableRef;
 import com.torodb.core.d2r.DocPartData;
+import com.torodb.core.d2r.DocPartResult;
 import com.torodb.core.d2r.DocPartResults;
 import com.torodb.core.d2r.DocPartRow;
 import com.torodb.core.exceptions.SystemException;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.transaction.RollbackException;
-import com.torodb.core.transaction.metainf.FieldType;
-import com.torodb.core.transaction.metainf.MetaCollection;
-import com.torodb.core.transaction.metainf.MetaDatabase;
-import com.torodb.core.transaction.metainf.MetaDocPart;
-import com.torodb.core.transaction.metainf.MetaField;
+import com.torodb.core.transaction.metainf.*;
 import com.torodb.kvdocument.values.KVValue;
-
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import com.torodb.backend.SqlInterface;
+import java.io.IOException;
+import java.io.Reader;
+import java.io.Serializable;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Comparator;
+import java.util.*;
+import javax.annotation.Nonnull;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import javax.sql.DataSource;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.jooq.*;
+import org.jooq.exception.DataAccessException;
+import org.jooq.impl.DSL;
+import org.postgresql.PGConnection;
+import org.postgresql.copy.CopyManager;
 
 /**
  *
  */
 @Singleton
-public class PostgreSQLDatabaseInterface implements SqlInterface {
+public class PostgreSQLSqlInterface implements SqlInterface {
     private static final Logger LOGGER
-        = LogManager.getLogger(PostgreSQLDatabaseInterface.class);
+        = LogManager.getLogger(PostgreSQLSqlInterface.class);
 
     private static final long serialVersionUID = 784618502;
+
+    private static final char SEPARATOR = '_';
+    private static final char ARRAY_DIMENSION_SEPARATOR = '$';
+    private static final char[] FIELD_TYPE_IDENTIFIERS = new char[FieldType.values().length];
+    private static final String[] SCALAR_FIELD_TYPE_IDENTIFIERS = new String[FieldType.values().length];
+    static {
+        FIELD_TYPE_IDENTIFIERS[FieldType.BINARY.ordinal()]='r'; // [r]aw
+        FIELD_TYPE_IDENTIFIERS[FieldType.BOOLEAN.ordinal()]='b'; // [b]inary
+        FIELD_TYPE_IDENTIFIERS[FieldType.DATE.ordinal()]='c'; // [c]alendar
+        FIELD_TYPE_IDENTIFIERS[FieldType.DOUBLE.ordinal()]='d'; // [d]ouble
+        FIELD_TYPE_IDENTIFIERS[FieldType.INSTANT.ordinal()]='g'; // [G]eorge Gamow or Admiral [G]race Hopper that were the earliest users of the term nanosecond
+        FIELD_TYPE_IDENTIFIERS[FieldType.INTEGER.ordinal()]='i'; // [i]nteger
+        FIELD_TYPE_IDENTIFIERS[FieldType.LONG.ordinal()]='l'; // [l]ong
+        FIELD_TYPE_IDENTIFIERS[FieldType.MONGO_OBJECT_ID.ordinal()]='x';
+        FIELD_TYPE_IDENTIFIERS[FieldType.MONGO_TIME_STAMP.ordinal()]='y';
+        FIELD_TYPE_IDENTIFIERS[FieldType.NULL.ordinal()]='n'; // [n]ull
+        FIELD_TYPE_IDENTIFIERS[FieldType.STRING.ordinal()]='s'; // [s]tring
+        FIELD_TYPE_IDENTIFIERS[FieldType.TIME.ordinal()]='t'; // [t]ime
+        FIELD_TYPE_IDENTIFIERS[FieldType.CHILD.ordinal()]='e'; // [e]lement
+        
+        Set<Character> fieldTypeIdentifierSet = new HashSet<>();
+        for (FieldType fieldType : FieldType.values()) {
+            if (FIELD_TYPE_IDENTIFIERS.length <= fieldType.ordinal()) {
+                throw new SystemException("FieldType " + fieldType + " has not been mapped to an identifier.");
+            }
+            
+            char identifier = FIELD_TYPE_IDENTIFIERS[fieldType.ordinal()];
+            
+            if ((identifier < 'a' || identifier > 'z') &&
+                    (identifier < '0' || identifier > '9')) {
+                throw new SystemException("FieldType " + fieldType + " has an unallowed identifier " 
+                        + identifier);
+            }
+            
+            if (fieldTypeIdentifierSet.contains(identifier)) {
+                throw new SystemException("FieldType " + fieldType + " identifier " 
+                        + identifier + " was used by another FieldType.");
+            }
+            
+            fieldTypeIdentifierSet.add(identifier);
+            
+            SCALAR_FIELD_TYPE_IDENTIFIERS[fieldType.ordinal()] = DocPartTableFields.SCALAR.fieldName + SEPARATOR + identifier;
+        }
+    }
 
     private static final String[] RESTRICTED_SCHEMA_NAMES = new String[] {
             TorodbSchema.TORODB_SCHEMA,
             "pg_catalog",
             "information_schema",
+            "pg_toast",
+            "public" 
     };
     {
         Arrays.sort(RESTRICTED_SCHEMA_NAMES);
@@ -109,6 +144,19 @@ public class PostgreSQLDatabaseInterface implements SqlInterface {
             DocPartTableFields.RID.fieldName,
             DocPartTableFields.PID.fieldName,
             DocPartTableFields.SEQ.fieldName,
+            SCALAR_FIELD_TYPE_IDENTIFIERS[FieldType.BINARY.ordinal()],
+            SCALAR_FIELD_TYPE_IDENTIFIERS[FieldType.BOOLEAN.ordinal()],
+            SCALAR_FIELD_TYPE_IDENTIFIERS[FieldType.DATE.ordinal()],
+            SCALAR_FIELD_TYPE_IDENTIFIERS[FieldType.DOUBLE.ordinal()],
+            SCALAR_FIELD_TYPE_IDENTIFIERS[FieldType.INSTANT.ordinal()],
+            SCALAR_FIELD_TYPE_IDENTIFIERS[FieldType.INTEGER.ordinal()],
+            SCALAR_FIELD_TYPE_IDENTIFIERS[FieldType.LONG.ordinal()],
+            SCALAR_FIELD_TYPE_IDENTIFIERS[FieldType.MONGO_OBJECT_ID.ordinal()],
+            SCALAR_FIELD_TYPE_IDENTIFIERS[FieldType.MONGO_TIME_STAMP.ordinal()],
+            SCALAR_FIELD_TYPE_IDENTIFIERS[FieldType.NULL.ordinal()],
+            SCALAR_FIELD_TYPE_IDENTIFIERS[FieldType.STRING.ordinal()],
+            SCALAR_FIELD_TYPE_IDENTIFIERS[FieldType.TIME.ordinal()],
+            SCALAR_FIELD_TYPE_IDENTIFIERS[FieldType.CHILD.ordinal()],
             "oid",
             "tableoid",
             "xmin",
@@ -127,9 +175,11 @@ public class PostgreSQLDatabaseInterface implements SqlInterface {
     private final PostgreSQLMetaCollectionTable metaCollectionTable = new PostgreSQLMetaCollectionTable();
     private final PostgreSQLMetaDocPartTable metaDocPartTable = new PostgreSQLMetaDocPartTable();
     private final PostgreSQLMetaFieldTable metaFieldTable = new PostgreSQLMetaFieldTable();
-
+    private final DataSource ds;
+    
     @Inject
-    public PostgreSQLDatabaseInterface() {
+    public PostgreSQLSqlInterface(DataSource ds) {
+        this.ds = ds;
         this.valueToJooqDataTypeProvider = PostgreSQLValueToJooqDataTypeProvider.getInstance();
     }
 
@@ -274,8 +324,9 @@ public class PostgreSQLDatabaseInterface implements SqlInterface {
                  .append(" (")
                  .append(MetaCollectionTable.TableFields.DATABASE.name()).append("         varchar     NOT NULL        ,")
                  .append(MetaCollectionTable.TableFields.NAME.name()).append("             varchar     NOT NULL        ,")
+                 .append(MetaCollectionTable.TableFields.IDENTIFIER.name()).append("       varchar     NOT NULL UNIQUE ,")
                  .append("    PRIMARY KEY (").append(MetaCollectionTable.TableFields.DATABASE.name()).append(",")
-                     .append(MetaCollectionTable.TableFields.NAME.name()).append("),")
+                     .append(MetaCollectionTable.TableFields.NAME.name()).append(")")
                  .append(")")
                  .toString();
     	executeStatement(dsl, statement, Context.ddl);
@@ -297,7 +348,7 @@ public class PostgreSQLDatabaseInterface implements SqlInterface {
                 .append("    PRIMARY KEY (").append(MetaDocPartTable.TableFields.DATABASE.name()).append(",")
                     .append(MetaDocPartTable.TableFields.COLLECTION.name()).append(",")
                     .append(MetaDocPartTable.TableFields.TABLE_REF.name()).append("),")
-                .append("    UNIQUE KEY (").append(MetaDocPartTable.TableFields.DATABASE.name()).append(",")
+                .append("    UNIQUE (").append(MetaDocPartTable.TableFields.DATABASE.name()).append(",")
                     .append(MetaDocPartTable.TableFields.IDENTIFIER.name()).append(")")
                 .append(")")
                 .toString();
@@ -321,8 +372,9 @@ public class PostgreSQLDatabaseInterface implements SqlInterface {
                 .append("    PRIMARY KEY (").append(MetaFieldTable.TableFields.DATABASE.name()).append(",")
                 .append(MetaFieldTable.TableFields.COLLECTION.name()).append(",")
                 .append(MetaFieldTable.TableFields.TABLE_REF.name()).append(",")
-                    .append(MetaFieldTable.TableFields.NAME.name()).append("),")
-                .append("    UNIQUE KEY (").append(MetaFieldTable.TableFields.DATABASE.name()).append(",")
+                .append(MetaFieldTable.TableFields.NAME.name()).append(",")                
+                .append(MetaFieldTable.TableFields.TYPE.name()).append("),")
+                .append("    UNIQUE (").append(MetaFieldTable.TableFields.DATABASE.name()).append(",")
                     .append(MetaFieldTable.TableFields.COLLECTION.name()).append(",")
                     .append(MetaFieldTable.TableFields.TABLE_REF.name()).append(",")
                     .append(MetaFieldTable.TableFields.IDENTIFIER.name()).append(")")
@@ -395,8 +447,62 @@ public class PostgreSQLDatabaseInterface implements SqlInterface {
 
     @Nonnull
     @Override
-    public DocPartResults<ResultSet> getCollectionResultSets(@Nonnull DSLContext dsl, @Nonnull MetaDatabase metaDatabase, @Nonnull MetaCollection metaCollection, @Nonnull Collection<Integer> requestedDocs) {
-        throw new UnsupportedOperationException("Not implemented yet");
+    public DocPartResults<ResultSet> getCollectionResultSets(@Nonnull DSLContext dsl, @Nonnull MetaDatabase metaDatabase, @Nonnull MetaCollection metaCollection, 
+            @Nonnull Collection<Integer> dids) throws SQLException {
+        Preconditions.checkArgument(dids.size() > 0, "At least 1 did must be specified");
+        
+        ImmutableList.Builder<DocPartResult<ResultSet>> docPartResultSetsBuilder = ImmutableList.builder();
+        Connection connection = dsl.configuration().connectionProvider().acquire();
+        Iterator<? extends MetaDocPart> metaDocPartIterator = metaCollection
+                .streamContainedMetaDocParts()
+                .sorted(TableRefComparator.MetaDocPart.DESC)
+                .iterator();
+        while (metaDocPartIterator.hasNext()) {
+            MetaDocPart metaDocPart = metaDocPartIterator.next();
+            StringBuilder sb = new StringBuilder()
+                    .append("SELECT ");
+            Collection<InternalField<?>> internalFields = getDocPartTableInternalFields(metaDocPart);
+            for (InternalField<?> internalField : internalFields) {
+                sb.append('"')
+                    .append(internalField.getName())
+                    .append("\",");
+            }
+            metaDocPart.streamFields().forEach(metaField -> {
+                sb.append('"')
+                    .append(metaField.getIdentifier())
+                    .append("\",");
+            });
+            sb.setCharAt(sb.length() - 1, ' ');
+            sb
+                .append("FROM \"")
+                .append(metaDatabase.getIdentifier())
+                .append("\".\"")
+                .append(metaDocPart.getIdentifier())
+                .append("\" WHERE \"")
+                .append(metaDocPartTable.DID.getName())
+                .append("\" IN (");
+            Converter<?, Integer> converter = 
+                    metaDocPartTable.DID.getDataType().getConverter();
+            for (Integer requestedDoc : dids) {
+                sb.append(converter.to(requestedDoc))
+                    .append(',');
+            }
+            sb.setCharAt(sb.length() - 1, ')');
+            if (!metaDocPart.getTableRef().isRoot()) {
+                sb.append(" ORDER BY ");
+                for (InternalField<?> internalField : internalFields) {
+                    sb
+                        .append('"')
+                        .append(internalField.getName())
+                        .append("\",");
+                }
+                sb.deleteCharAt(sb.length() - 1);
+            }
+
+            PreparedStatement preparedStatement = connection.prepareStatement(sb.toString());
+            docPartResultSetsBuilder.add(new DocPartResult<ResultSet>(metaDocPart, preparedStatement.executeQuery()));
+        }
+        return new DocPartResults<ResultSet>(docPartResultSetsBuilder.build());
     }
 
     @Override
@@ -580,11 +686,12 @@ public class PostgreSQLDatabaseInterface implements SqlInterface {
             connectionProvider.release(connection);
         }
     }
-
+    
     @Override
     public void insertDocPartData(DSLContext dsl, String schemaName, DocPartData docPartData) {
-        Preconditions.checkArgument(docPartData.rowCount() != 0, "Called insert with 0 documents");
-        
+    	if (docPartData.rowCount()==0){
+    		return;
+    	}
         Connection connection = dsl.configuration().connectionProvider().acquire();
         try {
             int maxCappedSize = 10;
@@ -629,9 +736,7 @@ public class PostgreSQLDatabaseInterface implements SqlInterface {
 
     protected void standardInsertPathDocuments(DSLContext dsl, String schemaName, DocPartData docPartData) {
         final int maxBatchSize = 1000;
-        final StringBuilder insertStatementBuilder = new StringBuilder(2048);
         final StringBuilder insertStatementHeaderBuilder = new StringBuilder(2048);
-        int docCounter = 0;
         MetaDocPart metaDocPart = docPartData.getMetaDocPart();
         insertStatementHeaderBuilder.append("INSERT INTO \"")
             .append(schemaName)
@@ -639,17 +744,26 @@ public class PostgreSQLDatabaseInterface implements SqlInterface {
             .append(metaDocPart.getIdentifier())
             .append("\" (");
         
+        Collection<InternalField<?>> internalFields = getDocPartTableInternalFields(metaDocPart);
+        for (InternalField<?> internalField : internalFields) {
+            insertStatementHeaderBuilder.append("\"")
+                .append(internalField.getName())
+                .append("\",");
+        }
+        
         Iterator<MetaField> metaFieldIterator = docPartData.orderedMetaFieldIterator();
         while (metaFieldIterator.hasNext()) {
             MetaField metaField = metaFieldIterator.next();
-            insertStatementHeaderBuilder.append("\"")
+            insertStatementHeaderBuilder
+            	.append("\"")
                 .append(metaField.getIdentifier())
-                .append("\",")
-                .append(",");
+                .append("\",");
         }
         insertStatementHeaderBuilder.setCharAt(insertStatementHeaderBuilder.length() - 1, ')');
         insertStatementHeaderBuilder.append(" VALUES ");
         
+        final StringBuilder insertStatementBuilder = new StringBuilder(2048);
+        int docCounter = 0;
         Iterator<DocPartRow> docPartRowIterator = docPartData.iterator();
         while (docPartRowIterator.hasNext()) {
             DocPartRow docPartRow = docPartRowIterator.next();
@@ -658,9 +772,22 @@ public class PostgreSQLDatabaseInterface implements SqlInterface {
                 insertStatementBuilder.append(insertStatementHeaderBuilder);
             }
             insertStatementBuilder.append("(");
+            for (InternalField<?> internalField : internalFields) {
+                if (! internalField.isNull(docPartRow)) {
+                    insertStatementBuilder
+                        .append(internalField.getSqlValue(docPartRow))
+                        .append(',');
+                } else {
+                    insertStatementBuilder.append("NULL,");
+                }
+            }
             for (KVValue<?> value : docPartRow) {
-                insertStatementBuilder.append(getSqlValue(value))
-                    .append(",");
+                if (value != null) {
+                    insertStatementBuilder.append(getSqlValue(value))
+                        .append(',');
+                } else {
+                    insertStatementBuilder.append("NULL,");
+                }
             }
             insertStatementBuilder.setCharAt(insertStatementBuilder.length() - 1, ')');
             insertStatementBuilder.append(",");
@@ -688,16 +815,16 @@ public class PostgreSQLDatabaseInterface implements SqlInterface {
         final CopyManager copyManager = connection.getCopyAPI();
         final MetaDocPart metaDocPart = docPartData.getMetaDocPart();
         copyStatementBuilder.append("COPY \"")
-            .append(schemaName).append("\".\"").append(metaDocPart.getIdentifier())
-            .append("(");
+            .append(schemaName)
+            .append("\".\"").append(metaDocPart.getIdentifier())
+            .append("\"").append(" (");
         
         Iterator<MetaField> metaFieldIterator = docPartData.orderedMetaFieldIterator();
         while (metaFieldIterator.hasNext()) {
             MetaField metaField = metaFieldIterator.next();
             copyStatementBuilder.append("\"")
                 .append(metaField.getIdentifier())
-                .append("\",")
-                .append(",");
+                .append("\",");
         }
         copyStatementBuilder.setCharAt(copyStatementBuilder.length() - 1, ')');
         copyStatementBuilder.append(" FROM STDIN");
@@ -731,8 +858,12 @@ public class PostgreSQLDatabaseInterface implements SqlInterface {
             StringBuilder sb,
             DocPartRow docPartRow) {
         for (KVValue<?> value : docPartRow) {
-            value.accept(PostgreSQLValueToCopyConverter.INSTANCE, sb);
-            sb.append('\t');
+        	if (value!=null){
+        		value.accept(PostgreSQLValueToCopyConverter.INSTANCE, sb);
+        	}else{
+        		sb.append("\\N");
+        	}
+        	sb.append('\t');
         }
         sb.setCharAt(sb.length() - 1, '\n');
     }
@@ -750,13 +881,13 @@ public class PostgreSQLDatabaseInterface implements SqlInterface {
         copyManager.copyIn(copyStatement, reader);
     }
     
-    public interface PGConnection extends Connection {
-        public CopyManager getCopyAPI();
-    }
-    
-    public interface CopyManager {
-        public void copyIn(String copyStatement, Reader reader);
-    }
+//    public interface PGConnection extends Connection {
+//        public CopyManager getCopyAPI();
+//    }
+//    
+//    public interface CopyManager {
+//        public void copyIn(String copyStatement, Reader reader);
+//    }
 
     private static class StringBuilderReader extends Reader {
 
@@ -787,7 +918,16 @@ public class PostgreSQLDatabaseInterface implements SqlInterface {
 
     @Override
     public int consumeRids(DSLContext dsl, String database, String collection, TableRef tableRef, int count) {
-        throw new UnsupportedOperationException("Not implemented yet");
+        Record1<Integer> lastRid = dsl.select(metaDocPartTable.LAST_RID).from(metaDocPartTable).where(
+                metaDocPartTable.DATABASE.eq(database)
+                .and(metaDocPartTable.COLLECTION.eq(collection))
+                .and(metaDocPartTable.TABLE_REF.eq(TableRefConverter.toStringArray(tableRef))))
+            .fetchOne();
+        dsl.update(metaDocPartTable).set(metaDocPartTable.LAST_RID, metaDocPartTable.LAST_RID.plus(count)).where(
+                metaDocPartTable.DATABASE.eq(database)
+                .and(metaDocPartTable.COLLECTION.eq(collection))
+                .and(metaDocPartTable.TABLE_REF.eq(TableRefConverter.toStringArray(tableRef)))).execute();
+        return lastRid.value1();
     }
 
     @Override
@@ -976,4 +1116,54 @@ public class PostgreSQLDatabaseInterface implements SqlInterface {
         handleRollbackException(context, dataAccessException);
     }
 
+    @Override
+    public char getSeparator() {
+        return SEPARATOR;
+    }
+
+    @Override
+    public char getArrayDimensionSeparator() {
+        return ARRAY_DIMENSION_SEPARATOR;
+    }
+
+    @Override
+    public char getFieldTypeIdentifier(FieldType fieldType) {
+        return FIELD_TYPE_IDENTIFIERS[fieldType.ordinal()];
+    }
+
+    @Override
+    public String getScalarIdentifier(FieldType fieldType) {
+        return SCALAR_FIELD_TYPE_IDENTIFIERS[fieldType.ordinal()];
+    }
+
+    @Override
+    public Connection createReadOnlyConnection() {
+        try {
+            Connection connection = ds.getConnection();
+            connection.setReadOnly(true);
+            connection.setAutoCommit(false);
+            return connection;
+        } catch (SQLException ex) {
+            //TODO: Improve exception thrown
+            throw new SystemException("It was impossible to create a read only connection", ex);
+        }
+    }
+
+    @Override
+    public Connection createWriteConnection() {
+        try {
+            Connection connection = ds.getConnection();
+            connection.setReadOnly(false);
+            connection.setAutoCommit(false);
+            return connection;
+        } catch (SQLException ex) {
+            //TODO: Improve exception thrown
+            throw new SystemException("It was impossible to create a write connection", ex);
+        }
+    }
+
+    @Override
+    public DSLContext createDSLContext(Connection connection) {
+        return DSL.using(connection, SQLDialect.POSTGRES_9_5);
+    }
 }
