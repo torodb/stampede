@@ -52,4 +52,16 @@ public interface MetaDocPart {
      */
     @Nullable
     public abstract MetaField getMetaFieldByNameAndType(String fieldName, FieldType type);
+
+    public abstract Stream<? extends MetaScalar> streamScalars();
+
+    @Nullable
+    public default MetaScalar getScalar(@Nonnull FieldType type) {
+        return streamScalars().filter((s) -> s.getType()== type).findAny().orElse(null);
+    }
+
+    @Nullable
+    public default MetaScalar getScalar(@Nonnull String identifier) {
+        return streamScalars().filter((s) -> s.getIdentifier().equals(identifier)).findAny().orElse(null);
+    }
 }

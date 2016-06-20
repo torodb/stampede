@@ -155,6 +155,9 @@ public class DefaultMergeChecker {
         for (ImmutableMetaField addedMetaField : changed.getAddedMetaFields()) {
             checkMerge(currentSnapshot, newSnapshot, db, col, byRef, addedMetaField);
         }
+        for (MetaScalar addedMetaScalar : changed.getAddedMetaScalars()) {
+            checkMerge(currentSnapshot, newSnapshot, db, col, byRef, addedMetaScalar);
+        }
     }
 
     private static void checkMerge(ImmutableMetaSnapshot currentSnapshot, MutableMetaSnapshot newSnapshot,
@@ -180,8 +183,38 @@ public class DefaultMergeChecker {
                         "There is a previous field on " + db.getIdentifier() + "." + col.getIdentifier() + "." + docPart.getIdentifier() +" whose "
                                 + "id is " + byId.getIdentifier()+ " that has a different name or "
                                 + "type. The previous element name is " + byId.getName()+ " and its "
-                                + "type is " + byId.getType() + ". The name of the one is "
+                                + "type is " + byId.getType() + ". The name of the new one is "
                                 + changed.getName() + " and its type is " + changed.getType());
+        }
+    }
+
+    private static void checkMerge(ImmutableMetaSnapshot currentSnapshot, MutableMetaSnapshot newSnapshot,
+            ImmutableMetaDatabase db, ImmutableMetaCollection col, ImmutableMetaDocPart docPart,
+            MetaScalar changed) {
+        MetaScalar byType = docPart.getScalar(changed.getType());
+        if (byType != null && byType.equals(changed)) {
+            assert changed.equals(docPart.getScalar(changed.getIdentifier()));
+            return ;
+        }
+
+        if (byType != null) {
+            throw new UnmergeableException(currentSnapshot, newSnapshot,
+                    "There is a previous meta scalar on " + db.getIdentifier() + "."
+                    + col.getIdentifier() + "." + docPart.getIdentifier() + " whose "
+                    + "type is " + changed.getType() + " but its identifier is "
+                    + byType.getIdentifier() + ". The identifier of the new one is "
+                    + changed.getIdentifier()
+            );
+        }
+        MetaScalar byId = docPart.getScalar(changed.getIdentifier());
+        if (byId != null) {
+            assert byId.getType() != changed.getType();
+            throw new UnmergeableException(currentSnapshot, newSnapshot,
+                    "There is a previous meta scalar on " + db.getIdentifier() + "."
+                    + col.getIdentifier() + "." + docPart.getIdentifier() + " whose "
+                    + "identifier is " + changed.getIdentifier() + " but its type is "
+                    + byId.getType() + ". The type of the new one is " + changed.getType()
+            );
         }
     }
 

@@ -50,7 +50,7 @@ public class DefaultCursor implements BackendCursor {
     
     private static final int BATCH_SIZE = 1000;
 
-    private final SqlInterface databaseInterface;
+    private final SqlInterface sqlInterface;
     private final R2DTranslator r2dTranslator;
     private final DidCursor didCursor;
     private final DSLContext dsl;
@@ -62,14 +62,14 @@ public class DefaultCursor implements BackendCursor {
      * @param didCursor
      */
     public DefaultCursor(
-            @Nonnull SqlInterface databaseInterface,
+            @Nonnull SqlInterface sqlInterface,
             @Nonnull R2DTranslator r2dTranslator,
             @Nonnull DidCursor didCursor,
             @Nonnull DSLContext dsl,
             @Nonnull MetaDatabase metaDatabase,
             @Nonnull MetaCollection metaCollection
             ) {
-        this.databaseInterface = databaseInterface;
+        this.sqlInterface = sqlInterface;
         this.r2dTranslator = r2dTranslator;
         this.didCursor = didCursor;
         this.dsl = dsl;
@@ -92,10 +92,10 @@ public class DefaultCursor implements BackendCursor {
         
         DocPartResults<ResultSet> docPartResults;
         try {
-            docPartResults = databaseInterface.getCollectionResultSets(
+            docPartResults = sqlInterface.getCollectionResultSets(
                     dsl, metaDatabase, metaCollection, requiredDocs);
         } catch(SQLException ex) {
-            databaseInterface.handleRollbackException(Context.fetch, ex);
+            sqlInterface.handleRollbackException(Context.fetch, ex);
             
             throw new SystemException(ex);
         }

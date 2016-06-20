@@ -1,20 +1,5 @@
 package com.torodb.torod.pipeline;
 
-import com.torodb.torod.pipeline.BatchMetaDocPart;
-import com.torodb.torod.pipeline.BatchMetaCollection;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.verify;
-
-import java.util.Collections;
-
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mockito;
-
 import com.google.common.collect.Iterables;
 import com.torodb.core.TableRef;
 import com.torodb.core.TableRefFactory;
@@ -22,6 +7,12 @@ import com.torodb.core.impl.TableRefFactoryImpl;
 import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
 import com.torodb.core.transaction.metainf.ImmutableMetaDocPart;
 import com.torodb.core.transaction.metainf.WrapperMutableMetaCollection;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mockito;
+
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.verify;
 
 /**
  *
@@ -39,7 +30,7 @@ public class BatchMetaCollectionTest {
     @Before
     public void setUp() {
         ImmutableMetaCollection immutableCollection = new ImmutableMetaCollection.Builder("colName", "colId")
-                .add(new ImmutableMetaDocPart(tableRefFactory.createRoot(), "docPartName", Collections.emptyMap()))
+                .add(new ImmutableMetaDocPart(tableRefFactory.createRoot(), "docPartName"))
                 .build();
         delegate = Mockito.spy(new WrapperMutableMetaCollection(immutableCollection, (o) -> {}));
 

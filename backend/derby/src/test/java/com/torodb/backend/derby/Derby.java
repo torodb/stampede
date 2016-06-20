@@ -24,7 +24,7 @@ public class Derby {
                
                @Override
                public int getReservedReadPoolSize() {
-                   return 0;
+                   return 4;
                }
                
                @Override
@@ -49,17 +49,17 @@ public class Derby {
                
                @Override
                public long getCursorTimeout() {
-                   return 0;
+                   return 8000;
                }
                
                @Override
                public long getConnectionPoolTimeout() {
-                   return 0;
+                   return 10000;
                }
                
                @Override
                public int getConnectionPoolSize() {
-                   return 0;
+                   return 8;
                }
 
                @Override
@@ -76,14 +76,14 @@ public class Derby {
 	       return new DerbyDbBackend(derbyConfiguration, derbyDriver);
 	}
 	
-	public static void cleanDatabase(SqlInterface databaseInterface, DbBackend dbBackend) throws SQLException{
-		try (Connection connection = dbBackend.getSessionDataSource().getConnection()) {
+	public static void cleanDatabase(SqlInterface sqlInterface) throws SQLException {
+		try (Connection connection = sqlInterface.createSystemConnection()) {
             DatabaseMetaData metaData = connection.getMetaData();
             ResultSet tables = metaData.getTables("%", "%", "%", null);
             while (tables.next()) {
                 String schemaName = tables.getString("TABLE_SCHEM");
                 String tableName = tables.getString("TABLE_NAME");
-                if (!databaseInterface.isAllowedSchemaIdentifier(schemaName) || schemaName.equals(TorodbSchema.TORODB_SCHEMA)) {
+                if (!sqlInterface.isAllowedSchemaIdentifier(schemaName) || schemaName.equals(TorodbSchema.TORODB_SCHEMA)) {
                     try (PreparedStatement preparedStatement = connection.prepareStatement("DROP TABLE \"" + schemaName + "\".\"" + tableName + "\"")) {
                         preparedStatement.executeUpdate();
                     }
@@ -92,7 +92,7 @@ public class Derby {
             ResultSet schemas = metaData.getSchemas();
             while (schemas.next()) {
                 String schemaName = schemas.getString("TABLE_SCHEM");
-                if (!databaseInterface.isAllowedSchemaIdentifier(schemaName) || schemaName.equals(TorodbSchema.TORODB_SCHEMA)) {
+                if (!sqlInterface.isAllowedSchemaIdentifier(schemaName) || schemaName.equals(TorodbSchema.TORODB_SCHEMA)) {
                     try (PreparedStatement preparedStatement = connection.prepareStatement("DROP SCHEMA \"" + schemaName + "\" RESTRICT")) {
                         preparedStatement.executeUpdate();
                     }

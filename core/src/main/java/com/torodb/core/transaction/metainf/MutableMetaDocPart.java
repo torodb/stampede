@@ -35,8 +35,19 @@ public interface MutableMetaDocPart extends MetaDocPart {
      */
     public abstract ImmutableMetaField addMetaField(String name, String identifier, FieldType type) throws IllegalArgumentException;
 
+    /**
+     *
+     * @return
+     * @throws IllegalArgumentException if this table already contains a scalar with the
+     *                                          same type or name
+     */
+    public abstract ImmutableMetaScalar addMetaScalar(String identifier, FieldType type) throws IllegalArgumentException;
+
     @DoNotChange
     public abstract Iterable<? extends ImmutableMetaField> getAddedMetaFields();
+
+    @DoNotChange
+    public abstract Iterable<? extends MetaScalar> getAddedMetaScalars();
 
     public abstract ImmutableMetaDocPart immutableCopy();
 }

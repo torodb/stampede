@@ -33,22 +33,20 @@ public abstract class AbstractBackendTest {
     
     protected TestSchema schema;
     protected SqlInterface sqlInterface;
-    protected DbBackend dbBackend;
     
     @Before
     public void setUp() throws Exception {
-        dbBackend = createDbBackend();
-        sqlInterface = createDatabaseInterface();
+        sqlInterface = createSqlInterface(createDbBackend());
         schema = new TestSchema(tableRefFactory, sqlInterface);
 
-        cleanDatabase(sqlInterface, dbBackend);
+        cleanDatabase(sqlInterface);
     }
 
     protected abstract DbBackend createDbBackend();
 
-    protected abstract SqlInterface createDatabaseInterface();
+    protected abstract SqlInterface createSqlInterface(DbBackend dbBackend);
     
-    protected abstract void cleanDatabase(SqlInterface databaseInterface, DbBackend dbBackend) throws SQLException;
+    protected abstract void cleanDatabase(SqlInterface sqlInterface) throws SQLException;
     
 
     

@@ -76,26 +76,18 @@ public class BackendDerbyTest extends AbstractBackendTest {
 	
     @Test
     public void testTorodbMeta() throws Exception {
-        try (Connection connection = sqlInterface.createWriteConnection()) {
-            TorodbMeta tododbMeta = buildTorodbMeta(connection);
-            connection.commit();
-            assertFalse(tododbMeta.getCurrentMetaSnapshot().streamMetaDatabases().iterator().hasNext());
-        }
+        TorodbMeta tododbMeta = buildTorodbMeta();
+        assertFalse(tododbMeta.getCurrentMetaSnapshot().streamMetaDatabases().iterator().hasNext());
         
-        try (Connection connection = sqlInterface.createWriteConnection()) {
-        	TorodbMeta tododbMeta = buildTorodbMeta(connection);
-            connection.commit();
-            assertFalse(tododbMeta.getCurrentMetaSnapshot().streamMetaDatabases().iterator().hasNext());
-        }
+    	tododbMeta = buildTorodbMeta();
+        assertFalse(tododbMeta.getCurrentMetaSnapshot().streamMetaDatabases().iterator().hasNext());
     }
     
     @Test
     public void testTorodbMetaStoreAndReload() throws Exception {
-        try (Connection connection = sqlInterface.createWriteConnection()) {
-        	buildTorodbMeta(connection);
-            connection.commit();
-        }
-        try (Connection connection = sqlInterface.createWriteConnection()) {
+       	buildTorodbMeta();
+
+       	try (Connection connection = sqlInterface.createWriteConnection()) {
             BackendTestHelper helper = new BackendTestHelper(sqlInterface, dsl(connection), schema);
             helper.createMetaModel();
             helper.insertMetaFields(schema.rootDocPartTableRef, schema.rootDocPartFields);
@@ -104,11 +96,7 @@ public class BackendDerbyTest extends AbstractBackendTest {
             helper.createDocPartTable(schema.subDocPartTableName, sqlInterface.getMetaDocPartTable().FIRST_FIELDS, schema.subDocPartFields.values());
             connection.commit();
         }
-        TorodbMeta torodbMeta;
-        try (Connection connection = sqlInterface.createWriteConnection()) {
-            torodbMeta = buildTorodbMeta(connection);
-            connection.commit();
-        }
+        TorodbMeta torodbMeta = buildTorodbMeta();
         
         MetaSnapshot metaSnapshot = torodbMeta.getCurrentMetaSnapshot();
         MetaDatabase metaDatabase = metaSnapshot.getMetaDatabaseByName(schema.databaseName);
@@ -140,10 +128,7 @@ public class BackendDerbyTest extends AbstractBackendTest {
             connection.commit();
         }
         
-        try (Connection connection = sqlInterface.createWriteConnection()) {
-            torodbMeta = buildTorodbMeta(connection);
-            connection.commit();
-        }
+        torodbMeta = buildTorodbMeta();
         
         metaSnapshot = torodbMeta.getCurrentMetaSnapshot();
         metaDatabase = metaSnapshot.getMetaDatabaseByName(schema.databaseName);
@@ -177,11 +162,9 @@ public class BackendDerbyTest extends AbstractBackendTest {
 
 	@Test
     public void testConsumeRids() throws Exception {
-    	 try (Connection connection = sqlInterface.createWriteConnection()) {
-    		 buildTorodbMeta(connection);
-             connection.commit();
-         }
-         try (Connection connection = sqlInterface.createWriteConnection()) {
+		 buildTorodbMeta();
+
+		 try (Connection connection = sqlInterface.createWriteConnection()) {
              DSLContext dsl = dsl(connection);
              BackendTestHelper helper = new BackendTestHelper(sqlInterface, dsl, schema);
              helper.createMetaModel();
@@ -201,10 +184,7 @@ public class BackendDerbyTest extends AbstractBackendTest {
 
     @Test
     public void testTorodbLastRowId() throws Exception {
-    	 try (Connection connection = sqlInterface.createWriteConnection()) {
-    		 buildTorodbMeta(connection);
-             connection.commit();
-         }
+		 buildTorodbMeta();
     	 
         try (Connection connection = sqlInterface.createWriteConnection()) {
         	DSLContext dsl = dsl(connection);
@@ -245,15 +225,14 @@ public class BackendDerbyTest extends AbstractBackendTest {
         	lastSubDocRowIUsed = sqlInterface.getLastRowIdUsed(dsl, metaDatabase, metaCollection, subDocMetaDocPart);
         	assertEquals(2, lastRootRowIUsed);
         	assertEquals(1, lastSubDocRowIUsed);
+        	connection.commit();
         }
     }
     
     @Test
     public void testTorodbInsertDocPart() throws Exception {
-        try (Connection connection = sqlInterface.createWriteConnection()) {
-        	buildTorodbMeta(connection);
-            connection.commit();
-        }
+    	buildTorodbMeta();
+    	
         try (Connection connection = sqlInterface.createWriteConnection()) {
             DSLContext dsl = dsl(connection);
             BackendTestHelper helper = new BackendTestHelper(sqlInterface, dsl, schema);
@@ -298,6 +277,7 @@ public class BackendDerbyTest extends AbstractBackendTest {
                     }
                 }
             }
+            connection.commit();
         }
     }
 
@@ -372,7 +352,8 @@ public class BackendDerbyTest extends AbstractBackendTest {
             System.out.println(document);
             System.out.println(readedDocument);
             assertEquals(document, readedDocument);
-        }
+            connection.commit();
+        } 
     }
     
     @Test
@@ -424,6 +405,7 @@ public class BackendDerbyTest extends AbstractBackendTest {
             System.out.println("Written :" + documents);
             System.out.println("Readed: " + readedDocuments);
             assertEquals(documents.size(), readedDocuments.size());
+            connection.commit();
         }
     }
 
@@ -529,25 +511,25 @@ public class BackendDerbyTest extends AbstractBackendTest {
 	}
 
     @Override
-    protected SqlInterface createDatabaseInterface() {
-        return new DerbySqlInterface(dbBackend);
+    protected DbBackend createDbBackend()  {
+        return Derby.getDbBackend();
     }
 
     @Override
-    protected DbBackend createDbBackend()  {
-    	return Derby.getDbBackend();
+    protected SqlInterface createSqlInterface(DbBackend dbBackend) {
+        return new DerbySqlInterface(dbBackend);
     }
     
 	@Override
-	protected void cleanDatabase(SqlInterface databaseInterface, DbBackend bbBackend) throws SQLException {
-		Derby.cleanDatabase(databaseInterface, bbBackend);
+	protected void cleanDatabase(SqlInterface sqlInterface) throws SQLException {
+		Derby.cleanDatabase(sqlInterface);
 	}
 
     private FieldType fieldType(Field<?> field) {
     	return FieldType.from(((DataTypeForKV<?>) field.getDataType()).getKVValueConverter().getErasuredType());
     }
     
-    private TorodbMeta buildTorodbMeta(Connection connection) throws SQLException, IOException, InvalidDatabaseException{
+    private TorodbMeta buildTorodbMeta() throws SQLException, IOException, InvalidDatabaseException{
     	return new TorodbMeta(tableRefFactory, sqlInterface);
     }
     

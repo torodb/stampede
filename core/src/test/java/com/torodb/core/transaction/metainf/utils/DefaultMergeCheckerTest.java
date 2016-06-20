@@ -19,24 +19,13 @@
  */
 package com.torodb.core.transaction.metainf.utils;
 
+import com.torodb.core.TableRefFactory;
+import com.torodb.core.impl.TableRefFactoryImpl;
+import com.torodb.core.transaction.metainf.*;
 import java.util.Collections;
-
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import com.torodb.core.TableRefFactory;
-import com.torodb.core.impl.TableRefFactoryImpl;
-import com.torodb.core.impl.TableRefImpl;
-import com.torodb.core.transaction.metainf.FieldType;
-import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
-import com.torodb.core.transaction.metainf.ImmutableMetaDatabase;
-import com.torodb.core.transaction.metainf.ImmutableMetaDocPart;
-import com.torodb.core.transaction.metainf.ImmutableMetaField;
-import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
-import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
-import com.torodb.core.transaction.metainf.UnmergeableException;
-import com.torodb.core.transaction.metainf.WrapperMutableMetaSnapshot;
 
 /**
  *
@@ -57,6 +46,7 @@ public class DefaultMergeCheckerTest {
                         .add(new ImmutableMetaCollection.Builder("colName1", "colId1")
                                 .add(new ImmutableMetaDocPart.Builder(tableRefFactory.createRoot(), "docPartId1")
                                         .add(new ImmutableMetaField("fieldName1", "fieldId1", FieldType.INTEGER))
+                                        .add(new ImmutableMetaScalar("scalarId1", FieldType.INTEGER))
                                 ).build()
                         ).build()
                 ).build();
@@ -69,10 +59,11 @@ public class DefaultMergeCheckerTest {
     @Test
     public void testIdempotency() throws Exception {
         MutableMetaSnapshot changedSnapshot = new WrapperMutableMetaSnapshot(new ImmutableMetaSnapshot(Collections.emptyMap()));
-        changedSnapshot.addMetaDatabase("dbName1", "dbId1")
+        MutableMetaDocPart metaDocPart = changedSnapshot.addMetaDatabase("dbName1", "dbId1")
                 .addMetaCollection("colName1", "colId1")
-                .addMetaDocPart(tableRefFactory.createRoot(), "docPartId1")
-                .addMetaField("fieldName1", "fieldId1", FieldType.INTEGER);
+                .addMetaDocPart(tableRefFactory.createRoot(), "docPartId1");
+        metaDocPart.addMetaField("fieldName1", "fieldId1", FieldType.INTEGER);
+        metaDocPart.addMetaScalar("scalarId1", FieldType.INTEGER);
 
         DefaultMergeChecker.checkMerge(currentSnapshot, changedSnapshot);
     }
@@ -238,7 +229,6 @@ public class DefaultMergeCheckerTest {
         }
     }
 
-
     /**
      * Test that no exception is thrown when creating a new field that shares type but not name
      * with a previous one.
@@ -283,6 +273,61 @@ public class DefaultMergeCheckerTest {
                 .addMetaCollection("colName1", "colId1")
                 .addMetaDocPart(tableRefFactory.createRoot(), "docPartId1")
                 .addMetaField("fieldName10", "fieldId20", FieldType.CHILD);
+
+        DefaultMergeChecker.checkMerge(currentSnapshot, changedSnapshot);
+    }
+
+    /**
+     * Test that an exception is thrown on scalar id conflicts
+     * @throws Exception
+     */
+    @Test
+    public void testScalarIdConflict() throws Exception {
+        MutableMetaSnapshot changedSnapshot = new WrapperMutableMetaSnapshot(new ImmutableMetaSnapshot(Collections.emptyMap()));
+        changedSnapshot.addMetaDatabase("dbName1", "dbId1")
+                .addMetaCollection("colName1", "colId1")
+                .addMetaDocPart(tableRefFactory.createRoot(), "docPartId1")
+                .addMetaScalar("scalarId1", FieldType.LONG);
+
+        try {
+            DefaultMergeChecker.checkMerge(currentSnapshot, changedSnapshot);
+            Assert.fail("A " + UnmergeableException.class.getSimpleName() + " was expected to be thrown");
+        } catch (UnmergeableException ex) {
+
+        }
+    }
+
+    /**
+     * Test that an exception is thrown on scalar type conflicts
+     * @throws Exception
+     */
+    @Test
+    public void testScalarTypeConflict() throws Exception {
+        MutableMetaSnapshot changedSnapshot = new WrapperMutableMetaSnapshot(new ImmutableMetaSnapshot(Collections.emptyMap()));
+        changedSnapshot.addMetaDatabase("dbName1", "dbId1")
+                .addMetaCollection("colName1", "colId1")
+                .addMetaDocPart(tableRefFactory.createRoot(), "docPartId1")
+                .addMetaScalar("fieldId2", FieldType.INTEGER);
+
+        try {
+            DefaultMergeChecker.checkMerge(currentSnapshot, changedSnapshot);
+            Assert.fail("A " + UnmergeableException.class.getSimpleName() + " was expected to be thrown");
+        } catch (UnmergeableException ex) {
+
+        }
+    }
+
+    /**
+     * Test that no exception is thrown when creating a new scalar with different id and type
+     * @throws Exception
+     */
+    @Test
+    public void testScalar_different() throws Exception {
+        MutableMetaSnapshot changedSnapshot = new WrapperMutableMetaSnapshot(new ImmutableMetaSnapshot(Collections.emptyMap()));
+        changedSnapshot.addMetaDatabase("dbName1", "dbId1")
+                .addMetaCollection("colName1", "colId1")
+                .addMetaDocPart(tableRefFactory.createRoot(), "docPartId1")
+                .addMetaScalar("fieldId20", FieldType.LONG);
 
         DefaultMergeChecker.checkMerge(currentSnapshot, changedSnapshot);
     }

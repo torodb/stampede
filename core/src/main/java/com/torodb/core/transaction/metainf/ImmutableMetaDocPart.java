@@ -3,9 +3,12 @@ package com.torodb.core.transaction.metainf;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Table;
 import com.torodb.core.TableRef;
 import com.torodb.core.annotations.DoNotChange;
+import java.util.Collections;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -19,21 +22,21 @@ public class ImmutableMetaDocPart implements MetaDocPart {
     private final String identifier;
     private final Table<String, FieldType, ImmutableMetaField> fieldsByNameAndType;
     private final Map<String, ImmutableMetaField> fieldsByIdentifier;
+    private final EnumMap<FieldType, MetaScalar> scalars;
 
-    public ImmutableMetaDocPart(TableRef tableRef, String dbName, @DoNotChange Table<String, FieldType, ImmutableMetaField> columns) {
-        this.tableRef = tableRef;
-        this.identifier = dbName;
-        this.fieldsByNameAndType = columns;
-        this.fieldsByIdentifier = new HashMap<>(columns.size());
-        columns.values().forEach((column) -> fieldsByIdentifier.put(column.getIdentifier(), column));
+    public ImmutableMetaDocPart(TableRef tableRef, String dbName) {
+        this(tableRef, dbName, Collections.emptyMap(), Maps.newEnumMap(FieldType.class));
     }
 
-    public ImmutableMetaDocPart(TableRef tableRef, String dbName, @DoNotChange Map<String, ImmutableMetaField> columns) {
+    public ImmutableMetaDocPart(TableRef tableRef, String dbName,
+            @DoNotChange Map<String, ImmutableMetaField> columns,
+            @DoNotChange EnumMap<FieldType, MetaScalar> scalars) {
         this.tableRef = tableRef;
         this.identifier = dbName;
         this.fieldsByIdentifier = columns;
         this.fieldsByNameAndType = HashBasedTable.create(columns.size(), 10);
         columns.values().forEach((column) -> fieldsByNameAndType.put(column.getName(), column.getType(), column));
+        this.scalars = scalars;
     }
 
     @Override
@@ -65,6 +68,16 @@ public class ImmutableMetaDocPart implements MetaDocPart {
     public ImmutableMetaField getMetaFieldByNameAndType(String columnDocName, FieldType type) {
         return fieldsByNameAndType.get(columnDocName, type);
     }
+
+    @Override
+    public Stream<? extends MetaScalar> streamScalars() {
+        return scalars.values().stream();
+    }
+
+    @Override
+    public MetaScalar getScalar(FieldType type) {
+        return scalars.get(type);
+    }
     
     public static class Builder {
 
@@ -72,23 +85,27 @@ public class ImmutableMetaDocPart implements MetaDocPart {
         private final TableRef tableRef;
         private final String identifier;
         private final HashMap<String, ImmutableMetaField> fields;
+        private final EnumMap<FieldType, MetaScalar> scalars;
 
         public Builder(TableRef tableRef, String identifier) {
             this.tableRef = tableRef;
             this.identifier = identifier;
             this.fields = new HashMap<>();
+            this.scalars = new EnumMap<>(FieldType.class);
         }
 
         public Builder(ImmutableMetaDocPart other) {
             this.tableRef = other.getTableRef();
             this.identifier = other.getIdentifier();
             this.fields = new HashMap<>(other.fieldsByIdentifier);
+            this.scalars = new EnumMap<>(other.scalars);
         }
 
         public Builder(TableRef tableRef, String identifier, int expectedColumns) {
             this.tableRef = tableRef;
             this.identifier = identifier;
             this.fields = new HashMap<>(expectedColumns);
+            this.scalars = new EnumMap<>(FieldType.class);
         }
 
         public Builder add(ImmutableMetaField column) {
@@ -97,14 +114,24 @@ public class ImmutableMetaDocPart implements MetaDocPart {
             return this;
         }
 
-        public Builder addColumn(String name, String identifier, FieldType type) {
+        public Builder addField(String name, String identifier, FieldType type) {
             return add(new ImmutableMetaField(name, identifier, type));
+        }
+
+        public Builder add(ImmutableMetaScalar scalar) {
+            scalars.put(scalar.getType(), scalar);
+            return this;
+        }
+
+        public Builder addScalar(FieldType type, String identifier) {
+            scalars.put(type, new ImmutableMetaScalar(identifier, type));
+            return this;
         }
 
         public ImmutableMetaDocPart build() {
             Preconditions.checkState(!built, "This builder has already been built");
             built = true;
-            return new ImmutableMetaDocPart(tableRef, identifier, fields);
+            return new ImmutableMetaDocPart(tableRef, identifier, fields, scalars);
         }
     }
 }

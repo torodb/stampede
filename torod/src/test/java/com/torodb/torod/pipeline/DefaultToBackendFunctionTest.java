@@ -1,15 +1,13 @@
 package com.torodb.torod.pipeline;
 
-import com.torodb.torod.pipeline.BatchMetaDocPart;
-import com.torodb.torod.pipeline.DefaultToBackendFunction;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.torodb.core.TableRefFactory;
+import com.torodb.core.backend.WriteBackendTransaction;
 import com.torodb.core.d2r.CollectionData;
 import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.dsl.backend.*;
 import com.torodb.core.impl.TableRefFactoryImpl;
-import com.torodb.core.impl.TableRefImpl;
 import com.torodb.core.transaction.RollbackException;
 import com.torodb.core.transaction.metainf.*;
 import java.util.ArrayList;
@@ -23,8 +21,6 @@ import org.mockito.internal.creation.MockSettingsImpl;
 import static org.junit.Assert.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
-
-import com.torodb.core.backend.WriteBackendTransaction;
 
 /**
  *
@@ -199,7 +195,7 @@ public class DefaultToBackendFunctionTest {
         given(data1.getMetaDocPart())
                 .willReturn(
                         new WrapperMutableMetaDocPart(
-                                new ImmutableMetaDocPart(tableRefFactory.createRoot(), "aDocPartName", Collections.emptyMap()),
+                                new ImmutableMetaDocPart(tableRefFactory.createRoot(), "aDocPartName"),
                                 (o) -> {
                         }
                         )

@@ -57,23 +57,23 @@ public class TorodbSchema extends SchemaImpl {
     public void checkOrCreate(
             DSLContext dsl, 
             Meta jooqMeta, 
-            SqlInterface databaseInterface
+            SqlInterface sqlInterface
     ) throws SQLException, InvalidDatabaseException {
         Schema torodbSchema = null;
         for (Schema schema : jooqMeta.getSchemas()) {
-            if (databaseInterface.isSameIdentifier(TORODB_SCHEMA, schema.getName())) {
+            if (sqlInterface.isSameIdentifier(TORODB_SCHEMA, schema.getName())) {
                 torodbSchema = schema;
                 break;
             }
         }
         if (torodbSchema == null) {
             LOGGER.info("Schema '{}' not found. Creating it...", TORODB_SCHEMA);
-            createSchema(dsl, databaseInterface);
+            createSchema(dsl, sqlInterface);
             LOGGER.info("Schema '{}' created", TORODB_SCHEMA);
         }
         else {
             LOGGER.info("Schema '{}' found. Checking it...", TORODB_SCHEMA);
-            checkSchema(torodbSchema, databaseInterface);
+            checkSchema(torodbSchema, sqlInterface);
             LOGGER.info("Schema '{}' checked", TORODB_SCHEMA);
         }
     }
@@ -83,26 +83,27 @@ public class TorodbSchema extends SchemaImpl {
 	    throw new RuntimeException("operation not permitted");
 	}
 
-    private void createSchema(DSLContext dsl, SqlInterface databaseInterface) throws SQLException {
-    	databaseInterface.createSchema(dsl, TORODB_SCHEMA);
-    	databaseInterface.createMetaDatabaseTable(dsl);
-    	databaseInterface.createMetaCollectionTable(dsl);
-    	databaseInterface.createMetaDocPartTable(dsl);
-    	databaseInterface.createMetaFieldTable(dsl);
+    private void createSchema(DSLContext dsl, SqlInterface sqlInterface) throws SQLException {
+    	sqlInterface.createSchema(dsl, TORODB_SCHEMA);
+    	sqlInterface.createMetaDatabaseTable(dsl);
+    	sqlInterface.createMetaCollectionTable(dsl);
+    	sqlInterface.createMetaDocPartTable(dsl);
+    	sqlInterface.createMetaFieldTable(dsl);
+    	sqlInterface.createMetaScalarTable(dsl);
     }
     
-    private void checkSchema(Schema torodbSchema, SqlInterface databaseInterface) throws InvalidDatabaseException {
+    private void checkSchema(Schema torodbSchema, SqlInterface sqlInterface) throws InvalidDatabaseException {
         SemanticTable<?>[] metaTables = new SemanticTable[] {
-            databaseInterface.getMetaDatabaseTable(),
-            databaseInterface.getMetaCollectionTable(),
-            databaseInterface.getMetaDocPartTable(),
-            databaseInterface.getMetaFieldTable()
+            sqlInterface.getMetaDatabaseTable(),
+            sqlInterface.getMetaCollectionTable(),
+            sqlInterface.getMetaDocPartTable(),
+            sqlInterface.getMetaFieldTable()
         };
         for (SemanticTable metaTable : metaTables) {
             String metaTableName = metaTable.getName();
             boolean metaTableFound = false;
             for (Table<?> table : torodbSchema.getTables()) {
-                if (databaseInterface.isSameIdentifier(table.getName(), metaTableName)) {
+                if (sqlInterface.isSameIdentifier(table.getName(), metaTableName)) {
                     metaTable.checkSemanticallyEquals(table);
                     metaTableFound = true;
                     LOGGER.info(table + " found and check");
