@@ -224,6 +224,7 @@ public class BackendDerbyTest extends AbstractBackendTest {
         	lastSubDocRowIUsed = sqlInterface.getLastRowIdUsed(dsl, metaDatabase, metaCollection, subDocMetaDocPart);
         	assertEquals(2, lastRootRowIUsed);
         	assertEquals(1, lastSubDocRowIUsed);
+        	connection.commit();
         }
     }
     
@@ -277,6 +278,7 @@ public class BackendDerbyTest extends AbstractBackendTest {
                     }
                 }
             }
+            connection.commit();
         }
     }
 
@@ -351,7 +353,8 @@ public class BackendDerbyTest extends AbstractBackendTest {
             System.out.println(document);
             System.out.println(readedDocument);
             assertEquals(document, readedDocument);
-        }
+            connection.commit();
+        } 
     }
     
     @Test
@@ -403,6 +406,7 @@ public class BackendDerbyTest extends AbstractBackendTest {
             System.out.println("Written :" + documents);
             System.out.println("Readed: " + readedDocuments);
             assertEquals(documents.size(), readedDocuments.size());
+            connection.commit();
         }
     }
 
