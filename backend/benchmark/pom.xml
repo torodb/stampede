@@ -6,6 +6,8 @@
 		<artifactId>backend-parent</artifactId>
 		<version>0.50.0-SNAPSHOT</version>
 	</parent>
+    
+    <name>ToroDB-poc: Backends benchmark</name>
 	<artifactId>benchmark</artifactId>
 	<dependencies>
 		<dependency>

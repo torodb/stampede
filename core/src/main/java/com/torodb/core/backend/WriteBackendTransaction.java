@@ -27,7 +27,7 @@ import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetaField;
 
-public interface WriteBackendTransaction extends AutoCloseable {
+public interface WriteBackendTransaction extends BackendTransaction {
 
     /**
      * Adds a new database.

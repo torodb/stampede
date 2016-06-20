@@ -8,10 +8,10 @@ import java.sql.SQLException;
 
 import javax.sql.DataSource;
 
-import com.torodb.backend.DatabaseInterface;
 import com.torodb.backend.driver.derby.DerbyDbBackendConfiguration;
 import com.torodb.backend.driver.derby.OfficialDerbyDriver;
 import com.torodb.backend.meta.TorodbSchema;
+import com.torodb.backend.SqlInterface;
 
 public class Derby {
 
@@ -75,7 +75,7 @@ public class Derby {
 	        }, "torod");
 	}
 	
-	public static void cleanDatabase(DatabaseInterface databaseInterface, DataSource dataSource) throws SQLException{
+	public static void cleanDatabase(SqlInterface databaseInterface, DataSource dataSource) throws SQLException{
 		try (Connection connection = dataSource.getConnection()) {
             DatabaseMetaData metaData = connection.getMetaData();
             ResultSet tables = metaData.getTables("%", "%", "%", null);

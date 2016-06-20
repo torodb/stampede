@@ -1,37 +1,5 @@
 package com.torodb.backend.d2r;
 
-import static com.torodb.backend.util.TestDataFactory.COLL1;
-import static com.torodb.backend.util.TestDataFactory.DB1;
-import static com.torodb.backend.util.TestDataFactory.InitialView;
-
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.stream.StreamSupport;
-
-import org.jooq.DSLContext;
-import org.jooq.Field;
-import org.jooq.SQLDialect;
-import org.jooq.impl.DSL;
-import org.openjdk.jmh.annotations.Benchmark;
-import org.openjdk.jmh.annotations.BenchmarkMode;
-import org.openjdk.jmh.annotations.Fork;
-import org.openjdk.jmh.annotations.Level;
-import org.openjdk.jmh.annotations.Measurement;
-import org.openjdk.jmh.annotations.Mode;
-import org.openjdk.jmh.annotations.Scope;
-import org.openjdk.jmh.annotations.Setup;
-import org.openjdk.jmh.annotations.State;
-import org.openjdk.jmh.annotations.Warmup;
-import org.openjdk.jmh.infra.Blackhole;
-
-import com.torodb.backend.DatabaseInterface;
 import com.torodb.backend.TableRefComparator;
 import com.torodb.backend.derby.DerbyDatabaseInterface;
 import com.torodb.backend.driver.derby.DerbyDbBackendConfiguration;
@@ -40,12 +8,7 @@ import com.torodb.backend.meta.TorodbSchema;
 import com.torodb.backend.util.InMemoryRidGenerator;
 import com.torodb.backend.util.TestDataFactory;
 import com.torodb.core.TableRefFactory;
-import com.torodb.core.d2r.CollectionData;
-import com.torodb.core.d2r.D2RTranslator;
-import com.torodb.core.d2r.DocPartData;
-import com.torodb.core.d2r.DocPartResults;
-import com.torodb.core.d2r.IdentifierFactory;
-import com.torodb.core.d2r.R2DTranslator;
+import com.torodb.core.d2r.*;
 import com.torodb.core.impl.TableRefFactoryImpl;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetainfoRepository.SnapshotStage;
@@ -58,6 +21,22 @@ import com.torodb.d2r.MockIdentifierInterface;
 import com.torodb.d2r.R2DBackedTranslator;
 import com.torodb.kvdocument.values.KVDocument;
 import com.torodb.metainfo.cache.mvcc.MvccMetainfoRepository;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.stream.StreamSupport;
+import org.jooq.DSLContext;
+import org.jooq.Field;
+import org.jooq.SQLDialect;
+import org.jooq.impl.DSL;
+import org.openjdk.jmh.annotations.*;
+import org.openjdk.jmh.infra.Blackhole;
+
+import static com.torodb.backend.util.TestDataFactory.*;
+
+import com.torodb.backend.SqlInterface;
 
 public class BenchmarkDerbyR2DBackedTranslator {
 
@@ -69,7 +48,7 @@ public class BenchmarkDerbyR2DBackedTranslator {
 	public static class TranslateState {
 		
         public List<KVDocument> documents;
-        public DatabaseInterface databaseInterface;
+        public SqlInterface databaseInterface;
         public Connection connection;
         public DSLContext dsl;
         public MutableMetaSnapshot mutableSnapshot;

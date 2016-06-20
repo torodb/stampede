@@ -23,10 +23,12 @@ package com.torodb.core.transaction;
 import com.torodb.core.backend.BackendConnection;
 import com.torodb.core.transaction.metainf.MetainfoRepository;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  *
  */
+@Singleton
 public class InternalTransactionManager {
 
     private final MetainfoRepository metainfoRepository;

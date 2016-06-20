@@ -20,24 +20,14 @@
 
 package com.torodb.backend;
 
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-
-import org.junit.Test;
-
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.torodb.core.TableRef;
-import com.torodb.core.TableRefFactory;
 import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.d2r.DocPartRow;
 import com.torodb.core.impl.TableRefFactoryImpl;
-import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
-import com.torodb.core.transaction.metainf.ImmutableMetaDatabase;
-import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
-import com.torodb.core.transaction.metainf.MetaField;
 import com.torodb.core.transaction.metainf.MetainfoRepository.SnapshotStage;
-import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
+import com.torodb.core.transaction.metainf.*;
 import com.torodb.d2r.MockRidGenerator;
 import com.torodb.kvdocument.values.KVDouble;
 import com.torodb.kvdocument.values.KVInteger;
@@ -47,6 +37,9 @@ import com.torodb.kvdocument.values.heap.ListKVArray;
 import com.torodb.kvdocument.values.heap.MapKVDocument;
 import com.torodb.kvdocument.values.heap.StringKVString;
 import com.torodb.metainfo.cache.mvcc.MvccMetainfoRepository;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import org.junit.Test;
 
 public class DocumentMaterializerTest {
     @Test
@@ -111,8 +104,9 @@ public class DocumentMaterializerTest {
             mutableSnapshot = snapshot.createMutableSnapshot();
         }
         
-        
-        D2RTranslatorImpl d2rTranslator=new D2RTranslatorImpl(new TableRefFactoryImpl(), new MockRidGenerator(), mutableSnapshot, "test", "test");
+
+        MutableMetaDatabase metaDatabaseByName = mutableSnapshot.getMetaDatabaseByName("test");
+        D2RTranslatorImpl d2rTranslator=new D2RTranslatorImpl(new TableRefFactoryImpl(), new MockRidGenerator(), metaDatabaseByName, metaDatabaseByName.getMetaCollectionByName("test"));
         
         d2rTranslator.translate(doc);
         d2rTranslator.translate(doc);

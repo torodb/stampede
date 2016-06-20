@@ -20,24 +20,17 @@
 
 package com.torodb.backend;
 
+import com.torodb.backend.interfaces.*;
 import java.io.Serializable;
-
-import com.torodb.backend.interfaces.DataTypeInterface;
-import com.torodb.backend.interfaces.ErrorHandlerInterface;
-import com.torodb.backend.interfaces.ReadInterface;
-import com.torodb.backend.interfaces.ReadMetaDataInterface;
-import com.torodb.backend.interfaces.StructureInterface;
-import com.torodb.backend.interfaces.WriteInterface;
-import com.torodb.backend.interfaces.WriteMetaDataInterface;
-import com.torodb.core.backend.IdentifierInterface;
+import com.torodb.core.backend.IdentifierConstraints;
 
 /**
  * Wrapper interface to define all database-specific SQL code
  */
-public interface DatabaseInterface extends 
+public interface SqlInterface extends 
     ReadMetaDataInterface, WriteMetaDataInterface, 
     DataTypeInterface, StructureInterface, ReadInterface, WriteInterface, 
-    IdentifierInterface, ErrorHandlerInterface, Serializable {
-    //TODO: Try to remove make DatabaseInterface not serializable
+    IdentifierConstraints, ErrorHandlerInterface, Serializable, DSLContextFactory {
+    //TODO: Try to remove make SqlInterface not serializable
     
 }

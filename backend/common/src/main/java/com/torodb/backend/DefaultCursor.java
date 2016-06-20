@@ -50,7 +50,7 @@ public class DefaultCursor implements BackendCursor {
     
     private static final int BATCH_SIZE = 1000;
 
-    private final DatabaseInterface databaseInterface;
+    private final SqlInterface databaseInterface;
     private final R2DTranslator r2dTranslator;
     private final DidCursor didCursor;
     private final DSLContext dsl;
@@ -62,7 +62,7 @@ public class DefaultCursor implements BackendCursor {
      * @param didCursor
      */
     public DefaultCursor(
-            @Nonnull DatabaseInterface databaseInterface,
+            @Nonnull SqlInterface databaseInterface,
             @Nonnull R2DTranslator r2dTranslator,
             @Nonnull DidCursor didCursor,
             @Nonnull DSLContext dsl,

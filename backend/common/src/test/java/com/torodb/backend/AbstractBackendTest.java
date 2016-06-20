@@ -34,7 +34,7 @@ public abstract class AbstractBackendTest {
     protected static final TableRefFactory tableRefFactory = new TableRefFactoryImpl();
     
     protected TestSchema schema;
-    protected DatabaseInterface databaseInterface;
+    protected SqlInterface databaseInterface;
     protected DataSource dataSource;
     
     @Before
@@ -48,9 +48,9 @@ public abstract class AbstractBackendTest {
 
     protected abstract DataSource createDataSource();
 
-    protected abstract DatabaseInterface createDatabaseInterface();
+    protected abstract SqlInterface createDatabaseInterface();
     
-    protected abstract void cleanDatabase(DatabaseInterface databaseInterface, DataSource dataSource) throws SQLException;
+    protected abstract void cleanDatabase(SqlInterface databaseInterface, DataSource dataSource) throws SQLException;
     
 
     

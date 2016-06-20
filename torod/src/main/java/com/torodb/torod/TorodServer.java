@@ -67,7 +67,7 @@ public class TorodServer extends AbstractIdleService {
         }
     }
 
-    D2RTranslatorFactory getD2RTranslatorRFactory() {
+    D2RTranslatorFactory getD2RTranslatorrFactory() {
         return d2RTranslatorFactory;
     }
 
@@ -87,7 +87,7 @@ public class TorodServer extends AbstractIdleService {
         return internalTransactionManager;
     }
 
-    void onConnectionClose(TorodConnection connection) {
+    void onConnectionClosed(TorodConnection connection) {
         openConnections.invalidate(connection.getConnectionId());
     }
 

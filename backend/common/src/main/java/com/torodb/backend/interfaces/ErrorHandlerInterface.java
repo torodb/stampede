@@ -1,10 +1,8 @@
 package com.torodb.backend.interfaces;
 
-import java.sql.SQLException;
-
-import org.jooq.exception.DataAccessException;
-
 import com.torodb.core.exceptions.user.UserException;
+import java.sql.SQLException;
+import org.jooq.exception.DataAccessException;
 
 public interface ErrorHandlerInterface {
     public enum Context {
@@ -14,7 +12,8 @@ public interface ErrorHandlerInterface {
         insert,
         update,
         delete,
-        commit
+        commit,
+        close
     }
     
     void handleRollbackException(Context context, SQLException sqlException);

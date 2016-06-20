@@ -57,7 +57,6 @@ import org.jooq.impl.DSL;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.torodb.backend.DatabaseInterface;
 import com.torodb.backend.InternalField;
 import com.torodb.backend.TableRefComparator;
 import com.torodb.backend.converters.TableRefConverter;
@@ -90,12 +89,13 @@ import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetaField;
 import com.torodb.kvdocument.values.KVValue;
+import com.torodb.backend.SqlInterface;
 
 /**
  *
  */
 @Singleton
-public class DerbyDatabaseInterface implements DatabaseInterface {
+public class DerbyDatabaseInterface implements SqlInterface {
     private static final Logger LOGGER
         = LogManager.getLogger(DerbyDatabaseInterface.class);
 
@@ -146,7 +146,7 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
 
     private void readObject(java.io.ObjectInputStream stream)
             throws IOException, ClassNotFoundException {
-        //TODO: Try to remove make DatabaseInterface not serializable
+        //TODO: Try to remove make SqlInterface not serializable
         stream.defaultReadObject();
     }
 

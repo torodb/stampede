@@ -1,25 +1,16 @@
 package com.torodb.d2r;
 
+import com.google.inject.Inject;
+import com.torodb.core.TableRef;
+import com.torodb.core.d2r.IdentifierFactory;
+import com.torodb.core.exceptions.SystemException;
+import com.torodb.core.transaction.metainf.*;
 import java.text.Normalizer;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Locale;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Pattern;
-
-import com.torodb.core.TableRef;
-import com.torodb.core.backend.IdentifierInterface;
-import com.torodb.core.d2r.IdentifierFactory;
-import com.torodb.core.exceptions.SystemException;
-import com.torodb.core.transaction.metainf.FieldType;
-import com.torodb.core.transaction.metainf.MetaCollection;
-import com.torodb.core.transaction.metainf.MetaDatabase;
-import com.torodb.core.transaction.metainf.MetaDocPart;
-import com.torodb.core.transaction.metainf.MetaSnapshot;
+import com.torodb.core.backend.IdentifierConstraints;
 
 public class IdentifierFactoryImpl implements IdentifierFactory {
 
@@ -66,9 +57,10 @@ public class IdentifierFactoryImpl implements IdentifierFactory {
         }
     }
 
-    private final IdentifierInterface identifierInterface;
-    
-    public IdentifierFactoryImpl(IdentifierInterface identifierInterface) {
+    private final IdentifierConstraints identifierInterface;
+
+    @Inject
+    public IdentifierFactoryImpl(IdentifierConstraints identifierInterface) {
         this.identifierInterface = identifierInterface;
     }
     
@@ -515,7 +507,7 @@ public class IdentifierFactoryImpl implements IdentifierFactory {
     
     private static interface IdentifierChecker {
         boolean isUnique(String identifier);
-        boolean isAllowed(IdentifierInterface identifierInterface, String identifier);
+        boolean isAllowed(IdentifierConstraints identifierInterface, String identifier);
     }
     
     private static class DatabaseIdentifierChecker implements IdentifierChecker {
@@ -532,7 +524,7 @@ public class IdentifierFactoryImpl implements IdentifierFactory {
         }
 
         @Override
-        public boolean isAllowed(IdentifierInterface identifierInterface, String identifier) {
+        public boolean isAllowed(IdentifierConstraints identifierInterface, String identifier) {
             return identifierInterface.isAllowedSchemaIdentifier(identifier);
         }
     }
@@ -560,7 +552,7 @@ public class IdentifierFactoryImpl implements IdentifierFactory {
         }
 
         @Override
-        public boolean isAllowed(IdentifierInterface identifierInterface, String identifier) {
+        public boolean isAllowed(IdentifierConstraints identifierInterface, String identifier) {
             return identifierInterface.isAllowedTableIdentifier(identifier);
         }
     }
@@ -579,7 +571,7 @@ public class IdentifierFactoryImpl implements IdentifierFactory {
         }
 
         @Override
-        public boolean isAllowed(IdentifierInterface identifierInterface, String identifier) {
+        public boolean isAllowed(IdentifierConstraints identifierInterface, String identifier) {
             return identifierInterface.isAllowedColumnIdentifier(identifier);
         }
     }

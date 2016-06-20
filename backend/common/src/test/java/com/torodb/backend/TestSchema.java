@@ -41,9 +41,9 @@ public class TestSchema {
     public final ImmutableList<ImmutableMap<String, Optional<KVValue<?>>>> rootDocPartValues;
     public final ImmutableList<ImmutableMap<String, Optional<KVValue<?>>>> subDocPartValues;
     
-    private DatabaseInterface databaseInterface;
+    private SqlInterface databaseInterface;
     
-    public TestSchema(TableRefFactory tableRefFactory, DatabaseInterface databaseInterface){
+    public TestSchema(TableRefFactory tableRefFactory, SqlInterface databaseInterface){
     	this.databaseInterface = databaseInterface;
         databaseName = "databaseName";
         databaseSchemaName = "databaseSchemaName";

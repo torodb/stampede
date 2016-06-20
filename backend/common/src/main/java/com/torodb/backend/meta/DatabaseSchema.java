@@ -10,20 +10,20 @@ import org.jooq.Sequence;
 import org.jooq.UDT;
 import org.jooq.impl.SchemaImpl;
 
-import com.torodb.backend.DatabaseInterface;
 import com.torodb.backend.exceptions.InvalidDatabaseSchemaException;
+import com.torodb.backend.SqlInterface;
 
 public final class DatabaseSchema extends SchemaImpl {
 
     private static final long serialVersionUID = 577805060;
 
     private final String database;
-    private final DatabaseInterface databaseInterface;
+    private final SqlInterface databaseInterface;
 
     public DatabaseSchema(
             @Nonnull String database,
             @Nonnull String schemaName,
-            DatabaseInterface databaseInterface
+            SqlInterface databaseInterface
     ) throws InvalidDatabaseSchemaException {
         super(schemaName);
 
@@ -61,7 +61,7 @@ public final class DatabaseSchema extends SchemaImpl {
         return super.equals(obj);
     }
 
-    public DatabaseInterface getDatabaseInterface() {
+    public SqlInterface getDatabaseInterface() {
         return databaseInterface;
     }
 }

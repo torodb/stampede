@@ -35,14 +35,14 @@ import com.torodb.kvdocument.values.KVDocument;
 
 public class BackendDocumentTestHelper {
 	
-	private DatabaseInterface databaseInterface;
+	private SqlInterface databaseInterface;
 	private TableRefFactory tableRefFactory;
 	private TestSchema schema;
 	
 	private MockRidGenerator ridGenerator = new MockRidGenerator();
 	private IdentifierFactory identifierFactory = new IdentifierFactoryImpl(new MockIdentifierInterface());
 	
-	public BackendDocumentTestHelper(DatabaseInterface databaseInterface, TableRefFactory tableRefFactory, TestSchema schema){
+	public BackendDocumentTestHelper(SqlInterface databaseInterface, TableRefFactory tableRefFactory, TestSchema schema){
 		this.databaseInterface = databaseInterface;
 		this.tableRefFactory = tableRefFactory;
 		this.schema = schema;

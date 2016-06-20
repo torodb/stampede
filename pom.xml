@@ -221,6 +221,11 @@
                 <version>4.0</version>
             </dependency>
             <dependency>
+                <groupId>com.google.inject.extensions</groupId>
+                <artifactId>guice-assistedinject</artifactId>
+                <version>4.0</version>
+            </dependency>
+            <dependency>
                 <groupId>com.beust</groupId>
                 <artifactId>jcommander</artifactId>
                 <version>1.48</version>
@@ -339,7 +344,6 @@
 	            <version>${jmh.version}</version>
 	            <scope>provided</scope>
 	        </dependency>
-
         </dependencies>
     </dependencyManagement>
 

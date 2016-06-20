@@ -50,7 +50,6 @@ import org.junit.Test;
 import com.torodb.backend.AbstractBackendTest;
 import com.torodb.backend.BackendDocumentTestHelper;
 import com.torodb.backend.BackendTestHelper;
-import com.torodb.backend.DatabaseInterface;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.backend.exceptions.InvalidDatabaseException;
 import com.torodb.backend.meta.TorodbMeta;
@@ -74,6 +73,7 @@ import com.torodb.kvdocument.values.KVDocument;
 import com.torodb.kvdocument.values.KVInteger;
 import com.torodb.kvdocument.values.KVValue;
 import com.torodb.kvdocument.values.heap.ListKVArray;
+import com.torodb.backend.SqlInterface;
 
 public class BackendDerbyTest extends AbstractBackendTest {
 	
@@ -532,7 +532,7 @@ public class BackendDerbyTest extends AbstractBackendTest {
 	}
 
     @Override
-    protected DatabaseInterface createDatabaseInterface() {
+    protected SqlInterface createDatabaseInterface() {
         return new DerbyDatabaseInterface(tableRefFactory);
     }
 
@@ -542,7 +542,7 @@ public class BackendDerbyTest extends AbstractBackendTest {
     }
     
 	@Override
-	protected void cleanDatabase(DatabaseInterface databaseInterface, DataSource dataSource) throws SQLException {
+	protected void cleanDatabase(SqlInterface databaseInterface, DataSource dataSource) throws SQLException {
 		Derby.cleanDatabase(databaseInterface, dataSource);
 	}
 

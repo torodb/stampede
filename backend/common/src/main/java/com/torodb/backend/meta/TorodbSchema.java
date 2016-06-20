@@ -31,9 +31,9 @@ import org.jooq.Schema;
 import org.jooq.Table;
 import org.jooq.impl.SchemaImpl;
 
-import com.torodb.backend.DatabaseInterface;
 import com.torodb.backend.exceptions.InvalidDatabaseException;
 import com.torodb.backend.tables.SemanticTable;
+import com.torodb.backend.SqlInterface;
 
 public class TorodbSchema extends SchemaImpl {
 
@@ -57,7 +57,7 @@ public class TorodbSchema extends SchemaImpl {
     public void checkOrCreate(
             DSLContext dsl, 
             Meta jooqMeta, 
-            DatabaseInterface databaseInterface
+            SqlInterface databaseInterface
     ) throws SQLException, InvalidDatabaseException {
         Schema torodbSchema = null;
         for (Schema schema : jooqMeta.getSchemas()) {
@@ -83,7 +83,7 @@ public class TorodbSchema extends SchemaImpl {
 	    throw new RuntimeException("operation not permitted");
 	}
 
-    private void createSchema(DSLContext dsl, DatabaseInterface databaseInterface) throws SQLException {
+    private void createSchema(DSLContext dsl, SqlInterface databaseInterface) throws SQLException {
     	databaseInterface.createSchema(dsl, TORODB_SCHEMA);
     	databaseInterface.createMetaDatabaseTable(dsl);
     	databaseInterface.createMetaCollectionTable(dsl);
@@ -91,7 +91,7 @@ public class TorodbSchema extends SchemaImpl {
     	databaseInterface.createMetaFieldTable(dsl);
     }
     
-    private void checkSchema(Schema torodbSchema, DatabaseInterface databaseInterface) throws InvalidDatabaseException {
+    private void checkSchema(Schema torodbSchema, SqlInterface databaseInterface) throws InvalidDatabaseException {
         SemanticTable<?>[] metaTables = new SemanticTable[] {
             databaseInterface.getMetaDatabaseTable(),
             databaseInterface.getMetaCollectionTable(),

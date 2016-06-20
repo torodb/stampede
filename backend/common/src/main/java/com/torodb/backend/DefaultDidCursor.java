@@ -30,10 +30,10 @@ import com.torodb.core.backend.DidCursor;
 import com.torodb.core.exceptions.SystemException;
 
 public class DefaultDidCursor implements DidCursor {
-    public final DatabaseInterface databaseInterface;
+    public final SqlInterface databaseInterface;
     public final ResultSet resultSet;
 
-    public DefaultDidCursor(@Nonnull DatabaseInterface databaseInterface, @Nonnull ResultSet resultSet) {
+    public DefaultDidCursor(@Nonnull SqlInterface databaseInterface, @Nonnull ResultSet resultSet) {
         super();
         this.databaseInterface = databaseInterface;
         this.resultSet = resultSet;

@@ -20,14 +20,7 @@
 
 package com.torodb.backend;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.List;
-
-import org.jooq.DSLContext;
-import org.jooq.Field;
-import org.jooq.impl.DSL;
-
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.torodb.backend.interfaces.ErrorHandlerInterface.Context;
 import com.torodb.core.backend.WriteBackendTransaction;
@@ -38,70 +31,93 @@ import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetaField;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.List;
+import org.jooq.DSLContext;
+import org.jooq.Field;
+import org.jooq.impl.DSL;
 
 public class WriteBackendTransactionImpl implements WriteBackendTransaction {
-    
+
+    private boolean closed = false;
+    private final Connection connection;
     private final DSLContext dsl;
-    private final DatabaseInterface databaseInterface;
+    private final SqlInterface sqlInterface;
     
-    public WriteBackendTransactionImpl(DSLContext dsl, DatabaseInterface databaseInterface) {
-        super();
-        this.dsl = dsl;
-        this.databaseInterface = databaseInterface;
+    public WriteBackendTransactionImpl(SqlInterface sqlInterface) {
+        this.sqlInterface = sqlInterface;
+        this.connection = sqlInterface.createWriteConnection();
+        this.dsl = sqlInterface.createDSLContext(connection);
     }
     
     @Override
     public void addDatabase(MetaDatabase db) {
-    	databaseInterface.addMetaDatabase(dsl, db.getName(), db.getIdentifier());
-        databaseInterface.createSchema(dsl, db.getIdentifier());
+        Preconditions.checkState(!closed, "This transaction is closed");
+
+    	sqlInterface.addMetaDatabase(dsl, db.getName(), db.getIdentifier());
+        sqlInterface.createSchema(dsl, db.getIdentifier());
     }
 
     @Override
     public void addCollection(MetaDatabase db, MetaCollection newCol) {
-    	databaseInterface.addMetaCollection(dsl, db.getName(), newCol.getName(), newCol.getIdentifier());
+        Preconditions.checkState(!closed, "This transaction is closed");
+
+    	sqlInterface.addMetaCollection(dsl, db.getName(), newCol.getName(), newCol.getIdentifier());
     }
 
     @Override
     public void addDocPart(MetaDatabase db, MetaCollection col, MetaDocPart newDocPart) {
-    	databaseInterface.addMetaDocPart(dsl, db.getName(), col.getName(), 
+        Preconditions.checkState(!closed, "This transaction is closed");
+
+    	sqlInterface.addMetaDocPart(dsl, db.getName(), col.getName(),
                 newDocPart.getTableRef(), newDocPart.getIdentifier());
     	
         ImmutableList.Builder<Field<?>> docPartFieldsBuilder = ImmutableList.<Field<?>>builder()
-            .addAll(databaseInterface.getDocPartTableInternalFields(newDocPart));
+            .addAll(sqlInterface.getDocPartTableInternalFields(newDocPart));
         newDocPart.streamFields().map(this::buildField).forEach(docPartFieldsBuilder::add);
         List<Field<?>> fields = docPartFieldsBuilder.build();
-        databaseInterface.createDocPartTable(dsl, db.getIdentifier(), newDocPart.getIdentifier(), fields);
+        sqlInterface.createDocPartTable(dsl, db.getIdentifier(), newDocPart.getIdentifier(), fields);
     }
 
     @Override
     public void addField(MetaDatabase db, MetaCollection col, MetaDocPart docPart, MetaField newField){
-    	databaseInterface.addMetaField(dsl, db.getName(), col.getName(), docPart.getTableRef(), 
+        Preconditions.checkState(!closed, "This transaction is closed");
+
+    	sqlInterface.addMetaField(dsl, db.getName(), col.getName(), docPart.getTableRef(),
                 newField.getName(), newField.getIdentifier(), newField.getType());
-        databaseInterface.addColumnToDocPartTable(dsl, db.getIdentifier(), 
+        sqlInterface.addColumnToDocPartTable(dsl, db.getIdentifier(),
                 docPart.getIdentifier(),buildField(newField));
     }
 
 	private Field<?> buildField(MetaField newField) {
-		return DSL.field(newField.getIdentifier(), databaseInterface.getDataType(newField.getType()));
+        Preconditions.checkState(!closed, "This transaction is closed");
+
+		return DSL.field(newField.getIdentifier(), sqlInterface.getDataType(newField.getType()));
 	}
 
     @Override
     public int consumeRids(MetaDatabase db, MetaCollection col, MetaDocPart docPart, int howMany) {
-        return databaseInterface.consumeRids(dsl, db.getName(), col.getName(), docPart.getTableRef(), howMany);
+        Preconditions.checkState(!closed, "This transaction is closed");
+
+        return sqlInterface.consumeRids(dsl, db.getName(), col.getName(), docPart.getTableRef(), howMany);
     }
 
     @Override
     public void insert(MetaDatabase db, MetaCollection col, DocPartData data) {
-        databaseInterface.insertDocPartData(dsl, db.getIdentifier(), data);
+        Preconditions.checkState(!closed, "This transaction is closed");
+        
+        sqlInterface.insertDocPartData(dsl, db.getIdentifier(), data);
     }
 
     @Override
     public void commit() throws UserException, RollbackException {
-        Connection connection = dsl.configuration().connectionProvider().acquire();
+        Preconditions.checkState(!closed, "This transaction is closed");
+        
         try {
             connection.commit();
-        } catch(SQLException ex) {
-            databaseInterface.handleRollbackException(Context.commit, ex);
+        } catch (SQLException ex) {
+            sqlInterface.handleUserAndRetryException(Context.commit, ex);
         } finally {
             dsl.configuration().connectionProvider().release(connection);
         }
@@ -109,7 +125,15 @@ public class WriteBackendTransactionImpl implements WriteBackendTransaction {
 
     @Override
     public void close() {
-        dsl.close();
+        if (!closed) {
+            closed = true;
+            try {
+                connection.close();
+            } catch (SQLException ex) {
+                sqlInterface.handleRollbackException(Context.close, ex);
+            }
+            dsl.close();
+        }
     }
 
 }

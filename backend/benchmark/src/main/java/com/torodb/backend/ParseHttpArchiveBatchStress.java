@@ -1,14 +1,5 @@
 package com.torodb.backend;
 
-import static com.torodb.backend.util.MetaInfoOperation.executeMetaOperation;
-import static com.torodb.backend.util.TestDataFactory.COLL1;
-import static com.torodb.backend.util.TestDataFactory.DB1;
-import static com.torodb.backend.util.TestDataFactory.InitialView;
-
-import java.io.IOException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
-
 import com.google.common.base.Stopwatch;
 import com.torodb.backend.util.InMemoryRidGenerator;
 import com.torodb.backend.util.JsonArchiveFeed;
@@ -18,6 +9,12 @@ import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.d2r.RidGenerator;
 import com.torodb.core.impl.TableRefFactoryImpl;
 import com.torodb.metainfo.cache.mvcc.MvccMetainfoRepository;
+import java.io.IOException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+
+import static com.torodb.backend.util.MetaInfoOperation.executeMetaOperation;
+import static com.torodb.backend.util.TestDataFactory.*;
 
 /**
  * 
@@ -41,7 +38,7 @@ public class ParseHttpArchiveBatchStress {
 		feed.getGroupedFeedForFiles((f)->f.getName().startsWith("160101_1J"), 50).forEach(docStream -> {
 			toroTimer.start();
 			executeMetaOperation(mvccMetainfoRepository, (mutableSnapshot) -> {
-				D2RTranslator translator = new D2RTranslatorImpl(tableRefFactory, ridGenerator, mutableSnapshot, DB1, COLL1);
+				D2RTranslator translator = new D2RTranslatorImpl(tableRefFactory, ridGenerator, mutableSnapshot.getMetaDatabaseByName(DB1), mutableSnapshot.getMetaDatabaseByName(DB1).getMetaCollectionByName(COLL1));
 				docStream.forEach(doc -> {
 					translator.translate(doc);	
 				});

@@ -50,11 +50,12 @@ public class TorodConnection implements AutoCloseable {
     @Override
     public void close() {
         if (!closed) {
+            closed = true;
             if (currentTransaction != null) {
                 currentTransaction.close();
             }
             assert currentTransaction == null;
-            server.onConnectionClose(this);
+            server.onConnectionClosed(this);
 
             backendConnection.close();
         }

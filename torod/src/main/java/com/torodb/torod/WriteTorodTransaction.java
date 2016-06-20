@@ -33,8 +33,9 @@ public class WriteTorodTransaction implements TorodTransaction {
         MutableMetaDatabase metaDb = getOrCreateMetaDatabase(db);
         MutableMetaCollection metaCol = getOrCreateMetaCollection(metaDb, collection);
 
-        InsertPipeline pipeline = connection.getServer().getInsertPipelineFactory().createInsertSubscriber(
-                connection.getServer().getD2RTranslatorRFactory(),
+        InsertPipeline pipeline = connection.getServer().getInsertPipelineFactory().createInsertPipeline(
+                connection.getServer().getD2RTranslatorrFactory(),
+                metaDb,
                 metaCol,
                 internalTransaction.getBackendConnection()
         );

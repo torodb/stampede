@@ -52,7 +52,6 @@ import org.jooq.impl.DSL;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
-import com.torodb.backend.DatabaseInterface;
 import com.torodb.backend.InternalField;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.backend.converters.jooq.ValueToJooqDataTypeProvider;
@@ -84,12 +83,13 @@ import com.torodb.core.transaction.metainf.MetaField;
 import com.torodb.kvdocument.values.KVValue;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import com.torodb.backend.SqlInterface;
 
 /**
  *
  */
 @Singleton
-public class PostgreSQLDatabaseInterface implements DatabaseInterface {
+public class PostgreSQLDatabaseInterface implements SqlInterface {
     private static final Logger LOGGER
         = LogManager.getLogger(PostgreSQLDatabaseInterface.class);
 
@@ -135,7 +135,7 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
 
     private void readObject(java.io.ObjectInputStream stream)
             throws IOException, ClassNotFoundException {
-        //TODO: Try to remove make DatabaseInterface not serializable
+        //TODO: Try to remove make SqlInterface not serializable
         stream.defaultReadObject();
     }
 

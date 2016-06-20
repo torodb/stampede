@@ -23,10 +23,10 @@ public class BackendTestHelper {
 
 	private DSLContext dsl;
 	private TestSchema schema;
-	private DatabaseInterface databaseInterface;
+	private SqlInterface databaseInterface;
 	private RidGenerator ridGenerator = new MockRidGenerator();
 	
-	public BackendTestHelper(DatabaseInterface databaseInterface, DSLContext dsl, TestSchema schema){
+	public BackendTestHelper(SqlInterface databaseInterface, DSLContext dsl, TestSchema schema){
 		this.databaseInterface = databaseInterface;
 		this.dsl = dsl;
 		this.schema = schema;
