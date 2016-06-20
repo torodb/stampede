@@ -35,15 +35,22 @@ import com.torodb.kvdocument.values.*;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
+import javax.annotation.Nonnull;
 
 import static com.eightkdata.mongowp.bson.utils.DefaultBsonValues.*;
 
 /**
  *
  */
-public class ToBsonValueTranslator implements KVValueVisitor<BsonValue<?>, Void>{
+public class ToBsonValueTranslator implements KVValueVisitor<BsonValue<?>, Void>, Function<KVValue<?>, BsonValue<?>>{
 
     private ToBsonValueTranslator() {
+    }
+
+    @Override
+    public BsonValue<?> apply(@Nonnull KVValue<?> kvValue) {
+        return kvValue.accept(this, null);
     }
 
     public static ToBsonValueTranslator getInstance() {

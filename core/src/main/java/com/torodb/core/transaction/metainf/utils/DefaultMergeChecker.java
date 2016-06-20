@@ -57,8 +57,8 @@ public class DefaultMergeChecker {
     }
 
     private static void checkMerge(ImmutableMetaSnapshot currentSnapshot, MutableMetaSnapshot newSnapshot, MutableMetaDatabase change) throws UnmergeableException {
-        ImmutableMetaDatabase byName = currentSnapshot.getMetaDatabaseByIdentifier(change.getIdentifier());
-        ImmutableMetaDatabase byId = currentSnapshot.getMetaDatabaseByName(change.getName());
+        ImmutableMetaDatabase byName = currentSnapshot.getMetaDatabaseByName(change.getName());
+        ImmutableMetaDatabase byId = currentSnapshot.getMetaDatabaseByIdentifier(change.getIdentifier());
 
         switch (checkCompatibility(byName, byId)) {
             case OK:

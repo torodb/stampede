@@ -2,6 +2,7 @@
 package com.torodb.core.transaction.metainf;
 
 import com.google.common.base.Preconditions;
+import com.torodb.core.annotations.DoNotChange;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -13,7 +14,7 @@ import java.util.stream.Stream;
 public class ImmutableMetaSnapshot implements MetaSnapshot {
 
     private final Map<String, ImmutableMetaDatabase> dbsByIdentifier;
-    private final Map<String, ImmutableMetaDatabase> bdsByName;
+    private final Map<String, ImmutableMetaDatabase> dbsByName;
 
     public ImmutableMetaSnapshot(Iterable<ImmutableMetaDatabase> dbs) {
         Map<String, ImmutableMetaDatabase> byName = new HashMap<>();
@@ -22,31 +23,31 @@ public class ImmutableMetaSnapshot implements MetaSnapshot {
             byName.put(database.getName(), database);
             byId.put(database.getIdentifier(), database);
         }
-        this.bdsByName = Collections.unmodifiableMap(byId);
-        this.dbsByIdentifier = Collections.unmodifiableMap(byName);
+        this.dbsByName = Collections.unmodifiableMap(byName);
+        this.dbsByIdentifier = Collections.unmodifiableMap(byId);
     }
 
-    public ImmutableMetaSnapshot(Map<String, ImmutableMetaDatabase> dbsByName) {
-        this.bdsByName = Collections.unmodifiableMap(dbsByName);
-        this.dbsByIdentifier = new HashMap<>(dbsByName.size());
-        for (ImmutableMetaDatabase schema : dbsByName.values()) {
-            dbsByIdentifier.put(schema.getName(), schema);
+    public ImmutableMetaSnapshot(@DoNotChange Map<String, ImmutableMetaDatabase> dbsById) {
+        this.dbsByIdentifier = Collections.unmodifiableMap(dbsById);
+        this.dbsByName = new HashMap<>(dbsById.size());
+        for (ImmutableMetaDatabase schema : dbsById.values()) {
+            dbsByName.put(schema.getName(), schema);
         }
     }
 
     @Override
     public Stream<ImmutableMetaDatabase> streamMetaDatabases() {
-        return bdsByName.values().stream();
+        return dbsByIdentifier.values().stream();
     }
 
     @Override
     public ImmutableMetaDatabase getMetaDatabaseByName(String schemaDocName) {
-        return dbsByIdentifier.get(schemaDocName);
+        return dbsByName.get(schemaDocName);
     }
 
     @Override
     public ImmutableMetaDatabase getMetaDatabaseByIdentifier(String schemaDbName) {
-        return bdsByName.get(schemaDbName);
+        return dbsByIdentifier.get(schemaDbName);
     }
 
     public static class Builder {

@@ -26,11 +26,12 @@ import com.torodb.kvdocument.conversion.mongowp.values.BsonKVString;
 import com.torodb.kvdocument.values.KVBinary.KVBinarySubtype;
 import com.torodb.kvdocument.values.*;
 import com.torodb.kvdocument.values.heap.*;
+import java.util.function.Function;
 
 /**
  *
  */
-public class FromBsonValueTranslator implements BsonValueVisitor<KVValue, Void> {
+public class FromBsonValueTranslator implements BsonValueVisitor<KVValue, Void>, Function<BsonValue<?>, KVValue> {
 
     private FromBsonValueTranslator() {
     }
@@ -39,6 +40,10 @@ public class FromBsonValueTranslator implements BsonValueVisitor<KVValue, Void> 
         return FromBsonValueTranslatorHolder.INSTANCE;
     }
 
+    @Override
+    public KVValue apply(BsonValue<?> bsonValue) {
+        return bsonValue.accept(this, null);
+    }
 
     @Override
     public KVValue visit(BsonArray value, Void arg) {
