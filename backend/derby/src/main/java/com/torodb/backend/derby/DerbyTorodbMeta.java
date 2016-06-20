@@ -28,11 +28,9 @@ import java.util.List;
 import java.util.Map;
 
 import org.jooq.DSLContext;
-import org.jooq.DataType;
 import org.jooq.Field;
 import org.jooq.Meta;
 import org.jooq.Result;
-import org.jooq.Schema;
 import org.jooq.Table;
 
 import com.torodb.backend.DatabaseInterface;
@@ -101,69 +99,61 @@ public class DerbyTorodbMeta implements TorodbMeta {
                 = dsl.selectFrom(metaDatabaseTable)
                     .fetch();
         
+        MetaCollectionTable<MetaCollectionRecord> collectionTable = databaseInterface.getMetaCollectionTable();
+        MetaDocPartTable<Object, MetaDocPartRecord<Object>> docPartTable = databaseInterface.getMetaDocPartTable();
+        MetaFieldTable<Object, MetaFieldRecord<Object>> fieldTable = databaseInterface.getMetaFieldTable();
+
         ImmutableMetaSnapshot.Builder metaSnapshotBuilder = new ImmutableMetaSnapshot.Builder();
         for (MetaDatabaseRecord databaseRecord : records) {
+        	String database = databaseRecord.getName();
+        	String schemaName = databaseRecord.getIdentifier();
+        	
             ImmutableMetaDatabase.Builder metaDatabaseBuilder = new ImmutableMetaDatabase.Builder(
-                    databaseRecord.getName(), databaseRecord.getIdentifier());
+            		database, schemaName);
             
-            String database = databaseRecord.getName();
-            String schemaName = databaseRecord.getIdentifier();
-            Schema standardSchema = null;
-            for (Schema schema : jooqMeta.getSchemas()) {
-                if (schema.getName().equals(schemaName)) {
-                    standardSchema = schema;
-                    break;
-                }
-            }
-            if (standardSchema == null) {
-                throw new IllegalStateException(
-                        "The database "+database+" is associated with schema "
-                        + schemaName+" but there is no schema with that name");
-            }
-
-            checkDatabaseSchema(standardSchema);
+            DerbySchemaValidator schemaValidator = new DerbySchemaValidator(jooqMeta, schemaName, database);
             
-            MetaCollectionTable<MetaCollectionRecord> collectionTable = databaseInterface.getMetaCollectionTable();
-            MetaDocPartTable<Object, MetaDocPartRecord<Object>> docPartTable = databaseInterface.getMetaDocPartTable();
-            MetaFieldTable<Object, MetaFieldRecord<Object>> fieldTable = databaseInterface.getMetaFieldTable();
             Result<MetaCollectionRecord> collections = dsl
                     .selectFrom(collectionTable)
                     .where(collectionTable.DATABASE.eq(database))
                     .fetch();
             
-            Iterable<? extends Table<?>> existingTables = standardSchema.getTables();
+            
             for (MetaCollectionRecord collection : collections) {
+            	String collectionName = collection.getName();
+            	
+            	ImmutableMetaCollection.Builder metaCollectionBuilder = 
+            			new ImmutableMetaCollection.Builder(collectionName, collection.getIdentifier());
+            	
                 List<MetaDocPartRecord<Object>> docParts = dsl
                         .selectFrom(docPartTable)
                         .where(docPartTable.DATABASE.eq(database)
-                            .and(docPartTable.COLLECTION.eq(collection.getName())))
+                            .and(docPartTable.COLLECTION.eq(collectionName)))
                         .fetch();
-                ImmutableMetaCollection.Builder metaCollectionBuilder = 
-                        new ImmutableMetaCollection.Builder(
-                                collection.getName(), 
-                                collection.getIdentifier());
                 
                 for (MetaDocPartRecord<Object> docPart : docParts) {
-                    if (!docPart.getCollection().equals(collection.getName())) {
+                    if (!docPart.getCollection().equals(collectionName)) {
                         continue;
                     }
+                    String docPartIdentifier = docPart.getIdentifier();
                     
                     TableRef tableRef = docPart.getTableRefValue(tableRefFactory);
                     ImmutableMetaDocPart.Builder metaDocPartBuilder = new ImmutableMetaDocPart.Builder(
-                            tableRef, 
-                            docPart.getIdentifier());
-                    if (!existsTable(docPart.getIdentifier(), existingTables)) {
+                            tableRef, docPartIdentifier);
+                    
+                    if (!schemaValidator.existsTable(docPartIdentifier)) {
                         throw new InvalidDatabaseSchemaException(schemaName, "Doc part "+tableRef
                                 +" in database "+database
-                                +" is associated with table "+docPart.getIdentifier()
+                                +" is associated with table "+docPartIdentifier
                                 +" but there is no table with that name in schema "+schemaName);
                     }
                     List<MetaFieldRecord<Object>> fields = dsl
                             .selectFrom(fieldTable)
                             .where(fieldTable.DATABASE.eq(database)
-                                .and(fieldTable.COLLECTION.eq(collection.getName()))
+                                .and(fieldTable.COLLECTION.eq(collectionName))
                                 .and(fieldTable.TABLE_REF.eq(docPart.getTableRef())))
                             .fetch();
+                    
                     for (MetaFieldRecord<?> field : fields) {
                         TableRef fieldTableRef = field.getTableRefValue(tableRefFactory);
                         if (!tableRef.equals(fieldTableRef)) {
@@ -175,127 +165,58 @@ public class DerbyTorodbMeta implements TorodbMeta {
                                 field.getIdentifier(), 
                                 field.getType());
                         
-                        if (!existsColumn(docPart.getIdentifier(), field.getIdentifier(), existingTables)) {
+                        if (!schemaValidator.existsColumn(docPartIdentifier, field.getIdentifier())) {
                             throw new InvalidDatabaseSchemaException(schemaName, "Field "+field.getCollection()+"."
                                     +field.getTableRefValue(tableRefFactory)+"."+field.getName()+" in database "+database+" is associated with field "+field.getIdentifier()
                                     +" but there is no field with that name in table "
-                                    +schemaName+"."+docPart.getIdentifier());
+                                    +schemaName+"."+docPartIdentifier);
                         }
-                        if (!existsColumnWithType(docPart.getIdentifier(), field.getIdentifier(), 
-                                databaseInterface.getDataType(field.getType()), existingTables)) {
+                        if (!schemaValidator.existsColumnWithType(docPartIdentifier, field.getIdentifier(), 
+                                databaseInterface.getDataType(field.getType()))) {
                             //TODO: some types can not be recognized using meta data
                             //throw new InvalidDatabaseSchemaException(schemaName, "Field "+field.getCollection()+"."
                             //        +field.getTableRefValue()+"."+field.getName()+" in database "+database+" is associated with field "+field.getIdentifier()
                             //        +" and type "+databaseInterface.getDataType(field.getType()).getTypeName()
-                            //        +" but the field "+schemaName+"."+docPart.getIdentifier()+"."+field.getIdentifier()
-                            //        +" has a different type "+getColumnType(docPart.getIdentifier(), field.getIdentifier(), existingTables).getTypeName());
+                            //        +" but the field "+schemaName+"."+docPartIdentifier+"."+field.getIdentifier()
+                            //        +" has a different type "+getColumnType(docPartIdentifier, field.getIdentifier(), existingTables).getTypeName());
                         }
                         metaDocPartBuilder.add(metaField);
                     }
                     metaCollectionBuilder.add(metaDocPartBuilder.build());
                 }
-                
                 metaDatabaseBuilder.add(metaCollectionBuilder.build());
             }
-            
-            Map<String, MetaDocPartRecord<Object>> docParts = dsl
-                    .selectFrom(docPartTable)
-                    .where(docPartTable.DATABASE.eq(database))
-                    .fetchMap(docPartTable.IDENTIFIER);
-            List<MetaFieldRecord<Object>> fields = dsl
-                    .selectFrom(fieldTable)
-                    .where(fieldTable.DATABASE.eq(database))
-                    .fetch();
-            for (Table<?> table : existingTables) {
-                if (!docParts.containsKey(table.getName())) {
-                    throw new InvalidDatabaseSchemaException(schemaName, "Table "+schemaName+"."+table.getName()
-                            +" has no container associated for database "+database);
-                }
-                
-                MetaDocPartRecord<Object> docPart = docParts.get(table.getName());
-                for (Field<?> existingField : table.fields()) {
-                    if (databaseInterface.isAllowedColumnIdentifier(existingField.getName())) {
-                        continue;
-                    }
-                    if (!containsField(existingField, docPart.getCollection(), docPart.getTableRefValue(tableRefFactory), fields, tableRefFactory)) {
-                        throw new InvalidDatabaseSchemaException(schemaName, "Column "+schemaName+"."+table.getName()
-                        +"."+existingField.getName()+" has no field associated for database "+database);
-                    }
-                }
-            }
-            
             metaSnapshotBuilder.add(metaDatabaseBuilder.build());
+            
+            
+	        Map<String, MetaDocPartRecord<Object>> docParts = dsl
+	        		.selectFrom(docPartTable)
+	        		.where(docPartTable.DATABASE.eq(database))
+	        		.fetchMap(docPartTable.IDENTIFIER);
+	        List<MetaFieldRecord<Object>> fields = dsl
+	        		.selectFrom(fieldTable)
+	        		.where(fieldTable.DATABASE.eq(database))
+	        		.fetch();
+	        for (Table<?> table : schemaValidator.getExistingTables()) {
+	        	if (!docParts.containsKey(table.getName())) {
+	        		throw new InvalidDatabaseSchemaException(schemaName, "Table "+schemaName+"."+table.getName()
+	        		+" has no container associated for database "+database);
+	        	}
+	        	
+	        	MetaDocPartRecord<Object> docPart = docParts.get(table.getName());
+	        	for (Field<?> existingField : table.fields()) {
+	        		if (databaseInterface.isAllowedColumnIdentifier(existingField.getName())) {
+	        			continue;
+	        		}
+	        		if (!DerbySchemaValidator.containsField(existingField, docPart.getCollection(), 
+	        				docPart.getTableRefValue(tableRefFactory), fields, tableRefFactory)) {
+	        			throw new InvalidDatabaseSchemaException(schemaName, "Column "+schemaName+"."+table.getName()
+	        			+"."+existingField.getName()+" has no field associated for database "+database);
+	        		}
+	        	}
+	        }
         }
-        
         return metaSnapshotBuilder.build();
-    }
-    
-    private boolean existsTable(String tableName, Iterable<? extends Table<?>> tables) {
-        for (Table<?> table : tables) {
-            if (table.getName().equals(tableName)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private boolean existsColumn(String tableName, String columnName, Iterable<? extends Table<?>> tables) {
-        for (Table<?> table : tables) {
-            if (table.getName().equals(tableName)) {
-                for (Field<?> field : table.fields()) {
-                    if (field.getName().equals(columnName)) {
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
-    }
-
-    private boolean existsColumnWithType(String tableName, String columnName, DataType<?> columnType, Iterable<? extends Table<?>> tables) {
-        for (Table<?> table : tables) {
-            if (table.getName().equals(tableName)) {
-                for (Field<?> field : table.fields()) {
-                    if (field.getName().equals(columnName)) {
-                        if (field.getDataType().getSQLType() == columnType.getSQLType() &&
-                            field.getDataType().getCastTypeName().equals(columnType.getCastTypeName())) {
-                            return true;
-                        } else {
-                            return false;
-                        }
-                    }
-                }
-            }
-        }
-        return false;
-    }
-
-    private DataType<?> getColumnType(String tableName, String columnName, Iterable<? extends Table<?>> tables) {
-        for (Table<?> table : tables) {
-            if (table.getName().equals(tableName)) {
-                for (Field<?> field : table.fields()) {
-                    if (field.getName().equals(columnName)) {
-                        return field.getDataType();
-                    }
-                }
-            }
-        }
-        return null;
-    }
-    
-    private boolean containsField(Field<?> existingField, String collection, TableRef tableRef, Iterable<MetaFieldRecord<Object>> fields, TableRefFactory tableRefFactory) {
-        for (MetaFieldRecord<?> field : fields) {
-            if (collection.equals(field.getCollection()) &&
-                    tableRef.equals(field.getTableRefValue(tableRefFactory)) &&
-                    existingField.getName().equals(field.getIdentifier())) {
-                return true;
-            }
-        }
-        return false;
-    }
-    
-    public static void checkDatabaseSchema(Schema schema) throws InvalidDatabaseSchemaException {
-        //TODO: improve checks
     }
     
 	private Map<String,Map<String,Map<TableRef,Integer>>> loadRowIds(DSLContext dsl, MetaSnapshot snapshot) {

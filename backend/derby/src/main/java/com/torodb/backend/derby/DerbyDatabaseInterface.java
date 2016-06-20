@@ -73,7 +73,6 @@ import com.torodb.backend.tables.MetaDocPartTable;
 import com.torodb.backend.tables.MetaDocPartTable.DocPartTableFields;
 import com.torodb.backend.tables.MetaFieldTable;
 import com.torodb.core.TableRef;
-import com.torodb.core.TableRefFactory;
 import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.d2r.DocPartResult;
 import com.torodb.core.d2r.DocPartResults;
@@ -190,7 +189,7 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
     private final DerbyMetaFieldTable metaFieldTable;
 
     @Inject
-    public DerbyDatabaseInterface(TableRefFactory tableRefFactory) {
+    public DerbyDatabaseInterface() {
         this.metaDatabaseTable = new DerbyMetaDatabaseTable();
         this.metaCollectionTable = new DerbyMetaCollectionTable();
         this.metaDocPartTable = new DerbyMetaDocPartTable();
@@ -389,7 +388,8 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
                 .append("    PRIMARY KEY (").append('"').append(MetaFieldTable.TableFields.DATABASE.toString()).append('"').append(",")
                 .append('"').append(MetaFieldTable.TableFields.COLLECTION.toString()).append('"').append(",")
                 .append('"').append(MetaFieldTable.TableFields.TABLE_REF.toString()).append('"').append(",")
-                    .append('"').append(MetaFieldTable.TableFields.NAME.toString()).append('"').append("),")
+                .append('"').append(MetaFieldTable.TableFields.NAME.toString()).append('"').append(",")
+                .append('"').append(MetaFieldTable.TableFields.TYPE.toString()).append('"').append("),")
                 .append("    UNIQUE (").append('"').append(MetaFieldTable.TableFields.DATABASE.toString()).append('"').append(",")
                     .append('"').append(MetaFieldTable.TableFields.COLLECTION.toString()).append('"').append(",")
                     .append('"').append(MetaFieldTable.TableFields.TABLE_REF.toString()).append('"').append(",")

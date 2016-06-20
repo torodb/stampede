@@ -80,7 +80,7 @@ public class BenchmarkDerbyR2DBackedTranslator {
 
 		@Setup(Level.Invocation)
 		public void setup() throws Exception {
-		    databaseInterface = new DerbyDatabaseInterface(tableRefFactory);
+		    databaseInterface = new DerbyDatabaseInterface();
 		    OfficialDerbyDriver driver = new OfficialDerbyDriver();
 		    connection = driver.getConfiguredDataSource(new DerbyDbBackendConfiguration() {
                 @Override

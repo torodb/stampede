@@ -10,7 +10,6 @@ import com.torodb.backend.util.SimpleDocumentFeed;
 import static com.torodb.backend.util.MetaInfoOperation.executeMetaOperation;
 import static com.torodb.backend.util.TestDataFactory.*;
 
-import com.torodb.core.TableRefFactory;
 import com.torodb.core.d2r.D2RTranslator;
 import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.impl.TableRefFactoryImpl;

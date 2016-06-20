@@ -22,7 +22,7 @@ public abstract class MetaFieldTable<TableRefType, R extends MetaFieldRecord<Tab
     public enum TableFields {
         DATABASE        (   "database"          ),
         COLLECTION      (   "collection"        ),
-        TABLE_REF       (   "tableRef"          ),
+        TABLE_REF       (   "table_ref"         ),
         NAME            (   "name"              ),
         IDENTIFIER      (   "identifier"        ),
         TYPE            (   "type"              )

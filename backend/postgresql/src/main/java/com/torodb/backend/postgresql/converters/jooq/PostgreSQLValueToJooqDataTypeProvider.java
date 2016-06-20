@@ -52,6 +52,7 @@ public class PostgreSQLValueToJooqDataTypeProvider implements ValueToJooqDataTyp
         dataTypes = Maps.newHashMap();
 
         dataTypes.put(FieldType.BOOLEAN, BooleanValueConverter.TYPE);
+        dataTypes.put(FieldType.CHILD, BooleanValueConverter.TYPE);
         dataTypes.put(FieldType.DOUBLE, DoubleValueConverter.TYPE);
         dataTypes.put(FieldType.INTEGER, IntegerValueConverter.TYPE);
         dataTypes.put(FieldType.LONG, LongValueConverter.TYPE);

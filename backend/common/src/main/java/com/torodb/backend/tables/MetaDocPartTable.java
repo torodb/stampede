@@ -27,7 +27,7 @@ public abstract class MetaDocPartTable<TableRefType, R extends MetaDocPartRecord
     public enum TableFields {
         DATABASE               (   "database"          ),
         COLLECTION             (   "collection"        ),
-        TABLE_REF              (   "tableRef"          ),
+        TABLE_REF              (   "table_ref"         ),
         IDENTIFIER             (   "identifier"        ),
         LAST_RID               (   "last_rid"          )
         ;
