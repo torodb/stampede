@@ -13,7 +13,7 @@ import java.util.stream.Stream;
 public class ImmutableMetaSnapshot implements MetaSnapshot {
 
     private final Map<String, ImmutableMetaDatabase> dbsByIdentifier;
-    private final Map<String, ImmutableMetaDatabase> bdsByName;
+    private final Map<String, ImmutableMetaDatabase> dbsByName;
 
     public ImmutableMetaSnapshot(Iterable<ImmutableMetaDatabase> dbs) {
         Map<String, ImmutableMetaDatabase> byName = new HashMap<>();
@@ -22,31 +22,31 @@ public class ImmutableMetaSnapshot implements MetaSnapshot {
             byName.put(database.getName(), database);
             byId.put(database.getIdentifier(), database);
         }
-        this.bdsByName = Collections.unmodifiableMap(byId);
-        this.dbsByIdentifier = Collections.unmodifiableMap(byName);
+        this.dbsByName = Collections.unmodifiableMap(byName);
+        this.dbsByIdentifier = Collections.unmodifiableMap(byId);
     }
 
     public ImmutableMetaSnapshot(Map<String, ImmutableMetaDatabase> dbsByName) {
-        this.bdsByName = Collections.unmodifiableMap(dbsByName);
+        this.dbsByName = Collections.unmodifiableMap(dbsByName);
         this.dbsByIdentifier = new HashMap<>(dbsByName.size());
         for (ImmutableMetaDatabase schema : dbsByName.values()) {
-            dbsByIdentifier.put(schema.getName(), schema);
+            dbsByIdentifier.put(schema.getIdentifier(), schema);
         }
     }
 
     @Override
     public Stream<ImmutableMetaDatabase> streamMetaDatabases() {
-        return bdsByName.values().stream();
+        return dbsByIdentifier.values().stream();
     }
 
     @Override
     public ImmutableMetaDatabase getMetaDatabaseByName(String schemaDocName) {
-        return dbsByIdentifier.get(schemaDocName);
+        return dbsByName.get(schemaDocName);
     }
 
     @Override
     public ImmutableMetaDatabase getMetaDatabaseByIdentifier(String schemaDbName) {
-        return bdsByName.get(schemaDbName);
+        return dbsByName.get(schemaDbName);
     }
 
     public static class Builder {

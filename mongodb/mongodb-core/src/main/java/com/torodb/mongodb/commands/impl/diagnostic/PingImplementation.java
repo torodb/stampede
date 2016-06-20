@@ -5,16 +5,16 @@ import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.Request;
 import com.eightkdata.mongowp.server.api.tools.Empty;
-import com.torodb.mongodb.commands.impl.AbstractTorodbCommandImplementation;
+import com.torodb.mongodb.commands.impl.ConnectionTorodbCommandImpl;
 import com.torodb.mongodb.core.MongodConnection;
 
 /**
  *
  */
-public class PingImplementation extends AbstractTorodbCommandImplementation<Empty, Empty>{
+public class PingImplementation extends ConnectionTorodbCommandImpl<Empty, Empty>{
 
     @Override
-    public Status<Empty> apply(Command<? super Empty, ? super Empty> command, Request<Empty> req, MongodConnection connection) {
+    public Status<Empty> apply(Request req, Command<? super Empty, ? super Empty> command, Empty arg, MongodConnection context) {
         return Status.ok(Empty.getInstance());
     }
 

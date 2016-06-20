@@ -23,13 +23,14 @@ package com.torodb.torod.pipeline;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.transaction.RollbackException;
 import com.torodb.kvdocument.values.KVDocument;
+import java.util.stream.Stream;
 
 /**
  *
  */
 public interface InsertPipeline {
 
-    void insert(Iterable<KVDocument> docs) throws RollbackException, UserException;
+    void insert(Stream<KVDocument> docs) throws RollbackException, UserException;
 
     int getDocsBatchLength();
 

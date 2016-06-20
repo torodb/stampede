@@ -9,7 +9,7 @@ import com.torodb.core.transaction.metainf.MutableMetaDatabase;
 import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
 import com.torodb.kvdocument.values.KVDocument;
 import com.torodb.torod.pipeline.InsertPipeline;
-import java.util.Collection;
+import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 
 /**
@@ -29,7 +29,7 @@ public class WriteTorodTransaction implements TorodTransaction {
                 .openWriteTransaction(connection.getBackendConnection());
     }
 
-    public void insert(String db, String collection, Collection<KVDocument> documents) throws RollbackException, UserException {
+    public void insert(String db, String collection, Stream<KVDocument> documents) throws RollbackException, UserException {
         MutableMetaDatabase metaDb = getOrCreateMetaDatabase(db);
         MutableMetaCollection metaCol = getOrCreateMetaCollection(metaDb, collection);
 
@@ -39,6 +39,10 @@ public class WriteTorodTransaction implements TorodTransaction {
                 internalTransaction.getBackendConnection()
         );
         pipeline.insert(documents);
+    }
+
+    public void commit() throws RollbackException, UserException {
+        internalTransaction.commit();
     }
 
     @Override

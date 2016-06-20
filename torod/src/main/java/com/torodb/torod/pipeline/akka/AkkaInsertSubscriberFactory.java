@@ -6,21 +6,22 @@ import akka.stream.javadsl.Keep;
 import akka.stream.javadsl.Sink;
 import akka.stream.javadsl.Source;
 import com.google.common.base.Throwables;
+import com.torodb.core.backend.WriteBackendTransaction;
 import com.torodb.core.d2r.D2RTranslatorFactory;
 import com.torodb.core.dsl.backend.BackendConnectionJobFactory;
 import com.torodb.core.exceptions.SystemException;
 import com.torodb.core.exceptions.user.UserException;
-import com.torodb.torod.pipeline.InsertPipeline;
-import com.torodb.torod.pipeline.InsertPipelineFactory;
 import com.torodb.core.transaction.RollbackException;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MutableMetaCollection;
+import com.torodb.kvdocument.values.KVDocument;
 import com.torodb.torod.pipeline.D2RTranslationBatchFunction;
 import com.torodb.torod.pipeline.DefaultToBackendFunction;
-import com.torodb.kvdocument.values.KVDocument;
+import com.torodb.torod.pipeline.InsertPipeline;
+import com.torodb.torod.pipeline.InsertPipelineFactory;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Stream;
 import javax.inject.Inject;
-import com.torodb.core.backend.WriteBackendTransaction;
 
 /**
  *
@@ -61,14 +62,14 @@ public class AkkaInsertSubscriberFactory implements InsertPipelineFactory {
         }
 
         @Override
-        public void insert(Iterable<KVDocument> docs) throws UserException {
+        public void insert(Stream<KVDocument> docs) throws UserException {
 
             D2RTranslationBatchFunction d2rFun
                     = new D2RTranslationBatchFunction(translatorFactory, mutableMetaCollection);
             DefaultToBackendFunction r2BackendFun
                     = new DefaultToBackendFunction(factory, database, mutableMetaCollection);
             try {
-                Source.from(docs)
+                Source.fromIterator(() -> docs.iterator())
                         .grouped(docBatch)
                         .map((kvList) -> d2rFun.apply(kvList))
                         .mapConcat((collData) -> r2BackendFun.apply(collData))
