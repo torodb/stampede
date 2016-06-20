@@ -18,26 +18,35 @@
  *     
  */
 
-package com.torodb.backend;
+package com.torodb.d2r;
 
-import java.io.Serializable;
-
-import com.torodb.backend.interfaces.DataTypeInterface;
-import com.torodb.backend.interfaces.ErrorHandlerInterface;
-import com.torodb.backend.interfaces.ReadInterface;
-import com.torodb.backend.interfaces.ReadMetaDataInterface;
-import com.torodb.backend.interfaces.StructureInterface;
-import com.torodb.backend.interfaces.WriteInterface;
-import com.torodb.backend.interfaces.WriteMetaDataInterface;
 import com.torodb.core.backend.IdentifierInterface;
 
-/**
- * Wrapper interface to define all database-specific SQL code
- */
-public interface DatabaseInterface extends 
-    ReadMetaDataInterface, WriteMetaDataInterface, 
-    DataTypeInterface, StructureInterface, ReadInterface, WriteInterface, 
-    IdentifierInterface, ErrorHandlerInterface, Serializable {
-    //TODO: Try to remove make DatabaseInterface not serializable
-    
+public class MockIdentifierInterface implements IdentifierInterface {
+
+    @Override
+    public int identifierMaxSize() {
+        return 128;
+    }
+
+    @Override
+    public boolean isAllowedSchemaIdentifier(String identifier) {
+        return !identifier.equals("unallowed_schema");
+    }
+
+    @Override
+    public boolean isAllowedTableIdentifier(String identifier) {
+        return !identifier.equals("unallowed_table");
+    }
+
+    @Override
+    public boolean isAllowedColumnIdentifier(String identifier) {
+        return !identifier.equals("unallowed_column_s");
+    }
+
+    @Override
+    public boolean isSameIdentifier(String leftIdentifier, String rightIdentifier) {
+        return leftIdentifier.equals(rightIdentifier);
+    }
+
 }

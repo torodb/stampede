@@ -26,6 +26,7 @@ import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
 import com.torodb.d2r.D2RTranslatorStack;
 import com.torodb.d2r.IdentifierFactoryImpl;
+import com.torodb.d2r.MockIdentifierInterface;
 import com.torodb.d2r.MockRidGenerator;
 import com.torodb.d2r.R2DBackedTranslator;
 import com.torodb.kvdocument.conversion.json.JacksonJsonParser;
@@ -39,7 +40,7 @@ public class BackendDocumentTestHelper {
 	private TestSchema schema;
 	
 	private MockRidGenerator ridGenerator = new MockRidGenerator();
-	private IdentifierFactory identifierFactory = new IdentifierFactoryImpl();
+	private IdentifierFactory identifierFactory = new IdentifierFactoryImpl(new MockIdentifierInterface());
 	
 	public BackendDocumentTestHelper(DatabaseInterface databaseInterface, TableRefFactory tableRefFactory, TestSchema schema){
 		this.databaseInterface = databaseInterface;

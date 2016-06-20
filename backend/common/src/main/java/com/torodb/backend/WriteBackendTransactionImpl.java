@@ -20,24 +20,31 @@
 
 package com.torodb.backend;
 
-import com.google.common.collect.ImmutableList;
-import com.torodb.core.backend.WriteBackendTransaction;
-import com.torodb.core.d2r.DocPartData;
-import com.torodb.core.transaction.metainf.MetaCollection;
-import com.torodb.core.transaction.metainf.MetaDatabase;
-import com.torodb.core.transaction.metainf.MetaDocPart;
-import com.torodb.core.transaction.metainf.MetaField;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.List;
+
 import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.impl.DSL;
 
-public class BackendConnectionImpl implements WriteBackendTransaction {
+import com.google.common.collect.ImmutableList;
+import com.torodb.backend.interfaces.ErrorHandlerInterface.Context;
+import com.torodb.core.backend.WriteBackendTransaction;
+import com.torodb.core.d2r.DocPartData;
+import com.torodb.core.exceptions.user.UserException;
+import com.torodb.core.transaction.RollbackException;
+import com.torodb.core.transaction.metainf.MetaCollection;
+import com.torodb.core.transaction.metainf.MetaDatabase;
+import com.torodb.core.transaction.metainf.MetaDocPart;
+import com.torodb.core.transaction.metainf.MetaField;
+
+public class WriteBackendTransactionImpl implements WriteBackendTransaction {
     
     private final DSLContext dsl;
     private final DatabaseInterface databaseInterface;
     
-    public BackendConnectionImpl(DSLContext dsl, DatabaseInterface databaseInterface) {
+    public WriteBackendTransactionImpl(DSLContext dsl, DatabaseInterface databaseInterface) {
         super();
         this.dsl = dsl;
         this.databaseInterface = databaseInterface;
@@ -86,6 +93,23 @@ public class BackendConnectionImpl implements WriteBackendTransaction {
     @Override
     public void insert(MetaDatabase db, MetaCollection col, DocPartData data) {
         databaseInterface.insertDocPartData(dsl, db.getIdentifier(), data);
+    }
+
+    @Override
+    public void commit() throws UserException, RollbackException {
+        Connection connection = dsl.configuration().connectionProvider().acquire();
+        try {
+            connection.commit();
+        } catch(SQLException ex) {
+            databaseInterface.handleRollbackException(Context.commit, ex);
+        } finally {
+            dsl.configuration().connectionProvider().release(connection);
+        }
+    }
+
+    @Override
+    public void close() {
+        dsl.close();
     }
 
 }

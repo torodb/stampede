@@ -445,7 +445,7 @@ public class Document2RelStackTest {
 
 	private CollectionData parseDocument(String ...docNames) {
 		MockRidGenerator ridGenerator = new MockRidGenerator();
-		IdentifierFactory identifierFactory = new IdentifierFactoryImpl();
+		IdentifierFactory identifierFactory = new IdentifierFactoryImpl(new MockIdentifierInterface());
 		D2RTranslator translator = new D2RTranslatorStack(tableRefFactory, identifierFactory, ridGenerator, mutableSnapshot, DB1, COLLA);
 		for (String doc: docNames){
 			KVDocument document = parser.createFromResource("docs/"+doc);

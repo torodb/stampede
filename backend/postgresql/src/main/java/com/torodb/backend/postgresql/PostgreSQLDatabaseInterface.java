@@ -23,9 +23,7 @@ package com.torodb.backend.postgresql;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Serializable;
-import java.sql.Array;
 import java.sql.Connection;
-import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -37,8 +35,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
@@ -78,6 +74,7 @@ import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.d2r.DocPartResults;
 import com.torodb.core.d2r.DocPartRow;
 import com.torodb.core.exceptions.SystemException;
+import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.transaction.RollbackException;
 import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.MetaCollection;
@@ -166,25 +163,6 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
         return metaFieldTable;
     }
 
-    @Override
-    public @Nonnull ValueToJooqDataTypeProvider getValueToJooqDataTypeProvider() {
-        return valueToJooqDataTypeProvider;
-    }
-
-    @Override
-    public String createIndexStatement(Configuration conf, String schemaName, String tableName, String fieldName) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("CREATE INDEX ON \"")
-                .append(schemaName)
-                .append("\".\"")
-                .append(tableName)
-                .append("\" (\"")
-                .append(fieldName)
-                .append("\")");
-
-        return sb.toString();
-    }
-
     private Iterable<Field<?>> getFieldIterator(Iterable<Field<?>> fields) {
         List<Field<?>> fieldList = Lists.newArrayList(fields);
         Collections.sort(fieldList, fieldComparator);
@@ -251,64 +229,23 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
     }
 
     @Override
-    public @Nonnull String escapeSchemaName(@Nonnull String collection) throws IllegalArgumentException {
-        return filter(collection);
+    public int identifierMaxSize() {
+        return 63;
     }
 
     @Override
-    public @Nonnull String escapeAttributeName(@Nonnull String attributeName) throws IllegalArgumentException {
-        return filter(attributeName);
-    }
-
-    @Override
-    public @Nonnull String escapeIndexName(@Nonnull String indexName) throws IllegalArgumentException {
-        return filter(indexName);
-    }
-
-    private static String filter(String str) {
-        if (str.length() > 63) {
-            throw new IllegalArgumentException(str + " is too long to be a "
-                    + "valid PostgreSQL name. By default names must be shorter "
-                    + "than 64, but it has " + str.length() + " characters");
-        }
-        Pattern quotesPattern = Pattern.compile("(\"+)");
-        Matcher matcher = quotesPattern.matcher(str);
-        while (matcher.find()) {
-            if (((matcher.end() - matcher.start()) & 1) == 1) { //lenght is uneven
-                throw new IllegalArgumentException("The name '" + str + "' is"
-                        + "illegal because contains an open quote at " + matcher.start());
-            }
-        }
-
-        return str;
-    }
-
-    @Override
-    @Nonnull
-    public ResultSet getColumns(DatabaseMetaData metadata, String schemaName, String tableName) throws SQLException {
-        return metadata.getColumns("%", schemaName, tableName, null);
+    public boolean isAllowedSchemaIdentifier(@Nonnull String schemaName) {
+        return Arrays.binarySearch(RESTRICTED_SCHEMA_NAMES, schemaName) >= 0;
     }
     
     @Override
-    @Nonnull
-    public ResultSet getIndexes(DatabaseMetaData metadata, String schemaName, String tableName) throws SQLException {
-        return metadata.getIndexInfo(
-                "%",
-                schemaName,
-                tableName,
-                false,
-                false
-        );
+    public boolean isAllowedTableIdentifier(@Nonnull String columnName) {
+        return true;
     }
-
+    
     @Override
-    public int getIntColumnType(ResultSet columns) throws SQLException {
-        return columns.getInt("DATA_TYPE");
-    }
-
-    @Override
-    public String getStringColumnType(ResultSet columns) throws SQLException {
-        return columns.getString("TYPE_NAME");
+    public boolean isAllowedColumnIdentifier(@Nonnull String columnName) {
+        return Arrays.binarySearch(RESTRICTED_COLUMN_NAMES, columnName) >= 0;
     }
 
     @Override
@@ -416,55 +353,43 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
     }
 
     @Override
-    public @Nonnull String arrayUnnestParametrizedSelectStatement() {
-        return "SELECT unnest(?)";
-    }
-
-    @Override
-    public @Nonnull String deleteDidsStatement(
+    public void deleteDocParts(@Nonnull DSLContext dsl,
             @Nonnull String schemaName, @Nonnull String tableName,
-            @Nonnull String didColumnName
+            @Nonnull List<Integer> dids
     ) {
-        return new StringBuilder()
+        Preconditions.checkArgument(dids.size() > 0, "At least 1 did must be specified");
+        
+        StringBuilder sb = new StringBuilder()
                 .append("DELETE FROM ")
                 .append(fullTableName(schemaName, tableName))
-                .append(" WHERE (")
-                    .append(fullTableName(schemaName, tableName))
-                    .append(".").append(didColumnName)
-                    .append(" IN (")
-                        .append(arrayUnnestParametrizedSelectStatement())
-                    .append(")")
-                .append(")")
-                .toString();
-    }
-
-    @Override
-    public void setDeleteDidsStatementParameters(@Nonnull PreparedStatement ps,
-            @Nonnull Collection<Integer> dids) throws SQLException {
-        Connection connection = ps.getConnection();
+                .append(" WHERE \"")
+                .append(MetaDocPartTable.DocPartTableFields.DID.fieldName)
+                .append("\" IN (");
+        for (Integer did : dids) {
+            sb.append(did)
+                .append(',');
+        }
+        sb.setCharAt(sb.length() - 1, ')');
         
-        final int maxInArray = (2 << 15) - 1; // = 2^16 -1 = 65535
-
-        Integer[] didsToDelete = dids.toArray(new Integer[dids.size()]);
-
-        int i = 0;
-        while (i < didsToDelete.length) {
-            int toIndex = Math.min(i + maxInArray, didsToDelete.length);
-            Integer[] subDids
-                    = Arrays.copyOfRange(didsToDelete, i, toIndex);
-
-            Array arr
-                = connection.createArrayOf("integer", subDids);
-            ps.setArray(1, arr);
-            ps.addBatch();
-
-            i = toIndex;
+        Connection connection = dsl.configuration().connectionProvider().acquire();
+        
+        try {
+            try (PreparedStatement preparedStatement = connection.prepareStatement(sb.toString())) {
+                preparedStatement.executeUpdate();
+            }
+        } catch(SQLException ex) {
+            handleRollbackException(Context.delete, ex);
+            
+            throw new SystemException(ex);
+        } finally {
+            dsl.configuration().connectionProvider().release(connection);
         }
     }
 
     @Override
     public void dropSchema(@Nonnull DSLContext dsl, @Nonnull String schemaName) {
         String query = "DROP SCHEMA \"" + schemaName + "\" CASCADE";
+        
         executeUpdate(dsl, query, Context.ddl);
     }
 
@@ -474,35 +399,35 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
         throw new UnsupportedOperationException("Not implemented yet");
     }
 
-    @Nonnull
     @Override
-    public String createIndexStatement(
-            @Nonnull String fullIndexName, @Nonnull String tableSchema, @Nonnull String tableName,
-            @Nonnull String tableColumnName, boolean ascending
+    public void createIndex(@Nonnull DSLContext dsl,
+            @Nonnull String indexName, @Nonnull String schemaName, @Nonnull String tableName,
+            @Nonnull String columnName, boolean ascending
     ) {
-        return new StringBuilder()
+        StringBuilder sb = new StringBuilder()
                 .append("CREATE INDEX ")
-                .append("\"").append(fullIndexName).append("\"")
+                .append("\"").append(indexName).append("\"")
                 .append(" ON ")
-                .append("\"").append(tableSchema).append("\"")
+                .append("\"").append(schemaName).append("\"")
                 .append(".")
                 .append("\"").append(tableName).append("\"")
                 .append(" (")
-                    .append("\"").append(tableColumnName).append("\"")
+                    .append("\"").append(columnName).append("\"")
                     .append(" ").append(ascending ? "ASC" : "DESC")
-                .append(")")
-                .toString();
+                .append(")");
+        
+        executeUpdate(dsl, sb.toString(), Context.ddl);
     }
 
-    @Nonnull
     @Override
-    public String dropIndexStatement(@Nonnull String schemaName, @Nonnull String indexName) {
-        return new StringBuilder()
+    public void dropIndex(@Nonnull DSLContext dsl, @Nonnull String schemaName, @Nonnull String indexName) {
+        StringBuilder sb = new StringBuilder()
                 .append("DROP INDEX ")
                 .append("\"").append(schemaName).append("\"")
                 .append(".")
-                .append("\"").append(indexName).append("\"")
-                .toString();
+                .append("\"").append(indexName).append("\"");
+        
+        executeUpdate(dsl, sb.toString(), Context.ddl);
     }
 
     @Override
@@ -690,10 +615,10 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
                 }
             }
         } catch (DataAccessException ex) {
-            handleRetryException(Context.insert, ex);
+            handleRollbackException(Context.insert, ex);
             throw new SystemException(ex);
         } catch (SQLException ex) {
-            handleRetryException(Context.insert, ex);
+            handleRollbackException(Context.insert, ex);
             throw new SystemException(ex);
         } catch (IOException ex) {
             throw new SystemException(ex);
@@ -876,14 +801,14 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
     }
     
     @Override
-    public void handleRetryException(Context context, SQLException sqlException) {
+    public void handleRollbackException(Context context, SQLException sqlException) {
         if (Arrays.binarySearch(ROLLBACK_EXCEPTIONS, sqlException.getSQLState()) >= 0) {
             throw new RollbackException(sqlException);
         }
     }
 
     @Override
-    public void handleRetryException(Context context, DataAccessException dataAccessException) {
+    public void handleRollbackException(Context context, DataAccessException dataAccessException) {
         if (Arrays.binarySearch(ROLLBACK_EXCEPTIONS, dataAccessException.sqlState()) >= 0) {
             throw new RollbackException(dataAccessException);
         }
@@ -894,16 +819,6 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
         return leftIdentifier.equals(rightIdentifier);
     }
 
-    @Override
-    public boolean isRestrictedSchemaName(@Nonnull String schemaName) {
-        return Arrays.binarySearch(RESTRICTED_SCHEMA_NAMES, schemaName) >= 0;
-    }
-    
-    @Override
-    public boolean isRestrictedColumnName(@Nonnull String columnName) {
-        return Arrays.binarySearch(RESTRICTED_COLUMN_NAMES, columnName) >= 0;
-    }
-    
     @Override
     public Collection<InternalField<?>> getDocPartTableInternalFields(MetaDocPart metaDocPart) {
         TableRef tableRef = metaDocPart.getTableRef();
@@ -916,7 +831,7 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
     }
     
 	@Override
-	public int getLastRowIUsed(@Nonnull DSLContext dsl, @Nonnull MetaDatabase metaDatabase, @Nonnull MetaCollection metaCollection, @Nonnull MetaDocPart metaDocPart) {
+	public int getLastRowIdUsed(@Nonnull DSLContext dsl, @Nonnull MetaDatabase metaDatabase, @Nonnull MetaCollection metaCollection, @Nonnull MetaDocPart metaDocPart) {
 		
 		TableRef tableRef = metaDocPart.getTableRef();
 		
@@ -939,7 +854,7 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
         	}
         	return maxId;
         } catch (SQLException ex){
-        	handleRetryException(Context.ddl, ex);
+        	handleRollbackException(Context.ddl, ex);
             throw new SystemException(ex);
         } finally {
             dsl.configuration().connectionProvider().release(connection);
@@ -1022,7 +937,7 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
         try (PreparedStatement ps = c.prepareStatement(statement)) {
             ps.execute();
         } catch (SQLException ex) {
-        	handleRetryException(context, ex);
+        	handleRollbackException(context, ex);
             throw new SystemException(ex);
 		} finally {
             dsl.configuration().connectionProvider().release(c);
@@ -1034,7 +949,7 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
         try (PreparedStatement ps = c.prepareStatement(statement)) {
             ps.execute();
         } catch (SQLException ex) {
-        	handleRetryException(context, ex);
+        	handleRollbackException(context, ex);
             throw new SystemException(ex);
 		} finally {
             dsl.configuration().connectionProvider().release(c);
@@ -1045,9 +960,20 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
         try {
             query.execute();
         } catch (DataAccessException ex) {
-        	handleRetryException(context, ex);
+        	handleRollbackException(context, ex);
             throw new SystemException(ex);
         }    	
+    }
+
+    @Override
+    public void handleUserAndRetryException(Context context, SQLException sqlException) throws UserException {
+        handleRollbackException(context, sqlException);
+    }
+
+    @Override
+    public void handleUserAndRetryException(Context context, DataAccessException dataAccessException)
+            throws UserException {
+        handleRollbackException(context, dataAccessException);
     }
 
 }

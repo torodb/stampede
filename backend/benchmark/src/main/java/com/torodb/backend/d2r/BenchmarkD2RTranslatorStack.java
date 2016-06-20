@@ -29,6 +29,7 @@ import com.torodb.core.transaction.metainf.MetainfoRepository.SnapshotStage;
 import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
 import com.torodb.d2r.D2RTranslatorStack;
 import com.torodb.d2r.IdentifierFactoryImpl;
+import com.torodb.d2r.MockIdentifierInterface;
 import com.torodb.kvdocument.values.KVDocument;
 import com.torodb.metainfo.cache.mvcc.MvccMetainfoRepository;
 
@@ -36,7 +37,7 @@ public class BenchmarkD2RTranslatorStack {
 
     private static TableRefFactory tableRefFactory = new TableRefFactoryImpl();
     private static InMemoryRidGenerator ridGenerator = new InMemoryRidGenerator();
-	private static IdentifierFactory identifierFactory=new IdentifierFactoryImpl();
+	private static IdentifierFactory identifierFactory=new IdentifierFactoryImpl(new MockIdentifierInterface());
 	
 	@State(Scope.Thread)
 	public static class TranslateState {

@@ -54,6 +54,7 @@ import com.torodb.core.transaction.metainf.MutableMetaDatabase;
 import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
 import com.torodb.d2r.D2RTranslatorStack;
 import com.torodb.d2r.IdentifierFactoryImpl;
+import com.torodb.d2r.MockIdentifierInterface;
 import com.torodb.d2r.R2DBackedTranslator;
 import com.torodb.kvdocument.values.KVDocument;
 import com.torodb.metainfo.cache.mvcc.MvccMetainfoRepository;
@@ -62,7 +63,7 @@ public class BenchmarkDerbyR2DBackedTranslator {
 
     private static TableRefFactory tableRefFactory = new TableRefFactoryImpl();
     private static InMemoryRidGenerator ridGenerator = new InMemoryRidGenerator();
-	private static IdentifierFactory identifierFactory=new IdentifierFactoryImpl();
+	private static IdentifierFactory identifierFactory=new IdentifierFactoryImpl(new MockIdentifierInterface());
 	
 	@State(Scope.Thread)
 	public static class TranslateState {
@@ -214,7 +215,7 @@ public class BenchmarkDerbyR2DBackedTranslator {
         while (tables.next()) {
             String schemaName = tables.getString("TABLE_SCHEM");
             String tableName = tables.getString("TABLE_NAME");
-            if (!state.databaseInterface.isRestrictedSchemaName(schemaName) || schemaName.equals(TorodbSchema.TORODB_SCHEMA)) {
+            if (!state.databaseInterface.isAllowedSchemaIdentifier(schemaName) || schemaName.equals(TorodbSchema.TORODB_SCHEMA)) {
                 try (PreparedStatement preparedStatement = state.connection.prepareStatement("DROP TABLE \"" + schemaName + "\".\"" + tableName + "\"")) {
                     preparedStatement.executeUpdate();
                 }
@@ -223,7 +224,7 @@ public class BenchmarkDerbyR2DBackedTranslator {
         ResultSet schemas = metaData.getSchemas();
         while (schemas.next()) {
             String schemaName = schemas.getString("TABLE_SCHEM");
-            if (!state.databaseInterface.isRestrictedSchemaName(schemaName) || schemaName.equals(TorodbSchema.TORODB_SCHEMA)) {
+            if (!state.databaseInterface.isAllowedSchemaIdentifier(schemaName) || schemaName.equals(TorodbSchema.TORODB_SCHEMA)) {
                 try (PreparedStatement preparedStatement = state.connection.prepareStatement("DROP SCHEMA \"" + schemaName + "\" RESTRICT")) {
                     preparedStatement.executeUpdate();
                 }

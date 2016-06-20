@@ -46,11 +46,17 @@
 			<artifactId>json-converter</artifactId>
 			<version>${project.version}</version>
 		</dependency>
-		<dependency>
-			<groupId>com.torodb</groupId>
-			<artifactId>d2r</artifactId>
-			<version>0.50.0-SNAPSHOT</version>
-		</dependency>
+        <dependency>
+            <groupId>com.torodb</groupId>
+            <artifactId>d2r</artifactId>
+            <version>0.50.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.torodb</groupId>
+            <artifactId>d2r</artifactId>
+            <type>test-jar</type>
+            <version>0.50.0-SNAPSHOT</version>
+        </dependency>
 	</dependencies>
 
 	<properties>

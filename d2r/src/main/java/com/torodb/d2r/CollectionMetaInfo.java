@@ -5,23 +5,22 @@ import com.torodb.core.d2r.IdentifierFactory;
 import com.torodb.core.d2r.RidGenerator;
 import com.torodb.core.d2r.RidGenerator.DocPartRidGenerator;
 import com.torodb.core.transaction.metainf.FieldType;
+import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MutableMetaCollection;
 import com.torodb.core.transaction.metainf.MutableMetaDocPart;
 
 public class CollectionMetaInfo {
 
-	private final String dbName;
-	private final String collectionName;
-	private final MutableMetaCollection metaCollection;
+    private final MetaDatabase metaDatabase;
+    private final MutableMetaCollection metaCollection;
 	private final IdentifierFactory identifierFactory;
 	private final DocPartRidGenerator docPartRidGenerator;
 	
-	public CollectionMetaInfo(String dbName, String collectionName, MutableMetaCollection metaCollection, IdentifierFactory identifierFactory, RidGenerator ridGenerator) {
-		this.dbName = dbName;
-		this.collectionName = collectionName;
+	public CollectionMetaInfo(MetaDatabase metaDatabase, MutableMetaCollection metaCollection, IdentifierFactory identifierFactory, RidGenerator ridGenerator) {
+		this.metaDatabase = metaDatabase;
 		this.metaCollection = metaCollection;
 		this.identifierFactory = identifierFactory;
-		this.docPartRidGenerator = ridGenerator.getDocPartRidGenerator(dbName, collectionName);
+		this.docPartRidGenerator = ridGenerator.getDocPartRidGenerator(metaDatabase.getName(), metaCollection.getName());
 	}
 	
 	public int getNextRowId(TableRef tableRef) {
@@ -31,8 +30,8 @@ public class CollectionMetaInfo {
 	public MutableMetaDocPart findMetaDocPart(TableRef tableRef){
 		MutableMetaDocPart metaDocPart = metaCollection.getMetaDocPartByTableRef(tableRef);
 		if (metaDocPart==null){
-			String tableIdentifier = identifierFactory.toTableIdentifier(metaCollection, collectionName, tableRef);
-			metaDocPart = metaCollection.addMetaDocPart(tableRef, tableIdentifier);
+			String docPartIdentifier = identifierFactory.toDocPartIdentifier(metaDatabase, metaCollection.getName(), tableRef);
+			metaDocPart = metaCollection.addMetaDocPart(tableRef, docPartIdentifier);
 		}
 		return metaDocPart;
 	}

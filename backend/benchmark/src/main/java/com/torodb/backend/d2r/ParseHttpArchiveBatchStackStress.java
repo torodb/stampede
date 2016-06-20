@@ -20,6 +20,7 @@ import com.torodb.core.d2r.RidGenerator;
 import com.torodb.core.impl.TableRefFactoryImpl;
 import com.torodb.d2r.D2RTranslatorStack;
 import com.torodb.d2r.IdentifierFactoryImpl;
+import com.torodb.d2r.MockIdentifierInterface;
 import com.torodb.metainfo.cache.mvcc.MvccMetainfoRepository;
 
 /**
@@ -38,7 +39,7 @@ public class ParseHttpArchiveBatchStackStress {
 		MvccMetainfoRepository mvccMetainfoRepository = new MvccMetainfoRepository(InitialView);
 	    TableRefFactory tableRefFactory = new TableRefFactoryImpl();
 		RidGenerator ridGenerator = new InMemoryRidGenerator();
-		IdentifierFactory identifierFactory = new IdentifierFactoryImpl();
+		IdentifierFactory identifierFactory = new IdentifierFactoryImpl(new MockIdentifierInterface());
 
 		AtomicLong cont=new AtomicLong(0);
 		Stopwatch toroTimer = Stopwatch.createUnstarted();
