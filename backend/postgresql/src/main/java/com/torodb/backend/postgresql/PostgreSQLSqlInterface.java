@@ -843,7 +843,7 @@ public class PostgreSQLSqlInterface implements SqlInterface {
                     insertStatementBuilder.append("NULL,");
                 }
             }
-            for (KVValue<?> value : docPartRow) {
+            for (KVValue<?> value : docPartRow.getFieldValues()) {
                 if (value != null) {
                     insertStatementBuilder.append(getSqlValue(value))
                         .append(',');
@@ -919,7 +919,7 @@ public class PostgreSQLSqlInterface implements SqlInterface {
     private void addToCopy(
             StringBuilder sb,
             DocPartRow docPartRow) {
-        for (KVValue<?> value : docPartRow) {
+        for (KVValue<?> value : docPartRow.getFieldValues()) {
         	if (value!=null){
         		value.accept(PostgreSQLValueToCopyConverter.INSTANCE, sb);
         	}else{

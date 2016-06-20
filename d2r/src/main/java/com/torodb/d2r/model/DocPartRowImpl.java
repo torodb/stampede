@@ -103,16 +103,16 @@ public class DocPartRowImpl implements DocPartRow{
 	}
 
 	@Override
-	public Iterator<KVValue<?>> iterator() {
+	public Iterable<KVValue<?>> getFieldValues() {
 		int columns = this.getDocPartData().columnCount();
 		int attrs = this.attributes.size();
 		if (columns==attrs){
-			return attributes.iterator();
+			return attributes;
 		}
 		NumberNullIterator<KVValue<?>> itTail=new NumberNullIterator<>(columns-attrs);
-		return Iterators.concat(attributes.iterator(),itTail);
+		return () -> Iterators.concat(attributes.iterator(),itTail);
 	}
-
+	
 	private static class NumberNullIterator<R> implements Iterator<R>{
 
 		private int n;
@@ -135,4 +135,5 @@ public class DocPartRowImpl implements DocPartRow{
 		}
 		
 	}
+
 }

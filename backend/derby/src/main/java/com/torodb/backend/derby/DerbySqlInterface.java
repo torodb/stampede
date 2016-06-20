@@ -683,7 +683,7 @@ public class DerbySqlInterface implements SqlInterface {
                     insertStatementBuilder.append("NULL,");
                 }
             }
-            for (KVValue<?> value : docPartRow) {
+            for (KVValue<?> value : docPartRow.getFieldValues()) {
                 if (value != null) {
                     insertStatementBuilder.append(getSqlValue(value))
                         .append(',');

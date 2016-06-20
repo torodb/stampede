@@ -99,7 +99,7 @@ public class Document2RelStackTest {
 		assertTrue(rootDocPart.iterator().hasNext());
 		DocPartRow firstRow = rootDocPart.iterator().next();
 		assertNotNull(firstRow);
-		assertFalse(firstRow.iterator().hasNext());
+		assertFalse(firstRow.getFieldValues().iterator().hasNext());
 	}
 	
 	@Test
@@ -194,7 +194,7 @@ public class Document2RelStackTest {
 		DocPartData departmentDocPart = findDocPart(collectionData,"department");
 		DocPartRow firstRow = departmentDocPart.iterator().next();
 		assertNotNull(firstRow);
-		assertFalse(firstRow.iterator().hasNext());
+		assertFalse(firstRow.getFieldValues().iterator().hasNext());
 	}
 	
 	@Test
@@ -347,7 +347,7 @@ public class Document2RelStackTest {
 	}
 	
 	private int countFields(DocPartRow row) {
-		Iterator<KVValue<?>> it = row.iterator();
+		Iterator<KVValue<?>> it = row.getFieldValues().iterator();
 		int cont = 0;
 		while (it.hasNext()) {
 			cont++;
@@ -429,7 +429,7 @@ public class Document2RelStackTest {
 	
 	private boolean assertExistValueInPosition(DocPartRow row,int order, Object value){
 		KVValue<?> kv = null;
-		Iterator<KVValue<?>> iterator = row.iterator();
+		Iterator<KVValue<?>> iterator = row.getFieldValues().iterator();
 		for (int i=0;i<=order;i++){
 			kv = iterator.next();
 		}
