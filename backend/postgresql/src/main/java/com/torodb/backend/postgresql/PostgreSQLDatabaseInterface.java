@@ -45,16 +45,23 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jooq.Configuration;
 import org.jooq.ConnectionProvider;
+import org.jooq.Converter;
 import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.Query;
+import org.jooq.Record1;
 import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
+import org.postgresql.PGConnection;
+import org.postgresql.copy.CopyManager;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.torodb.backend.DatabaseInterface;
 import com.torodb.backend.InternalField;
+import com.torodb.backend.TableRefComparator;
+import com.torodb.backend.converters.TableRefConverter;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.backend.converters.jooq.ValueToJooqDataTypeProvider;
 import com.torodb.backend.index.NamedDbIndex;
@@ -72,6 +79,7 @@ import com.torodb.backend.tables.MetaDocPartTable.DocPartTableFields;
 import com.torodb.backend.tables.MetaFieldTable;
 import com.torodb.core.TableRef;
 import com.torodb.core.d2r.DocPartData;
+import com.torodb.core.d2r.DocPartResult;
 import com.torodb.core.d2r.DocPartResults;
 import com.torodb.core.d2r.DocPartRow;
 import com.torodb.core.exceptions.SystemException;
@@ -144,6 +152,8 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
             TorodbSchema.TORODB_SCHEMA,
             "pg_catalog",
             "information_schema",
+            "pg_toast",
+            "public" 
     };
     {
         Arrays.sort(RESTRICTED_SCHEMA_NAMES);
@@ -185,7 +195,7 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
     private final PostgreSQLMetaCollectionTable metaCollectionTable = new PostgreSQLMetaCollectionTable();
     private final PostgreSQLMetaDocPartTable metaDocPartTable = new PostgreSQLMetaDocPartTable();
     private final PostgreSQLMetaFieldTable metaFieldTable = new PostgreSQLMetaFieldTable();
-
+    
     @Inject
     public PostgreSQLDatabaseInterface() {
         this.valueToJooqDataTypeProvider = PostgreSQLValueToJooqDataTypeProvider.getInstance();
@@ -332,8 +342,9 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
                  .append(" (")
                  .append(MetaCollectionTable.TableFields.DATABASE.name()).append("         varchar     NOT NULL        ,")
                  .append(MetaCollectionTable.TableFields.NAME.name()).append("             varchar     NOT NULL        ,")
+                 .append(MetaCollectionTable.TableFields.IDENTIFIER.name()).append("       varchar     NOT NULL UNIQUE ,")
                  .append("    PRIMARY KEY (").append(MetaCollectionTable.TableFields.DATABASE.name()).append(",")
-                     .append(MetaCollectionTable.TableFields.NAME.name()).append("),")
+                     .append(MetaCollectionTable.TableFields.NAME.name()).append(")")
                  .append(")")
                  .toString();
     	executeStatement(dsl, statement, Context.ddl);
@@ -355,7 +366,7 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
                 .append("    PRIMARY KEY (").append(MetaDocPartTable.TableFields.DATABASE.name()).append(",")
                     .append(MetaDocPartTable.TableFields.COLLECTION.name()).append(",")
                     .append(MetaDocPartTable.TableFields.TABLE_REF.name()).append("),")
-                .append("    UNIQUE KEY (").append(MetaDocPartTable.TableFields.DATABASE.name()).append(",")
+                .append("    UNIQUE (").append(MetaDocPartTable.TableFields.DATABASE.name()).append(",")
                     .append(MetaDocPartTable.TableFields.IDENTIFIER.name()).append(")")
                 .append(")")
                 .toString();
@@ -454,8 +465,62 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
 
     @Nonnull
     @Override
-    public DocPartResults<ResultSet> getCollectionResultSets(@Nonnull DSLContext dsl, @Nonnull MetaDatabase metaDatabase, @Nonnull MetaCollection metaCollection, @Nonnull Collection<Integer> requestedDocs) {
-        throw new UnsupportedOperationException("Not implemented yet");
+    public DocPartResults<ResultSet> getCollectionResultSets(@Nonnull DSLContext dsl, @Nonnull MetaDatabase metaDatabase, @Nonnull MetaCollection metaCollection, 
+            @Nonnull Collection<Integer> dids) throws SQLException {
+        Preconditions.checkArgument(dids.size() > 0, "At least 1 did must be specified");
+        
+        ImmutableList.Builder<DocPartResult<ResultSet>> docPartResultSetsBuilder = ImmutableList.builder();
+        Connection connection = dsl.configuration().connectionProvider().acquire();
+        Iterator<? extends MetaDocPart> metaDocPartIterator = metaCollection
+                .streamContainedMetaDocParts()
+                .sorted(TableRefComparator.MetaDocPart.DESC)
+                .iterator();
+        while (metaDocPartIterator.hasNext()) {
+            MetaDocPart metaDocPart = metaDocPartIterator.next();
+            StringBuilder sb = new StringBuilder()
+                    .append("SELECT ");
+            Collection<InternalField<?>> internalFields = getDocPartTableInternalFields(metaDocPart);
+            for (InternalField<?> internalField : internalFields) {
+                sb.append('"')
+                    .append(internalField.getName())
+                    .append("\",");
+            }
+            metaDocPart.streamFields().forEach(metaField -> {
+                sb.append('"')
+                    .append(metaField.getIdentifier())
+                    .append("\",");
+            });
+            sb.setCharAt(sb.length() - 1, ' ');
+            sb
+                .append("FROM \"")
+                .append(metaDatabase.getIdentifier())
+                .append("\".\"")
+                .append(metaDocPart.getIdentifier())
+                .append("\" WHERE \"")
+                .append(metaDocPartTable.DID.getName())
+                .append("\" IN (");
+            Converter<?, Integer> converter = 
+                    metaDocPartTable.DID.getDataType().getConverter();
+            for (Integer requestedDoc : dids) {
+                sb.append(converter.to(requestedDoc))
+                    .append(',');
+            }
+            sb.setCharAt(sb.length() - 1, ')');
+            if (!metaDocPart.getTableRef().isRoot()) {
+                sb.append(" ORDER BY ");
+                for (InternalField<?> internalField : internalFields) {
+                    sb
+                        .append('"')
+                        .append(internalField.getName())
+                        .append("\",");
+                }
+                sb.deleteCharAt(sb.length() - 1);
+            }
+
+            PreparedStatement preparedStatement = connection.prepareStatement(sb.toString());
+            docPartResultSetsBuilder.add(new DocPartResult<ResultSet>(metaDocPart, preparedStatement.executeQuery()));
+        }
+        return new DocPartResults<ResultSet>(docPartResultSetsBuilder.build());
     }
 
     @Override
@@ -639,11 +704,12 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
             connectionProvider.release(connection);
         }
     }
-
+    
     @Override
     public void insertDocPartData(DSLContext dsl, String schemaName, DocPartData docPartData) {
-        Preconditions.checkArgument(docPartData.rowCount() != 0, "Called insert with 0 documents");
-        
+    	if (docPartData.rowCount()==0){
+    		return;
+    	}
         Connection connection = dsl.configuration().connectionProvider().acquire();
         try {
             int maxCappedSize = 10;
@@ -688,9 +754,7 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
 
     protected void standardInsertPathDocuments(DSLContext dsl, String schemaName, DocPartData docPartData) {
         final int maxBatchSize = 1000;
-        final StringBuilder insertStatementBuilder = new StringBuilder(2048);
         final StringBuilder insertStatementHeaderBuilder = new StringBuilder(2048);
-        int docCounter = 0;
         MetaDocPart metaDocPart = docPartData.getMetaDocPart();
         insertStatementHeaderBuilder.append("INSERT INTO \"")
             .append(schemaName)
@@ -698,17 +762,26 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
             .append(metaDocPart.getIdentifier())
             .append("\" (");
         
+        Collection<InternalField<?>> internalFields = getDocPartTableInternalFields(metaDocPart);
+        for (InternalField<?> internalField : internalFields) {
+            insertStatementHeaderBuilder.append("\"")
+                .append(internalField.getName())
+                .append("\",");
+        }
+        
         Iterator<MetaField> metaFieldIterator = docPartData.orderedMetaFieldIterator();
         while (metaFieldIterator.hasNext()) {
             MetaField metaField = metaFieldIterator.next();
-            insertStatementHeaderBuilder.append("\"")
+            insertStatementHeaderBuilder
+            	.append("\"")
                 .append(metaField.getIdentifier())
-                .append("\",")
-                .append(",");
+                .append("\",");
         }
         insertStatementHeaderBuilder.setCharAt(insertStatementHeaderBuilder.length() - 1, ')');
         insertStatementHeaderBuilder.append(" VALUES ");
         
+        final StringBuilder insertStatementBuilder = new StringBuilder(2048);
+        int docCounter = 0;
         Iterator<DocPartRow> docPartRowIterator = docPartData.iterator();
         while (docPartRowIterator.hasNext()) {
             DocPartRow docPartRow = docPartRowIterator.next();
@@ -717,9 +790,22 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
                 insertStatementBuilder.append(insertStatementHeaderBuilder);
             }
             insertStatementBuilder.append("(");
+            for (InternalField<?> internalField : internalFields) {
+                if (! internalField.isNull(docPartRow)) {
+                    insertStatementBuilder
+                        .append(internalField.getSqlValue(docPartRow))
+                        .append(',');
+                } else {
+                    insertStatementBuilder.append("NULL,");
+                }
+            }
             for (KVValue<?> value : docPartRow) {
-                insertStatementBuilder.append(getSqlValue(value))
-                    .append(",");
+                if (value != null) {
+                    insertStatementBuilder.append(getSqlValue(value))
+                        .append(',');
+                } else {
+                    insertStatementBuilder.append("NULL,");
+                }
             }
             insertStatementBuilder.setCharAt(insertStatementBuilder.length() - 1, ')');
             insertStatementBuilder.append(",");
@@ -747,16 +833,16 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
         final CopyManager copyManager = connection.getCopyAPI();
         final MetaDocPart metaDocPart = docPartData.getMetaDocPart();
         copyStatementBuilder.append("COPY \"")
-            .append(schemaName).append("\".\"").append(metaDocPart.getIdentifier())
-            .append("(");
+            .append(schemaName)
+            .append("\".\"").append(metaDocPart.getIdentifier())
+            .append("\"").append(" (");
         
         Iterator<MetaField> metaFieldIterator = docPartData.orderedMetaFieldIterator();
         while (metaFieldIterator.hasNext()) {
             MetaField metaField = metaFieldIterator.next();
             copyStatementBuilder.append("\"")
                 .append(metaField.getIdentifier())
-                .append("\",")
-                .append(",");
+                .append("\",");
         }
         copyStatementBuilder.setCharAt(copyStatementBuilder.length() - 1, ')');
         copyStatementBuilder.append(" FROM STDIN");
@@ -790,8 +876,12 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
             StringBuilder sb,
             DocPartRow docPartRow) {
         for (KVValue<?> value : docPartRow) {
-            value.accept(PostgreSQLValueToCopyConverter.INSTANCE, sb);
-            sb.append('\t');
+        	if (value!=null){
+        		value.accept(PostgreSQLValueToCopyConverter.INSTANCE, sb);
+        	}else{
+        		sb.append("\\N");
+        	}
+        	sb.append('\t');
         }
         sb.setCharAt(sb.length() - 1, '\n');
     }
@@ -809,13 +899,13 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
         copyManager.copyIn(copyStatement, reader);
     }
     
-    public interface PGConnection extends Connection {
-        public CopyManager getCopyAPI();
-    }
-    
-    public interface CopyManager {
-        public void copyIn(String copyStatement, Reader reader);
-    }
+//    public interface PGConnection extends Connection {
+//        public CopyManager getCopyAPI();
+//    }
+//    
+//    public interface CopyManager {
+//        public void copyIn(String copyStatement, Reader reader);
+//    }
 
     private static class StringBuilderReader extends Reader {
 
@@ -846,7 +936,16 @@ public class PostgreSQLDatabaseInterface implements DatabaseInterface {
 
     @Override
     public int consumeRids(DSLContext dsl, String database, String collection, TableRef tableRef, int count) {
-        throw new UnsupportedOperationException("Not implemented yet");
+        Record1<Integer> lastRid = dsl.select(metaDocPartTable.LAST_RID).from(metaDocPartTable).where(
+                metaDocPartTable.DATABASE.eq(database)
+                .and(metaDocPartTable.COLLECTION.eq(collection))
+                .and(metaDocPartTable.TABLE_REF.eq(TableRefConverter.toStringArray(tableRef))))
+            .fetchOne();
+        dsl.update(metaDocPartTable).set(metaDocPartTable.LAST_RID, metaDocPartTable.LAST_RID.plus(count)).where(
+                metaDocPartTable.DATABASE.eq(database)
+                .and(metaDocPartTable.COLLECTION.eq(collection))
+                .and(metaDocPartTable.TABLE_REF.eq(TableRefConverter.toStringArray(tableRef)))).execute();
+        return lastRid.value1();
     }
 
     @Override
