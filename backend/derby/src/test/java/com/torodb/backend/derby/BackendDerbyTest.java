@@ -20,6 +20,31 @@
 
 package com.torodb.backend.derby;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+import javax.sql.DataSource;
+
+import org.jooq.DSLContext;
+import org.jooq.Field;
+import org.junit.Assert;
+import org.junit.Test;
+
 import com.torodb.backend.AbstractBackendTest;
 import com.torodb.backend.BackendDocumentTestHelper;
 import com.torodb.backend.BackendTestHelper;
@@ -30,26 +55,23 @@ import com.torodb.backend.meta.TorodbMeta;
 import com.torodb.core.d2r.CollectionData;
 import com.torodb.core.d2r.DocPartResults;
 import com.torodb.core.document.ToroDocument;
-import com.torodb.core.transaction.metainf.*;
+import com.torodb.core.transaction.metainf.FieldType;
+import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
+import com.torodb.core.transaction.metainf.ImmutableMetaDatabase;
+import com.torodb.core.transaction.metainf.ImmutableMetaDocPart;
+import com.torodb.core.transaction.metainf.ImmutableMetaField;
+import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
+import com.torodb.core.transaction.metainf.MetaCollection;
+import com.torodb.core.transaction.metainf.MetaDatabase;
+import com.torodb.core.transaction.metainf.MetaDocPart;
+import com.torodb.core.transaction.metainf.MetaField;
+import com.torodb.core.transaction.metainf.MetaSnapshot;
+import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
+import com.torodb.core.transaction.metainf.WrapperMutableMetaSnapshot;
 import com.torodb.kvdocument.values.KVDocument;
 import com.torodb.kvdocument.values.KVInteger;
 import com.torodb.kvdocument.values.KVValue;
 import com.torodb.kvdocument.values.heap.ListKVArray;
-import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import javax.sql.DataSource;
-import org.jooq.DSLContext;
-import org.jooq.Field;
-import org.junit.Assert;
-import org.junit.Test;
-
-import static org.junit.Assert.*;
 
 public class BackendDerbyTest extends AbstractBackendTest {
 	
@@ -512,7 +534,7 @@ public class BackendDerbyTest extends AbstractBackendTest {
 	}
 
     @Override
-    protected SqlInterface createDatabaseInterface() {
+    protected SqlInterface createSqlInterface() {
         return new DerbySqlInterface(dataSource);
     }
 
@@ -522,8 +544,8 @@ public class BackendDerbyTest extends AbstractBackendTest {
     }
     
 	@Override
-	protected void cleanDatabase(SqlInterface databaseInterface, DataSource dataSource) throws SQLException {
-		Derby.cleanDatabase(databaseInterface, dataSource);
+	protected void cleanDatabase(SqlInterface sqlInterface, DataSource dataSource) throws SQLException {
+		Derby.cleanDatabase(sqlInterface, dataSource);
 	}
 
     private FieldType fieldType(Field<?> field) {

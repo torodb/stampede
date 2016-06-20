@@ -14,7 +14,6 @@ import com.torodb.core.d2r.FieldValue;
 import com.torodb.core.d2r.InternalFields;
 import com.torodb.core.d2r.R2DBackendTranslator;
 import com.torodb.core.exceptions.SystemException;
-import com.torodb.core.transaction.RollbackException;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
@@ -24,7 +23,7 @@ import com.torodb.backend.SqlInterface;
 
 public class R2DBackendTranslatorImpl implements R2DBackendTranslator<ResultSet, R2DBackendTranslatorImpl.ResultSetInternalFields> {
 
-    private final SqlInterface databaseInterface;
+    private final SqlInterface sqlInterface;
     private final MetaDatabase metaDatabase;
     private final MetaCollection metaCollection;
     private final Converter<Object, Integer> didConverter;
@@ -33,18 +32,18 @@ public class R2DBackendTranslatorImpl implements R2DBackendTranslator<ResultSet,
     private final Converter<Object, Integer> seqConverter;
 	
 	@SuppressWarnings("unchecked")
-    public R2DBackendTranslatorImpl(SqlInterface databaseInterface, MetaDatabase metaDatabase, MetaCollection metaCollection) {
-        this.databaseInterface = databaseInterface;
+    public R2DBackendTranslatorImpl(SqlInterface sqlInterface, MetaDatabase metaDatabase, MetaCollection metaCollection) {
+        this.sqlInterface = sqlInterface;
         this.metaDatabase = metaDatabase;
         this.metaCollection = metaCollection;
 	    this.didConverter = (Converter<Object, Integer>) 
-	            databaseInterface.getMetaDocPartTable().DID.getConverter();
+	            sqlInterface.getMetaDocPartTable().DID.getConverter();
 	    this.ridConverter = (Converter<Object, Integer>) 
-	            databaseInterface.getMetaDocPartTable().RID.getConverter();
+	            sqlInterface.getMetaDocPartTable().RID.getConverter();
 	    this.pidConverter = (Converter<Object, Integer>) 
-	            databaseInterface.getMetaDocPartTable().PID.getConverter();
+	            sqlInterface.getMetaDocPartTable().PID.getConverter();
 	    this.seqConverter = (Converter<Object, Integer>) 
-	            databaseInterface.getMetaDocPartTable().SEQ.getConverter();
+	            sqlInterface.getMetaDocPartTable().SEQ.getConverter();
 	}
 
     public class ResultSetInternalFields extends InternalFields {
@@ -66,7 +65,7 @@ public class R2DBackendTranslatorImpl implements R2DBackendTranslator<ResultSet,
         Integer pid = null;
         Integer rid = null;
         Integer seq = null;
-        Collection<InternalField<?>> internalFields = databaseInterface.getDocPartTableInternalFields(
+        Collection<InternalField<?>> internalFields = sqlInterface.getDocPartTableInternalFields(
                 metaDocPart);
         int columnIndex = 1;
         for (InternalField<?> internalField : internalFields) {
@@ -81,7 +80,7 @@ public class R2DBackendTranslatorImpl implements R2DBackendTranslator<ResultSet,
                     seq = seqConverter.from(resultSet.getInt(columnIndex));
                 }
             } catch (SQLException sqlException) {
-                databaseInterface.handleRollbackException(Context.fetch, sqlException);
+                sqlInterface.handleRollbackException(Context.fetch, sqlException);
                 
                 throw new SystemException(sqlException);
             }
@@ -115,7 +114,7 @@ public class R2DBackendTranslatorImpl implements R2DBackendTranslator<ResultSet,
         try {
             databaseValue = resultSet.getObject(fieldIndex + internalFields.columnIndex);
         } catch (SQLException sqlException) {
-            databaseInterface.handleRollbackException(Context.fetch, sqlException);
+            sqlInterface.handleRollbackException(Context.fetch, sqlException);
             
             throw new SystemException(sqlException);
         }
@@ -124,7 +123,7 @@ public class R2DBackendTranslatorImpl implements R2DBackendTranslator<ResultSet,
             return FieldValue.NULL_VALUE;
         }
         
-        DataTypeForKV<?> dataType = databaseInterface.getDataType(metaField.getType());
+        DataTypeForKV<?> dataType = sqlInterface.getDataType(metaField.getType());
         Converter<Object, KVValue<?>> converter = (Converter<Object, KVValue<?>>) dataType.getConverter();
         KVValue<?> value = converter.from(databaseValue);
         
@@ -136,7 +135,7 @@ public class R2DBackendTranslatorImpl implements R2DBackendTranslator<ResultSet,
         try {
             return resultSet.next();
         } catch (SQLException sqlException) {
-            databaseInterface.handleRollbackException(Context.fetch, sqlException);
+            sqlInterface.handleRollbackException(Context.fetch, sqlException);
             
             throw new SystemException(sqlException);
         }

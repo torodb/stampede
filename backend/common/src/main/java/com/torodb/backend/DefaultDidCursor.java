@@ -30,12 +30,12 @@ import com.torodb.core.backend.DidCursor;
 import com.torodb.core.exceptions.SystemException;
 
 public class DefaultDidCursor implements DidCursor {
-    public final SqlInterface databaseInterface;
+    public final SqlInterface sqlInterface;
     public final ResultSet resultSet;
 
-    public DefaultDidCursor(@Nonnull SqlInterface databaseInterface, @Nonnull ResultSet resultSet) {
+    public DefaultDidCursor(@Nonnull SqlInterface sqlInterface, @Nonnull ResultSet resultSet) {
         super();
-        this.databaseInterface = databaseInterface;
+        this.sqlInterface = sqlInterface;
         this.resultSet = resultSet;
     }
 
@@ -44,7 +44,7 @@ public class DefaultDidCursor implements DidCursor {
         try {
             return resultSet.next();
         } catch(SQLException ex) {
-            databaseInterface.handleRollbackException(Context.fetch, ex);
+            sqlInterface.handleRollbackException(Context.fetch, ex);
             
             throw new SystemException(ex);
         }
@@ -55,7 +55,7 @@ public class DefaultDidCursor implements DidCursor {
         try {
             return resultSet.getInt(1);
         } catch(SQLException ex) {
-            databaseInterface.handleRollbackException(Context.fetch, ex);
+            sqlInterface.handleRollbackException(Context.fetch, ex);
             
             throw new SystemException(ex);
         }
@@ -66,7 +66,7 @@ public class DefaultDidCursor implements DidCursor {
         try {
             resultSet.close();
         } catch(SQLException ex) {
-            databaseInterface.handleRollbackException(Context.fetch, ex);
+            sqlInterface.handleRollbackException(Context.fetch, ex);
             
             throw new SystemException(ex);
         }

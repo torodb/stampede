@@ -75,14 +75,14 @@ public class Derby {
 	        }, "torod");
 	}
 	
-	public static void cleanDatabase(SqlInterface databaseInterface, DataSource dataSource) throws SQLException{
+	public static void cleanDatabase(SqlInterface sqlInterface, DataSource dataSource) throws SQLException{
 		try (Connection connection = dataSource.getConnection()) {
             DatabaseMetaData metaData = connection.getMetaData();
             ResultSet tables = metaData.getTables("%", "%", "%", null);
             while (tables.next()) {
                 String schemaName = tables.getString("TABLE_SCHEM");
                 String tableName = tables.getString("TABLE_NAME");
-                if (!databaseInterface.isAllowedSchemaIdentifier(schemaName) || schemaName.equals(TorodbSchema.TORODB_SCHEMA)) {
+                if (!sqlInterface.isAllowedSchemaIdentifier(schemaName) || schemaName.equals(TorodbSchema.TORODB_SCHEMA)) {
                     try (PreparedStatement preparedStatement = connection.prepareStatement("DROP TABLE \"" + schemaName + "\".\"" + tableName + "\"")) {
                         preparedStatement.executeUpdate();
                     }
@@ -91,7 +91,7 @@ public class Derby {
             ResultSet schemas = metaData.getSchemas();
             while (schemas.next()) {
                 String schemaName = schemas.getString("TABLE_SCHEM");
-                if (!databaseInterface.isAllowedSchemaIdentifier(schemaName) || schemaName.equals(TorodbSchema.TORODB_SCHEMA)) {
+                if (!sqlInterface.isAllowedSchemaIdentifier(schemaName) || schemaName.equals(TorodbSchema.TORODB_SCHEMA)) {
                     try (PreparedStatement preparedStatement = connection.prepareStatement("DROP SCHEMA \"" + schemaName + "\" RESTRICT")) {
                         preparedStatement.executeUpdate();
                     }

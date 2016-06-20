@@ -37,7 +37,7 @@ public abstract class AbstractBackendTest {
     @Before
     public void setUp() throws Exception {
         dataSource = createDataSource();
-        sqlInterface = createDatabaseInterface();
+        sqlInterface = createSqlInterface();
         schema = new TestSchema(tableRefFactory, sqlInterface);
 
         cleanDatabase(sqlInterface, dataSource);
@@ -45,9 +45,9 @@ public abstract class AbstractBackendTest {
 
     protected abstract DataSource createDataSource();
 
-    protected abstract SqlInterface createDatabaseInterface();
+    protected abstract SqlInterface createSqlInterface();
     
-    protected abstract void cleanDatabase(SqlInterface databaseInterface, DataSource dataSource) throws SQLException;
+    protected abstract void cleanDatabase(SqlInterface sqlInterface, DataSource dataSource) throws SQLException;
     
 
     

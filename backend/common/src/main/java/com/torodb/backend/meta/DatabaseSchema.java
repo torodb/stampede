@@ -18,17 +18,17 @@ public final class DatabaseSchema extends SchemaImpl {
     private static final long serialVersionUID = 577805060;
 
     private final String database;
-    private final SqlInterface databaseInterface;
+    private final SqlInterface sqlInterface;
 
     public DatabaseSchema(
             @Nonnull String database,
             @Nonnull String schemaName,
-            SqlInterface databaseInterface
+            SqlInterface sqlInterface
     ) throws InvalidDatabaseSchemaException {
         super(schemaName);
 
         this.database = database;
-        this.databaseInterface = databaseInterface;
+        this.sqlInterface = sqlInterface;
     }
 
     public String getDatabase() {
@@ -61,7 +61,7 @@ public final class DatabaseSchema extends SchemaImpl {
         return super.equals(obj);
     }
 
-    public SqlInterface getDatabaseInterface() {
-        return databaseInterface;
+    public SqlInterface getSqlInterface() {
+        return sqlInterface;
     }
 }

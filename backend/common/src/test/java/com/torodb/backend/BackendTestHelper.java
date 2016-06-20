@@ -23,11 +23,11 @@ public class BackendTestHelper {
 
 	private DSLContext dsl;
 	private TestSchema schema;
-	private SqlInterface databaseInterface;
+	private SqlInterface sqlInterface;
 	private RidGenerator ridGenerator = new MockRidGenerator();
 	
-	public BackendTestHelper(SqlInterface databaseInterface, DSLContext dsl, TestSchema schema){
-		this.databaseInterface = databaseInterface;
+	public BackendTestHelper(SqlInterface sqlInterface, DSLContext dsl, TestSchema schema){
+		this.sqlInterface = sqlInterface;
 		this.dsl = dsl;
 		this.schema = schema;
 	}
@@ -37,16 +37,16 @@ public class BackendTestHelper {
 		String databaseSchemaName = schema.databaseSchemaName;
 		String collectionName = schema.collectionName;
 		
-		databaseInterface.addMetaDatabase(dsl, databaseName, databaseSchemaName);
-		databaseInterface.createSchema(dsl, schema.databaseSchemaName);
-		databaseInterface.addMetaCollection(dsl, databaseName, collectionName, schema.collectionIdentifierName);
-		databaseInterface.addMetaDocPart(dsl, databaseName, collectionName, schema.rootDocPartTableRef, schema.rootDocPartTableName);
-		databaseInterface.addMetaDocPart(dsl, databaseName, collectionName, schema.subDocPartTableRef, schema.subDocPartTableName);
+		sqlInterface.addMetaDatabase(dsl, databaseName, databaseSchemaName);
+		sqlInterface.createSchema(dsl, schema.databaseSchemaName);
+		sqlInterface.addMetaCollection(dsl, databaseName, collectionName, schema.collectionIdentifierName);
+		sqlInterface.addMetaDocPart(dsl, databaseName, collectionName, schema.rootDocPartTableRef, schema.rootDocPartTableName);
+		sqlInterface.addMetaDocPart(dsl, databaseName, collectionName, schema.subDocPartTableRef, schema.subDocPartTableName);
 	}
 	
 	public void insertMetaFields(TableRef tableRef, Map<String, Field<?>> fields){
 		fields.forEach((key,value)->
-			databaseInterface.addMetaField(dsl, schema.databaseName, schema.collectionName, tableRef, 
+			sqlInterface.addMetaField(dsl, schema.databaseName, schema.collectionName, tableRef, 
                     key, value.getName(), getType(value))
 		);
 	}
@@ -54,7 +54,7 @@ public class BackendTestHelper {
 	public void createDocPartTable(String tableName, Collection<? extends Field<?>> headerFields, Collection<Field<?>> fields){
 		ArrayList<Field<?>> toAdd = new ArrayList<>(headerFields);
 		toAdd.addAll(fields);
-		databaseInterface.createDocPartTable(dsl, schema.databaseSchemaName, tableName, toAdd);
+		sqlInterface.createDocPartTable(dsl, schema.databaseSchemaName, tableName, toAdd);
 	}
 	
 	public void insertDocPartData(ImmutableMetaDocPart metaDocPart, 
@@ -74,7 +74,7 @@ public class BackendTestHelper {
 		        }
 		    }
 		}
-		databaseInterface.insertDocPartData(dsl, schema.databaseSchemaName, docPartData);
+		sqlInterface.insertDocPartData(dsl, schema.databaseSchemaName, docPartData);
 	}
 	
 	private FieldType getType(Field<?> field){

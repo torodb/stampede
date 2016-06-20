@@ -35,15 +35,15 @@ import com.torodb.kvdocument.values.KVDocument;
 
 public class BackendDocumentTestHelper {
 	
-	private SqlInterface databaseInterface;
+	private SqlInterface sqlInterface;
 	private TableRefFactory tableRefFactory;
 	private TestSchema schema;
 	
 	private MockRidGenerator ridGenerator = new MockRidGenerator();
 	private IdentifierFactory identifierFactory = new IdentifierFactoryImpl(new MockIdentifierInterface());
 	
-	public BackendDocumentTestHelper(SqlInterface databaseInterface, TableRefFactory tableRefFactory, TestSchema schema){
-		this.databaseInterface = databaseInterface;
+	public BackendDocumentTestHelper(SqlInterface sqlInterface, TableRefFactory tableRefFactory, TestSchema schema){
+		this.sqlInterface = sqlInterface;
 		this.tableRefFactory = tableRefFactory;
 		this.schema = schema;
 	}
@@ -51,7 +51,7 @@ public class BackendDocumentTestHelper {
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public Collection<ToroDocument> readDocuments(MetaDatabase metaDatabase, MetaCollection metaCollection,
             DocPartResults<ResultSet> docPartResultSets) {
-        R2DTranslator r2dTranslator = new R2DBackedTranslator(new R2DBackendTranslatorImpl(databaseInterface, metaDatabase, metaCollection));
+        R2DTranslator r2dTranslator = new R2DBackedTranslator(new R2DBackendTranslatorImpl(sqlInterface, metaDatabase, metaCollection));
         Collection<ToroDocument> readedDocuments = r2dTranslator.translate(docPartResultSets);
         return readedDocuments;
     }
@@ -65,7 +65,7 @@ public class BackendDocumentTestHelper {
             if (docPartData.getMetaDocPart().getTableRef().isRoot()) {
                 docPartData.forEach(docPartRow ->generatedDids.add(docPartRow.getDid()));
             }
-            databaseInterface.insertDocPartData(dsl, schema.databaseSchemaName, docPartData);
+            sqlInterface.insertDocPartData(dsl, schema.databaseSchemaName, docPartData);
         }
         return generatedDids;
     }
@@ -81,11 +81,11 @@ public class BackendDocumentTestHelper {
         mutableSnapshot.streamMetaDatabases().forEachOrdered(metaDatabase -> {
             metaDatabase.streamMetaCollections().forEachOrdered(metaCollection -> {
                 metaCollection.streamContainedMetaDocParts().sorted(TableRefComparator.MetaDocPart.ASC).forEachOrdered(metaDocPart -> {
-                    List<Field<?>> fields = new ArrayList<>(databaseInterface.getDocPartTableInternalFields(metaDocPart));
+                    List<Field<?>> fields = new ArrayList<>(sqlInterface.getDocPartTableInternalFields(metaDocPart));
                     metaDocPart.streamFields().forEachOrdered(metaField -> {
-                        fields.add(DSL.field(metaField.getIdentifier(), databaseInterface.getDataType(metaField.getType())));
+                        fields.add(DSL.field(metaField.getIdentifier(), sqlInterface.getDataType(metaField.getType())));
                     });
-                    databaseInterface.createDocPartTable(dsl, schema.databaseSchemaName, metaDocPart.getIdentifier(), fields);
+                    sqlInterface.createDocPartTable(dsl, schema.databaseSchemaName, metaDocPart.getIdentifier(), fields);
                 });
             });
         });

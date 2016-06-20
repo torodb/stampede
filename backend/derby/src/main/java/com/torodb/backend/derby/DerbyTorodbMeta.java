@@ -33,6 +33,7 @@ import org.jooq.Meta;
 import org.jooq.Result;
 import org.jooq.Table;
 
+import com.torodb.backend.SqlInterface;
 import com.torodb.backend.exceptions.InvalidDatabaseException;
 import com.torodb.backend.exceptions.InvalidDatabaseSchemaException;
 import com.torodb.backend.meta.TorodbMeta;
@@ -55,28 +56,27 @@ import com.torodb.core.transaction.metainf.ImmutableMetaDocPart;
 import com.torodb.core.transaction.metainf.ImmutableMetaField;
 import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
 import com.torodb.core.transaction.metainf.MetaSnapshot;
-import com.torodb.backend.SqlInterface;
 
 /**
  *
  */
 public class DerbyTorodbMeta implements TorodbMeta {
 
-    private final SqlInterface databaseInterface;
+    private final SqlInterface sqlInterface;
     private final ImmutableMetaSnapshot metaSnapshot;
     private final Map<String,Map<String,Map<TableRef,Integer>>> lastIds;
 
     DerbyTorodbMeta(
             DSLContext dsl,
             TableRefFactory tableRefFactory,
-            SqlInterface databaseInterface)
+            SqlInterface sqlInterface)
     throws SQLException, IOException, InvalidDatabaseException {
-        this.databaseInterface = databaseInterface;
+        this.sqlInterface = sqlInterface;
 
         Meta jooqMeta = dsl.meta();
         Connection conn = dsl.configuration().connectionProvider().acquire();
 
-        TorodbSchema.TORODB.checkOrCreate(dsl, jooqMeta, databaseInterface);
+        TorodbSchema.TORODB.checkOrCreate(dsl, jooqMeta, sqlInterface);
         metaSnapshot = loadMetaSnapshot(dsl, jooqMeta, tableRefFactory);
         lastIds = loadRowIds(dsl, metaSnapshot);
         
@@ -96,15 +96,15 @@ public class DerbyTorodbMeta implements TorodbMeta {
             Meta jooqMeta,
             TableRefFactory tableRefFactory) throws InvalidDatabaseSchemaException {
         
-        MetaDatabaseTable<MetaDatabaseRecord> metaDatabaseTable = databaseInterface.getMetaDatabaseTable();
+        MetaDatabaseTable<MetaDatabaseRecord> metaDatabaseTable = sqlInterface.getMetaDatabaseTable();
         Result<MetaDatabaseRecord> records
                 = dsl.selectFrom(metaDatabaseTable)
                     .fetch();
         
-        MetaCollectionTable<MetaCollectionRecord> collectionTable = databaseInterface.getMetaCollectionTable();
-        MetaDocPartTable<Object, MetaDocPartRecord<Object>> docPartTable = databaseInterface.getMetaDocPartTable();
-        MetaFieldTable<Object, MetaFieldRecord<Object>> fieldTable = databaseInterface.getMetaFieldTable();
-        MetaScalarTable<Object, MetaScalarRecord<Object>> scalarTable = databaseInterface.getMetaScalarTable();
+        MetaCollectionTable<MetaCollectionRecord> collectionTable = sqlInterface.getMetaCollectionTable();
+        MetaDocPartTable<Object, MetaDocPartRecord<Object>> docPartTable = sqlInterface.getMetaDocPartTable();
+        MetaFieldTable<Object, MetaFieldRecord<Object>> fieldTable = sqlInterface.getMetaFieldTable();
+        MetaScalarTable<Object, MetaScalarRecord<Object>> scalarTable = sqlInterface.getMetaScalarTable();
 
         ImmutableMetaSnapshot.Builder metaSnapshotBuilder = new ImmutableMetaSnapshot.Builder();
         for (MetaDatabaseRecord databaseRecord : records) {
@@ -176,11 +176,11 @@ public class DerbyTorodbMeta implements TorodbMeta {
                                     +schemaName+"."+docPartIdentifier);
                         }
                         if (!schemaValidator.existsColumnWithType(docPartIdentifier, field.getIdentifier(), 
-                                databaseInterface.getDataType(field.getType()))) {
+                                sqlInterface.getDataType(field.getType()))) {
                             //TODO: some types can not be recognized using meta data
                             //throw new InvalidDatabaseSchemaException(schemaName, "Field "+field.getCollection()+"."
                             //        +field.getTableRefValue()+"."+field.getName()+" in database "+database+" is associated with field "+field.getIdentifier()
-                            //        +" and type "+databaseInterface.getDataType(field.getType()).getTypeName()
+                            //        +" and type "+sqlInterface.getDataType(field.getType()).getTypeName()
                             //        +" but the field "+schemaName+"."+docPartIdentifier+"."+field.getIdentifier()
                             //        +" has a different type "+getColumnType(docPartIdentifier, field.getIdentifier(), existingTables).getTypeName());
                         }
@@ -211,7 +211,7 @@ public class DerbyTorodbMeta implements TorodbMeta {
                                     +schemaName+"."+docPartIdentifier);
                         }
                         if (!schemaValidator.existsColumnWithType(docPartIdentifier, scalar.getIdentifier(), 
-                                databaseInterface.getDataType(scalar.getType()))) {
+                        		sqlInterface.getDataType(scalar.getType()))) {
                             //TODO: some types can not be recognized using meta data
                             //throw new InvalidDatabaseSchemaException(schemaName, "Field "+field.getCollection()+"."
                             //        +field.getTableRefValue()+"."+field.getName()+" in database "+database+" is associated with field "+field.getIdentifier()
@@ -248,7 +248,7 @@ public class DerbyTorodbMeta implements TorodbMeta {
 	        	
 	        	MetaDocPartRecord<Object> docPart = docParts.get(table.getName());
 	        	for (Field<?> existingField : table.fields()) {
-	        		if (databaseInterface.isAllowedColumnIdentifier(existingField.getName())) {
+	        		if (sqlInterface.isAllowedColumnIdentifier(existingField.getName())) {
 	        			continue;
 	        		}
 	        		if (!DerbySchemaValidator.containsField(existingField, docPart.getCollection(), 
@@ -272,7 +272,7 @@ public class DerbyTorodbMeta implements TorodbMeta {
 				collMap.put(collection.getName(), tableRefMap);
 				collection.streamContainedMetaDocParts().forEach(metaDocPart -> {
 					TableRef tableRef = metaDocPart.getTableRef();
-					Integer lastRowIUsed = databaseInterface.getLastRowIdUsed(dsl, db, collection, metaDocPart);
+					Integer lastRowIUsed = sqlInterface.getLastRowIdUsed(dsl, db, collection, metaDocPart);
 					tableRefMap.put(tableRef, lastRowIUsed);
 				});
 			});
