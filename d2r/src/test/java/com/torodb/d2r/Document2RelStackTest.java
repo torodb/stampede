@@ -34,6 +34,7 @@ import com.torodb.core.transaction.metainf.ImmutableMetaDatabase;
 import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetaField;
+import com.torodb.core.transaction.metainf.MetaScalar;
 import com.torodb.core.transaction.metainf.MetainfoRepository.SnapshotStage;
 import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
 import com.torodb.kvdocument.conversion.json.JacksonJsonParser;
@@ -50,7 +51,6 @@ public class Document2RelStackTest {
     private final TableRefFactory tableRefFactory = new TableRefFactoryImpl();
     
 	//TODO: Change to final implementation code
-	private static final String ARRAY_VALUE_NAME = "v";
 	private static final boolean IS_ARRAY = true;
 	private static final boolean IS_SUBDOCUMENT = false;
 	private static final Integer NO_SEQ = null;
@@ -118,7 +118,7 @@ public class Document2RelStackTest {
 		int fieldPosition = findFieldPosition(rootDocPart, "name", FieldType.STRING);
 		assertTrue(fieldPosition>=0);
 		assertTrue(rootDocPart.iterator().hasNext());
-		assertExistValueInPosition(firstRow, 0, "John");
+		assertExistFieldValueInPosition(firstRow, 0, "John");
 	}
 	
 	@Test
@@ -174,7 +174,7 @@ public class Document2RelStackTest {
 		DocPartData monthsDocPart = findDocPart(collectionData, "months");
 		DocPartRow firstRow = monthsDocPart.iterator().next();
 		
-		assertFieldWithValueExists(monthsDocPart, firstRow, ARRAY_VALUE_NAME, FieldType.INTEGER, 1);
+		assertScalarWithValueExists(monthsDocPart, firstRow, FieldType.INTEGER, 1);
 	}
 	
 	@Test
@@ -275,16 +275,16 @@ public class Document2RelStackTest {
 
 		DocPartData monthsDocPart = findDocPart(collectionData, "months");
 		DocPartRow firstRowMonths = monthsDocPart.iterator().next();
-		assertFieldWithValueExists(monthsDocPart, firstRowMonths, ARRAY_VALUE_NAME, FieldType.CHILD, IS_ARRAY);
+		assertScalarWithValueExists(monthsDocPart, firstRowMonths, FieldType.CHILD, IS_ARRAY);
 
 		DocPartData subArrayDocPart = findDocPart(collectionData, "months.$2");
 		assertNotNull(subArrayDocPart);
 
 		DocPartRow firstRowSubArray = findRowSeq(subArrayDocPart, firstRow.getRid(), 0);
 		assertNotNull(firstRowSubArray);
-		int fieldSubArray = findFieldPosition(subArrayDocPart, ARRAY_VALUE_NAME, FieldType.INTEGER);
+		int fieldSubArray = findScalarPosition(subArrayDocPart, FieldType.INTEGER);
 		assertTrue(fieldSubArray >= 0);
-		assertExistValueInPosition(firstRowSubArray, fieldSubArray, 1);
+		assertExistScalarValueInPosition(firstRowSubArray, fieldSubArray, 1);
 	}
 	
 	@Test
@@ -294,7 +294,7 @@ public class Document2RelStackTest {
 		DocPartData monthsDocPart = findDocPart(collectionData, "months");
 		DocPartRow firstRow = monthsDocPart.iterator().next();
 
-		assertFieldWithValueExists(monthsDocPart, firstRow, ARRAY_VALUE_NAME, FieldType.CHILD, IS_ARRAY);
+		assertScalarWithValueExists(monthsDocPart, firstRow, FieldType.CHILD, IS_ARRAY);
 
 		DocPartData subArrayDocPart = findDocPart(collectionData, "months.$2");
 		assertNotNull(subArrayDocPart);
@@ -380,7 +380,13 @@ public class Document2RelStackTest {
 	private void assertFieldWithValueExists(DocPartData rootDocPart, DocPartRow firstRow, String fieldName, FieldType fieldType, Object fieldValue) {
 		int fieldOrder = findFieldPosition(rootDocPart, fieldName, fieldType);
 		assertTrue(fieldOrder>=0);
-		assertExistValueInPosition(firstRow, fieldOrder, fieldValue);
+		assertExistFieldValueInPosition(firstRow, fieldOrder, fieldValue);
+	}
+	
+	private void assertScalarWithValueExists(DocPartData rootDocPart, DocPartRow firstRow, FieldType fieldType, Object fieldValue) {
+		int scalarOrder = findScalarPosition(rootDocPart, fieldType);
+		assertTrue(scalarOrder>=0);
+		assertExistScalarValueInPosition(firstRow, scalarOrder, fieldValue);
 	}
 
 	private boolean isSamePath(ArrayList<String> pathList, TableRef tableRef){
@@ -427,9 +433,31 @@ public class Document2RelStackTest {
 		return -1;
 	}
 	
-	private boolean assertExistValueInPosition(DocPartRow row,int order, Object value){
+	private int findScalarPosition(DocPartData docPartData, FieldType type) {
+		int idx = 0;
+		Iterator<? extends MetaScalar> iterator = docPartData.orderedMetaScalarIterator();
+		while (iterator.hasNext()) {
+			MetaScalar scalar = iterator.next();
+			if (scalar.getType()==type){
+				return idx; 
+			}
+			idx++;
+		}
+		return -1;
+	}
+
+	
+	private boolean assertExistFieldValueInPosition(DocPartRow row,int order, Object value){
+		return assertExistValueInPosition(row.getFieldValues(), order, value);
+	}
+	
+	private boolean assertExistScalarValueInPosition(DocPartRow row, int order, Object value) {
+		return assertExistValueInPosition(row.getScalarValues(), order, value);
+	}
+	
+	private boolean assertExistValueInPosition(Iterable<KVValue<?>> values, int order, Object value){
+		Iterator<KVValue<?>> iterator = values.iterator();
 		KVValue<?> kv = null;
-		Iterator<KVValue<?>> iterator = row.getFieldValues().iterator();
 		for (int i=0;i<=order;i++){
 			kv = iterator.next();
 		}

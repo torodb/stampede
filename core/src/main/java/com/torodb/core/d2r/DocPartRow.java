@@ -15,4 +15,7 @@ public interface DocPartRow {
 	Integer getSeq();
 
 	Iterable<KVValue<?>> getFieldValues();
+	
+	Iterable<KVValue<?>> getScalarValues();
+	
 }

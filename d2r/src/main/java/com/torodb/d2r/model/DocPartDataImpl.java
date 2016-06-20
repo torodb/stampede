@@ -8,6 +8,7 @@ import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.d2r.DocPartRow;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetaField;
+import com.torodb.core.transaction.metainf.MetaScalar;
 
 public class DocPartDataImpl implements DocPartData{
 
@@ -60,8 +61,13 @@ public class DocPartDataImpl implements DocPartData{
 	}
 
 	@Override
-	public int columnCount() {
+	public int fieldColumnsCount() {
 		return metadata.getOrdererdFields().size();
+	}
+	
+	@Override
+	public int scalarColumnsCount() {
+		return metadata.getOrdererdScalars().size();
 	}
 
 	@Override
@@ -72,6 +78,11 @@ public class DocPartDataImpl implements DocPartData{
 	@Override
 	public Iterator<MetaField> orderedMetaFieldIterator() {
 		return metadata.getOrdererdFields().iterator();
+	}
+
+	@Override
+	public Iterator<MetaScalar> orderedMetaScalarIterator() {
+		return metadata.getOrdererdScalars().iterator();
 	}
 
 }
