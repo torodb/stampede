@@ -1,16 +1,25 @@
 
 package com.torodb.metainfo.cache.mvcc;
 
-import com.google.common.base.Preconditions;
-import com.torodb.core.transaction.metainf.*;
-import com.torodb.core.transaction.metainf.utils.DefaultMergeChecker;
-import com.torodb.core.transaction.metainf.WrapperMutableMetaSnapshot;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
+
 import javax.annotation.concurrent.NotThreadSafe;
+import javax.inject.Inject;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import com.google.common.base.Preconditions;
+import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
+import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot.ImmutableMetaSnapshotFactory;
+import com.torodb.core.transaction.metainf.MetainfoRepository;
+import com.torodb.core.transaction.metainf.MutableMetaDatabase;
+import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
+import com.torodb.core.transaction.metainf.UnmergeableException;
+import com.torodb.core.transaction.metainf.WrapperMutableMetaSnapshot;
+import com.torodb.core.transaction.metainf.utils.DefaultMergeChecker;
 
 /**
  *
@@ -30,6 +39,11 @@ public class MvccMetainfoRepository implements MetainfoRepository {
     public MvccMetainfoRepository(ImmutableMetaSnapshot currentView) {
         this.currentSnapshot = currentView;
         mergeChecker = DefaultMergeChecker::checkMerge;
+    }
+
+    @Inject
+    public MvccMetainfoRepository(ImmutableMetaSnapshotFactory factory) {
+        this(factory.getImmutableMetaSnapshot());
     }
 
     @Override

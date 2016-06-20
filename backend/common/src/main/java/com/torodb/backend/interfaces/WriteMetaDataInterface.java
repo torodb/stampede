@@ -1,5 +1,7 @@
 package com.torodb.backend.interfaces;
 
+import java.sql.Connection;
+
 import javax.annotation.Nonnull;
 
 import org.jooq.DSLContext;
@@ -8,6 +10,8 @@ import com.torodb.core.TableRef;
 import com.torodb.core.transaction.metainf.FieldType;
 
 public interface WriteMetaDataInterface {
+    @Nonnull Connection createSystemConnection();
+
     @Nonnull String createMetaIndexesTableStatement(@Nonnull String schemaName, @Nonnull String tableName, @Nonnull String indexNameColumn, @Nonnull String indexOptionsColumn);
     
     void createMetaDatabaseTable(@Nonnull DSLContext dsl);

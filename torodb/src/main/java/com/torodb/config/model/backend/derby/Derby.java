@@ -30,6 +30,7 @@ import com.torodb.config.model.backend.BackendImplementation;
 import com.torodb.config.model.backend.Password;
 import com.torodb.config.validation.ExistsAnyPassword;
 import com.torodb.config.validation.Host;
+import com.torodb.config.validation.InMemoryOnlyIfEmbedded;
 import com.torodb.config.validation.Port;
 import com.torodb.config.visitor.BackendImplementationVisitor;
 
@@ -46,18 +47,19 @@ import com.torodb.config.visitor.BackendImplementationVisitor;
     "inMemory"
 })
 @ExistsAnyPassword
+@InMemoryOnlyIfEmbedded
 public class Derby implements BackendImplementation, Password {
-	@Description("config.backend.derby.host")
+	@Description("config.backend.postgres.host")
 	@NotNull
 	@Host
 	@JsonProperty(required=true)
 	protected String host = "localhost";
-	@Description("config.backend.derby.port")
+	@Description("config.backend.postgres.port")
 	@NotNull
 	@Port
 	@JsonProperty(required=true)
 	protected Integer port = 5432;
-	@Description("config.backend.derby.database")
+	@Description("config.backend.postgres.database")
 	/**
 	 * @deprecated kept for backward compatibility
 	 */
@@ -65,21 +67,23 @@ public class Derby implements BackendImplementation, Password {
 	@NotNull
 	@JsonProperty(required=true)
 	protected String database = "torod";
-	@Description("config.backend.derby.user")
+	@Description("config.backend.postgres.user")
 	@NotNull
 	@JsonProperty(required=true)
 	protected String user = "torodb";
 	@JsonIgnore
 	protected String password;
-	@Description("config.backend.derby.toropassFile")
+	@Description("config.backend.postgres.toropassFile")
 	protected String toropassFile = System.getProperty("user.home") + "/.toropass";
-	@Description("config.backend.derby.applicationName")
+	@Description("config.backend.postgres.applicationName")
     @NotNull
     @JsonProperty(required=true)
     protected String applicationName = "toro";
+    @Description("config.backend.derby.embedded")
     @NotNull
     @JsonProperty(required=true)
     protected Boolean embedded = true;
+    @Description("config.backend.derby.inMemory")
     @NotNull
     @JsonProperty(required=true)
     protected Boolean inMemory = true;

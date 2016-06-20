@@ -18,26 +18,26 @@
  *     
  */
 
-package com.torodb.config.validation;
+package com.torodb.backend.meta;
 
-import static java.lang.annotation.ElementType.TYPE;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
+import javax.inject.Inject;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
+import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
+import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot.ImmutableMetaSnapshotFactory;
 
-import javax.validation.Constraint;
-import javax.validation.Payload;
-import javax.validation.ReportAsSingleViolation;
+public class TorodbImmutableMetaSnapshotFactory implements ImmutableMetaSnapshotFactory {
 
-@Target({ TYPE })
-@Retention(RUNTIME)
-@Constraint(validatedBy = NotNullElementsValidator.class)
-@ReportAsSingleViolation
-public @interface NotNullElements {
-	String message() default "{com.torodb.config.validation.NotNullElements.message}";
+    private final ImmutableMetaSnapshot immutableMetaSnapshot;
+    
+    @Inject
+    public TorodbImmutableMetaSnapshotFactory(TorodbMeta torodbMeta) {
+        super();
+        this.immutableMetaSnapshot = torodbMeta.getCurrentMetaSnapshot();
+    }
 
-	Class<?>[] groups() default {};
+    @Override
+    public ImmutableMetaSnapshot getImmutableMetaSnapshot() {
+        return immutableMetaSnapshot;
+    }
 
-	Class<? extends Payload>[] payload() default {};
 }

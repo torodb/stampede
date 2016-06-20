@@ -2,7 +2,6 @@
 package com.torodb.d2r.guice;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.torodb.backend.D2RTranslatorImpl;
 import com.torodb.core.d2r.D2RTranslator;
@@ -24,7 +23,7 @@ public class D2RModule extends AbstractModule {
 
         bind(IdentifierFactory.class)
                 .to(IdentifierFactoryImpl.class)
-                .in(Singleton.class);
+                .asEagerSingleton();
     }
 
 }

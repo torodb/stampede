@@ -3,6 +3,8 @@ package com.torodb.backend.rid;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.inject.Inject;
+
 import com.torodb.core.TableRef;
 import com.torodb.core.d2r.RidGenerator;
 
@@ -11,6 +13,7 @@ public class ReservedIdContainer implements RidGenerator {
 	private final Map<String, Map<String, Generator>> generators = new ConcurrentHashMap<>();
 	private final ReservedIdInfoFactory factory;
 
+	@Inject
 	public ReservedIdContainer(ReservedIdInfoFactory factory) {
 		this.factory = factory;
 	}

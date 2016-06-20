@@ -31,11 +31,23 @@ import org.apache.logging.log4j.Logger;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.internal.Console;
+import com.eightkdata.mongowp.server.wp.NettyMongoServer;
 import com.google.common.base.Charsets;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.google.inject.ProvisionException;
+import com.torodb.backend.guice.BackendModule;
 import com.torodb.config.model.Config;
 import com.torodb.config.model.backend.postgres.Postgres;
 import com.torodb.config.model.generic.LogLevel;
 import com.torodb.config.util.ConfigUtils;
+import com.torodb.core.guice.CoreModule;
+import com.torodb.d2r.guice.D2RModule;
+import com.torodb.guice.BackendImplementationModule;
+import com.torodb.metainfo.guice.MetainfModule;
+import com.torodb.mongodb.core.MongodServer;
+import com.torodb.torod.TorodServer;
+import com.torodb.torod.guice.TorodModule;
 import com.torodb.util.Log4jUtils;
 
 /**
@@ -104,7 +116,50 @@ public class Main {
 				postgres.setPassword(readPwd());
 			}
 		}
+		
+		Injector injector = Guice.createInjector(
+                new CoreModule(),
+                new BackendImplementationModule(config),
+                new BackendModule(),
+                new MetainfModule(),
+                new D2RModule(),
+                new TorodModule()
+		);
+
+		try {
+            final DefaultBuildProperties buildProperties = injector.getInstance(DefaultBuildProperties.class);
+            final TorodServer torod = injector.getInstance(TorodServer.class);
+            final MongodServer mongod = injector.getInstance(MongodServer.class);
+			final NettyMongoServer server = injector.getInstance(NettyMongoServer.class);
+
+			Thread serverThread = new Thread() {
+				@Override
+				public void run() {
+					LOGGER.info("Starting ToroDB v" + buildProperties.getFullVersion()
+							+ " listening on port " + config.getProtocol().getMongo().getNet().getPort());
+					Main.run(torod, mongod, server);
+				}
+			};
+			serverThread.start();
+		} catch (ProvisionException pe) {
+            LOGGER.error("Fatal error on initialization", pe);
+			String causeMessage = pe.getMessage();
+			if (causeMessage == null) {
+				causeMessage = pe.getCause().getMessage();
+			}
+			JCommander.getConsole().println(causeMessage);
+			System.exit(1);
+		}
 	}
+
+    private static void run(final TorodServer torod, final MongodServer mongod, final NettyMongoServer server) {
+        torod.startAsync()
+            .awaitRunning();
+        mongod.startAsync()
+            .awaitRunning();
+        server.startAsync()
+            .awaitRunning();
+    }
 
 	private static String readPwd() throws IOException {
 		Console c = JCommander.getConsole();

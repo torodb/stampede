@@ -38,8 +38,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import javax.sql.DataSource;
-
 import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.junit.Assert;
@@ -48,10 +46,10 @@ import org.junit.Test;
 import com.torodb.backend.AbstractBackendTest;
 import com.torodb.backend.BackendDocumentTestHelper;
 import com.torodb.backend.BackendTestHelper;
+import com.torodb.backend.DbBackend;
 import com.torodb.backend.SqlInterface;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.backend.exceptions.InvalidDatabaseException;
-import com.torodb.backend.meta.TorodbMeta;
 import com.torodb.backend.meta.TorodbMeta;
 import com.torodb.core.d2r.CollectionData;
 import com.torodb.core.d2r.DocPartResults;
@@ -221,7 +219,7 @@ public class BackendDerbyTest extends AbstractBackendTest {
             		sqlInterface.getMetaDocPartTable().FIRST_FIELDS,
             		schema.subDocPartFields.values());
 
-            TorodbMeta torodbMeta = new TorodbMeta(dsl, tableRefFactory, sqlInterface);
+            TorodbMeta torodbMeta = new TorodbMeta(tableRefFactory, sqlInterface);
             ImmutableMetaSnapshot snapshot = torodbMeta.getCurrentMetaSnapshot();
             
             ImmutableMetaDatabase metaDatabase = snapshot.getMetaDatabaseByName(schema.databaseName);
@@ -532,17 +530,17 @@ public class BackendDerbyTest extends AbstractBackendTest {
 
     @Override
     protected SqlInterface createDatabaseInterface() {
-        return new DerbySqlInterface(dataSource);
+        return new DerbySqlInterface(dbBackend);
     }
 
     @Override
-    protected DataSource createDataSource()  {
-    	return Derby.getDatasource();
+    protected DbBackend createDbBackend()  {
+    	return Derby.getDbBackend();
     }
     
 	@Override
-	protected void cleanDatabase(SqlInterface databaseInterface, DataSource dataSource) throws SQLException {
-		Derby.cleanDatabase(databaseInterface, dataSource);
+	protected void cleanDatabase(SqlInterface databaseInterface, DbBackend bbBackend) throws SQLException {
+		Derby.cleanDatabase(databaseInterface, bbBackend);
 	}
 
     private FieldType fieldType(Field<?> field) {
@@ -550,7 +548,7 @@ public class BackendDerbyTest extends AbstractBackendTest {
     }
     
     private TorodbMeta buildTorodbMeta(Connection connection) throws SQLException, IOException, InvalidDatabaseException{
-    	return new TorodbMeta(dsl(connection), tableRefFactory, sqlInterface);
+    	return new TorodbMeta(tableRefFactory, sqlInterface);
     }
     
 	private DSLContext dsl(Connection connection){

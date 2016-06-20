@@ -6,77 +6,78 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import javax.sql.DataSource;
-
+import com.torodb.backend.DbBackend;
+import com.torodb.backend.SqlInterface;
 import com.torodb.backend.driver.derby.DerbyDbBackendConfiguration;
 import com.torodb.backend.driver.derby.OfficialDerbyDriver;
 import com.torodb.backend.meta.TorodbSchema;
-import com.torodb.backend.SqlInterface;
 
 public class Derby {
 
-	public static DataSource getDatasource(){
+	public static DbBackend getDbBackend(){
 	       OfficialDerbyDriver derbyDriver = new OfficialDerbyDriver();
-	       return derbyDriver.getConfiguredDataSource(new DerbyDbBackendConfiguration() {
-	            @Override
-	            public String getUsername() {
-	                return null;
-	            }
-	            
-	            @Override
-	            public int getReservedReadPoolSize() {
-	                return 0;
-	            }
-	            
-	            @Override
-	            public String getPassword() {
-	                return null;
-	            }
-	            
-	            @Override
-	            public int getDbPort() {
-	                return 0;
-	            }
-	            
-	            @Override
-	            public String getDbName() {
-	                return "torodb";
-	            }
-	            
-	            @Override
-	            public String getDbHost() {
-	                return null;
-	            }
-	            
-	            @Override
-	            public long getCursorTimeout() {
-	                return 0;
-	            }
-	            
-	            @Override
-	            public long getConnectionPoolTimeout() {
-	                return 0;
-	            }
-	            
-	            @Override
-	            public int getConnectionPoolSize() {
-	                return 0;
-	            }
+	       DerbyDbBackendConfiguration derbyConfiguration = new DerbyDbBackendConfiguration() {
+               @Override
+               public String getUsername() {
+                   return null;
+               }
+               
+               @Override
+               public int getReservedReadPoolSize() {
+                   return 0;
+               }
+               
+               @Override
+               public String getPassword() {
+                   return null;
+               }
+               
+               @Override
+               public int getDbPort() {
+                   return 0;
+               }
+               
+               @Override
+               public String getDbName() {
+                   return "torodb";
+               }
+               
+               @Override
+               public String getDbHost() {
+                   return null;
+               }
+               
+               @Override
+               public long getCursorTimeout() {
+                   return 0;
+               }
+               
+               @Override
+               public long getConnectionPoolTimeout() {
+                   return 0;
+               }
+               
+               @Override
+               public int getConnectionPoolSize() {
+                   return 0;
+               }
 
-	            @Override
-	            public boolean inMemory() {
-	                return false;
-	            }
+               @Override
+               public boolean inMemory() {
+                   return false;
+               }
 
-	            @Override
-	            public boolean embedded() {
-	                return true;
-	            }
-	        }, "torod");
+               @Override
+               public boolean embedded() {
+                   return true;
+               }
+           };
+           
+	       return new DerbyDbBackend(derbyConfiguration, derbyDriver);
 	}
 	
-	public static void cleanDatabase(SqlInterface databaseInterface, DataSource dataSource) throws SQLException{
-		try (Connection connection = dataSource.getConnection()) {
+	public static void cleanDatabase(SqlInterface databaseInterface, DbBackend dbBackend) throws SQLException{
+		try (Connection connection = dbBackend.getSessionDataSource().getConnection()) {
             DatabaseMetaData metaData = connection.getMetaData();
             ResultSet tables = metaData.getTables("%", "%", "%", null);
             while (tables.next()) {

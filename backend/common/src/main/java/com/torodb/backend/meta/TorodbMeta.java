@@ -27,12 +27,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.inject.Inject;
+
 import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.Meta;
 import org.jooq.Result;
 import org.jooq.Table;
 
+import com.torodb.backend.DbBackend;
+import com.torodb.backend.SqlInterface;
 import com.torodb.backend.exceptions.InvalidDatabaseException;
 import com.torodb.backend.exceptions.InvalidDatabaseSchemaException;
 import com.torodb.backend.tables.MetaCollectionTable;
@@ -53,7 +57,6 @@ import com.torodb.core.transaction.metainf.ImmutableMetaDocPart;
 import com.torodb.core.transaction.metainf.ImmutableMetaField;
 import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
 import com.torodb.core.transaction.metainf.MetaSnapshot;
-import com.torodb.backend.SqlInterface;
 
 /**
  *
@@ -64,21 +67,20 @@ public class TorodbMeta {
     private final ImmutableMetaSnapshot metaSnapshot;
     private final Map<String,Map<String,Map<TableRef,Integer>>> lastIds;
 
+    @Inject
     public TorodbMeta(
-            DSLContext dsl,
             TableRefFactory tableRefFactory,
             SqlInterface databaseInterface)
     throws SQLException, IOException, InvalidDatabaseException {
         this.databaseInterface = databaseInterface;
 
+        Connection connection = databaseInterface.createSystemConnection();
+        DSLContext dsl = databaseInterface.createDSLContext(connection);
         Meta jooqMeta = dsl.meta();
-        Connection conn = dsl.configuration().connectionProvider().acquire();
 
         TorodbSchema.TORODB.checkOrCreate(dsl, jooqMeta, databaseInterface);
         metaSnapshot = loadMetaSnapshot(dsl, jooqMeta, tableRefFactory);
         lastIds = loadRowIds(dsl, metaSnapshot);
-        
-        dsl.configuration().connectionProvider().release(conn);
     }
     
     public ImmutableMetaSnapshot getCurrentMetaSnapshot() {
@@ -190,7 +192,7 @@ public class TorodbMeta {
                                 .and(scalarTable.COLLECTION.eq(collectionName))
                                 .and(scalarTable.TABLE_REF.eq(docPart.getTableRef())))
                             .fetch();
-                    
+                    /*
                     for (MetaScalarRecord<?> scalar : scalars) {
                         TableRef fieldTableRef = scalar.getTableRefValue(tableRefFactory);
                         if (!tableRef.equals(fieldTableRef)) {
@@ -219,6 +221,7 @@ public class TorodbMeta {
                         }
                         metaDocPartBuilder.add(metaScalar);
                     }
+                    */
                     metaCollectionBuilder.add(metaDocPartBuilder.build());
                 }
                 metaDatabaseBuilder.add(metaCollectionBuilder.build());

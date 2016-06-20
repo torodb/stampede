@@ -1,10 +1,5 @@
 package com.torodb.d2r;
 
-import com.torodb.core.TableRef;
-import com.torodb.core.backend.IdentifierConstraints;
-import com.torodb.core.d2r.IdentifierFactory;
-import com.torodb.core.exceptions.SystemException;
-import com.torodb.core.transaction.metainf.*;
 import java.text.Normalizer;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -13,6 +8,18 @@ import java.util.Iterator;
 import java.util.Locale;
 import java.util.Random;
 import java.util.regex.Pattern;
+
+import javax.inject.Inject;
+
+import com.torodb.core.TableRef;
+import com.torodb.core.backend.IdentifierConstraints;
+import com.torodb.core.d2r.IdentifierFactory;
+import com.torodb.core.exceptions.SystemException;
+import com.torodb.core.transaction.metainf.FieldType;
+import com.torodb.core.transaction.metainf.MetaCollection;
+import com.torodb.core.transaction.metainf.MetaDatabase;
+import com.torodb.core.transaction.metainf.MetaDocPart;
+import com.torodb.core.transaction.metainf.MetaSnapshot;
 
 public class IdentifierFactoryImpl implements IdentifierFactory {
 
@@ -23,6 +30,7 @@ public class IdentifierFactoryImpl implements IdentifierFactory {
     private final String separatorString;
     private final char arrayDimensionSeparator;
     
+    @Inject
     public IdentifierFactoryImpl(IdentifierConstraints identifierConstraints) {
         this.identifierConstraints = identifierConstraints;
         this.separator = identifierConstraints.getSeparator();
