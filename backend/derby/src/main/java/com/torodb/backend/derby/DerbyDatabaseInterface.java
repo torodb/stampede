@@ -22,9 +22,7 @@ package com.torodb.backend.derby;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.sql.Array;
 import java.sql.Connection;
-import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -36,8 +34,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
@@ -76,7 +72,6 @@ import com.torodb.backend.tables.MetaDocPartTable;
 import com.torodb.backend.tables.MetaDocPartTable.DocPartTableFields;
 import com.torodb.backend.tables.MetaFieldTable;
 import com.torodb.core.TableRef;
-import com.torodb.core.TableRefFactory;
 import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.d2r.DocPartResult;
 import com.torodb.core.d2r.DocPartResults;
@@ -136,7 +131,7 @@ public class DerbyDatabaseInterface implements DatabaseInterface {
     private final DerbyMetaFieldTable metaFieldTable;
 
     @Inject
-    public DerbyDatabaseInterface(TableRefFactory tableRefFactory) {
+    public DerbyDatabaseInterface() {
         this.metaDatabaseTable = new DerbyMetaDatabaseTable();
         this.metaCollectionTable = new DerbyMetaCollectionTable();
         this.metaDocPartTable = new DerbyMetaDocPartTable();

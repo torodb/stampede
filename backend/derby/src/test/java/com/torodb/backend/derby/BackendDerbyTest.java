@@ -533,7 +533,7 @@ public class BackendDerbyTest extends AbstractBackendTest {
 
     @Override
     protected DatabaseInterface createDatabaseInterface() {
-        return new DerbyDatabaseInterface(tableRefFactory);
+        return new DerbyDatabaseInterface();
     }
 
     @Override
