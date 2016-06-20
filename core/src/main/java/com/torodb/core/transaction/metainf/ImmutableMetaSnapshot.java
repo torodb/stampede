@@ -2,6 +2,7 @@
 package com.torodb.core.transaction.metainf;
 
 import com.google.common.base.Preconditions;
+import com.torodb.core.annotations.DoNotChange;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -26,11 +27,11 @@ public class ImmutableMetaSnapshot implements MetaSnapshot {
         this.dbsByIdentifier = Collections.unmodifiableMap(byId);
     }
 
-    public ImmutableMetaSnapshot(Map<String, ImmutableMetaDatabase> dbsByName) {
-        this.dbsByName = Collections.unmodifiableMap(dbsByName);
-        this.dbsByIdentifier = new HashMap<>(dbsByName.size());
-        for (ImmutableMetaDatabase schema : dbsByName.values()) {
-            dbsByIdentifier.put(schema.getIdentifier(), schema);
+    public ImmutableMetaSnapshot(@DoNotChange Map<String, ImmutableMetaDatabase> dbsById) {
+        this.dbsByIdentifier = Collections.unmodifiableMap(dbsById);
+        this.dbsByName = new HashMap<>(dbsById.size());
+        for (ImmutableMetaDatabase schema : dbsById.values()) {
+            dbsByName.put(schema.getName(), schema);
         }
     }
 
@@ -46,7 +47,7 @@ public class ImmutableMetaSnapshot implements MetaSnapshot {
 
     @Override
     public ImmutableMetaDatabase getMetaDatabaseByIdentifier(String schemaDbName) {
-        return dbsByName.get(schemaDbName);
+        return dbsByIdentifier.get(schemaDbName);
     }
 
     public static class Builder {
