@@ -18,26 +18,10 @@
  *     
  */
 
-package com.torodb.config.validation;
+package com.torodb.backend.driver.postgresql;
 
-import static java.lang.annotation.ElementType.TYPE;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
+import com.torodb.backend.DbBackendConfiguration;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
+public interface PostgreSQLDbBackendConfiguration extends DbBackendConfiguration {
 
-import javax.validation.Constraint;
-import javax.validation.Payload;
-import javax.validation.ReportAsSingleViolation;
-
-@Target({ TYPE })
-@Retention(RUNTIME)
-@Constraint(validatedBy = NotNullElementsValidator.class)
-@ReportAsSingleViolation
-public @interface NotNullElements {
-	String message() default "{com.torodb.config.validation.NotNullElements.message}";
-
-	Class<?>[] groups() default {};
-
-	Class<? extends Payload>[] payload() default {};
 }

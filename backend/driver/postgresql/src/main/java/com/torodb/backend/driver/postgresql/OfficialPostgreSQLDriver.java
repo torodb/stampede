@@ -36,7 +36,6 @@ import org.apache.logging.log4j.Logger;
 import org.postgresql.Driver;
 import org.postgresql.ds.PGSimpleDataSource;
 
-import com.torodb.backend.DbBackendConfiguration;
 import com.torodb.core.exceptions.SystemException;
 
 /**
@@ -56,7 +55,7 @@ public class OfficialPostgreSQLDriver implements PostgreSQLDriverProvider {
     }
     
     @Override
-    public DataSource getConfiguredDataSource(DbBackendConfiguration configuration, String poolName) {
+    public DataSource getConfiguredDataSource(PostgreSQLDbBackendConfiguration configuration, String poolName) {
         PGSimpleDataSource dataSource = new PGSimpleDataSource();
 
         dataSource.setUser(configuration.getUsername());

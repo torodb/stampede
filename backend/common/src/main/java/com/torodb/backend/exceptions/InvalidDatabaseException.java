@@ -1,10 +1,12 @@
 
 package com.torodb.backend.exceptions;
 
+import com.torodb.core.exceptions.SystemException;
+
 /**
  *
  */
-public class InvalidDatabaseException extends Exception {
+public class InvalidDatabaseException extends SystemException {
     private static final long serialVersionUID = 1L;
 
     public InvalidDatabaseException() {

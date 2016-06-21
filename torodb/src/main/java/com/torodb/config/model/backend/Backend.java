@@ -32,8 +32,6 @@ import com.google.common.collect.ImmutableList;
 import com.torodb.config.jackson.BackendDeserializer;
 import com.torodb.config.jackson.BackendSerializer;
 import com.torodb.config.model.backend.derby.Derby;
-import com.torodb.config.model.backend.greenplum.Greenplum;
-import com.torodb.config.model.backend.mysql.MySQL;
 import com.torodb.config.model.backend.postgres.Postgres;
 
 @JsonSerialize(using=BackendSerializer.class)
@@ -44,8 +42,7 @@ public class Backend {
             ImmutableList
                 .<Class<? extends BackendImplementation>>builder()
                 .add(Postgres.class)
-                .add(Greenplum.class)
-                .add(MySQL.class)
+                .add(Derby.class)
                 .build();
     
 	@NotNull

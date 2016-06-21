@@ -20,11 +20,12 @@
 
 package com.torodb.backend;
 
+import java.sql.SQLException;
+
+import org.junit.Before;
+
 import com.torodb.core.TableRefFactory;
 import com.torodb.core.impl.TableRefFactoryImpl;
-import java.sql.SQLException;
-import javax.sql.DataSource;
-import org.junit.Before;
 
 public abstract class AbstractBackendTest {
     
@@ -32,22 +33,20 @@ public abstract class AbstractBackendTest {
     
     protected TestSchema schema;
     protected SqlInterface sqlInterface;
-    protected DataSource dataSource;
     
     @Before
     public void setUp() throws Exception {
-        dataSource = createDataSource();
-        sqlInterface = createSqlInterface();
+        sqlInterface = createSqlInterface(createDbBackend());
         schema = new TestSchema(tableRefFactory, sqlInterface);
 
-        cleanDatabase(sqlInterface, dataSource);
+        cleanDatabase(sqlInterface);
     }
 
-    protected abstract DataSource createDataSource();
+    protected abstract DbBackend createDbBackend();
 
-    protected abstract SqlInterface createSqlInterface();
+    protected abstract SqlInterface createSqlInterface(DbBackend dbBackend);
     
-    protected abstract void cleanDatabase(SqlInterface sqlInterface, DataSource dataSource) throws SQLException;
+    protected abstract void cleanDatabase(SqlInterface sqlInterface) throws SQLException;
     
 
     

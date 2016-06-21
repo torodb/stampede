@@ -19,7 +19,6 @@ import java.util.Set;
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import javax.sql.DataSource;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -56,6 +55,7 @@ import org.jooq.impl.DSL;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.torodb.backend.DbBackend;
 import com.torodb.backend.InternalField;
 import com.torodb.backend.SqlInterface;
 import com.torodb.backend.TableRefComparator;
@@ -192,17 +192,17 @@ public class DerbySqlInterface implements SqlInterface {
     private final DerbyMetaDocPartTable metaDocPartTable;
     private final DerbyMetaFieldTable metaFieldTable;
     private final DerbyMetaScalarTable metaScalarTable;
-    private final DataSource ds;
+    private final DbBackend dbBackend;
 
     @Inject
-    public DerbySqlInterface(DataSource ds) {
+    public DerbySqlInterface(DbBackend dbBackend) {
         this.valueToJooqDataTypeProvider = DerbyValueToJooqDataTypeProvider.getInstance();
         this.metaDatabaseTable = DerbyMetaDatabaseTable.DATABASE;
         this.metaCollectionTable = DerbyMetaCollectionTable.COLLECTION;
         this.metaDocPartTable = DerbyMetaDocPartTable.DOC_PART;
         this.metaFieldTable = DerbyMetaFieldTable.FIELD;
         this.metaScalarTable = DerbyMetaScalarTable.SCALAR;
-        this.ds = ds;
+        this.dbBackend = dbBackend;
     }
 
     private void readObject(java.io.ObjectInputStream stream)
@@ -928,12 +928,10 @@ public class DerbySqlInterface implements SqlInterface {
     @Override
     public Connection createReadOnlyConnection() {
         try {
-            Connection connection = ds.getConnection();
-            connection.setReadOnly(true);
-            connection.setAutoCommit(false);
+            Connection connection = dbBackend.getGlobalCursorDatasource().getConnection();
             return connection;
         } catch (SQLException ex) {
-            //TODO: Improve exception thrown
+            handleRollbackException(Context.get_connection, ex);
             throw new SystemException("It was impossible to create a read only connection", ex);
         }
     }
@@ -941,13 +939,22 @@ public class DerbySqlInterface implements SqlInterface {
     @Override
     public Connection createWriteConnection() {
         try {
-            Connection connection = ds.getConnection();
-            connection.setReadOnly(false);
-            connection.setAutoCommit(false);
+            Connection connection = dbBackend.getSessionDataSource().getConnection();
             return connection;
         } catch (SQLException ex) {
-            //TODO: Improve exception thrown
+            handleRollbackException(Context.get_connection, ex);
             throw new SystemException("It was impossible to create a write connection", ex);
+        }
+    }
+
+    @Override
+    public Connection createSystemConnection() {
+        try {
+            Connection connection = dbBackend.getSystemDataSource().getConnection();
+            return connection;
+        } catch (SQLException ex) {
+            handleRollbackException(Context.get_connection, ex);
+            throw new SystemException("It was impossible to create a system connection", ex);
         }
     }
     

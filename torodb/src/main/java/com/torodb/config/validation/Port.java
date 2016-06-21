@@ -20,7 +20,6 @@
 
 package com.torodb.config.validation;
 
-import static java.lang.annotation.ElementType.ANNOTATION_TYPE;
 import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.ElementType.PARAMETER;
@@ -35,7 +34,7 @@ import javax.validation.ReportAsSingleViolation;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 
-@Target({ FIELD, METHOD, PARAMETER, ANNOTATION_TYPE })
+@Target({ FIELD, METHOD, PARAMETER })
 @Retention(RUNTIME)
 @Constraint(validatedBy = { })
 @ReportAsSingleViolation

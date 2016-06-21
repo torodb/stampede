@@ -32,10 +32,10 @@ import javax.validation.ReportAsSingleViolation;
 
 @Target({ TYPE })
 @Retention(RUNTIME)
-@Constraint(validatedBy = NotNullElementsValidator.class)
+@Constraint(validatedBy = { InMemoryOnlyIfEmbeddedValidator.class })
 @ReportAsSingleViolation
-public @interface NotNullElements {
-	String message() default "{com.torodb.config.validation.NotNullElements.message}";
+public @interface InMemoryOnlyIfEmbedded {
+	String message() default "{com.torodb.config.validation.InMemoryOnlyIfEmbedded.message}";
 
 	Class<?>[] groups() default {};
 

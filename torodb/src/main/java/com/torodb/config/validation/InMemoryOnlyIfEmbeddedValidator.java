@@ -20,24 +20,23 @@
 
 package com.torodb.config.validation;
 
-import static java.lang.annotation.ElementType.TYPE;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
+import javax.validation.ConstraintValidator;
+import javax.validation.ConstraintValidatorContext;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
+import com.torodb.config.model.backend.derby.Derby;
 
-import javax.validation.Constraint;
-import javax.validation.Payload;
-import javax.validation.ReportAsSingleViolation;
+public class InMemoryOnlyIfEmbeddedValidator implements ConstraintValidator<InMemoryOnlyIfEmbedded, Derby> {
+	
+	@Override
+	public void initialize(InMemoryOnlyIfEmbedded constraintAnnotation) {
+	}
 
-@Target({ TYPE })
-@Retention(RUNTIME)
-@Constraint(validatedBy = NotNullElementsValidator.class)
-@ReportAsSingleViolation
-public @interface NotNullElements {
-	String message() default "{com.torodb.config.validation.NotNullElements.message}";
+	@Override
+	public boolean isValid(Derby value, ConstraintValidatorContext context) {
+		if (value != null && value.getInMemory() != null && value.getEmbedded() != null) {
+		    return  !value.getInMemory() || value.getEmbedded();
+		}
 
-	Class<?>[] groups() default {};
-
-	Class<? extends Payload>[] payload() default {};
+		return true;
+	}
 }
