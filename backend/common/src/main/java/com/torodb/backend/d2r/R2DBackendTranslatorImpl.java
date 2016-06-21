@@ -7,19 +7,18 @@ import java.util.Collection;
 import org.jooq.Converter;
 
 import com.torodb.backend.InternalField;
+import com.torodb.backend.SqlInterface;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.backend.interfaces.ErrorHandlerInterface.Context;
 import com.torodb.backend.tables.MetaDocPartTable;
-import com.torodb.core.d2r.FieldValue;
 import com.torodb.core.d2r.InternalFields;
 import com.torodb.core.d2r.R2DBackendTranslator;
 import com.torodb.core.exceptions.SystemException;
+import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
-import com.torodb.core.transaction.metainf.MetaField;
 import com.torodb.kvdocument.values.KVValue;
-import com.torodb.backend.SqlInterface;
 
 public class R2DBackendTranslatorImpl implements R2DBackendTranslator<ResultSet, R2DBackendTranslatorImpl.ResultSetInternalFields> {
 
@@ -108,26 +107,25 @@ public class R2DBackendTranslatorImpl implements R2DBackendTranslator<ResultSet,
     }
 
     @Override
-    public FieldValue getFieldValue(MetaField metaField, ResultSet resultSet, ResultSetInternalFields internalFields,
+    public KVValue<?> getValue(FieldType type, ResultSet resultSet, ResultSetInternalFields internalFields,
             int fieldIndex) {
         Object databaseValue;
         try {
             databaseValue = resultSet.getObject(fieldIndex + internalFields.columnIndex);
         } catch (SQLException sqlException) {
             sqlInterface.handleRollbackException(Context.fetch, sqlException);
-            
             throw new SystemException(sqlException);
         }
         
         if (databaseValue == null) {
-            return FieldValue.NULL_VALUE;
+            return null;
         }
         
-        DataTypeForKV<?> dataType = sqlInterface.getDataType(metaField.getType());
+        DataTypeForKV<?> dataType = sqlInterface.getDataType(type);
         Converter<Object, KVValue<?>> converter = (Converter<Object, KVValue<?>>) dataType.getConverter();
         KVValue<?> value = converter.from(databaseValue);
         
-        return new FieldValue(value);
+        return value;
     }
 
     @Override

@@ -26,6 +26,7 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.util.Collection;
 import java.util.Map;
+import java.util.function.Function;
 
 import org.jooq.BetweenAndStep;
 import org.jooq.Binding;
@@ -44,7 +45,6 @@ import org.jooq.SortField;
 import org.jooq.SortOrder;
 import org.jooq.WindowIgnoreNullsStep;
 import org.jooq.WindowPartitionByStep;
-import org.jooq.impl.DSL;
 
 import com.torodb.core.d2r.DocPartRow;
 
@@ -54,11 +54,11 @@ public abstract class InternalField<T> implements Field<T> {
     
     private final Field<T> field;
 
-    public static class DidInternalField<T> extends InternalField<T> {
+    public static class DidInternalField extends InternalField<Integer> {
         
         private static final long serialVersionUID = 1L;
         
-        public DidInternalField(Field<T> field) {
+        public DidInternalField(Field<Integer> field) {
             super(field);
         }
         
@@ -68,16 +68,21 @@ public abstract class InternalField<T> implements Field<T> {
         }
 
         @Override
-        public void setStatementParameter(PreparedStatement preparedStatement, int index, DocPartRow docPartRow) throws SQLException {
+        public void set(PreparedStatement preparedStatement, int index, DocPartRow docPartRow) throws SQLException {
             preparedStatement.setInt(index, docPartRow.getDid());
+        }
+        
+        @Override
+        public <R> R apply(DocPartRow docPartRow, Function<Integer, R> function) {
+            return function.apply(docPartRow.getDid());
         }
     }
 
-    public static class RidInternalField<T> extends InternalField<T> {
+    public static class RidInternalField extends InternalField<Integer> {
         
         private static final long serialVersionUID = 1L;
         
-        public RidInternalField(Field<T> field) {
+        public RidInternalField(Field<Integer> field) {
             super(field);
         }
         
@@ -87,16 +92,21 @@ public abstract class InternalField<T> implements Field<T> {
         }
 
         @Override
-        public void setStatementParameter(PreparedStatement preparedStatement, int index, DocPartRow docPartRow) throws SQLException {
+        public void set(PreparedStatement preparedStatement, int index, DocPartRow docPartRow) throws SQLException {
             preparedStatement.setInt(index, docPartRow.getRid());
+        }
+        
+        @Override
+        public <R> R apply(DocPartRow docPartRow, Function<Integer, R> function) {
+            return function.apply(docPartRow.getRid());
         }
     }
 
-    public static class PidInternalField<T> extends InternalField<T> {
+    public static class PidInternalField extends InternalField<Integer> {
         
         private static final long serialVersionUID = 1L;
         
-        public PidInternalField(Field<T> field) {
+        public PidInternalField(Field<Integer> field) {
             super(field);
         }
         
@@ -106,16 +116,21 @@ public abstract class InternalField<T> implements Field<T> {
         }
 
         @Override
-        public void setStatementParameter(PreparedStatement preparedStatement, int index, DocPartRow docPartRow) throws SQLException {
+        public void set(PreparedStatement preparedStatement, int index, DocPartRow docPartRow) throws SQLException {
             preparedStatement.setInt(index, docPartRow.getPid());
+        }
+        
+        @Override
+        public <R> R apply(DocPartRow docPartRow, Function<Integer, R> function) {
+            return function.apply(docPartRow.getPid());
         }
     }
 
-    public static class SeqInternalField<T> extends InternalField<T> {
+    public static class SeqInternalField extends InternalField<Integer> {
         
         private static final long serialVersionUID = 1L;
         
-        public SeqInternalField(Field<T> field) {
+        public SeqInternalField(Field<Integer> field) {
             super(field);
         }
         
@@ -125,12 +140,17 @@ public abstract class InternalField<T> implements Field<T> {
         }
 
         @Override
-        public void setStatementParameter(PreparedStatement preparedStatement, int index, DocPartRow docPartRow) throws SQLException {
+        public void set(PreparedStatement preparedStatement, int index, DocPartRow docPartRow) throws SQLException {
             if (docPartRow.getSeq() != null) {
                 preparedStatement.setInt(index, docPartRow.getSeq());
             } else {
                 preparedStatement.setNull(index, Types.INTEGER);
             }
+        }
+        
+        @Override
+        public <R> R apply(DocPartRow docPartRow, Function<Integer, R> function) {
+            return function.apply(docPartRow.getSeq());
         }
     }
     
@@ -139,7 +159,9 @@ public abstract class InternalField<T> implements Field<T> {
         this.field = field;
     }
 
-    public abstract void setStatementParameter(PreparedStatement preparedStatement, int index, DocPartRow docPartRow) throws SQLException;
+    public abstract void set(PreparedStatement preparedStatement, int index, DocPartRow docPartRow) throws SQLException;
+    
+    public abstract <R> R apply(DocPartRow docPartRow, Function<T, R> function);
     
     public boolean isDid() {
         return false;

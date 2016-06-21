@@ -21,18 +21,10 @@
 package com.torodb.backend.jobs;
 
 import com.torodb.core.d2r.DocPartData;
-import com.torodb.core.dsl.backend.AddCollectionDDLJob;
-import com.torodb.core.dsl.backend.AddDatabaseDDLJob;
-import com.torodb.core.dsl.backend.AddDocPartDDLJob;
-import com.torodb.core.dsl.backend.AddFieldDDLJob;
-import com.torodb.core.dsl.backend.BackendConnectionJobFactory;
-import com.torodb.core.dsl.backend.InsertBackendJob;
-import com.torodb.core.transaction.metainf.MetaCollection;
-import com.torodb.core.transaction.metainf.MetaDatabase;
-import com.torodb.core.transaction.metainf.MetaDocPart;
-import com.torodb.core.transaction.metainf.MetaField;
+import com.torodb.core.dsl.backend.*;
+import com.torodb.core.transaction.metainf.*;
 
-public class BackendConnectionJobFactoryImpl implements BackendConnectionJobFactory {
+public class BackendConnectionJobFactoryImpl implements BackendTransactionJobFactory {
 
     @Override
     public AddDatabaseDDLJob createAddDatabaseDDLJob(MetaDatabase db) {
@@ -53,6 +45,11 @@ public class BackendConnectionJobFactoryImpl implements BackendConnectionJobFact
     public AddFieldDDLJob createAddFieldDDLJob(MetaDatabase db, MetaCollection col, MetaDocPart docPart,
             MetaField field) {
         return new AddFieldDDLJobImpl(db, col, docPart, field);
+    }
+
+    @Override
+    public AddScalarDDLJob createAddScalarDDLJob(MetaDatabase db, MetaCollection col, MetaDocPart docPart, MetaScalar scalar) {
+        return new AddScalarDDLJobImpl(db, col, docPart, scalar);
     }
 
     @Override

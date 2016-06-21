@@ -41,4 +41,9 @@ public class CollectionMetaInfo {
 		return identifierFactory.toFieldIdentifier(metaDocPart, fieldType, field);
 	}
 	
+	public String getScalarIdentifier(FieldType fieldType){
+		return identifierFactory.toFieldIdentifierForScalar(fieldType);
+	}
+
+	
 }

@@ -19,7 +19,8 @@ public class DocPartRowImpl implements DocPartRow{
 	private final Integer pid;
 	private final Integer seq;
 	
-	private final ArrayList<KVValue<?>> attributes;
+	private final ArrayList<KVValue<?>> fieldAttributes;
+	private final ArrayList<KVValue<?>> scalarAttributes;
 	private final TableMetadata tableMetadata;
 	private final DocPartDataImpl tableInfo;
 
@@ -35,47 +36,65 @@ public class DocPartRowImpl implements DocPartRow{
 			this.pid = parentRow.rid;
 		}
 		this.tableMetadata = tableMetadata;
-		this.attributes = new ArrayList<KVValue<?>>(); //initialize with metadata current size?
+		this.fieldAttributes = new ArrayList<KVValue<?>>(); //initialize with metadata current size?
+		this.scalarAttributes = new ArrayList<KVValue<?>>();
 	}
 
-	//TODO: review name for array values
-	private static final String ARRAY_VALUE_NAME = "v";
 	private static final KVBoolean IS_ARRAY = KVBoolean.TRUE;
 	private static final KVBoolean IS_SUBDOCUMENT = KVBoolean.FALSE;
 	
 	public void addScalar(String key, KVValue<?> value) {
-		Integer position = findPosition(key, FieldType.from(value.getType()));
-		attributes.set(position, value);
+		Integer position = findFieldPosition(key, FieldType.from(value.getType()));
+		fieldAttributes.set(position, value);
 	}
 
 	public void addChild(String key, KVValue<?> value) {
-		Integer position = findPosition(key, FieldType.from(value.getType()));
+		Integer position = findFieldPosition(key, FieldType.from(value.getType()));
 		if (value instanceof KVArray){
-			attributes.set(position, IS_ARRAY);
+			fieldAttributes.set(position, IS_ARRAY);
 		}else if (value instanceof KVDocument){
-			attributes.set(position, IS_SUBDOCUMENT);
+			fieldAttributes.set(position, IS_SUBDOCUMENT);
 		}else {
 			throw new IllegalArgumentException("Child value is not KVArray or KVDocument");
 		}
 	}
 	
 	public void addArrayItem(KVValue<?> value) {
-		addScalar(ARRAY_VALUE_NAME, value);
+		Integer position = findScalarPosition(FieldType.from(value.getType()));
+		scalarAttributes.set(position, value);
 	}
 	
 	public void addChildToArray(KVValue<?> value){
-		addChild(ARRAY_VALUE_NAME, value);
+		Integer position = findScalarPosition(FieldType.from(value.getType()));
+		if (value instanceof KVArray){
+			scalarAttributes.set(position, IS_ARRAY);
+		}else if (value instanceof KVDocument){
+			scalarAttributes.set(position, IS_SUBDOCUMENT);
+		}else {
+			throw new IllegalArgumentException("Child value is not KVArray or KVDocument");
+		}
 	}
 	
-	private Integer findPosition(String key, FieldType fieldType) {
-		Integer position = tableMetadata.findPosition(key, fieldType);
-		if (position>=attributes.size()){
-			for(int i=attributes.size();i<=position;i++){
-				attributes.add(null);
+	private Integer findFieldPosition(String key, FieldType fieldType) {
+		Integer position = tableMetadata.findFieldPosition(key, fieldType);
+		if (position>=fieldAttributes.size()){
+			for(int i=fieldAttributes.size();i<=position;i++){
+				fieldAttributes.add(null);
 			}
 		}
 		return position;
 	}
+	
+	private Integer findScalarPosition(FieldType fieldType) {
+		Integer position = tableMetadata.findScalarPosition(fieldType);
+		if (position>=scalarAttributes.size()){
+			for(int i=scalarAttributes.size();i<=position;i++){
+				scalarAttributes.add(null);
+			}
+		}
+		return position;
+	}
+
 
 	@Override
 	public DocPartData getDocPartData(){
@@ -103,16 +122,27 @@ public class DocPartRowImpl implements DocPartRow{
 	}
 
 	@Override
-	public Iterator<KVValue<?>> iterator() {
-		int columns = this.getDocPartData().columnCount();
-		int attrs = this.attributes.size();
+	public Iterable<KVValue<?>> getFieldValues() {
+		int columns = this.getDocPartData().fieldColumnsCount();
+		int attrs = this.fieldAttributes.size();
 		if (columns==attrs){
-			return attributes.iterator();
+			return fieldAttributes;
 		}
 		NumberNullIterator<KVValue<?>> itTail=new NumberNullIterator<>(columns-attrs);
-		return Iterators.concat(attributes.iterator(),itTail);
+		return () -> Iterators.concat(fieldAttributes.iterator(),itTail);
 	}
-
+	
+	@Override
+	public Iterable<KVValue<?>> getScalarValues() {
+		int columns = this.getDocPartData().scalarColumnsCount();
+		int attrs = this.scalarAttributes.size();
+		if (columns==attrs){
+			return scalarAttributes;
+		}
+		NumberNullIterator<KVValue<?>> itTail=new NumberNullIterator<>(columns-attrs);
+		return () -> Iterators.concat(scalarAttributes.iterator(),itTail);
+	}
+	
 	private static class NumberNullIterator<R> implements Iterator<R>{
 
 		private int n;
@@ -135,4 +165,5 @@ public class DocPartRowImpl implements DocPartRow{
 		}
 		
 	}
+
 }

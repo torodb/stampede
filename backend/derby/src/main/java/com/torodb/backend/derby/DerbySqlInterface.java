@@ -1,3 +1,23 @@
+/*
+ *     This file is part of ToroDB.
+ *
+ *     ToroDB is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU Affero General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     (at your option) any later version.
+ *
+ *     ToroDB is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU Affero General Public License for more details.
+ *
+ *     You should have received a copy of the GNU Affero General Public License
+ *     along with ToroDB. If not, see <http://www.gnu.org/licenses/>.
+ *
+ *     Copyright (c) 2014, 8Kdata Technology
+ *     
+ */
+
 package com.torodb.backend.derby;
 
 import java.io.IOException;
@@ -32,26 +52,6 @@ import org.jooq.Record1;
 import org.jooq.SQLDialect;
 import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
-
-/*
- *     This file is part of ToroDB.
- *
- *     ToroDB is free software: you can redistribute it and/or modify
- *     it under the terms of the GNU Affero General Public License as published by
- *     the Free Software Foundation, either version 3 of the License, or
- *     (at your option) any later version.
- *
- *     ToroDB is distributed in the hope that it will be useful,
- *     but WITHOUT ANY WARRANTY; without even the implied warranty of
- *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *     GNU Affero General Public License for more details.
- *
- *     You should have received a copy of the GNU Affero General Public License
- *     along with ToroDB. If not, see <http://www.gnu.org/licenses/>.
- *
- *     Copyright (c) 2014, 8Kdata Technology
- *     
- */
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -93,6 +93,7 @@ import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetaField;
+import com.torodb.core.transaction.metainf.MetaScalar;
 import com.torodb.kvdocument.values.KVValue;
 
 /**
@@ -497,6 +498,11 @@ public class DerbySqlInterface implements SqlInterface {
                     .append(internalField.getName())
                     .append("\",");
             }
+            metaDocPart.streamScalars().forEach(metaScalar -> {
+                sb.append('"')
+                    .append(metaScalar.getIdentifier())
+                    .append("\",");
+            });
             metaDocPart.streamFields().forEach(metaField -> {
                 sb.append('"')
                     .append(metaField.getIdentifier())
@@ -619,7 +625,8 @@ public class DerbySqlInterface implements SqlInterface {
         try {
             MetaDocPart metaDocPart = docPartData.getMetaDocPart();
             Iterator<MetaField> metaFieldIterator = docPartData.orderedMetaFieldIterator();
-            standardInsertDocPartData(dsl, schemaName, metaDocPart, metaFieldIterator, docPartRowIterator);
+            Iterator<MetaScalar> metaScalarIterator = docPartData.orderedMetaScalarIterator();
+            standardInsertDocPartData(dsl, schemaName, metaDocPart, metaFieldIterator, metaScalarIterator, docPartRowIterator);
         } catch (DataAccessException ex) {
             handleRollbackException(Context.insert, ex);
             throw new SystemException(ex);
@@ -627,7 +634,8 @@ public class DerbySqlInterface implements SqlInterface {
     }
 
     protected void standardInsertDocPartData(DSLContext dsl, String schemaName, MetaDocPart metaDocPart, 
-            Iterator<MetaField> metaFieldIterator, Iterator<DocPartRow> docPartRowIterator) {
+            Iterator<MetaField> metaFieldIterator, Iterator<MetaScalar> metaScalarIterator, 
+            Iterator<DocPartRow> docPartRowIterator) {
         final int maxBatchSize = 1000;
         final StringBuilder insertStatementBuilder = new StringBuilder(2048);
         final StringBuilder insertStatementValuesBuilder = new StringBuilder(1024);
@@ -646,6 +654,14 @@ public class DerbySqlInterface implements SqlInterface {
             insertStatementValuesBuilder.append("?,");
         }
         List<FieldType> fieldTypeList = new ArrayList<>();
+        while (metaScalarIterator.hasNext()) {
+            MetaScalar metaScalar = metaScalarIterator.next();
+            insertStatementBuilder.append("\"")
+                .append(metaScalar.getIdentifier())
+                .append("\",");
+            insertStatementValuesBuilder.append("?,");
+            fieldTypeList.add(metaScalar.getType());
+        }
         while (metaFieldIterator.hasNext()) {
             MetaField metaField = metaFieldIterator.next();
             insertStatementBuilder.append("\"")
@@ -667,11 +683,25 @@ public class DerbySqlInterface implements SqlInterface {
                     docCounter++;
                     int parameterIndex = 1;
                     for (InternalField<?> internalField : internalFields) {
-                        internalField.setStatementParameter(preparedStatement, parameterIndex, docPartRow);
+                        internalField.set(preparedStatement, parameterIndex, docPartRow);
                         parameterIndex++;
                     }
                     Iterator<FieldType> fieldTypeIterator = fieldTypeList.iterator();
-                    for (KVValue<?> value : docPartRow) {
+                    for (KVValue<?> value : docPartRow.getScalarValues()) {
+                        DataTypeForKV dataType = valueToJooqDataTypeProvider
+                                .getDataType(fieldTypeIterator.next());
+                        KVValueConverter valueConverter = dataType
+                                .getKVValueConverter();
+                        SqlBinding sqlBinding = valueConverter
+                                .getSqlBinding();
+                        if (value != null) {
+                            sqlBinding.set(preparedStatement, parameterIndex, valueConverter.to(value));
+                        } else {
+                            preparedStatement.setNull(parameterIndex, dataType.getSQLType());
+                        }
+                        parameterIndex++;
+                    }
+                    for (KVValue<?> value : docPartRow.getFieldValues()) {
                         DataTypeForKV dataType = valueToJooqDataTypeProvider
                                 .getDataType(fieldTypeIterator.next());
                         KVValueConverter valueConverter = dataType
@@ -840,6 +870,15 @@ public class DerbySqlInterface implements SqlInterface {
 		Query query = dsl.insertInto(metaFieldTable)
 				.set(metaFieldTable.newRecord()
 				.values(databaseName, collectionName, tableRef, fieldName, type, fieldIdentifier));
+		executeQuery(query, Context.ddl);
+	}
+	
+	@Override
+	public void addMetaScalar(DSLContext dsl, String databaseName, String collectionName, TableRef tableRef,
+			String fieldIdentifier, FieldType type) {
+		Query query = dsl.insertInto(metaScalarTable)
+				.set(metaScalarTable.newRecord()
+				.values(databaseName, collectionName, tableRef, type, fieldIdentifier));
 		executeQuery(query, Context.ddl);
 	}
 	

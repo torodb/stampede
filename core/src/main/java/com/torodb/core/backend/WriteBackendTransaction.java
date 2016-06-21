@@ -22,10 +22,7 @@ package com.torodb.core.backend;
 import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.transaction.RollbackException;
-import com.torodb.core.transaction.metainf.MetaCollection;
-import com.torodb.core.transaction.metainf.MetaDatabase;
-import com.torodb.core.transaction.metainf.MetaDocPart;
-import com.torodb.core.transaction.metainf.MetaField;
+import com.torodb.core.transaction.metainf.*;
 
 public interface WriteBackendTransaction extends BackendTransaction {
 
@@ -71,10 +68,19 @@ public interface WriteBackendTransaction extends BackendTransaction {
      *                 before
      * @param docPart  the docPart where the field will be added. It must have been added before
      * @param newField the field to add
-     * @throws BackendException
      * @throws RollbackException
      */
     public void addField(MetaDatabase db, MetaCollection col, MetaDocPart docPart, MetaField newField) throws RollbackException;
+
+    /**
+     * @param db        the database that contains the given collection. It must have been added
+     *                  before
+     * @param col       the collection that contains the given docPart. It must have been added
+     *                  before
+     * @param docPart   the docPart where the scalar will be added. It must have been added before
+     * @param newScalar the scalar to add
+     */
+    public void addScalar(MetaDatabase db, MetaCollection col, MetaDocPart docPart, MetaScalar newScalar);
 
     /**
      * Reserves a given number of rids on the given doc part.

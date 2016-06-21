@@ -21,10 +21,12 @@
 package com.torodb.core.d2r;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import com.torodb.core.transaction.RollbackException;
+import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.MetaDocPart;
-import com.torodb.core.transaction.metainf.MetaField;
+import com.torodb.kvdocument.values.KVValue;
 
 public interface R2DBackendTranslator<Result, BackendInternalFields extends InternalFields> {
     /**
@@ -48,15 +50,15 @@ public interface R2DBackendTranslator<Result, BackendInternalFields extends Inte
 
     /**
      * Read the value of a metaField from result.
-     * @param metaField
+     * @param type
      * @param result
      * @param internalFields
      * @param fieldIndex
-     * @return The value readed from result or FieldValue.NULL_VALUE if the value read is null.
+     * @return The value readed from result or null if the value read is null.
      * @throws BackendException
      * @throws RollbackException
      */
-    @Nonnull FieldValue getFieldValue(@Nonnull MetaField metaField, @Nonnull Result result, @Nonnull BackendInternalFields internalFields,
+    @Nullable KVValue<?> getValue(@Nonnull FieldType type, @Nonnull Result result, @Nonnull BackendInternalFields internalFields,
             int fieldIndex);
 
     /**
