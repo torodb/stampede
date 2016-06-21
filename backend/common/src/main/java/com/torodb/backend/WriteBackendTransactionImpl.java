@@ -27,12 +27,7 @@ import com.torodb.core.backend.WriteBackendTransaction;
 import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.transaction.RollbackException;
-import com.torodb.core.transaction.metainf.MetaCollection;
-import com.torodb.core.transaction.metainf.MetaDatabase;
-import com.torodb.core.transaction.metainf.MetaDocPart;
-import com.torodb.core.transaction.metainf.MetaField;
-import com.torodb.core.transaction.metainf.MetaScalar;
-
+import com.torodb.core.transaction.metainf.*;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
@@ -143,6 +138,7 @@ public class WriteBackendTransactionImpl implements WriteBackendTransaction {
         if (!closed) {
             closed = true;
             try {
+//                connection.rollback();
                 connection.close();
             } catch (SQLException ex) {
                 sqlInterface.handleRollbackException(Context.close, ex);

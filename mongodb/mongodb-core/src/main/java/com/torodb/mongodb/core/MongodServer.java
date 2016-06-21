@@ -2,13 +2,15 @@
 package com.torodb.mongodb.core;
 
 import com.eightkdata.mongowp.server.api.CommandsExecutor;
+import com.google.common.base.Preconditions;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.RemovalNotification;
+import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.torodb.mongodb.mongowp.ConnectionCommandsExecutor;
-import com.torodb.mongodb.mongowp.ReadOnlyTransactionCommandsExecutor;
-import com.torodb.mongodb.mongowp.WriteTransactionCommandsExecutor;
+import com.torodb.mongodb.commands.ConnectionCommandsExecutor;
+import com.torodb.mongodb.commands.ReadOnlyTransactionCommandsExecutor;
+import com.torodb.mongodb.commands.WriteTransactionCommandsExecutor;
 import com.torodb.torod.TorodServer;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -82,4 +84,5 @@ public class MongodServer extends AbstractIdleService {
             value.close();
         }
     }
+
 }

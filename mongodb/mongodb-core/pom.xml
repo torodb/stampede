@@ -45,5 +45,9 @@
             <artifactId>mongowp-converter</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.8kdata.mongowp.server</groupId>
+            <artifactId>wp-layer</artifactId>
+        </dependency>
     </dependencies>
 </project>

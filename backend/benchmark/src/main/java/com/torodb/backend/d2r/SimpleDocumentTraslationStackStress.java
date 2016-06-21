@@ -1,22 +1,21 @@
 package com.torodb.backend.d2r;
 
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
-
 import com.google.common.base.Stopwatch;
 import com.torodb.backend.util.InMemoryRidGenerator;
 import com.torodb.backend.util.SimpleDocumentFeed;
-
-import static com.torodb.backend.util.MetaInfoOperation.executeMetaOperation;
-import static com.torodb.backend.util.TestDataFactory.*;
-
 import com.torodb.core.d2r.D2RTranslator;
 import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.impl.TableRefFactoryImpl;
+import com.torodb.core.transaction.metainf.MutableMetaDatabase;
 import com.torodb.d2r.D2RTranslatorStack;
 import com.torodb.d2r.IdentifierFactoryImpl;
 import com.torodb.d2r.MockIdentifierInterface;
 import com.torodb.metainfo.cache.mvcc.MvccMetainfoRepository;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+
+import static com.torodb.backend.util.MetaInfoOperation.executeMetaOperation;
+import static com.torodb.backend.util.TestDataFactory.*;
 
 public class SimpleDocumentTraslationStackStress {
 
@@ -31,7 +30,10 @@ public class SimpleDocumentTraslationStackStress {
 			timer.start();
 			
 			executeMetaOperation(mvccMetainfoRepository, (mutableSnapshot)->{
-				D2RTranslator translator = new D2RTranslatorStack(new TableRefFactoryImpl(), new IdentifierFactoryImpl(new MockIdentifierInterface()), new InMemoryRidGenerator(), mutableSnapshot, DB1, COLL1);
+                MutableMetaDatabase db = mutableSnapshot.getMetaDatabaseByName(DB1);
+				D2RTranslator translator = new D2RTranslatorStack(
+                        new TableRefFactoryImpl(),
+                        new IdentifierFactoryImpl(new MockIdentifierInterface()), new InMemoryRidGenerator(), db, db.getMetaCollectionByName(COLL1));
 				translator.translate(doc);
 				for (DocPartData table : translator.getCollectionDataAccumulator()) {
 					cont.addAndGet(table.rowCount());

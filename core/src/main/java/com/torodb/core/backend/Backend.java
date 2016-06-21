@@ -20,9 +20,11 @@
 
 package com.torodb.core.backend;
 
+import com.google.common.util.concurrent.Service;
+
 /**
  *
  */
-public interface Backend {
+public interface Backend extends Service {
     public BackendConnection openConnection();
 }
