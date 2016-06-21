@@ -20,14 +20,22 @@
 
 package com.torodb.core.dsl.backend;
 
-import com.torodb.core.backend.WriteBackendTransaction;
-import com.torodb.core.exceptions.user.UserException;
+import com.torodb.core.transaction.metainf.MetaCollection;
+import com.torodb.core.transaction.metainf.MetaDatabase;
+import com.torodb.core.transaction.metainf.MetaDocPart;
+import com.torodb.core.transaction.metainf.MetaScalar;
 
 /**
  *
  */
-public interface BackendConnectionJob {
+public interface AddScalarDDLJob extends DDLBackendTransactionJob {
 
-    public void execute(WriteBackendTransaction connection) throws UserException;
+    public MetaDatabase getDatabase();
+
+    public MetaCollection getCollection();
+
+    public MetaDocPart getDocPart();
+
+    public MetaScalar getScalar();
 
 }

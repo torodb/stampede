@@ -7,6 +7,7 @@ import com.torodb.core.backend.WriteBackendTransaction;
 import com.torodb.core.d2r.CollectionData;
 import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.dsl.backend.*;
+import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.impl.TableRefFactoryImpl;
 import com.torodb.core.transaction.RollbackException;
 import com.torodb.core.transaction.metainf.*;
@@ -29,7 +30,7 @@ import static org.mockito.Mockito.*;
 public class DefaultToBackendFunctionTest {
 
     private final TableRefFactory tableRefFactory = new TableRefFactoryImpl();
-    private BackendConnectionJobFactory factory;
+    private BackendTransactionJobFactory factory;
     private ImmutableMetaCollection collection = new ImmutableMetaCollection("aColName", "aColId", Collections.emptyList());
     private MetaDatabase database = new ImmutableMetaDatabase("aDb", "aId", Collections.singletonList(collection));
     private DefaultToBackendFunction fun;
@@ -72,12 +73,25 @@ public class DefaultToBackendFunctionTest {
                 .willReturn(
                        withNewColumnsDocPart
                 );
+
+        BatchMetaDocPart withNewScalarDocPart = mock(BatchMetaDocPart.class, settings);
+        doReturn(false)
+                .when(withNewScalarDocPart).isCreatedOnCurrentBatch();
+        doReturn(Lists.newArrayList(new ImmutableMetaScalar("newScalarId", FieldType.INTEGER)))
+                .when(withNewScalarDocPart).getOnBatchModifiedMetaScalars();
+        DocPartData withNewScalar = mock(DocPartData.class);
+        given(withNewData.getMetaDocPart())
+                .willReturn(
+                       withNewScalarDocPart
+                );
         
         BatchMetaDocPart allNewDocPart = mock(BatchMetaDocPart.class, settings);
         doReturn(true)
                 .when(allNewDocPart).isCreatedOnCurrentBatch();
         doReturn(Lists.newArrayList(Lists.newArrayList(new ImmutableMetaField("newFieldName", "newFieldId", FieldType.BOOLEAN))).stream())
                 .when(allNewDocPart).streamFields();
+        doReturn(Lists.newArrayList(new ImmutableMetaScalar("newScalarId", FieldType.BOOLEAN)))
+                .when(allNewDocPart).getOnBatchModifiedMetaScalars();
         DocPartData allNewData = mock(DocPartData.class);
         given(allNewData.getMetaDocPart())
                 .willReturn(
@@ -90,17 +104,16 @@ public class DefaultToBackendFunctionTest {
                         .iterator()
                 );
 
-
         //when
-        Iterable<BackendConnectionJob> result = fun.apply(collectionData);
-        ArrayList<BackendConnectionJob> resultList = Lists.newArrayList(result);
+        Iterable<BackendTransactionJob> result = fun.apply(collectionData);
+        ArrayList<BackendTransactionJob> resultList = Lists.newArrayList(result);
 
         //then
         assertEquals("Expected 6 jobs to do, but " + resultList.size() +" were recived", 6, resultList.size());
 
         {
             //jobs created from allCreatedDocPart
-            Optional<BackendConnectionJob> insertJob = resultList.stream()
+            Optional<BackendTransactionJob> insertJob = resultList.stream()
                     .filter((job) -> job instanceof InsertBackendJob
                             && ((InsertBackendJob) job).getDataToInsert()
                                     .equals(allCreatedData))
@@ -109,13 +122,13 @@ public class DefaultToBackendFunctionTest {
         }
         {
             //jobs created from withNewColumnsDocPart
-            Optional<BackendConnectionJob> insertJob = resultList.stream()
+            Optional<BackendTransactionJob> insertJob = resultList.stream()
                     .filter((job) -> job instanceof InsertBackendJob
                             && ((InsertBackendJob) job).getDataToInsert()
                                     .equals(withNewData))
                     .findAny();
             assertTrue(insertJob.isPresent());
-            Optional<BackendConnectionJob> addFieldJob = resultList.stream()
+            Optional<BackendTransactionJob> addFieldJob = resultList.stream()
                     .filter((job) -> {
                         if (!(job instanceof AddFieldDDLJob)) {
                             return false;
@@ -139,14 +152,45 @@ public class DefaultToBackendFunctionTest {
         }
 
         {
+            //jobs created from withNewScalarDocPart
+            Optional<BackendTransactionJob> insertJob = resultList.stream()
+                    .filter((job) -> job instanceof InsertBackendJob
+                            && ((InsertBackendJob) job).getDataToInsert()
+                                    .equals(withNewScalar))
+                    .findAny();
+            assertTrue(insertJob.isPresent());
+            Optional<BackendTransactionJob> addScalarJob = resultList.stream()
+                    .filter((job) -> {
+                        if (!(job instanceof AddScalarDDLJob)) {
+                            return false;
+                        }
+                        AddScalarDDLJob castedJob = (AddScalarDDLJob) job;
+                        return castedJob.getDocPart().equals(withNewScalar)
+                                && castedJob.getScalar().getIdentifier().equals("newScalarId")
+                                && castedJob.getScalar().getType().equals(FieldType.INTEGER);
+                    })
+                    .findAny();
+            assertTrue(addScalarJob.isPresent());
+
+            int addScalarIndex = resultList.indexOf(addScalarJob.get());
+            int insertIndex = resultList.indexOf(insertJob.get());
+            assert addScalarIndex >= 0;
+            assert insertIndex >= 0;
+            assertTrue("For a given doc part, all related add scalar jobs must be executed before insert "
+                    + "jobs, but in this case the add scalr job has index " + addScalarIndex
+                    + " and the insert job has index " + insertIndex,
+                    addScalarIndex < insertIndex);
+        }
+
+        {
             //jobs created from allNewDocPart
-            Optional<BackendConnectionJob> insertJob = resultList.stream()
+            Optional<BackendTransactionJob> insertJob = resultList.stream()
                     .filter((job) -> job instanceof InsertBackendJob
                             && ((InsertBackendJob) job).getDataToInsert()
                                     .equals(allNewData))
                     .findAny();
             assertTrue(insertJob.isPresent());
-            Optional<BackendConnectionJob> addFieldJob = resultList.stream()
+            Optional<BackendTransactionJob> addFieldJob = resultList.stream()
                     .filter((job) -> {
                         if (!(job instanceof AddFieldDDLJob)) {
                             return false;
@@ -158,7 +202,7 @@ public class DefaultToBackendFunctionTest {
                     })
                     .findAny();
             assertTrue(addFieldJob.isPresent());
-            Optional<BackendConnectionJob> createDocPartJob = resultList.stream()
+            Optional<BackendTransactionJob> createDocPartJob = resultList.stream()
                     .filter((job) -> {
                         if (!(job instanceof AddDocPartDDLJob)) {
                             return false;
@@ -224,13 +268,13 @@ public class DefaultToBackendFunctionTest {
                 .willReturn(Collections.<DocPartData>emptyList().iterator());
 
         //when
-        Iterable<BackendConnectionJob> resultIterable = fun.apply(collectionData);
+        Iterable<BackendTransactionJob> resultIterable = fun.apply(collectionData);
 
         //then
         assertTrue("An empty iterator was expected", Iterables.isEmpty(resultIterable));
     }
 
-    private static class MockBackendConnectionJobFactory implements BackendConnectionJobFactory {
+    private static class MockBackendConnectionJobFactory implements BackendTransactionJobFactory {
 
         @Override
         public AddDatabaseDDLJob createAddDatabaseDDLJob(MetaDatabase db) {
@@ -317,6 +361,36 @@ public class DefaultToBackendFunctionTest {
 
                 @Override
                 public void execute(WriteBackendTransaction connection) throws RollbackException {
+                    throw new UnsupportedOperationException("Not supported yet.");
+                }
+            };
+        }
+
+        @Override
+        public AddScalarDDLJob createAddScalarDDLJob(MetaDatabase db, MetaCollection col, MetaDocPart docPart, MetaScalar scalar) {
+            return new AddScalarDDLJob() {
+                @Override
+                public MetaDatabase getDatabase() {
+                    return db;
+                }
+
+                @Override
+                public MetaCollection getCollection() {
+                    return col;
+                }
+
+                @Override
+                public MetaDocPart getDocPart() {
+                    return docPart;
+                }
+
+                @Override
+                public MetaScalar getScalar() {
+                    return scalar;
+                }
+
+                @Override
+                public void execute(WriteBackendTransaction connection) throws UserException {
                     throw new UnsupportedOperationException("Not supported yet.");
                 }
             };

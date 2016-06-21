@@ -27,7 +27,7 @@ import com.torodb.core.transaction.metainf.MetaField;
 /**
  *
  */
-public interface AddFieldDDLJob extends DDLBackendConnectionJob {
+public interface AddFieldDDLJob extends DDLBackendTransactionJob {
 
     public MetaDatabase getDatabase();
 

@@ -21,15 +21,12 @@
 package com.torodb.core.dsl.backend;
 
 import com.torodb.core.d2r.DocPartData;
-import com.torodb.core.transaction.metainf.MetaCollection;
-import com.torodb.core.transaction.metainf.MetaDatabase;
-import com.torodb.core.transaction.metainf.MetaDocPart;
-import com.torodb.core.transaction.metainf.MetaField;
+import com.torodb.core.transaction.metainf.*;
 
 /**
  *
  */
-public interface BackendConnectionJobFactory {
+public interface BackendTransactionJobFactory {
 
     AddDatabaseDDLJob createAddDatabaseDDLJob(MetaDatabase db);
 
@@ -38,6 +35,8 @@ public interface BackendConnectionJobFactory {
     AddDocPartDDLJob createAddDocPartDDLJob(MetaDatabase db, MetaCollection col, MetaDocPart docPart);
 
     AddFieldDDLJob createAddFieldDDLJob(MetaDatabase db, MetaCollection col, MetaDocPart docPart, MetaField field);
+
+    AddScalarDDLJob createAddScalarDDLJob(MetaDatabase db, MetaCollection col, MetaDocPart docPart, MetaScalar scalar);
 
     InsertBackendJob insert(MetaDatabase db, MetaCollection col, DocPartData data);
 

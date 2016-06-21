@@ -11,7 +11,7 @@ import com.torodb.backend.rid.ReservedIdContainer;
 import com.torodb.backend.rid.ReservedIdInfoFactory;
 import com.torodb.core.backend.Backend;
 import com.torodb.core.d2r.RidGenerator;
-import com.torodb.core.dsl.backend.BackendConnectionJobFactory;
+import com.torodb.core.dsl.backend.BackendTransactionJobFactory;
 import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot.ImmutableMetaSnapshotFactory;
 
 /**
@@ -21,7 +21,7 @@ public class BackendModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(BackendConnectionJobFactory.class)
+        bind(BackendTransactionJobFactory.class)
                 .to(BackendConnectionJobFactoryImpl.class)
                 .in(Singleton.class);
 

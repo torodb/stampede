@@ -2,43 +2,50 @@ package com.torodb.torod.pipeline;
 
 import com.torodb.core.d2r.CollectionData;
 import com.torodb.core.d2r.DocPartData;
-import com.torodb.core.dsl.backend.BackendConnectionJob;
-import com.torodb.core.dsl.backend.BackendConnectionJobFactory;
+import com.torodb.core.dsl.backend.BackendTransactionJob;
 import com.torodb.core.transaction.metainf.ImmutableMetaField;
+import com.torodb.core.transaction.metainf.ImmutableMetaScalar;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import java.util.ArrayList;
 import java.util.function.Function;
+import com.torodb.core.dsl.backend.BackendTransactionJobFactory;
 
 /**
  *
  */
 public class DefaultToBackendFunction implements
-        Function<CollectionData, Iterable<BackendConnectionJob>> {
+        Function<CollectionData, Iterable<BackendTransactionJob>> {
 
-    private final BackendConnectionJobFactory factory;
+    private final BackendTransactionJobFactory factory;
     private final MetaDatabase database;
     private final MetaCollection collection;
 
-    public DefaultToBackendFunction(BackendConnectionJobFactory factory, MetaDatabase database, MetaCollection collection) {
+    public DefaultToBackendFunction(BackendTransactionJobFactory factory, MetaDatabase database, MetaCollection collection) {
         this.factory = factory;
         this.database = database;
         this.collection = collection;
     }
 
-    public Iterable<BackendConnectionJob> apply(CollectionData collectionData) {
-        ArrayList<BackendConnectionJob> jobs = new ArrayList<>();
+    public Iterable<BackendTransactionJob> apply(CollectionData collectionData) {
+        ArrayList<BackendTransactionJob> jobs = new ArrayList<>();
         for (DocPartData docPartData : collectionData) {
             assert docPartData.getMetaDocPart() instanceof BatchMetaDocPart
                     : "This function can only use inputs whose meta doc part information is an instance of " + BatchMetaDocPart.class;
             BatchMetaDocPart metaDocPart = (BatchMetaDocPart) docPartData.getMetaDocPart();
             if (metaDocPart.isCreatedOnCurrentBatch()) {
                 jobs.add(factory.createAddDocPartDDLJob(database, collection, metaDocPart));
+                metaDocPart.streamScalars()
+                        .map((scalar) -> factory.createAddScalarDDLJob(database, collection, metaDocPart, scalar))
+                        .forEachOrdered((job) -> jobs.add(job));
                 metaDocPart.streamFields()
                         .map((field) -> factory.createAddFieldDDLJob(database, collection, metaDocPart, field))
                         .forEachOrdered((job) -> jobs.add(job));
             } else {
-                //it already exists, we only need to add the new fields
+                //it already exists, we only need to add the new scalars and fields
+                for (ImmutableMetaScalar newScalar : metaDocPart.getOnBatchModifiedMetaScalars()) {
+                    jobs.add(factory.createAddScalarDDLJob(database, collection, metaDocPart, newScalar));
+                }
                 for (ImmutableMetaField newField : metaDocPart.getOnBatchModifiedMetaFields()) {
                     jobs.add(factory.createAddFieldDDLJob(database, collection, metaDocPart, newField));
                 }
