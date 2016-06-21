@@ -25,7 +25,7 @@ import com.torodb.core.transaction.metainf.MetaDatabase;
 /**
  *
  */
-public interface AddCollectionDDLJob extends DDLBackendConnectionJob {
+public interface AddCollectionDDLJob extends DDLBackendTransactionJob {
 
     public MetaDatabase getDatabase();
 

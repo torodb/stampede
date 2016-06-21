@@ -6,7 +6,7 @@ import com.google.inject.Singleton;
 import com.torodb.backend.BackendImpl;
 import com.torodb.backend.jobs.BackendConnectionJobFactoryImpl;
 import com.torodb.core.backend.Backend;
-import com.torodb.core.dsl.backend.BackendConnectionJobFactory;
+import com.torodb.core.dsl.backend.BackendTransactionJobFactory;
 
 /**
  *
@@ -15,7 +15,7 @@ public class BackendModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(BackendConnectionJobFactory.class)
+        bind(BackendTransactionJobFactory.class)
                 .to(BackendConnectionJobFactoryImpl.class)
                 .in(Singleton.class);
 

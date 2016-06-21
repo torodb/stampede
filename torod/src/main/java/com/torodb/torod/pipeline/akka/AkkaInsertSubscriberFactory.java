@@ -8,7 +8,6 @@ import akka.stream.javadsl.Source;
 import com.google.common.base.Throwables;
 import com.torodb.core.backend.WriteBackendTransaction;
 import com.torodb.core.d2r.D2RTranslatorFactory;
-import com.torodb.core.dsl.backend.BackendConnectionJobFactory;
 import com.torodb.core.exceptions.SystemException;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.transaction.RollbackException;
@@ -22,6 +21,7 @@ import com.torodb.torod.pipeline.InsertPipelineFactory;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 import javax.inject.Inject;
+import com.torodb.core.dsl.backend.BackendTransactionJobFactory;
 
 /**
  *
@@ -29,11 +29,11 @@ import javax.inject.Inject;
 public class AkkaInsertSubscriberFactory implements InsertPipelineFactory {
 
     private final Materializer materializer;
-    private final BackendConnectionJobFactory factory;
+    private final BackendTransactionJobFactory factory;
     private final int docBatch = 100;
 
     @Inject
-    public AkkaInsertSubscriberFactory(Materializer materializer, BackendConnectionJobFactory factory) {
+    public AkkaInsertSubscriberFactory(Materializer materializer, BackendTransactionJobFactory factory) {
         this.materializer = materializer;
         this.factory = factory;
     }
