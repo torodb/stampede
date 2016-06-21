@@ -272,7 +272,7 @@ public class ConfigTest {
 		Assert.assertTrue("/backend not defined", config.getBackend() != null);
 		Assert.assertEquals("/backend/derby not defined", Derby.class, config.getBackend().getBackendImplementation().getClass());
 		Assert.assertTrue("/backend/derby not identified as Derby", config.getBackend().isDerby());
-		Assert.assertTrue("/backend/derby not identified as Postgres Like", config.getBackend().isPostgresLike());
+		Assert.assertTrue("/backend/derby not identified as Postgres Like", config.getBackend().isDerbyLike());
 		Assert.assertEquals("/backend/derby/host has different value than that specified", "localhost", config.getBackend().asDerby().getHost());
 		Assert.assertEquals("/backend/derby/port has different value than that specified", Integer.valueOf(5432), config.getBackend().asDerby().getPort());
 		Assert.assertEquals("/backend/derby/user has different value than that specified", "root", config.getBackend().asDerby().getUser());
