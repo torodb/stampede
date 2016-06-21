@@ -53,11 +53,14 @@ public class TorodServer extends AbstractIdleService {
 
     @Override
     protected void startUp() throws Exception {
+        backend.startAsync();
+        backend.awaitRunning();
     }
 
     @Override
     protected void shutDown() throws Exception {
         openConnections.invalidateAll();
+        backend.stopAsync();
     }
 
     private void onConnectionInvalidated(RemovalNotification<Integer, TorodConnection> notification) {

@@ -21,6 +21,7 @@
 package com.torodb.core;
 
 
+import java.time.Instant;
 import javax.annotation.concurrent.Immutable;
 
 /**
@@ -39,7 +40,7 @@ public interface BuildProperties {
 
     public String getExtraVersion();
 
-    public long getBuildTime();
+    public Instant getBuildTime();
 
     public String getGitCommitId();
 

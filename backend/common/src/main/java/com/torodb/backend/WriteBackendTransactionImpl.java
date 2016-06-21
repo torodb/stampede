@@ -27,10 +27,7 @@ import com.torodb.core.backend.WriteBackendTransaction;
 import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.transaction.RollbackException;
-import com.torodb.core.transaction.metainf.MetaCollection;
-import com.torodb.core.transaction.metainf.MetaDatabase;
-import com.torodb.core.transaction.metainf.MetaDocPart;
-import com.torodb.core.transaction.metainf.MetaField;
+import com.torodb.core.transaction.metainf.*;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
@@ -88,6 +85,12 @@ public class WriteBackendTransactionImpl implements WriteBackendTransaction {
                 newField.getName(), newField.getIdentifier(), newField.getType());
         sqlInterface.addColumnToDocPartTable(dsl, db.getIdentifier(),
                 docPart.getIdentifier(),buildField(newField));
+    }
+
+    @Override
+    public void addScalar(MetaDatabase db, MetaCollection col, MetaDocPart docPart, MetaScalar newScalar) {
+        Preconditions.checkState(!closed, "This transaction is closed");
+        throw new UnsupportedOperationException("Not supported yet."); //TODO: Implement
     }
 
 	private Field<?> buildField(MetaField newField) {

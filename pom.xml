@@ -93,7 +93,7 @@
         <module>d2r</module>
         <module>torod</module>
         <module>mongodb</module>
-        <module>torodb</module>
+        <module>packaging</module>
     </modules>
 
     <dependencyManagement>

@@ -10,6 +10,7 @@ import com.google.common.net.HostAndPort;
 import com.torodb.mongodb.commands.impl.ConnectionTorodbCommandImpl;
 import com.torodb.mongodb.core.MongoLayerConstants;
 import com.torodb.mongodb.core.MongodConnection;
+import com.torodb.mongodb.core.MongodServerConfig;
 import java.time.Clock;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -24,9 +25,9 @@ public class IsMasterImplementation extends ConnectionTorodbCommandImpl<Empty, I
     private final HostAndPort me;
 
     @Inject
-    public IsMasterImplementation(Clock clock, HostAndPort me) {
+    public IsMasterImplementation(Clock clock, MongodServerConfig ourConfig) {
         this.clock = clock;
-        this.me = me;
+        this.me = ourConfig.getHostAndPort();
     }
 
     @Override
