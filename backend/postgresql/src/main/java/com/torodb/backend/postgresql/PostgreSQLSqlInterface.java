@@ -67,6 +67,7 @@ import com.torodb.backend.converters.TableRefConverter;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.backend.converters.jooq.ValueToJooqDataTypeProvider;
 import com.torodb.backend.index.NamedDbIndex;
+import com.torodb.backend.interfaces.ErrorHandlerInterface.Context;
 import com.torodb.backend.meta.TorodbSchema;
 import com.torodb.backend.postgresql.converters.PostgreSQLValueToCopyConverter;
 import com.torodb.backend.postgresql.converters.jooq.PostgreSQLValueToJooqDataTypeProvider;
@@ -1119,6 +1120,15 @@ public class PostgreSQLSqlInterface implements SqlInterface {
 		Query query = dsl.insertInto(metaFieldTable)
 				.set(metaFieldTable.newRecord()
 				.values(databaseName, collectionName, tableRef, fieldName, type, fieldIdentifier));
+		executeQuery(query, Context.ddl);
+	}
+	
+	@Override
+	public void addMetaScalar(DSLContext dsl, String databaseName, String collectionName, TableRef tableRef,
+			String fieldIdentifier, FieldType type) {
+		Query query = dsl.insertInto(metaScalarTable)
+				.set(metaScalarTable.newRecord()
+				.values(databaseName, collectionName, tableRef, type, fieldIdentifier));
 		executeQuery(query, Context.ddl);
 	}
 	

@@ -89,6 +89,7 @@ import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetaField;
+import com.torodb.core.transaction.metainf.MetaScalar;
 import com.torodb.kvdocument.values.KVValue;
 
 /**
@@ -517,6 +518,12 @@ public class DerbySqlInterface implements SqlInterface {
                     .append("\",");
             });
             sb.setCharAt(sb.length() - 1, ' ');
+            metaDocPart.streamScalars().forEach(metaScalar -> {
+                sb.append('"')
+                    .append(metaScalar.getIdentifier())
+                    .append("\",");
+            });
+            sb.setCharAt(sb.length() - 1, ' ');
             sb
                 .append("FROM \"")
                 .append(metaDatabase.getIdentifier())
@@ -633,7 +640,8 @@ public class DerbySqlInterface implements SqlInterface {
         try {
             MetaDocPart metaDocPart = docPartData.getMetaDocPart();
             Iterator<MetaField> metaFieldIterator = docPartData.orderedMetaFieldIterator();
-            standardInsertDocPartData(dsl, schemaName, metaDocPart, metaFieldIterator, docPartRowIterator);
+            Iterator<MetaScalar> metaScalarIterator = docPartData.orderedMetaScalarIterator();
+            standardInsertDocPartData(dsl, schemaName, metaDocPart, metaFieldIterator, metaScalarIterator, docPartRowIterator);
         } catch (DataAccessException ex) {
             handleRollbackException(Context.insert, ex);
             throw new SystemException(ex);
@@ -641,7 +649,8 @@ public class DerbySqlInterface implements SqlInterface {
     }
 
     protected void standardInsertDocPartData(DSLContext dsl, String schemaName, MetaDocPart metaDocPart, 
-            Iterator<MetaField> metaFieldIterator, Iterator<DocPartRow> docPartRowIterator) {
+            Iterator<MetaField> metaFieldIterator, Iterator<MetaScalar> metaScalarIterator, 
+            Iterator<DocPartRow> docPartRowIterator) {
         final int maxBatchSize = 1000;
         final StringBuilder insertStatementHeaderBuilder = new StringBuilder(2048);
         insertStatementHeaderBuilder.append("INSERT INTO \"")
@@ -662,7 +671,14 @@ public class DerbySqlInterface implements SqlInterface {
                 .append(metaField.getIdentifier())
                 .append("\",");
         }
+        while (metaScalarIterator.hasNext()) {
+            MetaScalar metaScalar = metaScalarIterator.next();
+            insertStatementHeaderBuilder.append("\"")
+                .append(metaScalar.getIdentifier())
+                .append("\",");
+        }
         insertStatementHeaderBuilder.setCharAt(insertStatementHeaderBuilder.length() - 1, ')');
+        
         insertStatementHeaderBuilder.append(" VALUES ");
         
         final StringBuilder insertStatementBuilder = new StringBuilder(2048);
@@ -684,6 +700,14 @@ public class DerbySqlInterface implements SqlInterface {
                 }
             }
             for (KVValue<?> value : docPartRow.getFieldValues()) {
+                if (value != null) {
+                    insertStatementBuilder.append(getSqlValue(value))
+                        .append(',');
+                } else {
+                    insertStatementBuilder.append("NULL,");
+                }
+            }
+            for (KVValue<?> value : docPartRow.getScalarValues()) {
                 if (value != null) {
                     insertStatementBuilder.append(getSqlValue(value))
                         .append(',');
@@ -847,6 +871,15 @@ public class DerbySqlInterface implements SqlInterface {
 		Query query = dsl.insertInto(metaFieldTable)
 				.set(metaFieldTable.newRecord()
 				.values(databaseName, collectionName, tableRef, fieldName, type, fieldIdentifier));
+		executeQuery(query, Context.ddl);
+	}
+	
+	@Override
+	public void addMetaScalar(DSLContext dsl, String databaseName, String collectionName, TableRef tableRef,
+			String fieldIdentifier, FieldType type) {
+		Query query = dsl.insertInto(metaScalarTable)
+				.set(metaScalarTable.newRecord()
+				.values(databaseName, collectionName, tableRef, type, fieldIdentifier));
 		executeQuery(query, Context.ddl);
 	}
 	
