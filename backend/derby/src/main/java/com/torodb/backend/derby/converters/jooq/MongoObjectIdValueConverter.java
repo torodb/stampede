@@ -24,10 +24,10 @@ import org.jooq.DataType;
 import org.jooq.SQLDialect;
 import org.jooq.impl.DefaultDataType;
 import org.jooq.impl.SQLDataType;
-import org.jooq.util.derby.DerbyDataType;
 
 import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.backend.converters.jooq.KVValueConverter;
+import com.torodb.backend.derby.converters.jooq.binding.VarcharForBitDataBinding;
 import com.torodb.kvdocument.types.KVType;
 import com.torodb.kvdocument.types.MongoObjectIdType;
 import com.torodb.kvdocument.values.KVMongoObjectId;
@@ -39,9 +39,7 @@ import com.torodb.kvdocument.values.heap.ByteArrayKVMongoObjectId;
 public class MongoObjectIdValueConverter implements KVValueConverter<byte[], KVMongoObjectId> {
     private static final long serialVersionUID = 1L;
 
-    public static final DataType<byte[]> VARCHARFORBITDATA_12 = new DefaultDataType<>(SQLDialect.DERBY, SQLDataType.VARBINARY, "varchar(12) for bit data");
-    
-    public static final DataTypeForKV<KVMongoObjectId> TYPE = DataTypeForKV.from(VARCHARFORBITDATA_12, new MongoObjectIdValueConverter());
+    public static final DataTypeForKV<KVMongoObjectId> TYPE = VarcharForBitDataBinding.fromKVValue(KVMongoObjectId.class, new MongoObjectIdValueConverter(), 12);
 
     @Override
     public KVType getErasuredType() {

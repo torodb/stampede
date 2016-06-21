@@ -797,73 +797,7 @@ public class PostgreSQLSqlInterface implements SqlInterface {
     }
 
     protected void standardInsertPathDocuments(DSLContext dsl, String schemaName, DocPartData docPartData) {
-        final int maxBatchSize = 1000;
-        final StringBuilder insertStatementHeaderBuilder = new StringBuilder(2048);
-        MetaDocPart metaDocPart = docPartData.getMetaDocPart();
-        insertStatementHeaderBuilder.append("INSERT INTO \"")
-            .append(schemaName)
-            .append("\".\"")
-            .append(metaDocPart.getIdentifier())
-            .append("\" (");
-        
-        Collection<InternalField<?>> internalFields = getDocPartTableInternalFields(metaDocPart);
-        for (InternalField<?> internalField : internalFields) {
-            insertStatementHeaderBuilder.append("\"")
-                .append(internalField.getName())
-                .append("\",");
-        }
-        
-        Iterator<MetaField> metaFieldIterator = docPartData.orderedMetaFieldIterator();
-        while (metaFieldIterator.hasNext()) {
-            MetaField metaField = metaFieldIterator.next();
-            insertStatementHeaderBuilder
-            	.append("\"")
-                .append(metaField.getIdentifier())
-                .append("\",");
-        }
-        insertStatementHeaderBuilder.setCharAt(insertStatementHeaderBuilder.length() - 1, ')');
-        insertStatementHeaderBuilder.append(" VALUES ");
-        
-        final StringBuilder insertStatementBuilder = new StringBuilder(2048);
-        int docCounter = 0;
-        Iterator<DocPartRow> docPartRowIterator = docPartData.iterator();
-        while (docPartRowIterator.hasNext()) {
-            DocPartRow docPartRow = docPartRowIterator.next();
-            docCounter++;
-            if (insertStatementBuilder.length() == 0) {
-                insertStatementBuilder.append(insertStatementHeaderBuilder);
-            }
-            insertStatementBuilder.append("(");
-            for (InternalField<?> internalField : internalFields) {
-                if (! internalField.isNull(docPartRow)) {
-                    insertStatementBuilder
-                        .append(internalField.getSqlValue(docPartRow))
-                        .append(',');
-                } else {
-                    insertStatementBuilder.append("NULL,");
-                }
-            }
-            for (KVValue<?> value : docPartRow) {
-                if (value != null) {
-                    insertStatementBuilder.append(getSqlValue(value))
-                        .append(',');
-                } else {
-                    insertStatementBuilder.append("NULL,");
-                }
-            }
-            insertStatementBuilder.setCharAt(insertStatementBuilder.length() - 1, ')');
-            insertStatementBuilder.append(",");
-            if (docCounter % maxBatchSize == 0 || !docPartRowIterator.hasNext()) {
-                dsl.execute(insertStatementBuilder.substring(0, insertStatementBuilder.length() - 1));
-                if (docPartRowIterator.hasNext()) {
-                    insertStatementBuilder.delete(0, insertStatementBuilder.length());
-                }
-            }
-        }
-    }
-    
-    private String getSqlValue(KVValue<?> value) {
-        return DSL.value(value, valueToJooqDataTypeProvider.getDataType(FieldType.from(value.getType()))).toString();
+        throw new UnsupportedOperationException();
     }
     
     private void copyInsertPathDocuments(

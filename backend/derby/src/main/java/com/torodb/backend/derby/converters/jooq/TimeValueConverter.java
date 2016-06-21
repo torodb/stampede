@@ -2,8 +2,6 @@ package com.torodb.backend.derby.converters.jooq;
 import java.sql.Time;
 import java.time.LocalTime;
 
-import org.jooq.impl.SQLDataType;
-
 import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.backend.converters.jooq.KVValueConverter;
 import com.torodb.backend.derby.converters.jooq.binding.TimeBinding;
@@ -25,6 +23,7 @@ public class TimeValueConverter implements KVValueConverter<Time, KVTime>{
         return TimeType.INSTANCE;
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public KVTime from(Time databaseObject) {
         return new LocalTimeKVTime(
@@ -32,6 +31,7 @@ public class TimeValueConverter implements KVValueConverter<Time, KVTime>{
         );
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public Time to(KVTime userObject) {
         LocalTime time = userObject.getValue();

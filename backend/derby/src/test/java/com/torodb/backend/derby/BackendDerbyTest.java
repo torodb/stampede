@@ -38,6 +38,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import org.jooq.Converter;
 import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.junit.Assert;
@@ -295,7 +296,7 @@ public class BackendDerbyTest extends AbstractBackendTest {
 		        if (resultSet.wasNull()) {
 		            databaseConvertedValue = Optional.empty();
 		        } else {
-		            databaseConvertedValue = Optional.of(dataTypeForKV.convert(databaseValue));
+		            databaseConvertedValue = Optional.of(((Converter<Object, KVValue<?>>) dataTypeForKV.getConverter()).from(databaseValue));
 		        }
 		        columnIndex++;
 		        
@@ -481,7 +482,7 @@ public class BackendDerbyTest extends AbstractBackendTest {
 		                            }
 		                        }
 		                    }
-		                    documentBuilder.putValue("k", new ListKVArray(array_value));;
+		                    documentBuilder.putValue("k", new ListKVArray(array_value));
 		                }
 		                documents.add(documentBuilder.build());
 		            }

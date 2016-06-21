@@ -254,7 +254,7 @@ public class TorodbMeta {
 	        	
 	        	MetaDocPartRecord<Object> docPart = docParts.get(table.getName());
 	        	for (Field<?> existingField : table.fields()) {
-	        		if (sqlInterface.isAllowedColumnIdentifier(existingField.getName())) {
+	        		if (!sqlInterface.isAllowedColumnIdentifier(existingField.getName())) {
 	        			continue;
 	        		}
 	        		if (!SchemaValidator.containsField(existingField, docPart.getCollection(), 

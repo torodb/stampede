@@ -20,10 +20,18 @@
 
 package com.torodb.backend.converters.jooq;
 
+import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
 
 import org.jooq.Binding;
+import org.jooq.BindingGetResultSetContext;
+import org.jooq.BindingGetSQLInputContext;
+import org.jooq.BindingGetStatementContext;
+import org.jooq.BindingRegisterContext;
+import org.jooq.BindingSQLContext;
+import org.jooq.BindingSetSQLOutputContext;
+import org.jooq.BindingSetStatementContext;
 import org.jooq.Configuration;
 import org.jooq.Converter;
 import org.jooq.DataType;
@@ -41,11 +49,11 @@ public class DataTypeForKV<T extends KVValue<?>> implements DataType<T> {
     private static final long serialVersionUID = 1L;
     
     public static <DT, T extends KVValue<?>> DataTypeForKV<T> from(DataType<DT> dataType, KVValueConverter<DT, T> converter) {
-        return new DataTypeForKV<>(dataType.asConvertedDataType(converter), converter);
+        return new DataTypeForKV<>(dataType.asConvertedDataType(new KVChainConverter(dataType.getConverter(), converter)), converter);
     }
     
     public static <DT, T extends KVValue<?>> DataTypeForKV<T> from(DataType<DT> dataType, KVValueConverter<DT, T> converter, Binding<DT, T> binding) {
-        return new DataTypeForKV<>(dataType.asConvertedDataType(binding), converter);
+        return new DataTypeForKV<>(dataType.asConvertedDataType(new KVChainBinding(binding, dataType.getConverter(), converter)), converter);
     }
     
     private final DataType<T> dataType;
@@ -56,7 +64,7 @@ public class DataTypeForKV<T extends KVValue<?>> implements DataType<T> {
         this.dataType = dataType;
         this.kvValueConverter = kvValueConverter;
     }
-
+    
     public KVValueConverter<?, T> getKVValueConverter() {
         return kvValueConverter;
     }
@@ -93,16 +101,22 @@ public class DataTypeForKV<T extends KVValue<?>> implements DataType<T> {
         return dataType.getArrayDataType();
     }
 
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     public <E extends EnumType> DataType<E> asEnumDataType(Class<E> enumDataType) {
-        return new DataTypeForKV(dataType.asEnumDataType(enumDataType), kvValueConverter);
+        DataType<E> dataType = this.dataType.asEnumDataType(enumDataType);
+        return new DataTypeForKV(dataType, kvValueConverter);
     }
 
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     public <U> DataType<U> asConvertedDataType(Converter<? super T, U> converter) {
-        return new DataTypeForKV(dataType.asConvertedDataType(converter), kvValueConverter);
+        DataType dataType = this.dataType.asConvertedDataType(converter);
+        return new DataTypeForKV(dataType, kvValueConverter);
     }
 
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     public <U> DataType<U> asConvertedDataType(Binding<? super T, U> binding) {
-        return new DataTypeForKV(dataType.asConvertedDataType(binding), kvValueConverter);
+        DataType dataType = this.dataType.asConvertedDataType(binding);
+        return new DataTypeForKV(dataType, kvValueConverter);
     }
 
     public String getTypeName() {
@@ -137,8 +151,10 @@ public class DataTypeForKV<T extends KVValue<?>> implements DataType<T> {
         return dataType.convert(objects);
     }
 
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     public DataType<T> nullable(boolean nullable) {
-        return new DataTypeForKV(dataType.nullable(nullable), kvValueConverter);
+        DataType dataType = this.dataType.nullable(nullable);
+        return new DataTypeForKV(dataType, kvValueConverter);
     }
 
     public boolean nullable() {
@@ -154,12 +170,16 @@ public class DataTypeForKV<T extends KVValue<?>> implements DataType<T> {
         return dataType.defaulted();
     }
 
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     public DataType<T> precision(int precision) {
-        return new DataTypeForKV(dataType.precision(precision), kvValueConverter);
+        DataType dataType = this.dataType.precision(precision);
+        return new DataTypeForKV(dataType, kvValueConverter);
     }
 
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     public DataType<T> precision(int precision, int scale) {
-        return new DataTypeForKV(dataType.precision(precision, scale), kvValueConverter);
+        DataType dataType = this.dataType.precision(precision, scale);
+        return new DataTypeForKV(dataType, kvValueConverter);
     }
 
     public int precision() {
@@ -170,8 +190,10 @@ public class DataTypeForKV<T extends KVValue<?>> implements DataType<T> {
         return dataType.hasPrecision();
     }
 
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     public DataType<T> scale(int scale) {
-        return new DataTypeForKV(dataType.scale(scale), kvValueConverter);
+        DataType dataType = this.dataType.scale(scale);
+        return new DataTypeForKV(dataType, kvValueConverter);
     }
 
     public int scale() {
@@ -182,8 +204,10 @@ public class DataTypeForKV<T extends KVValue<?>> implements DataType<T> {
         return dataType.hasScale();
     }
 
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     public DataType<T> length(int length) {
-        return new DataTypeForKV(dataType.length(length), kvValueConverter);
+        DataType dataType = this.dataType.length(length);
+        return new DataTypeForKV(dataType, kvValueConverter);
     }
 
     public int length() {
@@ -226,18 +250,100 @@ public class DataTypeForKV<T extends KVValue<?>> implements DataType<T> {
         return dataType.isArray();
     }
 
-    @Override
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     public DataType<T> defaultValue(T defaultValue) {
-        return new DataTypeForKV(dataType.defaultValue(defaultValue), kvValueConverter);
+        DataType dataType = this.dataType.defaultValue(defaultValue);
+        return new DataTypeForKV(dataType, kvValueConverter);
     }
 
-    @Override
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     public DataType<T> defaultValue(Field<T> defaultValue) {
-        return new DataTypeForKV(dataType.defaultValue(defaultValue), kvValueConverter);
+        DataType dataType = this.dataType.defaultValue(defaultValue);
+        return new DataTypeForKV(dataType, kvValueConverter);
     }
 
-    @Override
     public Field<T> defaultValue() {
         return dataType.defaultValue();
+    }
+    
+    public static class KVChainConverter<NewT, ChainT, WrappedU> implements Converter<NewT, WrappedU> {
+
+        private static final long serialVersionUID = 1L;
+        
+        private final Converter<NewT, ChainT> leftConverter;
+        private final Converter<ChainT, WrappedU> rightConverter;
+        
+        public KVChainConverter(Converter<NewT, ChainT> leftConverter, Converter<ChainT, WrappedU> rightConverter) {
+            super();
+            this.leftConverter = leftConverter;
+            this.rightConverter = rightConverter;
+        }
+
+        @Override
+        public WrappedU from(NewT databaseObject) {
+            return rightConverter.from(leftConverter.from(databaseObject));
+        }
+
+        @Override
+        public NewT to(WrappedU userObject) {
+            if (userObject == null) return null;
+            return leftConverter.to(rightConverter.to(userObject));
+        }
+
+        @Override
+        public Class<NewT> fromType() {
+            return leftConverter.fromType();
+        }
+
+        @Override
+        public Class<WrappedU> toType() {
+            return rightConverter.toType();
+        }
+    }
+    
+    public static class KVChainBinding<NewT, ChainT, WrappedU> implements Binding<NewT, WrappedU> {
+
+        private static final long serialVersionUID = 1L;
+        
+        private final Binding<NewT, WrappedU> delegate;
+        private final KVChainConverter<NewT, ChainT, WrappedU> chainConverter;
+        
+        public KVChainBinding(Binding<NewT, WrappedU> delegate, Converter<NewT, ChainT> leftConverter, Converter<ChainT, WrappedU> rightConverter) {
+            super();
+            this.delegate = delegate;
+            this.chainConverter = new KVChainConverter<>(leftConverter, rightConverter);
+        }
+        
+        public Converter<NewT, WrappedU> converter() {
+            return chainConverter;
+        }
+
+        public void sql(BindingSQLContext<WrappedU> ctx) throws SQLException {
+            delegate.sql(ctx);
+        }
+
+        public void register(BindingRegisterContext<WrappedU> ctx) throws SQLException {
+            delegate.register(ctx);
+        }
+
+        public void set(BindingSetStatementContext<WrappedU> ctx) throws SQLException {
+            delegate.set(ctx);
+        }
+
+        public void set(BindingSetSQLOutputContext<WrappedU> ctx) throws SQLException {
+            delegate.set(ctx);
+        }
+
+        public void get(BindingGetResultSetContext<WrappedU> ctx) throws SQLException {
+            delegate.get(ctx);
+        }
+
+        public void get(BindingGetStatementContext<WrappedU> ctx) throws SQLException {
+            delegate.get(ctx);
+        }
+
+        public void get(BindingGetSQLInputContext<WrappedU> ctx) throws SQLException {
+            delegate.get(ctx);
+        }
     }
 }

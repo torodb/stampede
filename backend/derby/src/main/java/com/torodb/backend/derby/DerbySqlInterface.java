@@ -6,6 +6,9 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.SQLType;
+import java.sql.Types;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -22,13 +25,17 @@ import javax.inject.Singleton;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jooq.Binding;
+import org.jooq.BindingSetStatementContext;
 import org.jooq.Configuration;
 import org.jooq.Converter;
 import org.jooq.DSLContext;
+import org.jooq.DataType;
 import org.jooq.Field;
 import org.jooq.Query;
 import org.jooq.Record1;
 import org.jooq.SQLDialect;
+import org.jooq.conf.Settings;
 import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
 
@@ -54,6 +61,7 @@ import org.jooq.impl.DSL;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.torodb.backend.DbBackend;
 import com.torodb.backend.InternalField;
@@ -145,45 +153,27 @@ public class DerbySqlInterface implements SqlInterface {
         }
     }
     
-    private static final String[] RESTRICTED_SCHEMA_NAMES = new String[] {
-            TorodbSchema.TORODB_SCHEMA,
-            "NULLID",
-            "SQLJ",
-            "SYS",
-            "SYSCAT",
-            "SYSCS_DIAG",
-            "SYSCS_UTIL",
-            "SYSFUN",
-            "SYSIBM",
-            "SYSPROC",
-            "SYSSTAT",
-    };
-    {
-        Arrays.sort(RESTRICTED_SCHEMA_NAMES);
-    }
+    private static final ImmutableSet<String> RESTRICTED_SCHEMA_NAMES = ImmutableSet.<String>builder()
+            .add(TorodbSchema.TORODB_SCHEMA)
+            .add("NULLID")
+            .add("SQLJ")
+            .add("SYS")
+            .add("SYSCAT")
+            .add("SYSCS_DIAG")
+            .add("SYSCS_UTIL")
+            .add("SYSFUN")
+            .add("SYSIBM")
+            .add("SYSPROC")
+            .add("SYSSTAT")
+            .build();
 
-    private static final String[] RESTRICTED_COLUMN_NAMES = new String[] {
-            DocPartTableFields.DID.fieldName,
-            DocPartTableFields.RID.fieldName,
-            DocPartTableFields.PID.fieldName,
-            DocPartTableFields.SEQ.fieldName,
-            SCALAR_FIELD_TYPE_IDENTIFIERS[FieldType.BINARY.ordinal()],
-            SCALAR_FIELD_TYPE_IDENTIFIERS[FieldType.BOOLEAN.ordinal()],
-            SCALAR_FIELD_TYPE_IDENTIFIERS[FieldType.DATE.ordinal()],
-            SCALAR_FIELD_TYPE_IDENTIFIERS[FieldType.DOUBLE.ordinal()],
-            SCALAR_FIELD_TYPE_IDENTIFIERS[FieldType.INSTANT.ordinal()],
-            SCALAR_FIELD_TYPE_IDENTIFIERS[FieldType.INTEGER.ordinal()],
-            SCALAR_FIELD_TYPE_IDENTIFIERS[FieldType.LONG.ordinal()],
-            SCALAR_FIELD_TYPE_IDENTIFIERS[FieldType.MONGO_OBJECT_ID.ordinal()],
-            SCALAR_FIELD_TYPE_IDENTIFIERS[FieldType.MONGO_TIME_STAMP.ordinal()],
-            SCALAR_FIELD_TYPE_IDENTIFIERS[FieldType.NULL.ordinal()],
-            SCALAR_FIELD_TYPE_IDENTIFIERS[FieldType.STRING.ordinal()],
-            SCALAR_FIELD_TYPE_IDENTIFIERS[FieldType.TIME.ordinal()],
-            SCALAR_FIELD_TYPE_IDENTIFIERS[FieldType.CHILD.ordinal()],
-    };
-    {
-        Arrays.sort(RESTRICTED_COLUMN_NAMES);
-    }
+    private static final ImmutableSet<String> RESTRICTED_COLUMN_NAMES = ImmutableSet.<String>builder()
+            .add(DocPartTableFields.DID.fieldName)
+            .add(DocPartTableFields.RID.fieldName)
+            .add(DocPartTableFields.PID.fieldName)
+            .add(DocPartTableFields.SEQ.fieldName)
+            .addAll(Arrays.asList(SCALAR_FIELD_TYPE_IDENTIFIERS))
+            .build();
     
     private final ValueToJooqDataTypeProvider valueToJooqDataTypeProvider;
     private final FieldComparator fieldComparator = new FieldComparator();
@@ -317,7 +307,7 @@ public class DerbySqlInterface implements SqlInterface {
 
     @Override
     public boolean isAllowedSchemaIdentifier(@Nonnull String schemaName) {
-        return Arrays.binarySearch(RESTRICTED_SCHEMA_NAMES, schemaName) >= 0;
+        return !RESTRICTED_SCHEMA_NAMES.contains(schemaName);
     }
     
     @Override
@@ -327,7 +317,7 @@ public class DerbySqlInterface implements SqlInterface {
     
     @Override
     public boolean isAllowedColumnIdentifier(@Nonnull String columnName) {
-        return Arrays.binarySearch(RESTRICTED_COLUMN_NAMES, columnName) >= 0;
+        return !RESTRICTED_COLUMN_NAMES.contains(columnName);
     }
 
     @Override
@@ -383,7 +373,7 @@ public class DerbySqlInterface implements SqlInterface {
                     .append('"').append(MetaDocPartTable.TableFields.IDENTIFIER.toString()).append('"').append(")")
                 .append(")")
                 .toString();
-    	executeStatement(dsl, statement, Context.ddl);    	
+    	executeStatement(dsl, statement, Context.ddl);
     }
 
     @Override
@@ -411,7 +401,7 @@ public class DerbySqlInterface implements SqlInterface {
                     .append('"').append(MetaFieldTable.TableFields.IDENTIFIER.toString()).append('"').append(")")
                 .append(")")
                 .toString();
-        executeStatement(dsl, statement, Context.ddl);    	
+        executeStatement(dsl, statement, Context.ddl);
     }
 
     @Override
@@ -437,7 +427,7 @@ public class DerbySqlInterface implements SqlInterface {
                     .append('"').append(MetaScalarTable.TableFields.IDENTIFIER.toString()).append('"').append(")")
                 .append(")")
                 .toString();
-        executeStatement(dsl, statement, Context.ddl);      
+        executeStatement(dsl, statement, Context.ddl);
     }
 
     @Override
@@ -643,62 +633,143 @@ public class DerbySqlInterface implements SqlInterface {
     protected void standardInsertDocPartData(DSLContext dsl, String schemaName, MetaDocPart metaDocPart, 
             Iterator<MetaField> metaFieldIterator, Iterator<DocPartRow> docPartRowIterator) {
         final int maxBatchSize = 1000;
-        final StringBuilder insertStatementHeaderBuilder = new StringBuilder(2048);
-        insertStatementHeaderBuilder.append("INSERT INTO \"")
+        final StringBuilder insertStatementBuilder = new StringBuilder(2048);
+        final StringBuilder insertStatementValuesBuilder = new StringBuilder(1024);
+        insertStatementBuilder.append("INSERT INTO \"")
             .append(schemaName)
             .append("\".\"")
             .append(metaDocPart.getIdentifier())
             .append("\" (");
+        insertStatementValuesBuilder.append(" VALUES (");
         
         Collection<InternalField<?>> internalFields = getDocPartTableInternalFields(metaDocPart);
         for (InternalField<?> internalField : internalFields) {
-            insertStatementHeaderBuilder.append("\"")
+            insertStatementBuilder.append("\"")
                 .append(internalField.getName())
                 .append("\",");
+            insertStatementValuesBuilder.append("?,");
         }
+        List<FieldType> fieldTypeList = new ArrayList<>();
         while (metaFieldIterator.hasNext()) {
             MetaField metaField = metaFieldIterator.next();
-            insertStatementHeaderBuilder.append("\"")
+            insertStatementBuilder.append("\"")
                 .append(metaField.getIdentifier())
                 .append("\",");
+            insertStatementValuesBuilder.append("?,");
+            fieldTypeList.add(metaField.getType());
         }
-        insertStatementHeaderBuilder.setCharAt(insertStatementHeaderBuilder.length() - 1, ')');
-        insertStatementHeaderBuilder.append(" VALUES ");
+        insertStatementBuilder.setCharAt(insertStatementBuilder.length() - 1, ')');
+        insertStatementValuesBuilder.setCharAt(insertStatementValuesBuilder.length() - 1, ')');
+        insertStatementBuilder.append(insertStatementValuesBuilder);
         
-        final StringBuilder insertStatementBuilder = new StringBuilder(2048);
-        int docCounter = 0;
-        while (docPartRowIterator.hasNext()) {
-            DocPartRow docPartRow = docPartRowIterator.next();
-            docCounter++;
-            if (insertStatementBuilder.length() == 0) {
-                insertStatementBuilder.append(insertStatementHeaderBuilder);
-            }
-            insertStatementBuilder.append('(');
-            for (InternalField<?> internalField : internalFields) {
-                if (! internalField.isNull(docPartRow)) {
-                    insertStatementBuilder
-                        .append(internalField.getSqlValue(docPartRow))
-                        .append(',');
-                } else {
-                    insertStatementBuilder.append("NULL,");
+        Connection connection = dsl.configuration().connectionProvider().acquire();
+        try {
+            try (PreparedStatement preparedStatement = connection.prepareStatement(insertStatementBuilder.toString())) {
+                BindingSetStatementContextPlaceHolder placeHolder = 
+                        new BindingSetStatementContextPlaceHolder(dsl, preparedStatement);
+                int docCounter = 0;
+                while (docPartRowIterator.hasNext()) {
+                    DocPartRow docPartRow = docPartRowIterator.next();
+                    docCounter++;
+                    int parameterIndex = 1;
+                    for (InternalField<?> internalField : internalFields) {
+                        internalField.setStatementParameter(preparedStatement, parameterIndex, docPartRow);
+                        parameterIndex++;
+                    }
+                    Iterator<FieldType> fieldTypeIterator = fieldTypeList.iterator();
+                    for (KVValue<?> value : docPartRow) {
+                        placeHolder.index = parameterIndex;
+                        placeHolder.value = value;
+                        Binding<?, ?> binding = valueToJooqDataTypeProvider
+                                .getDataType(fieldTypeIterator.next())
+                                .getBinding();
+                        binding.set(placeHolder);
+                        parameterIndex++;
+                    }
+                    preparedStatement.addBatch();
+                    if (docCounter % maxBatchSize == 0 || !docPartRowIterator.hasNext()) {
+                        preparedStatement.executeBatch();
+                    }
                 }
             }
-            for (KVValue<?> value : docPartRow) {
-                if (value != null) {
-                    insertStatementBuilder.append(getSqlValue(value))
-                        .append(',');
-                } else {
-                    insertStatementBuilder.append("NULL,");
-                }
+        } catch(SQLException ex) {
+            handleRollbackException(Context.insert, ex);
+            throw new SystemException(ex);
+        } finally {
+            dsl.configuration().connectionProvider().release(connection);
+        }
+    }
+    
+    @SuppressWarnings("rawtypes")
+    private static class BindingSetStatementContextPlaceHolder implements BindingSetStatementContext {
+        private final DSLContext dsl;
+        private final PreparedStatement statement;
+        
+        public int index;
+        public Object value;
+        
+        public BindingSetStatementContextPlaceHolder(DSLContext dsl, PreparedStatement statement) {
+            super();
+            this.dsl = dsl;
+            this.statement = statement;
+        }
+
+        @Override
+        public Configuration configuration() {
+            return dsl.configuration();
+        }
+
+        @Override
+        public Settings settings() {
+            return dsl.settings();
+        }
+
+        @Override
+        public SQLDialect dialect() {
+            return dsl.dialect();
+        }
+
+        @Override
+        public SQLDialect family() {
+            return dsl.family();
+        }
+
+        @Override
+        public Map<Object, Object> data() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Object data(Object key) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Object data(Object key, Object value) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public PreparedStatement statement() {
+            return statement;
+        }
+
+        @Override
+        public int index() {
+            return index;
+        }
+
+        @Override
+        public Object value() {
+            return value;
+        }
+
+        @Override
+        public BindingSetStatementContext convert(Converter converter) {
+            if (value != null) {
+                this.value = converter.to(value);
             }
-            insertStatementBuilder.setCharAt(insertStatementBuilder.length() - 1, ')');
-            insertStatementBuilder.append(",");
-            if (docCounter % maxBatchSize == 0 || !docPartRowIterator.hasNext()) {
-                dsl.execute(insertStatementBuilder.substring(0, insertStatementBuilder.length() - 1));
-                if (docPartRowIterator.hasNext()) {
-                    insertStatementBuilder.delete(0, insertStatementBuilder.length());
-                }
-            }
+            return this;
         }
     }
     

@@ -28,7 +28,6 @@ import javax.json.JsonObject;
 
 import org.jooq.Converter;
 import org.jooq.DataType;
-import org.jooq.impl.SQLDataType;
 
 /**
  *

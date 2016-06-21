@@ -21,6 +21,9 @@
 package com.torodb.backend;
 
 import java.math.BigDecimal;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.Types;
 import java.util.Collection;
 import java.util.Map;
 
@@ -65,8 +68,8 @@ public abstract class InternalField<T> implements Field<T> {
         }
 
         @Override
-        public String getSqlValue(DocPartRow docPartRow) {
-            return DSL.value(docPartRow.getDid(), getDataType()).toString();
+        public void setStatementParameter(PreparedStatement preparedStatement, int index, DocPartRow docPartRow) throws SQLException {
+            preparedStatement.setInt(index, docPartRow.getDid());
         }
     }
 
@@ -84,8 +87,8 @@ public abstract class InternalField<T> implements Field<T> {
         }
 
         @Override
-        public String getSqlValue(DocPartRow docPartRow) {
-            return DSL.value(docPartRow.getRid(), getDataType()).toString();
+        public void setStatementParameter(PreparedStatement preparedStatement, int index, DocPartRow docPartRow) throws SQLException {
+            preparedStatement.setInt(index, docPartRow.getRid());
         }
     }
 
@@ -101,10 +104,10 @@ public abstract class InternalField<T> implements Field<T> {
         public boolean isPid() {
             return true;
         }
-        
+
         @Override
-        public String getSqlValue(DocPartRow docPartRow) {
-            return DSL.value(docPartRow.getPid(), getDataType()).toString();
+        public void setStatementParameter(PreparedStatement preparedStatement, int index, DocPartRow docPartRow) throws SQLException {
+            preparedStatement.setInt(index, docPartRow.getPid());
         }
     }
 
@@ -117,18 +120,17 @@ public abstract class InternalField<T> implements Field<T> {
         }
         
         @Override
-        public boolean isNull(DocPartRow docPartRow) {
-            return docPartRow.getSeq() == null;
-        }
-        
-        @Override
         public boolean isSeq() {
             return true;
         }
 
         @Override
-        public String getSqlValue(DocPartRow docPartRow) {
-            return DSL.value(docPartRow.getSeq(), getDataType()).toString();
+        public void setStatementParameter(PreparedStatement preparedStatement, int index, DocPartRow docPartRow) throws SQLException {
+            if (docPartRow.getSeq() != null) {
+                preparedStatement.setInt(index, docPartRow.getSeq());
+            } else {
+                preparedStatement.setNull(index, Types.INTEGER);
+            }
         }
     }
     
@@ -137,11 +139,7 @@ public abstract class InternalField<T> implements Field<T> {
         this.field = field;
     }
 
-    public boolean isNull(DocPartRow docPartRow) {
-        return false;
-    }
-    
-    public abstract String getSqlValue(DocPartRow docPartRow);
+    public abstract void setStatementParameter(PreparedStatement preparedStatement, int index, DocPartRow docPartRow) throws SQLException;
     
     public boolean isDid() {
         return false;

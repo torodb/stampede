@@ -97,7 +97,8 @@ public class TorodbSchema extends SchemaImpl {
             sqlInterface.getMetaDatabaseTable(),
             sqlInterface.getMetaCollectionTable(),
             sqlInterface.getMetaDocPartTable(),
-            sqlInterface.getMetaFieldTable()
+            sqlInterface.getMetaFieldTable(),
+            sqlInterface.getMetaScalarTable()
         };
         for (SemanticTable metaTable : metaTables) {
             String metaTableName = metaTable.getName();
