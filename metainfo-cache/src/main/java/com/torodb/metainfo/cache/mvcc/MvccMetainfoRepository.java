@@ -23,7 +23,6 @@ public class MvccMetainfoRepository implements MetainfoRepository {
     private ImmutableMetaSnapshot currentSnapshot;
     private final MergeChecker mergeChecker;
 
-    @Inject
     public MvccMetainfoRepository() {
         this.currentSnapshot = new ImmutableMetaSnapshot.Builder().build();
         mergeChecker = DefaultMergeChecker::checkMerge;
@@ -33,7 +32,7 @@ public class MvccMetainfoRepository implements MetainfoRepository {
         this.currentSnapshot = currentView;
         mergeChecker = DefaultMergeChecker::checkMerge;
     }
-    
+
     @Inject
     public MvccMetainfoRepository(ImmutableMetaSnapshotFactory factory) {
         this(factory.getImmutableMetaSnapshot());

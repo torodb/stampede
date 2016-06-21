@@ -25,12 +25,10 @@ public class BackendImpl extends AbstractIdleService implements Backend {
 
     @Override
     protected void startUp() throws Exception {
-        throw new UnsupportedOperationException("Not supported yet."); //TODO: Implement
     }
 
     @Override
     protected void shutDown() throws Exception {
-        throw new UnsupportedOperationException("Not supported yet."); //TODO: Implement
     }
 
     void onConnectionClosed(BackendConnectionImpl connection) {
