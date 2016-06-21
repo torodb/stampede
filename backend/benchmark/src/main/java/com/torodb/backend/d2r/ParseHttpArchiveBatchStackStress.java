@@ -1,14 +1,5 @@
 package com.torodb.backend.d2r;
 
-import static com.torodb.backend.util.MetaInfoOperation.executeMetaOperation;
-import static com.torodb.backend.util.TestDataFactory.COLL1;
-import static com.torodb.backend.util.TestDataFactory.DB1;
-import static com.torodb.backend.util.TestDataFactory.InitialView;
-
-import java.io.IOException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
-
 import com.google.common.base.Stopwatch;
 import com.torodb.backend.util.InMemoryRidGenerator;
 import com.torodb.backend.util.JsonArchiveFeed;
@@ -18,10 +9,17 @@ import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.d2r.IdentifierFactory;
 import com.torodb.core.d2r.RidGenerator;
 import com.torodb.core.impl.TableRefFactoryImpl;
+import com.torodb.core.transaction.metainf.MutableMetaDatabase;
 import com.torodb.d2r.D2RTranslatorStack;
 import com.torodb.d2r.IdentifierFactoryImpl;
 import com.torodb.d2r.MockIdentifierInterface;
 import com.torodb.metainfo.cache.mvcc.MvccMetainfoRepository;
+import java.io.IOException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+
+import static com.torodb.backend.util.MetaInfoOperation.executeMetaOperation;
+import static com.torodb.backend.util.TestDataFactory.*;
 
 /**
  * 
@@ -47,7 +45,8 @@ public class ParseHttpArchiveBatchStackStress {
 		feed.getGroupedFeedForFiles((f)->f.getName().startsWith("160101_1J"), 50).forEach(docStream -> {
 			toroTimer.start();
 			executeMetaOperation(mvccMetainfoRepository, (mutableSnapshot) -> {
-				D2RTranslator translator = new D2RTranslatorStack(tableRefFactory, identifierFactory, ridGenerator, mutableSnapshot, DB1, COLL1);
+                MutableMetaDatabase db = mutableSnapshot.getMetaDatabaseByName(DB1);
+				D2RTranslator translator = new D2RTranslatorStack(tableRefFactory, identifierFactory, ridGenerator, db, db.getMetaCollectionByName(COLL1));
 				docStream.forEach(doc -> {
 					translator.translate(doc);	
 				});

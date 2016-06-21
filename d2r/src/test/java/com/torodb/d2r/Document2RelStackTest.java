@@ -1,42 +1,12 @@
 package com.torodb.d2r;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-
-import java.time.Instant;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Optional;
-import java.util.Set;
-
-import org.junit.Before;
-import org.junit.Test;
-
 import com.torodb.common.util.HexUtils;
 import com.torodb.core.TableRef;
 import com.torodb.core.TableRefFactory;
-import com.torodb.core.d2r.CollectionData;
-import com.torodb.core.d2r.D2RTranslator;
-import com.torodb.core.d2r.DocPartData;
-import com.torodb.core.d2r.DocPartRow;
-import com.torodb.core.d2r.IdentifierFactory;
+import com.torodb.core.d2r.*;
 import com.torodb.core.impl.TableRefFactoryImpl;
-import com.torodb.core.transaction.metainf.FieldType;
-import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
-import com.torodb.core.transaction.metainf.ImmutableMetaDatabase;
-import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
-import com.torodb.core.transaction.metainf.MetaDocPart;
-import com.torodb.core.transaction.metainf.MetaField;
-import com.torodb.core.transaction.metainf.MetaScalar;
 import com.torodb.core.transaction.metainf.MetainfoRepository.SnapshotStage;
-import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
+import com.torodb.core.transaction.metainf.*;
 import com.torodb.kvdocument.conversion.json.JacksonJsonParser;
 import com.torodb.kvdocument.conversion.json.JsonParser;
 import com.torodb.kvdocument.types.MongoObjectIdType;
@@ -45,6 +15,13 @@ import com.torodb.kvdocument.values.KVDocument;
 import com.torodb.kvdocument.values.KVMongoObjectId;
 import com.torodb.kvdocument.values.KVValue;
 import com.torodb.metainfo.cache.mvcc.MvccMetainfoRepository;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import org.junit.Before;
+import org.junit.Test;
+
+import static org.junit.Assert.*;
 
 public class Document2RelStackTest {
 	
@@ -474,7 +451,8 @@ public class Document2RelStackTest {
 	private CollectionData parseDocument(String ...docNames) {
 		MockRidGenerator ridGenerator = new MockRidGenerator();
 		IdentifierFactory identifierFactory = new IdentifierFactoryImpl(new MockIdentifierInterface());
-		D2RTranslator translator = new D2RTranslatorStack(tableRefFactory, identifierFactory, ridGenerator, mutableSnapshot, DB1, COLLA);
+        MutableMetaDatabase db = mutableSnapshot.getMetaDatabaseByName(DB1);
+		D2RTranslator translator = new D2RTranslatorStack(tableRefFactory, identifierFactory, ridGenerator, db, db.getMetaCollectionByName(COLLA));
 		for (String doc: docNames){
 			KVDocument document = parser.createFromResource("docs/"+doc);
 			translator.translate(document);

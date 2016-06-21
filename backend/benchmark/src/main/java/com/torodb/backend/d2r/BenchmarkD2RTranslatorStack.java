@@ -1,24 +1,5 @@
 package com.torodb.backend.d2r;
 
-import static com.torodb.backend.util.TestDataFactory.COLL1;
-import static com.torodb.backend.util.TestDataFactory.DB1;
-import static com.torodb.backend.util.TestDataFactory.InitialView;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import org.openjdk.jmh.annotations.Benchmark;
-import org.openjdk.jmh.annotations.BenchmarkMode;
-import org.openjdk.jmh.annotations.Fork;
-import org.openjdk.jmh.annotations.Level;
-import org.openjdk.jmh.annotations.Measurement;
-import org.openjdk.jmh.annotations.Mode;
-import org.openjdk.jmh.annotations.Scope;
-import org.openjdk.jmh.annotations.Setup;
-import org.openjdk.jmh.annotations.State;
-import org.openjdk.jmh.annotations.Warmup;
-import org.openjdk.jmh.infra.Blackhole;
-
 import com.torodb.backend.util.InMemoryRidGenerator;
 import com.torodb.backend.util.TestDataFactory;
 import com.torodb.core.TableRefFactory;
@@ -26,12 +7,19 @@ import com.torodb.core.d2r.D2RTranslator;
 import com.torodb.core.d2r.IdentifierFactory;
 import com.torodb.core.impl.TableRefFactoryImpl;
 import com.torodb.core.transaction.metainf.MetainfoRepository.SnapshotStage;
+import com.torodb.core.transaction.metainf.MutableMetaDatabase;
 import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
 import com.torodb.d2r.D2RTranslatorStack;
 import com.torodb.d2r.IdentifierFactoryImpl;
 import com.torodb.d2r.MockIdentifierInterface;
 import com.torodb.kvdocument.values.KVDocument;
 import com.torodb.metainfo.cache.mvcc.MvccMetainfoRepository;
+import java.util.ArrayList;
+import java.util.List;
+import org.openjdk.jmh.annotations.*;
+import org.openjdk.jmh.infra.Blackhole;
+
+import static com.torodb.backend.util.TestDataFactory.*;
 
 public class BenchmarkD2RTranslatorStack {
 
@@ -64,7 +52,8 @@ public class BenchmarkD2RTranslatorStack {
 		try (SnapshotStage snapshot = mvccMetainfoRepository.startSnapshotStage()) {
 			mutableSnapshot = snapshot.createMutableSnapshot();
 		}
-		D2RTranslator translator = new D2RTranslatorStack(tableRefFactory, identifierFactory, ridGenerator, mutableSnapshot, DB1, COLL1);
+        MutableMetaDatabase db = mutableSnapshot.getMetaDatabaseByName(DB1);
+		D2RTranslator translator = new D2RTranslatorStack(tableRefFactory, identifierFactory, ridGenerator, db, db.getMetaCollectionByName(COLL1));
 		for(KVDocument doc: state.document){
 			translator.translate(doc);
 		}

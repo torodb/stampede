@@ -1,37 +1,23 @@
 package com.torodb.backend;
 
-import java.sql.ResultSet;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.stream.StreamSupport;
-
-import org.jooq.DSLContext;
-import org.jooq.Field;
-import org.jooq.impl.DSL;
-
 import com.torodb.backend.d2r.R2DBackendTranslatorImpl;
 import com.torodb.core.TableRefFactory;
-import com.torodb.core.d2r.CollectionData;
-import com.torodb.core.d2r.D2RTranslator;
-import com.torodb.core.d2r.DocPartData;
-import com.torodb.core.d2r.DocPartResults;
-import com.torodb.core.d2r.IdentifierFactory;
-import com.torodb.core.d2r.R2DTranslator;
+import com.torodb.core.d2r.*;
 import com.torodb.core.document.ToroDocument;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
+import com.torodb.core.transaction.metainf.MutableMetaDatabase;
 import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
-import com.torodb.d2r.D2RTranslatorStack;
-import com.torodb.d2r.IdentifierFactoryImpl;
-import com.torodb.d2r.MockIdentifierInterface;
-import com.torodb.d2r.MockRidGenerator;
-import com.torodb.d2r.R2DBackedTranslator;
+import com.torodb.d2r.*;
 import com.torodb.kvdocument.conversion.json.JacksonJsonParser;
 import com.torodb.kvdocument.conversion.json.JsonParser;
 import com.torodb.kvdocument.values.KVDocument;
+import java.sql.ResultSet;
+import java.util.*;
+import java.util.stream.StreamSupport;
+import org.jooq.DSLContext;
+import org.jooq.Field;
+import org.jooq.impl.DSL;
 
 public class BackendDocumentTestHelper {
 	
@@ -101,7 +87,8 @@ public class BackendDocumentTestHelper {
     }
     
     public CollectionData readDataFromDocuments(String database, String collection, List<KVDocument> documents, MutableMetaSnapshot mutableSnapshot) throws Exception {
-        D2RTranslator translator = new D2RTranslatorStack(tableRefFactory, identifierFactory, ridGenerator, mutableSnapshot, database, collection);
+        MutableMetaDatabase db = mutableSnapshot.getMetaDatabaseByName(database);
+        D2RTranslator translator = new D2RTranslatorStack(tableRefFactory, identifierFactory, ridGenerator, db, db.getMetaCollectionByName(collection));
         documents.forEach(translator::translate);
         return translator.getCollectionDataAccumulator();
     }
