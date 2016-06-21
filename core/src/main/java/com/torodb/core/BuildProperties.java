@@ -15,29 +15,49 @@
  *     along with ToroDB. If not, see <http://www.gnu.org/licenses/>.
  *
  *     Copyright (c) 2014, 8Kdata Technology
- *     
+ *
  */
 
-package com.torodb.config.validation;
+package com.torodb.core;
 
-import static java.lang.annotation.ElementType.TYPE;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
+import javax.annotation.concurrent.Immutable;
 
-import javax.validation.Constraint;
-import javax.validation.Payload;
-import javax.validation.ReportAsSingleViolation;
+/**
+ *
+ */
+@Immutable
+public interface BuildProperties {
 
-@Target({ TYPE })
-@Retention(RUNTIME)
-@Constraint(validatedBy = NotNullElementsValidator.class)
-@ReportAsSingleViolation
-public @interface NotNullElements {
-	String message() default "{com.torodb.config.validation.NotNullElements.message}";
+    public String getFullVersion();
 
-	Class<?>[] groups() default {};
+    public int getMajorVersion();
 
-	Class<? extends Payload>[] payload() default {};
+    public int getMinorVersion();
+
+    public int getSubVersion();
+
+    public String getExtraVersion();
+
+    public long getBuildTime();
+
+    public String getGitCommitId();
+
+    public String getGitBranch();
+
+    public String getGitRemoteOriginURL();
+
+    public String getJavaVersion();
+
+    public String getJavaVendor();
+
+    public String getJavaVMSpecificationVersion();
+
+    public String getJavaVMVersion();
+
+    public String getOsName();
+
+    public String getOsArch();
+
+    public String getOsVersion();
 }

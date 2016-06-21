@@ -4,14 +4,18 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.inject.Inject;
+
+import com.torodb.backend.meta.TorodbMeta;
 import com.torodb.core.TableRef;
 
 public class MaxRowIdFactory implements ReservedIdInfoFactory {
 
 	private final Map<String, Map<String, Map<TableRef, ReservedIdInfo>>> megaMap;
 
-	public MaxRowIdFactory(Map<String, Map<String, Map<TableRef, Integer>>> map) {
-			this.megaMap = copyToConcurrentMap(map);
+	@Inject
+	public MaxRowIdFactory(TorodbMeta torodbMeta) {
+			this.megaMap = copyToConcurrentMap(torodbMeta.getLastIds());
 	}
 
 	private Map<String, Map<String, Map<TableRef, ReservedIdInfo>>> copyToConcurrentMap(Map<String, Map<String, Map<TableRef, Integer>>> map){

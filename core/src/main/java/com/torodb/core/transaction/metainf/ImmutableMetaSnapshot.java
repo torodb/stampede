@@ -1,12 +1,15 @@
 
 package com.torodb.core.transaction.metainf;
 
-import com.google.common.base.Preconditions;
-import com.torodb.core.annotations.DoNotChange;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Stream;
+
+import javax.annotation.Nonnull;
+
+import com.google.common.base.Preconditions;
+import com.torodb.core.annotations.DoNotChange;
 
 /**
  *
@@ -83,4 +86,7 @@ public class ImmutableMetaSnapshot implements MetaSnapshot {
         }
     }
 
+    public static interface ImmutableMetaSnapshotFactory {
+        @Nonnull ImmutableMetaSnapshot getImmutableMetaSnapshot();
+    }
 }

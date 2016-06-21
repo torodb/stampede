@@ -1,4 +1,4 @@
-package com.torodb.backend.derby;
+package com.torodb.backend.meta;
 
 import org.jooq.DataType;
 import org.jooq.Field;
@@ -12,11 +12,11 @@ import com.torodb.backend.tables.records.MetaScalarRecord;
 import com.torodb.core.TableRef;
 import com.torodb.core.TableRefFactory;
 
-public class DerbySchemaValidator {
+public class SchemaValidator {
 	
 	private Iterable<? extends Table<?>> existingTables;
 	
-	public DerbySchemaValidator(Meta jooqMeta, String schemaName, String database) throws InvalidDatabaseSchemaException{
+	public SchemaValidator(Meta jooqMeta, String schemaName, String database) throws InvalidDatabaseSchemaException{
 		Schema standardSchema = findSchema(jooqMeta, schemaName);
         if (standardSchema == null) {
             throw new IllegalStateException(
