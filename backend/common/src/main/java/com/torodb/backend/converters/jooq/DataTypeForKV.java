@@ -56,17 +56,34 @@ public class DataTypeForKV<T extends KVValue<?>> implements DataType<T> {
         return new DataTypeForKV<>(dataType.asConvertedDataType(new KVChainBinding(binding, dataType.getConverter(), converter)), converter);
     }
     
+    public static <DT, T extends KVValue<?>> DataTypeForKV<T> from(DataType<DT> dataType, KVValueConverter<DT, T> converter, Binding<DT, T> binding, int sqlType) {
+        return new DataTypeForKV<>(dataType.asConvertedDataType(new KVChainBinding(binding, dataType.getConverter(), converter)), converter, sqlType);
+    }
+    
     private final DataType<T> dataType;
+    private final int sqlType;
     private final KVValueConverter<?, T> kvValueConverter;
     
     private DataTypeForKV(DataType<T> dataType, KVValueConverter<?, T> kvValueConverter) {
         super();
         this.dataType = dataType;
+        this.sqlType = dataType.getSQLType();
+        this.kvValueConverter = kvValueConverter;
+    }
+    
+    private DataTypeForKV(DataType<T> dataType, KVValueConverter<?, T> kvValueConverter, int sqlType) {
+        super();
+        this.dataType = dataType;
+        this.sqlType = sqlType;
         this.kvValueConverter = kvValueConverter;
     }
     
     public KVValueConverter<?, T> getKVValueConverter() {
         return kvValueConverter;
+    }
+
+    public int getSQLType() {
+        return sqlType;
     }
     
     public DataType<T> getSQLDataType() {
@@ -75,10 +92,6 @@ public class DataTypeForKV<T extends KVValue<?>> implements DataType<T> {
 
     public DataType<T> getDataType(Configuration configuration) {
         return dataType.getDataType(configuration);
-    }
-
-    public int getSQLType() {
-        return dataType.getSQLType();
     }
 
     public Binding<?, T> getBinding() {

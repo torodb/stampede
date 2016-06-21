@@ -25,6 +25,8 @@ import java.time.LocalDate;
 
 import org.jooq.impl.SQLDataType;
 
+import com.torodb.backend.converters.sql.DateSqlBinding;
+import com.torodb.backend.converters.sql.SqlBinding;
 import com.torodb.kvdocument.types.DateType;
 import com.torodb.kvdocument.types.KVType;
 import com.torodb.kvdocument.values.KVDate;
@@ -64,6 +66,11 @@ public class DateValueConverter implements KVValueConverter<Date, KVDate> {
     @Override
     public Class<KVDate> toType() {
         return KVDate.class;
+    }
+
+    @Override
+    public SqlBinding<Date> getSqlBinding() {
+        return DateSqlBinding.INSTANCE;
     }
 
 }

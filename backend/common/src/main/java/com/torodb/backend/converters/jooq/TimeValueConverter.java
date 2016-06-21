@@ -25,6 +25,8 @@ import java.time.LocalTime;
 
 import org.jooq.impl.SQLDataType;
 
+import com.torodb.backend.converters.sql.SqlBinding;
+import com.torodb.backend.converters.sql.TimeSqlBinding;
 import com.torodb.kvdocument.types.KVType;
 import com.torodb.kvdocument.types.TimeType;
 import com.torodb.kvdocument.values.KVTime;
@@ -65,6 +67,11 @@ public class TimeValueConverter implements KVValueConverter<Time, KVTime>{
     @Override
     public Class<KVTime> toType() {
         return KVTime.class;
+    }
+
+    @Override
+    public SqlBinding<Time> getSqlBinding() {
+        return TimeSqlBinding.INSTANCE;
     }
     
 }

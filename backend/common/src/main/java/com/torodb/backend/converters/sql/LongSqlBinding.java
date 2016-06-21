@@ -18,23 +18,22 @@
  *     
  */
 
+package com.torodb.backend.converters.sql;
 
-package com.torodb.backend.converters.jooq;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
-import org.jooq.Converter;
+public class LongSqlBinding implements SqlBinding<Long> {
+    public static final LongSqlBinding INSTANCE = new LongSqlBinding();
 
-import com.torodb.backend.converters.sql.SqlBinding;
-import com.torodb.kvdocument.types.KVType;
-import com.torodb.kvdocument.values.KVValue;
+    @Override
+    public Long get(ResultSet resultSet, int index) throws SQLException {
+        return resultSet.getLong(index);
+    }
 
-/**
- *
- * @param <DBT> data base type
- * @param <V> a value of the given Java type
- */
-public interface KVValueConverter<DBT, V extends KVValue<?>> extends Converter<DBT, V> {
-    
-    public KVType getErasuredType();
-    
-    public SqlBinding<DBT> getSqlBinding();
+    @Override
+    public void set(PreparedStatement preparedStatement, int parameterIndex, Long value) throws SQLException {
+        preparedStatement.setLong(parameterIndex, value);
+    }
 }

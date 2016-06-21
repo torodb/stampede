@@ -18,23 +18,23 @@
  *     
  */
 
+package com.torodb.backend.converters.sql;
 
-package com.torodb.backend.converters.jooq;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
 
-import org.jooq.Converter;
+public class TimestampSqlBinding implements SqlBinding<Timestamp> {
+    public static final TimestampSqlBinding INSTANCE = new TimestampSqlBinding();
 
-import com.torodb.backend.converters.sql.SqlBinding;
-import com.torodb.kvdocument.types.KVType;
-import com.torodb.kvdocument.values.KVValue;
+    @Override
+    public Timestamp get(ResultSet resultSet, int index) throws SQLException {
+        return resultSet.getTimestamp(index);
+    }
 
-/**
- *
- * @param <DBT> data base type
- * @param <V> a value of the given Java type
- */
-public interface KVValueConverter<DBT, V extends KVValue<?>> extends Converter<DBT, V> {
-    
-    public KVType getErasuredType();
-    
-    public SqlBinding<DBT> getSqlBinding();
+    @Override
+    public void set(PreparedStatement preparedStatement, int parameterIndex, Timestamp value) throws SQLException {
+        preparedStatement.setTimestamp(parameterIndex, value);
+    }
 }

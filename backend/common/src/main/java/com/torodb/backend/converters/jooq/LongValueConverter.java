@@ -23,6 +23,8 @@ package com.torodb.backend.converters.jooq;
 
 import org.jooq.impl.SQLDataType;
 
+import com.torodb.backend.converters.sql.LongSqlBinding;
+import com.torodb.backend.converters.sql.SqlBinding;
 import com.torodb.kvdocument.types.KVType;
 import com.torodb.kvdocument.types.LongType;
 import com.torodb.kvdocument.values.KVLong;
@@ -58,6 +60,11 @@ public class LongValueConverter implements KVValueConverter<Long, KVLong>{
     @Override
     public Class<KVLong> toType() {
         return KVLong.class;
+    }
+
+    @Override
+    public SqlBinding<Long> getSqlBinding() {
+        return LongSqlBinding.INSTANCE;
     }
     
 }

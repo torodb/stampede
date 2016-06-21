@@ -26,6 +26,8 @@ import java.time.Instant;
 import org.jooq.DataType;
 import org.jooq.impl.DefaultDataType;
 
+import com.torodb.backend.converters.sql.SqlBinding;
+import com.torodb.backend.converters.sql.TimestampSqlBinding;
 import com.torodb.kvdocument.types.InstantType;
 import com.torodb.kvdocument.types.KVType;
 import com.torodb.kvdocument.values.KVInstant;
@@ -74,5 +76,10 @@ public class InstantValueConverter implements KVValueConverter<Timestamp, KVInst
     public Class<KVInstant> toType() {
         return KVInstant.class;
     }
-    
+
+    @Override
+    public SqlBinding<Timestamp> getSqlBinding() {
+        return TimestampSqlBinding.INSTANCE;
+    }
+
 }

@@ -22,6 +22,8 @@ package com.torodb.backend.converters.jooq;
 
 import org.jooq.impl.SQLDataType;
 
+import com.torodb.backend.converters.sql.DoubleSqlBinding;
+import com.torodb.backend.converters.sql.SqlBinding;
 import com.torodb.kvdocument.types.DoubleType;
 import com.torodb.kvdocument.types.KVType;
 import com.torodb.kvdocument.values.KVDouble;
@@ -57,6 +59,11 @@ public class DoubleValueConverter implements KVValueConverter<Double, KVDouble> 
     @Override
     public Class<KVDouble> toType() {
         return KVDouble.class;
+    }
+
+    @Override
+    public SqlBinding<Double> getSqlBinding() {
+        return DoubleSqlBinding.INSTANCE;
     }
 
 }

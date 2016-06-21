@@ -27,6 +27,8 @@ import org.jooq.impl.SQLDataType;
 
 import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.backend.converters.jooq.KVValueConverter;
+import com.torodb.backend.converters.sql.BinarySqlBinding;
+import com.torodb.backend.converters.sql.SqlBinding;
 import com.torodb.backend.derby.converters.jooq.binding.VarcharForBitDataBinding;
 import com.torodb.kvdocument.types.KVType;
 import com.torodb.kvdocument.types.MongoObjectIdType;
@@ -64,6 +66,11 @@ public class MongoObjectIdValueConverter implements KVValueConverter<byte[], KVM
     @Override
     public Class<KVMongoObjectId> toType() {
         return KVMongoObjectId.class;
+    }
+
+    @Override
+    public SqlBinding<byte[]> getSqlBinding() {
+        return BinarySqlBinding.INSTANCE;
     }
 
 }

@@ -6,8 +6,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.SQLType;
-import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -25,17 +23,13 @@ import javax.inject.Singleton;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jooq.Binding;
-import org.jooq.BindingSetStatementContext;
 import org.jooq.Configuration;
 import org.jooq.Converter;
 import org.jooq.DSLContext;
-import org.jooq.DataType;
 import org.jooq.Field;
 import org.jooq.Query;
 import org.jooq.Record1;
 import org.jooq.SQLDialect;
-import org.jooq.conf.Settings;
 import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
 
@@ -69,7 +63,9 @@ import com.torodb.backend.SqlInterface;
 import com.torodb.backend.TableRefComparator;
 import com.torodb.backend.converters.TableRefConverter;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
+import com.torodb.backend.converters.jooq.KVValueConverter;
 import com.torodb.backend.converters.jooq.ValueToJooqDataTypeProvider;
+import com.torodb.backend.converters.sql.SqlBinding;
 import com.torodb.backend.derby.converters.jooq.DerbyValueToJooqDataTypeProvider;
 import com.torodb.backend.derby.tables.DerbyMetaCollectionTable;
 import com.torodb.backend.derby.tables.DerbyMetaDatabaseTable;
@@ -665,8 +661,6 @@ public class DerbySqlInterface implements SqlInterface {
         Connection connection = dsl.configuration().connectionProvider().acquire();
         try {
             try (PreparedStatement preparedStatement = connection.prepareStatement(insertStatementBuilder.toString())) {
-                BindingSetStatementContextPlaceHolder placeHolder = 
-                        new BindingSetStatementContextPlaceHolder(dsl, preparedStatement);
                 int docCounter = 0;
                 while (docPartRowIterator.hasNext()) {
                     DocPartRow docPartRow = docPartRowIterator.next();
@@ -678,12 +672,17 @@ public class DerbySqlInterface implements SqlInterface {
                     }
                     Iterator<FieldType> fieldTypeIterator = fieldTypeList.iterator();
                     for (KVValue<?> value : docPartRow) {
-                        placeHolder.index = parameterIndex;
-                        placeHolder.value = value;
-                        Binding<?, ?> binding = valueToJooqDataTypeProvider
-                                .getDataType(fieldTypeIterator.next())
-                                .getBinding();
-                        binding.set(placeHolder);
+                        DataTypeForKV dataType = valueToJooqDataTypeProvider
+                                .getDataType(fieldTypeIterator.next());
+                        KVValueConverter valueConverter = dataType
+                                .getKVValueConverter();
+                        SqlBinding sqlBinding = valueConverter
+                                .getSqlBinding();
+                        if (value != null) {
+                            sqlBinding.set(preparedStatement, parameterIndex, valueConverter.to(value));
+                        } else {
+                            preparedStatement.setNull(parameterIndex, dataType.getSQLType());
+                        }
                         parameterIndex++;
                     }
                     preparedStatement.addBatch();
@@ -700,83 +699,6 @@ public class DerbySqlInterface implements SqlInterface {
         }
     }
     
-    @SuppressWarnings("rawtypes")
-    private static class BindingSetStatementContextPlaceHolder implements BindingSetStatementContext {
-        private final DSLContext dsl;
-        private final PreparedStatement statement;
-        
-        public int index;
-        public Object value;
-        
-        public BindingSetStatementContextPlaceHolder(DSLContext dsl, PreparedStatement statement) {
-            super();
-            this.dsl = dsl;
-            this.statement = statement;
-        }
-
-        @Override
-        public Configuration configuration() {
-            return dsl.configuration();
-        }
-
-        @Override
-        public Settings settings() {
-            return dsl.settings();
-        }
-
-        @Override
-        public SQLDialect dialect() {
-            return dsl.dialect();
-        }
-
-        @Override
-        public SQLDialect family() {
-            return dsl.family();
-        }
-
-        @Override
-        public Map<Object, Object> data() {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public Object data(Object key) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public Object data(Object key, Object value) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public PreparedStatement statement() {
-            return statement;
-        }
-
-        @Override
-        public int index() {
-            return index;
-        }
-
-        @Override
-        public Object value() {
-            return value;
-        }
-
-        @Override
-        public BindingSetStatementContext convert(Converter converter) {
-            if (value != null) {
-                this.value = converter.to(value);
-            }
-            return this;
-        }
-    }
-    
-    private String getSqlValue(KVValue<?> value) {
-        return DSL.value(value, valueToJooqDataTypeProvider.getDataType(FieldType.from(value.getType()))).toString();
-    }
-
     @Override
     public int consumeRids(DSLContext dsl, String database, String collection, TableRef tableRef, int count) {
         Record1<Integer> lastRid = dsl.select(metaDocPartTable.LAST_RID).from(metaDocPartTable).where(

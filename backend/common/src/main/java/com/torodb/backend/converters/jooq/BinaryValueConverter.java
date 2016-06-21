@@ -23,6 +23,8 @@ package com.torodb.backend.converters.jooq;
 import org.jooq.impl.SQLDataType;
 
 import com.google.common.io.ByteSource;
+import com.torodb.backend.converters.sql.BinarySqlBinding;
+import com.torodb.backend.converters.sql.SqlBinding;
 import com.torodb.kvdocument.types.BinaryType;
 import com.torodb.kvdocument.types.KVType;
 import com.torodb.kvdocument.values.KVBinary;
@@ -61,6 +63,11 @@ public class BinaryValueConverter implements
     @Override
     public Class<KVBinary> toType() {
         return KVBinary.class;
+    }
+
+    @Override
+    public SqlBinding<byte[]> getSqlBinding() {
+        return BinarySqlBinding.INSTANCE;
     }
 
 }

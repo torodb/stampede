@@ -20,6 +20,11 @@
 
 package com.torodb.backend.converters.jooq;
 
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
+import com.torodb.backend.converters.sql.SqlBinding;
 import com.torodb.backend.udt.MongoTimestampUDT;
 import com.torodb.backend.udt.record.MongoTimestampRecord;
 import com.torodb.kvdocument.types.KVType;
@@ -60,5 +65,28 @@ public class MongoTimestampValueConverter implements
     @Override
     public Class<KVMongoTimestamp> toType() {
         return KVMongoTimestamp.class;
+    }
+
+    @Override
+    public SqlBinding<MongoTimestampRecord> getSqlBinding() {
+        return MongoTimestampRecordSqlBinding.INSTANCE;
+    }
+    
+    private static class MongoTimestampRecordSqlBinding implements SqlBinding<MongoTimestampRecord> {
+        
+        private static final MongoTimestampRecordSqlBinding INSTANCE =
+                new MongoTimestampRecordSqlBinding();
+        
+        @Override
+        public MongoTimestampRecord get(ResultSet resultSet, int index) throws SQLException {
+            return (MongoTimestampRecord) resultSet.getObject(index);
+        }
+
+        @Override
+        public void set(PreparedStatement preparedStatement, int parameterIndex, MongoTimestampRecord value)
+                throws SQLException {
+            preparedStatement.setObject(parameterIndex, value);
+        }
+        
     }
 }

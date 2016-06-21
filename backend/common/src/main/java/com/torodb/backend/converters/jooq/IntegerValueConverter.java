@@ -23,6 +23,8 @@ package com.torodb.backend.converters.jooq;
 
 import org.jooq.impl.SQLDataType;
 
+import com.torodb.backend.converters.sql.IntegerSqlBinding;
+import com.torodb.backend.converters.sql.SqlBinding;
 import com.torodb.kvdocument.types.IntegerType;
 import com.torodb.kvdocument.types.KVType;
 import com.torodb.kvdocument.values.KVInteger;
@@ -60,5 +62,9 @@ public class IntegerValueConverter implements KVValueConverter<Integer, KVIntege
     public Class<KVInteger> toType() {
         return KVInteger.class;
     }
-    
+
+    @Override
+    public SqlBinding<Integer> getSqlBinding() {
+        return IntegerSqlBinding.INSTANCE;
+    }
 }

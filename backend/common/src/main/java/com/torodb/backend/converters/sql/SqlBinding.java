@@ -18,23 +18,13 @@
  *     
  */
 
+package com.torodb.backend.converters.sql;
 
-package com.torodb.backend.converters.jooq;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
-import org.jooq.Converter;
-
-import com.torodb.backend.converters.sql.SqlBinding;
-import com.torodb.kvdocument.types.KVType;
-import com.torodb.kvdocument.values.KVValue;
-
-/**
- *
- * @param <DBT> data base type
- * @param <V> a value of the given Java type
- */
-public interface KVValueConverter<DBT, V extends KVValue<?>> extends Converter<DBT, V> {
-    
-    public KVType getErasuredType();
-    
-    public SqlBinding<DBT> getSqlBinding();
+public interface SqlBinding<T> {
+    public T get(ResultSet resultSet, int index) throws SQLException;
+    public void set(PreparedStatement preparedStatement, int parameterIndex, T value) throws SQLException;
 }

@@ -25,6 +25,9 @@ import org.jooq.util.derby.DerbyDataType;
 import com.google.common.io.ByteSource;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.backend.converters.jooq.KVValueConverter;
+import com.torodb.backend.converters.sql.BinarySqlBinding;
+import com.torodb.backend.converters.sql.SqlBinding;
+import com.torodb.backend.derby.converters.jooq.binding.VarcharForBitDataBinding;
 import com.torodb.kvdocument.types.BinaryType;
 import com.torodb.kvdocument.types.KVType;
 import com.torodb.kvdocument.values.KVBinary;
@@ -38,7 +41,7 @@ public class BinaryValueConverter implements
         KVValueConverter<byte[], KVBinary> {
     private static final long serialVersionUID = 1L;
 
-    public static final DataTypeForKV<KVBinary> TYPE = DataTypeForKV.from(DerbyDataType.VARCHARFORBITDATA, new BinaryValueConverter());
+    public static final DataTypeForKV<KVBinary> TYPE = VarcharForBitDataBinding.fromKVValue(KVBinary.class, new BinaryValueConverter(), 32672);
 
     @Override
     public KVType getErasuredType() {
@@ -63,5 +66,10 @@ public class BinaryValueConverter implements
     @Override
     public Class<KVBinary> toType() {
         return KVBinary.class;
+    }
+
+    @Override
+    public SqlBinding<byte[]> getSqlBinding() {
+        return BinarySqlBinding.INSTANCE;
     }
 }

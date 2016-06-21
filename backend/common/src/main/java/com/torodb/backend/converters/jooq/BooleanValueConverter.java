@@ -22,6 +22,8 @@ package com.torodb.backend.converters.jooq;
 
 import org.jooq.impl.SQLDataType;
 
+import com.torodb.backend.converters.sql.BooleanSqlBinding;
+import com.torodb.backend.converters.sql.SqlBinding;
 import com.torodb.kvdocument.types.BooleanType;
 import com.torodb.kvdocument.types.KVType;
 import com.torodb.kvdocument.values.KVBoolean;
@@ -57,6 +59,11 @@ public class BooleanValueConverter implements KVValueConverter<Boolean, KVBoolea
     @Override
     public Class<KVBoolean> toType() {
         return KVBoolean.class;
+    }
+
+    @Override
+    public SqlBinding<Boolean> getSqlBinding() {
+        return BooleanSqlBinding.INSTANCE;
     }
 
 }

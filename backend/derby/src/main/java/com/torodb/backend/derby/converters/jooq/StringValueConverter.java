@@ -26,6 +26,8 @@ import org.jooq.impl.SQLDataType;
 
 import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.backend.converters.jooq.KVValueConverter;
+import com.torodb.backend.converters.sql.SqlBinding;
+import com.torodb.backend.converters.sql.StringSqlBinding;
 import com.torodb.kvdocument.types.KVType;
 import com.torodb.kvdocument.types.StringType;
 import com.torodb.kvdocument.values.KVString;
@@ -64,6 +66,11 @@ public class StringValueConverter implements KVValueConverter<String, KVString>{
     @Override
     public Class<KVString> toType() {
         return KVString.class;
+    }
+
+    @Override
+    public SqlBinding<String> getSqlBinding() {
+        return StringSqlBinding.INSTANCE;
     }
     
 }

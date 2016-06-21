@@ -23,6 +23,8 @@ package com.torodb.backend.converters.jooq;
 
 import org.jooq.impl.SQLDataType;
 
+import com.torodb.backend.converters.sql.BooleanSqlBinding;
+import com.torodb.backend.converters.sql.SqlBinding;
 import com.torodb.kvdocument.types.KVType;
 import com.torodb.kvdocument.types.NullType;
 import com.torodb.kvdocument.values.KVNull;
@@ -58,6 +60,11 @@ public class NullValueConverter implements KVValueConverter<Boolean, KVNull>{
     @Override
     public Class<KVNull> toType() {
         return KVNull.class;
+    }
+
+    @Override
+    public SqlBinding<Boolean> getSqlBinding() {
+        return BooleanSqlBinding.INSTANCE;
     }
     
 }

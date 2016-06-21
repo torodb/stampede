@@ -27,6 +27,8 @@ import javax.json.JsonObjectBuilder;
 
 import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.backend.converters.jooq.KVValueConverter;
+import com.torodb.backend.converters.sql.JsonObjectSqlBinding;
+import com.torodb.backend.converters.sql.SqlBinding;
 import com.torodb.kvdocument.types.KVType;
 import com.torodb.kvdocument.types.MongoTimestampType;
 import com.torodb.kvdocument.values.KVMongoTimestamp;
@@ -69,5 +71,10 @@ public class MongoTimestampValueConverter implements
     @Override
     public Class<KVMongoTimestamp> toType() {
         return KVMongoTimestamp.class;
+    }
+
+    @Override
+    public SqlBinding<JsonObject> getSqlBinding() {
+        return JsonObjectSqlBinding.INSTANCE;
     }
 }
