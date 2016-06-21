@@ -45,62 +45,29 @@ public class DefaultToBackendFunctionTest {
     }
 
     @Test
-    public void testApply() {
+    public void testApply_noChanges() {
         MockSettings settings = new MockSettingsImpl().defaultAnswer((t) -> {
             throw new AssertionError("Method " + t.getMethod() + " was not expected to be called");
         });
 
-        CollectionData collectionData = mock(CollectionData.class);
-        
         BatchMetaDocPart allCreatedDocPart = mock(BatchMetaDocPart.class, settings);
         doReturn(false)
                 .when(allCreatedDocPart).isCreatedOnCurrentBatch();
         doReturn(Collections.emptyList())
                 .when(allCreatedDocPart).getOnBatchModifiedMetaFields();
+        doReturn(Collections.emptyList())
+                .when(allCreatedDocPart).getOnBatchModifiedMetaScalars();
         DocPartData allCreatedData = mock(DocPartData.class);
         given(allCreatedData.getMetaDocPart())
                 .willReturn(
-                       allCreatedDocPart 
+                       allCreatedDocPart
                 );
 
-        BatchMetaDocPart withNewColumnsDocPart = mock(BatchMetaDocPart.class, settings);
-        doReturn(false)
-                .when(withNewColumnsDocPart).isCreatedOnCurrentBatch();
-        doReturn(Lists.newArrayList(new ImmutableMetaField("newFieldName", "newFieldId", FieldType.INTEGER)))
-                .when(withNewColumnsDocPart).getOnBatchModifiedMetaFields();
-        DocPartData withNewData = mock(DocPartData.class);
-        given(withNewData.getMetaDocPart())
-                .willReturn(
-                       withNewColumnsDocPart
-                );
-
-        BatchMetaDocPart withNewScalarDocPart = mock(BatchMetaDocPart.class, settings);
-        doReturn(false)
-                .when(withNewScalarDocPart).isCreatedOnCurrentBatch();
-        doReturn(Lists.newArrayList(new ImmutableMetaScalar("newScalarId", FieldType.INTEGER)))
-                .when(withNewScalarDocPart).getOnBatchModifiedMetaScalars();
-        DocPartData withNewScalar = mock(DocPartData.class);
-        given(withNewData.getMetaDocPart())
-                .willReturn(
-                       withNewScalarDocPart
-                );
-        
-        BatchMetaDocPart allNewDocPart = mock(BatchMetaDocPart.class, settings);
-        doReturn(true)
-                .when(allNewDocPart).isCreatedOnCurrentBatch();
-        doReturn(Lists.newArrayList(Lists.newArrayList(new ImmutableMetaField("newFieldName", "newFieldId", FieldType.BOOLEAN))).stream())
-                .when(allNewDocPart).streamFields();
-        doReturn(Lists.newArrayList(new ImmutableMetaScalar("newScalarId", FieldType.BOOLEAN)))
-                .when(allNewDocPart).getOnBatchModifiedMetaScalars();
-        DocPartData allNewData = mock(DocPartData.class);
-        given(allNewData.getMetaDocPart())
-                .willReturn(
-                       allNewDocPart
-                );
+        CollectionData collectionData = mock(CollectionData.class);
 
         given(collectionData.iterator())
                 .willReturn(
-                        Lists.newArrayList(allCreatedData, withNewData, allNewData)
+                        Lists.<DocPartData>newArrayList(allCreatedData)
                         .iterator()
                 );
 
@@ -109,10 +76,9 @@ public class DefaultToBackendFunctionTest {
         ArrayList<BackendTransactionJob> resultList = Lists.newArrayList(result);
 
         //then
-        assertEquals("Expected 6 jobs to do, but " + resultList.size() +" were recived", 6, resultList.size());
+        assertEquals("Expected 1 jobs to do, but " + resultList.size() +" were recived", 1, resultList.size());
 
         {
-            //jobs created from allCreatedDocPart
             Optional<BackendTransactionJob> insertJob = resultList.stream()
                     .filter((job) -> job instanceof InsertBackendJob
                             && ((InsertBackendJob) job).getDataToInsert()
@@ -120,8 +86,43 @@ public class DefaultToBackendFunctionTest {
                     .findAny();
             assertTrue(insertJob.isPresent());
         }
+    }
+
+    @Test
+    public void testApply_newField() {
+        MockSettings settings = new MockSettingsImpl().defaultAnswer((t) -> {
+            throw new AssertionError("Method " + t.getMethod() + " was not expected to be called");
+        });
+
+        BatchMetaDocPart withNewFieldsDocPart = mock(BatchMetaDocPart.class, settings);
+        doReturn(false)
+                .when(withNewFieldsDocPart).isCreatedOnCurrentBatch();
+        doReturn(Lists.newArrayList(new ImmutableMetaField("newFieldName", "newFieldId", FieldType.INTEGER)))
+                .when(withNewFieldsDocPart).getOnBatchModifiedMetaFields();
+        doReturn(Collections.emptyList())
+                .when(withNewFieldsDocPart).getOnBatchModifiedMetaScalars();
+        DocPartData withNewData = mock(DocPartData.class);
+        given(withNewData.getMetaDocPart())
+                .willReturn(
+                       withNewFieldsDocPart
+                );
+
+        CollectionData collectionData = mock(CollectionData.class);
+
+        given(collectionData.iterator())
+                .willReturn(
+                        Lists.<DocPartData>newArrayList(withNewData)
+                        .iterator()
+                );
+
+        //when
+        Iterable<BackendTransactionJob> result = fun.apply(collectionData);
+        ArrayList<BackendTransactionJob> resultList = Lists.newArrayList(result);
+
+        //then
+        assertEquals("Expected 2 jobs to do, but " + resultList.size() +" were recived", 2, resultList.size());
+
         {
-            //jobs created from withNewColumnsDocPart
             Optional<BackendTransactionJob> insertJob = resultList.stream()
                     .filter((job) -> job instanceof InsertBackendJob
                             && ((InsertBackendJob) job).getDataToInsert()
@@ -134,13 +135,13 @@ public class DefaultToBackendFunctionTest {
                             return false;
                         }
                         AddFieldDDLJob castedJob = (AddFieldDDLJob) job;
-                        return castedJob.getDocPart().equals(withNewColumnsDocPart)
+                        return castedJob.getDocPart().equals(withNewFieldsDocPart)
                                 && castedJob.getField().getName().equals("newFieldName")
                                 && castedJob.getField().getIdentifier().equals("newFieldId");
                     })
                     .findAny();
             assertTrue(addFieldJob.isPresent());
-            
+
             int addFieldIndex = resultList.indexOf(addFieldJob.get());
             int insertIndex = resultList.indexOf(insertJob.get());
             assert addFieldIndex >= 0;
@@ -150,9 +151,44 @@ public class DefaultToBackendFunctionTest {
                     + " and the insert job has index " + insertIndex,
                     addFieldIndex < insertIndex);
         }
+    }
+
+    @Test
+    public void testApply_newScalar() {
+        MockSettings settings = new MockSettingsImpl().defaultAnswer((t) -> {
+            throw new AssertionError("Method " + t.getMethod() + " was not expected to be called");
+        });
+
+        BatchMetaDocPart withNewScalarDocPart = mock(BatchMetaDocPart.class, settings);
+        doReturn(false)
+                .when(withNewScalarDocPart).isCreatedOnCurrentBatch();
+        doReturn(Collections.emptyList())
+                .when(withNewScalarDocPart).getOnBatchModifiedMetaFields();
+        doReturn(Lists.newArrayList(new ImmutableMetaScalar("newScalarId", FieldType.INTEGER)))
+                .when(withNewScalarDocPart).getOnBatchModifiedMetaScalars();
+        DocPartData withNewScalar = mock(DocPartData.class);
+        given(withNewScalar.getMetaDocPart())
+                .willReturn(
+                       withNewScalarDocPart
+                );
+
+
+        CollectionData collectionData = mock(CollectionData.class);
+
+        given(collectionData.iterator())
+                .willReturn(
+                        Lists.<DocPartData>newArrayList(withNewScalar)
+                        .iterator()
+                );
+
+        //when
+        Iterable<BackendTransactionJob> result = fun.apply(collectionData);
+        ArrayList<BackendTransactionJob> resultList = Lists.newArrayList(result);
+
+        //then
+        assertEquals("Expected 2 jobs to do, but " + resultList.size() +" were recived", 2, resultList.size());
 
         {
-            //jobs created from withNewScalarDocPart
             Optional<BackendTransactionJob> insertJob = resultList.stream()
                     .filter((job) -> job instanceof InsertBackendJob
                             && ((InsertBackendJob) job).getDataToInsert()
@@ -165,7 +201,7 @@ public class DefaultToBackendFunctionTest {
                             return false;
                         }
                         AddScalarDDLJob castedJob = (AddScalarDDLJob) job;
-                        return castedJob.getDocPart().equals(withNewScalar)
+                        return castedJob.getDocPart().equals(withNewScalarDocPart)
                                 && castedJob.getScalar().getIdentifier().equals("newScalarId")
                                 && castedJob.getScalar().getType().equals(FieldType.INTEGER);
                     })
@@ -181,9 +217,43 @@ public class DefaultToBackendFunctionTest {
                     + " and the insert job has index " + insertIndex,
                     addScalarIndex < insertIndex);
         }
+    }
+
+    @Test
+    public void testApply_newDocPart() {
+        MockSettings settings = new MockSettingsImpl().defaultAnswer((t) -> {
+            throw new AssertionError("Method " + t.getMethod() + " was not expected to be called");
+        });
+        
+        BatchMetaDocPart allNewDocPart = mock(BatchMetaDocPart.class, settings);
+        doReturn(true)
+                .when(allNewDocPart).isCreatedOnCurrentBatch();
+        doReturn(Lists.newArrayList(Lists.newArrayList(new ImmutableMetaField("newFieldName", "newFieldId", FieldType.BOOLEAN))).stream())
+                .when(allNewDocPart).streamFields();
+        doReturn(Lists.newArrayList(new ImmutableMetaScalar("newScalarId", FieldType.BOOLEAN)).stream())
+                .when(allNewDocPart).streamScalars();
+        DocPartData allNewData = mock(DocPartData.class);
+        given(allNewData.getMetaDocPart())
+                .willReturn(
+                       allNewDocPart
+                );
+
+        CollectionData collectionData = mock(CollectionData.class);
+
+        given(collectionData.iterator())
+                .willReturn(
+                        Lists.<DocPartData>newArrayList(allNewData)
+                        .iterator()
+                );
+
+        //when
+        Iterable<BackendTransactionJob> result = fun.apply(collectionData);
+        ArrayList<BackendTransactionJob> resultList = Lists.newArrayList(result);
+
+        //then
+        assertEquals("Expected 4 jobs to do, but " + resultList.size() +" were recived", 4, resultList.size());
 
         {
-            //jobs created from allNewDocPart
             Optional<BackendTransactionJob> insertJob = resultList.stream()
                     .filter((job) -> job instanceof InsertBackendJob
                             && ((InsertBackendJob) job).getDataToInsert()
@@ -202,6 +272,18 @@ public class DefaultToBackendFunctionTest {
                     })
                     .findAny();
             assertTrue(addFieldJob.isPresent());
+            Optional<BackendTransactionJob> addScalarJob = resultList.stream()
+                    .filter((job) -> {
+                        if (!(job instanceof AddScalarDDLJob)) {
+                            return false;
+                        }
+                        AddScalarDDLJob castedJob = (AddScalarDDLJob) job;
+                        return castedJob.getDocPart().equals(allNewDocPart)
+                                && castedJob.getScalar().getIdentifier().equals("newScalarId")
+                                && castedJob.getScalar().getType().equals(FieldType.BOOLEAN);
+                    })
+                    .findAny();
+            assertTrue(addScalarJob.isPresent());
             Optional<BackendTransactionJob> createDocPartJob = resultList.stream()
                     .filter((job) -> {
                         if (!(job instanceof AddDocPartDDLJob)) {
@@ -215,14 +297,20 @@ public class DefaultToBackendFunctionTest {
 
             int createDocPartIndex = resultList.indexOf(createDocPartJob.get());
             int addFieldIndex = resultList.indexOf(addFieldJob.get());
+            int addScalarIndex = resultList.indexOf(addScalarJob.get());
             int insertIndex = resultList.indexOf(insertJob.get());
             assert createDocPartIndex >= 0;
             assert addFieldIndex >= 0;
+            assert addScalarIndex >= 0;
             assert insertIndex >= 0;
             assertTrue("For a given doc part, all related add fields jobs must be executed before insert "
                     + "jobs, but in this case the add field job has index " + addFieldIndex
                     + " and the insert job has index " + insertIndex,
                     addFieldIndex < insertIndex);
+            assertTrue("For a given doc part, all related add scalar jobs must be executed before insert "
+                    + "jobs, but in this case the add scalr job has index " + addScalarIndex
+                    + " and the insert job has index " + insertIndex,
+                    addScalarIndex < insertIndex);
             assertTrue("For a given doc part, all related create doc part jobs must be executed "
                     + "before add field jobs, but in this case the create doc part job has index "
                     + createDocPartIndex + " and "
