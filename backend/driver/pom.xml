@@ -15,9 +15,9 @@
     <artifactId>driver-parent</artifactId>
     <packaging>pom</packaging>
 
-    <name>Backends database drivers</name>
+    <name>ToroDB-poc: Database drivers</name>
     <description>
-        Parent project for the backend database drivers.
+        Parent project for the database drivers.
         Drivers are kept independent of the database implementation as some databases may share the same drivers
         (for instance, many Postgres-derived databases use the same JDBC drivers, as they implement the same wire
         protocol). However, database-dependent configuration is possible from the database backend module.

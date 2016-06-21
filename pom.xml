@@ -88,6 +88,7 @@
         <module>common</module>
         <module>kvdocument</module>
         <!--<module>query</module>-->
+        <module>metainfo-cache</module>
         <module>backend</module>
         <module>core</module>
         <module>d2r</module>
