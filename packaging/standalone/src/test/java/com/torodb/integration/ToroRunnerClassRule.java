@@ -32,6 +32,7 @@ import com.torodb.packaging.util.Log4jUtils.AppenderListener;
 import java.io.File;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.time.Clock;
 import java.util.*;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
@@ -171,7 +172,7 @@ public class ToroRunnerClassRule implements TestRule {
 				@Override
 				public void run() {
                     try {
-                        torodbServer = ToroDBServer.create(config);
+                        torodbServer = ToroDBServer.create(config, Clock.systemUTC());
                         torodbServer.startAsync();
                         torodbServer.awaitRunning();
 

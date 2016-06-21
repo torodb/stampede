@@ -1,57 +1,5 @@
 package com.torodb.backend.derby;
 
-import java.io.IOException;
-import java.io.Serializable;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import javax.annotation.Nonnull;
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.jooq.Configuration;
-import org.jooq.Converter;
-import org.jooq.DSLContext;
-import org.jooq.Field;
-import org.jooq.Query;
-import org.jooq.Record1;
-import org.jooq.SQLDialect;
-import org.jooq.exception.DataAccessException;
-import org.jooq.impl.DSL;
-
-/*
- *     This file is part of ToroDB.
- *
- *     ToroDB is free software: you can redistribute it and/or modify
- *     it under the terms of the GNU Affero General Public License as published by
- *     the Free Software Foundation, either version 3 of the License, or
- *     (at your option) any later version.
- *
- *     ToroDB is distributed in the hope that it will be useful,
- *     but WITHOUT ANY WARRANTY; without even the implied warranty of
- *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *     GNU Affero General Public License for more details.
- *
- *     You should have received a copy of the GNU Affero General Public License
- *     along with ToroDB. If not, see <http://www.gnu.org/licenses/>.
- *
- *     Copyright (c) 2014, 8Kdata Technology
- *     
- */
-
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -63,19 +11,11 @@ import com.torodb.backend.converters.TableRefConverter;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.backend.converters.jooq.ValueToJooqDataTypeProvider;
 import com.torodb.backend.derby.converters.jooq.DerbyValueToJooqDataTypeProvider;
-import com.torodb.backend.derby.tables.DerbyMetaCollectionTable;
-import com.torodb.backend.derby.tables.DerbyMetaDatabaseTable;
-import com.torodb.backend.derby.tables.DerbyMetaDocPartTable;
-import com.torodb.backend.derby.tables.DerbyMetaFieldTable;
-import com.torodb.backend.derby.tables.DerbyMetaScalarTable;
+import com.torodb.backend.derby.tables.*;
 import com.torodb.backend.index.NamedDbIndex;
 import com.torodb.backend.meta.TorodbSchema;
-import com.torodb.backend.tables.MetaCollectionTable;
-import com.torodb.backend.tables.MetaDatabaseTable;
-import com.torodb.backend.tables.MetaDocPartTable;
 import com.torodb.backend.tables.MetaDocPartTable.DocPartTableFields;
-import com.torodb.backend.tables.MetaFieldTable;
-import com.torodb.backend.tables.MetaScalarTable;
+import com.torodb.backend.tables.*;
 import com.torodb.core.TableRef;
 import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.d2r.DocPartResult;
@@ -84,12 +24,24 @@ import com.torodb.core.d2r.DocPartRow;
 import com.torodb.core.exceptions.SystemException;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.transaction.RollbackException;
-import com.torodb.core.transaction.metainf.FieldType;
-import com.torodb.core.transaction.metainf.MetaCollection;
-import com.torodb.core.transaction.metainf.MetaDatabase;
-import com.torodb.core.transaction.metainf.MetaDocPart;
-import com.torodb.core.transaction.metainf.MetaField;
+import com.torodb.core.transaction.metainf.*;
 import com.torodb.kvdocument.values.KVValue;
+import java.io.IOException;
+import java.io.Serializable;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Comparator;
+import java.util.*;
+import javax.annotation.Nonnull;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.jooq.*;
+import org.jooq.exception.DataAccessException;
+import org.jooq.impl.DSL;
 
 /**
  *
@@ -517,6 +469,12 @@ public class DerbySqlInterface implements SqlInterface {
                     .append("\",");
             });
             sb.setCharAt(sb.length() - 1, ' ');
+            metaDocPart.streamScalars().forEach(metaScalar -> {
+                sb.append('"')
+                    .append(metaScalar.getIdentifier())
+                    .append("\",");
+            });
+            sb.setCharAt(sb.length() - 1, ' ');
             sb
                 .append("FROM \"")
                 .append(metaDatabase.getIdentifier())
@@ -633,7 +591,8 @@ public class DerbySqlInterface implements SqlInterface {
         try {
             MetaDocPart metaDocPart = docPartData.getMetaDocPart();
             Iterator<MetaField> metaFieldIterator = docPartData.orderedMetaFieldIterator();
-            standardInsertDocPartData(dsl, schemaName, metaDocPart, metaFieldIterator, docPartRowIterator);
+            Iterator<MetaScalar> metaScalarIterator = docPartData.orderedMetaScalarIterator();
+            standardInsertDocPartData(dsl, schemaName, metaDocPart, metaFieldIterator, metaScalarIterator, docPartRowIterator);
         } catch (DataAccessException ex) {
             handleRollbackException(Context.insert, ex);
             throw new SystemException(ex);
@@ -641,7 +600,8 @@ public class DerbySqlInterface implements SqlInterface {
     }
 
     protected void standardInsertDocPartData(DSLContext dsl, String schemaName, MetaDocPart metaDocPart, 
-            Iterator<MetaField> metaFieldIterator, Iterator<DocPartRow> docPartRowIterator) {
+            Iterator<MetaField> metaFieldIterator, Iterator<MetaScalar> metaScalarIterator, 
+            Iterator<DocPartRow> docPartRowIterator) {
         final int maxBatchSize = 1000;
         final StringBuilder insertStatementHeaderBuilder = new StringBuilder(2048);
         insertStatementHeaderBuilder.append("INSERT INTO \"")
@@ -662,7 +622,14 @@ public class DerbySqlInterface implements SqlInterface {
                 .append(metaField.getIdentifier())
                 .append("\",");
         }
+        while (metaScalarIterator.hasNext()) {
+            MetaScalar metaScalar = metaScalarIterator.next();
+            insertStatementHeaderBuilder.append("\"")
+                .append(metaScalar.getIdentifier())
+                .append("\",");
+        }
         insertStatementHeaderBuilder.setCharAt(insertStatementHeaderBuilder.length() - 1, ')');
+        
         insertStatementHeaderBuilder.append(" VALUES ");
         
         final StringBuilder insertStatementBuilder = new StringBuilder(2048);
@@ -683,7 +650,15 @@ public class DerbySqlInterface implements SqlInterface {
                     insertStatementBuilder.append("NULL,");
                 }
             }
-            for (KVValue<?> value : docPartRow) {
+            for (KVValue<?> value : docPartRow.getFieldValues()) {
+                if (value != null) {
+                    insertStatementBuilder.append(getSqlValue(value))
+                        .append(',');
+                } else {
+                    insertStatementBuilder.append("NULL,");
+                }
+            }
+            for (KVValue<?> value : docPartRow.getScalarValues()) {
                 if (value != null) {
                     insertStatementBuilder.append(getSqlValue(value))
                         .append(',');
@@ -847,6 +822,15 @@ public class DerbySqlInterface implements SqlInterface {
 		Query query = dsl.insertInto(metaFieldTable)
 				.set(metaFieldTable.newRecord()
 				.values(databaseName, collectionName, tableRef, fieldName, type, fieldIdentifier));
+		executeQuery(query, Context.ddl);
+	}
+	
+	@Override
+	public void addMetaScalar(DSLContext dsl, String databaseName, String collectionName, TableRef tableRef,
+			String fieldIdentifier, FieldType type) {
+		Query query = dsl.insertInto(metaScalarTable)
+				.set(metaScalarTable.newRecord()
+				.values(databaseName, collectionName, tableRef, type, fieldIdentifier));
 		executeQuery(query, Context.ddl);
 	}
 	

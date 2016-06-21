@@ -85,6 +85,9 @@ public class BackendDocumentTestHelper {
                     metaDocPart.streamFields().forEachOrdered(metaField -> {
                         fields.add(DSL.field(metaField.getIdentifier(), sqlInterface.getDataType(metaField.getType())));
                     });
+                    metaDocPart.streamScalars().forEachOrdered(metaScalar -> {
+                        fields.add(DSL.field(metaScalar.getIdentifier(), sqlInterface.getDataType(metaScalar.getType())));
+                    });
                     sqlInterface.createDocPartTable(dsl, schema.databaseSchemaName, metaDocPart.getIdentifier(), fields);
                 });
             });

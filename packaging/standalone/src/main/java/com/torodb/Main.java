@@ -33,6 +33,7 @@ import com.torodb.packaging.config.util.ConfigUtils;
 import com.torodb.packaging.util.Log4jUtils;
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.Clock;
 import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
 import org.apache.logging.log4j.LogManager;
@@ -106,7 +107,7 @@ public class Main {
 		}
 		
 		try {
-            ToroDBServer toroDBServer = ToroDBServer.create(config);
+            ToroDBServer toroDBServer = ToroDBServer.create(config, Clock.systemDefaultZone());
 
             toroDBServer.startAsync();
 		} catch (ProvisionException pe) {

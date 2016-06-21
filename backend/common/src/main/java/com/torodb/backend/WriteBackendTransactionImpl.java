@@ -73,6 +73,7 @@ public class WriteBackendTransactionImpl implements WriteBackendTransaction {
         ImmutableList.Builder<Field<?>> docPartFieldsBuilder = ImmutableList.<Field<?>>builder()
             .addAll(sqlInterface.getDocPartTableInternalFields(newDocPart));
         newDocPart.streamFields().map(this::buildField).forEach(docPartFieldsBuilder::add);
+        newDocPart.streamScalars().map(this::buildScalar).forEach(docPartFieldsBuilder::add);
         List<Field<?>> fields = docPartFieldsBuilder.build();
         sqlInterface.createDocPartTable(dsl, db.getIdentifier(), newDocPart.getIdentifier(), fields);
     }
@@ -87,16 +88,22 @@ public class WriteBackendTransactionImpl implements WriteBackendTransaction {
                 docPart.getIdentifier(),buildField(newField));
     }
 
-    @Override
-    public void addScalar(MetaDatabase db, MetaCollection col, MetaDocPart docPart, MetaScalar newScalar) {
-        Preconditions.checkState(!closed, "This transaction is closed");
-        throw new UnsupportedOperationException("Not supported yet."); //TODO: Implement
-    }
+	@Override
+	public void addScalar(MetaDatabase db, MetaCollection col, MetaDocPart docPart, MetaScalar newScalar) {
+		Preconditions.checkState(!closed, "This transaction is closed");
 
+		sqlInterface.addMetaScalar(dsl, db.getName(), col.getName(), docPart.getTableRef(), 
+				newScalar.getIdentifier(), newScalar.getType());
+		sqlInterface.addColumnToDocPartTable(dsl, db.getIdentifier(), docPart.getIdentifier(), 
+				buildScalar(newScalar));
+	}
+	
 	private Field<?> buildField(MetaField newField) {
-        Preconditions.checkState(!closed, "This transaction is closed");
-
 		return DSL.field(newField.getIdentifier(), sqlInterface.getDataType(newField.getType()));
+	}
+	
+	private Field<?> buildScalar(MetaScalar newScalar) {
+		return DSL.field(newScalar.getIdentifier(), sqlInterface.getDataType(newScalar.getType()));
 	}
 
     @Override
@@ -131,6 +138,7 @@ public class WriteBackendTransactionImpl implements WriteBackendTransaction {
         if (!closed) {
             closed = true;
             try {
+//                connection.rollback();
                 connection.close();
             } catch (SQLException ex) {
                 sqlInterface.handleRollbackException(Context.close, ex);
