@@ -1,5 +1,6 @@
 package com.torodb.d2r;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
@@ -11,6 +12,11 @@ public class MockedResultSet {
 
 	public MockedResultSet(MockedRow... rows) {
 		List<MockedRow> rowsList = Arrays.asList(rows);
+		iterator = rowsList.iterator();
+	}
+	
+	public MockedResultSet(List<MockedRow> rows) {
+		List<MockedRow> rowsList = new ArrayList<>(rows);
 		iterator = rowsList.iterator();
 	}
 

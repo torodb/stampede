@@ -29,15 +29,19 @@ public class BackendTranslatorMocked implements R2DBackendTranslator<MockedResul
 	@Override
 	public KVValue<?> getValue(FieldType type, MockedResultSet resultSet, InternalFields internalFields, int fieldIndex) {
 		MockedRow result = resultSet.getCurrent();
-		return convertValue(result.get(fieldIndex));
+		return convertValue(type, result.get(fieldIndex));
 	}
 
-	private KVValue<?> convertValue(Object value) {
-		if (value == null){
-			return null;
-		}
-		if (value == KVNull.getInstance()){
-			return KVNull.getInstance();
+	private KVValue<?> convertValue(FieldType type, Object value) {
+		if (type == FieldType.NULL){
+			if (value==null){
+				return null;
+			}
+			if (value.equals(true)){
+				return KVNull.getInstance();
+			}else{
+				return null;
+			}
 		}
 		if (value instanceof String) {
 			return new StringKVString((String) value);
@@ -50,7 +54,7 @@ public class BackendTranslatorMocked implements R2DBackendTranslator<MockedResul
 		} else if (value instanceof Boolean) {
 			return KVBoolean.from((boolean) value);
 		} else {
-			throw new RuntimeException("Unexpected type value");
+			return null;
 		}
 	}
 
