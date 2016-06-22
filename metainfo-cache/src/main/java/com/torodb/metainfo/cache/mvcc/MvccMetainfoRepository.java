@@ -2,7 +2,6 @@
 package com.torodb.metainfo.cache.mvcc;
 
 import com.google.common.base.Preconditions;
-import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot.ImmutableMetaSnapshotFactory;
 import com.torodb.core.transaction.metainf.*;
 import com.torodb.core.transaction.metainf.utils.DefaultMergeChecker;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -23,6 +22,7 @@ public class MvccMetainfoRepository implements MetainfoRepository {
     private ImmutableMetaSnapshot currentSnapshot;
     private final MergeChecker mergeChecker;
 
+    @Inject
     public MvccMetainfoRepository() {
         this.currentSnapshot = new ImmutableMetaSnapshot.Builder().build();
         mergeChecker = DefaultMergeChecker::checkMerge;
@@ -31,11 +31,6 @@ public class MvccMetainfoRepository implements MetainfoRepository {
     public MvccMetainfoRepository(ImmutableMetaSnapshot currentView) {
         this.currentSnapshot = currentView;
         mergeChecker = DefaultMergeChecker::checkMerge;
-    }
-
-    @Inject
-    public MvccMetainfoRepository(ImmutableMetaSnapshotFactory factory) {
-        this(factory.getImmutableMetaSnapshot());
     }
 
     @Override

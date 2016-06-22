@@ -6,7 +6,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Stream;
-import javax.annotation.Nonnull;
 
 /**
  *
@@ -82,11 +81,5 @@ public class ImmutableMetaSnapshot implements MetaSnapshot {
             built = true;
             return new ImmutableMetaSnapshot(dbsByIdentifier);
         }
-    }
-
-    public static interface ImmutableMetaSnapshotFactory {
-
-        @Nonnull
-        ImmutableMetaSnapshot getImmutableMetaSnapshot();
     }
 }

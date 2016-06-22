@@ -24,7 +24,6 @@ package com.torodb;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.internal.Console;
 import com.google.common.base.Charsets;
-import com.google.inject.ProvisionException;
 import com.torodb.packaging.ToroDBServer;
 import com.torodb.packaging.config.model.Config;
 import com.torodb.packaging.config.model.backend.postgres.Postgres;
@@ -110,11 +109,11 @@ public class Main {
             ToroDBServer toroDBServer = ToroDBServer.create(config, Clock.systemDefaultZone());
 
             toroDBServer.startAsync();
-		} catch (ProvisionException pe) {
-            LOGGER.error("Fatal error on initialization", pe);
-			String causeMessage = pe.getMessage();
+		} catch (Throwable ex) {
+            LOGGER.error("Fatal error on initialization", ex);
+			String causeMessage = ex.getMessage();
 			if (causeMessage == null) {
-				causeMessage = pe.getCause().getMessage();
+				causeMessage = ex.getCause().getMessage();
 			}
 			JCommander.getConsole().println(causeMessage);
 			System.exit(1);

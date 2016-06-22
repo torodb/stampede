@@ -20,73 +20,52 @@
 
 package com.torodb.backend.derby;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-
-import java.io.IOException;
+import com.torodb.backend.*;
+import com.torodb.backend.converters.jooq.DataTypeForKV;
+import com.torodb.backend.meta.SnapshotUpdater;
+import com.torodb.core.d2r.CollectionData;
+import com.torodb.core.d2r.DocPartResults;
+import com.torodb.core.document.ToroDocument;
+import com.torodb.core.transaction.metainf.MetainfoRepository.SnapshotStage;
+import com.torodb.core.transaction.metainf.*;
+import com.torodb.kvdocument.values.KVDocument;
+import com.torodb.kvdocument.values.KVInteger;
+import com.torodb.kvdocument.values.KVValue;
+import com.torodb.kvdocument.values.heap.ListKVArray;
+import com.torodb.metainfo.cache.mvcc.MvccMetainfoRepository;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
 import org.jooq.Converter;
 import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.torodb.backend.AbstractBackendTest;
-import com.torodb.backend.BackendDocumentTestHelper;
-import com.torodb.backend.BackendTestHelper;
-import com.torodb.backend.DbBackend;
-import com.torodb.backend.SqlInterface;
-import com.torodb.backend.converters.jooq.DataTypeForKV;
-import com.torodb.backend.exceptions.InvalidDatabaseException;
-import com.torodb.backend.meta.TorodbMeta;
-import com.torodb.core.d2r.CollectionData;
-import com.torodb.core.d2r.DocPartResults;
-import com.torodb.core.document.ToroDocument;
-import com.torodb.core.transaction.metainf.FieldType;
-import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
-import com.torodb.core.transaction.metainf.ImmutableMetaDatabase;
-import com.torodb.core.transaction.metainf.ImmutableMetaDocPart;
-import com.torodb.core.transaction.metainf.ImmutableMetaField;
-import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
-import com.torodb.core.transaction.metainf.MetaCollection;
-import com.torodb.core.transaction.metainf.MetaDatabase;
-import com.torodb.core.transaction.metainf.MetaDocPart;
-import com.torodb.core.transaction.metainf.MetaField;
-import com.torodb.core.transaction.metainf.MetaSnapshot;
-import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
-import com.torodb.core.transaction.metainf.WrapperMutableMetaSnapshot;
-import com.torodb.kvdocument.values.KVDocument;
-import com.torodb.kvdocument.values.KVInteger;
-import com.torodb.kvdocument.values.KVValue;
-import com.torodb.kvdocument.values.heap.ListKVArray;
+import static org.junit.Assert.*;
 
 public class BackendDerbyTest extends AbstractBackendTest {
-	
+
+    /**
+     * This test whether the snapshot can be build and if it can be rebuild.
+     * @throws Exception
+     */
     @Test
-    public void testTorodbMeta() throws Exception {
-        TorodbMeta tododbMeta = buildTorodbMeta();
-        assertFalse(tododbMeta.getCurrentMetaSnapshot().streamMetaDatabases().iterator().hasNext());
+    public void testSnapshotUpdater() throws Exception {
+        MetaSnapshot metaSnapshot = buildMetaSnapshot();
+        assertFalse(metaSnapshot.streamMetaDatabases().iterator().hasNext());
         
-    	tododbMeta = buildTorodbMeta();
-        assertFalse(tododbMeta.getCurrentMetaSnapshot().streamMetaDatabases().iterator().hasNext());
+    	metaSnapshot = buildMetaSnapshot();
+        assertFalse(metaSnapshot.streamMetaDatabases().iterator().hasNext());
     }
     
     @Test
-    public void testTorodbMetaStoreAndReload() throws Exception {
-       	buildTorodbMeta();
+    public void testSnapshotUpdaterStoreAndReload() throws Exception {
+       	buildMetaSnapshot();
 
        	try (Connection connection = sqlInterface.createWriteConnection()) {
             BackendTestHelper helper = new BackendTestHelper(sqlInterface, dsl(connection), schema);
@@ -97,9 +76,8 @@ public class BackendDerbyTest extends AbstractBackendTest {
             helper.createDocPartTable(schema.subDocPartTableName, sqlInterface.getMetaDocPartTable().FIRST_FIELDS, schema.subDocPartFields.values());
             connection.commit();
         }
-        TorodbMeta torodbMeta = buildTorodbMeta();
         
-        MetaSnapshot metaSnapshot = torodbMeta.getCurrentMetaSnapshot();
+        MetaSnapshot metaSnapshot = buildMetaSnapshot();
         MetaDatabase metaDatabase = metaSnapshot.getMetaDatabaseByName(schema.databaseName);
         
         assertNotNull(metaDatabase);
@@ -129,9 +107,7 @@ public class BackendDerbyTest extends AbstractBackendTest {
             connection.commit();
         }
         
-        torodbMeta = buildTorodbMeta();
-        
-        metaSnapshot = torodbMeta.getCurrentMetaSnapshot();
+        metaSnapshot = buildMetaSnapshot();
         metaDatabase = metaSnapshot.getMetaDatabaseByName(schema.databaseName);
         
         assertNotNull(metaDatabase);
@@ -163,7 +139,7 @@ public class BackendDerbyTest extends AbstractBackendTest {
 
 	@Test
     public void testConsumeRids() throws Exception {
-		 buildTorodbMeta();
+		 buildMetaSnapshot();
 
 		 try (Connection connection = sqlInterface.createWriteConnection()) {
              DSLContext dsl = dsl(connection);
@@ -185,7 +161,7 @@ public class BackendDerbyTest extends AbstractBackendTest {
 
     @Test
     public void testTorodbLastRowId() throws Exception {
-		 buildTorodbMeta();
+		buildMetaSnapshot();
     	 
         try (Connection connection = sqlInterface.createWriteConnection()) {
         	DSLContext dsl = dsl(connection);
@@ -200,8 +176,7 @@ public class BackendDerbyTest extends AbstractBackendTest {
             		sqlInterface.getMetaDocPartTable().FIRST_FIELDS,
             		schema.subDocPartFields.values());
 
-            TorodbMeta torodbMeta = new TorodbMeta(tableRefFactory, sqlInterface);
-            ImmutableMetaSnapshot snapshot = torodbMeta.getCurrentMetaSnapshot();
+            ImmutableMetaSnapshot snapshot = buildMetaSnapshot();
             
             ImmutableMetaDatabase metaDatabase = snapshot.getMetaDatabaseByName(schema.databaseName);
         	ImmutableMetaCollection metaCollection = metaDatabase.getMetaCollectionByName(schema.collectionName);
@@ -232,7 +207,7 @@ public class BackendDerbyTest extends AbstractBackendTest {
     
     @Test
     public void testTorodbInsertDocPart() throws Exception {
-    	buildTorodbMeta();
+    	buildMetaSnapshot();
     	
         try (Connection connection = sqlInterface.createWriteConnection()) {
             DSLContext dsl = dsl(connection);
@@ -529,9 +504,14 @@ public class BackendDerbyTest extends AbstractBackendTest {
     private FieldType fieldType(Field<?> field) {
     	return FieldType.from(((DataTypeForKV<?>) field.getDataType()).getKVValueConverter().getErasuredType());
     }
-    
-    private TorodbMeta buildTorodbMeta() throws SQLException, IOException, InvalidDatabaseException{
-    	return new TorodbMeta(tableRefFactory, sqlInterface);
+
+    private ImmutableMetaSnapshot buildMetaSnapshot() {
+        MvccMetainfoRepository metainfoRepository = new MvccMetainfoRepository();
+        SnapshotUpdater.updateSnapshot(metainfoRepository, sqlInterface, tableRefFactory);
+
+        try (SnapshotStage stage = metainfoRepository.startSnapshotStage()) {
+            return stage.createImmutableSnapshot();
+        }
     }
     
 	private DSLContext dsl(Connection connection){

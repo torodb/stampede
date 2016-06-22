@@ -66,10 +66,13 @@ public class ToroDBServer extends AbstractIdleService {
         torod.startAsync();
         mongod.startAsync();
 
+        LOGGER.debug("Waiting for Mongod to be running");
         mongod.awaitRunning();
         netty.startAsync();
 
+        LOGGER.debug("Waiting for Torod to be running");
         torod.awaitRunning();
+        LOGGER.debug("Waiting for Netty to be running");
         netty.awaitRunning();
     }
 
