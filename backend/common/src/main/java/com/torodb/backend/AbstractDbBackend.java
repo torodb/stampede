@@ -20,11 +20,16 @@
 
 package com.torodb.backend;
 
+import java.sql.Connection;
+import java.sql.SQLException;
+
 import javax.annotation.Nonnull;
 import javax.inject.Singleton;
 import javax.sql.DataSource;
 
 import com.google.common.base.Preconditions;
+import com.torodb.backend.ErrorHandler.Context;
+import com.torodb.core.exceptions.SystemException;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
@@ -40,6 +45,7 @@ public abstract class AbstractDbBackend<Configuration extends DbBackendConfigura
             + MIN_SESSION_CONNECTIONS_DATABASE;
 
     private final Configuration configuration;
+    private final ErrorHandler errorHandler;
     private HikariDataSource commonDataSource;
     private HikariDataSource systemDataSource;
     private HikariDataSource globalCursorDataSource;
@@ -51,8 +57,9 @@ public abstract class AbstractDbBackend<Configuration extends DbBackendConfigura
      *
      * @param configuration
      */
-    public AbstractDbBackend(Configuration configuration) {
+    public AbstractDbBackend(Configuration configuration, ErrorHandler errorHandler) {
         this.configuration = configuration;
+        this.errorHandler = errorHandler;
 
         int connectionPoolSize = configuration.getConnectionPoolSize();
         int reservedReadPoolSize = configuration.getReservedReadPoolSize();
@@ -163,6 +170,39 @@ public abstract class AbstractDbBackend<Configuration extends DbBackendConfigura
     @Override
     public long getDefaultCursorTimeout() {
         return configuration.getCursorTimeout();
+    }
+
+    @Override
+    public Connection createSystemConnection() {
+        try {
+            Connection connection = getSystemDataSource().getConnection();
+            return connection;
+        } catch (SQLException ex) {
+            errorHandler.handleRollbackException(Context.get_connection, ex);
+            throw new SystemException("It was not possible to create a system connection", ex);
+        }
+    }
+
+    @Override
+    public Connection createReadOnlyConnection() {
+        try {
+            Connection connection = getGlobalCursorDatasource().getConnection();
+            return connection;
+        } catch (SQLException ex) {
+            errorHandler.handleRollbackException(Context.get_connection, ex);
+            throw new SystemException("It was not possible to create a read only connection", ex);
+        }
+    }
+
+    @Override
+    public Connection createWriteConnection() {
+        try {
+            Connection connection = getSessionDataSource().getConnection();
+            return connection;
+        } catch (SQLException ex) {
+            errorHandler.handleRollbackException(Context.get_connection, ex);
+            throw new SystemException("It was not possible to create a write connection", ex);
+        }
     }
 
     @Override

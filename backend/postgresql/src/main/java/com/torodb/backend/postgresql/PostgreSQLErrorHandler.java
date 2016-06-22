@@ -18,19 +18,15 @@
  *     
  */
 
-package com.torodb.backend;
+package com.torodb.backend.postgresql;
 
-import java.io.Serializable;
-
-import com.torodb.core.backend.IdentifierConstraints;
+import com.torodb.backend.AbstractErrorHandlerInterface;
 
 /**
- * Wrapper interface to define all database-specific SQL code
+ *
  */
-public interface SqlInterface extends 
-    MetaDataReadInterface, MetaDataWriteInterface, 
-    DataTypeProvider, StructureInterface, ReadInterface, WriteInterface, 
-    IdentifierConstraints, ErrorHandler, DslContextFactory, DbBackend, Serializable {
-    //TODO: Try to remove make SqlInterface not serializable
-    
+public class PostgreSQLErrorHandler extends AbstractErrorHandlerInterface {
+    public PostgreSQLErrorHandler() {
+        super("40001", "40P01");
+    }
 }

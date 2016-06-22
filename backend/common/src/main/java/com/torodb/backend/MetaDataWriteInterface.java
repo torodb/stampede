@@ -1,6 +1,4 @@
-package com.torodb.backend.interfaces;
-
-import java.sql.Connection;
+package com.torodb.backend;
 
 import javax.annotation.Nonnull;
 
@@ -9,9 +7,7 @@ import org.jooq.DSLContext;
 import com.torodb.core.TableRef;
 import com.torodb.core.transaction.metainf.FieldType;
 
-public interface WriteMetaDataInterface {
-    @Nonnull Connection createSystemConnection();
-
+public interface MetaDataWriteInterface {
     @Nonnull String createMetaIndexesTableStatement(@Nonnull String schemaName, @Nonnull String tableName, @Nonnull String indexNameColumn, @Nonnull String indexOptionsColumn);
     
     void createMetaDatabaseTable(@Nonnull DSLContext dsl);
@@ -25,6 +21,6 @@ public interface WriteMetaDataInterface {
     void addMetaDocPart(@Nonnull DSLContext dsl, @Nonnull String databaseName, @Nonnull String collectionName, @Nonnull TableRef tableRef, @Nonnull String docPartIdentifier);
     void addMetaField(@Nonnull DSLContext dsl, @Nonnull String databaseName, @Nonnull String collectionName, @Nonnull TableRef tableRef, @Nonnull String fieldName, String fieldIdentifier, FieldType type);
     void addMetaScalar(@Nonnull DSLContext dsl, @Nonnull String databaseName, @Nonnull String collectionName, @Nonnull TableRef tableRef, String fieldIdentifier, FieldType type);
-    
+
     int consumeRids(@Nonnull DSLContext dsl, @Nonnull String database, @Nonnull String collection, @Nonnull TableRef tableRef, int count);
 }

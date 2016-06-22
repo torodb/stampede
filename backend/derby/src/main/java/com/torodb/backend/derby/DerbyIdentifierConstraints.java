@@ -18,19 +18,39 @@
  *     
  */
 
-package com.torodb.backend;
+package com.torodb.backend.derby;
 
-import java.io.Serializable;
+import javax.inject.Singleton;
 
-import com.torodb.core.backend.IdentifierConstraints;
+import com.google.common.collect.ImmutableSet;
+import com.torodb.backend.AbstractIdentifierConstraints;
 
 /**
- * Wrapper interface to define all database-specific SQL code
+ *
  */
-public interface SqlInterface extends 
-    MetaDataReadInterface, MetaDataWriteInterface, 
-    DataTypeProvider, StructureInterface, ReadInterface, WriteInterface, 
-    IdentifierConstraints, ErrorHandler, DslContextFactory, DbBackend, Serializable {
-    //TODO: Try to remove make SqlInterface not serializable
+@Singleton
+public class DerbyIdentifierConstraints extends AbstractIdentifierConstraints {
     
+    public DerbyIdentifierConstraints() {
+        super(
+            ImmutableSet.<String>of(
+                "NULLID",
+                "SQLJ",
+                "SYS",
+                "SYSCAT",
+                "SYSCS_DIAG",
+                "SYSCS_UTIL",
+                "SYSFUN",
+                "SYSIBM",
+                "SYSPROC",
+                "SYSSTAT"
+                ),
+            ImmutableSet.<String>of(
+                ));
+    }
+
+    @Override
+    public int identifierMaxSize() {
+        return 128;
+    }
 }

@@ -8,8 +8,8 @@ import org.jooq.Converter;
 
 import com.torodb.backend.InternalField;
 import com.torodb.backend.SqlInterface;
+import com.torodb.backend.ErrorHandler.Context;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
-import com.torodb.backend.interfaces.ErrorHandlerInterface.Context;
 import com.torodb.backend.tables.MetaDocPartTable;
 import com.torodb.backend.tables.records.MetaDocPartRecord;
 import com.torodb.core.d2r.InternalFields;

@@ -18,19 +18,20 @@
  *     
  */
 
-package com.torodb.backend;
+package com.torodb.backend.derby;
 
-import java.io.Serializable;
-
-import com.torodb.core.backend.IdentifierConstraints;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+import com.torodb.backend.AbstractErrorHandlerInterface;
 
 /**
- * Wrapper interface to define all database-specific SQL code
+ *
  */
-public interface SqlInterface extends 
-    MetaDataReadInterface, MetaDataWriteInterface, 
-    DataTypeProvider, StructureInterface, ReadInterface, WriteInterface, 
-    IdentifierConstraints, ErrorHandler, DslContextFactory, DbBackend, Serializable {
-    //TODO: Try to remove make SqlInterface not serializable
+@Singleton
+public class DerbyErrorHandler extends AbstractErrorHandlerInterface {
     
+    @Inject
+    public DerbyErrorHandler() {
+        super("40001", "40P01");
+    }
 }

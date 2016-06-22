@@ -20,17 +20,31 @@
 
 package com.torodb.backend;
 
-import java.io.Serializable;
+import java.sql.Connection;
 
-import com.torodb.core.backend.IdentifierConstraints;
+import javax.inject.Singleton;
+
+import org.jooq.DSLContext;
+import org.jooq.impl.DSL;
+
+import com.google.inject.Inject;
 
 /**
- * Wrapper interface to define all database-specific SQL code
+ *
  */
-public interface SqlInterface extends 
-    MetaDataReadInterface, MetaDataWriteInterface, 
-    DataTypeProvider, StructureInterface, ReadInterface, WriteInterface, 
-    IdentifierConstraints, ErrorHandler, DslContextFactory, DbBackend, Serializable {
-    //TODO: Try to remove make SqlInterface not serializable
+@Singleton
+public class DslContextFactoryImpl implements DslContextFactory {
     
+    public final DataTypeProvider dataTypeProvider;
+    
+    @Inject
+    public DslContextFactoryImpl(DataTypeProvider dataTypeProvider) {
+        super();
+        this.dataTypeProvider = dataTypeProvider;
+    }
+
+    @Override
+    public DSLContext createDSLContext(Connection connection) {
+        return DSL.using(connection, dataTypeProvider.getDialect());
+    }
 }

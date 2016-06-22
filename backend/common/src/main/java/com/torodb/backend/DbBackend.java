@@ -20,6 +20,8 @@
 
 package com.torodb.backend;
 
+import java.sql.Connection;
+
 import javax.sql.DataSource;
 
 public interface DbBackend {
@@ -27,5 +29,8 @@ public interface DbBackend {
     public DataSource getSystemDataSource();
     public DataSource getGlobalCursorDatasource();
     public long getDefaultCursorTimeout();
+    public Connection createSystemConnection();
+    public Connection createReadOnlyConnection();
+    public Connection createWriteConnection();
     public void shutdown();
 }

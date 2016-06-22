@@ -20,9 +20,12 @@
 
 package com.torodb.backend.derby;
 
+import com.google.inject.Injector;
 import com.torodb.backend.*;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
+import com.torodb.backend.exceptions.InvalidDatabaseException;
 import com.torodb.backend.meta.SnapshotUpdater;
+import com.torodb.backend.meta.TorodbMeta;
 import com.torodb.core.d2r.CollectionData;
 import com.torodb.core.d2r.DocPartResults;
 import com.torodb.core.document.ToroDocument;
@@ -33,6 +36,8 @@ import com.torodb.kvdocument.values.KVInteger;
 import com.torodb.kvdocument.values.KVValue;
 import com.torodb.kvdocument.values.heap.ListKVArray;
 import com.torodb.metainfo.cache.mvcc.MvccMetainfoRepository;
+
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -49,6 +54,37 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 public class BackendDerbyTest extends AbstractBackendTest {
+
+    @Override
+    protected Injector createInjector() {
+        return Derby.createInjector();
+    }
+    
+    @Override
+    protected void cleanDatabase(Injector injector) throws SQLException {
+        Derby.cleanDatabase(injector);
+    }
+
+    private FieldType fieldType(Field<?> field) {
+        return FieldType.from(((DataTypeForKV<?>) field.getDataType()).getKVValueConverter().getErasuredType());
+    }
+
+    private ImmutableMetaSnapshot buildMetaSnapshot() {
+        MvccMetainfoRepository metainfoRepository = new MvccMetainfoRepository();
+        SnapshotUpdater.updateSnapshot(metainfoRepository, sqlInterface, tableRefFactory);
+
+        try (SnapshotStage stage = metainfoRepository.startSnapshotStage()) {
+            return stage.createImmutableSnapshot();
+        }
+    }
+    
+    private TorodbMeta buildTorodbMeta() throws SQLException, IOException, InvalidDatabaseException {
+        return new TorodbMeta(tableRefFactory, sqlInterface);
+    }
+    
+    private DSLContext dsl(Connection connection){
+        return sqlInterface.createDSLContext(connection);
+    }
 
     /**
      * This test whether the snapshot can be build and if it can be rebuild.
@@ -484,37 +520,5 @@ public class BackendDerbyTest extends AbstractBackendTest {
 		return new KVDocument.Builder()
 				.putValue("k", KVInteger.of(1))
 				.build();
-	}
-
-    @Override
-    protected DbBackend createDbBackend()  {
-        return Derby.getDbBackend();
-    }
-
-    @Override
-    protected SqlInterface createSqlInterface(DbBackend dbBackend) {
-        return new DerbySqlInterface(dbBackend);
-    }
-    
-	@Override
-	protected void cleanDatabase(SqlInterface sqlInterface) throws SQLException {
-		Derby.cleanDatabase(sqlInterface);
-	}
-
-    private FieldType fieldType(Field<?> field) {
-    	return FieldType.from(((DataTypeForKV<?>) field.getDataType()).getKVValueConverter().getErasuredType());
-    }
-
-    private ImmutableMetaSnapshot buildMetaSnapshot() {
-        MvccMetainfoRepository metainfoRepository = new MvccMetainfoRepository();
-        SnapshotUpdater.updateSnapshot(metainfoRepository, sqlInterface, tableRefFactory);
-
-        try (SnapshotStage stage = metainfoRepository.startSnapshotStage()) {
-            return stage.createImmutableSnapshot();
-        }
-    }
-    
-	private DSLContext dsl(Connection connection){
-		return sqlInterface.createDSLContext(connection);
 	}
 }

@@ -1,10 +1,10 @@
-package com.torodb.backend.interfaces;
+package com.torodb.backend;
 
 import com.torodb.core.exceptions.user.UserException;
 import java.sql.SQLException;
 import org.jooq.exception.DataAccessException;
 
-public interface ErrorHandlerInterface {
+public interface ErrorHandler {
     public enum Context {
         unknown,
         get_connection,
