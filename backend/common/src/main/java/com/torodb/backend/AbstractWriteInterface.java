@@ -43,6 +43,7 @@ import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.d2r.DocPartRow;
 import com.torodb.core.exceptions.SystemException;
 import com.torodb.core.transaction.metainf.FieldType;
+import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetaField;
 import com.torodb.core.transaction.metainf.MetaScalar;
@@ -71,14 +72,22 @@ public abstract class AbstractWriteInterface implements WriteInterface {
 
     @Override
     public void deleteDocParts(@Nonnull DSLContext dsl,
-            @Nonnull String schemaName, @Nonnull String tableName,
+            @Nonnull String schemaName, @Nonnull MetaCollection metaCollection,
             @Nonnull List<Integer> dids
     ) {
         Preconditions.checkArgument(dids.size() > 0, "At least 1 did must be specified");
         
-        String statement = getDeleteDocPartsStatement(schemaName, tableName, dids);
-        
-        sqlHelper.executeUpdate(dsl, statement, Context.delete);
+        Iterator<? extends MetaDocPart> iterator = metaCollection.streamContainedMetaDocParts().iterator();
+        Connection c = dsl.configuration().connectionProvider().acquire();
+        try{
+	        while (iterator.hasNext()){
+	        	MetaDocPart metaDocPart = iterator.next();
+	        	String statement = getDeleteDocPartsStatement(schemaName, metaDocPart.getIdentifier(), dids);
+	        	sqlHelper.executeUpdate(c, statement, Context.delete);
+	        }
+        }finally {
+        	dsl.configuration().connectionProvider().release(c);
+        }
     }
 
     protected abstract String getDeleteDocPartsStatement(String schemaName, String tableName, List<Integer> dids);
