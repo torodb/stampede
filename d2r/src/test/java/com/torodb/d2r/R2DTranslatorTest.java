@@ -37,7 +37,12 @@ public class R2DTranslatorTest {
 	private static final boolean IsArray = true;
 	private static final boolean IsDocument = false;
 	
-	
+	/*
+	  Document:
+  		{ 
+  			"name" : "jero"
+  		}
+	 */
 	@Test
 	public void readSimpleDocument(){
 		ImmutableMetaDocPart.Builder rootBuilder = new ImmutableMetaDocPart.Builder(rootRef, rootRef.getName());
@@ -59,6 +64,14 @@ public class R2DTranslatorTest {
         assertEquals("jero",doc.get("name").getValue());
 	}
 	
+	/*
+	  Document:
+		{ 
+			"name" : "jero",
+			"address" : null
+		}
+	 */
+
 	@Test
 	public void readDocumentWithNullField(){
 		ImmutableMetaDocPart.Builder rootBuilder = new ImmutableMetaDocPart.Builder(rootRef, rootRef.getName());
@@ -82,6 +95,12 @@ public class R2DTranslatorTest {
         assertEquals(KVNull.getInstance(),doc.get("address"));
 	}
 	
+	/*
+	  Document:
+		{ 
+			"name" : "jero"		
+		}
+	 */	
 	@Test
 	public void readDocumentWithOutPresentFields(){
 		ImmutableMetaDocPart.Builder rootBuilder = new ImmutableMetaDocPart.Builder(rootRef, rootRef.getName());
@@ -105,7 +124,14 @@ public class R2DTranslatorTest {
         assertNull(doc.get("address"));
 	}
 	
-	
+	/*
+	  Document:
+		{ 
+			"name" : "jero",
+			"address" : "my home",
+			"age" : 25
+		}
+	 */
 	@Test
 	public void readDocumentWithMultipleFields(){
 		ImmutableMetaDocPart.Builder rootBuilder = new ImmutableMetaDocPart.Builder(rootRef, rootRef.getName());
@@ -131,6 +157,16 @@ public class R2DTranslatorTest {
         assertEquals(25,doc.get("age").getValue());
 	}
 	
+	/*
+	  Document 1
+		{ 
+			"name" : "jero"
+		}
+	  Document 2
+		{ 
+			"name" : "john"
+		}
+	 */
 	@Test
 	public void readMultipleDocument(){
 		ImmutableMetaDocPart.Builder rootBuilder = new ImmutableMetaDocPart.Builder(rootRef, rootRef.getName());
@@ -158,6 +194,15 @@ public class R2DTranslatorTest {
 
 	}
 
+	/*
+	  Document:
+		{ 
+			"name" : "jero",
+			"address" : {
+				"street" : "myhouse"
+			}
+		}
+	 */
 	@Test
 	public void readTwoLevelDocument(){
 		/* Root Level */
@@ -198,7 +243,13 @@ public class R2DTranslatorTest {
         assertTrue(kvValue instanceof KVDocument);
 	}
 
-	
+	/*
+	  Document:
+		{ 
+			"name" : "jero",
+			"numbers" : [4, 8, 15, 16]
+		}
+	 */
 	@Test
 	public void readInnerArray(){
 		/* Root Level */
@@ -248,6 +299,13 @@ public class R2DTranslatorTest {
         assertEquals(16,array.get(3).getValue());
 	}
 	
+	/*
+	  Document:
+		{ 
+			"name" : "jero",
+			"numbers" : [666, [4,8, 15, 16]]
+		}
+	 */
 	@Test
 	public void readTwoInnerArray(){
 		int did = 1;
