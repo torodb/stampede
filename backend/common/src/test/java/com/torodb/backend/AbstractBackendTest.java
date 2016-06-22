@@ -38,6 +38,9 @@ public abstract class AbstractBackendTest {
     @Before
     public void setUp() throws Exception {
         Injector injector = createInjector();
+        DbBackendService dbBackend = injector.getInstance(DbBackendService.class);
+        dbBackend.startAsync();
+        dbBackend.awaitRunning();
         cleanDatabase(injector);
         sqlInterface = injector.getInstance(SqlInterface.class);
         schema = new TestSchema(tableRefFactory, sqlInterface);

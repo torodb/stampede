@@ -25,6 +25,7 @@ import javax.inject.Singleton;
 import com.google.inject.AbstractModule;
 import com.torodb.backend.DataTypeProvider;
 import com.torodb.backend.DbBackend;
+import com.torodb.backend.DbBackendService;
 import com.torodb.backend.ErrorHandler;
 import com.torodb.backend.MetaDataReadInterface;
 import com.torodb.backend.MetaDataWriteInterface;
@@ -49,7 +50,9 @@ public class PostgreSQLBackendModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(PostgreSQLDriverProvider.class).to(OfficialPostgreSQLDriver.class).in(Singleton.class);
-        bind(DbBackend.class).to(PostgreSQLDbBackend.class).in(Singleton.class);
+        bind(PostgreSQLDbBackend.class).in(Singleton.class);
+        bind(DbBackend.class).to(PostgreSQLDbBackend.class);
+        bind(DbBackendService.class).to(PostgreSQLDbBackend.class);
         bind(MetaDataReadInterface.class).to(PostgreSQLMetaDataReadInterface.class).in(Singleton.class);
         bind(MetaDataWriteInterface.class).to(PostgreSQLMetaDataWriteInterface.class).in(Singleton.class);
         bind(DataTypeProvider.class).to(PostgreSQLDataTypeProvider.class).in(Singleton.class);

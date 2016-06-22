@@ -25,6 +25,7 @@ import javax.inject.Singleton;
 import com.google.inject.AbstractModule;
 import com.torodb.backend.DataTypeProvider;
 import com.torodb.backend.DbBackend;
+import com.torodb.backend.DbBackendService;
 import com.torodb.backend.ErrorHandler;
 import com.torodb.backend.MetaDataReadInterface;
 import com.torodb.backend.MetaDataWriteInterface;
@@ -49,7 +50,9 @@ public class DerbyBackendModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(DerbyDriverProvider.class).to(OfficialDerbyDriver.class).in(Singleton.class);
-        bind(DbBackend.class).to(DerbyDbBackend.class).in(Singleton.class);
+        bind(DerbyDbBackend.class).in(Singleton.class);
+        bind(DbBackend.class).to(DerbyDbBackend.class);
+        bind(DbBackendService.class).to(DerbyDbBackend.class);
         bind(MetaDataReadInterface.class).to(DerbyMetaDataReadInterface.class).in(Singleton.class);
         bind(MetaDataWriteInterface.class).to(DerbyMetaDataWriteInterface.class).in(Singleton.class);
         bind(DataTypeProvider.class).to(DerbyDataTypeProvider.class).in(Singleton.class);

@@ -21,14 +21,13 @@
 package com.torodb.backend.postgresql;
 
 
-import javax.annotation.Nonnull;
-import javax.inject.Inject;
-import javax.sql.DataSource;
-
 import com.torodb.backend.AbstractDbBackend;
 import com.torodb.backend.TransactionIsolationLevel;
 import com.torodb.backend.driver.postgresql.PostgreSQLDbBackendConfiguration;
 import com.torodb.backend.driver.postgresql.PostgreSQLDriverProvider;
+import javax.annotation.Nonnull;
+import javax.inject.Inject;
+import javax.sql.DataSource;
 
 /**
  *
@@ -41,8 +40,6 @@ public class PostgreSQLDbBackend extends AbstractDbBackend<PostgreSQLDbBackendCo
     public PostgreSQLDbBackend(PostgreSQLDbBackendConfiguration configuration, PostgreSQLDriverProvider driverProvider, PostgreSQLErrorHandler errorHandler) {
         super(configuration, errorHandler);
         this.driverProvider = driverProvider;
-
-        initialize();
     }
 
     @Override

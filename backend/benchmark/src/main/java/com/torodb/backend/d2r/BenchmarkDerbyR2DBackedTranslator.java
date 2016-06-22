@@ -31,6 +31,7 @@ import org.openjdk.jmh.annotations.Warmup;
 import org.openjdk.jmh.infra.Blackhole;
 
 import com.google.inject.Injector;
+import com.torodb.backend.DbBackendService;
 import com.torodb.backend.SqlInterface;
 import com.torodb.backend.TableRefComparator;
 import com.torodb.backend.derby.Derby;
@@ -79,6 +80,9 @@ public class BenchmarkDerbyR2DBackedTranslator {
 		@Setup(Level.Invocation)
 		public void setup() throws Exception {
 		    Injector injector = Derby.createInjector();
+	        DbBackendService dbBackend = injector.getInstance(DbBackendService.class);
+	        dbBackend.startAsync();
+	        dbBackend.awaitRunning();
 		    Derby.cleanDatabase(injector);
 		    sqlInterface = injector.getInstance(SqlInterface.class);
 		    connection = sqlInterface.createWriteConnection();

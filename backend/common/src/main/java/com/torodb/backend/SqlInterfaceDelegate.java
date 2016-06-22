@@ -268,7 +268,4 @@ public class SqlInterfaceDelegate implements SqlInterface {
     public Connection createWriteConnection() {
         return dbBackend.createWriteConnection();
     }
-    public void shutdown() {
-        dbBackend.shutdown();
-    }
 }
