@@ -11,6 +11,7 @@ import com.torodb.backend.SqlInterface;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.backend.interfaces.ErrorHandlerInterface.Context;
 import com.torodb.backend.tables.MetaDocPartTable;
+import com.torodb.backend.tables.records.MetaDocPartRecord;
 import com.torodb.core.d2r.InternalFields;
 import com.torodb.core.d2r.R2DBackendTranslator;
 import com.torodb.core.exceptions.SystemException;
@@ -35,14 +36,11 @@ public class R2DBackendTranslatorImpl implements R2DBackendTranslator<ResultSet,
         this.sqlInterface = sqlInterface;
         this.metaDatabase = metaDatabase;
         this.metaCollection = metaCollection;
-	    this.didConverter = (Converter<Object, Integer>) 
-	            sqlInterface.getMetaDocPartTable().DID.getConverter();
-	    this.ridConverter = (Converter<Object, Integer>) 
-	            sqlInterface.getMetaDocPartTable().RID.getConverter();
-	    this.pidConverter = (Converter<Object, Integer>) 
-	            sqlInterface.getMetaDocPartTable().PID.getConverter();
-	    this.seqConverter = (Converter<Object, Integer>) 
-	            sqlInterface.getMetaDocPartTable().SEQ.getConverter();
+        MetaDocPartTable<Object,MetaDocPartRecord<Object>> metaDocPartTable = sqlInterface.getMetaDocPartTable();
+	    this.didConverter = (Converter<Object, Integer>) metaDocPartTable.DID.getConverter();
+	    this.ridConverter = (Converter<Object, Integer>) metaDocPartTable.RID.getConverter();
+	    this.pidConverter = (Converter<Object, Integer>) metaDocPartTable.PID.getConverter();
+	    this.seqConverter = (Converter<Object, Integer>) metaDocPartTable.SEQ.getConverter();
 	}
 
     public class ResultSetInternalFields extends InternalFields {
@@ -102,11 +100,6 @@ public class R2DBackendTranslatorImpl implements R2DBackendTranslator<ResultSet,
     }
 
     @Override
-    public String getScalarName() {
-        return MetaDocPartTable.DocPartTableFields.SCALAR.fieldName;
-    }
-
-    @Override
     public KVValue<?> getValue(FieldType type, ResultSet resultSet, ResultSetInternalFields internalFields,
             int fieldIndex) {
         Object databaseValue;
@@ -123,9 +116,7 @@ public class R2DBackendTranslatorImpl implements R2DBackendTranslator<ResultSet,
         
         DataTypeForKV<?> dataType = sqlInterface.getDataType(type);
         Converter<Object, KVValue<?>> converter = (Converter<Object, KVValue<?>>) dataType.getConverter();
-        KVValue<?> value = converter.from(databaseValue);
-        
-        return value;
+        return converter.from(databaseValue);
     }
 
     @Override

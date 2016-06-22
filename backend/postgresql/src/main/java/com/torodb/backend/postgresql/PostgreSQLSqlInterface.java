@@ -530,6 +530,11 @@ public class PostgreSQLSqlInterface implements SqlInterface {
                     .append(internalField.getName())
                     .append("\",");
             }
+            metaDocPart.streamScalars().forEach(metaScalar -> {
+                sb.append('"')
+                    .append(metaScalar.getIdentifier())
+                    .append("\",");
+            });
             metaDocPart.streamFields().forEach(metaField -> {
                 sb.append('"')
                     .append(metaField.getIdentifier())
