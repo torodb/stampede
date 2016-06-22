@@ -24,9 +24,11 @@ import javax.inject.Singleton;
 
 import org.jooq.SQLDialect;
 
+import com.google.common.collect.ImmutableMap;
 import com.torodb.backend.AbstractDataTypeProvider;
 import com.torodb.backend.converters.jooq.BinaryValueConverter;
 import com.torodb.backend.converters.jooq.BooleanValueConverter;
+import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.backend.converters.jooq.DateValueConverter;
 import com.torodb.backend.converters.jooq.DoubleValueConverter;
 import com.torodb.backend.converters.jooq.InstantValueConverter;
@@ -37,6 +39,7 @@ import com.torodb.backend.converters.jooq.MongoTimestampValueConverter;
 import com.torodb.backend.converters.jooq.NullValueConverter;
 import com.torodb.backend.converters.jooq.StringValueConverter;
 import com.torodb.backend.converters.jooq.TimeValueConverter;
+import com.torodb.core.transaction.metainf.FieldType;
 
 /**
  *
@@ -46,19 +49,21 @@ public class PostgreSQLDataTypeProvider extends AbstractDataTypeProvider {
 
     public PostgreSQLDataTypeProvider() {
         super(
-            BooleanValueConverter.TYPE,
-            BooleanValueConverter.TYPE,
-            DoubleValueConverter.TYPE,
-            IntegerValueConverter.TYPE,
-            LongValueConverter.TYPE,
-            NullValueConverter.TYPE,
-            StringValueConverter.TYPE,
-            DateValueConverter.TYPE,
-            InstantValueConverter.TYPE,
-            TimeValueConverter.TYPE,
-            MongoObjectIdValueConverter.TYPE,
-            MongoTimestampValueConverter.TYPE,
-            BinaryValueConverter.TYPE
+                ImmutableMap.<FieldType, DataTypeForKV<?>>builder()
+                .put(FieldType.CHILD, BooleanValueConverter.TYPE)
+                .put(FieldType.BOOLEAN, BooleanValueConverter.TYPE)
+                .put(FieldType.DOUBLE, DoubleValueConverter.TYPE)
+                .put(FieldType.INTEGER, IntegerValueConverter.TYPE)
+                .put(FieldType.LONG, LongValueConverter.TYPE)
+                .put(FieldType.NULL, NullValueConverter.TYPE)
+                .put(FieldType.STRING, StringValueConverter.TYPE)
+                .put(FieldType.DATE, DateValueConverter.TYPE)
+                .put(FieldType.INSTANT, InstantValueConverter.TYPE)
+                .put(FieldType.TIME, TimeValueConverter.TYPE)
+                .put(FieldType.MONGO_OBJECT_ID, MongoObjectIdValueConverter.TYPE)
+                .put(FieldType.MONGO_TIME_STAMP, MongoTimestampValueConverter.TYPE)
+                .put(FieldType.BINARY, BinaryValueConverter.TYPE)
+                .build()
         );
     }
 

@@ -58,7 +58,7 @@ import com.torodb.kvdocument.values.KVValue;
  *
  */
 @Singleton
-public abstract class PostgreSQLWriteInterface extends AbstractWriteInterface {
+public class PostgreSQLWriteInterface extends AbstractWriteInterface {
     
     private static final Logger LOGGER = LogManager.getLogger(PostgreSQLWriteInterface.class);
     

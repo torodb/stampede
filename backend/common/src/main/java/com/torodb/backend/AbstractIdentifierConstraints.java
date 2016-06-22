@@ -74,7 +74,7 @@ public abstract class AbstractIdentifierConstraints implements IdentifierConstra
                 throw new SystemException("FieldType " + fieldType + " has not been mapped to an identifier.");
             }
             
-            char identifier = this.fieldTypeIdentifiers.get(fieldType.ordinal());
+            char identifier = this.fieldTypeIdentifiers.get(fieldType);
             
             if ((identifier < 'a' || identifier > 'z') &&
                     (identifier < '0' || identifier > '9')) {

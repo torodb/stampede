@@ -34,6 +34,7 @@ import com.torodb.backend.WriteInterface;
 import com.torodb.backend.derby.DerbyDataTypeProvider;
 import com.torodb.backend.derby.DerbyDbBackend;
 import com.torodb.backend.derby.DerbyErrorHandler;
+import com.torodb.backend.derby.DerbyIdentifierConstraints;
 import com.torodb.backend.derby.DerbyMetaDataReadInterface;
 import com.torodb.backend.derby.DerbyMetaDataWriteInterface;
 import com.torodb.backend.derby.DerbyReadInterface;
@@ -41,6 +42,7 @@ import com.torodb.backend.derby.DerbyStructureInterface;
 import com.torodb.backend.derby.DerbyWriteInterface;
 import com.torodb.backend.driver.derby.DerbyDriverProvider;
 import com.torodb.backend.driver.derby.OfficialDerbyDriver;
+import com.torodb.core.backend.IdentifierConstraints;
 
 public class DerbyBackendModule extends AbstractModule {
 
@@ -55,6 +57,7 @@ public class DerbyBackendModule extends AbstractModule {
         bind(ReadInterface.class).to(DerbyReadInterface.class).in(Singleton.class);
         bind(WriteInterface.class).to(DerbyWriteInterface.class).in(Singleton.class);
         bind(ErrorHandler.class).to(DerbyErrorHandler.class).in(Singleton.class);
+        bind(IdentifierConstraints.class).to(DerbyIdentifierConstraints.class).in(Singleton.class);
     }
 
 }

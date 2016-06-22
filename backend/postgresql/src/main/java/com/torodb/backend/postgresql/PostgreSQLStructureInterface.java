@@ -34,7 +34,7 @@ import com.torodb.backend.SqlHelper;
  *
  */
 @Singleton
-public abstract class PostgreSQLStructureInterface extends AbstractStructureInterface {
+public class PostgreSQLStructureInterface extends AbstractStructureInterface {
 
     @Inject
     public PostgreSQLStructureInterface(SqlHelper sqlHelper) {

@@ -31,7 +31,7 @@ import com.torodb.backend.AbstractErrorHandlerInterface;
 public class DerbyErrorHandler extends AbstractErrorHandlerInterface {
     
     @Inject
-    public DerbyErrorHandler(String... rollbackErrorCodes) {
+    public DerbyErrorHandler() {
         super("40001", "40P01");
     }
 }

@@ -25,11 +25,10 @@ import javax.inject.Singleton;
 
 import org.jooq.DSLContext;
 import org.jooq.Record1;
+import org.jooq.conf.ParamType;
 import org.jooq.impl.DSL;
 
 import com.torodb.backend.AbstractWriteMetaDataInterface;
-import com.torodb.backend.DbBackend;
-import com.torodb.backend.ErrorHandler;
 import com.torodb.backend.SqlHelper;
 import com.torodb.backend.converters.TableRefConverter;
 import com.torodb.backend.derby.tables.DerbyMetaCollectionTable;
@@ -196,7 +195,7 @@ public class DerbyMetaDataWriteInterface extends AbstractWriteMetaDataInterface 
 	@Override
     protected String getAddMetaDatabaseStatement(String databaseName, String databaseIdentifier) {
         String statement = DSL.insertInto(metaDatabaseTable)
-            .set(metaDatabaseTable.newRecord().values(databaseName, databaseIdentifier)).getSQL();
+            .set(metaDatabaseTable.newRecord().values(databaseName, databaseIdentifier)).getSQL(ParamType.INLINED);
         return statement;
     }
 
@@ -205,7 +204,7 @@ public class DerbyMetaDataWriteInterface extends AbstractWriteMetaDataInterface 
             String collectionIdentifier) {
         String statement = DSL.insertInto(metaCollectionTable)
             .set(metaCollectionTable.newRecord()
-            .values(databaseName, collectionName, collectionIdentifier)).getSQL();
+            .values(databaseName, collectionName, collectionIdentifier)).getSQL(ParamType.INLINED);
         return statement;
     }
 
@@ -214,7 +213,7 @@ public class DerbyMetaDataWriteInterface extends AbstractWriteMetaDataInterface 
             String docPartIdentifier) {
         String statement = DSL.insertInto(metaDocPartTable)
             .set(metaDocPartTable.newRecord()
-            .values(databaseName, collectionName, tableRef, docPartIdentifier)).getSQL();
+            .values(databaseName, collectionName, tableRef, docPartIdentifier)).getSQL(ParamType.INLINED);
         return statement;
     }
 	
@@ -223,7 +222,7 @@ public class DerbyMetaDataWriteInterface extends AbstractWriteMetaDataInterface 
             String fieldName, String fieldIdentifier, FieldType type) {
         String statement = DSL.insertInto(metaFieldTable)
                 .set(metaFieldTable.newRecord()
-                .values(databaseName, collectionName, tableRef, fieldName, type, fieldIdentifier)).getSQL();
+                .values(databaseName, collectionName, tableRef, fieldName, type, fieldIdentifier)).getSQL(ParamType.INLINED);
         return statement;
     }
 	
@@ -232,7 +231,7 @@ public class DerbyMetaDataWriteInterface extends AbstractWriteMetaDataInterface 
             String fieldIdentifier, FieldType type) {
         String statement = DSL.insertInto(metaScalarTable)
 				.set(metaScalarTable.newRecord()
-				.values(databaseName, collectionName, tableRef, type, fieldIdentifier)).getSQL();
+				.values(databaseName, collectionName, tableRef, type, fieldIdentifier)).getSQL(ParamType.INLINED);
         return statement;
     }
     

@@ -27,6 +27,8 @@ import javax.inject.Singleton;
 import org.jooq.DSLContext;
 import org.jooq.impl.DSL;
 
+import com.google.inject.Inject;
+
 /**
  *
  */
@@ -35,6 +37,7 @@ public class DslContextFactoryImpl implements DslContextFactory {
     
     public final DataTypeProvider dataTypeProvider;
     
+    @Inject
     public DslContextFactoryImpl(DataTypeProvider dataTypeProvider) {
         super();
         this.dataTypeProvider = dataTypeProvider;

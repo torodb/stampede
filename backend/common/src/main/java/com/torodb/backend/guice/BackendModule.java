@@ -4,6 +4,8 @@ package com.torodb.backend.guice;
 import com.google.inject.AbstractModule;
 import com.google.inject.Singleton;
 import com.torodb.backend.BackendImpl;
+import com.torodb.backend.DslContextFactory;
+import com.torodb.backend.DslContextFactoryImpl;
 import com.torodb.backend.SqlInterface;
 import com.torodb.backend.SqlInterfaceDelegate;
 import com.torodb.backend.jobs.BackendConnectionJobFactoryImpl;
@@ -43,6 +45,10 @@ public class BackendModule extends AbstractModule {
         
         bind(RidGenerator.class)
                 .to(ReservedIdContainer.class)
+                .asEagerSingleton();
+        
+        bind(DslContextFactory.class)
+                .to(DslContextFactoryImpl.class)
                 .asEagerSingleton();
     }
 

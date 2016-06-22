@@ -34,7 +34,7 @@ import com.torodb.backend.SqlHelper;
  *
  */
 @Singleton
-public abstract class DerbyStructureInterface extends AbstractStructureInterface {
+public class DerbyStructureInterface extends AbstractStructureInterface {
 
     @Inject
     public DerbyStructureInterface(SqlHelper sqlHelper) {

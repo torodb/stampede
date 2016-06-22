@@ -26,7 +26,7 @@ import com.torodb.backend.AbstractErrorHandlerInterface;
  *
  */
 public class PostgreSQLErrorHandler extends AbstractErrorHandlerInterface {
-    public PostgreSQLErrorHandler(String... rollbackErrorCodes) {
+    public PostgreSQLErrorHandler() {
         super("40001", "40P01");
     }
 }

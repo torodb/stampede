@@ -34,21 +34,15 @@ public abstract class AbstractDataTypeProvider implements DataTypeProvider {
 
     private final ImmutableMap<FieldType, DataTypeForKV<?>> dataTypes;
 
-    protected AbstractDataTypeProvider(DataTypeForKV<?> ... dataTypes) {
-        ImmutableMap.Builder<FieldType, DataTypeForKV<?>> dataTypesBuilder =
-                ImmutableMap.builder();
-        
-        for (DataTypeForKV<?> dataType : dataTypes) {
-            dataTypesBuilder.put(FieldType.from(dataType.getKVValueConverter().getErasuredType()),
-                    dataType);
-        }
+    protected AbstractDataTypeProvider(ImmutableMap<FieldType, DataTypeForKV<?>> dataTypes) {
+        this.dataTypes = ImmutableMap.<FieldType, DataTypeForKV<?>>builder()
+                    .putAll(dataTypes)
+                    .build();
         
         //Check that all data types are specified or throw IllegalArgumentException
         for (FieldType fieldType : FieldType.values()) {
             getDataType(fieldType);
         }
-        
-        this.dataTypes = dataTypesBuilder.build();
     }
 
     @Override

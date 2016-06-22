@@ -52,10 +52,12 @@ import com.torodb.backend.SqlInterface;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.backend.derby.guice.DerbyBackendModule;
 import com.torodb.backend.exceptions.InvalidDatabaseException;
+import com.torodb.backend.guice.BackendModule;
 import com.torodb.backend.meta.TorodbMeta;
 import com.torodb.core.d2r.CollectionData;
 import com.torodb.core.d2r.DocPartResults;
 import com.torodb.core.document.ToroDocument;
+import com.torodb.core.guice.CoreModule;
 import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
 import com.torodb.core.transaction.metainf.ImmutableMetaDatabase;
@@ -75,6 +77,33 @@ import com.torodb.kvdocument.values.KVValue;
 import com.torodb.kvdocument.values.heap.ListKVArray;
 
 public class BackendDerbyTest extends AbstractBackendTest {
+
+    @Override
+    protected SqlInterface createSqlInterface() {
+        return Guice.createInjector(
+                    new CoreModule(),
+                    new BackendModule(),
+                    new DerbyBackendModule(),
+                    Derby.getConfigurationModule())
+                .getInstance(SqlInterface.class);
+    }
+    
+    @Override
+    protected void cleanDatabase(SqlInterface sqlInterface) throws SQLException {
+        Derby.cleanDatabase(sqlInterface);
+    }
+
+    private FieldType fieldType(Field<?> field) {
+        return FieldType.from(((DataTypeForKV<?>) field.getDataType()).getKVValueConverter().getErasuredType());
+    }
+    
+    private TorodbMeta buildTorodbMeta() throws SQLException, IOException, InvalidDatabaseException{
+        return new TorodbMeta(tableRefFactory, sqlInterface);
+    }
+    
+    private DSLContext dsl(Connection connection){
+        return sqlInterface.createDSLContext(connection);
+    }
 	
     @Test
     public void testTorodbMeta() throws Exception {
@@ -510,30 +539,5 @@ public class BackendDerbyTest extends AbstractBackendTest {
 		return new KVDocument.Builder()
 				.putValue("k", KVInteger.of(1))
 				.build();
-	}
-
-    @Override
-    protected SqlInterface createSqlInterface() {
-        return Guice.createInjector(
-                    new DerbyBackendModule(),
-                    Derby.getConfigurationModule())
-                .getInstance(SqlInterface.class);
-    }
-    
-	@Override
-	protected void cleanDatabase(SqlInterface sqlInterface) throws SQLException {
-		Derby.cleanDatabase(sqlInterface);
-	}
-
-    private FieldType fieldType(Field<?> field) {
-    	return FieldType.from(((DataTypeForKV<?>) field.getDataType()).getKVValueConverter().getErasuredType());
-    }
-    
-    private TorodbMeta buildTorodbMeta() throws SQLException, IOException, InvalidDatabaseException{
-    	return new TorodbMeta(tableRefFactory, sqlInterface);
-    }
-    
-	private DSLContext dsl(Connection connection){
-		return sqlInterface.createDSLContext(connection);
 	}
 }
