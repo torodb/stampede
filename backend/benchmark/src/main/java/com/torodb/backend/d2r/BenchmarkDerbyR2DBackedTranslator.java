@@ -30,13 +30,10 @@ import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.Warmup;
 import org.openjdk.jmh.infra.Blackhole;
 
-import com.google.inject.Guice;
+import com.google.inject.Injector;
 import com.torodb.backend.SqlInterface;
 import com.torodb.backend.TableRefComparator;
 import com.torodb.backend.derby.Derby;
-import com.torodb.backend.derby.guice.DerbyBackendModule;
-import com.torodb.backend.driver.derby.DerbyDbBackendConfiguration;
-import com.torodb.backend.driver.derby.OfficialDerbyDriver;
 import com.torodb.backend.meta.TorodbSchema;
 import com.torodb.backend.util.InMemoryRidGenerator;
 import com.torodb.backend.util.TestDataFactory;
@@ -81,7 +78,9 @@ public class BenchmarkDerbyR2DBackedTranslator {
 
 		@Setup(Level.Invocation)
 		public void setup() throws Exception {
-		    sqlInterface = Guice.createInjector(new DerbyBackendModule(), Derby.getConfigurationModule()).getInstance(SqlInterface.class);
+		    Injector injector = Derby.createInjector();
+		    Derby.cleanDatabase(injector);
+		    sqlInterface = injector.getInstance(SqlInterface.class);
 		    connection = sqlInterface.createWriteConnection();
 		    dsl = sqlInterface.createDSLContext(connection);
 			documents=new ArrayList<>();

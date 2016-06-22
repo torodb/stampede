@@ -7,12 +7,26 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import com.google.inject.Binder;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import com.google.inject.Module;
-import com.torodb.backend.SqlInterface;
+import com.torodb.backend.DbBackend;
+import com.torodb.backend.derby.guice.DerbyBackendModule;
 import com.torodb.backend.driver.derby.DerbyDbBackendConfiguration;
+import com.torodb.backend.guice.BackendModule;
 import com.torodb.backend.meta.TorodbSchema;
+import com.torodb.core.backend.IdentifierConstraints;
+import com.torodb.core.guice.CoreModule;
 
 public class Derby {
+
+    public static Injector createInjector() {
+        return Guice.createInjector(
+                    new CoreModule(),
+                    new BackendModule(),
+                    new DerbyBackendModule(),
+                    Derby.getConfigurationModule());
+    }
 
 	public static Module getConfigurationModule() {
 	    return new Module() {
@@ -79,14 +93,16 @@ public class Derby {
         };
 	}
 	
-	public static void cleanDatabase(SqlInterface sqlInterface) throws SQLException {
-		try (Connection connection = sqlInterface.createSystemConnection()) {
+	public static void cleanDatabase(Injector injector) throws SQLException {
+	    DbBackend dbBackend = injector.getInstance(DbBackend.class);
+	    IdentifierConstraints identifierConstraints = injector.getInstance(IdentifierConstraints.class);
+		try (Connection connection = dbBackend.createSystemConnection()) {
             DatabaseMetaData metaData = connection.getMetaData();
             ResultSet tables = metaData.getTables("%", "%", "%", null);
             while (tables.next()) {
                 String schemaName = tables.getString("TABLE_SCHEM");
                 String tableName = tables.getString("TABLE_NAME");
-                if (sqlInterface.isAllowedSchemaIdentifier(schemaName) || schemaName.equals(TorodbSchema.TORODB_SCHEMA)) {
+                if (identifierConstraints.isAllowedSchemaIdentifier(schemaName) || schemaName.equals(TorodbSchema.TORODB_SCHEMA)) {
                     try (PreparedStatement preparedStatement = connection.prepareStatement("DROP TABLE \"" + schemaName + "\".\"" + tableName + "\"")) {
                         preparedStatement.executeUpdate();
                     }
@@ -95,7 +111,7 @@ public class Derby {
             ResultSet schemas = metaData.getSchemas();
             while (schemas.next()) {
                 String schemaName = schemas.getString("TABLE_SCHEM");
-                if (sqlInterface.isAllowedSchemaIdentifier(schemaName) || schemaName.equals(TorodbSchema.TORODB_SCHEMA)) {
+                if (identifierConstraints.isAllowedSchemaIdentifier(schemaName) || schemaName.equals(TorodbSchema.TORODB_SCHEMA)) {
                     try (PreparedStatement preparedStatement = connection.prepareStatement("DROP SCHEMA \"" + schemaName + "\" RESTRICT")) {
                         preparedStatement.executeUpdate();
                     }

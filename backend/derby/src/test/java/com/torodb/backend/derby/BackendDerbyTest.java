@@ -44,20 +44,16 @@ import org.jooq.Field;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.google.inject.Guice;
+import com.google.inject.Injector;
 import com.torodb.backend.AbstractBackendTest;
 import com.torodb.backend.BackendDocumentTestHelper;
 import com.torodb.backend.BackendTestHelper;
-import com.torodb.backend.SqlInterface;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
-import com.torodb.backend.derby.guice.DerbyBackendModule;
 import com.torodb.backend.exceptions.InvalidDatabaseException;
-import com.torodb.backend.guice.BackendModule;
 import com.torodb.backend.meta.TorodbMeta;
 import com.torodb.core.d2r.CollectionData;
 import com.torodb.core.d2r.DocPartResults;
 import com.torodb.core.document.ToroDocument;
-import com.torodb.core.guice.CoreModule;
 import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
 import com.torodb.core.transaction.metainf.ImmutableMetaDatabase;
@@ -79,18 +75,13 @@ import com.torodb.kvdocument.values.heap.ListKVArray;
 public class BackendDerbyTest extends AbstractBackendTest {
 
     @Override
-    protected SqlInterface createSqlInterface() {
-        return Guice.createInjector(
-                    new CoreModule(),
-                    new BackendModule(),
-                    new DerbyBackendModule(),
-                    Derby.getConfigurationModule())
-                .getInstance(SqlInterface.class);
+    protected Injector createInjector() {
+        return Derby.createInjector();
     }
     
     @Override
-    protected void cleanDatabase(SqlInterface sqlInterface) throws SQLException {
-        Derby.cleanDatabase(sqlInterface);
+    protected void cleanDatabase(Injector injector) throws SQLException {
+        Derby.cleanDatabase(injector);
     }
 
     private FieldType fieldType(Field<?> field) {
@@ -212,7 +203,6 @@ public class BackendDerbyTest extends AbstractBackendTest {
          }
     }
     
-
     @Test
     public void testTorodbLastRowId() throws Exception {
 		 buildTorodbMeta();

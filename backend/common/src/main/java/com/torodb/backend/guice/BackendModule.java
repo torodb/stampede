@@ -37,15 +37,15 @@ public class BackendModule extends AbstractModule {
         
         bind(ImmutableMetaSnapshotFactory.class)
                 .to(TorodbImmutableMetaSnapshotFactory.class)
-                .asEagerSingleton();
+                .in(Singleton.class);
         
         bind(ReservedIdInfoFactory.class)
                 .to(MaxRowIdFactory.class)
-                .asEagerSingleton();
+                .in(Singleton.class);
         
         bind(RidGenerator.class)
                 .to(ReservedIdContainer.class)
-                .asEagerSingleton();
+                .in(Singleton.class);
         
         bind(DslContextFactory.class)
                 .to(DslContextFactoryImpl.class)
