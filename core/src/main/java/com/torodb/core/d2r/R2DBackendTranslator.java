@@ -61,9 +61,4 @@ public interface R2DBackendTranslator<Result, BackendInternalFields extends Inte
     @Nullable KVValue<?> getValue(@Nonnull FieldType type, @Nonnull Result result, @Nonnull BackendInternalFields internalFields,
             int fieldIndex);
 
-    /**
-     * Return the internal name of the scalar value.
-     * @return
-     */
-    @Nonnull String getScalarName();
 }
