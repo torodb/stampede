@@ -20,19 +20,19 @@
 
 package com.torodb.backend;
 
+import com.google.common.base.Preconditions;
+import com.google.common.util.concurrent.AbstractIdleService;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import javax.annotation.Nonnull;
 import javax.inject.Singleton;
 import javax.sql.DataSource;
-
-import com.google.common.base.Preconditions;
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
 
 /**
  *
  */
 @Singleton
-public abstract class AbstractDbBackend<Configuration extends DbBackendConfiguration> implements DbBackend {
+public abstract class AbstractDbBackend<Configuration extends DbBackendConfiguration> extends AbstractIdleService implements DbBackend {
     public static final int SYSTEM_DATABASE_CONNECTIONS = 1;
     public static final int MIN_READ_CONNECTIONS_DATABASE = 1;
     public static final int MIN_SESSION_CONNECTIONS_DATABASE = 2;
@@ -43,7 +43,6 @@ public abstract class AbstractDbBackend<Configuration extends DbBackendConfigura
     private HikariDataSource commonDataSource;
     private HikariDataSource systemDataSource;
     private HikariDataSource globalCursorDataSource;
-    private volatile boolean dataSourcesInitialized = false;
 
     /**
      * Configure the backend. The contract specifies that any subclass must call initialize() method after
@@ -71,11 +70,8 @@ public abstract class AbstractDbBackend<Configuration extends DbBackendConfigura
         );
     }
 
-    protected synchronized void initialize() {
-        if(dataSourcesInitialized) {
-            return;
-        }
-
+    @Override
+    protected void startUp() throws Exception {
         int reservedReadPoolSize = configuration.getReservedReadPoolSize();
 
         commonDataSource = createPooledDataSource(
@@ -85,17 +81,22 @@ public abstract class AbstractDbBackend<Configuration extends DbBackendConfigura
                 false
         );
         systemDataSource = createPooledDataSource(
-                configuration, "system", 
+                configuration, "system",
                 SYSTEM_DATABASE_CONNECTIONS,
                 getSystemTransactionIsolation(),
                 false);
         globalCursorDataSource = createPooledDataSource(
-                configuration, "cursors", 
+                configuration, "cursors",
                 reservedReadPoolSize,
                 getGlobalCursorTransactionIsolation(),
                 true);
+    }
 
-        dataSourcesInitialized = true;
+    @Override
+    protected void shutDown() throws Exception {
+        commonDataSource.close();
+        systemDataSource.close();
+        globalCursorDataSource.close();
     }
 
     @Nonnull
@@ -133,29 +134,23 @@ public abstract class AbstractDbBackend<Configuration extends DbBackendConfigura
 
     protected abstract DataSource getConfiguredDataSource(Configuration configuration, String poolName);
 
-    private void checkDataSourcesInitialized() {
-        if(! dataSourcesInitialized) {
-            initialize();
-        }
-    }
-
     @Override
     public DataSource getSessionDataSource() {
-        checkDataSourcesInitialized();
+        Preconditions.checkState(isRunning(), "The " + DbBackend.class + " is not running");
 
         return commonDataSource;
     }
 
     @Override
     public DataSource getSystemDataSource() {
-        checkDataSourcesInitialized();
+        Preconditions.checkState(isRunning(), "The " + DbBackend.class + " is not running");
 
         return systemDataSource;
     }
 
     @Override
     public DataSource getGlobalCursorDatasource() {
-        checkDataSourcesInitialized();
+        Preconditions.checkState(isRunning(), "The " + DbBackend.class + " is not running");
 
         return globalCursorDataSource;
     }
@@ -163,12 +158,5 @@ public abstract class AbstractDbBackend<Configuration extends DbBackendConfigura
     @Override
     public long getDefaultCursorTimeout() {
         return configuration.getCursorTimeout();
-    }
-
-    @Override
-    public void shutdown() {
-        commonDataSource.close();
-        systemDataSource.close();
-        globalCursorDataSource.close();
     }
 }

@@ -20,12 +20,12 @@
 
 package com.torodb.backend;
 
+import com.google.common.util.concurrent.Service;
 import javax.sql.DataSource;
 
-public interface DbBackend {
+public interface DbBackend extends Service {
     public DataSource getSessionDataSource();
     public DataSource getSystemDataSource();
     public DataSource getGlobalCursorDatasource();
     public long getDefaultCursorTimeout();
-    public void shutdown();
 }

@@ -21,14 +21,13 @@
 package com.torodb.backend.derby;
 
 
-import javax.annotation.Nonnull;
-import javax.inject.Inject;
-import javax.sql.DataSource;
-
 import com.torodb.backend.AbstractDbBackend;
 import com.torodb.backend.TransactionIsolationLevel;
 import com.torodb.backend.driver.derby.DerbyDbBackendConfiguration;
 import com.torodb.backend.driver.derby.DerbyDriverProvider;
+import javax.annotation.Nonnull;
+import javax.inject.Inject;
+import javax.sql.DataSource;
 
 /**
  *
@@ -41,8 +40,6 @@ public class DerbyDbBackend extends AbstractDbBackend<DerbyDbBackendConfiguratio
     public DerbyDbBackend(DerbyDbBackendConfiguration configuration, DerbyDriverProvider driverProvider) {
         super(configuration);
         this.driverProvider = driverProvider;
-
-        initialize();
     }
 
     @Override

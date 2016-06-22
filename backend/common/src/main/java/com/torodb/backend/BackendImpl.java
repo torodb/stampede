@@ -19,19 +19,20 @@ public class BackendImpl extends AbstractIdleService implements Backend {
 
     private static final Logger LOGGER = LogManager.getLogger(BackendImpl.class);
 
+    private final DbBackend dbBackend;
     private final SqlInterface sqlInterface;
     private final MetainfoRepository metainfoRepository;
     private final TableRefFactory tableRefFactory;
     private final MaxRowIdFactory maxRowIdFactory;
 
     @Inject
-    public BackendImpl(SqlInterface sqlInterface, MetainfoRepository metainfoRepository, TableRefFactory tableRefFactory, MaxRowIdFactory maxRowIdFactory) {
+    public BackendImpl(DbBackend dbBackend, SqlInterface sqlInterface, MetainfoRepository metainfoRepository, TableRefFactory tableRefFactory, MaxRowIdFactory maxRowIdFactory) {
+        this.dbBackend = dbBackend;
         this.sqlInterface = sqlInterface;
         this.metainfoRepository = metainfoRepository;
         this.tableRefFactory = tableRefFactory;
         this.maxRowIdFactory = maxRowIdFactory;
     }
-
     @Override
     public BackendConnection openConnection() {
         return new BackendConnectionImpl(this, sqlInterface);
@@ -40,6 +41,9 @@ public class BackendImpl extends AbstractIdleService implements Backend {
     @Override
     protected void startUp() throws Exception {
         LOGGER.debug("Starting backend");
+        LOGGER.trace("Starting backend datasources...");
+        dbBackend.startAsync();
+        dbBackend.awaitRunning();
         LOGGER.trace("Loading backend metadata...");
         SnapshotUpdater.updateSnapshot(metainfoRepository, sqlInterface, tableRefFactory);
         LOGGER.trace("Reading last used rids...");

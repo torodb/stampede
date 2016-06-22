@@ -24,6 +24,8 @@ package com.torodb;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.internal.Console;
 import com.google.common.base.Charsets;
+import com.google.common.base.Throwables;
+import com.google.inject.CreationException;
 import com.torodb.packaging.ToroDBServer;
 import com.torodb.packaging.config.model.Config;
 import com.torodb.packaging.config.model.backend.postgres.Postgres;
@@ -109,13 +111,15 @@ public class Main {
             ToroDBServer toroDBServer = ToroDBServer.create(config, Clock.systemDefaultZone());
 
             toroDBServer.startAsync();
+            toroDBServer.awaitRunning();
+        } catch (CreationException ex) {
+            ex.getErrorMessages().stream().forEach(m -> LOGGER.error(m.getCause().getMessage()));
+			System.exit(1);
 		} catch (Throwable ex) {
             LOGGER.error("Fatal error on initialization", ex);
-			String causeMessage = ex.getMessage();
-			if (causeMessage == null) {
-				causeMessage = ex.getCause().getMessage();
-			}
-			JCommander.getConsole().println(causeMessage);
+            Throwable rootCause = Throwables.getRootCause(ex);
+			String causeMessage = rootCause.getMessage();
+			JCommander.getConsole().println("Fatal error while ToroDB was starting: " + causeMessage);
 			System.exit(1);
 		}
 	}
