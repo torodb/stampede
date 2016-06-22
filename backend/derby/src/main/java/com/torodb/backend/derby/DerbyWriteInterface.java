@@ -28,7 +28,6 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import com.torodb.backend.AbstractWriteInterface;
-import com.torodb.backend.DbBackend;
 import com.torodb.backend.ErrorHandler;
 import com.torodb.backend.InternalField;
 import com.torodb.backend.SqlHelper;

@@ -85,6 +85,15 @@ public class SqlHelper {
             dsl.configuration().connectionProvider().release(c);
         }       
     }
+    
+    public void executeUpdate(Connection c, String statement, Context context){
+        try (PreparedStatement ps = c.prepareStatement(statement)) {
+            ps.execute();
+        } catch (SQLException ex) {
+            errorHandler.handleRollbackException(context, ex);
+            throw new SystemException(ex);
+        }       
+    }
 
     public String renderVal(String value) {
         return DSL.using(dataTypeProvider.getDialect()).render(DSL.val(value));

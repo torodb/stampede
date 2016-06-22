@@ -201,8 +201,8 @@ public class SqlInterfaceDelegate implements SqlInterface {
     public void insertDocPartData(DSLContext dsl, String schemaName, DocPartData docPartData) {
         writeInterface.insertDocPartData(dsl, schemaName, docPartData);
     }
-    public void deleteDocParts(DSLContext dsl, String schemaName, String tableName, List<Integer> dids) {
-        writeInterface.deleteDocParts(dsl, schemaName, tableName, dids);
+    public void deleteDocParts(DSLContext dsl, String schemaName, MetaCollection metaCollection, List<Integer> dids){
+        writeInterface.deleteDocParts(dsl, schemaName, metaCollection, dids);
     }
     public int identifierMaxSize() {
         return identifierConstraints.identifierMaxSize();
