@@ -6,74 +6,77 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import com.torodb.backend.DbBackend;
+import com.google.inject.Binder;
+import com.google.inject.Module;
 import com.torodb.backend.SqlInterface;
 import com.torodb.backend.driver.derby.DerbyDbBackendConfiguration;
-import com.torodb.backend.driver.derby.OfficialDerbyDriver;
 import com.torodb.backend.meta.TorodbSchema;
 
 public class Derby {
 
-	public static DbBackend getDbBackend(){
-	       OfficialDerbyDriver derbyDriver = new OfficialDerbyDriver();
-	       DerbyDbBackendConfiguration derbyConfiguration = new DerbyDbBackendConfiguration() {
-               @Override
-               public String getUsername() {
-                   return null;
-               }
-               
-               @Override
-               public int getReservedReadPoolSize() {
-                   return 4;
-               }
-               
-               @Override
-               public String getPassword() {
-                   return null;
-               }
-               
-               @Override
-               public int getDbPort() {
-                   return 0;
-               }
-               
-               @Override
-               public String getDbName() {
-                   return "torodb";
-               }
-               
-               @Override
-               public String getDbHost() {
-                   return null;
-               }
-               
-               @Override
-               public long getCursorTimeout() {
-                   return 8000;
-               }
-               
-               @Override
-               public long getConnectionPoolTimeout() {
-                   return 10000;
-               }
-               
-               @Override
-               public int getConnectionPoolSize() {
-                   return 8;
-               }
+	public static Module getConfigurationModule() {
+	    return new Module() {
+            @Override
+            public void configure(Binder binder) {
+                binder.bind(DerbyDbBackendConfiguration.class)
+                    .toInstance(new DerbyDbBackendConfiguration() {
+                        @Override
+                        public String getUsername() {
+                            return null;
+                        }
+                        
+                        @Override
+                        public int getReservedReadPoolSize() {
+                            return 4;
+                        }
+                        
+                        @Override
+                        public String getPassword() {
+                            return null;
+                        }
+                        
+                        @Override
+                        public int getDbPort() {
+                            return 0;
+                        }
+                        
+                        @Override
+                        public String getDbName() {
+                            return "torodb";
+                        }
+                        
+                        @Override
+                        public String getDbHost() {
+                            return null;
+                        }
+                        
+                        @Override
+                        public long getCursorTimeout() {
+                            return 8000;
+                        }
+                        
+                        @Override
+                        public long getConnectionPoolTimeout() {
+                            return 10000;
+                        }
+                        
+                        @Override
+                        public int getConnectionPoolSize() {
+                            return 8;
+                        }
 
-               @Override
-               public boolean inMemory() {
-                   return false;
-               }
+                        @Override
+                        public boolean inMemory() {
+                            return false;
+                        }
 
-               @Override
-               public boolean embedded() {
-                   return true;
-               }
-           };
-           
-	       return new DerbyDbBackend(derbyConfiguration, derbyDriver);
+                        @Override
+                        public boolean embedded() {
+                            return true;
+                        }
+                    });
+            }
+        };
 	}
 	
 	public static void cleanDatabase(SqlInterface sqlInterface) throws SQLException {

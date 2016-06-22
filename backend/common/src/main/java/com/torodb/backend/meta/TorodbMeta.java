@@ -21,9 +21,9 @@
 package com.torodb.backend.meta;
 
 import com.torodb.backend.SqlInterface;
+import com.torodb.backend.ErrorHandler.Context;
 import com.torodb.backend.exceptions.InvalidDatabaseException;
 import com.torodb.backend.exceptions.InvalidDatabaseSchemaException;
-import com.torodb.backend.interfaces.ErrorHandlerInterface.Context;
 import com.torodb.backend.tables.*;
 import com.torodb.backend.tables.records.*;
 import com.torodb.core.TableRef;

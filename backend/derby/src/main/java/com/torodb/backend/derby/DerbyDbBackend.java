@@ -38,8 +38,8 @@ public class DerbyDbBackend extends AbstractDbBackend<DerbyDbBackendConfiguratio
     private final DerbyDriverProvider driverProvider;
 
     @Inject
-    public DerbyDbBackend(DerbyDbBackendConfiguration configuration, DerbyDriverProvider driverProvider) {
-        super(configuration);
+    public DerbyDbBackend(DerbyDbBackendConfiguration configuration, DerbyDriverProvider driverProvider, DerbyErrorHandler errorHandler) {
+        super(configuration, errorHandler);
         this.driverProvider = driverProvider;
 
         initialize();

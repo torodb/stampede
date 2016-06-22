@@ -20,17 +20,17 @@
 
 package com.torodb.backend;
 
-import com.torodb.backend.interfaces.*;
 import java.io.Serializable;
+
 import com.torodb.core.backend.IdentifierConstraints;
 
 /**
  * Wrapper interface to define all database-specific SQL code
  */
 public interface SqlInterface extends 
-    ReadMetaDataInterface, WriteMetaDataInterface, 
-    DataTypeInterface, StructureInterface, ReadInterface, WriteInterface, 
-    IdentifierConstraints, ErrorHandlerInterface, Serializable, DSLContextFactory {
+    MetaDataReadInterface, MetaDataWriteInterface, 
+    DataTypeProvider, StructureInterface, ReadInterface, WriteInterface, 
+    IdentifierConstraints, ErrorHandler, DslContextFactory, DbBackend, Serializable {
     //TODO: Try to remove make SqlInterface not serializable
     
 }

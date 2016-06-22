@@ -44,12 +44,13 @@ import org.jooq.Field;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.google.inject.Guice;
 import com.torodb.backend.AbstractBackendTest;
 import com.torodb.backend.BackendDocumentTestHelper;
 import com.torodb.backend.BackendTestHelper;
-import com.torodb.backend.DbBackend;
 import com.torodb.backend.SqlInterface;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
+import com.torodb.backend.derby.guice.DerbyBackendModule;
 import com.torodb.backend.exceptions.InvalidDatabaseException;
 import com.torodb.backend.meta.TorodbMeta;
 import com.torodb.core.d2r.CollectionData;
@@ -512,13 +513,11 @@ public class BackendDerbyTest extends AbstractBackendTest {
 	}
 
     @Override
-    protected DbBackend createDbBackend()  {
-        return Derby.getDbBackend();
-    }
-
-    @Override
-    protected SqlInterface createSqlInterface(DbBackend dbBackend) {
-        return new DerbySqlInterface(dbBackend);
+    protected SqlInterface createSqlInterface() {
+        return Guice.createInjector(
+                    new DerbyBackendModule(),
+                    Derby.getConfigurationModule())
+                .getInstance(SqlInterface.class);
     }
     
 	@Override

@@ -1,0 +1,62 @@
+/*
+ *     This file is part of ToroDB.
+ *
+ *     ToroDB is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU Affero General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     (at your option) any later version.
+ *
+ *     ToroDB is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU Affero General Public License for more details.
+ *
+ *     You should have received a copy of the GNU Affero General Public License
+ *     along with ToroDB. If not, see <http://www.gnu.org/licenses/>.
+ *
+ *     Copyright (c) 2014, 8Kdata Technology
+ *     
+ */
+
+package com.torodb.backend;
+
+import javax.inject.Singleton;
+
+import com.google.common.collect.ImmutableMap;
+import com.torodb.backend.converters.jooq.DataTypeForKV;
+import com.torodb.core.transaction.metainf.FieldType;
+
+/**
+ *
+ */
+@Singleton
+public abstract class AbstractDataTypeProvider implements DataTypeProvider {
+
+    private final ImmutableMap<FieldType, DataTypeForKV<?>> dataTypes;
+
+    protected AbstractDataTypeProvider(DataTypeForKV<?> ... dataTypes) {
+        ImmutableMap.Builder<FieldType, DataTypeForKV<?>> dataTypesBuilder =
+                ImmutableMap.builder();
+        
+        for (DataTypeForKV<?> dataType : dataTypes) {
+            dataTypesBuilder.put(FieldType.from(dataType.getKVValueConverter().getErasuredType()),
+                    dataType);
+        }
+        
+        //Check that all data types are specified or throw IllegalArgumentException
+        for (FieldType fieldType : FieldType.values()) {
+            getDataType(fieldType);
+        }
+        
+        this.dataTypes = dataTypesBuilder.build();
+    }
+
+    @Override
+    public DataTypeForKV<?> getDataType(FieldType type) {
+        DataTypeForKV<?> dataType = dataTypes.get(type);
+        if (dataType == null) {
+            throw new IllegalArgumentException("It is not defined how to map elements of type " + type + " to SQL");
+        }
+        return dataType;
+    }
+}

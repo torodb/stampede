@@ -18,34 +18,20 @@
  *     
  */
 
-package com.torodb.backend;
+package com.torodb.backend.derby;
 
-import java.sql.SQLException;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+import com.torodb.backend.AbstractErrorHandlerInterface;
 
-import org.junit.Before;
-
-import com.torodb.core.TableRefFactory;
-import com.torodb.core.impl.TableRefFactoryImpl;
-
-public abstract class AbstractBackendTest {
+/**
+ *
+ */
+@Singleton
+public class DerbyErrorHandler extends AbstractErrorHandlerInterface {
     
-    protected static final TableRefFactory tableRefFactory = new TableRefFactoryImpl();
-    
-    protected TestSchema schema;
-    protected SqlInterface sqlInterface;
-    
-    @Before
-    public void setUp() throws Exception {
-        sqlInterface = createSqlInterface();
-        schema = new TestSchema(tableRefFactory, sqlInterface);
-
-        cleanDatabase(sqlInterface);
+    @Inject
+    public DerbyErrorHandler(String... rollbackErrorCodes) {
+        super("40001", "40P01");
     }
-
-    protected abstract SqlInterface createSqlInterface();
-    
-    protected abstract void cleanDatabase(SqlInterface sqlInterface) throws SQLException;
-    
-
-    
 }

@@ -18,34 +18,39 @@
  *     
  */
 
-package com.torodb.backend;
+package com.torodb.backend.derby;
 
-import java.sql.SQLException;
+import javax.inject.Singleton;
 
-import org.junit.Before;
+import com.google.common.collect.ImmutableSet;
+import com.torodb.backend.AbstractIdentifierConstraints;
 
-import com.torodb.core.TableRefFactory;
-import com.torodb.core.impl.TableRefFactoryImpl;
-
-public abstract class AbstractBackendTest {
+/**
+ *
+ */
+@Singleton
+public class DerbyIdentifierConstraints extends AbstractIdentifierConstraints {
     
-    protected static final TableRefFactory tableRefFactory = new TableRefFactoryImpl();
-    
-    protected TestSchema schema;
-    protected SqlInterface sqlInterface;
-    
-    @Before
-    public void setUp() throws Exception {
-        sqlInterface = createSqlInterface();
-        schema = new TestSchema(tableRefFactory, sqlInterface);
-
-        cleanDatabase(sqlInterface);
+    public DerbyIdentifierConstraints() {
+        super(
+            ImmutableSet.<String>of(
+                "NULLID",
+                "SQLJ",
+                "SYS",
+                "SYSCAT",
+                "SYSCS_DIAG",
+                "SYSCS_UTIL",
+                "SYSFUN",
+                "SYSIBM",
+                "SYSPROC",
+                "SYSSTAT"
+                ),
+            ImmutableSet.<String>of(
+                ));
     }
 
-    protected abstract SqlInterface createSqlInterface();
-    
-    protected abstract void cleanDatabase(SqlInterface sqlInterface) throws SQLException;
-    
-
-    
+    @Override
+    public int identifierMaxSize() {
+        return 128;
+    }
 }

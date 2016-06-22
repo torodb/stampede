@@ -32,7 +32,7 @@ import javax.annotation.Nonnull;
 import org.jooq.DSLContext;
 
 import com.google.common.base.Preconditions;
-import com.torodb.backend.interfaces.ErrorHandlerInterface.Context;
+import com.torodb.backend.ErrorHandler.Context;
 import com.torodb.core.backend.BackendCursor;
 import com.torodb.core.backend.DidCursor;
 import com.torodb.core.d2r.DocPartResults;

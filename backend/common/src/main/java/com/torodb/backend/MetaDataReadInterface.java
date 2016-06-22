@@ -1,4 +1,4 @@
-package com.torodb.backend.interfaces;
+package com.torodb.backend;
 
 import java.util.Collection;
 import java.util.Map;
@@ -8,7 +8,6 @@ import javax.annotation.Nonnull;
 
 import org.jooq.DSLContext;
 
-import com.torodb.backend.InternalField;
 import com.torodb.backend.index.NamedDbIndex;
 import com.torodb.backend.tables.MetaCollectionTable;
 import com.torodb.backend.tables.MetaDatabaseTable;
@@ -22,7 +21,7 @@ import com.torodb.backend.tables.records.MetaFieldRecord;
 import com.torodb.backend.tables.records.MetaScalarRecord;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 
-public interface ReadMetaDataInterface {
+public interface MetaDataReadInterface {
     @Nonnull <R extends MetaDatabaseRecord> MetaDatabaseTable<R> getMetaDatabaseTable();
     @Nonnull <R extends MetaCollectionRecord> MetaCollectionTable<R> getMetaCollectionTable();
     @Nonnull <T, R extends MetaDocPartRecord<T>> MetaDocPartTable<T, R> getMetaDocPartTable();

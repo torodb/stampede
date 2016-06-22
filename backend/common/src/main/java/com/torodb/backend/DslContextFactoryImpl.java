@@ -20,32 +20,28 @@
 
 package com.torodb.backend;
 
-import java.sql.SQLException;
+import java.sql.Connection;
 
-import org.junit.Before;
+import javax.inject.Singleton;
 
-import com.torodb.core.TableRefFactory;
-import com.torodb.core.impl.TableRefFactoryImpl;
+import org.jooq.DSLContext;
+import org.jooq.impl.DSL;
 
-public abstract class AbstractBackendTest {
+/**
+ *
+ */
+@Singleton
+public class DslContextFactoryImpl implements DslContextFactory {
     
-    protected static final TableRefFactory tableRefFactory = new TableRefFactoryImpl();
+    public final DataTypeProvider dataTypeProvider;
     
-    protected TestSchema schema;
-    protected SqlInterface sqlInterface;
-    
-    @Before
-    public void setUp() throws Exception {
-        sqlInterface = createSqlInterface();
-        schema = new TestSchema(tableRefFactory, sqlInterface);
-
-        cleanDatabase(sqlInterface);
+    public DslContextFactoryImpl(DataTypeProvider dataTypeProvider) {
+        super();
+        this.dataTypeProvider = dataTypeProvider;
     }
 
-    protected abstract SqlInterface createSqlInterface();
-    
-    protected abstract void cleanDatabase(SqlInterface sqlInterface) throws SQLException;
-    
-
-    
+    @Override
+    public DSLContext createDSLContext(Connection connection) {
+        return DSL.using(connection, dataTypeProvider.getDialect());
+    }
 }
