@@ -35,7 +35,6 @@ public class PostgreSQLBackendModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(SqlInterface.class).to(PostgreSQLSqlInterface.class).in(Singleton.class);
         bind(PostgreSQLDriverProvider.class).to(OfficialPostgreSQLDriver.class).in(Singleton.class);
         bind(DbBackend.class).to(PostgreSQLDbBackend.class).in(Singleton.class);
         bind(SqlInterface.class).to(PostgreSQLSqlInterface.class).in(Singleton.class);
