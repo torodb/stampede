@@ -25,11 +25,15 @@ import com.torodb.common.util.RetryHelper.ExceptionHandler;
 import com.torodb.core.Retrier;
 import com.torodb.core.exceptions.user.UserException;
 import java.util.concurrent.Callable;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  *
  */
 public class RetrierImpl implements Retrier {
+
+    private static final Logger LOGGER = LogManager.getLogger(RetrierImpl.class);
 
     @Override
     public <Result> Result retry(Callable<Result> callable) {
@@ -43,7 +47,11 @@ public class RetrierImpl implements Retrier {
 
     @Override
     public <Result> Result retry(Callable<Result> callable, Result defaultValue) {
-        return RetryHelper.retry(RetryHelper.defaultValueHandler(defaultValue), callable);
+        ExceptionHandler<Result, RuntimeException> handler = (c, t, a) -> {
+            LOGGER.warn("Error while executing", t);
+            c.doReturn(defaultValue);
+        };
+        return RetryHelper.retry(handler, callable);
     }
 
     @Override
