@@ -1,5 +1,5 @@
 
-package com.torodb.mongodb.commands;
+package com.torodb.mongodb.core;
 
 import com.eightkdata.mongowp.ErrorCode;
 import com.eightkdata.mongowp.Status;
@@ -12,6 +12,7 @@ import com.eightkdata.mongowp.server.api.Request;
 import com.eightkdata.mongowp.server.api.SafeRequestProcessor;
 import com.eightkdata.mongowp.server.api.pojos.QueryRequest;
 import com.torodb.core.Retrier;
+import com.torodb.mongodb.commands.TorodbCommandsLibrary;
 import com.torodb.mongodb.commands.TorodbCommandsLibrary.RequiredTransaction;
 import com.torodb.mongodb.core.MongodConnection;
 import com.torodb.mongodb.core.MongodServer;

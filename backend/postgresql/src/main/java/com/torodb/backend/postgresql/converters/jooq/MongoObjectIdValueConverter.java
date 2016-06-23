@@ -20,6 +20,8 @@
 
 package com.torodb.backend.postgresql.converters.jooq;
 
+import java.sql.Types;
+
 import org.jooq.util.postgres.PostgresDataType;
 
 import com.torodb.backend.converters.jooq.DataTypeForKV;
@@ -37,7 +39,7 @@ import com.torodb.kvdocument.values.heap.ByteArrayKVMongoObjectId;
 public class MongoObjectIdValueConverter implements KVValueConverter<byte[], KVMongoObjectId> {
     private static final long serialVersionUID = 1L;
 
-    public static final DataTypeForKV<KVMongoObjectId> TYPE = DataTypeForKV.from(PostgresDataType.BYTEA, new MongoObjectIdValueConverter());
+    public static final DataTypeForKV<KVMongoObjectId> TYPE = DataTypeForKV.from(PostgresDataType.BYTEA, new MongoObjectIdValueConverter(),Types.BINARY);
 
     @Override
     public KVType getErasuredType() {

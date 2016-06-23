@@ -227,7 +227,7 @@ public class PostgreSQLWriteInterface extends AbstractWriteInterface {
                         } else {
                             return internalValue.toString();
                         }
-                    }));
+                    })).append("\t");
         }
         for (KVValue<?> value : docPartRow.getScalarValues()) {
             addValueToCopy(sb, value);
