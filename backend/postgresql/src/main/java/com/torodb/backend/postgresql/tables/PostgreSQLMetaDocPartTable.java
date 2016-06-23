@@ -24,6 +24,7 @@ import org.jooq.Table;
 import org.jooq.TableField;
 import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
+import org.jooq.util.postgres.PostgresDataType;
 
 import com.torodb.backend.postgresql.tables.records.PostgreSQLMetaDocPartRecord;
 import com.torodb.backend.tables.MetaDocPartTable;
@@ -98,7 +99,7 @@ public class PostgreSQLMetaDocPartTable extends MetaDocPartTable<String[], Postg
 
     @Override
     protected TableField<PostgreSQLMetaDocPartRecord, String> createIdentifierField() {
-        return createField(TableFields.IDENTIFIER.fieldName, SQLDataType.VARCHAR.nullable(false), this, "");
+        return createField(TableFields.IDENTIFIER.fieldName, PostgresDataType.VARCHAR.nullable(false), this, "");
     }
 
     @Override

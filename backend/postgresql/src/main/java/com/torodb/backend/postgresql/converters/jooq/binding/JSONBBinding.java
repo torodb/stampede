@@ -1,4 +1,4 @@
-package com.torodb.backend.converters.jooq.binging;
+package com.torodb.backend.postgresql.converters.jooq.binding;
 
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;

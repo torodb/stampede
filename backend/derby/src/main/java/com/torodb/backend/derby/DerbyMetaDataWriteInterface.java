@@ -26,7 +26,6 @@ import javax.inject.Singleton;
 import org.jooq.DSLContext;
 import org.jooq.Record1;
 import org.jooq.conf.ParamType;
-import org.jooq.impl.DSL;
 
 import com.torodb.backend.AbstractWriteMetaDataInterface;
 import com.torodb.backend.SqlHelper;
@@ -55,6 +54,7 @@ public class DerbyMetaDataWriteInterface extends AbstractWriteMetaDataInterface 
     private final DerbyMetaDocPartTable metaDocPartTable;
     private final DerbyMetaFieldTable metaFieldTable;
     private final DerbyMetaScalarTable metaScalarTable;
+    private final SqlHelper sqlHelper;
 
     @Inject
     public DerbyMetaDataWriteInterface(DerbyMetaDataReadInterface derbyMetaDataReadInterface, 
@@ -65,6 +65,7 @@ public class DerbyMetaDataWriteInterface extends AbstractWriteMetaDataInterface 
         this.metaDocPartTable = derbyMetaDataReadInterface.getMetaDocPartTable();
         this.metaFieldTable = derbyMetaDataReadInterface.getMetaFieldTable();
         this.metaScalarTable = derbyMetaDataReadInterface.getMetaScalarTable();
+        this.sqlHelper = sqlHelper;
     }
 
     @Override
@@ -194,7 +195,7 @@ public class DerbyMetaDataWriteInterface extends AbstractWriteMetaDataInterface 
 
 	@Override
     protected String getAddMetaDatabaseStatement(String databaseName, String databaseIdentifier) {
-        String statement = DSL.insertInto(metaDatabaseTable)
+        String statement = sqlHelper.dsl().insertInto(metaDatabaseTable)
             .set(metaDatabaseTable.newRecord().values(databaseName, databaseIdentifier)).getSQL(ParamType.INLINED);
         return statement;
     }
@@ -202,7 +203,7 @@ public class DerbyMetaDataWriteInterface extends AbstractWriteMetaDataInterface 
 	@Override
     protected String getAddMetaCollectionStatement(String databaseName, String collectionName,
             String collectionIdentifier) {
-        String statement = DSL.insertInto(metaCollectionTable)
+        String statement = sqlHelper.dsl().insertInto(metaCollectionTable)
             .set(metaCollectionTable.newRecord()
             .values(databaseName, collectionName, collectionIdentifier)).getSQL(ParamType.INLINED);
         return statement;
@@ -211,7 +212,7 @@ public class DerbyMetaDataWriteInterface extends AbstractWriteMetaDataInterface 
 	@Override
     protected String getAddMetaDocPartStatement(String databaseName, String collectionName, TableRef tableRef,
             String docPartIdentifier) {
-        String statement = DSL.insertInto(metaDocPartTable)
+        String statement = sqlHelper.dsl().insertInto(metaDocPartTable)
             .set(metaDocPartTable.newRecord()
             .values(databaseName, collectionName, tableRef, docPartIdentifier)).getSQL(ParamType.INLINED);
         return statement;
@@ -220,7 +221,7 @@ public class DerbyMetaDataWriteInterface extends AbstractWriteMetaDataInterface 
 	@Override
     protected String getAddMetaFieldStatement(String databaseName, String collectionName, TableRef tableRef,
             String fieldName, String fieldIdentifier, FieldType type) {
-        String statement = DSL.insertInto(metaFieldTable)
+        String statement = sqlHelper.dsl().insertInto(metaFieldTable)
                 .set(metaFieldTable.newRecord()
                 .values(databaseName, collectionName, tableRef, fieldName, type, fieldIdentifier)).getSQL(ParamType.INLINED);
         return statement;
@@ -229,7 +230,7 @@ public class DerbyMetaDataWriteInterface extends AbstractWriteMetaDataInterface 
 	@Override
     protected String getAddMetaScalarStatement(String databaseName, String collectionName, TableRef tableRef,
             String fieldIdentifier, FieldType type) {
-        String statement = DSL.insertInto(metaScalarTable)
+        String statement = sqlHelper.dsl().insertInto(metaScalarTable)
 				.set(metaScalarTable.newRecord()
 				.values(databaseName, collectionName, tableRef, type, fieldIdentifier)).getSQL(ParamType.INLINED);
         return statement;
