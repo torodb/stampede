@@ -15,7 +15,6 @@ import org.jooq.DSLContext;
 
 public class MaxRowIdFactory extends AbstractIdleService implements ReservedIdInfoFactory {
 
-    private boolean initialized;
     private final MetainfoRepository metainfoRepository;
     private final SqlInterface sqlInterface;
 	private ConcurrentHashMap<String, ConcurrentHashMap<String, ConcurrentHashMap<TableRef, ReservedIdInfo>>> megaMap;
@@ -39,12 +38,10 @@ public class MaxRowIdFactory extends AbstractIdleService implements ReservedIdIn
             megaMap = loadRowIds(dsl, snapshot);
         }
 
-        initialized = true;
     }
 
     @Override
     protected void shutDown() throws Exception {
-        initialized = false;
     }
 
     private ConcurrentHashMap<String, ConcurrentHashMap<String, ConcurrentHashMap<TableRef, ReservedIdInfo>>> loadRowIds(DSLContext dsl, MetaSnapshot snapshot) {
@@ -69,7 +66,7 @@ public class MaxRowIdFactory extends AbstractIdleService implements ReservedIdIn
 	
 	@Override
 	public ReservedIdInfo create(String dbName, String collectionName, TableRef tableRef) {
-        Preconditions.checkState(initialized || isRunning(), "This " + ReservedIdInfoFactory.class
+        Preconditions.checkState(isRunning(), "This " + ReservedIdInfoFactory.class
                 + " is also a service and it is not running");
 
         assert megaMap != null;
