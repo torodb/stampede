@@ -54,6 +54,11 @@ public class DataTypeForKV<T extends KVValue<?>> implements DataType<T> {
     }
     
     @SuppressWarnings({ "unchecked", "rawtypes" })
+    public static <DT, T extends KVValue<?>> DataTypeForKV<T> from(DataType<DT> dataType, KVValueConverter<DT, T> converter, int sqlType) {
+        return new DataTypeForKV<>(dataType.asConvertedDataType(new KVChainConverter(dataType.getConverter(), converter)), converter, sqlType);
+    }
+    
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public static <DT, T extends KVValue<?>> DataTypeForKV<T> from(DataType<DT> dataType, KVValueConverter<DT, T> converter, Binding<DT, T> binding) {
         return new DataTypeForKV<>(dataType.asConvertedDataType(new KVChainBinding(binding, dataType.getConverter(), converter)), converter);
     }
