@@ -21,23 +21,16 @@
 package com.torodb.backend.driver.derby;
 
 import java.sql.Connection;
-import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
 import javax.sql.DataSource;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 public class DriverDerbyTest {
-    private static final Logger LOGGER = LogManager.getLogger(
-            DriverDerbyTest.class
-    );
-    
     private DataSource dataSource;
     
     @Before

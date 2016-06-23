@@ -31,7 +31,7 @@ import java.util.function.Function;
 /**
  *
  */
-public class FromBsonValueTranslator implements BsonValueVisitor<KVValue, Void>, Function<BsonValue<?>, KVValue> {
+public class FromBsonValueTranslator implements BsonValueVisitor<KVValue<?>, Void>, Function<BsonValue<?>, KVValue<?>> {
 
     private FromBsonValueTranslator() {
     }
@@ -41,18 +41,18 @@ public class FromBsonValueTranslator implements BsonValueVisitor<KVValue, Void>,
     }
 
     @Override
-    public KVValue apply(BsonValue<?> bsonValue) {
+    public KVValue<?> apply(BsonValue<?> bsonValue) {
         return bsonValue.accept(this, null);
     }
 
     @Override
-    public KVValue visit(BsonArray value, Void arg) {
+    public KVValue<?> visit(BsonArray value, Void arg) {
 //        return new LazyBsonKVArray(value);
         return MongoWPConverter.toEagerArray(value);
     }
 
     @Override
-    public KVValue visit(BsonBinary value, Void arg) {
+    public KVValue<?> visit(BsonBinary value, Void arg) {
         KVBinarySubtype subtype;
         switch (value.getSubtype()) {
             case FUNCTION:
@@ -84,12 +84,12 @@ public class FromBsonValueTranslator implements BsonValueVisitor<KVValue, Void>,
     }
 
     @Override
-    public KVValue visit(BsonDbPointer value, Void arg) {
+    public KVValue<?> visit(BsonDbPointer value, Void arg) {
         throw new UnsupportedBsonTypeException(value.getType());
     }
 
     @Override
-    public KVValue visit(BsonDateTime value, Void arg) {
+    public KVValue<?> visit(BsonDateTime value, Void arg) {
         if (value instanceof InstantBsonDateTime) {
             return new InstantKVInstant(value.getValue());
         }
@@ -97,28 +97,28 @@ public class FromBsonValueTranslator implements BsonValueVisitor<KVValue, Void>,
     }
 
     @Override
-    public KVValue visit(BsonDocument value, Void arg) {
+    public KVValue<?> visit(BsonDocument value, Void arg) {
 //        return new LazyBsonKVDocument(value);
         return MongoWPConverter.toEagerDocument(value);
     }
 
     @Override
-    public KVValue visit(BsonDouble value, Void arg) {
+    public KVValue<?> visit(BsonDouble value, Void arg) {
         return KVDouble.of(value.doubleValue());
     }
 
     @Override
-    public KVValue visit(BsonInt32 value, Void arg) {
+    public KVValue<?> visit(BsonInt32 value, Void arg) {
         return KVInteger.of(value.intValue());
     }
 
     @Override
-    public KVValue visit(BsonInt64 value, Void arg) {
+    public KVValue<?> visit(BsonInt64 value, Void arg) {
         return KVLong.of(value.longValue());
     }
 
     @Override
-    public KVValue visit(BsonBoolean value, Void arg) {
+    public KVValue<?> visit(BsonBoolean value, Void arg) {
         if (value.getPrimitiveValue()) {
             return KVBoolean.TRUE;
         }
@@ -126,58 +126,58 @@ public class FromBsonValueTranslator implements BsonValueVisitor<KVValue, Void>,
     }
 
     @Override
-    public KVValue visit(BsonJavaScript value, Void arg) {
+    public KVValue<?> visit(BsonJavaScript value, Void arg) {
         throw new UnsupportedBsonTypeException(value.getType());
     }
 
     @Override
-    public KVValue visit(BsonJavaScriptWithScope value, Void arg) {
+    public KVValue<?> visit(BsonJavaScriptWithScope value, Void arg) {
         throw new UnsupportedBsonTypeException(value.getType());
     }
 
     @Override
-    public KVValue visit(BsonMax value, Void arg) {
+    public KVValue<?> visit(BsonMax value, Void arg) {
         throw new UnsupportedBsonTypeException(value.getType());
     }
 
     @Override
-    public KVValue visit(BsonMin value, Void arg) {
+    public KVValue<?> visit(BsonMin value, Void arg) {
         throw new UnsupportedBsonTypeException(value.getType());
     }
 
     @Override
-    public KVValue visit(BsonNull value, Void arg) {
+    public KVValue<?> visit(BsonNull value, Void arg) {
         return KVNull.getInstance();
     }
 
     @Override
-    public KVValue visit(BsonObjectId value, Void arg) {
+    public KVValue<?> visit(BsonObjectId value, Void arg) {
         return new ByteArrayKVMongoObjectId(value.toByteArray());
     }
 
     @Override
-    public KVValue visit(BsonRegex value, Void arg) {
+    public KVValue<?> visit(BsonRegex value, Void arg) {
         throw new UnsupportedBsonTypeException(value.getType());
     }
 
     @Override
-    public KVValue visit(BsonString value, Void arg) {
+    public KVValue<?> visit(BsonString value, Void arg) {
         return new BsonKVString(value);
     }
 
     @Override
-    public KVValue visit(BsonUndefined value, Void arg) {
+    public KVValue<?> visit(BsonUndefined value, Void arg) {
 //        throw new UnsupportedBsonTypeException(value.getType());
         return KVNull.getInstance();
     }
 
     @Override
-    public KVValue visit(BsonTimestamp value, Void arg) {
+    public KVValue<?> visit(BsonTimestamp value, Void arg) {
         return new DefaultKVMongoTimestamp(value.getSecondsSinceEpoch(), value.getOrdinal());
     }
 
     @Override
-    public KVValue visit(BsonDeprecated value, Void arg) {
+    public KVValue<?> visit(BsonDeprecated value, Void arg) {
         throw new UnsupportedBsonTypeException(value.getType());
     }
 

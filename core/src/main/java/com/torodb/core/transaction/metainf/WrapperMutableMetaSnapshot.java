@@ -40,7 +40,6 @@ public class WrapperMutableMetaSnapshot implements MutableMetaSnapshot {
         changedDatabases = new HashSet<>();
 
         wrapped.streamMetaDatabases().forEach((db) -> {
-                @SuppressWarnings("unchecked")
                 WrapperMutableMetaDatabase mutable = createMetaDatabase(db);
                 newDatabases.put(db.getName(), mutable);
         });

@@ -65,6 +65,7 @@ public class Sequencer<E extends Enum<E>> {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public void notify(E... message) {
         for (E e : message) {
             notify(e);

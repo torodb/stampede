@@ -36,7 +36,7 @@ public abstract class MetaCollectionRecord extends UpdatableRecordImpl<MetaColle
      * Setter for <code>torodb.collection.database</code>.
      */
     public void setDatabase(String value) {
-        setValue(0, value);
+        set(0, value);
     }
 
     /**
@@ -50,7 +50,7 @@ public abstract class MetaCollectionRecord extends UpdatableRecordImpl<MetaColle
      * Setter for <code>torodb.collection.name</code>.
      */
     public void setName(String value) {
-        setValue(1, value);
+        set(1, value);
     }
 
     /**
@@ -71,7 +71,7 @@ public abstract class MetaCollectionRecord extends UpdatableRecordImpl<MetaColle
      * Setter for <code>torodb.collection.identifier</code>.
      */
     public void setIdentifier(String value) {
-        setValue(2, value);
+        set(2, value);
     }
 
 	// -------------------------------------------------------------------------
@@ -81,9 +81,10 @@ public abstract class MetaCollectionRecord extends UpdatableRecordImpl<MetaColle
 	/**
 	 * {@inheritDoc}
 	 */
-	@Override
+	@SuppressWarnings("unchecked")
+    @Override
 	public Record2<String, String> key() {
-		return (Record2) super.key();
+		return (Record2<String, String>) super.key();
 	}
 
 	// -------------------------------------------------------------------------
@@ -93,17 +94,19 @@ public abstract class MetaCollectionRecord extends UpdatableRecordImpl<MetaColle
 	/**
 	 * {@inheritDoc}
 	 */
-	@Override
+	@SuppressWarnings("unchecked")
+    @Override
 	public Row3<String, String, String> fieldsRow() {
-		return (Row3) super.fieldsRow();
+		return (Row3<String, String, String>) super.fieldsRow();
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
-	@Override
+	@SuppressWarnings("unchecked")
+    @Override
 	public Row3<String, String, String> valuesRow() {
-		return (Row3) super.valuesRow();
+		return (Row3<String, String, String>) super.valuesRow();
 	}
 
     /**
@@ -191,11 +194,12 @@ public abstract class MetaCollectionRecord extends UpdatableRecordImpl<MetaColle
     // Constructors
     // -------------------------------------------------------------------------
 
-    private final MetaCollectionTable metaCollectionTable;
+    private final MetaCollectionTable<MetaCollectionRecord> metaCollectionTable;
     
     /**
      * Create a detached MetaCollectionRecord
      */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     public MetaCollectionRecord(MetaCollectionTable metaCollectionTable) {
         super(metaCollectionTable);
         

@@ -1,4 +1,4 @@
-package com.torodb.backend.interfaces;
+package com.torodb.backend;
 
 import java.util.Collection;
 import javax.annotation.Nonnull;

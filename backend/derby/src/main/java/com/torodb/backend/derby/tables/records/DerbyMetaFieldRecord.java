@@ -49,7 +49,7 @@ public class DerbyMetaFieldRecord extends MetaFieldRecord<JsonArray> {
 	}
 
     @Override
-    public MetaFieldRecord values(String database, String collection, JsonArray tableRef, String name, FieldType type, String identifier) {
+    public MetaFieldRecord<JsonArray> values(String database, String collection, JsonArray tableRef, String name, FieldType type, String identifier) {
         setDatabase(database);
         setCollection(collection);
         setTableRef(tableRef);

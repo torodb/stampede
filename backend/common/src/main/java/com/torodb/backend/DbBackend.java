@@ -20,12 +20,16 @@
 
 package com.torodb.backend;
 
-import com.google.common.util.concurrent.Service;
+import java.sql.Connection;
+
 import javax.sql.DataSource;
 
-public interface DbBackend extends Service {
+public interface DbBackend {
     public DataSource getSessionDataSource();
     public DataSource getSystemDataSource();
     public DataSource getGlobalCursorDatasource();
     public long getDefaultCursorTimeout();
+    public Connection createSystemConnection();
+    public Connection createReadOnlyConnection();
+    public Connection createWriteConnection();
 }

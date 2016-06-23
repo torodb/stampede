@@ -39,7 +39,7 @@ public abstract class MetaFieldRecord<TableRefType> extends UpdatableRecordImpl<
      * Setter for <code>torodb.field.database</code>.
      */
     public void setDatabase(String value) {
-        setValue(0, value);
+        set(0, value);
     }
 
     /**
@@ -53,7 +53,7 @@ public abstract class MetaFieldRecord<TableRefType> extends UpdatableRecordImpl<
      * Setter for <code>torodb.field.collection</code>.
      */
     public void setCollection(String value) {
-        setValue(1, value);
+        set(1, value);
     }
 
     /**
@@ -67,12 +67,13 @@ public abstract class MetaFieldRecord<TableRefType> extends UpdatableRecordImpl<
      * Setter for <code>torodb.field.tableRef</code>.
      */
     public void setTableRef(TableRefType value) {
-        setValue(2, value);
+        set(2, value);
     }
 
     /**
      * Getter for <code>torodb.field.tableRef</code>.
      */
+    @SuppressWarnings("unchecked")
     public TableRefType getTableRef() {
         return (TableRefType) getValue(2);
     }
@@ -81,7 +82,7 @@ public abstract class MetaFieldRecord<TableRefType> extends UpdatableRecordImpl<
      * Setter for <code>torodb.field.name</code>.
      */
     public void setName(String value) {
-        setValue(3, value);
+        set(3, value);
     }
 
     /**
@@ -95,7 +96,7 @@ public abstract class MetaFieldRecord<TableRefType> extends UpdatableRecordImpl<
      * Setter for <code>torodb.field.type</code>.
      */
     public void setType(FieldType value) {
-        setValue(4, value);
+        set(4, value);
     }
 
     /**
@@ -109,7 +110,7 @@ public abstract class MetaFieldRecord<TableRefType> extends UpdatableRecordImpl<
      * Setter for <code>torodb.field.idenftifier</code>.
      */
     public void setIdentifier(String value) {
-        setValue(5, value);
+        set(5, value);
     }
 
     /**
@@ -126,9 +127,10 @@ public abstract class MetaFieldRecord<TableRefType> extends UpdatableRecordImpl<
 	/**
 	 * {@inheritDoc}
 	 */
-	@Override
+	@SuppressWarnings("unchecked")
+    @Override
 	public Record4<String, String, String, String> key() {
-		return (Record4) super.key();
+		return (Record4<String, String, String, String>) super.key();
 	}
 
 	// -------------------------------------------------------------------------
@@ -138,17 +140,19 @@ public abstract class MetaFieldRecord<TableRefType> extends UpdatableRecordImpl<
 	/**
 	 * {@inheritDoc}
 	 */
-	@Override
+	@SuppressWarnings("unchecked")
+    @Override
 	public Row6<String, String, TableRefType, String, FieldType, String> fieldsRow() {
-		return (Row6) super.fieldsRow();
+		return (Row6<String, String, TableRefType, String, FieldType, String>) super.fieldsRow();
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
-	@Override
+	@SuppressWarnings("unchecked")
+    @Override
 	public Row6<String, String, TableRefType, String, FieldType, String> valuesRow() {
-		return (Row6) super.valuesRow();
+		return (Row6<String, String, TableRefType, String, FieldType, String>) super.valuesRow();
 	}
 
     /**
@@ -251,7 +255,7 @@ public abstract class MetaFieldRecord<TableRefType> extends UpdatableRecordImpl<
      * {@inheritDoc}
      */
     @Override
-    public MetaFieldRecord value1(String value) {
+    public MetaFieldRecord<TableRefType> value1(String value) {
         setDatabase(value);
         return this;
     }
@@ -260,7 +264,7 @@ public abstract class MetaFieldRecord<TableRefType> extends UpdatableRecordImpl<
      * {@inheritDoc}
      */
     @Override
-    public MetaFieldRecord value2(String value) {
+    public MetaFieldRecord<TableRefType> value2(String value) {
         setCollection(value);
         return this;
     }
@@ -269,7 +273,7 @@ public abstract class MetaFieldRecord<TableRefType> extends UpdatableRecordImpl<
      * {@inheritDoc}
      */
     @Override
-    public MetaFieldRecord value3(TableRefType value) {
+    public MetaFieldRecord<TableRefType> value3(TableRefType value) {
         setTableRef(value);
         return this;
     }
@@ -278,7 +282,7 @@ public abstract class MetaFieldRecord<TableRefType> extends UpdatableRecordImpl<
      * {@inheritDoc}
      */
     @Override
-    public MetaFieldRecord value4(String value) {
+    public MetaFieldRecord<TableRefType> value4(String value) {
         setName(value);
         return this;
     }
@@ -287,7 +291,7 @@ public abstract class MetaFieldRecord<TableRefType> extends UpdatableRecordImpl<
      * {@inheritDoc}
      */
     @Override
-    public MetaFieldRecord value5(FieldType value) {
+    public MetaFieldRecord<TableRefType> value5(FieldType value) {
         setType(value);
         return this;
     }
@@ -296,7 +300,7 @@ public abstract class MetaFieldRecord<TableRefType> extends UpdatableRecordImpl<
      * {@inheritDoc}
      */
     @Override
-    public MetaFieldRecord value6(String value) {
+    public MetaFieldRecord<TableRefType> value6(String value) {
         setIdentifier(value);
         return this;
     }
@@ -305,9 +309,9 @@ public abstract class MetaFieldRecord<TableRefType> extends UpdatableRecordImpl<
 	 * {@inheritDoc}
 	 */
     @Override
-    public abstract MetaFieldRecord values(String database, String collection, TableRefType tableRef, String name, FieldType type, String identifier);
+    public abstract MetaFieldRecord<TableRefType> values(String database, String collection, TableRefType tableRef, String name, FieldType type, String identifier);
 
-    public MetaFieldRecord values(String database, String collection, TableRef tableRef, String name, FieldType type, String identifier) {
+    public MetaFieldRecord<TableRefType> values(String database, String collection, TableRef tableRef, String name, FieldType type, String identifier) {
         return values(database, collection, toTableRefType(tableRef), name, type, identifier);
     }
     
@@ -319,11 +323,12 @@ public abstract class MetaFieldRecord<TableRefType> extends UpdatableRecordImpl<
     // Constructors
     // -------------------------------------------------------------------------
 
-    private final MetaFieldTable metaFieldTable;
+    private final MetaFieldTable<TableRefType, MetaFieldRecord<TableRefType>> metaFieldTable;
     
     /**
      * Create a detached MetaFieldRecord
      */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     public MetaFieldRecord(MetaFieldTable metaFieldTable) {
         super(metaFieldTable);
         

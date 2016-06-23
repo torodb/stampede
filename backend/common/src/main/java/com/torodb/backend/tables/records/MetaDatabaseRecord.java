@@ -36,7 +36,7 @@ public abstract class MetaDatabaseRecord extends UpdatableRecordImpl<MetaDatabas
      * Setter for <code>torodb.database.name</code>.
      */
     public void setName(String value) {
-        setValue(0, value);
+        set(0, value);
     }
 
     /**
@@ -50,7 +50,7 @@ public abstract class MetaDatabaseRecord extends UpdatableRecordImpl<MetaDatabas
      * Setter for <code>torodb.database.identifier</code>.
      */
     public void setIdentifier(String value) {
-        setValue(1, value);
+        set(1, value);
     }
 
     /**
@@ -67,9 +67,10 @@ public abstract class MetaDatabaseRecord extends UpdatableRecordImpl<MetaDatabas
 	/**
 	 * {@inheritDoc}
 	 */
-	@Override
+	@SuppressWarnings("unchecked")
+    @Override
 	public Record1<String> key() {
-		return (Record1) super.key();
+		return (Record1<String>) super.key();
 	}
 
 	// -------------------------------------------------------------------------
@@ -79,17 +80,19 @@ public abstract class MetaDatabaseRecord extends UpdatableRecordImpl<MetaDatabas
 	/**
 	 * {@inheritDoc}
 	 */
-	@Override
+	@SuppressWarnings("unchecked")
+    @Override
 	public Row2<String, String> fieldsRow() {
-		return (Row2) super.fieldsRow();
+		return (Row2<String, String>) super.fieldsRow();
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
-	@Override
+	@SuppressWarnings("unchecked")
+    @Override
 	public Row2<String, String> valuesRow() {
-		return (Row2) super.valuesRow();
+		return (Row2<String, String>) super.valuesRow();
 	}
 
     /**
@@ -153,11 +156,12 @@ public abstract class MetaDatabaseRecord extends UpdatableRecordImpl<MetaDatabas
     // Constructors
     // -------------------------------------------------------------------------
 
-    private final MetaDatabaseTable metaDatabaseTable;
+    private final MetaDatabaseTable<MetaDatabaseRecord> metaDatabaseTable;
     
     /**
      * Create a detached MetaDatabaseRecord
      */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     public MetaDatabaseRecord(MetaDatabaseTable metaDatabaseTable) {
         super(metaDatabaseTable);
         

@@ -32,7 +32,7 @@ import javax.annotation.Nonnull;
 import org.jooq.DSLContext;
 
 import com.google.common.base.Preconditions;
-import com.torodb.backend.interfaces.ErrorHandlerInterface.Context;
+import com.torodb.backend.ErrorHandler.Context;
 import com.torodb.core.backend.BackendCursor;
 import com.torodb.core.backend.DidCursor;
 import com.torodb.core.d2r.DocPartResults;
@@ -51,7 +51,7 @@ public class DefaultCursor implements BackendCursor {
     private static final int BATCH_SIZE = 1000;
 
     private final SqlInterface sqlInterface;
-    private final R2DTranslator r2dTranslator;
+    private final R2DTranslator<ResultSet> r2dTranslator;
     private final DidCursor didCursor;
     private final DSLContext dsl;
     private final MetaDatabase metaDatabase;
@@ -63,7 +63,7 @@ public class DefaultCursor implements BackendCursor {
      */
     public DefaultCursor(
             @Nonnull SqlInterface sqlInterface,
-            @Nonnull R2DTranslator r2dTranslator,
+            @Nonnull R2DTranslator<ResultSet> r2dTranslator,
             @Nonnull DidCursor didCursor,
             @Nonnull DSLContext dsl,
             @Nonnull MetaDatabase metaDatabase,

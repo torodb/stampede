@@ -44,15 +44,15 @@ public class MapToKVValueConverter {
 		return new MapKVDocument(docHM);
 	}
 
-	private KVValue<?> convertValue(Object value) {
+	@SuppressWarnings("unchecked")
+    private KVValue<?> convertValue(Object value) {
 		if (value == null) {
 			return KVNull.getInstance();
 		}
-		Class fieldClass = value.getClass();
 		if (value instanceof Map) {
-			return convertMap((Map) value);
+			return convertMap((Map<String, Object>) value);
 		} else if (value instanceof List) {
-			return convertList((List) value);
+			return convertList((List<Object>) value);
 		} else if (value instanceof String) {
 			return new StringKVString((String) value);
 		} else if (value instanceof Integer) {

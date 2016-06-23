@@ -21,7 +21,7 @@
 package com.torodb.backend;
 
 import com.google.common.base.Preconditions;
-import com.torodb.backend.interfaces.ErrorHandlerInterface.Context;
+import com.torodb.backend.ErrorHandler.Context;
 import com.torodb.core.backend.WriteBackendTransaction;
 import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.exceptions.user.UserException;

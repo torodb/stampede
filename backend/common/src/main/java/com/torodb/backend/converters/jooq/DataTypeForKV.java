@@ -48,14 +48,17 @@ public class DataTypeForKV<T extends KVValue<?>> implements DataType<T> {
     
     private static final long serialVersionUID = 1L;
     
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public static <DT, T extends KVValue<?>> DataTypeForKV<T> from(DataType<DT> dataType, KVValueConverter<DT, T> converter) {
         return new DataTypeForKV<>(dataType.asConvertedDataType(new KVChainConverter(dataType.getConverter(), converter)), converter);
     }
     
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public static <DT, T extends KVValue<?>> DataTypeForKV<T> from(DataType<DT> dataType, KVValueConverter<DT, T> converter, Binding<DT, T> binding) {
         return new DataTypeForKV<>(dataType.asConvertedDataType(new KVChainBinding(binding, dataType.getConverter(), converter)), converter);
     }
     
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public static <DT, T extends KVValue<?>> DataTypeForKV<T> from(DataType<DT> dataType, KVValueConverter<DT, T> converter, Binding<DT, T> binding, int sqlType) {
         return new DataTypeForKV<>(dataType.asConvertedDataType(new KVChainBinding(binding, dataType.getConverter(), converter)), converter, sqlType);
     }

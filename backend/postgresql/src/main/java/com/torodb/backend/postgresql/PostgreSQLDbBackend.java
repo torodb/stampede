@@ -37,8 +37,8 @@ public class PostgreSQLDbBackend extends AbstractDbBackend<PostgreSQLDbBackendCo
     private final PostgreSQLDriverProvider driverProvider;
 
     @Inject
-    public PostgreSQLDbBackend(PostgreSQLDbBackendConfiguration configuration, PostgreSQLDriverProvider driverProvider) {
-        super(configuration);
+    public PostgreSQLDbBackend(PostgreSQLDbBackendConfiguration configuration, PostgreSQLDriverProvider driverProvider, PostgreSQLErrorHandler errorHandler) {
+        super(configuration, errorHandler);
         this.driverProvider = driverProvider;
     }
 

@@ -47,7 +47,7 @@ public class PostgreSQLMetaFieldRecord extends MetaFieldRecord<String[]> {
 	}
 
     @Override
-    public MetaFieldRecord values(String database, String collection, String[] tableRef, String name, FieldType type, String identifier) {
+    public MetaFieldRecord<String[]> values(String database, String collection, String[] tableRef, String name, FieldType type, String identifier) {
         setDatabase(database);
         setCollection(collection);
         setTableRef(tableRef);

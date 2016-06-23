@@ -20,10 +20,13 @@
 
 package com.torodb.backend;
 
+import java.sql.SQLException;
+
+import org.junit.Before;
+
+import com.google.inject.Injector;
 import com.torodb.core.TableRefFactory;
 import com.torodb.core.impl.TableRefFactoryImpl;
-import java.sql.SQLException;
-import org.junit.Before;
 
 public abstract class AbstractBackendTest {
     
@@ -34,21 +37,17 @@ public abstract class AbstractBackendTest {
     
     @Before
     public void setUp() throws Exception {
-        DbBackend dbBackend = createDbBackend();
+        Injector injector = createInjector();
+        DbBackendService dbBackend = injector.getInstance(DbBackendService.class);
         dbBackend.startAsync();
         dbBackend.awaitRunning();
-        sqlInterface = createSqlInterface(dbBackend);
+        cleanDatabase(injector);
+        sqlInterface = injector.getInstance(SqlInterface.class);
         schema = new TestSchema(tableRefFactory, sqlInterface);
-
-        cleanDatabase(sqlInterface);
     }
 
-    protected abstract DbBackend createDbBackend();
-
-    protected abstract SqlInterface createSqlInterface(DbBackend dbBackend);
+    protected abstract Injector createInjector();
     
-    protected abstract void cleanDatabase(SqlInterface sqlInterface) throws SQLException;
-    
-
+    protected abstract void cleanDatabase(Injector injector) throws SQLException;
     
 }

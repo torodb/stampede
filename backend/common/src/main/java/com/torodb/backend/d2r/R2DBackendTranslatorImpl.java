@@ -8,8 +8,8 @@ import org.jooq.Converter;
 
 import com.torodb.backend.InternalField;
 import com.torodb.backend.SqlInterface;
+import com.torodb.backend.ErrorHandler.Context;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
-import com.torodb.backend.interfaces.ErrorHandlerInterface.Context;
 import com.torodb.backend.tables.MetaDocPartTable;
 import com.torodb.backend.tables.records.MetaDocPartRecord;
 import com.torodb.core.d2r.InternalFields;
@@ -99,6 +99,7 @@ public class R2DBackendTranslatorImpl implements R2DBackendTranslator<ResultSet,
         return new ResultSetInternalFields(did, rid, pid, seq, columnIndex);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public KVValue<?> getValue(FieldType type, ResultSet resultSet, ResultSetInternalFields internalFields,
             int fieldIndex) {

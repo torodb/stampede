@@ -23,8 +23,6 @@ package com.torodb.backend.derby.converters.jooq;
 import java.sql.Timestamp;
 import java.time.Instant;
 
-import org.jooq.impl.SQLDataType;
-
 import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.backend.converters.jooq.KVValueConverter;
 import com.torodb.backend.converters.sql.SqlBinding;

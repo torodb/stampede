@@ -1,23 +1,41 @@
 
 package com.torodb.backend.meta;
 
-import com.torodb.backend.SqlInterface;
-import com.torodb.backend.exceptions.InvalidDatabaseException;
-import com.torodb.backend.exceptions.InvalidDatabaseSchemaException;
-import com.torodb.backend.interfaces.ErrorHandlerInterface.Context;
-import com.torodb.backend.tables.*;
-import com.torodb.backend.tables.records.*;
-import com.torodb.core.TableRef;
-import com.torodb.core.TableRefFactory;
-import com.torodb.core.transaction.metainf.MetainfoRepository.SnapshotStage;
-import com.torodb.core.transaction.metainf.*;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jooq.*;
+import org.jooq.DSLContext;
+import org.jooq.Field;
+import org.jooq.Meta;
+import org.jooq.Result;
+import org.jooq.Table;
+
+import com.torodb.backend.ErrorHandler.Context;
+import com.torodb.backend.SqlInterface;
+import com.torodb.backend.exceptions.InvalidDatabaseException;
+import com.torodb.backend.exceptions.InvalidDatabaseSchemaException;
+import com.torodb.backend.tables.MetaCollectionTable;
+import com.torodb.backend.tables.MetaDatabaseTable;
+import com.torodb.backend.tables.MetaDocPartTable;
+import com.torodb.backend.tables.MetaFieldTable;
+import com.torodb.backend.tables.MetaScalarTable;
+import com.torodb.backend.tables.records.MetaCollectionRecord;
+import com.torodb.backend.tables.records.MetaDatabaseRecord;
+import com.torodb.backend.tables.records.MetaDocPartRecord;
+import com.torodb.backend.tables.records.MetaFieldRecord;
+import com.torodb.backend.tables.records.MetaScalarRecord;
+import com.torodb.core.TableRef;
+import com.torodb.core.TableRefFactory;
+import com.torodb.core.transaction.metainf.MetainfoRepository;
+import com.torodb.core.transaction.metainf.MetainfoRepository.SnapshotStage;
+import com.torodb.core.transaction.metainf.MutableMetaCollection;
+import com.torodb.core.transaction.metainf.MutableMetaDatabase;
+import com.torodb.core.transaction.metainf.MutableMetaDocPart;
+import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
 
 /**
  *

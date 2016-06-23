@@ -114,10 +114,6 @@ public class MvccMetainfoRepository implements MetainfoRepository {
             this.writeLock = writeLock;
         }
 
-        private MvccMetainfoRepository getOwner() {
-            return MvccMetainfoRepository.this;
-        }
-
         @Override
         public MetainfoRepository getAssociatedRepository() {
             Preconditions.checkState(open, "This stage is closed");

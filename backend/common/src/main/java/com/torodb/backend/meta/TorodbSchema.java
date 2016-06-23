@@ -92,6 +92,7 @@ public class TorodbSchema extends SchemaImpl {
     	sqlInterface.createMetaScalarTable(dsl);
     }
     
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     private void checkSchema(Schema torodbSchema, SqlInterface sqlInterface) throws InvalidDatabaseException {
         SemanticTable<?>[] metaTables = new SemanticTable[] {
             sqlInterface.getMetaDatabaseTable(),

@@ -44,7 +44,6 @@ public class WrapperMutableMetaDatabase implements MutableMetaDatabase {
         this.modifiedMetaCollections = new HashSet<>();
         
         wrapped.streamMetaCollections().forEach((collection) -> {
-            @SuppressWarnings("unchecked")
             WrapperMutableMetaCollection mutable = createMetaColletion(collection);
                     
             newCollections.put(collection.getName(), mutable);

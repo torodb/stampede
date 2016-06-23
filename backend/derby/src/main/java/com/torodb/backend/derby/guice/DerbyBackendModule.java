@@ -23,10 +23,24 @@ package com.torodb.backend.derby.guice;
 import javax.inject.Singleton;
 
 import com.google.inject.AbstractModule;
+import com.torodb.backend.DataTypeProvider;
 import com.torodb.backend.DbBackend;
-import com.torodb.backend.SqlInterface;
+import com.torodb.backend.DbBackendService;
+import com.torodb.backend.ErrorHandler;
+import com.torodb.backend.MetaDataReadInterface;
+import com.torodb.backend.MetaDataWriteInterface;
+import com.torodb.backend.ReadInterface;
+import com.torodb.backend.StructureInterface;
+import com.torodb.backend.WriteInterface;
+import com.torodb.backend.derby.DerbyDataTypeProvider;
 import com.torodb.backend.derby.DerbyDbBackend;
-import com.torodb.backend.derby.DerbySqlInterface;
+import com.torodb.backend.derby.DerbyErrorHandler;
+import com.torodb.backend.derby.DerbyIdentifierConstraints;
+import com.torodb.backend.derby.DerbyMetaDataReadInterface;
+import com.torodb.backend.derby.DerbyMetaDataWriteInterface;
+import com.torodb.backend.derby.DerbyReadInterface;
+import com.torodb.backend.derby.DerbyStructureInterface;
+import com.torodb.backend.derby.DerbyWriteInterface;
 import com.torodb.backend.driver.derby.DerbyDriverProvider;
 import com.torodb.backend.driver.derby.OfficialDerbyDriver;
 import com.torodb.core.backend.IdentifierConstraints;
@@ -36,9 +50,17 @@ public class DerbyBackendModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(DerbyDriverProvider.class).to(OfficialDerbyDriver.class).in(Singleton.class);
-        bind(DbBackend.class).to(DerbyDbBackend.class).in(Singleton.class);
-        bind(SqlInterface.class).to(DerbySqlInterface.class).in(Singleton.class);
-        bind(IdentifierConstraints.class).to(DerbySqlInterface.class).in(Singleton.class);
+        bind(DerbyDbBackend.class).in(Singleton.class);
+        bind(DbBackend.class).to(DerbyDbBackend.class);
+        bind(DbBackendService.class).to(DerbyDbBackend.class);
+        bind(MetaDataReadInterface.class).to(DerbyMetaDataReadInterface.class).in(Singleton.class);
+        bind(MetaDataWriteInterface.class).to(DerbyMetaDataWriteInterface.class).in(Singleton.class);
+        bind(DataTypeProvider.class).to(DerbyDataTypeProvider.class).in(Singleton.class);
+        bind(StructureInterface.class).to(DerbyStructureInterface.class).in(Singleton.class);
+        bind(ReadInterface.class).to(DerbyReadInterface.class).in(Singleton.class);
+        bind(WriteInterface.class).to(DerbyWriteInterface.class).in(Singleton.class);
+        bind(ErrorHandler.class).to(DerbyErrorHandler.class).in(Singleton.class);
+        bind(IdentifierConstraints.class).to(DerbyIdentifierConstraints.class).in(Singleton.class);
     }
 
 }

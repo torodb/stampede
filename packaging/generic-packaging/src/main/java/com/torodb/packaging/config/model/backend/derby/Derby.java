@@ -60,10 +60,6 @@ public class Derby implements BackendImplementation, Password {
 	@JsonProperty(required=true)
 	protected Integer port = 5432;
 	@Description("config.backend.postgres.database")
-	/**
-	 * @deprecated kept for backward compatibility
-	 */
-	@Deprecated
 	@NotNull
 	@JsonProperty(required=true)
 	protected String database = "torod";
@@ -130,21 +126,9 @@ public class Derby implements BackendImplementation, Password {
     public Boolean getInMemory() {
         return inMemory;
     }
-
-	/**
-	 * @deprecated kept for backward compatibility
-	 * @return
-     */
-	@Deprecated
 	public String getDatabase() {
 		return database;
 	}
-
-	/**
-	 * @deprecated kept for backward compatibility
-	 * @param database
-     */
-	@Deprecated
 	public void setDatabase(String database) {
 		this.database = database;
 	}

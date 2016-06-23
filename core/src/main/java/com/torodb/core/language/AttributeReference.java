@@ -39,18 +39,18 @@ import com.google.common.collect.Lists;
 @Immutable
 public class AttributeReference implements Serializable {
     
-    public static final AttributeReference EMPTY_REFERENCE = new AttributeReference(Collections.<Key>emptyList());
+    public static final AttributeReference EMPTY_REFERENCE = new AttributeReference(Collections.<Key<?>>emptyList());
     private static final long serialVersionUID = 1L;
     
     @Nonnull
-    private final List<Key> keys;
+    private final List<Key<?>> keys;
 
-    public AttributeReference(@Nonnull List<Key> keys) {
+    public AttributeReference(@Nonnull List<Key<?>> keys) {
         this.keys = ImmutableList.copyOf(keys);
     }
 
     @Nonnull 
-    public List<Key> getKeys() {
+    public List<Key<?>> getKeys() {
         return keys;
     }
     
@@ -64,9 +64,9 @@ public class AttributeReference implements Serializable {
         return new AttributeReference(keys.subList(from, to));
     }
     
-    public AttributeReference append(AttributeReference.Key tail) {
+    public AttributeReference append(AttributeReference.Key<?> tail) {
         return new AttributeReference(
-                ImmutableList.<AttributeReference.Key>builder()
+                ImmutableList.<AttributeReference.Key<?>>builder()
                         .addAll(keys)
                         .add(tail)
                         .build()
@@ -77,12 +77,12 @@ public class AttributeReference implements Serializable {
         return append(tail.getKeys());
     }
     
-    public AttributeReference append(List<? extends Key> tail) {
-        ImmutableList<Key> newList = ImmutableList.copyOf(Iterables.concat(this.keys, tail));
+    public AttributeReference append(List<? extends Key<?>> tail) {
+        ImmutableList<Key<?>> newList = ImmutableList.copyOf(Iterables.concat(this.keys, tail));
         return new AttributeReference(newList);
     }
     
-    public AttributeReference prepend(List<? extends Key> head) {
+    public AttributeReference prepend(List<? extends Key<?>> head) {
         return new AttributeReference(ImmutableList.copyOf(Iterables.concat(head, this.keys)));
     }
 
@@ -114,7 +114,7 @@ public class AttributeReference implements Serializable {
     }
     
     public static class Builder {
-        private final List<Key> keys;
+        private final List<Key<?>> keys;
 
         public Builder() {
             keys = Lists.newArrayList();

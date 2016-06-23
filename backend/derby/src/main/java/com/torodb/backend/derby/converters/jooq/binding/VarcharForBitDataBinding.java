@@ -3,7 +3,6 @@ package com.torodb.backend.derby.converters.jooq.binding;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 import java.sql.Types;
-import java.util.Objects;
 
 import org.jooq.Binding;
 import org.jooq.BindingGetResultSetContext;

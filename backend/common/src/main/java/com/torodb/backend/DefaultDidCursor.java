@@ -25,7 +25,7 @@ import java.sql.SQLException;
 
 import javax.annotation.Nonnull;
 
-import com.torodb.backend.interfaces.ErrorHandlerInterface.Context;
+import com.torodb.backend.ErrorHandler.Context;
 import com.torodb.core.backend.DidCursor;
 import com.torodb.core.exceptions.SystemException;
 

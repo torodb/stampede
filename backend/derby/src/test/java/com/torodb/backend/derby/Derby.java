@@ -6,84 +6,117 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import com.google.inject.Binder;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.google.inject.Module;
+import com.google.inject.Singleton;
 import com.torodb.backend.DbBackend;
+import com.torodb.backend.DslContextFactory;
+import com.torodb.backend.DslContextFactoryImpl;
 import com.torodb.backend.SqlInterface;
+import com.torodb.backend.SqlInterfaceDelegate;
+import com.torodb.backend.derby.guice.DerbyBackendModule;
 import com.torodb.backend.driver.derby.DerbyDbBackendConfiguration;
-import com.torodb.backend.driver.derby.OfficialDerbyDriver;
 import com.torodb.backend.meta.TorodbSchema;
+import com.torodb.core.backend.IdentifierConstraints;
+import com.torodb.core.guice.CoreModule;
 
 public class Derby {
 
-	public static DbBackend getDbBackend(){
-	       OfficialDerbyDriver derbyDriver = new OfficialDerbyDriver();
-	       DerbyDbBackendConfiguration derbyConfiguration = new DerbyDbBackendConfiguration() {
-               @Override
-               public String getUsername() {
-                   return null;
-               }
-               
-               @Override
-               public int getReservedReadPoolSize() {
-                   return 4;
-               }
-               
-               @Override
-               public String getPassword() {
-                   return null;
-               }
-               
-               @Override
-               public int getDbPort() {
-                   return 0;
-               }
-               
-               @Override
-               public String getDbName() {
-                   return "torodb";
-               }
-               
-               @Override
-               public String getDbHost() {
-                   return null;
-               }
-               
-               @Override
-               public long getCursorTimeout() {
-                   return 8000;
-               }
-               
-               @Override
-               public long getConnectionPoolTimeout() {
-                   return 10000;
-               }
-               
-               @Override
-               public int getConnectionPoolSize() {
-                   return 8;
-               }
+    public static Injector createInjector() {
+        return Guice.createInjector(
+                    new CoreModule(),
+                    new Module() {
+                        @Override
+                        public void configure(Binder binder) {
+                            binder.bind(SqlInterface.class)
+                                .to(SqlInterfaceDelegate.class)
+                                .in(Singleton.class);
+                            binder.bind(DslContextFactory.class)
+                                .to(DslContextFactoryImpl.class)
+                                .asEagerSingleton();
+                        }
+                    },
+                    new DerbyBackendModule(),
+                    Derby.getConfigurationModule());
+    }
 
-               @Override
-               public boolean inMemory() {
-                   return false;
-               }
+	public static Module getConfigurationModule() {
+	    return new Module() {
+            @Override
+            public void configure(Binder binder) {
+                binder.bind(DerbyDbBackendConfiguration.class)
+                    .toInstance(new DerbyDbBackendConfiguration() {
+                        @Override
+                        public String getUsername() {
+                            return null;
+                        }
+                        
+                        @Override
+                        public int getReservedReadPoolSize() {
+                            return 4;
+                        }
+                        
+                        @Override
+                        public String getPassword() {
+                            return null;
+                        }
+                        
+                        @Override
+                        public int getDbPort() {
+                            return 0;
+                        }
+                        
+                        @Override
+                        public String getDbName() {
+                            return "torodb";
+                        }
+                        
+                        @Override
+                        public String getDbHost() {
+                            return null;
+                        }
+                        
+                        @Override
+                        public long getCursorTimeout() {
+                            return 8000;
+                        }
+                        
+                        @Override
+                        public long getConnectionPoolTimeout() {
+                            return 10000;
+                        }
+                        
+                        @Override
+                        public int getConnectionPoolSize() {
+                            return 8;
+                        }
 
-               @Override
-               public boolean embedded() {
-                   return true;
-               }
-           };
-           
-	       return new DerbyDbBackend(derbyConfiguration, derbyDriver);
+                        @Override
+                        public boolean inMemory() {
+                            return false;
+                        }
+
+                        @Override
+                        public boolean embedded() {
+                            return true;
+                        }
+                    });
+            }
+        };
 	}
 	
-	public static void cleanDatabase(SqlInterface sqlInterface) throws SQLException {
-		try (Connection connection = sqlInterface.createSystemConnection()) {
+	public static void cleanDatabase(Injector injector) throws SQLException {
+	    DbBackend dbBackend = injector.getInstance(DbBackend.class);
+	    IdentifierConstraints identifierConstraints = injector.getInstance(IdentifierConstraints.class);
+		try (Connection connection = dbBackend.createSystemConnection()) {
             DatabaseMetaData metaData = connection.getMetaData();
             ResultSet tables = metaData.getTables("%", "%", "%", null);
             while (tables.next()) {
                 String schemaName = tables.getString("TABLE_SCHEM");
                 String tableName = tables.getString("TABLE_NAME");
-                if (sqlInterface.isAllowedSchemaIdentifier(schemaName) || schemaName.equals(TorodbSchema.TORODB_SCHEMA)) {
+                if (identifierConstraints.isAllowedSchemaIdentifier(schemaName) || schemaName.equals(TorodbSchema.TORODB_SCHEMA)) {
                     try (PreparedStatement preparedStatement = connection.prepareStatement("DROP TABLE \"" + schemaName + "\".\"" + tableName + "\"")) {
                         preparedStatement.executeUpdate();
                     }
@@ -92,7 +125,7 @@ public class Derby {
             ResultSet schemas = metaData.getSchemas();
             while (schemas.next()) {
                 String schemaName = schemas.getString("TABLE_SCHEM");
-                if (sqlInterface.isAllowedSchemaIdentifier(schemaName) || schemaName.equals(TorodbSchema.TORODB_SCHEMA)) {
+                if (identifierConstraints.isAllowedSchemaIdentifier(schemaName) || schemaName.equals(TorodbSchema.TORODB_SCHEMA)) {
                     try (PreparedStatement preparedStatement = connection.prepareStatement("DROP SCHEMA \"" + schemaName + "\" RESTRICT")) {
                         preparedStatement.executeUpdate();
                     }

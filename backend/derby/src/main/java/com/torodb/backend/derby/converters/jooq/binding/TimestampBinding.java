@@ -1,8 +1,8 @@
 package com.torodb.backend.derby.converters.jooq.binding;
 
-import java.sql.Timestamp;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
+import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.Objects;
 
