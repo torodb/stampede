@@ -35,8 +35,9 @@ public class BackendModule extends AbstractModule {
                 .to(MaxRowIdFactory.class);
         
         bind(RidGenerator.class)
-                .to(ReservedIdContainer.class);
-
+                .to(ReservedIdContainer.class)
+                .in(Singleton.class);
+        
         bind(DslContextFactory.class)
                 .to(DslContextFactoryImpl.class)
                 .asEagerSingleton();
