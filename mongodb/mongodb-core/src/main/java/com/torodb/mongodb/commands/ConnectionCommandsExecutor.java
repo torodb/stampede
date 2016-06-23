@@ -18,6 +18,8 @@ import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.diagnos
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.diagnostic.CollStatsCommand.CollStatsArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.diagnostic.CollStatsCommand.CollStatsReply;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.diagnostic.DiagnosticCommands.DiagnosticCommandsImplementationsBuilder;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.diagnostic.GetLogCommand.GetLogArgument;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.diagnostic.GetLogCommand.GetLogReply;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.diagnostic.ListDatabasesCommand.ListDatabasesReply;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.diagnostic.ServerStatusCommand.ServerStatusArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.diagnostic.ServerStatusCommand.ServerStatusReply;
@@ -63,6 +65,7 @@ import com.google.common.net.HostAndPort;
 import com.torodb.core.annotations.DoNotChange;
 import com.torodb.mongodb.commands.impl.NotImplementedCommandImplementation;
 import com.torodb.mongodb.commands.impl.authentication.GetNonceImplementation;
+import com.torodb.mongodb.commands.impl.diagnostic.GetLogImplementation;
 import com.torodb.mongodb.commands.impl.diagnostic.PingImplementation;
 import com.torodb.mongodb.commands.impl.replication.IsMasterImplementation;
 import com.torodb.mongodb.core.MongodConnection;
@@ -213,10 +216,12 @@ public class ConnectionCommandsExecutor implements CommandsExecutor<MongodConnec
     static class MyDiagnosticCommandsImplementationBuilder extends DiagnosticCommandsImplementationsBuilder<MongodConnection> {
 
         private final PingImplementation ping;
+        private final GetLogImplementation getLog;
 
         @Inject
-        public MyDiagnosticCommandsImplementationBuilder(PingImplementation ping) {
+        public MyDiagnosticCommandsImplementationBuilder(PingImplementation ping, GetLogImplementation getLog) {
             this.ping = ping;
+            this.getLog = getLog;
         }
 
         @Override
@@ -237,6 +242,11 @@ public class ConnectionCommandsExecutor implements CommandsExecutor<MongodConnec
         @Override
         public CommandImplementation<ServerStatusArgument, ServerStatusReply, MongodConnection> getServerStatusImplementation() {
             return NotImplementedCommandImplementation.build();
+        }
+
+        @Override
+        public CommandImplementation<GetLogArgument, GetLogReply, MongodConnection> getGetLogImplementation() {
+            return getLog;
         }
 
         @Override

@@ -15,7 +15,7 @@ import com.eightkdata.mongowp.server.wp.RequestIdGenerator;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
-import com.torodb.mongodb.commands.TorodbSafeRequestProcessor;
+import com.torodb.mongodb.core.TorodbSafeRequestProcessor;
 import com.torodb.mongodb.core.ToroErrorHandler;
 
 /**
