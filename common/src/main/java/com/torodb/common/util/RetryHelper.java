@@ -119,7 +119,7 @@ public class RetryHelper {
         return new WaitExceptionHandler<>(millis);
     }
 
-    public static <R, T extends Exception> StorerExceptionHandler<R, T> storerExceptionHandler(Class<T> excetionClass, ExceptionHandler<R, T> delegate) {
+    public static <R, CT extends Exception, T2 extends Exception> StorerExceptionHandler<R, CT, T2> storerExceptionHandler(Class<CT> excetionClass, ExceptionHandler<R, T2> delegate) {
         return new StorerExceptionHandler<>(delegate, excetionClass);
     }
 
@@ -225,12 +225,12 @@ public class RetryHelper {
         }
     }
 
-    public static class StorerExceptionHandler<R, T extends Exception> extends DelegateExceptionHandler<R, T> {
+    public static class StorerExceptionHandler<R, CT extends Exception, T2 extends Exception> extends DelegateExceptionHandler<R, T2> {
 
-        private final Class<T> exClass;
-        private Optional<T> thrown;
+        private final Class<CT> exClass;
+        private Optional<CT> thrown;
 
-        public StorerExceptionHandler(ExceptionHandler<R, T> delegate, Class<T> exClass) {
+        public StorerExceptionHandler(ExceptionHandler<R, T2> delegate, Class<CT> exClass) {
             super(delegate);
             this.exClass = exClass;
             thrown = Optional.absent();
@@ -238,16 +238,16 @@ public class RetryHelper {
 
         @Override
         @SuppressWarnings("unchecked")
-        public void handleException(RetryCallback<R> callback, Exception t, int attempts) throws T {
+        public void handleException(RetryCallback<R> callback, Exception t, int attempts) throws T2 {
             if (exClass.isInstance(t)) {
-                thrown = Optional.of((T) t);
+                thrown = Optional.of((CT) t);
             }
             else {
                 super.handleException(callback, t, attempts);
             }
         }
 
-        public Optional<T> getThrown() {
+        public Optional<CT> getThrown() {
             return thrown;
         }
 

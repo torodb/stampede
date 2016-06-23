@@ -1,61 +1,5 @@
 package com.torodb.backend.postgresql;
 
-import java.io.IOException;
-import java.io.Reader;
-import java.io.Serializable;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import javax.annotation.Nonnull;
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.jooq.Configuration;
-import org.jooq.ConnectionProvider;
-import org.jooq.Converter;
-import org.jooq.DSLContext;
-import org.jooq.Field;
-import org.jooq.Query;
-import org.jooq.Record1;
-import org.jooq.SQLDialect;
-import org.jooq.exception.DataAccessException;
-import org.jooq.impl.DSL;
-import org.postgresql.PGConnection;
-import org.postgresql.copy.CopyManager;
-
-/*
- *     This file is part of ToroDB.
- *
- *     ToroDB is free software: you can redistribute it and/or modify
- *     it under the terms of the GNU Affero General Public License as published by
- *     the Free Software Foundation, either version 3 of the License, or
- *     (at your option) any later version.
- *
- *     ToroDB is distributed in the hope that it will be useful,
- *     but WITHOUT ANY WARRANTY; without even the implied warranty of
- *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *     GNU Affero General Public License for more details.
- *
- *     You should have received a copy of the GNU Affero General Public License
- *     along with ToroDB. If not, see <http://www.gnu.org/licenses/>.
- *
- *     Copyright (c) 2014, 8Kdata Technology
- *     
- */
-
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -70,17 +14,9 @@ import com.torodb.backend.index.NamedDbIndex;
 import com.torodb.backend.meta.TorodbSchema;
 import com.torodb.backend.postgresql.converters.PostgreSQLValueToCopyConverter;
 import com.torodb.backend.postgresql.converters.jooq.PostgreSQLValueToJooqDataTypeProvider;
-import com.torodb.backend.postgresql.tables.PostgreSQLMetaCollectionTable;
-import com.torodb.backend.postgresql.tables.PostgreSQLMetaDatabaseTable;
-import com.torodb.backend.postgresql.tables.PostgreSQLMetaDocPartTable;
-import com.torodb.backend.postgresql.tables.PostgreSQLMetaFieldTable;
-import com.torodb.backend.postgresql.tables.PostgreSQLMetaScalarTable;
-import com.torodb.backend.tables.MetaCollectionTable;
-import com.torodb.backend.tables.MetaDatabaseTable;
-import com.torodb.backend.tables.MetaDocPartTable;
+import com.torodb.backend.postgresql.tables.*;
 import com.torodb.backend.tables.MetaDocPartTable.DocPartTableFields;
-import com.torodb.backend.tables.MetaFieldTable;
-import com.torodb.backend.tables.MetaScalarTable;
+import com.torodb.backend.tables.*;
 import com.torodb.core.TableRef;
 import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.d2r.DocPartResult;
@@ -89,15 +25,28 @@ import com.torodb.core.d2r.DocPartRow;
 import com.torodb.core.exceptions.SystemException;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.transaction.RollbackException;
-import com.torodb.core.transaction.metainf.FieldType;
-import com.torodb.core.transaction.metainf.MetaCollection;
-import com.torodb.core.transaction.metainf.MetaDatabase;
-import com.torodb.core.transaction.metainf.MetaDocPart;
-import com.torodb.core.transaction.metainf.MetaField;
-import com.torodb.core.transaction.metainf.MetaScalar;
+import com.torodb.core.transaction.metainf.*;
 import com.torodb.kvdocument.values.KVValue;
-
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import java.io.IOException;
+import java.io.Reader;
+import java.io.Serializable;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Comparator;
+import java.util.*;
+import javax.annotation.Nonnull;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.jooq.*;
+import org.jooq.exception.DataAccessException;
+import org.jooq.impl.DSL;
+import org.postgresql.PGConnection;
+import org.postgresql.copy.CopyManager;
 
 /**
  *
@@ -250,7 +199,7 @@ public class PostgreSQLSqlInterface implements SqlInterface {
         return metaScalarTable;
     }
 
-    private Iterable<Field<?>> getFieldIterator(Iterable<Field<?>> fields) {
+    private Iterable<Field<?>> getFieldIterator(Iterable<? extends Field<?>> fields) {
         List<Field<?>> fieldList = Lists.newArrayList(fields);
         Collections.sort(fieldList, fieldComparator);
 
@@ -1061,7 +1010,7 @@ public class PostgreSQLSqlInterface implements SqlInterface {
 	}
 	
     @Override
-	public void createDocPartTable(DSLContext dsl, String schemaName, String tableName, Collection<Field<?>> fields) {
+	public void createDocPartTable(DSLContext dsl, String schemaName, String tableName, Collection<? extends Field<?>> fields) {
 		StringBuilder sb = new StringBuilder();
 		sb.append("CREATE TABLE ")
 		  .append(fullTableName(schemaName, tableName))

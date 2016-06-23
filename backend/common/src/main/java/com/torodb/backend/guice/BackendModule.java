@@ -26,14 +26,14 @@ public class BackendModule extends AbstractModule {
         bind(Backend.class)
                 .to(BackendImpl.class)
                 .asEagerSingleton();
-        
+
+        bind(MaxRowIdFactory.class)
+                .in(Singleton.class);
         bind(ReservedIdInfoFactory.class)
-                .to(MaxRowIdFactory.class)
-                .asEagerSingleton();
+                .to(MaxRowIdFactory.class);
         
         bind(RidGenerator.class)
-                .to(ReservedIdContainer.class)
-                .asEagerSingleton();
+                .to(ReservedIdContainer.class);
     }
 
 }
