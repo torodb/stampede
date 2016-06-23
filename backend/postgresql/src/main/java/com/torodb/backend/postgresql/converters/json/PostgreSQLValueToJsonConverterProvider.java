@@ -62,7 +62,7 @@ public class PostgreSQLValueToJsonConverterProvider implements ValueToJsonConver
 
     private static final long serialVersionUID = 1L;
 
-    private final Map<Class<? extends KVType>, ValueConverter> converters;
+    private final Map<Class<? extends KVType>, ValueConverter<?, ?>> converters;
 
     private PostgreSQLValueToJsonConverterProvider() {
         converters = Maps.newHashMap();
@@ -87,8 +87,8 @@ public class PostgreSQLValueToJsonConverterProvider implements ValueToJsonConver
 
     @Nonnull
     @Override
-    public ValueConverter getConverter(KVType valueType) {
-        ValueConverter converter = converters.get(valueType.getClass());
+    public ValueConverter<?, ?> getConverter(KVType valueType) {
+        ValueConverter<?, ?> converter = converters.get(valueType.getClass());
         if (converter == null) {
             throw new AssertionError("There is no converter that converts "
                     + "elements of type " + valueType);

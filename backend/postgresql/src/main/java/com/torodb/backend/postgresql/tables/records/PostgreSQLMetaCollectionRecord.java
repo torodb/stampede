@@ -36,9 +36,9 @@ public class PostgreSQLMetaCollectionRecord extends MetaCollectionRecord {
     @Override
     public MetaCollectionRecord values(String database, String name, String identifier) {
         
-        setValue(0, database);
-        setValue(1, name);
-        setValue(2, identifier);
+        setDatabase(database);
+        setName(name);
+        setIdentifier(identifier);
         return this;
     }
 
