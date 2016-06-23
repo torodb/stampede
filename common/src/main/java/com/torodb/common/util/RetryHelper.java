@@ -124,6 +124,7 @@ public class RetryHelper {
     }
 
     public static class ThrowExceptionHandler<R, T extends Exception> implements ExceptionHandler<R, T> {
+        @SuppressWarnings("rawtypes")
         private static final ThrowExceptionHandler INSTANCE = new ThrowExceptionHandler();
 
         @SuppressWarnings("unchecked")
@@ -131,6 +132,7 @@ public class RetryHelper {
             return INSTANCE;
         }
 
+        @SuppressWarnings("unchecked")
         @Override
         public void handleException(RetryCallback<R> callback, Exception t, int attempts) throws T {
             try {
@@ -142,6 +144,7 @@ public class RetryHelper {
     }
 
     public static class AlwaysRetryExceptionHandler<R, T extends Exception> implements ExceptionHandler<R, T> {
+        @SuppressWarnings("rawtypes")
         private static final AlwaysRetryExceptionHandler INSTANCE = new AlwaysRetryExceptionHandler();
 
         @SuppressWarnings("unchecked")
