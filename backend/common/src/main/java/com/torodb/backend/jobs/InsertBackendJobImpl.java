@@ -26,6 +26,7 @@ import com.torodb.core.dsl.backend.InsertBackendJob;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
+import com.torodb.core.transaction.metainf.MetaDocPart;
 
 public class InsertBackendJobImpl implements InsertBackendJob {
 
@@ -58,6 +59,13 @@ public class InsertBackendJobImpl implements InsertBackendJob {
     @Override
     public DocPartData getDataToInsert() {
         return data;
+    }
+
+    @Override
+    public String toString() {
+        MetaDocPart docPart = data.getMetaDocPart();
+        int rowCount = data.rowCount();
+        return "insert{db:" + db + ", col:" + col + ", docPart:" + docPart + ", rows:" + rowCount + '}';
     }
 
 }

@@ -20,11 +20,11 @@
 
 package com.torodb.backend.jobs;
 
+import com.torodb.core.backend.WriteBackendTransaction;
 import com.torodb.core.dsl.backend.AddDocPartDDLJob;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
-import com.torodb.core.backend.WriteBackendTransaction;
 
 public class AddDocPartDDLJobImpl implements AddDocPartDDLJob {
 
@@ -57,6 +57,11 @@ public class AddDocPartDDLJobImpl implements AddDocPartDDLJob {
     @Override
     public MetaDocPart getDocPart() {
         return newDocPart;
+    }
+
+    @Override
+    public String toString() {
+        return "add docPart{db:" + db + ", col:" + col + ", docPart:" + newDocPart + '}';
     }
 
 }

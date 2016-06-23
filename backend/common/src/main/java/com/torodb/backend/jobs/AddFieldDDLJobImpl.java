@@ -20,12 +20,12 @@
 
 package com.torodb.backend.jobs;
 
+import com.torodb.core.backend.WriteBackendTransaction;
 import com.torodb.core.dsl.backend.AddFieldDDLJob;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetaField;
-import com.torodb.core.backend.WriteBackendTransaction;
 
 public class AddFieldDDLJobImpl implements AddFieldDDLJob {
 
@@ -65,6 +65,11 @@ public class AddFieldDDLJobImpl implements AddFieldDDLJob {
     @Override
     public MetaField getField() {
         return newField;
+    }
+
+    @Override
+    public String toString() {
+        return "add field{db:" + db + ", col:" + col + ", docPart:" + docPart + ", field:" + newField + '}';
     }
 
 }

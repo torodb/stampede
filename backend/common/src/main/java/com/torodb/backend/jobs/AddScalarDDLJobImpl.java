@@ -51,4 +51,9 @@ public class AddScalarDDLJobImpl implements AddScalarDDLJob {
         connection.addScalar(db, col, docPart, newScalar);
     }
 
+    @Override
+    public String toString() {
+        return "add scalar{db:" + db + ", col:" + col + ", docPart:" + docPart + ", scalar:" + newScalar + '}';
+    }
+
 }

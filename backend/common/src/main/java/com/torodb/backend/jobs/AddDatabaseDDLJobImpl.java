@@ -20,9 +20,9 @@
 
 package com.torodb.backend.jobs;
 
+import com.torodb.core.backend.WriteBackendTransaction;
 import com.torodb.core.dsl.backend.AddDatabaseDDLJob;
 import com.torodb.core.transaction.metainf.MetaDatabase;
-import com.torodb.core.backend.WriteBackendTransaction;
 
 public class AddDatabaseDDLJobImpl implements AddDatabaseDDLJob {
 
@@ -41,6 +41,11 @@ public class AddDatabaseDDLJobImpl implements AddDatabaseDDLJob {
     @Override
     public MetaDatabase getDatabase() {
         return db;
+    }
+
+    @Override
+    public String toString() {
+        return "add database{db:" + db + '}';
     }
 
 }
