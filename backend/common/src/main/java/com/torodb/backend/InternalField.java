@@ -48,6 +48,7 @@ import org.jooq.WindowPartitionByStep;
 
 import com.torodb.core.d2r.DocPartRow;
 
+@SuppressWarnings("unchecked")
 public abstract class InternalField<T> implements Field<T> {
     
     private static final long serialVersionUID = 1L;

@@ -57,6 +57,7 @@ public abstract class BaseArrayValueToJsonConverter implements
         return KVArray.class;
     }
 
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     @Override
     public KVArray toValue(JsonArray value) {
         List<KVValue<?>> list = new ArrayList<>(value.size());

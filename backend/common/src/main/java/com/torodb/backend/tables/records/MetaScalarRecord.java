@@ -39,7 +39,7 @@ public abstract class MetaScalarRecord<TableRefType> extends UpdatableRecordImpl
      * Setter for <code>torodb.scalar.database</code>.
      */
     public void setDatabase(String value) {
-        setValue(0, value);
+        set(0, value);
     }
 
     /**
@@ -53,7 +53,7 @@ public abstract class MetaScalarRecord<TableRefType> extends UpdatableRecordImpl
      * Setter for <code>torodb.scalar.collection</code>.
      */
     public void setCollection(String value) {
-        setValue(1, value);
+        set(1, value);
     }
 
     /**
@@ -67,12 +67,13 @@ public abstract class MetaScalarRecord<TableRefType> extends UpdatableRecordImpl
      * Setter for <code>torodb.scalar.tableRef</code>.
      */
     public void setTableRef(TableRefType value) {
-        setValue(2, value);
+        set(2, value);
     }
 
     /**
      * Getter for <code>torodb.scalar.tableRef</code>.
      */
+    @SuppressWarnings("unchecked")
     public TableRefType getTableRef() {
         return (TableRefType) getValue(2);
     }
@@ -81,7 +82,7 @@ public abstract class MetaScalarRecord<TableRefType> extends UpdatableRecordImpl
      * Setter for <code>torodb.scalar.type</code>.
      */
     public void setType(FieldType value) {
-        setValue(4, value);
+        set(4, value);
     }
 
     /**
@@ -95,7 +96,7 @@ public abstract class MetaScalarRecord<TableRefType> extends UpdatableRecordImpl
      * Setter for <code>torodb.scalar.idenftifier</code>.
      */
     public void setIdentifier(String value) {
-        setValue(5, value);
+        set(5, value);
     }
 
     /**
@@ -109,12 +110,13 @@ public abstract class MetaScalarRecord<TableRefType> extends UpdatableRecordImpl
 	// Primary key information
 	// -------------------------------------------------------------------------
 
-	/**
+	@SuppressWarnings("unchecked")
+    /**
 	 * {@inheritDoc}
 	 */
 	@Override
 	public Record4<String, String, String, String> key() {
-		return (Record4) super.key();
+		return (Record4<String, String, String, String>) super.key();
 	}
 
 	// -------------------------------------------------------------------------
@@ -124,17 +126,19 @@ public abstract class MetaScalarRecord<TableRefType> extends UpdatableRecordImpl
 	/**
 	 * {@inheritDoc}
 	 */
-	@Override
+	@SuppressWarnings("unchecked")
+    @Override
 	public Row5<String, String, TableRefType, FieldType, String> fieldsRow() {
-		return (Row5) super.fieldsRow();
+		return (Row5<String, String, TableRefType, FieldType, String>) super.fieldsRow();
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
-	@Override
+	@SuppressWarnings("unchecked")
+    @Override
 	public Row5<String, String, TableRefType, FieldType, String> valuesRow() {
-		return (Row5) super.valuesRow();
+		return (Row5<String, String, TableRefType, FieldType, String>) super.valuesRow();
 	}
 
     /**
@@ -221,7 +225,7 @@ public abstract class MetaScalarRecord<TableRefType> extends UpdatableRecordImpl
      * {@inheritDoc}
      */
     @Override
-    public MetaScalarRecord value1(String value) {
+    public MetaScalarRecord<TableRefType> value1(String value) {
         setDatabase(value);
         return this;
     }
@@ -230,7 +234,7 @@ public abstract class MetaScalarRecord<TableRefType> extends UpdatableRecordImpl
      * {@inheritDoc}
      */
     @Override
-    public MetaScalarRecord value2(String value) {
+    public MetaScalarRecord<TableRefType> value2(String value) {
         setCollection(value);
         return this;
     }
@@ -239,7 +243,7 @@ public abstract class MetaScalarRecord<TableRefType> extends UpdatableRecordImpl
      * {@inheritDoc}
      */
     @Override
-    public MetaScalarRecord value3(TableRefType value) {
+    public MetaScalarRecord<TableRefType> value3(TableRefType value) {
         setTableRef(value);
         return this;
     }
@@ -248,7 +252,7 @@ public abstract class MetaScalarRecord<TableRefType> extends UpdatableRecordImpl
      * {@inheritDoc}
      */
     @Override
-    public MetaScalarRecord value4(FieldType value) {
+    public MetaScalarRecord<TableRefType> value4(FieldType value) {
         setType(value);
         return this;
     }
@@ -257,7 +261,7 @@ public abstract class MetaScalarRecord<TableRefType> extends UpdatableRecordImpl
      * {@inheritDoc}
      */
     @Override
-    public MetaScalarRecord value5(String value) {
+    public MetaScalarRecord<TableRefType> value5(String value) {
         setIdentifier(value);
         return this;
     }
@@ -266,9 +270,9 @@ public abstract class MetaScalarRecord<TableRefType> extends UpdatableRecordImpl
 	 * {@inheritDoc}
 	 */
     @Override
-    public abstract MetaScalarRecord values(String database, String collection, TableRefType tableRef, FieldType type, String identifier);
+    public abstract MetaScalarRecord<TableRefType> values(String database, String collection, TableRefType tableRef, FieldType type, String identifier);
 
-    public MetaScalarRecord values(String database, String collection, TableRef tableRef, FieldType type, String identifier) {
+    public MetaScalarRecord<TableRefType> values(String database, String collection, TableRef tableRef, FieldType type, String identifier) {
         return values(database, collection, toTableRefType(tableRef), type, identifier);
     }
     
@@ -280,11 +284,12 @@ public abstract class MetaScalarRecord<TableRefType> extends UpdatableRecordImpl
     // Constructors
     // -------------------------------------------------------------------------
 
-    private final MetaScalarTable metaScalarTable;
+    private final MetaScalarTable<TableRefType, MetaScalarRecord<TableRefType>> metaScalarTable;
     
     /**
      * Create a detached MetaScalarRecord
      */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     public MetaScalarRecord(MetaScalarTable metaScalarTable) {
         super(metaScalarTable);
         

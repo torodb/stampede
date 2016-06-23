@@ -99,6 +99,7 @@ public class R2DBackendTranslatorImpl implements R2DBackendTranslator<ResultSet,
         return new ResultSetInternalFields(did, rid, pid, seq, columnIndex);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public KVValue<?> getValue(FieldType type, ResultSet resultSet, ResultSetInternalFields internalFields,
             int fieldIndex) {

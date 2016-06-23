@@ -38,7 +38,7 @@ public abstract class MetaDocPartRecord<TableRefType> extends UpdatableRecordImp
      * Setter for <code>torodb.container.database</code>.
      */
     public void setDatabase(String value) {
-        setValue(0, value);
+        set(0, value);
     }
 
     /**
@@ -52,7 +52,7 @@ public abstract class MetaDocPartRecord<TableRefType> extends UpdatableRecordImp
      * Setter for <code>torodb.container.collection</code>.
      */
     public void setCollection(String value) {
-        setValue(1, value);
+        set(1, value);
     }
 
     /**
@@ -66,12 +66,13 @@ public abstract class MetaDocPartRecord<TableRefType> extends UpdatableRecordImp
      * Setter for <code>torodb.container.tableRef</code>.
      */
     public void setTableRef(TableRefType value) {
-        setValue(2, value);
+        set(2, value);
     }
 
     /**
      * Getter for <code>torodb.container.tableRef</code>.
      */
+    @SuppressWarnings("unchecked")
     public TableRefType getTableRef() {
         return (TableRefType) getValue(2);
     }
@@ -80,7 +81,7 @@ public abstract class MetaDocPartRecord<TableRefType> extends UpdatableRecordImp
      * Setter for <code>torodb.container.identifier</code>.
      */
     public void setIdentifier(String value) {
-        setValue(3, value);
+        set(3, value);
     }
 
     /**
@@ -94,7 +95,7 @@ public abstract class MetaDocPartRecord<TableRefType> extends UpdatableRecordImp
      * Setter for <code>torodb.container.last_rid</code>.
      */
     public void setLastRid(Integer value) {
-        setValue(4, value);
+        set(4, value);
     }
 
     /**
@@ -111,9 +112,10 @@ public abstract class MetaDocPartRecord<TableRefType> extends UpdatableRecordImp
 	/**
 	 * {@inheritDoc}
 	 */
-	@Override
+	@SuppressWarnings("unchecked")
+    @Override
 	public Record3<String, String, String> key() {
-		return (Record3) super.key();
+		return (Record3<String, String, String>) super.key();
 	}
 
 	// -------------------------------------------------------------------------
@@ -123,17 +125,19 @@ public abstract class MetaDocPartRecord<TableRefType> extends UpdatableRecordImp
 	/**
 	 * {@inheritDoc}
 	 */
-	@Override
+	@SuppressWarnings("unchecked")
+    @Override
 	public Row5<String, String, TableRefType, String, Integer> fieldsRow() {
-		return (Row5) super.fieldsRow();
+		return (Row5<String, String, TableRefType, String, Integer>) super.fieldsRow();
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
-	@Override
+	@SuppressWarnings("unchecked")
+    @Override
 	public Row5<String, String, TableRefType, String, Integer> valuesRow() {
-		return (Row5) super.valuesRow();
+		return (Row5<String, String, TableRefType, String, Integer>) super.valuesRow();
 	}
 
     /**
@@ -163,7 +167,7 @@ public abstract class MetaDocPartRecord<TableRefType> extends UpdatableRecordImp
 	/**
 	 * {@inheritDoc}
 	 */
-	@Override
+    @Override
 	public Field<String> field4() {
 		return metaDocPartTable.IDENTIFIER;
 	}
@@ -220,7 +224,7 @@ public abstract class MetaDocPartRecord<TableRefType> extends UpdatableRecordImp
      * {@inheritDoc}
      */
     @Override
-    public MetaDocPartRecord value1(String value) {
+    public MetaDocPartRecord<TableRefType> value1(String value) {
         setDatabase(value);
         return this;
     }
@@ -229,7 +233,7 @@ public abstract class MetaDocPartRecord<TableRefType> extends UpdatableRecordImp
      * {@inheritDoc}
      */
     @Override
-    public MetaDocPartRecord value2(String value) {
+    public MetaDocPartRecord<TableRefType> value2(String value) {
         setCollection(value);
         return this;
     }
@@ -238,7 +242,7 @@ public abstract class MetaDocPartRecord<TableRefType> extends UpdatableRecordImp
      * {@inheritDoc}
      */
     @Override
-    public MetaDocPartRecord value3(TableRefType value) {
+    public MetaDocPartRecord<TableRefType> value3(TableRefType value) {
         setTableRef(value);
         return this;
     }
@@ -247,7 +251,7 @@ public abstract class MetaDocPartRecord<TableRefType> extends UpdatableRecordImp
      * {@inheritDoc}
      */
     @Override
-    public MetaDocPartRecord value4(String value) {
+    public MetaDocPartRecord<TableRefType> value4(String value) {
         setIdentifier(value);
         return this;
     }
@@ -256,7 +260,7 @@ public abstract class MetaDocPartRecord<TableRefType> extends UpdatableRecordImp
 	 * {@inheritDoc}
 	 */
 	@Override
-	public MetaDocPartRecord value5(Integer value) {
+	public MetaDocPartRecord<TableRefType> value5(Integer value) {
 		setLastRid(value);
 		return this;
 	}
@@ -265,9 +269,9 @@ public abstract class MetaDocPartRecord<TableRefType> extends UpdatableRecordImp
 	 * {@inheritDoc}
 	 */
 	@Override
-	public abstract MetaDocPartRecord values(String database, String collection, TableRefType tableRef, String identifier, Integer lastRid);
+	public abstract MetaDocPartRecord<TableRefType> values(String database, String collection, TableRefType tableRef, String identifier, Integer lastRid);
 
-    public MetaDocPartRecord values(String database, String collection, TableRef tableRef, String identifier) {
+    public MetaDocPartRecord<TableRefType> values(String database, String collection, TableRef tableRef, String identifier) {
         return values(database, collection, toTableRefType(tableRef), identifier, 0);
     }
     
@@ -279,11 +283,12 @@ public abstract class MetaDocPartRecord<TableRefType> extends UpdatableRecordImp
     // Constructors
     // -------------------------------------------------------------------------
 
-    private final MetaDocPartTable metaDocPartTable;
+    private final MetaDocPartTable<TableRefType, MetaDocPartRecord<TableRefType>> metaDocPartTable;
     
     /**
      * Create a detached MetaDocPartRecord
      */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     public MetaDocPartRecord(MetaDocPartTable metaDocPartTable) {
         super(metaDocPartTable);
         

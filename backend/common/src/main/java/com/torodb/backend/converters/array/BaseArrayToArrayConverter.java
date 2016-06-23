@@ -43,6 +43,7 @@ public abstract class BaseArrayToArrayConverter implements ArrayConverter<JsonAr
         this.valueToArrayConverterProvider = valueToArrayConverterProvider;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public String toJsonLiteral(KVArray value) {
         StringBuilder sb = new StringBuilder(value.size() * 20);
@@ -58,6 +59,7 @@ public abstract class BaseArrayToArrayConverter implements ArrayConverter<JsonAr
         return sb.toString();
     }
 
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     @Override
     public KVArray fromJsonValue(JsonArray value) {
         List<KVValue<?>> list = new ArrayList<>(value.size());

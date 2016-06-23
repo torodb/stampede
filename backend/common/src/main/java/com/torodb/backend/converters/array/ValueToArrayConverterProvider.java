@@ -32,8 +32,10 @@ import com.torodb.kvdocument.types.KVType;
  */
 public interface ValueToArrayConverterProvider extends Serializable {
 
+    @SuppressWarnings("rawtypes")
     @Nonnull public ArrayConverter getConverter(KVType valueType);
 
+    @SuppressWarnings("rawtypes")
     @Nonnull public ArrayConverter fromJsonValue(JsonValue jsonValue);
 
 }

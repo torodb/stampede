@@ -21,7 +21,6 @@
 package com.torodb.backend.converters.jooq;
 
 import java.sql.Date;
-import java.time.LocalDate;
 
 import org.jooq.impl.SQLDataType;
 
@@ -47,15 +46,12 @@ public class DateValueConverter implements KVValueConverter<Date, KVDate> {
 
     @Override
     public KVDate from(Date databaseObject) {
-        return new LocalDateKVDate(
-                LocalDate.of(databaseObject.getYear() + 1900, databaseObject.getMonth() + 1, databaseObject.getDate())
-        );
+        return new LocalDateKVDate(databaseObject.toLocalDate());
     }
 
     @Override
     public Date to(KVDate userObject) {
-        LocalDate date = userObject.getValue();
-        return new Date(date.getYear() - 1900, date.getMonthValue() -1, date.getDayOfMonth());
+        return Date.valueOf(userObject.getValue());
     }
 
     @Override
