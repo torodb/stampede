@@ -69,7 +69,9 @@ public class TorodbSafeRequestProcessor implements SafeRequestProcessor<MongodCo
             case WRITE_TRANSACTION:
                 callable = () -> {
                     try (WriteMongodTransaction trans = connection.openWriteTransaction()) {
-                        return trans.execute(req, command, arg);
+                        Status<Result> result = trans.execute(req, command, arg);
+                        trans.commit();
+                        return result;
                     }
                 };
                 break;
