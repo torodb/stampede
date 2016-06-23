@@ -49,7 +49,6 @@ public class WrapperMutableMetaCollection implements MutableMetaCollection {
         modifiedMetaDocParts = new HashSet<>();
 
         wrappedCollection.streamContainedMetaDocParts().forEach((docPart) -> {
-            @SuppressWarnings("unchecked")
             WrapperMutableMetaDocPart mutable = createMetaDocPart(docPart);
             newDocParts.put(mutable.getTableRef(), mutable);
         });
