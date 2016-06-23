@@ -33,9 +33,6 @@ import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.converters.IParameterSplitter;
 import com.torodb.packaging.config.model.backend.Backend;
 import com.torodb.packaging.config.model.backend.BackendImplementation;
-import com.torodb.packaging.config.model.backend.greenplum.Greenplum;
-import com.torodb.packaging.config.model.backend.mysql.MySQL;
-import com.torodb.packaging.config.model.backend.postgres.Postgres;
 
 public class CliConfig {
 	
