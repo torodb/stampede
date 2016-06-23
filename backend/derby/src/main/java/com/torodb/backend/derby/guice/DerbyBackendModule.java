@@ -41,8 +41,10 @@ import com.torodb.backend.derby.DerbyMetaDataWriteInterface;
 import com.torodb.backend.derby.DerbyReadInterface;
 import com.torodb.backend.derby.DerbyStructureInterface;
 import com.torodb.backend.derby.DerbyWriteInterface;
+import com.torodb.backend.derby.schema.DerbySchemaUpdater;
 import com.torodb.backend.driver.derby.DerbyDriverProvider;
 import com.torodb.backend.driver.derby.OfficialDerbyDriver;
+import com.torodb.backend.meta.SchemaUpdater;
 import com.torodb.core.backend.IdentifierConstraints;
 
 public class DerbyBackendModule extends AbstractModule {
@@ -53,6 +55,7 @@ public class DerbyBackendModule extends AbstractModule {
         bind(DerbyDbBackend.class).in(Singleton.class);
         bind(DbBackend.class).to(DerbyDbBackend.class);
         bind(DbBackendService.class).to(DerbyDbBackend.class);
+        bind(SchemaUpdater.class).to(DerbySchemaUpdater.class).in(Singleton.class);
         bind(MetaDataReadInterface.class).to(DerbyMetaDataReadInterface.class).in(Singleton.class);
         bind(MetaDataWriteInterface.class).to(DerbyMetaDataWriteInterface.class).in(Singleton.class);
         bind(DataTypeProvider.class).to(DerbyDataTypeProvider.class).in(Singleton.class);

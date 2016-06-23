@@ -34,6 +34,7 @@ import com.torodb.backend.StructureInterface;
 import com.torodb.backend.WriteInterface;
 import com.torodb.backend.driver.postgresql.OfficialPostgreSQLDriver;
 import com.torodb.backend.driver.postgresql.PostgreSQLDriverProvider;
+import com.torodb.backend.meta.SchemaUpdater;
 import com.torodb.backend.postgresql.PostgreSQLDataTypeProvider;
 import com.torodb.backend.postgresql.PostgreSQLDbBackend;
 import com.torodb.backend.postgresql.PostgreSQLErrorHandler;
@@ -43,6 +44,7 @@ import com.torodb.backend.postgresql.PostgreSQLMetaDataWriteInterface;
 import com.torodb.backend.postgresql.PostgreSQLReadInterface;
 import com.torodb.backend.postgresql.PostgreSQLStructureInterface;
 import com.torodb.backend.postgresql.PostgreSQLWriteInterface;
+import com.torodb.backend.postgresql.meta.PostgreSQLSchemaUpdater;
 import com.torodb.core.backend.IdentifierConstraints;
 
 public class PostgreSQLBackendModule extends AbstractModule {
@@ -53,6 +55,7 @@ public class PostgreSQLBackendModule extends AbstractModule {
         bind(PostgreSQLDbBackend.class).in(Singleton.class);
         bind(DbBackend.class).to(PostgreSQLDbBackend.class);
         bind(DbBackendService.class).to(PostgreSQLDbBackend.class);
+        bind(SchemaUpdater.class).to(PostgreSQLSchemaUpdater.class).in(Singleton.class);
         bind(MetaDataReadInterface.class).to(PostgreSQLMetaDataReadInterface.class).in(Singleton.class);
         bind(MetaDataWriteInterface.class).to(PostgreSQLMetaDataWriteInterface.class).in(Singleton.class);
         bind(DataTypeProvider.class).to(PostgreSQLDataTypeProvider.class).in(Singleton.class);
