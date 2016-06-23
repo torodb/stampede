@@ -96,6 +96,10 @@ public class SqlHelper {
     }
 
     public String renderVal(String value) {
-        return DSL.using(dataTypeProvider.getDialect()).render(DSL.val(value));
+        return dsl().render(DSL.val(value));
+    }
+
+    public DSLContext dsl() {
+        return DSL.using(dataTypeProvider.getDialect());
     }
 }

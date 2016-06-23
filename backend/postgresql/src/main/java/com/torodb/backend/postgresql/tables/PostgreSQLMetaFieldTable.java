@@ -23,6 +23,7 @@ import org.jooq.Field;
 import org.jooq.Table;
 import org.jooq.TableField;
 import org.jooq.impl.SQLDataType;
+import org.jooq.util.postgres.PostgresDataType;
 
 import com.torodb.backend.converters.jooq.FieldTypeConverter;
 import com.torodb.backend.postgresql.tables.records.PostgreSQLMetaFieldRecord;
@@ -94,7 +95,7 @@ public class PostgreSQLMetaFieldTable extends MetaFieldTable<String[], PostgreSQ
 
     @Override
     protected TableField<PostgreSQLMetaFieldRecord, String[]> createTableRefField() {
-        return createField(TableFields.TABLE_REF.fieldName, SQLDataType.VARCHAR.getArrayDataType().nullable(false), this, "");
+        return createField(TableFields.TABLE_REF.fieldName, PostgresDataType.VARCHAR.getArrayDataType().nullable(false), this, "");
     }
 
     @Override

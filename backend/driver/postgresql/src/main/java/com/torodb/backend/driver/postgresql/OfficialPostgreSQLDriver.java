@@ -47,9 +47,12 @@ public class OfficialPostgreSQLDriver implements PostgreSQLDriverProvider {
     private static final Logger LOGGER = LogManager.getLogger(
             OfficialPostgreSQLDriver.class
     );
+    private static final Logger JDBC_LOGGER = LogManager.getLogger(
+            PGSimpleDataSource.class
+    );
     private static final PrintWriter LOGGER_WRITER = new PrintWriter(new LoggerWriter());
     {
-        if (LOGGER.isTraceEnabled()) {
+        if (JDBC_LOGGER.isTraceEnabled()) {
             DriverManager.setLogWriter(LOGGER_WRITER);
         }
     }
@@ -66,7 +69,7 @@ public class OfficialPostgreSQLDriver implements PostgreSQLDriverProvider {
 
         dataSource.setApplicationName("torodb-" + poolName);
         
-        if (LOGGER.isTraceEnabled()) {
+        if (JDBC_LOGGER.isTraceEnabled()) {
             dataSource.setLogLevel(Driver.DEBUG);
             dataSource.setLogWriter(LOGGER_WRITER);
         }
@@ -106,7 +109,7 @@ public class OfficialPostgreSQLDriver implements PostgreSQLDriverProvider {
             messageBuilder.append(cbuf, off, len);
             String message = messageBuilder.toString().replaceAll("(\r\n|\r|\n)$", "");
             if (!message.isEmpty()) {
-                LOGGER.debug(message);
+                JDBC_LOGGER.trace(message);
             }
         }
         @Override
