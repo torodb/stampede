@@ -18,7 +18,7 @@
  *     
  */
 
-package com.torodb.backend.postgresql;
+package com.torodb.backend.integration.postgresql;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
