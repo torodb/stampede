@@ -169,7 +169,7 @@ public abstract class KVDocument extends KVValue<KVDocument> implements Iterable
             if (!(obj instanceof DocEntry)) {
                 return false;
             }
-            DocEntry<?> other = (DocEntry) obj;
+            DocEntry<?> other = (DocEntry<?>) obj;
             return this.getKey().equals(other.getKey()) && this.getValue().equals(other.getValue());
         }
 
