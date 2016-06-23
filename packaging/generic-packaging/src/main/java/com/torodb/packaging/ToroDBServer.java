@@ -74,11 +74,13 @@ public class ToroDBServer extends AbstractIdleService {
         torod.awaitRunning();
         LOGGER.debug("Waiting for Netty to be running");
         netty.awaitRunning();
+        
+        LOGGER.debug("ToroDBServer ready to run");
     }
 
     @Override
     protected void shutDown() throws Exception {
-        LOGGER.info("Shutting up ToroDB");
+        LOGGER.info("Shutting down ToroDB");
 
         netty.stopAsync();
         netty.awaitTerminated();
@@ -88,6 +90,8 @@ public class ToroDBServer extends AbstractIdleService {
 
         torod.stopAsync();
         torod.awaitTerminated();
+        
+        LOGGER.debug("ToroDBServer shutdown complete");
     }
 
 }

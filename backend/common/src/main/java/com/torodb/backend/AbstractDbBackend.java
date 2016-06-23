@@ -47,9 +47,9 @@ public abstract class AbstractDbBackend<Configuration extends DbBackendConfigura
 
     private final Configuration configuration;
     private final ErrorHandler errorHandler;
-    private HikariDataSource commonDataSource;
+    private HikariDataSource writeDataSource;
     private HikariDataSource systemDataSource;
-    private HikariDataSource globalCursorDataSource;
+    private HikariDataSource readOnlyDataSource;
 
     /**
      * Configure the backend. The contract specifies that any subclass must call initialize() method after
@@ -82,7 +82,7 @@ public abstract class AbstractDbBackend<Configuration extends DbBackendConfigura
     protected void startUp() throws Exception {
         int reservedReadPoolSize = configuration.getReservedReadPoolSize();
 
-        commonDataSource = createPooledDataSource(
+        writeDataSource = createPooledDataSource(
                 configuration, "session",
                 configuration.getConnectionPoolSize() - reservedReadPoolSize - SYSTEM_DATABASE_CONNECTIONS,
                 getCommonTransactionIsolation(),
@@ -93,7 +93,7 @@ public abstract class AbstractDbBackend<Configuration extends DbBackendConfigura
                 SYSTEM_DATABASE_CONNECTIONS,
                 getSystemTransactionIsolation(),
                 false);
-        globalCursorDataSource = createPooledDataSource(
+        readOnlyDataSource = createPooledDataSource(
                 configuration, "cursors",
                 reservedReadPoolSize,
                 getGlobalCursorTransactionIsolation(),
@@ -102,9 +102,9 @@ public abstract class AbstractDbBackend<Configuration extends DbBackendConfigura
 
     @Override
     protected void shutDown() throws Exception {
-        commonDataSource.close();
+        writeDataSource.close();
         systemDataSource.close();
-        globalCursorDataSource.close();
+        readOnlyDataSource.close();
     }
 
     @Nonnull
@@ -144,23 +144,27 @@ public abstract class AbstractDbBackend<Configuration extends DbBackendConfigura
 
     @Override
     public DataSource getSessionDataSource() {
-        Preconditions.checkState(isRunning(), "The " + DbBackend.class + " is not running");
+        checkState();
 
-        return commonDataSource;
+        return writeDataSource;
     }
 
     @Override
     public DataSource getSystemDataSource() {
-        Preconditions.checkState(isRunning(), "The " + DbBackend.class + " is not running");
+        checkState();
 
         return systemDataSource;
     }
 
     @Override
     public DataSource getGlobalCursorDatasource() {
-        Preconditions.checkState(isRunning(), "The " + DbBackend.class + " is not running");
+        checkState();
 
-        return globalCursorDataSource;
+        return readOnlyDataSource;
+    }
+
+    protected void checkState() {
+        Preconditions.checkState(isRunning(), "The " + DbBackend.class + " is not running");
     }
 
     @Override
@@ -168,42 +172,46 @@ public abstract class AbstractDbBackend<Configuration extends DbBackendConfigura
         return configuration.getCursorTimeout();
     }
 
-    @Override
-    public Connection createSystemConnection() {
-        Preconditions.checkState(isRunning(), "The " + DbBackend.class + " is not running");
+    protected void postConsume(Connection connection, boolean readOnly) throws SQLException {
+        connection.setReadOnly(readOnly);
+        if (!connection.isValid(500)) {
+            throw new RuntimeException("DB connection is not valid");
+        }
+        connection.setAutoCommit(false);
+    }
+    
+    private Connection consumeConnection(DataSource ds, boolean readOnly) {
+        checkState();
 
         try {
-            Connection connection = getSystemDataSource().getConnection();
-            return connection;
+            Connection c = ds.getConnection();
+            postConsume(c, readOnly);
+
+            return c;
         } catch (SQLException ex) {
             errorHandler.handleRollbackException(Context.get_connection, ex);
-            throw new SystemException("It was not possible to create a system connection", ex);
+            throw new SystemException("It was not possible to create a connection", ex);
         }
+    }
+
+    @Override
+    public Connection createSystemConnection() {
+        checkState();
+
+        return consumeConnection(systemDataSource, false);
     }
 
     @Override
     public Connection createReadOnlyConnection() {
-        Preconditions.checkState(isRunning(), "The " + DbBackend.class + " is not running");
+        checkState();
 
-        try {
-            Connection connection = getGlobalCursorDatasource().getConnection();
-            return connection;
-        } catch (SQLException ex) {
-            errorHandler.handleRollbackException(Context.get_connection, ex);
-            throw new SystemException("It was not possible to create a read only connection", ex);
-        }
+        return consumeConnection(readOnlyDataSource, true);
     }
 
     @Override
     public Connection createWriteConnection() {
-        Preconditions.checkState(isRunning(), "The " + DbBackend.class + " is not running");
+        checkState();
 
-        try {
-            Connection connection = getSessionDataSource().getConnection();
-            return connection;
-        } catch (SQLException ex) {
-            errorHandler.handleRollbackException(Context.get_connection, ex);
-            throw new SystemException("It was not possible to create a write connection", ex);
-        }
+        return consumeConnection(writeDataSource, false);
     }
 }

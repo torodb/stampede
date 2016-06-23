@@ -1,6 +1,11 @@
 
 package com.torodb.torod;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.RemovalNotification;
@@ -10,9 +15,6 @@ import com.torodb.core.d2r.D2RTranslatorFactory;
 import com.torodb.core.d2r.IdentifierFactory;
 import com.torodb.core.transaction.InternalTransactionManager;
 import com.torodb.torod.pipeline.InsertPipelineFactory;
-import java.util.concurrent.atomic.AtomicInteger;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 /**
  *
