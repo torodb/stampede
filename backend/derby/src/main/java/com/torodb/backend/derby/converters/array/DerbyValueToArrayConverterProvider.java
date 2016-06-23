@@ -78,7 +78,7 @@ public class DerbyValueToArrayConverterProvider implements ValueToArrayConverter
 
     private static final long serialVersionUID = 1L;
 
-    private final Map<Class<? extends KVType>, ArrayConverter> converters;
+    private final Map<Class<? extends KVType>, ArrayConverter<?, ?>> converters;
     private final ArrayConverter<JsonArray, KVArray> arrayConverter;
     private final ArrayConverter<JsonValue, KVBoolean> booleanConverter;
     private final ArrayConverter<JsonString, KVDate> dateConverter;
@@ -131,8 +131,8 @@ public class DerbyValueToArrayConverterProvider implements ValueToArrayConverter
     }
 
     @Override
-    public @Nonnull ArrayConverter getConverter(KVType valueType) {
-        ArrayConverter converter = converters.get(valueType.getClass());
+    public ArrayConverter<?, ?> getConverter(KVType valueType) {
+        ArrayConverter<?, ?> converter = converters.get(valueType.getClass());
         if (converter == null) {
             throw new AssertionError("There is no converter that converts "
                     + "elements of type " + valueType);
@@ -141,7 +141,7 @@ public class DerbyValueToArrayConverterProvider implements ValueToArrayConverter
     }
 
     @Override
-    public @Nonnull ArrayConverter fromJsonValue(JsonValue jsonValue) {
+    public @Nonnull ArrayConverter<?, ?> fromJsonValue(JsonValue jsonValue) {
         switch (jsonValue.getValueType()) {
             case ARRAY:
                 assert jsonValue instanceof JsonArray;

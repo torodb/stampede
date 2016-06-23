@@ -12,7 +12,6 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.Singleton;
 import com.torodb.backend.DbBackend;
-import com.torodb.backend.DbBackendService;
 import com.torodb.backend.DslContextFactory;
 import com.torodb.backend.DslContextFactoryImpl;
 import com.torodb.backend.SqlInterface;

@@ -20,38 +20,57 @@
 
 package com.torodb.backend.derby;
 
-import com.google.inject.Injector;
-import com.torodb.backend.*;
-import com.torodb.backend.converters.jooq.DataTypeForKV;
-import com.torodb.backend.exceptions.InvalidDatabaseException;
-import com.torodb.backend.meta.SnapshotUpdater;
-import com.torodb.backend.meta.TorodbMeta;
-import com.torodb.core.d2r.CollectionData;
-import com.torodb.core.d2r.DocPartResults;
-import com.torodb.core.document.ToroDocument;
-import com.torodb.core.transaction.metainf.MetainfoRepository.SnapshotStage;
-import com.torodb.core.transaction.metainf.*;
-import com.torodb.kvdocument.values.KVDocument;
-import com.torodb.kvdocument.values.KVInteger;
-import com.torodb.kvdocument.values.KVValue;
-import com.torodb.kvdocument.values.heap.ListKVArray;
-import com.torodb.metainfo.cache.mvcc.MvccMetainfoRepository;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+
 import org.jooq.Converter;
 import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.junit.Assert;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import com.google.inject.Injector;
+import com.torodb.backend.AbstractBackendTest;
+import com.torodb.backend.BackendDocumentTestHelper;
+import com.torodb.backend.BackendTestHelper;
+import com.torodb.backend.converters.jooq.DataTypeForKV;
+import com.torodb.backend.meta.SnapshotUpdater;
+import com.torodb.core.d2r.CollectionData;
+import com.torodb.core.d2r.DocPartResults;
+import com.torodb.core.document.ToroDocument;
+import com.torodb.core.transaction.metainf.FieldType;
+import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
+import com.torodb.core.transaction.metainf.ImmutableMetaDatabase;
+import com.torodb.core.transaction.metainf.ImmutableMetaDocPart;
+import com.torodb.core.transaction.metainf.ImmutableMetaField;
+import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
+import com.torodb.core.transaction.metainf.MetaCollection;
+import com.torodb.core.transaction.metainf.MetaDatabase;
+import com.torodb.core.transaction.metainf.MetaDocPart;
+import com.torodb.core.transaction.metainf.MetaField;
+import com.torodb.core.transaction.metainf.MetaSnapshot;
+import com.torodb.core.transaction.metainf.MetainfoRepository.SnapshotStage;
+import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
+import com.torodb.core.transaction.metainf.WrapperMutableMetaSnapshot;
+import com.torodb.kvdocument.values.KVDocument;
+import com.torodb.kvdocument.values.KVInteger;
+import com.torodb.kvdocument.values.KVValue;
+import com.torodb.kvdocument.values.heap.ListKVArray;
+import com.torodb.metainfo.cache.mvcc.MvccMetainfoRepository;
 
 public class BackendDerbyTest extends AbstractBackendTest {
 
@@ -76,10 +95,6 @@ public class BackendDerbyTest extends AbstractBackendTest {
         try (SnapshotStage stage = metainfoRepository.startSnapshotStage()) {
             return stage.createImmutableSnapshot();
         }
-    }
-    
-    private TorodbMeta buildTorodbMeta() throws SQLException, IOException, InvalidDatabaseException {
-        return new TorodbMeta(tableRefFactory, sqlInterface);
     }
     
     private DSLContext dsl(Connection connection){
@@ -293,7 +308,8 @@ public class BackendDerbyTest extends AbstractBackendTest {
         }
     }
 
-	private boolean findRow(ResultSet resultSet, List<Integer> foundRowIndexes) throws SQLException {
+	@SuppressWarnings("unchecked")
+    private boolean findRow(ResultSet resultSet, List<Integer> foundRowIndexes) throws SQLException {
 		Integer index = 0;
 		boolean rowFound = true;
 		for (Map<String, Optional<KVValue<?>>> rootDocPartValueMap : schema.rootDocPartValues) {

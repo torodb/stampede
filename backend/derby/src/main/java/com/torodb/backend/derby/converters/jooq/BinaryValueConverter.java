@@ -20,8 +20,6 @@
 
 package com.torodb.backend.derby.converters.jooq;
 
-import org.jooq.util.derby.DerbyDataType;
-
 import com.google.common.io.ByteSource;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.backend.converters.jooq.KVValueConverter;

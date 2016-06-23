@@ -49,7 +49,7 @@ public class DerbyMetaScalarRecord extends MetaScalarRecord<JsonArray> {
 	}
 
     @Override
-    public MetaScalarRecord values(String database, String collection, JsonArray tableRef, FieldType type, String identifier) {
+    public MetaScalarRecord<JsonArray> values(String database, String collection, JsonArray tableRef, FieldType type, String identifier) {
         setDatabase(database);
         setCollection(collection);
         setTableRef(tableRef);

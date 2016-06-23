@@ -22,8 +22,6 @@ package com.torodb.backend.derby.converters.json;
 
 import java.util.Map;
 
-import javax.annotation.Nonnull;
-
 import com.google.common.collect.Maps;
 import com.torodb.backend.converters.ValueConverter;
 import com.torodb.backend.converters.json.BinaryValueToJsonConverter;
@@ -62,7 +60,7 @@ public class DerbyValueToJsonConverterProvider implements ValueToJsonConverterPr
 
     private static final long serialVersionUID = 1L;
 
-    private final Map<Class<? extends KVType>, ValueConverter> converters;
+    private final Map<Class<? extends KVType>, ValueConverter<?, ?>> converters;
 
     private DerbyValueToJsonConverterProvider() {
         converters = Maps.newHashMap();
@@ -85,10 +83,9 @@ public class DerbyValueToJsonConverterProvider implements ValueToJsonConverterPr
         return ValueToJsonConverterProviderHolder.INSTANCE;
     }
 
-    @Nonnull
     @Override
-    public ValueConverter getConverter(KVType valueType) {
-        ValueConverter converter = converters.get(valueType.getClass());
+    public ValueConverter<?, ?> getConverter(KVType valueType) {
+        ValueConverter<?, ?> converter = converters.get(valueType.getClass());
         if (converter == null) {
             throw new AssertionError("There is no converter that converts "
                     + "elements of type " + valueType);
