@@ -10,7 +10,6 @@
 		<version>0.50.0-SNAPSHOT</version>
 	</parent>
 
-	<groupId>com.torodb</groupId>
 	<artifactId>driver-derby</artifactId>
 
 	<name>ToroDB-poc: Derby driver</name>
