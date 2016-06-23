@@ -226,6 +226,7 @@ public class BackendDerbyTest extends AbstractBackendTest {
             helper.createDocPartTable(schema.subDocPartTableName, 
             		sqlInterface.getMetaDocPartTable().FIRST_FIELDS,
             		schema.subDocPartFields.values());
+            connection.commit();
 
             ImmutableMetaSnapshot snapshot = buildMetaSnapshot();
             
