@@ -3,19 +3,23 @@ package com.torodb.torod.pipeline;
 import com.torodb.core.d2r.CollectionData;
 import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.dsl.backend.BackendTransactionJob;
+import com.torodb.core.dsl.backend.BackendTransactionJobFactory;
 import com.torodb.core.transaction.metainf.ImmutableMetaField;
 import com.torodb.core.transaction.metainf.ImmutableMetaScalar;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import java.util.ArrayList;
 import java.util.function.Function;
-import com.torodb.core.dsl.backend.BackendTransactionJobFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  *
  */
 public class DefaultToBackendFunction implements
         Function<CollectionData, Iterable<BackendTransactionJob>> {
+
+    private static final Logger LOGGER = LogManager.getLogger(DefaultToBackendFunction.class);
 
     private final BackendTransactionJobFactory factory;
     private final MetaDatabase database;
@@ -53,6 +57,7 @@ public class DefaultToBackendFunction implements
 
             jobs.add(factory.insert(database, collection, docPartData));
         }
+        LOGGER.trace("Executing the following jobs: {}", jobs);
         return jobs;
     }
 
