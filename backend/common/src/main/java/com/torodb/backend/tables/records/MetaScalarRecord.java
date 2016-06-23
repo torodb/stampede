@@ -19,16 +19,15 @@
  */
 package com.torodb.backend.tables.records;
 
+import com.torodb.backend.tables.MetaScalarTable;
+import com.torodb.core.TableRef;
+import com.torodb.core.TableRefFactory;
+import com.torodb.core.transaction.metainf.FieldType;
 import org.jooq.Field;
 import org.jooq.Record4;
 import org.jooq.Record5;
 import org.jooq.Row5;
 import org.jooq.impl.UpdatableRecordImpl;
-
-import com.torodb.backend.tables.MetaScalarTable;
-import com.torodb.core.TableRef;
-import com.torodb.core.TableRefFactory;
-import com.torodb.core.transaction.metainf.FieldType;
 
 public abstract class MetaScalarRecord<TableRefType> extends UpdatableRecordImpl<MetaScalarRecord<TableRefType>> 
         implements Record5<String, String, TableRefType, FieldType, String> {
@@ -82,28 +81,28 @@ public abstract class MetaScalarRecord<TableRefType> extends UpdatableRecordImpl
      * Setter for <code>torodb.scalar.type</code>.
      */
     public void setType(FieldType value) {
-        set(4, value);
+        set(3, value);
     }
 
     /**
      * Getter for <code>torodb.scalar.type</code>.
      */
     public FieldType getType() {
-        return (FieldType) getValue(4);
+        return (FieldType) getValue(3);
     }
 
     /**
      * Setter for <code>torodb.scalar.idenftifier</code>.
      */
     public void setIdentifier(String value) {
-        set(5, value);
+        set(4, value);
     }
 
     /**
      * Getter for <code>torodb.scalar.idenftifier</code>.
      */
     public String getIdentifier() {
-        return (String) getValue(5);
+        return (String) getValue(4);
     }
 
 	// -------------------------------------------------------------------------
