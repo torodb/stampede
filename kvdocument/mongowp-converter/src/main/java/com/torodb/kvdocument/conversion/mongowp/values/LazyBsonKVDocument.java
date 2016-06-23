@@ -66,14 +66,14 @@ public class LazyBsonKVDocument extends KVDocument {
     private static class EntryTranslateFunction implements Function<BsonDocument.Entry<?>, KVDocument.DocEntry<?>> {
 
         @Override
-        @SuppressWarnings("unchecked")
+        @SuppressWarnings({ "unchecked", "rawtypes" })
         public DocEntry<?> apply(@Nonnegative Entry<?> input) {
             return new MyDocEntry(input);
         }
 
     }
 
-    private static class MyDocEntry<V> extends DocEntry {
+    private static class MyDocEntry<V> extends DocEntry<V> {
 
         private final BsonDocument.Entry<?> entry;
 
@@ -86,9 +86,10 @@ public class LazyBsonKVDocument extends KVDocument {
             return entry.getKey();
         }
 
+        @SuppressWarnings("unchecked")
         @Override
-        public KVValue getValue() {
-            return MongoWPConverter.translate(entry.getValue());
+        public KVValue<V> getValue() {
+            return (KVValue<V>) MongoWPConverter.translate(entry.getValue());
         }
     }
 
