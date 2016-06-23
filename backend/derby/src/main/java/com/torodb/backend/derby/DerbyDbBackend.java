@@ -31,7 +31,7 @@ import javax.sql.DataSource;
 
 /**
  *
- * PostgreSQL-based backend
+ * Derby-based backend
  */
 public class DerbyDbBackend extends AbstractDbBackend<DerbyDbBackendConfiguration> {
     private final DerbyDriverProvider driverProvider;

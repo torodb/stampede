@@ -47,62 +47,66 @@ public class Derby {
             @Override
             public void configure(Binder binder) {
                 binder.bind(DerbyDbBackendConfiguration.class)
-                    .toInstance(new DerbyDbBackendConfiguration() {
-                        @Override
-                        public String getUsername() {
-                            return null;
-                        }
-                        
-                        @Override
-                        public int getReservedReadPoolSize() {
-                            return 4;
-                        }
-                        
-                        @Override
-                        public String getPassword() {
-                            return null;
-                        }
-                        
-                        @Override
-                        public int getDbPort() {
-                            return 0;
-                        }
-                        
-                        @Override
-                        public String getDbName() {
-                            return "torodb";
-                        }
-                        
-                        @Override
-                        public String getDbHost() {
-                            return null;
-                        }
-                        
-                        @Override
-                        public long getCursorTimeout() {
-                            return 8000;
-                        }
-                        
-                        @Override
-                        public long getConnectionPoolTimeout() {
-                            return 10000;
-                        }
-                        
-                        @Override
-                        public int getConnectionPoolSize() {
-                            return 8;
-                        }
+                    .toInstance(getBackEndConfiguration());
+            }
+        };
+	}
+	
+	public static DerbyDbBackendConfiguration getBackEndConfiguration(){
+		return new DerbyDbBackendConfiguration() {
+            @Override
+            public String getUsername() {
+                return null;
+            }
+            
+            @Override
+            public int getReservedReadPoolSize() {
+                return 4;
+            }
+            
+            @Override
+            public String getPassword() {
+                return null;
+            }
+            
+            @Override
+            public int getDbPort() {
+                return 0;
+            }
+            
+            @Override
+            public String getDbName() {
+                return "torodb";
+            }
+            
+            @Override
+            public String getDbHost() {
+                return null;
+            }
+            
+            @Override
+            public long getCursorTimeout() {
+                return 8000;
+            }
+            
+            @Override
+            public long getConnectionPoolTimeout() {
+                return 10000;
+            }
+            
+            @Override
+            public int getConnectionPoolSize() {
+                return 8;
+            }
 
-                        @Override
-                        public boolean inMemory() {
-                            return false;
-                        }
+            @Override
+            public boolean inMemory() {
+                return false;
+            }
 
-                        @Override
-                        public boolean embedded() {
-                            return true;
-                        }
-                    });
+            @Override
+            public boolean embedded() {
+                return true;
             }
         };
 	}
