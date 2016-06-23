@@ -49,12 +49,17 @@ public interface WriteBackendTransaction extends BackendTransaction {
     /**
      * Adds a docPart to a collection.
      *
+     * Contained {@link MetaDocPart#streamFields() fields} and
+     * {@link MetaDocPart#streamScalars() () scalars} <b>are not</b> added and they must be added
+     * later calling
+     * {@link #addField(com.torodb.core.transaction.metainf.MetaDatabase, com.torodb.core.transaction.metainf.MetaCollection, com.torodb.core.transaction.metainf.MetaDocPart, com.torodb.core.transaction.metainf.MetaField) }
+     * and {@link #addScalar(com.torodb.core.transaction.metainf.MetaDatabase, com.torodb.core.transaction.metainf.MetaCollection, com.torodb.core.transaction.metainf.MetaDocPart, com.torodb.core.transaction.metainf.MetaScalar) }
+     *
      * @param db         the database that contains the given collection. It must have been added
      *                   before.
      * @param col        the collection where the doc part will be added. It must have been added
      *                   before
      * @param newDocPart the docPart to add
-     * @throws BackendException
      * @throws RollbackException
      */
     public void addDocPart(MetaDatabase db, MetaCollection col, MetaDocPart newDocPart) throws RollbackException;

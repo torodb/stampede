@@ -21,7 +21,6 @@
 package com.torodb.backend;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
 import com.torodb.backend.interfaces.ErrorHandlerInterface.Context;
 import com.torodb.core.backend.WriteBackendTransaction;
 import com.torodb.core.d2r.DocPartData;
@@ -30,7 +29,7 @@ import com.torodb.core.transaction.RollbackException;
 import com.torodb.core.transaction.metainf.*;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.List;
+import java.util.Collection;
 import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.impl.DSL;
@@ -41,11 +40,13 @@ public class WriteBackendTransactionImpl implements WriteBackendTransaction {
     private final Connection connection;
     private final DSLContext dsl;
     private final SqlInterface sqlInterface;
+    private final BackendConnectionImpl backendConnection;
     
-    public WriteBackendTransactionImpl(SqlInterface sqlInterface) {
+    public WriteBackendTransactionImpl(SqlInterface sqlInterface, BackendConnectionImpl backendConnection) {
         this.sqlInterface = sqlInterface;
         this.connection = sqlInterface.createWriteConnection();
         this.dsl = sqlInterface.createDSLContext(connection);
+        this.backendConnection = backendConnection;
     }
     
     @Override
@@ -70,11 +71,7 @@ public class WriteBackendTransactionImpl implements WriteBackendTransaction {
     	sqlInterface.addMetaDocPart(dsl, db.getName(), col.getName(),
                 newDocPart.getTableRef(), newDocPart.getIdentifier());
     	
-        ImmutableList.Builder<Field<?>> docPartFieldsBuilder = ImmutableList.<Field<?>>builder()
-            .addAll(sqlInterface.getDocPartTableInternalFields(newDocPart));
-        newDocPart.streamFields().map(this::buildField).forEach(docPartFieldsBuilder::add);
-        newDocPart.streamScalars().map(this::buildScalar).forEach(docPartFieldsBuilder::add);
-        List<Field<?>> fields = docPartFieldsBuilder.build();
+        Collection<? extends Field<?>> fields = sqlInterface.getDocPartTableInternalFields(newDocPart);
         sqlInterface.createDocPartTable(dsl, db.getIdentifier(), newDocPart.getIdentifier(), fields);
     }
 
@@ -137,8 +134,9 @@ public class WriteBackendTransactionImpl implements WriteBackendTransaction {
     public void close() {
         if (!closed) {
             closed = true;
+            backendConnection.onTransactionClosed(this);
             try {
-//                connection.rollback();
+                connection.rollback();
                 connection.close();
             } catch (SQLException ex) {
                 sqlInterface.handleRollbackException(Context.close, ex);
