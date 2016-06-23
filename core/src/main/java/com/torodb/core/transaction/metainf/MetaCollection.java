@@ -31,5 +31,9 @@ public interface MetaCollection {
 
     @Nullable
     public abstract MetaDocPart getMetaDocPartByTableRef(TableRef tableRef);
+
+    public default String defautToString() {
+        return "col{" + "name:" + getName() + ", id:" + getIdentifier() + '}';
+    }
     
 }

@@ -36,4 +36,8 @@ public interface MetaScalar {
     @Nonnull
     String getIdentifier();
 
+    public default String defautToString() {
+        return "field{type:" + getType() + ", id:" + getIdentifier() + '}';
+    }
+
 }

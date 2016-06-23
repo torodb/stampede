@@ -100,6 +100,11 @@ public class BatchMetaCollection implements MutableMetaCollection {
         return delegate.getIdentifier();
     }
 
+    @Override
+    public String toString() {
+        return defautToString();
+    }
+
     private void onDocPartChange(BatchMetaDocPart changedDocPart) {
         changesOnBatch.add(changedDocPart);
         modifiedDocParts.add(changedDocPart);

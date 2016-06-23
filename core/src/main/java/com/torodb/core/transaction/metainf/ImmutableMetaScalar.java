@@ -73,4 +73,9 @@ public class ImmutableMetaScalar implements MetaScalar {
         return true;
     }
 
+    @Override
+    public String toString() {
+        return defautToString();
+    }
+
 }

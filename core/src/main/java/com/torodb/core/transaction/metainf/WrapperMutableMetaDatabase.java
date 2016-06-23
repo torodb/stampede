@@ -120,6 +120,11 @@ public class WrapperMutableMetaDatabase implements MutableMetaDatabase {
                 .orElse(null);
     }
 
+    @Override
+    public String toString() {
+        return defautToString();
+    }
+
     private void onMetaCollectionChange(WrapperMutableMetaCollection changed) {
         modifiedMetaCollections.add(changed);
         changeConsumer.accept(this);

@@ -120,4 +120,9 @@ public class BatchMetaDocPart implements MutableMetaDocPart {
     public Stream<? extends MetaScalar> streamScalars() {
         return delegate.streamScalars();
     }
+
+    @Override
+    public String toString() {
+        return defautToString();
+    }
 }

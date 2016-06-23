@@ -134,4 +134,9 @@ public class ImmutableMetaCollection implements MetaCollection {
             return new ImmutableMetaCollection(name, identifier, docPartsByDbName);
         }
     }
+
+    @Override
+    public String toString() {
+        return defautToString();
+    }
 }

@@ -168,4 +168,9 @@ public class WrapperMutableMetaDocPart implements MutableMetaDocPart {
                 .orElse(null);
     }
 
+    @Override
+    public String toString() {
+        return defautToString();
+    }
+
 }

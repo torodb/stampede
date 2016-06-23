@@ -83,6 +83,11 @@ public class ImmutableMetaDatabase implements MetaDatabase {
         return collectionsById.get(collectionIdentifier);
     }
 
+    @Override
+    public String toString() {
+        return defautToString();
+    }
+
     public static class Builder {
         private boolean built = false;
         private final String name;

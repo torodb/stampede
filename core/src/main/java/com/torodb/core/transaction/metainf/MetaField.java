@@ -24,4 +24,8 @@ public interface MetaField {
 
     @Nonnull
     public abstract FieldType getType();
+
+    public default String defautToString() {
+        return "field{" + "name:" + getName() + ", type:" + getType() + ", id:" + getIdentifier() + '}';
+    }
 }

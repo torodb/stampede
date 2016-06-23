@@ -51,4 +51,8 @@ public interface MetaDatabase {
     @Nullable
     public MetaCollection getMetaCollectionByIdentifier(String collectionIdentifier);
 
+    public default String defautToString() {
+        return "db{" + "name:" + getName() + ", id:" + getIdentifier() + '}';
+    }
+
 }

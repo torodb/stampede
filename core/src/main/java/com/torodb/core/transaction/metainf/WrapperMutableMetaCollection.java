@@ -125,6 +125,11 @@ public class WrapperMutableMetaCollection implements MutableMetaCollection {
         return newDocParts.get(tableRef);
     }
 
+    @Override
+    public String toString() {
+        return defautToString();
+    }
+
     protected void onDocPartChange(WrapperMutableMetaDocPart changedDocPart) {
         modifiedMetaDocParts.add(changedDocPart);
         changeConsumer.accept(this);

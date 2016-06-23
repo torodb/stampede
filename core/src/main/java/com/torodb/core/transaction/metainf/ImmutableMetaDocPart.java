@@ -78,6 +78,11 @@ public class ImmutableMetaDocPart implements MetaDocPart {
     public MetaScalar getScalar(FieldType type) {
         return scalars.get(type);
     }
+
+    @Override
+    public String toString() {
+        return defautToString();
+    }
     
     public static class Builder {
 

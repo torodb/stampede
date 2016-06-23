@@ -34,4 +34,9 @@ public class ImmutableMetaField implements MetaField {
         return type;
     }
 
+    @Override
+    public String toString() {
+        return defautToString();
+    }
+
 }

@@ -64,4 +64,8 @@ public interface MetaDocPart {
     public default MetaScalar getScalar(@Nonnull String identifier) {
         return streamScalars().filter((s) -> s.getIdentifier().equals(identifier)).findAny().orElse(null);
     }
+
+    public default String defautToString() {
+        return "docPart{" + "ref:" + getTableRef() + ", id:" + getIdentifier() + '}';
+    }
 }
