@@ -38,7 +38,7 @@ import com.torodb.core.transaction.metainf.FieldType;
  *
  */
 @Singleton
-public abstract class AbstractWriteMetaDataInterface implements MetaDataWriteInterface {
+public abstract class AbstractMetaDataWriteInterface implements MetaDataWriteInterface {
 
     private final MetaDatabaseTable<?> metaDatabaseTable;
     private final MetaCollectionTable<?> metaCollectionTable;
@@ -47,7 +47,7 @@ public abstract class AbstractWriteMetaDataInterface implements MetaDataWriteInt
     private final MetaScalarTable<?, ?> metaScalarTable;
     private final SqlHelper sqlHelper;
     
-    public AbstractWriteMetaDataInterface(MetaDataReadInterface derbyMetaDataReadInterface, 
+    public AbstractMetaDataWriteInterface(MetaDataReadInterface derbyMetaDataReadInterface, 
             SqlHelper sqlHelper) {
         this.metaDatabaseTable = derbyMetaDataReadInterface.getMetaDatabaseTable();
         this.metaCollectionTable = derbyMetaDataReadInterface.getMetaCollectionTable();

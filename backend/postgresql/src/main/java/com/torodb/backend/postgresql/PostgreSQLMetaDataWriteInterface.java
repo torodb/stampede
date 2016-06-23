@@ -27,7 +27,7 @@ import org.jooq.DSLContext;
 import org.jooq.Record1;
 import org.jooq.conf.ParamType;
 
-import com.torodb.backend.AbstractWriteMetaDataInterface;
+import com.torodb.backend.AbstractMetaDataWriteInterface;
 import com.torodb.backend.SqlHelper;
 import com.torodb.backend.converters.TableRefConverter;
 import com.torodb.backend.postgresql.tables.PostgreSQLMetaCollectionTable;
@@ -47,7 +47,7 @@ import com.torodb.core.transaction.metainf.FieldType;
  *
  */
 @Singleton
-public class PostgreSQLMetaDataWriteInterface extends AbstractWriteMetaDataInterface {
+public class PostgreSQLMetaDataWriteInterface extends AbstractMetaDataWriteInterface {
 
     private final PostgreSQLMetaDatabaseTable metaDatabaseTable;
     private final PostgreSQLMetaCollectionTable metaCollectionTable;
