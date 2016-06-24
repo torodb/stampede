@@ -57,14 +57,14 @@ public class DerbyMetaDataWriteInterface extends AbstractMetaDataWriteInterface 
     private final SqlHelper sqlHelper;
 
     @Inject
-    public DerbyMetaDataWriteInterface(DerbyMetaDataReadInterface derbyMetaDataReadInterface, 
+    public DerbyMetaDataWriteInterface(DerbyMetaDataReadInterface metaDataReadInterface, 
             SqlHelper sqlHelper) {
-        super(derbyMetaDataReadInterface, sqlHelper);
-        this.metaDatabaseTable = derbyMetaDataReadInterface.getMetaDatabaseTable();
-        this.metaCollectionTable = derbyMetaDataReadInterface.getMetaCollectionTable();
-        this.metaDocPartTable = derbyMetaDataReadInterface.getMetaDocPartTable();
-        this.metaFieldTable = derbyMetaDataReadInterface.getMetaFieldTable();
-        this.metaScalarTable = derbyMetaDataReadInterface.getMetaScalarTable();
+        super(metaDataReadInterface, sqlHelper);
+        this.metaDatabaseTable = metaDataReadInterface.getMetaDatabaseTable();
+        this.metaCollectionTable = metaDataReadInterface.getMetaCollectionTable();
+        this.metaDocPartTable = metaDataReadInterface.getMetaDocPartTable();
+        this.metaFieldTable = metaDataReadInterface.getMetaFieldTable();
+        this.metaScalarTable = metaDataReadInterface.getMetaScalarTable();
         this.sqlHelper = sqlHelper;
     }
 

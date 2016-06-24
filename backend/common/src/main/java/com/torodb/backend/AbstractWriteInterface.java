@@ -36,9 +36,6 @@ import org.jooq.exception.DataAccessException;
 
 import com.google.common.base.Preconditions;
 import com.torodb.backend.ErrorHandler.Context;
-import com.torodb.backend.converters.jooq.DataTypeForKV;
-import com.torodb.backend.converters.jooq.KVValueConverter;
-import com.torodb.backend.converters.sql.SqlBinding;
 import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.d2r.DocPartRow;
 import com.torodb.core.exceptions.SystemException;
@@ -56,16 +53,14 @@ import com.torodb.kvdocument.values.KVValue;
 public abstract class AbstractWriteInterface implements WriteInterface {
     
     private final MetaDataReadInterface metaDataReadInterface;
-    private final DataTypeProvider dataTypeProvider;
     private final ErrorHandler errorHandler;
     private final SqlHelper sqlHelper;
 
     public AbstractWriteInterface(MetaDataReadInterface metaDataReadInterface,
-            DataTypeProvider dataTypeProvider, ErrorHandler errorHandler,
+            ErrorHandler errorHandler,
             SqlHelper sqlHelper) {
         super();
         this.metaDataReadInterface = metaDataReadInterface;
-        this.dataTypeProvider = dataTypeProvider;
         this.errorHandler = errorHandler;
         this.sqlHelper = sqlHelper;
     }
@@ -140,11 +135,15 @@ public abstract class AbstractWriteInterface implements WriteInterface {
                     }
                     Iterator<FieldType> fieldTypeIterator = fieldTypeList.iterator();
                     for (KVValue<?> value : docPartRow.getScalarValues()) {
-                        parameterIndex = setPreparedStatementValue(preparedStatement, parameterIndex, fieldTypeIterator,
+                        sqlHelper.setPreparedStatementNullableValue(
+                                preparedStatement, parameterIndex++, 
+                                fieldTypeIterator.next(),
                                 value);
                     }
                     for (KVValue<?> value : docPartRow.getFieldValues()) {
-                        parameterIndex = setPreparedStatementValue(preparedStatement, parameterIndex, fieldTypeIterator,
+                        sqlHelper.setPreparedStatementNullableValue(
+                                preparedStatement, parameterIndex++, 
+                                fieldTypeIterator.next(),
                                 value);
                     }
                     preparedStatement.addBatch();
@@ -159,24 +158,6 @@ public abstract class AbstractWriteInterface implements WriteInterface {
         } finally {
             dsl.configuration().connectionProvider().release(connection);
         }
-    }
-
-    @SuppressWarnings({ "rawtypes", "unchecked" })
-    protected int setPreparedStatementValue(PreparedStatement preparedStatement, int parameterIndex,
-            Iterator<FieldType> fieldTypeIterator, KVValue<?> value) throws SQLException {
-        DataTypeForKV dataType = dataTypeProvider
-                .getDataType(fieldTypeIterator.next());
-        KVValueConverter valueConverter = dataType
-                .getKVValueConverter();
-        SqlBinding sqlBinding = valueConverter
-                .getSqlBinding();
-        if (value != null) {
-            sqlBinding.set(preparedStatement, parameterIndex, valueConverter.to(value));
-        } else {
-            preparedStatement.setNull(parameterIndex, dataType.getSQLType());
-        }
-        parameterIndex++;
-        return parameterIndex;
     }
 
     protected abstract String getInsertDocPartDataStatement(String schemaName, MetaDocPart metaDocPart,

@@ -35,7 +35,6 @@ import org.jooq.DSLContext;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.torodb.backend.ErrorHandler.Context;
-import com.torodb.backend.tables.MetaDocPartTable;
 import com.torodb.backend.tables.MetaDocPartTable.DocPartTableFields;
 import com.torodb.core.TableRef;
 import com.torodb.core.d2r.DocPartResult;
@@ -44,6 +43,8 @@ import com.torodb.core.exceptions.SystemException;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
+import com.torodb.core.transaction.metainf.MetaField;
+import com.torodb.kvdocument.values.KVValue;
 
 /**
  *
@@ -51,17 +52,48 @@ import com.torodb.core.transaction.metainf.MetaDocPart;
 @Singleton
 public abstract class AbstractReadInterface implements ReadInterface {
     
-    protected final MetaDataReadInterface metaDataReadInterface;
-    protected final MetaDocPartTable<?, ?> metaDocPartTable;
-    protected final ErrorHandler errorHandler;
-    protected final DbBackend dbBackend;
+    private final ErrorHandler errorHandler;
+    private final SqlHelper sqlHelper;
 
-    public AbstractReadInterface(MetaDataReadInterface metaDataReadInterface, ErrorHandler errorHandler, DbBackend dbBackend) {
-        this.metaDataReadInterface = metaDataReadInterface;
-        this.metaDocPartTable = metaDataReadInterface.getMetaDocPartTable();
+    public AbstractReadInterface(ErrorHandler errorHandler, SqlHelper sqlHelper) {
         this.errorHandler = errorHandler;
-        this.dbBackend = dbBackend;
+        this.sqlHelper = sqlHelper;
     }
+
+    @Override
+    public ResultSet getCollectionDidsWithFieldEqualsTo(DSLContext dsl, MetaDatabase metaDatabase,
+            MetaDocPart metaDocPart, MetaField metaField, KVValue<?> value)
+            throws SQLException {
+        String statement = getReadCollectionDidsWithFieldEqualsToStatement(metaDatabase.getIdentifier(), metaDocPart.getIdentifier(), metaField.getIdentifier());
+        Connection connection = dsl.configuration().connectionProvider().acquire();
+        try {
+            PreparedStatement preparedStatement = connection.prepareStatement(statement);
+            
+            sqlHelper.setPreparedStatementValue(preparedStatement, 1, metaField.getType(), value);
+            
+            return preparedStatement.executeQuery();
+        } finally {
+            dsl.configuration().connectionProvider().release(connection);
+        }
+    }
+
+    protected abstract String getReadCollectionDidsWithFieldEqualsToStatement(String schemaName, String rootTableName,
+            String columnName);
+
+    @Override
+    public ResultSet getAllCollectionDids(DSLContext dsl, MetaDatabase metaDatabase, MetaDocPart metaDocPart)
+            throws SQLException {
+        String statement = getReadAllCollectionDidsStatement(metaDatabase.getIdentifier(), metaDocPart.getIdentifier());
+        Connection connection = dsl.configuration().connectionProvider().acquire();
+        try {
+            PreparedStatement preparedStatement = connection.prepareStatement(statement);
+            return preparedStatement.executeQuery();
+        } finally {
+            dsl.configuration().connectionProvider().release(connection);
+        }
+    }
+
+    protected abstract String getReadAllCollectionDidsStatement(String schemaName, String rootTableName);
 
     @Nonnull
     @Override
@@ -71,16 +103,20 @@ public abstract class AbstractReadInterface implements ReadInterface {
         
         ImmutableList.Builder<DocPartResult<ResultSet>> docPartResultSetsBuilder = ImmutableList.builder();
         Connection connection = dsl.configuration().connectionProvider().acquire();
-        Iterator<? extends MetaDocPart> metaDocPartIterator = metaCollection
-                .streamContainedMetaDocParts()
-                .sorted(TableRefComparator.MetaDocPart.DESC)
-                .iterator();
-        while (metaDocPartIterator.hasNext()) {
-            MetaDocPart metaDocPart = metaDocPartIterator.next();
-            String statament = getDocPartStatament(metaDatabase, metaDocPart, dids);
-
-            PreparedStatement preparedStatement = connection.prepareStatement(statament);
-            docPartResultSetsBuilder.add(new DocPartResult<ResultSet>(metaDocPart, preparedStatement.executeQuery()));
+        try {
+            Iterator<? extends MetaDocPart> metaDocPartIterator = metaCollection
+                    .streamContainedMetaDocParts()
+                    .sorted(TableRefComparator.MetaDocPart.DESC)
+                    .iterator();
+            while (metaDocPartIterator.hasNext()) {
+                MetaDocPart metaDocPart = metaDocPartIterator.next();
+                String statament = getDocPartStatament(metaDatabase, metaDocPart, dids);
+    
+                PreparedStatement preparedStatement = connection.prepareStatement(statament);
+                docPartResultSetsBuilder.add(new DocPartResult<ResultSet>(metaDocPart, preparedStatement.executeQuery()));
+            }
+        } finally {
+            dsl.configuration().connectionProvider().release(connection);
         }
         return new DocPartResults<ResultSet>(docPartResultSetsBuilder.build());
     }

@@ -28,7 +28,6 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import com.torodb.backend.AbstractWriteInterface;
-import com.torodb.backend.ErrorHandler;
 import com.torodb.backend.InternalField;
 import com.torodb.backend.SqlHelper;
 import com.torodb.backend.tables.MetaDocPartTable;
@@ -44,10 +43,10 @@ import com.torodb.core.transaction.metainf.MetaScalar;
 public class DerbyWriteInterface extends AbstractWriteInterface {
     
     @Inject
-    public DerbyWriteInterface(DerbyMetaDataReadInterface derbyMetaDataReadInterface,
-            DerbyDataTypeProvider derbyDataTypeProvider, ErrorHandler errorHandler,
+    public DerbyWriteInterface(DerbyMetaDataReadInterface metaDataReadInterface,
+            DerbyErrorHandler errorHandler,
             SqlHelper sqlHelper) {
-        super(derbyMetaDataReadInterface, derbyDataTypeProvider, errorHandler, sqlHelper);
+        super(metaDataReadInterface, errorHandler, sqlHelper);
     }
 
     @Override

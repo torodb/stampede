@@ -57,14 +57,14 @@ public class PostgreSQLMetaDataWriteInterface extends AbstractMetaDataWriteInter
     private final SqlHelper sqlHelper;
 
     @Inject
-    public PostgreSQLMetaDataWriteInterface(PostgreSQLMetaDataReadInterface postgreSQLMetaDataReadInterface, 
+    public PostgreSQLMetaDataWriteInterface(PostgreSQLMetaDataReadInterface metaDataReadInterface, 
             SqlHelper sqlHelper) {
-        super(postgreSQLMetaDataReadInterface, sqlHelper);
-        this.metaDatabaseTable = postgreSQLMetaDataReadInterface.getMetaDatabaseTable();
-        this.metaCollectionTable = postgreSQLMetaDataReadInterface.getMetaCollectionTable();
-        this.metaDocPartTable = postgreSQLMetaDataReadInterface.getMetaDocPartTable();
-        this.metaFieldTable = postgreSQLMetaDataReadInterface.getMetaFieldTable();
-        this.metaScalarTable = postgreSQLMetaDataReadInterface.getMetaScalarTable();
+        super(metaDataReadInterface, sqlHelper);
+        this.metaDatabaseTable = metaDataReadInterface.getMetaDatabaseTable();
+        this.metaCollectionTable = metaDataReadInterface.getMetaCollectionTable();
+        this.metaDocPartTable = metaDataReadInterface.getMetaDocPartTable();
+        this.metaFieldTable = metaDataReadInterface.getMetaFieldTable();
+        this.metaScalarTable = metaDataReadInterface.getMetaScalarTable();
         this.sqlHelper = sqlHelper;
     }
 

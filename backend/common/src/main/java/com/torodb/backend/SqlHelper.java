@@ -34,7 +34,12 @@ import org.jooq.Result;
 import org.jooq.impl.DSL;
 
 import com.torodb.backend.ErrorHandler.Context;
+import com.torodb.backend.converters.jooq.DataTypeForKV;
+import com.torodb.backend.converters.jooq.KVValueConverter;
+import com.torodb.backend.converters.sql.SqlBinding;
 import com.torodb.core.exceptions.SystemException;
+import com.torodb.core.transaction.metainf.FieldType;
+import com.torodb.kvdocument.values.KVValue;
 
 @Singleton
 public class SqlHelper {
@@ -101,5 +106,33 @@ public class SqlHelper {
 
     public DSLContext dsl() {
         return DSL.using(dataTypeProvider.getDialect());
+    }
+
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public void setPreparedStatementNullableValue(PreparedStatement preparedStatement, int parameterIndex,
+            FieldType fieldType, KVValue<?> value) throws SQLException {
+        DataTypeForKV dataType = dataTypeProvider
+                .getDataType(fieldType);
+        KVValueConverter valueConverter = dataType
+                .getKVValueConverter();
+        SqlBinding sqlBinding = valueConverter
+                .getSqlBinding();
+        if (value != null) {
+            sqlBinding.set(preparedStatement, parameterIndex, valueConverter.to(value));
+        } else {
+            preparedStatement.setNull(parameterIndex, dataType.getSQLType());
+        }
+    }
+
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public void setPreparedStatementValue(PreparedStatement preparedStatement, int parameterIndex,
+            FieldType fieldType, KVValue<?> value) throws SQLException {
+        DataTypeForKV dataType = dataTypeProvider
+                .getDataType(fieldType);
+        KVValueConverter valueConverter = dataType
+                .getKVValueConverter();
+        SqlBinding sqlBinding = valueConverter
+                .getSqlBinding();
+        sqlBinding.set(preparedStatement, parameterIndex, valueConverter.to(value));
     }
 }

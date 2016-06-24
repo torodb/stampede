@@ -82,8 +82,13 @@ public class BackendDocumentTestHelper {
     }
     
     public KVDocument parseFromJson(String jsonFileName) throws Exception {
-    	JsonParser parser = new JacksonJsonParser();
+        JsonParser parser = new JacksonJsonParser();
         return parser.createFromResource("docs/" + jsonFileName);
+    }
+    
+    public List<KVDocument> parseListFromJson(String jsonFileName) throws Exception {
+        JsonParser parser = new JacksonJsonParser();
+        return parser.createListFromResource("docs/" + jsonFileName);
     }
     
     public CollectionData readDataFromDocuments(String database, String collection, List<KVDocument> documents, MutableMetaSnapshot mutableSnapshot) throws Exception {

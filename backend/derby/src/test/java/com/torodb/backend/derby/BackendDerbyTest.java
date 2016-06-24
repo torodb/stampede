@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.StreamSupport;
 
 import org.jooq.Converter;
 import org.jooq.DSLContext;
@@ -47,6 +48,7 @@ import com.google.inject.Injector;
 import com.torodb.backend.AbstractBackendTest;
 import com.torodb.backend.BackendDocumentTestHelper;
 import com.torodb.backend.BackendTestHelper;
+import com.torodb.backend.DefaultDidCursor;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.backend.meta.SnapshotUpdater;
 import com.torodb.core.d2r.CollectionData;
@@ -70,6 +72,7 @@ import com.torodb.kvdocument.values.KVDocument;
 import com.torodb.kvdocument.values.KVInteger;
 import com.torodb.kvdocument.values.KVValue;
 import com.torodb.kvdocument.values.heap.ListKVArray;
+import com.torodb.kvdocument.values.heap.StringKVString;
 import com.torodb.metainfo.cache.mvcc.MvccMetainfoRepository;
 
 public class BackendDerbyTest extends AbstractBackendTest {
@@ -352,18 +355,17 @@ public class BackendDerbyTest extends AbstractBackendTest {
 		return rowFound;
 	}
     
-
     @Test
     public void testTorodbReadCollectionResultSets() throws Exception {
-    	BackendDocumentTestHelper helper = new BackendDocumentTestHelper(sqlInterface, tableRefFactory, schema);
+        BackendDocumentTestHelper helper = new BackendDocumentTestHelper(sqlInterface, tableRefFactory, schema);
         KVDocument document = helper.parseFromJson("testTorodbReadDocPart.json");
         try (Connection connection = sqlInterface.createWriteConnection()) {
-        	DSLContext dsl = dsl(connection);
-        	MutableMetaSnapshot mutableSnapshot = new WrapperMutableMetaSnapshot(new ImmutableMetaSnapshot.Builder().build());
-        	mutableSnapshot
-        		.addMetaDatabase(schema.databaseName, schema.databaseSchemaName)
-        		.addMetaCollection(schema.collectionName, schema.collectionIdentifierName);
-        	sqlInterface.createSchema(dsl, schema.databaseSchemaName);
+            DSLContext dsl = dsl(connection);
+            MutableMetaSnapshot mutableSnapshot = new WrapperMutableMetaSnapshot(new ImmutableMetaSnapshot.Builder().build());
+            mutableSnapshot
+                .addMetaDatabase(schema.databaseName, schema.databaseSchemaName)
+                .addMetaCollection(schema.collectionName, schema.collectionIdentifierName);
+            sqlInterface.createSchema(dsl, schema.databaseSchemaName);
             CollectionData collectionData = helper.parseDocumentAndCreateDocPartDataTables(mutableSnapshot, dsl, document);
             
             List<Integer> generatedDids = helper.writeCollectionData(dsl, collectionData);
@@ -381,6 +383,101 @@ public class BackendDerbyTest extends AbstractBackendTest {
             System.out.println(document);
             System.out.println(readedDocument);
             assertEquals(document, readedDocument);
+            connection.commit();
+        } 
+    }
+    
+    @Test
+    public void testTorodbReadAllCollectionResultSetsDids() throws Exception {
+        BackendDocumentTestHelper helper = new BackendDocumentTestHelper(sqlInterface, tableRefFactory, schema);
+        List<KVDocument> documents = helper.parseListFromJson("testTorodbReadDocPartDids.json");
+        try (Connection connection = sqlInterface.createWriteConnection()) {
+            DSLContext dsl = dsl(connection);
+            MutableMetaSnapshot mutableSnapshot = new WrapperMutableMetaSnapshot(new ImmutableMetaSnapshot.Builder().build());
+            mutableSnapshot
+                .addMetaDatabase(schema.databaseName, schema.databaseSchemaName)
+                .addMetaCollection(schema.collectionName, schema.collectionIdentifierName);
+            sqlInterface.createSchema(dsl, schema.databaseSchemaName);
+            CollectionData collectionData = helper.parseDocumentsAndCreateDocPartDataTables(mutableSnapshot, dsl, documents);
+            
+            List<Integer> generatedDids = helper.writeCollectionData(dsl, collectionData);
+            
+            MetaDatabase metaDatabase = mutableSnapshot.getMetaDatabaseByName(schema.databaseName);
+            MetaCollection metaCollection = metaDatabase.getMetaCollectionByName(schema.collectionName);
+            
+            MetaDocPart metaDocPart = metaCollection.getMetaDocPartByTableRef(createTableRef());
+            
+            Collection<ToroDocument> readedToroDocuments;
+            try (
+                    DefaultDidCursor defaultDidCursor = new DefaultDidCursor(sqlInterface, sqlInterface.getAllCollectionDids(dsl, metaDatabase, metaDocPart));
+                    DocPartResults<ResultSet> docPartResultSets = sqlInterface.getCollectionResultSets(
+                            dsl, metaDatabase, metaCollection, 
+                            StreamSupport.stream(((Iterable<Integer>) () -> defaultDidCursor).spliterator(), false).collect(Collectors.toList()));
+                    ) {
+                readedToroDocuments = helper.readDocuments(metaDatabase, metaCollection, docPartResultSets);
+            }
+
+            List<Integer> readedDids = readedToroDocuments.stream()
+                    .map(toroDocument -> toroDocument.getId())
+                    .collect(Collectors.toList()); 
+            System.out.println(generatedDids);
+            System.out.println(readedDids);
+            Assert.assertTrue(readedDids.containsAll(generatedDids));
+            Assert.assertTrue(generatedDids.containsAll(readedDids));
+            List<KVDocument> readedDocuments = readedToroDocuments.stream().map(readedToroDocument -> readedToroDocument.getRoot()).collect(Collectors.toList());
+            System.out.println(documents);
+            System.out.println(readedDocuments);
+            Assert.assertTrue(readedDocuments.containsAll(documents));
+            Assert.assertTrue(documents.containsAll(readedDocuments));
+            connection.commit();
+        } 
+    }
+    
+    @Test
+    public void testTorodbReadCollectionResultSetsDidsWithFieldEqualsTo() throws Exception {
+        BackendDocumentTestHelper helper = new BackendDocumentTestHelper(sqlInterface, tableRefFactory, schema);
+        List<KVDocument> documents = helper.parseListFromJson("testTorodbReadDocPartDids.json");
+        try (Connection connection = sqlInterface.createWriteConnection()) {
+            DSLContext dsl = dsl(connection);
+            MutableMetaSnapshot mutableSnapshot = new WrapperMutableMetaSnapshot(new ImmutableMetaSnapshot.Builder().build());
+            mutableSnapshot
+                .addMetaDatabase(schema.databaseName, schema.databaseSchemaName)
+                .addMetaCollection(schema.collectionName, schema.collectionIdentifierName);
+            sqlInterface.createSchema(dsl, schema.databaseSchemaName);
+            CollectionData collectionData = helper.parseDocumentsAndCreateDocPartDataTables(mutableSnapshot, dsl, documents);
+            
+            List<Integer> generatedDids = helper.writeCollectionData(dsl, collectionData);
+            
+            MetaDatabase metaDatabase = mutableSnapshot.getMetaDatabaseByName(schema.databaseName);
+            MetaCollection metaCollection = metaDatabase.getMetaCollectionByName(schema.collectionName);
+            
+            MetaDocPart metaDocPart = metaCollection.getMetaDocPartByTableRef(createTableRef("batters", "batter"));
+            MetaField metaField = metaDocPart.getMetaFieldByNameAndType("type", FieldType.STRING);
+            
+            connection.commit();
+            
+            Collection<ToroDocument> readedToroDocuments;
+            try (
+                    DefaultDidCursor defaultDidCursor = new DefaultDidCursor(sqlInterface, sqlInterface.getCollectionDidsWithFieldEqualsTo(
+                            dsl, metaDatabase, metaDocPart, metaField, new StringKVString("Blueberry")));
+                    DocPartResults<ResultSet> docPartResultSets = sqlInterface.getCollectionResultSets(
+                            dsl, metaDatabase, metaCollection, 
+                            StreamSupport.stream(((Iterable<Integer>) () -> defaultDidCursor).spliterator(), false).collect(Collectors.toList()));
+                    ) {
+                readedToroDocuments = helper.readDocuments(metaDatabase, metaCollection, docPartResultSets);
+            }
+
+            Assert.assertEquals(1, readedToroDocuments.size());
+            List<Integer> readedDids = readedToroDocuments.stream()
+                    .map(toroDocument -> toroDocument.getId())
+                    .collect(Collectors.toList()); 
+            System.out.println(generatedDids);
+            System.out.println(readedDids);
+            Assert.assertTrue(generatedDids.containsAll(readedDids));
+            List<KVDocument> readedDocuments = readedToroDocuments.stream().map(readedToroDocument -> readedToroDocument.getRoot()).collect(Collectors.toList());
+            System.out.println(documents);
+            System.out.println(readedDocuments);
+            Assert.assertTrue(documents.containsAll(readedDocuments));
             connection.commit();
         } 
     }

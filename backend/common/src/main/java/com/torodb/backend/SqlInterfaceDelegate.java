@@ -33,6 +33,9 @@ import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
+import com.torodb.core.transaction.metainf.MetaField;
+import com.torodb.kvdocument.values.KVValue;
+
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -178,6 +181,16 @@ public class SqlInterfaceDelegate implements SqlInterface {
     }
     public void dropIndex(DSLContext dsl, String schemaName, String indexName) {
         structureInterface.dropIndex(dsl, schemaName, indexName);
+    }
+    public ResultSet getCollectionDidsWithFieldEqualsTo(DSLContext dsl, MetaDatabase metaDatabase,
+            MetaDocPart metaDocPart, MetaField metaField, KVValue<?> value)
+            throws SQLException {
+        return readInterface.getCollectionDidsWithFieldEqualsTo(dsl, metaDatabase,  
+                metaDocPart, metaField, value);
+    }
+    public ResultSet getAllCollectionDids(DSLContext dsl, MetaDatabase metaDatabase, MetaDocPart metaDocPart)
+            throws SQLException {
+        return readInterface.getAllCollectionDids(dsl, metaDatabase, metaDocPart);
     }
     public DocPartResults<ResultSet> getCollectionResultSets(DSLContext dsl, MetaDatabase metaDatabase,
             MetaCollection metaCollection, Collection<Integer> requestedDocs) throws SQLException {

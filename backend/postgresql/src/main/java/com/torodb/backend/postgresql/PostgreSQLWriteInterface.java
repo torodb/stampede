@@ -41,9 +41,9 @@ import org.postgresql.copy.CopyManager;
 import com.torodb.backend.AbstractWriteInterface;
 import com.torodb.backend.ErrorHandler;
 import com.torodb.backend.ErrorHandler.Context;
-import com.torodb.backend.postgresql.converters.PostgreSQLValueToCopyConverter;
 import com.torodb.backend.InternalField;
 import com.torodb.backend.SqlHelper;
+import com.torodb.backend.postgresql.converters.PostgreSQLValueToCopyConverter;
 import com.torodb.backend.tables.MetaDocPartTable;
 import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.d2r.DocPartRow;
@@ -66,11 +66,11 @@ public class PostgreSQLWriteInterface extends AbstractWriteInterface {
     private final ErrorHandler errorHandler;
     
     @Inject
-    public PostgreSQLWriteInterface(PostgreSQLMetaDataReadInterface postgreSQLMetaDataReadInterface,
-            PostgreSQLDataTypeProvider postgreSQLDataTypeProvider, ErrorHandler errorHandler,
+    public PostgreSQLWriteInterface(PostgreSQLMetaDataReadInterface metaDataReadInterface,
+            PostgreSQLErrorHandler errorHandler,
             SqlHelper sqlHelper) {
-        super(postgreSQLMetaDataReadInterface, postgreSQLDataTypeProvider, errorHandler, sqlHelper);
-        this.postgreSQLMetaDataReadInterface = postgreSQLMetaDataReadInterface;
+        super(metaDataReadInterface, errorHandler, sqlHelper);
+        this.postgreSQLMetaDataReadInterface = metaDataReadInterface;
         this.errorHandler = errorHandler;
     }
 

@@ -26,6 +26,7 @@ import org.junit.Before;
 
 import com.google.inject.Injector;
 import com.torodb.backend.meta.SchemaUpdater;
+import com.torodb.core.TableRef;
 import com.torodb.core.TableRefFactory;
 import com.torodb.core.impl.TableRefFactoryImpl;
 
@@ -54,5 +55,20 @@ public abstract class AbstractBackendTest {
     protected abstract Injector createInjector();
     
     protected abstract void cleanDatabase(Injector injector) throws SQLException;
+    
+    protected TableRef createTableRef(String...names) {
+        TableRef tableRef = tableRefFactory.createRoot();
+        
+        for (String name : names) {
+            try {
+                int index = Integer.parseInt(name);
+                tableRef = tableRefFactory.createChild(tableRef, index);
+            } catch(NumberFormatException ex) {
+                tableRef = tableRefFactory.createChild(tableRef, name);
+            }
+        }
+        
+        return tableRef;
+    }
     
 }

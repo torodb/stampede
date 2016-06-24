@@ -28,9 +28,9 @@ import javax.inject.Singleton;
 import org.jooq.Converter;
 
 import com.torodb.backend.AbstractReadInterface;
-import com.torodb.backend.DbBackend;
-import com.torodb.backend.ErrorHandler;
 import com.torodb.backend.InternalField;
+import com.torodb.backend.SqlHelper;
+import com.torodb.backend.tables.MetaDocPartTable.DocPartTableFields;
 import com.torodb.core.TableRef;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
@@ -41,9 +41,52 @@ import com.torodb.core.transaction.metainf.MetaDocPart;
 @Singleton
 public class DerbyReadInterface extends AbstractReadInterface {
 
+    private final DerbyMetaDataReadInterface metaDataReadInterface;
+    
     @Inject
-    public DerbyReadInterface(DerbyMetaDataReadInterface derbyMetaDataReadInterface, ErrorHandler errorHandler, DbBackend dbBackend) {
-        super(derbyMetaDataReadInterface, errorHandler, dbBackend);
+    public DerbyReadInterface(DerbyMetaDataReadInterface metaDataReadInterface, 
+            DerbyErrorHandler errorHandler, SqlHelper sqlHelper) {
+        super(errorHandler, sqlHelper);
+        this.metaDataReadInterface = metaDataReadInterface;
+    }
+
+    @Override
+    protected String getReadCollectionDidsWithFieldEqualsToStatement(String schemaName, String rootTableName,
+            String columnName) {
+        StringBuilder sb = new StringBuilder()
+                .append("SELECT \"")
+                .append(DocPartTableFields.DID.fieldName)
+                .append("\" FROM \"")
+                .append(schemaName)
+                .append("\".\"")
+                .append(rootTableName)
+                .append("\" WHERE \"")
+                .append(schemaName)
+                .append("\".\"")
+                .append(rootTableName)
+                .append("\".\"")
+                .append(columnName)
+                .append("\" = ? GROUP BY \"")
+                .append(DocPartTableFields.DID.fieldName)
+                .append("\" ORDER BY \"")
+                .append(DocPartTableFields.DID.fieldName)
+                .append('"');
+        String statement = sb.toString();
+        return statement;
+    }
+
+    @Override
+    protected String getReadAllCollectionDidsStatement(String schemaName, String rootTableName) {
+        StringBuilder sb = new StringBuilder()
+                .append("SELECT \"")
+                .append(DocPartTableFields.DID.fieldName)
+                .append("\" FROM \"")
+                .append(schemaName)
+                .append("\".\"")
+                .append(rootTableName)
+                .append('"');
+        String statement = sb.toString();
+        return statement;
     }
 
     @Override
@@ -74,10 +117,10 @@ public class DerbyReadInterface extends AbstractReadInterface {
             .append("\".\"")
             .append(metaDocPart.getIdentifier())
             .append("\" WHERE \"")
-            .append(metaDocPartTable.DID.getName())
+            .append(metaDataReadInterface.getMetaDocPartTable().DID.getName())
             .append("\" IN (");
         Converter<?, Integer> converter = 
-                metaDocPartTable.DID.getDataType().getConverter();
+                metaDataReadInterface.getMetaDocPartTable().DID.getDataType().getConverter();
         for (Integer requestedDoc : dids) {
             sb.append(converter.to(requestedDoc))
                 .append(',');
