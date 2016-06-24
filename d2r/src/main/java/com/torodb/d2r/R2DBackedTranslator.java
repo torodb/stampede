@@ -26,7 +26,7 @@ import com.torodb.kvdocument.values.KVDocument;
 import com.torodb.kvdocument.values.KVValue;
 import com.torodb.kvdocument.values.heap.ListKVArray;
 
-public class R2DBackedTranslator<Result, BackendInternalFields extends InternalFields> implements R2DTranslator<Result> {
+public class R2DBackedTranslator<Result extends AutoCloseable, BackendInternalFields extends InternalFields> implements R2DTranslator<Result> {
 	
     private final R2DBackendTranslator<Result, BackendInternalFields> backendTranslator;
     

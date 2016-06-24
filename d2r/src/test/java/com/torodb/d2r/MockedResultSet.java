@@ -5,7 +5,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
-public class MockedResultSet {
+public class MockedResultSet implements AutoCloseable {
 
 	private Iterator<MockedRow> iterator;
 	private MockedRow current = null;
@@ -70,5 +70,9 @@ public class MockedResultSet {
 			return values.get(index);
 		}
 	}
+
+    @Override
+    public void close() throws Exception {
+    }
 	
 }

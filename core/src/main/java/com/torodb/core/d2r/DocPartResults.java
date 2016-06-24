@@ -24,7 +24,7 @@ import java.util.Iterator;
 
 import com.google.common.collect.ImmutableList;
 
-public class DocPartResults<Result> implements Iterable<DocPartResult<Result>> {
+public class DocPartResults<Result extends AutoCloseable> implements Iterable<DocPartResult<Result>>, AutoCloseable {
     private final ImmutableList<DocPartResult<Result>> docPartResults;
 
     public DocPartResults(ImmutableList<DocPartResult<Result>> docPartResults) {
@@ -35,5 +35,12 @@ public class DocPartResults<Result> implements Iterable<DocPartResult<Result>> {
     @Override
     public Iterator<DocPartResult<Result>> iterator() {
         return docPartResults.iterator();
+    }
+
+    @Override
+    public void close() throws Exception {
+        for (DocPartResult<Result> docPartResult : docPartResults) {
+            docPartResult.getResult().close();
+        }
     }
 }

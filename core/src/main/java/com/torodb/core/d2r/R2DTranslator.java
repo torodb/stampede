@@ -28,7 +28,7 @@ import com.torodb.core.document.ToroDocument;
 /**
  *
  */
-public interface R2DTranslator<Result> {
+public interface R2DTranslator<Result extends AutoCloseable> {
 
     /**
      * Translates from relational model to the document model the given doc part results.
