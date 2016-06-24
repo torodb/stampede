@@ -251,6 +251,7 @@ public class PostgreSQLWriteInterface extends AbstractWriteInterface {
         Reader reader = new StringBuilderReader(sb);
         
         copyManager.copyIn(copyStatement, reader);
+        sb.setLength(0);
     }
     
     private static class StringBuilderReader extends Reader {
