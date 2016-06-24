@@ -20,7 +20,10 @@
 
 package com.torodb.core.backend;
 
+import java.util.Collection;
 import java.util.Iterator;
+
+import javax.annotation.Nonnull;
 
 public interface DidCursor extends Iterator<Integer>, AutoCloseable {
     
@@ -38,12 +41,26 @@ public interface DidCursor extends Iterator<Integer>, AutoCloseable {
     }
 
     /**
-     * Gets the value of the current did of this {@code DidCursor}.
+     * Gets the did of the current position of this {@code DidCursor}.
      *
      * @return a did value
      */
     @Override
     Integer next();
+    
+    /**
+     * Gets up to maxSize dids from the current position of this {@code DidCursor}.
+     *
+     * @return a collection of did values
+     */
+    @Nonnull Collection<Integer> getNextBatch(int maxSize);
+    
+    /**
+     * Gets remaining dids from the current position of this {@code DidCursor}.
+     *
+     * @return a collection of did values
+     */
+    @Nonnull Collection<Integer> getRemaining();
     
     /**
      * Releases this {@code DidCursor} object's resources immediately.

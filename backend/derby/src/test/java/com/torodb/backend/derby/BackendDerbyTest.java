@@ -49,6 +49,7 @@ import com.torodb.backend.AbstractBackendTest;
 import com.torodb.backend.BackendDocumentTestHelper;
 import com.torodb.backend.BackendTestHelper;
 import com.torodb.backend.DefaultDidCursor;
+import com.torodb.backend.MockDidCursor;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.backend.meta.SnapshotUpdater;
 import com.torodb.core.d2r.CollectionData;
@@ -373,9 +374,10 @@ public class BackendDerbyTest extends AbstractBackendTest {
             MetaDatabase metaDatabase = mutableSnapshot.getMetaDatabaseByName(schema.databaseName);
             MetaCollection metaCollection = metaDatabase.getMetaCollectionByName(schema.collectionName);
             
+            
             DocPartResults<ResultSet> docPartResultSets = sqlInterface.getCollectionResultSets(
                     dsl, metaDatabase, metaCollection, 
-                    generatedDids);
+                    new MockDidCursor(generatedDids.iterator()), generatedDids.size());
             
             Collection<ToroDocument> readedDocuments = helper.readDocuments(metaDatabase, metaCollection, docPartResultSets);
             
@@ -411,8 +413,8 @@ public class BackendDerbyTest extends AbstractBackendTest {
             try (
                     DefaultDidCursor defaultDidCursor = new DefaultDidCursor(sqlInterface, sqlInterface.getAllCollectionDids(dsl, metaDatabase, metaDocPart));
                     DocPartResults<ResultSet> docPartResultSets = sqlInterface.getCollectionResultSets(
-                            dsl, metaDatabase, metaCollection, 
-                            StreamSupport.stream(((Iterable<Integer>) () -> defaultDidCursor).spliterator(), false).collect(Collectors.toList()));
+                            dsl, metaDatabase, metaCollection,
+                            defaultDidCursor,  generatedDids.size());
                     ) {
                 readedToroDocuments = helper.readDocuments(metaDatabase, metaCollection, docPartResultSets);
             }
@@ -461,8 +463,8 @@ public class BackendDerbyTest extends AbstractBackendTest {
                     DefaultDidCursor defaultDidCursor = new DefaultDidCursor(sqlInterface, sqlInterface.getCollectionDidsWithFieldEqualsTo(
                             dsl, metaDatabase, metaDocPart, metaField, new StringKVString("Blueberry")));
                     DocPartResults<ResultSet> docPartResultSets = sqlInterface.getCollectionResultSets(
-                            dsl, metaDatabase, metaCollection, 
-                            StreamSupport.stream(((Iterable<Integer>) () -> defaultDidCursor).spliterator(), false).collect(Collectors.toList()));
+                            dsl, metaDatabase, metaCollection,
+                            defaultDidCursor, generatedDids.size());
                     ) {
                 readedToroDocuments = helper.readDocuments(metaDatabase, metaCollection, docPartResultSets);
             }
@@ -507,7 +509,7 @@ public class BackendDerbyTest extends AbstractBackendTest {
                 
                 DocPartResults<ResultSet> docPartResultSets = sqlInterface.getCollectionResultSets(
                         dsl, metaDatabase, metaCollection, 
-                        generatedDids);
+                        new MockDidCursor(generatedDids.iterator()), generatedDids.size());
                 
                 Collection<ToroDocument> readedDocuments = helper.readDocuments(metaDatabase, metaCollection, docPartResultSets);
                 
@@ -525,7 +527,7 @@ public class BackendDerbyTest extends AbstractBackendTest {
             
             DocPartResults<ResultSet> docPartResultSets = sqlInterface.getCollectionResultSets(
                     dsl, metaDatabase, metaCollection, 
-                    generatedDids);
+                    new MockDidCursor(generatedDids.iterator()), generatedDids.size());
             
             Collection<ToroDocument> readedDocuments = helper.readDocuments(metaDatabase, metaCollection, docPartResultSets);
             System.out.println("Written :" + documents);

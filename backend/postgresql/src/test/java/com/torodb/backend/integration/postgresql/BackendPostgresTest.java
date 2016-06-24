@@ -47,6 +47,7 @@ import com.google.inject.Injector;
 import com.torodb.backend.AbstractBackendTest;
 import com.torodb.backend.BackendDocumentTestHelper;
 import com.torodb.backend.BackendTestHelper;
+import com.torodb.backend.MockDidCursor;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.backend.meta.SnapshotUpdater;
 import com.torodb.core.d2r.CollectionData;
@@ -369,7 +370,7 @@ public class BackendPostgresTest extends AbstractBackendTest {
             
             DocPartResults<ResultSet> docPartResultSets = sqlInterface.getCollectionResultSets(
                     dsl, metaDatabase, metaCollection, 
-                    generatedDids);
+                    new MockDidCursor(generatedDids.iterator()), generatedDids.size());
             
             Collection<ToroDocument> readedDocuments = helper.readDocuments(metaDatabase, metaCollection, docPartResultSets);
             
@@ -406,7 +407,7 @@ public class BackendPostgresTest extends AbstractBackendTest {
                 
                 DocPartResults<ResultSet> docPartResultSets = sqlInterface.getCollectionResultSets(
                         dsl, metaDatabase, metaCollection, 
-                        generatedDids);
+                        new MockDidCursor(generatedDids.iterator()), generatedDids.size());
                 
                 Collection<ToroDocument> readedDocuments = helper.readDocuments(metaDatabase, metaCollection, docPartResultSets);
                 
@@ -424,7 +425,7 @@ public class BackendPostgresTest extends AbstractBackendTest {
             
             DocPartResults<ResultSet> docPartResultSets = sqlInterface.getCollectionResultSets(
                     dsl, metaDatabase, metaCollection, 
-                    generatedDids);
+                    new MockDidCursor(generatedDids.iterator()), generatedDids.size());
             
             Collection<ToroDocument> readedDocuments = helper.readDocuments(metaDatabase, metaCollection, docPartResultSets);
             System.out.println("Written :" + documents);

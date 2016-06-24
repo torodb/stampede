@@ -37,6 +37,7 @@ import com.google.common.collect.ImmutableList;
 import com.torodb.backend.ErrorHandler.Context;
 import com.torodb.backend.tables.MetaDocPartTable.DocPartTableFields;
 import com.torodb.core.TableRef;
+import com.torodb.core.backend.DidCursor;
 import com.torodb.core.d2r.DocPartResult;
 import com.torodb.core.d2r.DocPartResults;
 import com.torodb.core.exceptions.SystemException;
@@ -98,8 +99,8 @@ public abstract class AbstractReadInterface implements ReadInterface {
     @Nonnull
     @Override
     public DocPartResults<ResultSet> getCollectionResultSets(@Nonnull DSLContext dsl, @Nonnull MetaDatabase metaDatabase, @Nonnull MetaCollection metaCollection, 
-            @Nonnull Collection<Integer> dids) throws SQLException {
-        Preconditions.checkArgument(dids.size() > 0, "At least 1 did must be specified");
+            @Nonnull DidCursor didCursor, int maxSize) throws SQLException {
+        Collection<Integer> dids = didCursor.getNextBatch(maxSize);
         
         ImmutableList.Builder<DocPartResult<ResultSet>> docPartResultSetsBuilder = ImmutableList.builder();
         Connection connection = dsl.configuration().connectionProvider().acquire();

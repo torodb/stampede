@@ -20,69 +20,29 @@
 
 package com.torodb.backend;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 
-import javax.annotation.Nonnull;
-
-import com.torodb.backend.ErrorHandler.Context;
 import com.torodb.core.backend.DidCursor;
-import com.torodb.core.exceptions.SystemException;
 
-public class DefaultDidCursor implements DidCursor {
-    public final SqlInterface sqlInterface;
-    public final ResultSet resultSet;
-    public boolean movedNext = false;
-    public boolean hasNext = false;
+public class MockDidCursor implements DidCursor {
+    private final Iterator<Integer> didsIterator;
 
-    public DefaultDidCursor(@Nonnull SqlInterface sqlInterface, @Nonnull ResultSet resultSet) {
+    public MockDidCursor(Iterator<Integer> didsIterator) {
         super();
-        this.sqlInterface = sqlInterface;
-        this.resultSet = resultSet;
+        this.didsIterator = didsIterator;
     }
 
     @Override
     public boolean hasNext() {
-        try {
-            if (!movedNext) {
-                hasNext = resultSet.next();
-                movedNext = true;
-            }
-            
-            return hasNext;
-        } catch(SQLException ex) {
-            sqlInterface.handleRollbackException(Context.fetch, ex);
-            
-            throw new SystemException(ex);
-        }
+        return didsIterator.hasNext();
     }
 
     @Override
     public Integer next() {
-        try {
-            hasNext();
-            movedNext = false;
-            
-            return resultSet.getInt(1);
-        } catch(SQLException ex) {
-            sqlInterface.handleRollbackException(Context.fetch, ex);
-            
-            throw new SystemException(ex);
-        }
-    }
-
-    @Override
-    public void close() {
-        try {
-            resultSet.close();
-        } catch(SQLException ex) {
-            sqlInterface.handleRollbackException(Context.fetch, ex);
-            
-            throw new SystemException(ex);
-        }
+        return didsIterator.next();
     }
 
     @Override
@@ -105,5 +65,9 @@ public class DefaultDidCursor implements DidCursor {
         }
         
         return dids;
+    }
+
+    @Override
+    public void close() {
     }
 }

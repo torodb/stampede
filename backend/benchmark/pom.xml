@@ -40,6 +40,12 @@
         </dependency>
         <dependency>
             <groupId>com.torodb</groupId>
+            <artifactId>backend-common</artifactId>
+            <type>test-jar</type>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.torodb</groupId>
             <artifactId>backend-derby</artifactId>
             <version>${project.version}</version>
         </dependency>

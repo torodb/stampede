@@ -81,19 +81,14 @@ public class DefaultCursor implements BackendCursor {
     public Collection<ToroDocument> readDocuments(int maxResults) {
         Preconditions.checkArgument(maxResults > 0, "max results must be at least 1, but "+maxResults+" was recived");
         
-        List<Integer> requiredDocs = new ArrayList<>();
-        for (int i = 0; i < maxResults && didCursor.hasNext(); i++) {
-            requiredDocs.add(didCursor.next());
-        }
-        
-        if (requiredDocs.isEmpty()) {
+        if (!didCursor.hasNext()) {
             return Collections.emptyList();
         }
         
         DocPartResults<ResultSet> docPartResults;
         try {
             docPartResults = sqlInterface.getCollectionResultSets(
-                    dsl, metaDatabase, metaCollection, requiredDocs);
+                    dsl, metaDatabase, metaCollection, didCursor, maxResults);
         } catch(SQLException ex) {
             sqlInterface.handleRollbackException(Context.fetch, ex);
             

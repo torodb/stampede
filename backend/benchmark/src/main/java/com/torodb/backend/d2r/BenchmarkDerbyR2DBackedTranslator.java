@@ -32,6 +32,7 @@ import org.openjdk.jmh.infra.Blackhole;
 
 import com.google.inject.Injector;
 import com.torodb.backend.DbBackendService;
+import com.torodb.backend.MockDidCursor;
 import com.torodb.backend.SqlInterface;
 import com.torodb.backend.TableRefComparator;
 import com.torodb.backend.derby.Derby;
@@ -103,7 +104,8 @@ public class BenchmarkDerbyR2DBackedTranslator {
 	        CollectionData collectionData = readDataFromDocuments(this, null);
 	        List<Integer> writtenDocs = writeCollectionData(this, null, collectionData);
 	        docPartResultSets = sqlInterface.getCollectionResultSets(
-	                dsl, metaDatabase, metaCollection, writtenDocs);
+	                dsl, metaDatabase, metaCollection, 
+	                new MockDidCursor(writtenDocs.iterator()), writtenDocs.size());
 	        r2dTranslator = new R2DBackedTranslator(new R2DBackendTranslatorImpl(sqlInterface, metaDatabase, metaCollection));
 		}
 	}

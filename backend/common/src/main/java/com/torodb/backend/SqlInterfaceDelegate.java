@@ -25,6 +25,7 @@ import com.torodb.backend.index.NamedDbIndex;
 import com.torodb.backend.tables.*;
 import com.torodb.backend.tables.records.*;
 import com.torodb.core.TableRef;
+import com.torodb.core.backend.DidCursor;
 import com.torodb.core.backend.IdentifierConstraints;
 import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.d2r.DocPartResults;
@@ -193,8 +194,8 @@ public class SqlInterfaceDelegate implements SqlInterface {
         return readInterface.getAllCollectionDids(dsl, metaDatabase, metaDocPart);
     }
     public DocPartResults<ResultSet> getCollectionResultSets(DSLContext dsl, MetaDatabase metaDatabase,
-            MetaCollection metaCollection, Collection<Integer> requestedDocs) throws SQLException {
-        return readInterface.getCollectionResultSets(dsl, metaDatabase, metaCollection, requestedDocs);
+            MetaCollection metaCollection, DidCursor didCursor, int maxSize) throws SQLException {
+        return readInterface.getCollectionResultSets(dsl, metaDatabase, metaCollection, didCursor, maxSize);
     }
     public int getLastRowIdUsed(DSLContext dsl, MetaDatabase metaDatabase, MetaCollection metaCollection,
             MetaDocPart metaDocPart) {
