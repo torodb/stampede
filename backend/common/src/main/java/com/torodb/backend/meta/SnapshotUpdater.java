@@ -1,6 +1,7 @@
 
 package com.torodb.backend.meta;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
@@ -15,6 +16,7 @@ import org.jooq.Result;
 import org.jooq.Table;
 
 import com.torodb.backend.ErrorHandler.Context;
+import com.torodb.backend.SqlHelper;
 import com.torodb.backend.SqlInterface;
 import com.torodb.backend.exceptions.InvalidDatabaseException;
 import com.torodb.backend.exceptions.InvalidDatabaseSchemaException;
@@ -57,6 +59,8 @@ public class SnapshotUpdater {
     public static void updateSnapshot(
             MetainfoRepository metainfoRepository,
             SqlInterface sqlInterface,
+            SqlHelper sqlHelper,
+            SchemaUpdater schemaUpdater,
             TableRefFactory tableRefFactory)
     throws InvalidDatabaseException {
         MutableMetaSnapshot mutableSnapshot;
@@ -73,12 +77,15 @@ public class SnapshotUpdater {
             DSLContext dsl = sqlInterface.createDSLContext(connection);
             Meta jooqMeta = dsl.meta();
 
-            TorodbSchema.TORODB.checkOrCreate(dsl, jooqMeta, sqlInterface);
+            schemaUpdater.checkOrCreate(dsl, jooqMeta, sqlInterface, sqlHelper);
 
             Updater updater = new Updater(dsl, jooqMeta, tableRefFactory, sqlInterface);
             updater.loadMetaSnapshot(mutableSnapshot);
 
             connection.commit();
+        } catch(IOException ioException) {
+
+            throw new InvalidDatabaseException(ioException);
         } catch(SQLException sqlException) {
             sqlInterface.handleRollbackException(Context.unknown, sqlException);
 

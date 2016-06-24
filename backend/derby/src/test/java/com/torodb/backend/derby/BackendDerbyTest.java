@@ -90,7 +90,7 @@ public class BackendDerbyTest extends AbstractBackendTest {
 
     private ImmutableMetaSnapshot buildMetaSnapshot() {
         MvccMetainfoRepository metainfoRepository = new MvccMetainfoRepository();
-        SnapshotUpdater.updateSnapshot(metainfoRepository, sqlInterface, tableRefFactory);
+        SnapshotUpdater.updateSnapshot(metainfoRepository, sqlInterface, sqlHelper, schemaUpdater, tableRefFactory);
 
         try (SnapshotStage stage = metainfoRepository.startSnapshotStage()) {
             return stage.createImmutableSnapshot();

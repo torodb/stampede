@@ -18,7 +18,7 @@
  *     
  */
 
-package com.torodb.backend.postgresql;
+package com.torodb.backend.integration.postgresql;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -90,7 +90,7 @@ public class BackendPostgresTest extends AbstractBackendTest {
     
     private ImmutableMetaSnapshot buildMetaSnapshot() {
         MvccMetainfoRepository metainfoRepository = new MvccMetainfoRepository();
-        SnapshotUpdater.updateSnapshot(metainfoRepository, sqlInterface, tableRefFactory);
+        SnapshotUpdater.updateSnapshot(metainfoRepository, sqlInterface, sqlHelper, schemaUpdater, tableRefFactory);
 
         try (SnapshotStage stage = metainfoRepository.startSnapshotStage()) {
             return stage.createImmutableSnapshot();

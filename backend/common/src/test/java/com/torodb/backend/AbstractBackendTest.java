@@ -25,6 +25,7 @@ import java.sql.SQLException;
 import org.junit.Before;
 
 import com.google.inject.Injector;
+import com.torodb.backend.meta.SchemaUpdater;
 import com.torodb.core.TableRefFactory;
 import com.torodb.core.impl.TableRefFactoryImpl;
 
@@ -33,7 +34,9 @@ public abstract class AbstractBackendTest {
     protected static final TableRefFactory tableRefFactory = new TableRefFactoryImpl();
     
     protected TestSchema schema;
+    protected SchemaUpdater schemaUpdater;
     protected SqlInterface sqlInterface;
+    protected SqlHelper sqlHelper;
     
     @Before
     public void setUp() throws Exception {
@@ -43,6 +46,8 @@ public abstract class AbstractBackendTest {
         dbBackend.awaitRunning();
         cleanDatabase(injector);
         sqlInterface = injector.getInstance(SqlInterface.class);
+        sqlHelper = injector.getInstance(SqlHelper.class);
+        schemaUpdater = injector.getInstance(SchemaUpdater.class);
         schema = new TestSchema(tableRefFactory, sqlInterface);
     }
 

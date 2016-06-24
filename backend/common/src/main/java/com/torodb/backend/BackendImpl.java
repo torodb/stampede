@@ -1,16 +1,19 @@
 
 package com.torodb.backend;
 
+import javax.inject.Inject;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.torodb.backend.meta.SchemaUpdater;
 import com.torodb.backend.meta.SnapshotUpdater;
 import com.torodb.backend.rid.MaxRowIdFactory;
 import com.torodb.core.TableRefFactory;
 import com.torodb.core.backend.Backend;
 import com.torodb.core.backend.BackendConnection;
 import com.torodb.core.transaction.metainf.MetainfoRepository;
-import javax.inject.Inject;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  *
@@ -21,14 +24,19 @@ public class BackendImpl extends AbstractIdleService implements Backend {
 
     private final DbBackendService dbBackendService;
     private final SqlInterface sqlInterface;
+    private final SqlHelper sqlHelper;
+    private final SchemaUpdater schemaUpdater;
     private final MetainfoRepository metainfoRepository;
     private final TableRefFactory tableRefFactory;
     private final MaxRowIdFactory maxRowIdFactory;
 
     @Inject
-    public BackendImpl(DbBackendService dbBackendService, SqlInterface sqlInterface, MetainfoRepository metainfoRepository, TableRefFactory tableRefFactory, MaxRowIdFactory maxRowIdFactory) {
+    public BackendImpl(DbBackendService dbBackendService, SqlInterface sqlInterface, SqlHelper sqlHelper, SchemaUpdater schemaUpdater, 
+            MetainfoRepository metainfoRepository, TableRefFactory tableRefFactory, MaxRowIdFactory maxRowIdFactory) {
         this.dbBackendService = dbBackendService;
         this.sqlInterface = sqlInterface;
+        this.sqlHelper = sqlHelper;
+        this.schemaUpdater = schemaUpdater;
         this.metainfoRepository = metainfoRepository;
         this.tableRefFactory = tableRefFactory;
         this.maxRowIdFactory = maxRowIdFactory;
@@ -45,7 +53,7 @@ public class BackendImpl extends AbstractIdleService implements Backend {
         dbBackendService.startAsync();
         dbBackendService.awaitRunning();
         LOGGER.trace("Loading backend metadata...");
-        SnapshotUpdater.updateSnapshot(metainfoRepository, sqlInterface, tableRefFactory);
+        SnapshotUpdater.updateSnapshot(metainfoRepository, sqlInterface, sqlHelper, schemaUpdater, tableRefFactory);
         LOGGER.trace("Reading last used rids...");
         maxRowIdFactory.startAsync();
         maxRowIdFactory.awaitRunning();

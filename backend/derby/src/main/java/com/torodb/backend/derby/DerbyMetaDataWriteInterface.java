@@ -27,7 +27,7 @@ import org.jooq.DSLContext;
 import org.jooq.Record1;
 import org.jooq.conf.ParamType;
 
-import com.torodb.backend.AbstractWriteMetaDataInterface;
+import com.torodb.backend.AbstractMetaDataWriteInterface;
 import com.torodb.backend.SqlHelper;
 import com.torodb.backend.converters.TableRefConverter;
 import com.torodb.backend.derby.tables.DerbyMetaCollectionTable;
@@ -47,7 +47,7 @@ import com.torodb.core.transaction.metainf.FieldType;
  *
  */
 @Singleton
-public class DerbyMetaDataWriteInterface extends AbstractWriteMetaDataInterface {
+public class DerbyMetaDataWriteInterface extends AbstractMetaDataWriteInterface {
 
     private final DerbyMetaDatabaseTable metaDatabaseTable;
     private final DerbyMetaCollectionTable metaCollectionTable;

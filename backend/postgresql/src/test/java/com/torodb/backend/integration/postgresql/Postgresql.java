@@ -1,4 +1,4 @@
-package com.torodb.backend.postgresql;
+package com.torodb.backend.integration.postgresql;
 
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
