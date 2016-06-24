@@ -20,35 +20,34 @@
 
 package com.torodb.core.backend;
 
-public interface DidCursor {
+import java.util.Iterator;
+
+public interface DidCursor extends Iterator<Integer>, AutoCloseable {
     
     /**
-     * Moves the cursor forward one did from its current position.
-     * A <code>DidCursor</code> cursor is initially positioned
-     * before the first did; the first call to the method
-     * <code>next</code> makes the first did the current did; the
-     * second call makes the second did the current did, and so on.
-     * <p>
-     * When a call to the <code>next</code> method returns <code>false</code>,
-     * the cursor is positioned after the last did. Any
-     * invocation of a <code>DidCursor</code> method which requires a
-     * current did will result in a <code>IllegalStateException</code> being thrown.
+     * Returns {@code true} if the iteration has more elements.
+     * (In other words, returns {@code true} if {@link #next} would
+     * return an element rather than throwing an exception.)
      *
-     * @return <code>true</code> if the new current did is valid;
-     * <code>false</code> if there are no more dids
+     * @return {@code true} if the iteration has more elements
      */
-    boolean next();
-    
+    @Override
+    default boolean hasNext() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
     /**
-     * <p>Gets the value of the current did
-     * of this <code>DidCursor</code>.
+     * Gets the value of the current did of this {@code DidCursor}.
      *
      * @return a did value
      */
-    int get();
+    @Override
+    Integer next();
     
     /**
-     * Releases this <code>DidCursor</code> object's resources immediately.
+     * Releases this {@code DidCursor} object's resources immediately.
      */
+    @Override
     void close();
 }

@@ -82,8 +82,8 @@ public class DefaultCursor implements BackendCursor {
         Preconditions.checkArgument(maxResults > 0, "max results must be at least 1, but "+maxResults+" was recived");
         
         List<Integer> requiredDocs = new ArrayList<>();
-        for (int i = 0; i < maxResults && didCursor.next(); i++) {
-            requiredDocs.add(didCursor.get());
+        for (int i = 0; i < maxResults && didCursor.hasNext(); i++) {
+            requiredDocs.add(didCursor.next());
         }
         
         if (requiredDocs.isEmpty()) {
