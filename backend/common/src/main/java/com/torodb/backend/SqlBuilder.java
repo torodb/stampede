@@ -34,6 +34,11 @@ public class SqlBuilder {
 		return this;
 	}
 	
+	public SqlBuilder append(char c) {
+		sb.append(c);
+		return this;
+	}
+	
 	public String toString(){
 		return sb.toString();
 	}
