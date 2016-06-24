@@ -219,15 +219,13 @@ public class PostgreSQLWriteInterface extends AbstractWriteInterface {
             DocPartRow docPartRow,
             Collection<InternalField<?>> internalFields) {
         for (InternalField<?> internalField : internalFields) {
-            sb
-                .append(internalField.<String>apply(docPartRow, internalValue -> 
-                    { 
-                        if (internalValue == null) { 
-                            return "\\N"; 
-                        } else {
-                            return internalValue.toString();
-                        }
-                    })).append("\t");
+			Object internalValue = internalField.getValue(docPartRow);
+			if (internalValue == null) {
+				sb.append("\\N");
+			} else {
+				sb.append(internalValue.toString());
+			}        	
+        	sb.append("\t");
         }
         for (KVValue<?> value : docPartRow.getScalarValues()) {
             addValueToCopy(sb, value);
