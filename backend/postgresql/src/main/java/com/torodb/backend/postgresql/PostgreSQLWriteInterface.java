@@ -148,12 +148,12 @@ public class PostgreSQLWriteInterface extends AbstractWriteInterface {
             String schemaName,
             DocPartData docPartData) throws SQLException, IOException {
 
-        final int maxBatchSize = 1000;
+        final int maxBatchSize = 1024;
         final CopyManager copyManager = connection.getCopyAPI();
         final MetaDocPart metaDocPart = docPartData.getMetaDocPart();
         Collection<InternalField<?>> internalFields = postgreSQLMetaDataReadInterface
                 .getDocPartTableInternalFields(metaDocPart);
-        final StringBuilder sb = new StringBuilder(2048);
+        final StringBuilder sb = new StringBuilder(65536);
         final String copyStatement = getCopyInsertDocPartDataStatement(
                 schemaName, docPartData, metaDocPart, internalFields);
         
@@ -168,15 +168,7 @@ public class PostgreSQLWriteInterface extends AbstractWriteInterface {
 
             if (docCounter % maxBatchSize == 0 || !docPartRowIterator.hasNext()) {
                 executeCopy(copyManager, copyStatement, sb);
-                assert sb.length() == 0;
-            }
-        }
-        if (sb.length() > 0) {
-            assert docCounter % maxBatchSize != 0;
-            executeCopy(copyManager, copyStatement, sb);
-            
-            if (docPartRowIterator.hasNext()) {
-                sb.delete(0, sb.length());
+                sb.setLength(0);
             }
         }
     }
@@ -251,7 +243,6 @@ public class PostgreSQLWriteInterface extends AbstractWriteInterface {
         Reader reader = new StringBuilderReader(sb);
         
         copyManager.copyIn(copyStatement, reader);
-        sb.setLength(0);
     }
     
     private static class StringBuilderReader extends Reader {
