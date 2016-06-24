@@ -8,8 +8,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import com.torodb.common.util.HexUtils;
+import com.torodb.kvdocument.values.KVArray;
 import com.torodb.kvdocument.values.KVBoolean;
 import com.torodb.kvdocument.values.KVDocument;
 import com.torodb.kvdocument.values.KVDouble;
@@ -27,22 +29,28 @@ import com.torodb.kvdocument.values.heap.StringKVString;
 
 public class MapToKVValueConverter {
 
-	public KVDocument convert(Map<String, Object> source) {
-		return (KVDocument) convertMap(source);
-	}
+    public KVDocument convert(Map<String, Object> source) {
+        return (KVDocument) convertMap(source);
+    }
 
-	private KVValue<?> convertMap(Map<String, Object> source) {
-		if (isSpecialObject(source)) {
-			return buildSpecialObject(source);
-		}
-		LinkedHashMap<String, KVValue<?>> docHM = new LinkedHashMap<>();
-		for (String key : source.keySet()) {
-			String interned = key.intern();
-			Object value = source.get(interned);
-			docHM.put(interned, convertValue(value));
-		}
-		return new MapKVDocument(docHM);
-	}
+    public List<KVDocument> convert(List<Map<String, Object>> source) {
+        KVArray array = (KVArray) convertList(source);
+        return StreamSupport.stream(array.spliterator(), false)
+                .map(e -> (KVDocument) e).collect(Collectors.toList());
+    }
+
+    private KVValue<?> convertMap(Map<String, Object> source) {
+        if (isSpecialObject(source)) {
+            return buildSpecialObject(source);
+        }
+        LinkedHashMap<String, KVValue<?>> docHM = new LinkedHashMap<>();
+        for (String key : source.keySet()) {
+            String interned = key.intern();
+            Object value = source.get(interned);
+            docHM.put(interned, convertValue(value));
+        }
+        return new MapKVDocument(docHM);
+    }
 
 	@SuppressWarnings("unchecked")
     private KVValue<?> convertValue(Object value) {
