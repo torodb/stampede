@@ -123,7 +123,6 @@ public class Postgresql {
                 String schemaName = schemas.getString("TABLE_SCHEM");
                 if (identifierConstraints.isAllowedSchemaIdentifier(schemaName) || schemaName.equals(TorodbSchema.TORODB_SCHEMA)) {
                     try (PreparedStatement preparedStatement = connection.prepareStatement("DROP SCHEMA \"" + schemaName + "\" CASCADE ")) {
-                    	System.out.println(schemaName);
                         preparedStatement.executeUpdate();
                     }
                 }
