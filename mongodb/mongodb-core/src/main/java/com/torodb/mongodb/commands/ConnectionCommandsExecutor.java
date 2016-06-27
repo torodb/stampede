@@ -65,6 +65,7 @@ import com.google.common.net.HostAndPort;
 import com.torodb.core.annotations.DoNotChange;
 import com.torodb.mongodb.commands.impl.NotImplementedCommandImplementation;
 import com.torodb.mongodb.commands.impl.authentication.GetNonceImplementation;
+import com.torodb.mongodb.commands.impl.diagnostic.BuildInfoImplementation;
 import com.torodb.mongodb.commands.impl.diagnostic.GetLogImplementation;
 import com.torodb.mongodb.commands.impl.diagnostic.PingImplementation;
 import com.torodb.mongodb.commands.impl.replication.IsMasterImplementation;
@@ -217,11 +218,13 @@ public class ConnectionCommandsExecutor implements CommandsExecutor<MongodConnec
 
         private final PingImplementation ping;
         private final GetLogImplementation getLog;
+        private final BuildInfoImplementation buildInfo;
 
         @Inject
-        public MyDiagnosticCommandsImplementationBuilder(PingImplementation ping, GetLogImplementation getLog) {
+        public MyDiagnosticCommandsImplementationBuilder(PingImplementation ping, GetLogImplementation getLog, BuildInfoImplementation buildInfo) {
             this.ping = ping;
             this.getLog = getLog;
+            this.buildInfo = buildInfo;
         }
 
         @Override
@@ -236,7 +239,7 @@ public class ConnectionCommandsExecutor implements CommandsExecutor<MongodConnec
 
         @Override
         public CommandImplementation<Empty, BuildInfoResult, MongodConnection> getBuildInfoImplementation() {
-            return NotImplementedCommandImplementation.build();
+            return buildInfo;
         }
 
         @Override
