@@ -37,6 +37,8 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jooq.Converter;
 import org.jooq.DSLContext;
 import org.jooq.Field;
@@ -74,7 +76,9 @@ import com.torodb.kvdocument.values.heap.ListKVArray;
 import com.torodb.metainfo.cache.mvcc.MvccMetainfoRepository;
 
 public class BackendPostgresTest extends AbstractBackendTest {
-	
+
+    private static final Logger LOGGER = LogManager.getLogger(BackendPostgresTest.class);
+    
     @Override
     protected Injector createInjector() {
         return Postgresql.createInjector();
@@ -375,8 +379,8 @@ public class BackendPostgresTest extends AbstractBackendTest {
             Collection<ToroDocument> readedDocuments = helper.readDocuments(metaDatabase, metaCollection, docPartResultSets);
             
             KVDocument readedDocument = readedDocuments.iterator().next().getRoot();
-            System.out.println(document);
-            System.out.println(readedDocument);
+            LOGGER.debug(document);
+            LOGGER.debug(readedDocument);
             assertEquals(document, readedDocument);
             connection.commit();
         } 
@@ -412,8 +416,8 @@ public class BackendPostgresTest extends AbstractBackendTest {
                 Collection<ToroDocument> readedDocuments = helper.readDocuments(metaDatabase, metaCollection, docPartResultSets);
                 
                 KVDocument readedDocument = readedDocuments.iterator().next().getRoot();
-                System.out.println("Written :" + document);
-                System.out.println("Readed: " + readedDocument);
+                LOGGER.debug("Written :" + document);
+                LOGGER.debug("Readed: " + readedDocument);
                 assertEquals(document, readedDocument);
             }
             CollectionData collectionData = helper.readDataFromDocuments(schema.databaseName, schema.collectionName, documents, mutableSnapshot);
@@ -428,8 +432,8 @@ public class BackendPostgresTest extends AbstractBackendTest {
                     new MockDidCursor(generatedDids.iterator()), generatedDids.size());
             
             Collection<ToroDocument> readedDocuments = helper.readDocuments(metaDatabase, metaCollection, docPartResultSets);
-            System.out.println("Written :" + documents);
-            System.out.println("Readed: " + readedDocuments);
+            LOGGER.debug("Written :" + documents);
+            LOGGER.debug("Readed: " + readedDocuments);
             assertEquals(documents.size(), readedDocuments.size());
             connection.commit();
         }

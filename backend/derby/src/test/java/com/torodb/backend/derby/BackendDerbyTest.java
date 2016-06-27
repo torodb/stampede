@@ -38,6 +38,8 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jooq.Converter;
 import org.jooq.DSLContext;
 import org.jooq.Field;
@@ -77,6 +79,8 @@ import com.torodb.kvdocument.values.heap.StringKVString;
 import com.torodb.metainfo.cache.mvcc.MvccMetainfoRepository;
 
 public class BackendDerbyTest extends AbstractBackendTest {
+    
+    private final Logger LOGGER = LogManager.getLogger(BackendDerbyTest.class);
 
     @Override
     protected Injector createInjector() {
@@ -382,8 +386,8 @@ public class BackendDerbyTest extends AbstractBackendTest {
             Collection<ToroDocument> readedDocuments = helper.readDocuments(metaDatabase, metaCollection, docPartResultSets);
             
             KVDocument readedDocument = readedDocuments.iterator().next().getRoot();
-            System.out.println(document);
-            System.out.println(readedDocument);
+            LOGGER.debug(document);
+            LOGGER.debug(readedDocument);
             assertEquals(document, readedDocument);
             connection.commit();
         } 
@@ -422,13 +426,13 @@ public class BackendDerbyTest extends AbstractBackendTest {
             List<Integer> readedDids = readedToroDocuments.stream()
                     .map(toroDocument -> toroDocument.getId())
                     .collect(Collectors.toList()); 
-            System.out.println(generatedDids);
-            System.out.println(readedDids);
+            LOGGER.debug(generatedDids);
+            LOGGER.debug(readedDids);
             Assert.assertTrue(readedDids.containsAll(generatedDids));
             Assert.assertTrue(generatedDids.containsAll(readedDids));
             List<KVDocument> readedDocuments = readedToroDocuments.stream().map(readedToroDocument -> readedToroDocument.getRoot()).collect(Collectors.toList());
-            System.out.println(documents);
-            System.out.println(readedDocuments);
+            LOGGER.debug(documents);
+            LOGGER.debug(readedDocuments);
             Assert.assertTrue(readedDocuments.containsAll(documents));
             Assert.assertTrue(documents.containsAll(readedDocuments));
             connection.commit();
@@ -473,12 +477,12 @@ public class BackendDerbyTest extends AbstractBackendTest {
             List<Integer> readedDids = readedToroDocuments.stream()
                     .map(toroDocument -> toroDocument.getId())
                     .collect(Collectors.toList()); 
-            System.out.println(generatedDids);
-            System.out.println(readedDids);
+            LOGGER.debug(generatedDids);
+            LOGGER.debug(readedDids);
             Assert.assertTrue(generatedDids.containsAll(readedDids));
             List<KVDocument> readedDocuments = readedToroDocuments.stream().map(readedToroDocument -> readedToroDocument.getRoot()).collect(Collectors.toList());
-            System.out.println(documents);
-            System.out.println(readedDocuments);
+            LOGGER.debug(documents);
+            LOGGER.debug(readedDocuments);
             Assert.assertTrue(documents.containsAll(readedDocuments));
             connection.commit();
         } 
@@ -514,8 +518,8 @@ public class BackendDerbyTest extends AbstractBackendTest {
                 Collection<ToroDocument> readedDocuments = helper.readDocuments(metaDatabase, metaCollection, docPartResultSets);
                 
                 KVDocument readedDocument = readedDocuments.iterator().next().getRoot();
-                System.out.println("Written :" + document);
-                System.out.println("Readed: " + readedDocument);
+                LOGGER.debug("Written :" + document);
+                LOGGER.debug("Readed: " + readedDocument);
                 assertEquals(document, readedDocument);
             }
             CollectionData collectionData = helper.readDataFromDocuments(schema.databaseName, schema.collectionName, documents, mutableSnapshot);
@@ -530,8 +534,8 @@ public class BackendDerbyTest extends AbstractBackendTest {
                     new MockDidCursor(generatedDids.iterator()), generatedDids.size());
             
             Collection<ToroDocument> readedDocuments = helper.readDocuments(metaDatabase, metaCollection, docPartResultSets);
-            System.out.println("Written :" + documents);
-            System.out.println("Readed: " + readedDocuments);
+            LOGGER.debug("Written :" + documents);
+            LOGGER.debug("Readed: " + readedDocuments);
             assertEquals(documents.size(), readedDocuments.size());
             connection.commit();
         }
