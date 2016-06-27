@@ -111,13 +111,10 @@ public class SqlHelper {
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public void setPreparedStatementNullableValue(PreparedStatement preparedStatement, int parameterIndex,
             FieldType fieldType, KVValue<?> value) throws SQLException {
-        DataTypeForKV dataType = dataTypeProvider
-                .getDataType(fieldType);
-        KVValueConverter valueConverter = dataType
-                .getKVValueConverter();
-        SqlBinding sqlBinding = valueConverter
-                .getSqlBinding();
+    	DataTypeForKV dataType = dataTypeProvider.getDataType(fieldType);
         if (value != null) {
+        	KVValueConverter valueConverter = dataType.getKVValueConverter();
+        	SqlBinding sqlBinding = valueConverter.getSqlBinding();
             sqlBinding.set(preparedStatement, parameterIndex, valueConverter.to(value));
         } else {
             preparedStatement.setNull(parameterIndex, dataType.getSQLType());
