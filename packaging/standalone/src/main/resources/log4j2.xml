@@ -28,5 +28,8 @@
         <Logger name="com.torodb" level="INFO" additivity="false">
             <AppenderRef ref="ASYNC"/>
         </Logger>
+        <Logger name="com.eightkdata" level="INFO" additivity="false">
+            <AppenderRef ref="ASYNC"/>
+        </Logger>
     </Loggers>
 </Configuration>
