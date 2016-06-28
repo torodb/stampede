@@ -32,6 +32,12 @@ public class DerbyErrorHandler extends AbstractErrorHandlerInterface {
     
     @Inject
     public DerbyErrorHandler() {
-        super("40001", "40P01");
+        super(
+                "40001", 
+                "40P01",
+                "X0Y68", // Schema '?' already exists.
+                "X0Y32"  // Table/View '?' already exists in Schema '?'.
+                         // Column '?' already exists in Table/View '"?"."?"'.
+                );
     }
 }
