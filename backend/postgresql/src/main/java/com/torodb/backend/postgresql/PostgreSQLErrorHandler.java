@@ -27,6 +27,11 @@ import com.torodb.backend.AbstractErrorHandlerInterface;
  */
 public class PostgreSQLErrorHandler extends AbstractErrorHandlerInterface {
     public PostgreSQLErrorHandler() {
-        super("40001", "40P01");
+        super(
+                "40001", 
+                "40P01",
+                "42P07", // relation "?" already exists
+                "42701"  // column "?" of relation "?" already exists
+                );
     }
 }
