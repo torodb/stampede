@@ -82,8 +82,8 @@ public class Main {
 			System.exit(0);
 		}
 		
-		if (config.getGeneric().getLogbackFile() != null) {
-			Log4jUtils.reconfigure(config.getGeneric().getLogbackFile());
+		if (config.getGeneric().getLog4j2File() != null) {
+			Log4jUtils.reconfigure(config.getGeneric().getLog4j2File());
 		} else {
 			Log4jUtils.setRootLevel(config.getGeneric().getLogLevel());
 			

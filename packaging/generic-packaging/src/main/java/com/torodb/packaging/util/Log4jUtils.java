@@ -20,19 +20,18 @@
 
 package com.torodb.packaging.util;
 
-import java.io.FileInputStream;
+import java.io.File;
 import java.util.Map;
 
 import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.LogEvent;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.appender.AbstractAppender;
-import org.apache.logging.log4j.core.config.ConfigurationSource;
-import org.apache.logging.log4j.core.config.xml.XmlConfiguration;
 import org.apache.logging.log4j.core.layout.PatternLayout;
 
-import com.torodb.packaging.config.model.generic.LogLevel;
 import com.torodb.core.exceptions.SystemException;
+import com.torodb.packaging.config.model.generic.LogLevel;
 
 public class Log4jUtils {
 
@@ -51,16 +50,8 @@ public class Log4jUtils {
 
     public static void reconfigure(String configurationFile) {
         try {
-            org.apache.logging.log4j.Logger logger = org.apache.logging.log4j.LogManager
-                    .getRootLogger();
-            org.apache.logging.log4j.core.Logger coreLogger = (org.apache.logging.log4j.core.Logger) logger;
-            
-            XmlConfiguration xmlConfiguration = new XmlConfiguration(
-                    new ConfigurationSource(new FileInputStream(configurationFile)));
-            
-            LoggerContext coreContext = coreLogger.getContext();
-            coreContext.stop();
-            coreContext.start(xmlConfiguration);
+            LoggerContext coreContext = (LoggerContext) LogManager.getContext(false);
+            coreContext.setConfigLocation(new File(configurationFile).toURI());
         } catch (Exception ex) {
             throw new SystemException(ex);
         }
