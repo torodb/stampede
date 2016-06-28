@@ -48,7 +48,6 @@ import org.junit.Test;
 import com.torodb.backend.DefaultDidCursor;
 import com.torodb.backend.MockDidCursor;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
-import com.torodb.backend.meta.SnapshotUpdater;
 import com.torodb.core.d2r.CollectionData;
 import com.torodb.core.d2r.DocPartResults;
 import com.torodb.core.document.ToroDocument;
@@ -63,7 +62,6 @@ import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetaField;
 import com.torodb.core.transaction.metainf.MetaSnapshot;
-import com.torodb.core.transaction.metainf.MetainfoRepository.SnapshotStage;
 import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
 import com.torodb.core.transaction.metainf.WrapperMutableMetaSnapshot;
 import com.torodb.kvdocument.values.KVDocument;
@@ -71,29 +69,11 @@ import com.torodb.kvdocument.values.KVInteger;
 import com.torodb.kvdocument.values.KVValue;
 import com.torodb.kvdocument.values.heap.ListKVArray;
 import com.torodb.kvdocument.values.heap.StringKVString;
-import com.torodb.metainfo.cache.mvcc.MvccMetainfoRepository;
 
 public class BackendIntegrationTest extends AbstractBackendTest {
     
     private final Logger LOGGER = LogManager.getLogger(BackendIntegrationTest.class);
-
-    private FieldType fieldType(Field<?> field) {
-        return FieldType.from(((DataTypeForKV<?>) field.getDataType()).getKVValueConverter().getErasuredType());
-    }
-
-    private ImmutableMetaSnapshot buildMetaSnapshot() {
-        MvccMetainfoRepository metainfoRepository = new MvccMetainfoRepository();
-        SnapshotUpdater.updateSnapshot(metainfoRepository, sqlInterface, sqlHelper, schemaUpdater, tableRefFactory);
-
-        try (SnapshotStage stage = metainfoRepository.startSnapshotStage()) {
-            return stage.createImmutableSnapshot();
-        }
-    }
     
-    private DSLContext dsl(Connection connection){
-        return sqlInterface.createDSLContext(connection);
-    }
-
     /**
      * This test whether the snapshot can be build and if it can be rebuild.
      * @throws Exception
@@ -112,12 +92,13 @@ public class BackendIntegrationTest extends AbstractBackendTest {
        	buildMetaSnapshot();
 
        	try (Connection connection = sqlInterface.createWriteConnection()) {
-            BackendTestHelper helper = new BackendTestHelper(sqlInterface, dsl(connection), schema);
-            helper.createMetaModel();
-            helper.insertMetaFields(schema.rootDocPartTableRef, schema.rootDocPartFields);
-            helper.createDocPartTable(schema.rootDocPartTableName, sqlInterface.getMetaDocPartTable().ROOT_FIELDS, schema.rootDocPartFields.values());
-            helper.insertMetaFields(schema.subDocPartTableRef, schema.subDocPartFields);
-            helper.createDocPartTable(schema.subDocPartTableName, sqlInterface.getMetaDocPartTable().FIRST_FIELDS, schema.subDocPartFields.values());
+       	    DSLContext dsl = sqlInterface.createDSLContext(connection);
+            BackendTestHelper helper = new BackendTestHelper(sqlInterface, schema);
+            helper.createMetaModel(dsl);
+            helper.insertMetaFields(dsl, schema.rootDocPartTableRef, schema.rootDocPartFields);
+            helper.createDocPartTable(dsl, schema.rootDocPartTableName, sqlInterface.getMetaDocPartTable().ROOT_FIELDS, schema.rootDocPartFields.values());
+            helper.insertMetaFields(dsl, schema.subDocPartTableRef, schema.subDocPartFields);
+            helper.createDocPartTable(dsl, schema.subDocPartTableName, sqlInterface.getMetaDocPartTable().FIRST_FIELDS, schema.subDocPartFields.values());
             connection.commit();
         }
         
@@ -142,9 +123,9 @@ public class BackendIntegrationTest extends AbstractBackendTest {
         assertAllFieldsArePresent(schema.subDocPartFields,subDocMetaDocPart);
         
         try (Connection connection = sqlInterface.createWriteConnection()) {
-        	DSLContext dsl = dsl(connection);
-        	BackendTestHelper helper = new BackendTestHelper(sqlInterface, dsl, schema);
-            helper.insertMetaFields(schema.subDocPartTableRef, schema.newSubDocPartFields);
+        	DSLContext dsl = sqlInterface.createDSLContext(connection);
+        	BackendTestHelper helper = new BackendTestHelper(sqlInterface, schema);
+            helper.insertMetaFields(dsl, schema.subDocPartTableRef, schema.newSubDocPartFields);
             for (Field<?> field: schema.newSubDocPartFields.values()){
             	sqlInterface.addColumnToDocPartTable(dsl, schema.databaseSchemaName, schema.subDocPartTableName, field);
             }
@@ -186,14 +167,14 @@ public class BackendIntegrationTest extends AbstractBackendTest {
 		 buildMetaSnapshot();
 
 		 try (Connection connection = sqlInterface.createWriteConnection()) {
-             DSLContext dsl = dsl(connection);
-             BackendTestHelper helper = new BackendTestHelper(sqlInterface, dsl, schema);
-             helper.createMetaModel();
+             DSLContext dsl = sqlInterface.createDSLContext(connection);
+             BackendTestHelper helper = new BackendTestHelper(sqlInterface, schema);
+             helper.createMetaModel(dsl);
              int first100RootRid = sqlInterface.consumeRids(dsl, schema.databaseName, schema.collectionName, schema.rootDocPartTableRef, 100);
              assertEquals(0, first100RootRid);
              int next100RootRid = sqlInterface.consumeRids(dsl, schema.databaseName, schema.collectionName, schema.rootDocPartTableRef, 100);
              assertEquals(100, next100RootRid);
-             helper.createDocPartTable(schema.rootDocPartTableName, sqlInterface.getMetaDocPartTable().ROOT_FIELDS, schema.rootDocPartFields.values());
+             helper.createDocPartTable(dsl, schema.rootDocPartTableName, sqlInterface.getMetaDocPartTable().ROOT_FIELDS, schema.rootDocPartFields.values());
              int first100SubRid = sqlInterface.consumeRids(dsl, schema.databaseName, schema.collectionName, schema.subDocPartTableRef, 100);
              assertEquals(0, first100SubRid);
              int next100SubRid = sqlInterface.consumeRids(dsl, schema.databaseName, schema.collectionName, schema.subDocPartTableRef, 100);
@@ -208,15 +189,15 @@ public class BackendIntegrationTest extends AbstractBackendTest {
 		buildMetaSnapshot();
     	 
         try (Connection connection = sqlInterface.createWriteConnection()) {
-        	DSLContext dsl = dsl(connection);
-        	BackendTestHelper helper = new BackendTestHelper(sqlInterface, dsl, schema);
-        	helper.createMetaModel();
-            helper.insertMetaFields(schema.rootDocPartTableRef, schema.rootDocPartFields);
-            helper.createDocPartTable(schema.rootDocPartTableName,
+        	DSLContext dsl = sqlInterface.createDSLContext(connection);
+        	BackendTestHelper helper = new BackendTestHelper(sqlInterface, schema);
+        	helper.createMetaModel(dsl);
+            helper.insertMetaFields(dsl, schema.rootDocPartTableRef, schema.rootDocPartFields);
+            helper.createDocPartTable(dsl, schema.rootDocPartTableName,
             		sqlInterface.getMetaDocPartTable().ROOT_FIELDS,
             		schema.rootDocPartFields.values());
-            helper.insertMetaFields(schema.subDocPartTableRef, schema.subDocPartFields);
-            helper.createDocPartTable(schema.subDocPartTableName, 
+            helper.insertMetaFields(dsl, schema.subDocPartTableRef, schema.subDocPartFields);
+            helper.createDocPartTable(dsl, schema.subDocPartTableName, 
             		sqlInterface.getMetaDocPartTable().FIRST_FIELDS,
             		schema.subDocPartFields.values());
             connection.commit();
@@ -233,15 +214,15 @@ public class BackendIntegrationTest extends AbstractBackendTest {
         	assertEquals(-1, lastRootRowIUsed);
         	assertEquals(-1, lastSubDocRowIUsed);
         	
-        	helper.insertDocPartData(rootMetaDocPart, schema.rootDocPartValues, schema.rootDocPartFields);
-        	helper.insertDocPartData(subDocMetaDocPart, schema.subDocPartValues, schema.subDocPartFields);
+        	helper.insertDocPartData(dsl, rootMetaDocPart, schema.rootDocPartValues, schema.rootDocPartFields);
+        	helper.insertDocPartData(dsl, subDocMetaDocPart, schema.subDocPartValues, schema.subDocPartFields);
         	lastRootRowIUsed = sqlInterface.getLastRowIdUsed(dsl, metaDatabase, metaCollection, rootMetaDocPart);
         	lastSubDocRowIUsed = sqlInterface.getLastRowIdUsed(dsl, metaDatabase, metaCollection, subDocMetaDocPart);
         	assertEquals(1, lastRootRowIUsed);
         	assertEquals(0, lastSubDocRowIUsed);
         	
-        	helper.insertDocPartData(rootMetaDocPart, schema.getMoreRootDocPartValues(), schema.rootDocPartFields);
-        	helper.insertDocPartData(subDocMetaDocPart, schema.getMoreSubDocPartValues(), schema.subDocPartFields);
+        	helper.insertDocPartData(dsl, rootMetaDocPart, schema.getMoreRootDocPartValues(), schema.rootDocPartFields);
+        	helper.insertDocPartData(dsl, subDocMetaDocPart, schema.getMoreSubDocPartValues(), schema.subDocPartFields);
         	lastRootRowIUsed = sqlInterface.getLastRowIdUsed(dsl, metaDatabase, metaCollection, rootMetaDocPart);
         	lastSubDocRowIUsed = sqlInterface.getLastRowIdUsed(dsl, metaDatabase, metaCollection, subDocMetaDocPart);
         	assertEquals(2, lastRootRowIUsed);
@@ -255,8 +236,8 @@ public class BackendIntegrationTest extends AbstractBackendTest {
     	buildMetaSnapshot();
     	
         try (Connection connection = sqlInterface.createWriteConnection()) {
-            DSLContext dsl = dsl(connection);
-            BackendTestHelper helper = new BackendTestHelper(sqlInterface, dsl, schema);
+            DSLContext dsl = sqlInterface.createDSLContext(connection);
+            BackendTestHelper helper = new BackendTestHelper(sqlInterface, schema);
             
             sqlInterface.createSchema(dsl, schema.databaseSchemaName);
             
@@ -266,8 +247,8 @@ public class BackendIntegrationTest extends AbstractBackendTest {
             });
             
             ImmutableMetaDocPart rootMetaDocPart = rootMetaDocPartBuilder.build();
-            helper.createDocPartTable(schema.rootDocPartTableName, sqlInterface.getDocPartTableInternalFields(rootMetaDocPart), schema.rootDocPartFields.values());
-            helper.insertDocPartData(rootMetaDocPart, schema.rootDocPartValues, schema.rootDocPartFields);
+            helper.createDocPartTable(dsl, schema.rootDocPartTableName, sqlInterface.getDocPartTableInternalFields(rootMetaDocPart), schema.rootDocPartFields.values());
+            helper.insertDocPartData(dsl, rootMetaDocPart, schema.rootDocPartValues, schema.rootDocPartFields);
             connection.commit();
             
             StringBuilder rootDocPartSelectStatementBuilder = new StringBuilder("SELECT ");
@@ -350,7 +331,7 @@ public class BackendIntegrationTest extends AbstractBackendTest {
         BackendDocumentTestHelper helper = new BackendDocumentTestHelper(sqlInterface, sqlHelper, tableRefFactory, schema);
         KVDocument document = helper.parseFromJson("testTorodbReadDocPart.json");
         try (Connection connection = sqlInterface.createWriteConnection()) {
-            DSLContext dsl = dsl(connection);
+            DSLContext dsl = sqlInterface.createDSLContext(connection);
             MutableMetaSnapshot mutableSnapshot = new WrapperMutableMetaSnapshot(new ImmutableMetaSnapshot.Builder().build());
             mutableSnapshot
                 .addMetaDatabase(schema.databaseName, schema.databaseSchemaName)
@@ -383,7 +364,7 @@ public class BackendIntegrationTest extends AbstractBackendTest {
         BackendDocumentTestHelper helper = new BackendDocumentTestHelper(sqlInterface, sqlHelper, tableRefFactory, schema);
         List<KVDocument> documents = helper.parseListFromJson("testTorodbReadDocPartDids.json");
         try (Connection connection = sqlInterface.createWriteConnection()) {
-            DSLContext dsl = dsl(connection);
+            DSLContext dsl = sqlInterface.createDSLContext(connection);
             MutableMetaSnapshot mutableSnapshot = new WrapperMutableMetaSnapshot(new ImmutableMetaSnapshot.Builder().build());
             mutableSnapshot
                 .addMetaDatabase(schema.databaseName, schema.databaseSchemaName)
@@ -429,7 +410,7 @@ public class BackendIntegrationTest extends AbstractBackendTest {
         BackendDocumentTestHelper helper = new BackendDocumentTestHelper(sqlInterface, sqlHelper, tableRefFactory, schema);
         List<KVDocument> documents = helper.parseListFromJson("testTorodbReadDocPartDids.json");
         try (Connection connection = sqlInterface.createWriteConnection()) {
-            DSLContext dsl = dsl(connection);
+            DSLContext dsl = sqlInterface.createDSLContext(connection);
             MutableMetaSnapshot mutableSnapshot = new WrapperMutableMetaSnapshot(new ImmutableMetaSnapshot.Builder().build());
             mutableSnapshot
                 .addMetaDatabase(schema.databaseName, schema.databaseSchemaName)
@@ -476,7 +457,7 @@ public class BackendIntegrationTest extends AbstractBackendTest {
     @Test
     public void testTorodbReadCollectionResultSetsWithStructures() throws Exception {
         try (Connection connection = sqlInterface.createWriteConnection()) {
-            DSLContext dsl = dsl(connection);
+            DSLContext dsl = sqlInterface.createDSLContext(connection);
             MutableMetaSnapshot mutableSnapshot = new WrapperMutableMetaSnapshot(new ImmutableMetaSnapshot.Builder().build());
             mutableSnapshot
             	.addMetaDatabase(schema.databaseName, schema.databaseSchemaName)

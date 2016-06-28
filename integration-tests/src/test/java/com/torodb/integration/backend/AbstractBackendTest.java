@@ -20,15 +20,22 @@
 
 package com.torodb.integration.backend;
 
+import org.jooq.Field;
 import org.junit.Before;
 import org.junit.ClassRule;
 
 import com.torodb.backend.SqlHelper;
 import com.torodb.backend.SqlInterface;
+import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.backend.meta.SchemaUpdater;
+import com.torodb.backend.meta.SnapshotUpdater;
 import com.torodb.core.TableRef;
 import com.torodb.core.TableRefFactory;
 import com.torodb.core.impl.TableRefFactoryImpl;
+import com.torodb.core.transaction.metainf.FieldType;
+import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
+import com.torodb.core.transaction.metainf.MetainfoRepository.SnapshotStage;
+import com.torodb.metainfo.cache.mvcc.MvccMetainfoRepository;
 
 public abstract class AbstractBackendTest {
 
@@ -51,6 +58,19 @@ public abstract class AbstractBackendTest {
         BACKEND_RUNNER_CLASS_RULE.cleanDatabase();
     }
 
+    protected FieldType fieldType(Field<?> field) {
+        return FieldType.from(((DataTypeForKV<?>) field.getDataType()).getKVValueConverter().getErasuredType());
+    }
+
+    protected ImmutableMetaSnapshot buildMetaSnapshot() {
+        MvccMetainfoRepository metainfoRepository = new MvccMetainfoRepository();
+        SnapshotUpdater.updateSnapshot(metainfoRepository, sqlInterface, sqlHelper, schemaUpdater, tableRefFactory);
+
+        try (SnapshotStage stage = metainfoRepository.startSnapshotStage()) {
+            return stage.createImmutableSnapshot();
+        }
+    }
+
     protected TableRef createTableRef(String...names) {
         TableRef tableRef = tableRefFactory.createRoot();
         
@@ -65,5 +85,4 @@ public abstract class AbstractBackendTest {
         
         return tableRef;
     }
-    
 }

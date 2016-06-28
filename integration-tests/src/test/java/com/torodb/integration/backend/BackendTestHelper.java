@@ -31,19 +31,17 @@ import com.torodb.kvdocument.values.KVValue;
 
 public class BackendTestHelper {
 
-	private DSLContext dsl;
 	private TestSchema schema;
 	private SqlInterface sqlInterface;
 	private RidGenerator ridGenerator = new MockRidGenerator();
 	private IdentifierFactory factory = Mockito.mock(IdentifierFactory.class);
 	
-	public BackendTestHelper(SqlInterface sqlInterface, DSLContext dsl, TestSchema schema){
+	public BackendTestHelper(SqlInterface sqlInterface, TestSchema schema){
 		this.sqlInterface = sqlInterface;
-		this.dsl = dsl;
 		this.schema = schema;
 	}
 	
-	public void createMetaModel() {
+	public void createMetaModel(DSLContext dsl) {
 		String databaseName = schema.databaseName;
 		String databaseSchemaName = schema.databaseSchemaName;
 		String collectionName = schema.collectionName;
@@ -55,20 +53,20 @@ public class BackendTestHelper {
 		sqlInterface.addMetaDocPart(dsl, databaseName, collectionName, schema.subDocPartTableRef, schema.subDocPartTableName);
 	}
 	
-	public void insertMetaFields(TableRef tableRef, Map<String, Field<?>> fields){
+	public void insertMetaFields(DSLContext dsl, TableRef tableRef, Map<String, Field<?>> fields){
 		fields.forEach((key,value)->
 			sqlInterface.addMetaField(dsl, schema.databaseName, schema.collectionName, tableRef, 
                     key, value.getName(), getType(value))
 		);
 	}
 	
-	public void createDocPartTable(String tableName, Collection<? extends Field<?>> headerFields, Collection<Field<?>> fields){
+	public void createDocPartTable(DSLContext dsl, String tableName, Collection<? extends Field<?>> headerFields, Collection<Field<?>> fields){
 		ArrayList<Field<?>> toAdd = new ArrayList<>(headerFields);
 		toAdd.addAll(fields);
 		sqlInterface.createDocPartTable(dsl, schema.databaseSchemaName, tableName, toAdd);
 	}
 	
-	public void insertDocPartData(ImmutableMetaDocPart metaDocPart, 
+	public void insertDocPartData(DSLContext dsl, ImmutableMetaDocPart metaDocPart, 
 								  List<ImmutableMap<String, Optional<KVValue<?>>>> values,
 								  Map<String, Field<?>> docPartFields
 			) {
@@ -81,19 +79,17 @@ public class BackendTestHelper {
 
 		CollectionMetaInfo metaInfo=new CollectionMetaInfo(db, col, factory, ridGenerator);
 		Mockito.when(col.getMetaDocPartByTableRef(metaDocPart.getTableRef())).thenReturn(new WrapperMutableMetaDocPart(metaDocPart, new Consumer<WrapperMutableMetaDocPart>() {
-			
 			@Override
 			public void accept(WrapperMutableMetaDocPart t) {
-				// TODO Auto-generated method stub
-				
 			}
 		}));
 		
 		TableMetadata tableMeta = new TableMetadata(metaInfo, metaDocPart.getTableRef());
 		
 		DocPartDataImpl docPartData = new DocPartDataImpl(tableMeta,null);
+		int index = 0;
 		for (Map<String, Optional<KVValue<?>>> docPartValueMap : values) {
-		    DocPartRowImpl row = docPartData.newRowObject(0,null);
+		    DocPartRowImpl row = docPartData.newRowObject(index++, null);
 		    
 		    for (Map.Entry<String, Optional<KVValue<?>>> docPartValue : docPartValueMap.entrySet()) {
 		        if (docPartValue.getValue().isPresent()) {
