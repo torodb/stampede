@@ -27,4 +27,7 @@ import java.sql.SQLException;
 public interface SqlBinding<T> {
     public T get(ResultSet resultSet, int index) throws SQLException;
     public void set(PreparedStatement preparedStatement, int parameterIndex, T value) throws SQLException;
+    default public String getPlaceholder() {
+        return "?";
+    }
 }

@@ -107,6 +107,17 @@ public class SqlHelper {
     public DSLContext dsl() {
         return DSL.using(dataTypeProvider.getDialect());
     }
+    
+    @SuppressWarnings({ "rawtypes" })
+    public Object getResultSetValue(FieldType fieldType, ResultSet resultSet, int index) throws SQLException {
+        DataTypeForKV dataType = dataTypeProvider
+                .getDataType(fieldType);
+        KVValueConverter valueConverter = dataType
+                .getKVValueConverter();
+        SqlBinding sqlBinding = valueConverter
+                .getSqlBinding();
+        return sqlBinding.get(resultSet, index);
+    }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public void setPreparedStatementNullableValue(PreparedStatement preparedStatement, int parameterIndex,
@@ -134,5 +145,16 @@ public class SqlHelper {
         SqlBinding sqlBinding = valueConverter
                 .getSqlBinding();
         sqlBinding.set(preparedStatement, parameterIndex, valueConverter.to(value));
+    }
+    
+    @SuppressWarnings({ "rawtypes" })
+    public String getPlaceholder(FieldType fieldType) {
+        DataTypeForKV dataType = dataTypeProvider
+                .getDataType(fieldType);
+        KVValueConverter valueConverter = dataType
+                .getKVValueConverter();
+        SqlBinding sqlBinding = valueConverter
+                .getSqlBinding();
+        return sqlBinding.getPlaceholder();
     }
 }
