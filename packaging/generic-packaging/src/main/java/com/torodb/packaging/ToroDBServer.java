@@ -45,6 +45,11 @@ public class ToroDBServer extends AbstractIdleService {
     }
 
     public static ToroDBServer create(Config config, Clock clock) throws ProvisionException {
+        Injector injector = createInjector(config, clock);
+        return injector.getInstance(ToroDBServer.class);
+    }
+
+    public static Injector createInjector(Config config, Clock clock) {
         Injector injector = Guice.createInjector(
                 new ConfigModule(config),
                 new PackagingModule(clock),
@@ -56,7 +61,7 @@ public class ToroDBServer extends AbstractIdleService {
                 new TorodModule(),
                 new MongoLayerModule()
         );
-        return injector.getInstance(ToroDBServer.class);
+        return injector;
     }
 
     @Override

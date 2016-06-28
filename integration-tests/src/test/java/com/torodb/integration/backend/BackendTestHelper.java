@@ -1,4 +1,4 @@
-package com.torodb.backend;
+package com.torodb.integration.backend;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -12,6 +12,7 @@ import org.jooq.Field;
 import org.mockito.Mockito;
 
 import com.google.common.collect.ImmutableMap;
+import com.torodb.backend.SqlInterface;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.core.TableRef;
 import com.torodb.core.d2r.IdentifierFactory;

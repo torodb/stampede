@@ -6,9 +6,10 @@ import java.util.Collection;
 
 import org.jooq.Converter;
 
-import com.torodb.backend.InternalField;
-import com.torodb.backend.SqlInterface;
 import com.torodb.backend.ErrorHandler.Context;
+import com.torodb.backend.InternalField;
+import com.torodb.backend.SqlHelper;
+import com.torodb.backend.SqlInterface;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.backend.tables.MetaDocPartTable;
 import com.torodb.backend.tables.records.MetaDocPartRecord;
@@ -24,6 +25,7 @@ import com.torodb.kvdocument.values.KVValue;
 public class R2DBackendTranslatorImpl implements R2DBackendTranslator<ResultSet, R2DBackendTranslatorImpl.ResultSetInternalFields> {
 
     private final SqlInterface sqlInterface;
+    private final SqlHelper sqlHelper;
     private final MetaDatabase metaDatabase;
     private final MetaCollection metaCollection;
     private final Converter<Object, Integer> didConverter;
@@ -32,8 +34,9 @@ public class R2DBackendTranslatorImpl implements R2DBackendTranslator<ResultSet,
     private final Converter<Object, Integer> seqConverter;
 	
 	@SuppressWarnings("unchecked")
-    public R2DBackendTranslatorImpl(SqlInterface sqlInterface, MetaDatabase metaDatabase, MetaCollection metaCollection) {
+    public R2DBackendTranslatorImpl(SqlInterface sqlInterface, SqlHelper sqlHelper, MetaDatabase metaDatabase, MetaCollection metaCollection) {
         this.sqlInterface = sqlInterface;
+        this.sqlHelper = sqlHelper;
         this.metaDatabase = metaDatabase;
         this.metaCollection = metaCollection;
         MetaDocPartTable<Object,MetaDocPartRecord<Object>> metaDocPartTable = sqlInterface.getMetaDocPartTable();
@@ -105,7 +108,7 @@ public class R2DBackendTranslatorImpl implements R2DBackendTranslator<ResultSet,
             int fieldIndex) {
         Object databaseValue;
         try {
-            databaseValue = resultSet.getObject(fieldIndex + internalFields.columnIndex);
+            databaseValue = sqlHelper.getResultSetValue(type, resultSet, fieldIndex + internalFields.columnIndex);
         } catch (SQLException sqlException) {
             sqlInterface.handleRollbackException(Context.fetch, sqlException);
             throw new SystemException(sqlException);

@@ -18,7 +18,7 @@
  *     
  */
 
-package com.torodb.backend.derby;
+package com.torodb.integration.backend;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -36,7 +36,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.stream.StreamSupport;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -46,10 +45,6 @@ import org.jooq.Field;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.google.inject.Injector;
-import com.torodb.backend.AbstractBackendTest;
-import com.torodb.backend.BackendDocumentTestHelper;
-import com.torodb.backend.BackendTestHelper;
 import com.torodb.backend.DefaultDidCursor;
 import com.torodb.backend.MockDidCursor;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
@@ -78,19 +73,9 @@ import com.torodb.kvdocument.values.heap.ListKVArray;
 import com.torodb.kvdocument.values.heap.StringKVString;
 import com.torodb.metainfo.cache.mvcc.MvccMetainfoRepository;
 
-public class BackendDerbyTest extends AbstractBackendTest {
+public class BackendIntegrationTest extends AbstractBackendTest {
     
-    private final Logger LOGGER = LogManager.getLogger(BackendDerbyTest.class);
-
-    @Override
-    protected Injector createInjector() {
-        return Derby.createInjector();
-    }
-    
-    @Override
-    protected void cleanDatabase(Injector injector) throws SQLException {
-        Derby.cleanDatabase(injector);
-    }
+    private final Logger LOGGER = LogManager.getLogger(BackendIntegrationTest.class);
 
     private FieldType fieldType(Field<?> field) {
         return FieldType.from(((DataTypeForKV<?>) field.getDataType()).getKVValueConverter().getErasuredType());
@@ -327,7 +312,7 @@ public class BackendDerbyTest extends AbstractBackendTest {
 		    for (Map.Entry<String, Field<?>> field : schema.rootDocPartFields.entrySet()) {
 		        Optional<KVValue<?>> value = rootDocPartValueMap.get(field.getKey());
 		        DataTypeForKV<?> dataTypeForKV = (DataTypeForKV<?>) field.getValue().getDataType();
-		        Object databaseValue = resultSet.getObject(columnIndex);
+		        Object databaseValue = sqlHelper.getResultSetValue(FieldType.from(dataTypeForKV.getKVValueConverter().getErasuredType()), resultSet, columnIndex);
 		        Optional<KVValue<?>> databaseConvertedValue;
 		        if (resultSet.wasNull()) {
 		            databaseConvertedValue = Optional.empty();
@@ -362,7 +347,7 @@ public class BackendDerbyTest extends AbstractBackendTest {
     
     @Test
     public void testTorodbReadCollectionResultSets() throws Exception {
-        BackendDocumentTestHelper helper = new BackendDocumentTestHelper(sqlInterface, tableRefFactory, schema);
+        BackendDocumentTestHelper helper = new BackendDocumentTestHelper(sqlInterface, sqlHelper, tableRefFactory, schema);
         KVDocument document = helper.parseFromJson("testTorodbReadDocPart.json");
         try (Connection connection = sqlInterface.createWriteConnection()) {
             DSLContext dsl = dsl(connection);
@@ -395,7 +380,7 @@ public class BackendDerbyTest extends AbstractBackendTest {
     
     @Test
     public void testTorodbReadAllCollectionResultSetsDids() throws Exception {
-        BackendDocumentTestHelper helper = new BackendDocumentTestHelper(sqlInterface, tableRefFactory, schema);
+        BackendDocumentTestHelper helper = new BackendDocumentTestHelper(sqlInterface, sqlHelper, tableRefFactory, schema);
         List<KVDocument> documents = helper.parseListFromJson("testTorodbReadDocPartDids.json");
         try (Connection connection = sqlInterface.createWriteConnection()) {
             DSLContext dsl = dsl(connection);
@@ -441,7 +426,7 @@ public class BackendDerbyTest extends AbstractBackendTest {
     
     @Test
     public void testTorodbReadCollectionResultSetsDidsWithFieldEqualsTo() throws Exception {
-        BackendDocumentTestHelper helper = new BackendDocumentTestHelper(sqlInterface, tableRefFactory, schema);
+        BackendDocumentTestHelper helper = new BackendDocumentTestHelper(sqlInterface, sqlHelper, tableRefFactory, schema);
         List<KVDocument> documents = helper.parseListFromJson("testTorodbReadDocPartDids.json");
         try (Connection connection = sqlInterface.createWriteConnection()) {
             DSLContext dsl = dsl(connection);
@@ -500,7 +485,7 @@ public class BackendDerbyTest extends AbstractBackendTest {
             
             List<KVDocument> documents = createDocumentsWithStructures();
             
-            BackendDocumentTestHelper helper = new BackendDocumentTestHelper(sqlInterface, tableRefFactory, schema);
+            BackendDocumentTestHelper helper = new BackendDocumentTestHelper(sqlInterface, sqlHelper, tableRefFactory, schema);
             helper.parseDocumentsAndCreateDocPartDataTables(mutableSnapshot, dsl, documents);
             
             for (KVDocument document : documents) {

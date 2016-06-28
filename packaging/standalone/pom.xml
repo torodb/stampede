@@ -57,6 +57,10 @@
             <groupId>com.8kdata.mongowp.client</groupId>
             <artifactId>driver-wrapper</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.8kdata.mongowp.server</groupId>
+            <artifactId>wp-layer</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>org.glassfish</groupId>
@@ -119,10 +123,6 @@
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.8kdata.mongowp.server</groupId>
-            <artifactId>wp-layer</artifactId>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>

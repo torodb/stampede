@@ -1,35 +1,55 @@
-package com.torodb.backend;
+package com.torodb.integration.backend;
 
+import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.stream.StreamSupport;
+
+import org.jooq.DSLContext;
+import org.jooq.Field;
+import org.jooq.impl.DSL;
+
+import com.torodb.backend.SqlHelper;
+import com.torodb.backend.SqlInterface;
+import com.torodb.backend.TableRefComparator;
 import com.torodb.backend.d2r.R2DBackendTranslatorImpl;
 import com.torodb.core.TableRefFactory;
-import com.torodb.core.d2r.*;
+import com.torodb.core.d2r.CollectionData;
+import com.torodb.core.d2r.D2RTranslator;
+import com.torodb.core.d2r.DocPartData;
+import com.torodb.core.d2r.DocPartResults;
+import com.torodb.core.d2r.IdentifierFactory;
+import com.torodb.core.d2r.R2DTranslator;
 import com.torodb.core.document.ToroDocument;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MutableMetaDatabase;
 import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
-import com.torodb.d2r.*;
+import com.torodb.d2r.D2RTranslatorStack;
+import com.torodb.d2r.IdentifierFactoryImpl;
+import com.torodb.d2r.MockIdentifierInterface;
+import com.torodb.d2r.MockRidGenerator;
+import com.torodb.d2r.R2DBackedTranslator;
 import com.torodb.kvdocument.conversion.json.JacksonJsonParser;
 import com.torodb.kvdocument.conversion.json.JsonParser;
 import com.torodb.kvdocument.values.KVDocument;
-import java.sql.ResultSet;
-import java.util.*;
-import java.util.stream.StreamSupport;
-import org.jooq.DSLContext;
-import org.jooq.Field;
-import org.jooq.impl.DSL;
 
 public class BackendDocumentTestHelper {
 	
-	private SqlInterface sqlInterface;
+    private SqlInterface sqlInterface;
+    private SqlHelper sqlHelper;
 	private TableRefFactory tableRefFactory;
 	private TestSchema schema;
 	
 	private MockRidGenerator ridGenerator = new MockRidGenerator();
 	private IdentifierFactory identifierFactory = new IdentifierFactoryImpl(new MockIdentifierInterface());
 	
-	public BackendDocumentTestHelper(SqlInterface sqlInterface, TableRefFactory tableRefFactory, TestSchema schema){
+	public BackendDocumentTestHelper(SqlInterface sqlInterface, SqlHelper sqlHelper, TableRefFactory tableRefFactory, TestSchema schema){
 		this.sqlInterface = sqlInterface;
+		this.sqlHelper = sqlHelper;
 		this.tableRefFactory = tableRefFactory;
 		this.schema = schema;
 	}
@@ -37,7 +57,7 @@ public class BackendDocumentTestHelper {
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public Collection<ToroDocument> readDocuments(MetaDatabase metaDatabase, MetaCollection metaCollection,
             DocPartResults<ResultSet> docPartResultSets) {
-        R2DTranslator r2dTranslator = new R2DBackedTranslator(new R2DBackendTranslatorImpl(sqlInterface, metaDatabase, metaCollection));
+        R2DTranslator r2dTranslator = new R2DBackedTranslator(new R2DBackendTranslatorImpl(sqlInterface, sqlHelper, metaDatabase, metaCollection));
         Collection<ToroDocument> readedDocuments = r2dTranslator.translate(docPartResultSets);
         return readedDocuments;
     }

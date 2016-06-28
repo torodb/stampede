@@ -18,19 +18,22 @@
  *     
  */
 
-package com.torodb.backend;
-
-import java.sql.SQLException;
+package com.torodb.integration.backend;
 
 import org.junit.Before;
+import org.junit.ClassRule;
 
-import com.google.inject.Injector;
+import com.torodb.backend.SqlHelper;
+import com.torodb.backend.SqlInterface;
 import com.torodb.backend.meta.SchemaUpdater;
 import com.torodb.core.TableRef;
 import com.torodb.core.TableRefFactory;
 import com.torodb.core.impl.TableRefFactoryImpl;
 
 public abstract class AbstractBackendTest {
+
+    @ClassRule
+    public final static BackendRunnerClassRule BACKEND_RUNNER_CLASS_RULE = new BackendRunnerClassRule();
     
     protected static final TableRefFactory tableRefFactory = new TableRefFactoryImpl();
     
@@ -41,21 +44,13 @@ public abstract class AbstractBackendTest {
     
     @Before
     public void setUp() throws Exception {
-        Injector injector = createInjector();
-        DbBackendService dbBackend = injector.getInstance(DbBackendService.class);
-        dbBackend.startAsync();
-        dbBackend.awaitRunning();
-        cleanDatabase(injector);
-        sqlInterface = injector.getInstance(SqlInterface.class);
-        sqlHelper = injector.getInstance(SqlHelper.class);
-        schemaUpdater = injector.getInstance(SchemaUpdater.class);
+        schemaUpdater = BACKEND_RUNNER_CLASS_RULE.getSchemaUpdater();
+        sqlInterface = BACKEND_RUNNER_CLASS_RULE.getSqlInterface();
+        sqlHelper = BACKEND_RUNNER_CLASS_RULE.getSqlHelper();
         schema = new TestSchema(tableRefFactory, sqlInterface);
+        BACKEND_RUNNER_CLASS_RULE.cleanDatabase();
     }
 
-    protected abstract Injector createInjector();
-    
-    protected abstract void cleanDatabase(Injector injector) throws SQLException;
-    
     protected TableRef createTableRef(String...names) {
         TableRef tableRef = tableRefFactory.createRoot();
         

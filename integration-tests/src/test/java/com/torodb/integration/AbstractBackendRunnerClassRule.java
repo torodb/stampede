@@ -20,23 +20,17 @@
 
 package com.torodb.integration;
 
-import com.beust.jcommander.internal.Console;
-import com.torodb.packaging.ToroDBServer;
-import com.torodb.packaging.config.model.Config;
-import com.torodb.packaging.config.model.backend.derby.Derby;
-import com.torodb.packaging.config.model.backend.postgres.Postgres;
-import com.torodb.packaging.config.model.protocol.mongo.Replication;
-import com.torodb.packaging.config.util.ConfigUtils;
-import com.torodb.packaging.util.Log4jUtils;
-import com.torodb.packaging.util.Log4jUtils.AppenderListener;
-import java.io.File;
 import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Clock;
-import java.util.*;
+import java.util.Arrays;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.rules.TestRule;
@@ -44,37 +38,46 @@ import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 import org.postgresql.ds.PGSimpleDataSource;
 
-public class ToroRunnerClassRule implements TestRule {
+import com.beust.jcommander.internal.Console;
+import com.google.inject.Injector;
+import com.torodb.backend.DbBackend;
+import com.torodb.backend.meta.TorodbSchema;
+import com.torodb.core.backend.IdentifierConstraints;
+import com.torodb.packaging.ToroDBServer;
+import com.torodb.packaging.config.model.Config;
+import com.torodb.packaging.config.model.backend.derby.Derby;
+import com.torodb.packaging.config.model.backend.postgres.Postgres;
+import com.torodb.packaging.config.model.protocol.mongo.Replication;
+import com.torodb.packaging.config.util.ConfigUtils;
+import com.torodb.packaging.util.Log4jUtils;
 
-    private static final Logger LOGGER = LogManager.getLogger(ToroRunnerClassRule.class);
+public abstract class AbstractBackendRunnerClassRule implements TestRule {
 
-	private static final int TORO_BOOT_MAX_INTERVAL_MILLIS = 2 * 60 * 1000;
-    private volatile ToroDBServer torodbServer;
-	
+    private static final Logger LOGGER = LogManager.getLogger(AbstractBackendRunnerClassRule.class);
+    private static final int TORO_BOOT_MAX_INTERVAL_MILLIS = 2 * 60 * 1000;
+
 	@Override
 	public Statement apply(final Statement base, Description description) {
 		return new Statement() {
 			@Override
 			public void evaluate() throws Throwable {
 				try {
-					startupToro();
+					startupBackend();
 					
 					base.evaluate();
 				} finally {
-					shutdownToro();
+					shutdownBackend();
 				}
 			}
 		};
 	}
 	
-	private final Set<Throwable> UNCAUGHT_EXCEPTIONS = new HashSet<>();
-
 	private boolean started = false;
-	private final Config config;
+	private Config config;
+	private Injector injector;
 
-	public ToroRunnerClassRule() {
+	public AbstractBackendRunnerClassRule() {
         super();
-        
         Config config = new Config();
         
         String yamlString = System.getProperty("torodbIntegrationConfigYml");
@@ -95,52 +98,23 @@ public class ToroRunnerClassRule implements TestRule {
         this.config = config;
     }
 
-    public void addUncaughtException(Throwable throwable) {
-		synchronized (UNCAUGHT_EXCEPTIONS) {
-			UNCAUGHT_EXCEPTIONS.add(throwable);
-		};
-	}
-
-	public List<Throwable> getUcaughtExceptions() {
-		List<Throwable> ucaughtExceptions;
-		synchronized (UNCAUGHT_EXCEPTIONS) {
-			ucaughtExceptions = new ArrayList<>(UNCAUGHT_EXCEPTIONS);
-			UNCAUGHT_EXCEPTIONS.clear();
-		}
-		return ucaughtExceptions;
-	}
-
 	public Config getConfig() {
 		return config;
 	}
 	
-	protected void startupToro() throws Exception {
+	public Injector getInjector() {
+	    return injector;
+	}
+	
+	protected void startupBackend() throws Exception {
 		if (!started) {
 			started = true;
 			
 			setupConfig();
 			
-			Thread.setDefaultUncaughtExceptionHandler(
-					new Thread.UncaughtExceptionHandler() {
-						@Override
-						public void uncaughtException(Thread t, Throwable e) {
-							addUncaughtException(e);
-						}
-					});
-			
-			new File("/tmp/data/db").mkdirs();
-			
+            injector = ToroDBServer.createInjector(config, Clock.systemUTC());
+
 			Log4jUtils.setRootLevel(config.getGeneric().getLogLevel());
-			
-			AppenderListener uncaughtExceptionAppenderListener = new AppenderListener() {
-                @Override
-                public void listen(String text, Throwable throwable) {
-                    if (throwable != null) {
-                        addUncaughtException(throwable);
-                    }
-                }
-			};
-			Log4jUtils.addRootAppenderListener(uncaughtExceptionAppenderListener);
 			
             if (config.getBackend().isPostgresLike()) {
                 Postgres postgresBackend = config.getBackend().asPostgres();
@@ -172,9 +146,7 @@ public class ToroRunnerClassRule implements TestRule {
 				@Override
 				public void run() {
                     try {
-                        torodbServer = ToroDBServer.create(config, Clock.systemUTC());
-                        torodbServer.startAsync();
-                        torodbServer.awaitRunning();
+                        startUp();
 
                         barrier.await();
                     } catch (Throwable e) {
@@ -190,16 +162,15 @@ public class ToroRunnerClassRule implements TestRule {
             } catch (TimeoutException ex) {
                 throw new RuntimeException("Toro failed to start after waiting for " + TORO_BOOT_MAX_INTERVAL_MILLIS + " milliseconds.", ex);
             }
-            List<Throwable> exceptions = getUcaughtExceptions();
-            if (!exceptions.isEmpty()) {
-                throw new RuntimeException(exceptions.get(0));
-            }
 		}
 	}
+	
+	protected abstract void startUp() throws Exception;
 
 	private void setupConfig() {
-        IntegrationTestEnvironment ite = IntegrationTestEnvironment.CURRENT_INTEGRATION_TEST_ENVIRONMENT;
-		switch(ite.getProtocol()) {
+        IntegrationTestEnvironment ite = 
+                IntegrationTestEnvironment.CURRENT_INTEGRATION_TEST_ENVIRONMENT;
+        switch(ite.getProtocol()) {
             case MONGO:
                 if (config.getProtocol().getMongo().getReplication() != null) {
                     config.getProtocol().getMongo().setReplication(null);
@@ -217,7 +188,7 @@ public class ToroRunnerClassRule implements TestRule {
                 break;
         }
 
-		switch(ite.getBackend()) {
+        switch(ite.getBackend()) {
             case POSTGRES:
                 if (!config.getBackend().isPostgres()) {
                     config.getBackend().setBackendImplementation(new Postgres());
@@ -241,14 +212,12 @@ public class ToroRunnerClassRule implements TestRule {
             if (config.getBackend().isDerbyLike() && 
                     config.getBackend().asDerby().getPassword() == null) {
                 config.getBackend().asDerby().setPassword("torodb");
-            } else {
-                throw new UnsupportedOperationException();
             }
 		} catch(Exception exception) {
 		    throw new RuntimeException(exception);
 		}
 		
-		config.getGeneric().setLogLevel(IntegrationTestEnvironment.CURRENT_INTEGRATION_TEST_ENVIRONMENT.getLogLevel());
+		config.getGeneric().setLogLevel(ite.getLogLevel());
 		
 		ConfigUtils.validateBean(config);
 		
@@ -275,21 +244,51 @@ public class ToroRunnerClassRule implements TestRule {
 		    throw new RuntimeException(exception);
 		}
 		
-		LOGGER.info("Configuration for ToroDB integration tests will be:\n" + yamlStringBuilder.toString());
+		LOGGER.info("Configuration for integration tests will be:\n" + yamlStringBuilder.toString());
 	}
 
-	private void shutdownToro() {
-        ToroDBServer torodbServer = this.torodbServer;
-        if (torodbServer != null) {
-            torodbServer.stopAsync();
-            torodbServer.awaitTerminated();
-        }
+	private void shutdownBackend() {
 		started = false;
 		
-		List<Throwable> exceptions = getUcaughtExceptions();
-		if (!exceptions.isEmpty()) {
-			throw new RuntimeException(exceptions.get(0));
-		}
+        try {
+            shutDown();
+        } catch (Throwable e) {
+            LogManager.getRootLogger().error(e.getMessage(), e);
+            throw new RuntimeException(e);
+        }
 	}
+	
+	protected abstract void shutDown() throws Exception;
 
+    protected void cleanDatabase() throws Exception {
+        DbBackend dbBackend = injector.getInstance(DbBackend.class);
+        IdentifierConstraints identifierConstraints = injector.getInstance(IdentifierConstraints.class);
+        try (Connection connection = dbBackend.createSystemConnection()) {
+            DatabaseMetaData metaData = connection.getMetaData();
+            ResultSet tables = metaData.getTables("%", "%", "%", new String[] { "TABLE", "VIEW" });
+            while (tables.next()) {
+                String schemaName = tables.getString("TABLE_SCHEM");
+                String tableName = tables.getString("TABLE_NAME");
+                if (identifierConstraints.isAllowedSchemaIdentifier(schemaName) || schemaName.equals(TorodbSchema.IDENTIFIER)) {
+                    try (PreparedStatement preparedStatement = connection.prepareStatement("DROP TABLE \"" + schemaName + "\".\"" + tableName + "\"")) {
+                        preparedStatement.executeUpdate();
+                    }
+                }
+            }
+            ResultSet schemas = metaData.getSchemas();
+            while (schemas.next()) {
+                String schemaName = schemas.getString("TABLE_SCHEM");
+                if (identifierConstraints.isAllowedSchemaIdentifier(schemaName) || schemaName.equals(TorodbSchema.IDENTIFIER)) {
+                    String dropSchemaStatement = "DROP SCHEMA \"" + schemaName + "\" CASCADE";
+                    if (config.getBackend().isDerbyLike()) {
+                        dropSchemaStatement = "DROP SCHEMA \"" + schemaName + "\" RESTRICT";
+                    }
+                    try (PreparedStatement preparedStatement = connection.prepareStatement(dropSchemaStatement)) {
+                        preparedStatement.executeUpdate();
+                    }
+                }
+            }
+            connection.commit();
+        }
+    }
 }

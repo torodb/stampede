@@ -15,6 +15,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.stream.StreamSupport;
 
+import javax.inject.Singleton;
+
 import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.impl.DSL;
@@ -30,22 +32,33 @@ import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.Warmup;
 import org.openjdk.jmh.infra.Blackhole;
 
+import com.google.inject.Binder;
+import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Module;
+import com.torodb.backend.DbBackend;
 import com.torodb.backend.DbBackendService;
+import com.torodb.backend.DslContextFactory;
+import com.torodb.backend.DslContextFactoryImpl;
 import com.torodb.backend.MockDidCursor;
+import com.torodb.backend.SqlHelper;
 import com.torodb.backend.SqlInterface;
+import com.torodb.backend.SqlInterfaceDelegate;
 import com.torodb.backend.TableRefComparator;
-import com.torodb.backend.derby.Derby;
+import com.torodb.backend.derby.guice.DerbyBackendModule;
+import com.torodb.backend.driver.derby.DerbyDbBackendConfiguration;
 import com.torodb.backend.meta.TorodbSchema;
 import com.torodb.backend.util.InMemoryRidGenerator;
 import com.torodb.backend.util.TestDataFactory;
 import com.torodb.core.TableRefFactory;
+import com.torodb.core.backend.IdentifierConstraints;
 import com.torodb.core.d2r.CollectionData;
 import com.torodb.core.d2r.D2RTranslator;
 import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.d2r.DocPartResults;
 import com.torodb.core.d2r.IdentifierFactory;
 import com.torodb.core.d2r.R2DTranslator;
+import com.torodb.core.guice.CoreModule;
 import com.torodb.core.impl.TableRefFactoryImpl;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetainfoRepository.SnapshotStage;
@@ -80,12 +93,13 @@ public class BenchmarkDerbyR2DBackedTranslator {
 
 		@Setup(Level.Invocation)
 		public void setup() throws Exception {
-		    Injector injector = Derby.createInjector();
+		    Injector injector = createInjector();
 	        DbBackendService dbBackend = injector.getInstance(DbBackendService.class);
 	        dbBackend.startAsync();
 	        dbBackend.awaitRunning();
-		    Derby.cleanDatabase(injector);
-		    sqlInterface = injector.getInstance(SqlInterface.class);
+            sqlInterface = injector.getInstance(SqlInterface.class);
+            SqlHelper sqlHelper = injector.getInstance(SqlHelper.class);
+		    cleanDatabase(dbBackend, sqlInterface);
 		    connection = sqlInterface.createWriteConnection();
 		    dsl = sqlInterface.createDSLContext(connection);
 			documents=new ArrayList<>();
@@ -106,9 +120,122 @@ public class BenchmarkDerbyR2DBackedTranslator {
 	        docPartResultSets = sqlInterface.getCollectionResultSets(
 	                dsl, metaDatabase, metaCollection, 
 	                new MockDidCursor(writtenDocs.iterator()), writtenDocs.size());
-	        r2dTranslator = new R2DBackedTranslator(new R2DBackendTranslatorImpl(sqlInterface, metaDatabase, metaCollection));
+	        r2dTranslator = new R2DBackedTranslator(new R2DBackendTranslatorImpl(sqlInterface, sqlHelper, metaDatabase, metaCollection));
 		}
-	}
+		
+	    public Injector createInjector() {
+	        return Guice.createInjector(
+	                    new CoreModule(),
+	                    new Module() {
+	                        @Override
+	                        public void configure(Binder binder) {
+	                            binder.bind(SqlInterface.class)
+	                                .to(SqlInterfaceDelegate.class)
+	                                .in(Singleton.class);
+	                            binder.bind(DslContextFactory.class)
+	                                .to(DslContextFactoryImpl.class)
+	                                .asEagerSingleton();
+	                        }
+	                    },
+	                    new DerbyBackendModule(),
+	                    getConfigurationModule());
+	    }
+
+	    public Module getConfigurationModule() {
+	        return new Module() {
+	            @Override
+	            public void configure(Binder binder) {
+	                binder.bind(DerbyDbBackendConfiguration.class)
+	                    .toInstance(getBackEndConfiguration());
+	            }
+	        };
+	    }
+	    
+	    public DerbyDbBackendConfiguration getBackEndConfiguration(){
+	        return new DerbyDbBackendConfiguration() {
+	            @Override
+	            public String getUsername() {
+	                return null;
+	            }
+	            
+	            @Override
+	            public int getReservedReadPoolSize() {
+	                return 4;
+	            }
+	            
+	            @Override
+	            public String getPassword() {
+	                return null;
+	            }
+	            
+	            @Override
+	            public int getDbPort() {
+	                return 0;
+	            }
+	            
+	            @Override
+	            public String getDbName() {
+	                return "torodb";
+	            }
+	            
+	            @Override
+	            public String getDbHost() {
+	                return null;
+	            }
+	            
+	            @Override
+	            public long getCursorTimeout() {
+	                return 8000;
+	            }
+	            
+	            @Override
+	            public long getConnectionPoolTimeout() {
+	                return 10000;
+	            }
+	            
+	            @Override
+	            public int getConnectionPoolSize() {
+	                return 8;
+	            }
+
+	            @Override
+	            public boolean inMemory() {
+	                return true;
+	            }
+
+	            @Override
+	            public boolean embedded() {
+	                return true;
+	            }
+	        };
+	    }
+	    
+	    public static void cleanDatabase(DbBackend dbBackend, IdentifierConstraints identifierConstraints) throws SQLException {
+	        try (Connection connection = dbBackend.createSystemConnection()) {
+	            DatabaseMetaData metaData = connection.getMetaData();
+	            ResultSet tables = metaData.getTables("%", "%", "%", null);
+	            while (tables.next()) {
+	                String schemaName = tables.getString("TABLE_SCHEM");
+	                String tableName = tables.getString("TABLE_NAME");
+	                if (identifierConstraints.isAllowedSchemaIdentifier(schemaName) || schemaName.equals(TorodbSchema.IDENTIFIER)) {
+	                    try (PreparedStatement preparedStatement = connection.prepareStatement("DROP TABLE \"" + schemaName + "\".\"" + tableName + "\"")) {
+	                        preparedStatement.executeUpdate();
+	                    }
+	                }
+	            }
+	            ResultSet schemas = metaData.getSchemas();
+	            while (schemas.next()) {
+	                String schemaName = schemas.getString("TABLE_SCHEM");
+	                if (identifierConstraints.isAllowedSchemaIdentifier(schemaName) || schemaName.equals(TorodbSchema.IDENTIFIER)) {
+	                    try (PreparedStatement preparedStatement = connection.prepareStatement("DROP SCHEMA \"" + schemaName + "\" RESTRICT")) {
+	                        preparedStatement.executeUpdate();
+	                    }
+	                }
+	            }
+	            connection.commit();
+	        }
+	    }
+    }
 
 	@Benchmark
 	@Fork(value=5)
@@ -175,7 +302,7 @@ public class BenchmarkDerbyR2DBackedTranslator {
         while (tables.next()) {
             String schemaName = tables.getString("TABLE_SCHEM");
             String tableName = tables.getString("TABLE_NAME");
-            if (!state.sqlInterface.isAllowedSchemaIdentifier(schemaName) || schemaName.equals(TorodbSchema.TORODB_SCHEMA)) {
+            if (!state.sqlInterface.isAllowedSchemaIdentifier(schemaName) || schemaName.equals(TorodbSchema.IDENTIFIER)) {
                 try (PreparedStatement preparedStatement = state.connection.prepareStatement("DROP TABLE \"" + schemaName + "\".\"" + tableName + "\"")) {
                     preparedStatement.executeUpdate();
                 }
@@ -184,7 +311,7 @@ public class BenchmarkDerbyR2DBackedTranslator {
         ResultSet schemas = metaData.getSchemas();
         while (schemas.next()) {
             String schemaName = schemas.getString("TABLE_SCHEM");
-            if (!state.sqlInterface.isAllowedSchemaIdentifier(schemaName) || schemaName.equals(TorodbSchema.TORODB_SCHEMA)) {
+            if (!state.sqlInterface.isAllowedSchemaIdentifier(schemaName) || schemaName.equals(TorodbSchema.IDENTIFIER)) {
                 try (PreparedStatement preparedStatement = state.connection.prepareStatement("DROP SCHEMA \"" + schemaName + "\" RESTRICT")) {
                     preparedStatement.executeUpdate();
                 }

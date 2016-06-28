@@ -1,4 +1,4 @@
-package com.torodb.backend;
+package com.torodb.integration.backend;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -9,6 +9,7 @@ import org.jooq.impl.DSL;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.torodb.backend.SqlInterface;
 import com.torodb.core.TableRef;
 import com.torodb.core.TableRefFactory;
 import com.torodb.core.transaction.metainf.FieldType;
@@ -41,10 +42,10 @@ public class TestSchema {
     public final ImmutableList<ImmutableMap<String, Optional<KVValue<?>>>> rootDocPartValues;
     public final ImmutableList<ImmutableMap<String, Optional<KVValue<?>>>> subDocPartValues;
     
-    private SqlInterface databaseInterface;
+    private SqlInterface sqlInterface;
     
-    public TestSchema(TableRefFactory tableRefFactory, SqlInterface databaseInterface){
-    	this.databaseInterface = databaseInterface;
+    public TestSchema(TableRefFactory tableRefFactory, SqlInterface sqlInterface){
+    	this.sqlInterface = sqlInterface;
         databaseName = "databaseName";
         databaseSchemaName = "databaseSchemaName";
         collectionName = "collectionName";
@@ -181,7 +182,7 @@ public class TestSchema {
     }
     
     private Field<?> field(String name, FieldType type){
-    	return DSL.field(name, databaseInterface.getDataType(type));
+    	return DSL.field(name, sqlInterface.getDataType(type));
     }
 
 }
