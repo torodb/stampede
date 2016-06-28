@@ -33,7 +33,7 @@ import com.torodb.kvdocument.values.KVInteger;
 /**
  *
  */
-public class IntegerValueConverter implements KVValueConverter<Integer, KVInteger>{
+public class IntegerValueConverter implements KVValueConverter<Integer, Integer, KVInteger>{
     private static final long serialVersionUID = 1L;
 
     public static final DataTypeForKV<KVInteger> TYPE = DataTypeForKV.from(SQLDataType.INTEGER, new IntegerValueConverter());

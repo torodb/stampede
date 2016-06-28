@@ -30,11 +30,12 @@ import com.torodb.kvdocument.values.KVValue;
 /**
  *
  * @param <DBT> data base type
- * @param <V> a value of the given Java type
+ * @param <JT> an intermediate JDBC-friendly Java type
+ * @param <V> a value of the given {@code KVValue} type
  */
-public interface KVValueConverter<DBT, V extends KVValue<?>> extends Converter<DBT, V> {
+public interface KVValueConverter<DBT, JT, V extends KVValue<?>> extends Converter<DBT, V> {
     
     public KVType getErasuredType();
     
-    public SqlBinding<DBT> getSqlBinding();
+    public SqlBinding<JT> getSqlBinding();
 }

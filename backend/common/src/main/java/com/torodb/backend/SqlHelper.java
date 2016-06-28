@@ -28,6 +28,7 @@ import java.sql.SQLException;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+import org.jooq.Converter;
 import org.jooq.DSLContext;
 import org.jooq.Record;
 import org.jooq.Result;
@@ -124,12 +125,13 @@ public class SqlHelper {
             FieldType fieldType, KVValue<?> value) throws SQLException {
         DataTypeForKV dataType = dataTypeProvider
                 .getDataType(fieldType);
+        Converter converter = dataType.getConverter();
         KVValueConverter valueConverter = dataType
                 .getKVValueConverter();
         SqlBinding sqlBinding = valueConverter
                 .getSqlBinding();
         if (value != null) {
-            sqlBinding.set(preparedStatement, parameterIndex, valueConverter.to(value));
+            sqlBinding.set(preparedStatement, parameterIndex, converter.to(value));
         } else {
             preparedStatement.setNull(parameterIndex, dataType.getSQLType());
         }
@@ -140,11 +142,12 @@ public class SqlHelper {
             FieldType fieldType, KVValue<?> value) throws SQLException {
         DataTypeForKV dataType = dataTypeProvider
                 .getDataType(fieldType);
+        Converter converter = dataType.getConverter();
         KVValueConverter valueConverter = dataType
                 .getKVValueConverter();
         SqlBinding sqlBinding = valueConverter
                 .getSqlBinding();
-        sqlBinding.set(preparedStatement, parameterIndex, valueConverter.to(value));
+        sqlBinding.set(preparedStatement, parameterIndex, converter.to(value));
     }
     
     @SuppressWarnings({ "rawtypes" })

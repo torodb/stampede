@@ -28,7 +28,7 @@ public class TimeBinding<T> implements Binding<Time, T> {
 
     private static final long serialVersionUID = 1L;
 
-    public static <UT extends KVValue<?>> DataTypeForKV<UT> fromKVValue(Class<UT> type, KVValueConverter<Time, UT> converter) {
+    public static <JT, UT extends KVValue<?>> DataTypeForKV<UT> fromKVValue(Class<UT> type, KVValueConverter<Time, JT, UT> converter) {
         return DataTypeForKV.from(new DefaultDataType<Time>(null, Time.class, "time"), converter, new TimeBinding<UT>(converter));
     }
     

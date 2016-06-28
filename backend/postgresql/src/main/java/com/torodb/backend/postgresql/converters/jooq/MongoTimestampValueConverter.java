@@ -35,7 +35,7 @@ import com.torodb.kvdocument.values.heap.DefaultKVMongoTimestamp;
  *
  */
 public class MongoTimestampValueConverter implements
-        KVValueConverter<MongoTimestampRecord, KVMongoTimestamp> {
+        KVValueConverter<MongoTimestampRecord, MongoTimestampRecord, KVMongoTimestamp> {
 
     private static final long serialVersionUID = 1251948867583783920L;
 

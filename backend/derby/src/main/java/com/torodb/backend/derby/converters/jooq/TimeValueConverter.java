@@ -14,7 +14,7 @@ import com.torodb.kvdocument.values.heap.LocalTimeKVTime;
 /**
  *
  */
-public class TimeValueConverter implements KVValueConverter<Time, KVTime>{
+public class TimeValueConverter implements KVValueConverter<Time, Time, KVTime>{
     private static final long serialVersionUID = 1L;
 
     public static final DataTypeForKV<KVTime> TYPE = TimeBinding.fromKVValue(KVTime.class, new TimeValueConverter());

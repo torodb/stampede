@@ -36,7 +36,7 @@ import com.torodb.kvdocument.values.heap.InstantKVInstant;
 /**
  *
  */
-public class InstantValueConverter implements KVValueConverter<Timestamp, KVInstant>{
+public class InstantValueConverter implements KVValueConverter<Timestamp, Timestamp, KVInstant>{
     private static final long serialVersionUID = 1L;
 
     private static final DataType<Timestamp> TIMESTAMPTZ = new DefaultDataType<Timestamp>(null, Timestamp.class, "timestamptz");

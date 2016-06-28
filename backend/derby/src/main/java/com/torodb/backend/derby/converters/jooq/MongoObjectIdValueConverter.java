@@ -33,7 +33,7 @@ import com.torodb.kvdocument.values.heap.ByteArrayKVMongoObjectId;
 /**
  *
  */
-public class MongoObjectIdValueConverter implements KVValueConverter<byte[], KVMongoObjectId> {
+public class MongoObjectIdValueConverter implements KVValueConverter<byte[], byte[], KVMongoObjectId> {
     private static final long serialVersionUID = 1L;
 
     public static final DataTypeForKV<KVMongoObjectId> TYPE = VarcharForBitDataBinding.fromKVValue(KVMongoObjectId.class, new MongoObjectIdValueConverter(), 12);

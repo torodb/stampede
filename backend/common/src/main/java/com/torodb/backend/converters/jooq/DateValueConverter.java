@@ -34,7 +34,7 @@ import com.torodb.kvdocument.values.heap.LocalDateKVDate;
 /**
  *
  */
-public class DateValueConverter implements KVValueConverter<Date, KVDate> {
+public class DateValueConverter implements KVValueConverter<Date, Date, KVDate> {
     private static final long serialVersionUID = 1L;
 
     public static final DataTypeForKV<KVDate> TYPE = DataTypeForKV.from(SQLDataType.DATE, new DateValueConverter());
