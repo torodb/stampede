@@ -58,25 +58,25 @@ public abstract class AbstractSchemaUpdater implements SchemaUpdater {
     ) throws SQLException, IOException, InvalidDatabaseException {
         Schema torodbSchema = null;
         for (Schema schema : jooqMeta.getSchemas()) {
-            if (sqlInterface.isSameIdentifier(TorodbSchema.TORODB_SCHEMA, schema.getName())) {
+            if (sqlInterface.isSameIdentifier(TorodbSchema.IDENTIFIER, schema.getName())) {
                 torodbSchema = schema;
                 break;
             }
         }
         if (torodbSchema == null) {
-            LOGGER.info("Schema '{}' not found. Creating it...", TorodbSchema.TORODB_SCHEMA);
+            LOGGER.info("Schema '{}' not found. Creating it...", TorodbSchema.IDENTIFIER);
             createSchema(dsl, sqlInterface, sqlHelper);
-            LOGGER.info("Schema '{}' created", TorodbSchema.TORODB_SCHEMA);
+            LOGGER.info("Schema '{}' created", TorodbSchema.IDENTIFIER);
         }
         else {
-            LOGGER.info("Schema '{}' found. Checking it...", TorodbSchema.TORODB_SCHEMA);
+            LOGGER.info("Schema '{}' found. Checking it...", TorodbSchema.IDENTIFIER);
             checkSchema(torodbSchema, sqlInterface);
-            LOGGER.info("Schema '{}' checked", TorodbSchema.TORODB_SCHEMA);
+            LOGGER.info("Schema '{}' checked", TorodbSchema.IDENTIFIER);
         }
     }
 
     protected void createSchema(DSLContext dsl, SqlInterface sqlInterface, SqlHelper sqlHelper) throws SQLException, IOException {
-        sqlInterface.createSchema(dsl, TorodbSchema.TORODB_SCHEMA);
+        sqlInterface.createSchema(dsl, TorodbSchema.IDENTIFIER);
         sqlInterface.createMetaDatabaseTable(dsl);
         sqlInterface.createMetaCollectionTable(dsl);
         sqlInterface.createMetaDocPartTable(dsl);
@@ -104,7 +104,7 @@ public abstract class AbstractSchemaUpdater implements SchemaUpdater {
                 }
             }
             if (!metaTableFound) {
-                throw new InvalidDatabaseException("The schema '" + TorodbSchema.TORODB_SCHEMA + "'"
+                throw new InvalidDatabaseException("The schema '" + TorodbSchema.IDENTIFIER + "'"
                         + " does not contain the expected meta table '" 
                         + metaTableName +"'");
             }

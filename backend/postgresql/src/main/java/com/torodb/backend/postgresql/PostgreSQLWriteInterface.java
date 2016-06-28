@@ -64,6 +64,7 @@ public class PostgreSQLWriteInterface extends AbstractWriteInterface {
     
     private final PostgreSQLMetaDataReadInterface postgreSQLMetaDataReadInterface;
     private final ErrorHandler errorHandler;
+    private final SqlHelper sqlHelper;
     
     @Inject
     public PostgreSQLWriteInterface(PostgreSQLMetaDataReadInterface metaDataReadInterface,
@@ -72,6 +73,7 @@ public class PostgreSQLWriteInterface extends AbstractWriteInterface {
         super(metaDataReadInterface, errorHandler, sqlHelper);
         this.postgreSQLMetaDataReadInterface = metaDataReadInterface;
         this.errorHandler = errorHandler;
+        this.sqlHelper = sqlHelper;
     }
 
     @Override
@@ -292,19 +294,25 @@ public class PostgreSQLWriteInterface extends AbstractWriteInterface {
         }
         while (metaScalarIterator.hasNext()) {
             MetaScalar metaScalar = metaScalarIterator.next();
+            FieldType type = metaScalar.getType();
             insertStatementBuilder.append("\"")
                 .append(metaScalar.getIdentifier())
                 .append("\",");
-            insertStatementValuesBuilder.append("?,");
-            fieldTypeList.add(metaScalar.getType());
+            insertStatementValuesBuilder
+                .append(sqlHelper.getPlaceholder(type))
+                .append(',');
+            fieldTypeList.add(type);
         }
         while (metaFieldIterator.hasNext()) {
             MetaField metaField = metaFieldIterator.next();
+            FieldType type = metaField.getType();
             insertStatementBuilder.append("\"")
                 .append(metaField.getIdentifier())
                 .append("\",");
-            insertStatementValuesBuilder.append("?,");
-            fieldTypeList.add(metaField.getType());
+            insertStatementValuesBuilder
+            .append(sqlHelper.getPlaceholder(type))
+            .append(',');
+        fieldTypeList.add(type);
         }
         insertStatementBuilder.setCharAt(insertStatementBuilder.length() - 1, ')');
         insertStatementValuesBuilder.setCharAt(insertStatementValuesBuilder.length() - 1, ')');

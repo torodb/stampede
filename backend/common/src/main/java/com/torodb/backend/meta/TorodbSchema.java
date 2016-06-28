@@ -29,7 +29,7 @@ public class TorodbSchema extends SchemaImpl {
 
 	private static final long serialVersionUID = -1813122131;
 
-    public static final String TORODB_SCHEMA = "torodb";
+    public static final String IDENTIFIER = "torodb";
 
     /**
      * The reference instance of <code>torodb</code>
@@ -40,7 +40,7 @@ public class TorodbSchema extends SchemaImpl {
      * No further instances allowed
      */
 	protected TorodbSchema() {
-		super(TORODB_SCHEMA);
+		super(IDENTIFIER);
 	}
 
 	@Override

@@ -33,7 +33,9 @@ import com.torodb.backend.udt.record.MongoTimestampRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class MongoTimestampUDT extends UDTImpl<MongoTimestampRecord> {
 
-	private static final long serialVersionUID = -552117608;
+	public static final String IDENTIFIER = "mongo_timestamp";
+
+    private static final long serialVersionUID = -552117608;
 
 	/**
 	 * The singleton instance of <code>torodb.mongo_timestamp</code>
@@ -63,7 +65,7 @@ public class MongoTimestampUDT extends UDTImpl<MongoTimestampRecord> {
 	 * No further instances allowed
 	 */
 	private MongoTimestampUDT() {
-		super("mongo_timestamp", TorodbSchema.TORODB);
+		super(IDENTIFIER, TorodbSchema.TORODB);
 
 		// Initialise data type
 		getDataType();
