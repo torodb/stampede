@@ -28,8 +28,12 @@ public class BooleanSqlBinding implements SqlBinding<Boolean> {
     public static final BooleanSqlBinding INSTANCE = new BooleanSqlBinding();
 
     @Override
-    public Boolean get(ResultSet resultSet, int index) throws SQLException {
-        return resultSet.getBoolean(index);
+    public Boolean get(ResultSet resultSet, int columnIndex) throws SQLException {
+        boolean value = resultSet.getBoolean(columnIndex);
+        if (resultSet.wasNull()) {
+            return null;
+        }
+        return value;
     }
 
     @Override

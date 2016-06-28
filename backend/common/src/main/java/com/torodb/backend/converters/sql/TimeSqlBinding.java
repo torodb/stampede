@@ -29,8 +29,12 @@ public class TimeSqlBinding implements SqlBinding<Time> {
     public static final TimeSqlBinding INSTANCE = new TimeSqlBinding();
 
     @Override
-    public Time get(ResultSet resultSet, int index) throws SQLException {
-        return resultSet.getTime(index);
+    public Time get(ResultSet resultSet, int columnIndex) throws SQLException {
+        Time value = resultSet.getTime(columnIndex);
+        if (resultSet.wasNull()) {
+            return null;
+        }
+        return value;
     }
 
     @Override

@@ -28,8 +28,12 @@ public class DoubleSqlBinding implements SqlBinding<Double> {
     public static final DoubleSqlBinding INSTANCE = new DoubleSqlBinding();
 
     @Override
-    public Double get(ResultSet resultSet, int index) throws SQLException {
-        return resultSet.getDouble(index);
+    public Double get(ResultSet resultSet, int columnIndex) throws SQLException {
+        double value = resultSet.getDouble(columnIndex);
+        if (resultSet.wasNull()) {
+            return null;
+        }
+        return value;
     }
 
     @Override

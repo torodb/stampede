@@ -32,8 +32,12 @@ public class JsonObjectSqlBinding implements SqlBinding<JsonObject> {
     public static final JsonObjectSqlBinding INSTANCE = new JsonObjectSqlBinding();
 
     @Override
-    public JsonObject get(ResultSet resultSet, int index) throws SQLException {
-        return Json.createReader(new StringReader(resultSet.getString(index))).readObject();
+    public JsonObject get(ResultSet resultSet, int columnIndex) throws SQLException {
+        String value = resultSet.getString(columnIndex);
+        if (resultSet.wasNull()) {
+            return null;
+        }
+        return Json.createReader(new StringReader(value)).readObject();
     }
 
     @Override

@@ -29,8 +29,12 @@ public class TimestampSqlBinding implements SqlBinding<Timestamp> {
     public static final TimestampSqlBinding INSTANCE = new TimestampSqlBinding();
 
     @Override
-    public Timestamp get(ResultSet resultSet, int index) throws SQLException {
-        return resultSet.getTimestamp(index);
+    public Timestamp get(ResultSet resultSet, int columnIndex) throws SQLException {
+        Timestamp value = resultSet.getTimestamp(columnIndex);
+        if (resultSet.wasNull()) {
+            return null;
+        }
+        return value;
     }
 
     @Override
