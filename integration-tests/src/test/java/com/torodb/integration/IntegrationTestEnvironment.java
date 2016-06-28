@@ -69,7 +69,7 @@ public class IntegrationTestEnvironment {
 	}
 
     private static Backend currentBackend() {
-        Backend currentBackend = Backend.POSTGRES;
+        Backend currentBackend = Backend.DERBY;
 
         String currentBackendValue = System.getenv(Backend.class.getSimpleName());
         if (currentBackendValue != null) {
