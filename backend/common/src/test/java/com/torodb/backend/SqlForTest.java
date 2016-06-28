@@ -1,29 +1,8 @@
-/*
- *     This file is part of ToroDB.
- *
- *     ToroDB is free software: you can redistribute it and/or modify
- *     it under the terms of the GNU Affero General Public License as published by
- *     the Free Software Foundation, either version 3 of the License, or
- *     (at your option) any later version.
- *
- *     ToroDB is distributed in the hope that it will be useful,
- *     but WITHOUT ANY WARRANTY; without even the implied warranty of
- *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *     GNU Affero General Public License for more details.
- *
- *     You should have received a copy of the GNU Affero General Public License
- *     along with ToroDB. If not, see <http://www.gnu.org/licenses/>.
- *
- *     Copyright (c) 2014, 8Kdata Technology
- *     
- */
-
 package com.torodb.backend;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.junit.Before;
 
 import com.google.inject.Binder;
 import com.google.inject.Guice;
@@ -34,23 +13,17 @@ import com.torodb.backend.meta.SchemaUpdater;
 import com.torodb.backend.meta.SnapshotUpdater;
 import com.torodb.core.TableRefFactory;
 import com.torodb.core.guice.CoreModule;
-import com.torodb.core.impl.TableRefFactoryImpl;
 import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
 import com.torodb.core.transaction.metainf.MetainfoRepository.SnapshotStage;
 import com.torodb.metainfo.cache.mvcc.MvccMetainfoRepository;
 
-public abstract class AbstractBackendTest {
-    
-    protected static final TableRefFactory tableRefFactory = new TableRefFactoryImpl();
-    
-    protected SqlInterface sqlInterface;
+public class SqlForTest {
+
+    private SqlInterface sqlInterface;
     private SchemaUpdater schemaUpdater;
     private SqlHelper sqlHelper;
     
-    @Before
-    public void setUp() throws Exception {
-    	DatabaseForTest database = getDatabaseForTest();
-    	
+    public SqlForTest(DatabaseForTest database) throws SQLException{
         Injector injector = createInjector(database);
         DbBackendService dbBackend = injector.getInstance(DbBackendService.class);
         dbBackend.startAsync();
@@ -81,9 +54,12 @@ public abstract class AbstractBackendTest {
         return Guice.createInjector(modules.toArray(new Module[]{}));
     }
     
-    protected abstract DatabaseForTest getDatabaseForTest();
+
+    public SqlInterface getSqlInterface(){
+    	return sqlInterface;
+    }
     
-    protected ImmutableMetaSnapshot buildMetaSnapshot() {
+    public ImmutableMetaSnapshot buildMetaSnapshot(TableRefFactory tableRefFactory) {
         MvccMetainfoRepository metainfoRepository = new MvccMetainfoRepository();
         SnapshotUpdater.updateSnapshot(metainfoRepository, sqlInterface, sqlHelper, schemaUpdater, tableRefFactory);
 
@@ -91,5 +67,5 @@ public abstract class AbstractBackendTest {
             return stage.createImmutableSnapshot();
         }
     }
-    
+
 }

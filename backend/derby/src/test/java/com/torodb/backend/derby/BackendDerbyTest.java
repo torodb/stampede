@@ -36,7 +36,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.stream.StreamSupport;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -44,19 +43,22 @@ import org.jooq.Converter;
 import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
-import com.google.inject.Injector;
-import com.torodb.backend.AbstractBackendTest;
 import com.torodb.backend.BackendDocumentTestHelper;
 import com.torodb.backend.BackendTestHelper;
 import com.torodb.backend.DefaultDidCursor;
 import com.torodb.backend.MockDidCursor;
+import com.torodb.backend.SqlForTest;
+import com.torodb.backend.SqlInterface;
+import com.torodb.backend.TestSchema;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
-import com.torodb.backend.meta.SnapshotUpdater;
+import com.torodb.core.TableRefFactory;
 import com.torodb.core.d2r.CollectionData;
 import com.torodb.core.d2r.DocPartResults;
 import com.torodb.core.document.ToroDocument;
+import com.torodb.core.impl.TableRefFactoryImpl;
 import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
 import com.torodb.core.transaction.metainf.ImmutableMetaDatabase;
@@ -68,7 +70,6 @@ import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetaField;
 import com.torodb.core.transaction.metainf.MetaSnapshot;
-import com.torodb.core.transaction.metainf.MetainfoRepository.SnapshotStage;
 import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
 import com.torodb.core.transaction.metainf.WrapperMutableMetaSnapshot;
 import com.torodb.kvdocument.values.KVDocument;
@@ -76,35 +77,27 @@ import com.torodb.kvdocument.values.KVInteger;
 import com.torodb.kvdocument.values.KVValue;
 import com.torodb.kvdocument.values.heap.ListKVArray;
 import com.torodb.kvdocument.values.heap.StringKVString;
-import com.torodb.metainfo.cache.mvcc.MvccMetainfoRepository;
 
-public class BackendDerbyTest extends AbstractBackendTest {
+public class BackendDerbyTest {
     
     private final Logger LOGGER = LogManager.getLogger(BackendDerbyTest.class);
 
-    @Override
-    protected Injector createInjector() {
-        return Derby.createInjector();
-    }
-    
-    @Override
-    protected void cleanDatabase(Injector injector) throws SQLException {
-        Derby.cleanDatabase(injector);
-    }
-
+	private SqlInterface sqlInterface;
+	private SqlForTest sqlForTest;
+	private TableRefFactory tableRefFactory;
+	
+	@Before
+	public void setUp() throws SQLException{
+		sqlForTest=new SqlForTest(new Derby());
+		sqlInterface = sqlForTest.getSqlInterface();
+		tableRefFactory = new TableRefFactoryImpl();
+	}
+	
+	
     private FieldType fieldType(Field<?> field) {
         return FieldType.from(((DataTypeForKV<?>) field.getDataType()).getKVValueConverter().getErasuredType());
     }
 
-    private ImmutableMetaSnapshot buildMetaSnapshot() {
-        MvccMetainfoRepository metainfoRepository = new MvccMetainfoRepository();
-        SnapshotUpdater.updateSnapshot(metainfoRepository, sqlInterface, sqlHelper, schemaUpdater, tableRefFactory);
-
-        try (SnapshotStage stage = metainfoRepository.startSnapshotStage()) {
-            return stage.createImmutableSnapshot();
-        }
-    }
-    
     private DSLContext dsl(Connection connection){
         return sqlInterface.createDSLContext(connection);
     }
@@ -115,17 +108,17 @@ public class BackendDerbyTest extends AbstractBackendTest {
      */
     @Test
     public void testSnapshotUpdater() throws Exception {
-        MetaSnapshot metaSnapshot = buildMetaSnapshot();
+        MetaSnapshot metaSnapshot = sqlForTest.buildMetaSnapshot(tableRefFactory);
         assertFalse(metaSnapshot.streamMetaDatabases().iterator().hasNext());
         
-    	metaSnapshot = buildMetaSnapshot();
+    	metaSnapshot = sqlForTest.buildMetaSnapshot(tableRefFactory);
         assertFalse(metaSnapshot.streamMetaDatabases().iterator().hasNext());
     }
     
     @Test
     public void testSnapshotUpdaterStoreAndReload() throws Exception {
-       	buildMetaSnapshot();
-
+    	TestSchema schema = new TestSchema(tableRefFactory, sqlInterface);
+    	sqlForTest.buildMetaSnapshot(tableRefFactory);
        	try (Connection connection = sqlInterface.createWriteConnection()) {
             BackendTestHelper helper = new BackendTestHelper(sqlInterface, dsl(connection), schema);
             helper.createMetaModel();
@@ -136,7 +129,7 @@ public class BackendDerbyTest extends AbstractBackendTest {
             connection.commit();
         }
         
-        MetaSnapshot metaSnapshot = buildMetaSnapshot();
+        MetaSnapshot metaSnapshot = sqlForTest.buildMetaSnapshot(tableRefFactory);
         MetaDatabase metaDatabase = metaSnapshot.getMetaDatabaseByName(schema.databaseName);
         
         assertNotNull(metaDatabase);
@@ -166,7 +159,7 @@ public class BackendDerbyTest extends AbstractBackendTest {
             connection.commit();
         }
         
-        metaSnapshot = buildMetaSnapshot();
+        metaSnapshot = sqlForTest.buildMetaSnapshot(tableRefFactory);
         metaDatabase = metaSnapshot.getMetaDatabaseByName(schema.databaseName);
         
         assertNotNull(metaDatabase);
@@ -198,9 +191,10 @@ public class BackendDerbyTest extends AbstractBackendTest {
 
 	@Test
     public void testConsumeRids() throws Exception {
-		 buildMetaSnapshot();
+		TestSchema schema = new TestSchema(tableRefFactory, sqlInterface);
+		sqlForTest.buildMetaSnapshot(tableRefFactory);
 
-		 try (Connection connection = sqlInterface.createWriteConnection()) {
+		try (Connection connection = sqlInterface.createWriteConnection()) {
              DSLContext dsl = dsl(connection);
              BackendTestHelper helper = new BackendTestHelper(sqlInterface, dsl, schema);
              helper.createMetaModel();
@@ -214,13 +208,14 @@ public class BackendDerbyTest extends AbstractBackendTest {
              int next100SubRid = sqlInterface.consumeRids(dsl, schema.databaseName, schema.collectionName, schema.subDocPartTableRef, 100);
              assertEquals(100, next100SubRid);
              connection.commit();
-         }
+        }
     }
     
 
     @Test
     public void testTorodbLastRowId() throws Exception {
-		buildMetaSnapshot();
+    	TestSchema schema = new TestSchema(tableRefFactory, sqlInterface);
+    	sqlForTest.buildMetaSnapshot(tableRefFactory);
     	 
         try (Connection connection = sqlInterface.createWriteConnection()) {
         	DSLContext dsl = dsl(connection);
@@ -236,7 +231,7 @@ public class BackendDerbyTest extends AbstractBackendTest {
             		schema.subDocPartFields.values());
             connection.commit();
 
-            ImmutableMetaSnapshot snapshot = buildMetaSnapshot();
+            ImmutableMetaSnapshot snapshot = sqlForTest.buildMetaSnapshot(tableRefFactory);
             
             ImmutableMetaDatabase metaDatabase = snapshot.getMetaDatabaseByName(schema.databaseName);
         	ImmutableMetaCollection metaCollection = metaDatabase.getMetaCollectionByName(schema.collectionName);
@@ -267,7 +262,8 @@ public class BackendDerbyTest extends AbstractBackendTest {
     
     @Test
     public void testTorodbInsertDocPart() throws Exception {
-    	buildMetaSnapshot();
+    	TestSchema schema = new TestSchema(tableRefFactory, sqlInterface);
+    	sqlForTest.buildMetaSnapshot(tableRefFactory);
     	
         try (Connection connection = sqlInterface.createWriteConnection()) {
             DSLContext dsl = dsl(connection);
@@ -319,6 +315,7 @@ public class BackendDerbyTest extends AbstractBackendTest {
 
 	@SuppressWarnings("unchecked")
     private boolean findRow(ResultSet resultSet, List<Integer> foundRowIndexes) throws SQLException {
+		TestSchema schema = new TestSchema(tableRefFactory, sqlInterface);
 		Integer index = 0;
 		boolean rowFound = true;
 		for (Map<String, Optional<KVValue<?>>> rootDocPartValueMap : schema.rootDocPartValues) {
@@ -362,6 +359,7 @@ public class BackendDerbyTest extends AbstractBackendTest {
     
     @Test
     public void testTorodbReadCollectionResultSets() throws Exception {
+    	TestSchema schema = new TestSchema(tableRefFactory, sqlInterface);
         BackendDocumentTestHelper helper = new BackendDocumentTestHelper(sqlInterface, tableRefFactory, schema);
         KVDocument document = helper.parseFromJson("testTorodbReadDocPart.json");
         try (Connection connection = sqlInterface.createWriteConnection()) {
@@ -395,6 +393,7 @@ public class BackendDerbyTest extends AbstractBackendTest {
     
     @Test
     public void testTorodbReadAllCollectionResultSetsDids() throws Exception {
+    	TestSchema schema = new TestSchema(tableRefFactory, sqlInterface);
         BackendDocumentTestHelper helper = new BackendDocumentTestHelper(sqlInterface, tableRefFactory, schema);
         List<KVDocument> documents = helper.parseListFromJson("testTorodbReadDocPartDids.json");
         try (Connection connection = sqlInterface.createWriteConnection()) {
@@ -411,7 +410,7 @@ public class BackendDerbyTest extends AbstractBackendTest {
             MetaDatabase metaDatabase = mutableSnapshot.getMetaDatabaseByName(schema.databaseName);
             MetaCollection metaCollection = metaDatabase.getMetaCollectionByName(schema.collectionName);
             
-            MetaDocPart metaDocPart = metaCollection.getMetaDocPartByTableRef(createTableRef());
+            MetaDocPart metaDocPart = metaCollection.getMetaDocPartByTableRef(helper.createTableRef());
             
             Collection<ToroDocument> readedToroDocuments;
             try (
@@ -441,6 +440,7 @@ public class BackendDerbyTest extends AbstractBackendTest {
     
     @Test
     public void testTorodbReadCollectionResultSetsDidsWithFieldEqualsTo() throws Exception {
+    	TestSchema schema = new TestSchema(tableRefFactory, sqlInterface);
         BackendDocumentTestHelper helper = new BackendDocumentTestHelper(sqlInterface, tableRefFactory, schema);
         List<KVDocument> documents = helper.parseListFromJson("testTorodbReadDocPartDids.json");
         try (Connection connection = sqlInterface.createWriteConnection()) {
@@ -457,7 +457,7 @@ public class BackendDerbyTest extends AbstractBackendTest {
             MetaDatabase metaDatabase = mutableSnapshot.getMetaDatabaseByName(schema.databaseName);
             MetaCollection metaCollection = metaDatabase.getMetaCollectionByName(schema.collectionName);
             
-            MetaDocPart metaDocPart = metaCollection.getMetaDocPartByTableRef(createTableRef("batters", "batter"));
+            MetaDocPart metaDocPart = metaCollection.getMetaDocPartByTableRef(helper.createTableRef("batters", "batter"));
             MetaField metaField = metaDocPart.getMetaFieldByNameAndType("type", FieldType.STRING);
             
             connection.commit();
@@ -490,6 +490,7 @@ public class BackendDerbyTest extends AbstractBackendTest {
     
     @Test
     public void testTorodbReadCollectionResultSetsWithStructures() throws Exception {
+    	TestSchema schema = new TestSchema(tableRefFactory, sqlInterface);
         try (Connection connection = sqlInterface.createWriteConnection()) {
             DSLContext dsl = dsl(connection);
             MutableMetaSnapshot mutableSnapshot = new WrapperMutableMetaSnapshot(new ImmutableMetaSnapshot.Builder().build());
@@ -504,7 +505,8 @@ public class BackendDerbyTest extends AbstractBackendTest {
             helper.parseDocumentsAndCreateDocPartDataTables(mutableSnapshot, dsl, documents);
             
             for (KVDocument document : documents) {
-                CollectionData collectionData = helper.readDataFromDocuments(schema.databaseName, schema.collectionName, Arrays.asList(document), mutableSnapshot);
+                CollectionData collectionData = helper.readDataFromDocuments(
+                		schema.databaseName, schema.collectionName, Arrays.asList(document), mutableSnapshot);
                 
                 List<Integer> generatedDids = helper.writeCollectionData(dsl, collectionData);
                 
@@ -641,4 +643,5 @@ public class BackendDerbyTest extends AbstractBackendTest {
 				.putValue("k", KVInteger.of(1))
 				.build();
 	}
+
 }

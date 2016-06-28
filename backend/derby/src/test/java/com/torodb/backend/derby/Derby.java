@@ -5,42 +5,25 @@ import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.List;
 
 import com.google.inject.Binder;
-import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
-import com.google.inject.Singleton;
+import com.torodb.backend.DatabaseForTest;
 import com.torodb.backend.DbBackend;
-import com.torodb.backend.DslContextFactory;
-import com.torodb.backend.DslContextFactoryImpl;
-import com.torodb.backend.SqlInterface;
-import com.torodb.backend.SqlInterfaceDelegate;
 import com.torodb.backend.derby.guice.DerbyBackendModule;
 import com.torodb.backend.driver.derby.DerbyDbBackendConfiguration;
 import com.torodb.backend.meta.TorodbSchema;
 import com.torodb.core.backend.IdentifierConstraints;
-import com.torodb.core.guice.CoreModule;
 
-public class Derby {
+public class Derby implements DatabaseForTest{
 
-    public static Injector createInjector() {
-        return Guice.createInjector(
-                    new CoreModule(),
-                    new Module() {
-                        @Override
-                        public void configure(Binder binder) {
-                            binder.bind(SqlInterface.class)
-                                .to(SqlInterfaceDelegate.class)
-                                .in(Singleton.class);
-                            binder.bind(DslContextFactory.class)
-                                .to(DslContextFactoryImpl.class)
-                                .asEagerSingleton();
-                        }
-                    },
-                    new DerbyBackendModule(),
-                    Derby.getConfigurationModule());
-    }
+	@Override
+	public List<Module> getModules() {
+		return Arrays.asList(new DerbyBackendModule(),getConfigurationModule());
+	}
 
 	public static Module getConfigurationModule() {
 	    return new Module() {
@@ -111,7 +94,7 @@ public class Derby {
         };
 	}
 	
-	public static void cleanDatabase(Injector injector) throws SQLException {
+	public void cleanDatabase(Injector injector) throws SQLException {
 	    DbBackend dbBackend = injector.getInstance(DbBackend.class);
 	    IdentifierConstraints identifierConstraints = injector.getInstance(IdentifierConstraints.class);
 		try (Connection connection = dbBackend.createSystemConnection()) {
@@ -138,4 +121,6 @@ public class Derby {
             connection.commit();
         }
 	}
+
+
 }

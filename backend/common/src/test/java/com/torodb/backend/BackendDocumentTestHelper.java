@@ -1,6 +1,7 @@
 package com.torodb.backend;
 
 import com.torodb.backend.d2r.R2DBackendTranslatorImpl;
+import com.torodb.core.TableRef;
 import com.torodb.core.TableRefFactory;
 import com.torodb.core.d2r.*;
 import com.torodb.core.document.ToroDocument;
@@ -97,5 +98,21 @@ public class BackendDocumentTestHelper {
         documents.forEach(translator::translate);
         return translator.getCollectionDataAccumulator();
     }
+    
+    public TableRef createTableRef(String...names) {
+        TableRef tableRef = tableRefFactory.createRoot();
+        
+        for (String name : names) {
+            try {
+                int index = Integer.parseInt(name);
+                tableRef = tableRefFactory.createChild(tableRef, index);
+            } catch(NumberFormatException ex) {
+                tableRef = tableRefFactory.createChild(tableRef, name);
+            }
+        }
+        
+        return tableRef;
+    }
+
     
 }
