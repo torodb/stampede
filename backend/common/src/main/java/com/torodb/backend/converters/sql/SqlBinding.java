@@ -24,9 +24,33 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 public interface SqlBinding<T> {
-    public T get(ResultSet resultSet, int columnIndex) throws SQLException;
-    public void set(PreparedStatement preparedStatement, int parameterIndex, T value) throws SQLException;
+    /**
+     * Return the value from the {@code ResultSet} at the specified {@code columnIndex}.
+     * If the value in the {@code ResultSet} is null it must return null too.
+     * @param resultSet
+     * @param columnIndex
+     * @return
+     * @throws SQLException
+     */
+    public @Nullable T get(@Nonnull ResultSet resultSet, int columnIndex) throws SQLException;
+    
+    /**
+     * Set the parameter of {@code PreparedStatement} at specified {@code parameterIndex}.
+     * @param preparedStatement
+     * @param parameterIndex
+     * @param value
+     * @throws SQLException
+     */
+    public void set(@Nonnull PreparedStatement preparedStatement, int parameterIndex, @Nonnull T value) throws SQLException;
+    
+    /**
+     * Return the placeholder for a value to use in SQL statement.
+     * @return
+     */
     default public String getPlaceholder() {
         return "?";
     }
