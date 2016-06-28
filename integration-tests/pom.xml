@@ -41,6 +41,13 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>com.torodb</groupId>
+            <artifactId>core</artifactId>
+            <version>${project.version}</version>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>com.torodb.kvdocument</groupId>
             <artifactId>json-converter</artifactId>
             <version>${project.version}</version>
