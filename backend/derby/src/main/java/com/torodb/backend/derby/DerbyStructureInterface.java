@@ -21,6 +21,7 @@
 package com.torodb.backend.derby;
 
 import com.torodb.backend.AbstractStructureInterface;
+import com.torodb.backend.SqlBuilder;
 import com.torodb.backend.SqlHelper;
 import java.util.Collection;
 import javax.inject.Inject;
@@ -40,8 +41,7 @@ public class DerbyStructureInterface extends AbstractStructureInterface {
 
     @Override
     protected String getDropSchemaStatement(String schemaName) {
-        String statement = "DROP SCHEMA \"" + schemaName + "\" CASCADE";
-        return statement;
+        return "DROP SCHEMA \"" + schemaName + "\" CASCADE";
     }
     
     @Override
@@ -58,8 +58,7 @@ public class DerbyStructureInterface extends AbstractStructureInterface {
                     .append("\"").append(columnName).append("\"")
                     .append(" ").append(ascending ? "ASC" : "DESC")
                 .append(")");
-        String statement = sb.toString();
-        return statement;
+        return sb.toString();
     }
 
     @Override
@@ -70,51 +69,41 @@ public class DerbyStructureInterface extends AbstractStructureInterface {
                 .append("\".\"")
                 .append(indexName)
                 .append('"');
-        String statement = sb.toString();
-        return statement;
+        return sb.toString();
     }
 
     @Override
     protected String getCreateSchemaStatement(String schemaName) {
-        String statement = "CREATE SCHEMA \"" + schemaName + "\"";
-        return statement;
+        return "CREATE SCHEMA \"" + schemaName + "\"";
     }
 
     @Override
     protected String getCreateDocPartTableStatement(String schemaName, String tableName,
             Collection<? extends Field<?>> fields) {
-        StringBuilder sb = new StringBuilder();
-		sb.append("CREATE TABLE \"")
-          .append(schemaName)
-          .append("\".\"")
-          .append(tableName)
-		  .append("\" (");
+    	SqlBuilder sb = new SqlBuilder("CREATE TABLE ");
+    	sb.table(schemaName, tableName)
+		  .append(" (");
 		int cont = 0;
 		for (Field<?> field : getFieldIterator(fields)) {
 			if (cont > 0) {
 				sb.append(',');
 			}
-			sb.append('"').append(field.getName()).append("\" ").append(field.getDataType().getCastTypeName());
+			sb.quote(field.getName()).append(' ').append(field.getDataType().getCastTypeName());
 			cont++;
 		}
 		sb.append(')');
-		String statement = sb.toString();
-        return statement;
+        return sb.toString();
     }
 	
     @Override
     protected String getAddColumnToDocPartTableStatement(String schemaName, String tableName,
             Field<?> field) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("ALTER TABLE \"")
-                .append(schemaName)
-                .append("\".\"")
-                .append(tableName)
-                .append("\" ADD COLUMN \"")
-                .append(field.getName())
-                .append("\" ")
-                .append(field.getDataType().getCastTypeName());
-        String statement = sb.toString();
-        return statement;
+    	SqlBuilder sb = new SqlBuilder("ALTER TABLE ")
+    		.table(schemaName, tableName)
+            .append(" ADD COLUMN ")
+            .quote(field.getName())
+            .append(" ")
+            .append(field.getDataType().getCastTypeName());
+        return sb.toString();
     }
 }

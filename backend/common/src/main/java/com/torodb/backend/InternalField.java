@@ -26,7 +26,6 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.util.Collection;
 import java.util.Map;
-import java.util.function.Function;
 
 import org.jooq.BetweenAndStep;
 import org.jooq.Binding;
@@ -73,9 +72,8 @@ public abstract class InternalField<T> implements Field<T> {
             preparedStatement.setInt(index, docPartRow.getDid());
         }
         
-        @Override
-        public <R> R apply(DocPartRow docPartRow, Function<Integer, R> function) {
-            return function.apply(docPartRow.getDid());
+        public Integer getValue(DocPartRow docPartRow){
+        	return docPartRow.getDid();
         }
     }
 
@@ -97,10 +95,10 @@ public abstract class InternalField<T> implements Field<T> {
             preparedStatement.setInt(index, docPartRow.getRid());
         }
         
-        @Override
-        public <R> R apply(DocPartRow docPartRow, Function<Integer, R> function) {
-            return function.apply(docPartRow.getRid());
+        public Integer getValue(DocPartRow docPartRow){
+        	return docPartRow.getRid();
         }
+
     }
 
     public static class PidInternalField extends InternalField<Integer> {
@@ -121,10 +119,10 @@ public abstract class InternalField<T> implements Field<T> {
             preparedStatement.setInt(index, docPartRow.getPid());
         }
         
-        @Override
-        public <R> R apply(DocPartRow docPartRow, Function<Integer, R> function) {
-            return function.apply(docPartRow.getPid());
+        public Integer getValue(DocPartRow docPartRow){
+        	return docPartRow.getPid();
         }
+
     }
 
     public static class SeqInternalField extends InternalField<Integer> {
@@ -149,10 +147,10 @@ public abstract class InternalField<T> implements Field<T> {
             }
         }
         
-        @Override
-        public <R> R apply(DocPartRow docPartRow, Function<Integer, R> function) {
-            return function.apply(docPartRow.getSeq());
+        public Integer getValue(DocPartRow docPartRow){
+        	return docPartRow.getSeq();
         }
+
     }
     
     public InternalField(Field<T> field) {
@@ -162,7 +160,7 @@ public abstract class InternalField<T> implements Field<T> {
 
     public abstract void set(PreparedStatement preparedStatement, int index, DocPartRow docPartRow) throws SQLException;
     
-    public abstract <R> R apply(DocPartRow docPartRow, Function<T, R> function);
+    public abstract T getValue(DocPartRow docPartRow);
     
     public boolean isDid() {
         return false;

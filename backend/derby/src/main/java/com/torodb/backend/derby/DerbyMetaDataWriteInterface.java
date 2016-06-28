@@ -28,6 +28,7 @@ import org.jooq.Record1;
 import org.jooq.conf.ParamType;
 
 import com.torodb.backend.AbstractMetaDataWriteInterface;
+import com.torodb.backend.SqlBuilder;
 import com.torodb.backend.SqlHelper;
 import com.torodb.backend.converters.TableRefConverter;
 import com.torodb.backend.derby.tables.DerbyMetaCollectionTable;
@@ -70,32 +71,24 @@ public class DerbyMetaDataWriteInterface extends AbstractMetaDataWriteInterface 
 
     @Override
     protected String getCreateMetaDatabaseTableStatement(String schemaName, String tableName) {
-        String statement = new StringBuilder()
-                .append("CREATE TABLE \"")
-                .append(schemaName)
-                .append("\".\"")
-                .append(tableName)
-                .append("\" (")
-                .append('"').append(MetaDatabaseTable.TableFields.NAME.toString()).append('"').append("             varchar(32672)    PRIMARY KEY     ,")
-                .append('"').append(MetaDatabaseTable.TableFields.IDENTIFIER.toString()).append('"').append("       varchar(128)      NOT NULL UNIQUE ")
-                .append(")")
-                .toString();
-        return statement;
+    	String statement = new SqlBuilder("CREATE TABLE ").table(schemaName, tableName)
+    	    	.append(" (")
+    	    	.quote(MetaDatabaseTable.TableFields.NAME).append("       varchar(32672)    PRIMARY KEY     ,")
+    	    	.quote(MetaDatabaseTable.TableFields.IDENTIFIER).append(" varchar(128)      NOT NULL UNIQUE ")
+    	        .append(")")
+    	        .toString();
+    	return statement;
     }
     
     @Override
     protected String getCreateMetaCollectionTableStatement(String schemaName, String tableName) {
-        String statement = new StringBuilder()
-                .append("CREATE TABLE \"")
-                .append(schemaName)
-                .append("\".\"")
-                .append(tableName)
-                .append("\" (")
-                .append('"').append(MetaCollectionTable.TableFields.DATABASE.toString()).append('"').append("         varchar(32672)    NOT NULL        ,")
-                .append('"').append(MetaCollectionTable.TableFields.NAME.toString()).append('"').append("             varchar(32672)    NOT NULL        ,")
-                .append('"').append(MetaDatabaseTable.TableFields.IDENTIFIER.toString()).append('"').append("         varchar(128)      NOT NULL UNIQUE ,")
-                .append("    PRIMARY KEY (").append('"').append(MetaCollectionTable.TableFields.DATABASE.toString()).append('"').append(",")
-                    .append('"').append(MetaCollectionTable.TableFields.NAME.toString()).append('"').append(")")
+    	String statement = new SqlBuilder("CREATE TABLE ").table(schemaName, tableName)
+    	    	.append(" (")
+                .quote(MetaCollectionTable.TableFields.DATABASE).append(" varchar(32672)    NOT NULL        ,")
+                .quote(MetaCollectionTable.TableFields.NAME).append("     varchar(32672)    NOT NULL        ,")
+                .quote(MetaDatabaseTable.TableFields.IDENTIFIER).append(" varchar(128)      NOT NULL UNIQUE ,")
+                	.append("    PRIMARY KEY (").quote(MetaCollectionTable.TableFields.DATABASE).append(",")
+                .quote(MetaCollectionTable.TableFields.NAME).append(")")
                 .append(")")
                 .toString();
         return statement;
@@ -103,22 +96,18 @@ public class DerbyMetaDataWriteInterface extends AbstractMetaDataWriteInterface 
     
     @Override
     protected String getCreateMetaDocPartTableStatement(String schemaName, String tableName) {
-        String statement = new StringBuilder()
-                .append("CREATE TABLE \"")
-                .append(schemaName)
-                .append("\".\"")
-                .append(tableName)
-                .append("\" (")
-                .append('"').append(MetaDocPartTable.TableFields.DATABASE.toString()).append('"').append("         varchar(32672)    NOT NULL        ,")
-                .append('"').append(MetaDocPartTable.TableFields.COLLECTION.toString()).append('"').append("       varchar(32672)    NOT NULL        ,")
-                .append('"').append(MetaDocPartTable.TableFields.TABLE_REF.toString()).append('"').append("        varchar(32672)    NOT NULL        ,")
-                .append('"').append(MetaDocPartTable.TableFields.IDENTIFIER.toString()).append('"').append("       varchar(128)      NOT NULL        ,")
-                .append('"').append(MetaDocPartTable.TableFields.LAST_RID.toString()).append('"').append("         integer           NOT NULL        ,")
-                .append("    PRIMARY KEY (").append('"').append(MetaDocPartTable.TableFields.DATABASE.toString()).append('"').append(",")
-                    .append('"').append(MetaDocPartTable.TableFields.COLLECTION.toString()).append('"').append(",")
-                    .append('"').append(MetaDocPartTable.TableFields.TABLE_REF.toString()).append('"').append("),")
-                .append("    UNIQUE (").append('"').append(MetaDocPartTable.TableFields.DATABASE.toString()).append('"').append(",")
-                    .append('"').append(MetaDocPartTable.TableFields.IDENTIFIER.toString()).append('"').append(")")
+    	String statement = new SqlBuilder("CREATE TABLE ").table(schemaName, tableName)
+    	    	.append(" (")
+    	    	.quote(MetaDocPartTable.TableFields.DATABASE).append("   varchar(32672)    NOT NULL        ,")
+    	    	.quote(MetaDocPartTable.TableFields.COLLECTION).append(" varchar(32672)    NOT NULL        ,")
+    	    	.quote(MetaDocPartTable.TableFields.TABLE_REF).append("  varchar(32672)    NOT NULL        ,")
+    	    	.quote(MetaDocPartTable.TableFields.IDENTIFIER).append(" varchar(128)      NOT NULL        ,")
+    	    	.quote(MetaDocPartTable.TableFields.LAST_RID).append("   integer           NOT NULL        ,")
+                .append("    PRIMARY KEY (").quote(MetaDocPartTable.TableFields.DATABASE).append(",")
+                .quote(MetaDocPartTable.TableFields.COLLECTION).append(",")
+                .quote(MetaDocPartTable.TableFields.TABLE_REF).append("),")
+                .append("    UNIQUE (").quote(MetaDocPartTable.TableFields.DATABASE).append(",")
+                .quote(MetaDocPartTable.TableFields.IDENTIFIER).append(")")
                 .append(")")
                 .toString();
         return statement;
@@ -126,27 +115,23 @@ public class DerbyMetaDataWriteInterface extends AbstractMetaDataWriteInterface 
 
     @Override
     protected String getCreateMetaFieldTableStatement(String schemaName, String tableName) {
-        String statement = new StringBuilder()
-                .append("CREATE TABLE \"")
-                .append(schemaName)
-                .append("\".\"")
-                .append(tableName)
-                .append("\" (")
-                .append('"').append(MetaFieldTable.TableFields.DATABASE.toString()).append('"').append("         varchar(32672)   NOT NULL        ,")
-                .append('"').append(MetaFieldTable.TableFields.COLLECTION.toString()).append('"').append("       varchar(32672)   NOT NULL        ,")
-                .append('"').append(MetaFieldTable.TableFields.TABLE_REF.toString()).append('"').append("        varchar(32672)   NOT NULL        ,")
-                .append('"').append(MetaFieldTable.TableFields.NAME.toString()).append('"').append("             varchar(32672)   NOT NULL        ,")
-                .append('"').append(MetaFieldTable.TableFields.TYPE.toString()).append('"').append("             varchar(128)     NOT NULL        ,")
-                .append('"').append(MetaFieldTable.TableFields.IDENTIFIER.toString()).append('"').append("       varchar(128)     NOT NULL        ,")
-                .append("    PRIMARY KEY (").append('"').append(MetaFieldTable.TableFields.DATABASE.toString()).append('"').append(",")
-                .append('"').append(MetaFieldTable.TableFields.COLLECTION.toString()).append('"').append(",")
-                .append('"').append(MetaFieldTable.TableFields.TABLE_REF.toString()).append('"').append(",")
-                .append('"').append(MetaFieldTable.TableFields.NAME.toString()).append('"').append(",")
-                .append('"').append(MetaFieldTable.TableFields.TYPE.toString()).append('"').append("),")
-                .append("    UNIQUE (").append('"').append(MetaFieldTable.TableFields.DATABASE.toString()).append('"').append(",")
-                    .append('"').append(MetaFieldTable.TableFields.COLLECTION.toString()).append('"').append(",")
-                    .append('"').append(MetaFieldTable.TableFields.TABLE_REF.toString()).append('"').append(",")
-                    .append('"').append(MetaFieldTable.TableFields.IDENTIFIER.toString()).append('"').append(")")
+    	String statement = new SqlBuilder("CREATE TABLE ").table(schemaName, tableName)
+    	    	.append(" (")
+    	    	.quote(MetaFieldTable.TableFields.DATABASE).append("   varchar(32672)   NOT NULL        ,")
+    	    	.quote(MetaFieldTable.TableFields.COLLECTION).append(" varchar(32672)   NOT NULL        ,")
+    	    	.quote(MetaFieldTable.TableFields.TABLE_REF).append("  varchar(32672)   NOT NULL        ,")
+    	    	.quote(MetaFieldTable.TableFields.NAME).append("       varchar(32672)   NOT NULL        ,")
+    	    	.quote(MetaFieldTable.TableFields.TYPE).append("       varchar(128)     NOT NULL        ,")
+    	    	.quote(MetaFieldTable.TableFields.IDENTIFIER).append(" varchar(128)     NOT NULL        ,")
+                .append("    PRIMARY KEY (").quote(MetaFieldTable.TableFields.DATABASE).append(",")
+                .quote(MetaFieldTable.TableFields.COLLECTION).append(",")
+                .quote(MetaFieldTable.TableFields.TABLE_REF).append(",")
+                .quote(MetaFieldTable.TableFields.NAME).append(",")
+                .quote(MetaFieldTable.TableFields.TYPE).append("),")
+                .append("    UNIQUE (").quote(MetaFieldTable.TableFields.DATABASE).append(",")
+                .quote(MetaFieldTable.TableFields.COLLECTION).append(",")
+                .quote(MetaFieldTable.TableFields.TABLE_REF).append(",")
+                .quote(MetaFieldTable.TableFields.IDENTIFIER).append(")")
                 .append(")")
                 .toString();
         return statement;
@@ -154,25 +139,21 @@ public class DerbyMetaDataWriteInterface extends AbstractMetaDataWriteInterface 
 
     @Override
     protected String getCreateMetaScalarTableStatement(String schemaName, String tableName) {
-        String statement = new StringBuilder()
-                .append("CREATE TABLE \"")
-                .append(schemaName)
-                .append("\".\"")
-                .append(tableName)
-                .append("\" (")
-                .append('"').append(MetaScalarTable.TableFields.DATABASE.toString()).append('"').append("         varchar(32672)   NOT NULL        ,")
-                .append('"').append(MetaScalarTable.TableFields.COLLECTION.toString()).append('"').append("       varchar(32672)   NOT NULL        ,")
-                .append('"').append(MetaScalarTable.TableFields.TABLE_REF.toString()).append('"').append("        varchar(32672)   NOT NULL        ,")
-                .append('"').append(MetaScalarTable.TableFields.TYPE.toString()).append('"').append("             varchar(128)     NOT NULL        ,")
-                .append('"').append(MetaScalarTable.TableFields.IDENTIFIER.toString()).append('"').append("       varchar(128)     NOT NULL        ,")
-                .append("    PRIMARY KEY (").append('"').append(MetaScalarTable.TableFields.DATABASE.toString()).append('"').append(",")
-                .append('"').append(MetaScalarTable.TableFields.COLLECTION.toString()).append('"').append(",")
-                .append('"').append(MetaScalarTable.TableFields.TABLE_REF.toString()).append('"').append(",")
-                .append('"').append(MetaScalarTable.TableFields.TYPE.toString()).append('"').append("),")
-                .append("    UNIQUE (").append('"').append(MetaScalarTable.TableFields.DATABASE.toString()).append('"').append(",")
-                    .append('"').append(MetaScalarTable.TableFields.COLLECTION.toString()).append('"').append(",")
-                    .append('"').append(MetaScalarTable.TableFields.TABLE_REF.toString()).append('"').append(",")
-                    .append('"').append(MetaScalarTable.TableFields.IDENTIFIER.toString()).append('"').append(")")
+    	String statement = new SqlBuilder("CREATE TABLE ").table(schemaName, tableName)
+    	    	.append(" (")
+                .quote(MetaScalarTable.TableFields.DATABASE).append("   varchar(32672)   NOT NULL        ,")
+                .quote(MetaScalarTable.TableFields.COLLECTION).append(" varchar(32672)   NOT NULL        ,")
+                .quote(MetaScalarTable.TableFields.TABLE_REF).append("  varchar(32672)   NOT NULL        ,")
+                .quote(MetaScalarTable.TableFields.TYPE).append("       varchar(128)     NOT NULL        ,")
+                .quote(MetaScalarTable.TableFields.IDENTIFIER).append(" varchar(128)     NOT NULL        ,")
+                .append("    PRIMARY KEY (").quote(MetaScalarTable.TableFields.DATABASE).append(",")
+                .quote(MetaScalarTable.TableFields.COLLECTION).append(",")
+                .quote(MetaScalarTable.TableFields.TABLE_REF).append(",")
+                .quote(MetaScalarTable.TableFields.TYPE).append("),")
+                .append("    UNIQUE (").quote(MetaScalarTable.TableFields.DATABASE).append(",")
+                    .quote(MetaScalarTable.TableFields.COLLECTION).append(",")
+                    .quote(MetaScalarTable.TableFields.TABLE_REF).append(",")
+                    .quote(MetaScalarTable.TableFields.IDENTIFIER).append(")")
                 .append(")")
                 .toString();
         return statement;
@@ -181,16 +162,13 @@ public class DerbyMetaDataWriteInterface extends AbstractMetaDataWriteInterface 
     @Override
     protected String getCreateMetaIndexesTableStatement(String schemaName, String tableName, String indexNameColumn,
             String indexOptionsColumn) {
-        return new StringBuilder()
-                .append("CREATE TABLE \"")
-                .append(schemaName)
-                .append("\".\"")
-                .append(tableName)
-                .append("\" (")
-                .append('"').append(indexNameColumn).append('"').append("       varchar(32672)    PRIMARY KEY,")
-                .append('"').append(indexOptionsColumn).append('"').append("    varchar(23672)    NOT NULL")
+    	String statement = new SqlBuilder("CREATE TABLE ").table(schemaName, tableName)
+    	    	.append(" (")
+                .quote(indexNameColumn).append("    varchar(32672)    PRIMARY KEY,")
+                .quote(indexOptionsColumn).append(" varchar(23672)    NOT NULL")
                 .append(")")
                 .toString();
+    	return statement;
     }
 
 	@Override
