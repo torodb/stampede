@@ -46,16 +46,16 @@ public class BackendTestHelper {
 		String databaseSchemaName = schema.databaseSchemaName;
 		String collectionName = schema.collectionName;
 		
-		sqlInterface.addMetaDatabase(dsl, databaseName, databaseSchemaName);
-		sqlInterface.createSchema(dsl, schema.databaseSchemaName);
-		sqlInterface.addMetaCollection(dsl, databaseName, collectionName, schema.collectionIdentifierName);
-		sqlInterface.addMetaDocPart(dsl, databaseName, collectionName, schema.rootDocPartTableRef, schema.rootDocPartTableName);
-		sqlInterface.addMetaDocPart(dsl, databaseName, collectionName, schema.subDocPartTableRef, schema.subDocPartTableName);
+		sqlInterface.getMetaDataWriteInterface().addMetaDatabase(dsl, databaseName, databaseSchemaName);
+		sqlInterface.getStructureInterface().createSchema(dsl, schema.databaseSchemaName);
+		sqlInterface.getMetaDataWriteInterface().addMetaCollection(dsl, databaseName, collectionName, schema.collectionIdentifierName);
+		sqlInterface.getMetaDataWriteInterface().addMetaDocPart(dsl, databaseName, collectionName, schema.rootDocPartTableRef, schema.rootDocPartTableName);
+		sqlInterface.getMetaDataWriteInterface().addMetaDocPart(dsl, databaseName, collectionName, schema.subDocPartTableRef, schema.subDocPartTableName);
 	}
 	
 	public void insertMetaFields(DSLContext dsl, TableRef tableRef, Map<String, Field<?>> fields){
 		fields.forEach((key,value)->
-			sqlInterface.addMetaField(dsl, schema.databaseName, schema.collectionName, tableRef, 
+			sqlInterface.getMetaDataWriteInterface().addMetaField(dsl, schema.databaseName, schema.collectionName, tableRef, 
                     key, value.getName(), getType(value))
 		);
 	}
@@ -63,7 +63,7 @@ public class BackendTestHelper {
 	public void createDocPartTable(DSLContext dsl, String tableName, Collection<? extends Field<?>> headerFields, Collection<Field<?>> fields){
 		ArrayList<Field<?>> toAdd = new ArrayList<>(headerFields);
 		toAdd.addAll(fields);
-		sqlInterface.createDocPartTable(dsl, schema.databaseSchemaName, tableName, toAdd);
+		sqlInterface.getStructureInterface().createDocPartTable(dsl, schema.databaseSchemaName, tableName, toAdd);
 	}
 	
 	public void insertDocPartData(DSLContext dsl, ImmutableMetaDocPart metaDocPart, 
@@ -99,7 +99,7 @@ public class BackendTestHelper {
 		        }
 		    }
 		}
-		sqlInterface.insertDocPartData(dsl, schema.databaseSchemaName, docPartData);
+		sqlInterface.getWriteInterface().insertDocPartData(dsl, schema.databaseSchemaName, docPartData);
 	}
 	
 	private FieldType getType(Field<?> field){

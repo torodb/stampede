@@ -39,7 +39,7 @@ public class R2DBackendTranslatorImpl implements R2DBackendTranslator<ResultSet,
         this.sqlHelper = sqlHelper;
         this.metaDatabase = metaDatabase;
         this.metaCollection = metaCollection;
-        MetaDocPartTable<Object,MetaDocPartRecord<Object>> metaDocPartTable = sqlInterface.getMetaDocPartTable();
+        MetaDocPartTable<Object,MetaDocPartRecord<Object>> metaDocPartTable = sqlInterface.getMetaDataReadInterface().getMetaDocPartTable();
 	    this.didConverter = (Converter<Object, Integer>) metaDocPartTable.DID.getConverter();
 	    this.ridConverter = (Converter<Object, Integer>) metaDocPartTable.RID.getConverter();
 	    this.pidConverter = (Converter<Object, Integer>) metaDocPartTable.PID.getConverter();
@@ -65,7 +65,7 @@ public class R2DBackendTranslatorImpl implements R2DBackendTranslator<ResultSet,
         Integer pid = null;
         Integer rid = null;
         Integer seq = null;
-        Collection<InternalField<?>> internalFields = sqlInterface.getDocPartTableInternalFields(
+        Collection<InternalField<?>> internalFields = sqlInterface.getMetaDataReadInterface().getDocPartTableInternalFields(
                 metaDocPart);
         int columnIndex = 1;
         for (InternalField<?> internalField : internalFields) {
@@ -80,7 +80,7 @@ public class R2DBackendTranslatorImpl implements R2DBackendTranslator<ResultSet,
                     seq = seqConverter.from(resultSet.getInt(columnIndex));
                 }
             } catch (SQLException sqlException) {
-                sqlInterface.handleRollbackException(Context.fetch, sqlException);
+                sqlInterface.getErrorHandler().handleRollbackException(Context.fetch, sqlException);
                 
                 throw new SystemException(sqlException);
             }
@@ -110,7 +110,7 @@ public class R2DBackendTranslatorImpl implements R2DBackendTranslator<ResultSet,
         try {
             databaseValue = sqlHelper.getResultSetValue(type, resultSet, fieldIndex + internalFields.columnIndex);
         } catch (SQLException sqlException) {
-            sqlInterface.handleRollbackException(Context.fetch, sqlException);
+            sqlInterface.getErrorHandler().handleRollbackException(Context.fetch, sqlException);
             throw new SystemException(sqlException);
         }
         
@@ -118,7 +118,7 @@ public class R2DBackendTranslatorImpl implements R2DBackendTranslator<ResultSet,
             return null;
         }
         
-        DataTypeForKV<?> dataType = sqlInterface.getDataType(type);
+        DataTypeForKV<?> dataType = sqlInterface.getDataTypeProvider().getDataType(type);
         Converter<Object, KVValue<?>> converter = (Converter<Object, KVValue<?>>) dataType.getConverter();
         return converter.from(databaseValue);
     }
@@ -128,7 +128,7 @@ public class R2DBackendTranslatorImpl implements R2DBackendTranslator<ResultSet,
         try {
             return resultSet.next();
         } catch (SQLException sqlException) {
-            sqlInterface.handleRollbackException(Context.fetch, sqlException);
+            sqlInterface.getErrorHandler().handleRollbackException(Context.fetch, sqlException);
             
             throw new SystemException(sqlException);
         }

@@ -71,7 +71,7 @@ public class BackendDocumentTestHelper {
             if (docPartData.getMetaDocPart().getTableRef().isRoot()) {
                 docPartData.forEach(docPartRow ->generatedDids.add(docPartRow.getDid()));
             }
-            sqlInterface.insertDocPartData(dsl, schema.databaseSchemaName, docPartData);
+            sqlInterface.getWriteInterface().insertDocPartData(dsl, schema.databaseSchemaName, docPartData);
         }
         return generatedDids;
     }
@@ -87,14 +87,14 @@ public class BackendDocumentTestHelper {
         mutableSnapshot.streamMetaDatabases().forEachOrdered(metaDatabase -> {
             metaDatabase.streamMetaCollections().forEachOrdered(metaCollection -> {
                 metaCollection.streamContainedMetaDocParts().sorted(TableRefComparator.MetaDocPart.ASC).forEachOrdered(metaDocPart -> {
-                    List<Field<?>> fields = new ArrayList<>(sqlInterface.getDocPartTableInternalFields(metaDocPart));
+                    List<Field<?>> fields = new ArrayList<>(sqlInterface.getMetaDataReadInterface().getDocPartTableInternalFields(metaDocPart));
                     metaDocPart.streamFields().forEachOrdered(metaField -> {
-                        fields.add(DSL.field(metaField.getIdentifier(), sqlInterface.getDataType(metaField.getType())));
+                        fields.add(DSL.field(metaField.getIdentifier(), sqlInterface.getDataTypeProvider().getDataType(metaField.getType())));
                     });
                     metaDocPart.streamScalars().forEachOrdered(metaScalar -> {
-                        fields.add(DSL.field(metaScalar.getIdentifier(), sqlInterface.getDataType(metaScalar.getType())));
+                        fields.add(DSL.field(metaScalar.getIdentifier(), sqlInterface.getDataTypeProvider().getDataType(metaScalar.getType())));
                     });
-                    sqlInterface.createDocPartTable(dsl, schema.databaseSchemaName, metaDocPart.getIdentifier(), fields);
+                    sqlInterface.getStructureInterface().createDocPartTable(dsl, schema.databaseSchemaName, metaDocPart.getIdentifier(), fields);
                 });
             });
         });

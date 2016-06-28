@@ -41,57 +41,57 @@ public class BackendRollbackIntegrationTest extends AbstractBackendTest {
                 IntegrationTestEnvironment.CURRENT_INTEGRATION_TEST_ENVIRONMENT.getBackend() == Backend.POSTGRES);
         
         try (
-             Connection leftConnection = sqlInterface.createWriteConnection();
-             Connection rightConnection = sqlInterface.createWriteConnection()
+             Connection leftConnection = sqlInterface.getDbBackend().createWriteConnection();
+             Connection rightConnection = sqlInterface.getDbBackend().createWriteConnection()
             ) {
-            DSLContext leftDsl = sqlInterface.createDSLContext(leftConnection);
-            DSLContext rightDsl = sqlInterface.createDSLContext(rightConnection);
-            sqlInterface.createSchema(leftDsl, "test");
+            DSLContext leftDsl = sqlInterface.getDslContextFactory().createDSLContext(leftConnection);
+            DSLContext rightDsl = sqlInterface.getDslContextFactory().createDSLContext(rightConnection);
+            sqlInterface.getStructureInterface().createSchema(leftDsl, "test");
             leftConnection.commit();
-            sqlInterface.createSchema(rightDsl, "test");
+            sqlInterface.getStructureInterface().createSchema(rightDsl, "test");
             rightConnection.commit();
         }
     }
     
     @Test(expected=RollbackException.class)
     public void testCreateSameTable() throws Exception {
-        try (Connection connection = sqlInterface.createWriteConnection()) {
-            DSLContext dsl = sqlInterface.createDSLContext(connection);
-            sqlInterface.createSchema(dsl, "test");
+        try (Connection connection = sqlInterface.getDbBackend().createWriteConnection()) {
+            DSLContext dsl = sqlInterface.getDslContextFactory().createDSLContext(connection);
+            sqlInterface.getStructureInterface().createSchema(dsl, "test");
             connection.commit();
         }
         
         try (
-             Connection leftConnection = sqlInterface.createWriteConnection();
-             Connection rightConnection = sqlInterface.createWriteConnection()
+             Connection leftConnection = sqlInterface.getDbBackend().createWriteConnection();
+             Connection rightConnection = sqlInterface.getDbBackend().createWriteConnection()
             ) {
-            DSLContext leftDsl = sqlInterface.createDSLContext(leftConnection);
-            DSLContext rightDsl = sqlInterface.createDSLContext(rightConnection);
-            sqlInterface.createDocPartTable(leftDsl, "test", "test", Arrays.asList(new Field<?>[] { DSL.field("dummy", sqlInterface.getDataType(FieldType.STRING)) }));
+            DSLContext leftDsl = sqlInterface.getDslContextFactory().createDSLContext(leftConnection);
+            DSLContext rightDsl = sqlInterface.getDslContextFactory().createDSLContext(rightConnection);
+            sqlInterface.getStructureInterface().createDocPartTable(leftDsl, "test", "test", Arrays.asList(new Field<?>[] { DSL.field("dummy", sqlInterface.getDataTypeProvider().getDataType(FieldType.STRING)) }));
             leftConnection.commit();
-            sqlInterface.createDocPartTable(rightDsl, "test", "test", Arrays.asList(new Field<?>[] { DSL.field("dummy", sqlInterface.getDataType(FieldType.STRING)) }));
+            sqlInterface.getStructureInterface().createDocPartTable(rightDsl, "test", "test", Arrays.asList(new Field<?>[] { DSL.field("dummy", sqlInterface.getDataTypeProvider().getDataType(FieldType.STRING)) }));
             rightConnection.commit();
         }
     }
     
     @Test(expected=RollbackException.class)
     public void testCreateSameColumn() throws Exception {
-        try (Connection connection = sqlInterface.createWriteConnection()) {
-            DSLContext dsl = sqlInterface.createDSLContext(connection);
-            sqlInterface.createSchema(dsl, "test");
-            sqlInterface.createDocPartTable(dsl, "test", "test", Arrays.asList(new Field<?>[] { DSL.field("dummy", sqlInterface.getDataType(FieldType.STRING)) }));
+        try (Connection connection = sqlInterface.getDbBackend().createWriteConnection()) {
+            DSLContext dsl = sqlInterface.getDslContextFactory().createDSLContext(connection);
+            sqlInterface.getStructureInterface().createSchema(dsl, "test");
+            sqlInterface.getStructureInterface().createDocPartTable(dsl, "test", "test", Arrays.asList(new Field<?>[] { DSL.field("dummy", sqlInterface.getDataTypeProvider().getDataType(FieldType.STRING)) }));
             connection.commit();
         }
         
         try (
-             Connection leftConnection = sqlInterface.createWriteConnection();
-             Connection rightConnection = sqlInterface.createWriteConnection()
+             Connection leftConnection = sqlInterface.getDbBackend().createWriteConnection();
+             Connection rightConnection = sqlInterface.getDbBackend().createWriteConnection()
             ) {
-            DSLContext leftDsl = sqlInterface.createDSLContext(leftConnection);
-            DSLContext rightDsl = sqlInterface.createDSLContext(rightConnection);
-            sqlInterface.addColumnToDocPartTable(leftDsl, "test", "test", DSL.field("test", sqlInterface.getDataType(FieldType.STRING)));
+            DSLContext leftDsl = sqlInterface.getDslContextFactory().createDSLContext(leftConnection);
+            DSLContext rightDsl = sqlInterface.getDslContextFactory().createDSLContext(rightConnection);
+            sqlInterface.getStructureInterface().addColumnToDocPartTable(leftDsl, "test", "test", DSL.field("test", sqlInterface.getDataTypeProvider().getDataType(FieldType.STRING)));
             leftConnection.commit();
-            sqlInterface.addColumnToDocPartTable(rightDsl, "test", "test", DSL.field("test", sqlInterface.getDataType(FieldType.STRING)));
+            sqlInterface.getStructureInterface().addColumnToDocPartTable(rightDsl, "test", "test", DSL.field("test", sqlInterface.getDataTypeProvider().getDataType(FieldType.STRING)));
             rightConnection.commit();
         }
     }

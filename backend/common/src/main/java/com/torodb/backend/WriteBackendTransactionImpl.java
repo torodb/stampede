@@ -44,8 +44,8 @@ public class WriteBackendTransactionImpl implements WriteBackendTransaction {
     
     public WriteBackendTransactionImpl(SqlInterface sqlInterface, BackendConnectionImpl backendConnection) {
         this.sqlInterface = sqlInterface;
-        this.connection = sqlInterface.createWriteConnection();
-        this.dsl = sqlInterface.createDSLContext(connection);
+        this.connection = sqlInterface.getDbBackend().createWriteConnection();
+        this.dsl = sqlInterface.getDslContextFactory().createDSLContext(connection);
         this.backendConnection = backendConnection;
     }
     
@@ -53,35 +53,35 @@ public class WriteBackendTransactionImpl implements WriteBackendTransaction {
     public void addDatabase(MetaDatabase db) {
         Preconditions.checkState(!closed, "This transaction is closed");
 
-    	sqlInterface.addMetaDatabase(dsl, db.getName(), db.getIdentifier());
-        sqlInterface.createSchema(dsl, db.getIdentifier());
+    	sqlInterface.getMetaDataWriteInterface().addMetaDatabase(dsl, db.getName(), db.getIdentifier());
+        sqlInterface.getStructureInterface().createSchema(dsl, db.getIdentifier());
     }
 
     @Override
     public void addCollection(MetaDatabase db, MetaCollection newCol) {
         Preconditions.checkState(!closed, "This transaction is closed");
 
-    	sqlInterface.addMetaCollection(dsl, db.getName(), newCol.getName(), newCol.getIdentifier());
+    	sqlInterface.getMetaDataWriteInterface().addMetaCollection(dsl, db.getName(), newCol.getName(), newCol.getIdentifier());
     }
 
     @Override
     public void addDocPart(MetaDatabase db, MetaCollection col, MetaDocPart newDocPart) {
         Preconditions.checkState(!closed, "This transaction is closed");
 
-    	sqlInterface.addMetaDocPart(dsl, db.getName(), col.getName(),
+    	sqlInterface.getMetaDataWriteInterface().addMetaDocPart(dsl, db.getName(), col.getName(),
                 newDocPart.getTableRef(), newDocPart.getIdentifier());
     	
-        Collection<? extends Field<?>> fields = sqlInterface.getDocPartTableInternalFields(newDocPart);
-        sqlInterface.createDocPartTable(dsl, db.getIdentifier(), newDocPart.getIdentifier(), fields);
+        Collection<? extends Field<?>> fields = sqlInterface.getMetaDataReadInterface().getDocPartTableInternalFields(newDocPart);
+        sqlInterface.getStructureInterface().createDocPartTable(dsl, db.getIdentifier(), newDocPart.getIdentifier(), fields);
     }
 
     @Override
     public void addField(MetaDatabase db, MetaCollection col, MetaDocPart docPart, MetaField newField){
         Preconditions.checkState(!closed, "This transaction is closed");
 
-    	sqlInterface.addMetaField(dsl, db.getName(), col.getName(), docPart.getTableRef(),
+    	sqlInterface.getMetaDataWriteInterface().addMetaField(dsl, db.getName(), col.getName(), docPart.getTableRef(),
                 newField.getName(), newField.getIdentifier(), newField.getType());
-        sqlInterface.addColumnToDocPartTable(dsl, db.getIdentifier(),
+        sqlInterface.getStructureInterface().addColumnToDocPartTable(dsl, db.getIdentifier(),
                 docPart.getIdentifier(),buildField(newField));
     }
 
@@ -89,32 +89,32 @@ public class WriteBackendTransactionImpl implements WriteBackendTransaction {
 	public void addScalar(MetaDatabase db, MetaCollection col, MetaDocPart docPart, MetaScalar newScalar) {
 		Preconditions.checkState(!closed, "This transaction is closed");
 
-		sqlInterface.addMetaScalar(dsl, db.getName(), col.getName(), docPart.getTableRef(), 
+		sqlInterface.getMetaDataWriteInterface().addMetaScalar(dsl, db.getName(), col.getName(), docPart.getTableRef(), 
 				newScalar.getIdentifier(), newScalar.getType());
-		sqlInterface.addColumnToDocPartTable(dsl, db.getIdentifier(), docPart.getIdentifier(), 
+		sqlInterface.getStructureInterface().addColumnToDocPartTable(dsl, db.getIdentifier(), docPart.getIdentifier(), 
 				buildScalar(newScalar));
 	}
 	
 	private Field<?> buildField(MetaField newField) {
-		return DSL.field(newField.getIdentifier(), sqlInterface.getDataType(newField.getType()));
+		return DSL.field(newField.getIdentifier(), sqlInterface.getDataTypeProvider().getDataType(newField.getType()));
 	}
 	
 	private Field<?> buildScalar(MetaScalar newScalar) {
-		return DSL.field(newScalar.getIdentifier(), sqlInterface.getDataType(newScalar.getType()));
+		return DSL.field(newScalar.getIdentifier(), sqlInterface.getDataTypeProvider().getDataType(newScalar.getType()));
 	}
 
     @Override
     public int consumeRids(MetaDatabase db, MetaCollection col, MetaDocPart docPart, int howMany) {
         Preconditions.checkState(!closed, "This transaction is closed");
 
-        return sqlInterface.consumeRids(dsl, db.getName(), col.getName(), docPart.getTableRef(), howMany);
+        return sqlInterface.getMetaDataWriteInterface().consumeRids(dsl, db.getName(), col.getName(), docPart.getTableRef(), howMany);
     }
 
     @Override
     public void insert(MetaDatabase db, MetaCollection col, DocPartData data) {
         Preconditions.checkState(!closed, "This transaction is closed");
         
-        sqlInterface.insertDocPartData(dsl, db.getIdentifier(), data);
+        sqlInterface.getWriteInterface().insertDocPartData(dsl, db.getIdentifier(), data);
     }
 
     @Override
@@ -124,7 +124,7 @@ public class WriteBackendTransactionImpl implements WriteBackendTransaction {
         try {
             connection.commit();
         } catch (SQLException ex) {
-            sqlInterface.handleUserAndRetryException(Context.commit, ex);
+            sqlInterface.getErrorHandler().handleUserAndRetryException(Context.commit, ex);
         } finally {
             dsl.configuration().connectionProvider().release(connection);
         }
@@ -139,7 +139,7 @@ public class WriteBackendTransactionImpl implements WriteBackendTransaction {
                 connection.rollback();
                 connection.close();
             } catch (SQLException ex) {
-                sqlInterface.handleRollbackException(Context.close, ex);
+                sqlInterface.getErrorHandler().handleRollbackException(Context.close, ex);
             }
             dsl.close();
         }

@@ -32,8 +32,8 @@ public class MaxRowIdFactory extends AbstractIdleService implements ReservedIdIn
             snapshot = snapshotStage.createImmutableSnapshot();
         }
 
-        try (Connection connection = sqlInterface.createSystemConnection()) {
-            DSLContext dsl = sqlInterface.createDSLContext(connection);
+        try (Connection connection = sqlInterface.getDbBackend().createSystemConnection()) {
+            DSLContext dsl = sqlInterface.getDslContextFactory().createDSLContext(connection);
 
             megaMap = loadRowIds(dsl, snapshot);
         }
@@ -56,7 +56,7 @@ public class MaxRowIdFactory extends AbstractIdleService implements ReservedIdIn
                 collMap.put(collection.getName(), tableRefMap);
                 collection.streamContainedMetaDocParts().forEach(metaDocPart -> {
                     TableRef tableRef = metaDocPart.getTableRef();
-                    Integer lastRowIUsed = sqlInterface.getLastRowIdUsed(dsl, db, collection, metaDocPart);
+                    Integer lastRowIUsed = sqlInterface.getReadInterface().getLastRowIdUsed(dsl, db, collection, metaDocPart);
                     tableRefMap.put(tableRef, new ReservedIdInfo(lastRowIUsed, lastRowIUsed));
                 });
             });

@@ -182,7 +182,7 @@ public class TestSchema {
     }
     
     private Field<?> field(String name, FieldType type){
-    	return DSL.field(name, sqlInterface.getDataType(type));
+    	return DSL.field(name, sqlInterface.getDataTypeProvider().getDataType(type));
     }
 
 }

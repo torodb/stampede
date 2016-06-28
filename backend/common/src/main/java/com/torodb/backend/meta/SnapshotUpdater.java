@@ -73,8 +73,8 @@ public class SnapshotUpdater {
                     + "the database");
         }
 
-        try (Connection connection = sqlInterface.createSystemConnection()) {
-            DSLContext dsl = sqlInterface.createDSLContext(connection);
+        try (Connection connection = sqlInterface.getDbBackend().createSystemConnection()) {
+            DSLContext dsl = sqlInterface.getDslContextFactory().createDSLContext(connection);
             Meta jooqMeta = dsl.meta();
 
             schemaUpdater.checkOrCreate(dsl, jooqMeta, sqlInterface, sqlHelper);
@@ -87,7 +87,7 @@ public class SnapshotUpdater {
 
             throw new InvalidDatabaseException(ioException);
         } catch(SQLException sqlException) {
-            sqlInterface.handleRollbackException(Context.unknown, sqlException);
+            sqlInterface.getErrorHandler().handleRollbackException(Context.unknown, sqlException);
 
             throw new InvalidDatabaseException(sqlException);
         }
@@ -114,15 +114,15 @@ public class SnapshotUpdater {
             this.tableRefFactory = tableRefFactory;
             this.sqlInterface = sqlInterface;
 
-            this.collectionTable = sqlInterface.getMetaCollectionTable();
-            this.docPartTable = sqlInterface.getMetaDocPartTable();
-            this.fieldTable = sqlInterface.getMetaFieldTable();
-            this.scalarTable = sqlInterface.getMetaScalarTable();
+            this.collectionTable = sqlInterface.getMetaDataReadInterface().getMetaCollectionTable();
+            this.docPartTable = sqlInterface.getMetaDataReadInterface().getMetaDocPartTable();
+            this.fieldTable = sqlInterface.getMetaDataReadInterface().getMetaFieldTable();
+            this.scalarTable = sqlInterface.getMetaDataReadInterface().getMetaScalarTable();
         }
 
         private void loadMetaSnapshot(MutableMetaSnapshot mutableSnapshot) throws InvalidDatabaseSchemaException {
 
-            MetaDatabaseTable<MetaDatabaseRecord> metaDatabaseTable = sqlInterface.getMetaDatabaseTable();
+            MetaDatabaseTable<MetaDatabaseRecord> metaDatabaseTable = sqlInterface.getMetaDataReadInterface().getMetaDatabaseTable();
             Result<MetaDatabaseRecord> records
                     = dsl.selectFrom(metaDatabaseTable)
                         .fetch();
@@ -171,7 +171,7 @@ public class SnapshotUpdater {
                 }
 
                 for (Field<?> existingField : table.fields()) {
-                    if (!sqlInterface.isAllowedColumnIdentifier(existingField.getName())) {
+                    if (!sqlInterface.getIdentifierConstraints().isAllowedColumnIdentifier(existingField.getName())) {
                         continue;
                     }
                     if (!SchemaValidator.containsField(existingField, docPart.getCollection(),
@@ -262,7 +262,7 @@ public class SnapshotUpdater {
                         + docPartIdentifier);
             }
             if (!schemaValidator.existsColumnWithType(docPartIdentifier, field.getIdentifier(),
-                    sqlInterface.getDataType(field.getType()))) {
+                    sqlInterface.getDataTypeProvider().getDataType(field.getType()))) {
                 //TODO: some types can not be recognized using meta data
                 //throw new InvalidDatabaseSchemaException(schemaName, "Field "+field.getCollection()+"."
                 //        +field.getTableRefValue()+"."+field.getName()+" in database "+database+" is associated with field "+field.getIdentifier()
@@ -294,7 +294,7 @@ public class SnapshotUpdater {
                         +schemaName+"."+docPartIdentifier);
             }
             if (!schemaValidator.existsColumnWithType(docPartIdentifier, scalar.getIdentifier(),
-                    sqlInterface.getDataType(scalar.getType()))) {
+                    sqlInterface.getDataTypeProvider().getDataType(scalar.getType()))) {
                 //TODO: some types can not be recognized using meta data
                 //throw new InvalidDatabaseSchemaException(schemaName, "Scalar "+scalar.getCollection()+"."
                 //        +scalar.getTableRefValue()+"."+scalar.getName()+" in database "+database+" is associated with scalar "+scalar.getIdentifier()

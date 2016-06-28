@@ -99,9 +99,9 @@ public class BenchmarkDerbyR2DBackedTranslator {
 	        dbBackend.awaitRunning();
             sqlInterface = injector.getInstance(SqlInterface.class);
             SqlHelper sqlHelper = injector.getInstance(SqlHelper.class);
-		    cleanDatabase(dbBackend, sqlInterface);
-		    connection = sqlInterface.createWriteConnection();
-		    dsl = sqlInterface.createDSLContext(connection);
+		    cleanDatabase(dbBackend, sqlInterface.getIdentifierConstraints());
+		    connection = sqlInterface.getDbBackend().createWriteConnection();
+		    dsl = sqlInterface.getDslContextFactory().createDSLContext(connection);
 			documents=new ArrayList<>();
 			for (int i=0;i<100;i++){
 				documents.add(TestDataFactory.buildDoc());
@@ -117,7 +117,7 @@ public class BenchmarkDerbyR2DBackedTranslator {
 	        connection.commit();
 	        CollectionData collectionData = readDataFromDocuments(this, null);
 	        List<Integer> writtenDocs = writeCollectionData(this, null, collectionData);
-	        docPartResultSets = sqlInterface.getCollectionResultSets(
+	        docPartResultSets = sqlInterface.getReadInterface().getCollectionResultSets(
 	                dsl, metaDatabase, metaCollection, 
 	                new MockDidCursor(writtenDocs.iterator()), writtenDocs.size());
 	        r2dTranslator = new R2DBackedTranslator(new R2DBackendTranslatorImpl(sqlInterface, sqlHelper, metaDatabase, metaCollection));
@@ -260,11 +260,11 @@ public class BenchmarkDerbyR2DBackedTranslator {
             metaDatabase.streamMetaCollections().forEachOrdered(metaCollection -> {
                 metaCollection.streamContainedMetaDocParts().sorted(TableRefComparator.MetaDocPart.ASC).forEachOrdered(metaDocPartObject -> {
                     MetaDocPart metaDocPart = (MetaDocPart) metaDocPartObject;
-                    List<Field<?>> fields = new ArrayList<>(state.sqlInterface.getDocPartTableInternalFields(metaDocPart));
+                    List<Field<?>> fields = new ArrayList<>(state.sqlInterface.getMetaDataReadInterface().getDocPartTableInternalFields(metaDocPart));
                     metaDocPart.streamFields().forEachOrdered(metaField -> {
-                        fields.add(DSL.field(metaField.getIdentifier(), state.sqlInterface.getDataType(metaField.getType())));
+                        fields.add(DSL.field(metaField.getIdentifier(), state.sqlInterface.getDataTypeProvider().getDataType(metaField.getType())));
                     });
-                    state.sqlInterface.createDocPartTable(state.dsl, metaDatabase.getIdentifier(), metaDocPart.getIdentifier(), fields);
+                    state.sqlInterface.getStructureInterface().createDocPartTable(state.dsl, metaDatabase.getIdentifier(), metaDocPart.getIdentifier(), fields);
                 });
             });
         });
@@ -282,7 +282,7 @@ public class BenchmarkDerbyR2DBackedTranslator {
                     generatedDids.add(docPartRow.getDid());
                 });
             }
-            state.sqlInterface.insertDocPartData(state.dsl, DB1, docPartData);
+            state.sqlInterface.getWriteInterface().insertDocPartData(state.dsl, DB1, docPartData);
         }
         return generatedDids;
     }
@@ -302,7 +302,7 @@ public class BenchmarkDerbyR2DBackedTranslator {
         while (tables.next()) {
             String schemaName = tables.getString("TABLE_SCHEM");
             String tableName = tables.getString("TABLE_NAME");
-            if (!state.sqlInterface.isAllowedSchemaIdentifier(schemaName) || schemaName.equals(TorodbSchema.IDENTIFIER)) {
+            if (!state.sqlInterface.getIdentifierConstraints().isAllowedSchemaIdentifier(schemaName) || schemaName.equals(TorodbSchema.IDENTIFIER)) {
                 try (PreparedStatement preparedStatement = state.connection.prepareStatement("DROP TABLE \"" + schemaName + "\".\"" + tableName + "\"")) {
                     preparedStatement.executeUpdate();
                 }
@@ -311,7 +311,7 @@ public class BenchmarkDerbyR2DBackedTranslator {
         ResultSet schemas = metaData.getSchemas();
         while (schemas.next()) {
             String schemaName = schemas.getString("TABLE_SCHEM");
-            if (!state.sqlInterface.isAllowedSchemaIdentifier(schemaName) || schemaName.equals(TorodbSchema.IDENTIFIER)) {
+            if (!state.sqlInterface.getIdentifierConstraints().isAllowedSchemaIdentifier(schemaName) || schemaName.equals(TorodbSchema.IDENTIFIER)) {
                 try (PreparedStatement preparedStatement = state.connection.prepareStatement("DROP SCHEMA \"" + schemaName + "\" RESTRICT")) {
                     preparedStatement.executeUpdate();
                 }
