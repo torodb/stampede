@@ -27,7 +27,7 @@ import com.torodb.kvdocument.values.heap.LocalTimeKVTime;
 import com.torodb.kvdocument.values.heap.LongKVInstant;
 import com.torodb.kvdocument.values.heap.StringKVString;
 
-public class TestSchema {
+public class TestData {
 
     public final ImmutableMetaSnapshot snapshot;
     public final ImmutableMetaDatabase database;
@@ -39,7 +39,7 @@ public class TestSchema {
     
     private SqlInterface sqlInterface;
     
-    public TestSchema(TableRefFactory tableRefFactory, SqlInterface sqlInterface){
+    public TestData(TableRefFactory tableRefFactory, SqlInterface sqlInterface){
     	this.sqlInterface = sqlInterface;
         ImmutableMetaSnapshot.Builder metaSnapshotBuilder = new ImmutableMetaSnapshot.Builder();
         ImmutableMetaDatabase.Builder metaDatabaseBuilder = new ImmutableMetaDatabase.Builder("databaseName", "databaseSchemaName");

@@ -78,7 +78,7 @@ public abstract class AbstractBackendTest {
     
     protected static final TableRefFactory tableRefFactory = new TableRefFactoryImpl();
     
-    protected TestSchema schema;
+    protected TestData data;
     protected SchemaUpdater schemaUpdater;
     protected SqlInterface sqlInterface;
     protected SqlHelper sqlHelper;
@@ -91,7 +91,7 @@ public abstract class AbstractBackendTest {
         schemaUpdater = BACKEND_RUNNER_CLASS_RULE.getSchemaUpdater();
         sqlInterface = BACKEND_RUNNER_CLASS_RULE.getSqlInterface();
         sqlHelper = BACKEND_RUNNER_CLASS_RULE.getSqlHelper();
-        schema = new TestSchema(tableRefFactory, sqlInterface);
+        data = new TestData(tableRefFactory, sqlInterface);
         BACKEND_RUNNER_CLASS_RULE.cleanDatabase();
     }
 
@@ -109,36 +109,36 @@ public abstract class AbstractBackendTest {
     }
     
     protected void createMetaModel(DSLContext dsl) {
-        String databaseName = schema.database.getName();
-        String databaseSchemaName = schema.database.getIdentifier();
-        String collectionName = schema.collection.getName();
+        String databaseName = data.database.getName();
+        String databaseSchemaName = data.database.getIdentifier();
+        String collectionName = data.collection.getName();
         
         sqlInterface.getMetaDataWriteInterface().addMetaDatabase(dsl, databaseName, databaseSchemaName);
         sqlInterface.getStructureInterface().createSchema(dsl, databaseSchemaName);
-        sqlInterface.getMetaDataWriteInterface().addMetaCollection(dsl, databaseName, collectionName, schema.collection.getIdentifier());
-        sqlInterface.getMetaDataWriteInterface().addMetaDocPart(dsl, databaseName, collectionName, schema.rootDocPart.getTableRef(), schema.rootDocPart.getIdentifier());
-        sqlInterface.getMetaDataWriteInterface().addMetaDocPart(dsl, databaseName, collectionName, schema.subDocPart.getTableRef(), schema.subDocPart.getIdentifier());
+        sqlInterface.getMetaDataWriteInterface().addMetaCollection(dsl, databaseName, collectionName, data.collection.getIdentifier());
+        sqlInterface.getMetaDataWriteInterface().addMetaDocPart(dsl, databaseName, collectionName, data.rootDocPart.getTableRef(), data.rootDocPart.getIdentifier());
+        sqlInterface.getMetaDataWriteInterface().addMetaDocPart(dsl, databaseName, collectionName, data.subDocPart.getTableRef(), data.subDocPart.getIdentifier());
     }
     
     protected void insertMetaFields(DSLContext dsl, MetaDocPart metaDocPart){
         metaDocPart.streamFields().forEach( metaField ->
-            sqlInterface.getMetaDataWriteInterface().addMetaField(dsl, schema.database.getName(), schema.collection.getName(), metaDocPart.getTableRef(), 
+            sqlInterface.getMetaDataWriteInterface().addMetaField(dsl, data.database.getName(), data.collection.getName(), metaDocPart.getTableRef(), 
                     metaField.getName(), metaField.getIdentifier(), metaField.getType())
         );
     }
     
     protected void insertNewMetaFields(DSLContext dsl, MutableMetaDocPart metaDocPart){
         for (MetaField metaField : metaDocPart.getAddedMetaFields()) {
-            sqlInterface.getMetaDataWriteInterface().addMetaField(dsl, schema.database.getName(), schema.collection.getName(), metaDocPart.getTableRef(), 
+            sqlInterface.getMetaDataWriteInterface().addMetaField(dsl, data.database.getName(), data.collection.getName(), metaDocPart.getTableRef(), 
                     metaField.getName(), metaField.getIdentifier(), metaField.getType());
         }
     }
     
     protected void createDocPartTable(DSLContext dsl, MetaCollection metaCollection, MetaDocPart metaDocPart) {
         if (metaDocPart.getTableRef().isRoot()) {
-            sqlInterface.getStructureInterface().createRootDocPartTable(dsl, schema.database.getIdentifier(), metaDocPart.getIdentifier(), metaDocPart.getTableRef());
+            sqlInterface.getStructureInterface().createRootDocPartTable(dsl, data.database.getIdentifier(), metaDocPart.getIdentifier(), metaDocPart.getTableRef());
         } else {
-            sqlInterface.getStructureInterface().createDocPartTable(dsl, schema.database.getIdentifier(), metaDocPart.getIdentifier(), metaDocPart.getTableRef(),
+            sqlInterface.getStructureInterface().createDocPartTable(dsl, data.database.getIdentifier(), metaDocPart.getIdentifier(), metaDocPart.getTableRef(),
                     metaCollection.getMetaDocPartByTableRef(metaDocPart.getTableRef().getParent().get()).getIdentifier());
         }
         
@@ -147,24 +147,24 @@ public abstract class AbstractBackendTest {
     
     protected void addColumnToDocPartTable(DSLContext dsl, MetaCollection metaCollection, MetaDocPart metaDocPart) {
         metaDocPart.streamScalars().forEach(metaScalar -> 
-            sqlInterface.getStructureInterface().addColumnToDocPartTable(dsl, schema.database.getIdentifier(), metaDocPart.getIdentifier(), 
+            sqlInterface.getStructureInterface().addColumnToDocPartTable(dsl, data.database.getIdentifier(), metaDocPart.getIdentifier(), 
                     metaScalar.getIdentifier(), (DataTypeForKV<?>) sqlInterface.getDataTypeProvider().getDataType(metaScalar.getType()))
         );
         
         metaDocPart.streamFields().forEach(metaField -> 
-            sqlInterface.getStructureInterface().addColumnToDocPartTable(dsl, schema.database.getIdentifier(), metaDocPart.getIdentifier(), 
+            sqlInterface.getStructureInterface().addColumnToDocPartTable(dsl, data.database.getIdentifier(), metaDocPart.getIdentifier(), 
                     metaField.getIdentifier(), (DataTypeForKV<?>) sqlInterface.getDataTypeProvider().getDataType(metaField.getType()))
         );
     }
     
     protected void addNewColumnToDocPartTable(DSLContext dsl, MetaCollection metaCollection, MutableMetaDocPart mutableMetaDocPart) {
         for (MetaScalar metaScalar : mutableMetaDocPart.getAddedMetaScalars()) { 
-            sqlInterface.getStructureInterface().addColumnToDocPartTable(dsl, schema.database.getIdentifier(), mutableMetaDocPart.getIdentifier(), 
+            sqlInterface.getStructureInterface().addColumnToDocPartTable(dsl, data.database.getIdentifier(), mutableMetaDocPart.getIdentifier(), 
                     metaScalar.getIdentifier(), (DataTypeForKV<?>) sqlInterface.getDataTypeProvider().getDataType(metaScalar.getType()));
         }
         
         for (MetaField metaField : mutableMetaDocPart.getAddedMetaFields()) { 
-            sqlInterface.getStructureInterface().addColumnToDocPartTable(dsl, schema.database.getIdentifier(), mutableMetaDocPart.getIdentifier(), 
+            sqlInterface.getStructureInterface().addColumnToDocPartTable(dsl, data.database.getIdentifier(), mutableMetaDocPart.getIdentifier(), 
                     metaField.getIdentifier(), (DataTypeForKV<?>) sqlInterface.getDataTypeProvider().getDataType(metaField.getType()));
         }
     }
@@ -186,7 +186,7 @@ public abstract class AbstractBackendTest {
             if (docPartData.getMetaDocPart().getTableRef().isRoot()) {
                 docPartData.forEach(docPartRow ->generatedDids.add(docPartRow.getDid()));
             }
-            sqlInterface.getWriteInterface().insertDocPartData(dsl, schema.database.getIdentifier(), docPartData);
+            sqlInterface.getWriteInterface().insertDocPartData(dsl, data.database.getIdentifier(), docPartData);
         }
         return generatedDids;
     }
@@ -204,17 +204,17 @@ public abstract class AbstractBackendTest {
             metaDatabase.streamMetaCollections().forEachOrdered(metaCollection -> {
                 metaCollection.streamContainedMetaDocParts().sorted(TableRefComparator.MetaDocPart.ASC).forEachOrdered(metaDocPart -> {
                     if (metaDocPart.getTableRef().isRoot()) {
-                        sqlInterface.getStructureInterface().createRootDocPartTable(dsl, schema.database.getIdentifier(), metaDocPart.getIdentifier(), metaDocPart.getTableRef());
+                        sqlInterface.getStructureInterface().createRootDocPartTable(dsl, data.database.getIdentifier(), metaDocPart.getIdentifier(), metaDocPart.getTableRef());
                     } else {
-                        sqlInterface.getStructureInterface().createDocPartTable(dsl, schema.database.getIdentifier(), metaDocPart.getIdentifier(), metaDocPart.getTableRef(),
+                        sqlInterface.getStructureInterface().createDocPartTable(dsl, data.database.getIdentifier(), metaDocPart.getIdentifier(), metaDocPart.getTableRef(),
                                 metaCollection.getMetaDocPartByTableRef(metaDocPart.getTableRef().getParent().get()).getIdentifier());
                     }
                     metaDocPart.streamScalars().forEachOrdered(metaScalar -> {
-                        sqlInterface.getStructureInterface().addColumnToDocPartTable(dsl, schema.database.getIdentifier(), metaDocPart.getIdentifier(), 
+                        sqlInterface.getStructureInterface().addColumnToDocPartTable(dsl, data.database.getIdentifier(), metaDocPart.getIdentifier(), 
                                 metaScalar.getIdentifier(), sqlInterface.getDataTypeProvider().getDataType(metaScalar.getType()));
                     });
                     metaDocPart.streamFields().forEachOrdered(metaField -> {
-                        sqlInterface.getStructureInterface().addColumnToDocPartTable(dsl, schema.database.getIdentifier(), metaDocPart.getIdentifier(), 
+                        sqlInterface.getStructureInterface().addColumnToDocPartTable(dsl, data.database.getIdentifier(), metaDocPart.getIdentifier(), 
                                 metaField.getIdentifier(), sqlInterface.getDataTypeProvider().getDataType(metaField.getType()));
                     });
                 });
@@ -226,7 +226,7 @@ public abstract class AbstractBackendTest {
 
     protected CollectionData parseDocuments(MutableMetaSnapshot mutableSnapshot, DSLContext dsl, List<KVDocument> documents)
             throws Exception {
-        CollectionData collectionData = readDataFromDocuments(schema.database.getName(), schema.collection.getName(), documents, mutableSnapshot);
+        CollectionData collectionData = readDataFromDocuments(data.database.getName(), data.collection.getName(), documents, mutableSnapshot);
         
         return collectionData;
     }

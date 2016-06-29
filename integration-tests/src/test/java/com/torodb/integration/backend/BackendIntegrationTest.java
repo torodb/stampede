@@ -33,7 +33,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -97,60 +96,60 @@ public class BackendIntegrationTest extends AbstractBackendTest {
        	try (Connection connection = sqlInterface.getDbBackend().createWriteConnection()) {
        	    DSLContext dsl = sqlInterface.getDslContextFactory().createDSLContext(connection);
             createMetaModel(dsl);
-            insertMetaFields(dsl, schema.rootDocPart);
-            createDocPartTable(dsl, schema.collection, schema.rootDocPart);
-            insertMetaFields(dsl, schema.subDocPart);
-            createDocPartTable(dsl, schema.collection, schema.subDocPart);
+            insertMetaFields(dsl, data.rootDocPart);
+            createDocPartTable(dsl, data.collection, data.rootDocPart);
+            insertMetaFields(dsl, data.subDocPart);
+            createDocPartTable(dsl, data.collection, data.subDocPart);
             connection.commit();
         }
         
         MetaSnapshot metaSnapshot = buildMetaSnapshot();
-        MetaDatabase metaDatabase = metaSnapshot.getMetaDatabaseByName(schema.database.getName());
+        MetaDatabase metaDatabase = metaSnapshot.getMetaDatabaseByName(data.database.getName());
         
         assertNotNull(metaDatabase);
-        assertEquals(schema.database.getIdentifier(), metaDatabase.getIdentifier());
+        assertEquals(data.database.getIdentifier(), metaDatabase.getIdentifier());
         
-        MetaCollection metaCollection = metaDatabase.getMetaCollectionByName(schema.collection.getName());
+        MetaCollection metaCollection = metaDatabase.getMetaCollectionByName(data.collection.getName());
         assertNotNull(metaCollection);
-        assertEquals(schema.collection.getIdentifier(), metaCollection.getIdentifier());
+        assertEquals(data.collection.getIdentifier(), metaCollection.getIdentifier());
         
-        MetaDocPart rootMetaDocPart = metaCollection.getMetaDocPartByTableRef(schema.rootDocPart.getTableRef());
+        MetaDocPart rootMetaDocPart = metaCollection.getMetaDocPartByTableRef(data.rootDocPart.getTableRef());
         assertNotNull(rootMetaDocPart);
-        assertEquals(schema.rootDocPart.getIdentifier(), rootMetaDocPart.getIdentifier());
-        assertAllFieldsArePresent(schema.rootDocPart, rootMetaDocPart);
+        assertEquals(data.rootDocPart.getIdentifier(), rootMetaDocPart.getIdentifier());
+        assertAllFieldsArePresent(data.rootDocPart, rootMetaDocPart);
         
-        final MetaDocPart subDocMetaDocPart = metaCollection.getMetaDocPartByTableRef(schema.subDocPart.getTableRef());
+        final MetaDocPart subDocMetaDocPart = metaCollection.getMetaDocPartByTableRef(data.subDocPart.getTableRef());
         assertNotNull(subDocMetaDocPart);
-        assertEquals(schema.subDocPart.getIdentifier(), subDocMetaDocPart.getIdentifier());
-        assertAllFieldsArePresent(schema.subDocPart,subDocMetaDocPart);
+        assertEquals(data.subDocPart.getIdentifier(), subDocMetaDocPart.getIdentifier());
+        assertAllFieldsArePresent(data.subDocPart,subDocMetaDocPart);
         
         try (Connection connection = sqlInterface.getDbBackend().createWriteConnection()) {
         	DSLContext dsl = sqlInterface.getDslContextFactory().createDSLContext(connection);
-            insertNewMetaFields(dsl, schema.newSubDocPart);
-            addNewColumnToDocPartTable(dsl, schema.collection, schema.newSubDocPart);
+            insertNewMetaFields(dsl, data.newSubDocPart);
+            addNewColumnToDocPartTable(dsl, data.collection, data.newSubDocPart);
             connection.commit();
         }
         
         metaSnapshot = buildMetaSnapshot();
-        metaDatabase = metaSnapshot.getMetaDatabaseByName(schema.database.getName());
+        metaDatabase = metaSnapshot.getMetaDatabaseByName(data.database.getName());
         
         assertNotNull(metaDatabase);
-        assertEquals(schema.database.getIdentifier(), metaDatabase.getIdentifier());
+        assertEquals(data.database.getIdentifier(), metaDatabase.getIdentifier());
         
-        metaCollection = metaDatabase.getMetaCollectionByName(schema.collection.getName());
+        metaCollection = metaDatabase.getMetaCollectionByName(data.collection.getName());
         assertNotNull(metaCollection);
-        assertEquals(schema.collection.getIdentifier(), metaCollection.getIdentifier());
+        assertEquals(data.collection.getIdentifier(), metaCollection.getIdentifier());
         
-        rootMetaDocPart = metaCollection.getMetaDocPartByTableRef(schema.rootDocPart.getTableRef());
+        rootMetaDocPart = metaCollection.getMetaDocPartByTableRef(data.rootDocPart.getTableRef());
         assertNotNull(rootMetaDocPart);
-        assertEquals(schema.rootDocPart.getIdentifier(), rootMetaDocPart.getIdentifier());
-        assertAllFieldsArePresent(schema.rootDocPart, rootMetaDocPart);
+        assertEquals(data.rootDocPart.getIdentifier(), rootMetaDocPart.getIdentifier());
+        assertAllFieldsArePresent(data.rootDocPart, rootMetaDocPart);
         
-        MetaDocPart newSubDocMetaDocPart = metaCollection.getMetaDocPartByTableRef(schema.subDocPart.getTableRef());
+        MetaDocPart newSubDocMetaDocPart = metaCollection.getMetaDocPartByTableRef(data.subDocPart.getTableRef());
         assertNotNull(newSubDocMetaDocPart);
-        assertEquals(schema.subDocPart.getIdentifier(), newSubDocMetaDocPart.getIdentifier());
-        assertAllFieldsArePresent(schema.subDocPart, newSubDocMetaDocPart);
-        assertAllFieldsArePresent(schema.newSubDocPart, newSubDocMetaDocPart);
+        assertEquals(data.subDocPart.getIdentifier(), newSubDocMetaDocPart.getIdentifier());
+        assertAllFieldsArePresent(data.subDocPart, newSubDocMetaDocPart);
+        assertAllFieldsArePresent(data.newSubDocPart, newSubDocMetaDocPart);
     }
 
 	private void assertAllFieldsArePresent(MetaDocPart docPart, MetaDocPart rootMetaDocPart) {
@@ -170,14 +169,14 @@ public class BackendIntegrationTest extends AbstractBackendTest {
 		 try (Connection connection = sqlInterface.getDbBackend().createWriteConnection()) {
              DSLContext dsl = sqlInterface.getDslContextFactory().createDSLContext(connection);
              createMetaModel(dsl);
-             int first100RootRid = sqlInterface.getMetaDataWriteInterface().consumeRids(dsl, schema.database.getName(), schema.collection.getName(), schema.rootDocPart.getTableRef(), 100);
+             int first100RootRid = sqlInterface.getMetaDataWriteInterface().consumeRids(dsl, data.database.getName(), data.collection.getName(), data.rootDocPart.getTableRef(), 100);
              assertEquals(0, first100RootRid);
-             int next100RootRid = sqlInterface.getMetaDataWriteInterface().consumeRids(dsl, schema.database.getName(), schema.collection.getName(), schema.rootDocPart.getTableRef(), 100);
+             int next100RootRid = sqlInterface.getMetaDataWriteInterface().consumeRids(dsl, data.database.getName(), data.collection.getName(), data.rootDocPart.getTableRef(), 100);
              assertEquals(100, next100RootRid);
-             createDocPartTable(dsl, schema.collection, schema.rootDocPart);
-             int first100SubRid = sqlInterface.getMetaDataWriteInterface().consumeRids(dsl, schema.database.getName(), schema.collection.getName(), schema.subDocPart.getTableRef(), 100);
+             createDocPartTable(dsl, data.collection, data.rootDocPart);
+             int first100SubRid = sqlInterface.getMetaDataWriteInterface().consumeRids(dsl, data.database.getName(), data.collection.getName(), data.subDocPart.getTableRef(), 100);
              assertEquals(0, first100SubRid);
-             int next100SubRid = sqlInterface.getMetaDataWriteInterface().consumeRids(dsl, schema.database.getName(), schema.collection.getName(), schema.subDocPart.getTableRef(), 100);
+             int next100SubRid = sqlInterface.getMetaDataWriteInterface().consumeRids(dsl, data.database.getName(), data.collection.getName(), data.subDocPart.getTableRef(), 100);
              assertEquals(100, next100SubRid);
              connection.commit();
          }
@@ -190,34 +189,34 @@ public class BackendIntegrationTest extends AbstractBackendTest {
         try (Connection connection = sqlInterface.getDbBackend().createWriteConnection()) {
         	DSLContext dsl = sqlInterface.getDslContextFactory().createDSLContext(connection);
         	createMetaModel(dsl);
-            insertMetaFields(dsl, schema.rootDocPart);
-            createDocPartTable(dsl, schema.collection,
-            		schema.rootDocPart);
-            insertMetaFields(dsl, schema.subDocPart);
-            createDocPartTable(dsl, schema.collection, 
-            		schema.subDocPart);
+            insertMetaFields(dsl, data.rootDocPart);
+            createDocPartTable(dsl, data.collection,
+            		data.rootDocPart);
+            insertMetaFields(dsl, data.subDocPart);
+            createDocPartTable(dsl, data.collection, 
+            		data.subDocPart);
             connection.commit();
 
             ImmutableMetaSnapshot snapshot = buildMetaSnapshot();
             
-            ImmutableMetaDatabase metaDatabase = snapshot.getMetaDatabaseByName(schema.database.getName());
-        	ImmutableMetaCollection metaCollection = metaDatabase.getMetaCollectionByName(schema.collection.getName());
-        	ImmutableMetaDocPart rootMetaDocPart = metaCollection.getMetaDocPartByTableRef(schema.rootDocPart.getTableRef());
-        	ImmutableMetaDocPart subDocMetaDocPart = metaCollection.getMetaDocPartByTableRef(schema.subDocPart.getTableRef());
+            ImmutableMetaDatabase metaDatabase = snapshot.getMetaDatabaseByName(data.database.getName());
+        	ImmutableMetaCollection metaCollection = metaDatabase.getMetaCollectionByName(data.collection.getName());
+        	ImmutableMetaDocPart rootMetaDocPart = metaCollection.getMetaDocPartByTableRef(data.rootDocPart.getTableRef());
+        	ImmutableMetaDocPart subDocMetaDocPart = metaCollection.getMetaDocPartByTableRef(data.subDocPart.getTableRef());
         	
         	int lastRootRowIUsed = sqlInterface.getReadInterface().getLastRowIdUsed(dsl, metaDatabase, metaCollection, rootMetaDocPart);
         	int lastSubDocRowIUsed = sqlInterface.getReadInterface().getLastRowIdUsed(dsl, metaDatabase, metaCollection, subDocMetaDocPart);
         	assertEquals(-1, lastRootRowIUsed);
         	assertEquals(-1, lastSubDocRowIUsed);
         	
-            MutableMetaSnapshot mutableSnapshot = new WrapperMutableMetaSnapshot(schema.snapshot);
-            writeCollectionData(dsl, parseDocuments(mutableSnapshot, dsl, schema.documents));
+            MutableMetaSnapshot mutableSnapshot = new WrapperMutableMetaSnapshot(data.snapshot);
+            writeCollectionData(dsl, parseDocuments(mutableSnapshot, dsl, data.documents));
         	lastRootRowIUsed = sqlInterface.getReadInterface().getLastRowIdUsed(dsl, metaDatabase, metaCollection, rootMetaDocPart);
         	lastSubDocRowIUsed = sqlInterface.getReadInterface().getLastRowIdUsed(dsl, metaDatabase, metaCollection, subDocMetaDocPart);
         	assertEquals(1, lastRootRowIUsed);
         	assertEquals(0, lastSubDocRowIUsed);
         	
-            writeCollectionData(dsl, parseDocuments(mutableSnapshot, dsl, schema.getMoreDocuments()));
+            writeCollectionData(dsl, parseDocuments(mutableSnapshot, dsl, data.getMoreDocuments()));
         	lastRootRowIUsed = sqlInterface.getReadInterface().getLastRowIdUsed(dsl, metaDatabase, metaCollection, rootMetaDocPart);
         	lastSubDocRowIUsed = sqlInterface.getReadInterface().getLastRowIdUsed(dsl, metaDatabase, metaCollection, subDocMetaDocPart);
         	assertEquals(2, lastRootRowIUsed);
@@ -233,24 +232,24 @@ public class BackendIntegrationTest extends AbstractBackendTest {
         try (Connection connection = sqlInterface.getDbBackend().createWriteConnection()) {
             DSLContext dsl = sqlInterface.getDslContextFactory().createDSLContext(connection);
             
-            sqlInterface.getStructureInterface().createSchema(dsl, schema.database.getIdentifier());
-            createDocPartTable(dsl, schema.collection, schema.rootDocPart);
-            createDocPartTable(dsl, schema.collection, schema.subDocPart);
-            MutableMetaSnapshot mutableSnapshot = new WrapperMutableMetaSnapshot(schema.snapshot);
-            writeCollectionData(dsl, parseDocuments(mutableSnapshot, dsl, schema.documents));
+            sqlInterface.getStructureInterface().createSchema(dsl, data.database.getIdentifier());
+            createDocPartTable(dsl, data.collection, data.rootDocPart);
+            createDocPartTable(dsl, data.collection, data.subDocPart);
+            MutableMetaSnapshot mutableSnapshot = new WrapperMutableMetaSnapshot(data.snapshot);
+            writeCollectionData(dsl, parseDocuments(mutableSnapshot, dsl, data.documents));
             connection.commit();
             
             StringBuilder rootDocPartSelectStatementBuilder = new StringBuilder("SELECT ");
-            schema.rootDocPart.streamFields().forEach(metaField ->
+            data.rootDocPart.streamFields().forEach(metaField ->
                 rootDocPartSelectStatementBuilder.append('"')
                     .append(metaField.getIdentifier())
                     .append("\",")
             );
             rootDocPartSelectStatementBuilder.setCharAt(rootDocPartSelectStatementBuilder.length() - 1, ' ');
             rootDocPartSelectStatementBuilder.append("FROM \"")
-                    .append(schema.database.getIdentifier())
+                    .append(data.database.getIdentifier())
                     .append("\".\"")
-                    .append(schema.rootDocPart.getIdentifier())
+                    .append(data.rootDocPart.getIdentifier())
                     .append('"');
             try (PreparedStatement preparedStatement = connection.prepareStatement(rootDocPartSelectStatementBuilder.toString())) {
                 ResultSet resultSet = preparedStatement.executeQuery();
@@ -279,25 +278,25 @@ public class BackendIntegrationTest extends AbstractBackendTest {
         try (Connection connection = sqlInterface.getDbBackend().createWriteConnection()) {
             DSLContext dsl = sqlInterface.getDslContextFactory().createDSLContext(connection);
             
-            sqlInterface.getStructureInterface().createSchema(dsl, schema.database.getIdentifier());
+            sqlInterface.getStructureInterface().createSchema(dsl, data.database.getIdentifier());
             
-            createDocPartTable(dsl, schema.collection, schema.rootDocPart);
-            createDocPartTable(dsl, schema.collection, schema.subDocPart);
-            MutableMetaSnapshot mutableSnapshot = new WrapperMutableMetaSnapshot(schema.snapshot);
-            CollectionData collectionData = parseDocuments(mutableSnapshot, dsl, schema.documents);
+            createDocPartTable(dsl, data.collection, data.rootDocPart);
+            createDocPartTable(dsl, data.collection, data.subDocPart);
+            MutableMetaSnapshot mutableSnapshot = new WrapperMutableMetaSnapshot(data.snapshot);
+            CollectionData collectionData = parseDocuments(mutableSnapshot, dsl, data.documents);
             List<Integer> generatedDids = writeCollectionData(dsl, collectionData);
             connection.commit();
             
             List<Integer> deletedDids = generatedDids.subList(0, 1);
-            sqlInterface.getWriteInterface().deleteDocParts(dsl, schema.database.getIdentifier(), schema.collection, deletedDids);
+            sqlInterface.getWriteInterface().deleteDocParts(dsl, data.database.getIdentifier(), data.collection, deletedDids);
             
             StringBuilder rootDocPartSelectStatementBuilder = new StringBuilder()
                     .append("SELECT \"")
                     .append(MetaDocPartTable.DocPartTableFields.DID.fieldName)
                     .append("\" FROM \"")
-                    .append(schema.database.getIdentifier())
+                    .append(data.database.getIdentifier())
                     .append("\".\"")
-                    .append(schema.rootDocPart.getIdentifier())
+                    .append(data.rootDocPart.getIdentifier())
                     .append('"');
             try (PreparedStatement preparedStatement = connection.prepareStatement(rootDocPartSelectStatementBuilder.toString())) {
                 ResultSet resultSet = preparedStatement.executeQuery();
@@ -311,9 +310,9 @@ public class BackendIntegrationTest extends AbstractBackendTest {
                     .append("SELECT \"")
                     .append(MetaDocPartTable.DocPartTableFields.DID.fieldName)
                     .append("\" FROM \"")
-                    .append(schema.database.getIdentifier())
+                    .append(data.database.getIdentifier())
                     .append("\".\"")
-                    .append(schema.subDocPart.getIdentifier())
+                    .append(data.subDocPart.getIdentifier())
                     .append('"');
             try (PreparedStatement preparedStatement = connection.prepareStatement(rootSubPartSelectStatementBuilder.toString())) {
                 ResultSet resultSet = preparedStatement.executeQuery();
@@ -330,10 +329,10 @@ public class BackendIntegrationTest extends AbstractBackendTest {
     private boolean findRootDocPartRow(ResultSet resultSet, List<Integer> foundRowIndexes) throws SQLException {
 		Integer index = 0;
 		boolean rowFound = true;
-		for (KVDocument document : schema.documents) {
+		for (KVDocument document : data.documents) {
 		    rowFound = true;
 		    int columnIndex = 1;
-		    Iterator<ImmutableMetaField> rootDocPartFieldsIterator = schema.rootDocPart.streamFields().iterator();
+		    Iterator<ImmutableMetaField> rootDocPartFieldsIterator = data.rootDocPart.streamFields().iterator();
             while (rootDocPartFieldsIterator.hasNext())  {
                 MetaField metaField = rootDocPartFieldsIterator.next();
 		        Optional<KVValue<?>> value;
@@ -390,15 +389,15 @@ public class BackendIntegrationTest extends AbstractBackendTest {
             DSLContext dsl = sqlInterface.getDslContextFactory().createDSLContext(connection);
             MutableMetaSnapshot mutableSnapshot = new WrapperMutableMetaSnapshot(new ImmutableMetaSnapshot.Builder().build());
             mutableSnapshot
-                .addMetaDatabase(schema.database.getName(), schema.database.getIdentifier())
-                .addMetaCollection(schema.collection.getName(), schema.collection.getIdentifier());
-            sqlInterface.getStructureInterface().createSchema(dsl, schema.database.getIdentifier());
+                .addMetaDatabase(data.database.getName(), data.database.getIdentifier())
+                .addMetaCollection(data.collection.getName(), data.collection.getIdentifier());
+            sqlInterface.getStructureInterface().createSchema(dsl, data.database.getIdentifier());
             CollectionData collectionData = parseDocumentAndCreateDocPartDataTables(mutableSnapshot, dsl, document);
             
             List<Integer> generatedDids = writeCollectionData(dsl, collectionData);
             
-            MetaDatabase metaDatabase = mutableSnapshot.getMetaDatabaseByName(schema.database.getName());
-            MetaCollection metaCollection = metaDatabase.getMetaCollectionByName(schema.collection.getName());
+            MetaDatabase metaDatabase = mutableSnapshot.getMetaDatabaseByName(data.database.getName());
+            MetaCollection metaCollection = metaDatabase.getMetaCollectionByName(data.collection.getName());
             
             
             DocPartResults<ResultSet> docPartResultSets = sqlInterface.getReadInterface().getCollectionResultSets(
@@ -422,15 +421,15 @@ public class BackendIntegrationTest extends AbstractBackendTest {
             DSLContext dsl = sqlInterface.getDslContextFactory().createDSLContext(connection);
             MutableMetaSnapshot mutableSnapshot = new WrapperMutableMetaSnapshot(new ImmutableMetaSnapshot.Builder().build());
             mutableSnapshot
-                .addMetaDatabase(schema.database.getName(), schema.database.getIdentifier())
-                .addMetaCollection(schema.collection.getName(), schema.collection.getIdentifier());
-            sqlInterface.getStructureInterface().createSchema(dsl, schema.database.getIdentifier());
+                .addMetaDatabase(data.database.getName(), data.database.getIdentifier())
+                .addMetaCollection(data.collection.getName(), data.collection.getIdentifier());
+            sqlInterface.getStructureInterface().createSchema(dsl, data.database.getIdentifier());
             CollectionData collectionData = parseDocumentsAndCreateDocPartDataTables(mutableSnapshot, dsl, documents);
             
             List<Integer> generatedDids = writeCollectionData(dsl, collectionData);
             
-            MetaDatabase metaDatabase = mutableSnapshot.getMetaDatabaseByName(schema.database.getName());
-            MetaCollection metaCollection = metaDatabase.getMetaCollectionByName(schema.collection.getName());
+            MetaDatabase metaDatabase = mutableSnapshot.getMetaDatabaseByName(data.database.getName());
+            MetaCollection metaCollection = metaDatabase.getMetaCollectionByName(data.collection.getName());
             
             MetaDocPart metaDocPart = metaCollection.getMetaDocPartByTableRef(createTableRef());
             
@@ -467,15 +466,15 @@ public class BackendIntegrationTest extends AbstractBackendTest {
             DSLContext dsl = sqlInterface.getDslContextFactory().createDSLContext(connection);
             MutableMetaSnapshot mutableSnapshot = new WrapperMutableMetaSnapshot(new ImmutableMetaSnapshot.Builder().build());
             mutableSnapshot
-                .addMetaDatabase(schema.database.getName(), schema.database.getIdentifier())
-                .addMetaCollection(schema.collection.getName(), schema.collection.getIdentifier());
-            sqlInterface.getStructureInterface().createSchema(dsl, schema.database.getIdentifier());
+                .addMetaDatabase(data.database.getName(), data.database.getIdentifier())
+                .addMetaCollection(data.collection.getName(), data.collection.getIdentifier());
+            sqlInterface.getStructureInterface().createSchema(dsl, data.database.getIdentifier());
             CollectionData collectionData = parseDocumentsAndCreateDocPartDataTables(mutableSnapshot, dsl, documents);
             
             List<Integer> generatedDids = writeCollectionData(dsl, collectionData);
             
-            MetaDatabase metaDatabase = mutableSnapshot.getMetaDatabaseByName(schema.database.getName());
-            MetaCollection metaCollection = metaDatabase.getMetaCollectionByName(schema.collection.getName());
+            MetaDatabase metaDatabase = mutableSnapshot.getMetaDatabaseByName(data.database.getName());
+            MetaCollection metaCollection = metaDatabase.getMetaCollectionByName(data.collection.getName());
             
             MetaDocPart metaDocPart = metaCollection.getMetaDocPartByTableRef(createTableRef("batters", "batter"));
             MetaField metaField = metaDocPart.getMetaFieldByNameAndType("type", FieldType.STRING);
@@ -514,21 +513,21 @@ public class BackendIntegrationTest extends AbstractBackendTest {
             DSLContext dsl = sqlInterface.getDslContextFactory().createDSLContext(connection);
             MutableMetaSnapshot mutableSnapshot = new WrapperMutableMetaSnapshot(new ImmutableMetaSnapshot.Builder().build());
             mutableSnapshot
-            	.addMetaDatabase(schema.database.getName(), schema.database.getIdentifier())
-            	.addMetaCollection(schema.collection.getName(), schema.collection.getIdentifier());
-            sqlInterface.getStructureInterface().createSchema(dsl, schema.database.getIdentifier());
+            	.addMetaDatabase(data.database.getName(), data.database.getIdentifier())
+            	.addMetaCollection(data.collection.getName(), data.collection.getIdentifier());
+            sqlInterface.getStructureInterface().createSchema(dsl, data.database.getIdentifier());
             
             List<KVDocument> documents = createDocumentsWithStructures();
             
             parseDocumentsAndCreateDocPartDataTables(mutableSnapshot, dsl, documents);
             
             for (KVDocument document : documents) {
-                CollectionData collectionData = readDataFromDocuments(schema.database.getName(), schema.collection.getName(), Arrays.asList(document), mutableSnapshot);
+                CollectionData collectionData = readDataFromDocuments(data.database.getName(), data.collection.getName(), Arrays.asList(document), mutableSnapshot);
                 
                 List<Integer> generatedDids = writeCollectionData(dsl, collectionData);
                 
-                MetaDatabase metaDatabase = mutableSnapshot.getMetaDatabaseByName(schema.database.getName());
-                MetaCollection metaCollection = metaDatabase.getMetaCollectionByName(schema.collection.getName());
+                MetaDatabase metaDatabase = mutableSnapshot.getMetaDatabaseByName(data.database.getName());
+                MetaCollection metaCollection = metaDatabase.getMetaCollectionByName(data.collection.getName());
                 
                 DocPartResults<ResultSet> docPartResultSets = sqlInterface.getReadInterface().getCollectionResultSets(
                         dsl, metaDatabase, metaCollection, 
@@ -541,12 +540,12 @@ public class BackendIntegrationTest extends AbstractBackendTest {
                 LOGGER.debug("Readed: " + readedDocument);
                 assertEquals(document, readedDocument);
             }
-            CollectionData collectionData = readDataFromDocuments(schema.database.getName(), schema.collection.getName(), documents, mutableSnapshot);
+            CollectionData collectionData = readDataFromDocuments(data.database.getName(), data.collection.getName(), documents, mutableSnapshot);
             
             List<Integer> generatedDids = writeCollectionData(dsl, collectionData);
             
-            MetaDatabase metaDatabase = mutableSnapshot.getMetaDatabaseByName(schema.database.getName());
-            MetaCollection metaCollection = metaDatabase.getMetaCollectionByName(schema.collection.getName());
+            MetaDatabase metaDatabase = mutableSnapshot.getMetaDatabaseByName(data.database.getName());
+            MetaCollection metaCollection = metaDatabase.getMetaCollectionByName(data.collection.getName());
             
             DocPartResults<ResultSet> docPartResultSets = sqlInterface.getReadInterface().getCollectionResultSets(
                     dsl, metaDatabase, metaCollection, 
