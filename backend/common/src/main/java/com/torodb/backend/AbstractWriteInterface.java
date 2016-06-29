@@ -66,7 +66,7 @@ public abstract class AbstractWriteInterface implements WriteInterface {
     }
 
     @Override
-    public void deleteDocParts(@Nonnull DSLContext dsl,
+    public void deleteCollectionDocParts(@Nonnull DSLContext dsl,
             @Nonnull String schemaName, @Nonnull MetaCollection metaCollection,
             @Nonnull List<Integer> dids
     ) {

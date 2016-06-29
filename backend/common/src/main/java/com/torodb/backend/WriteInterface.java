@@ -9,5 +9,5 @@ import org.jooq.DSLContext;
 
 public interface WriteInterface {
     void insertDocPartData(@Nonnull DSLContext dsl, @Nonnull String schemaName, @Nonnull DocPartData docPartData);
-    void deleteDocParts(@Nonnull DSLContext dsl, @Nonnull String schemaName, @Nonnull MetaCollection metaCollection, @Nonnull List<Integer> dids);
+    void deleteCollectionDocParts(@Nonnull DSLContext dsl, @Nonnull String schemaName, @Nonnull MetaCollection metaCollection, @Nonnull List<Integer> dids);
 }
