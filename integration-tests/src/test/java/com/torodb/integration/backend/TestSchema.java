@@ -2,10 +2,8 @@ package com.torodb.integration.backend;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.Optional;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.torodb.backend.SqlInterface;
 import com.torodb.core.TableRefFactory;
 import com.torodb.core.transaction.metainf.FieldType;
@@ -17,11 +15,11 @@ import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
 import com.torodb.core.transaction.metainf.MutableMetaDocPart;
 import com.torodb.core.transaction.metainf.WrapperMutableMetaDocPart;
 import com.torodb.kvdocument.values.KVBoolean;
+import com.torodb.kvdocument.values.KVDocument;
 import com.torodb.kvdocument.values.KVDouble;
 import com.torodb.kvdocument.values.KVInteger;
 import com.torodb.kvdocument.values.KVLong;
 import com.torodb.kvdocument.values.KVNull;
-import com.torodb.kvdocument.values.KVValue;
 import com.torodb.kvdocument.values.heap.ByteArrayKVMongoObjectId;
 import com.torodb.kvdocument.values.heap.DefaultKVMongoTimestamp;
 import com.torodb.kvdocument.values.heap.LocalDateKVDate;
@@ -37,8 +35,7 @@ public class TestSchema {
     public final ImmutableMetaDocPart rootDocPart;
     public final ImmutableMetaDocPart subDocPart;
     public final MutableMetaDocPart newSubDocPart;
-    public final ImmutableList<ImmutableMap<String, Optional<KVValue<?>>>> rootDocPartValues;
-    public final ImmutableList<ImmutableMap<String, Optional<KVValue<?>>>> subDocPartValues;
+    public final ImmutableList<KVDocument> documents;
     
     private SqlInterface sqlInterface;
     
@@ -106,91 +103,51 @@ public class TestSchema {
         database = metaDatabaseBuilder.build();
         metaSnapshotBuilder.add(database);
         snapshot = metaSnapshotBuilder.build();
-        rootDocPartValues = ImmutableList.<ImmutableMap<String, Optional<KVValue<?>>>>builder()
-                .add(ImmutableMap.<String, Optional<KVValue<?>>>builder()
-                        .put("nullRoot", Optional.of(KVNull.getInstance()))
-                        .put("booleanRoot", Optional.of(KVBoolean.TRUE))
-                        .put("integerRoot", Optional.of(KVInteger.of(1)))
-                        .put("longRoot", Optional.of(KVLong.of(2)))
-                        .put("doubleRoot", Optional.of(KVDouble.of(3.3)))
-                        .put("stringRoot", Optional.of(new StringKVString("Lorem ipsum")))
-                        .put("dateRoot", Optional.of(new LocalDateKVDate(LocalDate.of(2016, 06, 7))))
-                        .put("timeRoot", Optional.of(new LocalTimeKVTime(LocalTime.of(17, 29, 00))))
-                        .put("mongoObjectIdRoot", Optional.of(new ByteArrayKVMongoObjectId(
-                                new byte[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12})))
-                        .put("mongoTimeStampRoot", Optional.of(new DefaultKVMongoTimestamp(0, 0)))
-                        .put("instantRoot", Optional.of(new LongKVInstant(0)))
-                        .put("subDocPart", Optional.of(KVBoolean.FALSE))
+        documents = ImmutableList.<KVDocument>builder()
+                .add(new KVDocument.Builder()
+                        .putValue("nullRoot", KVNull.getInstance())
+                        .putValue("booleanRoot", KVBoolean.TRUE)
+                        .putValue("integerRoot", KVInteger.of(1))
+                        .putValue("longRoot", KVLong.of(2))
+                        .putValue("doubleRoot", KVDouble.of(3.3))
+                        .putValue("stringRoot", new StringKVString("Lorem ipsum"))
+                        .putValue("dateRoot", new LocalDateKVDate(LocalDate.of(2016, 06, 7)))
+                        .putValue("timeRoot", new LocalTimeKVTime(LocalTime.of(17, 29, 00)))
+                        .putValue("mongoObjectIdRoot", new ByteArrayKVMongoObjectId(
+                                new byte[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}))
+                        .putValue("mongoTimeStampRoot", new DefaultKVMongoTimestamp(0, 0))
+                        .putValue("instantRoot", new LongKVInstant(0))
+                        .putValue("subDocPart", new KVDocument.Builder()
+                                        .putValue("nullSub", KVNull.getInstance())
+                                        .putValue("booleanSub", KVBoolean.TRUE)
+                                        .putValue("integerSub", KVInteger.of(1))
+                                        .putValue("longSub", KVLong.of(2))
+                                        .putValue("doubleSub", KVDouble.of(3.3))
+                                        .putValue("stringSub", new StringKVString("Lorem ipsum"))
+                                        .putValue("dateSub", new LocalDateKVDate(LocalDate.of(2016, 06, 7)))
+                                        .putValue("timeSub", new LocalTimeKVTime(LocalTime.of(17, 29, 00)))
+                                        .putValue("mongoObjectIdSub", new ByteArrayKVMongoObjectId(
+                                                new byte[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}))
+                                        .putValue("mongoTimeStampSub", new DefaultKVMongoTimestamp(0, 0))
+                                        .putValue("instantSub", new LongKVInstant(0))
+                                        .build())
                         .build())
-                .add(ImmutableMap.<String, Optional<KVValue<?>>>builder()
-                        .put("nullRoot", Optional.empty())
-                        .put("booleanRoot", Optional.empty())
-                        .put("integerRoot", Optional.empty())
-                        .put("longRoot", Optional.empty())
-                        .put("doubleRoot", Optional.empty())
-                        .put("stringRoot", Optional.empty())
-                        .put("dateRoot", Optional.empty())
-                        .put("timeRoot", Optional.empty())
-                        .put("mongoObjectIdRoot", Optional.empty())
-                        .put("mongoTimeStampRoot", Optional.empty())
-                        .put("instantRoot", Optional.empty())
-                        .put("subDocPart", Optional.empty())
+                .add(new KVDocument.Builder()
                         .build())
                 .build();
-        subDocPartValues = ImmutableList.<ImmutableMap<String, Optional<KVValue<?>>>>builder()
-                .add(ImmutableMap.<String, Optional<KVValue<?>>>builder()
-                        .put("nullSub", Optional.of(KVNull.getInstance()))
-                        .put("booleanSub", Optional.of(KVBoolean.TRUE))
-                        .put("integerSub", Optional.of(KVInteger.of(1)))
-                        .put("longSub", Optional.of(KVLong.of(2)))
-                        .put("doubleSub", Optional.of(KVDouble.of(3.3)))
-                        .put("stringSub", Optional.of(new StringKVString("Lorem ipsum")))
-                        .put("dateSub", Optional.of(new LocalDateKVDate(LocalDate.of(2016, 06, 7))))
-                        .put("timeSub", Optional.of(new LocalTimeKVTime(LocalTime.of(17, 29, 00))))
-                        .put("mongoObjectIdSub", Optional.of(new ByteArrayKVMongoObjectId(
-                                new byte[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12})))
-                        .put("mongoTimeStampSub", Optional.of(new DefaultKVMongoTimestamp(0, 0)))
-                        .put("instantSub", Optional.of(new LongKVInstant(0)))
-                        .build())
-               .build();
-                
     }
     
-    public ImmutableList<ImmutableMap<String, Optional<KVValue<?>>>> getMoreRootDocPartValues(){
-    	return ImmutableList.<ImmutableMap<String, Optional<KVValue<?>>>>builder()
-        .add(ImmutableMap.<String, Optional<KVValue<?>>>builder()
-                .put("nullRoot", Optional.of(KVNull.getInstance()))
-                .put("booleanRoot", Optional.of(KVBoolean.FALSE))
-                .put("integerRoot", Optional.empty())
-                .put("longRoot", Optional.empty())
-                .put("doubleRoot", Optional.empty())
-                .put("stringRoot", Optional.empty())
-                .put("dateRoot", Optional.empty())
-                .put("timeRoot", Optional.empty())
-                .put("mongoObjectIdRoot", Optional.empty())
-                .put("mongoTimeStampRoot", Optional.empty())
-                .put("instantRoot", Optional.empty())
-                .put("subDocPart", Optional.empty())
+    public ImmutableList<KVDocument> getMoreDocuments(){
+    	return ImmutableList.<KVDocument>builder()
+        .add(new KVDocument.Builder()
+                .putValue("nullRoot", KVNull.getInstance())
+                .putValue("booleanRoot", KVBoolean.FALSE)
+                .putValue("subDocPart", new KVDocument.Builder()
+                        .putValue("nullSub", KVNull.getInstance())
+                        .putValue("booleanSub", KVBoolean.FALSE)
+                        .build())
                 .build())
         .build();
-    }
-    
-    public ImmutableList<ImmutableMap<String, Optional<KVValue<?>>>> getMoreSubDocPartValues(){
-    	return ImmutableList.<ImmutableMap<String, Optional<KVValue<?>>>>builder()
-                .add(ImmutableMap.<String, Optional<KVValue<?>>>builder()
-                        .put("nullSub", Optional.of(KVNull.getInstance()))
-                        .put("booleanSub", Optional.of(KVBoolean.FALSE))
-                        .put("integerSub", Optional.empty())
-                        .put("longSub", Optional.empty())
-                        .put("doubleSub", Optional.empty())
-                        .put("stringSub", Optional.empty())
-                        .put("dateSub", Optional.empty())
-                        .put("timeSub", Optional.empty())
-                        .put("mongoObjectIdSub", Optional.empty())
-                        .put("mongoTimeStampSub", Optional.empty())
-                        .put("instantSub", Optional.empty())
-                        .build())
-               .build();
     }
     
 }

@@ -20,21 +20,55 @@
 
 package com.torodb.integration.backend;
 
+import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.stream.StreamSupport;
+
+import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.junit.Before;
 import org.junit.ClassRule;
 
 import com.torodb.backend.SqlHelper;
 import com.torodb.backend.SqlInterface;
+import com.torodb.backend.TableRefComparator;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
+import com.torodb.backend.d2r.R2DBackendTranslatorImpl;
 import com.torodb.backend.meta.SchemaUpdater;
 import com.torodb.backend.meta.SnapshotUpdater;
 import com.torodb.core.TableRef;
 import com.torodb.core.TableRefFactory;
+import com.torodb.core.d2r.CollectionData;
+import com.torodb.core.d2r.D2RTranslator;
+import com.torodb.core.d2r.DocPartData;
+import com.torodb.core.d2r.DocPartResults;
+import com.torodb.core.d2r.IdentifierFactory;
+import com.torodb.core.d2r.R2DTranslator;
+import com.torodb.core.document.ToroDocument;
 import com.torodb.core.impl.TableRefFactoryImpl;
 import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
+import com.torodb.core.transaction.metainf.MetaCollection;
+import com.torodb.core.transaction.metainf.MetaDatabase;
+import com.torodb.core.transaction.metainf.MetaDocPart;
+import com.torodb.core.transaction.metainf.MetaField;
+import com.torodb.core.transaction.metainf.MetaScalar;
+import com.torodb.core.transaction.metainf.MutableMetaDatabase;
+import com.torodb.core.transaction.metainf.MutableMetaDocPart;
+import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
 import com.torodb.core.transaction.metainf.MetainfoRepository.SnapshotStage;
+import com.torodb.d2r.D2RTranslatorStack;
+import com.torodb.d2r.IdentifierFactoryImpl;
+import com.torodb.d2r.MockIdentifierInterface;
+import com.torodb.d2r.MockRidGenerator;
+import com.torodb.d2r.R2DBackedTranslator;
+import com.torodb.kvdocument.conversion.json.JacksonJsonParser;
+import com.torodb.kvdocument.conversion.json.JsonParser;
+import com.torodb.kvdocument.values.KVDocument;
 import com.torodb.metainfo.cache.mvcc.MvccMetainfoRepository;
 
 public abstract class AbstractBackendTest {
@@ -48,6 +82,9 @@ public abstract class AbstractBackendTest {
     protected SchemaUpdater schemaUpdater;
     protected SqlInterface sqlInterface;
     protected SqlHelper sqlHelper;
+    
+    private MockRidGenerator ridGenerator = new MockRidGenerator();
+    private IdentifierFactory identifierFactory = new IdentifierFactoryImpl(new MockIdentifierInterface());
     
     @Before
     public void setUp() throws Exception {
@@ -69,6 +106,146 @@ public abstract class AbstractBackendTest {
         try (SnapshotStage stage = metainfoRepository.startSnapshotStage()) {
             return stage.createImmutableSnapshot();
         }
+    }
+    
+    protected void createMetaModel(DSLContext dsl) {
+        String databaseName = schema.database.getName();
+        String databaseSchemaName = schema.database.getIdentifier();
+        String collectionName = schema.collection.getName();
+        
+        sqlInterface.getMetaDataWriteInterface().addMetaDatabase(dsl, databaseName, databaseSchemaName);
+        sqlInterface.getStructureInterface().createSchema(dsl, databaseSchemaName);
+        sqlInterface.getMetaDataWriteInterface().addMetaCollection(dsl, databaseName, collectionName, schema.collection.getIdentifier());
+        sqlInterface.getMetaDataWriteInterface().addMetaDocPart(dsl, databaseName, collectionName, schema.rootDocPart.getTableRef(), schema.rootDocPart.getIdentifier());
+        sqlInterface.getMetaDataWriteInterface().addMetaDocPart(dsl, databaseName, collectionName, schema.subDocPart.getTableRef(), schema.subDocPart.getIdentifier());
+    }
+    
+    protected void insertMetaFields(DSLContext dsl, MetaDocPart metaDocPart){
+        metaDocPart.streamFields().forEach( metaField ->
+            sqlInterface.getMetaDataWriteInterface().addMetaField(dsl, schema.database.getName(), schema.collection.getName(), metaDocPart.getTableRef(), 
+                    metaField.getName(), metaField.getIdentifier(), metaField.getType())
+        );
+    }
+    
+    protected void insertNewMetaFields(DSLContext dsl, MutableMetaDocPart metaDocPart){
+        for (MetaField metaField : metaDocPart.getAddedMetaFields()) {
+            sqlInterface.getMetaDataWriteInterface().addMetaField(dsl, schema.database.getName(), schema.collection.getName(), metaDocPart.getTableRef(), 
+                    metaField.getName(), metaField.getIdentifier(), metaField.getType());
+        }
+    }
+    
+    protected void createDocPartTable(DSLContext dsl, MetaCollection metaCollection, MetaDocPart metaDocPart) {
+        if (metaDocPart.getTableRef().isRoot()) {
+            sqlInterface.getStructureInterface().createRootDocPartTable(dsl, schema.database.getIdentifier(), metaDocPart.getIdentifier(), metaDocPart.getTableRef());
+        } else {
+            sqlInterface.getStructureInterface().createDocPartTable(dsl, schema.database.getIdentifier(), metaDocPart.getIdentifier(), metaDocPart.getTableRef(),
+                    metaCollection.getMetaDocPartByTableRef(metaDocPart.getTableRef().getParent().get()).getIdentifier());
+        }
+        
+        addColumnToDocPartTable(dsl, metaCollection, metaDocPart);
+    }
+    
+    protected void addColumnToDocPartTable(DSLContext dsl, MetaCollection metaCollection, MetaDocPart metaDocPart) {
+        metaDocPart.streamScalars().forEach(metaScalar -> 
+            sqlInterface.getStructureInterface().addColumnToDocPartTable(dsl, schema.database.getIdentifier(), metaDocPart.getIdentifier(), 
+                    metaScalar.getIdentifier(), (DataTypeForKV<?>) sqlInterface.getDataTypeProvider().getDataType(metaScalar.getType()))
+        );
+        
+        metaDocPart.streamFields().forEach(metaField -> 
+            sqlInterface.getStructureInterface().addColumnToDocPartTable(dsl, schema.database.getIdentifier(), metaDocPart.getIdentifier(), 
+                    metaField.getIdentifier(), (DataTypeForKV<?>) sqlInterface.getDataTypeProvider().getDataType(metaField.getType()))
+        );
+    }
+    
+    protected void addNewColumnToDocPartTable(DSLContext dsl, MetaCollection metaCollection, MutableMetaDocPart mutableMetaDocPart) {
+        for (MetaScalar metaScalar : mutableMetaDocPart.getAddedMetaScalars()) { 
+            sqlInterface.getStructureInterface().addColumnToDocPartTable(dsl, schema.database.getIdentifier(), mutableMetaDocPart.getIdentifier(), 
+                    metaScalar.getIdentifier(), (DataTypeForKV<?>) sqlInterface.getDataTypeProvider().getDataType(metaScalar.getType()));
+        }
+        
+        for (MetaField metaField : mutableMetaDocPart.getAddedMetaFields()) { 
+            sqlInterface.getStructureInterface().addColumnToDocPartTable(dsl, schema.database.getIdentifier(), mutableMetaDocPart.getIdentifier(), 
+                    metaField.getIdentifier(), (DataTypeForKV<?>) sqlInterface.getDataTypeProvider().getDataType(metaField.getType()));
+        }
+    }
+
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    protected Collection<ToroDocument> readDocuments(MetaDatabase metaDatabase, MetaCollection metaCollection,
+            DocPartResults<ResultSet> docPartResultSets) {
+        R2DTranslator r2dTranslator = new R2DBackedTranslator(new R2DBackendTranslatorImpl(sqlInterface, sqlHelper, metaDatabase, metaCollection));
+        Collection<ToroDocument> readedDocuments = r2dTranslator.translate(docPartResultSets);
+        return readedDocuments;
+    }
+
+    protected List<Integer> writeCollectionData(DSLContext dsl, CollectionData collectionData) {
+        Iterator<DocPartData> docPartDataIterator = StreamSupport.stream(collectionData.spliterator(), false)
+                .iterator();
+        List<Integer> generatedDids = new ArrayList<>();
+        while (docPartDataIterator.hasNext()) {
+            DocPartData docPartData = docPartDataIterator.next();
+            if (docPartData.getMetaDocPart().getTableRef().isRoot()) {
+                docPartData.forEach(docPartRow ->generatedDids.add(docPartRow.getDid()));
+            }
+            sqlInterface.getWriteInterface().insertDocPartData(dsl, schema.database.getIdentifier(), docPartData);
+        }
+        return generatedDids;
+    }
+
+    protected CollectionData parseDocumentAndCreateDocPartDataTables(MutableMetaSnapshot mutableSnapshot, DSLContext dsl, KVDocument document)
+            throws Exception {
+        return parseDocumentsAndCreateDocPartDataTables(mutableSnapshot, dsl, Arrays.asList(document));
+    }
+
+    protected CollectionData parseDocumentsAndCreateDocPartDataTables(MutableMetaSnapshot mutableSnapshot, DSLContext dsl, List<KVDocument> documents)
+            throws Exception {
+        CollectionData collectionData = parseDocuments(mutableSnapshot, dsl, documents);
+        
+        mutableSnapshot.streamMetaDatabases().forEachOrdered(metaDatabase -> {
+            metaDatabase.streamMetaCollections().forEachOrdered(metaCollection -> {
+                metaCollection.streamContainedMetaDocParts().sorted(TableRefComparator.MetaDocPart.ASC).forEachOrdered(metaDocPart -> {
+                    if (metaDocPart.getTableRef().isRoot()) {
+                        sqlInterface.getStructureInterface().createRootDocPartTable(dsl, schema.database.getIdentifier(), metaDocPart.getIdentifier(), metaDocPart.getTableRef());
+                    } else {
+                        sqlInterface.getStructureInterface().createDocPartTable(dsl, schema.database.getIdentifier(), metaDocPart.getIdentifier(), metaDocPart.getTableRef(),
+                                metaCollection.getMetaDocPartByTableRef(metaDocPart.getTableRef().getParent().get()).getIdentifier());
+                    }
+                    metaDocPart.streamScalars().forEachOrdered(metaScalar -> {
+                        sqlInterface.getStructureInterface().addColumnToDocPartTable(dsl, schema.database.getIdentifier(), metaDocPart.getIdentifier(), 
+                                metaScalar.getIdentifier(), sqlInterface.getDataTypeProvider().getDataType(metaScalar.getType()));
+                    });
+                    metaDocPart.streamFields().forEachOrdered(metaField -> {
+                        sqlInterface.getStructureInterface().addColumnToDocPartTable(dsl, schema.database.getIdentifier(), metaDocPart.getIdentifier(), 
+                                metaField.getIdentifier(), sqlInterface.getDataTypeProvider().getDataType(metaField.getType()));
+                    });
+                });
+            });
+        });
+        
+        return collectionData;
+    }
+
+    protected CollectionData parseDocuments(MutableMetaSnapshot mutableSnapshot, DSLContext dsl, List<KVDocument> documents)
+            throws Exception {
+        CollectionData collectionData = readDataFromDocuments(schema.database.getName(), schema.collection.getName(), documents, mutableSnapshot);
+        
+        return collectionData;
+    }
+    
+    protected KVDocument parseFromJson(String jsonFileName) throws Exception {
+        JsonParser parser = new JacksonJsonParser();
+        return parser.createFromResource("docs/" + jsonFileName);
+    }
+    
+    protected List<KVDocument> parseListFromJson(String jsonFileName) throws Exception {
+        JsonParser parser = new JacksonJsonParser();
+        return parser.createListFromResource("docs/" + jsonFileName);
+    }
+    
+    protected CollectionData readDataFromDocuments(String database, String collection, List<KVDocument> documents, MutableMetaSnapshot mutableSnapshot) throws Exception {
+        MutableMetaDatabase db = mutableSnapshot.getMetaDatabaseByName(database);
+        D2RTranslator translator = new D2RTranslatorStack(tableRefFactory, identifierFactory, ridGenerator, db, db.getMetaCollectionByName(collection));
+        documents.forEach(translator::translate);
+        return translator.getCollectionDataAccumulator();
     }
 
     protected TableRef createTableRef(String...names) {
