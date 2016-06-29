@@ -95,10 +95,6 @@ public abstract class AbstractBackendTest {
         BACKEND_RUNNER_CLASS_RULE.cleanDatabase();
     }
 
-    protected FieldType fieldType(Field<?> field) {
-        return FieldType.from(((DataTypeForKV<?>) field.getDataType()).getKVValueConverter().getErasuredType());
-    }
-
     protected ImmutableMetaSnapshot buildMetaSnapshot() {
         MvccMetainfoRepository metainfoRepository = new MvccMetainfoRepository();
         SnapshotUpdater.updateSnapshot(metainfoRepository, sqlInterface, sqlHelper, schemaUpdater, tableRefFactory);
@@ -142,10 +138,10 @@ public abstract class AbstractBackendTest {
                     metaCollection.getMetaDocPartByTableRef(metaDocPart.getTableRef().getParent().get()).getIdentifier());
         }
         
-        addColumnToDocPartTable(dsl, metaCollection, metaDocPart);
+        addColumnsToDocPartTable(dsl, metaCollection, metaDocPart);
     }
     
-    protected void addColumnToDocPartTable(DSLContext dsl, MetaCollection metaCollection, MetaDocPart metaDocPart) {
+    protected void addColumnsToDocPartTable(DSLContext dsl, MetaCollection metaCollection, MetaDocPart metaDocPart) {
         metaDocPart.streamScalars().forEach(metaScalar -> 
             sqlInterface.getStructureInterface().addColumnToDocPartTable(dsl, data.database.getIdentifier(), metaDocPart.getIdentifier(), 
                     metaScalar.getIdentifier(), (DataTypeForKV<?>) sqlInterface.getDataTypeProvider().getDataType(metaScalar.getType()))
@@ -157,7 +153,7 @@ public abstract class AbstractBackendTest {
         );
     }
     
-    protected void addNewColumnToDocPartTable(DSLContext dsl, MetaCollection metaCollection, MutableMetaDocPart mutableMetaDocPart) {
+    protected void addNewColumnsToDocPartTable(DSLContext dsl, MetaCollection metaCollection, MutableMetaDocPart mutableMetaDocPart) {
         for (MetaScalar metaScalar : mutableMetaDocPart.getAddedMetaScalars()) { 
             sqlInterface.getStructureInterface().addColumnToDocPartTable(dsl, data.database.getIdentifier(), mutableMetaDocPart.getIdentifier(), 
                     metaScalar.getIdentifier(), (DataTypeForKV<?>) sqlInterface.getDataTypeProvider().getDataType(metaScalar.getType()));

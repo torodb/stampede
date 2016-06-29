@@ -126,7 +126,7 @@ public class BackendIntegrationTest extends AbstractBackendTest {
         try (Connection connection = sqlInterface.getDbBackend().createWriteConnection()) {
         	DSLContext dsl = sqlInterface.getDslContextFactory().createDSLContext(connection);
             insertNewMetaFields(dsl, data.newSubDocPart);
-            addNewColumnToDocPartTable(dsl, data.collection, data.newSubDocPart);
+            addNewColumnsToDocPartTable(dsl, data.collection, data.newSubDocPart);
             connection.commit();
         }
         
