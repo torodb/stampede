@@ -94,7 +94,7 @@ public class DerbyReadInterface extends AbstractReadInterface {
             Collection<Integer> dids) {
         StringBuilder sb = new StringBuilder()
                 .append("SELECT ");
-        Collection<InternalField<?>> internalFields = metaDataReadInterface.getDocPartTableInternalFields(metaDocPart);
+        Collection<InternalField<?>> internalFields = metaDataReadInterface.getInternalFields(metaDocPart);
         for (InternalField<?> internalField : internalFields) {
             sb.append('"')
                 .append(internalField.getName())

@@ -9,8 +9,6 @@ import java.util.List;
 import java.util.stream.StreamSupport;
 
 import org.jooq.DSLContext;
-import org.jooq.Field;
-import org.jooq.impl.DSL;
 
 import com.torodb.backend.SqlHelper;
 import com.torodb.backend.SqlInterface;
@@ -71,7 +69,7 @@ public class BackendDocumentTestHelper {
             if (docPartData.getMetaDocPart().getTableRef().isRoot()) {
                 docPartData.forEach(docPartRow ->generatedDids.add(docPartRow.getDid()));
             }
-            sqlInterface.getWriteInterface().insertDocPartData(dsl, schema.databaseSchemaName, docPartData);
+            sqlInterface.getWriteInterface().insertDocPartData(dsl, schema.database.getIdentifier(), docPartData);
         }
         return generatedDids;
     }
@@ -83,18 +81,24 @@ public class BackendDocumentTestHelper {
 
     public CollectionData parseDocumentsAndCreateDocPartDataTables(MutableMetaSnapshot mutableSnapshot, DSLContext dsl, List<KVDocument> documents)
             throws Exception {
-        CollectionData collectionData = readDataFromDocuments(schema.databaseName, schema.collectionName, documents, mutableSnapshot);
+        CollectionData collectionData = readDataFromDocuments(schema.database.getName(), schema.collection.getName(), documents, mutableSnapshot);
         mutableSnapshot.streamMetaDatabases().forEachOrdered(metaDatabase -> {
             metaDatabase.streamMetaCollections().forEachOrdered(metaCollection -> {
                 metaCollection.streamContainedMetaDocParts().sorted(TableRefComparator.MetaDocPart.ASC).forEachOrdered(metaDocPart -> {
-                    List<Field<?>> fields = new ArrayList<>(sqlInterface.getMetaDataReadInterface().getDocPartTableInternalFields(metaDocPart));
-                    metaDocPart.streamFields().forEachOrdered(metaField -> {
-                        fields.add(DSL.field(metaField.getIdentifier(), sqlInterface.getDataTypeProvider().getDataType(metaField.getType())));
-                    });
+                    if (metaDocPart.getTableRef().isRoot()) {
+                        sqlInterface.getStructureInterface().createRootDocPartTable(dsl, schema.database.getIdentifier(), metaDocPart.getIdentifier(), metaDocPart.getTableRef());
+                    } else {
+                        sqlInterface.getStructureInterface().createDocPartTable(dsl, schema.database.getIdentifier(), metaDocPart.getIdentifier(), metaDocPart.getTableRef(),
+                                metaCollection.getMetaDocPartByTableRef(metaDocPart.getTableRef().getParent().get()).getIdentifier());
+                    }
                     metaDocPart.streamScalars().forEachOrdered(metaScalar -> {
-                        fields.add(DSL.field(metaScalar.getIdentifier(), sqlInterface.getDataTypeProvider().getDataType(metaScalar.getType())));
+                        sqlInterface.getStructureInterface().addColumnToDocPartTable(dsl, schema.database.getIdentifier(), metaDocPart.getIdentifier(), 
+                                metaScalar.getIdentifier(), sqlInterface.getDataTypeProvider().getDataType(metaScalar.getType()));
                     });
-                    sqlInterface.getStructureInterface().createDocPartTable(dsl, schema.databaseSchemaName, metaDocPart.getIdentifier(), fields);
+                    metaDocPart.streamFields().forEachOrdered(metaField -> {
+                        sqlInterface.getStructureInterface().addColumnToDocPartTable(dsl, schema.database.getIdentifier(), metaDocPart.getIdentifier(), 
+                                metaField.getIdentifier(), sqlInterface.getDataTypeProvider().getDataType(metaField.getType()));
+                    });
                 });
             });
         });

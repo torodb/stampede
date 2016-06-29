@@ -1,26 +1,25 @@
 package com.torodb.integration.backend;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 import org.jooq.DSLContext;
-import org.jooq.Field;
 import org.mockito.Mockito;
 
 import com.google.common.collect.ImmutableMap;
 import com.torodb.backend.SqlInterface;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
-import com.torodb.core.TableRef;
 import com.torodb.core.d2r.IdentifierFactory;
 import com.torodb.core.d2r.RidGenerator;
-import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.ImmutableMetaDocPart;
+import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
+import com.torodb.core.transaction.metainf.MetaDocPart;
+import com.torodb.core.transaction.metainf.MetaField;
+import com.torodb.core.transaction.metainf.MetaScalar;
 import com.torodb.core.transaction.metainf.MutableMetaCollection;
+import com.torodb.core.transaction.metainf.MutableMetaDocPart;
 import com.torodb.core.transaction.metainf.WrapperMutableMetaDocPart;
 import com.torodb.d2r.CollectionMetaInfo;
 import com.torodb.d2r.MockRidGenerator;
@@ -34,7 +33,6 @@ public class BackendTestHelper {
 	private TestSchema schema;
 	private SqlInterface sqlInterface;
 	private RidGenerator ridGenerator = new MockRidGenerator();
-	private IdentifierFactory factory = Mockito.mock(IdentifierFactory.class);
 	
 	public BackendTestHelper(SqlInterface sqlInterface, TestSchema schema){
 		this.sqlInterface = sqlInterface;
@@ -42,47 +40,80 @@ public class BackendTestHelper {
 	}
 	
 	public void createMetaModel(DSLContext dsl) {
-		String databaseName = schema.databaseName;
-		String databaseSchemaName = schema.databaseSchemaName;
-		String collectionName = schema.collectionName;
+		String databaseName = schema.database.getName();
+		String databaseSchemaName = schema.database.getIdentifier();
+		String collectionName = schema.collection.getName();
 		
 		sqlInterface.getMetaDataWriteInterface().addMetaDatabase(dsl, databaseName, databaseSchemaName);
-		sqlInterface.getStructureInterface().createSchema(dsl, schema.databaseSchemaName);
-		sqlInterface.getMetaDataWriteInterface().addMetaCollection(dsl, databaseName, collectionName, schema.collectionIdentifierName);
-		sqlInterface.getMetaDataWriteInterface().addMetaDocPart(dsl, databaseName, collectionName, schema.rootDocPartTableRef, schema.rootDocPartTableName);
-		sqlInterface.getMetaDataWriteInterface().addMetaDocPart(dsl, databaseName, collectionName, schema.subDocPartTableRef, schema.subDocPartTableName);
+		sqlInterface.getStructureInterface().createSchema(dsl, databaseSchemaName);
+		sqlInterface.getMetaDataWriteInterface().addMetaCollection(dsl, databaseName, collectionName, schema.collection.getIdentifier());
+		sqlInterface.getMetaDataWriteInterface().addMetaDocPart(dsl, databaseName, collectionName, schema.rootDocPart.getTableRef(), schema.rootDocPart.getIdentifier());
+		sqlInterface.getMetaDataWriteInterface().addMetaDocPart(dsl, databaseName, collectionName, schema.subDocPart.getTableRef(), schema.subDocPart.getIdentifier());
 	}
-	
-	public void insertMetaFields(DSLContext dsl, TableRef tableRef, Map<String, Field<?>> fields){
-		fields.forEach((key,value)->
-			sqlInterface.getMetaDataWriteInterface().addMetaField(dsl, schema.databaseName, schema.collectionName, tableRef, 
-                    key, value.getName(), getType(value))
-		);
-	}
-	
-	public void createDocPartTable(DSLContext dsl, String tableName, Collection<? extends Field<?>> headerFields, Collection<Field<?>> fields){
-		ArrayList<Field<?>> toAdd = new ArrayList<>(headerFields);
-		toAdd.addAll(fields);
-		sqlInterface.getStructureInterface().createDocPartTable(dsl, schema.databaseSchemaName, tableName, toAdd);
-	}
+    
+    public void insertMetaFields(DSLContext dsl, MetaDocPart metaDocPart){
+        metaDocPart.streamFields().forEach( metaField ->
+            sqlInterface.getMetaDataWriteInterface().addMetaField(dsl, schema.database.getName(), schema.collection.getName(), metaDocPart.getTableRef(), 
+                    metaField.getName(), metaField.getIdentifier(), metaField.getType())
+        );
+    }
+    
+    public void insertNewMetaFields(DSLContext dsl, MutableMetaDocPart metaDocPart){
+        for (MetaField metaField : metaDocPart.getAddedMetaFields()) {
+            sqlInterface.getMetaDataWriteInterface().addMetaField(dsl, schema.database.getName(), schema.collection.getName(), metaDocPart.getTableRef(), 
+                    metaField.getName(), metaField.getIdentifier(), metaField.getType());
+        }
+    }
+    
+    public void createDocPartTable(DSLContext dsl, MetaCollection metaCollection, MetaDocPart metaDocPart) {
+        if (metaDocPart.getTableRef().isRoot()) {
+            sqlInterface.getStructureInterface().createRootDocPartTable(dsl, schema.database.getIdentifier(), metaDocPart.getIdentifier(), metaDocPart.getTableRef());
+        } else {
+            sqlInterface.getStructureInterface().createDocPartTable(dsl, schema.database.getIdentifier(), metaDocPart.getIdentifier(), metaDocPart.getTableRef(),
+                    metaCollection.getMetaDocPartByTableRef(metaDocPart.getTableRef().getParent().get()).getIdentifier());
+        }
+        
+        addColumnToDocPartTable(dsl, metaCollection, metaDocPart);
+    }
+    
+    public void addColumnToDocPartTable(DSLContext dsl, MetaCollection metaCollection, MetaDocPart metaDocPart) {
+        metaDocPart.streamScalars().forEach(metaScalar -> 
+            sqlInterface.getStructureInterface().addColumnToDocPartTable(dsl, schema.database.getIdentifier(), metaDocPart.getIdentifier(), 
+                    metaScalar.getIdentifier(), (DataTypeForKV<?>) sqlInterface.getDataTypeProvider().getDataType(metaScalar.getType()))
+        );
+        
+        metaDocPart.streamFields().forEach(metaField -> 
+            sqlInterface.getStructureInterface().addColumnToDocPartTable(dsl, schema.database.getIdentifier(), metaDocPart.getIdentifier(), 
+                    metaField.getIdentifier(), (DataTypeForKV<?>) sqlInterface.getDataTypeProvider().getDataType(metaField.getType()))
+        );
+    }
+    
+    public void addNewColumnToDocPartTable(DSLContext dsl, MetaCollection metaCollection, MutableMetaDocPart mutableMetaDocPart) {
+        for (MetaScalar metaScalar : mutableMetaDocPart.getAddedMetaScalars()) { 
+            sqlInterface.getStructureInterface().addColumnToDocPartTable(dsl, schema.database.getIdentifier(), mutableMetaDocPart.getIdentifier(), 
+                    metaScalar.getIdentifier(), (DataTypeForKV<?>) sqlInterface.getDataTypeProvider().getDataType(metaScalar.getType()));
+        }
+        
+        for (MetaField metaField : mutableMetaDocPart.getAddedMetaFields()) { 
+            sqlInterface.getStructureInterface().addColumnToDocPartTable(dsl, schema.database.getIdentifier(), mutableMetaDocPart.getIdentifier(), 
+                    metaField.getIdentifier(), (DataTypeForKV<?>) sqlInterface.getDataTypeProvider().getDataType(metaField.getType()));
+        }
+    }
 	
 	public void insertDocPartData(DSLContext dsl, ImmutableMetaDocPart metaDocPart, 
-								  List<ImmutableMap<String, Optional<KVValue<?>>>> values,
-								  Map<String, Field<?>> docPartFields
+								  List<ImmutableMap<String, Optional<KVValue<?>>>> values
 			) {
+	    IdentifierFactory factory = Mockito.mock(IdentifierFactory.class);
+	    Mockito.when(factory.toFieldIdentifier(Mockito.any(), Mockito.any(), Mockito.eq("subDocPart"))).thenReturn("subDocPartField");
 		MetaDatabase db = Mockito.mock(MetaDatabase.class);
-		Mockito.when(db.getName()).thenReturn(schema.databaseName);
-		Mockito.when(db.getIdentifier()).thenReturn(schema.databaseSchemaName);
+		Mockito.when(db.getName()).thenReturn(schema.database.getName());
+		Mockito.when(db.getIdentifier()).thenReturn(schema.database.getIdentifier());
 		MutableMetaCollection col = Mockito.mock(MutableMetaCollection.class);
-		Mockito.when(col.getName()).thenReturn(schema.collectionName);
-		Mockito.when(col.getIdentifier()).thenReturn(schema.collectionIdentifierName);
+		Mockito.when(col.getName()).thenReturn(schema.collection.getName());
+		Mockito.when(col.getIdentifier()).thenReturn(schema.collection.getIdentifier());
 
 		CollectionMetaInfo metaInfo=new CollectionMetaInfo(db, col, factory, ridGenerator);
-		Mockito.when(col.getMetaDocPartByTableRef(metaDocPart.getTableRef())).thenReturn(new WrapperMutableMetaDocPart(metaDocPart, new Consumer<WrapperMutableMetaDocPart>() {
-			@Override
-			public void accept(WrapperMutableMetaDocPart t) {
-			}
-		}));
+		Mockito.when(col.getMetaDocPartByTableRef(metaDocPart.getTableRef())).thenReturn(new WrapperMutableMetaDocPart(metaDocPart, t -> {}));
 		
 		TableMetadata tableMeta = new TableMetadata(metaInfo, metaDocPart.getTableRef());
 		
@@ -95,15 +126,11 @@ public class BackendTestHelper {
 		        if (docPartValue.getValue().isPresent()) {
 		            String key = docPartValue.getKey();
 		            KVValue<?> kvValue = docPartValue.getValue().get();
-					row.addScalar(key,kvValue);
+                    row.addScalar(key, kvValue);
 		        }
 		    }
 		}
-		sqlInterface.getWriteInterface().insertDocPartData(dsl, schema.databaseSchemaName, docPartData);
-	}
-	
-	private FieldType getType(Field<?> field){
-		return FieldType.from(((DataTypeForKV<?>) field.getDataType()).getKVValueConverter().getErasuredType());
+		sqlInterface.getWriteInterface().insertDocPartData(dsl, schema.database.getIdentifier(), docPartData);
 	}
 	
 }

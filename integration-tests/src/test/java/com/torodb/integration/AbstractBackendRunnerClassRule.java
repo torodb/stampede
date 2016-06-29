@@ -26,7 +26,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Clock;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -266,15 +268,30 @@ public abstract class AbstractBackendRunnerClassRule implements TestRule {
         try (Connection connection = dbBackend.createSystemConnection()) {
             DatabaseMetaData metaData = connection.getMetaData();
             ResultSet tables = metaData.getTables("%", "%", "%", new String[] { "TABLE", "VIEW" });
+            List<String[]> nextToDropSchemaTableList = new ArrayList<>();
             while (tables.next()) {
                 String schemaName = tables.getString("TABLE_SCHEM");
                 String tableName = tables.getString("TABLE_NAME");
-                if (identifierConstraints.isAllowedSchemaIdentifier(schemaName) || schemaName.equals(TorodbSchema.IDENTIFIER)) {
-                    try (PreparedStatement preparedStatement = connection.prepareStatement("DROP TABLE \"" + schemaName + "\".\"" + tableName + "\"")) {
-                        preparedStatement.executeUpdate();
+                nextToDropSchemaTableList.add(new String[] { schemaName, tableName });
+            }
+            while (!nextToDropSchemaTableList.isEmpty()) {
+                List<String[]> toDropSchemaTableList = new ArrayList<>(nextToDropSchemaTableList);
+                nextToDropSchemaTableList.clear();
+                for (String[] toDropSchameTable : toDropSchemaTableList) {
+                    String schemaName = toDropSchameTable[0];
+                    String tableName = toDropSchameTable[1];
+                    if (identifierConstraints.isAllowedSchemaIdentifier(schemaName) || schemaName.equals(TorodbSchema.IDENTIFIER)) {
+                        try (PreparedStatement preparedStatement = connection.prepareStatement("DROP TABLE \"" + schemaName + "\".\"" + tableName + "\"")) {
+                            preparedStatement.executeUpdate();
+                            connection.commit();
+                        } catch(SQLException sqlException) {
+                            connection.rollback();
+                            nextToDropSchemaTableList.add(new String[] { schemaName, tableName });
+                        }
                     }
                 }
             }
+
             ResultSet schemas = metaData.getSchemas();
             while (schemas.next()) {
                 String schemaName = schemas.getString("TABLE_SCHEM");

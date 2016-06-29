@@ -65,7 +65,7 @@ public class R2DBackendTranslatorImpl implements R2DBackendTranslator<ResultSet,
         Integer pid = null;
         Integer rid = null;
         Integer seq = null;
-        Collection<InternalField<?>> internalFields = sqlInterface.getMetaDataReadInterface().getDocPartTableInternalFields(
+        Collection<InternalField<?>> internalFields = sqlInterface.getMetaDataReadInterface().getInternalFields(
                 metaDocPart);
         int columnIndex = 1;
         for (InternalField<?> internalField : internalFields) {

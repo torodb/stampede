@@ -20,13 +20,18 @@
 
 package com.torodb.backend.derby;
 
-import com.torodb.backend.AbstractStructureInterface;
-import com.torodb.backend.SqlBuilder;
-import com.torodb.backend.SqlHelper;
 import java.util.Collection;
+import java.util.Collections;
+
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import org.jooq.Field;
+
+import com.google.common.base.Preconditions;
+import com.torodb.backend.AbstractStructureInterface;
+import com.torodb.backend.InternalField;
+import com.torodb.backend.SqlBuilder;
+import com.torodb.backend.SqlHelper;
+import com.torodb.backend.converters.jooq.DataTypeForKV;
 
 /**
  *
@@ -35,8 +40,8 @@ import org.jooq.Field;
 public class DerbyStructureInterface extends AbstractStructureInterface {
 
     @Inject
-    public DerbyStructureInterface(SqlHelper sqlHelper) {
-        super(sqlHelper);
+    public DerbyStructureInterface(DerbyMetaDataReadInterface metaDataReadInterface, SqlHelper sqlHelper) {
+        super(metaDataReadInterface, sqlHelper);
     }
 
     @Override
@@ -79,31 +84,63 @@ public class DerbyStructureInterface extends AbstractStructureInterface {
 
     @Override
     protected String getCreateDocPartTableStatement(String schemaName, String tableName,
-            Collection<? extends Field<?>> fields) {
-    	SqlBuilder sb = new SqlBuilder("CREATE TABLE ");
-    	sb.table(schemaName, tableName)
-		  .append(" (");
-		int cont = 0;
-		for (Field<?> field : getFieldIterator(fields)) {
-			if (cont > 0) {
-				sb.append(',');
-			}
-			sb.quote(field.getName()).append(' ').append(field.getDataType().getCastTypeName());
-			cont++;
-		}
-		sb.append(')');
+            Collection<InternalField<?>> fields, Collection<InternalField<?>> primaryKeyFields) {
+        return getCreateDocPartTableStatement(schemaName, tableName, primaryKeyFields, primaryKeyFields, 
+                Collections.emptyList(), null, Collections.emptyList());
+    }
+
+    @Override
+    protected String getCreateDocPartTableStatement(String schemaName, String tableName,
+            Collection<InternalField<?>> fields, Collection<InternalField<?>> primaryKeyFields,
+            Collection<InternalField<?>> referenceFields, String foreignTableName,
+            Collection<InternalField<?>> foreignFields) {
+        Preconditions.checkArgument(referenceFields.size() == foreignFields.size());
+        
+        SqlBuilder sb = new SqlBuilder("CREATE TABLE ");
+        sb.table(schemaName, tableName)
+          .append(" (");
+        if (!fields.isEmpty()) {
+            for (InternalField<?> field : fields) {
+                sb.quote(field.getName()).append(' ')
+                    .append(field.getDataType().getCastTypeName()).append(',');
+            }
+            if (!primaryKeyFields.isEmpty()) {
+                sb.append("PRIMARY KEY (");
+                for (InternalField<?> field : primaryKeyFields) {
+                    sb.quote(field.getName()).append(',');
+                }
+                sb.setLastChar(')').append(',');
+            }
+            if (!referenceFields.isEmpty()) {
+                sb.append("FOREIGN KEY (");
+                for (InternalField<?> field : referenceFields) {
+                    sb.quote(field.getName()).append(',');
+                }
+                sb.setLastChar(')')
+                    .append(" REFERENCES ")
+                    .table(schemaName, foreignTableName)
+                    .append(" (");
+                for (InternalField<?> field : foreignFields) {
+                    sb.quote(field.getName()).append(',');
+                }
+                sb.setLastChar(')').append(',');
+            }
+            sb.setLastChar(')');
+        } else {
+            sb.append(')');
+        }
         return sb.toString();
     }
-	
+
     @Override
-    protected String getAddColumnToDocPartTableStatement(String schemaName, String tableName,
-            Field<?> field) {
-    	SqlBuilder sb = new SqlBuilder("ALTER TABLE ")
-    		.table(schemaName, tableName)
-            .append(" ADD COLUMN ")
-            .quote(field.getName())
-            .append(" ")
-            .append(field.getDataType().getCastTypeName());
-        return sb.toString();
+    protected String getAddColumnToDocPartTableStatement(String schemaName, String tableName, String columnName,
+            DataTypeForKV<?> dataType) {
+        SqlBuilder sb = new SqlBuilder("ALTER TABLE ")
+                .table(schemaName, tableName)
+                .append(" ADD COLUMN ")
+                .quote(columnName)
+                .append(" ")
+                .append(dataType.getCastTypeName());
+            return sb.toString();
     }
 }

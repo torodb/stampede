@@ -154,7 +154,7 @@ public class PostgreSQLWriteInterface extends AbstractWriteInterface {
         final CopyManager copyManager = connection.getCopyAPI();
         final MetaDocPart metaDocPart = docPartData.getMetaDocPart();
         Collection<InternalField<?>> internalFields = postgreSQLMetaDataReadInterface
-                .getDocPartTableInternalFields(metaDocPart);
+                .getInternalFields(metaDocPart);
         final StringBuilder sb = new StringBuilder(65536);
         final String copyStatement = getCopyInsertDocPartDataStatement(
                 schemaName, docPartData, metaDocPart, internalFields);

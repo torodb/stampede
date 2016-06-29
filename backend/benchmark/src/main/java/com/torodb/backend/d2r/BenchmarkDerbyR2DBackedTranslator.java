@@ -18,8 +18,6 @@ import java.util.stream.StreamSupport;
 import javax.inject.Singleton;
 
 import org.jooq.DSLContext;
-import org.jooq.Field;
-import org.jooq.impl.DSL;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -247,7 +245,7 @@ public class BenchmarkDerbyR2DBackedTranslator {
 	    blackhole.consume(readedDocuments);
 	}
     
-    @SuppressWarnings({ "unchecked", "rawtypes" })
+    @SuppressWarnings({ "unchecked" })
     protected static Collection<KVDocument> readDocuments(TranslateState state, Blackhole blackhole) {
         Collection<KVDocument> readedDocuments = state.r2dTranslator.translate(state.docPartResultSets);
         return readedDocuments;
@@ -260,11 +258,11 @@ public class BenchmarkDerbyR2DBackedTranslator {
             metaDatabase.streamMetaCollections().forEachOrdered(metaCollection -> {
                 metaCollection.streamContainedMetaDocParts().sorted(TableRefComparator.MetaDocPart.ASC).forEachOrdered(metaDocPartObject -> {
                     MetaDocPart metaDocPart = (MetaDocPart) metaDocPartObject;
-                    List<Field<?>> fields = new ArrayList<>(state.sqlInterface.getMetaDataReadInterface().getDocPartTableInternalFields(metaDocPart));
+                    state.sqlInterface.getStructureInterface().createRootDocPartTable(state.dsl, metaDatabase.getIdentifier(), metaDocPart.getIdentifier(), metaDocPart.getTableRef());
                     metaDocPart.streamFields().forEachOrdered(metaField -> {
-                        fields.add(DSL.field(metaField.getIdentifier(), state.sqlInterface.getDataTypeProvider().getDataType(metaField.getType())));
+                        state.sqlInterface.getStructureInterface().addColumnToDocPartTable(state.dsl, metaDatabase.getIdentifier(), metaDocPart.getIdentifier(), 
+                                metaField.getIdentifier(), state.sqlInterface.getDataTypeProvider().getDataType(metaField.getType()));
                     });
-                    state.sqlInterface.getStructureInterface().createDocPartTable(state.dsl, metaDatabase.getIdentifier(), metaDocPart.getIdentifier(), fields);
                 });
             });
         });

@@ -20,19 +20,23 @@
 
 package com.torodb.backend;
 
+import java.sql.Connection;
+import java.sql.SQLException;
+
+import org.jooq.DSLContext;
+
 import com.google.common.base.Preconditions;
 import com.torodb.backend.ErrorHandler.Context;
+import com.torodb.core.TableRef;
 import com.torodb.core.backend.WriteBackendTransaction;
 import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.transaction.RollbackException;
-import com.torodb.core.transaction.metainf.*;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.Collection;
-import org.jooq.DSLContext;
-import org.jooq.Field;
-import org.jooq.impl.DSL;
+import com.torodb.core.transaction.metainf.MetaCollection;
+import com.torodb.core.transaction.metainf.MetaDatabase;
+import com.torodb.core.transaction.metainf.MetaDocPart;
+import com.torodb.core.transaction.metainf.MetaField;
+import com.torodb.core.transaction.metainf.MetaScalar;
 
 public class WriteBackendTransactionImpl implements WriteBackendTransaction {
 
@@ -71,8 +75,13 @@ public class WriteBackendTransactionImpl implements WriteBackendTransaction {
     	sqlInterface.getMetaDataWriteInterface().addMetaDocPart(dsl, db.getName(), col.getName(),
                 newDocPart.getTableRef(), newDocPart.getIdentifier());
     	
-        Collection<? extends Field<?>> fields = sqlInterface.getMetaDataReadInterface().getDocPartTableInternalFields(newDocPart);
-        sqlInterface.getStructureInterface().createDocPartTable(dsl, db.getIdentifier(), newDocPart.getIdentifier(), fields);
+    	TableRef tableRef = newDocPart.getTableRef();
+    	if (tableRef.isRoot()) {
+    	    sqlInterface.getStructureInterface().createRootDocPartTable(dsl, db.getIdentifier(), newDocPart.getIdentifier(), tableRef);
+    	} else {
+            sqlInterface.getStructureInterface().createDocPartTable(dsl, db.getIdentifier(), newDocPart.getIdentifier(), tableRef, 
+                    col.getMetaDocPartByTableRef(tableRef.getParent().get()).getIdentifier());
+    	}
     }
 
     @Override
@@ -82,7 +91,7 @@ public class WriteBackendTransactionImpl implements WriteBackendTransaction {
     	sqlInterface.getMetaDataWriteInterface().addMetaField(dsl, db.getName(), col.getName(), docPart.getTableRef(),
                 newField.getName(), newField.getIdentifier(), newField.getType());
         sqlInterface.getStructureInterface().addColumnToDocPartTable(dsl, db.getIdentifier(),
-                docPart.getIdentifier(),buildField(newField));
+                docPart.getIdentifier(), newField.getIdentifier(), sqlInterface.getDataTypeProvider().getDataType(newField.getType()));
     }
 
 	@Override
@@ -92,17 +101,9 @@ public class WriteBackendTransactionImpl implements WriteBackendTransaction {
 		sqlInterface.getMetaDataWriteInterface().addMetaScalar(dsl, db.getName(), col.getName(), docPart.getTableRef(), 
 				newScalar.getIdentifier(), newScalar.getType());
 		sqlInterface.getStructureInterface().addColumnToDocPartTable(dsl, db.getIdentifier(), docPart.getIdentifier(), 
-				buildScalar(newScalar));
+		        newScalar.getIdentifier(), sqlInterface.getDataTypeProvider().getDataType(newScalar.getType()));
 	}
 	
-	private Field<?> buildField(MetaField newField) {
-		return DSL.field(newField.getIdentifier(), sqlInterface.getDataTypeProvider().getDataType(newField.getType()));
-	}
-	
-	private Field<?> buildScalar(MetaScalar newScalar) {
-		return DSL.field(newScalar.getIdentifier(), sqlInterface.getDataTypeProvider().getDataType(newScalar.getType()));
-	}
-
     @Override
     public int consumeRids(MetaDatabase db, MetaCollection col, MetaDocPart docPart, int howMany) {
         Preconditions.checkState(!closed, "This transaction is closed");

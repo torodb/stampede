@@ -21,11 +21,8 @@
 package com.torodb.integration.backend;
 
 import java.sql.Connection;
-import java.util.Arrays;
 
 import org.jooq.DSLContext;
-import org.jooq.Field;
-import org.jooq.impl.DSL;
 import org.junit.Assume;
 import org.junit.Test;
 
@@ -67,9 +64,9 @@ public class BackendRollbackIntegrationTest extends AbstractBackendTest {
             ) {
             DSLContext leftDsl = sqlInterface.getDslContextFactory().createDSLContext(leftConnection);
             DSLContext rightDsl = sqlInterface.getDslContextFactory().createDSLContext(rightConnection);
-            sqlInterface.getStructureInterface().createDocPartTable(leftDsl, "test", "test", Arrays.asList(new Field<?>[] { DSL.field("dummy", sqlInterface.getDataTypeProvider().getDataType(FieldType.STRING)) }));
+            sqlInterface.getStructureInterface().createRootDocPartTable(leftDsl, "test", "test", createTableRef());
             leftConnection.commit();
-            sqlInterface.getStructureInterface().createDocPartTable(rightDsl, "test", "test", Arrays.asList(new Field<?>[] { DSL.field("dummy", sqlInterface.getDataTypeProvider().getDataType(FieldType.STRING)) }));
+            sqlInterface.getStructureInterface().createRootDocPartTable(rightDsl, "test", "test", createTableRef());
             rightConnection.commit();
         }
     }
@@ -79,7 +76,7 @@ public class BackendRollbackIntegrationTest extends AbstractBackendTest {
         try (Connection connection = sqlInterface.getDbBackend().createWriteConnection()) {
             DSLContext dsl = sqlInterface.getDslContextFactory().createDSLContext(connection);
             sqlInterface.getStructureInterface().createSchema(dsl, "test");
-            sqlInterface.getStructureInterface().createDocPartTable(dsl, "test", "test", Arrays.asList(new Field<?>[] { DSL.field("dummy", sqlInterface.getDataTypeProvider().getDataType(FieldType.STRING)) }));
+            sqlInterface.getStructureInterface().createRootDocPartTable(dsl, "test", "test", createTableRef());
             connection.commit();
         }
         
@@ -89,9 +86,9 @@ public class BackendRollbackIntegrationTest extends AbstractBackendTest {
             ) {
             DSLContext leftDsl = sqlInterface.getDslContextFactory().createDSLContext(leftConnection);
             DSLContext rightDsl = sqlInterface.getDslContextFactory().createDSLContext(rightConnection);
-            sqlInterface.getStructureInterface().addColumnToDocPartTable(leftDsl, "test", "test", DSL.field("test", sqlInterface.getDataTypeProvider().getDataType(FieldType.STRING)));
+            sqlInterface.getStructureInterface().addColumnToDocPartTable(leftDsl, "test", "test", "test", sqlInterface.getDataTypeProvider().getDataType(FieldType.STRING));
             leftConnection.commit();
-            sqlInterface.getStructureInterface().addColumnToDocPartTable(rightDsl, "test", "test", DSL.field("test", sqlInterface.getDataTypeProvider().getDataType(FieldType.STRING)));
+            sqlInterface.getStructureInterface().addColumnToDocPartTable(rightDsl, "test", "test", "test", sqlInterface.getDataTypeProvider().getDataType(FieldType.STRING));
             rightConnection.commit();
         }
     }

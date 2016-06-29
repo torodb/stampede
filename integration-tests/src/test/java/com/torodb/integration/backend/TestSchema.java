@@ -4,15 +4,18 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Optional;
 
-import org.jooq.Field;
-import org.jooq.impl.DSL;
-
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.torodb.backend.SqlInterface;
-import com.torodb.core.TableRef;
 import com.torodb.core.TableRefFactory;
 import com.torodb.core.transaction.metainf.FieldType;
+import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
+import com.torodb.core.transaction.metainf.ImmutableMetaDatabase;
+import com.torodb.core.transaction.metainf.ImmutableMetaDocPart;
+import com.torodb.core.transaction.metainf.ImmutableMetaField;
+import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
+import com.torodb.core.transaction.metainf.MutableMetaDocPart;
+import com.torodb.core.transaction.metainf.WrapperMutableMetaDocPart;
 import com.torodb.kvdocument.values.KVBoolean;
 import com.torodb.kvdocument.values.KVDouble;
 import com.torodb.kvdocument.values.KVInteger;
@@ -28,17 +31,12 @@ import com.torodb.kvdocument.values.heap.StringKVString;
 
 public class TestSchema {
 
-    public final String databaseName;
-    public final String databaseSchemaName;
-    public final String collectionName;
-    public final String collectionIdentifierName;
-    public final TableRef rootDocPartTableRef;
-    public final String rootDocPartTableName;
-    public final ImmutableMap<String, Field<?>> rootDocPartFields;
-    public final TableRef subDocPartTableRef;
-    public final String subDocPartTableName;
-    public final ImmutableMap<String, Field<?>> subDocPartFields;
-    public final ImmutableMap<String, Field<?>> newSubDocPartFields;
+    public final ImmutableMetaSnapshot snapshot;
+    public final ImmutableMetaDatabase database;
+    public final ImmutableMetaCollection collection;
+    public final ImmutableMetaDocPart rootDocPart;
+    public final ImmutableMetaDocPart subDocPart;
+    public final MutableMetaDocPart newSubDocPart;
     public final ImmutableList<ImmutableMap<String, Optional<KVValue<?>>>> rootDocPartValues;
     public final ImmutableList<ImmutableMap<String, Optional<KVValue<?>>>> subDocPartValues;
     
@@ -46,54 +44,68 @@ public class TestSchema {
     
     public TestSchema(TableRefFactory tableRefFactory, SqlInterface sqlInterface){
     	this.sqlInterface = sqlInterface;
-        databaseName = "databaseName";
-        databaseSchemaName = "databaseSchemaName";
-        collectionName = "collectionName";
-        collectionIdentifierName = "collectionIdentifierName";
-        rootDocPartTableRef = tableRefFactory.createRoot();
-        rootDocPartTableName = "rootDocPartTableName";
-        rootDocPartFields = ImmutableMap.<String, Field<?>>builder()
-                .put("nullRoot", field("nullRootField", FieldType.NULL))
-                .put("booleanRoot", field("booleanRootField", FieldType.BOOLEAN))
-                .put("integerRoot", field("integerRootField", FieldType.INTEGER))
-                .put("longRoot", field("longRootField", FieldType.LONG))
-                .put("doubleRoot", field("doubleRootField", FieldType.DOUBLE))
-                .put("stringRoot", field("stringRootField", FieldType.STRING))
-                .put("dateRoot", field("dateRootField", FieldType.DATE))
-                .put("timeRoot", field("timeRootField", FieldType.TIME))
-                .put("mongoObjectIdRoot", field("mongoObjectIdRootField", FieldType.MONGO_OBJECT_ID))
-                .put("mongoTimeStampRoot", field("mongoTimeStampRootField", FieldType.MONGO_TIME_STAMP))
-                .put("instantRoot", field("instantRootField", FieldType.INSTANT))
-                .put("subDocPart", field("subDocPartField", FieldType.CHILD))
-                .build();
-        subDocPartTableRef = tableRefFactory.createChild(rootDocPartTableRef, "subDocPart");
-        subDocPartTableName = "subDocPartTableName";
-        subDocPartFields = ImmutableMap.<String, Field<?>>builder()
-                .put("nullSub", field("nullSubField", FieldType.NULL))
-                .put("booleanSub", field("booleanSubField", FieldType.BOOLEAN))
-                .put("integerSub", field("integerSubField", FieldType.INTEGER))
-                .put("longSub", field("longSubField", FieldType.LONG))
-                .put("doubleSub", field("doubleSubField", FieldType.DOUBLE))
-                .put("stringSub", field("stringSubField", FieldType.STRING))
-                .put("dateSub", field("dateSubField", FieldType.DATE))
-                .put("timeSub", field("timeSubField", FieldType.TIME))
-                .put("mongoObjectIdSub", field("mongoObjectIdSubField", FieldType.MONGO_OBJECT_ID))
-                .put("mongoTimeStampSub", field("mongoTimeStampSubField", FieldType.MONGO_TIME_STAMP))
-                .put("instantSub", field("instantSubField", FieldType.INSTANT))
-                .build();
-        newSubDocPartFields = ImmutableMap.<String, Field<?>>builder()
-                .put("newNullSub", field("newNullSubField", FieldType.NULL))
-                .put("newBooleanSub", field("newBooleanSubField", FieldType.BOOLEAN))
-                .put("newIntegerSub", field("newIntegerSubField", FieldType.INTEGER))
-                .put("newLongSub", field("newLongSubField", FieldType.LONG))
-                .put("newDoubleSub", field("newDoubleSubField", FieldType.DOUBLE))
-                .put("newStringSub", field("newStringSubField", FieldType.STRING))
-                .put("newDateSub", field("newDateSubField", FieldType.DATE))
-                .put("newTimeSub", field("newTimeSubField", FieldType.TIME))
-                .put("newMongoObjectIdSub", field("newMongoObjectIdSubField", FieldType.MONGO_OBJECT_ID))
-                .put("newMongoTimeStampSub", field("newMongoTimeStampSubField", FieldType.MONGO_TIME_STAMP))
-                .put("newInstantSub", field("newInstantSubField", FieldType.INSTANT))
-                .build();
+        ImmutableMetaSnapshot.Builder metaSnapshotBuilder = new ImmutableMetaSnapshot.Builder();
+        ImmutableMetaDatabase.Builder metaDatabaseBuilder = new ImmutableMetaDatabase.Builder("databaseName", "databaseSchemaName");
+        ImmutableMetaCollection.Builder metaCollectionBuilder = new ImmutableMetaCollection.Builder("collectionName", "collectionIdentifier");
+        ImmutableMetaDocPart.Builder metaRootDocPartBuilder = new ImmutableMetaDocPart.Builder(tableRefFactory.createRoot(), "rootDocPartTableName");
+        metaRootDocPartBuilder
+                .add(new ImmutableMetaField("nullRoot", "nullRootField", FieldType.NULL))
+                .add(new ImmutableMetaField("booleanRoot", "booleanRootField", FieldType.BOOLEAN))
+                .add(new ImmutableMetaField("integerRoot", "integerRootField", FieldType.INTEGER))
+                .add(new ImmutableMetaField("longRoot", "longRootField", FieldType.LONG))
+                .add(new ImmutableMetaField("doubleRoot", "doubleRootField", FieldType.DOUBLE))
+                .add(new ImmutableMetaField("stringRoot", "stringRootField", FieldType.STRING))
+                .add(new ImmutableMetaField("dateRoot", "dateRootField", FieldType.DATE))
+                .add(new ImmutableMetaField("timeRoot", "timeRootField", FieldType.TIME))
+                .add(new ImmutableMetaField("mongoObjectIdRoot", "mongoObjectIdRootField", FieldType.MONGO_OBJECT_ID))
+                .add(new ImmutableMetaField("mongoTimeStampRoot", "mongoTimeStampRootField", FieldType.MONGO_TIME_STAMP))
+                .add(new ImmutableMetaField("instantRoot", "instantRootField", FieldType.INSTANT))
+                .add(new ImmutableMetaField("subDocPart", "subDocPartField", FieldType.CHILD));
+        rootDocPart = metaRootDocPartBuilder.build();
+        metaCollectionBuilder.add(rootDocPart);
+        ImmutableMetaDocPart.Builder metaSubDocPartBuilder = new ImmutableMetaDocPart.Builder(tableRefFactory.createChild(rootDocPart.getTableRef(), "subDocPart"), "subDocPartTableName");
+        metaSubDocPartBuilder
+                .add(new ImmutableMetaField("nullSub", "nullSubField", FieldType.NULL))
+                .add(new ImmutableMetaField("booleanSub", "booleanSubField", FieldType.BOOLEAN))
+                .add(new ImmutableMetaField("integerSub", "integerSubField", FieldType.INTEGER))
+                .add(new ImmutableMetaField("longSub", "longSubField", FieldType.LONG))
+                .add(new ImmutableMetaField("doubleSub", "doubleSubField", FieldType.DOUBLE))
+                .add(new ImmutableMetaField("stringSub", "stringSubField", FieldType.STRING))
+                .add(new ImmutableMetaField("dateSub", "dateSubField", FieldType.DATE))
+                .add(new ImmutableMetaField("timeSub", "timeSubField", FieldType.TIME))
+                .add(new ImmutableMetaField("mongoObjectIdSub", "mongoObjectIdSubField", FieldType.MONGO_OBJECT_ID))
+                .add(new ImmutableMetaField("mongoTimeStampSub", "mongoTimeStampSubField", FieldType.MONGO_TIME_STAMP))
+                .add(new ImmutableMetaField("instantSub", "instantSubField", FieldType.INSTANT));
+        subDocPart = metaSubDocPartBuilder.build();
+        metaCollectionBuilder.add(subDocPart);
+        newSubDocPart = new WrapperMutableMetaDocPart(subDocPart, metaDocPart -> {});
+        newSubDocPart
+                .addMetaField("newNullSub", "newNullSubField", FieldType.NULL);
+        newSubDocPart
+                .addMetaField("newBooleanSub", "newBooleanSubField", FieldType.BOOLEAN);
+        newSubDocPart
+                .addMetaField("newIntegerSub", "newIntegerSubField", FieldType.INTEGER);
+        newSubDocPart
+                .addMetaField("newLongSub", "newLongSubField", FieldType.LONG);
+        newSubDocPart
+                .addMetaField("newDoubleSub", "newDoubleSubField", FieldType.DOUBLE);
+        newSubDocPart
+                .addMetaField("newStringSub", "newStringSubField", FieldType.STRING);
+        newSubDocPart
+                .addMetaField("newDateSub", "newDateSubField", FieldType.DATE);
+        newSubDocPart
+                .addMetaField("newTimeSub", "newTimeSubField", FieldType.TIME);
+        newSubDocPart
+                .addMetaField("newMongoObjectIdSub", "newMongoObjectIdSubField", FieldType.MONGO_OBJECT_ID);
+        newSubDocPart
+                .addMetaField("newMongoTimeStampSub", "newMongoTimeStampSubField", FieldType.MONGO_TIME_STAMP);
+        newSubDocPart
+                .addMetaField("newInstantSub", "newInstantSubField", FieldType.INSTANT);
+        collection = metaCollectionBuilder.build();
+        metaDatabaseBuilder.add(collection);
+        database = metaDatabaseBuilder.build();
+        metaSnapshotBuilder.add(database);
+        snapshot = metaSnapshotBuilder.build();
         rootDocPartValues = ImmutableList.<ImmutableMap<String, Optional<KVValue<?>>>>builder()
                 .add(ImmutableMap.<String, Optional<KVValue<?>>>builder()
                         .put("nullRoot", Optional.of(KVNull.getInstance()))
@@ -181,8 +193,4 @@ public class TestSchema {
                .build();
     }
     
-    private Field<?> field(String name, FieldType type){
-    	return DSL.field(name, sqlInterface.getDataTypeProvider().getDataType(type));
-    }
-
 }
