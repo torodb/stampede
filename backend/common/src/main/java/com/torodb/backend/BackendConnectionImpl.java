@@ -7,7 +7,6 @@ import com.torodb.core.backend.BackendTransaction;
 import com.torodb.core.backend.ReadOnlyBackendTransaction;
 import com.torodb.core.backend.WriteBackendTransaction;
 import com.torodb.core.d2r.R2DTranslator;
-import java.sql.ResultSet;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -20,10 +19,10 @@ public class BackendConnectionImpl implements BackendConnection {
     private final BackendImpl backend;
     private final SqlInterface sqlInterface;
     private boolean closed = false;
-    private final R2DTranslator<ResultSet> r2dTranslator;
+    private final R2DTranslator r2dTranslator;
     private BackendTransaction currentTransaction;
 
-    public BackendConnectionImpl(BackendImpl backend, SqlInterface sqlInterface, R2DTranslator<ResultSet> r2dTranslator) {
+    public BackendConnectionImpl(BackendImpl backend, SqlInterface sqlInterface, R2DTranslator r2dTranslator) {
         this.backend = backend;
         this.sqlInterface = sqlInterface;
         this.r2dTranslator = r2dTranslator;

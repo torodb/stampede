@@ -20,20 +20,22 @@
 package com.torodb.core.d2r;
 
 import com.torodb.core.document.ToroDocument;
+import java.util.Iterator;
 import java.util.List;
 import javax.annotation.Nonnull;
 
 /**
  *
  */
-public interface R2DTranslator<Result extends AutoCloseable> {
+public interface R2DTranslator {
 
     /**
      * Translates from relational model to the document model the given doc part results.
      *
+     * @param docPartResultIt
      * @return a collection that contains the translation of all doc part results that have been translated.
      */
     @Nonnull
-    public List<ToroDocument> translate(@Nonnull DocPartResults<Result> docPartResults);
+    public List<ToroDocument> translate(Iterator<DocPartResult> docPartResultIt);
 
 }

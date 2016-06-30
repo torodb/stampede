@@ -20,10 +20,8 @@
 
 package com.torodb.backend;
 
-import java.sql.ResultSet;
-import java.util.Comparator;
-
 import com.torodb.core.d2r.DocPartResult;
+import java.util.Comparator;
 
 public class TableRefComparator {
     public static class MetaDocPart implements Comparator<com.torodb.core.transaction.metainf.MetaDocPart> {
@@ -77,15 +75,15 @@ public class TableRefComparator {
         }
     }
     
-    public static class DocPartResultSet implements Comparator<DocPartResult<ResultSet>> {
+    public static class DocPartResultSet implements Comparator<DocPartResult> {
         public static final DocPartResultSet DESC = new DocPartResultSet();
     
         private DocPartResultSet() {
         }
         
         @Override
-        public int compare(DocPartResult<ResultSet> leftDocPartResultSet, 
-                DocPartResult<ResultSet> rightDocPartResultSet) {
+        public int compare(DocPartResult leftDocPartResultSet, 
+                DocPartResult rightDocPartResultSet) {
             return rightDocPartResultSet.getMetaDocPart().getTableRef().getDepth() -
                     leftDocPartResultSet.getMetaDocPart().getTableRef().getDepth();
         }

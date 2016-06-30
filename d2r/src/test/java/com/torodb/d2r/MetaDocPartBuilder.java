@@ -1,18 +1,11 @@
 package com.torodb.d2r;
 
+import com.torodb.core.TableRef;
+import com.torodb.core.transaction.metainf.*;
+import com.torodb.d2r.MockedDocPartResult.MockedRow;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-
-import com.torodb.core.TableRef;
-import com.torodb.core.transaction.metainf.FieldType;
-import com.torodb.core.transaction.metainf.ImmutableMetaDocPart;
-import com.torodb.core.transaction.metainf.ImmutableMetaField;
-import com.torodb.core.transaction.metainf.ImmutableMetaScalar;
-import com.torodb.core.transaction.metainf.MetaDocPart;
-import com.torodb.core.transaction.metainf.MetaField;
-import com.torodb.core.transaction.metainf.MetaScalar;
-import com.torodb.d2r.MockedResultSet.MockedRow;
 
 public class MetaDocPartBuilder {
 
@@ -53,8 +46,8 @@ public class MetaDocPartBuilder {
 		return row;
 	}
 	
-	public MockedResultSet getResultSet(){
-		return new MockedResultSet(rows);
+	public MockedDocPartResult getResultSet(){
+		return new MockedDocPartResult(metaDocPart, rows);
 	}
 	
 	private int findOrder(Object field ){

@@ -10,7 +10,6 @@ import com.torodb.core.backend.Backend;
 import com.torodb.core.backend.BackendConnection;
 import com.torodb.core.d2r.R2DTranslator;
 import com.torodb.core.transaction.metainf.MetainfoRepository;
-import java.sql.ResultSet;
 import javax.inject.Inject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -29,12 +28,12 @@ public class BackendImpl extends AbstractIdleService implements Backend {
     private final MetainfoRepository metainfoRepository;
     private final TableRefFactory tableRefFactory;
     private final MaxRowIdFactory maxRowIdFactory;
-    private final R2DTranslator<ResultSet> r2dTranslator;
+    private final R2DTranslator r2dTranslator;
 
     @Inject
     public BackendImpl(DbBackendService dbBackendService, SqlInterface sqlInterface, SqlHelper sqlHelper, SchemaUpdater schemaUpdater, 
             MetainfoRepository metainfoRepository, TableRefFactory tableRefFactory, MaxRowIdFactory maxRowIdFactory,
-            R2DTranslator<ResultSet> r2dTranslator) {
+            R2DTranslator r2dTranslator) {
         this.dbBackendService = dbBackendService;
         this.sqlInterface = sqlInterface;
         this.sqlHelper = sqlHelper;

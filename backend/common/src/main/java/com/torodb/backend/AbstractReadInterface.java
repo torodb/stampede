@@ -20,14 +20,13 @@
 
 package com.torodb.backend;
 
-import com.google.common.collect.ImmutableList;
 import com.torodb.backend.ErrorHandler.Context;
+import com.torodb.backend.d2r.ResultSetDocPartResult;
 import com.torodb.backend.tables.MetaDocPartTable.DocPartTableFields;
 import com.torodb.core.TableRef;
 import com.torodb.core.TableRefFactory;
 import com.torodb.core.backend.DidCursor;
 import com.torodb.core.d2r.DocPartResult;
-import com.torodb.core.d2r.DocPartResults;
 import com.torodb.core.exceptions.SystemException;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
@@ -38,6 +37,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import javax.annotation.Nonnull;
@@ -107,11 +107,11 @@ public abstract class AbstractReadInterface implements ReadInterface {
 
     @Nonnull
     @Override
-    public DocPartResults<ResultSet> getCollectionResultSets(@Nonnull DSLContext dsl, @Nonnull MetaDatabase metaDatabase, @Nonnull MetaCollection metaCollection, 
+    public DocPartResultBatch getCollectionResultSets(@Nonnull DSLContext dsl, @Nonnull MetaDatabase metaDatabase, @Nonnull MetaCollection metaCollection,
             @Nonnull DidCursor didCursor, int maxSize) throws SQLException {
         Collection<Integer> dids = didCursor.getNextBatch(maxSize);
-        
-        ImmutableList.Builder<DocPartResult<ResultSet>> docPartResultSetsBuilder = ImmutableList.builder();
+
+        ArrayList<DocPartResult> result = new ArrayList<>();
         Connection connection = dsl.configuration().connectionProvider().acquire();
         try {
             Iterator<? extends MetaDocPart> metaDocPartIterator = metaCollection
@@ -123,12 +123,12 @@ public abstract class AbstractReadInterface implements ReadInterface {
                 String statament = getDocPartStatament(metaDatabase, metaDocPart, dids);
     
                 PreparedStatement preparedStatement = connection.prepareStatement(statament);
-                docPartResultSetsBuilder.add(new DocPartResult<ResultSet>(metaDocPart, preparedStatement.executeQuery()));
+                result.add(new ResultSetDocPartResult(sqlInterface, metaDocPart, preparedStatement.executeQuery(), sqlHelper));
             }
         } finally {
             dsl.configuration().connectionProvider().release(connection);
         }
-        return new DocPartResults<ResultSet>(docPartResultSetsBuilder.build());
+        return new DocPartResultBatch(result);
     }
 
     protected abstract String getDocPartStatament(MetaDatabase metaDatabase, MetaDocPart metaDocPart,

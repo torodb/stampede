@@ -29,13 +29,12 @@ import com.torodb.core.d2r.R2DTranslator;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.transaction.RollbackException;
 import com.torodb.core.transaction.metainf.*;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class WriteBackendTransactionImpl extends BackendTransactionImpl implements WriteBackendTransaction {
 
     public WriteBackendTransactionImpl(SqlInterface sqlInterface, BackendConnectionImpl backendConnection,
-            R2DTranslator<ResultSet> r2dTranslator) {
+            R2DTranslator r2dTranslator) {
         super(sqlInterface.getDbBackend().createWriteConnection(), sqlInterface, backendConnection, r2dTranslator);
     }
     

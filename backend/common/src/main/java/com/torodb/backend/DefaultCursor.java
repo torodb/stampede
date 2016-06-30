@@ -24,13 +24,11 @@ import com.google.common.base.Preconditions;
 import com.torodb.backend.ErrorHandler.Context;
 import com.torodb.core.backend.DidCursor;
 import com.torodb.core.cursors.Cursor;
-import com.torodb.core.d2r.DocPartResults;
 import com.torodb.core.d2r.R2DTranslator;
 import com.torodb.core.document.ToroDocument;
 import com.torodb.core.exceptions.SystemException;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -49,7 +47,7 @@ public class DefaultCursor implements Cursor<ToroDocument> {
     private static final int BATCH_SIZE = 1000;
 
     private final SqlInterface sqlInterface;
-    private final R2DTranslator<ResultSet> r2dTranslator;
+    private final R2DTranslator r2dTranslator;
     private final DidCursor didCursor;
     private final DSLContext dsl;
     private final MetaDatabase metaDatabase;
@@ -57,7 +55,7 @@ public class DefaultCursor implements Cursor<ToroDocument> {
     
     public DefaultCursor(
             @Nonnull SqlInterface sqlInterface,
-            @Nonnull R2DTranslator<ResultSet> r2dTranslator,
+            @Nonnull R2DTranslator r2dTranslator,
             @Nonnull DidCursor didCursor,
             @Nonnull DSLContext dsl,
             @Nonnull MetaDatabase metaDatabase,
@@ -104,17 +102,15 @@ public class DefaultCursor implements Cursor<ToroDocument> {
             return Collections.emptyList();
         }
 
-        DocPartResults<ResultSet> docPartResults;
-        try {
-            docPartResults = sqlInterface.getReadInterface().getCollectionResultSets(
-                    dsl, metaDatabase, metaCollection, didCursor, maxResults);
+        
+        try (DocPartResultBatch batch = sqlInterface.getReadInterface().getCollectionResultSets(
+                    dsl, metaDatabase, metaCollection, didCursor, maxResults)) {
+            return r2dTranslator.translate(batch);
         } catch(SQLException ex) {
             sqlInterface.getErrorHandler().handleRollbackException(Context.fetch, ex);
             
             throw new SystemException(ex);
         }
-
-        return r2dTranslator.translate(docPartResults);
     }
 
     @Override

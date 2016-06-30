@@ -18,33 +18,26 @@
  * 
  */
 
-package com.torodb.core.cursors;
+package com.torodb.core.d2r;
 
-import com.google.common.base.Preconditions;
-import java.util.NoSuchElementException;
+import com.torodb.core.transaction.metainf.FieldType;
+import com.torodb.kvdocument.values.KVValue;
+import javax.annotation.Nullable;
 
 /**
  *
  */
-public class EmptyCursor<E> implements Cursor<E> {
+public interface DocPartResultRow {
 
-    private boolean closed = false;
+    public int getDid();
 
-    @Override
-    public void close() {
-        closed = true;
-    }
+    public int getRid();
 
-    @Override
-    public boolean hasNext() {
-        Preconditions.checkState(!closed);
-        return false;
-    }
+    public int getPid();
 
-    @Override
-    public E next() {
-        Preconditions.checkState(!closed);
-        throw new NoSuchElementException();
-    }
+    @Nullable
+    public Integer getSeq();
+
+    public KVValue<?> getUserValue(int fieldIndex, FieldType fieldType);
 
 }

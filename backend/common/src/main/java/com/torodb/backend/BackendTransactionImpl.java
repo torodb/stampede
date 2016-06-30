@@ -13,7 +13,6 @@ import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetaField;
 import com.torodb.kvdocument.values.KVValue;
 import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import org.jooq.DSLContext;
 
@@ -27,10 +26,10 @@ public abstract class BackendTransactionImpl implements BackendTransaction {
     private final DSLContext dsl;
     private final SqlInterface sqlInterface;
     private final BackendConnectionImpl backendConnection;
-    private final R2DTranslator<ResultSet> r2dTranslator;
+    private final R2DTranslator r2dTranslator;
 
     public BackendTransactionImpl(Connection connection, SqlInterface sqlInterface,
-            BackendConnectionImpl backendConnection, R2DTranslator<ResultSet> r2dTranslator) {
+            BackendConnectionImpl backendConnection, R2DTranslator r2dTranslator) {
         this.connection = connection;
         this.dsl = sqlInterface.getDslContextFactory().createDSLContext(connection);
         this.sqlInterface = sqlInterface;
