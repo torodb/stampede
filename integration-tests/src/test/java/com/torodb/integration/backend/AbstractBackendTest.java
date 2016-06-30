@@ -174,6 +174,10 @@ public abstract class AbstractBackendTest {
     }
 
     protected List<Integer> writeCollectionData(DSLContext dsl, CollectionData collectionData) {
+        return writeCollectionData(dsl, data.database.getIdentifier(), collectionData);
+    }
+
+    protected List<Integer> writeCollectionData(DSLContext dsl, String databaseIdentifier, CollectionData collectionData) {
         Iterator<DocPartData> docPartDataIterator = StreamSupport.stream(collectionData.spliterator(), false)
                 .iterator();
         List<Integer> generatedDids = new ArrayList<>();
@@ -182,7 +186,7 @@ public abstract class AbstractBackendTest {
             if (docPartData.getMetaDocPart().getTableRef().isRoot()) {
                 docPartData.forEach(docPartRow ->generatedDids.add(docPartRow.getDid()));
             }
-            sqlInterface.getWriteInterface().insertDocPartData(dsl, data.database.getIdentifier(), docPartData);
+            sqlInterface.getWriteInterface().insertDocPartData(dsl, databaseIdentifier, docPartData);
         }
         return generatedDids;
     }
@@ -222,7 +226,12 @@ public abstract class AbstractBackendTest {
 
     protected CollectionData parseDocuments(MutableMetaSnapshot mutableSnapshot, DSLContext dsl, List<KVDocument> documents)
             throws Exception {
-        CollectionData collectionData = readDataFromDocuments(data.database.getName(), data.collection.getName(), documents, mutableSnapshot);
+        return parseDocuments(mutableSnapshot, data.database.getName(), data.collection.getName(), dsl, documents);
+    }
+
+    protected CollectionData parseDocuments(MutableMetaSnapshot mutableSnapshot, String databaseName, String collectionName, DSLContext dsl, List<KVDocument> documents)
+            throws Exception {
+        CollectionData collectionData = readDataFromDocuments(databaseName, collectionName, documents, mutableSnapshot);
         
         return collectionData;
     }
