@@ -61,7 +61,7 @@ public class PostgreSQLStructureInterface extends AbstractStructureInterface {
 
     @Override
     protected String getDropTableStatement(String schemaName, String tableName) {
-        throw new UnsupportedOperationException();
+        return "DROP TABLE \"" + schemaName + "\".\"" + tableName + "\"";
     }
 
     @Override

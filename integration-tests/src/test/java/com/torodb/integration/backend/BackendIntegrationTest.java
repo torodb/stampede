@@ -355,6 +355,43 @@ public class BackendIntegrationTest extends AbstractBackendTest {
             connection.commit();
         }
     }
+    
+    @Test
+    public void testTorodbDropCollection() throws Exception {
+        buildMetaSnapshot();
+        
+        try (Connection connection = sqlInterface.getDbBackend().createWriteConnection()) {
+            DSLContext dsl = sqlInterface.getDslContextFactory().createDSLContext(connection);
+            
+            sqlInterface.getStructureInterface().createSchema(dsl, data.database.getIdentifier());
+            
+            createDocPartTable(dsl, data.collection, data.rootDocPart);
+            createDocPartTable(dsl, data.collection, data.subDocPart);
+            MutableMetaSnapshot mutableSnapshot = new WrapperMutableMetaSnapshot(data.snapshot);
+            writeCollectionData(dsl, parseDocuments(mutableSnapshot, dsl, data.documents));
+            connection.commit();
+            
+            
+            try (ResultSet resultSet = connection.getMetaData().getTables("%", data.database.getIdentifier(), 
+                    "%", new String[] { "TABLE" })) {
+                int count = 0;
+                while (resultSet.next()) {
+                    count++;
+                }
+                Assert.assertEquals(2, count);
+            }
+            connection.commit();
+            
+            sqlInterface.getStructureInterface().dropCollection(dsl, data.database.getIdentifier(), data.collection);
+            connection.commit();
+            
+            try (ResultSet resultSet = connection.getMetaData().getTables("%", data.database.getIdentifier(), 
+                    "%", new String[] { "TABLE" })) {
+                Assert.assertFalse(resultSet.next());
+            }
+            connection.commit();
+        }
+    }
 
 	@SuppressWarnings("unchecked")
     private boolean findRootDocPartRow(ResultSet resultSet, List<Integer> foundRowIndexes) throws SQLException {

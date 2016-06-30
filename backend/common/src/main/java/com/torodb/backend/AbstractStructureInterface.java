@@ -65,8 +65,19 @@ public abstract class AbstractStructureInterface implements StructureInterface {
                 sqlHelper.executeUpdate(dsl, statement, Context.DROP_TABLE);
             }
         }
-    	String statement = getDropSchemaStatement(metaDatabase.getIdentifier());
-    	sqlHelper.executeUpdate(dsl, statement, Context.DROP_SCHEMA);
+        String statement = getDropSchemaStatement(metaDatabase.getIdentifier());
+        sqlHelper.executeUpdate(dsl, statement, Context.DROP_SCHEMA);
+    }
+
+    @Override
+    public void dropCollection(@Nonnull DSLContext dsl, @Nonnull String schemaName, @Nonnull MetaCollection metaCollection) {
+        Iterator<? extends MetaDocPart> metaDocPartIterator = metaCollection.streamContainedMetaDocParts()
+                .sorted(TableRefComparator.MetaDocPart.DESC).iterator();
+        while (metaDocPartIterator.hasNext()) {
+            MetaDocPart metaDocPart = metaDocPartIterator.next();
+            String statement = getDropTableStatement(schemaName, metaDocPart.getIdentifier());
+            sqlHelper.executeUpdate(dsl, statement, Context.DROP_TABLE);
+        }
     }
 
     protected abstract String getDropTableStatement(String schemaName, String tableName);
