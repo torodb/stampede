@@ -1,33 +1,31 @@
 
 package com.torodb.mongodb.core;
 
-import java.util.concurrent.Callable;
-
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import com.eightkdata.mongowp.ErrorCode;
 import com.eightkdata.mongowp.Status;
+import com.eightkdata.mongowp.bson.utils.DefaultBsonValues;
 import com.eightkdata.mongowp.exceptions.MongoException;
-import com.eightkdata.mongowp.messages.request.DeleteMessage;
-import com.eightkdata.mongowp.messages.request.GetMoreMessage;
-import com.eightkdata.mongowp.messages.request.InsertMessage;
-import com.eightkdata.mongowp.messages.request.KillCursorsMessage;
-import com.eightkdata.mongowp.messages.request.UpdateMessage;
+import com.eightkdata.mongowp.messages.request.*;
 import com.eightkdata.mongowp.messages.response.ReplyMessage;
+import com.eightkdata.mongowp.messages.utils.IterableDocumentProvider;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.FindCommand;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.FindCommand.FindArgument;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.FindCommand.FindResult;
 import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.CommandsLibrary;
 import com.eightkdata.mongowp.server.api.Request;
 import com.eightkdata.mongowp.server.api.SafeRequestProcessor;
 import com.eightkdata.mongowp.server.api.pojos.QueryRequest;
+import com.google.common.collect.Lists;
 import com.torodb.core.Retrier;
 import com.torodb.mongodb.commands.TorodbCommandsLibrary;
 import com.torodb.mongodb.commands.TorodbCommandsLibrary.RequiredTransaction;
-
 import io.netty.util.AttributeKey;
+import java.util.concurrent.Callable;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  *
@@ -102,13 +100,38 @@ public class TorodbSafeRequestProcessor implements SafeRequestProcessor<MongodCo
     }
 
     @Override
-    public ReplyMessage query(MongodConnection connection, Request req, QueryRequest build) throws
+    public ReplyMessage query(MongodConnection connection, Request req, int requestId, QueryRequest queryRequest) throws
             MongoException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+
+        FindArgument findArg = new FindArgument.Builder()
+                .setCollection(queryRequest.getCollection())
+                .setFilter(queryRequest.getQuery() != null ? queryRequest.getQuery() : DefaultBsonValues.EMPTY_DOC)
+                .build();
+
+        Status<FindResult> status = execute(req, FindCommand.INSTANCE, findArg, connection);
+
+        if (!status.isOK()) {
+            throw new MongoException(status.getErrorCode(), status.getErrorMsg());
+        }
+
+        FindResult result = status.getResult();
+        assert result != null;
+
+        return new ReplyMessage(
+                EmptyBsonContext.getInstance(),
+                requestId,
+                false,
+                false,
+                false,
+                false,
+                result.getCursor().getCursorId(),
+                queryRequest.getNumberToSkip(),
+                IterableDocumentProvider.of(Lists.newArrayList(result.getCursor().getFirstBatch()))
+        );
     }
 
     @Override
-    public ReplyMessage getMore(MongodConnection connection, Request req, GetMoreMessage moreMessage)
+    public ReplyMessage getMore(MongodConnection connection, Request req, int requestId,GetMoreMessage moreMessage)
             throws MongoException {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
