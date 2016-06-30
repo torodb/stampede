@@ -65,10 +65,9 @@ public class DefaultToBackendFunctionTest {
 
         CollectionData collectionData = mock(CollectionData.class);
 
-        given(collectionData.iterator())
+        given(collectionData.orderedDocPartData())
                 .willReturn(
                         Lists.<DocPartData>newArrayList(allCreatedData)
-                        .iterator()
                 );
 
         //when
@@ -109,10 +108,9 @@ public class DefaultToBackendFunctionTest {
 
         CollectionData collectionData = mock(CollectionData.class);
 
-        given(collectionData.iterator())
+        given(collectionData.orderedDocPartData())
                 .willReturn(
                         Lists.<DocPartData>newArrayList(withNewData)
-                        .iterator()
                 );
 
         //when
@@ -175,10 +173,9 @@ public class DefaultToBackendFunctionTest {
 
         CollectionData collectionData = mock(CollectionData.class);
 
-        given(collectionData.iterator())
+        given(collectionData.orderedDocPartData())
                 .willReturn(
                         Lists.<DocPartData>newArrayList(withNewScalar)
-                        .iterator()
                 );
 
         //when
@@ -240,10 +237,9 @@ public class DefaultToBackendFunctionTest {
 
         CollectionData collectionData = mock(CollectionData.class);
 
-        given(collectionData.iterator())
+        given(collectionData.orderedDocPartData())
                 .willReturn(
                         Lists.<DocPartData>newArrayList(allNewData)
-                        .iterator()
                 );
 
         //when
@@ -333,10 +329,9 @@ public class DefaultToBackendFunctionTest {
                         )
                 );
 
-        given(collectionData.iterator())
+        given(collectionData.orderedDocPartData())
                 .willReturn(
                         Collections.singleton(data1)
-                        .iterator()
                 );
 
         //when
@@ -352,8 +347,8 @@ public class DefaultToBackendFunctionTest {
     @Test
     public void testApplyEmpty() {
         CollectionData collectionData = mock(CollectionData.class);
-        given(collectionData.iterator())
-                .willReturn(Collections.<DocPartData>emptyList().iterator());
+        given(collectionData.orderedDocPartData())
+                .willReturn(Collections.<DocPartData>emptyList());
 
         //when
         Iterable<BackendTransactionJob> resultIterable = fun.apply(collectionData);

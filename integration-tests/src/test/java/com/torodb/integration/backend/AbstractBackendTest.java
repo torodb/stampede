@@ -29,7 +29,6 @@ import java.util.List;
 import java.util.stream.StreamSupport;
 
 import org.jooq.DSLContext;
-import org.jooq.Field;
 import org.junit.Before;
 import org.junit.ClassRule;
 
@@ -50,17 +49,16 @@ import com.torodb.core.d2r.IdentifierFactory;
 import com.torodb.core.d2r.R2DTranslator;
 import com.torodb.core.document.ToroDocument;
 import com.torodb.core.impl.TableRefFactoryImpl;
-import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetaField;
 import com.torodb.core.transaction.metainf.MetaScalar;
+import com.torodb.core.transaction.metainf.MetainfoRepository.SnapshotStage;
 import com.torodb.core.transaction.metainf.MutableMetaDatabase;
 import com.torodb.core.transaction.metainf.MutableMetaDocPart;
 import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
-import com.torodb.core.transaction.metainf.MetainfoRepository.SnapshotStage;
 import com.torodb.d2r.D2RTranslatorStack;
 import com.torodb.d2r.IdentifierFactoryImpl;
 import com.torodb.d2r.MockIdentifierInterface;
@@ -178,7 +176,7 @@ public abstract class AbstractBackendTest {
     }
 
     protected List<Integer> writeCollectionData(DSLContext dsl, String databaseIdentifier, CollectionData collectionData) {
-        Iterator<DocPartData> docPartDataIterator = StreamSupport.stream(collectionData.spliterator(), false)
+        Iterator<DocPartData> docPartDataIterator = StreamSupport.stream(collectionData.orderedDocPartData().spliterator(), false)
                 .iterator();
         List<Integer> generatedDids = new ArrayList<>();
         while (docPartDataIterator.hasNext()) {

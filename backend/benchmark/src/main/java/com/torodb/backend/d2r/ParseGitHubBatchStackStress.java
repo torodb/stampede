@@ -49,7 +49,7 @@ public class ParseGitHubBatchStackStress {
 				docStream.forEach(doc -> {
 					translator.translate(doc);	
 				});
-				for (DocPartData table : translator.getCollectionDataAccumulator()) {
+				for (DocPartData table : translator.getCollectionDataAccumulator().orderedDocPartData()) {
 					cont.addAndGet(table.rowCount());
 				}
 			});

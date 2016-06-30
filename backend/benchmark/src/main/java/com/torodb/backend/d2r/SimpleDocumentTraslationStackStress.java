@@ -35,7 +35,7 @@ public class SimpleDocumentTraslationStackStress {
                         new TableRefFactoryImpl(),
                         new IdentifierFactoryImpl(new MockIdentifierInterface()), new InMemoryRidGenerator(), db, db.getMetaCollectionByName(COLL1));
 				translator.translate(doc);
-				for (DocPartData table : translator.getCollectionDataAccumulator()) {
+				for (DocPartData table : translator.getCollectionDataAccumulator().orderedDocPartData()) {
 					cont.addAndGet(table.rowCount());
 				}
 			});

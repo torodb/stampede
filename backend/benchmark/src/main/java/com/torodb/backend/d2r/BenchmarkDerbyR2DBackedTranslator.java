@@ -270,7 +270,7 @@ public class BenchmarkDerbyR2DBackedTranslator {
     }
 
     protected static List<Integer> writeCollectionData(TranslateState state, Blackhole blackhole, CollectionData collectionData) {
-        Iterator<DocPartData> docPartDataIterator = StreamSupport.stream(collectionData.spliterator(), false)
+        Iterator<DocPartData> docPartDataIterator = StreamSupport.stream(collectionData.orderedDocPartData().spliterator(), false)
                 .iterator();
         List<Integer> generatedDids = new ArrayList<>();
         while (docPartDataIterator.hasNext()) {

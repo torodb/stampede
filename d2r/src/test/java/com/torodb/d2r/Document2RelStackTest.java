@@ -312,7 +312,7 @@ public class Document2RelStackTest {
 		CollectionData collectionData = parseDocument("DocPartLevelSorted1.json","DocPartLevelSorted2.json");
 
 		Set<TableRef> parsed = new HashSet<>();		
-		for (DocPartData docPartData : collectionData) {
+		for (DocPartData docPartData : collectionData.orderedDocPartData()) {
 			TableRef tableRef = docPartData.getMetaDocPart().getTableRef();
 			if (!tableRef.isRoot()){
 				TableRef parent = tableRef.getParent().get();
@@ -343,7 +343,7 @@ public class Document2RelStackTest {
 		Collections.reverse(pathList);
 		pathList.add(ROOT_DOC_NAME);
 		String name = pathList.get(0); 
-		for(DocPartData docPartData :collectionData){
+		for(DocPartData docPartData :collectionData.orderedDocPartData()){
 			MetaDocPart metaDocPart = docPartData.getMetaDocPart();
 			if (name.equals(metaDocPart.getTableRef().getName())){
 				if (isSamePath(pathList, metaDocPart.getTableRef())){
