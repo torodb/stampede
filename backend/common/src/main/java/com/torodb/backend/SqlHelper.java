@@ -83,7 +83,7 @@ public class SqlHelper {
     public void executeUpdate(DSLContext dsl, String statement, Context context){
         Connection c = dsl.configuration().connectionProvider().acquire();
         try (PreparedStatement ps = c.prepareStatement(statement)) {
-            ps.execute();
+            ps.executeUpdate();
         } catch (SQLException ex) {
             errorHandler.handleRollbackException(context, ex);
             throw new SystemException(ex);
@@ -94,7 +94,7 @@ public class SqlHelper {
     
     public void executeUpdate(Connection c, String statement, Context context){
         try (PreparedStatement ps = c.prepareStatement(statement)) {
-            ps.execute();
+            ps.executeUpdate();
         } catch (SQLException ex) {
             errorHandler.handleRollbackException(context, ex);
             throw new SystemException(ex);
