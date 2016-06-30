@@ -32,7 +32,6 @@ import javax.inject.Singleton;
 
 import org.jooq.DSLContext;
 
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.torodb.backend.ErrorHandler.Context;
 import com.torodb.backend.tables.MetaDocPartTable.DocPartTableFields;
@@ -140,7 +139,7 @@ public abstract class AbstractReadInterface implements ReadInterface {
         	}
         	return maxId;
         } catch (SQLException ex){
-            errorHandler.handleRollbackException(Context.ddl, ex);
+            errorHandler.handleRollbackException(Context.FETCH, ex);
             throw new SystemException(ex);
         } finally {
             dsl.configuration().connectionProvider().release(connection);

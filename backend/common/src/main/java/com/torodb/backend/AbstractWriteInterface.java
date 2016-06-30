@@ -78,7 +78,7 @@ public abstract class AbstractWriteInterface implements WriteInterface {
 	        while (iterator.hasNext()){
 	        	MetaDocPart metaDocPart = iterator.next();
 	        	String statement = getDeleteDocPartsStatement(schemaName, metaDocPart.getIdentifier(), dids);
-	        	sqlHelper.executeUpdate(c, statement, Context.delete);
+	        	sqlHelper.executeUpdate(c, statement, Context.DELETE);
 	        }
         }finally {
         	dsl.configuration().connectionProvider().release(c);
@@ -100,7 +100,7 @@ public abstract class AbstractWriteInterface implements WriteInterface {
             Iterator<MetaField> metaFieldIterator = docPartData.orderedMetaFieldIterator();
             standardInsertDocPartData(dsl, schemaName, docPartData, metaDocPart, metaScalarIterator, metaFieldIterator, docPartRowIterator);
         } catch (DataAccessException ex) {
-            errorHandler.handleRollbackException(Context.insert, ex);
+            errorHandler.handleRollbackException(Context.INSERT, ex);
             throw new SystemException(ex);
         }
     }
@@ -153,7 +153,7 @@ public abstract class AbstractWriteInterface implements WriteInterface {
                 }
             }
         } catch(SQLException ex) {
-            errorHandler.handleRollbackException(Context.insert, ex);
+            errorHandler.handleRollbackException(Context.INSERT, ex);
             throw new SystemException(ex);
         } finally {
             dsl.configuration().connectionProvider().release(connection);

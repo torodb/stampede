@@ -87,7 +87,7 @@ public class SnapshotUpdater {
 
             throw new InvalidDatabaseException(ioException);
         } catch(SQLException sqlException) {
-            sqlInterface.getErrorHandler().handleRollbackException(Context.unknown, sqlException);
+            sqlInterface.getErrorHandler().handleRollbackException(Context.UNKNOWN, sqlException);
 
             throw new InvalidDatabaseException(sqlException);
         }

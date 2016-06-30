@@ -6,15 +6,22 @@ import org.jooq.exception.DataAccessException;
 
 public interface ErrorHandler {
     public enum Context {
-        unknown,
-        get_connection,
-        ddl,
-        fetch,
-        insert,
-        update,
-        delete,
-        commit,
-        close
+        UNKNOWN,
+        GET_CONNECTION,
+        CREATE_SCHEMA,
+        CREATE_TABLE,
+        ADD_COLUMN,
+        CREATE_INDEX,
+        DROP_SCHEMA,
+        DROP_TABLE,
+        DROP_INDEX,
+        FETCH,
+        META_INSERT,
+        INSERT,
+        UPDATE,
+        DELETE,
+        COMMIT,
+        CLOSE
     }
     
     void handleRollbackException(Context context, SQLException sqlException);

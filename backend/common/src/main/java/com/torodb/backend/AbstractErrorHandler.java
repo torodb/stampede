@@ -21,12 +21,15 @@
 package com.torodb.backend;
 
 import java.sql.SQLException;
+import java.util.Arrays;
 
 import javax.inject.Singleton;
 
 import org.jooq.exception.DataAccessException;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.transaction.RollbackException;
 
@@ -34,33 +37,42 @@ import com.torodb.core.transaction.RollbackException;
  *
  */
 @Singleton
-public abstract class AbstractErrorHandlerInterface implements ErrorHandler {
+public abstract class AbstractErrorHandler implements ErrorHandler {
 
-    private final ImmutableSet<String> rollbackSqlErrorCodes;
+    private final ImmutableMap<String, ImmutableSet<Context>> rollbackRules;
     
-    protected AbstractErrorHandlerInterface(String ... rollbackErrorCodes) {
-        ImmutableSet.Builder<String> rollbackSqlErrorCodesBuilder =
-                ImmutableSet.builder();
+    protected AbstractErrorHandler(RollbackRule...rollbackRules) {
+        ImmutableMap.Builder<String, ImmutableSet<Context>> rollbackRulesBuilder =
+                ImmutableMap.builder();
         
-        for (String rollbackErrorCode : rollbackErrorCodes) {
-            rollbackSqlErrorCodesBuilder.add(rollbackErrorCode);
+        for (RollbackRule rollbackRule : rollbackRules) {
+            rollbackRulesBuilder.put(rollbackRule.sqlCode, Sets.immutableEnumSet(Arrays.asList(rollbackRule.contexts)));
         }
         
-        rollbackSqlErrorCodes = rollbackSqlErrorCodesBuilder.build();
+        this.rollbackRules = rollbackRulesBuilder.build();
     }
     
     @Override
     public void handleRollbackException(Context context, SQLException sqlException) {
-        if (rollbackSqlErrorCodes.contains(sqlException.getSQLState())) {
+        if (applyToRollbackRule(context, sqlException.getSQLState())) {
             throw new RollbackException(sqlException);
         }
     }
 
     @Override
     public void handleRollbackException(Context context, DataAccessException dataAccessException) {
-        if (rollbackSqlErrorCodes.contains(dataAccessException.sqlState())) {
+        if (applyToRollbackRule(context, dataAccessException.sqlState())) {
             throw new RollbackException(dataAccessException);
         }
+    }
+
+    private boolean applyToRollbackRule(Context context, String sqlState) {
+        ImmutableSet<Context> contexts = rollbackRules.get(sqlState);
+        if (contexts != null && (contexts.isEmpty() || contexts.contains(context))) {
+            return true;
+        }
+        
+        return false;
     }
 
     @Override
@@ -71,5 +83,19 @@ public abstract class AbstractErrorHandlerInterface implements ErrorHandler {
     @Override
     public void handleUserAndRetryException(Context context, DataAccessException dataAccessException) throws UserException {
         handleRollbackException(context, dataAccessException);
+    }
+    
+    protected static RollbackRule rule(String sqlCode, Context...contexts) {
+        return new RollbackRule(sqlCode, contexts);
+    }
+    
+    protected static class RollbackRule {
+        private String sqlCode;
+        private Context[] contexts;
+        
+        private RollbackRule(String code, Context[] contexts) {
+            this.sqlCode = code;
+            this.contexts = contexts;
+        }
     }
 }

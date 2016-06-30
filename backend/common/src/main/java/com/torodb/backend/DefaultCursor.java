@@ -90,7 +90,7 @@ public class DefaultCursor implements BackendCursor {
             docPartResults = sqlInterface.getReadInterface().getCollectionResultSets(
                     dsl, metaDatabase, metaCollection, didCursor, maxResults);
         } catch(SQLException ex) {
-            sqlInterface.getErrorHandler().handleRollbackException(Context.fetch, ex);
+            sqlInterface.getErrorHandler().handleRollbackException(Context.FETCH, ex);
             
             throw new SystemException(ex);
         }

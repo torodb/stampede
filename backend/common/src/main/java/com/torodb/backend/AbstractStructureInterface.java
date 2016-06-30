@@ -50,7 +50,7 @@ public abstract class AbstractStructureInterface implements StructureInterface {
     @Override
     public void dropSchema(@Nonnull DSLContext dsl, @Nonnull String schemaName) {
     	String statement = getDropSchemaStatement(schemaName);
-    	sqlHelper.executeUpdate(dsl, statement, Context.ddl);
+    	sqlHelper.executeUpdate(dsl, statement, Context.DROP_SCHEMA);
     }
 
     protected String getDropSchemaStatement(String schemaName) {
@@ -65,7 +65,7 @@ public abstract class AbstractStructureInterface implements StructureInterface {
     ) {
         String statement = getCreateIndexStatement(indexName, schemaName, tableName, columnName, ascending);
 
-        sqlHelper.executeUpdate(dsl, statement, Context.ddl);
+        sqlHelper.executeUpdate(dsl, statement, Context.CREATE_INDEX);
     }
 
     protected abstract String getCreateIndexStatement(String indexName, String schemaName, String tableName, String columnName,
@@ -75,7 +75,7 @@ public abstract class AbstractStructureInterface implements StructureInterface {
     public void dropIndex(@Nonnull DSLContext dsl, @Nonnull String schemaName, @Nonnull String indexName) {
         String statement = getDropIndexStatement(schemaName, indexName);
         
-        sqlHelper.executeUpdate(dsl, statement, Context.ddl);
+        sqlHelper.executeUpdate(dsl, statement, Context.DROP_INDEX);
     }
 
     protected String getDropIndexStatement(String schemaName, String indexName) {
@@ -91,7 +91,7 @@ public abstract class AbstractStructureInterface implements StructureInterface {
     @Override
     public void createSchema(@Nonnull DSLContext dsl, @Nonnull String schemaName){
     	String statement = getCreateSchemaStatement(schemaName);
-    	sqlHelper.executeUpdate(dsl, statement, Context.ddl);
+    	sqlHelper.executeUpdate(dsl, statement, Context.CREATE_SCHEMA);
     }
 
     protected abstract String getCreateSchemaStatement(String schemaName);
@@ -100,7 +100,7 @@ public abstract class AbstractStructureInterface implements StructureInterface {
     public void createRootDocPartTable(DSLContext dsl, String schemaName, String tableName, TableRef tableRef) {
         String statement = getCreateDocPartTableStatement(schemaName, tableName, metaDataReadInterface.getInternalFields(tableRef),
                 metaDataReadInterface.getPrimaryKeyInternalFields(tableRef));
-        sqlHelper.executeStatement(dsl, statement, Context.ddl);
+        sqlHelper.executeStatement(dsl, statement, Context.CREATE_TABLE);
     }
 
     protected abstract String getCreateDocPartTableStatement(String schemaName, String tableName,
@@ -112,7 +112,7 @@ public abstract class AbstractStructureInterface implements StructureInterface {
         String statement = getCreateDocPartTableStatement(schemaName, tableName, metaDataReadInterface.getInternalFields(tableRef),
                 metaDataReadInterface.getPrimaryKeyInternalFields(tableRef),
                 metaDataReadInterface.getReferenceInternalFields(tableRef), foreignTableName, metaDataReadInterface.getForeignInternalFields(tableRef));
-        sqlHelper.executeStatement(dsl, statement, Context.ddl);
+        sqlHelper.executeStatement(dsl, statement, Context.CREATE_TABLE);
     }
 
     protected abstract String getCreateDocPartTableStatement(String schemaName, String tableName,
@@ -123,7 +123,7 @@ public abstract class AbstractStructureInterface implements StructureInterface {
     public void addColumnToDocPartTable(DSLContext dsl, String schemaName, String tableName, String columnName, DataTypeForKV<?> dataType) {
         String statement = getAddColumnToDocPartTableStatement(schemaName, tableName, columnName, dataType);
         
-        sqlHelper.executeStatement(dsl, statement, Context.ddl);
+        sqlHelper.executeStatement(dsl, statement, Context.ADD_COLUMN);
     }
 
     protected abstract String getAddColumnToDocPartTableStatement(String schemaName, String tableName,

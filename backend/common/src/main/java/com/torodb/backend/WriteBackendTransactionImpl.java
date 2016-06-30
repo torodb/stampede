@@ -125,7 +125,7 @@ public class WriteBackendTransactionImpl implements WriteBackendTransaction {
         try {
             connection.commit();
         } catch (SQLException ex) {
-            sqlInterface.getErrorHandler().handleUserAndRetryException(Context.commit, ex);
+            sqlInterface.getErrorHandler().handleUserAndRetryException(Context.COMMIT, ex);
         } finally {
             dsl.configuration().connectionProvider().release(connection);
         }
@@ -140,7 +140,7 @@ public class WriteBackendTransactionImpl implements WriteBackendTransaction {
                 connection.rollback();
                 connection.close();
             } catch (SQLException ex) {
-                sqlInterface.getErrorHandler().handleRollbackException(Context.close, ex);
+                sqlInterface.getErrorHandler().handleRollbackException(Context.CLOSE, ex);
             }
             dsl.close();
         }

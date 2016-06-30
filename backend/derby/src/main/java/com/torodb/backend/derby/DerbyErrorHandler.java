@@ -20,24 +20,31 @@
 
 package com.torodb.backend.derby;
 
+import static com.torodb.backend.ErrorHandler.Context.*;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.torodb.backend.AbstractErrorHandlerInterface;
+import com.torodb.backend.AbstractErrorHandler;
 
 /**
  *
  */
 @Singleton
-public class DerbyErrorHandler extends AbstractErrorHandlerInterface {
+public class DerbyErrorHandler extends AbstractErrorHandler {
     
     @Inject
     public DerbyErrorHandler() {
         super(
-                "40001", 
-                "40P01",
-                "X0Y68", // Schema '?' already exists.
-                "X0Y32"  // Table/View '?' already exists in Schema '?'.
-                         // Column '?' already exists in Table/View '"?"."?"'.
-                );
+                rule("40001"), 
+                rule("40P01"),
+                /**
+                 * Schema '?' already exists.
+                 */
+                rule("X0Y68", CREATE_SCHEMA),
+                /**
+                 * Table/View '?' already exists in Schema '?'.
+                 * Column '?' already exists in Table/View '"?"."?"'.
+                 */
+                rule("X0Y32", CREATE_TABLE, ADD_COLUMN)
+        );
     }
 }

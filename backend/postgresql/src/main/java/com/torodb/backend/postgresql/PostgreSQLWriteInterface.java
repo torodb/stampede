@@ -128,10 +128,10 @@ public class PostgreSQLWriteInterface extends AbstractWriteInterface {
                                 docPartData
                                 );
                     } catch (DataAccessException ex) {
-                        errorHandler.handleRollbackException(Context.insert, ex);
+                        errorHandler.handleRollbackException(Context.INSERT, ex);
                         throw new SystemException(ex);
                     } catch (SQLException ex) {
-                        errorHandler.handleRollbackException(Context.insert, ex);
+                        errorHandler.handleRollbackException(Context.INSERT, ex);
                         throw new SystemException(ex);
                     } catch (IOException ex) {
                         throw new SystemException(ex);

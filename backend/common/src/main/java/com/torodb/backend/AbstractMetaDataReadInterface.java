@@ -58,7 +58,7 @@ public abstract class AbstractMetaDataReadInterface implements MetaDataReadInter
             @Nonnull String databaseName
             ) {
     	String statement = getReadDatabaseSizeStatement(databaseName);
-    	return sqlHelper.executeStatementWithResult(dsl, statement, Context.fetch)
+    	return sqlHelper.executeStatementWithResult(dsl, statement, Context.FETCH)
     	        .get(0).into(Long.class);
     }
 
@@ -71,7 +71,7 @@ public abstract class AbstractMetaDataReadInterface implements MetaDataReadInter
             @Nonnull String collection
             ) {
         String statement = getReadCollectionSizeStatement(schemaName, collection);
-        return sqlHelper.executeStatementWithResult(dsl, statement, Context.fetch)
+        return sqlHelper.executeStatementWithResult(dsl, statement, Context.FETCH)
                 .get(0).into(Long.class);
     }
 
@@ -84,7 +84,7 @@ public abstract class AbstractMetaDataReadInterface implements MetaDataReadInter
             String collection
             ) {
         String statement = getReadDocumentsSizeStatement(schema, collection);
-        return sqlHelper.executeStatementWithResult(dsl, statement, Context.fetch)
+        return sqlHelper.executeStatementWithResult(dsl, statement, Context.FETCH)
                 .get(0).into(Long.class);
     }
 
@@ -105,7 +105,7 @@ public abstract class AbstractMetaDataReadInterface implements MetaDataReadInter
             assert usedBy != 0;
             String statement = getReadIndexSizeStatement(schema, collection, index, 
                     relatedDbIndexes, relatedToroIndexes);
-            result += sqlHelper.executeStatementWithResult(dsl, statement, Context.fetch)
+            result += sqlHelper.executeStatementWithResult(dsl, statement, Context.FETCH)
                     .get(0).into(Long.class) / usedBy;
         }
         return result;

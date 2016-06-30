@@ -62,7 +62,7 @@ public abstract class AbstractMetaDataWriteInterface implements MetaDataWriteInt
     	String schemaName = metaDatabaseTable.getSchema().getName();
     	String tableName = metaDatabaseTable.getName();
         String statement = getCreateMetaDatabaseTableStatement(schemaName, tableName);
-        sqlHelper.executeStatement(dsl, statement, Context.ddl);
+        sqlHelper.executeStatement(dsl, statement, Context.CREATE_TABLE);
     }
 
     protected abstract String getCreateMetaDatabaseTableStatement(String schemaName, String tableName);
@@ -72,7 +72,7 @@ public abstract class AbstractMetaDataWriteInterface implements MetaDataWriteInt
     	String schemaName = metaCollectionTable.getSchema().getName();
     	String tableName = metaCollectionTable.getName();
     	String statement = getCreateMetaCollectionTableStatement(schemaName, tableName);
-    	sqlHelper.executeStatement(dsl, statement, Context.ddl);
+    	sqlHelper.executeStatement(dsl, statement, Context.CREATE_TABLE);
     }
 
     protected abstract String getCreateMetaCollectionTableStatement(String schemaName, String tableName);
@@ -82,7 +82,7 @@ public abstract class AbstractMetaDataWriteInterface implements MetaDataWriteInt
     	String schemaName = metaDocPartTable.getSchema().getName();
     	String tableName = metaDocPartTable.getName();
     	String statement = getCreateMetaDocPartTableStatement(schemaName, tableName);
-    	sqlHelper.executeStatement(dsl, statement, Context.ddl);
+    	sqlHelper.executeStatement(dsl, statement, Context.CREATE_TABLE);
     }
 
     protected abstract String getCreateMetaDocPartTableStatement(String schemaName, String tableName);
@@ -92,7 +92,7 @@ public abstract class AbstractMetaDataWriteInterface implements MetaDataWriteInt
     	String schemaName = metaFieldTable.getSchema().getName();
     	String tableName = metaFieldTable.getName();
     	String statement = getCreateMetaFieldTableStatement(schemaName, tableName);
-    	sqlHelper.executeStatement(dsl, statement, Context.ddl);
+    	sqlHelper.executeStatement(dsl, statement, Context.CREATE_TABLE);
     }
 
     protected abstract String getCreateMetaFieldTableStatement(String schemaName, String tableName);
@@ -102,7 +102,7 @@ public abstract class AbstractMetaDataWriteInterface implements MetaDataWriteInt
         String schemaName = metaScalarTable.getSchema().getName();
         String tableName = metaScalarTable.getName();
         String statement = getCreateMetaScalarTableStatement(schemaName, tableName);
-        sqlHelper.executeStatement(dsl, statement, Context.ddl);
+        sqlHelper.executeStatement(dsl, statement, Context.CREATE_TABLE);
     }
 
     protected abstract String getCreateMetaScalarTableStatement(String schemaName, String tableName);
@@ -131,7 +131,7 @@ public abstract class AbstractMetaDataWriteInterface implements MetaDataWriteInt
 	@Override
 	public void addMetaDatabase(DSLContext dsl, String databaseName, String databaseIdentifier) {
         String statement = getAddMetaDatabaseStatement(databaseName, databaseIdentifier);
-        sqlHelper.executeStatement(dsl, statement, Context.ddl);
+        sqlHelper.executeUpdate(dsl, statement, Context.META_INSERT);
 	}
 
     protected abstract String getAddMetaDatabaseStatement(String databaseName, String databaseIdentifier);
@@ -139,7 +139,7 @@ public abstract class AbstractMetaDataWriteInterface implements MetaDataWriteInt
 	@Override
 	public void addMetaCollection(DSLContext dsl, String databaseName, String collectionName, String collectionIdentifier) {
 	    String statement = getAddMetaCollectionStatement(databaseName, collectionName, collectionIdentifier);
-        sqlHelper.executeStatement(dsl, statement, Context.ddl);
+        sqlHelper.executeUpdate(dsl, statement, Context.META_INSERT);
 	}
 
     protected abstract String getAddMetaCollectionStatement(String databaseName, String collectionName,
@@ -149,7 +149,7 @@ public abstract class AbstractMetaDataWriteInterface implements MetaDataWriteInt
 	public void addMetaDocPart(DSLContext dsl, String databaseName, String collectionName, TableRef tableRef,
 			String docPartIdentifier) {
 	    String statement = getAddMetaDocPartStatement(databaseName, collectionName, tableRef, docPartIdentifier);
-		sqlHelper.executeStatement(dsl, statement, Context.ddl);
+		sqlHelper.executeUpdate(dsl, statement, Context.META_INSERT);
 	}
 
     protected abstract String getAddMetaDocPartStatement(String databaseName, String collectionName, TableRef tableRef,
@@ -160,7 +160,7 @@ public abstract class AbstractMetaDataWriteInterface implements MetaDataWriteInt
 			String fieldName, String fieldIdentifier, FieldType type) {
 	    String statement = getAddMetaFieldStatement(databaseName, collectionName, tableRef, fieldName, fieldIdentifier,
                 type);
-		sqlHelper.executeStatement(dsl, statement, Context.ddl);
+		sqlHelper.executeUpdate(dsl, statement, Context.META_INSERT);
 	}
 
     protected abstract String getAddMetaFieldStatement(String databaseName, String collectionName, TableRef tableRef,
@@ -170,7 +170,7 @@ public abstract class AbstractMetaDataWriteInterface implements MetaDataWriteInt
 	public void addMetaScalar(DSLContext dsl, String databaseName, String collectionName, TableRef tableRef,
 			String fieldIdentifier, FieldType type) {
 	    String statement = getAddMetaScalarStatement(databaseName, collectionName, tableRef, fieldIdentifier, type);
-		sqlHelper.executeStatement(dsl, statement, Context.ddl);
+		sqlHelper.executeUpdate(dsl, statement, Context.META_INSERT);
 	}
 
     protected abstract String getAddMetaScalarStatement(String databaseName, String collectionName, TableRef tableRef,
