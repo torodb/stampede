@@ -36,7 +36,7 @@ import com.torodb.backend.InternalField;
 import com.torodb.backend.SqlBuilder;
 import com.torodb.backend.SqlHelper;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
-import com.torodb.core.transaction.metainf.MetaCollection;
+import com.torodb.core.transaction.metainf.MetaDatabase;
 
 /**
  *
@@ -54,8 +54,8 @@ public class PostgreSQLStructureInterface extends AbstractStructureInterface {
     }
 
     @Override
-    public void dropSchema(@Nonnull DSLContext dsl, @Nonnull String schemaName, @Nonnull MetaCollection metaCollection) {
-        String statement = getDropSchemaStatement(schemaName);
+    public void dropDatabase(@Nonnull DSLContext dsl, @Nonnull MetaDatabase metaDatabase) {
+        String statement = getDropSchemaStatement(metaDatabase.getIdentifier());
         sqlHelper.executeUpdate(dsl, statement, Context.DROP_SCHEMA);
     }
 

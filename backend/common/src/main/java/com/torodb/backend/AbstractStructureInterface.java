@@ -33,6 +33,7 @@ import com.torodb.backend.ErrorHandler.Context;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.core.TableRef;
 import com.torodb.core.transaction.metainf.MetaCollection;
+import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 
 /**
@@ -51,15 +52,20 @@ public abstract class AbstractStructureInterface implements StructureInterface {
     }
 
     @Override
-    public void dropSchema(@Nonnull DSLContext dsl, @Nonnull String schemaName, @Nonnull MetaCollection metaCollection) {
-        Iterator<? extends MetaDocPart> metaDocPartiterator = metaCollection.streamContainedMetaDocParts()
-                .sorted(TableRefComparator.MetaDocPart.DESC).iterator();
-        while (metaDocPartiterator.hasNext()) {
-            MetaDocPart metaDocPart = metaDocPartiterator.next();
-            String statement = getDropTableStatement(schemaName, metaDocPart.getIdentifier());
-            sqlHelper.executeUpdate(dsl, statement, Context.DROP_TABLE);
+    public void dropDatabase(@Nonnull DSLContext dsl, @Nonnull MetaDatabase metaDatabase) {
+        Iterator<? extends MetaCollection> metaCollectionIterator = metaDatabase.streamMetaCollections()
+                .iterator();
+        while (metaCollectionIterator.hasNext()) {
+            MetaCollection metaCollection = metaCollectionIterator.next();
+            Iterator<? extends MetaDocPart> metaDocPartIterator = metaCollection.streamContainedMetaDocParts()
+                    .sorted(TableRefComparator.MetaDocPart.DESC).iterator();
+            while (metaDocPartIterator.hasNext()) {
+                MetaDocPart metaDocPart = metaDocPartIterator.next();
+                String statement = getDropTableStatement(metaDatabase.getIdentifier(), metaDocPart.getIdentifier());
+                sqlHelper.executeUpdate(dsl, statement, Context.DROP_TABLE);
+            }
         }
-    	String statement = getDropSchemaStatement(schemaName);
+    	String statement = getDropSchemaStatement(metaDatabase.getIdentifier());
     	sqlHelper.executeUpdate(dsl, statement, Context.DROP_SCHEMA);
     }
 

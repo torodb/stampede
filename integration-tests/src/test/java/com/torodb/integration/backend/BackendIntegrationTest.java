@@ -326,7 +326,7 @@ public class BackendIntegrationTest extends AbstractBackendTest {
     }
     
     @Test
-    public void testTorodbDropSchema() throws Exception {
+    public void testTorodbDropDatabase() throws Exception {
         buildMetaSnapshot();
         
         try (Connection connection = sqlInterface.getDbBackend().createWriteConnection()) {
@@ -340,7 +340,13 @@ public class BackendIntegrationTest extends AbstractBackendTest {
             writeCollectionData(dsl, parseDocuments(mutableSnapshot, dsl, data.documents));
             connection.commit();
             
-            sqlInterface.getStructureInterface().dropSchema(dsl, data.database.getIdentifier(), data.collection);
+            
+            try (ResultSet resultSet = connection.getMetaData().getSchemas("%", data.database.getIdentifier())) {
+                Assert.assertTrue(resultSet.next());
+            }
+            connection.commit();
+            
+            sqlInterface.getStructureInterface().dropDatabase(dsl, data.database);
             connection.commit();
             
             try (ResultSet resultSet = connection.getMetaData().getSchemas("%", data.database.getIdentifier())) {
