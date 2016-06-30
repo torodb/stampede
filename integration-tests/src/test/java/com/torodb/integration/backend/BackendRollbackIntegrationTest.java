@@ -35,7 +35,6 @@ import org.jooq.exception.DataAccessException;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -54,7 +53,6 @@ import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
 import com.torodb.core.transaction.metainf.WrapperMutableMetaSnapshot;
 import com.torodb.kvdocument.values.KVDocument;
 
-@Ignore
 public class BackendRollbackIntegrationTest extends AbstractBackendTest {
 
     private final static Logger LOGGER = LogManager.getLogger(BackendRollbackIntegrationTest.class);
