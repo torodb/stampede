@@ -72,7 +72,8 @@ public abstract class AbstractWriteInterface implements WriteInterface {
     ) {
         Preconditions.checkArgument(dids.size() > 0, "At least 1 did must be specified");
         
-        Iterator<? extends MetaDocPart> iterator = metaCollection.streamContainedMetaDocParts().iterator();
+        Iterator<? extends MetaDocPart> iterator = metaCollection.streamContainedMetaDocParts()
+                .sorted(TableRefComparator.MetaDocPart.DESC).iterator();
         Connection c = dsl.configuration().connectionProvider().acquire();
         try{
 	        while (iterator.hasNext()){
