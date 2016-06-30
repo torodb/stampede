@@ -1,21 +1,11 @@
 package com.torodb.d2r;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Table;
+import com.google.inject.Inject;
 import com.torodb.core.TableRef;
-import com.torodb.core.d2r.DocPartResult;
-import com.torodb.core.d2r.DocPartResults;
-import com.torodb.core.d2r.InternalFields;
-import com.torodb.core.d2r.R2DBackendTranslator;
-import com.torodb.core.d2r.R2DTranslator;
+import com.torodb.core.d2r.*;
 import com.torodb.core.document.ToroDocument;
 import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.MetaDocPart;
@@ -25,17 +15,18 @@ import com.torodb.kvdocument.values.KVBoolean;
 import com.torodb.kvdocument.values.KVDocument;
 import com.torodb.kvdocument.values.KVValue;
 import com.torodb.kvdocument.values.heap.ListKVArray;
+import java.util.*;
 
 public class R2DBackedTranslator<Result extends AutoCloseable, BackendInternalFields extends InternalFields> implements R2DTranslator<Result> {
-	
     private final R2DBackendTranslator<Result, BackendInternalFields> backendTranslator;
-    
+
+    @Inject
     public R2DBackedTranslator(R2DBackendTranslator<Result, BackendInternalFields> backendTranslator) {
         this.backendTranslator = backendTranslator;
 	}
 
     @Override
-    public Collection<ToroDocument> translate(DocPartResults<Result> docPartResults) {
+    public List<ToroDocument> translate(DocPartResults<Result> docPartResults) {
         ImmutableList.Builder<ToroDocument> readedDocuments = ImmutableList.builder();
         
         Table<TableRef, Integer, Map<String, List<KVValue<?>>>> currentFieldDocPartTable = 

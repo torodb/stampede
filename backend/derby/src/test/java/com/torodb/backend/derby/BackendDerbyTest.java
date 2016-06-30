@@ -20,61 +20,39 @@
 
 package com.torodb.backend.derby;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import java.util.stream.StreamSupport;
-
-import org.jooq.Converter;
-import org.jooq.DSLContext;
-import org.jooq.Field;
-import org.junit.Assert;
-import org.junit.Test;
-
 import com.google.inject.Injector;
 import com.torodb.backend.AbstractBackendTest;
 import com.torodb.backend.BackendDocumentTestHelper;
 import com.torodb.backend.BackendTestHelper;
-import com.torodb.backend.DefaultDidCursor;
 import com.torodb.backend.MockDidCursor;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.backend.meta.SnapshotUpdater;
+import com.torodb.core.backend.DidCursor;
 import com.torodb.core.d2r.CollectionData;
 import com.torodb.core.d2r.DocPartResults;
 import com.torodb.core.document.ToroDocument;
-import com.torodb.core.transaction.metainf.FieldType;
-import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
-import com.torodb.core.transaction.metainf.ImmutableMetaDatabase;
-import com.torodb.core.transaction.metainf.ImmutableMetaDocPart;
-import com.torodb.core.transaction.metainf.ImmutableMetaField;
-import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
-import com.torodb.core.transaction.metainf.MetaCollection;
-import com.torodb.core.transaction.metainf.MetaDatabase;
-import com.torodb.core.transaction.metainf.MetaDocPart;
-import com.torodb.core.transaction.metainf.MetaField;
-import com.torodb.core.transaction.metainf.MetaSnapshot;
 import com.torodb.core.transaction.metainf.MetainfoRepository.SnapshotStage;
-import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
-import com.torodb.core.transaction.metainf.WrapperMutableMetaSnapshot;
+import com.torodb.core.transaction.metainf.*;
 import com.torodb.kvdocument.values.KVDocument;
 import com.torodb.kvdocument.values.KVInteger;
 import com.torodb.kvdocument.values.KVValue;
 import com.torodb.kvdocument.values.heap.ListKVArray;
 import com.torodb.kvdocument.values.heap.StringKVString;
 import com.torodb.metainfo.cache.mvcc.MvccMetainfoRepository;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import org.jooq.Converter;
+import org.jooq.DSLContext;
+import org.jooq.Field;
+import org.junit.Assert;
+import org.junit.Test;
+
+import static org.junit.Assert.*;
 
 public class BackendDerbyTest extends AbstractBackendTest {
 
@@ -411,10 +389,10 @@ public class BackendDerbyTest extends AbstractBackendTest {
             
             Collection<ToroDocument> readedToroDocuments;
             try (
-                    DefaultDidCursor defaultDidCursor = new DefaultDidCursor(sqlInterface, sqlInterface.getAllCollectionDids(dsl, metaDatabase, metaDocPart));
+                    DidCursor didCursor = sqlInterface.getAllCollectionDids(dsl, metaDatabase, metaCollection);
                     DocPartResults<ResultSet> docPartResultSets = sqlInterface.getCollectionResultSets(
                             dsl, metaDatabase, metaCollection,
-                            defaultDidCursor,  generatedDids.size());
+                            didCursor,  generatedDids.size());
                     ) {
                 readedToroDocuments = helper.readDocuments(metaDatabase, metaCollection, docPartResultSets);
             }
@@ -460,11 +438,11 @@ public class BackendDerbyTest extends AbstractBackendTest {
             
             Collection<ToroDocument> readedToroDocuments;
             try (
-                    DefaultDidCursor defaultDidCursor = new DefaultDidCursor(sqlInterface, sqlInterface.getCollectionDidsWithFieldEqualsTo(
-                            dsl, metaDatabase, metaDocPart, metaField, new StringKVString("Blueberry")));
+                    DidCursor did = sqlInterface.getCollectionDidsWithFieldEqualsTo(
+                            dsl, metaDatabase, metaCollection, metaDocPart, metaField, new StringKVString("Blueberry"));
                     DocPartResults<ResultSet> docPartResultSets = sqlInterface.getCollectionResultSets(
                             dsl, metaDatabase, metaCollection,
-                            defaultDidCursor, generatedDids.size());
+                            did, generatedDids.size());
                     ) {
                 readedToroDocuments = helper.readDocuments(metaDatabase, metaCollection, docPartResultSets);
             }

@@ -20,20 +20,18 @@
 
 package com.torodb.backend.postgresql;
 
-import java.util.Collection;
-
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
-import org.jooq.Converter;
-
 import com.torodb.backend.AbstractReadInterface;
 import com.torodb.backend.InternalField;
 import com.torodb.backend.SqlHelper;
 import com.torodb.backend.tables.MetaDocPartTable.DocPartTableFields;
 import com.torodb.core.TableRef;
+import com.torodb.core.TableRefFactory;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
+import java.util.Collection;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import org.jooq.Converter;
 
 /**
  *
@@ -45,8 +43,8 @@ public class PostgreSQLReadInterface extends AbstractReadInterface {
     
     @Inject
     public PostgreSQLReadInterface(PostgreSQLMetaDataReadInterface metaDataReadInterface,  
-            PostgreSQLErrorHandler errorHandler, SqlHelper sqlHelper) {
-        super(errorHandler, sqlHelper);
+            PostgreSQLErrorHandler errorHandler, SqlHelper sqlHelper, TableRefFactory tableRefFactory) {
+        super(errorHandler, sqlHelper, tableRefFactory);
         this.metaDataReadInterface = metaDataReadInterface;
     }
 

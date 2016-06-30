@@ -61,7 +61,7 @@ public class TorodConnection implements AutoCloseable {
         }
     }
 
-    void onTransactionClosed(WriteTorodTransaction transaction) {
+    void onTransactionClosed(TorodTransaction transaction) {
         if (currentTransaction == null) {
             LOGGER.debug("Recived an on transaction close notification, but there is no current transaction");
             return ;

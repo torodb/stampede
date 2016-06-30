@@ -24,6 +24,8 @@ import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.diagnos
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.diagnostic.ServerStatusCommand.ServerStatusArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.diagnostic.ServerStatusCommand.ServerStatusReply;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.DeleteCommand.DeleteArgument;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.FindCommand.FindArgument;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.FindCommand.FindResult;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.GeneralCommands.GeneralCommandsImplementationsBuilder;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.GetLastErrorCommand.GetLastErrorArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.GetLastErrorCommand.GetLastErrorReply;
@@ -65,6 +67,7 @@ import com.google.common.net.HostAndPort;
 import com.torodb.core.annotations.DoNotChange;
 import com.torodb.mongodb.commands.impl.NotImplementedCommandImplementation;
 import com.torodb.mongodb.commands.impl.diagnostic.PingImplementation;
+import com.torodb.mongodb.commands.impl.general.FindImplementation;
 import com.torodb.mongodb.commands.impl.general.InsertImplementation;
 import com.torodb.mongodb.core.WriteMongodTransaction;
 import java.util.Collections;
@@ -245,12 +248,8 @@ public class WriteTransactionCommandsExecutor implements CommandsExecutor<WriteM
     }
 
     static class MyGeneralCommandsImplementationBuilder extends GeneralCommandsImplementationsBuilder<WriteMongodTransaction> {
-        private final InsertImplementation insertImplementation;
-
-        @Inject
-        public MyGeneralCommandsImplementationBuilder(InsertImplementation insertImplementation) {
-            this.insertImplementation = insertImplementation;
-        }
+        @Inject private FindImplementation findImpl;
+        @Inject private InsertImplementation insertImpl;
 
         @Override
         public CommandImplementation<GetLastErrorArgument, GetLastErrorReply, WriteMongodTransaction> getGetLastErrrorImplementation() {
@@ -259,7 +258,12 @@ public class WriteTransactionCommandsExecutor implements CommandsExecutor<WriteM
 
         @Override
         public CommandImplementation<InsertArgument, InsertResult, WriteMongodTransaction> getInsertImplementation() {
-            return insertImplementation;
+            return insertImpl;
+        }
+
+        @Override
+        public CommandImplementation<FindArgument, FindResult, ? super WriteMongodTransaction> getFindImplementation() {
+            return findImpl;
         }
 
         @Override

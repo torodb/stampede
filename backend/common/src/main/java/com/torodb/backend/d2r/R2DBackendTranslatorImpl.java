@@ -1,14 +1,8 @@
 package com.torodb.backend.d2r;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Collection;
-
-import org.jooq.Converter;
-
+import com.torodb.backend.ErrorHandler.Context;
 import com.torodb.backend.InternalField;
 import com.torodb.backend.SqlInterface;
-import com.torodb.backend.ErrorHandler.Context;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.backend.tables.MetaDocPartTable;
 import com.torodb.backend.tables.records.MetaDocPartRecord;
@@ -20,6 +14,10 @@ import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.kvdocument.values.KVValue;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Collection;
+import org.jooq.Converter;
 
 public class R2DBackendTranslatorImpl implements R2DBackendTranslator<ResultSet, R2DBackendTranslatorImpl.ResultSetInternalFields> {
 

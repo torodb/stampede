@@ -20,27 +20,24 @@
 
 package com.torodb.backend;
 
+import com.torodb.backend.ErrorHandler.Context;
+import com.torodb.core.backend.DidCursor;
+import com.torodb.core.exceptions.SystemException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-
 import javax.annotation.Nonnull;
 
-import com.torodb.backend.ErrorHandler.Context;
-import com.torodb.core.backend.DidCursor;
-import com.torodb.core.exceptions.SystemException;
-
 public class DefaultDidCursor implements DidCursor {
-    public final SqlInterface sqlInterface;
+    public final ErrorHandler errorHandler;
     public final ResultSet resultSet;
     public boolean movedNext = false;
     public boolean hasNext = false;
 
-    public DefaultDidCursor(@Nonnull SqlInterface sqlInterface, @Nonnull ResultSet resultSet) {
-        super();
-        this.sqlInterface = sqlInterface;
+    public DefaultDidCursor(@Nonnull ErrorHandler sqlInterface, @Nonnull ResultSet resultSet) {
+        this.errorHandler = sqlInterface;
         this.resultSet = resultSet;
     }
 
@@ -54,7 +51,7 @@ public class DefaultDidCursor implements DidCursor {
             
             return hasNext;
         } catch(SQLException ex) {
-            sqlInterface.handleRollbackException(Context.fetch, ex);
+            errorHandler.handleRollbackException(Context.fetch, ex);
             
             throw new SystemException(ex);
         }
@@ -68,7 +65,7 @@ public class DefaultDidCursor implements DidCursor {
             
             return resultSet.getInt(1);
         } catch(SQLException ex) {
-            sqlInterface.handleRollbackException(Context.fetch, ex);
+            errorHandler.handleRollbackException(Context.fetch, ex);
             
             throw new SystemException(ex);
         }
@@ -79,7 +76,7 @@ public class DefaultDidCursor implements DidCursor {
         try {
             resultSet.close();
         } catch(SQLException ex) {
-            sqlInterface.handleRollbackException(Context.fetch, ex);
+            errorHandler.handleRollbackException(Context.fetch, ex);
             
             throw new SystemException(ex);
         }

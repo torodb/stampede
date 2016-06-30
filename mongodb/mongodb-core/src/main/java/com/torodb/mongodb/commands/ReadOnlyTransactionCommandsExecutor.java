@@ -24,6 +24,8 @@ import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.diagnos
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.diagnostic.ServerStatusCommand.ServerStatusArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.diagnostic.ServerStatusCommand.ServerStatusReply;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.DeleteCommand.DeleteArgument;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.FindCommand.FindArgument;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.FindCommand.FindResult;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.GeneralCommands.GeneralCommandsImplementationsBuilder;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.GetLastErrorCommand.GetLastErrorArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.GetLastErrorCommand.GetLastErrorReply;
@@ -64,6 +66,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.net.HostAndPort;
 import com.torodb.mongodb.commands.impl.NotImplementedCommandImplementation;
 import com.torodb.mongodb.commands.impl.diagnostic.PingImplementation;
+import com.torodb.mongodb.commands.impl.general.FindImplementation;
 import com.torodb.mongodb.core.ReadOnlyMongodTransaction;
 import java.util.Collections;
 import java.util.Map.Entry;
@@ -240,9 +243,17 @@ public class ReadOnlyTransactionCommandsExecutor implements CommandsExecutor<Rea
     }
 
     static class MyGeneralCommandsImplementationBuilder extends GeneralCommandsImplementationsBuilder<ReadOnlyMongodTransaction> {
+        @Inject
+        private FindImplementation findImpl;
+
         @Override
         public CommandImplementation<GetLastErrorArgument, GetLastErrorReply, ReadOnlyMongodTransaction> getGetLastErrrorImplementation() {
             return NotImplementedCommandImplementation.build();
+        }
+
+        @Override
+        public CommandImplementation<FindArgument, FindResult, ? super ReadOnlyMongodTransaction> getFindImplementation() {
+            return findImpl;
         }
 
         @Override

@@ -20,23 +20,11 @@
 
 package com.torodb.backend;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Collection;
-import java.util.Iterator;
-
-import javax.annotation.Nonnull;
-import javax.inject.Singleton;
-
-import org.jooq.DSLContext;
-
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.torodb.backend.ErrorHandler.Context;
 import com.torodb.backend.tables.MetaDocPartTable.DocPartTableFields;
 import com.torodb.core.TableRef;
+import com.torodb.core.TableRefFactory;
 import com.torodb.core.backend.DidCursor;
 import com.torodb.core.d2r.DocPartResult;
 import com.torodb.core.d2r.DocPartResults;
@@ -46,6 +34,15 @@ import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetaField;
 import com.torodb.kvdocument.values.KVValue;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Collection;
+import java.util.Iterator;
+import javax.annotation.Nonnull;
+import javax.inject.Singleton;
+import org.jooq.DSLContext;
 
 /**
  *
@@ -55,16 +52,22 @@ public abstract class AbstractReadInterface implements ReadInterface {
     
     private final ErrorHandler errorHandler;
     private final SqlHelper sqlHelper;
+    private final TableRefFactory tableRefFactory;
 
-    public AbstractReadInterface(ErrorHandler errorHandler, SqlHelper sqlHelper) {
+    public AbstractReadInterface(ErrorHandler errorHandler, SqlHelper sqlHelper, TableRefFactory tableRefFactory) {
         this.errorHandler = errorHandler;
         this.sqlHelper = sqlHelper;
+        this.tableRefFactory = tableRefFactory;
     }
 
     @Override
-    public ResultSet getCollectionDidsWithFieldEqualsTo(DSLContext dsl, MetaDatabase metaDatabase,
-            MetaDocPart metaDocPart, MetaField metaField, KVValue<?> value)
+    public DidCursor getCollectionDidsWithFieldEqualsTo(DSLContext dsl, MetaDatabase metaDatabase,
+            MetaCollection metaCol, MetaDocPart metaDocPart, MetaField metaField, KVValue<?> value)
             throws SQLException {
+        assert metaDatabase.getMetaCollectionByIdentifier(metaCol.getIdentifier()) != null;
+        assert metaCol.getMetaDocPartByIdentifier(metaDocPart.getIdentifier()) != null;
+        assert metaDocPart.getMetaFieldByIdentifier(metaField.getIdentifier()) != null;
+
         String statement = getReadCollectionDidsWithFieldEqualsToStatement(metaDatabase.getIdentifier(), metaDocPart.getIdentifier(), metaField.getIdentifier());
         Connection connection = dsl.configuration().connectionProvider().acquire();
         try {
@@ -72,7 +75,7 @@ public abstract class AbstractReadInterface implements ReadInterface {
             
             sqlHelper.setPreparedStatementValue(preparedStatement, 1, metaField.getType(), value);
             
-            return preparedStatement.executeQuery();
+            return new DefaultDidCursor(errorHandler, preparedStatement.executeQuery());
         } finally {
             dsl.configuration().connectionProvider().release(connection);
         }
@@ -82,13 +85,19 @@ public abstract class AbstractReadInterface implements ReadInterface {
             String columnName);
 
     @Override
-    public ResultSet getAllCollectionDids(DSLContext dsl, MetaDatabase metaDatabase, MetaDocPart metaDocPart)
+    public DidCursor getAllCollectionDids(DSLContext dsl, MetaDatabase metaDatabase, MetaCollection metaCollection)
             throws SQLException {
-        String statement = getReadAllCollectionDidsStatement(metaDatabase.getIdentifier(), metaDocPart.getIdentifier());
+
+        MetaDocPart rootDocPart = metaCollection.getMetaDocPartByTableRef(tableRefFactory.createRoot());
+        if (rootDocPart == null) {
+            return EmptyDidCursor.INSTANCE;
+        }
+
+        String statement = getReadAllCollectionDidsStatement(metaDatabase.getIdentifier(), rootDocPart.getIdentifier());
         Connection connection = dsl.configuration().connectionProvider().acquire();
         try {
             PreparedStatement preparedStatement = connection.prepareStatement(statement);
-            return preparedStatement.executeQuery();
+            return new DefaultDidCursor(errorHandler, preparedStatement.executeQuery());
         } finally {
             dsl.configuration().connectionProvider().release(connection);
         }

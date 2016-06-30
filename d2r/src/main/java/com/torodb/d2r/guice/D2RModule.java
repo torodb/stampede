@@ -2,12 +2,16 @@
 package com.torodb.d2r.guice;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.TypeLiteral;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.torodb.core.d2r.D2RTranslator;
 import com.torodb.core.d2r.D2RTranslatorFactory;
 import com.torodb.core.d2r.IdentifierFactory;
+import com.torodb.core.d2r.R2DTranslator;
 import com.torodb.d2r.D2RTranslatorStack;
 import com.torodb.d2r.IdentifierFactoryImpl;
+import com.torodb.d2r.R2DBackedTranslator;
+import java.sql.ResultSet;
 
 /**
  *
@@ -24,6 +28,9 @@ public class D2RModule extends AbstractModule {
         bind(IdentifierFactory.class)
                 .to(IdentifierFactoryImpl.class)
                 .asEagerSingleton();
+
+        bind(new TypeLiteral<R2DTranslator<ResultSet>>() {})
+                .to(R2DBackedTranslator.class);
     }
 
 }

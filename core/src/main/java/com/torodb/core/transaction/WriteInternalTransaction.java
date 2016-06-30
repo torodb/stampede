@@ -31,7 +31,7 @@ import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
 /**
  *
  */
-public class WriteInternalTransaction implements InternalReadTransaction {
+public class WriteInternalTransaction implements InternalTransaction {
     private final MetainfoRepository metainfoRepository;
     private final MutableMetaSnapshot metaSnapshot;
     private final WriteBackendTransaction backendTransaction;
@@ -52,6 +52,11 @@ public class WriteInternalTransaction implements InternalReadTransaction {
     }
 
     public WriteBackendTransaction getBackendConnection() {
+        return backendTransaction;
+    }
+
+    @Override
+    public WriteBackendTransaction getBackendTransaction() {
         return backendTransaction;
     }
 

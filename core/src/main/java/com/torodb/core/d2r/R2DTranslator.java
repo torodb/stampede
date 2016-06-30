@@ -19,11 +19,9 @@
  */
 package com.torodb.core.d2r;
 
-import java.util.Collection;
-
-import javax.annotation.Nonnull;
-
 import com.torodb.core.document.ToroDocument;
+import java.util.List;
+import javax.annotation.Nonnull;
 
 /**
  *
@@ -36,6 +34,6 @@ public interface R2DTranslator<Result extends AutoCloseable> {
      * @return a collection that contains the translation of all doc part results that have been translated.
      */
     @Nonnull
-    public Collection<ToroDocument> translate(@Nonnull DocPartResults<Result> docPartResults);
+    public List<ToroDocument> translate(@Nonnull DocPartResults<Result> docPartResults);
 
 }

@@ -20,10 +20,23 @@
 
 package com.torodb.core.backend;
 
+import com.torodb.core.cursors.Cursor;
+import com.torodb.core.document.ToroDocument;
+import com.torodb.core.transaction.metainf.MetaCollection;
+import com.torodb.core.transaction.metainf.MetaDatabase;
+import com.torodb.core.transaction.metainf.MetaDocPart;
+import com.torodb.core.transaction.metainf.MetaField;
+import com.torodb.kvdocument.values.KVValue;
+
 /**
  *
  */
 public interface BackendTransaction extends AutoCloseable {
+
+    public Cursor<ToroDocument> findAll(MetaDatabase db, MetaCollection col);
+
+    public Cursor<ToroDocument> findByField(MetaDatabase db, MetaCollection col,
+            MetaDocPart docPart, MetaField field, KVValue<?> value);
 
     @Override
     public void close();

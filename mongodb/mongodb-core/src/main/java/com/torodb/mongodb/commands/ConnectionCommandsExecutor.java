@@ -24,6 +24,8 @@ import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.diagnos
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.diagnostic.ServerStatusCommand.ServerStatusArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.diagnostic.ServerStatusCommand.ServerStatusReply;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.DeleteCommand.DeleteArgument;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.FindCommand.FindArgument;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.FindCommand.FindResult;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.GeneralCommands.GeneralCommandsImplementationsBuilder;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.GetLastErrorCommand.GetLastErrorArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.GetLastErrorCommand.GetLastErrorReply;
@@ -260,6 +262,12 @@ public class ConnectionCommandsExecutor implements CommandsExecutor<MongodConnec
     }
 
     static class MyGeneralCommandsImplementationBuilder extends GeneralCommandsImplementationsBuilder<MongodConnection> {
+
+        @Override
+        public CommandImplementation<FindArgument, FindResult, MongodConnection> getFindImplementation() {
+            return NotImplementedCommandImplementation.build();
+        }
+
         @Override
         public CommandImplementation<GetLastErrorArgument, GetLastErrorReply, MongodConnection> getGetLastErrrorImplementation() {
             return NotImplementedCommandImplementation.build();

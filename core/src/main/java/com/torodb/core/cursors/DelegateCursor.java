@@ -15,13 +15,38 @@
  * along with core. If not, see <http://www.gnu.org/licenses/>.
  *
  * Copyright (C) 2016 8Kdata.
- *
+ * 
  */
-package com.torodb.core.backend;
+
+package com.torodb.core.cursors;
+
+import java.util.function.Function;
 
 /**
  *
  */
-public interface ReadOnlyBackendTransaction extends BackendTransaction {
+public class DelegateCursor<I, O> implements Cursor<O> {
 
+    private final Cursor<I> delegate;
+    private final Function<I, O> transformation;
+
+    public DelegateCursor(Cursor<I> delegate, Function<I, O> transformFun) {
+        this.delegate = delegate;
+        this.transformation = transformFun;
+    }
+
+    @Override
+    public void close() {
+        delegate.close();
+    }
+
+    @Override
+    public boolean hasNext() {
+        return delegate.hasNext();
+    }
+
+    @Override
+    public O next() {
+        return transformation.apply(delegate.next());
+    }
 }

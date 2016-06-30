@@ -1,20 +1,19 @@
 
 package com.torodb.torod;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.RemovalNotification;
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.torodb.core.TableRefFactory;
 import com.torodb.core.backend.Backend;
 import com.torodb.core.d2r.D2RTranslatorFactory;
 import com.torodb.core.d2r.IdentifierFactory;
 import com.torodb.core.transaction.InternalTransactionManager;
 import com.torodb.torod.pipeline.InsertPipelineFactory;
+import java.util.concurrent.atomic.AtomicInteger;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  *
@@ -29,15 +28,18 @@ public class TorodServer extends AbstractIdleService {
     private final Cache<Integer, TorodConnection> openConnections;
     private final Backend backend;
     private final InternalTransactionManager internalTransactionManager;
+    private final TableRefFactory tableRefFactory;
 
     @Inject
     public TorodServer(D2RTranslatorFactory d2RTranslatorFactory, IdentifierFactory idFactory,
-            InsertPipelineFactory insertPipelineFactory, Backend backend, InternalTransactionManager internalTransactionManager) {
+            InsertPipelineFactory insertPipelineFactory, Backend backend, 
+            InternalTransactionManager internalTransactionManager, TableRefFactory tableRefFactory) {
         this.d2RTranslatorFactory = d2RTranslatorFactory;
         this.idFactory = idFactory;
         this.insertPipelineFactory = insertPipelineFactory;
         this.backend = backend;
         this.internalTransactionManager = internalTransactionManager;
+        this.tableRefFactory = tableRefFactory;
         
         openConnections = CacheBuilder.newBuilder()
                 .weakValues()
@@ -94,6 +96,10 @@ public class TorodServer extends AbstractIdleService {
 
     void onConnectionClosed(TorodConnection connection) {
         openConnections.invalidate(connection.getConnectionId());
+    }
+
+    TableRefFactory getTableRefFactory() {
+        return tableRefFactory;
     }
 
 }
