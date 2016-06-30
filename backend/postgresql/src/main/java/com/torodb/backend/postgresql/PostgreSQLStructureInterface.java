@@ -23,17 +23,20 @@ package com.torodb.backend.postgresql;
 import java.util.Collection;
 import java.util.Collections;
 
+import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-import org.jooq.Field;
+import org.jooq.DSLContext;
 
 import com.google.common.base.Preconditions;
 import com.torodb.backend.AbstractStructureInterface;
+import com.torodb.backend.ErrorHandler.Context;
 import com.torodb.backend.InternalField;
 import com.torodb.backend.SqlBuilder;
 import com.torodb.backend.SqlHelper;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
+import com.torodb.core.transaction.metainf.MetaCollection;
 
 /**
  *
@@ -41,9 +44,24 @@ import com.torodb.backend.converters.jooq.DataTypeForKV;
 @Singleton
 public class PostgreSQLStructureInterface extends AbstractStructureInterface {
 
+    private SqlHelper sqlHelper;
+    
     @Inject
     public PostgreSQLStructureInterface(PostgreSQLMetaDataReadInterface metaDataReadInterface, SqlHelper sqlHelper) {
         super(metaDataReadInterface, sqlHelper);
+        
+        this.sqlHelper = sqlHelper;
+    }
+
+    @Override
+    public void dropSchema(@Nonnull DSLContext dsl, @Nonnull String schemaName, @Nonnull MetaCollection metaCollection) {
+        String statement = getDropSchemaStatement(schemaName);
+        sqlHelper.executeUpdate(dsl, statement, Context.DROP_SCHEMA);
+    }
+
+    @Override
+    protected String getDropTableStatement(String schemaName, String tableName) {
+        throw new UnsupportedOperationException();
     }
 
     @Override

@@ -6,10 +6,11 @@ import org.jooq.DSLContext;
 
 import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.core.TableRef;
+import com.torodb.core.transaction.metainf.MetaCollection;
 
 public interface StructureInterface {
     void createSchema(@Nonnull DSLContext dsl, @Nonnull String schemaName);
-    void dropSchema(@Nonnull DSLContext dsl, @Nonnull String schemaName);
+    void dropSchema(@Nonnull DSLContext dsl, @Nonnull String schemaName, @Nonnull MetaCollection metaCollection);
     void createRootDocPartTable(@Nonnull DSLContext dsl, @Nonnull String schemaName, @Nonnull String tableName, @Nonnull TableRef tableRef);
     void createDocPartTable(@Nonnull DSLContext dsl, @Nonnull String schemaName, @Nonnull String tableName, @Nonnull TableRef tableRef,
             @Nonnull String foreignTableName);

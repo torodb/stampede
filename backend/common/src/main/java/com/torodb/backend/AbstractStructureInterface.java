@@ -21,6 +21,7 @@
 package com.torodb.backend;
 
 import java.util.Collection;
+import java.util.Iterator;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
@@ -31,6 +32,8 @@ import org.jooq.DSLContext;
 import com.torodb.backend.ErrorHandler.Context;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.core.TableRef;
+import com.torodb.core.transaction.metainf.MetaCollection;
+import com.torodb.core.transaction.metainf.MetaDocPart;
 
 /**
  *
@@ -48,15 +51,21 @@ public abstract class AbstractStructureInterface implements StructureInterface {
     }
 
     @Override
-    public void dropSchema(@Nonnull DSLContext dsl, @Nonnull String schemaName) {
+    public void dropSchema(@Nonnull DSLContext dsl, @Nonnull String schemaName, @Nonnull MetaCollection metaCollection) {
+        Iterator<? extends MetaDocPart> metaDocPartiterator = metaCollection.streamContainedMetaDocParts()
+                .sorted(TableRefComparator.MetaDocPart.DESC).iterator();
+        while (metaDocPartiterator.hasNext()) {
+            MetaDocPart metaDocPart = metaDocPartiterator.next();
+            String statement = getDropTableStatement(schemaName, metaDocPart.getIdentifier());
+            sqlHelper.executeUpdate(dsl, statement, Context.DROP_TABLE);
+        }
     	String statement = getDropSchemaStatement(schemaName);
     	sqlHelper.executeUpdate(dsl, statement, Context.DROP_SCHEMA);
     }
 
-    protected String getDropSchemaStatement(String schemaName) {
-        String statement = "DROP SCHEMA \"" + schemaName + "\" CASCADE";
-        return statement;
-    }
+    protected abstract String getDropTableStatement(String schemaName, String tableName);
+
+    protected abstract String getDropSchemaStatement(String schemaName);
     
     @Override
     public void createIndex(@Nonnull DSLContext dsl,
