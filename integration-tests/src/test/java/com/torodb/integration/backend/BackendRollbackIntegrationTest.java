@@ -99,14 +99,17 @@ public class BackendRollbackIntegrationTest extends AbstractBackendTest {
                         LOGGER.info("No exception was thrown");
                     } catch(RollbackException rollbackException) {
                         String sqlCode = null;
+                        String message = null;
                         if (rollbackException.getCause() instanceof SQLException) {
                             sqlCode = ((SQLException) rollbackException.getCause()).getSQLState();
+                            message = ((SQLException) rollbackException.getCause()).getMessage();
                         } else
                         if (rollbackException.getCause() instanceof DataAccessException) {
                             sqlCode = ((DataAccessException) rollbackException.getCause()).sqlState();
+                            message = ((DataAccessException) rollbackException.getCause()).getMessage();
                         }
                         if (sqlCode != null) {
-                            LOGGER.info("Rollback on sqlCode: " + sqlCode);
+                            LOGGER.info("Rollback on SQLState: " + sqlCode + " Message: " + message);
                         } else {
                             LOGGER.info("Custom rollback");
                         }
@@ -116,13 +119,13 @@ public class BackendRollbackIntegrationTest extends AbstractBackendTest {
                     } catch(SQLException sqlException) {
                         SQLException nextedSqlException = sqlException;
                         do {
-                            LOGGER.error("SQLCode: " + nextedSqlException.getSQLState(), nextedSqlException);
+                            LOGGER.error("SQLState: " + nextedSqlException.getSQLState() + " Message: " + nextedSqlException.getMessage());
                             nextedSqlException = nextedSqlException.getNextException();
                         } while(nextedSqlException != null);
                         
                         throw sqlException;
                     } catch(DataAccessException dataAccessException) {
-                        LOGGER.error("SQLCode: " + dataAccessException.sqlState(), dataAccessException);
+                        LOGGER.error("SQLState: " + dataAccessException.sqlState() + " Message: " + dataAccessException.getMessage());
                         
                         throw dataAccessException;
                     }
