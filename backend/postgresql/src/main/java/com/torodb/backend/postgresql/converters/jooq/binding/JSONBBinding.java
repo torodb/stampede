@@ -30,7 +30,7 @@ public class JSONBBinding<T> implements Binding<String, T> {
 
     private static final long serialVersionUID = 1L;
 
-    public static <UT extends KVValue<?>> DataTypeForKV<UT> fromKVValue(Class<UT> type, KVValueConverter<String, UT> converter) {
+    public static <JT, UT extends KVValue<?>> DataTypeForKV<UT> fromKVValue(Class<UT> type, KVValueConverter<String, JT, UT> converter) {
         return DataTypeForKV.from(new DefaultDataType<String>(null, String.class, "jsonb"), converter, new JSONBBinding<UT>(converter));
     }
     

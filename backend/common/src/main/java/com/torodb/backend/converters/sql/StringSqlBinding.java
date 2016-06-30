@@ -28,8 +28,12 @@ public class StringSqlBinding implements SqlBinding<String> {
     public static final StringSqlBinding INSTANCE = new StringSqlBinding();
 
     @Override
-    public String get(ResultSet resultSet, int index) throws SQLException {
-        return resultSet.getString(index);
+    public String get(ResultSet resultSet, int columnIndex) throws SQLException {
+        String value = resultSet.getString(columnIndex);
+        if (resultSet.wasNull()) {
+            return null;
+        }
+        return value;
     }
 
     @Override

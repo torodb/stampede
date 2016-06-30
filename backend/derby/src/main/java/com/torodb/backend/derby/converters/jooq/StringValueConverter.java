@@ -36,7 +36,7 @@ import com.torodb.kvdocument.values.heap.StringKVString;
 /**
  *
  */
-public class StringValueConverter implements KVValueConverter<String, KVString>{
+public class StringValueConverter implements KVValueConverter<String, String, KVString>{
     private static final long serialVersionUID = 1L;
 
     public static final DataType<String> VARCHAR_32672 = SQLDataType.VARCHAR.length(32672);

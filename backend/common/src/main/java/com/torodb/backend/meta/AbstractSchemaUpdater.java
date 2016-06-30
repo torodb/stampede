@@ -58,53 +58,53 @@ public abstract class AbstractSchemaUpdater implements SchemaUpdater {
     ) throws SQLException, IOException, InvalidDatabaseException {
         Schema torodbSchema = null;
         for (Schema schema : jooqMeta.getSchemas()) {
-            if (sqlInterface.isSameIdentifier(TorodbSchema.TORODB_SCHEMA, schema.getName())) {
+            if (sqlInterface.getIdentifierConstraints().isSameIdentifier(TorodbSchema.IDENTIFIER, schema.getName())) {
                 torodbSchema = schema;
                 break;
             }
         }
         if (torodbSchema == null) {
-            LOGGER.info("Schema '{}' not found. Creating it...", TorodbSchema.TORODB_SCHEMA);
+            LOGGER.info("Schema '{}' not found. Creating it...", TorodbSchema.IDENTIFIER);
             createSchema(dsl, sqlInterface, sqlHelper);
-            LOGGER.info("Schema '{}' created", TorodbSchema.TORODB_SCHEMA);
+            LOGGER.info("Schema '{}' created", TorodbSchema.IDENTIFIER);
         }
         else {
-            LOGGER.info("Schema '{}' found. Checking it...", TorodbSchema.TORODB_SCHEMA);
+            LOGGER.info("Schema '{}' found. Checking it...", TorodbSchema.IDENTIFIER);
             checkSchema(torodbSchema, sqlInterface);
-            LOGGER.info("Schema '{}' checked", TorodbSchema.TORODB_SCHEMA);
+            LOGGER.info("Schema '{}' checked", TorodbSchema.IDENTIFIER);
         }
     }
 
     protected void createSchema(DSLContext dsl, SqlInterface sqlInterface, SqlHelper sqlHelper) throws SQLException, IOException {
-        sqlInterface.createSchema(dsl, TorodbSchema.TORODB_SCHEMA);
-        sqlInterface.createMetaDatabaseTable(dsl);
-        sqlInterface.createMetaCollectionTable(dsl);
-        sqlInterface.createMetaDocPartTable(dsl);
-        sqlInterface.createMetaFieldTable(dsl);
-        sqlInterface.createMetaScalarTable(dsl);
+        sqlInterface.getStructureInterface().createSchema(dsl, TorodbSchema.IDENTIFIER);
+        sqlInterface.getMetaDataWriteInterface().createMetaDatabaseTable(dsl);
+        sqlInterface.getMetaDataWriteInterface().createMetaCollectionTable(dsl);
+        sqlInterface.getMetaDataWriteInterface().createMetaDocPartTable(dsl);
+        sqlInterface.getMetaDataWriteInterface().createMetaFieldTable(dsl);
+        sqlInterface.getMetaDataWriteInterface().createMetaScalarTable(dsl);
     }
     
     @SuppressWarnings({ "rawtypes", "unchecked" })
     private void checkSchema(Schema torodbSchema, SqlInterface sqlInterface) throws InvalidDatabaseException {
         SemanticTable<?>[] metaTables = new SemanticTable[] {
-            sqlInterface.getMetaDatabaseTable(),
-            sqlInterface.getMetaCollectionTable(),
-            sqlInterface.getMetaDocPartTable(),
-            sqlInterface.getMetaFieldTable(),
-            sqlInterface.getMetaScalarTable()
+            sqlInterface.getMetaDataReadInterface().getMetaDatabaseTable(),
+            sqlInterface.getMetaDataReadInterface().getMetaCollectionTable(),
+            sqlInterface.getMetaDataReadInterface().getMetaDocPartTable(),
+            sqlInterface.getMetaDataReadInterface().getMetaFieldTable(),
+            sqlInterface.getMetaDataReadInterface().getMetaScalarTable()
         };
         for (SemanticTable metaTable : metaTables) {
             String metaTableName = metaTable.getName();
             boolean metaTableFound = false;
             for (Table<?> table : torodbSchema.getTables()) {
-                if (sqlInterface.isSameIdentifier(table.getName(), metaTableName)) {
+                if (sqlInterface.getIdentifierConstraints().isSameIdentifier(table.getName(), metaTableName)) {
                     metaTable.checkSemanticallyEquals(table);
                     metaTableFound = true;
                     LOGGER.info(table + " found and check");
                 }
             }
             if (!metaTableFound) {
-                throw new InvalidDatabaseException("The schema '" + TorodbSchema.TORODB_SCHEMA + "'"
+                throw new InvalidDatabaseException("The schema '" + TorodbSchema.IDENTIFIER + "'"
                         + " does not contain the expected meta table '" 
                         + metaTableName +"'");
             }

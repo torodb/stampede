@@ -32,7 +32,7 @@ import com.torodb.kvdocument.values.KVNull;
 /**
  *
  */
-public class NullValueConverter implements KVValueConverter<Boolean, KVNull>{
+public class NullValueConverter implements KVValueConverter<Boolean, Boolean, KVNull>{
     private static final long serialVersionUID = 1L;
 
     public static final DataTypeForKV<KVNull> TYPE = DataTypeForKV.from(SQLDataType.BOOLEAN, new NullValueConverter());

@@ -1,10 +1,22 @@
 
 package com.torodb.mongodb.core;
 
+import java.util.concurrent.Callable;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.eightkdata.mongowp.ErrorCode;
 import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.exceptions.MongoException;
-import com.eightkdata.mongowp.messages.request.*;
+import com.eightkdata.mongowp.messages.request.DeleteMessage;
+import com.eightkdata.mongowp.messages.request.GetMoreMessage;
+import com.eightkdata.mongowp.messages.request.InsertMessage;
+import com.eightkdata.mongowp.messages.request.KillCursorsMessage;
+import com.eightkdata.mongowp.messages.request.UpdateMessage;
 import com.eightkdata.mongowp.messages.response.ReplyMessage;
 import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.CommandsLibrary;
@@ -14,16 +26,8 @@ import com.eightkdata.mongowp.server.api.pojos.QueryRequest;
 import com.torodb.core.Retrier;
 import com.torodb.mongodb.commands.TorodbCommandsLibrary;
 import com.torodb.mongodb.commands.TorodbCommandsLibrary.RequiredTransaction;
-import com.torodb.mongodb.core.MongodConnection;
-import com.torodb.mongodb.core.MongodServer;
-import com.torodb.mongodb.core.ReadOnlyMongodTransaction;
-import com.torodb.mongodb.core.WriteMongodTransaction;
+
 import io.netty.util.AttributeKey;
-import java.util.concurrent.Callable;
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  *

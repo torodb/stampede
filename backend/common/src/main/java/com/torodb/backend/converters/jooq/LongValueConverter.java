@@ -32,7 +32,7 @@ import com.torodb.kvdocument.values.KVLong;
 /**
  *
  */
-public class LongValueConverter implements KVValueConverter<Long, KVLong>{
+public class LongValueConverter implements KVValueConverter<Long, Long, KVLong>{
     private static final long serialVersionUID = 1L;
 
     public static final DataTypeForKV<KVLong> TYPE = DataTypeForKV.from(SQLDataType.BIGINT, new LongValueConverter());

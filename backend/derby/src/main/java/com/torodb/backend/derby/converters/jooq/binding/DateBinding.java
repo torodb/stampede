@@ -28,7 +28,7 @@ public class DateBinding<T> implements Binding<Date, T> {
 
     private static final long serialVersionUID = 1L;
 
-    public static <UT extends KVValue<?>> DataTypeForKV<UT> fromKVValue(Class<UT> type, KVValueConverter<Date, UT> converter) {
+    public static <JT, UT extends KVValue<?>> DataTypeForKV<UT> fromKVValue(Class<UT> type, KVValueConverter<Date, JT, UT> converter) {
         return DataTypeForKV.from(new DefaultDataType<Date>(null, Date.class, "date"), converter, new DateBinding<UT>(converter));
     }
     

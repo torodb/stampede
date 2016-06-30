@@ -28,6 +28,7 @@ import java.sql.SQLException;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+import org.jooq.Converter;
 import org.jooq.DSLContext;
 import org.jooq.Record;
 import org.jooq.Result;
@@ -107,18 +108,30 @@ public class SqlHelper {
     public DSLContext dsl() {
         return DSL.using(dataTypeProvider.getDialect());
     }
-
-    @SuppressWarnings({ "rawtypes", "unchecked" })
-    public void setPreparedStatementNullableValue(PreparedStatement preparedStatement, int parameterIndex,
-            FieldType fieldType, KVValue<?> value) throws SQLException {
+    
+    @SuppressWarnings({ "rawtypes" })
+    public Object getResultSetValue(FieldType fieldType, ResultSet resultSet, int index) throws SQLException {
         DataTypeForKV dataType = dataTypeProvider
                 .getDataType(fieldType);
         KVValueConverter valueConverter = dataType
                 .getKVValueConverter();
         SqlBinding sqlBinding = valueConverter
                 .getSqlBinding();
+        return sqlBinding.get(resultSet, index);
+    }
+
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public void setPreparedStatementNullableValue(PreparedStatement preparedStatement, int parameterIndex,
+            FieldType fieldType, KVValue<?> value) throws SQLException {
+        DataTypeForKV dataType = dataTypeProvider
+                .getDataType(fieldType);
+        Converter converter = dataType.getConverter();
+        KVValueConverter valueConverter = dataType
+                .getKVValueConverter();
+        SqlBinding sqlBinding = valueConverter
+                .getSqlBinding();
         if (value != null) {
-            sqlBinding.set(preparedStatement, parameterIndex, valueConverter.to(value));
+            sqlBinding.set(preparedStatement, parameterIndex, converter.to(value));
         } else {
             preparedStatement.setNull(parameterIndex, dataType.getSQLType());
         }
@@ -129,10 +142,22 @@ public class SqlHelper {
             FieldType fieldType, KVValue<?> value) throws SQLException {
         DataTypeForKV dataType = dataTypeProvider
                 .getDataType(fieldType);
+        Converter converter = dataType.getConverter();
         KVValueConverter valueConverter = dataType
                 .getKVValueConverter();
         SqlBinding sqlBinding = valueConverter
                 .getSqlBinding();
-        sqlBinding.set(preparedStatement, parameterIndex, valueConverter.to(value));
+        sqlBinding.set(preparedStatement, parameterIndex, converter.to(value));
+    }
+    
+    @SuppressWarnings({ "rawtypes" })
+    public String getPlaceholder(FieldType fieldType) {
+        DataTypeForKV dataType = dataTypeProvider
+                .getDataType(fieldType);
+        KVValueConverter valueConverter = dataType
+                .getKVValueConverter();
+        SqlBinding sqlBinding = valueConverter
+                .getSqlBinding();
+        return sqlBinding.getPlaceholder();
     }
 }

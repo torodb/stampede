@@ -27,8 +27,8 @@ import javax.json.JsonObjectBuilder;
 
 import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.backend.converters.jooq.KVValueConverter;
-import com.torodb.backend.converters.sql.JsonObjectSqlBinding;
 import com.torodb.backend.converters.sql.SqlBinding;
+import com.torodb.backend.converters.sql.StringSqlBinding;
 import com.torodb.kvdocument.types.KVType;
 import com.torodb.kvdocument.types.MongoTimestampType;
 import com.torodb.kvdocument.values.KVMongoTimestamp;
@@ -38,7 +38,7 @@ import com.torodb.kvdocument.values.heap.DefaultKVMongoTimestamp;
  *
  */
 public class MongoTimestampValueConverter implements
-        KVValueConverter<JsonObject, KVMongoTimestamp> {
+        KVValueConverter<JsonObject, String, KVMongoTimestamp> {
 
     private static final long serialVersionUID = 1251948867583783920L;
 
@@ -74,7 +74,7 @@ public class MongoTimestampValueConverter implements
     }
 
     @Override
-    public SqlBinding<JsonObject> getSqlBinding() {
-        return JsonObjectSqlBinding.INSTANCE;
+    public SqlBinding<String> getSqlBinding() {
+        return StringSqlBinding.INSTANCE;
     }
 }

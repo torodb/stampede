@@ -44,8 +44,8 @@ public class Generic {
 	private LogPackages logPackages;
 	@Description("config.generic.logFile")
 	private String logFile;
-	@Description("config.generic.logbackFile")
-	private String logbackFile;
+	@Description("config.generic.log4j2File")
+	private String log4j2File;
     @Description("config.generic.connectionPoolTimeout")
     @NotNull
     @JsonProperty(required=true)
@@ -85,12 +85,12 @@ public class Generic {
 		this.logFile = logFile;
 	}
 
-	public String getLogbackFile() {
-		return logbackFile;
+	public String getLog4j2File() {
+		return log4j2File;
 	}
 
-	public void setLogbackFile(String logbackFile) {
-		this.logbackFile = logbackFile;
+	public void setLog4j2File(String log4j2File) {
+		this.log4j2File = log4j2File;
 	}
 
 	public Long getConnectionPoolTimeout() {

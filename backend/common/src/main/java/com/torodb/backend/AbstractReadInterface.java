@@ -50,12 +50,12 @@ import org.jooq.DSLContext;
 @Singleton
 public abstract class AbstractReadInterface implements ReadInterface {
     
-    private final ErrorHandler errorHandler;
+    private final SqlInterface sqlInterface;
     private final SqlHelper sqlHelper;
     private final TableRefFactory tableRefFactory;
 
-    public AbstractReadInterface(ErrorHandler errorHandler, SqlHelper sqlHelper, TableRefFactory tableRefFactory) {
-        this.errorHandler = errorHandler;
+    public AbstractReadInterface(SqlInterface sqlInterface, SqlHelper sqlHelper, TableRefFactory tableRefFactory) {
+        this.sqlInterface = sqlInterface;
         this.sqlHelper = sqlHelper;
         this.tableRefFactory = tableRefFactory;
     }
@@ -75,7 +75,7 @@ public abstract class AbstractReadInterface implements ReadInterface {
             
             sqlHelper.setPreparedStatementValue(preparedStatement, 1, metaField.getType(), value);
             
-            return new DefaultDidCursor(errorHandler, preparedStatement.executeQuery());
+            return new DefaultDidCursor(sqlInterface, preparedStatement.executeQuery());
         } finally {
             dsl.configuration().connectionProvider().release(connection);
         }
@@ -97,7 +97,7 @@ public abstract class AbstractReadInterface implements ReadInterface {
         Connection connection = dsl.configuration().connectionProvider().acquire();
         try {
             PreparedStatement preparedStatement = connection.prepareStatement(statement);
-            return new DefaultDidCursor(errorHandler, preparedStatement.executeQuery());
+            return new DefaultDidCursor(sqlInterface, preparedStatement.executeQuery());
         } finally {
             dsl.configuration().connectionProvider().release(connection);
         }
@@ -149,7 +149,7 @@ public abstract class AbstractReadInterface implements ReadInterface {
         	}
         	return maxId;
         } catch (SQLException ex){
-            errorHandler.handleRollbackException(Context.ddl, ex);
+            sqlInterface.getErrorHandler().handleRollbackException(Context.ddl, ex);
             throw new SystemException(ex);
         } finally {
             dsl.configuration().connectionProvider().release(connection);

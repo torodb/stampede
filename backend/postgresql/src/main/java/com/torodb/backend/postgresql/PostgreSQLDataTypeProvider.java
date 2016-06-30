@@ -32,13 +32,13 @@ import com.torodb.backend.converters.jooq.DateValueConverter;
 import com.torodb.backend.converters.jooq.InstantValueConverter;
 import com.torodb.backend.converters.jooq.IntegerValueConverter;
 import com.torodb.backend.converters.jooq.LongValueConverter;
-import com.torodb.backend.converters.jooq.MongoTimestampValueConverter;
 import com.torodb.backend.converters.jooq.NullValueConverter;
 import com.torodb.backend.converters.jooq.StringValueConverter;
 import com.torodb.backend.converters.jooq.TimeValueConverter;
 import com.torodb.backend.postgresql.converters.jooq.BinaryValueConverter;
 import com.torodb.backend.postgresql.converters.jooq.DoubleValueConverter;
 import com.torodb.backend.postgresql.converters.jooq.MongoObjectIdValueConverter;
+import com.torodb.backend.postgresql.converters.jooq.MongoTimestampValueConverter;
 import com.torodb.core.transaction.metainf.FieldType;
 
 /**

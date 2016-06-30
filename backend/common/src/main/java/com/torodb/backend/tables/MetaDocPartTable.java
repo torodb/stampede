@@ -125,6 +125,33 @@ public abstract class MetaDocPartTable<TableRefType, R extends MetaDocPartRecord
             .add(SEQ)
             .build();
     
+    public final ImmutableList<InternalField<?>> PRIMARY_KEY_ROOT_FIELDS = ImmutableList.<InternalField<?>>builder()
+            .add(DID)
+            .build();
+    public final ImmutableList<InternalField<?>> PRIMARY_KEY_FIRST_FIELDS = ImmutableList.<InternalField<?>>builder()
+            .add(RID)
+            .build();
+    public final ImmutableList<InternalField<?>> PRIMARY_KEY_FIELDS = ImmutableList.<InternalField<?>>builder()
+            .add(RID)
+            .build();
+    
+    public final ImmutableList<InternalField<?>> REFERENCE_FIRST_FIELDS = ImmutableList.<InternalField<?>>builder()
+            .add(DID)
+            .build();
+    public final ImmutableList<InternalField<?>> REFERENCE_FIELDS = ImmutableList.<InternalField<?>>builder()
+            .add(PID)
+            .build();
+    
+    public final ImmutableList<InternalField<?>> FOREIGN_ROOT_FIELDS = ImmutableList.<InternalField<?>>builder()
+            .add(DID)
+            .build();
+    public final ImmutableList<InternalField<?>> FOREIGN_FIRST_FIELDS = ImmutableList.<InternalField<?>>builder()
+            .add(RID)
+            .build();
+    public final ImmutableList<InternalField<?>> FOREIGN_FIELDS = ImmutableList.<InternalField<?>>builder()
+            .add(RID)
+            .build();
+    
     protected abstract TableField<R, String> createDatabaseField();
     protected abstract TableField<R, String> createCollectionField();
     protected abstract TableField<R, TableRefType> createTableRefField();

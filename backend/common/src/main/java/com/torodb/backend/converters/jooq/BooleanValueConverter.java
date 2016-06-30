@@ -31,7 +31,7 @@ import com.torodb.kvdocument.values.KVBoolean;
 /**
  *
  */
-public class BooleanValueConverter implements KVValueConverter<Boolean, KVBoolean> {
+public class BooleanValueConverter implements KVValueConverter<Boolean, Boolean, KVBoolean> {
     private static final long serialVersionUID = 1L;
 
     public static final DataTypeForKV<KVBoolean> TYPE = DataTypeForKV.from(SQLDataType.BOOLEAN, new BooleanValueConverter());

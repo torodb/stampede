@@ -1,15 +1,19 @@
 package com.torodb.backend;
 
-import java.util.Collection;
 import javax.annotation.Nonnull;
+
 import org.jooq.DSLContext;
-import org.jooq.Field;
+
+import com.torodb.backend.converters.jooq.DataTypeForKV;
+import com.torodb.core.TableRef;
 
 public interface StructureInterface {
     void createSchema(@Nonnull DSLContext dsl, @Nonnull String schemaName);
     void dropSchema(@Nonnull DSLContext dsl, @Nonnull String schemaName);
-    void createDocPartTable(@Nonnull DSLContext dsl, @Nonnull String schemaName, @Nonnull String tableName, @Nonnull Collection<? extends Field<?>> fields);
-    void addColumnToDocPartTable(@Nonnull DSLContext dsl, @Nonnull String schemaName, @Nonnull String tableName, @Nonnull Field<?> field);
+    void createRootDocPartTable(@Nonnull DSLContext dsl, @Nonnull String schemaName, @Nonnull String tableName, @Nonnull TableRef tableRef);
+    void createDocPartTable(@Nonnull DSLContext dsl, @Nonnull String schemaName, @Nonnull String tableName, @Nonnull TableRef tableRef,
+            @Nonnull String foreignTableName);
+    void addColumnToDocPartTable(@Nonnull DSLContext dsl, @Nonnull String schemaName, @Nonnull String tableName, @Nonnull String columnName, @Nonnull DataTypeForKV<?> dataType);
     
     void createIndex(@Nonnull DSLContext dsl, @Nonnull String fullIndexName, @Nonnull String tableSchema, 
             @Nonnull String tableName, @Nonnull String tableColumnName, boolean isAscending);

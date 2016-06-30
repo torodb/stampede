@@ -66,7 +66,7 @@ public abstract class AbstractWriteInterface implements WriteInterface {
     }
 
     @Override
-    public void deleteDocParts(@Nonnull DSLContext dsl,
+    public void deleteCollectionDocParts(@Nonnull DSLContext dsl,
             @Nonnull String schemaName, @Nonnull MetaCollection metaCollection,
             @Nonnull List<Integer> dids
     ) {
@@ -113,7 +113,7 @@ public abstract class AbstractWriteInterface implements WriteInterface {
             Iterator<MetaScalar> metaScalarIterator, Iterator<MetaField> metaFieldIterator, 
             Iterator<DocPartRow> docPartRowIterator) {
         final int maxBatchSize = getMaxBatchSize();
-        Collection<InternalField<?>> internalFields = metaDataReadInterface.getDocPartTableInternalFields(metaDocPart);
+        Collection<InternalField<?>> internalFields = metaDataReadInterface.getInternalFields(metaDocPart);
         List<FieldType> fieldTypeList = new ArrayList<>();
         String statement = getInsertDocPartDataStatement(schemaName, metaDocPart, metaFieldIterator, metaScalarIterator,
                 internalFields, fieldTypeList);

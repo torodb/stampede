@@ -20,16 +20,17 @@
 
 package com.torodb.backend;
 
-import com.google.common.collect.Lists;
-import com.torodb.backend.ErrorHandler.Context;
-import com.torodb.backend.tables.MetaDocPartTable.DocPartTableFields;
-import java.io.Serializable;
-import java.util.*;
+import java.util.Collection;
+
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+
 import org.jooq.DSLContext;
-import org.jooq.Field;
+
+import com.torodb.backend.ErrorHandler.Context;
+import com.torodb.backend.converters.jooq.DataTypeForKV;
+import com.torodb.core.TableRef;
 
 /**
  *
@@ -37,11 +38,12 @@ import org.jooq.Field;
 @Singleton
 public abstract class AbstractStructureInterface implements StructureInterface {
 
+    private final MetaDataReadInterface metaDataReadInterface;
     private final SqlHelper sqlHelper;
-    private final FieldComparator fieldComparator = new FieldComparator();
     
     @Inject
-    public AbstractStructureInterface(SqlHelper sqlHelper) {
+    public AbstractStructureInterface(MetaDataReadInterface metaDataReadInterface, SqlHelper sqlHelper) {
+        this.metaDataReadInterface = metaDataReadInterface;
         this.sqlHelper = sqlHelper;
     }
 
@@ -94,86 +96,36 @@ public abstract class AbstractStructureInterface implements StructureInterface {
 
     protected abstract String getCreateSchemaStatement(String schemaName);
 
-	@Override
-	public void createDocPartTable(DSLContext dsl, String schemaName, String tableName, Collection<? extends Field<?>> fields) {
-		String statement = getCreateDocPartTableStatement(schemaName, tableName, fields);
-		sqlHelper.executeStatement(dsl, statement, Context.ddl);
-	}
+    @Override
+    public void createRootDocPartTable(DSLContext dsl, String schemaName, String tableName, TableRef tableRef) {
+        String statement = getCreateDocPartTableStatement(schemaName, tableName, metaDataReadInterface.getInternalFields(tableRef),
+                metaDataReadInterface.getPrimaryKeyInternalFields(tableRef));
+        sqlHelper.executeStatement(dsl, statement, Context.ddl);
+    }
 
     protected abstract String getCreateDocPartTableStatement(String schemaName, String tableName,
-            Collection<? extends Field<?>> fields);
-	
+            Collection<InternalField<?>> fields, Collection<InternalField<?>> primaryKeyFields);
+    
+
     @Override
-    public void addColumnToDocPartTable(DSLContext dsl, String schemaName, String tableName, Field<?> field) {
-        String statement = getAddColumnToDocPartTableStatement(schemaName, tableName, field);
+    public void createDocPartTable(DSLContext dsl, String schemaName, String tableName, TableRef tableRef, String foreignTableName) {
+        String statement = getCreateDocPartTableStatement(schemaName, tableName, metaDataReadInterface.getInternalFields(tableRef),
+                metaDataReadInterface.getPrimaryKeyInternalFields(tableRef),
+                metaDataReadInterface.getReferenceInternalFields(tableRef), foreignTableName, metaDataReadInterface.getForeignInternalFields(tableRef));
+        sqlHelper.executeStatement(dsl, statement, Context.ddl);
+    }
+
+    protected abstract String getCreateDocPartTableStatement(String schemaName, String tableName,
+            Collection<InternalField<?>> fields, Collection<InternalField<?>> primaryKeyFields, 
+            Collection<InternalField<?>> referenceFields, String foreignTableName, Collection<InternalField<?>> foreignFields);
+    
+    @Override
+    public void addColumnToDocPartTable(DSLContext dsl, String schemaName, String tableName, String columnName, DataTypeForKV<?> dataType) {
+        String statement = getAddColumnToDocPartTableStatement(schemaName, tableName, columnName, dataType);
         
         sqlHelper.executeStatement(dsl, statement, Context.ddl);
     }
 
     protected abstract String getAddColumnToDocPartTableStatement(String schemaName, String tableName,
-            Field<?> field);
-
-    protected Iterable<Field<?>> getFieldIterator(Iterable<? extends Field<?>> fields) {
-        List<Field<?>> fieldList = Lists.newArrayList(fields);
-        Collections.sort(fieldList, fieldComparator);
-        return fieldList;
-    }
-
-    private static class FieldComparator implements Comparator<Field<?>>, Serializable {
-
-        private static final List<Integer> sqlTypeOrder = Arrays.asList(new Integer[]{
-                    java.sql.Types.NULL,
-                    java.sql.Types.DOUBLE,
-                    java.sql.Types.BIGINT,
-                    java.sql.Types.INTEGER,
-                    java.sql.Types.FLOAT,
-                    java.sql.Types.TIME,
-                    java.sql.Types.DATE,
-                    java.sql.Types.REAL,
-                    java.sql.Types.TINYINT,
-                    java.sql.Types.CHAR,
-                    java.sql.Types.BIT,
-                    java.sql.Types.BINARY
-                });
-        private static final long serialVersionUID = 1L;
-
-        @Override
-        public int compare(Field<?> o1, Field<?> o2) {
-            if (o1.getName().equals(DocPartTableFields.DID)) {
-                return -1;
-            } else if (o2.getName().equals(DocPartTableFields.DID)) {
-                return 1;
-            }
-            if (o1.getName().equals(DocPartTableFields.RID)) {
-                return -1;
-            } else if (o2.getName().equals(DocPartTableFields.RID)) {
-                return 1;
-            }
-            if (o1.getName().equals(DocPartTableFields.PID)) {
-                return -1;
-            } else if (o2.getName().equals(DocPartTableFields.PID)) {
-                return 1;
-            }
-            if (o1.getName().equals(DocPartTableFields.SEQ)) {
-                return -1;
-            } else if (o2.getName().equals(DocPartTableFields.SEQ)) {
-                return 1;
-            }
-
-            int i1 = sqlTypeOrder.indexOf(o1.getDataType().getSQLType());
-            int i2 = sqlTypeOrder.indexOf(o2.getDataType().getSQLType());
-
-            if (i1 == i2) {
-                return o1.getName().compareTo(o2.getName());
-            }
-            if (i1 == -1) {
-                return 1;
-            }
-            if (i2 == -1) {
-                return -1;
-            }
-            return i1 - i2;
-        }
-
-    }
+            String columnName, DataTypeForKV<?> dataType);
 }

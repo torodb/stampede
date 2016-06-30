@@ -49,44 +49,44 @@ public class DataTypeForKV<T extends KVValue<?>> implements DataType<T> {
     private static final long serialVersionUID = 1L;
     
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    public static <DT, T extends KVValue<?>> DataTypeForKV<T> from(DataType<DT> dataType, KVValueConverter<DT, T> converter) {
+    public static <DT, JT, T extends KVValue<?>> DataTypeForKV<T> from(DataType<DT> dataType, KVValueConverter<DT, JT, T> converter) {
         return new DataTypeForKV<>(dataType.asConvertedDataType(new KVChainConverter(dataType.getConverter(), converter)), converter);
     }
     
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    public static <DT, T extends KVValue<?>> DataTypeForKV<T> from(DataType<DT> dataType, KVValueConverter<DT, T> converter, int sqlType) {
+    public static <DT, JT, T extends KVValue<?>> DataTypeForKV<T> from(DataType<DT> dataType, KVValueConverter<DT, JT, T> converter, int sqlType) {
         return new DataTypeForKV<>(dataType.asConvertedDataType(new KVChainConverter(dataType.getConverter(), converter)), converter, sqlType);
     }
     
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    public static <DT, T extends KVValue<?>> DataTypeForKV<T> from(DataType<DT> dataType, KVValueConverter<DT, T> converter, Binding<DT, T> binding) {
+    public static <DT, JT, T extends KVValue<?>> DataTypeForKV<T> from(DataType<DT> dataType, KVValueConverter<DT, JT, T> converter, Binding<DT, T> binding) {
         return new DataTypeForKV<>(dataType.asConvertedDataType(new KVChainBinding(binding, dataType.getConverter(), converter)), converter);
     }
     
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    public static <DT, T extends KVValue<?>> DataTypeForKV<T> from(DataType<DT> dataType, KVValueConverter<DT, T> converter, Binding<DT, T> binding, int sqlType) {
+    public static <DT, JT, T extends KVValue<?>> DataTypeForKV<T> from(DataType<DT> dataType, KVValueConverter<DT, JT, T> converter, Binding<DT, T> binding, int sqlType) {
         return new DataTypeForKV<>(dataType.asConvertedDataType(new KVChainBinding(binding, dataType.getConverter(), converter)), converter, sqlType);
     }
     
     private final DataType<T> dataType;
     private final int sqlType;
-    private final KVValueConverter<?, T> kvValueConverter;
+    private final KVValueConverter<?, ?, T> kvValueConverter;
     
-    private DataTypeForKV(DataType<T> dataType, KVValueConverter<?, T> kvValueConverter) {
+    private DataTypeForKV(DataType<T> dataType, KVValueConverter<?, ?, T> kvValueConverter) {
         super();
         this.dataType = dataType;
         this.sqlType = dataType.getSQLType();
         this.kvValueConverter = kvValueConverter;
     }
     
-    private DataTypeForKV(DataType<T> dataType, KVValueConverter<?, T> kvValueConverter, int sqlType) {
+    private DataTypeForKV(DataType<T> dataType, KVValueConverter<?, ?, T> kvValueConverter, int sqlType) {
         super();
         this.dataType = dataType;
         this.sqlType = sqlType;
         this.kvValueConverter = kvValueConverter;
     }
     
-    public KVValueConverter<?, T> getKVValueConverter() {
+    public KVValueConverter<?, ?, T> getKVValueConverter() {
         return kvValueConverter;
     }
 

@@ -36,7 +36,7 @@ import com.torodb.kvdocument.values.heap.ByteSourceKVBinary;
  *
  */
 public class BinaryValueConverter implements
-        KVValueConverter<byte[], KVBinary> {
+        KVValueConverter<byte[], byte[], KVBinary> {
     private static final long serialVersionUID = 1L;
 
     public static final DataTypeForKV<KVBinary> TYPE = VarcharForBitDataBinding.fromKVValue(KVBinary.class, new BinaryValueConverter(), 32672);

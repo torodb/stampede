@@ -29,8 +29,12 @@ public class DateSqlBinding implements SqlBinding<Date> {
     public static final DateSqlBinding INSTANCE = new DateSqlBinding();
 
     @Override
-    public Date get(ResultSet resultSet, int index) throws SQLException {
-        return resultSet.getDate(index);
+    public Date get(ResultSet resultSet, int columnIndex) throws SQLException {
+        Date value = resultSet.getDate(columnIndex);
+        if (resultSet.wasNull()) {
+            return null;
+        }
+        return value;
     }
 
     @Override

@@ -28,8 +28,12 @@ public class BinarySqlBinding implements SqlBinding<byte[]> {
     public static final BinarySqlBinding INSTANCE = new BinarySqlBinding();
 
     @Override
-    public byte[] get(ResultSet resultSet, int index) throws SQLException {
-        return resultSet.getBytes(index);
+    public byte[] get(ResultSet resultSet, int columnIndex) throws SQLException {
+        byte[] value = resultSet.getBytes(columnIndex);
+        if (resultSet.wasNull()) {
+            return null;
+        }
+        return value;
     }
 
     @Override

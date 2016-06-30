@@ -58,7 +58,7 @@ public class Derby implements BackendImplementation, Password {
 	@NotNull
 	@Port
 	@JsonProperty(required=true)
-	protected Integer port = 5432;
+	protected Integer port = 1527;
 	@Description("config.backend.postgres.database")
 	@NotNull
 	@JsonProperty(required=true)

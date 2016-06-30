@@ -28,7 +28,7 @@ public class TimestampBinding<T> implements Binding<Timestamp, T> {
 
     private static final long serialVersionUID = 1L;
 
-    public static <UT extends KVValue<?>> DataTypeForKV<UT> fromKVValue(Class<UT> type, KVValueConverter<Timestamp, UT> converter) {
+    public static <JT, UT extends KVValue<?>> DataTypeForKV<UT> fromKVValue(Class<UT> type, KVValueConverter<Timestamp, JT, UT> converter) {
         return DataTypeForKV.from(new DefaultDataType<Timestamp>(null, Timestamp.class, "timestamp"), converter, new TimestampBinding<UT>(converter));
     }
     

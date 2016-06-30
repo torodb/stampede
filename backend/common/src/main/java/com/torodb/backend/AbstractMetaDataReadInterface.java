@@ -30,6 +30,7 @@ import javax.inject.Singleton;
 
 import org.jooq.DSLContext;
 
+import com.google.common.base.Preconditions;
 import com.torodb.backend.ErrorHandler.Context;
 import com.torodb.backend.index.NamedDbIndex;
 import com.torodb.backend.tables.MetaDocPartTable;
@@ -116,13 +117,49 @@ public abstract class AbstractMetaDataReadInterface implements MetaDataReadInter
             Map<String, Integer> relatedToroIndexes);
     
     @Override
-    public Collection<InternalField<?>> getDocPartTableInternalFields(MetaDocPart metaDocPart) {
+    public Collection<InternalField<?>> getInternalFields(MetaDocPart metaDocPart) {
         TableRef tableRef = metaDocPart.getTableRef();
+        return getInternalFields(tableRef);
+    }
+
+    @Override
+    public Collection<InternalField<?>> getInternalFields(TableRef tableRef) {
         if (tableRef.isRoot()) {
             return metaDocPartTable.ROOT_FIELDS;
         } else if (tableRef.getParent().get().isRoot()) {
             return metaDocPartTable.FIRST_FIELDS;
         }
         return metaDocPartTable.FIELDS;
+    }
+
+    @Override
+    public Collection<InternalField<?>> getPrimaryKeyInternalFields(TableRef tableRef) {
+        if (tableRef.isRoot()) {
+            return metaDocPartTable.PRIMARY_KEY_ROOT_FIELDS;
+        } else if (tableRef.getParent().get().isRoot()) {
+            return metaDocPartTable.PRIMARY_KEY_FIRST_FIELDS;
+        }
+        return metaDocPartTable.PRIMARY_KEY_FIELDS;
+    }
+
+    @Override
+    public Collection<InternalField<?>> getReferenceInternalFields(TableRef tableRef) {
+        Preconditions.checkArgument(!tableRef.isRoot());
+        if (tableRef.getParent().get().isRoot()) {
+            return metaDocPartTable.REFERENCE_FIRST_FIELDS;
+        }
+        return metaDocPartTable.REFERENCE_FIELDS;
+    }
+
+    @Override
+    public Collection<InternalField<?>> getForeignInternalFields(TableRef tableRef) {
+        Preconditions.checkArgument(!tableRef.isRoot());
+        TableRef parentTableRef = tableRef.getParent().get();
+        if (parentTableRef.isRoot()) {
+            return metaDocPartTable.FOREIGN_ROOT_FIELDS;
+        } else if (parentTableRef.getParent().get().isRoot()) {
+            return metaDocPartTable.FOREIGN_FIRST_FIELDS;
+        }
+        return metaDocPartTable.FOREIGN_FIELDS;
     }
 }

@@ -95,7 +95,7 @@ public abstract class AbstractIdentifierConstraints implements IdentifierConstra
         this.scalarFieldTypeIdentifiers = Maps.immutableEnumMap(scalarFieldTypeIdentifiersBuilder.build());
         
         this.restrictedSchemaNames = ImmutableSet.<String>builder()
-                .add(TorodbSchema.TORODB_SCHEMA)
+                .add(TorodbSchema.IDENTIFIER)
                 .addAll(restrictedSchemaNames)
                 .build();
         

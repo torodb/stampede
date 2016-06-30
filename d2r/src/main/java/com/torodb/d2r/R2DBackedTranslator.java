@@ -134,12 +134,12 @@ public class R2DBackedTranslator<Result extends AutoCloseable, BackendInternalFi
         }
     }
 
-    private static final Boolean IS_ARRAY=true;
+    private static final Boolean IS_ARRAY = true;
     
     private KVValue<?> getChildValue(KVValue<?> value, String key,
             Map<String, List<KVValue<?>>> childDocPartCell) {
         KVBoolean child = (KVBoolean) value;
-        if (child.getValue()==IS_ARRAY) {
+        if (child.getValue() == IS_ARRAY) {
             List<KVValue<?>> elements;
             if (childDocPartCell == null || (elements = childDocPartCell.get(key)) == null) {
                 value = new ListKVArray(ImmutableList.of());

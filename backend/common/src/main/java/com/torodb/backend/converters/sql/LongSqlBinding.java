@@ -28,8 +28,12 @@ public class LongSqlBinding implements SqlBinding<Long> {
     public static final LongSqlBinding INSTANCE = new LongSqlBinding();
 
     @Override
-    public Long get(ResultSet resultSet, int index) throws SQLException {
-        return resultSet.getLong(index);
+    public Long get(ResultSet resultSet, int columnIndex) throws SQLException {
+        long value = resultSet.getLong(columnIndex);
+        if (resultSet.wasNull()) {
+            return null;
+        }
+        return value;
     }
 
     @Override

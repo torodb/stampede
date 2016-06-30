@@ -12,7 +12,7 @@ public class ReadOnlyBackendTransactionImpl extends BackendTransactionImpl imple
 
     public ReadOnlyBackendTransactionImpl(SqlInterface sqlInterface, BackendConnectionImpl backendConnection,
             R2DTranslator<ResultSet> r2dTranslator) {
-        super(sqlInterface.createReadOnlyConnection(), sqlInterface, backendConnection, r2dTranslator);
+        super(sqlInterface.getDbBackend().createReadOnlyConnection(), sqlInterface, backendConnection, r2dTranslator);
     }
 
 }

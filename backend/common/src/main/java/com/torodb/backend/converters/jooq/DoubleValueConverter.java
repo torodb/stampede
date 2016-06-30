@@ -31,7 +31,7 @@ import com.torodb.kvdocument.values.KVDouble;
 /**
  *
  */
-public class DoubleValueConverter implements KVValueConverter<Double, KVDouble> {
+public class DoubleValueConverter implements KVValueConverter<Double, Double, KVDouble> {
     private static final long serialVersionUID = 1L;
 
     public static final DataTypeForKV<KVDouble> TYPE = DataTypeForKV.from(SQLDataType.DOUBLE, new DoubleValueConverter());

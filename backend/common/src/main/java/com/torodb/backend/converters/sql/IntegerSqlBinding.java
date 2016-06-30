@@ -28,8 +28,12 @@ public class IntegerSqlBinding implements SqlBinding<Integer> {
     public static final IntegerSqlBinding INSTANCE = new IntegerSqlBinding();
 
     @Override
-    public Integer get(ResultSet resultSet, int index) throws SQLException {
-        return resultSet.getInt(index);
+    public Integer get(ResultSet resultSet, int columnIndex) throws SQLException {
+        int value = resultSet.getInt(columnIndex);
+        if (resultSet.wasNull()) {
+            return null;
+        }
+        return value;
     }
 
     @Override

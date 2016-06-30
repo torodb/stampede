@@ -64,6 +64,7 @@ public class PostgreSQLWriteInterface extends AbstractWriteInterface {
     
     private final PostgreSQLMetaDataReadInterface postgreSQLMetaDataReadInterface;
     private final ErrorHandler errorHandler;
+    private final SqlHelper sqlHelper;
     
     @Inject
     public PostgreSQLWriteInterface(PostgreSQLMetaDataReadInterface metaDataReadInterface,
@@ -72,6 +73,7 @@ public class PostgreSQLWriteInterface extends AbstractWriteInterface {
         super(metaDataReadInterface, errorHandler, sqlHelper);
         this.postgreSQLMetaDataReadInterface = metaDataReadInterface;
         this.errorHandler = errorHandler;
+        this.sqlHelper = sqlHelper;
     }
 
     @Override
@@ -152,7 +154,7 @@ public class PostgreSQLWriteInterface extends AbstractWriteInterface {
         final CopyManager copyManager = connection.getCopyAPI();
         final MetaDocPart metaDocPart = docPartData.getMetaDocPart();
         Collection<InternalField<?>> internalFields = postgreSQLMetaDataReadInterface
-                .getDocPartTableInternalFields(metaDocPart);
+                .getInternalFields(metaDocPart);
         final StringBuilder sb = new StringBuilder(65536);
         final String copyStatement = getCopyInsertDocPartDataStatement(
                 schemaName, docPartData, metaDocPart, internalFields);
@@ -211,15 +213,13 @@ public class PostgreSQLWriteInterface extends AbstractWriteInterface {
             DocPartRow docPartRow,
             Collection<InternalField<?>> internalFields) {
         for (InternalField<?> internalField : internalFields) {
-            sb
-                .append(internalField.<String>apply(docPartRow, internalValue -> 
-                    { 
-                        if (internalValue == null) { 
-                            return "\\N"; 
-                        } else {
-                            return internalValue.toString();
-                        }
-                    })).append("\t");
+			Object internalValue = internalField.getValue(docPartRow);
+			if (internalValue == null) {
+				sb.append("\\N");
+			} else {
+				sb.append(internalValue.toString());
+			}        	
+        	sb.append("\t");
         }
         for (KVValue<?> value : docPartRow.getScalarValues()) {
             addValueToCopy(sb, value);
@@ -292,19 +292,25 @@ public class PostgreSQLWriteInterface extends AbstractWriteInterface {
         }
         while (metaScalarIterator.hasNext()) {
             MetaScalar metaScalar = metaScalarIterator.next();
+            FieldType type = metaScalar.getType();
             insertStatementBuilder.append("\"")
                 .append(metaScalar.getIdentifier())
                 .append("\",");
-            insertStatementValuesBuilder.append("?,");
-            fieldTypeList.add(metaScalar.getType());
+            insertStatementValuesBuilder
+                .append(sqlHelper.getPlaceholder(type))
+                .append(',');
+            fieldTypeList.add(type);
         }
         while (metaFieldIterator.hasNext()) {
             MetaField metaField = metaFieldIterator.next();
+            FieldType type = metaField.getType();
             insertStatementBuilder.append("\"")
                 .append(metaField.getIdentifier())
                 .append("\",");
-            insertStatementValuesBuilder.append("?,");
-            fieldTypeList.add(metaField.getType());
+            insertStatementValuesBuilder
+            .append(sqlHelper.getPlaceholder(type))
+            .append(',');
+        fieldTypeList.add(type);
         }
         insertStatementBuilder.setCharAt(insertStatementBuilder.length() - 1, ')');
         insertStatementValuesBuilder.setCharAt(insertStatementValuesBuilder.length() - 1, ')');

@@ -23,6 +23,7 @@ package com.torodb.backend.derby;
 import com.torodb.backend.AbstractReadInterface;
 import com.torodb.backend.InternalField;
 import com.torodb.backend.SqlHelper;
+import com.torodb.backend.SqlInterface;
 import com.torodb.backend.tables.MetaDocPartTable.DocPartTableFields;
 import com.torodb.core.TableRef;
 import com.torodb.core.TableRefFactory;
@@ -43,8 +44,8 @@ public class DerbyReadInterface extends AbstractReadInterface {
     
     @Inject
     public DerbyReadInterface(DerbyMetaDataReadInterface metaDataReadInterface, 
-            DerbyErrorHandler errorHandler, SqlHelper sqlHelper, TableRefFactory tableRefFactory) {
-        super(errorHandler, sqlHelper, tableRefFactory);
+            SqlInterface sqlInterface, SqlHelper sqlHelper, TableRefFactory tableRefFactory) {
+        super(sqlInterface, sqlHelper, tableRefFactory);
         this.metaDataReadInterface = metaDataReadInterface;
     }
 
@@ -92,7 +93,7 @@ public class DerbyReadInterface extends AbstractReadInterface {
             Collection<Integer> dids) {
         StringBuilder sb = new StringBuilder()
                 .append("SELECT ");
-        Collection<InternalField<?>> internalFields = metaDataReadInterface.getDocPartTableInternalFields(metaDocPart);
+        Collection<InternalField<?>> internalFields = metaDataReadInterface.getInternalFields(metaDocPart);
         for (InternalField<?> internalField : internalFields) {
             sb.append('"')
                 .append(internalField.getName())

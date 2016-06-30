@@ -31,13 +31,13 @@ import java.util.List;
 import javax.annotation.Nonnull;
 
 public class DefaultDidCursor implements DidCursor {
-    public final ErrorHandler errorHandler;
+    public final SqlInterface sqlInterface;
     public final ResultSet resultSet;
     public boolean movedNext = false;
     public boolean hasNext = false;
 
-    public DefaultDidCursor(@Nonnull ErrorHandler sqlInterface, @Nonnull ResultSet resultSet) {
-        this.errorHandler = sqlInterface;
+    public DefaultDidCursor(@Nonnull SqlInterface sqlInterface, @Nonnull ResultSet resultSet) {
+        this.sqlInterface = sqlInterface;
         this.resultSet = resultSet;
     }
 
@@ -51,7 +51,7 @@ public class DefaultDidCursor implements DidCursor {
             
             return hasNext;
         } catch(SQLException ex) {
-            errorHandler.handleRollbackException(Context.fetch, ex);
+            sqlInterface.getErrorHandler().handleRollbackException(Context.fetch, ex);
             
             throw new SystemException(ex);
         }
@@ -65,7 +65,7 @@ public class DefaultDidCursor implements DidCursor {
             
             return resultSet.getInt(1);
         } catch(SQLException ex) {
-            errorHandler.handleRollbackException(Context.fetch, ex);
+            sqlInterface.getErrorHandler().handleRollbackException(Context.fetch, ex);
             
             throw new SystemException(ex);
         }
@@ -76,7 +76,7 @@ public class DefaultDidCursor implements DidCursor {
         try {
             resultSet.close();
         } catch(SQLException ex) {
-            errorHandler.handleRollbackException(Context.fetch, ex);
+            sqlInterface.getErrorHandler().handleRollbackException(Context.fetch, ex);
             
             throw new SystemException(ex);
         }

@@ -48,6 +48,9 @@ public class OfficialDerbyDriver implements DerbyDriverProvider {
     private static final Logger LOGGER = LogManager.getLogger(
             OfficialDerbyDriver.class
     );
+    private static final Logger DRIVER_LOGGER = LogManager.getLogger(
+            ClientDataSource.class
+    );
     private static final PrintWriter LOGGER_WRITER = new PrintWriter(new LoggerWriter());
     public static final OutputStream LOGGER_OUTPUT = new OutputStream() {
         public void write(int b) {}
@@ -60,7 +63,7 @@ public class OfficialDerbyDriver implements DerbyDriverProvider {
         public void write(int b) {}
     };
     {
-        if (LOGGER.isTraceEnabled()) {
+        if (DRIVER_LOGGER.isTraceEnabled()) {
             DriverManager.setLogWriter(LOGGER_WRITER);
             System.setProperty("derby.stream.error.field", OfficialDerbyDriver.class.getName() + ".LOGGER_OUTPUT");
         } else {
@@ -143,7 +146,7 @@ public class OfficialDerbyDriver implements DerbyDriverProvider {
             messageBuilder.append(cbuf, off, len);
             String message = messageBuilder.toString().replaceAll("(\r\n|\r|\n)$", "");
             if (!message.isEmpty()) {
-                LOGGER.debug(message);
+                DRIVER_LOGGER.trace(message);
             }
         }
         @Override
