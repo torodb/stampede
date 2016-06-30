@@ -1,6 +1,12 @@
 
 package com.torodb.torod;
 
+import java.util.stream.Stream;
+
+import javax.annotation.Nonnull;
+
+import com.torodb.core.exceptions.user.CollectionNotFoundException;
+import com.torodb.core.exceptions.user.DatabaseNotFoundException;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.transaction.RollbackException;
 import com.torodb.core.transaction.WriteInternalTransaction;
@@ -9,8 +15,6 @@ import com.torodb.core.transaction.metainf.MutableMetaDatabase;
 import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
 import com.torodb.kvdocument.values.KVDocument;
 import com.torodb.torod.pipeline.InsertPipeline;
-import java.util.stream.Stream;
-import javax.annotation.Nonnull;
 
 /**
  *
@@ -40,6 +44,16 @@ public class WriteTorodTransaction implements TorodTransaction {
                 internalTransaction.getBackendConnection()
         );
         pipeline.insert(documents);
+    }
+    
+    public void dropCollection(String db, String collection) throws RollbackException, UserException {
+        MutableMetaDatabase metaDb = getMetaDatabaseOrThrowException(db);
+        MutableMetaCollection metaColl = getMetaCollectionOrThrowException(metaDb, collection);
+        
+        internalTransaction.getBackendConnection().dropCollection(metaDb, metaColl);
+        
+        //TODO implement removeCollection in MutableMetaDatabase
+        //metaDb.removeCollection(metaColl)
     }
 
     public void commit() throws RollbackException, UserException {
@@ -79,6 +93,27 @@ public class WriteTorodTransaction implements TorodTransaction {
                     connection.getServer().getIdentifierFactory().toCollectionIdentifier(metaDb, colName)
             );
             internalTransaction.getBackendConnection().addCollection(metaDb, metaCol);
+        }
+        return metaCol;
+    }
+
+    @Nonnull
+    private MutableMetaDatabase getMetaDatabaseOrThrowException(@Nonnull String dbName) throws DatabaseNotFoundException {
+        MutableMetaSnapshot metaSnapshot = internalTransaction.getMetaSnapshot();
+        MutableMetaDatabase metaDb = metaSnapshot.getMetaDatabaseByName(dbName);
+
+        if (metaDb == null) {
+            throw new DatabaseNotFoundException(dbName);
+        }
+        return metaDb;
+    }
+
+    @Nonnull
+    private MutableMetaCollection getMetaCollectionOrThrowException(@Nonnull MutableMetaDatabase metaDb, @Nonnull String colName) throws CollectionNotFoundException {
+        MutableMetaCollection metaCol = metaDb.getMetaCollectionByName(colName);
+
+        if (metaCol == null) {
+            throw new CollectionNotFoundException(metaDb.getName(), colName);
         }
         return metaCol;
     }

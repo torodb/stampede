@@ -23,16 +23,14 @@ package com.torodb.backend.postgresql;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.Record1;
-import org.jooq.conf.ParamType;
 
 import com.torodb.backend.AbstractMetaDataWriteInterface;
 import com.torodb.backend.SqlBuilder;
 import com.torodb.backend.SqlHelper;
 import com.torodb.backend.converters.TableRefConverter;
-import com.torodb.backend.postgresql.tables.PostgreSQLMetaCollectionTable;
-import com.torodb.backend.postgresql.tables.PostgreSQLMetaDatabaseTable;
 import com.torodb.backend.postgresql.tables.PostgreSQLMetaDocPartTable;
 import com.torodb.backend.postgresql.tables.PostgreSQLMetaFieldTable;
 import com.torodb.backend.postgresql.tables.PostgreSQLMetaScalarTable;
@@ -42,7 +40,6 @@ import com.torodb.backend.tables.MetaDocPartTable;
 import com.torodb.backend.tables.MetaFieldTable;
 import com.torodb.backend.tables.MetaScalarTable;
 import com.torodb.core.TableRef;
-import com.torodb.core.transaction.metainf.FieldType;
 
 /**
  *
@@ -50,23 +47,19 @@ import com.torodb.core.transaction.metainf.FieldType;
 @Singleton
 public class PostgreSQLMetaDataWriteInterface extends AbstractMetaDataWriteInterface {
 
-    private final PostgreSQLMetaDatabaseTable metaDatabaseTable;
-    private final PostgreSQLMetaCollectionTable metaCollectionTable;
     private final PostgreSQLMetaDocPartTable metaDocPartTable;
     private final PostgreSQLMetaFieldTable metaFieldTable;
     private final PostgreSQLMetaScalarTable metaScalarTable;
-    private final SqlHelper sqlHelper;
 
     @Inject
-    public PostgreSQLMetaDataWriteInterface(PostgreSQLMetaDataReadInterface metaDataReadInterface, 
+    public PostgreSQLMetaDataWriteInterface(PostgreSQLMetaDataReadInterface metaDataReadInterface,
+            PostgreSQLMetaFieldTable metaFieldTable,
+            PostgreSQLMetaScalarTable metaScalarTable,
             SqlHelper sqlHelper) {
         super(metaDataReadInterface, sqlHelper);
-        this.metaDatabaseTable = metaDataReadInterface.getMetaDatabaseTable();
-        this.metaCollectionTable = metaDataReadInterface.getMetaCollectionTable();
         this.metaDocPartTable = metaDataReadInterface.getMetaDocPartTable();
         this.metaFieldTable = metaDataReadInterface.getMetaFieldTable();
         this.metaScalarTable = metaDataReadInterface.getMetaScalarTable();
-        this.sqlHelper = sqlHelper;
     }
 
     @Override
@@ -171,49 +164,6 @@ public class PostgreSQLMetaDataWriteInterface extends AbstractMetaDataWriteInter
         return statement;
     }
 
-	@Override
-    protected String getAddMetaDatabaseStatement(String databaseName, String databaseIdentifier) {
-        String statement = sqlHelper.dsl().insertInto(metaDatabaseTable)
-            .set(metaDatabaseTable.newRecord().values(databaseName, databaseIdentifier)).getSQL(ParamType.INLINED);
-        return statement;
-    }
-
-	@Override
-    protected String getAddMetaCollectionStatement(String databaseName, String collectionName,
-            String collectionIdentifier) {
-        String statement = sqlHelper.dsl().insertInto(metaCollectionTable)
-            .set(metaCollectionTable.newRecord()
-            .values(databaseName, collectionName, collectionIdentifier)).getSQL(ParamType.INLINED);
-        return statement;
-    }
-
-	@Override
-    protected String getAddMetaDocPartStatement(String databaseName, String collectionName, TableRef tableRef,
-            String docPartIdentifier) {
-        String statement = sqlHelper.dsl().insertInto(metaDocPartTable)
-            .set(metaDocPartTable.newRecord()
-            .values(databaseName, collectionName, tableRef, docPartIdentifier)).getSQL(ParamType.INLINED);
-        return statement;
-    }
-	
-	@Override
-    protected String getAddMetaFieldStatement(String databaseName, String collectionName, TableRef tableRef,
-            String fieldName, String fieldIdentifier, FieldType type) {
-        String statement = sqlHelper.dsl().insertInto(metaFieldTable)
-                .set(metaFieldTable.newRecord()
-                .values(databaseName, collectionName, tableRef, fieldName, type, fieldIdentifier)).getSQL(ParamType.INLINED);
-        return statement;
-    }
-	
-	@Override
-    protected String getAddMetaScalarStatement(String databaseName, String collectionName, TableRef tableRef,
-            String fieldIdentifier, FieldType type) {
-        String statement = sqlHelper.dsl().insertInto(metaScalarTable)
-				.set(metaScalarTable.newRecord()
-				.values(databaseName, collectionName, tableRef, type, fieldIdentifier)).getSQL(ParamType.INLINED);
-        return statement;
-    }
-    
     @Override
     public int consumeRids(DSLContext dsl, String database, String collection, TableRef tableRef, int count) {
         Record1<Integer> lastRid = dsl.select(metaDocPartTable.LAST_RID).from(metaDocPartTable).where(
@@ -226,5 +176,20 @@ public class PostgreSQLMetaDataWriteInterface extends AbstractMetaDataWriteInter
                 .and(metaDocPartTable.COLLECTION.eq(collection))
                 .and(metaDocPartTable.TABLE_REF.eq(TableRefConverter.toStringArray(tableRef)))).execute();
         return lastRid.value1();
+    }
+
+    @Override
+    protected Condition getMetaDocPartTableRefCondition(TableRef tableRef) {
+        return metaDocPartTable.TABLE_REF.eq(TableRefConverter.toStringArray(tableRef));
+    }
+
+    @Override
+    protected Condition getMetaFieldTableRefCondition(TableRef tableRef) {
+        return metaFieldTable.TABLE_REF.eq(TableRefConverter.toStringArray(tableRef));
+    }
+
+    @Override
+    protected Condition getMetaScalarTableRefCondition(TableRef tableRef) {
+        return metaScalarTable.TABLE_REF.eq(TableRefConverter.toStringArray(tableRef));
     }
 }

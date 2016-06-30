@@ -22,6 +22,7 @@ package com.torodb.backend;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Iterator;
 
 import org.jooq.DSLContext;
 
@@ -65,7 +66,45 @@ public class WriteBackendTransactionImpl implements WriteBackendTransaction {
     public void addCollection(MetaDatabase db, MetaCollection newCol) {
         Preconditions.checkState(!closed, "This transaction is closed");
 
-    	sqlInterface.getMetaDataWriteInterface().addMetaCollection(dsl, db.getName(), newCol.getName(), newCol.getIdentifier());
+        sqlInterface.getMetaDataWriteInterface().addMetaCollection(dsl, db.getName(), newCol.getName(), newCol.getIdentifier());
+    }
+
+    @Override
+    public void dropCollection(MetaDatabase db, MetaCollection coll) {
+        Preconditions.checkState(!closed, "This transaction is closed");
+
+        Iterator<? extends MetaDocPart> metaDocPartIterator = coll.streamContainedMetaDocParts().iterator();
+        while (metaDocPartIterator.hasNext()) {
+            MetaDocPart metaDocPart = metaDocPartIterator.next();
+            dropMetaDocPart(db, coll, metaDocPart);
+        }
+        sqlInterface.getMetaDataWriteInterface().deleteMetaCollection(dsl, db.getName(), coll.getName());
+        sqlInterface.getStructureInterface().dropCollection(dsl, db.getIdentifier(), coll);
+    }
+
+    private void dropMetaDocPart(MetaDatabase db, MetaCollection coll, MetaDocPart metaDocPart) {
+        dropMetaScalars(db, coll, metaDocPart);
+        dropMetaFields(db, coll, metaDocPart);
+        sqlInterface.getMetaDataWriteInterface().deleteMetaDocPart(dsl, db.getName(), coll.getName(), 
+                metaDocPart.getTableRef());
+    }
+
+    private void dropMetaScalars(MetaDatabase db, MetaCollection coll, MetaDocPart metaDocPart) {
+        Iterator<? extends MetaScalar> metaScalarIterator = metaDocPart.streamScalars().iterator();
+        while (metaScalarIterator.hasNext()) {
+            MetaScalar metaScalar = metaScalarIterator.next();
+            sqlInterface.getMetaDataWriteInterface().deleteMetaScalar(dsl, db.getName(), coll.getName(), 
+                    metaDocPart.getTableRef(), metaScalar.getType());
+        }
+    }
+
+    private void dropMetaFields(MetaDatabase db, MetaCollection coll, MetaDocPart metaDocPart) {
+        Iterator<? extends MetaField> metaFieldIterator = metaDocPart.streamFields().iterator();
+        while (metaFieldIterator.hasNext()) {
+            MetaField metaField = metaFieldIterator.next();
+            sqlInterface.getMetaDataWriteInterface().deleteMetaField(dsl, db.getName(), coll.getName(), 
+                    metaDocPart.getTableRef(), metaField.getName(), metaField.getType());
+        }
     }
 
     @Override

@@ -22,5 +22,10 @@ public interface MetaDataWriteInterface {
     void addMetaField(@Nonnull DSLContext dsl, @Nonnull String databaseName, @Nonnull String collectionName, @Nonnull TableRef tableRef, @Nonnull String fieldName, String fieldIdentifier, FieldType type);
     void addMetaScalar(@Nonnull DSLContext dsl, @Nonnull String databaseName, @Nonnull String collectionName, @Nonnull TableRef tableRef, String fieldIdentifier, FieldType type);
 
+    void deleteMetaCollection(@Nonnull DSLContext dsl, @Nonnull String databaseName, @Nonnull String collectionName);
+    void deleteMetaDocPart(@Nonnull DSLContext dsl, @Nonnull String databaseName, @Nonnull String collectionName, @Nonnull TableRef tableRef);
+    void deleteMetaField(@Nonnull DSLContext dsl, @Nonnull String databaseName, @Nonnull String collectionName, @Nonnull TableRef tableRef, @Nonnull String fieldName, FieldType type);
+    void deleteMetaScalar(@Nonnull DSLContext dsl, @Nonnull String databaseName, @Nonnull String collectionName, @Nonnull TableRef tableRef, FieldType type);
+    
     int consumeRids(@Nonnull DSLContext dsl, @Nonnull String database, @Nonnull String collection, @Nonnull TableRef tableRef, int count);
 }

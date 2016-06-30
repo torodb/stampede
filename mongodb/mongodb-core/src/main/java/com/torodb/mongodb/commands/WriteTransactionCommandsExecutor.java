@@ -1,6 +1,14 @@
 
 package com.torodb.mongodb.commands;
 
+import java.util.Collections;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.MongoDb30Commands.MongoDb30CommandsImplementationBuilder;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.AdminCommands.AdminCommandsImplementationsBuilder;
@@ -65,15 +73,10 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.net.HostAndPort;
 import com.torodb.core.annotations.DoNotChange;
 import com.torodb.mongodb.commands.impl.NotImplementedCommandImplementation;
+import com.torodb.mongodb.commands.impl.admin.DropCollectionImplementation;
 import com.torodb.mongodb.commands.impl.diagnostic.PingImplementation;
 import com.torodb.mongodb.commands.impl.general.InsertImplementation;
 import com.torodb.mongodb.core.WriteMongodTransaction;
-import java.util.Collections;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 /**
  *
@@ -155,6 +158,14 @@ public class WriteTransactionCommandsExecutor implements CommandsExecutor<WriteM
     }
 
     static class MyAdminCommandsImplementationBuilder extends AdminCommandsImplementationsBuilder<WriteMongodTransaction> {
+        private final DropCollectionImplementation dropCollectionImplementation;
+        
+        @Inject
+        public MyAdminCommandsImplementationBuilder(DropCollectionImplementation dropCollectionImplementation) {
+            super();
+            this.dropCollectionImplementation = dropCollectionImplementation;
+        }
+
         @Override
         public CommandImplementation<ListCollectionsArgument, ListCollectionsResult, WriteMongodTransaction> getListCollectionsImplementation() {
             return NotImplementedCommandImplementation.build();
@@ -167,7 +178,7 @@ public class WriteTransactionCommandsExecutor implements CommandsExecutor<WriteM
 
         @Override
         public CommandImplementation<CollectionCommandArgument, Empty, WriteMongodTransaction> getDropCollectionImplementation() {
-            return NotImplementedCommandImplementation.build();
+            return dropCollectionImplementation;
         }
 
         @Override

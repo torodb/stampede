@@ -20,7 +20,24 @@
 
 package com.torodb.core.exceptions.user;
 
-public interface UserExceptionVisitor<Result, Argument> {
-    public Result visit(DatabaseNotFoundException userException, Argument arg);
-    public Result visit(CollectionNotFoundException userException, Argument arg);
+public class DatabaseNotFoundException extends UserException {
+
+    private static final long serialVersionUID = 1L;
+
+    private final String database;
+    
+    public DatabaseNotFoundException(String database) {
+        super();
+        this.database = database;
+    }
+
+    public String getDatabase() {
+        return database;
+    }
+
+    @Override
+    public <Result, Argument> Result accept(UserExceptionVisitor<Result, Argument> visitor, Argument arg) {
+        return visitor.visit(this, arg);
+    }
+
 }

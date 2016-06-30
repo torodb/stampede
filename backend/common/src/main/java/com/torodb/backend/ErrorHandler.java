@@ -17,6 +17,7 @@ public interface ErrorHandler {
         DROP_INDEX,
         FETCH,
         META_INSERT,
+        META_DELETE,
         INSERT,
         UPDATE,
         DELETE,

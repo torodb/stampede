@@ -38,13 +38,23 @@ public interface WriteBackendTransaction extends BackendTransaction {
     /**
      * Adds a collection to a database.
      *
-     * @param db     the database where the collection will be added. It must have been added
+     * @param db     the database where the collection will be added. It must not have been added
      *               before.
      * @param newCol the collection to add
      * @throws BackendException
      * @throws RollbackException
      */
     public void addCollection(MetaDatabase db, MetaCollection newCol) throws RollbackException;
+
+    /**
+     * Drop an existing collection.
+     *
+     * @param db     the database that contains the collection to drop.
+     * @param coll the collection to drop.
+     * @throws BackendException
+     * @throws RollbackException
+     */
+    public void dropCollection(MetaDatabase db, MetaCollection coll) throws RollbackException;
 
     /**
      * Adds a docPart to a collection.
