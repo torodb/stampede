@@ -77,10 +77,10 @@ public class SqlHelper {
         }
     }
     
-    public void executeUpdate(DSLContext dsl, String statement, Context context){
+    public int executeUpdate(DSLContext dsl, String statement, Context context){
         Connection c = dsl.configuration().connectionProvider().acquire();
         try (PreparedStatement ps = c.prepareStatement(statement)) {
-            ps.executeUpdate();
+            return ps.executeUpdate();
         } catch (SQLException ex) {
             throw errorHandler.handleException(context, ex);
         } finally {
@@ -88,9 +88,9 @@ public class SqlHelper {
         }       
     }
     
-    public void executeUpdate(Connection c, String statement, Context context){
+    public int executeUpdate(Connection c, String statement, Context context){
         try (PreparedStatement ps = c.prepareStatement(statement)) {
-            ps.executeUpdate();
+            return ps.executeUpdate();
         } catch (SQLException ex) {
             throw errorHandler.handleException(context, ex);
         }       
