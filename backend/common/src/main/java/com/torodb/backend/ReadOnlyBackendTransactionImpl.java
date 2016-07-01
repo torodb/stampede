@@ -2,25 +2,16 @@
 package com.torodb.backend;
 
 import com.torodb.core.backend.ReadOnlyBackendTransaction;
+import com.torodb.core.d2r.R2DTranslator;
 
 /**
  *
  */
-public class ReadOnlyBackendTransactionImpl implements ReadOnlyBackendTransaction {
+public class ReadOnlyBackendTransactionImpl extends BackendTransactionImpl implements ReadOnlyBackendTransaction {
 
-    private boolean closed = false;
-    private final BackendConnectionImpl backendConnection;
-
-    public ReadOnlyBackendTransactionImpl(BackendConnectionImpl backendConnection) {
-        this.backendConnection = backendConnection;
-    }
-
-    @Override
-    public void close() {
-        if (!closed) {
-            closed = true;
-            backendConnection.onTransactionClosed(this);
-        }
+    public ReadOnlyBackendTransactionImpl(SqlInterface sqlInterface, BackendConnectionImpl backendConnection,
+            R2DTranslator r2dTranslator) {
+        super(sqlInterface.getDbBackend().createReadOnlyConnection(), sqlInterface, backendConnection, r2dTranslator);
     }
 
 }

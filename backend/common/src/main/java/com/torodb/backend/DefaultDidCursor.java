@@ -20,17 +20,15 @@
 
 package com.torodb.backend;
 
+import com.torodb.backend.ErrorHandler.Context;
+import com.torodb.core.backend.DidCursor;
+import com.torodb.core.exceptions.SystemException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-
 import javax.annotation.Nonnull;
-
-import com.torodb.backend.ErrorHandler.Context;
-import com.torodb.core.backend.DidCursor;
-import com.torodb.core.exceptions.SystemException;
 
 public class DefaultDidCursor implements DidCursor {
     public final SqlInterface sqlInterface;
@@ -39,7 +37,6 @@ public class DefaultDidCursor implements DidCursor {
     public boolean hasNext = false;
 
     public DefaultDidCursor(@Nonnull SqlInterface sqlInterface, @Nonnull ResultSet resultSet) {
-        super();
         this.sqlInterface = sqlInterface;
         this.resultSet = resultSet;
     }

@@ -20,33 +20,28 @@
 
 package com.torodb.backend;
 
-import java.util.Collection;
-import java.util.Collections;
-
-import com.torodb.core.backend.BackendCursor;
+import com.torodb.core.cursors.Cursor;
 import com.torodb.core.document.ToroDocument;
+import java.util.NoSuchElementException;
 
 /**
  *
  */
-public class EmptyCursor implements BackendCursor {
+public class EmptyCursor implements Cursor<ToroDocument> {
 
     private boolean closed = false;
-    
+
     @Override
-    public Collection<ToroDocument> readDocuments(int maxResults) {
-        if (closed) {
-            throw new IllegalArgumentException("Closed cursor");
-        }
-        return Collections.emptyList();
+    public boolean hasNext() {
+        return false;
     }
 
     @Override
-    public Collection<ToroDocument> readAllDocuments() {
+    public ToroDocument next() {
         if (closed) {
             throw new IllegalArgumentException("Closed cursor");
         }
-        return Collections.emptyList();
+        throw new NoSuchElementException();
     }
 
     @Override

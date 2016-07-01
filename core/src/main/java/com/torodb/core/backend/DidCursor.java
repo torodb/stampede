@@ -20,40 +20,34 @@
 
 package com.torodb.core.backend;
 
-import java.util.Collection;
-import java.util.Iterator;
-
+import java.util.*;
 import javax.annotation.Nonnull;
 
 public interface DidCursor extends Iterator<Integer>, AutoCloseable {
     
-    /**
-     * Returns {@code true} if the iteration has more elements.
-     * (In other words, returns {@code true} if {@link #next} would
-     * return an element rather than throwing an exception.)
-     *
-     * @return {@code true} if the iteration has more elements
-     */
     @Override
     default boolean hasNext() {
         // TODO Auto-generated method stub
         return false;
     }
 
-    /**
-     * Gets the did of the current position of this {@code DidCursor}.
-     *
-     * @return a did value
-     */
     @Override
-    Integer next();
+    Integer next() throws NoSuchElementException;
     
     /**
      * Gets up to maxSize dids from the current position of this {@code DidCursor}.
      *
      * @return a collection of did values
      */
-    @Nonnull Collection<Integer> getNextBatch(int maxSize);
+    default @Nonnull Collection<Integer> getNextBatch(int maxSize) {
+        List<Integer> dids = new ArrayList<>();
+
+        for (int index = 0; index < maxSize && hasNext(); index++) {
+            dids.add(next());
+        }
+
+        return dids;
+    }
     
     /**
      * Gets remaining dids from the current position of this {@code DidCursor}.

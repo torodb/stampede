@@ -6,7 +6,6 @@ import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.CommandsLibrary;
 import com.eightkdata.mongowp.server.api.impl.NameBasedCommandsLibrary;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Iterables;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -30,14 +29,6 @@ public class TorodbCommandsLibrary implements CommandsLibrary {
             ReadOnlyTransactionCommandsExecutor readOnlyExecutor,
             WriteTransactionCommandsExecutor writeExecutor) {
         String version = "torodb-3.2-like";
-
-        this.allCommands = new NameBasedCommandsLibrary(version,
-                Iterables.concat(
-                        connectionExecutor.getSupportedCommands(),
-                        readOnlyExecutor.getSupportedCommands(),
-                        writeExecutor.getSupportedCommands()
-                )
-        );
         
         requiredTranslationMap = new HashMap<>();
         this.writeLibrary = new NameBasedCommandsLibrary(version, writeExecutor.getSupportedCommands());
@@ -52,6 +43,8 @@ public class TorodbCommandsLibrary implements CommandsLibrary {
         noTransactionsLibrary.getSupportedCommands().forEach((c) -> {
             classifyCommand(c, RequiredTransaction.NO_TRANSACTION);
         });
+
+        allCommands = new NameBasedCommandsLibrary(version, requiredTranslationMap.keySet());
     }
 
     public RequiredTransaction getCommandType(Command<?,?> command) {

@@ -24,6 +24,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 
@@ -32,13 +33,13 @@ import javax.inject.Singleton;
 
 import org.jooq.DSLContext;
 
-import com.google.common.collect.ImmutableList;
 import com.torodb.backend.ErrorHandler.Context;
+import com.torodb.backend.d2r.ResultSetDocPartResult;
 import com.torodb.backend.tables.MetaDocPartTable.DocPartTableFields;
 import com.torodb.core.TableRef;
+import com.torodb.core.TableRefFactory;
 import com.torodb.core.backend.DidCursor;
 import com.torodb.core.d2r.DocPartResult;
-import com.torodb.core.d2r.DocPartResults;
 import com.torodb.core.exceptions.SystemException;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
@@ -52,18 +53,24 @@ import com.torodb.kvdocument.values.KVValue;
 @Singleton
 public abstract class AbstractReadInterface implements ReadInterface {
     
-    private final ErrorHandler errorHandler;
+    private final SqlInterface sqlInterface;
     private final SqlHelper sqlHelper;
+    private final TableRefFactory tableRefFactory;
 
-    public AbstractReadInterface(ErrorHandler errorHandler, SqlHelper sqlHelper) {
-        this.errorHandler = errorHandler;
+    public AbstractReadInterface(SqlInterface sqlInterface, SqlHelper sqlHelper, TableRefFactory tableRefFactory) {
+        this.sqlInterface = sqlInterface;
         this.sqlHelper = sqlHelper;
+        this.tableRefFactory = tableRefFactory;
     }
 
     @Override
-    public ResultSet getCollectionDidsWithFieldEqualsTo(DSLContext dsl, MetaDatabase metaDatabase,
-            MetaDocPart metaDocPart, MetaField metaField, KVValue<?> value)
+    public DidCursor getCollectionDidsWithFieldEqualsTo(DSLContext dsl, MetaDatabase metaDatabase,
+            MetaCollection metaCol, MetaDocPart metaDocPart, MetaField metaField, KVValue<?> value)
             throws SQLException {
+        assert metaDatabase.getMetaCollectionByIdentifier(metaCol.getIdentifier()) != null;
+        assert metaCol.getMetaDocPartByIdentifier(metaDocPart.getIdentifier()) != null;
+        assert metaDocPart.getMetaFieldByIdentifier(metaField.getIdentifier()) != null;
+
         String statement = getReadCollectionDidsWithFieldEqualsToStatement(metaDatabase.getIdentifier(), metaDocPart.getIdentifier(), metaField.getIdentifier());
         Connection connection = dsl.configuration().connectionProvider().acquire();
         try {
@@ -71,7 +78,7 @@ public abstract class AbstractReadInterface implements ReadInterface {
             
             sqlHelper.setPreparedStatementValue(preparedStatement, 1, metaField.getType(), value);
             
-            return preparedStatement.executeQuery();
+            return new DefaultDidCursor(sqlInterface, preparedStatement.executeQuery());
         } finally {
             dsl.configuration().connectionProvider().release(connection);
         }
@@ -81,13 +88,19 @@ public abstract class AbstractReadInterface implements ReadInterface {
             String columnName);
 
     @Override
-    public ResultSet getAllCollectionDids(DSLContext dsl, MetaDatabase metaDatabase, MetaDocPart metaDocPart)
+    public DidCursor getAllCollectionDids(DSLContext dsl, MetaDatabase metaDatabase, MetaCollection metaCollection)
             throws SQLException {
-        String statement = getReadAllCollectionDidsStatement(metaDatabase.getIdentifier(), metaDocPart.getIdentifier());
+
+        MetaDocPart rootDocPart = metaCollection.getMetaDocPartByTableRef(tableRefFactory.createRoot());
+        if (rootDocPart == null) {
+            return EmptyDidCursor.INSTANCE;
+        }
+
+        String statement = getReadAllCollectionDidsStatement(metaDatabase.getIdentifier(), rootDocPart.getIdentifier());
         Connection connection = dsl.configuration().connectionProvider().acquire();
         try {
             PreparedStatement preparedStatement = connection.prepareStatement(statement);
-            return preparedStatement.executeQuery();
+            return new DefaultDidCursor(sqlInterface, preparedStatement.executeQuery());
         } finally {
             dsl.configuration().connectionProvider().release(connection);
         }
@@ -97,11 +110,11 @@ public abstract class AbstractReadInterface implements ReadInterface {
 
     @Nonnull
     @Override
-    public DocPartResults<ResultSet> getCollectionResultSets(@Nonnull DSLContext dsl, @Nonnull MetaDatabase metaDatabase, @Nonnull MetaCollection metaCollection, 
+    public DocPartResultBatch getCollectionResultSets(@Nonnull DSLContext dsl, @Nonnull MetaDatabase metaDatabase, @Nonnull MetaCollection metaCollection,
             @Nonnull DidCursor didCursor, int maxSize) throws SQLException {
         Collection<Integer> dids = didCursor.getNextBatch(maxSize);
-        
-        ImmutableList.Builder<DocPartResult<ResultSet>> docPartResultSetsBuilder = ImmutableList.builder();
+
+        ArrayList<DocPartResult> result = new ArrayList<>();
         Connection connection = dsl.configuration().connectionProvider().acquire();
         try {
             Iterator<? extends MetaDocPart> metaDocPartIterator = metaCollection
@@ -113,12 +126,12 @@ public abstract class AbstractReadInterface implements ReadInterface {
                 String statament = getDocPartStatament(metaDatabase, metaDocPart, dids);
     
                 PreparedStatement preparedStatement = connection.prepareStatement(statament);
-                docPartResultSetsBuilder.add(new DocPartResult<ResultSet>(metaDocPart, preparedStatement.executeQuery()));
+                result.add(new ResultSetDocPartResult(sqlInterface, metaDocPart, preparedStatement.executeQuery(), sqlHelper));
             }
         } finally {
             dsl.configuration().connectionProvider().release(connection);
         }
-        return new DocPartResults<ResultSet>(docPartResultSetsBuilder.build());
+        return new DocPartResultBatch(result);
     }
 
     protected abstract String getDocPartStatament(MetaDatabase metaDatabase, MetaDocPart metaDocPart,
@@ -139,7 +152,7 @@ public abstract class AbstractReadInterface implements ReadInterface {
         	}
         	return maxId;
         } catch (SQLException ex){
-            errorHandler.handleRollbackException(Context.FETCH, ex);
+            sqlInterface.getErrorHandler().handleRollbackException(Context.FETCH, ex);
             throw new SystemException(ex);
         } finally {
             dsl.configuration().connectionProvider().release(connection);

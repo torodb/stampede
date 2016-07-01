@@ -15,13 +15,36 @@
  * along with core. If not, see <http://www.gnu.org/licenses/>.
  *
  * Copyright (C) 2016 8Kdata.
- *
+ * 
  */
-package com.torodb.core.backend;
+
+package com.torodb.core.cursors;
+
+import com.google.common.base.Preconditions;
+import java.util.NoSuchElementException;
 
 /**
  *
  */
-public interface ReadOnlyBackendTransaction extends BackendTransaction {
+public class EmptyCursor<E> implements Cursor<E> {
+
+    private boolean closed = false;
+
+    @Override
+    public void close() {
+        closed = true;
+    }
+
+    @Override
+    public boolean hasNext() {
+        Preconditions.checkState(!closed);
+        return false;
+    }
+
+    @Override
+    public E next() {
+        Preconditions.checkState(!closed);
+        throw new NoSuchElementException();
+    }
 
 }

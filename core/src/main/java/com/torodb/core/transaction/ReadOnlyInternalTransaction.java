@@ -29,7 +29,7 @@ import com.torodb.core.transaction.metainf.MetainfoRepository.SnapshotStage;
 /**
  *
  */
-public class ReadOnlyInternalTransaction implements InternalReadTransaction {
+public class ReadOnlyInternalTransaction implements InternalTransaction {
 
     private final ReadOnlyBackendTransaction backendTransaction;
     private final ImmutableMetaSnapshot metaSnapshot;
@@ -45,6 +45,11 @@ public class ReadOnlyInternalTransaction implements InternalReadTransaction {
 
             return new ReadOnlyInternalTransaction(snapshot, backendConnection.openReadOnlyTransaction());
         }
+    }
+
+    @Override
+    public ReadOnlyBackendTransaction getBackendTransaction() {
+        return backendTransaction;
     }
 
     @Override

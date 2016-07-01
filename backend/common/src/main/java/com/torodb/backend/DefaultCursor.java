@@ -20,55 +20,46 @@
 
 package com.torodb.backend;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-
-import javax.annotation.Nonnull;
-
-import org.jooq.DSLContext;
-
 import com.google.common.base.Preconditions;
 import com.torodb.backend.ErrorHandler.Context;
-import com.torodb.core.backend.BackendCursor;
 import com.torodb.core.backend.DidCursor;
-import com.torodb.core.d2r.DocPartResults;
+import com.torodb.core.cursors.Cursor;
 import com.torodb.core.d2r.R2DTranslator;
 import com.torodb.core.document.ToroDocument;
 import com.torodb.core.exceptions.SystemException;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.function.Consumer;
+import javax.annotation.Nonnull;
+import org.jooq.DSLContext;
 
 
 /**
  *
  */
-public class DefaultCursor implements BackendCursor {
+public class DefaultCursor implements Cursor<ToroDocument> {
     
     private static final int BATCH_SIZE = 1000;
 
     private final SqlInterface sqlInterface;
-    private final R2DTranslator<ResultSet> r2dTranslator;
+    private final R2DTranslator r2dTranslator;
     private final DidCursor didCursor;
     private final DSLContext dsl;
     private final MetaDatabase metaDatabase;
     private final MetaCollection metaCollection;
     
-    /**
-     * @param r2dTranslator
-     * @param didCursor
-     */
     public DefaultCursor(
             @Nonnull SqlInterface sqlInterface,
-            @Nonnull R2DTranslator<ResultSet> r2dTranslator,
+            @Nonnull R2DTranslator r2dTranslator,
             @Nonnull DidCursor didCursor,
             @Nonnull DSLContext dsl,
             @Nonnull MetaDatabase metaDatabase,
-            @Nonnull MetaCollection metaCollection
-            ) {
+            @Nonnull MetaCollection metaCollection) {
         this.sqlInterface = sqlInterface;
         this.r2dTranslator = r2dTranslator;
         this.didCursor = didCursor;
@@ -76,39 +67,55 @@ public class DefaultCursor implements BackendCursor {
         this.metaDatabase = metaDatabase;
         this.metaCollection = metaCollection;
     }
-    
+
     @Override
-    public Collection<ToroDocument> readDocuments(int maxResults) {
+    public boolean hasNext() {
+        return didCursor.hasNext();
+    }
+
+    @Override
+    public ToroDocument next() {
+        if (!hasNext()) {
+            throw new NoSuchElementException();
+        }
+        return getNextBatch(1).get(0);
+    }
+
+    @Override
+    public List<ToroDocument> getRemaining() {
+        List<ToroDocument> allDocuments = new ArrayList<>();
+
+        List<ToroDocument> readedDocuments;
+        do {
+            readedDocuments = getNextBatch(BATCH_SIZE);
+            allDocuments.addAll(readedDocuments);
+        } while(readedDocuments.isEmpty());
+
+        return allDocuments;
+    }
+
+    @Override
+    public List<ToroDocument> getNextBatch(int maxResults) {
         Preconditions.checkArgument(maxResults > 0, "max results must be at least 1, but "+maxResults+" was recived");
-        
+
         if (!didCursor.hasNext()) {
             return Collections.emptyList();
         }
+
         
-        DocPartResults<ResultSet> docPartResults;
-        try {
-            docPartResults = sqlInterface.getReadInterface().getCollectionResultSets(
-                    dsl, metaDatabase, metaCollection, didCursor, maxResults);
+        try (DocPartResultBatch batch = sqlInterface.getReadInterface().getCollectionResultSets(
+                    dsl, metaDatabase, metaCollection, didCursor, maxResults)) {
+            return r2dTranslator.translate(batch);
         } catch(SQLException ex) {
             sqlInterface.getErrorHandler().handleRollbackException(Context.FETCH, ex);
             
             throw new SystemException(ex);
         }
-        
-        return r2dTranslator.translate(docPartResults);
     }
 
     @Override
-    public Collection<ToroDocument> readAllDocuments() {
-        List<ToroDocument> allDocuments = new ArrayList<>();
-        
-        Collection<ToroDocument> readedDocuments = Collections.emptyList();
-        do {
-            readedDocuments = readDocuments(BATCH_SIZE);
-            allDocuments.addAll(readedDocuments);
-        } while(readedDocuments.isEmpty());
-        
-        return allDocuments;
+    public void forEachRemaining(Consumer<? super ToroDocument> action) {
+        getRemaining().forEach(action);
     }
 
     @Override

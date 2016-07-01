@@ -20,13 +20,12 @@
 
 package com.torodb.core.d2r;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-
 import com.torodb.core.transaction.RollbackException;
 import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.kvdocument.values.KVValue;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 public interface R2DBackendTranslator<Result, BackendInternalFields extends InternalFields> {
     /**

@@ -20,7 +20,6 @@
 
 package com.torodb.integration.backend;
 
-import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -36,7 +35,6 @@ import com.torodb.backend.SqlHelper;
 import com.torodb.backend.SqlInterface;
 import com.torodb.backend.TableRefComparator;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
-import com.torodb.backend.d2r.R2DBackendTranslatorImpl;
 import com.torodb.backend.meta.SchemaUpdater;
 import com.torodb.backend.meta.SnapshotUpdater;
 import com.torodb.core.TableRef;
@@ -44,7 +42,7 @@ import com.torodb.core.TableRefFactory;
 import com.torodb.core.d2r.CollectionData;
 import com.torodb.core.d2r.D2RTranslator;
 import com.torodb.core.d2r.DocPartData;
-import com.torodb.core.d2r.DocPartResults;
+import com.torodb.core.d2r.DocPartResult;
 import com.torodb.core.d2r.IdentifierFactory;
 import com.torodb.core.d2r.R2DTranslator;
 import com.torodb.core.document.ToroDocument;
@@ -63,7 +61,7 @@ import com.torodb.d2r.D2RTranslatorStack;
 import com.torodb.d2r.IdentifierFactoryImpl;
 import com.torodb.d2r.MockIdentifierInterface;
 import com.torodb.d2r.MockRidGenerator;
-import com.torodb.d2r.R2DBackedTranslator;
+import com.torodb.d2r.R2DTranslatorImpl;
 import com.torodb.kvdocument.conversion.json.JacksonJsonParser;
 import com.torodb.kvdocument.conversion.json.JsonParser;
 import com.torodb.kvdocument.values.KVDocument;
@@ -163,10 +161,9 @@ public abstract class AbstractBackendTest {
         }
     }
 
-    @SuppressWarnings({ "unchecked", "rawtypes" })
     protected Collection<ToroDocument> readDocuments(MetaDatabase metaDatabase, MetaCollection metaCollection,
-            DocPartResults<ResultSet> docPartResultSets) {
-        R2DTranslator r2dTranslator = new R2DBackedTranslator(new R2DBackendTranslatorImpl(sqlInterface, sqlHelper, metaDatabase, metaCollection));
+            Iterator<DocPartResult> docPartResultSets) {
+        R2DTranslator r2dTranslator = new R2DTranslatorImpl();
         Collection<ToroDocument> readedDocuments = r2dTranslator.translate(docPartResultSets);
         return readedDocuments;
     }

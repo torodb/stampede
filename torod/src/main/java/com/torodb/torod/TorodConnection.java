@@ -30,7 +30,10 @@ public class TorodConnection implements AutoCloseable {
         Preconditions.checkState(!closed, "This connection is closed");
         Preconditions.checkState(currentTransaction == null, "Another transaction is currently under execution. Transaction is " + currentTransaction);
 
-        throw new UnsupportedOperationException("Not supported yet.");
+        ReadOnlyTorodTransaction transaction = new ReadOnlyTorodTransaction(this);
+        currentTransaction = transaction;
+
+        return transaction;
     }
 
     public WriteTorodTransaction openWriteTransaction() {
@@ -61,7 +64,7 @@ public class TorodConnection implements AutoCloseable {
         }
     }
 
-    void onTransactionClosed(WriteTorodTransaction transaction) {
+    void onTransactionClosed(TorodTransaction transaction) {
         if (currentTransaction == null) {
             LOGGER.debug("Recived an on transaction close notification, but there is no current transaction");
             return ;

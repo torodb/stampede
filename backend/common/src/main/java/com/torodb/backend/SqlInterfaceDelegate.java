@@ -15,41 +15,12 @@
  *     along with ToroDB. If not, see <http://www.gnu.org/licenses/>.
  *
  *     Copyright (c) 2014, 8Kdata Technology
- *     
+ *
  */
-
 package com.torodb.backend;
 
-import com.torodb.backend.converters.jooq.DataTypeForKV;
-import com.torodb.backend.index.NamedDbIndex;
-import com.torodb.backend.tables.*;
-import com.torodb.backend.tables.records.*;
-import com.torodb.core.TableRef;
-import com.torodb.core.backend.DidCursor;
 import com.torodb.core.backend.IdentifierConstraints;
-import com.torodb.core.d2r.DocPartData;
-import com.torodb.core.d2r.DocPartResults;
-import com.torodb.core.exceptions.user.UserException;
-import com.torodb.core.transaction.metainf.FieldType;
-import com.torodb.core.transaction.metainf.MetaCollection;
-import com.torodb.core.transaction.metainf.MetaDatabase;
-import com.torodb.core.transaction.metainf.MetaDocPart;
-import com.torodb.core.transaction.metainf.MetaField;
-import com.torodb.kvdocument.values.KVValue;
-
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import javax.inject.Inject;
-import javax.sql.DataSource;
-import org.jooq.DSLContext;
-import org.jooq.Field;
-import org.jooq.SQLDialect;
-import org.jooq.exception.DataAccessException;
 
 public class SqlInterfaceDelegate implements SqlInterface {
 
@@ -63,7 +34,7 @@ public class SqlInterfaceDelegate implements SqlInterface {
     private final ErrorHandler errorHandler;
     private final DslContextFactory dslContextFactory;
     private final DbBackend dbBackend;
-    
+
     @Inject
     public SqlInterfaceDelegate(MetaDataReadInterface metaDataReadInterface,
             MetaDataWriteInterface metaDataWriteInterface, DataTypeProvider dataTypeProvider,

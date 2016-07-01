@@ -1,20 +1,9 @@
 package com.torodb.d2r;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Table;
 import com.torodb.core.TableRef;
-import com.torodb.core.d2r.DocPartResult;
-import com.torodb.core.d2r.DocPartResults;
-import com.torodb.core.d2r.InternalFields;
-import com.torodb.core.d2r.R2DBackendTranslator;
 import com.torodb.core.d2r.R2DTranslator;
 import com.torodb.core.document.ToroDocument;
 import com.torodb.core.transaction.metainf.FieldType;
@@ -25,17 +14,14 @@ import com.torodb.kvdocument.values.KVBoolean;
 import com.torodb.kvdocument.values.KVDocument;
 import com.torodb.kvdocument.values.KVValue;
 import com.torodb.kvdocument.values.heap.ListKVArray;
+import java.util.*;
+import com.torodb.core.d2r.DocPartResult;
+import com.torodb.core.d2r.DocPartResultRow;
 
-public class R2DBackedTranslator<Result extends AutoCloseable, BackendInternalFields extends InternalFields> implements R2DTranslator<Result> {
-	
-    private final R2DBackendTranslator<Result, BackendInternalFields> backendTranslator;
-    
-    public R2DBackedTranslator(R2DBackendTranslator<Result, BackendInternalFields> backendTranslator) {
-        this.backendTranslator = backendTranslator;
-	}
+public class R2DTranslatorImpl implements R2DTranslator {
 
     @Override
-    public Collection<ToroDocument> translate(DocPartResults<Result> docPartResults) {
+    public List<ToroDocument> translate(Iterator<DocPartResult> docPartResultIt) {
         ImmutableList.Builder<ToroDocument> readedDocuments = ImmutableList.builder();
         
         Table<TableRef, Integer, Map<String, List<KVValue<?>>>> currentFieldDocPartTable = 
@@ -44,10 +30,10 @@ public class R2DBackedTranslator<Result extends AutoCloseable, BackendInternalFi
                 HashBasedTable.<TableRef, Integer, Map<String, List<KVValue<?>>>>create();
         
         int previousDepth = -1;
-        Iterator<DocPartResult<Result>> docPartResultIterator = docPartResults.iterator();
-        while(docPartResultIterator.hasNext()) {
-            DocPartResult<Result> docPartResultSet = docPartResultIterator.next();
-            MetaDocPart metaDocPart = docPartResultSet.getMetaDocPart();
+        
+        while(docPartResultIt.hasNext()) {
+            DocPartResult docPartResult = docPartResultIt.next();
+            MetaDocPart metaDocPart = docPartResult.getMetaDocPart();
             TableRef tableRef = metaDocPart.getTableRef();
             
             if (previousDepth != -1 && previousDepth != tableRef.getDepth()) {
@@ -72,9 +58,7 @@ public class R2DBackedTranslator<Result extends AutoCloseable, BackendInternalFi
                 currentFieldDocPartRow = currentFieldDocPartTable.row(tableRef.getParent().get());
             }
             
-            Result result = docPartResultSet.getResult();
-            
-            readResult(metaDocPart, tableRef, result, 
+            readResult(metaDocPart, tableRef, docPartResult,
                     currentFieldDocPartRow, childFieldDocPartRow, readedDocuments);
         }
         
@@ -82,17 +66,19 @@ public class R2DBackedTranslator<Result extends AutoCloseable, BackendInternalFi
         return readedDocuments.build();
     }
     
-    private void readResult(MetaDocPart metaDocPart, TableRef tableRef, Result result,
+    private void readResult(MetaDocPart metaDocPart, TableRef tableRef, DocPartResult docPartResult,
             Map<Integer, Map<String, List<KVValue<?>>>> currentFieldDocPartRow,
             Map<Integer, Map<String, List<KVValue<?>>>> childFieldDocPartRow,
             ImmutableList.Builder<ToroDocument> readedDocuments) {
-        while (backendTranslator.next(result)) {
+        while (docPartResult.hasNext()) {
         	KVDocument.Builder documentBuilder = new KVDocument.Builder();
-            BackendInternalFields internalFields = backendTranslator.readInternalFields(metaDocPart, result);
-            Integer did = internalFields.getDid();
-            Integer rid = internalFields.getRid();
-            Integer pid = internalFields.getPid();
-            Integer seq = internalFields.getSeq();
+
+            DocPartResultRow row = docPartResult.next();
+
+            Integer did = row.getDid();
+            Integer rid = row.getRid();
+            Integer pid = row.getPid();
+            Integer seq = row.getSeq();
             
             Map<String, List<KVValue<?>>> childFieldDocPartCell = childFieldDocPartRow.get(rid);
             //TODO: ensure MetaField order using ResultSet meta data
@@ -105,7 +91,7 @@ public class R2DBackedTranslator<Result extends AutoCloseable, BackendInternalFi
                 assert seq != null : "found scalar value outside of an array";
                 
                 MetaScalar metaScalar = metaScalarIterator.next();
-                KVValue<?> value = backendTranslator.getValue(metaScalar.getType(), result, internalFields, fieldIndex);
+                KVValue<?> value = row.getUserValue(fieldIndex, metaScalar.getType());
                 fieldIndex++;
                 
                 if (value != null) {
@@ -125,7 +111,7 @@ public class R2DBackedTranslator<Result extends AutoCloseable, BackendInternalFi
                     .streamFields().iterator();
             while (metaFieldIterator.hasNext()) {
                 MetaField metaField = metaFieldIterator.next();
-                KVValue<?> value = backendTranslator.getValue(metaField.getType(), result, internalFields, fieldIndex);
+                KVValue<?> value = row.getUserValue(fieldIndex, metaField.getType());
                 fieldIndex++;
                 if (value != null) {
                 	if (metaField.getType() == FieldType.CHILD) {

@@ -1,14 +1,26 @@
 
 package com.torodb.torod;
 
+import com.torodb.core.transaction.InternalTransaction;
+import com.torodb.core.transaction.ReadOnlyInternalTransaction;
+
 /**
  *
  */
-public class ReadOnlyTorodTransaction implements TorodTransaction {
+public class ReadOnlyTorodTransaction extends TorodTransaction {
 
-    @Override
-    public void close() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    private final ReadOnlyInternalTransaction internalTransaction;
+
+    public ReadOnlyTorodTransaction(TorodConnection connection) {
+        super(connection);
+        this.internalTransaction = connection
+                .getServer()
+                .getInternalTransactionManager()
+                .openReadTransaction(getConnection().getBackendConnection());
     }
 
+    @Override
+    protected InternalTransaction getInternalTransaction() {
+        return internalTransaction;
+    }
 }

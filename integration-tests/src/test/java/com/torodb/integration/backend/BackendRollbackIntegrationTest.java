@@ -236,7 +236,7 @@ public class BackendRollbackIntegrationTest extends AbstractBackendTest {
             DSLContext leftDsl = sqlInterface.getDslContextFactory().createDSLContext(leftConnection);
             DSLContext rightDsl = sqlInterface.getDslContextFactory().createDSLContext(rightConnection);
             
-            rightThread.step(() -> sqlInterface.getReadInterface().getAllCollectionDids(rightDsl, metaDatabase, metaDocPart))
+            rightThread.step(() -> sqlInterface.getReadInterface().getAllCollectionDids(rightDsl, metaDatabase, metaCollection))
                 .waitQueuedSteps();
             leftThread.step(() -> sqlInterface.getWriteInterface().deleteCollectionDocParts(leftDsl, "test", metaCollection, generatedDids))
                 .waitQueuedSteps();

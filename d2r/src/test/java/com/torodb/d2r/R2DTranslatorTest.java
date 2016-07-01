@@ -1,20 +1,9 @@
 package com.torodb.d2r;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
-import java.util.Collection;
-
-import org.junit.Test;
-
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.torodb.core.TableRef;
 import com.torodb.core.TableRefFactory;
 import com.torodb.core.d2r.DocPartResult;
-import com.torodb.core.d2r.DocPartResults;
-import com.torodb.core.d2r.InternalFields;
 import com.torodb.core.d2r.R2DTranslator;
 import com.torodb.core.document.ToroDocument;
 import com.torodb.core.impl.TableRefFactoryImpl;
@@ -24,6 +13,12 @@ import com.torodb.kvdocument.values.KVArray;
 import com.torodb.kvdocument.values.KVDocument;
 import com.torodb.kvdocument.values.KVNull;
 import com.torodb.kvdocument.values.KVValue;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import org.junit.Test;
+
+import static org.junit.Assert.*;
 
 public class R2DTranslatorTest {
 
@@ -32,7 +27,7 @@ public class R2DTranslatorTest {
 	
 	private static final boolean IsArray = true;
 	private static final boolean IsDocument = false;
-	
+    
 	/*
 	  Document:
   		{ 
@@ -45,14 +40,12 @@ public class R2DTranslatorTest {
 		builder.addMetaField("name", "name_s", FieldType.STRING);
 		MetaDocPart rootDocPart = builder.buildMetaDocPart();
 		builder.addRow(1, null, 1, null, "jero");
-		MockedResultSet root = builder.getResultSet();
+		DocPartResult root = builder.getResultSet();
 		
-		DocPartResult<MockedResultSet> resultSet1 = new DocPartResult<MockedResultSet>(rootDocPart, root);
-		ImmutableList<DocPartResult<MockedResultSet>> lst = new ImmutableList.Builder<DocPartResult<MockedResultSet>>().add(resultSet1).build();
-		DocPartResults<MockedResultSet> docPartResultSets = new DocPartResults<>(lst);
+        List<DocPartResult> lst = Collections.singletonList(root);
 		
-        R2DTranslator<MockedResultSet> r2dTranslator = new R2DBackedTranslator<MockedResultSet, InternalFields>(new BackendTranslatorMocked());
-        Collection<ToroDocument> readedDocuments = r2dTranslator.translate(docPartResultSets);
+        R2DTranslator r2dTranslator = new R2DTranslatorImpl();
+        Collection<ToroDocument> readedDocuments = r2dTranslator.translate(lst.iterator());
         assertEquals(1, readedDocuments.size());
         KVDocument doc = readedDocuments.iterator().next().getRoot();
         assertEquals("jero",doc.get("name").getValue());
@@ -73,14 +66,12 @@ public class R2DTranslatorTest {
 		builder.addMetaField("address", "address_n", FieldType.NULL);
 		MetaDocPart rootDocPart = builder.buildMetaDocPart();
 		builder.addRow(1, null, 1, null, "jero", null, true);
-		MockedResultSet root = builder.getResultSet();
+		MockedDocPartResult root = builder.getResultSet();
 		
-		DocPartResult<MockedResultSet> resultSet1 = new DocPartResult<MockedResultSet>(rootDocPart, root);
-		ImmutableList<DocPartResult<MockedResultSet>> lst = new ImmutableList.Builder<DocPartResult<MockedResultSet>>().add(resultSet1).build();
-		DocPartResults<MockedResultSet> docPartResultSets = new DocPartResults<>(lst);
+		List<DocPartResult> lst = Collections.singletonList(root);
 		
-        R2DTranslator<MockedResultSet> r2dTranslator = new R2DBackedTranslator<MockedResultSet, InternalFields>(new BackendTranslatorMocked());
-        Collection<ToroDocument> readedDocuments = r2dTranslator.translate(docPartResultSets);
+        R2DTranslator r2dTranslator = new R2DTranslatorImpl();
+        Collection<ToroDocument> readedDocuments = r2dTranslator.translate(lst.iterator());
         assertEquals(1, readedDocuments.size());
         KVDocument doc = readedDocuments.iterator().next().getRoot();
         assertEquals("jero",doc.get("name").getValue());
@@ -100,14 +91,12 @@ public class R2DTranslatorTest {
 		builder.addMetaField("address", "address_s", FieldType.STRING);
 		MetaDocPart rootDocPart = builder.buildMetaDocPart();
 		builder.addRow(1, null, 1, null, "jero", null);
-		MockedResultSet root = builder.getResultSet();
+		MockedDocPartResult root = builder.getResultSet();
 		
-		DocPartResult<MockedResultSet> resultSet1 = new DocPartResult<MockedResultSet>(rootDocPart, root);
-		ImmutableList<DocPartResult<MockedResultSet>> lst = new ImmutableList.Builder<DocPartResult<MockedResultSet>>().add(resultSet1).build();
-		DocPartResults<MockedResultSet> docPartResultSets = new DocPartResults<>(lst);
+		List<DocPartResult> lst = Collections.singletonList(root);
 		
-        R2DTranslator<MockedResultSet> r2dTranslator = new R2DBackedTranslator<MockedResultSet, InternalFields>(new BackendTranslatorMocked());
-        Collection<ToroDocument> readedDocuments = r2dTranslator.translate(docPartResultSets);
+        R2DTranslator r2dTranslator = new R2DTranslatorImpl();
+        Collection<ToroDocument> readedDocuments = r2dTranslator.translate(lst.iterator());
         assertEquals(1, readedDocuments.size());
         KVDocument doc = readedDocuments.iterator().next().getRoot();
         assertEquals("jero", doc.get("name").getValue());
@@ -130,14 +119,12 @@ public class R2DTranslatorTest {
 		builder.addMetaField("age", "age_i", FieldType.INTEGER);
 		MetaDocPart rootDocPart = builder.buildMetaDocPart();
 		builder.addRow(1, null, 1, null, "jero","my home",25);
-		MockedResultSet root = builder.getResultSet();
+		MockedDocPartResult root = builder.getResultSet();
 		
-		DocPartResult<MockedResultSet> resultSet1 = new DocPartResult<MockedResultSet>(rootDocPart, root);
-		ImmutableList<DocPartResult<MockedResultSet>> lst = new ImmutableList.Builder<DocPartResult<MockedResultSet>>().add(resultSet1).build();
-		DocPartResults<MockedResultSet> docPartResultSets = new DocPartResults<>(lst);
+		List<DocPartResult> lst = Collections.singletonList(root);
 		
-        R2DTranslator<MockedResultSet> r2dTranslator = new R2DBackedTranslator<MockedResultSet, InternalFields>(new BackendTranslatorMocked());
-        Collection<ToroDocument> readedDocuments = r2dTranslator.translate(docPartResultSets);
+        R2DTranslator r2dTranslator = new R2DTranslatorImpl();
+        Collection<ToroDocument> readedDocuments = r2dTranslator.translate(lst.iterator());
         assertEquals(1, readedDocuments.size());
         KVDocument doc = readedDocuments.iterator().next().getRoot();
         assertEquals("jero",doc.get("name").getValue());
@@ -162,14 +149,12 @@ public class R2DTranslatorTest {
 		MetaDocPart rootDocPart = builder.buildMetaDocPart();
 		builder.addRow(1, null, 1, null, "jero");
 		builder.addRow(2, null, 2, null, "john");
-		MockedResultSet root = builder.getResultSet();
+		MockedDocPartResult root = builder.getResultSet();
 		
-		DocPartResult<MockedResultSet> resultSet1 = new DocPartResult<MockedResultSet>(rootDocPart, root);
-		ImmutableList<DocPartResult<MockedResultSet>> lst = new ImmutableList.Builder<DocPartResult<MockedResultSet>>().add(resultSet1).build();
-		DocPartResults<MockedResultSet> docPartResultSets = new DocPartResults<>(lst);
+		List<DocPartResult> lst = Collections.singletonList(root);
 		
-        R2DTranslator<MockedResultSet> r2dTranslator = new R2DBackedTranslator<MockedResultSet, InternalFields>(new BackendTranslatorMocked());
-        ToroDocument[] readedDocuments = r2dTranslator.translate(docPartResultSets).toArray(new ToroDocument[0]);
+        R2DTranslator r2dTranslator = new R2DTranslatorImpl();
+        ToroDocument[] readedDocuments = r2dTranslator.translate(lst.iterator()).toArray(new ToroDocument[0]);
         assertEquals(2, readedDocuments.length);
         
         KVDocument doc1 = readedDocuments[0].getRoot();
@@ -197,9 +182,7 @@ public class R2DTranslatorTest {
 		builder.addMetaField("address", "address_e", FieldType.CHILD);
 		MetaDocPart rootDocPart = builder.buildMetaDocPart();
 		builder.addRow(1, null, 1, null, "jero",IsDocument);
-		MockedResultSet root = builder.getResultSet();
-		
-		DocPartResult<MockedResultSet> resultSet1 = new DocPartResult<MockedResultSet>(rootDocPart, root);
+		MockedDocPartResult root = builder.getResultSet();
 		
 		/* Second Level */
 		TableRef secondRef = fact.createChild(rootRef, "address");
@@ -207,19 +190,12 @@ public class R2DTranslatorTest {
 		secondBuilder.addMetaField("street", "street_s", FieldType.STRING);
 		MetaDocPart secondLevelDocPart = secondBuilder.buildMetaDocPart();
 		secondBuilder.addRow(1, 1, 20, null, "myhouse");
-		MockedResultSet secondLevel = secondBuilder.getResultSet();
+		MockedDocPartResult secondLevel = secondBuilder.getResultSet();
 		
-		DocPartResult<MockedResultSet> resultSet2 = new DocPartResult<MockedResultSet>(secondLevelDocPart, secondLevel);
+		List<DocPartResult> lst = Lists.newArrayList(secondLevel, root);
 		
-		
-		ImmutableList<DocPartResult<MockedResultSet>> lst = new ImmutableList.Builder<DocPartResult<MockedResultSet>>()
-				.add(resultSet2)
-				.add(resultSet1)
-			.build();
-		DocPartResults<MockedResultSet> docPartResultSets = new DocPartResults<>(lst);
-		
-        R2DTranslator<MockedResultSet> r2dTranslator = new R2DBackedTranslator<MockedResultSet, InternalFields>(new BackendTranslatorMocked());
-        Collection<ToroDocument> readedDocuments = r2dTranslator.translate(docPartResultSets);
+        R2DTranslator r2dTranslator = new R2DTranslatorImpl();
+        Collection<ToroDocument> readedDocuments = r2dTranslator.translate(lst.iterator());
         assertEquals(1, readedDocuments.size());
         KVDocument doc = readedDocuments.iterator().next().getRoot();
         assertEquals("jero",doc.get("name").getValue());
@@ -242,8 +218,7 @@ public class R2DTranslatorTest {
 		builder.addMetaField("numbers", "numbers_e", FieldType.CHILD);
 		MetaDocPart rootDocPart = builder.buildMetaDocPart();
 		builder.addRow(1, null, 1, null, "jero",IsArray);
-		MockedResultSet root = builder.getResultSet();
-		DocPartResult<MockedResultSet> resultSet1 = new DocPartResult<MockedResultSet>(rootDocPart, root);
+		MockedDocPartResult root = builder.getResultSet();
 		
 		/* Second Level */
 		TableRef secondRef = fact.createChild(rootRef, "numbers");
@@ -254,19 +229,13 @@ public class R2DTranslatorTest {
 		secondBuilder.addRow(1, 1, 21, 1,  8);
 		secondBuilder.addRow(1, 1, 23, 2, 15);
 		secondBuilder.addRow(1, 1, 24, 3, 16);
-		MockedResultSet secondLevel = secondBuilder.getResultSet();
+		MockedDocPartResult secondLevel = secondBuilder.getResultSet();
 
-		DocPartResult<MockedResultSet> resultSet2 = new DocPartResult<MockedResultSet>(secondLevelDocPart, secondLevel);
 		
+		List<DocPartResult> lst = Lists.newArrayList(secondLevel, root);
 		
-		ImmutableList<DocPartResult<MockedResultSet>> lst = new ImmutableList.Builder<DocPartResult<MockedResultSet>>()
-				.add(resultSet2)
-				.add(resultSet1)
-			.build();
-		DocPartResults<MockedResultSet> docPartResultSets = new DocPartResults<>(lst);
-		
-        R2DTranslator<MockedResultSet> r2dTranslator = new R2DBackedTranslator<MockedResultSet, InternalFields>(new BackendTranslatorMocked());
-        Collection<ToroDocument> readedDocuments = r2dTranslator.translate(docPartResultSets);
+        R2DTranslator r2dTranslator = new R2DTranslatorImpl();
+        Collection<ToroDocument> readedDocuments = r2dTranslator.translate(lst.iterator());
         assertEquals(1, readedDocuments.size());
         KVDocument doc = readedDocuments.iterator().next().getRoot();
         assertEquals("jero",doc.get("name").getValue());
@@ -297,8 +266,7 @@ public class R2DTranslatorTest {
 		MetaDocPart rootDocPart = builder.buildMetaDocPart();
 		
 		builder.addRow(did, null, did, null, "jero",IsArray);
-		MockedResultSet root = builder.getResultSet();
-		DocPartResult<MockedResultSet> resultSet1 = new DocPartResult<MockedResultSet>(rootDocPart, root);
+		MockedDocPartResult root = builder.getResultSet();
 		
 		/* Second Level */
 		int pid = did;
@@ -310,8 +278,7 @@ public class R2DTranslatorTest {
 		
 		secondBuilder.addRow(did, pid, 20, 0,  666,   null);
 		secondBuilder.addRow(did, pid, 21, 1, null,IsArray);
-		MockedResultSet secondLevel = secondBuilder.getResultSet();
-		DocPartResult<MockedResultSet> resultSet2 = new DocPartResult<MockedResultSet>(secondLevelDocPart, secondLevel);
+		MockedDocPartResult secondLevel = secondBuilder.getResultSet();
 		
 		/* Third Level */
 		int pid1 = 21;
@@ -324,18 +291,15 @@ public class R2DTranslatorTest {
 		thirdBuilder.addRow(did, pid1, 31, 1,  8);
 		thirdBuilder.addRow(did, pid1, 33, 2, 15);
 		thirdBuilder.addRow(did, pid1, 34, 3, 16);
-		MockedResultSet thirdLevel = thirdBuilder.getResultSet();
-		DocPartResult<MockedResultSet> resultSet3 = new DocPartResult<MockedResultSet>(thirdLevelDocPart, thirdLevel);
+		MockedDocPartResult thirdLevel = thirdBuilder.getResultSet();
 		
-		ImmutableList<DocPartResult<MockedResultSet>> lst = new ImmutableList.Builder<DocPartResult<MockedResultSet>>()
-				.add(resultSet3)
-				.add(resultSet2)
-				.add(resultSet1)
-			.build();
-		DocPartResults<MockedResultSet> docPartResultSets = new DocPartResults<>(lst);
+		List<DocPartResult> lst = Lists.newArrayList(
+				thirdLevel,
+				secondLevel,
+				root);
 		
-        R2DTranslator<MockedResultSet> r2dTranslator = new R2DBackedTranslator<MockedResultSet, InternalFields>(new BackendTranslatorMocked());
-        Collection<ToroDocument> readedDocuments = r2dTranslator.translate(docPartResultSets);
+        R2DTranslator r2dTranslator = new R2DTranslatorImpl();
+        Collection<ToroDocument> readedDocuments = r2dTranslator.translate(lst.iterator());
         assertEquals(1, readedDocuments.size());
         KVDocument doc = readedDocuments.iterator().next().getRoot();
         assertEquals("jero",doc.get("name").getValue());
@@ -377,8 +341,7 @@ public class R2DTranslatorTest {
 		MetaDocPart rootDocPart = builder.buildMetaDocPart();
 		
 		builder.addRow(did, null, did, null, "jero",IsArray);
-		MockedResultSet root = builder.getResultSet();
-		DocPartResult<MockedResultSet> resultSet1 = new DocPartResult<MockedResultSet>(rootDocPart, root);
+		MockedDocPartResult root = builder.getResultSet();
 		
 		/* Second Level */
 		int pid = did;
@@ -390,17 +353,14 @@ public class R2DTranslatorTest {
 		
 		secondBuilder.addRow(did, pid, 20, 0,  666,     null);
 		secondBuilder.addRow(did, pid, 21, 1, null, "myhome");
-		MockedResultSet secondLevel = secondBuilder.getResultSet();
-		DocPartResult<MockedResultSet> resultSet2 = new DocPartResult<MockedResultSet>(secondLevelDocPart, secondLevel);
+		MockedDocPartResult secondLevel = secondBuilder.getResultSet();
 		
-		ImmutableList<DocPartResult<MockedResultSet>> lst = new ImmutableList.Builder<DocPartResult<MockedResultSet>>()
-				.add(resultSet2)
-				.add(resultSet1)
-			.build();
-		DocPartResults<MockedResultSet> docPartResultSets = new DocPartResults<>(lst);
+		List<DocPartResult> lst = Lists.newArrayList(
+				secondLevel,
+				root);
 		
-        R2DTranslator<MockedResultSet> r2dTranslator = new R2DBackedTranslator<MockedResultSet, InternalFields>(new BackendTranslatorMocked());
-        Collection<ToroDocument> readedDocuments = r2dTranslator.translate(docPartResultSets);
+        R2DTranslator r2dTranslator = new R2DTranslatorImpl();
+        Collection<ToroDocument> readedDocuments = r2dTranslator.translate(lst.iterator());
         assertEquals(1, readedDocuments.size());
         KVDocument doc = readedDocuments.iterator().next().getRoot();
         assertEquals("jero",doc.get("name").getValue());
