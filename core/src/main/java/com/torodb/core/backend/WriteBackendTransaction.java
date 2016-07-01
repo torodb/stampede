@@ -19,10 +19,19 @@
  */
 package com.torodb.core.backend;
 
+import java.util.Collection;
+import java.util.function.Function;
+
 import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.transaction.RollbackException;
-import com.torodb.core.transaction.metainf.*;
+import com.torodb.core.transaction.metainf.MetaCollection;
+import com.torodb.core.transaction.metainf.MetaDatabase;
+import com.torodb.core.transaction.metainf.MetaDocPart;
+import com.torodb.core.transaction.metainf.MetaField;
+import com.torodb.core.transaction.metainf.MetaScalar;
+import com.torodb.core.transaction.metainf.MutableMetaCollection;
+import com.torodb.kvdocument.values.KVDocument;
 import com.torodb.kvdocument.values.KVValue;
 
 public interface WriteBackendTransaction extends BackendTransaction {
@@ -131,10 +140,7 @@ public interface WriteBackendTransaction extends BackendTransaction {
      */
     public void insert(MetaDatabase db, MetaCollection col, DocPartData data) throws RollbackException, UserException;
 
-    public long deleteAll(MetaDatabase db, MetaCollection col);
-
-    public long deleteByField(MetaDatabase db, MetaCollection col, 
-            MetaDocPart docPart, MetaField field, KVValue<?> value);
+    public void deleteDids(MetaDatabase db, MetaCollection col, Collection<Integer> dids);
     
     public void commit() throws UserException, RollbackException;
 

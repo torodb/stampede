@@ -20,20 +20,23 @@
 
 package com.torodb.backend;
 
+import java.sql.SQLException;
+import java.util.Collection;
+import java.util.Iterator;
+
 import com.google.common.base.Preconditions;
 import com.torodb.backend.ErrorHandler.Context;
 import com.torodb.core.TableRef;
-import com.torodb.core.backend.DidCursor;
 import com.torodb.core.backend.WriteBackendTransaction;
 import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.d2r.R2DTranslator;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.transaction.RollbackException;
-import com.torodb.core.transaction.metainf.*;
-import com.torodb.kvdocument.values.KVValue;
-
-import java.sql.SQLException;
-import java.util.Iterator;
+import com.torodb.core.transaction.metainf.MetaCollection;
+import com.torodb.core.transaction.metainf.MetaDatabase;
+import com.torodb.core.transaction.metainf.MetaDocPart;
+import com.torodb.core.transaction.metainf.MetaField;
+import com.torodb.core.transaction.metainf.MetaScalar;
 
 public class WriteBackendTransactionImpl extends BackendTransactionImpl implements WriteBackendTransaction {
 
@@ -163,27 +166,10 @@ public class WriteBackendTransactionImpl extends BackendTransactionImpl implemen
     }
 
     @Override
-    public long deleteAll(MetaDatabase db, MetaCollection col) {
+    public void deleteDids(MetaDatabase db, MetaCollection col, Collection<Integer> dids) {
         Preconditions.checkState(!isClosed(), "This transaction is closed");
 
-        try {
-            DidCursor didCursor = getSqlInterface().getReadInterface().getAllCollectionDids(getDsl(), db, col);
-            return getSqlInterface().getWriteInterface().deleteCollectionDocParts(getDsl(), db.getIdentifier(), col, didCursor);
-        } catch (SQLException ex) {
-            throw getSqlInterface().getErrorHandler().handleException(Context.FETCH, ex);
-        }
-    }
-
-    @Override
-    public long deleteByField(MetaDatabase db, MetaCollection col, MetaDocPart docPart, MetaField field, KVValue<?> value) {
-        Preconditions.checkState(!isClosed(), "This transaction is closed");
-
-        try {
-            DidCursor didCursor = getSqlInterface().getReadInterface().getCollectionDidsWithFieldEqualsTo(getDsl(), db, col, docPart, field, value);
-            return getSqlInterface().getWriteInterface().deleteCollectionDocParts(getDsl(), db.getIdentifier(), col, didCursor);
-        } catch (SQLException ex) {
-            throw getSqlInterface().getErrorHandler().handleException(Context.FETCH, ex);
-        }
+        getSqlInterface().getWriteInterface().deleteCollectionDocParts(getDsl(), db.getIdentifier(), col, dids);
     }
 
     @Override

@@ -73,23 +73,41 @@ public abstract class AbstractWriteInterface implements WriteInterface {
         Connection c = dsl.configuration().connectionProvider().acquire();
         try{
             int maxBatchSize = 100;
-            long updated = 0;
+            long deleted = 0;
             
             while (didCursor.hasNext()) {
                 Collection<Integer> dids = didCursor.getNextBatch(maxBatchSize);
-                Iterator<? extends MetaDocPart> iterator = metaCollection.streamContainedMetaDocParts()
-                        .sorted(TableRefComparator.MetaDocPart.DESC).iterator();
-    	        while (iterator.hasNext()){
-    	        	MetaDocPart metaDocPart = iterator.next();
-            	    String statement = getDeleteDocPartsStatement(schemaName, metaDocPart.getIdentifier(), dids);
-            	    sqlHelper.executeUpdate(c, statement, Context.DELETE);
-    	        }
-    	        updated += dids.size();
+                deleteCollectionDocParts(c, schemaName, metaCollection, dids);
+                deleted += dids.size();
             }
-	        
-	        return updated;
+            
+            return deleted;
         }finally {
-        	dsl.configuration().connectionProvider().release(c);
+            dsl.configuration().connectionProvider().release(c);
+        }
+    }
+
+    @Override
+    public void deleteCollectionDocParts(@Nonnull DSLContext dsl,
+            @Nonnull String schemaName, @Nonnull MetaCollection metaCollection,
+            @Nonnull Collection<Integer> dids
+    ) {
+        Connection c = dsl.configuration().connectionProvider().acquire();
+        try{
+            deleteCollectionDocParts(c, schemaName, metaCollection, dids);
+        }finally {
+            dsl.configuration().connectionProvider().release(c);
+        }
+    }
+
+    private void deleteCollectionDocParts(Connection c, String schemaName, MetaCollection metaCollection,
+            Collection<Integer> dids) {
+        Iterator<? extends MetaDocPart> iterator = metaCollection.streamContainedMetaDocParts()
+                .sorted(TableRefComparator.MetaDocPart.DESC).iterator();
+        while (iterator.hasNext()){
+        	MetaDocPart metaDocPart = iterator.next();
+            String statement = getDeleteDocPartsStatement(schemaName, metaDocPart.getIdentifier(), dids);
+            sqlHelper.executeUpdate(c, statement, Context.DELETE);
         }
     }
 

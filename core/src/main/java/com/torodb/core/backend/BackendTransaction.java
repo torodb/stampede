@@ -20,6 +20,8 @@
 
 package com.torodb.core.backend;
 
+import java.util.Collection;
+
 import com.torodb.core.cursors.Cursor;
 import com.torodb.core.document.ToroDocument;
 import com.torodb.core.transaction.metainf.MetaCollection;
@@ -37,6 +39,13 @@ public interface BackendTransaction extends AutoCloseable {
 
     public Cursor<ToroDocument> findByField(MetaDatabase db, MetaCollection col,
             MetaDocPart docPart, MetaField field, KVValue<?> value);
+
+    public DidCursor findAllDids(MetaDatabase db, MetaCollection col);
+
+    public DidCursor findDidsByField(MetaDatabase db, MetaCollection col,
+            MetaDocPart docPart, MetaField field, KVValue<?> value);
+    
+    public Collection<ToroDocument> readDocuments(MetaDatabase db, MetaCollection col, Collection<Integer> dids);
     
     @Override
     public void close();

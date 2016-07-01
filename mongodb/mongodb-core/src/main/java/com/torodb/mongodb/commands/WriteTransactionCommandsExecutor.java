@@ -79,8 +79,8 @@ import com.torodb.mongodb.commands.impl.admin.DropCollectionImplementation;
 import com.torodb.mongodb.commands.impl.admin.DropDatabaseImplementation;
 import com.torodb.mongodb.commands.impl.diagnostic.PingImplementation;
 import com.torodb.mongodb.commands.impl.general.DeleteImplementation;
-import com.torodb.mongodb.commands.impl.general.FindImplementation;
 import com.torodb.mongodb.commands.impl.general.InsertImplementation;
+import com.torodb.mongodb.commands.impl.general.UpdateImplementation;
 import com.torodb.mongodb.core.WriteMongodTransaction;
 
 /**
@@ -268,13 +268,17 @@ public class WriteTransactionCommandsExecutor implements CommandsExecutor<WriteM
     static class MyGeneralCommandsImplementationBuilder extends GeneralCommandsImplementationsBuilder<WriteMongodTransaction> {
         private final InsertImplementation insertImpl;
         private final DeleteImplementation deleteImpl;
+        private final UpdateImplementation updateImpl;
 
         @Inject
-        public MyGeneralCommandsImplementationBuilder(InsertImplementation insertImpl,
-                DeleteImplementation deleteImpl) {
+        public MyGeneralCommandsImplementationBuilder(
+                InsertImplementation insertImpl,
+                DeleteImplementation deleteImpl,
+                UpdateImplementation updateImpl) {
             super();
             this.insertImpl = insertImpl;
             this.deleteImpl = deleteImpl;
+            this.updateImpl = updateImpl;
         }
 
         @Override
@@ -299,7 +303,7 @@ public class WriteTransactionCommandsExecutor implements CommandsExecutor<WriteM
 
         @Override
         public CommandImplementation<UpdateArgument, UpdateResult, WriteMongodTransaction> getUpdateImplementation() {
-            return NotImplementedCommandImplementation.build();
+            return updateImpl;
         }
 
     }

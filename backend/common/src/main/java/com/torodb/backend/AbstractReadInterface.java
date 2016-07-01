@@ -118,6 +118,12 @@ public abstract class AbstractReadInterface implements ReadInterface {
             @Nonnull DidCursor didCursor, int maxSize) throws SQLException {
         Collection<Integer> dids = didCursor.getNextBatch(maxSize);
 
+        return getCollectionResultSets(dsl, metaDatabase, metaCollection, dids);
+    }
+
+    @Override
+    public DocPartResultBatch getCollectionResultSets(DSLContext dsl, MetaDatabase metaDatabase,
+            MetaCollection metaCollection, Collection<Integer> dids) throws SQLException {
         ArrayList<DocPartResult> result = new ArrayList<>();
         Connection connection = dsl.configuration().connectionProvider().acquire();
         try {

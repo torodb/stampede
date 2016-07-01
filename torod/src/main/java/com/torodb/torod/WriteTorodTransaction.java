@@ -1,7 +1,9 @@
 
 package com.torodb.torod;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 import javax.annotation.Nonnull;
@@ -9,6 +11,9 @@ import javax.annotation.Nonnull;
 import com.google.common.base.Preconditions;
 import com.torodb.core.TableRef;
 import com.torodb.core.TableRefFactory;
+import com.torodb.core.backend.DidCursor;
+import com.torodb.core.backend.UpdateResult;
+import com.torodb.core.document.ToroDocument;
 import com.torodb.core.exceptions.user.CollectionNotFoundException;
 import com.torodb.core.exceptions.user.DatabaseNotFoundException;
 import com.torodb.core.exceptions.user.UserException;
@@ -97,7 +102,12 @@ public class WriteTorodTransaction extends TorodTransaction {
         if (col == null) {
             return 0;
         }
-        return internalTransaction.getBackendTransaction().deleteAll(db, col);
+
+        DidCursor didCursor = internalTransaction.getBackendTransaction().findAllDids(db, col);
+        Collection<Integer> dids = didCursor.getRemaining();
+        internalTransaction.getBackendTransaction().deleteDids(db, col, dids);
+        
+        return dids.size();
     }
 
     public long deleteByAttRef(String dbName, String colName, AttributeReference attRef, KVValue<?> value) {
@@ -134,7 +144,89 @@ public class WriteTorodTransaction extends TorodTransaction {
             return 0;
         }
 
-        return internalTransaction.getBackendTransaction().deleteByField(db, col, docPart, field, value);
+        DidCursor didCursor = internalTransaction.getBackendTransaction().findDidsByField(db, col, docPart, field, value);
+        Collection<Integer> dids = didCursor.getRemaining();
+        internalTransaction.getBackendTransaction().deleteDids(db, col, dids);
+        
+        return dids.size();
+    }
+
+    public UpdateResult updateAll(String dbName, String colName, Function<KVDocument, KVDocument> updateFunction) throws UserException {
+        MutableMetaDatabase db = internalTransaction.getMetaSnapshot().getMetaDatabaseByName(dbName);
+        if (db == null) {
+            return new UpdateResult(0, 0);
+        }
+        MutableMetaCollection col = db.getMetaCollectionByName(colName);
+        if (col == null) {
+            return new UpdateResult(0, 0);
+        }
+
+        DidCursor didCursor = internalTransaction.getBackendTransaction().findAllDids(db, col);
+        Collection<Integer> dids = didCursor.getRemaining();
+        Collection<ToroDocument> candidates = internalTransaction.getBackendTransaction().readDocuments(db, col, dids);
+        internalTransaction.getBackendTransaction().deleteDids(db, col, dids);
+        
+        Stream<KVDocument> updatedCandidates = candidates.stream().map(t -> t.getRoot()).map(updateFunction);
+        InsertPipeline pipeline = getConnection().getServer().getInsertPipelineFactory().createInsertPipeline(
+                getConnection().getServer().getD2RTranslatorrFactory(),
+                db,
+                col,
+                internalTransaction.getBackendConnection()
+        );
+        pipeline.insert(updatedCandidates);
+        
+        return new UpdateResult(dids.size(), dids.size());
+    }
+
+    public UpdateResult updateByAttRef(String dbName, String colName, AttributeReference attRef, KVValue<?> value, Function<KVDocument, KVDocument> updateFunction) throws UserException {
+        MutableMetaDatabase db = internalTransaction.getMetaSnapshot().getMetaDatabaseByName(dbName);
+        if (db == null) {
+            return new UpdateResult(0, 0);
+        }
+        MutableMetaCollection col = db.getMetaCollectionByName(colName);
+        if (col == null) {
+            return new UpdateResult(0, 0);
+        }
+        TableRefFactory tableRefFactory = getConnection().getServer().getTableRefFactory();
+        TableRef ref = tableRefFactory.createRoot();
+
+        if (attRef.getKeys().isEmpty()) {
+            throw new IllegalArgumentException("The empty attribute reference is not valid on queries");
+        }
+        String lastKey = extractKeyName(attRef.getKeys().get(attRef.getKeys().size() - 1));
+        if (attRef.getKeys().size() > 1) {
+            List<Key<?>> keys = attRef.getKeys();
+            List<Key<?>> tableKeys = keys.subList(0, keys.size() - 1);
+            for (Key<?> key : tableKeys) {
+                ref = tableRefFactory.createChild(ref, extractKeyName(key));
+            }
+        }
+        
+        MetaDocPart docPart = col.getMetaDocPartByTableRef(ref);
+        if (docPart == null) {
+            return new UpdateResult(0, 0);
+        }
+
+        MetaField field = docPart.getMetaFieldByNameAndType(lastKey, FieldType.from(value.getType()));
+        if (field == null) {
+            return new UpdateResult(0, 0);
+        }
+
+        DidCursor didCursor = internalTransaction.getBackendTransaction().findDidsByField(db, col, docPart, field, value);
+        Collection<Integer> dids = didCursor.getRemaining();
+        Collection<ToroDocument> candidates = internalTransaction.getBackendTransaction().readDocuments(db, col, dids);
+        internalTransaction.getBackendTransaction().deleteDids(db, col, dids);
+        
+        Stream<KVDocument> updatedCandidates = candidates.stream().map(t -> t.getRoot()).map(updateFunction);
+        InsertPipeline pipeline = getConnection().getServer().getInsertPipelineFactory().createInsertPipeline(
+                getConnection().getServer().getD2RTranslatorrFactory(),
+                db,
+                col,
+                internalTransaction.getBackendConnection()
+        );
+        pipeline.insert(updatedCandidates);
+        
+        return new UpdateResult(dids.size(), dids.size());
     }
     
     public void dropCollection(String db, String collection) throws RollbackException, UserException {
