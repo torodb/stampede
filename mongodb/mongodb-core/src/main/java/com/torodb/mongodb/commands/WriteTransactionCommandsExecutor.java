@@ -76,6 +76,7 @@ import com.google.common.net.HostAndPort;
 import com.torodb.core.annotations.DoNotChange;
 import com.torodb.mongodb.commands.impl.NotImplementedCommandImplementation;
 import com.torodb.mongodb.commands.impl.admin.DropCollectionImplementation;
+import com.torodb.mongodb.commands.impl.admin.DropDatabaseImplementation;
 import com.torodb.mongodb.commands.impl.diagnostic.PingImplementation;
 import com.torodb.mongodb.commands.impl.general.FindImplementation;
 import com.torodb.mongodb.commands.impl.general.InsertImplementation;
@@ -162,11 +163,15 @@ public class WriteTransactionCommandsExecutor implements CommandsExecutor<WriteM
 
     static class MyAdminCommandsImplementationBuilder extends AdminCommandsImplementationsBuilder<WriteMongodTransaction> {
         private final DropCollectionImplementation dropCollectionImplementation;
+        private final DropDatabaseImplementation dropDatabaseImplementation;
         
         @Inject
-        public MyAdminCommandsImplementationBuilder(DropCollectionImplementation dropCollectionImplementation) {
+        public MyAdminCommandsImplementationBuilder(
+                DropCollectionImplementation dropCollectionImplementation,
+                DropDatabaseImplementation dropDatabaseImplementation) {
             super();
             this.dropCollectionImplementation = dropCollectionImplementation;
+            this.dropDatabaseImplementation = dropDatabaseImplementation;
         }
 
         @Override
@@ -176,7 +181,7 @@ public class WriteTransactionCommandsExecutor implements CommandsExecutor<WriteM
 
         @Override
         public CommandImplementation<Empty, Empty, WriteMongodTransaction> getDropDatabaseImplementation() {
-            return NotImplementedCommandImplementation.build();
+            return dropDatabaseImplementation;
         }
 
         @Override

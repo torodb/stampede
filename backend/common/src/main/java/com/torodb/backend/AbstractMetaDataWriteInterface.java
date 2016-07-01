@@ -203,6 +203,12 @@ public abstract class AbstractMetaDataWriteInterface implements MetaDataWriteInt
     }
 
     @Override
+    public void deleteMetaDatabase(DSLContext dsl, String databaseName) {
+        String statement = getDeleteMetaDatabaseStatement(databaseName);
+        sqlHelper.executeUpdate(dsl, statement, Context.META_DELETE);
+    }
+
+    @Override
     public void deleteMetaCollection(DSLContext dsl, String databaseName, String collectionName) {
         String statement = getDeleteMetaCollectionStatement(databaseName, collectionName);
         sqlHelper.executeUpdate(dsl, statement, Context.META_DELETE);
@@ -227,6 +233,12 @@ public abstract class AbstractMetaDataWriteInterface implements MetaDataWriteInt
             FieldType type) {
         String statement = getDeleteMetaScalarStatement(databaseName, collectionName, tableRef, type);
         sqlHelper.executeUpdate(dsl, statement, Context.META_INSERT);
+    }
+
+    protected String getDeleteMetaDatabaseStatement(String databaseName) {
+        String statement = sqlHelper.dsl().deleteFrom(metaDatabaseTable)
+                .where(metaDatabaseTable.NAME.eq(databaseName)).getSQL(ParamType.INLINED);
+            return statement;
     }
 
     protected String getDeleteMetaCollectionStatement(String databaseName, String collectionName) {

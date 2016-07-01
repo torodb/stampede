@@ -57,6 +57,15 @@ public interface WriteBackendTransaction extends BackendTransaction {
     public void dropCollection(MetaDatabase db, MetaCollection coll) throws RollbackException;
 
     /**
+     * Drop an existing database.
+     *
+     * @param db     the database to drop.
+     * @throws BackendException
+     * @throws RollbackException
+     */
+    public void dropDatabase(MetaDatabase db) throws RollbackException;
+
+    /**
      * Adds a docPart to a collection.
      *
      * Contained {@link MetaDocPart#streamFields() fields} and

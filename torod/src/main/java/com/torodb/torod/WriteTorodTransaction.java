@@ -86,6 +86,17 @@ public class WriteTorodTransaction extends TorodTransaction {
         //TODO implement removeCollection in MutableMetaDatabase
         //metaDb.removeCollection(metaColl)
     }
+    
+    public void dropDatabase(String db) throws RollbackException, UserException {
+        MutableMetaDatabase metaDb = getMetaDatabaseOrThrowException(db);
+        
+        internalTransaction.getBackendConnection().dropDatabase(metaDb);
+        
+        //TODO implement removeCollection in MutableMetaDatabase
+        //metaDb.removeCollection(metaColl)
+        //TODO implement removeDatabase in MutableMetaSnapshot
+        //internalTransaction.getMetaSnapshot().removeDatabase(metaDb)
+    }
 
     @Nonnull
     private MutableMetaDatabase getMetaDatabaseOrThrowException(@Nonnull String dbName) throws DatabaseNotFoundException {

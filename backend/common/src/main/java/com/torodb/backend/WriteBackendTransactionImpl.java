@@ -58,36 +58,53 @@ public class WriteBackendTransactionImpl extends BackendTransactionImpl implemen
     public void dropCollection(MetaDatabase db, MetaCollection coll) {
         Preconditions.checkState(!isClosed(), "This transaction is closed");
 
-        Iterator<? extends MetaDocPart> metaDocPartIterator = coll.streamContainedMetaDocParts().iterator();
-        while (metaDocPartIterator.hasNext()) {
-            MetaDocPart metaDocPart = metaDocPartIterator.next();
-            dropMetaDocPart(db, coll, metaDocPart);
-        }
-        getSqlInterface().getMetaDataWriteInterface().deleteMetaCollection(getDsl(), db.getName(), coll.getName());
+        dropCollection(db.getName(), coll);
         getSqlInterface().getStructureInterface().dropCollection(getDsl(), db.getIdentifier(), coll);
     }
 
-    private void dropMetaDocPart(MetaDatabase db, MetaCollection coll, MetaDocPart metaDocPart) {
-        dropMetaScalars(db, coll, metaDocPart);
-        dropMetaFields(db, coll, metaDocPart);
-        getSqlInterface().getMetaDataWriteInterface().deleteMetaDocPart(getDsl(), db.getName(), coll.getName(), 
+    @Override
+    public void dropDatabase(MetaDatabase db) {
+        Preconditions.checkState(!isClosed(), "This transaction is closed");
+
+        Iterator<? extends MetaCollection> metaCollectionIterator = db.streamMetaCollections().iterator();
+        while (metaCollectionIterator.hasNext()) {
+            MetaCollection metaCollection = metaCollectionIterator.next();
+            dropCollection(db.getName(), metaCollection);
+        }
+        getSqlInterface().getMetaDataWriteInterface().deleteMetaDatabase(getDsl(), db.getName());
+        getSqlInterface().getStructureInterface().dropDatabase(getDsl(), db);
+    }
+
+    protected void dropCollection(String databaseName, MetaCollection coll) {
+        Iterator<? extends MetaDocPart> metaDocPartIterator = coll.streamContainedMetaDocParts().iterator();
+        while (metaDocPartIterator.hasNext()) {
+            MetaDocPart metaDocPart = metaDocPartIterator.next();
+            dropMetaDocPart(databaseName, coll, metaDocPart);
+        }
+        getSqlInterface().getMetaDataWriteInterface().deleteMetaCollection(getDsl(), databaseName, coll.getName());
+    }
+
+    private void dropMetaDocPart(String databaseName, MetaCollection coll, MetaDocPart metaDocPart) {
+        dropMetaScalars(databaseName, coll, metaDocPart);
+        dropMetaFields(databaseName, coll, metaDocPart);
+        getSqlInterface().getMetaDataWriteInterface().deleteMetaDocPart(getDsl(), databaseName, coll.getName(), 
                 metaDocPart.getTableRef());
     }
 
-    private void dropMetaScalars(MetaDatabase db, MetaCollection coll, MetaDocPart metaDocPart) {
+    private void dropMetaScalars(String databaseName, MetaCollection coll, MetaDocPart metaDocPart) {
         Iterator<? extends MetaScalar> metaScalarIterator = metaDocPart.streamScalars().iterator();
         while (metaScalarIterator.hasNext()) {
             MetaScalar metaScalar = metaScalarIterator.next();
-            getSqlInterface().getMetaDataWriteInterface().deleteMetaScalar(getDsl(), db.getName(), coll.getName(), 
+            getSqlInterface().getMetaDataWriteInterface().deleteMetaScalar(getDsl(), databaseName, coll.getName(), 
                     metaDocPart.getTableRef(), metaScalar.getType());
         }
     }
 
-    private void dropMetaFields(MetaDatabase db, MetaCollection coll, MetaDocPart metaDocPart) {
+    private void dropMetaFields(String databaseName, MetaCollection coll, MetaDocPart metaDocPart) {
         Iterator<? extends MetaField> metaFieldIterator = metaDocPart.streamFields().iterator();
         while (metaFieldIterator.hasNext()) {
             MetaField metaField = metaFieldIterator.next();
-            getSqlInterface().getMetaDataWriteInterface().deleteMetaField(getDsl(), db.getName(), coll.getName(), 
+            getSqlInterface().getMetaDataWriteInterface().deleteMetaField(getDsl(), databaseName, coll.getName(), 
                     metaDocPart.getTableRef(), metaField.getName(), metaField.getType());
         }
     }
