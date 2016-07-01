@@ -268,7 +268,8 @@ public class BackendIntegrationTest extends AbstractBackendTest {
             connection.commit();
             
             List<Integer> deletedDids = generatedDids.subList(0, 1);
-            sqlInterface.getWriteInterface().deleteCollectionDocParts(dsl, data.database.getIdentifier(), data.collection, deletedDids);
+            sqlInterface.getWriteInterface().deleteCollectionDocParts(dsl, data.database.getIdentifier(), 
+                    data.collection, new MockDidCursor(deletedDids.iterator()));
             
             StringBuilder rootDocPartSelectStatementBuilder = new StringBuilder()
                     .append("SELECT \"")

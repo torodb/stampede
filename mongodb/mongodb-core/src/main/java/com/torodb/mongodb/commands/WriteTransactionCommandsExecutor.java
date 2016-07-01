@@ -78,6 +78,7 @@ import com.torodb.mongodb.commands.impl.NotImplementedCommandImplementation;
 import com.torodb.mongodb.commands.impl.admin.DropCollectionImplementation;
 import com.torodb.mongodb.commands.impl.admin.DropDatabaseImplementation;
 import com.torodb.mongodb.commands.impl.diagnostic.PingImplementation;
+import com.torodb.mongodb.commands.impl.general.DeleteImplementation;
 import com.torodb.mongodb.commands.impl.general.FindImplementation;
 import com.torodb.mongodb.commands.impl.general.InsertImplementation;
 import com.torodb.mongodb.core.WriteMongodTransaction;
@@ -265,8 +266,16 @@ public class WriteTransactionCommandsExecutor implements CommandsExecutor<WriteM
     }
 
     static class MyGeneralCommandsImplementationBuilder extends GeneralCommandsImplementationsBuilder<WriteMongodTransaction> {
-        @Inject private FindImplementation findImpl;
-        @Inject private InsertImplementation insertImpl;
+        private final InsertImplementation insertImpl;
+        private final DeleteImplementation deleteImpl;
+
+        @Inject
+        public MyGeneralCommandsImplementationBuilder(InsertImplementation insertImpl,
+                DeleteImplementation deleteImpl) {
+            super();
+            this.insertImpl = insertImpl;
+            this.deleteImpl = deleteImpl;
+        }
 
         @Override
         public CommandImplementation<GetLastErrorArgument, GetLastErrorReply, WriteMongodTransaction> getGetLastErrrorImplementation() {
@@ -280,12 +289,12 @@ public class WriteTransactionCommandsExecutor implements CommandsExecutor<WriteM
 
         @Override
         public CommandImplementation<FindArgument, FindResult, ? super WriteMongodTransaction> getFindImplementation() {
-            return findImpl;
+            return NotImplementedCommandImplementation.build();
         }
 
         @Override
         public CommandImplementation<DeleteArgument, Long, WriteMongodTransaction> getDeleteImplementation() {
-            return NotImplementedCommandImplementation.build();
+            return deleteImpl;
         }
 
         @Override

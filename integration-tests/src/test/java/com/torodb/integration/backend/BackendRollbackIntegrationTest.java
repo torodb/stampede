@@ -43,6 +43,7 @@ import org.junit.runners.model.Statement;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.torodb.backend.MockDidCursor;
 import com.torodb.core.transaction.RollbackException;
 import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
@@ -238,9 +239,11 @@ public class BackendRollbackIntegrationTest extends AbstractBackendTest {
             
             rightThread.step(() -> sqlInterface.getReadInterface().getAllCollectionDids(rightDsl, metaDatabase, metaCollection))
                 .waitQueuedSteps();
-            leftThread.step(() -> sqlInterface.getWriteInterface().deleteCollectionDocParts(leftDsl, "test", metaCollection, generatedDids))
+            leftThread.step(() -> sqlInterface.getWriteInterface().deleteCollectionDocParts(leftDsl, "test", metaCollection, 
+                    new MockDidCursor(generatedDids.iterator())))
                 .waitQueuedSteps();
-            rightThread.step(() -> sqlInterface.getWriteInterface().deleteCollectionDocParts(rightDsl, "test", metaCollection, generatedDids))
+            rightThread.step(() -> sqlInterface.getWriteInterface().deleteCollectionDocParts(rightDsl, "test", metaCollection, 
+                    new MockDidCursor(generatedDids.iterator())))
                 .waitUntilThreadSleeps(1);
             leftThread.step(() -> leftConnection.commit())
                 .waitQueuedSteps();

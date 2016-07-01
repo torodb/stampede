@@ -100,7 +100,7 @@ public abstract class TorodTransaction implements AutoCloseable {
         return getInternalTransaction().getBackendTransaction().findByField(db, col, docPart, field, value);
     }
 
-    private String extractKeyName(Key<?> key) {
+    protected String extractKeyName(Key<?> key) {
         if (key instanceof ObjectKey) {
             return ((ObjectKey) key).getKey();
         }

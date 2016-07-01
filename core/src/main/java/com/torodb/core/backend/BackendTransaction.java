@@ -37,7 +37,7 @@ public interface BackendTransaction extends AutoCloseable {
 
     public Cursor<ToroDocument> findByField(MetaDatabase db, MetaCollection col,
             MetaDocPart docPart, MetaField field, KVValue<?> value);
-
+    
     @Override
     public void close();
 }

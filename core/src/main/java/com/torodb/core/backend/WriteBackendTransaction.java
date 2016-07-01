@@ -23,6 +23,7 @@ import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.transaction.RollbackException;
 import com.torodb.core.transaction.metainf.*;
+import com.torodb.kvdocument.values.KVValue;
 
 public interface WriteBackendTransaction extends BackendTransaction {
 
@@ -130,6 +131,11 @@ public interface WriteBackendTransaction extends BackendTransaction {
      */
     public void insert(MetaDatabase db, MetaCollection col, DocPartData data) throws RollbackException, UserException;
 
+    public long deleteAll(MetaDatabase db, MetaCollection col);
+
+    public long deleteByField(MetaDatabase db, MetaCollection col, 
+            MetaDocPart docPart, MetaField field, KVValue<?> value);
+    
     public void commit() throws UserException, RollbackException;
 
     @Override

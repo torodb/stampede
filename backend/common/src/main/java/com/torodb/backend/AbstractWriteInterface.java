@@ -36,9 +36,9 @@ import org.jooq.exception.DataAccessException;
 
 import com.google.common.base.Preconditions;
 import com.torodb.backend.ErrorHandler.Context;
+import com.torodb.core.backend.DidCursor;
 import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.d2r.DocPartRow;
-import com.torodb.core.exceptions.SystemException;
 import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDocPart;
@@ -66,27 +66,34 @@ public abstract class AbstractWriteInterface implements WriteInterface {
     }
 
     @Override
-    public void deleteCollectionDocParts(@Nonnull DSLContext dsl,
+    public long deleteCollectionDocParts(@Nonnull DSLContext dsl,
             @Nonnull String schemaName, @Nonnull MetaCollection metaCollection,
-            @Nonnull List<Integer> dids
+            @Nonnull DidCursor didCursor
     ) {
-        Preconditions.checkArgument(dids.size() > 0, "At least 1 did must be specified");
-        
         Iterator<? extends MetaDocPart> iterator = metaCollection.streamContainedMetaDocParts()
                 .sorted(TableRefComparator.MetaDocPart.DESC).iterator();
         Connection c = dsl.configuration().connectionProvider().acquire();
         try{
-	        while (iterator.hasNext()){
-	        	MetaDocPart metaDocPart = iterator.next();
-	        	String statement = getDeleteDocPartsStatement(schemaName, metaDocPart.getIdentifier(), dids);
-	        	sqlHelper.executeUpdate(c, statement, Context.DELETE);
-	        }
+            int maxBatchSize = 100;
+            long updated = 0;
+            
+            while (didCursor.hasNext()) {
+                Collection<Integer> dids = didCursor.getNextBatch(maxBatchSize);
+    	        while (iterator.hasNext()){
+    	        	MetaDocPart metaDocPart = iterator.next();
+            	    String statement = getDeleteDocPartsStatement(schemaName, metaDocPart.getIdentifier(), dids);
+            	    sqlHelper.executeUpdate(c, statement, Context.DELETE);
+    	        }
+    	        updated += dids.size();
+            }
+	        
+	        return updated;
         }finally {
         	dsl.configuration().connectionProvider().release(c);
         }
     }
 
-    protected abstract String getDeleteDocPartsStatement(String schemaName, String tableName, List<Integer> dids);
+    protected abstract String getDeleteDocPartsStatement(String schemaName, String tableName, Collection<Integer> dids);
 
     @Override
     public void insertDocPartData(DSLContext dsl, String schemaName, DocPartData docPartData) {
