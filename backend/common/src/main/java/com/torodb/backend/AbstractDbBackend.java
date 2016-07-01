@@ -30,7 +30,6 @@ import javax.sql.DataSource;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.torodb.backend.ErrorHandler.Context;
-import com.torodb.core.exceptions.SystemException;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
@@ -189,8 +188,7 @@ public abstract class AbstractDbBackend<Configuration extends DbBackendConfigura
 
             return c;
         } catch (SQLException ex) {
-            errorHandler.handleRollbackException(Context.GET_CONNECTION, ex);
-            throw new SystemException("It was not possible to create a connection", ex);
+            throw errorHandler.handleException(Context.GET_CONNECTION, ex);
         }
     }
 

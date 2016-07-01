@@ -1,6 +1,12 @@
 
 package com.torodb.backend.d2r;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Collection;
+
+import org.jooq.Converter;
+
 import com.google.common.base.Preconditions;
 import com.torodb.backend.ErrorHandler.Context;
 import com.torodb.backend.InternalField;
@@ -12,14 +18,9 @@ import com.torodb.backend.tables.records.MetaDocPartRecord;
 import com.torodb.core.d2r.DocPartResult;
 import com.torodb.core.d2r.DocPartResultRow;
 import com.torodb.core.d2r.IllegalDocPartRowException;
-import com.torodb.core.exceptions.SystemException;
 import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.kvdocument.values.KVValue;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Collection;
-import org.jooq.Converter;
 
 /**
  *
@@ -56,9 +57,7 @@ public class ResultSetDocPartResult implements DocPartResult {
             try {
                 hasNext = rs.next();
             } catch (SQLException sqlException) {
-                sqlInterface.getErrorHandler().handleRollbackException(Context.FETCH, sqlException);
-
-                throw new SystemException(sqlException);
+                throw sqlInterface.getErrorHandler().handleException(Context.FETCH, sqlException);
             }
         }
         return hasNext;
@@ -79,9 +78,7 @@ public class ResultSetDocPartResult implements DocPartResult {
         try {
             rs.close();
         } catch (SQLException ex) {
-            sqlInterface.getErrorHandler().handleRollbackException(Context.FETCH, ex);
-
-            throw new SystemException(ex);
+            throw sqlInterface.getErrorHandler().handleException(Context.FETCH, ex);
         }
     }
 
@@ -114,9 +111,7 @@ public class ResultSetDocPartResult implements DocPartResult {
                         _seq = metaDocPartTable.SEQ.getValue(rs, columnIndex);
                     }
                 } catch (SQLException sqlException) {
-                    sqlInterface.getErrorHandler().handleRollbackException(Context.FETCH, sqlException);
-
-                    throw new SystemException(sqlException);
+                    throw sqlInterface.getErrorHandler().handleException(Context.FETCH, sqlException);
                 }
                 columnIndex++;
 
@@ -167,8 +162,7 @@ public class ResultSetDocPartResult implements DocPartResult {
             try {
                 databaseValue = sqlHelper.getResultSetValue(fieldType, rs, fieldIndex + firstUserColumnIndex);
             } catch (SQLException sqlException) {
-                sqlInterface.getErrorHandler().handleRollbackException(Context.FETCH, sqlException);
-                throw new SystemException(sqlException);
+                throw sqlInterface.getErrorHandler().handleException(Context.FETCH, sqlException);
             }
 
             if (databaseValue == null) {

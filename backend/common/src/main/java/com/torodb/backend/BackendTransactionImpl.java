@@ -63,8 +63,7 @@ public abstract class BackendTransactionImpl implements BackendTransaction {
             DidCursor allDids = sqlInterface.getReadInterface().getAllCollectionDids(dsl, db, col);
             return new DefaultCursor(sqlInterface, r2dTranslator, allDids, dsl, db, col);
         } catch (SQLException ex) {
-            sqlInterface.getErrorHandler().handleRollbackException(Context.FETCH, ex);
-            throw new AssertionError();
+            throw sqlInterface.getErrorHandler().handleException(Context.FETCH, ex);
         }
     }
 
@@ -74,8 +73,7 @@ public abstract class BackendTransactionImpl implements BackendTransaction {
             DidCursor allDids = sqlInterface.getReadInterface().getCollectionDidsWithFieldEqualsTo(dsl, db, col, docPart, field, value);
             return new DefaultCursor(sqlInterface, r2dTranslator, allDids, dsl, db, col);
         } catch (SQLException ex) {
-            sqlInterface.getErrorHandler().handleRollbackException(Context.FETCH, ex);
-            throw new AssertionError();
+            throw sqlInterface.getErrorHandler().handleException(Context.FETCH, ex);
         }
     }
 
@@ -88,9 +86,10 @@ public abstract class BackendTransactionImpl implements BackendTransaction {
                 connection.rollback();
                 connection.close();
             } catch (SQLException ex) {
-                sqlInterface.getErrorHandler().handleRollbackException(Context.CLOSE, ex);
+                sqlInterface.getErrorHandler().handleException(Context.CLOSE, ex);
+            } finally {
+                dsl.close();
             }
-            dsl.close();
         }
     }
 

@@ -101,8 +101,7 @@ public abstract class AbstractWriteInterface implements WriteInterface {
             Iterator<MetaField> metaFieldIterator = docPartData.orderedMetaFieldIterator();
             standardInsertDocPartData(dsl, schemaName, docPartData, metaDocPart, metaScalarIterator, metaFieldIterator, docPartRowIterator);
         } catch (DataAccessException ex) {
-            errorHandler.handleRollbackException(Context.INSERT, ex);
-            throw new SystemException(ex);
+            throw errorHandler.handleException(Context.INSERT, ex);
         }
     }
 
@@ -154,8 +153,7 @@ public abstract class AbstractWriteInterface implements WriteInterface {
                 }
             }
         } catch(SQLException ex) {
-            errorHandler.handleRollbackException(Context.INSERT, ex);
-            throw new SystemException(ex);
+            throw errorHandler.handleException(Context.INSERT, ex);
         } finally {
             dsl.configuration().connectionProvider().release(connection);
         }

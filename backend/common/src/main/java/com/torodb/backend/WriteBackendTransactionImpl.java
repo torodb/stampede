@@ -166,7 +166,7 @@ public class WriteBackendTransactionImpl extends BackendTransactionImpl implemen
         try {
             getConnection().commit();
         } catch (SQLException ex) {
-            getSqlInterface().getErrorHandler().handleUserAndRetryException(Context.COMMIT, ex);
+            getSqlInterface().getErrorHandler().handleUserException(Context.COMMIT, ex);
         } finally {
             getDsl().configuration().connectionProvider().release(getConnection());
         }

@@ -51,9 +51,7 @@ public class DefaultDidCursor implements DidCursor {
             
             return hasNext;
         } catch(SQLException ex) {
-            sqlInterface.getErrorHandler().handleRollbackException(Context.FETCH, ex);
-            
-            throw new SystemException(ex);
+            throw sqlInterface.getErrorHandler().handleException(Context.FETCH, ex);
         }
     }
 
@@ -65,9 +63,7 @@ public class DefaultDidCursor implements DidCursor {
             
             return resultSet.getInt(1);
         } catch(SQLException ex) {
-            sqlInterface.getErrorHandler().handleRollbackException(Context.FETCH, ex);
-            
-            throw new SystemException(ex);
+            throw sqlInterface.getErrorHandler().handleException(Context.FETCH, ex);
         }
     }
 
@@ -76,9 +72,7 @@ public class DefaultDidCursor implements DidCursor {
         try {
             resultSet.close();
         } catch(SQLException ex) {
-            sqlInterface.getErrorHandler().handleRollbackException(Context.FETCH, ex);
-            
-            throw new SystemException(ex);
+            throw sqlInterface.getErrorHandler().handleException(Context.FETCH, ex);
         }
     }
 

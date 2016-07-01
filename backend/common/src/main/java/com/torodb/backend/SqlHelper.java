@@ -38,7 +38,6 @@ import com.torodb.backend.ErrorHandler.Context;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.backend.converters.jooq.KVValueConverter;
 import com.torodb.backend.converters.sql.SqlBinding;
-import com.torodb.core.exceptions.SystemException;
 import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.kvdocument.values.KVValue;
 
@@ -60,8 +59,7 @@ public class SqlHelper {
         try (PreparedStatement ps = c.prepareStatement(statement)) {
             ps.execute();
         } catch (SQLException ex) {
-            errorHandler.handleRollbackException(context, ex);
-            throw new SystemException(ex);
+            throw errorHandler.handleException(context, ex);
         } finally {
             dsl.configuration().connectionProvider().release(c);
         }       
@@ -73,8 +71,7 @@ public class SqlHelper {
             ResultSet resultSet = ps.executeQuery();
             return dsl.fetch(resultSet);
         } catch (SQLException ex) {
-            errorHandler.handleRollbackException(context, ex);
-            throw new SystemException(ex);
+            throw errorHandler.handleException(context, ex);
         } finally {
             dsl.configuration().connectionProvider().release(c);
         }
@@ -85,8 +82,7 @@ public class SqlHelper {
         try (PreparedStatement ps = c.prepareStatement(statement)) {
             ps.executeUpdate();
         } catch (SQLException ex) {
-            errorHandler.handleRollbackException(context, ex);
-            throw new SystemException(ex);
+            throw errorHandler.handleException(context, ex);
         } finally {
             dsl.configuration().connectionProvider().release(c);
         }       
@@ -96,8 +92,7 @@ public class SqlHelper {
         try (PreparedStatement ps = c.prepareStatement(statement)) {
             ps.executeUpdate();
         } catch (SQLException ex) {
-            errorHandler.handleRollbackException(context, ex);
-            throw new SystemException(ex);
+            throw errorHandler.handleException(context, ex);
         }       
     }
 

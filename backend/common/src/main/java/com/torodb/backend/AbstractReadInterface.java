@@ -152,8 +152,7 @@ public abstract class AbstractReadInterface implements ReadInterface {
         	}
         	return maxId;
         } catch (SQLException ex){
-            sqlInterface.getErrorHandler().handleRollbackException(Context.FETCH, ex);
-            throw new SystemException(ex);
+            throw sqlInterface.getErrorHandler().handleException(Context.FETCH, ex);
         } finally {
             dsl.configuration().connectionProvider().release(connection);
         }

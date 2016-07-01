@@ -30,6 +30,8 @@ import org.jooq.exception.DataAccessException;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+import com.torodb.backend.exceptions.BackendException;
+import com.torodb.core.exceptions.ToroRuntimeException;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.transaction.RollbackException;
 
@@ -53,17 +55,39 @@ public abstract class AbstractErrorHandler implements ErrorHandler {
     }
     
     @Override
-    public void handleRollbackException(Context context, SQLException sqlException) {
-        if (applyToRollbackRule(context, sqlException.getSQLState())) {
-            throw new RollbackException(sqlException);
+    public ToroRuntimeException handleException(Context context, SQLException sqlException) throws RollbackException {
+        try {
+            return handleUserException(context, sqlException);
+        } catch(UserException userException) {
+            return new BackendException(context, sqlException);
         }
     }
 
     @Override
-    public void handleRollbackException(Context context, DataAccessException dataAccessException) {
+    public ToroRuntimeException handleException(Context context, DataAccessException dataAccessException) throws RollbackException {
+        try {
+            return handleUserException(context, dataAccessException);
+        } catch(UserException userException) {
+            return new BackendException(context, dataAccessException);
+        }
+    }
+
+    @Override
+    public ToroRuntimeException handleUserException(Context context, SQLException sqlException) throws UserException, RollbackException {
+        if (applyToRollbackRule(context, sqlException.getSQLState())) {
+            throw new RollbackException(sqlException);
+        }
+        
+        return new BackendException(context, sqlException);
+    }
+
+    @Override
+    public ToroRuntimeException handleUserException(Context context, DataAccessException dataAccessException) throws UserException, RollbackException {
         if (applyToRollbackRule(context, dataAccessException.sqlState())) {
             throw new RollbackException(dataAccessException);
         }
+        
+        return new BackendException(context, dataAccessException);
     }
 
     private boolean applyToRollbackRule(Context context, String sqlState) {
@@ -73,16 +97,6 @@ public abstract class AbstractErrorHandler implements ErrorHandler {
         }
         
         return false;
-    }
-
-    @Override
-    public void handleUserAndRetryException(Context context, SQLException sqlException) throws UserException {
-        handleRollbackException(context, sqlException);
-    }
-
-    @Override
-    public void handleUserAndRetryException(Context context, DataAccessException dataAccessException) throws UserException {
-        handleRollbackException(context, dataAccessException);
     }
     
     protected static RollbackRule rule(String sqlCode, Context...contexts) {
