@@ -70,8 +70,6 @@ public abstract class AbstractWriteInterface implements WriteInterface {
             @Nonnull String schemaName, @Nonnull MetaCollection metaCollection,
             @Nonnull DidCursor didCursor
     ) {
-        Iterator<? extends MetaDocPart> iterator = metaCollection.streamContainedMetaDocParts()
-                .sorted(TableRefComparator.MetaDocPart.DESC).iterator();
         Connection c = dsl.configuration().connectionProvider().acquire();
         try{
             int maxBatchSize = 100;
@@ -79,6 +77,8 @@ public abstract class AbstractWriteInterface implements WriteInterface {
             
             while (didCursor.hasNext()) {
                 Collection<Integer> dids = didCursor.getNextBatch(maxBatchSize);
+                Iterator<? extends MetaDocPart> iterator = metaCollection.streamContainedMetaDocParts()
+                        .sorted(TableRefComparator.MetaDocPart.DESC).iterator();
     	        while (iterator.hasNext()){
     	        	MetaDocPart metaDocPart = iterator.next();
             	    String statement = getDeleteDocPartsStatement(schemaName, metaDocPart.getIdentifier(), dids);
