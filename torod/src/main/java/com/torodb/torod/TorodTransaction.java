@@ -1,20 +1,26 @@
 
 package com.torodb.torod;
 
+import java.util.List;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.torodb.core.TableRef;
 import com.torodb.core.TableRefFactory;
 import com.torodb.core.cursors.Cursor;
 import com.torodb.core.cursors.EmptyCursor;
+import com.torodb.core.document.ToroDocument;
 import com.torodb.core.language.AttributeReference;
 import com.torodb.core.language.AttributeReference.Key;
 import com.torodb.core.language.AttributeReference.ObjectKey;
 import com.torodb.core.transaction.InternalTransaction;
-import com.torodb.core.transaction.metainf.*;
-import com.torodb.kvdocument.values.KVDocument;
+import com.torodb.core.transaction.metainf.FieldType;
+import com.torodb.core.transaction.metainf.MetaCollection;
+import com.torodb.core.transaction.metainf.MetaDatabase;
+import com.torodb.core.transaction.metainf.MetaDocPart;
+import com.torodb.core.transaction.metainf.MetaField;
 import com.torodb.kvdocument.values.KVValue;
-import java.util.List;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  *
@@ -39,7 +45,7 @@ public abstract class TorodTransaction implements AutoCloseable {
 
     protected abstract InternalTransaction getInternalTransaction();
 
-    public Cursor<KVDocument> findAll(String dbName, String colName) {
+    public Cursor<ToroDocument> findAll(String dbName, String colName) {
         MetaDatabase db = getInternalTransaction().getMetaSnapshot().getMetaDatabaseByName(dbName);
         if (db == null) {
             LOGGER.trace("Db with name " + dbName + " does not exist. An empty cursor is returned");
@@ -50,10 +56,10 @@ public abstract class TorodTransaction implements AutoCloseable {
             LOGGER.trace("Collection " + dbName + '.' + colName + " does not exist. An empty cursor is returned");
             return new EmptyCursor<>();
         }
-        return getInternalTransaction().getBackendTransaction().findAll(db, col).transform(o -> o.getRoot());
+        return getInternalTransaction().getBackendTransaction().findAll(db, col);
     }
 
-    public Cursor<KVDocument> findByAttRef(String dbName, String colName, AttributeReference attRef, KVValue<?> value) {
+    public Cursor<ToroDocument> findByAttRef(String dbName, String colName, AttributeReference attRef, KVValue<?> value) {
         MetaDatabase db = getInternalTransaction().getMetaSnapshot().getMetaDatabaseByName(dbName);
         if (db == null) {
             LOGGER.trace("Db with name " + dbName + " does not exist. An empty cursor is returned");
@@ -91,8 +97,7 @@ public abstract class TorodTransaction implements AutoCloseable {
             return new EmptyCursor<>();
         }
 
-        return getInternalTransaction().getBackendTransaction().findByField(db, col, docPart, field, value)
-                .transform(o -> o.getRoot());
+        return getInternalTransaction().getBackendTransaction().findByField(db, col, docPart, field, value);
     }
 
     private String extractKeyName(Key<?> key) {
