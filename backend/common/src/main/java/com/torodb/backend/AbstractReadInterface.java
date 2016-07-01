@@ -40,7 +40,6 @@ import com.torodb.core.TableRef;
 import com.torodb.core.TableRefFactory;
 import com.torodb.core.backend.DidCursor;
 import com.torodb.core.d2r.DocPartResult;
-import com.torodb.core.exceptions.SystemException;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
@@ -53,12 +52,17 @@ import com.torodb.kvdocument.values.KVValue;
 @Singleton
 public abstract class AbstractReadInterface implements ReadInterface {
     
-    private final SqlInterface sqlInterface;
+    private final MetaDataReadInterface metaDataReadInterface;
+    private final DataTypeProvider dataTypeProvider;
+    private final ErrorHandler errorHandler;
     private final SqlHelper sqlHelper;
     private final TableRefFactory tableRefFactory;
 
-    public AbstractReadInterface(SqlInterface sqlInterface, SqlHelper sqlHelper, TableRefFactory tableRefFactory) {
-        this.sqlInterface = sqlInterface;
+    public AbstractReadInterface(MetaDataReadInterface metaDataReadInterface, DataTypeProvider dataTypeProvider,
+        ErrorHandler errorHandler, SqlHelper sqlHelper, TableRefFactory tableRefFactory) {
+        this.metaDataReadInterface = metaDataReadInterface;
+        this.dataTypeProvider = dataTypeProvider;
+        this.errorHandler = errorHandler;
         this.sqlHelper = sqlHelper;
         this.tableRefFactory = tableRefFactory;
     }
@@ -78,7 +82,7 @@ public abstract class AbstractReadInterface implements ReadInterface {
             
             sqlHelper.setPreparedStatementValue(preparedStatement, 1, metaField.getType(), value);
             
-            return new DefaultDidCursor(sqlInterface, preparedStatement.executeQuery());
+            return new DefaultDidCursor(errorHandler, preparedStatement.executeQuery());
         } finally {
             dsl.configuration().connectionProvider().release(connection);
         }
@@ -100,7 +104,7 @@ public abstract class AbstractReadInterface implements ReadInterface {
         Connection connection = dsl.configuration().connectionProvider().acquire();
         try {
             PreparedStatement preparedStatement = connection.prepareStatement(statement);
-            return new DefaultDidCursor(sqlInterface, preparedStatement.executeQuery());
+            return new DefaultDidCursor(errorHandler, preparedStatement.executeQuery());
         } finally {
             dsl.configuration().connectionProvider().release(connection);
         }
@@ -126,7 +130,8 @@ public abstract class AbstractReadInterface implements ReadInterface {
                 String statament = getDocPartStatament(metaDatabase, metaDocPart, dids);
     
                 PreparedStatement preparedStatement = connection.prepareStatement(statament);
-                result.add(new ResultSetDocPartResult(sqlInterface, metaDocPart, preparedStatement.executeQuery(), sqlHelper));
+                result.add(new ResultSetDocPartResult(metaDataReadInterface, dataTypeProvider, errorHandler, 
+                        metaDocPart, preparedStatement.executeQuery(), sqlHelper));
             }
         } finally {
             dsl.configuration().connectionProvider().release(connection);
@@ -152,7 +157,7 @@ public abstract class AbstractReadInterface implements ReadInterface {
         	}
         	return maxId;
         } catch (SQLException ex){
-            throw sqlInterface.getErrorHandler().handleException(Context.FETCH, ex);
+            throw errorHandler.handleException(Context.FETCH, ex);
         } finally {
             dsl.configuration().connectionProvider().release(connection);
         }

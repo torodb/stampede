@@ -20,24 +20,25 @@
 
 package com.torodb.backend;
 
-import com.torodb.backend.ErrorHandler.Context;
-import com.torodb.core.backend.DidCursor;
-import com.torodb.core.exceptions.SystemException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
 import javax.annotation.Nonnull;
 
+import com.torodb.backend.ErrorHandler.Context;
+import com.torodb.core.backend.DidCursor;
+
 public class DefaultDidCursor implements DidCursor {
-    public final SqlInterface sqlInterface;
+    public final ErrorHandler errorHandler;
     public final ResultSet resultSet;
     public boolean movedNext = false;
     public boolean hasNext = false;
 
-    public DefaultDidCursor(@Nonnull SqlInterface sqlInterface, @Nonnull ResultSet resultSet) {
-        this.sqlInterface = sqlInterface;
+    public DefaultDidCursor(@Nonnull ErrorHandler errorHandler, @Nonnull ResultSet resultSet) {
+        this.errorHandler = errorHandler;
         this.resultSet = resultSet;
     }
 
@@ -51,7 +52,7 @@ public class DefaultDidCursor implements DidCursor {
             
             return hasNext;
         } catch(SQLException ex) {
-            throw sqlInterface.getErrorHandler().handleException(Context.FETCH, ex);
+            throw errorHandler.handleException(Context.FETCH, ex);
         }
     }
 
@@ -63,7 +64,7 @@ public class DefaultDidCursor implements DidCursor {
             
             return resultSet.getInt(1);
         } catch(SQLException ex) {
-            throw sqlInterface.getErrorHandler().handleException(Context.FETCH, ex);
+            throw errorHandler.handleException(Context.FETCH, ex);
         }
     }
 
@@ -72,7 +73,7 @@ public class DefaultDidCursor implements DidCursor {
         try {
             resultSet.close();
         } catch(SQLException ex) {
-            throw sqlInterface.getErrorHandler().handleException(Context.FETCH, ex);
+            throw errorHandler.handleException(Context.FETCH, ex);
         }
     }
 
