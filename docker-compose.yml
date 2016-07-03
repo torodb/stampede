@@ -1,0 +1,22 @@
+version: '2'
+volumes:
+  toro_build:
+services:
+  postgres:
+    image: postgres:9.5
+  toro:
+    build: .
+    ports:
+      - "27018:27018"
+    depends_on:
+      - toro_building
+    links:
+      - postgres
+    volumes:
+      - toro_build:/toro
+  toro_building:
+    build:
+      context: .
+      dockerfile: Dockerfile-building
+    volumes:
+      - toro_build:/toro

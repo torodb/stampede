@@ -18,8 +18,8 @@ production use. Use at your own risk. However, any feedback,
 contributions, help and/or patches are very welcome. Please join the
 [torodb-dev][8] mailing list for further discussion.
 
-For more information, please see [ToroDB's website][1], this 
-[latest presentation][7] or this [video recording of a presentation][11] about 
+For more information, please see [ToroDB's website][1], this
+[latest presentation][7] or this [video recording of a presentation][11] about
 ToroDB.
 
 
@@ -40,8 +40,8 @@ ToroDB is written in Java and requires:
 
 ### Download the compiled file
 
-You may download the latest version (v. 0.40) of ToroDB from 
-[the release page](https://github.com/torodb/torodb/releases/latest) on the 
+You may download the latest version (v. 0.40) of ToroDB from
+[the release page](https://github.com/torodb/torodb/releases/latest) on the
 following packaging formats:
  * [tar.bz2](https://github.com/torodb/torodb/releases/download/v0.40/torodb-0.40-release.tar.bz2)
  * [zip](https://github.com/torodb/torodb/releases/download/v0.40/torodb-0.40-release.zip)
@@ -57,7 +57,7 @@ To get the latest version, you may compile ToroDB yourself. All the project is w
 
 ToroDB is based on the [Mongo Wire Protocol library][5] (mongowp), which is another library built by [8Kdata][6] to help construct programs that speak the MongoDB protocol. You may also compile this library yourself, or let maven download it from the repository automatically.
 
-Just run `mvn package -Passembler` on the root directory and execute it from 
+Just run `mvn package -Passembler` on the root directory and execute it from
 `torodb/target/appassembler/bin` or choose your prefered packaging format from
 `torodb/target/dist/`.
 
@@ -70,7 +70,7 @@ conventions.
 
 Before running ToroDB it is necessary to configure the RDBMS with the
 ToroDB user that will be responsible to create namespaces, required data
-types, tables and indexes. 
+types, tables and indexes.
 
 Create user torodb (this is default user name, see ToroDB configuration
 to use a different name):
@@ -121,6 +121,28 @@ like:
 
     $ mongo localhost:27018/torod
 
+## Running ToroDB with Docker
+
+A docker-compose.yml and Dockerfiles are provided to launch ToroDB without
+too much hassle.
+
+Docker & Docker compose must be installed and running.
+
+Build the images:
+
+    $ docker-compose build
+
+Prepare & drink a coffee (or two)
+
+Run ToroDB:
+
+    $ docker-compose up
+
+Connect to it with a normal MongoDB client, like:
+
+    $ mongo localhost:27018/torod
+
+Enjoy!
 
 ## Are you a developer? Want to contribute? Questions about the source code?
 
