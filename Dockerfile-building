@@ -1,0 +1,10 @@
+FROM java:8
+
+ADD http://apache.rediris.es/maven/maven-3/3.3.9/binaries/apache-maven-3.3.9-bin.tar.gz /opt/
+RUN cd /opt && tar xvf apache-maven-3.3.9-bin.tar.gz
+ENV PATH /opt/apache-maven-3.3.9/bin:$PATH
+
+ADD . /src
+RUN cd /src && mvn -P assembler clean install
+
+RUN mkdir -p /toro && tar xjvf $(ls -b /src/torodb/target/dist/torodb*.tar.bz2) -C /toro
