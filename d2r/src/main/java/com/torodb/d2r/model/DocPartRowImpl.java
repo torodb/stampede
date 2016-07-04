@@ -6,6 +6,7 @@ import java.util.Iterator;
 import com.google.common.collect.Iterators;
 import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.d2r.DocPartRow;
+import com.torodb.core.d2r.InternalFields;
 import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.kvdocument.values.KVArray;
 import com.torodb.kvdocument.values.KVBoolean;
@@ -40,8 +41,8 @@ public class DocPartRowImpl implements DocPartRow{
 		this.scalarAttributes = new ArrayList<KVValue<?>>();
 	}
 
-	private static final KVBoolean IS_ARRAY = KVBoolean.TRUE;
-	private static final KVBoolean IS_SUBDOCUMENT = KVBoolean.FALSE;
+	private static final KVBoolean IS_ARRAY = KVBoolean.from(InternalFields.CHILD_ARRAY_VALUE);
+	private static final KVBoolean IS_SUBDOCUMENT = KVBoolean.from(InternalFields.CHILD_OBJECT_VALUE);
 	
 	public void addScalar(String key, KVValue<?> value) {
 		Integer position = findFieldPosition(key, FieldType.from(value.getType()));
