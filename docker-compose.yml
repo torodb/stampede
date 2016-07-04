@@ -4,6 +4,8 @@ volumes:
 services:
   postgres:
     image: postgres:9.5
+    environment:
+      - POSTGRES_PASSWORD=trustme
   toro:
     build: .
     ports:

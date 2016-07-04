@@ -6,11 +6,11 @@ RUN mkdir -p /toro_dist
 WORKDIR /toro_dist
 ENV TOROHOME /toro_dist
 
-ADD docker_contents/setup.sh /toro_dist
-ADD docker_contents/run.sh /toro_dist
-ADD docker_contents/torodb.yml /toro_dist
+ADD .docker/setup.sh /toro_dist
+ADD .docker/run.sh /toro_dist
+ADD .docker/torodb.yml /toro_dist
 EXPOSE 27018
 
 ENV TOROPASS secret
-RUN echo $TOROPASS > /root/.toropass
+RUN echo postgres:5432:torod:torodb:$TOROPASS > /root/.toropass
 CMD /toro_dist/run.sh
