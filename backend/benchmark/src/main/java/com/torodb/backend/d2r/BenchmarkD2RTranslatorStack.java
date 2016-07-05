@@ -32,10 +32,10 @@ public class BenchmarkD2RTranslatorStack {
 		
 		public List<KVDocument> document;
 
-		@Setup(Level.Invocation)
+		@Setup(Level.Iteration)
 		public void setup(){
 			document=new ArrayList<>();
-			for (int i=0;i<100;i++){
+			for (int i = 0; i<100; i++) {
 				document.add(TestDataFactory.buildDoc());
 			}
 		}
