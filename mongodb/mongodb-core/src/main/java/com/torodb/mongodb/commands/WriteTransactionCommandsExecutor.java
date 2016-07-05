@@ -1,14 +1,6 @@
 
 package com.torodb.mongodb.commands;
 
-import java.util.Collections;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
 import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.MongoDb30Commands.MongoDb30CommandsImplementationBuilder;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.AdminCommands.AdminCommandsImplementationsBuilder;
@@ -82,6 +74,12 @@ import com.torodb.mongodb.commands.impl.general.DeleteImplementation;
 import com.torodb.mongodb.commands.impl.general.InsertImplementation;
 import com.torodb.mongodb.commands.impl.general.UpdateImplementation;
 import com.torodb.mongodb.core.WriteMongodTransaction;
+import java.util.Collections;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  *
@@ -170,7 +168,6 @@ public class WriteTransactionCommandsExecutor implements CommandsExecutor<WriteM
         public MyAdminCommandsImplementationBuilder(
                 DropCollectionImplementation dropCollectionImplementation,
                 DropDatabaseImplementation dropDatabaseImplementation) {
-            super();
             this.dropCollectionImplementation = dropCollectionImplementation;
             this.dropDatabaseImplementation = dropDatabaseImplementation;
         }

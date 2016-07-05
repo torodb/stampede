@@ -20,6 +20,12 @@
 
 package com.torodb.integration.backend;
 
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.torodb.backend.MockDidCursor;
+import com.torodb.core.transaction.RollbackException;
+import com.torodb.core.transaction.metainf.*;
+import com.torodb.kvdocument.values.KVDocument;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.Duration;
@@ -27,32 +33,14 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jooq.DSLContext;
 import org.jooq.exception.DataAccessException;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
-
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
-import com.torodb.backend.MockDidCursor;
-import com.torodb.core.transaction.RollbackException;
-import com.torodb.core.transaction.metainf.FieldType;
-import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
-import com.torodb.core.transaction.metainf.ImmutableMetaDatabase;
-import com.torodb.core.transaction.metainf.ImmutableMetaDocPart;
-import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
-import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
-import com.torodb.core.transaction.metainf.WrapperMutableMetaSnapshot;
-import com.torodb.kvdocument.values.KVDocument;
 
 public class BackendRollbackIntegrationTest extends AbstractBackendTest {
 
@@ -212,13 +200,13 @@ public class BackendRollbackIntegrationTest extends AbstractBackendTest {
         List<Integer> generatedDids;
         ImmutableMetaDocPart metaDocPart = new ImmutableMetaDocPart.Builder(createTableRef(), "test").build();
         ImmutableMetaCollection metaCollection = new ImmutableMetaCollection.Builder("test", "test")
-                .add(metaDocPart)
+                .put(metaDocPart)
                 .build();
         ImmutableMetaDatabase metaDatabase = new ImmutableMetaDatabase.Builder("test", "test")
-                .add(metaCollection)
+                .put(metaCollection)
                 .build();
         MutableMetaSnapshot mutableSnapshot = new WrapperMutableMetaSnapshot(new ImmutableMetaSnapshot.Builder()
-                .add(metaDatabase)
+                .put(metaDatabase)
                 .build());
         try (Connection connection = sqlInterface.getDbBackend().createWriteConnection()) {
             DSLContext dsl = sqlInterface.getDslContextFactory().createDSLContext(connection);
