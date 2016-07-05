@@ -11,6 +11,9 @@ import com.torodb.core.d2r.D2RTranslatorFactory;
 import com.torodb.core.d2r.IdentifierFactory;
 import com.torodb.core.transaction.InternalTransactionManager;
 import com.torodb.torod.pipeline.InsertPipelineFactory;
+
+import akka.actor.ActorSystem;
+
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -29,17 +32,20 @@ public class TorodServer extends AbstractIdleService {
     private final Backend backend;
     private final InternalTransactionManager internalTransactionManager;
     private final TableRefFactory tableRefFactory;
+    private final ActorSystem actorSystem;
 
     @Inject
     public TorodServer(D2RTranslatorFactory d2RTranslatorFactory, IdentifierFactory idFactory,
             InsertPipelineFactory insertPipelineFactory, Backend backend, 
-            InternalTransactionManager internalTransactionManager, TableRefFactory tableRefFactory) {
+            InternalTransactionManager internalTransactionManager, TableRefFactory tableRefFactory,
+            ActorSystem actorSystem) {
         this.d2RTranslatorFactory = d2RTranslatorFactory;
         this.idFactory = idFactory;
         this.insertPipelineFactory = insertPipelineFactory;
         this.backend = backend;
         this.internalTransactionManager = internalTransactionManager;
         this.tableRefFactory = tableRefFactory;
+        this.actorSystem = actorSystem;
         
         openConnections = CacheBuilder.newBuilder()
                 .weakValues()
@@ -65,6 +71,8 @@ public class TorodServer extends AbstractIdleService {
     protected void shutDown() throws Exception {
         openConnections.invalidateAll();
         backend.stopAsync();
+        backend.awaitTerminated();
+        actorSystem.terminate();
     }
 
     private void onConnectionInvalidated(RemovalNotification<Integer, TorodConnection> notification) {
