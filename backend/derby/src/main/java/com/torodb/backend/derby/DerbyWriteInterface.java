@@ -50,7 +50,7 @@ public class DerbyWriteInterface extends AbstractWriteInterface {
     }
 
     @Override
-    protected String getDeleteDocPartsStatement(String schemaName, String tableName, List<Integer> dids) {
+    protected String getDeleteDocPartsStatement(String schemaName, String tableName, Collection<Integer> dids) {
         StringBuilder sb = new StringBuilder()
                 .append("DELETE FROM \"")
                 .append(schemaName)

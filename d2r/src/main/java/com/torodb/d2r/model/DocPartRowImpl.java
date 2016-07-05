@@ -6,6 +6,7 @@ import java.util.Iterator;
 import com.google.common.collect.Iterators;
 import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.d2r.DocPartRow;
+import com.torodb.core.d2r.InternalFields;
 import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.kvdocument.values.KVArray;
 import com.torodb.kvdocument.values.KVBoolean;
@@ -40,21 +41,21 @@ public class DocPartRowImpl implements DocPartRow{
 		this.scalarAttributes = new ArrayList<KVValue<?>>();
 	}
 
-	private static final KVBoolean IS_ARRAY = KVBoolean.TRUE;
-	private static final KVBoolean IS_SUBDOCUMENT = KVBoolean.FALSE;
+	private static final KVBoolean IS_ARRAY = KVBoolean.from(InternalFields.CHILD_ARRAY_VALUE);
+	private static final KVBoolean IS_SUBDOCUMENT = KVBoolean.from(InternalFields.CHILD_OBJECT_VALUE);
 	
 	public void addScalar(String key, KVValue<?> value) {
-		Integer position = findFieldPosition(key, FieldType.from(value.getType()));
+	    final int position = findFieldPosition(key, FieldType.from(value.getType()));
 		fieldAttributes.set(position, value);
 	}
 
 	public void addChild(String key, KVValue<?> value) {
-		Integer position = findFieldPosition(key, FieldType.from(value.getType()));
+	    final int position = findFieldPosition(key, FieldType.from(value.getType()));
 		if (value instanceof KVArray){
 			fieldAttributes.set(position, IS_ARRAY);
-		}else if (value instanceof KVDocument){
+		} else if (value instanceof KVDocument) {
 			fieldAttributes.set(position, IS_SUBDOCUMENT);
-		}else {
+		} else {
 			throw new IllegalArgumentException("Child value is not KVArray or KVDocument");
 		}
 	}
@@ -65,30 +66,30 @@ public class DocPartRowImpl implements DocPartRow{
 	}
 	
 	public void addChildToArray(KVValue<?> value){
-		Integer position = findScalarPosition(FieldType.from(value.getType()));
+		final int position = findScalarPosition(FieldType.from(value.getType()));
 		if (value instanceof KVArray){
 			scalarAttributes.set(position, IS_ARRAY);
-		}else if (value instanceof KVDocument){
+		} else if (value instanceof KVDocument) {
 			scalarAttributes.set(position, IS_SUBDOCUMENT);
-		}else {
+		} else {
 			throw new IllegalArgumentException("Child value is not KVArray or KVDocument");
 		}
 	}
 	
-	private Integer findFieldPosition(String key, FieldType fieldType) {
-		Integer position = tableMetadata.findFieldPosition(key, fieldType);
-		if (position>=fieldAttributes.size()){
-			for(int i=fieldAttributes.size();i<=position;i++){
+	private int findFieldPosition(String key, FieldType fieldType) {
+		final int position = tableMetadata.findFieldPosition(key, fieldType);
+		if (position >= fieldAttributes.size()) {
+			for(int index = fieldAttributes.size(); index <= position; index++) {
 				fieldAttributes.add(null);
 			}
 		}
 		return position;
 	}
 	
-	private Integer findScalarPosition(FieldType fieldType) {
-		Integer position = tableMetadata.findScalarPosition(fieldType);
-		if (position>=scalarAttributes.size()){
-			for(int i=scalarAttributes.size();i<=position;i++){
+	private int findScalarPosition(FieldType fieldType) {
+		final int position = tableMetadata.findScalarPosition(fieldType);
+		if (position >= scalarAttributes.size()) {
+			for(int index = scalarAttributes.size(); index <= position; index++) {
 				scalarAttributes.add(null);
 			}
 		}
@@ -125,10 +126,10 @@ public class DocPartRowImpl implements DocPartRow{
 	public Iterable<KVValue<?>> getFieldValues() {
 		int columns = this.getDocPartData().fieldColumnsCount();
 		int attrs = this.fieldAttributes.size();
-		if (columns==attrs){
+		if (columns == attrs) {
 			return fieldAttributes;
 		}
-		NumberNullIterator<KVValue<?>> itTail=new NumberNullIterator<>(columns-attrs);
+		NumberNullIterator<KVValue<?>> itTail = new NumberNullIterator<>(columns-attrs);
 		return () -> Iterators.concat(fieldAttributes.iterator(),itTail);
 	}
 	
@@ -136,26 +137,27 @@ public class DocPartRowImpl implements DocPartRow{
 	public Iterable<KVValue<?>> getScalarValues() {
 		int columns = this.getDocPartData().scalarColumnsCount();
 		int attrs = this.scalarAttributes.size();
-		if (columns==attrs){
+		if (columns == attrs) {
 			return scalarAttributes;
 		}
-		NumberNullIterator<KVValue<?>> itTail=new NumberNullIterator<>(columns-attrs);
+		NumberNullIterator<KVValue<?>> itTail = new NumberNullIterator<>(columns-attrs);
 		return () -> Iterators.concat(scalarAttributes.iterator(),itTail);
 	}
 	
-	private static class NumberNullIterator<R> implements Iterator<R>{
+	private static class NumberNullIterator<R> implements Iterator<R> {
 
-		private int n;
+		private final int n;
+		
 		private int idx;
 		
-		public NumberNullIterator(int n){
-			this.n=n;
-			this.idx=0;
+		public NumberNullIterator(int n) {
+			this.n = n;
+			this.idx = 0;
 		}
 		
 		@Override
 		public boolean hasNext() {
-			return idx<n;
+			return idx < n;
 		}
 
 		@Override

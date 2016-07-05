@@ -130,7 +130,7 @@ public abstract class AbstractSchemaUpdater implements SchemaUpdater {
                                     new InputStreamReader(
                                             resourceAsStream,
                                             Charset.forName("UTF-8"))));
-            sqlHelper.executeStatement(dsl, statementAsString, Context.unknown);
+            sqlHelper.executeStatement(dsl, statementAsString, Context.UNKNOWN);
         } finally {
             resourceAsStream.close();
         }

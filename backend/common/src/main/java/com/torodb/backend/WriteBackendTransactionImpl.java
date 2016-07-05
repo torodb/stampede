@@ -20,6 +20,10 @@
 
 package com.torodb.backend;
 
+import java.sql.SQLException;
+import java.util.Collection;
+import java.util.Iterator;
+
 import com.google.common.base.Preconditions;
 import com.torodb.backend.ErrorHandler.Context;
 import com.torodb.core.TableRef;
@@ -28,8 +32,11 @@ import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.d2r.R2DTranslator;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.transaction.RollbackException;
-import com.torodb.core.transaction.metainf.*;
-import java.sql.SQLException;
+import com.torodb.core.transaction.metainf.MetaCollection;
+import com.torodb.core.transaction.metainf.MetaDatabase;
+import com.torodb.core.transaction.metainf.MetaDocPart;
+import com.torodb.core.transaction.metainf.MetaField;
+import com.torodb.core.transaction.metainf.MetaScalar;
 
 public class WriteBackendTransactionImpl extends BackendTransactionImpl implements WriteBackendTransaction {
 
@@ -51,6 +58,61 @@ public class WriteBackendTransactionImpl extends BackendTransactionImpl implemen
         Preconditions.checkState(!isClosed(), "This transaction is closed");
 
     	getSqlInterface().getMetaDataWriteInterface().addMetaCollection(getDsl(), db.getName(), newCol.getName(), newCol.getIdentifier());
+    }
+
+    @Override
+    public void dropCollection(MetaDatabase db, MetaCollection coll) {
+        Preconditions.checkState(!isClosed(), "This transaction is closed");
+
+        dropCollection(db.getName(), coll);
+        getSqlInterface().getStructureInterface().dropCollection(getDsl(), db.getIdentifier(), coll);
+    }
+
+    @Override
+    public void dropDatabase(MetaDatabase db) {
+        Preconditions.checkState(!isClosed(), "This transaction is closed");
+
+        Iterator<? extends MetaCollection> metaCollectionIterator = db.streamMetaCollections().iterator();
+        while (metaCollectionIterator.hasNext()) {
+            MetaCollection metaCollection = metaCollectionIterator.next();
+            dropCollection(db.getName(), metaCollection);
+        }
+        getSqlInterface().getMetaDataWriteInterface().deleteMetaDatabase(getDsl(), db.getName());
+        getSqlInterface().getStructureInterface().dropDatabase(getDsl(), db);
+    }
+
+    protected void dropCollection(String databaseName, MetaCollection coll) {
+        Iterator<? extends MetaDocPart> metaDocPartIterator = coll.streamContainedMetaDocParts().iterator();
+        while (metaDocPartIterator.hasNext()) {
+            MetaDocPart metaDocPart = metaDocPartIterator.next();
+            dropMetaDocPart(databaseName, coll, metaDocPart);
+        }
+        getSqlInterface().getMetaDataWriteInterface().deleteMetaCollection(getDsl(), databaseName, coll.getName());
+    }
+
+    private void dropMetaDocPart(String databaseName, MetaCollection coll, MetaDocPart metaDocPart) {
+        dropMetaScalars(databaseName, coll, metaDocPart);
+        dropMetaFields(databaseName, coll, metaDocPart);
+        getSqlInterface().getMetaDataWriteInterface().deleteMetaDocPart(getDsl(), databaseName, coll.getName(), 
+                metaDocPart.getTableRef());
+    }
+
+    private void dropMetaScalars(String databaseName, MetaCollection coll, MetaDocPart metaDocPart) {
+        Iterator<? extends MetaScalar> metaScalarIterator = metaDocPart.streamScalars().iterator();
+        while (metaScalarIterator.hasNext()) {
+            MetaScalar metaScalar = metaScalarIterator.next();
+            getSqlInterface().getMetaDataWriteInterface().deleteMetaScalar(getDsl(), databaseName, coll.getName(), 
+                    metaDocPart.getTableRef(), metaScalar.getType());
+        }
+    }
+
+    private void dropMetaFields(String databaseName, MetaCollection coll, MetaDocPart metaDocPart) {
+        Iterator<? extends MetaField> metaFieldIterator = metaDocPart.streamFields().iterator();
+        while (metaFieldIterator.hasNext()) {
+            MetaField metaField = metaFieldIterator.next();
+            getSqlInterface().getMetaDataWriteInterface().deleteMetaField(getDsl(), databaseName, coll.getName(), 
+                    metaDocPart.getTableRef(), metaField.getName(), metaField.getType());
+        }
     }
 
     @Override
@@ -104,13 +166,20 @@ public class WriteBackendTransactionImpl extends BackendTransactionImpl implemen
     }
 
     @Override
+    public void deleteDids(MetaDatabase db, MetaCollection col, Collection<Integer> dids) {
+        Preconditions.checkState(!isClosed(), "This transaction is closed");
+
+        getSqlInterface().getWriteInterface().deleteCollectionDocParts(getDsl(), db.getIdentifier(), col, dids);
+    }
+
+    @Override
     public void commit() throws UserException, RollbackException {
         Preconditions.checkState(!isClosed(), "This transaction is closed");
         
         try {
             getConnection().commit();
         } catch (SQLException ex) {
-            getSqlInterface().getErrorHandler().handleUserAndRetryException(Context.commit, ex);
+            getSqlInterface().getErrorHandler().handleUserException(Context.COMMIT, ex);
         } finally {
             getDsl().configuration().connectionProvider().release(getConnection());
         }

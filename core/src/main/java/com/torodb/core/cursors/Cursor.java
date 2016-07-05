@@ -61,7 +61,7 @@ public interface Cursor<E> extends AutoCloseable, Iterator<E> {
         return elements;
     }
 
-    default <O> @Nonnull Cursor<O> transform(Function<E, O> transformation) {
+    default @Nonnull <O> Cursor<O> transform(Function<E, O> transformation) {
         return new DelegateCursor<>(this, transformation);
     }
 

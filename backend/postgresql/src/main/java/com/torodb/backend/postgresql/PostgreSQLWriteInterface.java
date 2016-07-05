@@ -77,7 +77,7 @@ public class PostgreSQLWriteInterface extends AbstractWriteInterface {
     }
 
     @Override
-    protected String getDeleteDocPartsStatement(String schemaName, String tableName, List<Integer> dids) {
+    protected String getDeleteDocPartsStatement(String schemaName, String tableName, Collection<Integer> dids) {
         StringBuilder sb = new StringBuilder()
                 .append("DELETE FROM \"")
                 .append(schemaName)
@@ -128,11 +128,9 @@ public class PostgreSQLWriteInterface extends AbstractWriteInterface {
                                 docPartData
                                 );
                     } catch (DataAccessException ex) {
-                        errorHandler.handleRollbackException(Context.insert, ex);
-                        throw new SystemException(ex);
+                        throw errorHandler.handleException(Context.INSERT, ex);
                     } catch (SQLException ex) {
-                        errorHandler.handleRollbackException(Context.insert, ex);
-                        throw new SystemException(ex);
+                        throw errorHandler.handleException(Context.INSERT, ex);
                     } catch (IOException ex) {
                         throw new SystemException(ex);
                     }

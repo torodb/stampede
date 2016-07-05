@@ -19,10 +19,20 @@
  */
 package com.torodb.core.backend;
 
+import java.util.Collection;
+import java.util.function.Function;
+
 import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.transaction.RollbackException;
-import com.torodb.core.transaction.metainf.*;
+import com.torodb.core.transaction.metainf.MetaCollection;
+import com.torodb.core.transaction.metainf.MetaDatabase;
+import com.torodb.core.transaction.metainf.MetaDocPart;
+import com.torodb.core.transaction.metainf.MetaField;
+import com.torodb.core.transaction.metainf.MetaScalar;
+import com.torodb.core.transaction.metainf.MutableMetaCollection;
+import com.torodb.kvdocument.values.KVDocument;
+import com.torodb.kvdocument.values.KVValue;
 
 public interface WriteBackendTransaction extends BackendTransaction {
 
@@ -38,13 +48,32 @@ public interface WriteBackendTransaction extends BackendTransaction {
     /**
      * Adds a collection to a database.
      *
-     * @param db     the database where the collection will be added. It must have been added
+     * @param db     the database where the collection will be added. It must not have been added
      *               before.
      * @param newCol the collection to add
      * @throws BackendException
      * @throws RollbackException
      */
     public void addCollection(MetaDatabase db, MetaCollection newCol) throws RollbackException;
+
+    /**
+     * Drop an existing collection.
+     *
+     * @param db     the database that contains the collection to drop.
+     * @param coll the collection to drop.
+     * @throws BackendException
+     * @throws RollbackException
+     */
+    public void dropCollection(MetaDatabase db, MetaCollection coll) throws RollbackException;
+
+    /**
+     * Drop an existing database.
+     *
+     * @param db     the database to drop.
+     * @throws BackendException
+     * @throws RollbackException
+     */
+    public void dropDatabase(MetaDatabase db) throws RollbackException;
 
     /**
      * Adds a docPart to a collection.
@@ -111,6 +140,8 @@ public interface WriteBackendTransaction extends BackendTransaction {
      */
     public void insert(MetaDatabase db, MetaCollection col, DocPartData data) throws RollbackException, UserException;
 
+    public void deleteDids(MetaDatabase db, MetaCollection col, Collection<Integer> dids);
+    
     public void commit() throws UserException, RollbackException;
 
     @Override

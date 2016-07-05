@@ -33,7 +33,7 @@ public class DefaultToBackendFunction implements
 
     public Iterable<BackendTransactionJob> apply(CollectionData collectionData) {
         ArrayList<BackendTransactionJob> jobs = new ArrayList<>();
-        for (DocPartData docPartData : collectionData) {
+        for (DocPartData docPartData : collectionData.orderedDocPartData()) {
             assert docPartData.getMetaDocPart() instanceof BatchMetaDocPart
                     : "This function can only use inputs whose meta doc part information is an instance of " + BatchMetaDocPart.class;
             BatchMetaDocPart metaDocPart = (BatchMetaDocPart) docPartData.getMetaDocPart();

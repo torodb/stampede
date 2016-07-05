@@ -107,9 +107,7 @@ public class DefaultCursor implements Cursor<ToroDocument> {
                     dsl, metaDatabase, metaCollection, didCursor, maxResults)) {
             return r2dTranslator.translate(batch);
         } catch(SQLException ex) {
-            sqlInterface.getErrorHandler().handleRollbackException(Context.fetch, ex);
-            
-            throw new SystemException(ex);
+            throw sqlInterface.getErrorHandler().handleException(Context.FETCH, ex);
         }
     }
 

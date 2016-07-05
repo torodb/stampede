@@ -6,8 +6,8 @@
 		<artifactId>backend-parent</artifactId>
 		<version>0.50.0-SNAPSHOT</version>
 	</parent>
-    
-    <name>ToroDB-poc: Backends benchmark</name>
+
+	<name>ToroDB-poc: Backends benchmark</name>
 	<artifactId>benchmark</artifactId>
 	<dependencies>
 		<dependency>
@@ -33,43 +33,52 @@
 			<groupId>com.google.code.findbugs</groupId>
 			<artifactId>jsr305</artifactId>
 		</dependency>
-        <dependency>
-            <groupId>com.torodb</groupId>
-            <artifactId>backend-common</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.torodb</groupId>
-            <artifactId>backend-common</artifactId>
-            <type>test-jar</type>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.torodb</groupId>
-            <artifactId>backend-derby</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.torodb</groupId>
-            <artifactId>backend-derby</artifactId>
-            <type>test-jar</type>
-            <version>${project.version}</version>
-        </dependency>
+		<dependency>
+			<groupId>com.torodb</groupId>
+			<artifactId>backend-common</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.torodb</groupId>
+			<artifactId>backend-common</artifactId>
+			<type>test-jar</type>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.torodb</groupId>
+			<artifactId>backend-derby</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.torodb</groupId>
+			<artifactId>backend-derby</artifactId>
+			<type>test-jar</type>
+			<version>${project.version}</version>
+		</dependency>
 		<dependency>
 			<groupId>com.torodb.kvdocument</groupId>
 			<artifactId>json-converter</artifactId>
 			<version>${project.version}</version>
 		</dependency>
+		<dependency>
+			<groupId>com.torodb</groupId>
+			<artifactId>d2r</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.torodb</groupId>
+			<artifactId>d2r</artifactId>
+			<type>test-jar</type>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.torodb.packaging</groupId>
+			<artifactId>generic-packaging</artifactId>
+			<version>${project.version}</version>
+		</dependency>
         <dependency>
-            <groupId>com.torodb</groupId>
-            <artifactId>d2r</artifactId>
-           <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.torodb</groupId>
-            <artifactId>d2r</artifactId>
-            <type>test-jar</type>
-            <version>${project.version}</version>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-slf4j-impl</artifactId>
         </dependency>
 	</dependencies>
 
@@ -86,85 +95,45 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.1</version>
+				<dependencies>
+			        <dependency>
+			            <groupId>org.openjdk.jmh</groupId>
+			            <artifactId>jmh-generator-annprocess</artifactId>
+                        <version>${jmh.version}</version>
+			        </dependency>
+				</dependencies>
 				<configuration>
 					<compilerVersion>${javac.target}</compilerVersion>
 					<source>${javac.target}</source>
 					<target>${javac.target}</target>
 				</configuration>
 			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-shade-plugin</artifactId>
-				<version>2.2</version>
-				<executions>
-					<execution>
-						<phase>package</phase>
-						<goals>
-							<goal>shade</goal>
-						</goals>
-						<configuration>
-							<finalName>${uberjar.name}</finalName>
-							<transformers>
-								<transformer
-									implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-									<mainClass>org.openjdk.jmh.Main</mainClass>
-								</transformer>
-							</transformers>
-							<filters>
-								<filter>
-									<!-- Shading signed JARs will fail without this. http://stackoverflow.com/questions/999489/invalid-signature-file-when-attempting-to-run-a-jar -->
-									<artifact>*:*</artifact>
-									<excludes>
-										<exclude>META-INF/*.SF</exclude>
-										<exclude>META-INF/*.DSA</exclude>
-										<exclude>META-INF/*.RSA</exclude>
-									</excludes>
-								</filter>
-							</filters>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
 		</plugins>
-		<pluginManagement>
-			<plugins>
-				<plugin>
-					<artifactId>maven-clean-plugin</artifactId>
-					<version>2.5</version>
-				</plugin>
-				<plugin>
-					<artifactId>maven-deploy-plugin</artifactId>
-					<version>2.8.1</version>
-				</plugin>
-				<plugin>
-					<artifactId>maven-install-plugin</artifactId>
-					<version>2.5.1</version>
-				</plugin>
-				<plugin>
-					<artifactId>maven-jar-plugin</artifactId>
-					<version>2.4</version>
-				</plugin>
-				<plugin>
-					<artifactId>maven-javadoc-plugin</artifactId>
-					<version>2.9.1</version>
-				</plugin>
-				<plugin>
-					<artifactId>maven-resources-plugin</artifactId>
-					<version>2.6</version>
-				</plugin>
-				<plugin>
-					<artifactId>maven-site-plugin</artifactId>
-					<version>3.3</version>
-				</plugin>
-				<plugin>
-					<artifactId>maven-source-plugin</artifactId>
-					<version>2.2.1</version>
-				</plugin>
-				<plugin>
-					<artifactId>maven-surefire-plugin</artifactId>
-					<version>2.17</version>
-				</plugin>
-			</plugins>
-		</pluginManagement>
 	</build>
+	
+	<profiles>
+	   <profile>
+	       <id>jmh</id>
+	       <build>
+	           <plugins>
+	               <plugin>
+	                   <groupId>org.codehaus.mojo</groupId>
+	                   <artifactId>exec-maven-plugin</artifactId>
+	                   <version>1.5.0</version>
+	                   <executions>
+	                       <execution>
+	                           <phase>test</phase>
+	                           <goals>
+	                               <goal>java</goal>
+	                           </goals>
+	                       </execution>
+	                   </executions>
+				       <configuration>
+                          <mainClass>org.openjdk.jmh.Main</mainClass>
+				       </configuration>
+     	           </plugin>
+	           </plugins>
+	       </build>
+	   </profile>
+	</profiles>
 </project>

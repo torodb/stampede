@@ -20,6 +20,17 @@
 
 package com.torodb.integration.backend;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.stream.StreamSupport;
+
+import org.jooq.DSLContext;
+import org.junit.Before;
+import org.junit.ClassRule;
+
 import com.torodb.backend.SqlHelper;
 import com.torodb.backend.SqlInterface;
 import com.torodb.backend.TableRefComparator;
@@ -28,21 +39,33 @@ import com.torodb.backend.meta.SchemaUpdater;
 import com.torodb.backend.meta.SnapshotUpdater;
 import com.torodb.core.TableRef;
 import com.torodb.core.TableRefFactory;
-import com.torodb.core.d2r.*;
+import com.torodb.core.d2r.CollectionData;
+import com.torodb.core.d2r.D2RTranslator;
+import com.torodb.core.d2r.DocPartData;
+import com.torodb.core.d2r.DocPartResult;
+import com.torodb.core.d2r.IdentifierFactory;
+import com.torodb.core.d2r.R2DTranslator;
 import com.torodb.core.document.ToroDocument;
 import com.torodb.core.impl.TableRefFactoryImpl;
+import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
+import com.torodb.core.transaction.metainf.MetaCollection;
+import com.torodb.core.transaction.metainf.MetaDatabase;
+import com.torodb.core.transaction.metainf.MetaDocPart;
+import com.torodb.core.transaction.metainf.MetaField;
+import com.torodb.core.transaction.metainf.MetaScalar;
 import com.torodb.core.transaction.metainf.MetainfoRepository.SnapshotStage;
-import com.torodb.core.transaction.metainf.*;
-import com.torodb.d2r.*;
+import com.torodb.core.transaction.metainf.MutableMetaDatabase;
+import com.torodb.core.transaction.metainf.MutableMetaDocPart;
+import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
+import com.torodb.d2r.D2RTranslatorStack;
+import com.torodb.d2r.IdentifierFactoryImpl;
+import com.torodb.d2r.MockIdentifierInterface;
+import com.torodb.d2r.MockRidGenerator;
+import com.torodb.d2r.R2DTranslatorImpl;
 import com.torodb.kvdocument.conversion.json.JacksonJsonParser;
 import com.torodb.kvdocument.conversion.json.JsonParser;
 import com.torodb.kvdocument.values.KVDocument;
 import com.torodb.metainfo.cache.mvcc.MvccMetainfoRepository;
-import java.util.*;
-import java.util.stream.StreamSupport;
-import org.jooq.DSLContext;
-import org.junit.Before;
-import org.junit.ClassRule;
 
 public abstract class AbstractBackendTest {
 
@@ -138,7 +161,6 @@ public abstract class AbstractBackendTest {
         }
     }
 
-    @SuppressWarnings({ "unchecked", "rawtypes" })
     protected Collection<ToroDocument> readDocuments(MetaDatabase metaDatabase, MetaCollection metaCollection,
             Iterator<DocPartResult> docPartResultSets) {
         R2DTranslator r2dTranslator = new R2DTranslatorImpl();
@@ -147,7 +169,11 @@ public abstract class AbstractBackendTest {
     }
 
     protected List<Integer> writeCollectionData(DSLContext dsl, CollectionData collectionData) {
-        Iterator<DocPartData> docPartDataIterator = StreamSupport.stream(collectionData.spliterator(), false)
+        return writeCollectionData(dsl, data.database.getIdentifier(), collectionData);
+    }
+
+    protected List<Integer> writeCollectionData(DSLContext dsl, String databaseIdentifier, CollectionData collectionData) {
+        Iterator<DocPartData> docPartDataIterator = StreamSupport.stream(collectionData.orderedDocPartData().spliterator(), false)
                 .iterator();
         List<Integer> generatedDids = new ArrayList<>();
         while (docPartDataIterator.hasNext()) {
@@ -155,7 +181,7 @@ public abstract class AbstractBackendTest {
             if (docPartData.getMetaDocPart().getTableRef().isRoot()) {
                 docPartData.forEach(docPartRow ->generatedDids.add(docPartRow.getDid()));
             }
-            sqlInterface.getWriteInterface().insertDocPartData(dsl, data.database.getIdentifier(), docPartData);
+            sqlInterface.getWriteInterface().insertDocPartData(dsl, databaseIdentifier, docPartData);
         }
         return generatedDids;
     }
@@ -195,7 +221,12 @@ public abstract class AbstractBackendTest {
 
     protected CollectionData parseDocuments(MutableMetaSnapshot mutableSnapshot, DSLContext dsl, List<KVDocument> documents)
             throws Exception {
-        CollectionData collectionData = readDataFromDocuments(data.database.getName(), data.collection.getName(), documents, mutableSnapshot);
+        return parseDocuments(mutableSnapshot, data.database.getName(), data.collection.getName(), dsl, documents);
+    }
+
+    protected CollectionData parseDocuments(MutableMetaSnapshot mutableSnapshot, String databaseName, String collectionName, DSLContext dsl, List<KVDocument> documents)
+            throws Exception {
+        CollectionData collectionData = readDataFromDocuments(databaseName, collectionName, documents, mutableSnapshot);
         
         return collectionData;
     }

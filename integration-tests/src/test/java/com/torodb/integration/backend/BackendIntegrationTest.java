@@ -268,7 +268,8 @@ public class BackendIntegrationTest extends AbstractBackendTest {
             connection.commit();
             
             List<Integer> deletedDids = generatedDids.subList(0, 1);
-            sqlInterface.getWriteInterface().deleteCollectionDocParts(dsl, data.database.getIdentifier(), data.collection, deletedDids);
+            sqlInterface.getWriteInterface().deleteCollectionDocParts(dsl, data.database.getIdentifier(), 
+                    data.collection, new MockDidCursor(deletedDids.iterator()));
             
             StringBuilder rootDocPartSelectStatementBuilder = new StringBuilder()
                     .append("SELECT \"")
@@ -300,6 +301,74 @@ public class BackendIntegrationTest extends AbstractBackendTest {
                     Integer did = resultSet.getInt(1);
                     Assert.assertFalse(deletedDids.contains(did));
                 }
+            }
+            connection.commit();
+        }
+    }
+    
+    @Test
+    public void testTorodbDropDatabase() throws Exception {
+        buildMetaSnapshot();
+        
+        try (Connection connection = sqlInterface.getDbBackend().createWriteConnection()) {
+            DSLContext dsl = sqlInterface.getDslContextFactory().createDSLContext(connection);
+            
+            sqlInterface.getStructureInterface().createSchema(dsl, data.database.getIdentifier());
+            
+            createDocPartTable(dsl, data.collection, data.rootDocPart);
+            createDocPartTable(dsl, data.collection, data.subDocPart);
+            MutableMetaSnapshot mutableSnapshot = new WrapperMutableMetaSnapshot(data.snapshot);
+            writeCollectionData(dsl, parseDocuments(mutableSnapshot, dsl, data.documents));
+            connection.commit();
+            
+            
+            try (ResultSet resultSet = connection.getMetaData().getSchemas("%", data.database.getIdentifier())) {
+                Assert.assertTrue(resultSet.next());
+            }
+            connection.commit();
+            
+            sqlInterface.getStructureInterface().dropDatabase(dsl, data.database);
+            connection.commit();
+            
+            try (ResultSet resultSet = connection.getMetaData().getSchemas("%", data.database.getIdentifier())) {
+                Assert.assertFalse(resultSet.next());
+            }
+            connection.commit();
+        }
+    }
+    
+    @Test
+    public void testTorodbDropCollection() throws Exception {
+        buildMetaSnapshot();
+        
+        try (Connection connection = sqlInterface.getDbBackend().createWriteConnection()) {
+            DSLContext dsl = sqlInterface.getDslContextFactory().createDSLContext(connection);
+            
+            sqlInterface.getStructureInterface().createSchema(dsl, data.database.getIdentifier());
+            
+            createDocPartTable(dsl, data.collection, data.rootDocPart);
+            createDocPartTable(dsl, data.collection, data.subDocPart);
+            MutableMetaSnapshot mutableSnapshot = new WrapperMutableMetaSnapshot(data.snapshot);
+            writeCollectionData(dsl, parseDocuments(mutableSnapshot, dsl, data.documents));
+            connection.commit();
+            
+            
+            try (ResultSet resultSet = connection.getMetaData().getTables("%", data.database.getIdentifier(), 
+                    "%", new String[] { "TABLE" })) {
+                int count = 0;
+                while (resultSet.next()) {
+                    count++;
+                }
+                Assert.assertEquals(2, count);
+            }
+            connection.commit();
+            
+            sqlInterface.getStructureInterface().dropCollection(dsl, data.database.getIdentifier(), data.collection);
+            connection.commit();
+            
+            try (ResultSet resultSet = connection.getMetaData().getTables("%", data.database.getIdentifier(), 
+                    "%", new String[] { "TABLE" })) {
+                Assert.assertFalse(resultSet.next());
             }
             connection.commit();
         }

@@ -89,9 +89,10 @@ public class HexUtils {
         checkNotNull(value);
         checkArgument(value.length() % 2 == 0, "A string with a even lenght was expected");
 
+        final int size = value.length();
         int r = 0;
-        byte[] result = new byte[value.length() / 2];
-        for (int i = 0; i < value.length(); i += 2) {
+        byte[] result = new byte[size / 2];
+        for (int i = 0; i < size; i += 2) {
             assert r == i / 2;
             
             String substring = value.substring(i, i+2);

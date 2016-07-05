@@ -1,32 +1,37 @@
 
 package com.torodb.backend.d2r;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Collection;
+
+import org.jooq.Converter;
+
 import com.google.common.base.Preconditions;
+import com.torodb.backend.DataTypeProvider;
+import com.torodb.backend.ErrorHandler;
 import com.torodb.backend.ErrorHandler.Context;
 import com.torodb.backend.InternalField;
+import com.torodb.backend.MetaDataReadInterface;
 import com.torodb.backend.SqlHelper;
-import com.torodb.backend.SqlInterface;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.backend.tables.MetaDocPartTable;
 import com.torodb.backend.tables.records.MetaDocPartRecord;
 import com.torodb.core.d2r.DocPartResult;
 import com.torodb.core.d2r.DocPartResultRow;
 import com.torodb.core.d2r.IllegalDocPartRowException;
-import com.torodb.core.exceptions.SystemException;
 import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.kvdocument.values.KVValue;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Collection;
-import org.jooq.Converter;
 
 /**
  *
  */
 public class ResultSetDocPartResult implements DocPartResult {
 
-    private final SqlInterface sqlInterface;
+    private final MetaDataReadInterface metaDataReadInterface;
+    private final DataTypeProvider dataTypeProvider;
+    private final ErrorHandler errorHandler;
     private final MetaDocPart metaDocPart;
     private final ResultSet rs;
     /**
@@ -36,8 +41,12 @@ public class ResultSetDocPartResult implements DocPartResult {
     private boolean hasNext = false;
     private final SqlHelper sqlHelper;
 
-    public ResultSetDocPartResult(SqlInterface sqlInterface, MetaDocPart metaDocPart, ResultSet rs, SqlHelper sqlHelper) {
-        this.sqlInterface = sqlInterface;
+    public ResultSetDocPartResult(MetaDataReadInterface metaDataReadInterface,
+            DataTypeProvider dataTypeProvider, ErrorHandler errorHandler,
+            MetaDocPart metaDocPart, ResultSet rs, SqlHelper sqlHelper) {
+        this.metaDataReadInterface = metaDataReadInterface;
+        this.dataTypeProvider = dataTypeProvider;
+        this.errorHandler = errorHandler;
         this.metaDocPart = metaDocPart;
         this.rs = rs;
         this.sqlHelper = sqlHelper;
@@ -56,9 +65,7 @@ public class ResultSetDocPartResult implements DocPartResult {
             try {
                 hasNext = rs.next();
             } catch (SQLException sqlException) {
-                sqlInterface.getErrorHandler().handleRollbackException(Context.fetch, sqlException);
-
-                throw new SystemException(sqlException);
+                throw errorHandler.handleException(Context.FETCH, sqlException);
             }
         }
         return hasNext;
@@ -79,9 +86,7 @@ public class ResultSetDocPartResult implements DocPartResult {
         try {
             rs.close();
         } catch (SQLException ex) {
-            sqlInterface.getErrorHandler().handleRollbackException(Context.fetch, ex);
-
-            throw new SystemException(ex);
+            throw errorHandler.handleException(Context.FETCH, ex);
         }
     }
 
@@ -92,7 +97,7 @@ public class ResultSetDocPartResult implements DocPartResult {
         private final int firstUserColumnIndex;
 
         public ResultSetNewDocPartRow() throws IllegalDocPartRowException {
-            Collection<InternalField<?>> internalFields = sqlInterface.getMetaDataReadInterface()
+            Collection<InternalField<?>> internalFields = metaDataReadInterface
                     .getInternalFields(metaDocPart);
 
             Integer _did = null;
@@ -100,7 +105,7 @@ public class ResultSetDocPartResult implements DocPartResult {
             Integer _rid = null;
             Integer _seq = null;
             int columnIndex = 1;
-            MetaDocPartTable<Object,MetaDocPartRecord<Object>> metaDocPartTable = sqlInterface.getMetaDataReadInterface().getMetaDocPartTable();
+            MetaDocPartTable<Object,MetaDocPartRecord<Object>> metaDocPartTable = metaDataReadInterface.getMetaDocPartTable();
 
             for (InternalField<?> internalField : internalFields) {
                 try {
@@ -114,9 +119,7 @@ public class ResultSetDocPartResult implements DocPartResult {
                         _seq = metaDocPartTable.SEQ.getValue(rs, columnIndex);
                     }
                 } catch (SQLException sqlException) {
-                    sqlInterface.getErrorHandler().handleRollbackException(Context.fetch, sqlException);
-
-                    throw new SystemException(sqlException);
+                    throw errorHandler.handleException(Context.FETCH, sqlException);
                 }
                 columnIndex++;
 
@@ -167,15 +170,14 @@ public class ResultSetDocPartResult implements DocPartResult {
             try {
                 databaseValue = sqlHelper.getResultSetValue(fieldType, rs, fieldIndex + firstUserColumnIndex);
             } catch (SQLException sqlException) {
-                sqlInterface.getErrorHandler().handleRollbackException(Context.fetch, sqlException);
-                throw new SystemException(sqlException);
+                throw errorHandler.handleException(Context.FETCH, sqlException);
             }
 
             if (databaseValue == null) {
                 return null;
             }
 
-            DataTypeForKV<?> dataType = sqlInterface.getDataTypeProvider().getDataType(fieldType);
+            DataTypeForKV<?> dataType = dataTypeProvider.getDataType(fieldType);
             @SuppressWarnings("unchecked")
             Converter<Object, KVValue<?>> converter = (Converter<Object, KVValue<?>>) dataType.getConverter();
             return converter.from(databaseValue);

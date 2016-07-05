@@ -47,16 +47,16 @@ public class DocPartDataCollection implements CollectionData {
 	}
 
 	@Override
-	public Iterator<DocPartData> iterator() {
+	public Iterable<DocPartData> orderedDocPartData() {
 		List<DocPartData> all = new ArrayList<>();
 		for (DocPartDataImpl table: docPartDataList){
 			if (table.getParentDocPartRow()==null){
 				all.add(table);
 				addChilds(table, all);
-				return all.iterator();
+				return all;
 			}
 		}
-		return all.iterator();
+		return all;
 	}
 	
 	private void addChilds(DocPartDataImpl current, List<DocPartData> all) {

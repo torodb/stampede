@@ -1,6 +1,14 @@
 
 package com.torodb.mongodb.commands;
 
+import java.util.Collections;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.MongoDb30Commands.MongoDb30CommandsImplementationBuilder;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.AdminCommands.AdminCommandsImplementationsBuilder;
@@ -67,16 +75,13 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.net.HostAndPort;
 import com.torodb.core.annotations.DoNotChange;
 import com.torodb.mongodb.commands.impl.NotImplementedCommandImplementation;
+import com.torodb.mongodb.commands.impl.admin.DropCollectionImplementation;
+import com.torodb.mongodb.commands.impl.admin.DropDatabaseImplementation;
 import com.torodb.mongodb.commands.impl.diagnostic.PingImplementation;
-import com.torodb.mongodb.commands.impl.general.FindImplementation;
+import com.torodb.mongodb.commands.impl.general.DeleteImplementation;
 import com.torodb.mongodb.commands.impl.general.InsertImplementation;
+import com.torodb.mongodb.commands.impl.general.UpdateImplementation;
 import com.torodb.mongodb.core.WriteMongodTransaction;
-import java.util.Collections;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 /**
  *
@@ -158,6 +163,18 @@ public class WriteTransactionCommandsExecutor implements CommandsExecutor<WriteM
     }
 
     static class MyAdminCommandsImplementationBuilder extends AdminCommandsImplementationsBuilder<WriteMongodTransaction> {
+        private final DropCollectionImplementation dropCollectionImplementation;
+        private final DropDatabaseImplementation dropDatabaseImplementation;
+        
+        @Inject
+        public MyAdminCommandsImplementationBuilder(
+                DropCollectionImplementation dropCollectionImplementation,
+                DropDatabaseImplementation dropDatabaseImplementation) {
+            super();
+            this.dropCollectionImplementation = dropCollectionImplementation;
+            this.dropDatabaseImplementation = dropDatabaseImplementation;
+        }
+
         @Override
         public CommandImplementation<ListCollectionsArgument, ListCollectionsResult, WriteMongodTransaction> getListCollectionsImplementation() {
             return NotImplementedCommandImplementation.build();
@@ -165,12 +182,12 @@ public class WriteTransactionCommandsExecutor implements CommandsExecutor<WriteM
 
         @Override
         public CommandImplementation<Empty, Empty, WriteMongodTransaction> getDropDatabaseImplementation() {
-            return NotImplementedCommandImplementation.build();
+            return dropDatabaseImplementation;
         }
 
         @Override
         public CommandImplementation<CollectionCommandArgument, Empty, WriteMongodTransaction> getDropCollectionImplementation() {
-            return NotImplementedCommandImplementation.build();
+            return dropCollectionImplementation;
         }
 
         @Override
@@ -249,8 +266,20 @@ public class WriteTransactionCommandsExecutor implements CommandsExecutor<WriteM
     }
 
     static class MyGeneralCommandsImplementationBuilder extends GeneralCommandsImplementationsBuilder<WriteMongodTransaction> {
-        @Inject private FindImplementation findImpl;
-        @Inject private InsertImplementation insertImpl;
+        private final InsertImplementation insertImpl;
+        private final DeleteImplementation deleteImpl;
+        private final UpdateImplementation updateImpl;
+
+        @Inject
+        public MyGeneralCommandsImplementationBuilder(
+                InsertImplementation insertImpl,
+                DeleteImplementation deleteImpl,
+                UpdateImplementation updateImpl) {
+            super();
+            this.insertImpl = insertImpl;
+            this.deleteImpl = deleteImpl;
+            this.updateImpl = updateImpl;
+        }
 
         @Override
         public CommandImplementation<GetLastErrorArgument, GetLastErrorReply, WriteMongodTransaction> getGetLastErrrorImplementation() {
@@ -264,17 +293,17 @@ public class WriteTransactionCommandsExecutor implements CommandsExecutor<WriteM
 
         @Override
         public CommandImplementation<FindArgument, FindResult, ? super WriteMongodTransaction> getFindImplementation() {
-            return findImpl;
+            return NotImplementedCommandImplementation.build();
         }
 
         @Override
         public CommandImplementation<DeleteArgument, Long, WriteMongodTransaction> getDeleteImplementation() {
-            return NotImplementedCommandImplementation.build();
+            return deleteImpl;
         }
 
         @Override
         public CommandImplementation<UpdateArgument, UpdateResult, WriteMongodTransaction> getUpdateImplementation() {
-            return NotImplementedCommandImplementation.build();
+            return updateImpl;
         }
 
     }

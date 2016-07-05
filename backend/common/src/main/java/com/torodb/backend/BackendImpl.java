@@ -64,6 +64,10 @@ public class BackendImpl extends AbstractIdleService implements Backend {
 
     @Override
     protected void shutDown() throws Exception {
+        maxRowIdFactory.stopAsync();
+        maxRowIdFactory.awaitTerminated();
+        dbBackendService.stopAsync();
+        dbBackendService.awaitTerminated();
     }
 
     void onConnectionClosed(BackendConnectionImpl connection) {

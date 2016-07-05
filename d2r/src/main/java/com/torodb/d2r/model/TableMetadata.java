@@ -32,8 +32,8 @@ public class TableMetadata {
 		this.metaDocPart = collectionMetaInfo.findMetaDocPart(tableRef);
 		this.fieldOrder = HashBasedTable.create();
 		this.scalarOrder = new EnumMap<>(FieldType.class);
-		this.orderedFields = new ArrayList<>();
-		this.orderedScalars = new ArrayList<>();
+		this.orderedFields = new ArrayList<>(64);
+		this.orderedScalars = new ArrayList<>(64);
 	}
 
 	protected MutableMetaDocPart getMetaDocPart() {
@@ -52,7 +52,7 @@ public class TableMetadata {
 		return collectionMetaInfo.getNextRowId(tableRef);
 	}
 
-	protected Integer findFieldPosition(String key, FieldType type) {
+	protected int findFieldPosition(String key, FieldType type) {
 		Integer idx = fieldOrder.get(key, type);
 		if (idx == null) {
 			idx = orderedFields.size();
@@ -62,7 +62,7 @@ public class TableMetadata {
 		return idx;
 	}
 	
-	protected Integer findScalarPosition(FieldType type) {
+	protected int findScalarPosition(FieldType type) {
 		Integer idx = scalarOrder.get(type);
 		if (idx == null) {
 			idx = orderedScalars.size();

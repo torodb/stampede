@@ -20,18 +20,35 @@
 
 package com.torodb.backend.postgresql;
 
-import com.torodb.backend.AbstractErrorHandlerInterface;
+import static com.torodb.backend.ErrorHandler.Context.*;
+import com.torodb.backend.AbstractErrorHandler;
 
 /**
  *
  */
-public class PostgreSQLErrorHandler extends AbstractErrorHandlerInterface {
+public class PostgreSQLErrorHandler extends AbstractErrorHandler {
     public PostgreSQLErrorHandler() {
         super(
-                "40001", 
-                "40P01",
-                "42P07", // relation "?" already exists
-                "42701"  // column "?" of relation "?" already exists
+                rule("40001"), 
+                rule("40P01"),
+                /**
+                 * relation "?" already exists
+                 */
+                rule("42P07"),
+                /**
+                 * column "?" of relation "?" already exists
+                 */
+                rule("42701"),
+                /**
+                 * type "?" already exists
+                 */
+                rule("42710"),
+                /**
+                 * duplicate key value violates unique constraint "?"
+                 * 
+                 * This will be raised when modifying DDL concurrently
+                 */
+                rule("23505", CREATE_SCHEMA, CREATE_TABLE, ADD_COLUMN, CREATE_INDEX, DROP_SCHEMA, DROP_TABLE, DROP_INDEX)
                 );
     }
 }

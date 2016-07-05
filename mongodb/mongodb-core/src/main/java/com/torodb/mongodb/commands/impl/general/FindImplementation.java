@@ -40,6 +40,7 @@ public class FindImplementation extends ReadTorodbCommandImpl<FindArgument, Find
         switch (filter.size()) {
             case 0: {
                 cursor = context.getTorodTransaction().findAll(req.getDatabase(), arg.getCollection())
+                        .transform(t -> t.getRoot())
                         .transform(ToBsonDocumentTranslator.getInstance());
                 break;
             }
@@ -69,7 +70,8 @@ public class FindImplementation extends ReadTorodbCommandImpl<FindArgument, Find
         Builder refBuilder = new AttributeReference.Builder();
         KVValue<?> kvValue = calculateValueAndAttRef(filter, refBuilder);
 
-        return transaction.findByAttRef(db, col, refBuilder.build(), kvValue);
+        return transaction.findByAttRef(db, col, refBuilder.build(), kvValue)
+                .transform(t -> t.getRoot());
     }
 
     private KVValue<?> calculateValueAndAttRef(BsonDocument doc, AttributeReference.Builder refBuilder) throws CommandFailed {

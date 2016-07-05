@@ -45,8 +45,13 @@ public class DerbyStructureInterface extends AbstractStructureInterface {
     }
 
     @Override
+    protected String getDropTableStatement(String schemaName, String tableName) {
+        return "DROP TABLE \"" + schemaName + "\".\"" + tableName + "\"";
+    }
+
+    @Override
     protected String getDropSchemaStatement(String schemaName) {
-        return "DROP SCHEMA \"" + schemaName + "\" CASCADE";
+        return "DROP SCHEMA \"" + schemaName + "\" RESTRICT";
     }
     
     @Override

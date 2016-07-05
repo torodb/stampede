@@ -36,9 +36,9 @@ import org.jooq.exception.DataAccessException;
 
 import com.google.common.base.Preconditions;
 import com.torodb.backend.ErrorHandler.Context;
+import com.torodb.core.backend.DidCursor;
 import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.d2r.DocPartRow;
-import com.torodb.core.exceptions.SystemException;
 import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDocPart;
@@ -66,26 +66,52 @@ public abstract class AbstractWriteInterface implements WriteInterface {
     }
 
     @Override
-    public void deleteCollectionDocParts(@Nonnull DSLContext dsl,
+    public long deleteCollectionDocParts(@Nonnull DSLContext dsl,
             @Nonnull String schemaName, @Nonnull MetaCollection metaCollection,
-            @Nonnull List<Integer> dids
+            @Nonnull DidCursor didCursor
     ) {
-        Preconditions.checkArgument(dids.size() > 0, "At least 1 did must be specified");
-        
-        Iterator<? extends MetaDocPart> iterator = metaCollection.streamContainedMetaDocParts().iterator();
         Connection c = dsl.configuration().connectionProvider().acquire();
         try{
-	        while (iterator.hasNext()){
-	        	MetaDocPart metaDocPart = iterator.next();
-	        	String statement = getDeleteDocPartsStatement(schemaName, metaDocPart.getIdentifier(), dids);
-	        	sqlHelper.executeUpdate(c, statement, Context.delete);
-	        }
+            int maxBatchSize = 100;
+            long deleted = 0;
+            
+            while (didCursor.hasNext()) {
+                Collection<Integer> dids = didCursor.getNextBatch(maxBatchSize);
+                deleteCollectionDocParts(c, schemaName, metaCollection, dids);
+                deleted += dids.size();
+            }
+            
+            return deleted;
         }finally {
-        	dsl.configuration().connectionProvider().release(c);
+            dsl.configuration().connectionProvider().release(c);
         }
     }
 
-    protected abstract String getDeleteDocPartsStatement(String schemaName, String tableName, List<Integer> dids);
+    @Override
+    public void deleteCollectionDocParts(@Nonnull DSLContext dsl,
+            @Nonnull String schemaName, @Nonnull MetaCollection metaCollection,
+            @Nonnull Collection<Integer> dids
+    ) {
+        Connection c = dsl.configuration().connectionProvider().acquire();
+        try{
+            deleteCollectionDocParts(c, schemaName, metaCollection, dids);
+        }finally {
+            dsl.configuration().connectionProvider().release(c);
+        }
+    }
+
+    private void deleteCollectionDocParts(Connection c, String schemaName, MetaCollection metaCollection,
+            Collection<Integer> dids) {
+        Iterator<? extends MetaDocPart> iterator = metaCollection.streamContainedMetaDocParts()
+                .sorted(TableRefComparator.MetaDocPart.DESC).iterator();
+        while (iterator.hasNext()){
+        	MetaDocPart metaDocPart = iterator.next();
+            String statement = getDeleteDocPartsStatement(schemaName, metaDocPart.getIdentifier(), dids);
+            sqlHelper.executeUpdate(c, statement, Context.DELETE);
+        }
+    }
+
+    protected abstract String getDeleteDocPartsStatement(String schemaName, String tableName, Collection<Integer> dids);
 
     @Override
     public void insertDocPartData(DSLContext dsl, String schemaName, DocPartData docPartData) {
@@ -100,8 +126,7 @@ public abstract class AbstractWriteInterface implements WriteInterface {
             Iterator<MetaField> metaFieldIterator = docPartData.orderedMetaFieldIterator();
             standardInsertDocPartData(dsl, schemaName, docPartData, metaDocPart, metaScalarIterator, metaFieldIterator, docPartRowIterator);
         } catch (DataAccessException ex) {
-            errorHandler.handleRollbackException(Context.insert, ex);
-            throw new SystemException(ex);
+            throw errorHandler.handleException(Context.INSERT, ex);
         }
     }
 
@@ -153,8 +178,7 @@ public abstract class AbstractWriteInterface implements WriteInterface {
                 }
             }
         } catch(SQLException ex) {
-            errorHandler.handleRollbackException(Context.insert, ex);
-            throw new SystemException(ex);
+            throw errorHandler.handleException(Context.INSERT, ex);
         } finally {
             dsl.configuration().connectionProvider().release(connection);
         }

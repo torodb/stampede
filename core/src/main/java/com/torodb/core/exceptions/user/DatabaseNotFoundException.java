@@ -18,33 +18,26 @@
  *     
  */
 
-package com.torodb.backend.derby;
+package com.torodb.core.exceptions.user;
 
-import static com.torodb.backend.ErrorHandler.Context.*;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
-import com.torodb.backend.AbstractErrorHandler;
+public class DatabaseNotFoundException extends UserException {
 
-/**
- *
- */
-@Singleton
-public class DerbyErrorHandler extends AbstractErrorHandler {
+    private static final long serialVersionUID = 1L;
+
+    private final String database;
     
-    @Inject
-    public DerbyErrorHandler() {
-        super(
-                rule("40001"), 
-                rule("40P01"),
-                /**
-                 * Schema '?' already exists.
-                 */
-                rule("X0Y68", CREATE_SCHEMA),
-                /**
-                 * Table/View '?' already exists in Schema '?'.
-                 * Column '?' already exists in Table/View '"?"."?"'.
-                 */
-                rule("X0Y32", CREATE_TABLE, ADD_COLUMN)
-        );
+    public DatabaseNotFoundException(String database) {
+        super();
+        this.database = database;
     }
+
+    public String getDatabase() {
+        return database;
+    }
+
+    @Override
+    public <Result, Argument> Result accept(UserExceptionVisitor<Result, Argument> visitor, Argument arg) {
+        return visitor.visit(this, arg);
+    }
+
 }

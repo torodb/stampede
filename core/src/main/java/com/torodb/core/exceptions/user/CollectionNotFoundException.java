@@ -18,33 +18,32 @@
  *     
  */
 
-package com.torodb.backend.derby;
+package com.torodb.core.exceptions.user;
 
-import static com.torodb.backend.ErrorHandler.Context.*;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
-import com.torodb.backend.AbstractErrorHandler;
+public class CollectionNotFoundException extends UserException {
 
-/**
- *
- */
-@Singleton
-public class DerbyErrorHandler extends AbstractErrorHandler {
+    private static final long serialVersionUID = 1L;
     
-    @Inject
-    public DerbyErrorHandler() {
-        super(
-                rule("40001"), 
-                rule("40P01"),
-                /**
-                 * Schema '?' already exists.
-                 */
-                rule("X0Y68", CREATE_SCHEMA),
-                /**
-                 * Table/View '?' already exists in Schema '?'.
-                 * Column '?' already exists in Table/View '"?"."?"'.
-                 */
-                rule("X0Y32", CREATE_TABLE, ADD_COLUMN)
-        );
+    private final String database;
+    private final String collection;
+
+    public CollectionNotFoundException(String database, String collection) {
+        super();
+        this.database = database;
+        this.collection = collection;
     }
+
+    public String getDatabase() {
+        return database;
+    }
+
+    public String getCollection() {
+        return collection;
+    }
+
+    @Override
+    public <Result, Argument> Result accept(UserExceptionVisitor<Result, Argument> visitor, Argument arg) {
+        return visitor.visit(this, arg);
+    }
+
 }

@@ -17,6 +17,7 @@ import com.torodb.kvdocument.values.heap.ListKVArray;
 import java.util.*;
 import com.torodb.core.d2r.DocPartResult;
 import com.torodb.core.d2r.DocPartResultRow;
+import com.torodb.core.d2r.InternalFields;
 
 public class R2DTranslatorImpl implements R2DTranslator {
 
@@ -129,12 +130,10 @@ public class R2DTranslatorImpl implements R2DTranslator {
         }
     }
 
-    private static final Boolean IS_ARRAY = true;
-    
     private KVValue<?> getChildValue(KVValue<?> value, String key,
             Map<String, List<KVValue<?>>> childDocPartCell) {
         KVBoolean child = (KVBoolean) value;
-        if (child.getValue() == IS_ARRAY) {
+        if (child.getValue() == InternalFields.CHILD_ARRAY_VALUE) {
             List<KVValue<?>> elements;
             if (childDocPartCell == null || (elements = childDocPartCell.get(key)) == null) {
                 value = new ListKVArray(ImmutableList.of());
