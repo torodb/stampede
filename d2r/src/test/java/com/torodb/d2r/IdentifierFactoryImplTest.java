@@ -64,7 +64,7 @@ public class IdentifierFactoryImplTest {
     @Test
     public void longForCounterWithCollisionCharacterDatabaseToIdentifierTest() {
         ImmutableMetaSnapshot metaSnapshot = new ImmutableMetaSnapshot.Builder()
-                .add(new ImmutableMetaDatabase.Builder("database_collider", 
+                .put(new ImmutableMetaDatabase.Builder("database_collider", 
                         "database_long_long_long_long_long_long_long_long_long_long_longong_long_long_long_long_long_long_long_long_long_long_long_long_1"))
                 .build();
         String identifier = identifierFactory.toDatabaseIdentifier(metaSnapshot, 
@@ -159,8 +159,8 @@ public class IdentifierFactoryImplTest {
     @Test
     public void longForCounterWithCollisionCharacterDocPartToIdentifierTest() {
         ImmutableMetaDatabase metaDatabase = new ImmutableMetaDatabase.Builder("database", "database")
-                .add(new ImmutableMetaCollection.Builder("collecti", "collecti")
-                        .add(new ImmutableMetaDocPart.Builder(createTableRef(), 
+                .put(new ImmutableMetaCollection.Builder("collecti", "collecti")
+                        .put(new ImmutableMetaDocPart.Builder(createTableRef(), 
                                 "collecti_long_long_long_long_long_long_long_long_long_long_longong_long_long_long_long_long_long_long_long_long_long_long_long_1")
                                 .build())
                         .build())
@@ -222,7 +222,7 @@ public class IdentifierFactoryImplTest {
     public void longForCounterWithCollisionCharacterFieldToIdentifierTest() {
         ImmutableMetaDocPart metaDocPart = new ImmutableMetaDocPart.Builder(createTableRef(), 
                 "docpart")
-                .add(new ImmutableMetaField("field_collider", 
+                .put(new ImmutableMetaField("field_collider", 
                         "field____long_long_long_long_long_long_long_long_long_long_lonng_long_long_long_long_long_long_long_long_long_long_long_long_1_s", 
                         FieldType.STRING))
                 .build();

@@ -20,13 +20,13 @@ public class MetaDocPartBuilder {
 
 	public void addMetaField(String name, String identifier, FieldType type){
 		ImmutableMetaField metaField = new ImmutableMetaField(name, identifier, type);
-		builder.add(metaField);
+		builder.put(metaField);
 		both.add(metaField);
 	}
 	
 	public void addMetaScalar(String identifier, FieldType type){
 		ImmutableMetaScalar mestaScalar = new ImmutableMetaScalar(identifier, type);
-		builder.add(mestaScalar);
+		builder.put(mestaScalar);
 		both.add(mestaScalar);
 	}
 	

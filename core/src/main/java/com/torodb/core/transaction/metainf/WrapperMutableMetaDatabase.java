@@ -20,34 +20,41 @@
 
 package com.torodb.core.transaction.metainf;
 
+import com.google.common.collect.Maps;
 import com.torodb.core.annotations.DoNotChange;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.jooq.lambda.tuple.Tuple2;
 
 /**
  *
  */
 public class WrapperMutableMetaDatabase implements MutableMetaDatabase {
 
+    private static final Logger LOGGER = LogManager.getLogger(WrapperMutableMetaDatabase.class);
     private final ImmutableMetaDatabase wrapped;
-    private final Map<String, WrapperMutableMetaCollection> newCollections;
-    private final Set<WrapperMutableMetaCollection> modifiedMetaCollections;
+    private final HashMap<String, Tuple2<MutableMetaCollection, MetaElementState>> collectionsByName;
     private final Consumer<WrapperMutableMetaDatabase> changeConsumer;
+    private final Map<String, Tuple2<MutableMetaCollection, MetaElementState>> aliveMap;
 
     public WrapperMutableMetaDatabase(ImmutableMetaDatabase wrapped,
             Consumer<WrapperMutableMetaDatabase> changeConsumer) {
         this.wrapped = wrapped;
         this.changeConsumer = changeConsumer;
 
-        this.newCollections = new HashMap<>();
-        this.modifiedMetaCollections = new HashSet<>();
+        this.collectionsByName = new HashMap<>();
         
         wrapped.streamMetaCollections().forEach((collection) -> {
             WrapperMutableMetaCollection mutable = createMetaColletion(collection);
                     
-            newCollections.put(collection.getName(), mutable);
+            collectionsByName.put(collection.getName(), new Tuple2<>(mutable, MetaElementState.NOT_CHANGED));
         });
+        aliveMap = Maps.filterValues(collectionsByName, tuple -> tuple.v2().isAlive());
     }
 
     protected WrapperMutableMetaCollection createMetaColletion(ImmutableMetaCollection immutable) {
@@ -66,27 +73,43 @@ public class WrapperMutableMetaDatabase implements MutableMetaDatabase {
         WrapperMutableMetaCollection result = createMetaColletion(
                 new ImmutableMetaCollection(colName, colId, Collections.emptyMap()));
 
-        newCollections.put(colName, result);
-        onMetaCollectionChange(result);
+        collectionsByName.put(colName, new Tuple2<>(result, MetaElementState.ADDED));
+        changeConsumer.accept(this);
 
         return result;
     }
 
     @DoNotChange
     @Override
-    public Iterable<? extends WrapperMutableMetaCollection> getModifiedCollections() {
-        return modifiedMetaCollections;
+    public Iterable<Tuple2<MutableMetaCollection, MetaElementState>> getModifiedCollections() {
+        return Maps.filterValues(collectionsByName, tuple -> tuple.v2().hasChanged())
+                .values();
     }
 
     @Override
     public ImmutableMetaDatabase immutableCopy() {
-        if (modifiedMetaCollections.isEmpty()) {
+        if (collectionsByName.values().stream().noneMatch(tuple -> tuple.v2().hasChanged())) {
             return wrapped;
         } else {
             ImmutableMetaDatabase.Builder builder = new ImmutableMetaDatabase.Builder(wrapped);
-            for (MutableMetaCollection modifiedMetaCollection : modifiedMetaCollections) {
-                builder.add(modifiedMetaCollection.immutableCopy());
-            }
+
+            collectionsByName.values()
+                    .forEach(tuple -> {
+                        switch (tuple.v2()) {
+                            case ADDED:
+                            case MODIFIED:
+                            case NOT_CHANGED:
+                                builder.put(tuple.v1().immutableCopy());
+                                break;
+                            case REMOVED:
+                                builder.remove(tuple.v1());
+                                break;
+                            case NOT_EXISTENT:
+                            default:
+                                throw new AssertionError("Unexpected case" + tuple.v2());
+                        }
+                    }
+            );
             return builder.build();
         }
     }
@@ -103,20 +126,52 @@ public class WrapperMutableMetaDatabase implements MutableMetaDatabase {
 
     @Override
     public Stream<? extends WrapperMutableMetaCollection> streamMetaCollections() {
-        return newCollections.values().stream();
+        return aliveMap.values().stream().map(tuple -> (WrapperMutableMetaCollection) tuple.v1());
     }
 
     @Override
     public WrapperMutableMetaCollection getMetaCollectionByName(String collectionName) {
-        return newCollections.get(collectionName);
+        Tuple2<MutableMetaCollection, MetaElementState> tuple = aliveMap.get(collectionName);
+        if (tuple == null) {
+            return null;
+        }
+        return (WrapperMutableMetaCollection) tuple.v1();
     }
 
     @Override
     public WrapperMutableMetaCollection getMetaCollectionByIdentifier(String collectionIdentifier) {
-        return newCollections.values().stream()
+        LOGGER.debug("Looking for a meta collection by the unindexed attribute 'id'. "
+                + "Performance lost is expected");
+        return aliveMap.values().stream()
+                .map(tuple -> (WrapperMutableMetaCollection) tuple.v1())
                 .filter((collection) -> collection.getIdentifier().equals(collectionIdentifier))
                 .findAny()
                 .orElse(null);
+    }
+
+    @Override
+    public boolean removeMetaCollectionByName(String collectionName) {
+        WrapperMutableMetaCollection metaCol = getMetaCollectionByName(collectionName);
+        if (metaCol == null) {
+            return false;
+        }
+        removeMetaCollection(metaCol);
+        return true;
+    }
+
+    @Override
+    public boolean removeMetaCollectionByIdentifier(String collectionId) {
+        WrapperMutableMetaCollection metaCol = getMetaCollectionByIdentifier(collectionId);
+        if (metaCol == null) {
+            return false;
+        }
+        removeMetaCollection(metaCol);
+        return true;
+    }
+
+    private void removeMetaCollection(WrapperMutableMetaCollection metaCol) {
+        collectionsByName.put(metaCol.getName(), new Tuple2<>(metaCol, MetaElementState.REMOVED));
+        changeConsumer.accept(this);
     }
 
     @Override
@@ -124,8 +179,25 @@ public class WrapperMutableMetaDatabase implements MutableMetaDatabase {
         return defautToString();
     }
 
+    private boolean isTransitionAllowed(MetaCollection metaCol, MetaElementState newState) {
+        MetaElementState oldState;
+        Tuple2<MutableMetaCollection, MetaElementState> tuple = collectionsByName.get(metaCol.getName());
+        
+        if (tuple == null) {
+            oldState = MetaElementState.NOT_EXISTENT;
+        }
+        else {
+            oldState = tuple.v2();
+        }
+
+        oldState.assertLegalTransition(newState);
+        return true;
+    }
+
     private void onMetaCollectionChange(WrapperMutableMetaCollection changed) {
-        modifiedMetaCollections.add(changed);
+        assert isTransitionAllowed(changed, MetaElementState.REMOVED);
+        
+        collectionsByName.put(changed.getName(), new Tuple2<>(changed, MetaElementState.MODIFIED));
         changeConsumer.accept(this);
     }
 

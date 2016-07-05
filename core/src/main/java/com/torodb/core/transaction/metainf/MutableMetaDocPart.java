@@ -47,7 +47,7 @@ public interface MutableMetaDocPart extends MetaDocPart {
     public abstract Iterable<? extends ImmutableMetaField> getAddedMetaFields();
 
     @DoNotChange
-    public abstract Iterable<? extends MetaScalar> getAddedMetaScalars();
+    public abstract Iterable<? extends ImmutableMetaScalar> getAddedMetaScalars();
 
     public abstract ImmutableMetaDocPart immutableCopy();
 }

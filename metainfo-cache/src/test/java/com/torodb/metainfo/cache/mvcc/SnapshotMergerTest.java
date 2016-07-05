@@ -17,39 +17,66 @@
  * Copyright (C) 2016 8Kdata.
  *
  */
-package com.torodb.core.transaction.metainf.utils;
+package com.torodb.metainfo.cache.mvcc;
 
+import com.torodb.metainfo.cache.mvcc.SnapshotMerger;
 import com.torodb.core.TableRefFactory;
 import com.torodb.core.impl.TableRefFactoryImpl;
 import com.torodb.core.transaction.metainf.*;
+import com.torodb.core.transaction.metainf.FieldType;
+import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
+import com.torodb.core.transaction.metainf.ImmutableMetaDatabase;
+import com.torodb.core.transaction.metainf.ImmutableMetaDocPart;
+import com.torodb.core.transaction.metainf.ImmutableMetaField;
+import com.torodb.core.transaction.metainf.ImmutableMetaScalar;
+import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
+import com.torodb.core.transaction.metainf.MutableMetaDocPart;
+import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
+import com.torodb.core.transaction.metainf.UnmergeableException;
+import com.torodb.core.transaction.metainf.WrapperMutableMetaSnapshot;
 import java.util.Collections;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.MockSettings;
+import org.mockito.internal.creation.MockSettingsImpl;
+
+import static org.mockito.Mockito.spy;
 
 /**
  *
  * @author gortiz
  */
-public class DefaultMergeCheckerTest {
+public class SnapshotMergerTest {
 
     private static final TableRefFactory tableRefFactory = new TableRefFactoryImpl();
     private static ImmutableMetaSnapshot currentSnapshot;
+    private ImmutableMetaSnapshot.Builder snapshotBuilder;
 
-    public DefaultMergeCheckerTest() {
+    private static final MockSettings SETTINGS = new MockSettingsImpl().defaultAnswer((t) -> {
+        throw new AssertionError("Method " + t.getMethod() + " was not expected to be called");
+    });
+
+    public SnapshotMergerTest() {
     }
 
     @BeforeClass
     public static void setUpClass() throws Exception {
         currentSnapshot = new ImmutableMetaSnapshot.Builder()
-                .add(new ImmutableMetaDatabase.Builder("dbName1", "dbId1")
-                        .add(new ImmutableMetaCollection.Builder("colName1", "colId1")
-                                .add(new ImmutableMetaDocPart.Builder(tableRefFactory.createRoot(), "docPartId1")
-                                        .add(new ImmutableMetaField("fieldName1", "fieldId1", FieldType.INTEGER))
-                                        .add(new ImmutableMetaScalar("scalarId1", FieldType.INTEGER))
+                .put(new ImmutableMetaDatabase.Builder("dbName1", "dbId1")
+                        .put(new ImmutableMetaCollection.Builder("colName1", "colId1")
+                                .put(new ImmutableMetaDocPart.Builder(tableRefFactory.createRoot(), "docPartId1")
+                                        .put(new ImmutableMetaField("fieldName1", "fieldId1", FieldType.INTEGER))
+                                        .put(new ImmutableMetaScalar("scalarId1", FieldType.INTEGER))
                                 ).build()
                         ).build()
                 ).build();
+    }
+
+    @Before
+    public void setup() {
+        snapshotBuilder = spy(new ImmutableMetaSnapshot.Builder(currentSnapshot));
     }
 
     /**
@@ -58,6 +85,8 @@ public class DefaultMergeCheckerTest {
      */
     @Test
     public void testIdempotency() throws Exception {
+        SnapshotMerger merger;
+
         MutableMetaSnapshot changedSnapshot = new WrapperMutableMetaSnapshot(new ImmutableMetaSnapshot(Collections.emptyMap()));
         MutableMetaDocPart metaDocPart = changedSnapshot.addMetaDatabase("dbName1", "dbId1")
                 .addMetaCollection("colName1", "colId1")
@@ -65,7 +94,8 @@ public class DefaultMergeCheckerTest {
         metaDocPart.addMetaField("fieldName1", "fieldId1", FieldType.INTEGER);
         metaDocPart.addMetaScalar("scalarId1", FieldType.INTEGER);
 
-        DefaultMergeChecker.checkMerge(currentSnapshot, changedSnapshot);
+        merger = new SnapshotMerger(currentSnapshot, changedSnapshot);
+        merger.merge();
     }
 
     /**
@@ -78,7 +108,8 @@ public class DefaultMergeCheckerTest {
         changedSnapshot.addMetaDatabase("dbName2", "dbId1");
 
         try {
-            DefaultMergeChecker.checkMerge(currentSnapshot, changedSnapshot);
+            new SnapshotMerger(currentSnapshot, changedSnapshot)
+                    .merge();
             Assert.fail("A " + UnmergeableException.class.getSimpleName() + " was expected to be thrown");
         } catch (UnmergeableException ex) {
             
@@ -95,7 +126,7 @@ public class DefaultMergeCheckerTest {
         changedSnapshot.addMetaDatabase("dbName1", "dbId2");
 
         try {
-            DefaultMergeChecker.checkMerge(currentSnapshot, changedSnapshot);
+            new SnapshotMerger(currentSnapshot, changedSnapshot).merge();
             Assert.fail("A " + UnmergeableException.class.getSimpleName() + " was expected to be thrown");
         } catch (UnmergeableException ex) {
 
@@ -113,7 +144,7 @@ public class DefaultMergeCheckerTest {
                 .addMetaCollection("colName2", "colId1");
 
         try {
-            DefaultMergeChecker.checkMerge(currentSnapshot, changedSnapshot);
+            new SnapshotMerger(currentSnapshot, changedSnapshot).merge();
             Assert.fail("A " + UnmergeableException.class.getSimpleName() + " was expected to be thrown");
         } catch (UnmergeableException ex) {
 
@@ -131,7 +162,7 @@ public class DefaultMergeCheckerTest {
                 .addMetaCollection("colName1", "colId2");
 
         try {
-            DefaultMergeChecker.checkMerge(currentSnapshot, changedSnapshot);
+            new SnapshotMerger(currentSnapshot, changedSnapshot).merge();
             Assert.fail("A " + UnmergeableException.class.getSimpleName() + " was expected to be thrown");
         } catch (UnmergeableException ex) {
 
@@ -150,7 +181,7 @@ public class DefaultMergeCheckerTest {
                 .addMetaDocPart(tableRefFactory.createChild(tableRefFactory.createRoot(), "anotherTRef"), "docPartId1");
 
         try {
-            DefaultMergeChecker.checkMerge(currentSnapshot, changedSnapshot);
+            new SnapshotMerger(currentSnapshot, changedSnapshot).merge();
             Assert.fail("A " + UnmergeableException.class.getSimpleName() + " was expected to be thrown");
         } catch (UnmergeableException ex) {
 
@@ -169,7 +200,7 @@ public class DefaultMergeCheckerTest {
                 .addMetaDocPart(tableRefFactory.createRoot(), "docPartId2");
 
         try {
-            DefaultMergeChecker.checkMerge(currentSnapshot, changedSnapshot);
+            new SnapshotMerger(currentSnapshot, changedSnapshot).merge();
             Assert.fail("A " + UnmergeableException.class.getSimpleName() + " was expected to be thrown");
         } catch (UnmergeableException ex) {
 
@@ -189,7 +220,7 @@ public class DefaultMergeCheckerTest {
                 .addMetaField("fieldName1", "fieldId1", FieldType.TIME);
 
         try {
-            DefaultMergeChecker.checkMerge(currentSnapshot, changedSnapshot);
+            new SnapshotMerger(currentSnapshot, changedSnapshot).merge();
             Assert.fail("A " + UnmergeableException.class.getSimpleName() + " was expected to be thrown");
         } catch (UnmergeableException ex) {
 
@@ -202,7 +233,7 @@ public class DefaultMergeCheckerTest {
                 .addMetaField("fieldName2", "fieldId1", FieldType.INTEGER);
 
         try {
-            DefaultMergeChecker.checkMerge(currentSnapshot, changedSnapshot);
+            new SnapshotMerger(currentSnapshot, changedSnapshot).merge();
             Assert.fail("A " + UnmergeableException.class.getSimpleName() + " was expected to be thrown");
         } catch (UnmergeableException ex) {
 
@@ -222,7 +253,7 @@ public class DefaultMergeCheckerTest {
                 .addMetaField("fieldName1", "fieldId2", FieldType.INTEGER);
 
         try {
-            DefaultMergeChecker.checkMerge(currentSnapshot, changedSnapshot);
+            new SnapshotMerger(currentSnapshot, changedSnapshot).merge();
             Assert.fail("A " + UnmergeableException.class.getSimpleName() + " was expected to be thrown");
         } catch (UnmergeableException ex) {
 
@@ -242,7 +273,7 @@ public class DefaultMergeCheckerTest {
                 .addMetaDocPart(tableRefFactory.createRoot(), "docPartId1")
                 .addMetaField("fieldName2", "fieldId4", FieldType.INTEGER);
 
-        DefaultMergeChecker.checkMerge(currentSnapshot, changedSnapshot);
+        new SnapshotMerger(currentSnapshot, changedSnapshot).merge();
     }
 
 
@@ -259,7 +290,7 @@ public class DefaultMergeCheckerTest {
                 .addMetaDocPart(tableRefFactory.createRoot(), "docPartId1")
                 .addMetaField("fieldName1", "fieldId4", FieldType.TIME);
 
-        DefaultMergeChecker.checkMerge(currentSnapshot, changedSnapshot);
+        new SnapshotMerger(currentSnapshot, changedSnapshot).merge();
     }
 
     /**
@@ -274,7 +305,7 @@ public class DefaultMergeCheckerTest {
                 .addMetaDocPart(tableRefFactory.createRoot(), "docPartId1")
                 .addMetaField("fieldName10", "fieldId20", FieldType.CHILD);
 
-        DefaultMergeChecker.checkMerge(currentSnapshot, changedSnapshot);
+        new SnapshotMerger(currentSnapshot, changedSnapshot).merge();
     }
 
     /**
@@ -290,7 +321,7 @@ public class DefaultMergeCheckerTest {
                 .addMetaScalar("scalarId1", FieldType.LONG);
 
         try {
-            DefaultMergeChecker.checkMerge(currentSnapshot, changedSnapshot);
+            new SnapshotMerger(currentSnapshot, changedSnapshot).merge();
             Assert.fail("A " + UnmergeableException.class.getSimpleName() + " was expected to be thrown");
         } catch (UnmergeableException ex) {
 
@@ -310,7 +341,7 @@ public class DefaultMergeCheckerTest {
                 .addMetaScalar("fieldId2", FieldType.INTEGER);
 
         try {
-            DefaultMergeChecker.checkMerge(currentSnapshot, changedSnapshot);
+            new SnapshotMerger(currentSnapshot, changedSnapshot).merge();
             Assert.fail("A " + UnmergeableException.class.getSimpleName() + " was expected to be thrown");
         } catch (UnmergeableException ex) {
 
@@ -329,6 +360,6 @@ public class DefaultMergeCheckerTest {
                 .addMetaDocPart(tableRefFactory.createRoot(), "docPartId1")
                 .addMetaScalar("fieldId20", FieldType.LONG);
 
-        DefaultMergeChecker.checkMerge(currentSnapshot, changedSnapshot);
+        new SnapshotMerger(currentSnapshot, changedSnapshot).merge();
     }
 }

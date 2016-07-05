@@ -112,7 +112,7 @@ public class BatchMetaDocPart implements MutableMetaDocPart {
     }
 
     @Override
-    public Iterable<? extends MetaScalar> getAddedMetaScalars() {
+    public Iterable<? extends ImmutableMetaScalar> getAddedMetaScalars() {
         return delegate.getAddedMetaScalars();
     }
 

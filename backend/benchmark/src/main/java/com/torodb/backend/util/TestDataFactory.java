@@ -18,12 +18,12 @@ public class TestDataFactory {
 	public static final String COLL4 = "coll2Test2";
 
 	public static ImmutableMetaSnapshot InitialView = new ImmutableMetaSnapshot.Builder()
-			.add(new ImmutableMetaDatabase.Builder(DB1, DB1)
-					.add(new ImmutableMetaCollection.Builder(COLL1, COLL1).build())
-					.add(new ImmutableMetaCollection.Builder(COLL2, COLL2).build()).build())
-			.add(new ImmutableMetaDatabase.Builder(DB2, DB2)
-					.add(new ImmutableMetaCollection.Builder(COLL3, COLL3).build())
-					.add(new ImmutableMetaCollection.Builder(COLL4, COLL4).build()).build())
+			.put(new ImmutableMetaDatabase.Builder(DB1, DB1)
+					.put(new ImmutableMetaCollection.Builder(COLL1, COLL1).build())
+					.put(new ImmutableMetaCollection.Builder(COLL2, COLL2).build()).build())
+			.put(new ImmutableMetaDatabase.Builder(DB2, DB2)
+					.put(new ImmutableMetaCollection.Builder(COLL3, COLL3).build())
+					.put(new ImmutableMetaCollection.Builder(COLL4, COLL4).build()).build())
 			.build();
 	
 	//	{

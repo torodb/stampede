@@ -69,19 +69,17 @@ public interface MetainfoRepository {
         public MetainfoRepository getAssociatedRepository();
 
         /**
-         * Cancels the stage.
-         *
-         * A cancelled {@link MergerStage} will not commit its changes once it is closed.
-         *
-         * @throws IllegalStateException if this stage have been closed before.
-         */
-        public void cancel() throws IllegalStateException;
-
-        /**
-         * Closes the stage, commiting all {@link #cancel() non-cancelled} changes.
+         * Commits the merger stage and stores all its changes on the repository.
          *
          * This method should never fail due to business conditions (like incomatible metainfo
          * changes on the same or concurrent threads that uses other {@link MergerStage} or {@link SnapshotStage}).
+         */
+        public void commit();
+
+        /**
+         * Closes the stage.
+         *
+         * All changes that wont be stored on the repository.
          */
         @Override
         public void close();

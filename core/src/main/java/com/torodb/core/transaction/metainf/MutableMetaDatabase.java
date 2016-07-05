@@ -22,6 +22,7 @@ package com.torodb.core.transaction.metainf;
 
 import com.torodb.core.annotations.DoNotChange;
 import java.util.stream.Stream;
+import org.jooq.lambda.tuple.Tuple2;
 
 /**
  *
@@ -39,8 +40,22 @@ public interface MutableMetaDatabase extends MetaDatabase {
 
     public abstract MutableMetaCollection addMetaCollection(String colName, String colId) throws IllegalArgumentException;
 
+    /**
+     * Removes a meta collection selected by its name.
+     * @param collectionName
+     * @return true iff the meta collection was removed
+     */
+    public abstract boolean removeMetaCollectionByName(String collectionName);
+
+    /**
+     * REmoves a meta collection selected by its identifier
+     * @param collectionId
+     * @return true iff the meta collection was removed
+     */
+    public abstract boolean removeMetaCollectionByIdentifier(String collectionId);
+
     @DoNotChange
-    public abstract Iterable<? extends MutableMetaCollection> getModifiedCollections();
+    public abstract Iterable<Tuple2<MutableMetaCollection, MetaElementState>> getModifiedCollections();
 
     public abstract ImmutableMetaDatabase immutableCopy();
 

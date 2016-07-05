@@ -1,19 +1,13 @@
 package com.torodb.core.transaction.metainf;
 
-import org.openjdk.jmh.annotations.Benchmark;
-import org.openjdk.jmh.annotations.BenchmarkMode;
-import org.openjdk.jmh.annotations.Fork;
-import org.openjdk.jmh.annotations.Measurement;
-import org.openjdk.jmh.annotations.Mode;
-import org.openjdk.jmh.annotations.Warmup;
-import org.openjdk.jmh.infra.Blackhole;
-
 import com.torodb.core.TableRef;
 import com.torodb.core.TableRefFactory;
 import com.torodb.core.impl.TableRefFactoryImpl;
 import com.torodb.core.transaction.metainf.MetainfoRepository.MergerStage;
 import com.torodb.core.transaction.metainf.MetainfoRepository.SnapshotStage;
 import com.torodb.metainfo.cache.mvcc.MvccMetainfoRepository;
+import org.openjdk.jmh.annotations.*;
+import org.openjdk.jmh.infra.Blackhole;
 
 @Fork(value = 1)
 @Warmup(iterations = 4)
@@ -107,6 +101,7 @@ public class MetainfBenchmark {
 		t3.addMetaField("newone3", "newone3", FieldType.DOUBLE);
 		
 		try (MergerStage mergeStage = metainfoRepository.startMerge(mutableSnapshot)) {
+            mergeStage.commit();
         } catch (UnmergeableException ex) {
             throw new AssertionError("Unmergeable changes", ex);
         }

@@ -114,7 +114,7 @@ public class WrapperMutableMetaDocPart implements MutableMetaDocPart {
     }
 
     @Override
-    public Iterable<? extends MetaScalar> getAddedMetaScalars() {
+    public Iterable<? extends ImmutableMetaScalar> getAddedMetaScalars() {
         return newScalars.values();
     }
 
@@ -126,10 +126,10 @@ public class WrapperMutableMetaDocPart implements MutableMetaDocPart {
         else {
             ImmutableMetaDocPart.Builder builder = new Builder(wrapped);
             for (ImmutableMetaField addedField : addedFields) {
-                builder.add(addedField);
+                builder.put(addedField);
             }
             for (ImmutableMetaScalar value : newScalars.values()) {
-                builder.add(value);
+                builder.put(value);
             }
             return builder.build();
         }

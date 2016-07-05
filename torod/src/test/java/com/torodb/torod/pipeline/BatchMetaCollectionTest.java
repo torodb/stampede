@@ -30,7 +30,7 @@ public class BatchMetaCollectionTest {
     @Before
     public void setUp() {
         ImmutableMetaCollection immutableCollection = new ImmutableMetaCollection.Builder("colName", "colId")
-                .add(new ImmutableMetaDocPart(tableRefFactory.createRoot(), "docPartName"))
+                .put(new ImmutableMetaDocPart(tableRefFactory.createRoot(), "docPartName"))
                 .build();
         delegate = Mockito.spy(new WrapperMutableMetaCollection(immutableCollection, (o) -> {}));
 

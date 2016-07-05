@@ -52,9 +52,9 @@ public class ImmutableMetaCollection implements MetaCollection {
         this.docPartsByIdentifier = Collections.unmodifiableMap(byDbName);
     }
 
-    public ImmutableMetaCollection(String docName, String dbName, @DoNotChange Map<String, ImmutableMetaDocPart> docPartsById) {
-        this.name = docName;
-        this.identifier = dbName;
+    public ImmutableMetaCollection(String colName, String colId, @DoNotChange Map<String, ImmutableMetaDocPart> docPartsById) {
+        this.name = colName;
+        this.identifier = colId;
 
         this.docPartsByIdentifier = docPartsById;
         this.docPartsByTableRef = new HashMap<>();
@@ -113,11 +113,11 @@ public class ImmutableMetaCollection implements MetaCollection {
             docPartsByDbName = new HashMap<>(other.docPartsByIdentifier);
         }
 
-        public Builder add(ImmutableMetaDocPart.Builder tableBuilder) {
-            return add(tableBuilder.build());
+        public Builder put(ImmutableMetaDocPart.Builder tableBuilder) {
+            return put(tableBuilder.build());
         }
 
-        public Builder add(ImmutableMetaDocPart table) {
+        public Builder put(ImmutableMetaDocPart table) {
             Preconditions.checkState(!built, "This builder has already been built");
             docPartsByDbName.put(table.getIdentifier(), table);
             return this;

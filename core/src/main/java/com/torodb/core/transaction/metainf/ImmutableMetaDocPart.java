@@ -22,7 +22,7 @@ public class ImmutableMetaDocPart implements MetaDocPart {
     private final String identifier;
     private final Table<String, FieldType, ImmutableMetaField> fieldsByNameAndType;
     private final Map<String, ImmutableMetaField> fieldsByIdentifier;
-    private final EnumMap<FieldType, MetaScalar> scalars;
+    private final EnumMap<FieldType, ImmutableMetaScalar> scalars;
 
     public ImmutableMetaDocPart(TableRef tableRef, String dbName) {
         this(tableRef, dbName, Collections.emptyMap(), Maps.newEnumMap(FieldType.class));
@@ -30,7 +30,7 @@ public class ImmutableMetaDocPart implements MetaDocPart {
 
     public ImmutableMetaDocPart(TableRef tableRef, String dbName,
             @DoNotChange Map<String, ImmutableMetaField> columns,
-            @DoNotChange EnumMap<FieldType, MetaScalar> scalars) {
+            @DoNotChange EnumMap<FieldType, ImmutableMetaScalar> scalars) {
         this.tableRef = tableRef;
         this.identifier = dbName;
         this.fieldsByIdentifier = columns;
@@ -70,12 +70,12 @@ public class ImmutableMetaDocPart implements MetaDocPart {
     }
 
     @Override
-    public Stream<? extends MetaScalar> streamScalars() {
+    public Stream<ImmutableMetaScalar> streamScalars() {
         return scalars.values().stream();
     }
 
     @Override
-    public MetaScalar getScalar(FieldType type) {
+    public ImmutableMetaScalar getScalar(FieldType type) {
         return scalars.get(type);
     }
 
@@ -90,7 +90,7 @@ public class ImmutableMetaDocPart implements MetaDocPart {
         private final TableRef tableRef;
         private final String identifier;
         private final HashMap<String, ImmutableMetaField> fields;
-        private final EnumMap<FieldType, MetaScalar> scalars;
+        private final EnumMap<FieldType, ImmutableMetaScalar> scalars;
 
         public Builder(TableRef tableRef, String identifier) {
             this.tableRef = tableRef;
@@ -113,22 +113,22 @@ public class ImmutableMetaDocPart implements MetaDocPart {
             this.scalars = new EnumMap<>(FieldType.class);
         }
 
-        public Builder add(ImmutableMetaField column) {
+        public Builder put(ImmutableMetaField column) {
             Preconditions.checkState(!built, "This builder has already been built");
             fields.put(column.getIdentifier(), column);
             return this;
         }
 
-        public Builder addField(String name, String identifier, FieldType type) {
-            return add(new ImmutableMetaField(name, identifier, type));
+        public Builder putField(String name, String identifier, FieldType type) {
+            return put(new ImmutableMetaField(name, identifier, type));
         }
 
-        public Builder add(ImmutableMetaScalar scalar) {
+        public Builder put(ImmutableMetaScalar scalar) {
             scalars.put(scalar.getType(), scalar);
             return this;
         }
 
-        public Builder addScalar(FieldType type, String identifier) {
+        public Builder putScalar(FieldType type, String identifier) {
             scalars.put(type, new ImmutableMetaScalar(identifier, type));
             return this;
         }

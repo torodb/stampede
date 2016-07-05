@@ -48,7 +48,7 @@ public class ImmutableMetaDatabase implements MetaDatabase {
         }
     }
 
-    private ImmutableMetaDatabase(String name, String identifier, Map<String, ImmutableMetaCollection> collectionsById) {
+    public ImmutableMetaDatabase(String name, String identifier, Map<String, ImmutableMetaCollection> collectionsById) {
         this.name = name;
         this.identifier = identifier;
         this.collectionsById = collectionsById;
@@ -112,14 +112,20 @@ public class ImmutableMetaDatabase implements MetaDatabase {
             this.collectionsById = new HashMap<>(other.collectionsById);
         }
 
-        public Builder add(ImmutableMetaCollection collection) {
+        public Builder put(ImmutableMetaCollection collection) {
             Preconditions.checkState(!built, "This builder has already been built");
             collectionsById.put(collection.getIdentifier(), collection);
             return this;
         }
 
-        public Builder add(ImmutableMetaCollection.Builder collectionBuilder) {
-            return add(collectionBuilder.build());
+        public Builder remove(MetaCollection metaCol) {
+            Preconditions.checkState(!built, "This builder has already been built");
+            collectionsById.remove(metaCol.getIdentifier());
+            return this;
+        }
+
+        public Builder put(ImmutableMetaCollection.Builder collectionBuilder) {
+            return Builder.this.put(collectionBuilder.build());
         }
 
         public ImmutableMetaDatabase build() {

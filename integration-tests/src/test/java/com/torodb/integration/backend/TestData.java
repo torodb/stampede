@@ -46,35 +46,35 @@ public class TestData {
         ImmutableMetaCollection.Builder metaCollectionBuilder = new ImmutableMetaCollection.Builder("collectionName", "collectionIdentifier");
         ImmutableMetaDocPart.Builder metaRootDocPartBuilder = new ImmutableMetaDocPart.Builder(tableRefFactory.createRoot(), "rootDocPartTableName");
         metaRootDocPartBuilder
-                .add(new ImmutableMetaField("nullRoot", "nullRootField", FieldType.NULL))
-                .add(new ImmutableMetaField("booleanRoot", "booleanRootField", FieldType.BOOLEAN))
-                .add(new ImmutableMetaField("integerRoot", "integerRootField", FieldType.INTEGER))
-                .add(new ImmutableMetaField("longRoot", "longRootField", FieldType.LONG))
-                .add(new ImmutableMetaField("doubleRoot", "doubleRootField", FieldType.DOUBLE))
-                .add(new ImmutableMetaField("stringRoot", "stringRootField", FieldType.STRING))
-                .add(new ImmutableMetaField("dateRoot", "dateRootField", FieldType.DATE))
-                .add(new ImmutableMetaField("timeRoot", "timeRootField", FieldType.TIME))
-                .add(new ImmutableMetaField("mongoObjectIdRoot", "mongoObjectIdRootField", FieldType.MONGO_OBJECT_ID))
-                .add(new ImmutableMetaField("mongoTimeStampRoot", "mongoTimeStampRootField", FieldType.MONGO_TIME_STAMP))
-                .add(new ImmutableMetaField("instantRoot", "instantRootField", FieldType.INSTANT))
-                .add(new ImmutableMetaField("subDocPart", "subDocPartField", FieldType.CHILD));
+                .put(new ImmutableMetaField("nullRoot", "nullRootField", FieldType.NULL))
+                .put(new ImmutableMetaField("booleanRoot", "booleanRootField", FieldType.BOOLEAN))
+                .put(new ImmutableMetaField("integerRoot", "integerRootField", FieldType.INTEGER))
+                .put(new ImmutableMetaField("longRoot", "longRootField", FieldType.LONG))
+                .put(new ImmutableMetaField("doubleRoot", "doubleRootField", FieldType.DOUBLE))
+                .put(new ImmutableMetaField("stringRoot", "stringRootField", FieldType.STRING))
+                .put(new ImmutableMetaField("dateRoot", "dateRootField", FieldType.DATE))
+                .put(new ImmutableMetaField("timeRoot", "timeRootField", FieldType.TIME))
+                .put(new ImmutableMetaField("mongoObjectIdRoot", "mongoObjectIdRootField", FieldType.MONGO_OBJECT_ID))
+                .put(new ImmutableMetaField("mongoTimeStampRoot", "mongoTimeStampRootField", FieldType.MONGO_TIME_STAMP))
+                .put(new ImmutableMetaField("instantRoot", "instantRootField", FieldType.INSTANT))
+                .put(new ImmutableMetaField("subDocPart", "subDocPartField", FieldType.CHILD));
         rootDocPart = metaRootDocPartBuilder.build();
-        metaCollectionBuilder.add(rootDocPart);
+        metaCollectionBuilder.put(rootDocPart);
         ImmutableMetaDocPart.Builder metaSubDocPartBuilder = new ImmutableMetaDocPart.Builder(tableRefFactory.createChild(rootDocPart.getTableRef(), "subDocPart"), "subDocPartTableName");
         metaSubDocPartBuilder
-                .add(new ImmutableMetaField("nullSub", "nullSubField", FieldType.NULL))
-                .add(new ImmutableMetaField("booleanSub", "booleanSubField", FieldType.BOOLEAN))
-                .add(new ImmutableMetaField("integerSub", "integerSubField", FieldType.INTEGER))
-                .add(new ImmutableMetaField("longSub", "longSubField", FieldType.LONG))
-                .add(new ImmutableMetaField("doubleSub", "doubleSubField", FieldType.DOUBLE))
-                .add(new ImmutableMetaField("stringSub", "stringSubField", FieldType.STRING))
-                .add(new ImmutableMetaField("dateSub", "dateSubField", FieldType.DATE))
-                .add(new ImmutableMetaField("timeSub", "timeSubField", FieldType.TIME))
-                .add(new ImmutableMetaField("mongoObjectIdSub", "mongoObjectIdSubField", FieldType.MONGO_OBJECT_ID))
-                .add(new ImmutableMetaField("mongoTimeStampSub", "mongoTimeStampSubField", FieldType.MONGO_TIME_STAMP))
-                .add(new ImmutableMetaField("instantSub", "instantSubField", FieldType.INSTANT));
+                .put(new ImmutableMetaField("nullSub", "nullSubField", FieldType.NULL))
+                .put(new ImmutableMetaField("booleanSub", "booleanSubField", FieldType.BOOLEAN))
+                .put(new ImmutableMetaField("integerSub", "integerSubField", FieldType.INTEGER))
+                .put(new ImmutableMetaField("longSub", "longSubField", FieldType.LONG))
+                .put(new ImmutableMetaField("doubleSub", "doubleSubField", FieldType.DOUBLE))
+                .put(new ImmutableMetaField("stringSub", "stringSubField", FieldType.STRING))
+                .put(new ImmutableMetaField("dateSub", "dateSubField", FieldType.DATE))
+                .put(new ImmutableMetaField("timeSub", "timeSubField", FieldType.TIME))
+                .put(new ImmutableMetaField("mongoObjectIdSub", "mongoObjectIdSubField", FieldType.MONGO_OBJECT_ID))
+                .put(new ImmutableMetaField("mongoTimeStampSub", "mongoTimeStampSubField", FieldType.MONGO_TIME_STAMP))
+                .put(new ImmutableMetaField("instantSub", "instantSubField", FieldType.INSTANT));
         subDocPart = metaSubDocPartBuilder.build();
-        metaCollectionBuilder.add(subDocPart);
+        metaCollectionBuilder.put(subDocPart);
         newSubDocPart = new WrapperMutableMetaDocPart(subDocPart, metaDocPart -> {});
         newSubDocPart
                 .addMetaField("newNullSub", "newNullSubField", FieldType.NULL);
@@ -99,9 +99,9 @@ public class TestData {
         newSubDocPart
                 .addMetaField("newInstantSub", "newInstantSubField", FieldType.INSTANT);
         collection = metaCollectionBuilder.build();
-        metaDatabaseBuilder.add(collection);
+        metaDatabaseBuilder.put(collection);
         database = metaDatabaseBuilder.build();
-        metaSnapshotBuilder.add(database);
+        metaSnapshotBuilder.put(database);
         snapshot = metaSnapshotBuilder.build();
         documents = ImmutableList.<KVDocument>builder()
                 .add(new KVDocument.Builder()

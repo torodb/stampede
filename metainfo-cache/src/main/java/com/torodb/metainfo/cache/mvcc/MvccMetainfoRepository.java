@@ -3,11 +3,9 @@ package com.torodb.metainfo.cache.mvcc;
 
 import com.google.common.base.Preconditions;
 import com.torodb.core.transaction.metainf.*;
-import com.torodb.core.transaction.metainf.utils.DefaultMergeChecker;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
-import javax.annotation.concurrent.NotThreadSafe;
 import javax.inject.Inject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -20,17 +18,14 @@ public class MvccMetainfoRepository implements MetainfoRepository {
     private static final Logger LOGGER = LogManager.getLogger(MvccMetainfoRepository.class);
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
     private ImmutableMetaSnapshot currentSnapshot;
-    private final MergeChecker mergeChecker;
 
     @Inject
     public MvccMetainfoRepository() {
         this.currentSnapshot = new ImmutableMetaSnapshot.Builder().build();
-        mergeChecker = DefaultMergeChecker::checkMerge;
     }
 
     public MvccMetainfoRepository(ImmutableMetaSnapshot currentView) {
         this.currentSnapshot = currentView;
-        mergeChecker = DefaultMergeChecker::checkMerge;
     }
 
     @Override
@@ -58,7 +53,6 @@ public class MvccMetainfoRepository implements MetainfoRepository {
         lock.writeLock().lock();
         MvccMergerStage mergeStage = null;
         try {
-            mergeChecker.checkMerge(currentSnapshot, newSnapshot);
             mergeStage = new MvccMergerStage(newSnapshot, lock.writeLock());
             LOGGER.trace("{} created", MvccMergerStage.class);
         } finally {
@@ -107,11 +101,13 @@ public class MvccMetainfoRepository implements MetainfoRepository {
         private final MutableMetaSnapshot changedSnapshot;
         private final ReentrantReadWriteLock.WriteLock writeLock;
         private boolean open = true;
-        private boolean cancelled = false;
+        private final ImmutableMetaSnapshot.Builder snapshotBuilder;
 
         public MvccMergerStage(MutableMetaSnapshot changedView, WriteLock writeLock) {
             this.changedSnapshot = changedView;
             this.writeLock = writeLock;
+            snapshotBuilder = new SnapshotMerger(currentSnapshot, changedView)
+                            .merge();
         }
 
         @Override
@@ -121,48 +117,34 @@ public class MvccMetainfoRepository implements MetainfoRepository {
         }
 
         @Override
-        public void cancel() {
-            Preconditions.checkState(open, "This stage is closed");
-            cancelled = true;
+        public void commit() {
+            Preconditions.checkState(open, "This stage is already closed");
+            Preconditions.checkState(lock.writeLock().isHeldByCurrentThread(), "Trying to "
+                    + "apply changes without holding the write lock");
+
+            assert assertCheck(currentSnapshot, changedSnapshot);
+            
+            MvccMetainfoRepository.this.currentSnapshot = snapshotBuilder.build();
         }
 
         @Override
         public void close() {
             if (open) {
                 open = false;
-                if (!cancelled) {
-                    Preconditions.checkState(lock.writeLock().isHeldByCurrentThread(), "Trying to "
-                            + "apply changes without holding the write lock");
-
-                    assertCheck(currentSnapshot, changedSnapshot);
-
-                    MetaSnapshotMergeBuilder merger = new MetaSnapshotMergeBuilder(currentSnapshot);
-                    for (MutableMetaDatabase modifiedDatabase : changedSnapshot.getModifiedDatabases()) {
-                        merger.addModifiedDatabase(modifiedDatabase);
-                    }
-                    MvccMetainfoRepository.this.currentSnapshot = merger.build();
-                }
 
                 writeLock.unlock();
             }
         }
 
-        private void assertCheck(ImmutableMetaSnapshot currentSnapshot, MutableMetaSnapshot newSnapshot) {
+        private boolean assertCheck(ImmutableMetaSnapshot currentSnapshot, MutableMetaSnapshot newSnapshot) {
             try {
-                boolean assertsEnabled = false;
-                assert assertsEnabled = true; // Intentional side effect!!!
-                if (assertsEnabled) {
-                    mergeChecker.checkMerge(currentSnapshot, newSnapshot);
-                }
+                new SnapshotMerger(currentSnapshot, newSnapshot)
+                        .merge();
+                return true;
             } catch (UnmergeableException ex) {
                 throw new AssertionError("Unmergeable changes", ex);
             }
         }
 
-    }
-
-    @NotThreadSafe
-    public static interface MergeChecker {
-        public void checkMerge(ImmutableMetaSnapshot currentSnapshot, MutableMetaSnapshot newSnapshot) throws UnmergeableException;
     }
 }

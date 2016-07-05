@@ -32,6 +32,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import static com.google.common.truth.Truth.assertThat;
+
 /**
  *
  * @author gortiz
@@ -70,6 +72,7 @@ public class MvccMetainfoRepositoryTest {
         Assert.assertNotNull(mutableSnapshot.getMetaDatabaseByName(dbName).getMetaCollectionByIdentifier(colId));
 
         try (MergerStage mergeStage = repository.startMerge(mutableSnapshot)) {
+            mergeStage.commit();
         }
 
         ImmutableMetaSnapshot immutableSnapshot;
@@ -77,6 +80,9 @@ public class MvccMetainfoRepositoryTest {
             immutableSnapshot = snapshotStage.createImmutableSnapshot();
         }
 
+        assertThat(immutableSnapshot.getMetaDatabaseByName(dbName))
+                .named("the database by name")
+                .isNotNull();
         Assert.assertNotNull(immutableSnapshot.getMetaDatabaseByName(dbName));
         Assert.assertNotNull(immutableSnapshot.getMetaDatabaseByName(dbName).getMetaCollectionByIdentifier(colId));
     }
@@ -220,7 +226,7 @@ public class MvccMetainfoRepositoryTest {
     @Test
     public void testTwoMerges() throws Throwable {
         final String colName2 = colName + "2";
-        final String colId2 = colName + "2";
+        final String colId2 = colId + "2";
 
         final Sequencer<WriterRunnable.WriterPhase> writerSequencer1 = new Sequencer<>(WriterRunnable.WriterPhase.class);
         final Sequencer<WriterRunnable.WriterPhase> writerSequencer2 = new Sequencer<>(WriterRunnable.WriterPhase.class);
@@ -398,6 +404,7 @@ public class MvccMetainfoRepositoryTest {
             preMerge();
 
             try (MergerStage mergeStage = repository.startMerge(mutableSnapshot)) {
+                mergeStage.commit();
             } catch (UnmergeableException ex) {
                 throw new AssertionError("Unmergeable changes", ex);
             }

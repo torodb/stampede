@@ -66,13 +66,19 @@ public class ImmutableMetaSnapshot implements MetaSnapshot {
             this.dbsByIdentifier = new HashMap<>(other.dbsByIdentifier);
         }
 
-        public Builder add(ImmutableMetaDatabase.Builder dbBuilder) {
-            return add(dbBuilder.build());
+        public Builder put(ImmutableMetaDatabase.Builder dbBuilder) {
+            return Builder.this.put(dbBuilder.build());
         }
 
-        public Builder add(ImmutableMetaDatabase db) {
+        public Builder put(ImmutableMetaDatabase db) {
             Preconditions.checkState(!built, "This builder has already been built");
             dbsByIdentifier.put(db.getIdentifier(), db);
+            return this;
+        }
+        
+        public Builder remove(MetaDatabase metaDb) {
+            Preconditions.checkState(!built, "This builder has already been built");
+            dbsByIdentifier.remove(metaDb.getIdentifier());
             return this;
         }
 

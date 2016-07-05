@@ -44,12 +44,12 @@ public class Document2RelStackTest {
 	private static final String COLLD = "collD";
 
 	private static ImmutableMetaSnapshot currentView = new ImmutableMetaSnapshot.Builder()
-			.add(new ImmutableMetaDatabase.Builder(DB1, DB1)
-					.add(new ImmutableMetaCollection.Builder(COLLA, COLLA).build())
-					.add(new ImmutableMetaCollection.Builder(COLLB, COLLB).build()).build())
-			.add(new ImmutableMetaDatabase.Builder(DB2, DB2)
-					.add(new ImmutableMetaCollection.Builder(COLLC, COLLC).build())
-					.add(new ImmutableMetaCollection.Builder(COLLD, COLLD).build()).build())
+			.put(new ImmutableMetaDatabase.Builder(DB1, DB1)
+					.put(new ImmutableMetaCollection.Builder(COLLA, COLLA).build())
+					.put(new ImmutableMetaCollection.Builder(COLLB, COLLB).build()).build())
+			.put(new ImmutableMetaDatabase.Builder(DB2, DB2)
+					.put(new ImmutableMetaCollection.Builder(COLLC, COLLC).build())
+					.put(new ImmutableMetaCollection.Builder(COLLD, COLLD).build()).build())
 			.build();
 	
 	private MutableMetaSnapshot mutableSnapshot;

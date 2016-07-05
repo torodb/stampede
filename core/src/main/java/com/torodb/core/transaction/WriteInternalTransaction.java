@@ -69,6 +69,8 @@ public class WriteInternalTransaction implements InternalTransaction {
         try (MergerStage mergeStage = metainfoRepository.startMerge(metaSnapshot)) {
             backendTransaction.commit();
             backendTransaction.close();
+
+            mergeStage.commit();
         }
     }
 

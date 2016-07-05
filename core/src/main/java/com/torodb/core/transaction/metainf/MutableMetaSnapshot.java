@@ -5,6 +5,7 @@ import com.torodb.core.annotations.DoNotChange;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import org.jooq.lambda.tuple.Tuple2;
 
 /**
  *
@@ -26,8 +27,22 @@ public interface MutableMetaSnapshot extends MetaSnapshot {
     @Nonnull
     public abstract MutableMetaDatabase addMetaDatabase(String dbName, String dbId) throws IllegalArgumentException;
 
+    /**
+     * Removes a meta database selected by its name.
+     * @param dbName
+     * @return true iff the meta database was removed
+     */
+    public abstract boolean removeMetaDatabaseByName(String dbName);
+
+    /**
+     * REmoves a meta database selected by its identifier
+     * @param dbId
+     * @return true iff the meta database was removed
+     */
+    public abstract boolean removeMetaDatabaseByIdentifier(String dbId);
+
     @DoNotChange
-    public abstract Iterable<? extends MutableMetaDatabase> getModifiedDatabases();
+    public abstract Iterable<Tuple2<MutableMetaDatabase, MetaElementState>> getModifiedDatabases();
 
     @Nonnull
     public abstract ImmutableMetaSnapshot immutableCopy();

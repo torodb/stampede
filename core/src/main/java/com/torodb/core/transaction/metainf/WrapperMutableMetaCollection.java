@@ -89,7 +89,7 @@ public class WrapperMutableMetaCollection implements MutableMetaCollection {
         } else {
             ImmutableMetaCollection.Builder builder = new ImmutableMetaCollection.Builder(wrapped);
             for (MutableMetaDocPart modifiedMetaDocPart : modifiedMetaDocParts) {
-                builder.add(modifiedMetaDocPart.immutableCopy());
+                builder.put(modifiedMetaDocPart.immutableCopy());
             }
             return builder.build();
         }
