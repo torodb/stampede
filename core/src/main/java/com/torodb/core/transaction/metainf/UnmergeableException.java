@@ -29,8 +29,8 @@ public class UnmergeableException extends RollbackException {
 
     private static final long serialVersionUID = 6944819560068647762L;
 
-    private final ImmutableMetaSnapshot currentSnapshot;
-    private final MutableMetaSnapshot newSnapshot;
+    transient private final ImmutableMetaSnapshot currentSnapshot;
+    transient private final MutableMetaSnapshot newSnapshot;
 
     public UnmergeableException(ImmutableMetaSnapshot currentSnapshot, MutableMetaSnapshot newSnapshot) {
         this.currentSnapshot = currentSnapshot;
