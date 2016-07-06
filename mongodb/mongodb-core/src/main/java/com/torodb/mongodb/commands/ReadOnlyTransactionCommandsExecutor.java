@@ -66,7 +66,7 @@ import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.net.HostAndPort;
 import com.torodb.mongodb.commands.impl.NotImplementedCommandImplementation;
-import com.torodb.mongodb.commands.impl.diagnostic.PingImplementation;
+import com.torodb.mongodb.commands.impl.admin.ListCollectionsImplementation;
 import com.torodb.mongodb.commands.impl.general.FindImplementation;
 import com.torodb.mongodb.core.ReadOnlyMongodTransaction;
 import java.util.Collections;
@@ -153,9 +153,13 @@ public class ReadOnlyTransactionCommandsExecutor implements CommandsExecutor<Rea
     }
 
     static class MyAdminCommandsImplementationBuilder extends AdminCommandsImplementationsBuilder<ReadOnlyMongodTransaction> {
+
+        @Inject
+        private ListCollectionsImplementation listCollectionsImplementation;
+
         @Override
-        public CommandImplementation<ListCollectionsArgument, ListCollectionsResult, ReadOnlyMongodTransaction> getListCollectionsImplementation() {
-            return NotImplementedCommandImplementation.build();
+        public CommandImplementation<ListCollectionsArgument, ListCollectionsResult, ? super ReadOnlyMongodTransaction> getListCollectionsImplementation() {
+            return listCollectionsImplementation;
         }
 
         @Override
@@ -203,14 +207,6 @@ public class ReadOnlyTransactionCommandsExecutor implements CommandsExecutor<Rea
     }
 
     static class MyDiagnosticCommandsImplementationBuilder extends DiagnosticCommandsImplementationsBuilder<ReadOnlyMongodTransaction> {
-
-        private final PingImplementation ping;
-
-        @Inject
-        public MyDiagnosticCommandsImplementationBuilder(PingImplementation ping) {
-            this.ping = ping;
-        }
-
         @Override
         public CommandImplementation<CollStatsArgument, CollStatsReply, ReadOnlyMongodTransaction> getCollStatsImplementation() {
             return NotImplementedCommandImplementation.build();
