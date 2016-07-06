@@ -69,7 +69,6 @@ import com.torodb.core.annotations.DoNotChange;
 import com.torodb.mongodb.commands.impl.NotImplementedCommandImplementation;
 import com.torodb.mongodb.commands.impl.admin.DropCollectionImplementation;
 import com.torodb.mongodb.commands.impl.admin.DropDatabaseImplementation;
-import com.torodb.mongodb.commands.impl.diagnostic.PingImplementation;
 import com.torodb.mongodb.commands.impl.general.DeleteImplementation;
 import com.torodb.mongodb.commands.impl.general.InsertImplementation;
 import com.torodb.mongodb.commands.impl.general.UpdateImplementation;
@@ -222,13 +221,6 @@ public class WriteTransactionCommandsExecutor implements CommandsExecutor<WriteM
     }
 
     static class MyDiagnosticCommandsImplementationBuilder extends DiagnosticCommandsImplementationsBuilder<WriteMongodTransaction> {
-
-        private final PingImplementation ping;
-
-        @Inject
-        public MyDiagnosticCommandsImplementationBuilder(PingImplementation ping) {
-            this.ping = ping;
-        }
 
         @Override
         public CommandImplementation<CollStatsArgument, CollStatsReply, WriteMongodTransaction> getCollStatsImplementation() {
