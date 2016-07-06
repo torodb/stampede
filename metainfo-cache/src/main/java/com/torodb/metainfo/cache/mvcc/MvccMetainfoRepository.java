@@ -3,9 +3,11 @@ package com.torodb.metainfo.cache.mvcc;
 
 import com.google.common.base.Preconditions;
 import com.torodb.core.transaction.metainf.*;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
+import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -29,6 +31,8 @@ public class MvccMetainfoRepository implements MetainfoRepository {
     }
 
     @Override
+    @Nonnull
+    @SuppressFBWarnings(value = {"RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE", "UL_UNRELEASED_LOCK"})
     public SnapshotStage startSnapshotStage() {
         ReadLock readLock = lock.readLock();
         LOGGER.trace("Trying to create a {}", MvccSnapshotStage.class);
@@ -48,6 +52,8 @@ public class MvccMetainfoRepository implements MetainfoRepository {
     }
 
     @Override
+    @Nonnull
+    @SuppressFBWarnings(value = {"RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE", "UL_UNRELEASED_LOCK"})
     public MergerStage startMerge(MutableMetaSnapshot newSnapshot) throws UnmergeableException {
         LOGGER.trace("Trying to create a {}", MvccMergerStage.class);
         lock.writeLock().lock();
