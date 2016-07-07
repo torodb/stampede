@@ -7,6 +7,7 @@ import java.time.temporal.TemporalAccessor;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -76,9 +77,11 @@ public class MapToKVValueConverter {
 	}
 
 	private boolean isSpecialObject(Map<String, Object> map) {
-		if (map != null && map.keySet().size() == 1) {
-			String key = map.keySet().iterator().next();
-			if (key.startsWith("$") && map.get(key) != null) {
+		if (map != null && map.entrySet().size() == 1) {
+			Entry<String, Object> next = map.entrySet().iterator().next();
+			String key = next.getKey();
+			Object value = next.getValue();
+			if (key.startsWith("$") && value != null) {
 				return true;
 			}
 		}
@@ -86,8 +89,9 @@ public class MapToKVValueConverter {
 	}
 
 	private KVValue<?> buildSpecialObject(Map<String, Object> map) {
-		String key = map.keySet().iterator().next();
-		Object value = map.get(key);
+		Entry<String, Object> first = map.entrySet().iterator().next();
+		String key = first.getKey();
+		Object value = first.getValue();
 		if ("$oid".equals(key) && value instanceof String) {
 			return new ByteArrayKVMongoObjectId(HexUtils.hex2Bytes((String) value));
 		}
