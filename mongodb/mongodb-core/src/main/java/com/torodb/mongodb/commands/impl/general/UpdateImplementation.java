@@ -68,7 +68,6 @@ public class UpdateImplementation extends WriteTorodbCommandImpl<UpdateArgument,
                 BsonDocument query = updateStatement.getQuery();
                 UpdateAction updateAction = UpdateActionTranslator.translate(updateStatement.getUpdate());
                 Cursor<ToroDocument> candidatesCursor;
-        
                 switch (query.size()) {
                     case 0: {
                         candidatesCursor = context.getTorodTransaction().findAll(req.getDatabase(), arg.getCollection());
@@ -89,9 +88,14 @@ public class UpdateImplementation extends WriteTorodbCommandImpl<UpdateArgument,
                 
                 if (candidatesCursor.hasNext()) {
                     try {
-                        Stream<KVDocument> updatedCandidates = 
-                                StreamSupport.stream(
-                                        Spliterators.spliteratorUnknownSize(candidatesCursor.batch(100), Spliterator.ORDERED), false)
+                        Stream<List<ToroDocument>> candidatesbatchStream;
+                        if (updateStatement.isMulti()) {
+                            candidatesbatchStream = StreamSupport.stream(
+                                Spliterators.spliteratorUnknownSize(candidatesCursor.batch(100), Spliterator.ORDERED), false);
+                        } else {
+                            candidatesbatchStream = Stream.of(ImmutableList.of(candidatesCursor.next()));
+                        }
+                        Stream<KVDocument> updatedCandidates = candidatesbatchStream
                                 .map(candidates -> {
                                     updateStatus.increaseCandidates(candidates.size());
                                     context.getTorodTransaction().delete(req.getDatabase(), arg.getCollection(), candidates);
@@ -110,7 +114,7 @@ public class UpdateImplementation extends WriteTorodbCommandImpl<UpdateArgument,
                     } catch(UserWrappedException userWrappedException) {
                         throw userWrappedException.getCause();
                     }
-                } else {
+                } else if(updateStatement.isUpsert()) {
                     KVDocument toInsertCandidate;
                     if (updateAction instanceof SetDocumentUpdateAction) {
                         toInsertCandidate = ((SetDocumentUpdateAction) updateAction).getNewValue();
