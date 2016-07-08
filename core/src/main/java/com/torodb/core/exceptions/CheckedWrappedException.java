@@ -18,10 +18,21 @@
  *     
  */
 
-package com.torodb.core.exceptions.user;
 
-public interface UserExceptionVisitor<Result, Argument> {
-    public Result visit(DatabaseNotFoundException userException, Argument arg);
-    public Result visit(CollectionNotFoundException userException, Argument arg);
-    public Result visit(UpdateException userException, Argument arg);
+package com.torodb.core.exceptions;
+
+/**
+ *
+ */
+public class CheckedWrappedException extends ToroRuntimeException {
+    private static final long serialVersionUID = 1L;
+
+    public CheckedWrappedException(Exception cause) {
+        super(cause);
+    }
+
+    @Override
+    public synchronized Exception getCause() {
+        return (Exception) super.getCause();
+    }
 }

@@ -18,10 +18,24 @@
  *     
  */
 
-package com.torodb.core.exceptions.user;
+package com.torodb.mongodb.language.update;
 
-public interface UserExceptionVisitor<Result, Argument> {
-    public Result visit(DatabaseNotFoundException userException, Argument arg);
-    public Result visit(CollectionNotFoundException userException, Argument arg);
-    public Result visit(UpdateException userException, Argument arg);
+import java.util.Collection;
+
+import com.torodb.core.language.AttributeReference;
+
+/**
+ *
+ */
+public class SetCurrentDateUpdateAction extends SingleFieldUpdateAction {
+
+    public SetCurrentDateUpdateAction(Collection<AttributeReference> modifiedField) {
+        super(modifiedField);
+    }
+
+    @Override
+    public void apply(UpdatedToroDocumentBuilder builder) {
+        throw new UnsupportedOperationException();
+    }
+
 }

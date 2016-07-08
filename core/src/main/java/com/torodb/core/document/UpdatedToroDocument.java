@@ -18,10 +18,34 @@
  *     
  */
 
-package com.torodb.core.exceptions.user;
+package com.torodb.core.document;
 
-public interface UserExceptionVisitor<Result, Argument> {
-    public Result visit(DatabaseNotFoundException userException, Argument arg);
-    public Result visit(CollectionNotFoundException userException, Argument arg);
-    public Result visit(UpdateException userException, Argument arg);
+import com.torodb.kvdocument.values.KVDocument;
+
+public class UpdatedToroDocument extends ToroDocument {
+
+    private final boolean hasDid;
+    private final boolean updated;
+    
+    public UpdatedToroDocument(int id, KVDocument root, boolean updated) {
+        super(id, root);
+        
+        this.hasDid = true;
+        this.updated = updated;
+    }
+    
+    public UpdatedToroDocument(KVDocument root, boolean updated) {
+        super(-1, root);
+        
+        this.hasDid = false;
+        this.updated = updated;
+    }
+
+    public boolean isUpdated() {
+        return updated;
+    }
+
+    public boolean hasDid() {
+        return hasDid;
+    }
 }

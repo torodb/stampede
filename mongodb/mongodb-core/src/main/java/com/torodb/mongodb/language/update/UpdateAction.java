@@ -18,10 +18,19 @@
  *     
  */
 
-package com.torodb.core.exceptions.user;
+package com.torodb.mongodb.language.update;
 
-public interface UserExceptionVisitor<Result, Argument> {
-    public Result visit(DatabaseNotFoundException userException, Argument arg);
-    public Result visit(CollectionNotFoundException userException, Argument arg);
-    public Result visit(UpdateException userException, Argument arg);
+import com.torodb.core.exceptions.user.UpdateException;
+
+/**
+ *
+ */
+public abstract class UpdateAction {
+    
+    public UpdateAction() {
+        super();
+    }
+    
+    public abstract void apply(UpdatedToroDocumentBuilder builder) throws UpdateException;
+    
 }

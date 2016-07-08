@@ -18,10 +18,28 @@
  *     
  */
 
-package com.torodb.core.exceptions.user;
+package com.torodb.mongodb.language.update;
 
-public interface UserExceptionVisitor<Result, Argument> {
-    public Result visit(DatabaseNotFoundException userException, Argument arg);
-    public Result visit(CollectionNotFoundException userException, Argument arg);
-    public Result visit(UpdateException userException, Argument arg);
+import java.util.Collection;
+
+import com.google.common.collect.ImmutableCollection;
+import com.google.common.collect.ImmutableSet;
+import com.torodb.core.language.AttributeReference;
+
+/**
+ *
+ */
+public abstract class SingleFieldUpdateAction extends UpdateAction {
+
+    private final ImmutableCollection<AttributeReference> modifiedField;
+
+    SingleFieldUpdateAction(Collection<AttributeReference> modifiedField) {
+        super();
+        this.modifiedField = ImmutableSet.copyOf(modifiedField);
+    }
+
+    public ImmutableCollection<AttributeReference> getModifiedField() {
+        return modifiedField;
+    }
+
 }

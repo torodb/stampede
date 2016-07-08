@@ -18,10 +18,42 @@
  *     
  */
 
-package com.torodb.core.exceptions.user;
+package com.torodb.mongodb.language.update;
 
-public interface UserExceptionVisitor<Result, Argument> {
-    public Result visit(DatabaseNotFoundException userException, Argument arg);
-    public Result visit(CollectionNotFoundException userException, Argument arg);
-    public Result visit(UpdateException userException, Argument arg);
+import javax.annotation.Nonnull;
+
+import com.torodb.kvdocument.values.KVValue;
+
+/**
+ *
+ */
+interface BuilderCallback<K> {
+
+    Class<K> getKeyClass();
+    
+    boolean contains(K key);
+
+    boolean isValue(K key);
+
+    @Nonnull
+    KVValue<?> getValue(K key);
+
+    boolean isArrayBuilder(K key);
+
+    @Nonnull
+    UpdatedToroDocumentArrayBuilder getArrayBuilder(K key);
+
+    boolean isObjectBuilder(K key);
+
+    @Nonnull
+    UpdatedToroDocumentBuilder getObjectBuilder(K key);
+
+    UpdatedToroDocumentArrayBuilder newArray(K key);
+
+    UpdatedToroDocumentBuilder newObject(K key);
+
+    void setValue(K key, KVValue<?> value);
+
+    boolean unset(K key);
+
 }

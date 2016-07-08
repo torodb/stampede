@@ -1,12 +1,20 @@
 
 package com.torodb.torod;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.stream.Stream;
+
+import javax.annotation.Nonnull;
+
 import com.google.common.base.Preconditions;
 import com.torodb.core.TableRef;
 import com.torodb.core.TableRefFactory;
 import com.torodb.core.backend.DidCursor;
 import com.torodb.core.backend.UpdateResult;
 import com.torodb.core.document.ToroDocument;
+import com.torodb.core.document.UpdatedToroDocument;
+import com.torodb.core.exceptions.UserWrappedException;
 import com.torodb.core.exceptions.user.CollectionNotFoundException;
 import com.torodb.core.exceptions.user.DatabaseNotFoundException;
 import com.torodb.core.exceptions.user.UserException;
@@ -15,15 +23,17 @@ import com.torodb.core.language.AttributeReference.Key;
 import com.torodb.core.transaction.InternalTransaction;
 import com.torodb.core.transaction.RollbackException;
 import com.torodb.core.transaction.WriteInternalTransaction;
-import com.torodb.core.transaction.metainf.*;
+import com.torodb.core.transaction.metainf.FieldType;
+import com.torodb.core.transaction.metainf.MetaCollection;
+import com.torodb.core.transaction.metainf.MetaDatabase;
+import com.torodb.core.transaction.metainf.MetaDocPart;
+import com.torodb.core.transaction.metainf.MetaField;
+import com.torodb.core.transaction.metainf.MutableMetaCollection;
+import com.torodb.core.transaction.metainf.MutableMetaDatabase;
+import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
 import com.torodb.kvdocument.values.KVDocument;
 import com.torodb.kvdocument.values.KVValue;
 import com.torodb.torod.pipeline.InsertPipeline;
-import java.util.Collection;
-import java.util.List;
-import java.util.function.Function;
-import java.util.stream.Stream;
-import javax.annotation.Nonnull;
 
 /**
  *
@@ -141,8 +151,12 @@ public class WriteTorodTransaction extends TorodTransaction {
         
         return dids.size();
     }
+    
+    public interface UpdateFunction {
+        UpdatedToroDocument update(ToroDocument candidate) throws UserException;
+    }
 
-    public UpdateResult updateAll(String dbName, String colName, Function<KVDocument, KVDocument> updateFunction) throws UserException {
+    public UpdateResult updateAll(String dbName, String colName, UpdateFunction updateFunction) throws UserException {
         MutableMetaDatabase db = internalTransaction.getMetaSnapshot().getMetaDatabaseByName(dbName);
         if (db == null) {
             return new UpdateResult(0, 0);
@@ -157,19 +171,31 @@ public class WriteTorodTransaction extends TorodTransaction {
         Collection<ToroDocument> candidates = internalTransaction.getBackendTransaction().readDocuments(db, col, dids);
         internalTransaction.getBackendTransaction().deleteDids(db, col, dids);
         
-        Stream<KVDocument> updatedCandidates = candidates.stream().map(t -> t.getRoot()).map(updateFunction);
-        InsertPipeline pipeline = getConnection().getServer().getInsertPipelineFactory().createInsertPipeline(
-                getConnection().getServer().getD2RTranslatorrFactory(),
-                db,
-                col,
-                internalTransaction.getBackendConnection()
-        );
-        pipeline.insert(updatedCandidates);
-        
-        return new UpdateResult(dids.size(), dids.size());
+        try {
+            Stream<KVDocument> updatedCandidates = candidates.stream()
+                    .map(candidate -> {
+                        try {
+                            return updateFunction.update(candidate);
+                        } catch(UserException userException) {
+                            throw new UserWrappedException(userException);
+                        }
+                    })
+                    .map(updated -> updated.getRoot());
+            InsertPipeline pipeline = getConnection().getServer().getInsertPipelineFactory().createInsertPipeline(
+                    getConnection().getServer().getD2RTranslatorrFactory(),
+                    db,
+                    col,
+                    internalTransaction.getBackendConnection()
+            );
+            pipeline.insert(updatedCandidates);
+            
+            return new UpdateResult(dids.size(), dids.size());
+        } catch(UserWrappedException userWrappedException) {
+            throw userWrappedException.getCause();
+        }
     }
 
-    public UpdateResult updateByAttRef(String dbName, String colName, AttributeReference attRef, KVValue<?> value, Function<KVDocument, KVDocument> updateFunction) throws UserException {
+    public UpdateResult updateByAttRef(String dbName, String colName, AttributeReference attRef, KVValue<?> value, UpdateFunction updateFunction) throws UserException {
         MutableMetaDatabase db = internalTransaction.getMetaSnapshot().getMetaDatabaseByName(dbName);
         if (db == null) {
             return new UpdateResult(0, 0);
@@ -208,16 +234,28 @@ public class WriteTorodTransaction extends TorodTransaction {
         Collection<ToroDocument> candidates = internalTransaction.getBackendTransaction().readDocuments(db, col, dids);
         internalTransaction.getBackendTransaction().deleteDids(db, col, dids);
         
-        Stream<KVDocument> updatedCandidates = candidates.stream().map(t -> t.getRoot()).map(updateFunction);
-        InsertPipeline pipeline = getConnection().getServer().getInsertPipelineFactory().createInsertPipeline(
-                getConnection().getServer().getD2RTranslatorrFactory(),
-                db,
-                col,
-                internalTransaction.getBackendConnection()
-        );
-        pipeline.insert(updatedCandidates);
-        
-        return new UpdateResult(dids.size(), dids.size());
+        try {
+            Stream<KVDocument> updatedCandidates = candidates.stream()
+                    .map(candidate -> {
+                        try {
+                            return updateFunction.update(candidate);
+                        } catch(UserException userException) {
+                            throw new UserWrappedException(userException);
+                        }
+                    })
+                    .map(updated -> updated.getRoot());
+            InsertPipeline pipeline = getConnection().getServer().getInsertPipelineFactory().createInsertPipeline(
+                    getConnection().getServer().getD2RTranslatorrFactory(),
+                    db,
+                    col,
+                    internalTransaction.getBackendConnection()
+            );
+            pipeline.insert(updatedCandidates);
+            
+            return new UpdateResult(dids.size(), dids.size());
+        } catch(UserWrappedException userWrappedException) {
+            throw userWrappedException.getCause();
+        }
     }
     
     public void dropCollection(String db, String collection) throws RollbackException, UserException {

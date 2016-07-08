@@ -18,10 +18,23 @@
  *     
  */
 
-package com.torodb.core.exceptions.user;
 
-public interface UserExceptionVisitor<Result, Argument> {
-    public Result visit(DatabaseNotFoundException userException, Argument arg);
-    public Result visit(CollectionNotFoundException userException, Argument arg);
-    public Result visit(UpdateException userException, Argument arg);
+package com.torodb.core.exceptions;
+
+import com.torodb.core.exceptions.user.UserException;
+
+/**
+ *
+ */
+public class UserWrappedException extends CheckedWrappedException {
+    private static final long serialVersionUID = 1L;
+
+    public UserWrappedException(UserException cause) {
+        super(cause);
+    }
+
+    @Override
+    public synchronized UserException getCause() {
+        return (UserException) super.getCause();
+    }
 }

@@ -1,9 +1,6 @@
 
 package com.torodb.mongodb.commands.impl.general;
 
-import java.util.Map;
-import java.util.function.Function;
-
 import javax.inject.Singleton;
 
 import com.eightkdata.mongowp.ErrorCode;
@@ -17,16 +14,21 @@ import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general
 import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.Request;
 import com.google.common.base.Splitter;
+import com.torodb.core.document.ToroDocument;
+import com.torodb.core.document.UpdatedToroDocument;
+import com.torodb.core.exceptions.user.UpdateException;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.language.AttributeReference;
 import com.torodb.core.language.AttributeReference.Builder;
 import com.torodb.kvdocument.conversion.mongowp.MongoWPConverter;
-import com.torodb.kvdocument.values.KVDocument;
-import com.torodb.kvdocument.values.KVDocument.DocEntry;
 import com.torodb.kvdocument.values.KVValue;
 import com.torodb.mongodb.commands.impl.WriteTorodbCommandImpl;
 import com.torodb.mongodb.core.WriteMongodTransaction;
+import com.torodb.mongodb.language.UpdateActionTranslator;
+import com.torodb.mongodb.language.update.UpdateAction;
+import com.torodb.mongodb.language.update.UpdatedToroDocumentBuilder;
 import com.torodb.torod.WriteTorodTransaction;
+import com.torodb.torod.WriteTorodTransaction.UpdateFunction;
 
 /**
  *
@@ -40,36 +42,25 @@ public class UpdateImplementation extends WriteTorodbCommandImpl<UpdateArgument,
         Long created = 0l;
         Long modified = 0l;
 
-        for (UpdateStatement updateStatement : arg.getStatements()) {
-            BsonDocument query = updateStatement.getQuery();
-            BsonDocument update = updateStatement.getUpdate();
-            //TODO: Update just replace the document contet with the exception of the "_id"
-            Function<KVDocument, KVDocument> updateFunction = 
-                    (d) -> {
-                        KVDocument.Builder builder = new KVDocument.Builder();
-                        
-                        for (DocEntry<?> entry : MongoWPConverter.toEagerDocument(update)) {
-                            builder.putValue(entry.getKey(), entry.getValue());
-                        }
-                        
-                        if (d.containsKey("_id")) {
-                            builder.putValue("_id", d.get("_id"));
-                        }
-                        
-                        return builder.build();
-                    };
-    
-            try {
+        try {
+            for (UpdateStatement updateStatement : arg.getStatements()) {
+                BsonDocument query = updateStatement.getQuery();
+                BsonDocument update = updateStatement.getUpdate();
+                //TODO: Update just replace the document contet with the exception of the "_id"
+                UpdateAction updateAction = UpdateActionTranslator.translate(update);
+        
                 switch (query.size()) {
                     case 0: {
-                        com.torodb.core.backend.UpdateResult updateResult = context.getTorodTransaction().updateAll(req.getDatabase(), arg.getCollection(), updateFunction);
+                        com.torodb.core.backend.UpdateResult updateResult = context.getTorodTransaction().updateAll(req.getDatabase(), arg.getCollection(), 
+                                candidate -> update(updateAction, candidate));
                         created += updateResult.getCreated();
                         modified += updateResult.getModified();
                         break;
                     }
                     case 1: {
                         try {
-                            com.torodb.core.backend.UpdateResult updateResult = deleteByAttribute(context.getTorodTransaction(), req.getDatabase(), arg.getCollection(), query, updateFunction);
+                            com.torodb.core.backend.UpdateResult updateResult = deleteByAttribute(context.getTorodTransaction(), req.getDatabase(), arg.getCollection(), query, 
+                                    candidate -> update(updateAction, candidate));
                             created += updateResult.getCreated();
                             modified += updateResult.getModified();
                         } catch (CommandFailed ex) {
@@ -81,17 +72,23 @@ public class UpdateImplementation extends WriteTorodbCommandImpl<UpdateArgument,
                         return Status.from(ErrorCode.COMMAND_FAILED, "The given query is not supported right now");
                     }
                 }
-            } catch (UserException ex) {
-                //TODO: Improve error reporting
-                return Status.from(ErrorCode.COMMAND_FAILED, ex.getLocalizedMessage());
             }
+        } catch (UserException ex) {
+            //TODO: Improve error reporting
+            return Status.from(ErrorCode.COMMAND_FAILED, ex.getLocalizedMessage());
         }
 
         return Status.ok(new UpdateResult(modified, modified));
-
+    }
+    
+    protected UpdatedToroDocument update(UpdateAction updateAction, ToroDocument candidate) throws UpdateException {
+        UpdatedToroDocumentBuilder builder = 
+                UpdatedToroDocumentBuilder.from(candidate);
+        updateAction.apply(builder);
+        return builder.build();
     }
 
-    private com.torodb.core.backend.UpdateResult deleteByAttribute(WriteTorodTransaction transaction, String db, String col, BsonDocument query, Function<KVDocument, KVDocument> updateFunction) throws CommandFailed, UserException {
+    private com.torodb.core.backend.UpdateResult deleteByAttribute(WriteTorodTransaction transaction, String db, String col, BsonDocument query, UpdateFunction updateFunction) throws CommandFailed, UserException {
         Builder refBuilder = new AttributeReference.Builder();
         KVValue<?> kvValue = calculateValueAndAttRef(query, refBuilder);
 
