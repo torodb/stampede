@@ -3,6 +3,7 @@ package com.torodb.torod;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.annotation.Nonnull;
@@ -11,7 +12,6 @@ import com.google.common.base.Preconditions;
 import com.torodb.core.TableRef;
 import com.torodb.core.TableRefFactory;
 import com.torodb.core.backend.DidCursor;
-import com.torodb.core.cursors.Cursor;
 import com.torodb.core.document.ToroDocument;
 import com.torodb.core.exceptions.user.CollectionNotFoundException;
 import com.torodb.core.exceptions.user.DatabaseNotFoundException;
@@ -92,7 +92,7 @@ public class WriteTorodTransaction extends TorodTransaction {
         return metaCol;
     }
 
-    public void delete(String dbName, String colName, Cursor<ToroDocument> candidates) {
+    public void delete(String dbName, String colName, List<ToroDocument> candidates) {
         MetaDatabase db = getInternalTransaction().getMetaSnapshot().getMetaDatabaseByName(dbName);
         if (db == null) {
             return;
@@ -103,7 +103,7 @@ public class WriteTorodTransaction extends TorodTransaction {
         }
 
         internalTransaction.getBackendTransaction().deleteDids(db, col, 
-                candidates.transform(candidate -> candidate.getId()).getRemaining());
+                candidates.stream().map(candidate -> candidate.getId()).collect(Collectors.toList()));
     }
 
     public long deleteAll(String dbName, String colName) {

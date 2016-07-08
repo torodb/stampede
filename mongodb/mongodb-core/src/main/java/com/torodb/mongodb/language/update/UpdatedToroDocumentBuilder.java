@@ -26,7 +26,6 @@ import javax.annotation.Nonnull;
 
 import com.google.common.collect.Maps;
 import com.torodb.core.document.ToroDocument;
-import com.torodb.core.document.UpdatedToroDocument;
 import com.torodb.kvdocument.values.KVArray;
 import com.torodb.kvdocument.values.KVDocument;
 import com.torodb.kvdocument.values.KVDocument.DocEntry;
@@ -238,16 +237,19 @@ public class UpdatedToroDocumentBuilder {
         return this;
     }
     
-    public UpdatedToroDocument build() {
-        UpdatedToroDocument updatedToroDocument;
+    public boolean isUpdated() {
+        return updated;
+    }
+    
+    public KVDocument build() {
+        KVDocument updatedDocument;
         if (did != null) {
-            updatedToroDocument = new UpdatedToroDocument(did,
-                buildRoot(), updated);
+            updatedDocument = buildRoot();
         } else {
-            updatedToroDocument = new UpdatedToroDocument(buildRoot(), updated);
+            updatedDocument = buildRoot();
         }
         clear();
 
-        return updatedToroDocument;
+        return updatedDocument;
     }
 }

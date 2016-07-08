@@ -18,34 +18,8 @@
  *     
  */
 
-package com.torodb.core.document;
+package com.torodb.mongodb.language;
 
-import com.torodb.kvdocument.values.KVDocument;
-
-public class UpdatedToroDocument extends ToroDocument {
-
-    private final boolean hasDid;
-    private final boolean updated;
-    
-    public UpdatedToroDocument(int id, KVDocument root, boolean updated) {
-        super(id, root);
-        
-        this.hasDid = true;
-        this.updated = updated;
-    }
-    
-    public UpdatedToroDocument(KVDocument root, boolean updated) {
-        super(-1, root);
-        
-        this.hasDid = false;
-        this.updated = updated;
-    }
-
-    public boolean isUpdated() {
-        return updated;
-    }
-
-    public boolean hasDid() {
-        return hasDid;
-    }
+public class Constants {
+    public static final String ID = "_id";
 }
