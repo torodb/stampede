@@ -6,6 +6,8 @@ services:
     image: postgres:9.5
     environment:
       - POSTGRES_PASSWORD=trustme
+    ports:
+      - "5432:5432"
   toro:
     build: .
     ports:
