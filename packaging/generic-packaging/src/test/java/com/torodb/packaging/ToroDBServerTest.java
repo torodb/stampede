@@ -40,9 +40,9 @@ public class ToroDBServerTest {
         ToroDBServer server = ToroDBServer.create(config, Clock.systemUTC());
 
         server.startAsync();
-        server.awaitRunning(5, TimeUnit.SECONDS);
+        server.awaitRunning(10, TimeUnit.SECONDS);
 
         server.stopAsync();
-        server.awaitTerminated(5, TimeUnit.SECONDS);
+        server.awaitTerminated(10, TimeUnit.SECONDS);
     }
 }
