@@ -58,7 +58,11 @@ public class FindImplementation extends ReadTorodbCommandImpl<FindArgument, Find
             }
         }
 
-        List<BsonDocument> batch = cursor.getNextBatch(100);
+        if (Long.valueOf(arg.getBatchSize()) > (long) Integer.MAX_VALUE) {
+            return Status.from(ErrorCode.COMMAND_FAILED, "Only batchSize equals or lower than " + Integer.MAX_VALUE + " is supported");
+        }
+        
+        List<BsonDocument> batch = cursor.getNextBatch((int) arg.getBatchSize());
         cursor.close();
 
         return Status.ok(new FindResult(CursorResult.createSingleBatchCursor(req.getDatabase(), arg.getCollection(), batch.iterator())));
