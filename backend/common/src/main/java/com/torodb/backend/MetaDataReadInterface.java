@@ -35,6 +35,7 @@ public interface MetaDataReadInterface {
     @Nonnull Collection<InternalField<?>> getReferenceInternalFields(@Nonnull TableRef tableRef);
     @Nonnull Collection<InternalField<?>> getForeignInternalFields(@Nonnull TableRef tableRef);
     @Nonnull Collection<InternalField<?>> getReadInternalFields(@Nonnull MetaDocPart metaDocPart);
+    @Nonnull Collection<InternalField<?>> getReadInternalFields(@Nonnull TableRef tableRef);
     
     long getDatabaseSize(@Nonnull DSLContext dsl, @Nonnull String databaseName);
     Long getCollectionSize(@Nonnull DSLContext dsl, @Nonnull String schema, @Nonnull String collection);

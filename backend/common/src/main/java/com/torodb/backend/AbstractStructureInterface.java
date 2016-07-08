@@ -129,17 +129,21 @@ public abstract class AbstractStructureInterface implements StructureInterface {
         sqlHelper.executeStatement(dsl, statement, Context.CREATE_TABLE);
     }
 
-    protected abstract String getCreateDocPartTableStatement(String schemaName, String tableName,
-            Collection<InternalField<?>> fields, Collection<InternalField<?>> primaryKeyFields);
-    
-
     @Override
     public void createDocPartTable(DSLContext dsl, String schemaName, String tableName, TableRef tableRef, String foreignTableName) {
         String statement = getCreateDocPartTableStatement(schemaName, tableName, metaDataReadInterface.getInternalFields(tableRef),
                 metaDataReadInterface.getPrimaryKeyInternalFields(tableRef),
                 metaDataReadInterface.getReferenceInternalFields(tableRef), foreignTableName, metaDataReadInterface.getForeignInternalFields(tableRef));
         sqlHelper.executeStatement(dsl, statement, Context.CREATE_TABLE);
+        String readIndexStatement = getCreateDocPartTableIndexStatement(schemaName, tableName, metaDataReadInterface.getReadInternalFields(tableRef));
+        sqlHelper.executeStatement(dsl, readIndexStatement, Context.CREATE_INDEX);
     }
+
+    protected abstract String getCreateDocPartTableStatement(String schemaName, String tableName,
+            Collection<InternalField<?>> fields, Collection<InternalField<?>> primaryKeyFields);
+
+    protected abstract String getCreateDocPartTableIndexStatement(String schemaName, String tableName,
+            Collection<InternalField<?>> indexedFields);
 
     protected abstract String getCreateDocPartTableStatement(String schemaName, String tableName,
             Collection<InternalField<?>> fields, Collection<InternalField<?>> primaryKeyFields, 
