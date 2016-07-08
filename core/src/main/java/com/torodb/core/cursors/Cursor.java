@@ -65,6 +65,10 @@ public interface Cursor<E> extends AutoCloseable, Iterator<E> {
         return new DelegateCursor<>(this, transformation);
     }
 
+    default @Nonnull BatchCursor<E> batch(int size) {
+        return new BatchCursor<E>(this, size);
+    }
+
     /**
      * Releases this {@code Cursor} object's resources immediately.
      */
