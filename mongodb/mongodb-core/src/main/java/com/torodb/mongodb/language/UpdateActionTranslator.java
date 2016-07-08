@@ -290,7 +290,7 @@ public class UpdateActionTranslator {
 
         INCREMENT("$inc"),
         MOVE("$rename"),
-        MULTIPLY("$mult"),
+        MULTIPLY("$mul"),
         SET_CURRENT_DATE("$currentDate"),
         SET_FIELD("$set"),
         UNSET_FIELD("$unset");
