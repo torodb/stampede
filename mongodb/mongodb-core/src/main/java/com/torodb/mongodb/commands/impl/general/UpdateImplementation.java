@@ -1,6 +1,9 @@
 
 package com.torodb.mongodb.commands.impl.general;
 
+import java.util.List;
+import java.util.stream.Stream;
+
 import javax.inject.Singleton;
 
 import com.eightkdata.mongowp.ErrorCode;
@@ -14,13 +17,16 @@ import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general
 import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.Request;
 import com.google.common.base.Splitter;
+import com.torodb.core.cursors.Cursor;
 import com.torodb.core.document.ToroDocument;
 import com.torodb.core.document.UpdatedToroDocument;
+import com.torodb.core.exceptions.UserWrappedException;
 import com.torodb.core.exceptions.user.UpdateException;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.language.AttributeReference;
 import com.torodb.core.language.AttributeReference.Builder;
 import com.torodb.kvdocument.conversion.mongowp.MongoWPConverter;
+import com.torodb.kvdocument.values.KVDocument;
 import com.torodb.kvdocument.values.KVValue;
 import com.torodb.mongodb.commands.impl.WriteTorodbCommandImpl;
 import com.torodb.mongodb.core.WriteMongodTransaction;
@@ -28,7 +34,6 @@ import com.torodb.mongodb.language.UpdateActionTranslator;
 import com.torodb.mongodb.language.update.UpdateAction;
 import com.torodb.mongodb.language.update.UpdatedToroDocumentBuilder;
 import com.torodb.torod.WriteTorodTransaction;
-import com.torodb.torod.WriteTorodTransaction.UpdateFunction;
 
 /**
  *
@@ -39,30 +44,23 @@ public class UpdateImplementation extends WriteTorodbCommandImpl<UpdateArgument,
     @Override
     public Status<UpdateResult> apply(Request req, Command<? super UpdateArgument, ? super UpdateResult> command, UpdateArgument arg,
             WriteMongodTransaction context) {
-        Long created = 0l;
-        Long modified = 0l;
+        long created = 0l;
+        long candidatesSize = 0l;
 
         try {
             for (UpdateStatement updateStatement : arg.getStatements()) {
                 BsonDocument query = updateStatement.getQuery();
-                BsonDocument update = updateStatement.getUpdate();
-                //TODO: Update just replace the document contet with the exception of the "_id"
-                UpdateAction updateAction = UpdateActionTranslator.translate(update);
+                UpdateAction updateAction = UpdateActionTranslator.translate(updateStatement.getUpdate());
+                Cursor<ToroDocument> candidatesCursor;
         
                 switch (query.size()) {
                     case 0: {
-                        com.torodb.core.backend.UpdateResult updateResult = context.getTorodTransaction().updateAll(req.getDatabase(), arg.getCollection(), 
-                                candidate -> update(updateAction, candidate));
-                        created += updateResult.getCreated();
-                        modified += updateResult.getModified();
+                        candidatesCursor = context.getTorodTransaction().findAll(req.getDatabase(), arg.getCollection());
                         break;
                     }
                     case 1: {
                         try {
-                            com.torodb.core.backend.UpdateResult updateResult = deleteByAttribute(context.getTorodTransaction(), req.getDatabase(), arg.getCollection(), query, 
-                                    candidate -> update(updateAction, candidate));
-                            created += updateResult.getCreated();
-                            modified += updateResult.getModified();
+                            candidatesCursor = findByAttribute(context.getTorodTransaction(), req.getDatabase(), arg.getCollection(), query);
                         } catch (CommandFailed ex) {
                             return Status.from(ex);
                         }
@@ -72,13 +70,31 @@ public class UpdateImplementation extends WriteTorodbCommandImpl<UpdateArgument,
                         return Status.from(ErrorCode.COMMAND_FAILED, "The given query is not supported right now");
                     }
                 }
+                
+                List<ToroDocument> candidates = candidatesCursor.getRemaining();
+                candidatesSize += candidates.size();
+                
+                try {
+                    Stream<KVDocument> updatedCandidates = candidates.stream()
+                            .map(candidate -> {
+                                try {
+                                    return update(updateAction, candidate);
+                                } catch(UserException userException) {
+                                    throw new UserWrappedException(userException);
+                                }
+                            })
+                            .map(updated -> updated.getRoot());
+                    context.getTorodTransaction().insert(req.getDatabase(), arg.getCollection(), updatedCandidates);
+                } catch(UserWrappedException userWrappedException) {
+                    throw userWrappedException.getCause();
+                }
             }
         } catch (UserException ex) {
             //TODO: Improve error reporting
             return Status.from(ErrorCode.COMMAND_FAILED, ex.getLocalizedMessage());
         }
 
-        return Status.ok(new UpdateResult(modified, modified));
+        return Status.ok(new UpdateResult(candidatesSize - created, candidatesSize));
     }
     
     protected UpdatedToroDocument update(UpdateAction updateAction, ToroDocument candidate) throws UpdateException {
@@ -88,11 +104,11 @@ public class UpdateImplementation extends WriteTorodbCommandImpl<UpdateArgument,
         return builder.build();
     }
 
-    private com.torodb.core.backend.UpdateResult deleteByAttribute(WriteTorodTransaction transaction, String db, String col, BsonDocument query, UpdateFunction updateFunction) throws CommandFailed, UserException {
+    private Cursor<ToroDocument> findByAttribute(WriteTorodTransaction transaction, String db, String col, BsonDocument query) throws CommandFailed, UserException {
         Builder refBuilder = new AttributeReference.Builder();
         KVValue<?> kvValue = calculateValueAndAttRef(query, refBuilder);
 
-        return transaction.updateByAttRef(db, col, refBuilder.build(), kvValue, updateFunction);
+        return transaction.findByAttRef(db, col, refBuilder.build(), kvValue);
     }
 
     private KVValue<?> calculateValueAndAttRef(BsonDocument doc, AttributeReference.Builder refBuilder) throws CommandFailed {

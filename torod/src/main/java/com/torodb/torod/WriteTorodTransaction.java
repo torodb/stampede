@@ -11,10 +11,8 @@ import com.google.common.base.Preconditions;
 import com.torodb.core.TableRef;
 import com.torodb.core.TableRefFactory;
 import com.torodb.core.backend.DidCursor;
-import com.torodb.core.backend.UpdateResult;
+import com.torodb.core.cursors.Cursor;
 import com.torodb.core.document.ToroDocument;
-import com.torodb.core.document.UpdatedToroDocument;
-import com.torodb.core.exceptions.UserWrappedException;
 import com.torodb.core.exceptions.user.CollectionNotFoundException;
 import com.torodb.core.exceptions.user.DatabaseNotFoundException;
 import com.torodb.core.exceptions.user.UserException;
@@ -94,6 +92,20 @@ public class WriteTorodTransaction extends TorodTransaction {
         return metaCol;
     }
 
+    public void delete(String dbName, String colName, Cursor<ToroDocument> candidates) {
+        MetaDatabase db = getInternalTransaction().getMetaSnapshot().getMetaDatabaseByName(dbName);
+        if (db == null) {
+            return;
+        }
+        MetaCollection col = db.getMetaCollectionByName(colName);
+        if (col == null) {
+            return;
+        }
+
+        internalTransaction.getBackendTransaction().deleteDids(db, col, 
+                candidates.transform(candidate -> candidate.getId()).getRemaining());
+    }
+
     public long deleteAll(String dbName, String colName) {
         MetaDatabase db = getInternalTransaction().getMetaSnapshot().getMetaDatabaseByName(dbName);
         if (db == null) {
@@ -150,112 +162,6 @@ public class WriteTorodTransaction extends TorodTransaction {
         internalTransaction.getBackendTransaction().deleteDids(db, col, dids);
         
         return dids.size();
-    }
-    
-    public interface UpdateFunction {
-        UpdatedToroDocument update(ToroDocument candidate) throws UserException;
-    }
-
-    public UpdateResult updateAll(String dbName, String colName, UpdateFunction updateFunction) throws UserException {
-        MutableMetaDatabase db = internalTransaction.getMetaSnapshot().getMetaDatabaseByName(dbName);
-        if (db == null) {
-            return new UpdateResult(0, 0);
-        }
-        MutableMetaCollection col = db.getMetaCollectionByName(colName);
-        if (col == null) {
-            return new UpdateResult(0, 0);
-        }
-
-        DidCursor didCursor = internalTransaction.getBackendTransaction().findAllDids(db, col);
-        Collection<Integer> dids = didCursor.getRemaining();
-        Collection<ToroDocument> candidates = internalTransaction.getBackendTransaction().readDocuments(db, col, dids);
-        internalTransaction.getBackendTransaction().deleteDids(db, col, dids);
-        
-        try {
-            Stream<KVDocument> updatedCandidates = candidates.stream()
-                    .map(candidate -> {
-                        try {
-                            return updateFunction.update(candidate);
-                        } catch(UserException userException) {
-                            throw new UserWrappedException(userException);
-                        }
-                    })
-                    .map(updated -> updated.getRoot());
-            InsertPipeline pipeline = getConnection().getServer().getInsertPipelineFactory().createInsertPipeline(
-                    getConnection().getServer().getD2RTranslatorrFactory(),
-                    db,
-                    col,
-                    internalTransaction.getBackendConnection()
-            );
-            pipeline.insert(updatedCandidates);
-            
-            return new UpdateResult(dids.size(), dids.size());
-        } catch(UserWrappedException userWrappedException) {
-            throw userWrappedException.getCause();
-        }
-    }
-
-    public UpdateResult updateByAttRef(String dbName, String colName, AttributeReference attRef, KVValue<?> value, UpdateFunction updateFunction) throws UserException {
-        MutableMetaDatabase db = internalTransaction.getMetaSnapshot().getMetaDatabaseByName(dbName);
-        if (db == null) {
-            return new UpdateResult(0, 0);
-        }
-        MutableMetaCollection col = db.getMetaCollectionByName(colName);
-        if (col == null) {
-            return new UpdateResult(0, 0);
-        }
-        TableRefFactory tableRefFactory = getConnection().getServer().getTableRefFactory();
-        TableRef ref = tableRefFactory.createRoot();
-
-        if (attRef.getKeys().isEmpty()) {
-            throw new IllegalArgumentException("The empty attribute reference is not valid on queries");
-        }
-        String lastKey = extractKeyName(attRef.getKeys().get(attRef.getKeys().size() - 1));
-        if (attRef.getKeys().size() > 1) {
-            List<Key<?>> keys = attRef.getKeys();
-            List<Key<?>> tableKeys = keys.subList(0, keys.size() - 1);
-            for (Key<?> key : tableKeys) {
-                ref = tableRefFactory.createChild(ref, extractKeyName(key));
-            }
-        }
-        
-        MetaDocPart docPart = col.getMetaDocPartByTableRef(ref);
-        if (docPart == null) {
-            return new UpdateResult(0, 0);
-        }
-
-        MetaField field = docPart.getMetaFieldByNameAndType(lastKey, FieldType.from(value.getType()));
-        if (field == null) {
-            return new UpdateResult(0, 0);
-        }
-
-        DidCursor didCursor = internalTransaction.getBackendTransaction().findDidsByField(db, col, docPart, field, value);
-        Collection<Integer> dids = didCursor.getRemaining();
-        Collection<ToroDocument> candidates = internalTransaction.getBackendTransaction().readDocuments(db, col, dids);
-        internalTransaction.getBackendTransaction().deleteDids(db, col, dids);
-        
-        try {
-            Stream<KVDocument> updatedCandidates = candidates.stream()
-                    .map(candidate -> {
-                        try {
-                            return updateFunction.update(candidate);
-                        } catch(UserException userException) {
-                            throw new UserWrappedException(userException);
-                        }
-                    })
-                    .map(updated -> updated.getRoot());
-            InsertPipeline pipeline = getConnection().getServer().getInsertPipelineFactory().createInsertPipeline(
-                    getConnection().getServer().getD2RTranslatorrFactory(),
-                    db,
-                    col,
-                    internalTransaction.getBackendConnection()
-            );
-            pipeline.insert(updatedCandidates);
-            
-            return new UpdateResult(dids.size(), dids.size());
-        } catch(UserWrappedException userWrappedException) {
-            throw userWrappedException.getCause();
-        }
     }
     
     public void dropCollection(String db, String collection) throws RollbackException, UserException {
