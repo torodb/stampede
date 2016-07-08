@@ -129,7 +129,7 @@ public class DerbyReadInterface extends AbstractReadInterface {
         sb.setCharAt(sb.length() - 1, ')');
         if (!metaDocPart.getTableRef().isRoot()) {
             sb.append(" ORDER BY ");
-            for (InternalField<?> internalField : internalFields) {
+            for (InternalField<?> internalField : metaDataReadInterface.getReadInternalFields(metaDocPart)) {
                 sb
                     .append('"')
                     .append(internalField.getName())

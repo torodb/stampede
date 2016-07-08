@@ -162,4 +162,15 @@ public abstract class AbstractMetaDataReadInterface implements MetaDataReadInter
         }
         return metaDocPartTable.FOREIGN_FIELDS;
     }
+
+    @Override
+    public Collection<InternalField<?>> getReadInternalFields(MetaDocPart metaDocPart) {
+        TableRef tableRef = metaDocPart.getTableRef();
+        if (tableRef.isRoot()) {
+            return metaDocPartTable.READ_ROOT_FIELDS;
+        } else if (tableRef.getParent().get().isRoot()) {
+            return metaDocPartTable.READ_FIRST_FIELDS;
+        }
+        return metaDocPartTable.READ_FIELDS;
+    }
 }
