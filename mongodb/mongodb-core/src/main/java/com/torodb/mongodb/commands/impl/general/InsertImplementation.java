@@ -19,7 +19,7 @@ import javax.inject.Singleton;
  *
  */
 @Singleton
-public class InsertImplementation extends WriteTorodbCommandImpl<InsertArgument, InsertResult>{
+public class InsertImplementation implements WriteTorodbCommandImpl<InsertArgument, InsertResult>{
 
     @Override
     public Status<InsertResult> apply(Request req, Command<? super InsertArgument, ? super InsertResult> command, InsertArgument arg, WriteMongodTransaction trans) {

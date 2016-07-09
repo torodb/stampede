@@ -30,7 +30,7 @@ import com.torodb.core.exceptions.user.UserException;
 import com.torodb.mongodb.commands.impl.WriteTorodbCommandImpl;
 import com.torodb.mongodb.core.WriteMongodTransaction;
 
-public class DropCollectionImplementation extends WriteTorodbCommandImpl<CollectionCommandArgument, Empty> {
+public class DropCollectionImplementation implements WriteTorodbCommandImpl<CollectionCommandArgument, Empty> {
 
     @Override
     public Status<Empty> apply(Request req, Command<? super CollectionCommandArgument, ? super Empty> command,

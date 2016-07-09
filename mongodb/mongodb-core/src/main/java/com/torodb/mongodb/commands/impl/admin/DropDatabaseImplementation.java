@@ -29,7 +29,7 @@ import com.torodb.core.exceptions.user.UserException;
 import com.torodb.mongodb.commands.impl.WriteTorodbCommandImpl;
 import com.torodb.mongodb.core.WriteMongodTransaction;
 
-public class DropDatabaseImplementation extends WriteTorodbCommandImpl<Empty, Empty> {
+public class DropDatabaseImplementation implements WriteTorodbCommandImpl<Empty, Empty> {
 
     @Override
     public Status<Empty> apply(Request req, Command<? super Empty, ? super Empty> command,

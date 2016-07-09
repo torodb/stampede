@@ -22,7 +22,7 @@ import org.apache.logging.log4j.Logger;
  *
  */
 @Singleton
-public class ListCollectionsImplementation extends ReadTorodbCommandImpl<ListCollectionsArgument, ListCollectionsResult> {
+public class ListCollectionsImplementation implements ReadTorodbCommandImpl<ListCollectionsArgument, ListCollectionsResult> {
 
     private static final Logger LOGGER = LogManager.getLogger(ListCollectionsImplementation.class);
     public static final String LIST_COLLECTIONS_GET_MORE_COLLECTION = "$cmd.listCollections";

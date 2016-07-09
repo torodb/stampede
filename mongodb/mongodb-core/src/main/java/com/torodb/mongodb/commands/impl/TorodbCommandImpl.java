@@ -7,8 +7,8 @@ import com.torodb.mongodb.core.MongodTransaction;
 /**
  *
  */
-public abstract class TorodbCommandImpl<Arg, Result, MT extends MongodTransaction> implements CommandImplementation<Arg, Result, MT>{
+public interface TorodbCommandImpl<Arg, Result, MT extends MongodTransaction> extends CommandImplementation<Arg, Result, MT>{
 
-    public abstract boolean requiresWritePermission();
+    boolean requiresWritePermission();
 
 }

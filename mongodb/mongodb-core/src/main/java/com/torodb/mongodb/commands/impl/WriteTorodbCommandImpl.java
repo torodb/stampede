@@ -5,10 +5,10 @@ import com.torodb.mongodb.core.WriteMongodTransaction;
 /**
  *
  */
-public abstract class WriteTorodbCommandImpl<Arg, Result> extends TorodbCommandImpl<Arg, Result, WriteMongodTransaction>{
+public interface WriteTorodbCommandImpl<Arg, Result> extends TorodbCommandImpl<Arg, Result, WriteMongodTransaction>{
 
     @Override
-    public boolean requiresWritePermission() {
+    default public boolean requiresWritePermission() {
         return true;
     }
 

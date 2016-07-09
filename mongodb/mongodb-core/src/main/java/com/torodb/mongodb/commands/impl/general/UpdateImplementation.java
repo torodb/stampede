@@ -13,7 +13,6 @@ import javax.inject.Singleton;
 import com.eightkdata.mongowp.ErrorCode;
 import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.bson.BsonDocument;
-import com.eightkdata.mongowp.bson.BsonDocument.Entry;
 import com.eightkdata.mongowp.exceptions.CommandFailed;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.UpdateCommand.UpdateArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.UpdateCommand.UpdateResult;
@@ -21,7 +20,6 @@ import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.UpdateCommand.UpsertResult;
 import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.Request;
-import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.torodb.core.cursors.Cursor;
@@ -49,7 +47,7 @@ import com.torodb.torod.WriteTorodTransaction;
  *
  */
 @Singleton
-public class UpdateImplementation extends WriteTorodbCommandImpl<UpdateArgument, UpdateResult> {
+public class UpdateImplementation implements WriteTorodbCommandImpl<UpdateArgument, UpdateResult> {
 
     private final ObjectIdFactory objectIdFactory;
     
@@ -176,30 +174,9 @@ public class UpdateImplementation extends WriteTorodbCommandImpl<UpdateArgument,
 
     private Cursor<ToroDocument> findByAttribute(WriteTorodTransaction transaction, String db, String col, BsonDocument query) throws CommandFailed, UserException {
         Builder refBuilder = new AttributeReference.Builder();
-        KVValue<?> kvValue = calculateValueAndAttRef(query, refBuilder);
+        KVValue<?> kvValue = AttrRefHelper.calculateValueAndAttRef(query, refBuilder);
 
         return transaction.findByAttRef(db, col, refBuilder.build(), kvValue);
-    }
-
-    private KVValue<?> calculateValueAndAttRef(BsonDocument doc, AttributeReference.Builder refBuilder) throws CommandFailed {
-        if (doc.size() != 1) {
-            throw new CommandFailed("find", "The given query is not supported right now");
-        }
-        Entry<?> entry = doc.getFirstEntry();
-
-        for (String subKey : Splitter.on('.').split(entry.getKey())) {
-            refBuilder.addObjectKey(subKey);
-        }
-
-        if (entry.getValue().isArray()) {
-            throw new CommandFailed("find", "Filters with arrays are not supported right now");
-        }
-        if (entry.getValue().isDocument()) {
-            return calculateValueAndAttRef(entry.getValue().asDocument(), refBuilder);
-        }
-        else {
-            return MongoWPConverter.translate(entry.getValue());
-        }
     }
 
 }
