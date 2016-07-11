@@ -124,7 +124,7 @@ public class ResultSetDocPartResult implements DocPartResult {
                 columnIndex++;
 
                 if (_did == null) {
-                    throw new IllegalDocPartRowException(_did, _rid, _pid, _seq,
+                    throw new IllegalDocPartRowException(null, _rid, _pid, _seq,
                             "did was not found for doc part " + metaDocPart.getTableRef());
                 }
 

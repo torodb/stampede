@@ -68,6 +68,11 @@ public class DelegatorField<T> implements Field<T> {
     public boolean equals(Object other) {
         return delegate.equals(other);
     }
+    
+    @Override
+    public int hashCode() {
+        return delegate.hashCode();
+    }
 
     @Override
     public <Z> Field<Z> cast(Field<Z> field) {

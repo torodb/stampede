@@ -46,6 +46,8 @@ import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetaField;
 import com.torodb.kvdocument.values.KVValue;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 /**
  *
  */
@@ -68,6 +70,8 @@ public abstract class AbstractReadInterface implements ReadInterface {
     }
 
     @Override
+    @SuppressFBWarnings(value = {"OBL_UNSATISFIED_OBLIGATION","ODR_OPEN_DATABASE_RESOURCE"},
+    justification = "ResultSet is wrapped in a DidCursor. It's iterated and closed in caller code")
     public DidCursor getCollectionDidsWithFieldEqualsTo(DSLContext dsl, MetaDatabase metaDatabase,
             MetaCollection metaCol, MetaDocPart metaDocPart, MetaField metaField, KVValue<?> value)
             throws SQLException {
@@ -75,13 +79,12 @@ public abstract class AbstractReadInterface implements ReadInterface {
         assert metaCol.getMetaDocPartByIdentifier(metaDocPart.getIdentifier()) != null;
         assert metaDocPart.getMetaFieldByIdentifier(metaField.getIdentifier()) != null;
 
-        String statement = getReadCollectionDidsWithFieldEqualsToStatement(metaDatabase.getIdentifier(), metaDocPart.getIdentifier(), metaField.getIdentifier());
+		String statement = getReadCollectionDidsWithFieldEqualsToStatement(metaDatabase.getIdentifier(),
+				metaDocPart.getIdentifier(), metaField.getIdentifier());
         Connection connection = dsl.configuration().connectionProvider().acquire();
         try {
             PreparedStatement preparedStatement = connection.prepareStatement(statement);
-            
             sqlHelper.setPreparedStatementValue(preparedStatement, 1, metaField.getType(), value);
-            
             return new DefaultDidCursor(errorHandler, preparedStatement.executeQuery());
         } finally {
             dsl.configuration().connectionProvider().release(connection);
@@ -92,6 +95,8 @@ public abstract class AbstractReadInterface implements ReadInterface {
             String columnName);
 
     @Override
+    @SuppressFBWarnings(value = {"OBL_UNSATISFIED_OBLIGATION","ODR_OPEN_DATABASE_RESOURCE"},
+    justification = "ResultSet is wrapped in a DidCursor. It's iterated and closed in caller code")
     public DidCursor getAllCollectionDids(DSLContext dsl, MetaDatabase metaDatabase, MetaCollection metaCollection)
             throws SQLException {
 
@@ -117,11 +122,12 @@ public abstract class AbstractReadInterface implements ReadInterface {
     public DocPartResultBatch getCollectionResultSets(@Nonnull DSLContext dsl, @Nonnull MetaDatabase metaDatabase, @Nonnull MetaCollection metaCollection,
             @Nonnull DidCursor didCursor, int maxSize) throws SQLException {
         Collection<Integer> dids = didCursor.getNextBatch(maxSize);
-
         return getCollectionResultSets(dsl, metaDatabase, metaCollection, dids);
     }
 
     @Override
+    @SuppressFBWarnings(value = {"OBL_UNSATISFIED_OBLIGATION","ODR_OPEN_DATABASE_RESOURCE"},
+    justification = "ResultSet is wrapped in a ResultSetDocPartResult. It's iterated and closed in caller code")
     public DocPartResultBatch getCollectionResultSets(DSLContext dsl, MetaDatabase metaDatabase,
             MetaCollection metaCollection, Collection<Integer> dids) throws SQLException {
         ArrayList<DocPartResult> result = new ArrayList<>();
@@ -149,19 +155,20 @@ public abstract class AbstractReadInterface implements ReadInterface {
             Collection<Integer> dids);
 
 	@Override
-	public int getLastRowIdUsed(@Nonnull DSLContext dsl, @Nonnull MetaDatabase metaDatabase, @Nonnull MetaCollection metaCollection, @Nonnull MetaDocPart metaDocPart) {
+	public int getLastRowIdUsed(DSLContext dsl, MetaDatabase metaDatabase, MetaCollection metaCollection, MetaDocPart metaDocPart) {
 		
 		String statement = getLastRowIdUsedStatement(metaDatabase, metaDocPart);
 		
 		Connection connection = dsl.configuration().connectionProvider().acquire();
         try (PreparedStatement preparedStatement = connection.prepareStatement(statement)){
-        	ResultSet rs = preparedStatement.executeQuery();
-        	rs.next();
-        	int maxId = rs.getInt(1);
-        	if (rs.wasNull()){
-        		return -1;
+        	try (ResultSet rs = preparedStatement.executeQuery()){
+	        	rs.next();
+	        	int maxId = rs.getInt(1);
+	        	if (rs.wasNull()){
+	        		return -1;
+	        	}
+	        	return maxId;
         	}
-        	return maxId;
         } catch (SQLException ex){
             throw errorHandler.handleException(Context.FETCH, ex);
         } finally {

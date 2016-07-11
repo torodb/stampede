@@ -91,9 +91,8 @@ public class TableRefConverter {
 
     private static TableRef createChild(TableRefFactory tableRefFactory, TableRef tableRef, String tableRefName) {
         if (isArrayDimension(tableRefName)) {
-            int dimension = Integer.valueOf(tableRefName.substring(1));
-            tableRef = tableRefFactory.createChild(tableRef, 
-                    dimension);
+            Integer dimension = Integer.valueOf(tableRefName.substring(1));
+            tableRef = tableRefFactory.createChild(tableRef, dimension);
         } else {
             tableRef = tableRefFactory.createChild(tableRef, 
                     unescapeTableRefName(tableRefName).intern());

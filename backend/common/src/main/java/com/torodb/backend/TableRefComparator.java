@@ -21,11 +21,15 @@
 package com.torodb.backend;
 
 import com.torodb.core.d2r.DocPartResult;
+
+import java.io.Serializable;
 import java.util.Comparator;
 
 public class TableRefComparator {
+	
     public static class MetaDocPart implements Comparator<com.torodb.core.transaction.metainf.MetaDocPart> {
-        public static final MetaDocPart ASC = new MetaDocPart();
+      
+    	public static final MetaDocPart ASC = new MetaDocPart();
         public static final DescMetaDocPart DESC = new DescMetaDocPart();
         
         private MetaDocPart() {
@@ -38,8 +42,10 @@ public class TableRefComparator {
                     rightMetaDocPart.getTableRef().getDepth();
         }
     }
-    private static class DescMetaDocPart implements Comparator<com.torodb.core.transaction.metainf.MetaDocPart> {
-        private DescMetaDocPart() {
+    
+    private static class DescMetaDocPart implements Comparator<com.torodb.core.transaction.metainf.MetaDocPart>, Serializable {
+       
+    	private DescMetaDocPart() {
         }
         
         @Override
@@ -49,8 +55,10 @@ public class TableRefComparator {
                     leftMetaDocPart.getTableRef().getDepth();
         }
     }
+    
     public static class MutableMetaDocPart implements Comparator<com.torodb.core.transaction.metainf.MetaDocPart> {
-        public static final MutableMetaDocPart ASC = new MutableMetaDocPart();
+       
+    	public static final MutableMetaDocPart ASC = new MutableMetaDocPart();
         public static final DescMutableMetaDocPart DESC = new DescMutableMetaDocPart();
         
         private MutableMetaDocPart() {
@@ -63,8 +71,10 @@ public class TableRefComparator {
                     rightMetaDocPart.getTableRef().getDepth();
         }
     }
-    private static class DescMutableMetaDocPart implements Comparator<com.torodb.core.transaction.metainf.MetaDocPart> {
-        private DescMutableMetaDocPart() {
+    
+    private static class DescMutableMetaDocPart implements Comparator<com.torodb.core.transaction.metainf.MetaDocPart>, Serializable {
+        
+    	private DescMutableMetaDocPart() {
         }
         
         @Override
@@ -76,7 +86,8 @@ public class TableRefComparator {
     }
     
     public static class DocPartResultSet implements Comparator<DocPartResult> {
-        public static final DocPartResultSet DESC = new DocPartResultSet();
+        
+    	public static final DocPartResultSet DESC = new DocPartResultSet();
     
         private DocPartResultSet() {
         }
