@@ -5,7 +5,7 @@ services:
   postgres:
     image: postgres:9.5
     environment:
-      - POSTGRES_PASSWORD=trustme
+      - POSTGRES_PASSWORD
     ports:
       - "5432:5432"
   toro:
@@ -18,6 +18,9 @@ services:
       - postgres
     volumes:
       - toro_build:/toro
+    environment:
+      - POSTGRES_PASSWORD
+      - TORODB_PASSWORD
   toro_building:
     build:
       context: .
