@@ -47,7 +47,7 @@ public class BenchmarkD2RTranslatorStack {
 	@Warmup(iterations=3)
 	@Measurement(iterations=10) 
 	public void benchmarkTranslate(TranslateState state, Blackhole blackhole) {
-		MvccMetainfoRepository mvccMetainfoRepository = new MvccMetainfoRepository(InitialView);
+		MvccMetainfoRepository mvccMetainfoRepository = new MvccMetainfoRepository(initialView);
 		MutableMetaSnapshot mutableSnapshot;
 		try (SnapshotStage snapshot = mvccMetainfoRepository.startSnapshotStage()) {
 			mutableSnapshot = snapshot.createMutableSnapshot();
