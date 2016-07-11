@@ -14,6 +14,8 @@ import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.Request;
 import com.torodb.mongodb.commands.impl.ReadTorodbCommandImpl;
 import com.torodb.mongodb.core.MongodTransaction;
+import com.torodb.mongodb.language.utils.NamespaceUtil;
+
 import javax.inject.Singleton;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -25,7 +27,6 @@ import org.apache.logging.log4j.Logger;
 public class ListCollectionsImplementation implements ReadTorodbCommandImpl<ListCollectionsArgument, ListCollectionsResult> {
 
     private static final Logger LOGGER = LogManager.getLogger(ListCollectionsImplementation.class);
-    public static final String LIST_COLLECTIONS_GET_MORE_COLLECTION = "$cmd.listCollections";
 
     private static final CollectionOptions DEFAULT_COLLECTION_OPTIONS = new CollectionOptions.Builder()
             .setAutoIndexMode(AutoIndexMode.DEFAULT)
@@ -45,7 +46,7 @@ public class ListCollectionsImplementation implements ReadTorodbCommandImpl<List
 
         return Status.ok(
                 new ListCollectionsResult(
-                        CursorResult.createSingleBatchCursor(req.getDatabase(), LIST_COLLECTIONS_GET_MORE_COLLECTION, 
+                        CursorResult.createSingleBatchCursor(req.getDatabase(), NamespaceUtil.LIST_COLLECTIONS_GET_MORE_COLLECTION, 
                                 context.getTorodTransaction().getCollectionsInfo(req.getDatabase()).map(colInfo -> 
                                         new Entry(colInfo.getName(), DEFAULT_COLLECTION_OPTIONS)
                                 )
