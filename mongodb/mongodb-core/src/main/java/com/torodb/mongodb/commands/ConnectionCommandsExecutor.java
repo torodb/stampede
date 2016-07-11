@@ -71,6 +71,7 @@ import com.torodb.mongodb.commands.impl.authentication.GetNonceImplementation;
 import com.torodb.mongodb.commands.impl.diagnostic.BuildInfoImplementation;
 import com.torodb.mongodb.commands.impl.diagnostic.GetLogImplementation;
 import com.torodb.mongodb.commands.impl.diagnostic.PingImplementation;
+import com.torodb.mongodb.commands.impl.diagnostic.ServerStatusImplementation;
 import com.torodb.mongodb.commands.impl.internal.WhatsMyUriImplementation;
 import com.torodb.mongodb.commands.impl.replication.IsMasterImplementation;
 import com.torodb.mongodb.core.MongodConnection;
@@ -223,12 +224,17 @@ public class ConnectionCommandsExecutor implements CommandsExecutor<MongodConnec
         private final PingImplementation ping;
         private final GetLogImplementation getLog;
         private final BuildInfoImplementation buildInfo;
+        private final ServerStatusImplementation serverStatusImplementation;
 
         @Inject
-        public MyDiagnosticCommandsImplementationBuilder(PingImplementation ping, GetLogImplementation getLog, BuildInfoImplementation buildInfo) {
+        public MyDiagnosticCommandsImplementationBuilder(PingImplementation ping, 
+                GetLogImplementation getLog, 
+                BuildInfoImplementation buildInfo,
+                ServerStatusImplementation serverStatusImplementation) {
             this.ping = ping;
             this.getLog = getLog;
             this.buildInfo = buildInfo;
+            this.serverStatusImplementation = serverStatusImplementation;
         }
 
         @Override
@@ -248,7 +254,7 @@ public class ConnectionCommandsExecutor implements CommandsExecutor<MongodConnec
 
         @Override
         public CommandImplementation<ServerStatusArgument, ServerStatusReply, MongodConnection> getServerStatusImplementation() {
-            return NotImplementedCommandImplementation.build();
+            return serverStatusImplementation;
         }
 
         @Override
