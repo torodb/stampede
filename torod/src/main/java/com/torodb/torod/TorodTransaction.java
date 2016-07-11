@@ -110,8 +110,13 @@ public abstract class TorodTransaction implements AutoCloseable {
         return getInternalTransaction().getBackendTransaction().findByField(db, col, docPart, field, value);
     }
 
-    public Stream<CollectionInfo> getCollectionsInfo() {
-        return getInternalTransaction().getMetaSnapshot().streamMetaDatabases()
+    public Stream<CollectionInfo> getCollectionsInfo(String dbName) {
+        MetaDatabase db = getInternalTransaction().getMetaSnapshot().getMetaDatabaseByName(dbName);
+        if (db == null) {
+            return Stream.empty();
+        }
+        
+        return db.streamMetaCollections()
                 .map(metaCol -> new CollectionInfo(metaCol.getName(), Json.createObjectBuilder().build()));
     }
 

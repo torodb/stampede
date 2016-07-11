@@ -46,7 +46,7 @@ public class ListCollectionsImplementation implements ReadTorodbCommandImpl<List
         return Status.ok(
                 new ListCollectionsResult(
                         CursorResult.createSingleBatchCursor(req.getDatabase(), LIST_COLLECTIONS_GET_MORE_COLLECTION, 
-                                context.getTorodTransaction().getCollectionsInfo().map(colInfo -> 
+                                context.getTorodTransaction().getCollectionsInfo(req.getDatabase()).map(colInfo -> 
                                         new Entry(colInfo.getName(), DEFAULT_COLLECTION_OPTIONS)
                                 )
                         )
