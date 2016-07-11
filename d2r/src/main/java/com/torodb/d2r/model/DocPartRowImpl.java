@@ -2,6 +2,7 @@ package com.torodb.d2r.model;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 import com.google.common.collect.Iterators;
 import com.torodb.core.d2r.DocPartData;
@@ -162,8 +163,11 @@ public class DocPartRowImpl implements DocPartRow{
 
 		@Override
 		public R next() {
-			idx++;
-			return null;
+			if (hasNext()){
+				idx++;
+				return null;
+			}
+			throw new NoSuchElementException();
 		}
 		
 	}
