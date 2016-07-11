@@ -74,6 +74,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.net.HostAndPort;
 import com.torodb.mongodb.commands.impl.NotImplementedCommandImplementation;
 import com.torodb.mongodb.commands.impl.admin.ListCollectionsImplementation;
+import com.torodb.mongodb.commands.impl.aggregation.CountImplementation;
 import com.torodb.mongodb.commands.impl.diagnostic.CollStatsImplementation;
 import com.torodb.mongodb.commands.impl.diagnostic.ListDatabasesImplementation;
 import com.torodb.mongodb.commands.impl.general.FindImplementation;
@@ -195,9 +196,16 @@ public class ReadOnlyTransactionCommandsExecutor implements CommandsExecutor<Rea
 
     static class MyAggregationCommandsImplementationBuilder extends AggregationCommandsImplementationsBuilder<ReadOnlyMongodTransaction> {
 
+        private final CountImplementation countImplementation;
+        
+        @Inject
+        public MyAggregationCommandsImplementationBuilder(CountImplementation countImplementation) {
+            this.countImplementation = countImplementation;
+        }
+
         @Override
-        public CommandImplementation<CountArgument, Long, ReadOnlyMongodTransaction> getCountImplementation() {
-            return NotImplementedCommandImplementation.build();
+        public CommandImplementation<CountArgument, Long, ? super ReadOnlyMongodTransaction> getCountImplementation() {
+            return countImplementation;
         }
 
     }
