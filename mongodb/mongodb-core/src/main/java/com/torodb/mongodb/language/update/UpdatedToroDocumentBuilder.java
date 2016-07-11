@@ -243,11 +243,13 @@ public class UpdatedToroDocumentBuilder {
     
     public KVDocument build() {
         KVDocument updatedDocument;
-        if (did != null) {
-            updatedDocument = buildRoot();
-        } else {
-            updatedDocument = buildRoot();
-        }
+        //TODO: Remove if did=null is not relevant
+//        if (did != null) {
+//            updatedDocument = buildRoot();
+//        } else {
+//            updatedDocument = buildRoot();
+//        }
+        updatedDocument = buildRoot();
         clear();
 
         return updatedDocument;
