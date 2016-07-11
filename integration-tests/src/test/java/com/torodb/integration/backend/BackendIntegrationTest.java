@@ -22,6 +22,7 @@ package com.torodb.integration.backend;
 
 import com.torodb.backend.DocPartResultBatch;
 import com.torodb.backend.MockDidCursor;
+import com.torodb.backend.SqlBuilder;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.backend.tables.MetaDocPartTable;
 import com.torodb.core.backend.DidCursor;
@@ -47,7 +48,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jooq.Converter;
 import org.jooq.DSLContext;
-import org.junit.Assert;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -170,11 +170,9 @@ public class BackendIntegrationTest extends AbstractBackendTest {
         	DSLContext dsl = sqlInterface.getDslContextFactory().createDSLContext(connection);
         	createMetaModel(dsl);
             insertMetaFields(dsl, data.rootDocPart);
-            createDocPartTable(dsl, data.collection,
-            		data.rootDocPart);
+            createDocPartTable(dsl, data.collection, data.rootDocPart);
             insertMetaFields(dsl, data.subDocPart);
-            createDocPartTable(dsl, data.collection, 
-            		data.subDocPart);
+            createDocPartTable(dsl, data.collection, data.subDocPart);
             connection.commit();
 
             ImmutableMetaSnapshot snapshot = buildMetaSnapshot();
@@ -219,19 +217,14 @@ public class BackendIntegrationTest extends AbstractBackendTest {
             writeCollectionData(dsl, parseDocuments(mutableSnapshot, dsl, data.documents));
             connection.commit();
             
-            StringBuilder rootDocPartSelectStatementBuilder = new StringBuilder("SELECT ");
+            SqlBuilder sqlBuilder = new SqlBuilder("SELECT ");
             data.rootDocPart.streamFields().forEach(metaField ->
-                rootDocPartSelectStatementBuilder.append('"')
-                    .append(metaField.getIdentifier())
-                    .append("\",")
+            	sqlBuilder.quote(metaField.getIdentifier()).append(",")
             );
-            rootDocPartSelectStatementBuilder.setCharAt(rootDocPartSelectStatementBuilder.length() - 1, ' ');
-            rootDocPartSelectStatementBuilder.append("FROM \"")
-                    .append(data.database.getIdentifier())
-                    .append("\".\"")
-                    .append(data.rootDocPart.getIdentifier())
-                    .append('"');
-            try (PreparedStatement preparedStatement = connection.prepareStatement(rootDocPartSelectStatementBuilder.toString())) {
+            sqlBuilder.setLastChar(' ').append("FROM ");
+            sqlBuilder.table(data.database.getIdentifier(),data.rootDocPart.getIdentifier());
+            
+            try (PreparedStatement preparedStatement = connection.prepareStatement(sqlBuilder.toString())) {
                 ResultSet resultSet = preparedStatement.executeQuery();
                 List<Integer> foundRowIndexes = new ArrayList<>();
                 while (resultSet.next()) {
@@ -243,7 +236,7 @@ public class BackendIntegrationTest extends AbstractBackendTest {
                             resultSetRowBuilder.append(resultSet.getObject(columnIndex))
                                 .append(", ");
                         }
-                        Assert.fail("Row " + resultSetRowBuilder.toString() + " not found");
+                        fail("Row " + resultSetRowBuilder.toString() + " not found");
                     }
                 }
             }
@@ -271,35 +264,27 @@ public class BackendIntegrationTest extends AbstractBackendTest {
             sqlInterface.getWriteInterface().deleteCollectionDocParts(dsl, data.database.getIdentifier(), 
                     data.collection, new MockDidCursor(deletedDids.iterator()));
             
-            StringBuilder rootDocPartSelectStatementBuilder = new StringBuilder()
-                    .append("SELECT \"")
-                    .append(MetaDocPartTable.DocPartTableFields.DID.fieldName)
-                    .append("\" FROM \"")
-                    .append(data.database.getIdentifier())
-                    .append("\".\"")
-                    .append(data.rootDocPart.getIdentifier())
-                    .append('"');
+            SqlBuilder rootDocPartSelectStatementBuilder = new SqlBuilder("SELECT ")
+                    .quote(MetaDocPartTable.DocPartTableFields.DID.fieldName)
+                    .append(" FROM ")
+                    .table(data.database.getIdentifier(),data.rootDocPart.getIdentifier());
             try (PreparedStatement preparedStatement = connection.prepareStatement(rootDocPartSelectStatementBuilder.toString())) {
                 ResultSet resultSet = preparedStatement.executeQuery();
                 while (resultSet.next()) {
                     Integer did = resultSet.getInt(1);
-                    Assert.assertFalse(deletedDids.contains(did));
+                    assertFalse(deletedDids.contains(did));
                 }
             }
             
-            StringBuilder rootSubPartSelectStatementBuilder = new StringBuilder()
-                    .append("SELECT \"")
-                    .append(MetaDocPartTable.DocPartTableFields.DID.fieldName)
-                    .append("\" FROM \"")
-                    .append(data.database.getIdentifier())
-                    .append("\".\"")
-                    .append(data.subDocPart.getIdentifier())
-                    .append('"');
+            SqlBuilder rootSubPartSelectStatementBuilder = new SqlBuilder("SELECT ")
+                    .quote(MetaDocPartTable.DocPartTableFields.DID.fieldName)
+                    .append(" FROM ")
+                    .table(data.database.getIdentifier(), data.subDocPart.getIdentifier());
             try (PreparedStatement preparedStatement = connection.prepareStatement(rootSubPartSelectStatementBuilder.toString())) {
                 ResultSet resultSet = preparedStatement.executeQuery();
                 while (resultSet.next()) {
                     Integer did = resultSet.getInt(1);
-                    Assert.assertFalse(deletedDids.contains(did));
+                    assertFalse(deletedDids.contains(did));
                 }
             }
             connection.commit();
@@ -323,7 +308,7 @@ public class BackendIntegrationTest extends AbstractBackendTest {
             
             
             try (ResultSet resultSet = connection.getMetaData().getSchemas("%", data.database.getIdentifier())) {
-                Assert.assertTrue(resultSet.next());
+                assertTrue(resultSet.next());
             }
             connection.commit();
             
@@ -331,7 +316,7 @@ public class BackendIntegrationTest extends AbstractBackendTest {
             connection.commit();
             
             try (ResultSet resultSet = connection.getMetaData().getSchemas("%", data.database.getIdentifier())) {
-                Assert.assertFalse(resultSet.next());
+                assertFalse(resultSet.next());
             }
             connection.commit();
         }
@@ -359,7 +344,7 @@ public class BackendIntegrationTest extends AbstractBackendTest {
                 while (resultSet.next()) {
                     count++;
                 }
-                Assert.assertEquals(2, count);
+                assertEquals(2, count);
             }
             connection.commit();
             
@@ -368,7 +353,7 @@ public class BackendIntegrationTest extends AbstractBackendTest {
             
             try (ResultSet resultSet = connection.getMetaData().getTables("%", data.database.getIdentifier(), 
                     "%", new String[] { "TABLE" })) {
-                Assert.assertFalse(resultSet.next());
+                assertFalse(resultSet.next());
             }
             connection.commit();
         }
@@ -480,8 +465,6 @@ public class BackendIntegrationTest extends AbstractBackendTest {
             MetaDatabase metaDatabase = mutableSnapshot.getMetaDatabaseByName(data.database.getName());
             MetaCollection metaCollection = metaDatabase.getMetaCollectionByName(data.collection.getName());
             
-            MetaDocPart metaDocPart = metaCollection.getMetaDocPartByTableRef(createTableRef());
-            
             Collection<ToroDocument> readedToroDocuments;
             try (
                     DidCursor defaultDidCursor = sqlInterface.getReadInterface().getAllCollectionDids(dsl, metaDatabase, metaCollection);
@@ -497,13 +480,13 @@ public class BackendIntegrationTest extends AbstractBackendTest {
                     .collect(Collectors.toList()); 
             LOGGER.debug(generatedDids);
             LOGGER.debug(readedDids);
-            Assert.assertTrue(readedDids.containsAll(generatedDids));
-            Assert.assertTrue(generatedDids.containsAll(readedDids));
+            assertTrue(readedDids.containsAll(generatedDids));
+            assertTrue(generatedDids.containsAll(readedDids));
             List<KVDocument> readedDocuments = readedToroDocuments.stream().map(readedToroDocument -> readedToroDocument.getRoot()).collect(Collectors.toList());
             LOGGER.debug(documents);
             LOGGER.debug(readedDocuments);
-            Assert.assertTrue(readedDocuments.containsAll(documents));
-            Assert.assertTrue(documents.containsAll(readedDocuments));
+            assertTrue(readedDocuments.containsAll(documents));
+            assertTrue(documents.containsAll(readedDocuments));
             connection.commit();
         } 
     }
@@ -541,17 +524,17 @@ public class BackendIntegrationTest extends AbstractBackendTest {
                 readedToroDocuments = readDocuments(metaDatabase, metaCollection, batch);
             }
 
-            Assert.assertEquals(1, readedToroDocuments.size());
+            assertEquals(1, readedToroDocuments.size());
             List<Integer> readedDids = readedToroDocuments.stream()
                     .map(toroDocument -> toroDocument.getId())
                     .collect(Collectors.toList()); 
             LOGGER.debug(generatedDids);
             LOGGER.debug(readedDids);
-            Assert.assertTrue(generatedDids.containsAll(readedDids));
+            assertTrue(generatedDids.containsAll(readedDids));
             List<KVDocument> readedDocuments = readedToroDocuments.stream().map(readedToroDocument -> readedToroDocument.getRoot()).collect(Collectors.toList());
             LOGGER.debug(documents);
             LOGGER.debug(readedDocuments);
-            Assert.assertTrue(documents.containsAll(readedDocuments));
+            assertTrue(documents.containsAll(readedDocuments));
             connection.commit();
         } 
     }
