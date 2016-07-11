@@ -19,13 +19,14 @@
  */
 package com.torodb.mongodb.language.update;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import javax.annotation.Nonnull;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.torodb.kvdocument.types.DocumentType;
 import com.torodb.kvdocument.types.GenericType;
 import com.torodb.kvdocument.types.KVType;
@@ -43,13 +44,13 @@ class UpdatedToroDocumentArrayBuilder {
     private boolean built;
     private List<KVValue<?>> values;
     private final Map<Integer, UpdatedToroDocumentArrayBuilder> subArrayBuilders
-            = Maps.newHashMap();
+            = new HashMap<>();
     private final Map<Integer, UpdatedToroDocumentBuilder> subObjectBuilders
-            = Maps.newHashMap();
+            = new HashMap<>();
 
     private UpdatedToroDocumentArrayBuilder() {
         built = false;
-        values = Lists.newArrayList();
+        values = new ArrayList<>();
     }
 
     public UpdatedToroDocumentArrayBuilder(int expectedSize) {
@@ -266,7 +267,7 @@ class UpdatedToroDocumentArrayBuilder {
 
     private void checkNewBuild() {
         if (built) {
-            values = Lists.newArrayList();
+            values = new ArrayList<>();
             built = false;
         }
     }

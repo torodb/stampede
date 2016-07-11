@@ -19,12 +19,13 @@
  */
 package com.torodb.mongodb.language.update;
 
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.annotation.Nonnull;
 
-import com.google.common.collect.Maps;
 import com.torodb.core.document.ToroDocument;
 import com.torodb.kvdocument.values.KVArray;
 import com.torodb.kvdocument.values.KVDocument;
@@ -37,10 +38,9 @@ import com.torodb.kvdocument.values.heap.MapKVDocument;
  */
 public class UpdatedToroDocumentBuilder {
 
-    private Integer did = null;
-    private LinkedHashMap<String, KVValue<?>> values = Maps.newLinkedHashMap();
-    private final Map<String, UpdatedToroDocumentArrayBuilder> subArrayBuilders = Maps.newHashMap();
-    private final Map<String, UpdatedToroDocumentBuilder> subObjectBuilders = Maps.newHashMap();
+    private LinkedHashMap<String, KVValue<?>> values = new LinkedHashMap<>();
+    private final Map<String, UpdatedToroDocumentArrayBuilder> subArrayBuilders = new HashMap<>();
+    private final Map<String, UpdatedToroDocumentBuilder> subObjectBuilders = new HashMap<>();
     private boolean built = false;
     private boolean updated = false;
 
@@ -48,13 +48,13 @@ public class UpdatedToroDocumentBuilder {
     }
 
     public void clear() {
-        if (built) {
-            built = false;
-            updated = false;
-            values = Maps.newLinkedHashMap();
-        } else {
-            values.clear();
-        }
+		if (built) {
+			built = false;
+			updated = false;
+			values = new LinkedHashMap<>();
+		} else {
+			values.clear();
+		}
         subArrayBuilders.clear();
         subObjectBuilders.clear();
     }
@@ -66,7 +66,6 @@ public class UpdatedToroDocumentBuilder {
     public static UpdatedToroDocumentBuilder from(ToroDocument original) {
         UpdatedToroDocumentBuilder result = UpdatedToroDocumentBuilder.create();
         result.copy(original);
-
         return result;
     }
 
@@ -170,7 +169,7 @@ public class UpdatedToroDocumentBuilder {
     public KVDocument buildRoot() {
         built = true;
 
-        for (Map.Entry<String, UpdatedToroDocumentBuilder> objectBuilder
+        for (Entry<String, UpdatedToroDocumentBuilder> objectBuilder
                 : subObjectBuilders.entrySet()) {
 
             KVValue<?> oldValue
@@ -181,7 +180,7 @@ public class UpdatedToroDocumentBuilder {
 
             assert oldValue == null;
         }
-        for (Map.Entry<String, UpdatedToroDocumentArrayBuilder> arrayBuilder
+        for (Entry<String, UpdatedToroDocumentArrayBuilder> arrayBuilder
                 : subArrayBuilders.entrySet()) {
 
             KVValue<?> oldValue
@@ -199,8 +198,6 @@ public class UpdatedToroDocumentBuilder {
     }
 
     void copy(ToroDocument original) {
-        did = original.getId();
-        
         copy(original.getRoot());
     }
 
@@ -209,8 +206,6 @@ public class UpdatedToroDocumentBuilder {
         subArrayBuilders.clear();
         subObjectBuilders.clear();
 
-        did = null;
-        
         for (DocEntry<?> entry : original) {
             KVValue<?> value = entry.getValue();
             if (value instanceof KVArray) {
@@ -227,7 +222,7 @@ public class UpdatedToroDocumentBuilder {
 
     private void checkNewBuild() {
         if (built) {
-            values = Maps.newLinkedHashMap();
+            values = new LinkedHashMap<>();
             built = false;
         }
     }
@@ -242,16 +237,8 @@ public class UpdatedToroDocumentBuilder {
     }
     
     public KVDocument build() {
-        KVDocument updatedDocument;
-        //TODO: Remove if did=null is not relevant
-//        if (did != null) {
-//            updatedDocument = buildRoot();
-//        } else {
-//            updatedDocument = buildRoot();
-//        }
-        updatedDocument = buildRoot();
+        KVDocument updatedDocument = buildRoot();
         clear();
-
         return updatedDocument;
     }
 }
