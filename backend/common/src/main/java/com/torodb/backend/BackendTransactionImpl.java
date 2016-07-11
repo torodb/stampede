@@ -64,6 +64,10 @@ public abstract class BackendTransactionImpl implements BackendTransaction {
         return r2dTranslator;
     }
 
+    public long getDatabaseSize(MetaDatabase db) {
+        return sqlInterface.getMetaDataReadInterface().getDatabaseSize(getDsl(), db);
+    }
+
     @Override
     public Cursor<ToroDocument> findAll(MetaDatabase db, MetaCollection col) {
         try {

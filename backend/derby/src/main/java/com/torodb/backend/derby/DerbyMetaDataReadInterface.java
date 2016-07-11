@@ -96,7 +96,18 @@ public class DerbyMetaDataReadInterface extends AbstractMetaDataReadInterface {
 
     @Override
     protected String getReadDatabaseSizeStatement(String databaseName) {
-        throw new UnsupportedOperationException();
+        //TODO: This throw a ERROR XJ001: Java exception: ': java.lang.NullPointerException'.
+//        return "SELECT sum((NUMALLOCATEDPAGES + NUMFREEPAGES) * PAGESIZE) FROM"
+//                + " ("
+//                + "SELECT SPACE_TABLE.*"
+//                + " FROM SYS.SYSTABLES SYSTABLES,"
+//                + " SYS.SYSSCHEMAS SYSSCHEMAS,"
+//                + " TABLE (SYSCS_DIAG.SPACE_TABLE(SCHEMANAME, TABLENAME)) AS SPACE_TABLE"
+//                + " WHERE SYSTABLES.SCHEMAID = SYSSCHEMAS.SCEHMAID"
+//                + " AND TABLETYPE = 'T'"
+//                + " AND SCEHMANAME = ?"
+//                + ") SPACE_TABLE";
+        return "SELECT 0 FROM SYSIBM.SYSDUMMY1 WHERE ? IS NOT NULL";
     }
 
     @Override

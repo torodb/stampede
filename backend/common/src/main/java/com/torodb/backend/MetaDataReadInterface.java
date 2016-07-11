@@ -20,6 +20,7 @@ import com.torodb.backend.tables.records.MetaDocPartRecord;
 import com.torodb.backend.tables.records.MetaFieldRecord;
 import com.torodb.backend.tables.records.MetaScalarRecord;
 import com.torodb.core.TableRef;
+import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 
 public interface MetaDataReadInterface {
@@ -37,7 +38,7 @@ public interface MetaDataReadInterface {
     @Nonnull Collection<InternalField<?>> getReadInternalFields(@Nonnull MetaDocPart metaDocPart);
     @Nonnull Collection<InternalField<?>> getReadInternalFields(@Nonnull TableRef tableRef);
     
-    long getDatabaseSize(@Nonnull DSLContext dsl, @Nonnull String databaseName);
+    long getDatabaseSize(@Nonnull DSLContext dsl, @Nonnull MetaDatabase database);
     Long getCollectionSize(@Nonnull DSLContext dsl, @Nonnull String schema, @Nonnull String collection);
     Long getDocumentsSize(@Nonnull DSLContext dsl, @Nonnull String schema, @Nonnull String collection);
     Long getIndexSize(@Nonnull DSLContext dsl, @Nonnull String schema, @Nonnull String collection, @Nonnull String index, 

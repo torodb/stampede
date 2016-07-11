@@ -65,9 +65,19 @@ public class SqlHelper {
         }       
     }
 
-    public Result<Record> executeStatementWithResult(DSLContext dsl, String statement, Context context){
+    @FunctionalInterface
+    public interface SetupPreparedStatement {
+        public void accept(PreparedStatement ps) throws SQLException;
+    }
+    
+    public Result<Record> executeStatementWithResult(DSLContext dsl, String statement, Context context) {
+        return executeStatementWithResult(dsl, statement, context, ps -> {});
+    }
+
+    public Result<Record> executeStatementWithResult(DSLContext dsl, String statement, Context context, SetupPreparedStatement statementSetup) {
         Connection c = dsl.configuration().connectionProvider().acquire();
         try (PreparedStatement ps = c.prepareStatement(statement)) {
+            statementSetup.accept(ps);
             ResultSet resultSet = ps.executeQuery();
             return dsl.fetch(resultSet);
         } catch (SQLException ex) {

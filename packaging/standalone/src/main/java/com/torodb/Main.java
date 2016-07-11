@@ -113,7 +113,7 @@ public class Main {
             toroDBServer.startAsync();
             toroDBServer.awaitRunning();
         } catch (CreationException ex) {
-            ex.getErrorMessages().stream().forEach(m -> LOGGER.error(m.getCause().getMessage()));
+            ex.getErrorMessages().stream().forEach(m -> { if (m.getCause() != null) LOGGER.error(m.getCause().getMessage()); else LOGGER.error(m.getMessage()); });
 			System.exit(1);
 		} catch (Throwable ex) {
             LOGGER.error("Fatal error on initialization", ex);

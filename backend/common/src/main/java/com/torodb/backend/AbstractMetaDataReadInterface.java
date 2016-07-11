@@ -35,6 +35,7 @@ import com.torodb.backend.ErrorHandler.Context;
 import com.torodb.backend.index.NamedDbIndex;
 import com.torodb.backend.tables.MetaDocPartTable;
 import com.torodb.core.TableRef;
+import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 
 /**
@@ -55,11 +56,13 @@ public abstract class AbstractMetaDataReadInterface implements MetaDataReadInter
     @Override
     public long getDatabaseSize(
             @Nonnull DSLContext dsl,
-            @Nonnull String databaseName
+            @Nonnull MetaDatabase database
             ) {
-    	String statement = getReadDatabaseSizeStatement(databaseName);
-    	return sqlHelper.executeStatementWithResult(dsl, statement, Context.FETCH)
-    	        .get(0).into(Long.class);
+    	String statement = getReadDatabaseSizeStatement(database.getName());
+    	return sqlHelper.executeStatementWithResult(dsl, statement, Context.FETCH, ps -> {
+	        ps.setString(1, database.getName());
+    	})
+        .get(0).into(Long.class);
     }
 
     protected abstract String getReadDatabaseSizeStatement(String databaseName);

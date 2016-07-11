@@ -13,6 +13,7 @@ import com.torodb.core.transaction.InternalTransaction;
 import com.torodb.core.transaction.metainf.*;
 import com.torodb.kvdocument.values.KVValue;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.json.Json;
 import org.apache.logging.log4j.LogManager;
@@ -40,6 +41,19 @@ public abstract class TorodTransaction implements AutoCloseable {
     }
 
     protected abstract InternalTransaction getInternalTransaction();
+
+    public List<String> getDatabases() {
+        return getInternalTransaction().getMetaSnapshot().streamMetaDatabases()
+                .map(metaDb -> metaDb.getName()).collect(Collectors.toList());
+    }
+
+    public long getDatabaseSize(String dbName) {
+        MetaDatabase db = getInternalTransaction().getMetaSnapshot().getMetaDatabaseByName(dbName);
+        if (db == null) {
+            return 0l;
+        }
+        return getInternalTransaction().getBackendTransaction().getDatabaseSize(db);
+    }
 
     public Cursor<ToroDocument> findAll(String dbName, String colName) {
         MetaDatabase db = getInternalTransaction().getMetaSnapshot().getMetaDatabaseByName(dbName);

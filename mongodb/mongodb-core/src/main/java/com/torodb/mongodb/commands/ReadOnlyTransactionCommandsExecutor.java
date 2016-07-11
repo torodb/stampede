@@ -1,6 +1,13 @@
 
 package com.torodb.mongodb.commands;
 
+import java.util.Collections;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import javax.inject.Inject;
+
 import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.MongoDb30Commands.MongoDb30CommandsImplementationBuilder;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.AdminCommands.AdminCommandsImplementationsBuilder;
@@ -67,13 +74,9 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.net.HostAndPort;
 import com.torodb.mongodb.commands.impl.NotImplementedCommandImplementation;
 import com.torodb.mongodb.commands.impl.admin.ListCollectionsImplementation;
+import com.torodb.mongodb.commands.impl.diagnostic.ListDatabasesImplementation;
 import com.torodb.mongodb.commands.impl.general.FindImplementation;
 import com.torodb.mongodb.core.ReadOnlyMongodTransaction;
-import java.util.Collections;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.stream.Collectors;
-import javax.inject.Inject;
 
 /**
  *
@@ -207,14 +210,23 @@ public class ReadOnlyTransactionCommandsExecutor implements CommandsExecutor<Rea
     }
 
     static class MyDiagnosticCommandsImplementationBuilder extends DiagnosticCommandsImplementationsBuilder<ReadOnlyMongodTransaction> {
+        
+        private final ListDatabasesImplementation listDatabasesImplementation;
+        
+        @Inject
+        public MyDiagnosticCommandsImplementationBuilder(ListDatabasesImplementation listDatabasesImplementation) {
+            super();
+            this.listDatabasesImplementation = listDatabasesImplementation;
+        }
+
         @Override
         public CommandImplementation<CollStatsArgument, CollStatsReply, ReadOnlyMongodTransaction> getCollStatsImplementation() {
             return NotImplementedCommandImplementation.build();
         }
 
         @Override
-        public CommandImplementation<Empty, ListDatabasesReply, ReadOnlyMongodTransaction> getListDatabasesImplementation() {
-            return NotImplementedCommandImplementation.build();
+        public CommandImplementation<Empty, ListDatabasesReply, ? super ReadOnlyMongodTransaction> getListDatabasesImplementation() {
+            return listDatabasesImplementation;
         }
 
         @Override

@@ -35,6 +35,8 @@ import com.torodb.kvdocument.values.KVValue;
  */
 public interface BackendTransaction extends AutoCloseable {
 
+    public long getDatabaseSize(MetaDatabase db);
+    
     public Cursor<ToroDocument> findAll(MetaDatabase db, MetaCollection col);
 
     public Cursor<ToroDocument> findByField(MetaDatabase db, MetaCollection col,

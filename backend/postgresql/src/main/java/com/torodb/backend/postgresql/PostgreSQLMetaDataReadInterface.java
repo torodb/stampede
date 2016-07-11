@@ -98,9 +98,7 @@ public class PostgreSQLMetaDataReadInterface extends AbstractMetaDataReadInterfa
     
     @Override
     protected String getReadDatabaseSizeStatement(String databaseName) {
-        return "SELECT * from pg_database_size(" + 
-                sqlHelper.renderVal(databaseName) + 
-                ")";
+        return "SELECT sum(pg_total_relation_size(quote_ident(schemaname) || '.' || quote_ident(tablename)))::bigint FROM pg_tables WHERE schemaname = ?";
     }
 
     @Override
