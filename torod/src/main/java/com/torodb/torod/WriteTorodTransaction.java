@@ -173,6 +173,11 @@ public class WriteTorodTransaction extends TorodTransaction {
         metaDb.removeMetaCollectionByName(collection);
     }
     
+    public void createCollection(String db, String collection) throws RollbackException, UserException {
+        MutableMetaDatabase metaDb = getOrCreateMetaDatabase(db);
+        getOrCreateMetaCollection(metaDb, collection);
+    }
+    
     public void dropDatabase(String db) throws RollbackException, UserException {
         MutableMetaDatabase metaDb = getMetaDatabaseOrThrowException(db);
         
