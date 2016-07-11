@@ -68,6 +68,18 @@ public abstract class BackendTransactionImpl implements BackendTransaction {
         return sqlInterface.getMetaDataReadInterface().getDatabaseSize(getDsl(), db);
     }
 
+    public long countAll(MetaDatabase db, MetaCollection col) {
+        return sqlInterface.getReadInterface().countAll(getDsl(), db, col);
+    }
+
+    public long getCollectionSize(MetaDatabase db, MetaCollection col) {
+        return sqlInterface.getMetaDataReadInterface().getCollectionSize(getDsl(), db, col);
+    }
+
+    public long getDocumentsSize(MetaDatabase db, MetaCollection col) {
+        return sqlInterface.getMetaDataReadInterface().getDocumentsSize(getDsl(), db, col);
+    }
+
     @Override
     public Cursor<ToroDocument> findAll(MetaDatabase db, MetaCollection col) {
         try {

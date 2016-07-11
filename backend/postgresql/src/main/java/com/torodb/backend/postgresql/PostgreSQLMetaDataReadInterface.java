@@ -30,6 +30,7 @@ import javax.inject.Singleton;
 import com.torodb.backend.AbstractMetaDataReadInterface;
 import com.torodb.backend.SqlHelper;
 import com.torodb.backend.index.NamedDbIndex;
+import com.torodb.backend.meta.TorodbSchema;
 import com.torodb.backend.postgresql.tables.PostgreSQLMetaCollectionTable;
 import com.torodb.backend.postgresql.tables.PostgreSQLMetaDatabaseTable;
 import com.torodb.backend.postgresql.tables.PostgreSQLMetaDocPartTable;
@@ -102,26 +103,19 @@ public class PostgreSQLMetaDataReadInterface extends AbstractMetaDataReadInterfa
     }
 
     @Override
-    protected String getReadCollectionSizeStatement(String schema, String collection) {
-        return "SELECT sum(table_size)::bigint "
-                + "FROM ("
-                + "  SELECT "
-                + "    pg_relation_size(pg_catalog.pg_class.oid) as table_size "
-                + "  FROM pg_catalog.pg_class "
-                + "    JOIN pg_catalog.pg_namespace "
-                + "       ON relnamespace = pg_catalog.pg_namespace.oid "
-                + "    WHERE pg_catalog.pg_namespace.nspname = " + sqlHelper.renderVal(schema)
-                + ") AS t";
+    protected String getReadCollectionSizeStatement() {
+        return "SELECT sum(pg_total_relation_size(quote_ident(schemaname) || '.' || quote_ident(tablename)))::bigint "
+                + " FROM \"" + TorodbSchema.IDENTIFIER + "\".doc_part"
+                + " LEFT JOIN pg_tables ON (tablename = doc_part.identifier)"
+                + " WHERE doc_part.database = ? AND schemaname = ? AND doc_part.collection = ?";
     }
 
     @Override
-    protected String getReadDocumentsSizeStatement(String schema, String collection) {
-        return "SELECT sum(table_size)::bigint from ("
-                + "SELECT pg_relation_size(pg_class.oid) AS table_size "
-                + "FROM pg_class join pg_tables on pg_class.relname = pg_tables.tablename "
-                + "where pg_tables.schemaname = " + sqlHelper.renderVal(schema)
-                + "   and pg_tables.tablename LIKE 't_%'"
-                + ") as t";
+    protected String getReadDocumentsSizeStatement() {
+        return "SELECT sum(pg_total_relation_size(quote_ident(schemaname) || '.' || quote_ident(tablename)))::bigint "
+                + " FROM \"" + TorodbSchema.IDENTIFIER + "\".doc_part"
+                + " LEFT JOIN pg_tables ON (tablename = doc_part.identifier)"
+                + " WHERE doc_part.database = ? AND schemaname = ? AND doc_part.collection = ?";
     }
 
     @Override

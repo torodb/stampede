@@ -22,6 +22,8 @@ public interface ReadInterface {
             @Nonnull MetaField metaField, @Nonnull KVValue<?> value)
             throws SQLException;
 
+    long countAll(@Nonnull DSLContext dsl, @Nonnull MetaDatabase database, @Nonnull MetaCollection collection);
+
     @Nonnull
     DidCursor getAllCollectionDids(@Nonnull DSLContext dsl, @Nonnull MetaDatabase metaDatabase, @Nonnull MetaCollection metaCollection)
             throws SQLException;

@@ -112,6 +112,23 @@ public abstract class AbstractReadInterface implements ReadInterface {
 
     protected abstract String getReadAllCollectionDidsStatement(String schemaName, String rootTableName);
 
+    @Override
+    public long countAll(
+            @Nonnull DSLContext dsl,
+            @Nonnull MetaDatabase database,
+            @Nonnull MetaCollection collection
+            ) {
+        MetaDocPart rootDocPart = collection.getMetaDocPartByTableRef(tableRefFactory.createRoot());
+        if (rootDocPart == null) {
+            return 0;
+        }
+        String statement = getReadCountAllStatement(database.getIdentifier(), rootDocPart.getIdentifier());
+        return sqlHelper.executeStatementWithResult(dsl, statement, Context.FETCH)
+                .get(0).into(Long.class);
+    }
+
+    protected abstract String getReadCountAllStatement(String schema, String rootTableName);
+
     @Nonnull
     @Override
     public DocPartResultBatch getCollectionResultSets(@Nonnull DSLContext dsl, @Nonnull MetaDatabase metaDatabase, @Nonnull MetaCollection metaCollection,

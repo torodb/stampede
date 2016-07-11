@@ -97,27 +97,45 @@ public class DerbyMetaDataReadInterface extends AbstractMetaDataReadInterface {
     @Override
     protected String getReadDatabaseSizeStatement(String databaseName) {
         //TODO: This throw a ERROR XJ001: Java exception: ': java.lang.NullPointerException'.
-//        return "SELECT sum((NUMALLOCATEDPAGES + NUMFREEPAGES) * PAGESIZE) FROM"
-//                + " ("
-//                + "SELECT SPACE_TABLE.*"
-//                + " FROM SYS.SYSTABLES SYSTABLES,"
-//                + " SYS.SYSSCHEMAS SYSSCHEMAS,"
-//                + " TABLE (SYSCS_DIAG.SPACE_TABLE(SCHEMANAME, TABLENAME)) AS SPACE_TABLE"
-//                + " WHERE SYSTABLES.SCHEMAID = SYSSCHEMAS.SCEHMAID"
-//                + " AND TABLETYPE = 'T'"
-//                + " AND SCEHMANAME = ?"
-//                + ") SPACE_TABLE";
+//      return "SELECT sum((NUMALLOCATEDPAGES + NUMFREEPAGES) * PAGESIZE) FROM"
+//      + " ("
+//      + "SELECT SPACE_TABLE.*"
+//      + " FROM SYS.SYSTABLES SYSTABLES"
+//      + " LEFT JOIN SYS.SYSSCHEMAS SYSSCHEMAS ON (SYSTABLES.SCHEMAID = SYSSCHEMAS.SCEHMAID AND SCEHMANAME = ?),"
+//      + " TABLE (SYSCS_DIAG.SPACE_TABLE(SCHEMANAME, TABLENAME)) AS SPACE_TABLE"
+//      + ") SPACE_TABLE";
         return "SELECT 0 FROM SYSIBM.SYSDUMMY1 WHERE ? IS NOT NULL";
     }
 
     @Override
-    protected String getReadCollectionSizeStatement(String schema, String collection) {
-        throw new UnsupportedOperationException();
+    protected String getReadCollectionSizeStatement() {
+        //TODO: This throw a ERROR XJ001: Java exception: ': java.lang.NullPointerException'.
+//      return "SELECT sum((NUMALLOCATEDPAGES + NUMFREEPAGES) * PAGESIZE) FROM"
+//              + " ("
+//              + "SELECT SPACE_TABLE.*"
+//              + " FROM \"" + TorodbSchema.IDENTIFIER + "\".doc_part doc_part,"
+//              + " LEFT JOIN SYS.SYSTABLES SYSTABLES ON (doc_part.database = ? AND doc_part.identifier = SYSTABLES.TABLENAME)"
+//              + " LEFT JOIN SYS.SYSSCHEMAS SYSSCHEMAS ON (SYSTABLES.SCHEMAID = SYSSCHEMAS.SCEHMAID AND SCHEMANAME = ?),"
+//              + " TABLE (SYSCS_DIAG.SPACE_TABLE(SCHEMANAME, TABLENAME)) AS SPACE_TABLE"
+//              + " WHERE doc_part.collection = ?"
+//              + ") SPACE_TABLE";
+      return "SELECT 0 FROM SYSIBM.SYSDUMMY1 WHERE ? IS NOT NULL AND ? IS NOT NULL AND ? IS NOT NULL";
     }
 
     @Override
-    protected String getReadDocumentsSizeStatement(String schema, String collection) {
-        throw new UnsupportedOperationException();
+    protected String getReadDocumentsSizeStatement() {
+        //TODO: This throw a ERROR XJ001: Java exception: ': java.lang.NullPointerException'.
+//      return "SELECT sum((NUMALLOCATEDPAGES + NUMFREEPAGES) * PAGESIZE) FROM"
+//              + " ("
+//              + "SELECT SPACE_TABLE.*"
+//              + " FROM \"" + TorodbSchema.IDENTIFIER + "\".doc_part doc_part,"
+//              + " LEFT JOIN SYS.SYSTABLES SYSTABLES ON (doc_part.database = ? AND doc_part.identifier = SYSTABLES.TABLENAME)"
+//              + " LEFT JOIN SYS.SYSSCHEMAS SYSSCHEMAS ON (SYSTABLES.SCHEMAID = SYSSCHEMAS.SCEHMAID AND SCHEMANAME = ?),"
+//              + " TABLE (SYSCS_DIAG.SPACE_TABLE(SCHEMANAME, TABLENAME)) AS SPACE_TABLE"
+//              + " WHERE doc_part.collection = ?"
+//              + " WHERE TABLETYPE = 'T'"
+//              + ") SPACE_TABLE";
+        return "SELECT 0 FROM SYSIBM.SYSDUMMY1 WHERE ? IS NOT NULL AND ? IS NOT NULL AND ? IS NOT NULL";
     }
 
     @Override

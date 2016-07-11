@@ -74,6 +74,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.net.HostAndPort;
 import com.torodb.mongodb.commands.impl.NotImplementedCommandImplementation;
 import com.torodb.mongodb.commands.impl.admin.ListCollectionsImplementation;
+import com.torodb.mongodb.commands.impl.diagnostic.CollStatsImplementation;
 import com.torodb.mongodb.commands.impl.diagnostic.ListDatabasesImplementation;
 import com.torodb.mongodb.commands.impl.general.FindImplementation;
 import com.torodb.mongodb.core.ReadOnlyMongodTransaction;
@@ -212,16 +213,19 @@ public class ReadOnlyTransactionCommandsExecutor implements CommandsExecutor<Rea
     static class MyDiagnosticCommandsImplementationBuilder extends DiagnosticCommandsImplementationsBuilder<ReadOnlyMongodTransaction> {
         
         private final ListDatabasesImplementation listDatabasesImplementation;
+        private final CollStatsImplementation collStatsImplementation;
         
         @Inject
-        public MyDiagnosticCommandsImplementationBuilder(ListDatabasesImplementation listDatabasesImplementation) {
+        public MyDiagnosticCommandsImplementationBuilder(ListDatabasesImplementation listDatabasesImplementation,
+                CollStatsImplementation collStatsImplementation) {
             super();
             this.listDatabasesImplementation = listDatabasesImplementation;
+            this.collStatsImplementation = collStatsImplementation;
         }
 
         @Override
-        public CommandImplementation<CollStatsArgument, CollStatsReply, ReadOnlyMongodTransaction> getCollStatsImplementation() {
-            return NotImplementedCommandImplementation.build();
+        public CommandImplementation<CollStatsArgument, CollStatsReply, ? super ReadOnlyMongodTransaction> getCollStatsImplementation() {
+            return collStatsImplementation;
         }
 
         @Override

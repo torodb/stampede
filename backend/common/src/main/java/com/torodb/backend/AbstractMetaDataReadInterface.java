@@ -35,6 +35,7 @@ import com.torodb.backend.ErrorHandler.Context;
 import com.torodb.backend.index.NamedDbIndex;
 import com.torodb.backend.tables.MetaDocPartTable;
 import com.torodb.core.TableRef;
+import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 
@@ -68,30 +69,38 @@ public abstract class AbstractMetaDataReadInterface implements MetaDataReadInter
     protected abstract String getReadDatabaseSizeStatement(String databaseName);
 
     @Override
-    public Long getCollectionSize(
+    public long getCollectionSize(
             @Nonnull DSLContext dsl,
-            @Nonnull String schemaName,
-            @Nonnull String collection
+            @Nonnull MetaDatabase database,
+            @Nonnull MetaCollection collection
             ) {
-        String statement = getReadCollectionSizeStatement(schemaName, collection);
-        return sqlHelper.executeStatementWithResult(dsl, statement, Context.FETCH)
-                .get(0).into(Long.class);
+        String statement = getReadCollectionSizeStatement();
+        return sqlHelper.executeStatementWithResult(dsl, statement, Context.FETCH,
+                ps -> {
+                    ps.setString(1, database.getName());
+                    ps.setString(2, database.getIdentifier());
+                    ps.setString(3, collection.getName());
+                }).get(0).into(Long.class);
     }
 
-    protected abstract String getReadCollectionSizeStatement(String schema, String collection);
+    protected abstract String getReadCollectionSizeStatement();
 
     @Override
-    public Long getDocumentsSize(
+    public long getDocumentsSize(
             @Nonnull DSLContext dsl,
-            @Nonnull String schema,
-            String collection
+            @Nonnull MetaDatabase database,
+            @Nonnull MetaCollection collection
             ) {
-        String statement = getReadDocumentsSizeStatement(schema, collection);
-        return sqlHelper.executeStatementWithResult(dsl, statement, Context.FETCH)
-                .get(0).into(Long.class);
+        String statement = getReadDocumentsSizeStatement();
+        return sqlHelper.executeStatementWithResult(dsl, statement, Context.FETCH,
+                ps -> {
+                    ps.setString(1, database.getName());
+                    ps.setString(2, database.getIdentifier());
+                    ps.setString(3, collection.getName());
+                }).get(0).into(Long.class);
     }
 
-    protected abstract String getReadDocumentsSizeStatement(String schema, String collection);
+    protected abstract String getReadDocumentsSizeStatement();
 
     @Override
     public Long getIndexSize(
