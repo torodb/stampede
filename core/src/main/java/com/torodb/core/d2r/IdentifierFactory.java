@@ -12,7 +12,7 @@ public interface IdentifierFactory {
 
     @Nonnull String toDatabaseIdentifier(@Nonnull MetaSnapshot metaSnapshot, @Nonnull String database);
 
-    @Nonnull String toCollectionIdentifier(@Nonnull MetaDatabase metaDatabase, @Nonnull String collection);
+    @Nonnull String toCollectionIdentifier(@Nonnull MetaSnapshot metaSnapshot, @Nonnull String database, @Nonnull String collection);
 
     @Nonnull String toDocPartIdentifier(@Nonnull MetaDatabase metaDatabase, @Nonnull String collection, @Nonnull TableRef tableRef);
 

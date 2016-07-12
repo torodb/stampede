@@ -26,6 +26,7 @@ import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetaField;
+import com.torodb.core.transaction.metainf.MetaSnapshot;
 import com.torodb.core.transaction.metainf.MutableMetaCollection;
 import com.torodb.core.transaction.metainf.MutableMetaDatabase;
 import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
@@ -85,7 +86,8 @@ public class WriteTorodTransaction extends TorodTransaction {
         if (metaCol == null) {
             metaCol = metaDb.addMetaCollection(
                     colName,
-                    getConnection().getServer().getIdentifierFactory().toCollectionIdentifier(metaDb, colName)
+                    getConnection().getServer().getIdentifierFactory().toCollectionIdentifier(
+                            internalTransaction.getMetaSnapshot(), metaDb.getName(), colName)
             );
             internalTransaction.getBackendConnection().addCollection(metaDb, metaCol);
         }

@@ -49,11 +49,12 @@ public class IdentifierFactoryImpl implements IdentifierFactory {
     }
     
     @Override
-    public String toCollectionIdentifier(MetaDatabase metaDatabase, String collection) {
+    public String toCollectionIdentifier(MetaSnapshot metaSnapshot, String database, String collection) {
         NameChain nameChain = new NameChain(separatorString);
+        nameChain.add(database);
         nameChain.add(collection);
         
-        IdentifierChecker uniqueIdentifierChecker = new TableIdentifierChecker(metaDatabase);
+        IdentifierChecker uniqueIdentifierChecker = new CollectionIdentifierChecker(metaSnapshot);
         
         return generateUniqueIdentifier(nameChain, uniqueIdentifierChecker);
     }
@@ -480,6 +481,25 @@ public class IdentifierFactoryImpl implements IdentifierFactory {
         @Override
         public boolean isUnique(String identifier) {
             return metaSnapshot.getMetaDatabaseByIdentifier(identifier) == null;
+        }
+
+        @Override
+        public boolean isAllowed(IdentifierConstraints identifierInterface, String identifier) {
+            return identifierInterface.isAllowedSchemaIdentifier(identifier);
+        }
+    }
+    
+    private static class CollectionIdentifierChecker implements IdentifierChecker {
+        private final MetaSnapshot metaSnapshot;
+        
+        public CollectionIdentifierChecker(MetaSnapshot metaSnapshot) {
+            super();
+            this.metaSnapshot = metaSnapshot;
+        }
+        
+        @Override
+        public boolean isUnique(String identifier) {
+            return metaSnapshot.streamMetaDatabases().noneMatch(metaDatabase -> metaDatabase.getMetaCollectionByIdentifier(identifier) != null);
         }
 
         @Override
