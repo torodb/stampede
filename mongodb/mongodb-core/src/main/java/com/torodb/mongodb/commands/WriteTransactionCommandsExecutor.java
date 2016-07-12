@@ -1,14 +1,6 @@
 
 package com.torodb.mongodb.commands;
 
-import java.util.Collections;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
 import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.MongoDb30Commands.MongoDb30CommandsImplementationBuilder;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.AdminCommands.AdminCommandsImplementationsBuilder;
@@ -80,10 +72,19 @@ import com.torodb.mongodb.commands.impl.admin.CreateCollectionImplementation;
 import com.torodb.mongodb.commands.impl.admin.DropCollectionImplementation;
 import com.torodb.mongodb.commands.impl.admin.DropDatabaseImplementation;
 import com.torodb.mongodb.commands.impl.admin.RenameCollectionImplementation;
+import com.torodb.mongodb.commands.impl.aggregation.CountImplementation;
+import com.torodb.mongodb.commands.impl.diagnostic.CollStatsImplementation;
+import com.torodb.mongodb.commands.impl.diagnostic.ListDatabasesImplementation;
 import com.torodb.mongodb.commands.impl.general.DeleteImplementation;
 import com.torodb.mongodb.commands.impl.general.InsertImplementation;
 import com.torodb.mongodb.commands.impl.general.UpdateImplementation;
 import com.torodb.mongodb.core.WriteMongodTransaction;
+import java.util.Collections;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  *
@@ -221,9 +222,12 @@ public class WriteTransactionCommandsExecutor implements CommandsExecutor<WriteM
 
     static class MyAggregationCommandsImplementationBuilder extends AggregationCommandsImplementationsBuilder<WriteMongodTransaction> {
 
+        @Inject
+        private CountImplementation countImplementation;
+
         @Override
-        public CommandImplementation<CountArgument, Long, WriteMongodTransaction> getCountImplementation() {
-            return NotImplementedCommandImplementation.build();
+        public CommandImplementation<CountArgument, Long, ? super WriteMongodTransaction> getCountImplementation() {
+            return countImplementation;
         }
 
     }
@@ -238,14 +242,19 @@ public class WriteTransactionCommandsExecutor implements CommandsExecutor<WriteM
 
     static class MyDiagnosticCommandsImplementationBuilder extends DiagnosticCommandsImplementationsBuilder<WriteMongodTransaction> {
 
+        @Inject
+        private ListDatabasesImplementation listDb;
+        @Inject
+        private CollStatsImplementation collStatsImplementation;
+
         @Override
-        public CommandImplementation<CollStatsArgument, CollStatsReply, WriteMongodTransaction> getCollStatsImplementation() {
-            return NotImplementedCommandImplementation.build();
+        public CommandImplementation<CollStatsArgument, CollStatsReply, ? super WriteMongodTransaction> getCollStatsImplementation() {
+            return collStatsImplementation;
         }
 
         @Override
-        public CommandImplementation<Empty, ListDatabasesReply, WriteMongodTransaction> getListDatabasesImplementation() {
-            return NotImplementedCommandImplementation.build();
+        public CommandImplementation<Empty, ListDatabasesReply, ? super WriteMongodTransaction> getListDatabasesImplementation() {
+            return listDb;
         }
 
         @Override
