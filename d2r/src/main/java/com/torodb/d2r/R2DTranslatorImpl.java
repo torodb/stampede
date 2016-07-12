@@ -149,7 +149,7 @@ public class R2DTranslatorImpl implements R2DTranslator {
     private void addValueToDocPartRow(Map<Integer, Map<String, List<KVValue<?>>>> currentDocPartRow, TableRef tableRef,
             Integer pid, Integer seq, KVValue<?> value) {
         if (seq == null) {
-            setDocPartRowValue(currentDocPartRow, tableRef, pid, seq, ImmutableList.of(value));
+            setDocPartRowValue(currentDocPartRow, tableRef, pid, null, ImmutableList.of(value));
         } else {
             addToDocPartRow(currentDocPartRow, tableRef, pid, seq, value);
         }

@@ -1,6 +1,7 @@
 
 package com.torodb.mongodb.commands.impl.general;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Spliterator;
 import java.util.Spliterators;
@@ -21,7 +22,6 @@ import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general
 import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.Request;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import com.torodb.core.cursors.Cursor;
 import com.torodb.core.document.ToroDocument;
 import com.torodb.core.exceptions.UserWrappedException;
@@ -144,11 +144,11 @@ public class UpdateImplementation implements WriteTorodbCommandImpl<UpdateArgume
                 ImmutableList.copyOf(updateStatus.upsertResults)));
     }
     
-    private class UpdateStatus {
+    private static class UpdateStatus {
         int candidates = 0;
         int updated = 0;
         int created = 0;
-        List<UpsertResult> upsertResults = Lists.newArrayList();
+        List<UpsertResult> upsertResults = new ArrayList<>();
         
         void increaseCandidates(int size) {
             candidates+=size;

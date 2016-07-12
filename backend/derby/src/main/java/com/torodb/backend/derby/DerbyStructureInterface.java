@@ -141,7 +141,9 @@ public class DerbyStructureInterface extends AbstractStructureInterface {
     protected String getCreateDocPartTableIndexStatement(String schemaName, String tableName,
             Collection<InternalField<?>> indexFields) {
         Preconditions.checkArgument(!indexFields.isEmpty());
-        SqlBuilder sb = new SqlBuilder("CREATE INDEX ON ");
+        SqlBuilder sb = new SqlBuilder("CREATE INDEX ");
+        sb.quote(tableName+"_idx");
+        sb.append(" ON ");
         sb.table(schemaName, tableName)
           .append(" (");
         for (InternalField<?> field : indexFields) {
