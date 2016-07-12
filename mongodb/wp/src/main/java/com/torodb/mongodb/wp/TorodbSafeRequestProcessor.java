@@ -1,5 +1,5 @@
 
-package com.torodb.mongodb.core;
+package com.torodb.mongodb.wp;
 
 import com.eightkdata.mongowp.ErrorCode;
 import com.eightkdata.mongowp.Status;
@@ -20,6 +20,10 @@ import com.google.common.collect.Lists;
 import com.torodb.core.Retrier;
 import com.torodb.mongodb.commands.TorodbCommandsLibrary;
 import com.torodb.mongodb.commands.TorodbCommandsLibrary.RequiredTransaction;
+import com.torodb.mongodb.core.MongodConnection;
+import com.torodb.mongodb.core.MongodServer;
+import com.torodb.mongodb.core.ReadOnlyMongodTransaction;
+import com.torodb.mongodb.core.WriteMongodTransaction;
 import io.netty.util.AttributeKey;
 import java.util.concurrent.Callable;
 import javax.inject.Inject;

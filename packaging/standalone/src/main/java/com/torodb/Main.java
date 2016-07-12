@@ -26,7 +26,7 @@ import com.beust.jcommander.internal.Console;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.inject.CreationException;
-import com.torodb.packaging.ToroDBServer;
+import com.torodb.packaging.ToroDbServer;
 import com.torodb.packaging.config.model.Config;
 import com.torodb.packaging.config.model.backend.postgres.Postgres;
 import com.torodb.packaging.config.model.generic.LogLevel;
@@ -108,7 +108,7 @@ public class Main {
 		}
 		
 		try {
-            ToroDBServer toroDBServer = ToroDBServer.create(config, Clock.systemDefaultZone());
+            ToroDbServer toroDBServer = ToroDbServer.create(config, Clock.systemDefaultZone());
 
             toroDBServer.startAsync();
             toroDBServer.awaitRunning();

@@ -14,5 +14,7 @@
     
     <modules>
         <module>mongodb-core</module>
+        <module>wp</module>
+        <module>repl</module>
     </modules>
 </project>

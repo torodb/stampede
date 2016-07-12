@@ -41,6 +41,16 @@
             <artifactId>mongodb-core</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.torodb.mongodb</groupId>
+            <artifactId>wp</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.torodb.mongodb</groupId>
+            <artifactId>repl</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
         <dependency>
             <groupId>com.8kdata.mongowp.server</groupId>

@@ -14,7 +14,7 @@ import org.junit.Test;
  *
  * @author gortiz
  */
-public class ToroDBServerTest {
+public class ToroDbServerTest {
 
     private Config config;
 
@@ -32,12 +32,12 @@ public class ToroDBServerTest {
 
     @Test
     public void testCreate() {
-        ToroDBServer.create(config, Clock.systemUTC());
+        ToroDbServer.create(config, Clock.systemUTC());
     }
 
     @Test
     public void testInitiate() throws TimeoutException {
-        ToroDBServer server = ToroDBServer.create(config, Clock.systemUTC());
+        ToroDbServer server = ToroDbServer.create(config, Clock.systemUTC());
 
         server.startAsync();
         server.awaitRunning(5, TimeUnit.SECONDS);
