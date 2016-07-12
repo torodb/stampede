@@ -12,6 +12,7 @@ public class MetaDocPartBuilder {
 	private ImmutableMetaDocPart.Builder builder;
 	private List<Object> both = new ArrayList<>();
 	private MetaDocPart metaDocPart;
+	private boolean metaDocPartBuilded = false;
 	private List<MockedRow> rows = new ArrayList<>();
 	
 	public MetaDocPartBuilder(TableRef tableRef) {
@@ -30,12 +31,15 @@ public class MetaDocPartBuilder {
 		both.add(mestaScalar);
 	}
 	
-	public MetaDocPart buildMetaDocPart(){
-		metaDocPart = builder.build();
-		return metaDocPart;
+	private void buildMetaDocPart(){
+		if (!metaDocPartBuilded){
+			metaDocPart = builder.build();
+			metaDocPartBuilded = true;
+		}
 	}
 	
 	public MockedRow addRow(Integer did, Integer pid, Integer rid, Integer seq, Object... values){
+		buildMetaDocPart();
 		Object[] copy = new Object[values.length];
 		for (int i = 0; i < values.length; i++) {
 			int idx = findOrder(both.get(i));
@@ -47,6 +51,7 @@ public class MetaDocPartBuilder {
 	}
 	
 	public MockedDocPartResult getResultSet(){
+		buildMetaDocPart();
 		return new MockedDocPartResult(metaDocPart, rows);
 	}
 	

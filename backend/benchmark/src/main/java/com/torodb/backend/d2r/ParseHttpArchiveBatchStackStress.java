@@ -34,7 +34,7 @@ public class ParseHttpArchiveBatchStackStress {
 
 	public static void main(String[] args) throws IOException {
 
-		MvccMetainfoRepository mvccMetainfoRepository = new MvccMetainfoRepository(InitialView);
+		MvccMetainfoRepository mvccMetainfoRepository = new MvccMetainfoRepository(initialView);
 	    TableRefFactory tableRefFactory = new TableRefFactoryImpl();
 		RidGenerator ridGenerator = new InMemoryRidGenerator();
 		IdentifierFactory identifierFactory = new IdentifierFactoryImpl(new MockIdentifierInterface());

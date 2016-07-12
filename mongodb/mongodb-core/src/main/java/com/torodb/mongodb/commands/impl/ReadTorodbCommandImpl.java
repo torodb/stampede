@@ -6,10 +6,10 @@ import com.torodb.mongodb.core.MongodTransaction;
 /**
  *
  */
-public abstract class ReadTorodbCommandImpl<Arg, Result> extends TorodbCommandImpl<Arg, Result, MongodTransaction> {
+public interface ReadTorodbCommandImpl<Arg, Result> extends TorodbCommandImpl<Arg, Result, MongodTransaction> {
 
     @Override
-    public boolean requiresWritePermission() {
+    default public boolean requiresWritePermission() {
         return false;
     }
 

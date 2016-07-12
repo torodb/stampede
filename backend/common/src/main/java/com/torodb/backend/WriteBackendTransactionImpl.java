@@ -29,6 +29,7 @@ import com.torodb.backend.ErrorHandler.Context;
 import com.torodb.core.TableRef;
 import com.torodb.core.backend.WriteBackendTransaction;
 import com.torodb.core.d2r.DocPartData;
+import com.torodb.core.d2r.IdentifierFactory;
 import com.torodb.core.d2r.R2DTranslator;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.transaction.RollbackException;
@@ -37,12 +38,19 @@ import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetaField;
 import com.torodb.core.transaction.metainf.MetaScalar;
+import com.torodb.core.transaction.metainf.MutableMetaCollection;
+import com.torodb.core.transaction.metainf.MutableMetaDatabase;
+import com.torodb.core.transaction.metainf.MutableMetaDocPart;
 
 public class WriteBackendTransactionImpl extends BackendTransactionImpl implements WriteBackendTransaction {
 
+    private final IdentifierFactory identifierFactory;
+    
     public WriteBackendTransactionImpl(SqlInterface sqlInterface, BackendConnectionImpl backendConnection,
-            R2DTranslator r2dTranslator) {
+            R2DTranslator r2dTranslator, IdentifierFactory identifierFactory) {
         super(sqlInterface.getDbBackend().createWriteConnection(), sqlInterface, backendConnection, r2dTranslator);
+        
+        this.identifierFactory = identifierFactory;
     }
     
     @Override
@@ -64,8 +72,62 @@ public class WriteBackendTransactionImpl extends BackendTransactionImpl implemen
     public void dropCollection(MetaDatabase db, MetaCollection coll) {
         Preconditions.checkState(!isClosed(), "This transaction is closed");
 
-        dropCollection(db.getName(), coll);
+        dropMetaCollection(db.getName(), coll);
         getSqlInterface().getStructureInterface().dropCollection(getDsl(), db.getIdentifier(), coll);
+    }
+
+    @Override
+    public void renameCollection(MetaDatabase fromDb, MetaCollection fromColl, MutableMetaDatabase toDb, MutableMetaCollection toColl) {
+        Preconditions.checkState(!isClosed(), "This transaction is closed");
+
+        copyMetaCollection(fromColl, toDb, toColl);
+        getSqlInterface().getStructureInterface().renameCollection(getDsl(), fromDb.getIdentifier(), fromColl,
+                toDb.getIdentifier(), toColl);
+        dropMetaCollection(fromDb.getName(), fromColl);
+    }
+
+    private void copyMetaCollection(MetaCollection fromColl,
+            MutableMetaDatabase toDb, MutableMetaCollection toColl) {
+        Iterator<? extends MetaDocPart> fromMetaDocPartIterator = fromColl.streamContainedMetaDocParts().iterator();
+        while (fromMetaDocPartIterator.hasNext()) {
+            MetaDocPart fromMetaDocPart = fromMetaDocPartIterator.next();
+            MutableMetaDocPart toMetaDocPart = toColl.addMetaDocPart(fromMetaDocPart.getTableRef(), 
+                    identifierFactory.toDocPartIdentifier(
+                            toDb, toColl.getName(), fromMetaDocPart.getTableRef()));
+            getSqlInterface().getMetaDataWriteInterface().addMetaDocPart(getDsl(), toDb.getName(), toColl.getName(),
+                    toMetaDocPart.getTableRef(), toMetaDocPart.getIdentifier());
+            copyScalar(identifierFactory, fromMetaDocPart, toDb, toColl, toMetaDocPart);
+            copyFields(identifierFactory, fromMetaDocPart, toDb, toColl, toMetaDocPart);
+        }
+    }
+
+    private void copyScalar(IdentifierFactory identifierFactory, MetaDocPart fromMetaDocPart,
+            MetaDatabase toMetaDb, MetaCollection toMetaColl, MutableMetaDocPart toMetaDocPart) {
+        Iterator<? extends MetaScalar> fromMetaScalarIterator = fromMetaDocPart.streamScalars().iterator();
+        while (fromMetaScalarIterator.hasNext()) {
+            MetaScalar fromMetaScalar = fromMetaScalarIterator.next();
+            MetaScalar toMetaScalar = toMetaDocPart.addMetaScalar(
+                    identifierFactory.toFieldIdentifierForScalar(fromMetaScalar.getType()), 
+                    fromMetaScalar.getType());
+            getSqlInterface().getMetaDataWriteInterface().addMetaScalar(
+                    getDsl(), toMetaDb.getName(), toMetaColl.getName(), toMetaDocPart.getTableRef(), 
+                    toMetaScalar.getIdentifier(), toMetaScalar.getType());
+        }
+    }
+
+    private void copyFields(IdentifierFactory identifierFactory, MetaDocPart fromMetaDocPart,
+            MetaDatabase toMetaDb, MetaCollection toMetaColl, MutableMetaDocPart toMetaDocPart) {
+        Iterator<? extends MetaField> fromMetaFieldIterator = fromMetaDocPart.streamFields().iterator();
+        while (fromMetaFieldIterator.hasNext()) {
+            MetaField fromMetaField = fromMetaFieldIterator.next();
+            MetaField toMetaField = toMetaDocPart.addMetaField(
+                    fromMetaField.getName(), 
+                    identifierFactory.toFieldIdentifier(toMetaDocPart, fromMetaField.getType(), fromMetaField.getName()), 
+                    fromMetaField.getType());
+            getSqlInterface().getMetaDataWriteInterface().addMetaField(
+                    getDsl(), toMetaDb.getName(), toMetaColl.getName(), toMetaDocPart.getTableRef(), 
+                    toMetaField.getName(), toMetaField.getIdentifier(), toMetaField.getType());
+        }
     }
 
     @Override
@@ -75,13 +137,13 @@ public class WriteBackendTransactionImpl extends BackendTransactionImpl implemen
         Iterator<? extends MetaCollection> metaCollectionIterator = db.streamMetaCollections().iterator();
         while (metaCollectionIterator.hasNext()) {
             MetaCollection metaCollection = metaCollectionIterator.next();
-            dropCollection(db.getName(), metaCollection);
+            dropMetaCollection(db.getName(), metaCollection);
         }
         getSqlInterface().getMetaDataWriteInterface().deleteMetaDatabase(getDsl(), db.getName());
         getSqlInterface().getStructureInterface().dropDatabase(getDsl(), db);
     }
 
-    protected void dropCollection(String databaseName, MetaCollection coll) {
+    protected void dropMetaCollection(String databaseName, MetaCollection coll) {
         Iterator<? extends MetaDocPart> metaDocPartIterator = coll.streamContainedMetaDocParts().iterator();
         while (metaDocPartIterator.hasNext()) {
             MetaDocPart metaDocPart = metaDocPartIterator.next();

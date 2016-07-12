@@ -65,11 +65,22 @@ public class SqlHelper {
         }       
     }
 
-    public Result<Record> executeStatementWithResult(DSLContext dsl, String statement, Context context){
+    @FunctionalInterface
+    public interface SetupPreparedStatement {
+        public void accept(PreparedStatement ps) throws SQLException;
+    }
+    
+    public Result<Record> executeStatementWithResult(DSLContext dsl, String statement, Context context) {
+        return executeStatementWithResult(dsl, statement, context, ps -> {});
+    }
+
+    public Result<Record> executeStatementWithResult(DSLContext dsl, String statement, Context context, SetupPreparedStatement statementSetup) {
         Connection c = dsl.configuration().connectionProvider().acquire();
         try (PreparedStatement ps = c.prepareStatement(statement)) {
-            ResultSet resultSet = ps.executeQuery();
-            return dsl.fetch(resultSet);
+            statementSetup.accept(ps);
+            try (ResultSet resultSet = ps.executeQuery()){
+            	return dsl.fetch(resultSet);
+            }
         } catch (SQLException ex) {
             throw errorHandler.handleException(context, ex);
         } finally {
@@ -106,53 +117,41 @@ public class SqlHelper {
     
     @SuppressWarnings({ "rawtypes" })
     public Object getResultSetValue(FieldType fieldType, ResultSet resultSet, int index) throws SQLException {
-        DataTypeForKV dataType = dataTypeProvider
-                .getDataType(fieldType);
-        KVValueConverter valueConverter = dataType
-                .getKVValueConverter();
-        SqlBinding sqlBinding = valueConverter
-                .getSqlBinding();
-        return sqlBinding.get(resultSet, index);
+		DataTypeForKV dataType = dataTypeProvider.getDataType(fieldType);
+		KVValueConverter valueConverter = dataType.getKVValueConverter();
+		SqlBinding sqlBinding = valueConverter.getSqlBinding();
+		return sqlBinding.get(resultSet, index);
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public void setPreparedStatementNullableValue(PreparedStatement preparedStatement, int parameterIndex,
             FieldType fieldType, KVValue<?> value) throws SQLException {
-        DataTypeForKV dataType = dataTypeProvider
-                .getDataType(fieldType);
-        Converter converter = dataType.getConverter();
-        KVValueConverter valueConverter = dataType
-                .getKVValueConverter();
-        SqlBinding sqlBinding = valueConverter
-                .getSqlBinding();
-        if (value != null) {
-            sqlBinding.set(preparedStatement, parameterIndex, converter.to(value));
-        } else {
-            preparedStatement.setNull(parameterIndex, dataType.getSQLType());
-        }
+		DataTypeForKV dataType = dataTypeProvider.getDataType(fieldType);
+		if (value != null) {
+			KVValueConverter valueConverter = dataType.getKVValueConverter();
+			SqlBinding sqlBinding = valueConverter.getSqlBinding();
+			Converter converter = dataType.getConverter();
+			sqlBinding.set(preparedStatement, parameterIndex, converter.to(value));
+		} else {
+			preparedStatement.setNull(parameterIndex, dataType.getSQLType());
+		}
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public void setPreparedStatementValue(PreparedStatement preparedStatement, int parameterIndex,
             FieldType fieldType, KVValue<?> value) throws SQLException {
-        DataTypeForKV dataType = dataTypeProvider
-                .getDataType(fieldType);
-        Converter converter = dataType.getConverter();
-        KVValueConverter valueConverter = dataType
-                .getKVValueConverter();
-        SqlBinding sqlBinding = valueConverter
-                .getSqlBinding();
-        sqlBinding.set(preparedStatement, parameterIndex, converter.to(value));
+		DataTypeForKV dataType = dataTypeProvider.getDataType(fieldType);
+		KVValueConverter valueConverter = dataType.getKVValueConverter();
+		Converter converter = dataType.getConverter();
+		SqlBinding sqlBinding = valueConverter.getSqlBinding();
+		sqlBinding.set(preparedStatement, parameterIndex, converter.to(value));
     }
     
     @SuppressWarnings({ "rawtypes" })
     public String getPlaceholder(FieldType fieldType) {
-        DataTypeForKV dataType = dataTypeProvider
-                .getDataType(fieldType);
-        KVValueConverter valueConverter = dataType
-                .getKVValueConverter();
-        SqlBinding sqlBinding = valueConverter
-                .getSqlBinding();
-        return sqlBinding.getPlaceholder();
+		DataTypeForKV dataType = dataTypeProvider.getDataType(fieldType);
+		KVValueConverter valueConverter = dataType.getKVValueConverter();
+		SqlBinding sqlBinding = valueConverter.getSqlBinding();
+		return sqlBinding.getPlaceholder();
     }
 }

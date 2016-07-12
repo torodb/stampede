@@ -6,6 +6,7 @@ import com.torodb.core.TableRefFactory;
 import com.torodb.core.cursors.Cursor;
 import com.torodb.core.cursors.EmptyCursor;
 import com.torodb.core.document.ToroDocument;
+import com.torodb.core.exceptions.user.CollectionNotFoundException;
 import com.torodb.core.language.AttributeReference;
 import com.torodb.core.language.AttributeReference.Key;
 import com.torodb.core.language.AttributeReference.ObjectKey;
@@ -13,6 +14,7 @@ import com.torodb.core.transaction.InternalTransaction;
 import com.torodb.core.transaction.metainf.*;
 import com.torodb.kvdocument.values.KVValue;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.json.Json;
 import org.apache.logging.log4j.LogManager;
@@ -40,6 +42,60 @@ public abstract class TorodTransaction implements AutoCloseable {
     }
 
     protected abstract InternalTransaction getInternalTransaction();
+
+    public boolean existsCollection(String dbName, String colName) {
+        MetaDatabase metaDb = getInternalTransaction().getMetaSnapshot().getMetaDatabaseByName(dbName);
+        return metaDb != null && metaDb.getMetaCollectionByName(colName) != null;
+    }
+    
+    public List<String> getDatabases() {
+        return getInternalTransaction().getMetaSnapshot().streamMetaDatabases()
+                .map(metaDb -> metaDb.getName()).collect(Collectors.toList());
+    }
+
+    public long getDatabaseSize(String dbName) {
+        MetaDatabase db = getInternalTransaction().getMetaSnapshot().getMetaDatabaseByName(dbName);
+        if (db == null) {
+            return 0l;
+        }
+        return getInternalTransaction().getBackendTransaction().getDatabaseSize(db);
+    }
+    
+    public long countAll(String dbName, String colName) {
+        MetaDatabase db = getInternalTransaction().getMetaSnapshot().getMetaDatabaseByName(dbName);
+        if (db == null) {
+            return 0;
+        }
+        MetaCollection col = db.getMetaCollectionByName(colName);
+        if (col == null) {
+            return 0;
+        }
+        return getInternalTransaction().getBackendTransaction().countAll(db, col);
+    }
+    
+    public long getCollectionSize(String dbName, String colName) {
+        MetaDatabase db = getInternalTransaction().getMetaSnapshot().getMetaDatabaseByName(dbName);
+        if (db == null) {
+            return 0;
+        }
+        MetaCollection col = db.getMetaCollectionByName(colName);
+        if (col == null) {
+            return 0;
+        }
+        return getInternalTransaction().getBackendTransaction().getCollectionSize(db, col);
+    }
+    
+    public long getDocumentsSize(String dbName, String colName) {
+        MetaDatabase db = getInternalTransaction().getMetaSnapshot().getMetaDatabaseByName(dbName);
+        if (db == null) {
+            return 0;
+        }
+        MetaCollection col = db.getMetaCollectionByName(colName);
+        if (col == null) {
+            return 0;
+        }
+        return getInternalTransaction().getBackendTransaction().getDocumentsSize(db, col);
+    }
 
     public Cursor<ToroDocument> findAll(String dbName, String colName) {
         MetaDatabase db = getInternalTransaction().getMetaSnapshot().getMetaDatabaseByName(dbName);
@@ -96,9 +152,27 @@ public abstract class TorodTransaction implements AutoCloseable {
         return getInternalTransaction().getBackendTransaction().findByField(db, col, docPart, field, value);
     }
 
-    public Stream<CollectionInfo> getCollectionsInfo() {
-        return getInternalTransaction().getMetaSnapshot().streamMetaDatabases()
+    public Stream<CollectionInfo> getCollectionsInfo(String dbName) {
+        MetaDatabase db = getInternalTransaction().getMetaSnapshot().getMetaDatabaseByName(dbName);
+        if (db == null) {
+            return Stream.empty();
+        }
+        
+        return db.streamMetaCollections()
                 .map(metaCol -> new CollectionInfo(metaCol.getName(), Json.createObjectBuilder().build()));
+    }
+
+    public CollectionInfo getCollectionInfo(String dbName, String colName) throws CollectionNotFoundException {
+        MetaDatabase db = getInternalTransaction().getMetaSnapshot().getMetaDatabaseByName(dbName);
+        if (db == null) {
+            throw new CollectionNotFoundException(dbName, colName);
+        }
+        MetaCollection col = db.getMetaCollectionByName(colName);
+        if (col == null) {
+            throw new CollectionNotFoundException(dbName, colName);
+        }
+        
+        return new CollectionInfo(db.getMetaCollectionByName(colName).getName(), Json.createObjectBuilder().build());
     }
 
     protected String extractKeyName(Key<?> key) {

@@ -1,11 +1,17 @@
 
 package com.torodb.torod;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import javax.annotation.Nonnull;
+
 import com.google.common.base.Preconditions;
 import com.torodb.core.TableRef;
 import com.torodb.core.TableRefFactory;
 import com.torodb.core.backend.DidCursor;
-import com.torodb.core.backend.UpdateResult;
 import com.torodb.core.document.ToroDocument;
 import com.torodb.core.exceptions.user.CollectionNotFoundException;
 import com.torodb.core.exceptions.user.DatabaseNotFoundException;
@@ -15,15 +21,17 @@ import com.torodb.core.language.AttributeReference.Key;
 import com.torodb.core.transaction.InternalTransaction;
 import com.torodb.core.transaction.RollbackException;
 import com.torodb.core.transaction.WriteInternalTransaction;
-import com.torodb.core.transaction.metainf.*;
+import com.torodb.core.transaction.metainf.FieldType;
+import com.torodb.core.transaction.metainf.MetaCollection;
+import com.torodb.core.transaction.metainf.MetaDatabase;
+import com.torodb.core.transaction.metainf.MetaDocPart;
+import com.torodb.core.transaction.metainf.MetaField;
+import com.torodb.core.transaction.metainf.MutableMetaCollection;
+import com.torodb.core.transaction.metainf.MutableMetaDatabase;
+import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
 import com.torodb.kvdocument.values.KVDocument;
 import com.torodb.kvdocument.values.KVValue;
 import com.torodb.torod.pipeline.InsertPipeline;
-import java.util.Collection;
-import java.util.List;
-import java.util.function.Function;
-import java.util.stream.Stream;
-import javax.annotation.Nonnull;
 
 /**
  *
@@ -56,32 +64,60 @@ public class WriteTorodTransaction extends TorodTransaction {
 
     @Nonnull
     private MutableMetaDatabase getOrCreateMetaDatabase(String dbName) {
-        Preconditions.checkState(!isClosed());
         MutableMetaSnapshot metaSnapshot = internalTransaction.getMetaSnapshot();
         MutableMetaDatabase metaDb = metaSnapshot.getMetaDatabaseByName(dbName);
 
         if (metaDb == null) {
-            metaDb = metaSnapshot.addMetaDatabase(
-                    dbName,
-                    getConnection().getServer().getIdentifierFactory().toDatabaseIdentifier(metaSnapshot, dbName)
-            );
-            internalTransaction.getBackendConnection().addDatabase(metaDb);
+            metaDb = createMetaDatabase(dbName);
         }
         return metaDb;
     }
 
-    private MutableMetaCollection getOrCreateMetaCollection(@Nonnull MutableMetaDatabase metaDb, String colName) {
+    public MutableMetaDatabase createMetaDatabase(String dbName) {
         Preconditions.checkState(!isClosed());
+        MutableMetaSnapshot metaSnapshot = internalTransaction.getMetaSnapshot();
+        MutableMetaDatabase metaDb = metaSnapshot.addMetaDatabase(
+                dbName,
+                getConnection().getServer().getIdentifierFactory().toDatabaseIdentifier(
+                        metaSnapshot, dbName)
+        );
+        internalTransaction.getBackendConnection().addDatabase(metaDb);
+        return metaDb;
+    }
+
+    private MutableMetaCollection getOrCreateMetaCollection(@Nonnull MutableMetaDatabase metaDb, String colName) {
         MutableMetaCollection metaCol = metaDb.getMetaCollectionByName(colName);
 
         if (metaCol == null) {
-            metaCol = metaDb.addMetaCollection(
-                    colName,
-                    getConnection().getServer().getIdentifierFactory().toCollectionIdentifier(metaDb, colName)
-            );
-            internalTransaction.getBackendConnection().addCollection(metaDb, metaCol);
+            metaCol = createMetaCollection(metaDb, colName);
         }
         return metaCol;
+    }
+
+    public MutableMetaCollection createMetaCollection(MutableMetaDatabase metaDb, String colName) {
+        MutableMetaCollection metaCol;
+        Preconditions.checkState(!isClosed());
+        metaCol = metaDb.addMetaCollection(
+                colName,
+                getConnection().getServer().getIdentifierFactory().toCollectionIdentifier(
+                        internalTransaction.getMetaSnapshot(), metaDb.getName(), colName)
+        );
+        internalTransaction.getBackendConnection().addCollection(metaDb, metaCol);
+        return metaCol;
+    }
+
+    public void delete(String dbName, String colName, List<ToroDocument> candidates) {
+        MetaDatabase db = getInternalTransaction().getMetaSnapshot().getMetaDatabaseByName(dbName);
+        if (db == null) {
+            return;
+        }
+        MetaCollection col = db.getMetaCollectionByName(colName);
+        if (col == null) {
+            return;
+        }
+
+        internalTransaction.getBackendTransaction().deleteDids(db, col, 
+                candidates.stream().map(candidate -> candidate.getId()).collect(Collectors.toList()));
     }
 
     public long deleteAll(String dbName, String colName) {
@@ -141,84 +177,6 @@ public class WriteTorodTransaction extends TorodTransaction {
         
         return dids.size();
     }
-
-    public UpdateResult updateAll(String dbName, String colName, Function<KVDocument, KVDocument> updateFunction) throws UserException {
-        MutableMetaDatabase db = internalTransaction.getMetaSnapshot().getMetaDatabaseByName(dbName);
-        if (db == null) {
-            return new UpdateResult(0, 0);
-        }
-        MutableMetaCollection col = db.getMetaCollectionByName(colName);
-        if (col == null) {
-            return new UpdateResult(0, 0);
-        }
-
-        DidCursor didCursor = internalTransaction.getBackendTransaction().findAllDids(db, col);
-        Collection<Integer> dids = didCursor.getRemaining();
-        Collection<ToroDocument> candidates = internalTransaction.getBackendTransaction().readDocuments(db, col, dids);
-        internalTransaction.getBackendTransaction().deleteDids(db, col, dids);
-        
-        Stream<KVDocument> updatedCandidates = candidates.stream().map(t -> t.getRoot()).map(updateFunction);
-        InsertPipeline pipeline = getConnection().getServer().getInsertPipelineFactory().createInsertPipeline(
-                getConnection().getServer().getD2RTranslatorrFactory(),
-                db,
-                col,
-                internalTransaction.getBackendConnection()
-        );
-        pipeline.insert(updatedCandidates);
-        
-        return new UpdateResult(dids.size(), dids.size());
-    }
-
-    public UpdateResult updateByAttRef(String dbName, String colName, AttributeReference attRef, KVValue<?> value, Function<KVDocument, KVDocument> updateFunction) throws UserException {
-        MutableMetaDatabase db = internalTransaction.getMetaSnapshot().getMetaDatabaseByName(dbName);
-        if (db == null) {
-            return new UpdateResult(0, 0);
-        }
-        MutableMetaCollection col = db.getMetaCollectionByName(colName);
-        if (col == null) {
-            return new UpdateResult(0, 0);
-        }
-        TableRefFactory tableRefFactory = getConnection().getServer().getTableRefFactory();
-        TableRef ref = tableRefFactory.createRoot();
-
-        if (attRef.getKeys().isEmpty()) {
-            throw new IllegalArgumentException("The empty attribute reference is not valid on queries");
-        }
-        String lastKey = extractKeyName(attRef.getKeys().get(attRef.getKeys().size() - 1));
-        if (attRef.getKeys().size() > 1) {
-            List<Key<?>> keys = attRef.getKeys();
-            List<Key<?>> tableKeys = keys.subList(0, keys.size() - 1);
-            for (Key<?> key : tableKeys) {
-                ref = tableRefFactory.createChild(ref, extractKeyName(key));
-            }
-        }
-        
-        MetaDocPart docPart = col.getMetaDocPartByTableRef(ref);
-        if (docPart == null) {
-            return new UpdateResult(0, 0);
-        }
-
-        MetaField field = docPart.getMetaFieldByNameAndType(lastKey, FieldType.from(value.getType()));
-        if (field == null) {
-            return new UpdateResult(0, 0);
-        }
-
-        DidCursor didCursor = internalTransaction.getBackendTransaction().findDidsByField(db, col, docPart, field, value);
-        Collection<Integer> dids = didCursor.getRemaining();
-        Collection<ToroDocument> candidates = internalTransaction.getBackendTransaction().readDocuments(db, col, dids);
-        internalTransaction.getBackendTransaction().deleteDids(db, col, dids);
-        
-        Stream<KVDocument> updatedCandidates = candidates.stream().map(t -> t.getRoot()).map(updateFunction);
-        InsertPipeline pipeline = getConnection().getServer().getInsertPipelineFactory().createInsertPipeline(
-                getConnection().getServer().getD2RTranslatorrFactory(),
-                db,
-                col,
-                internalTransaction.getBackendConnection()
-        );
-        pipeline.insert(updatedCandidates);
-        
-        return new UpdateResult(dids.size(), dids.size());
-    }
     
     public void dropCollection(String db, String collection) throws RollbackException, UserException {
         MutableMetaDatabase metaDb = getMetaDatabaseOrThrowException(db);
@@ -227,6 +185,23 @@ public class WriteTorodTransaction extends TorodTransaction {
         internalTransaction.getBackendConnection().dropCollection(metaDb, metaColl);
 
         metaDb.removeMetaCollectionByName(collection);
+    }
+    
+    public void renameCollection(String fromDb, String fromCollection, String toDb, String toCollection) throws RollbackException, UserException {
+        MutableMetaDatabase fromMetaDb = getMetaDatabaseOrThrowException(fromDb);
+        MetaCollection fromMetaColl = getMetaCollectionOrThrowException(fromMetaDb, fromCollection);
+
+        MutableMetaDatabase toMetaDb = getOrCreateMetaDatabase(toDb);
+        MutableMetaCollection toMetaColl = createMetaCollection(toMetaDb, toCollection);
+        
+        internalTransaction.getBackendConnection().renameCollection(fromMetaDb, fromMetaColl, toMetaDb, toMetaColl);
+
+        fromMetaDb.removeMetaCollectionByName(fromCollection);
+    }
+    
+    public void createCollection(String db, String collection) throws RollbackException, UserException {
+        MutableMetaDatabase metaDb = getOrCreateMetaDatabase(db);
+        getOrCreateMetaCollection(metaDb, collection);
     }
     
     public void dropDatabase(String db) throws RollbackException, UserException {

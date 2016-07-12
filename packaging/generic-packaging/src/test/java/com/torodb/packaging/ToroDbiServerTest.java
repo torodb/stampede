@@ -8,8 +8,6 @@ import com.torodb.packaging.config.model.protocol.mongo.Role;
 import com.torodb.packaging.config.util.ConfigUtils;
 import java.time.Clock;
 import java.util.Collections;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -44,16 +42,5 @@ public class ToroDbiServerTest {
     @Test
     public void testCreate() {
         ToroDbiServer.create(config, Clock.systemUTC());
-    }
-
-    @Test
-    public void testInitiate() throws TimeoutException {
-        ToroDbiServer server = ToroDbiServer.create(config, Clock.systemUTC());
-
-        server.startAsync();
-        server.awaitRunning(500, TimeUnit.SECONDS);
-
-//        server.stopAsync();
-        server.awaitTerminated(5000, TimeUnit.SECONDS);
     }
 }

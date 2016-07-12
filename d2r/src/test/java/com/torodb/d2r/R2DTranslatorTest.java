@@ -8,7 +8,6 @@ import com.torodb.core.d2r.R2DTranslator;
 import com.torodb.core.document.ToroDocument;
 import com.torodb.core.impl.TableRefFactoryImpl;
 import com.torodb.core.transaction.metainf.FieldType;
-import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.kvdocument.values.KVArray;
 import com.torodb.kvdocument.values.KVDocument;
 import com.torodb.kvdocument.values.KVNull;
@@ -38,7 +37,6 @@ public class R2DTranslatorTest {
 	public void readSimpleDocument(){
 		MetaDocPartBuilder builder=new MetaDocPartBuilder(rootRef);
 		builder.addMetaField("name", "name_s", FieldType.STRING);
-		MetaDocPart rootDocPart = builder.buildMetaDocPart();
 		builder.addRow(1, null, 1, null, "jero");
 		DocPartResult root = builder.getResultSet();
 		
@@ -64,7 +62,6 @@ public class R2DTranslatorTest {
 		builder.addMetaField("name",    "name_s",    FieldType.STRING);
 		builder.addMetaField("address", "address_s", FieldType.STRING);
 		builder.addMetaField("address", "address_n", FieldType.NULL);
-		MetaDocPart rootDocPart = builder.buildMetaDocPart();
 		builder.addRow(1, null, 1, null, "jero", null, true);
 		MockedDocPartResult root = builder.getResultSet();
 		
@@ -89,7 +86,6 @@ public class R2DTranslatorTest {
 		MetaDocPartBuilder builder=new MetaDocPartBuilder(rootRef);
 		builder.addMetaField("name",    "name_s",    FieldType.STRING);
 		builder.addMetaField("address", "address_s", FieldType.STRING);
-		MetaDocPart rootDocPart = builder.buildMetaDocPart();
 		builder.addRow(1, null, 1, null, "jero", null);
 		MockedDocPartResult root = builder.getResultSet();
 		
@@ -117,7 +113,6 @@ public class R2DTranslatorTest {
 		builder.addMetaField("name", "name_s", FieldType.STRING);
 		builder.addMetaField("address", "address_s", FieldType.STRING);
 		builder.addMetaField("age", "age_i", FieldType.INTEGER);
-		MetaDocPart rootDocPart = builder.buildMetaDocPart();
 		builder.addRow(1, null, 1, null, "jero","my home",25);
 		MockedDocPartResult root = builder.getResultSet();
 		
@@ -146,7 +141,6 @@ public class R2DTranslatorTest {
 	public void readMultipleDocument(){
 		MetaDocPartBuilder builder=new MetaDocPartBuilder(rootRef);
 		builder.addMetaField("name", "name_s", FieldType.STRING);
-		MetaDocPart rootDocPart = builder.buildMetaDocPart();
 		builder.addRow(1, null, 1, null, "jero");
 		builder.addRow(2, null, 2, null, "john");
 		MockedDocPartResult root = builder.getResultSet();
@@ -180,19 +174,17 @@ public class R2DTranslatorTest {
 		MetaDocPartBuilder builder=new MetaDocPartBuilder(rootRef);
 		builder.addMetaField("name",    "name_s",    FieldType.STRING);
 		builder.addMetaField("address", "address_e", FieldType.CHILD);
-		MetaDocPart rootDocPart = builder.buildMetaDocPart();
-		builder.addRow(1, null, 1, null, "jero",IsDocument);
+		builder.addRow(1, null, 1, null, "jero", IsDocument);
 		MockedDocPartResult root = builder.getResultSet();
 		
 		/* Second Level */
 		TableRef secondRef = fact.createChild(rootRef, "address");
 		MetaDocPartBuilder secondBuilder=new MetaDocPartBuilder(secondRef);
 		secondBuilder.addMetaField("street", "street_s", FieldType.STRING);
-		MetaDocPart secondLevelDocPart = secondBuilder.buildMetaDocPart();
 		secondBuilder.addRow(1, 1, 20, null, "myhouse");
 		MockedDocPartResult secondLevel = secondBuilder.getResultSet();
 		
-		List<DocPartResult> lst = Lists.newArrayList(secondLevel, root);
+		List<DocPartResult> lst =  Lists.newArrayList(secondLevel, root);
 		
         R2DTranslator r2dTranslator = new R2DTranslatorImpl();
         Collection<ToroDocument> readedDocuments = r2dTranslator.translate(lst.iterator());
@@ -216,15 +208,13 @@ public class R2DTranslatorTest {
 		MetaDocPartBuilder builder=new MetaDocPartBuilder(rootRef);
 		builder.addMetaField("name",    "name_s",    FieldType.STRING);
 		builder.addMetaField("numbers", "numbers_e", FieldType.CHILD);
-		MetaDocPart rootDocPart = builder.buildMetaDocPart();
-		builder.addRow(1, null, 1, null, "jero",IsArray);
+		builder.addRow(1, null, 1, null, "jero", IsArray);
 		MockedDocPartResult root = builder.getResultSet();
 		
 		/* Second Level */
 		TableRef secondRef = fact.createChild(rootRef, "numbers");
 		MetaDocPartBuilder secondBuilder=new MetaDocPartBuilder(secondRef);
 		secondBuilder.addMetaScalar("v_i", FieldType.INTEGER);
-		MetaDocPart secondLevelDocPart = secondBuilder.buildMetaDocPart();
 		secondBuilder.addRow(1, 1, 20, 0,  4);
 		secondBuilder.addRow(1, 1, 21, 1,  8);
 		secondBuilder.addRow(1, 1, 23, 2, 15);
@@ -263,9 +253,8 @@ public class R2DTranslatorTest {
 		MetaDocPartBuilder builder=new MetaDocPartBuilder(rootRef);
 		builder.addMetaField("name",    "name_s",    FieldType.STRING);
 		builder.addMetaField("numbers", "numbers_e", FieldType.CHILD);
-		MetaDocPart rootDocPart = builder.buildMetaDocPart();
 		
-		builder.addRow(did, null, did, null, "jero",IsArray);
+		builder.addRow(did, null, did, null, "jero", IsArray);
 		MockedDocPartResult root = builder.getResultSet();
 		
 		/* Second Level */
@@ -274,10 +263,9 @@ public class R2DTranslatorTest {
 		MetaDocPartBuilder secondBuilder = new MetaDocPartBuilder(secondRef);
 		secondBuilder.addMetaScalar("v_i", FieldType.INTEGER);
 		secondBuilder.addMetaScalar("v_e", FieldType.CHILD);
-		MetaDocPart secondLevelDocPart = secondBuilder.buildMetaDocPart();
 		
-		secondBuilder.addRow(did, pid, 20, 0,  666,   null);
-		secondBuilder.addRow(did, pid, 21, 1, null,IsArray);
+		secondBuilder.addRow(did, pid, 20, 0,  666,    null);
+		secondBuilder.addRow(did, pid, 21, 1, null, IsArray);
 		MockedDocPartResult secondLevel = secondBuilder.getResultSet();
 		
 		/* Third Level */
@@ -285,7 +273,6 @@ public class R2DTranslatorTest {
 		TableRef thirdRef = fact.createChild(secondRef, 2);
 		MetaDocPartBuilder thirdBuilder = new MetaDocPartBuilder(thirdRef);
 		thirdBuilder.addMetaScalar("v_i", FieldType.INTEGER);
-		MetaDocPart thirdLevelDocPart = thirdBuilder.buildMetaDocPart();
 		
 		thirdBuilder.addRow(did, pid1, 30, 0,  4);
 		thirdBuilder.addRow(did, pid1, 31, 1,  8);
@@ -338,7 +325,6 @@ public class R2DTranslatorTest {
 		MetaDocPartBuilder builder=new MetaDocPartBuilder(rootRef);
 		builder.addMetaField("name",    "name_s",    FieldType.STRING);
 		builder.addMetaField("numbers", "numbers_e", FieldType.CHILD);
-		MetaDocPart rootDocPart = builder.buildMetaDocPart();
 		
 		builder.addRow(did, null, did, null, "jero",IsArray);
 		MockedDocPartResult root = builder.getResultSet();
@@ -349,7 +335,6 @@ public class R2DTranslatorTest {
 		MetaDocPartBuilder secondBuilder = new MetaDocPartBuilder(secondRef);
 		secondBuilder.addMetaScalar("v_i", FieldType.INTEGER);
 		secondBuilder.addMetaField("address", "address_s", FieldType.STRING);
-		MetaDocPart secondLevelDocPart = secondBuilder.buildMetaDocPart();
 		
 		secondBuilder.addRow(did, pid, 20, 0,  666,     null);
 		secondBuilder.addRow(did, pid, 21, 1, null, "myhome");

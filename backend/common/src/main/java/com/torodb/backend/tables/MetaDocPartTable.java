@@ -152,6 +152,19 @@ public abstract class MetaDocPartTable<TableRefType, R extends MetaDocPartRecord
             .add(RID)
             .build();
     
+    public final ImmutableList<InternalField<?>> READ_ROOT_FIELDS = ImmutableList.<InternalField<?>>builder()
+            .add(DID)
+            .build();
+    public final ImmutableList<InternalField<?>> READ_FIRST_FIELDS = ImmutableList.<InternalField<?>>builder()
+            .add(DID)
+            .add(SEQ)
+            .build();
+    public final ImmutableList<InternalField<?>> READ_FIELDS = ImmutableList.<InternalField<?>>builder()
+            .add(DID)
+            .add(PID)
+            .add(SEQ)
+            .build();
+    
     protected abstract TableField<R, String> createDatabaseField();
     protected abstract TableField<R, String> createCollectionField();
     protected abstract TableField<R, TableRefType> createTableRefField();

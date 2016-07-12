@@ -83,6 +83,29 @@ public abstract class AbstractStructureInterface implements StructureInterface {
     protected abstract String getDropTableStatement(String schemaName, String tableName);
 
     protected abstract String getDropSchemaStatement(String schemaName);
+
+    @Override
+    public void renameCollection(@Nonnull DSLContext dsl, @Nonnull String fromSchemaName, @Nonnull MetaCollection fromCollection, 
+            @Nonnull String toSchemaName, @Nonnull MetaCollection toCollection) {
+        Iterator<? extends MetaDocPart> metaDocPartIterator = fromCollection.streamContainedMetaDocParts().iterator();
+        while (metaDocPartIterator.hasNext()) {
+            MetaDocPart fromMetaDocPart = metaDocPartIterator.next();
+            MetaDocPart toMetaDocPart = toCollection.getMetaDocPartByTableRef(fromMetaDocPart.getTableRef());
+            String renameStatement = getRenameTableStatement(fromSchemaName, fromMetaDocPart.getIdentifier(), toMetaDocPart.getIdentifier());
+            sqlHelper.executeUpdate(dsl, renameStatement, Context.RENAME_TABLE);
+            
+            if (!fromSchemaName.equals(toSchemaName)) {
+                String setSchemaStatement = getSetTableSchemaStatement(fromSchemaName, fromMetaDocPart.getIdentifier(), toSchemaName);
+                sqlHelper.executeUpdate(dsl, setSchemaStatement, Context.SET_TABLE_SCHEMA);
+            }
+        }
+    }
+
+    protected abstract String getRenameTableStatement(String fromSchemaName, String fromTableName, 
+            String toTableName);
+
+    protected abstract String getSetTableSchemaStatement(String fromSchemaName, String fromTableName, 
+            String toSchemaName);
     
     @Override
     public void createIndex(@Nonnull DSLContext dsl,
@@ -129,17 +152,21 @@ public abstract class AbstractStructureInterface implements StructureInterface {
         sqlHelper.executeStatement(dsl, statement, Context.CREATE_TABLE);
     }
 
-    protected abstract String getCreateDocPartTableStatement(String schemaName, String tableName,
-            Collection<InternalField<?>> fields, Collection<InternalField<?>> primaryKeyFields);
-    
-
     @Override
     public void createDocPartTable(DSLContext dsl, String schemaName, String tableName, TableRef tableRef, String foreignTableName) {
         String statement = getCreateDocPartTableStatement(schemaName, tableName, metaDataReadInterface.getInternalFields(tableRef),
                 metaDataReadInterface.getPrimaryKeyInternalFields(tableRef),
                 metaDataReadInterface.getReferenceInternalFields(tableRef), foreignTableName, metaDataReadInterface.getForeignInternalFields(tableRef));
         sqlHelper.executeStatement(dsl, statement, Context.CREATE_TABLE);
+        String readIndexStatement = getCreateDocPartTableIndexStatement(schemaName, tableName, metaDataReadInterface.getReadInternalFields(tableRef));
+        sqlHelper.executeStatement(dsl, readIndexStatement, Context.CREATE_INDEX);
     }
+
+    protected abstract String getCreateDocPartTableStatement(String schemaName, String tableName,
+            Collection<InternalField<?>> fields, Collection<InternalField<?>> primaryKeyFields);
+
+    protected abstract String getCreateDocPartTableIndexStatement(String schemaName, String tableName,
+            Collection<InternalField<?>> indexedFields);
 
     protected abstract String getCreateDocPartTableStatement(String schemaName, String tableName,
             Collection<InternalField<?>> fields, Collection<InternalField<?>> primaryKeyFields, 

@@ -1,6 +1,13 @@
 
 package com.torodb.mongodb.commands;
 
+import java.util.Collections;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import javax.inject.Inject;
+
 import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.MongoDb30Commands.MongoDb30CommandsImplementationBuilder;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.AdminCommands.AdminCommandsImplementationsBuilder;
@@ -11,6 +18,7 @@ import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.L
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.ListCollectionsCommand.ListCollectionsResult;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.ListIndexesCommand.ListIndexesArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.ListIndexesCommand.ListIndexesResult;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.RenameCollectionCommand.RenameCollectionArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.aggregation.AggregationCommands.AggregationCommandsImplementationsBuilder;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.aggregation.CountCommand.CountArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.authentication.AuthenticationCommands.AuthenticationCommandsImplementationsBuilder;
@@ -67,13 +75,11 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.net.HostAndPort;
 import com.torodb.mongodb.commands.impl.NotImplementedCommandImplementation;
 import com.torodb.mongodb.commands.impl.admin.ListCollectionsImplementation;
+import com.torodb.mongodb.commands.impl.aggregation.CountImplementation;
+import com.torodb.mongodb.commands.impl.diagnostic.CollStatsImplementation;
+import com.torodb.mongodb.commands.impl.diagnostic.ListDatabasesImplementation;
 import com.torodb.mongodb.commands.impl.general.FindImplementation;
 import com.torodb.mongodb.core.ReadOnlyMongodTransaction;
-import java.util.Collections;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.stream.Collectors;
-import javax.inject.Inject;
 
 /**
  *
@@ -187,13 +193,25 @@ public class ReadOnlyTransactionCommandsExecutor implements CommandsExecutor<Rea
             return NotImplementedCommandImplementation.build();
         }
 
+        @Override
+        public CommandImplementation<RenameCollectionArgument, Empty, ? super ReadOnlyMongodTransaction> getRenameCollectionImplementation() {
+            return NotImplementedCommandImplementation.build();
+        }
+
     }
 
     static class MyAggregationCommandsImplementationBuilder extends AggregationCommandsImplementationsBuilder<ReadOnlyMongodTransaction> {
 
+        private final CountImplementation countImplementation;
+        
+        @Inject
+        public MyAggregationCommandsImplementationBuilder(CountImplementation countImplementation) {
+            this.countImplementation = countImplementation;
+        }
+
         @Override
-        public CommandImplementation<CountArgument, Long, ReadOnlyMongodTransaction> getCountImplementation() {
-            return NotImplementedCommandImplementation.build();
+        public CommandImplementation<CountArgument, Long, ? super ReadOnlyMongodTransaction> getCountImplementation() {
+            return countImplementation;
         }
 
     }
@@ -207,14 +225,26 @@ public class ReadOnlyTransactionCommandsExecutor implements CommandsExecutor<Rea
     }
 
     static class MyDiagnosticCommandsImplementationBuilder extends DiagnosticCommandsImplementationsBuilder<ReadOnlyMongodTransaction> {
-        @Override
-        public CommandImplementation<CollStatsArgument, CollStatsReply, ReadOnlyMongodTransaction> getCollStatsImplementation() {
-            return NotImplementedCommandImplementation.build();
+        
+        private final ListDatabasesImplementation listDatabasesImplementation;
+        private final CollStatsImplementation collStatsImplementation;
+        
+        @Inject
+        public MyDiagnosticCommandsImplementationBuilder(ListDatabasesImplementation listDatabasesImplementation,
+                CollStatsImplementation collStatsImplementation) {
+            super();
+            this.listDatabasesImplementation = listDatabasesImplementation;
+            this.collStatsImplementation = collStatsImplementation;
         }
 
         @Override
-        public CommandImplementation<Empty, ListDatabasesReply, ReadOnlyMongodTransaction> getListDatabasesImplementation() {
-            return NotImplementedCommandImplementation.build();
+        public CommandImplementation<CollStatsArgument, CollStatsReply, ? super ReadOnlyMongodTransaction> getCollStatsImplementation() {
+            return collStatsImplementation;
+        }
+
+        @Override
+        public CommandImplementation<Empty, ListDatabasesReply, ? super ReadOnlyMongodTransaction> getListDatabasesImplementation() {
+            return listDatabasesImplementation;
         }
 
         @Override

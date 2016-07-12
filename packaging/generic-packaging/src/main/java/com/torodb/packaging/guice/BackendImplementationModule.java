@@ -82,12 +82,12 @@ public class BackendImplementationModule extends AbstractModule implements Backe
         }
 
         @Override
-        public boolean inMemory() {
+        public boolean embedded() {
             return embedded;
         }
 
         @Override
-        public boolean embedded() {
+        public boolean inMemory() {
             return inMemory;
         }
     }

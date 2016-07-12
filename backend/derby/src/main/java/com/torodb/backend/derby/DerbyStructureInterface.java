@@ -50,6 +50,18 @@ public class DerbyStructureInterface extends AbstractStructureInterface {
     }
 
     @Override
+    protected String getRenameTableStatement(String fromSchemaName, String fromTableName, 
+            String toTableName) {
+        return "RENAME TABLE \"" + fromSchemaName + "\".\"" + fromTableName + "\" TO  \"" + toTableName + "\"";
+    }
+
+    @Override
+    protected String getSetTableSchemaStatement(String fromSchemaName, String fromTableName, 
+            String toSchemaName) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     protected String getDropSchemaStatement(String schemaName) {
         return "DROP SCHEMA \"" + schemaName + "\" RESTRICT";
     }
@@ -134,6 +146,22 @@ public class DerbyStructureInterface extends AbstractStructureInterface {
         } else {
             sb.append(')');
         }
+        return sb.toString();
+    }
+
+    @Override
+    protected String getCreateDocPartTableIndexStatement(String schemaName, String tableName,
+            Collection<InternalField<?>> indexFields) {
+        Preconditions.checkArgument(!indexFields.isEmpty());
+        SqlBuilder sb = new SqlBuilder("CREATE INDEX ");
+        sb.quote(tableName+"_idx");
+        sb.append(" ON ");
+        sb.table(schemaName, tableName)
+          .append(" (");
+        for (InternalField<?> field : indexFields) {
+            sb.quote(field.getName()).append(',');
+        }
+        sb.setLastChar(')');
         return sb.toString();
     }
 

@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import com.google.common.base.Charsets;
 import com.torodb.kvdocument.conversion.json.GsonJsonParser;
 import com.torodb.kvdocument.values.KVDocument;
 
@@ -41,7 +42,7 @@ public class SimpleDocumentFeed {
 
 	private static String getDocument(String name) {
 		try (InputStream is = SimpleDocumentFeed.class.getClassLoader().getResourceAsStream(name)) {
-			try (BufferedReader reader = new BufferedReader(new InputStreamReader(is))) {
+			try (BufferedReader reader = new BufferedReader(new InputStreamReader(is,Charsets.UTF_8))) {
 				StringBuffer sb = new StringBuffer();
 				String line = null;
 				while ((line = reader.readLine()) != null) {

@@ -160,6 +160,7 @@ public class DBCloner {
                 0,
                 0,
                 new QueryOptions(queryFlags),
+                null,
                 null
         );
         while (!cursor.isDead()) {

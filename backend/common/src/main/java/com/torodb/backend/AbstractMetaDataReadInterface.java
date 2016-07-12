@@ -35,6 +35,8 @@ import com.torodb.backend.ErrorHandler.Context;
 import com.torodb.backend.index.NamedDbIndex;
 import com.torodb.backend.tables.MetaDocPartTable;
 import com.torodb.core.TableRef;
+import com.torodb.core.transaction.metainf.MetaCollection;
+import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 
 /**
@@ -55,40 +57,50 @@ public abstract class AbstractMetaDataReadInterface implements MetaDataReadInter
     @Override
     public long getDatabaseSize(
             @Nonnull DSLContext dsl,
-            @Nonnull String databaseName
+            @Nonnull MetaDatabase database
             ) {
-    	String statement = getReadDatabaseSizeStatement(databaseName);
-    	return sqlHelper.executeStatementWithResult(dsl, statement, Context.FETCH)
-    	        .get(0).into(Long.class);
+    	String statement = getReadDatabaseSizeStatement(database.getName());
+    	return sqlHelper.executeStatementWithResult(dsl, statement, Context.FETCH, ps -> {
+	        ps.setString(1, database.getName());
+    	})
+        .get(0).into(Long.class);
     }
 
     protected abstract String getReadDatabaseSizeStatement(String databaseName);
 
     @Override
-    public Long getCollectionSize(
+    public long getCollectionSize(
             @Nonnull DSLContext dsl,
-            @Nonnull String schemaName,
-            @Nonnull String collection
+            @Nonnull MetaDatabase database,
+            @Nonnull MetaCollection collection
             ) {
-        String statement = getReadCollectionSizeStatement(schemaName, collection);
-        return sqlHelper.executeStatementWithResult(dsl, statement, Context.FETCH)
-                .get(0).into(Long.class);
+        String statement = getReadCollectionSizeStatement();
+        return sqlHelper.executeStatementWithResult(dsl, statement, Context.FETCH,
+                ps -> {
+                    ps.setString(1, database.getName());
+                    ps.setString(2, database.getIdentifier());
+                    ps.setString(3, collection.getName());
+                }).get(0).into(Long.class);
     }
 
-    protected abstract String getReadCollectionSizeStatement(String schema, String collection);
+    protected abstract String getReadCollectionSizeStatement();
 
     @Override
-    public Long getDocumentsSize(
+    public long getDocumentsSize(
             @Nonnull DSLContext dsl,
-            @Nonnull String schema,
-            String collection
+            @Nonnull MetaDatabase database,
+            @Nonnull MetaCollection collection
             ) {
-        String statement = getReadDocumentsSizeStatement(schema, collection);
-        return sqlHelper.executeStatementWithResult(dsl, statement, Context.FETCH)
-                .get(0).into(Long.class);
+        String statement = getReadDocumentsSizeStatement();
+        return sqlHelper.executeStatementWithResult(dsl, statement, Context.FETCH,
+                ps -> {
+                    ps.setString(1, database.getName());
+                    ps.setString(2, database.getIdentifier());
+                    ps.setString(3, collection.getName());
+                }).get(0).into(Long.class);
     }
 
-    protected abstract String getReadDocumentsSizeStatement(String schema, String collection);
+    protected abstract String getReadDocumentsSizeStatement();
 
     @Override
     public Long getIndexSize(
@@ -161,5 +173,21 @@ public abstract class AbstractMetaDataReadInterface implements MetaDataReadInter
             return metaDocPartTable.FOREIGN_FIRST_FIELDS;
         }
         return metaDocPartTable.FOREIGN_FIELDS;
+    }
+
+    @Override
+    public Collection<InternalField<?>> getReadInternalFields(MetaDocPart metaDocPart) {
+        TableRef tableRef = metaDocPart.getTableRef();
+        return getReadInternalFields(tableRef);
+    }
+
+    @Override
+    public Collection<InternalField<?>> getReadInternalFields(TableRef tableRef) {
+        if (tableRef.isRoot()) {
+            return metaDocPartTable.READ_ROOT_FIELDS;
+        } else if (tableRef.getParent().get().isRoot()) {
+            return metaDocPartTable.READ_FIRST_FIELDS;
+        }
+        return metaDocPartTable.READ_FIELDS;
     }
 }

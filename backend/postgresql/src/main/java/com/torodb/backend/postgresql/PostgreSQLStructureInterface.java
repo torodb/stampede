@@ -63,6 +63,18 @@ public class PostgreSQLStructureInterface extends AbstractStructureInterface {
     protected String getDropTableStatement(String schemaName, String tableName) {
         return "DROP TABLE \"" + schemaName + "\".\"" + tableName + "\"";
     }
+    
+    @Override
+    protected String getRenameTableStatement(String fromSchemaName, String fromTableName, 
+            String toTableName) {
+        return "ALTER TABLE \"" + fromSchemaName + "\".\"" + fromTableName + "\" RENAME TO \"" + toTableName + "\"";
+    }
+
+    @Override
+    protected String getSetTableSchemaStatement(String fromSchemaName, String fromTableName, 
+            String toSchemaName) {
+        return "ALTER TABLE \"" + fromSchemaName + "\".\"" + fromTableName + "\" SET SCHEMA = \"" + toSchemaName + "\"";
+    }
 
     @Override
     protected String getDropSchemaStatement(String schemaName) {
@@ -151,6 +163,20 @@ public class PostgreSQLStructureInterface extends AbstractStructureInterface {
         } else {
             sb.append(')');
         }
+        return sb.toString();
+    }
+
+    @Override
+    protected String getCreateDocPartTableIndexStatement(String schemaName, String tableName,
+            Collection<InternalField<?>> indexFields) {
+        Preconditions.checkArgument(!indexFields.isEmpty());
+        SqlBuilder sb = new SqlBuilder("CREATE INDEX ON ");
+        sb.table(schemaName, tableName)
+          .append(" (");
+        for (InternalField<?> field : indexFields) {
+            sb.quote(field.getName()).append(',');
+        }
+        sb.setLastChar(')');
         return sb.toString();
     }
 

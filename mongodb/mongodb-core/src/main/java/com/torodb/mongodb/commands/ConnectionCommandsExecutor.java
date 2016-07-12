@@ -11,6 +11,7 @@ import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.L
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.ListCollectionsCommand.ListCollectionsResult;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.ListIndexesCommand.ListIndexesArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.ListIndexesCommand.ListIndexesResult;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.RenameCollectionCommand.RenameCollectionArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.aggregation.AggregationCommands.AggregationCommandsImplementationsBuilder;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.aggregation.CountCommand.CountArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.authentication.AuthenticationCommands.AuthenticationCommandsImplementationsBuilder;
@@ -71,6 +72,7 @@ import com.torodb.mongodb.commands.impl.authentication.GetNonceImplementation;
 import com.torodb.mongodb.commands.impl.diagnostic.BuildInfoImplementation;
 import com.torodb.mongodb.commands.impl.diagnostic.GetLogImplementation;
 import com.torodb.mongodb.commands.impl.diagnostic.PingImplementation;
+import com.torodb.mongodb.commands.impl.diagnostic.ServerStatusImplementation;
 import com.torodb.mongodb.commands.impl.internal.WhatsMyUriImplementation;
 import com.torodb.mongodb.commands.impl.replication.IsMasterImplementation;
 import com.torodb.mongodb.core.MongodConnection;
@@ -192,6 +194,11 @@ public class ConnectionCommandsExecutor implements CommandsExecutor<MongodConnec
             return NotImplementedCommandImplementation.build();
         }
 
+        @Override
+        public CommandImplementation<RenameCollectionArgument, Empty, ? super MongodConnection> getRenameCollectionImplementation() {
+            return NotImplementedCommandImplementation.build();
+        }
+
     }
 
     static class MyAggregationCommandsImplementationBuilder extends AggregationCommandsImplementationsBuilder<MongodConnection> {
@@ -223,12 +230,17 @@ public class ConnectionCommandsExecutor implements CommandsExecutor<MongodConnec
         private final PingImplementation ping;
         private final GetLogImplementation getLog;
         private final BuildInfoImplementation buildInfo;
+        private final ServerStatusImplementation serverStatusImplementation;
 
         @Inject
-        public MyDiagnosticCommandsImplementationBuilder(PingImplementation ping, GetLogImplementation getLog, BuildInfoImplementation buildInfo) {
+        public MyDiagnosticCommandsImplementationBuilder(PingImplementation ping, 
+                GetLogImplementation getLog, 
+                BuildInfoImplementation buildInfo,
+                ServerStatusImplementation serverStatusImplementation) {
             this.ping = ping;
             this.getLog = getLog;
             this.buildInfo = buildInfo;
+            this.serverStatusImplementation = serverStatusImplementation;
         }
 
         @Override
@@ -248,7 +260,7 @@ public class ConnectionCommandsExecutor implements CommandsExecutor<MongodConnec
 
         @Override
         public CommandImplementation<ServerStatusArgument, ServerStatusReply, MongodConnection> getServerStatusImplementation() {
-            return NotImplementedCommandImplementation.build();
+            return serverStatusImplementation;
         }
 
         @Override

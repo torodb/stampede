@@ -49,11 +49,12 @@ public class IdentifierFactoryImpl implements IdentifierFactory {
     }
     
     @Override
-    public String toCollectionIdentifier(MetaDatabase metaDatabase, String collection) {
+    public String toCollectionIdentifier(MetaSnapshot metaSnapshot, String database, String collection) {
         NameChain nameChain = new NameChain(separatorString);
+        nameChain.add(database);
         nameChain.add(collection);
         
-        IdentifierChecker uniqueIdentifierChecker = new TableIdentifierChecker(metaDatabase);
+        IdentifierChecker uniqueIdentifierChecker = new CollectionIdentifierChecker(metaSnapshot);
         
         return generateUniqueIdentifier(nameChain, uniqueIdentifierChecker);
     }
@@ -92,9 +93,9 @@ public class IdentifierFactoryImpl implements IdentifierFactory {
         final Instant beginInstant = Instant.now();
         final int maxSize = identifierConstraints.identifierMaxSize();
         String lastCollision = null;
-        ChainConverterFactory chainConverterFactory = ChainConverterFactory.straight;
+        ChainConverterFactory straightConverterFactory = ChainConverterFactory.straight;
         Counter counter = new Counter();
-        String identifier = buildIdentifier(nameChain, chainConverterFactory.createConverters(), maxSize, counter, identifierChecker, extraImmutableName);
+        String identifier = buildIdentifier(nameChain, straightConverterFactory.getConverters(), maxSize, counter, identifierChecker, extraImmutableName);
         
         if (identifier.length() <= maxSize && identifierChecker.isUnique(identifier)) {
               return identifier;
@@ -105,9 +106,9 @@ public class IdentifierFactoryImpl implements IdentifierFactory {
         }
         
         ChainConverterFactory counterChainConverterFactory = ChainConverterFactory.counter;
-        NameConverter[] randomConverters = counterChainConverterFactory.createConverters();
+        NameConverter[] counterConverters = counterChainConverterFactory.getConverters();
         while (ChronoUnit.SECONDS.between(beginInstant, Instant.now()) < MAX_GENERATION_TIME) {
-            identifier = buildIdentifier(nameChain, randomConverters, maxSize, counter, identifierChecker, extraImmutableName);
+            identifier = buildIdentifier(nameChain, counterConverters, maxSize, counter, identifierChecker, extraImmutableName);
             
             if (identifier.length() > maxSize) {
                 throw new SystemException("Counter generator did not fit in maxSize!");
@@ -290,30 +291,39 @@ public class IdentifierFactoryImpl implements IdentifierFactory {
         }
     }
     
+    private static final NameConverters NameConverters=new NameConverters();
+    
+    
+    
+    
     private static enum ChainConverterFactory {
-        straight(NameConverterFactory.straight),
-        straight_cutvowels(NameConverterFactory.straight, NameConverterFactory.cutvowels, NameConverterFactory.straight),
-        straight_singlechar(NameConverterFactory.straight, NameConverterFactory.singlechar, NameConverterFactory.straight),
-        straight_hash(NameConverterFactory.straight, NameConverterFactory.hash, NameConverterFactory.straight),
-        first_straight_hash(NameConverterFactory.straight, NameConverterFactory.hash),
-        cutvowels(NameConverterFactory.cutvowels),
-        cutvowels_singlechar(NameConverterFactory.cutvowels, NameConverterFactory.singlechar, NameConverterFactory.cutvowels),
-        cutvowels_hash(NameConverterFactory.cutvowels, NameConverterFactory.hash, NameConverterFactory.cutvowels),
-        first_cutvowels_hash(NameConverterFactory.cutvowels, NameConverterFactory.hash),
-        hash(NameConverterFactory.hash),
-        hash_and_random(NameConverterFactory.hash_and_random),
-        counter(NameConverterFactory.counter);
+        straight(NameConverters.straight),
+        straight_cutvowels(NameConverters.straight, NameConverters.cutvowels, NameConverters.straight),
+        straight_singlechar(NameConverters.straight, NameConverters.singlechar, NameConverters.straight),
+        straight_hash(NameConverters.straight, NameConverters.hash, NameConverters.straight),
+        first_straight_hash(NameConverters.straight, NameConverters.hash),
+        cutvowels(NameConverters.cutvowels),
+        cutvowels_singlechar(NameConverters.cutvowels, NameConverters.singlechar, NameConverters.cutvowels),
+        cutvowels_hash(NameConverters.cutvowels, NameConverters.hash, NameConverters.cutvowels),
+        first_cutvowels_hash(NameConverters.cutvowels, NameConverters.hash),
+        hash(NameConverters.hash),
+        hash_and_random(NameConverters.hash_and_random),
+        counter(NameConverters.counter);
         
-        private final NameConverterFactory[] converterFactories;
+        private final NameConverter[] converters;
         
-        private ChainConverterFactory(NameConverterFactory...nameConverterFactories) {
-            this.converterFactories = nameConverterFactories;
+        private ChainConverterFactory(NameConverter...nameConverterFactories) {
+            this.converters = createConverters(nameConverterFactories);
         }
         
-        public NameConverter[] createConverters() {
+        public NameConverter[] getConverters(){
+        	return converters;
+        }
+        
+        private NameConverter[] createConverters(NameConverter[] converterFactories) {
             NameConverter[] converters = new NameConverter[3];
             
-            converters[0] = converterFactories[0].create();
+            converters[0] = converterFactories[0];
             converters[1] = converters[0];
             converters[2] = converters[0];
             
@@ -321,7 +331,7 @@ public class IdentifierFactoryImpl implements IdentifierFactory {
                 if (converterFactories[0] == converterFactories[1]) {
                     converters[1] = converters[0];
                 } else {
-                    converters[1] = converterFactories[1].create();
+                    converters[1] = converterFactories[1];
                 }
                 
                 converters[2] = converters[0];
@@ -333,7 +343,7 @@ public class IdentifierFactoryImpl implements IdentifierFactory {
                 } else if (converterFactories[1] == converterFactories[2]) {
                     converters[2] = converters[1];
                 } else {
-                    converters[2] = converterFactories[2].create();
+                    converters[2] = converterFactories[2];
                 }
             }
             
@@ -341,131 +351,100 @@ public class IdentifierFactoryImpl implements IdentifierFactory {
         }
     }
     
-    private static enum NameConverterFactory {
-        straight {
-            private final NameConverter nameConverter = new NameConverter() {
-                @Override
-                public String convert(String name, char separator, int maxSize, Counter counter) {
-                    return name;
-                }
-            };
-            
-            public NameConverter create() {
-                return nameConverter;
-            }
-        },
-        cutvowels {
-            public NameConverter create() {
-                return new NameConverter() {
-                    private final Pattern pattern = Pattern.compile("([a-z])[aeiou]+");
-                    
-                    @Override
-                    public String convert(String name, char separator, int maxSize, Counter counter) {
-                        return pattern.matcher(name).replaceAll("$1");
-                    }
-                };
-            }
-        },
-        singlechar {
-            private final NameConverter nameConverter = new NameConverter() {
-                @Override
-                public String convert(String name, char separator, int maxSize, Counter counter) {
-                    if (name.isEmpty()) {
-                        return name;
-                    }
-                    
-                    return "" + name.charAt(0);
-                }
-            };
-            
-            public NameConverter create() {
-                return nameConverter;
-            }
-        },
-        hash {
-            private final NameConverter nameConverter = new NameConverter() {
-                @Override
-                public String convert(String name, char separator, int maxSize, Counter counter) {
-                    String value = separator + 'x' + Integer.toHexString(name.hashCode());
-                    
-                    if (name.length() + value.length() < maxSize) {
-                        return name + value;
-                    }
-                    
-                    int availableSize = Math.min(name.length(), maxSize) - value.length();
-                    return name.substring(0, availableSize / 2 + availableSize % 2) 
-                            + name.substring(name.length() - availableSize / 2, name.length())
-                            + value;
-                }
-                
-                @Override
-                public boolean convertWhole() {
-                    return true;
-                }
-            };
-            
-            public NameConverter create() {
-                return nameConverter;
-            }
-        },
-        hash_and_random {
-            private final NameConverter nameConverter = new NameConverter() {
-                private final Random random = new Random();
-                
-                @Override
-                public String convert(String name, char separator, int maxSize, Counter counter) {
-                    String value = separator + 'x' + Integer.toHexString(name.hashCode())
-                        + separator + 'r' + Integer.toHexString(random.nextInt());
-                    
-                    if (name.length() + value.length() < maxSize) {
-                        return name + value;
-                    }
-                    
-                    int availableSize = Math.min(name.length(), maxSize) - value.length();
-                    return name.substring(0, availableSize / 2 + availableSize % 2) 
-                            + name.substring(name.length() - availableSize / 2, name.length())
-                            + value;
-                }
-                
-                @Override
-                public boolean convertWhole() {
-                    return true;
-                }
-            };
-            
-            public NameConverter create() {
-                return nameConverter;
-            }
-        },
-        counter {
-            private final NameConverter nameConverter = new NameConverter() {
-                @Override
-                public String convert(String name, char separator, int maxSize, Counter counter) {
-                    String value = separator + String.valueOf(counter.get());
-                    
-                    if (name.length() + value.length() < maxSize) {
-                        return name + value;
-                    }
-                    
-                    int availableSize = Math.min(name.length(), maxSize) - value.length();
-                    return name.substring(0, availableSize / 2 + availableSize % 2) 
-                            + name.substring(name.length() - availableSize / 2, name.length())
-                            + value;
-                }
-                
-                @Override
-                public boolean convertWhole() {
-                    return true;
-                }
-            };
-            
-            public NameConverter create() {
-                return nameConverter;
-            }
-        };
-        
-        public abstract NameConverter create();
-    }
+    
+	private static class NameConverters {
+		
+		public NameConverter straight = new NameConverter() {
+			@Override
+			public String convert(String name, char separator, int maxSize, Counter counter) {
+				return name;
+			}
+		};
+
+		public NameConverter cutvowels = new NameConverter() {
+			private final Pattern pattern = Pattern.compile("([a-z])[aeiou]+");
+
+			@Override
+			public String convert(String name, char separator, int maxSize, Counter counter) {
+				return pattern.matcher(name).replaceAll("$1");
+			}
+		};
+
+		public NameConverter singlechar = new NameConverter() {
+			@Override
+			public String convert(String name, char separator, int maxSize, Counter counter) {
+				if (name.isEmpty()) {
+					return name;
+				}
+
+				return "" + name.charAt(0);
+			}
+		};
+
+		public NameConverter hash = new NameConverter() {
+			@Override
+			public String convert(String name, char separator, int maxSize, Counter counter) {
+				String value = separator + 'x' + Integer.toHexString(name.hashCode());
+
+				if (name.length() + value.length() < maxSize) {
+					return name + value;
+				}
+
+				int availableSize = Math.min(name.length(), maxSize) - value.length();
+				return name.substring(0, availableSize / 2 + availableSize % 2)
+						+ name.substring(name.length() - availableSize / 2, name.length()) + value;
+			}
+
+			@Override
+			public boolean convertWhole() {
+				return true;
+			}
+		};
+
+		public NameConverter hash_and_random = new NameConverter() {
+			private final Random random = new Random();
+
+			@Override
+			public String convert(String name, char separator, int maxSize, Counter counter) {
+				String value = separator + 'x' + Integer.toHexString(name.hashCode()) + separator + 'r'
+						+ Integer.toHexString(random.nextInt());
+
+				if (name.length() + value.length() < maxSize) {
+					return name + value;
+				}
+
+				int availableSize = Math.min(name.length(), maxSize) - value.length();
+				return name.substring(0, availableSize / 2 + availableSize % 2)
+						+ name.substring(name.length() - availableSize / 2, name.length()) + value;
+			}
+
+			@Override
+			public boolean convertWhole() {
+				return true;
+			}
+		};
+
+		public NameConverter counter = new NameConverter() {
+			@Override
+			public String convert(String name, char separator, int maxSize, Counter counter) {
+				String value = separator + String.valueOf(counter.get());
+
+				if (name.length() + value.length() < maxSize) {
+					return name + value;
+				}
+
+				int availableSize = Math.min(name.length(), maxSize) - value.length();
+				return name.substring(0, availableSize / 2 + availableSize % 2)
+						+ name.substring(name.length() - availableSize / 2, name.length()) + value;
+			}
+
+			@Override
+			public boolean convertWhole() {
+				return true;
+			}
+		};
+
+	}
     
     private abstract static class NameConverter {
         public abstract String convert(String name, char separator, int maxSize, Counter counter);
@@ -502,6 +481,25 @@ public class IdentifierFactoryImpl implements IdentifierFactory {
         @Override
         public boolean isUnique(String identifier) {
             return metaSnapshot.getMetaDatabaseByIdentifier(identifier) == null;
+        }
+
+        @Override
+        public boolean isAllowed(IdentifierConstraints identifierInterface, String identifier) {
+            return identifierInterface.isAllowedSchemaIdentifier(identifier);
+        }
+    }
+    
+    private static class CollectionIdentifierChecker implements IdentifierChecker {
+        private final MetaSnapshot metaSnapshot;
+        
+        public CollectionIdentifierChecker(MetaSnapshot metaSnapshot) {
+            super();
+            this.metaSnapshot = metaSnapshot;
+        }
+        
+        @Override
+        public boolean isUnique(String identifier) {
+            return metaSnapshot.streamMetaDatabases().noneMatch(metaDatabase -> metaDatabase.getMetaCollectionByIdentifier(identifier) != null);
         }
 
         @Override

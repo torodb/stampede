@@ -21,7 +21,7 @@ public class SimpleDocumentTraslationStackStress {
 
 	public static void main(String[] args) {
 		
-		MvccMetainfoRepository mvccMetainfoRepository = new MvccMetainfoRepository(InitialView);
+		MvccMetainfoRepository mvccMetainfoRepository = new MvccMetainfoRepository(initialView);
 		
 		AtomicLong cont=new AtomicLong(0);
 		Stopwatch timer = Stopwatch.createUnstarted();

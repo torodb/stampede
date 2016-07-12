@@ -89,6 +89,18 @@ public class PostgreSQLReadInterface extends AbstractReadInterface {
     }
 
     @Override
+    protected String getReadCountAllStatement(String schemaName, String rootTableName) {
+        StringBuilder sb = new StringBuilder()
+                .append("SELECT COUNT(1) FROM \"")
+                .append(schemaName)
+                .append("\".\"")
+                .append(rootTableName)
+                .append('"');
+        String statement = sb.toString();
+        return statement;
+    }
+
+    @Override
     protected String getDocPartStatament(MetaDatabase metaDatabase, MetaDocPart metaDocPart,
             Collection<Integer> dids) {
         StringBuilder sb = new StringBuilder()
@@ -127,7 +139,7 @@ public class PostgreSQLReadInterface extends AbstractReadInterface {
         sb.setCharAt(sb.length() - 1, ')');
         if (!metaDocPart.getTableRef().isRoot()) {
             sb.append(" ORDER BY ");
-            for (InternalField<?> internalField : internalFields) {
+            for (InternalField<?> internalField : metaDataReadInterface.getReadInternalFields(metaDocPart)) {
                 sb
                     .append('"')
                     .append(internalField.getName())

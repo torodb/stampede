@@ -1,6 +1,14 @@
 
 package com.torodb.mongodb.commands;
 
+import java.util.Collections;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.MongoDb30Commands.MongoDb30CommandsImplementationBuilder;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.AdminCommands.AdminCommandsImplementationsBuilder;
@@ -11,6 +19,7 @@ import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.L
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.ListCollectionsCommand.ListCollectionsResult;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.ListIndexesCommand.ListIndexesArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.ListIndexesCommand.ListIndexesResult;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.RenameCollectionCommand.RenameCollectionArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.aggregation.AggregationCommands.AggregationCommandsImplementationsBuilder;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.aggregation.CountCommand.CountArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.authentication.AuthenticationCommands.AuthenticationCommandsImplementationsBuilder;
@@ -67,18 +76,14 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.net.HostAndPort;
 import com.torodb.core.annotations.DoNotChange;
 import com.torodb.mongodb.commands.impl.NotImplementedCommandImplementation;
+import com.torodb.mongodb.commands.impl.admin.CreateCollectionImplementation;
 import com.torodb.mongodb.commands.impl.admin.DropCollectionImplementation;
 import com.torodb.mongodb.commands.impl.admin.DropDatabaseImplementation;
+import com.torodb.mongodb.commands.impl.admin.RenameCollectionImplementation;
 import com.torodb.mongodb.commands.impl.general.DeleteImplementation;
 import com.torodb.mongodb.commands.impl.general.InsertImplementation;
 import com.torodb.mongodb.commands.impl.general.UpdateImplementation;
 import com.torodb.mongodb.core.WriteMongodTransaction;
-import java.util.Collections;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 /**
  *
@@ -160,15 +165,21 @@ public class WriteTransactionCommandsExecutor implements CommandsExecutor<WriteM
     }
 
     static class MyAdminCommandsImplementationBuilder extends AdminCommandsImplementationsBuilder<WriteMongodTransaction> {
+        private final CreateCollectionImplementation createCollectionImplementation;
         private final DropCollectionImplementation dropCollectionImplementation;
         private final DropDatabaseImplementation dropDatabaseImplementation;
+        private final RenameCollectionImplementation renameCollectionImplementation;
         
         @Inject
         public MyAdminCommandsImplementationBuilder(
+                CreateCollectionImplementation createCollectionImplementation,
                 DropCollectionImplementation dropCollectionImplementation,
-                DropDatabaseImplementation dropDatabaseImplementation) {
+                DropDatabaseImplementation dropDatabaseImplementation,
+                RenameCollectionImplementation renameCollectionImplementation) {
+            this.createCollectionImplementation = createCollectionImplementation;
             this.dropCollectionImplementation = dropCollectionImplementation;
             this.dropDatabaseImplementation = dropDatabaseImplementation;
+            this.renameCollectionImplementation = renameCollectionImplementation;
         }
 
         @Override
@@ -188,7 +199,7 @@ public class WriteTransactionCommandsExecutor implements CommandsExecutor<WriteM
 
         @Override
         public CommandImplementation<CreateCollectionArgument, Empty, WriteMongodTransaction> getCreateCollectionImplementation() {
-            return NotImplementedCommandImplementation.build();
+            return createCollectionImplementation;
         }
 
         @Override
@@ -199,6 +210,11 @@ public class WriteTransactionCommandsExecutor implements CommandsExecutor<WriteM
         @Override
         public CommandImplementation<CreateIndexesArgument, CreateIndexesResult, WriteMongodTransaction> getCreateIndexesImplementation() {
             return NotImplementedCommandImplementation.build();
+        }
+
+        @Override
+        public CommandImplementation<RenameCollectionArgument, Empty, ? super WriteMongodTransaction> getRenameCollectionImplementation() {
+            return renameCollectionImplementation;
         }
 
     }

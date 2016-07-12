@@ -37,6 +37,7 @@ import org.apache.derby.jdbc.EmbeddedDataSource;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.google.common.base.Charsets;
 import com.torodb.core.exceptions.SystemException;
 
 /**
@@ -56,7 +57,7 @@ public class OfficialDerbyDriver implements DerbyDriverProvider {
         public void write(int b) {}
         @Override
         public void write(byte b[], int off, int len) throws IOException {
-            LOGGER_WRITER.write(new String(b, off, len));
+            LOGGER_WRITER.write(new String(b, off, len,Charsets.UTF_8));
         }
     };
     public static final OutputStream NO_OUTPUT = new OutputStream() {
@@ -82,8 +83,9 @@ public class OfficialDerbyDriver implements DerbyDriverProvider {
             } else {
                 embeddedDataSource.setDatabaseName(configuration.getDbName());
             }
-            try {
-                embeddedDataSource.getConnection();
+            
+            try (Connection connection = embeddedDataSource.getConnection()){
+            	LOGGER.debug("Derby test connection has been successfully created.");
             } catch (SQLException ex) {
                 throw new SystemException(ex);
             }

@@ -1,35 +1,35 @@
 
 package com.torodb.mongodb.commands.impl.general;
 
+import java.util.List;
+import java.util.OptionalLong;
+
+import javax.inject.Singleton;
+
 import com.eightkdata.mongowp.ErrorCode;
 import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.bson.BsonDocument;
-import com.eightkdata.mongowp.bson.BsonDocument.Entry;
 import com.eightkdata.mongowp.exceptions.CommandFailed;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.FindCommand.FindArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.FindCommand.FindResult;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.CursorResult;
 import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.Request;
-import com.google.common.base.Splitter;
 import com.torodb.core.cursors.Cursor;
 import com.torodb.core.language.AttributeReference;
 import com.torodb.core.language.AttributeReference.Builder;
-import com.torodb.kvdocument.conversion.mongowp.MongoWPConverter;
 import com.torodb.kvdocument.conversion.mongowp.ToBsonDocumentTranslator;
 import com.torodb.kvdocument.values.KVDocument;
 import com.torodb.kvdocument.values.KVValue;
 import com.torodb.mongodb.commands.impl.ReadTorodbCommandImpl;
 import com.torodb.mongodb.core.MongodTransaction;
 import com.torodb.torod.TorodTransaction;
-import java.util.List;
-import javax.inject.Singleton;
 
 /**
  *
  */
 @Singleton
-public class FindImplementation extends ReadTorodbCommandImpl<FindArgument, FindResult> {
+public class FindImplementation implements ReadTorodbCommandImpl<FindArgument, FindResult> {
 
     @Override
     public Status<FindResult> apply(Request req, Command<? super FindArgument, ? super FindResult> command, FindArgument arg, MongodTransaction context) {
@@ -58,7 +58,12 @@ public class FindImplementation extends ReadTorodbCommandImpl<FindArgument, Find
             }
         }
 
-        List<BsonDocument> batch = cursor.getNextBatch(100);
+        if (Long.valueOf(arg.getBatchSize()) > (long) Integer.MAX_VALUE) {
+            return Status.from(ErrorCode.COMMAND_FAILED, "Only batchSize equals or lower than " + Integer.MAX_VALUE + " is supported");
+        }
+        
+        OptionalLong batchSize = arg.getEffectiveBatchSize();
+        List<BsonDocument> batch = cursor.getNextBatch(batchSize.isPresent() ? (int) batchSize.getAsLong() : 101);
         cursor.close();
 
         return Status.ok(new FindResult(CursorResult.createSingleBatchCursor(req.getDatabase(), arg.getCollection(), batch.iterator())));
@@ -68,31 +73,10 @@ public class FindImplementation extends ReadTorodbCommandImpl<FindArgument, Find
     private Cursor<KVDocument> getByAttributeCursor(TorodTransaction transaction, String db, String col, BsonDocument filter) throws CommandFailed {
 
         Builder refBuilder = new AttributeReference.Builder();
-        KVValue<?> kvValue = calculateValueAndAttRef(filter, refBuilder);
+        KVValue<?> kvValue = AttrRefHelper.calculateValueAndAttRef(filter, refBuilder);
 
         return transaction.findByAttRef(db, col, refBuilder.build(), kvValue)
                 .transform(t -> t.getRoot());
-    }
-
-    private KVValue<?> calculateValueAndAttRef(BsonDocument doc, AttributeReference.Builder refBuilder) throws CommandFailed {
-        if (doc.size() != 1) {
-            throw new CommandFailed("find", "The given query is not supported right now");
-        }
-        Entry<?> entry = doc.getFirstEntry();
-
-        for (String subKey : Splitter.on('.').split(entry.getKey())) {
-            refBuilder.addObjectKey(subKey);
-        }
-
-        if (entry.getValue().isArray()) {
-            throw new CommandFailed("find", "Filters with arrays are not supported right now");
-        }
-        if (entry.getValue().isDocument()) {
-            return calculateValueAndAttRef(entry.getValue().asDocument(), refBuilder);
-        }
-        else {
-            return MongoWPConverter.translate(entry.getValue());
-        }
     }
 
 }

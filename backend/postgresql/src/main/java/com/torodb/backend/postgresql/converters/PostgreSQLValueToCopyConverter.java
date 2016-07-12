@@ -146,6 +146,7 @@ public class PostgreSQLValueToCopyConverter implements KVValueVisitor<Void, Stri
                     appender.append('\\');
                     break;
                 default:
+                	break;
             }
             appender.append(c);
             i++;

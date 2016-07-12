@@ -37,10 +37,7 @@ public class TestData {
     public final MutableMetaDocPart newSubDocPart;
     public final ImmutableList<KVDocument> documents;
     
-    private SqlInterface sqlInterface;
-    
     public TestData(TableRefFactory tableRefFactory, SqlInterface sqlInterface){
-    	this.sqlInterface = sqlInterface;
         ImmutableMetaSnapshot.Builder metaSnapshotBuilder = new ImmutableMetaSnapshot.Builder();
         ImmutableMetaDatabase.Builder metaDatabaseBuilder = new ImmutableMetaDatabase.Builder("databaseName", "databaseSchemaName");
         ImmutableMetaCollection.Builder metaCollectionBuilder = new ImmutableMetaCollection.Builder("collectionName", "collectionIdentifier");
