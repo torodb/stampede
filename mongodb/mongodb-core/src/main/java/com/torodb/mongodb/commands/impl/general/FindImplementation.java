@@ -2,6 +2,7 @@
 package com.torodb.mongodb.commands.impl.general;
 
 import java.util.List;
+import java.util.OptionalLong;
 
 import javax.inject.Singleton;
 
@@ -61,7 +62,8 @@ public class FindImplementation implements ReadTorodbCommandImpl<FindArgument, F
             return Status.from(ErrorCode.COMMAND_FAILED, "Only batchSize equals or lower than " + Integer.MAX_VALUE + " is supported");
         }
         
-        List<BsonDocument> batch = cursor.getNextBatch((int) arg.getBatchSize());
+        OptionalLong batchSize = arg.getEffectiveBatchSize();
+        List<BsonDocument> batch = cursor.getNextBatch(batchSize.isPresent() ? (int) batchSize.getAsLong() : 101);
         cursor.close();
 
         return Status.ok(new FindResult(CursorResult.createSingleBatchCursor(req.getDatabase(), arg.getCollection(), batch.iterator())));
