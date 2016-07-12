@@ -6,6 +6,7 @@ import com.torodb.core.backend.BackendConnection;
 import com.torodb.core.backend.BackendTransaction;
 import com.torodb.core.backend.ReadOnlyBackendTransaction;
 import com.torodb.core.backend.WriteBackendTransaction;
+import com.torodb.core.d2r.IdentifierFactory;
 import com.torodb.core.d2r.R2DTranslator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -20,12 +21,14 @@ public class BackendConnectionImpl implements BackendConnection {
     private final SqlInterface sqlInterface;
     private boolean closed = false;
     private final R2DTranslator r2dTranslator;
+    private final IdentifierFactory identifierFactory;
     private BackendTransaction currentTransaction;
 
-    public BackendConnectionImpl(BackendImpl backend, SqlInterface sqlInterface, R2DTranslator r2dTranslator) {
+    public BackendConnectionImpl(BackendImpl backend, SqlInterface sqlInterface, R2DTranslator r2dTranslator, IdentifierFactory identifierFactory) {
         this.backend = backend;
         this.sqlInterface = sqlInterface;
         this.r2dTranslator = r2dTranslator;
+        this.identifierFactory = identifierFactory;
     }
 
     @Override
@@ -44,7 +47,7 @@ public class BackendConnectionImpl implements BackendConnection {
         Preconditions.checkState(!closed, "This connection is closed");
         Preconditions.checkState(currentTransaction == null, "Another transaction is currently under execution. Transaction is " + currentTransaction);
 
-        WriteBackendTransactionImpl transaction = new WriteBackendTransactionImpl(sqlInterface, this, r2dTranslator);
+        WriteBackendTransactionImpl transaction = new WriteBackendTransactionImpl(sqlInterface, this, r2dTranslator, identifierFactory);
         currentTransaction = transaction;
 
         return transaction;

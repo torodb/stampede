@@ -50,6 +50,18 @@ public class DerbyStructureInterface extends AbstractStructureInterface {
     }
 
     @Override
+    protected String getRenameTableStatement(String fromSchemaName, String fromTableName, 
+            String toTableName) {
+        return "RENAME TABLE \"" + fromSchemaName + "\".\"" + fromTableName + "\" TO  \"" + toTableName + "\"";
+    }
+
+    @Override
+    protected String getSetTableSchemaStatement(String fromSchemaName, String fromTableName, 
+            String toSchemaName) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     protected String getDropSchemaStatement(String schemaName) {
         return "DROP SCHEMA \"" + schemaName + "\" RESTRICT";
     }

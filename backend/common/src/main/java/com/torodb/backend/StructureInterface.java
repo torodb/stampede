@@ -13,6 +13,8 @@ public interface StructureInterface {
     void createSchema(@Nonnull DSLContext dsl, @Nonnull String schemaName);
     void dropDatabase(@Nonnull DSLContext dsl, @Nonnull MetaDatabase metaDatabase);
     void dropCollection(@Nonnull DSLContext dsl, @Nonnull String schemaName, @Nonnull MetaCollection metaCollection);
+    void renameCollection(@Nonnull DSLContext dsl, @Nonnull String fromSchemaName, @Nonnull MetaCollection fromCollection, 
+            @Nonnull String toSchemaName, @Nonnull MetaCollection toCollection);
     void createRootDocPartTable(@Nonnull DSLContext dsl, @Nonnull String schemaName, @Nonnull String tableName, @Nonnull TableRef tableRef);
     void createDocPartTable(@Nonnull DSLContext dsl, @Nonnull String schemaName, @Nonnull String tableName, @Nonnull TableRef tableRef,
             @Nonnull String foreignTableName);

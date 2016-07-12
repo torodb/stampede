@@ -31,6 +31,7 @@ import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetaField;
 import com.torodb.core.transaction.metainf.MetaScalar;
 import com.torodb.core.transaction.metainf.MutableMetaCollection;
+import com.torodb.core.transaction.metainf.MutableMetaDatabase;
 import com.torodb.kvdocument.values.KVDocument;
 import com.torodb.kvdocument.values.KVValue;
 
@@ -65,6 +66,18 @@ public interface WriteBackendTransaction extends BackendTransaction {
      * @throws RollbackException
      */
     public void dropCollection(MetaDatabase db, MetaCollection coll) throws RollbackException;
+
+    /**
+     * Rename an existing collection.
+     *
+     * @param fromDb     the database that contains the collection to rename.
+     * @param fromColl the collection to rename.
+     * @param toDb     the database that will contain the renamed collection.
+     * @param toColl the renamed collection.
+     * @throws BackendException
+     * @throws RollbackException
+     */
+    public void renameCollection(MetaDatabase fromDb, MetaCollection fromColl, MutableMetaDatabase toDb, MutableMetaCollection toColl) throws RollbackException;
 
     /**
      * Drop an existing database.

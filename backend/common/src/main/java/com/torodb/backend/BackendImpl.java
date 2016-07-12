@@ -1,6 +1,11 @@
 
 package com.torodb.backend;
 
+import javax.inject.Inject;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.torodb.backend.meta.SchemaUpdater;
 import com.torodb.backend.meta.SnapshotUpdater;
@@ -8,11 +13,9 @@ import com.torodb.backend.rid.MaxRowIdFactory;
 import com.torodb.core.TableRefFactory;
 import com.torodb.core.backend.Backend;
 import com.torodb.core.backend.BackendConnection;
+import com.torodb.core.d2r.IdentifierFactory;
 import com.torodb.core.d2r.R2DTranslator;
 import com.torodb.core.transaction.metainf.MetainfoRepository;
-import javax.inject.Inject;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  *
@@ -29,11 +32,12 @@ public class BackendImpl extends AbstractIdleService implements Backend {
     private final TableRefFactory tableRefFactory;
     private final MaxRowIdFactory maxRowIdFactory;
     private final R2DTranslator r2dTranslator;
+    private final IdentifierFactory identifierFactory;
 
     @Inject
     public BackendImpl(DbBackendService dbBackendService, SqlInterface sqlInterface, SqlHelper sqlHelper, SchemaUpdater schemaUpdater, 
             MetainfoRepository metainfoRepository, TableRefFactory tableRefFactory, MaxRowIdFactory maxRowIdFactory,
-            R2DTranslator r2dTranslator) {
+            R2DTranslator r2dTranslator, IdentifierFactory identifierFactory) {
         this.dbBackendService = dbBackendService;
         this.sqlInterface = sqlInterface;
         this.sqlHelper = sqlHelper;
@@ -42,10 +46,12 @@ public class BackendImpl extends AbstractIdleService implements Backend {
         this.tableRefFactory = tableRefFactory;
         this.maxRowIdFactory = maxRowIdFactory;
         this.r2dTranslator = r2dTranslator;
+        this.identifierFactory = identifierFactory;
     }
+    
     @Override
     public BackendConnection openConnection() {
-        return new BackendConnectionImpl(this, sqlInterface, r2dTranslator);
+        return new BackendConnectionImpl(this, sqlInterface, r2dTranslator, identifierFactory);
     }
 
     @Override

@@ -63,6 +63,18 @@ public class PostgreSQLStructureInterface extends AbstractStructureInterface {
     protected String getDropTableStatement(String schemaName, String tableName) {
         return "DROP TABLE \"" + schemaName + "\".\"" + tableName + "\"";
     }
+    
+    @Override
+    protected String getRenameTableStatement(String fromSchemaName, String fromTableName, 
+            String toTableName) {
+        return "ALTER TABLE \"" + fromSchemaName + "\".\"" + fromTableName + "\" RENAME TO \"" + toTableName + "\"";
+    }
+
+    @Override
+    protected String getSetTableSchemaStatement(String fromSchemaName, String fromTableName, 
+            String toSchemaName) {
+        return "ALTER TABLE \"" + fromSchemaName + "\".\"" + fromTableName + "\" SET SCHEMA = \"" + toSchemaName + "\"";
+    }
 
     @Override
     protected String getDropSchemaStatement(String schemaName) {

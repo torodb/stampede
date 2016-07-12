@@ -83,6 +83,29 @@ public abstract class AbstractStructureInterface implements StructureInterface {
     protected abstract String getDropTableStatement(String schemaName, String tableName);
 
     protected abstract String getDropSchemaStatement(String schemaName);
+
+    @Override
+    public void renameCollection(@Nonnull DSLContext dsl, @Nonnull String fromSchemaName, @Nonnull MetaCollection fromCollection, 
+            @Nonnull String toSchemaName, @Nonnull MetaCollection toCollection) {
+        Iterator<? extends MetaDocPart> metaDocPartIterator = fromCollection.streamContainedMetaDocParts().iterator();
+        while (metaDocPartIterator.hasNext()) {
+            MetaDocPart fromMetaDocPart = metaDocPartIterator.next();
+            MetaDocPart toMetaDocPart = toCollection.getMetaDocPartByTableRef(fromMetaDocPart.getTableRef());
+            String renameStatement = getRenameTableStatement(fromSchemaName, fromMetaDocPart.getIdentifier(), toMetaDocPart.getIdentifier());
+            sqlHelper.executeUpdate(dsl, renameStatement, Context.RENAME_TABLE);
+            
+            if (!fromSchemaName.equals(toSchemaName)) {
+                String setSchemaStatement = getSetTableSchemaStatement(fromSchemaName, fromMetaDocPart.getIdentifier(), toSchemaName);
+                sqlHelper.executeUpdate(dsl, setSchemaStatement, Context.SET_TABLE_SCHEMA);
+            }
+        }
+    }
+
+    protected abstract String getRenameTableStatement(String fromSchemaName, String fromTableName, 
+            String toTableName);
+
+    protected abstract String getSetTableSchemaStatement(String fromSchemaName, String fromTableName, 
+            String toSchemaName);
     
     @Override
     public void createIndex(@Nonnull DSLContext dsl,

@@ -26,7 +26,6 @@ import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetaField;
-import com.torodb.core.transaction.metainf.MetaSnapshot;
 import com.torodb.core.transaction.metainf.MutableMetaCollection;
 import com.torodb.core.transaction.metainf.MutableMetaDatabase;
 import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
@@ -65,32 +64,45 @@ public class WriteTorodTransaction extends TorodTransaction {
 
     @Nonnull
     private MutableMetaDatabase getOrCreateMetaDatabase(String dbName) {
-        Preconditions.checkState(!isClosed());
         MutableMetaSnapshot metaSnapshot = internalTransaction.getMetaSnapshot();
         MutableMetaDatabase metaDb = metaSnapshot.getMetaDatabaseByName(dbName);
 
         if (metaDb == null) {
-            metaDb = metaSnapshot.addMetaDatabase(
-                    dbName,
-                    getConnection().getServer().getIdentifierFactory().toDatabaseIdentifier(metaSnapshot, dbName)
-            );
-            internalTransaction.getBackendConnection().addDatabase(metaDb);
+            metaDb = createMetaDatabase(dbName);
         }
         return metaDb;
     }
 
-    private MutableMetaCollection getOrCreateMetaCollection(@Nonnull MutableMetaDatabase metaDb, String colName) {
+    public MutableMetaDatabase createMetaDatabase(String dbName) {
         Preconditions.checkState(!isClosed());
+        MutableMetaSnapshot metaSnapshot = internalTransaction.getMetaSnapshot();
+        MutableMetaDatabase metaDb = metaSnapshot.addMetaDatabase(
+                dbName,
+                getConnection().getServer().getIdentifierFactory().toDatabaseIdentifier(
+                        metaSnapshot, dbName)
+        );
+        internalTransaction.getBackendConnection().addDatabase(metaDb);
+        return metaDb;
+    }
+
+    private MutableMetaCollection getOrCreateMetaCollection(@Nonnull MutableMetaDatabase metaDb, String colName) {
         MutableMetaCollection metaCol = metaDb.getMetaCollectionByName(colName);
 
         if (metaCol == null) {
-            metaCol = metaDb.addMetaCollection(
-                    colName,
-                    getConnection().getServer().getIdentifierFactory().toCollectionIdentifier(
-                            internalTransaction.getMetaSnapshot(), metaDb.getName(), colName)
-            );
-            internalTransaction.getBackendConnection().addCollection(metaDb, metaCol);
+            metaCol = createMetaCollection(metaDb, colName);
         }
+        return metaCol;
+    }
+
+    public MutableMetaCollection createMetaCollection(MutableMetaDatabase metaDb, String colName) {
+        MutableMetaCollection metaCol;
+        Preconditions.checkState(!isClosed());
+        metaCol = metaDb.addMetaCollection(
+                colName,
+                getConnection().getServer().getIdentifierFactory().toCollectionIdentifier(
+                        internalTransaction.getMetaSnapshot(), metaDb.getName(), colName)
+        );
+        internalTransaction.getBackendConnection().addCollection(metaDb, metaCol);
         return metaCol;
     }
 
@@ -173,6 +185,18 @@ public class WriteTorodTransaction extends TorodTransaction {
         internalTransaction.getBackendConnection().dropCollection(metaDb, metaColl);
 
         metaDb.removeMetaCollectionByName(collection);
+    }
+    
+    public void renameCollection(String fromDb, String fromCollection, String toDb, String toCollection) throws RollbackException, UserException {
+        MutableMetaDatabase fromMetaDb = getMetaDatabaseOrThrowException(fromDb);
+        MetaCollection fromMetaColl = getMetaCollectionOrThrowException(fromMetaDb, fromCollection);
+
+        MutableMetaDatabase toMetaDb = getOrCreateMetaDatabase(toDb);
+        MutableMetaCollection toMetaColl = createMetaCollection(toMetaDb, toCollection);
+        
+        internalTransaction.getBackendConnection().renameCollection(fromMetaDb, fromMetaColl, toMetaDb, toMetaColl);
+
+        fromMetaDb.removeMetaCollectionByName(fromCollection);
     }
     
     public void createCollection(String db, String collection) throws RollbackException, UserException {

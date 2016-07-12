@@ -43,6 +43,11 @@ public abstract class TorodTransaction implements AutoCloseable {
 
     protected abstract InternalTransaction getInternalTransaction();
 
+    public boolean existsCollection(String dbName, String colName) {
+        MetaDatabase metaDb = getInternalTransaction().getMetaSnapshot().getMetaDatabaseByName(dbName);
+        return metaDb != null && metaDb.getMetaCollectionByName(colName) != null;
+    }
+    
     public List<String> getDatabases() {
         return getInternalTransaction().getMetaSnapshot().streamMetaDatabases()
                 .map(metaDb -> metaDb.getName()).collect(Collectors.toList());
