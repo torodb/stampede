@@ -27,7 +27,9 @@ import java.util.Comparator;
 
 public class TableRefComparator {
 	
-    public static class MetaDocPart implements Comparator<com.torodb.core.transaction.metainf.MetaDocPart> {
+    public static class MetaDocPart implements Comparator<com.torodb.core.transaction.metainf.MetaDocPart> , Serializable {
+    	
+    	private static final long serialVersionUID = 1L;
       
     	public static final MetaDocPart ASC = new MetaDocPart();
         public static final DescMetaDocPart DESC = new DescMetaDocPart();
@@ -45,7 +47,9 @@ public class TableRefComparator {
     
     private static class DescMetaDocPart implements Comparator<com.torodb.core.transaction.metainf.MetaDocPart>, Serializable {
        
-    	private DescMetaDocPart() {
+		private static final long serialVersionUID = 1L;
+
+		private DescMetaDocPart() {
         }
         
         @Override
@@ -56,7 +60,9 @@ public class TableRefComparator {
         }
     }
     
-    public static class MutableMetaDocPart implements Comparator<com.torodb.core.transaction.metainf.MetaDocPart> {
+    public static class MutableMetaDocPart implements Comparator<com.torodb.core.transaction.metainf.MetaDocPart> , Serializable {
+    	
+    	private static final long serialVersionUID = 1L;
        
     	public static final MutableMetaDocPart ASC = new MutableMetaDocPart();
         public static final DescMutableMetaDocPart DESC = new DescMutableMetaDocPart();
@@ -74,7 +80,9 @@ public class TableRefComparator {
     
     private static class DescMutableMetaDocPart implements Comparator<com.torodb.core.transaction.metainf.MetaDocPart>, Serializable {
         
-    	private DescMutableMetaDocPart() {
+    	private static final long serialVersionUID = 1L;
+
+		private DescMutableMetaDocPart() {
         }
         
         @Override
@@ -85,7 +93,9 @@ public class TableRefComparator {
         }
     }
     
-    public static class DocPartResultSet implements Comparator<DocPartResult> {
+    public static class DocPartResultSet implements Comparator<DocPartResult>, Serializable {
+    	
+    	private static final long serialVersionUID = 1L;
         
     	public static final DocPartResultSet DESC = new DocPartResultSet();
     

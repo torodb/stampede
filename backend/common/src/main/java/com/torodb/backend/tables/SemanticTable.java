@@ -28,6 +28,13 @@ import org.jooq.impl.TableImpl;
 
 import com.torodb.backend.exceptions.InvalidDatabaseException;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
+@SuppressFBWarnings(
+        value = "HE_HASHCODE_NO_EQUALS",
+        justification
+        = "Equals comparation is done in TableImpl class, which compares schema, name and fields"
+)
 public abstract class SemanticTable<R extends Record> extends TableImpl<R> {
     
     private static final long serialVersionUID = 1;
@@ -85,4 +92,5 @@ public abstract class SemanticTable<R extends Record> extends TableImpl<R> {
         }
         return true;
     }
+    
 }
