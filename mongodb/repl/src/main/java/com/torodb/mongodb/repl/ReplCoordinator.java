@@ -611,20 +611,22 @@ public class ReplCoordinator extends AbstractIdleService implements ReplInterfac
 
         @Override
         public void recoveryFinished() {
-            Lock writeLock = lock.writeLock();
-            writeLock.lock();
-            try {
-                if (memberState != null && memberState.equals(MemberState.RS_RECOVERING)) {
-                    stopRecoveryMode();
-                    startSecondaryMode();
+            executor.execute(() -> {
+                Lock writeLock = lock.writeLock();
+                writeLock.lock();
+                try {
+                    if (memberState != null && memberState.equals(MemberState.RS_RECOVERING)) {
+                        stopRecoveryMode();
+                        startSecondaryMode();
+                    }
+                    else {
+                        LOGGER.info("Recovery finished, but before we can start "
+                                + "secondary mode, the state changed to {}", memberState);
+                    }
+                } finally {
+                    writeLock.unlock();
                 }
-                else {
-                    LOGGER.info("Recovery finished, but before we can start "
-                            + "secondary mode, the state changed to {}", memberState);
-                }
-            } finally {
-                writeLock.unlock();
-            }
+            });
         }
 
         @Override

@@ -70,6 +70,7 @@ class ReplSyncApplier extends AbstractExecutionThreadService{
                     WriteMongodTransaction transaction = connection.openWriteTransaction()) {
                 try {
                     for (OplogOperation opToApply : callback.takeOps()) {
+                        LOGGER.info("Executing {}", opToApply);
                         try {
                             boolean done = false;
                             while (!done) {

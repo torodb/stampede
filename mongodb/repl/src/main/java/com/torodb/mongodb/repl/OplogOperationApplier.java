@@ -27,7 +27,6 @@ import com.torodb.mongodb.repl.OplogManager.OplogManagerPersistException;
 import com.torodb.mongodb.utils.DefaultIdUtils;
 import com.torodb.mongodb.utils.NamespaceUtil;
 import java.util.Collections;
-import java.util.concurrent.Callable;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.apache.logging.log4j.LogManager;
@@ -69,8 +68,6 @@ public class OplogOperationApplier {
     }
 
     private <Arg, Result> Result executeCommand(String db, Command<? super Arg, ? super Result> command, Arg arg, WriteMongodTransaction trans) throws MongoException {
-        Callable<Status<Result>> callable;
-
         Request req = new Request(db, null, true, null);
         
         

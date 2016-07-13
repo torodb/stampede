@@ -1,18 +1,12 @@
 
 package com.torodb.mongodb.core;
 
-import com.eightkdata.mongowp.server.api.CommandsExecutor;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.RemovalNotification;
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.torodb.mongodb.commands.ConnectionCommandsExecutor;
-import com.torodb.mongodb.commands.ReadOnlyTransactionCommandsExecutor;
-import com.torodb.mongodb.commands.WriteTransactionCommandsExecutor;
+import com.torodb.mongodb.commands.CommandsExecutorClassifier;
 import com.torodb.torod.TorodServer;
-
-import java.net.SocketAddress;
-
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.apache.logging.log4j.LogManager;
@@ -26,23 +20,16 @@ public class MongodServer extends AbstractIdleService {
     private static final Logger LOGGER = LogManager.getLogger(MongodServer.class);
     private final TorodServer torodServer;
     private final Cache<Integer, MongodConnection> openConnections;
-    private final WriteTransactionCommandsExecutor writeCommandsExecutor;
-    private final ReadOnlyTransactionCommandsExecutor readOnlyCommandsExecutor;
-    private final ConnectionCommandsExecutor connectionCommandsExecutor;
+    private CommandsExecutorClassifier commandsExecutorClassifier;
 
     @Inject
-    public MongodServer(TorodServer torodServer, 
-            WriteTransactionCommandsExecutor writeCommandsExecutor,
-            ReadOnlyTransactionCommandsExecutor readOnlyCommandsExecutor,
-            ConnectionCommandsExecutor connectionCommandsExecutor) {
+    public MongodServer(TorodServer torodServer, CommandsExecutorClassifier commandsExecutorClassifier) {
         this.torodServer = torodServer;
         openConnections = CacheBuilder.newBuilder()
                 .weakValues()
                 .removalListener(this::onConnectionInvalidated)
                 .build();
-        this.writeCommandsExecutor = writeCommandsExecutor;
-        this.readOnlyCommandsExecutor = readOnlyCommandsExecutor;
-        this.connectionCommandsExecutor = connectionCommandsExecutor;
+        this.commandsExecutorClassifier = commandsExecutorClassifier;
     }
 
     public TorodServer getTorodServer() {
@@ -68,16 +55,8 @@ public class MongodServer extends AbstractIdleService {
         openConnections.invalidateAll();
     }
 
-    CommandsExecutor<WriteMongodTransaction> getWriteCommandsExecutor() {
-        return writeCommandsExecutor;
-    }
-
-    CommandsExecutor<ReadOnlyMongodTransaction> getReadOnlyCommandsExecutor() {
-        return readOnlyCommandsExecutor;
-    }
-
-    CommandsExecutor<MongodConnection> getConnectionCommandsExecutor() {
-        return connectionCommandsExecutor;
+    public CommandsExecutorClassifier getCommandsExecutorClassifier() {
+        return commandsExecutorClassifier;
     }
 
     void onConnectionClose(MongodConnection connection) {

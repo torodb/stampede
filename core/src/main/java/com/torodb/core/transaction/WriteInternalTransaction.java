@@ -68,7 +68,6 @@ public class WriteInternalTransaction implements InternalTransaction {
     public void commit() throws RollbackException, UserException {
         try (MergerStage mergeStage = metainfoRepository.startMerge(metaSnapshot)) {
             backendTransaction.commit();
-            backendTransaction.close();
 
             mergeStage.commit();
         }

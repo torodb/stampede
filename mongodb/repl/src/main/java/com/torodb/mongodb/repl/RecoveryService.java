@@ -91,7 +91,7 @@ class RecoveryService extends AbstractExecutionThreadService {
             int attempt = 0;
             boolean finished = false;
 
-            while (!finished && attempt < MAX_ATTEMPTS) {
+            while (!finished && attempt < MAX_ATTEMPTS && isRunning()) {
                 attempt++;
                 try {
                     finished = initialSync();
@@ -290,6 +290,11 @@ class RecoveryService extends AbstractExecutionThreadService {
 
         for (DatabaseEntry database : databasesReply.getDatabases()) {
             String databaseName = database.getName();
+
+            if (isNotReplicable(databaseName)) {
+                continue;
+            }
+
             MyWritePermissionSupplier writePermissionSupplier = new MyWritePermissionSupplier(databaseName);
 
             CloneOptions options = new CloneOptions(
@@ -317,6 +322,9 @@ class RecoveryService extends AbstractExecutionThreadService {
             });
         }
         for (DatabaseEntry database : databasesReply.getDatabases()) {
+            if (isNotReplicable(database.getName())) {
+                continue;
+            }
             try {
                 completionService.take().get();
             } catch (InterruptedException ex) {
@@ -379,6 +387,10 @@ class RecoveryService extends AbstractExecutionThreadService {
     private void rebuildIndexes() {
         //TODO: Check if this is necessary
         LOGGER.warn("Rebuild index is not implemented yet, so indexes have not been rebuild");
+    }
+
+    private boolean isNotReplicable(String databaseName) {
+        return databaseName.equals("local");
     }
 
     private class MyWritePermissionSupplier implements Supplier<Boolean> {

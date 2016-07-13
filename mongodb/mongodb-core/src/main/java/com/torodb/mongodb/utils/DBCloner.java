@@ -114,7 +114,7 @@ public class DBCloner {
                 LOGGER.info("Not cloning {} because it is not normal", collName);
                 continue;
             }
-            LOGGER.info("Collection {} will be cloned", collName);
+            LOGGER.info("Collection {}.{} will be cloned", fromDb, collName);
             collsToClone.put(collName, collEntry.getCollectionOptions());
         }
 

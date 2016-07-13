@@ -1,7 +1,6 @@
 
 package com.torodb.mongodb.commands;
 
-import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.MongoDb30Commands.MongoDb30CommandsImplementationBuilder;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.AdminCommands.AdminCommandsImplementationsBuilder;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.CreateCollectionCommand.CreateCollectionArgument;
@@ -58,10 +57,7 @@ import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.repl.Re
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.ReplicaSetConfig;
 import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.CommandImplementation;
-import com.eightkdata.mongowp.server.api.CommandsExecutor;
-import com.eightkdata.mongowp.server.api.Request;
 import com.eightkdata.mongowp.server.api.impl.CollectionCommandArgument;
-import com.eightkdata.mongowp.server.api.impl.MapBasedCommandsExecutor;
 import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
@@ -72,17 +68,12 @@ import com.torodb.mongodb.commands.impl.admin.CreateCollectionImplementation;
 import com.torodb.mongodb.commands.impl.admin.DropCollectionImplementation;
 import com.torodb.mongodb.commands.impl.admin.DropDatabaseImplementation;
 import com.torodb.mongodb.commands.impl.admin.RenameCollectionImplementation;
-import com.torodb.mongodb.commands.impl.aggregation.CountImplementation;
-import com.torodb.mongodb.commands.impl.diagnostic.CollStatsImplementation;
-import com.torodb.mongodb.commands.impl.diagnostic.ListDatabasesImplementation;
 import com.torodb.mongodb.commands.impl.general.DeleteImplementation;
 import com.torodb.mongodb.commands.impl.general.InsertImplementation;
 import com.torodb.mongodb.commands.impl.general.UpdateImplementation;
 import com.torodb.mongodb.core.WriteMongodTransaction;
-import java.util.Collections;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -90,38 +81,25 @@ import javax.inject.Singleton;
  *
  */
 @Singleton
-public class WriteTransactionCommandsExecutor implements CommandsExecutor<WriteMongodTransaction> {
+public class WriteTransactionImplementations {
 
-    private final Set<Command<?,?>> supportedCommands;
-    private final MapBasedCommandsExecutor<WriteMongodTransaction> delegate;
+    private final ImmutableMap<Command<?,?>, CommandImplementation<?,?, ? super WriteMongodTransaction>> map;
 
     @Inject
-    WriteTransactionCommandsExecutor(MapFactory mapFactory) {
-        ImmutableMap<Command<?, ?>, CommandImplementation> supportedCommandsMap = mapFactory.get();
-
-        supportedCommands = Collections.unmodifiableSet(
-                supportedCommandsMap.entrySet().stream()
-                .filter((e) -> !(e.getValue() instanceof NotImplementedCommandImplementation))
-                .map((e) -> e.getKey())
-                .collect(Collectors.toSet())
-        );
-
-        delegate = MapBasedCommandsExecutor.<WriteMongodTransaction>builder()
-                .addImplementations(supportedCommandsMap.entrySet())
-                .build();
+    WriteTransactionImplementations(MapFactory mapFactory) {
+        map = mapFactory.get();
     }
 
     @DoNotChange
     Set<Command<?, ?>> getSupportedCommands() {
-        return supportedCommands;
+        return map.keySet();
     }
 
-    @Override
-    public <Arg, Result> Status<Result> execute(Request request, Command<? super Arg, ? super Result> command, Arg arg, WriteMongodTransaction context) {
-        return delegate.execute(request, command, arg, context);
+    public ImmutableMap<Command<?, ?>, CommandImplementation<?, ?, ? super WriteMongodTransaction>> getMap() {
+        return map;
     }
 
-    static class MapFactory implements Supplier<ImmutableMap<Command<?,?>, CommandImplementation>> {
+    static class MapFactory implements Supplier<ImmutableMap<Command<?,?>, CommandImplementation<?, ?, ? super WriteMongodTransaction>>> {
 
         private final MyAdminCommandsImplementationBuilder adminBuilder;
         private final MyAggregationCommandsImplementationBuilder aggregationBuilder;
@@ -150,13 +128,16 @@ public class WriteTransactionCommandsExecutor implements CommandsExecutor<WriteM
         }
 
         @Override
-        public ImmutableMap<Command<?,?>, CommandImplementation> get() {
-            MongoDb30CommandsImplementationBuilder implBuilder = new MongoDb30CommandsImplementationBuilder(
+        public ImmutableMap<Command<?,?>, CommandImplementation<?, ?, ? super WriteMongodTransaction>> get() {
+            MongoDb30CommandsImplementationBuilder<WriteMongodTransaction> implBuilder = new MongoDb30CommandsImplementationBuilder<>(
                     adminBuilder, aggregationBuilder, authenticationCommandsImplementationsBuilder, diagnosticBuilder, generalBuilder, internalBuilder, replBuilder
             );
 
-            ImmutableMap.Builder<Command<?,?>, CommandImplementation> builder = ImmutableMap.builder();
-            for (Entry<Command<?,?>, CommandImplementation> entry : implBuilder) {
+            ImmutableMap.Builder<Command<?,?>, CommandImplementation<?, ?, ? super WriteMongodTransaction>> builder = ImmutableMap.builder();
+            for (Entry<Command<?,?>, CommandImplementation<?, ?, ? super WriteMongodTransaction>> entry : implBuilder) {
+                if (entry.getValue() instanceof NotImplementedCommandImplementation) {
+                    continue;
+                }
                 builder.put(entry.getKey(), entry.getValue());
             }
 
@@ -222,12 +203,9 @@ public class WriteTransactionCommandsExecutor implements CommandsExecutor<WriteM
 
     static class MyAggregationCommandsImplementationBuilder extends AggregationCommandsImplementationsBuilder<WriteMongodTransaction> {
 
-        @Inject
-        private CountImplementation countImplementation;
-
         @Override
-        public CommandImplementation<CountArgument, Long, ? super WriteMongodTransaction> getCountImplementation() {
-            return countImplementation;
+        public CommandImplementation<CountArgument, Long, WriteMongodTransaction> getCountImplementation() {
+            return NotImplementedCommandImplementation.build();
         }
 
     }
@@ -242,19 +220,14 @@ public class WriteTransactionCommandsExecutor implements CommandsExecutor<WriteM
 
     static class MyDiagnosticCommandsImplementationBuilder extends DiagnosticCommandsImplementationsBuilder<WriteMongodTransaction> {
 
-        @Inject
-        private ListDatabasesImplementation listDb;
-        @Inject
-        private CollStatsImplementation collStatsImplementation;
-
         @Override
-        public CommandImplementation<CollStatsArgument, CollStatsReply, ? super WriteMongodTransaction> getCollStatsImplementation() {
-            return collStatsImplementation;
+        public CommandImplementation<CollStatsArgument, CollStatsReply, WriteMongodTransaction> getCollStatsImplementation() {
+            return NotImplementedCommandImplementation.build();
         }
 
         @Override
-        public CommandImplementation<Empty, ListDatabasesReply, ? super WriteMongodTransaction> getListDatabasesImplementation() {
-            return listDb;
+        public CommandImplementation<Empty, ListDatabasesReply, WriteMongodTransaction> getListDatabasesImplementation() {
+            return NotImplementedCommandImplementation.build();
         }
 
         @Override

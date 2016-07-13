@@ -25,8 +25,10 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.internal.Console;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
+import com.google.common.util.concurrent.Service;
 import com.google.inject.CreationException;
 import com.torodb.packaging.ToroDbServer;
+import com.torodb.packaging.ToroDbiServer;
 import com.torodb.packaging.config.model.Config;
 import com.torodb.packaging.config.model.backend.postgres.Postgres;
 import com.torodb.packaging.config.model.generic.LogLevel;
@@ -108,10 +110,29 @@ public class Main {
 		}
 		
 		try {
-            ToroDbServer toroDBServer = ToroDbServer.create(config, Clock.systemDefaultZone());
+            Clock clock = Clock.systemDefaultZone();
+            Service server;
+            if (config.getProtocol().getMongo().getReplication().isEmpty()) {
+                ToroDbServer toroDbServer = ToroDbServer.create(config, clock);
 
-            toroDBServer.startAsync();
-            toroDBServer.awaitRunning();
+                toroDbServer.startAsync();
+                toroDbServer.awaitRunning();
+
+                server = toroDbServer;
+            }
+            else {
+                ToroDbiServer toroDbiServer = ToroDbiServer.create(config, clock);
+
+                toroDbiServer.startAsync();
+                toroDbiServer.awaitTerminated();
+
+                server = toroDbiServer;
+            }
+
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                server.stopAsync();
+                server.awaitTerminated();
+            }));
         } catch (CreationException ex) {
             ex.getErrorMessages().stream().forEach(m -> { if (m.getCause() != null) LOGGER.error(m.getCause().getMessage()); else LOGGER.error(m.getMessage()); });
 			System.exit(1);
