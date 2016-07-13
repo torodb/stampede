@@ -34,7 +34,7 @@ import com.torodb.core.transaction.metainf.FieldType;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
-@SuppressFBWarnings("EQ_DOESNT_OVERRIDE_EQUALS")
+@SuppressFBWarnings(value = {"EQ_DOESNT_OVERRIDE_EQUALS","HE_HASHCODE_NO_EQUALS"})
 public class DerbyMetaFieldTable extends MetaFieldTable<JsonArray, DerbyMetaFieldRecord> {
 
     private static final long serialVersionUID = 2305519627765737325L;
