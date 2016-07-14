@@ -117,7 +117,7 @@ public abstract class AbstractSchemaUpdater implements SchemaUpdater {
             SqlHelper sqlHelper
     ) throws IOException, SQLException {
         InputStream resourceAsStream
-                = getClass().getClassLoader().getResourceAsStream(resourcePath);
+                = getClass().getResourceAsStream(resourcePath);
         if (resourceAsStream == null) {
             throw new SystemException(
                     "Resource '" + resourcePath + "' does not exist"
