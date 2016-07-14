@@ -12,6 +12,13 @@ import org.jooq.impl.AbstractKeys;
 import com.torodb.backend.meta.TorodbSchema;
 import com.torodb.backend.tables.records.MetaDatabaseRecord;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
+@SuppressFBWarnings(
+        value = "HE_HASHCODE_NO_EQUALS",
+        justification
+        = "Equals comparation is done in TableImpl class, which compares schema, name and fields"
+)
 public abstract class MetaDatabaseTable<R extends MetaDatabaseRecord> extends SemanticTable<R> {
 
     private static final long serialVersionUID = -8840058751911188345L;

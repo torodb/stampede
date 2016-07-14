@@ -2,6 +2,7 @@ package com.torodb.kvdocument.conversion.json;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,8 +17,9 @@ public class GsonJsonParser implements JsonParser {
 
 	private static Gson gson = new Gson();
 
-	private static MapToKVValueConverter converter = new MapToKVValueConverter();
-	private static HashMap<String, Object> sampleClass = new HashMap<String, Object>();
+	private static final MapToKVValueConverter converter = new MapToKVValueConverter();
+	private static final HashMap<String, Object> sampleClass = new HashMap<String, Object>();
+	private static final Type type = new TypeToken<List<HashMap<String, Object>>>() {}.getType();
 
     @Override
     public KVDocument createFromJson(String json) {
@@ -26,7 +28,7 @@ public class GsonJsonParser implements JsonParser {
 
     @Override
     public List<KVDocument> createListFromJson(String json) {
-        return converter.convert((List<Map<String, Object>>) gson.fromJson(json, new TypeToken<List<HashMap<String, Object>>>() {}.getType()));
+        return converter.convert((List<Map<String, Object>>) gson.fromJson(json, type));
     }
 
 	@Override
@@ -36,7 +38,7 @@ public class GsonJsonParser implements JsonParser {
 
     @Override
     public List<KVDocument> createListFrom(InputStream is) {
-        return converter.convert((List<Map<String, Object>>) gson.fromJson(new InputStreamReader(is,Charsets.UTF_8), new TypeToken<List<HashMap<String, Object>>>() {}.getType()));
+        return converter.convert((List<Map<String, Object>>) gson.fromJson(new InputStreamReader(is,Charsets.UTF_8), type));
     }
 
 	@Override

@@ -31,6 +31,8 @@ import javax.annotation.Nonnull;
 import javax.inject.Singleton;
 import javax.sql.DataSource;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 /**
  *
  */
@@ -98,6 +100,8 @@ public abstract class AbstractDbBackend<Configuration extends DbBackendConfigura
     }
 
     @Override
+    @SuppressFBWarnings(value = "UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR",
+    justification = "Object lifecyle is managed as a Service. Datasources are initialized in setup method")
     protected void shutDown() throws Exception {
         writeDataSource.close();
         systemDataSource.close();

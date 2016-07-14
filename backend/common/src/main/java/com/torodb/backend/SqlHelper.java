@@ -41,7 +41,10 @@ import com.torodb.backend.converters.sql.SqlBinding;
 import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.kvdocument.values.KVValue;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 @Singleton
+@SuppressFBWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
 public class SqlHelper {
 
     private final DataTypeProvider dataTypeProvider;

@@ -25,7 +25,6 @@ import java.sql.SQLException;
 
 import org.jooq.exception.DataAccessException;
 
-import com.torodb.backend.ErrorHandler;
 import com.torodb.backend.ErrorHandler.Context;
 import com.torodb.core.exceptions.SystemException;
 
@@ -48,10 +47,10 @@ public class BackendException extends SystemException {
     }
     
     private static String sqlMessage(DataAccessException cause) {
-        if (cause.getCause() instanceof SQLException) {
-            return sqlMessage((SQLException) cause.getCause()); 
+    	Throwable causeThroawle = cause.getCause();
+        if (causeThroawle instanceof SQLException) {
+            return sqlMessage((SQLException) causeThroawle); 
         }
-        
         return cause.getMessage();
     }
 

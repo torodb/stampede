@@ -24,10 +24,14 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 public class BinarySqlBinding implements SqlBinding<byte[]> {
     public static final BinarySqlBinding INSTANCE = new BinarySqlBinding();
 
     @Override
+    @SuppressFBWarnings(value ="PZLA_PREFER_ZERO_LENGTH_ARRAYS",
+    		justification="Null value has different meaning from empty array value")
     public byte[] get(ResultSet resultSet, int columnIndex) throws SQLException {
         byte[] value = resultSet.getBytes(columnIndex);
         if (resultSet.wasNull()) {
