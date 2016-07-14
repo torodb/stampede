@@ -134,8 +134,14 @@ public class Main {
                 server.awaitTerminated();
             }));
         } catch (CreationException ex) {
-            ex.getErrorMessages().stream().forEach(m -> { if (m.getCause() != null) LOGGER.error(m.getCause().getMessage()); else LOGGER.error(m.getMessage()); });
-			System.exit(1);
+            ex.getErrorMessages().stream().forEach(m -> {
+                if (m.getCause() != null) {
+                    LOGGER.error(m.getCause().getMessage());
+                } else {
+                    LOGGER.error(m.getMessage());
+                }
+            });
+            System.exit(1);
 		} catch (Throwable ex) {
             LOGGER.error("Fatal error on initialization", ex);
             Throwable rootCause = Throwables.getRootCause(ex);
