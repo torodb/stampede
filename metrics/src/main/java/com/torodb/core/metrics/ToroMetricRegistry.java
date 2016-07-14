@@ -1,53 +1,63 @@
 package com.torodb.core.metrics;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 import javax.inject.Singleton;
+import javax.management.ObjectName;
 
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.ExponentiallyDecayingReservoir;
 import com.codahale.metrics.Histogram;
+import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.Metric;
 import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.ObjectNameFactory;
 import com.codahale.metrics.Timer;
-import com.torodb.core.metrics.mbeans.MetricMBeans;
 
 @Singleton
-public class ToroMetricRegistry extends MetricRegistry {
-
-	private final MetricMBeans metricMBeans = new MetricMBeans();
+public class ToroMetricRegistry extends MetricRegistry  {
+	
+	private final MbeanNameFactory mbeanNameFactory = new MbeanNameFactory();
 	
 	public ToroMetricRegistry() {
 		super();
+		final JmxReporter reporter = JmxReporter
+				.forRegistry(this)
+				.inDomain("torodb")
+				.createsObjectNamesWith(mbeanNameFactory)
+				.build();
+		reporter.start();
 	}
 
 	public Counter counter(MetricName name) {
+		mbeanNameFactory.registerName(name);
 		Counter counter = counter(name.getMetricName());
-		metricMBeans.registerMBean(counter, name.getMBeanName());
 		return counter;
 	}
 
 	public Meter meter(MetricName name) {
+		mbeanNameFactory.registerName(name);
 		Meter meter = meter(name.getMetricName());
-		metricMBeans.registerMBean(meter, name.getMBeanName());
 		return meter;
 	}
 
 	public Histogram histogram(MetricName name) {
+		mbeanNameFactory.registerName(name);
 		Histogram histogram = register(name, new Histogram(new ExponentiallyDecayingReservoir()));
-		metricMBeans.registerMBean(histogram, name.getMBeanName());
 		return histogram;
 	}
 
 	public Timer timer(MetricName name) {
+		mbeanNameFactory.registerName(name);
 		Timer timer = register(name, new Timer());
-		metricMBeans.registerMBean(timer, name.getMBeanName());
 		return timer;
 	}
 
 	public <T extends Metric> T register(MetricName name, T metric) {
 		try {
 			register(name.getMetricName(), metric);
-			metricMBeans.registerMBean(metric, name.getMBeanName());
 			return metric;
 		} catch (IllegalArgumentException e) {
 			Metric existing = this.getMetrics().get(name.getMetricName());
@@ -57,12 +67,27 @@ public class ToroMetricRegistry extends MetricRegistry {
 
 	public boolean remove(MetricName name) {
 		boolean removed = remove(name.getMetricName());
-		try {
-			metricMBeans.unregisterMBean(name.getMBeanName());
-		} catch (Exception ignore) {
-		}
-
 		return removed;
+	}
+	
+	private static class MbeanNameFactory implements ObjectNameFactory{
+		
+		private Map<String,ObjectName> names = new ConcurrentHashMap<>();
+		
+		private void registerName(MetricName name){
+			names.put(name.getMetricName(), name.getMBeanName());
+		}
+		
+		@Override
+		public ObjectName createName(String type, String domain, String name) {
+			return names.computeIfAbsent(name, n -> {
+				try {
+					return new ObjectName(domain, type, name);
+				} catch (Exception e) {
+					return null;
+				}
+			});
+		}
 	}
 	
 }
