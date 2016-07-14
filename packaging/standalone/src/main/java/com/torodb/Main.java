@@ -112,7 +112,7 @@ public class Main {
 		try {
             Clock clock = Clock.systemDefaultZone();
             Service server;
-            if (config.getProtocol().getMongo().getReplication().isEmpty()) {
+            if (config.getProtocol().getMongo().getReplication() == null || config.getProtocol().getMongo().getReplication().isEmpty()) {
                 ToroDbServer toroDbServer = ToroDbServer.create(config, clock);
 
                 toroDbServer.startAsync();

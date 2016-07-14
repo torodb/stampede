@@ -145,7 +145,7 @@ public class OplogManager extends AbstractIdleService {
         });
 
         if (!result.isOK()) {
-            throw new OplogManagerPersistException(result);
+            throw new OplogManagerPersistException(result.getErrorCode(), result.getErrorMsg());
         }
     }
 
@@ -188,20 +188,26 @@ public class OplogManager extends AbstractIdleService {
         });
 
         if (!result.isOK()) {
-            throw new OplogManagerPersistException(result);
+            throw new OplogManagerPersistException(result.getErrorCode(), result.getErrorMsg());
         }
     }
 
     public static class OplogManagerPersistException extends Exception {
         private static final long serialVersionUID = 1L;
-        private final Status<?> originalStatus;
+        private final ErrorCode errorCode;
+        private final String errorMsg;
 
-        public OplogManagerPersistException(Status<?> originalStatus) {
-            this.originalStatus = originalStatus;
+        public OplogManagerPersistException(ErrorCode errorCode, String errorMsg) {
+            this.errorCode = errorCode;
+            this.errorMsg = errorMsg;
         }
 
-        public Status<?> getOriginalStatus() {
-            return originalStatus;
+        public ErrorCode getErrorCode() {
+            return errorCode;
+        }
+
+        public String getErrorMsg() {
+            return errorMsg;
         }
 
     }

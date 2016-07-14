@@ -331,8 +331,9 @@ class RecoveryService extends AbstractExecutionThreadService {
                 Thread.currentThread().interrupt();
                 throw new CloningException("Interrupted while cloning databases", ex);
             } catch (ExecutionException ex) {
-                if (ex.getCause() instanceof MongoException) {
-                    throw (MongoException) ex.getCause();
+                Throwable cause = ex.getCause();
+                if (cause instanceof MongoException) {
+                    throw (MongoException) cause;
                 }
                 else {
                     throw new CloningException("Error whilo clonning databases", ex);
