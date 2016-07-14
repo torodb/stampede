@@ -3,13 +3,12 @@ package com.torodb.core.metrics;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 
-
 import com.codahale.metrics.MetricRegistry;
 
-public class MetricName implements Comparable<MetricName>
-{
+public class MetricName {
+	
     private String group;
-    private String category;
+    private String type;
     private String name;
     private String mBeanName;
 
@@ -17,8 +16,8 @@ public class MetricName implements Comparable<MetricName>
 		return group;
 	}
 
-	public String getCategory() {
-		return category;
+	public String getType() {
+		return type;
 	}
 
 	public String getName() {
@@ -38,30 +37,30 @@ public class MetricName implements Comparable<MetricName>
 		build(group, type, name);
 	}
 
-	public MetricName(String group, String category, String name, String mBeanName) {
-		build(group, category, name, mBeanName);
+	public MetricName(String group, String type, String name, String mBeanName) {
+		build(group, type, name, mBeanName);
 	}
 	
-	private void build(String group, String category, String name) {
-		String mBeanName = createMBeanName(group, category, name);
-		build(group, category, name, mBeanName);
+	private void build(String group, String type, String name) {
+		String mBeanName = createMBeanName(group, type, name);
+		build(group, type, name, mBeanName);
 	}
 	
-	private void build(String group, String category, String name, String mBeanName) {
-		if (group == null || category == null) {
-			throw new IllegalArgumentException("Both group and category must be specified");
+	private void build(String group, String type, String name, String mBeanName) {
+		if (group == null || type == null) {
+			throw new IllegalArgumentException("Both group and type must be specified");
 		}
 		if (name == null) {
 			throw new IllegalArgumentException("Name must be specified");
 		}
 		this.group = group;
-		this.category = category;
+		this.type = type;
 		this.name = name;
 		this.mBeanName = mBeanName;
 	}
 
 	public String getMetricName() {
-		return MetricRegistry.name(group, category, name);
+		return MetricRegistry.name(group, type, name);
 	}
 
 	public ObjectName getMBeanName() {
@@ -102,11 +101,6 @@ public class MetricName implements Comparable<MetricName>
 		return mBeanName;
 	}
 
-	@Override
-	public int compareTo(MetricName o) {
-		return mBeanName.compareTo(o.mBeanName);
-	}
-
 	private String createMBeanName(String group, String type, String name) {
 		StringBuilder nameBuilder = new StringBuilder();
 		nameBuilder.append(group);
@@ -125,4 +119,5 @@ public class MetricName implements Comparable<MetricName>
 		}
 		return s;
 	}
+
 }
