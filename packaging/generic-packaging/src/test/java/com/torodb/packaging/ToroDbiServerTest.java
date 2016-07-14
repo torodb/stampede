@@ -3,10 +3,11 @@ package com.torodb.packaging;
 import com.torodb.packaging.config.model.Config;
 import com.torodb.packaging.config.model.backend.derby.Derby;
 import com.torodb.packaging.config.model.generic.LogLevel;
+import com.torodb.packaging.config.model.protocol.mongo.Replication;
+import com.torodb.packaging.config.model.protocol.mongo.Role;
 import com.torodb.packaging.config.util.ConfigUtils;
 import java.time.Clock;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.Collections;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -14,7 +15,7 @@ import org.junit.Test;
  *
  * @author gortiz
  */
-public class ToroDBServerTest {
+public class ToroDbiServerTest {
 
     private Config config;
 
@@ -22,7 +23,15 @@ public class ToroDBServerTest {
     public void setUp() {
         config = new Config();
 
-        config.getProtocol().getMongo().setReplication(null);
+
+        Replication replication = new Replication();
+        replication.setRole(Role.HIDDEN_SLAVE);
+        replication.setReplSetName("replSetName");
+        replication.setSyncSource("localhost:27020");
+
+        config.getProtocol().getMongo().setReplication(Collections.singletonList(
+                replication
+        ));
         config.getBackend().setBackendImplementation(new Derby());
         config.getBackend().asDerby().setPassword("torodb");
         config.getGeneric().setLogLevel(LogLevel.TRACE);
@@ -32,17 +41,6 @@ public class ToroDBServerTest {
 
     @Test
     public void testCreate() {
-        ToroDBServer.create(config, Clock.systemUTC());
-    }
-
-    @Test
-    public void testInitiate() throws TimeoutException {
-        ToroDBServer server = ToroDBServer.create(config, Clock.systemUTC());
-
-        server.startAsync();
-        server.awaitRunning(10, TimeUnit.SECONDS);
-
-        server.stopAsync();
-        server.awaitTerminated(10, TimeUnit.SECONDS);
+        ToroDbiServer.create(config, Clock.systemUTC());
     }
 }

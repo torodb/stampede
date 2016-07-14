@@ -26,8 +26,8 @@ public class TorodbCommandsLibrary implements CommandsLibrary {
 
     @Inject
     public TorodbCommandsLibrary(ConnectionCommandsExecutor connectionExecutor,
-            ReadOnlyTransactionCommandsExecutor readOnlyExecutor,
-            WriteTransactionCommandsExecutor writeExecutor) {
+            GeneralTransactionImplementations readOnlyExecutor,
+            WriteTransactionImplementations writeExecutor) {
         String version = "torodb-3.2-like";
         
         requiredTranslationMap = new HashMap<>();

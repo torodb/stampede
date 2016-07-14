@@ -20,18 +20,16 @@
 
 package com.torodb.backend;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-
-import javax.annotation.Nonnull;
-import javax.inject.Singleton;
-import javax.sql.DataSource;
-
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.torodb.backend.ErrorHandler.Context;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import java.sql.Connection;
+import java.sql.SQLException;
+import javax.annotation.Nonnull;
+import javax.inject.Singleton;
+import javax.sql.DataSource;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -167,7 +165,9 @@ public abstract class AbstractDbBackend<Configuration extends DbBackendConfigura
     }
 
     protected void checkState() {
-        Preconditions.checkState(isRunning(), "The " + DbBackend.class + " is not running");
+        if (!isRunning()) {
+            throw new IllegalStateException("The " + DbBackend.class + " is not running");
+        }
     }
 
     @Override

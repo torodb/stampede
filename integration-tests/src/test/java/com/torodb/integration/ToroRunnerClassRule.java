@@ -26,7 +26,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.torodb.packaging.ToroDBServer;
+import com.torodb.packaging.ToroDbServer;
 
 public class ToroRunnerClassRule extends AbstractBackendRunnerClassRule {
 
@@ -51,7 +51,7 @@ public class ToroRunnerClassRule extends AbstractBackendRunnerClassRule {
 		return ucaughtExceptions;
 	}
 
-	private ToroDBServer torodbServer;
+	private ToroDbServer torodbServer;
 
     @Override
     protected void startUp() throws Exception {
@@ -63,14 +63,14 @@ public class ToroRunnerClassRule extends AbstractBackendRunnerClassRule {
                     }
                 });
         
-        torodbServer = getInjector().getInstance(ToroDBServer.class);
+        torodbServer = getInjector().getInstance(ToroDbServer.class);
         torodbServer.startAsync();
         torodbServer.awaitRunning();
     }
 
     @Override
     protected void shutDown() throws Exception {
-        ToroDBServer torodbServer = this.torodbServer;
+        ToroDbServer torodbServer = this.torodbServer;
         if (torodbServer != null) {
             torodbServer.stopAsync();
             torodbServer.awaitTerminated();

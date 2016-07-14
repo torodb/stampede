@@ -1,14 +1,6 @@
 
 package com.torodb.mongodb.commands;
 
-import java.util.Collections;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import javax.inject.Inject;
-
-import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.MongoDb30Commands.MongoDb30CommandsImplementationBuilder;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.AdminCommands.AdminCommandsImplementationsBuilder;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.CreateCollectionCommand.CreateCollectionArgument;
@@ -65,56 +57,49 @@ import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.repl.Re
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.ReplicaSetConfig;
 import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.CommandImplementation;
-import com.eightkdata.mongowp.server.api.CommandsExecutor;
-import com.eightkdata.mongowp.server.api.Request;
 import com.eightkdata.mongowp.server.api.impl.CollectionCommandArgument;
-import com.eightkdata.mongowp.server.api.impl.MapBasedCommandsExecutor;
 import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.net.HostAndPort;
+import com.torodb.core.annotations.DoNotChange;
 import com.torodb.mongodb.commands.impl.NotImplementedCommandImplementation;
-import com.torodb.mongodb.commands.impl.admin.ListCollectionsImplementation;
-import com.torodb.mongodb.commands.impl.aggregation.CountImplementation;
-import com.torodb.mongodb.commands.impl.diagnostic.CollStatsImplementation;
-import com.torodb.mongodb.commands.impl.diagnostic.ListDatabasesImplementation;
-import com.torodb.mongodb.commands.impl.general.FindImplementation;
-import com.torodb.mongodb.core.ReadOnlyMongodTransaction;
+import com.torodb.mongodb.commands.impl.admin.CreateCollectionImplementation;
+import com.torodb.mongodb.commands.impl.admin.DropCollectionImplementation;
+import com.torodb.mongodb.commands.impl.admin.DropDatabaseImplementation;
+import com.torodb.mongodb.commands.impl.admin.RenameCollectionImplementation;
+import com.torodb.mongodb.commands.impl.general.DeleteImplementation;
+import com.torodb.mongodb.commands.impl.general.InsertImplementation;
+import com.torodb.mongodb.commands.impl.general.UpdateImplementation;
+import com.torodb.mongodb.core.WriteMongodTransaction;
+import java.util.Map.Entry;
+import java.util.Set;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  *
  */
-public class ReadOnlyTransactionCommandsExecutor implements CommandsExecutor<ReadOnlyMongodTransaction>{
+@Singleton
+public class WriteTransactionImplementations {
 
-    private final Set<Command<?,?>> supportedCommands;
-    private final MapBasedCommandsExecutor<ReadOnlyMongodTransaction> delegate;
+    private final ImmutableMap<Command<?,?>, CommandImplementation<?,?, ? super WriteMongodTransaction>> map;
 
     @Inject
-    ReadOnlyTransactionCommandsExecutor(MapFactory mapFactory) {
-        ImmutableMap<Command<?, ?>, CommandImplementation> supportedCommandsMap = mapFactory.get();
-
-        supportedCommands = Collections.unmodifiableSet(
-                supportedCommandsMap.entrySet().stream()
-                .filter((e) -> !(e.getValue() instanceof NotImplementedCommandImplementation))
-                .map((e) -> e.getKey())
-                .collect(Collectors.toSet())
-        );
-
-        delegate = MapBasedCommandsExecutor.<ReadOnlyMongodTransaction>builder()
-                .addImplementations(supportedCommandsMap.entrySet())
-                .build();
+    WriteTransactionImplementations(MapFactory mapFactory) {
+        map = mapFactory.get();
     }
 
+    @DoNotChange
     Set<Command<?, ?>> getSupportedCommands() {
-        return supportedCommands;
+        return map.keySet();
     }
 
-    @Override
-    public <Arg, Result> Status<Result> execute(Request request, Command<? super Arg, ? super Result> command, Arg arg, ReadOnlyMongodTransaction context) {
-        return delegate.execute(request, command, arg, context);
+    public ImmutableMap<Command<?, ?>, CommandImplementation<?, ?, ? super WriteMongodTransaction>> getMap() {
+        return map;
     }
 
-    static class MapFactory implements Supplier<ImmutableMap<Command<?,?>, CommandImplementation>> {
+    static class MapFactory implements Supplier<ImmutableMap<Command<?,?>, CommandImplementation<?, ?, ? super WriteMongodTransaction>>> {
 
         private final MyAdminCommandsImplementationBuilder adminBuilder;
         private final MyAggregationCommandsImplementationBuilder aggregationBuilder;
@@ -143,13 +128,16 @@ public class ReadOnlyTransactionCommandsExecutor implements CommandsExecutor<Rea
         }
 
         @Override
-        public ImmutableMap<Command<?,?>, CommandImplementation> get() {
-            MongoDb30CommandsImplementationBuilder implBuilder = new MongoDb30CommandsImplementationBuilder(
+        public ImmutableMap<Command<?,?>, CommandImplementation<?, ?, ? super WriteMongodTransaction>> get() {
+            MongoDb30CommandsImplementationBuilder<WriteMongodTransaction> implBuilder = new MongoDb30CommandsImplementationBuilder<>(
                     adminBuilder, aggregationBuilder, authenticationCommandsImplementationsBuilder, diagnosticBuilder, generalBuilder, internalBuilder, replBuilder
             );
 
-            ImmutableMap.Builder<Command<?,?>, CommandImplementation> builder = ImmutableMap.builder();
-            for (Entry<Command<?,?>, CommandImplementation> entry : implBuilder) {
+            ImmutableMap.Builder<Command<?,?>, CommandImplementation<?, ?, ? super WriteMongodTransaction>> builder = ImmutableMap.builder();
+            for (Entry<Command<?,?>, CommandImplementation<?, ?, ? super WriteMongodTransaction>> entry : implBuilder) {
+                if (entry.getValue() instanceof NotImplementedCommandImplementation) {
+                    continue;
+                }
                 builder.put(entry.getKey(), entry.getValue());
             }
 
@@ -158,235 +146,242 @@ public class ReadOnlyTransactionCommandsExecutor implements CommandsExecutor<Rea
 
     }
 
-    static class MyAdminCommandsImplementationBuilder extends AdminCommandsImplementationsBuilder<ReadOnlyMongodTransaction> {
-
+    static class MyAdminCommandsImplementationBuilder extends AdminCommandsImplementationsBuilder<WriteMongodTransaction> {
+        private final CreateCollectionImplementation createCollectionImplementation;
+        private final DropCollectionImplementation dropCollectionImplementation;
+        private final DropDatabaseImplementation dropDatabaseImplementation;
+        private final RenameCollectionImplementation renameCollectionImplementation;
+        
         @Inject
-        private ListCollectionsImplementation listCollectionsImplementation;
-
-        @Override
-        public CommandImplementation<ListCollectionsArgument, ListCollectionsResult, ? super ReadOnlyMongodTransaction> getListCollectionsImplementation() {
-            return listCollectionsImplementation;
+        public MyAdminCommandsImplementationBuilder(
+                CreateCollectionImplementation createCollectionImplementation,
+                DropCollectionImplementation dropCollectionImplementation,
+                DropDatabaseImplementation dropDatabaseImplementation,
+                RenameCollectionImplementation renameCollectionImplementation) {
+            this.createCollectionImplementation = createCollectionImplementation;
+            this.dropCollectionImplementation = dropCollectionImplementation;
+            this.dropDatabaseImplementation = dropDatabaseImplementation;
+            this.renameCollectionImplementation = renameCollectionImplementation;
         }
 
         @Override
-        public CommandImplementation<Empty, Empty, ReadOnlyMongodTransaction> getDropDatabaseImplementation() {
+        public CommandImplementation<ListCollectionsArgument, ListCollectionsResult, WriteMongodTransaction> getListCollectionsImplementation() {
             return NotImplementedCommandImplementation.build();
         }
 
         @Override
-        public CommandImplementation<CollectionCommandArgument, Empty, ReadOnlyMongodTransaction> getDropCollectionImplementation() {
+        public CommandImplementation<Empty, Empty, WriteMongodTransaction> getDropDatabaseImplementation() {
+            return dropDatabaseImplementation;
+        }
+
+        @Override
+        public CommandImplementation<CollectionCommandArgument, Empty, WriteMongodTransaction> getDropCollectionImplementation() {
+            return dropCollectionImplementation;
+        }
+
+        @Override
+        public CommandImplementation<CreateCollectionArgument, Empty, WriteMongodTransaction> getCreateCollectionImplementation() {
+            return createCollectionImplementation;
+        }
+
+        @Override
+        public CommandImplementation<ListIndexesArgument, ListIndexesResult, WriteMongodTransaction> getListIndexesImplementation() {
             return NotImplementedCommandImplementation.build();
         }
 
         @Override
-        public CommandImplementation<CreateCollectionArgument, Empty, ReadOnlyMongodTransaction> getCreateCollectionImplementation() {
+        public CommandImplementation<CreateIndexesArgument, CreateIndexesResult, WriteMongodTransaction> getCreateIndexesImplementation() {
             return NotImplementedCommandImplementation.build();
         }
 
         @Override
-        public CommandImplementation<ListIndexesArgument, ListIndexesResult, ReadOnlyMongodTransaction> getListIndexesImplementation() {
-            return NotImplementedCommandImplementation.build();
+        public CommandImplementation<RenameCollectionArgument, Empty, ? super WriteMongodTransaction> getRenameCollectionImplementation() {
+            return renameCollectionImplementation;
         }
 
-        @Override
-        public CommandImplementation<CreateIndexesArgument, CreateIndexesResult, ReadOnlyMongodTransaction> getCreateIndexesImplementation() {
-            return NotImplementedCommandImplementation.build();
-        }
+    }
+
+    static class MyAggregationCommandsImplementationBuilder extends AggregationCommandsImplementationsBuilder<WriteMongodTransaction> {
 
         @Override
-        public CommandImplementation<RenameCollectionArgument, Empty, ? super ReadOnlyMongodTransaction> getRenameCollectionImplementation() {
+        public CommandImplementation<CountArgument, Long, WriteMongodTransaction> getCountImplementation() {
             return NotImplementedCommandImplementation.build();
         }
 
     }
 
-    static class MyAggregationCommandsImplementationBuilder extends AggregationCommandsImplementationsBuilder<ReadOnlyMongodTransaction> {
-
-        private final CountImplementation countImplementation;
-        
-        @Inject
-        public MyAggregationCommandsImplementationBuilder(CountImplementation countImplementation) {
-            this.countImplementation = countImplementation;
-        }
+    static class MyAuthenticationCommandsImplementationsBuilder extends AuthenticationCommandsImplementationsBuilder<WriteMongodTransaction> {
 
         @Override
-        public CommandImplementation<CountArgument, Long, ? super ReadOnlyMongodTransaction> getCountImplementation() {
-            return countImplementation;
-        }
-
-    }
-
-    static class MyAuthenticationCommandsImplementationsBuilder extends AuthenticationCommandsImplementationsBuilder<ReadOnlyMongodTransaction> {
-
-        @Override
-        public CommandImplementation<Empty, String, ReadOnlyMongodTransaction> getGetNonceImplementation() {
+        public CommandImplementation<Empty, String, WriteMongodTransaction> getGetNonceImplementation() {
             return NotImplementedCommandImplementation.build();
         }
     }
 
-    static class MyDiagnosticCommandsImplementationBuilder extends DiagnosticCommandsImplementationsBuilder<ReadOnlyMongodTransaction> {
-        
-        private final ListDatabasesImplementation listDatabasesImplementation;
-        private final CollStatsImplementation collStatsImplementation;
-        
+    static class MyDiagnosticCommandsImplementationBuilder extends DiagnosticCommandsImplementationsBuilder<WriteMongodTransaction> {
+
+        @Override
+        public CommandImplementation<CollStatsArgument, CollStatsReply, WriteMongodTransaction> getCollStatsImplementation() {
+            return NotImplementedCommandImplementation.build();
+        }
+
+        @Override
+        public CommandImplementation<Empty, ListDatabasesReply, WriteMongodTransaction> getListDatabasesImplementation() {
+            return NotImplementedCommandImplementation.build();
+        }
+
+        @Override
+        public CommandImplementation<Empty, BuildInfoResult, WriteMongodTransaction> getBuildInfoImplementation() {
+            return NotImplementedCommandImplementation.build();
+        }
+
+        @Override
+        public CommandImplementation<ServerStatusArgument, ServerStatusReply, WriteMongodTransaction> getServerStatusImplementation() {
+            return NotImplementedCommandImplementation.build();
+        }
+
+        @Override
+        public CommandImplementation<GetLogArgument, GetLogReply, WriteMongodTransaction> getGetLogImplementation() {
+            return NotImplementedCommandImplementation.build();
+        }
+
+        @Override
+        public CommandImplementation<Empty, Empty, WriteMongodTransaction> getPingCommandImplementation() {
+            return NotImplementedCommandImplementation.build();
+        }
+
+    }
+
+    static class MyGeneralCommandsImplementationBuilder extends GeneralCommandsImplementationsBuilder<WriteMongodTransaction> {
+        private final InsertImplementation insertImpl;
+        private final DeleteImplementation deleteImpl;
+        private final UpdateImplementation updateImpl;
+
         @Inject
-        public MyDiagnosticCommandsImplementationBuilder(ListDatabasesImplementation listDatabasesImplementation,
-                CollStatsImplementation collStatsImplementation) {
+        public MyGeneralCommandsImplementationBuilder(
+                InsertImplementation insertImpl,
+                DeleteImplementation deleteImpl,
+                UpdateImplementation updateImpl) {
             super();
-            this.listDatabasesImplementation = listDatabasesImplementation;
-            this.collStatsImplementation = collStatsImplementation;
+            this.insertImpl = insertImpl;
+            this.deleteImpl = deleteImpl;
+            this.updateImpl = updateImpl;
         }
 
         @Override
-        public CommandImplementation<CollStatsArgument, CollStatsReply, ? super ReadOnlyMongodTransaction> getCollStatsImplementation() {
-            return collStatsImplementation;
-        }
-
-        @Override
-        public CommandImplementation<Empty, ListDatabasesReply, ? super ReadOnlyMongodTransaction> getListDatabasesImplementation() {
-            return listDatabasesImplementation;
-        }
-
-        @Override
-        public CommandImplementation<Empty, BuildInfoResult, ReadOnlyMongodTransaction> getBuildInfoImplementation() {
+        public CommandImplementation<GetLastErrorArgument, GetLastErrorReply, WriteMongodTransaction> getGetLastErrrorImplementation() {
             return NotImplementedCommandImplementation.build();
         }
 
         @Override
-        public CommandImplementation<ServerStatusArgument, ServerStatusReply, ReadOnlyMongodTransaction> getServerStatusImplementation() {
+        public CommandImplementation<InsertArgument, InsertResult, WriteMongodTransaction> getInsertImplementation() {
+            return insertImpl;
+        }
+
+        @Override
+        public CommandImplementation<FindArgument, FindResult, ? super WriteMongodTransaction> getFindImplementation() {
             return NotImplementedCommandImplementation.build();
         }
 
         @Override
-        public CommandImplementation<GetLogArgument, GetLogReply, ReadOnlyMongodTransaction> getGetLogImplementation() {
-            return NotImplementedCommandImplementation.build();
+        public CommandImplementation<DeleteArgument, Long, WriteMongodTransaction> getDeleteImplementation() {
+            return deleteImpl;
         }
 
         @Override
-        public CommandImplementation<Empty, Empty, ReadOnlyMongodTransaction> getPingCommandImplementation() {
-            return NotImplementedCommandImplementation.build();
+        public CommandImplementation<UpdateArgument, UpdateResult, WriteMongodTransaction> getUpdateImplementation() {
+            return updateImpl;
         }
 
     }
 
-    static class MyGeneralCommandsImplementationBuilder extends GeneralCommandsImplementationsBuilder<ReadOnlyMongodTransaction> {
-        @Inject
-        private FindImplementation findImpl;
+    static class MyInternalCommandsImplementationsBuilder extends InternalCommandsImplementationsBuilder<WriteMongodTransaction> {
 
         @Override
-        public CommandImplementation<GetLastErrorArgument, GetLastErrorReply, ReadOnlyMongodTransaction> getGetLastErrrorImplementation() {
+        public CommandImplementation<HandshakeArgument, Empty, WriteMongodTransaction> getHandshakeImplementation() {
             return NotImplementedCommandImplementation.build();
         }
 
         @Override
-        public CommandImplementation<FindArgument, FindResult, ? super ReadOnlyMongodTransaction> getFindImplementation() {
-            return findImpl;
-        }
-
-        @Override
-        public CommandImplementation<InsertArgument, InsertResult, ReadOnlyMongodTransaction> getInsertImplementation() {
+        public CommandImplementation<Empty, ReplSetGetRBIDReply, WriteMongodTransaction> getReplSetGetRBIDImplementation() {
             return NotImplementedCommandImplementation.build();
         }
 
         @Override
-        public CommandImplementation<DeleteArgument, Long, ReadOnlyMongodTransaction> getDeleteImplementation() {
+        public CommandImplementation<ReplSetUpdatePositionArgument, Empty, WriteMongodTransaction> getReplSetUpdateImplementation() {
             return NotImplementedCommandImplementation.build();
         }
 
         @Override
-        public CommandImplementation<UpdateArgument, UpdateResult, ReadOnlyMongodTransaction> getUpdateImplementation() {
-            return NotImplementedCommandImplementation.build();
-        }
-
-    }
-
-    static class MyInternalCommandsImplementationsBuilder extends InternalCommandsImplementationsBuilder<ReadOnlyMongodTransaction> {
-
-        @Override
-        public CommandImplementation<HandshakeArgument, Empty, ReadOnlyMongodTransaction> getHandshakeImplementation() {
+        public CommandImplementation<ReplSetElectArgument, ReplSetElectReply, WriteMongodTransaction> getReplSetElectImplementation() {
             return NotImplementedCommandImplementation.build();
         }
 
         @Override
-        public CommandImplementation<Empty, ReplSetGetRBIDReply, ReadOnlyMongodTransaction> getReplSetGetRBIDImplementation() {
+        public CommandImplementation<ReplSetFreshArgument, ReplSetFreshReply, WriteMongodTransaction> getReplSetFreshImplementation() {
             return NotImplementedCommandImplementation.build();
         }
 
         @Override
-        public CommandImplementation<ReplSetUpdatePositionArgument, Empty, ReadOnlyMongodTransaction> getReplSetUpdateImplementation() {
+        public CommandImplementation<ReplSetHeartbeatArgument, ReplSetHeartbeatReply, WriteMongodTransaction> getReplSetHeartbeatImplementation() {
             return NotImplementedCommandImplementation.build();
         }
 
         @Override
-        public CommandImplementation<ReplSetElectArgument, ReplSetElectReply, ReadOnlyMongodTransaction> getReplSetElectImplementation() {
-            return NotImplementedCommandImplementation.build();
-        }
-
-        @Override
-        public CommandImplementation<ReplSetFreshArgument, ReplSetFreshReply, ReadOnlyMongodTransaction> getReplSetFreshImplementation() {
-            return NotImplementedCommandImplementation.build();
-        }
-
-        @Override
-        public CommandImplementation<ReplSetHeartbeatArgument, ReplSetHeartbeatReply, ReadOnlyMongodTransaction> getReplSetHeartbeatImplementation() {
-            return NotImplementedCommandImplementation.build();
-        }
-
-        @Override
-        public CommandImplementation<Empty, WhatsMyUriReply, ReadOnlyMongodTransaction> getWhatsMyUriImplementation() {
+        public CommandImplementation<Empty, WhatsMyUriReply, WriteMongodTransaction> getWhatsMyUriImplementation() {
             return NotImplementedCommandImplementation.build();
         }
     }
 
-    static class MyReplCommandsImplementationsBuilder extends ReplCommandsImplementationsBuilder<ReadOnlyMongodTransaction> {
-        
+    static class MyReplCommandsImplementationsBuilder extends ReplCommandsImplementationsBuilder<WriteMongodTransaction> {
+
         @Override
-        public CommandImplementation<ApplyOpsArgument, ApplyOpsReply, ReadOnlyMongodTransaction> getApplyOpsImplementation() {
+        public CommandImplementation<ApplyOpsArgument, ApplyOpsReply, WriteMongodTransaction> getApplyOpsImplementation() {
             return NotImplementedCommandImplementation.build();
         }
 
         @Override
-        public CommandImplementation<ReplSetFreezeArgument, ReplSetFreezeReply, ReadOnlyMongodTransaction> getReplSetFreezeImplementation() {
+        public CommandImplementation<ReplSetFreezeArgument, ReplSetFreezeReply, WriteMongodTransaction> getReplSetFreezeImplementation() {
             return NotImplementedCommandImplementation.build();
         }
 
         @Override
-        public CommandImplementation<Empty, IsMasterReply, ReadOnlyMongodTransaction> getIsMasterImplementation() {
+        public CommandImplementation<Empty, IsMasterReply, WriteMongodTransaction> getIsMasterImplementation() {
             return NotImplementedCommandImplementation.build();
         }
 
         @Override
-        public CommandImplementation<Empty, ReplicaSetConfig, ReadOnlyMongodTransaction> getReplSetGetConfigImplementation() {
+        public CommandImplementation<Empty, ReplicaSetConfig, WriteMongodTransaction> getReplSetGetConfigImplementation() {
             return NotImplementedCommandImplementation.build();
         }
 
         @Override
-        public CommandImplementation<Empty, ReplSetGetStatusReply, ReadOnlyMongodTransaction> getReplSetGetStatusImplementation() {
+        public CommandImplementation<Empty, ReplSetGetStatusReply, WriteMongodTransaction> getReplSetGetStatusImplementation() {
             return NotImplementedCommandImplementation.build();
         }
 
         @Override
-        public CommandImplementation<ReplicaSetConfig, Empty, ReadOnlyMongodTransaction> getReplSetInitiateImplementation() {
+        public CommandImplementation<ReplicaSetConfig, Empty, WriteMongodTransaction> getReplSetInitiateImplementation() {
             return NotImplementedCommandImplementation.build();
         }
 
         @Override
-        public CommandImplementation<Boolean, Empty, ReadOnlyMongodTransaction> getReplSetMaintenanceImplementation() {
+        public CommandImplementation<Boolean, Empty, WriteMongodTransaction> getReplSetMaintenanceImplementation() {
             return NotImplementedCommandImplementation.build();
         }
 
         @Override
-        public CommandImplementation<ReplSetReconfigArgument, Empty, ReadOnlyMongodTransaction> getReplSetReconfigImplementation() {
+        public CommandImplementation<ReplSetReconfigArgument, Empty, WriteMongodTransaction> getReplSetReconfigImplementation() {
             return NotImplementedCommandImplementation.build();
         }
 
         @Override
-        public CommandImplementation<ReplSetStepDownArgument, Empty, ReadOnlyMongodTransaction> getReplSetStepDownImplementation() {
+        public CommandImplementation<ReplSetStepDownArgument, Empty, WriteMongodTransaction> getReplSetStepDownImplementation() {
             return NotImplementedCommandImplementation.build();
         }
 
         @Override
-        public CommandImplementation<HostAndPort, ReplSetSyncFromReply, ReadOnlyMongodTransaction> getReplSetSyncFromImplementation() {
+        public CommandImplementation<HostAndPort, ReplSetSyncFromReply, WriteMongodTransaction> getReplSetSyncFromImplementation() {
             return NotImplementedCommandImplementation.build();
         }
 

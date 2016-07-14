@@ -20,10 +20,6 @@
 
 package com.torodb.backend;
 
-import java.sql.SQLException;
-import java.util.Collection;
-import java.util.Iterator;
-
 import com.google.common.base.Preconditions;
 import com.torodb.backend.ErrorHandler.Context;
 import com.torodb.core.TableRef;
@@ -33,14 +29,10 @@ import com.torodb.core.d2r.IdentifierFactory;
 import com.torodb.core.d2r.R2DTranslator;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.transaction.RollbackException;
-import com.torodb.core.transaction.metainf.MetaCollection;
-import com.torodb.core.transaction.metainf.MetaDatabase;
-import com.torodb.core.transaction.metainf.MetaDocPart;
-import com.torodb.core.transaction.metainf.MetaField;
-import com.torodb.core.transaction.metainf.MetaScalar;
-import com.torodb.core.transaction.metainf.MutableMetaCollection;
-import com.torodb.core.transaction.metainf.MutableMetaDatabase;
-import com.torodb.core.transaction.metainf.MutableMetaDocPart;
+import com.torodb.core.transaction.metainf.*;
+import java.sql.SQLException;
+import java.util.Collection;
+import java.util.Iterator;
 
 public class WriteBackendTransactionImpl extends BackendTransactionImpl implements WriteBackendTransaction {
 
@@ -230,6 +222,10 @@ public class WriteBackendTransactionImpl extends BackendTransactionImpl implemen
     @Override
     public void deleteDids(MetaDatabase db, MetaCollection col, Collection<Integer> dids) {
         Preconditions.checkState(!isClosed(), "This transaction is closed");
+
+        if (dids.isEmpty()) {
+            return ;
+        }
 
         getSqlInterface().getWriteInterface().deleteCollectionDocParts(getDsl(), db.getIdentifier(), col, dids);
     }

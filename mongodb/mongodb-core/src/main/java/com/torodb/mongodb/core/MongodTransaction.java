@@ -5,6 +5,7 @@ import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.Request;
 import com.google.common.base.Preconditions;
+import com.torodb.core.transaction.RollbackException;
 import com.torodb.torod.TorodTransaction;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -31,10 +32,15 @@ public abstract class MongodTransaction implements AutoCloseable {
         return connection;
     }
 
-    public <Arg, Result> Status<Result> execute(Request req, Command<? super Arg, ? super Result> command, Arg arg) {
+    public <Arg, Result> Status<Result> execute(Request req, Command<? super Arg, ? super Result> command, Arg arg) throws RollbackException {
         Preconditions.checkState(currentRequest == null, "Another request is currently under execution. Request is " + currentRequest);
         this.currentRequest = req;
-        return executeProtected(req, command, arg);
+        try {
+            Status<Result> status = executeProtected(req, command, arg);
+            return status;
+        } finally {
+            this.currentRequest = null;
+        }
     }
 
     public Request getCurrentRequest() {

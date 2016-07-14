@@ -45,7 +45,7 @@ import com.google.inject.Injector;
 import com.torodb.backend.DbBackend;
 import com.torodb.backend.meta.TorodbSchema;
 import com.torodb.core.backend.IdentifierConstraints;
-import com.torodb.packaging.ToroDBServer;
+import com.torodb.packaging.ToroDbServer;
 import com.torodb.packaging.config.model.Config;
 import com.torodb.packaging.config.model.backend.derby.Derby;
 import com.torodb.packaging.config.model.backend.postgres.Postgres;
@@ -114,7 +114,7 @@ public abstract class AbstractBackendRunnerClassRule implements TestRule {
 			
 			setupConfig();
 			
-            injector = ToroDBServer.createInjector(config, Clock.systemUTC());
+            injector = ToroDbServer.createInjector(config, Clock.systemUTC());
 
 			Log4jUtils.setRootLevel(config.getGeneric().getLogLevel());
 			
