@@ -10,6 +10,7 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import java.util.zip.GZIPInputStream;
 
+import com.google.common.base.Charsets;
 import com.torodb.kvdocument.conversion.json.GsonJsonParser;
 import com.torodb.kvdocument.conversion.json.JsonParser;
 import com.torodb.kvdocument.values.KVDocument;
@@ -43,7 +44,7 @@ public class JsonArchiveFeed {
 		Stream<KVDocument> stream = Stream.of(root.listFiles()).filter(filter).flatMap(f -> {
 			System.out.println("Reading: " + f.getName());
 			try (GZIPInputStream is = new GZIPInputStream(new FileInputStream(f))) {
-				try (BufferedReader reader = new BufferedReader(new InputStreamReader(is))) {
+				try (BufferedReader reader = new BufferedReader(new InputStreamReader(is,Charsets.UTF_8))) {
 					return reader.lines().filter(filterLine).map(line -> {
 						documents++;
 						datasize += line.length();

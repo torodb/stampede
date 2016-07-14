@@ -1,6 +1,7 @@
 package com.torodb.backend.util;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.stream.IntStream;
@@ -50,7 +51,7 @@ public class SimpleDocumentFeed {
 				}
 				return sb.toString();
 			}
-		} catch (Exception e) {
+		} catch (IOException e) {
 			e.printStackTrace();
 			return null;
 		}
