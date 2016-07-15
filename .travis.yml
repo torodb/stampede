@@ -9,11 +9,16 @@ addons:
     packages:
       - oracle-java8-installer
 services:
+  - docker
   - postgresql
-  
+
 env:
+  global:
+    - DOCKER_ENGINE_VERSION=1.11.1-0~precise
+    - DOCKER_COMPOSE_VERSION=1.7.1
   matrix:
     - Protocol=Mongo Backend=Postgres
+    - DOCKER_TEST=TRUE
 #    - Protocol=Mongo Backend=MySQL
 #    - Protocol=Mongo Backend=Greenplum
 #    - Protocol=MongoReplSet Backend=Postgres
@@ -26,8 +31,26 @@ matrix:
       env: Protocol=Mongo Backend=MySQL
     - jdk: oraclejdk7
       env: Protocol=MongoReplSet Backend=Postgres
+    - jdk: oraclejdk7
+      env: DOCKER_TEST=TRUE
   allow_failures:
     - env: Protocol=MongoReplSet Backend=Postgres
+
+before_install:
+  -  if [[ "$DOCKER_TEST" == "TRUE" ]]; then sudo /etc/init.d/postgresql stop; fi
+
+install:
+  -  if [[ "$DOCKER_TEST" == "TRUE" ]]; then sudo sh -c 'echo "deb https://apt.dockerproject.org/repo ubuntu-precise main" > /etc/apt/sources.list.d/docker.list'; fi
+  -  if [[ "$DOCKER_TEST" == "TRUE" ]]; then sudo apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 58118E89F3A912897C070ADBF76221572C52609D; fi
+  -  if [[ "$DOCKER_TEST" == "TRUE" ]]; then sudo apt-get update; fi
+  -  if [[ "$DOCKER_TEST" == "TRUE" ]]; then sudo apt-key update; fi
+  -  if [[ "$DOCKER_TEST" == "TRUE" ]]; then sudo apt-get -qqy -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install docker-engine=${DOCKER_ENGINE_VERSION}; fi
+  -  if [[ "$DOCKER_TEST" == "TRUE" ]]; then curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose; fi
+  -  if [[ "$DOCKER_TEST" == "TRUE" ]]; then chmod +x docker-compose; fi
+  -  if [[ "$DOCKER_TEST" == "TRUE" ]]; then sudo mv docker-compose /usr/local/bin; fi
+  -  if [[ "$DOCKER_TEST" == "TRUE" ]]; then docker-compose -v; fi
+  -  if [[ "$DOCKER_TEST" == "TRUE" ]]; then docker -v; fi
+  -  if [[ "$DOCKER_TEST" == "TRUE" ]]; then sudo apt-get install mongodb-clients -y; fi
 
 before_script:
   - export GIT_BRANCH=$TRAVIS_BRANCH
@@ -35,6 +58,16 @@ before_script:
   - source ./.travis/prepare_protocol.sh
   - echo $PATH
   - java -version
+  -  if [[ "$DOCKER_TEST" == "TRUE" ]]; then docker-compose up -d --build; fi
+
+script:
+  -  if [[ "$DOCKER_TEST" == "TRUE" ]]; then docker ps | grep torodb_postgres_1; fi
+  -  if [[ "$DOCKER_TEST" == "TRUE" ]]; then docker ps | grep torodb_toro_1; fi
+  -  if [[ "$DOCKER_TEST" == "TRUE" ]]; then docker ps; fi
+  -  if [[ "$DOCKER_TEST" == "TRUE" ]]; then source .travis/test_connection_to_torodb.sh; fi
+
+after_script:
+  -  if [[ "$DOCKER_TEST" == "TRUE" ]]; then docker-compose down; fi
 
 sudo: false
 
@@ -61,4 +94,3 @@ deploy:
       repo: torodb/torodb
       branch: devel
       jdk: oraclejdk8
-  
