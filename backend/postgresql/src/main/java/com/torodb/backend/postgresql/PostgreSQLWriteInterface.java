@@ -51,6 +51,7 @@ import org.jooq.exception.DataAccessException;
 import org.postgresql.PGConnection;
 import org.postgresql.copy.CopyManager;
 
+import com.codahale.metrics.Timer;
 /**
  *
  */
@@ -62,15 +63,18 @@ public class PostgreSQLWriteInterface extends AbstractWriteInterface {
     private final PostgreSQLMetaDataReadInterface postgreSQLMetaDataReadInterface;
     private final ErrorHandler errorHandler;
     private final SqlHelper sqlHelper;
+    private final PostgreSQLMetrics metrics;
     
     @Inject
     public PostgreSQLWriteInterface(PostgreSQLMetaDataReadInterface metaDataReadInterface,
             PostgreSQLErrorHandler errorHandler,
-            SqlHelper sqlHelper) {
+            SqlHelper sqlHelper,
+            PostgreSQLMetrics metrics) {
         super(metaDataReadInterface, errorHandler, sqlHelper);
         this.postgreSQLMetaDataReadInterface = metaDataReadInterface;
         this.errorHandler = errorHandler;
         this.sqlHelper = sqlHelper;
+        this.metrics = metrics;
     }
 
     @Override
@@ -94,49 +98,54 @@ public class PostgreSQLWriteInterface extends AbstractWriteInterface {
     
     @Override
     public void insertDocPartData(DSLContext dsl, String schemaName, DocPartData docPartData) {
+    	metrics.insertRows.mark(docPartData.rowCount());
+    	metrics.insertFields.mark(docPartData.rowCount()*(docPartData.fieldColumnsCount()+docPartData.scalarColumnsCount()));
         if (docPartData.rowCount()==0){
             return;
         }
-        int maxCappedSize = 10;
-        int cappedSize = Math.min(docPartData.rowCount(), maxCappedSize);
-
-        if (cappedSize < maxCappedSize) { //there are not enough elements on the insert => fallback
-            LOGGER.debug(
-                    "The insert window is not big enough to use copy (the "
-                            + "limit is {}, the real size is {}).",
-                    maxCappedSize,
-                    cappedSize
-            );
-            super.insertDocPartData(dsl, schemaName, docPartData);
-        }
-        else {
-            Connection connection = dsl.configuration().connectionProvider().acquire();
-            try {
-                if (!connection.isWrapperFor(PGConnection.class)) {
-                    LOGGER.warn("It was impossible to use the PostgreSQL way to "
-                            + "insert documents. Inserting using the standard "
-                            + "implementation");
-                    super.insertDocPartData(dsl, schemaName, docPartData);
-                } else {
-                    try {
-                        copyInsertDocPartData(
-                                connection.unwrap(PGConnection.class),
-                                schemaName,
-                                docPartData
-                                );
-                    } catch (DataAccessException ex) {
-                        throw errorHandler.handleException(Context.INSERT, ex);
-                    } catch (SQLException ex) {
-                        throw errorHandler.handleException(Context.INSERT, ex);
-                    } catch (IOException ex) {
-                        throw new SystemException(ex);
-                    }
-                }
-            } catch (SQLException ex) {
-                throw new SystemException(ex);
-            } finally {
-                dsl.configuration().connectionProvider().release(connection);
-            }
+        try(Timer.Context ctx = metrics.insertDocPartDataTimer.time()){
+        
+	        int maxCappedSize = 10;
+	        int cappedSize = Math.min(docPartData.rowCount(), maxCappedSize);
+	
+	        if (cappedSize < maxCappedSize) { //there are not enough elements on the insert => fallback
+	            LOGGER.debug(
+	                    "The insert window is not big enough to use copy (the "
+	                            + "limit is {}, the real size is {}).",
+	                    maxCappedSize,
+	                    cappedSize
+	            );
+	            super.insertDocPartData(dsl, schemaName, docPartData);
+	        }
+	        else {
+	            Connection connection = dsl.configuration().connectionProvider().acquire();
+	            try {
+	                if (!connection.isWrapperFor(PGConnection.class)) {
+	                    LOGGER.warn("It was impossible to use the PostgreSQL way to "
+	                            + "insert documents. Inserting using the standard "
+	                            + "implementation");
+	                    super.insertDocPartData(dsl, schemaName, docPartData);
+	                } else {
+	                    try {
+	                        copyInsertDocPartData(
+	                                connection.unwrap(PGConnection.class),
+	                                schemaName,
+	                                docPartData
+	                                );
+	                    } catch (DataAccessException ex) {
+	                        throw errorHandler.handleException(Context.INSERT, ex);
+	                    } catch (SQLException ex) {
+	                        throw errorHandler.handleException(Context.INSERT, ex);
+	                    } catch (IOException ex) {
+	                        throw new SystemException(ex);
+	                    }
+	                }
+	            } catch (SQLException ex) {
+	                throw new SystemException(ex);
+	            } finally {
+	                dsl.configuration().connectionProvider().release(connection);
+	            }
+	        }
         }
     }
     
