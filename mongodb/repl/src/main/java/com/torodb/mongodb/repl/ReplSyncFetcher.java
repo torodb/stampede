@@ -207,7 +207,7 @@ class ReplSyncFetcher extends AbstractExecutionThreadService {
         int batchSize = oldBatch.getBatchSize();
         if (batchSize > 0 && batchSize < MIN_BATCH_SIZE) {
             long currentTime = System.currentTimeMillis();
-            long elapsedTime = oldBatch.getFetchTime() - currentTime;
+            long elapsedTime = currentTime - oldBatch.getFetchTime();
             if (elapsedTime < SLEEP_TO_BATCH_MILLIS) {
                 try {
                     LOGGER.debug("Batch size is very small. Waiting {} millis for more...", SLEEP_TO_BATCH_MILLIS);
