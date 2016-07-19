@@ -50,6 +50,11 @@
             <artifactId>driver-postgresql</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+        	<groupId>com.torodb</groupId>
+        	<artifactId>metrics</artifactId>
+        	<version>${project.version}</version>
+        </dependency>        
 	</dependencies>
 	<description>PostgreSQL implementation of a ToroDB backend.</description>
 </project>

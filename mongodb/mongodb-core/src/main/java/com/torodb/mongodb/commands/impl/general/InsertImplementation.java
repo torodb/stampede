@@ -11,8 +11,11 @@ import com.torodb.core.exceptions.user.UserException;
 import com.torodb.kvdocument.conversion.mongowp.FromBsonValueTranslator;
 import com.torodb.kvdocument.values.KVDocument;
 import com.torodb.mongodb.commands.impl.WriteTorodbCommandImpl;
+import com.torodb.mongodb.core.MongodMetrics;
 import com.torodb.mongodb.core.WriteMongodTransaction;
 import java.util.stream.Stream;
+
+import javax.inject.Inject;
 import javax.inject.Singleton;
 
 /**
@@ -20,10 +23,18 @@ import javax.inject.Singleton;
  */
 @Singleton
 public class InsertImplementation implements WriteTorodbCommandImpl<InsertArgument, InsertResult>{
+	
+	private MongodMetrics mongodMetrics;
+	
+	@Inject
+	public InsertImplementation(MongodMetrics mongodMetrics) {
+		this.mongodMetrics = mongodMetrics;
+	}
 
     @Override
     public Status<InsertResult> apply(Request req, Command<? super InsertArgument, ? super InsertResult> command, InsertArgument arg, WriteMongodTransaction trans) {
-        Stream<KVDocument> docsToInsert = arg.getDocuments().stream().map(FromBsonValueTranslator.getInstance())
+    	mongodMetrics.getInserts().mark(arg.getDocuments().size());
+    	Stream<KVDocument> docsToInsert = arg.getDocuments().stream().map(FromBsonValueTranslator.getInstance())
                 .map((v) -> (KVDocument)v);
 
         try {

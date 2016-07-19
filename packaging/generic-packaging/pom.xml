@@ -139,6 +139,11 @@
             <type>test-jar</type>
             <scope>test</scope>
         </dependency>
+        <dependency>
+        	<groupId>com.torodb</groupId>
+        	<artifactId>metrics</artifactId>
+        	<version>${project.version}</version>
+        </dependency>
     </dependencies>
     
     <build>

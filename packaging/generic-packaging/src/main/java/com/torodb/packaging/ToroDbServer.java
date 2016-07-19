@@ -10,6 +10,7 @@ import com.google.inject.ProvisionException;
 import com.torodb.backend.guice.BackendModule;
 import com.torodb.core.BuildProperties;
 import com.torodb.core.guice.CoreModule;
+import com.torodb.core.metrics.MetricsModule;
 import com.torodb.d2r.guice.D2RModule;
 import com.torodb.metainfo.guice.MetainfModule;
 import com.torodb.mongodb.core.MongodServer;
@@ -61,7 +62,8 @@ public class ToroDbServer extends AbstractIdleService {
                 new D2RModule(),
                 new TorodModule(),
                 new MongoLayerModule(),
-                new MongoDbWpModule()
+                new MongoDbWpModule(),
+                new MetricsModule(config.getGeneric())
         );
         return injector;
     }

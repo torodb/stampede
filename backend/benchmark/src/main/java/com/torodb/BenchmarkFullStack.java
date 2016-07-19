@@ -28,6 +28,12 @@ import com.torodb.torod.TorodConnection;
 import com.torodb.torod.TorodServer;
 import com.torodb.torod.WriteTorodTransaction;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
+@SuppressFBWarnings(
+        value = "UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR",
+        justification = "State lifecycle is managed by JMH"
+)
 public class BenchmarkFullStack {
 	
 	@State(Scope.Thread)
@@ -69,12 +75,11 @@ public class BenchmarkFullStack {
 	@Warmup(iterations=3)
 	@Measurement(iterations=10) 
 	public void benchmarkInsert(FullStackState state, Blackhole blackhole) throws RollbackException, UserException {
-	    try (
-	            TorodConnection toroConnection = state.torod.openConnection();
-	            WriteTorodTransaction toroTransaction = toroConnection.openWriteTransaction();
-	            ) {
-            toroTransaction.insert("test", "test", state.documents.stream());
-            toroTransaction.commit();
+	    try (TorodConnection toroConnection = state.torod.openConnection()) {
+	    	try(WriteTorodTransaction toroTransaction = toroConnection.openWriteTransaction()){
+	            toroTransaction.insert("test", "test", state.documents.stream());
+	            toroTransaction.commit();
+	    	}
 	    }
 	}
 	
