@@ -122,24 +122,23 @@ public class OplogManager extends AbstractIdleService {
                 }
 
                 Status<InsertResult> insertResult = transaction.execute(
-                        new Request("torodb", null, true, null),
+                        new Request(OPLOG_DB, null, true, null),
                         InsertCommand.INSTANCE,
-                        new InsertArgument.Builder("torodb")
+                        new InsertArgument.Builder(OPLOG_COL)
                         .addDocument(
                                 new BsonDocumentBuilder()
                                 .appendUnsafe(KEY, new BsonDocumentBuilder()
                                         .appendUnsafe("hash", newLong(hash))
-                                        .appendUnsafe("opTime", new BsonDocumentBuilder()
-                                                .appendUnsafe("t", newLong(opTime.getSecs().longValue()))
-                                                .appendUnsafe("i", newLong(opTime.getTerm().longValue()))
-                                                .build()
-                                        ).build()
+                                        .appendUnsafe("optime_i", newLong(opTime.getSecs().longValue()))
+                                        .appendUnsafe("optime_t", newLong(opTime.getTerm().longValue()))
+                                        .build()
                                 ).build()
                         ).build()
                 );
                 if (insertResult.isOK() && insertResult.getResult().getN() != 1) {
                     return Status.from(ErrorCode.OPERATION_FAILED, "More than one element inserted");
                 }
+                transaction.commit();
                 return insertResult;
             }
         });
@@ -157,7 +156,7 @@ public class OplogManager extends AbstractIdleService {
                         new Request(OPLOG_DB, null, true, null),
                         FindCommand.INSTANCE,
                         new FindArgument.Builder()
-                        .setComment(OPLOG_COL)
+                        .setCollection(OPLOG_COL)
                         .setSlaveOk(true)
                         .build()
                 );
@@ -175,10 +174,9 @@ public class OplogManager extends AbstractIdleService {
                     BsonDocument subDoc = BsonReaderTool.getDocument(doc, KEY);
                     lastAppliedHash = BsonReaderTool.getLong(subDoc, "hash");
 
-                    BsonDocument opTimeDoc = BsonReaderTool.getDocument(subDoc, "opTime");
                     lastAppliedOpTime = new OpTime(
-                            UnsignedInteger.valueOf(BsonReaderTool.getLong(opTimeDoc, "t")),
-                            UnsignedInteger.valueOf(BsonReaderTool.getLong(opTimeDoc, "i"))
+                            UnsignedInteger.valueOf(BsonReaderTool.getLong(subDoc, "optime_i")),
+                            UnsignedInteger.valueOf(BsonReaderTool.getLong(subDoc, "optime_t"))
                     );
                 }
                 return Status.ok();
