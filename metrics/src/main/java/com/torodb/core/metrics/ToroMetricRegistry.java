@@ -1,12 +1,15 @@
 package com.torodb.core.metrics;
 
+import java.io.File;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 import javax.inject.Singleton;
 import javax.management.ObjectName;
 
 import com.codahale.metrics.Counter;
+import com.codahale.metrics.CsvReporter;
 import com.codahale.metrics.ExponentiallyDecayingReservoir;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.JmxReporter;
@@ -25,7 +28,6 @@ public class ToroMetricRegistry extends MetricRegistry  {
 		super();
 		final JmxReporter reporter = JmxReporter
 				.forRegistry(this)
-				.inDomain("torodb")
 				.createsObjectNamesWith(mbeanNameFactory)
 				.build();
 		reporter.start();
@@ -57,6 +59,7 @@ public class ToroMetricRegistry extends MetricRegistry  {
 
 	public <T extends Metric> T register(MetricName name, T metric) {
 		try {
+			mbeanNameFactory.registerName(name);
 			register(name.getMetricName(), metric);
 			return metric;
 		} catch (IllegalArgumentException e) {
