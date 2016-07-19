@@ -20,29 +20,27 @@
 
 package com.torodb.backend.meta;
 
+import com.google.common.io.CharStreams;
+import com.torodb.backend.ErrorHandler.Context;
+import com.torodb.backend.SqlHelper;
+import com.torodb.backend.SqlInterface;
+import com.torodb.backend.exceptions.InvalidDatabaseException;
+import com.torodb.backend.tables.SemanticTable;
+import com.torodb.core.exceptions.SystemException;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.sql.SQLException;
-
 import javax.inject.Singleton;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jooq.DSLContext;
 import org.jooq.Meta;
 import org.jooq.Schema;
 import org.jooq.Table;
-
-import com.google.common.io.CharStreams;
-import com.torodb.backend.SqlHelper;
-import com.torodb.backend.SqlInterface;
-import com.torodb.backend.ErrorHandler.Context;
-import com.torodb.backend.exceptions.InvalidDatabaseException;
-import com.torodb.backend.tables.SemanticTable;
-import com.torodb.core.exceptions.SystemException;
 
 @Singleton
 public abstract class AbstractSchemaUpdater implements SchemaUpdater {
@@ -111,13 +109,15 @@ public abstract class AbstractSchemaUpdater implements SchemaUpdater {
         }
     }
 
+    @SuppressFBWarnings(value = "UI_INHERITANCE_UNSAFE_GETRESOURCE",
+            justification = "We want to read resources from the subclass")
     protected void executeSql(
             DSLContext dsl, 
             String resourcePath,
             SqlHelper sqlHelper
     ) throws IOException, SQLException {
         InputStream resourceAsStream
-                = getClass().getClassLoader().getResourceAsStream(resourcePath);
+                = getClass().getResourceAsStream(resourcePath);
         if (resourceAsStream == null) {
             throw new SystemException(
                     "Resource '" + resourcePath + "' does not exist"
