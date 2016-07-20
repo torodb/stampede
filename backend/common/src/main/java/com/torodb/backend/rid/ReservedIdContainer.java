@@ -61,7 +61,7 @@ public class ReservedIdContainer implements RidGenerator {
 
         @Override
         public void setNextRid(TableRef tableRef, int nextRid) {
-            get(tableRef).setLastCachedId(nextRid);
+            get(tableRef).setLastUsedId(nextRid);
         }
 
 	}
