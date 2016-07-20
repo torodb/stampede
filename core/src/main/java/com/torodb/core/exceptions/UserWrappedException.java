@@ -35,6 +35,11 @@ public class UserWrappedException extends CheckedWrappedException {
 
     @Override
     public synchronized UserException getCause() {
-        return (UserException) super.getCause();
+    	Exception cause = super.getCause();
+    	if (cause instanceof UserException){
+    		return (UserException) cause;
+    	}
+    	return null;
+    		
     }
 }

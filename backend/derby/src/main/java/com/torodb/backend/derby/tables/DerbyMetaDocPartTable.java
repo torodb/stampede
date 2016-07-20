@@ -33,7 +33,7 @@ import com.torodb.backend.tables.MetaDocPartTable;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
-@SuppressFBWarnings("EQ_DOESNT_OVERRIDE_EQUALS")
+@SuppressFBWarnings(value = {"EQ_DOESNT_OVERRIDE_EQUALS","HE_HASHCODE_NO_EQUALS"})
 public class DerbyMetaDocPartTable extends MetaDocPartTable<JsonArray, DerbyMetaDocPartRecord> {
 
     private static final long serialVersionUID = -550698624070753099L;

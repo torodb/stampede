@@ -14,6 +14,9 @@ import com.torodb.d2r.IdentifierFactoryImpl;
 import com.torodb.d2r.MockIdentifierInterface;
 import com.torodb.kvdocument.values.KVDocument;
 import com.torodb.metainfo.cache.mvcc.MvccMetainfoRepository;
+
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 import java.util.ArrayList;
 import java.util.List;
 import org.openjdk.jmh.annotations.*;
@@ -21,6 +24,10 @@ import org.openjdk.jmh.infra.Blackhole;
 
 import static com.torodb.backend.util.TestDataFactory.*;
 
+@SuppressFBWarnings(
+        value = "UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR",
+        justification = "State lifecycle is managed by JMH"
+)
 public class BenchmarkD2RTranslatorStack {
 
     private static TableRefFactory tableRefFactory = new TableRefFactoryImpl();

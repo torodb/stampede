@@ -15,12 +15,12 @@ import com.torodb.torod.WriteTorodTransaction;
 public class WriteMongodTransaction extends MongodTransaction {
 
     private final WriteTorodTransaction torodTransaction;
-    private final CommandsExecutor<WriteMongodTransaction> commandsExecutor;
+    private final CommandsExecutor<? super WriteMongodTransaction> commandsExecutor;
 
     public WriteMongodTransaction(MongodConnection connection) {
         super(connection);
         this.torodTransaction = connection.getTorodConnection().openWriteTransaction();
-        this.commandsExecutor = connection.getServer().getWriteCommandsExecutor();
+        this.commandsExecutor = connection.getServer().getCommandsExecutorClassifier().getWriteCommandsExecutor();
     }
 
     @Override

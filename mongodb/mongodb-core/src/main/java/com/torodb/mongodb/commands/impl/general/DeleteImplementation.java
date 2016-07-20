@@ -1,6 +1,7 @@
 
 package com.torodb.mongodb.commands.impl.general;
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import com.eightkdata.mongowp.ErrorCode;
@@ -15,6 +16,7 @@ import com.torodb.core.language.AttributeReference;
 import com.torodb.core.language.AttributeReference.Builder;
 import com.torodb.kvdocument.values.KVValue;
 import com.torodb.mongodb.commands.impl.WriteTorodbCommandImpl;
+import com.torodb.mongodb.core.MongodMetrics;
 import com.torodb.mongodb.core.WriteMongodTransaction;
 import com.torodb.torod.WriteTorodTransaction;
 
@@ -24,6 +26,13 @@ import com.torodb.torod.WriteTorodTransaction;
 @Singleton
 public class DeleteImplementation implements WriteTorodbCommandImpl<DeleteArgument, Long> {
 
+	private MongodMetrics mongodMetrics;
+	
+	@Inject
+	public DeleteImplementation(MongodMetrics mongodMetrics) {
+		this.mongodMetrics = mongodMetrics;
+	}
+	
     @Override
     public Status<Long> apply(Request req, Command<? super DeleteArgument, ? super Long> command, DeleteArgument arg,
             WriteMongodTransaction context) {
@@ -50,7 +59,7 @@ public class DeleteImplementation implements WriteTorodbCommandImpl<DeleteArgume
                 }
             }
         }
-
+        mongodMetrics.getDeletes().mark(deleted);
         return Status.ok(deleted);
 
     }

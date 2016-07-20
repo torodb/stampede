@@ -20,13 +20,6 @@
 
 package com.torodb.backend.derby;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
 import com.torodb.backend.AbstractWriteInterface;
 import com.torodb.backend.InternalField;
 import com.torodb.backend.SqlHelper;
@@ -35,6 +28,11 @@ import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetaField;
 import com.torodb.core.transaction.metainf.MetaScalar;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  *

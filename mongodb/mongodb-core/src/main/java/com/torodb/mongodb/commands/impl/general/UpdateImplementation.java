@@ -34,6 +34,7 @@ import com.torodb.kvdocument.values.KVDocument;
 import com.torodb.kvdocument.values.KVDocument.DocEntry;
 import com.torodb.kvdocument.values.KVValue;
 import com.torodb.mongodb.commands.impl.WriteTorodbCommandImpl;
+import com.torodb.mongodb.core.MongodMetrics;
 import com.torodb.mongodb.core.WriteMongodTransaction;
 import com.torodb.mongodb.language.Constants;
 import com.torodb.mongodb.language.ObjectIdFactory;
@@ -51,8 +52,11 @@ public class UpdateImplementation implements WriteTorodbCommandImpl<UpdateArgume
 
     private final ObjectIdFactory objectIdFactory;
     
+	private MongodMetrics mongodMetrics;
+	
     @Inject
-    public UpdateImplementation(ObjectIdFactory objectIdFactory) {
+    public UpdateImplementation(ObjectIdFactory objectIdFactory, MongodMetrics mongodMetrics) {
+		this.mongodMetrics = mongodMetrics;
         this.objectIdFactory = objectIdFactory;
     }
     
@@ -139,7 +143,9 @@ public class UpdateImplementation implements WriteTorodbCommandImpl<UpdateArgume
             //TODO: Improve error reporting
             return Status.from(ErrorCode.COMMAND_FAILED, ex.getLocalizedMessage());
         }
-
+        mongodMetrics.getUpdateModified().mark(updateStatus.updated);
+        mongodMetrics.getUpdateMatched().mark(updateStatus.candidates);
+        mongodMetrics.getUpdateUpserted().mark(updateStatus.upsertResults.size());
         return Status.ok(new UpdateResult(updateStatus.updated, updateStatus.candidates,
                 ImmutableList.copyOf(updateStatus.upsertResults)));
     }

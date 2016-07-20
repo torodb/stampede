@@ -10,10 +10,12 @@ import com.google.inject.ProvisionException;
 import com.torodb.backend.guice.BackendModule;
 import com.torodb.core.BuildProperties;
 import com.torodb.core.guice.CoreModule;
+import com.torodb.core.metrics.MetricsModule;
 import com.torodb.d2r.guice.D2RModule;
 import com.torodb.metainfo.guice.MetainfModule;
 import com.torodb.mongodb.core.MongodServer;
 import com.torodb.mongodb.guice.MongoLayerModule;
+import com.torodb.mongodb.wp.guice.MongoDbWpModule;
 import com.torodb.packaging.config.model.Config;
 import com.torodb.packaging.guice.BackendImplementationModule;
 import com.torodb.packaging.guice.ConfigModule;
@@ -27,9 +29,9 @@ import org.apache.logging.log4j.Logger;
 /**
  *
  */
-public class ToroDBServer extends AbstractIdleService {
+public class ToroDbServer extends AbstractIdleService {
 
-    private static final Logger LOGGER = LogManager.getLogger(ToroDBServer.class);
+    private static final Logger LOGGER = LogManager.getLogger(ToroDbServer.class);
 
     private final BuildProperties buildProperties;
     private final TorodServer torod;
@@ -37,16 +39,16 @@ public class ToroDBServer extends AbstractIdleService {
     private final NettyMongoServer netty;
 
     @Inject
-    ToroDBServer(BuildProperties buildProperties, TorodServer torod, MongodServer mongod, NettyMongoServer netty) {
+    ToroDbServer(BuildProperties buildProperties, TorodServer torod, MongodServer mongod, NettyMongoServer netty) {
         this.buildProperties = buildProperties;
         this.torod = torod;
         this.mongod = mongod;
         this.netty = netty;
     }
 
-    public static ToroDBServer create(Config config, Clock clock) throws ProvisionException {
+    public static ToroDbServer create(Config config, Clock clock) throws ProvisionException {
         Injector injector = createInjector(config, clock);
-        return injector.getInstance(ToroDBServer.class);
+        return injector.getInstance(ToroDbServer.class);
     }
 
     public static Injector createInjector(Config config, Clock clock) {
@@ -59,7 +61,9 @@ public class ToroDBServer extends AbstractIdleService {
                 new MetainfModule(),
                 new D2RModule(),
                 new TorodModule(),
-                new MongoLayerModule()
+                new MongoLayerModule(),
+                new MongoDbWpModule(),
+                new MetricsModule(config.getGeneric())
         );
         return injector;
     }
@@ -80,7 +84,7 @@ public class ToroDBServer extends AbstractIdleService {
         LOGGER.debug("Waiting for Netty to be running");
         netty.awaitRunning();
         
-        LOGGER.debug("ToroDBServer ready to run");
+        LOGGER.debug("ToroDbServer ready to run");
     }
 
     @Override

@@ -82,6 +82,7 @@
         <jackson.version>2.6.3</jackson.version>
         <mongowp.version>0.50.0-SNAPSHOT</mongowp.version>
         <jmh.version>1.12</jmh.version>
+        <metrics.version>3.1.2</metrics.version>
     </properties>
 
     <modules>
@@ -94,6 +95,7 @@
         <module>d2r</module>
         <module>torod</module>
         <module>mongodb</module>
+        <module>metrics</module>
         <module>packaging</module>
         <module>integration-tests</module>
     </modules>
@@ -364,6 +366,29 @@
                 </exclusions>
             </dependency>
 
+			<dependency>
+				<groupId>io.dropwizard.metrics</groupId>
+				<artifactId>metrics-core</artifactId>
+				<version>${metrics.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-api</artifactId>
+                    </exclusion>
+                </exclusions>
+			</dependency>
+			<dependency>
+				<groupId>io.dropwizard.metrics</groupId>
+				<artifactId>metrics-jvm</artifactId>
+				<version>${metrics.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-api</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+			
 	        <dependency>
 	            <groupId>org.openjdk.jmh</groupId>
 	            <artifactId>jmh-core</artifactId>

@@ -33,6 +33,10 @@ public class CheckedWrappedException extends ToroRuntimeException {
 
     @Override
     public synchronized Exception getCause() {
-        return (Exception) super.getCause();
+    	Throwable cause = super.getCause();
+    	if (cause instanceof Exception){
+    		return (Exception) cause;
+    	}
+    	return null;
     }
 }

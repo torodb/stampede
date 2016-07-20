@@ -13,12 +13,12 @@ import com.torodb.torod.ReadOnlyTorodTransaction;
 public class ReadOnlyMongodTransaction extends MongodTransaction {
 
     private final ReadOnlyTorodTransaction torodTransaction;
-    private final CommandsExecutor<ReadOnlyMongodTransaction> commandsExecutor;
+    private final CommandsExecutor<? super ReadOnlyMongodTransaction> commandsExecutor;
 
     public ReadOnlyMongodTransaction(MongodConnection connection) {
         super(connection);
         torodTransaction = connection.getTorodConnection().openReadOnlyTransaction();
-        this.commandsExecutor = connection.getServer().getReadOnlyCommandsExecutor();
+        this.commandsExecutor = connection.getServer().getCommandsExecutorClassifier().getReadOnlyCommandsExecutor();
     }
 
     @Override

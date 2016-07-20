@@ -34,7 +34,6 @@ import javax.inject.Singleton;
 import org.jooq.DSLContext;
 import org.jooq.exception.DataAccessException;
 
-import com.google.common.base.Preconditions;
 import com.torodb.backend.ErrorHandler.Context;
 import com.torodb.core.backend.DidCursor;
 import com.torodb.core.d2r.DocPartData;
@@ -46,10 +45,13 @@ import com.torodb.core.transaction.metainf.MetaField;
 import com.torodb.core.transaction.metainf.MetaScalar;
 import com.torodb.kvdocument.values.KVValue;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 /**
  *
  */
 @Singleton
+@SuppressFBWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
 public abstract class AbstractWriteInterface implements WriteInterface {
     
     private final MetaDataReadInterface metaDataReadInterface;

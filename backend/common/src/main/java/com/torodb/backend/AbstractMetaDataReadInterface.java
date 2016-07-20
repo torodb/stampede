@@ -39,10 +39,13 @@ import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 /**
  *
  */
 @Singleton
+@SuppressFBWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
 public abstract class AbstractMetaDataReadInterface implements MetaDataReadInterface {
 
     private final MetaDocPartTable<?, ?> metaDocPartTable;

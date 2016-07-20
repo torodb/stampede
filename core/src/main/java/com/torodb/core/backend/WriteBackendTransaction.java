@@ -19,21 +19,11 @@
  */
 package com.torodb.core.backend;
 
-import java.util.Collection;
-import java.util.function.Function;
-
 import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.transaction.RollbackException;
-import com.torodb.core.transaction.metainf.MetaCollection;
-import com.torodb.core.transaction.metainf.MetaDatabase;
-import com.torodb.core.transaction.metainf.MetaDocPart;
-import com.torodb.core.transaction.metainf.MetaField;
-import com.torodb.core.transaction.metainf.MetaScalar;
-import com.torodb.core.transaction.metainf.MutableMetaCollection;
-import com.torodb.core.transaction.metainf.MutableMetaDatabase;
-import com.torodb.kvdocument.values.KVDocument;
-import com.torodb.kvdocument.values.KVValue;
+import com.torodb.core.transaction.metainf.*;
+import java.util.Collection;
 
 public interface WriteBackendTransaction extends BackendTransaction {
 

@@ -22,7 +22,7 @@
         </Async>
     </Appenders>
     <Loggers>
-        <Root level="OFF">
+        <Root level="WARN">
             <AppenderRef ref="ASYNC"/>
         </Root>
         <Logger name="com.torodb" level="INFO" additivity="false">

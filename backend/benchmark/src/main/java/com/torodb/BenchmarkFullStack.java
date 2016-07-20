@@ -22,12 +22,18 @@ import com.torodb.backend.util.TestDataFactory;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.transaction.RollbackException;
 import com.torodb.kvdocument.values.KVDocument;
-import com.torodb.packaging.ToroDBServer;
+import com.torodb.packaging.ToroDbServer;
 import com.torodb.packaging.config.model.Config;
 import com.torodb.torod.TorodConnection;
 import com.torodb.torod.TorodServer;
 import com.torodb.torod.WriteTorodTransaction;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
+@SuppressFBWarnings(
+        value = "UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR",
+        justification = "State lifecycle is managed by JMH"
+)
 public class BenchmarkFullStack {
 	
 	@State(Scope.Thread)
@@ -41,7 +47,7 @@ public class BenchmarkFullStack {
             if (torod == null) {
                 Config config = new Config();
                 config.getBackend().asPostgres().setPassword("torodb");
-                Injector injector = ToroDBServer.createInjector(config, Clock.systemUTC());
+                Injector injector = ToroDbServer.createInjector(config, Clock.systemUTC());
                 torod = injector.getInstance(TorodServer.class);
                 torod.startAsync();
                 torod.awaitRunning();
@@ -69,12 +75,11 @@ public class BenchmarkFullStack {
 	@Warmup(iterations=3)
 	@Measurement(iterations=10) 
 	public void benchmarkInsert(FullStackState state, Blackhole blackhole) throws RollbackException, UserException {
-	    try (
-	            TorodConnection toroConnection = state.torod.openConnection();
-	            WriteTorodTransaction toroTransaction = toroConnection.openWriteTransaction();
-	            ) {
-            toroTransaction.insert("test", "test", state.documents.stream());
-            toroTransaction.commit();
+	    try (TorodConnection toroConnection = state.torod.openConnection()) {
+	    	try(WriteTorodTransaction toroTransaction = toroConnection.openWriteTransaction()){
+	            toroTransaction.insert("test", "test", state.documents.stream());
+	            toroTransaction.commit();
+	    	}
 	    }
 	}
 	

@@ -25,6 +25,7 @@ import javax.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.torodb.core.metrics.MetricsConfig;
 import com.torodb.packaging.config.annotation.Description;
 
 @Description("config.generic")
@@ -34,7 +35,7 @@ import com.torodb.packaging.config.annotation.Description;
 	"connectionPoolSize", 
 	"reservedReadPoolSize" 
 })
-public class Generic {
+public class Generic implements MetricsConfig{
 
 	@Description("config.generic.logLevel")
 	@NotNull
@@ -60,6 +61,8 @@ public class Generic {
 	@Min(1)
 	@JsonProperty(required=true)
 	private Integer reservedReadPoolSize = 10;
+	@Description("config.generic.metricsEnabled")
+	private Boolean metricsEnabled = true;
 
 	public LogLevel getLogLevel() {
 		return logLevel;
@@ -115,5 +118,16 @@ public class Generic {
 
 	public void setReservedReadPoolSize(Integer reserverdReadPoolSize) {
 		this.reservedReadPoolSize = reserverdReadPoolSize;
+	}
+
+	@Override
+	public Boolean getMetricsEnabled() {
+		return metricsEnabled;
+	}
+	
+	public void setMetricsEnabled(Boolean metricsEnabled){
+		if (metricsEnabled!=null){
+			this.metricsEnabled = metricsEnabled;
+		}
 	}
 }

@@ -1,6 +1,7 @@
 
-package com.torodb.mongodb.core;
+package com.torodb.mongodb.wp;
 
+import com.codahale.metrics.Timer;
 import com.eightkdata.mongowp.ErrorCode;
 import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.bson.utils.DefaultBsonValues;
@@ -20,6 +21,11 @@ import com.google.common.collect.Lists;
 import com.torodb.core.Retrier;
 import com.torodb.mongodb.commands.TorodbCommandsLibrary;
 import com.torodb.mongodb.commands.TorodbCommandsLibrary.RequiredTransaction;
+import com.torodb.mongodb.core.MongodConnection;
+import com.torodb.mongodb.core.MongodMetrics;
+import com.torodb.mongodb.core.MongodServer;
+import com.torodb.mongodb.core.ReadOnlyMongodTransaction;
+import com.torodb.mongodb.core.WriteMongodTransaction;
 import io.netty.util.AttributeKey;
 import java.util.concurrent.Callable;
 import javax.inject.Inject;
@@ -38,12 +44,14 @@ public class TorodbSafeRequestProcessor implements SafeRequestProcessor<MongodCo
     public static final AttributeKey<MongodConnection> MONGOD_CONNECTION_KEY = AttributeKey.newInstance("mongod.connection");
     private final Retrier retrier;
     private final TorodbCommandsLibrary commandsLibrary;
+    private final MongodMetrics mongodMetrics;
 
     @Inject
-    public TorodbSafeRequestProcessor(MongodServer server, Retrier retrier, TorodbCommandsLibrary commandsLibrary) {
+    public TorodbSafeRequestProcessor(MongodServer server, Retrier retrier, TorodbCommandsLibrary commandsLibrary, MongodMetrics mongodMetrics) {
         this.server = server;
         this.retrier = retrier;
         this.commandsLibrary = commandsLibrary;
+        this.mongodMetrics = mongodMetrics;
     }
 
     @Override
@@ -53,44 +61,47 @@ public class TorodbSafeRequestProcessor implements SafeRequestProcessor<MongodCo
 
     @Override
     public <Arg, Result> Status<Result> execute(Request req, Command<? super Arg, ? super Result> command, Arg arg, MongodConnection connection) {
-        Callable<Status<Result>> callable;
-
-        RequiredTransaction commandType = commandsLibrary.getCommandType(command);
-        switch (commandType) {
-            case NO_TRANSACTION:
-                callable = () -> {
-                    return connection.getCommandsExecutor().execute(req, command, arg, connection);
-                };
-                break;
-            case READ_TRANSACTION:
-                callable = () -> {
-                    try (ReadOnlyMongodTransaction trans = connection.openReadOnlyTransaction()) {
-                        return trans.execute(req, command, arg);
-                    }
-                };
-                break;
-            case WRITE_TRANSACTION:
-                callable = () -> {
-                    try (WriteMongodTransaction trans = connection.openWriteTransaction()) {
-                        Status<Result> result = trans.execute(req, command, arg);
-                        trans.commit();
-                        return result;
-                    }
-                };
-                break;
-            default:
-                throw new AssertionError("Unexpected command type" + commandType);
-        }
-
-        Status<Result> retryStatus = retrier.retry(callable, (Status<Result>)null);
-        if (retryStatus == null) {
-            return Status.from(
-                    ErrorCode.CONFLICTING_OPERATION_IN_PROGRESS,
-                    "It was impossible to execute " + command.getCommandName() + " after several attempts"
-            );
-        }
-        else {
-            return retryStatus;
+    	mongodMetrics.getCommands().mark();
+    	Timer timer = mongodMetrics.getTimer(command);
+    	try (Timer.Context ctx = timer.time()) {
+	    	Callable<Status<Result>> callable;
+	        RequiredTransaction commandType = commandsLibrary.getCommandType(command);
+	        switch (commandType) {
+	            case NO_TRANSACTION:
+	                callable = () -> {
+	                    return connection.getCommandsExecutor().execute(req, command, arg, connection);
+	                };
+	                break;
+	            case READ_TRANSACTION:
+	                callable = () -> {
+	                    try (ReadOnlyMongodTransaction trans = connection.openReadOnlyTransaction()) {
+	                        return trans.execute(req, command, arg);
+	                    }
+	                };
+	                break;
+	            case WRITE_TRANSACTION:
+	                callable = () -> {
+	                    try (WriteMongodTransaction trans = connection.openWriteTransaction()) {
+	                        Status<Result> result = trans.execute(req, command, arg);
+	                        trans.commit();
+	                        return result;
+	                    }
+	                };
+	                break;
+	            default:
+	                throw new AssertionError("Unexpected command type" + commandType);
+	        }
+	
+	        Status<Result> retryStatus = retrier.retry(callable, (Status<Result>)null);
+	        if (retryStatus == null) {
+	            return Status.from(
+	                    ErrorCode.CONFLICTING_OPERATION_IN_PROGRESS,
+	                    "It was impossible to execute " + command.getCommandName() + " after several attempts"
+	            );
+	        }
+	        else {
+	            return retryStatus;
+	        }
         }
     }
 

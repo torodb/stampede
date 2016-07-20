@@ -243,15 +243,15 @@ public class SnapshotUpdater {
                         + " but there is no field with that name in table " + schemaName + "."
                         + docPartIdentifier);
             }
-            if (!schemaValidator.existsColumnWithType(docPartIdentifier, field.getIdentifier(),
-                    sqlInterface.getDataTypeProvider().getDataType(field.getType()))) {
-                //TODO: some types can not be recognized using meta data
+            //TODO: some types can not be recognized using meta data
+//            if (!schemaValidator.existsColumnWithType(docPartIdentifier, field.getIdentifier(),
+//                    sqlInterface.getDataTypeProvider().getDataType(field.getType()))) {
                 //throw new InvalidDatabaseSchemaException(schemaName, "Field "+field.getCollection()+"."
                 //        +field.getTableRefValue()+"."+field.getName()+" in database "+database+" is associated with field "+field.getIdentifier()
                 //        +" and type "+sqlInterface.getDataType(field.getType()).getTypeName()
                 //        +" but the field "+schemaName+"."+docPartIdentifier+"."+field.getIdentifier()
                 //        +" has a different type "+getColumnType(docPartIdentifier, field.getIdentifier(), existingTables).getTypeName());
-            }
+//            }
         }
 
         private void analyzeScalar(MutableMetaDatabase db,MutableMetaDocPart metaDocPart,
@@ -275,15 +275,15 @@ public class SnapshotUpdater {
                         +" but there is no scalar with that name in table "
                         +schemaName+"."+docPartIdentifier);
             }
-            if (!schemaValidator.existsColumnWithType(docPartIdentifier, scalar.getIdentifier(),
-                    sqlInterface.getDataTypeProvider().getDataType(scalar.getType()))) {
-                //TODO: some types can not be recognized using meta data
+            //TODO: some types can not be recognized using meta data
+//            if (!schemaValidator.existsColumnWithType(docPartIdentifier, scalar.getIdentifier(),
+//                    sqlInterface.getDataTypeProvider().getDataType(scalar.getType()))) {
                 //throw new InvalidDatabaseSchemaException(schemaName, "Scalar "+scalar.getCollection()+"."
                 //        +scalar.getTableRefValue()+"."+scalar.getName()+" in database "+database+" is associated with scalar "+scalar.getIdentifier()
                 //        +" and type "+sqlInterface.getDataType(scalar.getType()).getTypeName()
                 //        +" but the scalar "+schemaName+"."+docPartIdentifier+"."+scalar.getIdentifier()
                 //        +" has a different type "+getColumnType(docPartIdentifier, scalar.getIdentifier(), existingTables).getTypeName());
-            }
+//            }
         }
     }
 
