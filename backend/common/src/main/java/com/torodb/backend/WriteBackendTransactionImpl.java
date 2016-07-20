@@ -27,6 +27,7 @@ import com.torodb.core.backend.WriteBackendTransaction;
 import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.d2r.IdentifierFactory;
 import com.torodb.core.d2r.R2DTranslator;
+import com.torodb.core.d2r.RidGenerator;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.transaction.RollbackException;
 import com.torodb.core.transaction.metainf.*;
@@ -37,12 +38,14 @@ import java.util.Iterator;
 public class WriteBackendTransactionImpl extends BackendTransactionImpl implements WriteBackendTransaction {
 
     private final IdentifierFactory identifierFactory;
+    private final RidGenerator ridGenerator;
     
     public WriteBackendTransactionImpl(SqlInterface sqlInterface, BackendConnectionImpl backendConnection,
-            R2DTranslator r2dTranslator, IdentifierFactory identifierFactory) {
+            R2DTranslator r2dTranslator, IdentifierFactory identifierFactory, RidGenerator ridGenerator) {
         super(sqlInterface.getDbBackend().createWriteConnection(), sqlInterface, backendConnection, r2dTranslator);
         
         this.identifierFactory = identifierFactory;
+        this.ridGenerator = ridGenerator;
     }
     
     @Override
@@ -72,13 +75,13 @@ public class WriteBackendTransactionImpl extends BackendTransactionImpl implemen
     public void renameCollection(MetaDatabase fromDb, MetaCollection fromColl, MutableMetaDatabase toDb, MutableMetaCollection toColl) {
         Preconditions.checkState(!isClosed(), "This transaction is closed");
 
-        copyMetaCollection(fromColl, toDb, toColl);
+        copyMetaCollection(fromDb, fromColl, toDb, toColl);
         getSqlInterface().getStructureInterface().renameCollection(getDsl(), fromDb.getIdentifier(), fromColl,
                 toDb.getIdentifier(), toColl);
         dropMetaCollection(fromDb.getName(), fromColl);
     }
 
-    private void copyMetaCollection(MetaCollection fromColl,
+    private void copyMetaCollection(MetaDatabase fromDb, MetaCollection fromColl,
             MutableMetaDatabase toDb, MutableMetaCollection toColl) {
         Iterator<? extends MetaDocPart> fromMetaDocPartIterator = fromColl.streamContainedMetaDocParts().iterator();
         while (fromMetaDocPartIterator.hasNext()) {
@@ -90,6 +93,8 @@ public class WriteBackendTransactionImpl extends BackendTransactionImpl implemen
                     toMetaDocPart.getTableRef(), toMetaDocPart.getIdentifier());
             copyScalar(identifierFactory, fromMetaDocPart, toDb, toColl, toMetaDocPart);
             copyFields(identifierFactory, fromMetaDocPart, toDb, toColl, toMetaDocPart);
+            int nextRid = ridGenerator.getDocPartRidGenerator(fromDb.getName(), fromColl.getName()).nextRid(fromMetaDocPart.getTableRef());
+            ridGenerator.getDocPartRidGenerator(toDb.getName(), toColl.getName()).setNextRid(toMetaDocPart.getTableRef(), nextRid - 1);
         }
     }
 
