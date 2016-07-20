@@ -25,4 +25,14 @@ public class InMemoryRidGenerator implements RidGenerator, DocPartRidGenerator {
 		return global.getAndIncrement();
 	}
 
+    @Override
+    public void setNextRid(TableRef tableRef, int nextRid) {
+        global.set(nextRid);
+    }
+
+    @Override
+    public void setNextRid(String dbName, String collectionName, TableRef tableRef, int nextRid) {
+        global.set(nextRid);
+    }
+
 }

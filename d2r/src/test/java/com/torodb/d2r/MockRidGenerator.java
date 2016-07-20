@@ -17,6 +17,11 @@ public class MockRidGenerator implements RidGenerator {
 	public int nextRid(String dbName, String collectionName, TableRef tableRef) {
 		return getDocPartRidGenerator(dbName, collectionName).nextRid(tableRef);
 	}
+
+    @Override
+    public void setNextRid(String dbName, String collectionName, TableRef tableRef, int nextRid) {
+        getDocPartRidGenerator(dbName, collectionName).setNextRid(tableRef, nextRid);
+    }
 	
 	@Override
 	public DocPartRidGenerator getDocPartRidGenerator(String dbName, String collectionName) {
@@ -37,6 +42,12 @@ public class MockRidGenerator implements RidGenerator {
 			AtomicInteger rid = map.computeIfAbsent(tableRef,tr -> new AtomicInteger(0));
 			return rid.getAndIncrement();
 		}
+
+        @Override
+        public void setNextRid(TableRef tableRef, int nextRid) {
+            AtomicInteger rid = map.computeIfAbsent(tableRef,tr -> new AtomicInteger(0));
+            rid.set(nextRid);
+        }
 
 	}
 

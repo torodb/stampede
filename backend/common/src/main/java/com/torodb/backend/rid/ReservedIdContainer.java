@@ -24,10 +24,15 @@ public class ReservedIdContainer implements RidGenerator {
 		return collectionsMap.computeIfAbsent(collectionName, (key) -> new Generator(dbName,collectionName));
 	}
 
-	@Override
-	public int nextRid(String dbName, String collectionName, TableRef tableRef) {
-		return getDocPartRidGenerator(dbName, collectionName).nextRid(tableRef);
-	}
+    @Override
+    public int nextRid(String dbName, String collectionName, TableRef tableRef) {
+        return getDocPartRidGenerator(dbName, collectionName).nextRid(tableRef);
+    }
+
+    @Override
+    public void setNextRid(String dbName, String collectionName, TableRef tableRef, int nextRid) {
+        getDocPartRidGenerator(dbName, collectionName).setNextRid(tableRef, nextRid);
+    }
 
 	@Override
 	public DocPartRidGenerator getDocPartRidGenerator(String dbName, String collectionName) {
@@ -49,10 +54,15 @@ public class ReservedIdContainer implements RidGenerator {
 			return this.map.computeIfAbsent(tableRef, tr -> factory.create(dbName, collectionName, tr));
 		}
 
-		@Override
-		public int nextRid(TableRef tableRef) {
-			return get(tableRef).getAndAddLastUsedId(1) + 1;
-		}
+        @Override
+        public int nextRid(TableRef tableRef) {
+            return get(tableRef).getAndAddLastUsedId(1) + 1;
+        }
+
+        @Override
+        public void setNextRid(TableRef tableRef, int nextRid) {
+            get(tableRef).setLastCachedId(nextRid);
+        }
 
 	}
 }
