@@ -20,7 +20,7 @@ public interface StructureInterface {
             @Nonnull String foreignTableName);
     void addColumnToDocPartTable(@Nonnull DSLContext dsl, @Nonnull String schemaName, @Nonnull String tableName, @Nonnull String columnName, @Nonnull DataTypeForKV<?> dataType);
     
-    void createIndex(@Nonnull DSLContext dsl, @Nonnull String fullIndexName, @Nonnull String tableSchema, 
+    void createIndex(@Nonnull DSLContext dsl, @Nonnull String tableSchema, 
             @Nonnull String tableName, @Nonnull String tableColumnName, boolean isAscending);
     void dropIndex(@Nonnull DSLContext dsl, @Nonnull String schemaName, @Nonnull String indexName);
 }

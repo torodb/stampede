@@ -82,11 +82,10 @@ public class PostgreSQLStructureInterface extends AbstractStructureInterface {
     }
     
     @Override
-    protected String getCreateIndexStatement(String indexName, String schemaName, String tableName, String columnName,
+    protected String getCreateIndexStatement(String schemaName, String tableName, String columnName,
             boolean ascending) {
         StringBuilder sb = new StringBuilder()
                 .append("CREATE INDEX ")
-                .append("\"").append(indexName).append("\"")
                 .append(" ON ")
                 .append("\"").append(schemaName).append("\"")
                 .append(".")

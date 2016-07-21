@@ -198,6 +198,11 @@ public class WriteBackendTransactionImpl extends BackendTransactionImpl implemen
                 newField.getName(), newField.getIdentifier(), newField.getType());
         getSqlInterface().getStructureInterface().addColumnToDocPartTable(getDsl(), db.getIdentifier(),
                 docPart.getIdentifier(), newField.getIdentifier(), getSqlInterface().getDataTypeProvider().getDataType(newField.getType()));
+        
+        //TODO: This is a hack accepted by all devs. Mongolization for create an index on _id fields
+        if (docPart.getTableRef().isRoot() && "_id".equals(newField.getName())) {
+            getSqlInterface().getStructureInterface().createIndex(getDsl(), db.getIdentifier(), docPart.getIdentifier(), newField.getIdentifier(), true);
+        }
     }
 
 	@Override

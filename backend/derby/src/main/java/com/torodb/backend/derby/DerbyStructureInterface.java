@@ -22,6 +22,7 @@ package com.torodb.backend.derby;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Random;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -67,8 +68,11 @@ public class DerbyStructureInterface extends AbstractStructureInterface {
     }
     
     @Override
-    protected String getCreateIndexStatement(String indexName, String schemaName, String tableName, String columnName,
+    protected String getCreateIndexStatement(String schemaName, String tableName, String columnName,
             boolean ascending) {
+        //TODO: This is a hack accepted by all devs. Common SQL interface for creating indexes should pass an identifier here
+        String indexName = tableName + '_' + columnName + new Random().nextInt() % 256;
+        
         StringBuilder sb = new StringBuilder()
                 .append("CREATE INDEX ")
                 .append("\"").append(indexName).append("\"")
