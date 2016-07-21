@@ -210,6 +210,84 @@
                 </plugins>
             </build>
         </profile>
+        
+        <profile>
+            <id>docker-postgres</id>
+            <properties>
+                <docker.postgres.password>postgres</docker.postgres.password>
+                <docker.torodb.password>torodb</docker.torodb.password>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>io.fabric8</groupId>
+                        <artifactId>docker-maven-plugin</artifactId>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <images>
+                                <image>
+                                    <alias>postgres</alias>
+                                    <name>postgres:9.5</name>
+                                    <run>
+                                        <env>
+                                            <POSTGRES_PASSWORD>${docker.postgres.password}</POSTGRES_PASSWORD>
+                                        </env>
+                                        <ports>
+                                            <port>5432:5432</port>
+                                        </ports>
+                                        <log>
+                                            <prefix>postgres</prefix>
+                                            <enabled>true</enabled>
+                                            <color>blue</color>
+                                        </log>
+                                    </run>
+                                </image>
+                                <image>
+                                    <alias>torodb</alias>
+                                    <name>8kdata/torodb:%v</name>
+                                    <build>
+                                        <from>java:8</from>
+                                        <tags>
+                                            <tag>${project.version}</tag>
+                                            <tag>latest</tag>
+                                        </tags>
+                                        <assembly>
+                                            <mode>dir</mode>
+                                            <descriptor>postgres.xml</descriptor>
+                                        </assembly>
+                                        <runCmds>
+                                          <run>apt-get update</run>
+                                          <run>apt-get install postgresql-client -y</run>
+                                          <run>apt-get clean</run>
+                                          <run>rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*</run>
+                                        </runCmds>
+                                    </build>
+                                    <run>
+                                        <env>
+                                            <POSTGRES_PASSWORD>${docker.postgres.password}</POSTGRES_PASSWORD>
+                                            <TORODB_PASSWORD>${docker.torodb.password}</TORODB_PASSWORD>
+                                        </env>
+                                        <links>
+                                          <link>postgres:postgres</link>
+                                        </links>
+                                        <ports>
+                                            <port>27018:27018</port>
+                                        </ports>
+                                        <log>
+                                            <prefix>torodb</prefix>
+                                            <enabled>true</enabled>
+                                            <color>blue</color>
+                                        </log>
+                                        <workingDir>/maven</workingDir>
+                                        <cmd>./run-postgres.sh</cmd>
+                                    </run>
+                                </image>
+                            </images>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
     </profiles>
 
 </project>
