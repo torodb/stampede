@@ -1,9 +1,10 @@
 package com.torodb.mongodb.guice;
 
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+
 import com.google.inject.AbstractModule;
 import com.torodb.mongodb.annotations.MongoDBLayer;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ForkJoinPool;
 
 /**
  *
@@ -15,7 +16,7 @@ public class MongoLayerModule extends AbstractModule {
 
         bind(Executor.class)
                 .annotatedWith(MongoDBLayer.class)
-                .toInstance(ForkJoinPool.commonPool());
+                .toInstance(Executors.newCachedThreadPool());
 
     }
 }
