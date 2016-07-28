@@ -44,6 +44,8 @@ public interface MutableMetaSnapshot extends MetaSnapshot {
     @DoNotChange
     public abstract Iterable<Tuple2<MutableMetaDatabase, MetaElementState>> getModifiedDatabases();
 
+    public abstract boolean hasChanged();
+
     @Nonnull
     public abstract ImmutableMetaSnapshot immutableCopy();
 

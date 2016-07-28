@@ -79,6 +79,11 @@ public class WrapperMutableMetaSnapshot implements MutableMetaSnapshot {
     }
 
     @Override
+    public boolean hasChanged() {
+        return dbsByName.values().stream().anyMatch(tuple -> tuple.v2.hasChanged());
+    }
+
+    @Override
     public ImmutableMetaSnapshot immutableCopy() {
         if (dbsByName.values().stream().noneMatch(tuple -> tuple.v2().hasChanged())) {
             return wrapped;

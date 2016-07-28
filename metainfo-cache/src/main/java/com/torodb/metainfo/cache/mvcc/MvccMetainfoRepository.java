@@ -20,6 +20,7 @@ public class MvccMetainfoRepository implements MetainfoRepository {
     private static final Logger LOGGER = LogManager.getLogger(MvccMetainfoRepository.class);
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
     private ImmutableMetaSnapshot currentSnapshot;
+    private NoChangeMergeStage noChangeMergeStage = new NoChangeMergeStage();
 
     @Inject
     public MvccMetainfoRepository() {
@@ -56,16 +57,23 @@ public class MvccMetainfoRepository implements MetainfoRepository {
     @SuppressFBWarnings(value = {"RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE", "UL_UNRELEASED_LOCK"})
     public MergerStage startMerge(MutableMetaSnapshot newSnapshot) throws UnmergeableException {
         LOGGER.trace("Trying to create a {}", MvccMergerStage.class);
-        lock.writeLock().lock();
-        MvccMergerStage mergeStage = null;
-        try {
-            mergeStage = new MvccMergerStage(newSnapshot, lock.writeLock());
-            LOGGER.trace("{} created", MvccMergerStage.class);
-        } finally {
-            if (mergeStage == null) {
-                LOGGER.error("Error while trying to create a {}", MvccMergerStage.class);
-                lock.writeLock().unlock();
+
+        MergerStage mergeStage = null;
+        if (newSnapshot.hasChanged()) {
+            lock.writeLock().lock();
+        
+            try {
+                mergeStage = new MvccMergerStage(newSnapshot, lock.writeLock());
+                LOGGER.trace("{} created", MvccMergerStage.class);
+            } finally {
+                if (mergeStage == null) {
+                    LOGGER.error("Error while trying to create a {}", MvccMergerStage.class);
+                    lock.writeLock().unlock();
+                }
             }
+        }
+        else {
+            mergeStage = noChangeMergeStage;
         }
         assert mergeStage != null;
         return mergeStage;
@@ -117,12 +125,6 @@ public class MvccMetainfoRepository implements MetainfoRepository {
         }
 
         @Override
-        public MetainfoRepository getAssociatedRepository() {
-            Preconditions.checkState(open, "This stage is closed");
-            return MvccMetainfoRepository.this;
-        }
-
-        @Override
         public void commit() {
             Preconditions.checkState(open, "This stage is already closed");
             Preconditions.checkState(lock.writeLock().isHeldByCurrentThread(), "Trying to "
@@ -150,6 +152,18 @@ public class MvccMetainfoRepository implements MetainfoRepository {
             } catch (UnmergeableException ex) {
                 throw new AssertionError("Unmergeable changes", ex);
             }
+        }
+
+    }
+
+    private static class NoChangeMergeStage implements MergerStage {
+
+        @Override
+        public void commit() {
+        }
+
+        @Override
+        public void close() {
         }
 
     }

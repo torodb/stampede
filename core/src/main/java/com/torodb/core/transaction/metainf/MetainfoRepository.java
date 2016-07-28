@@ -66,8 +66,6 @@ public interface MetainfoRepository {
     @NotThreadSafe
     public static interface MergerStage extends AutoCloseable {
 
-        public MetainfoRepository getAssociatedRepository();
-
         /**
          * Commits the merger stage and stores all its changes on the repository.
          *
