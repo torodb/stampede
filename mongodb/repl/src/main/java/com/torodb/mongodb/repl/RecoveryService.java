@@ -27,13 +27,14 @@ import com.torodb.mongodb.core.WriteMongodTransaction;
 import com.torodb.mongodb.repl.OplogManager.OplogManagerPersistException;
 import com.torodb.mongodb.repl.OplogManager.WriteTransaction;
 import com.torodb.mongodb.repl.exceptions.NoSyncSourceFoundException;
-import com.torodb.mongodb.utils.DBCloner;
-import com.torodb.mongodb.utils.DBCloner.CloneOptions;
-import com.torodb.mongodb.utils.DBCloner.CloningException;
+import com.torodb.mongodb.utils.AkkaDbCloner;
+import com.torodb.mongodb.utils.AkkaDbCloner.CloneOptions;
+import com.torodb.mongodb.utils.AkkaDbCloner.CloningException;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.Executor;
+import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -48,7 +49,7 @@ class RecoveryService extends AbstractExecutionThreadService {
     private final OplogManager oplogManager;
     private final SyncSourceProvider syncSourceProvider;
     private final OplogReaderProvider oplogReaderProvider;
-    private final DBCloner cloner;
+    private final AkkaDbCloner cloner;
     private final MongoClientProvider remoteClientProvider;
     private final MongodServer server;
     private final Executor executor;
@@ -59,7 +60,7 @@ class RecoveryService extends AbstractExecutionThreadService {
             OplogManager oplogManager,
             SyncSourceProvider syncSourceProvider,
             OplogReaderProvider oplogReaderProvider,
-            DBCloner cloner,
+            AkkaDbCloner cloner,
             MongoClientProvider remoteClientProvider,
             MongodServer server,
             OplogOperationApplier oplogOpApplier,
@@ -172,7 +173,7 @@ class RecoveryService extends AbstractExecutionThreadService {
                     return false;
                 }
                 LOGGER.info("Remote database cloning started");
-                cloneDatabases(remoteConnection);
+                cloneDatabases(remoteClient);
                 LOGGER.info("Remote database cloning finished");
 
                 oplogTransaction.forceNewValue(lastClonedOp.getHash(), lastClonedOp.getOpTime());
@@ -277,69 +278,38 @@ class RecoveryService extends AbstractExecutionThreadService {
         return Status.ok();
     }
 
-    private void cloneDatabases(@Nonnull MongoConnection remoteConnection) throws CloningException, MongoException {
+    private void cloneDatabases(@Nonnull MongoClient remoteClient) throws CloningException, MongoException {
 
-        ListDatabasesReply databasesReply = remoteConnection.execute(
-                ListDatabasesCommand.INSTANCE,
-                "admin",
-                true,
-                Empty.getInstance()
-        );
-
-        CompletionService<?> completionService = new ExecutorCompletionService<>(ForkJoinPool.commonPool());
-
-        for (DatabaseEntry database : databasesReply.getDatabases()) {
-            String databaseName = database.getName();
-
-            if (isNotReplicable(databaseName)) {
-                continue;
-            }
-
-            MyWritePermissionSupplier writePermissionSupplier = new MyWritePermissionSupplier(databaseName);
-
-            CloneOptions options = new CloneOptions(
+        Stream<String> dbNames;
+        try (MongoConnection remoteConnection = remoteClient.openConnection()) {
+            dbNames = remoteConnection.execute(
+                    ListDatabasesCommand.INSTANCE,
+                    "admin",
                     true,
-                    false,
-                    true,
-                    false,
-                    databaseName,
-                    Collections.<String>emptySet(),
-                    writePermissionSupplier);
+                    Empty.getInstance()
+            ).getDatabases().stream().map(db -> db.getName());
+        }
 
-            completionService.submit(() -> {
-                try (MongodConnection conn = server.openConnection();
-                        WriteMongodTransaction trans = conn.openWriteTransaction()) {
+        dbNames.filter(this::isReplicable)
+                .forEach(databaseName -> {
+                    MyWritePermissionSupplier writePermissionSupplier
+                            = new MyWritePermissionSupplier(databaseName);
 
-                    cloner.cloneDatabase(
+                    CloneOptions options = new CloneOptions(
+                            true,
+                            false,
+                            true,
+                            false,
                             databaseName,
-                            remoteConnection,
-                            trans,
-                            options
-                    );
-                    trans.commit();
-                    return null;
-                }
-            });
-        }
-        for (DatabaseEntry database : databasesReply.getDatabases()) {
-            if (isNotReplicable(database.getName())) {
-                continue;
-            }
-            try {
-                completionService.take().get();
-            } catch (InterruptedException ex) {
-                Thread.currentThread().interrupt();
-                throw new CloningException("Interrupted while cloning databases", ex);
-            } catch (ExecutionException ex) {
-                Throwable cause = ex.getCause();
-                if (cause instanceof MongoException) {
-                    throw (MongoException) cause;
-                }
-                else {
-                    throw new CloningException("Error whilo clonning databases", ex);
-                }
-            }
-        }
+                            Collections.<String>emptySet(),
+                            writePermissionSupplier);
+
+                    try {
+                        cloner.cloneDatabase(server, 4, 100, true, databaseName, remoteClient, options);
+                    } catch (MongoException ex) {
+                        throw new CloningException(ex);
+                    }
+                });
     }
 
     /**
@@ -390,8 +360,8 @@ class RecoveryService extends AbstractExecutionThreadService {
         LOGGER.warn("Rebuild index is not implemented yet, so indexes have not been rebuild");
     }
 
-    private boolean isNotReplicable(String databaseName) {
-        return databaseName.equals("local");
+    private boolean isReplicable(String databaseName) {
+        return !databaseName.equals("local");
     }
 
     private class MyWritePermissionSupplier implements Supplier<Boolean> {

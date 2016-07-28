@@ -60,5 +60,9 @@
         	<artifactId>metrics</artifactId>
         	<version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.typesafe.akka</groupId>
+            <artifactId>akka-stream_2.11</artifactId>
+        </dependency>
     </dependencies>
 </project>

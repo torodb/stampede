@@ -37,7 +37,7 @@ import com.torodb.mongodb.core.MongodServer;
 import com.torodb.mongodb.core.ReadOnlyMongodTransaction;
 import com.torodb.mongodb.core.WriteMongodTransaction;
 import com.torodb.mongodb.repl.exceptions.NoSyncSourceFoundException;
-import com.torodb.mongodb.utils.DBCloner;
+import com.torodb.mongodb.utils.AkkaDbCloner;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.concurrent.Executor;
@@ -71,7 +71,7 @@ public class ReplCoordinator extends AbstractIdleService implements ReplInterfac
     private final OplogOperationApplier oplogOpApplier;
     private final MongodServer server;
     private final SyncSourceProvider syncSourceProvider;
-    private final DBCloner dbCloner;
+    private final AkkaDbCloner dbCloner;
     private final MongoClientProvider remoteClientProvider;
     private final BsonObjectId myRID;
     private final int myId;
@@ -87,7 +87,7 @@ public class ReplCoordinator extends AbstractIdleService implements ReplInterfac
             OplogReaderProvider orpProvider,
             OplogOperationApplier oplogOpApplier,
             MongodServer server,
-            DBCloner dbCloner,
+            AkkaDbCloner dbCloner,
             MongoClientProvider remoteClientProvider,
             SyncSourceProvider syncSourceProvider,
             OplogManager oplogManager,
