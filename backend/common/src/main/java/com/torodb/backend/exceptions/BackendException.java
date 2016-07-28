@@ -21,12 +21,10 @@
 
 package com.torodb.backend.exceptions;
 
-import java.sql.SQLException;
-
-import org.jooq.exception.DataAccessException;
-
 import com.torodb.backend.ErrorHandler.Context;
 import com.torodb.core.exceptions.SystemException;
+import java.sql.SQLException;
+import org.jooq.exception.DataAccessException;
 
 /**
  * 
@@ -74,5 +72,10 @@ public class BackendException extends SystemException {
 
     public String getSqlState() {
         return sqlState;
+    }
+
+    @Override
+    public String getMessage() {
+        return "On context " + context + " with sqlState " + sqlState + ": " + getCause().getMessage();
     }
 }
