@@ -20,8 +20,9 @@
 
 package com.torodb.backend.postgresql;
 
-import static com.torodb.backend.ErrorHandler.Context.*;
 import com.torodb.backend.AbstractErrorHandler;
+
+import static com.torodb.backend.ErrorHandler.Context.*;
 
 /**
  *
@@ -48,7 +49,8 @@ public class PostgreSQLErrorHandler extends AbstractErrorHandler {
                  * 
                  * This will be raised when modifying DDL concurrently
                  */
-                rule("23505", CREATE_SCHEMA, CREATE_TABLE, ADD_COLUMN, CREATE_INDEX, DROP_SCHEMA, DROP_TABLE, DROP_INDEX)
+                rule("23505", CREATE_SCHEMA, CREATE_TABLE, ADD_COLUMN, CREATE_INDEX, DROP_SCHEMA, 
+                        DROP_TABLE, DROP_INDEX, META_INSERT)
                 );
     }
 }
