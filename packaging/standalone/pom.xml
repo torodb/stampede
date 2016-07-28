@@ -164,6 +164,11 @@
     <profiles>
         <profile>
             <id>assembler</id>
+			<activation>
+			  <property>
+			    <name>profile.docker</name>
+			  </property>
+			</activation>
             <build>
                 <plugins>
                     <plugin>
@@ -300,6 +305,15 @@
                                 </image>
                             </images>
                         </configuration>
+                        <executions>
+                            <execution>
+                                <id>build</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>build</goal>
+                                </goals>
+                            </execution>
+                        </executions>
                     </plugin>
                 </plugins>
             </build>
