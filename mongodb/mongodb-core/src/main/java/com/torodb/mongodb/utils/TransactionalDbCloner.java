@@ -1,3 +1,23 @@
+/*
+ * This file is part of ToroDB.
+ *
+ * ToroDB is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ToroDB is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with mongodb-core. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Copyright (C) 2016 8Kdata.
+ * 
+ */
+
 package com.torodb.mongodb.utils;
 
 import com.eightkdata.mongowp.Status;
@@ -24,33 +44,35 @@ import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.IndexOptio
 import com.eightkdata.mongowp.server.api.Request;
 import com.eightkdata.mongowp.server.api.impl.CollectionCommandArgument;
 import com.eightkdata.mongowp.server.api.pojos.MongoCursor;
-import com.google.common.annotations.Beta;
-import com.google.common.base.Supplier;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.net.HostAndPort;
+import com.torodb.mongodb.core.MongodConnection;
+import com.torodb.mongodb.core.MongodServer;
 import com.torodb.mongodb.core.WriteMongodTransaction;
-import java.util.*;
+import java.util.EnumSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import javax.annotation.Nonnull;
 import javax.inject.Singleton;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-/*
- * TODO: This class must be improved. Cloning is not transactional and it has
- * other problems or things that must be improved
+/**
+ *
  */
 @Singleton
-@Beta
-public class DBCloner {
-    private static final Logger LOGGER = LogManager.getLogger(DBCloner.class);
+public class TransactionalDbCloner implements DbCloner {
+    private static final Logger LOGGER = LogManager.getLogger(DbCloner.class);
 
-    public void cloneDatabase(
-            @Nonnull String dstDb,
-            @Nonnull MongoClient remoteClient,
-            @Nonnull WriteMongodTransaction transaction,
-            @Nonnull CloneOptions opts) throws CloningException, NotMasterException, MongoException {
-        try (MongoConnection remoteConnection = remoteClient.openConnection()) {
+    @Override
+    public void cloneDatabase(String dstDb, MongoClient remoteClient, MongodServer localServer, CloneOptions opts)
+            throws CloningException, NotMasterException, MongoException {
+        
+        try (MongoConnection remoteConnection = remoteClient.openConnection();
+                MongodConnection localConnection = localServer.openConnection();
+                WriteMongodTransaction transaction = localConnection.openWriteTransaction()) {
             cloneDatabase(dstDb, remoteConnection, transaction, opts);
         }
     }
@@ -150,7 +172,7 @@ public class DBCloner {
         LOGGER.info("Clonning {}.{} into {}.{}", fromDb, collection, toDb, collection);
 
         EnumSet<QueryOption> queryFlags = EnumSet.of(QueryOption.NO_CURSOR_TIMEOUT); //TODO: enable exhaust?
-        if (opts.slaveOk) {
+        if (opts.isSlaveOk()) {
             queryFlags.add(QueryOption.SLAVE_OK);
         }
         MongoCursor<BsonDocument> cursor = remoteConnection.query(
@@ -201,7 +223,7 @@ public class DBCloner {
             );
 
             Status<?> status;
-            
+
             List<IndexOptions> indexes = Lists.newArrayList(
                     ListIndexesRequester.getListCollections(remoteConnection, dstDb, fromCol).getFirstBatch()
             );
@@ -246,105 +268,5 @@ public class DBCloner {
                 DropCollectionCommand.INSTANCE,
                 new CollectionCommandArgument(collection, DropCollectionCommand.INSTANCE)
         );
-    }
-
-    public static class CloneOptions {
-
-        private final boolean cloneData;
-        private final boolean cloneIndexes;
-        private final boolean slaveOk;
-        private final boolean snapshot;
-        private final String dbToClone;
-        private final Set<String> collsToIgnore;
-        private final Supplier<Boolean> writePermissionSupplier;
-
-        public CloneOptions(
-                boolean cloneData,
-                boolean cloneIndexes,
-                boolean slaveOk,
-                boolean snapshot,
-                String dbToClone,
-                Set<String> collsToIgnore,
-                Supplier<Boolean> writePermissionSupplier) {
-            this.cloneData = cloneData;
-            this.cloneIndexes = cloneIndexes;
-            this.slaveOk = slaveOk;
-            this.snapshot = snapshot;
-            this.dbToClone = dbToClone;
-            this.collsToIgnore = collsToIgnore;
-            this.writePermissionSupplier = writePermissionSupplier;
-        }
-
-        /**
-         * @return true iff data must be cloned
-         */
-        public boolean isCloneData() {
-            return cloneData;
-        }
-
-        /**
-         * @return true iff indexes must be cloned
-         */
-        public boolean isCloneIndexes() {
-            return cloneIndexes;
-        }
-
-        /**
-         * @return true iff is ok to clone from a node that is not master
-         */
-        public boolean isSlaveOk() {
-            return slaveOk;
-        }
-
-        /**
-         * @return true iff $snapshot must be used
-         */
-        public boolean isSnapshot() {
-            return snapshot;
-        }
-
-        /**
-         * @return the database that will be cloned
-         */
-        public String getDbToClone() {
-            return dbToClone;
-        }
-
-        /**
-         * @return a set of collections that will not be cloned
-         */
-        @Nonnull
-        public Set<String> getCollsToIgnore() {
-            return collsToIgnore;
-        }
-
-        /**
-         * @return a supplier that can be used to know if write is allowed on
-         *         the destiny database
-         */
-        public Supplier<Boolean> getWritePermissionSupplier() {
-            return writePermissionSupplier;
-        }
-
-    }
-
-    public static class CloningException extends Exception {
-        private static final long serialVersionUID = 1L;
-
-        public CloningException() {
-        }
-
-        public CloningException(String message) {
-            super(message);
-        }
-
-        public CloningException(String message, Throwable cause) {
-            super(message, cause);
-        }
-
-        public CloningException(Throwable cause) {
-            super(cause);
-        }
-        
     }
 }

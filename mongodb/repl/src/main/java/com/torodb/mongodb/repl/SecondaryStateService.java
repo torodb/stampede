@@ -6,6 +6,8 @@ import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.MemberState;
 import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.inject.assistedinject.Assisted;
+import com.torodb.mongodb.guice.MongoDbLayer;
 import com.torodb.mongodb.core.MongodServer;
 import com.torodb.mongodb.repl.OplogManager.OplogManagerPersistException;
 import java.util.Collections;
@@ -15,6 +17,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 import javax.annotation.concurrent.ThreadSafe;
+import javax.inject.Inject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -28,7 +31,7 @@ import org.apache.logging.log4j.Logger;
  * {@linkplain MemberState#RS_PRIMARY primary}.
  */
 @ThreadSafe
-class SecondaryStateService extends AbstractIdleService {
+public class SecondaryStateService extends AbstractIdleService {
 
     /**
      * The maximum capacity of the {@linkplain #fetchQueue}.
@@ -60,14 +63,15 @@ class SecondaryStateService extends AbstractIdleService {
     private ReplSyncFetcher fetcherService;
     private ReplSyncApplier applierService;
 
+    @Inject
     SecondaryStateService(
-            Callback callback,
+            @Assisted Callback callback,
             OplogManager oplogManager,
             OplogReaderProvider readerProvider,
             OplogOperationApplier oplogOpApplier,
             MongodServer server,
             SyncSourceProvider syncSourceProvider,
-            Executor executor) {
+            @MongoDbLayer Executor executor) {
         this.callback = callback;
         this.fetchQueue = new MyQueue();
         this.readerProvider = readerProvider;
@@ -408,5 +412,9 @@ class SecondaryStateService extends AbstractIdleService {
                 mutex.unlock();
             }
         }
+    }
+
+    public static interface SecondaryStateServiceFactory {
+        SecondaryStateService createSecondaryStateService(Callback callback);
     }
 }

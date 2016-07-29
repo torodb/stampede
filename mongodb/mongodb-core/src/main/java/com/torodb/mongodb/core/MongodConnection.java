@@ -47,7 +47,7 @@ public class MongodConnection implements Connection, AutoCloseable {
     public ReadOnlyMongodTransaction openReadOnlyTransaction() {
         Preconditions.checkState(!closed, "This connection is closed");
         Preconditions.checkState(currentTransaction == null, "Another transaction is currently under execution. Transaction is " + currentTransaction);
-        ReadOnlyMongodTransaction trans = new ReadOnlyMongodTransaction(this);
+        ReadOnlyMongodTransaction trans = new ReadOnlyMongodTransactionImpl(this);
         currentTransaction = trans;
         return trans;
     }
@@ -55,7 +55,7 @@ public class MongodConnection implements Connection, AutoCloseable {
     public WriteMongodTransaction openWriteTransaction() {
         Preconditions.checkState(!closed, "This connection is closed");
         Preconditions.checkState(currentTransaction == null, "Another transaction is currently under execution. Transaction is " + currentTransaction);
-        WriteMongodTransaction trans = new WriteMongodTransaction(this);
+        WriteMongodTransaction trans = new WriteMongodTransactionImpl(this);
         currentTransaction = trans;
         return trans;
     }

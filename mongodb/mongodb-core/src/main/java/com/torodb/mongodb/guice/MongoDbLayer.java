@@ -1,5 +1,5 @@
 
-package com.torodb.mongodb.annotations;
+package com.torodb.mongodb.guice;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
@@ -20,6 +20,6 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Target({ FIELD, PARAMETER, METHOD, TYPE })
 @Retention(RUNTIME)
 @Documented
-public @interface MongoDBLayer {
+public @interface MongoDbLayer {
 
 }

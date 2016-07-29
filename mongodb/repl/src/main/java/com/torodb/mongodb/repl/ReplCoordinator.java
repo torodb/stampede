@@ -31,13 +31,12 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.transaction.RollbackException;
 import com.torodb.mongodb.annotations.Locked;
-import com.torodb.mongodb.annotations.MongoDBLayer;
+import com.torodb.mongodb.guice.MongoDbLayer;
 import com.torodb.mongodb.core.MongodConnection;
 import com.torodb.mongodb.core.MongodServer;
 import com.torodb.mongodb.core.ReadOnlyMongodTransaction;
 import com.torodb.mongodb.core.WriteMongodTransaction;
 import com.torodb.mongodb.repl.exceptions.NoSyncSourceFoundException;
-import com.torodb.mongodb.utils.AkkaDbCloner;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.concurrent.Executor;
@@ -64,18 +63,15 @@ public class ReplCoordinator extends AbstractIdleService implements ReplInterfac
     private static final String CONSISTENT_COL = "repl.consistent";
     private final ReplCoordinatorOwnerCallback ownerCallback;
     private final ReadWriteLock lock;
-    private final OplogReaderProvider oplogReaderProvider;
     private volatile MemberState memberState;
     private final Executor executor;
     private final OplogManager oplogManager;
-    private final OplogOperationApplier oplogOpApplier;
     private final MongodServer server;
     private final SyncSourceProvider syncSourceProvider;
-    private final AkkaDbCloner dbCloner;
-    private final MongoClientProvider remoteClientProvider;
     private final BsonObjectId myRID;
     private final int myId;
-    private final ObjectIdFactory objectIdFactory;
+    private final RecoveryService.RecoveryServiceFactory recoveryServiceFactory;
+    private final SecondaryStateService.SecondaryStateServiceFactory secondaryStateServiceFactory;
 
     private RecoveryService recoveryService;
     private SecondaryStateService secondaryService;
@@ -84,20 +80,19 @@ public class ReplCoordinator extends AbstractIdleService implements ReplInterfac
     @Inject
     public ReplCoordinator(
             ReplCoordinatorOwnerCallback ownerCallback,
-            OplogReaderProvider orpProvider,
-            OplogOperationApplier oplogOpApplier,
             MongodServer server,
-            AkkaDbCloner dbCloner,
             MongoClientProvider remoteClientProvider,
             SyncSourceProvider syncSourceProvider,
             OplogManager oplogManager,
-            @MongoDBLayer Executor replExecutor,
-            ObjectIdFactory objectIdFactory) {
+            @MongoDbLayer Executor replExecutor,
+            ObjectIdFactory objectIdFactory,
+            RecoveryService.RecoveryServiceFactory recoveryServiceFactory,
+            SecondaryStateService.SecondaryStateServiceFactory secondaryStateServiceFactory) {
         this.ownerCallback = ownerCallback;
         this.executor = replExecutor;
-        this.oplogReaderProvider = orpProvider;
         this.oplogManager = oplogManager;
-        this.objectIdFactory = objectIdFactory;
+        this.recoveryServiceFactory = recoveryServiceFactory;
+        this.secondaryStateServiceFactory = secondaryStateServiceFactory;
         
         this.lock = new ReentrantReadWriteLock();
 
@@ -108,9 +103,6 @@ public class ReplCoordinator extends AbstractIdleService implements ReplInterfac
         this.myId = 123;
         this.myRID = objectIdFactory.consumeObjectId();
 
-        this.dbCloner = dbCloner;
-        this.remoteClientProvider = remoteClientProvider;
-        this.oplogOpApplier = oplogOpApplier;
         this.server = server;
         this.syncSourceProvider = syncSourceProvider;
     }
@@ -234,17 +226,7 @@ public class ReplCoordinator extends AbstractIdleService implements ReplInterfac
         LOGGER.info("Starting RECOVERY mode");
 
         memberState = MemberState.RS_RECOVERING;
-        recoveryService = new RecoveryService(
-                new RecoveryServiceCallback(),
-                oplogManager,
-                syncSourceProvider,
-                oplogReaderProvider,
-                dbCloner,
-                remoteClientProvider,
-                server,
-                oplogOpApplier,
-                executor
-        );
+        recoveryService = recoveryServiceFactory.createRecoveryService(new RecoveryServiceCallback());
         recoveryService.startAsync();
     }
 
@@ -279,15 +261,7 @@ public class ReplCoordinator extends AbstractIdleService implements ReplInterfac
         LOGGER.info("Starting SECONDARY mode");
 
         memberState = MemberState.RS_SECONDARY;
-        secondaryService = new SecondaryStateService(
-                new SecondaryServiceCallback(),
-                oplogManager,
-                oplogReaderProvider,
-                oplogOpApplier,
-                server,
-                syncSourceProvider,
-                executor
-        );
+        secondaryService = secondaryStateServiceFactory.createSecondaryStateService(new SecondaryServiceCallback());
 
         secondaryService.startAsync();
         try {

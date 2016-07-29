@@ -26,27 +26,31 @@ import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.CollectionOptions;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.CursorResult;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.IndexOptions;
+import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.Request;
 import com.eightkdata.mongowp.server.api.impl.CollectionCommandArgument;
 import com.eightkdata.mongowp.server.api.pojos.MongoCursor;
 import com.google.common.annotations.Beta;
-import com.google.common.base.Supplier;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.net.HostAndPort;
-import com.torodb.core.exceptions.ToroRuntimeException;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.transaction.RollbackException;
 import com.torodb.mongodb.core.MongodConnection;
 import com.torodb.mongodb.core.MongodServer;
 import com.torodb.mongodb.core.WriteMongodTransaction;
-import java.util.*;
+import com.torodb.mongodb.utils.DbCloner.CloneOptions;
+import com.torodb.mongodb.utils.DbCloner.CloningException;
+import com.torodb.torod.WriteTorodTransaction;
+import java.time.Clock;
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
-import javax.annotation.Nonnull;
-import javax.inject.Singleton;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import scala.concurrent.Await;
@@ -70,37 +74,48 @@ import scala.concurrent.duration.Duration;
  * transactional way.
  */
 @Beta
-@Singleton
-public class AkkaDbCloner {
+public class AkkaDbCloner implements DbCloner {
 
     private static final Logger LOGGER = LogManager.getLogger(AkkaDbCloner.class);
+    /**
+     * The executor that will execute each task in which the cloning is divided.
+     */
+    private final ExecutorService executorService;
+    /**
+     * The number of parallel task that can be used to clone each collection
+     */
+    private final int maxParallelInsertTasks;
+    /**
+     * The size of the buffer where documents are stored before being balanced between the
+     * insert phases.
+     */
+    private final int cursorBatchBufferSize;
+    /**
+     * The number of documents that each transaction will insert.
+     */
+    private final int insertBufferSize;
+    private final CommitHeuristic commitHeuristic;
+    private final Clock clock;
 
-    public void cloneDatabase(
-            MongodServer mongoServer, int parallelismLevel, int docsPerBatch, boolean commitAfterIndex,
-            @Nonnull String dstDb,
-            @Nonnull MongoClient remoteClient,
-            @Nonnull CloneOptions opts) throws CloningException, NotMasterException, MongoException {
-        try (ExecutionContext context = new DefaultExecutionContext(mongoServer, parallelismLevel, docsPerBatch, commitAfterIndex)) {
-            cloneDatabase(context, dstDb, remoteClient, opts);
-        }
+    public AkkaDbCloner(ExecutorService executorService, int maxParallelInsertTasks,
+            int cursorBatchBufferSize, int insertBufferSize, CommitHeuristic commitHeuristic, Clock clock) {
+        this.executorService = executorService;
+        this.maxParallelInsertTasks = maxParallelInsertTasks;
+        Preconditions.checkArgument(maxParallelInsertTasks >= 1, "The number of parallel insert "
+                + "tasks level must be higher than 0, but " + maxParallelInsertTasks + " was used");
+        this.cursorBatchBufferSize = cursorBatchBufferSize;
+        Preconditions.checkArgument(cursorBatchBufferSize >= 1, "cursorBatchBufferSize must be "
+                + "higher than 0, but " + cursorBatchBufferSize + " was used");
+        this.insertBufferSize = insertBufferSize;
+        Preconditions.checkArgument(insertBufferSize >= 1, "Insert buffer size must be higher than "
+                + "0, but " + insertBufferSize + " was used");
+        this.commitHeuristic = commitHeuristic;
+        this.clock = clock;
     }
 
-    /**
-     *
-     * @param executionConfiguration
-     * @param dstDb
-     * @param remoteClient
-     * @param opts
-     * @throws CloningException
-     * @throws NotMasterException if {@link CloneOptions#getWritePermissionSupplier()
-     *                            opts.getWritePermissionSupplier().get()} is evaluated to false
-     * @throws MongoException
-     */
-    public void cloneDatabase(
-            @Nonnull ExecutionContext executionConfiguration,
-            @Nonnull String dstDb,
-            @Nonnull MongoClient remoteClient,
-            @Nonnull CloneOptions opts) throws CloningException, NotMasterException, MongoException {
+    @Override
+    public void cloneDatabase(String dstDb, MongoClient remoteClient, MongodServer localServer,
+            CloneOptions opts) throws CloningException, NotMasterException, MongoException {
         if (!remoteClient.isRemote() && opts.getDbToClone().equals(dstDb)) {
             LOGGER.warn("Trying to clone a database to itself! Ignoring it");
             return;
@@ -135,7 +150,7 @@ public class AkkaDbCloner {
         try {
             List<CompletableFuture<Void>> prepareCollectionFutures = collsToClone.stream()
                     .map(collEntry -> CompletableFuture.runAsync(() ->
-                            prepareCollection(executionConfiguration, dstDb, collEntry))
+                            prepareCollection(localServer, dstDb, collEntry))
                     )
                     .collect(Collectors.toList());
             CompletableFuture.allOf(prepareCollectionFutures.toArray(new CompletableFuture[prepareCollectionFutures.size()]))
@@ -154,7 +169,8 @@ public class AkkaDbCloner {
         }
         
         ActorSystem actorSystem = ActorSystem.create("dbClone", null, null,
-                ExecutionContexts.fromExecutorService(executionConfiguration.getExecutorService()));
+                ExecutionContexts.fromExecutorService(executorService)
+        );
         Materializer materializer = ActorMaterializer.create(actorSystem);
 
         try (MongoConnection remoteConnection = remoteClient.openConnection()) {
@@ -163,12 +179,12 @@ public class AkkaDbCloner {
                     LOGGER.info("Clonning {}.{} into {}.{}", fromDb, entry.getCollectionName(),
                             dstDb, entry.getCollectionName());
 
-                    cloneCollection(executionConfiguration, remoteConnection, dstDb, opts, materializer, entry);
+                    cloneCollection(localServer, remoteConnection, dstDb, opts, materializer, entry);
                 }
             }
             if (opts.isCloneIndexes()) {
                 for (Entry entry : collsToClone) {
-                    cloneIndex(executionConfiguration, dstDb, remoteConnection, opts, entry.getCollectionName());
+                    cloneIndex(localServer, dstDb, remoteConnection, opts, entry.getCollectionName());
                 }
             }
         }
@@ -179,39 +195,36 @@ public class AkkaDbCloner {
         }
     }
 
-    private void cloneCollection(ExecutionContext executionConfiguration, MongoConnection remoteConnection,
+    private void cloneCollection(MongodServer localServer, MongoConnection remoteConnection,
             String toDb, CloneOptions opts, Materializer materializer, Entry collToClone)
             throws MongoException {
 
-        int cursorBatchBuffer = 1000;
         String collName = collToClone.getCollectionName();
-        int parallelInserts = executionConfiguration.getParallelismLevel();
-        assert parallelInserts > 0;
 
         MongoCursor<BsonDocument> cursor = openCursor(remoteConnection, collName, opts);
 
         Source<BsonDocument, NotUsed> source = Source.from(cursor)
-                .buffer(cursorBatchBuffer, OverflowStrategy.backpressure())
+                .buffer(cursorBatchBufferSize, OverflowStrategy.backpressure())
                 .async();
 
         Flow<BsonDocument, NotUsed, NotUsed> inserterFlow;
-        if (parallelInserts == 1) {
-            inserterFlow = createCloneDocsWorker(executionConfiguration, toDb, collName);
+        if (maxParallelInsertTasks == 1) {
+            inserterFlow = createCloneDocsWorker(localServer, toDb, collName);
         }
         else {
             inserterFlow = Flow.fromGraph(GraphDSL.create(builder -> {
 
                 UniformFanOutShape<BsonDocument, BsonDocument> balance = builder.add(
-                        Balance.create(parallelInserts, false)
+                        Balance.create(maxParallelInsertTasks, false)
                 );
                 UniformFanInShape<NotUsed, NotUsed> merge = builder.add(
-                        Merge.create(parallelInserts, false)
+                        Merge.create(maxParallelInsertTasks, false)
                 );
 
-                for (int i = 0; i < parallelInserts; i++) {
+                for (int i = 0; i < maxParallelInsertTasks; i++) {
                     builder.from(balance.out(i))
                             .via(builder.add(
-                                    createCloneDocsWorker(executionConfiguration, toDb, collName).async())
+                                    createCloneDocsWorker(localServer, toDb, collName).async())
                             )
                             .toInlet(merge.in(i));
                 }
@@ -225,35 +238,36 @@ public class AkkaDbCloner {
                 .join();
     }
 
-    private Flow<BsonDocument, NotUsed, NotUsed> createCloneDocsWorker(
-            ExecutionContext executionConfiguration, String toDb, String collection) {
+    private Flow<BsonDocument, NotUsed, NotUsed> createCloneDocsWorker(MongodServer localServer,
+            String toDb, String collection) {
         return Flow.of(BsonDocument.class)
-                .grouped(10000)
+                .grouped(insertBufferSize)
                 .map(docs -> {
-                    insertDocuments(executionConfiguration, toDb, collection, docs);
+                    insertDocuments(localServer, toDb, collection, docs);
                     return NotUsed.getInstance();
                 }
         );
     }
 
-    private void insertDocuments(ExecutionContext executionConfiguration, String toDb,
-            String collection, List<BsonDocument> docsToInsert) {
+    private void insertDocuments(MongodServer localServer, String toDb, String collection,
+            List<BsonDocument> docsToInsert) {
 
         int maxAttempts = 10;
         int attempts = 1;
 
-        int maxDocBatchSize = executionConfiguration.getCommitPolicy().getDocumentsPerCommit();
-        LOGGER.debug("Inserting {} documents on commit batches of {}", docsToInsert.size(), maxDocBatchSize);
-        WriteMongodTransaction transaction = executionConfiguration.getTransactionPolicy().consumeTransaction();
+        int docsPerCommit = commitHeuristic.getDocumentsPerCommit();
+        LOGGER.debug("Inserting {} documents on commit batches of {}", docsToInsert.size(), docsPerCommit);
+        WriteMongodTransaction transaction = createWriteMongodTransaction(localServer);
         try {
 
             List<BsonDocument> remainingDocs = docsToInsert;
 
             while (!remainingDocs.isEmpty()) {
                 try {
-                    int docsBatchSize = Math.min(maxDocBatchSize, remainingDocs.size());
-                    List<BsonDocument> currentDocument = remainingDocs.subList(0, docsBatchSize);
-                    remainingDocs = remainingDocs.subList(docsBatchSize, remainingDocs.size());
+                    long start = clock.millis();
+                    int actualBatchSize = Math.min(docsPerCommit, remainingDocs.size());
+                    List<BsonDocument> currentDocument = remainingDocs.subList(0, actualBatchSize);
+                    remainingDocs = remainingDocs.subList(actualBatchSize, remainingDocs.size());
 
                     Status<InsertResult> insertResult = transaction.execute(
                             new Request(toDb, null, true, null),
@@ -268,12 +282,22 @@ public class AkkaDbCloner {
                         throw new CloningException("Error while inserting a cloned document");
                     }
                     transaction.commit();
+
+                    long end = clock.millis();
+
+                    commitHeuristic.notifyDocumentInsertionCommit(actualBatchSize, end - start);
+                    
+                    int newDocsPerCommit = commitHeuristic.getDocumentsPerCommit();
+                    if (newDocsPerCommit != docsPerCommit) {
+                        LOGGER.debug("Changing commit batch size from {} to {}", docsPerCommit, newDocsPerCommit);
+                        docsPerCommit = newDocsPerCommit;
+                    }
                 } catch (RollbackException ex) {
                     if (attempts < maxAttempts) {
                         LOGGER.debug("Found a rollback exception, trying again for " + attempts + "th time", ex);
                         attempts++;
                         transaction.close();
-                        transaction = executionConfiguration.getTransactionPolicy().consumeTransaction();
+                        transaction = createWriteMongodTransaction(localServer);
                     }
                     else {
                         LOGGER.error("Found a rollback exception for {}th time. Aborting", attempts);
@@ -290,7 +314,7 @@ public class AkkaDbCloner {
 
     private MongoCursor<BsonDocument> openCursor(MongoConnection remoteConnection, String collection, CloneOptions opts) throws MongoException {
         EnumSet<QueryOption> queryFlags = EnumSet.of(QueryOption.NO_CURSOR_TIMEOUT); //TODO: enable exhaust?
-        if (opts.slaveOk) {
+        if (opts.isSlaveOk()) {
             queryFlags.add(QueryOption.SLAVE_OK);
         }
         return remoteConnection.query(
@@ -331,8 +355,8 @@ public class AkkaDbCloner {
         return collsToClone;
     }
 
-    private void prepareCollection(ExecutionContext executionConfiguration, String dstDb, Entry colEntry) throws RollbackException {
-        try (WriteMongodTransaction transaction = executionConfiguration.getTransactionPolicy().consumeTransaction()) {
+    private void prepareCollection(MongodServer localServer, String dstDb, Entry colEntry) throws RollbackException {
+        try (WriteMongodTransaction transaction = createWriteMongodTransaction(localServer)) {
             dropCollection(transaction, dstDb, colEntry.getCollectionName());
             createCollection(transaction, dstDb, colEntry.getCollectionName(), colEntry.getCollectionOptions());
             transaction.commit();
@@ -342,12 +366,12 @@ public class AkkaDbCloner {
     }
 
     private void cloneIndex(
-            ExecutionContext executionConfiguration,
+            MongodServer localServer,
             String dstDb,
             MongoConnection remoteConnection,
             CloneOptions opts,
             String fromCol) throws CloningException {
-        try (WriteMongodTransaction transaction = executionConfiguration.getTransactionPolicy().consumeTransaction()) {
+        try (WriteMongodTransaction transaction = createWriteMongodTransaction(localServer)) {
             String fromDb = opts.getDbToClone();
             HostAndPort remoteAddress = remoteConnection.getClientOwner().getAddress();
             String remoteAddressString = remoteAddress != null ? remoteAddress.toString() : "local";
@@ -408,192 +432,60 @@ public class AkkaDbCloner {
         );
     }
 
-    public static class CloneOptions {
-
-        private final boolean cloneData;
-        private final boolean cloneIndexes;
-        private final boolean slaveOk;
-        private final boolean snapshot;
-        private final String dbToClone;
-        private final Set<String> collsToIgnore;
-        private final Supplier<Boolean> writePermissionSupplier;
-
-        public CloneOptions(
-                boolean cloneData,
-                boolean cloneIndexes,
-                boolean slaveOk,
-                boolean snapshot,
-                String dbToClone,
-                Set<String> collsToIgnore,
-                Supplier<Boolean> writePermissionSupplier) {
-            this.cloneData = cloneData;
-            this.cloneIndexes = cloneIndexes;
-            this.slaveOk = slaveOk;
-            this.snapshot = snapshot;
-            this.dbToClone = dbToClone;
-            this.collsToIgnore = collsToIgnore;
-            this.writePermissionSupplier = writePermissionSupplier;
-        }
-
-        /**
-         * @return true iff data must be cloned
-         */
-        public boolean isCloneData() {
-            return cloneData;
-        }
-
-        /**
-         * @return true iff indexes must be cloned
-         */
-        public boolean isCloneIndexes() {
-            return cloneIndexes;
-        }
-
-        /**
-         * @return true iff is ok to clone from a node that is not master
-         */
-        public boolean isSlaveOk() {
-            return slaveOk;
-        }
-
-        /**
-         * @return true iff $snapshot must be used
-         */
-        public boolean isSnapshot() {
-            return snapshot;
-        }
-
-        /**
-         * @return the database that will be cloned
-         */
-        public String getDbToClone() {
-            return dbToClone;
-        }
-
-        /**
-         * @return a set of collections that will not be cloned
-         */
-        @Nonnull
-        public Set<String> getCollsToIgnore() {
-            return collsToIgnore;
-        }
-
-        /**
-         * @return a supplier that can be used to know if write is allowed on the destiny database
-         */
-        public Supplier<Boolean> getWritePermissionSupplier() {
-            return writePermissionSupplier;
-        }
-
+    private WriteMongodTransaction createWriteMongodTransaction(MongodServer server) {
+        MongodConnection connection = server.openConnection();
+        WriteMongodTransaction delegateTransaction = connection.openWriteTransaction();
+        return new CloseConnectionWriteMongodTransaction(delegateTransaction);
     }
 
-    public static class CloningException extends ToroRuntimeException {
+    private static class CloseConnectionWriteMongodTransaction implements WriteMongodTransaction {
+        private final WriteMongodTransaction delegate;
 
-        private static final long serialVersionUID = 1L;
-
-        public CloningException() {
+        public CloseConnectionWriteMongodTransaction(WriteMongodTransaction delegate) {
+            this.delegate = delegate;
         }
-
-        public CloningException(String message) {
-            super(message);
-        }
-
-        public CloningException(String message, Throwable cause) {
-            super(message, cause);
-        }
-
-        public CloningException(Throwable cause) {
-            super(cause);
-        }
-
-    }
-
-    public static interface ExecutionContext extends AutoCloseable {
-
-        ExecutorService getExecutorService();
-
-        TransactionPolicy getTransactionPolicy();
-
-        CommitPolicy getCommitPolicy();
-
-        /**
-         * The number of parallel task that can be used to clone each collection
-         *
-         * @return
-         */
-        int getParallelismLevel();
 
         @Override
-        public void close();
+        public void commit() throws RollbackException, UserException {
+            delegate.commit();
+        }
+
+        @Override
+        public WriteTorodTransaction getTorodTransaction() {
+            return delegate.getTorodTransaction();
+        }
+
+        @Override
+        public MongodConnection getConnection() {
+            return delegate.getConnection();
+        }
+
+        @Override
+        public <Arg, Result> Status<Result> execute(Request req, Command<? super Arg, ? super Result> command, Arg arg)
+                throws RollbackException {
+            return delegate.execute(req, command, arg);
+        }
+
+        @Override
+        public Request getCurrentRequest() {
+            return delegate.getCurrentRequest();
+        }
+
+        @Override
+        public void close() {
+            delegate.close();
+            getConnection().close();
+        }
+
     }
 
-    public static interface CommitPolicy {
+    public static interface CommitHeuristic {
+
+        void notifyDocumentInsertionCommit(int docBatchSize, long millisSpent);
 
         int getDocumentsPerCommit();
 
         boolean shouldCommitAfterIndex();
     }
 
-    public static interface TransactionPolicy {
-        WriteMongodTransaction consumeTransaction();
-    }
-
-    private static class DefaultExecutionContext implements ExecutionContext {
-        private final int parallelismLevel;
-        
-        private final ExecutorService executorService;
-        private final ArrayList<MongodConnection> openConnections = new ArrayList<>();
-        private final TransactionPolicy transactionPolicy;
-        private final CommitPolicy commitPolicy;
-
-        public DefaultExecutionContext(MongodServer mongoServer, int parallelismLevel, int docsPerBatch, boolean commitAfterIndex) {
-            this.parallelismLevel = parallelismLevel;
-            
-            this.executorService = Executors.newFixedThreadPool(parallelismLevel);
-            this.transactionPolicy = () -> {
-                MongodConnection connection = mongoServer.openConnection();
-                openConnections.add(connection);
-
-                return connection.openWriteTransaction();
-            };
-            this.commitPolicy = new CommitPolicy() {
-                @Override
-                public int getDocumentsPerCommit() {
-                    return docsPerBatch;
-                }
-
-                @Override
-                public boolean shouldCommitAfterIndex() {
-                    return commitAfterIndex;
-                }
-            };
-
-        }
-
-        @Override
-        public ExecutorService getExecutorService() {
-            return executorService;
-        }
-
-        @Override
-        public TransactionPolicy getTransactionPolicy() {
-            return transactionPolicy;
-        }
-
-        @Override
-        public CommitPolicy getCommitPolicy() {
-            return commitPolicy;
-        }
-
-        @Override
-        public int getParallelismLevel() {
-            return parallelismLevel;
-        }
-
-        @Override
-        public void close() {
-            openConnections.forEach(connection -> connection.close());
-        }
-
-    }
 }

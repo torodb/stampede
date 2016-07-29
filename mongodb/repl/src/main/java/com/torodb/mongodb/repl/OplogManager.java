@@ -24,7 +24,6 @@ import com.google.common.primitives.UnsignedInteger;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.torodb.core.Retrier;
 import com.torodb.mongodb.annotations.Locked;
-import com.torodb.mongodb.annotations.MongoDBLayer;
 import com.torodb.mongodb.core.MongodConnection;
 import com.torodb.mongodb.core.MongodServer;
 import com.torodb.mongodb.core.ReadOnlyMongodTransaction;
@@ -43,6 +42,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import static com.eightkdata.mongowp.bson.utils.DefaultBsonValues.*;
+
+import com.torodb.mongodb.guice.MongoDbLayer;
 
 /**
  *
@@ -64,7 +65,7 @@ public class OplogManager extends AbstractIdleService {
     private final Retrier retrier;
 
     @Inject
-    public OplogManager(@MongoDBLayer Executor executor, MongodServer mongodServer, Retrier retrier) {
+    public OplogManager(@MongoDbLayer Executor executor, MongodServer mongodServer, Retrier retrier) {
         this.executor = executor;
         this.connection = mongodServer.openConnection();
         this.retrier = retrier;

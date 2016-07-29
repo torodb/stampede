@@ -19,52 +19,57 @@ import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.google.common.base.Supplier;
 import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
+import com.google.inject.assistedinject.Assisted;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.transaction.RollbackException;
+import com.torodb.mongodb.guice.MongoDbLayer;
 import com.torodb.mongodb.core.MongodConnection;
 import com.torodb.mongodb.core.MongodServer;
 import com.torodb.mongodb.core.WriteMongodTransaction;
 import com.torodb.mongodb.repl.OplogManager.OplogManagerPersistException;
 import com.torodb.mongodb.repl.OplogManager.WriteTransaction;
+import com.torodb.mongodb.repl.guice.MongoDbRepl;
 import com.torodb.mongodb.repl.exceptions.NoSyncSourceFoundException;
-import com.torodb.mongodb.utils.AkkaDbCloner;
-import com.torodb.mongodb.utils.AkkaDbCloner.CloneOptions;
-import com.torodb.mongodb.utils.AkkaDbCloner.CloningException;
+import com.torodb.mongodb.utils.DbCloner;
+import com.torodb.mongodb.utils.DbCloner.CloneOptions;
+import com.torodb.mongodb.utils.DbCloner.CloningException;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
+import javax.inject.Inject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
  *
  */
-class RecoveryService extends AbstractExecutionThreadService {
+public class RecoveryService extends AbstractExecutionThreadService {
     private static final int MAX_ATTEMPTS = 10;
     private static final Logger LOGGER = LogManager.getLogger(RecoveryService.class);
     private final Callback callback;
     private final OplogManager oplogManager;
     private final SyncSourceProvider syncSourceProvider;
     private final OplogReaderProvider oplogReaderProvider;
-    private final AkkaDbCloner cloner;
+    private final DbCloner cloner;
     private final MongoClientProvider remoteClientProvider;
     private final MongodServer server;
     private final Executor executor;
     private final OplogOperationApplier oplogOpApplier;
 
+    @Inject
     public RecoveryService(
-            Callback callback,
+            @Assisted Callback callback,
             OplogManager oplogManager,
             SyncSourceProvider syncSourceProvider,
             OplogReaderProvider oplogReaderProvider,
-            AkkaDbCloner cloner,
+            @MongoDbRepl DbCloner cloner,
             MongoClientProvider remoteClientProvider,
             MongodServer server,
             OplogOperationApplier oplogOpApplier,
-            Executor executor) {
+            @MongoDbLayer Executor executor) {
         this.callback = callback;
         this.oplogManager = oplogManager;
         this.syncSourceProvider = syncSourceProvider;
@@ -223,7 +228,7 @@ class RecoveryService extends AbstractExecutionThreadService {
                 throw new TryAgainException(ex);
             } catch (OplogOperationUnsupported ex) {
                 throw new TryAgainException(ex);
-            } catch (MongoException | CloningException | RollbackException ex) {
+            } catch (MongoException | RollbackException ex) {
                 throw new TryAgainException(ex);
             } catch (OplogManagerPersistException ex) {
                 throw new FatalErrorException();
@@ -305,7 +310,7 @@ class RecoveryService extends AbstractExecutionThreadService {
                             writePermissionSupplier);
 
                     try {
-                        cloner.cloneDatabase(server, 4, 100, true, databaseName, remoteClient, options);
+                        cloner.cloneDatabase(databaseName, remoteClient, server, options);
                     } catch (MongoException ex) {
                         throw new CloningException(ex);
                     }
@@ -416,6 +421,10 @@ class RecoveryService extends AbstractExecutionThreadService {
         public void setConsistentState(boolean consistent);
 
         public boolean canAcceptWrites(String database);
+    }
+
+    public static interface RecoveryServiceFactory {
+        RecoveryService createRecoveryService(Callback callback);
     }
 
 }

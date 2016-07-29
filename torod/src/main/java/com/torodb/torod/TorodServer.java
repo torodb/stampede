@@ -1,6 +1,7 @@
 
 package com.torodb.torod;
 
+import akka.actor.ActorSystem;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.RemovalNotification;
@@ -10,10 +11,8 @@ import com.torodb.core.backend.Backend;
 import com.torodb.core.d2r.D2RTranslatorFactory;
 import com.torodb.core.d2r.IdentifierFactory;
 import com.torodb.core.transaction.InternalTransactionManager;
+import com.torodb.torod.guice.TorodLayer;
 import com.torodb.torod.pipeline.InsertPipelineFactory;
-
-import akka.actor.ActorSystem;
-
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -38,7 +37,7 @@ public class TorodServer extends AbstractIdleService {
     public TorodServer(D2RTranslatorFactory d2RTranslatorFactory, IdentifierFactory idFactory,
             InsertPipelineFactory insertPipelineFactory, Backend backend, 
             InternalTransactionManager internalTransactionManager, TableRefFactory tableRefFactory,
-            ActorSystem actorSystem) {
+            @TorodLayer ActorSystem actorSystem) {
         this.d2RTranslatorFactory = d2RTranslatorFactory;
         this.idFactory = idFactory;
         this.insertPipelineFactory = insertPipelineFactory;

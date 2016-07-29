@@ -19,16 +19,19 @@ import com.torodb.mongodb.wp.guice.MongoDbWpModule;
 import com.torodb.packaging.config.model.Config;
 import com.torodb.packaging.guice.BackendImplementationModule;
 import com.torodb.packaging.guice.ConfigModule;
+import com.torodb.packaging.guice.ExecutorServicesModule;
 import com.torodb.packaging.guice.PackagingModule;
 import com.torodb.torod.TorodServer;
 import com.torodb.torod.guice.TorodModule;
 import java.time.Clock;
+import javax.inject.Singleton;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
  *
  */
+@Singleton
 public class ToroDbServer extends AbstractIdleService {
 
     private static final Logger LOGGER = LogManager.getLogger(ToroDbServer.class);
@@ -37,13 +40,16 @@ public class ToroDbServer extends AbstractIdleService {
     private final TorodServer torod;
     private final MongodServer mongod;
     private final NettyMongoServer netty;
+    private final ExecutorsService executorsService;
 
     @Inject
-    ToroDbServer(BuildProperties buildProperties, TorodServer torod, MongodServer mongod, NettyMongoServer netty) {
+    ToroDbServer(BuildProperties buildProperties, TorodServer torod, MongodServer mongod, NettyMongoServer netty,
+            ExecutorsService executorsService) {
         this.buildProperties = buildProperties;
         this.torod = torod;
         this.mongod = mongod;
         this.netty = netty;
+        this.executorsService = executorsService;
     }
 
     public static ToroDbServer create(Config config, Clock clock) throws ProvisionException {
@@ -63,7 +69,8 @@ public class ToroDbServer extends AbstractIdleService {
                 new TorodModule(),
                 new MongoLayerModule(),
                 new MongoDbWpModule(),
-                new MetricsModule(config.getGeneric())
+                new MetricsModule(config.getGeneric()),
+                new ExecutorServicesModule()
         );
         return injector;
     }
@@ -71,6 +78,9 @@ public class ToroDbServer extends AbstractIdleService {
     @Override
     protected void startUp() throws Exception {
         LOGGER.info("Starting up ToroDB v" +  buildProperties.getFullVersion());
+
+        executorsService.startAsync();
+        executorsService.awaitRunning();
 
         torod.startAsync();
         mongod.startAsync();
@@ -83,7 +93,7 @@ public class ToroDbServer extends AbstractIdleService {
         torod.awaitRunning();
         LOGGER.debug("Waiting for Netty to be running");
         netty.awaitRunning();
-        
+
         LOGGER.debug("ToroDbServer ready to run");
     }
 
@@ -99,7 +109,10 @@ public class ToroDbServer extends AbstractIdleService {
 
         torod.stopAsync();
         torod.awaitTerminated();
-        
+
+        executorsService.stopAsync();
+        executorsService.awaitTerminated();
+
         LOGGER.debug("ToroDBServer shutdown complete");
     }
 

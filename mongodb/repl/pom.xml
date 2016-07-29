@@ -24,5 +24,9 @@
             <groupId>com.8kdata.mongowp.client</groupId>
             <artifactId>driver-wrapper</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.google.inject.extensions</groupId>
+            <artifactId>guice-assistedinject</artifactId>
+        </dependency>
     </dependencies>
 </project>

@@ -8,12 +8,14 @@ import akka.stream.javadsl.Source;
 import com.google.common.base.Throwables;
 import com.torodb.core.backend.WriteBackendTransaction;
 import com.torodb.core.d2r.D2RTranslatorFactory;
+import com.torodb.core.dsl.backend.BackendTransactionJobFactory;
 import com.torodb.core.exceptions.SystemException;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.transaction.RollbackException;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MutableMetaCollection;
 import com.torodb.kvdocument.values.KVDocument;
+import com.torodb.torod.guice.TorodLayer;
 import com.torodb.torod.pipeline.D2RTranslationBatchFunction;
 import com.torodb.torod.pipeline.DefaultToBackendFunction;
 import com.torodb.torod.pipeline.InsertPipeline;
@@ -21,7 +23,6 @@ import com.torodb.torod.pipeline.InsertPipelineFactory;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 import javax.inject.Inject;
-import com.torodb.core.dsl.backend.BackendTransactionJobFactory;
 
 /**
  *
@@ -30,12 +31,14 @@ public class AkkaInsertSubscriberFactory implements InsertPipelineFactory {
 
     private final Materializer materializer;
     private final BackendTransactionJobFactory factory;
-    private final int docBatch = 100;
+    private final int docBatch;
 
     @Inject
-    public AkkaInsertSubscriberFactory(Materializer materializer, BackendTransactionJobFactory factory) {
+    public AkkaInsertSubscriberFactory(@TorodLayer Materializer materializer,
+            BackendTransactionJobFactory factory, int docBatch) {
         this.materializer = materializer;
         this.factory = factory;
+        this.docBatch = docBatch;
     }
 
     @Override

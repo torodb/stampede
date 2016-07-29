@@ -6,7 +6,6 @@ import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.transaction.RollbackException;
-import com.torodb.mongodb.annotations.MongoDBLayer;
 import com.torodb.mongodb.core.MongodConnection;
 import com.torodb.mongodb.core.MongodServer;
 import com.torodb.mongodb.core.WriteMongodTransaction;
@@ -17,6 +16,7 @@ import java.util.concurrent.Executor;
 import javax.annotation.Nonnull;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import com.torodb.mongodb.guice.MongoDbLayer;
 
 /**
  *
@@ -33,7 +33,7 @@ class ReplSyncApplier extends AbstractExecutionThreadService{
     private volatile Thread runThread;
 
     ReplSyncApplier(
-            @MongoDBLayer @Nonnull Executor executor,
+            @MongoDbLayer @Nonnull Executor executor,
             @Nonnull OplogOperationApplier oplogOpApplier,
             @Nonnull MongodServer server,
             @Nonnull OplogManager oplogManager,
