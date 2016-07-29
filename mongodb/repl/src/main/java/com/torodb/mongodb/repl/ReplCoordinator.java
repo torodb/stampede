@@ -54,6 +54,7 @@ import com.torodb.mongodb.core.MongodServer;
 import com.torodb.mongodb.core.ReadOnlyMongodTransaction;
 import com.torodb.mongodb.core.WriteMongodTransaction;
 import com.torodb.mongodb.guice.MongoDbLayer;
+import com.torodb.mongodb.language.ObjectIdFactory;
 import com.torodb.mongodb.repl.exceptions.NoSyncSourceFoundException;
 
 /**
