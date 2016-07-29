@@ -164,6 +164,11 @@
     <profiles>
         <profile>
             <id>assembler</id>
+			<activation>
+			  <property>
+			    <name>profile.docker</name>
+			  </property>
+			</activation>
             <build>
                 <plugins>
                     <plugin>
@@ -212,7 +217,7 @@
         </profile>
         
         <profile>
-            <id>docker-postgres</id>
+            <id>docker</id>
             <properties>
                 <docker.postgres.password>postgres</docker.postgres.password>
                 <docker.torodb.password>torodb</docker.torodb.password>
@@ -243,6 +248,21 @@
                                     </run>
                                 </image>
                                 <image>
+                                    <alias>mongo</alias>
+                                    <name>mongo:3.2</name>
+                                    <run>
+                                        <ports>
+                                            <port>27017:27017</port>
+                                        </ports>
+                                        <log>
+                                            <prefix>mongo</prefix>
+                                            <enabled>true</enabled>
+                                            <color>green</color>
+                                        </log>
+                                        <cmd>mongod --replSet rs1</cmd>
+                                    </run>
+                                </image>
+                                <image>
                                     <alias>torodb</alias>
                                     <name>8kdata/torodb:%v</name>
                                     <build>
@@ -253,11 +273,11 @@
                                         </tags>
                                         <assembly>
                                             <mode>dir</mode>
-                                            <descriptor>postgres.xml</descriptor>
+                                            <descriptor>assembly.xml</descriptor>
                                         </assembly>
                                         <runCmds>
                                           <run>apt-get update</run>
-                                          <run>apt-get install postgresql-client -y</run>
+                                          <run>apt-get install postgresql-client mongodb-clients -y</run>
                                           <run>apt-get clean</run>
                                           <run>rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*</run>
                                         </runCmds>
@@ -269,6 +289,7 @@
                                         </env>
                                         <links>
                                           <link>postgres:postgres</link>
+                                          <link>mongo:mongo</link>
                                         </links>
                                         <ports>
                                             <port>27018:27018</port>
@@ -276,14 +297,23 @@
                                         <log>
                                             <prefix>torodb</prefix>
                                             <enabled>true</enabled>
-                                            <color>blue</color>
+                                            <color>white</color>
                                         </log>
                                         <workingDir>/maven</workingDir>
-                                        <cmd>./run-postgres.sh</cmd>
+                                        <cmd>./run-replication-postgres.sh</cmd>
                                     </run>
                                 </image>
                             </images>
                         </configuration>
+                        <executions>
+                            <execution>
+                                <id>build</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>build</goal>
+                                </goals>
+                            </execution>
+                        </executions>
                     </plugin>
                 </plugins>
             </build>

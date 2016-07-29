@@ -10,6 +10,7 @@ import com.torodb.packaging.ExecutorsService;
 import com.torodb.torod.guice.TorodLayer;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -31,6 +32,10 @@ public class ExecutorServicesModule extends AbstractModule {
 
         bind(ExecutorService.class)
                 .annotatedWith(TorodLayer.class)
+                .toInstance(torodbDefaultThreadPool);
+
+        bind(Executor.class)
+                .annotatedWith(MongoDbLayer.class)
                 .toInstance(torodbDefaultThreadPool);
 
         bind(ExecutorService.class)
