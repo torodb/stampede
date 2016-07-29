@@ -72,7 +72,7 @@ public class ExecutorServicesModule extends AbstractModule {
                 executorService.shutdown();
             });
             for (ExecutorService executorService : executorServices) {
-                if (executorService.awaitTermination(10, TimeUnit.SECONDS)) {
+                if (!executorService.awaitTermination(100, TimeUnit.SECONDS)) {
                     LOGGER.warn("The executor service " + executorService + " did not terminate "
                             + "on the expected time");
                 }
