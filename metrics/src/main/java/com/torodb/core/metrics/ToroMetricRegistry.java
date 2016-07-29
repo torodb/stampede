@@ -1,16 +1,15 @@
 package com.torodb.core.metrics;
 
-import java.io.File;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 
+import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.management.ObjectName;
 
 import com.codahale.metrics.Counter;
-import com.codahale.metrics.CsvReporter;
 import com.codahale.metrics.ExponentiallyDecayingReservoir;
+import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.Meter;
@@ -51,11 +50,17 @@ public class ToroMetricRegistry extends MetricRegistry  {
 		return histogram;
 	}
 
-	public Timer timer(MetricName name) {
-		mbeanNameFactory.registerName(name);
-		Timer timer = register(name, new Timer());
-		return timer;
-	}
+    public Timer timer(MetricName name) {
+        mbeanNameFactory.registerName(name);
+        Timer timer = register(name, new Timer());
+        return timer;
+    }
+
+    public <T> SettableGauge<T> gauge(MetricName name) {
+        mbeanNameFactory.registerName(name);
+        SettableGauge<T> gauge = register(name, new SettableGauge<T>());
+        return gauge;
+    }
 
 	public <T extends Metric> T register(MetricName name, T metric) {
 		try {
