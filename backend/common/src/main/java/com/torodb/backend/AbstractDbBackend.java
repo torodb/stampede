@@ -174,6 +174,11 @@ public abstract class AbstractDbBackend<Configuration extends DbBackendConfigura
     public long getDefaultCursorTimeout() {
         return configuration.getCursorTimeout();
     }
+    
+    @Override
+    public boolean includeForeignKeys() {
+        return configuration.includeForeignKeys();
+    }
 
     protected void postConsume(Connection connection, boolean readOnly) throws SQLException {
         connection.setReadOnly(readOnly);

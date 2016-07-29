@@ -71,6 +71,10 @@ public class Postgres implements BackendImplementation, Password {
 	@NotNull
 	@JsonProperty(required=true)
 	protected String applicationName = "toro";
+    @Description("config.backend.postgres.includeForeignKeys")
+    @NotNull
+    @JsonProperty(required=true)
+    protected Boolean includeForeignKeys = false;
 	
 	public String getHost() {
 		return host;
@@ -114,6 +118,12 @@ public class Postgres implements BackendImplementation, Password {
 	public void setApplicationName(String applicationName) {
 		this.applicationName = applicationName;
 	}
+    public void setIncludeForeignKeys(Boolean includeForeignKeys) {
+        this.includeForeignKeys = includeForeignKeys;
+    }
+    public Boolean getIncludeForeignKeys() {
+        return includeForeignKeys;
+    }
 	
 	@Override
 	public void accept(BackendImplementationVisitor visitor) {

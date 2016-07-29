@@ -36,5 +36,5 @@ public interface DbBackendConfiguration {
     String getDbHost();
     String getDbName();
     @Nonnegative int getDbPort();
-
+    boolean includeForeignKeys();
 }

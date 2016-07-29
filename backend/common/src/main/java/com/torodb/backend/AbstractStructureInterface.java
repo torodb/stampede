@@ -21,6 +21,7 @@
 package com.torodb.backend;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 
 import javax.annotation.Nonnull;
@@ -42,11 +43,13 @@ import com.torodb.core.transaction.metainf.MetaDocPart;
 @Singleton
 public abstract class AbstractStructureInterface implements StructureInterface {
 
+    private final DbBackend dbBackend;
     private final MetaDataReadInterface metaDataReadInterface;
     private final SqlHelper sqlHelper;
     
     @Inject
-    public AbstractStructureInterface(MetaDataReadInterface metaDataReadInterface, SqlHelper sqlHelper) {
+    public AbstractStructureInterface(DbBackend dbBackend, MetaDataReadInterface metaDataReadInterface, SqlHelper sqlHelper) {
+        this.dbBackend = dbBackend;
         this.metaDataReadInterface = metaDataReadInterface;
         this.sqlHelper = sqlHelper;
     }
@@ -156,7 +159,8 @@ public abstract class AbstractStructureInterface implements StructureInterface {
     public void createDocPartTable(DSLContext dsl, String schemaName, String tableName, TableRef tableRef, String foreignTableName) {
         String statement = getCreateDocPartTableStatement(schemaName, tableName, metaDataReadInterface.getInternalFields(tableRef),
                 metaDataReadInterface.getPrimaryKeyInternalFields(tableRef),
-                metaDataReadInterface.getReferenceInternalFields(tableRef), foreignTableName, metaDataReadInterface.getForeignInternalFields(tableRef));
+                dbBackend.includeForeignKeys() ? metaDataReadInterface.getReferenceInternalFields(tableRef) : Collections.emptyList(), foreignTableName, 
+                    dbBackend.includeForeignKeys() ? metaDataReadInterface.getForeignInternalFields(tableRef) : Collections.emptyList());
         sqlHelper.executeStatement(dsl, statement, Context.CREATE_TABLE);
         String readIndexStatement = getCreateDocPartTableIndexStatement(schemaName, tableName, metaDataReadInterface.getReadInternalFields(tableRef));
         sqlHelper.executeStatement(dsl, readIndexStatement, Context.CREATE_INDEX);

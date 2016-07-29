@@ -41,8 +41,8 @@ import com.torodb.backend.converters.jooq.DataTypeForKV;
 public class DerbyStructureInterface extends AbstractStructureInterface {
 
     @Inject
-    public DerbyStructureInterface(DerbyMetaDataReadInterface metaDataReadInterface, SqlHelper sqlHelper) {
-        super(metaDataReadInterface, sqlHelper);
+    public DerbyStructureInterface(DerbyDbBackend dbBackend, DerbyMetaDataReadInterface metaDataReadInterface, SqlHelper sqlHelper) {
+        super(dbBackend, metaDataReadInterface, sqlHelper);
     }
 
     @Override

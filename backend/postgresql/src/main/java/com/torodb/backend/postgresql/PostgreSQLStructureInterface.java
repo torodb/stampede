@@ -31,6 +31,7 @@ import org.jooq.DSLContext;
 
 import com.google.common.base.Preconditions;
 import com.torodb.backend.AbstractStructureInterface;
+import com.torodb.backend.DbBackend;
 import com.torodb.backend.ErrorHandler.Context;
 import com.torodb.backend.InternalField;
 import com.torodb.backend.SqlBuilder;
@@ -47,8 +48,8 @@ public class PostgreSQLStructureInterface extends AbstractStructureInterface {
     private SqlHelper sqlHelper;
     
     @Inject
-    public PostgreSQLStructureInterface(PostgreSQLMetaDataReadInterface metaDataReadInterface, SqlHelper sqlHelper) {
-        super(metaDataReadInterface, sqlHelper);
+    public PostgreSQLStructureInterface(PostgreSQLDbBackend dbBackend, PostgreSQLMetaDataReadInterface metaDataReadInterface, SqlHelper sqlHelper) {
+        super(dbBackend, metaDataReadInterface, sqlHelper);
         
         this.sqlHelper = sqlHelper;
     }

@@ -75,7 +75,8 @@ public class BackendImplementationModule extends AbstractModule implements Backe
                     derby.getPort(),
                     derby.getDatabase(),
                     derby.getUser(),
-                    derby.getPassword());
+                    derby.getPassword(),
+                    derby.getIncludeForeignKeys());
             
             this.embedded = derby.getEmbedded();
             this.inMemory = derby.getInMemory();
@@ -105,7 +106,8 @@ public class BackendImplementationModule extends AbstractModule implements Backe
                     postgres.getPort(),
                     postgres.getDatabase(),
                     postgres.getUser(),
-                    postgres.getPassword());
+                    postgres.getPassword(),
+                    postgres.getIncludeForeignKeys());
         }
     }
     
@@ -120,10 +122,12 @@ public class BackendImplementationModule extends AbstractModule implements Backe
 		private final String dbName;
 		private final String username;
 		private final String password;
+		private boolean includeForeignKeys;
 		
 		@Inject
         public DbBackendConfigurationMapper(long cursorTimeout, long connectionPoolTimeout, int connectionPoolSize,
-                int reservedReadPoolSize, String dbHost, int dbPort, String dbName, String username, String password) {
+                int reservedReadPoolSize, String dbHost, int dbPort, String dbName, String username, String password,
+                boolean includeForeignKeys) {
             super();
             this.cursorTimeout = cursorTimeout;
             this.connectionPoolTimeout = connectionPoolTimeout;
@@ -134,6 +138,7 @@ public class BackendImplementationModule extends AbstractModule implements Backe
             this.dbName = dbName;
             this.username = username;
             this.password = password;
+            this.includeForeignKeys = includeForeignKeys;
         }
 
 		@Override
@@ -180,5 +185,10 @@ public class BackendImplementationModule extends AbstractModule implements Backe
 		public int getDbPort() {
 			return dbPort;
 		}
+
+        @Override
+        public boolean includeForeignKeys() {
+            return includeForeignKeys;
+        }
 	}
 }

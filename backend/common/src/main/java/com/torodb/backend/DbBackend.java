@@ -29,6 +29,7 @@ public interface DbBackend {
     public DataSource getSystemDataSource();
     public DataSource getGlobalCursorDatasource();
     public long getDefaultCursorTimeout();
+    public boolean includeForeignKeys();
     public Connection createSystemConnection();
     public Connection createReadOnlyConnection();
     public Connection createWriteConnection();

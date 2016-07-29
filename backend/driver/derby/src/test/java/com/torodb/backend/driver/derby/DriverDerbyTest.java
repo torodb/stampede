@@ -91,6 +91,11 @@ public class DriverDerbyTest {
             public boolean embedded() {
                 return true;
             }
+
+            @Override
+            public boolean includeForeignKeys() {
+                return true;
+            }
         }, "torod");
     }
     
