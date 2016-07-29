@@ -164,11 +164,9 @@
     <profiles>
         <profile>
             <id>assembler</id>
-			<activation>
-			  <property>
-			    <name>profile.docker</name>
-			  </property>
-			</activation>
+			<properties>
+			  <profile.assembler>true</profile.assembler>
+			</properties>
             <build>
                 <plugins>
                     <plugin>
@@ -224,6 +222,28 @@
             </properties>
             <build>
                 <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-enforcer-plugin</artifactId>
+                        <version>1.4.1</version>
+                        <executions>
+                            <execution>
+                                <id>enforce-property</id>
+                                <goals>
+                                    <goal>enforce</goal>
+                                </goals>
+                                <configuration>
+                                    <rules>
+                                        <requireProperty>
+                                            <property>profile.assembler</property>
+                                            <message>You must enable assembler profile</message>
+                                        </requireProperty>
+                                    </rules>
+                                    <fail>true</fail>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
                     <plugin>
                         <groupId>io.fabric8</groupId>
                         <artifactId>docker-maven-plugin</artifactId>
