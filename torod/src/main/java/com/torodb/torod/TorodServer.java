@@ -16,6 +16,8 @@ import com.torodb.torod.pipeline.InsertPipelineFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import scala.concurrent.Await;
+import scala.concurrent.duration.Duration;
 
 /**
  *
@@ -71,7 +73,7 @@ public class TorodServer extends AbstractIdleService {
         openConnections.invalidateAll();
         backend.stopAsync();
         backend.awaitTerminated();
-        actorSystem.terminate();
+        Await.result(actorSystem.terminate(), Duration.Inf());
     }
 
     private void onConnectionInvalidated(RemovalNotification<Integer, TorodConnection> notification) {
