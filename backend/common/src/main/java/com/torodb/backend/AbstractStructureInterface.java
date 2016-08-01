@@ -177,10 +177,15 @@ public abstract class AbstractStructureInterface implements StructureInterface {
             sqlHelper.executeStatement(dsl, primaryKeyStatement, Context.ADD_UNIQUE_INDEX);
         }
         
-        if (dbBackend.includeInternalIndexes() || dbBackend.includeForeignKeys()) {
-            String foreignKeyStatement = getAddDocPartTableForeignKeyStatement(schemaName, tableName, metaDataReadInterface.getReferenceInternalFields(tableRef),
-                    foreignTableName, metaDataReadInterface.getForeignInternalFields(tableRef));
-            sqlHelper.executeStatement(dsl, foreignKeyStatement, Context.ADD_FOREIGN_KEY);
+        if (dbBackend.includeInternalIndexes()) {
+            if (dbBackend.includeForeignKeys()) {
+                String foreignKeyStatement = getAddDocPartTableForeignKeyStatement(schemaName, tableName, metaDataReadInterface.getReferenceInternalFields(tableRef),
+                        foreignTableName, metaDataReadInterface.getForeignInternalFields(tableRef));
+                sqlHelper.executeStatement(dsl, foreignKeyStatement, Context.ADD_FOREIGN_KEY);
+            } else {
+                String foreignKeyIndexStatement = getCreateDocPartTableIndexStatement(schemaName, tableName, metaDataReadInterface.getReferenceInternalFields(tableRef));
+                sqlHelper.executeStatement(dsl, foreignKeyIndexStatement, Context.CREATE_INDEX);
+            }
         }
         
         if (dbBackend.includeInternalIndexes()) {
