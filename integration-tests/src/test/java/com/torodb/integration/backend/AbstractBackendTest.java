@@ -129,8 +129,11 @@ public abstract class AbstractBackendTest {
     protected void createDocPartTable(DSLContext dsl, MetaCollection metaCollection, MetaDocPart metaDocPart) {
         if (metaDocPart.getTableRef().isRoot()) {
             sqlInterface.getStructureInterface().createRootDocPartTable(dsl, data.database.getIdentifier(), metaDocPart.getIdentifier(), metaDocPart.getTableRef());
+            sqlInterface.getStructureInterface().addRootDocPartTableIndexes(dsl, data.database.getIdentifier(), metaDocPart.getIdentifier(), metaDocPart.getTableRef());
         } else {
             sqlInterface.getStructureInterface().createDocPartTable(dsl, data.database.getIdentifier(), metaDocPart.getIdentifier(), metaDocPart.getTableRef(),
+                    metaCollection.getMetaDocPartByTableRef(metaDocPart.getTableRef().getParent().get()).getIdentifier());
+            sqlInterface.getStructureInterface().addDocPartTableIndexes(dsl, data.database.getIdentifier(), metaDocPart.getIdentifier(), metaDocPart.getTableRef(),
                     metaCollection.getMetaDocPartByTableRef(metaDocPart.getTableRef().getParent().get()).getIdentifier());
         }
         
@@ -200,8 +203,11 @@ public abstract class AbstractBackendTest {
                 metaCollection.streamContainedMetaDocParts().sorted(TableRefComparator.MetaDocPart.ASC).forEachOrdered(metaDocPart -> {
                     if (metaDocPart.getTableRef().isRoot()) {
                         sqlInterface.getStructureInterface().createRootDocPartTable(dsl, data.database.getIdentifier(), metaDocPart.getIdentifier(), metaDocPart.getTableRef());
+                        sqlInterface.getStructureInterface().addRootDocPartTableIndexes(dsl, data.database.getIdentifier(), metaDocPart.getIdentifier(), metaDocPart.getTableRef());
                     } else {
                         sqlInterface.getStructureInterface().createDocPartTable(dsl, data.database.getIdentifier(), metaDocPart.getIdentifier(), metaDocPart.getTableRef(),
+                                metaCollection.getMetaDocPartByTableRef(metaDocPart.getTableRef().getParent().get()).getIdentifier());
+                        sqlInterface.getStructureInterface().addDocPartTableIndexes(dsl, data.database.getIdentifier(), metaDocPart.getIdentifier(), metaDocPart.getTableRef(),
                                 metaCollection.getMetaDocPartByTableRef(metaDocPart.getTableRef().getParent().get()).getIdentifier());
                     }
                     metaDocPart.streamScalars().forEachOrdered(metaScalar -> {

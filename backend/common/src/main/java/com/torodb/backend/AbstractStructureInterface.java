@@ -21,7 +21,6 @@
 package com.torodb.backend;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
 
 import javax.annotation.Nonnull;
@@ -150,31 +149,54 @@ public abstract class AbstractStructureInterface implements StructureInterface {
 
     @Override
     public void createRootDocPartTable(DSLContext dsl, String schemaName, String tableName, TableRef tableRef) {
-        String statement = getCreateDocPartTableStatement(schemaName, tableName, metaDataReadInterface.getInternalFields(tableRef),
-                metaDataReadInterface.getPrimaryKeyInternalFields(tableRef));
+        String statement = getCreateDocPartTableStatement(schemaName, tableName, metaDataReadInterface.getInternalFields(tableRef));
         sqlHelper.executeStatement(dsl, statement, Context.CREATE_TABLE);
     }
 
     @Override
     public void createDocPartTable(DSLContext dsl, String schemaName, String tableName, TableRef tableRef, String foreignTableName) {
-        String statement = getCreateDocPartTableStatement(schemaName, tableName, metaDataReadInterface.getInternalFields(tableRef),
-                metaDataReadInterface.getPrimaryKeyInternalFields(tableRef),
-                dbBackend.includeForeignKeys() ? metaDataReadInterface.getReferenceInternalFields(tableRef) : Collections.emptyList(), foreignTableName, 
-                    dbBackend.includeForeignKeys() ? metaDataReadInterface.getForeignInternalFields(tableRef) : Collections.emptyList());
+        String statement = getCreateDocPartTableStatement(schemaName, tableName, metaDataReadInterface.getInternalFields(tableRef));
         sqlHelper.executeStatement(dsl, statement, Context.CREATE_TABLE);
-        String readIndexStatement = getCreateDocPartTableIndexStatement(schemaName, tableName, metaDataReadInterface.getReadInternalFields(tableRef));
-        sqlHelper.executeStatement(dsl, readIndexStatement, Context.CREATE_INDEX);
     }
 
     protected abstract String getCreateDocPartTableStatement(String schemaName, String tableName,
-            Collection<InternalField<?>> fields, Collection<InternalField<?>> primaryKeyFields);
+            Collection<InternalField<?>> fields);
+
+    @Override
+    public void addRootDocPartTableIndexes(DSLContext dsl, String schemaName, String tableName, TableRef tableRef) {
+        if (dbBackend.includeInternalIndexes()) {
+            String primaryKeyStatement = getAddDocPartTablePrimaryKeyStatement(schemaName, tableName, metaDataReadInterface.getPrimaryKeyInternalFields(tableRef));
+            sqlHelper.executeStatement(dsl, primaryKeyStatement, Context.CREATE_INDEX);
+        }
+    }
+
+    @Override
+    public void addDocPartTableIndexes(DSLContext dsl, String schemaName, String tableName, TableRef tableRef, String foreignTableName) {
+        if (dbBackend.includeInternalIndexes()) {
+            String primaryKeyStatement = getAddDocPartTablePrimaryKeyStatement(schemaName, tableName, metaDataReadInterface.getPrimaryKeyInternalFields(tableRef));
+            sqlHelper.executeStatement(dsl, primaryKeyStatement, Context.ADD_UNIQUE_INDEX);
+        }
+        
+        if (dbBackend.includeInternalIndexes() || dbBackend.includeForeignKeys()) {
+            String foreignKeyStatement = getAddDocPartTableForeignKeyStatement(schemaName, tableName, metaDataReadInterface.getReferenceInternalFields(tableRef),
+                    foreignTableName, metaDataReadInterface.getForeignInternalFields(tableRef));
+            sqlHelper.executeStatement(dsl, foreignKeyStatement, Context.ADD_FOREIGN_KEY);
+        }
+        
+        if (dbBackend.includeInternalIndexes()) {
+            String readIndexStatement = getCreateDocPartTableIndexStatement(schemaName, tableName, metaDataReadInterface.getReadInternalFields(tableRef));
+            sqlHelper.executeStatement(dsl, readIndexStatement, Context.CREATE_INDEX);
+        }
+    }
+
+    protected abstract String getAddDocPartTablePrimaryKeyStatement(String schemaName, String tableName,
+            Collection<InternalField<?>> primaryKeyFields);
+
+    protected abstract String getAddDocPartTableForeignKeyStatement(String schemaName, String tableName,
+            Collection<InternalField<?>> referenceFields, String foreignTableName, Collection<InternalField<?>> foreignFields);
 
     protected abstract String getCreateDocPartTableIndexStatement(String schemaName, String tableName,
             Collection<InternalField<?>> indexedFields);
-
-    protected abstract String getCreateDocPartTableStatement(String schemaName, String tableName,
-            Collection<InternalField<?>> fields, Collection<InternalField<?>> primaryKeyFields, 
-            Collection<InternalField<?>> referenceFields, String foreignTableName, Collection<InternalField<?>> foreignFields);
     
     @Override
     public void addColumnToDocPartTable(DSLContext dsl, String schemaName, String tableName, String columnName, DataTypeForKV<?> dataType) {

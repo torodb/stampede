@@ -178,6 +178,7 @@ public class RecoveryService extends AbstractExecutionThreadService {
                     return false;
                 }
                 LOGGER.info("Remote database cloning started");
+                disableInternalIndexes();
                 cloneDatabases(remoteClient);
                 LOGGER.info("Remote database cloning finished");
 
@@ -236,6 +237,8 @@ public class RecoveryService extends AbstractExecutionThreadService {
                 throw new FatalErrorException(ex);
             }
 
+            enableInternalIndexes();
+            
             callback.setConsistentState(true);
 
             LOGGER.info("Initial sync finished");
@@ -243,6 +246,24 @@ public class RecoveryService extends AbstractExecutionThreadService {
             remoteClient.close();
         }
         return true;
+    }
+
+    private void disableInternalIndexes() {
+        try (
+                MongodConnection localConnection = server.openConnection();
+                WriteMongodTransaction transaction = localConnection.openWriteTransaction();
+        ) {
+            transaction.getTorodTransaction().disableInternalIndexes();
+        }
+    }
+
+    private void enableInternalIndexes() {
+        try (
+                MongodConnection localConnection = server.openConnection();
+                WriteMongodTransaction transaction = localConnection.openWriteTransaction();
+        ) {
+            transaction.getTorodTransaction().enableInternalIndexes();
+        }
     }
 
     @Override

@@ -147,25 +147,32 @@ public class AkkaDbCloner implements DbCloner {
                     + "after get collections info");
         }
 
-        try {
-            List<CompletableFuture<Void>> prepareCollectionFutures = collsToClone.stream()
-                    .map(collEntry -> CompletableFuture.runAsync(() ->
-                            prepareCollection(localServer, dstDb, collEntry))
-                    )
-                    .collect(Collectors.toList());
-            CompletableFuture.allOf(prepareCollectionFutures.toArray(new CompletableFuture[prepareCollectionFutures.size()]))
-                    .join();
-        } catch (CompletionException ex) {
-            Throwable cause = ex.getCause();
-            if (cause != null) {
-                if (cause instanceof CloningException) {
-                    throw (CloningException) cause;
+        boolean finish = false;
+        while (!finish) {
+            try {
+                List<CompletableFuture<Void>> prepareCollectionFutures = collsToClone.stream()
+                        .map(collEntry -> CompletableFuture.runAsync(() ->
+                                prepareCollection(localServer, dstDb, collEntry))
+                        )
+                        .collect(Collectors.toList());
+                CompletableFuture.allOf(prepareCollectionFutures.toArray(new CompletableFuture[prepareCollectionFutures.size()]))
+                        .join();
+                finish = true;
+            } catch (CompletionException ex) {
+                Throwable cause = ex.getCause();
+                if (cause != null) {
+                    if (cause instanceof CloningException) {
+                        throw (CloningException) cause;
+                    }
+                    if (cause instanceof MongoException) {
+                        throw (MongoException) cause;
+                    }
+                    if (cause instanceof RollbackException) {
+                        continue;
+                    }
                 }
-                if (cause instanceof MongoException) {
-                    throw (MongoException) cause;
-                }
+                throw ex;
             }
-            throw ex;
         }
         
         ActorSystem actorSystem = ActorSystem.create("dbClone", null, null,

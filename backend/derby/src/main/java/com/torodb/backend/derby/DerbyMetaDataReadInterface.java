@@ -95,7 +95,7 @@ public class DerbyMetaDataReadInterface extends AbstractMetaDataReadInterface {
     }
 
     @Override
-    protected String getReadDatabaseSizeStatement(String databaseName) {
+    protected String getReadSchemaSizeStatement(String databaseName) {
         //TODO: This throw a ERROR XJ001: Java exception: ': java.lang.NullPointerException'.
 //      return "SELECT sum((NUMALLOCATEDPAGES + NUMFREEPAGES) * PAGESIZE) FROM"
 //      + " ("

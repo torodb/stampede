@@ -57,6 +57,10 @@ public abstract class InternalField<T> extends DelegatorField<T> {
     public boolean isSeq() {
         return false;
     }
+    
+    public boolean isNullable() {
+        return false;
+    }
 
     public static class DidInternalField extends InternalField<Integer> {
 
@@ -154,6 +158,10 @@ public abstract class InternalField<T> extends DelegatorField<T> {
 
         @Override
         public boolean isSeq() {
+            return true;
+        }
+        
+        public boolean isNullable() {
             return true;
         }
 

@@ -29,6 +29,8 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import org.jooq.DSLContext;
+import org.jooq.Record;
+import org.jooq.Result;
 
 import com.google.common.base.Preconditions;
 import com.torodb.backend.ErrorHandler.Context;
@@ -62,14 +64,25 @@ public abstract class AbstractMetaDataReadInterface implements MetaDataReadInter
             @Nonnull DSLContext dsl,
             @Nonnull MetaDatabase database
             ) {
-    	String statement = getReadDatabaseSizeStatement(database.getName());
-    	return sqlHelper.executeStatementWithResult(dsl, statement, Context.FETCH, ps -> {
-	        ps.setString(1, database.getName());
-    	})
-        .get(0).into(Long.class);
+    	String statement = getReadSchemaSizeStatement(database.getIdentifier());
+    	Result<Record> result = sqlHelper.executeStatementWithResult(dsl, statement, Context.FETCH, ps -> {
+            ps.setString(1, database.getName());
+        });
+    	
+    	if (result.isEmpty()) {
+    	    return 0;
+    	}
+    	
+    	Long resultSize = result.get(0).into(Long.class);
+    	
+    	if (resultSize == null) {
+    	    return 0;
+    	}
+    	
+    	return resultSize;
     }
 
-    protected abstract String getReadDatabaseSizeStatement(String databaseName);
+    protected abstract String getReadSchemaSizeStatement(String databaseName);
 
     @Override
     public long getCollectionSize(

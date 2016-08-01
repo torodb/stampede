@@ -21,6 +21,7 @@
 package com.torodb.backend;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Predicates;
 import com.torodb.backend.ErrorHandler.Context;
 import com.torodb.core.TableRef;
 import com.torodb.core.backend.WriteBackendTransaction;
@@ -183,9 +184,12 @@ public class WriteBackendTransactionImpl extends BackendTransactionImpl implemen
     	
         TableRef tableRef = newDocPart.getTableRef();
     	if (tableRef.isRoot()) {
-    	    getSqlInterface().getStructureInterface().createRootDocPartTable(getDsl(), db.getIdentifier(), newDocPart.getIdentifier(), tableRef);
+            getSqlInterface().getStructureInterface().createRootDocPartTable(getDsl(), db.getIdentifier(), newDocPart.getIdentifier(), tableRef);
+            getSqlInterface().getStructureInterface().addRootDocPartTableIndexes(getDsl(), db.getIdentifier(), newDocPart.getIdentifier(), tableRef);
     	} else {
             getSqlInterface().getStructureInterface().createDocPartTable(getDsl(), db.getIdentifier(), newDocPart.getIdentifier(), tableRef,
+                    col.getMetaDocPartByTableRef(tableRef.getParent().get()).getIdentifier());
+            getSqlInterface().getStructureInterface().addDocPartTableIndexes(getDsl(), db.getIdentifier(), newDocPart.getIdentifier(), tableRef,
                     col.getMetaDocPartByTableRef(tableRef.getParent().get()).getIdentifier());
     	}
     }
@@ -253,4 +257,58 @@ public class WriteBackendTransactionImpl extends BackendTransactionImpl implemen
         }
     }
 
+    @Override
+    public void disableInternalIndexes(MetaSnapshot snapshot) throws RollbackException {
+        if (getSqlInterface().getDbBackend().includeInternalIndexes()) {
+            if (snapshot.streamMetaDatabases().anyMatch(database -> true)) {
+                throw new IllegalStateException("Can not disable indexes if any database exists");
+            }
+            
+            getSqlInterface().getDbBackend().disableInternalIndexes();
+        }
+    }
+
+    @Override
+    public void enableInternalIndexes(MetaSnapshot snapshot) throws RollbackException {
+        if (!getSqlInterface().getDbBackend().includeInternalIndexes()) {
+            getSqlInterface().getDbBackend().enableInternalIndexes();
+            
+            Iterator<? extends MetaDatabase> databaseIterator = snapshot.streamMetaDatabases().iterator();
+            while (databaseIterator.hasNext()) {
+                MetaDatabase database = databaseIterator.next();
+                enableDatabaseInternalIndexes(database);
+            }
+        }
+    }
+
+    private void enableDatabaseInternalIndexes(MetaDatabase database) {
+        Iterator<? extends MetaCollection> collectionIterator = database.streamMetaCollections().iterator();
+        while (collectionIterator.hasNext()) {
+            MetaCollection collection = collectionIterator.next();
+            enableCollectionInternalIndexes(database, collection);
+        }
+    }
+
+    private void enableCollectionInternalIndexes(MetaDatabase database, MetaCollection collection) {
+        Iterator<? extends MetaDocPart> docPartIterator = collection.streamContainedMetaDocParts()
+                .sorted(TableRefComparator.MetaDocPart.ASC).iterator();
+        while (docPartIterator.hasNext()) {
+            MetaDocPart docPart = docPartIterator.next();
+            enableDocPartInternalIndexes(database, collection, docPart);
+        }
+    }
+
+    private void enableDocPartInternalIndexes(MetaDatabase database, MetaCollection collection, MetaDocPart docPart) {
+        if (docPart.getTableRef().isRoot()) {
+            getSqlInterface().getStructureInterface().addRootDocPartTableIndexes(getDsl(), 
+                    database.getIdentifier(), docPart.getIdentifier(), docPart.getTableRef());
+        } else {
+            MetaDocPart parentDocPart = collection.getMetaDocPartByTableRef(
+                    docPart.getTableRef().getParent().get());
+            
+            getSqlInterface().getStructureInterface().addDocPartTableIndexes(getDsl(), 
+                    database.getIdentifier(), docPart.getIdentifier(), docPart.getTableRef(),
+                    parentDocPart.getIdentifier());
+        }
+    }
 }

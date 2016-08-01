@@ -49,6 +49,10 @@ public abstract class AbstractDbBackend<Configuration extends DbBackendConfigura
     private HikariDataSource writeDataSource;
     private HikariDataSource systemDataSource;
     private HikariDataSource readOnlyDataSource;
+    /**
+     * Global state variable that indicate if internal indexes have to be created or not
+     */
+    private volatile boolean includeInternalIndexes;
 
     /**
      * Configure the backend. The contract specifies that any subclass must call initialize() method after
@@ -59,6 +63,7 @@ public abstract class AbstractDbBackend<Configuration extends DbBackendConfigura
     public AbstractDbBackend(Configuration configuration, ErrorHandler errorHandler) {
         this.configuration = configuration;
         this.errorHandler = errorHandler;
+        this.includeInternalIndexes = true;
 
         int connectionPoolSize = configuration.getConnectionPoolSize();
         int reservedReadPoolSize = configuration.getReservedReadPoolSize();
@@ -142,6 +147,16 @@ public abstract class AbstractDbBackend<Configuration extends DbBackendConfigura
     }
 
     protected abstract DataSource getConfiguredDataSource(Configuration configuration, String poolName);
+    
+    @Override
+    public void enableInternalIndexes() {
+        this.includeInternalIndexes = true;
+    }
+    
+    @Override
+    public void disableInternalIndexes() {
+        this.includeInternalIndexes = false;
+    }
 
     @Override
     public DataSource getSessionDataSource() {
@@ -173,6 +188,11 @@ public abstract class AbstractDbBackend<Configuration extends DbBackendConfigura
     @Override
     public long getDefaultCursorTimeout() {
         return configuration.getCursorTimeout();
+    }
+    
+    @Override
+    public boolean includeInternalIndexes() {
+        return includeInternalIndexes;
     }
     
     @Override

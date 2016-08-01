@@ -28,7 +28,10 @@ public interface DbBackend {
     public DataSource getSessionDataSource();
     public DataSource getSystemDataSource();
     public DataSource getGlobalCursorDatasource();
+    public void enableInternalIndexes();
+    public void disableInternalIndexes();
     public long getDefaultCursorTimeout();
+    public boolean includeInternalIndexes();
     public boolean includeForeignKeys();
     public Connection createSystemConnection();
     public Connection createReadOnlyConnection();
