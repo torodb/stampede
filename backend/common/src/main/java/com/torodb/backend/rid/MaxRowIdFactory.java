@@ -1,26 +1,30 @@
 package com.torodb.backend.rid;
 
 import com.google.common.base.Preconditions;
-import com.google.common.util.concurrent.AbstractIdleService;
 import com.torodb.backend.SqlInterface;
+import com.torodb.common.util.ThreadFactoryIdleService;
 import com.torodb.core.TableRef;
+import com.torodb.core.annotations.ToroDbIdleService;
 import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
 import com.torodb.core.transaction.metainf.MetaSnapshot;
 import com.torodb.core.transaction.metainf.MetainfoRepository;
 import com.torodb.core.transaction.metainf.MetainfoRepository.SnapshotStage;
 import java.sql.Connection;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ThreadFactory;
 import javax.inject.Inject;
 import org.jooq.DSLContext;
 
-public class MaxRowIdFactory extends AbstractIdleService implements ReservedIdInfoFactory {
+public class MaxRowIdFactory extends ThreadFactoryIdleService implements ReservedIdInfoFactory {
 
     private final MetainfoRepository metainfoRepository;
     private final SqlInterface sqlInterface;
 	private ConcurrentHashMap<String, ConcurrentHashMap<String, ConcurrentHashMap<TableRef, ReservedIdInfo>>> megaMap;
 
     @Inject
-    public MaxRowIdFactory(MetainfoRepository metainfoRepository, SqlInterface sqlInterface) {
+    public MaxRowIdFactory(@ToroDbIdleService ThreadFactory threadFactory, 
+            MetainfoRepository metainfoRepository, SqlInterface sqlInterface) {
+        super(threadFactory);
         this.metainfoRepository = metainfoRepository;
         this.sqlInterface = sqlInterface;
     }

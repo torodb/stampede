@@ -21,23 +21,25 @@
 package com.torodb.backend;
 
 import com.google.common.base.Preconditions;
-import com.google.common.util.concurrent.AbstractIdleService;
 import com.torodb.backend.ErrorHandler.Context;
+import com.torodb.common.util.ThreadFactoryIdleService;
+import com.torodb.core.annotations.ToroDbIdleService;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.concurrent.ThreadFactory;
 import javax.annotation.Nonnull;
 import javax.inject.Singleton;
 import javax.sql.DataSource;
-
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  *
  */
 @Singleton
-public abstract class AbstractDbBackend<Configuration extends DbBackendConfiguration> extends AbstractIdleService implements DbBackendService {
+public abstract class AbstractDbBackend<Configuration extends DbBackendConfiguration> 
+        extends ThreadFactoryIdleService implements DbBackendService {
     public static final int SYSTEM_DATABASE_CONNECTIONS = 1;
     public static final int MIN_READ_CONNECTIONS_DATABASE = 1;
     public static final int MIN_SESSION_CONNECTIONS_DATABASE = 2;
@@ -58,9 +60,13 @@ public abstract class AbstractDbBackend<Configuration extends DbBackendConfigura
      * Configure the backend. The contract specifies that any subclass must call initialize() method after
      * properly constructing the object.
      *
+     * @param threadFactory the thread factory that will be used to create the startup and shutdown
+     *                      threads
      * @param configuration
      */
-    public AbstractDbBackend(Configuration configuration, ErrorHandler errorHandler) {
+    public AbstractDbBackend(@ToroDbIdleService ThreadFactory threadFactory, 
+            Configuration configuration, ErrorHandler errorHandler) {
+        super(threadFactory);
         this.configuration = configuration;
         this.errorHandler = errorHandler;
         this.includeInternalIndexes = true;

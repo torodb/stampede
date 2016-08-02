@@ -1,4 +1,4 @@
-package com.torodb.mongodb.utils;
+package com.torodb.mongodb.utils.cloner;
 
 import akka.NotUsed;
 import akka.actor.ActorSystem;
@@ -39,8 +39,12 @@ import com.torodb.core.transaction.RollbackException;
 import com.torodb.mongodb.core.MongodConnection;
 import com.torodb.mongodb.core.MongodServer;
 import com.torodb.mongodb.core.WriteMongodTransaction;
+import com.torodb.mongodb.utils.DbCloner;
 import com.torodb.mongodb.utils.DbCloner.CloneOptions;
 import com.torodb.mongodb.utils.DbCloner.CloningException;
+import com.torodb.mongodb.utils.ListCollectionsRequester;
+import com.torodb.mongodb.utils.ListIndexesRequester;
+import com.torodb.mongodb.utils.NamespaceUtil;
 import com.torodb.torod.WriteTorodTransaction;
 import java.time.Clock;
 import java.util.ArrayList;
@@ -484,15 +488,6 @@ public class AkkaDbCloner implements DbCloner {
             getConnection().close();
         }
 
-    }
-
-    public static interface CommitHeuristic {
-
-        void notifyDocumentInsertionCommit(int docBatchSize, long millisSpent);
-
-        int getDocumentsPerCommit();
-
-        boolean shouldCommitAfterIndex();
     }
 
 }

@@ -25,6 +25,8 @@ import com.torodb.backend.AbstractDbBackend;
 import com.torodb.backend.TransactionIsolationLevel;
 import com.torodb.backend.driver.postgresql.PostgreSQLDbBackendConfiguration;
 import com.torodb.backend.driver.postgresql.PostgreSQLDriverProvider;
+import com.torodb.core.annotations.ToroDbIdleService;
+import java.util.concurrent.ThreadFactory;
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import javax.sql.DataSource;
@@ -37,8 +39,10 @@ public class PostgreSQLDbBackend extends AbstractDbBackend<PostgreSQLDbBackendCo
     private final PostgreSQLDriverProvider driverProvider;
 
     @Inject
-    public PostgreSQLDbBackend(PostgreSQLDbBackendConfiguration configuration, PostgreSQLDriverProvider driverProvider, PostgreSQLErrorHandler errorHandler) {
-        super(configuration, errorHandler);
+    public PostgreSQLDbBackend(@ToroDbIdleService ThreadFactory threadFactory, 
+            PostgreSQLDbBackendConfiguration configuration, PostgreSQLDriverProvider driverProvider,
+            PostgreSQLErrorHandler errorHandler) {
+        super(threadFactory, configuration, errorHandler);
         this.driverProvider = driverProvider;
     }
 

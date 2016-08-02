@@ -2,13 +2,14 @@
 package com.torodb.packaging;
 
 import com.eightkdata.mongowp.server.wp.NettyMongoServer;
-import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.ProvisionException;
 import com.torodb.backend.guice.BackendModule;
+import com.torodb.common.util.ThreadFactoryIdleService;
 import com.torodb.core.BuildProperties;
+import com.torodb.core.annotations.ToroDbIdleService;
 import com.torodb.core.guice.CoreModule;
 import com.torodb.core.metrics.MetricsModule;
 import com.torodb.d2r.guice.D2RModule;
@@ -24,6 +25,7 @@ import com.torodb.packaging.guice.PackagingModule;
 import com.torodb.torod.TorodServer;
 import com.torodb.torod.guice.TorodModule;
 import java.time.Clock;
+import java.util.concurrent.ThreadFactory;
 import javax.inject.Singleton;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -32,7 +34,7 @@ import org.apache.logging.log4j.Logger;
  *
  */
 @Singleton
-public class ToroDbServer extends AbstractIdleService {
+public class ToroDbServer extends ThreadFactoryIdleService {
 
     private static final Logger LOGGER = LogManager.getLogger(ToroDbServer.class);
 
@@ -43,8 +45,10 @@ public class ToroDbServer extends AbstractIdleService {
     private final ExecutorsService executorsService;
 
     @Inject
-    ToroDbServer(BuildProperties buildProperties, TorodServer torod, MongodServer mongod, NettyMongoServer netty,
+    ToroDbServer(@ToroDbIdleService ThreadFactory threadFactory, BuildProperties buildProperties,
+            TorodServer torod, MongodServer mongod, NettyMongoServer netty,
             ExecutorsService executorsService) {
+        super(threadFactory);
         this.buildProperties = buildProperties;
         this.torod = torod;
         this.mongod = mongod;

@@ -18,25 +18,25 @@ import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
 import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.google.common.base.Supplier;
 import com.google.common.net.HostAndPort;
-import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.inject.assistedinject.Assisted;
+import com.torodb.common.util.ThreadFactoryRunnableService;
+import com.torodb.core.annotations.ToroDbRunnableService;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.transaction.RollbackException;
-import com.torodb.mongodb.guice.MongoDbLayer;
 import com.torodb.mongodb.core.MongodConnection;
 import com.torodb.mongodb.core.MongodServer;
 import com.torodb.mongodb.core.WriteMongodTransaction;
 import com.torodb.mongodb.repl.OplogManager.OplogManagerPersistException;
 import com.torodb.mongodb.repl.OplogManager.WriteTransaction;
-import com.torodb.mongodb.repl.guice.MongoDbRepl;
 import com.torodb.mongodb.repl.exceptions.NoSyncSourceFoundException;
+import com.torodb.mongodb.repl.guice.MongoDbRepl;
 import com.torodb.mongodb.utils.DbCloner;
 import com.torodb.mongodb.utils.DbCloner.CloneOptions;
 import com.torodb.mongodb.utils.DbCloner.CloningException;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.Executor;
+import java.util.concurrent.ThreadFactory;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
@@ -46,7 +46,7 @@ import org.apache.logging.log4j.Logger;
 /**
  *
  */
-public class RecoveryService extends AbstractExecutionThreadService {
+public class RecoveryService extends ThreadFactoryRunnableService {
     private static final int MAX_ATTEMPTS = 10;
     private static final Logger LOGGER = LogManager.getLogger(RecoveryService.class);
     private final Callback callback;
@@ -56,11 +56,11 @@ public class RecoveryService extends AbstractExecutionThreadService {
     private final DbCloner cloner;
     private final MongoClientProvider remoteClientProvider;
     private final MongodServer server;
-    private final Executor executor;
     private final OplogOperationApplier oplogOpApplier;
 
     @Inject
     public RecoveryService(
+            @ToroDbRunnableService ThreadFactory threadFactory,
             @Assisted Callback callback,
             OplogManager oplogManager,
             SyncSourceProvider syncSourceProvider,
@@ -68,8 +68,8 @@ public class RecoveryService extends AbstractExecutionThreadService {
             @MongoDbRepl DbCloner cloner,
             MongoClientProvider remoteClientProvider,
             MongodServer server,
-            OplogOperationApplier oplogOpApplier,
-            @MongoDbLayer Executor executor) {
+            OplogOperationApplier oplogOpApplier) {
+        super(threadFactory);
         this.callback = callback;
         this.oplogManager = oplogManager;
         this.syncSourceProvider = syncSourceProvider;
@@ -77,13 +77,7 @@ public class RecoveryService extends AbstractExecutionThreadService {
         this.cloner = cloner;
         this.remoteClientProvider = remoteClientProvider;
         this.server = server;
-        this.executor = executor;
         this.oplogOpApplier = oplogOpApplier;
-    }
-
-    @Override
-    protected Executor executor() {
-        return executor;
     }
 
     @Override
@@ -178,7 +172,6 @@ public class RecoveryService extends AbstractExecutionThreadService {
                     return false;
                 }
                 LOGGER.info("Remote database cloning started");
-                disableInternalIndexes();
                 cloneDatabases(remoteClient);
                 LOGGER.info("Remote database cloning finished");
 
@@ -237,8 +230,6 @@ public class RecoveryService extends AbstractExecutionThreadService {
                 throw new FatalErrorException(ex);
             }
 
-            enableInternalIndexes();
-            
             callback.setConsistentState(true);
 
             LOGGER.info("Initial sync finished");
@@ -248,22 +239,34 @@ public class RecoveryService extends AbstractExecutionThreadService {
         return true;
     }
 
-    private void disableInternalIndexes() {
-        try (
-                MongodConnection localConnection = server.openConnection();
-                WriteMongodTransaction transaction = localConnection.openWriteTransaction();
-        ) {
-            transaction.getTorodTransaction().disableInternalIndexes();
+    private void disableInternalIndexes() throws UserException {
+        LOGGER.debug("Disabling internal indexes");
+        try (MongodConnection localConnection = server.openConnection()) {
+            while (true) {
+                try (WriteMongodTransaction transaction = localConnection.openWriteTransaction();) {
+                    transaction.getTorodTransaction().disableInternalIndexes();
+                    transaction.commit();
+                    break;
+                } catch (RollbackException ignore) {
+                }
+            }
         }
+        LOGGER.trace("Internal indexes disabled");
     }
 
-    private void enableInternalIndexes() {
-        try (
-                MongodConnection localConnection = server.openConnection();
-                WriteMongodTransaction transaction = localConnection.openWriteTransaction();
-        ) {
-            transaction.getTorodTransaction().enableInternalIndexes();
+    private void enableInternalIndexes() throws UserException {
+        LOGGER.debug("Reactivating internal indexes");
+        try (MongodConnection localConnection = server.openConnection()) {
+            while (true) {
+                try (WriteMongodTransaction transaction = localConnection.openWriteTransaction();) {
+                    transaction.getTorodTransaction().enableInternalIndexes();
+                    transaction.commit();
+                    break;
+                } catch (RollbackException ignore) {
+                }
+            }
         }
+        LOGGER.trace("Internal indexes enabled");
     }
 
     @Override
@@ -304,38 +307,43 @@ public class RecoveryService extends AbstractExecutionThreadService {
         return Status.ok();
     }
 
-    private void cloneDatabases(@Nonnull MongoClient remoteClient) throws CloningException, MongoException {
+    private void cloneDatabases(@Nonnull MongoClient remoteClient) throws CloningException, MongoException, UserException {
+    
+        disableInternalIndexes();
+        try {
+            Stream<String> dbNames;
+            try (MongoConnection remoteConnection = remoteClient.openConnection()) {
+                dbNames = remoteConnection.execute(
+                        ListDatabasesCommand.INSTANCE,
+                        "admin",
+                        true,
+                        Empty.getInstance()
+                ).getDatabases().stream().map(db -> db.getName());
+            }
 
-        Stream<String> dbNames;
-        try (MongoConnection remoteConnection = remoteClient.openConnection()) {
-            dbNames = remoteConnection.execute(
-                    ListDatabasesCommand.INSTANCE,
-                    "admin",
-                    true,
-                    Empty.getInstance()
-            ).getDatabases().stream().map(db -> db.getName());
+            dbNames.filter(this::isReplicable)
+                    .forEach(databaseName -> {
+                        MyWritePermissionSupplier writePermissionSupplier
+                                = new MyWritePermissionSupplier(databaseName);
+
+                        CloneOptions options = new CloneOptions(
+                                true,
+                                false,
+                                true,
+                                false,
+                                databaseName,
+                                Collections.<String>emptySet(),
+                                writePermissionSupplier);
+
+                        try {
+                            cloner.cloneDatabase(databaseName, remoteClient, server, options);
+                        } catch (MongoException ex) {
+                            throw new CloningException(ex);
+                        }
+                    });
+        } finally {
+            enableInternalIndexes();
         }
-
-        dbNames.filter(this::isReplicable)
-                .forEach(databaseName -> {
-                    MyWritePermissionSupplier writePermissionSupplier
-                            = new MyWritePermissionSupplier(databaseName);
-
-                    CloneOptions options = new CloneOptions(
-                            true,
-                            false,
-                            true,
-                            false,
-                            databaseName,
-                            Collections.<String>emptySet(),
-                            writePermissionSupplier);
-
-                    try {
-                        cloner.cloneDatabase(databaseName, remoteClient, server, options);
-                    } catch (MongoException ex) {
-                        throw new CloningException(ex);
-                    }
-                });
     }
 
     /**
