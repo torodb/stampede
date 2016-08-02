@@ -5,15 +5,17 @@ import com.eightkdata.mongowp.OpTime;
 import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.MemberState;
 import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
-import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.assistedinject.Assisted;
-import com.torodb.mongodb.guice.MongoDbLayer;
+import com.torodb.common.util.ThreadFactoryIdleService;
+import com.torodb.core.annotations.ToroDbIdleService;
 import com.torodb.mongodb.core.MongodServer;
 import com.torodb.mongodb.repl.OplogManager.OplogManagerPersistException;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 import javax.annotation.concurrent.ThreadSafe;
@@ -31,7 +33,7 @@ import org.apache.logging.log4j.Logger;
  * {@linkplain MemberState#RS_PRIMARY primary}.
  */
 @ThreadSafe
-public class SecondaryStateService extends AbstractIdleService {
+public class SecondaryStateService extends ThreadFactoryIdleService {
 
     /**
      * The maximum capacity of the {@linkplain #fetchQueue}.
@@ -47,12 +49,13 @@ public class SecondaryStateService extends AbstractIdleService {
 
     private final Callback callback;
     private final OplogManager oplogManager;
-    private final Executor executor;
     private final OplogOperationApplier oplogOpApplier;
     private final MongodServer server;
     private final Condition allApplied;
     private final OplogReaderProvider readerProvider;
     private final SyncSourceProvider syncSourceProvider;
+    private final ThreadFactory threadFactory;
+    private final Executor executor;
 
     private boolean paused;
     private boolean pauseRequested;
@@ -65,29 +68,32 @@ public class SecondaryStateService extends AbstractIdleService {
 
     @Inject
     SecondaryStateService(
+            @ToroDbIdleService ThreadFactory threadFactory,
             @Assisted Callback callback,
             OplogManager oplogManager,
             OplogReaderProvider readerProvider,
             OplogOperationApplier oplogOpApplier,
             MongodServer server,
-            SyncSourceProvider syncSourceProvider,
-            @MongoDbLayer Executor executor) {
+            SyncSourceProvider syncSourceProvider) {
+        super(threadFactory);
         this.callback = callback;
         this.fetchQueue = new MyQueue();
         this.readerProvider = readerProvider;
         this.oplogManager = oplogManager;
         this.oplogOpApplier = oplogOpApplier;
         this.server = server;
-        this.executor = executor;
         this.allApplied = mutex.newCondition();
         this.fetcherPausedCond = mutex.newCondition();
         this.fetcherCanContinueCond = mutex.newCondition();
         this.syncSourceProvider = syncSourceProvider;
-    }
-
-    @Override
-    protected Executor executor() {
-        return executor;
+        this.threadFactory = threadFactory;
+        final ThreadFactory utilityThreadFactory = new ThreadFactoryBuilder()
+                .setThreadFactory(threadFactory)
+                .setNameFormat("repl-secondary-util-%d")
+                .build();
+        this.executor = (Runnable command) -> {
+            utilityThreadFactory.newThread(command).start();
+        };
     }
 
     @Override
@@ -102,7 +108,7 @@ public class SecondaryStateService extends AbstractIdleService {
             OpTime lastAppliedOptime = oplogReadTrans.getLastAppliedOptime();
 
             fetcherService = new ReplSyncFetcher(
-                    executor,
+                    threadFactory,
                     new FetcherView(),
                     syncSourceProvider,
                     readerProvider,
@@ -111,7 +117,7 @@ public class SecondaryStateService extends AbstractIdleService {
             );
             fetcherService.startAsync();
             applierService = new ReplSyncApplier(
-                    executor,
+                    threadFactory,
                     oplogOpApplier,
                     server,
                     oplogManager,

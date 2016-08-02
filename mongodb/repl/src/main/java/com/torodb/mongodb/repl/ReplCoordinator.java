@@ -1,24 +1,6 @@
 
 package com.torodb.mongodb.repl;
 
-import static com.eightkdata.mongowp.bson.utils.DefaultBsonValues.newBoolean;
-import static com.eightkdata.mongowp.bson.utils.DefaultBsonValues.newDocument;
-
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.concurrent.Executor;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-
-import javax.annotation.concurrent.NotThreadSafe;
-import javax.annotation.concurrent.ThreadSafe;
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import com.eightkdata.mongowp.ErrorCode;
 import com.eightkdata.mongowp.OpTime;
 import com.eightkdata.mongowp.Status;
@@ -45,7 +27,9 @@ import com.eightkdata.mongowp.server.api.Request;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.net.HostAndPort;
-import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.torodb.common.util.ThreadFactoryIdleService;
+import com.torodb.core.annotations.ToroDbIdleService;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.transaction.RollbackException;
 import com.torodb.mongodb.annotations.Locked;
@@ -53,23 +37,36 @@ import com.torodb.mongodb.core.MongodConnection;
 import com.torodb.mongodb.core.MongodServer;
 import com.torodb.mongodb.core.ReadOnlyMongodTransaction;
 import com.torodb.mongodb.core.WriteMongodTransaction;
-import com.torodb.mongodb.guice.MongoDbLayer;
 import com.torodb.mongodb.language.ObjectIdFactory;
 import com.torodb.mongodb.repl.exceptions.NoSyncSourceFoundException;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import javax.annotation.concurrent.NotThreadSafe;
+import javax.annotation.concurrent.ThreadSafe;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import static com.eightkdata.mongowp.bson.utils.DefaultBsonValues.*;
 
 /**
  *
  */
 @ThreadSafe
 @Singleton
-public class ReplCoordinator extends AbstractIdleService implements ReplInterface {
+public class ReplCoordinator extends ThreadFactoryIdleService implements ReplInterface {
     private static final Logger LOGGER = LogManager.getLogger(ReplCoordinator.class);
     private static final String CONSISTENT_DB = "torodb";
     private static final String CONSISTENT_COL = "repl.consistent";
     private final ReplCoordinatorOwnerCallback ownerCallback;
     private final ReadWriteLock lock;
     private volatile MemberState memberState;
-    private final Executor executor;
     private final OplogManager oplogManager;
     private final MongodServer server;
     private final SyncSourceProvider syncSourceProvider;
@@ -78,6 +75,7 @@ public class ReplCoordinator extends AbstractIdleService implements ReplInterfac
     private final RecoveryService.RecoveryServiceFactory recoveryServiceFactory;
     private final SecondaryStateService.SecondaryStateServiceFactory secondaryStateServiceFactory;
     private final ReplMetrics metrics;
+    private final Executor executor;
 
     private RecoveryService recoveryService;
     private SecondaryStateService secondaryService;
@@ -85,18 +83,18 @@ public class ReplCoordinator extends AbstractIdleService implements ReplInterfac
 
     @Inject
     public ReplCoordinator(
+            @ToroDbIdleService ThreadFactory threadFactory,
             ReplCoordinatorOwnerCallback ownerCallback,
             MongodServer server,
             MongoClientProvider remoteClientProvider,
             SyncSourceProvider syncSourceProvider,
             OplogManager oplogManager,
-            @MongoDbLayer Executor replExecutor,
             ObjectIdFactory objectIdFactory,
             RecoveryService.RecoveryServiceFactory recoveryServiceFactory,
             SecondaryStateService.SecondaryStateServiceFactory secondaryStateServiceFactory,
             ReplMetrics metrics) {
+        super(threadFactory);
         this.ownerCallback = ownerCallback;
-        this.executor = replExecutor;
         this.oplogManager = oplogManager;
         this.recoveryServiceFactory = recoveryServiceFactory;
         this.secondaryStateServiceFactory = secondaryStateServiceFactory;
@@ -113,11 +111,13 @@ public class ReplCoordinator extends AbstractIdleService implements ReplInterfac
 
         this.server = server;
         this.syncSourceProvider = syncSourceProvider;
-    }
-
-    @Override
-    protected Executor executor() {
-        return executor;
+        final ThreadFactory utilityThreadFactory = new ThreadFactoryBuilder()
+                .setThreadFactory(threadFactory)
+                .setNameFormat("repl-coord-util-%d")
+                .build();
+        this.executor = (Runnable command) -> {
+            utilityThreadFactory.newThread(command).start();
+        };
     }
 
     @Override

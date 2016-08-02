@@ -25,6 +25,8 @@ import com.torodb.backend.AbstractDbBackend;
 import com.torodb.backend.TransactionIsolationLevel;
 import com.torodb.backend.driver.derby.DerbyDbBackendConfiguration;
 import com.torodb.backend.driver.derby.DerbyDriverProvider;
+import com.torodb.core.annotations.ToroDbIdleService;
+import java.util.concurrent.ThreadFactory;
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import javax.sql.DataSource;
@@ -37,8 +39,10 @@ public class DerbyDbBackend extends AbstractDbBackend<DerbyDbBackendConfiguratio
     private final DerbyDriverProvider driverProvider;
 
     @Inject
-    public DerbyDbBackend(DerbyDbBackendConfiguration configuration, DerbyDriverProvider driverProvider, DerbyErrorHandler errorHandler) {
-        super(configuration, errorHandler);
+    public DerbyDbBackend(@ToroDbIdleService ThreadFactory threadFactory, 
+            DerbyDbBackendConfiguration configuration, DerbyDriverProvider driverProvider,
+            DerbyErrorHandler errorHandler) {
+        super(threadFactory, configuration, errorHandler);
         this.driverProvider = driverProvider;
     }
 

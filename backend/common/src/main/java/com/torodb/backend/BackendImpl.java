@@ -1,27 +1,27 @@
 
 package com.torodb.backend;
 
-import javax.inject.Inject;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import com.google.common.util.concurrent.AbstractIdleService;
 import com.torodb.backend.meta.SchemaUpdater;
 import com.torodb.backend.meta.SnapshotUpdater;
 import com.torodb.backend.rid.MaxRowIdFactory;
+import com.torodb.common.util.ThreadFactoryIdleService;
 import com.torodb.core.TableRefFactory;
+import com.torodb.core.annotations.ToroDbIdleService;
 import com.torodb.core.backend.Backend;
 import com.torodb.core.backend.BackendConnection;
 import com.torodb.core.d2r.IdentifierFactory;
 import com.torodb.core.d2r.R2DTranslator;
 import com.torodb.core.d2r.RidGenerator;
 import com.torodb.core.transaction.metainf.MetainfoRepository;
+import java.util.concurrent.ThreadFactory;
+import javax.inject.Inject;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  *
  */
-public class BackendImpl extends AbstractIdleService implements Backend {
+public class BackendImpl extends ThreadFactoryIdleService implements Backend {
 
     private static final Logger LOGGER = LogManager.getLogger(BackendImpl.class);
 
@@ -36,10 +36,25 @@ public class BackendImpl extends AbstractIdleService implements Backend {
     private final IdentifierFactory identifierFactory;
     private final RidGenerator ridGenerator;
 
+    /**
+     * @param threadFactory the thread factory that will be used to create the startup and shutdown
+     *                      threads
+     * @param dbBackendService
+     * @param sqlInterface
+     * @param sqlHelper
+     * @param schemaUpdater
+     * @param metainfoRepository
+     * @param tableRefFactory
+     * @param maxRowIdFactory
+     * @param r2dTranslator
+     * @param identifierFactory
+     * @param ridGenerator
+     */
     @Inject
-    public BackendImpl(DbBackendService dbBackendService, SqlInterface sqlInterface, SqlHelper sqlHelper, SchemaUpdater schemaUpdater, 
+    public BackendImpl(@ToroDbIdleService ThreadFactory threadFactory, DbBackendService dbBackendService, SqlInterface sqlInterface, SqlHelper sqlHelper, SchemaUpdater schemaUpdater,
             MetainfoRepository metainfoRepository, TableRefFactory tableRefFactory, MaxRowIdFactory maxRowIdFactory,
             R2DTranslator r2dTranslator, IdentifierFactory identifierFactory, RidGenerator ridGenerator) {
+        super(threadFactory);
         this.dbBackendService = dbBackendService;
         this.sqlInterface = sqlInterface;
         this.sqlHelper = sqlHelper;

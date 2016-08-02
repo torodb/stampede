@@ -4,9 +4,11 @@ package com.torodb.mongodb.core;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.RemovalNotification;
-import com.google.common.util.concurrent.AbstractIdleService;
+import com.torodb.common.util.ThreadFactoryIdleService;
+import com.torodb.core.annotations.ToroDbIdleService;
 import com.torodb.mongodb.commands.CommandsExecutorClassifier;
 import com.torodb.torod.TorodServer;
+import java.util.concurrent.ThreadFactory;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.apache.logging.log4j.LogManager;
@@ -16,14 +18,16 @@ import org.apache.logging.log4j.Logger;
  *
  */
 @Singleton
-public class MongodServer extends AbstractIdleService {
+public class MongodServer extends ThreadFactoryIdleService {
     private static final Logger LOGGER = LogManager.getLogger(MongodServer.class);
     private final TorodServer torodServer;
     private final Cache<Integer, MongodConnection> openConnections;
     private CommandsExecutorClassifier commandsExecutorClassifier;
 
     @Inject
-    public MongodServer(TorodServer torodServer, CommandsExecutorClassifier commandsExecutorClassifier) {
+    public MongodServer(@ToroDbIdleService ThreadFactory threadFactory, TorodServer torodServer,
+            CommandsExecutorClassifier commandsExecutorClassifier) {
+        super(threadFactory);
         this.torodServer = torodServer;
         openConnections = CacheBuilder.newBuilder()
                 .weakValues()

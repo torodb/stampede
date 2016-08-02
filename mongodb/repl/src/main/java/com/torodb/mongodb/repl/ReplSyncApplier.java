@@ -3,7 +3,8 @@ package com.torodb.mongodb.repl;
 
 import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
-import com.google.common.util.concurrent.AbstractExecutionThreadService;
+import com.torodb.common.util.ThreadFactoryRunnableService;
+import com.torodb.core.annotations.ToroDbRunnableService;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.transaction.RollbackException;
 import com.torodb.mongodb.core.MongodConnection;
@@ -12,20 +13,18 @@ import com.torodb.mongodb.core.WriteMongodTransaction;
 import com.torodb.mongodb.repl.OplogManager.OplogManagerPersistException;
 import com.torodb.mongodb.repl.OplogManager.WriteTransaction;
 import java.util.List;
-import java.util.concurrent.Executor;
+import java.util.concurrent.ThreadFactory;
 import javax.annotation.Nonnull;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import com.torodb.mongodb.guice.MongoDbLayer;
 
 /**
  *
  */
-class ReplSyncApplier extends AbstractExecutionThreadService{
+class ReplSyncApplier extends ThreadFactoryRunnableService {
 
     private static final Logger LOGGER = LogManager.getLogger(ReplSyncApplier.class);
     private final SyncServiceView callback;
-    private final Executor executor;
     private final OplogOperationApplier oplogOpApplier;
     private final OplogManager oplogManager;
     private final MongodConnection connection;
@@ -33,13 +32,13 @@ class ReplSyncApplier extends AbstractExecutionThreadService{
     private volatile Thread runThread;
 
     ReplSyncApplier(
-            @MongoDbLayer @Nonnull Executor executor,
+            @ToroDbRunnableService ThreadFactory threadFactory,
             @Nonnull OplogOperationApplier oplogOpApplier,
             @Nonnull MongodServer server,
             @Nonnull OplogManager oplogManager,
             @Nonnull SyncServiceView callback) {
+        super(threadFactory);
         this.callback = callback;
-        this.executor = executor;
         this.connection = server.openConnection();
         this.oplogOpApplier = oplogOpApplier;
         this.oplogManager = oplogManager;
@@ -48,11 +47,6 @@ class ReplSyncApplier extends AbstractExecutionThreadService{
     @Override
     protected String serviceName() {
         return "ToroDB Sync Applier";
-    }
-
-    @Override
-    protected Executor executor() {
-        return executor;
     }
 
     @Override

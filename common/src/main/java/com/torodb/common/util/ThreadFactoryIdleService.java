@@ -28,11 +28,11 @@ import java.util.concurrent.ThreadFactory;
  * A {@link AbstractIdleService} that creates the startup and shutdown threads using the given
  * thread factoy.
  */
-public abstract class ThreadFactoryAbstractIdleService extends AbstractIdleService {
+public abstract class ThreadFactoryIdleService extends AbstractIdleService {
 
     private final ThreadFactory threadFactory;
 
-    protected ThreadFactoryAbstractIdleService(ThreadFactory threadFactory) {
+    protected ThreadFactoryIdleService(ThreadFactory threadFactory) {
         this.threadFactory = threadFactory;
     }
 

@@ -21,8 +21,9 @@ import com.eightkdata.mongowp.utils.BsonDocumentBuilder;
 import com.eightkdata.mongowp.utils.BsonReaderTool;
 import com.google.common.base.Preconditions;
 import com.google.common.primitives.UnsignedInteger;
-import com.google.common.util.concurrent.AbstractIdleService;
+import com.torodb.common.util.ThreadFactoryIdleService;
 import com.torodb.core.Retrier;
+import com.torodb.core.annotations.ToroDbIdleService;
 import com.torodb.mongodb.annotations.Locked;
 import com.torodb.mongodb.core.MongodConnection;
 import com.torodb.mongodb.core.MongodServer;
@@ -30,7 +31,7 @@ import com.torodb.mongodb.core.ReadOnlyMongodTransaction;
 import com.torodb.mongodb.core.WriteMongodTransaction;
 import java.io.Closeable;
 import java.util.Iterator;
-import java.util.concurrent.Executor;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -43,13 +44,11 @@ import org.apache.logging.log4j.Logger;
 
 import static com.eightkdata.mongowp.bson.utils.DefaultBsonValues.*;
 
-import com.torodb.mongodb.guice.MongoDbLayer;
-
 /**
  *
  */
 @Singleton
-public class OplogManager extends AbstractIdleService {
+public class OplogManager extends ThreadFactoryIdleService {
 
     private static final Logger LOGGER = LogManager.getLogger(OplogManager.class);
     private static final String KEY = "lastAppliedOplogEntry";
@@ -60,13 +59,13 @@ public class OplogManager extends AbstractIdleService {
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private long lastAppliedHash;
     private OpTime lastAppliedOpTime;
-    private final Executor executor;
     private final MongodConnection connection;
     private final Retrier retrier;
 
     @Inject
-    public OplogManager(@MongoDbLayer Executor executor, MongodServer mongodServer, Retrier retrier) {
-        this.executor = executor;
+    public OplogManager(@ToroDbIdleService ThreadFactory threadFactory, MongodServer mongodServer,
+            Retrier retrier) {
+        super(threadFactory);
         this.connection = mongodServer.openConnection();
         this.retrier = retrier;
     }
@@ -79,11 +78,6 @@ public class OplogManager extends AbstractIdleService {
     WriteTransaction createWriteTransaction() {
         Preconditions.checkState(isRunning(), "The service is not running");
         return new WriteTransaction(lock.writeLock());
-    }
-
-    @Override
-    protected Executor executor() {
-        return executor;
     }
 
     @Override

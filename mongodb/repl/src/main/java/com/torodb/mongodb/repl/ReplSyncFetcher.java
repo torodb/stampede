@@ -10,9 +10,10 @@ import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
 import com.eightkdata.mongowp.server.api.pojos.MongoCursor;
 import com.eightkdata.mongowp.server.api.pojos.MongoCursor.Batch;
 import com.google.common.net.HostAndPort;
-import com.google.common.util.concurrent.AbstractExecutionThreadService;
+import com.torodb.common.util.ThreadFactoryRunnableService;
+import com.torodb.core.annotations.ToroDbRunnableService;
 import com.torodb.mongodb.repl.exceptions.NoSyncSourceFoundException;
-import java.util.concurrent.Executor;
+import java.util.concurrent.ThreadFactory;
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.NotThreadSafe;
 import org.apache.logging.log4j.LogManager;
@@ -22,7 +23,7 @@ import org.apache.logging.log4j.Logger;
  *
  */
 @NotThreadSafe
-class ReplSyncFetcher extends AbstractExecutionThreadService {
+class ReplSyncFetcher extends ThreadFactoryRunnableService {
 
     private static final Logger LOGGER = LogManager.getLogger(ReplSyncFetcher.class);
     private static final int MIN_BATCH_SIZE = 5;
@@ -30,7 +31,6 @@ class ReplSyncFetcher extends AbstractExecutionThreadService {
     
     private final SyncServiceView callback;
     private final OplogReaderProvider readerProvider;
-    private final Executor executor;
     private final SyncSourceProvider syncSourceProvider;
     private long opsReadCounter = 0;
 
@@ -39,13 +39,13 @@ class ReplSyncFetcher extends AbstractExecutionThreadService {
     private volatile Thread runThread;
 
     ReplSyncFetcher(
-            @Nonnull Executor executor,
+            @ToroDbRunnableService ThreadFactory threadFactory,
             @Nonnull SyncServiceView callback,
             @Nonnull SyncSourceProvider syncSourceProvider,
             @Nonnull OplogReaderProvider readerProvider,
             long lastAppliedHash,
             OpTime lastAppliedOpTime) {
-        this.executor = executor;
+        super(threadFactory);
         this.callback = callback;
         this.readerProvider = readerProvider;
         this.lastFetchedHash = 0;
@@ -59,11 +59,6 @@ class ReplSyncFetcher extends AbstractExecutionThreadService {
     @Override
     protected String serviceName() {
         return "ToroDB Sync Fetcher";
-    }
-
-    @Override
-    protected Executor executor() {
-        return executor;
     }
 
     /**

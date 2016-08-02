@@ -5,14 +5,16 @@ import akka.actor.ActorSystem;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.RemovalNotification;
-import com.google.common.util.concurrent.AbstractIdleService;
+import com.torodb.common.util.ThreadFactoryIdleService;
 import com.torodb.core.TableRefFactory;
+import com.torodb.core.annotations.ToroDbIdleService;
 import com.torodb.core.backend.Backend;
 import com.torodb.core.d2r.D2RTranslatorFactory;
 import com.torodb.core.d2r.IdentifierFactory;
 import com.torodb.core.transaction.InternalTransactionManager;
 import com.torodb.torod.guice.TorodLayer;
 import com.torodb.torod.pipeline.InsertPipelineFactory;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -23,7 +25,7 @@ import scala.concurrent.duration.Duration;
  *
  */
 @Singleton
-public class TorodServer extends AbstractIdleService {
+public class TorodServer extends ThreadFactoryIdleService {
 
     private final AtomicInteger connectionIdCounter = new AtomicInteger();
     private final D2RTranslatorFactory d2RTranslatorFactory;
@@ -36,10 +38,12 @@ public class TorodServer extends AbstractIdleService {
     private final ActorSystem actorSystem;
 
     @Inject
-    public TorodServer(D2RTranslatorFactory d2RTranslatorFactory, IdentifierFactory idFactory,
+    public TorodServer(@ToroDbIdleService ThreadFactory threadFactory,
+            D2RTranslatorFactory d2RTranslatorFactory, IdentifierFactory idFactory,
             InsertPipelineFactory insertPipelineFactory, Backend backend, 
             InternalTransactionManager internalTransactionManager, TableRefFactory tableRefFactory,
             @TorodLayer ActorSystem actorSystem) {
+        super(threadFactory);
         this.d2RTranslatorFactory = d2RTranslatorFactory;
         this.idFactory = idFactory;
         this.insertPipelineFactory = insertPipelineFactory;
