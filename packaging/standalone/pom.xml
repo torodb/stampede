@@ -297,7 +297,8 @@
                                         </assembly>
                                         <runCmds>
                                           <run>apt-get update</run>
-                                          <run>apt-get install postgresql-client mongodb-clients -y</run>
+                                          <run>apt-get install postgresql-client mongodb-clients python-pip -y</run>
+                                          <run>pip install awscli</run>
                                           <run>apt-get clean</run>
                                           <run>rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*</run>
                                         </runCmds>
