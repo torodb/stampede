@@ -5,6 +5,7 @@ import com.eightkdata.mongowp.OpTime;
 import com.eightkdata.mongowp.client.wrapper.MongoClientWrapper;
 import com.google.common.annotations.Beta;
 import com.google.common.net.HostAndPort;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
@@ -12,11 +13,9 @@ import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.torodb.mongodb.repl.*;
 import com.torodb.mongodb.repl.exceptions.NoSyncSourceFoundException;
 import com.torodb.mongodb.repl.impl.MongoOplogReaderProvider;
-import com.torodb.mongodb.utils.AkkaDbCloner;
-import com.torodb.mongodb.utils.AkkaDbCloner.CommitHeuristic;
 import com.torodb.mongodb.utils.DbCloner;
-import java.time.Clock;
-import java.util.concurrent.ExecutorService;
+import com.torodb.mongodb.utils.cloner.CommitHeuristic;
+import java.util.concurrent.ThreadFactory;
 import javax.annotation.Nonnull;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -54,6 +53,29 @@ public class MongoDbReplModule extends AbstractModule {
                 .build(RecoveryService.RecoveryServiceFactory.class)
         );
 
+        bind(DbCloner.class)
+                .annotatedWith(MongoDbRepl.class)
+                .toProvider(ConcurrentDbClonerProvider.class);
+
+        bind(CommitHeuristic.class)
+                .to(DefaultCommitHeuristic.class)
+                .in(Singleton.class);
+
+        bind(Integer.class)
+                .annotatedWith(DocsPerTransaction.class)
+                .toInstance(1000);
+
+        bind(Integer.class)
+                .annotatedWith(ParallelLevel.class)
+                .toInstance(5);
+
+        bind(ThreadFactory.class)
+                .annotatedWith(MongoDbRepl.class)
+                .toInstance(new ThreadFactoryBuilder()
+                        .setNameFormat("repl-unnamed-%d")
+                        .build()
+                );
+
     }
 
 
@@ -67,35 +89,21 @@ public class MongoDbReplModule extends AbstractModule {
         }
     }
 
-    @Provides @Singleton @MongoDbRepl
-    DbCloner createReplDbCloner(@MongoDbRepl ExecutorService executorService) {
-        final int parallelLevel = 5;
-        final int insertBatch = 10000;
-        final int docsPerCommit = 1000;
-        LOGGER.info("Using AkkaDbCloner with: {parallelLevel: {}, insertBatch: {}, docsPerCommit: {}}",
-                parallelLevel, insertBatch, docsPerCommit);
-        return new AkkaDbCloner(
-                executorService,
-                parallelLevel - 1,
-                parallelLevel * insertBatch,
-                insertBatch,
-                new CommitHeuristic() {
-                    @Override
-                    public void notifyDocumentInsertionCommit(int docBatchSize, long millisSpent) {
-                    }
+    private static class DefaultCommitHeuristic implements CommitHeuristic {
 
-                    @Override
-                    public int getDocumentsPerCommit() {
-                        return docsPerCommit;
-                    }
+        @Override
+        public void notifyDocumentInsertionCommit(int docBatchSize, long millisSpent) {
+        }
 
-                    @Override
-                    public boolean shouldCommitAfterIndex() {
-                        return true;
-                    }
-                },
-                Clock.systemDefaultZone()
-        );
+        @Override
+        public int getDocumentsPerCommit() {
+            return 1000;
+        }
+
+        @Override
+        public boolean shouldCommitAfterIndex() {
+            return false;
+        }
     }
 
     @Beta
