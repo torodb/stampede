@@ -21,7 +21,9 @@
 package com.torodb.core.transaction;
 
 import com.torodb.core.backend.BackendConnection;
+import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
 import com.torodb.core.transaction.metainf.MetainfoRepository;
+import com.torodb.core.transaction.metainf.MetainfoRepository.SnapshotStage;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -44,6 +46,12 @@ public class InternalTransactionManager {
 
     public WriteInternalTransaction openWriteTransaction(BackendConnection backendConnection) {
         return WriteInternalTransaction.createWriteTransaction(backendConnection, metainfoRepository);
+    }
+
+    public ImmutableMetaSnapshot takeMetaSnapshot() {
+        try (SnapshotStage snapshotStage = metainfoRepository.startSnapshotStage()) {
+            return snapshotStage.createImmutableSnapshot();
+        }
     }
 
 }

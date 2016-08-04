@@ -22,4 +22,6 @@ public interface MongodTransaction extends AutoCloseable {
     @Override
     public void close();
 
+    public boolean isClosed();
+
 }

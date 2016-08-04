@@ -55,7 +55,8 @@ public class MongoDbReplModule extends AbstractModule {
 
         bind(DbCloner.class)
                 .annotatedWith(MongoDbRepl.class)
-                .toProvider(ConcurrentDbClonerProvider.class);
+                .toProvider(AkkaDbClonerProvider.class);
+//                .toProvider(ConcurrentDbClonerProvider.class);
 
         bind(CommitHeuristic.class)
                 .to(DefaultCommitHeuristic.class)

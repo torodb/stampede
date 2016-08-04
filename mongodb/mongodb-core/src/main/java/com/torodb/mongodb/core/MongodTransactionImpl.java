@@ -57,6 +57,11 @@ abstract class MongodTransactionImpl implements MongodTransaction {
     }
 
     @Override
+    public boolean isClosed() {
+        return closed;
+    }
+
+    @Override
     protected void finalize() throws Throwable {
         if (!closed) {
             LOGGER.warn(this.getClass() + " finalized without being closed");

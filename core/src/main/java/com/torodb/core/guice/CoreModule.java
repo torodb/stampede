@@ -21,11 +21,10 @@
 package com.torodb.core.guice;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.Singleton;
-import com.torodb.core.Retrier;
 import com.torodb.core.TableRefFactory;
-import com.torodb.core.impl.RetrierImpl;
 import com.torodb.core.impl.TableRefFactoryImpl;
+import com.torodb.core.retrier.Retrier;
+import com.torodb.core.retrier.SmartRetrier;
 
 /**
  *
@@ -38,9 +37,17 @@ public class CoreModule extends AbstractModule {
                 .to(TableRefFactoryImpl.class)
                 .asEagerSingleton();
 
+        int maxInfrequentAttempts = 5;
+        int maxFrequentAttempts = 100;
+        int maxDefaultAttempts = 10;
+
         bind(Retrier.class)
-                .to(RetrierImpl.class)
-                .in(Singleton.class);
+                .toInstance(new SmartRetrier(
+                        attempts -> attempts >= maxInfrequentAttempts,
+                        attempts -> attempts >= maxFrequentAttempts,
+                        attempts -> attempts >= maxDefaultAttempts
+                )
+        );
 
     }
 

@@ -23,11 +23,11 @@ package com.torodb.mongodb.repl.guice;
 import com.torodb.mongodb.utils.cloner.AkkaDbCloner;
 import com.torodb.mongodb.utils.cloner.CommitHeuristic;
 import java.time.Clock;
-import java.util.concurrent.ExecutorService;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import com.torodb.core.ToroDbExecutorService;
 
 /**
  *
@@ -35,17 +35,17 @@ import org.apache.logging.log4j.Logger;
 public class AkkaDbClonerProvider implements Provider<AkkaDbCloner> {
     private static final Logger LOGGER = LogManager.getLogger(AkkaDbClonerProvider.class);
 
-    private final ExecutorService executorService;
+    private final ToroDbExecutorService executor;
     private final int parallelLevel;
     private final int docsPerTransaction;
     private final CommitHeuristic commitHeuristic;
     private final Clock clock;
 
     @Inject
-    public AkkaDbClonerProvider(@MongoDbRepl ExecutorService executorService,
+    public AkkaDbClonerProvider(ToroDbExecutorService executor,
             @ParallelLevel int parallelLevel,  @DocsPerTransaction int docsPerTransaction,
             CommitHeuristic commitHeuristic, Clock clock) {
-        this.executorService = executorService;
+        this.executor = executor;
         this.parallelLevel = parallelLevel;
         this.commitHeuristic = commitHeuristic;
         this.clock = clock;
@@ -57,7 +57,7 @@ public class AkkaDbClonerProvider implements Provider<AkkaDbCloner> {
         LOGGER.info("Using AkkaDbCloner with: {parallelLevel: {}, docsPerTransaction: {}}",
                 parallelLevel, docsPerTransaction);
         return new AkkaDbCloner(
-                executorService,
+                executor,
                 parallelLevel - 1,
                 parallelLevel * docsPerTransaction,
                 docsPerTransaction,

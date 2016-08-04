@@ -17,13 +17,18 @@ import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.InsertCommand.InsertResult;
 import com.eightkdata.mongowp.server.api.Request;
 import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
+import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.eightkdata.mongowp.utils.BsonDocumentBuilder;
 import com.eightkdata.mongowp.utils.BsonReaderTool;
 import com.google.common.base.Preconditions;
 import com.google.common.primitives.UnsignedInteger;
 import com.torodb.common.util.ThreadFactoryIdleService;
-import com.torodb.core.Retrier;
 import com.torodb.core.annotations.ToroDbIdleService;
+import com.torodb.core.exceptions.user.UserException;
+import com.torodb.core.retrier.Retrier;
+import com.torodb.core.retrier.Retrier.Hint;
+import com.torodb.core.retrier.RetrierAbortException;
+import com.torodb.core.retrier.RetrierGiveUpException;
 import com.torodb.mongodb.annotations.Locked;
 import com.torodb.mongodb.core.MongodConnection;
 import com.torodb.mongodb.core.MongodServer;
@@ -103,104 +108,104 @@ public class OplogManager extends ThreadFactoryIdleService {
     private void storeState(long hash, OpTime opTime) throws OplogManagerPersistException {
         Preconditions.checkState(isRunning(), "The service is not running");
 
-        Status<?> result = retrier.retry(() -> {
-            try (WriteMongodTransaction transaction = connection.openWriteTransaction()) {
-                Status<Long> deleteResult = transaction.execute(
-                        new Request(OPLOG_DB, null, true, null),
-                        DeleteCommand.INSTANCE,
-                        new DeleteArgument.Builder(OPLOG_COL)
-                        .addStatement(new DeleteStatement(DOC_QUERY, false))
-                        .build()
-                );
-                if (!deleteResult.isOK()) {
-                    return deleteResult;
-                }
+        try {
+            retrier.retry(() -> {
+                try (WriteMongodTransaction transaction = connection.openWriteTransaction()) {
+                    Status<Long> deleteResult = transaction.execute(
+                            new Request(OPLOG_DB, null, true, null),
+                            DeleteCommand.INSTANCE,
+                            new DeleteArgument.Builder(OPLOG_COL)
+                                    .addStatement(new DeleteStatement(DOC_QUERY, false))
+                                    .build()
+                    );
+                    if (!deleteResult.isOK()) {
+                        throw new RetrierAbortException(new MongoException(deleteResult));
+                    }
 
-                Status<InsertResult> insertResult = transaction.execute(
-                        new Request(OPLOG_DB, null, true, null),
-                        InsertCommand.INSTANCE,
-                        new InsertArgument.Builder(OPLOG_COL)
-                        .addDocument(
-                                new BsonDocumentBuilder()
-                                .appendUnsafe(KEY, new BsonDocumentBuilder()
-                                        .appendUnsafe("hash", newLong(hash))
-                                        .appendUnsafe("optime_i", newLong(opTime.getSecs().longValue()))
-                                        .appendUnsafe("optime_t", newLong(opTime.getTerm().longValue()))
-                                        .build()
-                                ).build()
-                        ).build()
-                );
-                if (insertResult.isOK() && insertResult.getResult().getN() != 1) {
-                    return Status.from(ErrorCode.OPERATION_FAILED, "More than one element inserted");
+                    Status<InsertResult> insertResult = transaction.execute(
+                            new Request(OPLOG_DB, null, true, null),
+                            InsertCommand.INSTANCE,
+                            new InsertArgument.Builder(OPLOG_COL)
+                                    .addDocument(
+                                            new BsonDocumentBuilder()
+                                                    .appendUnsafe(KEY, new BsonDocumentBuilder()
+                                                            .appendUnsafe("hash", newLong(hash))
+                                                            .appendUnsafe("optime_i", newLong(opTime.getSecs().longValue()))
+                                                            .appendUnsafe("optime_t", newLong(opTime.getTerm().longValue()))
+                                                            .build()
+                                                    ).build()
+                                    ).build()
+                    );
+                    if (insertResult.isOK() && insertResult.getResult().getN() != 1) {
+                        throw new RetrierAbortException(new MongoException(ErrorCode.OPERATION_FAILED, "More than one element inserted"));
+                    }
+                    if (!insertResult.isOK()) {
+                        throw new RetrierAbortException(new MongoException(insertResult));
+                    }
+                    transaction.commit();
+                    return Empty.getInstance();
+                } catch (UserException ex) {
+                    throw new RetrierAbortException(ex);
                 }
-                transaction.commit();
-                return insertResult;
-            }
-        });
-
-        if (!result.isOK()) {
-            throw new OplogManagerPersistException(result.getErrorCode(), result.getErrorMsg());
+            }, Hint.INFREQUENT_ROLLBACK);
+        } catch (RetrierGiveUpException ex) {
+            throw new OplogManagerPersistException(ex);
         }
     }
 
     @Locked(exclusive = true)
     private void loadState() throws OplogManagerPersistException {
-        Status<? extends Object> result = retrier.retry(() -> {
-            try (ReadOnlyMongodTransaction transaction = connection.openReadOnlyTransaction()) {
-                Status<FindResult> status = transaction.execute(
-                        new Request(OPLOG_DB, null, true, null),
-                        FindCommand.INSTANCE,
-                        new FindArgument.Builder()
-                        .setCollection(OPLOG_COL)
-                        .setSlaveOk(true)
-                        .build()
-                );
-                if (!status.isOK()) {
-                    return status;
-                }
-
-                Iterator<BsonDocument> batch = status.getResult().getCursor().getFirstBatch();
-                if (!batch.hasNext()) {
-                    lastAppliedHash = 0;
-                    lastAppliedOpTime = OpTime.EPOCH;
-                } else {
-                    BsonDocument doc = batch.next();
-
-                    BsonDocument subDoc = BsonReaderTool.getDocument(doc, KEY);
-                    lastAppliedHash = BsonReaderTool.getLong(subDoc, "hash");
-
-                    lastAppliedOpTime = new OpTime(
-                            UnsignedInteger.valueOf(BsonReaderTool.getLong(subDoc, "optime_i")),
-                            UnsignedInteger.valueOf(BsonReaderTool.getLong(subDoc, "optime_t"))
+        try {
+            retrier.retry(() -> {
+                try (ReadOnlyMongodTransaction transaction = connection.openReadOnlyTransaction()) {
+                    Status<FindResult> status = transaction.execute(
+                            new Request(OPLOG_DB, null, true, null),
+                            FindCommand.INSTANCE,
+                            new FindArgument.Builder()
+                            .setCollection(OPLOG_COL)
+                            .setSlaveOk(true)
+                            .build()
                     );
-                }
-                return Status.ok();
-            } catch (MongoException ex) {
-                return Status.from(ex);
-            }
-        });
+                    if (!status.isOK()) {
+                        throw new RetrierAbortException(new MongoException(status));
+                    }
 
-        if (!result.isOK()) {
-            throw new OplogManagerPersistException(result.getErrorCode(), result.getErrorMsg());
+                    Iterator<BsonDocument> batch = status.getResult().getCursor().getFirstBatch();
+                    if (!batch.hasNext()) {
+                        lastAppliedHash = 0;
+                        lastAppliedOpTime = OpTime.EPOCH;
+                    } else {
+                        BsonDocument doc = batch.next();
+
+                        BsonDocument subDoc = BsonReaderTool.getDocument(doc, KEY);
+                        lastAppliedHash = BsonReaderTool.getLong(subDoc, "hash");
+
+                        lastAppliedOpTime = new OpTime(
+                                UnsignedInteger.valueOf(BsonReaderTool.getLong(subDoc, "optime_i")),
+                                UnsignedInteger.valueOf(BsonReaderTool.getLong(subDoc, "optime_t"))
+                        );
+                    }
+                    return Empty.getInstance();
+                }
+            }, Hint.INFREQUENT_ROLLBACK);
+        } catch (RetrierGiveUpException ex) {
+            throw new OplogManagerPersistException(ex);
         }
     }
 
     public static class OplogManagerPersistException extends Exception {
-        private static final long serialVersionUID = 1L;
-        private final ErrorCode errorCode;
-        private final String errorMsg;
+        private static final long serialVersionUID = -2352073393613989057L;
 
-        public OplogManagerPersistException(ErrorCode errorCode, String errorMsg) {
-            this.errorCode = errorCode;
-            this.errorMsg = errorMsg;
+        public OplogManagerPersistException(String message) {
+            super(message);
         }
 
-        public ErrorCode getErrorCode() {
-            return errorCode;
+        public OplogManagerPersistException(String message, Throwable cause) {
+            super(message, cause);
         }
 
-        public String getErrorMsg() {
-            return errorMsg;
+        public OplogManagerPersistException(Throwable cause) {
+            super(cause);
         }
 
     }

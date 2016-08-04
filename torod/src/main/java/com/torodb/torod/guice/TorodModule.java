@@ -12,7 +12,7 @@ import com.google.inject.Singleton;
 import com.torodb.core.dsl.backend.BackendTransactionJobFactory;
 import com.torodb.torod.pipeline.InsertPipelineFactory;
 import com.torodb.torod.pipeline.akka.AkkaInsertSubscriberFactory;
-import java.util.concurrent.ExecutorService;
+import com.torodb.core.ToroDbExecutorService;
 
 /**
  *
@@ -24,10 +24,10 @@ public class TorodModule extends AbstractModule {
     }
 
     @Provides @Singleton @TorodLayer
-    ActorSystem createTorodActorSystem(@TorodLayer ExecutorService executorService) {
+    ActorSystem createTorodActorSystem(ToroDbExecutorService executor) {
         return ActorSystem.create("torod-layer", null, null,
-                ExecutionContexts.fromExecutorService(
-                        executorService
+                ExecutionContexts.fromExecutor(
+                        executor
                 )
         );
     }

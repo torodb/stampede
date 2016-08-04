@@ -4,18 +4,16 @@ package com.torodb.packaging.guice;
 import com.eightkdata.mongowp.annotations.MongoWP;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.AbstractModule;
+import com.google.inject.Provides;
+import com.google.inject.Singleton;
 import com.torodb.common.util.ThreadFactoryIdleService;
+import com.torodb.core.ToroDbExecutorService;
 import com.torodb.core.annotations.ToroDbIdleService;
 import com.torodb.core.annotations.ToroDbRunnableService;
-import com.torodb.mongodb.repl.guice.MongoDbRepl;
 import com.torodb.packaging.ExecutorsService;
-import com.torodb.torod.guice.TorodLayer;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -26,13 +24,19 @@ public class ExecutorServicesModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        ThreadFactory threadFactory = Executors.defaultThreadFactory();
+        ThreadFactory threadFactory = new ThreadFactoryBuilder()
+                .setNameFormat("torodb-executor-%d")
+                .build();
 
-        ExecutorService torodbDefaultThreadPool = Executors.newCachedThreadPool(
-                new ThreadFactoryBuilder()
-                .setNameFormat("torodb-%d")
-                .build()
-        );
+        bind(ToroDbExecutorService.class)
+                .toProvider(new ForkJoinToroDbExecutorProvider(
+                        ForkJoinPool.getCommonPoolParallelism(),
+                        ForkJoinPool.defaultForkJoinWorkerThreadFactory
+                ))
+                .in(Singleton.class);
+
+        bind(ThreadFactory.class)
+                .toInstance(threadFactory);
 
         bind(ThreadFactory.class)
                 .annotatedWith(ToroDbIdleService.class)
@@ -46,20 +50,11 @@ public class ExecutorServicesModule extends AbstractModule {
                 .annotatedWith(MongoWP.class)
                 .toInstance(threadFactory);
 
-        bind(ExecutorService.class)
-                .annotatedWith(TorodLayer.class)
-                .toInstance(torodbDefaultThreadPool);
+    }
 
-        bind(ExecutorService.class)
-                .annotatedWith(MongoDbRepl.class)
-                .toInstance(torodbDefaultThreadPool);
-
-        bind(ExecutorsService.class)
-                .toInstance(new DefaultExecutorsService(
-                        threadFactory,
-                        Collections.singletonList(torodbDefaultThreadPool))
-                );
-
+    @Provides @Singleton
+    ExecutorsService createExecutorsService(ThreadFactory threadFactory, ToroDbExecutorService executorService) {
+        return new DefaultExecutorsService(threadFactory, Collections.singleton(executorService));
     }
 
     private static class DefaultExecutorsService extends ThreadFactoryIdleService implements ExecutorsService {

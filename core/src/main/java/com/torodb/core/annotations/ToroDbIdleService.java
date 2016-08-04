@@ -13,7 +13,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 
 /**
- * This annotation is used annotate resources, specially {@link ThreadFactory thread factories} and
+ * This annotation annotates resources, specially {@link ThreadFactory thread factories} and
  * {@link Executor executors} used by classes that inherit {@link ThreadFactoryIdleService}.
  */
 @Qualifier

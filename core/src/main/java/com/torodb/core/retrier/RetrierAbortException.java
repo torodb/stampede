@@ -18,31 +18,28 @@
  * 
  */
 
-package com.torodb.core.backend;
+package com.torodb.core.retrier;
 
-import com.google.common.util.concurrent.Service;
-import com.torodb.core.transaction.RollbackException;
-import com.torodb.core.transaction.metainf.MetaSnapshot;
+import com.torodb.core.exceptions.ToroRuntimeException;
 
 /**
- *
+ * This exception can be thrown by task executed by a {@link Retrier} to indicate that it should
+ * give up.
  */
-public interface Backend extends Service {
-    public BackendConnection openConnection();
+public class RetrierAbortException extends ToroRuntimeException {
 
-    /**
-     * Enable internal indexes.
-     *
-     * @param snapshot the meta data snapshot.
-     * @throws RollbackException
-     */
-    public void enableInternalIndexes(MetaSnapshot snapshot) throws RollbackException;
+    private static final long serialVersionUID = 5610815170219321703L;
 
-    /**
-     * Disable internal indexes.
-     *
-     * @param snapshot the meta data snapshot.
-     * @throws RollbackException
-     */
-    public void disableInternalIndexes(MetaSnapshot snapshot) throws RollbackException;
+    public RetrierAbortException(String message) {
+        super(message);
+    }
+
+    public RetrierAbortException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public RetrierAbortException(Throwable cause) {
+        super(cause);
+    }
+
 }

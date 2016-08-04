@@ -173,7 +173,7 @@ public class TransactionalDbCloner implements DbCloner {
             String collection,
             CollectionOptions collOptions) throws MongoException, CloningException {
         String fromDb = opts.getDbToClone();
-        LOGGER.info("Clonning {}.{} into {}.{}", fromDb, collection, toDb, collection);
+        LOGGER.info("Cloning {}.{} into {}.{}", fromDb, collection, toDb, collection);
 
         EnumSet<QueryOption> queryFlags = EnumSet.of(QueryOption.NO_CURSOR_TIMEOUT); //TODO: enable exhaust?
         if (opts.isSlaveOk()) {

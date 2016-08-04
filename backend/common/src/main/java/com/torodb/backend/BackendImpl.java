@@ -1,22 +1,39 @@
 
 package com.torodb.backend;
 
+import com.torodb.backend.ErrorHandler.Context;
 import com.torodb.backend.meta.SchemaUpdater;
 import com.torodb.backend.meta.SnapshotUpdater;
 import com.torodb.backend.rid.MaxRowIdFactory;
 import com.torodb.common.util.ThreadFactoryIdleService;
 import com.torodb.core.TableRefFactory;
+import com.torodb.core.ToroDbExecutorService;
 import com.torodb.core.annotations.ToroDbIdleService;
 import com.torodb.core.backend.Backend;
 import com.torodb.core.backend.BackendConnection;
 import com.torodb.core.d2r.IdentifierFactory;
 import com.torodb.core.d2r.R2DTranslator;
 import com.torodb.core.d2r.RidGenerator;
-import com.torodb.core.transaction.metainf.MetainfoRepository;
+import com.torodb.core.exceptions.ToroRuntimeException;
+import com.torodb.core.retrier.Retrier;
+import com.torodb.core.retrier.Retrier.Hint;
+import com.torodb.core.retrier.RetrierGiveUpException;
+import com.torodb.core.transaction.RollbackException;
+import com.torodb.core.transaction.metainf.*;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ThreadFactory;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.inject.Inject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jooq.DSLContext;
 
 /**
  *
@@ -35,6 +52,8 @@ public class BackendImpl extends ThreadFactoryIdleService implements Backend {
     private final R2DTranslator r2dTranslator;
     private final IdentifierFactory identifierFactory;
     private final RidGenerator ridGenerator;
+    private final Retrier retrier;
+    private final ToroDbExecutorService executor;
 
     /**
      * @param threadFactory the thread factory that will be used to create the startup and shutdown
@@ -49,11 +68,16 @@ public class BackendImpl extends ThreadFactoryIdleService implements Backend {
      * @param r2dTranslator
      * @param identifierFactory
      * @param ridGenerator
+     * @param retrier
+     * @param executor
      */
     @Inject
-    public BackendImpl(@ToroDbIdleService ThreadFactory threadFactory, DbBackendService dbBackendService, SqlInterface sqlInterface, SqlHelper sqlHelper, SchemaUpdater schemaUpdater,
-            MetainfoRepository metainfoRepository, TableRefFactory tableRefFactory, MaxRowIdFactory maxRowIdFactory,
-            R2DTranslator r2dTranslator, IdentifierFactory identifierFactory, RidGenerator ridGenerator) {
+    public BackendImpl(@ToroDbIdleService ThreadFactory threadFactory, RidGenerator ridGenerator,
+            DbBackendService dbBackendService, SqlInterface sqlInterface, SqlHelper sqlHelper,
+            SchemaUpdater schemaUpdater, MetainfoRepository metainfoRepository,
+            TableRefFactory tableRefFactory, MaxRowIdFactory maxRowIdFactory,
+            R2DTranslator r2dTranslator, IdentifierFactory identifierFactory, Retrier retrier,
+            ToroDbExecutorService executor) {
         super(threadFactory);
         this.dbBackendService = dbBackendService;
         this.sqlInterface = sqlInterface;
@@ -65,11 +89,97 @@ public class BackendImpl extends ThreadFactoryIdleService implements Backend {
         this.r2dTranslator = r2dTranslator;
         this.identifierFactory = identifierFactory;
         this.ridGenerator = ridGenerator;
+        this.retrier = retrier;
+        this.executor = executor;
     }
     
     @Override
     public BackendConnection openConnection() {
         return new BackendConnectionImpl(this, sqlInterface, r2dTranslator, identifierFactory, ridGenerator);
+    }
+
+    @Override
+    public void disableInternalIndexes(MetaSnapshot snapshot) throws RollbackException {
+        if (sqlInterface.getDbBackend().includeInternalIndexes()) {
+            if (snapshot.streamMetaDatabases().findAny().isPresent()) {
+                throw new IllegalStateException("Can not disable indexes if any database exists");
+            }
+
+            sqlInterface.getDbBackend().disableInternalIndexes();
+        }
+    }
+
+    @Override
+    public void enableInternalIndexes(MetaSnapshot snapshot) throws RollbackException {
+        if (!sqlInterface.getDbBackend().includeInternalIndexes()) {
+            sqlInterface.getDbBackend().enableInternalIndexes();
+
+            Stream<Runnable> runnables = snapshot.streamMetaDatabases().flatMap(
+                    db -> db.streamMetaCollections().flatMap(
+                            col -> col.streamContainedMetaDocParts().flatMap(
+                                    docPart -> enableInternalIndexJobs(db, col, docPart)
+                            )
+                    )
+            );
+            List<CompletableFuture<Void>> futures = runnables
+                    .map(runnable -> CompletableFuture.runAsync(runnable, executor))
+                    .collect(Collectors.toList());
+            try {
+                CompletableFuture.allOf(
+                        futures.toArray(new CompletableFuture[futures.size()]))
+                        .join();
+            } catch (CompletionException ex) {
+                if (ex.getCause() != null && ex.getCause() instanceof RollbackException) {
+                    throw (RollbackException) ex.getCause();
+                }
+                throw ex;
+            }
+        }
+    }
+
+    private Stream<Runnable> enableInternalIndexJobs(MetaDatabase db, MetaCollection col, MetaDocPart docPart) {
+        StructureInterface structureInterface = sqlInterface.getStructureInterface();
+
+        Stream<Consumer<DSLContext>> consumerStream;
+
+        if (docPart.getTableRef().isRoot()) {
+            consumerStream = structureInterface.streamRootDocPartTableIndexesCreation(
+                    db.getIdentifier(),
+                    docPart.getIdentifier(),
+                    docPart.getTableRef()
+            );
+        } else {
+            MetaDocPart parentDocPart = col.getMetaDocPartByTableRef(
+                    docPart.getTableRef().getParent().get()
+            );
+            assert parentDocPart != null;
+            consumerStream = structureInterface.streamDocPartTableIndexesCreation(
+                    db.getIdentifier(),
+                    docPart.getIdentifier(),
+                    docPart.getTableRef(),
+                    parentDocPart.getIdentifier()
+            );
+        }
+
+        Stream<Callable<Void>> runnables = consumerStream.map(consumer -> () -> {
+            try (Connection connection = sqlInterface.getDbBackend().createWriteConnection()) {
+                DSLContext dsl = sqlInterface.getDslContextFactory().createDSLContext(connection);
+
+                consumer.accept(dsl);
+                return null;
+            } catch (SQLException ex) {
+                throw sqlInterface.getErrorHandler().handleException(Context.CREATE_INDEX, ex);
+            }
+        });
+        return runnables.map(callable -> () -> {
+            try {
+                retrier.retry(callable, Hint.INFREQUENT_ROLLBACK);
+            } catch (RetrierGiveUpException ex) {
+                LOGGER.warn("Error while trying to rebuild an index on {}.{}.{}",
+                        db.getIdentifier(), col.getIdentifier(), docPart.getIdentifier());
+                throw new ToroRuntimeException(ex);
+            }
+        });
     }
 
     @Override
