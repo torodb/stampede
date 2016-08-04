@@ -7,7 +7,7 @@ import com.torodb.backend.meta.SnapshotUpdater;
 import com.torodb.backend.rid.MaxRowIdFactory;
 import com.torodb.common.util.ThreadFactoryIdleService;
 import com.torodb.core.TableRefFactory;
-import com.torodb.concurrent.ToroDbExecutorService;
+import com.torodb.core.concurrent.ToroDbExecutorService;
 import com.torodb.core.annotations.ToroDbIdleService;
 import com.torodb.core.backend.Backend;
 import com.torodb.core.backend.BackendConnection;

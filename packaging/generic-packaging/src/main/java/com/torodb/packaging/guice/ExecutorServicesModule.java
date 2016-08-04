@@ -1,19 +1,22 @@
 
 package com.torodb.packaging.guice;
 
+import com.torodb.concurrent.guice.ForkJoinToroDbExecutorProvider;
 import com.eightkdata.mongowp.annotations.MongoWP;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.torodb.common.util.ThreadFactoryIdleService;
-import com.torodb.concurrent.ToroDbExecutorService;
+import com.torodb.core.annotations.ParallelLevel;
+import com.torodb.core.concurrent.ToroDbExecutorService;
 import com.torodb.core.annotations.ToroDbIdleService;
 import com.torodb.core.annotations.ToroDbRunnableService;
 import com.torodb.packaging.ExecutorsService;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.*;
+import java.util.concurrent.ForkJoinPool.ForkJoinWorkerThreadFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -24,16 +27,14 @@ public class ExecutorServicesModule extends AbstractModule {
 
     @Override
     protected void configure() {
+
+        bind(Integer.class)
+                .annotatedWith(ParallelLevel.class)
+                .toInstance(Runtime.getRuntime().availableProcessors());
+
         ThreadFactory threadFactory = new ThreadFactoryBuilder()
                 .setNameFormat("torodb-executor-%d")
                 .build();
-
-        bind(ToroDbExecutorService.class)
-                .toProvider(new ForkJoinToroDbExecutorProvider(
-                        ForkJoinPool.getCommonPoolParallelism(),
-                        ForkJoinPool.defaultForkJoinWorkerThreadFactory
-                ))
-                .in(Singleton.class);
 
         bind(ThreadFactory.class)
                 .toInstance(threadFactory);
@@ -50,6 +51,8 @@ public class ExecutorServicesModule extends AbstractModule {
                 .annotatedWith(MongoWP.class)
                 .toInstance(threadFactory);
 
+        bind(ForkJoinWorkerThreadFactory.class)
+                .toInstance(ForkJoinPool.defaultForkJoinWorkerThreadFactory);
     }
 
     @Provides @Singleton

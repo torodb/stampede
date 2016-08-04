@@ -1,5 +1,5 @@
 
-package com.torodb.mongodb.repl.guice;
+package com.torodb.core.annotations;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;

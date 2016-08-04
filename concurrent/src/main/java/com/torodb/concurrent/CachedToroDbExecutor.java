@@ -1,6 +1,7 @@
 
 package com.torodb.concurrent;
 
+import com.torodb.core.concurrent.ToroDbExecutorService;
 import java.util.List;
 import java.util.concurrent.*;
 

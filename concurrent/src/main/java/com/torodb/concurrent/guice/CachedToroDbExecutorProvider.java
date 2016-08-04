@@ -1,8 +1,8 @@
 
-package com.torodb.packaging.guice;
+package com.torodb.concurrent.guice;
 
 import com.torodb.concurrent.CachedToroDbExecutor;
-import com.torodb.concurrent.ToroDbExecutorService;
+import com.torodb.core.concurrent.ToroDbExecutorService;
 import java.util.List;
 import java.util.concurrent.*;
 import javax.inject.Inject;

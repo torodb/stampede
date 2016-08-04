@@ -8,6 +8,7 @@ import com.google.inject.Injector;
 import com.google.inject.ProvisionException;
 import com.torodb.backend.guice.BackendModule;
 import com.torodb.common.util.ThreadFactoryIdleService;
+import com.torodb.concurrent.guice.ConcurrentModule;
 import com.torodb.core.BuildProperties;
 import com.torodb.core.annotations.ToroDbIdleService;
 import com.torodb.core.guice.CoreModule;
@@ -74,7 +75,8 @@ public class ToroDbServer extends ThreadFactoryIdleService {
                 new MongoLayerModule(),
                 new MongoDbWpModule(),
                 new MetricsModule(config.getGeneric()),
-                new ExecutorServicesModule()
+                new ExecutorServicesModule(),
+                new ConcurrentModule()
         );
         return injector;
     }

@@ -20,6 +20,7 @@
 
 package com.torodb.mongodb.repl.guice;
 
+import com.torodb.core.annotations.ParallelLevel;
 import com.torodb.mongodb.utils.cloner.AkkaDbCloner;
 import com.torodb.mongodb.utils.cloner.CommitHeuristic;
 import java.time.Clock;
@@ -27,7 +28,7 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import com.torodb.concurrent.ToroDbExecutorService;
+import com.torodb.core.concurrent.ToroDbExecutorService;
 
 /**
  *
