@@ -296,11 +296,13 @@
                                             <descriptor>assembly.xml</descriptor>
                                         </assembly>
                                         <runCmds>
-                                          <run>apt-get update</run>
-                                          <run>apt-get install postgresql-client mongodb-clients python-pip -y</run>
-                                          <run>pip install awscli</run>
-                                          <run>apt-get clean</run>
-                                          <run>rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*</run>
+                                            <run>#TODO: https://jira.mongodb.org/browse/SERVER-22143</run>
+                                            <run>curl "https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-3.2.8.tgz" | tar xz  -C /opt --transform 's-^[^/]*-mongodb-' -f -</run>
+		                                    <run>apt-get update</run>
+		                                    <run>apt-get install netcat postgresql-client python-pip -y</run>
+                                            <run>pip install awscli</run>
+                                            <run>apt-get clean</run>
+                                            <run>rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*</run>
                                         </runCmds>
                                     </build>
                                     <run>
