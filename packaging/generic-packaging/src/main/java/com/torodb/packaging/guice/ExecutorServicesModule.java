@@ -7,7 +7,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.torodb.common.util.ThreadFactoryIdleService;
-import com.torodb.core.ToroDbExecutorService;
+import com.torodb.concurrent.ToroDbExecutorService;
 import com.torodb.core.annotations.ToroDbIdleService;
 import com.torodb.core.annotations.ToroDbRunnableService;
 import com.torodb.packaging.ExecutorsService;

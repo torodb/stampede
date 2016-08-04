@@ -27,7 +27,7 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import com.torodb.core.ToroDbExecutorService;
+import com.torodb.concurrent.ToroDbExecutorService;
 
 /**
  *

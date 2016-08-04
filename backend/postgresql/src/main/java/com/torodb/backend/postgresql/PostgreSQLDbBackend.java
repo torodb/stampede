@@ -27,9 +27,12 @@ import com.torodb.backend.driver.postgresql.PostgreSQLDbBackendConfiguration;
 import com.torodb.backend.driver.postgresql.PostgreSQLDriverProvider;
 import com.torodb.core.annotations.ToroDbIdleService;
 import java.util.concurrent.ThreadFactory;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import javax.sql.DataSource;
+import org.jooq.DSLContext;
 
 /**
  *

@@ -21,7 +21,6 @@
 package com.torodb.backend.postgresql;
 
 import java.util.Collection;
-import java.util.Collections;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
@@ -31,14 +30,17 @@ import org.jooq.DSLContext;
 
 import com.google.common.base.Preconditions;
 import com.torodb.backend.AbstractStructureInterface;
-import com.torodb.backend.DbBackend;
 import com.torodb.backend.ErrorHandler.Context;
 import com.torodb.backend.InternalField;
 import com.torodb.backend.SqlBuilder;
 import com.torodb.backend.SqlHelper;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
-import com.torodb.core.TableRef;
+import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
+import com.torodb.core.transaction.metainf.MetaDocPart;
+import com.torodb.core.transaction.metainf.MetaSnapshot;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 /**
  *
@@ -199,5 +201,24 @@ public class PostgreSQLStructureInterface extends AbstractStructureInterface {
                 .append(" ")
                 .append(dataType.getCastTypeName());
             return sb.toString();
+    }
+
+    @Override
+    public Stream<Consumer<DSLContext>> streamDataInsertFinishTasks(MetaSnapshot snapshot) {
+        return snapshot.streamMetaDatabases().flatMap(
+                db -> db.streamMetaCollections().flatMap(
+                        col -> col.streamContainedMetaDocParts().map(
+                                docPart -> createAnalyzeConsumer(db, col, docPart)
+                        )
+                )
+        );
+    }
+
+    private Consumer<DSLContext> createAnalyzeConsumer(MetaDatabase db, MetaCollection col, MetaDocPart docPart) {
+        return dsl -> {
+            SqlBuilder sb = new SqlBuilder("ANALYZE ")
+                    .table(db.getIdentifier(), docPart.getIdentifier());
+            dsl.execute(sb.toString());
+        };
     }
 }

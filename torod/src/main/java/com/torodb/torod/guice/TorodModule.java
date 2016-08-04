@@ -12,7 +12,7 @@ import com.google.inject.Singleton;
 import com.torodb.core.dsl.backend.BackendTransactionJobFactory;
 import com.torodb.torod.pipeline.InsertPipelineFactory;
 import com.torodb.torod.pipeline.akka.AkkaInsertSubscriberFactory;
-import com.torodb.core.ToroDbExecutorService;
+import com.torodb.concurrent.ToroDbExecutorService;
 
 /**
  *

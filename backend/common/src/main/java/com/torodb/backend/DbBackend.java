@@ -21,8 +21,11 @@
 package com.torodb.backend;
 
 import java.sql.Connection;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 import javax.sql.DataSource;
+import org.jooq.DSLContext;
 
 public interface DbBackend {
     public DataSource getSessionDataSource();
@@ -31,7 +34,7 @@ public interface DbBackend {
     public void enableInternalIndexes();
     public void disableInternalIndexes();
     public long getDefaultCursorTimeout();
-    public boolean includeInternalIndexes();
+    public boolean isOnDataInsertMode();
     public boolean includeForeignKeys();
     public Connection createSystemConnection();
     public Connection createReadOnlyConnection();

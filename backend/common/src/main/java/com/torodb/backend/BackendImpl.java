@@ -7,7 +7,7 @@ import com.torodb.backend.meta.SnapshotUpdater;
 import com.torodb.backend.rid.MaxRowIdFactory;
 import com.torodb.common.util.ThreadFactoryIdleService;
 import com.torodb.core.TableRefFactory;
-import com.torodb.core.ToroDbExecutorService;
+import com.torodb.concurrent.ToroDbExecutorService;
 import com.torodb.core.annotations.ToroDbIdleService;
 import com.torodb.core.backend.Backend;
 import com.torodb.core.backend.BackendConnection;
@@ -30,6 +30,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 import javax.inject.Inject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -99,8 +100,8 @@ public class BackendImpl extends ThreadFactoryIdleService implements Backend {
     }
 
     @Override
-    public void disableInternalIndexes(MetaSnapshot snapshot) throws RollbackException {
-        if (sqlInterface.getDbBackend().includeInternalIndexes()) {
+    public void enableDataImportMode(MetaSnapshot snapshot) throws RollbackException {
+        if (sqlInterface.getDbBackend().isOnDataInsertMode()) {
             if (snapshot.streamMetaDatabases().findAny().isPresent()) {
                 throw new IllegalStateException("Can not disable indexes if any database exists");
             }
@@ -110,17 +111,25 @@ public class BackendImpl extends ThreadFactoryIdleService implements Backend {
     }
 
     @Override
-    public void enableInternalIndexes(MetaSnapshot snapshot) throws RollbackException {
-        if (!sqlInterface.getDbBackend().includeInternalIndexes()) {
+    public void disableDataImportMode(MetaSnapshot snapshot) throws RollbackException {
+        if (!sqlInterface.getDbBackend().isOnDataInsertMode()) {
             sqlInterface.getDbBackend().enableInternalIndexes();
 
-            Stream<Runnable> runnables = snapshot.streamMetaDatabases().flatMap(
+            //create indexes
+            Stream<Consumer<DSLContext>> createIndexesJobs = snapshot.streamMetaDatabases().flatMap(
                     db -> db.streamMetaCollections().flatMap(
                             col -> col.streamContainedMetaDocParts().flatMap(
                                     docPart -> enableInternalIndexJobs(db, col, docPart)
                             )
                     )
             );
+
+            //backend specific jobs
+            Stream<Consumer<DSLContext>> backendSpecificJobs = sqlInterface.getStructureInterface()
+                    .streamDataInsertFinishTasks(snapshot);
+            Stream<Runnable> runnables = Stream.concat(createIndexesJobs, backendSpecificJobs)
+                    .map(this::dslConsumerToRunnable);
+            
             List<CompletableFuture<Void>> futures = runnables
                     .map(runnable -> CompletableFuture.runAsync(runnable, executor))
                     .collect(Collectors.toList());
@@ -137,7 +146,7 @@ public class BackendImpl extends ThreadFactoryIdleService implements Backend {
         }
     }
 
-    private Stream<Runnable> enableInternalIndexJobs(MetaDatabase db, MetaCollection col, MetaDocPart docPart) {
+    private Stream<Consumer<DSLContext>> enableInternalIndexJobs(MetaDatabase db, MetaCollection col, MetaDocPart docPart) {
         StructureInterface structureInterface = sqlInterface.getStructureInterface();
 
         Stream<Consumer<DSLContext>> consumerStream;
@@ -161,25 +170,27 @@ public class BackendImpl extends ThreadFactoryIdleService implements Backend {
             );
         }
 
-        Stream<Callable<Void>> runnables = consumerStream.map(consumer -> () -> {
-            try (Connection connection = sqlInterface.getDbBackend().createWriteConnection()) {
-                DSLContext dsl = sqlInterface.getDslContextFactory().createDSLContext(connection);
+        return consumerStream;
+    }
 
-                consumer.accept(dsl);
-                return null;
-            } catch (SQLException ex) {
-                throw sqlInterface.getErrorHandler().handleException(Context.CREATE_INDEX, ex);
-            }
-        });
-        return runnables.map(callable -> () -> {
+    private Runnable dslConsumerToRunnable(Consumer<DSLContext> consumer) {
+        return () -> {
             try {
-                retrier.retry(callable, Hint.INFREQUENT_ROLLBACK);
+                retrier.retry(() -> {
+                    try (Connection connection = sqlInterface.getDbBackend().createWriteConnection()) {
+                        DSLContext dsl = sqlInterface.getDslContextFactory()
+                                .createDSLContext(connection);
+
+                        consumer.accept(dsl);
+                        return null;
+                    } catch (SQLException ex) {
+                        throw sqlInterface.getErrorHandler().handleException(Context.CREATE_INDEX, ex);
+                    }
+                });
             } catch (RetrierGiveUpException ex) {
-                LOGGER.warn("Error while trying to rebuild an index on {}.{}.{}",
-                        db.getIdentifier(), col.getIdentifier(), docPart.getIdentifier());
                 throw new ToroRuntimeException(ex);
             }
-        });
+        };
     }
 
     @Override

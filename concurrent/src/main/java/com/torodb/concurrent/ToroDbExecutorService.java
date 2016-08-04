@@ -18,7 +18,7 @@
  * 
  */
 
-package com.torodb.core;
+package com.torodb.concurrent;
 
 import java.util.concurrent.*;
 
