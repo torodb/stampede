@@ -115,6 +115,7 @@ public class PostgreSQLWriteInterface extends AbstractWriteInterface {
 	                    maxCappedSize,
 	                    cappedSize
 	            );
+	            metrics.insertDefault.mark();
 	            super.insertDocPartData(dsl, schemaName, docPartData);
 	        }
 	        else {
@@ -124,9 +125,11 @@ public class PostgreSQLWriteInterface extends AbstractWriteInterface {
 	                    LOGGER.warn("It was impossible to use the PostgreSQL way to "
 	                            + "insert documents. Inserting using the standard "
 	                            + "implementation");
+	                    metrics.insertDefault.mark();
 	                    super.insertDocPartData(dsl, schemaName, docPartData);
 	                } else {
 	                    try {
+	                        metrics.insertCopy.mark();
 	                        copyInsertDocPartData(
 	                                connection.unwrap(PGConnection.class),
 	                                schemaName,

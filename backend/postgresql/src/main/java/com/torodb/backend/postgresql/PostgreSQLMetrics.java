@@ -15,12 +15,16 @@ public class PostgreSQLMetrics {
 	public final Timer insertDocPartDataTimer;
 	public final Meter insertRows;
 	public final Meter insertFields;
+    public final Meter insertDefault;
+    public final Meter insertCopy;
 	
 	@Inject
 	public PostgreSQLMetrics(ToroMetricRegistry registry){
 		insertDocPartDataTimer = registry.timer(factory.createMetricName("insertDocPartDataTimer"));
 		insertRows = registry.meter(factory.createMetricName("insertRows"));
 		insertFields = registry.meter(factory.createMetricName("insertFields"));
+		insertDefault = registry.meter(factory.createMetricName("insertDefault"));
+		insertCopy = registry.meter(factory.createMetricName("insertCopy"));
 	}
 	
 }
