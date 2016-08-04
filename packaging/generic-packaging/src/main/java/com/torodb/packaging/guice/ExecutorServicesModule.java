@@ -1,6 +1,7 @@
 
 package com.torodb.packaging.guice;
 
+import com.eightkdata.mongowp.annotations.MongoWP;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.AbstractModule;
 import com.torodb.common.util.ThreadFactoryIdleService;
@@ -39,6 +40,10 @@ public class ExecutorServicesModule extends AbstractModule {
 
         bind(ThreadFactory.class)
                 .annotatedWith(ToroDbRunnableService.class)
+                .toInstance(threadFactory);
+
+        bind(ThreadFactory.class)
+                .annotatedWith(MongoWP.class)
                 .toInstance(threadFactory);
 
         bind(ExecutorService.class)
