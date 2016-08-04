@@ -1,11 +1,18 @@
 package com.torodb.mongodb.utils.cloner;
 
-import akka.NotUsed;
-import akka.actor.ActorSystem;
-import akka.dispatch.ExecutionContexts;
-import akka.japi.Pair;
-import akka.stream.*;
-import akka.stream.javadsl.*;
+import java.time.Clock;
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.Executor;
+import java.util.stream.Collectors;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.WriteConcern;
 import com.eightkdata.mongowp.bson.BsonDocument;
@@ -41,23 +48,29 @@ import com.torodb.mongodb.core.MongodConnection;
 import com.torodb.mongodb.core.MongodServer;
 import com.torodb.mongodb.core.WriteMongodTransaction;
 import com.torodb.mongodb.utils.DbCloner;
-import com.torodb.mongodb.utils.DbCloner.CloneOptions;
-import com.torodb.mongodb.utils.DbCloner.CloningException;
 import com.torodb.mongodb.utils.ListCollectionsRequester;
 import com.torodb.mongodb.utils.ListIndexesRequester;
 import com.torodb.mongodb.utils.NamespaceUtil;
 import com.torodb.torod.WriteTorodTransaction;
-import java.time.Clock;
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.Executor;
-import java.util.stream.Collectors;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+import akka.NotUsed;
+import akka.actor.ActorSystem;
+import akka.dispatch.ExecutionContexts;
+import akka.japi.Pair;
+import akka.stream.ActorMaterializer;
+import akka.stream.FlowShape;
+import akka.stream.Graph;
+import akka.stream.Materializer;
+import akka.stream.OverflowStrategy;
+import akka.stream.UniformFanInShape;
+import akka.stream.UniformFanOutShape;
+import akka.stream.javadsl.Balance;
+import akka.stream.javadsl.Flow;
+import akka.stream.javadsl.GraphDSL;
+import akka.stream.javadsl.Keep;
+import akka.stream.javadsl.Merge;
+import akka.stream.javadsl.Sink;
+import akka.stream.javadsl.Source;
 import scala.concurrent.Await;
 import scala.concurrent.duration.Duration;
 
@@ -191,7 +204,15 @@ public class AkkaDbCloner implements DbCloner {
                     LOGGER.info("Cloning {}.{} into {}.{}", fromDb, entry.getCollectionName(),
                             dstDb, entry.getCollectionName());
 
-                    cloneCollection(localServer, remoteConnection, dstDb, opts, materializer, entry);
+                    try {
+                        cloneCollection(localServer, remoteConnection, dstDb, opts, materializer, entry);
+                    } catch(CompletionException completionException) {
+                        if (completionException.getCause() instanceof RollbackException) {
+                            throw (RollbackException) completionException.getCause();
+                        }
+                        
+                        throw completionException;
+                    }
                 }
             }
             if (opts.isCloneIndexes()) {
