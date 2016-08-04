@@ -98,6 +98,7 @@
         <module>metrics</module>
         <module>packaging</module>
         <module>integration-tests</module>
+        <module>concurrent</module>
     </modules>
 
     <dependencyManagement>

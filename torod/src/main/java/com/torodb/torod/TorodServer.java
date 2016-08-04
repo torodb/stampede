@@ -88,14 +88,14 @@ public class TorodServer extends ThreadFactoryIdleService {
         }
     }
 
-    public void disableInternalIndexes() {
+    public void disableDataImportMode() {
         ImmutableMetaSnapshot snapshot = internalTransactionManager.takeMetaSnapshot();
-        backend.disableInternalIndexes(snapshot);
+        backend.enableDataImportMode(snapshot);
     }
 
-    public void enableInternalIndexes() {
+    public void enableDataImportMode() {
         ImmutableMetaSnapshot snapshot = internalTransactionManager.takeMetaSnapshot();
-        backend.enableInternalIndexes(snapshot);
+        backend.disableDataImportMode(snapshot);
     }
 
     D2RTranslatorFactory getD2RTranslatorrFactory() {

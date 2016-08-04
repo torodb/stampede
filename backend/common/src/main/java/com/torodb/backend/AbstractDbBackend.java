@@ -29,10 +29,15 @@ import com.zaxxer.hikari.HikariDataSource;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Collections;
 import java.util.concurrent.ThreadFactory;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 import javax.annotation.Nonnull;
 import javax.inject.Singleton;
 import javax.sql.DataSource;
+import org.jooq.DSLContext;
 
 /**
  *
@@ -197,7 +202,7 @@ public abstract class AbstractDbBackend<Configuration extends DbBackendConfigura
     }
     
     @Override
-    public boolean includeInternalIndexes() {
+    public boolean isOnDataInsertMode() {
         return includeInternalIndexes;
     }
     

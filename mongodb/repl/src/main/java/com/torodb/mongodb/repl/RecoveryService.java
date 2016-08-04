@@ -241,13 +241,13 @@ public class RecoveryService extends ThreadFactoryRunnableService {
 
     private void disableInternalIndexes() throws UserException {
         LOGGER.debug("Disabling internal indexes");
-        server.getTorodServer().disableInternalIndexes();
+        server.getTorodServer().disableDataImportMode();
         LOGGER.trace("Internal indexes disabled");
     }
 
     private void enableInternalIndexes() throws UserException {
         LOGGER.debug("Reactivating internal indexes");
-        server.getTorodServer().enableInternalIndexes();
+        server.getTorodServer().enableDataImportMode();
         LOGGER.trace("Internal indexes enabled");
     }
 

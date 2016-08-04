@@ -26,10 +26,8 @@ import com.torodb.core.TableRef;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
+import com.torodb.core.transaction.metainf.MetaSnapshot;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
@@ -166,7 +164,7 @@ public abstract class AbstractStructureInterface implements StructureInterface {
     @Override
     public Stream<Consumer<DSLContext>> streamRootDocPartTableIndexesCreation(String schemaName, String tableName, TableRef tableRef) {
         List<Consumer<DSLContext>> result = new ArrayList<>(1);
-        if (dbBackend.includeInternalIndexes()) {
+        if (dbBackend.isOnDataInsertMode()) {
             String primaryKeyStatement = getAddDocPartTablePrimaryKeyStatement(schemaName, tableName, metaDataReadInterface.getPrimaryKeyInternalFields(tableRef));
 
             result.add(dsl -> sqlHelper.executeStatement(dsl, primaryKeyStatement, Context.CREATE_INDEX));
@@ -177,12 +175,12 @@ public abstract class AbstractStructureInterface implements StructureInterface {
     @Override
     public Stream<Consumer<DSLContext>> streamDocPartTableIndexesCreation(String schemaName, String tableName, TableRef tableRef, String foreignTableName) {
         List<Consumer<DSLContext>> result = new ArrayList<>(4);
-        if (dbBackend.includeInternalIndexes()) {
+        if (dbBackend.isOnDataInsertMode()) {
             String primaryKeyStatement = getAddDocPartTablePrimaryKeyStatement(schemaName, tableName, metaDataReadInterface.getPrimaryKeyInternalFields(tableRef));
             result.add( (dsl) -> sqlHelper.executeStatement(dsl, primaryKeyStatement, Context.ADD_UNIQUE_INDEX));
         }
 
-        if (dbBackend.includeInternalIndexes()) {
+        if (dbBackend.isOnDataInsertMode()) {
             if (dbBackend.includeForeignKeys()) {
                 String foreignKeyStatement = getAddDocPartTableForeignKeyStatement(schemaName, tableName, metaDataReadInterface.getReferenceInternalFields(tableRef),
                         foreignTableName, metaDataReadInterface.getForeignInternalFields(tableRef));
@@ -193,12 +191,17 @@ public abstract class AbstractStructureInterface implements StructureInterface {
             }
         }
 
-        if (dbBackend.includeInternalIndexes()) {
+        if (dbBackend.isOnDataInsertMode()) {
             String readIndexStatement = getCreateDocPartTableIndexStatement(schemaName, tableName, metaDataReadInterface.getReadInternalFields(tableRef));
             result.add( (dsl) -> sqlHelper.executeStatement(dsl, readIndexStatement, Context.CREATE_INDEX));
         }
 
         return result.stream();
+    }
+
+    @Override
+    public Stream<Consumer<DSLContext>> streamDataInsertFinishTasks(MetaSnapshot snapshot) {
+        return Collections.<Consumer<DSLContext>>emptySet().stream();
     }
 
     protected abstract String getAddDocPartTablePrimaryKeyStatement(String schemaName, String tableName,
