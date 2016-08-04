@@ -149,22 +149,4 @@ public interface WriteBackendTransaction extends BackendTransaction {
 
     @Override
     public void close();
-
-    /**
-     * Enable internal indexes.
-     *
-     * @param snapshot the meta data snapshot.
-     * @throws BackendException
-     * @throws RollbackException
-     */
-    public void enableInternalIndexes(MetaSnapshot snapshot) throws RollbackException;
-
-    /**
-     * Disable internal indexes.
-     *
-     * @param snapshot the meta data snapshot.
-     * @throws BackendException
-     * @throws RollbackException
-     */
-    public void disableInternalIndexes(MetaSnapshot snapshot) throws RollbackException;
 }

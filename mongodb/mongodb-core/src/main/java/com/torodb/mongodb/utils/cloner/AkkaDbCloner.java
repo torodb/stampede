@@ -3,6 +3,7 @@ package com.torodb.mongodb.utils.cloner;
 import akka.NotUsed;
 import akka.actor.ActorSystem;
 import akka.dispatch.ExecutionContexts;
+import akka.japi.Pair;
 import akka.stream.*;
 import akka.stream.javadsl.*;
 import com.eightkdata.mongowp.Status;
@@ -53,7 +54,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -84,7 +85,7 @@ public class AkkaDbCloner implements DbCloner {
     /**
      * The executor that will execute each task in which the cloning is divided.
      */
-    private final ExecutorService executorService;
+    private final Executor executor;
     /**
      * The number of parallel task that can be used to clone each collection
      */
@@ -101,9 +102,9 @@ public class AkkaDbCloner implements DbCloner {
     private final CommitHeuristic commitHeuristic;
     private final Clock clock;
 
-    public AkkaDbCloner(ExecutorService executorService, int maxParallelInsertTasks,
+    public AkkaDbCloner(Executor executor, int maxParallelInsertTasks,
             int cursorBatchBufferSize, int insertBufferSize, CommitHeuristic commitHeuristic, Clock clock) {
-        this.executorService = executorService;
+        this.executor = executor;
         this.maxParallelInsertTasks = maxParallelInsertTasks;
         Preconditions.checkArgument(maxParallelInsertTasks >= 1, "The number of parallel insert "
                 + "tasks level must be higher than 0, but " + maxParallelInsertTasks + " was used");
@@ -180,14 +181,14 @@ public class AkkaDbCloner implements DbCloner {
         }
         
         ActorSystem actorSystem = ActorSystem.create("dbClone", null, null,
-                ExecutionContexts.fromExecutorService(executorService)
+                ExecutionContexts.fromExecutor(executor)
         );
         Materializer materializer = ActorMaterializer.create(actorSystem);
 
         try (MongoConnection remoteConnection = remoteClient.openConnection()) {
             if (opts.isCloneData()) {
                 for (Entry entry : collsToClone) {
-                    LOGGER.info("Clonning {}.{} into {}.{}", fromDb, entry.getCollectionName(),
+                    LOGGER.info("Cloning {}.{} into {}.{}", fromDb, entry.getCollectionName(),
                             dstDb, entry.getCollectionName());
 
                     cloneCollection(localServer, remoteConnection, dstDb, opts, materializer, entry);
@@ -218,17 +219,17 @@ public class AkkaDbCloner implements DbCloner {
                 .buffer(cursorBatchBufferSize, OverflowStrategy.backpressure())
                 .async();
 
-        Flow<BsonDocument, NotUsed, NotUsed> inserterFlow;
+        Flow<BsonDocument, Pair<Integer, Integer>, NotUsed> inserterFlow;
         if (maxParallelInsertTasks == 1) {
             inserterFlow = createCloneDocsWorker(localServer, toDb, collName);
         }
         else {
-            inserterFlow = Flow.fromGraph(GraphDSL.create(builder -> {
+            Graph<FlowShape<BsonDocument, Pair<Integer, Integer>>, NotUsed> graph = GraphDSL.create(builder -> {
 
                 UniformFanOutShape<BsonDocument, BsonDocument> balance = builder.add(
                         Balance.create(maxParallelInsertTasks, false)
                 );
-                UniformFanInShape<NotUsed, NotUsed> merge = builder.add(
+                UniformFanInShape<Pair<Integer, Integer>, Pair<Integer, Integer>> merge = builder.add(
                         Merge.create(maxParallelInsertTasks, false)
                 );
 
@@ -240,31 +241,44 @@ public class AkkaDbCloner implements DbCloner {
                             .toInlet(merge.in(i));
                 }
                 return FlowShape.of(balance.in(), merge.out());
-            }));
+            });
+            inserterFlow = Flow.fromGraph(graph);
         }
-        source.via(inserterFlow)
-                .toMat(Sink.ignore(), Keep.right())
+        Pair<Integer, Integer> insertedDocs = source.via(inserterFlow)
+                .toMat(
+                        Sink.fold(new Pair<>(0,0),
+                                (Pair<Integer, Integer> acum, Pair<Integer, Integer> newBatch)
+                                -> new Pair<>(acum.first() + newBatch.first(), acum.second()
+                                        + newBatch.second())
+                        ),
+                        Keep.right()
+                )
                 .run(materializer)
                 .toCompletableFuture()
                 .join();
+        LOGGER.warn("Requested docs: {}, Inserted: {}", insertedDocs.second(), insertedDocs.first());
     }
 
-    private Flow<BsonDocument, NotUsed, NotUsed> createCloneDocsWorker(MongodServer localServer,
+    private Flow<BsonDocument, Pair<Integer, Integer>, NotUsed> createCloneDocsWorker(MongodServer localServer,
             String toDb, String collection) {
         return Flow.of(BsonDocument.class)
                 .grouped(insertBufferSize)
                 .map(docs -> {
-                    insertDocuments(localServer, toDb, collection, docs);
-                    return NotUsed.getInstance();
+                    return new Pair<>(
+                            insertDocuments(localServer, toDb, collection, docs),
+                            docs.size()
+                    );
                 }
         );
     }
 
-    private void insertDocuments(MongodServer localServer, String toDb, String collection,
+    private int insertDocuments(MongodServer localServer, String toDb, String collection,
             List<BsonDocument> docsToInsert) {
 
         int maxAttempts = 10;
         int attempts = 1;
+
+        int insertedDocsCounter = 0;
 
         int docsPerCommit = commitHeuristic.getDocumentsPerCommit();
         LOGGER.debug("Inserting {} documents on commit batches of {}", docsToInsert.size(), docsPerCommit);
@@ -274,45 +288,52 @@ public class AkkaDbCloner implements DbCloner {
             List<BsonDocument> remainingDocs = docsToInsert;
 
             while (!remainingDocs.isEmpty()) {
-                try {
-                    long start = clock.millis();
-                    int actualBatchSize = Math.min(docsPerCommit, remainingDocs.size());
-                    List<BsonDocument> currentDocument = remainingDocs.subList(0, actualBatchSize);
-                    remainingDocs = remainingDocs.subList(actualBatchSize, remainingDocs.size());
+                long start = clock.millis();
+                int actualBatchSize = Math.min(docsPerCommit, remainingDocs.size());
+                List<BsonDocument> currentDocuments = remainingDocs.subList(0, actualBatchSize);
+                remainingDocs = remainingDocs.subList(actualBatchSize, remainingDocs.size());
 
-                    Status<InsertResult> insertResult = transaction.execute(
-                            new Request(toDb, null, true, null),
-                            InsertCommand.INSTANCE,
-                            new InsertArgument.Builder(collection)
-                            .addDocuments(currentDocument)
-                            .setWriteConcern(WriteConcern.fsync())
-                            .setOrdered(true)
-                            .build()
-                    );
-                    if (!insertResult.isOK() || insertResult.getResult().getN() != currentDocument.size()) {
-                        throw new CloningException("Error while inserting a cloned document");
-                    }
-                    transaction.commit();
+                assert actualBatchSize == currentDocuments.size();
+                
+                boolean executed = false;
+                while (!executed) {
+                    try {
+                        Status<InsertResult> insertResult = transaction.execute(
+                                new Request(toDb, null, true, null),
+                                InsertCommand.INSTANCE,
+                                new InsertArgument.Builder(collection)
+                                .addDocuments(currentDocuments)
+                                .setWriteConcern(WriteConcern.fsync())
+                                .setOrdered(true)
+                                .build()
+                        );
+                        if (!insertResult.isOK() || insertResult.getResult().getN() != actualBatchSize) {
+                            throw new CloningException("Error while inserting a cloned document");
+                        }
+                        insertedDocsCounter += insertResult.getResult().getN();
+                        transaction.commit();
 
-                    long end = clock.millis();
+                        long end = clock.millis();
 
-                    commitHeuristic.notifyDocumentInsertionCommit(actualBatchSize, end - start);
-                    
-                    int newDocsPerCommit = commitHeuristic.getDocumentsPerCommit();
-                    if (newDocsPerCommit != docsPerCommit) {
-                        LOGGER.debug("Changing commit batch size from {} to {}", docsPerCommit, newDocsPerCommit);
-                        docsPerCommit = newDocsPerCommit;
-                    }
-                } catch (RollbackException ex) {
-                    if (attempts < maxAttempts) {
-                        LOGGER.debug("Found a rollback exception, trying again for " + attempts + "th time", ex);
-                        attempts++;
-                        transaction.close();
-                        transaction = createWriteMongodTransaction(localServer);
-                    }
-                    else {
-                        LOGGER.error("Found a rollback exception for {}th time. Aborting", attempts);
-                        throw ex;
+                        commitHeuristic.notifyDocumentInsertionCommit(actualBatchSize, end - start);
+
+                        int newDocsPerCommit = commitHeuristic.getDocumentsPerCommit();
+                        if (newDocsPerCommit != docsPerCommit) {
+                            LOGGER.debug("Changing commit batch size from {} to {}", docsPerCommit, newDocsPerCommit);
+                            docsPerCommit = newDocsPerCommit;
+                        }
+                        executed = true;
+                    } catch (RollbackException ex) {
+                        if (attempts < maxAttempts) {
+                            LOGGER.debug("Found a rollback exception, trying again for " + attempts + "th time", ex);
+                            attempts++;
+                            transaction.close();
+                            transaction = createWriteMongodTransaction(localServer);
+                        }
+                        else {
+                            LOGGER.error("Found a rollback exception for {}th time. Aborting", attempts);
+                            throw ex;
+                        }
                     }
                 }
             }
@@ -321,6 +342,7 @@ public class AkkaDbCloner implements DbCloner {
         } finally {
             transaction.close();
         }
+        return insertedDocsCounter;
     }
 
     private MongoCursor<BsonDocument> openCursor(MongoConnection remoteConnection, String collection, CloneOptions opts) throws MongoException {
@@ -486,6 +508,11 @@ public class AkkaDbCloner implements DbCloner {
         public void close() {
             delegate.close();
             getConnection().close();
+        }
+
+        @Override
+        public boolean isClosed() {
+            return delegate.isClosed();
         }
 
     }

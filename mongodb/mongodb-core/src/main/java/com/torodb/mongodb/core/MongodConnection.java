@@ -24,12 +24,14 @@ public class MongodConnection implements Connection, AutoCloseable {
     private final CommandsExecutor<? super MongodConnection> commandsExecutor;
     private MongodTransaction currentTransaction;
     private boolean closed = false;
+    private final StackTraceElement[] stack;
 
     public MongodConnection(MongodServer server) {
         this.server = server;
         this.torodConnection = server.getTorodServer().openConnection();
         this.lastErrorManager = new LastErrorManager();
         this.commandsExecutor = server.getCommandsExecutorClassifier().getConnectionCommandsExecutor();
+        stack = Thread.currentThread().getStackTrace();
     }
 
     public MongodServer getServer() {

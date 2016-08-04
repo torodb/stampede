@@ -12,6 +12,7 @@ import com.torodb.core.backend.Backend;
 import com.torodb.core.d2r.D2RTranslatorFactory;
 import com.torodb.core.d2r.IdentifierFactory;
 import com.torodb.core.transaction.InternalTransactionManager;
+import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
 import com.torodb.torod.guice.TorodLayer;
 import com.torodb.torod.pipeline.InsertPipelineFactory;
 import java.util.concurrent.ThreadFactory;
@@ -85,6 +86,16 @@ public class TorodServer extends ThreadFactoryIdleService {
         if (value != null) {
             value.close();
         }
+    }
+
+    public void disableInternalIndexes() {
+        ImmutableMetaSnapshot snapshot = internalTransactionManager.takeMetaSnapshot();
+        backend.disableInternalIndexes(snapshot);
+    }
+
+    public void enableInternalIndexes() {
+        ImmutableMetaSnapshot snapshot = internalTransactionManager.takeMetaSnapshot();
+        backend.enableInternalIndexes(snapshot);
     }
 
     D2RTranslatorFactory getD2RTranslatorrFactory() {

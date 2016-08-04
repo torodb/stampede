@@ -20,21 +20,22 @@
 
 package com.torodb.backend;
 
-import java.util.Collection;
-import java.util.Iterator;
-
-import javax.annotation.Nonnull;
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
-import org.jooq.DSLContext;
-
 import com.torodb.backend.ErrorHandler.Context;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.core.TableRef;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
+import javax.annotation.Nonnull;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import org.jooq.DSLContext;
 
 /**
  *
@@ -163,35 +164,41 @@ public abstract class AbstractStructureInterface implements StructureInterface {
             Collection<InternalField<?>> fields);
 
     @Override
-    public void addRootDocPartTableIndexes(DSLContext dsl, String schemaName, String tableName, TableRef tableRef) {
+    public Stream<Consumer<DSLContext>> streamRootDocPartTableIndexesCreation(String schemaName, String tableName, TableRef tableRef) {
+        List<Consumer<DSLContext>> result = new ArrayList<>(1);
         if (dbBackend.includeInternalIndexes()) {
             String primaryKeyStatement = getAddDocPartTablePrimaryKeyStatement(schemaName, tableName, metaDataReadInterface.getPrimaryKeyInternalFields(tableRef));
-            sqlHelper.executeStatement(dsl, primaryKeyStatement, Context.CREATE_INDEX);
+
+            result.add(dsl -> sqlHelper.executeStatement(dsl, primaryKeyStatement, Context.CREATE_INDEX));
         }
+        return result.stream();
     }
 
     @Override
-    public void addDocPartTableIndexes(DSLContext dsl, String schemaName, String tableName, TableRef tableRef, String foreignTableName) {
+    public Stream<Consumer<DSLContext>> streamDocPartTableIndexesCreation(String schemaName, String tableName, TableRef tableRef, String foreignTableName) {
+        List<Consumer<DSLContext>> result = new ArrayList<>(4);
         if (dbBackend.includeInternalIndexes()) {
             String primaryKeyStatement = getAddDocPartTablePrimaryKeyStatement(schemaName, tableName, metaDataReadInterface.getPrimaryKeyInternalFields(tableRef));
-            sqlHelper.executeStatement(dsl, primaryKeyStatement, Context.ADD_UNIQUE_INDEX);
+            result.add( (dsl) -> sqlHelper.executeStatement(dsl, primaryKeyStatement, Context.ADD_UNIQUE_INDEX));
         }
-        
+
         if (dbBackend.includeInternalIndexes()) {
             if (dbBackend.includeForeignKeys()) {
                 String foreignKeyStatement = getAddDocPartTableForeignKeyStatement(schemaName, tableName, metaDataReadInterface.getReferenceInternalFields(tableRef),
                         foreignTableName, metaDataReadInterface.getForeignInternalFields(tableRef));
-                sqlHelper.executeStatement(dsl, foreignKeyStatement, Context.ADD_FOREIGN_KEY);
+                result.add( (dsl) -> sqlHelper.executeStatement(dsl, foreignKeyStatement, Context.ADD_FOREIGN_KEY));
             } else {
                 String foreignKeyIndexStatement = getCreateDocPartTableIndexStatement(schemaName, tableName, metaDataReadInterface.getReferenceInternalFields(tableRef));
-                sqlHelper.executeStatement(dsl, foreignKeyIndexStatement, Context.CREATE_INDEX);
+                result.add( (dsl) -> sqlHelper.executeStatement(dsl, foreignKeyIndexStatement, Context.CREATE_INDEX));
             }
         }
-        
+
         if (dbBackend.includeInternalIndexes()) {
             String readIndexStatement = getCreateDocPartTableIndexStatement(schemaName, tableName, metaDataReadInterface.getReadInternalFields(tableRef));
-            sqlHelper.executeStatement(dsl, readIndexStatement, Context.CREATE_INDEX);
+            result.add( (dsl) -> sqlHelper.executeStatement(dsl, readIndexStatement, Context.CREATE_INDEX));
         }
+
+        return result.stream();
     }
 
     protected abstract String getAddDocPartTablePrimaryKeyStatement(String schemaName, String tableName,

@@ -18,7 +18,7 @@
  * 
  */
 
-package com.torodb.mongodb.utils;
+package com.torodb.mongodb.utils.cloner;
 
 import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.WriteConcern;
@@ -50,6 +50,10 @@ import com.google.common.net.HostAndPort;
 import com.torodb.mongodb.core.MongodConnection;
 import com.torodb.mongodb.core.MongodServer;
 import com.torodb.mongodb.core.WriteMongodTransaction;
+import com.torodb.mongodb.utils.DbCloner;
+import com.torodb.mongodb.utils.ListCollectionsRequester;
+import com.torodb.mongodb.utils.ListIndexesRequester;
+import com.torodb.mongodb.utils.NamespaceUtil;
 import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
@@ -169,7 +173,7 @@ public class TransactionalDbCloner implements DbCloner {
             String collection,
             CollectionOptions collOptions) throws MongoException, CloningException {
         String fromDb = opts.getDbToClone();
-        LOGGER.info("Clonning {}.{} into {}.{}", fromDb, collection, toDb, collection);
+        LOGGER.info("Cloning {}.{} into {}.{}", fromDb, collection, toDb, collection);
 
         EnumSet<QueryOption> queryFlags = EnumSet.of(QueryOption.NO_CURSOR_TIMEOUT); //TODO: enable exhaust?
         if (opts.isSlaveOk()) {

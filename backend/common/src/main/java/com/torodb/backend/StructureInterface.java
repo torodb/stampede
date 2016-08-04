@@ -1,13 +1,13 @@
 package com.torodb.backend;
 
-import javax.annotation.Nonnull;
-
-import org.jooq.DSLContext;
-
 import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.core.TableRef;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
+import javax.annotation.Nonnull;
+import org.jooq.DSLContext;
 
 public interface StructureInterface {
     void createSchema(@Nonnull DSLContext dsl, @Nonnull String schemaName);
@@ -18,8 +18,33 @@ public interface StructureInterface {
     void createRootDocPartTable(@Nonnull DSLContext dsl, @Nonnull String schemaName, @Nonnull String tableName, @Nonnull TableRef tableRef);
     void createDocPartTable(@Nonnull DSLContext dsl, @Nonnull String schemaName, @Nonnull String tableName, @Nonnull TableRef tableRef,
             @Nonnull String foreignTableName);
-    void addRootDocPartTableIndexes(@Nonnull DSLContext dsl, @Nonnull String schemaName, @Nonnull String tableName, @Nonnull TableRef tableRef);
-    void addDocPartTableIndexes(@Nonnull DSLContext dsl, @Nonnull String schemaName, @Nonnull String tableName, @Nonnull TableRef tableRef, @Nonnull String foreignTableName);
+
+    /**
+     * Returns a stream of consumers that, when executed, create the required indexes on a root
+     * doc part table.
+     *
+     * The returned stream is empty if the backend is not including the internal indexes
+     * @param schemaName
+     * @param tableName
+     * @param tableRef
+     * @return
+     * @see DbBackend#includeInternalIndexes()
+     */
+    Stream<Consumer<DSLContext>> streamRootDocPartTableIndexesCreation(String schemaName, String tableName, TableRef tableRef);
+    
+    /**
+     * Returns a stream of consumers that, when executed, create the required indexes on a doc part
+     * table.
+     *
+     * The returned stream is empty if the backend is not including the internal indexes
+     * @param schemaName
+     * @param tableName
+     * @param tableRef
+     * @param foreignTableName
+     * @return
+     * @see DbBackend#includeInternalIndexes()
+     */
+    Stream<Consumer<DSLContext>> streamDocPartTableIndexesCreation(String schemaName, String tableName, TableRef tableRef, String foreignTableName);
     void addColumnToDocPartTable(@Nonnull DSLContext dsl, @Nonnull String schemaName, @Nonnull String tableName, @Nonnull String columnName, @Nonnull DataTypeForKV<?> dataType);
     
     void createIndex(@Nonnull DSLContext dsl, @Nonnull String tableSchema, 

@@ -241,31 +241,13 @@ public class RecoveryService extends ThreadFactoryRunnableService {
 
     private void disableInternalIndexes() throws UserException {
         LOGGER.debug("Disabling internal indexes");
-        try (MongodConnection localConnection = server.openConnection()) {
-            while (true) {
-                try (WriteMongodTransaction transaction = localConnection.openWriteTransaction();) {
-                    transaction.getTorodTransaction().disableInternalIndexes();
-                    transaction.commit();
-                    break;
-                } catch (RollbackException ignore) {
-                }
-            }
-        }
+        server.getTorodServer().disableInternalIndexes();
         LOGGER.trace("Internal indexes disabled");
     }
 
     private void enableInternalIndexes() throws UserException {
         LOGGER.debug("Reactivating internal indexes");
-        try (MongodConnection localConnection = server.openConnection()) {
-            while (true) {
-                try (WriteMongodTransaction transaction = localConnection.openWriteTransaction();) {
-                    transaction.getTorodTransaction().enableInternalIndexes();
-                    transaction.commit();
-                    break;
-                } catch (RollbackException ignore) {
-                }
-            }
-        }
+        server.getTorodServer().enableInternalIndexes();
         LOGGER.trace("Internal indexes enabled");
     }
 

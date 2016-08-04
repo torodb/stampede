@@ -18,14 +18,11 @@ import com.eightkdata.mongowp.server.api.Request;
 import com.eightkdata.mongowp.server.api.SafeRequestProcessor;
 import com.eightkdata.mongowp.server.api.pojos.QueryRequest;
 import com.google.common.collect.Lists;
-import com.torodb.core.Retrier;
+import com.torodb.core.retrier.Retrier;
+import com.torodb.core.retrier.RetrierGiveUpException;
 import com.torodb.mongodb.commands.TorodbCommandsLibrary;
 import com.torodb.mongodb.commands.TorodbCommandsLibrary.RequiredTransaction;
-import com.torodb.mongodb.core.MongodConnection;
-import com.torodb.mongodb.core.MongodMetrics;
-import com.torodb.mongodb.core.MongodServer;
-import com.torodb.mongodb.core.ReadOnlyMongodTransaction;
-import com.torodb.mongodb.core.WriteMongodTransaction;
+import com.torodb.mongodb.core.*;
 import io.netty.util.AttributeKey;
 import java.util.concurrent.Callable;
 import javax.inject.Inject;
@@ -91,17 +88,15 @@ public class TorodbSafeRequestProcessor implements SafeRequestProcessor<MongodCo
 	            default:
 	                throw new AssertionError("Unexpected command type" + commandType);
 	        }
-	
-	        Status<Result> retryStatus = retrier.retry(callable, (Status<Result>)null);
-	        if (retryStatus == null) {
-	            return Status.from(
-	                    ErrorCode.CONFLICTING_OPERATION_IN_PROGRESS,
-	                    "It was impossible to execute " + command.getCommandName() + " after several attempts"
-	            );
-	        }
-	        else {
-	            return retryStatus;
-	        }
+
+            try {
+                return retrier.retry(callable);
+            } catch (RetrierGiveUpException ex) {
+                return Status.from(
+                        ErrorCode.CONFLICTING_OPERATION_IN_PROGRESS,
+                        "It was impossible to execute " + command.getCommandName() + " after several attempts"
+                );
+            }
         }
     }
 

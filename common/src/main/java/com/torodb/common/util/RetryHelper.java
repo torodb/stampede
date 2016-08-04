@@ -22,8 +22,10 @@ package com.torodb.common.util;
 
 import com.google.common.base.Optional;
 import java.util.concurrent.Callable;
+import java.util.function.IntBinaryOperator;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.annotation.concurrent.NotThreadSafe;
 
 /**
  *
@@ -115,8 +117,8 @@ public class RetryHelper {
         return new UntilAttemptsExceptionHandler<>(maxAttempts, beforeHandler, afterHandler);
     }
 
-    public static <R, T extends Exception> ExceptionHandler<R, T> waitExceptionHandler(long millis) {
-        return new WaitExceptionHandler<>(millis);
+    public static <R, T extends Exception> ExceptionHandler<R, T> waitExceptionHandler(int millis) {
+        return new FixedMillisWaitExceptionHandler<>(millis);
     }
 
     public static <R, CT extends Exception, T2 extends Exception> StorerExceptionHandler<R, CT, T2> storerExceptionHandler(Class<CT> excetionClass, ExceptionHandler<R, T2> delegate) {
@@ -210,10 +212,10 @@ public class RetryHelper {
         }
     }
 
-    public static class WaitExceptionHandler<Result, T extends Exception> implements ExceptionHandler<Result, T> {
-        private final long millis;
+    public static class FixedMillisWaitExceptionHandler<Result, T extends Exception> implements ExceptionHandler<Result, T> {
+        private final int millis;
 
-        public WaitExceptionHandler(long millis) {
+        public FixedMillisWaitExceptionHandler(int millis) {
             this.millis = millis;
         }
 
@@ -225,6 +227,43 @@ public class RetryHelper {
                 Thread.interrupted();
             }
             callback.doRetry();
+        }
+    }
+
+    @NotThreadSafe
+    public static class IncrementalWaitExceptionHandler<Result, T extends Exception> extends DelegateExceptionHandler<Result, T> {
+        private final IntBinaryOperator newMillisFunction;
+        private int currentMillis;
+
+        /**
+         *
+         * @param newMillisFunction the first argument is the millis that it has wait on the last
+         *                          iteration (or 0 for the first) and the second the attempts. The
+         *                          result is the number of millis that will wait or a negative
+         *                          number if it should give up.
+         * @param delegate          the exception handler on which delegate when giving up.
+         */
+        public IncrementalWaitExceptionHandler(IntBinaryOperator newMillisFunction, ExceptionHandler<Result, T> delegate) {
+            super(delegate);
+            this.newMillisFunction = newMillisFunction;
+            this.currentMillis = 0;
+        }
+
+        @Override
+        public void handleException(RetryCallback<Result> callback, Exception t, int attempts)
+                throws T {
+            try {
+                currentMillis = newMillisFunction.applyAsInt(currentMillis, attempts);
+                if (currentMillis < 0) {
+                    super.handleException(callback, t, attempts);
+                }
+                else {
+                    Thread.sleep(currentMillis);
+                    callback.doRetry();
+                }
+            } catch (InterruptedException ex) {
+                Thread.interrupted();
+            }
         }
     }
 

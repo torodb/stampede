@@ -223,14 +223,6 @@ public class WriteTorodTransaction extends TorodTransaction {
         }
         return metaCol;
     }
-    
-    public void disableInternalIndexes() {
-        internalTransaction.getBackendTransaction().disableInternalIndexes(internalTransaction.getMetaSnapshot());
-    }
-    
-    public void enableInternalIndexes() {
-        internalTransaction.getBackendTransaction().enableInternalIndexes(internalTransaction.getMetaSnapshot());
-    }
 
     @Override
     protected InternalTransaction getInternalTransaction() {
