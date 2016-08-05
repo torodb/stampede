@@ -1,6 +1,7 @@
 
 package com.torodb.mongodb.repl.guice;
 
+import com.torodb.core.annotations.ParallelLevel;
 import com.eightkdata.mongowp.OpTime;
 import com.eightkdata.mongowp.client.wrapper.MongoClientWrapper;
 import com.google.common.annotations.Beta;
@@ -65,10 +66,6 @@ public class MongoDbReplModule extends AbstractModule {
         bind(Integer.class)
                 .annotatedWith(DocsPerTransaction.class)
                 .toInstance(1000);
-
-        bind(Integer.class)
-                .annotatedWith(ParallelLevel.class)
-                .toInstance(5);
 
         bind(ThreadFactory.class)
                 .annotatedWith(MongoDbRepl.class)

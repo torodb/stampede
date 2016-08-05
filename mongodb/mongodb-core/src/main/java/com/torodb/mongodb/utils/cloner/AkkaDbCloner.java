@@ -1,18 +1,11 @@
 package com.torodb.mongodb.utils.cloner;
 
-import java.time.Clock;
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.Executor;
-import java.util.stream.Collectors;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
+import akka.NotUsed;
+import akka.actor.ActorSystem;
+import akka.dispatch.ExecutionContexts;
+import akka.japi.Pair;
+import akka.stream.*;
+import akka.stream.javadsl.*;
 import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.WriteConcern;
 import com.eightkdata.mongowp.bson.BsonDocument;
@@ -42,35 +35,33 @@ import com.google.common.annotations.Beta;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.net.HostAndPort;
+import com.torodb.core.concurrent.StreamExecutor;
 import com.torodb.core.exceptions.user.UserException;
+import com.torodb.core.retrier.Retrier;
+import com.torodb.core.retrier.RetrierAbortException;
+import com.torodb.core.retrier.RetrierGiveUpException;
 import com.torodb.core.transaction.RollbackException;
 import com.torodb.mongodb.core.MongodConnection;
 import com.torodb.mongodb.core.MongodServer;
 import com.torodb.mongodb.core.WriteMongodTransaction;
 import com.torodb.mongodb.utils.DbCloner;
+import com.torodb.mongodb.utils.DbCloner.CloneOptions;
+import com.torodb.mongodb.utils.DbCloner.CloningException;
 import com.torodb.mongodb.utils.ListCollectionsRequester;
 import com.torodb.mongodb.utils.ListIndexesRequester;
 import com.torodb.mongodb.utils.NamespaceUtil;
 import com.torodb.torod.WriteTorodTransaction;
-
-import akka.NotUsed;
-import akka.actor.ActorSystem;
-import akka.dispatch.ExecutionContexts;
-import akka.japi.Pair;
-import akka.stream.ActorMaterializer;
-import akka.stream.FlowShape;
-import akka.stream.Graph;
-import akka.stream.Materializer;
-import akka.stream.OverflowStrategy;
-import akka.stream.UniformFanInShape;
-import akka.stream.UniformFanOutShape;
-import akka.stream.javadsl.Balance;
-import akka.stream.javadsl.Flow;
-import akka.stream.javadsl.GraphDSL;
-import akka.stream.javadsl.Keep;
-import akka.stream.javadsl.Merge;
-import akka.stream.javadsl.Sink;
-import akka.stream.javadsl.Source;
+import java.time.Clock;
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.Executor;
+import java.util.logging.Level;
+import java.util.stream.Stream;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import scala.concurrent.Await;
 import scala.concurrent.duration.Duration;
 
@@ -99,6 +90,7 @@ public class AkkaDbCloner implements DbCloner {
      * The executor that will execute each task in which the cloning is divided.
      */
     private final Executor executor;
+    private final StreamExecutor streamExecutor;
     /**
      * The number of parallel task that can be used to clone each collection
      */
@@ -114,10 +106,13 @@ public class AkkaDbCloner implements DbCloner {
     private final int insertBufferSize;
     private final CommitHeuristic commitHeuristic;
     private final Clock clock;
+    private final Retrier retrier;
 
-    public AkkaDbCloner(Executor executor, int maxParallelInsertTasks,
-            int cursorBatchBufferSize, int insertBufferSize, CommitHeuristic commitHeuristic, Clock clock) {
+    public AkkaDbCloner(Executor executor, int maxParallelInsertTasks, StreamExecutor streamExecutor,
+            int cursorBatchBufferSize, int insertBufferSize, CommitHeuristic commitHeuristic, 
+            Clock clock, Retrier retrier) {
         this.executor = executor;
+        this.streamExecutor = streamExecutor;
         this.maxParallelInsertTasks = maxParallelInsertTasks;
         Preconditions.checkArgument(maxParallelInsertTasks >= 1, "The number of parallel insert "
                 + "tasks level must be higher than 0, but " + maxParallelInsertTasks + " was used");
@@ -129,6 +124,7 @@ public class AkkaDbCloner implements DbCloner {
                 + "0, but " + insertBufferSize + " was used");
         this.commitHeuristic = commitHeuristic;
         this.clock = clock;
+        this.retrier = retrier;
     }
 
     @Override
@@ -165,32 +161,25 @@ public class AkkaDbCloner implements DbCloner {
                     + "after get collections info");
         }
 
-        boolean finish = false;
-        while (!finish) {
-            try {
-                List<CompletableFuture<Void>> prepareCollectionFutures = collsToClone.stream()
-                        .map(collEntry -> CompletableFuture.runAsync(() ->
-                                prepareCollection(localServer, dstDb, collEntry))
-                        )
-                        .collect(Collectors.toList());
-                CompletableFuture.allOf(prepareCollectionFutures.toArray(new CompletableFuture[prepareCollectionFutures.size()]))
-                        .join();
-                finish = true;
-            } catch (CompletionException ex) {
-                Throwable cause = ex.getCause();
-                if (cause != null) {
-                    if (cause instanceof CloningException) {
-                        throw (CloningException) cause;
-                    }
-                    if (cause instanceof MongoException) {
-                        throw (MongoException) cause;
-                    }
-                    if (cause instanceof RollbackException) {
-                        continue;
-                    }
+        try {
+            Stream<Runnable> prepareCollectionRunnables = collsToClone.stream()
+                    .map(collEntry -> () -> prepareCollection(localServer, dstDb, collEntry));
+            streamExecutor.executeRunnables(prepareCollectionRunnables)
+                    .join();
+        } catch (CompletionException ex) {
+            Throwable cause = ex.getCause();
+            if (cause != null) {
+                if (cause instanceof CloningException) {
+                    throw (CloningException) cause;
                 }
-                throw ex;
+                if (cause instanceof MongoException) {
+                    throw (MongoException) cause;
+                }
+                if (cause instanceof RollbackException) {
+                    throw new AssertionError("Unexpected rollback exception", cause);
+                }
             }
+            throw ex;
         }
         
         ActorSystem actorSystem = ActorSystem.create("dbClone", null, null,
@@ -409,13 +398,21 @@ public class AkkaDbCloner implements DbCloner {
         return collsToClone;
     }
 
-    private void prepareCollection(MongodServer localServer, String dstDb, Entry colEntry) throws RollbackException {
-        try (WriteMongodTransaction transaction = createWriteMongodTransaction(localServer)) {
-            dropCollection(transaction, dstDb, colEntry.getCollectionName());
-            createCollection(transaction, dstDb, colEntry.getCollectionName(), colEntry.getCollectionOptions());
-            transaction.commit();
-        } catch (UserException ex) {
-            throw new CloningException("An unexpected user exception was catched", ex);
+    private void prepareCollection(MongodServer localServer, String dstDb, Entry colEntry) 
+            throws RetrierAbortException {
+        try {
+            retrier.retry(() -> {
+                try (WriteMongodTransaction transaction = createWriteMongodTransaction(localServer)) {
+                    dropCollection(transaction, dstDb, colEntry.getCollectionName());
+                    createCollection(transaction, dstDb, colEntry.getCollectionName(), colEntry.getCollectionOptions());
+                    transaction.commit();
+                    return null;
+                } catch (UserException ex) {
+                    throw new RetrierAbortException("An unexpected user exception was catched", ex);
+                }
+            });
+        } catch (RetrierGiveUpException ex) {
+            throw new CloningException(ex);
         }
     }
 

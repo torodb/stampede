@@ -186,6 +186,15 @@ public interface Retrier {
     public static enum Hint {
 
         /**
+         * For task that it is critical to be executed.
+         * <p>
+         * This hint indicates that the retrier should try to execute the task more times before it
+         * gives up when rollbacks are recived, because once it does, ToroDB could become unestable
+         * or at least it will be difficult or expensive to recover. The retrier could even decide
+         * to never give up when this hint is sent.
+         */
+        CRITICAL,
+        /**
          * For task that usually recives rollbacks.
          * <p>
          * This hint indicates that the retrier should try to execute the task more times before it

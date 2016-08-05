@@ -1,8 +1,9 @@
 
-package com.torodb.packaging.guice;
+package com.torodb.concurrent.guice;
 
 import com.torodb.concurrent.ForkJoinToroDbExecutor;
-import com.torodb.concurrent.ToroDbExecutorService;
+import com.torodb.core.annotations.ParallelLevel;
+import com.torodb.core.concurrent.ToroDbExecutorService;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinPool.ForkJoinWorkerThreadFactory;
 import javax.inject.Inject;
@@ -17,22 +18,19 @@ public class ForkJoinToroDbExecutorProvider implements Provider<ToroDbExecutorSe
     private final ForkJoinWorkerThreadFactory threadFactory;
 
     @Inject
-    public ForkJoinToroDbExecutorProvider(int parallelism, ForkJoinWorkerThreadFactory threadFactory) {
+    public ForkJoinToroDbExecutorProvider(@ParallelLevel int parallelism, ForkJoinWorkerThreadFactory threadFactory) {
         this.parallelism = parallelism;
         this.threadFactory = threadFactory;
     }
 
     @Override
     public ToroDbExecutorService get() {
-//        ForkJoinPool actualExecutor = new ForkJoinPool(
-//                parallelism,
-//                threadFactory,
-//                null,
-//                true
-//        );
-        ForkJoinPool actualExecutor = new ForkJoinPool(parallelism,
-                ForkJoinPool.defaultForkJoinWorkerThreadFactory,
-                null, true);
+        ForkJoinPool actualExecutor = new ForkJoinPool(
+                parallelism,
+                threadFactory,
+                null,
+                true
+        );
         return new ForkJoinToroDbExecutor(actualExecutor);
     }
 }

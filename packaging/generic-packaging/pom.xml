@@ -149,6 +149,10 @@
             <artifactId>concurrent</artifactId>
             <version>0.50.0-SNAPSHOT</version>
         </dependency>
+        <dependency>
+            <groupId>org.jooq</groupId>
+            <artifactId>jool</artifactId>
+        </dependency>
     </dependencies>
     
     <build>
