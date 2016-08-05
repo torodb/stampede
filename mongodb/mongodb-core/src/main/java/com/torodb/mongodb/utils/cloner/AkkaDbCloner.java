@@ -193,7 +193,15 @@ public class AkkaDbCloner implements DbCloner {
                     LOGGER.info("Cloning {}.{} into {}.{}", fromDb, entry.getCollectionName(),
                             dstDb, entry.getCollectionName());
 
-                    cloneCollection(localServer, remoteConnection, dstDb, opts, materializer, entry);
+                    try {
+                        cloneCollection(localServer, remoteConnection, dstDb, opts, materializer, entry);
+                    } catch(CompletionException completionException) {
+                        if (completionException.getCause() instanceof RollbackException) {
+                            throw (RollbackException) completionException.getCause();
+                        }
+                        
+                        throw completionException;
+                    }
                 }
             }
             if (opts.isCloneIndexes()) {
