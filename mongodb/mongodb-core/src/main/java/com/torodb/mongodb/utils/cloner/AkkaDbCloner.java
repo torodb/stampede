@@ -217,7 +217,7 @@ public class AkkaDbCloner implements DbCloner {
 
         MongoCursor<BsonDocument> cursor = openCursor(remoteConnection, collName, opts);
 
-        Source<BsonDocument, NotUsed> source = Source.from(cursor)
+        Source<BsonDocument, NotUsed> source = Source.fromIterator(() -> cursor)
                 .buffer(cursorBatchBufferSize, OverflowStrategy.backpressure())
                 .async();
 
@@ -526,5 +526,4 @@ public class AkkaDbCloner implements DbCloner {
         }
 
     }
-
 }

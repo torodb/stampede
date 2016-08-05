@@ -16,9 +16,11 @@ import com.eightkdata.mongowp.server.api.pojos.MongoCursor.DeadCursorException;
 import com.eightkdata.mongowp.server.api.pojos.TransformationMongoCursor;
 import com.eightkdata.mongowp.utils.BsonArrayBuilder;
 import com.google.common.base.Preconditions;
+import com.google.common.net.HostAndPort;
 import com.torodb.mongodb.repl.OplogReader;
 import java.util.EnumSet;
 import java.util.Iterator;
+import java.util.function.Consumer;
 
 import static com.eightkdata.mongowp.bson.utils.DefaultBsonValues.*;
 
@@ -211,32 +213,45 @@ public abstract class AbstractMongoOplogReader implements OplogReader {
         }
 
         @Override
-        public boolean isDead() {
-            return delegate.isDead();
-        }
-
-        @Override
         public Batch<T> fetchBatch() throws MongoException,
                 DeadCursorException {
             return delegate.fetchBatch();
         }
 
         @Override
-        public T getOne() throws MongoException, DeadCursorException {
-            T one = delegate.getOne();
-            releaseConnection(connection);
-            return one;
+        public T next() {
+            return delegate.next();
+        }
+
+        @Override
+        public HostAndPort getServerAddress() {
+            return delegate.getServerAddress();
+        }
+
+        @Override
+        public boolean hasNext() {
+            return delegate.hasNext();
+        }
+
+        @Override
+        public T tryNext() {
+            return delegate.tryNext();
+        }
+
+        @Override
+        public void remove() {
+            delegate.remove();
+        }
+
+        @Override
+        public void forEachRemaining(Consumer<? super T> action) {
+            delegate.forEachRemaining(action);
         }
 
         @Override
         public void close() {
             delegate.close();
             releaseConnection(connection);
-        }
-
-        @Override
-        public Iterator<T> iterator() {
-            return delegate.iterator();
         }
     }
 }

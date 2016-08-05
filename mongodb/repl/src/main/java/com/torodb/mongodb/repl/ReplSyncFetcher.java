@@ -226,7 +226,7 @@ class ReplSyncFetcher extends ThreadFactoryRunnableService {
         infrequentChecks(reader);
         
         if (!newBatch.hasNext()) {
-            if (cursor.isDead()) {
+            if (cursor.hasNext()) {
                 throw new RestartFetchException();
             }
         }
