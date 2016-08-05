@@ -37,12 +37,14 @@ public class CoreModule extends AbstractModule {
                 .to(TableRefFactoryImpl.class)
                 .asEagerSingleton();
 
+        int maxCriticalAttempts = 100;
         int maxInfrequentAttempts = 5;
         int maxFrequentAttempts = 100;
         int maxDefaultAttempts = 10;
 
         bind(Retrier.class)
                 .toInstance(new SmartRetrier(
+                        attempts -> attempts >= maxCriticalAttempts,
                         attempts -> attempts >= maxInfrequentAttempts,
                         attempts -> attempts >= maxFrequentAttempts,
                         attempts -> attempts >= maxDefaultAttempts

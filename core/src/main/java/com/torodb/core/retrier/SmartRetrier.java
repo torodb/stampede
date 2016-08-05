@@ -35,15 +35,17 @@ import org.apache.logging.log4j.Logger;
 public class SmartRetrier extends AbstractHintableRetrier {
 
     private static final Logger LOGGER = LogManager.getLogger(SmartRetrier.class);
+    private final IntPredicate criticalGiveUpPredicate;
     private final IntPredicate infrequentGiveUpPredicate;
     private final IntPredicate frequentGiveUpPredicate;
     private final IntPredicate defaultGiveUpPredicate;
     
-    public SmartRetrier(IntPredicate infrequentGiveUpPredicate,
+    public SmartRetrier(IntPredicate criticalGiveUpPredicate, IntPredicate infrequentGiveUpPredicate,
             IntPredicate frequentGiveUpPredicate, IntPredicate defaultGiveUpPredicate) {
         this.infrequentGiveUpPredicate = infrequentGiveUpPredicate;
         this.frequentGiveUpPredicate = frequentGiveUpPredicate;
         this.defaultGiveUpPredicate = defaultGiveUpPredicate;
+        this.criticalGiveUpPredicate = criticalGiveUpPredicate;
     }
 
     @Override
@@ -62,6 +64,9 @@ public class SmartRetrier extends AbstractHintableRetrier {
     }
 
     private IntPredicate getGiveUpPredicate(EnumSet<Hint> hints) {
+        if (hints.contains(Hint.CRITICAL)) {
+            return criticalGiveUpPredicate;
+        }
         if (hints.contains(Hint.INFREQUENT_ROLLBACK)) {
             return infrequentGiveUpPredicate;
         }
