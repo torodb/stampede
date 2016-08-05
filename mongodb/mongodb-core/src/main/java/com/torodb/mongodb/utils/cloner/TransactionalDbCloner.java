@@ -189,7 +189,7 @@ public class TransactionalDbCloner implements DbCloner {
                 null,
                 null
         );
-        while (!cursor.isDead()) {
+        while (!cursor.hasNext()) {
             List<? extends BsonDocument> docsToInsert = cursor.fetchBatch().asList();
 
             Status<InsertResult> insertResult = transaction.execute(

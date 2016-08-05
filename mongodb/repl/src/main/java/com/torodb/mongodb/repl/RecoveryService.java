@@ -344,7 +344,7 @@ public class RecoveryService extends ThreadFactoryRunnableService {
             OpTime from,
             OpTime to) throws TryAgainException, MongoException, OplogManagerPersistException {
 
-        Iterator<OplogOperation> it = remoteOplog.between(from, true, to, true).iterator();
+        Iterator<OplogOperation> it = remoteOplog.between(from, true, to, true);
 
         if (!it.hasNext()) {
             throw new OplogStartMissingException(remoteOplog.getSyncSource());
