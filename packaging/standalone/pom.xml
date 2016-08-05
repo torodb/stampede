@@ -217,6 +217,7 @@
         <profile>
             <id>docker</id>
             <properties>
+                <docker.skipbase>true</docker.skipbase>
                 <docker.postgres.password>postgres</docker.postgres.password>
                 <docker.torodb.password>torodb</docker.torodb.password>
             </properties>
@@ -258,7 +259,7 @@
                                             <POSTGRES_PASSWORD>${docker.postgres.password}</POSTGRES_PASSWORD>
                                         </env>
                                         <ports>
-                                            <port>5432:5432</port>
+                                            <port>15432:5432</port>
                                         </ports>
                                         <log>
                                             <prefix>postgres</prefix>
@@ -268,24 +269,10 @@
                                     </run>
                                 </image>
                                 <image>
-                                    <alias>mongo</alias>
-                                    <name>mongo:3.2</name>
-                                    <run>
-                                        <ports>
-                                            <port>27017:27017</port>
-                                        </ports>
-                                        <log>
-                                            <prefix>mongo</prefix>
-                                            <enabled>true</enabled>
-                                            <color>green</color>
-                                        </log>
-                                        <cmd>mongod --replSet rs1</cmd>
-                                    </run>
-                                </image>
-                                <image>
                                     <alias>torodb</alias>
-                                    <name>8kdata/torodb:%v</name>
+                                    <name>8kdata/torodb-base:%v</name>
                                     <build>
+                                        <skip>${docker.skipbase}</skip>
                                         <from>java:8</from>
                                         <tags>
                                             <tag>${project.version}</tag>
@@ -298,12 +285,27 @@
                                         <runCmds>
                                             <run>#TODO: https://jira.mongodb.org/browse/SERVER-22143</run>
                                             <run>curl "https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-3.2.8.tgz" | tar xz  -C /opt --transform 's-^[^/]*-mongodb-' -f -</run>
-		                                    <run>apt-get update</run>
-		                                    <run>apt-get install netcat postgresql-client python-pip -y</run>
+                                            <run>apt-get update</run>
+                                            <run>apt-get install netcat postgresql-client python-pip -y</run>
                                             <run>pip install awscli</run>
                                             <run>apt-get clean</run>
                                             <run>rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*</run>
                                         </runCmds>
+                                    </build>
+                                </image>
+                                <image>
+                                    <alias>torodb</alias>
+                                    <name>8kdata/torodb:%v</name>
+                                    <build>
+                                        <from>8kdata/torodb-base:latest</from>
+                                        <tags>
+                                            <tag>${project.version}</tag>
+                                            <tag>latest</tag>
+                                        </tags>
+                                        <assembly>
+                                            <mode>dir</mode>
+                                            <descriptor>assembly.xml</descriptor>
+                                        </assembly>
                                     </build>
                                     <run>
                                         <env>
@@ -312,7 +314,6 @@
                                         </env>
                                         <links>
                                           <link>postgres:postgres</link>
-                                          <link>mongo:mongo</link>
                                         </links>
                                         <ports>
                                             <port>27018:27018</port>
@@ -323,7 +324,7 @@
                                             <color>white</color>
                                         </log>
                                         <workingDir>/maven</workingDir>
-                                        <cmd>./run-replication-postgres.sh</cmd>
+                                        <cmd>./run-postgres.sh</cmd>
                                     </run>
                                 </image>
                             </images>

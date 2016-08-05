@@ -57,10 +57,17 @@ To get the latest version, you may compile ToroDB yourself. All the project is w
 
 ToroDB is based on the [Mongo Wire Protocol library][5] (mongowp), which is another library built by [8Kdata][6] to help construct programs that speak the MongoDB protocol. You may also compile this library yourself, or let maven download it from the repository automatically.
 
-Just run `mvn package -Passembler` on the root directory and execute it from 
+Just run `mvn package -P assembler` on the root directory and execute it from 
 `torodb/target/appassembler/bin` or choose your prefered packaging format from
 `torodb/target/dist/`.
 
+### Compile and create docker image
+
+To build the docker image the first time run `mvn package -P docker,assembler -Ddocker.skipbase=false` on the root directory.
+
+Next time you will be able to build the torodb docker image running `mvn package -P docker,assembler`.
+
+To run docker containers of ToroDB with PostgreSQL backend just run  `mvn docker:run -P docker,assembler -pl :standalone`. You will have now ToroDB running on port 27018 and will be able to watch created table connection to PostgreSQL on port 15432 (user: postgres, password: postgres, database: torod).
 
 ## Running ToroDB
 
