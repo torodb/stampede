@@ -35,6 +35,7 @@ import com.google.common.annotations.Beta;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.net.HostAndPort;
+import com.torodb.core.concurrent.StreamExecutor;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.transaction.RollbackException;
 import com.torodb.mongodb.core.MongodConnection;
@@ -52,10 +53,9 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executor;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import scala.concurrent.Await;
@@ -86,6 +86,7 @@ public class AkkaDbCloner implements DbCloner {
      * The executor that will execute each task in which the cloning is divided.
      */
     private final Executor executor;
+    private final StreamExecutor streamExecutor;
     /**
      * The number of parallel task that can be used to clone each collection
      */
@@ -102,9 +103,10 @@ public class AkkaDbCloner implements DbCloner {
     private final CommitHeuristic commitHeuristic;
     private final Clock clock;
 
-    public AkkaDbCloner(Executor executor, int maxParallelInsertTasks,
+    public AkkaDbCloner(Executor executor, int maxParallelInsertTasks, StreamExecutor streamExecutor,
             int cursorBatchBufferSize, int insertBufferSize, CommitHeuristic commitHeuristic, Clock clock) {
         this.executor = executor;
+        this.streamExecutor = streamExecutor;
         this.maxParallelInsertTasks = maxParallelInsertTasks;
         Preconditions.checkArgument(maxParallelInsertTasks >= 1, "The number of parallel insert "
                 + "tasks level must be higher than 0, but " + maxParallelInsertTasks + " was used");
@@ -155,12 +157,9 @@ public class AkkaDbCloner implements DbCloner {
         boolean finish = false;
         while (!finish) {
             try {
-                List<CompletableFuture<Void>> prepareCollectionFutures = collsToClone.stream()
-                        .map(collEntry -> CompletableFuture.runAsync(() ->
-                                prepareCollection(localServer, dstDb, collEntry))
-                        )
-                        .collect(Collectors.toList());
-                CompletableFuture.allOf(prepareCollectionFutures.toArray(new CompletableFuture[prepareCollectionFutures.size()]))
+                Stream<Runnable> prepareCollectionRunnables = collsToClone.stream()
+                        .map(collEntry -> () -> prepareCollection(localServer, dstDb, collEntry));
+                streamExecutor.executeRunnables(prepareCollectionRunnables)
                         .join();
                 finish = true;
             } catch (CompletionException ex) {

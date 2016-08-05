@@ -7,30 +7,24 @@ import com.torodb.backend.meta.SnapshotUpdater;
 import com.torodb.backend.rid.MaxRowIdFactory;
 import com.torodb.common.util.ThreadFactoryIdleService;
 import com.torodb.core.TableRefFactory;
-import com.torodb.core.concurrent.ToroDbExecutorService;
 import com.torodb.core.annotations.ToroDbIdleService;
 import com.torodb.core.backend.Backend;
 import com.torodb.core.backend.BackendConnection;
+import com.torodb.core.concurrent.StreamExecutor;
 import com.torodb.core.d2r.IdentifierFactory;
 import com.torodb.core.d2r.R2DTranslator;
 import com.torodb.core.d2r.RidGenerator;
 import com.torodb.core.exceptions.ToroRuntimeException;
 import com.torodb.core.retrier.Retrier;
-import com.torodb.core.retrier.Retrier.Hint;
 import com.torodb.core.retrier.RetrierGiveUpException;
 import com.torodb.core.transaction.RollbackException;
 import com.torodb.core.transaction.metainf.*;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ThreadFactory;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 import javax.inject.Inject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -54,7 +48,7 @@ public class BackendImpl extends ThreadFactoryIdleService implements Backend {
     private final IdentifierFactory identifierFactory;
     private final RidGenerator ridGenerator;
     private final Retrier retrier;
-    private final ToroDbExecutorService executor;
+    private final StreamExecutor streamExecutor;
 
     /**
      * @param threadFactory the thread factory that will be used to create the startup and shutdown
@@ -78,7 +72,7 @@ public class BackendImpl extends ThreadFactoryIdleService implements Backend {
             SchemaUpdater schemaUpdater, MetainfoRepository metainfoRepository,
             TableRefFactory tableRefFactory, MaxRowIdFactory maxRowIdFactory,
             R2DTranslator r2dTranslator, IdentifierFactory identifierFactory, Retrier retrier,
-            ToroDbExecutorService executor) {
+            StreamExecutor streamExecutor) {
         super(threadFactory);
         this.dbBackendService = dbBackendService;
         this.sqlInterface = sqlInterface;
@@ -91,7 +85,7 @@ public class BackendImpl extends ThreadFactoryIdleService implements Backend {
         this.identifierFactory = identifierFactory;
         this.ridGenerator = ridGenerator;
         this.retrier = retrier;
-        this.executor = executor;
+        this.streamExecutor = streamExecutor;
     }
     
     @Override
@@ -129,13 +123,8 @@ public class BackendImpl extends ThreadFactoryIdleService implements Backend {
                     .streamDataInsertFinishTasks(snapshot);
             Stream<Runnable> runnables = Stream.concat(createIndexesJobs, backendSpecificJobs)
                     .map(this::dslConsumerToRunnable);
-            
-            List<CompletableFuture<Void>> futures = runnables
-                    .map(runnable -> CompletableFuture.runAsync(runnable, executor))
-                    .collect(Collectors.toList());
             try {
-                CompletableFuture.allOf(
-                        futures.toArray(new CompletableFuture[futures.size()]))
+                streamExecutor.executeRunnables(runnables)
                         .join();
             } catch (CompletionException ex) {
                 if (ex.getCause() != null && ex.getCause() instanceof RollbackException) {
