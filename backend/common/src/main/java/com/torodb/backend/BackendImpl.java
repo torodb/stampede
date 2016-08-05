@@ -21,7 +21,6 @@ import com.torodb.core.transaction.RollbackException;
 import com.torodb.core.transaction.metainf.*;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.concurrent.CompletionException;
 import java.util.concurrent.ThreadFactory;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
@@ -64,6 +63,7 @@ public class BackendImpl extends ThreadFactoryIdleService implements Backend {
      * @param identifierFactory
      * @param ridGenerator
      * @param retrier
+     * @param streamExecutor
      * @param executor
      */
     @Inject
