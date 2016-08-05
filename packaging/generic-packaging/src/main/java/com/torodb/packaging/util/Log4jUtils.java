@@ -21,13 +21,19 @@
 package com.torodb.packaging.util;
 
 import java.io.File;
+import java.io.Serializable;
 import java.util.Map;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.Appender;
+import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.LogEvent;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.appender.AbstractAppender;
+import org.apache.logging.log4j.core.appender.FileAppender;
+import org.apache.logging.log4j.core.config.Configuration;
+import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.apache.logging.log4j.core.layout.PatternLayout;
 
 import com.torodb.core.exceptions.SystemException;
@@ -36,16 +42,18 @@ import com.torodb.packaging.config.model.generic.LogLevel;
 public class Log4jUtils {
 
     public static void appendToLogFile(String logFile) {
-        org.apache.logging.log4j.Logger logger = org.apache.logging.log4j.LogManager
-                .getRootLogger();
-        org.apache.logging.log4j.core.Logger coreLogger = (org.apache.logging.log4j.core.Logger) logger;
-
-        org.apache.logging.log4j.core.appender.FileAppender fileAppender = 
-                org.apache.logging.log4j.core.appender.FileAppender.createAppender(
-                    logFile, null, null, "FILE", null, null, null, null,
-                    PatternLayout.newBuilder().withPattern("").build(), null, null, null, null);
-        fileAppender.start();
-        coreLogger.addAppender(fileAppender);
+        LoggerContext coreContext = (LoggerContext) LogManager.getContext(false);
+        Configuration configuration = coreContext.getConfiguration();
+        final Layout<? extends Serializable> layout = PatternLayout.newBuilder()
+                .withConfiguration(configuration)
+                .withPattern("%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n")
+                .build();
+        final Appender appender = FileAppender.createAppender(logFile, "false", "false", "File", "true",
+                "false", null, null, layout, null, "false", null, configuration);
+        appender.start();
+        for (LoggerConfig loggerConfig : configuration.getLoggers().values()) {
+            configuration.addLoggerAppender(coreContext.getLogger(loggerConfig.getName()), appender);
+        }
     }
 
     public static void reconfigure(String configurationFile) {
@@ -59,39 +67,42 @@ public class Log4jUtils {
 
     public static void setLogPackages(Map<String, LogLevel> logPackages) {
         for (Map.Entry<String, LogLevel> logPackage : logPackages.entrySet()) {
-            org.apache.logging.log4j.Logger logger = org.apache.logging.log4j.LogManager
-                    .getLogger(logPackage.getKey());
-            org.apache.logging.log4j.core.Logger coreLogger = (org.apache.logging.log4j.core.Logger) logger;
-            setLevel(coreLogger, logPackage.getValue());
+            LoggerContext coreContext = (LoggerContext) LogManager.getContext(false);
+            Configuration configuration = coreContext.getConfiguration();
+            org.apache.logging.log4j.LogManager.getLogger(logPackage.getKey());
+            if (configuration.getLoggers().containsKey(logPackage.getKey())) {
+                setLevel(configuration.getLoggerConfig(logPackage.getKey()), logPackage.getValue());
+            }
         }
     }
 
     public static void setRootLevel(LogLevel logLevel) {
-        org.apache.logging.log4j.Logger logger = org.apache.logging.log4j.LogManager
-                .getRootLogger();
-        org.apache.logging.log4j.core.Logger coreLogger = (org.apache.logging.log4j.core.Logger) logger;
-        setLevel(coreLogger, logLevel);
+        LoggerContext coreContext = (LoggerContext) LogManager.getContext(false);
+        Configuration configuration = coreContext.getConfiguration();
+        for (LoggerConfig loggerConfig : configuration.getLoggers().values()) {
+            setLevel(loggerConfig, logLevel);
+        }
     }
     
-    private static void setLevel(org.apache.logging.log4j.core.Logger coreLogger, LogLevel logLevel) {
+    private static void setLevel(LoggerConfig loggerConfig, LogLevel logLevel) {
         switch (logLevel) {
         case NONE:
-            coreLogger.setLevel(Level.OFF);
+            loggerConfig.setLevel(Level.OFF);
             break;
         case INFO:
-            coreLogger.setLevel(Level.INFO);
+            loggerConfig.setLevel(Level.INFO);
             break;
         case ERROR:
-            coreLogger.setLevel(Level.ERROR);
+            loggerConfig.setLevel(Level.ERROR);
             break;
         case WARNING:
-            coreLogger.setLevel(Level.WARN);
+            loggerConfig.setLevel(Level.WARN);
             break;
         case DEBUG:
-            coreLogger.setLevel(Level.DEBUG);
+            loggerConfig.setLevel(Level.DEBUG);
             break;
         case TRACE:
-            coreLogger.setLevel(Level.TRACE);
+            loggerConfig.setLevel(Level.TRACE);
             break;
         }
     }
