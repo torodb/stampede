@@ -16,6 +16,7 @@ import com.torodb.core.d2r.R2DTranslator;
 import com.torodb.core.d2r.RidGenerator;
 import com.torodb.core.exceptions.ToroRuntimeException;
 import com.torodb.core.retrier.Retrier;
+import com.torodb.core.retrier.Retrier.Hint;
 import com.torodb.core.retrier.RetrierGiveUpException;
 import com.torodb.core.transaction.RollbackException;
 import com.torodb.core.transaction.metainf.*;
@@ -169,7 +170,7 @@ public class BackendImpl extends ThreadFactoryIdleService implements Backend {
                     } catch (SQLException ex) {
                         throw sqlInterface.getErrorHandler().handleException(Context.CREATE_INDEX, ex);
                     }
-                });
+                }, Hint.CRITICAL);
             } catch (RetrierGiveUpException ex) {
                 throw new ToroRuntimeException(ex);
             }
