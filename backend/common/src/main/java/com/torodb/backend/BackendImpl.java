@@ -123,15 +123,9 @@ public class BackendImpl extends ThreadFactoryIdleService implements Backend {
                     .streamDataInsertFinishTasks(snapshot);
             Stream<Runnable> runnables = Stream.concat(createIndexesJobs, backendSpecificJobs)
                     .map(this::dslConsumerToRunnable);
-            try {
-                streamExecutor.executeRunnables(runnables)
-                        .join();
-            } catch (CompletionException ex) {
-                if (ex.getCause() != null && ex.getCause() instanceof RollbackException) {
-                    throw (RollbackException) ex.getCause();
-                }
-                throw ex;
-            }
+
+            streamExecutor.executeRunnables(runnables)
+                    .join();
         }
     }
 

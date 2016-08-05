@@ -37,6 +37,9 @@ import com.google.common.collect.Lists;
 import com.google.common.net.HostAndPort;
 import com.torodb.core.concurrent.StreamExecutor;
 import com.torodb.core.exceptions.user.UserException;
+import com.torodb.core.retrier.Retrier;
+import com.torodb.core.retrier.RetrierAbortException;
+import com.torodb.core.retrier.RetrierGiveUpException;
 import com.torodb.core.transaction.RollbackException;
 import com.torodb.mongodb.core.MongodConnection;
 import com.torodb.mongodb.core.MongodServer;
@@ -55,6 +58,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executor;
+import java.util.logging.Level;
 import java.util.stream.Stream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -102,9 +106,11 @@ public class AkkaDbCloner implements DbCloner {
     private final int insertBufferSize;
     private final CommitHeuristic commitHeuristic;
     private final Clock clock;
+    private final Retrier retrier;
 
     public AkkaDbCloner(Executor executor, int maxParallelInsertTasks, StreamExecutor streamExecutor,
-            int cursorBatchBufferSize, int insertBufferSize, CommitHeuristic commitHeuristic, Clock clock) {
+            int cursorBatchBufferSize, int insertBufferSize, CommitHeuristic commitHeuristic, 
+            Clock clock, Retrier retrier) {
         this.executor = executor;
         this.streamExecutor = streamExecutor;
         this.maxParallelInsertTasks = maxParallelInsertTasks;
@@ -118,6 +124,7 @@ public class AkkaDbCloner implements DbCloner {
                 + "0, but " + insertBufferSize + " was used");
         this.commitHeuristic = commitHeuristic;
         this.clock = clock;
+        this.retrier = retrier;
     }
 
     @Override
@@ -154,29 +161,25 @@ public class AkkaDbCloner implements DbCloner {
                     + "after get collections info");
         }
 
-        boolean finish = false;
-        while (!finish) {
-            try {
-                Stream<Runnable> prepareCollectionRunnables = collsToClone.stream()
-                        .map(collEntry -> () -> prepareCollection(localServer, dstDb, collEntry));
-                streamExecutor.executeRunnables(prepareCollectionRunnables)
-                        .join();
-                finish = true;
-            } catch (CompletionException ex) {
-                Throwable cause = ex.getCause();
-                if (cause != null) {
-                    if (cause instanceof CloningException) {
-                        throw (CloningException) cause;
-                    }
-                    if (cause instanceof MongoException) {
-                        throw (MongoException) cause;
-                    }
-                    if (cause instanceof RollbackException) {
-                        continue;
-                    }
+        try {
+            Stream<Runnable> prepareCollectionRunnables = collsToClone.stream()
+                    .map(collEntry -> () -> prepareCollection(localServer, dstDb, collEntry));
+            streamExecutor.executeRunnables(prepareCollectionRunnables)
+                    .join();
+        } catch (CompletionException ex) {
+            Throwable cause = ex.getCause();
+            if (cause != null) {
+                if (cause instanceof CloningException) {
+                    throw (CloningException) cause;
                 }
-                throw ex;
+                if (cause instanceof MongoException) {
+                    throw (MongoException) cause;
+                }
+                if (cause instanceof RollbackException) {
+                    throw new AssertionError("Unexpected rollback exception", cause);
+                }
             }
+            throw ex;
         }
         
         ActorSystem actorSystem = ActorSystem.create("dbClone", null, null,
@@ -387,13 +390,21 @@ public class AkkaDbCloner implements DbCloner {
         return collsToClone;
     }
 
-    private void prepareCollection(MongodServer localServer, String dstDb, Entry colEntry) throws RollbackException {
-        try (WriteMongodTransaction transaction = createWriteMongodTransaction(localServer)) {
-            dropCollection(transaction, dstDb, colEntry.getCollectionName());
-            createCollection(transaction, dstDb, colEntry.getCollectionName(), colEntry.getCollectionOptions());
-            transaction.commit();
-        } catch (UserException ex) {
-            throw new CloningException("An unexpected user exception was catched", ex);
+    private void prepareCollection(MongodServer localServer, String dstDb, Entry colEntry) 
+            throws RetrierAbortException {
+        try {
+            retrier.retry(() -> {
+                try (WriteMongodTransaction transaction = createWriteMongodTransaction(localServer)) {
+                    dropCollection(transaction, dstDb, colEntry.getCollectionName());
+                    createCollection(transaction, dstDb, colEntry.getCollectionName(), colEntry.getCollectionOptions());
+                    transaction.commit();
+                    return null;
+                } catch (UserException ex) {
+                    throw new RetrierAbortException("An unexpected user exception was catched", ex);
+                }
+            });
+        } catch (RetrierGiveUpException ex) {
+            throw new CloningException(ex);
         }
     }
 
