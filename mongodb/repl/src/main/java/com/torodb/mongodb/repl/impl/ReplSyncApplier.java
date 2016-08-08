@@ -1,5 +1,5 @@
 
-package com.torodb.mongodb.repl;
+package com.torodb.mongodb.repl.impl;
 
 import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
@@ -10,8 +10,10 @@ import com.torodb.core.transaction.RollbackException;
 import com.torodb.mongodb.core.MongodConnection;
 import com.torodb.mongodb.core.MongodServer;
 import com.torodb.mongodb.core.WriteMongodTransaction;
+import com.torodb.mongodb.repl.OplogManager;
 import com.torodb.mongodb.repl.OplogManager.OplogManagerPersistException;
 import com.torodb.mongodb.repl.OplogManager.WriteTransaction;
+import com.torodb.mongodb.repl.OplogOperationApplier;
 import java.util.List;
 import java.util.concurrent.ThreadFactory;
 import javax.annotation.Nonnull;

@@ -1,5 +1,5 @@
 
-package com.torodb.mongodb.repl;
+package com.torodb.mongodb.repl.impl;
 
 import com.eightkdata.mongowp.OpTime;
 import com.eightkdata.mongowp.client.core.UnreachableMongoServerException;
@@ -12,6 +12,9 @@ import com.eightkdata.mongowp.server.api.pojos.MongoCursor.Batch;
 import com.google.common.net.HostAndPort;
 import com.torodb.common.util.ThreadFactoryRunnableService;
 import com.torodb.core.annotations.ToroDbRunnableService;
+import com.torodb.mongodb.repl.OplogReader;
+import com.torodb.mongodb.repl.OplogReaderProvider;
+import com.torodb.mongodb.repl.SyncSourceProvider;
 import com.torodb.mongodb.repl.exceptions.NoSyncSourceFoundException;
 import java.util.concurrent.ThreadFactory;
 import javax.annotation.Nonnull;

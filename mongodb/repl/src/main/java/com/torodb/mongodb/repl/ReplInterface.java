@@ -110,26 +110,7 @@ public interface ReplInterface {
         
     }
 
-    public static interface SecondaryStateInferface extends MemberStateInterface {
-
-        /**
-         * Pauses client replication process until
-         * {@link #continueSyncProcess()} is called.
-         */
-        public void doPause();
-
-        /**
-         * Unpauses the client replication process previously paused by a call
-         * to {@link #pauseSyncProcess()}.
-         */
-        public void doContinue();
-
-        /**
-         * Returns true iff the client replication process must be paused.
-         * @return
-         */
-        public boolean isPaused();
-    }
+    public static interface SecondaryStateInferface extends MemberStateInterface {}
 
     public static class WriteNotAllowedException extends RuntimeException {
         private static final long serialVersionUID = 1L;

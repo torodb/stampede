@@ -73,12 +73,12 @@ public class ReplCoordinator extends ThreadFactoryIdleService implements ReplInt
     private final BsonObjectId myRID;
     private final int myId;
     private final RecoveryService.RecoveryServiceFactory recoveryServiceFactory;
-    private final SecondaryStateService.SecondaryStateServiceFactory secondaryStateServiceFactory;
+    private final OplogReplier.OplogReplierFactory oplogReplierFactory;
     private final ReplMetrics metrics;
     private final Executor executor;
 
     private RecoveryService recoveryService;
-    private SecondaryStateService secondaryService;
+    private OplogReplier oplogReplier;
     private boolean consistent;
 
     @Inject
@@ -91,19 +91,19 @@ public class ReplCoordinator extends ThreadFactoryIdleService implements ReplInt
             OplogManager oplogManager,
             ObjectIdFactory objectIdFactory,
             RecoveryService.RecoveryServiceFactory recoveryServiceFactory,
-            SecondaryStateService.SecondaryStateServiceFactory secondaryStateServiceFactory,
+            OplogReplier.OplogReplierFactory oplogReplierFactory,
             ReplMetrics metrics) {
         super(threadFactory);
         this.ownerCallback = ownerCallback;
         this.oplogManager = oplogManager;
         this.recoveryServiceFactory = recoveryServiceFactory;
-        this.secondaryStateServiceFactory = secondaryStateServiceFactory;
+        this.oplogReplierFactory = oplogReplierFactory;
         this.metrics = metrics;
         
         this.lock = new ReentrantReadWriteLock();
 
         recoveryService = null;
-        secondaryService = null;
+        oplogReplier = null;
         memberState = null;
 
         this.myId = 123;
@@ -158,7 +158,7 @@ public class ReplCoordinator extends ThreadFactoryIdleService implements ReplInt
             if (recoveryService != null) {
                 stopRecoveryModeAsync();
             }
-            if (secondaryService != null) {
+            if (oplogReplier != null) {
                 stopSecondaryModeAsync();
             }
             memberState = null;
@@ -272,19 +272,19 @@ public class ReplCoordinator extends ThreadFactoryIdleService implements ReplInt
     private void startSecondaryMode() {
         if (memberState != null && memberState.equals(MemberState.RS_SECONDARY)) {
             LOGGER.warn("Trying to start SECONDARY mode while we already are in that state");
-            assert secondaryService != null;
+            assert oplogReplier != null;
             return ;
         }
-        assert secondaryService == null;
+        assert oplogReplier == null;
 
         LOGGER.info("Starting SECONDARY mode");
 
         setMemberState(MemberState.RS_SECONDARY);
-        secondaryService = secondaryStateServiceFactory.createSecondaryStateService(new SecondaryServiceCallback());
+        oplogReplier = oplogReplierFactory.createOplogReplier(new OplogReplierCallback());
 
-        secondaryService.startAsync();
+        oplogReplier.startAsync();
         try {
-            secondaryService.awaitRunning();
+            oplogReplier.awaitRunning();
         } catch (IllegalStateException ex) {
             LOGGER.error("Fatal error while starting secondary mode", ex);
             this.stopAsync();
@@ -295,7 +295,7 @@ public class ReplCoordinator extends ThreadFactoryIdleService implements ReplInt
     private void stopSecondaryMode() {
         Preconditions.checkState(memberState != null && memberState.equals(MemberState.RS_SECONDARY));
 
-        assert secondaryService != null;
+        assert oplogReplier != null;
 
         stopSecondaryModeAsync();
         awaitSecondaryStopped();
@@ -304,13 +304,13 @@ public class ReplCoordinator extends ThreadFactoryIdleService implements ReplInt
     @Locked(exclusive = true)
     private void stopSecondaryModeAsync() {
         LOGGER.info("Stopping SECONDARY mode");
-        secondaryService.stopAsync();
+        oplogReplier.stopAsync();
     }
 
     private void awaitSecondaryStopped() {
-        if (secondaryService != null) {
-            secondaryService.awaitTerminated();
-            secondaryService = null;
+        if (oplogReplier != null) {
+            oplogReplier.awaitTerminated();
+            oplogReplier = null;
         }
     }
 
@@ -580,24 +580,6 @@ public class ReplCoordinator extends ThreadFactoryIdleService implements ReplInt
         public boolean canNodeAcceptReads(String database) {
             return true;
         }
-
-        @Override
-        public void doPause() {
-            assert secondaryService != null;
-            secondaryService.doPause();
-        }
-
-        @Override
-        public void doContinue() {
-            assert secondaryService != null;
-            secondaryService.doContinue();
-        }
-
-        @Override
-        public boolean isPaused() {
-            assert secondaryService != null;
-            return secondaryService.isPaused();
-        }
     }
 
     private class RecoveryServiceCallback implements RecoveryService.Callback {
@@ -649,10 +631,10 @@ public class ReplCoordinator extends ThreadFactoryIdleService implements ReplInt
         }
     }
 
-    private class SecondaryServiceCallback implements SecondaryStateService.Callback {
+    private class OplogReplierCallback implements OplogReplier.Callback {
 
         @Override
-        public void rollbackRequired() {
+        public void rollback(OplogReader reader) {
             Lock writeLock = lock.writeLock();
             writeLock.lock();
             try {
@@ -671,7 +653,12 @@ public class ReplCoordinator extends ThreadFactoryIdleService implements ReplInt
         }
 
         @Override
-        public void impossibleToRecoverFromError(Status<?> status) {
+        public void onFinish() {
+            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        }
+
+        @Override
+        public void onError(Throwable t) {
             Lock writeLock = lock.writeLock();
             writeLock.lock();
             try {
@@ -688,11 +675,5 @@ public class ReplCoordinator extends ThreadFactoryIdleService implements ReplInt
                 writeLock.unlock();
             }
         }
-
-        @Override
-        public void impossibleToRecoverFromError(Throwable t) {
-            impossibleToRecoverFromError(Status.from(ErrorCode.UNKNOWN_ERROR));
-        }
-
     }
 }

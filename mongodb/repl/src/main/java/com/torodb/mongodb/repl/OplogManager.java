@@ -75,12 +75,12 @@ public class OplogManager extends ThreadFactoryIdleService {
         this.retrier = retrier;
     }
 
-    ReadTransaction createReadTransaction() {
+    public ReadTransaction createReadTransaction() {
         Preconditions.checkState(isRunning(), "The service is not running");
         return new ReadTransaction(lock.readLock());
     }
 
-    WriteTransaction createWriteTransaction() {
+    public WriteTransaction createWriteTransaction() {
         Preconditions.checkState(isRunning(), "The service is not running");
         return new WriteTransaction(lock.writeLock());
     }

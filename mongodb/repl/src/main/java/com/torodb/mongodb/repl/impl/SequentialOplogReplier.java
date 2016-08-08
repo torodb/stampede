@@ -1,8 +1,10 @@
 
-package com.torodb.mongodb.repl;
+package com.torodb.mongodb.repl.impl;
 
+import com.torodb.mongodb.repl.*;
 import com.eightkdata.mongowp.OpTime;
 import com.eightkdata.mongowp.Status;
+import com.eightkdata.mongowp.exceptions.MongoException;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.MemberState;
 import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -33,13 +35,13 @@ import org.apache.logging.log4j.Logger;
  * {@linkplain MemberState#RS_PRIMARY primary}.
  */
 @ThreadSafe
-public class SecondaryStateService extends ThreadFactoryIdleService {
+public class SequentialOplogReplier extends ThreadFactoryIdleService implements OplogReplier {
 
     /**
      * The maximum capacity of the {@linkplain #fetchQueue}.
      */
     private static final int BUFFER_CAPACITY = 1024;
-    private static final Logger LOGGER = LogManager.getLogger(SecondaryStateService.class);
+    private static final Logger LOGGER = LogManager.getLogger(SequentialOplogReplier.class);
 
     private final ReentrantLock mutex = new ReentrantLock();
     /**
@@ -67,7 +69,7 @@ public class SecondaryStateService extends ThreadFactoryIdleService {
     private ReplSyncApplier applierService;
 
     @Inject
-    SecondaryStateService(
+    SequentialOplogReplier(
             @ToroDbIdleService ThreadFactory threadFactory,
             @Assisted Callback callback,
             OplogManager oplogManager,
@@ -184,15 +186,6 @@ public class SecondaryStateService extends ThreadFactoryIdleService {
         }
     }
     
-    interface Callback {
-
-        void rollbackRequired();
-
-        void impossibleToRecoverFromError(Status<?> status);
-
-        void impossibleToRecoverFromError(Throwable t);
-    }
-
     private final class FetcherView implements ReplSyncFetcher.SyncServiceView {
 
         @Override
@@ -207,7 +200,7 @@ public class SecondaryStateService extends ThreadFactoryIdleService {
 
                         @Override
                         public void run() {
-                            callback.rollbackRequired();
+                            callback.rollback(reader);
                         }
                     }
             );
@@ -256,7 +249,7 @@ public class SecondaryStateService extends ThreadFactoryIdleService {
 
                         @Override
                         public void run() {
-                            callback.impossibleToRecoverFromError(ex);
+                            callback.onError(ex);
                         }
                     }
             );
@@ -288,7 +281,7 @@ public class SecondaryStateService extends ThreadFactoryIdleService {
                         @Override
                         public void run() {
                             LOGGER.error("Secondary state failed to apply an operation: {}", status);
-                            callback.impossibleToRecoverFromError(status);
+                            callback.onError(new MongoException(status));
                         }
                     }
             );
@@ -303,7 +296,7 @@ public class SecondaryStateService extends ThreadFactoryIdleService {
                         @Override
                         public void run() {
                             LOGGER.error("Secondary state failed to apply an operation", t);
-                            callback.impossibleToRecoverFromError(t);
+                            callback.onError(t);
                         }
                     }
             );
@@ -318,7 +311,7 @@ public class SecondaryStateService extends ThreadFactoryIdleService {
                         @Override
                         public void run() {
                             LOGGER.error("Secondary state failed to apply an operation", t);
-                            callback.impossibleToRecoverFromError(t);
+                            callback.onError(t);
                         }
                     }
             );
@@ -362,7 +355,7 @@ public class SecondaryStateService extends ThreadFactoryIdleService {
                 throw new NullPointerException();
             }
             final OplogOperation[] items = this.buffer;
-            final ReentrantLock mutex = SecondaryStateService.this.mutex;
+            final ReentrantLock mutex = SequentialOplogReplier.this.mutex;
             mutex.lockInterruptibly();
             try {
                 try {
@@ -384,7 +377,7 @@ public class SecondaryStateService extends ThreadFactoryIdleService {
 
         private OplogOperation getFirst() throws InterruptedException {
             final OplogOperation[] items = this.buffer;
-            final ReentrantLock mutex = SecondaryStateService.this.mutex;
+            final ReentrantLock mutex = SequentialOplogReplier.this.mutex;
             mutex.lock();
             try {
                 while (isEmpty()) {
@@ -398,7 +391,7 @@ public class SecondaryStateService extends ThreadFactoryIdleService {
 
         private void removeLast(OplogOperation sign) {
             final OplogOperation[] items = this.buffer;
-            final ReentrantLock mutex = SecondaryStateService.this.mutex;
+            final ReentrantLock mutex = SequentialOplogReplier.this.mutex;
             mutex.lock();
             try {
                 if (count == 0) {
@@ -418,9 +411,5 @@ public class SecondaryStateService extends ThreadFactoryIdleService {
                 mutex.unlock();
             }
         }
-    }
-
-    public static interface SecondaryStateServiceFactory {
-        SecondaryStateService createSecondaryStateService(Callback callback);
     }
 }

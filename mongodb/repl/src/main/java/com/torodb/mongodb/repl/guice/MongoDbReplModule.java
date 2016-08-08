@@ -14,6 +14,7 @@ import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.torodb.mongodb.repl.*;
 import com.torodb.mongodb.repl.exceptions.NoSyncSourceFoundException;
 import com.torodb.mongodb.repl.impl.MongoOplogReaderProvider;
+import com.torodb.mongodb.repl.impl.SequentialOplogReplier;
 import com.torodb.mongodb.utils.DbCloner;
 import com.torodb.mongodb.utils.cloner.CommitHeuristic;
 import java.util.concurrent.ThreadFactory;
@@ -46,8 +47,8 @@ public class MongoDbReplModule extends AbstractModule {
         );
 
         install(new FactoryModuleBuilder()
-                .implement(SecondaryStateService.class, SecondaryStateService.class)
-                .build(SecondaryStateService.SecondaryStateServiceFactory.class)
+                .implement(OplogReplier.class, SequentialOplogReplier.class)
+                .build(OplogReplier.OplogReplierFactory.class)
         );
         install(new FactoryModuleBuilder()
                 .implement(RecoveryService.class, RecoveryService.class)
