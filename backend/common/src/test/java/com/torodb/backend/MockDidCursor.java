@@ -21,13 +21,12 @@
 package com.torodb.backend;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
-import com.torodb.core.backend.DidCursor;
+import com.torodb.core.cursors.Cursor;
 
-public class MockDidCursor implements DidCursor {
+public class MockDidCursor implements Cursor<Integer> {
     private final Iterator<Integer> didsIterator;
 
     public MockDidCursor(Iterator<Integer> didsIterator) {
@@ -46,7 +45,7 @@ public class MockDidCursor implements DidCursor {
     }
 
     @Override
-    public Collection<Integer> getNextBatch(final int maxSize) {
+    public List<Integer> getNextBatch(final int maxSize) {
         List<Integer> dids = new ArrayList<>();
         
         for (int index = 0; index < maxSize && hasNext(); index++) {
@@ -57,7 +56,7 @@ public class MockDidCursor implements DidCursor {
     }
 
     @Override
-    public Collection<Integer> getRemaining() {
+    public List<Integer> getRemaining() {
         List<Integer> dids = new ArrayList<>();
         
         while (hasNext()) {

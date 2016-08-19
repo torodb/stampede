@@ -1,6 +1,7 @@
 
 package com.torodb.mongodb.repl;
 
+import com.torodb.mongodb.repl.oplogreplier.fetcher.LimitedOplogFetcher;
 import com.eightkdata.mongowp.OpTime;
 import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.client.core.MongoClient;
@@ -15,6 +16,7 @@ import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.diagnos
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.diagnostic.ListDatabasesCommand.ListDatabasesReply.DatabaseEntry;
 import com.eightkdata.mongowp.server.api.Request;
 import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
+import com.eightkdata.mongowp.server.api.pojos.MongoCursor;
 import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.google.common.base.Supplier;
 import com.google.common.net.HostAndPort;
@@ -27,15 +29,18 @@ import com.torodb.mongodb.core.MongodConnection;
 import com.torodb.mongodb.core.MongodServer;
 import com.torodb.mongodb.core.WriteMongodTransaction;
 import com.torodb.mongodb.repl.OplogManager.OplogManagerPersistException;
-import com.torodb.mongodb.repl.OplogManager.WriteTransaction;
+import com.torodb.mongodb.repl.OplogManager.ReadOplogTransaction;
+import com.torodb.mongodb.repl.OplogManager.WriteOplogTransaction;
 import com.torodb.mongodb.repl.exceptions.NoSyncSourceFoundException;
 import com.torodb.mongodb.repl.guice.MongoDbRepl;
+import com.torodb.mongodb.repl.oplogreplier.*;
+import com.torodb.mongodb.repl.oplogreplier.OplogApplier.UnexpectedOplogApplierException;
 import com.torodb.mongodb.utils.DbCloner;
 import com.torodb.mongodb.utils.DbCloner.CloneOptions;
 import com.torodb.mongodb.utils.DbCloner.CloningException;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ThreadFactory;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
@@ -56,7 +61,7 @@ public class RecoveryService extends ThreadFactoryRunnableService {
     private final DbCloner cloner;
     private final MongoClientProvider remoteClientProvider;
     private final MongodServer server;
-    private final OplogOperationApplier oplogOpApplier;
+    private final OplogApplier oplogApplier;
 
     @Inject
     public RecoveryService(
@@ -68,7 +73,7 @@ public class RecoveryService extends ThreadFactoryRunnableService {
             @MongoDbRepl DbCloner cloner,
             MongoClientProvider remoteClientProvider,
             MongodServer server,
-            OplogOperationApplier oplogOpApplier) {
+            OplogApplier oplogApplier) {
         super(threadFactory);
         this.callback = callback;
         this.oplogManager = oplogManager;
@@ -77,7 +82,7 @@ public class RecoveryService extends ThreadFactoryRunnableService {
         this.cloner = cloner;
         this.remoteClientProvider = remoteClientProvider;
         this.server = server;
-        this.oplogOpApplier = oplogOpApplier;
+        this.oplogApplier = oplogApplier;
     }
 
     @Override
@@ -153,29 +158,32 @@ public class RecoveryService extends ThreadFactoryRunnableService {
 
             MongoConnection remoteConnection = remoteClient.openConnection();
 
-            try (WriteTransaction oplogTransaction = oplogManager.createWriteTransaction()) {
+            try {
                 OplogReader reader = oplogReaderProvider.newReader(remoteConnection);
 
                 OplogOperation lastClonedOp = reader.getLastOp();
                 OpTime lastRemoteOptime1 = lastClonedOp.getOpTime();
 
-                LOGGER.info("Remote database cloning started");
-                oplogTransaction.truncate();
-                LOGGER.info("Local databases dropping started");
-                Status<?> status = dropDatabases();
-                if (!status.isOK()) {
-                    throw new TryAgainException("Error while trying to drop collections: " + status);
-                }
-                LOGGER.info("Local databases dropping finished");
-                if (!isRunning()) {
-                    LOGGER.warn("Recovery stopped before it can finish");
-                    return false;
-                }
-                LOGGER.info("Remote database cloning started");
-                cloneDatabases(remoteClient);
-                LOGGER.info("Remote database cloning finished");
+                try (WriteOplogTransaction oplogTransaction = oplogManager.createWriteTransaction()) {
+                    LOGGER.info("Remote database cloning started");
+                    oplogTransaction.truncate();
+                    LOGGER.info("Local databases dropping started");
+                    Status<?> status = dropDatabases();
+                    if (!status.isOK()) {
+                        throw new TryAgainException("Error while trying to drop collections: "
+                                + status);
+                    }
+                    LOGGER.info("Local databases dropping finished");
+                    if (!isRunning()) {
+                        LOGGER.warn("Recovery stopped before it can finish");
+                        return false;
+                    }
+                    LOGGER.info("Remote database cloning started");
+                    cloneDatabases(remoteClient);
+                    LOGGER.info("Remote database cloning finished");
 
-                oplogTransaction.forceNewValue(lastClonedOp.getHash(), lastClonedOp.getOpTime());
+                    oplogTransaction.forceNewValue(lastClonedOp.getHash(), lastClonedOp.getOpTime());
+                }
 
                 if (!isRunning()) {
                     LOGGER.warn("Recovery stopped before it can finish");
@@ -186,7 +194,7 @@ public class RecoveryService extends ThreadFactoryRunnableService {
                         WriteMongodTransaction trans = connection.openWriteTransaction()) {
                     OpTime lastRemoteOptime2 = reader.getLastOp().getOpTime();
                     LOGGER.info("First oplog application started");
-                    applyOplog(trans, oplogTransaction, reader, lastRemoteOptime1, lastRemoteOptime2);
+                    applyOplog(trans, reader, lastRemoteOptime1, lastRemoteOptime2);
                     trans.commit();
                     LOGGER.info("First oplog application finished");
 
@@ -198,7 +206,7 @@ public class RecoveryService extends ThreadFactoryRunnableService {
                     OplogOperation lastOperation = reader.getLastOp();
                     OpTime lastRemoteOptime3 = lastOperation.getOpTime();
                     LOGGER.info("Second oplog application started");
-                    applyOplog(trans, oplogTransaction, reader, lastRemoteOptime2, lastRemoteOptime3);
+                    applyOplog(trans, reader, lastRemoteOptime2, lastRemoteOptime3);
                     trans.commit();
                     LOGGER.info("Second oplog application finished");
 
@@ -339,34 +347,40 @@ public class RecoveryService extends ThreadFactoryRunnableService {
      */
     private void applyOplog(
             WriteMongodTransaction trans,
-            WriteTransaction myOplog,
             OplogReader remoteOplog,
             OpTime from,
-            OpTime to) throws TryAgainException, MongoException, OplogManagerPersistException {
+            OpTime to) throws TryAgainException, MongoException, FatalErrorException {
 
-        Iterator<OplogOperation> it = remoteOplog.between(from, true, to, true);
+        MongoCursor<OplogOperation> oplogCursor = remoteOplog.between(from, true, to, true);
 
-        if (!it.hasNext()) {
+        if (!oplogCursor.hasNext()) {
             throw new OplogStartMissingException(remoteOplog.getSyncSource());
         }
-        OplogOperation firstOp = it.next();
+        OplogOperation firstOp = oplogCursor.next();
         if (!firstOp.getOpTime().equals(from)) {
             throw new TryAgainException("Remote oplog does not cointain our last operation");
         }
 
-        OplogOperation nextOp = null;
-        while (it.hasNext()) {
-            nextOp = it.next();
-            if (nextOp.getOpTime().compareTo(to) > 0) {
-                throw new TryAgainException("Max optime expected was "+ to + " but an "
-                        + "operation whose optime is "+ nextOp.getOpTime() + " "
-                        + "was found");
-            }
-            oplogOpApplier.apply(nextOp, trans, myOplog, false);
+        LimitedOplogFetcher fetcher = new LimitedOplogFetcher(oplogCursor);
+
+        ApplierContext context = new ApplierContext(true);
+
+        try {
+            oplogApplier.apply(fetcher, context)
+                    .waitUntilFinished();
+        } catch (StopReplicationException |
+                RollbackReplicationException | CancellationException |
+                UnexpectedOplogApplierException ex) {
+            throw new FatalErrorException(ex);
         }
-        if (nextOp != null && !nextOp.getOpTime().equals(to)) {
+        
+        OpTime lastAppliedOptime;
+        try (ReadOplogTransaction oplogTrans = oplogManager.createReadTransaction()) {
+            lastAppliedOptime = oplogTrans.getLastAppliedOptime();
+        }
+        if (!lastAppliedOptime.equals(to)) {
             LOGGER.warn("Unexpected optime for last operation to apply. "
-                    + "Expected " + to + ", but " + nextOp.getOpTime()
+                    + "Expected " + to + ", but " + lastAppliedOptime
                     + " found");
         }
     }

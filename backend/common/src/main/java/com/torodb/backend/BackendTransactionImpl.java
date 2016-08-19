@@ -1,18 +1,18 @@
 
 package com.torodb.backend;
 
+import com.google.common.collect.Multimap;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.Collection;
 
 import org.jooq.DSLContext;
 
 import com.torodb.backend.ErrorHandler.Context;
 import com.torodb.core.backend.BackendTransaction;
-import com.torodb.core.backend.DidCursor;
 import com.torodb.core.cursors.Cursor;
+import com.torodb.core.cursors.EmptyToroCursor;
+import com.torodb.core.cursors.ToroCursor;
 import com.torodb.core.d2r.R2DTranslator;
-import com.torodb.core.document.ToroDocument;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
@@ -64,70 +64,74 @@ public abstract class BackendTransactionImpl implements BackendTransaction {
         return r2dTranslator;
     }
 
+    @Override
     public long getDatabaseSize(MetaDatabase db) {
         return sqlInterface.getMetaDataReadInterface().getDatabaseSize(getDsl(), db);
     }
 
+    @Override
     public long countAll(MetaDatabase db, MetaCollection col) {
         return sqlInterface.getReadInterface().countAll(getDsl(), db, col);
     }
 
+    @Override
     public long getCollectionSize(MetaDatabase db, MetaCollection col) {
         return sqlInterface.getMetaDataReadInterface().getCollectionSize(getDsl(), db, col);
     }
 
+    @Override
     public long getDocumentsSize(MetaDatabase db, MetaCollection col) {
         return sqlInterface.getMetaDataReadInterface().getDocumentsSize(getDsl(), db, col);
     }
 
     @Override
-    public Cursor<ToroDocument> findAll(MetaDatabase db, MetaCollection col) {
+    public ToroCursor findAll(MetaDatabase db, MetaCollection col) {
         try {
-            DidCursor allDids = sqlInterface.getReadInterface().getAllCollectionDids(dsl, db, col);
-            return new DefaultCursor(sqlInterface, r2dTranslator, allDids, dsl, db, col);
+            Cursor<Integer> allDids = sqlInterface.getReadInterface().getAllCollectionDids(dsl, db, col);
+            return new LazyToroCursor(sqlInterface, r2dTranslator, allDids, dsl, db, col);
         } catch (SQLException ex) {
             throw sqlInterface.getErrorHandler().handleException(Context.FETCH, ex);
         }
     }
 
     @Override
-    public Cursor<ToroDocument> findByField(MetaDatabase db, MetaCollection col, MetaDocPart docPart, MetaField field, KVValue<?> value) {
+    public ToroCursor findByField(MetaDatabase db, MetaCollection col, MetaDocPart docPart, MetaField field, KVValue<?> value) {
         try {
-            DidCursor allDids = sqlInterface.getReadInterface().getCollectionDidsWithFieldEqualsTo(dsl, db, col, docPart, field, value);
-            return new DefaultCursor(sqlInterface, r2dTranslator, allDids, dsl, db, col);
+            Cursor<Integer> allDids = sqlInterface.getReadInterface().getCollectionDidsWithFieldEqualsTo(dsl, db, col, docPart, field, value);
+            return new LazyToroCursor(sqlInterface, r2dTranslator, allDids, dsl, db, col);
         } catch (SQLException ex) {
             throw sqlInterface.getErrorHandler().handleException(Context.FETCH, ex);
         }
     }
 
     @Override
-    public DidCursor findAllDids(MetaDatabase db, MetaCollection col) {
+    public ToroCursor findByFieldIn(MetaDatabase db, MetaCollection col, MetaDocPart docPart,
+            Multimap<MetaField, KVValue<?>> valuesMultimap) {
         try {
-            return sqlInterface.getReadInterface().getAllCollectionDids(dsl, db, col);
+            if (valuesMultimap.isEmpty()) {
+                return new EmptyToroCursor();
+            }
+            Cursor<Integer> allDids = sqlInterface.getReadInterface().getCollectionDidsWithFieldsIn(dsl, db, col, docPart, valuesMultimap);
+            return new LazyToroCursor(sqlInterface, r2dTranslator, allDids, dsl, db, col);
         } catch (SQLException ex) {
             throw sqlInterface.getErrorHandler().handleException(Context.FETCH, ex);
         }
     }
 
     @Override
-    public DidCursor findDidsByField(MetaDatabase db, MetaCollection col, MetaDocPart docPart, MetaField field, KVValue<?> value) {
-        try {
-            return sqlInterface.getReadInterface().getCollectionDidsWithFieldEqualsTo(dsl, db, col, docPart, field, value);
-        } catch (SQLException ex) {
-            throw sqlInterface.getErrorHandler().handleException(Context.FETCH, ex);
-        }
+    public ToroCursor fetch(MetaDatabase db, MetaCollection col, Cursor<Integer> didCursor) {
+        return new LazyToroCursor(sqlInterface, r2dTranslator, didCursor, dsl, db, col);
     }
 
     @Override
-    public Collection<ToroDocument> readDocuments(MetaDatabase db, MetaCollection col, Collection<Integer> dids) {
+    public void rollback() {
         try {
-            DocPartResultBatch docPartResultBatch = sqlInterface.getReadInterface().getCollectionResultSets(getDsl(), db, col, dids);
-            return r2dTranslator.translate(docPartResultBatch);
+            connection.rollback();
         } catch (SQLException ex) {
-            throw sqlInterface.getErrorHandler().handleException(Context.FETCH, ex);
+            sqlInterface.getErrorHandler().handleException(Context.ROLLBACK, ex);
         }
     }
-
+    
     @Override
     public void close() {
         if (!closed) {

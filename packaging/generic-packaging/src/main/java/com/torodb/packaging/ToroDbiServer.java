@@ -10,6 +10,7 @@ import com.torodb.backend.guice.BackendModule;
 import com.torodb.common.util.ThreadFactoryIdleService;
 import com.torodb.concurrent.guice.ConcurrentModule;
 import com.torodb.core.BuildProperties;
+import com.torodb.core.Shutdowner;
 import com.torodb.core.annotations.ToroDbIdleService;
 import com.torodb.core.guice.CoreModule;
 import com.torodb.d2r.guice.D2RModule;
@@ -25,7 +26,7 @@ import com.torodb.packaging.guice.ConfigModule;
 import com.torodb.packaging.guice.ExecutorServicesModule;
 import com.torodb.packaging.guice.PackagingModule;
 import com.torodb.torod.TorodServer;
-import com.torodb.torod.guice.TorodModule;
+import com.torodb.torod.guice.SqlTorodModule;
 import java.time.Clock;
 import java.util.List;
 import java.util.concurrent.ThreadFactory;
@@ -45,18 +46,18 @@ public class ToroDbiServer extends ThreadFactoryIdleService {
     private final TorodServer torod;
     private final MongodServer mongod;
     private final ReplCoordinator replCoordinator;
-    private final ExecutorsService executorsService;
+    private final Shutdowner shutdowner;
 
     @Inject
     ToroDbiServer(@ToroDbIdleService ThreadFactory threadFactory, BuildProperties buildProperties,
             TorodServer torod, MongodServer mongod, ReplCoordinator replCoordinator,
-            ExecutorsService executorsService) {
+            Shutdowner shutdowner) {
         super(threadFactory);
         this.buildProperties = buildProperties;
         this.torod = torod;
         this.mongod = mongod;
         this.replCoordinator = replCoordinator;
-        this.executorsService = executorsService;
+        this.shutdowner = shutdowner;
     }
 
     public static ToroDbiServer create(Config config, Clock clock) throws ProvisionException {
@@ -77,15 +78,14 @@ public class ToroDbiServer extends ThreadFactoryIdleService {
         HostAndPort syncSource = HostAndPort.fromString(syncSourceString)
                 .withDefaultPort(27017);
 
-        Injector injector = Guice.createInjector(
-                new ConfigModule(config),
+        Injector injector = Guice.createInjector(new ConfigModule(config),
                 new PackagingModule(clock),
                 new CoreModule(),
                 new BackendImplementationModule(config),
                 new BackendModule(),
                 new MetainfModule(),
                 new D2RModule(),
-                new TorodModule(),
+                new SqlTorodModule(),
                 new MongoLayerModule(),
                 new MongoDbReplModule(syncSource),
                 new ExecutorServicesModule(),
@@ -97,9 +97,6 @@ public class ToroDbiServer extends ThreadFactoryIdleService {
     @Override
     protected void startUp() throws Exception {
         LOGGER.info("Starting up ToroDB v" +  buildProperties.getFullVersion());
-
-        executorsService.startAsync();
-        executorsService.awaitRunning();
 
         torod.startAsync();
         mongod.startAsync();
@@ -129,8 +126,7 @@ public class ToroDbiServer extends ThreadFactoryIdleService {
         torod.stopAsync();
         torod.awaitTerminated();
 
-        executorsService.stopAsync();
-        executorsService.awaitTerminated();
+        shutdowner.close();
 
         LOGGER.debug("ToroDBServer shutdown complete");
     }

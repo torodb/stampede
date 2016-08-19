@@ -72,7 +72,9 @@ public class UpdateImplementation implements WriteTorodbCommandImpl<UpdateArgume
                 Cursor<ToroDocument> candidatesCursor;
                 switch (query.size()) {
                     case 0: {
-                        candidatesCursor = context.getTorodTransaction().findAll(req.getDatabase(), arg.getCollection());
+                        candidatesCursor = context.getTorodTransaction()
+                                .findAll(req.getDatabase(), arg.getCollection())
+                                .asDocCursor();
                         break;
                     }
                     case 1: {
@@ -182,7 +184,7 @@ public class UpdateImplementation implements WriteTorodbCommandImpl<UpdateArgume
         Builder refBuilder = new AttributeReference.Builder();
         KVValue<?> kvValue = AttrRefHelper.calculateValueAndAttRef(query, refBuilder);
 
-        return transaction.findByAttRef(db, col, refBuilder.build(), kvValue);
+        return transaction.findByAttRef(db, col, refBuilder.build(), kvValue).asDocCursor();
     }
 
 }

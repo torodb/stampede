@@ -75,14 +75,14 @@ public class OplogManager extends ThreadFactoryIdleService {
         this.retrier = retrier;
     }
 
-    public ReadTransaction createReadTransaction() {
+    public ReadOplogTransaction createReadTransaction() {
         Preconditions.checkState(isRunning(), "The service is not running");
-        return new ReadTransaction(lock.readLock());
+        return new ReadOplogTransaction(lock.readLock());
     }
 
-    public WriteTransaction createWriteTransaction() {
+    public WriteOplogTransaction createWriteTransaction() {
         Preconditions.checkState(isRunning(), "The service is not running");
-        return new WriteTransaction(lock.writeLock());
+        return new WriteOplogTransaction(lock.writeLock());
     }
 
     @Override
@@ -211,11 +211,11 @@ public class OplogManager extends ThreadFactoryIdleService {
     }
 
     @NotThreadSafe
-    public class ReadTransaction implements Closeable {
+    public class ReadOplogTransaction implements Closeable {
         private final Lock readLock;
         private boolean closed;
 
-        private ReadTransaction(Lock readLock) {
+        private ReadOplogTransaction(Lock readLock) {
             this.readLock = readLock;
             readLock.lock();
             closed = false;
@@ -249,11 +249,11 @@ public class OplogManager extends ThreadFactoryIdleService {
     }
 
     @NotThreadSafe
-    public class WriteTransaction implements Closeable {
+    public class WriteOplogTransaction implements Closeable {
         private final Lock writeLock;
         private boolean closed = false;
 
-        public WriteTransaction(Lock writeLock) {
+        public WriteOplogTransaction(Lock writeLock) {
             this.writeLock = writeLock;
             writeLock.lock();
             closed = false;

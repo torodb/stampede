@@ -118,4 +118,9 @@ public class SetFieldUpdateAction extends SingleFieldUpdateAction implements Res
         parentBuilder.setValue(key, newValue);
         return true;
     }
+
+    @Override
+    public <Result, Arg> Result accept(UpdateActionVisitor<Result, Arg> visitor, Arg arg) {
+        return visitor.visit(this, arg);
+    }
 }

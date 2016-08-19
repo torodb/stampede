@@ -249,6 +249,16 @@ public abstract class AbstractMongoOplogReader implements OplogReader {
         }
 
         @Override
+        public Batch<T> tryFetchBatch() throws MongoException, DeadCursorException {
+            return delegate.tryFetchBatch();
+        }
+
+        @Override
+        public boolean isClosed() {
+            return delegate.isClosed();
+        }
+
+        @Override
         public void close() {
             delegate.close();
             releaseConnection(connection);

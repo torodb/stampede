@@ -15,10 +15,10 @@ public interface StreamExecutor {
      * Executes the given runnables, returning a future that will be done once all runnables finish.
      *
      * This execution is executed on a limited number of threads.
-     * @param callables
+     * @param runnables
      * @return a CompletableFuture that will be done on once all runnables finish.
      */
-    public CompletableFuture<?> executeRunnables(Stream<Runnable> callables);
+    public CompletableFuture<?> executeRunnables(Stream<Runnable> runnables);
 
     /**
      * Executes the given callables, returning a future that will be done once all callables finish.

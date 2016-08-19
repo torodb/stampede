@@ -55,6 +55,9 @@ import org.apache.logging.log4j.Logger;
 
 import static com.eightkdata.mongowp.bson.utils.DefaultBsonValues.*;
 
+import com.torodb.mongodb.repl.oplogreplier.OplogApplierService;
+import com.torodb.mongodb.repl.oplogreplier.RollbackReplicationException;
+
 /**
  *
  */
@@ -73,12 +76,12 @@ public class ReplCoordinator extends ThreadFactoryIdleService implements ReplInt
     private final BsonObjectId myRID;
     private final int myId;
     private final RecoveryService.RecoveryServiceFactory recoveryServiceFactory;
-    private final OplogReplier.OplogReplierFactory oplogReplierFactory;
+    private final OplogApplierService.OplogApplierServiceFactory oplogReplierFactory;
     private final ReplMetrics metrics;
     private final Executor executor;
 
     private RecoveryService recoveryService;
-    private OplogReplier oplogReplier;
+    private OplogApplierService oplogReplierService;
     private boolean consistent;
 
     @Inject
@@ -91,7 +94,7 @@ public class ReplCoordinator extends ThreadFactoryIdleService implements ReplInt
             OplogManager oplogManager,
             ObjectIdFactory objectIdFactory,
             RecoveryService.RecoveryServiceFactory recoveryServiceFactory,
-            OplogReplier.OplogReplierFactory oplogReplierFactory,
+            OplogApplierService.OplogApplierServiceFactory oplogReplierFactory,
             ReplMetrics metrics) {
         super(threadFactory);
         this.ownerCallback = ownerCallback;
@@ -103,7 +106,7 @@ public class ReplCoordinator extends ThreadFactoryIdleService implements ReplInt
         this.lock = new ReentrantReadWriteLock();
 
         recoveryService = null;
-        oplogReplier = null;
+        oplogReplierService = null;
         memberState = null;
 
         this.myId = 123;
@@ -158,7 +161,7 @@ public class ReplCoordinator extends ThreadFactoryIdleService implements ReplInt
             if (recoveryService != null) {
                 stopRecoveryModeAsync();
             }
-            if (oplogReplier != null) {
+            if (oplogReplierService != null) {
                 stopSecondaryModeAsync();
             }
             memberState = null;
@@ -250,12 +253,6 @@ public class ReplCoordinator extends ThreadFactoryIdleService implements ReplInt
     }
 
     @Locked(exclusive = true)
-    private void stopRecoveryMode() {
-        stopRecoveryModeAsync();
-        awaitRecoveryStopped();
-    }
-
-    @Locked(exclusive = true)
     private void stopRecoveryModeAsync() {
         LOGGER.info("Stopping RECOVERY mode");
         recoveryService.stopAsync();
@@ -272,19 +269,19 @@ public class ReplCoordinator extends ThreadFactoryIdleService implements ReplInt
     private void startSecondaryMode() {
         if (memberState != null && memberState.equals(MemberState.RS_SECONDARY)) {
             LOGGER.warn("Trying to start SECONDARY mode while we already are in that state");
-            assert oplogReplier != null;
+            assert oplogReplierService != null;
             return ;
         }
-        assert oplogReplier == null;
+        assert oplogReplierService == null;
 
         LOGGER.info("Starting SECONDARY mode");
 
         setMemberState(MemberState.RS_SECONDARY);
-        oplogReplier = oplogReplierFactory.createOplogReplier(new OplogReplierCallback());
+        oplogReplierService = oplogReplierFactory.createOplogApplier(new OplogReplierCallback());
 
-        oplogReplier.startAsync();
+        oplogReplierService.startAsync();
         try {
-            oplogReplier.awaitRunning();
+            oplogReplierService.awaitRunning();
         } catch (IllegalStateException ex) {
             LOGGER.error("Fatal error while starting secondary mode", ex);
             this.stopAsync();
@@ -292,25 +289,21 @@ public class ReplCoordinator extends ThreadFactoryIdleService implements ReplInt
     }
 
     @Locked(exclusive = true)
-    private void stopSecondaryMode() {
-        Preconditions.checkState(memberState != null && memberState.equals(MemberState.RS_SECONDARY));
-
-        assert oplogReplier != null;
-
-        stopSecondaryModeAsync();
-        awaitSecondaryStopped();
-    }
-
-    @Locked(exclusive = true)
     private void stopSecondaryModeAsync() {
         LOGGER.info("Stopping SECONDARY mode");
-        oplogReplier.stopAsync();
+        oplogReplierService.stopAsync();
     }
 
     private void awaitSecondaryStopped() {
-        if (oplogReplier != null) {
-            oplogReplier.awaitTerminated();
-            oplogReplier = null;
+        if (oplogReplierService != null) {
+            try {
+                oplogReplierService.awaitTerminated();
+                oplogReplierService = null;
+            } catch (IllegalStateException ex) {
+                LOGGER.error("Error while stopping secondary mode", ex);
+                startUnrecoverableMode();
+                throw ex;
+            }
         }
     }
 
@@ -584,6 +577,12 @@ public class ReplCoordinator extends ThreadFactoryIdleService implements ReplInt
 
     private class RecoveryServiceCallback implements RecoveryService.Callback {
 
+        @Locked(exclusive = true)
+        private void stopRecoveryMode() {
+            stopRecoveryModeAsync();
+            awaitRecoveryStopped();
+        }
+
         @Override
         public void recoveryFinished() {
             executor.execute(() -> {
@@ -631,10 +630,25 @@ public class ReplCoordinator extends ThreadFactoryIdleService implements ReplInt
         }
     }
 
-    private class OplogReplierCallback implements OplogReplier.Callback {
+    private class OplogReplierCallback implements OplogApplierService.Callback {
+
+        private volatile boolean shuttingUp = false;
+
+        @Locked(exclusive = true)
+        private void stopSecondaryMode() {
+            Preconditions.checkState(memberState != null
+                    && memberState.equals(MemberState.RS_SECONDARY));
+
+            assert oplogReplierService != null;
+            shuttingUp = true;
+
+            stopSecondaryModeAsync();
+            awaitSecondaryStopped();
+        }
 
         @Override
-        public void rollback(OplogReader reader) {
+        public void rollback(RollbackReplicationException t) {
+            LOGGER.debug("Secondary request a rollback with an exception", t);
             Lock writeLock = lock.writeLock();
             writeLock.lock();
             try {
@@ -654,7 +668,22 @@ public class ReplCoordinator extends ThreadFactoryIdleService implements ReplInt
 
         @Override
         public void onFinish() {
-            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            if (!shuttingUp) {
+                LOGGER.error("Unexpected oplog applier service shutdown. Trying to transist to"
+                        + "unrecoverable mode.");
+                executor.execute(() -> {
+                    Lock writeLock = lock.writeLock();
+                    writeLock.lock();
+                    try {
+                        if (MemberState.RS_SECONDARY.equals(memberState)) {
+                            stopSecondaryMode();
+                        }
+                        startUnrecoverableMode();
+                    } finally {
+                        writeLock.unlock();
+                    }
+                });
+            }
         }
 
         @Override

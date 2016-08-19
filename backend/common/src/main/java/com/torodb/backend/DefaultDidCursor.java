@@ -23,15 +23,14 @@ package com.torodb.backend;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 import javax.annotation.Nonnull;
 
 import com.torodb.backend.ErrorHandler.Context;
-import com.torodb.core.backend.DidCursor;
+import com.torodb.core.cursors.Cursor;
 
-public class DefaultDidCursor implements DidCursor {
+public class DefaultDidCursor implements Cursor<Integer> {
     public final ErrorHandler errorHandler;
     public final ResultSet resultSet;
     public boolean movedNext = false;
@@ -78,7 +77,7 @@ public class DefaultDidCursor implements DidCursor {
     }
 
     @Override
-    public Collection<Integer> getNextBatch(final int maxSize) {
+    public List<Integer> getNextBatch(final int maxSize) {
         List<Integer> dids = new ArrayList<>();
         
         for (int index = 0; index < maxSize && hasNext(); index++) {
@@ -89,7 +88,7 @@ public class DefaultDidCursor implements DidCursor {
     }
 
     @Override
-    public Collection<Integer> getRemaining() {
+    public List<Integer> getRemaining() {
         List<Integer> dids = new ArrayList<>();
         
         while (hasNext()) {

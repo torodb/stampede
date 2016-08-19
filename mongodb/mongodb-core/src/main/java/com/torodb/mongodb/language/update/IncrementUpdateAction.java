@@ -125,6 +125,11 @@ public class IncrementUpdateAction extends SingleFieldUpdateAction implements Re
         return true;
     }
 
+    @Override
+    public <Result, Arg> Result accept(UpdateActionVisitor<Result, Arg> visitor, Arg arg) {
+        return visitor.visit(this, arg);
+    }
+
     private static class Incrementer extends KVValueAdaptor<KVNumeric<?>, KVNumeric<?>> {
 
         @Override

@@ -10,6 +10,7 @@ import com.torodb.backend.guice.BackendModule;
 import com.torodb.common.util.ThreadFactoryIdleService;
 import com.torodb.concurrent.guice.ConcurrentModule;
 import com.torodb.core.BuildProperties;
+import com.torodb.core.Shutdowner;
 import com.torodb.core.annotations.ToroDbIdleService;
 import com.torodb.core.guice.CoreModule;
 import com.torodb.core.metrics.MetricsModule;
@@ -24,7 +25,7 @@ import com.torodb.packaging.guice.ConfigModule;
 import com.torodb.packaging.guice.ExecutorServicesModule;
 import com.torodb.packaging.guice.PackagingModule;
 import com.torodb.torod.TorodServer;
-import com.torodb.torod.guice.TorodModule;
+import com.torodb.torod.guice.SqlTorodModule;
 import java.time.Clock;
 import java.util.concurrent.ThreadFactory;
 import javax.inject.Singleton;
@@ -43,18 +44,18 @@ public class ToroDbServer extends ThreadFactoryIdleService {
     private final TorodServer torod;
     private final MongodServer mongod;
     private final NettyMongoServer netty;
-    private final ExecutorsService executorsService;
+    private final Shutdowner shutdowner;
 
     @Inject
     ToroDbServer(@ToroDbIdleService ThreadFactory threadFactory, BuildProperties buildProperties,
             TorodServer torod, MongodServer mongod, NettyMongoServer netty,
-            ExecutorsService executorsService) {
+            Shutdowner shutdowner) {
         super(threadFactory);
         this.buildProperties = buildProperties;
         this.torod = torod;
         this.mongod = mongod;
         this.netty = netty;
-        this.executorsService = executorsService;
+        this.shutdowner = shutdowner;
     }
 
     public static ToroDbServer create(Config config, Clock clock) throws ProvisionException {
@@ -63,15 +64,14 @@ public class ToroDbServer extends ThreadFactoryIdleService {
     }
 
     public static Injector createInjector(Config config, Clock clock) {
-        Injector injector = Guice.createInjector(
-                new ConfigModule(config),
+        Injector injector = Guice.createInjector(new ConfigModule(config),
                 new PackagingModule(clock),
                 new CoreModule(),
                 new BackendImplementationModule(config),
                 new BackendModule(),
                 new MetainfModule(),
                 new D2RModule(),
-                new TorodModule(),
+                new SqlTorodModule(),
                 new MongoLayerModule(),
                 new MongoDbWpModule(),
                 new MetricsModule(config.getGeneric()),
@@ -84,9 +84,6 @@ public class ToroDbServer extends ThreadFactoryIdleService {
     @Override
     protected void startUp() throws Exception {
         LOGGER.info("Starting up ToroDB v" +  buildProperties.getFullVersion());
-
-        executorsService.startAsync();
-        executorsService.awaitRunning();
 
         torod.startAsync();
         mongod.startAsync();
@@ -116,8 +113,7 @@ public class ToroDbServer extends ThreadFactoryIdleService {
         torod.stopAsync();
         torod.awaitTerminated();
 
-        executorsService.stopAsync();
-        executorsService.awaitTerminated();
+        shutdowner.close();
 
         LOGGER.debug("ToroDBServer shutdown complete");
     }

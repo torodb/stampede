@@ -126,6 +126,11 @@ public class MultiplyUpdateAction extends SingleFieldUpdateAction implements Res
         return true;
     }
 
+    @Override
+    public <Result, Arg> Result accept(UpdateActionVisitor<Result, Arg> visitor, Arg arg) {
+        return visitor.visit(this, arg);
+    }
+
     private static class Multiplicator extends KVValueAdaptor<KVNumeric<?>, KVNumeric<?>> {
 
         @Override

@@ -26,11 +26,12 @@ import com.torodb.core.exceptions.user.UpdateException;
  *
  */
 public abstract class UpdateAction {
-    
-    public UpdateAction() {
-        super();
-    }
-    
+
     public abstract void apply(UpdatedToroDocumentBuilder builder) throws UpdateException;
-    
+
+    public abstract <Result, Arg> Result accept(UpdateActionVisitor<Result, Arg> visitor, Arg arg);
+
+    public boolean isSetModification() {
+        return false;
+    }
 }

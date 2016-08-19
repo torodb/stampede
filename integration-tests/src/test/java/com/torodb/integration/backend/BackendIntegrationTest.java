@@ -25,7 +25,7 @@ import com.torodb.backend.MockDidCursor;
 import com.torodb.backend.SqlBuilder;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.backend.tables.MetaDocPartTable;
-import com.torodb.core.backend.DidCursor;
+import com.torodb.core.cursors.Cursor;
 import com.torodb.core.d2r.CollectionData;
 import com.torodb.core.d2r.DocPartResult;
 import com.torodb.core.document.ToroDocument;
@@ -467,7 +467,7 @@ public class BackendIntegrationTest extends AbstractBackendTest {
             
             Collection<ToroDocument> readedToroDocuments;
             try (
-                    DidCursor defaultDidCursor = sqlInterface.getReadInterface().getAllCollectionDids(dsl, metaDatabase, metaCollection);
+                    Cursor<Integer> defaultDidCursor = sqlInterface.getReadInterface().getAllCollectionDids(dsl, metaDatabase, metaCollection);
                     DocPartResultBatch batch = sqlInterface.getReadInterface().getCollectionResultSets(
                             dsl, metaDatabase, metaCollection,
                             defaultDidCursor,  generatedDids.size());
@@ -515,7 +515,7 @@ public class BackendIntegrationTest extends AbstractBackendTest {
             
             Collection<ToroDocument> readedToroDocuments;
             try (
-                    DidCursor defaultDidCursor = sqlInterface.getReadInterface().getCollectionDidsWithFieldEqualsTo(
+                    Cursor<Integer> defaultDidCursor = sqlInterface.getReadInterface().getCollectionDidsWithFieldEqualsTo(
                             dsl, metaDatabase, metaCollection, metaDocPart, metaField, new StringKVString("Blueberry"));
                     DocPartResultBatch batch = sqlInterface.getReadInterface().getCollectionResultSets(
                             dsl, metaDatabase, metaCollection,

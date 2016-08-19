@@ -110,4 +110,9 @@ public class UnsetFieldUpdateAction extends SingleFieldUpdateAction implements R
     ) {
         return false;
     }
+
+    @Override
+    public <Result, Arg> Result accept(UpdateActionVisitor<Result, Arg> visitor, Arg arg) {
+        return visitor.visit(this, arg);
+    }
 }

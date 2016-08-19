@@ -38,4 +38,9 @@ public class SetCurrentDateUpdateAction extends SingleFieldUpdateAction {
         throw new UnsupportedOperationException();
     }
 
+    @Override
+    public <Result, Arg> Result accept(UpdateActionVisitor<Result, Arg> visitor, Arg arg) {
+        return visitor.visit(this, arg);
+    }
+
 }

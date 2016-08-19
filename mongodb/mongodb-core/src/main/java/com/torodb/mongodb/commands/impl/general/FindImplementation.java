@@ -40,6 +40,7 @@ public class FindImplementation implements ReadTorodbCommandImpl<FindArgument, F
         switch (filter.size()) {
             case 0: {
                 cursor = context.getTorodTransaction().findAll(req.getDatabase(), arg.getCollection())
+                        .asDocCursor()
                         .transform(t -> t.getRoot())
                         .transform(ToBsonDocumentTranslator.getInstance());
                 break;
@@ -76,6 +77,7 @@ public class FindImplementation implements ReadTorodbCommandImpl<FindArgument, F
         KVValue<?> kvValue = AttrRefHelper.calculateValueAndAttRef(filter, refBuilder);
 
         return transaction.findByAttRef(db, col, refBuilder.build(), kvValue)
+                .asDocCursor()
                 .transform(t -> t.getRoot());
     }
 

@@ -60,6 +60,6 @@ public interface StructureInterface {
     public Stream<Consumer<DSLContext>> streamDataInsertFinishTasks(MetaSnapshot snapshot);
     
     void createIndex(@Nonnull DSLContext dsl, @Nonnull String tableSchema, 
-            @Nonnull String tableName, @Nonnull String tableColumnName, boolean isAscending);
+            @Nonnull String tableName, @Nonnull String tableColumnName, boolean isAscending, boolean unique);
     void dropIndex(@Nonnull DSLContext dsl, @Nonnull String schemaName, @Nonnull String indexName);
 }

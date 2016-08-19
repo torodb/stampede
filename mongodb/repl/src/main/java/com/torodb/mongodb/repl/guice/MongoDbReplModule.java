@@ -1,7 +1,7 @@
 
 package com.torodb.mongodb.repl.guice;
 
-import com.torodb.core.annotations.ParallelLevel;
+import com.torodb.mongodb.repl.oplogreplier.fetcher.ContinuousOplogFetcher;
 import com.eightkdata.mongowp.OpTime;
 import com.eightkdata.mongowp.client.wrapper.MongoClientWrapper;
 import com.google.common.annotations.Beta;
@@ -14,9 +14,16 @@ import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.torodb.mongodb.repl.*;
 import com.torodb.mongodb.repl.exceptions.NoSyncSourceFoundException;
 import com.torodb.mongodb.repl.impl.MongoOplogReaderProvider;
-import com.torodb.mongodb.repl.impl.SequentialOplogReplier;
+import com.torodb.mongodb.repl.oplogreplier.*;
+import com.torodb.mongodb.repl.oplogreplier.DefaultOplogApplier.BatchLimits;
+import com.torodb.mongodb.repl.oplogreplier.analyzed.AnalyzedOpReducer;
+import com.torodb.mongodb.repl.oplogreplier.batch.AnalyzedOplogBatchExecutor;
+import com.torodb.mongodb.repl.oplogreplier.batch.BatchAnalyzer;
+import com.torodb.mongodb.repl.oplogreplier.batch.ConcurrentOplogBatchExecutor;
+import com.torodb.mongodb.repl.oplogreplier.batch.ConcurrentOplogBatchExecutor.ConcurrentOplogBatchExecutorMetrics;
 import com.torodb.mongodb.utils.DbCloner;
 import com.torodb.mongodb.utils.cloner.CommitHeuristic;
+import java.time.Duration;
 import java.util.concurrent.ThreadFactory;
 import javax.annotation.Nonnull;
 import org.apache.logging.log4j.LogManager;
@@ -47,18 +54,34 @@ public class MongoDbReplModule extends AbstractModule {
         );
 
         install(new FactoryModuleBuilder()
-                .implement(OplogReplier.class, SequentialOplogReplier.class)
-                .build(OplogReplier.OplogReplierFactory.class)
+                //To use the old applier that emulates MongoDB
+//                .implement(OplogApplierService.class, SequentialOplogApplierService.class)
+
+                //To use the applier service that delegates on a OplogApplier
+                .implement(OplogApplierService.class, DefaultOplogApplierService.class)
+                .build(OplogApplierService.OplogApplierServiceFactory.class)
         );
+
         install(new FactoryModuleBuilder()
                 .implement(RecoveryService.class, RecoveryService.class)
                 .build(RecoveryService.RecoveryServiceFactory.class)
         );
 
+        install(new FactoryModuleBuilder()
+                .implement(ContinuousOplogFetcher.class, ContinuousOplogFetcher.class)
+                .build(ContinuousOplogFetcher.ContinuousOplogFetcherFactory.class)
+        );
+
         bind(DbCloner.class)
                 .annotatedWith(MongoDbRepl.class)
                 .toProvider(AkkaDbClonerProvider.class);
-//                .toProvider(ConcurrentDbClonerProvider.class);
+
+        bind(OplogApplier.class)
+                .to(DefaultOplogApplier.class)
+                .in(Singleton.class);
+
+        bind(DefaultOplogApplier.BatchLimits.class)
+                .toInstance(new BatchLimits(1000, Duration.ofSeconds(2)));
 
         bind(CommitHeuristic.class)
                 .to(DefaultCommitHeuristic.class)
@@ -75,6 +98,28 @@ public class MongoDbReplModule extends AbstractModule {
                         .build()
                 );
 
+        bind(ConcurrentOplogBatchExecutor.class)
+                .in(Singleton.class);
+
+        bind(AnalyzedOplogBatchExecutor.class)
+                .to(ConcurrentOplogBatchExecutor.class);
+
+        bind(ConcurrentOplogBatchExecutor.ConcurrentOplogBatchExecutorMetrics.class)
+                .in(Singleton.class);
+        bind(AnalyzedOplogBatchExecutor.AnalyzedOplogBatchExecutorMetrics.class)
+                .to(ConcurrentOplogBatchExecutorMetrics.class);
+
+        bind(ConcurrentOplogBatchExecutor.SubBatchHeuristic.class)
+                .toInstance((ConcurrentOplogBatchExecutorMetrics metrics) -> 100);
+
+
+        install(new FactoryModuleBuilder()
+                .implement(BatchAnalyzer.class, BatchAnalyzer.class)
+                .build(BatchAnalyzer.BatchAnalyzerFactory.class)
+        );
+        bind(AnalyzedOpReducer.class)
+                .toInstance(new AnalyzedOpReducer(false));
+
     }
 
 
@@ -88,7 +133,7 @@ public class MongoDbReplModule extends AbstractModule {
         }
     }
 
-    private static class DefaultCommitHeuristic implements CommitHeuristic {
+    public static class DefaultCommitHeuristic implements CommitHeuristic {
 
         @Override
         public void notifyDocumentInsertionCommit(int docBatchSize, long millisSpent) {

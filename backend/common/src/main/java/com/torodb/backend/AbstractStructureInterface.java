@@ -111,15 +111,15 @@ public abstract class AbstractStructureInterface implements StructureInterface {
     @Override
     public void createIndex(@Nonnull DSLContext dsl,
             @Nonnull String schemaName, @Nonnull String tableName,
-            @Nonnull String columnName, boolean ascending
+            @Nonnull String columnName, boolean ascending, boolean unique
     ) {
-        String statement = getCreateIndexStatement(schemaName, tableName, columnName, ascending);
+        String statement = getCreateIndexStatement(schemaName, tableName, columnName, ascending, unique);
 
         sqlHelper.executeUpdate(dsl, statement, Context.CREATE_INDEX);
     }
 
     protected abstract String getCreateIndexStatement(String schemaName, String tableName, String columnName,
-            boolean ascending);
+            boolean ascending, boolean unique);
     
     @Override
     public void dropIndex(@Nonnull DSLContext dsl, @Nonnull String schemaName, @Nonnull String indexName) {

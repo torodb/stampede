@@ -206,7 +206,7 @@ public class WriteBackendTransactionImpl extends BackendTransactionImpl implemen
         
         //TODO: This is a hack accepted by all devs. Mongolization for create an index on _id fields
         if (docPart.getTableRef().isRoot() && "_id".equals(newField.getName())) {
-            getSqlInterface().getStructureInterface().createIndex(getDsl(), db.getIdentifier(), docPart.getIdentifier(), newField.getIdentifier(), true);
+            getSqlInterface().getStructureInterface().createIndex(getDsl(), db.getIdentifier(), docPart.getIdentifier(), newField.getIdentifier(), true, true);
         }
     }
 

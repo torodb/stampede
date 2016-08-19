@@ -21,6 +21,7 @@
 package com.torodb.core.retrier;
 
 import com.torodb.common.util.RetryHelper;
+import com.torodb.common.util.RetryHelper.DelegateExceptionHandler;
 import com.torodb.common.util.RetryHelper.ExceptionHandler;
 import com.torodb.common.util.RetryHelper.RetryCallback;
 import com.torodb.core.exceptions.user.UserException;
@@ -94,7 +95,9 @@ public abstract class AbstractHintableRetrier implements Retrier {
     @Override
     public <Result, T extends Exception> Result retry(Callable<Result> callable, ExceptionHandler<Result, T> handler, EnumSet<Hint> hints)
             throws T {
-        ExceptionHandler<Result, T> subHandler = getExceptionHandler(hints, handler);
+        ExceptionHandler<Result, T> subHandler = new AbortFailFastExceptionHandler<>(
+                getExceptionHandler(hints, handler)
+        );
         return RetryHelper.retryOrThrow(subHandler, callable);
     }
 
@@ -102,10 +105,36 @@ public abstract class AbstractHintableRetrier implements Retrier {
     protected <Result> ExceptionHandler<Result, RetrierGiveUpException> getExceptionHandler(
             EnumSet<Hint> hints) {
         //This horrible cast is done to not create the default handler each time
-        return getExceptionHandler(
-                hints,
-                (ExceptionHandler<Result, RetrierGiveUpException>) throwHandler
+        return new AbortFailFastExceptionHandler<>(
+                getExceptionHandler(
+                        hints,
+                        (ExceptionHandler<Result, RetrierGiveUpException>) throwHandler
+                )
         );
+    }
+
+    /**
+     * A {@link ExceptionHandler} that fails if {@link RetrierAbortException} is catched and
+     * delegates on the given delegate in other case.
+     * @param <Result>
+     * @param <T>
+     */
+    private static class AbortFailFastExceptionHandler<Result, T extends Exception> extends DelegateExceptionHandler<Result, T> {
+
+        public AbortFailFastExceptionHandler(ExceptionHandler<Result, T> delegate) {
+            super(delegate);
+        }
+
+        @Override
+        public void handleException(RetryCallback<Result> callback, Exception t, int attempts)
+                throws T {
+            if (t instanceof RetrierAbortException) {
+                throw (RetrierAbortException) t;
+            } else {
+                super.handleException(callback, t, attempts);
+            }
+        }
+
     }
 
     private final static class WrapperException extends Exception {

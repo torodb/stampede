@@ -20,10 +20,9 @@
 
 package com.torodb.core.backend;
 
-import java.util.Collection;
-
+import com.google.common.collect.Multimap;
 import com.torodb.core.cursors.Cursor;
-import com.torodb.core.document.ToroDocument;
+import com.torodb.core.cursors.ToroCursor;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
@@ -43,18 +42,29 @@ public interface BackendTransaction extends AutoCloseable {
     
     public long getDocumentsSize(MetaDatabase db, MetaCollection col);
 
-    public Cursor<ToroDocument> findAll(MetaDatabase db, MetaCollection col);
+    public ToroCursor fetch(MetaDatabase db, MetaCollection col, Cursor<Integer> didCursor);
 
-    public Cursor<ToroDocument> findByField(MetaDatabase db, MetaCollection col,
+    public ToroCursor findAll(MetaDatabase db, MetaCollection col);
+
+    public ToroCursor findByField(MetaDatabase db, MetaCollection col,
             MetaDocPart docPart, MetaField field, KVValue<?> value);
 
-    public DidCursor findAllDids(MetaDatabase db, MetaCollection col);
+    /**
+     * Return a cursor that iterates over all documents that fulfill the query.
+     *
+     * Each entry on the metafield is a value restriction on the entry metafield. The query is
+     * fulfilled if for at least one entry, the evaluation is true.
+     * @param db
+     * @param col
+     * @param docPart
+     * @param valuesMultimap
+     * @return
+     */
+    public ToroCursor findByFieldIn(MetaDatabase db, MetaCollection col, MetaDocPart docPart,
+            Multimap<MetaField, KVValue<?>> valuesMultimap);
 
-    public DidCursor findDidsByField(MetaDatabase db, MetaCollection col,
-            MetaDocPart docPart, MetaField field, KVValue<?> value);
-    
-    public Collection<ToroDocument> readDocuments(MetaDatabase db, MetaCollection col, Collection<Integer> dids);
-    
+    public void rollback();
+
     @Override
     public void close();
 }

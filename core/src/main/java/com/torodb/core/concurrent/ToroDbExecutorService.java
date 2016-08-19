@@ -20,7 +20,10 @@
 
 package com.torodb.core.concurrent;
 
-import java.util.concurrent.*;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ForkJoinPool;
 
 /**
  * A special executor service that, by default, treat all runnables as blocking tasks.

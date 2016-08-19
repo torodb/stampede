@@ -203,7 +203,7 @@ public class UpdateActionTranslator {
             builder.add(new IncrementUpdateAction(
                             attRefs,
                             (KVNumeric<?>) translatedValue
-                    )
+                    ), false
             );
         }
     }
@@ -227,7 +227,7 @@ public class UpdateActionTranslator {
                     new MoveUpdateAction(
                             attRefs,
                             newRef
-                    )
+                    ), false
             );
         }
     }
@@ -247,7 +247,7 @@ public class UpdateActionTranslator {
             builder.add(new MultiplyUpdateAction(
                             attRefs,
                             (KVNumeric<?>) translatedValue
-                    )
+                    ), false
             );
         }
     }
@@ -269,7 +269,7 @@ public class UpdateActionTranslator {
                     new SetFieldUpdateAction(
                             attRefs,
                             translatedValue
-                    )
+                    ), false
             );
         }
     }
@@ -280,9 +280,7 @@ public class UpdateActionTranslator {
             Collection<AttributeReference> attRefs
                     = parseAttributeReference(entry.getKey());
             
-            builder.add(
-                    new UnsetFieldUpdateAction(attRefs)
-            );
+            builder.add(new UnsetFieldUpdateAction(attRefs), false);
         }
     }
 

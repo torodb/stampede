@@ -69,6 +69,12 @@ public class UpdatedToroDocumentBuilder {
         return result;
     }
 
+    public static UpdatedToroDocumentBuilder from(KVDocument original) {
+        UpdatedToroDocumentBuilder result = UpdatedToroDocumentBuilder.create();
+        result.copy(original);
+        return result;
+    }
+
     public boolean contains(String key) {
         return isValue(key)
                 || isArrayBuilder(key)

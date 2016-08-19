@@ -20,6 +20,7 @@
 
 package com.torodb.backend.derby;
 
+import com.google.common.base.Joiner;
 import java.util.Collection;
 import java.util.Random;
 
@@ -68,12 +69,14 @@ public class DerbyStructureInterface extends AbstractStructureInterface {
     
     @Override
     protected String getCreateIndexStatement(String schemaName, String tableName, String columnName,
-            boolean ascending) {
+            boolean ascending, boolean unique) {
         //TODO: This is a hack accepted by all devs. Common SQL interface for creating indexes should pass an identifier here
         String indexName = tableName + '_' + columnName + new Random().nextInt() % 256;
         
+        String uniqueText = unique ? "UNIQUE " : "";
+
         StringBuilder sb = new StringBuilder()
-                .append("CREATE INDEX ")
+                .append("CREATE ").append(uniqueText).append("INDEX ")
                 .append("\"").append(indexName).append("\"")
                 .append(" ON ")
                 .append("\"").append(schemaName).append("\"")
@@ -111,7 +114,11 @@ public class DerbyStructureInterface extends AbstractStructureInterface {
         if (!fields.isEmpty()) {
             for (InternalField<?> field : fields) {
                 sb.quote(field.getName()).append(' ')
-                    .append(field.getDataType().getCastTypeName()).append(',');
+                    .append(field.getDataType().getCastTypeName());
+                if (!field.isNullable()) {
+                    sb.append(" NOT NULL");
+                }
+                sb.append(',');
             }
             sb.setLastChar(')');
         } else {
@@ -161,7 +168,13 @@ public class DerbyStructureInterface extends AbstractStructureInterface {
             Collection<InternalField<?>> indexFields) {
         Preconditions.checkArgument(!indexFields.isEmpty());
         SqlBuilder sb = new SqlBuilder("CREATE INDEX ");
-        sb.quote(tableName+"_idx");
+
+        String fieldPartName = Joiner.on("")
+                .join(indexFields.stream()
+                        .map(field -> field.getName()).iterator()
+                );
+
+        sb.quote(tableName + fieldPartName +"_idx");
         sb.append(" ON ");
         sb.table(schemaName, tableName)
           .append(" (");

@@ -185,4 +185,9 @@ public class MoveUpdateAction extends SingleFieldUpdateAction {
             return true;
         }
     }
+
+    @Override
+    public <Result, Arg> Result accept(UpdateActionVisitor<Result, Arg> visitor, Arg arg) {
+        return visitor.visit(this, arg);
+    }
 }

@@ -35,7 +35,7 @@ import org.jooq.DSLContext;
 import org.jooq.exception.DataAccessException;
 
 import com.torodb.backend.ErrorHandler.Context;
-import com.torodb.core.backend.DidCursor;
+import com.torodb.core.cursors.Cursor;
 import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.d2r.DocPartRow;
 import com.torodb.core.transaction.metainf.FieldType;
@@ -70,7 +70,7 @@ public abstract class AbstractWriteInterface implements WriteInterface {
     @Override
     public long deleteCollectionDocParts(@Nonnull DSLContext dsl,
             @Nonnull String schemaName, @Nonnull MetaCollection metaCollection,
-            @Nonnull DidCursor didCursor
+            @Nonnull Cursor<Integer> didCursor
     ) {
         Connection c = dsl.configuration().connectionProvider().acquire();
         try{

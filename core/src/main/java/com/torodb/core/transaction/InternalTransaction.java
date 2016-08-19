@@ -32,6 +32,8 @@ public interface InternalTransaction extends AutoCloseable {
 
     public BackendTransaction getBackendTransaction();
 
+    public void rollback();
+
     @Override
     public void close();
 

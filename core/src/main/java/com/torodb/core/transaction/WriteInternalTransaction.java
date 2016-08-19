@@ -33,7 +33,7 @@ import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
  */
 public class WriteInternalTransaction implements InternalTransaction {
     private final MetainfoRepository metainfoRepository;
-    private final MutableMetaSnapshot metaSnapshot;
+    private MutableMetaSnapshot metaSnapshot;
     private final WriteBackendTransaction backendTransaction;
 
     private WriteInternalTransaction(MetainfoRepository metainfoRepository, MutableMetaSnapshot metaSnapshot, WriteBackendTransaction backendConnection) {
@@ -70,6 +70,19 @@ public class WriteInternalTransaction implements InternalTransaction {
             backendTransaction.commit();
 
             mergeStage.commit();
+        }
+    }
+
+    @Override
+    public void rollback() {
+        backendTransaction.rollback();
+
+        //This is only correct if the SQL transaction completely rollback (ie no savepoints were used)
+        //On other case, if another writer commited their chenges, we could have a disparity
+        //between what we see on the metainformation (the changes of the other writer) and what we
+        //see on the database (were our rollbacked transaction did not see the other writer changes)
+        try (SnapshotStage snapshotStage = metainfoRepository.startSnapshotStage()) {
+            metaSnapshot = snapshotStage.createMutableSnapshot();
         }
     }
 

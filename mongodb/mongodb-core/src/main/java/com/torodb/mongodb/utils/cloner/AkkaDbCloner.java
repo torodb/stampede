@@ -37,7 +37,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.net.HostAndPort;
 import com.torodb.common.util.RetryHelper.ExceptionHandler;
-import com.torodb.common.util.RetryHelper.ThrowExceptionHandler;
 import com.torodb.core.concurrent.StreamExecutor;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.retrier.Retrier;
@@ -60,7 +59,6 @@ import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executor;
-import java.util.logging.Level;
 import java.util.stream.Stream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -535,6 +533,11 @@ public class AkkaDbCloner implements DbCloner {
         @Override
         public Request getCurrentRequest() {
             return delegate.getCurrentRequest();
+        }
+
+        @Override
+        public void rollback() {
+            delegate.rollback();
         }
 
         @Override

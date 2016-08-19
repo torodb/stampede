@@ -42,6 +42,7 @@ import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.kvdocument.values.KVValue;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.jooq.*;
 
 @Singleton
 @SuppressFBWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
@@ -156,5 +157,11 @@ public class SqlHelper {
 		KVValueConverter valueConverter = dataType.getKVValueConverter();
 		SqlBinding sqlBinding = valueConverter.getSqlBinding();
 		return sqlBinding.getPlaceholder();
+    }
+
+    public String getSqlTypeName(FieldType fieldType) {
+        DataTypeForKV dataType = dataTypeProvider.getDataType(fieldType);
+
+        return dataType.getTypeName();
     }
 }

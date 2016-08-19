@@ -36,6 +36,7 @@ public interface ErrorHandler {
         UPDATE,
         DELETE,
         COMMIT,
+        ROLLBACK,
         CLOSE
     }
     

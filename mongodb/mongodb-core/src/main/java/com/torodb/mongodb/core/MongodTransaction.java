@@ -19,6 +19,8 @@ public interface MongodTransaction extends AutoCloseable {
 
     public Request getCurrentRequest();
 
+    public void rollback();
+
     @Override
     public void close();
 

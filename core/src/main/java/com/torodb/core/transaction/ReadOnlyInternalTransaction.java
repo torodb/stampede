@@ -58,6 +58,10 @@ public class ReadOnlyInternalTransaction implements InternalTransaction {
     }
 
     @Override
+    public void rollback() {
+    }
+
+    @Override
     public void close() {
         backendTransaction.close();
     }

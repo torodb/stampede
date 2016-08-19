@@ -59,4 +59,14 @@ public class SetDocumentUpdateAction extends UpdateAction {
         
         builder.setUpdated();
     }
+
+    @Override
+    public boolean isSetModification() {
+        return true;
+    }
+
+    @Override
+    public <Result, Arg> Result accept(UpdateActionVisitor<Result, Arg> visitor, Arg arg) {
+        return visitor.visit(this, arg);
+    }
 }

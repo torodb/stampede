@@ -48,6 +48,11 @@ abstract class MongodTransactionImpl implements MongodTransaction {
     }
 
     @Override
+    public void rollback() {
+        getTorodTransaction().rollback();
+    }
+
+    @Override
     public void close() {
         if (!closed) {
             closed = true;

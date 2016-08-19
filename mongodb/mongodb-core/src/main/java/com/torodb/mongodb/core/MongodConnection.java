@@ -83,7 +83,6 @@ public class MongodConnection implements Connection, AutoCloseable {
             if (currentTransaction != null) {
                 currentTransaction.close();
             }
-            assert currentTransaction == null;
             server.onConnectionClose(this);
 
             torodConnection.close();

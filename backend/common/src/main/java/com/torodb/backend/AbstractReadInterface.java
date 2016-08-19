@@ -20,6 +20,7 @@
 
 package com.torodb.backend;
 
+import com.google.common.collect.Multimap;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -38,15 +39,19 @@ import com.torodb.backend.d2r.ResultSetDocPartResult;
 import com.torodb.backend.tables.MetaDocPartTable.DocPartTableFields;
 import com.torodb.core.TableRef;
 import com.torodb.core.TableRefFactory;
-import com.torodb.core.backend.DidCursor;
+import com.torodb.core.cursors.Cursor;
+import com.torodb.core.cursors.EmptyCursor;
+import com.torodb.core.cursors.IteratorCursor;
 import com.torodb.core.d2r.DocPartResult;
-import com.torodb.core.transaction.metainf.MetaCollection;
-import com.torodb.core.transaction.metainf.MetaDatabase;
-import com.torodb.core.transaction.metainf.MetaDocPart;
-import com.torodb.core.transaction.metainf.MetaField;
+import com.torodb.core.transaction.metainf.*;
 import com.torodb.kvdocument.values.KVValue;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import java.util.Map;
+import java.util.stream.Stream;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.jooq.lambda.Unchecked;
 
 /**
  *
@@ -54,7 +59,8 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 @Singleton
 @SuppressFBWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
 public abstract class AbstractReadInterface implements ReadInterface {
-    
+
+    private static final Logger LOGGER = LogManager.getLogger(AbstractReadInterface.class);
     private final MetaDataReadInterface metaDataReadInterface;
     private final DataTypeProvider dataTypeProvider;
     private final ErrorHandler errorHandler;
@@ -72,8 +78,8 @@ public abstract class AbstractReadInterface implements ReadInterface {
 
     @Override
     @SuppressFBWarnings(value = {"OBL_UNSATISFIED_OBLIGATION","ODR_OPEN_DATABASE_RESOURCE"},
-    justification = "ResultSet is wrapped in a DidCursor. It's iterated and closed in caller code")
-    public DidCursor getCollectionDidsWithFieldEqualsTo(DSLContext dsl, MetaDatabase metaDatabase,
+    justification = "ResultSet is wrapped in a Cursor<Integer>. It's iterated and closed in caller code")
+    public Cursor<Integer> getCollectionDidsWithFieldEqualsTo(DSLContext dsl, MetaDatabase metaDatabase,
             MetaCollection metaCol, MetaDocPart metaDocPart, MetaField metaField, KVValue<?> value)
             throws SQLException {
         assert metaDatabase.getMetaCollectionByIdentifier(metaCol.getIdentifier()) != null;
@@ -91,19 +97,48 @@ public abstract class AbstractReadInterface implements ReadInterface {
             dsl.configuration().connectionProvider().release(connection);
         }
     }
-
+    
     protected abstract String getReadCollectionDidsWithFieldEqualsToStatement(String schemaName, String rootTableName,
             String columnName);
 
     @Override
     @SuppressFBWarnings(value = {"OBL_UNSATISFIED_OBLIGATION","ODR_OPEN_DATABASE_RESOURCE"},
-    justification = "ResultSet is wrapped in a DidCursor. It's iterated and closed in caller code")
-    public DidCursor getAllCollectionDids(DSLContext dsl, MetaDatabase metaDatabase, MetaCollection metaCollection)
+    justification = "ResultSet is wrapped in a Cursor<Integer>. It's iterated and closed in caller code")
+    @SuppressWarnings("unchecked")
+    public Cursor<Integer> getCollectionDidsWithFieldsIn(DSLContext dsl, MetaDatabase metaDatabase,
+            MetaCollection metaCol, MetaDocPart metaDocPart, Multimap<MetaField, KVValue<?>> valuesMultimap)
+            throws SQLException {
+        assert metaDatabase.getMetaCollectionByIdentifier(metaCol.getIdentifier()) != null;
+        assert metaCol.getMetaDocPartByIdentifier(metaDocPart.getIdentifier()) != null;
+        assert valuesMultimap.keySet().stream().allMatch(metafield -> metaDocPart.getMetaFieldByIdentifier(metafield.getIdentifier()) != null);
+
+        LOGGER.warn("A very inefficient implementation of getCollectionDidsWithFieldsIn is being used");
+
+        Stream<Integer> didStream = valuesMultimap.entries().stream()
+                .map(Unchecked.function(
+                        (Map.Entry<MetaField, KVValue<?>> entry)
+                        -> getCollectionDidsWithFieldEqualsTo(
+                                dsl,
+                                metaDatabase,
+                                metaCol,
+                                metaDocPart,
+                                entry.getKey(),
+                                entry.getValue())
+                ))
+                .flatMap((Cursor<Integer> cursor) -> cursor.getRemaining().stream());
+
+        return new IteratorCursor<>(didStream.iterator());
+    }
+
+    @Override
+    @SuppressFBWarnings(value = {"OBL_UNSATISFIED_OBLIGATION","ODR_OPEN_DATABASE_RESOURCE"},
+    justification = "ResultSet is wrapped in a Cursor<Integer>. It's iterated and closed in caller code")
+    public Cursor<Integer> getAllCollectionDids(DSLContext dsl, MetaDatabase metaDatabase, MetaCollection metaCollection)
             throws SQLException {
 
         MetaDocPart rootDocPart = metaCollection.getMetaDocPartByTableRef(tableRefFactory.createRoot());
         if (rootDocPart == null) {
-            return EmptyDidCursor.INSTANCE;
+            return new EmptyCursor<>();
         }
 
         String statement = getReadAllCollectionDidsStatement(metaDatabase.getIdentifier(), rootDocPart.getIdentifier());
@@ -138,7 +173,7 @@ public abstract class AbstractReadInterface implements ReadInterface {
     @Nonnull
     @Override
     public DocPartResultBatch getCollectionResultSets(@Nonnull DSLContext dsl, @Nonnull MetaDatabase metaDatabase, @Nonnull MetaCollection metaCollection,
-            @Nonnull DidCursor didCursor, int maxSize) throws SQLException {
+            @Nonnull Cursor<Integer> didCursor, int maxSize) throws SQLException {
         Collection<Integer> dids = didCursor.getNextBatch(maxSize);
         return getCollectionResultSets(dsl, metaDatabase, metaCollection, dids);
     }
