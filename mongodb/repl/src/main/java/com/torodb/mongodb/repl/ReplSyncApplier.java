@@ -5,6 +5,7 @@ import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
 import com.torodb.common.util.ThreadFactoryRunnableService;
 import com.torodb.core.annotations.ToroDbRunnableService;
+import com.torodb.core.exceptions.SystemInterruptedException;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.transaction.RollbackException;
 import com.torodb.mongodb.core.MongodConnection;
@@ -111,7 +112,7 @@ class ReplSyncApplier extends ThreadFactoryRunnableService {
                         }
                         callback.markAsApplied(opToApply);
                     }
-                } catch (InterruptedException ex) {
+                } catch (SystemInterruptedException | InterruptedException ex) {
                     LOGGER.debug("Interrupted applier thread while waiting for an operator");
                 }
             }
