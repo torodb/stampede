@@ -23,6 +23,7 @@ package com.torodb.packaging.config.util;
 import com.beust.jcommander.internal.Console;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.JsonGenerationException;
+import com.fasterxml.jackson.core.JsonLocation;
 import com.fasterxml.jackson.core.JsonParser.Feature;
 import com.fasterxml.jackson.core.JsonPointer;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -86,6 +87,11 @@ public class ConfigUtils {
         for (Reference reference : jsonMappingException.getPath()) {
             jsonPointer = jsonPointer.append(JsonPointer.compile("/" + reference.getFieldName()));
         }
+        
+        if (LOGGER.isDebugEnabled()) {
+            return new IllegalArgumentException("Validation error at " + jsonPointer + ": " + jsonMappingException.getMessage(), jsonMappingException);
+        }
+        
         return new IllegalArgumentException("Validation error at " + jsonPointer + ": " + jsonMappingException.getMessage());
     }
 
@@ -215,7 +221,12 @@ public class ConfigUtils {
 		}
 
 		ObjectNode objectNode = (ObjectNode) pathNode;
-		Object valueAsObject = objectMapper.readValue(value, Object.class);
+		Object valueAsObject;
+		try {
+		    valueAsObject = objectMapper.readValue(value, Object.class);
+		} catch(JsonMappingException jsonMappingException) {
+		    throw JsonMappingException.wrapWithPath(jsonMappingException, configRootNode, path.substring(1) + "/" + prop);
+		}
 		if (valueAsObject != null) {
 			JsonNode valueNode = objectMapper.valueToTree(valueAsObject);
 			objectNode.set(prop, valueNode);
