@@ -1,5 +1,6 @@
 package com.torodb.mongodb.utils.cloner;
 
+import akka.Done;
 import akka.NotUsed;
 import akka.actor.ActorSystem;
 import akka.dispatch.ExecutionContexts;
@@ -35,9 +36,12 @@ import com.google.common.annotations.Beta;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.net.HostAndPort;
+import com.torodb.common.util.RetryHelper.ExceptionHandler;
+import com.torodb.common.util.RetryHelper.ThrowExceptionHandler;
 import com.torodb.core.concurrent.StreamExecutor;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.retrier.Retrier;
+import com.torodb.core.retrier.Retrier.Hint;
 import com.torodb.core.retrier.RetrierAbortException;
 import com.torodb.core.retrier.RetrierGiveUpException;
 import com.torodb.core.transaction.RollbackException;
@@ -52,10 +56,8 @@ import com.torodb.mongodb.utils.ListIndexesRequester;
 import com.torodb.mongodb.utils.NamespaceUtil;
 import com.torodb.torod.WriteTorodTransaction;
 import java.time.Clock;
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executor;
 import java.util.logging.Level;
@@ -65,10 +67,6 @@ import org.apache.logging.log4j.Logger;
 import scala.concurrent.Await;
 import scala.concurrent.duration.Duration;
 
-/*
- * TODO: This class must be improved. Cloning is not transactional and it has other problems or
- * things that must be improved
- */
 /**
  * This class is used to clone databases using a client, so remote and local databases can
  * be cloned.
@@ -225,7 +223,9 @@ public class AkkaDbCloner implements DbCloner {
 
         MongoCursor<BsonDocument> cursor = openCursor(remoteConnection, collName, opts);
 
-        Source<BsonDocument, NotUsed> source = Source.fromIterator(() -> cursor)
+        CollectionIterator iterator = new CollectionIterator(cursor, retrier);
+
+        Source<BsonDocument, NotUsed> source = Source.fromIterator(() -> iterator)
                 .buffer(cursorBatchBufferSize, OverflowStrategy.backpressure())
                 .async();
 
@@ -254,19 +254,34 @@ public class AkkaDbCloner implements DbCloner {
             });
             inserterFlow = Flow.fromGraph(graph);
         }
-        Pair<Integer, Integer> insertedDocs = source.via(inserterFlow)
-                .toMat(
-                        Sink.fold(new Pair<>(0,0),
-                                (Pair<Integer, Integer> acum, Pair<Integer, Integer> newBatch)
-                                -> new Pair<>(acum.first() + newBatch.first(), acum.second()
-                                        + newBatch.second())
-                        ),
-                        Keep.right()
-                )
-                .run(materializer)
-                .toCompletableFuture()
-                .join();
-        LOGGER.warn("Requested docs: {}, Inserted: {}", insertedDocs.second(), insertedDocs.first());
+        try {
+            retrier.retry(() -> {
+                try {
+                    Pair<Integer, Integer> insertedDocs = source.via(inserterFlow)
+                            .toMat(
+                                    Sink.fold(new Pair<>(0,0),
+                                            (Pair<Integer, Integer> acum, Pair<Integer, Integer> newBatch)
+                                                    -> new Pair<>(acum.first() + newBatch.first(), acum.second()
+                                                            + newBatch.second())
+                                    ),
+                                    Keep.right()
+                            )
+                            .run(materializer)
+                            .toCompletableFuture()
+                            .join();
+                    LOGGER.warn("Requested docs: {}, Inserted: {}", insertedDocs.second(), insertedDocs.first());
+                    return Done.getInstance();
+                } catch (CompletionException ex) {
+                    Throwable cause = ex.getCause();
+                    if (cause != null && cause instanceof RollbackException) {
+                        throw (RollbackException) cause;
+                    }
+                    throw ex;
+                }
+            }, Hint.TIME_SENSIBLE, Hint.INFREQUENT_ROLLBACK);
+        } catch (RetrierGiveUpException ex) {
+            throw new CloningException(ex);
+        }
     }
 
     private Flow<BsonDocument, Pair<Integer, Integer>, NotUsed> createCloneDocsWorker(MongodServer localServer,
@@ -531,6 +546,50 @@ public class AkkaDbCloner implements DbCloner {
         @Override
         public boolean isClosed() {
             return delegate.isClosed();
+        }
+
+    }
+
+    private static class CollectionIterator implements Iterator<BsonDocument> {
+
+        private final MongoCursor<BsonDocument> cursor;
+        private final Retrier retrier;
+        private static final ExceptionHandler<Boolean, CloningException> HAS_NEXT_HANDLER = (callback, t, i) -> {
+            throw new CloningException("Giving up after {} calls to hasNext", t);
+        };
+        private static final ExceptionHandler<BsonDocument, CloningException> NEXT_HANDLER = (callback, t, i) -> {
+            throw new CloningException("Giving up after {} calls to next", t);
+        };
+
+        public CollectionIterator(MongoCursor<BsonDocument> cursor, Retrier retrier) {
+            this.cursor = cursor;
+            this.retrier = retrier;
+        }
+
+        @Override
+        public boolean hasNext() {
+            Callable<Boolean> callable = () -> {
+                try {
+                    return cursor.hasNext();
+                } catch (RuntimeException ex) {
+                    throw new RollbackException(ex);
+                }
+            };
+            return retrier.retry(callable, HAS_NEXT_HANDLER, Hint.TIME_SENSIBLE, Hint.INFREQUENT_ROLLBACK);
+        }
+
+        @Override
+        public BsonDocument next() {
+            Callable<BsonDocument> callable = () -> {
+                try {
+                    return cursor.next();
+                } catch (NoSuchElementException ex) {
+                    throw ex;
+                } catch (RuntimeException ex) {
+                    throw new RollbackException(ex);
+                }
+            };
+            return retrier.retry(callable, NEXT_HANDLER, Hint.TIME_SENSIBLE, Hint.INFREQUENT_ROLLBACK);
         }
 
     }
