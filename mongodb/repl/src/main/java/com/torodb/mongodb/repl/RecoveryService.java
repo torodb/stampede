@@ -1,6 +1,19 @@
 
 package com.torodb.mongodb.repl;
 
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.concurrent.ThreadFactory;
+import java.util.stream.Stream;
+
+import javax.annotation.Nonnull;
+import javax.inject.Inject;
+import javax.net.SocketFactory;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.eightkdata.mongowp.OpTime;
 import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.client.core.MongoClient;
@@ -19,6 +32,8 @@ import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.google.common.base.Supplier;
 import com.google.common.net.HostAndPort;
 import com.google.inject.assistedinject.Assisted;
+import com.mongodb.MongoClientOptions;
+import com.mongodb.MongoCredential;
 import com.torodb.common.util.ThreadFactoryRunnableService;
 import com.torodb.core.annotations.ToroDbRunnableService;
 import com.torodb.core.exceptions.user.UserException;
@@ -33,15 +48,6 @@ import com.torodb.mongodb.repl.guice.MongoDbRepl;
 import com.torodb.mongodb.utils.DbCloner;
 import com.torodb.mongodb.utils.DbCloner.CloneOptions;
 import com.torodb.mongodb.utils.DbCloner.CloningException;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.concurrent.ThreadFactory;
-import java.util.stream.Stream;
-import javax.annotation.Nonnull;
-import javax.inject.Inject;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  *
@@ -135,8 +141,12 @@ public class RecoveryService extends ThreadFactoryRunnableService {
         callback.setConsistentState(false);
 
         HostAndPort syncSource;
+        MongoClientOptions mongoClientOptions;
+        MongoCredential mongoCredential;
         try {
             syncSource = syncSourceProvider.calculateSyncSource(null);
+            mongoClientOptions = syncSourceProvider.getMongoClientOptions();
+            mongoCredential = syncSourceProvider.getCredential();
             LOGGER.info("Using node " + syncSource + " to replicate from");
         } catch (NoSyncSourceFoundException ex) {
             throw new TryAgainException();
@@ -144,7 +154,7 @@ public class RecoveryService extends ThreadFactoryRunnableService {
 
         MongoClient remoteClient;
         try {
-            remoteClient = remoteClientProvider.getClient(syncSource);
+            remoteClient = remoteClientProvider.getClient(syncSource, mongoClientOptions, mongoCredential);
         } catch (UnreachableMongoServerException ex) {
             throw new TryAgainException(ex);
         }

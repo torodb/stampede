@@ -29,6 +29,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.torodb.packaging.config.annotation.Description;
 import com.torodb.packaging.config.validation.NoDuplicatedReplName;
+import com.torodb.packaging.config.validation.NotNullElements;
+import com.torodb.packaging.config.validation.SSLEnabledForX509Authentication;
 
 @Description("config.protocol.mongo")
 @JsonPropertyOrder({
@@ -41,12 +43,17 @@ public class Mongo {
 	@JsonProperty(required=true)
 	private Net net = new Net();
 	@Valid
-	@NoDuplicatedReplName
+    @NoDuplicatedReplName
+    @NotNullElements
+    @SSLEnabledForX509Authentication
 	private List<Replication> replication;
     @Description("config.protocol.mongo.cursorTimeout")
     @NotNull
     @JsonProperty(required=true)
     private Long cursorTimeout = 10L * 60 * 1000;
+    @Description("config.protocol.mongo.mongopassFile")
+    @JsonProperty(required=true)
+    private String mongopassFile = System.getProperty("user.home") + "/.mongopass";
 
 	public Net getNet() {
 		return net;
@@ -65,5 +72,11 @@ public class Mongo {
     }
     public void setCursorTimeout(Long cursorTimeout) {
         this.cursorTimeout = cursorTimeout;
+    }
+    public String getMongopassFile() {
+        return mongopassFile;
+    }
+    public void setMongopassFile(String mongopassFile) {
+        this.mongopassFile = mongopassFile;
     }
 }

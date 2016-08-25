@@ -27,6 +27,7 @@ import org.hibernate.validator.constraints.NotEmpty;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.torodb.packaging.config.annotation.Description;
+import com.torodb.packaging.config.validation.RequiredParametersForAuthentication;
 
 @JsonPropertyOrder({
 	"replSetName",
@@ -43,11 +44,17 @@ public class Replication {
 	@JsonProperty(required=true)
 	private Role role = Role.HIDDEN_SLAVE;
 	@Description("config.protocol.mongo.replication.syncSource")
-	/**
-	 * @deprecated kept for backward compatibility
-	 */
-	@Deprecated
+    @JsonProperty(required=true)
 	private String syncSource;
+    @Description("config.protocol.mongo.replication.ssl")
+    @NotNull
+    @JsonProperty(required=true)
+    private SSL ssl = new SSL();
+    @Description("config.protocol.mongo.replication.auth")
+    @NotNull
+    @JsonProperty(required=true)
+    @RequiredParametersForAuthentication
+    private Auth auth = new Auth();
 	
 	public String getReplSetName() {
 		return replSetName;
@@ -61,22 +68,22 @@ public class Replication {
 	public void setRole(Role role) {
 		this.role = role;
 	}
-
-	/**
-	 * @deprecated kept for backward compatibility
-	 * @return
-     */
-	@Deprecated
 	public String getSyncSource() {
 		return syncSource;
 	}
-
-	/**
-	 * @deprecated kept for backward compatibility
-	 * @param syncSource
-     */
-	@Deprecated
 	public void setSyncSource(String syncSource) {
 		this.syncSource = syncSource;
 	}
+    public SSL getSsl() {
+        return ssl;
+    }
+    public void setSsl(SSL ssl) {
+        this.ssl = ssl;
+    }
+    public Auth getAuth() {
+        return auth;
+    }
+    public void setAuth(Auth auth) {
+        this.auth = auth;
+    }
 }

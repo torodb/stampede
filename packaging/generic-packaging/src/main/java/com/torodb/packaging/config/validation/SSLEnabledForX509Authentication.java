@@ -34,10 +34,10 @@ import javax.validation.ReportAsSingleViolation;
 
 @Target({ FIELD, METHOD, PARAMETER })
 @Retention(RUNTIME)
-@Constraint(validatedBy = NotNullElementsValidator.class)
+@Constraint(validatedBy = SSLEnabledForX509AuthenticationValidator.class)
 @ReportAsSingleViolation
-public @interface NotNullElements {
-	String message() default "{com.torodb.config.validation.NotNullElements.message}";
+public @interface SSLEnabledForX509Authentication {
+	String message() default "{com.torodb.config.validation.SSLEnabledForX509Authentication.message}";
 
 	Class<?>[] groups() default {};
 

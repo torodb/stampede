@@ -1,7 +1,14 @@
 
 package com.torodb.mongodb.repl.guice;
 
-import com.torodb.core.annotations.ParallelLevel;
+import java.util.concurrent.ThreadFactory;
+
+import javax.annotation.Nonnull;
+import javax.net.SocketFactory;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.eightkdata.mongowp.OpTime;
 import com.eightkdata.mongowp.client.wrapper.MongoClientWrapper;
 import com.google.common.annotations.Beta;
@@ -11,15 +18,19 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
-import com.torodb.mongodb.repl.*;
+import com.mongodb.MongoClientOptions;
+import com.mongodb.MongoCredential;
+import com.mongodb.MongoOptions;
+import com.torodb.mongodb.repl.MongoClientProvider;
+import com.torodb.mongodb.repl.OplogReaderProvider;
+import com.torodb.mongodb.repl.RecoveryService;
+import com.torodb.mongodb.repl.ReplCoordinator;
+import com.torodb.mongodb.repl.SecondaryStateService;
+import com.torodb.mongodb.repl.SyncSourceProvider;
 import com.torodb.mongodb.repl.exceptions.NoSyncSourceFoundException;
 import com.torodb.mongodb.repl.impl.MongoOplogReaderProvider;
 import com.torodb.mongodb.utils.DbCloner;
 import com.torodb.mongodb.utils.cloner.CommitHeuristic;
-import java.util.concurrent.ThreadFactory;
-import javax.annotation.Nonnull;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  *
@@ -29,14 +40,19 @@ public class MongoDbReplModule extends AbstractModule {
     private static final Logger LOGGER = LogManager.getLogger(MongoDbReplModule.class);
 
     private final HostAndPort syncSource;
-    public MongoDbReplModule(HostAndPort syncSource) {
+    private final MongoClientOptions mongoClientOptions;
+    private final MongoCredential mongoCredential;
+    
+    public MongoDbReplModule(HostAndPort syncSource, MongoClientOptions mongoClientOptions, MongoCredential mongoCredential) {
         this.syncSource = syncSource;
+        this.mongoClientOptions = mongoClientOptions;
+        this.mongoCredential = mongoCredential;
     }
 
     @Override
     protected void configure() {
         bind(MongoClientProvider.class)
-                .toInstance((hostAndPort) -> new MongoClientWrapper(hostAndPort));
+                .toInstance((hostAndPort, mongoClientOptions, mongoCredential) -> new MongoClientWrapper(hostAndPort, mongoClientOptions, mongoCredential));
         bind(OplogReaderProvider.class).to(MongoOplogReaderProvider.class).asEagerSingleton();
 
         bind(ReplCoordinator.ReplCoordinatorOwnerCallback.class)
@@ -80,7 +96,7 @@ public class MongoDbReplModule extends AbstractModule {
     @Provides @Singleton
     SyncSourceProvider createSyncSourceProvider() {
         if (syncSource != null) {
-            return new FollowerSyncSourceProvider(syncSource);
+            return new FollowerSyncSourceProvider(syncSource, mongoClientOptions, mongoCredential);
         }
         else {
             return new PrimarySyncSourceProvider();
@@ -107,9 +123,13 @@ public class MongoDbReplModule extends AbstractModule {
     @Beta
     private static class FollowerSyncSourceProvider implements SyncSourceProvider {
         private final HostAndPort syncSource;
+        private final MongoClientOptions mongoClientOptions;
+        private final MongoCredential mongoCredential;
 
-        public FollowerSyncSourceProvider(@Nonnull HostAndPort syncSource) {
+        public FollowerSyncSourceProvider(@Nonnull HostAndPort syncSource, MongoClientOptions mongoClientOptions, MongoCredential mongoCredential) {
             this.syncSource = syncSource;
+            this.mongoClientOptions = mongoClientOptions;
+            this.mongoCredential = mongoCredential;
         }
 
         @Override
@@ -126,6 +146,16 @@ public class MongoDbReplModule extends AbstractModule {
         public HostAndPort getSyncSource(OpTime lastFetchedOpTime) throws
                 NoSyncSourceFoundException {
             return syncSource;
+        }
+
+        @Override
+        public MongoClientOptions getMongoClientOptions() {
+            return mongoClientOptions;
+        }
+
+        @Override
+        public MongoCredential getCredential() {
+            return mongoCredential;
         }
     }
 
@@ -148,6 +178,15 @@ public class MongoDbReplModule extends AbstractModule {
             return null;
         }
 
+        @Override
+        public MongoClientOptions getMongoClientOptions() {
+            return null;
+        }
+
+        @Override
+        public MongoCredential getCredential() {
+            return null;
+        }
     }
 
 }

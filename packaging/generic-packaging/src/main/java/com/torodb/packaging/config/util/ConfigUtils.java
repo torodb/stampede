@@ -20,29 +20,55 @@
 
 package com.torodb.packaging.config.util;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.PropertyResourceBundle;
+import java.util.ResourceBundle;
+import java.util.Set;
+
+import javax.validation.ConstraintViolation;
+import javax.validation.Path;
+import javax.validation.Validation;
+import javax.validation.Validator;
+import javax.validation.ValidatorFactory;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.beust.jcommander.internal.Console;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.JsonGenerationException;
-import com.fasterxml.jackson.core.JsonLocation;
 import com.fasterxml.jackson.core.JsonParser.Feature;
 import com.fasterxml.jackson.core.JsonPointer;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonMappingException.Reference;
-import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import com.google.common.base.Charsets;
+import com.google.common.net.HostAndPort;
 import com.torodb.packaging.config.model.Config;
 import com.torodb.packaging.config.model.backend.derby.Derby;
 import com.torodb.packaging.config.model.backend.postgres.Postgres;
-import java.io.*;
-import java.util.*;
-import javax.validation.*;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import com.torodb.packaging.config.model.protocol.mongo.Mongo;
+import com.torodb.packaging.config.model.protocol.mongo.Replication;
 
 public class ConfigUtils {
 
@@ -124,7 +150,7 @@ public class ConfigUtils {
     public static void parseToropassFile(final Config config) throws FileNotFoundException, IOException {
         if (config.getBackend().isPostgresLike()) {
             Postgres postgres = config.getBackend().asPostgres();
-            postgres.setPassword(getPasswordFromToropassFile(
+            postgres.setPassword(getPasswordFromPassFile(
                     postgres.getToropassFile(), 
                     postgres.getHost(), 
                     postgres.getPort(), 
@@ -132,7 +158,7 @@ public class ConfigUtils {
                     postgres.getUser()));
         } else if(config.getBackend().isDerbyLike()) {
             Derby derby = config.getBackend().asDerby();
-            derby.setPassword(getPasswordFromToropassFile(
+            derby.setPassword(getPasswordFromPassFile(
                     derby.getToropassFile(), 
                     derby.getHost(), 
                     derby.getPort(), 
@@ -141,28 +167,46 @@ public class ConfigUtils {
         }
     }
 
-    private static String getPasswordFromToropassFile(String toropassFile, String host, int port, String database,
+    public static void parseMongopassFile(final Config config) throws FileNotFoundException, IOException {
+        Mongo mongo = config.getProtocol().getMongo();
+        if (mongo.getReplication() != null) {
+            for (Replication replication : mongo.getReplication()) {
+                if (replication.getAuth().getUser() != null) {
+                    HostAndPort syncSource = HostAndPort.fromString(replication.getSyncSource())
+                            .withDefaultPort(27017);
+                    replication.getAuth().setPassword(getPasswordFromPassFile(
+                            mongo.getMongopassFile(), 
+                            syncSource.getHostText(), 
+                            syncSource.getPort(), 
+                            replication.getAuth().getSource(), 
+                            replication.getAuth().getUser()));
+                }
+            }
+        }
+    }
+
+    private static String getPasswordFromPassFile(String passFile, String host, int port, String database,
             String user) throws FileNotFoundException, IOException {
-        File toroPass = new File(toropassFile);
-        if (toroPass.exists() && toroPass.canRead() && toroPass.isFile()) {
-            BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(toroPass), Charsets.UTF_8));
+        File pass = new File(passFile);
+        if (pass.exists() && pass.canRead() && pass.isFile()) {
+            BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(pass), Charsets.UTF_8));
             try {
                 String line;
                 int index = 0;
                 while ((line = br.readLine()) != null) {
                     index++;
-                    String[] toroPassChunks = line.split(":");
-                    if (toroPassChunks.length != 5) {
-                        LOGGER.warn("Wrong format at line " + index + " of file " + toropassFile);
+                    String[] passChunks = line.split(":");
+                    if (passChunks.length != 5) {
+                        LOGGER.warn("Wrong format at line " + index + " of file " + passFile);
                         continue;
                     }
 
-                    if ((toroPassChunks[0].equals("*") || toroPassChunks[0].equals(host))
-                            && (toroPassChunks[1].equals("*")
-                                    || toroPassChunks[1].equals(String.valueOf(port)))
-                            && (toroPassChunks[2].equals("*") || toroPassChunks[2].equals(database))
-                            && (toroPassChunks[3].equals("*") || toroPassChunks[3].equals(user))) {
-                        return toroPassChunks[4];
+                    if ((passChunks[0].equals("*") || passChunks[0].equals(host))
+                            && (passChunks[1].equals("*")
+                                    || passChunks[1].equals(String.valueOf(port)))
+                            && (passChunks[2].equals("*") || passChunks[2].equals(database))
+                            && (passChunks[3].equals("*") || passChunks[3].equals(user))) {
+                        return passChunks[4];
                     }
                 }
                 br.close();

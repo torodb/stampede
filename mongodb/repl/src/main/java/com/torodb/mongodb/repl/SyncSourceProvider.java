@@ -1,10 +1,13 @@
 
 package com.torodb.mongodb.repl;
 
+import javax.annotation.Nullable;
+
 import com.eightkdata.mongowp.OpTime;
 import com.google.common.net.HostAndPort;
+import com.mongodb.MongoClientOptions;
+import com.mongodb.MongoCredential;
 import com.torodb.mongodb.repl.exceptions.NoSyncSourceFoundException;
-import javax.annotation.Nullable;
 
 /**
  *
@@ -28,4 +31,7 @@ public interface SyncSourceProvider {
 
     public HostAndPort getLastUsedSyncSource();
 
+    public MongoClientOptions getMongoClientOptions();
+    
+    public MongoCredential getCredential();
 }

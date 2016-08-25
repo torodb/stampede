@@ -1,6 +1,14 @@
 
 package com.torodb.mongodb.repl;
 
+import java.util.concurrent.ThreadFactory;
+
+import javax.annotation.Nonnull;
+import javax.annotation.concurrent.NotThreadSafe;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.eightkdata.mongowp.OpTime;
 import com.eightkdata.mongowp.client.core.UnreachableMongoServerException;
 import com.eightkdata.mongowp.exceptions.MongoException;
@@ -10,14 +18,11 @@ import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
 import com.eightkdata.mongowp.server.api.pojos.MongoCursor;
 import com.eightkdata.mongowp.server.api.pojos.MongoCursor.Batch;
 import com.google.common.net.HostAndPort;
+import com.mongodb.MongoClientOptions;
+import com.mongodb.MongoCredential;
 import com.torodb.common.util.ThreadFactoryRunnableService;
 import com.torodb.core.annotations.ToroDbRunnableService;
 import com.torodb.mongodb.repl.exceptions.NoSyncSourceFoundException;
-import java.util.concurrent.ThreadFactory;
-import javax.annotation.Nonnull;
-import javax.annotation.concurrent.NotThreadSafe;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  *
@@ -93,7 +98,9 @@ class ReplSyncFetcher extends ThreadFactoryRunnableService {
                     HostAndPort syncSource = null;
                     try {
                         syncSource = syncSourceProvider.getSyncSource(lastFetchedOpTime);
-                        oplogReader = readerProvider.newReader(syncSource);
+                        MongoClientOptions mongoClientOptions = syncSourceProvider.getMongoClientOptions();
+                        MongoCredential mongoCredential = syncSourceProvider.getCredential();
+                        oplogReader = readerProvider.newReader(syncSource, mongoClientOptions, mongoCredential);
                     } catch (NoSyncSourceFoundException ex) {
                         LOGGER.warn("There is no source to sync from");
                         Thread.sleep(1000);
