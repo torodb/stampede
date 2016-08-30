@@ -15,7 +15,9 @@ import java.security.cert.X509Certificate;
 import java.time.Clock;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ThreadFactory;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import javax.inject.Singleton;
@@ -28,6 +30,8 @@ import javax.net.ssl.TrustManagerFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.net.HostAndPort;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
@@ -48,10 +52,13 @@ import com.torodb.mongodb.core.MongodServer;
 import com.torodb.mongodb.guice.MongoLayerModule;
 import com.torodb.mongodb.repl.ReplCoordinator;
 import com.torodb.mongodb.repl.guice.MongoDbReplModule;
+import com.torodb.mongodb.utils.FilterProvider;
 import com.torodb.packaging.config.model.Config;
 import com.torodb.packaging.config.model.protocol.mongo.Auth;
+import com.torodb.packaging.config.model.protocol.mongo.FilterList;
 import com.torodb.packaging.config.model.protocol.mongo.Replication;
 import com.torodb.packaging.config.model.protocol.mongo.SSL;
+import com.torodb.packaging.config.util.SimpleRegExpDecoder;
 import com.torodb.packaging.guice.BackendImplementationModule;
 import com.torodb.packaging.guice.ConfigModule;
 import com.torodb.packaging.guice.ExecutorServicesModule;
@@ -103,6 +110,7 @@ public class ToroDbiServer extends ThreadFactoryIdleService {
                 .withDefaultPort(27017);
         MongoClientOptions mongoClientOptions = getMongoClientOptions(config);
         MongoCredential mongoCredential = getMongoCredential(config);
+        FilterProvider filterProvider = getFilterProvider(config);
 
         Injector injector = Guice.createInjector(
                 new ConfigModule(config),
@@ -114,7 +122,7 @@ public class ToroDbiServer extends ThreadFactoryIdleService {
                 new D2RModule(),
                 new TorodModule(),
                 new MongoLayerModule(),
-                new MongoDbReplModule(syncSource, mongoClientOptions, mongoCredential),
+                new MongoDbReplModule(syncSource, mongoClientOptions, mongoCredential, filterProvider),
                 new ExecutorServicesModule(),
                 new ConcurrentModule()
         );
@@ -254,6 +262,30 @@ public class ToroDbiServer extends ThreadFactoryIdleService {
             break;
         }
         return mongoCredential;
+    }
+
+    private static FilterProvider getFilterProvider(Config config) {
+        FilterProvider filterProvider = new FilterProvider(
+                convertFilterList(config.getProtocol().getMongo().getReplication().get(0).getInclude()), 
+                convertFilterList(config.getProtocol().getMongo().getReplication().get(0).getExclude()));
+        return filterProvider;
+    }
+
+    private static ImmutableMap<Pattern, ImmutableList<Pattern>> convertFilterList(
+            FilterList filterList) {
+        ImmutableMap.Builder<Pattern, ImmutableList<Pattern>> filterBuilder = ImmutableMap.builder();
+        
+        if (filterList != null) {
+            for (Map.Entry<String, List<String>> databaseEntry : filterList.entrySet()) {
+                ImmutableList.Builder<Pattern> collectionsBuilder = ImmutableList.builder();
+                for (String collection : databaseEntry.getValue()) {
+                    collectionsBuilder.add(SimpleRegExpDecoder.decode(collection));
+                }
+                filterBuilder.put(SimpleRegExpDecoder.decode(databaseEntry.getKey()), collectionsBuilder.build());
+            }
+        }
+        
+        return filterBuilder.build();
     }
 
     @Override

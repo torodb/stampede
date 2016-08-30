@@ -55,6 +55,12 @@ public class Replication {
     @JsonProperty(required=true)
     @RequiredParametersForAuthentication
     private Auth auth = new Auth();
+    @Description("config.protocol.mongo.replication.include")
+    @JsonProperty(required=true)
+    private FilterList include;
+    @Description("config.protocol.mongo.replication.exclude")
+    @JsonProperty(required=true)
+    private FilterList exclude;
 	
 	public String getReplSetName() {
 		return replSetName;
@@ -85,5 +91,17 @@ public class Replication {
     }
     public void setAuth(Auth auth) {
         this.auth = auth;
+    }
+    public FilterList getInclude() {
+        return include;
+    }
+    public void setInclude(FilterList include) {
+        this.include = include;
+    }
+    public FilterList getExclude() {
+        return exclude;
+    }
+    public void setExclude(FilterList exclude) {
+        this.exclude = exclude;
     }
 }

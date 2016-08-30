@@ -30,6 +30,7 @@ import com.torodb.mongodb.repl.SyncSourceProvider;
 import com.torodb.mongodb.repl.exceptions.NoSyncSourceFoundException;
 import com.torodb.mongodb.repl.impl.MongoOplogReaderProvider;
 import com.torodb.mongodb.utils.DbCloner;
+import com.torodb.mongodb.utils.FilterProvider;
 import com.torodb.mongodb.utils.cloner.CommitHeuristic;
 
 /**
@@ -42,11 +43,13 @@ public class MongoDbReplModule extends AbstractModule {
     private final HostAndPort syncSource;
     private final MongoClientOptions mongoClientOptions;
     private final MongoCredential mongoCredential;
+    private final FilterProvider filterProvider;
     
-    public MongoDbReplModule(HostAndPort syncSource, MongoClientOptions mongoClientOptions, MongoCredential mongoCredential) {
+    public MongoDbReplModule(HostAndPort syncSource, MongoClientOptions mongoClientOptions, MongoCredential mongoCredential, FilterProvider filterProvider) {
         this.syncSource = syncSource;
         this.mongoClientOptions = mongoClientOptions;
         this.mongoCredential = mongoCredential;
+        this.filterProvider = filterProvider;
     }
 
     @Override
@@ -90,6 +93,7 @@ public class MongoDbReplModule extends AbstractModule {
                         .build()
                 );
 
+        bind(FilterProvider.class).toInstance(filterProvider);
     }
 
 

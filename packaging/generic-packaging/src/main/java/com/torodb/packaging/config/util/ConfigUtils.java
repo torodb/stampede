@@ -264,18 +264,30 @@ public class ConfigUtils {
 			}
 		}
 
-		ObjectNode objectNode = (ObjectNode) pathNode;
 		Object valueAsObject;
 		try {
 		    valueAsObject = objectMapper.readValue(value, Object.class);
 		} catch(JsonMappingException jsonMappingException) {
 		    throw JsonMappingException.wrapWithPath(jsonMappingException, configRootNode, path.substring(1) + "/" + prop);
 		}
-		if (valueAsObject != null) {
-			JsonNode valueNode = objectMapper.valueToTree(valueAsObject);
-			objectNode.set(prop, valueNode);
-		} else {
-			objectNode.remove(prop);
+		
+		if (pathNode instanceof ObjectNode) {
+	        ObjectNode objectNode = (ObjectNode) pathNode;
+	        if (valueAsObject != null) {
+	            JsonNode valueNode = objectMapper.valueToTree(valueAsObject);
+	            objectNode.set(prop, valueNode);
+	        } else {
+	            objectNode.remove(prop);
+	        }
+		} else if (pathNode instanceof ArrayNode) {
+	        ArrayNode arrayNode = (ArrayNode) pathNode;
+	        int index = Integer.valueOf(prop);
+	        if (valueAsObject != null) {
+	            JsonNode valueNode = objectMapper.valueToTree(valueAsObject);
+	            arrayNode.set(index, valueNode);
+	        } else {
+	            arrayNode.remove(index);
+	        }
 		}
 	}
 
