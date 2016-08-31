@@ -28,6 +28,8 @@ import javax.annotation.Nullable;
  */
 public class UniqueIndexViolationException extends UserException {
 
+    private static final long serialVersionUID = -8679405097266977101L;
+
     @Nullable
     private final String index;
     @Nullable
