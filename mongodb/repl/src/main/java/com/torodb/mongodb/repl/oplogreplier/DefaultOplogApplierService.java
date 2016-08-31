@@ -27,6 +27,7 @@ import com.google.inject.assistedinject.Assisted;
 import com.torodb.common.util.ThreadFactoryIdleService;
 import com.torodb.mongodb.repl.OplogManager;
 import com.torodb.mongodb.repl.OplogManager.ReadOplogTransaction;
+import com.torodb.mongodb.repl.ReplicationFilters;
 import com.torodb.mongodb.repl.oplogreplier.fetcher.ContinuousOplogFetcher.ContinuousOplogFetcherFactory;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadFactory;
@@ -34,6 +35,7 @@ import javax.inject.Inject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.torodb.mongodb.repl.oplogreplier.OplogApplier.ApplyingJob;
+import com.torodb.mongodb.repl.oplogreplier.fetcher.OplogFetcher;
 
 /**
  * A {@link OplogApplierService} that delegate on an {@link OplogApplier}.
@@ -49,18 +51,20 @@ public class DefaultOplogApplierService extends ThreadFactoryIdleService impleme
     private final OplogManager oplogManager;
     private final Callback callback;
     private volatile boolean stopping;
-    private ContinuousOplogFetcher fetcher;
+    private OplogFetcher fetcher;
     private ApplyingJob applyJob;
+    private final ReplicationFilters replFilters;
 
     @Inject
     public DefaultOplogApplierService(ThreadFactory threadFactory, OplogApplier oplogApplier,
             ContinuousOplogFetcherFactory oplogFetcherFactory, OplogManager oplogManager,
-            @Assisted Callback callback) {
+            @Assisted Callback callback, ReplicationFilters replFilters) {
         super(threadFactory);
         this.oplogApplier = oplogApplier;
         this.oplogFetcherFactory = oplogFetcherFactory;
         this.oplogManager = oplogManager;
         this.callback = callback;
+        this.replFilters = replFilters;
     }
 
     @Override
@@ -121,7 +125,7 @@ public class DefaultOplogApplierService extends ThreadFactoryIdleService impleme
         callback.onFinish();
     }
     
-    private ContinuousOplogFetcher createFetcher() {
+    private OplogFetcher createFetcher() {
         OpTime lastAppliedOptime;
         long lastAppliedHash;
         try (ReadOplogTransaction oplogReadTrans = oplogManager.createReadTransaction()) {
@@ -129,6 +133,8 @@ public class DefaultOplogApplierService extends ThreadFactoryIdleService impleme
             lastAppliedHash = oplogReadTrans.getLastAppliedHash();
         }
 
-        return oplogFetcherFactory.createFetcher(lastAppliedHash, lastAppliedOptime);
+        return replFilters.filterOplogFetcher(
+                oplogFetcherFactory.createFetcher(lastAppliedHash, lastAppliedOptime)
+        );
     }
 }

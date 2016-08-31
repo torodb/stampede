@@ -46,7 +46,7 @@ public class FinishedOplogBatch implements OplogBatch {
     }
 
     @Override
-    public boolean isFinished() {
+    public boolean isLastOne() {
         return true;
     }
 

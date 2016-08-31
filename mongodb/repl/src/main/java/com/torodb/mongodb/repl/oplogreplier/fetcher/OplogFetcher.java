@@ -29,6 +29,18 @@ import com.torodb.mongodb.repl.oplogreplier.StopReplicationException;
  */
 public interface OplogFetcher extends AutoCloseable {
 
+    /**
+     * Fetchs a new batch.
+     *
+     * If fetcher has been finished or it is closed, a {@link OplogBatch#isLastOne() finished}
+     * batch is returned. If the fetcher thinks it there are no more elements on the remote oplog
+     * but more could be there in future, the returned batch will return false to
+     * {@link OplogBatch#isReadyForMore()}.
+     *
+     * @return
+     * @throws StopReplicationException
+     * @throws RollbackReplicationException
+     */
     public OplogBatch fetch() throws StopReplicationException, RollbackReplicationException;
 
     @Override

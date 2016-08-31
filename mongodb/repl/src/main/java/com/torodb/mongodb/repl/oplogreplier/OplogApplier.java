@@ -20,9 +20,9 @@
 
 package com.torodb.mongodb.repl.oplogreplier;
 
-import com.torodb.mongodb.repl.oplogreplier.fetcher.OplogFetcher;
 import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.torodb.mongodb.repl.OplogManager;
+import com.torodb.mongodb.repl.oplogreplier.fetcher.OplogFetcher;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;

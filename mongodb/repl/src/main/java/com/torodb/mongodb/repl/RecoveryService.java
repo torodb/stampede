@@ -36,6 +36,7 @@ import com.torodb.mongodb.repl.exceptions.NoSyncSourceFoundException;
 import com.torodb.mongodb.repl.guice.MongoDbRepl;
 import com.torodb.mongodb.repl.oplogreplier.*;
 import com.torodb.mongodb.repl.oplogreplier.OplogApplier.UnexpectedOplogApplierException;
+import com.torodb.mongodb.repl.oplogreplier.fetcher.OplogFetcher;
 import com.torodb.mongodb.utils.DbCloner;
 import com.torodb.mongodb.utils.DbCloner.CloneOptions;
 import com.torodb.mongodb.utils.DbCloner.CloningException;
@@ -63,6 +64,7 @@ public class RecoveryService extends ThreadFactoryRunnableService {
     private final MongoClientFactory remoteClientFactory;
     private final MongodServer server;
     private final OplogApplier oplogApplier;
+    private final ReplicationFilters replFilters;
 
     @Inject
     public RecoveryService(
@@ -74,7 +76,8 @@ public class RecoveryService extends ThreadFactoryRunnableService {
             @MongoDbRepl DbCloner cloner,
             MongoClientFactory remoteClientFactory,
             MongodServer server,
-            OplogApplier oplogApplier) {
+            OplogApplier oplogApplier,
+            ReplicationFilters replFilters) {
         super(threadFactory);
         this.callback = callback;
         this.oplogManager = oplogManager;
@@ -84,6 +87,7 @@ public class RecoveryService extends ThreadFactoryRunnableService {
         this.remoteClientFactory = remoteClientFactory;
         this.server = server;
         this.oplogApplier = oplogApplier;
+        this.replFilters = replFilters;
     }
 
     @Override
@@ -324,7 +328,9 @@ public class RecoveryService extends ThreadFactoryRunnableService {
                                 false,
                                 databaseName,
                                 Collections.<String>emptySet(),
-                                writePermissionSupplier);
+                                writePermissionSupplier,
+                                (colName) -> replFilters.getCollectionPredicate().test(databaseName, colName)
+                        );
 
                         try {
                             cloner.cloneDatabase(databaseName, remoteClient, server, options);
@@ -362,7 +368,7 @@ public class RecoveryService extends ThreadFactoryRunnableService {
             throw new TryAgainException("Remote oplog does not cointain our last operation");
         }
 
-        LimitedOplogFetcher fetcher = new LimitedOplogFetcher(oplogCursor);
+        OplogFetcher fetcher = replFilters.filterOplogFetcher(new LimitedOplogFetcher(oplogCursor));
 
         ApplierContext context = new ApplierContext(true);
 

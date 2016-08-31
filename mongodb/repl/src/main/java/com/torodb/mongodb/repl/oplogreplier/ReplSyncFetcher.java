@@ -65,7 +65,7 @@ class ReplSyncFetcher extends ThreadFactoryRunnableService {
 
                     OplogBatch oplogBatch = fetcher.fetch();
 
-                    if (oplogBatch.isFinished()) {
+                    if (oplogBatch.isLastOne()) {
                         oplogFinished = true;
                         break;
                     }

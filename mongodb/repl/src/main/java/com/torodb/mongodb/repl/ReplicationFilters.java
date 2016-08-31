@@ -23,6 +23,8 @@ package com.torodb.mongodb.repl;
 import com.eightkdata.mongowp.server.api.oplog.*;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.torodb.mongodb.repl.oplogreplier.fetcher.FilteredOplogFetcher;
+import com.torodb.mongodb.repl.oplogreplier.fetcher.OplogFetcher;
 import java.util.Map;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
@@ -53,6 +55,10 @@ public class ReplicationFilters {
 
     public Predicate<OplogOperation> getOperationPredicate() {
         return oplogOperationPredicate;
+    }
+
+    public OplogFetcher filterOplogFetcher(OplogFetcher originalFetcher) {
+        return new FilteredOplogFetcher(oplogOperationPredicate, originalFetcher);
     }
     
     private boolean databaseWhiteFilter(String database) {

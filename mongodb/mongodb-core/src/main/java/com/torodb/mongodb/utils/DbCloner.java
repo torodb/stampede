@@ -7,6 +7,7 @@ import com.google.common.base.Supplier;
 import com.torodb.core.exceptions.ToroRuntimeException;
 import com.torodb.mongodb.core.MongodServer;
 import java.util.Set;
+import java.util.function.Predicate;
 import javax.annotation.Nonnull;
 
 public interface DbCloner {
@@ -30,6 +31,7 @@ public interface DbCloner {
         private final String dbToClone;
         private final Set<String> collsToIgnore;
         private final Supplier<Boolean> writePermissionSupplier;
+        private final Predicate<String> collectionFilter;
 
         public CloneOptions(
                 boolean cloneData,
@@ -38,7 +40,8 @@ public interface DbCloner {
                 boolean snapshot,
                 String dbToClone,
                 Set<String> collsToIgnore,
-                Supplier<Boolean> writePermissionSupplier) {
+                Supplier<Boolean> writePermissionSupplier,
+                Predicate<String> collectionFilter) {
             this.cloneData = cloneData;
             this.cloneIndexes = cloneIndexes;
             this.slaveOk = slaveOk;
@@ -46,6 +49,7 @@ public interface DbCloner {
             this.dbToClone = dbToClone;
             this.collsToIgnore = collsToIgnore;
             this.writePermissionSupplier = writePermissionSupplier;
+            this.collectionFilter = collectionFilter;
         }
 
         /**
@@ -97,6 +101,16 @@ public interface DbCloner {
          */
         public Supplier<Boolean> getWritePermissionSupplier() {
             return writePermissionSupplier;
+        }
+
+        /**
+         * Returns a predicate that indicates which collections must be cloned.
+         *
+         * @return a predicate that is evaluated to true iff the collection with the given name must
+         *         be cloned
+         */
+        public Predicate<String> getCollectionFilter() {
+            return collectionFilter;
         }
 
     }

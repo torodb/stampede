@@ -405,6 +405,10 @@ public class AkkaDbCloner implements DbCloner {
                 LOGGER.info("Not cloning {} because it is not normal", collName);
                 continue;
             }
+            if (!opts.getCollectionFilter().test(collName)) {
+                LOGGER.info("Not cloning {} because it didn't pass the given filter predicate", collName);
+                continue;
+            }
             LOGGER.info("Collection {}.{} will be cloned", fromDb, collName);
             collsToClone.add(collEntry);
         }
