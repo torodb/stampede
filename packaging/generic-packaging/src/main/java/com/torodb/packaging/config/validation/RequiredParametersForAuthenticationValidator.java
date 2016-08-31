@@ -20,26 +20,34 @@
 
 package com.torodb.packaging.config.validation;
 
-import static java.lang.annotation.ElementType.FIELD;
-import static java.lang.annotation.ElementType.METHOD;
-import static java.lang.annotation.ElementType.PARAMETER;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
+import javax.validation.ConstraintValidator;
+import javax.validation.ConstraintValidatorContext;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
+import com.torodb.packaging.config.model.protocol.mongo.Auth;
 
-import javax.validation.Constraint;
-import javax.validation.Payload;
-import javax.validation.ReportAsSingleViolation;
+public class RequiredParametersForAuthenticationValidator implements ConstraintValidator<RequiredParametersForAuthentication, Auth> {
+	
+	@Override
+	public void initialize(RequiredParametersForAuthentication constraintAnnotation) {
+	}
 
-@Target({ FIELD, METHOD, PARAMETER })
-@Retention(RUNTIME)
-@Constraint(validatedBy = NotNullElementsValidator.class)
-@ReportAsSingleViolation
-public @interface NotNullElements {
-	String message() default "{com.torodb.config.validation.NotNullElements.message}";
+	@Override
+	public boolean isValid(Auth value, ConstraintValidatorContext context) {
+	    switch (value.getMode()) {
+        case cr:
+        case negotiate:
+        case scram_sha1:
+            if (value.getUser() == null ||
+                    value.getSource() == null) {
+                return false;
+            }
+            break;
+        case x509:
+        case disabled:
+        default:
+            break;
+	    }
 
-	Class<?>[] groups() default {};
-
-	Class<? extends Payload>[] payload() default {};
+		return true;
+	}
 }

@@ -34,10 +34,10 @@ import javax.validation.ReportAsSingleViolation;
 
 @Target({ FIELD, METHOD, PARAMETER })
 @Retention(RUNTIME)
-@Constraint(validatedBy = NotNullElementsValidator.class)
+@Constraint(validatedBy = RequiredParametersForAuthenticationValidator.class)
 @ReportAsSingleViolation
-public @interface NotNullElements {
-	String message() default "{com.torodb.config.validation.NotNullElements.message}";
+public @interface RequiredParametersForAuthentication {
+	String message() default "{com.torodb.config.validation.RequiredParametersForAuthentication.message}";
 
 	Class<?>[] groups() default {};
 

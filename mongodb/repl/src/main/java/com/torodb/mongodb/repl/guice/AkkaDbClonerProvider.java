@@ -75,7 +75,7 @@ public class AkkaDbClonerProvider implements Provider<AkkaDbCloner> {
                 parallelLevel, docsPerTransaction);
         return new AkkaDbCloner(
                 executor,
-                parallelLevel - 1,
+                Math.max(1, parallelLevel - 1),
                 streamExecutor,
                 parallelLevel * docsPerTransaction,
                 docsPerTransaction,

@@ -5,6 +5,7 @@ import com.torodb.mongodb.repl.oplogreplier.fetcher.LimitedOplogFetcher;
 import com.eightkdata.mongowp.OpTime;
 import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.client.core.MongoClient;
+import com.eightkdata.mongowp.client.core.MongoClientFactory;
 import com.eightkdata.mongowp.client.core.MongoConnection;
 import com.eightkdata.mongowp.client.core.UnreachableMongoServerException;
 import com.eightkdata.mongowp.exceptions.MongoException;
@@ -59,7 +60,7 @@ public class RecoveryService extends ThreadFactoryRunnableService {
     private final SyncSourceProvider syncSourceProvider;
     private final OplogReaderProvider oplogReaderProvider;
     private final DbCloner cloner;
-    private final MongoClientProvider remoteClientProvider;
+    private final MongoClientFactory remoteClientFactory;
     private final MongodServer server;
     private final OplogApplier oplogApplier;
 
@@ -71,7 +72,7 @@ public class RecoveryService extends ThreadFactoryRunnableService {
             SyncSourceProvider syncSourceProvider,
             OplogReaderProvider oplogReaderProvider,
             @MongoDbRepl DbCloner cloner,
-            MongoClientProvider remoteClientProvider,
+            MongoClientFactory remoteClientFactory,
             MongodServer server,
             OplogApplier oplogApplier) {
         super(threadFactory);
@@ -80,7 +81,7 @@ public class RecoveryService extends ThreadFactoryRunnableService {
         this.syncSourceProvider = syncSourceProvider;
         this.oplogReaderProvider = oplogReaderProvider;
         this.cloner = cloner;
-        this.remoteClientProvider = remoteClientProvider;
+        this.remoteClientFactory = remoteClientFactory;
         this.server = server;
         this.oplogApplier = oplogApplier;
     }
@@ -149,7 +150,7 @@ public class RecoveryService extends ThreadFactoryRunnableService {
 
         MongoClient remoteClient;
         try {
-            remoteClient = remoteClientProvider.getClient(syncSource);
+            remoteClient = remoteClientFactory.createClient(syncSource);
         } catch (UnreachableMongoServerException ex) {
             throw new TryAgainException(ex);
         }

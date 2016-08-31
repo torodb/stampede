@@ -9,6 +9,7 @@ import com.google.common.base.Throwables;
 import com.torodb.core.backend.WriteBackendTransaction;
 import com.torodb.core.d2r.D2RTranslatorFactory;
 import com.torodb.core.dsl.backend.BackendTransactionJobFactory;
+import com.torodb.core.exceptions.SystemInterruptedException;
 import com.torodb.core.exceptions.SystemException;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.transaction.RollbackException;
@@ -80,7 +81,7 @@ public class AkkaInsertSubscriberFactory implements InsertPipelineFactory {
                         .toCompletableFuture()
                         .get();
             } catch (InterruptedException ex) {
-                throw new SystemException("insertion interrupted", ex);
+                throw new SystemInterruptedException("insertion interrupted", ex);
             } catch (ExecutionException ex) {
                 Throwable t;
                 if (ex.getCause() != null) {

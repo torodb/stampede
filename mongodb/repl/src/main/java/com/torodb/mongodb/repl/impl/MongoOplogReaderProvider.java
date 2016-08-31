@@ -1,34 +1,35 @@
 
 package com.torodb.mongodb.repl.impl;
 
+import javax.inject.Inject;
+
 import com.eightkdata.mongowp.client.core.MongoClient;
+import com.eightkdata.mongowp.client.core.MongoClientFactory;
 import com.eightkdata.mongowp.client.core.MongoConnection;
 import com.eightkdata.mongowp.client.core.UnreachableMongoServerException;
 import com.google.common.net.HostAndPort;
-import com.torodb.mongodb.repl.MongoClientProvider;
 import com.torodb.mongodb.repl.OplogReader;
 import com.torodb.mongodb.repl.OplogReaderProvider;
 import com.torodb.mongodb.repl.exceptions.NoSyncSourceFoundException;
-import javax.inject.Inject;
 
 /**
  *
  */
 public class MongoOplogReaderProvider implements OplogReaderProvider {
-    private final MongoClientProvider mongoClientProvider;
-
+    private final MongoClientFactory mongoClientFactory;
+    
     @Inject
-    public MongoOplogReaderProvider(
-            MongoClientProvider mongoClientProvider) {
-        this.mongoClientProvider = mongoClientProvider;
+    public MongoOplogReaderProvider(MongoClientFactory mongoClientProvider) {
+        this.mongoClientFactory = mongoClientProvider;
     }
+
 
     @Override
     public OplogReader newReader(HostAndPort syncSource) throws
             NoSyncSourceFoundException, UnreachableMongoServerException {
 
         MongoClient client;
-        client = mongoClientProvider.getClient(syncSource);
+        client = mongoClientFactory.createClient(syncSource);
         return new ClientOwnerMongoOplogReader(client);
     }
 

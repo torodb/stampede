@@ -168,7 +168,7 @@ public class DescriptionFactoryWrapper extends JsonFormatVisitorWrapper.Base {
 				Description enumConstantConfigProperty = enumField.getAnnotation(Description.class);
 				if (enumConstantConfigProperty != null && enumConstantConfigProperty.value() != null) {
 					console.print(" # ");
-					console.print(enumConstantConfigProperty.value());
+					console.print(resourceBundle.getString(enumConstantConfigProperty.value()));
 				}
 
 				console.println("");

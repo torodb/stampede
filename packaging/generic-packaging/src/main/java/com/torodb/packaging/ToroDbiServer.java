@@ -25,6 +25,9 @@ import com.torodb.packaging.guice.BackendImplementationModule;
 import com.torodb.packaging.guice.ConfigModule;
 import com.torodb.packaging.guice.ExecutorServicesModule;
 import com.torodb.packaging.guice.PackagingModule;
+import com.torodb.packaging.util.MongoClientOptionsFactory;
+import com.torodb.packaging.util.MongoCredentialsFactory;
+import com.torodb.packaging.util.ReplicationFiltersFactory;
 import com.torodb.torod.TorodServer;
 import com.torodb.torod.guice.SqlTorodModule;
 import java.time.Clock;
@@ -65,7 +68,6 @@ public class ToroDbiServer extends ThreadFactoryIdleService {
         return injector.getInstance(ToroDbiServer.class);
     }
 
-    @SuppressWarnings("deprecation")
     public static Injector createInjector(Config config, Clock clock) {
         List<Replication> replications = config.getProtocol().getMongo().getReplication();
         if (replications == null) {
@@ -87,7 +89,10 @@ public class ToroDbiServer extends ThreadFactoryIdleService {
                 new D2RModule(),
                 new SqlTorodModule(),
                 new MongoLayerModule(),
-                new MongoDbReplModule(syncSource),
+                new MongoDbReplModule(syncSource,
+                        MongoClientOptionsFactory.getMongoClientOptions(config),
+                        MongoCredentialsFactory.getMongoCredential(config),
+                        ReplicationFiltersFactory.fromConfig(config)),
                 new ExecutorServicesModule(),
                 new ConcurrentModule()
         );

@@ -89,7 +89,6 @@ public class ReplCoordinator extends ThreadFactoryIdleService implements ReplInt
             @ToroDbIdleService ThreadFactory threadFactory,
             ReplCoordinatorOwnerCallback ownerCallback,
             MongodServer server,
-            MongoClientProvider remoteClientProvider,
             SyncSourceProvider syncSourceProvider,
             OplogManager oplogManager,
             ObjectIdFactory objectIdFactory,
