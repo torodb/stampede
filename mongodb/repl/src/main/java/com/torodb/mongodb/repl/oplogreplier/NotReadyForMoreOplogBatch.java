@@ -46,7 +46,7 @@ public class NotReadyForMoreOplogBatch implements OplogBatch {
     }
 
     @Override
-    public boolean isFinished() {
+    public boolean isLastOne() {
         return false;
     }
 

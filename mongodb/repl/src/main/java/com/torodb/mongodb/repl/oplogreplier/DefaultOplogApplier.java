@@ -20,7 +20,6 @@
 
 package com.torodb.mongodb.repl.oplogreplier;
 
-import com.torodb.mongodb.repl.oplogreplier.fetcher.OplogFetcher;
 import akka.Done;
 import akka.NotUsed;
 import akka.actor.ActorSystem;
@@ -38,12 +37,11 @@ import com.torodb.core.concurrent.ToroDbExecutorService;
 import com.torodb.mongodb.repl.OplogManager;
 import com.torodb.mongodb.repl.OplogManager.OplogManagerPersistException;
 import com.torodb.mongodb.repl.OplogManager.WriteOplogTransaction;
-import com.torodb.mongodb.repl.oplogreplier.RollbackReplicationException;
-import com.torodb.mongodb.repl.oplogreplier.StopReplicationException;
 import com.torodb.mongodb.repl.oplogreplier.batch.AnalyzedOplogBatch;
 import com.torodb.mongodb.repl.oplogreplier.batch.AnalyzedOplogBatchExecutor;
 import com.torodb.mongodb.repl.oplogreplier.batch.BatchAnalyzer;
 import com.torodb.mongodb.repl.oplogreplier.batch.BatchAnalyzer.BatchAnalyzerFactory;
+import com.torodb.mongodb.repl.oplogreplier.fetcher.OplogFetcher;
 import java.util.Optional;
 import java.util.concurrent.*;
 import java.util.function.BiFunction;
@@ -162,7 +160,7 @@ public class DefaultOplogApplier implements OplogApplier {
 
     private Optional<OplogBatch> fetchOplog(OplogFetcher fetcher) throws StopReplicationException, RollbackReplicationException {
         OplogBatch batch = fetcher.fetch();
-        if (batch.isFinished()) {
+        if (batch.isLastOne()) {
             return Optional.empty();
         }
         return Optional.of(batch);

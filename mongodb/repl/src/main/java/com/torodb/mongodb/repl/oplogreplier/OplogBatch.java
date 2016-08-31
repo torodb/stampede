@@ -29,24 +29,35 @@ import java.util.stream.Stream;
  */
 public interface OplogBatch {
 
+    /**
+     * Returns the stream of operations contained by this batch.
+     *
+     * If {@link #isLastOne() } returns true, then this method will return an empty stream.
+     *
+     * @return
+     */
     public Stream<OplogOperation> getOps();
 
     /**
      * Returns true if the {@link OplogFetcher} that created this batch thinks that there are more
-     * elements that can be fetch from the remote oplog.
+     * elements that can be fetch right now from the remote oplog.
      * @return
      */
     public boolean isReadyForMore();
 
     /**
-     * Returns true if this batch is the last one of that the producer {@link OplogFetcher} will
-     * fetch.
+     * Returns true if this batch has been fetch after the producer {@link OplogFetcher} thinks it
+     * has finished the remote oplog.
      *
      * This could happen when the fetcher was created with a given limit, which is usual on
-     * the context of a {@link RecoveryService}.
+     * the context of a {@link RecoveryService}, or when the fetcher is closed for any reason.
+     *
+     * If a batch returns true to this method, then it cannot contain any that, so {@link #getOps() }
+     * will return an empty stream.
+     *
      * @return
      */
-    public boolean isFinished();
+    public boolean isLastOne();
 
     public default OplogBatch concat(OplogBatch next) {
         return new NormalOplogBatch(Stream.concat(getOps(), next.getOps()), next.isReadyForMore());
