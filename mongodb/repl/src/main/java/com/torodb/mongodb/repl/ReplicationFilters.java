@@ -20,18 +20,40 @@
 
 package com.torodb.mongodb.repl;
 
-import com.eightkdata.mongowp.server.api.oplog.*;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.torodb.mongodb.repl.oplogreplier.fetcher.FilteredOplogFetcher;
-import com.torodb.mongodb.repl.oplogreplier.fetcher.OplogFetcher;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.jooq.lambda.fi.util.function.CheckedFunction;
+
+import com.eightkdata.mongowp.bson.BsonDocument;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.CreateCollectionCommand;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.CreateIndexesCommand;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.DropCollectionCommand;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.RenameCollectionCommand;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.DeleteCommand;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.InsertCommand;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.UpdateCommand;
+import com.eightkdata.mongowp.server.api.Command;
+import com.eightkdata.mongowp.server.api.oplog.DbCmdOplogOperation;
+import com.eightkdata.mongowp.server.api.oplog.DbOplogOperation;
+import com.eightkdata.mongowp.server.api.oplog.DeleteOplogOperation;
+import com.eightkdata.mongowp.server.api.oplog.InsertOplogOperation;
+import com.eightkdata.mongowp.server.api.oplog.NoopOplogOperation;
+import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
+import com.eightkdata.mongowp.server.api.oplog.OplogOperationVisitor;
+import com.eightkdata.mongowp.server.api.oplog.UpdateOplogOperation;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.torodb.core.exceptions.SystemException;
+import com.torodb.mongodb.repl.oplogreplier.fetcher.FilteredOplogFetcher;
+import com.torodb.mongodb.repl.oplogreplier.fetcher.OplogFetcher;
+
 public class ReplicationFilters {
+
     private final ImmutableMap<Pattern, ImmutableList<Pattern>> whitelist;
     private final ImmutableMap<Pattern, ImmutableList<Pattern>> blacklist;
     private final DatabasePredicate databasePredicate = new DatabasePredicate();
@@ -159,10 +181,32 @@ public class ReplicationFilters {
         
     }
     
+    private static final ImmutableMap<Command<?, ?>, CheckedFunction<BsonDocument, String>> collectionRelatedCommands = 
+        ImmutableMap.<Command<?, ?>, CheckedFunction<BsonDocument, String>>builder()
+            .put(CreateCollectionCommand.INSTANCE, d -> CreateCollectionCommand.INSTANCE.unmarshallArg(d).getCollection())
+            .put(CreateIndexesCommand.INSTANCE, d -> CreateIndexesCommand.INSTANCE.unmarshallArg(d).getCollection())
+            .put(DropCollectionCommand.INSTANCE, d -> DropCollectionCommand.INSTANCE.unmarshallArg(d).getCollection())
+            .put(RenameCollectionCommand.INSTANCE, d -> RenameCollectionCommand.INSTANCE.unmarshallArg(d).getFromCollection())
+            .put(DeleteCommand.INSTANCE, d -> DeleteCommand.INSTANCE.unmarshallArg(d).getCollection())
+            .put(InsertCommand.INSTANCE, d -> InsertCommand.INSTANCE.unmarshallArg(d).getCollection())
+            .put(UpdateCommand.INSTANCE, d -> UpdateCommand.INSTANCE.unmarshallArg(d).getCollection())
+            .build();
+    
     private class OplogOperationPredicate implements OplogOperationVisitor<Boolean, Void>, Predicate<OplogOperation> {
 
         @Override
         public Boolean visit(DbCmdOplogOperation op, Void arg) {
+            Optional<Command<?, ?>> collectionRelatedCommand = collectionRelatedCommands.keySet().stream().filter(
+                    c -> c.getCommandName().equals(op.getCommandName())).findFirst();
+            if (collectionRelatedCommand.isPresent()) {
+                try {
+                    String collection = collectionRelatedCommands.get(collectionRelatedCommand)
+                            .apply(op.getRequest());
+                    return collectionPredicate.test(op.getDatabase(), collection);
+                } catch (Throwable e) {
+                    throw new SystemException("Error while parsing argument for command " + op.getCommandName(), e);
+                }
+            }
             return databasePredicate.test(op.getDatabase());
         }
 
