@@ -111,7 +111,12 @@ public class ConfigUtils {
     public static IllegalArgumentException transformJsonMappingException(JsonMappingException jsonMappingException) {
         JsonPointer jsonPointer = JsonPointer.compile("/config");
         for (Reference reference : jsonMappingException.getPath()) {
-            jsonPointer = jsonPointer.append(JsonPointer.compile("/" + reference.getFieldName()));
+            if (reference.getIndex() != -1) {
+                jsonPointer = jsonPointer.append(JsonPointer.compile("/" + reference.getIndex()));
+            }
+            if (reference.getFieldName() != null) {
+                jsonPointer = jsonPointer.append(JsonPointer.compile("/" + reference.getFieldName()));
+            }
         }
         
         if (LOGGER.isDebugEnabled()) {
@@ -362,7 +367,8 @@ public class ConfigUtils {
 		for (Path.Node pathNode : path) {
 			if (pathNode.getIndex() != null) {
 				pointer = pointer.append(JsonPointer.valueOf("/" + pathNode.getIndex()));
-			} else if (pathNode.getName() != null) {
+			}
+			if (pathNode.getName() != null) {
 				pointer = pointer.append(JsonPointer.valueOf("/" + pathNode.getName()));
 			}
 		}

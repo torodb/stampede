@@ -28,4 +28,5 @@ public interface SyncSourceProvider {
     public HostAndPort getSyncSource(OpTime lastFetchedOpTime) throws NoSyncSourceFoundException;
 
     public HostAndPort getLastUsedSyncSource();
+
 }

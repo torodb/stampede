@@ -1,7 +1,18 @@
 
 package com.torodb.mongodb.repl;
 
-import com.torodb.mongodb.repl.oplogreplier.fetcher.LimitedOplogFetcher;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ThreadFactory;
+import java.util.stream.Stream;
+
+import javax.annotation.Nonnull;
+import javax.inject.Inject;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.eightkdata.mongowp.OpTime;
 import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.client.core.MongoClient;
@@ -34,21 +45,16 @@ import com.torodb.mongodb.repl.OplogManager.ReadOplogTransaction;
 import com.torodb.mongodb.repl.OplogManager.WriteOplogTransaction;
 import com.torodb.mongodb.repl.exceptions.NoSyncSourceFoundException;
 import com.torodb.mongodb.repl.guice.MongoDbRepl;
-import com.torodb.mongodb.repl.oplogreplier.*;
+import com.torodb.mongodb.repl.oplogreplier.ApplierContext;
+import com.torodb.mongodb.repl.oplogreplier.OplogApplier;
 import com.torodb.mongodb.repl.oplogreplier.OplogApplier.UnexpectedOplogApplierException;
+import com.torodb.mongodb.repl.oplogreplier.RollbackReplicationException;
+import com.torodb.mongodb.repl.oplogreplier.StopReplicationException;
+import com.torodb.mongodb.repl.oplogreplier.fetcher.LimitedOplogFetcher;
 import com.torodb.mongodb.repl.oplogreplier.fetcher.OplogFetcher;
 import com.torodb.mongodb.utils.DbCloner;
 import com.torodb.mongodb.utils.DbCloner.CloneOptions;
 import com.torodb.mongodb.utils.DbCloner.CloningException;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.ThreadFactory;
-import java.util.stream.Stream;
-import javax.annotation.Nonnull;
-import javax.inject.Inject;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  *

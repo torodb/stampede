@@ -1,7 +1,16 @@
 
 package com.torodb.mongodb.repl.guice;
 
+import java.time.Duration;
+import java.util.concurrent.ThreadFactory;
+
+import javax.annotation.Nonnull;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.eightkdata.mongowp.OpTime;
+import com.eightkdata.mongowp.client.wrapper.MongoClientConfiguration;
 import com.eightkdata.mongowp.client.wrapper.MongoClientWrapperModule;
 import com.google.common.annotations.Beta;
 import com.google.common.net.HostAndPort;
@@ -9,11 +18,12 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
-import com.google.inject.TypeLiteral;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
-import com.mongodb.MongoClientOptions;
-import com.mongodb.MongoCredential;
-import com.torodb.mongodb.repl.*;
+import com.torodb.mongodb.repl.OplogReaderProvider;
+import com.torodb.mongodb.repl.RecoveryService;
+import com.torodb.mongodb.repl.ReplCoordinator;
+import com.torodb.mongodb.repl.ReplicationFilters;
+import com.torodb.mongodb.repl.SyncSourceProvider;
 import com.torodb.mongodb.repl.exceptions.NoSyncSourceFoundException;
 import com.torodb.mongodb.repl.impl.MongoOplogReaderProvider;
 import com.torodb.mongodb.repl.oplogreplier.DefaultOplogApplier;
@@ -28,14 +38,7 @@ import com.torodb.mongodb.repl.oplogreplier.batch.ConcurrentOplogBatchExecutor;
 import com.torodb.mongodb.repl.oplogreplier.batch.ConcurrentOplogBatchExecutor.ConcurrentOplogBatchExecutorMetrics;
 import com.torodb.mongodb.repl.oplogreplier.fetcher.ContinuousOplogFetcher;
 import com.torodb.mongodb.utils.DbCloner;
-import com.torodb.mongodb.repl.ReplicationFilters;
 import com.torodb.mongodb.utils.cloner.CommitHeuristic;
-import java.time.Duration;
-import java.util.Optional;
-import java.util.concurrent.ThreadFactory;
-import javax.annotation.Nonnull;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  *
@@ -44,25 +47,19 @@ public class MongoDbReplModule extends AbstractModule {
 
     private static final Logger LOGGER = LogManager.getLogger(MongoDbReplModule.class);
 
-    private final HostAndPort syncSource;
-    private final MongoClientOptions mongoClientOptions;
-    private final MongoCredential mongoCredential;
-    private final ReplicationFilters filterProvider;
+    private final MongoClientConfiguration mongoClientConfiguration;
+    private final ReplicationFilters replicationFilters;
     
-    public MongoDbReplModule(HostAndPort syncSource, MongoClientOptions mongoClientOptions, MongoCredential mongoCredential, ReplicationFilters filterProvider) {
-        this.syncSource = syncSource;
-        this.mongoClientOptions = mongoClientOptions;
-        this.mongoCredential = mongoCredential;
-        this.filterProvider = filterProvider;
+    public MongoDbReplModule(MongoClientConfiguration mongoClientConfiguration, ReplicationFilters replicationFilters) {
+        this.mongoClientConfiguration = mongoClientConfiguration;
+        this.replicationFilters = replicationFilters;
     }
 
     @Override
     protected void configure() {
         //Binds necessary to instanciate mongodb clients
-        bind(new TypeLiteral<Optional<MongoCredential>>(){})
-                .toInstance(Optional.ofNullable(mongoCredential));
-        bind(MongoClientOptions.class)
-                .toInstance(mongoClientOptions);
+        bind(MongoClientConfiguration.class)
+                .toInstance(mongoClientConfiguration);
         install(new MongoClientWrapperModule());
 
         bind(OplogReaderProvider.class).to(MongoOplogReaderProvider.class).asEagerSingleton();
@@ -140,14 +137,14 @@ public class MongoDbReplModule extends AbstractModule {
         bind(AnalyzedOpReducer.class)
                 .toInstance(new AnalyzedOpReducer(false));
 
-        bind(ReplicationFilters.class).toInstance(filterProvider);
+        bind(ReplicationFilters.class).toInstance(replicationFilters);
     }
 
 
     @Provides @Singleton
     SyncSourceProvider createSyncSourceProvider() {
-        if (syncSource != null) {
-            return new FollowerSyncSourceProvider(syncSource);
+        if (mongoClientConfiguration != null) {
+            return new FollowerSyncSourceProvider(mongoClientConfiguration.getHostAndPort());
         }
         else {
             return new PrimarySyncSourceProvider();
