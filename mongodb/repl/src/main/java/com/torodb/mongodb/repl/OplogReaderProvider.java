@@ -5,9 +5,7 @@ import javax.annotation.Nonnull;
 
 import com.eightkdata.mongowp.client.core.MongoConnection;
 import com.eightkdata.mongowp.client.core.UnreachableMongoServerException;
-import com.google.common.net.HostAndPort;
-import com.mongodb.MongoClientOptions;
-import com.mongodb.MongoCredential;
+import com.eightkdata.mongowp.client.wrapper.MongoClientConfiguration;
 import com.torodb.mongodb.repl.exceptions.NoSyncSourceFoundException;
 
 /**
@@ -27,7 +25,7 @@ public interface OplogReaderProvider {
      * @throws UnreachableMongoServerException
      */
     @Nonnull
-    public OplogReader newReader(@Nonnull HostAndPort syncSource, MongoClientOptions mongoClientOptions, MongoCredential mongoCredential)
+    public OplogReader newReader(@Nonnull MongoClientConfiguration syncSource)
             throws NoSyncSourceFoundException, UnreachableMongoServerException;
 
     public OplogReader newReader(@Nonnull MongoConnection connection);

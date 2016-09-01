@@ -17,6 +17,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ThreadFactory;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -30,15 +31,17 @@ import javax.net.ssl.TrustManagerFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.eightkdata.mongowp.client.wrapper.MongoAuthenticationConfiguration;
+import com.eightkdata.mongowp.client.wrapper.MongoAuthenticationMechanism;
+import com.eightkdata.mongowp.client.wrapper.MongoClientConfiguration;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import com.google.common.net.HostAndPort;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.ProvisionException;
-import com.mongodb.MongoClientOptions;
-import com.mongodb.MongoCredential;
 import com.torodb.backend.guice.BackendModule;
 import com.torodb.common.util.ThreadFactoryIdleService;
 import com.torodb.concurrent.guice.ConcurrentModule;
@@ -55,6 +58,7 @@ import com.torodb.mongodb.repl.guice.MongoDbReplModule;
 import com.torodb.mongodb.utils.FilterProvider;
 import com.torodb.packaging.config.model.Config;
 import com.torodb.packaging.config.model.protocol.mongo.Auth;
+import com.torodb.packaging.config.model.protocol.mongo.AuthMode;
 import com.torodb.packaging.config.model.protocol.mongo.FilterList;
 import com.torodb.packaging.config.model.protocol.mongo.Replication;
 import com.torodb.packaging.config.model.protocol.mongo.SSL;
@@ -105,12 +109,9 @@ public class ToroDbiServer extends ThreadFactoryIdleService {
         if (replications.size() != 1) {
             throw new IllegalArgumentException("Exactly one protocol.mongo.replication must be set");
         }
-        String syncSourceString = replications.stream().findAny().get().getSyncSource();
-        HostAndPort syncSource = HostAndPort.fromString(syncSourceString)
-                .withDefaultPort(27017);
-        MongoClientOptions mongoClientOptions = getMongoClientOptions(config);
-        MongoCredential mongoCredential = getMongoCredential(config);
-        FilterProvider filterProvider = getFilterProvider(config);
+        Replication replication = replications.stream().findAny().get();
+        MongoClientConfiguration mongoClientConfiguration = getMongoClientConfiguration(replication);
+        FilterProvider filterProvider = getFilterProvider(replication);
 
         Injector injector = Guice.createInjector(
                 new ConfigModule(config),
@@ -122,20 +123,25 @@ public class ToroDbiServer extends ThreadFactoryIdleService {
                 new D2RModule(),
                 new TorodModule(),
                 new MongoLayerModule(),
-                new MongoDbReplModule(syncSource, mongoClientOptions, mongoCredential, filterProvider),
+                new MongoDbReplModule(mongoClientConfiguration, filterProvider),
                 new ExecutorServicesModule(),
                 new ConcurrentModule()
         );
         return injector;
     }
 
-    private static MongoClientOptions getMongoClientOptions(Config config) {
-        MongoClientOptions.Builder mongoClientOptionsBuilder = new MongoClientOptions.Builder();
-        SSL ssl = config.getProtocol().getMongo().getReplication().get(0).getSsl();
-        mongoClientOptionsBuilder.sslEnabled(ssl.getEnabled());
+    private static MongoClientConfiguration getMongoClientConfiguration(Replication replication) {
+        HostAndPort syncSource = HostAndPort.fromString(replication.getSyncSource())
+                .withDefaultPort(27017);
+        
+        MongoClientConfiguration.Builder mongoClientConfigurationBuilder = 
+                new MongoClientConfiguration.Builder(syncSource);
+        
+        SSL ssl = replication.getSsl();
+        mongoClientConfigurationBuilder.setSslEnabled(ssl.getEnabled());
         if (ssl.getEnabled()) {
             try {
-                mongoClientOptionsBuilder.sslInvalidHostNameAllowed(ssl.getAllowInvalidHostnames());
+                mongoClientConfigurationBuilder.setSslAllowInvalidHostnames(ssl.getAllowInvalidHostnames());
                 
                 TrustManager[] tms = getTrustManagers(ssl);
                 
@@ -148,13 +154,19 @@ public class ToroDbiServer extends ThreadFactoryIdleService {
                     sslContext = SSLContext.getInstance("TLS");
                 }
                 sslContext.init(kms, tms, null);
-                mongoClientOptionsBuilder.socketFactory(sslContext.getSocketFactory());
+                mongoClientConfigurationBuilder.setSocketFactory(sslContext.getSocketFactory());
             } catch(Exception exception) {
                 throw new SystemException(exception);
             }
         }
-        MongoClientOptions mongoClientOptions = mongoClientOptionsBuilder.build();
-        return mongoClientOptions;
+        
+        Auth auth = replication.getAuth();
+        if (auth.getMode().isEnabled()) {
+            MongoAuthenticationConfiguration mongoAuthenticationConfiguration = getMongoAuthenticationConfiguration(auth, ssl);
+            mongoClientConfigurationBuilder.addAuthenticationConfiguration(mongoAuthenticationConfiguration);
+        }
+        
+        return mongoClientConfigurationBuilder.build();
     }
 
     public static TrustManager[] getTrustManagers(SSL ssl) throws NoSuchAlgorithmException, FileNotFoundException,
@@ -227,47 +239,42 @@ public class ToroDbiServer extends ThreadFactoryIdleService {
         return ks;
     }
 
-    private static MongoCredential getMongoCredential(Config config) {
-        MongoCredential mongoCredential = null;
+    private final static ImmutableMap<AuthMode, Function<AuthMode, MongoAuthenticationMechanism>> mongoAuthenticationMechanismConverter =
+            Maps.immutableEnumMap(ImmutableMap.of(
+                    AuthMode.cr, a -> MongoAuthenticationMechanism.cr,
+                    AuthMode.scram_sha1, a -> MongoAuthenticationMechanism.scram_sha1,
+                    AuthMode.negotiate, a -> MongoAuthenticationMechanism.negotiate,
+                    AuthMode.x509, a -> MongoAuthenticationMechanism.x509
+                    ));
+    
+    private static MongoAuthenticationConfiguration getMongoAuthenticationConfiguration(Auth auth, SSL ssl) {
+        AuthMode authMode = auth.getMode();
+        MongoAuthenticationConfiguration.Builder mongoAuthenticationConfigurationBuilder = 
+                new MongoAuthenticationConfiguration.Builder(mongoAuthenticationMechanismConverter.get(authMode).apply(authMode));
         
-        Auth auth = config.getProtocol().getMongo().getReplication().get(0).getAuth();
-        switch (auth.getMode()) {
-        case cr:
-            mongoCredential = MongoCredential.createMongoCRCredential(auth.getUser(), auth.getSource(), auth.getPassword().toCharArray());
-            break;
-        case scram_sha1:
-            mongoCredential = MongoCredential.createScramSha1Credential(auth.getUser(), auth.getSource(), auth.getPassword().toCharArray());
-            break;
-        case negotiate:
-            mongoCredential = MongoCredential.createCredential(auth.getUser(), auth.getSource(), auth.getPassword().toCharArray());
-            break;
-        case x509:
+        mongoAuthenticationConfigurationBuilder.setUser(auth.getUser());
+        mongoAuthenticationConfigurationBuilder.setSource(auth.getSource());
+        mongoAuthenticationConfigurationBuilder.setPassword(auth.getPassword());
+        
+        if (authMode == AuthMode.x509 && auth.getUser() == null) {
             try {
-                String user = auth.getUser();
-                
-                if (user == null) {
-                    KeyStore ks = getKeyStore(config.getProtocol().getMongo().getReplication().get(0).getSsl());
-                    X509Certificate certificate = (X509Certificate) ks.getCertificate(ks.aliases().nextElement());
-                    user = Arrays.asList(certificate.getSubjectDN().getName().split(",")).stream()
-                            .map(dn -> dn.trim()).collect(Collectors.joining(","));
-                }
-                
-                mongoCredential = MongoCredential.createMongoX509Credential(user);
+                KeyStore ks = getKeyStore(ssl);
+                X509Certificate certificate = (X509Certificate) ks.getCertificate(ks.aliases().nextElement());
+                mongoAuthenticationConfigurationBuilder.setUser(
+                        Arrays.asList(certificate.getSubjectDN().getName().split(",")).stream()
+                            .map(dn -> dn.trim()).collect(Collectors.joining(",")));
             } catch(Exception exception) {
                 throw new SystemException(exception);
             }
-            break;
-        case disabled:
-        default:
-            break;
         }
-        return mongoCredential;
+        
+        return mongoAuthenticationConfigurationBuilder.build();
     }
 
-    private static FilterProvider getFilterProvider(Config config) {
+    private static FilterProvider getFilterProvider(Replication replication) {
         FilterProvider filterProvider = new FilterProvider(
-                convertFilterList(config.getProtocol().getMongo().getReplication().get(0).getInclude()), 
-                convertFilterList(config.getProtocol().getMongo().getReplication().get(0).getExclude()));
+                convertFilterList(replication.getInclude()), 
+                convertFilterList(replication.getExclude()));
         return filterProvider;
     }
 

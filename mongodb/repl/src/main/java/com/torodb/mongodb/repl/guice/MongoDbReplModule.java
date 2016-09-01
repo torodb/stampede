@@ -4,12 +4,12 @@ package com.torodb.mongodb.repl.guice;
 import java.util.concurrent.ThreadFactory;
 
 import javax.annotation.Nonnull;
-import javax.net.SocketFactory;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.eightkdata.mongowp.OpTime;
+import com.eightkdata.mongowp.client.wrapper.MongoClientConfiguration;
 import com.eightkdata.mongowp.client.wrapper.MongoClientWrapper;
 import com.google.common.annotations.Beta;
 import com.google.common.net.HostAndPort;
@@ -18,9 +18,6 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
-import com.mongodb.MongoClientOptions;
-import com.mongodb.MongoCredential;
-import com.mongodb.MongoOptions;
 import com.torodb.mongodb.repl.MongoClientProvider;
 import com.torodb.mongodb.repl.OplogReaderProvider;
 import com.torodb.mongodb.repl.RecoveryService;
@@ -40,22 +37,18 @@ public class MongoDbReplModule extends AbstractModule {
 
     private static final Logger LOGGER = LogManager.getLogger(MongoDbReplModule.class);
 
-    private final HostAndPort syncSource;
-    private final MongoClientOptions mongoClientOptions;
-    private final MongoCredential mongoCredential;
+    private final MongoClientConfiguration mongoClientConfiguration;
     private final FilterProvider filterProvider;
     
-    public MongoDbReplModule(HostAndPort syncSource, MongoClientOptions mongoClientOptions, MongoCredential mongoCredential, FilterProvider filterProvider) {
-        this.syncSource = syncSource;
-        this.mongoClientOptions = mongoClientOptions;
-        this.mongoCredential = mongoCredential;
+    public MongoDbReplModule(MongoClientConfiguration mongoClientConfiguration, FilterProvider filterProvider) {
+        this.mongoClientConfiguration = mongoClientConfiguration;
         this.filterProvider = filterProvider;
     }
 
     @Override
     protected void configure() {
         bind(MongoClientProvider.class)
-                .toInstance((hostAndPort, mongoClientOptions, mongoCredential) -> new MongoClientWrapper(hostAndPort, mongoClientOptions, mongoCredential));
+                .toInstance((mongoClientConfiguration) -> new MongoClientWrapper(mongoClientConfiguration));
         bind(OplogReaderProvider.class).to(MongoOplogReaderProvider.class).asEagerSingleton();
 
         bind(ReplCoordinator.ReplCoordinatorOwnerCallback.class)
@@ -99,8 +92,8 @@ public class MongoDbReplModule extends AbstractModule {
 
     @Provides @Singleton
     SyncSourceProvider createSyncSourceProvider() {
-        if (syncSource != null) {
-            return new FollowerSyncSourceProvider(syncSource, mongoClientOptions, mongoCredential);
+        if (mongoClientConfiguration != null) {
+            return new FollowerSyncSourceProvider(mongoClientConfiguration);
         }
         else {
             return new PrimarySyncSourceProvider();
@@ -126,71 +119,49 @@ public class MongoDbReplModule extends AbstractModule {
 
     @Beta
     private static class FollowerSyncSourceProvider implements SyncSourceProvider {
-        private final HostAndPort syncSource;
-        private final MongoClientOptions mongoClientOptions;
-        private final MongoCredential mongoCredential;
+        private final MongoClientConfiguration syncSource;
 
-        public FollowerSyncSourceProvider(@Nonnull HostAndPort syncSource, MongoClientOptions mongoClientOptions, MongoCredential mongoCredential) {
+        public FollowerSyncSourceProvider(@Nonnull MongoClientConfiguration syncSource) {
             this.syncSource = syncSource;
-            this.mongoClientOptions = mongoClientOptions;
-            this.mongoCredential = mongoCredential;
         }
 
         @Override
-        public HostAndPort calculateSyncSource(HostAndPort oldSyncSource) {
+        public MongoClientConfiguration calculateSyncSource(HostAndPort oldSyncSource) {
             return syncSource;
         }
 
         @Override
-        public HostAndPort getLastUsedSyncSource() {
+        public MongoClientConfiguration getLastUsedSyncSource() {
             return syncSource;
         }
 
         @Override
-        public HostAndPort getSyncSource(OpTime lastFetchedOpTime) throws
+        public MongoClientConfiguration getSyncSource(OpTime lastFetchedOpTime) throws
                 NoSyncSourceFoundException {
             return syncSource;
         }
 
-        @Override
-        public MongoClientOptions getMongoClientOptions() {
-            return mongoClientOptions;
-        }
-
-        @Override
-        public MongoCredential getCredential() {
-            return mongoCredential;
-        }
     }
 
     private static class PrimarySyncSourceProvider implements SyncSourceProvider {
 
         @Override
-        public HostAndPort calculateSyncSource(HostAndPort oldSyncSource) throws
+        public MongoClientConfiguration calculateSyncSource(HostAndPort oldSyncSource) throws
                 NoSyncSourceFoundException {
             throw new NoSyncSourceFoundException();
         }
 
         @Override
-        public HostAndPort getSyncSource(OpTime lastFetchedOpTime) throws
+        public MongoClientConfiguration getSyncSource(OpTime lastFetchedOpTime) throws
                 NoSyncSourceFoundException {
             throw new NoSyncSourceFoundException();
         }
 
         @Override
-        public HostAndPort getLastUsedSyncSource() {
+        public MongoClientConfiguration getLastUsedSyncSource() {
             return null;
         }
-
-        @Override
-        public MongoClientOptions getMongoClientOptions() {
-            return null;
-        }
-
-        @Override
-        public MongoCredential getCredential() {
-            return null;
-        }
+        
     }
 
 }

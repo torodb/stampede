@@ -4,9 +4,8 @@ package com.torodb.mongodb.repl;
 import javax.annotation.Nullable;
 
 import com.eightkdata.mongowp.OpTime;
+import com.eightkdata.mongowp.client.wrapper.MongoClientConfiguration;
 import com.google.common.net.HostAndPort;
-import com.mongodb.MongoClientOptions;
-import com.mongodb.MongoCredential;
 import com.torodb.mongodb.repl.exceptions.NoSyncSourceFoundException;
 
 /**
@@ -14,7 +13,7 @@ import com.torodb.mongodb.repl.exceptions.NoSyncSourceFoundException;
  */
 public interface SyncSourceProvider {
 
-    public HostAndPort calculateSyncSource(@Nullable HostAndPort oldSyncSource)
+    public MongoClientConfiguration calculateSyncSource(@Nullable HostAndPort oldSyncSource)
             throws NoSyncSourceFoundException;
 
     /**
@@ -27,11 +26,8 @@ public interface SyncSourceProvider {
      * @throws NoSyncSourceFoundException iff there is no sync source we can
      *                                    reply from using the given optime
      */
-    public HostAndPort getSyncSource(OpTime lastFetchedOpTime) throws NoSyncSourceFoundException;
+    public MongoClientConfiguration getSyncSource(OpTime lastFetchedOpTime) throws NoSyncSourceFoundException;
 
-    public HostAndPort getLastUsedSyncSource();
+    public MongoClientConfiguration getLastUsedSyncSource();
 
-    public MongoClientOptions getMongoClientOptions();
-    
-    public MongoCredential getCredential();
 }

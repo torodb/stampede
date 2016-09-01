@@ -9,7 +9,6 @@ import java.util.stream.Stream;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
-import javax.net.SocketFactory;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -19,6 +18,7 @@ import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.client.core.MongoClient;
 import com.eightkdata.mongowp.client.core.MongoConnection;
 import com.eightkdata.mongowp.client.core.UnreachableMongoServerException;
+import com.eightkdata.mongowp.client.wrapper.MongoClientConfiguration;
 import com.eightkdata.mongowp.exceptions.MongoException;
 import com.eightkdata.mongowp.exceptions.OplogOperationUnsupported;
 import com.eightkdata.mongowp.exceptions.OplogStartMissingException;
@@ -30,10 +30,7 @@ import com.eightkdata.mongowp.server.api.Request;
 import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
 import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.google.common.base.Supplier;
-import com.google.common.net.HostAndPort;
 import com.google.inject.assistedinject.Assisted;
-import com.mongodb.MongoClientOptions;
-import com.mongodb.MongoCredential;
 import com.torodb.common.util.ThreadFactoryRunnableService;
 import com.torodb.core.annotations.ToroDbRunnableService;
 import com.torodb.core.exceptions.user.UserException;
@@ -140,13 +137,9 @@ public class RecoveryService extends ThreadFactoryRunnableService {
 
         callback.setConsistentState(false);
 
-        HostAndPort syncSource;
-        MongoClientOptions mongoClientOptions;
-        MongoCredential mongoCredential;
+        MongoClientConfiguration syncSource;
         try {
             syncSource = syncSourceProvider.calculateSyncSource(null);
-            mongoClientOptions = syncSourceProvider.getMongoClientOptions();
-            mongoCredential = syncSourceProvider.getCredential();
             LOGGER.info("Using node " + syncSource + " to replicate from");
         } catch (NoSyncSourceFoundException ex) {
             throw new TryAgainException();
@@ -154,7 +147,7 @@ public class RecoveryService extends ThreadFactoryRunnableService {
 
         MongoClient remoteClient;
         try {
-            remoteClient = remoteClientProvider.getClient(syncSource, mongoClientOptions, mongoCredential);
+            remoteClient = remoteClientProvider.getClient(syncSource);
         } catch (UnreachableMongoServerException ex) {
             throw new TryAgainException(ex);
         }

@@ -6,9 +6,7 @@ import javax.inject.Inject;
 import com.eightkdata.mongowp.client.core.MongoClient;
 import com.eightkdata.mongowp.client.core.MongoConnection;
 import com.eightkdata.mongowp.client.core.UnreachableMongoServerException;
-import com.google.common.net.HostAndPort;
-import com.mongodb.MongoClientOptions;
-import com.mongodb.MongoCredential;
+import com.eightkdata.mongowp.client.wrapper.MongoClientConfiguration;
 import com.torodb.mongodb.repl.MongoClientProvider;
 import com.torodb.mongodb.repl.OplogReader;
 import com.torodb.mongodb.repl.OplogReaderProvider;
@@ -27,11 +25,11 @@ public class MongoOplogReaderProvider implements OplogReaderProvider {
     }
 
     @Override
-    public OplogReader newReader(HostAndPort syncSource, MongoClientOptions mongoClientOptions, MongoCredential mongoCredential) throws
+    public OplogReader newReader(MongoClientConfiguration syncSource) throws
             NoSyncSourceFoundException, UnreachableMongoServerException {
 
         MongoClient client;
-        client = mongoClientProvider.getClient(syncSource, mongoClientOptions, mongoCredential);
+        client = mongoClientProvider.getClient(syncSource);
         return new ClientOwnerMongoOplogReader(client);
     }
 
