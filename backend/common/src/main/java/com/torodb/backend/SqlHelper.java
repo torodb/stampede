@@ -24,6 +24,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Optional;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -121,10 +122,20 @@ public class SqlHelper {
     
     @SuppressWarnings({ "rawtypes" })
     public Object getResultSetValue(FieldType fieldType, ResultSet resultSet, int index) throws SQLException {
-		DataTypeForKV dataType = dataTypeProvider.getDataType(fieldType);
-		KVValueConverter valueConverter = dataType.getKVValueConverter();
-		SqlBinding sqlBinding = valueConverter.getSqlBinding();
-		return sqlBinding.get(resultSet, index);
+        DataTypeForKV dataType = dataTypeProvider.getDataType(fieldType);
+        KVValueConverter valueConverter = dataType.getKVValueConverter();
+        SqlBinding sqlBinding = valueConverter.getSqlBinding();
+        return sqlBinding.get(resultSet, index);
+    }
+    
+    @SuppressWarnings({ "unchecked" })
+    public KVValue<?> getResultSetKVValue(FieldType fieldType, DataTypeForKV<?> dataTypeForKV, ResultSet resultSet, int index) throws SQLException {
+        Object databaseValue = getResultSetValue(FieldType.from(dataTypeForKV.getKVValueConverter().getErasuredType()), resultSet, index);
+        if (resultSet.wasNull()) {
+            return null;
+        }
+        
+        return ((Converter<Object, KVValue<?>>) dataTypeForKV.getConverter()).from(databaseValue);
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })

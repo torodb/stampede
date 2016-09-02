@@ -30,6 +30,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.annotation.Nonnull;
@@ -46,6 +47,7 @@ import org.jooq.lambda.tuple.Tuple2;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import com.torodb.backend.ErrorHandler.Context;
+import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.backend.d2r.ResultSetDocPartResult;
 import com.torodb.backend.tables.MetaDocPartTable.DocPartTableFields;
 import com.torodb.core.TableRef;
@@ -151,6 +153,14 @@ public abstract class AbstractReadInterface implements ReadInterface {
         
         return getCollectionDidsWithFieldsInBatch(dsl, metaDatabase, metaCol, metaDocPart, valuesMultimap);
     }
+    
+    private Multimap<MetaField, KVValue<?>> toValuesMultimap(Stream<Entry<MetaField, KVValue<?>>> valueEntryStream) {
+        Multimap<MetaField, KVValue<?>> valuesMultimap = ArrayListMultimap.create();
+
+        valueEntryStream.forEach(e -> valuesMultimap.put(e.getKey(), e.getValue()));
+        
+        return valuesMultimap;
+    }
 
     private Cursor<Integer> getCollectionDidsWithFieldsInBatch(DSLContext dsl, MetaDatabase metaDatabase,
             MetaCollection metaCol, MetaDocPart metaDocPart, Multimap<MetaField, KVValue<?>> valuesMultimap)
@@ -179,16 +189,86 @@ public abstract class AbstractReadInterface implements ReadInterface {
         }
     }
     
-    private Multimap<MetaField, KVValue<?>> toValuesMultimap(Stream<Entry<MetaField, KVValue<?>>> valueEntryStream) {
-        Multimap<MetaField, KVValue<?>> valuesMultimap = ArrayListMultimap.create();
-
-        valueEntryStream.forEach(e -> valuesMultimap.put(e.getKey(), e.getValue()));
-        
-        return valuesMultimap;
-    }
-    
     protected abstract String getReadCollectionDidsWithFieldInStatement(String schemaName, String rootTableName,
             Stream<Tuple2<String, Integer>> valuesCountList);
+
+    @Override
+    @SuppressFBWarnings(value = {"OBL_UNSATISFIED_OBLIGATION","ODR_OPEN_DATABASE_RESOURCE"},
+    justification = "ResultSet is wrapped in a Cursor<Tuple2<Integer, KVValue<?>>>. It's iterated and closed in caller code")
+    public Cursor<Tuple2<Integer, KVValue<?>>> getCollectionDidsAndProjectionWithFieldsIn(DSLContext dsl, MetaDatabase metaDatabase,
+            MetaCollection metaCol, MetaDocPart metaDocPart, Multimap<MetaField, KVValue<?>> valuesMultimap)
+            throws SQLException {
+        assert metaDatabase.getMetaCollectionByIdentifier(metaCol.getIdentifier()) != null;
+        assert metaCol.getMetaDocPartByIdentifier(metaDocPart.getIdentifier()) != null;
+        assert valuesMultimap.keySet().stream().allMatch(metafield -> metaDocPart.getMetaFieldByIdentifier(metafield.getIdentifier()) != null);
+
+        Stream<Tuple2<MetaField, Collection<KVValue<?>>>> valuesBatchStream = 
+                valuesMultimap.asMap().entrySet().stream()
+                .map(e -> new Tuple2<MetaField, Collection<KVValue<?>>>(e.getKey(), e.getValue()));
+        if (valuesMultimap.asMap().entrySet().stream().anyMatch(e -> e.getValue().size() > 500)) {
+            valuesBatchStream = valuesBatchStream 
+                    .flatMap(e -> Seq.seq(e.v2.stream())
+                            .zipWithIndex()
+                            .groupBy(t -> t.v2 / 500)
+                            .entrySet()
+                            .stream()
+                            .map(se -> toValuesMap(e.v1, se)));
+        }
+        Stream<Cursor<Tuple2<Integer, KVValue<?>>>> didProjectionCursorStream = 
+            valuesBatchStream
+                .map(Unchecked.function(mapBatch -> 
+                    getCollectionDidsAndProjectionWithFieldsInBatch(
+                            dsl,
+                            metaDatabase,
+                            metaCol,
+                            metaDocPart,
+                            mapBatch.v1,
+                            mapBatch.v2)));
+        Stream<Tuple2<Integer, KVValue<?>>> didProjectionStream = 
+                didProjectionCursorStream
+                    .flatMap(cursor -> cursor.getRemaining().stream());
+
+        return new IteratorCursor<>(didProjectionStream.iterator());
+    }
+    
+    @SuppressWarnings("rawtypes")
+    private Tuple2<MetaField, Collection<KVValue<?>>> toValuesMap(MetaField metaField, Entry<Long, List<Tuple2<KVValue<?>, Long>>> groupedValuesMap) {
+        List<KVValue> collect = groupedValuesMap.getValue().stream()
+                .map(e -> (KVValue) e.v1)
+                .collect(Collectors.toList());
+        
+        return new Tuple2<MetaField, Collection<KVValue<?>>>(metaField, collect.stream()
+                .map(e -> (KVValue<?>) e)
+                .collect(Collectors.toList()));
+    }
+
+    private Cursor<Tuple2<Integer, KVValue<?>>> getCollectionDidsAndProjectionWithFieldsInBatch(DSLContext dsl, MetaDatabase metaDatabase,
+            MetaCollection metaCol, MetaDocPart metaDocPart, MetaField metaField, Collection<KVValue<?>> values)
+            throws SQLException {
+        String statement = getReadCollectionDidsAndProjectionWithFieldInStatement(metaDatabase.getIdentifier(),
+                metaDocPart.getIdentifier(), metaField.getIdentifier(), values.size());
+        Connection connection = dsl.configuration().connectionProvider().acquire();
+        try {
+            PreparedStatement preparedStatement = connection.prepareStatement(statement);
+            int parameterIndex = 1;
+            for (KVValue<?> value : values) {
+                sqlHelper.setPreparedStatementValue(preparedStatement, parameterIndex, metaField.getType(), value);
+                parameterIndex++;
+            }
+            return new AbstractCursor<Tuple2<Integer, KVValue<?>>>(errorHandler, preparedStatement.executeQuery()) {
+                @Override
+                protected Tuple2<Integer, KVValue<?>> read(ResultSet resultSet) throws SQLException {
+                    return new Tuple2<Integer, KVValue<?>>(resultSet.getInt(1), sqlHelper.getResultSetKVValue(
+                            metaField.getType(), dataTypeProvider.getDataType(metaField.getType()), resultSet, 2));
+                }
+            };
+        } finally {
+            dsl.configuration().connectionProvider().release(connection);
+        }
+    }
+    
+    protected abstract String getReadCollectionDidsAndProjectionWithFieldInStatement(String schemaName, String rootTableName,
+            String columnName, int valuesCount);
 
     @Override
     @SuppressFBWarnings(value = {"OBL_UNSATISFIED_OBLIGATION","ODR_OPEN_DATABASE_RESOURCE"},

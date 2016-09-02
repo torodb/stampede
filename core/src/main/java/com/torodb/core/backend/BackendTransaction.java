@@ -20,6 +20,8 @@
 
 package com.torodb.core.backend;
 
+import org.jooq.lambda.tuple.Tuple2;
+
 import com.google.common.collect.Multimap;
 import com.torodb.core.cursors.Cursor;
 import com.torodb.core.cursors.ToroCursor;
@@ -63,6 +65,21 @@ public interface BackendTransaction extends AutoCloseable {
     public ToroCursor findByFieldIn(MetaDatabase db, MetaCollection col, MetaDocPart docPart,
             Multimap<MetaField, KVValue<?>> valuesMultimap);
 
+
+    /**
+     * Return a cursor that iterates over all dids associated with the relative value that fulfill the query.
+     *
+     * Each entry on the metafield is a value restriction on the entry metafield. The query is
+     * fulfilled if for at least one entry, the evaluation is true.
+     * @param db
+     * @param col
+     * @param docPart
+     * @param valuesMultimap
+     * @return
+     */
+    public Cursor<Tuple2<Integer, KVValue<?>>> findByFieldInProjection(MetaDatabase db, MetaCollection col, MetaDocPart docPart,
+            Multimap<MetaField, KVValue<?>> valuesMultimap);
+    
     public void rollback();
 
     @Override

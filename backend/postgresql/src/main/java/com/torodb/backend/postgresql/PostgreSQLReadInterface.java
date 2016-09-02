@@ -115,6 +115,31 @@ public class PostgreSQLReadInterface extends AbstractReadInterface {
         String statement = sb.toString();
         return statement;
     }
+    
+    @Override
+    protected String getReadCollectionDidsAndProjectionWithFieldInStatement(String schemaName, String rootTableName,
+            String columnName, int valuesCount) {
+        StringBuilder sb = new StringBuilder()
+                .append("SELECT \"")
+                .append(DocPartTableFields.DID.fieldName)
+                .append("\",\"")
+                .append(columnName)
+                .append("\" FROM \"")
+                .append(schemaName)
+                .append("\".\"")
+                .append(rootTableName)
+                .append("\" WHERE \"")
+                .append(columnName)
+                .append("\" IN (");
+        
+        for (int index=0; index < valuesCount; index++) {
+            sb.append("?,");
+        }
+        sb.setCharAt(sb.length() - 1, ')');
+        
+        String statement = sb.toString();
+        return statement;
+    }
 
     @Override
     protected String getReadAllCollectionDidsStatement(String schemaName, String rootTableName) {
