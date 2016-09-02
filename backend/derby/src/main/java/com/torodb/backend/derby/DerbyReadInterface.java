@@ -21,11 +21,14 @@
 package com.torodb.backend.derby;
 
 import java.util.Collection;
+import java.util.Iterator;
+import java.util.stream.Stream;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import org.jooq.Converter;
+import org.jooq.lambda.tuple.Tuple2;
 
 import com.torodb.backend.AbstractReadInterface;
 import com.torodb.backend.InternalField;
@@ -70,6 +73,45 @@ public class DerbyReadInterface extends AbstractReadInterface {
                 .append("\" = ? GROUP BY \"")
                 .append(DocPartTableFields.DID.fieldName)
                 .append("\" ORDER BY \"")
+                .append(DocPartTableFields.DID.fieldName)
+                .append('"');
+        String statement = sb.toString();
+        return statement;
+    }
+
+    @Override
+    protected String getReadCollectionDidsWithFieldInStatement(String schemaName, String rootTableName,
+            Stream<Tuple2<String, Integer>> valuesCountList) {
+        StringBuilder sb = new StringBuilder()
+                .append("SELECT \"")
+                .append(DocPartTableFields.DID.fieldName)
+                .append("\" FROM \"")
+                .append(schemaName)
+                .append("\".\"")
+                .append(rootTableName)
+                .append("\" WHERE \"");
+        
+        Iterator<Tuple2<String, Integer>> valuesCountMapEntryIterator = 
+                valuesCountList.iterator();
+        while (valuesCountMapEntryIterator.hasNext()) {
+            Tuple2<String, Integer> valuesCountMapEntry = 
+                    valuesCountMapEntryIterator.next();
+            String columnName = valuesCountMapEntry.v1;
+            Integer valuesCount = valuesCountMapEntry.v2;
+            
+            sb
+                    .append(rootTableName)
+                    .append("\".\"")
+                    .append(columnName)
+                    .append("\" IN (");
+            
+            for (int index=0; index < valuesCount; index++) {
+                sb.append("?,");
+            }
+            sb.setCharAt(sb.length() - 1, ')');
+        }
+        
+        sb.append(" ORDER BY \"")
                 .append(DocPartTableFields.DID.fieldName)
                 .append('"');
         String statement = sb.toString();
