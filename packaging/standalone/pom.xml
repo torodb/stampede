@@ -278,10 +278,7 @@
                                             <tag>${project.version}</tag>
                                             <tag>latest</tag>
                                         </tags>
-                                        <assembly>
-                                            <mode>dir</mode>
-                                            <descriptor>assembly.xml</descriptor>
-                                        </assembly>
+                                        <nocache>true</nocache>
                                         <runCmds>
                                             <run>#TODO: https://jira.mongodb.org/browse/SERVER-22143</run>
                                             <run>curl "https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-3.2.8.tgz" | tar xz  -C /opt --transform 's-^[^/]*-mongodb-' -f -</run>
