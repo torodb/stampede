@@ -286,7 +286,7 @@ public class ConfigUtils {
 	        }
 		} else if (pathNode instanceof ArrayNode) {
 	        ArrayNode arrayNode = (ArrayNode) pathNode;
-	        int index = Integer.valueOf(prop);
+	        Integer index = Integer.valueOf(prop);
 	        if (valueAsObject != null) {
 	            JsonNode valueNode = objectMapper.valueToTree(valueAsObject);
 	            arrayNode.set(index, valueNode);

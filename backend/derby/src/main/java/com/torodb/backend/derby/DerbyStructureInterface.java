@@ -67,11 +67,13 @@ public class DerbyStructureInterface extends AbstractStructureInterface {
         return "DROP SCHEMA \"" + schemaName + "\" RESTRICT";
     }
     
+    private final Random random = new Random();
+    
     @Override
     protected String getCreateIndexStatement(String schemaName, String tableName, String columnName,
             boolean ascending, boolean unique) {
         //TODO: This is a hack accepted by all devs. Common SQL interface for creating indexes should pass an identifier here
-        String indexName = tableName + '_' + columnName + new Random().nextInt() % 256;
+        String indexName = tableName + '_' + columnName + random.nextInt() % 256;
         
         String uniqueText = unique ? "UNIQUE " : "";
 

@@ -30,15 +30,21 @@ public class SystemInterruptedException extends SystemException {
     
     private static final long serialVersionUID = 1L;
     
+    private final InterruptedException cause;
+    
     public SystemInterruptedException(InterruptedException cause) {
         super(cause);
+        
+        this.cause = cause;
     }
     
     public SystemInterruptedException(String message, InterruptedException cause) {
         super(message, cause);
+        
+        this.cause = cause;
     }
 
     public InterruptedException getCause() {
-        return (InterruptedException) super.getCause();
+        return cause;
     }
 }

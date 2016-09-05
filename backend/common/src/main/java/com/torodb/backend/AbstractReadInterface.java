@@ -162,6 +162,8 @@ public abstract class AbstractReadInterface implements ReadInterface {
         return valuesMultimap;
     }
 
+    @SuppressFBWarnings(value = {"OBL_UNSATISFIED_OBLIGATION","ODR_OPEN_DATABASE_RESOURCE"},
+            justification = "ResultSet is wrapped in a Cursor<Integer>. It's iterated and closed in caller code")
     private Cursor<Integer> getCollectionDidsWithFieldsInBatch(DSLContext dsl, MetaDatabase metaDatabase,
             MetaCollection metaCol, MetaDocPart metaDocPart, Multimap<MetaField, KVValue<?>> valuesMultimap)
             throws SQLException {
@@ -242,6 +244,8 @@ public abstract class AbstractReadInterface implements ReadInterface {
                 .collect(Collectors.toList()));
     }
 
+    @SuppressFBWarnings(value = {"OBL_UNSATISFIED_OBLIGATION","ODR_OPEN_DATABASE_RESOURCE"},
+    justification = "ResultSet is wrapped in a Cursor<Tuple2<Integer, KVValue<?>>>. It's iterated and closed in caller code")
     private Cursor<Tuple2<Integer, KVValue<?>>> getCollectionDidsAndProjectionWithFieldsInBatch(DSLContext dsl, MetaDatabase metaDatabase,
             MetaCollection metaCol, MetaDocPart metaDocPart, MetaField metaField, Collection<KVValue<?>> values)
             throws SQLException {

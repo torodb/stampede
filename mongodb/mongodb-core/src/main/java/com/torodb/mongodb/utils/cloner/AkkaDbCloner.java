@@ -7,6 +7,8 @@ import akka.dispatch.ExecutionContexts;
 import akka.japi.Pair;
 import akka.stream.*;
 import akka.stream.javadsl.*;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.WriteConcern;
 import com.eightkdata.mongowp.bson.BsonDocument;
@@ -192,8 +194,9 @@ public class AkkaDbCloner implements DbCloner {
                     try {
                         cloneCollection(localServer, remoteConnection, dstDb, opts, materializer, entry);
                     } catch(CompletionException completionException) {
-                        if (completionException.getCause() instanceof RollbackException) {
-                            throw (RollbackException) completionException.getCause();
+                        Throwable cause = completionException.getCause();
+                        if (cause instanceof RollbackException) {
+                            throw (RollbackException) cause;
                         }
                         
                         throw completionException;
@@ -586,6 +589,8 @@ public class AkkaDbCloner implements DbCloner {
         }
 
         @Override
+        @SuppressFBWarnings(value = {"IT_NO_SUCH_ELEMENT"},
+        justification="This retrier always throws a CloningException on any exception.")
         public BsonDocument next() {
             Callable<BsonDocument> callable = () -> {
                 try {

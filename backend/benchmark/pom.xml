@@ -113,6 +113,17 @@
 				</configuration>
 			</plugin>
 		</plugins>
+		<pluginManagement>
+		  <plugins>
+	          <plugin>
+	              <groupId>org.codehaus.mojo</groupId>
+	              <artifactId>findbugs-maven-plugin</artifactId>
+	              <configuration>
+	                  <excludeFilterFile>${basedir}/findbugs-exclude-filter.xml</excludeFilterFile>
+	              </configuration>
+	          </plugin>
+		  </plugins>
+		</pluginManagement>
 	</build>
 	
 	<profiles>

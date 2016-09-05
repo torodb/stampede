@@ -24,9 +24,11 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
@@ -80,7 +82,9 @@ public class MongoClientConfigurationFactory {
                 }
                 sslContext.init(kms, tms, null);
                 mongoClientConfigurationBuilder.setSocketFactory(sslContext.getSocketFactory());
-            } catch(Exception exception) {
+            } catch(CertificateException | KeyManagementException | KeyStoreException | 
+                    UnrecoverableKeyException | NoSuchProviderException | 
+                    NoSuchAlgorithmException | IOException exception) {
                 throw new SystemException(exception);
             }
         }
@@ -99,33 +103,34 @@ public class MongoClientConfigurationFactory {
         TrustManager[] tms = null;
         if (ssl.getCAFile() != null) {
             TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-            InputStream is = new FileInputStream(ssl.getCAFile());
-      
-            CertificateFactory cf = CertificateFactory.getInstance("X.509");
-            X509Certificate caCert = (X509Certificate) cf.generateCertificate(is);
-            
-            KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
-            ks.load(null);
-            ks.setCertificateEntry("ca", caCert);
-            
-            tmf.init(ks);
-            
-            tms = tmf.getTrustManagers();
+            try (InputStream is = new FileInputStream(ssl.getCAFile())) {
+                CertificateFactory cf = CertificateFactory.getInstance("X.509");
+                X509Certificate caCert = (X509Certificate) cf.generateCertificate(is);
+                
+                KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
+                ks.load(null);
+                ks.setCertificateEntry("ca", caCert);
+                
+                tmf.init(ks);
+                
+                tms = tmf.getTrustManagers();
+            }
         } else if (ssl.getTrustStoreFile() != null) {
             TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-            InputStream is = new FileInputStream(ssl.getCAFile());
-            char[] storePassword = null;
-
-            if (ssl.getTrustStorePassword() != null) {
-                storePassword = ssl.getTrustStorePassword().toCharArray();
+            try (InputStream is = new FileInputStream(ssl.getCAFile())) {
+                char[] storePassword = null;
+    
+                if (ssl.getTrustStorePassword() != null) {
+                    storePassword = ssl.getTrustStorePassword().toCharArray();
+                }
+                
+                KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
+                ks.load(is, storePassword);
+                
+                tmf.init(ks);
+                
+                tms = tmf.getTrustManagers();
             }
-            
-            KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
-            ks.load(is, storePassword);
-            
-            tmf.init(ks);
-            
-            tms = tmf.getTrustManagers();
         }
         return tms;
     }
@@ -152,16 +157,17 @@ public class MongoClientConfigurationFactory {
 
     private static KeyStore getKeyStore(SSL ssl) throws FileNotFoundException, KeyStoreException, IOException,
             NoSuchAlgorithmException, CertificateException {
-        InputStream is = new FileInputStream(ssl.getKeyStoreFile());
-        char[] storePassword = null;
-
-        if (ssl.getKeyStorePassword() != null) {
-            storePassword = ssl.getKeyStorePassword().toCharArray();
+        try (InputStream is = new FileInputStream(ssl.getKeyStoreFile())) {
+            char[] storePassword = null;
+    
+            if (ssl.getKeyStorePassword() != null) {
+                storePassword = ssl.getKeyStorePassword().toCharArray();
+            }
+            
+            KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
+            ks.load(is, storePassword);
+            return ks;
         }
-        
-        KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
-        ks.load(is, storePassword);
-        return ks;
     }
 
     private final static ImmutableMap<AuthMode, Function<AuthMode, MongoAuthenticationMechanism>> mongoAuthenticationMechanismConverter =
@@ -188,7 +194,7 @@ public class MongoClientConfigurationFactory {
                 mongoAuthenticationConfigurationBuilder.setUser(
                         Arrays.asList(certificate.getSubjectDN().getName().split(",")).stream()
                             .map(dn -> dn.trim()).collect(Collectors.joining(",")));
-            } catch(Exception exception) {
+            } catch(CertificateException | KeyStoreException | NoSuchAlgorithmException | IOException exception) {
                 throw new SystemException(exception);
             }
         }

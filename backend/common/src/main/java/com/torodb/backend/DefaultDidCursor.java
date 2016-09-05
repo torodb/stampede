@@ -25,9 +25,7 @@ import java.sql.SQLException;
 
 import javax.annotation.Nonnull;
 
-import com.torodb.core.cursors.Cursor;
-
-public class DefaultDidCursor extends AbstractCursor<Integer> implements Cursor<Integer> {
+public class DefaultDidCursor extends AbstractCursor<Integer> {
     public DefaultDidCursor(@Nonnull ErrorHandler errorHandler, @Nonnull ResultSet resultSet) {
         super(errorHandler, resultSet);
     }

@@ -41,7 +41,7 @@ public class Shutdowner implements AutoCloseable {
         closeables.add(new WeakReference<>(new AutoCloseableShutdownCallback(autoCloseable)));
     }
 
-    public synchronized void AddStopShutdownListener(Service service) {
+    public synchronized void addStopShutdownListener(Service service) {
         closeables.add(new WeakReference<>(new ServiceShutdownCallback(service)));
     }
 

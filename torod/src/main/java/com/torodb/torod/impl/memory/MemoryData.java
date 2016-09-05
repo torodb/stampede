@@ -8,6 +8,9 @@ import com.torodb.core.document.ToroDocument;
 import com.torodb.core.exceptions.user.UniqueIndexViolationException;
 import com.torodb.kvdocument.values.KVDocument;
 import com.torodb.kvdocument.values.KVValue;
+
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
@@ -39,6 +42,7 @@ public class MemoryData {
         }
     }
 
+    @SuppressFBWarnings(value = {"UL_UNRELEASED_LOCK"})
     public MDWriteTransaction openWriteTransaction() {
         Lock writeLock = lock.writeLock();
         writeLock.lock();
