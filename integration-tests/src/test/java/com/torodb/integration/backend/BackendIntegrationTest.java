@@ -20,6 +20,32 @@
 
 package com.torodb.integration.backend;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.jooq.DSLContext;
+import org.jooq.lambda.tuple.Tuple2;
+import org.junit.Test;
+
+import com.google.common.collect.ImmutableMultimap;
 import com.torodb.backend.DocPartResultBatch;
 import com.torodb.backend.MockDidCursor;
 import com.torodb.backend.SqlBuilder;
@@ -29,7 +55,19 @@ import com.torodb.core.cursors.Cursor;
 import com.torodb.core.d2r.CollectionData;
 import com.torodb.core.d2r.DocPartResult;
 import com.torodb.core.document.ToroDocument;
-import com.torodb.core.transaction.metainf.*;
+import com.torodb.core.transaction.metainf.FieldType;
+import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
+import com.torodb.core.transaction.metainf.ImmutableMetaDatabase;
+import com.torodb.core.transaction.metainf.ImmutableMetaDocPart;
+import com.torodb.core.transaction.metainf.ImmutableMetaField;
+import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
+import com.torodb.core.transaction.metainf.MetaCollection;
+import com.torodb.core.transaction.metainf.MetaDatabase;
+import com.torodb.core.transaction.metainf.MetaDocPart;
+import com.torodb.core.transaction.metainf.MetaField;
+import com.torodb.core.transaction.metainf.MetaSnapshot;
+import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
+import com.torodb.core.transaction.metainf.WrapperMutableMetaSnapshot;
 import com.torodb.kvdocument.types.DocumentType;
 import com.torodb.kvdocument.values.KVBoolean;
 import com.torodb.kvdocument.values.KVDocument;
@@ -37,20 +75,6 @@ import com.torodb.kvdocument.values.KVInteger;
 import com.torodb.kvdocument.values.KVValue;
 import com.torodb.kvdocument.values.heap.ListKVArray;
 import com.torodb.kvdocument.values.heap.StringKVString;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.jooq.Converter;
-import org.jooq.DSLContext;
-import org.junit.Test;
-
-import static org.junit.Assert.*;
 
 public class BackendIntegrationTest extends AbstractBackendTest {
     
@@ -383,12 +407,13 @@ public class BackendIntegrationTest extends AbstractBackendTest {
 		            value = Optional.empty();
 		        }
 		        DataTypeForKV<?> dataTypeForKV = (DataTypeForKV<?>) sqlInterface.getDataTypeProvider().getDataType(metaField.getType());
-		        Object databaseValue = sqlHelper.getResultSetValue(FieldType.from(dataTypeForKV.getKVValueConverter().getErasuredType()), resultSet, columnIndex);
+		        FieldType fieldType = FieldType.from(dataTypeForKV.getKVValueConverter().getErasuredType());
+		        KVValue<?> kvValue = sqlHelper.getResultSetKVValue(fieldType, dataTypeForKV, resultSet, columnIndex);
 		        Optional<KVValue<?>> databaseConvertedValue;
 		        if (resultSet.wasNull()) {
 		            databaseConvertedValue = Optional.empty();
 		        } else {
-		            databaseConvertedValue = Optional.of(((Converter<Object, KVValue<?>>) dataTypeForKV.getConverter()).from(databaseValue));
+		            databaseConvertedValue = Optional.of(kvValue);
 		        }
 		        columnIndex++;
 		        
@@ -508,18 +533,70 @@ public class BackendIntegrationTest extends AbstractBackendTest {
             MetaDatabase metaDatabase = mutableSnapshot.getMetaDatabaseByName(data.database.getName());
             MetaCollection metaCollection = metaDatabase.getMetaCollectionByName(data.collection.getName());
             
-            MetaDocPart metaDocPart = metaCollection.getMetaDocPartByTableRef(createTableRef("batters", "batter"));
-            MetaField metaField = metaDocPart.getMetaFieldByNameAndType("type", FieldType.STRING);
+            MetaDocPart metaDocPart = metaCollection.getMetaDocPartByTableRef(createTableRef());
+            MetaField metaField = metaDocPart.getMetaFieldByNameAndType("id", FieldType.STRING);
             
             connection.commit();
             
             Collection<ToroDocument> readedToroDocuments;
             try (
                     Cursor<Integer> defaultDidCursor = sqlInterface.getReadInterface().getCollectionDidsWithFieldEqualsTo(
-                            dsl, metaDatabase, metaCollection, metaDocPart, metaField, new StringKVString("Blueberry"));
+                            dsl, metaDatabase, metaCollection, metaDocPart, metaField, new StringKVString("0001"));
                     DocPartResultBatch batch = sqlInterface.getReadInterface().getCollectionResultSets(
                             dsl, metaDatabase, metaCollection,
                             defaultDidCursor, generatedDids.size());
+                    ) {
+                readedToroDocuments = readDocuments(metaDatabase, metaCollection, batch);
+            }
+
+            assertEquals(1, readedToroDocuments.size());
+            List<Integer> readedDids = readedToroDocuments.stream()
+                    .map(toroDocument -> toroDocument.getId())
+                    .collect(Collectors.toList()); 
+            LOGGER.debug(generatedDids);
+            LOGGER.debug(readedDids);
+            assertTrue(generatedDids.containsAll(readedDids));
+            List<KVDocument> readedDocuments = readedToroDocuments.stream().map(readedToroDocument -> readedToroDocument.getRoot()).collect(Collectors.toList());
+            LOGGER.debug(documents);
+            LOGGER.debug(readedDocuments);
+            assertTrue(documents.containsAll(readedDocuments));
+            connection.commit();
+        } 
+    }
+    
+    @Test
+    public void testTorodbReadCollectionResultSetsDidsAndProjectionWithFieldsIn() throws Exception {
+        List<KVDocument> documents = parseListFromJson("testTorodbReadDocPartDids.json");
+        try (Connection connection = sqlInterface.getDbBackend().createWriteConnection()) {
+            DSLContext dsl = sqlInterface.getDslContextFactory().createDSLContext(connection);
+            MutableMetaSnapshot mutableSnapshot = new WrapperMutableMetaSnapshot(new ImmutableMetaSnapshot.Builder().build());
+            mutableSnapshot
+                .addMetaDatabase(data.database.getName(), data.database.getIdentifier())
+                .addMetaCollection(data.collection.getName(), data.collection.getIdentifier());
+            sqlInterface.getStructureInterface().createSchema(dsl, data.database.getIdentifier());
+            CollectionData collectionData = parseDocumentsAndCreateDocPartDataTables(mutableSnapshot, dsl, documents);
+            
+            List<Integer> generatedDids = writeCollectionData(dsl, collectionData);
+            
+            MetaDatabase metaDatabase = mutableSnapshot.getMetaDatabaseByName(data.database.getName());
+            MetaCollection metaCollection = metaDatabase.getMetaCollectionByName(data.collection.getName());
+            
+            MetaDocPart metaDocPart = metaCollection.getMetaDocPartByTableRef(createTableRef());
+            MetaField metaField = metaDocPart.getMetaFieldByNameAndType("id", FieldType.STRING);
+            
+            connection.commit();
+            
+            ImmutableMultimap.Builder<MetaField, KVValue<?>> valuesMultimapBuilder = new ImmutableMultimap.Builder<MetaField, KVValue<?>>();
+            for (int count=0; count<1000; count++) {
+                valuesMultimapBuilder.put(metaField, new StringKVString("0001"));
+            }
+            Collection<ToroDocument> readedToroDocuments;
+            try (
+                    Cursor<Tuple2<Integer, KVValue<?>>> didProjectionCursor = sqlInterface.getReadInterface().getCollectionDidsAndProjectionWithFieldsIn(
+                            dsl, metaDatabase, metaCollection, metaDocPart, valuesMultimapBuilder.build());
+                    DocPartResultBatch batch = sqlInterface.getReadInterface().getCollectionResultSets(
+                            dsl, metaDatabase, metaCollection,
+                            didProjectionCursor.transform(t -> t.v1), generatedDids.size());
                     ) {
                 readedToroDocuments = readDocuments(metaDatabase, metaCollection, batch);
             }
