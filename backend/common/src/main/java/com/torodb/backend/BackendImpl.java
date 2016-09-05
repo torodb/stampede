@@ -166,6 +166,7 @@ public class BackendImpl extends ThreadFactoryIdleService implements Backend {
                                 .createDSLContext(connection);
 
                         consumer.accept(dsl);
+                        connection.commit();
                         return null;
                     } catch (SQLException ex) {
                         throw sqlInterface.getErrorHandler().handleException(Context.CREATE_INDEX, ex);
