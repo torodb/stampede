@@ -1,10 +1,27 @@
-
+/*
+ *     This file is part of ToroDB.
+ *
+ *     ToroDB is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU Affero General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     (at your option) any later version.
+ *
+ *     ToroDB is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU Affero General Public License for more details.
+ *
+ *     You should have received a copy of the GNU Affero General Public License
+ *     along with ToroDB. If not, see <http://www.gnu.org/licenses/>.
+ *
+ *     Copyright (c) 2014, 8Kdata Technology
+ *
+ */
 package com.torodb.packaging.util;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.torodb.mongodb.repl.ReplicationFilters;
-import com.torodb.packaging.config.model.Config;
 import com.torodb.packaging.config.model.protocol.mongo.FilterList;
 import com.torodb.packaging.config.util.SimpleRegExpDecoder;
 import java.util.List;
@@ -18,17 +35,17 @@ public class ReplicationFiltersFactory {
 
     private ReplicationFiltersFactory() {}
 
-    public static ReplicationFilters fromConfig(Config config) {
-        ReplicationFilters filterProvider = new ReplicationFilters(
-                convertFilterList(config.getProtocol().getMongo().getReplication().get(0).getInclude()),
-                convertFilterList(config.getProtocol().getMongo().getReplication().get(0).getExclude()));
-        return filterProvider;
+    public static ReplicationFilters getReplicationFilters(Replication replication) {
+        ReplicationFilters replicationFilters = new ReplicationFilters(
+                convertFilterList(replication.getInclude()), 
+                convertFilterList(replication.getExclude()));
+        return replicationFilters;
     }
 
     private static ImmutableMap<Pattern, ImmutableList<Pattern>> convertFilterList(
             FilterList filterList) {
         ImmutableMap.Builder<Pattern, ImmutableList<Pattern>> filterBuilder = ImmutableMap.builder();
-
+        
         if (filterList != null) {
             for (Map.Entry<String, List<String>> databaseEntry : filterList.entrySet()) {
                 ImmutableList.Builder<Pattern> collectionsBuilder = ImmutableList.builder();
@@ -38,7 +55,7 @@ public class ReplicationFiltersFactory {
                 filterBuilder.put(SimpleRegExpDecoder.decode(databaseEntry.getKey()), collectionsBuilder.build());
             }
         }
-
+        
         return filterBuilder.build();
     }
 }

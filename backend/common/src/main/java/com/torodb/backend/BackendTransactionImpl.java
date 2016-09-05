@@ -1,15 +1,17 @@
 
 package com.torodb.backend;
 
-import com.google.common.collect.Multimap;
 import java.sql.Connection;
 import java.sql.SQLException;
 
 import org.jooq.DSLContext;
+import org.jooq.lambda.tuple.Tuple2;
 
+import com.google.common.collect.Multimap;
 import com.torodb.backend.ErrorHandler.Context;
 import com.torodb.core.backend.BackendTransaction;
 import com.torodb.core.cursors.Cursor;
+import com.torodb.core.cursors.EmptyCursor;
 import com.torodb.core.cursors.EmptyToroCursor;
 import com.torodb.core.cursors.ToroCursor;
 import com.torodb.core.d2r.R2DTranslator;
@@ -113,6 +115,19 @@ public abstract class BackendTransactionImpl implements BackendTransaction {
             }
             Cursor<Integer> allDids = sqlInterface.getReadInterface().getCollectionDidsWithFieldsIn(dsl, db, col, docPart, valuesMultimap);
             return new LazyToroCursor(sqlInterface, r2dTranslator, allDids, dsl, db, col);
+        } catch (SQLException ex) {
+            throw sqlInterface.getErrorHandler().handleException(Context.FETCH, ex);
+        }
+    }
+
+    @Override
+    public Cursor<Tuple2<Integer, KVValue<?>>> findByFieldInProjection(MetaDatabase db, MetaCollection col, MetaDocPart docPart,
+            Multimap<MetaField, KVValue<?>> valuesMultimap) {
+        try {
+            if (valuesMultimap.isEmpty()) {
+                return new EmptyCursor<>();
+            }
+            return sqlInterface.getReadInterface().getCollectionDidsAndProjectionWithFieldsIn(dsl, db, col, docPart, valuesMultimap);
         } catch (SQLException ex) {
             throw sqlInterface.getErrorHandler().handleException(Context.FETCH, ex);
         }

@@ -22,79 +22,18 @@ package com.torodb.backend;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
 
 import javax.annotation.Nonnull;
 
-import com.torodb.backend.ErrorHandler.Context;
 import com.torodb.core.cursors.Cursor;
 
-public class DefaultDidCursor implements Cursor<Integer> {
-    public final ErrorHandler errorHandler;
-    public final ResultSet resultSet;
-    public boolean movedNext = false;
-    public boolean hasNext = false;
-
+public class DefaultDidCursor extends AbstractCursor<Integer> implements Cursor<Integer> {
     public DefaultDidCursor(@Nonnull ErrorHandler errorHandler, @Nonnull ResultSet resultSet) {
-        this.errorHandler = errorHandler;
-        this.resultSet = resultSet;
+        super(errorHandler, resultSet);
     }
 
     @Override
-    public boolean hasNext() {
-        try {
-            if (!movedNext) {
-                hasNext = resultSet.next();
-                movedNext = true;
-            }
-            
-            return hasNext;
-        } catch(SQLException ex) {
-            throw errorHandler.handleException(Context.FETCH, ex);
-        }
-    }
-
-    @Override
-    public Integer next() {
-        try {
-            hasNext();
-            movedNext = false;
-            
-            return resultSet.getInt(1);
-        } catch(SQLException ex) {
-            throw errorHandler.handleException(Context.FETCH, ex);
-        }
-    }
-
-    @Override
-    public void close() {
-        try {
-            resultSet.close();
-        } catch(SQLException ex) {
-            throw errorHandler.handleException(Context.FETCH, ex);
-        }
-    }
-
-    @Override
-    public List<Integer> getNextBatch(final int maxSize) {
-        List<Integer> dids = new ArrayList<>();
-        
-        for (int index = 0; index < maxSize && hasNext(); index++) {
-            dids.add(next());
-        }
-        
-        return dids;
-    }
-
-    @Override
-    public List<Integer> getRemaining() {
-        List<Integer> dids = new ArrayList<>();
-        
-        while (hasNext()) {
-            dids.add(next());
-        }
-        
-        return dids;
+    protected Integer read(ResultSet resultSet) throws SQLException {
+        return resultSet.getInt(1);
     }
 }

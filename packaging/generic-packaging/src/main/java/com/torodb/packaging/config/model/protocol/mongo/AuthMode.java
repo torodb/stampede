@@ -27,7 +27,7 @@ public enum AuthMode {
      * Disable authentication mechanism. No authentication will be done
      */
     @Description(value="config.protocol.mongo.authmode.disabled")
-    disabled,
+    disabled(false),
     /**
      * The client will negotiate best mechanism to authenticate. With server 
      * version 3.0 or above, the driver will authenticate using the 
@@ -50,5 +50,19 @@ public enum AuthMode {
      * SCRAM-SHA-1 SASL authentication 
      */
     @Description(value="config.protocol.mongo.authmode.scram_sha1")
-    scram_sha1
+    scram_sha1;
+    
+    private final boolean enabled;
+    
+    private AuthMode() {
+        this.enabled = true;
+    }
+    
+    private AuthMode(boolean enabled) {
+        this.enabled = enabled;
+    }
+    
+    public boolean isEnabled() {
+        return enabled;
+    }
 }

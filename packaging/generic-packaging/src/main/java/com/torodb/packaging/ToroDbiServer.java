@@ -1,7 +1,15 @@
 
 package com.torodb.packaging;
 
-import com.google.common.net.HostAndPort;
+import java.time.Clock;
+import java.util.List;
+import java.util.concurrent.ThreadFactory;
+
+import javax.inject.Singleton;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
@@ -25,17 +33,10 @@ import com.torodb.packaging.guice.BackendImplementationModule;
 import com.torodb.packaging.guice.ConfigModule;
 import com.torodb.packaging.guice.ExecutorServicesModule;
 import com.torodb.packaging.guice.PackagingModule;
-import com.torodb.packaging.util.MongoClientOptionsFactory;
-import com.torodb.packaging.util.MongoCredentialsFactory;
+import com.torodb.packaging.util.MongoClientConfigurationFactory;
 import com.torodb.packaging.util.ReplicationFiltersFactory;
 import com.torodb.torod.TorodServer;
 import com.torodb.torod.guice.SqlTorodModule;
-import java.time.Clock;
-import java.util.List;
-import java.util.concurrent.ThreadFactory;
-import javax.inject.Singleton;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  *
@@ -76,9 +77,7 @@ public class ToroDbiServer extends ThreadFactoryIdleService {
         if (replications.size() != 1) {
             throw new IllegalArgumentException("Exactly one protocol.mongo.replication must be set");
         }
-        String syncSourceString = replications.stream().findAny().get().getSyncSource();
-        HostAndPort syncSource = HostAndPort.fromString(syncSourceString)
-                .withDefaultPort(27017);
+        Replication replication = replications.stream().findAny().get();
 
         Injector injector = Guice.createInjector(new ConfigModule(config),
                 new PackagingModule(clock),
@@ -89,10 +88,9 @@ public class ToroDbiServer extends ThreadFactoryIdleService {
                 new D2RModule(),
                 new SqlTorodModule(),
                 new MongoLayerModule(),
-                new MongoDbReplModule(syncSource,
-                        MongoClientOptionsFactory.getMongoClientOptions(config),
-                        MongoCredentialsFactory.getMongoCredential(config),
-                        ReplicationFiltersFactory.fromConfig(config)),
+                new MongoDbReplModule(
+                        MongoClientConfigurationFactory.getMongoClientConfiguration(replication),
+                        ReplicationFiltersFactory.getReplicationFilters(replication)),
                 new ExecutorServicesModule(),
                 new ConcurrentModule()
         );

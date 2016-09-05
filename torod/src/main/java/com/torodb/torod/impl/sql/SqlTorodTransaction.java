@@ -218,21 +218,49 @@ public abstract class SqlTorodTransaction implements TorodTransaction {
     @Override
     public Cursor<Tuple2<Integer, KVValue<?>>> findByAttRefInProjection(String dbName, 
             String colName, AttributeReference attRef, Collection<KVValue<?>> values) {
-        //TODO: This implementation is very inneficient! We need to create a low level method that
-        //returns the same cursor that is returned by this one
-        if (values.isEmpty()) {
+        MetaDatabase db = getInternalTransaction().getMetaSnapshot().getMetaDatabaseByName(dbName);
+        if (db == null) {
+            LOGGER.trace("Db with name " + dbName + " does not exist. An empty cursor is returned");
             return new EmptyCursor<>();
         }
-        LOGGER.warn("A very inefficient implementation of findByAttRefInProjection is being used");
-        return new TransformCursor<>(
-                findByAttRefIn(dbName, colName, attRef, values)
-                        .asDocCursor(),
-                toroDoc -> {
-                    Optional<KVValue<?>> resolved = AttributeRefKVDocResolver.resolve(attRef, toroDoc.getRoot());
-                    assert resolved.isPresent();
-                    return new Tuple2<>(toroDoc.getId(), resolved.get());
-                }
-        );
+        MetaCollection col = db.getMetaCollectionByName(colName);
+        if (col == null) {
+            LOGGER.trace("Collection " + dbName + '.' + colName + " does not exist. An empty cursor is returned");
+            return new EmptyCursor<>();
+        }
+        if (values.isEmpty()) {
+            LOGGER.trace("An empty list of values have been given as in condition. An empty cursor is returned");
+            return new EmptyCursor<>();
+        }
+        TableRefFactory tableRefFactory = connection.getServer().getTableRefFactory();
+        TableRef ref = tableRefFactory.createRoot();
+
+        if (attRef.getKeys().isEmpty()) {
+            throw new IllegalArgumentException("The empty attribute reference is not valid on queries");
+        }
+        String lastKey = extractKeyName(attRef.getKeys().get(attRef.getKeys().size() - 1));
+        if (attRef.getKeys().size() > 1) {
+            List<Key<?>> keys = attRef.getKeys();
+            List<Key<?>> tableKeys = keys.subList(0, keys.size() - 1);
+            for (Key<?> key : tableKeys) {
+                ref = tableRefFactory.createChild(ref, extractKeyName(key));
+            }
+        }
+
+        MetaDocPart docPart = col.getMetaDocPartByTableRef(ref);
+        if (docPart == null) {
+            LOGGER.trace("DocPart " + dbName + '.' + colName + '.' + ref + " does not exist. An empty cursor is returned");
+            return new EmptyCursor<>();
+        }
+
+        Multimap<MetaField, KVValue<?>> valuesMap = ArrayListMultimap.create();
+        for (KVValue<?> value : values) {
+            MetaField field = docPart.getMetaFieldByNameAndType(lastKey, FieldType.from(value.getType()));
+            if (field != null) {
+                valuesMap.put(field, value);
+            }
+        }
+        return getInternalTransaction().getBackendTransaction().findByFieldInProjection(db, col, docPart, valuesMap);
     }
 
     @Override

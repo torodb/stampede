@@ -7,6 +7,7 @@ import java.util.Collection;
 import javax.annotation.Nonnull;
 
 import org.jooq.DSLContext;
+import org.jooq.lambda.tuple.Tuple2;
 
 import com.torodb.core.cursors.Cursor;
 import com.torodb.core.transaction.metainf.MetaCollection;
@@ -26,6 +27,11 @@ public interface ReadInterface {
     @Nonnull
     public Cursor<Integer> getCollectionDidsWithFieldsIn(DSLContext dsl, MetaDatabase metaDatabase,
             MetaCollection metaCol, MetaDocPart metaDocPart, Multimap<MetaField, KVValue<?>> valuesMap)
+            throws SQLException;
+    
+    @Nonnull
+    public Cursor<Tuple2<Integer, KVValue<?>>> getCollectionDidsAndProjectionWithFieldsIn(DSLContext dsl, MetaDatabase metaDatabase,
+            MetaCollection metaCol, MetaDocPart metaDocPart, Multimap<MetaField, KVValue<?>> valuesMultimap)
             throws SQLException;
 
     long countAll(@Nonnull DSLContext dsl, @Nonnull MetaDatabase database, @Nonnull MetaCollection collection);
