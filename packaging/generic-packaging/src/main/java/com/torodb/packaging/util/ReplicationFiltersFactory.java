@@ -23,6 +23,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.torodb.mongodb.repl.ReplicationFilters;
 import com.torodb.packaging.config.model.protocol.mongo.FilterList;
+import com.torodb.packaging.config.model.protocol.mongo.Replication;
 import com.torodb.packaging.config.util.SimpleRegExpDecoder;
 import java.util.List;
 import java.util.Map;
