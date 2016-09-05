@@ -224,24 +224,24 @@
             <build>
                 <plugins>
                     <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-enforcer-plugin</artifactId>
-                        <version>1.4.1</version>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>appassembler-maven-plugin</artifactId>
+                        <version>1.10</version>
+                        <configuration>
+                            <programs>
+                                <program>
+                                    <mainClass>com.torodb.Main</mainClass>
+                                    <id>torodb</id>
+                                </program>
+                            </programs>
+                        </configuration>
                         <executions>
                             <execution>
-                                <id>enforce-property</id>
+                                <id>assemble</id>
+                                <phase>package</phase>
                                 <goals>
-                                    <goal>enforce</goal>
+                                    <goal>assemble</goal>
                                 </goals>
-                                <configuration>
-                                    <rules>
-                                        <requireProperty>
-                                            <property>profile.assembler</property>
-                                            <message>You must enable assembler profile</message>
-                                        </requireProperty>
-                                    </rules>
-                                    <fail>true</fail>
-                                </configuration>
                             </execution>
                         </executions>
                     </plugin>
