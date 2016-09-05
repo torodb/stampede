@@ -20,6 +20,17 @@
 
 package com.torodb.mongodb.repl.oplogreplier.batch;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletionException;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import javax.inject.Inject;
+
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Meter;
 import com.eightkdata.mongowp.server.api.tools.Empty;
@@ -36,14 +47,6 @@ import com.torodb.mongodb.repl.OplogManager.OplogManagerPersistException;
 import com.torodb.mongodb.repl.oplogreplier.ApplierContext;
 import com.torodb.mongodb.repl.oplogreplier.OplogOperationApplier;
 import com.torodb.mongodb.repl.oplogreplier.analyzed.AnalyzedOp;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CompletionException;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import javax.inject.Inject;
 
 /**
  *
@@ -73,10 +76,11 @@ public class ConcurrentOplogBatchExecutor extends AnalyzedOplogBatchExecutor {
         concurrentMetrics.getSubBatchSizeHistogram().update(namespaceJobList.size());
 
         Stream<Callable<Empty>> callables = namespaceJobList.stream()
-                .map((NamespaceJob namespaceJob) -> () -> {
-                    execute(namespaceJob, context);
-                    return Empty.getInstance();
-                });
+                .map((Function<NamespaceJob, Callable<Empty>>) 
+                        (NamespaceJob namespaceJob) -> () -> {
+                            execute(namespaceJob, context);
+                            return Empty.getInstance();
+                        });
         try {
             streamExecutor.execute(callables)
                     .join();
