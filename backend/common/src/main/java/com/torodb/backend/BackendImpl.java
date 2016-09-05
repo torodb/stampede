@@ -10,6 +10,7 @@ import com.torodb.core.TableRefFactory;
 import com.torodb.core.annotations.ToroDbIdleService;
 import com.torodb.core.backend.Backend;
 import com.torodb.core.backend.BackendConnection;
+import com.torodb.core.concurrent.ConcurrentToolsFactory;
 import com.torodb.core.concurrent.StreamExecutor;
 import com.torodb.core.d2r.IdentifierFactory;
 import com.torodb.core.d2r.R2DTranslator;
@@ -73,7 +74,7 @@ public class BackendImpl extends ThreadFactoryIdleService implements Backend {
             SchemaUpdater schemaUpdater, MetainfoRepository metainfoRepository,
             TableRefFactory tableRefFactory, MaxRowIdFactory maxRowIdFactory,
             R2DTranslator r2dTranslator, IdentifierFactory identifierFactory, Retrier retrier,
-            StreamExecutor streamExecutor) {
+            ConcurrentToolsFactory concurrentToolsFactory) {
         super(threadFactory);
         this.dbBackendService = dbBackendService;
         this.sqlInterface = sqlInterface;
@@ -86,7 +87,7 @@ public class BackendImpl extends ThreadFactoryIdleService implements Backend {
         this.identifierFactory = identifierFactory;
         this.ridGenerator = ridGenerator;
         this.retrier = retrier;
-        this.streamExecutor = streamExecutor;
+        this.streamExecutor = concurrentToolsFactory.createStreamExecutor("backend-inner-jobs", true);
     }
     
     @Override

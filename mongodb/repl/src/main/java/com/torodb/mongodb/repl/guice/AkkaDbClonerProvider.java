@@ -21,6 +21,7 @@
 package com.torodb.mongodb.repl.guice;
 
 import com.torodb.core.annotations.ParallelLevel;
+import com.torodb.core.concurrent.ConcurrentToolsFactory;
 import com.torodb.core.concurrent.StreamExecutor;
 import com.torodb.mongodb.utils.cloner.AkkaDbCloner;
 import com.torodb.mongodb.utils.cloner.CommitHeuristic;
@@ -29,8 +30,8 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import com.torodb.core.concurrent.ToroDbExecutorService;
 import com.torodb.core.retrier.Retrier;
+import java.util.concurrent.ExecutorService;
 
 /**
  *
@@ -38,7 +39,7 @@ import com.torodb.core.retrier.Retrier;
 public class AkkaDbClonerProvider implements Provider<AkkaDbCloner> {
     private static final Logger LOGGER = LogManager.getLogger(AkkaDbClonerProvider.class);
 
-    private final ToroDbExecutorService executor;
+    private final ExecutorService executorService;
     private final StreamExecutor streamExecutor;
     private final int parallelLevel;
     private final int docsPerTransaction;
@@ -48,8 +49,7 @@ public class AkkaDbClonerProvider implements Provider<AkkaDbCloner> {
 
     /**
      *
-     * @param executor
-     * @param streamExecutor
+     * @param concurrentToolsFactory
      * @param parallelLevel
      * @param docsPerTransaction
      * @param commitHeuristic
@@ -57,11 +57,11 @@ public class AkkaDbClonerProvider implements Provider<AkkaDbCloner> {
      * @param retrier
      */
     @Inject
-    public AkkaDbClonerProvider(ToroDbExecutorService executor, StreamExecutor streamExecutor,
+    public AkkaDbClonerProvider(ConcurrentToolsFactory concurrentToolsFactory,
             @ParallelLevel int parallelLevel,  @DocsPerTransaction int docsPerTransaction,
             CommitHeuristic commitHeuristic, Clock clock, Retrier retrier) {
-        this.executor = executor;
-        this.streamExecutor = streamExecutor;
+        this.executorService = concurrentToolsFactory.createExecutorService("db-cloner", false);
+        this.streamExecutor = concurrentToolsFactory.createStreamExecutor("db-cloner-subtasks", false);
         this.parallelLevel = parallelLevel;
         this.commitHeuristic = commitHeuristic;
         this.clock = clock;
@@ -74,7 +74,7 @@ public class AkkaDbClonerProvider implements Provider<AkkaDbCloner> {
         LOGGER.info("Using AkkaDbCloner with: {parallelLevel: {}, docsPerTransaction: {}}",
                 parallelLevel, docsPerTransaction);
         return new AkkaDbCloner(
-                executor,
+                executorService,
                 Math.max(1, parallelLevel - 1),
                 streamExecutor,
                 parallelLevel * docsPerTransaction,

@@ -33,7 +33,7 @@ import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
 import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.google.common.base.Supplier;
 import com.torodb.core.Shutdowner;
-import com.torodb.core.concurrent.ToroDbExecutorService;
+import com.torodb.core.concurrent.ConcurrentToolsFactory;
 import com.torodb.mongodb.repl.OplogManager;
 import com.torodb.mongodb.repl.OplogManager.OplogManagerPersistException;
 import com.torodb.mongodb.repl.OplogManager.WriteOplogTransaction;
@@ -66,19 +66,21 @@ public class DefaultOplogApplier implements OplogApplier {
     private final OplogManager oplogManager;
     private final BatchAnalyzerFactory batchAnalyzerFactory;
     private final ActorSystem actorSystem;
-    private final ToroDbExecutorService executor;
+    private final ExecutorService stopperExecutorService;
 
     @Inject
     public DefaultOplogApplier(BatchLimits batchLimits, OplogManager oplogManager,
             AnalyzedOplogBatchExecutor batchExecutor, BatchAnalyzerFactory batchAnalyzerFactory,
-            ToroDbExecutorService executor, Shutdowner shutdowner) {
+            ConcurrentToolsFactory concurrentToolsFactory, Shutdowner shutdowner) {
         this.batchExecutor = batchExecutor;
         this.batchLimits = batchLimits;
         this.oplogManager = oplogManager;
         this.batchAnalyzerFactory = batchAnalyzerFactory;
-        this.executor = executor;
-        this.actorSystem = ActorSystem.create("oplogReplier", null, null,
-                ExecutionContexts.fromExecutor(executor)
+        this.stopperExecutorService = concurrentToolsFactory.createExecutorService("oplog-applier-stopper", true, 1);
+        this.actorSystem = ActorSystem.create("oplog-applier", null, null,
+                ExecutionContexts.fromExecutor(
+                        concurrentToolsFactory.createExecutorService("oplog-applier", false, 2)
+                )
         );
         shutdowner.addCloseShutdownListener(this);
     }
@@ -138,7 +140,7 @@ public class DefaultOplogApplier implements OplogApplier {
                     killSwitch.abort(new CancellationException());
                     return whenComplete.exceptionally(t -> Empty.getInstance())
                             .join();
-                }, executor);
+                }, stopperExecutorService);
             }
         };
     }

@@ -22,6 +22,7 @@ package com.torodb.mongodb.repl.oplogreplier.batch;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Meter;
 import com.google.common.collect.Lists;
+import com.torodb.core.concurrent.ConcurrentToolsFactory;
 import com.torodb.core.concurrent.StreamExecutor;
 import com.torodb.core.retrier.Retrier;
 import com.torodb.kvdocument.values.KVInteger;
@@ -60,6 +61,7 @@ public class ConcurrentOplogBatchExecutorTest {
     private ConcurrentOplogBatchExecutorMetrics metrics;
     @Mock
     private StreamExecutor streamExecutor;
+    private ConcurrentToolsFactory concurrentToolsFactory;
     @Mock
     private SubBatchHeuristic subBatchHeuristic;
     @Mock
@@ -81,7 +83,11 @@ public class ConcurrentOplogBatchExecutorTest {
     public void setUp() {
         idFactory = 0;
         MockitoAnnotations.initMocks(this);
-        executor = spy(new ConcurrentOplogBatchExecutor(applier, server, retrier, streamExecutor, namespaceJobExecutor, metrics, subBatchHeuristic));
+        concurrentToolsFactory = mock(ConcurrentToolsFactory.class);
+        when(concurrentToolsFactory.getDefaultMaxThreads()).thenReturn(4);
+        when(concurrentToolsFactory.createStreamExecutor(any(String.class), any(Boolean.class)))
+                .thenReturn(streamExecutor);
+        executor = spy(new ConcurrentOplogBatchExecutor(applier, server, retrier, concurrentToolsFactory, namespaceJobExecutor, metrics, subBatchHeuristic));
     }
 
     @Test

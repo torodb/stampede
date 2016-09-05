@@ -35,6 +35,7 @@ import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Meter;
 import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.google.common.base.Supplier;
+import com.torodb.core.concurrent.ConcurrentToolsFactory;
 import com.torodb.core.concurrent.StreamExecutor;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.metrics.ToroMetricRegistry;
@@ -59,11 +60,11 @@ public class ConcurrentOplogBatchExecutor extends AnalyzedOplogBatchExecutor {
 
     @Inject
     public ConcurrentOplogBatchExecutor(OplogOperationApplier oplogOperationApplier,
-            MongodServer server, Retrier retrier, StreamExecutor streamExecutor,
+            MongodServer server, Retrier retrier, ConcurrentToolsFactory concurrentToolsFactory,
             NamespaceJobExecutor namespaceJobExecutor,  
             ConcurrentOplogBatchExecutorMetrics concurrentMetrics, SubBatchHeuristic subBatchHeuristic) {
         super(concurrentMetrics, oplogOperationApplier, server, retrier, namespaceJobExecutor);
-        this.streamExecutor = streamExecutor;
+        this.streamExecutor = concurrentToolsFactory.createStreamExecutor("concurrent-oplog-batch-executor", true);
         this.concurrentMetrics = concurrentMetrics;
         this.subBatchHeuristic = subBatchHeuristic;
     }
