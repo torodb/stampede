@@ -270,7 +270,7 @@ public class AkkaDbCloner implements DbCloner {
                             .run(materializer)
                             .toCompletableFuture()
                             .join();
-                    LOGGER.warn("Requested docs: {}, Inserted: {}", insertedDocs.second(), insertedDocs.first());
+                    LOGGER.debug("Requested docs: {}, Inserted: {}", insertedDocs.second(), insertedDocs.first());
                     return Done.getInstance();
                 } catch (CompletionException ex) {
                     Throwable cause = ex.getCause();

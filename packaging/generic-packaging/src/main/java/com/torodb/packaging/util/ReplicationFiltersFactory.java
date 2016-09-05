@@ -15,14 +15,9 @@
  *     along with ToroDB. If not, see <http://www.gnu.org/licenses/>.
  *
  *     Copyright (c) 2014, 8Kdata Technology
- *     
+ *
  */
-
 package com.torodb.packaging.util;
-
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Pattern;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -30,8 +25,16 @@ import com.torodb.mongodb.repl.ReplicationFilters;
 import com.torodb.packaging.config.model.protocol.mongo.FilterList;
 import com.torodb.packaging.config.model.protocol.mongo.Replication;
 import com.torodb.packaging.config.util.SimpleRegExpDecoder;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Pattern;
 
+/**
+ *
+ */
 public class ReplicationFiltersFactory {
+
+    private ReplicationFiltersFactory() {}
 
     public static ReplicationFilters getReplicationFilters(Replication replication) {
         ReplicationFilters replicationFilters = new ReplicationFilters(
@@ -56,5 +59,4 @@ public class ReplicationFiltersFactory {
         
         return filterBuilder.build();
     }
-
 }

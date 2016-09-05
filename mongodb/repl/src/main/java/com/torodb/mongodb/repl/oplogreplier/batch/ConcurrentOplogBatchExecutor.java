@@ -72,7 +72,6 @@ public class ConcurrentOplogBatchExecutor extends AnalyzedOplogBatchExecutor {
         concurrentMetrics.getSubBatchSizeMeter().mark(namespaceJobList.size());
         concurrentMetrics.getSubBatchSizeHistogram().update(namespaceJobList.size());
 
-        /*
         Stream<Callable<Empty>> callables = namespaceJobList.stream()
                 .map((NamespaceJob namespaceJob) -> () -> {
                     execute(namespaceJob, context);
@@ -90,7 +89,6 @@ public class ConcurrentOplogBatchExecutor extends AnalyzedOplogBatchExecutor {
             }
             throw ex;
         }
-        */
     }
 
     private void execute(NamespaceJob job, ApplierContext applierContext) 
