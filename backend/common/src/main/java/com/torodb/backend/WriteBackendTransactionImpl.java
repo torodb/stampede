@@ -228,7 +228,7 @@ public class WriteBackendTransactionImpl extends BackendTransactionImpl implemen
     }
 
     @Override
-    public void insert(MetaDatabase db, MetaCollection col, DocPartData data) {
+    public void insert(MetaDatabase db, MetaCollection col, DocPartData data) throws UserException {
         Preconditions.checkState(!isClosed(), "This transaction is closed");
 
         getSqlInterface().getWriteInterface().insertDocPartData(getDsl(), db.getIdentifier(), data);

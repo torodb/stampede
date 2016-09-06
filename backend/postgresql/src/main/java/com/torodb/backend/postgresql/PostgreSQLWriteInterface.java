@@ -30,6 +30,8 @@ import com.torodb.backend.tables.MetaDocPartTable;
 import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.d2r.DocPartRow;
 import com.torodb.core.exceptions.SystemException;
+import com.torodb.core.exceptions.user.UserException;
+import com.torodb.core.transaction.RollbackException;
 import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetaField;
@@ -97,7 +99,7 @@ public class PostgreSQLWriteInterface extends AbstractWriteInterface {
     }
     
     @Override
-    public void insertDocPartData(DSLContext dsl, String schemaName, DocPartData docPartData) {
+    public void insertDocPartData(DSLContext dsl, String schemaName, DocPartData docPartData) throws UserException {
     	metrics.insertRows.mark(docPartData.rowCount());
     	metrics.insertFields.mark(docPartData.rowCount()*(docPartData.fieldColumnsCount()+docPartData.scalarColumnsCount()));
         if (docPartData.rowCount()==0){
@@ -136,9 +138,9 @@ public class PostgreSQLWriteInterface extends AbstractWriteInterface {
 	                                docPartData
 	                                );
 	                    } catch (DataAccessException ex) {
-	                        throw errorHandler.handleException(Context.INSERT, ex);
+	                        throw errorHandler.handleUserException(Context.INSERT, ex);
 	                    } catch (SQLException ex) {
-	                        throw errorHandler.handleException(Context.INSERT, ex);
+	                        throw errorHandler.handleUserException(Context.INSERT, ex);
 	                    } catch (IOException ex) {
 	                        throw new SystemException(ex);
 	                    }

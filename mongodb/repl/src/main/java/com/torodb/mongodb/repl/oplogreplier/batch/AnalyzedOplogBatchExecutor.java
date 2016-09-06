@@ -101,15 +101,11 @@ public class AnalyzedOplogBatchExecutor implements
             MongodConnection connection)  throws RollbackException, UserException,
             NamespaceJobExecutionException {
         try (Context timerContext = metrics.getSubBatchTimer().time()) {
-            //TODO: uncomment this once the backend layer is correctly throwing UniqueIndexViolationException
-//            try {
-//                execute(job, applierContext, connection, true);
-//            } catch (UniqueIndexViolationException ex) {
-//                execute(job, applierContext, connection, true);
-//            }
-
-            //TODO: Remove this once the backend is correctly throwing UniqueIndexViolationException
-            execute(job, applierContext, connection, false);
+            try {
+                execute(job, applierContext, connection, true);
+            } catch (UniqueIndexViolationException ex) {
+                execute(job, applierContext, connection, false);
+            }
         }
     }
 

@@ -88,7 +88,7 @@ public class NamespaceJobExecutor {
                 .filter(AnalyzedOp::requiresToFetchToroId);
 
         if (optimisticDeleteAndCreate) {
-            filteredJobs = filteredJobs.filter(op -> op.getType() == AnalyzedOpType.DELETE_CREATE);
+            filteredJobs = filteredJobs.filter(op -> op.getType() != AnalyzedOpType.DELETE_CREATE);
         }
         
         Map<KVValue<?>, AnalyzedOp> mapToFetch = filteredJobs

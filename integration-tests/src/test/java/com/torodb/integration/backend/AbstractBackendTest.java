@@ -46,6 +46,7 @@ import com.torodb.core.d2r.DocPartResult;
 import com.torodb.core.d2r.IdentifierFactory;
 import com.torodb.core.d2r.R2DTranslator;
 import com.torodb.core.document.ToroDocument;
+import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.impl.TableRefFactoryImpl;
 import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
 import com.torodb.core.transaction.metainf.MetaCollection;
@@ -173,11 +174,11 @@ public abstract class AbstractBackendTest {
         return readedDocuments;
     }
 
-    protected List<Integer> writeCollectionData(DSLContext dsl, CollectionData collectionData) {
+    protected List<Integer> writeCollectionData(DSLContext dsl, CollectionData collectionData) throws UserException {
         return writeCollectionData(dsl, data.database.getIdentifier(), collectionData);
     }
 
-    protected List<Integer> writeCollectionData(DSLContext dsl, String databaseIdentifier, CollectionData collectionData) {
+    protected List<Integer> writeCollectionData(DSLContext dsl, String databaseIdentifier, CollectionData collectionData) throws UserException {
         Iterator<DocPartData> docPartDataIterator = StreamSupport.stream(collectionData.orderedDocPartData().spliterator(), false)
                 .iterator();
         List<Integer> generatedDids = new ArrayList<>();
