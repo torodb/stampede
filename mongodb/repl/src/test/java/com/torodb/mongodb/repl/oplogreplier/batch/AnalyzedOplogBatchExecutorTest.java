@@ -19,6 +19,8 @@
  */
 package com.torodb.mongodb.repl.oplogreplier.batch;
 
+import com.codahale.metrics.Histogram;
+import com.codahale.metrics.Meter;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.Timer.Context;
 import com.eightkdata.mongowp.ErrorCode;
@@ -46,6 +48,7 @@ import org.mockito.stubbing.Answer;
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.*;
+import static org.mockito.Mockito.mock;
 
 public class AnalyzedOplogBatchExecutorTest {
 
@@ -72,6 +75,13 @@ public class AnalyzedOplogBatchExecutorTest {
 
         given(server.openConnection()).willReturn(conn);
         given(conn.openWriteTransaction()).willReturn(writeTrans);
+
+        given(metrics.getCudBatchSizeHistogram()).willReturn(mock(Histogram.class));
+        given(metrics.getCudBatchSizeMeter()).willReturn(mock(Meter.class));
+        given(metrics.getCudBatchTimer()).willReturn(mock(Timer.class));
+        given(metrics.getSubBatchTimer()).willReturn(mock(Timer.class));
+        given(metrics.getCudBatchSizeHistogram()).willReturn(mock(Histogram.class));
+        given(metrics.getCudBatchSizeMeter()).willReturn(mock(Meter.class));
     }
 
     @Test
@@ -129,18 +139,16 @@ public class AnalyzedOplogBatchExecutorTest {
                 .setReapplying(true)
                 .setUpdatesAsUpserts(true)
                 .build();
-        Timer timer = mock(Timer.class);
         Context context = mock(Context.class);
         NamespaceJob job = mock(NamespaceJob.class);
-        given(metrics.getSubBatchTimer()).willReturn(timer);
-        given(timer.time()).willReturn(context);
+        given(metrics.getSubBatchTimer().time()).willReturn(context);
 
         //WHEN
         executor.execute(job, applierContext, conn);
 
         //THEN
-        then(metrics).should().getSubBatchTimer();
-        then(timer).should().time();
+        then(metrics).should(atLeastOnce()).getSubBatchTimer();
+        then(metrics.getSubBatchTimer()).should().time();
         then(context).should().close();
         //TODO: This might be changed once the backend throws UniqueIndexViolation
         then(namespaceJobExecutor).should().apply(eq(job), eq(writeTrans), eq(applierContext), any(Boolean.class));
@@ -434,6 +442,8 @@ public class AnalyzedOplogBatchExecutorTest {
         }).when(executor)
                 .execute(eq(batch), any());
 
+        boolean success;
+
         try {
             //WHEN
             OplogOperation result = executor.visit(batch, applierContext);
@@ -441,13 +451,17 @@ public class AnalyzedOplogBatchExecutorTest {
             //THEN
             then(executor).should(times(atteptsToSucceed)).execute(eq(batch), any());
             assertEquals(lastOp, result);
-            return true;
+            success = true;
         } catch (RetrierGiveUpException ignore) {
-            return false;
-        } finally {
-            then(metrics).should().getCudBatchTimer();
-            then(timer).should().time();
+            success = false;
         }
+        then(metrics).should().getCudBatchSizeMeter();
+        then(metrics.getCudBatchSizeMeter()).should().mark(batch.getOriginalBatch().size());
+        then(metrics.getCudBatchSizeHistogram()).should().update(batch.getOriginalBatch().size());
+        then(metrics).should().getCudBatchTimer();
+        then(metrics.getCudBatchTimer()).should().time();
+
+        return success;
     }
 
     @Test

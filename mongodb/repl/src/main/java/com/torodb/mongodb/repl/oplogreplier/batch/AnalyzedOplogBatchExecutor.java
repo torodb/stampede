@@ -101,9 +101,12 @@ public class AnalyzedOplogBatchExecutor implements
             MongodConnection connection)  throws RollbackException, UserException,
             NamespaceJobExecutionException {
         try (Context timerContext = metrics.getSubBatchTimer().time()) {
+            boolean optimisticDeleteAndCreate = applierContext.isReapplying().orElse(true);
             try {
-                execute(job, applierContext, connection, true);
+                execute(job, applierContext, connection, optimisticDeleteAndCreate);
             } catch (UniqueIndexViolationException ex) {
+                assert optimisticDeleteAndCreate : "Unique index violations should not happen when "
+                        + "pesimistic delete and create is executed";
                 execute(job, applierContext, connection, false);
             }
         }
