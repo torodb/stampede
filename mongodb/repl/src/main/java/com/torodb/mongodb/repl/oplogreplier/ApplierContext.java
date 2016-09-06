@@ -21,6 +21,7 @@
 package com.torodb.mongodb.repl.oplogreplier;
 
 import com.eightkdata.mongowp.server.api.oplog.UpdateOplogOperation;
+import java.util.Optional;
 
 /**
  *
@@ -28,9 +29,11 @@ import com.eightkdata.mongowp.server.api.oplog.UpdateOplogOperation;
 public final class ApplierContext {
 
     private final boolean updatesAsUpserts;
+    private final Optional<Boolean> reapplying;
 
-    public ApplierContext(boolean updatesAsUpserts) {
+    public ApplierContext(boolean updatesAsUpserts, Optional<Boolean> reapplying) {
         this.updatesAsUpserts = updatesAsUpserts;
+        this.reapplying = reapplying;
     }
 
     /**
@@ -41,5 +44,42 @@ public final class ApplierContext {
      */
     public boolean treatUpdateAsUpsert() {
         return updatesAsUpserts;
+    }
+
+    /**
+     * Return an optional whose value indicates if the oplog is being reapplyed.
+     *
+     * If the retuned optional is not {@link Optional#isPresent()}, then it is unknown if the oplog
+     * contains operations that have been already executed.
+     * @return
+     */
+    public Optional<Boolean> isReapplying() {
+        return reapplying;
+    }
+
+    public static class Builder {
+        private boolean updatesAsUpserts = true;
+        private Optional<Boolean> reapplying = Optional.empty();
+
+        public Builder() {}
+
+        public Builder setUpdatesAsUpserts(boolean updatesAsUpserts) {
+            this.updatesAsUpserts = updatesAsUpserts;
+            return this;
+        }
+
+        public Builder setReapplying(boolean reapplying) {
+            this.reapplying = Optional.of(reapplying);
+            return this;
+        }
+
+        public Builder setReapplying(Optional<Boolean> reaplying) {
+            this.reapplying = reaplying;
+            return this;
+        }
+
+        public ApplierContext build() {
+            return new ApplierContext(updatesAsUpserts, reapplying);
+        }
     }
 }

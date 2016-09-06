@@ -70,7 +70,11 @@ public class DefaultOplogApplierService extends ThreadFactoryIdleService impleme
     @Override
     protected void startUp() throws Exception {
         fetcher = createFetcher();
-        applyJob = oplogApplier.apply(fetcher, new ApplierContext(true));
+        applyJob = oplogApplier.apply(fetcher, new ApplierContext.Builder()
+                .setReapplying(false)
+                .setUpdatesAsUpserts(true)
+                .build()
+        );
         applyJob.onFinish().thenAccept(tuple -> {
             if (stopping) {
                 return ;

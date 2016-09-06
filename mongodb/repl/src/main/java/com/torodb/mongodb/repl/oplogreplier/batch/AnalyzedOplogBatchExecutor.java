@@ -130,7 +130,10 @@ public class AnalyzedOplogBatchExecutor implements
             } catch (OplogApplyingException | UserException ex) {
                 throw new RetrierGiveUpException("Unexpected exception while replying", ex);
             } catch (RollbackException ex) {
-                ApplierContext retryingReplingContext = new ApplierContext(true);
+                ApplierContext retryingReplingContext = new ApplierContext.Builder()
+                        .setReapplying(true)
+                        .setUpdatesAsUpserts(true)
+                        .build();
                 retrier.retry(() -> {
                     try {
                         execute(batch.getOperation(), retryingReplingContext);
@@ -154,7 +157,10 @@ public class AnalyzedOplogBatchExecutor implements
             } catch (UserException | NamespaceJobExecutionException ex) {
                 throw new RetrierGiveUpException("Unexpected exception while replying", ex);
             } catch (RollbackException ex) {
-                ApplierContext retryingReplingContext = new ApplierContext(true);
+                ApplierContext retryingReplingContext = new ApplierContext.Builder()
+                        .setReapplying(true)
+                        .setUpdatesAsUpserts(true)
+                        .build();
                 retrier.retry(() -> {
                     try {
                         execute(batch, retryingReplingContext);

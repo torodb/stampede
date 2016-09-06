@@ -376,7 +376,10 @@ public class RecoveryService extends ThreadFactoryRunnableService {
 
         OplogFetcher fetcher = replFilters.filterOplogFetcher(new LimitedOplogFetcher(oplogCursor));
 
-        ApplierContext context = new ApplierContext(true);
+        ApplierContext context = new ApplierContext.Builder()
+                .setReapplying(true)
+                .setUpdatesAsUpserts(true)
+                .build();
 
         try {
             oplogApplier.apply(fetcher, context)

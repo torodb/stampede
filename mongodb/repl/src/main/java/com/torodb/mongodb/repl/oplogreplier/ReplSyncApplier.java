@@ -71,7 +71,10 @@ class ReplSyncApplier extends ThreadFactoryRunnableService {
          * As it is not possible to do that yet, we have to always apply operations as replying to
          * be safe.
          */
-        ApplierContext applierContext = new ApplierContext(true);
+        ApplierContext applierContext = new ApplierContext.Builder()
+                .setReapplying(true)
+                .setUpdatesAsUpserts(true)
+                .build();
         while (isRunning()) {
             OplogOperation lastOperation = null;
             try (WriteMongodTransaction transaction = connection.openWriteTransaction()) {

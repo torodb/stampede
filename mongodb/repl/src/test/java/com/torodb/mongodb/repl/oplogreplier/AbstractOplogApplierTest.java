@@ -174,7 +174,10 @@ public abstract class AbstractOplogApplierTest {
 
         OplogFetcher fetcher = createOplogFetcher(oplog);
 
-        ApplyingJob job = oplogApplier.apply(fetcher, new ApplierContext(updatesAsUpsert));
+        ApplyingJob job = oplogApplier.apply(fetcher, new ApplierContext.Builder()
+                .setReapplying(true)
+                .setUpdatesAsUpserts(updatesAsUpsert)
+                .build());
         job.onFinishRaw().join();
 
         try (TorodConnection conn = torodServer.openConnection();

@@ -78,7 +78,10 @@ public class AnalyzedOplogBatchExecutorTest {
     public void testExecute_OplogOperation() throws Exception {
         //GIVEN
         OplogOperation op = mock(OplogOperation.class);
-        ApplierContext applierContext = new ApplierContext(true);
+        ApplierContext applierContext = new ApplierContext.Builder()
+                .setReapplying(true)
+                .setUpdatesAsUpserts(true)
+                .build();
 
         //WHEN
         executor.execute(op, applierContext);
@@ -95,7 +98,10 @@ public class AnalyzedOplogBatchExecutorTest {
     public void testExecute_CudAnalyzedOplogBatch() throws Exception {
         //GIVEN
         CudAnalyzedOplogBatch cudBatch = mock(CudAnalyzedOplogBatch.class);
-        ApplierContext applierContext = new ApplierContext(true);
+        ApplierContext applierContext = new ApplierContext.Builder()
+                .setReapplying(true)
+                .setUpdatesAsUpserts(true)
+                .build();
 
         NamespaceJob job1 = mock(NamespaceJob.class);
         NamespaceJob job2 = mock(NamespaceJob.class);
@@ -119,7 +125,10 @@ public class AnalyzedOplogBatchExecutorTest {
     @Test
     public void testExecute_NamespaceJob() throws Exception {
         //GIVEN
-        ApplierContext applierContext = new ApplierContext(true);
+        ApplierContext applierContext = new ApplierContext.Builder()
+                .setReapplying(true)
+                .setUpdatesAsUpserts(true)
+                .build();
         Timer timer = mock(Timer.class);
         Context context = mock(Context.class);
         NamespaceJob job = mock(NamespaceJob.class);
@@ -142,7 +151,10 @@ public class AnalyzedOplogBatchExecutorTest {
         //GIVEN
         OplogOperation operation = mock(OplogOperation.class);
         SingleOpAnalyzedOplogBatch batch = new SingleOpAnalyzedOplogBatch(operation);
-        ApplierContext applierContext = new ApplierContext(true);
+        ApplierContext applierContext = new ApplierContext.Builder()
+                .setReapplying(true)
+                .setUpdatesAsUpserts(true)
+                .build();
 
         Timer timer = mock(Timer.class);
         Context context = mock(Context.class);
@@ -166,7 +178,10 @@ public class AnalyzedOplogBatchExecutorTest {
         //GIVEN
         OplogOperation operation = mock(OplogOperation.class);
         SingleOpAnalyzedOplogBatch batch = new SingleOpAnalyzedOplogBatch(operation);
-        ApplierContext applierContext = new ApplierContext(true);
+        ApplierContext applierContext = new ApplierContext.Builder()
+                .setReapplying(true)
+                .setUpdatesAsUpserts(true)
+                .build();
 
         Timer timer = mock(Timer.class);
         Context context = mock(Context.class);
@@ -193,7 +208,10 @@ public class AnalyzedOplogBatchExecutorTest {
         //GIVEN
         OplogOperation operation = mock(OplogOperation.class);
         SingleOpAnalyzedOplogBatch batch = new SingleOpAnalyzedOplogBatch(operation);
-        ApplierContext applierContext = new ApplierContext(true);
+        ApplierContext applierContext = new ApplierContext.Builder()
+                .setReapplying(true)
+                .setUpdatesAsUpserts(true)
+                .build();
 
         Timer timer = mock(Timer.class);
         Context context = mock(Context.class);
@@ -232,7 +250,10 @@ public class AnalyzedOplogBatchExecutorTest {
         //GIVEN
         OplogOperation operation = mock(OplogOperation.class);
         SingleOpAnalyzedOplogBatch batch = new SingleOpAnalyzedOplogBatch(operation);
-        ApplierContext applierContext = new ApplierContext(false);
+        ApplierContext applierContext = new ApplierContext.Builder()
+                .setReapplying(true)
+                .setUpdatesAsUpserts(false)
+                .build();
         executor = spy(new AnalyzedOplogBatchExecutor(metrics, applier, server, myRetrier, namespaceJobExecutor));
 
         Timer timer = mock(Timer.class);
@@ -246,11 +267,11 @@ public class AnalyzedOplogBatchExecutorTest {
                 try {
                     ApplierContext context = invocation.getArgument(1);
                     if (attempts == 0) {
-                        assert !context.treatUpdateAsUpsert() : "on this test, first attept should be not reaplying";
+                        assert !context.treatUpdateAsUpsert() : "on this test, first attept should be not trying updates as upserts";
                         throw new RollbackException("Forcing a rollback on the first attempt");
                     }
                     assert context.treatUpdateAsUpsert() : "on this test, only the first attept should be "
-                            + "not reaplying, but " + attempts + " is not reaplying";
+                            + "not trying updates as upserts, but " + attempts + " is not trying updates as upserts";
                     if (attempts < (atteptsToSucceed - 1)) {
                         throw new RollbackException("forcing a rollback on the " + attempts + "th attempt");
                     }
@@ -295,7 +316,10 @@ public class AnalyzedOplogBatchExecutorTest {
         //GIVEN
         OplogOperation lastOp = mock(OplogOperation.class);
         CudAnalyzedOplogBatch batch = mock(CudAnalyzedOplogBatch.class);
-        ApplierContext applierContext = new ApplierContext(true);
+        ApplierContext applierContext = new ApplierContext.Builder()
+                .setReapplying(true)
+                .setUpdatesAsUpserts(true)
+                .build();
         given(batch.getOriginalBatch()).willReturn(Lists.newArrayList(
                 mock(OplogOperation.class),
                 mock(OplogOperation.class),
@@ -325,7 +349,10 @@ public class AnalyzedOplogBatchExecutorTest {
         //GIVEN
         OplogOperation lastOp = mock(OplogOperation.class);
         CudAnalyzedOplogBatch batch = mock(CudAnalyzedOplogBatch.class);
-        ApplierContext applierContext = new ApplierContext(true);
+        ApplierContext applierContext = new ApplierContext.Builder()
+                .setReapplying(true)
+                .setUpdatesAsUpserts(true)
+                .build();
         given(batch.getOriginalBatch()).willReturn(Lists.newArrayList(
                 mock(OplogOperation.class),
                 mock(OplogOperation.class),
@@ -368,7 +395,10 @@ public class AnalyzedOplogBatchExecutorTest {
         //GIVEN
         OplogOperation lastOp = mock(OplogOperation.class);
         CudAnalyzedOplogBatch batch = mock(CudAnalyzedOplogBatch.class);
-        ApplierContext applierContext = new ApplierContext(false);
+        ApplierContext applierContext = new ApplierContext.Builder()
+                .setReapplying(true)
+                .setUpdatesAsUpserts(false)
+                .build();
         given(batch.getOriginalBatch()).willReturn(Lists.newArrayList(
                 mock(OplogOperation.class),
                 mock(OplogOperation.class),
@@ -388,11 +418,11 @@ public class AnalyzedOplogBatchExecutorTest {
                 try {
                     ApplierContext context = invocation.getArgument(1);
                     if (attempts == 0) {
-                        assert !context.treatUpdateAsUpsert() : "on this test, first attept should be not reaplying";
+                        assert !context.treatUpdateAsUpsert() : "on this test, first attept should be not trying updates as upserts";
                         throw new RollbackException("Forcing a rollback on the first attempt");
                     }
                     assert context.treatUpdateAsUpsert() : "on this test, only the first attept should be "
-                            + "not reaplying, but " + attempts + " is not reaplying";
+                            + "not trying updates as upserts, but " + attempts + " is not trying updates as upserts";
                     if (attempts < (atteptsToSucceed - 1)) {
                         throw new RollbackException("forcing a rollback on the " + attempts + "th attempt");
                     }

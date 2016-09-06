@@ -115,7 +115,10 @@ public class ConcurrentOplogBatchExecutorTest {
         }
         AtomicInteger callablesCounter = new AtomicInteger(0);
 
-        ApplierContext context = new ApplierContext(true);
+        ApplierContext context = new ApplierContext.Builder()
+                .setReapplying(true)
+                .setUpdatesAsUpserts(true)
+                .build();
         Histogram mockHistogram = mock(Histogram.class);
         Meter mockMeter = mock(Meter.class);
 
