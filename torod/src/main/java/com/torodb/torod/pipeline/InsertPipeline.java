@@ -34,6 +34,6 @@ public interface InsertPipeline {
 
     int getDocsBatchLength();
 
-    void setDocsBatchLength();
+    void setDocsBatchLength(int newBatchLength);
 
 }

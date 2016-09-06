@@ -8,12 +8,9 @@ import akka.stream.*;
 import akka.stream.javadsl.*;
 import com.torodb.core.annotations.ParallelLevel;
 import com.torodb.core.concurrent.StreamExecutor;
-import com.torodb.core.concurrent.ToroDbExecutorService;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-import java.util.concurrent.Executor;
+import java.util.concurrent.*;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 import javax.inject.Inject;
 
@@ -25,10 +22,15 @@ public class AkkaStreamExecutor implements StreamExecutor {
     private final int parallelLevel;
     private final Sink<Runnable, CompletionStage<Done>> genericRunnableGraph;
     private final Materializer materializer;
+    private final ExecutorService executor;
+    private final Consumer<ExecutorService> onClose;
 
     @Inject
-    public AkkaStreamExecutor(@ParallelLevel int parallelLevel, ToroDbExecutorService executor) {
+    public AkkaStreamExecutor(@ParallelLevel int parallelLevel, ExecutorService executor,
+            Consumer<ExecutorService> onClose) {
         this.parallelLevel = parallelLevel;
+        this.executor = executor;
+        this.onClose = onClose;
 
         ActorSystem actorSystem = ActorSystem.create("stream-executor", null, null,
                 ExecutionContexts.fromExecutor(executor)
@@ -77,6 +79,11 @@ public class AkkaStreamExecutor implements StreamExecutor {
                 .toMat(Sink.fold(zero, (acum, newValue) -> fun.apply(acum, newValue)), Keep.right())
                 .run(materializer)
                 .toCompletableFuture();
+    }
+
+    @Override
+    public void close() {
+        onClose.accept(executor);
     }
 
     private <I, O> Graph<FlowShape<I, O>, NotUsed> createBalanceGraph(Flow<I, O, NotUsed> flow) {

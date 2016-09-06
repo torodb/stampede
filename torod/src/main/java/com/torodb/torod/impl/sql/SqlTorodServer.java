@@ -1,7 +1,6 @@
 
 package com.torodb.torod.impl.sql;
 
-import akka.actor.ActorSystem;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.RemovalNotification;
@@ -14,14 +13,11 @@ import com.torodb.core.d2r.IdentifierFactory;
 import com.torodb.core.transaction.InternalTransactionManager;
 import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
 import com.torodb.torod.TorodServer;
-import com.torodb.torod.guice.TorodLayer;
 import com.torodb.torod.pipeline.InsertPipelineFactory;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import scala.concurrent.Await;
-import scala.concurrent.duration.Duration;
 
 /**
  *
@@ -37,14 +33,12 @@ public class SqlTorodServer extends ThreadFactoryIdleService implements TorodSer
     private final Backend backend;
     private final InternalTransactionManager internalTransactionManager;
     private final TableRefFactory tableRefFactory;
-    private final ActorSystem actorSystem;
 
     @Inject
     public SqlTorodServer(@ToroDbIdleService ThreadFactory threadFactory,
             D2RTranslatorFactory d2RTranslatorFactory, IdentifierFactory idFactory,
             InsertPipelineFactory insertPipelineFactory, Backend backend, 
-            InternalTransactionManager internalTransactionManager, TableRefFactory tableRefFactory,
-            @TorodLayer ActorSystem actorSystem) {
+            InternalTransactionManager internalTransactionManager, TableRefFactory tableRefFactory) {
         super(threadFactory);
         this.d2RTranslatorFactory = d2RTranslatorFactory;
         this.idFactory = idFactory;
@@ -52,7 +46,6 @@ public class SqlTorodServer extends ThreadFactoryIdleService implements TorodSer
         this.backend = backend;
         this.internalTransactionManager = internalTransactionManager;
         this.tableRefFactory = tableRefFactory;
-        this.actorSystem = actorSystem;
         
         openConnections = CacheBuilder.newBuilder()
                 .weakValues()
@@ -80,7 +73,6 @@ public class SqlTorodServer extends ThreadFactoryIdleService implements TorodSer
         openConnections.invalidateAll();
         backend.stopAsync();
         backend.awaitTerminated();
-        Await.result(actorSystem.terminate(), Duration.Inf());
     }
 
     private void onConnectionInvalidated(RemovalNotification<Integer, SqlTorodConnection> notification) {

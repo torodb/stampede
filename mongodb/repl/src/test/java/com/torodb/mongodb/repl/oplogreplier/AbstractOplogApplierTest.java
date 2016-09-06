@@ -21,6 +21,9 @@ import com.google.inject.*;
 import com.torodb.backend.derby.guice.DerbyBackendModule;
 import com.torodb.backend.driver.derby.DerbyDbBackendConfiguration;
 import com.torodb.backend.guice.BackendModule;
+import com.torodb.concurrent.DefaultConcurrentToolsFactory;
+import com.torodb.concurrent.DefaultConcurrentToolsFactory.BlockerThreadFactoryFunction;
+import com.torodb.concurrent.DefaultConcurrentToolsFactory.ForkJoinThreadFactoryFunction;
 import com.torodb.concurrent.guice.ConcurrentModule;
 import com.torodb.core.BuildProperties;
 import com.torodb.core.annotations.ParallelLevel;
@@ -56,6 +59,7 @@ import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinPool.ForkJoinWorkerThreadFactory;
+import java.util.concurrent.ForkJoinWorkerThread;
 import java.util.concurrent.ThreadFactory;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -69,21 +73,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
-import static com.eightkdata.mongowp.bson.utils.DefaultBsonValues.newDocument;
-import static com.eightkdata.mongowp.bson.utils.DefaultBsonValues.newDocument;
-import static com.eightkdata.mongowp.bson.utils.DefaultBsonValues.newDocument;
-import static com.eightkdata.mongowp.bson.utils.DefaultBsonValues.newDocument;
-import static com.eightkdata.mongowp.bson.utils.DefaultBsonValues.newDocument;
-import static com.eightkdata.mongowp.bson.utils.DefaultBsonValues.newDocument;
-import static com.eightkdata.mongowp.bson.utils.DefaultBsonValues.newDocument;
-import static com.eightkdata.mongowp.bson.utils.DefaultBsonValues.newDocument;
-import static com.eightkdata.mongowp.bson.utils.DefaultBsonValues.newDocument;
-import static com.eightkdata.mongowp.bson.utils.DefaultBsonValues.newDocument;
-import static com.eightkdata.mongowp.bson.utils.DefaultBsonValues.newDocument;
-import static com.eightkdata.mongowp.bson.utils.DefaultBsonValues.newDocument;
-import static com.eightkdata.mongowp.bson.utils.DefaultBsonValues.newDocument;
-import static com.eightkdata.mongowp.bson.utils.DefaultBsonValues.newDocument;
-import static com.eightkdata.mongowp.bson.utils.DefaultBsonValues.newDocument;
 import static com.eightkdata.mongowp.bson.utils.DefaultBsonValues.newDocument;
 
 
@@ -485,6 +474,35 @@ public abstract class AbstractOplogApplierTest {
                             .setNameFormat("repl-unnamed-%d")
                             .build()
                     );
+            
+            bind(DefaultConcurrentToolsFactory.BlockerThreadFactoryFunction.class)
+                    .toInstance(new BlockerThreadFactoryFunction() {
+                        @Override
+                        public ThreadFactory apply(String prefix) {
+                            return new ThreadFactoryBuilder()
+                                    .setNameFormat(prefix + " -%d")
+                                    .build();
+                        }
+                    });
+
+            bind(DefaultConcurrentToolsFactory.ForkJoinThreadFactoryFunction.class)
+                    .toInstance(new ForkJoinThreadFactoryFunction() {
+                        @Override
+                        public ForkJoinWorkerThreadFactory apply(String prefix) {
+                            return new ForkJoinWorkerThreadFactory() {
+                                private volatile int idProvider = 0;
+
+                                @Override
+                                public ForkJoinWorkerThread newThread(ForkJoinPool pool) {
+                                    ForkJoinWorkerThread newThread
+                                            = ForkJoinPool.defaultForkJoinWorkerThreadFactory.newThread(pool);
+                                    int id = idProvider++;
+                                    newThread.setName(prefix + '-' + id);
+                                    return newThread;
+                                }
+                            };
+                        }
+                    });
         }
 
     }
