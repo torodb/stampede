@@ -21,15 +21,15 @@
 package com.torodb.backend;
 
 import java.sql.SQLException;
-import java.util.Arrays;
+import java.util.Optional;
+import java.util.function.Function;
 
 import javax.inject.Singleton;
 
 import org.jooq.exception.DataAccessException;
 
-import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
 import com.torodb.backend.exceptions.BackendException;
 import com.torodb.core.exceptions.ToroRuntimeException;
 import com.torodb.core.exceptions.user.UserException;
@@ -41,17 +41,26 @@ import com.torodb.core.transaction.RollbackException;
 @Singleton
 public abstract class AbstractErrorHandler implements ErrorHandler {
 
-    private final ImmutableMap<String, ImmutableSet<Context>> rollbackRules;
+    private final ImmutableList<RollbackRule> rollbackRules;
+    private final ImmutableList<UserRule> userRules;
     
-    protected AbstractErrorHandler(RollbackRule...rollbackRules) {
-        ImmutableMap.Builder<String, ImmutableSet<Context>> rollbackRulesBuilder =
-                ImmutableMap.builder();
+    protected AbstractErrorHandler(Rule...rules) {
+        ImmutableList.Builder<RollbackRule> rollbackRulesBuilder =
+                ImmutableList.builder();
+        ImmutableList.Builder<UserRule> userRulesBuilder =
+                ImmutableList.builder();
         
-        for (RollbackRule rollbackRule : rollbackRules) {
-            rollbackRulesBuilder.put(rollbackRule.sqlCode, Sets.immutableEnumSet(Arrays.asList(rollbackRule.contexts)));
+        for (Rule rule : rules) {
+            if (rule instanceof RollbackRule) {
+                rollbackRulesBuilder.add((RollbackRule) rule);
+            } else
+            if (rule instanceof UserRule) {
+                userRulesBuilder.add((UserRule) rule);
+            }
         }
         
         this.rollbackRules = rollbackRulesBuilder.build();
+        this.userRules = userRulesBuilder.build();
     }
     
     @Override
@@ -74,6 +83,10 @@ public abstract class AbstractErrorHandler implements ErrorHandler {
 
     @Override
     public ToroRuntimeException handleUserException(Context context, SQLException sqlException) throws UserException, RollbackException {
+        if (applyToUserRule(context, sqlException.getSQLState())) {
+            throw createUserException(context, sqlException.getSQLState(), new BackendException(context, sqlException));
+        }
+        
         if (applyToRollbackRule(context, sqlException.getSQLState())) {
             throw new RollbackException(sqlException);
         }
@@ -83,6 +96,10 @@ public abstract class AbstractErrorHandler implements ErrorHandler {
 
     @Override
     public ToroRuntimeException handleUserException(Context context, DataAccessException dataAccessException) throws UserException, RollbackException {
+        if (applyToUserRule(context, dataAccessException.sqlState())) {
+            throw createUserException(context, dataAccessException.sqlState(), new BackendException(context, dataAccessException));
+        }
+        
         if (applyToRollbackRule(context, dataAccessException.sqlState())) {
             throw new RollbackException(dataAccessException);
         }
@@ -91,25 +108,78 @@ public abstract class AbstractErrorHandler implements ErrorHandler {
     }
 
     private boolean applyToRollbackRule(Context context, String sqlState) {
-        ImmutableSet<Context> contexts = rollbackRules.get(sqlState);
-        if (contexts != null && (contexts.isEmpty() || contexts.contains(context))) {
-            return true;
-        }
-        
-        return false;
+        return rollbackRules.stream()
+                .anyMatch(r -> 
+                    r.getSqlCode().equals(sqlState) &&
+                    (r.getContexts().isEmpty() || r.getContexts().contains(context)));
+    }
+
+    private boolean applyToUserRule(Context context, String sqlState) {
+        return userRules.stream()
+                .anyMatch(r -> 
+                    r.getSqlCode().equals(sqlState) &&
+                    (r.getContexts().isEmpty() || r.getContexts().contains(context)));
     }
     
-    protected static RollbackRule rule(String sqlCode, Context...contexts) {
+    private UserException createUserException(Context context, String sqlState, BackendException backendException) {
+        Optional<UserRule> userRule = userRules.stream()
+                .filter(r -> 
+                    r.getSqlCode().equals(sqlState) &&
+                    (r.getContexts().isEmpty() || r.getContexts().contains(context)))
+                .findFirst();
+        if (userRule.isPresent()) {
+            return userRule.get().translate(backendException);
+        }
+        
+        throw new IllegalArgumentException("User exception not found for context " + 
+                context + " and sqlState " + sqlState);
+    }
+    
+    protected static Rule rollbackRule(String sqlCode, Context...contexts) {
         return new RollbackRule(sqlCode, contexts);
     }
     
-    protected static class RollbackRule {
-        private String sqlCode;
-        private Context[] contexts;
+    protected static Rule userRule(  
+            String sqlCode, Function<BackendException, UserException> translateFunction, Context...contexts) {
+        return new UserRule(sqlCode, contexts, translateFunction);
+    }
+    
+    protected static abstract class Rule {
+        private final String sqlCode;
+        private final ImmutableSet<Context> contexts;
         
-        private RollbackRule(String code, Context[] contexts) {
+        private Rule(String code, Context[] contexts) {
             this.sqlCode = code;
-            this.contexts = contexts;
+            this.contexts = ImmutableSet.copyOf(contexts);
+        }
+
+        public String getSqlCode() {
+            return sqlCode;
+        }
+
+        public ImmutableSet<Context> getContexts() {
+            return contexts;
+        }
+    }
+    
+    protected static class RollbackRule extends Rule {
+        private RollbackRule(String code, Context[] contexts) {
+            super(code, contexts);
+        }
+    }
+    
+    protected static class UserRule extends Rule {
+        private final Function<BackendException, UserException> translateFunction;
+        
+        private UserRule(String code, Context[] contexts, 
+                Function<BackendException, UserException> translateFunction) {
+            super(code, contexts);
+            
+            this.translateFunction = translateFunction;
+        }
+        
+        public UserException translate(BackendException backendException) {
+            return translateFunction.apply(backendException);
         }
     }
 }
