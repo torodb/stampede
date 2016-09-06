@@ -45,26 +45,23 @@ public class ToroMetricRegistry extends MetricRegistry  {
 	}
 
 	public Histogram histogram(MetricName name) {
-		mbeanNameFactory.registerName(name);
 		Histogram histogram = register(name, new Histogram(new ExponentiallyDecayingReservoir()));
 		return histogram;
 	}
 
     public Timer timer(MetricName name) {
-        mbeanNameFactory.registerName(name);
         Timer timer = register(name, new Timer());
         return timer;
     }
 
     public <T> SettableGauge<T> gauge(MetricName name) {
-        mbeanNameFactory.registerName(name);
         SettableGauge<T> gauge = register(name, new SettableGauge<T>());
         return gauge;
     }
 
 	public <T extends Metric> T register(MetricName name, T metric) {
+        mbeanNameFactory.registerName(name);
 		try {
-			mbeanNameFactory.registerName(name);
 			register(name.getMetricName(), metric);
 			return metric;
 		} catch (IllegalArgumentException e) {

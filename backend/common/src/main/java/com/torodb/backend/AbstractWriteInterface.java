@@ -38,6 +38,7 @@ import com.torodb.backend.ErrorHandler.Context;
 import com.torodb.core.cursors.Cursor;
 import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.d2r.DocPartRow;
+import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDocPart;
@@ -116,7 +117,7 @@ public abstract class AbstractWriteInterface implements WriteInterface {
     protected abstract String getDeleteDocPartsStatement(String schemaName, String tableName, Collection<Integer> dids);
 
     @Override
-    public void insertDocPartData(DSLContext dsl, String schemaName, DocPartData docPartData) {
+    public void insertDocPartData(DSLContext dsl, String schemaName, DocPartData docPartData) throws UserException {
         Iterator<DocPartRow> docPartRowIterator = docPartData.iterator();
         if (!docPartRowIterator.hasNext()) {
             return;
@@ -128,7 +129,7 @@ public abstract class AbstractWriteInterface implements WriteInterface {
             Iterator<MetaField> metaFieldIterator = docPartData.orderedMetaFieldIterator();
             standardInsertDocPartData(dsl, schemaName, docPartData, metaDocPart, metaScalarIterator, metaFieldIterator, docPartRowIterator);
         } catch (DataAccessException ex) {
-            throw errorHandler.handleException(Context.INSERT, ex);
+            throw errorHandler.handleUserException(Context.INSERT, ex);
         }
     }
 

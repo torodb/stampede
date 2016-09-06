@@ -21,6 +21,7 @@
 package com.torodb.backend.postgresql;
 
 import com.torodb.backend.AbstractErrorHandler;
+import com.torodb.core.exceptions.user.UniqueIndexViolationException;
 
 import static com.torodb.backend.ErrorHandler.Context.*;
 
@@ -30,27 +31,30 @@ import static com.torodb.backend.ErrorHandler.Context.*;
 public class PostgreSQLErrorHandler extends AbstractErrorHandler {
     public PostgreSQLErrorHandler() {
         super(
-                rule("40001"), 
-                rule("40P01"),
+                rollbackRule("40001"), 
+                rollbackRule("40P01"),
                 /**
                  * relation "?" already exists
                  */
-                rule("42P07"),
+                rollbackRule("42P07"),
                 /**
                  * column "?" of relation "?" already exists
                  */
-                rule("42701"),
+                rollbackRule("42701"),
                 /**
                  * type "?" already exists
                  */
-                rule("42710"),
+                rollbackRule("42710"),
                 /**
                  * duplicate key value violates unique constraint "?"
                  * 
                  * This will be raised when modifying DDL concurrently
                  */
-                rule("23505", CREATE_SCHEMA, CREATE_TABLE, ADD_UNIQUE_INDEX, ADD_FOREIGN_KEY, ADD_COLUMN, CREATE_INDEX, DROP_SCHEMA, 
-                        DROP_TABLE, DROP_INDEX, META_INSERT)
-                );
+                rollbackRule("23505", CREATE_SCHEMA, CREATE_TABLE, ADD_UNIQUE_INDEX, ADD_FOREIGN_KEY, ADD_COLUMN, CREATE_INDEX, DROP_SCHEMA, 
+                        DROP_TABLE, DROP_INDEX, META_INSERT),
+                /**
+                 * Duplicate key value in unique index on insert
+                 */
+                userRule("23505", b -> new UniqueIndexViolationException(b.getMessage(), b), INSERT));
     }
 }

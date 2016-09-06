@@ -19,6 +19,18 @@
  */
 package com.torodb.mongodb.repl.oplogreplier.batch;
 
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+
+import javax.annotation.Nonnull;
+import javax.annotation.concurrent.ThreadSafe;
+import javax.inject.Inject;
+
+import com.codahale.metrics.Histogram;
+import com.codahale.metrics.Meter;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.Timer.Context;
 import com.eightkdata.mongowp.server.api.oplog.DbCmdOplogOperation;
@@ -36,18 +48,9 @@ import com.torodb.core.transaction.RollbackException;
 import com.torodb.mongodb.core.MongodConnection;
 import com.torodb.mongodb.core.MongodServer;
 import com.torodb.mongodb.core.WriteMongodTransaction;
+import com.torodb.mongodb.repl.oplogreplier.ApplierContext;
 import com.torodb.mongodb.repl.oplogreplier.OplogOperationApplier;
 import com.torodb.mongodb.repl.oplogreplier.OplogOperationApplier.OplogApplyingException;
-import com.torodb.mongodb.repl.oplogreplier.ApplierContext;
-import com.torodb.mongodb.repl.oplogreplier.batch.AnalyzedOplogBatchExecutor.AnalyzedOplogBatchExecutorMetrics;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import javax.annotation.Nonnull;
-import javax.annotation.concurrent.ThreadSafe;
-import javax.inject.Inject;
 
 /**
  *
@@ -98,15 +101,11 @@ public class AnalyzedOplogBatchExecutor implements
             MongodConnection connection)  throws RollbackException, UserException,
             NamespaceJobExecutionException {
         try (Context timerContext = metrics.getSubBatchTimer().time()) {
-            //TODO: uncomment this once the backend layer is correctly throwing UniqueIndexViolationException
-//            try {
-//                execute(job, applierContext, connection, true);
-//            } catch (UniqueIndexViolationException ex) {
-//                execute(job, applierContext, connection, true);
-//            }
-
-            //TODO: Remove this once the backend is correctly throwing UniqueIndexViolationException
-            execute(job, applierContext, connection, false);
+            try {
+                execute(job, applierContext, connection, true);
+            } catch (UniqueIndexViolationException ex) {
+                execute(job, applierContext, connection, false);
+            }
         }
     }
 
@@ -151,6 +150,8 @@ public class AnalyzedOplogBatchExecutor implements
     @Override
     public OplogOperation visit(CudAnalyzedOplogBatch batch, ApplierContext arg) throws
             RetrierGiveUpException {
+        metrics.getCudBatchSizeMeter().mark(batch.getOriginalBatch().size());
+        metrics.getCudBatchSizeHistogram().update(batch.getOriginalBatch().size());
         try (Context context = metrics.getCudBatchTimer().time()) {
             try {
                 execute(batch, arg);
@@ -192,12 +193,16 @@ public class AnalyzedOplogBatchExecutor implements
                 = new MetricNameFactory("OplogBatchExecutor");
         private final ConcurrentMap<String, Timer> singleOpTimers = new ConcurrentHashMap<>();
         private final ToroMetricRegistry metricRegistry;
+        private final Meter cudBatchSizeMeter;
+        private final Histogram cudBatchSizeHistogram;
         private final Timer cudBatchTimer;
         private final Timer subBatchTimer;
 
         @Inject
         public AnalyzedOplogBatchExecutorMetrics(ToroMetricRegistry metricRegistry) {
             this.metricRegistry = metricRegistry;
+            this.cudBatchSizeMeter = metricRegistry.meter(NAME_FACTORY.createMetricName("cudBatchSizeMeter"));
+            this.cudBatchSizeHistogram = metricRegistry.histogram(NAME_FACTORY.createMetricName("cudBatchSizeHistogram"));
             this.cudBatchTimer = metricRegistry.timer(NAME_FACTORY.createMetricName("cudBatch"));
             this.subBatchTimer = metricRegistry.timer(NAME_FACTORY.createMetricName("subBatch"));
         }
@@ -215,6 +220,14 @@ public class AnalyzedOplogBatchExecutor implements
                     mapKey,
                     (key) -> createSingleTimer(singleOplogOp, key)
             );
+        }
+
+        public Meter getCudBatchSizeMeter() {
+            return cudBatchSizeMeter;
+        }
+
+        public Histogram getCudBatchSizeHistogram() {
+            return cudBatchSizeHistogram;
         }
 
         public Timer getCudBatchTimer() {
@@ -237,7 +250,6 @@ public class AnalyzedOplogBatchExecutor implements
         private Timer createSingleTimer(OplogOperation oplogOp, String mapKey) {
             String prefix = "single-";
             if (oplogOp instanceof DbCmdOplogOperation) {
-                DbCmdOplogOperation cmdOp = (DbCmdOplogOperation) oplogOp;
                 return metricRegistry.timer(NAME_FACTORY.createMetricName(prefix + mapKey));
             }
             return metricRegistry.timer(prefix + mapKey.toLowerCase(Locale.ENGLISH));
