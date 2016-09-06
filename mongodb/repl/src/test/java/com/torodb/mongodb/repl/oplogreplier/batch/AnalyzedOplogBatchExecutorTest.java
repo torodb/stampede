@@ -111,11 +111,9 @@ public class AnalyzedOplogBatchExecutorTest {
         //THEN
         then(server).should().openConnection();
         then(conn).should().close();
-        then(conn).should().openWriteTransaction();
-        then(writeTrans).should().close();
-        then(executor).should().execute(job1, applierContext, writeTrans);
-        then(executor).should().execute(job2, applierContext, writeTrans);
-        then(executor).should().execute(job3, applierContext, writeTrans);
+        then(executor).should().execute(job1, applierContext, conn);
+        then(executor).should().execute(job2, applierContext, conn);
+        then(executor).should().execute(job3, applierContext, conn);
     }
 
     @Test
@@ -129,13 +127,14 @@ public class AnalyzedOplogBatchExecutorTest {
         given(timer.time()).willReturn(context);
 
         //WHEN
-        executor.execute(job, applierContext, writeTrans);
+        executor.execute(job, applierContext, conn);
 
         //THEN
         then(metrics).should().getSubBatchTimer();
         then(timer).should().time();
         then(context).should().close();
-        then(namespaceJobExecutor).should().apply(eq(job), eq(writeTrans), eq(applierContext));
+        //TODO: This might be changed once the backend throws UniqueIndexViolation
+        then(namespaceJobExecutor).should().apply(eq(job), eq(writeTrans), eq(applierContext), any(Boolean.class));
     }
 
     @Test

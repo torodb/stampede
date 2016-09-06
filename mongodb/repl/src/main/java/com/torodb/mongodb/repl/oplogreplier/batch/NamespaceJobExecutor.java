@@ -24,6 +24,7 @@ import com.eightkdata.mongowp.Status;
 import com.torodb.core.cursors.Cursor;
 import com.torodb.core.cursors.IteratorCursor;
 import com.torodb.core.document.ToroDocument;
+import com.torodb.core.exceptions.user.UniqueIndexViolationException;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.language.AttributeReference;
 import com.torodb.core.transaction.RollbackException;
@@ -32,6 +33,7 @@ import com.torodb.kvdocument.values.KVValue;
 import com.torodb.mongodb.core.WriteMongodTransaction;
 import com.torodb.mongodb.repl.oplogreplier.ApplierContext;
 import com.torodb.mongodb.repl.oplogreplier.analyzed.AnalyzedOp;
+import com.torodb.mongodb.repl.oplogreplier.analyzed.AnalyzedOpType;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -53,9 +55,10 @@ public class NamespaceJobExecutor {
             .build();
 
     public void apply(NamespaceJob job, WriteMongodTransaction transaction,
-            ApplierContext applierContext) throws RollbackException, UserException, NamespaceJobExecutionException {
+            ApplierContext applierContext, boolean optimisticDeleteAndCreate)
+            throws RollbackException, UserException, NamespaceJobExecutionException, UniqueIndexViolationException {
 
-        Map<AnalyzedOp, Integer> fetchDids = fetchDids(job, transaction);
+        Map<AnalyzedOp, Integer> fetchDids = fetchDids(job, transaction, optimisticDeleteAndCreate);
 
         List<Status<?>> errors = findErrors(job, fetchDids);
         if (!errors.isEmpty()) {
@@ -79,10 +82,14 @@ public class NamespaceJobExecutor {
      * @see AnalyzedOp#requiresToFetchToroId() 
      */
     private static Map<AnalyzedOp, Integer> fetchDids(NamespaceJob job,
-            WriteMongodTransaction transaction) {
+            WriteMongodTransaction transaction, boolean optimisticDeleteAndCreate) {
 
         Stream<AnalyzedOp> filteredJobs = job.getJobs().stream()
                 .filter(AnalyzedOp::requiresToFetchToroId);
+
+        if (optimisticDeleteAndCreate) {
+            filteredJobs = filteredJobs.filter(op -> op.getType() == AnalyzedOpType.DELETE_CREATE);
+        }
         
         Map<KVValue<?>, AnalyzedOp> mapToFetch = filteredJobs
                 .collect(Collectors.toMap(
