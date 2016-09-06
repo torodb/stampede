@@ -11,7 +11,6 @@ import org.apache.logging.log4j.Logger;
 
 import com.eightkdata.mongowp.OpTime;
 import com.eightkdata.mongowp.client.core.UnreachableMongoServerException;
-import com.eightkdata.mongowp.client.wrapper.MongoClientConfiguration;
 import com.eightkdata.mongowp.exceptions.MongoException;
 import com.eightkdata.mongowp.exceptions.OplogOperationUnsupported;
 import com.eightkdata.mongowp.exceptions.OplogStartMissingException;
@@ -36,6 +35,7 @@ class ReplSyncFetcher extends ThreadFactoryRunnableService {
     private final SyncServiceView callback;
     private final OplogReaderProvider readerProvider;
     private final SyncSourceProvider syncSourceProvider;
+    private final ReplMetrics metrics;
     private long opsReadCounter = 0;
 
     private long lastFetchedHash;
@@ -48,7 +48,8 @@ class ReplSyncFetcher extends ThreadFactoryRunnableService {
             @Nonnull SyncSourceProvider syncSourceProvider,
             @Nonnull OplogReaderProvider readerProvider,
             long lastAppliedHash,
-            OpTime lastAppliedOpTime) {
+            OpTime lastAppliedOpTime,
+            ReplMetrics metrics) {
         super(threadFactory);
         this.callback = callback;
         this.readerProvider = readerProvider;
@@ -58,6 +59,10 @@ class ReplSyncFetcher extends ThreadFactoryRunnableService {
 
         this.lastFetchedHash = lastAppliedHash;
         this.lastFetchedOpTime = lastAppliedOpTime;
+        
+        this.metrics = metrics;
+        
+        metrics.oplogStatOpTime.setValue(lastFetchedOpTime.toString());
     }
 
     @Override
@@ -163,6 +168,8 @@ class ReplSyncFetcher extends ThreadFactoryRunnableService {
                 
                 while (fetchIterationCanContinue()) {
                     if (!batch.hasNext()) {
+                        metrics.oplogStatOpTime.setValue(lastFetchedOpTime.toString());
+                        
                         preBatchChecks(batch);
                         batch = cursor.fetchBatch();
                         postBatchChecks(reader, cursor, batch);

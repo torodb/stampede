@@ -19,6 +19,7 @@ import com.torodb.core.retrier.RetrierGiveUpException;
 import com.torodb.core.transaction.RollbackException;
 import com.torodb.mongodb.repl.OplogReader;
 import com.torodb.mongodb.repl.OplogReaderProvider;
+import com.torodb.mongodb.repl.ReplMetrics;
 import com.torodb.mongodb.repl.SyncSourceProvider;
 import com.torodb.mongodb.repl.oplogreplier.NormalOplogBatch;
 import com.torodb.mongodb.repl.oplogreplier.NotReadyForMoreOplogBatch;
@@ -45,14 +46,20 @@ public class ContinuousOplogFetcher implements OplogFetcher {
     private final SyncSourceProvider syncSourceProvider;
     private final Retrier retrier;
     private final FetcherState state;
+    private final ReplMetrics metrics;
 
     @Inject
     public ContinuousOplogFetcher(OplogReaderProvider readerProvider, SyncSourceProvider syncSourceProvider,
-            Retrier retrier, @Assisted long lastFetchedHash, @Assisted OpTime lastFetchedOptime) {
+            Retrier retrier, @Assisted long lastFetchedHash, @Assisted OpTime lastFetchedOptime, ReplMetrics metrics) {
         this.readerProvider = readerProvider;
         this.syncSourceProvider = syncSourceProvider;
         this.retrier = retrier;
         this.state = new FetcherState(lastFetchedHash, lastFetchedOptime);
+        this.metrics = metrics;
+        
+        if (lastFetchedOptime != null) {
+            metrics.oplogStatOpTime.setValue(lastFetchedOptime.toString());
+        }
     }
 
     public static interface ContinuousOplogFetcherFactory {
@@ -100,6 +107,7 @@ public class ContinuousOplogFetcher implements OplogFetcher {
                         } else {
                             assert fetchedOps != null;
                             assert fetchTime != 0;
+                            metrics.oplogStatOpTime.setValue(state.lastFetchedOpTime.toString());
                             state.updateState(fetchedOps, fetchTime);
                         }
                     }
