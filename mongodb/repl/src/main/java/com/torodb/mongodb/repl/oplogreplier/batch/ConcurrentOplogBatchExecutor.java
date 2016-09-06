@@ -43,7 +43,6 @@ import com.torodb.core.retrier.Retrier;
 import com.torodb.core.transaction.RollbackException;
 import com.torodb.mongodb.core.MongodConnection;
 import com.torodb.mongodb.core.MongodServer;
-import com.torodb.mongodb.core.WriteMongodTransaction;
 import com.torodb.mongodb.repl.OplogManager.OplogManagerPersistException;
 import com.torodb.mongodb.repl.oplogreplier.ApplierContext;
 import com.torodb.mongodb.repl.oplogreplier.OplogOperationApplier;
@@ -98,10 +97,8 @@ public class ConcurrentOplogBatchExecutor extends AnalyzedOplogBatchExecutor {
 
     private void execute(NamespaceJob job, ApplierContext applierContext) 
             throws OplogManagerPersistException, UserException, NamespaceJobExecutionException {
-        try (MongodConnection connection = getServer().openConnection();
-                WriteMongodTransaction mongoTransaction = connection.openWriteTransaction()) {
-            execute(job, applierContext, mongoTransaction);
-            mongoTransaction.commit();
+        try (MongodConnection connection = getServer().openConnection()) {
+            execute(job, applierContext, connection);
         }
     }
 

@@ -36,6 +36,7 @@ import com.codahale.metrics.Timer.Context;
 import com.eightkdata.mongowp.server.api.oplog.DbCmdOplogOperation;
 import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
 import com.eightkdata.mongowp.server.api.tools.Empty;
+import com.torodb.core.exceptions.user.UniqueIndexViolationException;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.metrics.MetricNameFactory;
 import com.torodb.core.metrics.ToroMetricRegistry;
@@ -87,22 +88,37 @@ public class AnalyzedOplogBatchExecutor implements
 
     public void execute(CudAnalyzedOplogBatch cudBatch, ApplierContext context)
             throws RollbackException, UserException, NamespaceJobExecutionException {
-        try (MongodConnection connection = server.openConnection();
-                WriteMongodTransaction mongoTransaction = connection.openWriteTransaction()) {
+        try (MongodConnection connection = server.openConnection()) {
 
             Iterator<NamespaceJob> it = cudBatch.streamNamespaceJobs().iterator();
             while (it.hasNext()) {
-                execute(it.next(), context, mongoTransaction);
+                execute(it.next(), context, connection);
             }
-            mongoTransaction.commit();
         }
     }
 
-    protected void execute(NamespaceJob job, ApplierContext applierContext,
-            WriteMongodTransaction mongoTransaction) throws RollbackException, UserException,
+    protected void execute(NamespaceJob job, ApplierContext applierContext, 
+            MongodConnection connection)  throws RollbackException, UserException,
             NamespaceJobExecutionException {
         try (Context timerContext = metrics.getSubBatchTimer().time()) {
-            namespaceJobExecutor.apply(job, mongoTransaction, applierContext);
+            //TODO: uncomment this once the backend layer is correctly throwing UniqueIndexViolationException
+//            try {
+//                execute(job, applierContext, connection, true);
+//            } catch (UniqueIndexViolationException ex) {
+//                execute(job, applierContext, connection, true);
+//            }
+
+            //TODO: Remove this once the backend is correctly throwing UniqueIndexViolationException
+            execute(job, applierContext, connection, false);
+        }
+    }
+
+    private void execute(NamespaceJob job, ApplierContext applierContext,
+            MongodConnection connection, boolean optimisticDeleteAndCreate)
+            throws RollbackException, UserException, NamespaceJobExecutionException, UniqueIndexViolationException {
+        try (WriteMongodTransaction mongoTransaction = connection.openWriteTransaction()) {
+            namespaceJobExecutor.apply(job, mongoTransaction, applierContext, optimisticDeleteAndCreate);
+            mongoTransaction.commit();
         }
     }
 
