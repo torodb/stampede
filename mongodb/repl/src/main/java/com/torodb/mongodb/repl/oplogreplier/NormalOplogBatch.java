@@ -21,23 +21,23 @@
 package com.torodb.mongodb.repl.oplogreplier;
 
 import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
-import java.util.stream.Stream;
+import java.util.List;
 
 /**
  *
  */
 public class NormalOplogBatch implements OplogBatch {
 
-    private final Stream<OplogOperation> ops;
+    private final List<OplogOperation> ops;
     private boolean readyForMore;
 
-    public NormalOplogBatch(Stream<OplogOperation> ops, boolean readyForMore) {
+    public NormalOplogBatch(List<OplogOperation> ops, boolean readyForMore) {
         this.ops = ops;
         this.readyForMore = readyForMore;
     }
 
     @Override
-    public Stream<OplogOperation> getOps() {
+    public List<OplogOperation> getOps() {
         return ops;
     }
 

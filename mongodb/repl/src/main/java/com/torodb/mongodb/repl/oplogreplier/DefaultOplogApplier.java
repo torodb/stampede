@@ -42,11 +42,11 @@ import com.torodb.mongodb.repl.oplogreplier.batch.AnalyzedOplogBatchExecutor;
 import com.torodb.mongodb.repl.oplogreplier.batch.BatchAnalyzer;
 import com.torodb.mongodb.repl.oplogreplier.batch.BatchAnalyzer.BatchAnalyzerFactory;
 import com.torodb.mongodb.repl.oplogreplier.fetcher.OplogFetcher;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.*;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import javax.inject.Inject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -67,11 +67,13 @@ public class DefaultOplogApplier implements OplogApplier {
     private final BatchAnalyzerFactory batchAnalyzerFactory;
     private final ActorSystem actorSystem;
     private final ExecutorService stopperExecutorService;
+    private final OplogApplierMetrics metrics;
 
     @Inject
     public DefaultOplogApplier(BatchLimits batchLimits, OplogManager oplogManager,
             AnalyzedOplogBatchExecutor batchExecutor, BatchAnalyzerFactory batchAnalyzerFactory,
-            ConcurrentToolsFactory concurrentToolsFactory, Shutdowner shutdowner) {
+            ConcurrentToolsFactory concurrentToolsFactory, Shutdowner shutdowner,
+            OplogApplierMetrics metrics) {
         this.batchExecutor = batchExecutor;
         this.batchLimits = batchLimits;
         this.oplogManager = oplogManager;
@@ -82,6 +84,7 @@ public class DefaultOplogApplier implements OplogApplier {
                         concurrentToolsFactory.createExecutorService("oplog-applier", false, 2)
                 )
         );
+        this.metrics = metrics;
         shutdowner.addCloseShutdownListener(this);
     }
 
@@ -94,7 +97,14 @@ public class DefaultOplogApplier implements OplogApplier {
                 .via(createBatcherFlow(applierContext))
                 .viaMat(KillSwitches.single(), Keep.right())
                 .async()
-                .map(analyzedOp -> batchExecutor.apply(analyzedOp, applierContext))
+                .map(analyzedElem -> {
+                    for (AnalyzedOplogBatch analyzedOplogBatch : analyzedElem.analyzedBatch) {
+                        batchExecutor.apply(analyzedOplogBatch, applierContext);
+                    }
+                    return analyzedElem;
+                })
+                .map(this::metricExecution)
+                .map(this::storeLastAppliedOp)
                 .toMat(
                         Sink.foreach(this::storeLastAppliedOp),
                         (_killSwitch, completionStage) -> new Pair<>(_killSwitch, completionStage)
@@ -179,26 +189,57 @@ public class DefaultOplogApplier implements OplogApplier {
      * </ul>
      * @return
      */
-    private Flow<OplogBatch, AnalyzedOplogBatch, NotUsed> createBatcherFlow(ApplierContext context) {
-        Predicate<OplogBatch> finishBatchPredicate = (OplogBatch job) -> !job.isReadyForMore();
-        Supplier<OplogBatch> zeroFun = () -> NotReadyForMoreOplogBatch.getInstance();
-        BiFunction<OplogBatch, OplogBatch, OplogBatch> acumFun = (acumJob, newJob) ->
-                acumJob.concat(newJob);
+    private Flow<OplogBatch, AnalyzedStreamElement, NotUsed> createBatcherFlow(ApplierContext context) {
+        Predicate<OplogBatch> finishBatchPredicate = (OplogBatch rawBatch) -> !rawBatch.isReadyForMore();
+        Supplier<RawStreamElement> zeroFun = () -> RawStreamElement.INITIAL_ELEMENT;
+        BiFunction<RawStreamElement, OplogBatch, RawStreamElement> acumFun = (streamElem, newBatch) ->
+                streamElem.concat(newBatch);
 
         BatchAnalyzer batchAnalyzer = batchAnalyzerFactory.createBatchAnalyzer(context);
         return Flow.of(OplogBatch.class)
-                .via(new BatchFlow<>(batchLimits.maxSize, batchLimits.maxPeriod, finishBatchPredicate, zeroFun,
-                        acumFun))
-                .map(job -> job.getOps().collect(Collectors.toList()))
-                .mapConcat(batchAnalyzer::apply);
+                .via(new BatchFlow<>(batchLimits.maxSize, batchLimits.maxPeriod,
+                        finishBatchPredicate, zeroFun, acumFun))
+                .filter(rawElem -> rawElem.rawBatch != null && !rawElem.rawBatch.isEmpty())
+                .map(rawElem -> {
+                    List<OplogOperation> rawOps = rawElem.rawBatch.getOps();
+                    List<AnalyzedOplogBatch> analyzed = batchAnalyzer.apply(rawOps);
+                    return new AnalyzedStreamElement(rawElem, analyzed);
+                });
     }
 
-    private void storeLastAppliedOp(OplogOperation oplogOp) throws OplogManagerPersistException {
+    private AnalyzedStreamElement storeLastAppliedOp(AnalyzedStreamElement streamElement) throws OplogManagerPersistException {
+        assert !streamElement.rawBatch.isEmpty();
+        OplogOperation lastOp = streamElement.rawBatch.getLastOperation();
         try (WriteOplogTransaction writeTrans = oplogManager.createWriteTransaction()) {
-            writeTrans.forceNewValue(oplogOp.getHash(), oplogOp.getOpTime());
+            writeTrans.forceNewValue(lastOp.getHash(), lastOp.getOpTime());
         }
+        return streamElement;
     }
 
+    private AnalyzedStreamElement metricExecution(AnalyzedStreamElement streamElement) {
+        long timestamp = System.currentTimeMillis();
+        long batchExecutionMillis = timestamp - streamElement.startFetchTimestamp;
+
+        int rawBatchSize = streamElement.rawBatch.count();
+        metrics.getBatchSize().update(rawBatchSize);
+        metrics.getApplied().mark(rawBatchSize);
+
+        metricOpsExecutionDelay(rawBatchSize, batchExecutionMillis);
+
+        return streamElement;
+    }
+
+    private void metricOpsExecutionDelay(int rawBatchSize, long batchExecutionMillis) {
+        if (rawBatchSize < 1) {
+            return ;
+        }
+        if (batchExecutionMillis <= 0) {
+            LOGGER.debug("Unexpected time execution: {}" + batchExecutionMillis);
+        }
+        metrics.getMaxDelay().update(batchExecutionMillis, TimeUnit.MILLISECONDS);
+        metrics.getApplicationCost().update((1000l * batchExecutionMillis) / rawBatchSize);
+    }
+    
     public static class BatchLimits {
         private final int maxSize;
         private final FiniteDuration maxPeriod;
@@ -215,6 +256,43 @@ public class DefaultOplogApplier implements OplogApplier {
         public FiniteDuration getMaxPeriod() {
             return maxPeriod;
         }
+    }
+
+    private static class RawStreamElement {
+        private static final RawStreamElement INITIAL_ELEMENT = new RawStreamElement(null, 0);
+        private final OplogBatch rawBatch;
+        private final long startFetchTimestamp;
+        
+        public RawStreamElement(OplogBatch rawBatch, long startFetchTimestamp) {
+            this.rawBatch = rawBatch;
+            this.startFetchTimestamp = startFetchTimestamp;
+        }
+
+        private RawStreamElement concat(OplogBatch newBatch) {
+            OplogBatch newRawBatch;
+            long newStartFetchTimestamp;
+            if (this == INITIAL_ELEMENT) {
+                newRawBatch = newBatch;
+                newStartFetchTimestamp = System.currentTimeMillis();
+            } else {
+                newRawBatch = rawBatch.concat(newBatch);
+                newStartFetchTimestamp = startFetchTimestamp;
+            }
+            return new RawStreamElement(newRawBatch, newStartFetchTimestamp);
+        }
+    }
+
+    private static class AnalyzedStreamElement {
+        private final OplogBatch rawBatch;
+        private final long startFetchTimestamp;
+        private final List<AnalyzedOplogBatch> analyzedBatch;
+
+        AnalyzedStreamElement(RawStreamElement rawStreamElement, List<AnalyzedOplogBatch> analyzedBatches) {
+            this.rawBatch = rawStreamElement.rawBatch;
+            this.startFetchTimestamp = rawStreamElement.startFetchTimestamp;
+            this.analyzedBatch = analyzedBatches;
+        }
+
     }
 
     private static class BatchFlow<E, A> extends GraphStage<FlowShape<E, A>> {

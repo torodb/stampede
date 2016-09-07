@@ -100,7 +100,7 @@ public class AnalyzedOplogBatchExecutor implements
     protected void execute(NamespaceJob job, ApplierContext applierContext, 
             MongodConnection connection)  throws RollbackException, UserException,
             NamespaceJobExecutionException {
-        try (Context timerContext = metrics.getSubBatchTimer().time()) {
+        try (Context timerContext = metrics.getNamespaceBatchTimer().time()) {
             boolean optimisticDeleteAndCreate = applierContext.isReapplying().orElse(true);
             try {
                 execute(job, applierContext, connection, optimisticDeleteAndCreate);
@@ -143,7 +143,7 @@ public class AnalyzedOplogBatchExecutor implements
                     } catch (OplogApplyingException ex2) {
                         throw new RetrierAbortException("Unexpected exception while replying", ex2);
                     }
-                }, Hint.CRITICAL);
+                }, Hint.CRITICAL, Hint.TIME_SENSIBLE);
             }
         }
 
@@ -173,7 +173,7 @@ public class AnalyzedOplogBatchExecutor implements
                         throw new RetrierAbortException("Unexpected user exception while applying "
                                 + "the batch " + batch, ex2);
                     }
-                });
+                }, Hint.CRITICAL, Hint.TIME_SENSIBLE);
             }
         }
 
@@ -199,7 +199,7 @@ public class AnalyzedOplogBatchExecutor implements
         private final Meter cudBatchSizeMeter;
         private final Histogram cudBatchSizeHistogram;
         private final Timer cudBatchTimer;
-        private final Timer subBatchTimer;
+        private final Timer namespaceBatchTimer;
 
         @Inject
         public AnalyzedOplogBatchExecutorMetrics(ToroMetricRegistry metricRegistry) {
@@ -207,7 +207,7 @@ public class AnalyzedOplogBatchExecutor implements
             this.cudBatchSizeMeter = metricRegistry.meter(NAME_FACTORY.createMetricName("cudBatchSizeMeter"));
             this.cudBatchSizeHistogram = metricRegistry.histogram(NAME_FACTORY.createMetricName("cudBatchSizeHistogram"));
             this.cudBatchTimer = metricRegistry.timer(NAME_FACTORY.createMetricName("cudBatch"));
-            this.subBatchTimer = metricRegistry.timer(NAME_FACTORY.createMetricName("subBatch"));
+            this.namespaceBatchTimer = metricRegistry.timer(NAME_FACTORY.createMetricName("namespaceBatch"));
         }
 
         /**
@@ -237,8 +237,8 @@ public class AnalyzedOplogBatchExecutor implements
             return cudBatchTimer;
         }
 
-        public Timer getSubBatchTimer() {
-            return subBatchTimer;
+        public Timer getNamespaceBatchTimer() {
+            return namespaceBatchTimer;
         }
 
         @Nonnull

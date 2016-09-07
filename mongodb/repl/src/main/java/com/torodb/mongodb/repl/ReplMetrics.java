@@ -15,9 +15,10 @@ import com.torodb.core.metrics.ToroMetricRegistry;
 public class ReplMetrics {
 
 	private static final MetricNameFactory factory = new MetricNameFactory("Repl");
-	public final SettableGauge<String> memberState;
-    public final Counter[] memberStateCounters;
-    public final SettableGauge<String> oplogStatOpTime;
+	private final SettableGauge<String> memberState;
+    private final Counter[] memberStateCounters;
+    private final SettableGauge<String> lastOpTimeFetched;
+    private final SettableGauge<String> lastOpTimeApplied;
 	
 	@Inject
 	public ReplMetrics(ToroMetricRegistry registry){
@@ -28,6 +29,23 @@ public class ReplMetrics {
 	                registry.counter(factory.createMetricName(
 	                        memberState.name().substring(3).toLowerCase(Locale.US) + "Count"));
 	    }
-        oplogStatOpTime = registry.gauge(factory.createMetricName("lastOplogStatOpTime"));
+        lastOpTimeFetched = registry.gauge(factory.createMetricName("lastOpTimeFetched"));
+        lastOpTimeApplied = registry.gauge(factory.createMetricName("lastOpTimeApplied"));
 	}
+
+    public SettableGauge<String> getMemberState() {
+        return memberState;
+    }
+
+    public Counter[] getMemberStateCounters() {
+        return memberStateCounters;
+    }
+
+    public SettableGauge<String> getLastOpTimeFetched() {
+        return lastOpTimeFetched;
+    }
+
+    public SettableGauge<String> getLastOpTimeApplied() {
+        return lastOpTimeApplied;
+    }
 }

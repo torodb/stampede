@@ -22,7 +22,9 @@ package com.torodb.mongodb.repl.oplogreplier;
 
 import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
 import com.torodb.mongodb.repl.RecoveryService;
-import java.util.stream.Stream;
+import java.util.ArrayList;
+import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  *
@@ -30,13 +32,13 @@ import java.util.stream.Stream;
 public interface OplogBatch {
 
     /**
-     * Returns the stream of operations contained by this batch.
+     * Returns the list of operations contained by this batch.
      *
-     * If {@link #isLastOne() } returns true, then this method will return an empty stream.
+     * If {@link #isLastOne() } returns true, then this method will return an empty list.
      *
      * @return
      */
-    public Stream<OplogOperation> getOps();
+    public List<OplogOperation> getOps();
 
     /**
      * Returns true if the {@link OplogFetcher} that created this batch thinks that there are more
@@ -59,8 +61,27 @@ public interface OplogBatch {
      */
     public boolean isLastOne();
 
+    @Nullable
+    public default OplogOperation getLastOperation() {
+        if (getOps().isEmpty()) {
+            return null;
+        }
+        return getOps().get(getOps().size() - 1);
+    }
+
+    public default int count() {
+        return getOps().size();
+    }
+
+    public default boolean isEmpty() {
+        return getOps().isEmpty() || isLastOne();
+    }
+
     public default OplogBatch concat(OplogBatch next) {
-        return new NormalOplogBatch(Stream.concat(getOps(), next.getOps()), next.isReadyForMore());
+        ArrayList<OplogOperation> newList = new ArrayList<>(this.count() + next.count());
+        newList.addAll(getOps());
+        newList.addAll(next.getOps());
+        return new NormalOplogBatch(newList, next.isReadyForMore());
     }
 
 }

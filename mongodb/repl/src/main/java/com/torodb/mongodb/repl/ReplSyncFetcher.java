@@ -61,8 +61,6 @@ class ReplSyncFetcher extends ThreadFactoryRunnableService {
         this.lastFetchedOpTime = lastAppliedOpTime;
         
         this.metrics = metrics;
-        
-        metrics.oplogStatOpTime.setValue(lastFetchedOpTime.toString());
     }
 
     @Override
@@ -168,8 +166,6 @@ class ReplSyncFetcher extends ThreadFactoryRunnableService {
                 
                 while (fetchIterationCanContinue()) {
                     if (!batch.hasNext()) {
-                        metrics.oplogStatOpTime.setValue(lastFetchedOpTime.toString());
-                        
                         preBatchChecks(batch);
                         batch = cursor.fetchBatch();
                         postBatchChecks(reader, cursor, batch);
@@ -194,6 +190,7 @@ class ReplSyncFetcher extends ThreadFactoryRunnableService {
 
                         lastFetchedHash = nextOp.getHash();
                         lastFetchedOpTime = nextOp.getOpTime();
+                        metrics.getLastOpTimeFetched().setValue(lastFetchedOpTime.toString());
                     }
                 }
             } finally {

@@ -70,7 +70,7 @@ class ReplSyncFetcher extends ThreadFactoryRunnableService {
                         break;
                     }
 
-                    oplogBatch.getOps().forEachOrdered((oplogOp) -> {
+                    oplogBatch.getOps().forEach((oplogOp) -> {
                         try {
                             callback.deliver(oplogOp);
                         } catch (InterruptedException ex) {

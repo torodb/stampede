@@ -66,13 +66,15 @@ public class OplogManager extends ThreadFactoryIdleService {
     private OpTime lastAppliedOpTime;
     private final MongodConnection connection;
     private final Retrier retrier;
+    private final ReplMetrics metrics;
 
     @Inject
     public OplogManager(@ToroDbIdleService ThreadFactory threadFactory, MongodServer mongodServer,
-            Retrier retrier) {
+            Retrier retrier, ReplMetrics metrics) {
         super(threadFactory);
         this.connection = mongodServer.openConnection();
         this.retrier = retrier;
+        this.metrics = metrics;
     }
 
     public ReadOplogTransaction createReadTransaction() {
@@ -83,6 +85,10 @@ public class OplogManager extends ThreadFactoryIdleService {
     public WriteOplogTransaction createWriteTransaction() {
         Preconditions.checkState(isRunning(), "The service is not running");
         return new WriteOplogTransaction(lock.writeLock());
+    }
+
+    private void notifyLastAppliedOpTimeChange() {
+        metrics.getLastOpTimeApplied().setValue(lastAppliedOpTime.toString());
     }
 
     @Override
@@ -185,6 +191,7 @@ public class OplogManager extends ThreadFactoryIdleService {
                                 UnsignedInteger.valueOf(BsonReaderTool.getLong(subDoc, "optime_t"))
                         );
                     }
+                    notifyLastAppliedOpTimeChange();
                     return Empty.getInstance();
                 }
             }, Hint.INFREQUENT_ROLLBACK);
@@ -282,6 +289,7 @@ public class OplogManager extends ThreadFactoryIdleService {
 
             lastAppliedHash = op.getHash();
             lastAppliedOpTime = op.getOpTime();
+            notifyLastAppliedOpTimeChange();
         }
 
         public void forceNewValue(long newHash, OpTime newOptime) throws OplogManagerPersistException {
@@ -292,6 +300,7 @@ public class OplogManager extends ThreadFactoryIdleService {
 
             OplogManager.this.lastAppliedHash = newHash;
             OplogManager.this.lastAppliedOpTime = newOptime;
+            notifyLastAppliedOpTimeChange();
         }
 
         @Override
@@ -314,6 +323,7 @@ public class OplogManager extends ThreadFactoryIdleService {
 
             lastAppliedHash = 0;
             lastAppliedOpTime = OpTime.EPOCH;
+            notifyLastAppliedOpTimeChange();
         }
 
 

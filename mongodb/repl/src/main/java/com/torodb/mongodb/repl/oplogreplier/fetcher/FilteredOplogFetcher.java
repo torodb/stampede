@@ -43,7 +43,7 @@ public class FilteredOplogFetcher implements OplogFetcher {
     public OplogBatch fetch() throws StopReplicationException, RollbackReplicationException {
         OplogBatch batch = delegate.fetch();
 
-        List<OplogOperation> filteredBatch = batch.getOps().filter(filter)
+        List<OplogOperation> filteredBatch = batch.getOps().stream().filter(filter)
                 .collect(Collectors.toList());
 
         if (filteredBatch.isEmpty()) {
@@ -58,7 +58,7 @@ public class FilteredOplogFetcher implements OplogFetcher {
                 throw new AssertionError("Batchs produced by a finished oplog fetcher cannot "
                         + "contain ops");
             }
-            return new NormalOplogBatch(filteredBatch.stream(), batch.isReadyForMore());
+            return new NormalOplogBatch(filteredBatch, batch.isReadyForMore());
         }
     }
 

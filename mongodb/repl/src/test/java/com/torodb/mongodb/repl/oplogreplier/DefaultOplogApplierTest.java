@@ -35,14 +35,14 @@ import com.torodb.mongodb.repl.oplogreplier.batch.ConcurrentOplogBatchExecutor.C
  */
 public class DefaultOplogApplierTest extends AbstractOplogApplierTest {
 
-    Module module = new AkkaOplogApplierTestModule();
+    Module module = new DefaultOplogApplierTestModule();
 
     @Override
     public Module getSpecificTestModule() {
         return module;
     }
 
-    private static class AkkaOplogApplierTestModule extends AbstractModule {
+    private static class DefaultOplogApplierTestModule extends AbstractModule {
         @Override
         protected void configure() {
             bind(ConcurrentOplogBatchExecutor.class)

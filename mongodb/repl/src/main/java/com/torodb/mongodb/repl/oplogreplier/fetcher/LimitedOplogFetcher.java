@@ -60,7 +60,7 @@ public class LimitedOplogFetcher implements OplogFetcher {
                     return FinishedOplogBatch.getInstance();
                 }
             }
-            return new NormalOplogBatch(batch.asList().stream(), true);
+            return new NormalOplogBatch(batch.asList(), true);
         } catch (MongoException ex) {
             throw new RollbackReplicationException(ex);
         } catch (DeadCursorException ex) {

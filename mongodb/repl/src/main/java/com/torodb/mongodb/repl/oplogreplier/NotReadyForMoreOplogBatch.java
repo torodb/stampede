@@ -21,7 +21,8 @@
 package com.torodb.mongodb.repl.oplogreplier;
 
 import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
-import java.util.stream.Stream;
+import java.util.Collections;
+import java.util.List;
 
 /**
  *
@@ -36,8 +37,8 @@ public class NotReadyForMoreOplogBatch implements OplogBatch {
     }
 
     @Override
-    public Stream<OplogOperation> getOps() {
-        return Stream.empty();
+    public List<OplogOperation> getOps() {
+        return Collections.emptyList();
     }
 
     @Override

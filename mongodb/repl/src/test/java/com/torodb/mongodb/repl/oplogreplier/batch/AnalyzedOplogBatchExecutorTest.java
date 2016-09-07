@@ -79,7 +79,7 @@ public class AnalyzedOplogBatchExecutorTest {
         given(metrics.getCudBatchSizeHistogram()).willReturn(mock(Histogram.class));
         given(metrics.getCudBatchSizeMeter()).willReturn(mock(Meter.class));
         given(metrics.getCudBatchTimer()).willReturn(mock(Timer.class));
-        given(metrics.getSubBatchTimer()).willReturn(mock(Timer.class));
+        given(metrics.getNamespaceBatchTimer()).willReturn(mock(Timer.class));
         given(metrics.getCudBatchSizeHistogram()).willReturn(mock(Histogram.class));
         given(metrics.getCudBatchSizeMeter()).willReturn(mock(Meter.class));
     }
@@ -141,14 +141,14 @@ public class AnalyzedOplogBatchExecutorTest {
                 .build();
         Context context = mock(Context.class);
         NamespaceJob job = mock(NamespaceJob.class);
-        given(metrics.getSubBatchTimer().time()).willReturn(context);
+        given(metrics.getNamespaceBatchTimer().time()).willReturn(context);
 
         //WHEN
         executor.execute(job, applierContext, conn);
 
         //THEN
-        then(metrics).should(atLeastOnce()).getSubBatchTimer();
-        then(metrics.getSubBatchTimer()).should().time();
+        then(metrics).should(atLeastOnce()).getNamespaceBatchTimer();
+        then(metrics.getNamespaceBatchTimer()).should().time();
         then(context).should().close();
         //TODO: This might be changed once the backend throws UniqueIndexViolation
         then(namespaceJobExecutor).should().apply(eq(job), eq(writeTrans), eq(applierContext), any(Boolean.class));

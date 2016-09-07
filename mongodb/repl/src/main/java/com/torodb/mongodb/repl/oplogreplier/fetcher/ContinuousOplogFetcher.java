@@ -56,10 +56,6 @@ public class ContinuousOplogFetcher implements OplogFetcher {
         this.retrier = retrier;
         this.state = new FetcherState(lastFetchedHash, lastFetchedOptime);
         this.metrics = metrics;
-        
-        if (lastFetchedOptime != null) {
-            metrics.oplogStatOpTime.setValue(lastFetchedOptime.toString());
-        }
     }
 
     public static interface ContinuousOplogFetcherFactory {
@@ -98,7 +94,7 @@ public class ContinuousOplogFetcher implements OplogFetcher {
 
                         postBatchChecks(cursor, fetchedOps);
 
-                        OplogBatch result = new NormalOplogBatch(fetchedOps.stream(), true);
+                        OplogBatch result = new NormalOplogBatch(fetchedOps, true);
                         successful = true;
                         return result;
                     } finally {
@@ -107,7 +103,6 @@ public class ContinuousOplogFetcher implements OplogFetcher {
                         } else {
                             assert fetchedOps != null;
                             assert fetchTime != 0;
-                            metrics.oplogStatOpTime.setValue(state.lastFetchedOpTime.toString());
                             state.updateState(fetchedOps, fetchTime);
                         }
                     }
@@ -324,6 +319,8 @@ public class ContinuousOplogFetcher implements OplogFetcher {
             OplogOperation lastOp = fetchedOps.get(fetchedOpsSize - 1);
             lastFetchedHash = lastOp.getHash();
             lastFetchedOpTime = lastOp.getOpTime();
+
+            metrics.getLastOpTimeFetched().setValue(state.lastFetchedOpTime.toString());
         }
 
     }
