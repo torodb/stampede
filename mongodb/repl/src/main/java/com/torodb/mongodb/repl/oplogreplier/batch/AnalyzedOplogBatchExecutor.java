@@ -30,7 +30,6 @@ import javax.annotation.concurrent.ThreadSafe;
 import javax.inject.Inject;
 
 import com.codahale.metrics.Histogram;
-import com.codahale.metrics.Meter;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.Timer.Context;
 import com.eightkdata.mongowp.server.api.oplog.DbCmdOplogOperation;
@@ -153,8 +152,7 @@ public class AnalyzedOplogBatchExecutor implements
     @Override
     public OplogOperation visit(CudAnalyzedOplogBatch batch, ApplierContext arg) throws
             RetrierGiveUpException {
-        metrics.getCudBatchSizeMeter().mark(batch.getOriginalBatch().size());
-        metrics.getCudBatchSizeHistogram().update(batch.getOriginalBatch().size());
+        metrics.getCudBatchSize().update(batch.getOriginalBatch().size());
         try (Context context = metrics.getCudBatchTimer().time()) {
             try {
                 execute(batch, arg);
@@ -196,18 +194,16 @@ public class AnalyzedOplogBatchExecutor implements
                 = new MetricNameFactory("OplogBatchExecutor");
         private final ConcurrentMap<String, Timer> singleOpTimers = new ConcurrentHashMap<>();
         private final ToroMetricRegistry metricRegistry;
-        private final Meter cudBatchSizeMeter;
-        private final Histogram cudBatchSizeHistogram;
+        private final Histogram cudBatchSize;
         private final Timer cudBatchTimer;
         private final Timer namespaceBatchTimer;
 
         @Inject
         public AnalyzedOplogBatchExecutorMetrics(ToroMetricRegistry metricRegistry) {
             this.metricRegistry = metricRegistry;
-            this.cudBatchSizeMeter = metricRegistry.meter(NAME_FACTORY.createMetricName("cudBatchSizeMeter"));
-            this.cudBatchSizeHistogram = metricRegistry.histogram(NAME_FACTORY.createMetricName("cudBatchSizeHistogram"));
-            this.cudBatchTimer = metricRegistry.timer(NAME_FACTORY.createMetricName("cudBatch"));
-            this.namespaceBatchTimer = metricRegistry.timer(NAME_FACTORY.createMetricName("namespaceBatch"));
+            this.cudBatchSize = metricRegistry.histogram(NAME_FACTORY.createMetricName("batchSize"));
+            this.cudBatchTimer = metricRegistry.timer(NAME_FACTORY.createMetricName("cudTimer"));
+            this.namespaceBatchTimer = metricRegistry.timer(NAME_FACTORY.createMetricName("namespaceTimer"));
         }
 
         /**
@@ -225,12 +221,8 @@ public class AnalyzedOplogBatchExecutor implements
             );
         }
 
-        public Meter getCudBatchSizeMeter() {
-            return cudBatchSizeMeter;
-        }
-
-        public Histogram getCudBatchSizeHistogram() {
-            return cudBatchSizeHistogram;
+        public Histogram getCudBatchSize() {
+            return cudBatchSize;
         }
 
         public Timer getCudBatchTimer() {

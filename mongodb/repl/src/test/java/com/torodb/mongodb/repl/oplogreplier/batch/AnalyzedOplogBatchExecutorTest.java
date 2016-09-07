@@ -20,7 +20,6 @@
 package com.torodb.mongodb.repl.oplogreplier.batch;
 
 import com.codahale.metrics.Histogram;
-import com.codahale.metrics.Meter;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.Timer.Context;
 import com.eightkdata.mongowp.ErrorCode;
@@ -76,12 +75,10 @@ public class AnalyzedOplogBatchExecutorTest {
         given(server.openConnection()).willReturn(conn);
         given(conn.openWriteTransaction()).willReturn(writeTrans);
 
-        given(metrics.getCudBatchSizeHistogram()).willReturn(mock(Histogram.class));
-        given(metrics.getCudBatchSizeMeter()).willReturn(mock(Meter.class));
+        given(metrics.getCudBatchSize()).willReturn(mock(Histogram.class));
         given(metrics.getCudBatchTimer()).willReturn(mock(Timer.class));
         given(metrics.getNamespaceBatchTimer()).willReturn(mock(Timer.class));
-        given(metrics.getCudBatchSizeHistogram()).willReturn(mock(Histogram.class));
-        given(metrics.getCudBatchSizeMeter()).willReturn(mock(Meter.class));
+        given(metrics.getCudBatchSize()).willReturn(mock(Histogram.class));
     }
 
     @Test
@@ -455,9 +452,7 @@ public class AnalyzedOplogBatchExecutorTest {
         } catch (RetrierGiveUpException ignore) {
             success = false;
         }
-        then(metrics).should().getCudBatchSizeMeter();
-        then(metrics.getCudBatchSizeMeter()).should().mark(batch.getOriginalBatch().size());
-        then(metrics.getCudBatchSizeHistogram()).should().update(batch.getOriginalBatch().size());
+        then(metrics.getCudBatchSize()).should().update(batch.getOriginalBatch().size());
         then(metrics).should().getCudBatchTimer();
         then(metrics.getCudBatchTimer()).should().time();
 

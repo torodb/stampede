@@ -22,7 +22,6 @@ package com.torodb.mongodb.repl.oplogreplier;
 
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Meter;
-import com.codahale.metrics.Timer;
 import com.torodb.core.metrics.MetricNameFactory;
 import com.torodb.core.metrics.ToroMetricRegistry;
 import javax.inject.Inject;
@@ -34,7 +33,7 @@ import javax.inject.Singleton;
 @Singleton
 public class OplogApplierMetrics {
 
-    private final Timer maxDelay;
+    private final Histogram maxDelay;
     private final Meter applied;
     private final Histogram batchSize;
     private final Histogram applicationCost;
@@ -43,7 +42,8 @@ public class OplogApplierMetrics {
     public OplogApplierMetrics(ToroMetricRegistry registry) {
         MetricNameFactory factory = new MetricNameFactory("OplogApplier");
 
-        maxDelay = registry.timer(factory.createMetricName("maxDelay"));
+        maxDelay = registry.histogram(factory.createMetricName("maxDelay"));
+        registry.gauge(factory.createMetricName("maxDelayUnits")).setValue("milliseconds");
 
         applied = registry.meter(factory.createMetricName("applied"));
         registry.gauge(factory.createMetricName("appliedUnit")).setValue("ops");
@@ -55,7 +55,7 @@ public class OplogApplierMetrics {
         registry.gauge(factory.createMetricName("applicationCostUnit")).setValue("microseconds/op");
     }
     
-    public Timer getMaxDelay() {
+    public Histogram getMaxDelay() {
         return maxDelay;
     }
 

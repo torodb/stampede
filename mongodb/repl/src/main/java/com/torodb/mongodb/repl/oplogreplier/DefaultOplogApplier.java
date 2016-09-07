@@ -236,7 +236,7 @@ public class DefaultOplogApplier implements OplogApplier {
         if (batchExecutionMillis <= 0) {
             LOGGER.debug("Unexpected time execution: {}" + batchExecutionMillis);
         }
-        metrics.getMaxDelay().update(batchExecutionMillis, TimeUnit.MILLISECONDS);
+        metrics.getMaxDelay().update(batchExecutionMillis);
         metrics.getApplicationCost().update((1000l * batchExecutionMillis) / rawBatchSize);
     }
     
