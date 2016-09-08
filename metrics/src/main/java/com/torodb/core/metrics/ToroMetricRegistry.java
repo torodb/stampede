@@ -1,22 +1,14 @@
 package com.torodb.core.metrics;
 
+import com.codahale.metrics.*;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.management.ObjectName;
 
-import com.codahale.metrics.Counter;
-import com.codahale.metrics.ExponentiallyDecayingReservoir;
-import com.codahale.metrics.Gauge;
-import com.codahale.metrics.Histogram;
-import com.codahale.metrics.JmxReporter;
-import com.codahale.metrics.Meter;
-import com.codahale.metrics.Metric;
-import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.ObjectNameFactory;
-import com.codahale.metrics.Timer;
+import org.mpierce.metrics.reservoir.hdrhistogram.HdrHistogramReservoir;
+import org.mpierce.metrics.reservoir.hdrhistogram.HdrHistogramResetOnSnapshotReservoir;
 
 @Singleton
 public class ToroMetricRegistry extends MetricRegistry  {
@@ -45,12 +37,48 @@ public class ToroMetricRegistry extends MetricRegistry  {
 	}
 
 	public Histogram histogram(MetricName name) {
-		Histogram histogram = register(name, new Histogram(new ExponentiallyDecayingReservoir()));
+		Histogram histogram = register(name, new Histogram(new HdrHistogramReservoir()));
+		return histogram;
+	}
+
+    /**
+     *
+     * @param name
+     * @param resetOnSnapshot This is usually true if you're using snapshots as a means of defining
+     *                        the window in which you want to calculate, say, the 99.9th percentile
+     * @return
+     */
+	public Histogram histogram(MetricName name, boolean resetOnSnapshot) {
+        Reservoir reservoir;
+        if (resetOnSnapshot) {
+            reservoir = new HdrHistogramResetOnSnapshotReservoir();
+        } else {
+            reservoir = new HdrHistogramReservoir();
+        }
+		Histogram histogram = register(name, new Histogram(reservoir));
 		return histogram;
 	}
 
     public Timer timer(MetricName name) {
-        Timer timer = register(name, new Timer());
+        Timer timer = register(name, new Timer(new HdrHistogramReservoir()));
+        return timer;
+    }
+
+    /**
+     *
+     * @param name
+     * @param resetOnSnapshot This is usually true if you're using snapshots as a means of defining
+     *                        the window in which you want to calculate, say, the 99.9th percentile
+     * @return
+     */
+    public Timer timer(MetricName name, boolean resetOnSnapshot) {
+        Reservoir reservoir;
+        if (resetOnSnapshot) {
+            reservoir = new HdrHistogramResetOnSnapshotReservoir();
+        } else {
+            reservoir = new HdrHistogramReservoir();
+        }
+        Timer timer = register(name, new Timer(reservoir));
         return timer;
     }
 

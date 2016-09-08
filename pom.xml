@@ -415,6 +415,11 @@
                     </exclusion>
                 </exclusions>
             </dependency>
+            <dependency>
+                <groupId>org.mpierce.metrics.reservoir</groupId>
+                <artifactId>hdrhistogram-metrics-reservoir</artifactId>
+                <version>1.1.0</version>
+            </dependency>
 			
 	        <dependency>
 	            <groupId>org.openjdk.jmh</groupId>
