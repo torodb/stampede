@@ -1,8 +1,6 @@
 
 package com.torodb.mongodb.repl.oplogreplier;
 
-import com.torodb.mongodb.repl.oplogreplier.fetcher.LimitedOplogFetcher;
-import com.torodb.mongodb.repl.oplogreplier.fetcher.OplogFetcher;
 import com.eightkdata.mongowp.OpTime;
 import com.eightkdata.mongowp.annotations.MongoWP;
 import com.eightkdata.mongowp.bson.BsonDocument;
@@ -39,7 +37,10 @@ import com.torodb.d2r.guice.D2RModule;
 import com.torodb.kvdocument.conversion.mongowp.MongoWPConverter;
 import com.torodb.kvdocument.values.KVInteger;
 import com.torodb.metainfo.guice.MetainfModule;
-import com.torodb.mongodb.core.*;
+import com.torodb.mongodb.core.MongodConnection;
+import com.torodb.mongodb.core.MongodServer;
+import com.torodb.mongodb.core.MongodServerConfig;
+import com.torodb.mongodb.core.WriteMongodTransaction;
 import com.torodb.mongodb.guice.MongoLayerModule;
 import com.torodb.mongodb.repl.OplogManager;
 import com.torodb.mongodb.repl.guice.AkkaDbClonerProvider;
@@ -48,9 +49,13 @@ import com.torodb.mongodb.repl.guice.MongoDbRepl;
 import com.torodb.mongodb.repl.guice.MongoDbReplModule.DefaultCommitHeuristic;
 import com.torodb.mongodb.repl.oplogreplier.DefaultOplogApplier.BatchLimits;
 import com.torodb.mongodb.repl.oplogreplier.OplogApplier.ApplyingJob;
+import com.torodb.mongodb.repl.oplogreplier.fetcher.LimitedOplogFetcher;
+import com.torodb.mongodb.repl.oplogreplier.fetcher.OplogFetcher;
 import com.torodb.mongodb.utils.DbCloner;
 import com.torodb.mongodb.utils.cloner.CommitHeuristic;
-import com.torodb.torod.*;
+import com.torodb.torod.ReadOnlyTorodTransaction;
+import com.torodb.torod.TorodConnection;
+import com.torodb.torod.TorodServer;
 import com.torodb.torod.guice.MemoryTorodModule;
 import java.time.Clock;
 import java.time.Duration;
@@ -72,8 +77,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
 import static com.eightkdata.mongowp.bson.utils.DefaultBsonValues.newDocument;
+import static org.junit.Assert.*;
 
 
 /**
@@ -306,7 +311,6 @@ public abstract class AbstractOplogApplierTest {
                         "local",
                         "oplog.rs",
                         1,
-                        false,
                         HostAndPort.fromParts("localhost", 27017),
                         opsStream.iterator())
         );

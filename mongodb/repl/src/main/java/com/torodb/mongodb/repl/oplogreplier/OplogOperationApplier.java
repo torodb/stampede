@@ -70,7 +70,7 @@ public class OplogOperationApplier {
         );
     }
 
-    private <Arg, Result> Result executeCommand(String db, Command<? super Arg, ? super Result> command, Arg arg, WriteMongodTransaction trans) throws MongoException {
+    private <Arg, Result> Status<Result> executeCommand(String db, Command<? super Arg, ? super Result> command, Arg arg, WriteMongodTransaction trans) throws MongoException {
         Request req = new Request(db, null, true, null);
         
         
@@ -80,7 +80,7 @@ public class OplogOperationApplier {
             throw new ConflictingOperationInProgressException("It was impossible to execute "
                     + command.getCommandName() + " after several attempts");
         }
-        return result.getResult();
+        return result;
     }
 
     public static class OplogApplyingException extends Exception {
@@ -155,8 +155,7 @@ public class OplogOperationApplier {
             CreateIndexesCommand command = CreateIndexesCommand.INSTANCE;
             CreateIndexesArgument arg = command.unmarshallArg(indexDoc);
 
-            CreateIndexesResult result = executeCommand(database, command, arg, trans);
-            return Status.ok(result);
+            return executeCommand(database, command, arg, trans);
         } catch (MongoException ex) {
             return Status.from(ex);
         }
@@ -207,9 +206,9 @@ public class OplogOperationApplier {
 
         boolean upsert = op.isUpsert() || applierContext.treatUpdateAsUpsert();
 
-        UpdateResult result;
+        Status<UpdateResult> status;
         try {
-            result = executeCommand(
+            status = executeCommand(
                     op.getDatabase(),
                     UpdateCommand.INSTANCE,
                     new UpdateArgument(
@@ -226,17 +225,22 @@ public class OplogOperationApplier {
             throw new OplogApplyingException(ex);
         }
 
-        if (!result.isOk()) {
+        if (!status.isOK()) {
             //TODO: improve error code
-            throw new OplogApplyingException(new MongoException(result.getErrorMessage(), ErrorCode.UNKNOWN_ERROR));
+            throw new OplogApplyingException(new MongoException(status));
+        }
+        UpdateResult updateResult = status.getResult();
+        assert updateResult != null;
+        if (!updateResult.isOk()) {
+            throw new OplogApplyingException(new MongoException(updateResult.getErrorMessage(), ErrorCode.UNKNOWN_ERROR));
         }
 
-        if (!upsert && result.getModifiedCounter() != 0) {
+        if (!upsert && updateResult.getModifiedCounter() != 0) {
             LOGGER.info("Oplog update operation with optime {} and hash {} did not find the doc to "
                     + "modify. Filter is {}", op.getOpTime(), op.getHash(), op.getFilter());
         }
 
-        if (upsert && !result.getUpserts().isEmpty()) {
+        if (upsert && !updateResult.getUpserts().isEmpty()) {
             LOGGER.warn("Replication couldn't find doc for op " + op);
         }
     }
@@ -247,7 +251,7 @@ public class OplogOperationApplier {
             ApplierContext applierContext) throws OplogApplyingException {
         try {
             //TODO: Check that the operation is executed even if the execution is interrupted!
-            Long result = executeCommand(
+            Status<Long> status = executeCommand(
                     op.getDatabase(),
                     DeleteCommand.INSTANCE,
                     new DeleteArgument(
@@ -260,7 +264,10 @@ public class OplogOperationApplier {
                     ),
                     trans
             );
-            if (result == 0 && applierContext.treatUpdateAsUpsert()) {
+            if (!status.isOK()) {
+                throw new OplogApplyingException(new MongoException(status));
+            }
+            if (status.getResult() == 0 && applierContext.treatUpdateAsUpsert()) {
                 LOGGER.info("Oplog delete operation with optime {} and hash {} did not find the "
                         + "doc to delete. Filter is {}", op.getOpTime(), op.getHash(), op.getFilter());
             }

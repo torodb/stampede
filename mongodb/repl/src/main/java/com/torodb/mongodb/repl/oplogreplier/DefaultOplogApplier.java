@@ -47,6 +47,7 @@ import java.util.Optional;
 import java.util.concurrent.*;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
+import java.util.function.ToIntFunction;
 import javax.inject.Inject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -191,6 +192,8 @@ public class DefaultOplogApplier implements OplogApplier {
      */
     private Flow<OplogBatch, AnalyzedStreamElement, NotUsed> createBatcherFlow(ApplierContext context) {
         Predicate<OplogBatch> finishBatchPredicate = (OplogBatch rawBatch) -> !rawBatch.isReadyForMore();
+        ToIntFunction<OplogBatch> costFunction = (rawBatch) -> rawBatch.count();
+
         Supplier<RawStreamElement> zeroFun = () -> RawStreamElement.INITIAL_ELEMENT;
         BiFunction<RawStreamElement, OplogBatch, RawStreamElement> acumFun = (streamElem, newBatch) ->
                 streamElem.concat(newBatch);
@@ -198,7 +201,7 @@ public class DefaultOplogApplier implements OplogApplier {
         BatchAnalyzer batchAnalyzer = batchAnalyzerFactory.createBatchAnalyzer(context);
         return Flow.of(OplogBatch.class)
                 .via(new BatchFlow<>(batchLimits.maxSize, batchLimits.maxPeriod,
-                        finishBatchPredicate, zeroFun, acumFun))
+                        finishBatchPredicate, costFunction, zeroFun, acumFun))
                 .filter(rawElem -> rawElem.rawBatch != null && !rawElem.rawBatch.isEmpty())
                 .map(rawElem -> {
                     List<OplogOperation> rawOps = rawElem.rawBatch.getOps();
@@ -302,15 +305,18 @@ public class DefaultOplogApplier implements OplogApplier {
         private final int maxBatchSize;
         private final FiniteDuration period;
         private final Predicate<E> predicate;
+        private final ToIntFunction<E> costFunction;
         private final Supplier<A> zero;
         private final BiFunction<A, E, A> aggregate;
         private final FlowShape<E,A> shape = FlowShape.of(in, out);
         private static final String MY_TIMER_KEY = "key";
 
-        public BatchFlow(int maxBatchSize, FiniteDuration period, Predicate<E> predicate, Supplier<A> zero, BiFunction<A, E, A> aggregate) {
+        public BatchFlow(int maxBatchSize, FiniteDuration period, Predicate<E> predicate,
+                ToIntFunction<E> costFunction, Supplier<A> zero, BiFunction<A, E, A> aggregate) {
             this.maxBatchSize = maxBatchSize;
             this.period = period;
             this.predicate = predicate;
+            this.costFunction = costFunction;
             this.zero = zero;
             this.aggregate = aggregate;
         }
@@ -378,7 +384,7 @@ public class DefaultOplogApplier implements OplogApplier {
                 private void nextElement(E elem) {
                     groupEmitted = false;
                     acum = aggregate.apply(acum, elem);
-                    iteration += 1;
+                    iteration += costFunction.applyAsInt(elem);
                     if (iteration >= maxBatchSize || predicate.test(elem)) {
                         schedulePeriodically(MY_TIMER_KEY, period);
                         closeGroup();
