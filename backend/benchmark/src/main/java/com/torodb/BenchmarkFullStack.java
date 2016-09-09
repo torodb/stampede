@@ -74,9 +74,23 @@ public class BenchmarkFullStack {
 	@BenchmarkMode(value=Mode.Throughput)
 	@Warmup(iterations=3)
 	@Measurement(iterations=10) 
-	public void benchmarkInsert(FullStackState state, Blackhole blackhole) throws RollbackException, UserException {
+	public void benchmarkInsertConcurrent(FullStackState state, Blackhole blackhole) throws RollbackException, UserException {
 	    try (TorodConnection toroConnection = state.torod.openConnection()) {
-	    	try(WriteTorodTransaction toroTransaction = toroConnection.openWriteTransaction()){
+	    	try(WriteTorodTransaction toroTransaction = toroConnection.openWriteTransaction(true)){
+	            toroTransaction.insert("test", "test", state.documents.stream());
+	            toroTransaction.commit();
+	    	}
+	    }
+	}
+
+	@Benchmark
+	@Fork(value=5)
+	@BenchmarkMode(value=Mode.Throughput)
+	@Warmup(iterations=3)
+	@Measurement(iterations=10)
+	public void benchmarkInsertSingleThread(FullStackState state, Blackhole blackhole) throws RollbackException, UserException {
+	    try (TorodConnection toroConnection = state.torod.openConnection()) {
+	    	try(WriteTorodTransaction toroTransaction = toroConnection.openWriteTransaction(false)){
 	            toroTransaction.insert("test", "test", state.documents.stream());
 	            toroTransaction.commit();
 	    	}

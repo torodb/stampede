@@ -58,7 +58,12 @@ public class DefaultConcurrentToolsFactory implements ConcurrentToolsFactory {
         ExecutorService executorService;
         if (blockerTasks) {
             ThreadFactory threadFactory = blockerThreadFactoryFunction.apply(prefix);
-            executorService = Executors.newFixedThreadPool(maxThreads, threadFactory);
+            ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(maxThreads, maxThreads,
+                                      10L, TimeUnit.MINUTES,
+                                      new LinkedBlockingQueue<>(),
+                                      threadFactory);
+            threadPoolExecutor.allowCoreThreadTimeOut(true);
+            executorService = threadPoolExecutor;
         } else {
             ForkJoinWorkerThreadFactory threadFactory = forkJoinThreadFactoryFunction.apply(prefix);
             executorService = new ForkJoinPool(maxThreads, threadFactory, null, true);

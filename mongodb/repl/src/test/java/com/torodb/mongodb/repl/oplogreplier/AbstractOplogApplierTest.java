@@ -171,7 +171,7 @@ public abstract class AbstractOplogApplierTest {
             OnTransactionFunction<ReadOnlyTorodTransaction, R> then) throws Exception {
         try (
                 MongodConnection conn = mongodServer.openConnection();
-                WriteMongodTransaction trans = conn.openWriteTransaction()) {
+                WriteMongodTransaction trans = conn.openWriteTransaction(true)) {
 
             given.execute(trans);
             trans.commit();

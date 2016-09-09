@@ -11,7 +11,7 @@ public interface TorodConnection extends AutoCloseable {
 
     public ReadOnlyTorodTransaction openReadOnlyTransaction();
 
-    public WriteTorodTransaction openWriteTransaction();
+    public WriteTorodTransaction openWriteTransaction(boolean concurrent);
 
     public int getConnectionId();
 

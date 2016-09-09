@@ -17,9 +17,9 @@ class WriteMongodTransactionImpl extends MongodTransactionImpl implements WriteM
     private final WriteTorodTransaction torodTransaction;
     private final CommandsExecutor<? super WriteMongodTransactionImpl> commandsExecutor;
 
-    public WriteMongodTransactionImpl(MongodConnection connection) {
+    public WriteMongodTransactionImpl(MongodConnection connection, boolean concurrent) {
         super(connection);
-        this.torodTransaction = connection.getTorodConnection().openWriteTransaction();
+        this.torodTransaction = connection.getTorodConnection().openWriteTransaction(concurrent);
         this.commandsExecutor = connection.getServer().getCommandsExecutorClassifier().getWriteCommandsExecutor();
     }
 

@@ -84,8 +84,8 @@ public class AkkaInsertPipelineFactory implements InsertPipelineFactory {
             try {
                 Source.fromIterator(() -> docs.iterator())
                         .grouped(docBatch)
-                        .map((kvList) -> d2rFun.apply(kvList))
-                        .mapConcat((collData) -> r2BackendFun.apply(collData))
+                        .map(d2rFun::apply)
+                        .mapConcat(r2BackendFun::apply)
                         .async()
                         .toMat(
                                 Sink.foreach((job) -> job.execute(backendConnection)),

@@ -39,11 +39,11 @@ public class SqlTorodConnection implements TorodConnection {
     }
 
     @Override
-    public SqlWriteTorodTransaction openWriteTransaction() {
+    public SqlWriteTorodTransaction openWriteTransaction(boolean concurrent) {
         Preconditions.checkState(!closed, "This connection is closed");
         Preconditions.checkState(currentTransaction == null, "Another transaction is currently under execution. Transaction is " + currentTransaction);
 
-        SqlWriteTorodTransaction transaction = new SqlWriteTorodTransaction(this);
+        SqlWriteTorodTransaction transaction = new SqlWriteTorodTransaction(this, concurrent);
         currentTransaction = transaction;
 
         return transaction;

@@ -37,7 +37,7 @@ public class MemoryTorodConnection implements TorodConnection {
     }
 
     @Override
-    public WriteTorodTransaction openWriteTransaction() {
+    public WriteTorodTransaction openWriteTransaction(boolean concurrent) {
         Preconditions.checkState(!closed, "This connection is closed");
         Preconditions.checkState(currentTransaction == null, "Another transaction is currently under execution. Transaction is " + currentTransaction);
 

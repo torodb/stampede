@@ -81,7 +81,7 @@ public class DefaultOplogApplier implements OplogApplier {
         this.stopperExecutorService = concurrentToolsFactory.createExecutorService("oplog-applier-stopper", true, 1);
         this.actorSystem = ActorSystem.create("oplog-applier", null, null,
                 ExecutionContexts.fromExecutor(
-                        concurrentToolsFactory.createExecutorService("oplog-applier", false, 2)
+                        concurrentToolsFactory.createExecutorService("oplog-applier", true, 2)
                 )
         );
         this.metrics = metrics;

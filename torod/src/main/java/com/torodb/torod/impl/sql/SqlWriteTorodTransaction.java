@@ -29,13 +29,15 @@ import javax.annotation.Nonnull;
 public class SqlWriteTorodTransaction extends SqlTorodTransaction implements WriteTorodTransaction {
 
     private final WriteInternalTransaction internalTransaction;
+    private final boolean concurrent;
     
-    public SqlWriteTorodTransaction(SqlTorodConnection connection) {
+    public SqlWriteTorodTransaction(SqlTorodConnection connection, boolean concurrent) {
         super(connection);
         internalTransaction = connection
                 .getServer()
                 .getInternalTransactionManager()
                 .openWriteTransaction(getConnection().getBackendConnection());
+        this.concurrent = concurrent;
     }
 
     @Override
@@ -44,12 +46,14 @@ public class SqlWriteTorodTransaction extends SqlTorodTransaction implements Wri
         MutableMetaDatabase metaDb = getOrCreateMetaDatabase(db);
         MutableMetaCollection metaCol = getOrCreateMetaCollection(metaDb, collection);
 
-        InsertPipeline pipeline = getConnection().getServer().getInsertPipelineFactory().createInsertPipeline(
-                getConnection().getServer().getD2RTranslatorrFactory(),
-                metaDb,
-                metaCol,
-                internalTransaction.getBackendConnection()
-        );
+        InsertPipeline pipeline = getConnection().getServer()
+                .getInsertPipelineFactory(concurrent)
+                .createInsertPipeline(
+                        getConnection().getServer().getD2RTranslatorrFactory(),
+                        metaDb,
+                        metaCol,
+                        internalTransaction.getBackendConnection()
+                );
         pipeline.insert(documents);
     }
 

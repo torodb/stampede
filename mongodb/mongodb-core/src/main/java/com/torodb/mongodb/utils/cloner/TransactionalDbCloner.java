@@ -76,7 +76,7 @@ public class TransactionalDbCloner implements DbCloner {
         
         try (MongoConnection remoteConnection = remoteClient.openConnection();
                 MongodConnection localConnection = localServer.openConnection();
-                WriteMongodTransaction transaction = localConnection.openWriteTransaction()) {
+                WriteMongodTransaction transaction = localConnection.openWriteTransaction(true)) {
             cloneDatabase(dstDb, remoteConnection, transaction, opts);
         }
     }
