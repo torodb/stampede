@@ -25,7 +25,6 @@ import akka.NotUsed;
 import akka.actor.ActorSystem;
 import akka.dispatch.ExecutionContexts;
 import akka.japi.Pair;
-import akka.japi.function.Creator;
 import akka.stream.*;
 import akka.stream.javadsl.*;
 import akka.stream.stage.*;
@@ -94,7 +93,7 @@ public class DefaultOplogApplier implements OplogApplier {
 
         Materializer materializer = ActorMaterializer.create(actorSystem);
 
-        RunnableGraph<Pair<UniqueKillSwitch, CompletionStage<Done>>> graph = createOplogSource(() -> fetcher)
+        RunnableGraph<Pair<UniqueKillSwitch, CompletionStage<Done>>> graph = createOplogSource(fetcher)
                 .via(createBatcherFlow(applierContext))
                 .viaMat(KillSwitches.single(), Keep.right())
                 .async()
@@ -163,20 +162,14 @@ public class DefaultOplogApplier implements OplogApplier {
         LOGGER.trace("Actor system terminated");
     }
 
-    private Source<OplogBatch, NotUsed> createOplogSource(Creator<OplogFetcher> fetcherCreator) {
-        return Source.unfoldResource(
-                fetcherCreator,
-                this::fetchOplog,
-                (fetcher) -> fetcher.close()
-        );
-    }
-
-    private Optional<OplogBatch> fetchOplog(OplogFetcher fetcher) throws StopReplicationException, RollbackReplicationException {
-        OplogBatch batch = fetcher.fetch();
-        if (batch.isLastOne()) {
-            return Optional.empty();
-        }
-        return Optional.of(batch);
+    private Source<OplogBatch, NotUsed> createOplogSource(OplogFetcher fetcher) {
+        return Source.unfold(fetcher, f -> {
+            OplogBatch batch = f.fetch();
+            if (batch.isLastOne()) {
+                return Optional.empty();
+            }
+            return Optional.of(new Pair<>(f, batch));
+        });
     }
 
     /**

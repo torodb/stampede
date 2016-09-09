@@ -21,11 +21,7 @@ import com.torodb.mongodb.repl.OplogReader;
 import com.torodb.mongodb.repl.OplogReaderProvider;
 import com.torodb.mongodb.repl.ReplMetrics;
 import com.torodb.mongodb.repl.SyncSourceProvider;
-import com.torodb.mongodb.repl.oplogreplier.NormalOplogBatch;
-import com.torodb.mongodb.repl.oplogreplier.NotReadyForMoreOplogBatch;
-import com.torodb.mongodb.repl.oplogreplier.OplogBatch;
-import com.torodb.mongodb.repl.oplogreplier.RollbackReplicationException;
-import com.torodb.mongodb.repl.oplogreplier.StopReplicationException;
+import com.torodb.mongodb.repl.oplogreplier.*;
 import java.util.List;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -71,9 +67,14 @@ public class ContinuousOplogFetcher implements OplogFetcher {
 
                     MongoCursor<OplogOperation> cursor = state.getLastUsedMongoCursor();
                     Batch<OplogOperation> batch = cursor.tryFetchBatch();
+//                    Batch<OplogOperation> batch = cursor.fetchBatch();
 
-                    if (batch == null) {
-                        return NotReadyForMoreOplogBatch.getInstance();
+                    if (batch == null || !batch.hasNext()) {
+                        Thread.sleep(1000);
+                        batch = cursor.tryFetchBatch();
+                        if (batch == null || !batch.hasNext()) {
+                            return NotReadyForMoreOplogBatch.getInstance();
+                        }
                     }
                     List<OplogOperation> fetchedOps = null;
                     long fetchTime = 0;
