@@ -273,7 +273,7 @@
                                     <name>8kdata/torodb-base:%v</name>
                                     <build>
                                         <skip>${docker.skipbase}</skip>
-                                        <from>java:8</from>
+                                        <from>isuper/java-oracle:jdk_8</from>
                                         <tags>
                                             <tag>${project.version}</tag>
                                             <tag>latest</tag>
