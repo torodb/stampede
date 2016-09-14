@@ -43,7 +43,7 @@ public class PostgreSQLValueToCopyConverter implements KVValueVisitor<Void, Stri
 
     @Override
     public Void visit(KVNull value, StringBuilder arg) {
-        arg.append("\\N");
+        arg.append("true");
         return null;
     }
 
