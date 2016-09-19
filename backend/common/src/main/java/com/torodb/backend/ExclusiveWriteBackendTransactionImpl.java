@@ -56,7 +56,7 @@ public class ExclusiveWriteBackendTransactionImpl extends SharedWriteBackendTran
         copyMetaCollection(fromDb, fromColl, toDb, toColl);
         getSqlInterface().getStructureInterface().renameCollection(getDsl(), fromDb.getIdentifier(), fromColl,
                 toDb.getIdentifier(), toColl);
-        dropMetaCollection(fromDb.getName(), fromColl);
+        dropMetaCollection(fromDb, fromColl);
     }
 
     private void copyMetaCollection(MetaDatabase fromDb, MetaCollection fromColl,
@@ -67,8 +67,7 @@ public class ExclusiveWriteBackendTransactionImpl extends SharedWriteBackendTran
             MutableMetaDocPart toMetaDocPart = toColl.addMetaDocPart(fromMetaDocPart.getTableRef(), 
                     identifierFactory.toDocPartIdentifier(
                             toDb, toColl.getName(), fromMetaDocPart.getTableRef()));
-            getSqlInterface().getMetaDataWriteInterface().addMetaDocPart(getDsl(), toDb.getName(), toColl.getName(),
-                    toMetaDocPart.getTableRef(), toMetaDocPart.getIdentifier());
+            getSqlInterface().getMetaDataWriteInterface().addMetaDocPart(getDsl(), toDb, toColl, toMetaDocPart);
             copyScalar(identifierFactory, fromMetaDocPart, toDb, toColl, toMetaDocPart);
             copyFields(identifierFactory, fromMetaDocPart, toDb, toColl, toMetaDocPart);
             int nextRid = ridGenerator.getDocPartRidGenerator(fromDb.getName(), fromColl.getName()).nextRid(fromMetaDocPart.getTableRef());
@@ -85,8 +84,7 @@ public class ExclusiveWriteBackendTransactionImpl extends SharedWriteBackendTran
                     identifierFactory.toFieldIdentifierForScalar(fromMetaScalar.getType()), 
                     fromMetaScalar.getType());
             getSqlInterface().getMetaDataWriteInterface().addMetaScalar(
-                    getDsl(), toMetaDb.getName(), toMetaColl.getName(), toMetaDocPart.getTableRef(), 
-                    toMetaScalar.getIdentifier(), toMetaScalar.getType());
+                    getDsl(), toMetaDb, toMetaColl, toMetaDocPart, toMetaScalar);
         }
     }
 
@@ -97,11 +95,10 @@ public class ExclusiveWriteBackendTransactionImpl extends SharedWriteBackendTran
             MetaField fromMetaField = fromMetaFieldIterator.next();
             MetaField toMetaField = toMetaDocPart.addMetaField(
                     fromMetaField.getName(), 
-                    identifierFactory.toFieldIdentifier(toMetaDocPart, fromMetaField.getType(), fromMetaField.getName()), 
+                    identifierFactory.toFieldIdentifier(toMetaDocPart, fromMetaField.getName(), fromMetaField.getType()), 
                     fromMetaField.getType());
             getSqlInterface().getMetaDataWriteInterface().addMetaField(
-                    getDsl(), toMetaDb.getName(), toMetaColl.getName(), toMetaDocPart.getTableRef(), 
-                    toMetaField.getName(), toMetaField.getIdentifier(), toMetaField.getType());
+                    getDsl(), toMetaDb, toMetaColl, toMetaDocPart, toMetaField);
         }
     }
 

@@ -102,28 +102,24 @@ public abstract class AbstractBackendTest {
     }
     
     protected void createMetaModel(DSLContext dsl) {
-        String databaseName = data.database.getName();
-        String databaseSchemaName = data.database.getIdentifier();
-        String collectionName = data.collection.getName();
-        
-        sqlInterface.getMetaDataWriteInterface().addMetaDatabase(dsl, databaseName, databaseSchemaName);
-        sqlInterface.getStructureInterface().createSchema(dsl, databaseSchemaName);
-        sqlInterface.getMetaDataWriteInterface().addMetaCollection(dsl, databaseName, collectionName, data.collection.getIdentifier());
-        sqlInterface.getMetaDataWriteInterface().addMetaDocPart(dsl, databaseName, collectionName, data.rootDocPart.getTableRef(), data.rootDocPart.getIdentifier());
-        sqlInterface.getMetaDataWriteInterface().addMetaDocPart(dsl, databaseName, collectionName, data.subDocPart.getTableRef(), data.subDocPart.getIdentifier());
+        sqlInterface.getMetaDataWriteInterface().addMetaDatabase(dsl, data.database);
+        sqlInterface.getStructureInterface().createSchema(dsl, data.database.getIdentifier());
+        sqlInterface.getMetaDataWriteInterface().addMetaCollection(dsl, data.database, data.collection);
+        sqlInterface.getMetaDataWriteInterface().addMetaDocPart(dsl, data.database, data.collection, data.rootDocPart);
+        sqlInterface.getMetaDataWriteInterface().addMetaDocPart(dsl, data.database, data.collection, data.subDocPart);
     }
     
     protected void insertMetaFields(DSLContext dsl, MetaDocPart metaDocPart){
         metaDocPart.streamFields().forEach( metaField ->
-            sqlInterface.getMetaDataWriteInterface().addMetaField(dsl, data.database.getName(), data.collection.getName(), metaDocPart.getTableRef(), 
-                    metaField.getName(), metaField.getIdentifier(), metaField.getType())
+            sqlInterface.getMetaDataWriteInterface().addMetaField(dsl, data.database, data.collection, metaDocPart, 
+                    metaField)
         );
     }
     
     protected void insertNewMetaFields(DSLContext dsl, MutableMetaDocPart metaDocPart){
         for (MetaField metaField : metaDocPart.getAddedMetaFields()) {
-            sqlInterface.getMetaDataWriteInterface().addMetaField(dsl, data.database.getName(), data.collection.getName(), metaDocPart.getTableRef(), 
-                    metaField.getName(), metaField.getIdentifier(), metaField.getType());
+            sqlInterface.getMetaDataWriteInterface().addMetaField(dsl, data.database, data.collection, metaDocPart, 
+                    metaField);
         }
     }
     

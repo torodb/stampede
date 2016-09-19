@@ -20,13 +20,14 @@
 
 package com.torodb.core.transaction.metainf;
 
-import com.google.common.base.Preconditions;
-import com.torodb.core.TableRef;
-import com.torodb.core.annotations.DoNotChange;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Stream;
+
+import com.google.common.base.Preconditions;
+import com.torodb.core.TableRef;
+import com.torodb.core.annotations.DoNotChange;
 
 /**
  *
@@ -37,8 +38,9 @@ public class ImmutableMetaCollection implements MetaCollection {
     private final String identifier;
     private final Map<TableRef, ImmutableMetaDocPart> docPartsByTableRef;
     private final Map<String, ImmutableMetaDocPart> docPartsByIdentifier;
+    private final Map<String, ImmutableMetaIndex> indexesByName;
 
-    public ImmutableMetaCollection(String colName, String colId, Iterable<ImmutableMetaDocPart> docParts) {
+    public ImmutableMetaCollection(String colName, String colId, Iterable<ImmutableMetaDocPart> docParts, Iterable<ImmutableMetaIndex> indexes) {
         this.name = colName;
         this.identifier = colId;
 
@@ -50,9 +52,15 @@ public class ImmutableMetaCollection implements MetaCollection {
         }
         this.docPartsByTableRef = Collections.unmodifiableMap(byTableRef);
         this.docPartsByIdentifier = Collections.unmodifiableMap(byDbName);
+        
+        HashMap<String, ImmutableMetaIndex> indexesByName = new HashMap<>();
+        for (ImmutableMetaIndex index : indexes) {
+            indexesByName.put(index.getName(), index);
+        }
+        this.indexesByName = Collections.unmodifiableMap(indexesByName);
     }
 
-    public ImmutableMetaCollection(String colName, String colId, @DoNotChange Map<String, ImmutableMetaDocPart> docPartsById) {
+    public ImmutableMetaCollection(String colName, String colId, @DoNotChange Map<String, ImmutableMetaDocPart> docPartsById, Map<String, ImmutableMetaIndex> indexesByName) {
         this.name = colName;
         this.identifier = colId;
 
@@ -61,6 +69,8 @@ public class ImmutableMetaCollection implements MetaCollection {
         for (ImmutableMetaDocPart table : docPartsById.values()) {
             docPartsByTableRef.put(table.getTableRef(), table);
         }
+
+        this.indexesByName = indexesByName;
     }
 
     @Override
@@ -87,30 +97,44 @@ public class ImmutableMetaCollection implements MetaCollection {
     public ImmutableMetaDocPart getMetaDocPartByTableRef(TableRef tableRef) {
         return docPartsByTableRef.get(tableRef);
     }
+
+    @Override
+    public Stream<ImmutableMetaIndex> streamContainedMetaIndexes() {
+        return indexesByName.values().stream();
+    }
+
+    @Override
+    public ImmutableMetaIndex getMetaIndexByName(String indexName) {
+        return indexesByName.get(indexName);
+    }
    
     public static class Builder {
         private boolean built = false;
         private final String name;
         private final String identifier;
-        private final Map<String, ImmutableMetaDocPart> docPartsByDbName;
+        private final Map<String, ImmutableMetaDocPart> docPartsByIdentifier;
+        private final Map<String, ImmutableMetaIndex> indexesByName;
 
         public Builder(String name, String identifier) {
             this.name = name;
             this.identifier = identifier;
-            this.docPartsByDbName = new HashMap<>();
+            this.docPartsByIdentifier = new HashMap<>();
+            this.indexesByName = new HashMap<>();
         }
 
-        public Builder(String name, String identifier, int expectedDocParts) {
+        public Builder(String name, String identifier, int expectedDocParts, int expectedIndexes) {
             this.name = name;
             this.identifier = identifier;
-            this.docPartsByDbName = new HashMap<>(expectedDocParts);
+            this.docPartsByIdentifier = new HashMap<>(expectedDocParts);
+            this.indexesByName = new HashMap<>(expectedIndexes);
         }
 
         public Builder(ImmutableMetaCollection other) {
             this.name = other.getName();
             this.identifier = other.getIdentifier();
 
-            docPartsByDbName = new HashMap<>(other.docPartsByIdentifier);
+            docPartsByIdentifier = new HashMap<>(other.docPartsByIdentifier);
+            this.indexesByName = new HashMap<>(other.indexesByName);
         }
 
         public Builder put(ImmutableMetaDocPart.Builder tableBuilder) {
@@ -119,19 +143,29 @@ public class ImmutableMetaCollection implements MetaCollection {
 
         public Builder put(ImmutableMetaDocPart table) {
             Preconditions.checkState(!built, "This builder has already been built");
-            docPartsByDbName.put(table.getIdentifier(), table);
+            docPartsByIdentifier.put(table.getIdentifier(), table);
+            return this;
+        }
+
+        public Builder put(ImmutableMetaIndex.Builder indexBuilder) {
+            return put(indexBuilder.build());
+        }
+
+        public Builder put(ImmutableMetaIndex index) {
+            Preconditions.checkState(!built, "This builder has already been built");
+            indexesByName.put(index.getName(), index);
             return this;
         }
 
         public ImmutableMetaCollection build() {
             Preconditions.checkState(!built, "This builder has already been built");
             Preconditions.checkState(
-            		docPartsByDbName.values().isEmpty() || 
-                    docPartsByDbName.values().stream().anyMatch((dp) -> dp.getTableRef().isRoot()),
+            		docPartsByIdentifier.values().isEmpty() || 
+                    docPartsByIdentifier.values().stream().anyMatch((dp) -> dp.getTableRef().isRoot()),
                     "Tryng to create a MetaCollection without a root doc part"
             );
             built = true;
-            return new ImmutableMetaCollection(name, identifier, docPartsByDbName);
+            return new ImmutableMetaCollection(name, identifier, docPartsByIdentifier, indexesByName);
         }
     }
 

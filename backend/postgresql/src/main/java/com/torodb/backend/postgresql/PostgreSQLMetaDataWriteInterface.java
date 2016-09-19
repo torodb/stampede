@@ -24,8 +24,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import org.jooq.Condition;
-import org.jooq.DSLContext;
-import org.jooq.Record1;
+import org.jooq.TableField;
 
 import com.torodb.backend.AbstractMetaDataWriteInterface;
 import com.torodb.backend.SqlBuilder;
@@ -36,8 +35,12 @@ import com.torodb.backend.postgresql.tables.PostgreSQLMetaFieldTable;
 import com.torodb.backend.postgresql.tables.PostgreSQLMetaScalarTable;
 import com.torodb.backend.tables.MetaCollectionTable;
 import com.torodb.backend.tables.MetaDatabaseTable;
+import com.torodb.backend.tables.MetaDocPartIndexTable;
 import com.torodb.backend.tables.MetaDocPartTable;
+import com.torodb.backend.tables.MetaFieldIndexTable;
 import com.torodb.backend.tables.MetaFieldTable;
+import com.torodb.backend.tables.MetaIndexFieldTable;
+import com.torodb.backend.tables.MetaIndexTable;
 import com.torodb.backend.tables.MetaScalarTable;
 import com.torodb.core.TableRef;
 
@@ -79,7 +82,7 @@ public class PostgreSQLMetaDataWriteInterface extends AbstractMetaDataWriteInter
                 .append(" (")
                 .quote(MetaCollectionTable.TableFields.DATABASE).append(" varchar  NOT NULL        ,")
                 .quote(MetaCollectionTable.TableFields.NAME).append("     varchar  NOT NULL        ,")
-                .quote(MetaDatabaseTable.TableFields.IDENTIFIER).append(" varchar  NOT NULL UNIQUE ,")
+                .quote(MetaCollectionTable.TableFields.IDENTIFIER).append(" varchar  NOT NULL UNIQUE ,")
                 .append("    PRIMARY KEY (").quote(MetaCollectionTable.TableFields.DATABASE).append(",")
                     .quote(MetaCollectionTable.TableFields.NAME).append(")")
                 .append(")")
@@ -151,45 +154,89 @@ public class PostgreSQLMetaDataWriteInterface extends AbstractMetaDataWriteInter
                 .toString();
         return statement;
     }
-
+    
     @Override
-    protected String getCreateMetaIndexesTableStatement(String schemaName, String tableName, String indexNameColumn,
-            String indexOptionsColumn) {
-    	String statement = new SqlBuilder("CREATE TABLE ").table(schemaName, tableName)
+    protected String getCreateMetaIndexTableStatement(String schemaName, String tableName) {
+        String statement = new SqlBuilder("CREATE TABLE ").table(schemaName, tableName)
                 .append(" (")
-                .quote(indexNameColumn).append("       varchar           PRIMARY KEY,")
-                .quote(indexOptionsColumn).append("    jsonb             NOT NULL")
+                .quote(MetaIndexTable.TableFields.DATABASE).append(" varchar  NOT NULL        ,")
+                .quote(MetaIndexTable.TableFields.COLLECTION).append(" varchar  NOT NULL        ,")
+                .quote(MetaIndexTable.TableFields.NAME).append("     varchar  NOT NULL        ,")
+                .append("    PRIMARY KEY (").quote(MetaIndexTable.TableFields.DATABASE).append(",")
+                    .quote(MetaIndexTable.TableFields.COLLECTION).append(",")
+                    .quote(MetaIndexTable.TableFields.NAME).append(")")
+                .append(")")
+                .toString();
+        return statement;
+    }
+    
+    @Override
+    protected String getCreateMetaIndexFieldTableStatement(String schemaName, String tableName) {
+        String statement = new SqlBuilder("CREATE TABLE ").table(schemaName, tableName)
+                .append(" (")
+                .quote(MetaIndexFieldTable.TableFields.DATABASE).append("   varchar   NOT NULL ,")
+                .quote(MetaIndexFieldTable.TableFields.COLLECTION).append(" varchar   NOT NULL ,")
+                .quote(MetaIndexFieldTable.TableFields.INDEX).append(" varchar   NOT NULL ,")
+                .quote(MetaIndexFieldTable.TableFields.POSITION).append(" integer   NOT NULL ,")
+                .quote(MetaIndexFieldTable.TableFields.TABLE_REF).append("  varchar[] NOT NULL ,")
+                .quote(MetaIndexFieldTable.TableFields.NAME).append(" varchar   NOT NULL ,")
+                .quote(MetaIndexFieldTable.TableFields.ORDERING).append("   varchar   NOT NULL ,")
+                .append("    PRIMARY KEY (").quote(MetaIndexFieldTable.TableFields.DATABASE).append(",")
+                    .quote(MetaIndexFieldTable.TableFields.COLLECTION).append(",")
+                    .quote(MetaIndexFieldTable.TableFields.INDEX).append(",")
+                    .quote(MetaIndexFieldTable.TableFields.POSITION).append("),")
+                .append("    UNIQUE (").quote(MetaIndexFieldTable.TableFields.DATABASE).append(",")
+                    .quote(MetaIndexFieldTable.TableFields.COLLECTION).append(",")
+                    .quote(MetaIndexFieldTable.TableFields.INDEX).append(",")
+                    .quote(MetaIndexFieldTable.TableFields.TABLE_REF).append(",")
+                    .quote(MetaIndexFieldTable.TableFields.NAME).append(")")
+                .append(")")
+                .toString();
+        return statement;
+    }
+    
+    @Override
+    protected String getCreateMetaDocPartIndexTableStatement(String schemaName, String tableName) {
+        String statement = new SqlBuilder("CREATE TABLE ").table(schemaName, tableName)
+                .append(" (")
+                .quote(MetaDocPartIndexTable.TableFields.DATABASE).append("   varchar   NOT NULL ,")
+                .quote(MetaDocPartIndexTable.TableFields.IDENTIFIER).append(" varchar   NOT NULL ,")
+                .quote(MetaDocPartIndexTable.TableFields.COLLECTION).append(" varchar   NOT NULL ,")
+                .quote(MetaDocPartIndexTable.TableFields.TABLE_REF).append("  varchar[] NOT NULL ,")
+                .append("    PRIMARY KEY (").quote(MetaDocPartIndexTable.TableFields.DATABASE).append(",")
+                    .quote(MetaDocPartIndexTable.TableFields.IDENTIFIER).append("),")
+                .append("    UNIQUE (").quote(MetaDocPartIndexTable.TableFields.DATABASE).append(",")
+                    .quote(MetaDocPartIndexTable.TableFields.COLLECTION).append(",")
+                    .quote(MetaDocPartIndexTable.TableFields.TABLE_REF).append(")")
                 .append(")")
                 .toString();
         return statement;
     }
 
     @Override
-    public int consumeRids(DSLContext dsl, String database, String collection, TableRef tableRef, int count) {
-        Record1<Integer> lastRid = dsl.select(metaDocPartTable.LAST_RID).from(metaDocPartTable).where(
-                metaDocPartTable.DATABASE.eq(database)
-                .and(metaDocPartTable.COLLECTION.eq(collection))
-                .and(metaDocPartTable.TABLE_REF.eq(TableRefConverter.toStringArray(tableRef))))
-            .fetchOne();
-        dsl.update(metaDocPartTable).set(metaDocPartTable.LAST_RID, metaDocPartTable.LAST_RID.plus(count)).where(
-                metaDocPartTable.DATABASE.eq(database)
-                .and(metaDocPartTable.COLLECTION.eq(collection))
-                .and(metaDocPartTable.TABLE_REF.eq(TableRefConverter.toStringArray(tableRef)))).execute();
-        return lastRid.value1();
+    protected String getCreateMetaFieldIndexTableStatement(String schemaName, String tableName) {
+        String statement = new SqlBuilder("CREATE TABLE ").table(schemaName, tableName)
+                .append(" (")
+                .quote(MetaFieldIndexTable.TableFields.DATABASE).append("   varchar     NOT NULL ,")
+                .quote(MetaFieldIndexTable.TableFields.IDENTIFIER).append(" varchar     NOT NULL ,")
+                .quote(MetaFieldIndexTable.TableFields.POSITION).append(" varchar     NOT NULL ,")
+                .quote(MetaFieldIndexTable.TableFields.COLLECTION).append(" varchar     NOT NULL ,")
+                .quote(MetaFieldIndexTable.TableFields.TABLE_REF).append("  varchar[]   NOT NULL ,")
+                .quote(MetaFieldIndexTable.TableFields.NAME).append("       varchar     NOT NULL ,")
+                .quote(MetaFieldIndexTable.TableFields.TYPE).append("       varchar     NOT NULL ,")
+                .quote(MetaFieldIndexTable.TableFields.ORDERING).append("       varchar     NOT NULL ,")
+                .append("    PRIMARY KEY (").quote(MetaFieldIndexTable.TableFields.DATABASE).append(",")
+                    .quote(MetaFieldIndexTable.TableFields.IDENTIFIER).append(",")
+                    .quote(MetaFieldIndexTable.TableFields.POSITION).append("),")
+                .append(")")
+                .toString();
+        return statement;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    protected Condition getMetaDocPartTableRefCondition(TableRef tableRef) {
-        return metaDocPartTable.TABLE_REF.eq(TableRefConverter.toStringArray(tableRef));
+    protected Condition getTableRefEqCondition(@SuppressWarnings("rawtypes") TableField field, TableRef tableRef) {
+        return field.eq(TableRefConverter.toStringArray(tableRef));
     }
 
-    @Override
-    protected Condition getMetaFieldTableRefCondition(TableRef tableRef) {
-        return metaFieldTable.TABLE_REF.eq(TableRefConverter.toStringArray(tableRef));
-    }
-
-    @Override
-    protected Condition getMetaScalarTableRefCondition(TableRef tableRef) {
-        return metaScalarTable.TABLE_REF.eq(TableRefConverter.toStringArray(tableRef));
-    }
 }

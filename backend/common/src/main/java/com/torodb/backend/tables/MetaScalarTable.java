@@ -121,7 +121,9 @@ public abstract class MetaScalarTable<TableRefType, R extends MetaScalarRecord<T
      */
     @Override
     public List<UniqueKey<R>> getKeys() {
-        return Arrays.<UniqueKey<R>>asList(uniqueKeys.FIELD_PKEY, uniqueKeys.FIELD_COLUMN_NAME_UNIQUE_PKEY);
+        return Arrays.<UniqueKey<R>>asList(uniqueKeys.FIELD_PKEY, 
+                uniqueKeys.FIELD_COLUMN_NAME_UNIQUE_PKEY
+        );
     }
 
     /**
@@ -145,7 +147,7 @@ public abstract class MetaScalarTable<TableRefType, R extends MetaScalarRecord<T
         
         private UniqueKeys(MetaScalarTable<TableRefType, KeyRecord> fieldTable) {
             FIELD_PKEY = createUniqueKey(fieldTable, fieldTable.DATABASE, fieldTable.COLLECTION, fieldTable.TABLE_REF, fieldTable.TYPE);
-            FIELD_COLUMN_NAME_UNIQUE_PKEY = createUniqueKey(fieldTable, fieldTable.DATABASE, fieldTable.COLLECTION, fieldTable.TABLE_REF, fieldTable.IDENTIFIER);
+            FIELD_COLUMN_NAME_UNIQUE_PKEY = createUniqueKey(fieldTable, fieldTable.DATABASE, fieldTable.TABLE_REF, fieldTable.IDENTIFIER);
         }
     }
 }

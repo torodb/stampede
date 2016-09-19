@@ -30,7 +30,7 @@ import com.torodb.core.transaction.metainf.FieldType;
 
 public class DerbyMetaScalarRecord extends MetaScalarRecord<JsonArray> {
 
-    private static final long serialVersionUID = -7296241344455399566L;
+    private static final long serialVersionUID = -2302806537753411580L;
 
     /**
 	 * Create a detached MetaFieldRecord

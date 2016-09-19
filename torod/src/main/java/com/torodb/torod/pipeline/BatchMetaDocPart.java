@@ -5,6 +5,7 @@ import com.torodb.core.TableRef;
 import com.torodb.core.annotations.DoNotChange;
 import com.torodb.core.transaction.metainf.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -124,5 +125,25 @@ public class BatchMetaDocPart implements MutableMetaDocPart {
     @Override
     public String toString() {
         return defautToString();
+    }
+
+    @Override
+    public Stream<? extends MetaDocPartIndex> streamIndexes() {
+        return delegate.streamIndexes();
+    }
+
+    @Override
+    public MetaDocPartIndex getMetaDocPartIndexByIdentifier(String indexId) {
+        return delegate.getMetaDocPartIndexByIdentifier(indexId);
+    }
+
+    @Override
+    public MutableMetaDocPartIndex addMetaDocPartIndex(String identifier, boolean unique) throws IllegalArgumentException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Iterable<? extends MutableMetaDocPartIndex> getAddedMetaDocPartIndexes() {
+        return Collections.emptyList();
     }
 }

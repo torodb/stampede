@@ -176,7 +176,7 @@ public class IdentifierFactoryImplTest {
         ImmutableMetaDocPart metaDocPart = new ImmutableMetaDocPart.Builder(createTableRef(), 
                 "docpart")
                 .build();
-        String identifier = identifierFactory.toFieldIdentifier(metaDocPart, FieldType.STRING, "");
+        String identifier = identifierFactory.toFieldIdentifier(metaDocPart, "", FieldType.STRING);
         Assert.assertEquals("_s", identifier);
     }
     
@@ -185,7 +185,7 @@ public class IdentifierFactoryImplTest {
         ImmutableMetaDocPart metaDocPart = new ImmutableMetaDocPart.Builder(createTableRef(), 
                 "docpart")
                 .build();
-        String identifier = identifierFactory.toFieldIdentifier(metaDocPart, FieldType.STRING, "unallowed_column");
+        String identifier = identifierFactory.toFieldIdentifier(metaDocPart, "unallowed_column", FieldType.STRING);
         Assert.assertEquals("_unallowed_column_s", identifier);
     }
     
@@ -194,7 +194,7 @@ public class IdentifierFactoryImplTest {
         ImmutableMetaDocPart metaDocPart = new ImmutableMetaDocPart.Builder(createTableRef(), 
                 "docpart")
                 .build();
-        String identifier = identifierFactory.toFieldIdentifier(metaDocPart, FieldType.STRING, "field");
+        String identifier = identifierFactory.toFieldIdentifier(metaDocPart, "field", FieldType.STRING);
         Assert.assertEquals("field_s", identifier);
     }
     
@@ -203,8 +203,8 @@ public class IdentifierFactoryImplTest {
         ImmutableMetaDocPart metaDocPart = new ImmutableMetaDocPart.Builder(createTableRef(), 
                 "docpart")
                 .build();
-        String identifier = identifierFactory.toFieldIdentifier(metaDocPart, FieldType.STRING, 
-                "field__long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long");
+        String identifier = identifierFactory.toFieldIdentifier(metaDocPart, 
+                "field__long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long", FieldType.STRING);
         Assert.assertEquals("field__long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_s", identifier);
     }
     
@@ -213,8 +213,8 @@ public class IdentifierFactoryImplTest {
         ImmutableMetaDocPart metaDocPart = new ImmutableMetaDocPart.Builder(createTableRef(), 
                 "docpart")
                 .build();
-        String identifier = identifierFactory.toFieldIdentifier(metaDocPart, FieldType.STRING, 
-                "field____long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long");
+        String identifier = identifierFactory.toFieldIdentifier(metaDocPart, 
+                "field____long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long", FieldType.STRING);
         Assert.assertEquals("field____long_long_long_long_long_long_long_long_long_long_lonng_long_long_long_long_long_long_long_long_long_long_long_long_1_s", identifier);
     }
     
@@ -226,8 +226,8 @@ public class IdentifierFactoryImplTest {
                         "field____long_long_long_long_long_long_long_long_long_long_lonng_long_long_long_long_long_long_long_long_long_long_long_long_1_s", 
                         FieldType.STRING))
                 .build();
-        String identifier = identifierFactory.toFieldIdentifier(metaDocPart, FieldType.STRING, 
-                "field____long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long");
+        String identifier = identifierFactory.toFieldIdentifier(metaDocPart, 
+                "field____long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long", FieldType.STRING);
         Assert.assertEquals("field____long_long_long_long_long_long_long_long_long_long_lonng_long_long_long_long_long_long_long_long_long_long_long_long_2_s", identifier);
     }
     

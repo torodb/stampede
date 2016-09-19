@@ -55,7 +55,7 @@ public class DefaultToBackendFunctionTest {
 
     private final TableRefFactory tableRefFactory = new TableRefFactoryImpl();
     private BackendTransactionJobFactory factory;
-    private ImmutableMetaCollection collection = new ImmutableMetaCollection("aColName", "aColId", Collections.emptyList());
+    private ImmutableMetaCollection collection = new ImmutableMetaCollection("aColName", "aColId", Collections.emptyList(), Collections.emptyList());
     private MetaDatabase database = new ImmutableMetaDatabase("aDb", "aId", Collections.singletonList(collection));
     private DefaultToBackendFunction fun;
 

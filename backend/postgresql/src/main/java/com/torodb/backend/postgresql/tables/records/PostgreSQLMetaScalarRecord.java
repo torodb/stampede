@@ -28,7 +28,7 @@ import com.torodb.core.transaction.metainf.FieldType;
 
 public class PostgreSQLMetaScalarRecord extends MetaScalarRecord<String[]> {
 
-    private static final long serialVersionUID = -7296241344455399566L;
+    private static final long serialVersionUID = 4277383894798572430L;
 
     /**
 	 * Create a detached MetaFieldRecord

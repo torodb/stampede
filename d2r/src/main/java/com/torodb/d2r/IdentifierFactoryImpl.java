@@ -19,6 +19,7 @@ import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
+import com.torodb.core.transaction.metainf.MetaField;
 import com.torodb.core.transaction.metainf.MetaSnapshot;
 
 public class IdentifierFactoryImpl implements IdentifierFactory {
@@ -71,7 +72,7 @@ public class IdentifierFactoryImpl implements IdentifierFactory {
     }
     
     @Override
-    public String toFieldIdentifier(MetaDocPart metaDocPart, FieldType fieldType, String field) {
+    public String toFieldIdentifier(MetaDocPart metaDocPart, String field, FieldType fieldType) {
         NameChain nameChain = new NameChain(separatorString);
         nameChain.add(field);
         
@@ -83,6 +84,21 @@ public class IdentifierFactoryImpl implements IdentifierFactory {
     @Override
     public String toFieldIdentifierForScalar(FieldType fieldType) {
         return identifierConstraints.getScalarIdentifier(fieldType);
+    }
+
+    @Override
+    public String toIndexIdentifier(MetaDatabase metaDatabase, String indexName, Iterable<MetaField> fields) {
+        NameChain nameChain = new NameChain(separatorString);
+        nameChain.add(indexName);
+        
+        for (MetaField field : fields) {
+            nameChain.add(field.getName());
+            nameChain.add(field.getType().name());
+        }
+        
+        IdentifierChecker identifierChecker = new IndexIdentifierChecker(metaDatabase);
+        
+        return generateUniqueIdentifier(nameChain, identifierChecker);
     }
 
     private String generateUniqueIdentifier(NameChain nameChain, IdentifierChecker uniqueIdentifierChecker) {
@@ -554,4 +570,26 @@ public class IdentifierFactoryImpl implements IdentifierFactory {
             return identifierInterface.isAllowedColumnIdentifier(identifier);
         }
     }
+    
+    private static class IndexIdentifierChecker implements IdentifierChecker {
+        private final MetaDatabase metaDatabase;
+        
+        public IndexIdentifierChecker(MetaDatabase metaDatabase) {
+            super();
+            this.metaDatabase = metaDatabase;
+        }
+        
+        @Override
+        public boolean isUnique(String identifier) {
+            return metaDatabase.streamMetaCollections()
+                    .flatMap(collection -> collection.streamContainedMetaDocParts())
+                    .allMatch(docPart -> docPart.getMetaDocPartIndexByIdentifier(identifier) == null);
+        }
+
+        @Override
+        public boolean isAllowed(IdentifierConstraints identifierInterface, String identifier) {
+            return identifierInterface.isAllowedIndexIdentifier(identifier);
+        }
+    }
+
 }

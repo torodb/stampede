@@ -65,6 +65,19 @@ public interface MetaDocPart {
         return streamScalars().filter((s) -> s.getIdentifier().equals(identifier)).findAny().orElse(null);
     }
 
+    @Nonnull
+    @DoNotChange
+    public abstract Stream<? extends MetaDocPartIndex> streamIndexes();
+
+    /**
+     *
+     * @param indexId
+     * @return the contained index whose {@link MetaDocPartIndex#getidentifier() indexId} is the given or null
+     *         if there is no one that match that condition
+     */
+    @Nullable
+    public abstract MetaDocPartIndex getMetaDocPartIndexByIdentifier(String indexId);
+
     public default String defautToString() {
         return "docPart{" + "ref:" + getTableRef() + ", id:" + getIdentifier() + '}';
     }
