@@ -7,6 +7,8 @@ import javax.inject.Singleton;
 
 import com.codahale.metrics.Counter;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.MemberState;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import com.torodb.core.metrics.MetricNameFactory;
 import com.torodb.core.metrics.SettableGauge;
 import com.torodb.core.metrics.ToroMetricRegistry;
@@ -16,19 +18,21 @@ public class ReplMetrics {
 
 	private static final MetricNameFactory factory = new MetricNameFactory("Repl");
 	private final SettableGauge<String> memberState;
-    private final Counter[] memberStateCounters;
+    private final ImmutableMap<MemberState, Counter> memberStateCounters;
     private final SettableGauge<String> lastOpTimeFetched;
     private final SettableGauge<String> lastOpTimeApplied;
 	
 	@Inject
 	public ReplMetrics(ToroMetricRegistry registry){
         memberState = registry.gauge(factory.createMetricName("currentMemberState"));
-	    memberStateCounters = new Counter[MemberState.values().length];
+        ImmutableMap.Builder<MemberState, Counter> memberStateCountersBuilder =
+                ImmutableMap.builder();
 	    for (MemberState memberState : MemberState.values()) {
-	        memberStateCounters[memberState.ordinal()] = 
+	        memberStateCountersBuilder.put(memberState, 
 	                registry.counter(factory.createMetricName(
-	                        memberState.name().substring(3).toLowerCase(Locale.US) + "Count"));
+	                        memberState.name().substring(3).toLowerCase(Locale.US) + "Count")));
 	    }
+        memberStateCounters = Maps.immutableEnumMap(memberStateCountersBuilder.build());
         lastOpTimeFetched = registry.gauge(factory.createMetricName("lastOpTimeFetched"));
         lastOpTimeApplied = registry.gauge(factory.createMetricName("lastOpTimeApplied"));
 	}
@@ -37,7 +41,7 @@ public class ReplMetrics {
         return memberState;
     }
 
-    public Counter[] getMemberStateCounters() {
+    public ImmutableMap<MemberState, Counter> getMemberStateCounters() {
         return memberStateCounters;
     }
 

@@ -13,6 +13,9 @@ import com.torodb.mongodb.core.MongodServer;
 import com.torodb.mongodb.repl.OplogManager;
 import com.torodb.mongodb.repl.OplogManager.OplogManagerPersistException;
 import com.torodb.mongodb.repl.oplogreplier.fetcher.ContinuousOplogFetcher.ContinuousOplogFetcherFactory;
+
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -159,6 +162,8 @@ public class SequentialOplogApplierService extends ThreadFactoryIdleService impl
         }
 
         @Override
+        @SuppressFBWarnings(value = {"WA_AWAIT_NOT_IN_LOOP"},
+                justification = "This class seem deprecated. We just ignore the warning even if it is correct")
         public void awaitUntilUnpaused() throws InterruptedException {
             mutex.lock();
             try {

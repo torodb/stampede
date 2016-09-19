@@ -87,14 +87,6 @@ public class CudAnalyzedOplogBatch extends AnalyzedOplogBatch {
         return visitor.visit(this, arg);
     }
     
-    private static OplogOperation checkValid(OplogOperation op) {
-        if (op instanceof DbCmdOplogOperation) {
-            throw new AssertionError("cmd operations are not expected on " 
-                    + CudAnalyzedOplogBatch.class.getSimpleName() + " but " + op + " was found");
-        }
-        return op;
-    }
-
     private void reduceToTableEntry(CollectionOplogOperation op, ApplierContext context,
             AnalyzedOpReducer analyzedOpReducer) {
         String database = op.getDatabase();

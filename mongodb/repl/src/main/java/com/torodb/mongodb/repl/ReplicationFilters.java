@@ -197,7 +197,8 @@ public class ReplicationFilters {
         @Override
         public Boolean visit(DbCmdOplogOperation op, Void arg) {
             Optional<Command<?, ?>> collectionRelatedCommand = collectionRelatedCommands.keySet().stream().filter(
-                    c -> c.getCommandName().equals(op.getCommandName())).findFirst();
+                    c -> op.getCommandName().isPresent() && 
+                        c.getCommandName().equals(op.getCommandName().get())).findFirst();
             if (collectionRelatedCommand.isPresent()) {
                 try {
                     String collection = collectionRelatedCommands.get(collectionRelatedCommand)
