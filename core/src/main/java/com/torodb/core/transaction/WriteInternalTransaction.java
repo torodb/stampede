@@ -20,7 +20,12 @@
 
 package com.torodb.core.transaction;
 
-import com.torodb.core.backend.BackendConnection;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
+import java.util.function.Function;
+
 import com.torodb.core.backend.WriteBackendTransaction;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.transaction.metainf.MetainfoRepository;
@@ -31,32 +36,43 @@ import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
 /**
  *
  */
-public class WriteInternalTransaction implements InternalTransaction {
+public abstract class WriteInternalTransaction<T extends WriteBackendTransaction> implements InternalTransaction {
+    private static final ReentrantReadWriteLock globalLock = new ReentrantReadWriteLock();
+    private static final ReadLock sharedLock = globalLock.readLock();
+    private static final WriteLock exclusiveLock = globalLock.writeLock();
+    
     private final MetainfoRepository metainfoRepository;
     private MutableMetaSnapshot metaSnapshot;
-    private final WriteBackendTransaction backendTransaction;
+    private final T backendTransaction;
+    private final Lock lock;
 
-    private WriteInternalTransaction(MetainfoRepository metainfoRepository, MutableMetaSnapshot metaSnapshot, WriteBackendTransaction backendConnection) {
+    protected WriteInternalTransaction(MetainfoRepository metainfoRepository, MutableMetaSnapshot metaSnapshot, T backendConnection, Lock lock) {
         this.metainfoRepository = metainfoRepository;
         this.metaSnapshot = metaSnapshot;
         this.backendTransaction = backendConnection;
+        this.lock = lock;
     }
-
-    static WriteInternalTransaction createWriteTransaction(BackendConnection backendConnection, MetainfoRepository metainfoRepository) {
+    
+    protected static ReadLock sharedLock() {
+        return sharedLock;
+    }
+    
+    protected static WriteLock exclusiveLock() {
+        return exclusiveLock;
+    }
+    
+    protected static <T extends WriteInternalTransaction<?>> T createWriteTransaction(
+            MetainfoRepository metainfoRepository, Function<MutableMetaSnapshot, T> internalTransactionSupplier) {
         try (SnapshotStage snapshotStage = metainfoRepository.startSnapshotStage()) {
             
             MutableMetaSnapshot snapshot = snapshotStage.createMutableSnapshot();
 
-            return new WriteInternalTransaction(metainfoRepository, snapshot, backendConnection.openWriteTransaction());
+            return internalTransactionSupplier.apply(snapshot);
         }
     }
 
-    public WriteBackendTransaction getBackendConnection() {
-        return backendTransaction;
-    }
-
     @Override
-    public WriteBackendTransaction getBackendTransaction() {
+    public T getBackendTransaction() {
         return backendTransaction;
     }
 
@@ -88,7 +104,11 @@ public class WriteInternalTransaction implements InternalTransaction {
 
     @Override
     public void close() {
-        backendTransaction.close();
+        try {
+            backendTransaction.close();
+        } finally {
+            lock.unlock();
+        }
     }
 
 }

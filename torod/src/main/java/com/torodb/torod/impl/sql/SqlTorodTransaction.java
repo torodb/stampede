@@ -12,13 +12,11 @@ import com.torodb.core.language.AttributeReference.Key;
 import com.torodb.core.language.AttributeReference.ObjectKey;
 import com.torodb.core.transaction.InternalTransaction;
 import com.torodb.core.transaction.metainf.*;
-import com.torodb.core.util.AttributeRefKVDocResolver;
 import com.torodb.kvdocument.values.KVValue;
 import com.torodb.torod.CollectionInfo;
 import com.torodb.torod.TorodTransaction;
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.json.Json;
@@ -29,15 +27,19 @@ import org.jooq.lambda.tuple.Tuple2;
 /**
  *
  */
-public abstract class SqlTorodTransaction implements TorodTransaction {
+public abstract class SqlTorodTransaction<T extends InternalTransaction> implements TorodTransaction {
 
     private static final Logger LOGGER = LogManager.getLogger(SqlTorodTransaction.class);
     private boolean closed = false;
     private final SqlTorodConnection connection;
+    private final T internalTransaction;
     
     public SqlTorodTransaction(SqlTorodConnection connection) {
         this.connection = connection;
+        this.internalTransaction = createInternalTransaction(connection);
     }
+    
+    protected abstract T createInternalTransaction(SqlTorodConnection connection);
 
     @Override
     public boolean isClosed() {
@@ -49,7 +51,9 @@ public abstract class SqlTorodTransaction implements TorodTransaction {
         return connection;
     }
 
-    protected abstract InternalTransaction getInternalTransaction();
+    protected T getInternalTransaction() {
+        return internalTransaction;
+    }
 
     @Override
     public boolean existsCollection(String dbName, String colName) {

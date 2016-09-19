@@ -7,24 +7,24 @@ import com.eightkdata.mongowp.server.api.CommandsExecutor;
 import com.eightkdata.mongowp.server.api.Request;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.transaction.RollbackException;
-import com.torodb.torod.SharedWriteTorodTransaction;
+import com.torodb.torod.ExclusiveWriteTorodTransaction;
 
 /**
  *
  */
-class WriteMongodTransactionImpl extends MongodTransactionImpl implements WriteMongodTransaction {
+class ExclusiveWriteMongodTransactionImpl extends MongodTransactionImpl implements ExclusiveWriteMongodTransaction {
 
-    private final SharedWriteTorodTransaction torodTransaction;
-    private final CommandsExecutor<? super WriteMongodTransactionImpl> commandsExecutor;
+    private final ExclusiveWriteTorodTransaction torodTransaction;
+    private final CommandsExecutor<? super ExclusiveWriteMongodTransactionImpl> commandsExecutor;
 
-    public WriteMongodTransactionImpl(MongodConnection connection, boolean concurrent) {
+    public ExclusiveWriteMongodTransactionImpl(MongodConnection connection, boolean concurrent) {
         super(connection);
-        this.torodTransaction = connection.getTorodConnection().openWriteTransaction(concurrent);
-        this.commandsExecutor = connection.getServer().getCommandsExecutorClassifier().getWriteCommandsExecutor();
+        this.torodTransaction = connection.getTorodConnection().openExclusiveWriteTransaction(concurrent);
+        this.commandsExecutor = connection.getServer().getCommandsExecutorClassifier().getExclusiveWriteCommandsExecutor();
     }
 
     @Override
-    public SharedWriteTorodTransaction getTorodTransaction() {
+    public ExclusiveWriteTorodTransaction getTorodTransaction() {
         return torodTransaction;
     }
 

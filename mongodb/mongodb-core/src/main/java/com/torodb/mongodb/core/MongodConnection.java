@@ -66,6 +66,18 @@ public class MongodConnection implements Connection, AutoCloseable {
         return trans;
     }
 
+    public ExclusiveWriteMongodTransaction openExclusiveWriteTransaction() {
+        return openExclusiveWriteTransaction(false);
+    }
+
+    public ExclusiveWriteMongodTransaction openExclusiveWriteTransaction(boolean concurrent) {
+        Preconditions.checkState(!closed, "This connection is closed");
+        Preconditions.checkState(currentTransaction == null, "Another transaction is currently under execution. Transaction is " + currentTransaction);
+        ExclusiveWriteMongodTransaction trans = new ExclusiveWriteMongodTransactionImpl(this, concurrent);
+        currentTransaction = trans;
+        return trans;
+    }
+
     @Nullable
     public MongodTransaction getCurrentTransaction() {
         return currentTransaction;

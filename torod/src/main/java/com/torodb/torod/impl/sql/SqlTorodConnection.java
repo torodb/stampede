@@ -19,7 +19,7 @@ public class SqlTorodConnection implements TorodConnection {
     private final int connectionid;
     private final BackendConnection backendConnection;
     private boolean closed = false;
-    private SqlTorodTransaction currentTransaction = null;
+    private SqlTorodTransaction<?> currentTransaction = null;
 
     SqlTorodConnection(SqlTorodServer server, int connectionId) {
         this.server = server;
@@ -39,11 +39,22 @@ public class SqlTorodConnection implements TorodConnection {
     }
 
     @Override
-    public SqlWriteTorodTransaction openWriteTransaction(boolean concurrent) {
+    public SqlSharedWriteTorodTransaction openWriteTransaction(boolean concurrent) {
         Preconditions.checkState(!closed, "This connection is closed");
         Preconditions.checkState(currentTransaction == null, "Another transaction is currently under execution. Transaction is " + currentTransaction);
 
-        SqlWriteTorodTransaction transaction = new SqlWriteTorodTransaction(this, concurrent);
+        SqlSharedWriteTorodTransaction transaction = new SqlSharedWriteTorodTransaction(this, concurrent);
+        currentTransaction = transaction;
+
+        return transaction;
+    }
+
+    @Override
+    public SqlExclusiveWriteTorodTransaction openExclusiveWriteTransaction(boolean concurrent) {
+        Preconditions.checkState(!closed, "This connection is closed");
+        Preconditions.checkState(currentTransaction == null, "Another transaction is currently under execution. Transaction is " + currentTransaction);
+
+        SqlExclusiveWriteTorodTransaction transaction = new SqlExclusiveWriteTorodTransaction(this, concurrent);
         currentTransaction = transaction;
 
         return transaction;
@@ -68,7 +79,7 @@ public class SqlTorodConnection implements TorodConnection {
         }
     }
 
-    void onTransactionClosed(SqlTorodTransaction transaction) {
+    void onTransactionClosed(SqlTorodTransaction<?> transaction) {
         if (currentTransaction == null) {
             LOGGER.debug("Recived an on transaction close notification, but there is no current transaction");
             return ;

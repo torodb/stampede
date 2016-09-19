@@ -20,32 +20,29 @@
 
 package com.torodb.backend;
 
-import com.google.common.base.Preconditions;
-import com.torodb.backend.ErrorHandler.Context;
-import com.torodb.core.TableRef;
-import com.torodb.core.backend.WriteBackendTransaction;
-import com.torodb.core.d2r.DocPartData;
-import com.torodb.core.d2r.IdentifierFactory;
-import com.torodb.core.d2r.R2DTranslator;
-import com.torodb.core.d2r.RidGenerator;
-import com.torodb.core.exceptions.user.UserException;
-import com.torodb.core.transaction.RollbackException;
-import com.torodb.core.transaction.metainf.*;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Iterator;
 
-public class WriteBackendTransactionImpl extends BackendTransactionImpl implements WriteBackendTransaction {
+import com.google.common.base.Preconditions;
+import com.torodb.backend.ErrorHandler.Context;
+import com.torodb.core.TableRef;
+import com.torodb.core.backend.SharedWriteBackendTransaction;
+import com.torodb.core.d2r.DocPartData;
+import com.torodb.core.d2r.R2DTranslator;
+import com.torodb.core.exceptions.user.UserException;
+import com.torodb.core.transaction.RollbackException;
+import com.torodb.core.transaction.metainf.MetaCollection;
+import com.torodb.core.transaction.metainf.MetaDatabase;
+import com.torodb.core.transaction.metainf.MetaDocPart;
+import com.torodb.core.transaction.metainf.MetaField;
+import com.torodb.core.transaction.metainf.MetaScalar;
 
-    private final IdentifierFactory identifierFactory;
-    private final RidGenerator ridGenerator;
-    
-    public WriteBackendTransactionImpl(SqlInterface sqlInterface, BackendConnectionImpl backendConnection,
-            R2DTranslator r2dTranslator, IdentifierFactory identifierFactory, RidGenerator ridGenerator) {
+public class SharedWriteBackendTransactionImpl extends BackendTransactionImpl implements SharedWriteBackendTransaction {
+
+    public SharedWriteBackendTransactionImpl(SqlInterface sqlInterface, BackendConnectionImpl backendConnection,
+            R2DTranslator r2dTranslator) {
         super(sqlInterface.getDbBackend().createWriteConnection(), sqlInterface, backendConnection, r2dTranslator);
-        
-        this.identifierFactory = identifierFactory;
-        this.ridGenerator = ridGenerator;
     }
     
     @Override
@@ -69,62 +66,6 @@ public class WriteBackendTransactionImpl extends BackendTransactionImpl implemen
 
         dropMetaCollection(db.getName(), coll);
         getSqlInterface().getStructureInterface().dropCollection(getDsl(), db.getIdentifier(), coll);
-    }
-
-    @Override
-    public void renameCollection(MetaDatabase fromDb, MetaCollection fromColl, MutableMetaDatabase toDb, MutableMetaCollection toColl) {
-        Preconditions.checkState(!isClosed(), "This transaction is closed");
-
-        copyMetaCollection(fromDb, fromColl, toDb, toColl);
-        getSqlInterface().getStructureInterface().renameCollection(getDsl(), fromDb.getIdentifier(), fromColl,
-                toDb.getIdentifier(), toColl);
-        dropMetaCollection(fromDb.getName(), fromColl);
-    }
-
-    private void copyMetaCollection(MetaDatabase fromDb, MetaCollection fromColl,
-            MutableMetaDatabase toDb, MutableMetaCollection toColl) {
-        Iterator<? extends MetaDocPart> fromMetaDocPartIterator = fromColl.streamContainedMetaDocParts().iterator();
-        while (fromMetaDocPartIterator.hasNext()) {
-            MetaDocPart fromMetaDocPart = fromMetaDocPartIterator.next();
-            MutableMetaDocPart toMetaDocPart = toColl.addMetaDocPart(fromMetaDocPart.getTableRef(), 
-                    identifierFactory.toDocPartIdentifier(
-                            toDb, toColl.getName(), fromMetaDocPart.getTableRef()));
-            getSqlInterface().getMetaDataWriteInterface().addMetaDocPart(getDsl(), toDb.getName(), toColl.getName(),
-                    toMetaDocPart.getTableRef(), toMetaDocPart.getIdentifier());
-            copyScalar(identifierFactory, fromMetaDocPart, toDb, toColl, toMetaDocPart);
-            copyFields(identifierFactory, fromMetaDocPart, toDb, toColl, toMetaDocPart);
-            int nextRid = ridGenerator.getDocPartRidGenerator(fromDb.getName(), fromColl.getName()).nextRid(fromMetaDocPart.getTableRef());
-            ridGenerator.getDocPartRidGenerator(toDb.getName(), toColl.getName()).setNextRid(toMetaDocPart.getTableRef(), nextRid - 1);
-        }
-    }
-
-    private void copyScalar(IdentifierFactory identifierFactory, MetaDocPart fromMetaDocPart,
-            MetaDatabase toMetaDb, MetaCollection toMetaColl, MutableMetaDocPart toMetaDocPart) {
-        Iterator<? extends MetaScalar> fromMetaScalarIterator = fromMetaDocPart.streamScalars().iterator();
-        while (fromMetaScalarIterator.hasNext()) {
-            MetaScalar fromMetaScalar = fromMetaScalarIterator.next();
-            MetaScalar toMetaScalar = toMetaDocPart.addMetaScalar(
-                    identifierFactory.toFieldIdentifierForScalar(fromMetaScalar.getType()), 
-                    fromMetaScalar.getType());
-            getSqlInterface().getMetaDataWriteInterface().addMetaScalar(
-                    getDsl(), toMetaDb.getName(), toMetaColl.getName(), toMetaDocPart.getTableRef(), 
-                    toMetaScalar.getIdentifier(), toMetaScalar.getType());
-        }
-    }
-
-    private void copyFields(IdentifierFactory identifierFactory, MetaDocPart fromMetaDocPart,
-            MetaDatabase toMetaDb, MetaCollection toMetaColl, MutableMetaDocPart toMetaDocPart) {
-        Iterator<? extends MetaField> fromMetaFieldIterator = fromMetaDocPart.streamFields().iterator();
-        while (fromMetaFieldIterator.hasNext()) {
-            MetaField fromMetaField = fromMetaFieldIterator.next();
-            MetaField toMetaField = toMetaDocPart.addMetaField(
-                    fromMetaField.getName(), 
-                    identifierFactory.toFieldIdentifier(toMetaDocPart, fromMetaField.getType(), fromMetaField.getName()), 
-                    fromMetaField.getType());
-            getSqlInterface().getMetaDataWriteInterface().addMetaField(
-                    getDsl(), toMetaDb.getName(), toMetaColl.getName(), toMetaDocPart.getTableRef(), 
-                    toMetaField.getName(), toMetaField.getIdentifier(), toMetaField.getType());
-        }
     }
 
     @Override

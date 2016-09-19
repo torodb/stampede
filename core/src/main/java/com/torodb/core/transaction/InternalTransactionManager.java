@@ -44,8 +44,12 @@ public class InternalTransactionManager {
         return ReadOnlyInternalTransaction.createReadOnlyTransaction(backendConnection, metainfoRepository);
     }
 
-    public WriteInternalTransaction openWriteTransaction(BackendConnection backendConnection) {
-        return WriteInternalTransaction.createWriteTransaction(backendConnection, metainfoRepository);
+    public SharedWriteInternalTransaction openSharedWriteTransaction(BackendConnection backendConnection) {
+        return SharedWriteInternalTransaction.createSharedWriteTransaction(backendConnection, metainfoRepository);
+    }
+
+    public ExclusiveWriteInternalTransaction openExclusiveWriteTransaction(BackendConnection backendConnection) {
+        return ExclusiveWriteInternalTransaction.createExclusiveWriteTransaction(backendConnection, metainfoRepository);
     }
 
     public ImmutableMetaSnapshot takeMetaSnapshot() {

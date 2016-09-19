@@ -21,16 +21,21 @@ public class TorodbCommandsLibrary implements CommandsLibrary {
 
     private static final Logger LOGGER = LogManager.getLogger(TorodbCommandsLibrary.class);
     private final CommandsLibrary allCommands;
-    private final CommandsLibrary noTransactionsLibrary, readLibrary, writeLibrary;
+    private final CommandsLibrary noTransactionsLibrary, readLibrary, writeLibrary, exclusiveWriteLibrary;
     private final Map<Command<?,?>, RequiredTransaction> requiredTranslationMap;
 
     @Inject
     public TorodbCommandsLibrary(ConnectionCommandsExecutor connectionExecutor,
             GeneralTransactionImplementations readOnlyExecutor,
-            WriteTransactionImplementations writeExecutor) {
+            WriteTransactionImplementations writeExecutor,
+            ExclusiveWriteTransactionImplementations exclusiveWriteExecutor) {
         String version = "torodb-3.2-like";
         
         requiredTranslationMap = new HashMap<>();
+        this.exclusiveWriteLibrary = new NameBasedCommandsLibrary(version, exclusiveWriteExecutor.getSupportedCommands());
+        exclusiveWriteLibrary.getSupportedCommands().forEach((c) -> {
+            classifyCommand(c, RequiredTransaction.EXCLUSIVE_WRITE_TRANSACTION);
+        });
         this.writeLibrary = new NameBasedCommandsLibrary(version, writeExecutor.getSupportedCommands());
         writeLibrary.getSupportedCommands().forEach((c) -> {
             classifyCommand(c, RequiredTransaction.WRITE_TRANSACTION);
@@ -91,7 +96,8 @@ public class TorodbCommandsLibrary implements CommandsLibrary {
     public static enum RequiredTransaction {
         NO_TRANSACTION,
         READ_TRANSACTION,
-        WRITE_TRANSACTION
+        WRITE_TRANSACTION,
+        EXCLUSIVE_WRITE_TRANSACTION
     }
 
 }

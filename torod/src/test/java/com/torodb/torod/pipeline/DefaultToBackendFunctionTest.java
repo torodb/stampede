@@ -1,27 +1,51 @@
 package com.torodb.torod.pipeline;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Optional;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.MockSettings;
+import org.mockito.internal.creation.MockSettingsImpl;
+
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.torodb.core.TableRefFactory;
 import com.torodb.core.backend.WriteBackendTransaction;
 import com.torodb.core.d2r.CollectionData;
 import com.torodb.core.d2r.DocPartData;
-import com.torodb.core.dsl.backend.*;
+import com.torodb.core.dsl.backend.AddCollectionDDLJob;
+import com.torodb.core.dsl.backend.AddDatabaseDDLJob;
+import com.torodb.core.dsl.backend.AddDocPartDDLJob;
+import com.torodb.core.dsl.backend.AddFieldDDLJob;
+import com.torodb.core.dsl.backend.AddScalarDDLJob;
+import com.torodb.core.dsl.backend.BackendTransactionJob;
+import com.torodb.core.dsl.backend.BackendTransactionJobFactory;
+import com.torodb.core.dsl.backend.InsertBackendJob;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.impl.TableRefFactoryImpl;
 import com.torodb.core.transaction.RollbackException;
-import com.torodb.core.transaction.metainf.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Optional;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.MockSettings;
-import org.mockito.internal.creation.MockSettingsImpl;
-
-import static org.junit.Assert.*;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.*;
+import com.torodb.core.transaction.metainf.FieldType;
+import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
+import com.torodb.core.transaction.metainf.ImmutableMetaDatabase;
+import com.torodb.core.transaction.metainf.ImmutableMetaDocPart;
+import com.torodb.core.transaction.metainf.ImmutableMetaField;
+import com.torodb.core.transaction.metainf.ImmutableMetaScalar;
+import com.torodb.core.transaction.metainf.MetaCollection;
+import com.torodb.core.transaction.metainf.MetaDatabase;
+import com.torodb.core.transaction.metainf.MetaDocPart;
+import com.torodb.core.transaction.metainf.MetaField;
+import com.torodb.core.transaction.metainf.MetaScalar;
+import com.torodb.core.transaction.metainf.WrapperMutableMetaDocPart;
 
 /**
  *

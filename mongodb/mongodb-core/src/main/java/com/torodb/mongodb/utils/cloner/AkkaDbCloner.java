@@ -55,7 +55,7 @@ import com.torodb.mongodb.utils.DbCloner.CloningException;
 import com.torodb.mongodb.utils.ListCollectionsRequester;
 import com.torodb.mongodb.utils.ListIndexesRequester;
 import com.torodb.mongodb.utils.NamespaceUtil;
-import com.torodb.torod.WriteTorodTransaction;
+import com.torodb.torod.SharedWriteTorodTransaction;
 import java.time.Clock;
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -522,7 +522,7 @@ public class AkkaDbCloner implements DbCloner {
         }
 
         @Override
-        public WriteTorodTransaction getTorodTransaction() {
+        public SharedWriteTorodTransaction getTorodTransaction() {
             return delegate.getTorodTransaction();
         }
 

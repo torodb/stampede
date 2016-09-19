@@ -2,9 +2,10 @@
 package com.torodb.torod.impl.memory;
 
 import com.google.common.base.Preconditions;
+import com.torodb.torod.ExclusiveWriteTorodTransaction;
 import com.torodb.torod.ReadOnlyTorodTransaction;
 import com.torodb.torod.TorodConnection;
-import com.torodb.torod.WriteTorodTransaction;
+import com.torodb.torod.SharedWriteTorodTransaction;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -37,13 +38,18 @@ public class MemoryTorodConnection implements TorodConnection {
     }
 
     @Override
-    public WriteTorodTransaction openWriteTransaction(boolean concurrent) {
+    public ExclusiveWriteTorodTransaction openWriteTransaction(boolean concurrent) {
         Preconditions.checkState(!closed, "This connection is closed");
         Preconditions.checkState(currentTransaction == null, "Another transaction is currently under execution. Transaction is " + currentTransaction);
 
         MemoryWriteTorodTransaction result = new MemoryWriteTorodTransaction(this);
         this.currentTransaction = result;
         return result;
+    }
+
+    @Override
+    public ExclusiveWriteTorodTransaction openExclusiveWriteTransaction(boolean concurrent) {
+        return openWriteTransaction(concurrent);
     }
 
     @Override

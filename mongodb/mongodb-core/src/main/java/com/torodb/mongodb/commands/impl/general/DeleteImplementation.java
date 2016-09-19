@@ -18,7 +18,7 @@ import com.torodb.kvdocument.values.KVValue;
 import com.torodb.mongodb.commands.impl.WriteTorodbCommandImpl;
 import com.torodb.mongodb.core.MongodMetrics;
 import com.torodb.mongodb.core.WriteMongodTransaction;
-import com.torodb.torod.WriteTorodTransaction;
+import com.torodb.torod.SharedWriteTorodTransaction;
 
 /**
  *
@@ -64,7 +64,7 @@ public class DeleteImplementation implements WriteTorodbCommandImpl<DeleteArgume
 
     }
 
-    private long deleteByAttribute(WriteTorodTransaction transaction, String db, String col, BsonDocument query) throws CommandFailed {
+    private long deleteByAttribute(SharedWriteTorodTransaction transaction, String db, String col, BsonDocument query) throws CommandFailed {
         Builder refBuilder = new AttributeReference.Builder();
         KVValue<?> kvValue = AttrRefHelper.calculateValueAndAttRef(query, refBuilder);
         return transaction.deleteByAttRef(db, col, refBuilder.build(), kvValue);

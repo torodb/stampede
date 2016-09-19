@@ -4,8 +4,9 @@ package com.torodb.backend;
 import com.google.common.base.Preconditions;
 import com.torodb.core.backend.BackendConnection;
 import com.torodb.core.backend.BackendTransaction;
+import com.torodb.core.backend.ExclusiveWriteBackendTransaction;
 import com.torodb.core.backend.ReadOnlyBackendTransaction;
-import com.torodb.core.backend.WriteBackendTransaction;
+import com.torodb.core.backend.SharedWriteBackendTransaction;
 import com.torodb.core.d2r.IdentifierFactory;
 import com.torodb.core.d2r.R2DTranslator;
 import com.torodb.core.d2r.RidGenerator;
@@ -47,11 +48,22 @@ public class BackendConnectionImpl implements BackendConnection {
     }
 
     @Override
-    public WriteBackendTransaction openWriteTransaction() {
+    public SharedWriteBackendTransaction openSharedWriteTransaction() {
         Preconditions.checkState(!closed, "This connection is closed");
         Preconditions.checkState(currentTransaction == null, "Another transaction is currently under execution. Transaction is " + currentTransaction);
 
-        WriteBackendTransactionImpl transaction = new WriteBackendTransactionImpl(sqlInterface, this, r2dTranslator, identifierFactory, ridGenerator);
+        SharedWriteBackendTransactionImpl transaction = new SharedWriteBackendTransactionImpl(sqlInterface, this, r2dTranslator);
+        currentTransaction = transaction;
+
+        return transaction;
+    }
+
+    @Override
+    public ExclusiveWriteBackendTransaction openExclusiveWriteTransaction() {
+        Preconditions.checkState(!closed, "This connection is closed");
+        Preconditions.checkState(currentTransaction == null, "Another transaction is currently under execution. Transaction is " + currentTransaction);
+
+        ExclusiveWriteBackendTransactionImpl transaction = new ExclusiveWriteBackendTransactionImpl(sqlInterface, this, r2dTranslator, identifierFactory, ridGenerator);
         currentTransaction = transaction;
 
         return transaction;

@@ -27,7 +27,9 @@ public interface BackendConnection extends AutoCloseable {
 
     public ReadOnlyBackendTransaction openReadOnlyTransaction();
 
-    public WriteBackendTransaction openWriteTransaction();
+    public SharedWriteBackendTransaction openSharedWriteTransaction();
+    
+    public ExclusiveWriteBackendTransaction openExclusiveWriteTransaction();
 
     @Override
     public void close();

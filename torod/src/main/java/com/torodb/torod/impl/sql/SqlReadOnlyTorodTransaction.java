@@ -1,27 +1,24 @@
 
 package com.torodb.torod.impl.sql;
 
-import com.torodb.core.transaction.InternalTransaction;
 import com.torodb.core.transaction.ReadOnlyInternalTransaction;
 import com.torodb.torod.ReadOnlyTorodTransaction;
 
 /**
  *
  */
-public class SqlReadOnlyTorodTransaction extends SqlTorodTransaction implements ReadOnlyTorodTransaction {
-
-    private final ReadOnlyInternalTransaction internalTransaction;
+public class SqlReadOnlyTorodTransaction extends SqlTorodTransaction<ReadOnlyInternalTransaction> implements ReadOnlyTorodTransaction {
 
     public SqlReadOnlyTorodTransaction(SqlTorodConnection connection) {
         super(connection);
-        this.internalTransaction = connection
+    }
+
+    @Override
+    protected ReadOnlyInternalTransaction createInternalTransaction(SqlTorodConnection connection) {
+        return connection
                 .getServer()
                 .getInternalTransactionManager()
                 .openReadTransaction(getConnection().getBackendConnection());
     }
 
-    @Override
-    protected InternalTransaction getInternalTransaction() {
-        return internalTransaction;
-    }
 }

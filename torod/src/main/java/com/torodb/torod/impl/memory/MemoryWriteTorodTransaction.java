@@ -1,6 +1,8 @@
 
 package com.torodb.torod.impl.memory;
 
+import java.util.stream.Stream;
+
 import com.torodb.core.cursors.Cursor;
 import com.torodb.core.document.ToroDocument;
 import com.torodb.core.exceptions.user.UserException;
@@ -8,14 +10,13 @@ import com.torodb.core.language.AttributeReference;
 import com.torodb.core.transaction.RollbackException;
 import com.torodb.kvdocument.values.KVDocument;
 import com.torodb.kvdocument.values.KVValue;
-import com.torodb.torod.WriteTorodTransaction;
+import com.torodb.torod.ExclusiveWriteTorodTransaction;
 import com.torodb.torod.impl.memory.MemoryData.MDTransaction;
-import java.util.stream.Stream;
 
 /**
  *
  */
-public class MemoryWriteTorodTransaction extends MemoryTorodTransaction implements WriteTorodTransaction {
+public class MemoryWriteTorodTransaction extends MemoryTorodTransaction implements ExclusiveWriteTorodTransaction {
 
     private final MemoryData.MDWriteTransaction trans;
 
