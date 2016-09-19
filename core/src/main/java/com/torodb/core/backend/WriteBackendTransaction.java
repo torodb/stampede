@@ -27,8 +27,12 @@ import com.torodb.core.transaction.RollbackException;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
+import com.torodb.core.transaction.metainf.MetaDocPartIndex;
 import com.torodb.core.transaction.metainf.MetaField;
+import com.torodb.core.transaction.metainf.MetaIndex;
 import com.torodb.core.transaction.metainf.MetaScalar;
+import com.torodb.core.transaction.metainf.MutableMetaCollection;
+import com.torodb.core.transaction.metainf.MutableMetaDocPart;
 
 public interface WriteBackendTransaction extends BackendTransaction {
     /**
@@ -90,6 +94,7 @@ public interface WriteBackendTransaction extends BackendTransaction {
 
     /**
      * Adds a field to a table.
+     * Create a {@link MetaDocPartIndex physical index} if compatible with an existing {@link MetaIndex logical index}. 
      *
      * @param db       the database that contains the given collection. It must have been added
      *                 before
@@ -99,7 +104,7 @@ public interface WriteBackendTransaction extends BackendTransaction {
      * @param newField the field to add
      * @throws RollbackException
      */
-    public void addField(MetaDatabase db, MetaCollection col, MetaDocPart docPart, MetaField newField) throws RollbackException;
+    public void addField(MetaDatabase db, MetaCollection col, MutableMetaDocPart docPart, MetaField newField) throws RollbackException;
 
     /**
      * @param db        the database that contains the given collection. It must have been added
@@ -136,6 +141,16 @@ public interface WriteBackendTransaction extends BackendTransaction {
     public void insert(MetaDatabase db, MetaCollection col, DocPartData data) throws RollbackException, UserException;
 
     public void deleteDids(MetaDatabase db, MetaCollection col, Collection<Integer> dids);
+
+    /**
+     * Create a logical index on doc part fields and scalars without type. A physical index will be created for each existent and future doc part fields and scalars
+     * that satisfy logical index definition.
+     * 
+     * @param db
+     * @param col
+     * @param index
+     */
+    public void createIndex(MetaDatabase db, MutableMetaCollection col, MetaIndex index);
 
     public void commit() throws UserException, RollbackException;
 

@@ -19,52 +19,54 @@
  */
 
 
-package com.torodb.backend.converters.jooq;
+package com.torodb.backend.postgresql.converters.jooq;
 
-import org.jooq.impl.SQLDataType;
+import org.jooq.util.postgres.PostgresDataType;
 
-import com.torodb.backend.converters.sql.LongSqlBinding;
+import com.torodb.backend.converters.jooq.DataTypeForKV;
+import com.torodb.backend.converters.jooq.KVValueConverter;
+import com.torodb.backend.converters.sql.IntegerSqlBinding;
 import com.torodb.backend.converters.sql.SqlBinding;
+import com.torodb.kvdocument.types.IntegerType;
 import com.torodb.kvdocument.types.KVType;
-import com.torodb.kvdocument.types.LongType;
-import com.torodb.kvdocument.values.KVLong;
+import com.torodb.kvdocument.values.KVInteger;
+
 
 /**
  *
  */
-public class LongValueConverter implements KVValueConverter<Long, Long, KVLong>{
+public class IntegerValueConverter implements KVValueConverter<Integer, Integer, KVInteger>{
     private static final long serialVersionUID = 1L;
 
-    public static final DataTypeForKV<KVLong> TYPE = DataTypeForKV.from(SQLDataType.BIGINT, new LongValueConverter());
+    public static final DataTypeForKV<KVInteger> TYPE = DataTypeForKV.from(PostgresDataType.INT4, new IntegerValueConverter());
 
     @Override
     public KVType getErasuredType() {
-        return LongType.INSTANCE;
+        return IntegerType.INSTANCE;
     }
 
     @Override
-    public KVLong from(Long databaseObject) {
-        return KVLong.of(databaseObject);
+    public KVInteger from(Integer databaseObject) {
+        return KVInteger.of(databaseObject);
     }
 
     @Override
-    public Long to(KVLong userObject) {
+    public Integer to(KVInteger userObject) {
         return userObject.getValue();
     }
 
     @Override
-    public Class<Long> fromType() {
-        return Long.class;
+    public Class<Integer> fromType() {
+        return Integer.class;
     }
 
     @Override
-    public Class<KVLong> toType() {
-        return KVLong.class;
+    public Class<KVInteger> toType() {
+        return KVInteger.class;
     }
 
     @Override
-    public SqlBinding<Long> getSqlBinding() {
-        return LongSqlBinding.INSTANCE;
+    public SqlBinding<Integer> getSqlBinding() {
+        return IntegerSqlBinding.INSTANCE;
     }
-    
 }

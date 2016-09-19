@@ -34,7 +34,7 @@ public interface BackendTransactionJobFactory {
 
     AddDocPartDDLJob createAddDocPartDDLJob(MetaDatabase db, MetaCollection col, MetaDocPart docPart);
 
-    AddFieldDDLJob createAddFieldDDLJob(MetaDatabase db, MetaCollection col, MetaDocPart docPart, MetaField field);
+    AddFieldDDLJob createAddFieldDDLJob(MetaDatabase db, MetaCollection col, MutableMetaDocPart docPart, MetaField field);
 
     AddScalarDDLJob createAddScalarDDLJob(MetaDatabase db, MetaCollection col, MetaDocPart docPart, MetaScalar scalar);
 

@@ -18,52 +18,57 @@
  *     
  */
 
-package com.torodb.backend.converters.jooq;
+package com.torodb.backend.postgresql.converters.jooq;
+
+import java.sql.Time;
 
 import org.jooq.impl.SQLDataType;
 
-import com.torodb.backend.converters.sql.BooleanSqlBinding;
+import com.torodb.backend.converters.jooq.DataTypeForKV;
+import com.torodb.backend.converters.jooq.KVValueConverter;
 import com.torodb.backend.converters.sql.SqlBinding;
-import com.torodb.kvdocument.types.BooleanType;
+import com.torodb.backend.converters.sql.TimeSqlBinding;
 import com.torodb.kvdocument.types.KVType;
-import com.torodb.kvdocument.values.KVBoolean;
+import com.torodb.kvdocument.types.TimeType;
+import com.torodb.kvdocument.values.KVTime;
+import com.torodb.kvdocument.values.heap.LocalTimeKVTime;
 
 /**
  *
  */
-public class BooleanValueConverter implements KVValueConverter<Boolean, Boolean, KVBoolean> {
+public class TimeValueConverter implements KVValueConverter<Time, Time, KVTime>{
     private static final long serialVersionUID = 1L;
 
-    public static final DataTypeForKV<KVBoolean> TYPE = DataTypeForKV.from(SQLDataType.BOOLEAN, new BooleanValueConverter());
+    public static final DataTypeForKV<KVTime> TYPE = DataTypeForKV.from(SQLDataType.TIME, new TimeValueConverter());
 
     @Override
     public KVType getErasuredType() {
-        return BooleanType.INSTANCE;
+        return TimeType.INSTANCE;
     }
 
     @Override
-    public KVBoolean from(Boolean databaseObject) {
-        return KVBoolean.from(databaseObject);
+    public KVTime from(Time databaseObject) {
+        return new LocalTimeKVTime(databaseObject.toLocalTime());
     }
 
     @Override
-    public Boolean to(KVBoolean userObject) {
-        return userObject.getValue();
+    public Time to(KVTime userObject) {
+        return Time.valueOf(userObject.getValue());
     }
 
     @Override
-    public Class<Boolean> fromType() {
-        return Boolean.class;
+    public Class<Time> fromType() {
+        return Time.class;
     }
 
     @Override
-    public Class<KVBoolean> toType() {
-        return KVBoolean.class;
+    public Class<KVTime> toType() {
+        return KVTime.class;
     }
 
     @Override
-    public SqlBinding<Boolean> getSqlBinding() {
-        return BooleanSqlBinding.INSTANCE;
+    public SqlBinding<Time> getSqlBinding() {
+        return TimeSqlBinding.INSTANCE;
     }
-
+    
 }

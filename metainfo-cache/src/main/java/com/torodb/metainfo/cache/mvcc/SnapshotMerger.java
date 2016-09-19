@@ -20,23 +20,34 @@
 
 package com.torodb.metainfo.cache.mvcc;
 
+import java.util.Optional;
+
+import org.jooq.lambda.tuple.Tuple2;
+
 import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
 import com.torodb.core.transaction.metainf.ImmutableMetaDatabase;
 import com.torodb.core.transaction.metainf.ImmutableMetaDocPart;
+import com.torodb.core.transaction.metainf.ImmutableMetaDocPartIndex;
 import com.torodb.core.transaction.metainf.ImmutableMetaField;
+import com.torodb.core.transaction.metainf.ImmutableMetaDocPartIndexColumn;
+import com.torodb.core.transaction.metainf.ImmutableMetaIndex;
+import com.torodb.core.transaction.metainf.ImmutableMetaIndexField;
 import com.torodb.core.transaction.metainf.ImmutableMetaScalar;
 import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
+import com.torodb.core.transaction.metainf.MetaDocPartIndex;
 import com.torodb.core.transaction.metainf.MetaElementState;
+import com.torodb.core.transaction.metainf.MetaIndex;
 import com.torodb.core.transaction.metainf.MetaScalar;
 import com.torodb.core.transaction.metainf.MutableMetaCollection;
 import com.torodb.core.transaction.metainf.MutableMetaDatabase;
 import com.torodb.core.transaction.metainf.MutableMetaDocPart;
+import com.torodb.core.transaction.metainf.MutableMetaDocPartIndex;
+import com.torodb.core.transaction.metainf.MutableMetaIndex;
 import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
 import com.torodb.core.transaction.metainf.UnmergeableException;
-import org.jooq.lambda.tuple.Tuple2;
 
 /**
  *
@@ -84,7 +95,7 @@ public class SnapshotMerger {
 
                 ImmutableMetaDatabase.Builder childBuilder = new ImmutableMetaDatabase.Builder(byId);
                 for (Tuple2<MutableMetaCollection, MetaElementState> modifiedCollection : newDb.getModifiedCollections()) {
-                    merge(byId, childBuilder, modifiedCollection.v1(), modifiedCollection.v2());
+                    merge(newDb, byId, childBuilder, modifiedCollection.v1(), modifiedCollection.v2());
                 }
                 parentBuilder.put(childBuilder);
                 break;
@@ -118,7 +129,7 @@ public class SnapshotMerger {
 
     }
 
-    private void merge(ImmutableMetaDatabase oldStructure, ImmutableMetaDatabase.Builder parentBuilder,
+    private void merge(MetaDatabase newStructure, ImmutableMetaDatabase oldStructure, ImmutableMetaDatabase.Builder parentBuilder,
             MutableMetaCollection newCol, MetaElementState newState) throws UnmergeableException {
 
         ImmutableMetaCollection byName = oldStructure.getMetaCollectionByName(newCol.getName());
@@ -142,9 +153,13 @@ public class SnapshotMerger {
 
                 ImmutableMetaCollection.Builder childBuilder = new ImmutableMetaCollection.Builder(byId);
                 for (MutableMetaDocPart modifiedDocPart : newCol.getModifiedMetaDocParts()) {
-                    merge(oldStructure, byId, childBuilder, modifiedDocPart);
+                    merge(newStructure, oldStructure, newCol, byId, childBuilder, modifiedDocPart);
+                }
+                for (MutableMetaIndex modifiedIndex : newCol.getModifiedMetaIndexes()) {
+                    merge(oldStructure, byId, childBuilder, modifiedIndex);
                 }
                 parentBuilder.put(childBuilder);
+
                 break;
             }
             case REMOVED: {
@@ -176,13 +191,23 @@ public class SnapshotMerger {
 
     }
 
-    private void merge(MetaDatabase db, ImmutableMetaCollection oldStructure,
+    private void merge(MetaDatabase newDb, MetaDatabase oldDb, MetaCollection newStructure, ImmutableMetaCollection oldStructure,
             ImmutableMetaCollection.Builder parentBuilder, MutableMetaDocPart changed) throws UnmergeableException {
+        Optional<? extends ImmutableMetaIndex> oldMissedIndex = oldStructure.streamContainedMetaIndexes()
+                .filter(oldIndex -> 
+                    newStructure.getMetaIndexByName(oldIndex.getName()) == null && 
+                    oldIndex.iteratorMetaIndexFieldByTableRef(changed.getTableRef()).hasNext())
+                .findAny();
+        
+        if (oldMissedIndex.isPresent()) {
+            throw createUnmergeableException(oldDb, oldStructure, changed, oldMissedIndex.get());
+        }
+        
         ImmutableMetaDocPart byRef = oldStructure.getMetaDocPartByTableRef(changed.getTableRef());
         ImmutableMetaDocPart byId = oldStructure.getMetaDocPartByIdentifier(changed.getIdentifier());
 
         if (byRef != byId) {
-            throw createUnmergeableException(db, oldStructure, changed, byRef, byId);
+            throw createUnmergeableException(oldDb, oldStructure, changed, byRef, byId);
         }
         if (byRef == null && byId == null) {
             parentBuilder.put(changed.immutableCopy());
@@ -194,10 +219,13 @@ public class SnapshotMerger {
         ImmutableMetaDocPart.Builder childBuilder = new ImmutableMetaDocPart.Builder(byId);
 
         for (ImmutableMetaField addedMetaField : changed.getAddedMetaFields()) {
-            merge(db, oldStructure, byId, childBuilder, addedMetaField);
+            merge(oldDb, oldStructure, byId, childBuilder, addedMetaField);
         }
         for (ImmutableMetaScalar addedMetaScalar : changed.getAddedMetaScalars()) {
-            merge(db, oldStructure, byId, childBuilder, addedMetaScalar);
+            merge(oldDb, oldStructure, byId, childBuilder, addedMetaScalar);
+        }
+        for (MutableMetaDocPartIndex addedMetaDocPartIndex : changed.getAddedMetaDocPartIndexes()) {
+            merge(oldDb, oldStructure, byId, childBuilder, addedMetaDocPartIndex);
         }
 
         parentBuilder.put(childBuilder);
@@ -227,6 +255,79 @@ public class SnapshotMerger {
         }
         if (byType == null && byId == null) {
             parentBuilder.put(changed);
+        }
+    }
+
+    private void merge(MetaDatabase db, ImmutableMetaCollection col, ImmutableMetaDocPart oldStructure,
+            ImmutableMetaDocPart.Builder parentBuilder, MutableMetaDocPartIndex changed) throws UnmergeableException {
+        Optional<ImmutableMetaDocPartIndex> bySameColumns = oldStructure.streamIndexes()
+                .filter(docPartIndex -> docPartIndex.hasSameColumns(changed)).findAny();
+        
+        if (bySameColumns.isPresent()) {
+            throw createUnmergeableException(db, col, oldStructure, changed, bySameColumns.get());
+        }
+        
+        ImmutableMetaDocPartIndex byId = oldStructure.getMetaDocPartIndexByIdentifier(changed.getIdentifier());
+
+        if (byId == null) {
+            parentBuilder.put(changed.immutableCopy());
+            return ;
+        }
+        assert byId != null;
+
+        ImmutableMetaDocPartIndex.Builder childBuilder = new ImmutableMetaDocPartIndex.Builder(byId);
+
+        for (ImmutableMetaDocPartIndexColumn addedMetaFieldIndex : changed.getAddedMetaDocPartIndexColumns()) {
+            merge(db, col, oldStructure, byId, childBuilder, addedMetaFieldIndex);
+        }
+
+        parentBuilder.put(childBuilder);
+
+    }
+
+    private void merge(MetaDatabase db, MetaCollection col, MetaDocPart docPart, ImmutableMetaDocPartIndex oldStructure,
+            ImmutableMetaDocPartIndex.Builder parentBuilder, ImmutableMetaDocPartIndexColumn changed) throws UnmergeableException {
+        ImmutableMetaDocPartIndexColumn byIdentifier = oldStructure.getMetaDocPartIndexColumnByIdentifier(changed.getIdentifier());
+        ImmutableMetaDocPartIndexColumn byPosition = oldStructure.getMetaDocPartIndexColumnByPosition(changed.getPosition());
+
+        if (byIdentifier != byPosition) {
+            throw createUnmergeableException(db, col, docPart, oldStructure, changed, byIdentifier, byPosition);
+        }
+        if (byIdentifier == null && byPosition == null) {
+            parentBuilder.add(changed);
+        }
+    }
+
+    private void merge(MetaDatabase db, ImmutableMetaCollection oldStructure,
+            ImmutableMetaCollection.Builder parentBuilder, MutableMetaIndex changed) throws UnmergeableException {
+        ImmutableMetaIndex byName = oldStructure.getMetaIndexByName(changed.getName());
+
+        if (byName == null) {
+            parentBuilder.put(changed.immutableCopy());
+            return ;
+        }
+        assert byName != null;
+
+        ImmutableMetaIndex.Builder childBuilder = new ImmutableMetaIndex.Builder(byName);
+
+        for (ImmutableMetaIndexField addedMetaIndexField : changed.getAddedMetaIndexFields()) {
+            merge(db, oldStructure, byName, childBuilder, addedMetaIndexField);
+        }
+
+        parentBuilder.put(childBuilder);
+
+    }
+
+    private void merge(MetaDatabase db, MetaCollection col, ImmutableMetaIndex oldStructure,
+            ImmutableMetaIndex.Builder parentBuilder, ImmutableMetaIndexField changed) throws UnmergeableException {
+        ImmutableMetaIndexField byTableRefAndName = oldStructure.getMetaIndexFieldByTableRefAndName(changed.getTableRef(), changed.getName());
+        ImmutableMetaIndexField byPosition = oldStructure.getMetaIndexFieldByPosition(changed.getPosition());
+
+        if (byTableRefAndName != byPosition) {
+            throw createUnmergeableException(db, col, oldStructure, changed, byTableRefAndName, byPosition);
+        }
+        if (byTableRefAndName == null && byPosition == null) {
+            parentBuilder.add(changed);
         }
     }
 
@@ -288,11 +389,21 @@ public class SnapshotMerger {
     }
 
     private UnmergeableException createUnmergeableException(
+            MetaDatabase db,
+            MetaCollection col, MutableMetaDocPart changed, ImmutableMetaIndex oldMissedIndex) {
+        throw new UnmergeableException(oldSnapshot, newSnapshot,
+                "There is a previous index on " + db + "." + col 
+                + " whose name is " + oldMissedIndex.getName()
+                + " associated with new doc part "
+                + changed + " that has not been created.");
+    }
+
+    private UnmergeableException createUnmergeableException(
             MetaDatabase db, MetaCollection col, MetaDocPart docPart, ImmutableMetaField changed,
             ImmutableMetaField byNameAndType, ImmutableMetaField byId) {
         if (byNameAndType != null) {
             throw new UnmergeableException(oldSnapshot, newSnapshot,
-                    "There is a previous field on " + db + "." + col + "." + docPart + " whose "
+                    "There is a previous field on doc part " + db + "." + col + "." + docPart + " whose "
                     + "name is " + byNameAndType.getName() + " and type is "
                     + byNameAndType.getType() + " that has a different id. The previous "
                     + "element id is " + byNameAndType.getIdentifier() + " and the new "
@@ -300,7 +411,7 @@ public class SnapshotMerger {
         } else {
             assert byId != null;
             throw new UnmergeableException(oldSnapshot, newSnapshot,
-                    "There is a previous field on " + db.getIdentifier() + "." + col.getIdentifier()
+                    "There is a previous field on doc part " + db.getIdentifier() + "." + col.getIdentifier()
                     + "." + docPart.getIdentifier() + " whose id is " + byId.getIdentifier() + " that has a different name or "
                     + "type. The previous element name is " + byId.getName() + " and its "
                     + "type is " + byId.getType() + ". The name of the new one is "
@@ -327,6 +438,59 @@ public class SnapshotMerger {
                     + "identifier is " + changed.getIdentifier() + " but its type is "
                     + byId.getType() + ". The type of the new one is " + changed.getType()
             );
+        }
+    }
+
+    private UnmergeableException createUnmergeableException(
+            MetaDatabase db, MetaCollection col, MetaDocPart docPart, MetaDocPartIndex changed,
+            ImmutableMetaDocPartIndex bySameColumns) {
+        throw new UnmergeableException(oldSnapshot, newSnapshot,
+                "There is a previous doc part index " + db.getIdentifier() + "." + col.getIdentifier() + 
+                "." + docPart.getIdentifier() + "." + bySameColumns.getIdentifier()
+                + " that has same columns than new doc part index " + db.getIdentifier() + "." + col.getIdentifier() + 
+                "." + docPart.getIdentifier() + "." + changed.getIdentifier());
+    }
+
+    private UnmergeableException createUnmergeableException(
+            MetaDatabase db, MetaCollection col, MetaDocPart docPart, MetaDocPartIndex index, ImmutableMetaDocPartIndexColumn changed,
+            ImmutableMetaDocPartIndexColumn byIdentifier, ImmutableMetaDocPartIndexColumn byPosition) {
+        if (byIdentifier != null) {
+            throw new UnmergeableException(oldSnapshot, newSnapshot,
+                    "There is a previous field on doc part index " + db.getIdentifier() + "." + col.getIdentifier() + 
+                    "." + docPart.getIdentifier() + "." + index.getIdentifier() + " whose "
+                    + "identifier is " + byIdentifier.getIdentifier() 
+                    + " that has a different position. The previous "
+                    + "element position is " + byIdentifier.getPosition() + " and the new "
+                    + "one is " + changed.getPosition());
+        } else {
+            assert byPosition != null;
+            throw new UnmergeableException(oldSnapshot, newSnapshot,
+                    "There is a previous field on doc part index " + db.getIdentifier() + "." + col.getIdentifier()
+                    + "." + docPart.getIdentifier() + "." + index.getIdentifier() + 
+                    " whose position is " + byPosition.getPosition() + " that has a different name or "
+                    + "type. The previous element identifier is " + byPosition.getIdentifier()
+                    + ". The name of the new one is " + changed.getIdentifier());
+        }
+    }
+
+    private UnmergeableException createUnmergeableException(
+            MetaDatabase db, MetaCollection col, MetaIndex index, ImmutableMetaIndexField changed,
+            ImmutableMetaIndexField byTableRefAndName, ImmutableMetaIndexField byPosition) {
+        if (byTableRefAndName != null) {
+            throw new UnmergeableException(oldSnapshot, newSnapshot,
+                    "There is a previous field on index " + db + "." + col + "." + index + " whose "
+                    + "tableRef is " + byTableRefAndName.getTableRef() + " and name is "
+                    + byTableRefAndName.getName() + " that has a different position. The previous "
+                    + "element position is " + byTableRefAndName.getPosition() + " and the new "
+                    + "one is " + changed.getPosition());
+        } else {
+            assert byPosition != null;
+            throw new UnmergeableException(oldSnapshot, newSnapshot,
+                    "There is a previous field on index " + db + "." + col
+                    + "." + index + " whose position is " + byPosition.getPosition() + " that has a different tableRef or "
+                    + "name. The previous element tableRef is " + byPosition.getTableRef() + " and its "
+                    + "name is " + byPosition.getName() + ". The tableRef of the new one is "
+                    + changed.getTableRef() + " and its name is " + changed.getName());
         }
     }
 

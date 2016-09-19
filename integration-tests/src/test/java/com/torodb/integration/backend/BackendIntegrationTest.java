@@ -173,14 +173,14 @@ public class BackendIntegrationTest extends AbstractBackendTest {
 		 try (Connection connection = sqlInterface.getDbBackend().createWriteConnection()) {
              DSLContext dsl = sqlInterface.getDslContextFactory().createDSLContext(connection);
              createMetaModel(dsl);
-             int first100RootRid = sqlInterface.getMetaDataWriteInterface().consumeRids(dsl, data.database.getName(), data.collection.getName(), data.rootDocPart.getTableRef(), 100);
+             int first100RootRid = sqlInterface.getMetaDataWriteInterface().consumeRids(dsl, data.database, data.collection, data.rootDocPart, 100);
              assertEquals(0, first100RootRid);
-             int next100RootRid = sqlInterface.getMetaDataWriteInterface().consumeRids(dsl, data.database.getName(), data.collection.getName(), data.rootDocPart.getTableRef(), 100);
+             int next100RootRid = sqlInterface.getMetaDataWriteInterface().consumeRids(dsl, data.database, data.collection, data.rootDocPart, 100);
              assertEquals(100, next100RootRid);
              createDocPartTable(dsl, data.collection, data.rootDocPart);
-             int first100SubRid = sqlInterface.getMetaDataWriteInterface().consumeRids(dsl, data.database.getName(), data.collection.getName(), data.subDocPart.getTableRef(), 100);
+             int first100SubRid = sqlInterface.getMetaDataWriteInterface().consumeRids(dsl, data.database, data.collection, data.subDocPart, 100);
              assertEquals(0, first100SubRid);
-             int next100SubRid = sqlInterface.getMetaDataWriteInterface().consumeRids(dsl, data.database.getName(), data.collection.getName(), data.subDocPart.getTableRef(), 100);
+             int next100SubRid = sqlInterface.getMetaDataWriteInterface().consumeRids(dsl, data.database, data.collection, data.subDocPart, 100);
              assertEquals(100, next100SubRid);
              connection.commit();
          }
@@ -383,7 +383,6 @@ public class BackendIntegrationTest extends AbstractBackendTest {
         }
     }
 
-	@SuppressWarnings("unchecked")
     private boolean findRootDocPartRow(ResultSet resultSet, List<Integer> foundRowIndexes) throws SQLException {
 		Integer index = 0;
 		boolean rowFound = true;

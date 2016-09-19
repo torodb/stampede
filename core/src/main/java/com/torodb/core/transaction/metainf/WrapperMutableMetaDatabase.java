@@ -71,7 +71,7 @@ public class WrapperMutableMetaDatabase implements MutableMetaDatabase {
         assert getMetaCollectionByIdentifier(colId) == null : "There is another collection whose id is " + colId;
 
         WrapperMutableMetaCollection result = createMetaColletion(
-                new ImmutableMetaCollection(colName, colId, Collections.emptyMap()));
+                new ImmutableMetaCollection(colName, colId, Collections.emptyMap(), Collections.emptyMap()));
 
         collectionsByName.put(colName, new Tuple2<>(result, MetaElementState.ADDED));
         changeConsumer.accept(this);

@@ -21,50 +21,38 @@
 
 package com.torodb.backend.converters.jooq;
 
+import org.jooq.Converter;
+import org.jooq.DataType;
 import org.jooq.impl.SQLDataType;
 
-import com.torodb.backend.converters.sql.BooleanSqlBinding;
-import com.torodb.backend.converters.sql.SqlBinding;
-import com.torodb.kvdocument.types.KVType;
-import com.torodb.kvdocument.types.NullType;
-import com.torodb.kvdocument.values.KVNull;
+import com.torodb.core.transaction.metainf.FieldIndexOrdering;
 
 /**
  *
  */
-public class NullValueConverter implements KVValueConverter<Boolean, Boolean, KVNull>{
+public class OrderingConverter implements Converter<String, FieldIndexOrdering>{
     private static final long serialVersionUID = 1L;
 
-    public static final DataTypeForKV<KVNull> TYPE = DataTypeForKV.from(SQLDataType.BOOLEAN, new NullValueConverter());
+    public static final DataType<FieldIndexOrdering> TYPE = SQLDataType.VARCHAR.asConvertedDataType(new OrderingConverter());
 
     @Override
-    public KVType getErasuredType() {
-        return NullType.INSTANCE;
+    public FieldIndexOrdering from(String databaseObject) {
+        return FieldIndexOrdering.valueOf(databaseObject);
     }
 
     @Override
-    public KVNull from(Boolean databaseObject) {
-        return KVNull.getInstance();
+    public String to(FieldIndexOrdering userObject) {
+        return userObject.name();
     }
 
     @Override
-    public Boolean to(KVNull userObject) {
-        return Boolean.TRUE;
+    public Class<String> fromType() {
+        return String.class;
     }
 
     @Override
-    public Class<Boolean> fromType() {
-        return Boolean.class;
-    }
-
-    @Override
-    public Class<KVNull> toType() {
-        return KVNull.class;
-    }
-
-    @Override
-    public SqlBinding<Boolean> getSqlBinding() {
-        return BooleanSqlBinding.INSTANCE;
+    public Class<FieldIndexOrdering> toType() {
+        return FieldIndexOrdering.class;
     }
     
 }

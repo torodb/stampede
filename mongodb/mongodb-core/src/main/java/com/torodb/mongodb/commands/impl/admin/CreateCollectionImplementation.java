@@ -20,6 +20,8 @@
 
 package com.torodb.mongodb.commands.impl.admin;
 
+import java.util.Arrays;
+
 import com.eightkdata.mongowp.ErrorCode;
 import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.CreateCollectionCommand.CreateCollectionArgument;
@@ -27,14 +29,24 @@ import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.Request;
 import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.torodb.core.exceptions.user.UserException;
+import com.torodb.core.language.AttributeReference;
+import com.torodb.core.language.AttributeReference.Key;
+import com.torodb.core.language.AttributeReference.ObjectKey;
+import com.torodb.core.transaction.metainf.FieldIndexOrdering;
 import com.torodb.mongodb.commands.impl.WriteTorodbCommandImpl;
 import com.torodb.mongodb.core.WriteMongodTransaction;
+import com.torodb.mongodb.language.Constants;
 
 public class CreateCollectionImplementation implements WriteTorodbCommandImpl<CreateCollectionArgument, Empty> {
 
     @Override
     public Status<Empty> apply(Request req, Command<? super CreateCollectionArgument, ? super Empty> command,
             CreateCollectionArgument arg, WriteMongodTransaction context) {
+        if (!context.getTorodTransaction().existsCollection(req.getDatabase(), arg.getCollection())) {
+            context.getTorodTransaction().createIndex(req.getDatabase(), arg.getCollection(), Constants.ID_INDEX, 
+                    new AttributeReference(Arrays.asList(new Key[] { new ObjectKey(Constants.ID) })), FieldIndexOrdering.ASC, true);
+        }
+        
         try {
             context.getTorodTransaction().createCollection(req.getDatabase(), arg.getCollection());
         } catch (UserException ex) {

@@ -6,11 +6,16 @@ import java.time.LocalTime;
 import com.google.common.collect.ImmutableList;
 import com.torodb.backend.SqlInterface;
 import com.torodb.core.TableRefFactory;
+import com.torodb.core.transaction.metainf.FieldIndexOrdering;
 import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
 import com.torodb.core.transaction.metainf.ImmutableMetaDatabase;
 import com.torodb.core.transaction.metainf.ImmutableMetaDocPart;
+import com.torodb.core.transaction.metainf.ImmutableMetaDocPartIndex;
+import com.torodb.core.transaction.metainf.ImmutableMetaDocPartIndexColumn;
 import com.torodb.core.transaction.metainf.ImmutableMetaField;
+import com.torodb.core.transaction.metainf.ImmutableMetaIndex;
+import com.torodb.core.transaction.metainf.ImmutableMetaIndexField;
 import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
 import com.torodb.core.transaction.metainf.MutableMetaDocPart;
 import com.torodb.core.transaction.metainf.WrapperMutableMetaDocPart;
@@ -36,6 +41,7 @@ public class TestData {
     public final ImmutableMetaDocPart subDocPart;
     public final MutableMetaDocPart newSubDocPart;
     public final ImmutableList<KVDocument> documents;
+    public final ImmutableMetaIndex index;
     
     public TestData(TableRefFactory tableRefFactory, SqlInterface sqlInterface){
         ImmutableMetaSnapshot.Builder metaSnapshotBuilder = new ImmutableMetaSnapshot.Builder();
@@ -54,7 +60,9 @@ public class TestData {
                 .put(new ImmutableMetaField("mongoObjectIdRoot", "mongoObjectIdRootField", FieldType.MONGO_OBJECT_ID))
                 .put(new ImmutableMetaField("mongoTimeStampRoot", "mongoTimeStampRootField", FieldType.MONGO_TIME_STAMP))
                 .put(new ImmutableMetaField("instantRoot", "instantRootField", FieldType.INSTANT))
-                .put(new ImmutableMetaField("subDocPart", "subDocPartField", FieldType.CHILD));
+                .put(new ImmutableMetaField("subDocPart", "subDocPartField", FieldType.CHILD))
+                .put(new ImmutableMetaDocPartIndex.Builder("rootDocPartIndex", false)
+                        .add(new ImmutableMetaDocPartIndexColumn(0, "integerRootField", FieldIndexOrdering.ASC)).build());
         rootDocPart = metaRootDocPartBuilder.build();
         metaCollectionBuilder.put(rootDocPart);
         ImmutableMetaDocPart.Builder metaSubDocPartBuilder = new ImmutableMetaDocPart.Builder(tableRefFactory.createChild(rootDocPart.getTableRef(), "subDocPart"), "subDocPartTableName");
@@ -69,7 +77,9 @@ public class TestData {
                 .put(new ImmutableMetaField("timeSub", "timeSubField", FieldType.TIME))
                 .put(new ImmutableMetaField("mongoObjectIdSub", "mongoObjectIdSubField", FieldType.MONGO_OBJECT_ID))
                 .put(new ImmutableMetaField("mongoTimeStampSub", "mongoTimeStampSubField", FieldType.MONGO_TIME_STAMP))
-                .put(new ImmutableMetaField("instantSub", "instantSubField", FieldType.INSTANT));
+                .put(new ImmutableMetaField("instantSub", "instantSubField", FieldType.INSTANT))
+                .put(new ImmutableMetaDocPartIndex.Builder("subDocPartIndex", false)
+                        .add(new ImmutableMetaDocPartIndexColumn(0, "longSubField", FieldIndexOrdering.ASC)).build());
         subDocPart = metaSubDocPartBuilder.build();
         metaCollectionBuilder.put(subDocPart);
         newSubDocPart = new WrapperMutableMetaDocPart(subDocPart, metaDocPart -> {});
@@ -95,6 +105,14 @@ public class TestData {
                 .addMetaField("newMongoTimeStampSub", "newMongoTimeStampSubField", FieldType.MONGO_TIME_STAMP);
         newSubDocPart
                 .addMetaField("newInstantSub", "newInstantSubField", FieldType.INSTANT);
+        ImmutableMetaIndex.Builder metaIndexBuilder = new ImmutableMetaIndex.Builder("index", false);
+        metaIndexBuilder
+                .add(new ImmutableMetaIndexField(0, rootDocPart.getTableRef(), "integerRoot", FieldIndexOrdering.ASC))
+                .add(new ImmutableMetaIndexField(1, subDocPart.getTableRef(), "integerSub", FieldIndexOrdering.ASC))
+                .add(new ImmutableMetaIndexField(2, subDocPart.getTableRef(), "longSub", FieldIndexOrdering.ASC));
+        index = metaIndexBuilder.build();
+        metaCollectionBuilder.put(index);
+        metaCollectionBuilder.put(subDocPart);
         collection = metaCollectionBuilder.build();
         metaDatabaseBuilder.put(collection);
         database = metaDatabaseBuilder.build();

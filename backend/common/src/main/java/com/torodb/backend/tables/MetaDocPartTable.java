@@ -239,7 +239,7 @@ public abstract class MetaDocPartTable<TableRefType, R extends MetaDocPartRecord
         
         private UniqueKeys(MetaDocPartTable<TableRefType, KeyRecord> containerTable) {
             CONTAINER_PKEY = createUniqueKey(containerTable, containerTable.DATABASE, containerTable.COLLECTION, containerTable.TABLE_REF);
-            CONTAINER_TABLE_NAME_UNIQUE = createUniqueKey(containerTable, containerTable.DATABASE, containerTable.COLLECTION, containerTable.IDENTIFIER);
+            CONTAINER_TABLE_NAME_UNIQUE = createUniqueKey(containerTable, containerTable.DATABASE, containerTable.IDENTIFIER);
         }
     }
 }

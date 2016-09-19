@@ -21,35 +21,49 @@
 package com.torodb.backend;
 
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Optional;
 
 import com.google.common.base.Preconditions;
 import com.torodb.backend.ErrorHandler.Context;
 import com.torodb.core.TableRef;
 import com.torodb.core.backend.SharedWriteBackendTransaction;
 import com.torodb.core.d2r.DocPartData;
+import com.torodb.core.d2r.IdentifierFactory;
 import com.torodb.core.d2r.R2DTranslator;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.transaction.RollbackException;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
+import com.torodb.core.transaction.metainf.MetaDocPartIndexColumn;
 import com.torodb.core.transaction.metainf.MetaField;
+import com.torodb.core.transaction.metainf.MetaIndex;
+import com.torodb.core.transaction.metainf.MetaIndexField;
 import com.torodb.core.transaction.metainf.MetaScalar;
+import com.torodb.core.transaction.metainf.MutableMetaCollection;
+import com.torodb.core.transaction.metainf.MutableMetaDocPart;
+import com.torodb.core.transaction.metainf.MutableMetaDocPartIndex;
 
 public class SharedWriteBackendTransactionImpl extends BackendTransactionImpl implements SharedWriteBackendTransaction {
 
+    private final IdentifierFactory identifierFactory;
+
     public SharedWriteBackendTransactionImpl(SqlInterface sqlInterface, BackendConnectionImpl backendConnection,
-            R2DTranslator r2dTranslator) {
+            R2DTranslator r2dTranslator, IdentifierFactory identifierFactory) {
         super(sqlInterface.getDbBackend().createWriteConnection(), sqlInterface, backendConnection, r2dTranslator);
+        
+        this.identifierFactory = identifierFactory;
     }
     
     @Override
     public void addDatabase(MetaDatabase db) {
         Preconditions.checkState(!isClosed(), "This transaction is closed");
 
-    	getSqlInterface().getMetaDataWriteInterface().addMetaDatabase(getDsl(), db.getName(), db.getIdentifier());
+    	getSqlInterface().getMetaDataWriteInterface().addMetaDatabase(getDsl(), db);
         getSqlInterface().getStructureInterface().createSchema(getDsl(), db.getIdentifier());
     }
 
@@ -57,14 +71,14 @@ public class SharedWriteBackendTransactionImpl extends BackendTransactionImpl im
     public void addCollection(MetaDatabase db, MetaCollection newCol) {
         Preconditions.checkState(!isClosed(), "This transaction is closed");
 
-    	getSqlInterface().getMetaDataWriteInterface().addMetaCollection(getDsl(), db.getName(), newCol.getName(), newCol.getIdentifier());
+    	getSqlInterface().getMetaDataWriteInterface().addMetaCollection(getDsl(), db, newCol);
     }
 
     @Override
     public void dropCollection(MetaDatabase db, MetaCollection coll) {
         Preconditions.checkState(!isClosed(), "This transaction is closed");
 
-        dropMetaCollection(db.getName(), coll);
+        dropMetaCollection(db, coll);
         getSqlInterface().getStructureInterface().dropCollection(getDsl(), db.getIdentifier(), coll);
     }
 
@@ -75,52 +89,22 @@ public class SharedWriteBackendTransactionImpl extends BackendTransactionImpl im
         Iterator<? extends MetaCollection> metaCollectionIterator = db.streamMetaCollections().iterator();
         while (metaCollectionIterator.hasNext()) {
             MetaCollection metaCollection = metaCollectionIterator.next();
-            dropMetaCollection(db.getName(), metaCollection);
+            dropMetaCollection(db, metaCollection);
         }
-        getSqlInterface().getMetaDataWriteInterface().deleteMetaDatabase(getDsl(), db.getName());
+        getSqlInterface().getMetaDataWriteInterface().deleteMetaDatabase(getDsl(), db);
         getSqlInterface().getStructureInterface().dropDatabase(getDsl(), db);
     }
 
-    protected void dropMetaCollection(String databaseName, MetaCollection coll) {
-        Iterator<? extends MetaDocPart> metaDocPartIterator = coll.streamContainedMetaDocParts().iterator();
-        while (metaDocPartIterator.hasNext()) {
-            MetaDocPart metaDocPart = metaDocPartIterator.next();
-            dropMetaDocPart(databaseName, coll, metaDocPart);
-        }
-        getSqlInterface().getMetaDataWriteInterface().deleteMetaCollection(getDsl(), databaseName, coll.getName());
-    }
-
-    private void dropMetaDocPart(String databaseName, MetaCollection coll, MetaDocPart metaDocPart) {
-        dropMetaScalars(databaseName, coll, metaDocPart);
-        dropMetaFields(databaseName, coll, metaDocPart);
-        getSqlInterface().getMetaDataWriteInterface().deleteMetaDocPart(getDsl(), databaseName, coll.getName(), 
-                metaDocPart.getTableRef());
-    }
-
-    private void dropMetaScalars(String databaseName, MetaCollection coll, MetaDocPart metaDocPart) {
-        Iterator<? extends MetaScalar> metaScalarIterator = metaDocPart.streamScalars().iterator();
-        while (metaScalarIterator.hasNext()) {
-            MetaScalar metaScalar = metaScalarIterator.next();
-            getSqlInterface().getMetaDataWriteInterface().deleteMetaScalar(getDsl(), databaseName, coll.getName(), 
-                    metaDocPart.getTableRef(), metaScalar.getType());
-        }
-    }
-
-    private void dropMetaFields(String databaseName, MetaCollection coll, MetaDocPart metaDocPart) {
-        Iterator<? extends MetaField> metaFieldIterator = metaDocPart.streamFields().iterator();
-        while (metaFieldIterator.hasNext()) {
-            MetaField metaField = metaFieldIterator.next();
-            getSqlInterface().getMetaDataWriteInterface().deleteMetaField(getDsl(), databaseName, coll.getName(), 
-                    metaDocPart.getTableRef(), metaField.getName(), metaField.getType());
-        }
+    protected void dropMetaCollection(MetaDatabase database, MetaCollection coll) {
+        getSqlInterface().getMetaDataWriteInterface().deleteMetaCollection(getDsl(), database, coll);
     }
 
     @Override
     public void addDocPart(MetaDatabase db, MetaCollection col, MetaDocPart newDocPart) {
         Preconditions.checkState(!isClosed(), "This transaction is closed");
 
-    	getSqlInterface().getMetaDataWriteInterface().addMetaDocPart(getDsl(), db.getName(), col.getName(),
-                newDocPart.getTableRef(), newDocPart.getIdentifier());
+    	getSqlInterface().getMetaDataWriteInterface().addMetaDocPart(getDsl(), db, col,
+                newDocPart);
     	
         TableRef tableRef = newDocPart.getTableRef();
     	if (tableRef.isRoot()) {
@@ -137,17 +121,38 @@ public class SharedWriteBackendTransactionImpl extends BackendTransactionImpl im
     }
 
     @Override
-    public void addField(MetaDatabase db, MetaCollection col, MetaDocPart docPart, MetaField newField){
+    public void addField(MetaDatabase db, MetaCollection col, MutableMetaDocPart docPart, MetaField newField){
         Preconditions.checkState(!isClosed(), "This transaction is closed");
 
-    	getSqlInterface().getMetaDataWriteInterface().addMetaField(getDsl(), db.getName(), col.getName(), docPart.getTableRef(),
-                newField.getName(), newField.getIdentifier(), newField.getType());
+    	getSqlInterface().getMetaDataWriteInterface().addMetaField(getDsl(), db, col, docPart,
+                newField);
         getSqlInterface().getStructureInterface().addColumnToDocPartTable(getDsl(), db.getIdentifier(),
                 docPart.getIdentifier(), newField.getIdentifier(), getSqlInterface().getDataTypeProvider().getDataType(newField.getType()));
         
-        //TODO: This is a hack accepted by all devs. Mongolization for create an index on _id fields
-        if (docPart.getTableRef().isRoot() && "_id".equals(newField.getName())) {
-            getSqlInterface().getStructureInterface().createIndex(getDsl(), db.getIdentifier(), docPart.getIdentifier(), newField.getIdentifier(), true, true);
+        col.streamContainedMetaIndexes()
+            .filter(index -> index.getMetaIndexFieldByTableRefAndName(docPart.getTableRef(), newField.getName()) != null)
+            .forEach(index -> { 
+                if (index.size() > 1) {
+                    throw new UnsupportedOperationException("Index with more than one field is not supported");
+                }
+            });
+        Optional<? extends MetaIndex> optionalCompatibleIndex = col.streamContainedMetaIndexes()
+                .filter(index -> index.getMetaIndexFieldByTableRefAndName(docPart.getTableRef(), newField.getName()) != null)
+                .findAny();
+        
+        if (optionalCompatibleIndex.isPresent()) {
+            MetaIndex compatibleIndex = optionalCompatibleIndex.get();  
+            MutableMetaDocPartIndex docPartIndex = docPart.addMetaDocPartIndex(identifierFactory.toIndexIdentifier( 
+                    db, docPart.getIdentifier(), Arrays.asList(new String[] { newField.getIdentifier() })), 
+                    compatibleIndex.isUnique());
+            getSqlInterface().getMetaDataWriteInterface().addMetaDocPartIndex(getDsl(), db, col, docPart, docPartIndex);
+            
+            MetaIndexField indexField = compatibleIndex.iteratorFields().next();
+            MetaDocPartIndexColumn fieldIndex = docPartIndex.addMetaDocPartIndexColumn(newField.getIdentifier(), indexField.getOrdering());
+            getSqlInterface().getMetaDataWriteInterface().addMetaDocPartIndexColumn(getDsl(), db, col, docPart, docPartIndex, fieldIndex);
+            
+            getSqlInterface().getStructureInterface().createIndex(getDsl(), docPartIndex.getIdentifier(), db.getIdentifier(), 
+                    docPart.getIdentifier(), newField.getIdentifier(), fieldIndex.getOrdering().isAscending(), docPartIndex.isUnique());
         }
     }
 
@@ -155,8 +160,8 @@ public class SharedWriteBackendTransactionImpl extends BackendTransactionImpl im
 	public void addScalar(MetaDatabase db, MetaCollection col, MetaDocPart docPart, MetaScalar newScalar) {
 		Preconditions.checkState(!isClosed(), "This transaction is closed");
 
-        getSqlInterface().getMetaDataWriteInterface().addMetaScalar(getDsl(), db.getName(), col.getName(), docPart.getTableRef(),
-				newScalar.getIdentifier(), newScalar.getType());
+        getSqlInterface().getMetaDataWriteInterface().addMetaScalar(getDsl(), db, col, docPart,
+				newScalar);
 		getSqlInterface().getStructureInterface().addColumnToDocPartTable(getDsl(), db.getIdentifier(), docPart.getIdentifier(),
 		        newScalar.getIdentifier(), getSqlInterface().getDataTypeProvider().getDataType(newScalar.getType()));
 	}
@@ -165,7 +170,7 @@ public class SharedWriteBackendTransactionImpl extends BackendTransactionImpl im
     public int consumeRids(MetaDatabase db, MetaCollection col, MetaDocPart docPart, int howMany) {
         Preconditions.checkState(!isClosed(), "This transaction is closed");
 
-        return getSqlInterface().getMetaDataWriteInterface().consumeRids(getDsl(), db.getName(), col.getName(), docPart.getTableRef(), howMany);
+        return getSqlInterface().getMetaDataWriteInterface().consumeRids(getDsl(), db, col, docPart, howMany);
     }
 
     @Override
@@ -184,6 +189,63 @@ public class SharedWriteBackendTransactionImpl extends BackendTransactionImpl im
         }
 
         getSqlInterface().getWriteInterface().deleteCollectionDocParts(getDsl(), db.getIdentifier(), col, dids);
+    }
+
+    @Override
+    public void createIndex(MetaDatabase db, MutableMetaCollection col, MetaIndex index) {
+        if (index.size() > 1) {
+            throw new UnsupportedOperationException("Index with more than one field is not supported");
+        }
+        
+        getSqlInterface().getMetaDataWriteInterface().addMetaIndex(getDsl(), db, col, index);
+        
+        Iterator<? extends MetaIndexField> indexFieldIterator = index.iteratorFields();
+        while (indexFieldIterator.hasNext()) {
+            MetaIndexField field = indexFieldIterator.next();
+            getSqlInterface().getMetaDataWriteInterface().addMetaIndexField(getDsl(), db, col, index, field);
+        }
+        
+        createMissingDocPartIndexes(db, col, index);
+    }
+
+    private void createMissingDocPartIndexes(MetaDatabase db, MutableMetaCollection col, MetaIndex index) {
+        Iterator<TableRef> tableRefIterator = index.streamTableRefs().iterator();
+        while (tableRefIterator.hasNext()) {
+            TableRef tableRef = tableRefIterator.next();
+            MutableMetaDocPart docPart = col.getMetaDocPartByTableRef(tableRef);
+            if (docPart != null) {
+                Iterator<List<String>> docPartIndexesFieldsIterator = 
+                        index.streamMetaDocPartIndexesIdentifiers(docPart).iterator();
+                
+                while (docPartIndexesFieldsIterator.hasNext()) {
+                    List<String> identifiers = docPartIndexesFieldsIterator.next();
+                    boolean containsExactDocPartIndex = docPart.streamIndexes()
+                            .anyMatch(docPartIndex -> index.isMatch(docPart, identifiers, docPartIndex));
+                    if (!containsExactDocPartIndex) {
+                        createOneFieldIndex(db, col, index, tableRef, docPart, identifiers);
+                    }
+                }
+            }
+        }
+    }
+
+    private void createOneFieldIndex(MetaDatabase db, MetaCollection col, MetaIndex index, TableRef tableRef, MutableMetaDocPart docPart,
+            List<String> identifiers) {
+        Iterator<? extends MetaIndexField> indexFieldIterator;
+        MutableMetaDocPartIndex docPartIndex = docPart.addMetaDocPartIndex(
+                identifierFactory.toIndexIdentifier(db, docPart.getIdentifier(), identifiers), index.isUnique());
+        getSqlInterface().getMetaDataWriteInterface().addMetaDocPartIndex(getDsl(), db, col, docPart, docPartIndex);
+        indexFieldIterator = index.iteratorMetaIndexFieldByTableRef(tableRef);
+        for (String identifier : identifiers) {
+            MetaIndexField indexField = indexFieldIterator.next();
+            MetaDocPartIndexColumn docPartIndexColumn = docPartIndex.addMetaDocPartIndexColumn(identifier, indexField.getOrdering());
+            getSqlInterface().getMetaDataWriteInterface().addMetaDocPartIndexColumn(getDsl(), db, col, docPart, docPartIndex, docPartIndexColumn);
+        }
+        
+        getSqlInterface().getStructureInterface().createIndex(
+                getDsl(), docPartIndex.getIdentifier(), db.getIdentifier(), docPart.getIdentifier(), 
+                identifiers.get(0), index.iteratorMetaIndexFieldByTableRef(tableRef)
+                    .next().getOrdering().isAscending(), index.isUnique());
     }
 
     @Override

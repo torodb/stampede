@@ -37,8 +37,6 @@ import javax.annotation.Nonnull;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.jooq.DSLContext;
 import org.jooq.lambda.Seq;
 import org.jooq.lambda.Unchecked;
@@ -47,7 +45,6 @@ import org.jooq.lambda.tuple.Tuple2;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import com.torodb.backend.ErrorHandler.Context;
-import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.backend.d2r.ResultSetDocPartResult;
 import com.torodb.backend.tables.MetaDocPartTable.DocPartTableFields;
 import com.torodb.core.TableRef;
@@ -71,7 +68,6 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 @SuppressFBWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
 public abstract class AbstractReadInterface implements ReadInterface {
 
-    private static final Logger LOGGER = LogManager.getLogger(AbstractReadInterface.class);
     private final MetaDataReadInterface metaDataReadInterface;
     private final DataTypeProvider dataTypeProvider;
     private final ErrorHandler errorHandler;

@@ -1,6 +1,21 @@
 
 package com.torodb.backend;
 
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.concurrent.ThreadFactory;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
+
+import javax.inject.Inject;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.jooq.DSLContext;
+
 import com.torodb.backend.ErrorHandler.Context;
 import com.torodb.backend.meta.SchemaUpdater;
 import com.torodb.backend.meta.SnapshotUpdater;
@@ -20,16 +35,12 @@ import com.torodb.core.retrier.Retrier;
 import com.torodb.core.retrier.Retrier.Hint;
 import com.torodb.core.retrier.RetrierGiveUpException;
 import com.torodb.core.transaction.RollbackException;
-import com.torodb.core.transaction.metainf.*;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.concurrent.ThreadFactory;
-import java.util.function.Consumer;
-import java.util.stream.Stream;
-import javax.inject.Inject;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.jooq.DSLContext;
+import com.torodb.core.transaction.metainf.MetaCollection;
+import com.torodb.core.transaction.metainf.MetaDatabase;
+import com.torodb.core.transaction.metainf.MetaDocPart;
+import com.torodb.core.transaction.metainf.MetaDocPartIndex;
+import com.torodb.core.transaction.metainf.MetaSnapshot;
+import com.torodb.core.transaction.metainf.MetainfoRepository;
 
 /**
  *
@@ -97,22 +108,22 @@ public class BackendImpl extends ThreadFactoryIdleService implements Backend {
 
     @Override
     public void enableDataImportMode(MetaSnapshot snapshot) throws RollbackException {
-        if (sqlInterface.getDbBackend().isOnDataInsertMode()) {
+        if (!sqlInterface.getDbBackend().isOnDataInsertMode()) {
             if (snapshot.streamMetaDatabases().findAny().isPresent()) {
                 throw new IllegalStateException("Can not disable indexes if any database exists");
             }
 
-            sqlInterface.getDbBackend().disableInternalIndexes();
+            sqlInterface.getDbBackend().enableDataInsertMode();
         }
     }
 
     @Override
     public void disableDataImportMode(MetaSnapshot snapshot) throws RollbackException {
-        if (!sqlInterface.getDbBackend().isOnDataInsertMode()) {
-            sqlInterface.getDbBackend().enableInternalIndexes();
+        if (sqlInterface.getDbBackend().isOnDataInsertMode()) {
+            sqlInterface.getDbBackend().disableDataInsertMode();
 
-            //create indexes
-            Stream<Consumer<DSLContext>> createIndexesJobs = snapshot.streamMetaDatabases().flatMap(
+            //create internal indexes
+            Stream<Consumer<DSLContext>> createInternalIndexesJobs = snapshot.streamMetaDatabases().flatMap(
                     db -> db.streamMetaCollections().flatMap(
                             col -> col.streamContainedMetaDocParts().flatMap(
                                     docPart -> enableInternalIndexJobs(db, col, docPart)
@@ -120,11 +131,19 @@ public class BackendImpl extends ThreadFactoryIdleService implements Backend {
                     )
             );
 
+            //create indexes
+            Stream<Consumer<DSLContext>> createIndexesJobs = snapshot.streamMetaDatabases().flatMap(
+                    db -> db.streamMetaCollections().flatMap(
+                            col -> enableIndexJobs(db, col)
+                    )
+            );
+
             //backend specific jobs
             Stream<Consumer<DSLContext>> backendSpecificJobs = sqlInterface.getStructureInterface()
                     .streamDataInsertFinishTasks(snapshot);
-            Stream<Runnable> runnables = Stream.concat(createIndexesJobs, backendSpecificJobs)
-                    .map(this::dslConsumerToRunnable);
+            Stream<Consumer<DSLContext>> jobs = Stream.concat(createInternalIndexesJobs, createIndexesJobs);
+            jobs = Stream.concat(jobs, backendSpecificJobs);
+            Stream<Runnable> runnables = jobs.map(this::dslConsumerToRunnable);
 
             streamExecutor.executeRunnables(runnables)
                     .join();
@@ -156,6 +175,37 @@ public class BackendImpl extends ThreadFactoryIdleService implements Backend {
         }
 
         return consumerStream;
+    }
+
+    private Stream<Consumer<DSLContext>> enableIndexJobs(MetaDatabase db, MetaCollection col) {
+        List<Consumer<DSLContext>> consumerList = new ArrayList<>();
+
+        Iterator<? extends MetaDocPart> docPartIterator = col.streamContainedMetaDocParts().iterator();
+        while (docPartIterator.hasNext()) {
+            MetaDocPart docPart = docPartIterator.next();
+            
+            Iterator<? extends MetaDocPartIndex> docPartIndexIterator = docPart.streamIndexes().iterator();
+            while (docPartIndexIterator.hasNext()) {
+                MetaDocPartIndex docPartIndex = docPartIndexIterator.next();
+
+                if (docPartIndex.size() > 1) {
+                    throw new UnsupportedOperationException("Index with more than one column is not supported");
+                }
+                
+                consumerList.add(createOneFieldIndexJob(db, docPart, docPartIndex));
+            }
+        }
+        
+        return consumerList.stream();
+    }
+
+    private Consumer<DSLContext> createOneFieldIndexJob(MetaDatabase db, MetaDocPart docPart,
+            MetaDocPartIndex docPartIndex) {
+        return dsl -> sqlInterface.getStructureInterface().createIndex(
+                dsl, docPartIndex.getIdentifier(), db.getIdentifier(), docPart.getIdentifier(), 
+                docPartIndex.iteratorColumns().next().getIdentifier(), 
+                docPartIndex.iteratorColumns().next().getOrdering().isAscending(), 
+                docPartIndex.isUnique());
     }
 
     private Runnable dslConsumerToRunnable(Consumer<DSLContext> consumer) {

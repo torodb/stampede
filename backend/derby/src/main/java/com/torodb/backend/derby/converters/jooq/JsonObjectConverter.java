@@ -35,7 +35,7 @@ import org.jooq.DataType;
 public class JsonObjectConverter implements Converter<String, JsonObject>{
     private static final long serialVersionUID = 1L;
 
-    public static final DataType<JsonObject> TYPE = StringValueConverter.VARCHAR_32672.asConvertedDataType(new JsonObjectConverter());
+    public static final DataType<JsonObject> TYPE = StringValueConverter.VARCHAR_TYPE.asConvertedDataType(new JsonObjectConverter());
 
     @Override
     public JsonObject from(String databaseObject) {

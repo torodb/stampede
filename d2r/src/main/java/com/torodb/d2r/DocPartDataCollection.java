@@ -2,15 +2,14 @@ package com.torodb.d2r;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 import com.torodb.core.d2r.CollectionData;
 import com.torodb.core.d2r.DocPartData;
 import com.torodb.d2r.model.DocPartDataImpl;
-import com.torodb.d2r.model.TableMetadata;
 import com.torodb.d2r.model.PathStack.PathInfo;
+import com.torodb.d2r.model.TableMetadata;
 
 public class DocPartDataCollection implements CollectionData {
 

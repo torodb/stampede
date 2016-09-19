@@ -29,11 +29,11 @@ public class TimeBinding<T> implements Binding<Time, T> {
     private static final long serialVersionUID = 1L;
 
     public static <JT, UT extends KVValue<?>> DataTypeForKV<UT> fromKVValue(Class<UT> type, KVValueConverter<Time, JT, UT> converter) {
-        return DataTypeForKV.from(new DefaultDataType<Time>(null, Time.class, "time"), converter, new TimeBinding<UT>(converter));
+        return DataTypeForKV.from(new DefaultDataType<Time>(null, Time.class, "TIME"), converter, new TimeBinding<UT>(converter));
     }
     
     public static <UT> DataType<UT> fromType(Class<UT> type, Converter<Time, UT> converter) {
-        return new DefaultDataType<Time>(null, Time.class, "time").asConvertedDataType(new TimeBinding<UT>(converter));
+        return new DefaultDataType<Time>(null, Time.class, "TIME").asConvertedDataType(new TimeBinding<UT>(converter));
     }
 
     private final Converter<Time, T> converter;

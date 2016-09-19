@@ -1,12 +1,20 @@
 
 package com.torodb.torod.pipeline;
 
-import com.torodb.core.TableRef;
-import com.torodb.core.annotations.DoNotChange;
-import com.torodb.core.transaction.metainf.*;
 import java.util.ArrayList;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
+
+import com.torodb.core.TableRef;
+import com.torodb.core.annotations.DoNotChange;
+import com.torodb.core.transaction.metainf.FieldType;
+import com.torodb.core.transaction.metainf.ImmutableMetaDocPart;
+import com.torodb.core.transaction.metainf.ImmutableMetaField;
+import com.torodb.core.transaction.metainf.ImmutableMetaScalar;
+import com.torodb.core.transaction.metainf.MetaDocPartIndex;
+import com.torodb.core.transaction.metainf.MetaScalar;
+import com.torodb.core.transaction.metainf.MutableMetaDocPart;
+import com.torodb.core.transaction.metainf.MutableMetaDocPartIndex;
 
 /**
  *
@@ -124,5 +132,25 @@ public class BatchMetaDocPart implements MutableMetaDocPart {
     @Override
     public String toString() {
         return defautToString();
+    }
+
+    @Override
+    public Stream<? extends MetaDocPartIndex> streamIndexes() {
+        return delegate.streamIndexes();
+    }
+
+    @Override
+    public MetaDocPartIndex getMetaDocPartIndexByIdentifier(String indexId) {
+        return delegate.getMetaDocPartIndexByIdentifier(indexId);
+    }
+
+    @Override
+    public MutableMetaDocPartIndex addMetaDocPartIndex(String identifier, boolean unique) throws IllegalArgumentException {
+        return delegate.addMetaDocPartIndex(identifier, unique);
+    }
+
+    @Override
+    public Iterable<? extends MutableMetaDocPartIndex> getAddedMetaDocPartIndexes() {
+        return delegate.getAddedMetaDocPartIndexes();
     }
 }

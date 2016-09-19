@@ -24,7 +24,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Optional;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -43,7 +42,6 @@ import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.kvdocument.values.KVValue;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.jooq.*;
 
 @Singleton
 @SuppressFBWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
@@ -170,6 +168,7 @@ public class SqlHelper {
 		return sqlBinding.getPlaceholder();
     }
 
+    @SuppressWarnings("rawtypes")
     public String getSqlTypeName(FieldType fieldType) {
         DataTypeForKV dataType = dataTypeProvider.getDataType(fieldType);
 

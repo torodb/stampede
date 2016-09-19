@@ -38,7 +38,7 @@ public interface ExclusiveWriteBackendTransaction extends WriteBackendTransactio
      * @throws RollbackException
      */
     public void renameCollection(MetaDatabase fromDb, MetaCollection fromColl, MutableMetaDatabase toDb, MutableMetaCollection toColl) throws RollbackException;
-
+    
     @Override
     public void close();
 }

@@ -44,9 +44,6 @@ import com.torodb.core.exceptions.SystemException;
  * @see <a href="http://jdbc.postgresql.org/">PostgreSQL JDBC Driver</a>
  */
 public class OfficialPostgreSQLDriver implements PostgreSQLDriverProvider {
-    private static final Logger LOGGER = LogManager.getLogger(
-            OfficialPostgreSQLDriver.class
-    );
     private static final Logger JDBC_LOGGER = LogManager.getLogger(
             PGSimpleDataSource.class
     );

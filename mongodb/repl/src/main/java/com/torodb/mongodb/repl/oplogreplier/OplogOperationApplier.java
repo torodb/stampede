@@ -19,6 +19,7 @@ import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.UpdateCommand.UpdateArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.UpdateCommand.UpdateResult;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.UpdateCommand.UpdateStatement;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.IndexOptions;
 import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.Request;
 import com.eightkdata.mongowp.server.api.oplog.*;
@@ -27,6 +28,8 @@ import com.torodb.mongodb.core.WriteMongodTransaction;
 import com.torodb.mongodb.repl.OplogManager;
 import com.torodb.mongodb.utils.DefaultIdUtils;
 import com.torodb.mongodb.utils.NamespaceUtil;
+
+import java.util.Arrays;
 import java.util.Collections;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -153,7 +156,9 @@ public class OplogOperationApplier {
     private Status<CreateIndexesResult> insertIndex(BsonDocument indexDoc, String database, WriteMongodTransaction trans) {
         try {
             CreateIndexesCommand command = CreateIndexesCommand.INSTANCE;
-            CreateIndexesArgument arg = command.unmarshallArg(indexDoc);
+            IndexOptions indexOptions = IndexOptions.unmarshall(indexDoc);
+            CreateIndexesArgument arg = new CreateIndexesArgument(
+                    indexOptions.getCollection(), Arrays.asList(new IndexOptions[] { indexOptions }));
 
             return executeCommand(database, command, arg, trans);
         } catch (MongoException ex) {

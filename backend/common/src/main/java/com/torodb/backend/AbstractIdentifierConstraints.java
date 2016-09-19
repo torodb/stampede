@@ -133,6 +133,11 @@ public abstract class AbstractIdentifierConstraints implements IdentifierConstra
     public boolean isAllowedColumnIdentifier(@Nonnull String columnName) {
         return !restrictedColumnNames.contains(columnName);
     }
+    
+    @Override
+    public boolean isAllowedIndexIdentifier(@Nonnull String indexName) {
+        return true;
+    }
 
     @Override
     public boolean isSameIdentifier(@Nonnull String leftIdentifier, @Nonnull String rightIdentifier) {

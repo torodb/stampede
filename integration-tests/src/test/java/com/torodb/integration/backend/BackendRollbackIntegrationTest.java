@@ -20,12 +20,6 @@
 
 package com.torodb.integration.backend;
 
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
-import com.torodb.backend.MockDidCursor;
-import com.torodb.core.transaction.RollbackException;
-import com.torodb.core.transaction.metainf.*;
-import com.torodb.kvdocument.values.KVDocument;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.Duration;
@@ -33,21 +27,45 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jooq.DSLContext;
 import org.jooq.exception.DataAccessException;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
+
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.torodb.backend.MockDidCursor;
+import com.torodb.core.transaction.RollbackException;
+import com.torodb.core.transaction.metainf.FieldType;
+import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
+import com.torodb.core.transaction.metainf.ImmutableMetaDatabase;
+import com.torodb.core.transaction.metainf.ImmutableMetaDocPart;
+import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
+import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
+import com.torodb.core.transaction.metainf.WrapperMutableMetaSnapshot;
+import com.torodb.integration.Backend;
+import com.torodb.integration.IgnoreBackend;
+import com.torodb.integration.IgnoreBackendRule;
+import com.torodb.kvdocument.values.KVDocument;
 
 public class BackendRollbackIntegrationTest extends AbstractBackendTest {
 
     private final static Logger LOGGER = LogManager.getLogger(BackendRollbackIntegrationTest.class);
     
+    public RollbackOrSuccessRule rollbackOrSuccessRule = new RollbackOrSuccessRule();
     @Rule
-    public RollbackOrSuccessRule rule = new RollbackOrSuccessRule();
+    public TestRule rule = RuleChain.outerRule(new IgnoreBackendRule())
+                                    .around(rollbackOrSuccessRule);
     
     private StepThread leftThread;
     private StepThread rightThread;
@@ -71,10 +89,10 @@ public class BackendRollbackIntegrationTest extends AbstractBackendTest {
     
     private static class RollbackOrSuccessRule implements TestRule {
 
-        public boolean couldRollback = false;
+        public boolean shouldRollback = false;
         
-        public void couldRollback() {
-            couldRollback = true;
+        public void shouldRollback() {
+            shouldRollback = true;
         }
         
         @Override
@@ -85,7 +103,9 @@ public class BackendRollbackIntegrationTest extends AbstractBackendTest {
                     try {
                         base.evaluate();
                         
-                        LOGGER.info("No exception was thrown");
+                        if (shouldRollback) {
+                            Assert.fail("Should have rolled back");
+                        }
                     } catch(RollbackException rollbackException) {
                         String sqlCode = null;
                         String message = null;
@@ -102,7 +122,7 @@ public class BackendRollbackIntegrationTest extends AbstractBackendTest {
                         } else {
                             LOGGER.info("Custom rollback");
                         }
-                        if (!couldRollback) {
+                        if (!shouldRollback) {
                             throw rollbackException;
                         }
                     } catch(SQLException sqlException) {
@@ -138,7 +158,7 @@ public class BackendRollbackIntegrationTest extends AbstractBackendTest {
                 .waitUntilThreadSleeps(1);
             leftThread.step(() -> leftConnection.commit())
                 .waitQueuedSteps();
-            rule.couldRollback();
+            rollbackOrSuccessRule.shouldRollback();
             rightThread.step(() -> rightConnection.commit())
                 .waitQueuedSteps();
         }
@@ -163,7 +183,7 @@ public class BackendRollbackIntegrationTest extends AbstractBackendTest {
             rightThread.step(() -> sqlInterface.getStructureInterface().createRootDocPartTable(rightDsl, "test", "test", createTableRef()))
                 .waitUntilThreadSleeps(1);
             leftThread.step(() -> leftConnection.commit()).waitQueuedSteps();
-            rule.couldRollback();
+            rollbackOrSuccessRule.shouldRollback();
             rightThread.step(() -> rightConnection.commit()).waitQueuedSteps();
         }
     }
@@ -190,13 +210,14 @@ public class BackendRollbackIntegrationTest extends AbstractBackendTest {
                     .addColumnToDocPartTable(rightDsl, "test", "test", "test", sqlInterface.getDataTypeProvider().getDataType(FieldType.STRING)))
                 .waitUntilThreadSleeps(1);
             leftThread.step(() -> leftConnection.commit()).waitQueuedSteps();
-            rule.couldRollback();
+            rollbackOrSuccessRule.shouldRollback();
             rightThread.step(() -> rightConnection.commit()).waitQueuedSteps();
         }
     }
     
     @Test
-    public void testDeletedSameData() throws Throwable {
+    @IgnoreBackend(Backend.DERBY)
+    public void testDeleteSameData() throws Throwable {
         List<Integer> generatedDids;
         ImmutableMetaDocPart metaDocPart = new ImmutableMetaDocPart.Builder(createTableRef(), "test").build();
         ImmutableMetaCollection metaCollection = new ImmutableMetaCollection.Builder("test", "test")
@@ -235,9 +256,36 @@ public class BackendRollbackIntegrationTest extends AbstractBackendTest {
                 .waitUntilThreadSleeps(1);
             leftThread.step(() -> leftConnection.commit())
                 .waitQueuedSteps();
-            rule.couldRollback();
+            rollbackOrSuccessRule.shouldRollback();
             rightThread.step(() -> rightConnection.commit())
                 .waitQueuedSteps();
+        }
+    }
+    
+    @Test
+    @IgnoreBackend(Backend.DERBY)
+    public void testCreateSameIndex() throws Throwable {
+        try (Connection connection = sqlInterface.getDbBackend().createWriteConnection()) {
+            DSLContext dsl = sqlInterface.getDslContextFactory().createDSLContext(connection);
+            sqlInterface.getStructureInterface().createSchema(dsl, "test");
+            sqlInterface.getStructureInterface().createRootDocPartTable(dsl, "test", "test", createTableRef());
+            sqlInterface.getStructureInterface().addColumnToDocPartTable(dsl, "test", "test", "test", sqlInterface.getDataTypeProvider().getDataType(FieldType.STRING));
+            connection.commit();
+        }
+        
+        try (
+             Connection leftConnection = sqlInterface.getDbBackend().createWriteConnection();
+             Connection rightConnection = sqlInterface.getDbBackend().createWriteConnection()
+            ) {
+            DSLContext leftDsl = sqlInterface.getDslContextFactory().createDSLContext(leftConnection);
+            DSLContext rightDsl = sqlInterface.getDslContextFactory().createDSLContext(rightConnection);
+            leftThread.step(() -> sqlInterface.getStructureInterface().createIndex(leftDsl, "test_index", "test", "test", "test", true, false))
+                .waitQueuedSteps();
+            rightThread.step(() -> sqlInterface.getStructureInterface().createIndex(rightDsl, "test_index", "test", "test", "test", true, false))
+                .waitUntilThreadSleeps(1);
+            leftThread.step(() -> leftConnection.commit()).waitQueuedSteps();
+            rollbackOrSuccessRule.shouldRollback();
+            rightThread.step(() -> rightConnection.commit()).waitQueuedSteps();
         }
     }
     

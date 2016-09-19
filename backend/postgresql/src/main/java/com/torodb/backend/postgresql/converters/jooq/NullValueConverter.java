@@ -18,53 +18,57 @@
  *     
  */
 
-package com.torodb.backend.converters.jooq;
 
-import org.jooq.impl.SQLDataType;
+package com.torodb.backend.postgresql.converters.jooq;
 
-import com.torodb.backend.converters.sql.BinarySqlBinding;
+import java.sql.Types;
+
+import org.jooq.util.postgres.PostgresDataType;
+
+import com.torodb.backend.converters.jooq.DataTypeForKV;
+import com.torodb.backend.converters.jooq.KVValueConverter;
+import com.torodb.backend.converters.sql.BooleanSqlBinding;
 import com.torodb.backend.converters.sql.SqlBinding;
 import com.torodb.kvdocument.types.KVType;
-import com.torodb.kvdocument.types.MongoObjectIdType;
-import com.torodb.kvdocument.values.KVMongoObjectId;
-import com.torodb.kvdocument.values.heap.ByteArrayKVMongoObjectId;
+import com.torodb.kvdocument.types.NullType;
+import com.torodb.kvdocument.values.KVNull;
 
 /**
  *
  */
-public class MongoObjectIdValueConverter implements KVValueConverter<byte[], byte[], KVMongoObjectId> {
+public class NullValueConverter implements KVValueConverter<Boolean, Boolean, KVNull>{
     private static final long serialVersionUID = 1L;
 
-    public static final DataTypeForKV<KVMongoObjectId> TYPE = DataTypeForKV.from(SQLDataType.BINARY, new MongoObjectIdValueConverter());
+    public static final DataTypeForKV<KVNull> TYPE = DataTypeForKV.from(PostgresDataType.BOOL, new NullValueConverter(), Types.BIT);
 
     @Override
     public KVType getErasuredType() {
-        return MongoObjectIdType.INSTANCE;
+        return NullType.INSTANCE;
     }
 
     @Override
-    public KVMongoObjectId from(byte[] databaseObject) {
-        return new ByteArrayKVMongoObjectId(databaseObject);
+    public KVNull from(Boolean databaseObject) {
+        return KVNull.getInstance();
     }
 
     @Override
-    public byte[] to(KVMongoObjectId userObject) {
-        return userObject.getArrayValue();
+    public Boolean to(KVNull userObject) {
+        return Boolean.TRUE;
     }
 
     @Override
-    public Class<byte[]> fromType() {
-        return byte[].class;
+    public Class<Boolean> fromType() {
+        return Boolean.class;
     }
 
     @Override
-    public Class<KVMongoObjectId> toType() {
-        return KVMongoObjectId.class;
+    public Class<KVNull> toType() {
+        return KVNull.class;
     }
 
     @Override
-    public SqlBinding<byte[]> getSqlBinding() {
-        return BinarySqlBinding.INSTANCE;
+    public SqlBinding<Boolean> getSqlBinding() {
+        return BooleanSqlBinding.INSTANCE;
     }
-
+    
 }

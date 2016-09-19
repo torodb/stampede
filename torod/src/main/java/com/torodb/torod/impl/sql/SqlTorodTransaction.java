@@ -142,20 +142,8 @@ public abstract class SqlTorodTransaction<T extends InternalTransaction> impleme
             LOGGER.trace("Collection " + dbName + '.' + colName + " does not exist. An empty cursor is returned");
             return new EmptyToroCursor();
         }
-        TableRefFactory tableRefFactory = connection.getServer().getTableRefFactory();
-        TableRef ref = tableRefFactory.createRoot();
-
-        if (attRef.getKeys().isEmpty()) {
-            throw new IllegalArgumentException("The empty attribute reference is not valid on queries");
-        }
+        TableRef ref = extractTableRef(attRef);
         String lastKey = extractKeyName(attRef.getKeys().get(attRef.getKeys().size() - 1));
-        if (attRef.getKeys().size() > 1) {
-            List<Key<?>> keys = attRef.getKeys();
-            List<Key<?>> tableKeys = keys.subList(0, keys.size() - 1);
-            for (Key<?> key : tableKeys) {
-                ref = tableRefFactory.createChild(ref, extractKeyName(key));
-            }
-        }
         
         MetaDocPart docPart = col.getMetaDocPartByTableRef(ref);
         if (docPart == null) {
@@ -188,20 +176,9 @@ public abstract class SqlTorodTransaction<T extends InternalTransaction> impleme
             LOGGER.trace("An empty list of values have been given as in condition. An empty cursor is returned");
             return new EmptyToroCursor();
         }
-        TableRefFactory tableRefFactory = connection.getServer().getTableRefFactory();
-        TableRef ref = tableRefFactory.createRoot();
 
-        if (attRef.getKeys().isEmpty()) {
-            throw new IllegalArgumentException("The empty attribute reference is not valid on queries");
-        }
+        TableRef ref = extractTableRef(attRef);
         String lastKey = extractKeyName(attRef.getKeys().get(attRef.getKeys().size() - 1));
-        if (attRef.getKeys().size() > 1) {
-            List<Key<?>> keys = attRef.getKeys();
-            List<Key<?>> tableKeys = keys.subList(0, keys.size() - 1);
-            for (Key<?> key : tableKeys) {
-                ref = tableRefFactory.createChild(ref, extractKeyName(key));
-            }
-        }
 
         MetaDocPart docPart = col.getMetaDocPartByTableRef(ref);
         if (docPart == null) {
@@ -236,20 +213,9 @@ public abstract class SqlTorodTransaction<T extends InternalTransaction> impleme
             LOGGER.trace("An empty list of values have been given as in condition. An empty cursor is returned");
             return new EmptyCursor<>();
         }
-        TableRefFactory tableRefFactory = connection.getServer().getTableRefFactory();
-        TableRef ref = tableRefFactory.createRoot();
-
-        if (attRef.getKeys().isEmpty()) {
-            throw new IllegalArgumentException("The empty attribute reference is not valid on queries");
-        }
+        
+        TableRef ref = extractTableRef(attRef);
         String lastKey = extractKeyName(attRef.getKeys().get(attRef.getKeys().size() - 1));
-        if (attRef.getKeys().size() > 1) {
-            List<Key<?>> keys = attRef.getKeys();
-            List<Key<?>> tableKeys = keys.subList(0, keys.size() - 1);
-            for (Key<?> key : tableKeys) {
-                ref = tableRefFactory.createChild(ref, extractKeyName(key));
-            }
-        }
 
         MetaDocPart docPart = col.getMetaDocPartByTableRef(ref);
         if (docPart == null) {
@@ -307,12 +273,29 @@ public abstract class SqlTorodTransaction<T extends InternalTransaction> impleme
         return new CollectionInfo(db.getMetaCollectionByName(colName).getName(), Json.createObjectBuilder().build());
     }
 
+    protected TableRef extractTableRef(AttributeReference attRef) {
+        TableRefFactory tableRefFactory = getConnection().getServer().getTableRefFactory();
+        TableRef ref = tableRefFactory.createRoot();
+
+        if (attRef.getKeys().isEmpty()) {
+            throw new IllegalArgumentException("The empty attribute reference is not valid");
+        }
+        if (attRef.getKeys().size() > 1) {
+            List<Key<?>> keys = attRef.getKeys();
+            List<Key<?>> tableKeys = keys.subList(0, keys.size() - 1);
+            for (Key<?> key : tableKeys) {
+                ref = tableRefFactory.createChild(ref, extractKeyName(key));
+            }
+        }
+        return ref;
+    }
+
     protected String extractKeyName(Key<?> key) {
         if (key instanceof ObjectKey) {
             return ((ObjectKey) key).getKey();
         }
         else {
-            throw new IllegalArgumentException("Keys whose type is not object are not valid on queries");
+            throw new IllegalArgumentException("Keys whose type is not object are not valid");
         }
     }
 

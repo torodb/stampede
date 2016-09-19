@@ -38,7 +38,7 @@ public class CollectionMetaInfo {
 	
 	public String getFieldIdentifier(TableRef tableRef, FieldType fieldType, String field){
 		MutableMetaDocPart metaDocPart = metaCollection.getMetaDocPartByTableRef(tableRef);
-		return identifierFactory.toFieldIdentifier(metaDocPart, fieldType, field);
+		return identifierFactory.toFieldIdentifier(metaDocPart, field, fieldType);
 	}
 	
 	public String getScalarIdentifier(FieldType fieldType){

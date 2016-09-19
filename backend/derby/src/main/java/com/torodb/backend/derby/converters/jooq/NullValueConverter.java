@@ -18,52 +18,53 @@
  *     
  */
 
-package com.torodb.backend.converters.jooq;
 
-import org.jooq.impl.SQLDataType;
+package com.torodb.backend.derby.converters.jooq;
 
-import com.torodb.backend.converters.sql.DoubleSqlBinding;
+import com.torodb.backend.converters.jooq.DataTypeForKV;
+import com.torodb.backend.converters.jooq.KVValueConverter;
+import com.torodb.backend.converters.sql.BooleanSqlBinding;
 import com.torodb.backend.converters.sql.SqlBinding;
-import com.torodb.kvdocument.types.DoubleType;
 import com.torodb.kvdocument.types.KVType;
-import com.torodb.kvdocument.values.KVDouble;
+import com.torodb.kvdocument.types.NullType;
+import com.torodb.kvdocument.values.KVNull;
 
 /**
  *
  */
-public class DoubleValueConverter implements KVValueConverter<Double, Double, KVDouble> {
+public class NullValueConverter implements KVValueConverter<Boolean, Boolean, KVNull>{
     private static final long serialVersionUID = 1L;
 
-    public static final DataTypeForKV<KVDouble> TYPE = DataTypeForKV.from(SQLDataType.DOUBLE, new DoubleValueConverter());
+    public static final DataTypeForKV<KVNull> TYPE = DataTypeForKV.from(BooleanValueConverter.BOOLEAN_TYPE, new NullValueConverter());
 
     @Override
     public KVType getErasuredType() {
-        return DoubleType.INSTANCE;
+        return NullType.INSTANCE;
     }
 
     @Override
-    public KVDouble from(Double databaseObject) {
-        return KVDouble.of(databaseObject);
+    public KVNull from(Boolean databaseObject) {
+        return KVNull.getInstance();
     }
 
     @Override
-    public Double to(KVDouble userObject) {
-        return userObject.getValue();
+    public Boolean to(KVNull userObject) {
+        return Boolean.TRUE;
     }
 
     @Override
-    public Class<Double> fromType() {
-        return Double.class;
+    public Class<Boolean> fromType() {
+        return Boolean.class;
     }
 
     @Override
-    public Class<KVDouble> toType() {
-        return KVDouble.class;
+    public Class<KVNull> toType() {
+        return KVNull.class;
     }
 
     @Override
-    public SqlBinding<Double> getSqlBinding() {
-        return DoubleSqlBinding.INSTANCE;
+    public SqlBinding<Boolean> getSqlBinding() {
+        return BooleanSqlBinding.INSTANCE;
     }
-
+    
 }

@@ -20,13 +20,12 @@
 
 package com.torodb.backend.derby;
 
-import com.google.common.base.Joiner;
 import java.util.Collection;
-import java.util.Random;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.torodb.backend.AbstractStructureInterface;
 import com.torodb.backend.InternalField;
@@ -67,14 +66,9 @@ public class DerbyStructureInterface extends AbstractStructureInterface {
         return "DROP SCHEMA \"" + schemaName + "\" RESTRICT";
     }
     
-    private final Random random = new Random();
-    
     @Override
-    protected String getCreateIndexStatement(String schemaName, String tableName, String columnName,
+    protected String getCreateIndexStatement(String indexName, String schemaName, String tableName, String columnName,
             boolean ascending, boolean unique) {
-        //TODO: This is a hack accepted by all devs. Common SQL interface for creating indexes should pass an identifier here
-        String indexName = tableName + '_' + columnName + random.nextInt() % 256;
-        
         String uniqueText = unique ? "UNIQUE " : "";
 
         StringBuilder sb = new StringBuilder()

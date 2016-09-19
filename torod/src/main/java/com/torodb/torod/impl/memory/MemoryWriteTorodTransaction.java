@@ -8,6 +8,7 @@ import com.torodb.core.document.ToroDocument;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.language.AttributeReference;
 import com.torodb.core.transaction.RollbackException;
+import com.torodb.core.transaction.metainf.FieldIndexOrdering;
 import com.torodb.kvdocument.values.KVDocument;
 import com.torodb.kvdocument.values.KVValue;
 import com.torodb.torod.ExclusiveWriteTorodTransaction;
@@ -85,5 +86,9 @@ public class MemoryWriteTorodTransaction extends MemoryTorodTransaction implemen
         trans.commit();
     }
 
+    @Override
+    public void createIndex(String dbName, String colName, String indexName, AttributeReference attRef,
+            FieldIndexOrdering ordering, boolean unique) {
+    }
 
 }

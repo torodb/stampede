@@ -4,9 +4,13 @@ package com.torodb.torod.pipeline;
 import com.torodb.core.TableRef;
 import com.torodb.core.annotations.DoNotChange;
 import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
+import com.torodb.core.transaction.metainf.MetaIndex;
 import com.torodb.core.transaction.metainf.MutableMetaCollection;
 import com.torodb.core.transaction.metainf.MutableMetaDocPart;
+import com.torodb.core.transaction.metainf.MutableMetaIndex;
+
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -108,6 +112,26 @@ public class BatchMetaCollection implements MutableMetaCollection {
     private void onDocPartChange(BatchMetaDocPart changedDocPart) {
         changesOnBatch.add(changedDocPart);
         modifiedDocParts.add(changedDocPart);
+    }
+
+    @Override
+    public MetaIndex getMetaIndexByName(String indexName) {
+        return delegate.getMetaIndexByName(indexName);
+    }
+
+    @Override
+    public Stream<? extends MutableMetaIndex> streamContainedMetaIndexes() {
+        return delegate.streamContainedMetaIndexes();
+    }
+
+    @Override
+    public MutableMetaIndex addMetaIndex(String name, boolean unique) throws IllegalArgumentException {
+        return delegate.addMetaIndex(name, unique);
+    }
+
+    @Override
+    public Iterable<? extends MutableMetaIndex> getModifiedMetaIndexes() {
+        return delegate.getModifiedMetaIndexes();
     }
 
 }

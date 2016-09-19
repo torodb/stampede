@@ -37,7 +37,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 @SuppressFBWarnings(value = {"EQ_DOESNT_OVERRIDE_EQUALS","HE_HASHCODE_NO_EQUALS"})
 public class DerbyMetaScalarTable extends MetaScalarTable<JsonArray, DerbyMetaScalarRecord> {
 
-    private static final long serialVersionUID = 2305519627765737325L;
+    private static final long serialVersionUID = -4901972508689222558L;
     /**
 	 * The singleton instance of <code>torodb.collections</code>
 	 */

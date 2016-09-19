@@ -31,8 +31,8 @@ import com.torodb.core.TableRefFactory;
 
 public abstract class MetaDocPartRecord<TableRefType> extends UpdatableRecordImpl<MetaDocPartRecord<TableRefType>> 
         implements Record5<String, String, TableRefType, String, Integer> {
-// database, name, original_name, last_did
-	private static final long serialVersionUID = -2107968478;
+
+    private static final long serialVersionUID = -2107968478;
 
     /**
      * Setter for <code>torodb.container.database</code>.

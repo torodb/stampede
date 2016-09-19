@@ -1,10 +1,12 @@
 
 package com.torodb.core.transaction.metainf;
 
-import com.torodb.core.TableRef;
 import java.util.stream.Stream;
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+
+import com.torodb.core.TableRef;
 
 /**
  */
@@ -32,6 +34,12 @@ public interface MetaCollection {
     @Nullable
     public abstract MetaDocPart getMetaDocPartByTableRef(TableRef tableRef);
 
+
+    public Stream<? extends MetaIndex> streamContainedMetaIndexes();
+
+    @Nullable
+    public MetaIndex getMetaIndexByName(String indexName);
+    
     public default String defautToString() {
         return "col{" + "name:" + getName() + ", id:" + getIdentifier() + '}';
     }

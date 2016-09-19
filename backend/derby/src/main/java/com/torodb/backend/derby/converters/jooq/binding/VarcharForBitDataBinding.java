@@ -27,11 +27,11 @@ public class VarcharForBitDataBinding<T> implements Binding<byte[], T> {
     private static final long serialVersionUID = 1L;
 
     public static <JT, UT extends KVValue<?>> DataTypeForKV<UT> fromKVValue(Class<UT> type, KVValueConverter<byte[], JT, UT> converter, int size) {
-        return DataTypeForKV.from(new DefaultDataType<byte[]>(null, byte[].class, "varchar (" + size + ") for bit data"), converter, new VarcharForBitDataBinding<UT>(converter), Types.VARBINARY);
+        return DataTypeForKV.from(new DefaultDataType<byte[]>(null, byte[].class, "VARCHAR () FOR BIT DATA", "VARCHAR (" + size + ") FOR BIT DATA"), converter, new VarcharForBitDataBinding<UT>(converter), Types.VARBINARY);
     }
     
     public static <UT> DataType<UT> fromType(Class<UT> type, Converter<byte[], UT> converter, int size) {
-        return new DefaultDataType<byte[]>(null, byte[].class, "varchar (" + size + ") for bit data").asConvertedDataType(new VarcharForBitDataBinding<UT>(converter));
+        return new DefaultDataType<byte[]>(null, byte[].class, "VARCHAR () FOR BIT DATA", "VARCHAR (" + size + ") FOR BIT DATA").asConvertedDataType(new VarcharForBitDataBinding<UT>(converter));
     }
 
     private final Converter<byte[], T> converter;

@@ -26,15 +26,16 @@ import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetaField;
+import com.torodb.core.transaction.metainf.MutableMetaDocPart;
 
 public class AddFieldDDLJobImpl implements AddFieldDDLJob {
 
     private final MetaDatabase db;
     private final MetaCollection col;
-    private final MetaDocPart docPart;
+    private final MutableMetaDocPart docPart;
     private final MetaField newField;
 
-    public AddFieldDDLJobImpl(MetaDatabase db, MetaCollection col, MetaDocPart docPart, MetaField newField) {
+    public AddFieldDDLJobImpl(MetaDatabase db, MetaCollection col, MutableMetaDocPart docPart, MetaField newField) {
         super();
         this.db = db;
         this.col = col;

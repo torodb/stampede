@@ -31,8 +31,8 @@ import org.jooq.impl.UpdatableRecordImpl;
 
 public abstract class MetaScalarRecord<TableRefType> extends UpdatableRecordImpl<MetaScalarRecord<TableRefType>> 
         implements Record5<String, String, TableRefType, FieldType, String> {
-// database, name, original_name, last_did
-	private static final long serialVersionUID = -1107968478;
+
+    private static final long serialVersionUID = -1107968478;
 
     /**
      * Setter for <code>torodb.scalar.database</code>.

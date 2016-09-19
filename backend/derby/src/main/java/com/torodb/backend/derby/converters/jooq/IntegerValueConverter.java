@@ -19,10 +19,15 @@
  */
 
 
-package com.torodb.backend.converters.jooq;
+package com.torodb.backend.derby.converters.jooq;
 
+import org.jooq.DataType;
+import org.jooq.SQLDialect;
+import org.jooq.impl.DefaultDataType;
 import org.jooq.impl.SQLDataType;
 
+import com.torodb.backend.converters.jooq.DataTypeForKV;
+import com.torodb.backend.converters.jooq.KVValueConverter;
 import com.torodb.backend.converters.sql.IntegerSqlBinding;
 import com.torodb.backend.converters.sql.SqlBinding;
 import com.torodb.kvdocument.types.IntegerType;
@@ -36,7 +41,9 @@ import com.torodb.kvdocument.values.KVInteger;
 public class IntegerValueConverter implements KVValueConverter<Integer, Integer, KVInteger>{
     private static final long serialVersionUID = 1L;
 
-    public static final DataTypeForKV<KVInteger> TYPE = DataTypeForKV.from(SQLDataType.INTEGER, new IntegerValueConverter());
+    public static final DataType<Integer> INTEGER_TYPE = new DefaultDataType<Integer>(SQLDialect.DERBY, Integer.class, "INTEGER");
+    
+    public static final DataTypeForKV<KVInteger> TYPE = DataTypeForKV.from(INTEGER_TYPE, new IntegerValueConverter());
 
     @Override
     public KVType getErasuredType() {

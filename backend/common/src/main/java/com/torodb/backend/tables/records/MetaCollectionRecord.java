@@ -29,8 +29,8 @@ import com.torodb.backend.tables.MetaCollectionTable;
 
 public abstract class MetaCollectionRecord extends UpdatableRecordImpl<MetaCollectionRecord> 
         implements Record3<String, String, String> {
-// database, name
-	private static final long serialVersionUID = -2107968478;
+
+    private static final long serialVersionUID = -2107968478;
 
     /**
      * Setter for <code>torodb.collection.database</code>.

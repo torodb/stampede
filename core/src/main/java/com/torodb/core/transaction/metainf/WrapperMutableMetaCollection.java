@@ -37,6 +37,8 @@ public class WrapperMutableMetaCollection implements MutableMetaCollection {
     private final ImmutableMetaCollection wrapped;
     private final HashMap<TableRef, WrapperMutableMetaDocPart> newDocParts;
     private final Set<WrapperMutableMetaDocPart> modifiedMetaDocParts;
+    private final HashMap<String, WrapperMutableMetaIndex> newIndexes;
+    private final Set<WrapperMutableMetaIndex> modifiedMetaIndexes;
     private final Consumer<WrapperMutableMetaCollection> changeConsumer;
 
     public WrapperMutableMetaCollection(ImmutableMetaCollection wrappedCollection,
@@ -52,10 +54,23 @@ public class WrapperMutableMetaCollection implements MutableMetaCollection {
             WrapperMutableMetaDocPart mutable = createMetaDocPart(docPart);
             newDocParts.put(mutable.getTableRef(), mutable);
         });
+        
+        this.newIndexes = new HashMap<>();
+
+        modifiedMetaIndexes = new HashSet<>();
+
+        wrappedCollection.streamContainedMetaIndexes().forEach((index) -> {
+            WrapperMutableMetaIndex mutable = createMetaIndex(index);
+            newIndexes.put(mutable.getName(), mutable);
+        });
     }
 
     protected WrapperMutableMetaDocPart createMetaDocPart(ImmutableMetaDocPart immutable) {
         return new WrapperMutableMetaDocPart(immutable, this::onDocPartChange);
+    }
+
+    protected WrapperMutableMetaIndex createMetaIndex(ImmutableMetaIndex immutable) {
+        return new WrapperMutableMetaIndex(immutable, this::onIndexChange);
     }
 
     @Override
@@ -83,13 +98,36 @@ public class WrapperMutableMetaCollection implements MutableMetaCollection {
     }
 
     @Override
+    public MutableMetaIndex addMetaIndex(String name, boolean unique) throws IllegalArgumentException {
+        if (getMetaIndexByName(name) != null) {
+            throw new IllegalArgumentException("There is another index whose name is " + name);
+        }
+
+        WrapperMutableMetaIndex result = createMetaIndex(
+                new ImmutableMetaIndex(name, unique));
+
+        newIndexes.put(name, result);
+        onIndexChange(result);
+
+        return result;
+    }
+
+    @Override
+    public Iterable<? extends MutableMetaIndex> getModifiedMetaIndexes() {
+        return modifiedMetaIndexes;
+    }
+
+    @Override
     public ImmutableMetaCollection immutableCopy() {
-        if (modifiedMetaDocParts.isEmpty()) {
+        if (modifiedMetaDocParts.isEmpty() && modifiedMetaIndexes.isEmpty()) {
             return wrapped;
         } else {
             ImmutableMetaCollection.Builder builder = new ImmutableMetaCollection.Builder(wrapped);
             for (MutableMetaDocPart modifiedMetaDocPart : modifiedMetaDocParts) {
                 builder.put(modifiedMetaDocPart.immutableCopy());
+            }
+            for (MutableMetaIndex modifiedMetaIndex : modifiedMetaIndexes) {
+                builder.put(modifiedMetaIndex.immutableCopy());
             }
             return builder.build();
         }
@@ -125,12 +163,27 @@ public class WrapperMutableMetaCollection implements MutableMetaCollection {
     }
 
     @Override
+    public Stream<? extends WrapperMutableMetaIndex> streamContainedMetaIndexes() {
+        return newIndexes.values().stream();
+    }
+
+    @Override
+    public WrapperMutableMetaIndex getMetaIndexByName(String indexName) {
+        return newIndexes.get(indexName);
+    }
+
+    @Override
     public String toString() {
         return defautToString();
     }
 
     protected void onDocPartChange(WrapperMutableMetaDocPart changedDocPart) {
         modifiedMetaDocParts.add(changedDocPart);
+        changeConsumer.accept(this);
+    }
+
+    protected void onIndexChange(WrapperMutableMetaIndex changedIndex) {
+        modifiedMetaIndexes.add(changedIndex);
         changeConsumer.accept(this);
     }
 

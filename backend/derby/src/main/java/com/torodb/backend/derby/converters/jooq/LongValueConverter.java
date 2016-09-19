@@ -18,55 +18,60 @@
  *     
  */
 
-package com.torodb.backend.converters.jooq;
 
-import java.sql.Date;
+package com.torodb.backend.derby.converters.jooq;
 
+import org.jooq.DataType;
+import org.jooq.SQLDialect;
+import org.jooq.impl.DefaultDataType;
 import org.jooq.impl.SQLDataType;
 
-import com.torodb.backend.converters.sql.DateSqlBinding;
+import com.torodb.backend.converters.jooq.DataTypeForKV;
+import com.torodb.backend.converters.jooq.KVValueConverter;
+import com.torodb.backend.converters.sql.LongSqlBinding;
 import com.torodb.backend.converters.sql.SqlBinding;
-import com.torodb.kvdocument.types.DateType;
 import com.torodb.kvdocument.types.KVType;
-import com.torodb.kvdocument.values.KVDate;
-import com.torodb.kvdocument.values.heap.LocalDateKVDate;
+import com.torodb.kvdocument.types.LongType;
+import com.torodb.kvdocument.values.KVLong;
 
 /**
  *
  */
-public class DateValueConverter implements KVValueConverter<Date, Date, KVDate> {
+public class LongValueConverter implements KVValueConverter<Long, Long, KVLong>{
     private static final long serialVersionUID = 1L;
 
-    public static final DataTypeForKV<KVDate> TYPE = DataTypeForKV.from(SQLDataType.DATE, new DateValueConverter());
+    public static final DataType<Long> LONG_TYPE = new DefaultDataType<Long>(SQLDialect.DERBY, Long.class, "BIGINT");
+    
+    public static final DataTypeForKV<KVLong> TYPE = DataTypeForKV.from(LONG_TYPE, new LongValueConverter());
 
     @Override
     public KVType getErasuredType() {
-        return DateType.INSTANCE;
+        return LongType.INSTANCE;
     }
 
     @Override
-    public KVDate from(Date databaseObject) {
-        return new LocalDateKVDate(databaseObject.toLocalDate());
+    public KVLong from(Long databaseObject) {
+        return KVLong.of(databaseObject);
     }
 
     @Override
-    public Date to(KVDate userObject) {
-        return Date.valueOf(userObject.getValue());
+    public Long to(KVLong userObject) {
+        return userObject.getValue();
     }
 
     @Override
-    public Class<Date> fromType() {
-        return Date.class;
+    public Class<Long> fromType() {
+        return Long.class;
     }
 
     @Override
-    public Class<KVDate> toType() {
-        return KVDate.class;
+    public Class<KVLong> toType() {
+        return KVLong.class;
     }
 
     @Override
-    public SqlBinding<Date> getSqlBinding() {
-        return DateSqlBinding.INSTANCE;
+    public SqlBinding<Long> getSqlBinding() {
+        return LongSqlBinding.INSTANCE;
     }
-
+    
 }

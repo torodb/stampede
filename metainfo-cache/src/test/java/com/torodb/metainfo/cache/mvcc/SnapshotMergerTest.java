@@ -48,6 +48,7 @@ import static org.mockito.Mockito.spy;
  *
  * @author gortiz
  */
+@SuppressWarnings({ "unused", "rawtypes" })
 public class SnapshotMergerTest {
 
     private static final TableRefFactory tableRefFactory = new TableRefFactoryImpl();

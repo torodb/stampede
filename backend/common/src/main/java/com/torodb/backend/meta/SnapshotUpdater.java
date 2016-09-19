@@ -1,26 +1,60 @@
 
 package com.torodb.backend.meta;
 
-import com.torodb.backend.ErrorHandler.Context;
-import com.torodb.backend.SqlHelper;
-import com.torodb.backend.SqlInterface;
-import com.torodb.backend.exceptions.InvalidDatabaseException;
-import com.torodb.backend.exceptions.InvalidDatabaseSchemaException;
-import com.torodb.backend.tables.*;
-import com.torodb.backend.tables.records.*;
-import com.torodb.core.TableRef;
-import com.torodb.core.TableRefFactory;
-import com.torodb.core.transaction.metainf.MetainfoRepository.MergerStage;
-import com.torodb.core.transaction.metainf.MetainfoRepository.SnapshotStage;
-import com.torodb.core.transaction.metainf.*;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jooq.*;
+import org.jooq.DSLContext;
+import org.jooq.DataType;
+import org.jooq.Meta;
+import org.jooq.Result;
+
+import com.torodb.backend.ErrorHandler.Context;
+import com.torodb.backend.SqlHelper;
+import com.torodb.backend.SqlInterface;
+import com.torodb.backend.exceptions.InvalidDatabaseException;
+import com.torodb.backend.exceptions.InvalidDatabaseSchemaException;
+import com.torodb.backend.meta.SchemaValidator.Table;
+import com.torodb.backend.meta.SchemaValidator.TableField;
+import com.torodb.backend.tables.MetaCollectionTable;
+import com.torodb.backend.tables.MetaDatabaseTable;
+import com.torodb.backend.tables.MetaDocPartIndexTable;
+import com.torodb.backend.tables.MetaDocPartTable;
+import com.torodb.backend.tables.MetaDocPartIndexColumnTable;
+import com.torodb.backend.tables.MetaFieldTable;
+import com.torodb.backend.tables.MetaIndexFieldTable;
+import com.torodb.backend.tables.MetaIndexTable;
+import com.torodb.backend.tables.MetaScalarTable;
+import com.torodb.backend.tables.records.MetaCollectionRecord;
+import com.torodb.backend.tables.records.MetaDatabaseRecord;
+import com.torodb.backend.tables.records.MetaDocPartIndexRecord;
+import com.torodb.backend.tables.records.MetaDocPartRecord;
+import com.torodb.backend.tables.records.MetaDocPartIndexColumnRecord;
+import com.torodb.backend.tables.records.MetaFieldRecord;
+import com.torodb.backend.tables.records.MetaIndexFieldRecord;
+import com.torodb.backend.tables.records.MetaIndexRecord;
+import com.torodb.backend.tables.records.MetaScalarRecord;
+import com.torodb.core.TableRef;
+import com.torodb.core.TableRefFactory;
+import com.torodb.core.transaction.metainf.MetaCollection;
+import com.torodb.core.transaction.metainf.MetaDatabase;
+import com.torodb.core.transaction.metainf.MetaDocPart;
+import com.torodb.core.transaction.metainf.MetaDocPartIndex;
+import com.torodb.core.transaction.metainf.MetaField;
+import com.torodb.core.transaction.metainf.MetainfoRepository;
+import com.torodb.core.transaction.metainf.MetainfoRepository.MergerStage;
+import com.torodb.core.transaction.metainf.MetainfoRepository.SnapshotStage;
+import com.torodb.core.transaction.metainf.MutableMetaCollection;
+import com.torodb.core.transaction.metainf.MutableMetaDatabase;
+import com.torodb.core.transaction.metainf.MutableMetaDocPart;
+import com.torodb.core.transaction.metainf.MutableMetaDocPartIndex;
+import com.torodb.core.transaction.metainf.MutableMetaIndex;
+import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
 
 /**
  *
@@ -62,7 +96,7 @@ public class SnapshotUpdater {
 
             schemaUpdater.checkOrCreate(dsl, jooqMeta, sqlInterface, sqlHelper);
 
-            Updater updater = new Updater(dsl, jooqMeta, tableRefFactory, sqlInterface);
+            Updater updater = new Updater(dsl, tableRefFactory, sqlInterface);
             updater.loadMetaSnapshot(mutableSnapshot);
 
             connection.commit();
@@ -82,17 +116,19 @@ public class SnapshotUpdater {
     private static class Updater {
 
         private final DSLContext dsl;
-        private final Meta jooqMeta;
         private final TableRefFactory tableRefFactory;
         private final SqlInterface sqlInterface;
         private final MetaCollectionTable<MetaCollectionRecord> collectionTable;
         private final MetaDocPartTable<Object, MetaDocPartRecord<Object>> docPartTable;
         private final MetaFieldTable<Object, MetaFieldRecord<Object>> fieldTable;
         private final MetaScalarTable<Object, MetaScalarRecord<Object>> scalarTable;
+        private final MetaIndexTable<MetaIndexRecord> indexTable;
+        private final MetaIndexFieldTable<Object, MetaIndexFieldRecord<Object>> indexFieldTable;
+        private final MetaDocPartIndexTable<Object, MetaDocPartIndexRecord<Object>> docPartIndexTable;
+        private final MetaDocPartIndexColumnTable<Object, MetaDocPartIndexColumnRecord<Object>> fieldIndexTable;
 
-        public Updater(DSLContext dsl, Meta jooqMeta, TableRefFactory tableRefFactory, SqlInterface sqlInterface) {
+        public Updater(DSLContext dsl, TableRefFactory tableRefFactory, SqlInterface sqlInterface) {
             this.dsl = dsl;
-            this.jooqMeta = jooqMeta;
             this.tableRefFactory = tableRefFactory;
             this.sqlInterface = sqlInterface;
 
@@ -100,6 +136,10 @@ public class SnapshotUpdater {
             this.docPartTable = sqlInterface.getMetaDataReadInterface().getMetaDocPartTable();
             this.fieldTable = sqlInterface.getMetaDataReadInterface().getMetaFieldTable();
             this.scalarTable = sqlInterface.getMetaDataReadInterface().getMetaScalarTable();
+            this.indexTable = sqlInterface.getMetaDataReadInterface().getMetaIndexTable();
+            this.indexFieldTable = sqlInterface.getMetaDataReadInterface().getMetaIndexFieldTable();
+            this.docPartIndexTable = sqlInterface.getMetaDataReadInterface().getMetaDocPartIndexTable();
+            this.fieldIndexTable = sqlInterface.getMetaDataReadInterface().getMetaDocPartIndexColumnTable();
         }
 
         private void loadMetaSnapshot(MutableMetaSnapshot mutableSnapshot) throws InvalidDatabaseSchemaException {
@@ -110,180 +150,331 @@ public class SnapshotUpdater {
                         .fetch();
 
             for (MetaDatabaseRecord databaseRecord : records) {
-                analyzeDatabase(mutableSnapshot, databaseRecord);
+                try {
+                    analyzeDatabase(mutableSnapshot, databaseRecord);
+                } catch(SQLException sqlException) {
+                    throw new InvalidDatabaseException(sqlException);
+                }
             }
         }
 
-        private void analyzeDatabase(MutableMetaSnapshot mutableSnapshot, MetaDatabaseRecord databaseRecord) {
-            String dbName = databaseRecord.getName();
-            String schemaName = databaseRecord.getIdentifier();
+        private void analyzeDatabase(MutableMetaSnapshot snapshot, MetaDatabaseRecord databaseRecord) throws InvalidDatabaseSchemaException, SQLException {
+            MutableMetaDatabase metaDatabase = snapshot.addMetaDatabase(databaseRecord.getName(), databaseRecord.getIdentifier());
 
-            MutableMetaDatabase metaDatabase = mutableSnapshot.addMetaDatabase(dbName, schemaName);
-
-            SchemaValidator schemaValidator = new SchemaValidator(jooqMeta, schemaName, dbName);
+            SchemaValidator schemaValidator = new SchemaValidator(dsl, databaseRecord.getIdentifier(), databaseRecord.getName());
 
             dsl.selectFrom(collectionTable)
-                    .where(collectionTable.DATABASE.eq(dbName))
+                    .where(collectionTable.DATABASE.eq(databaseRecord.getName()))
                     .fetch()
                     .forEach(
                             (col) -> analyzeCollection(metaDatabase, col, schemaValidator)
                     );
 
-            checkCompleteness(dbName, schemaValidator, schemaName);
+            checkCompleteness(databaseRecord, schemaValidator);
         }
 
-        private void checkCompleteness(String dbName, SchemaValidator schemaValidator, String schemaName) {
+        private void checkCompleteness(MetaDatabaseRecord database, SchemaValidator schemaValidator) {
             Map<String, MetaDocPartRecord<Object>> docParts = dsl
                     .selectFrom(docPartTable)
-                    .where(docPartTable.DATABASE.eq(dbName))
+                    .where(docPartTable.DATABASE.eq(database.getName()))
                     .fetchMap(docPartTable.IDENTIFIER);
             List<MetaFieldRecord<Object>> fields = dsl
                     .selectFrom(fieldTable)
-                    .where(fieldTable.DATABASE.eq(dbName))
+                    .where(fieldTable.DATABASE.eq(database.getName()))
                     .fetch();
             List<MetaScalarRecord<Object>> scalars = dsl
                     .selectFrom(scalarTable)
-                    .where(scalarTable.DATABASE.eq(dbName))
+                    .where(scalarTable.DATABASE.eq(database.getName()))
                     .fetch();
-            for (Table<?> table : schemaValidator.getExistingTables()) {
+            for (Table table : schemaValidator.getExistingTables()) {
                 MetaDocPartRecord<?> docPart = docParts.get(table.getName());
                 if (docPart == null) {
-                    throw new InvalidDatabaseSchemaException(schemaName, "Table "+schemaName+"."+table.getName()
-                    +" has no container associated for database "+dbName);
+                    throw new InvalidDatabaseSchemaException(database.getIdentifier(), "Table "+getTableRef(database, table)
+                    +" has no container associated for database "+database.getName());
                 }
 
-                for (Field<?> existingField : table.fields()) {
+                for (TableField existingField : table.fields()) {
                     if (!sqlInterface.getIdentifierConstraints().isAllowedColumnIdentifier(existingField.getName())) {
                         continue;
                     }
                     if (!SchemaValidator.containsField(existingField, docPart.getCollection(),
                             docPart.getTableRefValue(tableRefFactory), fields, scalars, tableRefFactory)) {
-                        throw new InvalidDatabaseSchemaException(schemaName, "Column "+schemaName+"."+table.getName()
-                        +"."+existingField.getName()+" has no field associated for database "+dbName);
+                        throw new InvalidDatabaseSchemaException(database.getIdentifier(), 
+                                "Column "+getColumnRef(database, table, existingField)
+                                +" has no field associated for database "+database.getName());
                     }
                 }
             }
         }
 
-        private void analyzeCollection(MutableMetaDatabase db, MetaCollectionRecord collection, SchemaValidator schemaValidator) {
-
-            String database = db.getName();
-            String collectionName = collection.getName();
-
-            MutableMetaCollection col = db.addMetaCollection(
-                    collectionName,
+        private void analyzeCollection(MutableMetaDatabase database, MetaCollectionRecord collection, SchemaValidator schemaValidator) {
+            MutableMetaCollection col = database.addMetaCollection(
+                    collection.getName(),
                     collection.getIdentifier()
             );
 
             dsl.selectFrom(docPartTable)
-                    .where(docPartTable.DATABASE.eq(database)
-                        .and(docPartTable.COLLECTION.eq(collectionName)))
+                    .where(docPartTable.DATABASE.eq(database.getName())
+                        .and(docPartTable.COLLECTION.eq(collection.getName())))
                     .fetch()
                     .forEach(
-                            (docPart) -> analyzeDocPart(db, col, docPart, schemaValidator)
+                            (docPart) -> analyzeDocPart(database, col, docPart, schemaValidator)
+                    );
+
+            dsl.selectFrom(indexTable)
+                    .where(indexTable.DATABASE.eq(database.getName())
+                        .and(indexTable.COLLECTION.eq(collection.getName())))
+                    .fetch()
+                    .forEach(
+                            (index) -> analyzeIndex(database, col, index, schemaValidator)
                     );
         }
 
-        private void analyzeDocPart(MutableMetaDatabase db,
-                MutableMetaCollection metaCollection, MetaDocPartRecord<Object> docPart,
+        private void analyzeDocPart(MutableMetaDatabase database,
+                MutableMetaCollection collection, MetaDocPartRecord<Object> docPartRecord,
                 SchemaValidator schemaValidator) {
-            if (!docPart.getCollection().equals(metaCollection.getName())) {
+            if (!docPartRecord.getCollection().equals(collection.getName())) {
                 return;
             }
-            String docPartIdentifier = docPart.getIdentifier();
-
-            TableRef tableRef = docPart.getTableRefValue(tableRefFactory);
-            MutableMetaDocPart metaDocPart = metaCollection.addMetaDocPart(tableRef, docPartIdentifier);
-
-            if (!schemaValidator.existsTable(docPartIdentifier)) {
-                throw new InvalidDatabaseSchemaException(db.getIdentifier(),
-                        "Doc part " + tableRef + " in database " + db.getName()
-                        + " is associated with table " + docPartIdentifier
-                        + " but there is no table with that name in schema "
-                        + db.getIdentifier());
+            
+            if (!schemaValidator.existsTable(docPartRecord.getIdentifier())) {
+                throw new InvalidDatabaseSchemaException(database.getIdentifier(),
+                        "Doc part " + getDocPartRef(database, collection, docPartRecord)
+                        + " is associated with table " + getTableRef(database, docPartRecord)
+                        + " but there is no table with that name in the schema");
             }
+            
+            MutableMetaDocPart docPart = collection.addMetaDocPart(
+                    docPartRecord.getTableRefValue(tableRefFactory), docPartRecord.getIdentifier());
             dsl.selectFrom(fieldTable)
-                    .where(fieldTable.DATABASE.eq(db.getName())
-                            .and(fieldTable.COLLECTION.eq(metaCollection.getName()))
-                            .and(fieldTable.TABLE_REF.eq(docPart.getTableRef())))
+                    .where(fieldTable.DATABASE.eq(database.getName())
+                            .and(fieldTable.COLLECTION.eq(collection.getName()))
+                            .and(fieldTable.TABLE_REF.eq(docPartRecord.getTableRef())))
                     .fetch()
                     .forEach(
-                            (field) -> analyzeField(db, metaDocPart, field, schemaValidator)
+                            (field) -> analyzeField(database, collection, docPart, field, schemaValidator)
                     );
 
             dsl.selectFrom(scalarTable)
-                    .where(scalarTable.DATABASE.eq(db.getName())
-                            .and(scalarTable.COLLECTION.eq(metaCollection.getName()))
-                            .and(scalarTable.TABLE_REF.eq(docPart.getTableRef())))
+                    .where(scalarTable.DATABASE.eq(database.getName())
+                            .and(scalarTable.COLLECTION.eq(collection.getName()))
+                            .and(scalarTable.TABLE_REF.eq(docPartRecord.getTableRef())))
                     .fetch()
                     .forEach(
-                            (scalar) -> analyzeScalar(db, metaDocPart, scalar, schemaValidator)
+                            (scalar) -> analyzeScalar(database, collection, docPart, scalar, schemaValidator)
+                    );
+
+            dsl.selectFrom(docPartIndexTable)
+                    .where(docPartIndexTable.DATABASE.eq(database.getName())
+                            .and(docPartIndexTable.COLLECTION.eq(collection.getName()))
+                            .and(docPartIndexTable.TABLE_REF.eq(docPartRecord.getTableRef())))
+                    .fetch()
+                    .forEach(
+                            (docPartIndex) -> analyzeDocPartIndex(database, collection, docPart, docPartIndex, schemaValidator)
                     );
         }
 
-        private void analyzeField(MutableMetaDatabase db, MutableMetaDocPart metaDocPart,
+        private void analyzeField(MutableMetaDatabase database, MetaCollection collection, MutableMetaDocPart docPart,
                 MetaFieldRecord<?> field, SchemaValidator schemaValidator) {
 
-            String docPartIdentifier = metaDocPart.getIdentifier();
-            String schemaName = db.getIdentifier();
-            String dbName = db.getName();
-
-            TableRef fieldTableRef = field.getTableRefValue(tableRefFactory);
-            if (!metaDocPart.getTableRef().equals(fieldTableRef)) {
+            if (!docPart.getTableRef().equals(field.getTableRefValue(tableRefFactory))) {
                 return;
             }
 
-            metaDocPart.addMetaField(field.getName(), field.getIdentifier(), field.getType());
+            docPart.addMetaField(field.getName(), field.getIdentifier(), field.getType());
 
-            if (!schemaValidator.existsColumn(docPartIdentifier, field.getIdentifier())) {
-                throw new InvalidDatabaseSchemaException(schemaName, "Field "
-                        + field.getCollection() + "." + field.getTableRefValue(tableRefFactory)
-                        + "." + field.getName() + " of type " + field.getType() + " in database "
-                        + dbName + " is associated with field " + field.getIdentifier()
-                        + " but there is no field with that name in table " + schemaName + "."
-                        + docPartIdentifier);
+            if (!schemaValidator.existsColumn(docPart.getIdentifier(), field.getIdentifier())) {
+                throw new InvalidDatabaseSchemaException(database.getIdentifier(), 
+                        "Field " + getFieldRef(database, collection, docPart, field)
+                        + " is associated with column " + field.getIdentifier()
+                        + " but there is no column with that name in the table");
             }
+            
             //TODO: some types can not be recognized using meta data
-//            if (!schemaValidator.existsColumnWithType(docPartIdentifier, field.getIdentifier(),
-//                    sqlInterface.getDataTypeProvider().getDataType(field.getType()))) {
-                //throw new InvalidDatabaseSchemaException(schemaName, "Field "+field.getCollection()+"."
-                //        +field.getTableRefValue()+"."+field.getName()+" in database "+database+" is associated with field "+field.getIdentifier()
-                //        +" and type "+sqlInterface.getDataType(field.getType()).getTypeName()
-                //        +" but the field "+schemaName+"."+docPartIdentifier+"."+field.getIdentifier()
-                //        +" has a different type "+getColumnType(docPartIdentifier, field.getIdentifier(), existingTables).getTypeName());
-//            }
+            if (!schemaValidator.existsColumnWithType(docPart.getIdentifier(), field.getIdentifier(),
+                    sqlInterface.getDataTypeProvider().getDataType(field.getType()))) {
+                String existingType = schemaValidator.getColumn(
+                        docPart.getIdentifier(), field.getIdentifier())
+                    .getTypeName();
+                throw new InvalidDatabaseSchemaException(database.getIdentifier(), 
+                        "Field "+getFieldRef(database, collection, docPart, field)
+                        + " is associated with column "+getColumnRef(database, docPart, field)
+                        + " but existing column has a different type " + existingType);
+            }
         }
 
-        private void analyzeScalar(MutableMetaDatabase db,MutableMetaDocPart metaDocPart,
+        private void analyzeScalar(MutableMetaDatabase database, MetaCollection collection, MutableMetaDocPart docPart,
                 MetaScalarRecord<?> scalar, SchemaValidator schemaValidator) {
-
-            String docPartIdentifier = metaDocPart.getIdentifier();
-            String schemaName = db.getIdentifier();
-            String dbName = db.getName();
-
-            TableRef fieldTableRef = scalar.getTableRefValue(tableRefFactory);
-            if (!metaDocPart.getTableRef().equals(fieldTableRef)) {
+            if (!docPart.getTableRef().equals(scalar.getTableRefValue(tableRefFactory))) {
                 return ;
             }
 
-            metaDocPart.addMetaScalar(scalar.getIdentifier(), scalar.getType());
+            docPart.addMetaScalar(scalar.getIdentifier(), scalar.getType());
 
-            if (!schemaValidator.existsColumn(docPartIdentifier, scalar.getIdentifier())) {
-                throw new InvalidDatabaseSchemaException(schemaName, "Scalar "+scalar.getCollection()+"."
-                        +scalar.getTableRefValue(tableRefFactory)+" of type "+scalar.getType()
-                        +" in database "+dbName+" is associated with scalar "+scalar.getIdentifier()
-                        +" but there is no scalar with that name in table "
-                        +schemaName+"."+docPartIdentifier);
+            if (!schemaValidator.existsColumn(docPart.getIdentifier(), scalar.getIdentifier())) {
+                throw new InvalidDatabaseSchemaException(database.getIdentifier(), 
+                        "Scalar "+getScalarRef(database, collection, docPart, scalar)
+                        + " is associated with column "+getColumnRef(database, docPart, scalar)
+                        + " but there is no column with that name in the table");
             }
+
             //TODO: some types can not be recognized using meta data
-//            if (!schemaValidator.existsColumnWithType(docPartIdentifier, scalar.getIdentifier(),
-//                    sqlInterface.getDataTypeProvider().getDataType(scalar.getType()))) {
-                //throw new InvalidDatabaseSchemaException(schemaName, "Scalar "+scalar.getCollection()+"."
-                //        +scalar.getTableRefValue()+"."+scalar.getName()+" in database "+database+" is associated with scalar "+scalar.getIdentifier()
-                //        +" and type "+sqlInterface.getDataType(scalar.getType()).getTypeName()
-                //        +" but the scalar "+schemaName+"."+docPartIdentifier+"."+scalar.getIdentifier()
-                //        +" has a different type "+getColumnType(docPartIdentifier, scalar.getIdentifier(), existingTables).getTypeName());
-//            }
+            if (!schemaValidator.existsColumnWithType(docPart.getIdentifier(), scalar.getIdentifier(),
+                    sqlInterface.getDataTypeProvider().getDataType(scalar.getType()))) {
+                String existingType = schemaValidator.getColumn(
+                            docPart.getIdentifier(), scalar.getIdentifier())
+                        .getTypeName();
+                throw new InvalidDatabaseSchemaException(database.getIdentifier(), 
+                        "Scalar "+getScalarRef(database, collection, docPart, scalar)
+                        +" is associated with column "+getColumnRef(database, docPart, scalar)
+                        + " but existing column has a different type "+existingType);
+            }
+        }
+
+        private void analyzeDocPartIndex(MutableMetaDatabase database, MetaCollection collection,
+                MutableMetaDocPart docPart, MetaDocPartIndexRecord<Object> docPartIndex,
+                SchemaValidator schemaValidator) {
+            TableRef tableRef = docPartIndex.getTableRefValue(tableRefFactory);
+            
+            if (!tableRef.equals(docPart.getTableRef())) {
+                return;
+            }
+
+            if (!schemaValidator.existsIndex(docPartIndex.getIdentifier())) {
+                throw new InvalidDatabaseSchemaException(database.getIdentifier(), 
+                        "Doc part index under " + getDocPartRef(database, collection, docPart)
+                        + " is associated with index " + getIndexRef(database, docPart, docPartIndex)
+                        + " but there is no index with that name in the schema");
+            }
+
+            MutableMetaDocPartIndex metaDocPartIndex = docPart.addMetaDocPartIndex(docPartIndex.getIdentifier(), docPartIndex.getUnique());
+
+            dsl.selectFrom(fieldIndexTable)
+                    .where(fieldIndexTable.DATABASE.eq(database.getName())
+                            .and(fieldIndexTable.INDEX_IDENTIFIER.eq(metaDocPartIndex.getIdentifier())))
+                    .orderBy(fieldIndexTable.POSITION)
+                    .fetch()
+                    .forEach(
+                            (indexField) -> analyzeDocPartIndexColumn(database, collection, docPart, metaDocPartIndex, indexField, schemaValidator)
+                    );
+
+        }
+
+        private void analyzeDocPartIndexColumn(MutableMetaDatabase database, MetaCollection collection, MetaDocPart docPart,
+                MutableMetaDocPartIndex docPartIndex, MetaDocPartIndexColumnRecord<Object> indexColumn,
+                SchemaValidator schemaValidator) {
+            if (!indexColumn.getIndexIdentifier().equals(docPartIndex.getIdentifier())) {
+                return;
+            }
+            
+            MetaField field = docPart.getMetaFieldByIdentifier(indexColumn.getIdentifier());
+            if (field == null) {
+                throw new InvalidDatabaseSchemaException(database.getIdentifier(), 
+                        "Found doc part index column " + getDocPartIndexColumnRef(database, collection, docPart, docPartIndex, indexColumn)
+                        + " but no associated field has been found");
+            }
+
+            if (!schemaValidator.existsIndexColumn(docPartIndex.getIdentifier(), indexColumn.getPosition(),
+                    field.getIdentifier())) {
+                throw new InvalidDatabaseSchemaException(database.getIdentifier(), 
+                        "Doc part index column " + getDocPartIndexColumnRef(database, collection, docPart, docPartIndex, indexColumn)
+                        + " is associated with field " + getFieldRef(database, collection, docPart, field)
+                        + " but there is no column with that name in index " + getIndexRef(database, docPart, docPartIndex));
+            }
+            
+            docPartIndex.addMetaDocPartIndexColumn(indexColumn.getIdentifier(), indexColumn.getOrdering());
+        }
+
+        private void analyzeIndex(MutableMetaDatabase db,
+                MutableMetaCollection metaCollection, MetaIndexRecord index,
+                SchemaValidator schemaValidator) {
+            if (!index.getCollection().equals(metaCollection.getName())) {
+                return;
+            }
+            MutableMetaIndex metaIndex = metaCollection.addMetaIndex(index.getName(), index.getUnique());
+
+            dsl.selectFrom(indexFieldTable)
+                    .where(indexFieldTable.DATABASE.eq(db.getName())
+                            .and(indexFieldTable.COLLECTION.eq(metaCollection.getName()))
+                            .and(indexFieldTable.INDEX.eq(index.getName())))
+                    .orderBy(indexFieldTable.POSITION)
+                    .fetch()
+                    .forEach(
+                            (indexField) -> analyzeIndexField(db, metaIndex, indexField, schemaValidator)
+                    );
+
+        }
+
+        private void analyzeIndexField(MutableMetaDatabase db,
+                MutableMetaIndex metaIndex, MetaIndexFieldRecord<Object> indexField,
+                SchemaValidator schemaValidator) {
+            if (!indexField.getIndex().equals(metaIndex.getName())) {
+                return;
+            }
+            TableRef tableRef = indexField.getTableRefValue(tableRefFactory);
+            metaIndex.addMetaIndexField(tableRef, indexField.getName(), indexField.getOrdering());
+        }
+        
+        private String getDocPartRef(MetaDatabase database, MetaCollection collection, MetaDocPart docPart) {
+            return database.getName() + "." + collection.getName() + ".[" + docPart.getTableRef() + "]";
+        }
+        
+        private String getDocPartRef(MetaDatabase database, MetaCollection collection, MetaDocPartRecord<?> docPart) {
+            return database.getName() + "." + collection.getName() + ".[" + docPart.getTableRefValue(tableRefFactory) + "]";
+        }
+        
+        private String getFieldRef(MetaDatabase database, MetaCollection collection, MetaDocPart docPart, MetaFieldRecord<?> field) {
+            return getDocPartRef(database, collection, docPart) + "." + field.getName() + " (type:" + field.getType().name() + ")";
+        }
+        
+        private String getFieldRef(MetaDatabase database, MetaCollection collection, MetaDocPart docPart, MetaField field) {
+            return getDocPartRef(database, collection, docPart) + "." + field.getName() + " (type:" + field.getType().name() + ")";
+        }
+        
+        private String getScalarRef(MetaDatabase database, MetaCollection collection, MetaDocPart docPart, MetaScalarRecord<?> scalar) {
+            return getDocPartRef(database, collection, docPart) + "[] (type:" + scalar.getType().name() + ")";
+        }
+        
+        private String getDocPartIndexColumnRef(MetaDatabase database, MetaCollection collection, MetaDocPart docPart, MetaDocPartIndex docPartIndex, MetaDocPartIndexColumnRecord<?> column) {
+            return getDocPartRef(database, collection, docPart) + "." + column.getIdentifier();
+        }
+        
+        private String getTableRef(MetaDatabase database, MetaDocPartRecord<?> docPart) {
+            return database.getIdentifier() + "." + docPart.getIdentifier();
+        }
+        
+        private String getTableRef(MetaDatabase database, MetaDocPart docPart) {
+            return database.getIdentifier() + "." + docPart.getIdentifier();
+        }
+        
+        private String getTableRef(MetaDatabaseRecord database, Table table) {
+            return database.getIdentifier() + "." + table.getName();
+        }
+        
+        private String getColumnRef(MetaDatabaseRecord database, Table table, TableField field) {
+            return getTableRef(database, table) + "." + field.getName() + " (type:" + field.getTypeName() + ")";
+        }
+        
+        private String getColumnRef(MetaDatabase database, MetaDocPart docPart, MetaFieldRecord<?> field) {
+            DataType<?> dataType = sqlInterface.getDataTypeProvider().getDataType(field.getType());
+            String type = dataType.getTypeName();
+            int sqlType = dataType.getSQLType();
+            return getTableRef(database, docPart) + "." + field.getIdentifier() + " (type:" + type + ", sqlType:" + sqlType + ")";
+        }
+        
+        private String getColumnRef(MetaDatabase database, MetaDocPart docPart, MetaScalarRecord<?> scalar) {
+            DataType<?> dataType = sqlInterface.getDataTypeProvider().getDataType(scalar.getType());
+            String type = dataType.getTypeName();
+            int sqlType = dataType.getSQLType();
+            return getTableRef(database, docPart) + "." + scalar.getIdentifier() + " (type:" + type + ", sqlType:" + sqlType + ")";
+        }
+        
+        private String getIndexRef(MetaDatabase database, MetaDocPart docPart, MetaDocPartIndexRecord<?> docPartIndex) {
+            return database.getIdentifier() + "." + docPart.getIdentifier() + "." + docPartIndex.getIdentifier();
+        }
+        
+        private String getIndexRef(MetaDatabase database, MetaDocPart docPart, MetaDocPartIndex docPartIndex) {
+            return database.getIdentifier() + "." + docPart.getIdentifier() + "." + docPartIndex.getIdentifier();
         }
     }
 

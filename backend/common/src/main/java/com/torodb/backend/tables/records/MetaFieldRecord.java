@@ -32,8 +32,8 @@ import com.torodb.core.transaction.metainf.FieldType;
 
 public abstract class MetaFieldRecord<TableRefType> extends UpdatableRecordImpl<MetaFieldRecord<TableRefType>> 
         implements Record6<String, String, TableRefType, String, FieldType, String> {
-// database, name, original_name, last_did
-	private static final long serialVersionUID = -2107968478;
+
+    private static final long serialVersionUID = -2107968478;
 
     /**
      * Setter for <code>torodb.field.database</code>.

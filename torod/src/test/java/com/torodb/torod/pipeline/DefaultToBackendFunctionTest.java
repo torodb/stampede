@@ -45,6 +45,7 @@ import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetaField;
 import com.torodb.core.transaction.metainf.MetaScalar;
+import com.torodb.core.transaction.metainf.MutableMetaDocPart;
 import com.torodb.core.transaction.metainf.WrapperMutableMetaDocPart;
 
 /**
@@ -55,7 +56,7 @@ public class DefaultToBackendFunctionTest {
 
     private final TableRefFactory tableRefFactory = new TableRefFactoryImpl();
     private BackendTransactionJobFactory factory;
-    private ImmutableMetaCollection collection = new ImmutableMetaCollection("aColName", "aColId", Collections.emptyList());
+    private ImmutableMetaCollection collection = new ImmutableMetaCollection("aColName", "aColId", Collections.emptyList(), Collections.emptyList());
     private MetaDatabase database = new ImmutableMetaDatabase("aDb", "aId", Collections.singletonList(collection));
     private DefaultToBackendFunction fun;
 
@@ -419,7 +420,7 @@ public class DefaultToBackendFunctionTest {
         }
 
         @Override
-        public AddFieldDDLJob createAddFieldDDLJob(MetaDatabase db, MetaCollection col, MetaDocPart docPart, MetaField field) {
+        public AddFieldDDLJob createAddFieldDDLJob(MetaDatabase db, MetaCollection col, MutableMetaDocPart docPart, MetaField field) {
             return new AddFieldDDLJob() {
                 @Override
                 public MetaDatabase getDatabase() {

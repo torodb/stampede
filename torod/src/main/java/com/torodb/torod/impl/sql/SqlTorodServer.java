@@ -87,13 +87,13 @@ public class SqlTorodServer extends ThreadFactoryIdleService implements TorodSer
     }
 
     @Override
-    public void disableDataImportMode() {
+    public void enableDataImportMode() {
         ImmutableMetaSnapshot snapshot = internalTransactionManager.takeMetaSnapshot();
         backend.enableDataImportMode(snapshot);
     }
 
     @Override
-    public void enableDataImportMode() {
+    public void disableDataImportMode() {
         ImmutableMetaSnapshot snapshot = internalTransactionManager.takeMetaSnapshot();
         backend.disableDataImportMode(snapshot);
     }

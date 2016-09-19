@@ -52,7 +52,7 @@ public class BackendConnectionImpl implements BackendConnection {
         Preconditions.checkState(!closed, "This connection is closed");
         Preconditions.checkState(currentTransaction == null, "Another transaction is currently under execution. Transaction is " + currentTransaction);
 
-        SharedWriteBackendTransactionImpl transaction = new SharedWriteBackendTransactionImpl(sqlInterface, this, r2dTranslator);
+        SharedWriteBackendTransactionImpl transaction = new SharedWriteBackendTransactionImpl(sqlInterface, this, r2dTranslator, identifierFactory);
         currentTransaction = transaction;
 
         return transaction;

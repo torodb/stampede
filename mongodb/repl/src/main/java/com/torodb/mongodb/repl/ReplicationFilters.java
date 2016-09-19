@@ -201,7 +201,9 @@ public class ReplicationFilters {
                         c.getCommandName().equals(op.getCommandName().get())).findFirst();
             if (collectionRelatedCommand.isPresent()) {
                 try {
-                    String collection = collectionRelatedCommands.get(collectionRelatedCommand)
+                    assert op.getRequest() != null;
+                    
+                    String collection = collectionRelatedCommands.get(collectionRelatedCommand.get())
                             .apply(op.getRequest());
                     return collectionPredicate.test(op.getDatabase(), collection);
                 } catch (Throwable e) {

@@ -21,8 +21,7 @@
 package com.torodb.backend;
 
 import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
+import java.util.Iterator;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
@@ -34,12 +33,13 @@ import org.jooq.Result;
 
 import com.google.common.base.Preconditions;
 import com.torodb.backend.ErrorHandler.Context;
-import com.torodb.backend.index.NamedDbIndex;
 import com.torodb.backend.tables.MetaDocPartTable;
 import com.torodb.core.TableRef;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
+import com.torodb.core.transaction.metainf.MetaDocPartIndex;
+import com.torodb.core.transaction.metainf.MetaIndex;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -120,29 +120,32 @@ public abstract class AbstractMetaDataReadInterface implements MetaDataReadInter
 
     @Override
     public Long getIndexSize(
-            @Nonnull DSLContext dsl,
-            @Nonnull String schema,
-            String collection, String index,
-            Set<NamedDbIndex> relatedDbIndexes,
-            Map<String, Integer> relatedToroIndexes
-            ) {
+            @Nonnull DSLContext dsl, @Nonnull MetaDatabase database,
+            @Nonnull MetaCollection collection, @Nonnull String indexName) {
         long result = 0;
-        for (NamedDbIndex dbIndex : relatedDbIndexes) {
-            assert relatedToroIndexes.containsKey(dbIndex.getName());
-            int usedBy = relatedToroIndexes.get(dbIndex.getName());
-            assert usedBy != 0;
-            String statement = getReadIndexSizeStatement(schema, collection, index, 
-                    relatedDbIndexes, relatedToroIndexes);
-            result += sqlHelper.executeStatementWithResult(dsl, statement, Context.FETCH)
-                    .get(0).into(Long.class) / usedBy;
+        MetaIndex index = collection.getMetaIndexByName(indexName);
+        Iterator<TableRef> tableRefIterator = index.streamTableRefs().iterator();
+        while (tableRefIterator.hasNext()) {
+            TableRef tableRef = tableRefIterator.next();
+            MetaDocPart docPart = collection.getMetaDocPartByTableRef(tableRef);
+            Iterator<? extends MetaDocPartIndex> docPartIndexIterator = docPart.streamIndexes().iterator();
+            while (docPartIndexIterator.hasNext()) {
+                MetaDocPartIndex docPartIndex = docPartIndexIterator.next();
+                if (index.isCompatible(docPart, docPartIndex)) {
+                    long relatedIndexCount = collection.streamContainedMetaIndexes()
+                            .filter(i -> i.isCompatible(docPart, docPartIndex)).count();
+                    String statement = getReadIndexSizeStatement(database.getIdentifier(), 
+                            docPart.getIdentifier(), docPartIndex.getIdentifier());
+                    result += sqlHelper.executeStatementWithResult(dsl, statement, Context.FETCH)
+                            .get(0).into(Long.class) / relatedIndexCount;
+                }
+            }
         }
         return result;
     }
 
-    protected abstract String getReadIndexSizeStatement(String schema,
-            String collection, String index,
-            Set<NamedDbIndex> relatedDbIndexes,
-            Map<String, Integer> relatedToroIndexes);
+    protected abstract String getReadIndexSizeStatement(
+            String schemaName, String tableName, String indexName);
     
     @Override
     public Collection<InternalField<?>> getInternalFields(MetaDocPart metaDocPart) {

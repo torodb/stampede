@@ -22,7 +22,8 @@
 package com.torodb.backend.derby.converters.jooq;
 
 import org.jooq.DataType;
-import org.jooq.impl.SQLDataType;
+import org.jooq.SQLDialect;
+import org.jooq.impl.DefaultDataType;
 
 import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.backend.converters.jooq.KVValueConverter;
@@ -39,9 +40,9 @@ import com.torodb.kvdocument.values.heap.StringKVString;
 public class StringValueConverter implements KVValueConverter<String, String, KVString>{
     private static final long serialVersionUID = 1L;
 
-    public static final DataType<String> VARCHAR_32672 = SQLDataType.VARCHAR.length(32672);
+    public static final DataType<String> VARCHAR_TYPE = new DefaultDataType<String>(SQLDialect.DERBY, String.class, "VARCHAR").length(32672);
     
-    public static final DataTypeForKV<KVString> TYPE = DataTypeForKV.from(VARCHAR_32672, new StringValueConverter());
+    public static final DataTypeForKV<KVString> TYPE = DataTypeForKV.from(VARCHAR_TYPE, new StringValueConverter());
 
     @Override
     public KVType getErasuredType() {

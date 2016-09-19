@@ -80,6 +80,10 @@ public abstract class AbstractSchemaUpdater implements SchemaUpdater {
         sqlInterface.getMetaDataWriteInterface().createMetaDocPartTable(dsl);
         sqlInterface.getMetaDataWriteInterface().createMetaFieldTable(dsl);
         sqlInterface.getMetaDataWriteInterface().createMetaScalarTable(dsl);
+        sqlInterface.getMetaDataWriteInterface().createMetaIndexTable(dsl);
+        sqlInterface.getMetaDataWriteInterface().createMetaIndexFieldTable(dsl);
+        sqlInterface.getMetaDataWriteInterface().createMetaDocPartIndexTable(dsl);
+        sqlInterface.getMetaDataWriteInterface().createMetaFieldIndexTable(dsl);
     }
     
     @SuppressWarnings({ "rawtypes", "unchecked" })
@@ -89,7 +93,11 @@ public abstract class AbstractSchemaUpdater implements SchemaUpdater {
             sqlInterface.getMetaDataReadInterface().getMetaCollectionTable(),
             sqlInterface.getMetaDataReadInterface().getMetaDocPartTable(),
             sqlInterface.getMetaDataReadInterface().getMetaFieldTable(),
-            sqlInterface.getMetaDataReadInterface().getMetaScalarTable()
+            sqlInterface.getMetaDataReadInterface().getMetaScalarTable(),
+            sqlInterface.getMetaDataReadInterface().getMetaIndexTable(),
+            sqlInterface.getMetaDataReadInterface().getMetaIndexFieldTable(),
+            sqlInterface.getMetaDataReadInterface().getMetaDocPartIndexTable(),
+            sqlInterface.getMetaDataReadInterface().getMetaDocPartIndexColumnTable()
         };
         for (SemanticTable metaTable : metaTables) {
             String metaTableName = metaTable.getName();

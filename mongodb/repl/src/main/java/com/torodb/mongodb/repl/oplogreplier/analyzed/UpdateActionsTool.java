@@ -27,6 +27,7 @@ import com.torodb.kvdocument.conversion.mongowp.MongoWPConverter;
 import com.torodb.kvdocument.values.KVDocument;
 import com.torodb.kvdocument.values.KVValue;
 import com.torodb.kvdocument.values.heap.MapKVDocument;
+import com.torodb.mongodb.language.Constants;
 import com.torodb.mongodb.language.UpdateActionTranslator;
 import com.torodb.mongodb.language.update.*;
 import javax.inject.Singleton;
@@ -47,7 +48,7 @@ public class UpdateActionsTool {
     public static KVDocument applyAsUpsert(UpdateOplogOperation updateAction) {
         KVValue<?> _id = MongoWPConverter.translate(updateAction.getDocId());
         KVDocument initialDoc = new MapKVDocument.Builder()
-                .putValue("_id", _id)
+                .putValue(Constants.ID, _id)
                 .build();
         return applyModification(initialDoc, parseUpdateAction(updateAction));
     }
