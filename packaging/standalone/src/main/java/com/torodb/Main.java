@@ -21,15 +21,6 @@
 package com.torodb;
 
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.time.Clock;
-import java.util.PropertyResourceBundle;
-import java.util.ResourceBundle;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.internal.Console;
 import com.google.common.base.Charsets;
@@ -42,9 +33,16 @@ import com.torodb.packaging.config.model.Config;
 import com.torodb.packaging.config.model.backend.derby.Derby;
 import com.torodb.packaging.config.model.backend.postgres.Postgres;
 import com.torodb.packaging.config.model.generic.LogLevel;
-import com.torodb.packaging.config.model.protocol.mongo.Replication;
 import com.torodb.packaging.config.util.ConfigUtils;
 import com.torodb.packaging.util.Log4jUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.time.Clock;
+import java.util.PropertyResourceBundle;
+import java.util.ResourceBundle;
 
 /**
  * ToroDB's entry point
