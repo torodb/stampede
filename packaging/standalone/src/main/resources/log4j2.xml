@@ -25,11 +25,17 @@
         <Root level="WARN">
             <AppenderRef ref="ASYNC"/>
         </Root>
+
         <Logger name="com.torodb" level="INFO" additivity="false">
             <AppenderRef ref="ASYNC"/>
         </Logger>
         <Logger name="com.eightkdata" level="INFO" additivity="false">
             <AppenderRef ref="ASYNC"/>
         </Logger>
+
+        <!-- Third party libraries -->
+
+        <Logger name="com.zaxxer.hikari" level="WARN" additivity="false" />
+        <Logger name="org.jooq" level="WARN" additivity="false" />
     </Loggers>
 </Configuration>
