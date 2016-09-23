@@ -44,6 +44,7 @@ public class Replication {
 	@JsonProperty(required=true)
 	private Role role = Role.HIDDEN_SLAVE;
 	@Description("config.protocol.mongo.replication.syncSource")
+    @NotNull
     @JsonProperty(required=true)
 	private String syncSource;
     @Description("config.protocol.mongo.replication.ssl")
