@@ -20,14 +20,18 @@
 
 package com.torodb.core.transaction.metainf;
 
+import com.google.common.collect.Maps;
 import com.torodb.core.TableRef;
 import com.torodb.core.annotations.DoNotChange;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
+
+import org.jooq.lambda.tuple.Tuple2;
 
 /**
  *
@@ -37,9 +41,9 @@ public class WrapperMutableMetaCollection implements MutableMetaCollection {
     private final ImmutableMetaCollection wrapped;
     private final HashMap<TableRef, WrapperMutableMetaDocPart> newDocParts;
     private final Set<WrapperMutableMetaDocPart> modifiedMetaDocParts;
-    private final HashMap<String, WrapperMutableMetaIndex> newIndexes;
-    private final Set<WrapperMutableMetaIndex> modifiedMetaIndexes;
+    private final HashMap<String, Tuple2<MutableMetaIndex, MetaElementState>> indexesByName;
     private final Consumer<WrapperMutableMetaCollection> changeConsumer;
+    private final Map<String, Tuple2<MutableMetaIndex, MetaElementState>> aliveIndexesMap;
 
     public WrapperMutableMetaCollection(ImmutableMetaCollection wrappedCollection,
             Consumer<WrapperMutableMetaCollection> changeConsumer) {
@@ -55,14 +59,13 @@ public class WrapperMutableMetaCollection implements MutableMetaCollection {
             newDocParts.put(mutable.getTableRef(), mutable);
         });
         
-        this.newIndexes = new HashMap<>();
-
-        modifiedMetaIndexes = new HashSet<>();
+        this.indexesByName = new HashMap<>();
 
         wrappedCollection.streamContainedMetaIndexes().forEach((index) -> {
             WrapperMutableMetaIndex mutable = createMetaIndex(index);
-            newIndexes.put(mutable.getName(), mutable);
+            indexesByName.put(mutable.getName(), new Tuple2<>(mutable, MetaElementState.NOT_CHANGED));
         });
+        aliveIndexesMap = Maps.filterValues(indexesByName, tuple -> tuple.v2().isAlive());
     }
 
     protected WrapperMutableMetaDocPart createMetaDocPart(ImmutableMetaDocPart immutable) {
@@ -106,29 +109,58 @@ public class WrapperMutableMetaCollection implements MutableMetaCollection {
         WrapperMutableMetaIndex result = createMetaIndex(
                 new ImmutableMetaIndex(name, unique));
 
-        newIndexes.put(name, result);
-        onIndexChange(result);
+        indexesByName.put(name, new Tuple2<>(result, MetaElementState.ADDED));
+        changeConsumer.accept(this);
 
         return result;
     }
 
     @Override
-    public Iterable<? extends MutableMetaIndex> getModifiedMetaIndexes() {
-        return modifiedMetaIndexes;
+    public boolean removeMetaIndexByName(String indexName) {
+        WrapperMutableMetaIndex metaIndex = getMetaIndexByName(indexName);
+        if (metaIndex == null) {
+            return false;
+        }
+        
+        indexesByName.put(metaIndex.getName(), new Tuple2<>(metaIndex, MetaElementState.REMOVED));
+        changeConsumer.accept(this);
+        return true;
+    }
+
+    @Override
+    public Iterable<Tuple2<MutableMetaIndex, MetaElementState>> getModifiedMetaIndexes() {
+        return Maps.filterValues(indexesByName, tuple -> tuple.v2().hasChanged())
+                .values();
     }
 
     @Override
     public ImmutableMetaCollection immutableCopy() {
-        if (modifiedMetaDocParts.isEmpty() && modifiedMetaIndexes.isEmpty()) {
+        if (modifiedMetaDocParts.isEmpty() && 
+                indexesByName.values().stream().noneMatch(tuple -> tuple.v2().hasChanged())) {
             return wrapped;
         } else {
             ImmutableMetaCollection.Builder builder = new ImmutableMetaCollection.Builder(wrapped);
             for (MutableMetaDocPart modifiedMetaDocPart : modifiedMetaDocParts) {
                 builder.put(modifiedMetaDocPart.immutableCopy());
             }
-            for (MutableMetaIndex modifiedMetaIndex : modifiedMetaIndexes) {
-                builder.put(modifiedMetaIndex.immutableCopy());
-            }
+
+            indexesByName.values()
+                    .forEach(tuple -> {
+                        switch (tuple.v2()) {
+                            case ADDED:
+                            case MODIFIED:
+                            case NOT_CHANGED:
+                                builder.put(tuple.v1().immutableCopy());
+                                break;
+                            case REMOVED:
+                                builder.remove(tuple.v1());
+                                break;
+                            case NOT_EXISTENT:
+                            default:
+                                throw new AssertionError("Unexpected case" + tuple.v2());
+                        }
+                    }
+            );
             return builder.build();
         }
     }
@@ -164,12 +196,16 @@ public class WrapperMutableMetaCollection implements MutableMetaCollection {
 
     @Override
     public Stream<? extends WrapperMutableMetaIndex> streamContainedMetaIndexes() {
-        return newIndexes.values().stream();
+        return aliveIndexesMap.values().stream().map(tuple -> (WrapperMutableMetaIndex) tuple.v1());
     }
 
     @Override
     public WrapperMutableMetaIndex getMetaIndexByName(String indexName) {
-        return newIndexes.get(indexName);
+        Tuple2<MutableMetaIndex, MetaElementState> tuple = aliveIndexesMap.get(indexName);
+        if (tuple == null) {
+            return null;
+        }
+        return (WrapperMutableMetaIndex) tuple.v1();
     }
 
     @Override
@@ -182,8 +218,25 @@ public class WrapperMutableMetaCollection implements MutableMetaCollection {
         changeConsumer.accept(this);
     }
 
+    private boolean isTransitionAllowed(MetaIndex metaIndex, MetaElementState newState) {
+        MetaElementState oldState;
+        Tuple2<MutableMetaIndex, MetaElementState> tuple = indexesByName.get(metaIndex.getName());
+        
+        if (tuple == null) {
+            oldState = MetaElementState.NOT_EXISTENT;
+        }
+        else {
+            oldState = tuple.v2();
+        }
+
+        oldState.assertLegalTransition(newState);
+        return true;
+    }
+
     protected void onIndexChange(WrapperMutableMetaIndex changedIndex) {
-        modifiedMetaIndexes.add(changedIndex);
+        assert isTransitionAllowed(changedIndex, MetaElementState.REMOVED);
+        
+        indexesByName.put(changedIndex.getName(), new Tuple2<>(changedIndex, MetaElementState.MODIFIED));
         changeConsumer.accept(this);
     }
 

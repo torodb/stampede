@@ -1,22 +1,24 @@
 
 package com.torodb.torod.pipeline;
 
-import com.torodb.core.TableRef;
-import com.torodb.core.annotations.DoNotChange;
-import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
-import com.torodb.core.transaction.metainf.MetaIndex;
-import com.torodb.core.transaction.metainf.MutableMetaCollection;
-import com.torodb.core.transaction.metainf.MutableMetaDocPart;
-import com.torodb.core.transaction.metainf.MutableMetaIndex;
-
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.stream.Stream;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jooq.lambda.tuple.Tuple2;
+
+import com.torodb.core.TableRef;
+import com.torodb.core.annotations.DoNotChange;
+import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
+import com.torodb.core.transaction.metainf.MetaElementState;
+import com.torodb.core.transaction.metainf.MetaIndex;
+import com.torodb.core.transaction.metainf.MutableMetaCollection;
+import com.torodb.core.transaction.metainf.MutableMetaDocPart;
+import com.torodb.core.transaction.metainf.MutableMetaIndex;
 
 /**
  *
@@ -130,7 +132,12 @@ public class BatchMetaCollection implements MutableMetaCollection {
     }
 
     @Override
-    public Iterable<? extends MutableMetaIndex> getModifiedMetaIndexes() {
+    public boolean removeMetaIndexByName(String indexName) {
+        return delegate.removeMetaIndexByName(indexName);
+    }
+
+    @Override
+    public Iterable<Tuple2<MutableMetaIndex, MetaElementState>> getModifiedMetaIndexes() {
         return delegate.getModifiedMetaIndexes();
     }
 

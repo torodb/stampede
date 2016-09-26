@@ -21,6 +21,7 @@ import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetaField;
+import com.torodb.core.transaction.metainf.MetaIndex;
 import com.torodb.core.transaction.metainf.MutableMetaCollection;
 import com.torodb.core.transaction.metainf.MutableMetaDatabase;
 import com.torodb.core.transaction.metainf.MutableMetaIndex;
@@ -173,6 +174,25 @@ public abstract class SqlWriteTorodTransaction<T extends WriteInternalTransactio
             
             getInternalTransaction().getBackendTransaction().createIndex(metaDb, metaColl, metaIndex);
         }
+    }
+
+    @Override
+    public void dropIndex(String dbName, String colName, String indexName) {
+        MutableMetaDatabase db = getInternalTransaction().getMetaSnapshot().getMetaDatabaseByName(dbName);
+        if (db == null) {
+            return;
+        }
+        MutableMetaCollection col = db.getMetaCollectionByName(colName);
+        if (col == null) {
+            return;
+        }
+        MetaIndex index = col.getMetaIndexByName(indexName);
+        if (index == null) {
+            return;
+        }
+        col.removeMetaIndexByName(indexName);
+
+        getInternalTransaction().getBackendTransaction().dropIndex(db, col, index);
     }
 
     @Nonnull

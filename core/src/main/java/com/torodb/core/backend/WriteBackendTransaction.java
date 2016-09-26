@@ -143,7 +143,7 @@ public interface WriteBackendTransaction extends BackendTransaction {
     public void deleteDids(MetaDatabase db, MetaCollection col, Collection<Integer> dids);
 
     /**
-     * Create a logical index on doc part fields and scalars without type. A physical index will be created for each existent and future doc part fields and scalars
+     * Create a logical index on doc part. If not yet existing, a physical index will be created for each existent and future doc part fields and scalars
      * that satisfy logical index definition.
      * 
      * @param db
@@ -151,7 +151,16 @@ public interface WriteBackendTransaction extends BackendTransaction {
      * @param index
      */
     public void createIndex(MetaDatabase db, MutableMetaCollection col, MetaIndex index);
-
+    
+    /**
+     * Drop a logical index on doc part. Physical indexes that satisfy logical index definition and are not used by other logical indexes will be dropped.
+     * 
+     * @param db
+     * @param col
+     * @param index
+     */
+    public void dropIndex(MetaDatabase db, MutableMetaCollection col, MetaIndex index);
+    
     public void commit() throws UserException, RollbackException;
 
     @Override

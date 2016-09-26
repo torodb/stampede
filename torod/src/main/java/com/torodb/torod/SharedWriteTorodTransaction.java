@@ -43,6 +43,8 @@ public interface SharedWriteTorodTransaction extends TorodTransaction {
 
     public void createIndex(String dbName, String colName, String indexName, AttributeReference attRef, FieldIndexOrdering ordering, boolean unique);
 
+    public void dropIndex(String dbName, String colName, String indexName);
+
     public void commit() throws RollbackException, UserException;
 
 }

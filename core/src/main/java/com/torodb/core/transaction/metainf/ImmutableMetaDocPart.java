@@ -1,17 +1,18 @@
 
 package com.torodb.core.transaction.metainf;
 
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Stream;
+
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Table;
 import com.torodb.core.TableRef;
 import com.torodb.core.annotations.DoNotChange;
-import java.util.Collections;
-import java.util.EnumMap;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.stream.Stream;
 
 /**
  *
@@ -157,6 +158,12 @@ public class ImmutableMetaDocPart implements MetaDocPart {
         public Builder put(ImmutableMetaDocPartIndex index) {
             Preconditions.checkState(!built, "This builder has already been built");
             indexes.put(index.getIdentifier(), index);
+            return this;
+        }
+
+        public Builder remove(MetaDocPartIndex index) {
+            Preconditions.checkState(!built, "This builder has already been built");
+            indexes.remove(index.getIdentifier());
             return this;
         }
 

@@ -20,9 +20,12 @@
 
 package com.torodb.core.transaction.metainf;
 
+import java.util.stream.Stream;
+
+import org.jooq.lambda.tuple.Tuple2;
+
 import com.torodb.core.TableRef;
 import com.torodb.core.annotations.DoNotChange;
-import java.util.stream.Stream;
 
 /**
  *
@@ -47,9 +50,11 @@ public interface MutableMetaCollection extends MetaCollection {
     public Stream<? extends MutableMetaIndex> streamContainedMetaIndexes();
 
     public MutableMetaIndex addMetaIndex(String name, boolean unique) throws IllegalArgumentException;
+    
+    public boolean removeMetaIndexByName(String indexName);
 
     @DoNotChange
-    public Iterable<? extends MutableMetaIndex> getModifiedMetaIndexes();
+    public Iterable<Tuple2<MutableMetaIndex, MetaElementState>> getModifiedMetaIndexes();
     
     public abstract ImmutableMetaCollection immutableCopy();
 }

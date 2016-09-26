@@ -39,6 +39,7 @@ import com.torodb.core.transaction.RollbackException;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
+import com.torodb.core.transaction.metainf.MetaDocPartIndex;
 import com.torodb.core.transaction.metainf.MetaDocPartIndexColumn;
 import com.torodb.core.transaction.metainf.MetaField;
 import com.torodb.core.transaction.metainf.MetaIndex;
@@ -222,20 +223,20 @@ public class SharedWriteBackendTransactionImpl extends BackendTransactionImpl im
                     boolean containsExactDocPartIndex = docPart.streamIndexes()
                             .anyMatch(docPartIndex -> index.isMatch(docPart, identifiers, docPartIndex));
                     if (!containsExactDocPartIndex) {
-                        createOneFieldIndex(db, col, index, tableRef, docPart, identifiers);
+                        createOneFieldIndex(db, col, index, docPart, identifiers);
                     }
                 }
             }
         }
     }
 
-    private void createOneFieldIndex(MetaDatabase db, MetaCollection col, MetaIndex index, TableRef tableRef, MutableMetaDocPart docPart,
+    private void createOneFieldIndex(MetaDatabase db, MetaCollection col, MetaIndex index, MutableMetaDocPart docPart,
             List<String> identifiers) {
         Iterator<? extends MetaIndexField> indexFieldIterator;
         MutableMetaDocPartIndex docPartIndex = docPart.addMetaDocPartIndex(
                 identifierFactory.toIndexIdentifier(db, docPart.getIdentifier(), identifiers), index.isUnique());
         getSqlInterface().getMetaDataWriteInterface().addMetaDocPartIndex(getDsl(), db, col, docPart, docPartIndex);
-        indexFieldIterator = index.iteratorMetaIndexFieldByTableRef(tableRef);
+        indexFieldIterator = index.iteratorMetaIndexFieldByTableRef(docPart.getTableRef());
         for (String identifier : identifiers) {
             MetaIndexField indexField = indexFieldIterator.next();
             MetaDocPartIndexColumn docPartIndexColumn = docPartIndex.addMetaDocPartIndexColumn(identifier, indexField.getOrdering());
@@ -244,8 +245,40 @@ public class SharedWriteBackendTransactionImpl extends BackendTransactionImpl im
         
         getSqlInterface().getStructureInterface().createIndex(
                 getDsl(), docPartIndex.getIdentifier(), db.getIdentifier(), docPart.getIdentifier(), 
-                identifiers.get(0), index.iteratorMetaIndexFieldByTableRef(tableRef)
+                identifiers.get(0), index.iteratorMetaIndexFieldByTableRef(docPart.getTableRef())
                     .next().getOrdering().isAscending(), index.isUnique());
+    }
+
+    @Override
+    public void dropIndex(MetaDatabase db, MutableMetaCollection col, MetaIndex index) {
+        getSqlInterface().getMetaDataWriteInterface().deleteMetaIndex(getDsl(), db, col, index);
+        Iterator<TableRef> tableRefIterator = index.streamTableRefs().iterator();
+        while (tableRefIterator.hasNext()) {
+            TableRef tableRef = tableRefIterator.next();
+            MutableMetaDocPart docPart = col.getMetaDocPartByTableRef(tableRef);
+            if (docPart != null) {
+                Iterator<? extends MetaDocPartIndex> docPartIndexesIterator = 
+                        docPart.streamIndexes().iterator();
+                
+                while (docPartIndexesIterator.hasNext()) {
+                    MetaDocPartIndex docPartIndex = docPartIndexesIterator.next();
+                    boolean existsAnyOtherCompatibleIndex = col.streamContainedMetaIndexes()
+                            .anyMatch(otherIndex -> otherIndex != index &&
+                                otherIndex.isCompatible(docPart, docPartIndex));
+                    if (!existsAnyOtherCompatibleIndex) {
+                        dropIndex(db, col, docPart, docPartIndex);
+                    }
+                }
+            }
+        }
+    }
+
+    private void dropIndex(MetaDatabase db, MetaCollection col, MutableMetaDocPart docPart,
+            MetaDocPartIndex docPartIndex) {
+        getSqlInterface().getMetaDataWriteInterface().deleteMetaDocPartIndex(getDsl(), db, col, docPart, docPartIndex);
+        
+        getSqlInterface().getStructureInterface().dropIndex(
+                getDsl(), db.getIdentifier(), docPartIndex.getIdentifier());
     }
 
     @Override

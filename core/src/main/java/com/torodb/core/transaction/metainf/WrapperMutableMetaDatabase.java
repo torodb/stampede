@@ -40,7 +40,7 @@ public class WrapperMutableMetaDatabase implements MutableMetaDatabase {
     private final ImmutableMetaDatabase wrapped;
     private final HashMap<String, Tuple2<MutableMetaCollection, MetaElementState>> collectionsByName;
     private final Consumer<WrapperMutableMetaDatabase> changeConsumer;
-    private final Map<String, Tuple2<MutableMetaCollection, MetaElementState>> aliveMap;
+    private final Map<String, Tuple2<MutableMetaCollection, MetaElementState>> aliveCollectionsMap;
 
     public WrapperMutableMetaDatabase(ImmutableMetaDatabase wrapped,
             Consumer<WrapperMutableMetaDatabase> changeConsumer) {
@@ -54,7 +54,7 @@ public class WrapperMutableMetaDatabase implements MutableMetaDatabase {
                     
             collectionsByName.put(collection.getName(), new Tuple2<>(mutable, MetaElementState.NOT_CHANGED));
         });
-        aliveMap = Maps.filterValues(collectionsByName, tuple -> tuple.v2().isAlive());
+        aliveCollectionsMap = Maps.filterValues(collectionsByName, tuple -> tuple.v2().isAlive());
     }
 
     protected WrapperMutableMetaCollection createMetaColletion(ImmutableMetaCollection immutable) {
@@ -126,12 +126,12 @@ public class WrapperMutableMetaDatabase implements MutableMetaDatabase {
 
     @Override
     public Stream<? extends WrapperMutableMetaCollection> streamMetaCollections() {
-        return aliveMap.values().stream().map(tuple -> (WrapperMutableMetaCollection) tuple.v1());
+        return aliveCollectionsMap.values().stream().map(tuple -> (WrapperMutableMetaCollection) tuple.v1());
     }
 
     @Override
     public WrapperMutableMetaCollection getMetaCollectionByName(String collectionName) {
-        Tuple2<MutableMetaCollection, MetaElementState> tuple = aliveMap.get(collectionName);
+        Tuple2<MutableMetaCollection, MetaElementState> tuple = aliveCollectionsMap.get(collectionName);
         if (tuple == null) {
             return null;
         }
@@ -142,7 +142,7 @@ public class WrapperMutableMetaDatabase implements MutableMetaDatabase {
     public WrapperMutableMetaCollection getMetaCollectionByIdentifier(String collectionIdentifier) {
         LOGGER.debug("Looking for a meta collection by the unindexed attribute 'id'. "
                 + "Performance lost is expected");
-        return aliveMap.values().stream()
+        return aliveCollectionsMap.values().stream()
                 .map(tuple -> (WrapperMutableMetaCollection) tuple.v1())
                 .filter((collection) -> collection.getIdentifier().equals(collectionIdentifier))
                 .findAny()

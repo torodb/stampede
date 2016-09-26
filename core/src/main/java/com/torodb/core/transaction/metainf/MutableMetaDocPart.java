@@ -3,6 +3,8 @@ package com.torodb.core.transaction.metainf;
 
 import java.util.stream.Stream;
 
+import org.jooq.lambda.tuple.Tuple2;
+
 import com.torodb.core.annotations.DoNotChange;
 
 /**
@@ -60,15 +62,24 @@ public interface MutableMetaDocPart extends MetaDocPart {
     public abstract Iterable<? extends ImmutableMetaScalar> getAddedMetaScalars();
 
     /**
-     *
+     * Add an index to this doc part
+     * @param indexId
+     * @param unique
      * @return
      * @throws IllegalArgumentException if this table already contains an index with the
      *                                          same identifier
      */
-    public abstract MutableMetaDocPartIndex addMetaDocPartIndex(String identifier, boolean unique) throws IllegalArgumentException;
+    public abstract MutableMetaDocPartIndex addMetaDocPartIndex(String indexId, boolean unique) throws IllegalArgumentException;
 
+    /**
+     * Remove an index from this doc part
+     * @param indexId
+     * @return
+     */
+    public boolean removeMetaDocPartIndexByIdentifier(String indexId);
+    
     @DoNotChange
-    public abstract Iterable<? extends MutableMetaDocPartIndex> getAddedMetaDocPartIndexes();
+    public Iterable<Tuple2<MutableMetaDocPartIndex, MetaElementState>> getAddedMetaDocPartIndexes();
 
     public abstract ImmutableMetaDocPart immutableCopy();
 }

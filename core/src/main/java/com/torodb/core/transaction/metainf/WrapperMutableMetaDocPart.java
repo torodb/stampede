@@ -21,6 +21,7 @@
 package com.torodb.core.transaction.metainf;
 
 import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Table;
 import com.torodb.core.TableRef;
 import com.torodb.core.annotations.DoNotChange;
@@ -32,6 +33,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
+
+import org.jooq.lambda.tuple.Tuple2;
 
 /**
  *
@@ -50,7 +53,8 @@ public class WrapperMutableMetaDocPart implements MutableMetaDocPart {
     private final List<ImmutableMetaField> addedFields;
     private final Consumer<WrapperMutableMetaDocPart> changeConsumer;
     private final EnumMap<FieldType, ImmutableMetaScalar> newScalars;
-    private final Map<String, WrapperMutableMetaDocPartIndex> newIndexes;
+    private final HashMap<String, Tuple2<MutableMetaDocPartIndex, MetaElementState>> indexesByIdentifier;
+    private final Map<String, Tuple2<MutableMetaDocPartIndex, MetaElementState>> aliveIndexesMap;
 
     public WrapperMutableMetaDocPart(ImmutableMetaDocPart wrapped,
             Consumer<WrapperMutableMetaDocPart> changeConsumer) {
@@ -64,7 +68,16 @@ public class WrapperMutableMetaDocPart implements MutableMetaDocPart {
         addedFields = new ArrayList<>();
         this.changeConsumer = changeConsumer;
         this.newScalars = new EnumMap<>(FieldType.class);
-        newIndexes = new HashMap<>();
+        indexesByIdentifier = new HashMap<>();
+        wrapped.streamIndexes().forEach((docPartIndexindex) -> {
+            WrapperMutableMetaDocPartIndex mutable = createMetaDocPartIndex(docPartIndexindex);
+            indexesByIdentifier.put(mutable.getIdentifier(), new Tuple2<>(mutable, MetaElementState.NOT_CHANGED));
+        });
+        aliveIndexesMap = Maps.filterValues(indexesByIdentifier, tuple -> tuple.v2().isAlive());
+    }
+
+    protected WrapperMutableMetaDocPartIndex createMetaDocPartIndex(ImmutableMetaDocPartIndex immutable) {
+        return new WrapperMutableMetaDocPartIndex(immutable, this::onDocPartIndexChange);
     }
 
     @Override
@@ -109,28 +122,42 @@ public class WrapperMutableMetaDocPart implements MutableMetaDocPart {
     }
 
     @Override
-    public MutableMetaDocPartIndex addMetaDocPartIndex(String identifier, boolean unique) throws
+    public MutableMetaDocPartIndex addMetaDocPartIndex(String indexId, boolean unique) throws
             IllegalArgumentException {
-        if (getMetaDocPartIndexByIdentifier(identifier) != null) {
-            throw new IllegalArgumentException("There is another index with the identifier " + identifier);
+        if (getMetaDocPartIndexByIdentifier(indexId) != null) {
+            throw new IllegalArgumentException("There is another index with the identifier " + indexId);
         }
 
-        WrapperMutableMetaDocPartIndex newIndex = new WrapperMutableMetaDocPartIndex(
-                new ImmutableMetaDocPartIndex(identifier, unique), index -> {});
-        newIndexes.put(identifier, newIndex);
+        WrapperMutableMetaDocPartIndex newIndex = createMetaDocPartIndex(
+                new ImmutableMetaDocPartIndex(indexId, unique));
+        indexesByIdentifier.put(indexId, new Tuple2<>(newIndex, MetaElementState.ADDED));
         changeConsumer.accept(this);
         return newIndex;
     }
 
     @Override
+    public boolean removeMetaDocPartIndexByIdentifier(String indexId) {
+        WrapperMutableMetaDocPartIndex metaDocPartIndex = getMetaDocPartIndexByIdentifier(indexId);
+        if (metaDocPartIndex == null) {
+            return false;
+        }
+        
+        indexesByIdentifier.put(metaDocPartIndex.getIdentifier(), new Tuple2<>(metaDocPartIndex, MetaElementState.REMOVED));
+        changeConsumer.accept(this);
+        return true;
+    }
+
+    @Override
     @DoNotChange
-    public Iterable<? extends WrapperMutableMetaDocPartIndex> getAddedMetaDocPartIndexes() {
-        return newIndexes.values();
+    public Iterable<Tuple2<MutableMetaDocPartIndex, MetaElementState>> getAddedMetaDocPartIndexes() {
+        return Maps.filterValues(indexesByIdentifier, tuple -> tuple.v2().hasChanged())
+                .values();
     }
 
     @Override
     public ImmutableMetaDocPart immutableCopy() {
-        if (addedFields.isEmpty() && newScalars.isEmpty() && newIndexes.isEmpty()) {
+        if (addedFields.isEmpty() && newScalars.isEmpty() && 
+                indexesByIdentifier.values().stream().noneMatch(tuple -> tuple.v2().hasChanged())) {
             return wrapped;
         }
         else {
@@ -141,9 +168,24 @@ public class WrapperMutableMetaDocPart implements MutableMetaDocPart {
             for (ImmutableMetaScalar value : newScalars.values()) {
                 builder.put(value);
             }
-            for (MutableMetaDocPartIndex value : newIndexes.values()) {
-                builder.put(value.immutableCopy());
-            }
+
+            indexesByIdentifier.values()
+                    .forEach(tuple -> {
+                        switch (tuple.v2()) {
+                            case ADDED:
+                            case MODIFIED:
+                            case NOT_CHANGED:
+                                builder.put(tuple.v1().immutableCopy());
+                                break;
+                            case REMOVED:
+                                builder.remove(tuple.v1());
+                                break;
+                            case NOT_EXISTENT:
+                            default:
+                                throw new AssertionError("Unexpected case" + tuple.v2());
+                        }
+                    }
+            );
             return builder.build();
         }
     }
@@ -196,19 +238,39 @@ public class WrapperMutableMetaDocPart implements MutableMetaDocPart {
     }
 
     @Override
-    public Stream<? extends MetaDocPartIndex> streamIndexes() {
-        return Stream.concat(newIndexes.values().stream(), wrapped.streamIndexes());
+    public Stream<? extends WrapperMutableMetaDocPartIndex> streamIndexes() {
+        return aliveIndexesMap.values().stream().map(tuple -> (WrapperMutableMetaDocPartIndex) tuple.v1());
     }
 
     @Override
-    public MetaDocPartIndex getMetaDocPartIndexByIdentifier(String indexId) {
-        MetaDocPartIndex index = wrapped.getMetaDocPartIndexByIdentifier(indexId);
-        
-        if (index != null) {
-            return index;
+    public WrapperMutableMetaDocPartIndex getMetaDocPartIndexByIdentifier(String indexId) {
+        Tuple2<MutableMetaDocPartIndex, MetaElementState> tuple = aliveIndexesMap.get(indexId);
+        if (tuple == null) {
+            return null;
         }
+        return (WrapperMutableMetaDocPartIndex) tuple.v1();
+    }
+
+    private boolean isTransitionAllowed(MetaDocPartIndex metaDocPartIndexIndex, MetaElementState newState) {
+        MetaElementState oldState;
+        Tuple2<MutableMetaDocPartIndex, MetaElementState> tuple = indexesByIdentifier.get(metaDocPartIndexIndex.getIdentifier());
         
-        return newIndexes.get(indexId);
+        if (tuple == null) {
+            oldState = MetaElementState.NOT_EXISTENT;
+        }
+        else {
+            oldState = tuple.v2();
+        }
+
+        oldState.assertLegalTransition(newState);
+        return true;
+    }
+
+    protected void onDocPartIndexChange(WrapperMutableMetaDocPartIndex changedIndex) {
+        assert isTransitionAllowed(changedIndex, MetaElementState.REMOVED);
+        
+        indexesByIdentifier.put(changedIndex.getIdentifier(), new Tuple2<>(changedIndex, MetaElementState.MODIFIED));
+        changeConsumer.accept(this);
     }
 
     @Override

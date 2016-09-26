@@ -28,8 +28,8 @@ import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
 import com.torodb.core.transaction.metainf.ImmutableMetaDatabase;
 import com.torodb.core.transaction.metainf.ImmutableMetaDocPart;
 import com.torodb.core.transaction.metainf.ImmutableMetaDocPartIndex;
-import com.torodb.core.transaction.metainf.ImmutableMetaField;
 import com.torodb.core.transaction.metainf.ImmutableMetaDocPartIndexColumn;
+import com.torodb.core.transaction.metainf.ImmutableMetaField;
 import com.torodb.core.transaction.metainf.ImmutableMetaIndex;
 import com.torodb.core.transaction.metainf.ImmutableMetaIndexField;
 import com.torodb.core.transaction.metainf.ImmutableMetaScalar;
@@ -155,8 +155,8 @@ public class SnapshotMerger {
                 for (MutableMetaDocPart modifiedDocPart : newCol.getModifiedMetaDocParts()) {
                     merge(newStructure, oldStructure, newCol, byId, childBuilder, modifiedDocPart);
                 }
-                for (MutableMetaIndex modifiedIndex : newCol.getModifiedMetaIndexes()) {
-                    merge(oldStructure, byId, childBuilder, modifiedIndex);
+                for (Tuple2<MutableMetaIndex, MetaElementState> modifiedIndex : newCol.getModifiedMetaIndexes()) {
+                    merge(oldStructure, newCol, byId, childBuilder, modifiedIndex.v1(), modifiedIndex.v2());
                 }
                 parentBuilder.put(childBuilder);
 
@@ -224,8 +224,8 @@ public class SnapshotMerger {
         for (ImmutableMetaScalar addedMetaScalar : changed.getAddedMetaScalars()) {
             merge(oldDb, oldStructure, byId, childBuilder, addedMetaScalar);
         }
-        for (MutableMetaDocPartIndex addedMetaDocPartIndex : changed.getAddedMetaDocPartIndexes()) {
-            merge(oldDb, oldStructure, byId, childBuilder, addedMetaDocPartIndex);
+        for (Tuple2<MutableMetaDocPartIndex, MetaElementState> addedMetaDocPartIndex : changed.getAddedMetaDocPartIndexes()) {
+            merge(oldDb, oldStructure, byId, childBuilder, addedMetaDocPartIndex.v1(), addedMetaDocPartIndex.v2());
         }
 
         parentBuilder.put(childBuilder);
@@ -258,31 +258,68 @@ public class SnapshotMerger {
         }
     }
 
-    private void merge(MetaDatabase db, ImmutableMetaCollection col, ImmutableMetaDocPart oldStructure,
-            ImmutableMetaDocPart.Builder parentBuilder, MutableMetaDocPartIndex changed) throws UnmergeableException {
-        Optional<ImmutableMetaDocPartIndex> bySameColumns = oldStructure.streamIndexes()
-                .filter(docPartIndex -> docPartIndex.hasSameColumns(changed)).findAny();
-        
-        if (bySameColumns.isPresent()) {
-            throw createUnmergeableException(db, col, oldStructure, changed, bySameColumns.get());
-        }
-        
+    private void merge(MetaDatabase oldDb, ImmutableMetaCollection oldCol, ImmutableMetaDocPart oldStructure,
+            ImmutableMetaDocPart.Builder parentBuilder, MutableMetaDocPartIndex changed, MetaElementState newState) throws UnmergeableException {
         ImmutableMetaDocPartIndex byId = oldStructure.getMetaDocPartIndexByIdentifier(changed.getIdentifier());
 
-        if (byId == null) {
-            parentBuilder.put(changed.immutableCopy());
-            return ;
+        switch (newState) {
+            case NOT_CHANGED:
+            case NOT_EXISTENT:
+                throw new AssertionError("A modification was expected, but the new state is " + newState);
+            case ADDED:
+            case MODIFIED: {
+                Optional<ImmutableMetaDocPartIndex> bySameColumns = oldStructure.streamIndexes()
+                        .filter(docPartIndex -> !docPartIndex.getIdentifier().equals(changed.getIdentifier()) && 
+                            docPartIndex.hasSameColumns(changed))
+                        .findAny();
+                
+                if (bySameColumns.isPresent()) {
+                    throw createUnmergeableException(oldDb, oldCol, oldStructure, changed, bySameColumns.get());
+                }
+
+                if (byId == null) {
+                    parentBuilder.put(changed.immutableCopy());
+                    return ;
+                }
+                assert byId != null;
+
+                ImmutableMetaDocPartIndex.Builder childBuilder = new ImmutableMetaDocPartIndex.Builder(byId);
+
+                for (ImmutableMetaDocPartIndexColumn addedMetaFieldIndex : changed.getAddedMetaDocPartIndexColumns()) {
+                    merge(oldDb, oldCol, oldStructure, byId, childBuilder, addedMetaFieldIndex);
+                }
+
+                parentBuilder.put(childBuilder);
+
+                break;
+            }
+            case REMOVED: {
+                Optional<ImmutableMetaIndex> oldMissedIndex = oldCol.streamContainedMetaIndexes()
+                        .flatMap(index -> index.streamTableRefs()
+                                .filter(tableRef -> index.isCompatible(oldCol.getMetaDocPartByTableRef(tableRef), changed))
+                                .map(tableRef -> index))
+                        .findAny();
+                
+                if (oldMissedIndex.isPresent()) {
+                    throw createUnmergeableException(oldDb, oldCol, oldStructure, changed, oldMissedIndex.get());
+                }
+                
+                if (byId == null) { 
+                    /*
+                     * it has been removed on another transaction or created and removed on the 
+                     * current one. No change must be done
+                     */
+                    return ;
+                }
+                assert byId != null;
+                /*
+                 * In this case, we can delegate on the backend transaction check. If it thinks
+                 * everything is fine, we can remove the element. If it thinks there is an error,
+                 * then we have to rollback the transaction.
+                 */
+                parentBuilder.remove(byId);
+            }
         }
-        assert byId != null;
-
-        ImmutableMetaDocPartIndex.Builder childBuilder = new ImmutableMetaDocPartIndex.Builder(byId);
-
-        for (ImmutableMetaDocPartIndexColumn addedMetaFieldIndex : changed.getAddedMetaDocPartIndexColumns()) {
-            merge(db, col, oldStructure, byId, childBuilder, addedMetaFieldIndex);
-        }
-
-        parentBuilder.put(childBuilder);
-
     }
 
     private void merge(MetaDatabase db, MetaCollection col, MetaDocPart docPart, ImmutableMetaDocPartIndex oldStructure,
@@ -298,24 +335,67 @@ public class SnapshotMerger {
         }
     }
 
-    private void merge(MetaDatabase db, ImmutableMetaCollection oldStructure,
-            ImmutableMetaCollection.Builder parentBuilder, MutableMetaIndex changed) throws UnmergeableException {
+    private void merge(MetaDatabase oldDb, MetaCollection newStructure, ImmutableMetaCollection oldStructure,
+            ImmutableMetaCollection.Builder parentBuilder, MutableMetaIndex changed, MetaElementState newState) throws UnmergeableException {
         ImmutableMetaIndex byName = oldStructure.getMetaIndexByName(changed.getName());
 
-        if (byName == null) {
-            parentBuilder.put(changed.immutableCopy());
-            return ;
+        switch (newState) {
+            case NOT_CHANGED:
+            case NOT_EXISTENT:
+                throw new AssertionError("A modification was expected, but the new state is " + newState);
+            case ADDED:
+            case MODIFIED: {
+                if (byName == null) {
+                    parentBuilder.put(changed.immutableCopy());
+                    return ;
+                }
+                assert byName != null;
+
+                ImmutableMetaIndex.Builder childBuilder = new ImmutableMetaIndex.Builder(byName);
+
+                for (ImmutableMetaIndexField addedMetaIndexField : changed.getAddedMetaIndexFields()) {
+                    merge(oldDb, oldStructure, byName, childBuilder, addedMetaIndexField);
+                }
+
+                parentBuilder.put(childBuilder);
+
+                break;
+            }
+            case REMOVED: {
+                Optional<Tuple2<MetaDocPart, MetaDocPartIndex>> oldMissedDocPartIndex = changed.streamTableRefs()
+                        .map(tableRef -> oldStructure.getMetaDocPartByTableRef(tableRef))
+                        .flatMap(oldDocPart -> oldDocPart.streamIndexes()
+                                .filter(oldDocPartIndex -> 
+                                    changed.isCompatible(oldDocPart, oldDocPartIndex) && 
+                                    newStructure.streamContainedMetaDocParts()
+                                        .noneMatch(docPart -> docPart.streamIndexes()
+                                            .anyMatch(docPartIndex -> docPartIndex.hasSameColumns(oldDocPartIndex))) &&
+                                    oldStructure.streamContainedMetaIndexes().anyMatch(index -> 
+                                        !index.getName().equals(changed.getName()) &&
+                                        index.isCompatible(oldDocPart, oldDocPartIndex)))
+                                .map(docPartIndex -> new Tuple2<MetaDocPart, MetaDocPartIndex>(oldDocPart, docPartIndex)))
+                        .findAny();
+                
+                if (oldMissedDocPartIndex.isPresent()) {
+                    throw createUnmergeableException(oldDb, oldStructure, changed, oldMissedDocPartIndex.get());
+                }
+                
+                if (byName == null) { 
+                    /*
+                     * it has been removed on another transaction or created and removed on the 
+                     * current one. No change must be done
+                     */
+                    return ;
+                }
+                assert byName != null;
+                /*
+                 * In this case, we can delegate on the backend transaction check. If it thinks
+                 * everything is fine, we can remove the element. If it thinks there is an error,
+                 * then we have to rollback the transaction.
+                 */
+                parentBuilder.remove(byName);
+            }
         }
-        assert byName != null;
-
-        ImmutableMetaIndex.Builder childBuilder = new ImmutableMetaIndex.Builder(byName);
-
-        for (ImmutableMetaIndexField addedMetaIndexField : changed.getAddedMetaIndexFields()) {
-            merge(db, oldStructure, byName, childBuilder, addedMetaIndexField);
-        }
-
-        parentBuilder.put(childBuilder);
-
     }
 
     private void merge(MetaDatabase db, MetaCollection col, ImmutableMetaIndex oldStructure,
@@ -452,6 +532,17 @@ public class SnapshotMerger {
     }
 
     private UnmergeableException createUnmergeableException(
+            MetaDatabase db, MetaCollection col, MetaDocPart docPart, MetaDocPartIndex changed,
+            ImmutableMetaIndex oldMissedIndex) {
+        throw new UnmergeableException(oldSnapshot, newSnapshot,
+                "There is a previous doc part index " + db + "." + col + 
+                "." + docPart + "." + oldMissedIndex
+                + " that is compatible with the removed doc part index "
+                + db.getIdentifier() + "." + col.getIdentifier() + 
+                "." + docPart.getIdentifier() + "." + changed.getIdentifier());
+    }
+
+    private UnmergeableException createUnmergeableException(
             MetaDatabase db, MetaCollection col, MetaDocPart docPart, MetaDocPartIndex index, ImmutableMetaDocPartIndexColumn changed,
             ImmutableMetaDocPartIndexColumn byIdentifier, ImmutableMetaDocPartIndexColumn byPosition) {
         if (byIdentifier != null) {
@@ -492,6 +583,16 @@ public class SnapshotMerger {
                     + "name is " + byPosition.getName() + ". The tableRef of the new one is "
                     + changed.getTableRef() + " and its name is " + changed.getName());
         }
+    }
+
+    private UnmergeableException createUnmergeableException(
+            MetaDatabase db,
+            MetaCollection col, MutableMetaIndex changed, Tuple2<MetaDocPart, MetaDocPartIndex> oldMissedDocPartIndex) {
+        throw new UnmergeableException(oldSnapshot, newSnapshot,
+                "There is a previous doc part index on " + db.getIdentifier() + "." + oldMissedDocPartIndex.v1().getIdentifier() 
+                + "." + oldMissedDocPartIndex.v2().getIdentifier()
+                + " associated only with removed index "
+                + changed + " that has not been deleted.");
     }
 
 }

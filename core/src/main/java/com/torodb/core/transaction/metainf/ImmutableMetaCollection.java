@@ -157,6 +157,12 @@ public class ImmutableMetaCollection implements MetaCollection {
             return this;
         }
 
+        public Builder remove(MetaIndex index) {
+            Preconditions.checkState(!built, "This builder has already been built");
+            indexesByName.remove(index.getName());
+            return this;
+        }
+
         public ImmutableMetaCollection build() {
             Preconditions.checkState(!built, "This builder has already been built");
             Preconditions.checkState(
