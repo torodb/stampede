@@ -1,15 +1,18 @@
 
 package com.torodb.torod;
 
-import com.torodb.core.cursors.Cursor;
-import com.torodb.core.cursors.ToroCursor;
-import com.torodb.core.exceptions.user.CollectionNotFoundException;
-import com.torodb.core.language.AttributeReference;
-import com.torodb.kvdocument.values.KVValue;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Stream;
+
 import org.jooq.lambda.tuple.Tuple2;
+
+import com.torodb.core.cursors.Cursor;
+import com.torodb.core.cursors.ToroCursor;
+import com.torodb.core.exceptions.user.CollectionNotFoundException;
+import com.torodb.core.exceptions.user.IndexNotFoundException;
+import com.torodb.core.language.AttributeReference;
+import com.torodb.kvdocument.values.KVValue;
 
 /**
  *
@@ -66,6 +69,10 @@ public interface TorodTransaction extends AutoCloseable {
     public Stream<CollectionInfo> getCollectionsInfo(String dbName);
 
     public CollectionInfo getCollectionInfo(String dbName, String colName) throws CollectionNotFoundException;
+
+    public Stream<IndexInfo> getIndexesInfo(String dbName, String colName);
+
+    public IndexInfo getIndexInfo(String dbName, String colName, String idxName) throws IndexNotFoundException;
 
     @Override
     public void close();

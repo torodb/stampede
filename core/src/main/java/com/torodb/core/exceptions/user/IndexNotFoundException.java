@@ -20,10 +20,36 @@
 
 package com.torodb.core.exceptions.user;
 
-public interface UserExceptionVisitor<Result, Argument> {
-    public Result visit(DatabaseNotFoundException userException, Argument arg);
-    public Result visit(CollectionNotFoundException userException, Argument arg);
-    public Result visit(IndexNotFoundException userException, Argument arg);
-    public Result visit(UpdateException userException, Argument arg);
-    public Result visit(UniqueIndexViolationException userException, Argument arg);
+public class IndexNotFoundException extends UserException {
+
+    private static final long serialVersionUID = 1L;
+    
+    private final String database;
+    private final String collection;
+    private final String index;
+
+    public IndexNotFoundException(String database, String collection, String index) {
+        super();
+        this.database = database;
+        this.collection = collection;
+        this.index = index;
+    }
+
+    public String getDatabase() {
+        return database;
+    }
+
+    public String getCollection() {
+        return collection;
+    }
+    
+    public String getIndex() {
+        return index;
+    }
+
+    @Override
+    public <Result, Argument> Result accept(UserExceptionVisitor<Result, Argument> visitor, Argument arg) {
+        return visitor.visit(this, arg);
+    }
+
 }

@@ -120,6 +120,16 @@ public class AttributeReference implements Serializable {
             keys = Lists.newArrayList();
         }
         
+        public Builder addObjectKeyAsFirst(String key) {
+            keys.add(0, new ObjectKey(key));
+            return this;
+        }
+        
+        public Builder addArrayKeyAsFirst(int key) {
+            keys.add(0, new ArrayKey(key));
+            return this;
+        }
+        
         public Builder addObjectKey(String key) {
             keys.add(new ObjectKey(key));
             return this;
