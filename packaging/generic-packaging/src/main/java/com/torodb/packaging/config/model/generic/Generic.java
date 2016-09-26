@@ -40,7 +40,7 @@ public class Generic implements MetricsConfig{
 	@Description("config.generic.logLevel")
 	@NotNull
 	@JsonProperty(required=true)
-	private LogLevel logLevel = LogLevel.TRACE;
+	private LogLevel logLevel = LogLevel.INFO;
 	@Description("config.generic.logPackages")
 	private LogPackages logPackages;
 	@Description("config.generic.logFile")

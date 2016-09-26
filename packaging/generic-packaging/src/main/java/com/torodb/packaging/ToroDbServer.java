@@ -83,26 +83,27 @@ public class ToroDbServer extends ThreadFactoryIdleService {
 
     @Override
     protected void startUp() throws Exception {
-        LOGGER.info("Starting up ToroDB v" +  buildProperties.getFullVersion());
+        LOGGER.info("Starting up ToroDB v" +  buildProperties.getFullVersion() + "...");
 
-        torod.startAsync();
         mongod.startAsync();
-
-        LOGGER.debug("Waiting for Mongod to be running");
-        mongod.awaitRunning();
+        torod.startAsync();
         netty.startAsync();
 
-        LOGGER.debug("Waiting for Torod to be running");
+        LOGGER.debug("Waiting for Mongod to be running...");
+        mongod.awaitRunning();
+
+        LOGGER.debug("Waiting for Torod to be running...");
         torod.awaitRunning();
-        LOGGER.debug("Waiting for Netty to be running");
+
+        LOGGER.debug("Waiting for Netty to be running...");
         netty.awaitRunning();
 
-        LOGGER.debug("ToroDbServer ready to run");
+        LOGGER.info("ToroDbServer started");
     }
 
     @Override
     protected void shutDown() throws Exception {
-        LOGGER.info("Shutting down ToroDB");
+        LOGGER.info("Shutting down ToroDB...");
 
         netty.stopAsync();
         netty.awaitTerminated();
@@ -115,7 +116,7 @@ public class ToroDbServer extends ThreadFactoryIdleService {
 
         shutdowner.close();
 
-        LOGGER.debug("ToroDBServer shutdown complete");
+        LOGGER.debug("ToroDbServer shutdown complete");
     }
 
 }

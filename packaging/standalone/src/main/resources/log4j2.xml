@@ -27,6 +27,7 @@
         <Logger name="org.hibernate" level="WARN" additivity="false"/>
         <Logger name="org.postgresql" level="WARN" additivity="false"/>
         <Logger name="org.jboss" level="WARN" additivity="false"/>
+        <Logger name="io.netty" level="WARN" additivity="false"/>
 
         <!-- Root -->
 

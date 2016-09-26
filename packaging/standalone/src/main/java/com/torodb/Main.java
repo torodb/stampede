@@ -54,7 +54,7 @@ public class Main {
 	public static void main(String[] args) throws Exception {
 		Console console = JCommander.getConsole();
 
-		Log4jUtils.setRootLevel(LogLevel.TRACE);
+		Log4jUtils.setRootLevel(LogLevel.INFO);
 
 		ResourceBundle cliBundle = PropertyResourceBundle.getBundle("CliMessages");
 		final CliConfig cliConfig = new CliConfig();
