@@ -181,16 +181,20 @@ public class BackendImpl extends ThreadFactoryIdleService implements Backend {
 
     @Override
     protected void startUp() throws Exception {
-        LOGGER.debug("Starting backend");
+        LOGGER.debug("Starting backend...");
+
         LOGGER.trace("Starting backend datasources...");
         dbBackendService.startAsync();
         dbBackendService.awaitRunning();
+
         LOGGER.trace("Loading backend metadata...");
         SnapshotUpdater.updateSnapshot(metainfoRepository, sqlInterface, sqlHelper, schemaUpdater, tableRefFactory);
+
         LOGGER.trace("Reading last used rids...");
         maxRowIdFactory.startAsync();
         maxRowIdFactory.awaitRunning();
-        LOGGER.debug("Backend ready to run");
+
+        LOGGER.debug("Backend started");
     }
 
     @Override

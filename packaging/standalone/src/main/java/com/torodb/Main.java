@@ -54,7 +54,7 @@ public class Main {
 	public static void main(String[] args) throws Exception {
 		Console console = JCommander.getConsole();
 
-		Log4jUtils.setRootLevel(LogLevel.NONE);
+		Log4jUtils.setRootLevel(LogLevel.TRACE);
 
 		ResourceBundle cliBundle = PropertyResourceBundle.getBundle("CliMessages");
 		final CliConfig cliConfig = new CliConfig();
@@ -85,22 +85,10 @@ public class Main {
 			
 			System.exit(0);
 		}
-		
-		if (config.getGeneric().getLog4j2File() != null) {
-			Log4jUtils.reconfigure(config.getGeneric().getLog4j2File());
-		} else {
-			Log4jUtils.setRootLevel(config.getGeneric().getLogLevel());
-			
-			if (config.getGeneric().getLogPackages() != null) {
-				Log4jUtils.setLogPackages(config.getGeneric().getLogPackages());
-			}
-			
-			if (config.getGeneric().getLogFile() != null) {
-				Log4jUtils.appendToLogFile(config.getGeneric().getLogFile());
-			}
-		}
-		
-        ConfigUtils.parseToropassFile(config);
+
+		configureLoggerService(config);
+
+		ConfigUtils.parseToropassFile(config);
         ConfigUtils.parseMongopassFile(config);
         
         if (config.getBackend().isPostgresLike()) {
@@ -158,6 +146,22 @@ public class Main {
 			String causeMessage = rootCause.getMessage();
 			JCommander.getConsole().println("Fatal error while ToroDB was starting: " + causeMessage);
 			System.exit(1);
+		}
+	}
+
+	private static void configureLoggerService(Config config) {
+		if (config.getGeneric().getLog4j2File() != null) {
+			Log4jUtils.reconfigure(config.getGeneric().getLog4j2File());
+		} else {
+			Log4jUtils.setRootLevel(config.getGeneric().getLogLevel());
+
+			if (config.getGeneric().getLogPackages() != null) {
+				Log4jUtils.setLogPackages(config.getGeneric().getLogPackages());
+			}
+
+			if (config.getGeneric().getLogFile() != null) {
+				Log4jUtils.appendToLogFile(config.getGeneric().getLogFile());
+			}
 		}
 	}
 
