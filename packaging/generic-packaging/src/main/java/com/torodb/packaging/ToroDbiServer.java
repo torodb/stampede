@@ -1,6 +1,7 @@
 
 package com.torodb.packaging;
 
+import com.google.common.base.Preconditions;
 import java.time.Clock;
 import java.util.List;
 import java.util.concurrent.ThreadFactory;
@@ -79,6 +80,8 @@ public class ToroDbiServer extends ThreadFactoryIdleService {
         }
         Replication replication = replications.stream().findAny().get();
 
+        String replSetName = getReplSetName(config);
+
         Injector injector = Guice.createInjector(new ConfigModule(config),
                 new PackagingModule(clock),
                 new CoreModule(),
@@ -90,11 +93,22 @@ public class ToroDbiServer extends ThreadFactoryIdleService {
                 new MongoLayerModule(),
                 new MongoDbReplModule(
                         MongoClientConfigurationFactory.getMongoClientConfiguration(replication),
-                        ReplicationFiltersFactory.getReplicationFilters(replication)),
+                        ReplicationFiltersFactory.getReplicationFilters(replication),
+                        replSetName
+                ),
                 new ExecutorServicesModule(),
                 new ConcurrentModule()
         );
         return injector;
+    }
+
+    private static String getReplSetName(Config config) {
+        Preconditions.checkNotNull(config);
+        Preconditions.checkNotNull(config.getProtocol());
+        Preconditions.checkNotNull(config.getProtocol().getMongo());
+        Preconditions.checkNotNull(config.getProtocol().getMongo().getReplication());
+        Preconditions.checkArgument(!config.getProtocol().getMongo().getReplication().isEmpty());
+        return config.getProtocol().getMongo().getReplication().get(0).getReplSetName();
     }
 
     @Override

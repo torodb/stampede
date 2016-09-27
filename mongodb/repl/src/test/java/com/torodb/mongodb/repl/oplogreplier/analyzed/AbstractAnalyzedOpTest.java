@@ -71,7 +71,7 @@ public abstract class AbstractAnalyzedOpTest<E extends AnalyzedOp> {
         if (op.getType().requiresMatch()) {
             Status<?> status = op.getMismatchErrorMessage();
             assertNotNull("The mismatch error of an analyzed operation that requires match must not be null", status);
-            assertFalse("The mismatch error of an analyzed operation that requires match must not be OK", status.isOK());
+            assertFalse("The mismatch error of an analyzed operation that requires match must not be OK", status.isOk());
         } else {
             try {
                 op.getMismatchErrorMessage();

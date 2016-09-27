@@ -80,7 +80,7 @@ public class MongoWPConverter {
             case MAX:
             case MIN:
             case DB_POINTER:
-            case DEPRECTED:
+            case DEPRECATED:
                 throw new UnsupportedBsonTypeException(bsonType);
             default:
                 throw new AssertionError("It seems that " + bsonType + " has "

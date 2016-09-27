@@ -1,31 +1,13 @@
 
 package com.torodb.mongodb.repl.guice;
 
-import java.time.Duration;
-import java.util.concurrent.ThreadFactory;
-
-import javax.annotation.Nonnull;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import com.eightkdata.mongowp.OpTime;
 import com.eightkdata.mongowp.client.wrapper.MongoClientConfiguration;
 import com.eightkdata.mongowp.client.wrapper.MongoClientWrapperModule;
-import com.google.common.annotations.Beta;
-import com.google.common.net.HostAndPort;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.AbstractModule;
-import com.google.inject.Provides;
-import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
-import com.torodb.mongodb.repl.OplogReaderProvider;
-import com.torodb.mongodb.repl.RecoveryService;
-import com.torodb.mongodb.repl.ReplCoordinator;
-import com.torodb.mongodb.repl.ReplicationFilters;
-import com.torodb.mongodb.repl.SyncSourceProvider;
-import com.torodb.mongodb.repl.exceptions.NoSyncSourceFoundException;
+import com.torodb.mongodb.repl.*;
 import com.torodb.mongodb.repl.impl.MongoOplogReaderProvider;
+import com.torodb.mongodb.repl.impl.ReplicationErrorHandlerImpl;
 import com.torodb.mongodb.repl.oplogreplier.DefaultOplogApplier;
 import com.torodb.mongodb.repl.oplogreplier.DefaultOplogApplier.BatchLimits;
 import com.torodb.mongodb.repl.oplogreplier.DefaultOplogApplierService;
@@ -37,8 +19,13 @@ import com.torodb.mongodb.repl.oplogreplier.batch.BatchAnalyzer;
 import com.torodb.mongodb.repl.oplogreplier.batch.ConcurrentOplogBatchExecutor;
 import com.torodb.mongodb.repl.oplogreplier.batch.ConcurrentOplogBatchExecutor.ConcurrentOplogBatchExecutorMetrics;
 import com.torodb.mongodb.repl.oplogreplier.fetcher.ContinuousOplogFetcher;
+import com.torodb.mongodb.repl.topology.TopologyGuiceModule;
 import com.torodb.mongodb.utils.DbCloner;
 import com.torodb.mongodb.utils.cloner.CommitHeuristic;
+import java.time.Duration;
+import javax.inject.Singleton;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  *
@@ -49,10 +36,13 @@ public class MongoDbReplModule extends AbstractModule {
 
     private final MongoClientConfiguration mongoClientConfiguration;
     private final ReplicationFilters replicationFilters;
+    private final String replSetName;
     
-    public MongoDbReplModule(MongoClientConfiguration mongoClientConfiguration, ReplicationFilters replicationFilters) {
+    public MongoDbReplModule(MongoClientConfiguration mongoClientConfiguration, 
+            ReplicationFilters replicationFilters, String replSetName) {
         this.mongoClientConfiguration = mongoClientConfiguration;
         this.replicationFilters = replicationFilters;
+        this.replSetName = replSetName;
     }
 
     @Override
@@ -108,13 +98,6 @@ public class MongoDbReplModule extends AbstractModule {
                 .annotatedWith(DocsPerTransaction.class)
                 .toInstance(1000);
 
-        bind(ThreadFactory.class)
-                .annotatedWith(MongoDbRepl.class)
-                .toInstance(new ThreadFactoryBuilder()
-                        .setNameFormat("repl-unnamed-%d")
-                        .build()
-                );
-
         bind(ConcurrentOplogBatchExecutor.class)
                 .in(Singleton.class);
 
@@ -138,17 +121,14 @@ public class MongoDbReplModule extends AbstractModule {
                 .toInstance(new AnalyzedOpReducer(false));
 
         bind(ReplicationFilters.class).toInstance(replicationFilters);
-    }
 
+        bind(String.class).annotatedWith(ReplSetName.class).toInstance(replSetName);
 
-    @Provides @Singleton
-    SyncSourceProvider createSyncSourceProvider() {
-        if (mongoClientConfiguration != null) {
-            return new FollowerSyncSourceProvider(mongoClientConfiguration.getHostAndPort());
-        }
-        else {
-            return new PrimarySyncSourceProvider();
-        }
+        install(new TopologyGuiceModule());
+
+        bind(ReplicationErrorHandler.class)
+                .to(ReplicationErrorHandlerImpl.class)
+                .in(Singleton.class);
     }
 
     public static class DefaultCommitHeuristic implements CommitHeuristic {
@@ -167,50 +147,4 @@ public class MongoDbReplModule extends AbstractModule {
             return false;
         }
     }
-
-    @Beta
-    private static class FollowerSyncSourceProvider implements SyncSourceProvider {
-        private final HostAndPort syncSource;
-
-        public FollowerSyncSourceProvider(@Nonnull HostAndPort syncSource) {
-            this.syncSource = syncSource;
-        }
-
-        @Override
-        public HostAndPort calculateSyncSource(HostAndPort oldSyncSource) {
-            return syncSource;
-        }
-
-        @Override
-        public HostAndPort getLastUsedSyncSource() {
-            return syncSource;
-        }
-
-        @Override
-        public HostAndPort getSyncSource(OpTime lastFetchedOpTime) throws
-                NoSyncSourceFoundException {
-            return syncSource;
-        }
-    }
-
-    private static class PrimarySyncSourceProvider implements SyncSourceProvider {
-
-        @Override
-        public HostAndPort calculateSyncSource(HostAndPort oldSyncSource) throws
-                NoSyncSourceFoundException {
-            throw new NoSyncSourceFoundException();
-        }
-
-        @Override
-        public HostAndPort getSyncSource(OpTime lastFetchedOpTime) throws
-                NoSyncSourceFoundException {
-            throw new NoSyncSourceFoundException();
-        }
-
-        @Override
-        public HostAndPort getLastUsedSyncSource() {
-            return null;
-        }
-    }
-
 }

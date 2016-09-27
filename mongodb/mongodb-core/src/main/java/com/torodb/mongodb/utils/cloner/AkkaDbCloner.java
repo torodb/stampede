@@ -333,7 +333,7 @@ public class AkkaDbCloner implements DbCloner {
                                 .setOrdered(true)
                                 .build()
                         );
-                        if (!insertResult.isOK() || insertResult.getResult().getN() != actualBatchSize) {
+                        if (!insertResult.isOk() || insertResult.getResult().getN() != actualBatchSize) {
                             throw new CloningException("Error while inserting a cloned document");
                         }
                         insertedDocsCounter += insertResult.getResult().getN();
@@ -471,7 +471,7 @@ public class AkkaDbCloner implements DbCloner {
                             indexes
                     )
             );
-            if (!status.isOK()) {
+            if (!status.isOk()) {
                 throw new CloningException("Error while trying to fetch indexes from remote: "
                         + status);
             }

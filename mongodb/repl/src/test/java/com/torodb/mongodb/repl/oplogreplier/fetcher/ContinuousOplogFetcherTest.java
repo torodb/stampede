@@ -40,10 +40,7 @@ import com.torodb.mongodb.repl.oplogreplier.OplogBatch;
 import com.torodb.mongodb.repl.oplogreplier.RollbackReplicationException;
 import com.torodb.mongodb.repl.oplogreplier.StopReplicationException;
 import com.torodb.mongodb.repl.oplogreplier.fetcher.ContinuousOplogFetcher.ContinuousOplogFetcherFactory;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.function.IntFunction;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -226,19 +223,18 @@ public class ContinuousOplogFetcherTest {
         private final HostAndPort hostAndPort = HostAndPort.fromParts("localhost", 1);
 
         @Override
-        public HostAndPort calculateSyncSource(HostAndPort oldSyncSource) throws
-                NoSyncSourceFoundException {
+        public HostAndPort newSyncSource() throws NoSyncSourceFoundException {
             return hostAndPort;
         }
 
         @Override
-        public HostAndPort getSyncSource(OpTime lastFetchedOpTime) throws NoSyncSourceFoundException {
+        public HostAndPort newSyncSource(OpTime lastFetchedOpTime) throws NoSyncSourceFoundException {
             return hostAndPort;
         }
 
         @Override
-        public HostAndPort getLastUsedSyncSource() {
-            return hostAndPort;
+        public Optional<HostAndPort> getLastUsedSyncSource() {
+            return Optional.of(hostAndPort);
         }
     }
 }

@@ -116,7 +116,7 @@ public class TorodbSafeRequestProcessor implements SafeRequestProcessor<MongodCo
 
         Status<FindResult> status = execute(req, FindCommand.INSTANCE, findArg, connection);
 
-        if (!status.isOK()) {
+        if (!status.isOk()) {
             throw new MongoException(status.getErrorCode(), status.getErrorMsg());
         }
 

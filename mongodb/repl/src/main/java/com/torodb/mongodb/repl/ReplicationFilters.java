@@ -21,7 +21,6 @@
 package com.torodb.mongodb.repl;
 
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
@@ -37,7 +36,6 @@ import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.R
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.DeleteCommand;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.InsertCommand;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.UpdateCommand;
-import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.oplog.DbCmdOplogOperation;
 import com.eightkdata.mongowp.server.api.oplog.DbOplogOperation;
 import com.eightkdata.mongowp.server.api.oplog.DeleteOplogOperation;
@@ -181,31 +179,37 @@ public class ReplicationFilters {
         
     }
     
-    private static final ImmutableMap<Command<?, ?>, CheckedFunction<BsonDocument, String>> collectionRelatedCommands = 
-        ImmutableMap.<Command<?, ?>, CheckedFunction<BsonDocument, String>>builder()
-            .put(CreateCollectionCommand.INSTANCE, d -> CreateCollectionCommand.INSTANCE.unmarshallArg(d).getCollection())
-            .put(CreateIndexesCommand.INSTANCE, d -> CreateIndexesCommand.INSTANCE.unmarshallArg(d).getCollection())
-            .put(DropCollectionCommand.INSTANCE, d -> DropCollectionCommand.INSTANCE.unmarshallArg(d).getCollection())
-            .put(RenameCollectionCommand.INSTANCE, d -> RenameCollectionCommand.INSTANCE.unmarshallArg(d).getFromCollection())
-            .put(DeleteCommand.INSTANCE, d -> DeleteCommand.INSTANCE.unmarshallArg(d).getCollection())
-            .put(InsertCommand.INSTANCE, d -> InsertCommand.INSTANCE.unmarshallArg(d).getCollection())
-            .put(UpdateCommand.INSTANCE, d -> UpdateCommand.INSTANCE.unmarshallArg(d).getCollection())
+    private static final ImmutableMap<String, CheckedFunction<BsonDocument, String>> collectionRelatedCommands =
+        ImmutableMap.<String, CheckedFunction<BsonDocument, String>>builder()
+            .put(CreateCollectionCommand.INSTANCE.getCommandName(), d -> CreateCollectionCommand.INSTANCE.unmarshallArg(d).getCollection())
+            .put(CreateIndexesCommand.INSTANCE.getCommandName(), d -> CreateIndexesCommand.INSTANCE.unmarshallArg(d).getCollection())
+            .put(DropCollectionCommand.INSTANCE.getCommandName(), d -> DropCollectionCommand.INSTANCE.unmarshallArg(d).getCollection())
+            .put(RenameCollectionCommand.INSTANCE.getCommandName(), d -> RenameCollectionCommand.INSTANCE.unmarshallArg(d).getFromCollection())
+            .put(DeleteCommand.INSTANCE.getCommandName(), d -> DeleteCommand.INSTANCE.unmarshallArg(d).getCollection())
+            .put(InsertCommand.INSTANCE.getCommandName(), d -> InsertCommand.INSTANCE.unmarshallArg(d).getCollection())
+            .put(UpdateCommand.INSTANCE.getCommandName(), d -> UpdateCommand.INSTANCE.unmarshallArg(d).getCollection())
             .build();
     
     private class OplogOperationPredicate implements OplogOperationVisitor<Boolean, Void>, Predicate<OplogOperation> {
 
         @Override
         public Boolean visit(DbCmdOplogOperation op, Void arg) {
-            Optional<Command<?, ?>> collectionRelatedCommand = collectionRelatedCommands.keySet().stream().filter(
-                    c -> op.getCommandName().isPresent() && 
-                        c.getCommandName().equals(op.getCommandName().get())).findFirst();
-            if (collectionRelatedCommand.isPresent()) {
-                try {
-                    String collection = collectionRelatedCommands.get(collectionRelatedCommand)
-                            .apply(op.getRequest());
-                    return collectionPredicate.test(op.getDatabase(), collection);
-                } catch (Throwable e) {
-                    throw new SystemException("Error while parsing argument for command " + op.getCommandName(), e);
+            if (op.getCommandName().isPresent()) {
+                /*
+                 * TODO(gortiz): This code is quite inneficient. Here, commands are parsed once to
+                 * extract their database, but they are also parsed deeper on the stream to be
+                 * executed. To parse some commands is quite expensive, so we should improve our
+                 * code to do it only once.
+                 */
+                CheckedFunction<BsonDocument, String> fun = collectionRelatedCommands.get(op.getCommandName().get());
+                if (fun != null) {
+                    try {
+                        String collection = fun.apply(op.getRequest());
+                        return collectionPredicate.test(op.getDatabase(), collection);
+                    } catch (Throwable e) {
+                        throw new SystemException("Error while parsing argument for command "
+                                + op.getCommandName().orElse("unknownCmd"), e);
+                    }
                 }
             }
             return databasePredicate.test(op.getDatabase());

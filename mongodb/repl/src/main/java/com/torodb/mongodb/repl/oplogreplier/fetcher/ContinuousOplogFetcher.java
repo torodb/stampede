@@ -227,7 +227,7 @@ public class ContinuousOplogFetcher implements OplogFetcher {
             if (oplogReader == null) {
                 try {
                     oplogReader = retrier.retry(() -> {
-                        HostAndPort syncSource = syncSourceProvider.getSyncSource(lastFetchedOpTime);
+                        HostAndPort syncSource = syncSourceProvider.newSyncSource(lastFetchedOpTime);
                         return readerProvider.newReader(syncSource);
                     }, Hint.TIME_SENSIBLE, Hint.CRITICAL);
                 } catch (RetrierGiveUpException ex) {

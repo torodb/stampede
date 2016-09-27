@@ -124,7 +124,7 @@ public class OplogManager extends ThreadFactoryIdleService {
                                     .addStatement(new DeleteStatement(DOC_QUERY, false))
                                     .build()
                     );
-                    if (!deleteResult.isOK()) {
+                    if (!deleteResult.isOk()) {
                         throw new RetrierAbortException(new MongoException(deleteResult));
                     }
 
@@ -142,10 +142,10 @@ public class OplogManager extends ThreadFactoryIdleService {
                                                     ).build()
                                     ).build()
                     );
-                    if (insertResult.isOK() && insertResult.getResult().getN() != 1) {
+                    if (insertResult.isOk() && insertResult.getResult().getN() != 1) {
                         throw new RetrierAbortException(new MongoException(ErrorCode.OPERATION_FAILED, "More than one element inserted"));
                     }
-                    if (!insertResult.isOK()) {
+                    if (!insertResult.isOk()) {
                         throw new RetrierAbortException(new MongoException(insertResult));
                     }
                     transaction.commit();
@@ -172,7 +172,7 @@ public class OplogManager extends ThreadFactoryIdleService {
                             .setSlaveOk(true)
                             .build()
                     );
-                    if (!status.isOK()) {
+                    if (!status.isOk()) {
                         throw new RetrierAbortException(new MongoException(status));
                     }
 
