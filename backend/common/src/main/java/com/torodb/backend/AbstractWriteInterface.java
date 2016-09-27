@@ -114,7 +114,10 @@ public abstract class AbstractWriteInterface implements WriteInterface {
         while (iterator.hasNext()){
         	MetaDocPart metaDocPart = iterator.next();
             String statement = getDeleteDocPartsStatement(schemaName, metaDocPart.getIdentifier(), dids);
+
             sqlHelper.executeUpdate(c, statement, Context.DELETE);
+
+            LOGGER.info("Executed {}", statement);
         }
     }
 
