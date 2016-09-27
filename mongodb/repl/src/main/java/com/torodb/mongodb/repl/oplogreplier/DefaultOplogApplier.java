@@ -81,7 +81,7 @@ public class DefaultOplogApplier implements OplogApplier {
         this.stopperExecutorService = concurrentToolsFactory.createExecutorService("oplog-applier-stopper", true, 1);
         this.actorSystem = ActorSystem.create("oplog-applier", null, null,
                 ExecutionContexts.fromExecutor(
-                        concurrentToolsFactory.createExecutorService("oplog-applier", true, 2)
+                        concurrentToolsFactory.createExecutorService("oplog-applier", true, 3)
                 )
         );
         this.metrics = metrics;
@@ -94,6 +94,7 @@ public class DefaultOplogApplier implements OplogApplier {
         Materializer materializer = ActorMaterializer.create(actorSystem);
 
         RunnableGraph<Pair<UniqueKillSwitch, CompletionStage<Done>>> graph = createOplogSource(fetcher)
+                .async()
                 .via(createBatcherFlow(applierContext))
                 .viaMat(KillSwitches.single(), Keep.right())
                 .async()
