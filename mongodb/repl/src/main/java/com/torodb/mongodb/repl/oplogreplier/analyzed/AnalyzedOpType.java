@@ -23,6 +23,8 @@ package com.torodb.mongodb.repl.oplogreplier.analyzed;
 import com.eightkdata.mongowp.server.api.oplog.CollectionOplogOperation;
 import com.eightkdata.mongowp.server.api.oplog.UpdateOplogOperation;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 /**
  *
  */
@@ -303,6 +305,8 @@ public enum AnalyzedOpType {
         return deletes;
     }
 
+    @SuppressFBWarnings(value = {"BC_UNCONFIRMED_CAST"},
+            justification = "Cast is ligthly enforced by class implementation. We ignore this but maybe visitor pattern should be used to prevent errors")
     public AnalyzedOpType andThen(CollectionOplogOperation colOp) {
         switch (colOp.getType()) {
             case DELETE: return andThenDelete();

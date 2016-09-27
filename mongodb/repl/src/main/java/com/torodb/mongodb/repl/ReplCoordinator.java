@@ -210,7 +210,7 @@ public class ReplCoordinator extends ThreadFactoryIdleService implements ReplInt
         
         if (memberState != null) {
             metrics.getMemberState().setValue(memberState.name());
-            metrics.getMemberStateCounters()[memberState.ordinal()].inc();
+            metrics.getMemberStateCounters().get(memberState).inc();
         } else {
             metrics.getMemberState().setValue(null);
         }

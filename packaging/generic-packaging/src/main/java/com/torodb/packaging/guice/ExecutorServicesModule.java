@@ -19,7 +19,7 @@ import java.util.concurrent.ThreadFactory;
  *
  */
 public class ExecutorServicesModule extends AbstractModule {
-
+    
     @Override
     protected void configure() {
 
@@ -50,32 +50,45 @@ public class ExecutorServicesModule extends AbstractModule {
                 .toInstance(ForkJoinPool.defaultForkJoinWorkerThreadFactory);
 
         bind(DefaultConcurrentToolsFactory.BlockerThreadFactoryFunction.class)
-                .toInstance(new BlockerThreadFactoryFunction() {
-            @Override
-            public ThreadFactory apply(String prefix) {
-                return new ThreadFactoryBuilder()
-                        .setNameFormat(prefix + " -%d")
-                        .build();
-            }
-        });
+                .toInstance(new CustomBlockerThreadFactoryFunction());
 
         bind(DefaultConcurrentToolsFactory.ForkJoinThreadFactoryFunction.class)
-                .toInstance(new ForkJoinThreadFactoryFunction() {
-            @Override
-            public ForkJoinWorkerThreadFactory apply(String prefix) {
-                return new ForkJoinWorkerThreadFactory() {
-                    private volatile int idProvider = 0;
-                    @Override
-                    public ForkJoinWorkerThread newThread(ForkJoinPool pool) {
-                        ForkJoinWorkerThread newThread = ForkJoinPool
-                                .defaultForkJoinWorkerThreadFactory.newThread(pool);
-                        int id = idProvider++;
-                        newThread.setName(prefix + '-' + id);
-                        return newThread;
-                    }
-                };
-            }
-        });
+                .toInstance(new CustomForkJoinThreadFactoryFunction());
+    }
+
+    private static class CustomBlockerThreadFactoryFunction implements BlockerThreadFactoryFunction {
+        @Override
+        public ThreadFactory apply(String prefix) {
+            return new ThreadFactoryBuilder()
+                    .setNameFormat(prefix + " -%d")
+                    .build();
+        }
+    }
+    
+    private static class CustomForkJoinThreadFactoryFunction implements ForkJoinThreadFactoryFunction {
+        @Override
+        public ForkJoinWorkerThreadFactory apply(String prefix) {
+            return new CustomForkJoinThreadFactory(prefix);
+        }
+    }
+    
+    private static class CustomForkJoinThreadFactory implements ForkJoinWorkerThreadFactory {
+        private final String prefix;
+        private volatile int idProvider = 0;
+        
+        public CustomForkJoinThreadFactory(String prefix) {
+            super();
+            this.prefix = prefix;
+        }
+
+        @Override
+        public ForkJoinWorkerThread newThread(ForkJoinPool pool) {
+            ForkJoinWorkerThread newThread = ForkJoinPool
+                    .defaultForkJoinWorkerThreadFactory.newThread(pool);
+            int id = idProvider++;
+            newThread.setName(prefix + '-' + id);
+            return newThread;
+        }
     }
 
 }

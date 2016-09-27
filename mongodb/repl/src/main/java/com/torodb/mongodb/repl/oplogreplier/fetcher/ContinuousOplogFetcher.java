@@ -181,7 +181,6 @@ public class ContinuousOplogFetcher implements OplogFetcher {
             }
         }
         else {
-            assert firstCursorOp != null;
             if (firstCursorOp.getHash() != state.lastFetchedHash
                     || !firstCursorOp.getOpTime().equals(state.lastFetchedOpTime)) {
 
@@ -197,9 +196,6 @@ public class ContinuousOplogFetcher implements OplogFetcher {
         private long lastFetchedHash;
         private OpTime lastFetchedOpTime;
         private OplogReader oplogReader;
-        private int previousBatchSize = 0;
-        private long previousBatchTime = 0;
-        private long opsReadCounter = 0;
         private MongoCursor<OplogOperation> cursor;
 
         private FetcherState(long lastFetchedHash, OpTime lastFetchedOpTime) {
@@ -309,13 +305,9 @@ public class ContinuousOplogFetcher implements OplogFetcher {
         private void updateState(List<OplogOperation> fetchedOps, long fetchTime) {
             int fetchedOpsSize = fetchedOps.size();
 
-            previousBatchSize = fetchedOpsSize;
-            previousBatchTime = fetchTime;
-
             if (fetchedOpsSize == 0) {
                 return ;
             }
-            opsReadCounter += fetchedOpsSize;
             
             OplogOperation lastOp = fetchedOps.get(fetchedOpsSize - 1);
             lastFetchedHash = lastOp.getHash();

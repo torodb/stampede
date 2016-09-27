@@ -4,6 +4,9 @@ package com.torodb.concurrent;
 import com.torodb.concurrent.guice.ExecutorServiceShutdownHelper;
 import com.torodb.core.annotations.ParallelLevel;
 import com.torodb.core.concurrent.StreamExecutor;
+
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 import java.util.concurrent.*;
 import java.util.concurrent.ForkJoinPool.ForkJoinWorkerThreadFactory;
 import java.util.function.Function;
@@ -54,6 +57,8 @@ public class DefaultConcurrentToolsFactory implements ConcurrentToolsFactory {
     }
 
     @Override
+    @SuppressFBWarnings(value = {"NP_NONNULL_PARAM_VIOLATION"},
+            justification = "ForkJoinPool constructor admits a null UncaughtExceptionHandler")
     public ExecutorService createExecutorService(String prefix, boolean blockerTasks, int maxThreads) {
         ExecutorService executorService;
         if (blockerTasks) {

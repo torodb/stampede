@@ -22,6 +22,9 @@ package com.torodb.mongodb.repl.oplogreplier.batch;
 
 import com.eightkdata.mongowp.Status;
 import com.torodb.core.annotations.DoNotChange;
+
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +32,7 @@ import java.util.List;
 /**
  *
  */
+@SuppressFBWarnings(value = {"SE_BAD_FIELD"})
 public class NamespaceJobExecutionException extends Exception {
 
     private static final long serialVersionUID = -6900585949003470244L;
