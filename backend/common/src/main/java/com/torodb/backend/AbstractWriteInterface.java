@@ -117,7 +117,7 @@ public abstract class AbstractWriteInterface implements WriteInterface {
 
             sqlHelper.executeUpdate(c, statement, Context.DELETE);
 
-            LOGGER.info("Executed {}", statement);
+            LOGGER.trace("Executed {}", statement);
         }
     }
 
@@ -183,12 +183,12 @@ public abstract class AbstractWriteInterface implements WriteInterface {
                     }
                     preparedStatement.addBatch();
 
-                    LOGGER.info("Added to insert {}", preparedStatement.toString());
+                    LOGGER.trace("Added to insert {}", preparedStatement.toString());
 
                     if (docCounter % maxBatchSize == 0 || !docPartRowIterator.hasNext()) {
                         preparedStatement.executeBatch();
 
-                        LOGGER.info("Insertion batch executed");
+                        LOGGER.trace("Insertion batch executed");
                     }
                 }
             }
