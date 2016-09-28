@@ -153,12 +153,19 @@ public class WrapperMutableMetaIndex implements MutableMetaIndex {
 
     @Override
     public Stream<List<String>> streamMetaDocPartIndexesIdentifiers(MetaDocPart docPart) {
-        return wrapped.streamMetaDocPartIndexesIdentifiers(docPart, iteratorMetaIndexFieldByTableRef(docPart.getTableRef()));
+        return wrapped.streamMetaDocPartIndexesIdentifiers(docPart, 
+                iteratorMetaIndexFieldByTableRef(docPart.getTableRef()));
     }
 
     @Override
     public String toString() {
         return defautToString();
+    }
+
+    @Override
+    public boolean isCompatible(MetaDocPart docPart) {
+        return wrapped.isCompatible(docPart, 
+                iteratorMetaIndexFieldByTableRef(docPart.getTableRef()));
     }
 
 }

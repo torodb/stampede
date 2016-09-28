@@ -79,7 +79,7 @@ public interface MutableMetaDocPart extends MetaDocPart {
     public boolean removeMetaDocPartIndexByIdentifier(String indexId);
     
     @DoNotChange
-    public Iterable<Tuple2<MutableMetaDocPartIndex, MetaElementState>> getAddedMetaDocPartIndexes();
+    public Iterable<Tuple2<MutableMetaDocPartIndex, MetaElementState>> getModifiedMetaDocPartIndexes();
 
     public abstract ImmutableMetaDocPart immutableCopy();
 }

@@ -26,6 +26,8 @@ public interface MetaIndexField {
     @Nonnull
     public abstract FieldIndexOrdering getOrdering();
     
+    public abstract boolean isCompatible(MetaDocPart docPart);
+    
     public abstract boolean isCompatible(MetaDocPart docPart, MetaDocPartIndexColumn indexColumn);
     
     public abstract boolean isMatch(MetaDocPart docPart, String identifier, MetaDocPartIndexColumn indexColumn);

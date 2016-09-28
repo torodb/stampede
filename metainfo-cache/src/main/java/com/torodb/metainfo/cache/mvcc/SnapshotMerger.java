@@ -21,6 +21,7 @@
 package com.torodb.metainfo.cache.mvcc;
 
 import java.util.Optional;
+import java.util.stream.StreamSupport;
 
 import org.jooq.lambda.tuple.Tuple2;
 
@@ -39,6 +40,7 @@ import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetaDocPartIndex;
 import com.torodb.core.transaction.metainf.MetaElementState;
+import com.torodb.core.transaction.metainf.MetaField;
 import com.torodb.core.transaction.metainf.MetaIndex;
 import com.torodb.core.transaction.metainf.MetaScalar;
 import com.torodb.core.transaction.metainf.MutableMetaCollection;
@@ -191,18 +193,8 @@ public class SnapshotMerger {
 
     }
 
-    private void merge(MetaDatabase newDb, MetaDatabase oldDb, MetaCollection newStructure, ImmutableMetaCollection oldStructure,
+    private void merge(MetaDatabase newDb, MetaDatabase oldDb, MutableMetaCollection newStructure, ImmutableMetaCollection oldStructure,
             ImmutableMetaCollection.Builder parentBuilder, MutableMetaDocPart changed) throws UnmergeableException {
-        Optional<? extends ImmutableMetaIndex> oldMissedIndex = oldStructure.streamContainedMetaIndexes()
-                .filter(oldIndex -> 
-                    newStructure.getMetaIndexByName(oldIndex.getName()) == null && 
-                    oldIndex.iteratorMetaIndexFieldByTableRef(changed.getTableRef()).hasNext())
-                .findAny();
-        
-        if (oldMissedIndex.isPresent()) {
-            throw createUnmergeableException(oldDb, oldStructure, changed, oldMissedIndex.get());
-        }
-        
         ImmutableMetaDocPart byRef = oldStructure.getMetaDocPartByTableRef(changed.getTableRef());
         ImmutableMetaDocPart byId = oldStructure.getMetaDocPartByIdentifier(changed.getIdentifier());
 
@@ -219,28 +211,38 @@ public class SnapshotMerger {
         ImmutableMetaDocPart.Builder childBuilder = new ImmutableMetaDocPart.Builder(byId);
 
         for (ImmutableMetaField addedMetaField : changed.getAddedMetaFields()) {
-            merge(oldDb, oldStructure, byId, childBuilder, addedMetaField);
+            merge(oldDb, newStructure, oldStructure, byId, childBuilder, addedMetaField);
         }
         for (ImmutableMetaScalar addedMetaScalar : changed.getAddedMetaScalars()) {
             merge(oldDb, oldStructure, byId, childBuilder, addedMetaScalar);
         }
-        for (Tuple2<MutableMetaDocPartIndex, MetaElementState> addedMetaDocPartIndex : changed.getAddedMetaDocPartIndexes()) {
-            merge(oldDb, oldStructure, byId, childBuilder, addedMetaDocPartIndex.v1(), addedMetaDocPartIndex.v2());
+        for (Tuple2<MutableMetaDocPartIndex, MetaElementState> addedMetaDocPartIndex : changed.getModifiedMetaDocPartIndexes()) {
+            merge(oldDb, newStructure, oldStructure, changed, byId, childBuilder, addedMetaDocPartIndex.v1(), addedMetaDocPartIndex.v2());
         }
 
         parentBuilder.put(childBuilder);
 
     }
 
-    private void merge(MetaDatabase db, MetaCollection col, ImmutableMetaDocPart oldStructure,
+    private void merge(MetaDatabase oldDb, MetaCollection newCol, MetaCollection oldCol, ImmutableMetaDocPart oldStructure,
             ImmutableMetaDocPart.Builder parentBuilder, ImmutableMetaField changed) throws UnmergeableException {
         ImmutableMetaField byNameAndType = oldStructure.getMetaFieldByNameAndType(changed.getName(), changed.getType());
         ImmutableMetaField byId = oldStructure.getMetaFieldByIdentifier(changed.getIdentifier());
 
         if (byNameAndType != byId) {
-            throw createUnmergeableException(db, col, oldStructure, changed, byNameAndType, byId);
+            throw createUnmergeableException(oldDb, oldCol, oldStructure, changed, byNameAndType, byId);
         }
+        
         if (byNameAndType == null && byId == null) {
+            Optional<? extends MetaIndex> oldMissedIndex = oldCol.streamContainedMetaIndexes()
+                .filter(oldIndex -> newCol.getMetaIndexByName(oldIndex.getName()) == null &&
+                    oldIndex.getMetaIndexFieldByTableRefAndName(oldStructure.getTableRef(), changed.getName()) != null)
+                .findAny();
+            
+            if (oldMissedIndex.isPresent()) {
+                throw createUnmergeableExceptionForMissing(oldDb, oldCol, oldStructure, changed, oldMissedIndex.get());
+            }
+            
             parentBuilder.put(changed);
         }
     }
@@ -258,9 +260,13 @@ public class SnapshotMerger {
         }
     }
 
-    private void merge(MetaDatabase oldDb, ImmutableMetaCollection oldCol, ImmutableMetaDocPart oldStructure,
+    private void merge(MetaDatabase oldDb, MutableMetaCollection newCol, ImmutableMetaCollection oldCol, MetaDocPart newStructure, ImmutableMetaDocPart oldStructure,
             ImmutableMetaDocPart.Builder parentBuilder, MutableMetaDocPartIndex changed, MetaElementState newState) throws UnmergeableException {
         ImmutableMetaDocPartIndex byId = oldStructure.getMetaDocPartIndexByIdentifier(changed.getIdentifier());
+        ImmutableMetaDocPartIndex bySameColumns = oldStructure.streamIndexes()
+                .filter(oldDocPartIndex -> oldDocPartIndex.hasSameColumns(changed))
+                .findAny()
+                .orElse(null);
 
         switch (newState) {
             case NOT_CHANGED:
@@ -268,13 +274,19 @@ public class SnapshotMerger {
                 throw new AssertionError("A modification was expected, but the new state is " + newState);
             case ADDED:
             case MODIFIED: {
-                Optional<ImmutableMetaDocPartIndex> bySameColumns = oldStructure.streamIndexes()
-                        .filter(docPartIndex -> !docPartIndex.getIdentifier().equals(changed.getIdentifier()) && 
-                            docPartIndex.hasSameColumns(changed))
-                        .findAny();
+                Optional<? extends MetaIndex> anyNewRelatedIndex = 
+                        StreamSupport.stream(newCol.getModifiedMetaIndexes().spliterator(), false)
+                            .map(index -> index.v1())
+                            .filter(newIndex -> newIndex.isCompatible(newStructure, changed))
+                            .findAny();
                 
-                if (bySameColumns.isPresent()) {
-                    throw createUnmergeableException(oldDb, oldCol, oldStructure, changed, bySameColumns.get());
+                if (!anyNewRelatedIndex.isPresent()) {
+                    Optional<ImmutableMetaIndex> anyOldRelatedIndex = oldCol.streamContainedMetaIndexes()
+                            .filter(oldIndex -> oldIndex.isCompatible(newStructure, changed))
+                            .findAny();
+                    if (!anyOldRelatedIndex.isPresent()) {
+                        throw createUnmergeableExceptionForOrphan(oldDb, oldCol, oldStructure, changed);
+                    }
                 }
 
                 if (byId == null) {
@@ -295,16 +307,28 @@ public class SnapshotMerger {
             }
             case REMOVED: {
                 Optional<ImmutableMetaIndex> oldMissedIndex = oldCol.streamContainedMetaIndexes()
-                        .flatMap(index -> index.streamTableRefs()
-                                .filter(tableRef -> index.isCompatible(oldCol.getMetaDocPartByTableRef(tableRef), changed))
-                                .map(tableRef -> index))
+                        .flatMap(oldIndex -> oldIndex.streamTableRefs()
+                                .map(tableRef -> oldCol.getMetaDocPartByTableRef(tableRef))
+                                .filter(oldDocPart -> oldDocPart != null &&
+                                        oldIndex.isCompatible(oldDocPart, changed))
+                                .map(tableRef -> oldIndex))
                         .findAny();
                 
                 if (oldMissedIndex.isPresent()) {
-                    throw createUnmergeableException(oldDb, oldCol, oldStructure, changed, oldMissedIndex.get());
+                    Optional<? extends MetaIndex> newMissedIndex = 
+                            newCol.streamContainedMetaIndexes()
+                                .flatMap(newIndex -> newIndex.streamTableRefs()
+                                        .map(tableRef -> newCol.getMetaDocPartByTableRef(tableRef))
+                                        .filter(newDocPart -> newDocPart != null &&
+                                                newIndex.isCompatible(newDocPart, changed))
+                                        .map(tableRef -> newIndex))
+                                .findAny();
+                    if (newMissedIndex.isPresent()) {
+                        throw createUnmergeableExceptionForMissing(oldDb, oldCol, oldStructure, changed, oldMissedIndex.get());
+                    }
                 }
                 
-                if (byId == null) { 
+                if (byId == null || bySameColumns == null) {
                     /*
                      * it has been removed on another transaction or created and removed on the 
                      * current one. No change must be done
@@ -312,6 +336,7 @@ public class SnapshotMerger {
                     return ;
                 }
                 assert byId != null;
+                assert bySameColumns != null;
                 /*
                  * In this case, we can delegate on the backend transaction check. If it thinks
                  * everything is fine, we can remove the element. If it thinks there is an error,
@@ -335,7 +360,7 @@ public class SnapshotMerger {
         }
     }
 
-    private void merge(MetaDatabase oldDb, MetaCollection newStructure, ImmutableMetaCollection oldStructure,
+    private void merge(MetaDatabase oldDb, MutableMetaCollection newStructure, ImmutableMetaCollection oldStructure,
             ImmutableMetaCollection.Builder parentBuilder, MutableMetaIndex changed, MetaElementState newState) throws UnmergeableException {
         ImmutableMetaIndex byName = oldStructure.getMetaIndexByName(changed.getName());
 
@@ -345,6 +370,24 @@ public class SnapshotMerger {
                 throw new AssertionError("A modification was expected, but the new state is " + newState);
             case ADDED:
             case MODIFIED: {
+                Optional<? extends MetaDocPart> anyDocPartWithMissingDocPartIndex = changed.streamTableRefs()
+                    .map(tableRef -> (MetaDocPart) oldStructure.getMetaDocPartByTableRef(tableRef))
+                    .filter(docPart -> docPart != null &&
+                            changed.streamMetaDocPartIndexesIdentifiers(docPart)
+                                .filter(identifiers -> docPart.streamIndexes()
+                                    .noneMatch(docPartIndex -> changed.isMatch(docPart, identifiers, docPartIndex)))
+                                .anyMatch(identifiers -> {
+                                    MetaDocPart newDocPart = newStructure.getMetaDocPartByTableRef(docPart.getTableRef()); 
+                                    return newDocPart.streamIndexes()
+                                            .noneMatch(docPartIndex -> changed.isMatch(newDocPart, identifiers, docPartIndex));
+                                }))
+                    .findAny();
+                    
+                
+                if (anyDocPartWithMissingDocPartIndex.isPresent()) {
+                    throw createUnmergeableExceptionForMissing(oldDb, oldStructure, changed, anyDocPartWithMissingDocPartIndex.get());
+                }
+                
                 if (byName == null) {
                     parentBuilder.put(changed.immutableCopy());
                     return ;
@@ -362,24 +405,29 @@ public class SnapshotMerger {
                 break;
             }
             case REMOVED: {
-                Optional<Tuple2<MetaDocPart, MetaDocPartIndex>> oldMissedDocPartIndex = changed.streamTableRefs()
-                        .map(tableRef -> oldStructure.getMetaDocPartByTableRef(tableRef))
-                        .flatMap(oldDocPart -> oldDocPart.streamIndexes()
-                                .filter(oldDocPartIndex -> 
-                                    changed.isCompatible(oldDocPart, oldDocPartIndex) && 
-                                    newStructure.streamContainedMetaDocParts()
-                                        .noneMatch(docPart -> docPart.streamIndexes()
-                                            .anyMatch(docPartIndex -> docPartIndex.hasSameColumns(oldDocPartIndex))) &&
-                                    oldStructure.streamContainedMetaIndexes().anyMatch(index -> 
-                                        !index.getName().equals(changed.getName()) &&
-                                        index.isCompatible(oldDocPart, oldDocPartIndex)))
-                                .map(docPartIndex -> new Tuple2<MetaDocPart, MetaDocPartIndex>(oldDocPart, docPartIndex)))
-                        .findAny();
+                Optional<? extends MetaDocPartIndex> orphanDocPartIndex = changed.streamTableRefs()
+                    .map(tableRef -> (MetaDocPart) oldStructure.getMetaDocPartByTableRef(tableRef))
+                    .filter(docPart -> docPart != null)
+                    .flatMap(oldDocPart -> oldDocPart.streamIndexes()
+                            .filter(oldDocPartIndex -> changed.isCompatible(oldDocPart, oldDocPartIndex) &&
+                                    StreamSupport.stream(newStructure.getMetaDocPartByTableRef(oldDocPart.getTableRef()).getModifiedMetaDocPartIndexes().spliterator(), false)
+                                        .noneMatch(newDocPartIndex -> newDocPartIndex.v2() == MetaElementState.REMOVED &&
+                                            newDocPartIndex.v1().getIdentifier().equals(oldDocPartIndex.getIdentifier())) &&
+                                    oldStructure.streamContainedMetaIndexes()
+                                            .noneMatch(oldIndex -> oldIndex.isCompatible(oldDocPart, oldDocPartIndex) &&
+                                                    StreamSupport.stream(newStructure.getModifiedMetaIndexes().spliterator(), false)
+                                                        .noneMatch(newIndex -> newIndex.v2() == MetaElementState.REMOVED &&
+                                                            newIndex.v1().getName().equals(oldIndex.getName()))
+                                            )
+                            )
+                    )
+                    .findAny();
+                        
                 
-                if (oldMissedDocPartIndex.isPresent()) {
-                    throw createUnmergeableException(oldDb, oldStructure, changed, oldMissedDocPartIndex.get());
+                if (orphanDocPartIndex.isPresent()) {
+                    throw createUnmergeableExceptionForOrphan(oldDb, oldStructure, changed, orphanDocPartIndex.get());
                 }
-                
+
                 if (byName == null) { 
                     /*
                      * it has been removed on another transaction or created and removed on the 
@@ -388,6 +436,7 @@ public class SnapshotMerger {
                     return ;
                 }
                 assert byName != null;
+                
                 /*
                  * In this case, we can delegate on the backend transaction check. If it thinks
                  * everything is fine, we can remove the element. If it thinks there is an error,
@@ -468,14 +517,14 @@ public class SnapshotMerger {
         }
     }
 
-    private UnmergeableException createUnmergeableException(
+    private UnmergeableException createUnmergeableExceptionForMissing(
             MetaDatabase db,
-            MetaCollection col, MutableMetaDocPart changed, ImmutableMetaIndex oldMissedIndex) {
+            MetaCollection col, MetaDocPart docPart, MetaField changed, MetaIndex oldMissedIndex) {
         throw new UnmergeableException(oldSnapshot, newSnapshot,
                 "There is a previous index on " + db + "." + col 
                 + " whose name is " + oldMissedIndex.getName()
-                + " associated with new doc part "
-                + changed + " that has not been created.");
+                + " associated with new doc part field " +  docPart + "."
+                + changed + " and the corresponding doc part index has not been created.");
     }
 
     private UnmergeableException createUnmergeableException(
@@ -521,17 +570,15 @@ public class SnapshotMerger {
         }
     }
 
-    private UnmergeableException createUnmergeableException(
-            MetaDatabase db, MetaCollection col, MetaDocPart docPart, MetaDocPartIndex changed,
-            ImmutableMetaDocPartIndex bySameColumns) {
+    private UnmergeableException createUnmergeableExceptionForOrphan(
+            MetaDatabase db, MetaCollection col, MetaDocPart docPart, MetaDocPartIndex changed) {
         throw new UnmergeableException(oldSnapshot, newSnapshot,
-                "There is a previous doc part index " + db.getIdentifier() + "." + col.getIdentifier() + 
-                "." + docPart.getIdentifier() + "." + bySameColumns.getIdentifier()
-                + " that has same columns than new doc part index " + db.getIdentifier() + "." + col.getIdentifier() + 
-                "." + docPart.getIdentifier() + "." + changed.getIdentifier());
+                "There is a new doc part index " + db.getIdentifier() + "." + col.getIdentifier() + 
+                "." + docPart.getIdentifier() + "." + changed.getIdentifier()
+                + " that has no index associated");
     }
 
-    private UnmergeableException createUnmergeableException(
+    private UnmergeableException createUnmergeableExceptionForMissing(
             MetaDatabase db, MetaCollection col, MetaDocPart docPart, MetaDocPartIndex changed,
             ImmutableMetaIndex oldMissedIndex) {
         throw new UnmergeableException(oldSnapshot, newSnapshot,
@@ -585,14 +632,22 @@ public class SnapshotMerger {
         }
     }
 
-    private UnmergeableException createUnmergeableException(
+    private UnmergeableException createUnmergeableExceptionForOrphan(
             MetaDatabase db,
-            MetaCollection col, MutableMetaIndex changed, Tuple2<MetaDocPart, MetaDocPartIndex> oldMissedDocPartIndex) {
+            MetaCollection col, MutableMetaIndex changed, MetaDocPartIndex oldOrphanDocPartIndex) {
         throw new UnmergeableException(oldSnapshot, newSnapshot,
-                "There is a previous doc part index on " + db.getIdentifier() + "." + oldMissedDocPartIndex.v1().getIdentifier() 
-                + "." + oldMissedDocPartIndex.v2().getIdentifier()
+                "There is a previous doc part index on " + db.getIdentifier() + "." + oldOrphanDocPartIndex.getIdentifier()
                 + " associated only with removed index "
                 + changed + " that has not been deleted.");
+    }
+
+    private UnmergeableException createUnmergeableExceptionForMissing(
+            MetaDatabase db,
+            MetaCollection col, MutableMetaIndex changed, MetaDocPart oldDocPartForMissedIndex) {
+        throw new UnmergeableException(oldSnapshot, newSnapshot,
+                "There should be a doc part index on " + db + "." + col + "." + oldDocPartForMissedIndex 
+                + " associated only with new index "
+                + changed + " that has not been created.");
     }
 
 }

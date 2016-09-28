@@ -19,22 +19,10 @@
  */
 package com.torodb.metainfo.cache.mvcc;
 
-import com.torodb.metainfo.cache.mvcc.SnapshotMerger;
-import com.torodb.core.TableRefFactory;
-import com.torodb.core.impl.TableRefFactoryImpl;
-import com.torodb.core.transaction.metainf.*;
-import com.torodb.core.transaction.metainf.FieldType;
-import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
-import com.torodb.core.transaction.metainf.ImmutableMetaDatabase;
-import com.torodb.core.transaction.metainf.ImmutableMetaDocPart;
-import com.torodb.core.transaction.metainf.ImmutableMetaField;
-import com.torodb.core.transaction.metainf.ImmutableMetaScalar;
-import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
-import com.torodb.core.transaction.metainf.MutableMetaDocPart;
-import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
-import com.torodb.core.transaction.metainf.UnmergeableException;
-import com.torodb.core.transaction.metainf.WrapperMutableMetaSnapshot;
+import static org.mockito.Mockito.spy;
+
 import java.util.Collections;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -42,7 +30,25 @@ import org.junit.Test;
 import org.mockito.MockSettings;
 import org.mockito.internal.creation.MockSettingsImpl;
 
-import static org.mockito.Mockito.spy;
+import com.torodb.core.TableRefFactory;
+import com.torodb.core.impl.TableRefFactoryImpl;
+import com.torodb.core.transaction.metainf.FieldIndexOrdering;
+import com.torodb.core.transaction.metainf.FieldType;
+import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
+import com.torodb.core.transaction.metainf.ImmutableMetaDatabase;
+import com.torodb.core.transaction.metainf.ImmutableMetaDocPart;
+import com.torodb.core.transaction.metainf.ImmutableMetaDocPartIndex;
+import com.torodb.core.transaction.metainf.ImmutableMetaDocPartIndexColumn;
+import com.torodb.core.transaction.metainf.ImmutableMetaField;
+import com.torodb.core.transaction.metainf.ImmutableMetaIndex;
+import com.torodb.core.transaction.metainf.ImmutableMetaIndexField;
+import com.torodb.core.transaction.metainf.ImmutableMetaScalar;
+import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
+import com.torodb.core.transaction.metainf.MutableMetaCollection;
+import com.torodb.core.transaction.metainf.MutableMetaDocPart;
+import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
+import com.torodb.core.transaction.metainf.UnmergeableException;
+import com.torodb.core.transaction.metainf.WrapperMutableMetaSnapshot;
 
 /**
  *
@@ -70,7 +76,8 @@ public class SnapshotMergerTest {
                                 .put(new ImmutableMetaDocPart.Builder(tableRefFactory.createRoot(), "docPartId1")
                                         .put(new ImmutableMetaField("fieldName1", "fieldId1", FieldType.INTEGER))
                                         .put(new ImmutableMetaScalar("scalarId1", FieldType.INTEGER))
-                                ).build()
+                                )
+                                .build()
                         ).build()
                 ).build();
     }

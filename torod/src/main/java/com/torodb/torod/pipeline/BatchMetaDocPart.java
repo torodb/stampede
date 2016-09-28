@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
+import org.jooq.lambda.tuple.Tuple2;
+
 import com.torodb.core.TableRef;
 import com.torodb.core.annotations.DoNotChange;
 import com.torodb.core.transaction.metainf.FieldType;
@@ -12,6 +14,7 @@ import com.torodb.core.transaction.metainf.ImmutableMetaDocPart;
 import com.torodb.core.transaction.metainf.ImmutableMetaField;
 import com.torodb.core.transaction.metainf.ImmutableMetaScalar;
 import com.torodb.core.transaction.metainf.MetaDocPartIndex;
+import com.torodb.core.transaction.metainf.MetaElementState;
 import com.torodb.core.transaction.metainf.MetaScalar;
 import com.torodb.core.transaction.metainf.MutableMetaDocPart;
 import com.torodb.core.transaction.metainf.MutableMetaDocPartIndex;
@@ -150,7 +153,12 @@ public class BatchMetaDocPart implements MutableMetaDocPart {
     }
 
     @Override
-    public Iterable<? extends MutableMetaDocPartIndex> getAddedMetaDocPartIndexes() {
-        return delegate.getAddedMetaDocPartIndexes();
+    public Iterable<Tuple2<MutableMetaDocPartIndex, MetaElementState>> getModifiedMetaDocPartIndexes() {
+        return delegate.getModifiedMetaDocPartIndexes();
+    }
+
+    @Override
+    public boolean removeMetaDocPartIndexByIdentifier(String indexId) {
+        return delegate.removeMetaDocPartIndexByIdentifier(indexId);
     }
 }

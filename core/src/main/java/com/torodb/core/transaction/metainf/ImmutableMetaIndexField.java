@@ -1,6 +1,8 @@
 
 package com.torodb.core.transaction.metainf;
 
+import java.util.Optional;
+
 import javax.annotation.concurrent.Immutable;
 
 import com.torodb.core.TableRef;
@@ -50,16 +52,39 @@ public class ImmutableMetaIndexField implements MetaIndexField {
     }
 
     @Override
+    public boolean isCompatible(MetaDocPart docPart) {
+        if (docPart.getTableRef().equals(tableRef)) {
+            Optional<? extends MetaField> field = docPart.streamMetaFieldByName(name).findAny();
+            
+            if (field.isPresent()) {
+                return true;
+            }
+        }
+        
+        if (!tableRef.isRoot()) {
+            return name.equals(docPart.getTableRef().getName()) &&
+                    tableRef.getParent().get().equals(tableRef);
+        }
+        
+        return false;
+    }
+
+    @Override
     public boolean isCompatible(MetaDocPart docPart, MetaDocPartIndexColumn indexColumn) {
         if (ordering.equals(indexColumn.getOrdering())) {
-            MetaField field = docPart.getMetaFieldByIdentifier(indexColumn.getIdentifier());
-            
-            if (field != null) {
-                return name.equals(field.getName());
+            if (docPart.getTableRef().equals(tableRef)) {
+                MetaField field = docPart.getMetaFieldByIdentifier(indexColumn.getIdentifier());
+                
+                if (field != null) {
+                    return name.equals(field.getName());
+                }
             }
-            
-            return docPart.getScalar(indexColumn.getIdentifier()) != null && 
-                    name.equals(docPart.getTableRef().getName());
+        
+            if (!tableRef.isRoot()) {
+                return name.equals(docPart.getTableRef().getName()) &&
+                        docPart.getScalar(indexColumn.getIdentifier()) != null && 
+                        tableRef.getParent().get().equals(tableRef);
+            }
         }
         
         return false;
@@ -69,14 +94,19 @@ public class ImmutableMetaIndexField implements MetaIndexField {
     public boolean isMatch(MetaDocPart docPart, String identifier, MetaDocPartIndexColumn indexColumn) {
         if (identifier.equals(indexColumn.getIdentifier()) &&
                 ordering.equals(indexColumn.getOrdering())) {
-            MetaField field = docPart.getMetaFieldByIdentifier(indexColumn.getIdentifier());
-            
-            if (field != null) {
-                return name.equals(field.getName());
+            if (docPart.getTableRef().equals(tableRef)) {
+                MetaField field = docPart.getMetaFieldByIdentifier(indexColumn.getIdentifier());
+                
+                if (field != null) {
+                    return name.equals(field.getName());
+                }
             }
-            
-            return docPart.getScalar(indexColumn.getIdentifier()) != null && 
-                    name.equals(docPart.getTableRef().getName());
+        
+            if (!tableRef.isRoot()) {
+                return name.equals(docPart.getTableRef().getName()) &&
+                        docPart.getScalar(indexColumn.getIdentifier()) != null && 
+                        tableRef.getParent().get().equals(tableRef);
+            }
         }
         
         return false;

@@ -39,6 +39,8 @@ public interface MetaIndex {
     
     public abstract Stream<List<String>> streamMetaDocPartIndexesIdentifiers(MetaDocPart docPart);
     
+    public abstract boolean isCompatible(MetaDocPart docPart);
+    
     public abstract boolean isCompatible(MetaDocPart docPart, MetaDocPartIndex docPartIndex);
     
     public abstract boolean isMatch(MetaDocPart docPart, List<String> identifiers, MetaDocPartIndex docPartIndex);

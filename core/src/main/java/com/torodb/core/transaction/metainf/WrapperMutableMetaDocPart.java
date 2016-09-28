@@ -149,7 +149,7 @@ public class WrapperMutableMetaDocPart implements MutableMetaDocPart {
 
     @Override
     @DoNotChange
-    public Iterable<Tuple2<MutableMetaDocPartIndex, MetaElementState>> getAddedMetaDocPartIndexes() {
+    public Iterable<Tuple2<MutableMetaDocPartIndex, MetaElementState>> getModifiedMetaDocPartIndexes() {
         return Maps.filterValues(indexesByIdentifier, tuple -> tuple.v2().hasChanged())
                 .values();
     }

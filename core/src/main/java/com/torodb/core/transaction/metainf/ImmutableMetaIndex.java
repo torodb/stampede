@@ -110,6 +110,27 @@ public class ImmutableMetaIndex implements MetaIndex {
     }
 
     @Override
+    public boolean isCompatible(MetaDocPart docPart) {
+        return isCompatible(docPart,
+                iteratorMetaIndexFieldByTableRef(docPart.getTableRef()));
+    }
+
+    protected boolean isCompatible(MetaDocPart docPart, Iterator<? extends MetaIndexField> indexFieldIterator) {
+        if (!indexFieldIterator.hasNext()) {
+            return false;
+        }
+        
+        while (indexFieldIterator.hasNext()) {
+            MetaIndexField indexField = indexFieldIterator.next();
+            if (!indexField.isCompatible(docPart)) {
+                return false;
+            }
+        }
+        
+        return !indexFieldIterator.hasNext();
+    }
+
+    @Override
     public boolean isCompatible(MetaDocPart docPart, MetaDocPartIndex docPartIndex) {
         return isCompatible(docPart, docPartIndex,  
                 iteratorMetaIndexFieldByTableRef(docPart.getTableRef()));
