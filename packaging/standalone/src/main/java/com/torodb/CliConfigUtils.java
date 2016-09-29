@@ -1,19 +1,20 @@
 
 package com.torodb;
 
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
-import com.torodb.packaging.config.model.Config;
-import com.torodb.packaging.config.util.ConfigUtils;
+import static com.torodb.packaging.config.util.ConfigUtils.validateBean;
+
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 
-import static com.torodb.packaging.config.util.ConfigUtils.validateBean;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
+import com.torodb.packaging.config.model.Config;
+import com.torodb.packaging.config.util.ConfigUtils;
 
 /**
  *
@@ -38,7 +39,7 @@ public class CliConfigUtils {
 		    defaultConfig.getBackend().setBackendImplementation(
 		            CliConfig.getBackendClass(cliConfig.getBackend()).newInstance());
 		}
-		JsonNode configNode = objectMapper.valueToTree(defaultConfig);
+		ObjectNode configNode = (ObjectNode) objectMapper.valueToTree(defaultConfig);
 
 		if (cliConfig.hasConfFile() || cliConfig.hasXmlConfFile()) {
 			ObjectMapper mapper = null;
@@ -71,7 +72,7 @@ public class CliConfigUtils {
 
 				String value = paramPathValue.substring(paramPathValueSeparatorIndex + 1);
 
-				ConfigUtils.mergeParam(yamlMapper, configNode, pathAndProp, value);
+				configNode = ConfigUtils.mergeParam(yamlMapper, configNode, pathAndProp, value);
 			}
 		}
 

@@ -223,8 +223,12 @@ public class ConfigUtils {
         return null;
     }
 
-	public static void mergeParam(ObjectMapper objectMapper, JsonNode configRootNode, String pathAndProp, String value)
+	public static ObjectNode mergeParam(ObjectMapper objectMapper, ObjectNode configRootNode, String pathAndProp, String value)
 			throws Exception {
+	    if (JsonPointer.compile(pathAndProp).equals(JsonPointer.compile("/"))) {
+	        return (ObjectNode) objectMapper.readTree(value);
+	    }
+	    
 		String path = pathAndProp.substring(0, pathAndProp.lastIndexOf("/"));
 		String prop = pathAndProp.substring(pathAndProp.lastIndexOf("/") + 1);
 
@@ -294,6 +298,8 @@ public class ConfigUtils {
 	            arrayNode.remove(index);
 	        }
 		}
+		
+		return configRootNode;
 	}
 
 	private static JsonNode createNode(JsonPointer childOfPointer, List<JsonNode> newNodes) {
