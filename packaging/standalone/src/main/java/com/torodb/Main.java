@@ -54,8 +54,6 @@ public class Main {
 	public static void main(String[] args) throws Exception {
 		Console console = JCommander.getConsole();
 
-		Log4jUtils.setRootLevel(LogLevel.INFO);
-
 		ResourceBundle cliBundle = PropertyResourceBundle.getBundle("CliMessages");
 		final CliConfig cliConfig = new CliConfig();
 		JCommander jCommander = new JCommander(cliConfig, cliBundle, args);
@@ -86,7 +84,7 @@ public class Main {
 			System.exit(0);
 		}
 
-		configureLoggerService(config);
+		configureLogger(cliConfig, config);
 
 		ConfigUtils.parseToropassFile(config);
         ConfigUtils.parseMongopassFile(config);
@@ -149,10 +147,8 @@ public class Main {
 		}
 	}
 
-	private static void configureLoggerService(Config config) {
-		if (config.getGeneric().getLog4j2File() != null) {
-			Log4jUtils.reconfigure(config.getGeneric().getLog4j2File());
-		} else {
+	private static void configureLogger(CliConfig cliConfig, Config config) {
+		if (cliConfig.hasConfFile()) {
 			Log4jUtils.setRootLevel(config.getGeneric().getLogLevel());
 
 			if (config.getGeneric().getLogPackages() != null) {
@@ -163,6 +159,7 @@ public class Main {
 				Log4jUtils.appendToLogFile(config.getGeneric().getLogFile());
 			}
 		}
+		// If not specified in configuration YAML then the log4j2.xml is used instead (by default)
 	}
 
 	private static String readPwd() throws IOException {

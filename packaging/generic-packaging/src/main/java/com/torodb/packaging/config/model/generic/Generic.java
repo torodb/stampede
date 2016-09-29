@@ -27,6 +27,15 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.torodb.core.metrics.MetricsConfig;
 import com.torodb.packaging.config.annotation.Description;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+
+import java.util.AbstractMap;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Description("config.generic")
 @JsonPropertyOrder({ 
@@ -40,7 +49,7 @@ public class Generic implements MetricsConfig{
 	@Description("config.generic.logLevel")
 	@NotNull
 	@JsonProperty(required=true)
-	private LogLevel logLevel = LogLevel.INFO;
+	private LogLevel logLevel;
 	@Description("config.generic.logPackages")
 	private LogPackages logPackages;
 	@Description("config.generic.logFile")
@@ -63,6 +72,11 @@ public class Generic implements MetricsConfig{
 	private Integer reservedReadPoolSize = 10;
 	@Description("config.generic.metricsEnabled")
 	private Boolean metricsEnabled = true;
+
+	public Generic() {
+		Level log4jLevel = LogManager.getRootLogger().getLevel();
+		logLevel = new Log4jLevelToLogLevelMapper().map(log4jLevel);
+	}
 
 	public LogLevel getLogLevel() {
 		return logLevel;
@@ -130,4 +144,23 @@ public class Generic implements MetricsConfig{
 			this.metricsEnabled = metricsEnabled;
 		}
 	}
+
+	private class Log4jLevelToLogLevelMapper {
+
+		private Map<Level, LogLevel> dictionary = Collections.unmodifiableMap(Stream.of(
+				new AbstractMap.SimpleEntry<Level, LogLevel>(Level.OFF, LogLevel.NONE),
+				new AbstractMap.SimpleEntry<Level, LogLevel>(Level.ERROR, LogLevel.ERROR),
+				new AbstractMap.SimpleEntry<Level, LogLevel>(Level.WARN, LogLevel.WARNING),
+				new AbstractMap.SimpleEntry<Level, LogLevel>(Level.INFO, LogLevel.INFO),
+				new AbstractMap.SimpleEntry<Level, LogLevel>(Level.DEBUG, LogLevel.DEBUG),
+				new AbstractMap.SimpleEntry<Level, LogLevel>(Level.TRACE, LogLevel.TRACE))
+				.collect(Collectors.toMap((e) -> e.getKey(), (e) -> e.getValue())
+		));
+
+		public LogLevel map(Level log4jLevel) {
+			return dictionary.get(log4jLevel);
+		}
+
+	}
+
 }

@@ -11,11 +11,11 @@
     <Loggers>
         <!-- 8kData & ToroDB code -->
 
-        <Logger name="com.torodb" level="TRACE" additivity="false">
+        <Logger name="com.torodb" level="INFO" additivity="false">
             <AppenderRef ref="ASYNC"/>
         </Logger>
 
-        <Logger name="com.eightkdata" level="TRACE" additivity="false">
+        <Logger name="com.eightkdata" level="WARN" additivity="false">
             <AppenderRef ref="ASYNC"/>
         </Logger>
 
@@ -31,7 +31,7 @@
 
         <!-- Root -->
 
-        <Root level="WARN">
+        <Root level="INFO">
             <AppenderRef ref="ASYNC"/>
         </Root>
     </Loggers>
