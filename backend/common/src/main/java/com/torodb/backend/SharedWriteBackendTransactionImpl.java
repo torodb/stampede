@@ -262,11 +262,13 @@ public class SharedWriteBackendTransactionImpl extends BackendTransactionImpl im
                 
                 while (docPartIndexesIterator.hasNext()) {
                     MetaDocPartIndex docPartIndex = docPartIndexesIterator.next();
-                    boolean existsAnyOtherCompatibleIndex = col.streamContainedMetaIndexes()
-                            .anyMatch(otherIndex -> otherIndex != index &&
-                                otherIndex.isCompatible(docPart, docPartIndex));
-                    if (!existsAnyOtherCompatibleIndex) {
-                        dropIndex(db, col, docPart, docPartIndex);
+                    if (index.isCompatible(docPart, docPartIndex)) {
+                        boolean existsAnyOtherCompatibleIndex = col.streamContainedMetaIndexes()
+                                .anyMatch(otherIndex -> otherIndex != index &&
+                                    otherIndex.isCompatible(docPart, docPartIndex));
+                        if (!existsAnyOtherCompatibleIndex) {
+                            dropIndex(db, col, docPart, docPartIndex);
+                        }
                     }
                 }
             }
@@ -275,6 +277,8 @@ public class SharedWriteBackendTransactionImpl extends BackendTransactionImpl im
 
     private void dropIndex(MetaDatabase db, MetaCollection col, MutableMetaDocPart docPart,
             MetaDocPartIndex docPartIndex) {
+        docPart.removeMetaDocPartIndexByIdentifier(docPartIndex.getIdentifier());
+        
         getSqlInterface().getMetaDataWriteInterface().deleteMetaDocPartIndex(getDsl(), db, col, docPart, docPartIndex);
         
         getSqlInterface().getStructureInterface().dropIndex(
