@@ -36,6 +36,8 @@ import javax.annotation.Nullable;
 
 import org.jooq.lambda.fi.util.function.CheckedFunction;
 
+import com.eightkdata.mongowp.ErrorCode;
+import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.bson.BsonDocument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.CreateCollectionCommand;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.CreateIndexesCommand;
@@ -99,6 +101,41 @@ public class ReplicationFilters {
 
     public OplogFetcher filterOplogFetcher(OplogFetcher originalFetcher) {
         return new FilteredOplogFetcher(oplogOperationPredicate, originalFetcher);
+    }
+    
+    private static final ResultFilter identityResultFilter = new ResultFilter() {
+        @Override
+        public <Result> Status<Result> filter(Status<Result> result) {
+            return result;
+        }
+    };
+    
+    private static final ImmutableMap<Command<?, ?>, ResultFilter> resultFilters = 
+        ImmutableMap.<Command<?, ?>, ResultFilter>builder()
+            .put(DropIndexesCommand.INSTANCE, new ResultFilter() {
+                @Override
+                public <Result> Status<Result> filter(Status<Result> result) {
+                    if (!result.isOK() && result.getErrorCode() == ErrorCode.INDEX_NOT_FOUND) {
+                        result = Status.ok();
+                    }
+                    return result;
+                }
+            })
+            .build();
+    
+    public ResultFilter getResultFilter(Command<?, ?> command) {
+        ResultFilter resultFilter = resultFilters.get(command);
+        
+        if (resultFilter == null) {
+            resultFilter = identityResultFilter;
+        }
+        
+        return resultFilter;
+    }
+    
+    @FunctionalInterface
+    public interface ResultFilter {
+        public <Result> Status<Result> filter(Status<Result> result);
     }
     
     private boolean databaseWhiteFilter(String database) {
