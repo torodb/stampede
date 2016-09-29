@@ -27,6 +27,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.torodb.core.metrics.MetricsConfig;
 import com.torodb.packaging.config.annotation.Description;
+import com.torodb.packaging.config.model.generic.log4j.Log4jLevelToLogLevelMapper;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 
@@ -143,24 +144,6 @@ public class Generic implements MetricsConfig{
 		if (metricsEnabled!=null){
 			this.metricsEnabled = metricsEnabled;
 		}
-	}
-
-	private class Log4jLevelToLogLevelMapper {
-
-		private Map<Level, LogLevel> dictionary = Collections.unmodifiableMap(Stream.of(
-				new AbstractMap.SimpleEntry<Level, LogLevel>(Level.OFF, LogLevel.NONE),
-				new AbstractMap.SimpleEntry<Level, LogLevel>(Level.ERROR, LogLevel.ERROR),
-				new AbstractMap.SimpleEntry<Level, LogLevel>(Level.WARN, LogLevel.WARNING),
-				new AbstractMap.SimpleEntry<Level, LogLevel>(Level.INFO, LogLevel.INFO),
-				new AbstractMap.SimpleEntry<Level, LogLevel>(Level.DEBUG, LogLevel.DEBUG),
-				new AbstractMap.SimpleEntry<Level, LogLevel>(Level.TRACE, LogLevel.TRACE))
-				.collect(Collectors.toMap((e) -> e.getKey(), (e) -> e.getValue())
-		));
-
-		public LogLevel map(Level log4jLevel) {
-			return dictionary.get(log4jLevel);
-		}
-
 	}
 
 }
