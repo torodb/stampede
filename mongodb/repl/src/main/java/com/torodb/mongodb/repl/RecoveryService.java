@@ -335,7 +335,8 @@ public class RecoveryService extends ThreadFactoryRunnableService {
                                 databaseName,
                                 Collections.<String>emptySet(),
                                 writePermissionSupplier,
-                                (colName) -> replFilters.getCollectionPredicate().test(databaseName, colName)
+                                (colName) -> replFilters.getCollectionPredicate().test(databaseName, colName),
+                                (collection, indexName, unique, keys) -> replFilters.getIndexPredicate().test(databaseName, collection, indexName, unique, keys)
                         );
 
                         try {

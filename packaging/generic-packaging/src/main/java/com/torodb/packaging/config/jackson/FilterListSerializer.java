@@ -32,6 +32,7 @@ import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.jsonFormatVisitors.JsonFormatVisitorWrapper;
 import com.torodb.packaging.config.model.protocol.mongo.FilterList;
+import com.torodb.packaging.config.model.protocol.mongo.FilterList.IndexFilter;
 import com.torodb.packaging.config.util.DescriptionFactoryWrapper;
 
 public class FilterListSerializer extends JsonSerializer<FilterList> {
@@ -46,10 +47,20 @@ public class FilterListSerializer extends JsonSerializer<FilterList> {
 	}
 
 	private void serializeFields(FilterList value, JsonGenerator jgen) throws IOException {
-		for (Map.Entry<String, List<String>> databaseEntry : value.entrySet()) {
+		for (Map.Entry<String, Map<String, List<IndexFilter>>> databaseEntry : value.entrySet()) {
             jgen.writeArrayFieldStart(databaseEntry.getKey());
-            for (String collection : databaseEntry.getValue()) {
-                jgen.writeString(collection);
+            for (Map.Entry<String, List<IndexFilter>> collection : databaseEntry.getValue().entrySet()) {
+                if (collection.getValue().isEmpty()) {
+                    jgen.writeString(collection.getKey());
+                } else {
+                    jgen.writeStartObject();
+                    jgen.writeArrayFieldStart(collection.getKey());
+                    for (IndexFilter indexFilter : collection.getValue()) {
+                        jgen.writeObject(indexFilter);
+                    }
+                    jgen.writeEndArray();
+                    jgen.writeEndObject();
+                }
             }
             jgen.writeEndArray();
 		}

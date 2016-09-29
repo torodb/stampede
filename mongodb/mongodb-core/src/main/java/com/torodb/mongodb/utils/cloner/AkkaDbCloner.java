@@ -225,7 +225,7 @@ public class AkkaDbCloner implements DbCloner {
                             dstDb, entry.getCollectionName());
 
                     try {
-                        cloneIndex(localServer, dstDb, remoteConnection, opts, entry.getCollectionName());
+                        cloneIndex(localServer, dstDb, dstDb, remoteConnection, opts, entry.getCollectionName(), entry.getCollectionName());
                     } catch(CompletionException completionException) {
                         Throwable cause = completionException.getCause();
                         if (cause instanceof RollbackException) {
@@ -362,7 +362,7 @@ public class AkkaDbCloner implements DbCloner {
                                 .build()
                         );
                         if (!insertResult.isOK() || insertResult.getResult().getN() != actualBatchSize) {
-                            throw new CloningException("Error while inserting a cloned document");
+                            throw new CloningException("Error while inserting a cloned document: " + insertResult.getErrorMsg());
                         }
                         insertedDocsCounter += insertResult.getResult().getN();
                         transaction.commit();
@@ -465,17 +465,19 @@ public class AkkaDbCloner implements DbCloner {
 
     private void cloneIndex(
             MongodServer localServer,
+            String fromDb,
             String dstDb,
             MongoConnection remoteConnection,
             CloneOptions opts,
-            String fromCol) throws CloningException {
+            String fromCol,
+            String toCol) throws CloningException {
         WriteMongodTransaction transaction = createWriteMongodTransaction(localServer);
         try {
             try {
-                List<IndexOptions> indexes = Lists.newArrayList(
+                List<IndexOptions> indexesToClone = getIndexesToClone(Lists.newArrayList(
                         ListIndexesRequester.getListCollections(remoteConnection, dstDb, fromCol).getFirstBatch()
-                );
-                if (indexes.isEmpty()) {
+                ), dstDb, toCol, fromDb, fromCol, opts);
+                if (indexesToClone.isEmpty()) {
                     return;
                 }
     
@@ -484,11 +486,11 @@ public class AkkaDbCloner implements DbCloner {
                         CreateIndexesCommand.INSTANCE,
                         new CreateIndexesArgument(
                                 fromCol,
-                                indexes
+                                indexesToClone
                         )
                 );
-                if (!status.isOK() || status.getResult().getNumNewIndexes() != indexes.size()) {
-                    throw new CloningException("Error while cloning indexes");
+                if (!status.isOK() || status.getResult().getNumNewIndexes() != indexesToClone.size()) {
+                    throw new CloningException("Error while cloning indexes: " + status.getErrorMsg());
                 }
                 transaction.commit();
             } catch (UserException | MongoException ex) {
@@ -497,6 +499,20 @@ public class AkkaDbCloner implements DbCloner {
         } finally {
             transaction.close();
         }
+    }
+
+    private List<IndexOptions> getIndexesToClone(List<IndexOptions> listindexes, String toDb, String toCol, String fromCol, String fromDb, CloneOptions opts) {
+        List<IndexOptions> indexesToClone = new ArrayList<>();
+        for (Iterator<IndexOptions> iterator = listindexes.iterator(); iterator.hasNext();) {
+            IndexOptions indexEntry = iterator.next();
+            if (!opts.getIndexFilter().test(toCol, indexEntry.getName(), indexEntry.isUnique(), indexEntry.getKeys())) {
+                LOGGER.info("Not cloning index {}.{} because it didn't pass the given filter predicate", toCol, indexEntry.getName());
+                continue;
+            }
+            LOGGER.info("Index {}.{}.{} will be cloned", fromDb, fromCol, indexEntry.getName());
+            indexesToClone.add(indexEntry);
+        }
+        return indexesToClone;
     }
 
     private Status<?> createCollection(

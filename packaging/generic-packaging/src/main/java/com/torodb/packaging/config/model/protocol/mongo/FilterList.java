@@ -21,15 +21,112 @@
 package com.torodb.packaging.config.model.protocol.mongo;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.IndexOptions.IndexType;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.torodb.packaging.config.jackson.FilterListDeserializer;
 import com.torodb.packaging.config.jackson.FilterListSerializer;
+import com.torodb.packaging.config.model.protocol.mongo.FilterList.IndexFilter;
 
 @JsonSerialize(using = FilterListSerializer.class)
 @JsonDeserialize(using = FilterListDeserializer.class)
-public class FilterList extends HashMap<String, List<String>> {
+public class FilterList extends HashMap<String, Map<String, List<IndexFilter>>> {
 	private static final long serialVersionUID = -167780238191456194L;
+	
+	public static class IndexFilter {
+	    private String name = null;
+	    private Boolean unique = null;
+	    private IndexFieldsFilter keys = new IndexFieldsFilter();
+	    
+	    public IndexFilter() {
+	    }
+	    
+	    public IndexFilter(String name, Boolean unique, Map<String, String> keys) {
+	        this.name = name;
+	        this.unique = unique;
+	        this.keys = keys != null?new IndexFieldsFilter(keys):new IndexFieldsFilter();
+	    }
+	    
+        public String getName() {
+            return name;
+        }
+        public void setName(String name) {
+            this.name = name;
+        }
+        public Boolean getUnique() {
+            return unique;
+        }
+        public void setUnique(Boolean unique) {
+            this.unique = unique;
+        }
+        public IndexFieldsFilter getKeys() {
+            return keys;
+        }
+        public void setKeys(IndexFieldsFilter keys) {
+            this.keys = keys;
+        }
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + ((keys == null) ? 0 : keys.hashCode());
+            result = prime * result + ((name == null) ? 0 : name.hashCode());
+            result = prime * result + ((unique == null) ? 0 : unique.hashCode());
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            IndexFilter other = (IndexFilter) obj;
+            if (keys == null) {
+                if (other.keys != null)
+                    return false;
+            } else if (!keys.equals(other.keys))
+                return false;
+            if (name == null) {
+                if (other.name != null)
+                    return false;
+            } else if (!name.equals(other.name))
+                return false;
+            if (unique == null) {
+                if (other.unique != null)
+                    return false;
+            } else if (!unique.equals(other.unique))
+                return false;
+            return true;
+        }
+	}
+
+    public static class IndexFieldsFilter extends LinkedHashMap<String, String> {
+        private static final long serialVersionUID = -1571579992353508686L;
+        
+        public IndexFieldsFilter() {
+            super();
+        }
+        
+        public IndexFieldsFilter(Map<String, String> keys) {
+            super(keys);
+        }
+    }
+    
+    public static IndexType getIndexType(String filterType) {
+        for (IndexType indexType : IndexType.values()) {
+            if (indexType.toBsonValue().toString().equals(filterType)) {
+                return indexType;
+            }
+        }
+        
+        throw new IllegalArgumentException("Unknown filter type " + filterType);
+    }
 }

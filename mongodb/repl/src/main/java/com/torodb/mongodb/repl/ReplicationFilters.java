@@ -20,23 +20,34 @@
 
 package com.torodb.mongodb.repl;
 
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import org.jooq.lambda.fi.util.function.CheckedFunction;
 
 import com.eightkdata.mongowp.bson.BsonDocument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.CreateCollectionCommand;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.CreateIndexesCommand;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.CreateIndexesCommand.CreateIndexesArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.DropCollectionCommand;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.DropIndexesCommand;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.RenameCollectionCommand;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.DeleteCommand;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.InsertCommand;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.UpdateCommand;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.IndexOptions;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.IndexOptions.IndexType;
 import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.oplog.DbCmdOplogOperation;
 import com.eightkdata.mongowp.server.api.oplog.DbOplogOperation;
@@ -49,19 +60,22 @@ import com.eightkdata.mongowp.server.api.oplog.UpdateOplogOperation;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.torodb.core.exceptions.SystemException;
+import com.torodb.mongodb.language.utils.NamespaceUtil;
 import com.torodb.mongodb.repl.oplogreplier.fetcher.FilteredOplogFetcher;
 import com.torodb.mongodb.repl.oplogreplier.fetcher.OplogFetcher;
+import com.torodb.mongodb.utils.IndexPredicate;
 
 public class ReplicationFilters {
 
-    private final ImmutableMap<Pattern, ImmutableList<Pattern>> whitelist;
-    private final ImmutableMap<Pattern, ImmutableList<Pattern>> blacklist;
+    private final ImmutableMap<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>> whitelist;
+    private final ImmutableMap<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>> blacklist;
     private final DatabasePredicate databasePredicate = new DatabasePredicate();
     private final CollectionPredicate collectionPredicate = new CollectionPredicate();
+    private final IndexPredicateImpl indexPredicate = new IndexPredicateImpl();
     private final OplogOperationPredicate oplogOperationPredicate = new OplogOperationPredicate(); 
-    
-    public ReplicationFilters(ImmutableMap<Pattern, ImmutableList<Pattern>> whitelist,
-            ImmutableMap<Pattern, ImmutableList<Pattern>> blacklist) {
+
+    public ReplicationFilters(ImmutableMap<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>> whitelist,
+            ImmutableMap<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>> blacklist) {
         super();
         this.whitelist = whitelist;
         this.blacklist = blacklist;
@@ -73,6 +87,10 @@ public class ReplicationFilters {
     
     public BiPredicate<String, String> getCollectionPredicate() {
         return collectionPredicate;
+    }
+    
+    public IndexPredicate getIndexPredicate() {
+        return indexPredicate;
     }
 
     public Predicate<OplogOperation> getOperationPredicate() {
@@ -88,7 +106,7 @@ public class ReplicationFilters {
             return true;
         }
         
-        for (Map.Entry<Pattern, ImmutableList<Pattern>> filterEntry : whitelist.entrySet()) {
+        for (Map.Entry<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>> filterEntry : whitelist.entrySet()) {
             Matcher databaseMatcher = filterEntry.getKey().matcher(database);
             if (databaseMatcher.matches()) {
                 return true;
@@ -103,7 +121,7 @@ public class ReplicationFilters {
             return true;
         }
 
-        for (Map.Entry<Pattern, ImmutableList<Pattern>> filterEntry : blacklist.entrySet()) {
+        for (Map.Entry<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>> filterEntry : blacklist.entrySet()) {
             Matcher databaseMatcher = filterEntry.getKey().matcher(database);
             if (databaseMatcher.matches()) {
                 if (filterEntry.getValue().isEmpty()) {
@@ -120,15 +138,15 @@ public class ReplicationFilters {
             return true;
         }
         
-        for (Map.Entry<Pattern, ImmutableList<Pattern>> filterEntry : whitelist.entrySet()) {
+        for (Map.Entry<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>> filterEntry : whitelist.entrySet()) {
             Matcher databaseMatcher = filterEntry.getKey().matcher(database);
             if (databaseMatcher.matches()) {
                 if (filterEntry.getValue().isEmpty()) {
                     return true;
                 }
                 
-                for (Pattern collectionPattern : filterEntry.getValue()) {
-                    Matcher collectionMatcher = collectionPattern.matcher(collection);
+                for (Map.Entry<Pattern, ImmutableList<IndexPattern>> collectionPattern : filterEntry.getValue().entrySet()) {
+                    Matcher collectionMatcher = collectionPattern.getKey().matcher(collection);
                     if (collectionMatcher.matches()) {
                         return true;
                     }
@@ -144,17 +162,83 @@ public class ReplicationFilters {
             return true;
         }
 
-        for (Map.Entry<Pattern, ImmutableList<Pattern>> filterEntry : blacklist.entrySet()) {
+        for (Map.Entry<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>> filterEntry : blacklist.entrySet()) {
             Matcher databaseMatcher = filterEntry.getKey().matcher(database);
             if (databaseMatcher.matches()) {
                 if (filterEntry.getValue().isEmpty()) {
                     return false;
                 }
                 
-                for (Pattern collectionPattern : filterEntry.getValue()) {
-                    Matcher collectionMatcher = collectionPattern.matcher(collection);
+                for (Map.Entry<Pattern, ImmutableList<IndexPattern>> collectionPattern : filterEntry.getValue().entrySet()) {
+                    if (collectionPattern.getValue().isEmpty()) {
+                        Matcher collectionMatcher = collectionPattern.getKey().matcher(collection);
+                        if (collectionMatcher.matches()) {
+                            return false;
+                        }
+                    }
+                }
+            }
+        }
+        
+        return true;
+    }
+    
+    private boolean indexWhiteFilter(String database, String collection, String indexName, boolean unique, Map<List<String>, IndexType> keys) {
+        if (whitelist.isEmpty()) {
+            return true;
+        }
+        
+        for (Map.Entry<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>> filterEntry : whitelist.entrySet()) {
+            Matcher databaseMatcher = filterEntry.getKey().matcher(database);
+            if (databaseMatcher.matches()) {
+                if (filterEntry.getValue().isEmpty()) {
+                    return true;
+                }
+                
+                for (Map.Entry<Pattern, ImmutableList<IndexPattern>> collectionPattern : filterEntry.getValue().entrySet()) {
+                    Matcher collectionMatcher = collectionPattern.getKey().matcher(collection);
                     if (collectionMatcher.matches()) {
-                        return false;
+                        if (collectionPattern.getValue().isEmpty()) {
+                            return true;
+                        }
+                        
+                        for (IndexPattern indexPattern : collectionPattern.getValue()) {
+                            if (indexPattern.match(indexName, unique, keys)) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        return false;
+    }
+    
+    private boolean indexBlackFilter(String database, String collection, String indexName, boolean unique, Map<List<String>, IndexType> keys) {
+        if (blacklist.isEmpty()) {
+            return true;
+        }
+
+        for (Map.Entry<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>> filterEntry : blacklist.entrySet()) {
+            Matcher databaseMatcher = filterEntry.getKey().matcher(database);
+            if (databaseMatcher.matches()) {
+                if (filterEntry.getValue().isEmpty()) {
+                    return false;
+                }
+                
+                for (Map.Entry<Pattern, ImmutableList<IndexPattern>> collectionPattern : filterEntry.getValue().entrySet()) {
+                    Matcher collectionMatcher = collectionPattern.getKey().matcher(collection);
+                    if (collectionMatcher.matches()) {
+                        if (collectionPattern.getValue().isEmpty()) {
+                            return false;
+                        }
+                        
+                        for (IndexPattern indexPattern : collectionPattern.getValue()) {
+                            if (indexPattern.match(indexName, unique, keys)) {
+                                return false;
+                            }
+                        }
                     }
                 }
             }
@@ -181,10 +265,18 @@ public class ReplicationFilters {
         
     }
     
-    private static final ImmutableMap<Command<?, ?>, CheckedFunction<BsonDocument, String>> collectionRelatedCommands = 
+    public class IndexPredicateImpl implements IndexPredicate {
+        @Override
+        public boolean test(String database, String collection, String indexName, boolean unique, Map<List<String>, IndexType> keys) {
+            return indexWhiteFilter(database, collection, indexName, unique, keys) &&
+                    indexBlackFilter(database, collection, indexName, unique, keys);
+        }
+    }
+    
+    private static final ImmutableMap<Command<?, ?>, CheckedFunction<BsonDocument, String>> collectionCommands = 
         ImmutableMap.<Command<?, ?>, CheckedFunction<BsonDocument, String>>builder()
             .put(CreateCollectionCommand.INSTANCE, d -> CreateCollectionCommand.INSTANCE.unmarshallArg(d).getCollection())
-            .put(CreateIndexesCommand.INSTANCE, d -> CreateIndexesCommand.INSTANCE.unmarshallArg(d).getCollection())
+            .put(DropIndexesCommand.INSTANCE, d -> DropIndexesCommand.INSTANCE.unmarshallArg(d).getCollection())
             .put(DropCollectionCommand.INSTANCE, d -> DropCollectionCommand.INSTANCE.unmarshallArg(d).getCollection())
             .put(RenameCollectionCommand.INSTANCE, d -> RenameCollectionCommand.INSTANCE.unmarshallArg(d).getFromCollection())
             .put(DeleteCommand.INSTANCE, d -> DeleteCommand.INSTANCE.unmarshallArg(d).getCollection())
@@ -192,22 +284,51 @@ public class ReplicationFilters {
             .put(UpdateCommand.INSTANCE, d -> UpdateCommand.INSTANCE.unmarshallArg(d).getCollection())
             .build();
     
+    private static final ImmutableMap<Command<?, ?>, CheckedFunction<BsonDocument, BiFunction<String, IndexPredicateImpl, Boolean>>> indexCommands = 
+        ImmutableMap.<Command<?, ?>, CheckedFunction<BsonDocument, BiFunction<String, IndexPredicateImpl, Boolean>>>builder()
+            .put(CreateIndexesCommand.INSTANCE, d -> {
+                CreateIndexesArgument arg = CreateIndexesCommand.INSTANCE.unmarshallArg(d);
+                
+                return (database, indexPredicate) -> {
+                    for (IndexOptions indexOptions : arg.getIndexesToCreate()) {
+                        if (!indexPredicate.test(database, arg.getCollection(), 
+                                indexOptions.getName(), 
+                                indexOptions.isUnique(), 
+                                indexOptions.getKeys().entrySet().stream().collect(Collectors.toMap(entry -> entry.getKey(), entry -> entry.getValue())))) {
+                            return false;
+                        }
+                    }
+                    return true;
+                };
+            })
+            .build();
+    
     private class OplogOperationPredicate implements OplogOperationVisitor<Boolean, Void>, Predicate<OplogOperation> {
 
         @Override
         public Boolean visit(DbCmdOplogOperation op, Void arg) {
-            Optional<Command<?, ?>> collectionRelatedCommand = collectionRelatedCommands.keySet().stream().filter(
-                    c -> op.getCommandName().isPresent() && 
-                        c.getCommandName().equals(op.getCommandName().get())).findFirst();
-            if (collectionRelatedCommand.isPresent()) {
-                try {
-                    assert op.getRequest() != null;
-                    
-                    String collection = collectionRelatedCommands.get(collectionRelatedCommand.get())
-                            .apply(op.getRequest());
-                    return collectionPredicate.test(op.getDatabase(), collection);
-                } catch (Throwable e) {
-                    throw new SystemException("Error while parsing argument for command " + op.getCommandName(), e);
+            if (op.getCommandName().isPresent()) {
+                if (collectionCommands.containsKey(op.getCommandName().get())) {
+                    try {
+                        assert op.getRequest() != null;
+                        
+                        String collection = collectionCommands.get(op.getCommandName().get())
+                                .apply(op.getRequest());
+                        return collectionPredicate.test(op.getDatabase(), collection);
+                    } catch (Throwable e) {
+                        throw new SystemException("Error while parsing argument for command " + op.getCommandName(), e);
+                    }
+                }
+                if (indexCommands.containsKey(op.getCommandName().get())) {
+                    try {
+                        assert op.getRequest() != null;
+                        
+                        return indexCommands.get(op.getCommandName().get())
+                                .apply(op.getRequest())
+                                .apply(op.getDatabase(), indexPredicate);
+                    } catch (Throwable e) {
+                        throw new SystemException("Error while parsing argument for command " + op.getCommandName(), e);
+                    }
                 }
             }
             return databasePredicate.test(op.getDatabase());
@@ -225,6 +346,22 @@ public class ReplicationFilters {
 
         @Override
         public Boolean visit(InsertOplogOperation op, Void arg) {
+            if (NamespaceUtil.INDEXES_COLLECTION.equals(op.getCollection())) {
+                try {
+                    IndexOptions indexOptions = IndexOptions.unmarshall(op.getDocToInsert());
+                    if (!indexPredicate.test(op.getDatabase(), op.getCollection(), 
+                            indexOptions.getName(), 
+                            indexOptions.isUnique(), 
+                            indexOptions.getKeys().entrySet().stream().collect(Collectors.toMap(entry -> entry.getKey(), entry -> entry.getValue())))) {
+                        return false;
+                    }
+                    
+                    return true;
+                } catch (Throwable e) {
+                    throw new SystemException("Error while parsing argument for insert on collection " + NamespaceUtil.INDEXES_COLLECTION, e);
+                }
+            }
+            
             return collectionPredicate.test(op.getDatabase(), op.getCollection());
         }
 
@@ -243,5 +380,75 @@ public class ReplicationFilters {
             return t.accept(this, null);
         }
         
+    }
+    
+    public static class IndexPattern {
+        private final Pattern name;
+        private final Boolean unique;
+        private final ImmutableMap<ImmutableList<Pattern>, Pattern> fieldsPattern;
+        
+        public IndexPattern(@Nonnull Pattern name, @Nullable Boolean unique, @Nonnull ImmutableMap<ImmutableList<Pattern>, Pattern> fieldsPattern) {
+            super();
+            this.name = name;
+            this.unique = unique;
+            this.fieldsPattern = fieldsPattern;
+        }
+        
+        public boolean match(String name, boolean unique, Map<List<String>, IndexType> fields) {
+            if (this.name.matcher(name).matches() && 
+                    (this.unique == null || this.unique.booleanValue() == unique) &&
+                    (this.fieldsPattern.isEmpty() || this.fieldsPattern.size() == fields.size())) {
+                if (this.fieldsPattern.isEmpty()) {
+                    return true;
+                }
+                
+                Iterator<Map.Entry<List<String>, IndexType>> fieldIterator = fields.entrySet().iterator();
+                Iterator<Map.Entry<ImmutableList<Pattern>, Pattern>> fieldPatternIterator = fieldsPattern.entrySet().iterator();
+                while (fieldPatternIterator.hasNext() &&
+                        fieldIterator.hasNext()) {
+                    Map.Entry<ImmutableList<Pattern>, Pattern> fieldPattern = fieldPatternIterator.next();
+                    Map.Entry<List<String>, IndexType> field = fieldIterator.next();
+                    if (!fieldPattern.getValue().matcher(field.getValue().name()).matches() ||
+                            fieldPattern.getKey().size() != field.getKey().size()) {
+                        return false;
+                    }
+                    Iterator<Pattern> fieldReferencePatternIterator = fieldPattern.getKey().iterator();
+                    Iterator<String> fieldReferenceIterator = field.getKey().iterator();
+                    while (fieldReferencePatternIterator.hasNext() && 
+                            fieldReferenceIterator.hasNext()) {
+                        Pattern fieldReferencePattern = fieldReferencePatternIterator.next();
+                        String fieldReference = fieldReferenceIterator.next();
+                        if (!fieldReferencePattern.matcher(fieldReference).matches()) {
+                            return false;
+                        }
+                    }
+                }
+                
+                return true;
+            }
+            
+            return false;
+        }
+        
+        public static class Builder {
+            private final Pattern name;
+            private final Boolean unique;
+            private final Map<ImmutableList<Pattern>, Pattern> fieldsPattern =
+                    new LinkedHashMap<>();
+            
+            public Builder(@Nonnull Pattern name, @Nullable Boolean unique) {
+                this.name = name;
+                this.unique = unique;
+            }
+            
+            public Builder addFieldPattern(ImmutableList<Pattern> fieldReferencePattern, Pattern typePattern) {
+                fieldsPattern.put(fieldReferencePattern, typePattern);
+                return this;
+            }
+            
+            public IndexPattern build() {
+                return new IndexPattern(name, unique, ImmutableMap.copyOf(fieldsPattern));
+            }
+        }
     }
 }

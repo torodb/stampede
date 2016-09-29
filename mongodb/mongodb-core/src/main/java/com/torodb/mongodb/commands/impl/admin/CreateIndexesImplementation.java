@@ -51,7 +51,7 @@ public class CreateIndexesImplementation implements WriteTorodbCommandImpl<Creat
                     new AttributeReference(Arrays.asList(new Key[] { new ObjectKey(Constants.ID) })), FieldIndexOrdering.ASC, true);
         }
         
-        int indexesBefore = 0;
+        int indexesBefore = (int) context.getTorodTransaction().getIndexesInfo(req.getDatabase(), arg.getCollection()).count();
         int indexesAfter = indexesBefore;
         
         try {
