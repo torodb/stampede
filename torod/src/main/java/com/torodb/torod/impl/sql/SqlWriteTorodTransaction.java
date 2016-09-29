@@ -155,7 +155,7 @@ public abstract class SqlWriteTorodTransaction<T extends WriteInternalTransactio
     }
 
     @Override
-    public void createIndex(String dbName, String colName, String indexName, AttributeReference attRef, FieldIndexOrdering ordering, boolean unique) {
+    public boolean createIndex(String dbName, String colName, String indexName, AttributeReference attRef, FieldIndexOrdering ordering, boolean unique) {
         MutableMetaDatabase metaDb = getOrCreateMetaDatabase(dbName);
         MutableMetaCollection metaColl = getOrCreateMetaCollection(metaDb, colName);
         
@@ -174,25 +174,29 @@ public abstract class SqlWriteTorodTransaction<T extends WriteInternalTransactio
             
             getInternalTransaction().getBackendTransaction().createIndex(metaDb, metaColl, metaIndex);
         }
+        
+        return !indexExists;
     }
 
     @Override
-    public void dropIndex(String dbName, String colName, String indexName) {
+    public boolean dropIndex(String dbName, String colName, String indexName) {
         MutableMetaDatabase db = getInternalTransaction().getMetaSnapshot().getMetaDatabaseByName(dbName);
         if (db == null) {
-            return;
+            return false;
         }
         MutableMetaCollection col = db.getMetaCollectionByName(colName);
         if (col == null) {
-            return;
+            return false;
         }
         MetaIndex index = col.getMetaIndexByName(indexName);
         if (index == null) {
-            return;
+            return false;
         }
         col.removeMetaIndexByName(indexName);
 
         getInternalTransaction().getBackendTransaction().dropIndex(db, col, index);
+        
+        return true;
     }
 
     @Nonnull

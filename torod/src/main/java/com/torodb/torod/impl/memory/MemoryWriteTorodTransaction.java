@@ -77,7 +77,13 @@ public class MemoryWriteTorodTransaction extends MemoryTorodTransaction implemen
     }
 
     @Override
-    public void dropIndex(String dbName, String colName, String indexName) {
+    public boolean createIndex(String dbName, String colName, String indexName, AttributeReference attRef,
+            FieldIndexOrdering ordering, boolean unique) {
+        throw new UnsupportedOperationException("Not supported yet."); //TODO: Implement when necessary
+    }
+
+    @Override
+    public boolean dropIndex(String dbName, String colName, String indexName) {
         throw new UnsupportedOperationException("Not supported yet."); //TODO: Implement when necessary
     }
 
@@ -89,11 +95,6 @@ public class MemoryWriteTorodTransaction extends MemoryTorodTransaction implemen
     @Override
     public void commit() throws RollbackException, UserException {
         trans.commit();
-    }
-
-    @Override
-    public void createIndex(String dbName, String colName, String indexName, AttributeReference attRef,
-            FieldIndexOrdering ordering, boolean unique) {
     }
 
 }

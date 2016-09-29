@@ -24,20 +24,23 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.eightkdata.mongowp.ErrorCode;
 import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.DropIndexesCommand.DropIndexesArgument;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.DropIndexesCommand.DropIndexesResult;
 import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.Request;
-import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.torodb.mongodb.commands.impl.WriteTorodbCommandImpl;
 import com.torodb.mongodb.core.WriteMongodTransaction;
 import com.torodb.mongodb.language.Constants;
 
-public class DropIndexesImplementation implements WriteTorodbCommandImpl<DropIndexesArgument, Empty> {
+public class DropIndexesImplementation implements WriteTorodbCommandImpl<DropIndexesArgument, DropIndexesResult> {
 
     @Override
-    public Status<Empty> apply(Request req, Command<? super DropIndexesArgument, ? super Empty> command,
+    public Status<DropIndexesResult> apply(Request req, Command<? super DropIndexesArgument, ? super DropIndexesResult> command,
             DropIndexesArgument arg, WriteMongodTransaction context) {
+        int indexesBefore = (int) context.getTorodTransaction().getIndexesInfo(req.getDatabase(), arg.getCollection()).count();
+        
         List<String> indexesToDrop;
         
         if (!arg.isDropAllIndexes()) {
@@ -50,10 +53,12 @@ public class DropIndexesImplementation implements WriteTorodbCommandImpl<DropInd
         }
         
         for (String indexToDrop : indexesToDrop) {
-            context.getTorodTransaction().dropIndex(req.getDatabase(), arg.getCollection(), indexToDrop);
+            if (!context.getTorodTransaction().dropIndex(req.getDatabase(), arg.getCollection(), indexToDrop)) {
+                return Status.from(ErrorCode.INDEX_NOT_FOUND, "index not found with name [" + indexToDrop + "]");
+            }
         }
 
-        return Status.ok();
+        return Status.ok(new DropIndexesResult(indexesBefore));
     }
 
 }

@@ -1,12 +1,21 @@
 
 package com.torodb.mongodb.commands;
 
+import java.util.Collections;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.MongoDb30Commands.MongoDb30CommandsImplementationBuilder;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.AdminCommands.AdminCommandsImplementationsBuilder;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.CreateCollectionCommand.CreateCollectionArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.CreateIndexesCommand.CreateIndexesArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.CreateIndexesCommand.CreateIndexesResult;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.DropIndexesCommand.DropIndexesArgument;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.DropIndexesCommand.DropIndexesResult;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.ListCollectionsCommand.ListCollectionsArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.ListCollectionsCommand.ListCollectionsResult;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.ListIndexesCommand.ListIndexesArgument;
@@ -73,12 +82,6 @@ import com.torodb.mongodb.commands.impl.diagnostic.ServerStatusImplementation;
 import com.torodb.mongodb.commands.impl.internal.WhatsMyUriImplementation;
 import com.torodb.mongodb.commands.impl.replication.IsMasterImplementation;
 import com.torodb.mongodb.core.MongodConnection;
-import java.util.Collections;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 /**
  *
@@ -186,7 +189,7 @@ public class ConnectionCommandsExecutor {
         }
 
         @Override
-        public CommandImplementation<DropIndexesArgument, Empty, ? super MongodConnection> getDropIndexesImplementation() {
+        public CommandImplementation<DropIndexesArgument, DropIndexesResult, ? super MongodConnection> getDropIndexesImplementation() {
             return NotImplementedCommandImplementation.build();
         }
 

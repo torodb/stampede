@@ -100,12 +100,18 @@ public class CreateIndexesImplementation implements WriteTorodbCommandImpl<Creat
                             "Sparse index are not suppoeted right now");
                 }
                 
-                context.getTorodTransaction().createIndex(req.getDatabase(), arg.getCollection(), indexOptions.getName(), refBuilder.build(), ordering, indexOptions.isUnique());
-                
-                indexesAfter++;
+                if (context.getTorodTransaction().createIndex(req.getDatabase(), arg.getCollection(), indexOptions.getName(), refBuilder.build(), ordering, indexOptions.isUnique())) {
+                    indexesAfter++;
+                }
             }
 
-            return Status.ok(new CreateIndexesResult(indexesBefore, indexesAfter, null, createdCollectionAutomatically));
+            String note = null;
+            
+            if (indexesAfter == indexesBefore) {
+                note = "all indexes already exist";
+            }
+            
+            return Status.ok(new CreateIndexesResult(indexesBefore, indexesAfter, note, createdCollectionAutomatically));
         } catch(CommandFailed ex) {
             return Status.from(ex);
         }
