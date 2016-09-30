@@ -39,6 +39,9 @@ public interface MutableMetaCollection extends MetaCollection {
     public MutableMetaDocPart getMetaDocPartByIdentifier(String docPartId);
 
     @Override
+    public MutableMetaIndex getMetaIndexByName(String indexId);
+
+    @Override
     public Stream<? extends MutableMetaDocPart> streamContainedMetaDocParts();
 
     public MutableMetaDocPart addMetaDocPart(TableRef tableRef, String identifier) throws IllegalArgumentException;

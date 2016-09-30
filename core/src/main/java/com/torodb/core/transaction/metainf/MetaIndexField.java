@@ -32,6 +32,8 @@ public interface MetaIndexField {
     
     public abstract boolean isMatch(MetaDocPart docPart, String identifier, MetaDocPartIndexColumn indexColumn);
 
+    public abstract boolean isMatch(MetaIndexField otherIndexField);
+
     public default String defautToString() {
         return "indexField{" + "position:" + getPosition() + ", tableRef:" + getTableRef() + ", name:" + getName() + ", ordering:" + getOrdering() + '}';
     }

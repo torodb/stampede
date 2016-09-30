@@ -31,7 +31,7 @@ public interface MutableMetaDocPart extends MetaDocPart {
     public abstract Stream<? extends MetaDocPartIndex> streamIndexes();
 
     @Override
-    public MetaDocPartIndex getMetaDocPartIndexByIdentifier(String indexId);
+    public MutableMetaDocPartIndex getMetaDocPartIndexByIdentifier(String indexId);
 
     /**
      * Adds a new field to this table.

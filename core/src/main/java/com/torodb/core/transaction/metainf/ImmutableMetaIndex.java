@@ -29,6 +29,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.jooq.lambda.Seq;
+
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
@@ -204,6 +206,26 @@ public class ImmutableMetaIndex implements MetaIndex {
         return !indexFieldIterator.hasNext() && 
                 !fieldIndexIterator.hasNext() &&
                 !identifiersIterator.hasNext();
+    }
+    
+    
+    @Override
+    public boolean isMatch(MetaIndex index) {
+        return isMatch(index, iteratorFields());
+    }
+    
+    protected boolean isMatch(MetaIndex index, Iterator<? extends MetaIndexField> iteratorFields) {
+        if (getName().equals(index.getName())) {
+            return true;
+        }
+        
+        return index.isUnique() == isUnique() && 
+                index.size() == size() && 
+                Seq.seq(iteratorFields)
+                    .allMatch(indexField -> {
+                        MetaIndexField otherIndexField = index.getMetaIndexFieldByPosition(indexField.getPosition());
+                        return otherIndexField != null && indexField.isMatch(otherIndexField);
+                    });
     }
     
     @Override

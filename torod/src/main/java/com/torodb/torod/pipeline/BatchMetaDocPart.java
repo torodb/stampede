@@ -143,7 +143,7 @@ public class BatchMetaDocPart implements MutableMetaDocPart {
     }
 
     @Override
-    public MetaDocPartIndex getMetaDocPartIndexByIdentifier(String indexId) {
+    public MutableMetaDocPartIndex getMetaDocPartIndexByIdentifier(String indexId) {
         return delegate.getMetaDocPartIndexByIdentifier(indexId);
     }
 

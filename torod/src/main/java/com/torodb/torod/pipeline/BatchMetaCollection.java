@@ -15,7 +15,6 @@ import com.torodb.core.TableRef;
 import com.torodb.core.annotations.DoNotChange;
 import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
 import com.torodb.core.transaction.metainf.MetaElementState;
-import com.torodb.core.transaction.metainf.MetaIndex;
 import com.torodb.core.transaction.metainf.MutableMetaCollection;
 import com.torodb.core.transaction.metainf.MutableMetaDocPart;
 import com.torodb.core.transaction.metainf.MutableMetaIndex;
@@ -117,7 +116,7 @@ public class BatchMetaCollection implements MutableMetaCollection {
     }
 
     @Override
-    public MetaIndex getMetaIndexByName(String indexName) {
+    public MutableMetaIndex getMetaIndexByName(String indexName) {
         return delegate.getMetaIndexByName(indexName);
     }
 

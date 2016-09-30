@@ -211,7 +211,7 @@ public class SnapshotMerger {
         ImmutableMetaDocPart.Builder childBuilder = new ImmutableMetaDocPart.Builder(byId);
 
         for (ImmutableMetaField addedMetaField : changed.getAddedMetaFields()) {
-            merge(oldDb, newStructure, oldStructure, byId, childBuilder, addedMetaField);
+            merge(oldDb, newStructure, oldStructure, changed, byId, childBuilder, addedMetaField);
         }
         for (ImmutableMetaScalar addedMetaScalar : changed.getAddedMetaScalars()) {
             merge(oldDb, oldStructure, byId, childBuilder, addedMetaScalar);
@@ -224,7 +224,7 @@ public class SnapshotMerger {
 
     }
 
-    private void merge(MetaDatabase oldDb, MetaCollection newCol, MetaCollection oldCol, ImmutableMetaDocPart oldStructure,
+    private void merge(MetaDatabase oldDb, MetaCollection newCol, MetaCollection oldCol, MutableMetaDocPart newStructure, ImmutableMetaDocPart oldStructure,
             ImmutableMetaDocPart.Builder parentBuilder, ImmutableMetaField changed) throws UnmergeableException {
         ImmutableMetaField byNameAndType = oldStructure.getMetaFieldByNameAndType(changed.getName(), changed.getType());
         ImmutableMetaField byId = oldStructure.getMetaFieldByIdentifier(changed.getIdentifier());
@@ -235,8 +235,12 @@ public class SnapshotMerger {
         
         if (byNameAndType == null && byId == null) {
             Optional<? extends MetaIndex> oldMissedIndex = oldCol.streamContainedMetaIndexes()
-                .filter(oldIndex -> newCol.getMetaIndexByName(oldIndex.getName()) == null &&
-                    oldIndex.getMetaIndexFieldByTableRefAndName(oldStructure.getTableRef(), changed.getName()) != null)
+                .filter(oldIndex -> oldIndex.getMetaIndexFieldByTableRefAndName(oldStructure.getTableRef(), changed.getName()) != null &&
+                        (newCol.getMetaIndexByName(oldIndex.getName()) == null ||
+                        Seq.seq(oldIndex.iteratorMetaDocPartIndexesIdentifiers(newStructure))
+                                .filter(identifiers -> identifiers.contains(changed.getIdentifier()))
+                                .anyMatch(identifiers -> newStructure.streamIndexes()
+                                        .noneMatch(newDocPartIndex -> oldIndex.isMatch(newStructure, identifiers, newDocPartIndex)))))
                 .findAny();
             
             if (oldMissedIndex.isPresent()) {
@@ -370,6 +374,17 @@ public class SnapshotMerger {
                 throw new AssertionError("A modification was expected, but the new state is " + newState);
             case ADDED:
             case MODIFIED: {
+                Optional<? extends MetaIndex> anyConflictingIndex = oldStructure.streamContainedMetaIndexes()
+                        .filter(index -> index.isMatch(changed) &&
+                                Seq.seq(newStructure.getModifiedMetaIndexes())
+                                    .noneMatch(modifiedIndex -> modifiedIndex.v2() == MetaElementState.REMOVED &&
+                                            modifiedIndex.v1().getName().equals(index.getName())))
+                        .findAny();
+                
+                if (anyConflictingIndex.isPresent()) {
+                    throw createUnmergeableException(oldDb, oldStructure, changed, anyConflictingIndex.get());
+                }
+                
                 Optional<? extends MetaDocPart> anyDocPartWithMissingDocPartIndex = changed.streamTableRefs()
                     .map(tableRef -> (MetaDocPart) oldStructure.getMetaDocPartByTableRef(tableRef))
                     .filter(docPart -> docPart != null && changed.isCompatible(docPart) &&
@@ -382,7 +397,6 @@ public class SnapshotMerger {
                                             .noneMatch(docPartIndex -> changed.isMatch(newDocPart, identifiers, docPartIndex));
                                 }))
                     .findAny();
-                    
                 
                 if (anyDocPartWithMissingDocPartIndex.isPresent()) {
                     throw createUnmergeableExceptionForMissing(oldDb, oldStructure, changed, anyDocPartWithMissingDocPartIndex.get());
@@ -630,6 +644,15 @@ public class SnapshotMerger {
                     + "name is " + byPosition.getName() + ". The tableRef of the new one is "
                     + changed.getTableRef() + " and its name is " + changed.getName());
         }
+    }
+
+    private UnmergeableException createUnmergeableException(
+            MetaDatabase db,
+            MetaCollection col, MutableMetaIndex changed, MetaIndex oldIndex) {
+        throw new UnmergeableException(oldSnapshot, newSnapshot,
+                "There is a previous index on " + db + "." + col + "." + oldIndex 
+                + " that conflict with new index "
+                + changed);
     }
 
     private UnmergeableException createUnmergeableExceptionForOrphan(

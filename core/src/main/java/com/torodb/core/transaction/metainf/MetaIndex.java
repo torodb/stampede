@@ -47,6 +47,8 @@ public interface MetaIndex {
     public abstract boolean isCompatible(MetaDocPart docPart, MetaDocPartIndex docPartIndex);
     
     public abstract boolean isMatch(MetaDocPart docPart, List<String> identifiers, MetaDocPartIndex docPartIndex);
+    
+    public abstract boolean isMatch(MetaIndex index);
 
     public default String defautToString() {
         return "index{" + "name:" + getName() + ", unique:" + isUnique() + '}';

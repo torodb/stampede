@@ -156,9 +156,21 @@ public class WrapperMutableMetaIndex implements MutableMetaIndex {
     }
 
     @Override
+    public boolean isCompatible(MetaDocPart docPart) {
+        return wrapped.isCompatible(docPart, 
+                iteratorMetaIndexFieldByTableRef(docPart.getTableRef()));
+    }
+
+    @Override
     public boolean isMatch(MetaDocPart docPart, List<String> identifiers, MetaDocPartIndex docPartIndex) {
         return wrapped.isMatch(docPart, identifiers, docPartIndex, 
                 iteratorMetaIndexFieldByTableRef(docPart.getTableRef()));
+    }
+
+    @Override
+    public boolean isMatch(MetaIndex index) {
+        return wrapped.isMatch(index, 
+                iteratorFields());
     }
 
     @Override
@@ -170,12 +182,6 @@ public class WrapperMutableMetaIndex implements MutableMetaIndex {
     @Override
     public String toString() {
         return defautToString();
-    }
-
-    @Override
-    public boolean isCompatible(MetaDocPart docPart) {
-        return wrapped.isCompatible(docPart, 
-                iteratorMetaIndexFieldByTableRef(docPart.getTableRef()));
     }
 
 }

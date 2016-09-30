@@ -111,5 +111,12 @@ public class ImmutableMetaIndexField implements MetaIndexField {
         
         return false;
     }
+    
+    @Override
+    public boolean isMatch(MetaIndexField otherIndexField) {
+        return otherIndexField.getTableRef().equals(getTableRef()) &&
+                otherIndexField.getName().equals(getName()) &&
+                otherIndexField.getOrdering() == getOrdering();
+    }
 
 }
