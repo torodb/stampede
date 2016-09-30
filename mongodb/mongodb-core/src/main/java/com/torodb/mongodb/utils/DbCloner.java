@@ -1,7 +1,6 @@
 package com.torodb.mongodb.utils;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -10,7 +9,7 @@ import javax.annotation.Nonnull;
 import com.eightkdata.mongowp.client.core.MongoClient;
 import com.eightkdata.mongowp.exceptions.MongoException;
 import com.eightkdata.mongowp.exceptions.NotMasterException;
-import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.IndexOptions.IndexType;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.IndexOptions;
 import com.google.common.base.Supplier;
 import com.torodb.core.exceptions.ToroRuntimeException;
 import com.torodb.mongodb.core.MongodServer;
@@ -40,7 +39,7 @@ public interface DbCloner {
         private final MyIndexPredicate indexFilter;
 
         public interface MyIndexPredicate {
-            public boolean test(String collection, String indexName, boolean unique, Map<List<String>, IndexType> keys);
+            public boolean test(String collection, String indexName, boolean unique, List<IndexOptions.Key> keys);
         }
         
         public CloneOptions(

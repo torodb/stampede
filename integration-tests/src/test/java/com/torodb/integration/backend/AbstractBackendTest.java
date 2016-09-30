@@ -28,9 +28,11 @@ import java.util.List;
 import java.util.stream.StreamSupport;
 
 import org.jooq.DSLContext;
+import org.jooq.lambda.tuple.Tuple2;
 import org.junit.Before;
 import org.junit.ClassRule;
 
+import com.google.common.collect.ImmutableList;
 import com.torodb.backend.SqlHelper;
 import com.torodb.backend.SqlInterface;
 import com.torodb.backend.TableRefComparator;
@@ -151,7 +153,10 @@ public abstract class AbstractBackendTest {
         metaDocPart.streamIndexes().forEach(docPartIndex -> {
             MetaDocPartIndexColumn firstColumn = docPartIndex.iteratorColumns().next();
             sqlInterface.getStructureInterface().createIndex(dsl, docPartIndex.getIdentifier(), data.database.getIdentifier(), metaDocPart.getIdentifier(), 
-                    firstColumn.getIdentifier(), firstColumn.getOrdering().isAscending(), docPartIndex.isUnique());
+                    ImmutableList.<Tuple2<String, Boolean>>builder()
+                        .add(new Tuple2<>(firstColumn.getIdentifier(), firstColumn.getOrdering().isAscending()))
+                        .build(), 
+                    docPartIndex.isUnique());
         });
     }
     

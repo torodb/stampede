@@ -27,6 +27,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
+import org.jooq.lambda.Seq;
+
 import com.torodb.core.annotations.DoNotChange;
 import com.torodb.core.transaction.metainf.ImmutableMetaDocPartIndex.Builder;
 
@@ -111,7 +113,9 @@ public class WrapperMutableMetaDocPartIndex implements MutableMetaDocPartIndex {
 
     @Override
     public Iterator<? extends ImmutableMetaDocPartIndexColumn> iteratorColumns() {
-        return newColumns.values().iterator();
+        return Seq.seq(wrapped.iteratorColumns())
+                .concat(addedColumns.stream())
+                .iterator();
     }
 
     @Override

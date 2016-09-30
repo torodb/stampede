@@ -33,11 +33,14 @@ public interface MetaIndex {
 
     @Nullable
     public abstract MetaIndexField getMetaIndexFieldByTableRefAndName(TableRef tableRef, String name);
+    
+    @Nullable
+    public abstract MetaIndexField getMetaIndexFieldByTableRefAndPosition(TableRef tableRef, int position);
 
     @Nullable
     public abstract MetaIndexField getMetaIndexFieldByPosition(int position);
     
-    public abstract Stream<List<String>> streamMetaDocPartIndexesIdentifiers(MetaDocPart docPart);
+    public abstract Iterator<List<String>> iteratorMetaDocPartIndexesIdentifiers(MetaDocPart docPart);
     
     public abstract boolean isCompatible(MetaDocPart docPart);
     

@@ -1,6 +1,10 @@
 
 package com.torodb.torod;
 
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.stream.Stream;
+
 import com.torodb.core.cursors.Cursor;
 import com.torodb.core.cursors.IteratorCursor;
 import com.torodb.core.cursors.ToroCursor;
@@ -11,8 +15,6 @@ import com.torodb.core.transaction.RollbackException;
 import com.torodb.core.transaction.metainf.FieldIndexOrdering;
 import com.torodb.kvdocument.values.KVDocument;
 import com.torodb.kvdocument.values.KVValue;
-import java.util.List;
-import java.util.stream.Stream;
 
 /**
  *
@@ -41,7 +43,7 @@ public interface SharedWriteTorodTransaction extends TorodTransaction {
     
     public void dropDatabase(String db) throws RollbackException, UserException;
 
-    public boolean createIndex(String dbName, String colName, String indexName, AttributeReference attRef, FieldIndexOrdering ordering, boolean unique);
+    public boolean createIndex(String dbName, String colName, String indexName, List<IndexFieldInfo> fields, boolean unique);
 
     public boolean dropIndex(String dbName, String colName, String indexName);
 

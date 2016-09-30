@@ -21,8 +21,8 @@
 package com.torodb.metainfo.cache.mvcc;
 
 import java.util.Optional;
-import java.util.stream.StreamSupport;
 
+import org.jooq.lambda.Seq;
 import org.jooq.lambda.tuple.Tuple2;
 
 import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
@@ -275,7 +275,7 @@ public class SnapshotMerger {
             case ADDED:
             case MODIFIED: {
                 Optional<? extends MetaIndex> anyNewRelatedIndex = 
-                        StreamSupport.stream(newCol.getModifiedMetaIndexes().spliterator(), false)
+                        Seq.seq(newCol.getModifiedMetaIndexes())
                             .map(index -> index.v1())
                             .filter(newIndex -> newIndex.isCompatible(newStructure, changed))
                             .findAny();
@@ -372,8 +372,8 @@ public class SnapshotMerger {
             case MODIFIED: {
                 Optional<? extends MetaDocPart> anyDocPartWithMissingDocPartIndex = changed.streamTableRefs()
                     .map(tableRef -> (MetaDocPart) oldStructure.getMetaDocPartByTableRef(tableRef))
-                    .filter(docPart -> docPart != null &&
-                            changed.streamMetaDocPartIndexesIdentifiers(docPart)
+                    .filter(docPart -> docPart != null && changed.isCompatible(docPart) &&
+                            Seq.seq(changed.iteratorMetaDocPartIndexesIdentifiers(docPart))
                                 .filter(identifiers -> docPart.streamIndexes()
                                     .noneMatch(docPartIndex -> changed.isMatch(docPart, identifiers, docPartIndex)))
                                 .anyMatch(identifiers -> {
@@ -407,15 +407,15 @@ public class SnapshotMerger {
             case REMOVED: {
                 Optional<? extends MetaDocPartIndex> orphanDocPartIndex = changed.streamTableRefs()
                     .map(tableRef -> (MetaDocPart) oldStructure.getMetaDocPartByTableRef(tableRef))
-                    .filter(docPart -> docPart != null)
+                    .filter(docPart -> docPart != null && changed.isCompatible(docPart))
                     .flatMap(oldDocPart -> oldDocPart.streamIndexes()
                             .filter(oldDocPartIndex -> changed.isCompatible(oldDocPart, oldDocPartIndex) &&
-                                    StreamSupport.stream(newStructure.getMetaDocPartByTableRef(oldDocPart.getTableRef()).getModifiedMetaDocPartIndexes().spliterator(), false)
+                                    Seq.seq(newStructure.getMetaDocPartByTableRef(oldDocPart.getTableRef()).getModifiedMetaDocPartIndexes())
                                         .noneMatch(newDocPartIndex -> newDocPartIndex.v2() == MetaElementState.REMOVED &&
                                             newDocPartIndex.v1().getIdentifier().equals(oldDocPartIndex.getIdentifier())) &&
                                     oldStructure.streamContainedMetaIndexes()
                                             .noneMatch(oldIndex -> oldIndex.isCompatible(oldDocPart, oldDocPartIndex) &&
-                                                    StreamSupport.stream(newStructure.getModifiedMetaIndexes().spliterator(), false)
+                                                    Seq.seq(newStructure.getModifiedMetaIndexes())
                                                         .noneMatch(newIndex -> newIndex.v2() == MetaElementState.REMOVED &&
                                                             newIndex.v1().getName().equals(oldIndex.getName()))
                                             )

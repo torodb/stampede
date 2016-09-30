@@ -21,12 +21,16 @@
 package com.torodb.backend.postgresql;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import org.jooq.DSLContext;
+import org.jooq.lambda.tuple.Tuple2;
 
 import com.google.common.base.Preconditions;
 import com.torodb.backend.AbstractStructureInterface;
@@ -39,8 +43,6 @@ import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetaSnapshot;
-import java.util.function.Consumer;
-import java.util.stream.Stream;
 
 /**
  *
@@ -86,21 +88,20 @@ public class PostgreSQLStructureInterface extends AbstractStructureInterface {
     }
     
     @Override
-    protected String getCreateIndexStatement(String indexName, String schemaName, String tableName, String columnName,
-            boolean ascending, boolean unique) {
-        String uniqueText = unique ? "UNIQUE " : "";
-
+    protected String getCreateIndexStatement(String indexName, String schemaName, String tableName, List<Tuple2<String, Boolean>> columnList, boolean unique) {
         StringBuilder sb = new StringBuilder()
-                .append("CREATE ").append(uniqueText).append("INDEX ")
+                .append(unique ? "CREATE UNIQUE INDEX " : "CREATE INDEX ")
                 .append("\"").append(indexName).append("\"")
                 .append(" ON ")
                 .append("\"").append(schemaName).append("\"")
                 .append(".")
                 .append("\"").append(tableName).append("\"")
-                .append(" (")
-                    .append("\"").append(columnName).append("\"")
-                    .append(" ").append(ascending ? "ASC" : "DESC")
-                .append(")");
+                .append(" (");
+        for (Tuple2<String, Boolean> columnEntry : columnList) {
+            sb.append("\"").append(columnEntry.v1()).append("\" ")
+                    .append(columnEntry.v2() ? "ASC," : "DESC,");
+        }
+        sb.setCharAt(sb.length() - 1, ')');
         String statement = sb.toString();
         return statement;
     }

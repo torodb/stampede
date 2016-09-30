@@ -32,6 +32,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jooq.DSLContext;
 import org.jooq.exception.DataAccessException;
+import org.jooq.lambda.tuple.Tuple2;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -279,9 +280,17 @@ public class BackendRollbackIntegrationTest extends AbstractBackendTest {
             ) {
             DSLContext leftDsl = sqlInterface.getDslContextFactory().createDSLContext(leftConnection);
             DSLContext rightDsl = sqlInterface.getDslContextFactory().createDSLContext(rightConnection);
-            leftThread.step(() -> sqlInterface.getStructureInterface().createIndex(leftDsl, "test_index", "test", "test", "test", true, false))
+            leftThread.step(() -> sqlInterface.getStructureInterface().createIndex(leftDsl, "test_index", "test", "test", 
+                    ImmutableList.<Tuple2<String, Boolean>>builder()
+                        .add(new Tuple2<>("test", true))
+                        .build(), 
+                    false))
                 .waitQueuedSteps();
-            rightThread.step(() -> sqlInterface.getStructureInterface().createIndex(rightDsl, "test_index", "test", "test", "test", true, false))
+            rightThread.step(() -> sqlInterface.getStructureInterface().createIndex(rightDsl, "test_index", "test", "test", 
+                    ImmutableList.<Tuple2<String, Boolean>>builder()
+                        .add(new Tuple2<>("test", true))
+                        .build(), 
+                    false))
                 .waitUntilThreadSleeps(1);
             leftThread.step(() -> leftConnection.commit()).waitQueuedSteps();
             rollbackOrSuccessRule.shouldRollback();

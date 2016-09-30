@@ -489,7 +489,7 @@ public class AkkaDbCloner implements DbCloner {
                                 indexesToClone
                         )
                 );
-                if (!status.isOK() || status.getResult().getNumNewIndexes() != indexesToClone.size()) {
+                if (!status.isOK()) {
                     throw new CloningException("Error while cloning indexes: " + status.getErrorMsg());
                 }
                 transaction.commit();

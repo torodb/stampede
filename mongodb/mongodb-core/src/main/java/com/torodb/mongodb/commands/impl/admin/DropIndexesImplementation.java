@@ -44,10 +44,13 @@ public class DropIndexesImplementation implements WriteTorodbCommandImpl<DropInd
         List<String> indexesToDrop;
         
         if (!arg.isDropAllIndexes()) {
+            if (Constants.ID_INDEX.equals(arg.getIndexToDrop())) {
+                return Status.from(ErrorCode.INVALID_OPTIONS, "cannot drop _id index");
+            }
             indexesToDrop = Arrays.asList(arg.getIndexToDrop());
         } else {
             indexesToDrop = context.getTorodTransaction().getIndexesInfo(req.getDatabase(), arg.getCollection())
-                .filter(indexInfo -> indexInfo.getName().equals(Constants.ID_INDEX))
+                .filter(indexInfo -> !Constants.ID_INDEX.equals(indexInfo.getName()))
                 .map(indexInfo -> indexInfo.getName())
                 .collect(Collectors.toList());   
         }

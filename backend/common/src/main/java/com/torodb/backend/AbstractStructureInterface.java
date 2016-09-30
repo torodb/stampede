@@ -25,6 +25,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -32,7 +33,9 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import org.jooq.DSLContext;
+import org.jooq.lambda.tuple.Tuple2;
 
+import com.google.common.base.Preconditions;
 import com.torodb.backend.ErrorHandler.Context;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.core.TableRef;
@@ -117,17 +120,18 @@ public abstract class AbstractStructureInterface implements StructureInterface {
     @Override
     public void createIndex(DSLContext dsl, String indexName,
             String schemaName, String tableName,
-            String columnName, boolean ascending, boolean unique
+            List<Tuple2<String, Boolean>> columnList, boolean unique
     ) {
         if (!dbBackend.isOnDataInsertMode()) {
-            String statement = getCreateIndexStatement(indexName, schemaName, tableName, columnName, ascending, unique);
+            Preconditions.checkArgument(!columnList.isEmpty(), "Can not create index on 0 columns");
+            
+            String statement = getCreateIndexStatement(indexName, schemaName, tableName, columnList, unique);
 
             sqlHelper.executeUpdate(dsl, statement, unique?Context.ADD_UNIQUE_INDEX:Context.CREATE_INDEX);
         }
     }
 
-    protected abstract String getCreateIndexStatement(String indexName, String schemaName, String tableName, String columnName,
-            boolean ascending, boolean unique);
+    protected abstract String getCreateIndexStatement(String indexName, String schemaName, String tableName, List<Tuple2<String, Boolean>> columnList, boolean unique);
     
     @Override
     public void dropIndex(DSLContext dsl, String schemaName, String indexName) {

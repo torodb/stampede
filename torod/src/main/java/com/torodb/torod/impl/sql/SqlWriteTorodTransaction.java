@@ -1,10 +1,16 @@
 
 package com.torodb.torod.impl.sql;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
 import javax.annotation.Nonnull;
+
+import org.jooq.lambda.Seq;
+import org.jooq.lambda.tuple.Tuple3;
 
 import com.google.common.base.Preconditions;
 import com.torodb.core.TableRef;
@@ -28,6 +34,7 @@ import com.torodb.core.transaction.metainf.MutableMetaIndex;
 import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
 import com.torodb.kvdocument.values.KVDocument;
 import com.torodb.kvdocument.values.KVValue;
+import com.torodb.torod.IndexFieldInfo;
 import com.torodb.torod.SharedWriteTorodTransaction;
 import com.torodb.torod.pipeline.InsertPipeline;
 
@@ -155,23 +162,38 @@ public abstract class SqlWriteTorodTransaction<T extends WriteInternalTransactio
     }
 
     @Override
-    public boolean createIndex(String dbName, String colName, String indexName, AttributeReference attRef, FieldIndexOrdering ordering, boolean unique) {
+    public boolean createIndex(String dbName, String colName, String indexName, List<IndexFieldInfo> fields, boolean unique) {
         MutableMetaDatabase metaDb = getOrCreateMetaDatabase(dbName);
         MutableMetaCollection metaColl = getOrCreateMetaCollection(metaDb, colName);
         
-        TableRef tableRef = extractTableRef(attRef);
-        String lastKey = extractKeyName(attRef.getKeys().get(attRef.getKeys().size() - 1));
+        List<Tuple3<TableRef, String, FieldIndexOrdering>> indexFieldDefs = new ArrayList<>(fields.size());
+        for (IndexFieldInfo field : fields) {
+            AttributeReference attRef = field.getAttributeReference();
+            FieldIndexOrdering ordering = field.isAscending()?FieldIndexOrdering.ASC:FieldIndexOrdering.DESC;
+            TableRef tableRef = extractTableRef(attRef);
+            String lastKey = extractKeyName(attRef.getKeys().get(attRef.getKeys().size() - 1));
+            indexFieldDefs.add(new Tuple3<>(tableRef, lastKey, ordering));
+        }
         
         boolean indexExists = metaColl.streamContainedMetaIndexes()
                 .anyMatch(index -> index.getName().equals(indexName) || (
-                        index.isUnique() == unique &&
-                        index.getMetaIndexFieldByTableRefAndName(tableRef, lastKey) != null &&
-                        index.getMetaIndexFieldByTableRefAndName(tableRef, lastKey).getOrdering() == ordering));
+                        index.isUnique() == unique && 
+                        index.size() == indexFieldDefs.size() && 
+                        Seq.seq(index.iteratorFields())
+                            .allMatch(indexField -> {
+                                Tuple3<TableRef, String, FieldIndexOrdering> indexFieldDef =
+                                        indexFieldDefs.get(indexField.getPosition());
+                                return indexFieldDef != null && 
+                                        indexFieldDef.v1().equals(indexField.getTableRef()) &&
+                                        indexFieldDef.v2().equals(indexField.getName()) &&
+                                        indexFieldDef.v3() == indexField.getOrdering();
+                            })));
         
         if (!indexExists) {
             MutableMetaIndex metaIndex = metaColl.addMetaIndex(indexName, unique);
-            metaIndex.addMetaIndexField(tableRef, lastKey, ordering);
-            
+            for (Tuple3<TableRef, String, FieldIndexOrdering> indexFieldDef : indexFieldDefs) {
+                metaIndex.addMetaIndexField(indexFieldDef.v1(), indexFieldDef.v2(), indexFieldDef.v3());
+            }
             getInternalTransaction().getBackendTransaction().createIndex(metaDb, metaColl, metaIndex);
         }
         

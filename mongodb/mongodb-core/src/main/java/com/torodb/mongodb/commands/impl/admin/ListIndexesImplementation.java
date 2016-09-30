@@ -20,7 +20,11 @@
 
 package com.torodb.mongodb.commands.impl.admin;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.function.BinaryOperator;
+import java.util.function.Function;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import com.eightkdata.mongowp.Status;
@@ -34,7 +38,7 @@ import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.Request;
 import com.torodb.mongodb.commands.impl.ReadTorodbCommandImpl;
 import com.torodb.mongodb.core.MongodTransaction;
-import com.torodb.torod.IndexInfo.IndexFieldInfo;
+import com.torodb.torod.IndexFieldInfo;
 
 public class ListIndexesImplementation implements ReadTorodbCommandImpl<ListIndexesArgument, ListIndexesResult> {
 
@@ -54,9 +58,9 @@ public class ListIndexesImplementation implements ReadTorodbCommandImpl<ListInde
                                         indexInfo.isUnique(),
                                         false,
                                         0,
-                                        indexInfo.getFields().stream().collect(Collectors.toMap(
-                                                indexFieldInfo -> extractKeys(indexFieldInfo), 
-                                                indexFieldInfo -> extractType(indexFieldInfo))),
+                                        indexInfo.getFields().stream()
+                                            .map(field -> new IndexOptions.Key(extractKeys(field), extractType(field)))
+                                            .collect(Collectors.toList()),
                                         null,
                                         null)
                         )
@@ -64,6 +68,15 @@ public class ListIndexesImplementation implements ReadTorodbCommandImpl<ListInde
             ));
     }
 
+    public <T, K, U> Collector<T, ?, LinkedHashMap<K,U>> toMap(Function<? super T, ? extends K> keyMapper,
+                                    Function<? super T, ? extends U> valueMapper) {
+        return Collectors.toMap(keyMapper, valueMapper, throwingMerger(), LinkedHashMap::new);
+    }
+    
+    private static <T> BinaryOperator<T> throwingMerger() {
+        return (u,v) -> { throw new IllegalStateException(String.format("Duplicate key %s", u)); };
+    }
+    
     private List<String> extractKeys(IndexFieldInfo indexFieldInfo) {
         return indexFieldInfo.getAttributeReference().getKeys().stream()
             .map(k -> k.getKeyValue().toString()).collect(Collectors.toList());

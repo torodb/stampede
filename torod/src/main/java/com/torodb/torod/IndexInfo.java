@@ -45,25 +45,6 @@ public class IndexInfo {
     public ImmutableList<IndexFieldInfo> getFields() {
         return fields;
     }
-    
-    public static class IndexFieldInfo {
-        private final AttributeReference attributeReference;
-        private final boolean ascending;
-        
-        public IndexFieldInfo(AttributeReference attributeReference, boolean ascending) {
-            super();
-            this.attributeReference = attributeReference;
-            this.ascending = ascending;
-        }
-
-        public AttributeReference getAttributeReference() {
-            return attributeReference;
-        }
-
-        public boolean isAscending() {
-            return ascending;
-        }
-    }
 
     public static class Builder {
         private final String name;

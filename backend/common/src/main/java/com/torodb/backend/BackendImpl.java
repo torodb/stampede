@@ -15,6 +15,7 @@ import javax.inject.Inject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jooq.DSLContext;
+import org.jooq.lambda.tuple.Tuple2;
 
 import com.torodb.backend.ErrorHandler.Context;
 import com.torodb.backend.meta.SchemaUpdater;
@@ -39,6 +40,7 @@ import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetaDocPartIndex;
+import com.torodb.core.transaction.metainf.MetaDocPartIndexColumn;
 import com.torodb.core.transaction.metainf.MetaSnapshot;
 import com.torodb.core.transaction.metainf.MetainfoRepository;
 
@@ -188,24 +190,27 @@ public class BackendImpl extends ThreadFactoryIdleService implements Backend {
             while (docPartIndexIterator.hasNext()) {
                 MetaDocPartIndex docPartIndex = docPartIndexIterator.next();
 
-                if (docPartIndex.size() > 1) {
-                    throw new UnsupportedOperationException("Index with more than one column is not supported");
-                }
-                
-                consumerList.add(createOneFieldIndexJob(db, docPart, docPartIndex));
+                consumerList.add(createIndexJob(db, docPart, docPartIndex));
             }
         }
         
         return consumerList.stream();
     }
 
-    private Consumer<DSLContext> createOneFieldIndexJob(MetaDatabase db, MetaDocPart docPart,
+    private Consumer<DSLContext> createIndexJob(MetaDatabase db, MetaDocPart docPart,
             MetaDocPartIndex docPartIndex) {
-        return dsl -> sqlInterface.getStructureInterface().createIndex(
-                dsl, docPartIndex.getIdentifier(), db.getIdentifier(), docPart.getIdentifier(), 
-                docPartIndex.iteratorColumns().next().getIdentifier(), 
-                docPartIndex.iteratorColumns().next().getOrdering().isAscending(), 
+        return dsl -> {
+            List<Tuple2<String, Boolean>> columnList = new ArrayList<>(docPartIndex.size());
+            for (Iterator<? extends MetaDocPartIndexColumn> indexColumnIterator = docPartIndex.iteratorColumns(); indexColumnIterator.hasNext();) {
+                MetaDocPartIndexColumn indexColumn = indexColumnIterator.next();
+                columnList.add(new Tuple2<>(indexColumn.getIdentifier(), indexColumn.getOrdering().isAscending()));
+            }
+            
+            sqlInterface.getStructureInterface().createIndex(
+                dsl, docPartIndex.getIdentifier(), db.getIdentifier(), docPart.getIdentifier(),
+                columnList,
                 docPartIndex.isUnique());
+        };
     }
 
     private Runnable dslConsumerToRunnable(Consumer<DSLContext> consumer) {

@@ -20,8 +20,8 @@
 
 package com.torodb.mongodb.repl;
 
+import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
@@ -29,7 +29,6 @@ import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -49,7 +48,6 @@ import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.InsertCommand;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.UpdateCommand;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.IndexOptions;
-import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.IndexOptions.IndexType;
 import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.oplog.DbCmdOplogOperation;
 import com.eightkdata.mongowp.server.api.oplog.DbOplogOperation;
@@ -220,7 +218,7 @@ public class ReplicationFilters {
         return true;
     }
     
-    private boolean indexWhiteFilter(String database, String collection, String indexName, boolean unique, Map<List<String>, IndexType> keys) {
+    private boolean indexWhiteFilter(String database, String collection, String indexName, boolean unique, List<IndexOptions.Key> keys) {
         if (whitelist.isEmpty()) {
             return true;
         }
@@ -252,7 +250,7 @@ public class ReplicationFilters {
         return false;
     }
     
-    private boolean indexBlackFilter(String database, String collection, String indexName, boolean unique, Map<List<String>, IndexType> keys) {
+    private boolean indexBlackFilter(String database, String collection, String indexName, boolean unique, List<IndexOptions.Key> keys) {
         if (blacklist.isEmpty()) {
             return true;
         }
@@ -304,7 +302,7 @@ public class ReplicationFilters {
     
     public class IndexPredicateImpl implements IndexPredicate {
         @Override
-        public boolean test(String database, String collection, String indexName, boolean unique, Map<List<String>, IndexType> keys) {
+        public boolean test(String database, String collection, String indexName, boolean unique, List<IndexOptions.Key> keys) {
             return indexWhiteFilter(database, collection, indexName, unique, keys) &&
                     indexBlackFilter(database, collection, indexName, unique, keys);
         }
@@ -331,7 +329,7 @@ public class ReplicationFilters {
                         if (!indexPredicate.test(database, arg.getCollection(), 
                                 indexOptions.getName(), 
                                 indexOptions.isUnique(), 
-                                indexOptions.getKeys().entrySet().stream().collect(Collectors.toMap(entry -> entry.getKey(), entry -> entry.getValue())))) {
+                                indexOptions.getKeys())) {
                             return false;
                         }
                     }
@@ -389,7 +387,7 @@ public class ReplicationFilters {
                     if (!indexPredicate.test(op.getDatabase(), op.getCollection(), 
                             indexOptions.getName(), 
                             indexOptions.isUnique(), 
-                            indexOptions.getKeys().entrySet().stream().collect(Collectors.toMap(entry -> entry.getKey(), entry -> entry.getValue())))) {
+                            indexOptions.getKeys())) {
                         return false;
                     }
                     
@@ -422,16 +420,16 @@ public class ReplicationFilters {
     public static class IndexPattern {
         private final Pattern name;
         private final Boolean unique;
-        private final ImmutableMap<ImmutableList<Pattern>, Pattern> fieldsPattern;
+        private final ImmutableList<IndexFieldPattern> fieldsPattern;
         
-        public IndexPattern(@Nonnull Pattern name, @Nullable Boolean unique, @Nonnull ImmutableMap<ImmutableList<Pattern>, Pattern> fieldsPattern) {
+        public IndexPattern(@Nonnull Pattern name, @Nullable Boolean unique, @Nonnull ImmutableList<IndexFieldPattern> fieldsPattern) {
             super();
             this.name = name;
             this.unique = unique;
             this.fieldsPattern = fieldsPattern;
         }
         
-        public boolean match(String name, boolean unique, Map<List<String>, IndexType> fields) {
+        public boolean match(String name, boolean unique, List<IndexOptions.Key> fields) {
             if (this.name.matcher(name).matches() && 
                     (this.unique == null || this.unique.booleanValue() == unique) &&
                     (this.fieldsPattern.isEmpty() || this.fieldsPattern.size() == fields.size())) {
@@ -439,18 +437,18 @@ public class ReplicationFilters {
                     return true;
                 }
                 
-                Iterator<Map.Entry<List<String>, IndexType>> fieldIterator = fields.entrySet().iterator();
-                Iterator<Map.Entry<ImmutableList<Pattern>, Pattern>> fieldPatternIterator = fieldsPattern.entrySet().iterator();
+                Iterator<IndexOptions.Key> fieldIterator = fields.iterator();
+                Iterator<IndexFieldPattern> fieldPatternIterator = fieldsPattern.iterator();
                 while (fieldPatternIterator.hasNext() &&
                         fieldIterator.hasNext()) {
-                    Map.Entry<ImmutableList<Pattern>, Pattern> fieldPattern = fieldPatternIterator.next();
-                    Map.Entry<List<String>, IndexType> field = fieldIterator.next();
-                    if (!fieldPattern.getValue().matcher(field.getValue().name()).matches() ||
-                            fieldPattern.getKey().size() != field.getKey().size()) {
+                    IndexFieldPattern fieldPattern = fieldPatternIterator.next();
+                    IndexOptions.Key field = fieldIterator.next();
+                    if (!fieldPattern.getType().matcher(field.getType().toBsonValue().toString()).matches() ||
+                            fieldPattern.getKeys().size() != field.getKeys().size()) {
                         return false;
                     }
-                    Iterator<Pattern> fieldReferencePatternIterator = fieldPattern.getKey().iterator();
-                    Iterator<String> fieldReferenceIterator = field.getKey().iterator();
+                    Iterator<Pattern> fieldReferencePatternIterator = fieldPattern.getKeys().iterator();
+                    Iterator<String> fieldReferenceIterator = field.getKeys().iterator();
                     while (fieldReferencePatternIterator.hasNext() && 
                             fieldReferenceIterator.hasNext()) {
                         Pattern fieldReferencePattern = fieldReferencePatternIterator.next();
@@ -470,8 +468,8 @@ public class ReplicationFilters {
         public static class Builder {
             private final Pattern name;
             private final Boolean unique;
-            private final Map<ImmutableList<Pattern>, Pattern> fieldsPattern =
-                    new LinkedHashMap<>();
+            private final List<IndexFieldPattern> fieldsPattern =
+                    new ArrayList<>();
             
             public Builder(@Nonnull Pattern name, @Nullable Boolean unique) {
                 this.name = name;
@@ -479,13 +477,31 @@ public class ReplicationFilters {
             }
             
             public Builder addFieldPattern(ImmutableList<Pattern> fieldReferencePattern, Pattern typePattern) {
-                fieldsPattern.put(fieldReferencePattern, typePattern);
+                fieldsPattern.add(new IndexFieldPattern(fieldReferencePattern, typePattern));
                 return this;
             }
             
             public IndexPattern build() {
-                return new IndexPattern(name, unique, ImmutableMap.copyOf(fieldsPattern));
+                return new IndexPattern(name, unique, ImmutableList.copyOf(fieldsPattern));
             }
+        }
+    }
+    
+    public static class IndexFieldPattern {
+        private final List<Pattern> keys;
+        private final Pattern type;
+        
+        public IndexFieldPattern(List<Pattern> keys, Pattern type) {
+            super();
+            this.keys = keys;
+            this.type = type;
+        }
+        
+        public List<Pattern> getKeys() {
+            return keys;
+        }
+        public Pattern getType() {
+            return type;
         }
     }
 }

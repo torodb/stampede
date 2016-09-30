@@ -22,8 +22,10 @@ package com.torodb.core.transaction.metainf;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -40,6 +42,7 @@ public class ImmutableMetaIndex implements MetaIndex {
     private final String name;
     private final boolean unique;
     private final List<ImmutableMetaIndexField> fieldsByPosition;
+    private final Map<TableRef, List<ImmutableMetaIndexField>> fieldsByTableRefAndPosition;
     private final Table<TableRef, String, ImmutableMetaIndexField> fieldsByTableRefAndName;
 
     public ImmutableMetaIndex(String name, boolean unique) {
@@ -52,10 +55,12 @@ public class ImmutableMetaIndex implements MetaIndex {
 
         fieldsByTableRefAndName = HashBasedTable.create();
         fieldsByPosition = new ArrayList<>(fieldsByTableRefAndName.size());
+        fieldsByTableRefAndPosition = new HashMap<>(fieldsByTableRefAndName.size());
 
         for (ImmutableMetaIndexField field : fields) {
-            fieldsByTableRefAndName.put(field.getTableRef(), field.getName(), field);
             fieldsByPosition.add(field);
+            fieldsByTableRefAndPosition.computeIfAbsent(field.getTableRef(), tableRef -> new ArrayList<>()).add(field);
+            fieldsByTableRefAndName.put(field.getTableRef(), field.getName(), field);
         }
     }
 
@@ -63,8 +68,10 @@ public class ImmutableMetaIndex implements MetaIndex {
         this.name = name;
         this.unique = unique;
         this.fieldsByPosition = fieldsByPosition;
+        this.fieldsByTableRefAndPosition = new HashMap<>();
         this.fieldsByTableRefAndName = HashBasedTable.create();
         for (ImmutableMetaIndexField field : fieldsByPosition) {
+            fieldsByTableRefAndPosition.computeIfAbsent(field.getTableRef(), tableRef -> new ArrayList<>()).add(field);
             fieldsByTableRefAndName.put(field.getTableRef(), field.getName(), field);
         }
     }
@@ -91,7 +98,7 @@ public class ImmutableMetaIndex implements MetaIndex {
 
     @Override
     public Iterator<? extends ImmutableMetaIndexField> iteratorMetaIndexFieldByTableRef(TableRef tableRef) {
-        return fieldsByTableRefAndName.row(tableRef).values().iterator();
+        return fieldsByTableRefAndPosition.computeIfAbsent(tableRef, t-> new ArrayList<>()).iterator();
     }
 
     @Override
@@ -102,6 +109,11 @@ public class ImmutableMetaIndex implements MetaIndex {
     @Override
     public ImmutableMetaIndexField getMetaIndexFieldByTableRefAndName(TableRef tableRef, String name) {
         return fieldsByTableRefAndName.get(tableRef, name);
+    }
+
+    @Override
+    public ImmutableMetaIndexField getMetaIndexFieldByTableRefAndPosition(TableRef tableRef, int position) {
+        return fieldsByTableRefAndPosition.computeIfAbsent(tableRef, t-> new ArrayList<>()).get(position);
     }
     
     @Override
@@ -195,11 +207,11 @@ public class ImmutableMetaIndex implements MetaIndex {
     }
     
     @Override
-    public Stream<List<String>> streamMetaDocPartIndexesIdentifiers(MetaDocPart docPart) {
-        return streamMetaDocPartIndexesIdentifiers(docPart, iteratorMetaIndexFieldByTableRef(docPart.getTableRef()));
+    public Iterator<List<String>> iteratorMetaDocPartIndexesIdentifiers(MetaDocPart docPart) {
+        return iteratorMetaDocPartIndexesIdentifiers(docPart, iteratorMetaIndexFieldByTableRef(docPart.getTableRef()));
     }
 
-    protected Stream<List<String>> streamMetaDocPartIndexesIdentifiers(MetaDocPart docPart, Iterator<? extends MetaIndexField> indexFieldIterator) {
+    protected Iterator<List<String>> iteratorMetaDocPartIndexesIdentifiers(MetaDocPart docPart, Iterator<? extends MetaIndexField> indexFieldIterator) {
         List<List<String>> docPartIndexesIdentifiers = new ArrayList<>();
         while (indexFieldIterator.hasNext()) {
             MetaIndexField indexField = indexFieldIterator.next();
@@ -207,7 +219,7 @@ public class ImmutableMetaIndex implements MetaIndex {
                 .filter(field -> field.getName().equals(indexField.getName()))
                 .collect(Collectors.toList()));
         }
-        return docPartIndexesIdentifiers.stream();
+        return docPartIndexesIdentifiers.iterator();
     }
     
     private void cartesianAppend(List<List<String>> docPartIndexesIdentifiers, List<MetaField> fields) {
@@ -222,6 +234,8 @@ public class ImmutableMetaIndex implements MetaIndex {
                 docPartIndexesIdentifiers.add(docPartIndexIdentifiers);
             }
         } else {
+            List<List<String>> newDocPartIndexesIdentifiers = 
+                    new ArrayList<>(docPartIndexesIdentifiers.size() * fields.size());
             for (List<String> docPartIndexIdentifiers : docPartIndexesIdentifiers) {
                 Iterator<MetaField> fieldsIterator = fields.iterator();
                 MetaField field = fieldsIterator.next();
@@ -230,12 +244,15 @@ public class ImmutableMetaIndex implements MetaIndex {
                     MetaField nextField = fieldsIterator.next();
                     List<String> docPartIndexIdentifiersCopy = new ArrayList<>(docPartIndexIdentifiers);
                     docPartIndexIdentifiersCopy.add(nextField.getIdentifier());
-                    docPartIndexesIdentifiers.add(docPartIndexIdentifiersCopy);
+                    newDocPartIndexesIdentifiers.add(docPartIndexIdentifiersCopy);
                 }
                 
                 docPartIndexIdentifiers.add(field.getIdentifier());
-                docPartIndexesIdentifiers.add(docPartIndexIdentifiers);
+                newDocPartIndexesIdentifiers.add(docPartIndexIdentifiers);
             }
+            
+            docPartIndexesIdentifiers.clear();
+            docPartIndexesIdentifiers.addAll(newDocPartIndexesIdentifiers);
         }
     }
 

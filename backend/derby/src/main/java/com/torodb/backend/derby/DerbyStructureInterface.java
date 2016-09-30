@@ -21,9 +21,12 @@
 package com.torodb.backend.derby;
 
 import java.util.Collection;
+import java.util.List;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+
+import org.jooq.lambda.tuple.Tuple2;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
@@ -67,22 +70,22 @@ public class DerbyStructureInterface extends AbstractStructureInterface {
     }
     
     @Override
-    protected String getCreateIndexStatement(String indexName, String schemaName, String tableName, String columnName,
-            boolean ascending, boolean unique) {
-        String uniqueText = unique ? "UNIQUE " : "";
-
+    protected String getCreateIndexStatement(String indexName, String schemaName, String tableName, List<Tuple2<String, Boolean>> columnList, boolean unique) {
         StringBuilder sb = new StringBuilder()
-                .append("CREATE ").append(uniqueText).append("INDEX ")
+                .append(unique ? "CREATE UNIQUE INDEX " : "CREATE INDEX ")
                 .append("\"").append(indexName).append("\"")
                 .append(" ON ")
                 .append("\"").append(schemaName).append("\"")
                 .append(".")
                 .append("\"").append(tableName).append("\"")
-                .append(" (")
-                    .append("\"").append(columnName).append("\"")
-                    .append(" ").append(ascending ? "ASC" : "DESC")
-                .append(")");
-        return sb.toString();
+                .append(" (");
+        for (Tuple2<String, Boolean> columnEntry : columnList) {
+            sb.append("\"").append(columnEntry.v1()).append("\" ")
+                    .append(columnEntry.v2() ? "ASC," : "DESC,");
+        }
+        sb.setCharAt(sb.length() - 1, ')');
+        String statement = sb.toString();
+        return statement;
     }
 
     @Override

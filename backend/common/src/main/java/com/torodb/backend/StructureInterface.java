@@ -1,11 +1,13 @@
 package com.torodb.backend;
 
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import javax.annotation.Nonnull;
 
 import org.jooq.DSLContext;
+import org.jooq.lambda.tuple.Tuple2;
 
 import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.core.TableRef;
@@ -63,6 +65,6 @@ public interface StructureInterface {
     public Stream<Consumer<DSLContext>> streamDataInsertFinishTasks(MetaSnapshot snapshot);
     
     void createIndex(@Nonnull DSLContext dsl, @Nonnull String indexName, @Nonnull String tableSchema, 
-            @Nonnull String tableName, @Nonnull String tableColumnName, boolean isAscending, boolean unique);
+            @Nonnull String tableName, @Nonnull List<Tuple2<String, Boolean>> columnList, boolean unique);
     void dropIndex(@Nonnull DSLContext dsl, @Nonnull String schemaName, @Nonnull String indexName);
 }
