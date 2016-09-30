@@ -83,7 +83,7 @@ public class ToroDbServer extends ThreadFactoryIdleService {
 
     @Override
     protected void startUp() throws Exception {
-        LOGGER.info("Starting up ToroDB v" +  buildProperties.getFullVersion() + "...");
+        LOGGER.info("Starting ToroDB v" +  buildProperties.getFullVersion());
 
         mongod.startAsync();
         torod.startAsync();
@@ -98,12 +98,13 @@ public class ToroDbServer extends ThreadFactoryIdleService {
         LOGGER.debug("Waiting for Netty to be running...");
         netty.awaitRunning();
 
-        LOGGER.info("ToroDbServer started");
+        LOGGER.info("Launched Mongo connector at port {}", netty.getPort());
+        LOGGER.info("ToroDB started");
     }
 
     @Override
     protected void shutDown() throws Exception {
-        LOGGER.info("Shutting down ToroDB...");
+        LOGGER.info("Shutting down ToroDB");
 
         netty.stopAsync();
         netty.awaitTerminated();
@@ -116,7 +117,7 @@ public class ToroDbServer extends ThreadFactoryIdleService {
 
         shutdowner.close();
 
-        LOGGER.debug("ToroDbServer shutdown complete");
+        LOGGER.info("ToroDB shutdown complete");
     }
 
 }
