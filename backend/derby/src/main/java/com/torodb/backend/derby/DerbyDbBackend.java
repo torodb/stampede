@@ -26,6 +26,9 @@ import com.torodb.backend.TransactionIsolationLevel;
 import com.torodb.backend.driver.derby.DerbyDbBackendConfiguration;
 import com.torodb.backend.driver.derby.DerbyDriverProvider;
 import com.torodb.core.annotations.ToroDbIdleService;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.util.concurrent.ThreadFactory;
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
@@ -36,6 +39,9 @@ import javax.sql.DataSource;
  * Derby-based backend
  */
 public class DerbyDbBackend extends AbstractDbBackend<DerbyDbBackendConfiguration> {
+
+    private static final Logger LOGGER = LogManager.getLogger(DerbyDbBackend.class);
+
     private final DerbyDriverProvider driverProvider;
 
     @Inject
@@ -43,6 +49,9 @@ public class DerbyDbBackend extends AbstractDbBackend<DerbyDbBackendConfiguratio
             DerbyDbBackendConfiguration configuration, DerbyDriverProvider driverProvider,
             DerbyErrorHandler errorHandler) {
         super(threadFactory, configuration, errorHandler);
+
+        LOGGER.info("Configured Derby backend at {}:{}", configuration.getDbHost(), configuration.getDbPort());
+
         this.driverProvider = driverProvider;
     }
 
@@ -68,4 +77,5 @@ public class DerbyDbBackend extends AbstractDbBackend<DerbyDbBackendConfiguratio
     protected TransactionIsolationLevel getGlobalCursorTransactionIsolation() {
         return TransactionIsolationLevel.TRANSACTION_REPEATABLE_READ;
     }
+
 }

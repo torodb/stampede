@@ -76,6 +76,7 @@ public class BackendImpl extends ThreadFactoryIdleService implements Backend {
             R2DTranslator r2dTranslator, IdentifierFactory identifierFactory, Retrier retrier,
             ConcurrentToolsFactory concurrentToolsFactory) {
         super(threadFactory);
+
         this.dbBackendService = dbBackendService;
         this.sqlInterface = sqlInterface;
         this.sqlHelper = sqlHelper;
