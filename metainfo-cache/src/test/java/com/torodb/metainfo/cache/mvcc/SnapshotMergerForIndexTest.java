@@ -44,6 +44,7 @@ import com.torodb.core.transaction.metainf.ImmutableMetaIndex;
 import com.torodb.core.transaction.metainf.ImmutableMetaIndexField;
 import com.torodb.core.transaction.metainf.ImmutableMetaScalar;
 import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
+import com.torodb.core.transaction.metainf.MetaSnapshot;
 import com.torodb.core.transaction.metainf.MutableMetaCollection;
 import com.torodb.core.transaction.metainf.MutableMetaDocPart;
 import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
@@ -94,7 +95,7 @@ import com.torodb.core.transaction.metainf.WrapperMutableMetaSnapshot;
  * 2&2: Remove an index in parallel but after to remove an index
  *  2&2.OK1: removed index and old removed index does not have the same names
  *  2&2.OK2: removed index is associated with old doc part index. Removed index and old removed index does not have the same names
- * 	2&2.KO1: removed index and old removed index have the same names
+ * 	2&2.OK3: removed index and old removed index have the same names
  * 
  * 2&3: Remove an index in parallel but after to create a field
  *  2&3.OK1: old new field does not complete an index match for removed index
@@ -164,8 +165,9 @@ public class SnapshotMergerForIndexTest {
         snapshotBuilder = spy(new ImmutableMetaSnapshot.Builder(currentSnapshot));
     }
 
-    /** 1&1.OK1.1
+    /** 
      * Test a new index
+     * Case [1&1.OK1|1&2.OK1].1
      * @throws Exception
      */
     @Test
@@ -182,8 +184,9 @@ public class SnapshotMergerForIndexTest {
         new SnapshotMerger(currentSnapshot, changedSnapshot).merge();
     }
 
-    /** 1&1.OK1.2
+    /** 
      * Test a new index with multiple fields
+     * Case [1&1.OK1|1&2.OK1].2
      * @throws Exception
      */
     @Test
@@ -215,8 +218,9 @@ public class SnapshotMergerForIndexTest {
         new SnapshotMerger(currentSnapshot, changedSnapshot).merge();
     }
 
-    /** 1&1.OK1.3
+    /** 
      * Test a new index with multiple fields in multiple doc parts
+     * Case [1&1.OK1|1&2.OK1].3
      * @throws Exception
      */
     @Test
@@ -238,18 +242,19 @@ public class SnapshotMergerForIndexTest {
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaIndexByName("idxName2")
-            .addMetaIndexField(tableRefFactory.createChild(tableRefFactory.createRoot(), "docPartId2"), "fieldName4", FieldIndexOrdering.ASC);
+            .addMetaIndexField(tableRefFactory.createChild(tableRefFactory.createRoot(), "docPartName2"), "fieldName4", FieldIndexOrdering.ASC);
         changedSnapshot
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaIndexByName("idxName2")
-            .addMetaIndexField(tableRefFactory.createChild(tableRefFactory.createRoot(), "docPartId2"), "fieldName5", FieldIndexOrdering.ASC);
+            .addMetaIndexField(tableRefFactory.createChild(tableRefFactory.createRoot(), "docPartName2"), "fieldName5", FieldIndexOrdering.ASC);
 
         new SnapshotMerger(currentSnapshot, changedSnapshot).merge();
     }
 
-    /** 1&1.KO1.1
+    /** 
      * Test an exception is thrown when a new index has same name as an old index
+     * Case 1&1.KO1.1
      * @throws Exception
      */
     @Test
@@ -275,8 +280,9 @@ public class SnapshotMergerForIndexTest {
         }
     }
 
-    /** 1&1.KO1.1a
+    /** 
      * Test an exception is thrown when a new index match an old index
+     * Case 1&1.KO1.1a
      * @throws Exception
      */
     @Test
@@ -302,8 +308,9 @@ public class SnapshotMergerForIndexTest {
         }
     }
 
-    /** 1&1.KO1.2
+    /** 
      * Test an exception is thrown when a new index with multiple fields match an old index
+     * Case 1&1.KO1.2
      * @throws Exception
      */
     @Test
@@ -360,8 +367,9 @@ public class SnapshotMergerForIndexTest {
         }
     }
 
-    /** 1&1.KO1.3
+    /** 
      * Test an exception is thrown when a new index with multiple fields in multiple doc parts match an old index
+     * Case 1&1.KO1.3
      * @throws Exception
      */
     @Test
@@ -381,12 +389,12 @@ public class SnapshotMergerForIndexTest {
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaIndexByName("idxName2")
-            .addMetaIndexField(tableRefFactory.createChild(tableRefFactory.createRoot(), "docPartId2"), "fieldName4", FieldIndexOrdering.ASC);
+            .addMetaIndexField(tableRefFactory.createChild(tableRefFactory.createRoot(), "docPartName2"), "fieldName4", FieldIndexOrdering.ASC);
         currentModifiedSnapshot
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaIndexByName("idxName2")
-            .addMetaIndexField(tableRefFactory.createChild(tableRefFactory.createRoot(), "docPartId2"), "fieldName5", FieldIndexOrdering.ASC);
+            .addMetaIndexField(tableRefFactory.createChild(tableRefFactory.createRoot(), "docPartName2"), "fieldName5", FieldIndexOrdering.ASC);
         MutableMetaSnapshot changedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
         changedSnapshot
             .getMetaDatabaseByName("dbName1")
@@ -402,12 +410,12 @@ public class SnapshotMergerForIndexTest {
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaIndexByName("idxName2")
-            .addMetaIndexField(tableRefFactory.createChild(tableRefFactory.createRoot(), "docPartId2"), "fieldName4", FieldIndexOrdering.ASC);
+            .addMetaIndexField(tableRefFactory.createChild(tableRefFactory.createRoot(), "docPartName2"), "fieldName4", FieldIndexOrdering.ASC);
         changedSnapshot
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaIndexByName("idxName2")
-            .addMetaIndexField(tableRefFactory.createChild(tableRefFactory.createRoot(), "docPartId2"), "fieldName5", FieldIndexOrdering.ASC);
+            .addMetaIndexField(tableRefFactory.createChild(tableRefFactory.createRoot(), "docPartName2"), "fieldName5", FieldIndexOrdering.ASC);
 
 
         try {
@@ -418,8 +426,226 @@ public class SnapshotMergerForIndexTest {
         }
     }
 
-    /** 1&3.OK1.1
+    /** 
+     * Test an exception is thrown when a new index has same doc part index as an old remove index
+     * Case 1&2.KO1.1
+     * @throws Exception
+     */
+    @Test
+    public void testNewIndexWithOldIndexWithSameDocPartIndexRemovedConflict() throws Exception {
+        MutableMetaSnapshot currentModifiedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .addMetaField("fieldName2", "fieldId2", FieldType.STRING);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .addMetaIndex("idxName2", true)
+            .addMetaIndexField(tableRefFactory.createRoot(), "fieldName2", FieldIndexOrdering.DESC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaIndexByName("idxName2")
+            .addMetaIndexField(tableRefFactory.createChild(tableRefFactory.createRoot(), "docPartName2"), "fieldName3", FieldIndexOrdering.DESC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .addMetaDocPartIndex("idxId2", false)
+            .addMetaDocPartIndexColumn("fieldId2", FieldIndexOrdering.ASC);
+        ImmutableMetaSnapshot currentSnapshot = currentModifiedSnapshot.immutableCopy();
+        currentModifiedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .removeMetaIndexByName("idxName2");
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .removeMetaDocPartIndexByIdentifier("idxId2");
+        MutableMetaSnapshot changedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
+        changedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .addMetaIndex("idxName3", false)
+            .addMetaIndexField(tableRefFactory.createRoot(), "fieldName2", FieldIndexOrdering.ASC);
+
+        try {
+            new SnapshotMerger(currentModifiedSnapshot.immutableCopy(), changedSnapshot).merge();
+            Assert.fail("A " + UnmergeableException.class.getSimpleName() + " was expected to be thrown");
+        } catch (UnmergeableException ex) {
+
+        }
+    }
+
+    /** 
+     * Test an exception is thrown when a new index with multiple fields has same doc part index as an old remove index
+     * Case 1&2.KO1.2
+     * @throws Exception
+     */
+    @Test
+    public void testNewIndexWithMultiFieldsWithOldIndexWithSameDocPartIndexRemovedConflict() throws Exception {
+        MutableMetaSnapshot currentModifiedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .addMetaField("fieldName2", "fieldId2", FieldType.STRING);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .addMetaField("fieldName3", "fieldId3", FieldType.STRING);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .addMetaIndex("idxName2", true)
+            .addMetaIndexField(tableRefFactory.createRoot(), "fieldName2", FieldIndexOrdering.DESC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaIndexByName("idxName2")
+            .addMetaIndexField(tableRefFactory.createRoot(), "fieldName3", FieldIndexOrdering.DESC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaIndexByName("idxName2")
+            .addMetaIndexField(tableRefFactory.createChild(tableRefFactory.createRoot(), "docPartName2"), "fieldName4", FieldIndexOrdering.DESC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .addMetaDocPartIndex("idxId2", false)
+            .addMetaDocPartIndexColumn("fieldId2", FieldIndexOrdering.ASC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .getMetaDocPartIndexByIdentifier("idxId2")
+            .addMetaDocPartIndexColumn("fieldId3", FieldIndexOrdering.ASC);
+        ImmutableMetaSnapshot currentSnapshot = currentModifiedSnapshot.immutableCopy();
+        currentModifiedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .removeMetaIndexByName("idxName2");
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .removeMetaDocPartIndexByIdentifier("idxId2");
+        MutableMetaSnapshot changedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
+        changedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .addMetaIndex("idxName3", false)
+            .addMetaIndexField(tableRefFactory.createRoot(), "fieldName2", FieldIndexOrdering.ASC);
+        changedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaIndexByName("idxName3")
+            .addMetaIndexField(tableRefFactory.createRoot(), "fieldName3", FieldIndexOrdering.ASC);
+
+        try {
+            new SnapshotMerger(currentModifiedSnapshot.immutableCopy(), changedSnapshot).merge();
+            Assert.fail("A " + UnmergeableException.class.getSimpleName() + " was expected to be thrown");
+        } catch (UnmergeableException ex) {
+
+        }
+    }
+
+    /** 
+     * Test an exception is thrown when a new index with multiple fields in multiple doc parts has same doc part index as an old remove index
+     * Case 1&2.KO1.3
+     * @throws Exception
+     */
+    @Test
+    public void testNewIndexWithMultiFieldsInMultiDocPartsWithOldIndexWithSameDocPartIndexRemovedConflict() throws Exception {
+        MutableMetaSnapshot currentModifiedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .addMetaField("fieldName2", "fieldId2", FieldType.STRING);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .addMetaField("fieldName3", "fieldId3", FieldType.STRING);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .addMetaIndex("idxName2", true)
+            .addMetaIndexField(tableRefFactory.createRoot(), "fieldName2", FieldIndexOrdering.DESC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaIndexByName("idxName2")
+            .addMetaIndexField(tableRefFactory.createRoot(), "fieldName3", FieldIndexOrdering.DESC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaIndexByName("idxName2")
+            .addMetaIndexField(tableRefFactory.createChild(tableRefFactory.createRoot(), "docPartName3"), "fieldName6", FieldIndexOrdering.DESC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .addMetaDocPartIndex("idxId2", false)
+            .addMetaDocPartIndexColumn("fieldId2", FieldIndexOrdering.ASC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .getMetaDocPartIndexByIdentifier("idxId2")
+            .addMetaDocPartIndexColumn("fieldId3", FieldIndexOrdering.ASC);
+        ImmutableMetaSnapshot currentSnapshot = currentModifiedSnapshot.immutableCopy();
+        currentModifiedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .removeMetaIndexByName("idxName2");
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .removeMetaDocPartIndexByIdentifier("idxId2");
+        MutableMetaSnapshot changedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
+        changedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .addMetaIndex("idxName3", false)
+            .addMetaIndexField(tableRefFactory.createRoot(), "fieldName2", FieldIndexOrdering.ASC);
+        changedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaIndexByName("idxName3")
+            .addMetaIndexField(tableRefFactory.createRoot(), "fieldName3", FieldIndexOrdering.ASC);
+        changedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaIndexByName("idxName2")
+            .addMetaIndexField(tableRefFactory.createChild(tableRefFactory.createRoot(), "docPartName2"), "fieldName4", FieldIndexOrdering.DESC);
+        changedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaIndexByName("idxName2")
+            .addMetaIndexField(tableRefFactory.createChild(tableRefFactory.createRoot(), "docPartName2"), "fieldName5", FieldIndexOrdering.DESC);
+
+        try {
+            new SnapshotMerger(currentModifiedSnapshot.immutableCopy(), changedSnapshot).merge();
+            Assert.fail("A " + UnmergeableException.class.getSimpleName() + " was expected to be thrown");
+        } catch (UnmergeableException ex) {
+
+        }
+    }
+
+    /** 
      * Test a new index and new doc part index
+     * Case 1&3.OK1.1
      * @throws Exception
      */
     @Test
@@ -447,8 +673,9 @@ public class SnapshotMergerForIndexTest {
         new SnapshotMerger(currentSnapshot, changedSnapshot).merge();
     }
 
-    /** 1&3.OK1.2
+    /** 
      * Test a new index with multiple fields and new doc part index
+     * Case 1&3.OK1.2
      * @throws Exception
      */
     @Test
@@ -524,8 +751,9 @@ public class SnapshotMergerForIndexTest {
         new SnapshotMerger(currentSnapshot, changedSnapshot).merge();
     }
 
-    /** 1&3.OK1.3
+    /** 
      * Test a new index with multiple fields in multiple doc parts and new doc part index
+     * Case 1&3.OK1.3
      * @throws Exception
      */
     @Test
@@ -579,8 +807,9 @@ public class SnapshotMergerForIndexTest {
         new SnapshotMerger(currentSnapshot, changedSnapshot).merge();
     }
 
-    /** 1&3.OK1.3b
+    /** 
      * Test a new index with multiple fields in multiple doc parts and new doc part indexes
+     * Case 1&3.OK1.3b
      * @throws Exception
      */
     @Test
@@ -660,8 +889,9 @@ public class SnapshotMergerForIndexTest {
         new SnapshotMerger(currentSnapshot, changedSnapshot).merge();
     }
 
-    /** 1&3.OK2.1
+    /** 
      * Test a new index and old doc part index
+     * Case 1&3.OK2.1
      * @throws Exception
      */
     @Test
@@ -699,8 +929,9 @@ public class SnapshotMergerForIndexTest {
         new SnapshotMerger(currentSnapshot, changedSnapshot).merge();
     }
 
-    /** 1&3.OK2.2
+    /** 
      * Test a new index with multiple fields and old doc part index
+     * Case 1&3.OK2.2
      * @throws Exception
      */
     @Test
@@ -801,8 +1032,9 @@ public class SnapshotMergerForIndexTest {
         new SnapshotMerger(currentSnapshot, changedSnapshot).merge();
     }
 
-    /** 1&3.OK2.3
+    /** 
      * Test a new index with multiple fields and old doc part index and a new one
+     * Case 1&3.OK2.3
      * @throws Exception
      */
     @Test
@@ -907,8 +1139,9 @@ public class SnapshotMergerForIndexTest {
         new SnapshotMerger(currentSnapshot, changedSnapshot).merge();
     }
 
-    /** 1&3.OK2.3b
+    /** 
      * Test a new index with multiple fields and old doc part indexes
+     * Case 1&3.OK2.3b
      * @throws Exception
      */
     @Test
@@ -988,8 +1221,9 @@ public class SnapshotMergerForIndexTest {
         new SnapshotMerger(currentSnapshot, changedSnapshot).merge();
     }
 
-    /** 3&1.OK1.1
+    /** 
      * Test a new field and new doc part index
+     * Case 3&1.OK1.1
      * @throws Exception
      */
     @Test
@@ -1017,8 +1251,9 @@ public class SnapshotMergerForIndexTest {
         new SnapshotMerger(currentSnapshot, changedSnapshot).merge();
     }
 
-    /** 3&1.OK1.2
+    /** 
      * Test a new fields and new doc part index with multiple columns
+     * Case 3&1.OK1.2
      * @throws Exception
      */
     @Test
@@ -1094,8 +1329,9 @@ public class SnapshotMergerForIndexTest {
         new SnapshotMerger(currentSnapshot, changedSnapshot).merge();
     }
 
-    /** 3&1.OK1.3
+    /** 
      * Test a new fields and new doc part index with multiple columns in multiple doc parts
+     * Case 3&1.OK1.3
      * @throws Exception
      */
     @Test
@@ -1175,8 +1411,217 @@ public class SnapshotMergerForIndexTest {
         new SnapshotMerger(currentSnapshot, changedSnapshot).merge();
     }
 
-    /** [2&1.OK1|2&2.OK1|2&3.OK1].1
+    /** 
+     * Test a new field and new doc part index with old removed index
+     * Case 3&2.OK1.1
+     * @throws Exception
+     */
+    @Test
+    public void testNewFieldAndNewDocPartIndexWithOldRemovedIndex() throws Exception {
+        MutableMetaSnapshot currentModifiedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .addMetaIndex("idxName2", false)
+            .addMetaIndexField(tableRefFactory.createRoot(), "fieldName2", FieldIndexOrdering.ASC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .addMetaIndex("idxName3", false)
+            .addMetaIndexField(tableRefFactory.createRoot(), "fieldName3", FieldIndexOrdering.ASC);
+        ImmutableMetaSnapshot currentSnapshot = currentModifiedSnapshot.immutableCopy();
+        currentModifiedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .removeMetaIndexByName("idxName3");
+        MutableMetaSnapshot changedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
+        changedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .addMetaField("fieldName2", "fieldId2", FieldType.STRING);
+        changedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .addMetaDocPartIndex("idxId2", false)
+            .addMetaDocPartIndexColumn("fieldId2", FieldIndexOrdering.ASC);
+
+        new SnapshotMerger(currentSnapshot, changedSnapshot).merge();
+    }
+
+    /** 
+     * Test a new fields and new doc part index with multiple columns with old removed index
+     * Case 3&2.OK1.2
+     * @throws Exception
+     */
+    @Test
+    public void testNewFieldsAndNewDocPartIndexMultiColumnsWithOldRemovedIndex() throws Exception {
+        MutableMetaSnapshot currentModifiedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .addMetaIndex("idxName2", false)
+            .addMetaIndexField(tableRefFactory.createRoot(), "fieldName2", FieldIndexOrdering.ASC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaIndexByName("idxName2")
+            .addMetaIndexField(tableRefFactory.createRoot(), "fieldName3", FieldIndexOrdering.ASC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .addMetaIndex("idxName3", false)
+            .addMetaIndexField(tableRefFactory.createRoot(), "fieldName4", FieldIndexOrdering.ASC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaIndexByName("idxName3")
+            .addMetaIndexField(tableRefFactory.createRoot(), "fieldName5", FieldIndexOrdering.ASC);
+        ImmutableMetaSnapshot currentSnapshot = currentModifiedSnapshot.immutableCopy();
+        currentModifiedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .removeMetaIndexByName("idxName3");
+        MutableMetaSnapshot changedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
+        changedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .addMetaField("fieldName2", "fieldId2", FieldType.STRING);
+        changedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .addMetaField("fieldName3", "fieldId3", FieldType.STRING);
+        changedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .addMetaDocPartIndex("idxId2", false)
+            .addMetaDocPartIndexColumn("fieldId2", FieldIndexOrdering.ASC);
+        changedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .getMetaDocPartIndexByIdentifier("idxId2")
+            .addMetaDocPartIndexColumn("fieldId3", FieldIndexOrdering.ASC);
+
+        new SnapshotMerger(currentSnapshot, changedSnapshot).merge();
+    }
+
+    /** 
+     * Test a new fields and new doc part index with multiple columns in multiple doc parts with old removed index
+     * Case 3&2.OK1.3
+     * @throws Exception
+     */
+    @Test
+    public void testNewFieldsAndNewDocPartIndexMultiColumnsInMultiDocPartsWithOldRemovedIndex() throws Exception {
+        MutableMetaSnapshot currentModifiedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .addMetaIndex("idxName2", false)
+            .addMetaIndexField(tableRefFactory.createRoot(), "fieldName2", FieldIndexOrdering.ASC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaIndexByName("idxName2")
+            .addMetaIndexField(tableRefFactory.createRoot(), "fieldName3", FieldIndexOrdering.ASC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .addMetaDocPart(tableRefFactory.createChild(tableRefFactory.createRoot(), "docPartName2"), "docPartId2");
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaIndexByName("idxName2")
+            .addMetaIndexField(tableRefFactory.createChild(tableRefFactory.createRoot(), "docPartName2"), "fieldName4", FieldIndexOrdering.ASC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaIndexByName("idxName2")
+            .addMetaIndexField(tableRefFactory.createChild(tableRefFactory.createRoot(), "docPartName2"), "fieldName5", FieldIndexOrdering.ASC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .addMetaIndex("idxName3", false)
+            .addMetaIndexField(tableRefFactory.createRoot(), "fieldName6", FieldIndexOrdering.ASC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaIndexByName("idxName3")
+            .addMetaIndexField(tableRefFactory.createRoot(), "fieldName7", FieldIndexOrdering.ASC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaIndexByName("idxName3")
+            .addMetaIndexField(tableRefFactory.createChild(tableRefFactory.createRoot(), "docPartName2"), "fieldName8", FieldIndexOrdering.ASC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaIndexByName("idxName3")
+            .addMetaIndexField(tableRefFactory.createChild(tableRefFactory.createRoot(), "docPartName2"), "fieldName9", FieldIndexOrdering.ASC);
+        ImmutableMetaSnapshot currentSnapshot = currentModifiedSnapshot.immutableCopy();
+        currentModifiedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .removeMetaIndexByName("idxName2");
+        MutableMetaSnapshot changedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
+        changedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .addMetaField("fieldName2", "fieldId2", FieldType.STRING);
+        changedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .addMetaField("fieldName3", "fieldId3", FieldType.STRING);
+        changedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createChild(tableRefFactory.createRoot(), "docPartName2"))
+            .addMetaField("fieldName4", "fieldId4", FieldType.STRING);
+        changedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createChild(tableRefFactory.createRoot(), "docPartName2"))
+            .addMetaField("fieldName5", "fieldId5", FieldType.STRING);
+        changedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .addMetaDocPartIndex("idxId2", false)
+            .addMetaDocPartIndexColumn("fieldId2", FieldIndexOrdering.ASC);
+        changedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .getMetaDocPartIndexByIdentifier("idxId2")
+            .addMetaDocPartIndexColumn("fieldId3", FieldIndexOrdering.ASC);
+        changedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createChild(tableRefFactory.createRoot(), "docPartName2"))
+            .addMetaDocPartIndex("idxId3", false)
+            .addMetaDocPartIndexColumn("fieldId4", FieldIndexOrdering.ASC);
+        changedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createChild(tableRefFactory.createRoot(), "docPartName2"))
+            .getMetaDocPartIndexByIdentifier("idxId3")
+            .addMetaDocPartIndexColumn("fieldId5", FieldIndexOrdering.ASC);
+
+        new SnapshotMerger(currentSnapshot, changedSnapshot).merge();
+    }
+
+    /** 
      * Test remove an index
+     * Case [2&1.OK1|2&2.OK1|2&3.OK1].1
      * @throws Exception
      */
     @Test
@@ -1197,8 +1642,9 @@ public class SnapshotMergerForIndexTest {
         new SnapshotMerger(currentSnapshot, changedSnapshot).merge();
     }
 
-    /** [2&1.OK1|2&2.OK1|2&3.OK1].2
+    /** 
      * Test remove an index with multiple fields
+     * Case [2&1.OK1|2&2.OK1|2&3.OK1].2
      * @throws Exception
      */
     @Test
@@ -1254,8 +1700,9 @@ public class SnapshotMergerForIndexTest {
         new SnapshotMerger(currentSnapshot, changedSnapshot).merge();
     }
 
-    /** [2&1.OK1|2&2.OK1|2&3.OK1].3
+    /** 
      * Test remove an index with multiple fields in multiple doc parts
+     * Case [2&1.OK1|2&2.OK1|2&3.OK1].3
      * @throws Exception
      */
     @Test
@@ -1315,8 +1762,9 @@ public class SnapshotMergerForIndexTest {
         new SnapshotMerger(currentSnapshot, changedSnapshot).merge();
     }
 
-    /** [2&1.OK2|2&2.OK2|2&3.OK2].1
+    /** 
      * Test remove an index and remove a doc part index
+     * Case [2&1.OK2|2&2.OK2|2&3.OK2].1
      * @throws Exception
      */
     @Test
@@ -1337,8 +1785,9 @@ public class SnapshotMergerForIndexTest {
         new SnapshotMerger(currentSnapshot, changedSnapshot).merge();
     }
 
-    /** [2&1.OK2|2&2.OK2|2&3.OK2].2
+    /** 
      * Test remove an index with multiple fields and remove a doc part index
+     * Case [2&1.OK2|2&2.OK2|2&3.OK2].2
      * @throws Exception
      */
     @Test
@@ -1423,8 +1872,9 @@ public class SnapshotMergerForIndexTest {
         new SnapshotMerger(currentSnapshot, changedSnapshot).merge();
     }
 
-    /** [2&1.OK2|2&2.OK2|2&3.OK2].3
+    /** 
      * Test remove an index with multiple fields in multiple doc parts and remove multiple doc part indexes
+     * Case [2&1.OK2|2&2.OK2|2&3.OK2].3
      * @throws Exception
      */
     @Test
@@ -1518,8 +1968,9 @@ public class SnapshotMergerForIndexTest {
         new SnapshotMerger(currentSnapshot, changedSnapshot).merge();
     }
 
-    /** 2&1.OK1.1
+    /** 
      * Test remove an index that relates to a doc part index that also relate to another index
+     * Case 2&1.OK1.1
      * @throws Exception
      */
     @Test
@@ -1540,8 +1991,9 @@ public class SnapshotMergerForIndexTest {
         new SnapshotMerger(currentSnapshot, changedSnapshot).merge();
     }
 
-    /** 2&1.OK1.2
+    /** 
      * Test remove an index with multiple fields that relates to a doc part index that also relate to another index
+     * Case 2&1.OK1.2
      * @throws Exception
      */
     @Test
@@ -1641,8 +2093,420 @@ public class SnapshotMergerForIndexTest {
         new SnapshotMerger(currentSnapshot, changedSnapshot).merge();
     }
 
-    /** 1&3.KO1.1
+    /** 
+     * Test an exception is thrown when an index is removed and has same doc part index as an old added index
+     * Case 2&1.KO1.1
+     * @throws Exception
+     */
+    @Test
+    public void testRemoveIndexWithOldIndexWithSameDocPartIndexAddedConflict() throws Exception {
+        MutableMetaSnapshot currentModifiedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .addMetaField("fieldName2", "fieldId2", FieldType.STRING);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .addMetaIndex("idxName2", true)
+            .addMetaIndexField(tableRefFactory.createRoot(), "fieldName2", FieldIndexOrdering.ASC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaIndexByName("idxName2")
+            .addMetaIndexField(tableRefFactory.createChild(tableRefFactory.createRoot(), "docPartName2"), "fieldName3", FieldIndexOrdering.ASC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .addMetaDocPartIndex("idxId2", false)
+            .addMetaDocPartIndexColumn("fieldId2", FieldIndexOrdering.ASC);
+        ImmutableMetaSnapshot currentSnapshot = currentModifiedSnapshot.immutableCopy();
+        currentModifiedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .addMetaIndex("idxName3", false)
+            .addMetaIndexField(tableRefFactory.createRoot(), "fieldName2", FieldIndexOrdering.ASC);
+        MutableMetaSnapshot changedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
+        changedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .removeMetaIndexByName("idxName2");
+        changedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .removeMetaDocPartIndexByIdentifier("idxId2");
+
+        try {
+            new SnapshotMerger(currentModifiedSnapshot.immutableCopy(), changedSnapshot).merge();
+            Assert.fail("A " + UnmergeableException.class.getSimpleName() + " was expected to be thrown");
+        } catch (UnmergeableException ex) {
+
+        }
+    }
+
+    /** 
+     * Test an exception is thrown when an index with multiple fields is removed and has same doc part index as an old added index
+     * Case 2&1.KO1.2
+     * @throws Exception
+     */
+    @Test
+    public void testRemoveIndexWithMultiFieldsWithOldIndexWithSameDocPartIndexAddedConflict() throws Exception {
+        MutableMetaSnapshot currentModifiedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .addMetaField("fieldName2", "fieldId2", FieldType.STRING);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .addMetaField("fieldName3", "fieldId3", FieldType.STRING);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .addMetaIndex("idxName2", true)
+            .addMetaIndexField(tableRefFactory.createRoot(), "fieldName2", FieldIndexOrdering.ASC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaIndexByName("idxName2")
+            .addMetaIndexField(tableRefFactory.createRoot(), "fieldName3", FieldIndexOrdering.ASC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaIndexByName("idxName2")
+            .addMetaIndexField(tableRefFactory.createChild(tableRefFactory.createRoot(), "docPartName2"), "fieldName4", FieldIndexOrdering.ASC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .addMetaDocPartIndex("idxId2", false)
+            .addMetaDocPartIndexColumn("fieldId2", FieldIndexOrdering.ASC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .getMetaDocPartIndexByIdentifier("idxId2")
+            .addMetaDocPartIndexColumn("fieldId3", FieldIndexOrdering.ASC);
+        ImmutableMetaSnapshot currentSnapshot = currentModifiedSnapshot.immutableCopy();
+        currentModifiedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .addMetaIndex("idxName3", false)
+            .addMetaIndexField(tableRefFactory.createRoot(), "fieldName2", FieldIndexOrdering.ASC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaIndexByName("idxName3")
+            .addMetaIndexField(tableRefFactory.createRoot(), "fieldName3", FieldIndexOrdering.ASC);
+        MutableMetaSnapshot changedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
+        changedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .removeMetaIndexByName("idxName2");
+        changedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .removeMetaDocPartIndexByIdentifier("idxId2");
+
+        try {
+            new SnapshotMerger(currentModifiedSnapshot.immutableCopy(), changedSnapshot).merge();
+            Assert.fail("A " + UnmergeableException.class.getSimpleName() + " was expected to be thrown");
+        } catch (UnmergeableException ex) {
+
+        }
+    }
+
+    /** 
+     * Test an exception is thrown when an index with multiple fields in multiple doc parts is removed and has same doc part index as an old added index
+     * Case 2&1.KO1.3
+     * @throws Exception
+     */
+    @Test
+    public void testRemoveIndexWithMultiFieldsInMultiDocPartsWithOldIndexWithSameDocPartIndexAddedConflict() throws Exception {
+        MutableMetaSnapshot currentModifiedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .addMetaField("fieldName2", "fieldId2", FieldType.STRING);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .addMetaField("fieldName3", "fieldId3", FieldType.STRING);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .addMetaIndex("idxName2", true)
+            .addMetaIndexField(tableRefFactory.createRoot(), "fieldName2", FieldIndexOrdering.ASC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaIndexByName("idxName2")
+            .addMetaIndexField(tableRefFactory.createRoot(), "fieldName3", FieldIndexOrdering.ASC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaIndexByName("idxName2")
+            .addMetaIndexField(tableRefFactory.createChild(tableRefFactory.createRoot(), "docPartName3"), "fieldName6", FieldIndexOrdering.ASC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .addMetaDocPartIndex("idxId2", false)
+            .addMetaDocPartIndexColumn("fieldId2", FieldIndexOrdering.ASC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .getMetaDocPartIndexByIdentifier("idxId2")
+            .addMetaDocPartIndexColumn("fieldId3", FieldIndexOrdering.ASC);
+        ImmutableMetaSnapshot currentSnapshot = currentModifiedSnapshot.immutableCopy();
+        currentModifiedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .addMetaIndex("idxName3", false)
+            .addMetaIndexField(tableRefFactory.createRoot(), "fieldName2", FieldIndexOrdering.ASC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaIndexByName("idxName3")
+            .addMetaIndexField(tableRefFactory.createRoot(), "fieldName3", FieldIndexOrdering.ASC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaIndexByName("idxName3")
+            .addMetaIndexField(tableRefFactory.createChild(tableRefFactory.createRoot(), "docPartName2"), "fieldName4", FieldIndexOrdering.ASC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaIndexByName("idxName3")
+            .addMetaIndexField(tableRefFactory.createChild(tableRefFactory.createRoot(), "docPartName2"), "fieldName5", FieldIndexOrdering.ASC);
+        MutableMetaSnapshot changedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
+        changedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .removeMetaIndexByName("idxName2");
+        changedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .removeMetaDocPartIndexByIdentifier("idxId2");
+
+        try {
+            new SnapshotMerger(currentModifiedSnapshot.immutableCopy(), changedSnapshot).merge();
+            Assert.fail("A " + UnmergeableException.class.getSimpleName() + " was expected to be thrown");
+        } catch (UnmergeableException ex) {
+
+        }
+    }
+
+    /** 
+     * Test when an index is removed and has same old removed index
+     * Case 2&2.OK3.1
+     * @throws Exception
+     */
+    @Test
+    public void testRemoveIndexWithSameOldRemovedIndex() throws Exception {
+        MutableMetaSnapshot currentModifiedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .addMetaField("fieldName2", "fieldId2", FieldType.STRING);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .addMetaIndex("idxName2", true)
+            .addMetaIndexField(tableRefFactory.createRoot(), "fieldName2", FieldIndexOrdering.ASC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaIndexByName("idxName2")
+            .addMetaIndexField(tableRefFactory.createChild(tableRefFactory.createRoot(), "docPartName2"), "fieldName3", FieldIndexOrdering.ASC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .addMetaDocPartIndex("idxId2", false)
+            .addMetaDocPartIndexColumn("fieldId2", FieldIndexOrdering.ASC);
+        ImmutableMetaSnapshot currentSnapshot = currentModifiedSnapshot.immutableCopy();
+        currentModifiedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .removeMetaIndexByName("idxName2");
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .removeMetaDocPartIndexByIdentifier("idxId2");
+        MutableMetaSnapshot changedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
+        changedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .removeMetaIndexByName("idxName2");
+        changedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .removeMetaDocPartIndexByIdentifier("idxId2");
+
+        new SnapshotMerger(currentModifiedSnapshot.immutableCopy(), changedSnapshot).merge();
+    }
+
+    /** 
+     * Test when an index with multiple fields is removed and has same old removed index
+     * Case 2&2.OK3.2
+     * @throws Exception
+     */
+    @Test
+    public void testRemoveIndexWithMultiFieldsWithOldIndexWithSameDocPartIndexRemoved() throws Exception {
+        MutableMetaSnapshot currentModifiedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .addMetaField("fieldName2", "fieldId2", FieldType.STRING);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .addMetaField("fieldName3", "fieldId3", FieldType.STRING);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .addMetaIndex("idxName2", true)
+            .addMetaIndexField(tableRefFactory.createRoot(), "fieldName2", FieldIndexOrdering.ASC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaIndexByName("idxName2")
+            .addMetaIndexField(tableRefFactory.createRoot(), "fieldName3", FieldIndexOrdering.ASC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaIndexByName("idxName2")
+            .addMetaIndexField(tableRefFactory.createChild(tableRefFactory.createRoot(), "docPartName2"), "fieldName4", FieldIndexOrdering.ASC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .addMetaDocPartIndex("idxId2", false)
+            .addMetaDocPartIndexColumn("fieldId2", FieldIndexOrdering.ASC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .getMetaDocPartIndexByIdentifier("idxId2")
+            .addMetaDocPartIndexColumn("fieldId3", FieldIndexOrdering.ASC);
+        ImmutableMetaSnapshot currentSnapshot = currentModifiedSnapshot.immutableCopy();
+        currentModifiedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .removeMetaIndexByName("idxName2");
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .removeMetaDocPartIndexByIdentifier("idxId2");
+        MutableMetaSnapshot changedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
+        changedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .removeMetaIndexByName("idxName2");
+        changedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .removeMetaDocPartIndexByIdentifier("idxId2");
+
+        new SnapshotMerger(currentModifiedSnapshot.immutableCopy(), changedSnapshot).merge();
+    }
+
+    /** 
+     * Test when an index with multiple fields in multiple doc parts is removed and has same old removed index
+     * Case 2&2.OK3.3
+     * @throws Exception
+     */
+    @Test
+    public void testRemoveIndexWithMultiFieldsInMultiDocPartsWithOldIndexWithSameDocPartIndexRemoved() throws Exception {
+        MutableMetaSnapshot currentModifiedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .addMetaField("fieldName2", "fieldId2", FieldType.STRING);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .addMetaField("fieldName3", "fieldId3", FieldType.STRING);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .addMetaIndex("idxName2", true)
+            .addMetaIndexField(tableRefFactory.createRoot(), "fieldName2", FieldIndexOrdering.ASC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaIndexByName("idxName2")
+            .addMetaIndexField(tableRefFactory.createRoot(), "fieldName3", FieldIndexOrdering.ASC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaIndexByName("idxName2")
+            .addMetaIndexField(tableRefFactory.createChild(tableRefFactory.createRoot(), "docPartName3"), "fieldName6", FieldIndexOrdering.ASC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .addMetaDocPartIndex("idxId2", false)
+            .addMetaDocPartIndexColumn("fieldId2", FieldIndexOrdering.ASC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .getMetaDocPartIndexByIdentifier("idxId2")
+            .addMetaDocPartIndexColumn("fieldId3", FieldIndexOrdering.ASC);
+        ImmutableMetaSnapshot currentSnapshot = currentModifiedSnapshot.immutableCopy();
+        currentModifiedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .removeMetaIndexByName("idxName2");
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .removeMetaDocPartIndexByIdentifier("idxId2");
+        MutableMetaSnapshot changedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
+        changedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .removeMetaIndexByName("idxName2");
+        changedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .removeMetaDocPartIndexByIdentifier("idxId2");
+
+        new SnapshotMerger(currentModifiedSnapshot.immutableCopy(), changedSnapshot).merge();
+    }
+
+    /** 
      * Test that an exception is thrown on new index with missing doc part index conflicts
+     * Case 1&3.KO1.1
      * @throws Exception
      */
     @Test
@@ -1668,8 +2532,9 @@ public class SnapshotMergerForIndexTest {
         }
     }
 
-    /** 1&3.KO1.2
+    /** 
      * Test that an exception is thrown on new index with multiple fields with missing doc part index conflicts
+     * Case 1&3.KO1.2
      * @throws Exception
      */
     @Test
@@ -1705,8 +2570,9 @@ public class SnapshotMergerForIndexTest {
         }
     }
 
-    /** 1&3.KO1.3
+    /** 
      * Test that an exception is thrown on new index with multiple fields in multiple doc parts with missing doc part index conflicts
+     * Case 1&3.KO1.3
      * @throws Exception
      */
     @Test
@@ -1752,129 +2618,9 @@ public class SnapshotMergerForIndexTest {
         }
     }
 
-    /** 3&1.KO1.1
-     * Test that an exception is thrown on new doc part index with missing index conflicts
-     * @throws Exception
-     */
-    @Test
-    public void testIndexWithNewMissingDocPartIndexConflict() throws Exception {
-        MutableMetaSnapshot currentModifiedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
-        currentModifiedSnapshot
-            .getMetaDatabaseByName("dbName1")
-            .getMetaCollectionByName("colName1")
-            .addMetaIndex("idxName2", false)
-            .addMetaIndexField(tableRefFactory.createRoot(), "fieldName2", FieldIndexOrdering.ASC);
-        MutableMetaSnapshot changedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
-        changedSnapshot
-            .getMetaDatabaseByName("dbName1")
-            .getMetaCollectionByName("colName1")
-            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .addMetaField("fieldName2", "fieldId2", FieldType.STRING);
-        changedSnapshot
-            .getMetaDatabaseByName("dbName1")
-            .getMetaCollectionByName("colName1")
-            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .addMetaDocPartIndex("idxId2", false)
-            .addMetaDocPartIndexColumn("fieldId2", FieldIndexOrdering.ASC);
-
-        try {
-            new SnapshotMerger(currentModifiedSnapshot.immutableCopy(), changedSnapshot).merge();
-            Assert.fail("A " + UnmergeableException.class.getSimpleName() + " was expected to be thrown");
-        } catch (UnmergeableException ex) {
-
-        }
-    }
-
-    /** 3&1.KO1.2
-     * Test that an exception is thrown on new doc part index with missing index with multiple fields conflicts
-     * @throws Exception
-     */
-    @Test
-    public void testIndexWithMultiFieldsWithNewMissingDocPartIndexConflict() throws Exception {
-        MutableMetaSnapshot currentModifiedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
-        currentModifiedSnapshot
-            .getMetaDatabaseByName("dbName1")
-            .getMetaCollectionByName("colName1")
-            .addMetaIndex("idxName2", false)
-            .addMetaIndexField(tableRefFactory.createRoot(), "fieldName2", FieldIndexOrdering.ASC);
-        currentModifiedSnapshot
-            .getMetaDatabaseByName("dbName1")
-            .getMetaCollectionByName("colName1")
-            .getMetaIndexByName("idxName2")
-            .addMetaIndexField(tableRefFactory.createRoot(), "fieldName3", FieldIndexOrdering.ASC);
-        MutableMetaSnapshot changedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
-        changedSnapshot
-            .getMetaDatabaseByName("dbName1")
-            .getMetaCollectionByName("colName1")
-            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .addMetaField("fieldName2", "fieldId2", FieldType.STRING);
-        changedSnapshot
-            .getMetaDatabaseByName("dbName1")
-            .getMetaCollectionByName("colName1")
-            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .addMetaField("fieldName3", "fieldId3", FieldType.STRING);
-
-        try {
-            new SnapshotMerger(currentModifiedSnapshot.immutableCopy(), changedSnapshot).merge();
-            Assert.fail("A " + UnmergeableException.class.getSimpleName() + " was expected to be thrown");
-        } catch (UnmergeableException ex) {
-
-        }
-    }
-
-    /** 3&1.KO1.3
-     * Test that an exception is thrown on new doc part index with missing index with multiple fields in multiple doc parts conflicts
-     * @throws Exception
-     */
-    @Test
-    public void testIndexWithMultiFieldsInMultiDocPartsWithNewMissingDocPartIndexConflict() throws Exception {
-        MutableMetaSnapshot currentModifiedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
-        currentModifiedSnapshot
-            .getMetaDatabaseByName("dbName1")
-            .getMetaCollectionByName("colName1")
-            .addMetaIndex("idxName2", false)
-            .addMetaIndexField(tableRefFactory.createRoot(), "fieldName2", FieldIndexOrdering.ASC);
-        currentModifiedSnapshot
-            .getMetaDatabaseByName("dbName1")
-            .getMetaCollectionByName("colName1")
-            .getMetaIndexByName("idxName2")
-            .addMetaIndexField(tableRefFactory.createRoot(), "fieldName3", FieldIndexOrdering.ASC);
-        currentModifiedSnapshot
-            .getMetaDatabaseByName("dbName1")
-            .getMetaCollectionByName("colName1")
-            .addMetaDocPart(tableRefFactory.createChild(tableRefFactory.createRoot(), "docPartName2"), "docPartId2");
-        currentModifiedSnapshot
-            .getMetaDatabaseByName("dbName1")
-            .getMetaCollectionByName("colName1")
-            .getMetaIndexByName("idxName2")
-            .addMetaIndexField(tableRefFactory.createChild(tableRefFactory.createRoot(), "docPartName2"), "fieldName4", FieldIndexOrdering.ASC);
-        currentModifiedSnapshot
-            .getMetaDatabaseByName("dbName1")
-            .getMetaCollectionByName("colName1")
-            .getMetaIndexByName("idxName2")
-            .addMetaIndexField(tableRefFactory.createChild(tableRefFactory.createRoot(), "docPartName2"), "fieldName5", FieldIndexOrdering.ASC);
-        MutableMetaSnapshot changedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
-        changedSnapshot
-            .getMetaDatabaseByName("dbName1")
-            .getMetaCollectionByName("colName1")
-            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .addMetaField("fieldName2", "fieldId2", FieldType.STRING);
-        changedSnapshot
-            .getMetaDatabaseByName("dbName1")
-            .getMetaCollectionByName("colName1")
-            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .addMetaField("fieldName3", "fieldId3", FieldType.STRING);
-
-        try {
-            new SnapshotMerger(currentModifiedSnapshot.immutableCopy(), changedSnapshot).merge();
-            Assert.fail("A " + UnmergeableException.class.getSimpleName() + " was expected to be thrown");
-        } catch (UnmergeableException ex) {
-
-        }
-    }
-
-    /** 1&3.KO1.1
+    /** 
      * Test that an exception is thrown on new field with missing doc part index conflicts
+     * Case 3&1.KO1.1
      * @throws Exception
      */
     @Test
@@ -1900,8 +2646,9 @@ public class SnapshotMergerForIndexTest {
         }
     }
 
-    /** 1&3.KO1.2
+    /** 
      * Test that an exception is thrown on new field with missing doc part index with multiple fields conflicts
+     * Case 3&1.KO1.2
      * @throws Exception
      */
     @Test
@@ -1937,8 +2684,9 @@ public class SnapshotMergerForIndexTest {
         }
     }
 
-    /** 1&3.KO1.3
+    /** 
      * Test that an exception is thrown on new field with missing doc part index with multiple fields in multiple doc parts conflicts
+     * Case 3&1.KO1.3
      * @throws Exception
      */
     @Test
@@ -1988,8 +2736,9 @@ public class SnapshotMergerForIndexTest {
         }
     }
 
-    /** 2&3.KO1.1
+    /** 
      * Test that an exception is thrown on removed index with orphan doc part index conflicts
+     * Case 2&3.KO1.1
      * @throws Exception
      */
     @Test
@@ -2025,8 +2774,9 @@ public class SnapshotMergerForIndexTest {
         }
     }
 
-    /** 2&3.KO1.2
+    /** 
      * Test that an exception is thrown on removed index with multiple fields with orphan doc part index conflicts
+     * Case 2&3.KO1.2
      * @throws Exception
      */
     @Test
@@ -2107,8 +2857,9 @@ public class SnapshotMergerForIndexTest {
         }
     }
 
-    /** 2&3.KO1.3
+    /** 
      * Test that an exception is thrown on removed index with multiple fields in multiple doc parts with orphan doc part index conflicts
+     * Case 2&3.KO1.3
      * @throws Exception
      */
     @Test
@@ -2213,8 +2964,9 @@ public class SnapshotMergerForIndexTest {
         }
     }
 
-    /** 3&2.KO1.1
+    /** 
      * Test that an exception is thrown on new doc part index with missing index conflicts
+     * Case 3&2.KO1.1
      * @throws Exception
      */
     @Test
@@ -2250,8 +3002,9 @@ public class SnapshotMergerForIndexTest {
         }
     }
 
-    /** 3&2.KO1.2
+    /** 
      * Test that an exception is thrown on new doc part index with missing index with multiple fields conflicts
+     * Case 3&2.KO1.2
      * @throws Exception
      */
     @Test
@@ -2332,8 +3085,9 @@ public class SnapshotMergerForIndexTest {
         }
     }
     
-    /** 3&2.KO1.2
+    /** 
      * Test that an exception is thrown on new doc part index with missing index with multiple fields in multiple doc parts conflicts
+     * Case 3&2.KO1.2
      * @throws Exception
      */
     @Test
@@ -2438,8 +3192,9 @@ public class SnapshotMergerForIndexTest {
         }
     }
 
-    /** 3&3.OK1.2
+    /** 
      * Test new field with new doc part index for existing index with multiple fields conflicts
+     * Case 3&3.OK1.2
      * @throws Exception
      */
     @Test
@@ -2487,8 +3242,9 @@ public class SnapshotMergerForIndexTest {
         }
     }
 
-    /** 3&3.OK1.3
+    /** 
      * Test new field with new doc part index for existing index with multiple fields in multiple doc parts
+     * Case 3&3.OK1.3
      * @throws Exception
      */
     @Test
@@ -2550,8 +3306,9 @@ public class SnapshotMergerForIndexTest {
         }
     }
 
-    /** 3&3.KO1.2
+    /** 
      * Test that an exception is thrown on new field with missing doc part index for existing index with multiple fields conflicts
+     * Case 3&3.KO1.2
      * @throws Exception
      */
     @Test
@@ -2589,8 +3346,9 @@ public class SnapshotMergerForIndexTest {
         }
     }
 
-    /** 3&3.KO1.3
+    /** 
      * Test that an exception is thrown on new field with missing doc part index for existing index with multiple fields in multiple doc parts conflicts
+     * Case 3&3.KO1.3
      * @throws Exception
      */
     @Test

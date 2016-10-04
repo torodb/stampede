@@ -224,7 +224,7 @@ public class SnapshotMerger {
 
     }
 
-    private void merge(MetaDatabase oldDb, MetaCollection newCol, MetaCollection oldCol, MutableMetaDocPart newStructure, ImmutableMetaDocPart oldStructure,
+    private void merge(MetaDatabase oldDb, MutableMetaCollection newCol, MetaCollection oldCol, MutableMetaDocPart newStructure, ImmutableMetaDocPart oldStructure,
             ImmutableMetaDocPart.Builder parentBuilder, ImmutableMetaField changed) throws UnmergeableException {
         ImmutableMetaField byNameAndType = oldStructure.getMetaFieldByNameAndType(changed.getName(), changed.getType());
         ImmutableMetaField byId = oldStructure.getMetaFieldByIdentifier(changed.getIdentifier());
@@ -280,7 +280,7 @@ public class SnapshotMerger {
             case MODIFIED: {
                 Optional<? extends MetaIndex> anyNewRelatedIndex = 
                         Seq.seq(newCol.getModifiedMetaIndexes())
-                            .map(index -> index.v1())
+                            .map(modIndex -> modIndex.v1())
                             .filter(newIndex -> newIndex.isCompatible(newStructure, changed))
                             .findAny();
                 
@@ -310,26 +310,19 @@ public class SnapshotMerger {
                 break;
             }
             case REMOVED: {
-                Optional<ImmutableMetaIndex> oldMissedIndex = oldCol.streamContainedMetaIndexes()
+                Optional<? extends MetaIndex> oldMissedIndex = oldCol.streamContainedMetaIndexes()
                         .flatMap(oldIndex -> oldIndex.streamTableRefs()
                                 .map(tableRef -> oldCol.getMetaDocPartByTableRef(tableRef))
                                 .filter(oldDocPart -> oldDocPart != null &&
-                                        oldIndex.isCompatible(oldDocPart, changed))
+                                        oldIndex.isCompatible(oldDocPart, changed) &&
+                                        Seq.seq(newCol.getModifiedMetaIndexes())
+                                            .noneMatch(newIndex -> newIndex.v2() == MetaElementState.REMOVED &&
+                                                    newIndex.v1().getName().equals(oldIndex.getName())))
                                 .map(tableRef -> oldIndex))
                         .findAny();
                 
                 if (oldMissedIndex.isPresent()) {
-                    Optional<? extends MetaIndex> newMissedIndex = 
-                            newCol.streamContainedMetaIndexes()
-                                .flatMap(newIndex -> newIndex.streamTableRefs()
-                                        .map(tableRef -> newCol.getMetaDocPartByTableRef(tableRef))
-                                        .filter(newDocPart -> newDocPart != null &&
-                                                newIndex.isCompatible(newDocPart, changed))
-                                        .map(tableRef -> newIndex))
-                                .findAny();
-                    if (newMissedIndex.isPresent()) {
-                        throw createUnmergeableExceptionForMissing(oldDb, oldCol, oldStructure, changed, oldMissedIndex.get());
-                    }
+                    throw createUnmergeableExceptionForMissing(oldDb, oldCol, oldStructure, changed, oldMissedIndex.get());
                 }
                 
                 if (byId == null || bySameColumns == null) {
@@ -386,15 +379,16 @@ public class SnapshotMerger {
                 }
                 
                 Optional<? extends MetaDocPart> anyDocPartWithMissingDocPartIndex = changed.streamTableRefs()
-                    .map(tableRef -> (MetaDocPart) oldStructure.getMetaDocPartByTableRef(tableRef))
+                    .map(tableRef -> oldStructure.getMetaDocPartByTableRef(tableRef))
                     .filter(docPart -> docPart != null && changed.isCompatible(docPart) &&
                             Seq.seq(changed.iteratorMetaDocPartIndexesIdentifiers(docPart))
                                 .filter(identifiers -> docPart.streamIndexes()
-                                    .noneMatch(docPartIndex -> changed.isMatch(docPart, identifiers, docPartIndex)))
+                                        .noneMatch(docPartIndex -> changed.isMatch(docPart, identifiers, docPartIndex)))
                                 .anyMatch(identifiers -> {
-                                    MetaDocPart newDocPart = newStructure.getMetaDocPartByTableRef(docPart.getTableRef()); 
-                                    return newDocPart.streamIndexes()
-                                            .noneMatch(docPartIndex -> changed.isMatch(newDocPart, identifiers, docPartIndex));
+                                    MutableMetaDocPart newDocPart = newStructure.getMetaDocPartByTableRef(docPart.getTableRef()); 
+                                    return Seq.seq(newDocPart.getModifiedMetaDocPartIndexes())
+                                            .filter(docPartIndex -> docPartIndex.v2() != MetaElementState.REMOVED)
+                                            .noneMatch(docPartIndex -> changed.isMatch(newDocPart, identifiers, docPartIndex.v1()));
                                 }))
                     .findAny();
                 
@@ -436,7 +430,6 @@ public class SnapshotMerger {
                             )
                     )
                     .findAny();
-                        
                 
                 if (orphanDocPartIndex.isPresent()) {
                     throw createUnmergeableExceptionForOrphan(oldDb, oldStructure, changed, orphanDocPartIndex.get());
@@ -594,7 +587,7 @@ public class SnapshotMerger {
 
     private UnmergeableException createUnmergeableExceptionForMissing(
             MetaDatabase db, MetaCollection col, MetaDocPart docPart, MetaDocPartIndex changed,
-            ImmutableMetaIndex oldMissedIndex) {
+            MetaIndex oldMissedIndex) {
         throw new UnmergeableException(oldSnapshot, newSnapshot,
                 "There is a previous doc part index " + db + "." + col + 
                 "." + docPart + "." + oldMissedIndex
