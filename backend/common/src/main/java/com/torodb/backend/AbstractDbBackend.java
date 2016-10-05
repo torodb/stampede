@@ -37,6 +37,9 @@ import java.util.stream.StreamSupport;
 import javax.annotation.Nonnull;
 import javax.inject.Singleton;
 import javax.sql.DataSource;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jooq.DSLContext;
 
 /**
@@ -45,6 +48,9 @@ import org.jooq.DSLContext;
 @Singleton
 public abstract class AbstractDbBackend<Configuration extends DbBackendConfiguration> 
         extends ThreadFactoryIdleService implements DbBackendService {
+
+    private static final Logger LOGGER = LogManager.getLogger(AbstractDbBackend.class);
+
     public static final int SYSTEM_DATABASE_CONNECTIONS = 1;
     public static final int MIN_READ_CONNECTIONS_DATABASE = 1;
     public static final int MIN_SESSION_CONNECTIONS_DATABASE = 2;
@@ -153,6 +159,8 @@ public abstract class AbstractDbBackend<Configuration extends DbBackendConfigura
          * TODO: implement to add metric support. See https://github.com/brettwooldridge/HikariCP/wiki/Codahale-Metrics
          * hikariConfig.setMetricRegistry(...);
          */
+
+        LOGGER.info("Created pool {} with size {} and level {}", poolName, poolSize, transactionIsolationLevel.name());
 
         return new HikariDataSource(hikariConfig);
     }

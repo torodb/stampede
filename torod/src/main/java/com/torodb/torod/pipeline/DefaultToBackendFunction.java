@@ -57,7 +57,10 @@ public class DefaultToBackendFunction implements
 
             jobs.add(factory.insert(database, collection, docPartData));
         }
-        LOGGER.trace("Executing the following jobs: {}", jobs);
+
+        if (LOGGER.isTraceEnabled())
+            LOGGER.trace("Executing the following jobs: {}", jobs);
+
         return jobs;
     }
 

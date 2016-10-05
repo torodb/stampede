@@ -27,6 +27,16 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.torodb.core.metrics.MetricsConfig;
 import com.torodb.packaging.config.annotation.Description;
+import com.torodb.packaging.config.model.generic.log4j.Log4jLevelToLogLevelMapper;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+
+import java.util.AbstractMap;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Description("config.generic")
 @JsonPropertyOrder({ 
@@ -40,7 +50,7 @@ public class Generic implements MetricsConfig{
 	@Description("config.generic.logLevel")
 	@NotNull
 	@JsonProperty(required=true)
-	private LogLevel logLevel = LogLevel.INFO;
+	private LogLevel logLevel;
 	@Description("config.generic.logPackages")
 	private LogPackages logPackages;
 	@Description("config.generic.logFile")
@@ -63,6 +73,11 @@ public class Generic implements MetricsConfig{
 	private Integer reservedReadPoolSize = 10;
 	@Description("config.generic.metricsEnabled")
 	private Boolean metricsEnabled = true;
+
+	public Generic() {
+		Level log4jLevel = LogManager.getRootLogger().getLevel();
+		logLevel = new Log4jLevelToLogLevelMapper().map(log4jLevel);
+	}
 
 	public LogLevel getLogLevel() {
 		return logLevel;
@@ -130,4 +145,5 @@ public class Generic implements MetricsConfig{
 			this.metricsEnabled = metricsEnabled;
 		}
 	}
+
 }

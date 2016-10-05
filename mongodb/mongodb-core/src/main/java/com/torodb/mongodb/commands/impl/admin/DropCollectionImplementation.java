@@ -29,13 +29,19 @@ import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.mongodb.commands.impl.WriteTorodbCommandImpl;
 import com.torodb.mongodb.core.WriteMongodTransaction;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class DropCollectionImplementation implements WriteTorodbCommandImpl<CollectionCommandArgument, Empty> {
+
+    private static final Logger LOGGER = LogManager.getLogger(DropCollectionImplementation.class);
 
     @Override
     public Status<Empty> apply(Request req, Command<? super CollectionCommandArgument, ? super Empty> command,
             CollectionCommandArgument arg, WriteMongodTransaction context) {
         try {
+            logDropCommand(arg);
+
             context.getTorodTransaction().dropCollection(req.getDatabase(), arg.getCollection());
         } catch (UserException ex) {
             //TODO: Improve error reporting
@@ -43,6 +49,12 @@ public class DropCollectionImplementation implements WriteTorodbCommandImpl<Coll
         }
 
         return Status.ok();
+    }
+
+    private void logDropCommand(CollectionCommandArgument arg) {
+        String collection = arg.getCollection();
+
+        LOGGER.info("Drop collection {}", collection);
     }
 
 }
