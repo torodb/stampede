@@ -318,7 +318,7 @@ public class AkkaDbCloner implements DbCloner {
                                 insertDocuments(localServer, toDb, collection, docs),
                                 docs.size()
                         ),
-                        Hint.INFREQUENT_ROLLBACK, Hint.TIME_SENSIBLE
+                        Hint.FREQUENT_ROLLBACK, Hint.TIME_SENSIBLE
                 ))
                 .map(tuple -> {
                     commitHeuristic.notifyDocumentInsertionCommit(
