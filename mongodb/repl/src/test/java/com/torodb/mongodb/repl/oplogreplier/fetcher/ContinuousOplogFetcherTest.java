@@ -27,7 +27,6 @@ import com.eightkdata.mongowp.server.api.oplog.InsertOplogOperation;
 import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
 import com.eightkdata.mongowp.server.api.oplog.OplogVersion;
 import com.google.common.net.HostAndPort;
-import com.google.common.primitives.UnsignedInteger;
 import com.torodb.core.metrics.DisabledMetricRegistry;
 import com.torodb.core.retrier.Retrier;
 import com.torodb.core.retrier.SmartRetrier;
@@ -40,6 +39,7 @@ import com.torodb.mongodb.repl.oplogreplier.OplogBatch;
 import com.torodb.mongodb.repl.oplogreplier.RollbackReplicationException;
 import com.torodb.mongodb.repl.oplogreplier.StopReplicationException;
 import com.torodb.mongodb.repl.oplogreplier.fetcher.ContinuousOplogFetcher.ContinuousOplogFetcherFactory;
+import java.time.Instant;
 import java.util.*;
 import java.util.function.IntFunction;
 import java.util.function.Supplier;
@@ -102,7 +102,7 @@ public class ContinuousOplogFetcherTest {
 
         OplogOperation lastOp = oplog.get(oplog.size() - 1);
         ContinuousOplogFetcher fetcher = factory.createFetcher(0,
-                new OpTime(lastOp.getOpTime().getSecs().plus(UnsignedInteger.ONE), UnsignedInteger.ZERO)
+                new OpTime(lastOp.getOpTime().toInstant().plusMillis(1))
         );
 
         fetcher.fetch();
@@ -213,7 +213,7 @@ public class ContinuousOplogFetcherTest {
                 DefaultBsonValues.newDocument("_id", DefaultBsonValues.newInt(i)),
                 "aDb",
                 "aCol",
-                new OpTime(i, i),
+                new OpTime(Instant.ofEpochSecond(i)),
                 i,
                 OplogVersion.V1,
                 false);

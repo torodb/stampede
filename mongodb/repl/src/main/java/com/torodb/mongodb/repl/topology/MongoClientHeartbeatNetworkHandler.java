@@ -27,7 +27,10 @@ import com.eightkdata.mongowp.client.core.MongoConnection.RemoteCommandResponse;
 import com.eightkdata.mongowp.client.core.UnreachableMongoServerException;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.internal.ReplSetHeartbeatCommand;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.internal.ReplSetHeartbeatCommand.ReplSetHeartbeatArgument;
-import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.internal.ReplSetHeartbeatCommand.ReplSetHeartbeatReply;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.internal.ReplSetHeartbeatReply;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.repl.ReplSetGetConfigCommand;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.ReplicaSetConfig;
+import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.torodb.core.concurrent.ConcurrentToolsFactory;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -37,13 +40,13 @@ import org.jooq.lambda.UncheckedException;
 /**
  *
  */
-public class MongoClientHeartbeatSender implements HeartbeatSender {
+public class MongoClientHeartbeatNetworkHandler implements HeartbeatNetworkHandler {
 
     private final MongoClientFactory mongoClientFactory;
     private final ExecutorService executorService;
 
     @Inject
-    public MongoClientHeartbeatSender(MongoClientFactory mongoClientFactory, 
+    public MongoClientHeartbeatNetworkHandler(MongoClientFactory mongoClientFactory,
             ConcurrentToolsFactory concurrentToolsFactory) {
         this.mongoClientFactory = mongoClientFactory;
         executorService = concurrentToolsFactory.createExecutorServiceWithMaxThreads("topology-heartbeat", 1);
@@ -54,6 +57,13 @@ public class MongoClientHeartbeatSender implements HeartbeatSender {
             RemoteCommandRequest<ReplSetHeartbeatArgument> req) {
         return CompletableFuture.completedFuture(req)
                 .thenApplyAsync(this::sendHeartbeatTask, executorService);
+    }
+
+    @Override
+    public CompletableFuture<RemoteCommandResponse<ReplicaSetConfig>> askForConfig(
+            RemoteCommandRequest<Empty> req) {
+        return CompletableFuture.completedFuture(req)
+                .thenApplyAsync(this::sendGetConfig, executorService);
     }
 
     private RemoteCommandResponse<ReplSetHeartbeatReply> sendHeartbeatTask(
@@ -67,6 +77,24 @@ public class MongoClientHeartbeatSender implements HeartbeatSender {
         try (MongoConnection connection = client.openConnection()) {
             return connection.execute(
                     ReplSetHeartbeatCommand.INSTANCE,
+                    req.getDbname(),
+                    true,
+                    req.getCmdObj()
+            );
+        }
+    }
+
+    private RemoteCommandResponse<ReplicaSetConfig> sendGetConfig(
+            RemoteCommandRequest<Empty> req) {
+        MongoClient client;
+        try {
+            client = mongoClientFactory.createClient(req.getTarget());
+        } catch (UnreachableMongoServerException ex) {
+            throw new UncheckedException(ex);
+        }
+        try (MongoConnection connection = client.openConnection()) {
+            return connection.execute(
+                    ReplSetGetConfigCommand.INSTANCE,
                     req.getDbname(),
                     true,
                     req.getCmdObj()

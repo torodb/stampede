@@ -124,7 +124,7 @@ public class MongoDbReplModule extends AbstractModule {
 
         bind(String.class).annotatedWith(ReplSetName.class).toInstance(replSetName);
 
-        install(new TopologyGuiceModule());
+        install(new TopologyGuiceModule(mongoClientConfiguration));
 
         bind(ReplicationErrorHandler.class)
                 .to(ReplicationErrorHandlerImpl.class)

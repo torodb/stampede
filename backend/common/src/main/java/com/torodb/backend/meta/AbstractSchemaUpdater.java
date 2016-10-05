@@ -98,7 +98,7 @@ public abstract class AbstractSchemaUpdater implements SchemaUpdater {
                 if (sqlInterface.getIdentifierConstraints().isSameIdentifier(table.getName(), metaTableName)) {
                     metaTable.checkSemanticallyEquals(table);
                     metaTableFound = true;
-                    LOGGER.info(table + " found and check");
+                    LOGGER.debug(table + " found and check");
                 }
             }
             if (!metaTableFound) {

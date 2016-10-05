@@ -38,6 +38,9 @@ import com.torodb.mongodb.core.MongodServer;
 import com.torodb.mongodb.core.ReadOnlyMongodTransaction;
 import com.torodb.mongodb.core.WriteMongodTransaction;
 import com.torodb.mongodb.language.ObjectIdFactory;
+import com.torodb.mongodb.repl.oplogreplier.OplogApplierService;
+import com.torodb.mongodb.repl.oplogreplier.RollbackReplicationException;
+import com.torodb.mongodb.repl.topology.TopologyService;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.concurrent.Executor;
@@ -53,10 +56,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import static com.eightkdata.mongowp.bson.utils.DefaultBsonValues.*;
-
-import com.torodb.mongodb.repl.oplogreplier.OplogApplierService;
-import com.torodb.mongodb.repl.oplogreplier.RollbackReplicationException;
-import javax.inject.Provider;
 
 /**
  *
@@ -79,6 +78,7 @@ public class ReplCoordinator extends ThreadFactoryIdleService implements ReplInt
     private final OplogApplierService.OplogApplierServiceFactory oplogReplierFactory;
     private final ReplMetrics metrics;
     private final Executor executor;
+    private final TopologyService topologyService;
 
     private RecoveryService recoveryService;
     private OplogApplierService oplogReplierService;
@@ -94,7 +94,7 @@ public class ReplCoordinator extends ThreadFactoryIdleService implements ReplInt
             ObjectIdFactory objectIdFactory,
             RecoveryService.RecoveryServiceFactory recoveryServiceFactory,
             OplogApplierService.OplogApplierServiceFactory oplogReplierFactory,
-            ReplMetrics metrics) {
+            ReplMetrics metrics, TopologyService topologyService) {
         super(threadFactory);
         this.ownerCallback = ownerCallback;
         this.oplogManager = oplogManager;
@@ -120,6 +120,7 @@ public class ReplCoordinator extends ThreadFactoryIdleService implements ReplInt
         this.executor = (Runnable command) -> {
             utilityThreadFactory.newThread(command).start();
         };
+        this.topologyService = topologyService;
     }
 
     @Override
@@ -130,6 +131,10 @@ public class ReplCoordinator extends ThreadFactoryIdleService implements ReplInt
         try {
             //TODO: temporal implementation
             loadStoredConfig();
+
+            topologyService.startAsync();
+            topologyService.awaitRunning();
+
             oplogManager.startAsync();
             oplogManager.awaitRunning();
             loadConsistentState();

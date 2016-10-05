@@ -33,10 +33,10 @@ import javax.inject.Inject;
  */
 public class TopologySyncSourceProvider implements SyncSourceProvider {
 
-    private final TopologyService topologyInterface;
+    private final TopologyInterface topologyInterface;
 
     @Inject
-    public TopologySyncSourceProvider(TopologyService topologyInterface) {
+    public TopologySyncSourceProvider(TopologyInterface topologyInterface) {
         this.topologyInterface = topologyInterface;
     }
 

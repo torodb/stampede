@@ -41,7 +41,7 @@ public abstract class AbstractMongoOplogReader implements OplogReader {
     public MongoCursor<OplogOperation> queryGTE(OpTime lastFetchedOpTime) throws MongoException {
         BsonDocument query = newDocument(
                 "ts",
-                newDocument("$gte", lastFetchedOpTime.asBsonTimestamp())
+                newDocument("$gte", lastFetchedOpTime.getTimestamp())
         );
         
         EnumSet<QueryOption> flags = EnumSet.of(
@@ -75,13 +75,13 @@ public abstract class AbstractMongoOplogReader implements OplogReader {
         conditions.add(
                 newDocument(
                         "ts",
-                        newDocument(includeFrom ? "$gte" : "$gt", from.asBsonTimestamp())
+                        newDocument(includeFrom ? "$gte" : "$gt", from.getTimestamp())
                 )
         );
         conditions.add(
                 newDocument(
                         "ts",
-                        newDocument(includeTo ? "$lte" : "$lt", to.asBsonTimestamp())
+                        newDocument(includeTo ? "$lte" : "$lt", to.getTimestamp())
                 )
         );
 

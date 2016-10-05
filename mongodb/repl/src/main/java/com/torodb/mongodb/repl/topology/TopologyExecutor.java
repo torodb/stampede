@@ -73,10 +73,6 @@ public class TopologyExecutor {
         return onCurrentVersion;
     }
 
-    void onVersionChange(VersionChangeListener callback) {
-        CompletableFuture.runAsync(() -> coord.addVersionChangeListener(callback), executor).join();
-    }
-
     interface VersionExecutor {
 
         public abstract CompletableFuture<?> consumeAsync(Consumer<TopologyCoordinator> callback);
@@ -93,7 +89,9 @@ public class TopologyExecutor {
          */
         public abstract CompletableFuture<?> scheduleOnce(Consumer<TopologyCoordinator> callback, Duration delay);
 
-        public abstract <E> CompletableFuture<?> andThenConsumeAsync(CompletionStage<E> stage, BiConsumer<TopologyCoordinator, E> consumer);
+        public abstract <E> CompletableFuture<?> andThenAcceptAsync(CompletionStage<E> stage, BiConsumer<TopologyCoordinator, E> consumer);
+
+        public abstract <E, U> CompletableFuture<U> andThenApplyAsync(CompletionStage<E> stage, BiFunction<TopologyCoordinator, E, U> function);
     }
 
     private static class OnAnyVersion implements VersionExecutor {
@@ -123,8 +121,13 @@ public class TopologyExecutor {
         }
 
         @Override
-        public <E> CompletableFuture<?> andThenConsumeAsync(CompletionStage<E> stage, BiConsumer<TopologyCoordinator, E> consumer) {
+        public <E> CompletableFuture<?> andThenAcceptAsync(CompletionStage<E> stage, BiConsumer<TopologyCoordinator, E> consumer) {
             return stage.thenAcceptAsync(e -> consumer.accept(coord, e), executor).toCompletableFuture();
+        }
+
+        @Override
+        public <E, U> CompletableFuture<U> andThenApplyAsync(CompletionStage<E> stage, BiFunction<TopologyCoordinator, E, U> function) {
+            return stage.thenApplyAsync(e -> function.apply(coord, e), executor).toCompletableFuture();
         }
 
     }
@@ -179,11 +182,21 @@ public class TopologyExecutor {
         }
 
         @Override
-        public <E> CompletableFuture<?> andThenConsumeAsync(CompletionStage<E> stage, BiConsumer<TopologyCoordinator, E> consumer) {
+        public <E> CompletableFuture<?> andThenAcceptAsync(CompletionStage<E> stage, BiConsumer<TopologyCoordinator, E> consumer) {
             final int originalVersion = versionSupplier.getAsInt();
             return stage.thenAcceptAsync(e -> {
                 checkVersion(originalVersion);
                 consumer.accept(coord, e);
+            }, executor)
+                    .toCompletableFuture();
+        }
+
+        @Override
+        public <E, U> CompletableFuture<U> andThenApplyAsync(CompletionStage<E> stage, BiFunction<TopologyCoordinator, E, U> function) {
+            final int originalVersion = versionSupplier.getAsInt();
+            return stage.thenApplyAsync(e -> {
+                checkVersion(originalVersion);
+                return function.apply(coord, e);
             }, executor)
                     .toCompletableFuture();
         }

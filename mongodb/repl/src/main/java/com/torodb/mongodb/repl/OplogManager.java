@@ -21,7 +21,6 @@ import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.eightkdata.mongowp.utils.BsonDocumentBuilder;
 import com.eightkdata.mongowp.utils.BsonReaderTool;
 import com.google.common.base.Preconditions;
-import com.google.common.primitives.UnsignedInteger;
 import com.torodb.common.util.ThreadFactoryIdleService;
 import com.torodb.core.annotations.ToroDbIdleService;
 import com.torodb.core.exceptions.user.UserException;
@@ -136,8 +135,8 @@ public class OplogManager extends ThreadFactoryIdleService {
                                             new BsonDocumentBuilder()
                                                     .appendUnsafe(KEY, new BsonDocumentBuilder()
                                                             .appendUnsafe("hash", newLong(hash))
-                                                            .appendUnsafe("optime_i", newLong(opTime.getSecs().longValue()))
-                                                            .appendUnsafe("optime_t", newLong(opTime.getTerm().longValue()))
+                                                            .appendUnsafe("optime_i", opTime.getTimestamp())
+                                                            .appendUnsafe("optime_t", newLong(opTime.getTerm()))
                                                             .build()
                                                     ).build()
                                     ).build()
@@ -187,8 +186,8 @@ public class OplogManager extends ThreadFactoryIdleService {
                         lastAppliedHash = BsonReaderTool.getLong(subDoc, "hash");
 
                         lastAppliedOpTime = new OpTime(
-                                UnsignedInteger.valueOf(BsonReaderTool.getLong(subDoc, "optime_i")),
-                                UnsignedInteger.valueOf(BsonReaderTool.getLong(subDoc, "optime_t"))
+                                BsonReaderTool.getTimestamp(subDoc, "optime_i"),
+                                BsonReaderTool.getLong(subDoc, "optime_t")
                         );
                     }
                     notifyLastAppliedOpTimeChange();

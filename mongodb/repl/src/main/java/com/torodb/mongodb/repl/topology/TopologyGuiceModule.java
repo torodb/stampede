@@ -20,11 +20,13 @@
 
 package com.torodb.mongodb.repl.topology;
 
+import com.eightkdata.mongowp.client.wrapper.MongoClientConfiguration;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.torodb.core.concurrent.ConcurrentToolsFactory;
 import com.torodb.mongodb.repl.SyncSourceProvider;
 import java.time.Duration;
+import java.util.concurrent.ThreadFactory;
 import javax.inject.Singleton;
 
 /**
@@ -32,11 +34,17 @@ import javax.inject.Singleton;
  */
 public class TopologyGuiceModule extends AbstractModule {
 
+    private final MongoClientConfiguration mongoClientConfiguration;
+
+    public TopologyGuiceModule(MongoClientConfiguration mongoClientConfiguration) {
+        this.mongoClientConfiguration = mongoClientConfiguration;
+    }
+
     @Override
     protected void configure() {
 
-        bind(HeartbeatSender.class)
-                .to(MongoClientHeartbeatSender.class)
+        bind(HeartbeatNetworkHandler.class)
+                .to(MongoClientHeartbeatNetworkHandler.class)
                 .in(Singleton.class);
 
         bind(SyncSourceProvider.class)
@@ -47,6 +55,13 @@ public class TopologyGuiceModule extends AbstractModule {
                 .to(DefaultTopologyErrorHandler.class)
                 .in(Singleton.class);
 
+    }
+
+    @Provides @Singleton
+    public TopologyService createTopologyService(
+            TopologyHeartbeatHandler heartbeatHandler, ThreadFactory threadFactory) {
+        return new TopologyService(mongoClientConfiguration.getHostAndPort(),
+                heartbeatHandler, threadFactory);
     }
 
     @Provides @Singleton

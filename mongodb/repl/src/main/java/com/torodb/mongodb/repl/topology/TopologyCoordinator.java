@@ -25,7 +25,7 @@ import com.eightkdata.mongowp.OpTime;
 import com.eightkdata.mongowp.client.core.MongoConnection.RemoteCommandResponse;
 import com.eightkdata.mongowp.exceptions.*;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.internal.ReplSetHeartbeatCommand.ReplSetHeartbeatArgument;
-import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.internal.ReplSetHeartbeatCommand.ReplSetHeartbeatReply;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.internal.ReplSetHeartbeatReply;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.repl.ReplSetSyncFromCommand.ReplSetSyncFromReply;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.MemberHeartbeatData.Health;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.*;
@@ -87,7 +87,7 @@ class TopologyCoordinator {
     /**
      * How far this node must fall behind before considering switching sync sources
      */
-    private final UnsignedInteger _maxSyncSourceLagSecs;
+    private final long _maxSyncSourceLagSecs;
 
     /**
      * The current config, including a vector of MemberConfigs.
@@ -113,26 +113,18 @@ class TopologyCoordinator {
      * @param maxSyncSourceLagSecs
      * @param slaveDelay our delay. It is rounded to seconds and must be non negative.
      */
-    public TopologyCoordinator(UnsignedInteger maxSyncSourceLagSecs, Duration slaveDelay) {
+    public TopologyCoordinator(Duration maxSyncSourceLag, Duration slaveDelay) {
         this._currentPrimaryIndex = -1;
         this._syncSource = Optional.empty();
         this._syncSourceBlacklist = new HashMap<>();
         this._forceSyncSourceIndex = -1;
-        this._maxSyncSourceLagSecs = maxSyncSourceLagSecs;
-        this._pings = new HashMap<>();
-        this.slaveDelaySecs = slaveDelay.getSeconds();
-        Preconditions.checkArgument(slaveDelaySecs >= 0, "Slave delay must be non negative, but "
-                + "%s was found", slaveDelay);
-    }
-
-    /**
-     * @param maxSyncSourceLag sub second units are ignored
-     * @param slaveDelay
-     */
-    public TopologyCoordinator(Duration maxSyncSourceLag, Duration slaveDelay) {
-        this(UnsignedInteger.valueOf(maxSyncSourceLag.getSeconds()), slaveDelay);
         Preconditions.checkArgument(!maxSyncSourceLag.isNegative(),
                 "Negative max sync source lag is not accepted");
+        this._maxSyncSourceLagSecs = maxSyncSourceLag.getSeconds();
+        this._pings = new HashMap<>();
+        this.slaveDelaySecs = slaveDelay.getSeconds();
+        Preconditions.checkArgument(slaveDelaySecs >= 0, "Slave delay must be "
+                + "non negative, but %s was found", slaveDelay);
     }
 
     @Nonnull
@@ -250,16 +242,16 @@ class TopologyCoordinator {
             assert primaryOpTime != null;
         } else {
             // choose a time that will exclude no candidates, since we don't see a primary
-            primaryOpTime = new OpTime(_maxSyncSourceLagSecs, UnsignedInteger.ZERO);
+            primaryOpTime = OpTime.ofSeconds(_maxSyncSourceLagSecs);
         }
 
-        if (primaryOpTime.getSecs().compareTo(_maxSyncSourceLagSecs) < 0) {
+        if (primaryOpTime.getSecs() < _maxSyncSourceLagSecs) {
             // erh - I think this means there was just a new election
             // and we don't yet know the new primary's optime
-            primaryOpTime = new OpTime(_maxSyncSourceLagSecs, UnsignedInteger.ZERO);
+            primaryOpTime = OpTime.ofSeconds(_maxSyncSourceLagSecs);
         }
 
-        OpTime oldestSyncOpTime = new OpTime(primaryOpTime.getSecs().minus(_maxSyncSourceLagSecs), UnsignedInteger.ZERO);
+        OpTime oldestSyncOpTime = OpTime.ofSeconds(primaryOpTime.getSecs() - _maxSyncSourceLagSecs);
 
         Optional<MemberConfig> newSyncSourceMember = lookForSyncSource(now, lastOpApplied, true, oldestSyncOpTime);
         if (!newSyncSourceMember.isPresent()) {
@@ -406,8 +398,8 @@ class TopologyCoordinator {
             // change.
             return false;
         }
-        UnsignedInteger currentSecs = currentOpTime.getSecs();
-        UnsignedInteger goalSecs = currentSecs.plus(_maxSyncSourceLagSecs);
+        long currentSecs = currentOpTime.getSecs();
+        long goalSecs = currentSecs + _maxSyncSourceLagSecs;
 
         for (int i = 0; i < _hbdata.size(); i++) {
             MemberHeartbeatData it = _hbdata.get(i);
@@ -417,7 +409,7 @@ class TopologyCoordinator {
             
             if (itOpTime != null && it.isUp() 
                     && it.getState().isReadable() && !isBlacklistedMember(candidateConfig, now)
-                    && goalSecs.compareTo(itOpTime.getSecs()) < 0) {
+                    && goalSecs < itOpTime.getSecs()) {
                 LOGGER.info("changing sync target because current sync target's most recent OpTime "
                         + "is {}  which is more than {} seconds behind member {} whose most recent "
                         + "OpTime is {} ", currentOpTime, _maxSyncSourceLagSecs,
@@ -463,7 +455,7 @@ class TopologyCoordinator {
             throw new HostUnreachableException("I cannot reach the requested member: " + target);
         }
         assert hbdata.getOpTime() != null;
-        if (hbdata.getOpTime().getSecs().longValue() + 10 < lastOpApplied.getSecs().longValue()) {
+        if (hbdata.getOpTime().getSecs() + 10 < lastOpApplied.getSecs()) {
             LOGGER.warn("attempting to sync from {}, but its latest opTime is {} and ours is {} "
                     + "so this may not work", target, hbdata.getOpTime().getSecs(), lastOpApplied.getSecs());
 
@@ -544,8 +536,8 @@ class TopologyCoordinator {
      *                   not have a valid configuration installed.
      * @param host       the target of the request to be created
      */
-    RemoteCommandRequest<ReplSetHeartbeatArgument> prepareHeartbeatRequest(Instant now,
-            String ourSetName, HostAndPort target) {
+    RemoteCommandRequest<ReplSetHeartbeatArgument> prepareHeartbeatRequest(
+            Instant now, String ourSetName, HostAndPort target) {
         PingStats hbStats = getPingOrDefault(target);
 
         Duration alreadyElapsed;
@@ -637,9 +629,9 @@ class TopologyCoordinator {
         }
 
         Optional<ReplSetHeartbeatReply> commandReply = hbResponse.getCommandReply();
-        if (hbResponse.isOk() && commandReply.get().getConfig() != null) {
+        if (hbResponse.isOk() && commandReply.get().getConfig().isPresent()) {
             long currentConfigVersion = _rsConfig != null ? _rsConfig.getConfigVersion() : -2;
-            ReplicaSetConfig newConfig = commandReply.get().getConfig();
+            ReplicaSetConfig newConfig = commandReply.get().getConfig().get();
             assert newConfig != null;
             if (newConfig.getConfigVersion() > currentConfigVersion) {
                 HeartbeatResponseAction nextAction = HeartbeatResponseAction.makeReconfigAction()
@@ -699,7 +691,7 @@ class TopologyCoordinator {
         } else {
             ReplSetHeartbeatReply nonNullReply = commandReply.get();
             LOGGER.trace("setUpValues: heartbeat response good for member _id:{}, msg:  {}",
-                    member.getId(), nonNullReply.getHbMsg());
+                    member.getId(), nonNullReply.getHbmsg());
             hbData.setUpValues(now, member.getHostAndPort(), nonNullReply);
         }
         HeartbeatResponseAction nextAction = updateHeartbeatDataImpl(memberIndex, now);

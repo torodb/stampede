@@ -45,7 +45,7 @@ import com.torodb.torod.guice.SqlTorodModule;
 @Singleton
 public class ToroDbiServer extends ThreadFactoryIdleService {
 
-    private static final Logger LOGGER = LogManager.getLogger(ToroDbServer.class);
+    private static final Logger LOGGER = LogManager.getLogger(ToroDbiServer.class);
 
     private final BuildProperties buildProperties;
     private final TorodServer torod;

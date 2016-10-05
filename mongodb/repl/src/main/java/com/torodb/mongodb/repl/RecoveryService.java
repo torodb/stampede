@@ -162,7 +162,7 @@ public class RecoveryService extends ThreadFactoryRunnableService {
             syncSource = syncSourceProvider.newSyncSource();
             LOGGER.info("Using node " + syncSource + " to replicate from");
         } catch (NoSyncSourceFoundException ex) {
-            throw new TryAgainException();
+            throw new TryAgainException("No sync source");
         }
 
         MongoClient remoteClient;

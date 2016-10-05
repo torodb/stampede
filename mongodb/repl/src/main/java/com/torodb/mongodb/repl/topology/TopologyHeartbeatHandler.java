@@ -21,10 +21,12 @@
 package com.torodb.mongodb.repl.topology;
 
 import com.eightkdata.mongowp.ErrorCode;
+import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.client.core.MongoConnection.RemoteCommandResponse;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.internal.ReplSetHeartbeatCommand.ReplSetHeartbeatArgument;
-import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.internal.ReplSetHeartbeatCommand.ReplSetHeartbeatReply;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.internal.ReplSetHeartbeatReply;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.ReplicaSetConfig;
+import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.google.common.net.HostAndPort;
 import com.torodb.mongodb.repl.guice.ReplSetName;
 import java.time.Clock;
@@ -32,7 +34,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.GuardedBy;
 import javax.inject.Inject;
@@ -52,25 +53,34 @@ class TopologyHeartbeatHandler {
 
     private final Clock clock;
     private final String replSetName;
-    private final HeartbeatSender heartbeatSender;
+    private final HeartbeatNetworkHandler networkHandler;
     private final TopologyExecutor executor;
     private final TopologyErrorHandler errorHandler;
 
     @Inject
     public TopologyHeartbeatHandler(Clock clock, @ReplSetName String replSetName,
-            HeartbeatSender heartbeatSender, TopologyExecutor executor,
+            HeartbeatNetworkHandler heartbeatSender, TopologyExecutor executor,
             TopologyErrorHandler errorHandler) {
         this.clock = clock;
         this.replSetName = replSetName;
-        this.heartbeatSender = heartbeatSender;
+        this.networkHandler = heartbeatSender;
         this.executor = executor;
         this.errorHandler = errorHandler;
-        
-        this.executor.onVersionChange((coord, old) -> startHeartbeats(coord));
     }
 
-    public CompletableFuture<?> startHeartbeats() {
-        return executor.onCurrentVersion().consumeAsync((Consumer<TopologyCoordinator>) this::startHeartbeats);
+    public CompletableFuture<Status<?>> start(HostAndPort seed) {
+        return executor.onCurrentVersion().andThenApplyAsync(
+                networkHandler.askForConfig(
+                        new RemoteCommandRequest<>(seed, "admin", Empty.getInstance())
+                ),
+                (coord, remoteConfig) -> {
+                    if (remoteConfig.isOk()) {
+                        coord.addVersionChangeListener((coord2, old) -> startHeartbeats(coord2));
+                        updateConfig(coord, remoteConfig.getCommandReply().get());
+                    }
+                    return remoteConfig.asStatus();
+                }
+        );
     }
 
     @GuardedBy("executor")
@@ -92,7 +102,7 @@ class TopologyHeartbeatHandler {
         RemoteCommandRequest<ReplSetHeartbeatArgument> request = coord.prepareHeartbeatRequest(
                 clock.instant(), replSetName, target);
 
-        CompletableFuture<RemoteCommandResponse<ReplSetHeartbeatReply>> hbHandle = heartbeatSender
+        CompletableFuture<RemoteCommandResponse<ReplSetHeartbeatReply>> hbHandle = networkHandler
                 .sendHeartbeat(request);
 
         hbHandle.exceptionally(t -> {
@@ -105,7 +115,7 @@ class TopologyHeartbeatHandler {
         });
 
 
-        CompletableFuture<?> executeResponseFuture = executor.onCurrentVersion().andThenConsumeAsync(
+        CompletableFuture<?> executeResponseFuture = executor.onCurrentVersion().andThenAcceptAsync(
                 hbHandle,
                 (coord2, response) -> handleHeartbeatResponse(
                                 coord2, target, request.getCmdObj(), response)
@@ -166,9 +176,8 @@ class TopologyHeartbeatHandler {
                 break;
             case RECONFIG:
                 assert reply != null;
-                assert reply.getConfig() != null;
-                validateConfig(coord, reply.getConfig());
-                coord.updateConfig(reply.getConfig(), clock.instant());
+                assert reply.getConfig().isPresent();
+                updateConfig(coord, reply.getConfig().get());
                 break;
             case START_ELECTION:
             case STEP_DOWN_SELF:
@@ -178,6 +187,11 @@ class TopologyHeartbeatHandler {
                 LOGGER.error("Illegal heartbeat response action code {}", action.getAction());
                 throw new AssertionError();
         }
+    }
+
+    private void updateConfig(TopologyCoordinator coord, ReplicaSetConfig config) {
+        validateConfig(coord, config);
+        coord.updateConfig(config, clock.instant());
     }
 
     @GuardedBy("executor")

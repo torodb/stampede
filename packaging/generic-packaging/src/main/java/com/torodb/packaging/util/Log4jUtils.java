@@ -24,6 +24,7 @@ import java.io.File;
 import java.io.Serializable;
 import java.util.Map;
 
+import com.torodb.packaging.config.model.generic.log4j.Log4jLevelToLogLevelMapper;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.Appender;
@@ -85,26 +86,8 @@ public class Log4jUtils {
     }
     
     private static void setLevel(LoggerConfig loggerConfig, LogLevel logLevel) {
-        switch (logLevel) {
-        case NONE:
-            loggerConfig.setLevel(Level.OFF);
-            break;
-        case INFO:
-            loggerConfig.setLevel(Level.INFO);
-            break;
-        case ERROR:
-            loggerConfig.setLevel(Level.ERROR);
-            break;
-        case WARNING:
-            loggerConfig.setLevel(Level.WARN);
-            break;
-        case DEBUG:
-            loggerConfig.setLevel(Level.DEBUG);
-            break;
-        case TRACE:
-            loggerConfig.setLevel(Level.TRACE);
-            break;
-        }
+        Level log4jLevel = new Log4jLevelToLogLevelMapper().map(logLevel);
+        loggerConfig.setLevel(log4jLevel);
     }
 
     public static void addRootAppenderListener(AppenderListener appenderListener) {

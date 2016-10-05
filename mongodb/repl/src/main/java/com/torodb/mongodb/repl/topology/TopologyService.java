@@ -15,55 +15,74 @@
  * along with repl. If not, see <http://www.gnu.org/licenses/>.
  *
  * Copyright (C) 2016 8Kdata.
- *
+ * 
  */
+
 package com.torodb.mongodb.repl.topology;
 
-import com.eightkdata.mongowp.OpTime;
-import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.ReplicaSetConfig;
-import com.eightkdata.mongowp.server.api.tools.Empty;
+import com.eightkdata.mongowp.Status;
 import com.google.common.net.HostAndPort;
-import java.time.Clock;
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
+import com.torodb.common.util.ThreadFactoryIdleService;
+import java.util.concurrent.ThreadFactory;
 import javax.inject.Inject;
-import javax.inject.Singleton;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
- * This is the class used by external classes to talk with the topology layer.
+ *
  */
-@Singleton
-public class TopologyService {
-    private final Clock clock;
-    private final TopologyExecutor executor;
-    /*
-     * TODO(gortiz): This class don't really need a heartbeat handler... but
-     * we need a reference somewhere. Otherwhise it could be garbage collected!
-     * We should find a better way to protect that class against GC.
-     */
+public class TopologyService extends ThreadFactoryIdleService {
+    private static final Logger LOGGER = LogManager.getLogger(TopologyService.class);
+
+    private final HostAndPort seed;
     private final TopologyHeartbeatHandler heartbeatHandler;
 
     @Inject
-    public TopologyService(Clock clock, TopologyExecutor executor,
-            TopologyHeartbeatHandler heartbeatHandler) {
-        this.clock = clock;
-        this.executor = executor;
+    public TopologyService(HostAndPort seed,
+            TopologyHeartbeatHandler heartbeatHandler,
+            ThreadFactory threadFactory) {
+        super(threadFactory);
+        this.seed = seed;
         this.heartbeatHandler = heartbeatHandler;
     }
-    
-    public CompletableFuture<Empty> initiate(ReplicaSetConfig rsConfig) {
-        return executor.onAnyVersion().mapAsync(coord -> {
-            coord.updateConfig(rsConfig, clock.instant());
-            return Empty.getInstance();
-        });
-    }
-    
-    public CompletableFuture<Optional<HostAndPort>> getLastUsedSyncSource() {
-        return executor.onAnyVersion().mapAsync(TopologyCoordinator::getSyncSourceAddress);
+
+    @Override
+    protected void startUp() throws Exception {
+        boolean finished = false;
+        LOGGER.debug("Starting topology service");
+        while (!finished) {
+            finished = heartbeatHandler.start(seed)
+                    .handle(this::checkHeartbeatStarted)
+                    .join();
+            if (!finished) {
+                LOGGER.debug("Trying to start heartbeats in 1 second");
+                Thread.sleep(1000);
+            }
+        }
+        LOGGER.info("Topology service started");
     }
 
-    public CompletableFuture<Optional<HostAndPort>> chooseNewSyncSource(Optional<OpTime> lastFetchedOpTime) {
-        return executor.onAnyVersion().mapAsync(coord -> coord.chooseNewSyncSource(clock.instant(), lastFetchedOpTime));
+    private boolean checkHeartbeatStarted(Status<?> status, Throwable t) {
+        if (t == null) {
+            if (status.isOk()) {
+                LOGGER.trace("Heartbeat started correctly");
+                return true;
+            }
+            else {
+                LOGGER.debug("Heartbeat start failed: {}", status);
+                return false;
+            }
+        } else {
+            LOGGER.debug("Heartbeat start failed", t);
+            return false;
+        }
     }
+
+    @Override
+    protected void shutDown() throws Exception {
+        LOGGER.info("Topology service shutted down");
+    }
+
+    
 
 }
