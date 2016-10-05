@@ -113,8 +113,8 @@ public class PostgreSQLWriteInterface extends AbstractWriteInterface {
 	        int cappedSize = Math.min(docPartData.rowCount(), maxCappedSize);
 	
 	        if (cappedSize < maxCappedSize) { //there are not enough elements on the insert => fallback
-	            if (LOGGER.isDebugEnabled())
-                    LOGGER.debug(
+	            if (LOGGER.isTraceEnabled())
+                    LOGGER.trace(
 	                    "The insert window is not big enough to use copy (the limit is {}, the real size is {}).",
 	                    maxCappedSize,
 	                    cappedSize);

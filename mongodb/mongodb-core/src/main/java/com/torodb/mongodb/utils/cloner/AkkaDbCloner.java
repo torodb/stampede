@@ -7,8 +7,6 @@ import akka.japi.Pair;
 import akka.japi.tuple.Tuple3;
 import akka.stream.*;
 import akka.stream.javadsl.*;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-
 import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.WriteConcern;
 import com.eightkdata.mongowp.bson.BsonDocument;
@@ -50,12 +48,16 @@ import com.torodb.mongodb.core.MongodConnection;
 import com.torodb.mongodb.core.MongodServer;
 import com.torodb.mongodb.core.WriteMongodTransaction;
 import com.torodb.mongodb.utils.DbCloner;
-import com.torodb.mongodb.utils.DbCloner.CloneOptions;
-import com.torodb.mongodb.utils.DbCloner.CloningException;
 import com.torodb.mongodb.utils.ListCollectionsRequester;
 import com.torodb.mongodb.utils.ListIndexesRequester;
 import com.torodb.mongodb.utils.NamespaceUtil;
 import com.torodb.torod.WriteTorodTransaction;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import scala.concurrent.Await;
+import scala.concurrent.duration.Duration;
+
 import java.time.Clock;
 import java.time.Instant;
 import java.util.*;
@@ -63,10 +65,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executor;
 import java.util.stream.Stream;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import scala.concurrent.Await;
-import scala.concurrent.duration.Duration;
 
 /**
  * This class is used to clone databases using a client, so remote and local databases can
