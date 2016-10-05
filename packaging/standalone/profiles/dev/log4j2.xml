@@ -2,7 +2,7 @@
 <Configuration status="WARN">
     <Appenders>
         <Console name="CONSOLE" target="SYSTEM_OUT">
-            <PatternLayout pattern="%d{yyyy/MM/dd hh:mm:ss.SSS XXX} %-5level '%t' %logger{1.} - %msg%n"/>
+            <PatternLayout pattern="%d{yyyy-MM-dd'T'hh:mm:ss.SSS} %-5level '%t' %logger{1.} - %msg%n"/>
         </Console>
         <Async name="ASYNC">
             <AppenderRef ref="CONSOLE"/>
