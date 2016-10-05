@@ -4,7 +4,6 @@ package com.torodb.torod.impl.sql;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Stream;
 
 import javax.annotation.Nonnull;
@@ -162,7 +161,7 @@ public abstract class SqlWriteTorodTransaction<T extends WriteInternalTransactio
     }
 
     @Override
-    public boolean createIndex(String dbName, String colName, String indexName, List<IndexFieldInfo> fields, boolean unique) {
+    public boolean createIndex(String dbName, String colName, String indexName, List<IndexFieldInfo> fields, boolean unique) throws UserException {
         MutableMetaDatabase metaDb = getOrCreateMetaDatabase(dbName);
         MutableMetaCollection metaColl = getOrCreateMetaCollection(metaDb, colName);
         

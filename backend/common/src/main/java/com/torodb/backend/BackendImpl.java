@@ -31,7 +31,9 @@ import com.torodb.core.concurrent.StreamExecutor;
 import com.torodb.core.d2r.IdentifierFactory;
 import com.torodb.core.d2r.R2DTranslator;
 import com.torodb.core.d2r.RidGenerator;
+import com.torodb.core.exceptions.SystemException;
 import com.torodb.core.exceptions.ToroRuntimeException;
+import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.retrier.Retrier;
 import com.torodb.core.retrier.Retrier.Hint;
 import com.torodb.core.retrier.RetrierGiveUpException;
@@ -206,10 +208,14 @@ public class BackendImpl extends ThreadFactoryIdleService implements Backend {
                 columnList.add(new Tuple2<>(indexColumn.getIdentifier(), indexColumn.getOrdering().isAscending()));
             }
             
-            sqlInterface.getStructureInterface().createIndex(
-                dsl, docPartIndex.getIdentifier(), db.getIdentifier(), docPart.getIdentifier(),
-                columnList,
-                docPartIndex.isUnique());
+            try {
+                sqlInterface.getStructureInterface().createIndex(
+                    dsl, docPartIndex.getIdentifier(), db.getIdentifier(), docPart.getIdentifier(),
+                    columnList,
+                    docPartIndex.isUnique());
+            } catch(UserException userException) {
+                throw new SystemException(userException);
+            }
         };
     }
 

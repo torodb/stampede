@@ -347,17 +347,17 @@ public class SnapshotUpdater {
                         + " but there is no index with that name in the schema");
             }
 
-            MutableMetaDocPartIndex metaDocPartIndex = docPart.addMetaDocPartIndex(docPartIndex.getIdentifier(), docPartIndex.getUnique());
+            MutableMetaDocPartIndex metaDocPartIndex = docPart.addMetaDocPartIndex(docPartIndex.getUnique());
 
             dsl.selectFrom(fieldIndexTable)
                     .where(fieldIndexTable.DATABASE.eq(database.getName())
-                            .and(fieldIndexTable.INDEX_IDENTIFIER.eq(metaDocPartIndex.getIdentifier())))
+                            .and(fieldIndexTable.INDEX_IDENTIFIER.eq(docPart.getIdentifier())))
                     .orderBy(fieldIndexTable.POSITION)
                     .fetch()
                     .forEach(
                             (indexField) -> analyzeDocPartIndexColumn(database, collection, docPart, metaDocPartIndex, indexField, schemaValidator)
                     );
-
+            metaDocPartIndex.makeImmutable(docPartIndex.getIdentifier());
         }
 
         private void analyzeDocPartIndexColumn(MutableMetaDatabase database, MetaCollection collection, MetaDocPart docPart,
@@ -382,7 +382,7 @@ public class SnapshotUpdater {
                         + " but there is no column with that name in index " + getIndexRef(database, docPart, docPartIndex));
             }
             
-            docPartIndex.addMetaDocPartIndexColumn(indexColumn.getIdentifier(), indexColumn.getOrdering());
+            docPartIndex.putMetaDocPartIndexColumn(indexColumn.getPosition(), indexColumn.getIdentifier(), indexColumn.getOrdering());
         }
 
         private void analyzeIndex(MutableMetaDatabase db,

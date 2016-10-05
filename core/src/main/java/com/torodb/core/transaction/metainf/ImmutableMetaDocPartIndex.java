@@ -14,10 +14,8 @@ import com.torodb.core.annotations.DoNotChange;
 /**
  *
  */
-public class ImmutableMetaDocPartIndex implements MetaDocPartIndex {
+public class ImmutableMetaDocPartIndex extends AbstractMetaDocPartIndex {
 
-    private final String identifier;
-    private final boolean unique;
     private final Map<String, ImmutableMetaDocPartIndexColumn> columnsByIdentifier;
     private final List<ImmutableMetaDocPartIndexColumn> columnsByPosition;
 
@@ -27,21 +25,10 @@ public class ImmutableMetaDocPartIndex implements MetaDocPartIndex {
 
     public ImmutableMetaDocPartIndex(String identifier, boolean unique,
             @DoNotChange List<ImmutableMetaDocPartIndexColumn> columns) {
-        this.identifier = identifier;
-        this.unique = unique;
+        super(identifier, unique);
         this.columnsByPosition = columns;
         this.columnsByIdentifier = new HashMap<>();
         columns.forEach((column) -> columnsByIdentifier.put(column.getIdentifier(), column));
-    }
-
-    @Override
-    public String getIdentifier() {
-        return identifier;
-    }
-
-    @Override
-    public boolean isUnique() {
-        return unique;
     }
 
     @Override
@@ -64,32 +51,6 @@ public class ImmutableMetaDocPartIndex implements MetaDocPartIndex {
         return columnsByIdentifier.get(columnName);
     }
     
-    @Override
-    public boolean hasSameColumns(MetaDocPartIndex docPartIndex) {
-        return hasSameColumns(docPartIndex, iteratorColumns());
-    }
-
-    protected boolean hasSameColumns(MetaDocPartIndex docPartIndex, Iterator<? extends MetaDocPartIndexColumn> columnsIterator) {
-        Iterator<? extends MetaDocPartIndexColumn> docPartIndexColumnsIterator = docPartIndex.iteratorColumns();
-        
-        while (columnsIterator.hasNext() && docPartIndexColumnsIterator.hasNext()) {
-            MetaDocPartIndexColumn column = columnsIterator.next();
-            MetaDocPartIndexColumn docPartIndexColumn = docPartIndexColumnsIterator.next();
-            if (!column.getIdentifier().equals(docPartIndexColumn.getIdentifier()) ||
-                    column.getOrdering() != docPartIndexColumn.getOrdering()) {
-                return false;
-            }
-        }
-        
-        return !columnsIterator.hasNext() &&
-                !docPartIndexColumnsIterator.hasNext();
-    }
-    
-    @Override
-    public String toString() {
-        return defautToString();
-    }
-    
     public static class Builder {
 
         private boolean built = false;
@@ -107,6 +68,10 @@ public class ImmutableMetaDocPartIndex implements MetaDocPartIndex {
             this.identifier = other.getIdentifier();
             this.unique = other.isUnique();
             this.columns = new ArrayList<>(other.columnsByPosition);
+        }
+
+        public Builder(AbstractMetaDocPartIndex other) {
+            this(other.getIdentifier(), other.isUnique());
         }
 
         public Builder(String identifier, boolean unique, int expectedColumns) {

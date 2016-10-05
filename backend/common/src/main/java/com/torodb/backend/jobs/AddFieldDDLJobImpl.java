@@ -22,6 +22,7 @@ package com.torodb.backend.jobs;
 
 import com.torodb.core.backend.WriteBackendTransaction;
 import com.torodb.core.dsl.backend.AddFieldDDLJob;
+import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
@@ -44,7 +45,7 @@ public class AddFieldDDLJobImpl implements AddFieldDDLJob {
     }
 
     @Override
-    public void execute(WriteBackendTransaction connection) {
+    public void execute(WriteBackendTransaction connection) throws UserException {
         connection.addField(db, col, docPart, newField);
     }
 

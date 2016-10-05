@@ -44,12 +44,12 @@ public class CreateCollectionImplementation implements WriteTorodbCommandImpl<Cr
     @Override
     public Status<Empty> apply(Request req, Command<? super CreateCollectionArgument, ? super Empty> command,
             CreateCollectionArgument arg, WriteMongodTransaction context) {
-        if (!context.getTorodTransaction().existsCollection(req.getDatabase(), arg.getCollection())) {
-            context.getTorodTransaction().createIndex(req.getDatabase(), arg.getCollection(), Constants.ID_INDEX, 
-                    ImmutableList.<IndexFieldInfo>of(new IndexFieldInfo(new AttributeReference(Arrays.asList(new Key[] { new ObjectKey(Constants.ID) })), FieldIndexOrdering.ASC.isAscending())), true);
-        }
-        
         try {
+            if (!context.getTorodTransaction().existsCollection(req.getDatabase(), arg.getCollection())) {
+                context.getTorodTransaction().createIndex(req.getDatabase(), arg.getCollection(), Constants.ID_INDEX, 
+                        ImmutableList.<IndexFieldInfo>of(new IndexFieldInfo(new AttributeReference(Arrays.asList(new Key[] { new ObjectKey(Constants.ID) })), FieldIndexOrdering.ASC.isAscending())), true);
+            }
+            
             context.getTorodTransaction().createCollection(req.getDatabase(), arg.getCollection());
         } catch (UserException ex) {
             //TODO: Improve error reporting

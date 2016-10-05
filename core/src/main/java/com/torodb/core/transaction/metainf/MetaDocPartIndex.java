@@ -32,7 +32,11 @@ public interface MetaDocPartIndex {
     public abstract boolean hasSameColumns(MetaDocPartIndex docPartIndex);
 
     public default String defautToString() {
-        return "docPartIndex{" + "id:" + getIdentifier() + ", unique:" + isUnique() + '}';
+        try {
+            return "docPartIndex{" + "id:" + getIdentifier() + ", unique:" + isUnique() + '}';
+        } catch(IllegalArgumentException illegalArgumentException) {
+            return "docPartIndex{" + "id:unknown, unique:" + isUnique() + '}';
+        }
     }
     
 }

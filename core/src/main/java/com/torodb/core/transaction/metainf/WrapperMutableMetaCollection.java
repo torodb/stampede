@@ -234,7 +234,7 @@ public class WrapperMutableMetaCollection implements MutableMetaCollection {
     }
 
     protected void onIndexChange(WrapperMutableMetaIndex changedIndex) {
-        assert isTransitionAllowed(changedIndex, MetaElementState.REMOVED);
+        assert isTransitionAllowed(changedIndex, MetaElementState.MODIFIED);
         
         indexesByName.put(changedIndex.getName(), new Tuple2<>(changedIndex, MetaElementState.MODIFIED));
         changeConsumer.accept(this);

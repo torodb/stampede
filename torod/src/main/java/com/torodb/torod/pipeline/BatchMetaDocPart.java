@@ -11,6 +11,7 @@ import com.torodb.core.TableRef;
 import com.torodb.core.annotations.DoNotChange;
 import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.ImmutableMetaDocPart;
+import com.torodb.core.transaction.metainf.ImmutableMetaDocPartIndex;
 import com.torodb.core.transaction.metainf.ImmutableMetaField;
 import com.torodb.core.transaction.metainf.ImmutableMetaScalar;
 import com.torodb.core.transaction.metainf.MetaDocPartIndex;
@@ -108,6 +109,11 @@ public class BatchMetaDocPart implements MutableMetaDocPart {
     }
 
     @Override
+    public ImmutableMetaField getAddedFieldByIdentifier(String identifier) {
+        return delegate.getAddedFieldByIdentifier(identifier);
+    }
+
+    @Override
     public ImmutableMetaDocPart immutableCopy() {
         return delegate.immutableCopy();
     }
@@ -143,18 +149,23 @@ public class BatchMetaDocPart implements MutableMetaDocPart {
     }
 
     @Override
-    public MutableMetaDocPartIndex getMetaDocPartIndexByIdentifier(String indexId) {
+    public MetaDocPartIndex getMetaDocPartIndexByIdentifier(String indexId) {
         return delegate.getMetaDocPartIndexByIdentifier(indexId);
     }
 
     @Override
-    public MutableMetaDocPartIndex addMetaDocPartIndex(String identifier, boolean unique) throws IllegalArgumentException {
-        return delegate.addMetaDocPartIndex(identifier, unique);
+    public MutableMetaDocPartIndex addMetaDocPartIndex(boolean unique) throws IllegalArgumentException {
+        return delegate.addMetaDocPartIndex(unique);
     }
 
     @Override
-    public Iterable<Tuple2<MutableMetaDocPartIndex, MetaElementState>> getModifiedMetaDocPartIndexes() {
+    public Iterable<Tuple2<ImmutableMetaDocPartIndex, MetaElementState>> getModifiedMetaDocPartIndexes() {
         return delegate.getModifiedMetaDocPartIndexes();
+    }
+
+    @Override
+    public Iterable<MutableMetaDocPartIndex> getAddedMutableMetaDocPartIndexes() {
+        return delegate.getAddedMutableMetaDocPartIndexes();
     }
 
     @Override

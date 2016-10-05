@@ -195,7 +195,7 @@ public class WrapperMutableMetaDatabase implements MutableMetaDatabase {
     }
 
     private void onMetaCollectionChange(WrapperMutableMetaCollection changed) {
-        assert isTransitionAllowed(changed, MetaElementState.REMOVED);
+        assert isTransitionAllowed(changed, MetaElementState.MODIFIED);
         
         collectionsByName.put(changed.getName(), new Tuple2<>(changed, MetaElementState.MODIFIED));
         changeConsumer.accept(this);

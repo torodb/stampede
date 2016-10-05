@@ -55,6 +55,7 @@ public class PostgreSQLErrorHandler extends AbstractErrorHandler {
                 /**
                  * Duplicate key value in unique index on insert
                  */
-                userRule("23505", b -> new UniqueIndexViolationException(b.getMessage(), b), INSERT));
+                userRule("23505", b -> new UniqueIndexViolationException(b.getMessage(), b), INSERT)
+        );
     }
 }

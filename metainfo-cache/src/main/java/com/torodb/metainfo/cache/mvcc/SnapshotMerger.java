@@ -20,6 +20,8 @@
 
 package com.torodb.metainfo.cache.mvcc;
 
+import java.util.Iterator;
+import java.util.List;
 import java.util.Optional;
 
 import org.jooq.lambda.Seq;
@@ -46,7 +48,6 @@ import com.torodb.core.transaction.metainf.MetaScalar;
 import com.torodb.core.transaction.metainf.MutableMetaCollection;
 import com.torodb.core.transaction.metainf.MutableMetaDatabase;
 import com.torodb.core.transaction.metainf.MutableMetaDocPart;
-import com.torodb.core.transaction.metainf.MutableMetaDocPartIndex;
 import com.torodb.core.transaction.metainf.MutableMetaIndex;
 import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
 import com.torodb.core.transaction.metainf.UnmergeableException;
@@ -216,7 +217,7 @@ public class SnapshotMerger {
         for (ImmutableMetaScalar addedMetaScalar : changed.getAddedMetaScalars()) {
             merge(oldDb, oldStructure, byId, childBuilder, addedMetaScalar);
         }
-        for (Tuple2<MutableMetaDocPartIndex, MetaElementState> addedMetaDocPartIndex : changed.getModifiedMetaDocPartIndexes()) {
+        for (Tuple2<ImmutableMetaDocPartIndex, MetaElementState> addedMetaDocPartIndex : changed.getModifiedMetaDocPartIndexes()) {
             merge(oldDb, newStructure, oldStructure, changed, byId, childBuilder, addedMetaDocPartIndex.v1(), addedMetaDocPartIndex.v2());
         }
 
@@ -237,10 +238,7 @@ public class SnapshotMerger {
             Optional<? extends MetaIndex> oldMissedIndex = oldCol.streamContainedMetaIndexes()
                 .filter(oldIndex -> oldIndex.getMetaIndexFieldByTableRefAndName(oldStructure.getTableRef(), changed.getName()) != null &&
                         (newCol.getMetaIndexByName(oldIndex.getName()) == null ||
-                        Seq.seq(oldIndex.iteratorMetaDocPartIndexesIdentifiers(newStructure))
-                                .filter(identifiers -> identifiers.contains(changed.getIdentifier()))
-                                .anyMatch(identifiers -> newStructure.streamIndexes()
-                                        .noneMatch(newDocPartIndex -> oldIndex.isMatch(newStructure, identifiers, newDocPartIndex)))))
+                        existsAnyNotMatchingCombinationOfIdentifiers(oldIndex, newStructure, changed)))
                 .findAny();
             
             if (oldMissedIndex.isPresent()) {
@@ -249,6 +247,21 @@ public class SnapshotMerger {
             
             parentBuilder.put(changed);
         }
+    }
+
+    private boolean existsAnyNotMatchingCombinationOfIdentifiers(MetaIndex oldIndex,MutableMetaDocPart newStructure,ImmutableMetaField changed) {
+        return Seq.seq(oldIndex.iteratorMetaDocPartIndexesIdentifiers(newStructure))
+            .filter(identifiers -> identifiers.contains(changed.getIdentifier()))
+            .anyMatch(identifiers -> newStructure.streamIndexes()
+                    .noneMatch(newDocPartIndex -> oldIndex.isMatch(newStructure, identifiers, newDocPartIndex)));
+    }
+
+    private Optional<List<String>> getAnyNotMatchingCombinationOfIdentifiers(MetaIndex oldIndex,MutableMetaDocPart newStructure,ImmutableMetaField changed) {
+        return Seq.seq(oldIndex.iteratorMetaDocPartIndexesIdentifiers(newStructure))
+            .filter(identifiers -> identifiers.contains(changed.getIdentifier()))
+            .filter(identifiers -> newStructure.streamIndexes()
+                    .noneMatch(newDocPartIndex -> oldIndex.isMatch(newStructure, identifiers, newDocPartIndex)))
+            .findAny();
     }
 
     private void merge(MetaDatabase db, MetaCollection col, ImmutableMetaDocPart oldStructure, 
@@ -265,7 +278,7 @@ public class SnapshotMerger {
     }
 
     private void merge(MetaDatabase oldDb, MutableMetaCollection newCol, ImmutableMetaCollection oldCol, MetaDocPart newStructure, ImmutableMetaDocPart oldStructure,
-            ImmutableMetaDocPart.Builder parentBuilder, MutableMetaDocPartIndex changed, MetaElementState newState) throws UnmergeableException {
+            ImmutableMetaDocPart.Builder parentBuilder, ImmutableMetaDocPartIndex changed, MetaElementState newState) throws UnmergeableException {
         ImmutableMetaDocPartIndex byId = oldStructure.getMetaDocPartIndexByIdentifier(changed.getIdentifier());
         ImmutableMetaDocPartIndex bySameColumns = oldStructure.streamIndexes()
                 .filter(oldDocPartIndex -> oldDocPartIndex.hasSameColumns(changed))
@@ -294,15 +307,17 @@ public class SnapshotMerger {
                 }
 
                 if (byId == null) {
-                    parentBuilder.put(changed.immutableCopy());
+                    parentBuilder.put(changed);
                     return ;
                 }
                 assert byId != null;
 
                 ImmutableMetaDocPartIndex.Builder childBuilder = new ImmutableMetaDocPartIndex.Builder(byId);
 
-                for (ImmutableMetaDocPartIndexColumn addedMetaFieldIndex : changed.getAddedMetaDocPartIndexColumns()) {
-                    merge(oldDb, oldCol, oldStructure, byId, childBuilder, addedMetaFieldIndex);
+                Iterator<ImmutableMetaDocPartIndexColumn> indexColumnIterator = changed.iteratorColumns();
+                while (indexColumnIterator.hasNext()) {
+                    ImmutableMetaDocPartIndexColumn indexColumn = indexColumnIterator.next();
+                    merge(oldDb, oldCol, oldStructure, byId, childBuilder, indexColumn);
                 }
 
                 parentBuilder.put(childBuilder);

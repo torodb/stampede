@@ -25,7 +25,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -39,6 +38,7 @@ import com.google.common.base.Preconditions;
 import com.torodb.backend.ErrorHandler.Context;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.core.TableRef;
+import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
@@ -121,13 +121,13 @@ public abstract class AbstractStructureInterface implements StructureInterface {
     public void createIndex(DSLContext dsl, String indexName,
             String schemaName, String tableName,
             List<Tuple2<String, Boolean>> columnList, boolean unique
-    ) {
+    ) throws UserException {
         if (!dbBackend.isOnDataInsertMode()) {
             Preconditions.checkArgument(!columnList.isEmpty(), "Can not create index on 0 columns");
             
             String statement = getCreateIndexStatement(indexName, schemaName, tableName, columnList, unique);
 
-            sqlHelper.executeUpdate(dsl, statement, unique?Context.ADD_UNIQUE_INDEX:Context.CREATE_INDEX);
+            sqlHelper.executeUpdateOrThrow(dsl, statement, unique?Context.ADD_UNIQUE_INDEX:Context.CREATE_INDEX);
         }
     }
 

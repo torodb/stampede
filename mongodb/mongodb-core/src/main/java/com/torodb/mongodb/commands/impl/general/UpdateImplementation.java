@@ -23,7 +23,6 @@ import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general
 import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.Request;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.torodb.core.cursors.Cursor;
 import com.torodb.core.document.ToroDocument;
 import com.torodb.core.exceptions.UserWrappedException;
@@ -69,14 +68,14 @@ public class UpdateImplementation implements WriteTorodbCommandImpl<UpdateArgume
     @Override
     public Status<UpdateResult> apply(Request req, Command<? super UpdateArgument, ? super UpdateResult> command, UpdateArgument arg,
             WriteMongodTransaction context) {
-        if (!context.getTorodTransaction().existsCollection(req.getDatabase(), arg.getCollection())) {
-            context.getTorodTransaction().createIndex(req.getDatabase(), arg.getCollection(), Constants.ID_INDEX, 
-                    ImmutableList.<IndexFieldInfo>of(new IndexFieldInfo(new AttributeReference(Arrays.asList(new Key[] { new ObjectKey(Constants.ID) })), FieldIndexOrdering.ASC.isAscending())), true);
-        }
-        
         UpdateStatus updateStatus = new UpdateStatus();
 
         try {
+            if (!context.getTorodTransaction().existsCollection(req.getDatabase(), arg.getCollection())) {
+                context.getTorodTransaction().createIndex(req.getDatabase(), arg.getCollection(), Constants.ID_INDEX, 
+                        ImmutableList.<IndexFieldInfo>of(new IndexFieldInfo(new AttributeReference(Arrays.asList(new Key[] { new ObjectKey(Constants.ID) })), FieldIndexOrdering.ASC.isAscending())), true);
+            }
+            
             for (UpdateStatement updateStatement : arg.getStatements()) {
                 BsonDocument query = updateStatement.getQuery();
                 UpdateAction updateAction = UpdateActionTranslator.translate(updateStatement.getUpdate());

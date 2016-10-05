@@ -21,8 +21,6 @@ package com.torodb.metainfo.cache.mvcc;
 
 import static org.mockito.Mockito.spy;
 
-import java.util.Collections;
-
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -44,9 +42,6 @@ import com.torodb.core.transaction.metainf.ImmutableMetaIndex;
 import com.torodb.core.transaction.metainf.ImmutableMetaIndexField;
 import com.torodb.core.transaction.metainf.ImmutableMetaScalar;
 import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
-import com.torodb.core.transaction.metainf.MetaSnapshot;
-import com.torodb.core.transaction.metainf.MutableMetaCollection;
-import com.torodb.core.transaction.metainf.MutableMetaDocPart;
 import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
 import com.torodb.core.transaction.metainf.UnmergeableException;
 import com.torodb.core.transaction.metainf.WrapperMutableMetaSnapshot;
@@ -453,8 +448,14 @@ public class SnapshotMergerForIndexTest {
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .addMetaDocPartIndex("idxId2", false)
+            .addMetaDocPartIndex(false)
             .addMetaDocPartIndexColumn("fieldId2", FieldIndexOrdering.ASC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
+            .makeImmutable("indexId2");
         ImmutableMetaSnapshot currentSnapshot = currentModifiedSnapshot.immutableCopy();
         currentModifiedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
         currentModifiedSnapshot
@@ -518,14 +519,20 @@ public class SnapshotMergerForIndexTest {
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .addMetaDocPartIndex("idxId2", false)
+            .addMetaDocPartIndex(false)
             .addMetaDocPartIndexColumn("fieldId2", FieldIndexOrdering.ASC);
         currentModifiedSnapshot
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .getMetaDocPartIndexByIdentifier("idxId2")
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
             .addMetaDocPartIndexColumn("fieldId3", FieldIndexOrdering.ASC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
+            .makeImmutable("indexId2");
         ImmutableMetaSnapshot currentSnapshot = currentModifiedSnapshot.immutableCopy();
         currentModifiedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
         currentModifiedSnapshot
@@ -594,14 +601,20 @@ public class SnapshotMergerForIndexTest {
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .addMetaDocPartIndex("idxId2", false)
+            .addMetaDocPartIndex(false)
             .addMetaDocPartIndexColumn("fieldId2", FieldIndexOrdering.ASC);
         currentModifiedSnapshot
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .getMetaDocPartIndexByIdentifier("idxId2")
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
             .addMetaDocPartIndexColumn("fieldId3", FieldIndexOrdering.ASC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
+            .makeImmutable("indexId2");
         ImmutableMetaSnapshot currentSnapshot = currentModifiedSnapshot.immutableCopy();
         currentModifiedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
         currentModifiedSnapshot
@@ -667,8 +680,14 @@ public class SnapshotMergerForIndexTest {
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .addMetaDocPartIndex("idxId2", false)
+            .addMetaDocPartIndex(false)
             .addMetaDocPartIndexColumn("fieldId2", FieldIndexOrdering.ASC);
+        changedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
+            .makeImmutable("indexId2");
 
         new SnapshotMerger(currentSnapshot, changedSnapshot).merge();
     }
@@ -727,26 +746,32 @@ public class SnapshotMergerForIndexTest {
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .addMetaDocPartIndex("idxId2", false)
+            .addMetaDocPartIndex(false)
             .addMetaDocPartIndexColumn("fieldId2", FieldIndexOrdering.ASC);
         changedSnapshot
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .getMetaDocPartIndexByIdentifier("idxId2")
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
             .addMetaDocPartIndexColumn("fieldId3", FieldIndexOrdering.ASC);
         changedSnapshot
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .getMetaDocPartIndexByIdentifier("idxId2")
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
             .addMetaDocPartIndexColumn("fieldId4", FieldIndexOrdering.ASC);
         changedSnapshot
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .getMetaDocPartIndexByIdentifier("idxId2")
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
             .addMetaDocPartIndexColumn("fieldId5", FieldIndexOrdering.ASC);
+        changedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
+            .makeImmutable("indexId2");
 
         new SnapshotMerger(currentSnapshot, changedSnapshot).merge();
     }
@@ -795,14 +820,20 @@ public class SnapshotMergerForIndexTest {
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .addMetaDocPartIndex("idxId2", false)
+            .addMetaDocPartIndex(false)
             .addMetaDocPartIndexColumn("fieldId2", FieldIndexOrdering.ASC);
         changedSnapshot
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .getMetaDocPartIndexByIdentifier("idxId2")
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
             .addMetaDocPartIndexColumn("fieldId3", FieldIndexOrdering.ASC);
+        changedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
+            .makeImmutable("indexId2");
 
         new SnapshotMerger(currentSnapshot, changedSnapshot).merge();
     }
@@ -865,26 +896,38 @@ public class SnapshotMergerForIndexTest {
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .addMetaDocPartIndex("idxId2", false)
+            .addMetaDocPartIndex(false)
             .addMetaDocPartIndexColumn("fieldId2", FieldIndexOrdering.ASC);
         changedSnapshot
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .getMetaDocPartIndexByIdentifier("idxId2")
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
             .addMetaDocPartIndexColumn("fieldId3", FieldIndexOrdering.ASC);
         changedSnapshot
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
+            .makeImmutable("indexId2");
+        changedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createChild(tableRefFactory.createRoot(), "docPartName2"))
-            .addMetaDocPartIndex("idxId3", false)
+            .addMetaDocPartIndex(false)
             .addMetaDocPartIndexColumn("fieldId4", FieldIndexOrdering.ASC);
         changedSnapshot
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createChild(tableRefFactory.createRoot(), "docPartName2"))
-            .getMetaDocPartIndexByIdentifier("idxId3")
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
             .addMetaDocPartIndexColumn("fieldId5", FieldIndexOrdering.ASC);
+        changedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createChild(tableRefFactory.createRoot(), "docPartName2"))
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
+            .makeImmutable("indexId3");
 
         new SnapshotMerger(currentSnapshot, changedSnapshot).merge();
     }
@@ -916,8 +959,14 @@ public class SnapshotMergerForIndexTest {
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .addMetaDocPartIndex("idxId2", false)
+            .addMetaDocPartIndex(false)
             .addMetaDocPartIndexColumn("fieldId2", FieldIndexOrdering.ASC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
+            .makeImmutable("indexId2");
         ImmutableMetaSnapshot currentSnapshot = currentModifiedSnapshot.immutableCopy();
         MutableMetaSnapshot changedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
         changedSnapshot
@@ -986,26 +1035,32 @@ public class SnapshotMergerForIndexTest {
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .addMetaDocPartIndex("idxId2", false)
+            .addMetaDocPartIndex(false)
             .addMetaDocPartIndexColumn("fieldId2", FieldIndexOrdering.ASC);
         currentModifiedSnapshot
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .getMetaDocPartIndexByIdentifier("idxId2")
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
             .addMetaDocPartIndexColumn("fieldId3", FieldIndexOrdering.ASC);
         currentModifiedSnapshot
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .getMetaDocPartIndexByIdentifier("idxId2")
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
             .addMetaDocPartIndexColumn("fieldId4", FieldIndexOrdering.ASC);
         currentModifiedSnapshot
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .getMetaDocPartIndexByIdentifier("idxId2")
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
             .addMetaDocPartIndexColumn("fieldId5", FieldIndexOrdering.ASC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
+            .makeImmutable("indexId2");
         ImmutableMetaSnapshot currentSnapshot = currentModifiedSnapshot.immutableCopy();
         MutableMetaSnapshot changedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
         changedSnapshot
@@ -1093,14 +1148,20 @@ public class SnapshotMergerForIndexTest {
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .addMetaDocPartIndex("idxId2", false)
+            .addMetaDocPartIndex(false)
             .addMetaDocPartIndexColumn("fieldId2", FieldIndexOrdering.ASC);
         currentModifiedSnapshot
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .getMetaDocPartIndexByIdentifier("idxId2")
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
             .addMetaDocPartIndexColumn("fieldId3", FieldIndexOrdering.ASC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
+            .makeImmutable("indexId2");
         ImmutableMetaSnapshot currentSnapshot = currentModifiedSnapshot.immutableCopy();
         MutableMetaSnapshot changedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
         changedSnapshot
@@ -1127,14 +1188,20 @@ public class SnapshotMergerForIndexTest {
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createChild(tableRefFactory.createRoot(), "docPartName2"))
-            .addMetaDocPartIndex("idxId3", false)
+            .addMetaDocPartIndex(false)
             .addMetaDocPartIndexColumn("fieldId4", FieldIndexOrdering.ASC);
         changedSnapshot
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createChild(tableRefFactory.createRoot(), "docPartName2"))
-            .getMetaDocPartIndexByIdentifier("idxId3")
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
             .addMetaDocPartIndexColumn("fieldId5", FieldIndexOrdering.ASC);
+        changedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createChild(tableRefFactory.createRoot(), "docPartName2"))
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
+            .makeImmutable("indexId3");
 
         new SnapshotMerger(currentSnapshot, changedSnapshot).merge();
     }
@@ -1175,26 +1242,38 @@ public class SnapshotMergerForIndexTest {
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .addMetaDocPartIndex("idxId2", false)
+            .addMetaDocPartIndex(false)
             .addMetaDocPartIndexColumn("fieldId2", FieldIndexOrdering.ASC);
         currentModifiedSnapshot
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .getMetaDocPartIndexByIdentifier("idxId2")
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
             .addMetaDocPartIndexColumn("fieldId3", FieldIndexOrdering.ASC);
         currentModifiedSnapshot
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
+            .makeImmutable("indexId2");
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createChild(tableRefFactory.createRoot(), "docPartName2"))
-            .addMetaDocPartIndex("idxId3", false)
+            .addMetaDocPartIndex(false)
             .addMetaDocPartIndexColumn("fieldId4", FieldIndexOrdering.ASC);
         currentModifiedSnapshot
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createChild(tableRefFactory.createRoot(), "docPartName2"))
-            .getMetaDocPartIndexByIdentifier("idxId3")
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
             .addMetaDocPartIndexColumn("fieldId5", FieldIndexOrdering.ASC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createChild(tableRefFactory.createRoot(), "docPartName2"))
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
+            .makeImmutable("indexId3");
         ImmutableMetaSnapshot currentSnapshot = currentModifiedSnapshot.immutableCopy();
         MutableMetaSnapshot changedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
         changedSnapshot
@@ -1245,8 +1324,14 @@ public class SnapshotMergerForIndexTest {
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .addMetaDocPartIndex("idxId2", false)
+            .addMetaDocPartIndex(false)
             .addMetaDocPartIndexColumn("fieldId2", FieldIndexOrdering.ASC);
+        changedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
+            .makeImmutable("indexId2");
 
         new SnapshotMerger(currentSnapshot, changedSnapshot).merge();
     }
@@ -1305,26 +1390,32 @@ public class SnapshotMergerForIndexTest {
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .addMetaDocPartIndex("idxId2", false)
+            .addMetaDocPartIndex(false)
             .addMetaDocPartIndexColumn("fieldId2", FieldIndexOrdering.ASC);
         changedSnapshot
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .getMetaDocPartIndexByIdentifier("idxId2")
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
             .addMetaDocPartIndexColumn("fieldId3", FieldIndexOrdering.ASC);
         changedSnapshot
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .getMetaDocPartIndexByIdentifier("idxId2")
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
             .addMetaDocPartIndexColumn("fieldId4", FieldIndexOrdering.ASC);
         changedSnapshot
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .getMetaDocPartIndexByIdentifier("idxId2")
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
             .addMetaDocPartIndexColumn("fieldId5", FieldIndexOrdering.ASC);
+        changedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
+            .makeImmutable("indexId2");
 
         new SnapshotMerger(currentSnapshot, changedSnapshot).merge();
     }
@@ -1387,26 +1478,38 @@ public class SnapshotMergerForIndexTest {
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .addMetaDocPartIndex("idxId2", false)
+            .addMetaDocPartIndex(false)
             .addMetaDocPartIndexColumn("fieldId2", FieldIndexOrdering.ASC);
         changedSnapshot
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .getMetaDocPartIndexByIdentifier("idxId2")
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
             .addMetaDocPartIndexColumn("fieldId3", FieldIndexOrdering.ASC);
         changedSnapshot
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
+            .makeImmutable("indexId2");
+        changedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createChild(tableRefFactory.createRoot(), "docPartName2"))
-            .addMetaDocPartIndex("idxId3", false)
+            .addMetaDocPartIndex(false)
             .addMetaDocPartIndexColumn("fieldId4", FieldIndexOrdering.ASC);
         changedSnapshot
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createChild(tableRefFactory.createRoot(), "docPartName2"))
-            .getMetaDocPartIndexByIdentifier("idxId3")
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
             .addMetaDocPartIndexColumn("fieldId5", FieldIndexOrdering.ASC);
+        changedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createChild(tableRefFactory.createRoot(), "docPartName2"))
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
+            .makeImmutable("indexId3");
 
         new SnapshotMerger(currentSnapshot, changedSnapshot).merge();
     }
@@ -1445,8 +1548,14 @@ public class SnapshotMergerForIndexTest {
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .addMetaDocPartIndex("idxId2", false)
+            .addMetaDocPartIndex(false)
             .addMetaDocPartIndexColumn("fieldId2", FieldIndexOrdering.ASC);
+        changedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
+            .makeImmutable("indexId2");
 
         new SnapshotMerger(currentSnapshot, changedSnapshot).merge();
     }
@@ -1500,14 +1609,20 @@ public class SnapshotMergerForIndexTest {
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .addMetaDocPartIndex("idxId2", false)
+            .addMetaDocPartIndex(false)
             .addMetaDocPartIndexColumn("fieldId2", FieldIndexOrdering.ASC);
         changedSnapshot
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .getMetaDocPartIndexByIdentifier("idxId2")
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
             .addMetaDocPartIndexColumn("fieldId3", FieldIndexOrdering.ASC);
+        changedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
+            .makeImmutable("indexId2");
 
         new SnapshotMerger(currentSnapshot, changedSnapshot).merge();
     }
@@ -1595,26 +1710,38 @@ public class SnapshotMergerForIndexTest {
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .addMetaDocPartIndex("idxId2", false)
+            .addMetaDocPartIndex(false)
             .addMetaDocPartIndexColumn("fieldId2", FieldIndexOrdering.ASC);
         changedSnapshot
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .getMetaDocPartIndexByIdentifier("idxId2")
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
             .addMetaDocPartIndexColumn("fieldId3", FieldIndexOrdering.ASC);
         changedSnapshot
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
+            .makeImmutable("indexId2");
+        changedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createChild(tableRefFactory.createRoot(), "docPartName2"))
-            .addMetaDocPartIndex("idxId3", false)
+            .addMetaDocPartIndex(false)
             .addMetaDocPartIndexColumn("fieldId4", FieldIndexOrdering.ASC);
         changedSnapshot
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createChild(tableRefFactory.createRoot(), "docPartName2"))
-            .getMetaDocPartIndexByIdentifier("idxId3")
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
             .addMetaDocPartIndexColumn("fieldId5", FieldIndexOrdering.ASC);
+        changedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createChild(tableRefFactory.createRoot(), "docPartName2"))
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
+            .makeImmutable("indexId3");
 
         new SnapshotMerger(currentSnapshot, changedSnapshot).merge();
     }
@@ -1837,26 +1964,32 @@ public class SnapshotMergerForIndexTest {
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .addMetaDocPartIndex("idxId2", false)
+            .addMetaDocPartIndex(false)
             .addMetaDocPartIndexColumn("fieldId2", FieldIndexOrdering.ASC);
         currentModifiedSnapshot
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .getMetaDocPartIndexByIdentifier("idxId2")
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
             .addMetaDocPartIndexColumn("fieldId3", FieldIndexOrdering.ASC);
         currentModifiedSnapshot
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .getMetaDocPartIndexByIdentifier("idxId2")
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
             .addMetaDocPartIndexColumn("fieldId4", FieldIndexOrdering.ASC);
         currentModifiedSnapshot
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .getMetaDocPartIndexByIdentifier("idxId2")
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
             .addMetaDocPartIndexColumn("fieldId5", FieldIndexOrdering.ASC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
+            .makeImmutable("indexId2");
         ImmutableMetaSnapshot currentSnapshot = currentModifiedSnapshot.immutableCopy();
         MutableMetaSnapshot changedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
         changedSnapshot
@@ -1928,26 +2061,38 @@ public class SnapshotMergerForIndexTest {
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .addMetaDocPartIndex("idxId2", false)
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
+            .makeImmutable("indexId2");
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .addMetaDocPartIndex(false)
             .addMetaDocPartIndexColumn("fieldId2", FieldIndexOrdering.ASC);
         currentModifiedSnapshot
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .getMetaDocPartIndexByIdentifier("idxId2")
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
             .addMetaDocPartIndexColumn("fieldId3", FieldIndexOrdering.ASC);
         currentModifiedSnapshot
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createChild(tableRefFactory.createRoot(), "docPartName2"))
-            .addMetaDocPartIndex("idxId3", false)
+            .addMetaDocPartIndex(false)
             .addMetaDocPartIndexColumn("fieldId4", FieldIndexOrdering.ASC);
         currentModifiedSnapshot
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createChild(tableRefFactory.createRoot(), "docPartName2"))
-            .getMetaDocPartIndexByIdentifier("idxId3")
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
             .addMetaDocPartIndexColumn("fieldId5", FieldIndexOrdering.ASC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
+            .makeImmutable("indexId3");
         ImmutableMetaSnapshot currentSnapshot = currentModifiedSnapshot.immutableCopy();
         MutableMetaSnapshot changedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
         changedSnapshot
@@ -2043,26 +2188,32 @@ public class SnapshotMergerForIndexTest {
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .addMetaDocPartIndex("idxId2", false)
+            .addMetaDocPartIndex(false)
             .addMetaDocPartIndexColumn("fieldId2", FieldIndexOrdering.ASC);
         currentModifiedSnapshot
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .getMetaDocPartIndexByIdentifier("idxId2")
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
             .addMetaDocPartIndexColumn("fieldId3", FieldIndexOrdering.ASC);
         currentModifiedSnapshot
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .getMetaDocPartIndexByIdentifier("idxId2")
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
             .addMetaDocPartIndexColumn("fieldId4", FieldIndexOrdering.ASC);
         currentModifiedSnapshot
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .getMetaDocPartIndexByIdentifier("idxId2")
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
             .addMetaDocPartIndexColumn("fieldId5", FieldIndexOrdering.ASC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
+            .makeImmutable("indexId2");
         currentModifiedSnapshot
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
@@ -2120,8 +2271,14 @@ public class SnapshotMergerForIndexTest {
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .addMetaDocPartIndex("idxId2", false)
+            .addMetaDocPartIndex(false)
             .addMetaDocPartIndexColumn("fieldId2", FieldIndexOrdering.ASC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
+            .makeImmutable("indexId2");
         ImmutableMetaSnapshot currentSnapshot = currentModifiedSnapshot.immutableCopy();
         currentModifiedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
         currentModifiedSnapshot
@@ -2185,14 +2342,20 @@ public class SnapshotMergerForIndexTest {
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .addMetaDocPartIndex("idxId2", false)
+            .addMetaDocPartIndex(false)
             .addMetaDocPartIndexColumn("fieldId2", FieldIndexOrdering.ASC);
         currentModifiedSnapshot
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .getMetaDocPartIndexByIdentifier("idxId2")
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
             .addMetaDocPartIndexColumn("fieldId3", FieldIndexOrdering.ASC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
+            .makeImmutable("indexId2");
         ImmutableMetaSnapshot currentSnapshot = currentModifiedSnapshot.immutableCopy();
         currentModifiedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
         currentModifiedSnapshot
@@ -2261,14 +2424,20 @@ public class SnapshotMergerForIndexTest {
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .addMetaDocPartIndex("idxId2", false)
+            .addMetaDocPartIndex(false)
             .addMetaDocPartIndexColumn("fieldId2", FieldIndexOrdering.ASC);
         currentModifiedSnapshot
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .getMetaDocPartIndexByIdentifier("idxId2")
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
             .addMetaDocPartIndexColumn("fieldId3", FieldIndexOrdering.ASC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
+            .makeImmutable("indexId2");
         ImmutableMetaSnapshot currentSnapshot = currentModifiedSnapshot.immutableCopy();
         currentModifiedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
         currentModifiedSnapshot
@@ -2337,8 +2506,14 @@ public class SnapshotMergerForIndexTest {
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .addMetaDocPartIndex("idxId2", false)
+            .addMetaDocPartIndex(false)
             .addMetaDocPartIndexColumn("fieldId2", FieldIndexOrdering.ASC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
+            .makeImmutable("indexId2");
         ImmutableMetaSnapshot currentSnapshot = currentModifiedSnapshot.immutableCopy();
         currentModifiedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
         currentModifiedSnapshot
@@ -2401,14 +2576,20 @@ public class SnapshotMergerForIndexTest {
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .addMetaDocPartIndex("idxId2", false)
+            .addMetaDocPartIndex(false)
             .addMetaDocPartIndexColumn("fieldId2", FieldIndexOrdering.ASC);
         currentModifiedSnapshot
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .getMetaDocPartIndexByIdentifier("idxId2")
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
             .addMetaDocPartIndexColumn("fieldId3", FieldIndexOrdering.ASC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
+            .makeImmutable("indexId2");
         ImmutableMetaSnapshot currentSnapshot = currentModifiedSnapshot.immutableCopy();
         currentModifiedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
         currentModifiedSnapshot
@@ -2471,14 +2652,20 @@ public class SnapshotMergerForIndexTest {
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .addMetaDocPartIndex("idxId2", false)
+            .addMetaDocPartIndex(false)
             .addMetaDocPartIndexColumn("fieldId2", FieldIndexOrdering.ASC);
         currentModifiedSnapshot
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .getMetaDocPartIndexByIdentifier("idxId2")
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
             .addMetaDocPartIndexColumn("fieldId3", FieldIndexOrdering.ASC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
+            .makeImmutable("indexId2");
         ImmutableMetaSnapshot currentSnapshot = currentModifiedSnapshot.immutableCopy();
         currentModifiedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
         currentModifiedSnapshot
@@ -2753,8 +2940,14 @@ public class SnapshotMergerForIndexTest {
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .addMetaDocPartIndex("idxId2", false)
+            .addMetaDocPartIndex(false)
             .addMetaDocPartIndexColumn("fieldId2", FieldIndexOrdering.ASC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
+            .makeImmutable("indexId2");
         MutableMetaSnapshot changedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
         changedSnapshot
             .getMetaDatabaseByName("dbName1")
@@ -2806,14 +2999,20 @@ public class SnapshotMergerForIndexTest {
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .addMetaDocPartIndex("idxId2", false)
+            .addMetaDocPartIndex(false)
             .addMetaDocPartIndexColumn("fieldId12", FieldIndexOrdering.ASC);
         currentModifiedSnapshot
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .getMetaDocPartIndexByIdentifier("idxId2")
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
             .addMetaDocPartIndexColumn("fieldId13", FieldIndexOrdering.ASC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
+            .makeImmutable("indexId2");
         ImmutableMetaSnapshot currentSnapshot = currentModifiedSnapshot.immutableCopy();
         currentModifiedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
         currentModifiedSnapshot
@@ -2830,14 +3029,20 @@ public class SnapshotMergerForIndexTest {
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .addMetaDocPartIndex("idxId3", false)
+            .addMetaDocPartIndex(false)
             .addMetaDocPartIndexColumn("fieldId2", FieldIndexOrdering.ASC);
         currentModifiedSnapshot
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .getMetaDocPartIndexByIdentifier("idxId3")
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
             .addMetaDocPartIndexColumn("fieldId3", FieldIndexOrdering.ASC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
+            .makeImmutable("indexId3");
         MutableMetaSnapshot changedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
         changedSnapshot
             .getMetaDatabaseByName("dbName1")
@@ -2913,14 +3118,20 @@ public class SnapshotMergerForIndexTest {
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .addMetaDocPartIndex("idxId2", false)
+            .addMetaDocPartIndex(false)
             .addMetaDocPartIndexColumn("fieldId12", FieldIndexOrdering.ASC);
         currentModifiedSnapshot
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .getMetaDocPartIndexByIdentifier("idxId2")
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
             .addMetaDocPartIndexColumn("fieldId13", FieldIndexOrdering.ASC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
+            .makeImmutable("indexId2");
         ImmutableMetaSnapshot currentSnapshot = currentModifiedSnapshot.immutableCopy();
         currentModifiedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
         currentModifiedSnapshot
@@ -2937,14 +3148,20 @@ public class SnapshotMergerForIndexTest {
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .addMetaDocPartIndex("idxId3", false)
+            .addMetaDocPartIndex(false)
             .addMetaDocPartIndexColumn("fieldId2", FieldIndexOrdering.ASC);
         currentModifiedSnapshot
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .getMetaDocPartIndexByIdentifier("idxId3")
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
             .addMetaDocPartIndexColumn("fieldId3", FieldIndexOrdering.ASC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
+            .makeImmutable("indexId3");
         MutableMetaSnapshot changedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
         changedSnapshot
             .getMetaDatabaseByName("dbName1")
@@ -2991,8 +3208,14 @@ public class SnapshotMergerForIndexTest {
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .addMetaDocPartIndex("idxId2", false)
+            .addMetaDocPartIndex(false)
             .addMetaDocPartIndexColumn("fieldId2", FieldIndexOrdering.ASC);
+        changedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
+            .makeImmutable("indexId2");
 
         try {
             new SnapshotMerger(currentModifiedSnapshot.immutableCopy(), changedSnapshot).merge();
@@ -3034,14 +3257,20 @@ public class SnapshotMergerForIndexTest {
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .addMetaDocPartIndex("idxId2", false)
+            .addMetaDocPartIndex(false)
             .addMetaDocPartIndexColumn("fieldId12", FieldIndexOrdering.ASC);
         currentModifiedSnapshot
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .getMetaDocPartIndexByIdentifier("idxId2")
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
             .addMetaDocPartIndexColumn("fieldId13", FieldIndexOrdering.ASC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
+            .makeImmutable("indexId2");
         ImmutableMetaSnapshot currentSnapshot = currentModifiedSnapshot.immutableCopy();
         currentModifiedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
         currentModifiedSnapshot
@@ -3068,14 +3297,20 @@ public class SnapshotMergerForIndexTest {
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .addMetaDocPartIndex("idxId3", false)
+            .addMetaDocPartIndex(false)
             .addMetaDocPartIndexColumn("fieldId2", FieldIndexOrdering.ASC);
         changedSnapshot
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .getMetaDocPartIndexByIdentifier("idxId3")
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
             .addMetaDocPartIndexColumn("fieldId3", FieldIndexOrdering.ASC);
+        changedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
+            .makeImmutable("indexId3");
 
         try {
             new SnapshotMerger(currentModifiedSnapshot.immutableCopy(), changedSnapshot).merge();
@@ -3141,14 +3376,20 @@ public class SnapshotMergerForIndexTest {
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .addMetaDocPartIndex("idxId2", false)
+            .addMetaDocPartIndex(false)
             .addMetaDocPartIndexColumn("fieldId12", FieldIndexOrdering.ASC);
         currentModifiedSnapshot
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .getMetaDocPartIndexByIdentifier("idxId2")
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
             .addMetaDocPartIndexColumn("fieldId13", FieldIndexOrdering.ASC);
+        currentModifiedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
+            .makeImmutable("indexId2");
         ImmutableMetaSnapshot currentSnapshot = currentModifiedSnapshot.immutableCopy();
         currentModifiedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
         currentModifiedSnapshot
@@ -3175,14 +3416,20 @@ public class SnapshotMergerForIndexTest {
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .addMetaDocPartIndex("idxId3", false)
+            .addMetaDocPartIndex(false)
             .addMetaDocPartIndexColumn("fieldId2", FieldIndexOrdering.ASC);
         changedSnapshot
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .getMetaDocPartIndexByIdentifier("idxId3")
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
             .addMetaDocPartIndexColumn("fieldId3", FieldIndexOrdering.ASC);
+        changedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
+            .makeImmutable("indexId3");
 
         try {
             new SnapshotMerger(currentModifiedSnapshot.immutableCopy(), changedSnapshot).merge();
@@ -3221,25 +3468,26 @@ public class SnapshotMergerForIndexTest {
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
             .addMetaField("fieldName3", "fieldId3", FieldType.STRING);
-        currentModifiedSnapshot
+        changedSnapshot
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .addMetaDocPartIndex("idxId2", false)
+            .addMetaDocPartIndex(false)
             .addMetaDocPartIndexColumn("fieldId2", FieldIndexOrdering.ASC);
-        currentModifiedSnapshot
+        changedSnapshot
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .getMetaDocPartIndexByIdentifier("idxId2")
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
             .addMetaDocPartIndexColumn("fieldId3", FieldIndexOrdering.ASC);
+        changedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
+            .makeImmutable("indexId2");
 
-        try {
-            new SnapshotMerger(currentModifiedSnapshot.immutableCopy(), changedSnapshot).merge();
-            Assert.fail("A " + UnmergeableException.class.getSimpleName() + " was expected to be thrown");
-        } catch (UnmergeableException ex) {
-
-        }
+        new SnapshotMerger(currentModifiedSnapshot.immutableCopy(), changedSnapshot).merge();
     }
 
     /** 
@@ -3285,25 +3533,26 @@ public class SnapshotMergerForIndexTest {
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
             .addMetaField("fieldName3", "fieldId3", FieldType.STRING);
-        currentModifiedSnapshot
+        changedSnapshot
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .addMetaDocPartIndex("idxId2", false)
+            .addMetaDocPartIndex(false)
             .addMetaDocPartIndexColumn("fieldId2", FieldIndexOrdering.ASC);
-        currentModifiedSnapshot
+        changedSnapshot
             .getMetaDatabaseByName("dbName1")
             .getMetaCollectionByName("colName1")
             .getMetaDocPartByTableRef(tableRefFactory.createRoot())
-            .getMetaDocPartIndexByIdentifier("idxId2")
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
             .addMetaDocPartIndexColumn("fieldId3", FieldIndexOrdering.ASC);
+        changedSnapshot
+            .getMetaDatabaseByName("dbName1")
+            .getMetaCollectionByName("colName1")
+            .getMetaDocPartByTableRef(tableRefFactory.createRoot())
+            .getAddedMutableMetaDocPartIndexes().iterator().next()
+            .makeImmutable("indexId2");
 
-        try {
-            new SnapshotMerger(currentModifiedSnapshot.immutableCopy(), changedSnapshot).merge();
-            Assert.fail("A " + UnmergeableException.class.getSimpleName() + " was expected to be thrown");
-        } catch (UnmergeableException ex) {
-
-        }
+        new SnapshotMerger(currentModifiedSnapshot.immutableCopy(), changedSnapshot).merge();
     }
 
     /** 

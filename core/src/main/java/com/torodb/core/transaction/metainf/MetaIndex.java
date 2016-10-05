@@ -48,6 +48,8 @@ public interface MetaIndex {
     
     public abstract boolean isMatch(MetaDocPart docPart, List<String> identifiers, MetaDocPartIndex docPartIndex);
     
+    public abstract boolean isSubMatch(MetaDocPart docPart, List<String> identifiersSublist, MetaDocPartIndex docPartIndex);
+    
     public abstract boolean isMatch(MetaIndex index);
 
     public default String defautToString() {

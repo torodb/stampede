@@ -11,6 +11,8 @@ import java.util.regex.Pattern;
 
 import javax.inject.Inject;
 
+import org.jooq.lambda.tuple.Tuple2;
+
 import com.torodb.core.TableRef;
 import com.torodb.core.backend.IdentifierConstraints;
 import com.torodb.core.d2r.IdentifierFactory;
@@ -86,12 +88,13 @@ public class IdentifierFactoryImpl implements IdentifierFactory {
     }
 
     @Override
-    public String toIndexIdentifier(MetaDatabase metaDatabase, String tableName, Iterable<String> identifiers) {
+    public String toIndexIdentifier(MetaDatabase metaDatabase, String tableName, Iterable<Tuple2<String, Boolean>> columns) {
         NameChain nameChain = new NameChain(separatorString);
         nameChain.add(tableName);
         
-        for (String identifier : identifiers) {
-            nameChain.add(identifier);
+        for (Tuple2<String, Boolean> column : columns) {
+            nameChain.add(column.v1());
+            nameChain.add(column.v2()?"a":"d");
         }
         
         IdentifierChecker identifierChecker = new IndexIdentifierChecker(metaDatabase);

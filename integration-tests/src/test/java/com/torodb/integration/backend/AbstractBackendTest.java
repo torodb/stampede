@@ -48,6 +48,7 @@ import com.torodb.core.d2r.DocPartResult;
 import com.torodb.core.d2r.IdentifierFactory;
 import com.torodb.core.d2r.R2DTranslator;
 import com.torodb.core.document.ToroDocument;
+import com.torodb.core.exceptions.SystemException;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.impl.TableRefFactoryImpl;
 import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
@@ -152,11 +153,15 @@ public abstract class AbstractBackendTest {
         
         metaDocPart.streamIndexes().forEach(docPartIndex -> {
             MetaDocPartIndexColumn firstColumn = docPartIndex.iteratorColumns().next();
-            sqlInterface.getStructureInterface().createIndex(dsl, docPartIndex.getIdentifier(), data.database.getIdentifier(), metaDocPart.getIdentifier(), 
-                    ImmutableList.<Tuple2<String, Boolean>>builder()
-                        .add(new Tuple2<>(firstColumn.getIdentifier(), firstColumn.getOrdering().isAscending()))
-                        .build(), 
-                    docPartIndex.isUnique());
+            try {
+                sqlInterface.getStructureInterface().createIndex(dsl, docPartIndex.getIdentifier(), data.database.getIdentifier(), metaDocPart.getIdentifier(), 
+                        ImmutableList.<Tuple2<String, Boolean>>builder()
+                            .add(new Tuple2<>(firstColumn.getIdentifier(), firstColumn.getOrdering().isAscending()))
+                            .build(), 
+                        docPartIndex.isUnique());
+            } catch(UserException ex) {
+                throw new SystemException(ex);
+            }
         });
     }
     

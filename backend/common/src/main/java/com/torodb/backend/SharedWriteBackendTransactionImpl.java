@@ -25,7 +25,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.jooq.lambda.Seq;
 import org.jooq.lambda.tuple.Tuple2;
@@ -125,45 +127,80 @@ public class SharedWriteBackendTransactionImpl extends BackendTransactionImpl im
     }
 
     @Override
-    public void addField(MetaDatabase db, MetaCollection col, MutableMetaDocPart docPart, MetaField newField){
+    public void addField(MetaDatabase db, MetaCollection col, MutableMetaDocPart docPart, MetaField newField) throws UserException {
         Preconditions.checkState(!isClosed(), "This transaction is closed");
 
     	getSqlInterface().getMetaDataWriteInterface().addMetaField(getDsl(), db, col, docPart,
                 newField);
         getSqlInterface().getStructureInterface().addColumnToDocPartTable(getDsl(), db.getIdentifier(),
                 docPart.getIdentifier(), newField.getIdentifier(), getSqlInterface().getDataTypeProvider().getDataType(newField.getType()));
-        
+
         List<Tuple2<MetaIndex, List<String>>> missingIndexesParts = col.streamContainedMetaIndexes()
-                .filter(index -> index.streamTableRefs().anyMatch(tableRef -> tableRef.equals(docPart.getTableRef())))
-                .flatMap(index -> Seq.seq(index.iteratorMetaDocPartIndexesIdentifiers(docPart))
-                        .filter(identifiers -> identifiers.contains(newField.getIdentifier()) &&
-                                docPart.streamIndexes()
-                                        .noneMatch(docPartIndex -> index.isMatch(docPart, identifiers, docPartIndex)))
-                        .map(identifiers -> new Tuple2<MetaIndex, List<String>>(index, identifiers)))
-                .collect(Collectors.toList());
+            .filter(index -> index.getMetaIndexFieldByTableRefAndName(docPart.getTableRef(), newField.getName()) != null)
+            .flatMap(index -> Seq.seq(index.iteratorMetaDocPartIndexesIdentifiers(docPart))
+                    .filter(identifiers -> identifiers.contains(newField.getIdentifier()))
+                    .map(identifiers -> new Tuple2<MetaIndex,List<String>>(index, identifiers)))
+            .collect(Collectors.toList());
         
         for (Tuple2<MetaIndex, List<String>> missingIndexEntry : missingIndexesParts) {
             MetaIndex missingIndex = missingIndexEntry.v1();
             List<String> identifiers = missingIndexEntry.v2();
-            MutableMetaDocPartIndex docPartIndex = docPart.addMetaDocPartIndex(identifierFactory.toIndexIdentifier( 
-                    db, docPart.getIdentifier(), identifiers), 
-                    missingIndex.isUnique());
-            getSqlInterface().getMetaDataWriteInterface().addMetaDocPartIndex(getDsl(), db, col, docPart, docPartIndex);
-            
-            List<Tuple2<String, Boolean>> columnList = new ArrayList<>(docPartIndex.size());
-            Iterator<String> identifiersIterator = identifiers.iterator();
-            int position = 0;
-            while (identifiersIterator.hasNext()) {
-                MetaIndexField indexField = missingIndex.getMetaIndexFieldByTableRefAndPosition(docPart.getTableRef(), position++);
-                String identifier = identifiersIterator.next();
-                MetaDocPartIndexColumn docPartIndexColumn = docPartIndex.addMetaDocPartIndexColumn(identifier, indexField.getOrdering());
-                getSqlInterface().getMetaDataWriteInterface().addMetaDocPartIndexColumn(getDsl(), db, col, docPart, docPartIndex, docPartIndexColumn);
-                columnList.add(new Tuple2<>(docPartIndexColumn.getIdentifier(), docPartIndexColumn.getOrdering().isAscending()));
+            int position = identifiers.indexOf(newField.getIdentifier());
+            Optional<MutableMetaDocPartIndex> matchingMutableDocPartIndex = Seq.seq(docPart.getAddedMutableMetaDocPartIndexes())
+                    .filter(docPartIndex -> docPartIndex.getMetaDocPartIndexColumnByPosition(position) == null && 
+                        missingIndex.isSubMatch(docPart, identifiers, docPartIndex) &&
+                        // We ensure we do not pick a doc part index that fit a isSubMatch for our index but
+                        // was the only chance for another combination. For example:
+                        // 1. a_i, b_i, c_i are old fields
+                        // 2. a_s, b_s, c_s are new fields
+                        // 3. we have index a asc, b asc, c asc
+                        // 4. we added doc part index a_s asc, null, null and a_s asc, b_i asc, null
+                        // 5. we search for a sub match for a_s, b_i, c_s and found a_s asc, null, null
+                        noneNonCurrentAndNullIndexColumnIsNew(position, docPartIndex, docPart, identifiers))
+                    .findAny();
+            MutableMetaDocPartIndex docPartIndex;
+            if (matchingMutableDocPartIndex.isPresent()) {
+                docPartIndex = matchingMutableDocPartIndex.get();
+            } else {
+                docPartIndex = docPart.addMetaDocPartIndex(missingIndex.isUnique());
+                int index = 0;
+                for (String identifier : identifiers) {
+                    if (docPart.getAddedFieldByIdentifier(identifier) == null) {
+                        MetaIndexField indexField = missingIndex.getMetaIndexFieldByTableRefAndPosition(docPart.getTableRef(), index);
+                        docPartIndex.putMetaDocPartIndexColumn(index, identifier, indexField.getOrdering());
+                    }
+                    index++;
+                }
             }
-            
-            getSqlInterface().getStructureInterface().createIndex(getDsl(), docPartIndex.getIdentifier(), db.getIdentifier(), 
-                    docPart.getIdentifier(), columnList, docPartIndex.isUnique());
+            MetaIndexField indexField = missingIndex.getMetaIndexFieldByTableRefAndPosition(docPart.getTableRef(), position);
+            docPartIndex.putMetaDocPartIndexColumn(position, newField.getIdentifier(), indexField.getOrdering());
+            if (missingIndex.isMatch(docPart, identifiers, docPartIndex)) {
+                List<Tuple2<String, Boolean>> columnList = new ArrayList<>(docPartIndex.size());
+                for (String identifier : identifiers) {
+                    MetaDocPartIndexColumn docPartIndexColumn = docPartIndex.getMetaDocPartIndexColumnByIdentifier(identifier);
+                    columnList.add(new Tuple2<>(docPartIndexColumn.getIdentifier(), docPartIndexColumn.getOrdering().isAscending()));
+                }
+                docPartIndex.makeImmutable(identifierFactory.toIndexIdentifier(db, docPart.getIdentifier(), columnList));
+
+                getSqlInterface().getMetaDataWriteInterface().addMetaDocPartIndex(getDsl(), db, col, docPart, docPartIndex);
+
+                for (String identifier : identifiers) {
+                    MetaDocPartIndexColumn docPartIndexColumn = docPartIndex.getMetaDocPartIndexColumnByIdentifier(identifier);
+                    getSqlInterface().getMetaDataWriteInterface().addMetaDocPartIndexColumn(getDsl(), db, col, docPart, docPartIndex, docPartIndexColumn);
+                }
+                
+                getSqlInterface().getStructureInterface().createIndex(getDsl(), docPartIndex.getIdentifier(), db.getIdentifier(), 
+                        docPart.getIdentifier(), columnList, docPartIndex.isUnique());
+            }
         }
+    }
+
+    private boolean noneNonCurrentAndNullIndexColumnIsNew(int position, MutableMetaDocPartIndex docPartIndex,
+            MutableMetaDocPart docPart, List<String> identifiers) {
+        return IntStream.range(0, identifiers.size())
+            .noneMatch(index -> index != position && 
+                docPartIndex.getMetaDocPartIndexColumnByPosition(index) == null &&
+                docPart.getAddedFieldByIdentifier(identifiers.get(index)) == null);
     }
 
 	@Override
@@ -202,7 +239,7 @@ public class SharedWriteBackendTransactionImpl extends BackendTransactionImpl im
     }
 
     @Override
-    public void createIndex(MetaDatabase db, MutableMetaCollection col, MetaIndex index) {
+    public void createIndex(MetaDatabase db, MutableMetaCollection col, MetaIndex index) throws UserException {
         Preconditions.checkState(!isClosed(), "This transaction is closed");
 
         Preconditions.checkArgument(!index.isUnique() || index.streamTableRefs().count() == 1, 
@@ -219,7 +256,7 @@ public class SharedWriteBackendTransactionImpl extends BackendTransactionImpl im
         createMissingDocPartIndexes(db, col, index);
     }
 
-    private void createMissingDocPartIndexes(MetaDatabase db, MutableMetaCollection col, MetaIndex index) {
+    private void createMissingDocPartIndexes(MetaDatabase db, MutableMetaCollection col, MetaIndex index) throws UserException {
         Iterator<TableRef> tableRefIterator = index.streamTableRefs().iterator();
         while (tableRefIterator.hasNext()) {
             TableRef tableRef = tableRefIterator.next();
@@ -241,17 +278,23 @@ public class SharedWriteBackendTransactionImpl extends BackendTransactionImpl im
     }
 
     private void createIndex(MetaDatabase db, MetaCollection col, MetaIndex index, MutableMetaDocPart docPart,
-            List<String> identifiers) {
-        MutableMetaDocPartIndex docPartIndex = docPart.addMetaDocPartIndex(
-                identifierFactory.toIndexIdentifier(db, docPart.getIdentifier(), identifiers), index.isUnique());
-        getSqlInterface().getMetaDataWriteInterface().addMetaDocPartIndex(getDsl(), db, col, docPart, docPartIndex);
+            List<String> identifiers) throws UserException {
+        MutableMetaDocPartIndex docPartIndex = docPart.addMetaDocPartIndex(index.isUnique());
         Iterator<? extends MetaIndexField> indexFieldIterator = index.iteratorMetaIndexFieldByTableRef(docPart.getTableRef());
+        int position = 0;
         List<Tuple2<String, Boolean>> columnList = new ArrayList<>(identifiers.size());
         for (String identifier : identifiers) {
             MetaIndexField indexField = indexFieldIterator.next();
-            MetaDocPartIndexColumn docPartIndexColumn = docPartIndex.addMetaDocPartIndexColumn(identifier, indexField.getOrdering());
-            getSqlInterface().getMetaDataWriteInterface().addMetaDocPartIndexColumn(getDsl(), db, col, docPart, docPartIndex, docPartIndexColumn);
+            MetaDocPartIndexColumn docPartIndexColumn = docPartIndex.putMetaDocPartIndexColumn(position++, identifier, indexField.getOrdering());
             columnList.add(new Tuple2<>(docPartIndexColumn.getIdentifier(), docPartIndexColumn.getOrdering().isAscending()));
+        }
+        docPartIndex.makeImmutable(identifierFactory.toIndexIdentifier(db, docPart.getIdentifier(), columnList));
+
+        getSqlInterface().getMetaDataWriteInterface().addMetaDocPartIndex(getDsl(), db, col, docPart, docPartIndex);
+        
+        for (String identifier : identifiers) {
+            MetaDocPartIndexColumn docPartIndexColumn = docPartIndex.getMetaDocPartIndexColumnByIdentifier(identifier);
+            getSqlInterface().getMetaDataWriteInterface().addMetaDocPartIndexColumn(getDsl(), db, col, docPart, docPartIndex, docPartIndexColumn);
         }
         
         getSqlInterface().getStructureInterface().createIndex(

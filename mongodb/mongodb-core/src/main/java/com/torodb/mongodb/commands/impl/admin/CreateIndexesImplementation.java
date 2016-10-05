@@ -33,6 +33,7 @@ import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.IndexOptio
 import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.Request;
 import com.google.common.collect.ImmutableList;
+import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.language.AttributeReference;
 import com.torodb.core.language.AttributeReference.Key;
 import com.torodb.core.language.AttributeReference.ObjectKey;
@@ -47,16 +48,16 @@ public class CreateIndexesImplementation implements WriteTorodbCommandImpl<Creat
     @Override
     public Status<CreateIndexesResult> apply(Request req, Command<? super CreateIndexesArgument, ? super CreateIndexesResult> command,
             CreateIndexesArgument arg, WriteMongodTransaction context) {
-        boolean existsCollection = context.getTorodTransaction().existsCollection(req.getDatabase(), arg.getCollection());
-        if (!existsCollection) {
-            context.getTorodTransaction().createIndex(req.getDatabase(), arg.getCollection(), Constants.ID_INDEX, 
-                    ImmutableList.<IndexFieldInfo>of(new IndexFieldInfo(new AttributeReference(Arrays.asList(new Key[] { new ObjectKey(Constants.ID) })), FieldIndexOrdering.ASC.isAscending())), true);
-        }
-        
         int indexesBefore = (int) context.getTorodTransaction().getIndexesInfo(req.getDatabase(), arg.getCollection()).count();
         int indexesAfter = indexesBefore;
         
         try {
+            boolean existsCollection = context.getTorodTransaction().existsCollection(req.getDatabase(), arg.getCollection());
+            if (!existsCollection) {
+                context.getTorodTransaction().createIndex(req.getDatabase(), arg.getCollection(), Constants.ID_INDEX, 
+                        ImmutableList.<IndexFieldInfo>of(new IndexFieldInfo(new AttributeReference(Arrays.asList(new Key[] { new ObjectKey(Constants.ID) })), FieldIndexOrdering.ASC.isAscending())), true);
+            }
+            
             boolean createdCollectionAutomatically = !existsCollection;
             
             for (IndexOptions indexOptions : arg.getIndexesToCreate()) {
@@ -112,6 +113,8 @@ public class CreateIndexesImplementation implements WriteTorodbCommandImpl<Creat
             }
             
             return Status.ok(new CreateIndexesResult(indexesBefore, indexesAfter, note, createdCollectionAutomatically));
+        } catch(UserException ex) {
+            return Status.from(ErrorCode.COMMAND_FAILED, ex.getLocalizedMessage());
         } catch(CommandFailed ex) {
             return Status.from(ex);
         }

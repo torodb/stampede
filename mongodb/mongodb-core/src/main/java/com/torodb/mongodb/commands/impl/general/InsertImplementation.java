@@ -14,7 +14,6 @@ import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general
 import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.Request;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.language.AttributeReference;
 import com.torodb.core.language.AttributeReference.Key;
@@ -43,16 +42,16 @@ public class InsertImplementation implements WriteTorodbCommandImpl<InsertArgume
 
     @Override
     public Status<InsertResult> apply(Request req, Command<? super InsertArgument, ? super InsertResult> command, InsertArgument arg, WriteMongodTransaction context) {
-        if (!context.getTorodTransaction().existsCollection(req.getDatabase(), arg.getCollection())) {
-            context.getTorodTransaction().createIndex(req.getDatabase(), arg.getCollection(), Constants.ID_INDEX, 
-                    ImmutableList.<IndexFieldInfo>of(new IndexFieldInfo(new AttributeReference(Arrays.asList(new Key[] { new ObjectKey(Constants.ID) })), FieldIndexOrdering.ASC.isAscending())), true);
-        }
-        
     	mongodMetrics.getInserts().mark(arg.getDocuments().size());
     	Stream<KVDocument> docsToInsert = arg.getDocuments().stream().map(FromBsonValueTranslator.getInstance())
                 .map((v) -> (KVDocument)v);
 
         try {
+            if (!context.getTorodTransaction().existsCollection(req.getDatabase(), arg.getCollection())) {
+                context.getTorodTransaction().createIndex(req.getDatabase(), arg.getCollection(), Constants.ID_INDEX, 
+                        ImmutableList.<IndexFieldInfo>of(new IndexFieldInfo(new AttributeReference(Arrays.asList(new Key[] { new ObjectKey(Constants.ID) })), FieldIndexOrdering.ASC.isAscending())), true);
+            }
+            
             context.getTorodTransaction().insert(req.getDatabase(), arg.getCollection(), docsToInsert);
         } catch (UserException ex) {
             //TODO: Improve error reporting

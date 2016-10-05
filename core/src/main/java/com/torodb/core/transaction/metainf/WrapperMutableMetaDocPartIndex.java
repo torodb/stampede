@@ -25,41 +25,74 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.IntStream;
 import java.util.function.Consumer;
 
-import org.jooq.lambda.Seq;
-
+import com.google.common.base.Preconditions;
 import com.torodb.core.annotations.DoNotChange;
 import com.torodb.core.transaction.metainf.ImmutableMetaDocPartIndex.Builder;
 
 /**
  *
  */
-public class WrapperMutableMetaDocPartIndex implements MutableMetaDocPartIndex {
+public class WrapperMutableMetaDocPartIndex extends AbstractMetaDocPartIndex implements MutableMetaDocPartIndex {
 
-    private final ImmutableMetaDocPartIndex wrapped;
     /**
      * This table contains all fields contained by wrapper and all new fields
      */
-    private final Map<String, ImmutableMetaDocPartIndexColumn> newColumns;
+    private final Map<String, ImmutableMetaDocPartIndexColumn> addedColumnsByIdentifier;
     /**
      * This list just contains the fields that have been added on this wrapper but not on the
      * wrapped object.
      */
     private final List<ImmutableMetaDocPartIndexColumn> addedColumns;
     private final Consumer<WrapperMutableMetaDocPartIndex> changeConsumer;
+    
+    private String identifier;
+    private boolean mutable = true;
 
-    public WrapperMutableMetaDocPartIndex(ImmutableMetaDocPartIndex wrapped,
-            Consumer<WrapperMutableMetaDocPartIndex> changeConsumer) {
-        this.wrapped = wrapped;
+    public WrapperMutableMetaDocPartIndex(ImmutableMetaDocPartIndex docPartIndex, Consumer<WrapperMutableMetaDocPartIndex> changeConsumer) {
+        this(docPartIndex.getIdentifier(), docPartIndex.isUnique(), changeConsumer);
         
-        newColumns = new HashMap<>();
+        makeImmutable(docPartIndex.getIdentifier());
+    }
 
-        wrapped.iteratorColumns().forEachRemaining((column) ->
-            newColumns.put(column.getIdentifier(), column)
-        );
+    public WrapperMutableMetaDocPartIndex(boolean unique, Consumer<WrapperMutableMetaDocPartIndex> changeConsumer) {
+        this(null, unique, changeConsumer);
+    }
+
+    private WrapperMutableMetaDocPartIndex(String identifier, boolean unique, Consumer<WrapperMutableMetaDocPartIndex> changeConsumer) {
+        super(identifier, unique);
+        addedColumnsByIdentifier = new HashMap<>();
         addedColumns = new ArrayList<>();
         this.changeConsumer = changeConsumer;
+    }
+
+    @Override
+    public String getIdentifier() {
+        Preconditions.checkArgument(!mutable, "Must be immutable to be read");
+        return identifier;
+    }
+
+    @Override
+    public ImmutableMetaDocPartIndexColumn putMetaDocPartIndexColumn(int position, String identifier, FieldIndexOrdering ordering) throws
+            IllegalArgumentException {
+        Preconditions.checkArgument(this.mutable, "This object has been marked as immutable");
+        if (getMetaDocPartIndexColumnByIdentifier(identifier) != null) {
+            throw new IllegalArgumentException("There is another column with the identifier " + identifier);
+        }
+        if (getMetaDocPartIndexColumnByPosition(position) != null) {
+            throw new IllegalArgumentException("There is another column with the position " + position);
+        }
+
+        ImmutableMetaDocPartIndexColumn newField = new ImmutableMetaDocPartIndexColumn(position, identifier, ordering);
+        addedColumnsByIdentifier.put(identifier, newField);
+        if (addedColumns.size() <= position) {
+            IntStream.range(addedColumns.size(), position + 1)
+                .forEach(index -> addedColumns.add(null));
+        }
+        addedColumns.set(position, newField);
+        return newField;
     }
 
     @Override
@@ -70,9 +103,8 @@ public class WrapperMutableMetaDocPartIndex implements MutableMetaDocPartIndex {
         }
 
         ImmutableMetaDocPartIndexColumn newField = new ImmutableMetaDocPartIndexColumn(size(), identifier, ordering);
-        newColumns.put(identifier, newField);
+        addedColumnsByIdentifier.put(identifier, newField);
         addedColumns.add(newField);
-        changeConsumer.accept(this);
         return newField;
     }
 
@@ -84,56 +116,51 @@ public class WrapperMutableMetaDocPartIndex implements MutableMetaDocPartIndex {
 
     @Override
     public ImmutableMetaDocPartIndex immutableCopy() {
-        if (addedColumns.isEmpty()) {
-            return wrapped;
+        Preconditions.checkArgument(!mutable, "Must be marked immutable");
+        ImmutableMetaDocPartIndex.Builder builder = new Builder(this);
+        for (ImmutableMetaDocPartIndexColumn addedField : addedColumns) {
+            builder.add(addedField);
         }
-        else {
-            ImmutableMetaDocPartIndex.Builder builder = new Builder(wrapped);
-            for (ImmutableMetaDocPartIndexColumn addedField : addedColumns) {
-                builder.add(addedField);
-            }
-            return builder.build();
-        }
+        return builder.build();
     }
 
-    @Override
-    public String getIdentifier() {
-        return wrapped.getIdentifier();
-    }
-
-    @Override
-    public boolean isUnique() {
-        return wrapped.isUnique();
-    }
-    
     @Override
     public int size() {
-        return newColumns.size();
+        return addedColumnsByIdentifier.size();
     }
 
     @Override
     public Iterator<? extends ImmutableMetaDocPartIndexColumn> iteratorColumns() {
-        return Seq.seq(wrapped.iteratorColumns())
-                .concat(addedColumns.stream())
-                .iterator();
+        return addedColumns.iterator();
     }
 
     @Override
     public ImmutableMetaDocPartIndexColumn getMetaDocPartIndexColumnByIdentifier(String columnName) {
-        return newColumns.get(columnName);
+        return addedColumnsByIdentifier.get(columnName);
     }
 
     @Override
     public MetaDocPartIndexColumn getMetaDocPartIndexColumnByPosition(int position) {
-        if (position < wrapped.size()) {
-            return wrapped.getMetaDocPartIndexColumnByPosition(position);
+        if (position >= addedColumns.size()) {
+            return null;
         }
-        return addedColumns.get(position - wrapped.size());
+        return addedColumns.get(position);
     }
 
     @Override
-    public boolean hasSameColumns(MetaDocPartIndex docPartIndex) {
-        return wrapped.hasSameColumns(this, iteratorColumns());
+    public boolean isMutable() {
+        return mutable;
+    }
+
+    @Override
+    public void makeImmutable(String identifier) {
+        Preconditions.checkArgument(mutable, "Yet immutable");
+        Preconditions.checkArgument(addedColumnsByIdentifier.size() == addedColumns.size(), 
+                "Some columns are missing. Found %s but they should be %s", 
+                addedColumnsByIdentifier.size(), addedColumns.size());
+        this.identifier = identifier;
+        this.mutable = false;
+        changeConsumer.accept(this);
     }
 
     @Override

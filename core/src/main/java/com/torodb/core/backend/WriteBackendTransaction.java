@@ -104,7 +104,7 @@ public interface WriteBackendTransaction extends BackendTransaction {
      * @param newField the field to add
      * @throws RollbackException
      */
-    public void addField(MetaDatabase db, MetaCollection col, MutableMetaDocPart docPart, MetaField newField) throws RollbackException;
+    public void addField(MetaDatabase db, MetaCollection col, MutableMetaDocPart docPart, MetaField newField) throws UserException, RollbackException;
 
     /**
      * @param db        the database that contains the given collection. It must have been added
@@ -150,7 +150,7 @@ public interface WriteBackendTransaction extends BackendTransaction {
      * @param col
      * @param index
      */
-    public void createIndex(MetaDatabase db, MutableMetaCollection col, MetaIndex index);
+    public void createIndex(MetaDatabase db, MutableMetaCollection col, MetaIndex index) throws UserException;
     
     /**
      * Drop a logical index on doc part. Physical indexes that satisfy logical index definition and are not used by other logical indexes will be dropped.

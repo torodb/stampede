@@ -30,9 +30,6 @@ public interface MutableMetaDocPart extends MetaDocPart {
     @Override
     public abstract Stream<? extends MetaDocPartIndex> streamIndexes();
 
-    @Override
-    public MutableMetaDocPartIndex getMetaDocPartIndexByIdentifier(String indexId);
-
     /**
      * Adds a new field to this table.
      *
@@ -57,19 +54,19 @@ public interface MutableMetaDocPart extends MetaDocPart {
 
     @DoNotChange
     public abstract Iterable<? extends ImmutableMetaField> getAddedMetaFields();
+    
+    public abstract ImmutableMetaField getAddedFieldByIdentifier(String identifier);
 
     @DoNotChange
     public abstract Iterable<? extends ImmutableMetaScalar> getAddedMetaScalars();
 
     /**
-     * Add an index to this doc part
-     * @param indexId
+     * Add a non existent index to this doc part
+     * 
      * @param unique
      * @return
-     * @throws IllegalArgumentException if this table already contains an index with the
-     *                                          same identifier
      */
-    public abstract MutableMetaDocPartIndex addMetaDocPartIndex(String indexId, boolean unique) throws IllegalArgumentException;
+    public abstract MutableMetaDocPartIndex addMetaDocPartIndex(boolean unique);
 
     /**
      * Remove an index from this doc part
@@ -79,7 +76,10 @@ public interface MutableMetaDocPart extends MetaDocPart {
     public boolean removeMetaDocPartIndexByIdentifier(String indexId);
     
     @DoNotChange
-    public Iterable<Tuple2<MutableMetaDocPartIndex, MetaElementState>> getModifiedMetaDocPartIndexes();
-
+    public Iterable<Tuple2<ImmutableMetaDocPartIndex, MetaElementState>> getModifiedMetaDocPartIndexes();
+    
+    @DoNotChange
+    public Iterable<MutableMetaDocPartIndex> getAddedMutableMetaDocPartIndexes();
+    
     public abstract ImmutableMetaDocPart immutableCopy();
 }

@@ -177,10 +177,16 @@ public class ImmutableMetaIndex implements MetaIndex {
     @Override
     public boolean isMatch(MetaDocPart docPart, List<String> identifiers, MetaDocPartIndex docPartIndex) {
         return isMatch(docPart, identifiers, docPartIndex, 
-                iteratorMetaIndexFieldByTableRef(docPart.getTableRef()));
+                iteratorMetaIndexFieldByTableRef(docPart.getTableRef()), false);
+    }
+    
+    @Override
+    public boolean isSubMatch(MetaDocPart docPart, List<String> identifiersSublist, MetaDocPartIndex docPartIndex) {
+        return isMatch(docPart, identifiersSublist, docPartIndex, 
+                iteratorMetaIndexFieldByTableRef(docPart.getTableRef()), true);
     }
 
-    protected boolean isMatch(MetaDocPart docPart, List<String> identifiers, MetaDocPartIndex docPartIndex, Iterator<? extends MetaIndexField> indexFieldIterator) {
+    protected boolean isMatch(MetaDocPart docPart, List<String> identifiers, MetaDocPartIndex docPartIndex, Iterator<? extends MetaIndexField> indexFieldIterator, boolean isSubMatch) {
         if (isUnique() != docPartIndex.isUnique()) {
             return false;
         }
@@ -189,22 +195,33 @@ public class ImmutableMetaIndex implements MetaIndex {
             return false;
         }
         
+        if (isSubMatch && identifiers.isEmpty()) {
+            return true;
+        }
+        
         Iterator<? extends MetaDocPartIndexColumn> fieldIndexIterator = 
                 docPartIndex.iteratorColumns();
         Iterator<String> identifiersIterator = identifiers.iterator();
         while (indexFieldIterator.hasNext() && 
-                fieldIndexIterator.hasNext() &&
+                (isSubMatch || fieldIndexIterator.hasNext()) &&
                 identifiersIterator.hasNext()) {
             MetaIndexField indexField = indexFieldIterator.next();
-            MetaDocPartIndexColumn indexColumn = fieldIndexIterator.next();
+            MetaDocPartIndexColumn indexColumn = isSubMatch ? fieldIndexIterator.hasNext() ? fieldIndexIterator.next() : null : 
+                fieldIndexIterator.next();
             String identifier = identifiersIterator.next();
-            if (!indexField.isMatch(docPart, identifier, indexColumn)) {
-                return false;
+            if (indexColumn == null) {
+                if (!isSubMatch) {
+                    return false;
+                }
+            } else {
+                if (!indexField.isMatch(docPart, identifier, indexColumn)) {
+                    return false;
+                }
             }
         }
         
-        return !indexFieldIterator.hasNext() && 
-                !fieldIndexIterator.hasNext() &&
+        return (isSubMatch || !indexFieldIterator.hasNext() && 
+                !fieldIndexIterator.hasNext()) &&
                 !identifiersIterator.hasNext();
     }
     
@@ -234,12 +251,12 @@ public class ImmutableMetaIndex implements MetaIndex {
     }
 
     protected Iterator<List<String>> iteratorMetaDocPartIndexesIdentifiers(MetaDocPart docPart, Iterator<? extends MetaIndexField> indexFieldIterator) {
-        List<List<String>> docPartIndexesIdentifiers = new ArrayList<>();
+        List<List<String>> docPartIndexesIdentifiers = new ArrayList<>((int) Math.pow(2, size()));
         while (indexFieldIterator.hasNext()) {
             MetaIndexField indexField = indexFieldIterator.next();
-            cartesianAppend(docPartIndexesIdentifiers, docPart.streamFields()
-                .filter(field -> field.getName().equals(indexField.getName()))
-                .collect(Collectors.toList()));
+            cartesianAppend(docPartIndexesIdentifiers, 
+                docPart.streamMetaFieldByName(indexField.getName())
+                    .collect(Collectors.toList()));
         }
         return docPartIndexesIdentifiers.iterator();
     }
