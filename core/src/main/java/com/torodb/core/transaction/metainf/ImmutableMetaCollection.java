@@ -126,7 +126,11 @@ public class ImmutableMetaCollection implements MetaCollection {
             .flatMap(index -> Seq.seq(index.iteratorMetaDocPartIndexesIdentifiers(docPart))
                     .filter(identifiers -> identifiers.contains(newField.getIdentifier()))
                     .map(identifiers -> new Tuple2<MetaIndex,List<String>>(index, identifiers)))
-            .collect(Collectors.toList());
+            .collect(Collectors.groupingBy(missingIndexEntry -> missingIndexEntry.v2()))
+                .entrySet()
+                .stream()
+                .map(groupedMissingIndexEntries -> groupedMissingIndexEntries.getValue().get(0))
+                .collect(Collectors.toList());
     }
    
     public static class Builder {
