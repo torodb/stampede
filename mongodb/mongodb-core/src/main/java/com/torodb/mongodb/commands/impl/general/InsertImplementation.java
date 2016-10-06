@@ -57,10 +57,12 @@ public class InsertImplementation implements WriteTorodbCommandImpl<InsertArgume
     }
 
     private void logInsertCommand(InsertArgument arg) {
-        String collection = arg.getCollection();
-        String documents = arg.getDocuments().toString();
+        if (LOGGER.isTraceEnabled()) {
+            String collection = arg.getCollection();
+            String documents = arg.getDocuments().toString();
 
-        LOGGER.trace("Insert into {} values {}", collection, documents);
+            LOGGER.trace("Insert into {} values {}", collection, documents);
+        }
     }
 
 }

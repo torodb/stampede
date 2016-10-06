@@ -80,12 +80,14 @@ public class DeleteImplementation implements WriteTorodbCommandImpl<DeleteArgume
     }
 
     private void logDeleteCommand(DeleteArgument arg) {
-        String collection = arg.getCollection();
-        String filter = StreamSupport.stream(arg.getStatements().spliterator(), false)
-                .map(statement -> statement.getQuery().toString())
-                .collect(Collectors.joining(","));
+        if (LOGGER.isTraceEnabled()) {
+            String collection = arg.getCollection();
+            String filter = StreamSupport.stream(arg.getStatements().spliterator(), false)
+                    .map(statement -> statement.getQuery().toString())
+                    .collect(Collectors.joining(","));
 
-        LOGGER.trace("Delete from {} filter {}", collection, filter);
+            LOGGER.trace("Delete from {} filter {}", collection, filter);
+        }
     }
 
 }
