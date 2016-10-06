@@ -26,6 +26,8 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jooq.lambda.tuple.Tuple2;
 
 import com.google.common.base.Preconditions;
@@ -51,6 +53,8 @@ import com.torodb.core.transaction.metainf.MutableMetaDocPart;
 import com.torodb.core.transaction.metainf.MutableMetaDocPartIndex;
 
 public class SharedWriteBackendTransactionImpl extends BackendTransactionImpl implements SharedWriteBackendTransaction {
+
+    private static final Logger LOGGER = LogManager.getLogger(SharedWriteBackendTransactionImpl.class);
 
     private final IdentifierFactory identifierFactory;
 
@@ -112,13 +116,19 @@ public class SharedWriteBackendTransactionImpl extends BackendTransactionImpl im
     	if (tableRef.isRoot()) {
             getSqlInterface().getStructureInterface().createRootDocPartTable(getDsl(), db.getIdentifier(), newDocPart.getIdentifier(), tableRef);
             getSqlInterface().getStructureInterface().streamRootDocPartTableIndexesCreation(db.getIdentifier(), newDocPart.getIdentifier(), tableRef)
-                    .forEach(consumer -> consumer.accept(getDsl()));
+                    .forEach(consumer -> { 
+                        String index = consumer.apply(getDsl()); 
+                        LOGGER.info("Created internal index {} for table {}", index, newDocPart.getIdentifier());
+                    });
     	} else {
             getSqlInterface().getStructureInterface().createDocPartTable(getDsl(), db.getIdentifier(), newDocPart.getIdentifier(), tableRef,
                     col.getMetaDocPartByTableRef(tableRef.getParent().get()).getIdentifier());
             getSqlInterface().getStructureInterface().streamDocPartTableIndexesCreation(db.getIdentifier(), newDocPart.getIdentifier(), tableRef,
                     col.getMetaDocPartByTableRef(tableRef.getParent().get()).getIdentifier())
-                    .forEach(consumer -> consumer.accept(getDsl()));;
+                    .forEach(consumer -> { 
+                        String index = consumer.apply(getDsl()); 
+                        LOGGER.info("Created internal index {} for table {}", index, newDocPart.getIdentifier());
+                    });
     	}
     }
 
@@ -146,17 +156,18 @@ public class SharedWriteBackendTransactionImpl extends BackendTransactionImpl im
                     MetaDocPartIndexColumn docPartIndexColumn = docPartIndex.getMetaDocPartIndexColumnByIdentifier(identifier);
                     columnList.add(new Tuple2<>(docPartIndexColumn.getIdentifier(), docPartIndexColumn.getOrdering().isAscending()));
                 }
-                MetaIdentifiedDocPartIndex namedDocPartIndex = docPartIndex.immutableCopy(identifierFactory.toIndexIdentifier(db, docPart.getIdentifier(), columnList));
+                MetaIdentifiedDocPartIndex identifiedDocPartIndex = docPartIndex.immutableCopy(identifierFactory.toIndexIdentifier(db, docPart.getIdentifier(), columnList));
 
-                getSqlInterface().getMetaDataWriteInterface().addMetaDocPartIndex(getDsl(), db, col, docPart, namedDocPartIndex);
+                getSqlInterface().getMetaDataWriteInterface().addMetaDocPartIndex(getDsl(), db, col, docPart, identifiedDocPartIndex);
 
                 for (String identifier : identifiers) {
                     MetaDocPartIndexColumn docPartIndexColumn = docPartIndex.getMetaDocPartIndexColumnByIdentifier(identifier);
-                    getSqlInterface().getMetaDataWriteInterface().addMetaDocPartIndexColumn(getDsl(), db, col, docPart, namedDocPartIndex, docPartIndexColumn);
+                    getSqlInterface().getMetaDataWriteInterface().addMetaDocPartIndexColumn(getDsl(), db, col, docPart, identifiedDocPartIndex, docPartIndexColumn);
                 }
                 
-                getSqlInterface().getStructureInterface().createIndex(getDsl(), namedDocPartIndex.getIdentifier(), db.getIdentifier(), 
+                getSqlInterface().getStructureInterface().createIndex(getDsl(), identifiedDocPartIndex.getIdentifier(), db.getIdentifier(), 
                         docPart.getIdentifier(), columnList, docPartIndex.isUnique());
+                LOGGER.info("Created index {} for table {} associated to logical index {}.{}.{}", identifiedDocPartIndex.getIdentifier(), docPart.getIdentifier(), db.getName(), col.getName(), missingIndex.getName());
             }
         }
     }
@@ -246,18 +257,19 @@ public class SharedWriteBackendTransactionImpl extends BackendTransactionImpl im
             MetaDocPartIndexColumn docPartIndexColumn = docPartIndex.putMetaDocPartIndexColumn(position++, identifier, indexField.getOrdering());
             columnList.add(new Tuple2<>(docPartIndexColumn.getIdentifier(), docPartIndexColumn.getOrdering().isAscending()));
         }
-        MetaIdentifiedDocPartIndex namedDocPartIndex = docPartIndex.immutableCopy(identifierFactory.toIndexIdentifier(db, docPart.getIdentifier(), columnList));
+        MetaIdentifiedDocPartIndex identifiedDocPartIndex = docPartIndex.immutableCopy(identifierFactory.toIndexIdentifier(db, docPart.getIdentifier(), columnList));
 
-        getSqlInterface().getMetaDataWriteInterface().addMetaDocPartIndex(getDsl(), db, col, docPart, namedDocPartIndex);
+        getSqlInterface().getMetaDataWriteInterface().addMetaDocPartIndex(getDsl(), db, col, docPart, identifiedDocPartIndex);
         
         for (String identifier : identifiers) {
             MetaDocPartIndexColumn docPartIndexColumn = docPartIndex.getMetaDocPartIndexColumnByIdentifier(identifier);
-            getSqlInterface().getMetaDataWriteInterface().addMetaDocPartIndexColumn(getDsl(), db, col, docPart, namedDocPartIndex, docPartIndexColumn);
+            getSqlInterface().getMetaDataWriteInterface().addMetaDocPartIndexColumn(getDsl(), db, col, docPart, identifiedDocPartIndex, docPartIndexColumn);
         }
         
         getSqlInterface().getStructureInterface().createIndex(
-                getDsl(), namedDocPartIndex.getIdentifier(), db.getIdentifier(), docPart.getIdentifier(), 
+                getDsl(), identifiedDocPartIndex.getIdentifier(), db.getIdentifier(), docPart.getIdentifier(), 
                 columnList, index.isUnique());
+        LOGGER.info("Created index {} for table {} associated to logical index {}.{}.{}", identifiedDocPartIndex.getIdentifier(), docPart.getIdentifier(), db.getName(), col.getName(), index.getName());
     }
 
     @Override
@@ -281,6 +293,7 @@ public class SharedWriteBackendTransactionImpl extends BackendTransactionImpl im
                                     otherIndex.isCompatible(docPart, docPartIndex));
                         if (!existsAnyOtherCompatibleIndex) {
                             dropIndex(db, col, docPart, docPartIndex);
+                            LOGGER.info("Dropped index {} for table {}", docPartIndex.getIdentifier(), docPart.getIdentifier());
                         }
                     }
                 }

@@ -1,7 +1,7 @@
 package com.torodb.backend;
 
 import java.util.List;
-import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 import javax.annotation.Nonnull;
@@ -37,11 +37,11 @@ public interface StructureInterface {
      * @return
      * @see DbBackend#includeInternalIndexes()
      */
-    Stream<Consumer<DSLContext>> streamRootDocPartTableIndexesCreation(String schemaName, String tableName, TableRef tableRef);
+    Stream<Function<DSLContext, String>> streamRootDocPartTableIndexesCreation(String schemaName, String tableName, TableRef tableRef);
     
     /**
-     * Returns a stream of consumers that, when executed, creates the required indexes on a doc part
-     * table.
+     * Returns a stream of functions that, when executed, creates the required indexes on a doc part
+     * table and return a label that indicate the type of index created.
      *
      * The returned stream is empty if the backend is not including the internal indexes
      * @param schemaName
@@ -51,19 +51,19 @@ public interface StructureInterface {
      * @return
      * @see DbBackend#includeInternalIndexes()
      */
-    Stream<Consumer<DSLContext>> streamDocPartTableIndexesCreation(String schemaName, String tableName, TableRef tableRef, String foreignTableName);
+    Stream<Function<DSLContext, String>> streamDocPartTableIndexesCreation(String schemaName, String tableName, TableRef tableRef, String foreignTableName);
     void addColumnToDocPartTable(@Nonnull DSLContext dsl, @Nonnull String schemaName, @Nonnull String tableName, @Nonnull String columnName, @Nonnull DataTypeForKV<?> dataType);
 
     /**
-     * Returns a stream of consumers that, when executed, executes backend specific tasks that
-     * should be done once the data insert mode finishes.
+     * Returns a stream of functions that, when executed, executes backend specific tasks that
+     * should be done once the data insert mode finishes and return a label that indicate the type of operation executed.
      *
      * For example, PostgreSQL backend would like to run analyze on the modified tables to get some
      * stadistics.
      * @param snapshot
      * @return
      */
-    public Stream<Consumer<DSLContext>> streamDataInsertFinishTasks(MetaSnapshot snapshot);
+    public Stream<Function<DSLContext, String>> streamDataInsertFinishTasks(MetaSnapshot snapshot);
     
     void createIndex(@Nonnull DSLContext dsl, @Nonnull String indexName, @Nonnull String tableSchema, 
             @Nonnull String tableName, @Nonnull List<Tuple2<String, Boolean>> columnList, boolean unique) throws UserException;

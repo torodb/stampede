@@ -23,6 +23,7 @@ package com.torodb.backend.postgresql;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 import javax.annotation.Nonnull;
@@ -208,7 +209,7 @@ public class PostgreSQLStructureInterface extends AbstractStructureInterface {
     }
 
     @Override
-    public Stream<Consumer<DSLContext>> streamDataInsertFinishTasks(MetaSnapshot snapshot) {
+    public Stream<Function<DSLContext, String>> streamDataInsertFinishTasks(MetaSnapshot snapshot) {
         return snapshot.streamMetaDatabases().flatMap(
                 db -> db.streamMetaCollections().flatMap(
                         col -> col.streamContainedMetaDocParts().map(
@@ -218,11 +219,12 @@ public class PostgreSQLStructureInterface extends AbstractStructureInterface {
         );
     }
 
-    private Consumer<DSLContext> createAnalyzeConsumer(MetaDatabase db, MetaCollection col, MetaDocPart docPart) {
+    private Function<DSLContext, String> createAnalyzeConsumer(MetaDatabase db, MetaCollection col, MetaDocPart docPart) {
         return dsl -> {
             SqlBuilder sb = new SqlBuilder("ANALYZE ")
                     .table(db.getIdentifier(), docPart.getIdentifier());
             dsl.execute(sb.toString());
+            return "analyze table " + docPart.getIdentifier();
         };
     }
 }
