@@ -65,7 +65,7 @@ public class ContinuousOplogFetcherTest {
     @Spy
     private SyncSourceProvider syncSourceProvider = new MockedSyncSourceProvider();
     @Spy
-    private Retrier retrier = new SmartRetrier(i -> i > 10, i -> i > 10, i -> i > 10, i -> i > 10);
+    private Retrier retrier = new SmartRetrier(i -> i > 10, i -> i > 10, i -> i > 10, i -> i > 10, (a, m) -> (1 + m) * a);
     private ReplMetrics metrics = new ReplMetrics(new DisabledMetricRegistry());
     private final ContinuousOplogFetcherFactory factory = new ContinuousOplogFetcherFactory() {
         @Override

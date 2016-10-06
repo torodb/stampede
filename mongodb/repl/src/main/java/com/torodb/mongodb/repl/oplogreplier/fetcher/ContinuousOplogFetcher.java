@@ -299,7 +299,10 @@ public class ContinuousOplogFetcher implements OplogFetcher {
                 cursor.close();
                 cursor = null;
             }
-            oplogReader = null;
+            if (oplogReader != null) {
+                oplogReader.close();
+                oplogReader = null;
+            }
         }
 
         private void updateState(List<OplogOperation> fetchedOps, long fetchTime) {

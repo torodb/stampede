@@ -28,12 +28,15 @@ import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.interna
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.ReplicaSetConfig;
 import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.google.common.net.HostAndPort;
+import com.torodb.common.util.ThreadFactoryIdleService;
 import com.torodb.mongodb.repl.guice.ReplSetName;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ThreadFactory;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.GuardedBy;
 import javax.inject.Inject;
@@ -47,35 +50,91 @@ import org.apache.logging.log4j.Logger;
  *
  */
 @Singleton
-class TopologyHeartbeatHandler {
+public class TopologyHeartbeatHandler extends ThreadFactoryIdleService {
     private static final Logger LOGGER = LogManager.getLogger(TopologyHeartbeatHandler.class);
     private static final Duration POST_ERROR_HB_DELAY = Duration.ofSeconds(2);
 
+    private final HostAndPort seed;
     private final Clock clock;
     private final String replSetName;
     private final HeartbeatNetworkHandler networkHandler;
     private final TopologyExecutor executor;
     private final TopologyErrorHandler errorHandler;
+    private final VersionChangeListener versionChangeListener;
+    @GuardedBy("executor")
+    private boolean stopped;
 
     @Inject
     public TopologyHeartbeatHandler(Clock clock, @ReplSetName String replSetName,
             HeartbeatNetworkHandler heartbeatSender, TopologyExecutor executor,
-            TopologyErrorHandler errorHandler) {
+            TopologyErrorHandler errorHandler, ThreadFactory threadFactory,
+            HostAndPort seed) {
+        super(threadFactory);
         this.clock = clock;
         this.replSetName = replSetName;
         this.networkHandler = heartbeatSender;
         this.executor = executor;
         this.errorHandler = errorHandler;
+        this.versionChangeListener = this::scheduleHeartbeats;
+        this.seed = seed;
     }
 
-    public CompletableFuture<Status<?>> start(HostAndPort seed) {
+    @Override
+    protected final String serviceName() {
+        return "Heartbeat handler";
+    }
+
+    @Override
+    protected void startUp() throws Exception {
+        LOGGER.debug("Starting up {}", serviceName());
+
+        boolean finished = false;
+        while (!finished) {
+            finished = start(seed)
+                    .handle(this::checkHeartbeatStarted)
+                    .join();
+            if (!finished) {
+                LOGGER.debug("Retrying to start heartbeats in 1 second");
+                Thread.sleep(1000);
+            }
+        }
+        
+        LOGGER.debug("{} has been started up", serviceName());
+    }
+
+    @Override
+    protected void shutDown() throws Exception {
+        LOGGER.debug("Shutting down {}", serviceName());
+        executor.onAnyVersion()
+                .consumeAsync(coord -> stopped = true)
+                .join();
+        LOGGER.debug("{} has been shutted down", serviceName());
+    }
+
+    private boolean checkHeartbeatStarted(Status<?> status, Throwable t) {
+        if (t == null) {
+            if (status.isOk()) {
+                LOGGER.trace("Heartbeat started correctly");
+                return true;
+            }
+            else {
+                LOGGER.debug("Heartbeat start failed: {}", status);
+                return false;
+            }
+        } else {
+            LOGGER.debug("Heartbeat start failed", t);
+            return false;
+        }
+    }
+
+    CompletableFuture<Status<ReplicaSetConfig>> start(HostAndPort seed) {
+        executor.addVersionChangeListener(versionChangeListener);
         return executor.onCurrentVersion().andThenApplyAsync(
                 networkHandler.askForConfig(
                         new RemoteCommandRequest<>(seed, "admin", Empty.getInstance())
                 ),
                 (coord, remoteConfig) -> {
                     if (remoteConfig.isOk()) {
-                        coord.addVersionChangeListener((coord2, old) -> startHeartbeats(coord2));
                         updateConfig(coord, remoteConfig.getCommandReply().get());
                     }
                     return remoteConfig.asStatus();
@@ -84,13 +143,15 @@ class TopologyHeartbeatHandler {
     }
 
     @GuardedBy("executor")
-    private void startHeartbeats(TopologyCoordinator coord) {
+    private void scheduleHeartbeats(TopologyCoordinator coord, ReplicaSetConfig oldConf) {
+        LOGGER.debug("Scheduling new heartbeats to nodes on config {}",
+                coord.getRsConfig().getConfigVersion());
         coord.getRsConfig().getMembers().stream()
                 .forEach(member -> scheduleHeartbeatToTarget(member.getHostAndPort(), Duration.ZERO));
     }
 
     private CompletableFuture<?> scheduleHeartbeatToTarget(final HostAndPort target, Duration delay) {
-        LOGGER.debug("Scheduling heartbeat to {} in {}", target, delay);
+        LOGGER.trace("Scheduling heartbeat to {} in {}", target, delay);
 
         return executor.onCurrentVersion()
                 .scheduleOnce((coord) -> doHeartbeat(coord, target), delay);
@@ -98,34 +159,46 @@ class TopologyHeartbeatHandler {
 
     @GuardedBy("executor")
     private void doHeartbeat(final TopologyCoordinator coord, final HostAndPort target) {
+        if (stopped) {
+            LOGGER.trace("Ignoring heartbeat to {} because the handler has "
+                    + "been stopped", target);
+            return ;
+        }
 
         RemoteCommandRequest<ReplSetHeartbeatArgument> request = coord.prepareHeartbeatRequest(
                 clock.instant(), replSetName, target);
 
         CompletableFuture<RemoteCommandResponse<ReplSetHeartbeatReply>> hbHandle = networkHandler
-                .sendHeartbeat(request);
+                        .sendHeartbeat(request)
+                        .whenComplete((response, t) -> {
+                            if (t != null) {
+                                onRequestError(t, target);
+                            }
+                        });
 
-        hbHandle.exceptionally(t -> {
-            LOGGER.trace("Error while sending a heartbeat to " + target, t);
-            if (errorHandler.sendHeartbeatError(t)) {
-                LOGGER.trace("Rescheduling a new heartbeat to {} on {}", target, POST_ERROR_HB_DELAY);
-                scheduleHeartbeatToTarget(target, POST_ERROR_HB_DELAY);
-            }
-            return null;
-        });
-
-
-        CompletableFuture<?> executeResponseFuture = executor.onCurrentVersion().andThenAcceptAsync(
-                hbHandle,
-                (coord2, response) -> handleHeartbeatResponse(
+        CompletableFuture<?> executeResponseFuture = executor.onCurrentVersion()
+                .andThenAcceptAsync(
+                        hbHandle,
+                        (coord2, response) -> handleHeartbeatResponse(
                                 coord2, target, request.getCmdObj(), response)
                 );
 
         executeResponseFuture.exceptionally(t -> {
-            if (!(t instanceof CancellationException)) {
-                LOGGER.trace("Error while handling a heartbeat response from " + target, t);
+            Throwable cause;
+            if (t instanceof CompletionException && t.getCause() != null) {
+                cause = t.getCause();
+            } else {
+                cause = t;
+            }
+            if (cause instanceof CancellationException) {
+                LOGGER.trace("Heartbeat handling to {} has been cancelled "
+                        + "before execution: {}", target, cause.getMessage());
+            } else {
+                LOGGER.debug("Error while handling a heartbeat response from "
+                        + target, t);
                 if (errorHandler.reciveHeartbeatError(t)) {
-                    LOGGER.trace("Rescheduling a new heartbeat to {} on {}", target, POST_ERROR_HB_DELAY);
+                    LOGGER.trace("Rescheduling a new heartbeat to {} on {}",
+                            target, POST_ERROR_HB_DELAY);
                     scheduleHeartbeatToTarget(target, POST_ERROR_HB_DELAY);
                 }
             }
@@ -133,8 +206,23 @@ class TopologyHeartbeatHandler {
         });
     }
 
+    /**
+     * Called when a heartbeat request finishes exceptionally.
+     * @param t
+     * @param target
+     */
+    private void onRequestError(Throwable t, HostAndPort target) {
+        LOGGER.trace("Error while sending a heartbeat to "
+                + target, t);
+        if (errorHandler.sendHeartbeatError(t)) {
+            LOGGER.trace("Rescheduling a new heartbeat to {} on {}", target, POST_ERROR_HB_DELAY);
+            scheduleHeartbeatToTarget(target, POST_ERROR_HB_DELAY);
+        }
+    }
+
     @GuardedBy("executor")
-    private void handleHeartbeatResponse(TopologyCoordinator coord, HostAndPort target, ReplSetHeartbeatArgument request,
+    private void handleHeartbeatResponse(TopologyCoordinator coord,
+            HostAndPort target, ReplSetHeartbeatArgument request,
             RemoteCommandResponse<ReplSetHeartbeatReply> response) {
         boolean isUnauthorized = (response.getErrorCode() == ErrorCode.UNAUTHORIZED) ||
             (response.getErrorCode() == ErrorCode.AUTHENTICATION_FAILED);
@@ -144,7 +232,7 @@ class TopologyHeartbeatHandler {
         if (response.isOk()) {
             networkTime = response.getNetworkTime();
         } else {
-            LOGGER.info("Error in heartbeat request to {}; {}", target, response.asStatus());
+            LOGGER.debug("Error in heartbeat request to {}; {}", target, response.asStatus());
             if (response.getBson() != null) {
                 LOGGER.info("heartbeat response: ", response.getBson());
             }
@@ -154,8 +242,8 @@ class TopologyHeartbeatHandler {
             }
         }
 
-        HeartbeatResponseAction action = coord.processHeartbeatResponse(now, networkTime, target,
-                response);
+        HeartbeatResponseAction action = coord.processHeartbeatResponse(now, 
+                networkTime, target, response);
 
         ReplSetHeartbeatReply hbReply = response.getCommandReply().orElse(null);
         assert hbReply != null || !response.isOk() :
@@ -168,7 +256,8 @@ class TopologyHeartbeatHandler {
     }
 
     @GuardedBy("executor")
-    private void handleHeartbeatResponseAction(TopologyCoordinator coord, HeartbeatResponseAction action,
+    private void handleHeartbeatResponseAction(TopologyCoordinator coord, 
+            HeartbeatResponseAction action,
             @Nullable ReplSetHeartbeatReply reply, ErrorCode responseStatus)
             throws UnsupportedHeartbeatResponseActionException{
         switch (action.getAction()) {

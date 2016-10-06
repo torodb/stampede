@@ -1,10 +1,10 @@
 package com.torodb.mongodb.utils.cloner;
 
-import akka.Done;
 import akka.NotUsed;
 import akka.actor.ActorSystem;
 import akka.dispatch.ExecutionContexts;
 import akka.japi.Pair;
+import akka.japi.tuple.Tuple3;
 import akka.stream.*;
 import akka.stream.javadsl.*;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -57,6 +57,7 @@ import com.torodb.mongodb.utils.ListIndexesRequester;
 import com.torodb.mongodb.utils.NamespaceUtil;
 import com.torodb.torod.WriteTorodTransaction;
 import java.time.Clock;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionException;
@@ -256,119 +257,111 @@ public class AkkaDbCloner implements DbCloner {
             inserterFlow = Flow.fromGraph(graph);
         }
         try {
-            retrier.retry(() -> {
-                try {
-                    Pair<Integer, Integer> insertedDocs = source.via(inserterFlow)
-                            .toMat(
-                                    Sink.fold(new Pair<>(0,0),
-                                            (Pair<Integer, Integer> acum, Pair<Integer, Integer> newBatch)
-                                                    -> new Pair<>(acum.first() + newBatch.first(), acum.second()
-                                                            + newBatch.second())
-                                    ),
-                                    Keep.right()
-                            )
-                            .run(materializer)
-                            .toCompletableFuture()
-                            .join();
-                    LOGGER.debug("Requested docs: {}, Inserted: {}", insertedDocs.second(), insertedDocs.first());
-                    return Done.getInstance();
-                } catch (CompletionException ex) {
-                    Throwable cause = ex.getCause();
-                    if (cause != null && cause instanceof RollbackException) {
-                        throw (RollbackException) cause;
-                    }
-                    throw ex;
-                }
-            }, Hint.TIME_SENSIBLE, Hint.INFREQUENT_ROLLBACK);
-        } catch (RetrierGiveUpException ex) {
-            throw new CloningException(ex);
+            source.via(inserterFlow)
+                    .fold(new Tuple3<>(0, 0, clock.instant()), (acum, batch)
+                            -> postInsertFold(toDb, collName, acum, batch))
+                    .toMat(
+                            Sink.foreach(tuple -> logCollectionCloning(
+                                    toDb, collName, tuple.t1(), tuple.t2())),
+                            Keep.right())
+                    .run(materializer)
+                    .toCompletableFuture()
+                    .join();
+        } catch (CompletionException ex) {
+            Throwable cause = ex.getCause();
+            if (cause != null) {
+                throw new CloningException("Error while cloning " + toDb + "." + collName, cause);
+            }
+            throw ex;
         }
     }
 
-    private Flow<BsonDocument, Pair<Integer, Integer>, NotUsed> createCloneDocsWorker(MongodServer localServer,
-            String toDb, String collection) {
-        return Flow.of(BsonDocument.class)
-                .grouped(insertBufferSize)
-                .map(docs -> {
-                    return new Pair<>(
-                            insertDocuments(localServer, toDb, collection, docs),
-                            docs.size()
-                    );
-                }
+    private Tuple3<Integer, Integer, Instant> postInsertFold(String toDb,
+            String toCol, Tuple3<Integer, Integer, Instant> acum,
+            Pair<Integer, Integer> newBatch) {
+        Instant lastLogInstant = acum.t3();
+
+        long now = clock.millis();
+        long millisSinceLastLog = now - lastLogInstant.toEpochMilli();
+        if (shouldLogCollectionCloning(millisSinceLastLog)) {
+            logCollectionCloning(toDb, toCol, acum.t1(), acum.t2());
+            lastLogInstant = Instant.ofEpochMilli(now);
+        }
+        return new Tuple3<>(
+                acum.t1() + newBatch.first(),
+                acum.t2() + newBatch.second(),
+                lastLogInstant
         );
     }
 
+    private boolean shouldLogCollectionCloning(long millisSinceLog) {
+        return millisSinceLog > 10000;
+    }
+
+    private void logCollectionCloning(String toDb, String toCol, int insertedDocs, int requestedDocs) {
+        if (insertedDocs != requestedDocs) {
+            throw new AssertionError("Detected aninconsistency between inserted documents ( "
+                    + insertedDocs + ") andrequested documents to insert (" + requestedDocs + ")");
+        }
+        LOGGER.info("{} documents have been cloned to {}.{}", insertedDocs, toDb, toCol);
+    }
+
+    private Flow<BsonDocument, Pair<Integer, Integer>, NotUsed> createCloneDocsWorker(
+            MongodServer localServer, String toDb, String collection) {
+        return Flow.of(BsonDocument.class)
+                //TODO(gortiz): This is not the best way to use the heuristic,
+                //as it only be asked once per collection, but there is no
+                //builtin stage that groupes using a dynamic function. This kind
+                //of stage is very useful and should be implemented.
+                .grouped(commitHeuristic.getDocumentsPerCommit())
+                .map(docs -> retrier.retry(
+                        () -> new Tuple3<>(
+                                clock.instant(),
+                                insertDocuments(localServer, toDb, collection, docs),
+                                docs.size()
+                        ),
+                        Hint.FREQUENT_ROLLBACK, Hint.TIME_SENSIBLE
+                ))
+                .map(tuple -> {
+                    commitHeuristic.notifyDocumentInsertionCommit(
+                            tuple.t2(),
+                            clock.millis() - tuple.t1().toEpochMilli()
+                    );
+                    return new Pair<>(tuple.t2(), tuple.t3());
+                });
+    }
+
     private int insertDocuments(MongodServer localServer, String toDb, String collection,
-            List<BsonDocument> docsToInsert) {
+            List<BsonDocument> docsToInsert) throws RollbackException {
 
-        int maxAttempts = 10;
-        int attempts = 1;
+        try (WriteMongodTransaction transaction = createWriteMongodTransaction(localServer)) {
 
-        int insertedDocsCounter = 0;
+            Status<InsertResult> insertResult = transaction.execute(
+                    new Request(toDb, null, true, null),
+                    InsertCommand.INSTANCE,
+                    new InsertArgument.Builder(collection)
+                            .addDocuments(docsToInsert)
+                            .setWriteConcern(WriteConcern.fsync())
+                            .setOrdered(true)
+                            .build()
+            );
 
-        int docsPerCommit = commitHeuristic.getDocumentsPerCommit();
-        LOGGER.debug("Inserting {} documents on commit batches of {}", docsToInsert.size(), docsPerCommit);
-        WriteMongodTransaction transaction = createWriteMongodTransaction(localServer);
-        try {
-
-            List<BsonDocument> remainingDocs = docsToInsert;
-
-            while (!remainingDocs.isEmpty()) {
-                long start = clock.millis();
-                int actualBatchSize = Math.min(docsPerCommit, remainingDocs.size());
-                List<BsonDocument> currentDocuments = remainingDocs.subList(0, actualBatchSize);
-                remainingDocs = remainingDocs.subList(actualBatchSize, remainingDocs.size());
-
-                assert actualBatchSize == currentDocuments.size();
-                
-                boolean executed = false;
-                while (!executed) {
-                    try {
-                        Status<InsertResult> insertResult = transaction.execute(
-                                new Request(toDb, null, true, null),
-                                InsertCommand.INSTANCE,
-                                new InsertArgument.Builder(collection)
-                                .addDocuments(currentDocuments)
-                                .setWriteConcern(WriteConcern.fsync())
-                                .setOrdered(true)
-                                .build()
-                        );
-                        if (!insertResult.isOk() || insertResult.getResult().getN() != actualBatchSize) {
-                            throw new CloningException("Error while inserting a cloned document");
-                        }
-                        insertedDocsCounter += insertResult.getResult().getN();
-                        transaction.commit();
-
-                        long end = clock.millis();
-
-                        commitHeuristic.notifyDocumentInsertionCommit(actualBatchSize, end - start);
-
-                        int newDocsPerCommit = commitHeuristic.getDocumentsPerCommit();
-                        if (newDocsPerCommit != docsPerCommit) {
-                            LOGGER.debug("Changing commit batch size from {} to {}", docsPerCommit, newDocsPerCommit);
-                            docsPerCommit = newDocsPerCommit;
-                        }
-                        executed = true;
-                    } catch (RollbackException ex) {
-                        if (attempts < maxAttempts) {
-                            LOGGER.debug("Found a rollback exception, trying again for " + attempts + "th time", ex);
-                            attempts++;
-                            transaction.close();
-                            transaction = createWriteMongodTransaction(localServer);
-                        }
-                        else {
-                            LOGGER.error("Found a rollback exception for {}th time. Aborting", attempts);
-                            throw ex;
-                        }
-                    }
-                }
+            if (!insertResult.isOk()) {
+                throw new CloningException("Error while inserting a cloned document");
             }
+            int insertedDocs = insertResult.getResult().getN();
+            if (insertedDocs != docsToInsert.size()) {
+                throw new CloningException("Expected to insert "
+                        + docsToInsert.size() + " but " + insertResult
+                        + " were inserted");
+            }
+
+            transaction.commit();
+
+            return insertedDocs;
         } catch (UserException ex) {
             throw new CloningException("Unexpected error while cloning documents", ex);
-        } finally {
-            transaction.close();
         }
-        return insertedDocsCounter;
     }
 
     private MongoCursor<BsonDocument> openCursor(MongoConnection remoteConnection, String collection, CloneOptions opts) throws MongoException {

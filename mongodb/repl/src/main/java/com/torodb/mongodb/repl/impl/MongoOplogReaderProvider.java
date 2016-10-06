@@ -28,9 +28,16 @@ public class MongoOplogReaderProvider implements OplogReaderProvider {
     public OplogReader newReader(HostAndPort syncSource) throws
             NoSyncSourceFoundException, UnreachableMongoServerException {
 
-        MongoClient client;
-        client = mongoClientFactory.createClient(syncSource);
-        return new ClientOwnerMongoOplogReader(client);
+        MongoClient client = null;
+        try {
+            client = mongoClientFactory.createClient(syncSource);
+            return new ClientOwnerMongoOplogReader(client);
+        } catch (Throwable ex) {
+            if (client != null) {
+                client.close();
+            }
+            throw ex;
+        }
     }
 
     @Override

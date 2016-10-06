@@ -24,7 +24,7 @@ public interface SyncSourceProvider {
      * @throws NoSyncSourceFoundException iff there is no sync source we can
      *                                    reply from using the given optime
      */
-    public default HostAndPort newSyncSource(OpTime lastFetchedOpTime) throws NoSyncSourceFoundException {
+    public default HostAndPort newSyncSource(OpTime lastFetchedOpTime) throws NoSyncSourceFoundException{
         return newSyncSource();
     }
 

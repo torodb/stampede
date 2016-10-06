@@ -23,11 +23,15 @@ import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.ReplicaSet
 import com.google.common.util.concurrent.*;
 import com.torodb.core.concurrent.ConcurrentToolsFactory;
 import java.time.Duration;
+import java.util.Collections;
+import java.util.Set;
+import java.util.WeakHashMap;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.function.*;
+import javax.annotation.concurrent.GuardedBy;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -44,7 +48,9 @@ public class TopologyExecutor {
     private final ListeningScheduledExecutorService executor;
     private final OnAnyVersion onAnyVersion;
     private final OnCurrentVersion onCurrentVersion;
-    private volatile int version;
+    private final VersionChangeListener versionChangeListener;
+    private final Set<VersionChangeListener> versionListeners = Collections.newSetFromMap(new WeakHashMap<>());
+    private volatile int version = -1;
 
     public TopologyExecutor(ConcurrentToolsFactory concurrentToolsFactory,
             Duration maxSyncSourceLag, Duration slaveDelay) {
@@ -52,7 +58,8 @@ public class TopologyExecutor {
                 concurrentToolsFactory.createScheduledExecutorServiceWithMaxThreads("topology-executor", 1)
         );
         this.coord = new TopologyCoordinator(maxSyncSourceLag, slaveDelay);
-        this.coord.addVersionChangeListener(this::onVersionChange);
+        this.versionChangeListener = this::onVersionChange;
+        this.coord.addVersionChangeListener(versionChangeListener);
         this.onAnyVersion = new OnAnyVersion(executor, coord);
         this.onCurrentVersion = new OnCurrentVersion(executor, coord, this::getVersion);
     }
@@ -61,8 +68,16 @@ public class TopologyExecutor {
         return version;
     }
 
+    void addVersionChangeListener(VersionChangeListener listener) {
+        versionListeners.add(listener);
+    }
+
+    @GuardedBy("executor")
     private void onVersionChange(TopologyCoordinator coord, ReplicaSetConfig oldConfig) {
+        LOGGER.debug("Changing version from {} to {}", version,
+                coord.getRsConfig().getConfigVersion());
         version = coord.getRsConfig().getConfigVersion();
+        versionListeners.forEach(listener -> listener.onVersionChange(coord, oldConfig));
     }
 
     VersionExecutor onAnyVersion() {

@@ -47,10 +47,20 @@ public class CoreModule extends AbstractModule {
                         attempts -> attempts >= maxCriticalAttempts,
                         attempts -> attempts >= maxInfrequentAttempts,
                         attempts -> attempts >= maxFrequentAttempts,
-                        attempts -> attempts >= maxDefaultAttempts
+                        attempts -> attempts >= maxDefaultAttempts,
+                        CoreModule::millisToWait
                 )
         );
 
+    }
+
+    private static int millisToWait(int attempts, int millis) {
+        int factor = (int) Math.round(millis * (1.5 + Math.random()));
+        if (factor < 2) {
+            assert millis <= 1;
+            factor = 2;
+        }
+        return millis * factor;
     }
 
 }

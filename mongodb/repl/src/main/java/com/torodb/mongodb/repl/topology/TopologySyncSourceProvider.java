@@ -27,17 +27,19 @@ import com.torodb.mongodb.repl.exceptions.NoSyncSourceFoundException;
 import java.util.Optional;
 import java.util.function.Supplier;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  *
  */
+@Singleton
 public class TopologySyncSourceProvider implements SyncSourceProvider {
 
-    private final TopologyInterface topologyInterface;
+    private final TopologyService topologyService;
 
     @Inject
-    public TopologySyncSourceProvider(TopologyInterface topologyInterface) {
-        this.topologyInterface = topologyInterface;
+    public TopologySyncSourceProvider(TopologyService topologyService) {
+        this.topologyService = topologyService;
     }
 
     @Override
@@ -51,14 +53,14 @@ public class TopologySyncSourceProvider implements SyncSourceProvider {
     }
 
     private HostAndPort newSyncSource(Optional<OpTime> minOpTime, Supplier<NoSyncSourceFoundException> exSupplier) throws NoSyncSourceFoundException {
-        return topologyInterface.chooseNewSyncSource(minOpTime)
+        return topologyService.chooseNewSyncSource(minOpTime)
                 .join()
                 .orElseThrow(exSupplier);
     }
 
     @Override
     public Optional<HostAndPort> getLastUsedSyncSource() {
-        return topologyInterface.getLastUsedSyncSource().join();
+        return topologyService.getLastUsedSyncSource().join();
     }
 
 }

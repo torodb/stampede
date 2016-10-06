@@ -20,9 +20,15 @@
 
 package com.torodb.mongodb.repl.topology;
 
-import com.eightkdata.mongowp.Status;
+import com.eightkdata.mongowp.OpTime;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.ReplicaSetConfig;
+import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.google.common.net.HostAndPort;
 import com.torodb.common.util.ThreadFactoryIdleService;
+import java.time.Clock;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ThreadFactory;
 import javax.inject.Inject;
 import org.apache.logging.log4j.LogManager;
@@ -34,55 +40,86 @@ import org.apache.logging.log4j.Logger;
 public class TopologyService extends ThreadFactoryIdleService {
     private static final Logger LOGGER = LogManager.getLogger(TopologyService.class);
 
-    private final HostAndPort seed;
     private final TopologyHeartbeatHandler heartbeatHandler;
+    private final TopologyExecutor executor;
+    private final Clock clock;
 
     @Inject
-    public TopologyService(HostAndPort seed,
-            TopologyHeartbeatHandler heartbeatHandler,
-            ThreadFactory threadFactory) {
+    public TopologyService(TopologyHeartbeatHandler heartbeatHandler,
+            ThreadFactory threadFactory, TopologyExecutor executor,
+            Clock clock) {
         super(threadFactory);
-        this.seed = seed;
         this.heartbeatHandler = heartbeatHandler;
+        this.executor = executor;
+        this.clock = clock;
+    }
+
+    public CompletableFuture<Empty> initiate(ReplicaSetConfig rsConfig) {
+        return executor.onAnyVersion().mapAsync(coord -> {
+            coord.updateConfig(rsConfig, clock.instant());
+            return Empty.getInstance();
+        });
+    }
+
+    public CompletableFuture<Optional<HostAndPort>> getLastUsedSyncSource() {
+        return executor.onAnyVersion().mapAsync(TopologyCoordinator::getSyncSourceAddress);
+    }
+
+    public CompletableFuture<Optional<HostAndPort>> chooseNewSyncSource(Optional<OpTime> lastFetchedOpTime) {
+        return executor.onAnyVersion().mapAsync(coord -> coord.chooseNewSyncSource(clock.instant(), lastFetchedOpTime));
     }
 
     @Override
     protected void startUp() throws Exception {
         boolean finished = false;
         LOGGER.debug("Starting topology service");
-        while (!finished) {
-            finished = heartbeatHandler.start(seed)
-                    .handle(this::checkHeartbeatStarted)
-                    .join();
-            if (!finished) {
-                LOGGER.debug("Trying to start heartbeats in 1 second");
+
+        heartbeatHandler.startUp();
+        heartbeatHandler.awaitRunning();
+
+        boolean topologyReady;
+        int attempts = 0;
+        do {
+            topologyReady = calculateTopologyReady();
+            if (!topologyReady) {
+                LOGGER.debug("Waiting until topology is ready");
                 Thread.sleep(1000);
             }
+            attempts++;
         }
-        LOGGER.info("Topology service started");
-    }
+        while (!topologyReady || attempts >= 30);
+        if (!topologyReady) {
+            throw new RuntimeException("Topology was not able to be ready "
+                    + "after " + attempts + " attempts");
+        }
+        
 
-    private boolean checkHeartbeatStarted(Status<?> status, Throwable t) {
-        if (t == null) {
-            if (status.isOk()) {
-                LOGGER.trace("Heartbeat started correctly");
-                return true;
-            }
-            else {
-                LOGGER.debug("Heartbeat start failed: {}", status);
-                return false;
-            }
-        } else {
-            LOGGER.debug("Heartbeat start failed", t);
-            return false;
-        }
+        LOGGER.info("Topology service started");
     }
 
     @Override
     protected void shutDown() throws Exception {
         LOGGER.info("Topology service shutted down");
+
+        heartbeatHandler.shutDown();
+        heartbeatHandler.awaitTerminated();
     }
 
+    private boolean isTopologyReady(TopologyCoordinator coord) {
+        return coord.chooseNewSyncSource(clock.instant(), Optional.empty()).isPresent();
+    }
+
+    private boolean calculateTopologyReady() {
+        try {
+            return executor.onAnyVersion()
+                    .mapAsync(this::isTopologyReady)
+                    .join();
+        } catch (CompletionException ex) {
+            Throwable cause = ex.getCause() != null ? ex.getCause() : ex;
+            throw new RuntimeException("Topology startup failed before it "
+                    + "was ready to accept requests", cause);
+        }
+    }
     
 
 }

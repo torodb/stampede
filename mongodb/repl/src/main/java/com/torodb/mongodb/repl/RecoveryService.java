@@ -176,8 +176,7 @@ public class RecoveryService extends ThreadFactoryRunnableService {
 
             MongoConnection remoteConnection = remoteClient.openConnection();
 
-            try {
-                OplogReader reader = oplogReaderProvider.newReader(remoteConnection);
+            try (OplogReader reader = oplogReaderProvider.newReader(remoteConnection)) {
 
                 OplogOperation lastClonedOp = reader.getLastOp();
                 OpTime lastRemoteOptime1 = lastClonedOp.getOpTime();

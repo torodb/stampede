@@ -387,12 +387,13 @@ class TopologyCoordinator {
             return true;
         }
 
-        int currentMemberIndex = _rsConfig.findMemberIndexByHostAndPort(currentSource);
-        if (currentMemberIndex == -1) {
+        OptionalInt currentMemberIndex = _rsConfig.findMemberIndexByHostAndPort(currentSource);
+        if (!currentMemberIndex.isPresent()) {
             return true;
         }
 
-        OpTime currentOpTime = _hbdata.get(currentMemberIndex).getOpTime();
+        assert _hbdata.get(currentMemberIndex.getAsInt()) != null;
+        OpTime currentOpTime = _hbdata.get(currentMemberIndex.getAsInt()).getOpTime();
         if (currentOpTime == null) {
             // Haven't received a heartbeat from the sync source yet, so can't tell if we should
             // change.
@@ -656,15 +657,16 @@ class TopologyCoordinator {
             nextAction.setNextHeartbeatDelay(nextHeartbeatDelay);
             return nextAction;
         }
-        int memberIndex = _rsConfig.findMemberIndexByHostAndPort(target);
-        if (memberIndex == -1) {
+        OptionalInt memberIndexOpt = _rsConfig.findMemberIndexByHostAndPort(target);
+        if (!memberIndexOpt.isPresent()) {
             LOGGER.debug("replset: Could not find {} in current config so ignoring --"
                     + " current config: {}", target, _rsConfig);
             HeartbeatResponseAction nextAction = HeartbeatResponseAction.makeNoAction();
             nextAction.setNextHeartbeatDelay(nextHeartbeatDelay);
             return nextAction;
         }
-        assert memberIndex >= 0;
+        assert memberIndexOpt.isPresent();
+        int memberIndex = memberIndexOpt.getAsInt();
 
         MemberHeartbeatData hbData = _hbdata.get(memberIndex);
         assert hbData != null;

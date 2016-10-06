@@ -25,6 +25,7 @@ import com.torodb.common.util.RetryHelper.ExceptionHandler;
 import com.torodb.common.util.RetryHelper.IncrementalWaitExceptionHandler;
 import com.torodb.common.util.RetryHelper.RetryCallback;
 import java.util.EnumSet;
+import java.util.function.IntBinaryOperator;
 import java.util.function.IntPredicate;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -39,13 +40,16 @@ public class SmartRetrier extends AbstractHintableRetrier {
     private final IntPredicate infrequentGiveUpPredicate;
     private final IntPredicate frequentGiveUpPredicate;
     private final IntPredicate defaultGiveUpPredicate;
+    private final MillisToWaitFunction millisToWaitFunction;
     
     public SmartRetrier(IntPredicate criticalGiveUpPredicate, IntPredicate infrequentGiveUpPredicate,
-            IntPredicate frequentGiveUpPredicate, IntPredicate defaultGiveUpPredicate) {
+            IntPredicate frequentGiveUpPredicate, IntPredicate defaultGiveUpPredicate,
+            MillisToWaitFunction millisToWaitFunction) {
         this.infrequentGiveUpPredicate = infrequentGiveUpPredicate;
         this.frequentGiveUpPredicate = frequentGiveUpPredicate;
         this.defaultGiveUpPredicate = defaultGiveUpPredicate;
         this.criticalGiveUpPredicate = criticalGiveUpPredicate;
+        this.millisToWaitFunction = millisToWaitFunction;
     }
 
     @Override
@@ -91,13 +95,23 @@ public class SmartRetrier extends AbstractHintableRetrier {
             LOGGER.debug("Giving up when executing a task after {} executions (last execution took {} millis)", attempts, millis);
             return -1;
         }
-        int factor = (int) Math.round(millis * (1.5 + Math.random()));
-        if (factor < 2) {
-            assert millis <= 1;
-            factor = 2;
+        int millisToWait = millisToWaitFunction.applyAsInt(attempts, millis);
+        if (LOGGER.isTraceEnabled()) {
+            int newAttempt = attempts + 1;
+            if (millisToWait == 0) {
+                LOGGER.trace("Trying to execute a task for {}th time (last "
+                        + "execution took {} millis)", newAttempt, millis);
+            } else if (millisToWait > 0) {
+                LOGGER.trace("Sleeping {} millis before trying to execute a "
+                        + "task for {}th time", millisToWait, newAttempt);
+            } else {
+                assert millisToWait < 0;
+                LOGGER.debug("Giving up when executing a task after {} "
+                        + "executions (last execution took {} millis)", attempts, millis);
+            }
         }
-        LOGGER.trace("Trying to execute a task for {}th time (last execution took {} millis)", attempts, millis);
-        return millis * factor;
+
+        return millisToWait;
     }
 
     private <Result, T extends Exception> ExceptionHandler<Result, T> createWithoutTimeHandler(
@@ -117,8 +131,24 @@ public class SmartRetrier extends AbstractHintableRetrier {
     private <Result, T extends Exception> ExceptionHandler<Result, T> createWithTimeHandler(
             IntPredicate giveUpPredicate, ExceptionHandler<Result, T> delegateHandler) {
         return new IncrementalWaitExceptionHandler<>(
-                (attepts, millis) -> getMillisToWait(attepts, millis, giveUpPredicate),
+                (millis, attempts) -> getMillisToWait(attempts, millis, giveUpPredicate),
                 delegateHandler
         );
+    }
+
+    @FunctionalInterface
+    public static interface MillisToWaitFunction extends IntBinaryOperator{
+
+        /**
+         *
+         * @param attempts the number of times this task was executed and failed
+         * @param millis   the number of milliseconds that had been waited on
+         *                 the previous iteration
+         * @return the number of milliseconds that should be waited before the
+         *         next iteration. If the number is negative, the executor gives
+         *         up
+         */
+        @Override
+        public int applyAsInt(int attempts, int millis);
     }
 }

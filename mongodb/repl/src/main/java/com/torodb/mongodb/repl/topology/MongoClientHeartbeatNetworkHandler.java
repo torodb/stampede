@@ -68,19 +68,16 @@ public class MongoClientHeartbeatNetworkHandler implements HeartbeatNetworkHandl
 
     private RemoteCommandResponse<ReplSetHeartbeatReply> sendHeartbeatTask(
             RemoteCommandRequest<ReplSetHeartbeatArgument> req) {
-        MongoClient client;
-        try {
-            client = mongoClientFactory.createClient(req.getTarget());
-        } catch (UnreachableMongoServerException ex) {
-            throw new UncheckedException(ex);
-        }
-        try (MongoConnection connection = client.openConnection()) {
+        try (MongoClient client = mongoClientFactory.createClient(req.getTarget());
+                MongoConnection connection = client.openConnection()) {
             return connection.execute(
                     ReplSetHeartbeatCommand.INSTANCE,
                     req.getDbname(),
                     true,
                     req.getCmdObj()
             );
+        } catch (UnreachableMongoServerException ex) {
+            throw new UncheckedException(ex);
         }
     }
 
