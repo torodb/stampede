@@ -101,7 +101,6 @@ public abstract class MetaDocPartIndexRecord<TableRefType> extends UpdatableReco
     /**
      * Getter for <code>torodb.container.unique</code>.
      */
-    @SuppressWarnings("unchecked")
     public Boolean getUnique() {
         return (Boolean) getValue(4);
     }

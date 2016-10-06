@@ -20,14 +20,20 @@
 
 package com.torodb.core.transaction.metainf;
 
+import com.google.common.collect.Maps;
 import com.torodb.core.TableRef;
 import com.torodb.core.annotations.DoNotChange;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
+
+import org.jooq.lambda.Seq;
+import org.jooq.lambda.tuple.Tuple2;
 
 /**
  *
@@ -37,9 +43,9 @@ public class WrapperMutableMetaCollection implements MutableMetaCollection {
     private final ImmutableMetaCollection wrapped;
     private final HashMap<TableRef, WrapperMutableMetaDocPart> newDocParts;
     private final Set<WrapperMutableMetaDocPart> modifiedMetaDocParts;
-    private final HashMap<String, WrapperMutableMetaIndex> newIndexes;
-    private final Set<WrapperMutableMetaIndex> modifiedMetaIndexes;
+    private final HashMap<String, Tuple2<MutableMetaIndex, MetaElementState>> indexesByName;
     private final Consumer<WrapperMutableMetaCollection> changeConsumer;
+    private final Map<String, Tuple2<MutableMetaIndex, MetaElementState>> aliveIndexesMap;
 
     public WrapperMutableMetaCollection(ImmutableMetaCollection wrappedCollection,
             Consumer<WrapperMutableMetaCollection> changeConsumer) {
@@ -55,14 +61,13 @@ public class WrapperMutableMetaCollection implements MutableMetaCollection {
             newDocParts.put(mutable.getTableRef(), mutable);
         });
         
-        this.newIndexes = new HashMap<>();
-
-        modifiedMetaIndexes = new HashSet<>();
+        this.indexesByName = new HashMap<>();
 
         wrappedCollection.streamContainedMetaIndexes().forEach((index) -> {
             WrapperMutableMetaIndex mutable = createMetaIndex(index);
-            newIndexes.put(mutable.getName(), mutable);
+            indexesByName.put(mutable.getName(), new Tuple2<>(mutable, MetaElementState.NOT_CHANGED));
         });
+        aliveIndexesMap = Maps.filterValues(indexesByName, tuple -> tuple.v2().isAlive());
     }
 
     protected WrapperMutableMetaDocPart createMetaDocPart(ImmutableMetaDocPart immutable) {
@@ -106,26 +111,58 @@ public class WrapperMutableMetaCollection implements MutableMetaCollection {
         WrapperMutableMetaIndex result = createMetaIndex(
                 new ImmutableMetaIndex(name, unique));
 
-        newIndexes.put(name, result);
-        onIndexChange(result);
+        indexesByName.put(name, new Tuple2<>(result, MetaElementState.ADDED));
+        changeConsumer.accept(this);
 
         return result;
     }
 
     @Override
-    public Iterable<? extends MutableMetaIndex> getModifiedMetaIndexes() {
-        return modifiedMetaIndexes;
+    public boolean removeMetaIndexByName(String indexName) {
+        WrapperMutableMetaIndex metaIndex = getMetaIndexByName(indexName);
+        if (metaIndex == null) {
+            return false;
+        }
+        
+        indexesByName.put(metaIndex.getName(), new Tuple2<>(metaIndex, MetaElementState.REMOVED));
+        changeConsumer.accept(this);
+        return true;
+    }
+
+    @Override
+    public Iterable<Tuple2<MutableMetaIndex, MetaElementState>> getModifiedMetaIndexes() {
+        return Maps.filterValues(indexesByName, tuple -> tuple.v2().hasChanged())
+                .values();
     }
 
     @Override
     public ImmutableMetaCollection immutableCopy() {
-        if (modifiedMetaDocParts.isEmpty()) {
+        if (modifiedMetaDocParts.isEmpty() && 
+                indexesByName.values().stream().noneMatch(tuple -> tuple.v2().hasChanged())) {
             return wrapped;
         } else {
             ImmutableMetaCollection.Builder builder = new ImmutableMetaCollection.Builder(wrapped);
             for (MutableMetaDocPart modifiedMetaDocPart : modifiedMetaDocParts) {
                 builder.put(modifiedMetaDocPart.immutableCopy());
             }
+
+            indexesByName.values()
+                    .forEach(tuple -> {
+                        switch (tuple.v2()) {
+                            case ADDED:
+                            case MODIFIED:
+                            case NOT_CHANGED:
+                                builder.put(tuple.v1().immutableCopy());
+                                break;
+                            case REMOVED:
+                                builder.remove(tuple.v1());
+                                break;
+                            case NOT_EXISTENT:
+                            default:
+                                throw new AssertionError("Unexpected case" + tuple.v2());
+                        }
+                    }
+            );
             return builder.build();
         }
     }
@@ -161,12 +198,121 @@ public class WrapperMutableMetaCollection implements MutableMetaCollection {
 
     @Override
     public Stream<? extends WrapperMutableMetaIndex> streamContainedMetaIndexes() {
-        return newIndexes.values().stream();
+        return aliveIndexesMap.values().stream().map(tuple -> (WrapperMutableMetaIndex) tuple.v1());
     }
 
     @Override
     public WrapperMutableMetaIndex getMetaIndexByName(String indexName) {
-        return newIndexes.get(indexName);
+        Tuple2<MutableMetaIndex, MetaElementState> tuple = aliveIndexesMap.get(indexName);
+        if (tuple == null) {
+            return null;
+        }
+        return (WrapperMutableMetaIndex) tuple.v1();
+    }
+
+    @Override
+    public List<Tuple2<MetaIndex, List<String>>> getMissingIndexesForNewField(MutableMetaDocPart docPart,
+            MetaField newField) {
+        return wrapped.getMissingIndexesForNewField(streamContainedMetaIndexes(), docPart, newField);
+    }
+
+    @Override
+    public Optional<? extends MetaIndex> getAnyMissedIndex(MetaCollection oldCol,
+            MutableMetaDocPart newStructure, ImmutableMetaDocPart oldStructure, ImmutableMetaField newField) {
+        return oldCol.streamContainedMetaIndexes()
+            .filter(oldIndex -> oldIndex.getMetaIndexFieldByTableRefAndName(oldStructure.getTableRef(), newField.getName()) != null &&
+                    (getMetaIndexByName(oldIndex.getName()) == null ||
+                            Seq.seq(oldIndex.iteratorMetaDocPartIndexesIdentifiers(newStructure))
+                            .filter(identifiers -> identifiers.contains(newField.getIdentifier()))
+                            .anyMatch(identifiers -> newStructure.streamIndexes()
+                                    .noneMatch(newDocPartIndex -> oldIndex.isMatch(newStructure, identifiers, newDocPartIndex)))))
+            .findAny();
+    }
+
+    @Override
+    public Optional<? extends MetaIndex> getAnyRelatedIndex(ImmutableMetaCollection oldCol,
+            MetaDocPart newStructure, ImmutableMetaIdentifiedDocPartIndex newDocPartIndex) {
+        Optional<? extends MetaIndex> anyNewRelatedIndex = 
+                Seq.seq(getModifiedMetaIndexes())
+                    .map(modIndex -> modIndex.v1())
+                    .filter(newIndex -> newIndex.isCompatible(newStructure, newDocPartIndex))
+                    .findAny();
+        
+        if (anyNewRelatedIndex.isPresent()) {
+            return anyNewRelatedIndex;
+        }
+        
+        Optional<ImmutableMetaIndex> anyOldRelatedIndex = oldCol.streamContainedMetaIndexes()
+                .filter(oldIndex -> oldIndex.isCompatible(newStructure, newDocPartIndex))
+                .findAny();
+
+        return anyOldRelatedIndex;
+    }
+    
+    @Override
+    public Optional<ImmutableMetaIndex> getAnyMissedIndex(ImmutableMetaCollection oldCol,
+            ImmutableMetaIdentifiedDocPartIndex newRemovedDocPartIndex) {
+        return oldCol.streamContainedMetaIndexes()
+                .flatMap(oldIndex -> oldIndex.streamTableRefs()
+                        .map(tableRef -> oldCol.getMetaDocPartByTableRef(tableRef))
+                        .filter(oldDocPart -> oldDocPart != null &&
+                                oldIndex.isCompatible(oldDocPart, newRemovedDocPartIndex) &&
+                                Seq.seq(getModifiedMetaIndexes())
+                                    .noneMatch(newIndex -> newIndex.v2() == MetaElementState.REMOVED &&
+                                            newIndex.v1().getName().equals(oldIndex.getName())))
+                        .map(tableRef -> oldIndex))
+                .findAny();
+    }
+
+    @Override
+    public Optional<ImmutableMetaIndex> getAnyConflictingIndex(
+            ImmutableMetaCollection oldStructure, MutableMetaIndex newIndex) {
+        return oldStructure.streamContainedMetaIndexes()
+                .filter(index -> index.isMatch(newIndex) &&
+                        Seq.seq(getModifiedMetaIndexes())
+                            .noneMatch(modifiedIndex -> modifiedIndex.v2() == MetaElementState.REMOVED &&
+                                    modifiedIndex.v1().getName().equals(index.getName())))
+                .findAny();
+    }
+
+    @Override
+    public Optional<ImmutableMetaDocPart> getAnyDocPartWithMissedDocPartIndex(
+            ImmutableMetaCollection oldStructure, MutableMetaIndex newIndex) {
+        return newIndex.streamTableRefs()
+            .map(tableRef -> oldStructure.getMetaDocPartByTableRef(tableRef))
+            .filter(docPart -> docPart != null && newIndex.isCompatible(docPart) &&
+                    Seq.seq(newIndex.iteratorMetaDocPartIndexesIdentifiers(docPart))
+                        .filter(identifiers -> docPart.streamIndexes()
+                                .noneMatch(docPartIndex -> newIndex.isMatch(docPart, identifiers, docPartIndex)))
+                        .anyMatch(identifiers -> {
+                            MutableMetaDocPart newDocPart = getMetaDocPartByTableRef(docPart.getTableRef()); 
+                            return Seq.seq(newDocPart.getModifiedMetaDocPartIndexes())
+                                    .filter(docPartIndex -> docPartIndex.v2() != MetaElementState.REMOVED)
+                                    .noneMatch(docPartIndex -> newIndex.isMatch(newDocPart, identifiers, docPartIndex.v1()));
+                        }))
+            .findAny();
+    }
+
+    @Override
+    public Optional<? extends MetaIdentifiedDocPartIndex> getAnyOrphanDocPartIndex(
+            ImmutableMetaCollection oldStructure, MutableMetaIndex newRemovedIndex) {
+        return newRemovedIndex.streamTableRefs()
+            .map(tableRef -> (MetaDocPart) oldStructure.getMetaDocPartByTableRef(tableRef))
+            .filter(docPart -> docPart != null && newRemovedIndex.isCompatible(docPart))
+            .flatMap(oldDocPart -> oldDocPart.streamIndexes()
+                    .filter(oldDocPartIndex -> newRemovedIndex.isCompatible(oldDocPart, oldDocPartIndex) &&
+                            Seq.seq(getMetaDocPartByTableRef(oldDocPart.getTableRef()).getModifiedMetaDocPartIndexes())
+                                .noneMatch(newDocPartIndex -> newDocPartIndex.v2() == MetaElementState.REMOVED &&
+                                    newDocPartIndex.v1().getIdentifier().equals(oldDocPartIndex.getIdentifier())) &&
+                            oldStructure.streamContainedMetaIndexes()
+                                    .noneMatch(oldIndex -> oldIndex.isCompatible(oldDocPart, oldDocPartIndex) &&
+                                            Seq.seq(getModifiedMetaIndexes())
+                                                .noneMatch(newIndex -> newIndex.v2() == MetaElementState.REMOVED &&
+                                                    newIndex.v1().getName().equals(oldIndex.getName()))
+                                    )
+                    )
+            )
+            .findAny();
     }
 
     @Override
@@ -179,8 +325,25 @@ public class WrapperMutableMetaCollection implements MutableMetaCollection {
         changeConsumer.accept(this);
     }
 
+    private boolean isTransitionAllowed(MetaIndex metaIndex, MetaElementState newState) {
+        MetaElementState oldState;
+        Tuple2<MutableMetaIndex, MetaElementState> tuple = indexesByName.get(metaIndex.getName());
+        
+        if (tuple == null) {
+            oldState = MetaElementState.NOT_EXISTENT;
+        }
+        else {
+            oldState = tuple.v2();
+        }
+
+        oldState.assertLegalTransition(newState);
+        return true;
+    }
+
     protected void onIndexChange(WrapperMutableMetaIndex changedIndex) {
-        modifiedMetaIndexes.add(changedIndex);
+        assert isTransitionAllowed(changedIndex, MetaElementState.MODIFIED);
+        
+        indexesByName.put(changedIndex.getName(), new Tuple2<>(changedIndex, MetaElementState.MODIFIED));
         changeConsumer.accept(this);
     }
 

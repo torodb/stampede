@@ -20,19 +20,29 @@
 
 package com.torodb.config;
 
+import java.io.File;
+import java.io.InputStream;
+import java.util.Arrays;
+import java.util.List;
+
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.torodb.CliConfig;
 import com.torodb.CliConfigUtils;
 import com.torodb.packaging.config.model.Config;
 import com.torodb.packaging.config.model.backend.derby.Derby;
 import com.torodb.packaging.config.model.backend.postgres.Postgres;
 import com.torodb.packaging.config.model.generic.LogLevel;
+import com.torodb.packaging.config.model.protocol.mongo.FilterList.IndexFilter;
 import com.torodb.packaging.config.model.protocol.mongo.Role;
 import com.torodb.packaging.config.util.ConfigUtils;
-import java.io.File;
-import java.io.InputStream;
-import java.util.Arrays;
-import java.util.List;
-import org.junit.*;
 
 public class ConfigTest {
 
@@ -398,8 +408,8 @@ public class ConfigTest {
             @Override
             public List<String> getParams() {
                 String[] params = new String[] { 
-                        "/protocol/mongo/replication/0/include={torodb: [\"postgres\", \"derby\"]}", 
-                        "/protocol/mongo/replication/0/exclude={mongodb: [\"mmapv1\", \"wiredtiger\"]}" 
+                        "/protocol/mongo/replication/0/include={torodb: [postgres, derby]}", 
+                        "/protocol/mongo/replication/0/exclude={mongodb: {mmapv1, wiredtiger}}" 
                 };
                 return Arrays.asList(params);
             }
@@ -424,12 +434,69 @@ public class ConfigTest {
         Assert.assertTrue("/protocol/mongo/replication/0/include not defined", config.getProtocol().getMongo().getReplication().get(0).getInclude() != null);
         Assert.assertTrue("/protocol/mongo/replication/0/include/torodb not defined", config.getProtocol().getMongo().getReplication().get(0).getInclude().get("torodb") != null);
         Assert.assertEquals("/protocol/mongo/replication/0/include/torodb has different value than that specified", 
-                Arrays.asList("postgres", "derby"), 
+                ImmutableMap.of("postgres", ImmutableList.of(), "derby", ImmutableList.of()), 
                 config.getProtocol().getMongo().getReplication().get(0).getInclude().get("torodb"));
         Assert.assertTrue("/protocol/mongo/replication/0/exclude not defined", config.getProtocol().getMongo().getReplication().get(0).getExclude() != null);
         Assert.assertTrue("/protocol/mongo/replication/0/exclude/mongodb not defined", config.getProtocol().getMongo().getReplication().get(0).getExclude().get("mongodb") != null);
         Assert.assertEquals("/protocol/mongo/replication/0/exclude/mongodb has different value than that specified", 
-                Arrays.asList("mmapv1", "wiredtiger"), 
+                ImmutableMap.of("mmapv1", ImmutableList.of(), "wiredtiger", ImmutableList.of()), 
+                config.getProtocol().getMongo().getReplication().get(0).getExclude().get("mongodb"));
+        Assert.assertTrue("/backend not defined", config.getBackend() != null);
+        Assert.assertEquals("/backend/postgres not defined", Postgres.class, config.getBackend().getBackendImplementation().getClass());
+        Assert.assertTrue("/backend/postgres not identified as Postgres", config.getBackend().isPostgres());
+        Assert.assertTrue("/backend/postgres not identified as Postgres Like", config.getBackend().isPostgresLike());
+        Assert.assertEquals("/backend/postgres/host has different value than that specified", "localhost", config.getBackend().asPostgres().getHost());
+        Assert.assertEquals("/backend/postgres/port has different value than that specified", Integer.valueOf(5432), config.getBackend().asPostgres().getPort());
+        Assert.assertEquals("/backend/postgres/user has different value than that specified", "root", config.getBackend().asPostgres().getUser());
+        Assert.assertEquals("/backend/postgres/password specified but should have not been read from parameters", null, config.getBackend().asPostgres().getPassword());
+    }
+
+    @Test
+    public void testReplicationFilteringWithIndexes() throws Exception {
+        CliConfig cliConfig = new CliConfig() {
+            @Override
+            public boolean hasConfFile() {
+                return true;
+            }
+            @Override
+            public InputStream getConfInputStream() {
+                return ConfigTest.class.getResourceAsStream("/test-parse-with-yaml.yml");
+            }
+            @Override
+            public List<String> getParams() {
+                String[] params = new String[] { 
+                        "/protocol/mongo/replication/0/include={torodb: [{postgres: {name: awesome, unique: true}}, derby]}", 
+                        "/protocol/mongo/replication/0/exclude={mongodb: [{mmapv1: {keys: {\"the.old.mmapv1\": 1}}}, wiredtiger]}" 
+                };
+                return Arrays.asList(params);
+            }
+        };
+        Config config = CliConfigUtils.readConfig(cliConfig);
+        
+        Assert.assertTrue("/generic not defined", config.getGeneric() != null);
+        Assert.assertTrue("/generic/logPackages not defined", config.getGeneric().getLogPackages() != null);
+        Assert.assertTrue("/generic/logPackages/com.torodb not defined", config.getGeneric().getLogPackages().get("com.torodb") != null);
+        Assert.assertEquals("/generic/logLevel has different value than that specified", LogLevel.NONE, config.getGeneric().getLogLevel());
+        Assert.assertEquals("/generic/logPackages has not 1 entry", 1, config.getGeneric().getLogPackages().size());
+        Assert.assertEquals("/generic/logPackages/com.torodb has different value than that specified", LogLevel.DEBUG, config.getGeneric().getLogPackages().get("com.torodb"));
+        Assert.assertTrue("/protocol not defined", config.getProtocol() != null);
+        Assert.assertTrue("/protocol/mongo not defined", config.getProtocol().getMongo() != null);
+        Assert.assertTrue("/protocol/mongo/net not defined", config.getProtocol().getMongo().getNet() != null);
+        Assert.assertTrue("/protocol/mongo/replication not defined", config.getProtocol().getMongo().getReplication() != null);
+        Assert.assertEquals("/protocol/mongo/net/port has different value than that specified", Integer.valueOf(27019), config.getProtocol().getMongo().getNet().getPort());
+        Assert.assertEquals("/protocol/mongo/replication has not 1 element", 1, config.getProtocol().getMongo().getReplication().size());
+        Assert.assertEquals("/protocol/mongo/replication/0/replSetName has different value than that specified", "rs1", config.getProtocol().getMongo().getReplication().get(0).getReplSetName());
+        Assert.assertEquals("/protocol/mongo/replication/0/role has different value than that specified", Role.HIDDEN_SLAVE, config.getProtocol().getMongo().getReplication().get(0).getRole());
+        Assert.assertEquals("/protocol/mongo/replication/0/syncSource has different value than that specified", "localhost:27017", config.getProtocol().getMongo().getReplication().get(0).getSyncSource());
+        Assert.assertTrue("/protocol/mongo/replication/0/include not defined", config.getProtocol().getMongo().getReplication().get(0).getInclude() != null);
+        Assert.assertTrue("/protocol/mongo/replication/0/include/torodb not defined", config.getProtocol().getMongo().getReplication().get(0).getInclude().get("torodb") != null);
+        Assert.assertEquals("/protocol/mongo/replication/0/include/torodb has different value than that specified", 
+                ImmutableMap.of("postgres", ImmutableList.of(new IndexFilter("awesome", true, null)), "derby", ImmutableList.of()), 
+                config.getProtocol().getMongo().getReplication().get(0).getInclude().get("torodb"));
+        Assert.assertTrue("/protocol/mongo/replication/0/exclude not defined", config.getProtocol().getMongo().getReplication().get(0).getExclude() != null);
+        Assert.assertTrue("/protocol/mongo/replication/0/exclude/mongodb not defined", config.getProtocol().getMongo().getReplication().get(0).getExclude().get("mongodb") != null);
+        Assert.assertEquals("/protocol/mongo/replication/0/exclude/mongodb has different value than that specified", 
+                ImmutableMap.of("mmapv1", ImmutableList.of(new IndexFilter(null, null, ImmutableMap.<String, String>builder().put("the.old.mmapv1", "1").build())), "wiredtiger", ImmutableList.of()), 
                 config.getProtocol().getMongo().getReplication().get(0).getExclude().get("mongodb"));
         Assert.assertTrue("/backend not defined", config.getBackend() != null);
         Assert.assertEquals("/backend/postgres not defined", Postgres.class, config.getBackend().getBackendImplementation().getClass());

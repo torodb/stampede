@@ -20,20 +20,29 @@
 
 package com.torodb.backend;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
+import org.jooq.DSLContext;
+import org.jooq.lambda.tuple.Tuple2;
+
+import com.google.common.base.Preconditions;
 import com.torodb.backend.ErrorHandler.Context;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.core.TableRef;
+import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetaSnapshot;
-import java.util.*;
-import java.util.function.Consumer;
-import java.util.stream.Stream;
-import javax.annotation.Nonnull;
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import org.jooq.DSLContext;
 
 /**
  *
@@ -53,7 +62,7 @@ public abstract class AbstractStructureInterface implements StructureInterface {
     }
 
     @Override
-    public void dropDatabase(@Nonnull DSLContext dsl, @Nonnull MetaDatabase metaDatabase) {
+    public void dropDatabase(DSLContext dsl, MetaDatabase metaDatabase) {
         Iterator<? extends MetaCollection> metaCollectionIterator = metaDatabase.streamMetaCollections()
                 .iterator();
         while (metaCollectionIterator.hasNext()) {
@@ -71,7 +80,7 @@ public abstract class AbstractStructureInterface implements StructureInterface {
     }
 
     @Override
-    public void dropCollection(@Nonnull DSLContext dsl, @Nonnull String schemaName, @Nonnull MetaCollection metaCollection) {
+    public void dropCollection(DSLContext dsl, String schemaName, MetaCollection metaCollection) {
         Iterator<? extends MetaDocPart> metaDocPartIterator = metaCollection.streamContainedMetaDocParts()
                 .sorted(TableRefComparator.MetaDocPart.DESC).iterator();
         while (metaDocPartIterator.hasNext()) {
@@ -86,8 +95,8 @@ public abstract class AbstractStructureInterface implements StructureInterface {
     protected abstract String getDropSchemaStatement(String schemaName);
 
     @Override
-    public void renameCollection(@Nonnull DSLContext dsl, @Nonnull String fromSchemaName, @Nonnull MetaCollection fromCollection, 
-            @Nonnull String toSchemaName, @Nonnull MetaCollection toCollection) {
+    public void renameCollection(DSLContext dsl, String fromSchemaName, MetaCollection fromCollection, 
+            String toSchemaName, MetaCollection toCollection) {
         Iterator<? extends MetaDocPart> metaDocPartIterator = fromCollection.streamContainedMetaDocParts().iterator();
         while (metaDocPartIterator.hasNext()) {
             MetaDocPart fromMetaDocPart = metaDocPartIterator.next();
@@ -109,20 +118,23 @@ public abstract class AbstractStructureInterface implements StructureInterface {
             String toSchemaName);
     
     @Override
-    public void createIndex(@Nonnull DSLContext dsl,
-            @Nonnull String schemaName, @Nonnull String tableName,
-            @Nonnull String columnName, boolean ascending, boolean unique
-    ) {
-        String statement = getCreateIndexStatement(schemaName, tableName, columnName, ascending, unique);
+    public void createIndex(DSLContext dsl, String indexName,
+            String schemaName, String tableName,
+            List<Tuple2<String, Boolean>> columnList, boolean unique
+    ) throws UserException {
+        if (!dbBackend.isOnDataInsertMode()) {
+            Preconditions.checkArgument(!columnList.isEmpty(), "Can not create index on 0 columns");
+            
+            String statement = getCreateIndexStatement(indexName, schemaName, tableName, columnList, unique);
 
-        sqlHelper.executeUpdate(dsl, statement, Context.CREATE_INDEX);
+            sqlHelper.executeUpdateOrThrow(dsl, statement, unique?Context.ADD_UNIQUE_INDEX:Context.CREATE_INDEX);
+        }
     }
 
-    protected abstract String getCreateIndexStatement(String schemaName, String tableName, String columnName,
-            boolean ascending, boolean unique);
+    protected abstract String getCreateIndexStatement(String indexName, String schemaName, String tableName, List<Tuple2<String, Boolean>> columnList, boolean unique);
     
     @Override
-    public void dropIndex(@Nonnull DSLContext dsl, @Nonnull String schemaName, @Nonnull String indexName) {
+    public void dropIndex(DSLContext dsl, String schemaName, String indexName) {
         String statement = getDropIndexStatement(schemaName, indexName);
         
         sqlHelper.executeUpdate(dsl, statement, Context.DROP_INDEX);
@@ -139,7 +151,7 @@ public abstract class AbstractStructureInterface implements StructureInterface {
     }
 
     @Override
-    public void createSchema(@Nonnull DSLContext dsl, @Nonnull String schemaName){
+    public void createSchema(DSLContext dsl, String schemaName){
     	String statement = getCreateSchemaStatement(schemaName);
     	sqlHelper.executeUpdate(dsl, statement, Context.CREATE_SCHEMA);
     }
@@ -164,10 +176,10 @@ public abstract class AbstractStructureInterface implements StructureInterface {
     @Override
     public Stream<Consumer<DSLContext>> streamRootDocPartTableIndexesCreation(String schemaName, String tableName, TableRef tableRef) {
         List<Consumer<DSLContext>> result = new ArrayList<>(1);
-        if (dbBackend.isOnDataInsertMode()) {
+        if (!dbBackend.isOnDataInsertMode()) {
             String primaryKeyStatement = getAddDocPartTablePrimaryKeyStatement(schemaName, tableName, metaDataReadInterface.getPrimaryKeyInternalFields(tableRef));
 
-            result.add(dsl -> sqlHelper.executeStatement(dsl, primaryKeyStatement, Context.CREATE_INDEX));
+            result.add(dsl -> sqlHelper.executeStatement(dsl, primaryKeyStatement, Context.ADD_UNIQUE_INDEX));
         }
         return result.stream();
     }
@@ -175,12 +187,12 @@ public abstract class AbstractStructureInterface implements StructureInterface {
     @Override
     public Stream<Consumer<DSLContext>> streamDocPartTableIndexesCreation(String schemaName, String tableName, TableRef tableRef, String foreignTableName) {
         List<Consumer<DSLContext>> result = new ArrayList<>(4);
-        if (dbBackend.isOnDataInsertMode()) {
+        if (!dbBackend.isOnDataInsertMode()) {
             String primaryKeyStatement = getAddDocPartTablePrimaryKeyStatement(schemaName, tableName, metaDataReadInterface.getPrimaryKeyInternalFields(tableRef));
             result.add( (dsl) -> sqlHelper.executeStatement(dsl, primaryKeyStatement, Context.ADD_UNIQUE_INDEX));
         }
 
-        if (dbBackend.isOnDataInsertMode()) {
+        if (!dbBackend.isOnDataInsertMode()) {
             if (dbBackend.includeForeignKeys()) {
                 String foreignKeyStatement = getAddDocPartTableForeignKeyStatement(schemaName, tableName, metaDataReadInterface.getReferenceInternalFields(tableRef),
                         foreignTableName, metaDataReadInterface.getForeignInternalFields(tableRef));
@@ -191,7 +203,7 @@ public abstract class AbstractStructureInterface implements StructureInterface {
             }
         }
 
-        if (dbBackend.isOnDataInsertMode()) {
+        if (!dbBackend.isOnDataInsertMode()) {
             String readIndexStatement = getCreateDocPartTableIndexStatement(schemaName, tableName, metaDataReadInterface.getReadInternalFields(tableRef));
             result.add( (dsl) -> sqlHelper.executeStatement(dsl, readIndexStatement, Context.CREATE_INDEX));
         }

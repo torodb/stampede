@@ -7,9 +7,9 @@ import org.jooq.DSLContext;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
-import com.torodb.core.transaction.metainf.MetaDocPartIndex;
+import com.torodb.core.transaction.metainf.MetaIdentifiedDocPartIndex;
 import com.torodb.core.transaction.metainf.MetaField;
-import com.torodb.core.transaction.metainf.MetaFieldIndex;
+import com.torodb.core.transaction.metainf.MetaDocPartIndexColumn;
 import com.torodb.core.transaction.metainf.MetaIndex;
 import com.torodb.core.transaction.metainf.MetaIndexField;
 import com.torodb.core.transaction.metainf.MetaScalar;
@@ -32,16 +32,13 @@ public interface MetaDataWriteInterface {
     void addMetaScalar(@Nonnull DSLContext dsl, @Nonnull MetaDatabase database, @Nonnull MetaCollection collection, @Nonnull MetaDocPart docPart, @Nonnull MetaScalar scalar);
     void addMetaIndex(@Nonnull DSLContext dsl, @Nonnull MetaDatabase database, @Nonnull MetaCollection collection, @Nonnull MetaIndex index);
     void addMetaIndexField(@Nonnull DSLContext dsl, @Nonnull MetaDatabase database, @Nonnull MetaCollection collection, @Nonnull MetaIndex index, @Nonnull MetaIndexField field);
-    void addMetaDocPartIndex(@Nonnull DSLContext dsl, @Nonnull MetaDatabase database, @Nonnull MetaCollection collection, @Nonnull MetaDocPart docPart, @Nonnull MetaDocPartIndex index);
-    void addMetaFieldIndex(@Nonnull DSLContext dsl, @Nonnull MetaDatabase database, @Nonnull MetaCollection collection, @Nonnull MetaDocPart docPart, @Nonnull MetaDocPartIndex index, @Nonnull MetaFieldIndex field);
+    void addMetaDocPartIndex(@Nonnull DSLContext dsl, @Nonnull MetaDatabase database, @Nonnull MetaCollection collection, @Nonnull MetaDocPart docPart, @Nonnull MetaIdentifiedDocPartIndex index);
+    void addMetaDocPartIndexColumn(@Nonnull DSLContext dsl, @Nonnull MetaDatabase database, @Nonnull MetaCollection collection, @Nonnull MetaDocPart docPart, @Nonnull MetaIdentifiedDocPartIndex index, @Nonnull MetaDocPartIndexColumn field);
 
     void deleteMetaDatabase(@Nonnull DSLContext dsl, @Nonnull MetaDatabase database);
     void deleteMetaCollection(@Nonnull DSLContext dsl, @Nonnull MetaDatabase database, @Nonnull MetaCollection collection);
-    void deleteMetaDocPart(@Nonnull DSLContext dsl, @Nonnull MetaDatabase database, @Nonnull MetaCollection collection, @Nonnull MetaDocPart docPart);
-    void deleteMetaField(@Nonnull DSLContext dsl, @Nonnull MetaDatabase database, @Nonnull MetaCollection collection, @Nonnull MetaDocPart docPart, @Nonnull MetaField field);
-    void deleteMetaScalar(@Nonnull DSLContext dsl, @Nonnull MetaDatabase database, @Nonnull MetaCollection collection, @Nonnull MetaDocPart docPart, @Nonnull MetaScalar scalar);
     void deleteMetaIndex(@Nonnull DSLContext dsl, @Nonnull MetaDatabase database, @Nonnull MetaCollection collection, @Nonnull MetaIndex index);
-    void deleteMetaDocPartIndex(@Nonnull DSLContext dsl, @Nonnull MetaDatabase database, @Nonnull MetaCollection collection, @Nonnull MetaDocPart docPart, @Nonnull MetaDocPartIndex index);
+    void deleteMetaDocPartIndex(@Nonnull DSLContext dsl, @Nonnull MetaDatabase database, @Nonnull MetaCollection collection, @Nonnull MetaDocPart docPart, @Nonnull MetaIdentifiedDocPartIndex index);
     
     int consumeRids(@Nonnull DSLContext dsl, @Nonnull MetaDatabase database, @Nonnull MetaCollection collection, @Nonnull MetaDocPart docPart, int count);
 }

@@ -22,7 +22,6 @@ package com.torodb.backend;
 
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.stream.Stream;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
@@ -31,7 +30,6 @@ import javax.inject.Singleton;
 import org.jooq.DSLContext;
 import org.jooq.Record;
 import org.jooq.Result;
-import org.jooq.lambda.tuple.Tuple2;
 
 import com.google.common.base.Preconditions;
 import com.torodb.backend.ErrorHandler.Context;
@@ -40,10 +38,8 @@ import com.torodb.core.TableRef;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
-import com.torodb.core.transaction.metainf.MetaDocPartIndex;
-import com.torodb.core.transaction.metainf.MetaFieldIndex;
+import com.torodb.core.transaction.metainf.MetaIdentifiedDocPartIndex;
 import com.torodb.core.transaction.metainf.MetaIndex;
-import com.torodb.core.transaction.metainf.MetaIndexField;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -125,52 +121,27 @@ public abstract class AbstractMetaDataReadInterface implements MetaDataReadInter
     @Override
     public Long getIndexSize(
             @Nonnull DSLContext dsl, @Nonnull MetaDatabase database,
-            @Nonnull MetaCollection collection, @Nonnull String index) {
+            @Nonnull MetaCollection collection, @Nonnull String indexName) {
         long result = 0;
-        Iterator<Tuple2<MetaDocPart, MetaDocPartIndex>> docPartIndexIterator = streamMetaDocPartIndexesByIndexName(collection, index).iterator();
-        while (docPartIndexIterator.hasNext()) {
-            Tuple2<MetaDocPart, MetaDocPartIndex> indexEntry = docPartIndexIterator.next();
-            long relatedIndexCount = streamMetaIndexesByIndexIdentifier(collection, indexEntry.v2().getIdentifier()).count();
-            String statement = getReadIndexSizeStatement(database.getIdentifier(), 
-                    indexEntry.v1().getIdentifier(), indexEntry.v2().getIdentifier());
-            result += sqlHelper.executeStatementWithResult(dsl, statement, Context.FETCH)
-                    .get(0).into(Long.class) / relatedIndexCount;
+        MetaIndex index = collection.getMetaIndexByName(indexName);
+        Iterator<TableRef> tableRefIterator = index.streamTableRefs().iterator();
+        while (tableRefIterator.hasNext()) {
+            TableRef tableRef = tableRefIterator.next();
+            MetaDocPart docPart = collection.getMetaDocPartByTableRef(tableRef);
+            Iterator<? extends MetaIdentifiedDocPartIndex> docPartIndexIterator = docPart.streamIndexes().iterator();
+            while (docPartIndexIterator.hasNext()) {
+                MetaIdentifiedDocPartIndex docPartIndex = docPartIndexIterator.next();
+                if (index.isCompatible(docPart, docPartIndex)) {
+                    long relatedIndexCount = collection.streamContainedMetaIndexes()
+                            .filter(i -> i.isCompatible(docPart, docPartIndex)).count();
+                    String statement = getReadIndexSizeStatement(database.getIdentifier(), 
+                            docPart.getIdentifier(), docPartIndex.getIdentifier());
+                    result += sqlHelper.executeStatementWithResult(dsl, statement, Context.FETCH)
+                            .get(0).into(Long.class) / relatedIndexCount;
+                }
+            }
         }
         return result;
-    }
-
-    private Stream<Tuple2<MetaDocPart, MetaDocPartIndex>> streamMetaDocPartIndexesByIndexName(MetaCollection collection, String indexName) {
-        MetaIndex metaIndex = collection.getMetaIndexByName(indexName);
-        return collection.streamContainedMetaDocParts()
-                .flatMap(docPart -> docPart.streamIndexes().map(docPartIndex -> new Tuple2<MetaDocPart, MetaDocPartIndex>(docPart, docPartIndex)))
-                .filter(t -> t.v1().streamIndexes()
-                        .flatMap(docPartIndex -> docPartIndex.streamFields())
-                                .allMatch(fieldIndex -> matchIndexField(metaIndex, t.v1(), fieldIndex)));
-    }
-    
-    private boolean matchIndexField(MetaIndex metaIndex, MetaDocPart docPart, MetaFieldIndex fieldIndex) {
-        MetaIndexField indexField = metaIndex.getMetaIndexFieldByPosition(fieldIndex.getPosition());
-        return indexField.getTableRef().equals(docPart.getTableRef()) &&
-                indexField.getName().equals(fieldIndex.getName()) && 
-                indexField.getOrdering().equals(fieldIndex.getOrdering());
-    }
-
-    private Stream<MetaIndex> streamMetaIndexesByIndexIdentifier(MetaCollection collection, String indexIdentifier) {
-        Tuple2<MetaDocPart, MetaDocPartIndex> metaDocPartIndex = collection.streamContainedMetaDocParts()
-                .flatMap(docPart -> docPart.streamIndexes().map(docPartIndex -> new Tuple2<MetaDocPart, MetaDocPartIndex>(docPart, docPartIndex)))
-                .filter(docPart -> docPart.v1().getMetaDocPartIndexByIdentifier(indexIdentifier) != null)
-                .findAny().get();
-        return collection.streamContainedMetaIndexes()
-                .filter(index -> index.streamFields()
-                        .allMatch(indexField -> matchFieldIndex(metaDocPartIndex.v1(), metaDocPartIndex.v2(), indexField)))
-                .map(index -> (MetaIndex) index);
-    }
-    
-    private boolean matchFieldIndex(MetaDocPart docPart, MetaDocPartIndex docPartIndex, MetaIndexField indexField) {
-        MetaFieldIndex fieldIndex = docPartIndex.getMetaFieldIndexByPosition(indexField.getPosition());
-        return docPart.getTableRef().equals(indexField.getTableRef()) &&
-                fieldIndex.getName().equals(indexField.getName()) && 
-                fieldIndex.getOrdering().equals(indexField.getOrdering());
     }
 
     protected abstract String getReadIndexSizeStatement(

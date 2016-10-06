@@ -1,35 +1,38 @@
 
 package com.torodb.mongodb.commands.impl.general;
 
+import java.util.Arrays;
+import java.util.stream.Stream;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 import com.eightkdata.mongowp.ErrorCode;
 import com.eightkdata.mongowp.Status;
-import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.InsertCommand;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.InsertCommand.InsertArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.InsertCommand.InsertResult;
 import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.Request;
+import com.google.common.collect.ImmutableList;
 import com.torodb.core.exceptions.user.UserException;
+import com.torodb.core.language.AttributeReference;
+import com.torodb.core.language.AttributeReference.Key;
+import com.torodb.core.language.AttributeReference.ObjectKey;
+import com.torodb.core.transaction.metainf.FieldIndexOrdering;
 import com.torodb.kvdocument.conversion.mongowp.FromBsonValueTranslator;
 import com.torodb.kvdocument.values.KVDocument;
 import com.torodb.mongodb.commands.impl.WriteTorodbCommandImpl;
 import com.torodb.mongodb.core.MongodMetrics;
 import com.torodb.mongodb.core.WriteMongodTransaction;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import java.util.stream.Stream;
-
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import com.torodb.mongodb.language.Constants;
+import com.torodb.torod.IndexFieldInfo;
 
 /**
  *
  */
 @Singleton
 public class InsertImplementation implements WriteTorodbCommandImpl<InsertArgument, InsertResult>{
-
-    private static final Logger LOGGER = LogManager.getLogger(InsertImplementation.class);
-
+	
 	private MongodMetrics mongodMetrics;
 	
 	@Inject
@@ -38,16 +41,18 @@ public class InsertImplementation implements WriteTorodbCommandImpl<InsertArgume
 	}
 
     @Override
-    public Status<InsertResult> apply(Request req, Command<? super InsertArgument, ? super InsertResult> command, InsertArgument arg, WriteMongodTransaction trans) {
-        logInsertCommand(arg);
-
-        mongodMetrics.getInserts().mark(arg.getDocuments().size());
-
+    public Status<InsertResult> apply(Request req, Command<? super InsertArgument, ? super InsertResult> command, InsertArgument arg, WriteMongodTransaction context) {
+    	mongodMetrics.getInserts().mark(arg.getDocuments().size());
     	Stream<KVDocument> docsToInsert = arg.getDocuments().stream().map(FromBsonValueTranslator.getInstance())
                 .map((v) -> (KVDocument)v);
 
         try {
-            trans.getTorodTransaction().insert(req.getDatabase(), arg.getCollection(), docsToInsert);
+            if (!context.getTorodTransaction().existsCollection(req.getDatabase(), arg.getCollection())) {
+                context.getTorodTransaction().createIndex(req.getDatabase(), arg.getCollection(), Constants.ID_INDEX, 
+                        ImmutableList.<IndexFieldInfo>of(new IndexFieldInfo(new AttributeReference(Arrays.asList(new Key[] { new ObjectKey(Constants.ID) })), FieldIndexOrdering.ASC.isAscending())), true);
+            }
+            
+            context.getTorodTransaction().insert(req.getDatabase(), arg.getCollection(), docsToInsert);
         } catch (UserException ex) {
             //TODO: Improve error reporting
             return Status.from(ErrorCode.COMMAND_FAILED, ex.getLocalizedMessage());
@@ -55,14 +60,4 @@ public class InsertImplementation implements WriteTorodbCommandImpl<InsertArgume
 
         return Status.ok(new InsertResult(arg.getDocuments().size()));
     }
-
-    private void logInsertCommand(InsertArgument arg) {
-        if (LOGGER.isTraceEnabled()) {
-            String collection = arg.getCollection();
-            String documents = arg.getDocuments().toString();
-
-            LOGGER.trace("Insert into {} values {}", collection, documents);
-        }
-    }
-
 }

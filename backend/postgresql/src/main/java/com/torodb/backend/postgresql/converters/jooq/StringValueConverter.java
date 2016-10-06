@@ -18,56 +18,56 @@
  *     
  */
 
-package com.torodb.backend.converters.jooq;
+
+package com.torodb.backend.postgresql.converters.jooq;
 
 import org.jooq.impl.SQLDataType;
 
-import com.google.common.io.ByteSource;
-import com.torodb.backend.converters.sql.BinarySqlBinding;
+import com.torodb.backend.converters.jooq.DataTypeForKV;
+import com.torodb.backend.converters.jooq.KVValueConverter;
 import com.torodb.backend.converters.sql.SqlBinding;
-import com.torodb.kvdocument.types.BinaryType;
+import com.torodb.backend.converters.sql.StringSqlBinding;
 import com.torodb.kvdocument.types.KVType;
-import com.torodb.kvdocument.values.KVBinary;
-import com.torodb.kvdocument.values.KVBinary.KVBinarySubtype;
-import com.torodb.kvdocument.values.heap.ByteSourceKVBinary;
+import com.torodb.kvdocument.types.StringType;
+import com.torodb.kvdocument.values.KVString;
+import com.torodb.kvdocument.values.heap.StringKVString;
 
 /**
  *
  */
-public class BinaryValueConverter implements
-        KVValueConverter<byte[], byte[], KVBinary> {
+public class StringValueConverter implements KVValueConverter<String, String, KVString>{
     private static final long serialVersionUID = 1L;
 
-    public static final DataTypeForKV<KVBinary> TYPE = DataTypeForKV.from(SQLDataType.BINARY, new BinaryValueConverter());
+    public static final DataTypeForKV<KVString> TYPE = DataTypeForKV.from(SQLDataType.VARCHAR, new StringValueConverter());
 
     @Override
     public KVType getErasuredType() {
-        return BinaryType.INSTANCE;
+        return StringType.INSTANCE;
     }
 
     @Override
-    public KVBinary from(byte[] databaseObject) {
-        return new ByteSourceKVBinary(KVBinarySubtype.MONGO_GENERIC, (byte) 0, ByteSource.wrap(databaseObject));
+    public KVString from(String databaseObject) {
+        return new StringKVString(databaseObject);
     }
 
     @Override
-    public byte[] to(KVBinary userObject) {
-        return userObject.getByteSource().read();
+    public String to(KVString userObject) {
+        return userObject.getValue();
     }
 
     @Override
-    public Class<byte[]> fromType() {
-        return byte[].class;
+    public Class<String> fromType() {
+        return String.class;
     }
 
     @Override
-    public Class<KVBinary> toType() {
-        return KVBinary.class;
+    public Class<KVString> toType() {
+        return KVString.class;
     }
 
     @Override
-    public SqlBinding<byte[]> getSqlBinding() {
-        return BinarySqlBinding.INSTANCE;
+    public SqlBinding<String> getSqlBinding() {
+        return StringSqlBinding.INSTANCE;
     }
-
+    
 }

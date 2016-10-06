@@ -20,9 +20,13 @@
 
 package com.torodb.core.transaction.metainf;
 
+import java.util.Optional;
+import java.util.stream.Stream;
+
+import org.jooq.lambda.tuple.Tuple2;
+
 import com.torodb.core.TableRef;
 import com.torodb.core.annotations.DoNotChange;
-import java.util.stream.Stream;
 
 /**
  *
@@ -36,6 +40,9 @@ public interface MutableMetaCollection extends MetaCollection {
     public MutableMetaDocPart getMetaDocPartByIdentifier(String docPartId);
 
     @Override
+    public MutableMetaIndex getMetaIndexByName(String indexId);
+
+    @Override
     public Stream<? extends MutableMetaDocPart> streamContainedMetaDocParts();
 
     public MutableMetaDocPart addMetaDocPart(TableRef tableRef, String identifier) throws IllegalArgumentException;
@@ -47,9 +54,30 @@ public interface MutableMetaCollection extends MetaCollection {
     public Stream<? extends MutableMetaIndex> streamContainedMetaIndexes();
 
     public MutableMetaIndex addMetaIndex(String name, boolean unique) throws IllegalArgumentException;
+    
+    public boolean removeMetaIndexByName(String indexName);
 
     @DoNotChange
-    public Iterable<? extends MutableMetaIndex> getModifiedMetaIndexes();
+    public Iterable<Tuple2<MutableMetaIndex, MetaElementState>> getModifiedMetaIndexes();
+    
+
+    public Optional<? extends MetaIndex> getAnyMissedIndex(MetaCollection oldCol,
+            MutableMetaDocPart newStructure, ImmutableMetaDocPart oldStructure, ImmutableMetaField newField);
+
+    public Optional<? extends MetaIndex> getAnyRelatedIndex(ImmutableMetaCollection oldCol,
+            MetaDocPart newStructure, ImmutableMetaIdentifiedDocPartIndex newDocPartIndex);
+    
+    public Optional<ImmutableMetaIndex> getAnyMissedIndex(ImmutableMetaCollection oldCol,
+            ImmutableMetaIdentifiedDocPartIndex newRemovedDocPartIndex);
+
+    public Optional<ImmutableMetaIndex> getAnyConflictingIndex(
+            ImmutableMetaCollection oldStructure, MutableMetaIndex changed);
+
+    public Optional<ImmutableMetaDocPart> getAnyDocPartWithMissedDocPartIndex(
+            ImmutableMetaCollection oldStructure, MutableMetaIndex changed);
+
+    public Optional<? extends MetaIdentifiedDocPartIndex> getAnyOrphanDocPartIndex(
+            ImmutableMetaCollection oldStructure, MutableMetaIndex changed);
     
     public abstract ImmutableMetaCollection immutableCopy();
 }

@@ -104,7 +104,7 @@ public class SmartRetrier extends AbstractHintableRetrier {
             IntPredicate giveUpPredicate, ExceptionHandler<Result, T> delegateHandler) {
         return (RetryCallback<Result> callback, Exception t, int attempts) -> {
             if (giveUpPredicate.test(attempts)) {
-                LOGGER.debug("Giving up when executing a task after {} executions", attempts);
+                LOGGER.debug("Giving up when executing a task after {} executions", attempts, t);
                 delegateHandler.handleException(callback, t, attempts);
             }
             else {

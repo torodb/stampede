@@ -22,4 +22,5 @@ package com.torodb.mongodb.language;
 
 public class Constants {
     public static final String ID = "_id";
+    public static final String ID_INDEX = "_id_";
 }

@@ -37,7 +37,7 @@ public class PostgreSQLMetaIndexRecord extends MetaIndexRecord {
     public MetaIndexRecord values(String database, String collection, String name, Boolean unique) {
         
         setDatabase(database);
-        setDatabase(collection);
+        setCollection(collection);
         setName(name);
         setUnique(unique);
         return this;

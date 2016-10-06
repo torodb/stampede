@@ -146,7 +146,7 @@ public abstract class AbstractWriteInterface implements WriteInterface {
     
     protected void standardInsertDocPartData(DSLContext dsl, String schemaName, DocPartData docPartData, MetaDocPart metaDocPart, 
             Iterator<MetaScalar> metaScalarIterator, Iterator<MetaField> metaFieldIterator, 
-            Iterator<DocPartRow> docPartRowIterator) {
+            Iterator<DocPartRow> docPartRowIterator) throws UserException {
         final int maxBatchSize = getMaxBatchSize();
         Collection<InternalField<?>> internalFields = metaDataReadInterface.getInternalFields(metaDocPart);
         List<FieldType> fieldTypeList = new ArrayList<>();
@@ -193,7 +193,7 @@ public abstract class AbstractWriteInterface implements WriteInterface {
                 }
             }
         } catch(SQLException ex) {
-            throw errorHandler.handleException(Context.INSERT, ex);
+            throw errorHandler.handleUserException(Context.INSERT, ex);
         } finally {
             dsl.configuration().connectionProvider().release(connection);
         }

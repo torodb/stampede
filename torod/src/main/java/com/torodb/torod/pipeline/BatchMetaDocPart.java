@@ -1,13 +1,27 @@
 
 package com.torodb.torod.pipeline;
 
-import com.torodb.core.TableRef;
-import com.torodb.core.annotations.DoNotChange;
-import com.torodb.core.transaction.metainf.*;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
+
+import org.jooq.lambda.tuple.Tuple2;
+
+import com.torodb.core.TableRef;
+import com.torodb.core.annotations.DoNotChange;
+import com.torodb.core.transaction.metainf.FieldType;
+import com.torodb.core.transaction.metainf.ImmutableMetaDocPart;
+import com.torodb.core.transaction.metainf.ImmutableMetaIdentifiedDocPartIndex;
+import com.torodb.core.transaction.metainf.ImmutableMetaField;
+import com.torodb.core.transaction.metainf.ImmutableMetaScalar;
+import com.torodb.core.transaction.metainf.MetaIdentifiedDocPartIndex;
+import com.torodb.core.transaction.metainf.MetaElementState;
+import com.torodb.core.transaction.metainf.MetaField;
+import com.torodb.core.transaction.metainf.MetaIndex;
+import com.torodb.core.transaction.metainf.MetaScalar;
+import com.torodb.core.transaction.metainf.MutableMetaDocPart;
+import com.torodb.core.transaction.metainf.MutableMetaDocPartIndex;
 
 /**
  *
@@ -98,6 +112,11 @@ public class BatchMetaDocPart implements MutableMetaDocPart {
     }
 
     @Override
+    public ImmutableMetaField getAddedFieldByIdentifier(String identifier) {
+        return delegate.getAddedFieldByIdentifier(identifier);
+    }
+
+    @Override
     public ImmutableMetaDocPart immutableCopy() {
         return delegate.immutableCopy();
     }
@@ -123,27 +142,43 @@ public class BatchMetaDocPart implements MutableMetaDocPart {
     }
 
     @Override
-    public String toString() {
-        return defautToString();
-    }
-
-    @Override
-    public Stream<? extends MetaDocPartIndex> streamIndexes() {
+    public Stream<? extends MetaIdentifiedDocPartIndex> streamIndexes() {
         return delegate.streamIndexes();
     }
 
     @Override
-    public MetaDocPartIndex getMetaDocPartIndexByIdentifier(String indexId) {
+    public MetaIdentifiedDocPartIndex getMetaDocPartIndexByIdentifier(String indexId) {
         return delegate.getMetaDocPartIndexByIdentifier(indexId);
     }
 
     @Override
-    public MutableMetaDocPartIndex addMetaDocPartIndex(String identifier, boolean unique) throws IllegalArgumentException {
-        throw new UnsupportedOperationException();
+    public MutableMetaDocPartIndex addMetaDocPartIndex(boolean unique) throws IllegalArgumentException {
+        return delegate.addMetaDocPartIndex(unique);
     }
 
     @Override
-    public Iterable<? extends MutableMetaDocPartIndex> getAddedMetaDocPartIndexes() {
-        return Collections.emptyList();
+    public Iterable<Tuple2<ImmutableMetaIdentifiedDocPartIndex, MetaElementState>> getModifiedMetaDocPartIndexes() {
+        return delegate.getModifiedMetaDocPartIndexes();
+    }
+
+    @Override
+    public Iterable<MutableMetaDocPartIndex> getAddedMutableMetaDocPartIndexes() {
+        return delegate.getAddedMutableMetaDocPartIndexes();
+    }
+
+    @Override
+    public boolean removeMetaDocPartIndexByIdentifier(String indexId) {
+        return delegate.removeMetaDocPartIndexByIdentifier(indexId);
+    }
+
+    @Override
+    public MutableMetaDocPartIndex getOrCreatePartialMutableDocPartIndexForMissingIndexAndNewField(
+            MetaIndex missingIndex, List<String> identifiers, MetaField newField) {
+        return delegate.getOrCreatePartialMutableDocPartIndexForMissingIndexAndNewField(missingIndex, identifiers, newField);
+    }
+
+    @Override
+    public String toString() {
+        return defautToString();
     }
 }

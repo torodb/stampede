@@ -2,11 +2,12 @@ package com.torodb.core.d2r;
 
 import javax.annotation.Nonnull;
 
+import org.jooq.lambda.tuple.Tuple2;
+
 import com.torodb.core.TableRef;
 import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
-import com.torodb.core.transaction.metainf.MetaField;
 import com.torodb.core.transaction.metainf.MetaSnapshot;
 
 public interface IdentifierFactory {
@@ -21,5 +22,5 @@ public interface IdentifierFactory {
 
     @Nonnull String toFieldIdentifierForScalar(@Nonnull FieldType fieldType);
 
-    @Nonnull String toIndexIdentifier(@Nonnull MetaDatabase metaSnapshot, @Nonnull String indexName, @Nonnull Iterable<MetaField> fields);
+    @Nonnull String toIndexIdentifier(@Nonnull MetaDatabase metaSnapshot, @Nonnull String indexName, @Nonnull Iterable<Tuple2<String, Boolean>> identifiers);
 }

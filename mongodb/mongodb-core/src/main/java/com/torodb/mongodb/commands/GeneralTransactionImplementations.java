@@ -1,11 +1,20 @@
 
 package com.torodb.mongodb.commands;
 
+import java.util.Collections;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import javax.inject.Inject;
+
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.MongoDb30Commands.MongoDb30CommandsImplementationBuilder;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.AdminCommands.AdminCommandsImplementationsBuilder;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.CreateCollectionCommand.CreateCollectionArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.CreateIndexesCommand.CreateIndexesArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.CreateIndexesCommand.CreateIndexesResult;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.DropIndexesCommand.DropIndexesArgument;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.DropIndexesCommand.DropIndexesResult;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.ListCollectionsCommand.ListCollectionsArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.ListCollectionsCommand.ListCollectionsResult;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.ListIndexesCommand.ListIndexesArgument;
@@ -64,16 +73,12 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.net.HostAndPort;
 import com.torodb.mongodb.commands.impl.NotImplementedCommandImplementation;
 import com.torodb.mongodb.commands.impl.admin.ListCollectionsImplementation;
+import com.torodb.mongodb.commands.impl.admin.ListIndexesImplementation;
 import com.torodb.mongodb.commands.impl.aggregation.CountImplementation;
 import com.torodb.mongodb.commands.impl.diagnostic.CollStatsImplementation;
 import com.torodb.mongodb.commands.impl.diagnostic.ListDatabasesImplementation;
 import com.torodb.mongodb.commands.impl.general.FindImplementation;
 import com.torodb.mongodb.core.MongodTransaction;
-import java.util.Collections;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.stream.Collectors;
-import javax.inject.Inject;
 
 /**
  * This class contains the implementations of all commands that can be executed on a read or write
@@ -149,9 +154,16 @@ public class GeneralTransactionImplementations {
     }
 
     static class MyAdminCommandsImplementationBuilder extends AdminCommandsImplementationsBuilder<MongodTransaction> {
+        private final ListCollectionsImplementation listCollectionsImplementation;
+        private final ListIndexesImplementation listIndexesImplementation;
 
         @Inject
-        private ListCollectionsImplementation listCollectionsImplementation;
+        public MyAdminCommandsImplementationBuilder(ListCollectionsImplementation listCollectionsImplementation,
+                ListIndexesImplementation listIndexesImplementation) {
+            super();
+            this.listCollectionsImplementation = listCollectionsImplementation;
+            this.listIndexesImplementation = listIndexesImplementation;
+        }
 
         @Override
         public CommandImplementation<ListCollectionsArgument, ListCollectionsResult, ? super MongodTransaction> getListCollectionsImplementation() {
@@ -175,11 +187,16 @@ public class GeneralTransactionImplementations {
 
         @Override
         public CommandImplementation<ListIndexesArgument, ListIndexesResult, MongodTransaction> getListIndexesImplementation() {
-            return NotImplementedCommandImplementation.build();
+            return listIndexesImplementation;
         }
 
         @Override
         public CommandImplementation<CreateIndexesArgument, CreateIndexesResult, MongodTransaction> getCreateIndexesImplementation() {
+            return NotImplementedCommandImplementation.build();
+        }
+
+        @Override
+        public CommandImplementation<DropIndexesArgument, DropIndexesResult, ? super MongodTransaction> getDropIndexesImplementation() {
             return NotImplementedCommandImplementation.build();
         }
 

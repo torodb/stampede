@@ -23,6 +23,7 @@ package com.torodb.core.exceptions.user;
 public interface UserExceptionVisitor<Result, Argument> {
     public Result visit(DatabaseNotFoundException userException, Argument arg);
     public Result visit(CollectionNotFoundException userException, Argument arg);
+    public Result visit(IndexNotFoundException userException, Argument arg);
     public Result visit(UpdateException userException, Argument arg);
     public Result visit(UniqueIndexViolationException userException, Argument arg);
 }

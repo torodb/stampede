@@ -28,9 +28,11 @@ import java.util.List;
 import java.util.stream.StreamSupport;
 
 import org.jooq.DSLContext;
+import org.jooq.lambda.tuple.Tuple2;
 import org.junit.Before;
 import org.junit.ClassRule;
 
+import com.google.common.collect.ImmutableList;
 import com.torodb.backend.SqlHelper;
 import com.torodb.backend.SqlInterface;
 import com.torodb.backend.TableRefComparator;
@@ -46,12 +48,14 @@ import com.torodb.core.d2r.DocPartResult;
 import com.torodb.core.d2r.IdentifierFactory;
 import com.torodb.core.d2r.R2DTranslator;
 import com.torodb.core.document.ToroDocument;
+import com.torodb.core.exceptions.SystemException;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.impl.TableRefFactoryImpl;
 import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
+import com.torodb.core.transaction.metainf.MetaDocPartIndexColumn;
 import com.torodb.core.transaction.metainf.MetaField;
 import com.torodb.core.transaction.metainf.MetaScalar;
 import com.torodb.core.transaction.metainf.MetainfoRepository.SnapshotStage;
@@ -105,8 +109,17 @@ public abstract class AbstractBackendTest {
         sqlInterface.getMetaDataWriteInterface().addMetaDatabase(dsl, data.database);
         sqlInterface.getStructureInterface().createSchema(dsl, data.database.getIdentifier());
         sqlInterface.getMetaDataWriteInterface().addMetaCollection(dsl, data.database, data.collection);
+        sqlInterface.getMetaDataWriteInterface().addMetaIndex(dsl, data.database, data.collection, data.index);
+        data.index.iteratorFields().forEachRemaining(indexField -> sqlInterface.getMetaDataWriteInterface().addMetaIndexField(dsl, data.database, data.collection, data.index, indexField));
         sqlInterface.getMetaDataWriteInterface().addMetaDocPart(dsl, data.database, data.collection, data.rootDocPart);
         sqlInterface.getMetaDataWriteInterface().addMetaDocPart(dsl, data.database, data.collection, data.subDocPart);
+        data.collection.streamContainedMetaDocParts().forEach(docPart -> {
+            docPart.streamIndexes().forEach(docPartIndex -> {
+                MetaDocPartIndexColumn firstColumn = docPartIndex.iteratorColumns().next();
+                sqlInterface.getMetaDataWriteInterface().addMetaDocPartIndex(dsl, data.database, data.collection, docPart, docPartIndex);
+                sqlInterface.getMetaDataWriteInterface().addMetaDocPartIndexColumn(dsl, data.database, data.collection, docPart, docPartIndex, firstColumn);
+            });
+        });
     }
     
     protected void insertMetaFields(DSLContext dsl, MetaDocPart metaDocPart){
@@ -137,6 +150,19 @@ public abstract class AbstractBackendTest {
         }
         
         addColumnsToDocPartTable(dsl, metaCollection, metaDocPart);
+        
+        metaDocPart.streamIndexes().forEach(docPartIndex -> {
+            MetaDocPartIndexColumn firstColumn = docPartIndex.iteratorColumns().next();
+            try {
+                sqlInterface.getStructureInterface().createIndex(dsl, docPartIndex.getIdentifier(), data.database.getIdentifier(), metaDocPart.getIdentifier(), 
+                        ImmutableList.<Tuple2<String, Boolean>>builder()
+                            .add(new Tuple2<>(firstColumn.getIdentifier(), firstColumn.getOrdering().isAscending()))
+                            .build(), 
+                        docPartIndex.isUnique());
+            } catch(UserException ex) {
+                throw new SystemException(ex);
+            }
+        });
     }
     
     protected void addColumnsToDocPartTable(DSLContext dsl, MetaCollection metaCollection, MetaDocPart metaDocPart) {

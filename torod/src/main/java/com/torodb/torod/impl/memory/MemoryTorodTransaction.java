@@ -4,11 +4,13 @@ package com.torodb.torod.impl.memory;
 import com.torodb.core.cursors.*;
 import com.torodb.core.document.ToroDocument;
 import com.torodb.core.exceptions.user.CollectionNotFoundException;
+import com.torodb.core.exceptions.user.IndexNotFoundException;
 import com.torodb.core.language.AttributeReference;
 import com.torodb.core.util.AttributeRefKVDocResolver;
 import com.torodb.kvdocument.values.KVDocument;
 import com.torodb.kvdocument.values.KVValue;
 import com.torodb.torod.CollectionInfo;
+import com.torodb.torod.IndexInfo;
 import com.torodb.torod.TorodTransaction;
 import java.util.Collection;
 import java.util.List;
@@ -136,6 +138,16 @@ public abstract class MemoryTorodTransaction implements TorodTransaction {
     @Override
     public CollectionInfo getCollectionInfo(String dbName, String colName) throws
             CollectionNotFoundException {
+        throw new UnsupportedOperationException("Not supported yet."); //TODO: Implement when necessary
+    }
+
+    @Override
+    public Stream<IndexInfo> getIndexesInfo(String dbName, String colName) {
+        throw new UnsupportedOperationException("Not supported yet."); //TODO: Implement when necessary
+    }
+
+    @Override
+    public IndexInfo getIndexInfo(String dbName, String colName, String idxName) throws IndexNotFoundException {
         throw new UnsupportedOperationException("Not supported yet."); //TODO: Implement when necessary
     }
 

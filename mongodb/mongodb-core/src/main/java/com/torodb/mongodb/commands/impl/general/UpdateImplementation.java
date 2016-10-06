@@ -2,6 +2,7 @@
 package com.torodb.mongodb.commands.impl.general;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Spliterator;
 import java.util.Spliterators;
@@ -29,6 +30,9 @@ import com.torodb.core.exceptions.user.UpdateException;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.language.AttributeReference;
 import com.torodb.core.language.AttributeReference.Builder;
+import com.torodb.core.language.AttributeReference.Key;
+import com.torodb.core.language.AttributeReference.ObjectKey;
+import com.torodb.core.transaction.metainf.FieldIndexOrdering;
 import com.torodb.kvdocument.conversion.mongowp.MongoWPConverter;
 import com.torodb.kvdocument.values.KVDocument;
 import com.torodb.kvdocument.values.KVDocument.DocEntry;
@@ -42,6 +46,7 @@ import com.torodb.mongodb.language.UpdateActionTranslator;
 import com.torodb.mongodb.language.update.SetDocumentUpdateAction;
 import com.torodb.mongodb.language.update.UpdateAction;
 import com.torodb.mongodb.language.update.UpdatedToroDocumentBuilder;
+import com.torodb.torod.IndexFieldInfo;
 import com.torodb.torod.SharedWriteTorodTransaction;
 
 /**
@@ -66,6 +71,11 @@ public class UpdateImplementation implements WriteTorodbCommandImpl<UpdateArgume
         UpdateStatus updateStatus = new UpdateStatus();
 
         try {
+            if (!context.getTorodTransaction().existsCollection(req.getDatabase(), arg.getCollection())) {
+                context.getTorodTransaction().createIndex(req.getDatabase(), arg.getCollection(), Constants.ID_INDEX, 
+                        ImmutableList.<IndexFieldInfo>of(new IndexFieldInfo(new AttributeReference(Arrays.asList(new Key[] { new ObjectKey(Constants.ID) })), FieldIndexOrdering.ASC.isAscending())), true);
+            }
+            
             for (UpdateStatement updateStatement : arg.getStatements()) {
                 BsonDocument query = updateStatement.getQuery();
                 UpdateAction updateAction = UpdateActionTranslator.translate(updateStatement.getUpdate());

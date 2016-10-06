@@ -1,11 +1,19 @@
 
 package com.torodb.mongodb.commands;
 
+import java.util.Map.Entry;
+import java.util.Set;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.MongoDb30Commands.MongoDb30CommandsImplementationBuilder;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.AdminCommands.AdminCommandsImplementationsBuilder;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.CreateCollectionCommand.CreateCollectionArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.CreateIndexesCommand.CreateIndexesArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.CreateIndexesCommand.CreateIndexesResult;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.DropIndexesCommand.DropIndexesArgument;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.DropIndexesCommand.DropIndexesResult;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.ListCollectionsCommand.ListCollectionsArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.ListCollectionsCommand.ListCollectionsResult;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.ListIndexesCommand.ListIndexesArgument;
@@ -65,17 +73,14 @@ import com.google.common.net.HostAndPort;
 import com.torodb.core.annotations.DoNotChange;
 import com.torodb.mongodb.commands.impl.NotImplementedCommandImplementation;
 import com.torodb.mongodb.commands.impl.admin.CreateCollectionImplementation;
+import com.torodb.mongodb.commands.impl.admin.CreateIndexesImplementation;
 import com.torodb.mongodb.commands.impl.admin.DropCollectionImplementation;
 import com.torodb.mongodb.commands.impl.admin.DropDatabaseImplementation;
-import com.torodb.mongodb.commands.impl.admin.RenameCollectionImplementation;
+import com.torodb.mongodb.commands.impl.admin.DropIndexesImplementation;
 import com.torodb.mongodb.commands.impl.general.DeleteImplementation;
 import com.torodb.mongodb.commands.impl.general.InsertImplementation;
 import com.torodb.mongodb.commands.impl.general.UpdateImplementation;
 import com.torodb.mongodb.core.WriteMongodTransaction;
-import java.util.Map.Entry;
-import java.util.Set;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 /**
  *
@@ -150,15 +155,21 @@ public class WriteTransactionImplementations {
         private final CreateCollectionImplementation createCollectionImplementation;
         private final DropCollectionImplementation dropCollectionImplementation;
         private final DropDatabaseImplementation dropDatabaseImplementation;
+        private final CreateIndexesImplementation createIndexesImplementation;
+        private final DropIndexesImplementation dropIndexesImplementation;
         
         @Inject
         public MyAdminCommandsImplementationBuilder(
                 CreateCollectionImplementation createCollectionImplementation,
                 DropCollectionImplementation dropCollectionImplementation,
-                DropDatabaseImplementation dropDatabaseImplementation) {
+                DropDatabaseImplementation dropDatabaseImplementation,
+                CreateIndexesImplementation createIndexesImplementation,
+                DropIndexesImplementation dropIndexesImplementation) {
             this.createCollectionImplementation = createCollectionImplementation;
             this.dropCollectionImplementation = dropCollectionImplementation;
             this.dropDatabaseImplementation = dropDatabaseImplementation;
+            this.createIndexesImplementation = createIndexesImplementation;
+            this.dropIndexesImplementation = dropIndexesImplementation;
         }
 
         @Override
@@ -188,7 +199,12 @@ public class WriteTransactionImplementations {
 
         @Override
         public CommandImplementation<CreateIndexesArgument, CreateIndexesResult, WriteMongodTransaction> getCreateIndexesImplementation() {
-            return NotImplementedCommandImplementation.build();
+            return createIndexesImplementation;
+        }
+
+        @Override
+        public CommandImplementation<DropIndexesArgument, DropIndexesResult, ? super WriteMongodTransaction> getDropIndexesImplementation() {
+            return dropIndexesImplementation;
         }
 
         @Override

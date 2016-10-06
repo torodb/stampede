@@ -22,7 +22,6 @@ package com.torodb.backend.tables.records;
 import org.jooq.Field;
 import org.jooq.Record3;
 import org.jooq.Record4;
-import org.jooq.Row3;
 import org.jooq.Row4;
 import org.jooq.impl.UpdatableRecordImpl;
 

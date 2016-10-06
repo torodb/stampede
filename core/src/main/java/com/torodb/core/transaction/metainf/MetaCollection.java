@@ -1,10 +1,13 @@
 
 package com.torodb.core.transaction.metainf;
 
+import java.util.List;
 import java.util.stream.Stream;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+
+import org.jooq.lambda.tuple.Tuple2;
 
 import com.torodb.core.TableRef;
 
@@ -39,6 +42,9 @@ public interface MetaCollection {
 
     @Nullable
     public MetaIndex getMetaIndexByName(String indexName);
+
+    public List<Tuple2<MetaIndex, List<String>>> getMissingIndexesForNewField(
+            MutableMetaDocPart docPart, MetaField newField);
     
     public default String defautToString() {
         return "col{" + "name:" + getName() + ", id:" + getIdentifier() + '}';

@@ -1,28 +1,42 @@
 
 package com.torodb.torod.impl.sql;
 
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Multimap;
-import com.torodb.core.TableRef;
-import com.torodb.core.TableRefFactory;
-import com.torodb.core.cursors.*;
-import com.torodb.core.exceptions.user.CollectionNotFoundException;
-import com.torodb.core.language.AttributeReference;
-import com.torodb.core.language.AttributeReference.Key;
-import com.torodb.core.language.AttributeReference.ObjectKey;
-import com.torodb.core.transaction.InternalTransaction;
-import com.torodb.core.transaction.metainf.*;
-import com.torodb.kvdocument.values.KVValue;
-import com.torodb.torod.CollectionInfo;
-import com.torodb.torod.TorodTransaction;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
 import javax.json.Json;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jooq.lambda.tuple.Tuple2;
+
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
+import com.torodb.core.TableRef;
+import com.torodb.core.TableRefFactory;
+import com.torodb.core.cursors.Cursor;
+import com.torodb.core.cursors.EmptyCursor;
+import com.torodb.core.cursors.EmptyToroCursor;
+import com.torodb.core.cursors.ToroCursor;
+import com.torodb.core.exceptions.user.CollectionNotFoundException;
+import com.torodb.core.exceptions.user.IndexNotFoundException;
+import com.torodb.core.language.AttributeReference;
+import com.torodb.core.language.AttributeReference.Key;
+import com.torodb.core.language.AttributeReference.ObjectKey;
+import com.torodb.core.transaction.InternalTransaction;
+import com.torodb.core.transaction.metainf.FieldType;
+import com.torodb.core.transaction.metainf.MetaCollection;
+import com.torodb.core.transaction.metainf.MetaDatabase;
+import com.torodb.core.transaction.metainf.MetaDocPart;
+import com.torodb.core.transaction.metainf.MetaField;
+import com.torodb.core.transaction.metainf.MetaIndex;
+import com.torodb.core.transaction.metainf.MetaIndexField;
+import com.torodb.kvdocument.values.KVValue;
+import com.torodb.torod.CollectionInfo;
+import com.torodb.torod.IndexInfo;
+import com.torodb.torod.TorodTransaction;
 
 /**
  *
@@ -142,20 +156,8 @@ public abstract class SqlTorodTransaction<T extends InternalTransaction> impleme
             LOGGER.trace("Collection " + dbName + '.' + colName + " does not exist. An empty cursor is returned");
             return new EmptyToroCursor();
         }
-        TableRefFactory tableRefFactory = connection.getServer().getTableRefFactory();
-        TableRef ref = tableRefFactory.createRoot();
-
-        if (attRef.getKeys().isEmpty()) {
-            throw new IllegalArgumentException("The empty attribute reference is not valid on queries");
-        }
+        TableRef ref = extractTableRef(attRef);
         String lastKey = extractKeyName(attRef.getKeys().get(attRef.getKeys().size() - 1));
-        if (attRef.getKeys().size() > 1) {
-            List<Key<?>> keys = attRef.getKeys();
-            List<Key<?>> tableKeys = keys.subList(0, keys.size() - 1);
-            for (Key<?> key : tableKeys) {
-                ref = tableRefFactory.createChild(ref, extractKeyName(key));
-            }
-        }
         
         MetaDocPart docPart = col.getMetaDocPartByTableRef(ref);
         if (docPart == null) {
@@ -188,20 +190,9 @@ public abstract class SqlTorodTransaction<T extends InternalTransaction> impleme
             LOGGER.trace("An empty list of values have been given as in condition. An empty cursor is returned");
             return new EmptyToroCursor();
         }
-        TableRefFactory tableRefFactory = connection.getServer().getTableRefFactory();
-        TableRef ref = tableRefFactory.createRoot();
 
-        if (attRef.getKeys().isEmpty()) {
-            throw new IllegalArgumentException("The empty attribute reference is not valid on queries");
-        }
+        TableRef ref = extractTableRef(attRef);
         String lastKey = extractKeyName(attRef.getKeys().get(attRef.getKeys().size() - 1));
-        if (attRef.getKeys().size() > 1) {
-            List<Key<?>> keys = attRef.getKeys();
-            List<Key<?>> tableKeys = keys.subList(0, keys.size() - 1);
-            for (Key<?> key : tableKeys) {
-                ref = tableRefFactory.createChild(ref, extractKeyName(key));
-            }
-        }
 
         MetaDocPart docPart = col.getMetaDocPartByTableRef(ref);
         if (docPart == null) {
@@ -236,20 +227,9 @@ public abstract class SqlTorodTransaction<T extends InternalTransaction> impleme
             LOGGER.trace("An empty list of values have been given as in condition. An empty cursor is returned");
             return new EmptyCursor<>();
         }
-        TableRefFactory tableRefFactory = connection.getServer().getTableRefFactory();
-        TableRef ref = tableRefFactory.createRoot();
-
-        if (attRef.getKeys().isEmpty()) {
-            throw new IllegalArgumentException("The empty attribute reference is not valid on queries");
-        }
+        
+        TableRef ref = extractTableRef(attRef);
         String lastKey = extractKeyName(attRef.getKeys().get(attRef.getKeys().size() - 1));
-        if (attRef.getKeys().size() > 1) {
-            List<Key<?>> keys = attRef.getKeys();
-            List<Key<?>> tableKeys = keys.subList(0, keys.size() - 1);
-            for (Key<?> key : tableKeys) {
-                ref = tableRefFactory.createChild(ref, extractKeyName(key));
-            }
-        }
 
         MetaDocPart docPart = col.getMetaDocPartByTableRef(ref);
         if (docPart == null) {
@@ -307,12 +287,87 @@ public abstract class SqlTorodTransaction<T extends InternalTransaction> impleme
         return new CollectionInfo(db.getMetaCollectionByName(colName).getName(), Json.createObjectBuilder().build());
     }
 
+    @Override
+    public Stream<IndexInfo> getIndexesInfo(String dbName, String colName) {
+        MetaDatabase db = getInternalTransaction().getMetaSnapshot().getMetaDatabaseByName(dbName);
+        if (db == null) {
+            return Stream.empty();
+        }
+        MetaCollection col = db.getMetaCollectionByName(colName);
+        if (col == null) {
+            return Stream.empty();
+        }
+        
+        return col.streamContainedMetaIndexes()
+                .map(metaIdx -> createIndexInfo(metaIdx));
+    }
+
+    @Override
+    public IndexInfo getIndexInfo(String dbName, String colName, String idxName) throws IndexNotFoundException {
+        MetaDatabase db = getInternalTransaction().getMetaSnapshot().getMetaDatabaseByName(dbName);
+        if (db == null) {
+            throw new IndexNotFoundException(dbName, colName, idxName);
+        }
+        MetaCollection col = db.getMetaCollectionByName(colName);
+        if (col == null) {
+            throw new IndexNotFoundException(dbName, colName, idxName);
+        }
+        MetaIndex idx = col.getMetaIndexByName(idxName);
+        if (idx == null) {
+            throw new IndexNotFoundException(dbName, colName, idxName);
+        }
+        
+        return createIndexInfo(idx);
+    }
+
+    protected IndexInfo createIndexInfo(MetaIndex metaIndex) {
+        IndexInfo.Builder indexInfoBuilder = new IndexInfo.Builder(metaIndex.getName(), metaIndex.isUnique());
+        
+        metaIndex.iteratorFields()
+            .forEachRemaining(metaIndexField -> 
+                indexInfoBuilder.addField(
+                        getAttrivuteReference(metaIndexField.getTableRef(), metaIndexField.getName()), 
+                        metaIndexField.getOrdering().isAscending()));
+        
+        return indexInfoBuilder.build();
+    }
+    
+    protected AttributeReference getAttrivuteReference(TableRef tableRef, String name) {
+        AttributeReference.Builder attributeReferenceBuilder = new AttributeReference.Builder();
+        
+        while (!tableRef.isRoot()) {
+            attributeReferenceBuilder.addObjectKeyAsFirst(tableRef.getName());
+            tableRef = tableRef.getParent().get();
+        }
+        
+        attributeReferenceBuilder.addObjectKey(name);
+        
+        return attributeReferenceBuilder.build();
+    }
+    
+    protected TableRef extractTableRef(AttributeReference attRef) {
+        TableRefFactory tableRefFactory = getConnection().getServer().getTableRefFactory();
+        TableRef ref = tableRefFactory.createRoot();
+
+        if (attRef.getKeys().isEmpty()) {
+            throw new IllegalArgumentException("The empty attribute reference is not valid");
+        }
+        if (attRef.getKeys().size() > 1) {
+            List<Key<?>> keys = attRef.getKeys();
+            List<Key<?>> tableKeys = keys.subList(0, keys.size() - 1);
+            for (Key<?> key : tableKeys) {
+                ref = tableRefFactory.createChild(ref, extractKeyName(key));
+            }
+        }
+        return ref;
+    }
+
     protected String extractKeyName(Key<?> key) {
         if (key instanceof ObjectKey) {
             return ((ObjectKey) key).getKey();
         }
         else {
-            throw new IllegalArgumentException("Keys whose type is not object are not valid on queries");
+            throw new IllegalArgumentException("Keys whose type is not object are not valid");
         }
     }
 

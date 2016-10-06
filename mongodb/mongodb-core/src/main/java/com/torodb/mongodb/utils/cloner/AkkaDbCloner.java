@@ -28,6 +28,7 @@ import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.C
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.CreateCollectionCommand.CreateCollectionArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.CreateIndexesCommand;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.CreateIndexesCommand.CreateIndexesArgument;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.CreateIndexesCommand.CreateIndexesResult;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.DropCollectionCommand;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.ListCollectionsCommand.ListCollectionsResult.Entry;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.InsertCommand;
@@ -43,7 +44,6 @@ import com.eightkdata.mongowp.server.api.pojos.MongoCursor;
 import com.google.common.annotations.Beta;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
-import com.google.common.net.HostAndPort;
 import com.torodb.common.util.RetryHelper.ExceptionHandler;
 import com.torodb.core.concurrent.StreamExecutor;
 import com.torodb.core.exceptions.user.UserException;
@@ -205,7 +205,7 @@ public class AkkaDbCloner implements DbCloner {
         try (MongoConnection remoteConnection = remoteClient.openConnection()) {
             if (opts.isCloneData()) {
                 for (Entry entry : collsToClone) {
-                    LOGGER.info("Cloning {}.{} into {}.{}", fromDb, entry.getCollectionName(),
+                    LOGGER.info("Cloning collection data {}.{} into {}.{}", fromDb, entry.getCollectionName(),
                             dstDb, entry.getCollectionName());
 
                     try {
@@ -222,7 +222,19 @@ public class AkkaDbCloner implements DbCloner {
             }
             if (opts.isCloneIndexes()) {
                 for (Entry entry : collsToClone) {
-                    cloneIndex(localServer, dstDb, remoteConnection, opts, entry.getCollectionName());
+                    LOGGER.info("Cloning collection indexes {}.{} into {}.{}", fromDb, entry.getCollectionName(),
+                            dstDb, entry.getCollectionName());
+
+                    try {
+                        cloneIndex(localServer, dstDb, dstDb, remoteConnection, opts, entry.getCollectionName(), entry.getCollectionName());
+                    } catch(CompletionException completionException) {
+                        Throwable cause = completionException.getCause();
+                        if (cause instanceof RollbackException) {
+                            throw (RollbackException) cause;
+                        }
+                        
+                        throw completionException;
+                    }
                 }
             }
         }
@@ -447,46 +459,54 @@ public class AkkaDbCloner implements DbCloner {
 
     private void cloneIndex(
             MongodServer localServer,
+            String fromDb,
             String dstDb,
             MongoConnection remoteConnection,
             CloneOptions opts,
-            String fromCol) throws CloningException {
-        try (WriteMongodTransaction transaction = createWriteMongodTransaction(localServer)) {
-            String fromDb = opts.getDbToClone();
-            HostAndPort remoteAddress = remoteConnection.getClientOwner().getAddress();
-            String remoteAddressString = remoteAddress != null ? remoteAddress.toString() : "local";
-            LOGGER.info("copying indexes from {}.{} on {} to {}.{} on local server",
-                    fromDb,
-                    fromCol,
-                    remoteAddressString,
-                    dstDb,
-                    fromCol
-            );
-
-            Status<?> status;
-
-            List<IndexOptions> indexes = Lists.newArrayList(
-                    ListIndexesRequester.getListCollections(remoteConnection, dstDb, fromCol).getFirstBatch()
-            );
-            if (indexes.isEmpty()) {
-                return;
+            String fromCol,
+            String toCol) throws CloningException {
+        WriteMongodTransaction transaction = createWriteMongodTransaction(localServer);
+        try {
+            try {
+                List<IndexOptions> indexesToClone = getIndexesToClone(Lists.newArrayList(
+                        ListIndexesRequester.getListCollections(remoteConnection, dstDb, fromCol).getFirstBatch()
+                ), dstDb, toCol, fromDb, fromCol, opts);
+                if (indexesToClone.isEmpty()) {
+                    return;
+                }
+    
+                Status<CreateIndexesResult> status = transaction.execute(
+                        new Request(dstDb, null, true, null),
+                        CreateIndexesCommand.INSTANCE,
+                        new CreateIndexesArgument(
+                                fromCol,
+                                indexesToClone
+                        )
+                );
+                if (!status.isOK()) {
+                    throw new CloningException("Error while cloning indexes: " + status.getErrorMsg());
+                }
+                transaction.commit();
+            } catch (UserException | MongoException ex) {
+                throw new CloningException("Unexpected error while cloning indexes", ex);
             }
-
-            status = transaction.execute(
-                    new Request(dstDb, null, true, null),
-                    CreateIndexesCommand.INSTANCE,
-                    new CreateIndexesArgument(
-                            fromCol,
-                            indexes
-                    )
-            );
-            if (!status.isOK()) {
-                throw new CloningException("Error while trying to fetch indexes from remote: "
-                        + status);
-            }
-        } catch (MongoException ex) {
-            throw new CloningException("Error while trying to fetch indexes from remote", ex);
+        } finally {
+            transaction.close();
         }
+    }
+
+    private List<IndexOptions> getIndexesToClone(List<IndexOptions> listindexes, String toDb, String toCol, String fromCol, String fromDb, CloneOptions opts) {
+        List<IndexOptions> indexesToClone = new ArrayList<>();
+        for (Iterator<IndexOptions> iterator = listindexes.iterator(); iterator.hasNext();) {
+            IndexOptions indexEntry = iterator.next();
+            if (!opts.getIndexFilter().test(toCol, indexEntry.getName(), indexEntry.isUnique(), indexEntry.getKeys())) {
+                LOGGER.info("Not cloning index {}.{} because it didn't pass the given filter predicate", toCol, indexEntry.getName());
+                continue;
+            }
+            LOGGER.info("Index {}.{}.{} will be cloned", fromDb, fromCol, indexEntry.getName());
+            indexesToClone.add(indexEntry);
+        }
+        return indexesToClone;
     }
 
     private Status<?> createCollection(

@@ -20,9 +20,6 @@
 
 package com.torodb.backend.postgresql;
 
-import java.util.Map;
-import java.util.Set;
-
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -30,14 +27,14 @@ import javax.inject.Singleton;
 import com.torodb.backend.AbstractMetaDataReadInterface;
 import com.torodb.backend.SqlHelper;
 import com.torodb.backend.meta.TorodbSchema;
-import com.torodb.backend.postgresql.tables.PostgreSQLMetaDocPartIndexTable;
-import com.torodb.backend.postgresql.tables.PostgreSQLMetaFieldIndexTable;
-import com.torodb.backend.postgresql.tables.PostgreSQLMetaIndexFieldTable;
-import com.torodb.backend.postgresql.tables.PostgreSQLMetaIndexTable;
 import com.torodb.backend.postgresql.tables.PostgreSQLMetaCollectionTable;
 import com.torodb.backend.postgresql.tables.PostgreSQLMetaDatabaseTable;
+import com.torodb.backend.postgresql.tables.PostgreSQLMetaDocPartIndexTable;
 import com.torodb.backend.postgresql.tables.PostgreSQLMetaDocPartTable;
+import com.torodb.backend.postgresql.tables.PostgreSQLMetaDocPartIndexColumnTable;
 import com.torodb.backend.postgresql.tables.PostgreSQLMetaFieldTable;
+import com.torodb.backend.postgresql.tables.PostgreSQLMetaIndexFieldTable;
+import com.torodb.backend.postgresql.tables.PostgreSQLMetaIndexTable;
 import com.torodb.backend.postgresql.tables.PostgreSQLMetaScalarTable;
 
 /**
@@ -53,7 +50,7 @@ public class PostgreSQLMetaDataReadInterface extends AbstractMetaDataReadInterfa
     private final PostgreSQLMetaFieldTable metaFieldTable;
     private final PostgreSQLMetaScalarTable metaScalarTable;
     private final PostgreSQLMetaDocPartIndexTable metaDocPartIndexTable;
-    private final PostgreSQLMetaFieldIndexTable metaFieldIndexTable;
+    private final PostgreSQLMetaDocPartIndexColumnTable metaDocPartIndexColumnTable;
     private final PostgreSQLMetaIndexTable metaIndexTable;
     private final PostgreSQLMetaIndexFieldTable metaIndexFieldTable;
 
@@ -68,7 +65,7 @@ public class PostgreSQLMetaDataReadInterface extends AbstractMetaDataReadInterfa
         this.metaFieldTable = PostgreSQLMetaFieldTable.FIELD;
         this.metaScalarTable = PostgreSQLMetaScalarTable.SCALAR;
         this.metaDocPartIndexTable = PostgreSQLMetaDocPartIndexTable.DOC_PART_INDEX;
-        this.metaFieldIndexTable = PostgreSQLMetaFieldIndexTable.FIELD_INDEX;
+        this.metaDocPartIndexColumnTable = PostgreSQLMetaDocPartIndexColumnTable.DOC_PART_INDEX_COLUMN;
         this.metaIndexTable = PostgreSQLMetaIndexTable.INDEX;
         this.metaIndexFieldTable = PostgreSQLMetaIndexFieldTable.INDEX_FIELD;
     }
@@ -118,8 +115,8 @@ public class PostgreSQLMetaDataReadInterface extends AbstractMetaDataReadInterfa
     @Nonnull
     @Override
     @SuppressWarnings("unchecked")
-    public PostgreSQLMetaFieldIndexTable getMetaFieldIndexTable() {
-        return metaFieldIndexTable;
+    public PostgreSQLMetaDocPartIndexColumnTable getMetaDocPartIndexColumnTable() {
+        return metaDocPartIndexColumnTable;
     }
 
     @Nonnull

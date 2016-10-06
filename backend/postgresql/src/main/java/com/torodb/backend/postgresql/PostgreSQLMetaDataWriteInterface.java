@@ -30,14 +30,11 @@ import com.torodb.backend.AbstractMetaDataWriteInterface;
 import com.torodb.backend.SqlBuilder;
 import com.torodb.backend.SqlHelper;
 import com.torodb.backend.converters.TableRefConverter;
-import com.torodb.backend.postgresql.tables.PostgreSQLMetaDocPartTable;
-import com.torodb.backend.postgresql.tables.PostgreSQLMetaFieldTable;
-import com.torodb.backend.postgresql.tables.PostgreSQLMetaScalarTable;
 import com.torodb.backend.tables.MetaCollectionTable;
 import com.torodb.backend.tables.MetaDatabaseTable;
 import com.torodb.backend.tables.MetaDocPartIndexTable;
 import com.torodb.backend.tables.MetaDocPartTable;
-import com.torodb.backend.tables.MetaFieldIndexTable;
+import com.torodb.backend.tables.MetaDocPartIndexColumnTable;
 import com.torodb.backend.tables.MetaFieldTable;
 import com.torodb.backend.tables.MetaIndexFieldTable;
 import com.torodb.backend.tables.MetaIndexTable;
@@ -50,19 +47,10 @@ import com.torodb.core.TableRef;
 @Singleton
 public class PostgreSQLMetaDataWriteInterface extends AbstractMetaDataWriteInterface {
 
-    private final PostgreSQLMetaDocPartTable metaDocPartTable;
-    private final PostgreSQLMetaFieldTable metaFieldTable;
-    private final PostgreSQLMetaScalarTable metaScalarTable;
-
     @Inject
     public PostgreSQLMetaDataWriteInterface(PostgreSQLMetaDataReadInterface metaDataReadInterface,
-            PostgreSQLMetaFieldTable metaFieldTable,
-            PostgreSQLMetaScalarTable metaScalarTable,
             SqlHelper sqlHelper) {
         super(metaDataReadInterface, sqlHelper);
-        this.metaDocPartTable = metaDataReadInterface.getMetaDocPartTable();
-        this.metaFieldTable = metaDataReadInterface.getMetaFieldTable();
-        this.metaScalarTable = metaDataReadInterface.getMetaScalarTable();
     }
 
     @Override
@@ -162,6 +150,7 @@ public class PostgreSQLMetaDataWriteInterface extends AbstractMetaDataWriteInter
                 .quote(MetaIndexTable.TableFields.DATABASE).append(" varchar  NOT NULL        ,")
                 .quote(MetaIndexTable.TableFields.COLLECTION).append(" varchar  NOT NULL        ,")
                 .quote(MetaIndexTable.TableFields.NAME).append("     varchar  NOT NULL        ,")
+                .quote(MetaIndexTable.TableFields.UNIQUE).append("     boolean  NOT NULL        ,")
                 .append("    PRIMARY KEY (").quote(MetaIndexTable.TableFields.DATABASE).append(",")
                     .quote(MetaIndexTable.TableFields.COLLECTION).append(",")
                     .quote(MetaIndexTable.TableFields.NAME).append(")")
@@ -203,31 +192,31 @@ public class PostgreSQLMetaDataWriteInterface extends AbstractMetaDataWriteInter
                 .quote(MetaDocPartIndexTable.TableFields.IDENTIFIER).append(" varchar   NOT NULL ,")
                 .quote(MetaDocPartIndexTable.TableFields.COLLECTION).append(" varchar   NOT NULL ,")
                 .quote(MetaDocPartIndexTable.TableFields.TABLE_REF).append("  varchar[] NOT NULL ,")
+                .quote(MetaDocPartIndexTable.TableFields.UNIQUE).append("     boolean  NOT NULL        ,")
                 .append("    PRIMARY KEY (").quote(MetaDocPartIndexTable.TableFields.DATABASE).append(",")
-                    .quote(MetaDocPartIndexTable.TableFields.IDENTIFIER).append("),")
-                .append("    UNIQUE (").quote(MetaDocPartIndexTable.TableFields.DATABASE).append(",")
-                    .quote(MetaDocPartIndexTable.TableFields.COLLECTION).append(",")
-                    .quote(MetaDocPartIndexTable.TableFields.TABLE_REF).append(")")
+                    .quote(MetaDocPartIndexTable.TableFields.IDENTIFIER).append(")")
                 .append(")")
                 .toString();
         return statement;
     }
 
     @Override
-    protected String getCreateMetaFieldIndexTableStatement(String schemaName, String tableName) {
+    protected String getCreateMetaDocPartIndexColumnTableStatement(String schemaName, String tableName) {
         String statement = new SqlBuilder("CREATE TABLE ").table(schemaName, tableName)
                 .append(" (")
-                .quote(MetaFieldIndexTable.TableFields.DATABASE).append("   varchar     NOT NULL ,")
-                .quote(MetaFieldIndexTable.TableFields.IDENTIFIER).append(" varchar     NOT NULL ,")
-                .quote(MetaFieldIndexTable.TableFields.POSITION).append(" varchar     NOT NULL ,")
-                .quote(MetaFieldIndexTable.TableFields.COLLECTION).append(" varchar     NOT NULL ,")
-                .quote(MetaFieldIndexTable.TableFields.TABLE_REF).append("  varchar[]   NOT NULL ,")
-                .quote(MetaFieldIndexTable.TableFields.NAME).append("       varchar     NOT NULL ,")
-                .quote(MetaFieldIndexTable.TableFields.TYPE).append("       varchar     NOT NULL ,")
-                .quote(MetaFieldIndexTable.TableFields.ORDERING).append("       varchar     NOT NULL ,")
-                .append("    PRIMARY KEY (").quote(MetaFieldIndexTable.TableFields.DATABASE).append(",")
-                    .quote(MetaFieldIndexTable.TableFields.IDENTIFIER).append(",")
-                    .quote(MetaFieldIndexTable.TableFields.POSITION).append("),")
+                .quote(MetaDocPartIndexColumnTable.TableFields.DATABASE).append("   varchar     NOT NULL ,")
+                .quote(MetaDocPartIndexColumnTable.TableFields.INDEX_IDENTIFIER).append(" varchar     NOT NULL ,")
+                .quote(MetaDocPartIndexColumnTable.TableFields.POSITION).append(" varchar     NOT NULL ,")
+                .quote(MetaDocPartIndexColumnTable.TableFields.COLLECTION).append(" varchar     NOT NULL ,")
+                .quote(MetaDocPartIndexColumnTable.TableFields.TABLE_REF).append("  varchar[]   NOT NULL ,")
+                .quote(MetaDocPartIndexColumnTable.TableFields.IDENTIFIER).append("       varchar     NOT NULL ,")
+                .quote(MetaDocPartIndexColumnTable.TableFields.ORDERING).append("       varchar     NOT NULL ,")
+                .append("    PRIMARY KEY (").quote(MetaDocPartIndexColumnTable.TableFields.DATABASE).append(",")
+                    .quote(MetaDocPartIndexColumnTable.TableFields.INDEX_IDENTIFIER).append(",")
+                    .quote(MetaDocPartIndexColumnTable.TableFields.POSITION).append("),")
+                .append("    UNIQUE (").quote(MetaDocPartIndexColumnTable.TableFields.DATABASE).append(",")
+                    .quote(MetaDocPartIndexColumnTable.TableFields.INDEX_IDENTIFIER).append(",")
+                    .quote(MetaDocPartIndexColumnTable.TableFields.IDENTIFIER).append(")")
                 .append(")")
                 .toString();
         return statement;

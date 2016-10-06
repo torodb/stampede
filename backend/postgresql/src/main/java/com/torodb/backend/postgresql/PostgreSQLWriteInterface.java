@@ -20,6 +20,25 @@
 
 package com.torodb.backend.postgresql;
 
+import java.io.IOException;
+import java.io.Reader;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.jooq.DSLContext;
+import org.jooq.exception.DataAccessException;
+import org.postgresql.PGConnection;
+import org.postgresql.copy.CopyManager;
+
+import com.codahale.metrics.Timer;
 import com.torodb.backend.AbstractWriteInterface;
 import com.torodb.backend.ErrorHandler;
 import com.torodb.backend.ErrorHandler.Context;
@@ -31,29 +50,11 @@ import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.d2r.DocPartRow;
 import com.torodb.core.exceptions.SystemException;
 import com.torodb.core.exceptions.user.UserException;
-import com.torodb.core.transaction.RollbackException;
 import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetaField;
 import com.torodb.core.transaction.metainf.MetaScalar;
 import com.torodb.kvdocument.values.KVValue;
-import java.io.IOException;
-import java.io.Reader;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.jooq.DSLContext;
-import org.jooq.exception.DataAccessException;
-import org.postgresql.PGConnection;
-import org.postgresql.copy.CopyManager;
-
-import com.codahale.metrics.Timer;
 /**
  *
  */

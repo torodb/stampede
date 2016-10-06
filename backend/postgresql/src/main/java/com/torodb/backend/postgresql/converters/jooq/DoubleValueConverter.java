@@ -20,6 +20,8 @@
 
 package com.torodb.backend.postgresql.converters.jooq;
 
+import java.sql.Types;
+
 import org.jooq.util.postgres.PostgresDataType;
 
 import com.torodb.backend.converters.jooq.DataTypeForKV;
@@ -36,7 +38,7 @@ import com.torodb.kvdocument.values.KVDouble;
 public class DoubleValueConverter implements KVValueConverter<Double, Double, KVDouble> {
     private static final long serialVersionUID = 1L;
 
-    public static final DataTypeForKV<KVDouble> TYPE = DataTypeForKV.from(PostgresDataType.DOUBLEPRECISION, new DoubleValueConverter());
+    public static final DataTypeForKV<KVDouble> TYPE = DataTypeForKV.from(PostgresDataType.FLOAT8, new DoubleValueConverter(), Types.DOUBLE);
 
     @Override
     public KVType getErasuredType() {

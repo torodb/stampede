@@ -87,7 +87,8 @@ public class ToroMetricRegistry extends MetricRegistry  {
         return gauge;
     }
 
-	public <T extends Metric> T register(MetricName name, T metric) {
+	@SuppressWarnings("unchecked")
+    public <T extends Metric> T register(MetricName name, T metric) {
         mbeanNameFactory.registerName(name);
 		try {
 			register(name.getMetricName(), metric);

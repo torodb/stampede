@@ -27,7 +27,6 @@ import java.sql.SQLException;
 import java.sql.Types;
 import org.jooq.Field;
 
-@SuppressWarnings("unchecked")
 public abstract class InternalField<T> extends DelegatorField<T> {
     
     private static final long serialVersionUID = 1L;

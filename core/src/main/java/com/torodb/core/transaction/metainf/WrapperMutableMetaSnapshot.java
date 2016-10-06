@@ -176,7 +176,7 @@ public class WrapperMutableMetaSnapshot implements MutableMetaSnapshot {
     }
 
     private void onMetaDatabaseChange(WrapperMutableMetaDatabase changed) {
-        assert isTransitionAllowed(changed, MetaElementState.REMOVED);
+        assert isTransitionAllowed(changed, MetaElementState.MODIFIED);
 
         dbsByName.put(changed.getName(), new Tuple2<>(changed, MetaElementState.MODIFIED));
     }

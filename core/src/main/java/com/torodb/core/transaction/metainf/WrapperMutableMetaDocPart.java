@@ -20,18 +20,26 @@
 
 package com.torodb.core.transaction.metainf;
 
-import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.Table;
-import com.torodb.core.TableRef;
-import com.torodb.core.annotations.DoNotChange;
-import com.torodb.core.transaction.metainf.ImmutableMetaDocPart.Builder;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
+
+import org.jooq.lambda.Seq;
+import org.jooq.lambda.tuple.Tuple2;
+
+import com.google.common.base.Preconditions;
+import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Table;
+import com.torodb.core.TableRef;
+import com.torodb.core.annotations.DoNotChange;
+import com.torodb.core.transaction.metainf.ImmutableMetaDocPart.Builder;
 
 /**
  *
@@ -48,9 +56,12 @@ public class WrapperMutableMetaDocPart implements MutableMetaDocPart {
      * wrapped object.
      */
     private final List<ImmutableMetaField> addedFields;
+    private final Map<String, ImmutableMetaField> addedFieldsByIndetifiers;
     private final Consumer<WrapperMutableMetaDocPart> changeConsumer;
     private final EnumMap<FieldType, ImmutableMetaScalar> newScalars;
-    private final Map<String, WrapperMutableMetaDocPartIndex> newIndexes;
+    private final HashMap<String, Tuple2<ImmutableMetaIdentifiedDocPartIndex, MetaElementState>> indexesByIdentifier;
+    private final Map<String, Tuple2<ImmutableMetaIdentifiedDocPartIndex, MetaElementState>> aliveIndexesMap;
+    private final List<MutableMetaDocPartIndex> addedMutableIndexes;
 
     public WrapperMutableMetaDocPart(ImmutableMetaDocPart wrapped,
             Consumer<WrapperMutableMetaDocPart> changeConsumer) {
@@ -62,9 +73,15 @@ public class WrapperMutableMetaDocPart implements MutableMetaDocPart {
             newFields.put(field.getName(), field.getType(), field)
         );
         addedFields = new ArrayList<>();
+        addedFieldsByIndetifiers = new HashMap<>();
         this.changeConsumer = changeConsumer;
         this.newScalars = new EnumMap<>(FieldType.class);
-        newIndexes = new HashMap<>();
+        indexesByIdentifier = new HashMap<>();
+        wrapped.streamIndexes().forEach((docPartIndexindex) -> {
+            indexesByIdentifier.put(docPartIndexindex.getIdentifier(), new Tuple2<>(docPartIndexindex, MetaElementState.NOT_CHANGED));
+        });
+        aliveIndexesMap = Maps.filterValues(indexesByIdentifier, tuple -> tuple.v2().isAlive());
+        addedMutableIndexes = new ArrayList<>();
     }
 
     @Override
@@ -80,6 +97,7 @@ public class WrapperMutableMetaDocPart implements MutableMetaDocPart {
         ImmutableMetaField newField = new ImmutableMetaField(name, identifier, type);
         newFields.put(name, type, newField);
         addedFields.add(newField);
+        addedFieldsByIndetifiers.put(newField.getIdentifier(), newField);
         changeConsumer.accept(this);
         return newField;
     }
@@ -102,6 +120,11 @@ public class WrapperMutableMetaDocPart implements MutableMetaDocPart {
     public Iterable<ImmutableMetaField> getAddedMetaFields() {
         return addedFields;
     }
+    
+    @Override
+    public ImmutableMetaField getAddedFieldByIdentifier(String identifier) {
+        return addedFieldsByIndetifiers.get(identifier);
+    }
 
     @Override
     public Iterable<? extends ImmutableMetaScalar> getAddedMetaScalars() {
@@ -109,28 +132,43 @@ public class WrapperMutableMetaDocPart implements MutableMetaDocPart {
     }
 
     @Override
-    public MutableMetaDocPartIndex addMetaDocPartIndex(String identifier, boolean unique) throws
-            IllegalArgumentException {
-        if (getMetaDocPartIndexByIdentifier(identifier) != null) {
-            throw new IllegalArgumentException("There is another index with the identifier " + identifier);
-        }
-
-        WrapperMutableMetaDocPartIndex newIndex = new WrapperMutableMetaDocPartIndex(
-                new ImmutableMetaDocPartIndex(identifier, unique), index -> {});
-        newIndexes.put(identifier, newIndex);
-        changeConsumer.accept(this);
+    public MutableMetaDocPartIndex addMetaDocPartIndex(boolean unique) {
+        MutableMetaDocPartIndex newIndex = new WrapperMutableMetaDocPartIndex(unique, this::onDocPartIndexChange);
+        addedMutableIndexes.add(newIndex);
         return newIndex;
     }
 
     @Override
+    public boolean removeMetaDocPartIndexByIdentifier(String indexId) {
+        ImmutableMetaIdentifiedDocPartIndex metaDocPartIndex = getMetaDocPartIndexByIdentifier(indexId);
+        if (metaDocPartIndex == null) {
+            return false;
+        }
+        
+        indexesByIdentifier.put(metaDocPartIndex.getIdentifier(), new Tuple2<>(metaDocPartIndex, MetaElementState.REMOVED));
+        changeConsumer.accept(this);
+        return true;
+    }
+
+    @Override
     @DoNotChange
-    public Iterable<? extends WrapperMutableMetaDocPartIndex> getAddedMetaDocPartIndexes() {
-        return newIndexes.values();
+    public Iterable<Tuple2<ImmutableMetaIdentifiedDocPartIndex, MetaElementState>> getModifiedMetaDocPartIndexes() {
+        return Maps.filterValues(indexesByIdentifier, tuple -> tuple.v2().hasChanged())
+                .values();
+    }
+
+    @Override
+    @DoNotChange
+    public Iterable<MutableMetaDocPartIndex> getAddedMutableMetaDocPartIndexes() {
+        return addedMutableIndexes;
     }
 
     @Override
     public ImmutableMetaDocPart immutableCopy() {
-        if (addedFields.isEmpty() && newScalars.isEmpty()) {
+        Preconditions.checkArgument(addedMutableIndexes.isEmpty(), "Some mutable indexes have not been marked immutable");
+        
+        if (addedFields.isEmpty() && newScalars.isEmpty() && 
+                indexesByIdentifier.values().stream().noneMatch(tuple -> tuple.v2().hasChanged())) {
             return wrapped;
         }
         else {
@@ -141,6 +179,24 @@ public class WrapperMutableMetaDocPart implements MutableMetaDocPart {
             for (ImmutableMetaScalar value : newScalars.values()) {
                 builder.put(value);
             }
+
+            indexesByIdentifier.values()
+                    .forEach(tuple -> {
+                        switch (tuple.v2()) {
+                            case ADDED:
+                            case MODIFIED:
+                            case NOT_CHANGED:
+                                builder.put(tuple.v1());
+                                break;
+                            case REMOVED:
+                                builder.remove(tuple.v1());
+                                break;
+                            case NOT_EXISTENT:
+                            default:
+                                throw new AssertionError("Unexpected case " + tuple.v2());
+                        }
+                    }
+            );
             return builder.build();
         }
     }
@@ -193,19 +249,87 @@ public class WrapperMutableMetaDocPart implements MutableMetaDocPart {
     }
 
     @Override
-    public Stream<? extends MetaDocPartIndex> streamIndexes() {
-        return Stream.concat(newIndexes.values().stream(), wrapped.streamIndexes());
+    public Stream<? extends ImmutableMetaIdentifiedDocPartIndex> streamIndexes() {
+        return aliveIndexesMap.values().stream().map(tuple -> tuple.v1());
     }
 
     @Override
-    public MetaDocPartIndex getMetaDocPartIndexByIdentifier(String indexId) {
-        MetaDocPartIndex index = wrapped.getMetaDocPartIndexByIdentifier(indexId);
+    public ImmutableMetaIdentifiedDocPartIndex getMetaDocPartIndexByIdentifier(String indexId) {
+        Tuple2<ImmutableMetaIdentifiedDocPartIndex, MetaElementState> tuple = aliveIndexesMap.get(indexId);
+        if (tuple == null) {
+            return null;
+        }
+        return tuple.v1();
+    }
+
+    @Override
+    public MutableMetaDocPartIndex getOrCreatePartialMutableDocPartIndexForMissingIndexAndNewField(MetaIndex missingIndex,
+            List<String> identifiers, MetaField newField) {
+        int position = identifiers.indexOf(newField.getIdentifier());
+        Optional<MutableMetaDocPartIndex> matchingMutableDocPartIndex = Seq.seq(getAddedMutableMetaDocPartIndexes())
+                .filter(docPartIndex -> docPartIndex.getMetaDocPartIndexColumnByPosition(position) == null && 
+                    missingIndex.isSubMatch(this, identifiers, docPartIndex) &&
+                    // We ensure we do not pick a doc part index that fit a isSubMatch for our index but
+                    // was the only chance for another combination. For example:
+                    // 1. a_i, b_i, c_i are old fields
+                    // 2. a_s, b_s, c_s are new fields
+                    // 3. we have index a asc, b asc, c asc
+                    // 4. we added doc part index a_s asc, null, null and a_s asc, b_i asc, null
+                    // 5. we search for a sub match for a_s, b_i, c_s and found a_s asc, null, null
+                    noneNonCurrentAndNullIndexColumnIsNew(position, docPartIndex, identifiers))
+                .findAny();
+        MutableMetaDocPartIndex docPartIndex;
+        if (matchingMutableDocPartIndex.isPresent()) {
+            docPartIndex = matchingMutableDocPartIndex.get();
+        } else {
+            docPartIndex = addMetaDocPartIndex(missingIndex.isUnique());
+            int index = 0;
+            for (String identifier : identifiers) {
+                if (getAddedFieldByIdentifier(identifier) == null) {
+                    MetaIndexField indexField = missingIndex.getMetaIndexFieldByTableRefAndPosition(getTableRef(), index);
+                    docPartIndex.putMetaDocPartIndexColumn(index, identifier, indexField.getOrdering());
+                }
+                index++;
+            }
+        }
+        MetaIndexField indexField = missingIndex.getMetaIndexFieldByTableRefAndPosition(getTableRef(), position);
+        docPartIndex.putMetaDocPartIndexColumn(position, newField.getIdentifier(), indexField.getOrdering());
+        return docPartIndex;
+    }
+
+    private boolean noneNonCurrentAndNullIndexColumnIsNew(int position, MutableMetaDocPartIndex docPartIndex,
+            List<String> identifiers) {
+        return IntStream.range(0, identifiers.size())
+            .noneMatch(index -> index != position && 
+                docPartIndex.getMetaDocPartIndexColumnByPosition(index) == null &&
+                getAddedFieldByIdentifier(identifiers.get(index)) == null);
+    }
+
+    private boolean isTransitionAllowed(MetaIdentifiedDocPartIndex metaDocPartIndexIndex, MetaElementState newState) {
+        MetaElementState oldState;
+        Tuple2<ImmutableMetaIdentifiedDocPartIndex, MetaElementState> tuple = indexesByIdentifier.get(metaDocPartIndexIndex.getIdentifier());
         
-        if (index != null) {
-            return index;
+        if (tuple == null) {
+            oldState = MetaElementState.NOT_EXISTENT;
+        }
+        else {
+            oldState = tuple.v2();
+        }
+
+        oldState.assertLegalTransition(newState);
+        return true;
+    }
+
+    protected void onDocPartIndexChange(WrapperMutableMetaDocPartIndex changedIndex, ImmutableMetaIdentifiedDocPartIndex immutableIndex) {
+        assert isTransitionAllowed(immutableIndex, MetaElementState.ADDED);
+        
+        if (getMetaDocPartIndexByIdentifier(immutableIndex.getIdentifier()) != null) {
+            throw new IllegalArgumentException("There is another index with the identifier " + immutableIndex.getIdentifier());
         }
         
-        return newIndexes.get(indexId);
+        addedMutableIndexes.remove(changedIndex);
+        indexesByIdentifier.put(immutableIndex.getIdentifier(), new Tuple2<>(immutableIndex, MetaElementState.ADDED));
+        changeConsumer.accept(this);
     }
 
     @Override

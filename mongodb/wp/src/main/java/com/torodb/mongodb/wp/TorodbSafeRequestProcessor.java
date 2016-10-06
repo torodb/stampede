@@ -84,7 +84,9 @@ public class TorodbSafeRequestProcessor implements SafeRequestProcessor<MongodCo
                     callable = () -> {
                         try (WriteMongodTransaction trans = connection.openWriteTransaction(true)) {
                             Status<Result> result = trans.execute(req, command, arg);
-                            trans.commit();
+                            if (result.isOK()) {
+                                trans.commit();
+                            }
                             return result;
                         }
                     };
@@ -93,7 +95,9 @@ public class TorodbSafeRequestProcessor implements SafeRequestProcessor<MongodCo
                     callable = () -> {
                         try (ExclusiveWriteMongodTransaction trans = connection.openExclusiveWriteTransaction(true)) {
                             Status<Result> result = trans.execute(req, command, arg);
-                            trans.commit();
+                            if (result.isOK()) {
+                                trans.commit();
+                            }
                             return result;
                         }
                     };

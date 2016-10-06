@@ -1,7 +1,7 @@
 
 package com.torodb.core.transaction.metainf;
 
-import java.util.stream.Stream;
+import java.util.Iterator;
 
 import com.torodb.core.TableRef;
 import com.torodb.core.annotations.DoNotChange;
@@ -11,6 +11,8 @@ import com.torodb.core.annotations.DoNotChange;
  */
 public interface MutableMetaIndex extends MetaIndex {
 
+    public abstract boolean isUnique();
+
     @Override
     public ImmutableMetaIndexField getMetaIndexFieldByPosition(int position);
 
@@ -18,10 +20,10 @@ public interface MutableMetaIndex extends MetaIndex {
     public ImmutableMetaIndexField getMetaIndexFieldByTableRefAndName(TableRef tableRef, String name);
 
     @Override
-    public Stream<? extends ImmutableMetaIndexField> streamFields();
+    public Iterator<? extends ImmutableMetaIndexField> iteratorFields();
     
     @Override
-    public Stream<? extends ImmutableMetaIndexField> streamMetaIndexFieldByTableRef(TableRef tableRef);
+    public Iterator<? extends ImmutableMetaIndexField> iteratorMetaIndexFieldByTableRef(TableRef tableRef);
 
     /**
      * Adds a new field to this index.

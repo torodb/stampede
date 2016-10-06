@@ -383,7 +383,6 @@ public class BackendIntegrationTest extends AbstractBackendTest {
         }
     }
 
-	@SuppressWarnings("unchecked")
     private boolean findRootDocPartRow(ResultSet resultSet, List<Integer> foundRowIndexes) throws SQLException {
 		Integer index = 0;
 		boolean rowFound = true;

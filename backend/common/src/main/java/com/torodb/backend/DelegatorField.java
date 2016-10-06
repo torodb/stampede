@@ -124,6 +124,7 @@ public class DelegatorField<T> implements Field<T> {
         return delegate.sortAsc(sortList);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public SortField<Integer> sortAsc(T... sortList) {
         return delegate.sortAsc(sortList);
@@ -134,6 +135,7 @@ public class DelegatorField<T> implements Field<T> {
         return delegate.sortDesc(sortList);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public SortField<Integer> sortDesc(T... sortList) {
         return delegate.sortDesc(sortList);
@@ -514,6 +516,7 @@ public class DelegatorField<T> implements Field<T> {
         return delegate.in(result);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public Condition in(T... values) {
         return delegate.in(values);
@@ -539,6 +542,7 @@ public class DelegatorField<T> implements Field<T> {
         return delegate.notIn(result);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public Condition notIn(T... values) {
         return delegate.notIn(values);
@@ -1374,6 +1378,7 @@ public class DelegatorField<T> implements Field<T> {
         return delegate.extract(datePart);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public Field<T> greatest(T... others) {
         return delegate.greatest(others);
@@ -1384,6 +1389,7 @@ public class DelegatorField<T> implements Field<T> {
         return delegate.greatest(others);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public Field<T> least(T... others) {
         return delegate.least(others);
@@ -1444,6 +1450,7 @@ public class DelegatorField<T> implements Field<T> {
         return delegate.decode(search, result, more);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public Field<T> coalesce(T option, T... options) {
         return delegate.coalesce(option, options);

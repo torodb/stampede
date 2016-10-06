@@ -19,10 +19,15 @@
  */
 
 
-package com.torodb.backend.converters.jooq;
+package com.torodb.backend.derby.converters.jooq;
 
+import org.jooq.DataType;
+import org.jooq.SQLDialect;
+import org.jooq.impl.DefaultDataType;
 import org.jooq.impl.SQLDataType;
 
+import com.torodb.backend.converters.jooq.DataTypeForKV;
+import com.torodb.backend.converters.jooq.KVValueConverter;
 import com.torodb.backend.converters.sql.LongSqlBinding;
 import com.torodb.backend.converters.sql.SqlBinding;
 import com.torodb.kvdocument.types.KVType;
@@ -35,7 +40,9 @@ import com.torodb.kvdocument.values.KVLong;
 public class LongValueConverter implements KVValueConverter<Long, Long, KVLong>{
     private static final long serialVersionUID = 1L;
 
-    public static final DataTypeForKV<KVLong> TYPE = DataTypeForKV.from(SQLDataType.BIGINT, new LongValueConverter());
+    public static final DataType<Long> LONG_TYPE = new DefaultDataType<Long>(SQLDialect.DERBY, Long.class, "BIGINT");
+    
+    public static final DataTypeForKV<KVLong> TYPE = DataTypeForKV.from(LONG_TYPE, new LongValueConverter());
 
     @Override
     public KVType getErasuredType() {

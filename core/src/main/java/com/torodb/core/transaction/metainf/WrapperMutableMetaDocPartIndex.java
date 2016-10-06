@@ -21,111 +21,114 @@
 package com.torodb.core.transaction.metainf;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
-import java.util.function.Consumer;
-import java.util.stream.Stream;
+import java.util.Map;
+import java.util.function.BiConsumer;
+import java.util.stream.IntStream;
 
-import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.Table;
+import com.google.common.base.Preconditions;
 import com.torodb.core.annotations.DoNotChange;
-import com.torodb.core.transaction.metainf.ImmutableMetaDocPartIndex.Builder;
+import com.torodb.core.transaction.metainf.ImmutableMetaIdentifiedDocPartIndex.Builder;
 
 /**
  *
  */
-public class WrapperMutableMetaDocPartIndex implements MutableMetaDocPartIndex {
+public class WrapperMutableMetaDocPartIndex extends AbstractMetaDocPartIndex implements MutableMetaDocPartIndex {
 
-    private final ImmutableMetaDocPartIndex wrapped;
     /**
      * This table contains all fields contained by wrapper and all new fields
      */
-    private final Table<String, FieldType, ImmutableMetaFieldIndex> newFields;
+    private final Map<String, ImmutableMetaDocPartIndexColumn> addedColumnsByIdentifier;
     /**
      * This list just contains the fields that have been added on this wrapper but not on the
      * wrapped object.
      */
-    private final List<ImmutableMetaFieldIndex> addedFields;
-    private final Consumer<WrapperMutableMetaDocPartIndex> changeConsumer;
-
-    public WrapperMutableMetaDocPartIndex(ImmutableMetaDocPartIndex wrapped,
-            Consumer<WrapperMutableMetaDocPartIndex> changeConsumer) {
-        this.wrapped = wrapped;
-        
-        newFields = HashBasedTable.create();
-
-        wrapped.streamFields().forEach((field) ->
-            newFields.put(field.getName(), field.getType(), field)
-        );
-        addedFields = new ArrayList<>();
+    private final List<ImmutableMetaDocPartIndexColumn> addedColumns;
+    private final BiConsumer<WrapperMutableMetaDocPartIndex, ImmutableMetaIdentifiedDocPartIndex> changeConsumer;
+    
+    public WrapperMutableMetaDocPartIndex(boolean unique, BiConsumer<WrapperMutableMetaDocPartIndex, ImmutableMetaIdentifiedDocPartIndex> changeConsumer) {
+        super(unique);
+        addedColumnsByIdentifier = new HashMap<>();
+        addedColumns = new ArrayList<>();
         this.changeConsumer = changeConsumer;
     }
 
     @Override
-    public ImmutableMetaFieldIndex addMetaFieldIndex(String name, String identifier, FieldType type, FieldIndexOrdering ordering) throws
+    public ImmutableMetaDocPartIndexColumn putMetaDocPartIndexColumn(int position, String identifier, FieldIndexOrdering ordering) throws
             IllegalArgumentException {
-        if (getMetaFieldIndexByNameAndType(name, type) != null) {
-            throw new IllegalArgumentException("There is another field with the name " + name +
-                    " whose type is " + type);
+        if (getMetaDocPartIndexColumnByIdentifier(identifier) != null) {
+            throw new IllegalArgumentException("There is another column with the identifier " + identifier);
+        }
+        if (getMetaDocPartIndexColumnByPosition(position) != null) {
+            throw new IllegalArgumentException("There is another column with the position " + position);
         }
 
-        ImmutableMetaFieldIndex newField = new ImmutableMetaFieldIndex(size(),name, type, ordering);
-        newFields.put(name, type, newField);
-        addedFields.add(newField);
-        changeConsumer.accept(this);
+        ImmutableMetaDocPartIndexColumn newField = new ImmutableMetaDocPartIndexColumn(position, identifier, ordering);
+        addedColumnsByIdentifier.put(identifier, newField);
+        if (addedColumns.size() <= position) {
+            IntStream.range(addedColumns.size(), position + 1)
+                .forEach(index -> addedColumns.add(null));
+        }
+        addedColumns.set(position, newField);
+        return newField;
+    }
+
+    @Override
+    public ImmutableMetaDocPartIndexColumn addMetaDocPartIndexColumn(String identifier, FieldIndexOrdering ordering) throws
+            IllegalArgumentException {
+        if (getMetaDocPartIndexColumnByIdentifier(identifier) != null) {
+            throw new IllegalArgumentException("There is another column with the identifier " + identifier);
+        }
+
+        ImmutableMetaDocPartIndexColumn newField = new ImmutableMetaDocPartIndexColumn(size(), identifier, ordering);
+        addedColumnsByIdentifier.put(identifier, newField);
+        addedColumns.add(newField);
         return newField;
     }
 
     @Override
     @DoNotChange
-    public Iterable<ImmutableMetaFieldIndex> getAddedMetaFieldIndexes() {
-        return addedFields;
+    public Iterable<ImmutableMetaDocPartIndexColumn> getAddedMetaDocPartIndexColumns() {
+        return addedColumns;
     }
 
     @Override
-    public ImmutableMetaDocPartIndex immutableCopy() {
-        if (addedFields.isEmpty()) {
-            return wrapped;
+    public ImmutableMetaIdentifiedDocPartIndex immutableCopy(String identifier) {
+        Preconditions.checkArgument(addedColumnsByIdentifier.size() == addedColumns.size(), 
+                "Some columns are missing. Found %s but they should be %s", 
+                addedColumnsByIdentifier.size(), addedColumns.size());
+        ImmutableMetaIdentifiedDocPartIndex.Builder builder = new Builder(identifier, isUnique());
+        for (ImmutableMetaDocPartIndexColumn addedField : addedColumns) {
+            builder.add(addedField);
         }
-        else {
-            ImmutableMetaDocPartIndex.Builder builder = new Builder(wrapped);
-            for (ImmutableMetaFieldIndex addedField : addedFields) {
-                builder.add(addedField);
-            }
-            return builder.build();
-        }
+        ImmutableMetaIdentifiedDocPartIndex immutableIndex = builder.build();
+        changeConsumer.accept(this, immutableIndex);
+        return immutableIndex;
     }
 
-    @Override
-    public String getIdentifier() {
-        return wrapped.getIdentifier();
-    }
-
-    @Override
-    public boolean isUnique() {
-        return wrapped.isUnique();
-    }
-    
     @Override
     public int size() {
-        return newFields.size();
+        return addedColumnsByIdentifier.size();
     }
 
     @Override
-    public Stream<? extends ImmutableMetaFieldIndex> streamFields() {
-        return newFields.values().stream();
+    public Iterator<? extends ImmutableMetaDocPartIndexColumn> iteratorColumns() {
+        return addedColumns.iterator();
     }
 
     @Override
-    public ImmutableMetaFieldIndex getMetaFieldIndexByNameAndType(String fieldName, FieldType type) {
-        return newFields.get(fieldName, type);
+    public ImmutableMetaDocPartIndexColumn getMetaDocPartIndexColumnByIdentifier(String columnName) {
+        return addedColumnsByIdentifier.get(columnName);
     }
 
     @Override
-    public MetaFieldIndex getMetaFieldIndexByPosition(int position) {
-        if (position < wrapped.size()) {
-            return wrapped.getMetaFieldIndexByPosition(position);
+    public MetaDocPartIndexColumn getMetaDocPartIndexColumnByPosition(int position) {
+        if (position >= addedColumns.size()) {
+            return null;
         }
-        return addedFields.get(position - wrapped.size());
+        return addedColumns.get(position);
     }
 
     @Override

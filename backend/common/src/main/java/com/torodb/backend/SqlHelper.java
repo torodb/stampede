@@ -24,7 +24,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Optional;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -39,11 +38,11 @@ import com.torodb.backend.ErrorHandler.Context;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.backend.converters.jooq.KVValueConverter;
 import com.torodb.backend.converters.sql.SqlBinding;
+import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.kvdocument.values.KVValue;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.jooq.*;
 
 @Singleton
 @SuppressFBWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
@@ -111,6 +110,25 @@ public class SqlHelper {
             throw errorHandler.handleException(context, ex);
         }       
     }
+    
+    public int executeUpdateOrThrow(DSLContext dsl, String statement, Context context) throws UserException {
+        Connection c = dsl.configuration().connectionProvider().acquire();
+        try (PreparedStatement ps = c.prepareStatement(statement)) {
+            return ps.executeUpdate();
+        } catch (SQLException ex) {
+            throw errorHandler.handleUserException(context, ex);
+        } finally {
+            dsl.configuration().connectionProvider().release(c);
+        }       
+    }
+    
+    public int executeUpdateOrThrow(Connection c, String statement, Context context) throws UserException {
+        try (PreparedStatement ps = c.prepareStatement(statement)) {
+            return ps.executeUpdate();
+        } catch (SQLException ex) {
+            throw errorHandler.handleUserException(context, ex);
+        }       
+    }
 
     public String renderVal(String value) {
         return dsl().render(DSL.val(value));
@@ -170,6 +188,7 @@ public class SqlHelper {
 		return sqlBinding.getPlaceholder();
     }
 
+    @SuppressWarnings("rawtypes")
     public String getSqlTypeName(FieldType fieldType) {
         DataTypeForKV dataType = dataTypeProvider.getDataType(fieldType);
 

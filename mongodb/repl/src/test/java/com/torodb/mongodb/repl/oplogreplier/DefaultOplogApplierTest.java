@@ -19,10 +19,12 @@
  */
 package com.torodb.mongodb.repl.oplogreplier;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
+import com.torodb.mongodb.repl.ReplicationFilters;
 import com.torodb.mongodb.repl.oplogreplier.analyzed.AnalyzedOpReducer;
 import com.torodb.mongodb.repl.oplogreplier.batch.AnalyzedOplogBatchExecutor;
 import com.torodb.mongodb.repl.oplogreplier.batch.BatchAnalyzer;
@@ -66,7 +68,9 @@ public class DefaultOplogApplierTest extends AbstractOplogApplierTest {
             );
             bind(AnalyzedOpReducer.class)
                     .toInstance(new AnalyzedOpReducer(true));
-
+            
+            bind(ReplicationFilters.class)
+                    .toInstance(new ReplicationFilters(ImmutableMap.of(), ImmutableMap.of()));
         }
     }
 

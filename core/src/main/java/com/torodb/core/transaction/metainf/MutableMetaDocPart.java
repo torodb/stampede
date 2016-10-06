@@ -1,7 +1,10 @@
 
 package com.torodb.core.transaction.metainf;
 
+import java.util.List;
 import java.util.stream.Stream;
+
+import org.jooq.lambda.tuple.Tuple2;
 
 import com.torodb.core.annotations.DoNotChange;
 
@@ -26,10 +29,7 @@ public interface MutableMetaDocPart extends MetaDocPart {
     public Stream<? extends MetaScalar> streamScalars();
     
     @Override
-    public abstract Stream<? extends MetaDocPartIndex> streamIndexes();
-
-    @Override
-    public MetaDocPartIndex getMetaDocPartIndexByIdentifier(String indexId);
+    public abstract Stream<? extends MetaIdentifiedDocPartIndex> streamIndexes();
 
     /**
      * Adds a new field to this table.
@@ -55,20 +55,34 @@ public interface MutableMetaDocPart extends MetaDocPart {
 
     @DoNotChange
     public abstract Iterable<? extends ImmutableMetaField> getAddedMetaFields();
+    
+    public abstract ImmutableMetaField getAddedFieldByIdentifier(String identifier);
 
     @DoNotChange
     public abstract Iterable<? extends ImmutableMetaScalar> getAddedMetaScalars();
 
     /**
-     *
+     * Add a non existent index to this doc part
+     * 
+     * @param unique
      * @return
-     * @throws IllegalArgumentException if this table already contains an index with the
-     *                                          same identifier
      */
-    public abstract MutableMetaDocPartIndex addMetaDocPartIndex(String identifier, boolean unique) throws IllegalArgumentException;
+    public abstract MutableMetaDocPartIndex addMetaDocPartIndex(boolean unique);
 
+    /**
+     * Remove an index from this doc part
+     * @param indexId
+     * @return
+     */
+    public boolean removeMetaDocPartIndexByIdentifier(String indexId);
+    
     @DoNotChange
-    public abstract Iterable<? extends MutableMetaDocPartIndex> getAddedMetaDocPartIndexes();
+    public Iterable<Tuple2<ImmutableMetaIdentifiedDocPartIndex, MetaElementState>> getModifiedMetaDocPartIndexes();
+    
+    @DoNotChange
+    public Iterable<MutableMetaDocPartIndex> getAddedMutableMetaDocPartIndexes();
 
+    public MutableMetaDocPartIndex getOrCreatePartialMutableDocPartIndexForMissingIndexAndNewField(MetaIndex missingIndex, List<String> identifiers, MetaField newField);
+    
     public abstract ImmutableMetaDocPart immutableCopy();
 }

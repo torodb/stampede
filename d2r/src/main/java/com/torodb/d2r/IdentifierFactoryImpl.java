@@ -11,6 +11,8 @@ import java.util.regex.Pattern;
 
 import javax.inject.Inject;
 
+import org.jooq.lambda.tuple.Tuple2;
+
 import com.torodb.core.TableRef;
 import com.torodb.core.backend.IdentifierConstraints;
 import com.torodb.core.d2r.IdentifierFactory;
@@ -19,7 +21,6 @@ import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
-import com.torodb.core.transaction.metainf.MetaField;
 import com.torodb.core.transaction.metainf.MetaSnapshot;
 
 public class IdentifierFactoryImpl implements IdentifierFactory {
@@ -87,13 +88,13 @@ public class IdentifierFactoryImpl implements IdentifierFactory {
     }
 
     @Override
-    public String toIndexIdentifier(MetaDatabase metaDatabase, String indexName, Iterable<MetaField> fields) {
+    public String toIndexIdentifier(MetaDatabase metaDatabase, String tableName, Iterable<Tuple2<String, Boolean>> columns) {
         NameChain nameChain = new NameChain(separatorString);
-        nameChain.add(indexName);
+        nameChain.add(tableName);
         
-        for (MetaField field : fields) {
-            nameChain.add(field.getName());
-            nameChain.add(field.getType().name());
+        for (Tuple2<String, Boolean> column : columns) {
+            nameChain.add(column.v1());
+            nameChain.add(column.v2()?"a":"d");
         }
         
         IdentifierChecker identifierChecker = new IndexIdentifierChecker(metaDatabase);

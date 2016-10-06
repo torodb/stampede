@@ -10,7 +10,7 @@ import com.torodb.backend.tables.MetaCollectionTable;
 import com.torodb.backend.tables.MetaDatabaseTable;
 import com.torodb.backend.tables.MetaDocPartIndexTable;
 import com.torodb.backend.tables.MetaDocPartTable;
-import com.torodb.backend.tables.MetaFieldIndexTable;
+import com.torodb.backend.tables.MetaDocPartIndexColumnTable;
 import com.torodb.backend.tables.MetaFieldTable;
 import com.torodb.backend.tables.MetaIndexFieldTable;
 import com.torodb.backend.tables.MetaIndexTable;
@@ -19,7 +19,7 @@ import com.torodb.backend.tables.records.MetaCollectionRecord;
 import com.torodb.backend.tables.records.MetaDatabaseRecord;
 import com.torodb.backend.tables.records.MetaDocPartIndexRecord;
 import com.torodb.backend.tables.records.MetaDocPartRecord;
-import com.torodb.backend.tables.records.MetaFieldIndexRecord;
+import com.torodb.backend.tables.records.MetaDocPartIndexColumnRecord;
 import com.torodb.backend.tables.records.MetaFieldRecord;
 import com.torodb.backend.tables.records.MetaIndexFieldRecord;
 import com.torodb.backend.tables.records.MetaIndexRecord;
@@ -36,7 +36,7 @@ public interface MetaDataReadInterface {
     @Nonnull <T, R extends MetaFieldRecord<T>> MetaFieldTable<T, R> getMetaFieldTable();
     @Nonnull <T, R extends MetaScalarRecord<T>> MetaScalarTable<T, R> getMetaScalarTable();
     @Nonnull <T, R extends MetaDocPartIndexRecord<T>> MetaDocPartIndexTable<T, R> getMetaDocPartIndexTable();
-    @Nonnull <T, R extends MetaFieldIndexRecord<T>> MetaFieldIndexTable<T, R> getMetaFieldIndexTable();
+    @Nonnull <T, R extends MetaDocPartIndexColumnRecord<T>> MetaDocPartIndexColumnTable<T, R> getMetaDocPartIndexColumnTable();
     @Nonnull <R extends MetaIndexRecord> MetaIndexTable<R> getMetaIndexTable();
     @Nonnull <T, R extends MetaIndexFieldRecord<T>> MetaIndexFieldTable<T, R> getMetaIndexFieldTable();
     

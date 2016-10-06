@@ -1,22 +1,34 @@
 
 package com.torodb.torod.pipeline;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Stream;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.jooq.lambda.tuple.Tuple2;
+
 import com.torodb.core.TableRef;
 import com.torodb.core.annotations.DoNotChange;
 import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
+import com.torodb.core.transaction.metainf.ImmutableMetaDocPart;
+import com.torodb.core.transaction.metainf.ImmutableMetaField;
+import com.torodb.core.transaction.metainf.ImmutableMetaIdentifiedDocPartIndex;
+import com.torodb.core.transaction.metainf.ImmutableMetaIndex;
+import com.torodb.core.transaction.metainf.MetaCollection;
+import com.torodb.core.transaction.metainf.MetaDocPart;
+import com.torodb.core.transaction.metainf.MetaElementState;
+import com.torodb.core.transaction.metainf.MetaField;
+import com.torodb.core.transaction.metainf.MetaIdentifiedDocPartIndex;
 import com.torodb.core.transaction.metainf.MetaIndex;
 import com.torodb.core.transaction.metainf.MutableMetaCollection;
 import com.torodb.core.transaction.metainf.MutableMetaDocPart;
 import com.torodb.core.transaction.metainf.MutableMetaIndex;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.stream.Stream;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  *
@@ -90,6 +102,73 @@ public class BatchMetaCollection implements MutableMetaCollection {
     }
 
     @Override
+    public MutableMetaIndex getMetaIndexByName(String indexName) {
+        return delegate.getMetaIndexByName(indexName);
+    }
+
+    @Override
+    public Stream<? extends MutableMetaIndex> streamContainedMetaIndexes() {
+        return delegate.streamContainedMetaIndexes();
+    }
+
+    @Override
+    public MutableMetaIndex addMetaIndex(String name, boolean unique) throws IllegalArgumentException {
+        return delegate.addMetaIndex(name, unique);
+    }
+
+    @Override
+    public boolean removeMetaIndexByName(String indexName) {
+        return delegate.removeMetaIndexByName(indexName);
+    }
+
+    @Override
+    public Iterable<Tuple2<MutableMetaIndex, MetaElementState>> getModifiedMetaIndexes() {
+        return delegate.getModifiedMetaIndexes();
+    }
+
+    @Override
+    public List<Tuple2<MetaIndex, List<String>>> getMissingIndexesForNewField(MutableMetaDocPart docPart,
+            MetaField newField) {
+        return delegate.getMissingIndexesForNewField(docPart, newField);
+    }
+
+    @Override
+    public Optional<? extends MetaIndex> getAnyMissedIndex(MetaCollection oldCol, MutableMetaDocPart newStructure,
+            ImmutableMetaDocPart oldStructure, ImmutableMetaField newField) {
+        return delegate.getAnyMissedIndex(oldCol, newStructure, oldStructure, newField);
+    }
+
+    @Override
+    public Optional<? extends MetaIndex> getAnyRelatedIndex(ImmutableMetaCollection oldCol, MetaDocPart newStructure,
+            ImmutableMetaIdentifiedDocPartIndex newDocPartIndex) {
+        return delegate.getAnyRelatedIndex(oldCol, newStructure, newDocPartIndex);
+    }
+
+    @Override
+    public Optional<ImmutableMetaIndex> getAnyMissedIndex(ImmutableMetaCollection oldCol,
+            ImmutableMetaIdentifiedDocPartIndex newRemovedDocPartIndex) {
+        return delegate.getAnyMissedIndex(oldCol, newRemovedDocPartIndex);
+    }
+
+    @Override
+    public Optional<ImmutableMetaIndex> getAnyConflictingIndex(ImmutableMetaCollection oldStructure,
+            MutableMetaIndex changed) {
+        return delegate.getAnyConflictingIndex(oldStructure, changed);
+    }
+
+    @Override
+    public Optional<ImmutableMetaDocPart> getAnyDocPartWithMissedDocPartIndex(ImmutableMetaCollection oldStructure,
+            MutableMetaIndex changed) {
+        return delegate.getAnyDocPartWithMissedDocPartIndex(oldStructure, changed);
+    }
+
+    @Override
+    public Optional<? extends MetaIdentifiedDocPartIndex> getAnyOrphanDocPartIndex(ImmutableMetaCollection oldStructure,
+            MutableMetaIndex changed) {
+        return delegate.getAnyOrphanDocPartIndex(oldStructure, changed);
+    }
+
+    @Override
     public ImmutableMetaCollection immutableCopy() {
         return delegate.immutableCopy();
     }
@@ -112,26 +191,6 @@ public class BatchMetaCollection implements MutableMetaCollection {
     private void onDocPartChange(BatchMetaDocPart changedDocPart) {
         changesOnBatch.add(changedDocPart);
         modifiedDocParts.add(changedDocPart);
-    }
-
-    @Override
-    public MetaIndex getMetaIndexByName(String indexName) {
-        return delegate.getMetaIndexByName(indexName);
-    }
-
-    @Override
-    public Stream<? extends MutableMetaIndex> streamContainedMetaIndexes() {
-        return delegate.streamContainedMetaIndexes();
-    }
-
-    @Override
-    public MutableMetaIndex addMetaIndex(String name, boolean unique) throws IllegalArgumentException {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Iterable<? extends MutableMetaIndex> getModifiedMetaIndexes() {
-        return Collections.emptyList();
     }
 
 }

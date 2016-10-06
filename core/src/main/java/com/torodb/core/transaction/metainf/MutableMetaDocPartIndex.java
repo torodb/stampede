@@ -1,7 +1,7 @@
 
 package com.torodb.core.transaction.metainf;
 
-import java.util.stream.Stream;
+import java.util.Iterator;
 
 import com.torodb.core.annotations.DoNotChange;
 
@@ -11,25 +11,40 @@ import com.torodb.core.annotations.DoNotChange;
 public interface MutableMetaDocPartIndex extends MetaDocPartIndex {
 
     @Override
-    public ImmutableMetaFieldIndex getMetaFieldIndexByNameAndType(String fieldName, FieldType type);
+    public ImmutableMetaDocPartIndexColumn getMetaDocPartIndexColumnByIdentifier(String columnName);
 
     @Override
-    public Stream<? extends ImmutableMetaFieldIndex> streamFields();
+    public Iterator<? extends ImmutableMetaDocPartIndexColumn> iteratorColumns();
 
     /**
-     * Adds a new column to this index.
+     * Put a new column to this index at specified position.
      *
-     * @param name
-     * @param type
+     * @param position
+     * @param identifier
+     * @param ordering
      * @return the new column
      * @throws IllegalArgumentException if this index already contains a column with the same
-     *                                  {@link MetaFieldIndex#getName() name} and
-     *                                  {@link MetaFieldIndex#getType() type}.
+     *                                  {@link MetaDocPartIndexColumn#getPosition() position} or
+     *                                  {@link MetaDocPartIndexColumn#getName() identifier}.
      */
-    public abstract ImmutableMetaFieldIndex addMetaFieldIndex(String name, String identifier, FieldType type, FieldIndexOrdering ordering) throws IllegalArgumentException;
+    public abstract ImmutableMetaDocPartIndexColumn putMetaDocPartIndexColumn(int position, String identifier, FieldIndexOrdering ordering) throws IllegalArgumentException;
+
+    /**
+     * Adds a new column to this index at next free position.
+     *
+     * @param identifier
+     * @param ordering
+     * @return the new column
+     * @throws IllegalArgumentException if this index already contains a column with the same
+     *                                  {@link MetaDocPartIndexColumn#getName() identifier}.
+     */
+    public abstract ImmutableMetaDocPartIndexColumn addMetaDocPartIndexColumn(String identifier, FieldIndexOrdering ordering) throws IllegalArgumentException;
 
     @DoNotChange
-    public abstract Iterable<? extends ImmutableMetaFieldIndex> getAddedMetaFieldIndexes();
+    public abstract Iterable<? extends ImmutableMetaDocPartIndexColumn> getAddedMetaDocPartIndexColumns();
 
-    public abstract ImmutableMetaDocPartIndex immutableCopy();
+    /**
+     * @throws IllegalArgumentException if this index does not contains all column from position 0 to the position for the column with maximum position
+     */
+    public abstract ImmutableMetaIdentifiedDocPartIndex immutableCopy(String identifier) throws IllegalArgumentException;
 }

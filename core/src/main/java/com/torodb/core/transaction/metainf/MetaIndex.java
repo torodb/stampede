@@ -1,6 +1,8 @@
 
 package com.torodb.core.transaction.metainf;
 
+import java.util.Iterator;
+import java.util.List;
 import java.util.stream.Stream;
 
 import javax.annotation.Nonnull;
@@ -23,15 +25,32 @@ public interface MetaIndex {
 
     public abstract int size();
     
-    public abstract Stream<? extends MetaIndexField> streamFields();
+    public abstract Iterator<? extends MetaIndexField> iteratorFields();
     
-    public abstract Stream<? extends ImmutableMetaIndexField> streamMetaIndexFieldByTableRef(TableRef tableRef);
+    public abstract Iterator<? extends ImmutableMetaIndexField> iteratorMetaIndexFieldByTableRef(TableRef tableRef);
+    
+    public abstract Stream<TableRef> streamTableRefs();
 
     @Nullable
     public abstract MetaIndexField getMetaIndexFieldByTableRefAndName(TableRef tableRef, String name);
+    
+    @Nullable
+    public abstract MetaIndexField getMetaIndexFieldByTableRefAndPosition(TableRef tableRef, int position);
 
     @Nullable
     public abstract MetaIndexField getMetaIndexFieldByPosition(int position);
+    
+    public abstract Iterator<List<String>> iteratorMetaDocPartIndexesIdentifiers(MetaDocPart docPart);
+    
+    public abstract boolean isCompatible(MetaDocPart docPart);
+    
+    public abstract boolean isCompatible(MetaDocPart docPart, MetaDocPartIndex docPartIndex);
+    
+    public abstract boolean isMatch(MetaDocPart docPart, List<String> identifiers, MetaDocPartIndex docPartIndex);
+    
+    public abstract boolean isSubMatch(MetaDocPart docPart, List<String> identifiersSublist, MetaDocPartIndex docPartIndex);
+    
+    public abstract boolean isMatch(MetaIndex index);
 
     public default String defautToString() {
         return "index{" + "name:" + getName() + ", unique:" + isUnique() + '}';

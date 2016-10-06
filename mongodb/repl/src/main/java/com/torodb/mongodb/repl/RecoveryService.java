@@ -258,16 +258,16 @@ public class RecoveryService extends ThreadFactoryRunnableService {
         return true;
     }
 
-    private void disableInternalIndexes() throws UserException {
-        LOGGER.debug("Disabling internal indexes");
-        server.getTorodServer().disableDataImportMode();
-        LOGGER.trace("Internal indexes disabled");
+    private void enableDataImportMode() throws UserException {
+        LOGGER.debug("Starting data import mode");
+        server.getTorodServer().enableDataImportMode();
+        LOGGER.trace("Data import mode started");
     }
 
-    private void enableInternalIndexes() throws UserException {
-        LOGGER.debug("Reactivating internal indexes");
-        server.getTorodServer().enableDataImportMode();
-        LOGGER.trace("Internal indexes enabled");
+    private void disableDataImportMode() throws UserException {
+        LOGGER.debug("Ending data import mode");
+        server.getTorodServer().disableDataImportMode();
+        LOGGER.trace("Data import mode ended");
     }
 
     @Override
@@ -310,7 +310,7 @@ public class RecoveryService extends ThreadFactoryRunnableService {
 
     private void cloneDatabases(@Nonnull MongoClient remoteClient) throws CloningException, MongoException, UserException {
     
-        disableInternalIndexes();
+        enableDataImportMode();
         try {
             Stream<String> dbNames;
             try (MongoConnection remoteConnection = remoteClient.openConnection()) {
@@ -329,13 +329,14 @@ public class RecoveryService extends ThreadFactoryRunnableService {
 
                         CloneOptions options = new CloneOptions(
                                 true,
-                                false,
+                                true,
                                 true,
                                 false,
                                 databaseName,
                                 Collections.<String>emptySet(),
                                 writePermissionSupplier,
-                                (colName) -> replFilters.getCollectionPredicate().test(databaseName, colName)
+                                (colName) -> replFilters.getCollectionPredicate().test(databaseName, colName),
+                                (collection, indexName, unique, keys) -> replFilters.getIndexPredicate().test(databaseName, collection, indexName, unique, keys)
                         );
 
                         try {
@@ -345,7 +346,7 @@ public class RecoveryService extends ThreadFactoryRunnableService {
                         }
                     });
         } finally {
-            enableInternalIndexes();
+            disableDataImportMode();
         }
     }
 

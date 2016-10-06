@@ -63,9 +63,12 @@ public abstract class AbstractDbBackend<Configuration extends DbBackendConfigura
     private HikariDataSource systemDataSource;
     private HikariDataSource readOnlyDataSource;
     /**
-     * Global state variable that indicate if internal indexes have to be created or not
+     * Global state variable for data import mode.
+     * If true data import mode is enabled, data import mode is otherwise disabled.
+     * Indexes will not be created while data import mode is enabled.
+     * When this mode is enabled importing data will be faster.
      */
-    private volatile boolean includeInternalIndexes;
+    private volatile boolean dataImportMode;
 
     /**
      * Configure the backend. The contract specifies that any subclass must call initialize() method after
@@ -80,7 +83,7 @@ public abstract class AbstractDbBackend<Configuration extends DbBackendConfigura
         super(threadFactory);
         this.configuration = configuration;
         this.errorHandler = errorHandler;
-        this.includeInternalIndexes = true;
+        this.dataImportMode = false;
 
         int connectionPoolSize = configuration.getConnectionPoolSize();
         int reservedReadPoolSize = configuration.getReservedReadPoolSize();
@@ -168,13 +171,13 @@ public abstract class AbstractDbBackend<Configuration extends DbBackendConfigura
     protected abstract DataSource getConfiguredDataSource(Configuration configuration, String poolName);
     
     @Override
-    public void enableInternalIndexes() {
-        this.includeInternalIndexes = true;
+    public void disableDataInsertMode() {
+        this.dataImportMode = false;
     }
     
     @Override
-    public void disableInternalIndexes() {
-        this.includeInternalIndexes = false;
+    public void enableDataInsertMode() {
+        this.dataImportMode = true;
     }
 
     @Override
@@ -211,7 +214,7 @@ public abstract class AbstractDbBackend<Configuration extends DbBackendConfigura
     
     @Override
     public boolean isOnDataInsertMode() {
-        return includeInternalIndexes;
+        return dataImportMode;
     }
     
     @Override

@@ -30,7 +30,7 @@ import com.torodb.backend.derby.tables.DerbyMetaCollectionTable;
 import com.torodb.backend.derby.tables.DerbyMetaDatabaseTable;
 import com.torodb.backend.derby.tables.DerbyMetaDocPartIndexTable;
 import com.torodb.backend.derby.tables.DerbyMetaDocPartTable;
-import com.torodb.backend.derby.tables.DerbyMetaFieldIndexTable;
+import com.torodb.backend.derby.tables.DerbyMetaDocPartIndexColumnTable;
 import com.torodb.backend.derby.tables.DerbyMetaFieldTable;
 import com.torodb.backend.derby.tables.DerbyMetaIndexFieldTable;
 import com.torodb.backend.derby.tables.DerbyMetaIndexTable;
@@ -48,7 +48,7 @@ public class DerbyMetaDataReadInterface extends AbstractMetaDataReadInterface {
     private final DerbyMetaFieldTable metaFieldTable;
     private final DerbyMetaScalarTable metaScalarTable;
     private final DerbyMetaDocPartIndexTable metaDocPartIndexTable;
-    private final DerbyMetaFieldIndexTable metaFieldIndexTable;
+    private final DerbyMetaDocPartIndexColumnTable metaFieldIndexTable;
     private final DerbyMetaIndexTable metaIndexTable;
     private final DerbyMetaIndexFieldTable metaIndexFieldTable;
 
@@ -62,7 +62,7 @@ public class DerbyMetaDataReadInterface extends AbstractMetaDataReadInterface {
         this.metaFieldTable = DerbyMetaFieldTable.FIELD;
         this.metaScalarTable = DerbyMetaScalarTable.SCALAR;
         this.metaDocPartIndexTable = DerbyMetaDocPartIndexTable.DOC_PART_INDEX;
-        this.metaFieldIndexTable = DerbyMetaFieldIndexTable.FIELD_INDEX;
+        this.metaFieldIndexTable = DerbyMetaDocPartIndexColumnTable.DOC_PART_INDEX_COLUMN;
         this.metaIndexTable = DerbyMetaIndexTable.INDEX;
         this.metaIndexFieldTable = DerbyMetaIndexFieldTable.INDEX_FIELD;
     }
@@ -112,7 +112,7 @@ public class DerbyMetaDataReadInterface extends AbstractMetaDataReadInterface {
     @Nonnull
     @Override
     @SuppressWarnings("unchecked")
-    public DerbyMetaFieldIndexTable getMetaFieldIndexTable() {
+    public DerbyMetaDocPartIndexColumnTable getMetaDocPartIndexColumnTable() {
         return metaFieldIndexTable;
     }
 

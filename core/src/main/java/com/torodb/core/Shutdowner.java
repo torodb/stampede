@@ -35,6 +35,7 @@ public class Shutdowner implements AutoCloseable {
 
     private static final Logger LOGGER = LogManager.getLogger(Shutdowner.class);
 
+    @SuppressWarnings("rawtypes")
     private final List<WeakReference<ShutdownCallback>> closeables = new ArrayList<>();
 
     public synchronized void addCloseShutdownListener(AutoCloseable autoCloseable) {
@@ -53,6 +54,7 @@ public class Shutdowner implements AutoCloseable {
         closeables.removeIf(ref -> ref.get() == null);
     }
 
+    @SuppressWarnings("rawtypes")
     @Override
     public synchronized void close() {
         Lists.reverse(closeables).forEach(ref -> {

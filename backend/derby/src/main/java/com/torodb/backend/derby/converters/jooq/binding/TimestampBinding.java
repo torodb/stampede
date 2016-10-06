@@ -29,11 +29,11 @@ public class TimestampBinding<T> implements Binding<Timestamp, T> {
     private static final long serialVersionUID = 1L;
 
     public static <JT, UT extends KVValue<?>> DataTypeForKV<UT> fromKVValue(Class<UT> type, KVValueConverter<Timestamp, JT, UT> converter) {
-        return DataTypeForKV.from(new DefaultDataType<Timestamp>(null, Timestamp.class, "timestamp"), converter, new TimestampBinding<UT>(converter));
+        return DataTypeForKV.from(new DefaultDataType<Timestamp>(null, Timestamp.class, "TIMESTAMP"), converter, new TimestampBinding<UT>(converter));
     }
     
     public static <UT> DataType<UT> fromType(Class<UT> type, Converter<Timestamp, UT> converter) {
-        return new DefaultDataType<Timestamp>(null, Timestamp.class, "timestamp").asConvertedDataType(new TimestampBinding<UT>(converter));
+        return new DefaultDataType<Timestamp>(null, Timestamp.class, "TIMESTAMP").asConvertedDataType(new TimestampBinding<UT>(converter));
     }
 
     private final Converter<Timestamp, T> converter;

@@ -19,52 +19,54 @@
  */
 
 
-package com.torodb.backend.converters.jooq;
+package com.torodb.backend.postgresql.converters.jooq;
 
-import org.jooq.impl.SQLDataType;
+import org.jooq.util.postgres.PostgresDataType;
 
-import com.torodb.backend.converters.sql.BooleanSqlBinding;
+import com.torodb.backend.converters.jooq.DataTypeForKV;
+import com.torodb.backend.converters.jooq.KVValueConverter;
+import com.torodb.backend.converters.sql.IntegerSqlBinding;
 import com.torodb.backend.converters.sql.SqlBinding;
+import com.torodb.kvdocument.types.IntegerType;
 import com.torodb.kvdocument.types.KVType;
-import com.torodb.kvdocument.types.NullType;
-import com.torodb.kvdocument.values.KVNull;
+import com.torodb.kvdocument.values.KVInteger;
+
 
 /**
  *
  */
-public class NullValueConverter implements KVValueConverter<Boolean, Boolean, KVNull>{
+public class IntegerValueConverter implements KVValueConverter<Integer, Integer, KVInteger>{
     private static final long serialVersionUID = 1L;
 
-    public static final DataTypeForKV<KVNull> TYPE = DataTypeForKV.from(SQLDataType.BOOLEAN, new NullValueConverter());
+    public static final DataTypeForKV<KVInteger> TYPE = DataTypeForKV.from(PostgresDataType.INT4, new IntegerValueConverter());
 
     @Override
     public KVType getErasuredType() {
-        return NullType.INSTANCE;
+        return IntegerType.INSTANCE;
     }
 
     @Override
-    public KVNull from(Boolean databaseObject) {
-        return KVNull.getInstance();
+    public KVInteger from(Integer databaseObject) {
+        return KVInteger.of(databaseObject);
     }
 
     @Override
-    public Boolean to(KVNull userObject) {
-        return Boolean.TRUE;
+    public Integer to(KVInteger userObject) {
+        return userObject.getValue();
     }
 
     @Override
-    public Class<Boolean> fromType() {
-        return Boolean.class;
+    public Class<Integer> fromType() {
+        return Integer.class;
     }
 
     @Override
-    public Class<KVNull> toType() {
-        return KVNull.class;
+    public Class<KVInteger> toType() {
+        return KVInteger.class;
     }
 
     @Override
-    public SqlBinding<Boolean> getSqlBinding() {
-        return BooleanSqlBinding.INSTANCE;
+    public SqlBinding<Integer> getSqlBinding() {
+        return IntegerSqlBinding.INSTANCE;
     }
-    
 }

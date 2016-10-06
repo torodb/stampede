@@ -18,54 +18,56 @@
  *     
  */
 
+package com.torodb.backend.postgresql.converters.jooq;
 
-package com.torodb.backend.converters.jooq;
+import java.sql.Types;
 
-import org.jooq.impl.SQLDataType;
+import org.jooq.util.postgres.PostgresDataType;
 
+import com.torodb.backend.converters.jooq.DataTypeForKV;
+import com.torodb.backend.converters.jooq.KVValueConverter;
+import com.torodb.backend.converters.sql.BooleanSqlBinding;
 import com.torodb.backend.converters.sql.SqlBinding;
-import com.torodb.backend.converters.sql.StringSqlBinding;
+import com.torodb.kvdocument.types.BooleanType;
 import com.torodb.kvdocument.types.KVType;
-import com.torodb.kvdocument.types.StringType;
-import com.torodb.kvdocument.values.KVString;
-import com.torodb.kvdocument.values.heap.StringKVString;
+import com.torodb.kvdocument.values.KVBoolean;
 
 /**
  *
  */
-public class StringValueConverter implements KVValueConverter<String, String, KVString>{
+public class BooleanValueConverter implements KVValueConverter<Boolean, Boolean, KVBoolean> {
     private static final long serialVersionUID = 1L;
 
-    public static final DataTypeForKV<KVString> TYPE = DataTypeForKV.from(SQLDataType.VARCHAR, new StringValueConverter());
+    public static final DataTypeForKV<KVBoolean> TYPE = DataTypeForKV.from(PostgresDataType.BOOL, new BooleanValueConverter(), Types.BIT);
 
     @Override
     public KVType getErasuredType() {
-        return StringType.INSTANCE;
+        return BooleanType.INSTANCE;
     }
 
     @Override
-    public KVString from(String databaseObject) {
-        return new StringKVString(databaseObject);
+    public KVBoolean from(Boolean databaseObject) {
+        return KVBoolean.from(databaseObject);
     }
 
     @Override
-    public String to(KVString userObject) {
+    public Boolean to(KVBoolean userObject) {
         return userObject.getValue();
     }
 
     @Override
-    public Class<String> fromType() {
-        return String.class;
+    public Class<Boolean> fromType() {
+        return Boolean.class;
     }
 
     @Override
-    public Class<KVString> toType() {
-        return KVString.class;
+    public Class<KVBoolean> toType() {
+        return KVBoolean.class;
     }
 
     @Override
-    public SqlBinding<String> getSqlBinding() {
-        return StringSqlBinding.INSTANCE;
+    public SqlBinding<Boolean> getSqlBinding() {
+        return BooleanSqlBinding.INSTANCE;
     }
-    
+
 }

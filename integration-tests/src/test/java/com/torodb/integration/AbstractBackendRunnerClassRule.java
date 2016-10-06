@@ -108,10 +108,8 @@ public abstract class AbstractBackendRunnerClassRule implements TestRule {
 	    return injector;
 	}
 	
-	protected void startupBackend() throws Exception {
+	protected synchronized void startupBackend() throws Exception {
 		if (!started) {
-			started = true;
-			
 			setupConfig();
 			
             injector = ToroDbServer.createInjector(config, Clock.systemUTC());
@@ -164,6 +162,8 @@ public abstract class AbstractBackendRunnerClassRule implements TestRule {
             } catch (TimeoutException ex) {
                 throw new RuntimeException("Toro failed to start after waiting for " + TORO_BOOT_MAX_INTERVAL_MILLIS + " milliseconds.", ex);
             }
+            
+            started = true;
 		}
 	}
 	
@@ -249,7 +249,7 @@ public abstract class AbstractBackendRunnerClassRule implements TestRule {
 		LOGGER.info("Configuration for integration tests will be:\n" + yamlStringBuilder.toString());
 	}
 
-	private void shutdownBackend() {
+	private synchronized void shutdownBackend() {
 		started = false;
 		
         try {

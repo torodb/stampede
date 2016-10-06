@@ -1,13 +1,13 @@
 
 package com.torodb.torod.impl.memory;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.google.common.base.Preconditions;
 import com.torodb.torod.ExclusiveWriteTorodTransaction;
 import com.torodb.torod.ReadOnlyTorodTransaction;
 import com.torodb.torod.TorodConnection;
-import com.torodb.torod.SharedWriteTorodTransaction;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  *
@@ -15,14 +15,12 @@ import org.apache.logging.log4j.Logger;
 public class MemoryTorodConnection implements TorodConnection {
 
     private static final Logger LOGGER = LogManager.getLogger(MemoryTorodConnection.class);
-    private final MemoryData data;
     private final MemoryTorodServer server;
     private final int connectionId;
     private boolean closed = false;
     private MemoryTorodTransaction currentTransaction = null;
 
     MemoryTorodConnection(MemoryTorodServer server, int connectionId) {
-        data = server.getData();
         this.server = server;
         this.connectionId = connectionId;
     }

@@ -43,7 +43,7 @@ public class ExclusiveWriteBackendTransactionImpl extends SharedWriteBackendTran
     
     public ExclusiveWriteBackendTransactionImpl(SqlInterface sqlInterface, BackendConnectionImpl backendConnection,
             R2DTranslator r2dTranslator, IdentifierFactory identifierFactory, RidGenerator ridGenerator) {
-        super(sqlInterface, backendConnection, r2dTranslator);
+        super(sqlInterface, backendConnection, r2dTranslator, identifierFactory);
         
         this.identifierFactory = identifierFactory;
         this.ridGenerator = ridGenerator;

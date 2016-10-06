@@ -1,6 +1,17 @@
 
 package com.torodb.mongodb.repl.oplogreplier;
 
+import static com.eightkdata.mongowp.bson.utils.DefaultBsonValues.newDocument;
+
+import java.util.Arrays;
+import java.util.Collections;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.eightkdata.mongowp.ErrorCode;
 import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.WriteConcern;
@@ -19,21 +30,23 @@ import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.UpdateCommand.UpdateArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.UpdateCommand.UpdateResult;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.UpdateCommand.UpdateStatement;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.IndexOptions;
 import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.Request;
-import com.eightkdata.mongowp.server.api.oplog.*;
+import com.eightkdata.mongowp.server.api.oplog.DbCmdOplogOperation;
+import com.eightkdata.mongowp.server.api.oplog.DbOplogOperation;
+import com.eightkdata.mongowp.server.api.oplog.DeleteOplogOperation;
+import com.eightkdata.mongowp.server.api.oplog.InsertOplogOperation;
+import com.eightkdata.mongowp.server.api.oplog.NoopOplogOperation;
+import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
+import com.eightkdata.mongowp.server.api.oplog.OplogOperationVisitor;
+import com.eightkdata.mongowp.server.api.oplog.UpdateOplogOperation;
 import com.torodb.mongodb.commands.TorodbCommandsLibrary;
 import com.torodb.mongodb.core.WriteMongodTransaction;
 import com.torodb.mongodb.repl.OplogManager;
+import com.torodb.mongodb.repl.ReplicationFilters;
 import com.torodb.mongodb.utils.DefaultIdUtils;
 import com.torodb.mongodb.utils.NamespaceUtil;
-import java.util.Collections;
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import static com.eightkdata.mongowp.bson.utils.DefaultBsonValues.newDocument;
 
 /**
  *
@@ -43,11 +56,13 @@ public class OplogOperationApplier {
 
     private static final Logger LOGGER = LogManager.getLogger(OplogOperationApplier.class);
     private final TorodbCommandsLibrary library;
+    private final ReplicationFilters replicationFilters;
     private final Visitor visitor = new Visitor();
 
     @Inject
-    public OplogOperationApplier(TorodbCommandsLibrary library) {
+    public OplogOperationApplier(TorodbCommandsLibrary library, ReplicationFilters replicationFilters) {
         this.library = library;
+        this.replicationFilters = replicationFilters;
     }
 
     /**
@@ -75,6 +90,8 @@ public class OplogOperationApplier {
         
         
         Status<Result> result = trans.execute(req, command, arg);
+        
+        result = replicationFilters.getResultFilter(command).filter(result);
         
         if (result == null) {
             throw new ConflictingOperationInProgressException("It was impossible to execute "
@@ -153,7 +170,9 @@ public class OplogOperationApplier {
     private Status<CreateIndexesResult> insertIndex(BsonDocument indexDoc, String database, WriteMongodTransaction trans) {
         try {
             CreateIndexesCommand command = CreateIndexesCommand.INSTANCE;
-            CreateIndexesArgument arg = command.unmarshallArg(indexDoc);
+            IndexOptions indexOptions = IndexOptions.unmarshall(indexDoc);
+            CreateIndexesArgument arg = new CreateIndexesArgument(
+                    indexOptions.getCollection(), Arrays.asList(new IndexOptions[] { indexOptions }));
 
             return executeCommand(database, command, arg, trans);
         } catch (MongoException ex) {
