@@ -117,7 +117,7 @@ public class SmartRetrier extends AbstractHintableRetrier {
     private <Result, T extends Exception> ExceptionHandler<Result, T> createWithTimeHandler(
             IntPredicate giveUpPredicate, ExceptionHandler<Result, T> delegateHandler) {
         return new IncrementalWaitExceptionHandler<>(
-                (attepts, millis) -> getMillisToWait(attepts, millis, giveUpPredicate),
+                (millis, attempts) -> getMillisToWait(attempts, millis, giveUpPredicate),
                 delegateHandler
         );
     }

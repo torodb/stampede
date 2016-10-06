@@ -31,7 +31,7 @@ import javax.annotation.concurrent.NotThreadSafe;
  *
  */
 public class RetryHelper {
-
+	
     private RetryHelper() {}
 
     public static <R> R retry(@Nonnull ExceptionHandler<R, RuntimeException> handler, Callable<R> job) {
@@ -246,7 +246,7 @@ public class RetryHelper {
         public IncrementalWaitExceptionHandler(IntBinaryOperator newMillisFunction, ExceptionHandler<Result, T> delegate) {
             super(delegate);
             this.newMillisFunction = newMillisFunction;
-            this.currentMillis = 0;
+            this.currentMillis = 1;
         }
 
         @Override
