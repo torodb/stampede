@@ -41,7 +41,7 @@ import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.interna
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.internal.ReplSetFreshCommand.ReplSetFreshReply;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.internal.ReplSetGetRBIDCommand.ReplSetGetRBIDReply;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.internal.ReplSetHeartbeatCommand.ReplSetHeartbeatArgument;
-import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.internal.ReplSetHeartbeatCommand.ReplSetHeartbeatReply;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.internal.ReplSetHeartbeatReply;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.internal.ReplSetUpdatePositionCommand.ReplSetUpdatePositionArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.internal.WhatsMyUriCommand.WhatsMyUriReply;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.repl.ApplyOpsCommand.ApplyOpsArgument;
@@ -64,15 +64,8 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.net.HostAndPort;
 import com.torodb.core.annotations.DoNotChange;
 import com.torodb.mongodb.commands.impl.NotImplementedCommandImplementation;
-import com.torodb.mongodb.commands.impl.admin.CreateCollectionImplementation;
-import com.torodb.mongodb.commands.impl.admin.DropCollectionImplementation;
-import com.torodb.mongodb.commands.impl.admin.DropDatabaseImplementation;
 import com.torodb.mongodb.commands.impl.admin.RenameCollectionImplementation;
-import com.torodb.mongodb.commands.impl.general.DeleteImplementation;
-import com.torodb.mongodb.commands.impl.general.InsertImplementation;
-import com.torodb.mongodb.commands.impl.general.UpdateImplementation;
 import com.torodb.mongodb.core.ExclusiveWriteMongodTransaction;
-import com.torodb.mongodb.core.WriteMongodTransaction;
 
 import java.util.Map.Entry;
 import java.util.Set;
