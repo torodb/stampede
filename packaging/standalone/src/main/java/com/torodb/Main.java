@@ -21,15 +21,6 @@
 package com.torodb;
 
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.time.Clock;
-import java.util.PropertyResourceBundle;
-import java.util.ResourceBundle;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.internal.Console;
 import com.google.common.base.Charsets;
@@ -42,9 +33,16 @@ import com.torodb.packaging.config.model.Config;
 import com.torodb.packaging.config.model.backend.derby.Derby;
 import com.torodb.packaging.config.model.backend.postgres.Postgres;
 import com.torodb.packaging.config.model.generic.LogLevel;
-import com.torodb.packaging.config.model.protocol.mongo.Replication;
 import com.torodb.packaging.config.util.ConfigUtils;
 import com.torodb.packaging.util.Log4jUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.time.Clock;
+import java.util.PropertyResourceBundle;
+import java.util.ResourceBundle;
 
 /**
  * ToroDB's entry point
@@ -55,8 +53,6 @@ public class Main {
 	
 	public static void main(String[] args) throws Exception {
 		Console console = JCommander.getConsole();
-
-		Log4jUtils.setRootLevel(LogLevel.NONE);
 
 		ResourceBundle cliBundle = PropertyResourceBundle.getBundle("CliMessages");
 		final CliConfig cliConfig = new CliConfig();
@@ -87,22 +83,10 @@ public class Main {
 			
 			System.exit(0);
 		}
-		
-		if (config.getGeneric().getLog4j2File() != null) {
-			Log4jUtils.reconfigure(config.getGeneric().getLog4j2File());
-		} else {
-			Log4jUtils.setRootLevel(config.getGeneric().getLogLevel());
-			
-			if (config.getGeneric().getLogPackages() != null) {
-				Log4jUtils.setLogPackages(config.getGeneric().getLogPackages());
-			}
-			
-			if (config.getGeneric().getLogFile() != null) {
-				Log4jUtils.appendToLogFile(config.getGeneric().getLogFile());
-			}
-		}
-		
-        ConfigUtils.parseToropassFile(config);
+
+		configureLogger(cliConfig, config);
+
+		ConfigUtils.parseToropassFile(config);
         ConfigUtils.parseMongopassFile(config);
         
         if (config.getBackend().isPostgresLike()) {
@@ -161,6 +145,21 @@ public class Main {
 			JCommander.getConsole().println("Fatal error while ToroDB was starting: " + causeMessage);
 			System.exit(1);
 		}
+	}
+
+	private static void configureLogger(CliConfig cliConfig, Config config) {
+		if (cliConfig.hasConfFile()) {
+			Log4jUtils.setRootLevel(config.getGeneric().getLogLevel());
+
+			if (config.getGeneric().getLogPackages() != null) {
+				Log4jUtils.setLogPackages(config.getGeneric().getLogPackages());
+			}
+
+			if (config.getGeneric().getLogFile() != null) {
+				Log4jUtils.appendToLogFile(config.getGeneric().getLogFile());
+			}
+		}
+		// If not specified in configuration YAML then the log4j2.xml is used instead (by default)
 	}
 
 	private static String readPwd() throws IOException {

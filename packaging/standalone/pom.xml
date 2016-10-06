@@ -339,6 +339,30 @@
                 </plugins>
             </build>
         </profile>
+        <profile>
+            <id>prod</id>
+            <build>
+                <resources>
+                    <resource>
+                        <directory>profiles/prod</directory>
+                    </resource>
+                </resources>
+            </build>
+        </profile>
+        <profile>
+            <id>dev</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <build>
+                <resources>
+                    <resource>
+                        <directory>profiles/dev</directory>
+                    </resource>
+                </resources>
+            </build>
+        </profile>
+
     </profiles>
 
 </project>

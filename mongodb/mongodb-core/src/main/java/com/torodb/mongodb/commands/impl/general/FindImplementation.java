@@ -10,6 +10,7 @@ import com.eightkdata.mongowp.ErrorCode;
 import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.bson.BsonDocument;
 import com.eightkdata.mongowp.exceptions.CommandFailed;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.FindCommand;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.FindCommand.FindArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.FindCommand.FindResult;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.CursorResult;
@@ -24,6 +25,8 @@ import com.torodb.kvdocument.values.KVValue;
 import com.torodb.mongodb.commands.impl.ReadTorodbCommandImpl;
 import com.torodb.mongodb.core.MongodTransaction;
 import com.torodb.torod.TorodTransaction;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  *
@@ -31,8 +34,12 @@ import com.torodb.torod.TorodTransaction;
 @Singleton
 public class FindImplementation implements ReadTorodbCommandImpl<FindArgument, FindResult> {
 
+    private static final Logger LOGGER = LogManager.getLogger(FindImplementation.class);
+
     @Override
     public Status<FindResult> apply(Request req, Command<? super FindArgument, ? super FindResult> command, FindArgument arg, MongodTransaction context) {
+        logFindCommand(arg);
+
         BsonDocument filter = arg.getFilter();
 
         Cursor<BsonDocument> cursor;
@@ -79,6 +86,15 @@ public class FindImplementation implements ReadTorodbCommandImpl<FindArgument, F
         return transaction.findByAttRef(db, col, refBuilder.build(), kvValue)
                 .asDocCursor()
                 .transform(t -> t.getRoot());
+    }
+
+    private void logFindCommand(FindArgument arg) {
+        if (LOGGER.isTraceEnabled()) {
+            String collection = arg.getCollection();
+            String filter = arg.getFilter().toString();
+
+            LOGGER.trace("Find into {} filter {}", collection, filter);
+        }
     }
 
 }

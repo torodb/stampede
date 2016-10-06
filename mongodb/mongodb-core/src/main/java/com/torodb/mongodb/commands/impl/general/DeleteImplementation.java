@@ -19,12 +19,19 @@ import com.torodb.mongodb.commands.impl.WriteTorodbCommandImpl;
 import com.torodb.mongodb.core.MongodMetrics;
 import com.torodb.mongodb.core.WriteMongodTransaction;
 import com.torodb.torod.SharedWriteTorodTransaction;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 /**
  *
  */
 @Singleton
 public class DeleteImplementation implements WriteTorodbCommandImpl<DeleteArgument, Long> {
+
+    private static final Logger LOGGER = LogManager.getLogger(DeleteImplementation.class);
 
 	private MongodMetrics mongodMetrics;
 	
@@ -48,6 +55,7 @@ public class DeleteImplementation implements WriteTorodbCommandImpl<DeleteArgume
                 }
                 case 1: {
                     try {
+                        logDeleteCommand(arg);
                         deleted += deleteByAttribute(context.getTorodTransaction(), req.getDatabase(), arg.getCollection(), query);
                     } catch (CommandFailed ex) {
                         return Status.from(ex);
@@ -68,6 +76,17 @@ public class DeleteImplementation implements WriteTorodbCommandImpl<DeleteArgume
         Builder refBuilder = new AttributeReference.Builder();
         KVValue<?> kvValue = AttrRefHelper.calculateValueAndAttRef(query, refBuilder);
         return transaction.deleteByAttRef(db, col, refBuilder.build(), kvValue);
+    }
+
+    private void logDeleteCommand(DeleteArgument arg) {
+        if (LOGGER.isTraceEnabled()) {
+            String collection = arg.getCollection();
+            String filter = StreamSupport.stream(arg.getStatements().spliterator(), false)
+                    .map(statement -> statement.getQuery().toString())
+                    .collect(Collectors.joining(","));
+
+            LOGGER.trace("Delete from {} filter {}", collection, filter);
+        }
     }
 
 }

@@ -76,6 +76,7 @@ public class BackendImpl extends ThreadFactoryIdleService implements Backend {
             R2DTranslator r2dTranslator, IdentifierFactory identifierFactory, Retrier retrier,
             ConcurrentToolsFactory concurrentToolsFactory) {
         super(threadFactory);
+
         this.dbBackendService = dbBackendService;
         this.sqlInterface = sqlInterface;
         this.sqlHelper = sqlHelper;
@@ -181,16 +182,20 @@ public class BackendImpl extends ThreadFactoryIdleService implements Backend {
 
     @Override
     protected void startUp() throws Exception {
-        LOGGER.debug("Starting backend");
+        LOGGER.debug("Starting backend...");
+
         LOGGER.trace("Starting backend datasources...");
         dbBackendService.startAsync();
         dbBackendService.awaitRunning();
+
         LOGGER.trace("Loading backend metadata...");
         SnapshotUpdater.updateSnapshot(metainfoRepository, sqlInterface, sqlHelper, schemaUpdater, tableRefFactory);
+
         LOGGER.trace("Reading last used rids...");
         maxRowIdFactory.startAsync();
         maxRowIdFactory.awaitRunning();
-        LOGGER.debug("Backend ready to run");
+
+        LOGGER.debug("Backend started");
     }
 
     @Override

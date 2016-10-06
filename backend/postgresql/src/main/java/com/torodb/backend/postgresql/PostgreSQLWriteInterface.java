@@ -102,22 +102,25 @@ public class PostgreSQLWriteInterface extends AbstractWriteInterface {
     public void insertDocPartData(DSLContext dsl, String schemaName, DocPartData docPartData) throws UserException {
     	metrics.insertRows.mark(docPartData.rowCount());
     	metrics.insertFields.mark(docPartData.rowCount()*(docPartData.fieldColumnsCount()+docPartData.scalarColumnsCount()));
+
         if (docPartData.rowCount()==0){
             return;
         }
+
         try(Timer.Context ctx = metrics.insertDocPartDataTimer.time()){
         
 	        int maxCappedSize = 10;
 	        int cappedSize = Math.min(docPartData.rowCount(), maxCappedSize);
 	
 	        if (cappedSize < maxCappedSize) { //there are not enough elements on the insert => fallback
-	            LOGGER.debug(
-	                    "The insert window is not big enough to use copy (the "
-	                            + "limit is {}, the real size is {}).",
+	            if (LOGGER.isTraceEnabled())
+                    LOGGER.trace(
+	                    "The insert window is not big enough to use copy (the limit is {}, the real size is {}).",
 	                    maxCappedSize,
-	                    cappedSize
-	            );
+	                    cappedSize);
+
 	            metrics.insertDefault.mark();
+
 	            super.insertDocPartData(dsl, schemaName, docPartData);
 	        }
 	        else {

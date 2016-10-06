@@ -32,6 +32,9 @@ import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import javax.sql.DataSource;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jooq.DSLContext;
 
 /**
@@ -39,6 +42,9 @@ import org.jooq.DSLContext;
  * PostgreSQL-based backend
  */
 public class PostgreSQLDbBackend extends AbstractDbBackend<PostgreSQLDbBackendConfiguration> {
+
+    private static final Logger LOGGER = LogManager.getLogger(PostgreSQLDbBackend.class);
+
     private final PostgreSQLDriverProvider driverProvider;
 
     @Inject
@@ -46,6 +52,9 @@ public class PostgreSQLDbBackend extends AbstractDbBackend<PostgreSQLDbBackendCo
             PostgreSQLDbBackendConfiguration configuration, PostgreSQLDriverProvider driverProvider,
             PostgreSQLErrorHandler errorHandler) {
         super(threadFactory, configuration, errorHandler);
+
+        LOGGER.info("Configured PostgreSQL backend at {}:{}", configuration.getDbHost(), configuration.getDbPort());
+
         this.driverProvider = driverProvider;
     }
 

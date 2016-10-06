@@ -53,7 +53,11 @@ public class TorodbSafeRequestProcessor implements SafeRequestProcessor<MongodCo
 
     @Override
     public MongodConnection openConnection() {
-        return server.openConnection();
+        MongodConnection connection = server.openConnection();
+
+        LOGGER.info("Accepted connection {}", connection.getConnectionId());
+
+        return connection;
     }
 
     @Override

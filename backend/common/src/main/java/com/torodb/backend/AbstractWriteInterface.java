@@ -31,6 +31,8 @@ import java.util.List;
 import javax.annotation.Nonnull;
 import javax.inject.Singleton;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jooq.DSLContext;
 import org.jooq.exception.DataAccessException;
 
@@ -54,7 +56,9 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 @Singleton
 @SuppressFBWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
 public abstract class AbstractWriteInterface implements WriteInterface {
-    
+
+    private final static Logger LOGGER = LogManager.getLogger(AbstractWriteInterface.class);
+
     private final MetaDataReadInterface metaDataReadInterface;
     private final ErrorHandler errorHandler;
     private final SqlHelper sqlHelper;
@@ -110,7 +114,10 @@ public abstract class AbstractWriteInterface implements WriteInterface {
         while (iterator.hasNext()){
         	MetaDocPart metaDocPart = iterator.next();
             String statement = getDeleteDocPartsStatement(schemaName, metaDocPart.getIdentifier(), dids);
+
             sqlHelper.executeUpdate(c, statement, Context.DELETE);
+
+            LOGGER.trace("Executed {}", statement);
         }
     }
 
@@ -175,8 +182,13 @@ public abstract class AbstractWriteInterface implements WriteInterface {
                                 value);
                     }
                     preparedStatement.addBatch();
+
+                    LOGGER.trace("Added to insert {}", preparedStatement.toString());
+
                     if (docCounter % maxBatchSize == 0 || !docPartRowIterator.hasNext()) {
                         preparedStatement.executeBatch();
+
+                        LOGGER.trace("Insertion batch executed");
                     }
                 }
             }
