@@ -7,14 +7,14 @@ import com.eightkdata.mongowp.server.api.CommandsExecutor;
 import com.eightkdata.mongowp.server.api.Request;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.transaction.RollbackException;
-import com.torodb.torod.WriteTorodTransaction;
+import com.torodb.torod.SharedWriteTorodTransaction;
 
 /**
  *
  */
 class WriteMongodTransactionImpl extends MongodTransactionImpl implements WriteMongodTransaction {
 
-    private final WriteTorodTransaction torodTransaction;
+    private final SharedWriteTorodTransaction torodTransaction;
     private final CommandsExecutor<? super WriteMongodTransactionImpl> commandsExecutor;
 
     public WriteMongodTransactionImpl(MongodConnection connection, boolean concurrent) {
@@ -24,7 +24,7 @@ class WriteMongodTransactionImpl extends MongodTransactionImpl implements WriteM
     }
 
     @Override
-    public WriteTorodTransaction getTorodTransaction() {
+    public SharedWriteTorodTransaction getTorodTransaction() {
         return torodTransaction;
     }
 

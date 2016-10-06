@@ -27,14 +27,14 @@ import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.Request;
 import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.torodb.core.exceptions.user.UserException;
-import com.torodb.mongodb.commands.impl.WriteTorodbCommandImpl;
-import com.torodb.mongodb.core.WriteMongodTransaction;
+import com.torodb.mongodb.commands.impl.ExclusiveWriteTorodbCommandImpl;
+import com.torodb.mongodb.core.ExclusiveWriteMongodTransaction;
 
-public class RenameCollectionImplementation implements WriteTorodbCommandImpl<RenameCollectionArgument, Empty> {
+public class RenameCollectionImplementation implements ExclusiveWriteTorodbCommandImpl<RenameCollectionArgument, Empty> {
 
     @Override
     public Status<Empty> apply(Request req, Command<? super RenameCollectionArgument, ? super Empty> command,
-            RenameCollectionArgument arg, WriteMongodTransaction context) {
+            RenameCollectionArgument arg, ExclusiveWriteMongodTransaction context) {
         try {
             if (arg.isDropTarget()) {
                 context.getTorodTransaction().dropCollection(arg.getToDatabase(), arg.getToCollection());

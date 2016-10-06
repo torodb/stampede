@@ -1,8 +1,9 @@
 
 package com.torodb.core.transaction.metainf;
 
-import com.torodb.core.annotations.DoNotChange;
 import java.util.stream.Stream;
+
+import com.torodb.core.annotations.DoNotChange;
 
 /**
  *
@@ -20,6 +21,15 @@ public interface MutableMetaDocPart extends MetaDocPart {
 
     @Override
     public Stream<? extends ImmutableMetaField> streamFields();
+
+    @Override
+    public Stream<? extends MetaScalar> streamScalars();
+    
+    @Override
+    public abstract Stream<? extends MetaDocPartIndex> streamIndexes();
+
+    @Override
+    public MetaDocPartIndex getMetaDocPartIndexByIdentifier(String indexId);
 
     /**
      * Adds a new field to this table.
@@ -48,6 +58,17 @@ public interface MutableMetaDocPart extends MetaDocPart {
 
     @DoNotChange
     public abstract Iterable<? extends ImmutableMetaScalar> getAddedMetaScalars();
+
+    /**
+     *
+     * @return
+     * @throws IllegalArgumentException if this table already contains an index with the
+     *                                          same identifier
+     */
+    public abstract MutableMetaDocPartIndex addMetaDocPartIndex(String identifier, boolean unique) throws IllegalArgumentException;
+
+    @DoNotChange
+    public abstract Iterable<? extends MutableMetaDocPartIndex> getAddedMetaDocPartIndexes();
 
     public abstract ImmutableMetaDocPart immutableCopy();
 }

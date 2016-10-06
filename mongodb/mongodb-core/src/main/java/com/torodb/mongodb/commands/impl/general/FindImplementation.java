@@ -89,10 +89,12 @@ public class FindImplementation implements ReadTorodbCommandImpl<FindArgument, F
     }
 
     private void logFindCommand(FindArgument arg) {
-        String collection = arg.getCollection();
-        String filter = arg.getFilter().toString();
+        if (LOGGER.isTraceEnabled()) {
+            String collection = arg.getCollection();
+            String filter = arg.getFilter().toString();
 
-        LOGGER.trace("Find into {} filter {}", collection, filter);
+            LOGGER.trace("Find into {} filter {}", collection, filter);
+        }
     }
 
 }

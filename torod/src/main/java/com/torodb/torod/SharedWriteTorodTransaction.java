@@ -16,7 +16,7 @@ import java.util.stream.Stream;
 /**
  *
  */
-public interface WriteTorodTransaction extends TorodTransaction {
+public interface SharedWriteTorodTransaction extends TorodTransaction {
 
     public void insert(String dbName, String colName, Stream<KVDocument> documents) throws RollbackException, UserException;
 
@@ -35,8 +35,6 @@ public interface WriteTorodTransaction extends TorodTransaction {
     public long deleteByAttRef(String dbName, String colName, AttributeReference attRef, KVValue<?> value);
     
     public void dropCollection(String db, String collection) throws RollbackException, UserException;
-    
-    public void renameCollection(String fromDb, String fromCollection, String toDb, String toCollection) throws RollbackException, UserException;
     
     public void createCollection(String db, String collection) throws RollbackException, UserException;
     

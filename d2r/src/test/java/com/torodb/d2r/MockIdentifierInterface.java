@@ -46,6 +46,11 @@ public class MockIdentifierInterface implements IdentifierConstraints {
     }
 
     @Override
+    public boolean isAllowedIndexIdentifier(String identifier) {
+        return !identifier.equals("unallowed_index");
+    }
+
+    @Override
     public boolean isSameIdentifier(String leftIdentifier, String rightIdentifier) {
         return leftIdentifier.equals(rightIdentifier);
     }

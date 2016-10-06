@@ -1,6 +1,12 @@
 
 package com.torodb.torod.impl.sql;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.stream.Stream;
+
+import javax.annotation.Nonnull;
+
 import com.google.common.base.Preconditions;
 import com.torodb.core.TableRef;
 import com.torodb.core.TableRefFactory;
@@ -10,33 +16,31 @@ import com.torodb.core.exceptions.user.DatabaseNotFoundException;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.language.AttributeReference;
 import com.torodb.core.language.AttributeReference.Key;
-import com.torodb.core.transaction.InternalTransaction;
 import com.torodb.core.transaction.RollbackException;
 import com.torodb.core.transaction.WriteInternalTransaction;
-import com.torodb.core.transaction.metainf.*;
+import com.torodb.core.transaction.metainf.FieldType;
+import com.torodb.core.transaction.metainf.MetaCollection;
+import com.torodb.core.transaction.metainf.MetaDatabase;
+import com.torodb.core.transaction.metainf.MetaDocPart;
+import com.torodb.core.transaction.metainf.MetaField;
+import com.torodb.core.transaction.metainf.MutableMetaCollection;
+import com.torodb.core.transaction.metainf.MutableMetaDatabase;
+import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
 import com.torodb.kvdocument.values.KVDocument;
 import com.torodb.kvdocument.values.KVValue;
-import com.torodb.torod.WriteTorodTransaction;
+import com.torodb.torod.SharedWriteTorodTransaction;
 import com.torodb.torod.pipeline.InsertPipeline;
-import java.util.Collection;
-import java.util.List;
-import java.util.stream.Stream;
-import javax.annotation.Nonnull;
 
 /**
  *
  */
-public class SqlWriteTorodTransaction extends SqlTorodTransaction implements WriteTorodTransaction {
-
-    private final WriteInternalTransaction internalTransaction;
+public abstract class SqlWriteTorodTransaction<T extends WriteInternalTransaction<?>> extends SqlTorodTransaction<T> implements SharedWriteTorodTransaction {
+    
     private final boolean concurrent;
     
     public SqlWriteTorodTransaction(SqlTorodConnection connection, boolean concurrent) {
         super(connection);
-        internalTransaction = connection
-                .getServer()
-                .getInternalTransactionManager()
-                .openWriteTransaction(getConnection().getBackendConnection());
+        
         this.concurrent = concurrent;
     }
 
@@ -46,20 +50,21 @@ public class SqlWriteTorodTransaction extends SqlTorodTransaction implements Wri
         MutableMetaDatabase metaDb = getOrCreateMetaDatabase(db);
         MutableMetaCollection metaCol = getOrCreateMetaCollection(metaDb, collection);
 
+        //TODO: here we can not use a pipeline
         InsertPipeline pipeline = getConnection().getServer()
                 .getInsertPipelineFactory(concurrent)
                 .createInsertPipeline(
                         getConnection().getServer().getD2RTranslatorrFactory(),
                         metaDb,
                         metaCol,
-                        internalTransaction.getBackendConnection()
+                        getInternalTransaction().getBackendTransaction()
                 );
         pipeline.insert(documents);
     }
 
     @Nonnull
-    private MutableMetaDatabase getOrCreateMetaDatabase(String dbName) {
-        MutableMetaSnapshot metaSnapshot = internalTransaction.getMetaSnapshot();
+    protected MutableMetaDatabase getOrCreateMetaDatabase(String dbName) {
+        MutableMetaSnapshot metaSnapshot = getInternalTransaction().getMetaSnapshot();
         MutableMetaDatabase metaDb = metaSnapshot.getMetaDatabaseByName(dbName);
 
         if (metaDb == null) {
@@ -70,17 +75,17 @@ public class SqlWriteTorodTransaction extends SqlTorodTransaction implements Wri
 
     private MutableMetaDatabase createMetaDatabase(String dbName) {
         Preconditions.checkState(!isClosed());
-        MutableMetaSnapshot metaSnapshot = internalTransaction.getMetaSnapshot();
+        MutableMetaSnapshot metaSnapshot = getInternalTransaction().getMetaSnapshot();
         MutableMetaDatabase metaDb = metaSnapshot.addMetaDatabase(
                 dbName,
                 getConnection().getServer().getIdentifierFactory().toDatabaseIdentifier(
                         metaSnapshot, dbName)
         );
-        internalTransaction.getBackendConnection().addDatabase(metaDb);
+        getInternalTransaction().getBackendTransaction().addDatabase(metaDb);
         return metaDb;
     }
 
-    private MutableMetaCollection getOrCreateMetaCollection(@Nonnull MutableMetaDatabase metaDb, String colName) {
+    protected MutableMetaCollection getOrCreateMetaCollection(@Nonnull MutableMetaDatabase metaDb, String colName) {
         MutableMetaCollection metaCol = metaDb.getMetaCollectionByName(colName);
 
         if (metaCol == null) {
@@ -89,15 +94,15 @@ public class SqlWriteTorodTransaction extends SqlTorodTransaction implements Wri
         return metaCol;
     }
 
-    private MutableMetaCollection createMetaCollection(MutableMetaDatabase metaDb, String colName) {
+    protected MutableMetaCollection createMetaCollection(MutableMetaDatabase metaDb, String colName) {
         MutableMetaCollection metaCol;
         Preconditions.checkState(!isClosed());
         metaCol = metaDb.addMetaCollection(
                 colName,
                 getConnection().getServer().getIdentifierFactory().toCollectionIdentifier(
-                        internalTransaction.getMetaSnapshot(), metaDb.getName(), colName)
+                        getInternalTransaction().getMetaSnapshot(), metaDb.getName(), colName)
         );
-        internalTransaction.getBackendConnection().addCollection(metaDb, metaCol);
+        getInternalTransaction().getBackendTransaction().addCollection(metaDb, metaCol);
         return metaCol;
     }
 
@@ -112,7 +117,7 @@ public class SqlWriteTorodTransaction extends SqlTorodTransaction implements Wri
             return;
         }
 
-        internalTransaction.getBackendTransaction().deleteDids(db, col, cursor.getRemaining());
+        getInternalTransaction().getBackendTransaction().deleteDids(db, col, cursor.getRemaining());
     }
     
     @Override
@@ -126,11 +131,11 @@ public class SqlWriteTorodTransaction extends SqlTorodTransaction implements Wri
             return 0;
         }
 
-        Collection<Integer> dids = internalTransaction.getBackendTransaction()
+        Collection<Integer> dids = getInternalTransaction().getBackendTransaction()
                 .findAll(db, col)
                 .asDidCursor()
                 .getRemaining();
-        internalTransaction.getBackendTransaction().deleteDids(db, col, dids);
+        getInternalTransaction().getBackendTransaction().deleteDids(db, col, dids);
         
         return dids.size();
     }
@@ -170,11 +175,11 @@ public class SqlWriteTorodTransaction extends SqlTorodTransaction implements Wri
             return 0;
         }
 
-        Collection<Integer> dids = internalTransaction.getBackendTransaction()
+        Collection<Integer> dids = getInternalTransaction().getBackendTransaction()
                 .findByField(db, col, docPart, field, value)
                 .asDidCursor()
                 .getRemaining();
-        internalTransaction.getBackendTransaction().deleteDids(db, col, dids);
+        getInternalTransaction().getBackendTransaction().deleteDids(db, col, dids);
         
         return dids.size();
     }
@@ -184,22 +189,9 @@ public class SqlWriteTorodTransaction extends SqlTorodTransaction implements Wri
         MutableMetaDatabase metaDb = getMetaDatabaseOrThrowException(db);
         MutableMetaCollection metaColl = getMetaCollectionOrThrowException(metaDb, collection);
         
-        internalTransaction.getBackendConnection().dropCollection(metaDb, metaColl);
+        getInternalTransaction().getBackendTransaction().dropCollection(metaDb, metaColl);
 
         metaDb.removeMetaCollectionByName(collection);
-    }
-
-    @Override
-    public void renameCollection(String fromDb, String fromCollection, String toDb, String toCollection) throws RollbackException, UserException {
-        MutableMetaDatabase fromMetaDb = getMetaDatabaseOrThrowException(fromDb);
-        MetaCollection fromMetaColl = getMetaCollectionOrThrowException(fromMetaDb, fromCollection);
-
-        MutableMetaDatabase toMetaDb = getOrCreateMetaDatabase(toDb);
-        MutableMetaCollection toMetaColl = createMetaCollection(toMetaDb, toCollection);
-        
-        internalTransaction.getBackendConnection().renameCollection(fromMetaDb, fromMetaColl, toMetaDb, toMetaColl);
-
-        fromMetaDb.removeMetaCollectionByName(fromCollection);
     }
 
     @Override
@@ -212,14 +204,14 @@ public class SqlWriteTorodTransaction extends SqlTorodTransaction implements Wri
     public void dropDatabase(String db) throws RollbackException, UserException {
         MutableMetaDatabase metaDb = getMetaDatabaseOrThrowException(db);
         
-        internalTransaction.getBackendConnection().dropDatabase(metaDb);
+        getInternalTransaction().getBackendTransaction().dropDatabase(metaDb);
 
-        internalTransaction.getMetaSnapshot().removeMetaDatabaseByName(db);
+        getInternalTransaction().getMetaSnapshot().removeMetaDatabaseByName(db);
     }
 
     @Nonnull
-    private MutableMetaDatabase getMetaDatabaseOrThrowException(@Nonnull String dbName) throws DatabaseNotFoundException {
-        MutableMetaSnapshot metaSnapshot = internalTransaction.getMetaSnapshot();
+    protected MutableMetaDatabase getMetaDatabaseOrThrowException(@Nonnull String dbName) throws DatabaseNotFoundException {
+        MutableMetaSnapshot metaSnapshot = getInternalTransaction().getMetaSnapshot();
         MutableMetaDatabase metaDb = metaSnapshot.getMetaDatabaseByName(dbName);
 
         if (metaDb == null) {
@@ -229,7 +221,7 @@ public class SqlWriteTorodTransaction extends SqlTorodTransaction implements Wri
     }
 
     @Nonnull
-    private MutableMetaCollection getMetaCollectionOrThrowException(@Nonnull MutableMetaDatabase metaDb, @Nonnull String colName) throws CollectionNotFoundException {
+    protected MutableMetaCollection getMetaCollectionOrThrowException(@Nonnull MutableMetaDatabase metaDb, @Nonnull String colName) throws CollectionNotFoundException {
         MutableMetaCollection metaCol = metaDb.getMetaCollectionByName(colName);
 
         if (metaCol == null) {
@@ -239,13 +231,8 @@ public class SqlWriteTorodTransaction extends SqlTorodTransaction implements Wri
     }
 
     @Override
-    protected InternalTransaction getInternalTransaction() {
-        return internalTransaction;
-    }
-
-    @Override
     public void commit() throws RollbackException, UserException {
-        internalTransaction.commit();
+        getInternalTransaction().commit();
     }
 
 }

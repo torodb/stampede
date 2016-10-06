@@ -23,20 +23,23 @@ public class ImmutableMetaDocPart implements MetaDocPart {
     private final Table<String, FieldType, ImmutableMetaField> fieldsByNameAndType;
     private final Map<String, ImmutableMetaField> fieldsByIdentifier;
     private final EnumMap<FieldType, ImmutableMetaScalar> scalars;
+    private final Map<String, ImmutableMetaDocPartIndex> indexesByIdentifier;
 
     public ImmutableMetaDocPart(TableRef tableRef, String dbName) {
-        this(tableRef, dbName, Collections.emptyMap(), Maps.newEnumMap(FieldType.class));
+        this(tableRef, dbName, Collections.emptyMap(), Maps.newEnumMap(FieldType.class), Collections.emptyMap());
     }
 
     public ImmutableMetaDocPart(TableRef tableRef, String dbName,
             @DoNotChange Map<String, ImmutableMetaField> columns,
-            @DoNotChange EnumMap<FieldType, ImmutableMetaScalar> scalars) {
+            @DoNotChange EnumMap<FieldType, ImmutableMetaScalar> scalars,
+            @DoNotChange Map<String, ImmutableMetaDocPartIndex> indexes) {
         this.tableRef = tableRef;
         this.identifier = dbName;
         this.fieldsByIdentifier = columns;
         this.fieldsByNameAndType = HashBasedTable.create(columns.size(), 10);
         columns.values().forEach((column) -> fieldsByNameAndType.put(column.getName(), column.getType(), column));
         this.scalars = scalars;
+        this.indexesByIdentifier = indexes;
     }
 
     @Override
@@ -80,6 +83,16 @@ public class ImmutableMetaDocPart implements MetaDocPart {
     }
 
     @Override
+    public Stream<ImmutableMetaDocPartIndex> streamIndexes() {
+        return indexesByIdentifier.values().stream();
+    }
+
+    @Override
+    public ImmutableMetaDocPartIndex getMetaDocPartIndexByIdentifier(String indexName) {
+        return indexesByIdentifier.get(indexName);
+    }
+
+    @Override
     public String toString() {
         return defautToString();
     }
@@ -91,12 +104,14 @@ public class ImmutableMetaDocPart implements MetaDocPart {
         private final String identifier;
         private final HashMap<String, ImmutableMetaField> fields;
         private final EnumMap<FieldType, ImmutableMetaScalar> scalars;
+        private final HashMap<String, ImmutableMetaDocPartIndex> indexes;
 
         public Builder(TableRef tableRef, String identifier) {
             this.tableRef = tableRef;
             this.identifier = identifier;
             this.fields = new HashMap<>();
             this.scalars = new EnumMap<>(FieldType.class);
+            this.indexes = new HashMap<>();
         }
 
         public Builder(ImmutableMetaDocPart other) {
@@ -104,13 +119,15 @@ public class ImmutableMetaDocPart implements MetaDocPart {
             this.identifier = other.getIdentifier();
             this.fields = new HashMap<>(other.fieldsByIdentifier);
             this.scalars = new EnumMap<>(other.scalars);
+            this.indexes = new HashMap<>(other.indexesByIdentifier);
         }
 
-        public Builder(TableRef tableRef, String identifier, int expectedColumns) {
+        public Builder(TableRef tableRef, String identifier, int expectedColumns, int expectedIndexes) {
             this.tableRef = tableRef;
             this.identifier = identifier;
             this.fields = new HashMap<>(expectedColumns);
             this.scalars = new EnumMap<>(FieldType.class);
+            this.indexes = new HashMap<>(expectedIndexes);
         }
 
         public Builder put(ImmutableMetaField column) {
@@ -133,10 +150,20 @@ public class ImmutableMetaDocPart implements MetaDocPart {
             return this;
         }
 
+        public Builder put(ImmutableMetaDocPartIndex.Builder indexBuilder) {
+            return put(indexBuilder.build());
+        }
+
+        public Builder put(ImmutableMetaDocPartIndex index) {
+            Preconditions.checkState(!built, "This builder has already been built");
+            indexes.put(index.getIdentifier(), index);
+            return this;
+        }
+
         public ImmutableMetaDocPart build() {
             Preconditions.checkState(!built, "This builder has already been built");
             built = true;
-            return new ImmutableMetaDocPart(tableRef, identifier, fields, scalars);
+            return new ImmutableMetaDocPart(tableRef, identifier, fields, scalars, indexes);
         }
     }
 }

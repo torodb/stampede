@@ -27,7 +27,9 @@ import com.torodb.core.annotations.DoNotChange;
 import com.torodb.core.transaction.metainf.ImmutableMetaDocPart.Builder;
 import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -48,6 +50,7 @@ public class WrapperMutableMetaDocPart implements MutableMetaDocPart {
     private final List<ImmutableMetaField> addedFields;
     private final Consumer<WrapperMutableMetaDocPart> changeConsumer;
     private final EnumMap<FieldType, ImmutableMetaScalar> newScalars;
+    private final Map<String, WrapperMutableMetaDocPartIndex> newIndexes;
 
     public WrapperMutableMetaDocPart(ImmutableMetaDocPart wrapped,
             Consumer<WrapperMutableMetaDocPart> changeConsumer) {
@@ -61,6 +64,7 @@ public class WrapperMutableMetaDocPart implements MutableMetaDocPart {
         addedFields = new ArrayList<>();
         this.changeConsumer = changeConsumer;
         this.newScalars = new EnumMap<>(FieldType.class);
+        newIndexes = new HashMap<>();
     }
 
     @Override
@@ -78,20 +82,6 @@ public class WrapperMutableMetaDocPart implements MutableMetaDocPart {
         addedFields.add(newField);
         changeConsumer.accept(this);
         return newField;
-    }
-
-    @Override
-    public Stream<? extends MetaScalar> streamScalars() {
-        return Stream.concat(newScalars.values().stream(), wrapped.streamScalars());
-    }
-
-    @Override
-    public MetaScalar getScalar(FieldType type) {
-        ImmutableMetaScalar scalar = newScalars.get(type);
-        if (scalar != null) {
-            return scalar;
-        }
-        return wrapped.getScalar(type);
     }
 
     @Override
@@ -116,6 +106,26 @@ public class WrapperMutableMetaDocPart implements MutableMetaDocPart {
     @Override
     public Iterable<? extends ImmutableMetaScalar> getAddedMetaScalars() {
         return newScalars.values();
+    }
+
+    @Override
+    public MutableMetaDocPartIndex addMetaDocPartIndex(String identifier, boolean unique) throws
+            IllegalArgumentException {
+        if (getMetaDocPartIndexByIdentifier(identifier) != null) {
+            throw new IllegalArgumentException("There is another index with the identifier " + identifier);
+        }
+
+        WrapperMutableMetaDocPartIndex newIndex = new WrapperMutableMetaDocPartIndex(
+                new ImmutableMetaDocPartIndex(identifier, unique), index -> {});
+        newIndexes.put(identifier, newIndex);
+        changeConsumer.accept(this);
+        return newIndex;
+    }
+
+    @Override
+    @DoNotChange
+    public Iterable<? extends WrapperMutableMetaDocPartIndex> getAddedMetaDocPartIndexes() {
+        return newIndexes.values();
     }
 
     @Override
@@ -166,6 +176,36 @@ public class WrapperMutableMetaDocPart implements MutableMetaDocPart {
                 .filter((field) -> field.getIdentifier().equals(fieldId))
                 .findAny()
                 .orElse(null);
+    }
+
+    @Override
+    public Stream<? extends MetaScalar> streamScalars() {
+        return Stream.concat(newScalars.values().stream(), wrapped.streamScalars());
+    }
+
+    @Override
+    public MetaScalar getScalar(FieldType type) {
+        ImmutableMetaScalar scalar = newScalars.get(type);
+        if (scalar != null) {
+            return scalar;
+        }
+        return wrapped.getScalar(type);
+    }
+
+    @Override
+    public Stream<? extends MetaDocPartIndex> streamIndexes() {
+        return Stream.concat(newIndexes.values().stream(), wrapped.streamIndexes());
+    }
+
+    @Override
+    public MetaDocPartIndex getMetaDocPartIndexByIdentifier(String indexId) {
+        MetaDocPartIndex index = wrapped.getMetaDocPartIndexByIdentifier(indexId);
+        
+        if (index != null) {
+            return index;
+        }
+        
+        return newIndexes.get(indexId);
     }
 
     @Override

@@ -42,6 +42,14 @@ public interface MutableMetaCollection extends MetaCollection {
 
     @DoNotChange
     public Iterable<? extends MutableMetaDocPart> getModifiedMetaDocParts();
+
+    @Override
+    public Stream<? extends MutableMetaIndex> streamContainedMetaIndexes();
+
+    public MutableMetaIndex addMetaIndex(String name, boolean unique) throws IllegalArgumentException;
+
+    @DoNotChange
+    public Iterable<? extends MutableMetaIndex> getModifiedMetaIndexes();
     
     public abstract ImmutableMetaCollection immutableCopy();
 }

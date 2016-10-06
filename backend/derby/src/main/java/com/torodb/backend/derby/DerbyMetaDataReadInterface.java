@@ -20,9 +20,6 @@
 
 package com.torodb.backend.derby;
 
-import java.util.Map;
-import java.util.Set;
-
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -31,10 +28,13 @@ import com.torodb.backend.AbstractMetaDataReadInterface;
 import com.torodb.backend.SqlHelper;
 import com.torodb.backend.derby.tables.DerbyMetaCollectionTable;
 import com.torodb.backend.derby.tables.DerbyMetaDatabaseTable;
+import com.torodb.backend.derby.tables.DerbyMetaDocPartIndexTable;
 import com.torodb.backend.derby.tables.DerbyMetaDocPartTable;
+import com.torodb.backend.derby.tables.DerbyMetaFieldIndexTable;
 import com.torodb.backend.derby.tables.DerbyMetaFieldTable;
+import com.torodb.backend.derby.tables.DerbyMetaIndexFieldTable;
+import com.torodb.backend.derby.tables.DerbyMetaIndexTable;
 import com.torodb.backend.derby.tables.DerbyMetaScalarTable;
-import com.torodb.backend.index.NamedDbIndex;
 
 /**
  *
@@ -47,6 +47,10 @@ public class DerbyMetaDataReadInterface extends AbstractMetaDataReadInterface {
     private final DerbyMetaDocPartTable metaDocPartTable;
     private final DerbyMetaFieldTable metaFieldTable;
     private final DerbyMetaScalarTable metaScalarTable;
+    private final DerbyMetaDocPartIndexTable metaDocPartIndexTable;
+    private final DerbyMetaFieldIndexTable metaFieldIndexTable;
+    private final DerbyMetaIndexTable metaIndexTable;
+    private final DerbyMetaIndexFieldTable metaIndexFieldTable;
 
     @Inject
     public DerbyMetaDataReadInterface(SqlHelper sqlHelper) {
@@ -57,6 +61,10 @@ public class DerbyMetaDataReadInterface extends AbstractMetaDataReadInterface {
         this.metaDocPartTable = DerbyMetaDocPartTable.DOC_PART;
         this.metaFieldTable = DerbyMetaFieldTable.FIELD;
         this.metaScalarTable = DerbyMetaScalarTable.SCALAR;
+        this.metaDocPartIndexTable = DerbyMetaDocPartIndexTable.DOC_PART_INDEX;
+        this.metaFieldIndexTable = DerbyMetaFieldIndexTable.FIELD_INDEX;
+        this.metaIndexTable = DerbyMetaIndexTable.INDEX;
+        this.metaIndexFieldTable = DerbyMetaIndexFieldTable.INDEX_FIELD;
     }
 
     @Nonnull
@@ -92,6 +100,34 @@ public class DerbyMetaDataReadInterface extends AbstractMetaDataReadInterface {
     @SuppressWarnings("unchecked")
     public DerbyMetaScalarTable getMetaScalarTable() {
         return metaScalarTable;
+    }
+
+    @Nonnull
+    @Override
+    @SuppressWarnings("unchecked")
+    public DerbyMetaDocPartIndexTable getMetaDocPartIndexTable() {
+        return metaDocPartIndexTable;
+    }
+
+    @Nonnull
+    @Override
+    @SuppressWarnings("unchecked")
+    public DerbyMetaFieldIndexTable getMetaFieldIndexTable() {
+        return metaFieldIndexTable;
+    }
+
+    @Nonnull
+    @Override
+    @SuppressWarnings("unchecked")
+    public DerbyMetaIndexTable getMetaIndexTable() {
+        return metaIndexTable;
+    }
+
+    @Nonnull
+    @Override
+    @SuppressWarnings("unchecked")
+    public DerbyMetaIndexFieldTable getMetaIndexFieldTable() {
+        return metaIndexFieldTable;
     }
 
     @Override
@@ -139,8 +175,8 @@ public class DerbyMetaDataReadInterface extends AbstractMetaDataReadInterface {
     }
 
     @Override
-    protected String getReadIndexSizeStatement(String schema, String collection, String index,
-            Set<NamedDbIndex> relatedDbIndexes, Map<String, Integer> relatedToroIndexes) {
+    protected String getReadIndexSizeStatement(
+            String schemaName, String tableName, String indexName) {
         throw new UnsupportedOperationException();
     }
 }

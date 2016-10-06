@@ -150,18 +150,15 @@ public class WriteTransactionImplementations {
         private final CreateCollectionImplementation createCollectionImplementation;
         private final DropCollectionImplementation dropCollectionImplementation;
         private final DropDatabaseImplementation dropDatabaseImplementation;
-        private final RenameCollectionImplementation renameCollectionImplementation;
         
         @Inject
         public MyAdminCommandsImplementationBuilder(
                 CreateCollectionImplementation createCollectionImplementation,
                 DropCollectionImplementation dropCollectionImplementation,
-                DropDatabaseImplementation dropDatabaseImplementation,
-                RenameCollectionImplementation renameCollectionImplementation) {
+                DropDatabaseImplementation dropDatabaseImplementation) {
             this.createCollectionImplementation = createCollectionImplementation;
             this.dropCollectionImplementation = dropCollectionImplementation;
             this.dropDatabaseImplementation = dropDatabaseImplementation;
-            this.renameCollectionImplementation = renameCollectionImplementation;
         }
 
         @Override
@@ -196,7 +193,7 @@ public class WriteTransactionImplementations {
 
         @Override
         public CommandImplementation<RenameCollectionArgument, Empty, ? super WriteMongodTransaction> getRenameCollectionImplementation() {
-            return renameCollectionImplementation;
+            return NotImplementedCommandImplementation.build();
         }
 
     }

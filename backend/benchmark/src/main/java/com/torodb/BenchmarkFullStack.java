@@ -26,7 +26,7 @@ import com.torodb.packaging.ToroDbServer;
 import com.torodb.packaging.config.model.Config;
 import com.torodb.torod.TorodConnection;
 import com.torodb.torod.TorodServer;
-import com.torodb.torod.WriteTorodTransaction;
+import com.torodb.torod.SharedWriteTorodTransaction;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -76,7 +76,7 @@ public class BenchmarkFullStack {
 	@Measurement(iterations=10) 
 	public void benchmarkInsertConcurrent(FullStackState state, Blackhole blackhole) throws RollbackException, UserException {
 	    try (TorodConnection toroConnection = state.torod.openConnection()) {
-	    	try(WriteTorodTransaction toroTransaction = toroConnection.openWriteTransaction(true)){
+	    	try(SharedWriteTorodTransaction toroTransaction = toroConnection.openWriteTransaction(true)){
 	            toroTransaction.insert("test", "test", state.documents.stream());
 	            toroTransaction.commit();
 	    	}
@@ -90,7 +90,7 @@ public class BenchmarkFullStack {
 	@Measurement(iterations=10)
 	public void benchmarkInsertSingleThread(FullStackState state, Blackhole blackhole) throws RollbackException, UserException {
 	    try (TorodConnection toroConnection = state.torod.openConnection()) {
-	    	try(WriteTorodTransaction toroTransaction = toroConnection.openWriteTransaction(false)){
+	    	try(SharedWriteTorodTransaction toroTransaction = toroConnection.openWriteTransaction(false)){
 	            toroTransaction.insert("test", "test", state.documents.stream());
 	            toroTransaction.commit();
 	    	}

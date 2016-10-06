@@ -20,32 +20,39 @@
 
 package com.torodb.mongodb.commands;
 
+import java.util.Map;
+
+import javax.inject.Inject;
+
 import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.CommandImplementation;
 import com.eightkdata.mongowp.server.api.CommandsExecutor;
 import com.eightkdata.mongowp.server.api.impl.MapBasedCommandsExecutor;
 import com.google.common.collect.ImmutableMap;
 import com.torodb.mongodb.commands.impl.NotImplementedCommandImplementation;
+import com.torodb.mongodb.core.ExclusiveWriteMongodTransaction;
 import com.torodb.mongodb.core.MongodConnection;
 import com.torodb.mongodb.core.MongodTransaction;
 import com.torodb.mongodb.core.ReadOnlyMongodTransaction;
 import com.torodb.mongodb.core.WriteMongodTransaction;
-import java.util.Map;
-import javax.inject.Inject;
 
 /**
  *
  */
 public class CommandsExecutorClassifier {
+    private final CommandsExecutor<ExclusiveWriteMongodTransaction> exclusiveWriteCommandsExecutor;
     private final CommandsExecutor<WriteMongodTransaction> writeCommandsExecutor;
     private final CommandsExecutor<ReadOnlyMongodTransaction> readOnlyCommandsExecutor;
     private final CommandsExecutor<MongodConnection> connectionCommandsExecutor;
 
     @Inject
     public CommandsExecutorClassifier(
+            ExclusiveWriteTransactionImplementations exclusiveWriteTransImpls,
             WriteTransactionImplementations writeTransImpls,
             GeneralTransactionImplementations generalTransImpls,
             ConnectionCommandsExecutor connTransImpls) {
+        ImmutableMap.Builder<Command<?,?>, CommandImplementation<?, ?, ? super ExclusiveWriteMongodTransaction>> exclusiveWriteMapBuilder =
+                ImmutableMap.builder();
         ImmutableMap.Builder<Command<?,?>, CommandImplementation<?, ?, ? super WriteMongodTransaction>> writeMapBuilder =
                 ImmutableMap.builder();
         ImmutableMap.Builder<Command<?,?>, CommandImplementation<?, ?, ? super ReadOnlyMongodTransaction>> readOnlyMapBuilder =
@@ -63,9 +70,18 @@ public class CommandsExecutorClassifier {
                 .filter(CommandsExecutorClassifier::isImplemented)
                 .forEach(entry -> writeMapBuilder.put(entry));
 
+        exclusiveWriteTransImpls.getMap().entrySet().stream()
+                .filter(CommandsExecutorClassifier::isImplemented)
+                .forEach(entry -> exclusiveWriteMapBuilder.put(entry));
+
+        this.exclusiveWriteCommandsExecutor = MapBasedCommandsExecutor.fromMap(exclusiveWriteMapBuilder.build());
         this.writeCommandsExecutor = MapBasedCommandsExecutor.fromMap(writeMapBuilder.build());
         this.readOnlyCommandsExecutor = MapBasedCommandsExecutor.fromMap(readOnlyMapBuilder.build());
         this.connectionCommandsExecutor = MapBasedCommandsExecutor.fromMap(connTransImpls.getMap());
+    }
+
+    public CommandsExecutor<? super ExclusiveWriteMongodTransaction> getExclusiveWriteCommandsExecutor() {
+        return exclusiveWriteCommandsExecutor;
     }
 
     public CommandsExecutor<? super WriteMongodTransaction> getWriteCommandsExecutor() {

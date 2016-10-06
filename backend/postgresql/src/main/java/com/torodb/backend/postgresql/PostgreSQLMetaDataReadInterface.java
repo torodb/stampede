@@ -29,8 +29,11 @@ import javax.inject.Singleton;
 
 import com.torodb.backend.AbstractMetaDataReadInterface;
 import com.torodb.backend.SqlHelper;
-import com.torodb.backend.index.NamedDbIndex;
 import com.torodb.backend.meta.TorodbSchema;
+import com.torodb.backend.postgresql.tables.PostgreSQLMetaDocPartIndexTable;
+import com.torodb.backend.postgresql.tables.PostgreSQLMetaFieldIndexTable;
+import com.torodb.backend.postgresql.tables.PostgreSQLMetaIndexFieldTable;
+import com.torodb.backend.postgresql.tables.PostgreSQLMetaIndexTable;
 import com.torodb.backend.postgresql.tables.PostgreSQLMetaCollectionTable;
 import com.torodb.backend.postgresql.tables.PostgreSQLMetaDatabaseTable;
 import com.torodb.backend.postgresql.tables.PostgreSQLMetaDocPartTable;
@@ -49,6 +52,10 @@ public class PostgreSQLMetaDataReadInterface extends AbstractMetaDataReadInterfa
     private final PostgreSQLMetaDocPartTable metaDocPartTable;
     private final PostgreSQLMetaFieldTable metaFieldTable;
     private final PostgreSQLMetaScalarTable metaScalarTable;
+    private final PostgreSQLMetaDocPartIndexTable metaDocPartIndexTable;
+    private final PostgreSQLMetaFieldIndexTable metaFieldIndexTable;
+    private final PostgreSQLMetaIndexTable metaIndexTable;
+    private final PostgreSQLMetaIndexFieldTable metaIndexFieldTable;
 
     @Inject
     public PostgreSQLMetaDataReadInterface(SqlHelper sqlHelper) {
@@ -60,6 +67,10 @@ public class PostgreSQLMetaDataReadInterface extends AbstractMetaDataReadInterfa
         this.metaDocPartTable = PostgreSQLMetaDocPartTable.DOC_PART;
         this.metaFieldTable = PostgreSQLMetaFieldTable.FIELD;
         this.metaScalarTable = PostgreSQLMetaScalarTable.SCALAR;
+        this.metaDocPartIndexTable = PostgreSQLMetaDocPartIndexTable.DOC_PART_INDEX;
+        this.metaFieldIndexTable = PostgreSQLMetaFieldIndexTable.FIELD_INDEX;
+        this.metaIndexTable = PostgreSQLMetaIndexTable.INDEX;
+        this.metaIndexFieldTable = PostgreSQLMetaIndexFieldTable.INDEX_FIELD;
     }
 
     @Nonnull
@@ -96,6 +107,34 @@ public class PostgreSQLMetaDataReadInterface extends AbstractMetaDataReadInterfa
     public PostgreSQLMetaScalarTable getMetaScalarTable() {
         return metaScalarTable;
     }
+
+    @Nonnull
+    @Override
+    @SuppressWarnings("unchecked")
+    public PostgreSQLMetaDocPartIndexTable getMetaDocPartIndexTable() {
+        return metaDocPartIndexTable;
+    }
+
+    @Nonnull
+    @Override
+    @SuppressWarnings("unchecked")
+    public PostgreSQLMetaFieldIndexTable getMetaFieldIndexTable() {
+        return metaFieldIndexTable;
+    }
+
+    @Nonnull
+    @Override
+    @SuppressWarnings("unchecked")
+    public PostgreSQLMetaIndexTable getMetaIndexTable() {
+        return metaIndexTable;
+    }
+
+    @Nonnull
+    @Override
+    @SuppressWarnings("unchecked")
+    public PostgreSQLMetaIndexFieldTable getMetaIndexFieldTable() {
+        return metaIndexFieldTable;
+    }
     
     @Override
     protected String getReadSchemaSizeStatement(String databaseName) {
@@ -119,14 +158,14 @@ public class PostgreSQLMetaDataReadInterface extends AbstractMetaDataReadInterfa
     }
 
     @Override
-    protected String getReadIndexSizeStatement(String schema, String collection, String index,
-            Set<NamedDbIndex> relatedDbIndexes, Map<String, Integer> relatedToroIndexes) {
+    protected String getReadIndexSizeStatement(
+            String schemaName, String tableName, String indexName) {
         return "SELECT sum(table_size)::bigint from ("
                 + "SELECT pg_relation_size(pg_class.oid) AS table_size "
                 + "FROM pg_class join pg_indexes "
                 + "  on pg_class.relname = pg_indexes.tablename "
-                + "WHERE pg_indexes.schemaname = "  + sqlHelper.renderVal(schema)
-                + "  and pg_indexes.indexname = " + sqlHelper.renderVal(index)
+                + "WHERE pg_indexes.schemaname = "  + sqlHelper.renderVal(schemaName)
+                + "  and pg_indexes.indexname = " + sqlHelper.renderVal(indexName)
                 + ") as t";
     }
 }

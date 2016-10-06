@@ -4,29 +4,44 @@ import javax.annotation.Nonnull;
 
 import org.jooq.DSLContext;
 
-import com.torodb.core.TableRef;
-import com.torodb.core.transaction.metainf.FieldType;
+import com.torodb.core.transaction.metainf.MetaCollection;
+import com.torodb.core.transaction.metainf.MetaDatabase;
+import com.torodb.core.transaction.metainf.MetaDocPart;
+import com.torodb.core.transaction.metainf.MetaDocPartIndex;
+import com.torodb.core.transaction.metainf.MetaField;
+import com.torodb.core.transaction.metainf.MetaFieldIndex;
+import com.torodb.core.transaction.metainf.MetaIndex;
+import com.torodb.core.transaction.metainf.MetaIndexField;
+import com.torodb.core.transaction.metainf.MetaScalar;
 
 public interface MetaDataWriteInterface {
-    @Nonnull String createMetaIndexesTableStatement(@Nonnull String schemaName, @Nonnull String tableName, @Nonnull String indexNameColumn, @Nonnull String indexOptionsColumn);
-    
     void createMetaDatabaseTable(@Nonnull DSLContext dsl);
     void createMetaCollectionTable(@Nonnull DSLContext dsl);
     void createMetaDocPartTable(@Nonnull DSLContext dsl);
     void createMetaFieldTable(@Nonnull DSLContext dsl);
     void createMetaScalarTable(@Nonnull DSLContext dsl);
+    void createMetaIndexTable(@Nonnull DSLContext dsl);
+    void createMetaIndexFieldTable(@Nonnull DSLContext dsl);
+    void createMetaDocPartIndexTable(@Nonnull DSLContext dsl);
+    void createMetaFieldIndexTable(@Nonnull DSLContext dsl);
     
-    void addMetaDatabase(@Nonnull DSLContext dsl, @Nonnull String databaseName, @Nonnull String databaseIdentifier);
-    void addMetaCollection(@Nonnull DSLContext dsl, @Nonnull String databaseName, @Nonnull String collectionName, @Nonnull String collectionIdentifier);
-    void addMetaDocPart(@Nonnull DSLContext dsl, @Nonnull String databaseName, @Nonnull String collectionName, @Nonnull TableRef tableRef, @Nonnull String docPartIdentifier);
-    void addMetaField(@Nonnull DSLContext dsl, @Nonnull String databaseName, @Nonnull String collectionName, @Nonnull TableRef tableRef, @Nonnull String fieldName, String fieldIdentifier, FieldType type);
-    void addMetaScalar(@Nonnull DSLContext dsl, @Nonnull String databaseName, @Nonnull String collectionName, @Nonnull TableRef tableRef, String fieldIdentifier, FieldType type);
+    void addMetaDatabase(@Nonnull DSLContext dsl, @Nonnull MetaDatabase database);
+    void addMetaCollection(@Nonnull DSLContext dsl, @Nonnull MetaDatabase database, @Nonnull MetaCollection collection);
+    void addMetaDocPart(@Nonnull DSLContext dsl, @Nonnull MetaDatabase database, @Nonnull MetaCollection collection, @Nonnull MetaDocPart docPart);
+    void addMetaField(@Nonnull DSLContext dsl, @Nonnull MetaDatabase database, @Nonnull MetaCollection collection, @Nonnull MetaDocPart docPart, @Nonnull MetaField field);
+    void addMetaScalar(@Nonnull DSLContext dsl, @Nonnull MetaDatabase database, @Nonnull MetaCollection collection, @Nonnull MetaDocPart docPart, @Nonnull MetaScalar scalar);
+    void addMetaIndex(@Nonnull DSLContext dsl, @Nonnull MetaDatabase database, @Nonnull MetaCollection collection, @Nonnull MetaIndex index);
+    void addMetaIndexField(@Nonnull DSLContext dsl, @Nonnull MetaDatabase database, @Nonnull MetaCollection collection, @Nonnull MetaIndex index, @Nonnull MetaIndexField field);
+    void addMetaDocPartIndex(@Nonnull DSLContext dsl, @Nonnull MetaDatabase database, @Nonnull MetaCollection collection, @Nonnull MetaDocPart docPart, @Nonnull MetaDocPartIndex index);
+    void addMetaFieldIndex(@Nonnull DSLContext dsl, @Nonnull MetaDatabase database, @Nonnull MetaCollection collection, @Nonnull MetaDocPart docPart, @Nonnull MetaDocPartIndex index, @Nonnull MetaFieldIndex field);
 
-    void deleteMetaDatabase(@Nonnull DSLContext dsl, @Nonnull String databaseName);
-    void deleteMetaCollection(@Nonnull DSLContext dsl, @Nonnull String databaseName, @Nonnull String collectionName);
-    void deleteMetaDocPart(@Nonnull DSLContext dsl, @Nonnull String databaseName, @Nonnull String collectionName, @Nonnull TableRef tableRef);
-    void deleteMetaField(@Nonnull DSLContext dsl, @Nonnull String databaseName, @Nonnull String collectionName, @Nonnull TableRef tableRef, @Nonnull String fieldName, FieldType type);
-    void deleteMetaScalar(@Nonnull DSLContext dsl, @Nonnull String databaseName, @Nonnull String collectionName, @Nonnull TableRef tableRef, FieldType type);
+    void deleteMetaDatabase(@Nonnull DSLContext dsl, @Nonnull MetaDatabase database);
+    void deleteMetaCollection(@Nonnull DSLContext dsl, @Nonnull MetaDatabase database, @Nonnull MetaCollection collection);
+    void deleteMetaDocPart(@Nonnull DSLContext dsl, @Nonnull MetaDatabase database, @Nonnull MetaCollection collection, @Nonnull MetaDocPart docPart);
+    void deleteMetaField(@Nonnull DSLContext dsl, @Nonnull MetaDatabase database, @Nonnull MetaCollection collection, @Nonnull MetaDocPart docPart, @Nonnull MetaField field);
+    void deleteMetaScalar(@Nonnull DSLContext dsl, @Nonnull MetaDatabase database, @Nonnull MetaCollection collection, @Nonnull MetaDocPart docPart, @Nonnull MetaScalar scalar);
+    void deleteMetaIndex(@Nonnull DSLContext dsl, @Nonnull MetaDatabase database, @Nonnull MetaCollection collection, @Nonnull MetaIndex index);
+    void deleteMetaDocPartIndex(@Nonnull DSLContext dsl, @Nonnull MetaDatabase database, @Nonnull MetaCollection collection, @Nonnull MetaDocPart docPart, @Nonnull MetaDocPartIndex index);
     
-    int consumeRids(@Nonnull DSLContext dsl, @Nonnull String database, @Nonnull String collection, @Nonnull TableRef tableRef, int count);
+    int consumeRids(@Nonnull DSLContext dsl, @Nonnull MetaDatabase database, @Nonnull MetaCollection collection, @Nonnull MetaDocPart docPart, int count);
 }

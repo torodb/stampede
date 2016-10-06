@@ -20,6 +20,13 @@
 
 package com.torodb.torod.pipeline.impl;
 
+import java.util.stream.Stream;
+
+import javax.inject.Inject;
+
+import org.jooq.lambda.Unchecked;
+import org.jooq.lambda.UncheckedException;
+
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterators;
 import com.google.inject.assistedinject.Assisted;
@@ -36,10 +43,6 @@ import com.torodb.kvdocument.values.KVDocument;
 import com.torodb.torod.pipeline.D2RTranslationBatchFunction;
 import com.torodb.torod.pipeline.DefaultToBackendFunction;
 import com.torodb.torod.pipeline.InsertPipeline;
-import java.util.stream.Stream;
-import javax.inject.Inject;
-import org.jooq.lambda.Unchecked;
-import org.jooq.lambda.UncheckedException;
 
 /**
  *

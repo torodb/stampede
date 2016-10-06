@@ -19,14 +19,18 @@
  */
 package com.torodb.core.backend;
 
+import java.util.Collection;
+
 import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.transaction.RollbackException;
-import com.torodb.core.transaction.metainf.*;
-import java.util.Collection;
+import com.torodb.core.transaction.metainf.MetaCollection;
+import com.torodb.core.transaction.metainf.MetaDatabase;
+import com.torodb.core.transaction.metainf.MetaDocPart;
+import com.torodb.core.transaction.metainf.MetaField;
+import com.torodb.core.transaction.metainf.MetaScalar;
 
 public interface WriteBackendTransaction extends BackendTransaction {
-
     /**
      * Adds a new database.
      *
@@ -56,18 +60,6 @@ public interface WriteBackendTransaction extends BackendTransaction {
      * @throws RollbackException
      */
     public void dropCollection(MetaDatabase db, MetaCollection coll) throws RollbackException;
-
-    /**
-     * Rename an existing collection.
-     *
-     * @param fromDb     the database that contains the collection to rename.
-     * @param fromColl the collection to rename.
-     * @param toDb     the database that will contain the renamed collection.
-     * @param toColl the renamed collection.
-     * @throws BackendException
-     * @throws RollbackException
-     */
-    public void renameCollection(MetaDatabase fromDb, MetaCollection fromColl, MutableMetaDatabase toDb, MutableMetaCollection toColl) throws RollbackException;
 
     /**
      * Drop an existing database.
@@ -144,7 +136,7 @@ public interface WriteBackendTransaction extends BackendTransaction {
     public void insert(MetaDatabase db, MetaCollection col, DocPartData data) throws RollbackException, UserException;
 
     public void deleteDids(MetaDatabase db, MetaCollection col, Collection<Integer> dids);
-    
+
     public void commit() throws UserException, RollbackException;
 
     @Override

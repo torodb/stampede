@@ -80,15 +80,24 @@ public class TorodbSafeRequestProcessor implements SafeRequestProcessor<MongodCo
 	                    }
 	                };
 	                break;
-	            case WRITE_TRANSACTION:
-	                callable = () -> {
-	                    try (WriteMongodTransaction trans = connection.openWriteTransaction(true)) {
-	                        Status<Result> result = trans.execute(req, command, arg);
-	                        trans.commit();
-	                        return result;
-	                    }
-	                };
-	                break;
+                case WRITE_TRANSACTION:
+                    callable = () -> {
+                        try (WriteMongodTransaction trans = connection.openWriteTransaction(true)) {
+                            Status<Result> result = trans.execute(req, command, arg);
+                            trans.commit();
+                            return result;
+                        }
+                    };
+                    break;
+                case EXCLUSIVE_WRITE_TRANSACTION:
+                    callable = () -> {
+                        try (ExclusiveWriteMongodTransaction trans = connection.openExclusiveWriteTransaction(true)) {
+                            Status<Result> result = trans.execute(req, command, arg);
+                            trans.commit();
+                            return result;
+                        }
+                    };
+                    break;
 	            default:
 	                throw new AssertionError("Unexpected command type" + commandType);
 	        }

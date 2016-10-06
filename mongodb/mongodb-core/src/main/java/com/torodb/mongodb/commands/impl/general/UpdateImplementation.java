@@ -42,7 +42,7 @@ import com.torodb.mongodb.language.UpdateActionTranslator;
 import com.torodb.mongodb.language.update.SetDocumentUpdateAction;
 import com.torodb.mongodb.language.update.UpdateAction;
 import com.torodb.mongodb.language.update.UpdatedToroDocumentBuilder;
-import com.torodb.torod.WriteTorodTransaction;
+import com.torodb.torod.SharedWriteTorodTransaction;
 
 /**
  *
@@ -180,7 +180,7 @@ public class UpdateImplementation implements WriteTorodbCommandImpl<UpdateArgume
         return builder.build();
     }
 
-    private Cursor<ToroDocument> findByAttribute(WriteTorodTransaction transaction, String db, String col, BsonDocument query) throws CommandFailed, UserException {
+    private Cursor<ToroDocument> findByAttribute(SharedWriteTorodTransaction transaction, String db, String col, BsonDocument query) throws CommandFailed, UserException {
         Builder refBuilder = new AttributeReference.Builder();
         KVValue<?> kvValue = AttrRefHelper.calculateValueAndAttRef(query, refBuilder);
 

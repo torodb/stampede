@@ -8,7 +8,6 @@ import com.eightkdata.mongowp.ErrorCode;
 import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.bson.BsonDocument;
 import com.eightkdata.mongowp.exceptions.CommandFailed;
-import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.DeleteCommand;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.DeleteCommand.DeleteArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.DeleteCommand.DeleteStatement;
 import com.eightkdata.mongowp.server.api.Command;
@@ -19,7 +18,7 @@ import com.torodb.kvdocument.values.KVValue;
 import com.torodb.mongodb.commands.impl.WriteTorodbCommandImpl;
 import com.torodb.mongodb.core.MongodMetrics;
 import com.torodb.mongodb.core.WriteMongodTransaction;
-import com.torodb.torod.WriteTorodTransaction;
+import com.torodb.torod.SharedWriteTorodTransaction;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -73,19 +72,21 @@ public class DeleteImplementation implements WriteTorodbCommandImpl<DeleteArgume
 
     }
 
-    private long deleteByAttribute(WriteTorodTransaction transaction, String db, String col, BsonDocument query) throws CommandFailed {
+    private long deleteByAttribute(SharedWriteTorodTransaction transaction, String db, String col, BsonDocument query) throws CommandFailed {
         Builder refBuilder = new AttributeReference.Builder();
         KVValue<?> kvValue = AttrRefHelper.calculateValueAndAttRef(query, refBuilder);
         return transaction.deleteByAttRef(db, col, refBuilder.build(), kvValue);
     }
 
     private void logDeleteCommand(DeleteArgument arg) {
-        String collection = arg.getCollection();
-        String filter = StreamSupport.stream(arg.getStatements().spliterator(), false)
-                .map(statement -> statement.getQuery().toString())
-                .collect(Collectors.joining(","));
+        if (LOGGER.isTraceEnabled()) {
+            String collection = arg.getCollection();
+            String filter = StreamSupport.stream(arg.getStatements().spliterator(), false)
+                    .map(statement -> statement.getQuery().toString())
+                    .collect(Collectors.joining(","));
 
-        LOGGER.trace("Delete from {} filter {}", collection, filter);
+            LOGGER.trace("Delete from {} filter {}", collection, filter);
+        }
     }
 
 }
