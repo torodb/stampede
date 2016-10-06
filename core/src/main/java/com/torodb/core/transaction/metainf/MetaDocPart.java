@@ -67,16 +67,16 @@ public interface MetaDocPart {
 
     @Nonnull
     @DoNotChange
-    public abstract Stream<? extends MetaDocPartIndex> streamIndexes();
+    public abstract Stream<? extends MetaIdentifiedDocPartIndex> streamIndexes();
 
     /**
      *
      * @param indexId
-     * @return the contained index whose {@link MetaDocPartIndex#getidentifier() indexId} is the given or null
+     * @return the contained index whose {@link MetaIdentifiedDocPartIndex#getidentifier() indexId} is the given or null
      *         if there is no one that match that condition
      */
     @Nullable
-    public abstract MetaDocPartIndex getMetaDocPartIndexByIdentifier(String indexId);
+    public abstract MetaIdentifiedDocPartIndex getMetaDocPartIndexByIdentifier(String indexId);
 
     public default String defautToString() {
         return "docPart{" + "ref:" + getTableRef() + ", id:" + getIdentifier() + '}';

@@ -37,7 +37,7 @@ import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
 import com.torodb.core.transaction.metainf.ImmutableMetaDatabase;
 import com.torodb.core.transaction.metainf.ImmutableMetaDocPart;
-import com.torodb.core.transaction.metainf.ImmutableMetaDocPartIndex;
+import com.torodb.core.transaction.metainf.ImmutableMetaIdentifiedDocPartIndex;
 import com.torodb.core.transaction.metainf.ImmutableMetaDocPartIndexColumn;
 import com.torodb.core.transaction.metainf.ImmutableMetaField;
 import com.torodb.core.transaction.metainf.ImmutableMetaIndex;

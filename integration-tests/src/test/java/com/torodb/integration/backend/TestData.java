@@ -11,7 +11,7 @@ import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
 import com.torodb.core.transaction.metainf.ImmutableMetaDatabase;
 import com.torodb.core.transaction.metainf.ImmutableMetaDocPart;
-import com.torodb.core.transaction.metainf.ImmutableMetaDocPartIndex;
+import com.torodb.core.transaction.metainf.ImmutableMetaIdentifiedDocPartIndex;
 import com.torodb.core.transaction.metainf.ImmutableMetaDocPartIndexColumn;
 import com.torodb.core.transaction.metainf.ImmutableMetaField;
 import com.torodb.core.transaction.metainf.ImmutableMetaIndex;
@@ -61,7 +61,7 @@ public class TestData {
                 .put(new ImmutableMetaField("mongoTimeStampRoot", "mongoTimeStampRootField", FieldType.MONGO_TIME_STAMP))
                 .put(new ImmutableMetaField("instantRoot", "instantRootField", FieldType.INSTANT))
                 .put(new ImmutableMetaField("subDocPart", "subDocPartField", FieldType.CHILD))
-                .put(new ImmutableMetaDocPartIndex.Builder("rootDocPartIndex", false)
+                .put(new ImmutableMetaIdentifiedDocPartIndex.Builder("rootDocPartIndex", false)
                         .add(new ImmutableMetaDocPartIndexColumn(0, "integerRootField", FieldIndexOrdering.ASC)).build());
         rootDocPart = metaRootDocPartBuilder.build();
         metaCollectionBuilder.put(rootDocPart);
@@ -78,7 +78,7 @@ public class TestData {
                 .put(new ImmutableMetaField("mongoObjectIdSub", "mongoObjectIdSubField", FieldType.MONGO_OBJECT_ID))
                 .put(new ImmutableMetaField("mongoTimeStampSub", "mongoTimeStampSubField", FieldType.MONGO_TIME_STAMP))
                 .put(new ImmutableMetaField("instantSub", "instantSubField", FieldType.INSTANT))
-                .put(new ImmutableMetaDocPartIndex.Builder("subDocPartIndex", false)
+                .put(new ImmutableMetaIdentifiedDocPartIndex.Builder("subDocPartIndex", false)
                         .add(new ImmutableMetaDocPartIndexColumn(0, "longSubField", FieldIndexOrdering.ASC)).build());
         subDocPart = metaSubDocPartBuilder.build();
         metaCollectionBuilder.put(subDocPart);

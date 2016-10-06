@@ -25,12 +25,12 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiConsumer;
 import java.util.stream.IntStream;
-import java.util.function.Consumer;
 
 import com.google.common.base.Preconditions;
 import com.torodb.core.annotations.DoNotChange;
-import com.torodb.core.transaction.metainf.ImmutableMetaDocPartIndex.Builder;
+import com.torodb.core.transaction.metainf.ImmutableMetaIdentifiedDocPartIndex.Builder;
 
 /**
  *
@@ -46,38 +46,18 @@ public class WrapperMutableMetaDocPartIndex extends AbstractMetaDocPartIndex imp
      * wrapped object.
      */
     private final List<ImmutableMetaDocPartIndexColumn> addedColumns;
-    private final Consumer<WrapperMutableMetaDocPartIndex> changeConsumer;
+    private final BiConsumer<WrapperMutableMetaDocPartIndex, ImmutableMetaIdentifiedDocPartIndex> changeConsumer;
     
-    private String identifier;
-    private boolean mutable = true;
-
-    public WrapperMutableMetaDocPartIndex(ImmutableMetaDocPartIndex docPartIndex, Consumer<WrapperMutableMetaDocPartIndex> changeConsumer) {
-        this(docPartIndex.getIdentifier(), docPartIndex.isUnique(), changeConsumer);
-        
-        makeImmutable(docPartIndex.getIdentifier());
-    }
-
-    public WrapperMutableMetaDocPartIndex(boolean unique, Consumer<WrapperMutableMetaDocPartIndex> changeConsumer) {
-        this(null, unique, changeConsumer);
-    }
-
-    private WrapperMutableMetaDocPartIndex(String identifier, boolean unique, Consumer<WrapperMutableMetaDocPartIndex> changeConsumer) {
-        super(identifier, unique);
+    public WrapperMutableMetaDocPartIndex(boolean unique, BiConsumer<WrapperMutableMetaDocPartIndex, ImmutableMetaIdentifiedDocPartIndex> changeConsumer) {
+        super(unique);
         addedColumnsByIdentifier = new HashMap<>();
         addedColumns = new ArrayList<>();
         this.changeConsumer = changeConsumer;
     }
 
     @Override
-    public String getIdentifier() {
-        Preconditions.checkArgument(!mutable, "Must be immutable to be read");
-        return identifier;
-    }
-
-    @Override
     public ImmutableMetaDocPartIndexColumn putMetaDocPartIndexColumn(int position, String identifier, FieldIndexOrdering ordering) throws
             IllegalArgumentException {
-        Preconditions.checkArgument(this.mutable, "This object has been marked as immutable");
         if (getMetaDocPartIndexColumnByIdentifier(identifier) != null) {
             throw new IllegalArgumentException("There is another column with the identifier " + identifier);
         }
@@ -115,13 +95,17 @@ public class WrapperMutableMetaDocPartIndex extends AbstractMetaDocPartIndex imp
     }
 
     @Override
-    public ImmutableMetaDocPartIndex immutableCopy() {
-        Preconditions.checkArgument(!mutable, "Must be marked immutable");
-        ImmutableMetaDocPartIndex.Builder builder = new Builder(this);
+    public ImmutableMetaIdentifiedDocPartIndex immutableCopy(String identifier) {
+        Preconditions.checkArgument(addedColumnsByIdentifier.size() == addedColumns.size(), 
+                "Some columns are missing. Found %s but they should be %s", 
+                addedColumnsByIdentifier.size(), addedColumns.size());
+        ImmutableMetaIdentifiedDocPartIndex.Builder builder = new Builder(identifier, isUnique());
         for (ImmutableMetaDocPartIndexColumn addedField : addedColumns) {
             builder.add(addedField);
         }
-        return builder.build();
+        ImmutableMetaIdentifiedDocPartIndex immutableIndex = builder.build();
+        changeConsumer.accept(this, immutableIndex);
+        return immutableIndex;
     }
 
     @Override
@@ -145,22 +129,6 @@ public class WrapperMutableMetaDocPartIndex extends AbstractMetaDocPartIndex imp
             return null;
         }
         return addedColumns.get(position);
-    }
-
-    @Override
-    public boolean isMutable() {
-        return mutable;
-    }
-
-    @Override
-    public void makeImmutable(String identifier) {
-        Preconditions.checkArgument(mutable, "Yet immutable");
-        Preconditions.checkArgument(addedColumnsByIdentifier.size() == addedColumns.size(), 
-                "Some columns are missing. Found %s but they should be %s", 
-                addedColumnsByIdentifier.size(), addedColumns.size());
-        this.identifier = identifier;
-        this.mutable = false;
-        changeConsumer.accept(this);
     }
 
     @Override

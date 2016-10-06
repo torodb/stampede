@@ -44,7 +44,7 @@ import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
-import com.torodb.core.transaction.metainf.MetaDocPartIndex;
+import com.torodb.core.transaction.metainf.MetaIdentifiedDocPartIndex;
 import com.torodb.core.transaction.metainf.MetaField;
 import com.torodb.core.transaction.metainf.MetaDocPartIndexColumn;
 import com.torodb.core.transaction.metainf.MetaIndex;
@@ -227,7 +227,7 @@ public abstract class AbstractMetaDataWriteInterface implements MetaDataWriteInt
 
     @Override
     public void addMetaDocPartIndex(DSLContext dsl, MetaDatabase database, MetaCollection collection, 
-            MetaDocPart docPart, MetaDocPartIndex index) {
+            MetaDocPart docPart, MetaIdentifiedDocPartIndex index) {
         String statement = getAddMetaDocPartIndexStatement(database.getName(), index.getIdentifier(), collection.getName(), 
                 docPart.getTableRef(), index.isUnique());
         sqlHelper.executeUpdate(dsl, statement, Context.META_INSERT);
@@ -235,7 +235,7 @@ public abstract class AbstractMetaDataWriteInterface implements MetaDataWriteInt
 
     @Override
     public void addMetaDocPartIndexColumn(DSLContext dsl, MetaDatabase database, MetaCollection collection, 
-            MetaDocPart docPart, MetaDocPartIndex index, MetaDocPartIndexColumn column) {
+            MetaDocPart docPart, MetaIdentifiedDocPartIndex index, MetaDocPartIndexColumn column) {
         String statement = getAddMetaDocPartIndexColumnStatement(database.getName(), index.getIdentifier(), column.getPosition(), 
                 collection.getName(), docPart.getTableRef(), column.getIdentifier(), column.getOrdering());
         sqlHelper.executeUpdate(dsl, statement, Context.META_INSERT);
@@ -349,7 +349,7 @@ public abstract class AbstractMetaDataWriteInterface implements MetaDataWriteInt
     }
 
     @Override
-    public void deleteMetaDocPartIndex(DSLContext dsl, MetaDatabase database, MetaCollection collection, MetaDocPart docPart, MetaDocPartIndex index) {
+    public void deleteMetaDocPartIndex(DSLContext dsl, MetaDatabase database, MetaCollection collection, MetaDocPart docPart, MetaIdentifiedDocPartIndex index) {
         String statement = getCascadeDeleteMetaDocPartIndexColumnStatement(database.getName(), collection.getName(), index.getIdentifier());
         sqlHelper.executeUpdate(dsl, statement, Context.META_DELETE);
         statement = getDeleteMetaDocPartIndexStatement(database.getName(), collection.getName(), index.getIdentifier());

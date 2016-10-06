@@ -1,6 +1,7 @@
 
 package com.torodb.core.transaction.metainf;
 
+import java.util.List;
 import java.util.stream.Stream;
 
 import org.jooq.lambda.tuple.Tuple2;
@@ -28,7 +29,7 @@ public interface MutableMetaDocPart extends MetaDocPart {
     public Stream<? extends MetaScalar> streamScalars();
     
     @Override
-    public abstract Stream<? extends MetaDocPartIndex> streamIndexes();
+    public abstract Stream<? extends MetaIdentifiedDocPartIndex> streamIndexes();
 
     /**
      * Adds a new field to this table.
@@ -76,10 +77,12 @@ public interface MutableMetaDocPart extends MetaDocPart {
     public boolean removeMetaDocPartIndexByIdentifier(String indexId);
     
     @DoNotChange
-    public Iterable<Tuple2<ImmutableMetaDocPartIndex, MetaElementState>> getModifiedMetaDocPartIndexes();
+    public Iterable<Tuple2<ImmutableMetaIdentifiedDocPartIndex, MetaElementState>> getModifiedMetaDocPartIndexes();
     
     @DoNotChange
     public Iterable<MutableMetaDocPartIndex> getAddedMutableMetaDocPartIndexes();
+
+    public MutableMetaDocPartIndex getOrCreatePartialMutableDocPartIndexForMissingIndexAndNewField(MetaIndex missingIndex, List<String> identifiers, MetaField newField);
     
     public abstract ImmutableMetaDocPart immutableCopy();
 }

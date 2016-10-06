@@ -79,7 +79,7 @@ public class MemoryWriteTorodTransaction extends MemoryTorodTransaction implemen
 
     @Override
     public boolean createIndex(String dbName, String colName, String indexName, List<IndexFieldInfo> fields, boolean unique) {
-        throw new UnsupportedOperationException("Not supported yet."); //TODO: Implement when necessary
+        return false;
     }
 
     @Override

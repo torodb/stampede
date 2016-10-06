@@ -2,6 +2,7 @@
 package com.torodb.torod.pipeline;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -11,11 +12,13 @@ import com.torodb.core.TableRef;
 import com.torodb.core.annotations.DoNotChange;
 import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.ImmutableMetaDocPart;
-import com.torodb.core.transaction.metainf.ImmutableMetaDocPartIndex;
+import com.torodb.core.transaction.metainf.ImmutableMetaIdentifiedDocPartIndex;
 import com.torodb.core.transaction.metainf.ImmutableMetaField;
 import com.torodb.core.transaction.metainf.ImmutableMetaScalar;
-import com.torodb.core.transaction.metainf.MetaDocPartIndex;
+import com.torodb.core.transaction.metainf.MetaIdentifiedDocPartIndex;
 import com.torodb.core.transaction.metainf.MetaElementState;
+import com.torodb.core.transaction.metainf.MetaField;
+import com.torodb.core.transaction.metainf.MetaIndex;
 import com.torodb.core.transaction.metainf.MetaScalar;
 import com.torodb.core.transaction.metainf.MutableMetaDocPart;
 import com.torodb.core.transaction.metainf.MutableMetaDocPartIndex;
@@ -139,17 +142,12 @@ public class BatchMetaDocPart implements MutableMetaDocPart {
     }
 
     @Override
-    public String toString() {
-        return defautToString();
-    }
-
-    @Override
-    public Stream<? extends MetaDocPartIndex> streamIndexes() {
+    public Stream<? extends MetaIdentifiedDocPartIndex> streamIndexes() {
         return delegate.streamIndexes();
     }
 
     @Override
-    public MetaDocPartIndex getMetaDocPartIndexByIdentifier(String indexId) {
+    public MetaIdentifiedDocPartIndex getMetaDocPartIndexByIdentifier(String indexId) {
         return delegate.getMetaDocPartIndexByIdentifier(indexId);
     }
 
@@ -159,7 +157,7 @@ public class BatchMetaDocPart implements MutableMetaDocPart {
     }
 
     @Override
-    public Iterable<Tuple2<ImmutableMetaDocPartIndex, MetaElementState>> getModifiedMetaDocPartIndexes() {
+    public Iterable<Tuple2<ImmutableMetaIdentifiedDocPartIndex, MetaElementState>> getModifiedMetaDocPartIndexes() {
         return delegate.getModifiedMetaDocPartIndexes();
     }
 
@@ -171,5 +169,16 @@ public class BatchMetaDocPart implements MutableMetaDocPart {
     @Override
     public boolean removeMetaDocPartIndexByIdentifier(String indexId) {
         return delegate.removeMetaDocPartIndexByIdentifier(indexId);
+    }
+
+    @Override
+    public MutableMetaDocPartIndex getOrCreatePartialMutableDocPartIndexForMissingIndexAndNewField(
+            MetaIndex missingIndex, List<String> identifiers, MetaField newField) {
+        return delegate.getOrCreatePartialMutableDocPartIndexForMissingIndexAndNewField(missingIndex, identifiers, newField);
+    }
+
+    @Override
+    public String toString() {
+        return defautToString();
     }
 }

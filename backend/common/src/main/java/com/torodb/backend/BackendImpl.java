@@ -41,7 +41,7 @@ import com.torodb.core.transaction.RollbackException;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
-import com.torodb.core.transaction.metainf.MetaDocPartIndex;
+import com.torodb.core.transaction.metainf.MetaIdentifiedDocPartIndex;
 import com.torodb.core.transaction.metainf.MetaDocPartIndexColumn;
 import com.torodb.core.transaction.metainf.MetaSnapshot;
 import com.torodb.core.transaction.metainf.MetainfoRepository;
@@ -188,9 +188,9 @@ public class BackendImpl extends ThreadFactoryIdleService implements Backend {
         while (docPartIterator.hasNext()) {
             MetaDocPart docPart = docPartIterator.next();
             
-            Iterator<? extends MetaDocPartIndex> docPartIndexIterator = docPart.streamIndexes().iterator();
+            Iterator<? extends MetaIdentifiedDocPartIndex> docPartIndexIterator = docPart.streamIndexes().iterator();
             while (docPartIndexIterator.hasNext()) {
-                MetaDocPartIndex docPartIndex = docPartIndexIterator.next();
+                MetaIdentifiedDocPartIndex docPartIndex = docPartIndexIterator.next();
 
                 consumerList.add(createIndexJob(db, docPart, docPartIndex));
             }
@@ -200,7 +200,7 @@ public class BackendImpl extends ThreadFactoryIdleService implements Backend {
     }
 
     private Consumer<DSLContext> createIndexJob(MetaDatabase db, MetaDocPart docPart,
-            MetaDocPartIndex docPartIndex) {
+            MetaIdentifiedDocPartIndex docPartIndex) {
         return dsl -> {
             List<Tuple2<String, Boolean>> columnList = new ArrayList<>(docPartIndex.size());
             for (Iterator<? extends MetaDocPartIndexColumn> indexColumnIterator = docPartIndex.iteratorColumns(); indexColumnIterator.hasNext();) {

@@ -3,19 +3,11 @@ package com.torodb.core.transaction.metainf;
 
 import java.util.Iterator;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 /**
  */
 public interface MetaDocPartIndex {
-
-    /**
-     * The identifier MetaDocPart on the SQL model.
-     * @return
-     */
-    @Nonnull
-    public abstract String getIdentifier();
 
     public abstract boolean isUnique();
 
@@ -32,11 +24,7 @@ public interface MetaDocPartIndex {
     public abstract boolean hasSameColumns(MetaDocPartIndex docPartIndex);
 
     public default String defautToString() {
-        try {
-            return "docPartIndex{" + "id:" + getIdentifier() + ", unique:" + isUnique() + '}';
-        } catch(IllegalArgumentException illegalArgumentException) {
-            return "docPartIndex{" + "id:unknown, unique:" + isUnique() + '}';
-        }
+        return "docPartIndex{" + "unique:" + isUnique() + '}';
     }
     
 }

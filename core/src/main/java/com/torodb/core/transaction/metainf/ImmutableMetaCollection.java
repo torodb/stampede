@@ -22,8 +22,13 @@ package com.torodb.core.transaction.metainf;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import org.jooq.lambda.Seq;
+import org.jooq.lambda.tuple.Tuple2;
 
 import com.google.common.base.Preconditions;
 import com.torodb.core.TableRef;
@@ -106,6 +111,22 @@ public class ImmutableMetaCollection implements MetaCollection {
     @Override
     public ImmutableMetaIndex getMetaIndexByName(String indexName) {
         return indexesByName.get(indexName);
+    }
+
+    @Override
+    public List<Tuple2<MetaIndex, List<String>>> getMissingIndexesForNewField(
+            MutableMetaDocPart docPart, MetaField newField) {
+        return getMissingIndexesForNewField(streamContainedMetaIndexes(), docPart, newField);
+    }
+
+    protected List<Tuple2<MetaIndex, List<String>>> getMissingIndexesForNewField(Stream<? extends MetaIndex> containedMetaIndexes,
+            MutableMetaDocPart docPart, MetaField newField) {
+        return containedMetaIndexes
+            .filter(index -> index.getMetaIndexFieldByTableRefAndName(docPart.getTableRef(), newField.getName()) != null)
+            .flatMap(index -> Seq.seq(index.iteratorMetaDocPartIndexesIdentifiers(docPart))
+                    .filter(identifiers -> identifiers.contains(newField.getIdentifier()))
+                    .map(identifiers -> new Tuple2<MetaIndex,List<String>>(index, identifiers)))
+            .collect(Collectors.toList());
     }
    
     public static class Builder {

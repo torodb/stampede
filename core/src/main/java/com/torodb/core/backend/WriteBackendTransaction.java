@@ -27,7 +27,7 @@ import com.torodb.core.transaction.RollbackException;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
-import com.torodb.core.transaction.metainf.MetaDocPartIndex;
+import com.torodb.core.transaction.metainf.MetaIdentifiedDocPartIndex;
 import com.torodb.core.transaction.metainf.MetaField;
 import com.torodb.core.transaction.metainf.MetaIndex;
 import com.torodb.core.transaction.metainf.MetaScalar;
@@ -94,7 +94,7 @@ public interface WriteBackendTransaction extends BackendTransaction {
 
     /**
      * Adds a field to a table.
-     * Create a {@link MetaDocPartIndex physical index} if compatible with an existing {@link MetaIndex logical index}. 
+     * Create a {@link MetaIdentifiedDocPartIndex physical index} if compatible with an existing {@link MetaIndex logical index}. 
      *
      * @param db       the database that contains the given collection. It must have been added
      *                 before

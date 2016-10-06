@@ -11,6 +11,8 @@ import com.torodb.core.annotations.DoNotChange;
  */
 public interface MutableMetaIndex extends MetaIndex {
 
+    public abstract boolean isUnique();
+
     @Override
     public ImmutableMetaIndexField getMetaIndexFieldByPosition(int position);
 

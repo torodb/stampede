@@ -20,6 +20,7 @@
 
 package com.torodb.core.transaction.metainf;
 
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.jooq.lambda.tuple.Tuple2;
@@ -58,6 +59,25 @@ public interface MutableMetaCollection extends MetaCollection {
 
     @DoNotChange
     public Iterable<Tuple2<MutableMetaIndex, MetaElementState>> getModifiedMetaIndexes();
+    
+
+    public Optional<? extends MetaIndex> getAnyMissedIndex(MetaCollection oldCol,
+            MutableMetaDocPart newStructure, ImmutableMetaDocPart oldStructure, ImmutableMetaField newField);
+
+    public Optional<? extends MetaIndex> getAnyRelatedIndex(ImmutableMetaCollection oldCol,
+            MetaDocPart newStructure, ImmutableMetaIdentifiedDocPartIndex newDocPartIndex);
+    
+    public Optional<ImmutableMetaIndex> getAnyMissedIndex(ImmutableMetaCollection oldCol,
+            ImmutableMetaIdentifiedDocPartIndex newRemovedDocPartIndex);
+
+    public Optional<ImmutableMetaIndex> getAnyConflictingIndex(
+            ImmutableMetaCollection oldStructure, MutableMetaIndex changed);
+
+    public Optional<ImmutableMetaDocPart> getAnyDocPartWithMissedDocPartIndex(
+            ImmutableMetaCollection oldStructure, MutableMetaIndex changed);
+
+    public Optional<? extends MetaIdentifiedDocPartIndex> getAnyOrphanDocPartIndex(
+            ImmutableMetaCollection oldStructure, MutableMetaIndex changed);
     
     public abstract ImmutableMetaCollection immutableCopy();
 }

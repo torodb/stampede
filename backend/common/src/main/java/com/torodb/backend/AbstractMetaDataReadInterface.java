@@ -38,7 +38,7 @@ import com.torodb.core.TableRef;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
-import com.torodb.core.transaction.metainf.MetaDocPartIndex;
+import com.torodb.core.transaction.metainf.MetaIdentifiedDocPartIndex;
 import com.torodb.core.transaction.metainf.MetaIndex;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -128,9 +128,9 @@ public abstract class AbstractMetaDataReadInterface implements MetaDataReadInter
         while (tableRefIterator.hasNext()) {
             TableRef tableRef = tableRefIterator.next();
             MetaDocPart docPart = collection.getMetaDocPartByTableRef(tableRef);
-            Iterator<? extends MetaDocPartIndex> docPartIndexIterator = docPart.streamIndexes().iterator();
+            Iterator<? extends MetaIdentifiedDocPartIndex> docPartIndexIterator = docPart.streamIndexes().iterator();
             while (docPartIndexIterator.hasNext()) {
-                MetaDocPartIndex docPartIndex = docPartIndexIterator.next();
+                MetaIdentifiedDocPartIndex docPartIndex = docPartIndexIterator.next();
                 if (index.isCompatible(docPart, docPartIndex)) {
                     long relatedIndexCount = collection.streamContainedMetaIndexes()
                             .filter(i -> i.isCompatible(docPart, docPartIndex)).count();

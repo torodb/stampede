@@ -23,18 +23,18 @@ import com.torodb.backend.meta.SchemaValidator.Table;
 import com.torodb.backend.meta.SchemaValidator.TableField;
 import com.torodb.backend.tables.MetaCollectionTable;
 import com.torodb.backend.tables.MetaDatabaseTable;
+import com.torodb.backend.tables.MetaDocPartIndexColumnTable;
 import com.torodb.backend.tables.MetaDocPartIndexTable;
 import com.torodb.backend.tables.MetaDocPartTable;
-import com.torodb.backend.tables.MetaDocPartIndexColumnTable;
 import com.torodb.backend.tables.MetaFieldTable;
 import com.torodb.backend.tables.MetaIndexFieldTable;
 import com.torodb.backend.tables.MetaIndexTable;
 import com.torodb.backend.tables.MetaScalarTable;
 import com.torodb.backend.tables.records.MetaCollectionRecord;
 import com.torodb.backend.tables.records.MetaDatabaseRecord;
+import com.torodb.backend.tables.records.MetaDocPartIndexColumnRecord;
 import com.torodb.backend.tables.records.MetaDocPartIndexRecord;
 import com.torodb.backend.tables.records.MetaDocPartRecord;
-import com.torodb.backend.tables.records.MetaDocPartIndexColumnRecord;
 import com.torodb.backend.tables.records.MetaFieldRecord;
 import com.torodb.backend.tables.records.MetaIndexFieldRecord;
 import com.torodb.backend.tables.records.MetaIndexRecord;
@@ -44,7 +44,6 @@ import com.torodb.core.TableRefFactory;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
-import com.torodb.core.transaction.metainf.MetaDocPartIndex;
 import com.torodb.core.transaction.metainf.MetaField;
 import com.torodb.core.transaction.metainf.MetainfoRepository;
 import com.torodb.core.transaction.metainf.MetainfoRepository.MergerStage;
@@ -351,35 +350,35 @@ public class SnapshotUpdater {
 
             dsl.selectFrom(fieldIndexTable)
                     .where(fieldIndexTable.DATABASE.eq(database.getName())
-                            .and(fieldIndexTable.INDEX_IDENTIFIER.eq(docPart.getIdentifier())))
+                            .and(fieldIndexTable.INDEX_IDENTIFIER.eq(docPartIndex.getIdentifier())))
                     .orderBy(fieldIndexTable.POSITION)
                     .fetch()
                     .forEach(
-                            (indexField) -> analyzeDocPartIndexColumn(database, collection, docPart, metaDocPartIndex, indexField, schemaValidator)
+                            (indexField) -> analyzeDocPartIndexColumn(database, collection, docPart, docPartIndex.getIdentifier(), metaDocPartIndex, indexField, schemaValidator)
                     );
-            metaDocPartIndex.makeImmutable(docPartIndex.getIdentifier());
+            metaDocPartIndex.immutableCopy(docPartIndex.getIdentifier());
         }
 
         private void analyzeDocPartIndexColumn(MutableMetaDatabase database, MetaCollection collection, MetaDocPart docPart,
-                MutableMetaDocPartIndex docPartIndex, MetaDocPartIndexColumnRecord<Object> indexColumn,
+                String docPartIndexIdentifier, MutableMetaDocPartIndex docPartIndex, MetaDocPartIndexColumnRecord<Object> indexColumn,
                 SchemaValidator schemaValidator) {
-            if (!indexColumn.getIndexIdentifier().equals(docPartIndex.getIdentifier())) {
+            if (!indexColumn.getIndexIdentifier().equals(docPartIndexIdentifier)) {
                 return;
             }
             
             MetaField field = docPart.getMetaFieldByIdentifier(indexColumn.getIdentifier());
             if (field == null) {
                 throw new InvalidDatabaseSchemaException(database.getIdentifier(), 
-                        "Found doc part index column " + getDocPartIndexColumnRef(database, collection, docPart, docPartIndex, indexColumn)
+                        "Found doc part index column " + getDocPartIndexColumnRef(database, collection, docPart, docPartIndexIdentifier, indexColumn)
                         + " but no associated field has been found");
             }
 
-            if (!schemaValidator.existsIndexColumn(docPartIndex.getIdentifier(), indexColumn.getPosition(),
+            if (!schemaValidator.existsIndexColumn(docPartIndexIdentifier, indexColumn.getPosition(),
                     field.getIdentifier())) {
                 throw new InvalidDatabaseSchemaException(database.getIdentifier(), 
-                        "Doc part index column " + getDocPartIndexColumnRef(database, collection, docPart, docPartIndex, indexColumn)
+                        "Doc part index column " + getDocPartIndexColumnRef(database, collection, docPart, docPartIndexIdentifier, indexColumn)
                         + " is associated with field " + getFieldRef(database, collection, docPart, field)
-                        + " but there is no column with that name in index " + getIndexRef(database, docPart, docPartIndex));
+                        + " but there is no column with that name in index " + getIndexRef(database, docPart, docPartIndexIdentifier));
             }
             
             docPartIndex.putMetaDocPartIndexColumn(indexColumn.getPosition(), indexColumn.getIdentifier(), indexColumn.getOrdering());
@@ -435,7 +434,7 @@ public class SnapshotUpdater {
             return getDocPartRef(database, collection, docPart) + "[] (type:" + scalar.getType().name() + ")";
         }
         
-        private String getDocPartIndexColumnRef(MetaDatabase database, MetaCollection collection, MetaDocPart docPart, MetaDocPartIndex docPartIndex, MetaDocPartIndexColumnRecord<?> column) {
+        private String getDocPartIndexColumnRef(MetaDatabase database, MetaCollection collection, MetaDocPart docPart, String docPartIndexIdentifier, MetaDocPartIndexColumnRecord<?> column) {
             return getDocPartRef(database, collection, docPart) + "." + column.getIdentifier();
         }
         
@@ -473,8 +472,8 @@ public class SnapshotUpdater {
             return database.getIdentifier() + "." + docPart.getIdentifier() + "." + docPartIndex.getIdentifier();
         }
         
-        private String getIndexRef(MetaDatabase database, MetaDocPart docPart, MetaDocPartIndex docPartIndex) {
-            return database.getIdentifier() + "." + docPart.getIdentifier() + "." + docPartIndex.getIdentifier();
+        private String getIndexRef(MetaDatabase database, MetaDocPart docPart, String docPartIndexIdentifier) {
+            return database.getIdentifier() + "." + docPart.getIdentifier() + "." + docPartIndexIdentifier;
         }
     }
 

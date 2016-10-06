@@ -42,15 +42,9 @@ public interface MutableMetaDocPartIndex extends MetaDocPartIndex {
 
     @DoNotChange
     public abstract Iterable<? extends ImmutableMetaDocPartIndexColumn> getAddedMetaDocPartIndexColumns();
-    
-    public abstract boolean isMutable();
 
     /**
-     * After this is called the index will not be modifiable any more. 
-     * 
      * @throws IllegalArgumentException if this index does not contains all column from position 0 to the position for the column with maximum position
      */
-    public abstract void makeImmutable(String identifier) throws IllegalArgumentException;
-
-    public abstract ImmutableMetaDocPartIndex immutableCopy();
+    public abstract ImmutableMetaIdentifiedDocPartIndex immutableCopy(String identifier) throws IllegalArgumentException;
 }

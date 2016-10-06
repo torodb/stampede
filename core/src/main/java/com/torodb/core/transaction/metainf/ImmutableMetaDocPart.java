@@ -24,7 +24,7 @@ public class ImmutableMetaDocPart implements MetaDocPart {
     private final Table<String, FieldType, ImmutableMetaField> fieldsByNameAndType;
     private final Map<String, ImmutableMetaField> fieldsByIdentifier;
     private final EnumMap<FieldType, ImmutableMetaScalar> scalars;
-    private final Map<String, ImmutableMetaDocPartIndex> indexesByIdentifier;
+    private final Map<String, ImmutableMetaIdentifiedDocPartIndex> indexesByIdentifier;
 
     public ImmutableMetaDocPart(TableRef tableRef, String dbName) {
         this(tableRef, dbName, Collections.emptyMap(), Maps.newEnumMap(FieldType.class), Collections.emptyMap());
@@ -33,7 +33,7 @@ public class ImmutableMetaDocPart implements MetaDocPart {
     public ImmutableMetaDocPart(TableRef tableRef, String dbName,
             @DoNotChange Map<String, ImmutableMetaField> columns,
             @DoNotChange EnumMap<FieldType, ImmutableMetaScalar> scalars,
-            @DoNotChange Map<String, ImmutableMetaDocPartIndex> indexes) {
+            @DoNotChange Map<String, ImmutableMetaIdentifiedDocPartIndex> indexes) {
         this.tableRef = tableRef;
         this.identifier = dbName;
         this.fieldsByIdentifier = columns;
@@ -84,12 +84,12 @@ public class ImmutableMetaDocPart implements MetaDocPart {
     }
 
     @Override
-    public Stream<ImmutableMetaDocPartIndex> streamIndexes() {
+    public Stream<ImmutableMetaIdentifiedDocPartIndex> streamIndexes() {
         return indexesByIdentifier.values().stream();
     }
 
     @Override
-    public ImmutableMetaDocPartIndex getMetaDocPartIndexByIdentifier(String indexName) {
+    public ImmutableMetaIdentifiedDocPartIndex getMetaDocPartIndexByIdentifier(String indexName) {
         return indexesByIdentifier.get(indexName);
     }
 
@@ -105,7 +105,7 @@ public class ImmutableMetaDocPart implements MetaDocPart {
         private final String identifier;
         private final HashMap<String, ImmutableMetaField> fields;
         private final EnumMap<FieldType, ImmutableMetaScalar> scalars;
-        private final HashMap<String, ImmutableMetaDocPartIndex> indexes;
+        private final HashMap<String, ImmutableMetaIdentifiedDocPartIndex> indexes;
 
         public Builder(TableRef tableRef, String identifier) {
             this.tableRef = tableRef;
@@ -151,17 +151,17 @@ public class ImmutableMetaDocPart implements MetaDocPart {
             return this;
         }
 
-        public Builder put(ImmutableMetaDocPartIndex.Builder indexBuilder) {
+        public Builder put(ImmutableMetaIdentifiedDocPartIndex.Builder indexBuilder) {
             return put(indexBuilder.build());
         }
 
-        public Builder put(ImmutableMetaDocPartIndex index) {
+        public Builder put(ImmutableMetaIdentifiedDocPartIndex index) {
             Preconditions.checkState(!built, "This builder has already been built");
             indexes.put(index.getIdentifier(), index);
             return this;
         }
 
-        public Builder remove(MetaDocPartIndex index) {
+        public Builder remove(MetaIdentifiedDocPartIndex index) {
             Preconditions.checkState(!built, "This builder has already been built");
             indexes.remove(index.getIdentifier());
             return this;

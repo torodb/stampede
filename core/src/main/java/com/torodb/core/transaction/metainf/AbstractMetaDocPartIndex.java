@@ -8,17 +8,10 @@ import java.util.Iterator;
  */
 public abstract class AbstractMetaDocPartIndex implements MetaDocPartIndex {
 
-    private final String identifier;
     private final boolean unique;
 
-    public AbstractMetaDocPartIndex(String identifier,  boolean unique) {
-        this.identifier = identifier;
+    public AbstractMetaDocPartIndex(boolean unique) {
         this.unique = unique;
-    }
-
-    @Override
-    public String getIdentifier() {
-        return identifier;
     }
 
     @Override

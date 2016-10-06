@@ -14,21 +14,28 @@ import com.torodb.core.annotations.DoNotChange;
 /**
  *
  */
-public class ImmutableMetaDocPartIndex extends AbstractMetaDocPartIndex {
+public class ImmutableMetaIdentifiedDocPartIndex extends AbstractMetaDocPartIndex implements MetaIdentifiedDocPartIndex {
 
+    private final String identifier;
     private final Map<String, ImmutableMetaDocPartIndexColumn> columnsByIdentifier;
     private final List<ImmutableMetaDocPartIndexColumn> columnsByPosition;
 
-    public ImmutableMetaDocPartIndex(String identifier,  boolean unique) {
+    public ImmutableMetaIdentifiedDocPartIndex(String identifier,  boolean unique) {
         this(identifier, unique, Collections.emptyList());
     }
 
-    public ImmutableMetaDocPartIndex(String identifier, boolean unique,
+    public ImmutableMetaIdentifiedDocPartIndex(String identifier, boolean unique,
             @DoNotChange List<ImmutableMetaDocPartIndexColumn> columns) {
-        super(identifier, unique);
+        super(unique);
+        this.identifier = identifier;
         this.columnsByPosition = columns;
         this.columnsByIdentifier = new HashMap<>();
         columns.forEach((column) -> columnsByIdentifier.put(column.getIdentifier(), column));
+    }
+
+    @Override
+    public String getIdentifier() {
+        return identifier;
     }
 
     @Override
@@ -50,6 +57,11 @@ public class ImmutableMetaDocPartIndex extends AbstractMetaDocPartIndex {
     public ImmutableMetaDocPartIndexColumn getMetaDocPartIndexColumnByIdentifier(String columnName) {
         return columnsByIdentifier.get(columnName);
     }
+
+    @Override
+    public String toString() {
+        return defautToString();
+    }
     
     public static class Builder {
 
@@ -64,14 +76,10 @@ public class ImmutableMetaDocPartIndex extends AbstractMetaDocPartIndex {
             this.columns = new ArrayList<>();
         }
 
-        public Builder(ImmutableMetaDocPartIndex other) {
+        public Builder(ImmutableMetaIdentifiedDocPartIndex other) {
             this.identifier = other.getIdentifier();
             this.unique = other.isUnique();
             this.columns = new ArrayList<>(other.columnsByPosition);
-        }
-
-        public Builder(AbstractMetaDocPartIndex other) {
-            this(other.getIdentifier(), other.isUnique());
         }
 
         public Builder(String identifier, boolean unique, int expectedColumns) {
@@ -93,10 +101,10 @@ public class ImmutableMetaDocPartIndex extends AbstractMetaDocPartIndex {
             return add(new ImmutableMetaDocPartIndexColumn(columns.size(), identifier, ordering));
         }
 
-        public ImmutableMetaDocPartIndex build() {
+        public ImmutableMetaIdentifiedDocPartIndex build() {
             Preconditions.checkState(!built, "This builder has already been built");
             built = true;
-            return new ImmutableMetaDocPartIndex(identifier, unique, columns);
+            return new ImmutableMetaIdentifiedDocPartIndex(identifier, unique, columns);
         }
     }
 

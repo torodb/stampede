@@ -4,7 +4,9 @@ package com.torodb.torod.pipeline;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
@@ -14,7 +16,16 @@ import org.jooq.lambda.tuple.Tuple2;
 import com.torodb.core.TableRef;
 import com.torodb.core.annotations.DoNotChange;
 import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
+import com.torodb.core.transaction.metainf.ImmutableMetaDocPart;
+import com.torodb.core.transaction.metainf.ImmutableMetaField;
+import com.torodb.core.transaction.metainf.ImmutableMetaIdentifiedDocPartIndex;
+import com.torodb.core.transaction.metainf.ImmutableMetaIndex;
+import com.torodb.core.transaction.metainf.MetaCollection;
+import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetaElementState;
+import com.torodb.core.transaction.metainf.MetaField;
+import com.torodb.core.transaction.metainf.MetaIdentifiedDocPartIndex;
+import com.torodb.core.transaction.metainf.MetaIndex;
 import com.torodb.core.transaction.metainf.MutableMetaCollection;
 import com.torodb.core.transaction.metainf.MutableMetaDocPart;
 import com.torodb.core.transaction.metainf.MutableMetaIndex;
@@ -91,31 +102,6 @@ public class BatchMetaCollection implements MutableMetaCollection {
     }
 
     @Override
-    public ImmutableMetaCollection immutableCopy() {
-        return delegate.immutableCopy();
-    }
-
-    @Override
-    public String getName() {
-        return delegate.getName();
-    }
-
-    @Override
-    public String getIdentifier() {
-        return delegate.getIdentifier();
-    }
-
-    @Override
-    public String toString() {
-        return defautToString();
-    }
-
-    private void onDocPartChange(BatchMetaDocPart changedDocPart) {
-        changesOnBatch.add(changedDocPart);
-        modifiedDocParts.add(changedDocPart);
-    }
-
-    @Override
     public MutableMetaIndex getMetaIndexByName(String indexName) {
         return delegate.getMetaIndexByName(indexName);
     }
@@ -138,6 +124,73 @@ public class BatchMetaCollection implements MutableMetaCollection {
     @Override
     public Iterable<Tuple2<MutableMetaIndex, MetaElementState>> getModifiedMetaIndexes() {
         return delegate.getModifiedMetaIndexes();
+    }
+
+    @Override
+    public List<Tuple2<MetaIndex, List<String>>> getMissingIndexesForNewField(MutableMetaDocPart docPart,
+            MetaField newField) {
+        return delegate.getMissingIndexesForNewField(docPart, newField);
+    }
+
+    @Override
+    public Optional<? extends MetaIndex> getAnyMissedIndex(MetaCollection oldCol, MutableMetaDocPart newStructure,
+            ImmutableMetaDocPart oldStructure, ImmutableMetaField newField) {
+        return delegate.getAnyMissedIndex(oldCol, newStructure, oldStructure, newField);
+    }
+
+    @Override
+    public Optional<? extends MetaIndex> getAnyRelatedIndex(ImmutableMetaCollection oldCol, MetaDocPart newStructure,
+            ImmutableMetaIdentifiedDocPartIndex newDocPartIndex) {
+        return delegate.getAnyRelatedIndex(oldCol, newStructure, newDocPartIndex);
+    }
+
+    @Override
+    public Optional<ImmutableMetaIndex> getAnyMissedIndex(ImmutableMetaCollection oldCol,
+            ImmutableMetaIdentifiedDocPartIndex newRemovedDocPartIndex) {
+        return delegate.getAnyMissedIndex(oldCol, newRemovedDocPartIndex);
+    }
+
+    @Override
+    public Optional<ImmutableMetaIndex> getAnyConflictingIndex(ImmutableMetaCollection oldStructure,
+            MutableMetaIndex changed) {
+        return delegate.getAnyConflictingIndex(oldStructure, changed);
+    }
+
+    @Override
+    public Optional<ImmutableMetaDocPart> getAnyDocPartWithMissedDocPartIndex(ImmutableMetaCollection oldStructure,
+            MutableMetaIndex changed) {
+        return delegate.getAnyDocPartWithMissedDocPartIndex(oldStructure, changed);
+    }
+
+    @Override
+    public Optional<? extends MetaIdentifiedDocPartIndex> getAnyOrphanDocPartIndex(ImmutableMetaCollection oldStructure,
+            MutableMetaIndex changed) {
+        return delegate.getAnyOrphanDocPartIndex(oldStructure, changed);
+    }
+
+    @Override
+    public ImmutableMetaCollection immutableCopy() {
+        return delegate.immutableCopy();
+    }
+
+    @Override
+    public String getName() {
+        return delegate.getName();
+    }
+
+    @Override
+    public String getIdentifier() {
+        return delegate.getIdentifier();
+    }
+
+    @Override
+    public String toString() {
+        return defautToString();
+    }
+
+    private void onDocPartChange(BatchMetaDocPart changedDocPart) {
+        changesOnBatch.add(changedDocPart);
+        modifiedDocParts.add(changedDocPart);
     }
 
 }
