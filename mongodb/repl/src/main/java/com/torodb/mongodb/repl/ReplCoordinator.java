@@ -38,7 +38,9 @@ import com.torodb.mongodb.core.MongodServer;
 import com.torodb.mongodb.core.ReadOnlyMongodTransaction;
 import com.torodb.mongodb.core.WriteMongodTransaction;
 import com.torodb.mongodb.language.ObjectIdFactory;
-import com.torodb.mongodb.repl.exceptions.NoSyncSourceFoundException;
+import com.torodb.mongodb.repl.oplogreplier.OplogApplierService;
+import com.torodb.mongodb.repl.oplogreplier.RollbackReplicationException;
+import com.torodb.mongodb.repl.topology.TopologyService;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.concurrent.Executor;
@@ -54,9 +56,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import static com.eightkdata.mongowp.bson.utils.DefaultBsonValues.*;
-
-import com.torodb.mongodb.repl.oplogreplier.OplogApplierService;
-import com.torodb.mongodb.repl.oplogreplier.RollbackReplicationException;
 
 /**
  *
@@ -79,6 +78,7 @@ public class ReplCoordinator extends ThreadFactoryIdleService implements ReplInt
     private final OplogApplierService.OplogApplierServiceFactory oplogReplierFactory;
     private final ReplMetrics metrics;
     private final Executor executor;
+    private final TopologyService topologyService;
 
     private RecoveryService recoveryService;
     private OplogApplierService oplogReplierService;
@@ -94,7 +94,7 @@ public class ReplCoordinator extends ThreadFactoryIdleService implements ReplInt
             ObjectIdFactory objectIdFactory,
             RecoveryService.RecoveryServiceFactory recoveryServiceFactory,
             OplogApplierService.OplogApplierServiceFactory oplogReplierFactory,
-            ReplMetrics metrics) {
+            ReplMetrics metrics, TopologyService topologyService) {
         super(threadFactory);
         this.ownerCallback = ownerCallback;
         this.oplogManager = oplogManager;
@@ -120,6 +120,7 @@ public class ReplCoordinator extends ThreadFactoryIdleService implements ReplInt
         this.executor = (Runnable command) -> {
             utilityThreadFactory.newThread(command).start();
         };
+        this.topologyService = topologyService;
     }
 
     @Override
@@ -130,20 +131,19 @@ public class ReplCoordinator extends ThreadFactoryIdleService implements ReplInt
         try {
             //TODO: temporal implementation
             loadStoredConfig();
+
+            topologyService.startAsync();
+            topologyService.awaitRunning();
+
             oplogManager.startAsync();
             oplogManager.awaitRunning();
             loadConsistentState();
 
-            if (iAmMaster()) {
-                startPrimaryMode();
+            if (!isConsistent()) {
+                startRecoveryMode();
             }
             else {
-                if (!isConsistent()) {
-                    startRecoveryMode();
-                }
-                else {
-                    startSecondaryMode();
-                }
+                startSecondaryMode();
             }
         } finally {
             writeLock.unlock();
@@ -377,7 +377,7 @@ public class ReplCoordinator extends ThreadFactoryIdleService implements ReplInt
                             WriteConcern.fsync()
                     )
             );
-            if (!deleteStatus.isOK()) {
+            if (!deleteStatus.isOk()) {
                 return deleteStatus;
             }
 
@@ -394,7 +394,7 @@ public class ReplCoordinator extends ThreadFactoryIdleService implements ReplInt
                             null
                     )
             );
-            if (!insertStatus.isOK()) {
+            if (!insertStatus.isOk()) {
                 return insertStatus;
             }
             if (insertStatus.getResult().getN() != 1) {
@@ -418,7 +418,7 @@ public class ReplCoordinator extends ThreadFactoryIdleService implements ReplInt
                     .setCollection(CONSISTENT_COL)
                     .build()
             );
-            if (!findStatus.isOK()) {
+            if (!findStatus.isOk()) {
                 throw new UnknownErrorException(findStatus.getErrorMsg());
             }
             boolean newConsistent;
@@ -438,15 +438,6 @@ public class ReplCoordinator extends ThreadFactoryIdleService implements ReplInt
 
     private void loadStoredConfig() {
         LOGGER.warn("loadStoredConfig() is not implemented yet");
-    }
-
-    private boolean iAmMaster() {
-        try {
-            syncSourceProvider.calculateSyncSource(null);
-        } catch (NoSyncSourceFoundException ex) {
-            return true;
-        }
-        return false;
     }
 
     public static interface ReplCoordinatorOwnerCallback {
@@ -617,7 +608,7 @@ public class ReplCoordinator extends ThreadFactoryIdleService implements ReplInt
         @Override
         public void setConsistentState(boolean consistent) {
             Status<?> status = ReplCoordinator.this.setConsistentState(consistent);
-            if (!status.isOK()) {
+            if (!status.isOk()) {
                 LOGGER.error("Fatal error: It was impossible to store the consistent state: {}", status);
                 throw new AssertionError("Fatal error: It was impossible to store the consistent state: " + status);
             }
@@ -704,4 +695,5 @@ public class ReplCoordinator extends ThreadFactoryIdleService implements ReplInt
             }
         }
     }
+
 }

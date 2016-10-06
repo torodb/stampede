@@ -256,9 +256,10 @@ public class RetryHelper {
                 currentMillis = newMillisFunction.applyAsInt(currentMillis, attempts);
                 if (currentMillis < 0) {
                     super.handleException(callback, t, attempts);
-                }
-                else {
-                    Thread.sleep(currentMillis);
+                } else {
+                    if (currentMillis > 0) {
+                        Thread.sleep(currentMillis);
+                    }
                     callback.doRetry();
                 }
             } catch (InterruptedException ex) {

@@ -113,7 +113,7 @@ public class ReplicationFilters {
             .put(DropIndexesCommand.INSTANCE, new ResultFilter() {
                 @Override
                 public <Result> Status<Result> filter(Status<Result> result) {
-                    if (!result.isOK() && result.getErrorCode() == ErrorCode.INDEX_NOT_FOUND) {
+                    if (!result.isOk() && result.getErrorCode() == ErrorCode.INDEX_NOT_FOUND) {
                         result = Status.ok();
                     }
                     return result;

@@ -99,7 +99,7 @@ class ReplSyncFetcher extends ThreadFactoryRunnableService {
 
                     HostAndPort syncSource = null;
                     try {
-                        syncSource = syncSourceProvider.getSyncSource(lastFetchedOpTime);
+                        syncSource = syncSourceProvider.newSyncSource(lastFetchedOpTime);
                         oplogReader = readerProvider.newReader(syncSource);
                     } catch (NoSyncSourceFoundException ex) {
                         LOGGER.warn("There is no source to sync from");

@@ -28,12 +28,10 @@ import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
 import com.eightkdata.mongowp.server.api.pojos.IteratorMongoCursor;
 import com.eightkdata.mongowp.server.api.pojos.MongoCursor;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Iterators;
 import com.google.common.net.HostAndPort;
-import com.google.common.primitives.UnsignedInteger;
 import com.torodb.mongodb.repl.OplogReader;
-import java.util.Collection;
-import java.util.SortedMap;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -126,21 +124,36 @@ public class StaticOplogReader implements OplogReader {
             throws OplogStartMissingException, OplogOperationUnsupported, MongoException {
         Preconditions.checkState(!closed);
 
+        Iterator<OplogOperation> iterator = getBetweenIterator(from, includeFrom, to, includeTo);
+
+        return new IteratorMongoCursor<>(DATABASE, COLLECTION, idProvider.incrementAndGet(), hostAndPort, iterator);
+    }
+
+    private Iterator<OplogOperation> getBetweenIterator(OpTime from, boolean includeFrom, OpTime to, boolean includeTo) {
         OpTime includedFrom;
         OpTime excludedTo;
-        if (includeFrom) {
+
+        if (includeFrom || !oplog.containsKey(from)) {
             includedFrom = from;
-        } else {
-            includedFrom = new OpTime(from.getSecs().minus(UnsignedInteger.ONE), from.getTerm());
-        }
-        if (includeTo) {
-            excludedTo = new OpTime(to.getSecs().plus(UnsignedInteger.ONE), to.getTerm());
-        } else {
-            excludedTo = to;
+        } else { //_from_ is excluded, but subMap includes it!
+            SortedMap<OpTime, OplogOperation> tailMap = oplog.tailMap(from);
+            if (tailMap.size() > 1) {
+                includedFrom = tailMap.keySet().iterator().next();
+            } else { //the _from_ key is the only key greater or equal than _from_ and we want to exclude it
+                return Collections.emptyIterator();
+            }
         }
 
-        SortedMap<OpTime, OplogOperation> subMap = oplog.subMap(includedFrom, excludedTo);
-        return new IteratorMongoCursor<>(DATABASE, COLLECTION, idProvider.incrementAndGet(), hostAndPort, subMap.values().iterator());
+        Iterator<OplogOperation> excludingIt = oplog.subMap(includedFrom, to)
+                .values()
+                .iterator();
+        if (includeTo) {
+            OplogOperation toOp = oplog.get(to);
+            if (toOp != null) {
+                return Iterators.concat(excludingIt, Collections.singleton(toOp).iterator());
+            }
+        }
+        return excludingIt;
     }
 
 }

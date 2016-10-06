@@ -57,6 +57,27 @@ public class DefaultConcurrentToolsFactory implements ConcurrentToolsFactory {
     }
 
     @Override
+    public ScheduledExecutorService createScheduledExecutorServiceWithMaxThreads(String prefix, int maxThreads) {
+        ThreadFactory threadFactory = blockerThreadFactoryFunction.apply(prefix);
+        ScheduledThreadPoolExecutor executorService = new ScheduledThreadPoolExecutor(maxThreads, threadFactory);
+        shutdownHelper.terminateOnShutdown(executorService);
+
+        return executorService;
+    }
+
+    @Override
+    public ExecutorService createExecutorServiceWithMaxThreads(String prefix, int maxThreads) {
+        ThreadFactory threadFactory = blockerThreadFactoryFunction.apply(prefix);
+        ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(maxThreads, maxThreads,
+                                  10L, TimeUnit.MINUTES,
+                                  new LinkedBlockingQueue<>(),
+                                  threadFactory);
+        threadPoolExecutor.allowCoreThreadTimeOut(true);
+        shutdownHelper.terminateOnShutdown(threadPoolExecutor);
+        return threadPoolExecutor;
+    }
+
+    @Override
     @SuppressFBWarnings(value = {"NP_NONNULL_PARAM_VIOLATION"},
             justification = "ForkJoinPool constructor admits a null UncaughtExceptionHandler")
     public ExecutorService createExecutorService(String prefix, boolean blockerTasks, int maxThreads) {

@@ -3,6 +3,7 @@ package com.torodb.mongodb.utils;
 
 import com.eightkdata.mongowp.MongoVersion;
 import com.eightkdata.mongowp.client.core.MongoConnection;
+import com.eightkdata.mongowp.client.core.MongoConnection.RemoteCommandResponse;
 import com.eightkdata.mongowp.exceptions.MongoException;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.ListIndexesCommand;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.ListIndexesCommand.ListIndexesResult;
@@ -42,7 +43,7 @@ public class ListIndexesRequester {
             MongoConnection connection,
             String database,
             String collection) throws MongoException {
-        ListIndexesResult reply = connection.execute(
+        RemoteCommandResponse<ListIndexesResult> reply = connection.execute(
                 ListIndexesCommand.INSTANCE,
                 database,
                 true,
@@ -50,7 +51,10 @@ public class ListIndexesRequester {
                         collection
                 )
         );
-        return reply.getCursor();
+        if (!reply.isOk()) {
+            throw reply.asMongoException();
+        }
+        return reply.getCommandReply().get().getCursor();
     }
 
     private static CursorResult<IndexOptions> getFromQuery(

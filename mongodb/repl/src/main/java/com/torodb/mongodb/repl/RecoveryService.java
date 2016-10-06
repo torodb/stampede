@@ -18,6 +18,7 @@ import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.client.core.MongoClient;
 import com.eightkdata.mongowp.client.core.MongoClientFactory;
 import com.eightkdata.mongowp.client.core.MongoConnection;
+import com.eightkdata.mongowp.client.core.MongoConnection.RemoteCommandResponse;
 import com.eightkdata.mongowp.client.core.UnreachableMongoServerException;
 import com.eightkdata.mongowp.exceptions.MongoException;
 import com.eightkdata.mongowp.exceptions.OplogOperationUnsupported;
@@ -71,7 +72,7 @@ public class RecoveryService extends ThreadFactoryRunnableService {
     private final MongodServer server;
     private final OplogApplier oplogApplier;
     private final ReplicationFilters replFilters;
-
+    
     @Inject
     public RecoveryService(
             @ToroDbRunnableService ThreadFactory threadFactory,
@@ -109,10 +110,16 @@ public class RecoveryService extends ThreadFactoryRunnableService {
 
             while (!finished && attempt < MAX_ATTEMPTS && isRunning()) {
                 attempt++;
+                if (attempt > 1) {
+                    long millisToSleep = getMillisToSleep(attempt);
+                    LOGGER.debug("Waiting {} millis after the {}th attempt", millisToSleep, attempt - 1);
+                    Thread.sleep(millisToSleep);
+                }
                 try {
                     finished = initialSync();
                 } catch (TryAgainException ex) {
-                    LOGGER.warn("Error while trying to recover (attempt: " + attempt +")", ex);
+                    LOGGER.warn("Error while trying to recover (attempt: " 
+                            + attempt +")", ex);
                 } catch (FatalErrorException ex) {
                     LOGGER.error("Fatal error while trying to recover", ex);
                 }
@@ -152,10 +159,10 @@ public class RecoveryService extends ThreadFactoryRunnableService {
 
         HostAndPort syncSource;
         try {
-            syncSource = syncSourceProvider.calculateSyncSource(null);
+            syncSource = syncSourceProvider.newSyncSource();
             LOGGER.info("Using node " + syncSource + " to replicate from");
         } catch (NoSyncSourceFoundException ex) {
-            throw new TryAgainException();
+            throw new TryAgainException("No sync source");
         }
 
         MongoClient remoteClient;
@@ -169,8 +176,7 @@ public class RecoveryService extends ThreadFactoryRunnableService {
 
             MongoConnection remoteConnection = remoteClient.openConnection();
 
-            try {
-                OplogReader reader = oplogReaderProvider.newReader(remoteConnection);
+            try (OplogReader reader = oplogReaderProvider.newReader(remoteConnection)) {
 
                 OplogOperation lastClonedOp = reader.getLastOp();
                 OpTime lastRemoteOptime1 = lastClonedOp.getOpTime();
@@ -180,7 +186,7 @@ public class RecoveryService extends ThreadFactoryRunnableService {
                     oplogTransaction.truncate();
                     LOGGER.info("Local databases dropping started");
                     Status<?> status = dropDatabases();
-                    if (!status.isOK()) {
+                    if (!status.isOk()) {
                         throw new TryAgainException("Error while trying to drop collections: "
                                 + status);
                     }
@@ -284,7 +290,7 @@ public class RecoveryService extends ThreadFactoryRunnableService {
                     ListDatabasesCommand.INSTANCE,
                     Empty.getInstance()
             );
-            if (!listStatus.isOK()) {
+            if (!listStatus.isOk()) {
                 return listStatus;
             }
             assert listStatus.getResult() != null;
@@ -297,7 +303,7 @@ public class RecoveryService extends ThreadFactoryRunnableService {
                             DropDatabaseCommand.INSTANCE,
                             Empty.getInstance()
                     );
-                    if (!status.isOK()) {
+                    if (!status.isOk()) {
                         return status;
                     }
                 }
@@ -314,12 +320,17 @@ public class RecoveryService extends ThreadFactoryRunnableService {
         try {
             Stream<String> dbNames;
             try (MongoConnection remoteConnection = remoteClient.openConnection()) {
-                dbNames = remoteConnection.execute(
+                RemoteCommandResponse<ListDatabasesReply> remoteResponse = remoteConnection.execute(
                         ListDatabasesCommand.INSTANCE,
                         "admin",
                         true,
                         Empty.getInstance()
-                ).getDatabases().stream().map(db -> db.getName());
+                );
+                if (!remoteResponse.isOk()) {
+                    throw remoteResponse.asMongoException();
+                }
+
+                dbNames = remoteResponse.getCommandReply().get().getDatabases().stream().map(db -> db.getName());
             }
 
             dbNames.filter(this::isReplicable)
@@ -409,6 +420,10 @@ public class RecoveryService extends ThreadFactoryRunnableService {
 
     private boolean isReplicable(String databaseName) {
         return !databaseName.equals("local");
+    }
+
+    private long getMillisToSleep(int attempt) {
+        return attempt * 1000L;
     }
 
     private class MyWritePermissionSupplier implements Supplier<Boolean> {
