@@ -78,10 +78,12 @@ public class DefaultOplogApplier implements OplogApplier {
         this.batchLimits = batchLimits;
         this.oplogManager = oplogManager;
         this.batchAnalyzerFactory = batchAnalyzerFactory;
-        this.stopperExecutorService = concurrentToolsFactory.createExecutorService("oplog-applier-stopper", true, 1);
+        this.stopperExecutorService = concurrentToolsFactory.createExecutorServiceWithMaxThreads(
+                "oplog-applier-stopper", 1);
         this.actorSystem = ActorSystem.create("oplog-applier", null, null,
                 ExecutionContexts.fromExecutor(
-                        concurrentToolsFactory.createExecutorService("oplog-applier", true, 3)
+                        concurrentToolsFactory.createExecutorServiceWithMaxThreads(
+                                "oplog-applier", 3)
                 )
         );
         this.metrics = metrics;

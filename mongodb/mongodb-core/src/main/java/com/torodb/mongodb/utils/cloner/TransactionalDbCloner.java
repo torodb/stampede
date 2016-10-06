@@ -201,7 +201,7 @@ public class TransactionalDbCloner implements DbCloner {
                         .setOrdered(true)
                         .build()
             );
-            if (!insertResult.isOK() || insertResult.getResult().getN() != docsToInsert.size()) {
+            if (!insertResult.isOk() || insertResult.getResult().getN() != docsToInsert.size()) {
                 throw new CloningException("Error while inserting a cloned document");
             }
         }
@@ -243,7 +243,7 @@ public class TransactionalDbCloner implements DbCloner {
                             indexes
                     )
             );
-            if (!status.isOK()) {
+            if (!status.isOk()) {
                 throw new CloningException("Error while trying to fetch indexes from remote: " + status);
             }
         } catch (MongoException ex) {

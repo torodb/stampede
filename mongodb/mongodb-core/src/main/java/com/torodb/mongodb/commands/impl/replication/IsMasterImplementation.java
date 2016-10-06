@@ -32,14 +32,14 @@ public class IsMasterImplementation extends ConnectionTorodbCommandImpl<Empty, I
     @Override
     public Status<IsMasterReply> apply(Request req, Command<? super Empty, ? super IsMasterReply> command, Empty arg, MongodConnection context) {
         return Status.ok(
-                new IsMasterReply(
+                IsMasterReply.Builder.fromStandalone(
                         MongoLayerConstants.MAX_BSON_DOCUMENT_SIZE,
                         MongoLayerConstants.MAX_MESSAGE_SIZE_BYTES,
                         MongoLayerConstants.MAX_WRITE_BATCH_SIZE,
                         clock.instant(),
                         MongoLayerConstants.MAX_WIRE_VERSION,
                         MongoLayerConstants.MIN_WIRE_VERSION
-                )
+                ).build()
         );
 
     }

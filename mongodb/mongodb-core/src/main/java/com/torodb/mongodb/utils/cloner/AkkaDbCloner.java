@@ -374,7 +374,7 @@ public class AkkaDbCloner implements DbCloner {
                             .build()
             );
 
-            if (!insertResult.isOK()) {
+            if (!insertResult.isOk()) {
                 throw new CloningException("Error while inserting a cloned document");
             }
             int insertedDocs = insertResult.getResult().getN();
@@ -483,7 +483,7 @@ public class AkkaDbCloner implements DbCloner {
                                 indexesToClone
                         )
                 );
-                if (!status.isOK()) {
+                if (!status.isOk()) {
                     throw new CloningException("Error while cloning indexes: " + status.getErrorMsg());
                 }
                 transaction.commit();

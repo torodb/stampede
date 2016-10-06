@@ -1,19 +1,18 @@
 
 package com.torodb.mongodb.repl;
 
-import javax.annotation.Nullable;
 
 import com.eightkdata.mongowp.OpTime;
 import com.google.common.net.HostAndPort;
 import com.torodb.mongodb.repl.exceptions.NoSyncSourceFoundException;
+import java.util.Optional;
 
 /**
  *
  */
 public interface SyncSourceProvider {
 
-    public HostAndPort calculateSyncSource(@Nullable HostAndPort oldSyncSource)
-            throws NoSyncSourceFoundException;
+    public HostAndPort newSyncSource() throws NoSyncSourceFoundException;
 
     /**
      * Returns the host and port of the server that must be used to read from.
@@ -25,8 +24,10 @@ public interface SyncSourceProvider {
      * @throws NoSyncSourceFoundException iff there is no sync source we can
      *                                    reply from using the given optime
      */
-    public HostAndPort getSyncSource(OpTime lastFetchedOpTime) throws NoSyncSourceFoundException;
+    public default HostAndPort newSyncSource(OpTime lastFetchedOpTime) throws NoSyncSourceFoundException{
+        return newSyncSource();
+    }
 
-    public HostAndPort getLastUsedSyncSource();
+    public Optional<HostAndPort> getLastUsedSyncSource();
 
 }

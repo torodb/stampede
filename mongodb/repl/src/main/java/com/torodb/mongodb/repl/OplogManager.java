@@ -21,7 +21,6 @@ import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.eightkdata.mongowp.utils.BsonDocumentBuilder;
 import com.eightkdata.mongowp.utils.BsonReaderTool;
 import com.google.common.base.Preconditions;
-import com.google.common.primitives.UnsignedInteger;
 import com.torodb.common.util.ThreadFactoryIdleService;
 import com.torodb.core.annotations.ToroDbIdleService;
 import com.torodb.core.exceptions.user.UserException;
@@ -124,7 +123,7 @@ public class OplogManager extends ThreadFactoryIdleService {
                                     .addStatement(new DeleteStatement(DOC_QUERY, false))
                                     .build()
                     );
-                    if (!deleteResult.isOK()) {
+                    if (!deleteResult.isOk()) {
                         throw new RetrierAbortException(new MongoException(deleteResult));
                     }
 
@@ -136,16 +135,16 @@ public class OplogManager extends ThreadFactoryIdleService {
                                             new BsonDocumentBuilder()
                                                     .appendUnsafe(KEY, new BsonDocumentBuilder()
                                                             .appendUnsafe("hash", newLong(hash))
-                                                            .appendUnsafe("optime_i", newLong(opTime.getSecs().longValue()))
-                                                            .appendUnsafe("optime_t", newLong(opTime.getTerm().longValue()))
+                                                            .appendUnsafe("optime_i", opTime.getTimestamp())
+                                                            .appendUnsafe("optime_t", newLong(opTime.getTerm()))
                                                             .build()
                                                     ).build()
                                     ).build()
                     );
-                    if (insertResult.isOK() && insertResult.getResult().getN() != 1) {
+                    if (insertResult.isOk() && insertResult.getResult().getN() != 1) {
                         throw new RetrierAbortException(new MongoException(ErrorCode.OPERATION_FAILED, "More than one element inserted"));
                     }
-                    if (!insertResult.isOK()) {
+                    if (!insertResult.isOk()) {
                         throw new RetrierAbortException(new MongoException(insertResult));
                     }
                     transaction.commit();
@@ -172,7 +171,7 @@ public class OplogManager extends ThreadFactoryIdleService {
                             .setSlaveOk(true)
                             .build()
                     );
-                    if (!status.isOK()) {
+                    if (!status.isOk()) {
                         throw new RetrierAbortException(new MongoException(status));
                     }
 
@@ -187,8 +186,8 @@ public class OplogManager extends ThreadFactoryIdleService {
                         lastAppliedHash = BsonReaderTool.getLong(subDoc, "hash");
 
                         lastAppliedOpTime = new OpTime(
-                                UnsignedInteger.valueOf(BsonReaderTool.getLong(subDoc, "optime_i")),
-                                UnsignedInteger.valueOf(BsonReaderTool.getLong(subDoc, "optime_t"))
+                                BsonReaderTool.getTimestamp(subDoc, "optime_i"),
+                                BsonReaderTool.getLong(subDoc, "optime_t")
                         );
                     }
                     notifyLastAppliedOpTimeChange();

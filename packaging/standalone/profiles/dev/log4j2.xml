@@ -14,6 +14,14 @@
         <Logger name="com.torodb" level="DEBUG" additivity="false">
             <AppenderRef ref="ASYNC"/>
         </Logger>
+        
+        <Logger name="com.torodb.mongodb.repl" level="TRACE" additivity="false">
+            <AppenderRef ref="ASYNC"/>
+        </Logger>
+        
+        <Logger name="com.torodb.core.retrier" level="TRACE" additivity="false">
+            <AppenderRef ref="ASYNC"/>
+        </Logger>
 
         <Logger name="com.eightkdata" level="TRACE" additivity="false">
             <AppenderRef ref="ASYNC"/>

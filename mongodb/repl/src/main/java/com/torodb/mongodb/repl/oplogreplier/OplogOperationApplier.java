@@ -47,6 +47,14 @@ import com.torodb.mongodb.repl.OplogManager;
 import com.torodb.mongodb.repl.ReplicationFilters;
 import com.torodb.mongodb.utils.DefaultIdUtils;
 import com.torodb.mongodb.utils.NamespaceUtil;
+import java.util.Collections;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import static com.eightkdata.mongowp.bson.utils.DefaultBsonValues.newDocument;
+import static com.eightkdata.mongowp.bson.utils.DefaultBsonValues.newDocument;
 
 /**
  *
@@ -244,7 +252,7 @@ public class OplogOperationApplier {
             throw new OplogApplyingException(ex);
         }
 
-        if (!status.isOK()) {
+        if (!status.isOk()) {
             //TODO: improve error code
             throw new OplogApplyingException(new MongoException(status));
         }
@@ -283,7 +291,7 @@ public class OplogOperationApplier {
                     ),
                     trans
             );
-            if (!status.isOK()) {
+            if (!status.isOk()) {
                 throw new OplogApplyingException(new MongoException(status));
             }
             if (status.getResult() == 0 && applierContext.treatUpdateAsUpsert()) {
