@@ -140,13 +140,13 @@ public abstract class AbstractBackendTest {
         if (metaDocPart.getTableRef().isRoot()) {
             sqlInterface.getStructureInterface().createRootDocPartTable(dsl, data.database.getIdentifier(), metaDocPart.getIdentifier(), metaDocPart.getTableRef());
             sqlInterface.getStructureInterface().streamRootDocPartTableIndexesCreation(data.database.getIdentifier(), metaDocPart.getIdentifier(), metaDocPart.getTableRef())
-                    .forEach(consumer -> consumer.accept(dsl));
+                    .forEach(consumer -> consumer.apply(dsl));
         } else {
             sqlInterface.getStructureInterface().createDocPartTable(dsl, data.database.getIdentifier(), metaDocPart.getIdentifier(), metaDocPart.getTableRef(),
                     metaCollection.getMetaDocPartByTableRef(metaDocPart.getTableRef().getParent().get()).getIdentifier());
             sqlInterface.getStructureInterface().streamDocPartTableIndexesCreation(data.database.getIdentifier(), metaDocPart.getIdentifier(), metaDocPart.getTableRef(),
                     metaCollection.getMetaDocPartByTableRef(metaDocPart.getTableRef().getParent().get()).getIdentifier())
-                    .forEach(consumer -> consumer.accept(dsl));
+                    .forEach(consumer -> consumer.apply(dsl));
         }
         
         addColumnsToDocPartTable(dsl, metaCollection, metaDocPart);
@@ -229,13 +229,13 @@ public abstract class AbstractBackendTest {
                     if (metaDocPart.getTableRef().isRoot()) {
                         sqlInterface.getStructureInterface().createRootDocPartTable(dsl, data.database.getIdentifier(), metaDocPart.getIdentifier(), metaDocPart.getTableRef());
                         sqlInterface.getStructureInterface().streamRootDocPartTableIndexesCreation(data.database.getIdentifier(), metaDocPart.getIdentifier(), metaDocPart.getTableRef())
-                                .forEach(consumer -> consumer.accept(dsl));
+                                .forEach(consumer -> consumer.apply(dsl));
                     } else {
                         sqlInterface.getStructureInterface().createDocPartTable(dsl, data.database.getIdentifier(), metaDocPart.getIdentifier(), metaDocPart.getTableRef(),
                                 metaCollection.getMetaDocPartByTableRef(metaDocPart.getTableRef().getParent().get()).getIdentifier());
                         sqlInterface.getStructureInterface().streamDocPartTableIndexesCreation(data.database.getIdentifier(), metaDocPart.getIdentifier(), metaDocPart.getTableRef(),
                                 metaCollection.getMetaDocPartByTableRef(metaDocPart.getTableRef().getParent().get()).getIdentifier())
-                                .forEach(consumer -> consumer.accept(dsl));
+                                .forEach(consumer -> consumer.apply(dsl));
                     }
                     metaDocPart.streamScalars().forEachOrdered(metaScalar -> {
                         sqlInterface.getStructureInterface().addColumnToDocPartTable(dsl, data.database.getIdentifier(), metaDocPart.getIdentifier(), 

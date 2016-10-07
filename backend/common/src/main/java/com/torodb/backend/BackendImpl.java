@@ -8,6 +8,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ThreadFactory;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 import javax.inject.Inject;
@@ -41,8 +42,8 @@ import com.torodb.core.transaction.RollbackException;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
-import com.torodb.core.transaction.metainf.MetaIdentifiedDocPartIndex;
 import com.torodb.core.transaction.metainf.MetaDocPartIndexColumn;
+import com.torodb.core.transaction.metainf.MetaIdentifiedDocPartIndex;
 import com.torodb.core.transaction.metainf.MetaSnapshot;
 import com.torodb.core.transaction.metainf.MetainfoRepository;
 
@@ -145,7 +146,12 @@ public class BackendImpl extends ThreadFactoryIdleService implements Backend {
 
             //backend specific jobs
             Stream<Consumer<DSLContext>> backendSpecificJobs = sqlInterface.getStructureInterface()
-                    .streamDataInsertFinishTasks(snapshot);
+                    .streamDataInsertFinishTasks(snapshot).map(job -> {
+                        return (Consumer<DSLContext>) dsl -> {
+                            String index = job.apply(dsl);
+                            LOGGER.info("Task {} completed", index);
+                        };
+                    });
             Stream<Consumer<DSLContext>> jobs = Stream.concat(createInternalIndexesJobs, createIndexesJobs);
             jobs = Stream.concat(jobs, backendSpecificJobs);
             Stream<Runnable> runnables = jobs.map(this::dslConsumerToRunnable);
@@ -158,7 +164,7 @@ public class BackendImpl extends ThreadFactoryIdleService implements Backend {
     private Stream<Consumer<DSLContext>> enableInternalIndexJobs(MetaDatabase db, MetaCollection col, MetaDocPart docPart) {
         StructureInterface structureInterface = sqlInterface.getStructureInterface();
 
-        Stream<Consumer<DSLContext>> consumerStream;
+        Stream<Function<DSLContext, String>> consumerStream;
 
         if (docPart.getTableRef().isRoot()) {
             consumerStream = structureInterface.streamRootDocPartTableIndexesCreation(
@@ -179,7 +185,12 @@ public class BackendImpl extends ThreadFactoryIdleService implements Backend {
             );
         }
 
-        return consumerStream;
+        return consumerStream.map(job -> {
+            return (Consumer<DSLContext>) dsl -> {
+                String index = job.apply(dsl);
+                LOGGER.info("Created internal index {} for table {}", index, docPart.getIdentifier());
+            };
+        });
     }
 
     private Stream<Consumer<DSLContext>> enableIndexJobs(MetaDatabase db, MetaCollection col) {
@@ -217,6 +228,7 @@ public class BackendImpl extends ThreadFactoryIdleService implements Backend {
             } catch(UserException userException) {
                 throw new SystemException(userException);
             }
+            LOGGER.info("Created index {} for table {}", docPartIndex.getIdentifier(), docPart.getIdentifier());
         };
     }
 
