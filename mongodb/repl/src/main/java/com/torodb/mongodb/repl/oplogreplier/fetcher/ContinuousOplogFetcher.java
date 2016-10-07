@@ -12,6 +12,7 @@ import com.eightkdata.mongowp.server.api.pojos.MongoCursor.DeadCursorException;
 import com.google.common.base.Preconditions;
 import com.google.common.net.HostAndPort;
 import com.google.inject.assistedinject.Assisted;
+import com.mongodb.MongoServerException;
 import com.torodb.core.retrier.Retrier;
 import com.torodb.core.retrier.Retrier.Hint;
 import com.torodb.core.retrier.RetrierAbortException;
@@ -114,6 +115,8 @@ public class ContinuousOplogFetcher implements OplogFetcher {
                     throw new RollbackException(ex); //lets retry the whole block with the same reader
                 } catch (StopReplicationException | RollbackReplicationException ex) { //a business error
                     throw new RetrierAbortException(ex); //do not try again
+                } catch (MongoServerException ex) { //TODO: Fix this violation on the abstraction!
+                    throw new RollbackException(ex); //rollback and hopefully use another member
                 }
             }, Hint.CRITICAL, Hint.TIME_SENSIBLE);
         } catch (RetrierGiveUpException ex) {

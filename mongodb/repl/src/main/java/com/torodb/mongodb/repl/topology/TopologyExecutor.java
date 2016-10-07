@@ -32,6 +32,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.function.*;
 import javax.annotation.concurrent.GuardedBy;
+import javax.inject.Singleton;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -41,6 +42,7 @@ import static com.torodb.common.util.ListeningFutureToCompletableFuture.toComple
  * This class wrappes the single thread {@link ListeningScheduledExecutorService} that controls the
  * access to {@link TopologyCoordinator} methods.
  */
+@Singleton
 public class TopologyExecutor {
 
     private static final Logger LOGGER = LogManager.getLogger(TopologyExecutor.class);

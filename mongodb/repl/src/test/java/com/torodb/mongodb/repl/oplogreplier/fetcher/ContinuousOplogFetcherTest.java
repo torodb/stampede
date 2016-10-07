@@ -35,11 +35,11 @@ import com.torodb.mongodb.repl.OplogReaderProvider;
 import com.torodb.mongodb.repl.ReplMetrics;
 import com.torodb.mongodb.repl.SyncSourceProvider;
 import com.torodb.mongodb.repl.exceptions.NoSyncSourceFoundException;
+import com.torodb.mongodb.repl.oplogreplier.OpTimeFactory;
 import com.torodb.mongodb.repl.oplogreplier.OplogBatch;
 import com.torodb.mongodb.repl.oplogreplier.RollbackReplicationException;
 import com.torodb.mongodb.repl.oplogreplier.StopReplicationException;
 import com.torodb.mongodb.repl.oplogreplier.fetcher.ContinuousOplogFetcher.ContinuousOplogFetcherFactory;
-import java.time.Instant;
 import java.util.*;
 import java.util.function.IntFunction;
 import java.util.function.Supplier;
@@ -74,6 +74,7 @@ public class ContinuousOplogFetcherTest {
                 lastFetchedHash, lastFetchedOptime, metrics);
         }
     };
+    private static final OpTimeFactory opTimeFactory = new OpTimeFactory();
     
     @Before
     public void setUp() {
@@ -102,7 +103,7 @@ public class ContinuousOplogFetcherTest {
 
         OplogOperation lastOp = oplog.get(oplog.size() - 1);
         ContinuousOplogFetcher fetcher = factory.createFetcher(0,
-                new OpTime(lastOp.getOpTime().toInstant().plusMillis(1))
+                opTimeFactory.getNextOpTime(lastOp.getOpTime())
         );
 
         fetcher.fetch();
@@ -213,7 +214,7 @@ public class ContinuousOplogFetcherTest {
                 DefaultBsonValues.newDocument("_id", DefaultBsonValues.newInt(i)),
                 "aDb",
                 "aCol",
-                new OpTime(Instant.ofEpochSecond(i)),
+                opTimeFactory.newOpTime(i),
                 i,
                 OplogVersion.V1,
                 false);

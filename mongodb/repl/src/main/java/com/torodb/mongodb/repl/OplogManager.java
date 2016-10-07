@@ -4,7 +4,10 @@ package com.torodb.mongodb.repl;
 import com.eightkdata.mongowp.ErrorCode;
 import com.eightkdata.mongowp.OpTime;
 import com.eightkdata.mongowp.Status;
+import com.eightkdata.mongowp.bson.BsonDateTime;
 import com.eightkdata.mongowp.bson.BsonDocument;
+import com.eightkdata.mongowp.bson.utils.DefaultBsonValues;
+import com.eightkdata.mongowp.bson.utils.TimestampToDateTime;
 import com.eightkdata.mongowp.exceptions.MongoException;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.DeleteCommand;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.DeleteCommand.DeleteArgument;
@@ -126,6 +129,8 @@ public class OplogManager extends ThreadFactoryIdleService {
                     if (!deleteResult.isOk()) {
                         throw new RetrierAbortException(new MongoException(deleteResult));
                     }
+                    //TODO: This should be stored as timestamp once TORODB-189 is resolved
+                    long optimeAsLong = opTime.toOldBson().getMillisFromUnix();
 
                     Status<InsertResult> insertResult = transaction.execute(
                             new Request(OPLOG_DB, null, true, null),
@@ -135,7 +140,7 @@ public class OplogManager extends ThreadFactoryIdleService {
                                             new BsonDocumentBuilder()
                                                     .appendUnsafe(KEY, new BsonDocumentBuilder()
                                                             .appendUnsafe("hash", newLong(hash))
-                                                            .appendUnsafe("optime_i", opTime.getTimestamp())
+                                                            .appendUnsafe("optime_i", DefaultBsonValues.newLong(optimeAsLong))
                                                             .appendUnsafe("optime_t", newLong(opTime.getTerm()))
                                                             .build()
                                                     ).build()
@@ -185,8 +190,11 @@ public class OplogManager extends ThreadFactoryIdleService {
                         BsonDocument subDoc = BsonReaderTool.getDocument(doc, KEY);
                         lastAppliedHash = BsonReaderTool.getLong(subDoc, "hash");
 
+                        long optimeAsLong = BsonReaderTool.getLong(subDoc, "optime_i");
+                        BsonDateTime optimeAsDateTime = DefaultBsonValues.newDateTime(optimeAsLong);
+
                         lastAppliedOpTime = new OpTime(
-                                BsonReaderTool.getTimestamp(subDoc, "optime_i"),
+                                TimestampToDateTime.toTimestamp(optimeAsDateTime, DefaultBsonValues::newTimestamp),
                                 BsonReaderTool.getLong(subDoc, "optime_t")
                         );
                     }

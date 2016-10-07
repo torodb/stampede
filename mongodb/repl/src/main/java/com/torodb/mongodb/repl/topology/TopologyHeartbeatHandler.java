@@ -28,6 +28,7 @@ import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.interna
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.ReplicaSetConfig;
 import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.google.common.net.HostAndPort;
+import com.torodb.common.util.CompletionExceptions;
 import com.torodb.common.util.ThreadFactoryIdleService;
 import com.torodb.mongodb.repl.guice.ReplSetName;
 import java.time.Clock;
@@ -35,7 +36,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 import java.util.concurrent.ThreadFactory;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.GuardedBy;
@@ -184,12 +184,7 @@ public class TopologyHeartbeatHandler extends ThreadFactoryIdleService {
                 );
 
         executeResponseFuture.exceptionally(t -> {
-            Throwable cause;
-            if (t instanceof CompletionException && t.getCause() != null) {
-                cause = t.getCause();
-            } else {
-                cause = t;
-            }
+            Throwable cause = CompletionExceptions.getFirstNonCompletionException(t);
             if (cause instanceof CancellationException) {
                 LOGGER.trace("Heartbeat handling to {} has been cancelled "
                         + "before execution: {}", target, cause.getMessage());

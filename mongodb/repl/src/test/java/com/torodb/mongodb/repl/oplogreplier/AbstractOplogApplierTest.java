@@ -1,7 +1,6 @@
 
 package com.torodb.mongodb.repl.oplogreplier;
 
-import com.eightkdata.mongowp.OpTime;
 import com.eightkdata.mongowp.annotations.MongoWP;
 import com.eightkdata.mongowp.bson.BsonDocument;
 import com.eightkdata.mongowp.bson.utils.DefaultBsonValues;
@@ -92,6 +91,7 @@ public abstract class AbstractOplogApplierTest {
     private OplogApplier oplogApplier;
     private TorodServer torodServer;
     private OplogManager oplogManager;
+    private static final OpTimeFactory opTimeFactory = new OpTimeFactory();
 
     public abstract Module getSpecificTestModule();
 
@@ -292,7 +292,7 @@ public abstract class AbstractOplogApplierTest {
                 doc,
                 db,
                 col,
-                new OpTime(Instant.now()),
+                opTimeFactory.newOpTime(),
                 0,
                 OplogVersion.V1,
                 false
@@ -301,7 +301,7 @@ public abstract class AbstractOplogApplierTest {
 
     private UpdateOplogOperation createUpdateOplogOp(String db, String col, BsonDocument filter,
             boolean upsert, BsonDocument update) {
-        return new UpdateOplogOperation(filter, db, col, new OpTime(Instant.now()), 0,
+        return new UpdateOplogOperation(filter, db, col, opTimeFactory.newOpTime(), 0,
                 OplogVersion.V1, false, update, upsert);
     }
 

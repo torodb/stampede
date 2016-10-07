@@ -19,7 +19,6 @@
  */
 package com.torodb.mongodb.repl.oplogreplier.analyzed;
 
-import com.eightkdata.mongowp.OpTime;
 import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.bson.BsonDocument;
 import com.eightkdata.mongowp.server.api.oplog.*;
@@ -28,7 +27,7 @@ import com.torodb.kvdocument.values.KVDocument;
 import com.torodb.kvdocument.values.KVInteger;
 import com.torodb.kvdocument.values.KVValue;
 import com.torodb.kvdocument.values.heap.StringKVString;
-import java.time.Instant;
+import com.torodb.mongodb.repl.oplogreplier.OpTimeFactory;
 import java.util.Random;
 import java.util.function.BiConsumer;
 import org.apache.logging.log4j.Logger;
@@ -44,6 +43,7 @@ import static org.junit.Assert.*;
 public abstract class AbstractAnalyzedOpTest<E extends AnalyzedOp> {
     private static final Random RANDOM = new Random();
     private final KVValue<?> defaultMongoDocId = KVInteger.of(1);
+    private static final OpTimeFactory opTimeFactory = new OpTimeFactory();
 
     abstract E getAnalyzedOp(KVValue<?> mongoDocId);
 
@@ -133,7 +133,7 @@ public abstract class AbstractAnalyzedOpTest<E extends AnalyzedOp> {
                 (BsonDocument) MongoWPConverter.translate(createDefaultKVDoc(defaultMongoDocId)),
                 "db",
                 "col",
-                new OpTime(Instant.now()),
+                opTimeFactory.newOpTime(),
                 RANDOM.nextLong(),
                 OplogVersion.V1,
                 false
@@ -237,7 +237,7 @@ public abstract class AbstractAnalyzedOpTest<E extends AnalyzedOp> {
                 newDocument("_id", MongoWPConverter.translate(mongoDocId)),
                 "db",
                 "col",
-                new OpTime(Instant.now()),
+                opTimeFactory.newOpTime(),
                 RANDOM.nextLong(),
                 OplogVersion.V1,
                 false,
@@ -251,7 +251,7 @@ public abstract class AbstractAnalyzedOpTest<E extends AnalyzedOp> {
                 newDocument("_id", MongoWPConverter.translate(mongoDocId)),
                 "db",
                 "col",
-                new OpTime(Instant.now()),
+                opTimeFactory.newOpTime(),
                 RANDOM.nextLong(),
                 OplogVersion.V1,
                 false,
@@ -265,7 +265,7 @@ public abstract class AbstractAnalyzedOpTest<E extends AnalyzedOp> {
                 newDocument("_id", MongoWPConverter.translate(mongoDocId)),
                 "db",
                 "col",
-                new OpTime(Instant.now()),
+                opTimeFactory.newOpTime(),
                 RANDOM.nextLong(),
                 OplogVersion.V1,
                 false,

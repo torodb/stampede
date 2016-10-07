@@ -74,7 +74,7 @@ public class TopologyService extends ThreadFactoryIdleService {
         boolean finished = false;
         LOGGER.debug("Starting topology service");
 
-        heartbeatHandler.startUp();
+        heartbeatHandler.startAsync();
         heartbeatHandler.awaitRunning();
 
         boolean topologyReady;

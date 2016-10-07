@@ -87,7 +87,7 @@ class TopologyCoordinator {
     /**
      * How far this node must fall behind before considering switching sync sources
      */
-    private final long _maxSyncSourceLagSecs;
+    private final int _maxSyncSourceLagSecs;
 
     /**
      * The current config, including a vector of MemberConfigs.
@@ -120,7 +120,7 @@ class TopologyCoordinator {
         this._forceSyncSourceIndex = -1;
         Preconditions.checkArgument(!maxSyncSourceLag.isNegative(),
                 "Negative max sync source lag is not accepted");
-        this._maxSyncSourceLagSecs = maxSyncSourceLag.getSeconds();
+        this._maxSyncSourceLagSecs = (int) maxSyncSourceLag.getSeconds();
         this._pings = new HashMap<>();
         this.slaveDelaySecs = slaveDelay.getSeconds();
         Preconditions.checkArgument(slaveDelaySecs >= 0, "Slave delay must be "
