@@ -25,7 +25,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.validation.constraints.NotNull;
+
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.IndexOptions.IndexType;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.torodb.packaging.config.jackson.FilterListDeserializer;
@@ -37,9 +41,18 @@ import com.torodb.packaging.config.model.protocol.mongo.FilterList.IndexFilter;
 public class FilterList extends HashMap<String, Map<String, List<IndexFilter>>> {
 	private static final long serialVersionUID = -167780238191456194L;
 	
+	@JsonPropertyOrder({
+	    "name",
+	    "unique",
+	    "keys"
+	})
 	public static class IndexFilter {
+        @JsonProperty(required=false)
 	    private String name = null;
+        @JsonProperty(required=false)
 	    private Boolean unique = null;
+	    @NotNull
+	    @JsonProperty(required=true)
 	    private IndexFieldsFilter keys = new IndexFieldsFilter();
 	    
 	    public IndexFilter() {

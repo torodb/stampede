@@ -30,8 +30,13 @@ import com.torodb.packaging.config.annotation.Description;
 import com.torodb.packaging.config.validation.RequiredParametersForAuthentication;
 
 @JsonPropertyOrder({
-	"replSetName",
-	"role"
+    "replSetName",
+    "syncSource",
+	"role",
+	"ssl",
+	"auth",
+	"include",
+	"exclude"
 })
 public class Replication {
 	

@@ -23,8 +23,20 @@ package com.torodb.packaging.config.model.protocol.mongo;
 import javax.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.torodb.packaging.config.annotation.Description;
 
+@JsonPropertyOrder({
+    "enabled",
+    "allowInvalidHostnames",
+    "FIPSMode",
+    "CAFile",
+    "trustStoreFile",
+    "trustStorePassword",
+    "keyStoreFile",
+    "keyStorePassword",
+    "keyPassword"
+})
 public class SSL {
     @Description("config.protocol.mongo.replication.ssl.enabled")
     @NotNull

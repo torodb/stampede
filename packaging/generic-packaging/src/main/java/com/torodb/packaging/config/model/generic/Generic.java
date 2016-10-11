@@ -23,20 +23,15 @@ package com.torodb.packaging.config.model.generic;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.torodb.core.metrics.MetricsConfig;
 import com.torodb.packaging.config.annotation.Description;
+import com.torodb.packaging.config.model.backend.ConnectionPoolConfig;
 import com.torodb.packaging.config.model.generic.log4j.Log4jLevelToLogLevelMapper;
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-
-import java.util.AbstractMap;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Description("config.generic")
 @JsonPropertyOrder({ 
@@ -45,7 +40,7 @@ import java.util.stream.Stream;
 	"connectionPoolSize", 
 	"reservedReadPoolSize" 
 })
-public class Generic implements MetricsConfig{
+public class Generic implements ConnectionPoolConfig, MetricsConfig {
 
 	@Description("config.generic.logLevel")
 	@NotNull
@@ -111,6 +106,7 @@ public class Generic implements MetricsConfig{
 		this.log4j2File = log4j2File;
 	}
 
+	@Override
 	public Long getConnectionPoolTimeout() {
         return connectionPoolTimeout;
     }
@@ -119,6 +115,7 @@ public class Generic implements MetricsConfig{
         this.connectionPoolTimeout = connectionPoolTimeout;
     }
 
+    @Override
     public Integer getConnectionPoolSize() {
 		return connectionPoolSize;
 	}
@@ -127,6 +124,7 @@ public class Generic implements MetricsConfig{
 		this.connectionPoolSize = connectionPoolSize;
 	}
 
+    @Override
 	public Integer getReservedReadPoolSize() {
 		return reservedReadPoolSize;
 	}

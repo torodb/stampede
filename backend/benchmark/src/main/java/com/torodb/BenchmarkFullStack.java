@@ -22,11 +22,11 @@ import com.torodb.backend.util.TestDataFactory;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.transaction.RollbackException;
 import com.torodb.kvdocument.values.KVDocument;
-import com.torodb.packaging.ToroDbServer;
-import com.torodb.packaging.config.model.Config;
+import com.torodb.standalone.ToroDbServer;
+import com.torodb.standalone.config.model.Config;
+import com.torodb.torod.SharedWriteTorodTransaction;
 import com.torodb.torod.TorodConnection;
 import com.torodb.torod.TorodServer;
-import com.torodb.torod.SharedWriteTorodTransaction;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 

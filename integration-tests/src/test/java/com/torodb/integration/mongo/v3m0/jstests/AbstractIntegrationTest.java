@@ -40,11 +40,11 @@ import org.slf4j.Logger;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.Multimap;
-import com.torodb.packaging.config.model.Config;
 import com.torodb.core.exceptions.SystemException;
 import com.torodb.integration.IntegrationTestEnvironment;
 import com.torodb.integration.TestCategory;
 import com.torodb.integration.ToroRunnerClassRule;
+import com.torodb.standalone.config.model.Config;
 
 public abstract class AbstractIntegrationTest {
 

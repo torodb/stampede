@@ -26,12 +26,13 @@ import javax.xml.bind.annotation.XmlType;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.torodb.packaging.config.annotation.Description;
+import com.torodb.packaging.config.model.protocol.ProtocolListenerConfig;
 import com.torodb.packaging.config.validation.Host;
 import com.torodb.packaging.config.validation.Port;
 
 @XmlType
 @JsonPropertyOrder({ "bindIp", "port" })
-public class Net {
+public class Net implements ProtocolListenerConfig {
 	@Description("config.protocol.mongo.net.bindIp")
 	@NotNull
 	@Host
@@ -43,6 +44,7 @@ public class Net {
 	@JsonProperty(required=true)
 	private Integer port = 27018;
 
+	@Override
 	public String getBindIp() {
 		return bindIp;
 	}
@@ -51,6 +53,7 @@ public class Net {
 		this.bindIp = bindIp;
 	}
 
+    @Override
 	public Integer getPort() {
 		return port;
 	}

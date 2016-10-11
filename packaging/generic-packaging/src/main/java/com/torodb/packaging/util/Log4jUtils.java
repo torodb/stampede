@@ -105,8 +105,6 @@ public class Log4jUtils {
     }
     
     private static class InternalAppenderListener extends AbstractAppender {
-
-        private static final long serialVersionUID = 1L;
         
         private final AppenderListener appenderListener;
         

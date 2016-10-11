@@ -23,16 +23,16 @@ package com.torodb.packaging.config.validation;
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 
-import com.torodb.packaging.config.model.backend.Password;
+import com.torodb.packaging.config.model.backend.BackendPasswordConfig;
 
-public class ExistsAnyPasswordValidator implements ConstraintValidator<ExistsAnyPassword, Password> {
+public class ExistsAnyPasswordValidator implements ConstraintValidator<ExistsAnyPassword, BackendPasswordConfig> {
 	
 	@Override
 	public void initialize(ExistsAnyPassword constraintAnnotation) {
 	}
 
 	@Override
-	public boolean isValid(Password value, ConstraintValidatorContext context) {
+	public boolean isValid(BackendPasswordConfig value, ConstraintValidatorContext context) {
 		return value == null || value.getPassword() != null || value.getToropassFile() != null;
 	}
 }
