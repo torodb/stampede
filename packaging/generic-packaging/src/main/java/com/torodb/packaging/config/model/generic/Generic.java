@@ -67,7 +67,7 @@ public class Generic implements ConnectionPoolConfig, MetricsConfig {
 	@JsonProperty(required=true)
 	private Integer reservedReadPoolSize = 10;
 	@Description("config.generic.metricsEnabled")
-	private Boolean metricsEnabled = true;
+	private Boolean metricsEnabled = false;
 
 	public Generic() {
 		Level log4jLevel = LogManager.getRootLogger().getLevel();
