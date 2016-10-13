@@ -97,6 +97,11 @@ then
   LIBDIR="$BASEDIR"/lib
 fi
 
+if [ -z "$TOROCONFIG" ]
+then
+  TOROCONFIG="$BASEDIR"/bin/@{name}.conf
+fi
+
 CLASSPATH="$LIBDIR"/@{name}-@{version}.jar
 
 ENDORSED_DIR=
@@ -120,4 +125,5 @@ fi
 exec "$JAVACMD" $JAVA_OPTS  \
   -cp "$CLASSPATH" \
   @{mainClass} \
+  -c "$TOROCONFIG" \
   "$@"
