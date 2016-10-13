@@ -36,8 +36,6 @@ import org.junit.Test;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.torodb.packaging.config.model.backend.derby.Derby;
-import com.torodb.packaging.config.model.backend.postgres.Postgres;
 import com.torodb.packaging.config.model.generic.LogLevel;
 import com.torodb.packaging.config.model.protocol.mongo.FilterList.IndexFilter;
 import com.torodb.packaging.config.model.protocol.mongo.Role;
@@ -45,6 +43,7 @@ import com.torodb.packaging.config.util.ConfigUtils;
 import com.torodb.stampede.CliConfig;
 import com.torodb.stampede.CliConfigUtils;
 import com.torodb.stampede.config.model.Config;
+import com.torodb.stampede.config.model.backend.postgres.Postgres;
 
 public class ConfigTest {
 
@@ -199,7 +198,7 @@ public class ConfigTest {
 		Assert.assertTrue("/replication not defined", config.getReplication() != null);
 		Assert.assertTrue("/backend not defined", config.getBackend() != null);
 		Assert.assertEquals("/backend/postgres not defined", Postgres.class, config.getBackend().getBackendImplementation().getClass());
-		Assert.assertTrue("/backend/postgres not identified as Postgres", config.getBackend().isPostgres());
+		Assert.assertTrue("/backend/postgres not identified as Postgres", config.getBackend().is(Postgres.class));
 	}
 
 	@Test(expected=IllegalArgumentException.class)
@@ -243,71 +242,13 @@ public class ConfigTest {
         Assert.assertEquals("/replication/syncSource has different value than that specified", "localhost:27017", config.getReplication().getSyncSource());
         Assert.assertTrue("/backend not defined", config.getBackend() != null);
         Assert.assertEquals("/backend/postgres not defined", Postgres.class, config.getBackend().getBackendImplementation().getClass());
-        Assert.assertTrue("/backend/postgres not identified as Postgres", config.getBackend().isPostgres());
-        Assert.assertTrue("/backend/postgres not identified as Postgres Like", config.getBackend().isPostgresLike());
-        Assert.assertEquals("/backend/postgres/host has different value than that specified", "localhost", config.getBackend().asPostgres().getHost());
-        Assert.assertEquals("/backend/postgres/port has different value than that specified", Integer.valueOf(5432), config.getBackend().asPostgres().getPort());
-        Assert.assertEquals("/backend/postgres/user has different value than that specified", "root", config.getBackend().asPostgres().getUser());
-        Assert.assertEquals("/backend/postgres/password specified but should have not been read from parameters", null, config.getBackend().asPostgres().getPassword());
+        Assert.assertTrue("/backend/postgres not identified as Postgres", config.getBackend().is(Postgres.class));
+        Assert.assertTrue("/backend/postgres not identified as Postgres Like", config.getBackend().isLike(Postgres.class));
+        Assert.assertEquals("/backend/postgres/host has different value than that specified", "localhost", config.getBackend().as(Postgres.class).getHost());
+        Assert.assertEquals("/backend/postgres/port has different value than that specified", Integer.valueOf(5432), config.getBackend().as(Postgres.class).getPort());
+        Assert.assertEquals("/backend/postgres/user has different value than that specified", "root", config.getBackend().as(Postgres.class).getUser());
+        Assert.assertEquals("/backend/postgres/password specified but should have not been read from parameters", null, config.getBackend().as(Postgres.class).getPassword());
 	}
-
-	@Test
-	public void testParseWithYAMLAndReplaceBackendWithParam() throws Exception {
-		CliConfig cliConfig = new CliConfig() {
-			@Override
-			public boolean hasConfFile() {
-				return true;
-			}
-			@Override
-			public InputStream getConfInputStream() {
-				return ConfigTest.class.getResourceAsStream("/test-parse-with-yaml.yml");
-			}
-			@Override
-			public List<String> getParams() {
-				String[] params = new String[] {
-			        "/backend=null",
-					"/backend/derby/host=localhost", 
-					"/backend/derby/port=5432", 
-					"/backend/derby/user=root", 
-				};
-				return Arrays.asList(params);
-			}
-		};
-		Config config = CliConfigUtils.readConfig(cliConfig);
-		
-		Assert.assertTrue("/backend not defined", config.getBackend() != null);
-		Assert.assertEquals("/backend/derby not defined", Derby.class, config.getBackend().getBackendImplementation().getClass());
-		Assert.assertTrue("/backend/derby not identified as Derby", config.getBackend().isDerby());
-		Assert.assertTrue("/backend/derby not identified as Derby Like", config.getBackend().isDerbyLike());
-		Assert.assertEquals("/backend/derby/host has different value than that specified", "localhost", config.getBackend().asDerby().getHost());
-		Assert.assertEquals("/backend/derby/port has different value than that specified", Integer.valueOf(5432), config.getBackend().asDerby().getPort());
-		Assert.assertEquals("/backend/derby/user has different value than that specified", "root", config.getBackend().asDerby().getUser());
-		Assert.assertEquals("/backend/derby/password specified but should have not been read from parameters", null, config.getBackend().asDerby().getPassword());
-	}
-
-    @Test
-    public void testParseWithYAMLUsingDerby() throws Exception {
-        CliConfig cliConfig = new CliConfig() {
-            @Override
-            public boolean hasConfFile() {
-                return true;
-            }
-            @Override
-            public InputStream getConfInputStream() {
-                return ConfigTest.class.getResourceAsStream("/test-parse-with-yaml-using-derby.yml");
-            }
-        };
-        Config config = CliConfigUtils.readConfig(cliConfig);
-        
-        Assert.assertTrue("/backend not defined", config.getBackend() != null);
-        Assert.assertEquals("/backend/derby not defined", Derby.class, config.getBackend().getBackendImplementation().getClass());
-        Assert.assertTrue("/backend/derby not identified as Derby", config.getBackend().isDerby());
-        Assert.assertTrue("/backend/derby not identified as Derby Like", config.getBackend().isDerbyLike());
-        Assert.assertEquals("/backend/derby/host has different value than that specified", "localhost", config.getBackend().asDerby().getHost());
-        Assert.assertEquals("/backend/derby/port has different value than that specified", Integer.valueOf(5432), config.getBackend().asDerby().getPort());
-        Assert.assertEquals("/backend/derby/user has different value than that specified", "root", config.getBackend().asDerby().getUser());
-        Assert.assertEquals("/backend/derby/password specified but should have not been read from parameters", null, config.getBackend().asDerby().getPassword());
-    }
 
     @Test(expected=IllegalArgumentException.class)
     public void testParseWithYAMLUsingPassword() throws Exception {
@@ -380,12 +321,12 @@ public class ConfigTest {
         Assert.assertEquals("/replication/syncSource has different value than that specified", "localhost:27017", config.getReplication().getSyncSource());
         Assert.assertTrue("/backend not defined", config.getBackend() != null);
         Assert.assertEquals("/backend/postgres not defined", Postgres.class, config.getBackend().getBackendImplementation().getClass());
-        Assert.assertTrue("/backend/postgres not identified as Postgres", config.getBackend().isPostgres());
-        Assert.assertTrue("/backend/postgres not identified as Postgres Like", config.getBackend().isPostgresLike());
-        Assert.assertEquals("/backend/postgres/host has different value than that specified", "localhost", config.getBackend().asPostgres().getHost());
-        Assert.assertEquals("/backend/postgres/port has different value than that specified", Integer.valueOf(5432), config.getBackend().asPostgres().getPort());
-        Assert.assertEquals("/backend/postgres/user has different value than that specified", "root", config.getBackend().asPostgres().getUser());
-        Assert.assertEquals("/backend/postgres/password has different value than that specified", null, config.getBackend().asPostgres().getPassword());
+        Assert.assertTrue("/backend/postgres not identified as Postgres", config.getBackend().is(Postgres.class));
+        Assert.assertTrue("/backend/postgres not identified as Postgres Like", config.getBackend().isLike(Postgres.class));
+        Assert.assertEquals("/backend/postgres/host has different value than that specified", "localhost", config.getBackend().as(Postgres.class).getHost());
+        Assert.assertEquals("/backend/postgres/port has different value than that specified", Integer.valueOf(5432), config.getBackend().as(Postgres.class).getPort());
+        Assert.assertEquals("/backend/postgres/user has different value than that specified", "root", config.getBackend().as(Postgres.class).getUser());
+        Assert.assertEquals("/backend/postgres/password has different value than that specified", null, config.getBackend().as(Postgres.class).getPassword());
     }
 
     @Test
@@ -432,12 +373,12 @@ public class ConfigTest {
                 config.getReplication().getExclude().get("mongodb"));
         Assert.assertTrue("/backend not defined", config.getBackend() != null);
         Assert.assertEquals("/backend/postgres not defined", Postgres.class, config.getBackend().getBackendImplementation().getClass());
-        Assert.assertTrue("/backend/postgres not identified as Postgres", config.getBackend().isPostgres());
-        Assert.assertTrue("/backend/postgres not identified as Postgres Like", config.getBackend().isPostgresLike());
-        Assert.assertEquals("/backend/postgres/host has different value than that specified", "localhost", config.getBackend().asPostgres().getHost());
-        Assert.assertEquals("/backend/postgres/port has different value than that specified", Integer.valueOf(5432), config.getBackend().asPostgres().getPort());
-        Assert.assertEquals("/backend/postgres/user has different value than that specified", "root", config.getBackend().asPostgres().getUser());
-        Assert.assertEquals("/backend/postgres/password specified but should have not been read from parameters", null, config.getBackend().asPostgres().getPassword());
+        Assert.assertTrue("/backend/postgres not identified as Postgres", config.getBackend().is(Postgres.class));
+        Assert.assertTrue("/backend/postgres not identified as Postgres Like", config.getBackend().isLike(Postgres.class));
+        Assert.assertEquals("/backend/postgres/host has different value than that specified", "localhost", config.getBackend().as(Postgres.class).getHost());
+        Assert.assertEquals("/backend/postgres/port has different value than that specified", Integer.valueOf(5432), config.getBackend().as(Postgres.class).getPort());
+        Assert.assertEquals("/backend/postgres/user has different value than that specified", "root", config.getBackend().as(Postgres.class).getUser());
+        Assert.assertEquals("/backend/postgres/password specified but should have not been read from parameters", null, config.getBackend().as(Postgres.class).getPassword());
     }
 
     @Test
@@ -484,12 +425,12 @@ public class ConfigTest {
                 config.getReplication().getExclude().get("mongodb"));
         Assert.assertTrue("/backend not defined", config.getBackend() != null);
         Assert.assertEquals("/backend/postgres not defined", Postgres.class, config.getBackend().getBackendImplementation().getClass());
-        Assert.assertTrue("/backend/postgres not identified as Postgres", config.getBackend().isPostgres());
-        Assert.assertTrue("/backend/postgres not identified as Postgres Like", config.getBackend().isPostgresLike());
-        Assert.assertEquals("/backend/postgres/host has different value than that specified", "localhost", config.getBackend().asPostgres().getHost());
-        Assert.assertEquals("/backend/postgres/port has different value than that specified", Integer.valueOf(5432), config.getBackend().asPostgres().getPort());
-        Assert.assertEquals("/backend/postgres/user has different value than that specified", "root", config.getBackend().asPostgres().getUser());
-        Assert.assertEquals("/backend/postgres/password specified but should have not been read from parameters", null, config.getBackend().asPostgres().getPassword());
+        Assert.assertTrue("/backend/postgres not identified as Postgres", config.getBackend().is(Postgres.class));
+        Assert.assertTrue("/backend/postgres not identified as Postgres Like", config.getBackend().isLike(Postgres.class));
+        Assert.assertEquals("/backend/postgres/host has different value than that specified", "localhost", config.getBackend().as(Postgres.class).getHost());
+        Assert.assertEquals("/backend/postgres/port has different value than that specified", Integer.valueOf(5432), config.getBackend().as(Postgres.class).getPort());
+        Assert.assertEquals("/backend/postgres/user has different value than that specified", "root", config.getBackend().as(Postgres.class).getUser());
+        Assert.assertEquals("/backend/postgres/password specified but should have not been read from parameters", null, config.getBackend().as(Postgres.class).getPassword());
     }
 
 }

@@ -20,75 +20,38 @@
 
 package com.torodb.packaging.config.model.backend.derby;
 
-import javax.validation.constraints.NotNull;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import com.torodb.packaging.config.annotation.Description;
 import com.torodb.packaging.config.model.backend.BackendImplementation;
 import com.torodb.packaging.config.model.backend.BackendPasswordConfig;
-import com.torodb.packaging.config.validation.ExistsAnyPassword;
-import com.torodb.packaging.config.validation.Host;
-import com.torodb.packaging.config.validation.InMemoryOnlyIfEmbedded;
-import com.torodb.packaging.config.validation.Port;
 import com.torodb.packaging.config.visitor.BackendImplementationVisitor;
 
-@Description("config.backend.derby")
-@JsonPropertyOrder({
-	"host",
-	"port",
-	"database",
-	"user",
-	"password",
-	"toropassFile",
-	"applicationName",
-    "embedded",
-    "inMemory"
-})
-@ExistsAnyPassword
-@InMemoryOnlyIfEmbedded
-public class Derby implements BackendImplementation, BackendPasswordConfig {
-	@Description("config.backend.postgres.host")
-	@NotNull
-	@Host
-	@JsonProperty(required=true)
-	protected String host = "localhost";
-	@Description("config.backend.postgres.port")
-	@NotNull
-	@Port
-	@JsonProperty(required=true)
-	protected Integer port = 1527;
-	@Description("config.backend.postgres.database")
-	@NotNull
-	@JsonProperty(required=true)
-	protected String database = "torod";
-	@Description("config.backend.postgres.user")
-	@NotNull
-	@JsonProperty(required=true)
-	protected String user = "torodb";
-	@JsonIgnore
-	protected String password;
-	@Description("config.backend.postgres.toropassFile")
-	protected String toropassFile = System.getProperty("user.home", "/") + "/.toropass";
-	@Description("config.backend.postgres.applicationName")
-    @NotNull
-    @JsonProperty(required=true)
-    protected String applicationName = "toro";
-    @Description("config.backend.postgres.includeForeignKeys")
-    @NotNull
-    @JsonProperty(required=true)
-    protected Boolean includeForeignKeys = false;
-    @Description("config.backend.derby.embedded")
-    @NotNull
-    @JsonProperty(required=true)
-    protected Boolean embedded = true;
-    @Description("config.backend.derby.inMemory")
-    @NotNull
-    @JsonProperty(required=true)
-    protected Boolean inMemory = true;
+public abstract class Derby implements BackendImplementation, BackendPasswordConfig {
+	private String host;
+	private Integer port;
+	private String database;
+	private String user;
+	private String password;
+	private String toropassFile;
+	private String applicationName;
+	private Boolean includeForeignKeys;
+	private Boolean embedded;
+	private Boolean inMemory;
 	
-	public String getHost() {
+	protected Derby(String host, Integer port, String database, String user, String password, String toropassFile,
+            String applicationName, Boolean includeForeignKeys, Boolean embedded, Boolean inMemory) {
+        super();
+        this.host = host;
+        this.port = port;
+        this.database = database;
+        this.user = user;
+        this.password = password;
+        this.toropassFile = toropassFile;
+        this.applicationName = applicationName;
+        this.includeForeignKeys = includeForeignKeys;
+        this.embedded = embedded;
+        this.inMemory = inMemory;
+    }
+	
+    public String getHost() {
 		return host;
 	}
 	public void setHost(String host) {
@@ -100,6 +63,12 @@ public class Derby implements BackendImplementation, BackendPasswordConfig {
 	public void setPort(Integer port) {
 		this.port = port;
 	}
+    public String getDatabase() {
+        return database;
+    }
+    public void setDatabase(String database) {
+        this.database = database;
+    }
 	public String getUser() {
 		return user;
 	}
@@ -121,24 +90,6 @@ public class Derby implements BackendImplementation, BackendPasswordConfig {
 	public void setToropassFile(String toropassFile) {
 		this.toropassFile = toropassFile;
 	}
-    public void setEmbedded(Boolean embedded) {
-        this.embedded = embedded;
-    }
-    public Boolean getEmbedded() {
-        return embedded;
-    }
-    public void setInMemory(Boolean inMemory) {
-        this.inMemory = inMemory;
-    }
-    public Boolean getInMemory() {
-        return inMemory;
-    }
-	public String getDatabase() {
-		return database;
-	}
-	public void setDatabase(String database) {
-		this.database = database;
-	}
 	public String getApplicationName() {
 		return applicationName;
 	}
@@ -150,6 +101,18 @@ public class Derby implements BackendImplementation, BackendPasswordConfig {
     }
     public Boolean getIncludeForeignKeys() {
         return includeForeignKeys;
+    }
+    public void setEmbedded(Boolean embedded) {
+        this.embedded = embedded;
+    }
+    public Boolean getEmbedded() {
+        return embedded;
+    }
+    public void setInMemory(Boolean inMemory) {
+        this.inMemory = inMemory;
+    }
+    public Boolean getInMemory() {
+        return inMemory;
     }
 	
 	@Override

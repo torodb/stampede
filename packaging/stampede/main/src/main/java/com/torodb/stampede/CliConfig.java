@@ -31,9 +31,9 @@ import com.beust.jcommander.IValueValidator;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.converters.IParameterSplitter;
-import com.torodb.packaging.config.model.backend.Backend;
 import com.torodb.packaging.config.model.backend.BackendImplementation;
 import com.torodb.packaging.config.model.backend.derby.Derby;
+import com.torodb.stampede.config.model.backend.Backend;
 
 public class CliConfig {
 	
@@ -388,7 +388,7 @@ public class CliConfig {
     public static Class<? extends BackendImplementation> getBackendClass(String backend) {
         backend = backend.toLowerCase(Locale.US);
         
-        for (Class<? extends BackendImplementation> backendClass : Backend.BACKEND_CLASSES) {
+        for (Class<? extends BackendImplementation> backendClass : Backend.BACKEND_CLASSES.values()) {
             String backendClassLabel = backendClass.getSimpleName().toLowerCase(Locale.US);
             if (backend.equals(backendClassLabel)) {
                 return backendClass;
@@ -404,7 +404,7 @@ public class CliConfig {
                     (getBackendClass(value) == null || 
                     getBackendClass(value) == Derby.class)) {
                 List<String> possibleValues = new ArrayList<>();
-                for (Class<? extends BackendImplementation> backendClass : Backend.BACKEND_CLASSES) {
+                for (Class<? extends BackendImplementation> backendClass : Backend.BACKEND_CLASSES.values()) {
                     if (backendClass == Derby.class) {
                         continue;
                     }

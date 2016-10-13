@@ -31,8 +31,8 @@ import com.beust.jcommander.IValueValidator;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.converters.IParameterSplitter;
-import com.torodb.packaging.config.model.backend.Backend;
 import com.torodb.packaging.config.model.backend.BackendImplementation;
+import com.torodb.standalone.config.model.backend.Backend;
 
 public class CliConfig {
 	
@@ -110,7 +110,7 @@ public class CliConfig {
     public static Class<? extends BackendImplementation> getBackendClass(String backend) {
         backend = backend.toLowerCase(Locale.US);
         
-        for (Class<? extends BackendImplementation> backendClass : Backend.BACKEND_CLASSES) {
+        for (Class<? extends BackendImplementation> backendClass : Backend.BACKEND_CLASSES.values()) {
             String backendClassLabel = backendClass.getSimpleName().toLowerCase(Locale.US);
             if (backend.equals(backendClassLabel)) {
                 return backendClass;
@@ -124,7 +124,7 @@ public class CliConfig {
         public void validate(String name, String value) throws ParameterException {
             if (value != null && getBackendClass(value) == null) {
                 List<String> possibleValues = new ArrayList<>();
-                for (Class<? extends BackendImplementation> backendClass : Backend.BACKEND_CLASSES) {
+                for (Class<? extends BackendImplementation> backendClass : Backend.BACKEND_CLASSES.values()) {
                     possibleValues.add(backendClass.getSimpleName().toLowerCase(Locale.US));
                 }
                 throw new ParameterException("Unknown backend: " + value + " (possible values are: " + possibleValues + ")");

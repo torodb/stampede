@@ -7,12 +7,12 @@ import java.util.Collections;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.torodb.packaging.config.model.backend.derby.Derby;
 import com.torodb.packaging.config.model.generic.LogLevel;
 import com.torodb.packaging.config.model.protocol.mongo.Replication;
 import com.torodb.packaging.config.model.protocol.mongo.Role;
 import com.torodb.packaging.config.util.ConfigUtils;
 import com.torodb.standalone.config.model.Config;
+import com.torodb.standalone.config.model.backend.derby.Derby;
 
 /**
  *
@@ -36,7 +36,7 @@ public class ToroDbiServerTest {
                 replication
         ));
         config.getBackend().setBackendImplementation(new Derby());
-        config.getBackend().asDerby().setPassword("torodb");
+        config.getBackend().as(Derby.class).setPassword("torodb");
         config.getGeneric().setLogLevel(LogLevel.TRACE);
 
         ConfigUtils.validateBean(config);

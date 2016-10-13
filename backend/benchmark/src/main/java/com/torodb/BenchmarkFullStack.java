@@ -22,6 +22,7 @@ import com.torodb.backend.util.TestDataFactory;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.transaction.RollbackException;
 import com.torodb.kvdocument.values.KVDocument;
+import com.torodb.packaging.config.model.backend.postgres.Postgres;
 import com.torodb.standalone.ToroDbServer;
 import com.torodb.standalone.config.model.Config;
 import com.torodb.torod.SharedWriteTorodTransaction;
@@ -46,7 +47,7 @@ public class BenchmarkFullStack {
         public void startup() {
             if (torod == null) {
                 Config config = new Config();
-                config.getBackend().asPostgres().setPassword("torodb");
+                config.getBackend().as(Postgres.class).setPassword("torodb");
                 Injector injector = ToroDbServer.createInjector(config, Clock.systemUTC());
                 torod = injector.getInstance(TorodServer.class);
                 torod.startAsync();

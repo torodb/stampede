@@ -156,15 +156,15 @@ public class Main {
             }
         }
         
-        if (config.getBackend().isPostgresLike()) {
-            Postgres postgres = config.getBackend().asPostgres();
+        if (config.getBackend().isLike(Postgres.class)) {
+            Postgres postgres = config.getBackend().as(Postgres.class);
 
             if (cliConfig.isAskForPassword()) {
                 console.print("Database user " + postgres.getUser() + " password:");
                 postgres.setPassword(readPwd());
             }
-        } else if (config.getBackend().isDerbyLike()) {
-            Derby derby = config.getBackend().asDerby();
+        } else if (config.getBackend().isLike(Derby.class)) {
+            Derby derby = config.getBackend().as(Derby.class);
 
             if (cliConfig.isAskForPassword()) {
                 console.print("Database user " + derby.getUser() + " password:");

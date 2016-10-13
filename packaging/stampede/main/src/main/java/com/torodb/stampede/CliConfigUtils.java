@@ -13,9 +13,10 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
-import com.torodb.packaging.config.model.backend.Backend;
+import com.torodb.packaging.config.model.backend.derby.Derby;
 import com.torodb.packaging.config.util.ConfigUtils;
 import com.torodb.stampede.config.model.Config;
+import com.torodb.stampede.config.model.backend.Backend;
 
 /**
  *
@@ -84,10 +85,6 @@ public class CliConfigUtils {
 
 		validateBean(config);
 		
-		if (config.getBackend().isDerby()) {
-		    throw new IllegalArgumentException("Validation error at /config/backend: Backend derby is not valid. (through reference chain: com.torodb.stampede.config.model.Config[\"backend\"])");
-		}
-
 		return config;
 	}
 }

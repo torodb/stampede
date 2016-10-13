@@ -18,21 +18,14 @@
  *     
  */
 
-package com.torodb.packaging.config.model.backend.greenplum;
+package com.torodb.stampede.config.jackson;
 
-import com.torodb.packaging.config.annotation.Description;
-import com.torodb.packaging.config.model.backend.postgres.Postgres;
-import com.torodb.packaging.config.visitor.BackendImplementationVisitor;
+import com.torodb.stampede.config.model.backend.Backend;
 
-@Description("config.backend.greenplum")
-public class Greenplum extends Postgres {
-
-    public Greenplum() {
-        this.port = 6432;
+public class BackendDeserializer extends com.torodb.packaging.config.jackson.BackendDeserializer {
+    
+    public BackendDeserializer() {
+        super(() -> new Backend());
     }
 
-	@Override
-	public void accept(BackendImplementationVisitor visitor) {
-		visitor.visit(this);
-	}
 }

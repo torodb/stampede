@@ -22,6 +22,7 @@ package com.torodb.packaging.config.jackson;
 
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.function.Supplier;
 
 import org.bson.json.JsonParseException;
 
@@ -30,16 +31,21 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.torodb.core.exceptions.SystemException;
 import com.torodb.packaging.config.model.backend.Backend;
 import com.torodb.packaging.config.model.backend.BackendImplementation;
-import com.torodb.packaging.config.model.backend.derby.Derby;
-import com.torodb.packaging.config.model.backend.postgres.Postgres;
-import com.torodb.core.exceptions.SystemException;
 
-public class BackendDeserializer extends JsonDeserializer<Backend> {
+public abstract class BackendDeserializer extends JsonDeserializer<Backend> {
+    
+    private final Supplier<Backend> backendProvider;
+    
+    protected BackendDeserializer(Supplier<Backend> backendProvider) {
+        this.backendProvider = backendProvider;
+    }
+    
 	@Override
 	public Backend deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException, JsonProcessingException {
-		Backend backend = new Backend();
+		Backend backend = backendProvider.get();
 		JsonNode node = jp.getCodec().readTree(jp);
 		
 		JsonNode backendImplementationNode = null;
@@ -53,10 +59,8 @@ public class BackendDeserializer extends JsonDeserializer<Backend> {
 			}
 			
 			backendImplementationNode = node.get(fieldName);
-			if ("postgres".equals(fieldName)) {
-				backendImplementationClass = Postgres.class;
-            } else if ("derby".equals(fieldName)) {
-                backendImplementationClass = Derby.class;
+			if (backend.hasBackendImplementation(fieldName)) {
+                backendImplementationClass = backend.getBackendImplementationClass(fieldName);
 			} else {
 			    throw new SystemException("Backend " + fieldName + " is not valid.");
 			}

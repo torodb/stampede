@@ -1,7 +1,0 @@
-replication:
-  replSetName: rs1
-backend:
-  derby:
-    host: localhost
-    port: 5432
-    user: root

@@ -45,13 +45,13 @@ import com.google.inject.Injector;
 import com.torodb.backend.DbBackend;
 import com.torodb.backend.meta.TorodbSchema;
 import com.torodb.core.backend.IdentifierConstraints;
-import com.torodb.packaging.config.model.backend.derby.Derby;
-import com.torodb.packaging.config.model.backend.postgres.Postgres;
 import com.torodb.packaging.config.model.protocol.mongo.Replication;
 import com.torodb.packaging.config.util.ConfigUtils;
 import com.torodb.packaging.util.Log4jUtils;
 import com.torodb.standalone.ToroDbServer;
 import com.torodb.standalone.config.model.Config;
+import com.torodb.standalone.config.model.backend.derby.Derby;
+import com.torodb.standalone.config.model.backend.postgres.Postgres;
 
 public abstract class AbstractBackendRunnerClassRule implements TestRule {
 
@@ -116,8 +116,8 @@ public abstract class AbstractBackendRunnerClassRule implements TestRule {
 
 			Log4jUtils.setRootLevel(config.getGeneric().getLogLevel());
 			
-            if (config.getBackend().isPostgresLike()) {
-                Postgres postgresBackend = config.getBackend().asPostgres();
+            if (config.getBackend().isLike(Postgres.class)) {
+                Postgres postgresBackend = config.getBackend().as(Postgres.class);
 
                 PGSimpleDataSource dataSource = new PGSimpleDataSource();
         
@@ -192,12 +192,12 @@ public abstract class AbstractBackendRunnerClassRule implements TestRule {
 
         switch(ite.getBackend()) {
             case POSTGRES:
-                if (!config.getBackend().isPostgres()) {
+                if (!config.getBackend().is(Postgres.class)) {
                     config.getBackend().setBackendImplementation(new Postgres());
                 }
                 break;
             case DERBY:
-                if (!config.getBackend().isDerby()) {
+                if (!config.getBackend().is(Derby.class)) {
                     config.getBackend().setBackendImplementation(new Derby());
                 }
                 break;
@@ -206,16 +206,16 @@ public abstract class AbstractBackendRunnerClassRule implements TestRule {
         }
 		
 		try {
-            if (config.getBackend().isPostgresLike()) { 
-                ConfigUtils.parseToropassFile(config.getBackend().asPostgres());
-                if (config.getBackend().asPostgres().getPassword() == null) {
-                    config.getBackend().asPostgres().setPassword("torodb");
+            if (config.getBackend().isLike(Postgres.class)) { 
+                ConfigUtils.parseToropassFile(config.getBackend().as(Postgres.class));
+                if (config.getBackend().as(Postgres.class).getPassword() == null) {
+                    config.getBackend().as(Postgres.class).setPassword("torodb");
                 }
             } else
-            if (config.getBackend().isDerbyLike()) { 
-                ConfigUtils.parseToropassFile(config.getBackend().asDerby());
-                if (config.getBackend().asDerby().getPassword() == null) {
-                    config.getBackend().asDerby().setPassword("torodb");
+            if (config.getBackend().isLike(Derby.class)) { 
+                ConfigUtils.parseToropassFile(config.getBackend().as(Derby.class));
+                if (config.getBackend().as(Derby.class).getPassword() == null) {
+                    config.getBackend().as(Derby.class).setPassword("torodb");
                 }
             }
 		} catch(Exception exception) {
@@ -300,7 +300,7 @@ public abstract class AbstractBackendRunnerClassRule implements TestRule {
                 String schemaName = schemas.getString("TABLE_SCHEM");
                 if (identifierConstraints.isAllowedSchemaIdentifier(schemaName) || schemaName.equals(TorodbSchema.IDENTIFIER)) {
                     String dropSchemaStatement = "DROP SCHEMA \"" + schemaName + "\" CASCADE";
-                    if (config.getBackend().isDerbyLike()) {
+                    if (config.getBackend().isLike(Derby.class)) {
                         dropSchemaStatement = "DROP SCHEMA \"" + schemaName + "\" RESTRICT";
                     }
                     try (PreparedStatement preparedStatement = connection.prepareStatement(dropSchemaStatement)) {

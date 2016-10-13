@@ -18,26 +18,14 @@
  *     
  */
 
-package com.torodb.packaging.config.annotation;
+package com.torodb.standalone.config.jackson;
 
-import static java.lang.annotation.ElementType.TYPE;
-import static java.lang.annotation.ElementType.FIELD;
-import static java.lang.annotation.ElementType.METHOD;
+import com.torodb.standalone.config.model.backend.Backend;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-
-import javax.inject.Qualifier;
-
-/**
- * 
- */
-@Qualifier
-@Retention(RetentionPolicy.RUNTIME)
-@Target({TYPE,FIELD,METHOD})
-public @interface Description {
-
-	String value();
+public class BackendDeserializer extends com.torodb.packaging.config.jackson.BackendDeserializer {
+    
+    public BackendDeserializer() {
+        super(() -> new Backend());
+    }
 
 }

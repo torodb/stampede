@@ -26,8 +26,8 @@ import javax.validation.constraints.NotNull;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.torodb.packaging.config.annotation.Description;
-import com.torodb.packaging.config.model.backend.Backend;
 import com.torodb.packaging.config.model.generic.Generic;
+import com.torodb.standalone.config.model.backend.Backend;
 import com.torodb.standalone.config.model.protocol.Protocol;
 
 
