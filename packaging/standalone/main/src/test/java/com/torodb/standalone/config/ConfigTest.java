@@ -24,6 +24,8 @@ import java.io.File;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
+import java.util.PropertyResourceBundle;
+import java.util.ResourceBundle;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -81,7 +83,8 @@ public class ConfigTest {
 
 	@Test
 	public void testHelpParam() throws Exception {
-		ConfigUtils.printParamDescriptionFromConfigSchema(Config.class, new ByteArrayConsole(), 0);
+        ResourceBundle configBundle = PropertyResourceBundle.getBundle("ConfigMessages");
+		ConfigUtils.printParamDescriptionFromConfigSchema(Config.class, configBundle, new ByteArrayConsole(), 0);
 	}
 
 	@Test

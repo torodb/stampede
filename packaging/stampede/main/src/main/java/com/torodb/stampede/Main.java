@@ -69,10 +69,12 @@ public class Main {
 		}
 
 		if (cliConfig.isHelpParam()) {
-			console.println(cliBundle.getString("help-param-header"));
-			ConfigUtils.printParamDescriptionFromConfigSchema(Config.class, console, 0);
+			console.println(cliBundle.getString("cli.help-param-header"));
+			ConfigUtils.printParamDescriptionFromConfigSchema(Config.class, cliBundle, console, 0);
 			System.exit(0);
 		}
+		
+		cliConfig.addParams();
 		
 		final Config config = CliConfigUtils.readConfig(cliConfig);
 		

@@ -13,6 +13,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
+import com.torodb.packaging.config.model.backend.Backend;
 import com.torodb.packaging.config.util.ConfigUtils;
 import com.torodb.stampede.config.model.Config;
 
@@ -35,10 +36,6 @@ public class CliConfigUtils {
 		ObjectMapper objectMapper = ConfigUtils.mapper();
 
 		Config defaultConfig = new Config();
-		if (cliConfig.getBackend() != null) {
-		    defaultConfig.getBackend().setBackendImplementation(
-		            CliConfig.getBackendClass(cliConfig.getBackend()).newInstance());
-		}
 		ObjectNode configNode = (ObjectNode) objectMapper.valueToTree(defaultConfig);
 
 		if (cliConfig.hasConfFile() || cliConfig.hasXmlConfFile()) {
@@ -58,6 +55,13 @@ public class CliConfigUtils {
 			}
 		}
 
+        if (cliConfig.getBackend() != null) {
+            Backend backend = new Backend(
+                    CliConfig.getBackendClass(cliConfig.getBackend()).newInstance());
+            ObjectNode backendNode = (ObjectNode) objectMapper.valueToTree(backend);
+            configNode.set("backend", backendNode);
+        }
+		
 		if (cliConfig.getParams() != null) {
 			YAMLMapper yamlMapper = ConfigUtils.yamlMapper();
 			for (String paramPathValue : cliConfig.getParams()) {
@@ -79,6 +83,10 @@ public class CliConfigUtils {
 		Config config = objectMapper.treeToValue(configNode, Config.class);
 
 		validateBean(config);
+		
+		if (config.getBackend().isDerby()) {
+		    throw new IllegalArgumentException("Validation error at /config/backend: Backend derby is not valid. (through reference chain: com.torodb.stampede.config.model.Config[\"backend\"])");
+		}
 
 		return config;
 	}

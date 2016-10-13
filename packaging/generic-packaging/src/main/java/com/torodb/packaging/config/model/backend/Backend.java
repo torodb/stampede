@@ -56,6 +56,13 @@ public class Backend {
 	@JsonProperty(required=true)
 	private BackendImplementation backendImplementation = new Postgres();
 
+    public Backend() {
+    }
+
+    public Backend(BackendImplementation backendImplementation) {
+        this.backendImplementation = backendImplementation;
+    }
+	
 	public BackendImplementation getBackendImplementation() {
 		return backendImplementation;
 	}

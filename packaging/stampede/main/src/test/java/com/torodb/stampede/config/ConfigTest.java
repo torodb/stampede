@@ -22,10 +22,10 @@ package com.torodb.stampede.config;
 
 import java.io.File;
 import java.io.InputStream;
-import java.lang.reflect.Field;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.PropertyResourceBundle;
+import java.util.ResourceBundle;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -71,7 +71,6 @@ public class ConfigTest {
 	public void testPrintConf() throws Exception {
 		ByteArrayConsole byteArrayConsole = new ByteArrayConsole();
 		Config config = new Config();
-		config.getReplication().setReplSetName("rs1");
 		ConfigUtils.printYamlConfig(config, byteArrayConsole);
 		ConfigUtils.readConfigFromYaml(Config.class, new String(byteArrayConsole.getByteArrayOutputStream().toByteArray()));
 	}
@@ -80,25 +79,19 @@ public class ConfigTest {
 	public void testPrintXmlConf() throws Exception {
 		ByteArrayConsole byteArrayConsole = new ByteArrayConsole();
         Config config = new Config();
-        config.getReplication().setReplSetName("rs1");
 		ConfigUtils.printXmlConfig(config, byteArrayConsole);
         ConfigUtils.readConfigFromXml(Config.class, new String(byteArrayConsole.getByteArrayOutputStream().toByteArray()));
 	}
 
 	@Test
 	public void testHelpParam() throws Exception {
-		ConfigUtils.printParamDescriptionFromConfigSchema(Config.class, new ByteArrayConsole(), 0);
+        ResourceBundle cliBundle = PropertyResourceBundle.getBundle("CliMessages");
+		ConfigUtils.printParamDescriptionFromConfigSchema(Config.class, cliBundle, new ByteArrayConsole(), 0);
 	}
 
 	@Test
 	public void testParse() throws Exception {
 	    CliConfig cliConfig = new CliConfig();
-	    Field field = ImmutableList.copyOf(CliConfig.class.getDeclaredFields()).stream()
-	        .filter(f -> f.getName().equals("params"))
-	        .findAny().get();
-	    field.setAccessible(true);
-	    field.set(cliConfig, new ArrayList<>());
-	    cliConfig.getParams().add("/replication/replSetName=rs1");
 		CliConfigUtils.readConfig(cliConfig);
 	}
 
@@ -112,8 +105,7 @@ public class ConfigTest {
             @Override
             public List<String> getParams() {
                 String[] params = new String[] { 
-                    "/generic/logFile=" + logFile,
-                    "/replication/replSetName=rs1"
+                    "/generic/logFile=" + logFile
                 };
                 return Arrays.asList(params);
             }
@@ -129,8 +121,7 @@ public class ConfigTest {
             @Override
             public List<String> getParams() {
                 String[] params = new String[] { 
-                    "/generic/logFile=null",
-                    "/replication/replSetName=rs1"
+                    "/generic/logFile=null"
                 };
                 return Arrays.asList(params);
             }
@@ -149,8 +140,7 @@ public class ConfigTest {
             @Override
             public List<String> getParams() {
                 String[] params = new String[] { 
-                    "/generic/logPackages/" + logPackage + "=" + logLevel.name(),
-                    "/replication/replSetName=rs1"
+                    "/generic/logPackages/" + logPackage + "=" + logLevel.name()
                 };
                 return Arrays.asList(params);
             }

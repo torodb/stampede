@@ -31,7 +31,6 @@ import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
 import java.util.Set;
 
@@ -315,10 +314,9 @@ public class ConfigUtils {
 		console.println(byteArrayOutputStream.toString(Charsets.UTF_8.name()));
 	}
 
-	public static <T> void printParamDescriptionFromConfigSchema(Class<T> configClass, Console console, int tabs)
+	public static <T> void printParamDescriptionFromConfigSchema(Class<T> configClass, ResourceBundle resourceBundle, Console console, int tabs)
 			throws UnsupportedEncodingException, JsonMappingException {
 		ObjectMapper objectMapper = mapper();
-		ResourceBundle resourceBundle = PropertyResourceBundle.getBundle("ConfigMessages");
 		DescriptionFactoryWrapper visitor = new DescriptionFactoryWrapper(resourceBundle, console, tabs);
 		objectMapper.acceptJsonFormatVisitor(objectMapper.constructType(configClass), visitor);
 		console.println("");

@@ -70,7 +70,8 @@ public class Main {
 
 		if (cliConfig.isHelpParam()) {
 			console.println(cliBundle.getString("help-param-header"));
-			ConfigUtils.printParamDescriptionFromConfigSchema(Config.class, console, 0);
+	        ResourceBundle configBundle = PropertyResourceBundle.getBundle("ConfigMessages");
+			ConfigUtils.printParamDescriptionFromConfigSchema(Config.class, configBundle, console, 0);
 			System.exit(0);
 		}
 		
