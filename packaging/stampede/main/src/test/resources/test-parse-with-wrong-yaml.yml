@@ -1,0 +1,14 @@
+generics:
+  logLevel: NONE
+  logPackages:
+    com.torodb: DEBUG
+replication:
+  replSetName: rs1
+  role: HIDDEN_SLAVE
+  syncSource: localhost:27017
+backend:
+  postgres:
+    host: localhost
+    port: 5432
+    user: root
+    password: toor

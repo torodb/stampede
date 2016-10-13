@@ -21,6 +21,7 @@ import com.torodb.core.BuildProperties;
 import com.torodb.core.Shutdowner;
 import com.torodb.core.annotations.ToroDbIdleService;
 import com.torodb.core.guice.CoreModule;
+import com.torodb.core.metrics.MetricsModule;
 import com.torodb.d2r.guice.D2RModule;
 import com.torodb.metainfo.guice.MetainfModule;
 import com.torodb.mongodb.core.MongodServer;
@@ -31,6 +32,7 @@ import com.torodb.packaging.config.model.protocol.mongo.Replication;
 import com.torodb.packaging.guice.BackendImplementationModule;
 import com.torodb.packaging.guice.ConfigModule;
 import com.torodb.packaging.guice.ExecutorServicesModule;
+import com.torodb.packaging.guice.FakeMongoServerModule;
 import com.torodb.packaging.guice.PackagingModule;
 import com.torodb.packaging.util.MongoClientConfigurationFactory;
 import com.torodb.packaging.util.ReplicationFiltersFactory;
@@ -83,22 +85,24 @@ public class ToroDbiServer extends ThreadFactoryIdleService {
 
         Injector injector = Guice.createInjector(
                 new ConfigModule(
-                    config.getProtocol().getMongo().getNet(),
-                    config.getProtocol().getMongo(),
-                    config.getGeneric()),
+                        config.getProtocol().getMongo(),
+                        config.getGeneric()),
                 new PackagingModule(clock),
                 new CoreModule(),
-                new BackendImplementationModule(config.getBackend().getBackendImplementation()),
+                new BackendImplementationModule(
+                        config.getBackend().getBackendImplementation()),
                 new BackendModule(),
                 new MetainfModule(),
                 new D2RModule(),
                 new SqlTorodModule(),
                 new MongoLayerModule(),
+                new FakeMongoServerModule(),
                 new MongoDbReplModule(
                         MongoClientConfigurationFactory.getMongoClientConfiguration(replication),
                         ReplicationFiltersFactory.getReplicationFilters(replication),
                         replSetName
                 ),
+                new MetricsModule(config.getGeneric()),
                 new ExecutorServicesModule(),
                 new ConcurrentModule()
         );

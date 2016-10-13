@@ -67,7 +67,7 @@ public class Postgres implements BackendImplementation, BackendPasswordConfig {
 	protected String password;
 	@Description("config.backend.postgres.toropassFile")
     @JsonProperty(required=true)
-	protected String toropassFile = System.getProperty("user.home") + "/.toropass";
+	protected String toropassFile = System.getProperty("user.home", "/") + "/.toropass";
 	@Description("config.backend.postgres.applicationName")
 	@NotNull
 	@JsonProperty(required=true)

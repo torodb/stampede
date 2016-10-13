@@ -198,7 +198,7 @@
                         <configuration>
                             <programs>
                                 <program>
-                                    <mainClass>com.torodb.Main</mainClass>
+                                    <mainClass>com.torodb.standalone.Main</mainClass>
                                     <id>torodb</id>
                                 </program>
                             </programs>
@@ -220,7 +220,6 @@
         <profile>
             <id>docker</id>
             <properties>
-                <docker.skipbase>true</docker.skipbase>
                 <docker.postgres.password>postgres</docker.postgres.password>
                 <docker.torodb.password>torodb</docker.torodb.password>
             </properties>
@@ -233,7 +232,7 @@
                         <configuration>
                             <programs>
                                 <program>
-                                    <mainClass>com.torodb.Main</mainClass>
+                                    <mainClass>com.torodb.standalone.Main</mainClass>
                                     <id>torodb</id>
                                 </program>
                             </programs>
@@ -270,28 +269,6 @@
                                             <color>blue</color>
                                         </log>
                                     </run>
-                                </image>
-                                <image>
-                                    <alias>torodb</alias>
-                                    <name>8kdata/torodb-base:%v</name>
-                                    <build>
-                                        <skip>${docker.skipbase}</skip>
-                                        <from>isuper/java-oracle:jdk_8</from>
-                                        <tags>
-                                            <tag>${project.version}</tag>
-                                            <tag>latest</tag>
-                                        </tags>
-                                        <nocache>true</nocache>
-                                        <runCmds>
-                                            <run>#TODO: https://jira.mongodb.org/browse/SERVER-22143</run>
-                                            <run>curl "https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-3.2.8.tgz" | tar xz  -C /opt --transform 's-^[^/]*-mongodb-' -f -</run>
-                                            <run>apt-get update</run>
-                                            <run>apt-get install netcat postgresql-client python-pip -y</run>
-                                            <run>pip install awscli</run>
-                                            <run>apt-get clean</run>
-                                            <run>rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*</run>
-                                        </runCmds>
-                                    </build>
                                 </image>
                                 <image>
                                     <alias>torodb</alias>

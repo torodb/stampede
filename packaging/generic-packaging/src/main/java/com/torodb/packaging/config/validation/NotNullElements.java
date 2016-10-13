@@ -37,7 +37,7 @@ import javax.validation.ReportAsSingleViolation;
 @Constraint(validatedBy = NotNullElementsValidator.class)
 @ReportAsSingleViolation
 public @interface NotNullElements {
-	String message() default "{com.torodb.config.validation.NotNullElements.message}";
+	String message() default "{config.validation.NotNullElements.message}";
 
 	Class<?>[] groups() default {};
 

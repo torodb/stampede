@@ -30,6 +30,7 @@ import com.torodb.mongodb.wp.guice.MongoDbWpModule;
 import com.torodb.packaging.guice.BackendImplementationModule;
 import com.torodb.packaging.guice.ConfigModule;
 import com.torodb.packaging.guice.ExecutorServicesModule;
+import com.torodb.packaging.guice.MongoServerModule;
 import com.torodb.packaging.guice.PackagingModule;
 import com.torodb.standalone.config.model.Config;
 import com.torodb.torod.TorodServer;
@@ -69,7 +70,6 @@ public class ToroDbServer extends ThreadFactoryIdleService {
     public static Injector createInjector(Config config, Clock clock) {
         Injector injector = Guice.createInjector(
                 new ConfigModule(
-                        config.getProtocol().getMongo().getNet(),
                         config.getProtocol().getMongo(),
                         config.getGeneric()),
                 new PackagingModule(clock),
@@ -80,6 +80,8 @@ public class ToroDbServer extends ThreadFactoryIdleService {
                 new D2RModule(),
                 new SqlTorodModule(),
                 new MongoLayerModule(),
+                new MongoServerModule(
+                        config.getProtocol().getMongo().getNet()),
                 new MongoDbWpModule(),
                 new MetricsModule(config.getGeneric()),
                 new ExecutorServicesModule(),

@@ -37,7 +37,7 @@ import javax.validation.ReportAsSingleViolation;
 @Constraint(validatedBy = RequiredParametersForAuthenticationValidator.class)
 @ReportAsSingleViolation
 public @interface RequiredParametersForAuthentication {
-	String message() default "{com.torodb.config.validation.RequiredParametersForAuthentication.message}";
+	String message() default "{config.validation.RequiredParametersForAuthentication.message}";
 
 	Class<?>[] groups() default {};
 

@@ -11,9 +11,7 @@
     <packaging>pom</packaging>
 
     <name>ToroDB-poc: Packaging Standalone</name>
-    <description>
-        ToroDB main project. Contains executable class, CLI parsing and DI dependencies.
-    </description>
+    <description>ToroDB standalone project.</description>
 
     <properties>
         <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:ssZZ</maven.build.timestamp.format>

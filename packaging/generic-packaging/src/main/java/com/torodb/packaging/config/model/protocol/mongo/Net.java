@@ -33,12 +33,12 @@ import com.torodb.packaging.config.validation.Port;
 @XmlType
 @JsonPropertyOrder({ "bindIp", "port" })
 public class Net implements ProtocolListenerConfig {
-	@Description("config.protocol.mongo.net.bindIp")
+	@Description("config.mongo.net.bindIp")
 	@NotNull
 	@Host
 	@JsonProperty(required=true)
 	private String bindIp = "localhost";
-	@Description("config.protocol.mongo.net.port")
+	@Description("config.mongo.net.port")
 	@NotNull
 	@Port
 	@JsonProperty(required=true)

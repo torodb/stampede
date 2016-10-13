@@ -67,7 +67,7 @@ public class MySQL implements BackendImplementation, BackendPasswordConfig {
 	@JsonIgnore
 	private String password;
 	@Description("config.backend.postgres.toropassFile")
-	private String toropassFile = System.getProperty("user.home") + "/.toropass";
+	private String toropassFile = System.getProperty("user.home", "/") + "/.toropass";
 	@Description("config.backend.postgres.applicationName")
 	@NotNull
 	@JsonProperty(required=true)

@@ -70,7 +70,7 @@ public class Derby implements BackendImplementation, BackendPasswordConfig {
 	@JsonIgnore
 	protected String password;
 	@Description("config.backend.postgres.toropassFile")
-	protected String toropassFile = System.getProperty("user.home") + "/.toropass";
+	protected String toropassFile = System.getProperty("user.home", "/") + "/.toropass";
 	@Description("config.backend.postgres.applicationName")
     @NotNull
     @JsonProperty(required=true)

@@ -133,7 +133,7 @@ public class Main {
                         
                         @Override
                         public String getPassword() {
-                            return null;
+                            return replication.getAuth().getPassword();
                         }
                         
                         @Override

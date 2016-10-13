@@ -52,13 +52,13 @@ public class Mongo implements CursorConfig {
     @NotNullElements
     @SSLEnabledForX509Authentication
 	private List<Replication> replication;
-    @Description("config.protocol.mongo.cursorTimeout")
+    @Description("config.mongo.cursorTimeout")
     @NotNull
     @JsonProperty(required=true)
     private Long cursorTimeout = 10L * 60 * 1000;
-    @Description("config.protocol.mongo.mongopassFile")
+    @Description("config.mongo.mongopassFile")
     @JsonProperty(required=true)
-    private String mongopassFile = System.getProperty("user.home") + "/.mongopass";
+    private String mongopassFile = System.getProperty("user.home", "/") + "/.mongopass";
 
 	public Net getNet() {
 		return net;

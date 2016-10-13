@@ -35,7 +35,7 @@ import javax.validation.ReportAsSingleViolation;
 @Constraint(validatedBy = { InMemoryOnlyIfEmbeddedValidator.class })
 @ReportAsSingleViolation
 public @interface InMemoryOnlyIfEmbedded {
-	String message() default "{com.torodb.config.validation.InMemoryOnlyIfEmbedded.message}";
+	String message() default "{config.validation.InMemoryOnlyIfEmbedded.message}";
 
 	Class<?>[] groups() default {};
 
