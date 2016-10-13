@@ -1,4 +1,9 @@
-# Toro Stampede
+# Documentation
+
+* [English version](en/00_Getting_started.md)
+* [Spanish version](es/00_Getting_started.md)
+
+# What is Toro Stampede?
 
 In a MongoDB replica set, Toro Stampede can work as a node replicating the entire documental database in a relational way using PostgreSQL as a backend.
 
