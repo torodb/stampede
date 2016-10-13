@@ -23,15 +23,11 @@ package com.torodb.packaging.config.model.generic;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.torodb.core.metrics.MetricsConfig;
 import com.torodb.packaging.config.annotation.Description;
 import com.torodb.packaging.config.model.backend.ConnectionPoolConfig;
-import com.torodb.packaging.config.model.generic.log4j.Log4jLevelToLogLevelMapper;
 
 @Description("config.generic")
 @JsonPropertyOrder({ 
@@ -43,8 +39,7 @@ import com.torodb.packaging.config.model.generic.log4j.Log4jLevelToLogLevelMappe
 public class Generic implements ConnectionPoolConfig, MetricsConfig {
 
 	@Description("config.generic.logLevel")
-	@NotNull
-	@JsonProperty(required=true)
+	@JsonProperty(required=false)
 	private LogLevel logLevel;
 	@Description("config.generic.logPackages")
 	private LogPackages logPackages;
@@ -68,11 +63,6 @@ public class Generic implements ConnectionPoolConfig, MetricsConfig {
 	private Integer reservedReadPoolSize = 10;
 	@Description("config.generic.metricsEnabled")
 	private Boolean metricsEnabled = false;
-
-	public Generic() {
-		Level log4jLevel = LogManager.getRootLogger().getLevel();
-		logLevel = new Log4jLevelToLogLevelMapper().map(log4jLevel);
-	}
 
 	public LogLevel getLogLevel() {
 		return logLevel;

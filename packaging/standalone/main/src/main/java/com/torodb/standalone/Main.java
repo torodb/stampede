@@ -215,7 +215,9 @@ public class Main {
 
 	private static void configureLogger(CliConfig cliConfig, Config config) {
 		if (cliConfig.hasConfFile()) {
-			Log4jUtils.setRootLevel(config.getGeneric().getLogLevel());
+			if (config.getGeneric().getLogLevel() != null) {
+			    Log4jUtils.setRootLevel(config.getGeneric().getLogLevel());
+			}
 
 			if (config.getGeneric().getLogPackages() != null) {
 				Log4jUtils.setLogPackages(config.getGeneric().getLogPackages());
