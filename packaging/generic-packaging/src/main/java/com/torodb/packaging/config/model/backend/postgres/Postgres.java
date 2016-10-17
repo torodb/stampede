@@ -20,64 +20,34 @@
 
 package com.torodb.packaging.config.model.backend.postgres;
 
-import javax.validation.constraints.NotNull;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import com.torodb.packaging.config.annotation.Description;
 import com.torodb.packaging.config.model.backend.BackendImplementation;
-import com.torodb.packaging.config.model.backend.Password;
-import com.torodb.packaging.config.validation.ExistsAnyPassword;
-import com.torodb.packaging.config.validation.Host;
-import com.torodb.packaging.config.validation.Port;
+import com.torodb.packaging.config.model.backend.BackendPasswordConfig;
 import com.torodb.packaging.config.visitor.BackendImplementationVisitor;
 
-@Description("config.backend.postgres")
-@JsonPropertyOrder({
-	"host",
-	"port",
-	"database",
-	"user",
-	"password",
-	"toropassFile",
-	"applicationName"
-})
-@ExistsAnyPassword
-public class Postgres implements BackendImplementation, Password {
-	@Description("config.backend.postgres.host")
-	@NotNull
-	@Host
-	@JsonProperty(required=true)
-	protected String host = "localhost";
-	@Description("config.backend.postgres.port")
-	@NotNull
-	@Port
-	@JsonProperty(required=true)
-	protected Integer port = 5432;
-	@Description("config.backend.postgres.database")
-	@NotNull
-	@JsonProperty(required=true)
-	protected String database = "torod";
-	@Description("config.backend.postgres.user")
-	@NotNull
-	@JsonProperty(required=true)
-	protected String user = "torodb";
-	@JsonIgnore
-	protected String password;
-	@Description("config.backend.postgres.toropassFile")
-    @JsonProperty(required=true)
-	protected String toropassFile = System.getProperty("user.home") + "/.toropass";
-	@Description("config.backend.postgres.applicationName")
-	@NotNull
-	@JsonProperty(required=true)
-	protected String applicationName = "toro";
-    @Description("config.backend.postgres.includeForeignKeys")
-    @NotNull
-    @JsonProperty(required=true)
-    protected Boolean includeForeignKeys = false;
+public abstract class Postgres implements BackendImplementation, BackendPasswordConfig {
+	private String host;
+	private Integer port;
+	private String database;
+	private String user;
+	private String password;
+	private String toropassFile;
+	private String applicationName;
+	private Boolean includeForeignKeys;
 	
-	public String getHost() {
+	protected Postgres(String host, Integer port, String database, String user, String password, String toropassFile,
+            String applicationName, Boolean includeForeignKeys) {
+        super();
+        this.host = host;
+        this.port = port;
+        this.database = database;
+        this.user = user;
+        this.password = password;
+        this.toropassFile = toropassFile;
+        this.applicationName = applicationName;
+        this.includeForeignKeys = includeForeignKeys;
+    }
+	
+    public String getHost() {
 		return host;
 	}
 	public void setHost(String host) {
@@ -95,12 +65,15 @@ public class Postgres implements BackendImplementation, Password {
 	public void setUser(String user) {
 		this.user = user;
 	}
+    @Override
 	public String getPassword() {
 		return password;
 	}
+    @Override
 	public void setPassword(String password) {
 		this.password = password;
 	}
+	@Override
 	public String getToropassFile() {
 		return toropassFile;
 	}

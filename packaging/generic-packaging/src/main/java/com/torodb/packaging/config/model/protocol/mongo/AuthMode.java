@@ -26,7 +26,7 @@ public enum AuthMode {
     /**
      * Disable authentication mechanism. No authentication will be done
      */
-    @Description(value="config.protocol.mongo.authmode.disabled")
+    @Description(value="config.mongo.authmode.disabled")
     disabled(false),
     /**
      * The client will negotiate best mechanism to authenticate. With server 
@@ -34,22 +34,22 @@ public enum AuthMode {
      * SCRAM-SHA-1 mechanism. Otherwise, the driver will authenticate 
      * using the Challenge Response mechanism.
      */
-    @Description(value="config.protocol.mongo.authmode.negotiate")
+    @Description(value="config.mongo.authmode.negotiate")
     negotiate,
     /**
      * Challenge Response authentication
      */
-    @Description(value="config.protocol.mongo.authmode.cr")
+    @Description(value="config.mongo.authmode.cr")
     cr,
     /**
      * X.509 authentication
      */
-    @Description(value="config.protocol.mongo.authmode.x509")
+    @Description(value="config.mongo.authmode.x509")
     x509,
     /**
      * SCRAM-SHA-1 SASL authentication 
      */
-    @Description(value="config.protocol.mongo.authmode.scram_sha1")
+    @Description(value="config.mongo.authmode.scram_sha1")
     scram_sha1;
     
     private final boolean enabled;

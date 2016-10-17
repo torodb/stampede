@@ -37,7 +37,7 @@ import javax.validation.ReportAsSingleViolation;
 @Constraint(validatedBy = NoDuplicatedReplNameValidator.class)
 @ReportAsSingleViolation
 public @interface NoDuplicatedReplName {
-	String message() default "{com.torodb.config.validation.NoDuplicatedReplName.message}";
+	String message() default "{config.validation.NoDuplicatedReplName.message}";
 
 	Class<?>[] groups() default {};
 

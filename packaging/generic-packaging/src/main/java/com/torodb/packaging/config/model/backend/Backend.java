@@ -20,42 +20,41 @@
 
 package com.torodb.packaging.config.model.backend;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import com.google.common.collect.ImmutableMap;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.google.common.collect.ImmutableList;
-import com.torodb.packaging.config.jackson.BackendDeserializer;
-import com.torodb.packaging.config.jackson.BackendSerializer;
-import com.torodb.packaging.config.model.backend.derby.Derby;
-import com.torodb.packaging.config.model.backend.postgres.Postgres;
-
-@JsonSerialize(using=BackendSerializer.class)
-@JsonDeserialize(using=BackendDeserializer.class)
-public class Backend {
+public abstract class Backend {
     
-    public static final ImmutableList<Class<? extends BackendImplementation>> BACKEND_CLASSES = 
-            ImmutableList
-                .<Class<? extends BackendImplementation>>builder()
-                .add(Postgres.class)
-                .add(Derby.class)
-                .build();
-    
-	@NotNull
-	@Valid
-	@JsonTypeInfo(use=JsonTypeInfo.Id.NAME, include=JsonTypeInfo.As.WRAPPER_OBJECT)
-	@JsonSubTypes({
-	    //@JsonSubTypes.Type.name must be equals to <? extends BackendImplementation>.class.getSimpleName.toLowerCase(Locale.US)
-		@JsonSubTypes.Type(name="postgres", value=Postgres.class),
-        @JsonSubTypes.Type(name="derby", value=Derby.class),
-	})
-	@JsonProperty(required=true)
-	private BackendImplementation backendImplementation = new Postgres();
+    private final ImmutableMap<String, Class<? extends BackendImplementation>> backendClasses;
+	private BackendImplementation backendImplementation;
 
+    public Backend(ImmutableMap<String, Class<? extends BackendImplementation>> backendClasses) {
+        this.backendClasses = backendClasses;
+    }
+
+    public Backend(ImmutableMap<String, Class<? extends BackendImplementation>> backendClasses, BackendImplementation backendImplementation) {
+        this(backendClasses);
+        
+        this.backendImplementation = backendImplementation;
+    }
+    
+    public boolean hasBackendImplementation(String name) {
+        return backendClasses.containsKey(name);
+    }
+    
+    public Class<? extends BackendImplementation> getBackendImplementationClass(String name) {
+        return backendClasses.get(name);
+    }
+	
+    public String getBackendImplementationName(Class<? extends BackendImplementation> backendImplementationClass) {
+        return backendClasses.entrySet().stream()
+                .filter(entry -> entry.getValue() == backendImplementationClass || (
+                        backendImplementationClass.getSuperclass() != null &&
+                        entry.getValue() == backendImplementationClass.getSuperclass()))
+                .findAny()
+                .orElseThrow(() -> new IllegalArgumentException("Backend not found for class " + backendImplementationClass.getName()))
+                .getKey();
+    }
+    
 	public BackendImplementation getBackendImplementation() {
 		return backendImplementation;
 	}
@@ -63,26 +62,15 @@ public class Backend {
 		this.backendImplementation = backendImplementation;
 	}
 	
-	public boolean isPostgresLike() {
-		return backendImplementation instanceof Postgres;
+	public boolean isLike(Class<? extends BackendImplementation> backendImplementationClass) {
+		return backendImplementationClass.isAssignableFrom(backendImplementation.getClass());
 	}
-	public boolean isPostgres() {
-		return Postgres.class == backendImplementation.getClass();
+	public boolean is(Class<? extends BackendImplementation> backendImplementationClass) {
+		return backendImplementationClass == backendImplementation.getClass();
 	}
-	public Postgres asPostgres() {
-		assert backendImplementation instanceof Postgres;
+	public <T extends BackendImplementation> T as(Class<? extends T> backendImplementationClass) {
+		assert backendImplementationClass.isAssignableFrom(backendImplementation.getClass());
 		
-		return (Postgres) backendImplementation;
+		return backendImplementationClass.cast(backendImplementation);
 	}
-    public boolean isDerbyLike() {
-        return backendImplementation instanceof Derby;
-    }
-    public boolean isDerby() {
-        return Derby.class == backendImplementation.getClass();
-    }
-    public Derby asDerby() {
-        assert backendImplementation instanceof Derby;
-        
-        return (Derby) backendImplementation;
-    }
 }

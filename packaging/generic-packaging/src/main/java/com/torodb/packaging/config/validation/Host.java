@@ -37,7 +37,7 @@ import javax.validation.ReportAsSingleViolation;
 @Constraint(validatedBy = HostValidator.class)
 @ReportAsSingleViolation
 public @interface Host {
-	String message() default "{com.torodb.config.validation.Host.message}";
+	String message() default "{config.validation.Host.message}";
 
 	Class<?>[] groups() default {};
 

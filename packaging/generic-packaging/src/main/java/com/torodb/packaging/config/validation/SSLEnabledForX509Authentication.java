@@ -37,7 +37,7 @@ import javax.validation.ReportAsSingleViolation;
 @Constraint(validatedBy = SSLEnabledForX509AuthenticationValidator.class)
 @ReportAsSingleViolation
 public @interface SSLEnabledForX509Authentication {
-	String message() default "{com.torodb.config.validation.SSLEnabledForX509Authentication.message}";
+	String message() default "{config.validation.SSLEnabledForX509Authentication.message}";
 
 	Class<?>[] groups() default {};
 

@@ -75,7 +75,7 @@ public class MongoClientConfigurationFactory {
                 KeyManager[] kms = getKeyManagers(ssl);
     
                 SSLContext sslContext;
-                if (ssl.getFIPSMode()) {
+                if (ssl.getFipsMode()) {
                     sslContext = SSLContext.getInstance("TLS", "SunPKCS11-NSS");
                 } else {
                     sslContext = SSLContext.getInstance("TLS");
@@ -101,9 +101,9 @@ public class MongoClientConfigurationFactory {
     public static TrustManager[] getTrustManagers(SSL ssl) throws NoSuchAlgorithmException, FileNotFoundException,
             CertificateException, KeyStoreException, IOException {
         TrustManager[] tms = null;
-        if (ssl.getCAFile() != null) {
+        if (ssl.getCaFile() != null) {
             TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-            try (InputStream is = new FileInputStream(ssl.getCAFile())) {
+            try (InputStream is = new FileInputStream(ssl.getCaFile())) {
                 CertificateFactory cf = CertificateFactory.getInstance("X.509");
                 X509Certificate caCert = (X509Certificate) cf.generateCertificate(is);
                 
@@ -117,7 +117,7 @@ public class MongoClientConfigurationFactory {
             }
         } else if (ssl.getTrustStoreFile() != null) {
             TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-            try (InputStream is = new FileInputStream(ssl.getCAFile())) {
+            try (InputStream is = new FileInputStream(ssl.getCaFile())) {
                 char[] storePassword = null;
     
                 if (ssl.getTrustStorePassword() != null) {

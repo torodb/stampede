@@ -21,54 +21,26 @@
 
 package com.torodb.packaging.guice;
 
-import com.eightkdata.mongowp.server.MongoServerConfig;
-import com.google.common.net.HostAndPort;
 import com.google.inject.AbstractModule;
-import com.google.inject.Provides;
-import com.torodb.core.BuildProperties;
-import com.torodb.mongodb.core.MongodServerConfig;
-import com.torodb.packaging.DefaultBuildProperties;
-import com.torodb.packaging.config.model.Config;
-import com.torodb.packaging.config.model.backend.derby.Derby;
-import com.torodb.packaging.config.model.backend.postgres.Postgres;
-import com.torodb.packaging.config.model.protocol.mongo.Net;
-import com.torodb.packaging.config.visitor.BackendImplementationVisitor;
+import com.torodb.packaging.config.model.backend.ConnectionPoolConfig;
+import com.torodb.packaging.config.model.backend.CursorConfig;
 
-public class ConfigModule extends AbstractModule implements BackendImplementationVisitor {
-	private final Config config;
+public class ConfigModule extends AbstractModule {
 
-	public ConfigModule(Config config) {
-		this.config = config;
+    private final CursorConfig cursorConfig;
+    private final ConnectionPoolConfig connectionPoolConfig;
+    
+	public ConfigModule(
+            CursorConfig cursorConfig,
+            ConnectionPoolConfig connectionPoolConfig) {
+        this.connectionPoolConfig = connectionPoolConfig;
+        this.cursorConfig = cursorConfig;
 	}
 	
 	@Override
 	protected void configure() {
-        bind(BuildProperties.class).to(DefaultBuildProperties.class).asEagerSingleton();
-		bind(Config.class).toInstance(config);
-
-        int port = config.getProtocol().getMongo().getNet().getPort();
-        bind(MongoServerConfig.class)
-                .toInstance(() -> port);
-
-        config.getBackend().getBackendImplementation().accept(this);
+        bind(CursorConfig.class).toInstance(cursorConfig);
+        bind(ConnectionPoolConfig.class).toInstance(connectionPoolConfig);
 	}
 
-	@Override
-	public void visit(Postgres value) {
-		bind(Postgres.class).toInstance(value);
-	}
-
-    @Override
-    public void visit(Derby value) {
-        bind(Derby.class).toInstance(value);
-    }
-
-    @Provides
-    public MongodServerConfig createMongodServerConfig() {
-        Net net = config.getProtocol().getMongo().getNet();
-        return new MongodServerConfig(HostAndPort.fromParts(
-                net.getBindIp(),
-                net.getPort()
-        ));
-    }
 }

@@ -30,36 +30,41 @@ import com.torodb.packaging.config.annotation.Description;
 import com.torodb.packaging.config.validation.RequiredParametersForAuthentication;
 
 @JsonPropertyOrder({
-	"replSetName",
-	"role"
+    "replSetName",
+    "syncSource",
+	"role",
+	"ssl",
+	"auth",
+	"include",
+	"exclude"
 })
 public class Replication {
 	
-	@Description("config.protocol.mongo.replication.replSetName")
+	@Description("config.mongo.replication.replSetName")
 	@NotEmpty
 	@JsonProperty(required=true)
 	private String replSetName;
-	@Description("config.protocol.mongo.replication.role")
+	@Description("config.mongo.replication.role")
 	@NotNull
 	@JsonProperty(required=true)
 	private Role role = Role.HIDDEN_SLAVE;
-	@Description("config.protocol.mongo.replication.syncSource")
+	@Description("config.mongo.replication.syncSource")
     @NotNull
     @JsonProperty(required=true)
 	private String syncSource;
-    @Description("config.protocol.mongo.replication.ssl")
+    @Description("config.mongo.replication.ssl")
     @NotNull
     @JsonProperty(required=true)
     private SSL ssl = new SSL();
-    @Description("config.protocol.mongo.replication.auth")
+    @Description("config.mongo.replication.auth")
     @NotNull
     @JsonProperty(required=true)
     @RequiredParametersForAuthentication
     private Auth auth = new Auth();
-    @Description("config.protocol.mongo.replication.include")
+    @Description("config.mongo.replication.include")
     @JsonProperty(required=true)
     private FilterList include;
-    @Description("config.protocol.mongo.replication.exclude")
+    @Description("config.mongo.replication.exclude")
     @JsonProperty(required=true)
     private FilterList exclude;
 	

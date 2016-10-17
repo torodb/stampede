@@ -25,7 +25,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.torodb.packaging.ToroDbServer;
+import com.torodb.standalone.ToroDbServer;
 
 public class ToroRunnerClassRule extends AbstractBackendRunnerClassRule {
 

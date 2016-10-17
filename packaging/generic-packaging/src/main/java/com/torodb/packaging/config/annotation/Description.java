@@ -22,6 +22,7 @@ package com.torodb.packaging.config.annotation;
 
 import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.ElementType.FIELD;
+import static java.lang.annotation.ElementType.METHOD;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -34,7 +35,7 @@ import javax.inject.Qualifier;
  */
 @Qualifier
 @Retention(RetentionPolicy.RUNTIME)
-@Target({TYPE,FIELD})
+@Target({TYPE,FIELD,METHOD})
 public @interface Description {
 
 	String value();

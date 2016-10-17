@@ -27,16 +27,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.torodb.core.metrics.MetricsConfig;
 import com.torodb.packaging.config.annotation.Description;
-import com.torodb.packaging.config.model.generic.log4j.Log4jLevelToLogLevelMapper;
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-
-import java.util.AbstractMap;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import com.torodb.packaging.config.model.backend.ConnectionPoolConfig;
 
 @Description("config.generic")
 @JsonPropertyOrder({ 
@@ -45,11 +36,10 @@ import java.util.stream.Stream;
 	"connectionPoolSize", 
 	"reservedReadPoolSize" 
 })
-public class Generic implements MetricsConfig{
+public class Generic implements ConnectionPoolConfig, MetricsConfig {
 
 	@Description("config.generic.logLevel")
-	@NotNull
-	@JsonProperty(required=true)
+	@JsonProperty(required=false)
 	private LogLevel logLevel;
 	@Description("config.generic.logPackages")
 	private LogPackages logPackages;
@@ -72,12 +62,7 @@ public class Generic implements MetricsConfig{
 	@JsonProperty(required=true)
 	private Integer reservedReadPoolSize = 10;
 	@Description("config.generic.metricsEnabled")
-	private Boolean metricsEnabled = true;
-
-	public Generic() {
-		Level log4jLevel = LogManager.getRootLogger().getLevel();
-		logLevel = new Log4jLevelToLogLevelMapper().map(log4jLevel);
-	}
+	private Boolean metricsEnabled = false;
 
 	public LogLevel getLogLevel() {
 		return logLevel;
@@ -111,6 +96,7 @@ public class Generic implements MetricsConfig{
 		this.log4j2File = log4j2File;
 	}
 
+	@Override
 	public Long getConnectionPoolTimeout() {
         return connectionPoolTimeout;
     }
@@ -119,6 +105,7 @@ public class Generic implements MetricsConfig{
         this.connectionPoolTimeout = connectionPoolTimeout;
     }
 
+    @Override
     public Integer getConnectionPoolSize() {
 		return connectionPoolSize;
 	}
@@ -127,6 +114,7 @@ public class Generic implements MetricsConfig{
 		this.connectionPoolSize = connectionPoolSize;
 	}
 
+    @Override
 	public Integer getReservedReadPoolSize() {
 		return reservedReadPoolSize;
 	}

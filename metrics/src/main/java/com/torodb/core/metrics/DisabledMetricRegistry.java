@@ -26,7 +26,9 @@ public class DisabledMetricRegistry extends ToroMetricRegistry {
 	private static final Counter mockedCounter = new MockedCounter();
 	private static final Meter mockedMeter = new MockedMeter();
 	private static final Histogram mockedHistogram = new MockedHistogram(new ExponentiallyDecayingReservoir());
-	private static final Timer mockedTimer = new MockedTimer();
+    private static final Timer mockedTimer = new MockedTimer();
+    @SuppressWarnings("rawtypes")
+    private static final SettableGauge mockedGauge = new MockedGauge();
 	
 	public Counter counter(MetricName name) {
 		return mockedCounter;
@@ -39,10 +41,23 @@ public class DisabledMetricRegistry extends ToroMetricRegistry {
 	public Histogram histogram(MetricName name) {
 		return mockedHistogram;
 	}
+    
+    public Histogram histogram(MetricName name, boolean resetOnSnapshot) {
+        return histogram(name);
+    }
 
 	public Timer timer(MetricName name) {
 		return mockedTimer;
 	}
+
+    public Timer timer(MetricName name, boolean resetOnSnapshot) {
+        return timer(name);
+    }
+	
+    @SuppressWarnings("unchecked")
+    public <T> SettableGauge<T> gauge(MetricName name) {
+        return mockedGauge;
+    }
 
 	public boolean remove(MetricName name) {
 		boolean removed = remove(name.getMetricName());
@@ -180,5 +195,16 @@ public class DisabledMetricRegistry extends ToroMetricRegistry {
 	    public Snapshot getSnapshot() {
 	        return null;
 	    }
+	}
+	
+	public static class MockedGauge<T> extends SettableGauge<T> {
+        @Override
+        public T getValue() {
+            return null;
+        }
+
+        @Override
+        public void setValue(T value) {
+        }
 	}
 }

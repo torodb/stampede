@@ -31,7 +31,6 @@ import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
 import java.util.Set;
 
@@ -63,12 +62,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import com.google.common.base.Charsets;
-import com.google.common.net.HostAndPort;
-import com.torodb.packaging.config.model.Config;
-import com.torodb.packaging.config.model.backend.derby.Derby;
-import com.torodb.packaging.config.model.backend.postgres.Postgres;
-import com.torodb.packaging.config.model.protocol.mongo.Mongo;
-import com.torodb.packaging.config.model.protocol.mongo.Replication;
+import com.torodb.packaging.config.model.backend.BackendPasswordConfig;
+import com.torodb.packaging.config.model.protocol.mongo.MongoPasswordConfig;
 
 public class ConfigUtils {
 
@@ -126,68 +121,48 @@ public class ConfigUtils {
         return new IllegalArgumentException("Validation error at " + jsonPointer + ": " + jsonMappingException.getMessage());
     }
 
-    public static Config readConfigFromYaml(String yamlString) throws JsonProcessingException, IOException {
+    public static <T> T readConfigFromYaml(Class<T> configClass, String yamlString) throws JsonProcessingException, IOException {
         ObjectMapper objectMapper = mapper();
         YAMLMapper yamlMapper = yamlMapper();
         
         JsonNode configNode = yamlMapper.readTree(yamlString);
 
-        Config config = objectMapper.treeToValue(configNode, Config.class);
+        T config = objectMapper.treeToValue(configNode, configClass);
 
         validateBean(config);
 
         return config;
     }
 
-    public static Config readConfigFromXml(String xmlString) throws JsonProcessingException, IOException {
+    public static <T> T readConfigFromXml(Class<T> configClass, String xmlString) throws JsonProcessingException, IOException {
         ObjectMapper objectMapper = mapper();
         XmlMapper xmlMapper = xmlMapper();
         
         JsonNode configNode = xmlMapper.readTree(xmlString);
 
-        Config config = objectMapper.treeToValue(configNode, Config.class);
+        T config = objectMapper.treeToValue(configNode, configClass);
 
         validateBean(config);
 
         return config;
     }
 
-    public static void parseToropassFile(final Config config) throws FileNotFoundException, IOException {
-        if (config.getBackend().isPostgresLike()) {
-            Postgres postgres = config.getBackend().asPostgres();
-            postgres.setPassword(getPasswordFromPassFile(
-                    postgres.getToropassFile(), 
-                    postgres.getHost(), 
-                    postgres.getPort(), 
-                    postgres.getDatabase(), 
-                    postgres.getUser()));
-        } else if(config.getBackend().isDerbyLike()) {
-            Derby derby = config.getBackend().asDerby();
-            derby.setPassword(getPasswordFromPassFile(
-                    derby.getToropassFile(), 
-                    derby.getHost(), 
-                    derby.getPort(), 
-                    derby.getDatabase(), 
-                    derby.getUser()));
-        }
+    public static void parseToropassFile(final BackendPasswordConfig backendPasswordConfig) throws FileNotFoundException, IOException {
+        backendPasswordConfig.setPassword(getPasswordFromPassFile(
+                backendPasswordConfig.getToropassFile(), 
+                backendPasswordConfig.getHost(), 
+                backendPasswordConfig.getPort(), 
+                backendPasswordConfig.getDatabase(), 
+                backendPasswordConfig.getUser()));
     }
 
-    public static void parseMongopassFile(final Config config) throws FileNotFoundException, IOException {
-        Mongo mongo = config.getProtocol().getMongo();
-        if (mongo.getReplication() != null) {
-            for (Replication replication : mongo.getReplication()) {
-                if (replication.getAuth().getUser() != null) {
-                    HostAndPort syncSource = HostAndPort.fromString(replication.getSyncSource())
-                            .withDefaultPort(27017);
-                    replication.getAuth().setPassword(getPasswordFromPassFile(
-                            mongo.getMongopassFile(), 
-                            syncSource.getHostText(), 
-                            syncSource.getPort(), 
-                            replication.getAuth().getSource(), 
-                            replication.getAuth().getUser()));
-                }
-            }
-        }
+    public static void parseMongopassFile(final MongoPasswordConfig mongoPasswordConfig) throws FileNotFoundException, IOException {
+        mongoPasswordConfig.setPassword(getPasswordFromPassFile(
+                mongoPasswordConfig.getMongopassFile(), 
+                mongoPasswordConfig.getHost(), 
+                mongoPasswordConfig.getPort(), 
+                mongoPasswordConfig.getDatabase(), 
+                mongoPasswordConfig.getUser()));
     }
 
     private static String getPasswordFromPassFile(String passFile, String host, int port, String database,
@@ -316,14 +291,14 @@ public class ConfigUtils {
 		return newNode;
 	}
 
-	public static void printYamlConfig(Config config, Console console)
+	public static <T> void printYamlConfig(T config, Console console)
 			throws IOException, JsonGenerationException, JsonMappingException {
 		ObjectMapper objectMapper = yamlMapper();
 		ObjectWriter objectWriter = objectMapper.writer();
 		printConfig(config, console, objectWriter);
 	}
 
-	public static void printXmlConfig(Config config, Console console)
+	public static <T> void printXmlConfig(T config, Console console)
 			throws IOException, JsonGenerationException, JsonMappingException {
 		ObjectMapper objectMapper = xmlMapper();
 		ObjectWriter objectWriter = objectMapper.writer();
@@ -331,7 +306,7 @@ public class ConfigUtils {
 		printConfig(config, console, objectWriter);
 	}
 
-	private static void printConfig(Config config, Console console, ObjectWriter objectWriter)
+	private static <T> void printConfig(T config, Console console, ObjectWriter objectWriter)
 			throws IOException, JsonGenerationException, JsonMappingException, UnsupportedEncodingException {
 		ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 		PrintStream printStream = new PrintStream(byteArrayOutputStream, false, Charsets.UTF_8.name());
@@ -339,22 +314,21 @@ public class ConfigUtils {
 		console.println(byteArrayOutputStream.toString(Charsets.UTF_8.name()));
 	}
 
-	public static void printParamDescriptionFromConfigSchema(Console console, int tabs)
+	public static <T> void printParamDescriptionFromConfigSchema(Class<T> configClass, ResourceBundle resourceBundle, Console console, int tabs)
 			throws UnsupportedEncodingException, JsonMappingException {
 		ObjectMapper objectMapper = mapper();
-		ResourceBundle resourceBundle = PropertyResourceBundle.getBundle("ConfigMessages");
 		DescriptionFactoryWrapper visitor = new DescriptionFactoryWrapper(resourceBundle, console, tabs);
-		objectMapper.acceptJsonFormatVisitor(objectMapper.constructType(Config.class), visitor);
+		objectMapper.acceptJsonFormatVisitor(objectMapper.constructType(configClass), visitor);
 		console.println("");
 	}
 	
-	public static void validateBean(Config config) {
+	public static <T> void validateBean(T config) {
 		ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
 		Validator validator = factory.getValidator();
-		Set<ConstraintViolation<Config>> constraintViolations = validator.validate(config);
+		Set<ConstraintViolation<T>> constraintViolations = validator.validate(config);
 		if (!constraintViolations.isEmpty()) {
 			StringBuilder constraintViolationExceptionMessageBuilder = new StringBuilder();
-			for (ConstraintViolation<Config> constraintViolation : constraintViolations) {
+			for (ConstraintViolation<T> constraintViolation : constraintViolations) {
 				if (constraintViolationExceptionMessageBuilder.length() > 0) {
 					constraintViolationExceptionMessageBuilder.append(", ");
 				}

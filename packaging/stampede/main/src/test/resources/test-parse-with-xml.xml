@@ -1,0 +1,20 @@
+<config>
+  <generic>
+    <logLevel>NONE</logLevel>
+    <logPackages>
+      <com.torodb>DEBUG</com.torodb>
+    </logPackages>
+  </generic>
+  <replication>
+    <replSetName>rs1</replSetName>
+    <role>HIDDEN_SLAVE</role>
+    <syncSource>localhost:27017</syncSource>
+  </replication>
+  <backend>
+    <postgres>
+      <host>localhost</host>
+      <port>5432</port>
+      <user>root</user>
+    </postgres>
+  </backend>
+</config>
