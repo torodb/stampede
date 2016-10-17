@@ -25,8 +25,6 @@ import java.util.Iterator;
 import com.google.common.base.Preconditions;
 import com.torodb.core.backend.ExclusiveWriteBackendTransaction;
 import com.torodb.core.d2r.IdentifierFactory;
-import com.torodb.core.d2r.R2DTranslator;
-import com.torodb.core.d2r.RidGenerator;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
@@ -35,17 +33,20 @@ import com.torodb.core.transaction.metainf.MetaScalar;
 import com.torodb.core.transaction.metainf.MutableMetaCollection;
 import com.torodb.core.transaction.metainf.MutableMetaDatabase;
 import com.torodb.core.transaction.metainf.MutableMetaDocPart;
+import com.torodb.core.d2r.ReservedIdGenerator;
+import com.torodb.core.exceptions.InvalidDatabaseException;
+import com.torodb.core.transaction.RollbackException;
 
 public class ExclusiveWriteBackendTransactionImpl extends SharedWriteBackendTransactionImpl implements ExclusiveWriteBackendTransaction {
 
-    private final IdentifierFactory identifierFactory;
-    private final RidGenerator ridGenerator;
+    private final ReservedIdGenerator ridGenerator;
     
-    public ExclusiveWriteBackendTransactionImpl(SqlInterface sqlInterface, BackendConnectionImpl backendConnection,
-            R2DTranslator r2dTranslator, IdentifierFactory identifierFactory, RidGenerator ridGenerator) {
-        super(sqlInterface, backendConnection, r2dTranslator, identifierFactory);
+    public ExclusiveWriteBackendTransactionImpl(SqlInterface sqlInterface, 
+            BackendConnectionImpl backendConnection,
+            IdentifierFactory identifierFactory, 
+            ReservedIdGenerator ridGenerator) {
+        super(sqlInterface, backendConnection, identifierFactory);
         
-        this.identifierFactory = identifierFactory;
         this.ridGenerator = ridGenerator;
     }
     
@@ -59,8 +60,25 @@ public class ExclusiveWriteBackendTransactionImpl extends SharedWriteBackendTran
         dropMetaCollection(fromDb, fromColl);
     }
 
+    @Override
+    public void dropAll() throws RollbackException {
+        getSqlInterface().getStructureInterface().dropAll(getDsl());
+    }
+
+    @Override
+    public void dropUserData() throws RollbackException {
+        getSqlInterface().getStructureInterface().dropUserData(getDsl());
+    }
+
+    @Override
+    public void checkOrCreateMetaDataTables() throws InvalidDatabaseException {
+        getBackendConnection().getSchemaUpdater().checkOrCreate(getDsl());
+    }
+
     private void copyMetaCollection(MetaDatabase fromDb, MetaCollection fromColl,
             MutableMetaDatabase toDb, MutableMetaCollection toColl) {
+        IdentifierFactory identifierFactory = getIdentifierFactory();
+
         Iterator<? extends MetaDocPart> fromMetaDocPartIterator = fromColl.streamContainedMetaDocParts().iterator();
         while (fromMetaDocPartIterator.hasNext()) {
             MetaDocPart fromMetaDocPart = fromMetaDocPartIterator.next();

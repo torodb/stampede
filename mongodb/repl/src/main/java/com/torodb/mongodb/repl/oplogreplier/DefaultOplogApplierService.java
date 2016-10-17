@@ -20,22 +20,22 @@
 
 package com.torodb.mongodb.repl.oplogreplier;
 
-import com.torodb.mongodb.repl.oplogreplier.fetcher.ContinuousOplogFetcher;
 import com.eightkdata.mongowp.OpTime;
 import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.google.inject.assistedinject.Assisted;
-import com.torodb.common.util.ThreadFactoryIdleService;
+import com.torodb.core.services.IdleTorodbService;
 import com.torodb.mongodb.repl.OplogManager;
 import com.torodb.mongodb.repl.OplogManager.ReadOplogTransaction;
 import com.torodb.mongodb.repl.ReplicationFilters;
+import com.torodb.mongodb.repl.oplogreplier.OplogApplier.ApplyingJob;
+import com.torodb.mongodb.repl.oplogreplier.fetcher.ContinuousOplogFetcher;
 import com.torodb.mongodb.repl.oplogreplier.fetcher.ContinuousOplogFetcher.ContinuousOplogFetcherFactory;
+import com.torodb.mongodb.repl.oplogreplier.fetcher.OplogFetcher;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadFactory;
 import javax.inject.Inject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import com.torodb.mongodb.repl.oplogreplier.OplogApplier.ApplyingJob;
-import com.torodb.mongodb.repl.oplogreplier.fetcher.OplogFetcher;
 
 /**
  * A {@link OplogApplierService} that delegate on an {@link OplogApplier}.
@@ -43,7 +43,7 @@ import com.torodb.mongodb.repl.oplogreplier.fetcher.OplogFetcher;
  * A new {@link ContinuousOplogFetcher} and a new {@link ApplyingJob} are created when this service
  * start up and they are finished once the service stop.
  */
-public class DefaultOplogApplierService extends ThreadFactoryIdleService implements OplogApplierService {
+public class DefaultOplogApplierService extends IdleTorodbService implements OplogApplierService {
 
     private static final Logger LOGGER = LogManager.getLogger(DefaultOplogApplierService.class);
     private final OplogApplier oplogApplier;
@@ -56,8 +56,9 @@ public class DefaultOplogApplierService extends ThreadFactoryIdleService impleme
     private final ReplicationFilters replFilters;
 
     @Inject
-    public DefaultOplogApplierService(ThreadFactory threadFactory, OplogApplier oplogApplier,
-            ContinuousOplogFetcherFactory oplogFetcherFactory, OplogManager oplogManager,
+    public DefaultOplogApplierService(ThreadFactory threadFactory,
+            OplogApplier oplogApplier, OplogManager oplogManager,
+            ContinuousOplogFetcherFactory oplogFetcherFactory, 
             @Assisted Callback callback, ReplicationFilters replFilters) {
         super(threadFactory);
         this.oplogApplier = oplogApplier;
@@ -128,7 +129,7 @@ public class DefaultOplogApplierService extends ThreadFactoryIdleService impleme
         }
         callback.onFinish();
     }
-    
+
     private OplogFetcher createFetcher() {
         OpTime lastAppliedOptime;
         long lastAppliedHash;

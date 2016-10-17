@@ -29,7 +29,7 @@ import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.ReplicaSet
 import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.google.common.net.HostAndPort;
 import com.torodb.common.util.CompletionExceptions;
-import com.torodb.common.util.ThreadFactoryIdleService;
+import com.torodb.core.services.IdleTorodbService;
 import com.torodb.mongodb.repl.guice.ReplSetName;
 import java.time.Clock;
 import java.time.Duration;
@@ -50,7 +50,7 @@ import org.apache.logging.log4j.Logger;
  *
  */
 @Singleton
-public class TopologyHeartbeatHandler extends ThreadFactoryIdleService {
+public class TopologyHeartbeatHandler extends IdleTorodbService {
     private static final Logger LOGGER = LogManager.getLogger(TopologyHeartbeatHandler.class);
     private static final Duration POST_ERROR_HB_DELAY = Duration.ofSeconds(2);
 
@@ -68,7 +68,7 @@ public class TopologyHeartbeatHandler extends ThreadFactoryIdleService {
     public TopologyHeartbeatHandler(Clock clock, @ReplSetName String replSetName,
             HeartbeatNetworkHandler heartbeatSender, TopologyExecutor executor,
             TopologyErrorHandler errorHandler, ThreadFactory threadFactory,
-            HostAndPort seed) {
+            @RemoteSeed HostAndPort seed) {
         super(threadFactory);
         this.clock = clock;
         this.replSetName = replSetName;

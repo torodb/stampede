@@ -20,7 +20,7 @@
 
 package com.torodb.metainfo.guice;
 
-import com.google.inject.AbstractModule;
+import com.google.inject.PrivateModule;
 import com.google.inject.Singleton;
 import com.torodb.core.transaction.metainf.MetainfoRepository;
 import com.torodb.metainfo.cache.mvcc.MvccMetainfoRepository;
@@ -28,13 +28,14 @@ import com.torodb.metainfo.cache.mvcc.MvccMetainfoRepository;
 /**
  *
  */
-public class MetainfModule extends AbstractModule {
+public class MetainfModule extends PrivateModule {
 
     @Override
     protected void configure() {
         bind(MetainfoRepository.class)
                 .to(MvccMetainfoRepository.class)
                 .in(Singleton.class);
+        expose(MetainfoRepository.class);
     }
 
 }

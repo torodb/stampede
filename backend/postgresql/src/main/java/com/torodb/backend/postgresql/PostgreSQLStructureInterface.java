@@ -22,7 +22,6 @@ package com.torodb.backend.postgresql;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -34,12 +33,10 @@ import org.jooq.DSLContext;
 import org.jooq.lambda.tuple.Tuple2;
 
 import com.google.common.base.Preconditions;
-import com.torodb.backend.AbstractStructureInterface;
+import com.torodb.backend.*;
 import com.torodb.backend.ErrorHandler.Context;
-import com.torodb.backend.InternalField;
-import com.torodb.backend.SqlBuilder;
-import com.torodb.backend.SqlHelper;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
+import com.torodb.core.backend.IdentifierConstraints;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
@@ -54,15 +51,22 @@ public class PostgreSQLStructureInterface extends AbstractStructureInterface {
     private SqlHelper sqlHelper;
     
     @Inject
-    public PostgreSQLStructureInterface(PostgreSQLDbBackend dbBackend, PostgreSQLMetaDataReadInterface metaDataReadInterface, SqlHelper sqlHelper) {
-        super(dbBackend, metaDataReadInterface, sqlHelper);
+    public PostgreSQLStructureInterface(PostgreSQLDbBackend dbBackend,
+            PostgreSQLMetaDataReadInterface metaDataReadInterface,
+            SqlHelper sqlHelper, IdentifierConstraints identifierConstraints) {
+        super(dbBackend, metaDataReadInterface, sqlHelper, identifierConstraints);
         
         this.sqlHelper = sqlHelper;
     }
 
     @Override
     public void dropDatabase(@Nonnull DSLContext dsl, @Nonnull MetaDatabase metaDatabase) {
-        String statement = getDropSchemaStatement(metaDatabase.getIdentifier());
+        dropDatabase(dsl, metaDatabase.getIdentifier());
+    }
+
+    @Override
+    protected void dropDatabase(DSLContext dsl, String dbIdentifier) {
+        String statement = getDropSchemaStatement(dbIdentifier);
         sqlHelper.executeUpdate(dsl, statement, Context.DROP_SCHEMA);
     }
 

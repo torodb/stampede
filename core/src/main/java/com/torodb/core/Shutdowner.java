@@ -63,7 +63,7 @@ public class Shutdowner implements AutoCloseable {
                 try {
                     listener.onShutdown();
                 } catch (Throwable t) {
-                    LOGGER.error("Error while trying notifying the a shutdown", t);
+                    LOGGER.error("Error while trying to notify the a shutdown", t);
                 }
             }
         });

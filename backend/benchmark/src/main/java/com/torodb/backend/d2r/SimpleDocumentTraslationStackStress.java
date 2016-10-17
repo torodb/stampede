@@ -1,6 +1,7 @@
 package com.torodb.backend.d2r;
 
 import com.google.common.base.Stopwatch;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.torodb.backend.util.InMemoryRidGenerator;
 import com.torodb.backend.util.SimpleDocumentFeed;
 import com.torodb.core.d2r.D2RTranslator;
@@ -8,7 +9,7 @@ import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.impl.TableRefFactoryImpl;
 import com.torodb.core.transaction.metainf.MutableMetaDatabase;
 import com.torodb.d2r.D2RTranslatorStack;
-import com.torodb.d2r.IdentifierFactoryImpl;
+import com.torodb.core.d2r.DefaultIdentifierFactory;
 import com.torodb.d2r.MockIdentifierInterface;
 import com.torodb.metainfo.cache.mvcc.MvccMetainfoRepository;
 import java.util.concurrent.TimeUnit;
@@ -33,7 +34,7 @@ public class SimpleDocumentTraslationStackStress {
                 MutableMetaDatabase db = mutableSnapshot.getMetaDatabaseByName(DB1);
 				D2RTranslator translator = new D2RTranslatorStack(
                         new TableRefFactoryImpl(),
-                        new IdentifierFactoryImpl(new MockIdentifierInterface()), new InMemoryRidGenerator(), db, db.getMetaCollectionByName(COLL1));
+                        new DefaultIdentifierFactory(new MockIdentifierInterface()), new InMemoryRidGenerator(new ThreadFactoryBuilder().build()), db, db.getMetaCollectionByName(COLL1));
 				translator.translate(doc);
 				for (DocPartData table : translator.getCollectionDataAccumulator().orderedDocPartData()) {
 					cont.addAndGet(table.rowCount());

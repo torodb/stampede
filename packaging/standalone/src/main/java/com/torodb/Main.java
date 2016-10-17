@@ -28,12 +28,11 @@ import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.CreationException;
 import com.torodb.packaging.ToroDbServer;
-import com.torodb.packaging.ToroDbiServer;
 import com.torodb.packaging.config.model.Config;
 import com.torodb.packaging.config.model.backend.derby.Derby;
 import com.torodb.packaging.config.model.backend.postgres.Postgres;
-import com.torodb.packaging.config.model.generic.LogLevel;
 import com.torodb.packaging.config.util.ConfigUtils;
+import com.torodb.packaging.stampede.StampedeBootstrap;
 import com.torodb.packaging.util.Log4jUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -117,12 +116,13 @@ public class Main {
                 server = toroDbServer;
             }
             else {
-                ToroDbiServer toroDbiServer = ToroDbiServer.create(config, clock);
+                Service stampedeService = StampedeBootstrap.createStampedeService(
+                        config, clock);
 
-                toroDbiServer.startAsync();
-                toroDbiServer.awaitTerminated();
+                stampedeService.startAsync();
+                stampedeService.awaitTerminated();
 
-                server = toroDbiServer;
+                server = stampedeService;
             }
 
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {

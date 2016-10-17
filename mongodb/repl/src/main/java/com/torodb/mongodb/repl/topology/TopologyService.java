@@ -24,20 +24,22 @@ import com.eightkdata.mongowp.OpTime;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.ReplicaSetConfig;
 import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.google.common.net.HostAndPort;
-import com.torodb.common.util.ThreadFactoryIdleService;
+import com.torodb.core.services.IdleTorodbService;
 import java.time.Clock;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ThreadFactory;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
  *
  */
-public class TopologyService extends ThreadFactoryIdleService {
+@Singleton
+public class TopologyService extends IdleTorodbService {
     private static final Logger LOGGER = LogManager.getLogger(TopologyService.class);
 
     private final TopologyHeartbeatHandler heartbeatHandler;

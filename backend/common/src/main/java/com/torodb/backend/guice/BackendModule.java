@@ -1,46 +1,59 @@
 
 package com.torodb.backend.guice;
 
-import com.google.inject.AbstractModule;
+import com.google.inject.PrivateModule;
 import com.google.inject.Singleton;
+import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.torodb.backend.*;
 import com.torodb.backend.jobs.BackendConnectionJobFactoryImpl;
-import com.torodb.backend.rid.MaxRowIdFactory;
-import com.torodb.backend.rid.ReservedIdContainer;
+import com.torodb.backend.meta.SnapshotUpdaterImpl;
+import com.torodb.backend.rid.ReservedIdInfoFactoryImpl;
+import com.torodb.backend.rid.ReservedIdGeneratorImpl;
 import com.torodb.backend.rid.ReservedIdInfoFactory;
-import com.torodb.core.backend.Backend;
-import com.torodb.core.d2r.RidGenerator;
+import com.torodb.core.backend.BackendBundle;
+import com.torodb.core.backend.BackendBundleFactory;
+import com.torodb.core.backend.SnapshotUpdater;
 import com.torodb.core.dsl.backend.BackendTransactionJobFactory;
+import com.torodb.core.d2r.ReservedIdGenerator;
 
 /**
  *
  */
-public class BackendModule extends AbstractModule {
+public class BackendModule extends PrivateModule {
 
     @Override
     protected void configure() {
         bind(SqlInterface.class).to(SqlInterfaceDelegate.class).in(Singleton.class);
+        expose(SqlInterface.class);
         
         bind(BackendTransactionJobFactory.class)
                 .to(BackendConnectionJobFactoryImpl.class)
                 .in(Singleton.class);
+        expose(BackendTransactionJobFactory.class);
 
-        bind(Backend.class)
-                .to(BackendImpl.class)
-                .asEagerSingleton();
-
-        bind(MaxRowIdFactory.class)
+        bind(ReservedIdInfoFactoryImpl.class)
                 .in(Singleton.class);
         bind(ReservedIdInfoFactory.class)
-                .to(MaxRowIdFactory.class);
+                .to(ReservedIdInfoFactoryImpl.class);
         
-        bind(RidGenerator.class)
-                .to(ReservedIdContainer.class)
+        bind(ReservedIdGenerator.class)
+                .to(ReservedIdGeneratorImpl.class)
                 .in(Singleton.class);
+        expose(ReservedIdGenerator.class);
         
         bind(DslContextFactory.class)
                 .to(DslContextFactoryImpl.class)
                 .asEagerSingleton();
+
+        bind(SnapshotUpdater.class)
+                .to(SnapshotUpdaterImpl.class);
+        expose(SnapshotUpdater.class);
+
+        install(new FactoryModuleBuilder()
+                .implement(BackendBundle.class, BackendBundleImpl.class)
+                .build(BackendBundleFactory.class)
+        );
+        expose(BackendBundleFactory.class);
     }
 
 }

@@ -38,7 +38,7 @@ import com.torodb.backend.SqlInterface;
 import com.torodb.backend.TableRefComparator;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
 import com.torodb.backend.meta.SchemaUpdater;
-import com.torodb.backend.meta.SnapshotUpdater;
+import com.torodb.backend.meta.SnapshotUpdaterImpl;
 import com.torodb.core.TableRef;
 import com.torodb.core.TableRefFactory;
 import com.torodb.core.d2r.CollectionData;
@@ -63,7 +63,7 @@ import com.torodb.core.transaction.metainf.MutableMetaDatabase;
 import com.torodb.core.transaction.metainf.MutableMetaDocPart;
 import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
 import com.torodb.d2r.D2RTranslatorStack;
-import com.torodb.d2r.IdentifierFactoryImpl;
+import com.torodb.core.d2r.DefaultIdentifierFactory;
 import com.torodb.d2r.MockIdentifierInterface;
 import com.torodb.d2r.MockRidGenerator;
 import com.torodb.d2r.R2DTranslatorImpl;
@@ -85,7 +85,7 @@ public abstract class AbstractBackendTest {
     protected SqlHelper sqlHelper;
     
     private MockRidGenerator ridGenerator = new MockRidGenerator();
-    private IdentifierFactory identifierFactory = new IdentifierFactoryImpl(new MockIdentifierInterface());
+    private IdentifierFactory identifierFactory = new DefaultIdentifierFactory(new MockIdentifierInterface());
     
     @Before
     public void setUp() throws Exception {
@@ -98,7 +98,9 @@ public abstract class AbstractBackendTest {
 
     protected ImmutableMetaSnapshot buildMetaSnapshot() {
         MvccMetainfoRepository metainfoRepository = new MvccMetainfoRepository();
-        SnapshotUpdater.updateSnapshot(metainfoRepository, sqlInterface, sqlHelper, schemaUpdater, tableRefFactory);
+        SnapshotUpdaterImpl snapshotUpdater = new SnapshotUpdaterImpl(sqlInterface, sqlHelper, schemaUpdater, tableRefFactory);
+
+        snapshotUpdater.updateSnapshot(metainfoRepository);
 
         try (SnapshotStage stage = metainfoRepository.startSnapshotStage()) {
             return stage.createImmutableSnapshot();
@@ -190,9 +192,10 @@ public abstract class AbstractBackendTest {
     }
 
     protected Collection<ToroDocument> readDocuments(MetaDatabase metaDatabase, MetaCollection metaCollection,
-            Iterator<DocPartResult> docPartResultSets) {
+            List<DocPartResult> docPartResultSets) {
         R2DTranslator r2dTranslator = new R2DTranslatorImpl();
-        Collection<ToroDocument> readedDocuments = r2dTranslator.translate(docPartResultSets);
+        Collection<ToroDocument> readedDocuments = r2dTranslator.translate(docPartResultSets.iterator());
+        docPartResultSets.forEach(docPartResult -> docPartResult.close());
         return readedDocuments;
     }
 

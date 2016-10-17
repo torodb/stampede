@@ -22,9 +22,8 @@ package com.torodb.backend.postgresql.guice;
 
 import javax.inject.Singleton;
 
-import com.google.inject.AbstractModule;
+import com.google.inject.PrivateModule;
 import com.torodb.backend.DataTypeProvider;
-import com.torodb.backend.DbBackend;
 import com.torodb.backend.DbBackendService;
 import com.torodb.backend.ErrorHandler;
 import com.torodb.backend.MetaDataReadInterface;
@@ -47,23 +46,32 @@ import com.torodb.backend.postgresql.PostgreSQLWriteInterface;
 import com.torodb.backend.postgresql.meta.PostgreSQLSchemaUpdater;
 import com.torodb.core.backend.IdentifierConstraints;
 
-public class PostgreSQLBackendModule extends AbstractModule {
+public class PostgreSQLBackendModule extends PrivateModule {
 
     @Override
     protected void configure() {
         bind(PostgreSQLDriverProvider.class).to(OfficialPostgreSQLDriver.class).in(Singleton.class);
         bind(PostgreSQLDbBackend.class).in(Singleton.class);
-        bind(DbBackend.class).to(PostgreSQLDbBackend.class);
         bind(DbBackendService.class).to(PostgreSQLDbBackend.class);
+        expose(DbBackendService.class);
         bind(SchemaUpdater.class).to(PostgreSQLSchemaUpdater.class).in(Singleton.class);
+        expose(SchemaUpdater.class);
         bind(MetaDataReadInterface.class).to(PostgreSQLMetaDataReadInterface.class).in(Singleton.class);
+        expose(MetaDataReadInterface.class);
         bind(MetaDataWriteInterface.class).to(PostgreSQLMetaDataWriteInterface.class).in(Singleton.class);
+        expose(MetaDataWriteInterface.class);
         bind(DataTypeProvider.class).to(PostgreSQLDataTypeProvider.class).in(Singleton.class);
+        expose(DataTypeProvider.class);
         bind(StructureInterface.class).to(PostgreSQLStructureInterface.class).in(Singleton.class);
+        expose(StructureInterface.class);
         bind(ReadInterface.class).to(PostgreSQLReadInterface.class).in(Singleton.class);
+        expose(ReadInterface.class);
         bind(WriteInterface.class).to(PostgreSQLWriteInterface.class).in(Singleton.class);
+        expose(WriteInterface.class);
         bind(ErrorHandler.class).to(PostgreSQLErrorHandler.class).in(Singleton.class);
+        expose(ErrorHandler.class);
         bind(IdentifierConstraints.class).to(PostgreSQLIdentifierConstraints.class).in(Singleton.class);
+        expose(IdentifierConstraints.class);
     }
 
 }

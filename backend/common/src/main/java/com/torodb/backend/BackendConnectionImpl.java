@@ -2,17 +2,17 @@
 package com.torodb.backend;
 
 import com.google.common.base.Preconditions;
+import com.torodb.backend.meta.SchemaUpdater;
 import com.torodb.core.backend.BackendConnection;
 import com.torodb.core.backend.BackendTransaction;
 import com.torodb.core.backend.ExclusiveWriteBackendTransaction;
 import com.torodb.core.backend.ReadOnlyBackendTransaction;
 import com.torodb.core.backend.SharedWriteBackendTransaction;
 import com.torodb.core.d2r.IdentifierFactory;
-import com.torodb.core.d2r.R2DTranslator;
-import com.torodb.core.d2r.RidGenerator;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import com.torodb.core.d2r.ReservedIdGenerator;
 
 /**
  *
@@ -20,18 +20,18 @@ import org.apache.logging.log4j.Logger;
 public class BackendConnectionImpl implements BackendConnection {
 
     private static final Logger LOGGER = LogManager.getLogger(BackendConnectionImpl.class);
-    private final BackendImpl backend;
+    private final BackendServiceImpl backend;
     private final SqlInterface sqlInterface;
     private boolean closed = false;
-    private final R2DTranslator r2dTranslator;
     private final IdentifierFactory identifierFactory;
-    private final RidGenerator ridGenerator;
+    private final ReservedIdGenerator ridGenerator;
     private BackendTransaction currentTransaction;
 
-    public BackendConnectionImpl(BackendImpl backend, SqlInterface sqlInterface, R2DTranslator r2dTranslator, IdentifierFactory identifierFactory, RidGenerator ridGenerator) {
+    public BackendConnectionImpl(BackendServiceImpl backend,
+            SqlInterface sqlInterface, ReservedIdGenerator ridGenerator,
+            IdentifierFactory identifierFactory) {
         this.backend = backend;
         this.sqlInterface = sqlInterface;
-        this.r2dTranslator = r2dTranslator;
         this.identifierFactory = identifierFactory;
         this.ridGenerator = ridGenerator;
     }
@@ -41,7 +41,7 @@ public class BackendConnectionImpl implements BackendConnection {
         Preconditions.checkState(!closed, "This connection is closed");
         Preconditions.checkState(currentTransaction == null, "Another transaction is currently under execution. Transaction is " + currentTransaction);
         
-        ReadOnlyBackendTransactionImpl transaction = new ReadOnlyBackendTransactionImpl(sqlInterface, this, r2dTranslator);
+        ReadOnlyBackendTransactionImpl transaction = new ReadOnlyBackendTransactionImpl(sqlInterface, this);
         currentTransaction = transaction;
 
         return transaction;
@@ -52,7 +52,7 @@ public class BackendConnectionImpl implements BackendConnection {
         Preconditions.checkState(!closed, "This connection is closed");
         Preconditions.checkState(currentTransaction == null, "Another transaction is currently under execution. Transaction is " + currentTransaction);
 
-        SharedWriteBackendTransactionImpl transaction = new SharedWriteBackendTransactionImpl(sqlInterface, this, r2dTranslator, identifierFactory);
+        SharedWriteBackendTransactionImpl transaction = new SharedWriteBackendTransactionImpl(sqlInterface, this, identifierFactory);
         currentTransaction = transaction;
 
         return transaction;
@@ -63,10 +63,18 @@ public class BackendConnectionImpl implements BackendConnection {
         Preconditions.checkState(!closed, "This connection is closed");
         Preconditions.checkState(currentTransaction == null, "Another transaction is currently under execution. Transaction is " + currentTransaction);
 
-        ExclusiveWriteBackendTransactionImpl transaction = new ExclusiveWriteBackendTransactionImpl(sqlInterface, this, r2dTranslator, identifierFactory, ridGenerator);
+        ExclusiveWriteBackendTransactionImpl transaction = new ExclusiveWriteBackendTransactionImpl(sqlInterface, this, identifierFactory, ridGenerator);
         currentTransaction = transaction;
 
         return transaction;
+    }
+
+    KvMetainfoHandler getMetaInfoHandler() {
+        return backend.getMetaInfoHandler();
+    }
+
+    SchemaUpdater getSchemaUpdater() {
+        return backend.getSchemaUpdater();
     }
 
     @Override

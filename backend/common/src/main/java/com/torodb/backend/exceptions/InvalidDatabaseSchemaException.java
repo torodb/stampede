@@ -1,6 +1,8 @@
 
 package com.torodb.backend.exceptions;
 
+import com.torodb.core.exceptions.InvalidDatabaseException;
+
 /**
  *
  */

@@ -38,28 +38,44 @@ import org.jooq.lambda.tuple.Tuple2;
 import com.google.common.base.Preconditions;
 import com.torodb.backend.ErrorHandler.Context;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
+import com.torodb.backend.meta.TorodbSchema;
+import com.torodb.backend.tables.SemanticTable;
 import com.torodb.core.TableRef;
+import com.torodb.core.backend.IdentifierConstraints;
+import com.torodb.core.exceptions.InvalidDatabaseException;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetaSnapshot;
+import java.util.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.jooq.Meta;
+import org.jooq.Schema;
+import org.jooq.Table;
 
 /**
  *
  */
 @Singleton
 public abstract class AbstractStructureInterface implements StructureInterface {
+    private static final Logger LOGGER
+            = LogManager.getLogger(AbstractStructureInterface.class);
 
-    private final DbBackend dbBackend;
+    private final DbBackendService dbBackend;
     private final MetaDataReadInterface metaDataReadInterface;
     private final SqlHelper sqlHelper;
+    private final IdentifierConstraints identifierConstraints;
     
     @Inject
-    public AbstractStructureInterface(DbBackend dbBackend, MetaDataReadInterface metaDataReadInterface, SqlHelper sqlHelper) {
+    public AbstractStructureInterface(DbBackendService dbBackend, 
+            MetaDataReadInterface metaDataReadInterface, SqlHelper sqlHelper,
+            IdentifierConstraints identifierConstraints) {
         this.dbBackend = dbBackend;
         this.metaDataReadInterface = metaDataReadInterface;
         this.sqlHelper = sqlHelper;
+        this.identifierConstraints = identifierConstraints;
     }
 
     @Override
@@ -139,6 +155,71 @@ public abstract class AbstractStructureInterface implements StructureInterface {
         String statement = getDropIndexStatement(schemaName, indexName);
         
         sqlHelper.executeUpdate(dsl, statement, Context.DROP_INDEX);
+    }
+
+    @Override
+    public void dropAll(DSLContext dsl) {
+        dropUserDatabases(dsl, metaDataReadInterface);
+        metaDataReadInterface.getMetaTables().forEach(t -> dsl.dropTable(t).execute());
+    }
+
+    @Override
+    public void dropUserData(DSLContext dsl) {
+        dropUserDatabases(dsl, metaDataReadInterface);
+        metaDataReadInterface.getMetaTables().forEach(t ->
+                dsl.deleteFrom(t).execute()
+        );
+    }
+
+    /**
+     * This method drops all user databases (usually, db schemas).
+     *
+     * To implement this method, metainformation found on metatables can be
+     * acceded using the given {@link MetaDataReadInterface}.
+     * @param dsl
+     * @param metaReadInterface
+     */
+    protected void dropUserDatabases(DSLContext dsl, MetaDataReadInterface metaDataReadInterface) {
+        metaDataReadInterface.readMetaDatabaseTable(dsl)
+                .forEach(dbRecord -> dropDatabase(dsl, dbRecord.getIdentifier()));
+    }
+
+    protected abstract void dropDatabase(DSLContext dsl, String dbIdentifier);
+
+    @Override
+    public Optional<Schema> findTorodbSchema(DSLContext dsl, Meta jooqMeta) {
+        Schema torodbSchema = null;
+        for (Schema schema : jooqMeta.getSchemas()) {
+            if (identifierConstraints.isSameIdentifier(TorodbSchema.IDENTIFIER, schema.getName())) {
+                torodbSchema = schema;
+                break;
+            }
+        }
+        return Optional.ofNullable(torodbSchema);
+    }
+
+    @Override
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public void checkMetaDataTables(Schema torodbSchema) {
+
+        List<SemanticTable<?>> metaTables = metaDataReadInterface.getMetaTables();
+        for (SemanticTable metaTable : metaTables) {
+            String metaTableName = metaTable.getName();
+            boolean metaTableFound = false;
+            for (Table<?> table : torodbSchema.getTables()) {
+                if (identifierConstraints.isSameIdentifier(table.getName(), metaTableName)) {
+                    metaTable.checkSemanticallyEquals(table);
+                    metaTableFound = true;
+                    LOGGER.debug(table + " found and check");
+                }
+            }
+            if (!metaTableFound) {
+                throw new InvalidDatabaseException("The schema '" + TorodbSchema.IDENTIFIER + "'"
+                        + " does not contain the expected meta table '"
+                        + metaTableName +"'");
+            }
+        }
+
     }
 
     protected String getDropIndexStatement(String schemaName, String indexName) {

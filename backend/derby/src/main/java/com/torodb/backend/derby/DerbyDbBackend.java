@@ -21,33 +21,32 @@
 package com.torodb.backend.derby;
 
 
-import com.torodb.backend.AbstractDbBackend;
+import com.torodb.backend.AbstractDbBackendService;
 import com.torodb.backend.TransactionIsolationLevel;
 import com.torodb.backend.driver.derby.DerbyDbBackendConfiguration;
 import com.torodb.backend.driver.derby.DerbyDriverProvider;
-import com.torodb.core.annotations.ToroDbIdleService;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import java.util.concurrent.ThreadFactory;
 import javax.annotation.Nonnull;
-import javax.inject.Inject;
 import javax.sql.DataSource;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import com.torodb.core.annotations.TorodbIdleService;
+import javax.inject.Inject;
 
 /**
  *
  * Derby-based backend
  */
-public class DerbyDbBackend extends AbstractDbBackend<DerbyDbBackendConfiguration> {
+public class DerbyDbBackend extends AbstractDbBackendService<DerbyDbBackendConfiguration> {
 
     private static final Logger LOGGER = LogManager.getLogger(DerbyDbBackend.class);
 
     private final DerbyDriverProvider driverProvider;
 
     @Inject
-    public DerbyDbBackend(@ToroDbIdleService ThreadFactory threadFactory, 
-            DerbyDbBackendConfiguration configuration, DerbyDriverProvider driverProvider,
-            DerbyErrorHandler errorHandler) {
+    public DerbyDbBackend(@TorodbIdleService ThreadFactory threadFactory,
+            DerbyDbBackendConfiguration configuration,
+            DerbyDriverProvider driverProvider, DerbyErrorHandler errorHandler) {
         super(threadFactory, configuration, errorHandler);
 
         LOGGER.info("Configured Derby backend at {}:{}", configuration.getDbHost(), configuration.getDbPort());

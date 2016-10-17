@@ -24,14 +24,12 @@ import com.torodb.concurrent.DefaultConcurrentToolsFactory.ForkJoinThreadFactory
 import com.torodb.concurrent.guice.ConcurrentModule;
 import com.torodb.core.BuildProperties;
 import com.torodb.core.annotations.ParallelLevel;
-import com.torodb.core.annotations.ToroDbIdleService;
-import com.torodb.core.annotations.ToroDbRunnableService;
 import com.torodb.core.cursors.Cursor;
 import com.torodb.core.document.ToroDocument;
 import com.torodb.core.guice.CoreModule;
 import com.torodb.core.language.AttributeReference;
 import com.torodb.core.metrics.MetricsConfig;
-import com.torodb.core.metrics.MetricsModule;
+import com.torodb.core.metrics.guice.MetricsModule;
 import com.torodb.d2r.guice.D2RModule;
 import com.torodb.kvdocument.conversion.mongowp.MongoWPConverter;
 import com.torodb.kvdocument.values.KVInteger;
@@ -79,6 +77,13 @@ import org.junit.Test;
 import static com.eightkdata.mongowp.bson.utils.DefaultBsonValues.newDocument;
 import static org.junit.Assert.*;
 
+import com.torodb.core.annotations.TorodbIdleService;
+import com.torodb.core.annotations.TorodbRunnableService;
+import com.torodb.core.backend.BackendBundle;
+import com.torodb.core.backend.BackendBundleFactory;
+import com.torodb.core.supervision.SupervisorDecision;
+import com.torodb.torod.*;
+
 
 /**
  *
@@ -93,31 +98,35 @@ public abstract class AbstractOplogApplierTest {
     private OplogManager oplogManager;
     private static final OpTimeFactory opTimeFactory = new OpTimeFactory();
 
-    public abstract Module getSpecificTestModule();
+    public abstract Module getMongodSpecificTestModule();
 
     @Before
     public void setUp() {
-        testInjector = Guice.createInjector(new ReplTestModule(),
-                new TestMongoDbReplModule(),
+        Injector torodInjector = Guice.createInjector(
+                new ReplTestModule(),
+                new TorodServerTestModule(),
                 new CoreModule(),
                 new BackendModule(),
                 new DerbyBackendModule(),
                 new MetainfModule(),
                 new D2RModule(),
                 new MemoryTorodModule(),
-//                new SqlTorodModule(),
-                new MongoLayerModule(),
                 new MetricsModule(new MetricsConfig() {
                     @Override
                     public Boolean getMetricsEnabled() {
                         return true;
                     }
                 }),
-                new ConcurrentModule(),
-                getSpecificTestModule()
+                new ConcurrentModule()
+        );
+        testInjector = torodInjector.createChildInjector(
+                new MongoLayerModule(),
+                new MongodServerTestModule(),
+                getMongodSpecificTestModule()
         );
         
-        torodServer = testInjector.getInstance(TorodServer.class);
+        torodServer = testInjector.getInstance(TorodBundle.class)
+                .getTorodServer();
         torodServer.startAsync();
 
         mongodServer = testInjector.getInstance(MongodServer.class);
@@ -137,20 +146,24 @@ public abstract class AbstractOplogApplierTest {
 
     @After
     public void tearDown() throws Exception {
-        assert oplogApplier != null;
-        oplogApplier.close();
+        if (oplogApplier != null) {
+            oplogApplier.close();
+        }
 
-        assert oplogManager != null;
-        oplogManager.stopAsync();
-        oplogManager.awaitTerminated();
+        if (oplogManager != null) {
+            oplogManager.stopAsync();
+            oplogManager.awaitTerminated();
+        }
 
-        assert mongodServer != null;
-        mongodServer.stopAsync();
-        mongodServer.awaitTerminated();
+        if (mongodServer != null) {
+            mongodServer.stopAsync();
+            mongodServer.awaitTerminated();
+        }
 
-        assert torodServer != null;
-        torodServer.stopAsync();
-        torodServer.awaitTerminated();
+        if (torodServer != null) {
+            torodServer.stopAsync();
+            torodServer.awaitTerminated();
+        }
     }
 
     private void executeSimpleTest(OnTransactionConsumer<WriteMongodTransaction> given,
@@ -362,11 +375,11 @@ public abstract class AbstractOplogApplierTest {
                     .toInstance(threadFactory);
 
             bind(ThreadFactory.class)
-                    .annotatedWith(ToroDbIdleService.class)
+                    .annotatedWith(TorodbIdleService.class)
                     .toInstance(threadFactory);
 
             bind(ThreadFactory.class)
-                    .annotatedWith(ToroDbRunnableService.class)
+                    .annotatedWith(TorodbRunnableService.class)
                     .toInstance(threadFactory);
 
             bind(ThreadFactory.class)
@@ -376,15 +389,10 @@ public abstract class AbstractOplogApplierTest {
             bind(ForkJoinWorkerThreadFactory.class)
                     .toInstance(ForkJoinPool.defaultForkJoinWorkerThreadFactory);
             
-            bind(MongoServerConfig.class)
-                    .toInstance(new MongoServerConfig() {
-                        @Override
-                        public int getPort() {
-                            return 28019;
-                        }
-                    });
             bind(MongodServerConfig.class)
                     .toInstance(new MongodServerConfig(HostAndPort.fromParts("localhost", 28017)));
+            bind(MongoServerConfig.class)
+                    .to(MongodServerConfig.class);
         }
     }
 
@@ -451,7 +459,26 @@ public abstract class AbstractOplogApplierTest {
         }
     }
 
-    private static class TestMongoDbReplModule extends AbstractModule {
+    private static class MongodServerTestModule extends PrivateModule {
+
+        @Override
+        protected void configure() {
+            bind(OplogApplier.class)
+                    .to(DefaultOplogApplier.class)
+                    .in(Singleton.class);
+            expose(OplogApplier.class);
+
+            bind(DefaultOplogApplier.BatchLimits.class)
+                    .toInstance(new BatchLimits(1000, Duration.ofSeconds(2)));
+        }
+
+        @Provides
+        TorodServer getMongodServer(TorodBundle bundle) {
+            return bundle.getTorodServer();
+        }
+    }
+
+    private static class TorodServerTestModule extends AbstractModule {
 
         @Override
         protected void configure() {
@@ -459,13 +486,6 @@ public abstract class AbstractOplogApplierTest {
             bind(DbCloner.class)
                     .annotatedWith(MongoDbRepl.class)
                     .toProvider(AkkaDbClonerProvider.class);
-
-            bind(OplogApplier.class)
-                    .to(DefaultOplogApplier.class)
-                    .in(Singleton.class);
-
-            bind(DefaultOplogApplier.BatchLimits.class)
-                    .toInstance(new BatchLimits(1000, Duration.ofSeconds(2)));
 
             bind(CommitHeuristic.class)
                     .to(DefaultCommitHeuristic.class)
@@ -510,6 +530,16 @@ public abstract class AbstractOplogApplierTest {
                             };
                         }
                     });
+        }
+
+        @Provides @Singleton
+        BackendBundle createBackendBundle(BackendBundleFactory factory) {
+            return factory.createBundle((o, t) -> SupervisorDecision.STOP);
+        }
+
+        @Provides @Singleton
+        TorodBundle createTorodBundle(TorodBundleFactory factory, BackendBundle backendBundle) {
+            return factory.createBundle((o, t) -> SupervisorDecision.STOP, backendBundle);
         }
 
     }

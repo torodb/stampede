@@ -6,13 +6,13 @@ import java.util.stream.Stream;
 
 import com.torodb.core.cursors.Cursor;
 import com.torodb.core.cursors.IteratorCursor;
-import com.torodb.core.cursors.ToroCursor;
 import com.torodb.core.document.ToroDocument;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.language.AttributeReference;
 import com.torodb.core.transaction.RollbackException;
 import com.torodb.kvdocument.values.KVDocument;
 import com.torodb.kvdocument.values.KVValue;
+import com.torodb.torod.cursors.TorodCursor;
 
 /**
  *
@@ -25,7 +25,7 @@ public interface SharedWriteTorodTransaction extends TorodTransaction {
         delete(dbName, colName, new IteratorCursor<>(candidates.stream().map(ToroDocument::getId).iterator()));
     }
 
-    public default void delete(String dbName, String colName, ToroCursor cursor) {
+    public default void delete(String dbName, String colName, TorodCursor cursor) {
         delete(dbName, colName, cursor.asDidCursor());
     }
 

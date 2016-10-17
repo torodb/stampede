@@ -89,20 +89,24 @@
         </dependency>
 		<dependency>
 			<groupId>com.google.inject</groupId>
-			<artifactId>guice</artifactId>
-		</dependency>
-	 <dependency>
-	  <groupId>org.apache.logging.log4j</groupId>
-	  <artifactId>log4j-core</artifactId>
-	 </dependency>
-	 <dependency>
-	  <groupId>${project.groupId}</groupId>
-	  <artifactId>concurrent</artifactId>
-	  <version>${project.version}</version>
-	 </dependency>
-	</dependencies>
+            <artifactId>guice</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>concurrent</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.inject.extensions</groupId>
+            <artifactId>guice-assistedinject</artifactId>
+        </dependency>
+    </dependencies>
 
-	<build>
+    <build>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>

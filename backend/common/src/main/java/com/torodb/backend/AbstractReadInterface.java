@@ -312,7 +312,7 @@ public abstract class AbstractReadInterface implements ReadInterface {
 
     @Nonnull
     @Override
-    public DocPartResultBatch getCollectionResultSets(@Nonnull DSLContext dsl, @Nonnull MetaDatabase metaDatabase, @Nonnull MetaCollection metaCollection,
+    public List<DocPartResult> getCollectionResultSets(@Nonnull DSLContext dsl, @Nonnull MetaDatabase metaDatabase, @Nonnull MetaCollection metaCollection,
             @Nonnull Cursor<Integer> didCursor, int maxSize) throws SQLException {
         Collection<Integer> dids = didCursor.getNextBatch(maxSize);
         return getCollectionResultSets(dsl, metaDatabase, metaCollection, dids);
@@ -320,8 +320,8 @@ public abstract class AbstractReadInterface implements ReadInterface {
 
     @Override
     @SuppressFBWarnings(value = {"OBL_UNSATISFIED_OBLIGATION","ODR_OPEN_DATABASE_RESOURCE"},
-    justification = "ResultSet is wrapped in a ResultSetDocPartResult. It's iterated and closed in caller code")
-    public DocPartResultBatch getCollectionResultSets(DSLContext dsl, MetaDatabase metaDatabase,
+    justification = "ResultSet is wrapped in a DocPartResult. It's iterated and closed in caller code")
+    public List<DocPartResult> getCollectionResultSets(DSLContext dsl, MetaDatabase metaDatabase,
             MetaCollection metaCollection, Collection<Integer> dids) throws SQLException {
         ArrayList<DocPartResult> result = new ArrayList<>();
         Connection connection = dsl.configuration().connectionProvider().acquire();
@@ -341,7 +341,7 @@ public abstract class AbstractReadInterface implements ReadInterface {
         } finally {
             dsl.configuration().connectionProvider().release(connection);
         }
-        return new DocPartResultBatch(result);
+        return result;
     }
 
     protected abstract String getDocPartStatament(MetaDatabase metaDatabase, MetaDocPart metaDocPart,

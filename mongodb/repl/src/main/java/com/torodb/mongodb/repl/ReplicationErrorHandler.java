@@ -20,10 +20,12 @@
 
 package com.torodb.mongodb.repl;
 
+import com.torodb.core.supervision.Supervisor;
+
 /**
  *
  */
-public interface ReplicationErrorHandler {
+public interface ReplicationErrorHandler extends Supervisor {
 
     public void onTopologyError(Throwable t);
 

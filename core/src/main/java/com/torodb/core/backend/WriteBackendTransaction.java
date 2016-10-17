@@ -33,6 +33,7 @@ import com.torodb.core.transaction.metainf.MetaIndex;
 import com.torodb.core.transaction.metainf.MetaScalar;
 import com.torodb.core.transaction.metainf.MutableMetaCollection;
 import com.torodb.core.transaction.metainf.MutableMetaDocPart;
+import com.torodb.kvdocument.values.KVValue;
 
 public interface WriteBackendTransaction extends BackendTransaction {
     /**
@@ -160,6 +161,18 @@ public interface WriteBackendTransaction extends BackendTransaction {
      * @param index
      */
     public void dropIndex(MetaDatabase db, MutableMetaCollection col, MetaIndex index);
+
+    /**
+     * Stores the given key value association.
+     *
+     * This metainfo is a key-value storage that different modules can use to
+     * store their own information.
+     * @param key
+     * @param newValue
+     * @return the old value or null if none was stored
+     * @throws IllegalArgumentException if the given key is not registered
+     */
+    public KVValue<?> writeMetaInfo(MetaInfoKey key, KVValue<?> newValue);
     
     public void commit() throws UserException, RollbackException;
 

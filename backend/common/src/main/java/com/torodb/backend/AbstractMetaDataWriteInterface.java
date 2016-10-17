@@ -29,16 +29,9 @@ import org.jooq.TableField;
 import org.jooq.conf.ParamType;
 
 import com.torodb.backend.ErrorHandler.Context;
-import com.torodb.backend.tables.MetaCollectionTable;
-import com.torodb.backend.tables.MetaDatabaseTable;
-import com.torodb.backend.tables.MetaDocPartIndexTable;
-import com.torodb.backend.tables.MetaDocPartTable;
-import com.torodb.backend.tables.MetaDocPartIndexColumnTable;
-import com.torodb.backend.tables.MetaFieldTable;
-import com.torodb.backend.tables.MetaIndexFieldTable;
-import com.torodb.backend.tables.MetaIndexTable;
-import com.torodb.backend.tables.MetaScalarTable;
+import com.torodb.backend.tables.*;
 import com.torodb.core.TableRef;
+import com.torodb.core.backend.MetaInfoKey;
 import com.torodb.core.transaction.metainf.FieldIndexOrdering;
 import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.MetaCollection;
@@ -50,6 +43,7 @@ import com.torodb.core.transaction.metainf.MetaDocPartIndexColumn;
 import com.torodb.core.transaction.metainf.MetaIndex;
 import com.torodb.core.transaction.metainf.MetaIndexField;
 import com.torodb.core.transaction.metainf.MetaScalar;
+import java.util.Optional;
 
 /**
  *
@@ -66,19 +60,21 @@ public abstract class AbstractMetaDataWriteInterface implements MetaDataWriteInt
     private final MetaIndexFieldTable<?, ?> metaIndexFieldTable;
     private final MetaDocPartIndexTable<?, ?> metaDocPartIndexTable;
     private final MetaDocPartIndexColumnTable<?, ?> metaDocPartIndexColumnTable;
+    private final KvTable<?> kvTable;
     private final SqlHelper sqlHelper;
     
-    public AbstractMetaDataWriteInterface(MetaDataReadInterface derbyMetaDataReadInterface, 
+    public AbstractMetaDataWriteInterface(MetaDataReadInterface metaDataReadInterface,
             SqlHelper sqlHelper) {
-        this.metaDatabaseTable = derbyMetaDataReadInterface.getMetaDatabaseTable();
-        this.metaCollectionTable = derbyMetaDataReadInterface.getMetaCollectionTable();
-        this.metaDocPartTable = derbyMetaDataReadInterface.getMetaDocPartTable();
-        this.metaFieldTable = derbyMetaDataReadInterface.getMetaFieldTable();
-        this.metaScalarTable = derbyMetaDataReadInterface.getMetaScalarTable();
-        this.metaIndexTable = derbyMetaDataReadInterface.getMetaIndexTable();
-        this.metaIndexFieldTable = derbyMetaDataReadInterface.getMetaIndexFieldTable();
-        this.metaDocPartIndexTable = derbyMetaDataReadInterface.getMetaDocPartIndexTable();
-        this.metaDocPartIndexColumnTable = derbyMetaDataReadInterface.getMetaDocPartIndexColumnTable();
+        this.metaDatabaseTable = metaDataReadInterface.getMetaDatabaseTable();
+        this.metaCollectionTable = metaDataReadInterface.getMetaCollectionTable();
+        this.metaDocPartTable = metaDataReadInterface.getMetaDocPartTable();
+        this.metaFieldTable = metaDataReadInterface.getMetaFieldTable();
+        this.metaScalarTable = metaDataReadInterface.getMetaScalarTable();
+        this.metaIndexTable = metaDataReadInterface.getMetaIndexTable();
+        this.metaIndexFieldTable = metaDataReadInterface.getMetaIndexFieldTable();
+        this.metaDocPartIndexTable = metaDataReadInterface.getMetaDocPartIndexTable();
+        this.metaDocPartIndexColumnTable = metaDataReadInterface.getMetaDocPartIndexColumnTable();
+        this.kvTable = metaDataReadInterface.getKvTable();
         this.sqlHelper = sqlHelper;
     }
 
@@ -171,6 +167,16 @@ public abstract class AbstractMetaDataWriteInterface implements MetaDataWriteInt
     }
 
     protected abstract String getCreateMetaDocPartIndexColumnTableStatement(String schemaName, String tableName);
+
+    @Override
+    public void createKvTable(DSLContext dsl) {
+    	String schemaName = kvTable.getSchema().getName();
+    	String tableName = kvTable.getName();
+        String statement = getCreateMetainfStatement(schemaName, tableName);
+        sqlHelper.executeStatement(dsl, statement, Context.CREATE_TABLE);
+    }
+
+    protected abstract String getCreateMetainfStatement(String schemaName, String tableName);
 
     @Override
 	public void addMetaDatabase(DSLContext dsl, MetaDatabase database) {
@@ -462,4 +468,30 @@ public abstract class AbstractMetaDataWriteInterface implements MetaDataWriteInt
     }
     
     protected abstract Condition getTableRefEqCondition(TableField<?, ?> field, TableRef tableRef);
+
+    @Override
+    public String writeMetaInfo(DSLContext dsl, MetaInfoKey key, String newValue) {
+        Condition c = kvTable.KEY.eq(key.getKeyName());
+
+        Optional<String> oldValue = dsl.select(kvTable.VALUE)
+                .from(kvTable)
+                .where(c)
+                .fetchOptional()
+                .map(Record1::value1);
+        
+        if (oldValue.isPresent()) {
+            int updatedRows = dsl.update(kvTable)
+                .set(kvTable.KEY, key.getKeyName())
+                .set(kvTable.VALUE, newValue)
+                .where(c)
+                .execute();
+            assert updatedRows == 1;
+        } else {
+            int newRows = dsl.insertInto(kvTable, kvTable.KEY, kvTable.VALUE)
+                    .values(key.getKeyName(), newValue)
+                    .execute();
+            assert newRows == 1;
+        }
+        return oldValue.orElse(null);
+    }
 }

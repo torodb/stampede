@@ -100,6 +100,4 @@ public class SqlTorodConnection implements TorodConnection {
         return backendConnection;
     }
 
-    
-
 }

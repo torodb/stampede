@@ -20,8 +20,21 @@
 
 package com.torodb.backend;
 
-import com.google.common.util.concurrent.Service;
+import com.torodb.core.services.TorodbService;
+import java.sql.Connection;
+import javax.sql.DataSource;
 
-public interface DbBackendService extends DbBackend, Service {
+public interface DbBackendService extends TorodbService {
 
+    public DataSource getSessionDataSource();
+    public DataSource getSystemDataSource();
+    public DataSource getGlobalCursorDatasource();
+    public void disableDataInsertMode();
+    public void enableDataInsertMode();
+    public long getDefaultCursorTimeout();
+    public boolean isOnDataInsertMode();
+    public boolean includeForeignKeys();
+    public Connection createSystemConnection();
+    public Connection createReadOnlyConnection();
+    public Connection createWriteConnection();
 }

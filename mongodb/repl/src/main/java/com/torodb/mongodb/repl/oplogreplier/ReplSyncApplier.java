@@ -3,9 +3,9 @@ package com.torodb.mongodb.repl.oplogreplier;
 
 import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
-import com.torodb.common.util.ThreadFactoryRunnableService;
-import com.torodb.core.annotations.ToroDbRunnableService;
 import com.torodb.core.exceptions.user.UserException;
+import com.torodb.core.services.RunnableTorodbService;
+import com.torodb.core.supervision.Supervisor;
 import com.torodb.core.transaction.RollbackException;
 import com.torodb.mongodb.core.MongodConnection;
 import com.torodb.mongodb.core.MongodServer;
@@ -19,11 +19,12 @@ import java.util.concurrent.ThreadFactory;
 import javax.annotation.Nonnull;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import com.torodb.core.annotations.TorodbRunnableService;
 
 /**
  *
  */
-class ReplSyncApplier extends ThreadFactoryRunnableService {
+class ReplSyncApplier extends RunnableTorodbService {
 
     private static final Logger LOGGER = LogManager.getLogger(ReplSyncApplier.class);
     private final SyncServiceView callback;
@@ -34,16 +35,21 @@ class ReplSyncApplier extends ThreadFactoryRunnableService {
     private volatile Thread runThread;
 
     ReplSyncApplier(
-            @ToroDbRunnableService ThreadFactory threadFactory,
+            @TorodbRunnableService ThreadFactory threadFactory,
             @Nonnull OplogOperationApplier oplogOpApplier,
             @Nonnull MongodServer server,
             @Nonnull OplogManager oplogManager,
             @Nonnull SyncServiceView callback) {
-        super(threadFactory);
+        super(callback, threadFactory);
         this.callback = callback;
         this.connection = server.openConnection();
         this.oplogOpApplier = oplogOpApplier;
         this.oplogManager = oplogManager;
+    }
+
+    @Override
+    protected Logger getLogger() {
+        return LOGGER;
     }
 
     @Override
@@ -59,7 +65,7 @@ class ReplSyncApplier extends ThreadFactoryRunnableService {
     }
 
     @Override
-    protected void run() {
+    protected void runProtected() {
         runThread = Thread.currentThread();
         /*
          * TODO: In general, the replication context can be set as not reaplying. But it is not
@@ -144,7 +150,7 @@ class ReplSyncApplier extends ThreadFactoryRunnableService {
     }
 
 
-    public static interface SyncServiceView {
+    public static interface SyncServiceView extends Supervisor {
 
         public List<OplogOperation> takeOps() throws InterruptedException;
 

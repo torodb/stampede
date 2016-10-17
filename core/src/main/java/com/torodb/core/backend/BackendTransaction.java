@@ -24,12 +24,13 @@ import org.jooq.lambda.tuple.Tuple2;
 
 import com.google.common.collect.Multimap;
 import com.torodb.core.cursors.Cursor;
-import com.torodb.core.cursors.ToroCursor;
+import com.torodb.core.exceptions.InvalidDatabaseException;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetaField;
 import com.torodb.kvdocument.values.KVValue;
+import java.util.Optional;
 
 /**
  *
@@ -44,11 +45,11 @@ public interface BackendTransaction extends AutoCloseable {
     
     public long getDocumentsSize(MetaDatabase db, MetaCollection col);
 
-    public ToroCursor fetch(MetaDatabase db, MetaCollection col, Cursor<Integer> didCursor);
+    public BackendCursor fetch(MetaDatabase db, MetaCollection col, Cursor<Integer> didCursor);
 
-    public ToroCursor findAll(MetaDatabase db, MetaCollection col);
+    public BackendCursor findAll(MetaDatabase db, MetaCollection col);
 
-    public ToroCursor findByField(MetaDatabase db, MetaCollection col,
+    public BackendCursor findByField(MetaDatabase db, MetaCollection col,
             MetaDocPart docPart, MetaField field, KVValue<?> value);
 
     /**
@@ -62,7 +63,7 @@ public interface BackendTransaction extends AutoCloseable {
      * @param valuesMultimap
      * @return
      */
-    public ToroCursor findByFieldIn(MetaDatabase db, MetaCollection col, MetaDocPart docPart,
+    public BackendCursor findByFieldIn(MetaDatabase db, MetaCollection col, MetaDocPart docPart,
             Multimap<MetaField, KVValue<?>> valuesMultimap);
 
 
@@ -79,6 +80,19 @@ public interface BackendTransaction extends AutoCloseable {
      */
     public Cursor<Tuple2<Integer, KVValue<?>>> findByFieldInProjection(MetaDatabase db, MetaCollection col, MetaDocPart docPart,
             Multimap<MetaField, KVValue<?>> valuesMultimap);
+
+    /**
+     * Reads the metadata value stored with the given key.
+     *
+     * This metainfo is a key-value storage that different modules can use to
+     * store their own information.
+     *
+     * @param key
+     * @return
+     */
+    public Optional<KVValue<?>> readMetaInfo(MetaInfoKey key);
+
+    public void checkMetaDataTables() throws InvalidDatabaseException;
     
     public void rollback();
 

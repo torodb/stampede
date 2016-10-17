@@ -30,15 +30,7 @@ import com.torodb.backend.AbstractMetaDataWriteInterface;
 import com.torodb.backend.SqlBuilder;
 import com.torodb.backend.SqlHelper;
 import com.torodb.backend.converters.TableRefConverter;
-import com.torodb.backend.tables.MetaCollectionTable;
-import com.torodb.backend.tables.MetaDatabaseTable;
-import com.torodb.backend.tables.MetaDocPartIndexTable;
-import com.torodb.backend.tables.MetaDocPartTable;
-import com.torodb.backend.tables.MetaDocPartIndexColumnTable;
-import com.torodb.backend.tables.MetaFieldTable;
-import com.torodb.backend.tables.MetaIndexFieldTable;
-import com.torodb.backend.tables.MetaIndexTable;
-import com.torodb.backend.tables.MetaScalarTable;
+import com.torodb.backend.tables.*;
 import com.torodb.core.TableRef;
 
 /**
@@ -227,6 +219,17 @@ public class DerbyMetaDataWriteInterface extends AbstractMetaDataWriteInterface 
     @Override
     protected Condition getTableRefEqCondition(@SuppressWarnings("rawtypes") TableField field, TableRef tableRef) {
         return field.eq(TableRefConverter.toJsonArray(tableRef));
+    }
+
+    @Override
+    protected String getCreateMetainfStatement(String schemaName, String tableName) {
+        return new SqlBuilder("CREATE TABLE ").table(schemaName, tableName)
+                .append(" (")
+                .quote(KvTable.TableFields.KEY).append(" varchar(256) NOT NULL, ")
+                .quote(KvTable.TableFields.VALUE).append(" varchar(32672) NOT NULL,")
+                .append("  PRIMARY KEY (").quote(KvTable.TableFields.KEY).append(')')
+                .append(')')
+                .toString();
     }
 
 }

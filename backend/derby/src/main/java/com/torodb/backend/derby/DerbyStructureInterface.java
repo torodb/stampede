@@ -35,6 +35,8 @@ import com.torodb.backend.InternalField;
 import com.torodb.backend.SqlBuilder;
 import com.torodb.backend.SqlHelper;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
+import com.torodb.core.backend.IdentifierConstraints;
+import org.jooq.DSLContext;
 
 /**
  *
@@ -43,8 +45,11 @@ import com.torodb.backend.converters.jooq.DataTypeForKV;
 public class DerbyStructureInterface extends AbstractStructureInterface {
 
     @Inject
-    public DerbyStructureInterface(DerbyDbBackend dbBackend, DerbyMetaDataReadInterface metaDataReadInterface, SqlHelper sqlHelper) {
-        super(dbBackend, metaDataReadInterface, sqlHelper);
+    public DerbyStructureInterface(DerbyDbBackend dbBackend,
+            DerbyMetaDataReadInterface metaDataReadInterface,
+            SqlHelper sqlHelper,
+            IdentifierConstraints identifierConstraints) {
+        super(dbBackend, metaDataReadInterface, sqlHelper, identifierConstraints);
     }
 
     @Override
@@ -194,5 +199,13 @@ public class DerbyStructureInterface extends AbstractStructureInterface {
                 .append(" ")
                 .append(dataType.getCastTypeName());
             return sb.toString();
+    }
+
+    @Override
+    protected void dropDatabase(DSLContext dsl, String dbIdentifier) {
+        //TODO: The general implementation is not implemented yet, as it
+        //requires several reads to the metadata
+        throw new UnsupportedOperationException("It is not defined yet how to "
+                + "drop all user databases on a general way");
     }
 }

@@ -1,17 +1,17 @@
 package com.torodb.backend.d2r;
 
 import com.google.common.base.Stopwatch;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.torodb.backend.util.InMemoryRidGenerator;
 import com.torodb.backend.util.JsonArchiveFeed;
 import com.torodb.core.TableRefFactory;
 import com.torodb.core.d2r.D2RTranslator;
 import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.d2r.IdentifierFactory;
-import com.torodb.core.d2r.RidGenerator;
 import com.torodb.core.impl.TableRefFactoryImpl;
 import com.torodb.core.transaction.metainf.MutableMetaDatabase;
 import com.torodb.d2r.D2RTranslatorStack;
-import com.torodb.d2r.IdentifierFactoryImpl;
+import com.torodb.core.d2r.DefaultIdentifierFactory;
 import com.torodb.d2r.MockIdentifierInterface;
 import com.torodb.metainfo.cache.mvcc.MvccMetainfoRepository;
 import java.io.IOException;
@@ -20,6 +20,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static com.torodb.backend.util.MetaInfoOperation.executeMetaOperation;
 import static com.torodb.backend.util.TestDataFactory.*;
+
+import com.torodb.core.d2r.ReservedIdGenerator;
 
 /**
  * 
@@ -36,8 +38,8 @@ public class ParseHttpArchiveBatchStackStress {
 
 		MvccMetainfoRepository mvccMetainfoRepository = new MvccMetainfoRepository(initialView);
 	    TableRefFactory tableRefFactory = new TableRefFactoryImpl();
-		RidGenerator ridGenerator = new InMemoryRidGenerator();
-		IdentifierFactory identifierFactory = new IdentifierFactoryImpl(new MockIdentifierInterface());
+		ReservedIdGenerator ridGenerator = new InMemoryRidGenerator(new ThreadFactoryBuilder().build());
+		IdentifierFactory identifierFactory = new DefaultIdentifierFactory(new MockIdentifierInterface());
 
 		AtomicLong cont=new AtomicLong(0);
 		Stopwatch toroTimer = Stopwatch.createUnstarted();

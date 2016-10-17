@@ -20,8 +20,8 @@
 
 package com.torodb.mongodb.repl.topology;
 
-import com.torodb.mongodb.repl.ReplicationErrorHandler;
 import javax.inject.Inject;
+import com.torodb.mongodb.repl.ReplicationErrorHandler;
 
 /**
  *

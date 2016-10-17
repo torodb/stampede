@@ -33,10 +33,10 @@ import org.jooq.lambda.tuple.Tuple2;
 import com.google.common.base.Preconditions;
 import com.torodb.backend.ErrorHandler.Context;
 import com.torodb.core.TableRef;
+import com.torodb.core.backend.MetaInfoKey;
 import com.torodb.core.backend.SharedWriteBackendTransaction;
 import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.d2r.IdentifierFactory;
-import com.torodb.core.d2r.R2DTranslator;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.transaction.RollbackException;
 import com.torodb.core.transaction.metainf.MetaCollection;
@@ -51,6 +51,7 @@ import com.torodb.core.transaction.metainf.MetaScalar;
 import com.torodb.core.transaction.metainf.MutableMetaCollection;
 import com.torodb.core.transaction.metainf.MutableMetaDocPart;
 import com.torodb.core.transaction.metainf.MutableMetaDocPartIndex;
+import com.torodb.kvdocument.values.KVValue;
 
 public class SharedWriteBackendTransactionImpl extends BackendTransactionImpl implements SharedWriteBackendTransaction {
 
@@ -58,11 +59,16 @@ public class SharedWriteBackendTransactionImpl extends BackendTransactionImpl im
 
     private final IdentifierFactory identifierFactory;
 
-    public SharedWriteBackendTransactionImpl(SqlInterface sqlInterface, BackendConnectionImpl backendConnection,
-            R2DTranslator r2dTranslator, IdentifierFactory identifierFactory) {
-        super(sqlInterface.getDbBackend().createWriteConnection(), sqlInterface, backendConnection, r2dTranslator);
+    public SharedWriteBackendTransactionImpl(SqlInterface sqlInterface,
+            BackendConnectionImpl backendConnection,
+            IdentifierFactory identifierFactory) {
+        super(sqlInterface.getDbBackend().createWriteConnection(), sqlInterface, backendConnection);
         
         this.identifierFactory = identifierFactory;
+    }
+
+    IdentifierFactory getIdentifierFactory() {
+        return identifierFactory;
     }
     
     @Override
@@ -299,6 +305,12 @@ public class SharedWriteBackendTransactionImpl extends BackendTransactionImpl im
                 }
             }
         }
+    }
+
+    @Override
+    public KVValue<?> writeMetaInfo(MetaInfoKey key, KVValue<?> newValue) {
+        return getBackendConnection().getMetaInfoHandler()
+                .writeMetaInfo(getDsl(), key, newValue);
     }
 
     private void dropIndex(MetaDatabase db, MetaCollection col, MutableMetaDocPart docPart,

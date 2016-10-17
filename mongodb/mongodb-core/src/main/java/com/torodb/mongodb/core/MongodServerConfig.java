@@ -1,13 +1,14 @@
 
 package com.torodb.mongodb.core;
 
+import com.eightkdata.mongowp.server.MongoServerConfig;
 import com.google.common.base.Preconditions;
 import com.google.common.net.HostAndPort;
 
 /**
  *
  */
-public class MongodServerConfig {
+public class MongodServerConfig implements MongoServerConfig {
 
     private final HostAndPort hostAndPort;
 
@@ -18,6 +19,11 @@ public class MongodServerConfig {
 
     public HostAndPort getHostAndPort() {
         return hostAndPort;
+    }
+
+    @Override
+    public int getPort() {
+        return hostAndPort.getPort();
     }
 
 }

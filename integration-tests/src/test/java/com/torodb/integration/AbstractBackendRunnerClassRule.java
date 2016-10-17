@@ -42,7 +42,7 @@ import org.postgresql.ds.PGSimpleDataSource;
 
 import com.beust.jcommander.internal.Console;
 import com.google.inject.Injector;
-import com.torodb.backend.DbBackend;
+import com.torodb.backend.DbBackendService;
 import com.torodb.backend.meta.TorodbSchema;
 import com.torodb.core.backend.IdentifierConstraints;
 import com.torodb.packaging.ToroDbServer;
@@ -263,7 +263,7 @@ public abstract class AbstractBackendRunnerClassRule implements TestRule {
 	protected abstract void shutDown() throws Exception;
 
     protected void cleanDatabase() throws Exception {
-        DbBackend dbBackend = injector.getInstance(DbBackend.class);
+        DbBackendService dbBackend = injector.getInstance(DbBackendService.class);
         IdentifierConstraints identifierConstraints = injector.getInstance(IdentifierConstraints.class);
         try (Connection connection = dbBackend.createSystemConnection()) {
             DatabaseMetaData metaData = connection.getMetaData();

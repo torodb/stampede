@@ -4,7 +4,8 @@ package com.torodb.torod.impl.memory;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.RemovalNotification;
-import com.torodb.common.util.ThreadFactoryIdleService;
+import com.google.inject.Singleton;
+import com.torodb.core.services.IdleTorodbService;
 import com.torodb.torod.TorodConnection;
 import com.torodb.torod.TorodServer;
 import java.util.concurrent.ThreadFactory;
@@ -14,7 +15,8 @@ import javax.inject.Inject;
 /**
  *
  */
-public class MemoryTorodServer  extends ThreadFactoryIdleService implements TorodServer {
+@Singleton
+public class MemoryTorodServer extends IdleTorodbService implements TorodServer {
 
     private final MemoryData data = new MemoryData();
     private final AtomicInteger connIdGenerator = new AtomicInteger();

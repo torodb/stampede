@@ -1,5 +1,6 @@
 package com.torodb.backend.d2r;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.torodb.backend.util.InMemoryRidGenerator;
 import com.torodb.backend.util.TestDataFactory;
 import com.torodb.core.TableRefFactory;
@@ -10,7 +11,7 @@ import com.torodb.core.transaction.metainf.MetainfoRepository.SnapshotStage;
 import com.torodb.core.transaction.metainf.MutableMetaDatabase;
 import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
 import com.torodb.d2r.D2RTranslatorStack;
-import com.torodb.d2r.IdentifierFactoryImpl;
+import com.torodb.core.d2r.DefaultIdentifierFactory;
 import com.torodb.d2r.MockIdentifierInterface;
 import com.torodb.kvdocument.values.KVDocument;
 import com.torodb.metainfo.cache.mvcc.MvccMetainfoRepository;
@@ -31,8 +32,8 @@ import static com.torodb.backend.util.TestDataFactory.*;
 public class BenchmarkD2RTranslatorStack {
 
     private static TableRefFactory tableRefFactory = new TableRefFactoryImpl();
-    private static InMemoryRidGenerator ridGenerator = new InMemoryRidGenerator();
-	private static IdentifierFactory identifierFactory=new IdentifierFactoryImpl(new MockIdentifierInterface());
+    private static InMemoryRidGenerator ridGenerator = new InMemoryRidGenerator(new ThreadFactoryBuilder().build());
+	private static IdentifierFactory identifierFactory=new DefaultIdentifierFactory(new MockIdentifierInterface());
 	
 	@State(Scope.Thread)
 	public static class TranslateState {

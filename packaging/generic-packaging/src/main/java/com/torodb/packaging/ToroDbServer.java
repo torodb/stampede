@@ -7,13 +7,11 @@ import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.ProvisionException;
 import com.torodb.backend.guice.BackendModule;
-import com.torodb.common.util.ThreadFactoryIdleService;
 import com.torodb.concurrent.guice.ConcurrentModule;
 import com.torodb.core.BuildProperties;
 import com.torodb.core.Shutdowner;
-import com.torodb.core.annotations.ToroDbIdleService;
 import com.torodb.core.guice.CoreModule;
-import com.torodb.core.metrics.MetricsModule;
+import com.torodb.core.metrics.guice.MetricsModule;
 import com.torodb.d2r.guice.D2RModule;
 import com.torodb.metainfo.guice.MetainfModule;
 import com.torodb.mongodb.core.MongodServer;
@@ -31,12 +29,14 @@ import java.util.concurrent.ThreadFactory;
 import javax.inject.Singleton;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import com.torodb.core.annotations.TorodbIdleService;
+import com.torodb.core.services.IdleTorodbService;
 
 /**
  *
  */
 @Singleton
-public class ToroDbServer extends ThreadFactoryIdleService {
+public class ToroDbServer extends IdleTorodbService {
 
     private static final Logger LOGGER = LogManager.getLogger(ToroDbServer.class);
 
@@ -47,7 +47,7 @@ public class ToroDbServer extends ThreadFactoryIdleService {
     private final Shutdowner shutdowner;
 
     @Inject
-    ToroDbServer(@ToroDbIdleService ThreadFactory threadFactory, BuildProperties buildProperties,
+    ToroDbServer(@TorodbIdleService ThreadFactory threadFactory, BuildProperties buildProperties,
             TorodServer torod, MongodServer mongod, NettyMongoServer netty,
             Shutdowner shutdowner) {
         super(threadFactory);

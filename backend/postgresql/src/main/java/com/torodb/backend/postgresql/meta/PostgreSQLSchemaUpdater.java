@@ -20,8 +20,6 @@
 
 package com.torodb.backend.postgresql.meta;
 
-import java.io.IOException;
-import java.sql.SQLException;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -36,12 +34,12 @@ import com.torodb.backend.meta.AbstractSchemaUpdater;
 public class PostgreSQLSchemaUpdater extends AbstractSchemaUpdater {
 
     @Inject
-    public PostgreSQLSchemaUpdater() {
-        super();
+    public PostgreSQLSchemaUpdater(SqlInterface sqlInterface, SqlHelper sqlHelper) {
+        super(sqlInterface, sqlHelper);
     }
 
     @Override
-    protected void createSchema(DSLContext dsl, SqlInterface sqlInterface, SqlHelper sqlHelper) throws SQLException, IOException {
+    protected void createSchema(DSLContext dsl, SqlInterface sqlInterface, SqlHelper sqlHelper) {
         super.createSchema(dsl, sqlInterface, sqlHelper);
         
         executeSql(dsl, "/sql/postgresql/mongo_timestamp_type.sql", sqlHelper);

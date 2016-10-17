@@ -34,9 +34,9 @@ import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.google.common.base.Supplier;
 import com.google.common.net.HostAndPort;
 import com.google.inject.assistedinject.Assisted;
-import com.torodb.common.util.ThreadFactoryRunnableService;
-import com.torodb.core.annotations.ToroDbRunnableService;
 import com.torodb.core.exceptions.user.UserException;
+import com.torodb.core.services.RunnableTorodbService;
+import com.torodb.core.supervision.Supervisor;
 import com.torodb.core.transaction.RollbackException;
 import com.torodb.mongodb.core.MongodConnection;
 import com.torodb.mongodb.core.MongodServer;
@@ -56,11 +56,14 @@ import com.torodb.mongodb.repl.oplogreplier.fetcher.OplogFetcher;
 import com.torodb.mongodb.utils.DbCloner;
 import com.torodb.mongodb.utils.DbCloner.CloneOptions;
 import com.torodb.mongodb.utils.DbCloner.CloningException;
+import com.torodb.core.annotations.TorodbRunnableService;
+import com.torodb.core.services.TorodbService;
+import com.torodb.core.supervision.SupervisorDecision;
 
 /**
  *
  */
-public class RecoveryService extends ThreadFactoryRunnableService {
+public class RecoveryService extends RunnableTorodbService {
     private static final int MAX_ATTEMPTS = 10;
     private static final Logger LOGGER = LogManager.getLogger(RecoveryService.class);
     private final Callback callback;
@@ -75,7 +78,7 @@ public class RecoveryService extends ThreadFactoryRunnableService {
     
     @Inject
     public RecoveryService(
-            @ToroDbRunnableService ThreadFactory threadFactory,
+            @TorodbRunnableService ThreadFactory threadFactory,
             @Assisted Callback callback,
             OplogManager oplogManager,
             SyncSourceProvider syncSourceProvider,
@@ -85,7 +88,7 @@ public class RecoveryService extends ThreadFactoryRunnableService {
             MongodServer server,
             OplogApplier oplogApplier,
             ReplicationFilters replFilters) {
-        super(threadFactory);
+        super(callback, threadFactory);
         this.callback = callback;
         this.oplogManager = oplogManager;
         this.syncSourceProvider = syncSourceProvider;
@@ -103,7 +106,12 @@ public class RecoveryService extends ThreadFactoryRunnableService {
     }
 
     @Override
-    protected void run() throws Exception {
+    protected Logger getLogger() {
+        return LOGGER;
+    }
+
+    @Override
+    protected void runProtected() throws Exception {
         try {
             int attempt = 0;
             boolean finished = false;
@@ -468,7 +476,7 @@ public class RecoveryService extends ThreadFactoryRunnableService {
         }
     }
 
-    static interface Callback {
+    static interface Callback extends Supervisor {
         void recoveryFinished();
 
         void recoveryFailed();
@@ -478,6 +486,12 @@ public class RecoveryService extends ThreadFactoryRunnableService {
         public void setConsistentState(boolean consistent);
 
         public boolean canAcceptWrites(String database);
+
+        @Override
+        public default SupervisorDecision onError(TorodbService supervised, Throwable error) {
+            recoveryFailed(error);
+            return SupervisorDecision.STOP;
+        }
     }
 
     public static interface RecoveryServiceFactory {

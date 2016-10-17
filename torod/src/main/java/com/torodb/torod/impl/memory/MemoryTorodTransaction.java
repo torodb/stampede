@@ -1,6 +1,8 @@
 
 package com.torodb.torod.impl.memory;
 
+import com.torodb.torod.cursors.TorodCursor;
+import com.torodb.torod.cursors.DocTorodCursor;
 import com.torodb.core.cursors.*;
 import com.torodb.core.document.ToroDocument;
 import com.torodb.core.exceptions.user.CollectionNotFoundException;
@@ -59,7 +61,7 @@ public abstract class MemoryTorodTransaction implements TorodTransaction {
     }
 
     @Override
-    public ToroCursor findAll(String dbName, String colName) {
+    public TorodCursor findAll(String dbName, String colName) {
         return createCursor(getTransaction().streamCollection(dbName, colName));
     }
 
@@ -73,12 +75,12 @@ public abstract class MemoryTorodTransaction implements TorodTransaction {
     }
 
     @Override
-    public ToroCursor findByAttRef(String dbName, String colName, AttributeReference attRef, KVValue<?> value) {
+    public TorodCursor findByAttRef(String dbName, String colName, AttributeReference attRef, KVValue<?> value) {
         return createCursor(streamByAttRef(dbName, colName, attRef, value));
     }
 
     @Override
-    public ToroCursor findByAttRefIn(String dbName, String colName, AttributeReference attRef, Collection<KVValue<?>> values) {
+    public TorodCursor findByAttRefIn(String dbName, String colName, AttributeReference attRef, Collection<KVValue<?>> values) {
         return createCursor(
                 getTransaction().streamCollection(dbName, colName)
                         .filter(doc -> {
@@ -102,7 +104,7 @@ public abstract class MemoryTorodTransaction implements TorodTransaction {
     }
 
     @Override
-    public ToroCursor fetch(String dbName, String colName, Cursor<Integer> didCursor) {
+    public TorodCursor fetch(String dbName, String colName, Cursor<Integer> didCursor) {
         Map<Integer, KVDocument> colData = getTransaction().data.get(dbName, colName);
         return createCursor(didCursor.getRemaining().stream()
                 .map(did -> new Tuple2<>(did, colData.get(did)))
@@ -111,8 +113,8 @@ public abstract class MemoryTorodTransaction implements TorodTransaction {
         );
     }
 
-    private ToroCursor createCursor(Stream<ToroDocument> docsStream) {
-        return new DocToroCursor(new IteratorCursor<>(docsStream.iterator()));
+    private TorodCursor createCursor(Stream<ToroDocument> docsStream) {
+        return new DocTorodCursor(new IteratorCursor<>(docsStream.iterator()));
     }
 
     @Override

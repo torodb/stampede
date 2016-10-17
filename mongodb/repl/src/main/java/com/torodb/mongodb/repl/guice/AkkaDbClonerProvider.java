@@ -71,7 +71,7 @@ public class AkkaDbClonerProvider implements Provider<AkkaDbCloner> {
 
     @Override
     public AkkaDbCloner get() {
-        LOGGER.info("Using AkkaDbCloner with: {parallelLevel: {}, docsPerTransaction: {}}",
+        LOGGER.debug("Using AkkaDbCloner with: {parallelLevel: {}, docsPerTransaction: {}}",
                 parallelLevel, docsPerTransaction);
         return new AkkaDbCloner(
                 executorService,

@@ -8,12 +8,12 @@ import com.torodb.concurrent.DefaultConcurrentToolsFactory;
 import com.torodb.concurrent.DefaultConcurrentToolsFactory.BlockerThreadFactoryFunction;
 import com.torodb.concurrent.DefaultConcurrentToolsFactory.ForkJoinThreadFactoryFunction;
 import com.torodb.core.annotations.ParallelLevel;
-import com.torodb.core.annotations.ToroDbIdleService;
-import com.torodb.core.annotations.ToroDbRunnableService;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinPool.ForkJoinWorkerThreadFactory;
 import java.util.concurrent.ForkJoinWorkerThread;
 import java.util.concurrent.ThreadFactory;
+import com.torodb.core.annotations.TorodbIdleService;
+import com.torodb.core.annotations.TorodbRunnableService;
 
 /**
  *
@@ -28,18 +28,18 @@ public class ExecutorServicesModule extends AbstractModule {
                 .toInstance(Runtime.getRuntime().availableProcessors());
 
         ThreadFactory threadFactory = new ThreadFactoryBuilder()
-                .setNameFormat("torodb-executor-%d")
+                .setNameFormat("torodb-%d")
                 .build();
 
         bind(ThreadFactory.class)
                 .toInstance(threadFactory);
 
         bind(ThreadFactory.class)
-                .annotatedWith(ToroDbIdleService.class)
+                .annotatedWith(TorodbIdleService.class)
                 .toInstance(threadFactory);
 
         bind(ThreadFactory.class)
-                .annotatedWith(ToroDbRunnableService.class)
+                .annotatedWith(TorodbRunnableService.class)
                 .toInstance(threadFactory);
 
         bind(ThreadFactory.class)
