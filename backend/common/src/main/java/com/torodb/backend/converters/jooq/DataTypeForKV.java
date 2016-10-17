@@ -40,6 +40,7 @@ import org.jooq.Field;
 import org.jooq.SQLDialect;
 
 import com.torodb.kvdocument.values.KVValue;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  *
@@ -71,7 +72,7 @@ public class DataTypeForKV<T extends KVValue<?>> implements DataType<T> {
     private final DataType<T> dataType;
     private final int sqlType;
     private final KVValueConverter<?, ?, T> kvValueConverter;
-    
+
     private DataTypeForKV(DataType<T> dataType, KVValueConverter<?, ?, T> kvValueConverter) {
         super();
         this.dataType = dataType;
@@ -90,199 +91,246 @@ public class DataTypeForKV<T extends KVValue<?>> implements DataType<T> {
         return kvValueConverter;
     }
 
+    @SuppressFBWarnings(value = "NM_CONFUSING", justification = "we cannot "
+            + "change the name of a jOOQ method. And it goes against the code"
+            + "style")
+    @Override
     public int getSQLType() {
         return sqlType;
     }
     
+    @Override
     public DataType<T> getSQLDataType() {
         return dataType.getSQLDataType();
     }
 
+    @Override
     public DataType<T> getDataType(Configuration configuration) {
         return dataType.getDataType(configuration);
     }
 
+    @Override
     public Binding<?, T> getBinding() {
         return dataType.getBinding();
     }
 
+    @Override
     public Converter<?, T> getConverter() {
         return dataType.getConverter();
     }
 
+    @Override
     public Class<T> getType() {
         return dataType.getType();
     }
 
+    @Override
     public Class<T[]> getArrayType() {
         return dataType.getArrayType();
     }
 
+    @Override
     public DataType<T[]> getArrayDataType() {
         return dataType.getArrayDataType();
     }
 
+    @Override
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public <E extends EnumType> DataType<E> asEnumDataType(Class<E> enumDataType) {
         DataType<E> dataType = this.dataType.asEnumDataType(enumDataType);
         return new DataTypeForKV(dataType, kvValueConverter);
     }
 
+    @Override
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public <U> DataType<U> asConvertedDataType(Converter<? super T, U> converter) {
         DataType dataType = this.dataType.asConvertedDataType(converter);
         return new DataTypeForKV(dataType, kvValueConverter);
     }
 
+    @Override
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public <U> DataType<U> asConvertedDataType(Binding<? super T, U> binding) {
         DataType dataType = this.dataType.asConvertedDataType(binding);
         return new DataTypeForKV(dataType, kvValueConverter);
     }
 
+    @Override
     public String getTypeName() {
         return dataType.getTypeName();
     }
 
+    @Override
     public String getTypeName(Configuration configuration) {
         return dataType.getTypeName(configuration);
     }
 
+    @Override
     public String getCastTypeName() {
         return dataType.getCastTypeName();
     }
 
+    @Override
     public String getCastTypeName(Configuration configuration) {
         return dataType.getCastTypeName(configuration);
     }
 
+    @Override
     public SQLDialect getDialect() {
         return dataType.getDialect();
     }
 
+    @Override
     public T convert(Object object) {
         return dataType.convert(object);
     }
 
+    @Override
     public T[] convert(Object... objects) {
         return dataType.convert(objects);
     }
 
+    @Override
     public List<T> convert(Collection<?> objects) {
         return dataType.convert(objects);
     }
 
+    @Override
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public DataType<T> nullable(boolean nullable) {
         DataType dataType = this.dataType.nullable(nullable);
         return new DataTypeForKV(dataType, kvValueConverter);
     }
 
+    @Override
     public boolean nullable() {
         return dataType.nullable();
     }
 
+    @Override
     @Deprecated
     public DataType<T> defaulted(boolean defaulted) {
         return dataType.defaulted(defaulted);
     }
 
+    @Override
     public boolean defaulted() {
         return dataType.defaulted();
     }
 
+    @Override
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public DataType<T> precision(int precision) {
         DataType dataType = this.dataType.precision(precision);
         return new DataTypeForKV(dataType, kvValueConverter);
     }
 
+    @Override
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public DataType<T> precision(int precision, int scale) {
         DataType dataType = this.dataType.precision(precision, scale);
         return new DataTypeForKV(dataType, kvValueConverter);
     }
 
+    @Override
     public int precision() {
         return dataType.precision();
     }
 
+    @Override
     public boolean hasPrecision() {
         return dataType.hasPrecision();
     }
 
+    @Override
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public DataType<T> scale(int scale) {
         DataType dataType = this.dataType.scale(scale);
         return new DataTypeForKV(dataType, kvValueConverter);
     }
 
+    @Override
     public int scale() {
         return dataType.scale();
     }
 
+    @Override
     public boolean hasScale() {
         return dataType.hasScale();
     }
 
+    @Override
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public DataType<T> length(int length) {
         DataType dataType = this.dataType.length(length);
         return new DataTypeForKV(dataType, kvValueConverter);
     }
 
+    @Override
     public int length() {
         return dataType.length();
     }
 
+    @Override
     public boolean hasLength() {
         return dataType.hasLength();
     }
 
+    @Override
     public boolean isNumeric() {
         return dataType.isNumeric();
     }
 
+    @Override
     public boolean isString() {
         return dataType.isString();
     }
 
+    @Override
     public boolean isDateTime() {
         return dataType.isDateTime();
     }
 
+    @Override
     public boolean isTemporal() {
         return dataType.isTemporal();
     }
 
+    @Override
     public boolean isInterval() {
         return dataType.isInterval();
     }
 
+    @Override
     public boolean isBinary() {
         return dataType.isBinary();
     }
 
+    @Override
     public boolean isLob() {
         return dataType.isLob();
     }
 
+    @Override
     public boolean isArray() {
         return dataType.isArray();
     }
 
+    @Override
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public DataType<T> defaultValue(T defaultValue) {
         DataType dataType = this.dataType.defaultValue(defaultValue);
         return new DataTypeForKV(dataType, kvValueConverter);
     }
 
+    @Override
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public DataType<T> defaultValue(Field<T> defaultValue) {
         DataType dataType = this.dataType.defaultValue(defaultValue);
         return new DataTypeForKV(dataType, kvValueConverter);
     }
 
+    @Override
     public Field<T> defaultValue() {
         return dataType.defaultValue();
     }

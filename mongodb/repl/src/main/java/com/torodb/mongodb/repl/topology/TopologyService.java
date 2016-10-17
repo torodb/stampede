@@ -73,7 +73,6 @@ public class TopologyService extends IdleTorodbService {
 
     @Override
     protected void startUp() throws Exception {
-        boolean finished = false;
         LOGGER.debug("Starting topology service");
 
         heartbeatHandler.startAsync();
@@ -89,7 +88,7 @@ public class TopologyService extends IdleTorodbService {
             }
             attempts++;
         }
-        while (!topologyReady || attempts >= 30);
+        while (!topologyReady && attempts < 30);
         if (!topologyReady) {
             throw new RuntimeException("Topology was not able to be ready "
                     + "after " + attempts + " attempts");

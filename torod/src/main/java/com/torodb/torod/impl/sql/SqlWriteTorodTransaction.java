@@ -36,6 +36,7 @@ import com.torodb.kvdocument.values.KVValue;
 import com.torodb.torod.IndexFieldInfo;
 import com.torodb.torod.SharedWriteTorodTransaction;
 import com.torodb.torod.pipeline.InsertPipeline;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  *
@@ -199,6 +200,9 @@ public abstract class SqlWriteTorodTransaction<T extends WriteInternalTransactio
         return !indexExists;
     }
 
+    @SuppressFBWarnings(value = "RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT",
+            justification = "Findbugs thinks MutableMetaCollection#removeMetaIndexByName"
+                    + "has no side effect")
     @Override
     public boolean dropIndex(String dbName, String colName, String indexName) {
         MutableMetaDatabase db = getInternalTransaction().getMetaSnapshot().getMetaDatabaseByName(dbName);

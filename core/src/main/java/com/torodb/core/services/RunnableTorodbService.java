@@ -95,7 +95,10 @@ public abstract class RunnableTorodbService extends AbstractExecutionThreadServi
         switch (decision) {
             case STOP: {
                 this.stopAsync();
+                break;
             }
+            case IGNORE:
+            default:
         }
     }
 

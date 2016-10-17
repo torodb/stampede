@@ -242,12 +242,6 @@ public class ReplCoordinator extends IdleTorodbService implements ReplInterface 
         setMemberState(null);
     }
 
-    @Locked(exclusive = true)
-    private void startPrimaryMode() {
-        LOGGER.info("Starting PRIMARY mode");
-        setMemberState(MemberState.RS_PRIMARY);
-    }
-
     private void setConsistentState(boolean consistent) throws RetrierGiveUpException {
         Lock writeLock = lock.writeLock();
         writeLock.lock();

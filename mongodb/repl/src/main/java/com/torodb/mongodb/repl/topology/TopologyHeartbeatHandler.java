@@ -287,7 +287,7 @@ public class TopologyHeartbeatHandler extends IdleTorodbService {
 
         private static final long serialVersionUID = 8879568483145061898L;
         private final HeartbeatResponseAction action;
-        private final @Nullable ReplSetHeartbeatReply reply;
+        private final transient @Nullable ReplSetHeartbeatReply reply;
 
         public UnsupportedHeartbeatResponseActionException(HeartbeatResponseAction action, ReplSetHeartbeatReply reply) {
             super("Heartbeat action " + action.getAction() + " is not supported");
@@ -299,6 +299,7 @@ public class TopologyHeartbeatHandler extends IdleTorodbService {
             return action;
         }
 
+        @Nullable 
         public ReplSetHeartbeatReply getReply() {
             return reply;
         }
