@@ -20,6 +20,7 @@
 
 package com.torodb.mongodb.repl;
 
+import com.eightkdata.mongowp.client.core.CachedMongoClientFactory;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.torodb.core.annotations.TorodbIdleService;
@@ -49,6 +50,7 @@ public class MongodbReplBundle extends AbstractBundle {
     private final ReplCoordinator replCoordinator;
     private final OplogManager oplogManager;
     private final MongodServer mongodServer;
+    private final CachedMongoClientFactory cachedMongoClientFactory;
 
     public MongodbReplBundle(TorodBundle torodBundle, Supervisor supervisor,
             MongodbReplConfig config, Injector injector) {
@@ -65,6 +67,7 @@ public class MongodbReplBundle extends AbstractBundle {
         this.replCoordinator = replInjector.getInstance(ReplCoordinator.class);
         this.oplogManager = replInjector.getInstance(OplogManager.class);
         this.mongodServer = replInjector.getInstance(MongodServer.class);
+        this.cachedMongoClientFactory = replInjector.getInstance(CachedMongoClientFactory.class);
     }
 
     @Override
@@ -89,6 +92,7 @@ public class MongodbReplBundle extends AbstractBundle {
     protected void preDependenciesShutDown() throws Exception {
         LOGGER.info("Shutting down replication service");
 
+        LOGGER.debug("Shutting down replication layer");
         replCoordinator.stop().join();
         oplogManager.stopAsync();
         topologyService.stopAsync();
@@ -96,7 +100,14 @@ public class MongodbReplBundle extends AbstractBundle {
         oplogManager.awaitTerminated();
         topologyService.awaitTerminated();
 
+        LOGGER.debug("Replication layer has been shutted down");
+
         mongodServer.stopAsync();
+
+        LOGGER.debug("Closing remote connections");
+        cachedMongoClientFactory.invalidateAll();
+        LOGGER.debug("Remote connections have been closed");
+
         mongodServer.awaitTerminated();
 
         LOGGER.info("Replication service shutted down");
