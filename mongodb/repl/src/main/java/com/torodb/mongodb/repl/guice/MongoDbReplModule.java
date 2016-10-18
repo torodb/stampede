@@ -2,7 +2,6 @@
 package com.torodb.mongodb.repl.guice;
 
 import com.eightkdata.mongowp.client.wrapper.MongoClientConfiguration;
-import com.eightkdata.mongowp.client.wrapper.MongoClientWrapperModule;
 import com.google.common.net.HostAndPort;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provides;
