@@ -2,6 +2,8 @@
 
 ## Instalación de MongoDB Community Edition
 
+### Ubuntu 16.04 LTS
+
 En esta sección se decriben los pasos a seguir para instalar MongoDB Community Edition en un Ubuntu 16.04 LTS, si fuese necesario se puede encontrar más información en la [documentación oficial de MongoDB](https://docs.mongodb.com/v3.2/tutorial/install-mongodb-on-ubuntu/).
 
 Importar la clave pública utilizada por el gestor de paquetes de Ubuntu.
@@ -55,6 +57,8 @@ Si ejecutamos el comando `mongo` podremos ver como se accede a la consola de Mon
 
 ## Configuración de un replica set en MongoDB
 
+### Ubuntu 16.04 LTS
+
 Para configurar la instalación de MongoDB como un nodo primario del replica set, debemos modificar el fichero `/etc/mongod.conf` para añadir las siguientes líneas.
 
 ```
@@ -77,3 +81,37 @@ Ahora podemos acceder a la consola de MongoDB con el comando `mongo` para poder 
 Para comprobar que la configuración del replica set es correcta podemos ejecutar el comando `rs.conf()`. Cuando tengamos configurados otros nodos del replica set los podremos añadir con el comando `rs.add(...)`.
 
 ## Instalación de PostgreSQL
+
+### Ubuntu 16.04 LTS
+
+Se puede encontrar más información en el siguiente [enlace](https://www.digitalocean.com/community/tutorials/how-to-install-and-use-postgresql-on-ubuntu-16-04).
+
+Instalación de los paquetes necesarios.
+
+```
+$ sudo apt-get update
+$ sudo apt-get install postgresql postgresql-contrib
+```
+
+Podemos comprobar que la instalación ha sido satisfactoria accediendo a la consola de PostgreSQL.
+
+```
+$ sudo -u postgres psql
+```
+
+## Otras herramientas
+
+### Java 8
+
+```
+$ sudo add-apt-repository ppa:webupd8team/java
+$ sudo apt-get update
+$ sudo apt-get install oracle-java8-installer
+```
+
+### Maven 3
+
+```
+$ sudo apt-get update
+$ sudo apt-get install maven
+```
