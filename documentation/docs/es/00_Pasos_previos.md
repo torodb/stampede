@@ -99,9 +99,11 @@ Podemos comprobar que la instalación ha sido satisfactoria accediendo a la cons
 $ sudo -u postgres psql
 ```
 
-## Otras herramientas
+## Instalar Oracle Java 8
 
-### Java 8
+### Ubuntu 16.04 LTS
+
+La instalación de Oracle Java 8 en Ubuntu 16.04 se hace a partir de paquetes del sistema, por lo que basta ejecutar los siguientes comandos.
 
 ```
 $ sudo add-apt-repository ppa:webupd8team/java
@@ -109,7 +111,15 @@ $ sudo apt-get update
 $ sudo apt-get install oracle-java8-installer
 ```
 
+## Otras herramientas
+
 ### Maven 3
+
+Aunque para ejecutar Toro Stampede no es necesario compilar el código fuente, si se desea hacerlo hay que instalar Maven 3 para poder obtener las dependencias y lanzar el proceso de construcción.
+
+#### Ubuntu 16.04 LTS
+
+Basta con descargar los paquetes oficiales, ejecutando los siguientes comandos.
 
 ```
 $ sudo apt-get update
