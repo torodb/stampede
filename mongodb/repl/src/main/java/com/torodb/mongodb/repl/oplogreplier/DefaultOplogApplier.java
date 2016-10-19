@@ -107,7 +107,6 @@ public class DefaultOplogApplier implements OplogApplier {
                     return analyzedElem;
                 })
                 .map(this::metricExecution)
-                .map(this::storeLastAppliedOp)
                 .toMat(
                         Sink.foreach(this::storeLastAppliedOp),
                         (_killSwitch, completionStage) -> new Pair<>(_killSwitch, completionStage)
