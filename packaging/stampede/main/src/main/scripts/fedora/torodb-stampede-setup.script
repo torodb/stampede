@@ -1,0 +1,58 @@
+#!/bin/bash
+# ToroDB setup script
+# matteom@8kdata.com
+
+set -e
+
+. /etc/sysconfig/@{assembler.name}
+
+if [ -f "$TOROPASSFILE" ]
+then
+    echo "File $TOROPASSFILE exists. It seem that setup has been run before or manual configuration has been done. Please check online documentation to configure @{assembler.name} at http://github.com/torodb/torodb" >&2
+    exit 1
+fi
+
+POSTGRES_PORT="$(@{assembler.name} $OPTIONS -lp /backend/postgres/port)"
+POSTGRES_USER="$(@{assembler.name} $OPTIONS -lp /backend/postgres/user)"
+POSTGRES_HOST="$(@{assembler.name} $OPTIONS -lp /backend/postgres/host)"
+POSTGRES_DATABASE="$(@{assembler.name} $OPTIONS -lp /backend/postgres/database)"
+
+torodb_password=$(tr -dc A-Za-z0-9_ < /dev/urandom | head -c 10 | xargs)
+systemctl start postgresql
+if su - postgres -c 'psql -c "SELECT 1"' > /dev/null 2>&1
+then
+    if ! su - postgres -c 'psql torod' > /dev/null 2>&1
+    then
+        echo "Creating $POSTGRES_USER user"
+        su - postgres -c 'psql -c "CREATE USER $POSTGRES_USER WITH SUPERUSER PASSWORD '\'"$torodb_password"\''"'
+        echo "Creating $POSTGRES_DATABASE database"
+        su - postgres -c 'psql -c "CREATE DATABASE $POSTGRES_DATABASE WITH OWNER $POSTGRES_USER"'
+    else
+        echo "Database $POSTGRES_DATABASE already exists" >&2
+        exit 1
+    fi
+else
+    echo "PostgreSQL must be running to setup @{assembler.name}" >&2
+    exit 1
+fi
+echo "$POSTGRES_HOST:$POSTGRES_PORT:$POSTGRES_DATABASE:$POSTGRES_USER:$torodb_password" > "$TOROPASSFILE"
+chmod 400 "$TOROPASSFILE"
+chown "$(systemctl show @{assembler.name}|grep '^User='|cut -d= -f2)" "$TOROPASSFILE"
+
+if ! su - "$(systemctl show @{assembler.name}|grep '^User='|cut -d= -f2)" -c "(PGPASSFILE='$TOROPASSFILE'; psql --no-readline -U $POSTGRES_USER -d $POSTGRES_DATABASE -h $POSTGRES_HOST -p $POSTGRES_PORT -c 'SELECT 1')" > /dev/null 2>&1
+then
+    if [ "$POSTGRES_HOST" == "localhost" ]
+    then
+        sed -i '1s#^#'"host    $POSTGRES_DATABASE           $POSTGRES_USER          ::1/128                 md5"'\n#' /var/lib/pgsql/data/pg_hba.conf
+        sed -i '1s#^#'"host    $POSTGRES_DATABASE           $POSTGRES_USER          127.0.0.1/32            md5"'\n#' /var/lib/pgsql/data/pg_hba.conf
+    else
+        echo "Seem that we can not connect to PostgreSQL due to some security restrictions. Please add those lines to pg_hba.conf file:" >&2
+        echo >&2
+        echo "host    $POSTGRES_DATABASE           $POSTGRES_USER          <this machine IPv6>              md5" >&2
+        echo "host    $POSTGRES_DATABASE           $POSTGRES_USER          <this machine IP>                md5" >&2
+        echo >&2
+        echo "...and then restart PostgreSQL server" >&2 
+        exit 1
+    fi
+fi
+systemctl restart postgresql

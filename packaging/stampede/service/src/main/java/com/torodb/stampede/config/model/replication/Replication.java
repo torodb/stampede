@@ -26,6 +26,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.torodb.packaging.config.annotation.Description;
 import com.torodb.packaging.config.model.backend.CursorConfig;
+import com.torodb.packaging.config.util.ConfigUtils;
 
 @JsonPropertyOrder({
     "net",
@@ -40,7 +41,7 @@ public class Replication extends com.torodb.packaging.config.model.protocol.mong
     private Long cursorTimeout = 10L * 60 * 1000;
     @Description("config.mongo.mongopassFile")
     @JsonProperty(required=true)
-    private String mongopassFile = System.getProperty("user.home", "/") + "/.mongopass";
+    private String mongopassFile = ConfigUtils.getUserHomeFilePath(".mongopass");
 
     public Replication() {
         setSyncSource("localhost:27017");

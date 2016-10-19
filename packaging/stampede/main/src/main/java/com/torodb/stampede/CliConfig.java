@@ -45,6 +45,8 @@ public class CliConfig {
 	private boolean printXmlConfig = false;
 	@Parameter(names={"-hp", "--help-param"}, descriptionKey="cli.help-param")
 	private boolean helpParam = false;
+    @Parameter(names={"-lp","--print-param"}, descriptionKey="cli.print-param")
+    private String printParam;
 	@Parameter(names={"-c","--conf"}, descriptionKey="cli.conf")
 	private String confFile;
 	@Parameter(names={"-x","--xml-conf"}, descriptionKey="cli.xml-conf")
@@ -53,7 +55,7 @@ public class CliConfig {
 	private boolean askForPassword = false;
     @Parameter(names={"-b","--backend"}, descriptionKey="cli.backend",validateValueWith=BackendValueValidator.class)
     private String backend;
-	@Parameter(names={"-p","--param"}, descriptionKey="cli.param",validateValueWith=ParamValueValidator.class,
+	@Parameter(names={"-p","--param"}, descriptionKey="cli.param",validateValueWith=ParamListValueValidator.class,
 			splitter=NoParameterSplitter.class)
 	private List<String> params;
     @Parameter(names={"--log-level"}, descriptionKey="config.generic.logLevel")
@@ -134,6 +136,12 @@ public class CliConfig {
 	public boolean isPrintXmlConfig() {
 		return printXmlConfig;
 	}
+    public boolean isPrintParam() {
+        return printParam != null;
+    }
+    public String getPrintParamPath() {
+        return printParam;
+    }
 	public String getConfFile() {
 		return confFile;
 	}
@@ -374,7 +382,7 @@ public class CliConfig {
         }
     }
 
-    public static class ParamValueValidator implements IValueValidator<List<String>> {
+    public static class ParamListValueValidator implements IValueValidator<List<String>> {
         @Override
         public void validate(String name, List<String> value) throws ParameterException {
             for (String param : value) {

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # ----------------------------------------------------------------------------
 #  Copyright 2001-2006 The Apache Software Foundation.
 #
@@ -18,6 +18,9 @@
 #   Copyright (c) 2001-2006 The Apache Software Foundation.  All rights
 #   reserved.
 
+$DEBUG > /dev/null 2>&1 && set -x
+$DEBUG > /dev/null 2>&1 && set -v
+set -e
 
 # resolve links - $0 may be a softlink
 PRG="$0"
@@ -99,10 +102,10 @@ fi
 
 if [ -z "$TOROCONFIG" ]
 then
-  TOROCONFIG="$BASEDIR"/bin/@{name}.conf
+  TOROCONFIG="$BASEDIR"/bin/@{assembler.name}.conf
 fi
 
-CLASSPATH="$LIBDIR"/@{name}-@{version}.jar
+CLASSPATH="$LIBDIR"/@{assembler.name}-@{version}.jar
 
 ENDORSED_DIR=
 if [ -n "$ENDORSED_DIR" ] ; then
@@ -124,6 +127,6 @@ fi
 
 exec "$JAVACMD" $JAVA_OPTS  \
   -cp "$CLASSPATH" \
-  @{mainClass} \
+  @{assembler.mainClass} \
   -c "$TOROCONFIG" \
   "$@"

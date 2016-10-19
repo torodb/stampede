@@ -72,7 +72,7 @@ if "%JAVACMD%"=="" set JAVACMD=java
 
 if "%LIBDIR%"=="" set LIBDIR=%BASEDIR%\lib
 
-set CLASSPATH="%LIBDIR%"\@{name}-@{version}.jar
+set CLASSPATH="%LIBDIR%"\@{assembler.name}-@{version}.jar
 
 set ENDORSED_DIR=
 if NOT "%ENDORSED_DIR%" == "" set CLASSPATH="%BASEDIR%"\%ENDORSED_DIR%\*;%CLASSPATH%
@@ -82,7 +82,7 @@ if NOT "%CLASSPATH_PREFIX%" == "" set CLASSPATH=%CLASSPATH_PREFIX%;%CLASSPATH%
 @REM Reaching here means variables are defined and arguments have been captured
 :endInit
 
-%JAVACMD% %JAVA_OPTS%  -cp %CLASSPATH% @{mainClass} %CMD_LINE_ARGS%
+%JAVACMD% %JAVA_OPTS%  -cp %CLASSPATH% @{assembler.mainClass} %CMD_LINE_ARGS%
 if %ERRORLEVEL% NEQ 0 goto error
 goto end
 

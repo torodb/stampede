@@ -185,6 +185,7 @@
             <id>docker</id>
             <properties>
                 <docker.skipbase>true</docker.skipbase>
+                <docker.javaimage>java:8-jre</docker.javaimage>
             </properties>
             <build>
                 <plugins>
@@ -199,7 +200,7 @@
                                     <name>8kdata/torodb-base:%v</name>
                                     <build>
                                         <skip>${docker.skipbase}</skip>
-                                        <from>isuper/java-oracle:jdk_8</from>
+                                        <from>${docker.javaimage}</from>
                                         <tags>
                                             <tag>${project.version}</tag>
                                             <tag>latest</tag>
