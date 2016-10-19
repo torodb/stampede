@@ -23,6 +23,7 @@ package com.torodb.mongodb.repl.topology;
 import com.eightkdata.mongowp.ErrorCode;
 import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.client.core.MongoConnection.RemoteCommandResponse;
+import com.eightkdata.mongowp.exceptions.InconsistentReplicaSetNamesException;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.internal.ReplSetHeartbeatCommand.ReplSetHeartbeatArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.internal.ReplSetHeartbeatReply;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.ReplicaSetConfig;
@@ -134,12 +135,33 @@ public class TopologyHeartbeatHandler extends IdleTorodbService {
                         new RemoteCommandRequest<>(seed, "admin", Empty.getInstance())
                 ),
                 (coord, remoteConfig) -> {
-                    if (remoteConfig.isOk()) {
-                        updateConfig(coord, remoteConfig.getCommandReply().get());
+                    Status<ReplicaSetConfig> result = remoteConfig.asStatus();
+                    if (!result.isOk()) {
+                        return result;
                     }
-                    return remoteConfig.asStatus();
+                    ReplicaSetConfig replConfig = result.getResult();
+                    try {
+                        checkRemoteReplSetConfig(replConfig);
+                        updateConfig(coord, replConfig);
+                        return result;
+                    } catch (InconsistentReplicaSetNamesException ex) {
+                        LOGGER.warn(ex.getLocalizedMessage());
+                        return Status.from(ex);
+                    }
                 }
         );
+    }
+
+    private void checkRemoteReplSetConfig(ReplicaSetConfig remoteConfig) throws InconsistentReplicaSetNamesException {
+        //TODO(gortiz): DRY. Implement a better way to do that once the config
+        //is validated
+        String remoteReplSetName = remoteConfig.getReplSetName();
+        if (!replSetName.equals(remoteReplSetName)) {
+            throw new InconsistentReplicaSetNamesException(
+                    "The remote replica set configuration is named as '" 
+                    + remoteReplSetName +"', which differs with the local "
+                    + "replica set name '" + replSetName + "'");
+        }
     }
 
     @GuardedBy("executor")
