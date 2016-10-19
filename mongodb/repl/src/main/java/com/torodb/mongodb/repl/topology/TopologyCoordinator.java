@@ -306,7 +306,9 @@ class TopologyCoordinator {
                 // candidate must be PRIMARY or SECONDARY state to be considered.
                 .filter(hbData -> hbData.getState().isReadable())
                 // only consider candidates that are ahead of where we are
-                .filter(hbData -> hbData.getOpTime().isAfter(lastOpApplied));
+                .filter(hbData -> 
+                        hbData.getOpTime().isAfter(lastOpApplied)
+                );
         if (onlyOptimal) {
             hbCandidateStream = hbCandidateStream
                     // omit candidates that are excessively behind

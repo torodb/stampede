@@ -34,15 +34,7 @@ import com.torodb.backend.WriteInterface;
 import com.torodb.backend.driver.postgresql.OfficialPostgreSQLDriver;
 import com.torodb.backend.driver.postgresql.PostgreSQLDriverProvider;
 import com.torodb.backend.meta.SchemaUpdater;
-import com.torodb.backend.postgresql.PostgreSQLDataTypeProvider;
-import com.torodb.backend.postgresql.PostgreSQLDbBackend;
-import com.torodb.backend.postgresql.PostgreSQLErrorHandler;
-import com.torodb.backend.postgresql.PostgreSQLIdentifierConstraints;
-import com.torodb.backend.postgresql.PostgreSQLMetaDataReadInterface;
-import com.torodb.backend.postgresql.PostgreSQLMetaDataWriteInterface;
-import com.torodb.backend.postgresql.PostgreSQLReadInterface;
-import com.torodb.backend.postgresql.PostgreSQLStructureInterface;
-import com.torodb.backend.postgresql.PostgreSQLWriteInterface;
+import com.torodb.backend.postgresql.*;
 import com.torodb.backend.postgresql.meta.PostgreSQLSchemaUpdater;
 import com.torodb.core.backend.IdentifierConstraints;
 
@@ -50,28 +42,73 @@ public class PostgreSQLBackendModule extends PrivateModule {
 
     @Override
     protected void configure() {
-        bind(PostgreSQLDriverProvider.class).to(OfficialPostgreSQLDriver.class).in(Singleton.class);
-        bind(PostgreSQLDbBackend.class).in(Singleton.class);
-        bind(DbBackendService.class).to(PostgreSQLDbBackend.class);
+        bind(OfficialPostgreSQLDriver.class)
+                .in(Singleton.class);
+        bind(PostgreSQLDriverProvider.class)
+                .to(OfficialPostgreSQLDriver.class);
+
+        bind(PostgreSQLDbBackend.class)
+                .in(Singleton.class);
+        bind(DbBackendService.class)
+                .to(PostgreSQLDbBackend.class);
         expose(DbBackendService.class);
-        bind(SchemaUpdater.class).to(PostgreSQLSchemaUpdater.class).in(Singleton.class);
+
+        bind(PostgreSQLSchemaUpdater.class)
+                .in(Singleton.class);
+        bind(SchemaUpdater.class)
+                .to(PostgreSQLSchemaUpdater.class);
         expose(SchemaUpdater.class);
-        bind(MetaDataReadInterface.class).to(PostgreSQLMetaDataReadInterface.class).in(Singleton.class);
+
+        bind(PostgreSQLMetaDataReadInterface.class)
+                .in(Singleton.class);
+        bind(MetaDataReadInterface.class)
+                .to(PostgreSQLMetaDataReadInterface.class);
         expose(MetaDataReadInterface.class);
-        bind(MetaDataWriteInterface.class).to(PostgreSQLMetaDataWriteInterface.class).in(Singleton.class);
+
+        bind(PostgreSQLMetaDataWriteInterface.class)
+                .in(Singleton.class);
+        bind(MetaDataWriteInterface.class)
+                .to(PostgreSQLMetaDataWriteInterface.class);
         expose(MetaDataWriteInterface.class);
-        bind(DataTypeProvider.class).to(PostgreSQLDataTypeProvider.class).in(Singleton.class);
+
+        bind(PostgreSQLDataTypeProvider.class)
+                .in(Singleton.class);
+        bind(DataTypeProvider.class)
+                .to(PostgreSQLDataTypeProvider.class);
         expose(DataTypeProvider.class);
-        bind(StructureInterface.class).to(PostgreSQLStructureInterface.class).in(Singleton.class);
+
+        bind(PostgreSQLStructureInterface.class)
+                .in(Singleton.class);
+        bind(StructureInterface.class)
+                .to(PostgreSQLStructureInterface.class);
         expose(StructureInterface.class);
-        bind(ReadInterface.class).to(PostgreSQLReadInterface.class).in(Singleton.class);
+
+        bind(PostgreSQLReadInterface.class)
+                .in(Singleton.class);
+        bind(ReadInterface.class)
+                .to(PostgreSQLReadInterface.class);
         expose(ReadInterface.class);
-        bind(WriteInterface.class).to(PostgreSQLWriteInterface.class).in(Singleton.class);
+
+        bind(PostgreSQLWriteInterface.class)
+                .in(Singleton.class);
+        bind(WriteInterface.class)
+                .to(PostgreSQLWriteInterface.class);
         expose(WriteInterface.class);
-        bind(ErrorHandler.class).to(PostgreSQLErrorHandler.class).in(Singleton.class);
+
+        bind(PostgreSQLErrorHandler.class)
+                .in(Singleton.class);
+        bind(ErrorHandler.class)
+                .to(PostgreSQLErrorHandler.class);
         expose(ErrorHandler.class);
-        bind(IdentifierConstraints.class).to(PostgreSQLIdentifierConstraints.class).in(Singleton.class);
+
+        bind(PostgreSQLIdentifierConstraints.class)
+                .in(Singleton.class);
+        bind(IdentifierConstraints.class)
+                .to(PostgreSQLIdentifierConstraints.class);
         expose(IdentifierConstraints.class);
+
+        bind(PostgreSQLMetrics.class)
+                .in(Singleton.class);
     }
 
 }

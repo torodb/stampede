@@ -47,13 +47,16 @@ public class StampedeBootstrapTest {
     }
 
     @Test
-    @Ignore
+    @Ignore(value = "The test is not working properly")
     public void testCreateStampedeService_run() {
         Service stampedeService = StampedeBootstrap.createStampedeService(
                 config,
                 Clock.systemUTC());
         stampedeService.startAsync();
         stampedeService.awaitRunning();
+
+        stampedeService.stopAsync();
+        stampedeService.awaitTerminated();
     }
 
 }

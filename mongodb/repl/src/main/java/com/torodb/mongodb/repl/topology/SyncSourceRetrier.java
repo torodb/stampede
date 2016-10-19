@@ -28,12 +28,12 @@ import com.torodb.core.retrier.SmartRetrier;
 import java.util.EnumSet;
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
-import javax.inject.Singleton;
+import javax.annotation.concurrent.ThreadSafe;
 
 /**
  *
  */
-@Singleton
+@ThreadSafe
 public class SyncSourceRetrier implements Retrier {
 
     private final SmartRetrier delegate;

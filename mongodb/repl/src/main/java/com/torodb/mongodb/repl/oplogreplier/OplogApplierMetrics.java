@@ -24,13 +24,13 @@ import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Meter;
 import com.torodb.core.metrics.MetricNameFactory;
 import com.torodb.core.metrics.ToroMetricRegistry;
+import javax.annotation.concurrent.ThreadSafe;
 import javax.inject.Inject;
-import javax.inject.Singleton;
 
 /**
  *
  */
-@Singleton
+@ThreadSafe
 public class OplogApplierMetrics {
 
     private final Histogram maxDelay;

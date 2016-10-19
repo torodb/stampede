@@ -17,6 +17,8 @@ public class ConcurrentModule extends PrivateModule {
                 .to(DefaultConcurrentToolsFactory.class)
                 .in(Singleton.class);
         expose(ConcurrentToolsFactory.class);
+
+        bind(ExecutorServiceShutdownHelper.class);
     }
 
 }

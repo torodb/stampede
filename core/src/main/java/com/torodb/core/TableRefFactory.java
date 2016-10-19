@@ -1,9 +1,12 @@
 
 package com.torodb.core;
 
+import javax.annotation.concurrent.ThreadSafe;
+
 /**
  *
  */
+@ThreadSafe
 public interface TableRefFactory {
 
     /**

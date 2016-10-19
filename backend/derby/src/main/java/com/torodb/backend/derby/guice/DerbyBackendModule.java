@@ -34,27 +34,69 @@ public class DerbyBackendModule extends PrivateModule {
 
     @Override
     protected void configure() {
-        bind(DerbyDriverProvider.class).to(OfficialDerbyDriver.class).in(Singleton.class);
-        bind(DerbyDbBackend.class).in(Singleton.class);
-        bind(DbBackendService.class).to(DerbyDbBackend.class);
+        bind(OfficialDerbyDriver.class)
+                .in(Singleton.class);
+        bind(DerbyDriverProvider.class)
+                .to(OfficialDerbyDriver.class);
+
+        bind(DerbyDbBackend.class)
+                .in(Singleton.class);
+        bind(DbBackendService.class)
+                .to(DerbyDbBackend.class);
         expose(DbBackendService.class);
-        bind(SchemaUpdater.class).to(DerbySchemaUpdater.class).in(Singleton.class);
+
+        bind(DerbySchemaUpdater.class)
+                .in(Singleton.class);
+        bind(SchemaUpdater.class)
+                .to(DerbySchemaUpdater.class);
         expose(SchemaUpdater.class);
-        bind(MetaDataReadInterface.class).to(DerbyMetaDataReadInterface.class).in(Singleton.class);
+
+        bind(DerbyMetaDataReadInterface.class)
+                .in(Singleton.class);
+        bind(MetaDataReadInterface.class)
+                .to(DerbyMetaDataReadInterface.class);
         expose(MetaDataReadInterface.class);
-        bind(MetaDataWriteInterface.class).to(DerbyMetaDataWriteInterface.class).in(Singleton.class);
+
+        bind(DerbyMetaDataWriteInterface.class)
+                .in(Singleton.class);
+        bind(MetaDataWriteInterface.class)
+                .to(DerbyMetaDataWriteInterface.class);
         expose(MetaDataWriteInterface.class);
-        bind(DataTypeProvider.class).to(DerbyDataTypeProvider.class).in(Singleton.class);
+
+        bind(DerbyDataTypeProvider.class)
+                .in(Singleton.class);
+        bind(DataTypeProvider.class)
+                .to(DerbyDataTypeProvider.class);
         expose(DataTypeProvider.class);
-        bind(StructureInterface.class).to(DerbyStructureInterface.class).in(Singleton.class);
+
+        bind(DerbyStructureInterface.class)
+                .in(Singleton.class);
+        bind(StructureInterface.class)
+                .to(DerbyStructureInterface.class);
         expose(StructureInterface.class);
-        bind(ReadInterface.class).to(DerbyReadInterface.class).in(Singleton.class);
+
+        bind(DerbyReadInterface.class)
+                .in(Singleton.class);
+        bind(ReadInterface.class)
+                .to(DerbyReadInterface.class);
         expose(ReadInterface.class);
-        bind(WriteInterface.class).to(DerbyWriteInterface.class).in(Singleton.class);
+
+        bind(DerbyWriteInterface.class)
+                .in(Singleton.class);
+        bind(WriteInterface.class)
+                .to(DerbyWriteInterface.class);
         expose(WriteInterface.class);
-        bind(ErrorHandler.class).to(DerbyErrorHandler.class).in(Singleton.class);
+
+        bind(DerbyErrorHandler.class)
+                .in(Singleton.class);
+        bind(ErrorHandler.class)
+                .to(DerbyErrorHandler.class);
         expose(ErrorHandler.class);
-        bind(IdentifierConstraints.class).to(DerbyIdentifierConstraints.class).in(Singleton.class);
+
+        bind(DerbyIdentifierConstraints.class)
+                .in(Singleton.class);
+        bind(IdentifierConstraints.class)
+                .to(DerbyIdentifierConstraints.class);
         expose(IdentifierConstraints.class);
     }
 

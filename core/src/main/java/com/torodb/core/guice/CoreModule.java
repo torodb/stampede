@@ -21,12 +21,15 @@
 package com.torodb.core.guice;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.Singleton;
+import com.torodb.core.Shutdowner;
 import com.torodb.core.TableRefFactory;
 import com.torodb.core.d2r.DefaultIdentifierFactory;
 import com.torodb.core.d2r.IdentifierFactory;
 import com.torodb.core.impl.TableRefFactoryImpl;
 import com.torodb.core.retrier.Retrier;
 import com.torodb.core.retrier.SmartRetrier;
+import com.torodb.core.transaction.InternalTransactionManager;
 
 /**
  *
@@ -57,6 +60,12 @@ public class CoreModule extends AbstractModule {
         bind(IdentifierFactory.class)
                 .to(DefaultIdentifierFactory.class)
                 .asEagerSingleton();
+
+        bind(Shutdowner.class)
+                .in(Singleton.class);
+
+        bind(InternalTransactionManager.class)
+                .in(Singleton.class);
     }
 
     private static int millisToWait(int attempts, int millis) {

@@ -1,6 +1,7 @@
 
 package com.torodb.mongodb.repl.guice;
 
+import com.eightkdata.mongowp.client.core.CachedMongoClientFactory;
 import com.eightkdata.mongowp.client.wrapper.MongoClientConfiguration;
 import com.google.common.net.HostAndPort;
 import com.google.inject.PrivateModule;
@@ -10,20 +11,16 @@ import com.torodb.core.supervision.Supervisor;
 import com.torodb.mongodb.repl.*;
 import com.torodb.mongodb.repl.impl.MongoOplogReaderProvider;
 import com.torodb.mongodb.repl.impl.ReplicationErrorHandlerImpl;
-import com.torodb.mongodb.repl.oplogreplier.DefaultOplogApplier;
+import com.torodb.mongodb.repl.oplogreplier.*;
 import com.torodb.mongodb.repl.oplogreplier.DefaultOplogApplier.BatchLimits;
-import com.torodb.mongodb.repl.oplogreplier.DefaultOplogApplierService;
-import com.torodb.mongodb.repl.oplogreplier.OplogApplier;
-import com.torodb.mongodb.repl.oplogreplier.OplogApplierService;
 import com.torodb.mongodb.repl.oplogreplier.analyzed.AnalyzedOpReducer;
 import com.torodb.mongodb.repl.oplogreplier.batch.AnalyzedOplogBatchExecutor;
 import com.torodb.mongodb.repl.oplogreplier.batch.BatchAnalyzer;
 import com.torodb.mongodb.repl.oplogreplier.batch.ConcurrentOplogBatchExecutor;
 import com.torodb.mongodb.repl.oplogreplier.batch.ConcurrentOplogBatchExecutor.ConcurrentOplogBatchExecutorMetrics;
+import com.torodb.mongodb.repl.oplogreplier.batch.NamespaceJobExecutor;
 import com.torodb.mongodb.repl.oplogreplier.fetcher.ContinuousOplogFetcher;
-import com.torodb.mongodb.repl.topology.RemoteSeed;
-import com.torodb.mongodb.repl.topology.TopologyGuiceModule;
-import com.torodb.mongodb.repl.topology.TopologyService;
+import com.torodb.mongodb.repl.topology.*;
 import com.torodb.mongodb.utils.DbCloner;
 import com.torodb.mongodb.utils.cloner.CommitHeuristic;
 import java.time.Duration;
@@ -52,6 +49,7 @@ public class MongoDbReplModule extends PrivateModule {
                 .in(Singleton.class);
 
         install(new MongoClientWrapperModule());
+        expose(CachedMongoClientFactory.class);
 
         bind(OplogReaderProvider.class).to(MongoOplogReaderProvider.class).asEagerSingleton();
 
@@ -126,6 +124,18 @@ public class MongoDbReplModule extends PrivateModule {
                 .to(ReplicationErrorHandler.class);
         bind(MongodbReplConfig.class)
                 .toInstance(config);
+
+        bind(ReplMetrics.class)
+                .in(Singleton.class);
+
+        bind(OplogApplierMetrics.class)
+                .in(Singleton.class);
+
+        bind(OplogOperationApplier.class)
+                .in(Singleton.class);
+
+        bind(NamespaceJobExecutor.class)
+                .in(Singleton.class);
     }
 
     @Provides

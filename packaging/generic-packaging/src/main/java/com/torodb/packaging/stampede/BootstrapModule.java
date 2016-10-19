@@ -7,6 +7,7 @@ import com.torodb.backend.guice.BackendModule;
 import com.torodb.concurrent.guice.ConcurrentModule;
 import com.torodb.core.BuildProperties;
 import com.torodb.core.guice.CoreModule;
+import com.torodb.core.metrics.guice.MetricsModule;
 import com.torodb.metainfo.guice.MetainfModule;
 import com.torodb.mongodb.core.MongodServerConfig;
 import com.torodb.packaging.DefaultBuildProperties;
@@ -31,11 +32,13 @@ class BootstrapModule extends AbstractModule {
 
     @Override
     protected void configure() {
+        binder().requireExplicitBindings();
         install(new PackagingModule(clock));
         install(new CoreModule());
         install(new ExecutorServicesModule());
         install(new ConcurrentModule());
         install(new MetainfModule());
+        install(new MetricsModule(config.getGeneric()));
 
         install(new BackendImplementationModule(config));
         install(new BackendModule());

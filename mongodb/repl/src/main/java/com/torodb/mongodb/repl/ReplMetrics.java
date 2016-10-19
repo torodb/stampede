@@ -3,7 +3,6 @@ package com.torodb.mongodb.repl;
 import java.util.Locale;
 
 import javax.inject.Inject;
-import javax.inject.Singleton;
 
 import com.codahale.metrics.Counter;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.MemberState;
@@ -12,8 +11,9 @@ import com.google.common.collect.Maps;
 import com.torodb.core.metrics.MetricNameFactory;
 import com.torodb.core.metrics.SettableGauge;
 import com.torodb.core.metrics.ToroMetricRegistry;
+import javax.annotation.concurrent.ThreadSafe;
 
-@Singleton
+@ThreadSafe
 public class ReplMetrics {
 
 	private static final MetricNameFactory factory = new MetricNameFactory("Repl");

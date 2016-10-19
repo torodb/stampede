@@ -1,16 +1,8 @@
 
 package com.torodb.mongodb.repl.oplogreplier;
 
-import static com.eightkdata.mongowp.bson.utils.DefaultBsonValues.newDocument;
 
 import java.util.Arrays;
-import java.util.Collections;
-
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import com.eightkdata.mongowp.ErrorCode;
 import com.eightkdata.mongowp.Status;
@@ -48,18 +40,17 @@ import com.torodb.mongodb.repl.ReplicationFilters;
 import com.torodb.mongodb.utils.DefaultIdUtils;
 import com.torodb.mongodb.utils.NamespaceUtil;
 import java.util.Collections;
+import javax.annotation.concurrent.ThreadSafe;
 import javax.inject.Inject;
-import javax.inject.Singleton;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import static com.eightkdata.mongowp.bson.utils.DefaultBsonValues.newDocument;
 import static com.eightkdata.mongowp.bson.utils.DefaultBsonValues.newDocument;
 
 /**
  *
  */
-@Singleton
+@ThreadSafe
 public class OplogOperationApplier {
 
     private static final Logger LOGGER = LogManager.getLogger(OplogOperationApplier.class);

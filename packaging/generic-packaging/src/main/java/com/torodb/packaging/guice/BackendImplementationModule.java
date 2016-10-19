@@ -49,23 +49,23 @@ public class BackendImplementationModule extends AbstractModule implements Backe
 
 	@Override
 	public void visit(Postgres value) {
-		bind(PostgreSQLDbBackendConfiguration.class).to(PostgresSQLDbBackendConfigurationMapper.class);
+		bind(PostgreSQLDbBackendConfiguration.class)
+                .toInstance(new PostgresSQLDbBackendConfigurationMapper(config, value));
 		install(new PostgreSQLBackendModule());
 	}
 
 	@Override
 	public void visit(Derby value) {
-        bind(DerbyDbBackendConfiguration.class).to(DerbyBackendConfigurationMapper.class);
+        bind(DerbyDbBackendConfiguration.class)
+                .toInstance(new DerbyBackendConfigurationMapper(config, value));
         install(new DerbyBackendModule());
 	}
     
     @Immutable
-    @Singleton
     public static class DerbyBackendConfigurationMapper extends DbBackendConfigurationMapper implements DerbyDbBackendConfiguration {
         private final boolean embedded;
         private final boolean inMemory;
         
-        @Inject
         public DerbyBackendConfigurationMapper(Config config, Derby derby) {
             super(config.getProtocol().getMongo().getCursorTimeout(),
                     config.getGeneric().getConnectionPoolTimeout(),

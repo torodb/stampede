@@ -7,7 +7,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
-import javax.inject.Singleton;
 
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.MongoDb30Commands.MongoDb30CommandsImplementationBuilder;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.AdminCommands.AdminCommandsImplementationsBuilder;
@@ -72,6 +71,8 @@ import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.net.HostAndPort;
+import com.google.inject.Injector;
+import com.torodb.core.BuildProperties;
 import com.torodb.core.annotations.DoNotChange;
 import com.torodb.mongodb.commands.impl.NotImplementedCommandImplementation;
 import com.torodb.mongodb.commands.impl.authentication.GetNonceImplementation;
@@ -82,19 +83,22 @@ import com.torodb.mongodb.commands.impl.diagnostic.ServerStatusImplementation;
 import com.torodb.mongodb.commands.impl.internal.WhatsMyUriImplementation;
 import com.torodb.mongodb.commands.impl.replication.IsMasterImplementation;
 import com.torodb.mongodb.core.MongodConnection;
+import com.torodb.mongodb.core.MongodServerConfig;
+import java.time.Clock;
+import javax.annotation.concurrent.ThreadSafe;
 
 /**
  *
  */
-@Singleton
+@ThreadSafe
 public class ConnectionCommandsExecutor {
 
     private final ImmutableMap<Command<?,?>, CommandImplementation<?,?, ? super MongodConnection>> map;
     private final Set<Command<?, ?>> supportedCommands;
 
     @Inject
-    ConnectionCommandsExecutor(MapFactory mapFactory) {
-        map = mapFactory.get();
+    ConnectionCommandsExecutor(Injector injector) {
+        map = new MapFactory(injector).get();
 
         supportedCommands = Collections.unmodifiableSet(
                 map.entrySet().stream()
@@ -123,22 +127,14 @@ public class ConnectionCommandsExecutor {
         private final MyInternalCommandsImplementationsBuilder internalBuilder;
         private final MyReplCommandsImplementationsBuilder replBuilder;
 
-        @Inject
-        public MapFactory(
-                MyAdminCommandsImplementationBuilder adminBuilder,
-                MyAggregationCommandsImplementationBuilder aggregationBuilder,
-                MyAuthenticationCommandsImplementationsBuilder authenticationCommandsImplementationsBuilder,
-                MyDiagnosticCommandsImplementationBuilder diagnosticBuilder,
-                MyGeneralCommandsImplementationBuilder generalBuilder,
-                MyInternalCommandsImplementationsBuilder internalBuilder,
-                MyReplCommandsImplementationsBuilder replBuilder) {
-            this.adminBuilder = adminBuilder;
-            this.aggregationBuilder = aggregationBuilder;
-            this.authenticationCommandsImplementationsBuilder = authenticationCommandsImplementationsBuilder;
-            this.diagnosticBuilder = diagnosticBuilder;
-            this.generalBuilder = generalBuilder;
-            this.internalBuilder = internalBuilder;
-            this.replBuilder = replBuilder;
+        public MapFactory(Injector injector) {
+            this.adminBuilder = new MyAdminCommandsImplementationBuilder();
+            this.aggregationBuilder = new MyAggregationCommandsImplementationBuilder();
+            this.authenticationCommandsImplementationsBuilder = new MyAuthenticationCommandsImplementationsBuilder(injector);
+            this.diagnosticBuilder = new MyDiagnosticCommandsImplementationBuilder(injector);
+            this.generalBuilder = new MyGeneralCommandsImplementationBuilder();
+            this.internalBuilder = new MyInternalCommandsImplementationsBuilder();
+            this.replBuilder = new MyReplCommandsImplementationsBuilder(injector);
         }
 
         @Override
@@ -158,6 +154,7 @@ public class ConnectionCommandsExecutor {
     }
 
     static class MyAdminCommandsImplementationBuilder extends AdminCommandsImplementationsBuilder<MongodConnection> {
+
         @Override
         public CommandImplementation<ListCollectionsArgument, ListCollectionsResult, MongodConnection> getListCollectionsImplementation() {
             return NotImplementedCommandImplementation.build();
@@ -210,36 +207,23 @@ public class ConnectionCommandsExecutor {
     }
 
     static class MyAuthenticationCommandsImplementationsBuilder extends AuthenticationCommandsImplementationsBuilder<MongodConnection> {
-        private final GetNonceImplementation getNonceImplementation;
 
-        @Inject
-        public MyAuthenticationCommandsImplementationsBuilder(GetNonceImplementation getNonceImplementation) {
-            this.getNonceImplementation = getNonceImplementation;
+        private MyAuthenticationCommandsImplementationsBuilder(Injector injector) {
         }
-
+        
         @Override
         public GetNonceImplementation getGetNonceImplementation() {
-            return getNonceImplementation;
+            return new GetNonceImplementation();
         }
 
     }
 
     static class MyDiagnosticCommandsImplementationBuilder extends DiagnosticCommandsImplementationsBuilder<MongodConnection> {
 
-        private final PingImplementation ping;
-        private final GetLogImplementation getLog;
-        private final BuildInfoImplementation buildInfo;
-        private final ServerStatusImplementation serverStatusImplementation;
+        private final Injector injector;
 
-        @Inject
-        public MyDiagnosticCommandsImplementationBuilder(PingImplementation ping, 
-                GetLogImplementation getLog, 
-                BuildInfoImplementation buildInfo,
-                ServerStatusImplementation serverStatusImplementation) {
-            this.ping = ping;
-            this.getLog = getLog;
-            this.buildInfo = buildInfo;
-            this.serverStatusImplementation = serverStatusImplementation;
+        public MyDiagnosticCommandsImplementationBuilder(Injector injector) {
+            this.injector = injector;
         }
 
         @Override
@@ -254,22 +238,22 @@ public class ConnectionCommandsExecutor {
 
         @Override
         public CommandImplementation<Empty, BuildInfoResult, MongodConnection> getBuildInfoImplementation() {
-            return buildInfo;
+            return new BuildInfoImplementation(injector.getInstance(BuildProperties.class));
         }
 
         @Override
         public CommandImplementation<ServerStatusArgument, ServerStatusReply, MongodConnection> getServerStatusImplementation() {
-            return serverStatusImplementation;
+            return new ServerStatusImplementation(injector.getInstance(MongodServerConfig.class));
         }
 
         @Override
         public CommandImplementation<GetLogArgument, GetLogReply, MongodConnection> getGetLogImplementation() {
-            return getLog;
+            return new GetLogImplementation();
         }
 
         @Override
         public CommandImplementation<Empty, Empty, MongodConnection> getPingCommandImplementation() {
-            return ping;
+            return new PingImplementation();
         }
 
     }
@@ -304,12 +288,6 @@ public class ConnectionCommandsExecutor {
     }
 
     static class MyInternalCommandsImplementationsBuilder extends InternalCommandsImplementationsBuilder<MongodConnection> {
-        private final WhatsMyUriImplementation whatsMyUriImpl;
-        
-        @Inject
-        public MyInternalCommandsImplementationsBuilder(WhatsMyUriImplementation whatsMyUriImpl) {
-            this.whatsMyUriImpl = whatsMyUriImpl;
-        }
 
         @Override
         public CommandImplementation<HandshakeArgument, Empty, MongodConnection> getHandshakeImplementation() {
@@ -343,16 +321,16 @@ public class ConnectionCommandsExecutor {
 
         @Override
         public CommandImplementation<Empty, WhatsMyUriReply, MongodConnection> getWhatsMyUriImplementation() {
-            return whatsMyUriImpl;
+            return new WhatsMyUriImplementation();
         }
     }
 
     static class MyReplCommandsImplementationsBuilder extends ReplCommandsImplementationsBuilder<MongodConnection> {
-        private final IsMasterImplementation isMasterImpl;
 
-        @Inject
-        public MyReplCommandsImplementationsBuilder(IsMasterImplementation isMasterImpl) {
-            this.isMasterImpl = isMasterImpl;
+        private final Injector injector;
+
+        public MyReplCommandsImplementationsBuilder(Injector injector) {
+            this.injector = injector;
         }
 
         @Override
@@ -367,7 +345,7 @@ public class ConnectionCommandsExecutor {
 
         @Override
         public CommandImplementation<Empty, IsMasterReply, MongodConnection> getIsMasterImplementation() {
-            return isMasterImpl;
+            return new IsMasterImplementation(injector.getInstance(Clock.class), injector.getInstance(MongodServerConfig.class));
         }
 
         @Override

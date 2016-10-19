@@ -35,10 +35,12 @@ import com.torodb.mongodb.core.MongodConnection;
 import com.torodb.mongodb.core.MongodTransaction;
 import com.torodb.mongodb.core.ReadOnlyMongodTransaction;
 import com.torodb.mongodb.core.WriteMongodTransaction;
+import javax.annotation.concurrent.ThreadSafe;
 
 /**
  *
  */
+@ThreadSafe
 public class CommandsExecutorClassifier {
     private final CommandsExecutor<ExclusiveWriteMongodTransaction> exclusiveWriteCommandsExecutor;
     private final CommandsExecutor<WriteMongodTransaction> writeCommandsExecutor;

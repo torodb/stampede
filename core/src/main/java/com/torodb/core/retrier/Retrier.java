@@ -6,10 +6,12 @@ import com.torodb.core.exceptions.user.UserException;
 import java.util.EnumSet;
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
+import javax.annotation.concurrent.ThreadSafe;
 
 /**
  *
  */
+@ThreadSafe
 public interface Retrier {
 
     /**

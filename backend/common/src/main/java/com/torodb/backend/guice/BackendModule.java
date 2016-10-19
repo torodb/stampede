@@ -23,7 +23,10 @@ public class BackendModule extends PrivateModule {
 
     @Override
     protected void configure() {
-        bind(SqlInterface.class).to(SqlInterfaceDelegate.class).in(Singleton.class);
+        bind(SqlInterfaceDelegate.class)
+                .in(Singleton.class);
+        bind(SqlInterface.class)
+                .to(SqlInterfaceDelegate.class);
         expose(SqlInterface.class);
         
         bind(BackendTransactionJobFactory.class)
@@ -35,16 +38,19 @@ public class BackendModule extends PrivateModule {
                 .in(Singleton.class);
         bind(ReservedIdInfoFactory.class)
                 .to(ReservedIdInfoFactoryImpl.class);
-        
-        bind(ReservedIdGenerator.class)
-                .to(ReservedIdGeneratorImpl.class)
-                .in(Singleton.class);
-        expose(ReservedIdGenerator.class);
-        
-        bind(DslContextFactory.class)
-                .to(DslContextFactoryImpl.class)
-                .asEagerSingleton();
 
+        bind(ReservedIdGeneratorImpl.class)
+                .in(Singleton.class);
+        bind(ReservedIdGenerator.class)
+                .to(ReservedIdGeneratorImpl.class);
+        expose(ReservedIdGenerator.class);
+
+        bind(DslContextFactoryImpl.class)
+                .in(Singleton.class);
+        bind(DslContextFactory.class)
+                .to(DslContextFactoryImpl.class);
+
+        bind(SnapshotUpdaterImpl.class);
         bind(SnapshotUpdater.class)
                 .to(SnapshotUpdaterImpl.class);
         expose(SnapshotUpdater.class);
@@ -54,6 +60,15 @@ public class BackendModule extends PrivateModule {
                 .build(BackendBundleFactory.class)
         );
         expose(BackendBundleFactory.class);
+
+        bind(SqlHelper.class)
+                .in(Singleton.class);
+        expose(SqlHelper.class);
+
+        bind(BackendServiceImpl.class)
+                .in(Singleton.class);
+
+        bind(KvMetainfoHandler.class);
     }
 
 }

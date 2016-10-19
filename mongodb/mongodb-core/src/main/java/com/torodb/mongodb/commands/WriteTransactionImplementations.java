@@ -70,6 +70,7 @@ import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.net.HostAndPort;
+import com.google.inject.Injector;
 import com.torodb.core.annotations.DoNotChange;
 import com.torodb.mongodb.commands.impl.NotImplementedCommandImplementation;
 import com.torodb.mongodb.commands.impl.admin.CreateCollectionImplementation;
@@ -80,7 +81,9 @@ import com.torodb.mongodb.commands.impl.admin.DropIndexesImplementation;
 import com.torodb.mongodb.commands.impl.general.DeleteImplementation;
 import com.torodb.mongodb.commands.impl.general.InsertImplementation;
 import com.torodb.mongodb.commands.impl.general.UpdateImplementation;
+import com.torodb.mongodb.core.MongodMetrics;
 import com.torodb.mongodb.core.WriteMongodTransaction;
+import com.torodb.mongodb.language.ObjectIdFactory;
 
 /**
  *
@@ -91,8 +94,8 @@ public class WriteTransactionImplementations {
     private final ImmutableMap<Command<?,?>, CommandImplementation<?,?, ? super WriteMongodTransaction>> map;
 
     @Inject
-    WriteTransactionImplementations(MapFactory mapFactory) {
-        map = mapFactory.get();
+    WriteTransactionImplementations(Injector injector) {
+        map = new MapFactory(injector).get();
     }
 
     @DoNotChange
@@ -115,21 +118,14 @@ public class WriteTransactionImplementations {
         private final MyReplCommandsImplementationsBuilder replBuilder;
 
         @Inject
-        public MapFactory(
-                MyAdminCommandsImplementationBuilder adminBuilder,
-                MyAggregationCommandsImplementationBuilder aggregationBuilder,
-                MyAuthenticationCommandsImplementationsBuilder authenticationCommandsImplementationsBuilder,
-                MyDiagnosticCommandsImplementationBuilder diagnosticBuilder,
-                MyGeneralCommandsImplementationBuilder generalBuilder,
-                MyInternalCommandsImplementationsBuilder internalBuilder,
-                MyReplCommandsImplementationsBuilder replBuilder) {
-            this.adminBuilder = adminBuilder;
-            this.aggregationBuilder = aggregationBuilder;
-            this.authenticationCommandsImplementationsBuilder = authenticationCommandsImplementationsBuilder;
-            this.diagnosticBuilder = diagnosticBuilder;
-            this.generalBuilder = generalBuilder;
-            this.internalBuilder = internalBuilder;
-            this.replBuilder = replBuilder;
+        public MapFactory(Injector injector) {
+            this.adminBuilder = new MyAdminCommandsImplementationBuilder();
+            this.aggregationBuilder = new MyAggregationCommandsImplementationBuilder();
+            this.authenticationCommandsImplementationsBuilder = new MyAuthenticationCommandsImplementationsBuilder();
+            this.diagnosticBuilder = new MyDiagnosticCommandsImplementationBuilder();
+            this.generalBuilder = new MyGeneralCommandsImplementationBuilder(injector);
+            this.internalBuilder = new MyInternalCommandsImplementationsBuilder();
+            this.replBuilder = new MyReplCommandsImplementationsBuilder();
         }
 
         @Override
@@ -152,25 +148,6 @@ public class WriteTransactionImplementations {
     }
 
     static class MyAdminCommandsImplementationBuilder extends AdminCommandsImplementationsBuilder<WriteMongodTransaction> {
-        private final CreateCollectionImplementation createCollectionImplementation;
-        private final DropCollectionImplementation dropCollectionImplementation;
-        private final DropDatabaseImplementation dropDatabaseImplementation;
-        private final CreateIndexesImplementation createIndexesImplementation;
-        private final DropIndexesImplementation dropIndexesImplementation;
-        
-        @Inject
-        public MyAdminCommandsImplementationBuilder(
-                CreateCollectionImplementation createCollectionImplementation,
-                DropCollectionImplementation dropCollectionImplementation,
-                DropDatabaseImplementation dropDatabaseImplementation,
-                CreateIndexesImplementation createIndexesImplementation,
-                DropIndexesImplementation dropIndexesImplementation) {
-            this.createCollectionImplementation = createCollectionImplementation;
-            this.dropCollectionImplementation = dropCollectionImplementation;
-            this.dropDatabaseImplementation = dropDatabaseImplementation;
-            this.createIndexesImplementation = createIndexesImplementation;
-            this.dropIndexesImplementation = dropIndexesImplementation;
-        }
 
         @Override
         public CommandImplementation<ListCollectionsArgument, ListCollectionsResult, WriteMongodTransaction> getListCollectionsImplementation() {
@@ -179,17 +156,17 @@ public class WriteTransactionImplementations {
 
         @Override
         public CommandImplementation<Empty, Empty, WriteMongodTransaction> getDropDatabaseImplementation() {
-            return dropDatabaseImplementation;
+            return new DropDatabaseImplementation();
         }
 
         @Override
         public CommandImplementation<CollectionCommandArgument, Empty, WriteMongodTransaction> getDropCollectionImplementation() {
-            return dropCollectionImplementation;
+            return new DropCollectionImplementation();
         }
 
         @Override
         public CommandImplementation<CreateCollectionArgument, Empty, WriteMongodTransaction> getCreateCollectionImplementation() {
-            return createCollectionImplementation;
+            return new CreateCollectionImplementation();
         }
 
         @Override
@@ -199,12 +176,12 @@ public class WriteTransactionImplementations {
 
         @Override
         public CommandImplementation<CreateIndexesArgument, CreateIndexesResult, WriteMongodTransaction> getCreateIndexesImplementation() {
-            return createIndexesImplementation;
+            return new CreateIndexesImplementation();
         }
 
         @Override
         public CommandImplementation<DropIndexesArgument, DropIndexesResult, ? super WriteMongodTransaction> getDropIndexesImplementation() {
-            return dropIndexesImplementation;
+            return new DropIndexesImplementation();
         }
 
         @Override
@@ -266,19 +243,13 @@ public class WriteTransactionImplementations {
     }
 
     static class MyGeneralCommandsImplementationBuilder extends GeneralCommandsImplementationsBuilder<WriteMongodTransaction> {
-        private final InsertImplementation insertImpl;
-        private final DeleteImplementation deleteImpl;
-        private final UpdateImplementation updateImpl;
+        
+        private final MongodMetrics mongodMetrics;
+        private final ObjectIdFactory objectIdFactory;
 
-        @Inject
-        public MyGeneralCommandsImplementationBuilder(
-                InsertImplementation insertImpl,
-                DeleteImplementation deleteImpl,
-                UpdateImplementation updateImpl) {
-            super();
-            this.insertImpl = insertImpl;
-            this.deleteImpl = deleteImpl;
-            this.updateImpl = updateImpl;
+        public MyGeneralCommandsImplementationBuilder(Injector injector) {
+            this.mongodMetrics = injector.getInstance(MongodMetrics.class);
+            this.objectIdFactory = injector.getInstance(ObjectIdFactory.class);
         }
 
         @Override
@@ -288,7 +259,7 @@ public class WriteTransactionImplementations {
 
         @Override
         public CommandImplementation<InsertArgument, InsertResult, WriteMongodTransaction> getInsertImplementation() {
-            return insertImpl;
+            return new InsertImplementation(mongodMetrics);
         }
 
         @Override
@@ -298,12 +269,12 @@ public class WriteTransactionImplementations {
 
         @Override
         public CommandImplementation<DeleteArgument, Long, WriteMongodTransaction> getDeleteImplementation() {
-            return deleteImpl;
+            return new DeleteImplementation(mongodMetrics);
         }
 
         @Override
         public CommandImplementation<UpdateArgument, UpdateResult, WriteMongodTransaction> getUpdateImplementation() {
-            return updateImpl;
+            return new UpdateImplementation(objectIdFactory, mongodMetrics);
         }
 
     }

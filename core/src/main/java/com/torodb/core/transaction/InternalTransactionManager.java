@@ -24,13 +24,13 @@ import com.torodb.core.backend.BackendConnection;
 import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
 import com.torodb.core.transaction.metainf.MetainfoRepository;
 import com.torodb.core.transaction.metainf.MetainfoRepository.SnapshotStage;
+import javax.annotation.concurrent.ThreadSafe;
 import javax.inject.Inject;
-import javax.inject.Singleton;
 
 /**
  *
  */
-@Singleton
+@ThreadSafe
 public class InternalTransactionManager {
 
     private final MetainfoRepository metainfoRepository;

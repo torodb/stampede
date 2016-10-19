@@ -50,6 +50,15 @@ public class TopologyGuiceModule extends PrivateModule {
         bind(TopologyErrorHandler.class)
                 .to(DefaultTopologyErrorHandler.class)
                 .in(Singleton.class);
+
+        bind(SyncSourceRetrier.class)
+                .in(Singleton.class);
+
+        bind(TopologyHeartbeatHandler.class)
+                .in(Singleton.class);
+
+        bind(TopologySyncSourceProvider.class)
+                .in(Singleton.class);
     }
 
     @Provides @Singleton @Exposed
