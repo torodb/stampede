@@ -67,12 +67,12 @@ public class CreateIndexesImplementation implements WriteTorodbCommandImpl<Creat
                 
                 if (indexOptions.isBackground()) {
                     throw new CommandFailed("createIndexes", 
-                            "Building index in background is not suppoeted right now");
+                            "Building index in background is not supported right now");
                 }
                 
                 if (indexOptions.isSparse()) {
                     throw new CommandFailed("createIndexes", 
-                            "Sparse index are not suppoeted right now");
+                            "Sparse index are not supported right now");
                 }
 
                 List<IndexFieldInfo> fields = new ArrayList<>(indexOptions.getKeys().size());
@@ -95,7 +95,7 @@ public class CreateIndexesImplementation implements WriteTorodbCommandImpl<Creat
                     case text:
                     default:
                         throw new CommandFailed("createIndexes", 
-                                "Index of type " + indexKey.getType().name() + " is not suppoeted right now");
+                                "Index of type " + indexKey.getType().name() + " is not supported right now");
                     }
                     
                     fields.add(new IndexFieldInfo(attRefBuilder.build(), ordering.isAscending()));
