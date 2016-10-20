@@ -90,7 +90,9 @@ public class CreateIndexesImplementation implements WriteTorodbCommandImpl<Creat
                     case desc:
                         ordering = FieldIndexOrdering.DESC;
                         break;
-                    case geospatial:
+					case twod:
+                    case twodsphere:
+                    case geoHaystack: 
                     case hashed:
                     case text:
                     default:
