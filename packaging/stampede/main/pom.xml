@@ -371,9 +371,8 @@
         </profile>
         
         <profile>
-            <id>docker-alone</id>
+            <id>docker-stampede</id>
             <properties>
-                <docker.postgres.password>postgres</docker.postgres.password>
                 <docker.postgres.host></docker.postgres.host>
                 <docker.postgres.port>5432</docker.postgres.port>
                 <docker.torodb.backend.user>torodb</docker.torodb.backend.user>
@@ -395,7 +394,6 @@
                                         <env>
                                             <TORO_RUN_SETUP>false</TORO_RUN_SETUP>
                                             <MONGO_SYNC_SOURCE>${docker.mongo.syncsource}</MONGO_SYNC_SOURCE>
-                                            <POSTGRES_PASSWORD>${docker.postgres.password}</POSTGRES_PASSWORD>
                                             <TORODB_BACKEND_HOST>${docker.postgres.host}</TORODB_BACKEND_HOST>
                                             <TORODB_BACKEND_PORT>${docker.postgres.port}</TORODB_BACKEND_PORT>
                                             <TORODB_BACKEND_DATABASE>${docker.postgres.database}</TORODB_BACKEND_DATABASE>
@@ -418,7 +416,7 @@
         </profile>
         
         <profile>
-            <id>docker-postgres</id>
+            <id>docker-stampede-postgres</id>
             <properties>
                 <docker.postgres.password>postgres</docker.postgres.password>
                 <docker.torodb.backend.password>torodb</docker.torodb.backend.password>
@@ -498,7 +496,7 @@
         </profile>
         
         <profile>
-            <id>docker-fullstack</id>
+            <id>docker-stampede-fullstack</id>
             <properties>
                 <docker.postgres.password>postgres</docker.postgres.password>
                 <docker.torodb.backend.password>torodb</docker.torodb.backend.password>
