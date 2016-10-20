@@ -62,7 +62,7 @@ public class DeleteCreateAnalyzedOp extends AbstractAnalyzedOp {
 
     @Override
     public AnalyzedOp andThenUpsertMod(UpdateOplogOperation op) {
-        return new DeleteCreateAnalyzedOp(getMongoDocId(), createUpdateSetAsDocument(op));
+        return new DeleteCreateAnalyzedOp(getMongoDocId(), createUpdateMergeChain(op));
     }
 
     @Override

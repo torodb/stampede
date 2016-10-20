@@ -3,15 +3,12 @@ package com.torodb.mongodb.repl.oplogreplier;
 
 import com.eightkdata.mongowp.annotations.MongoWP;
 import com.eightkdata.mongowp.bson.BsonDocument;
-import com.eightkdata.mongowp.bson.utils.DefaultBsonValues;
 import com.eightkdata.mongowp.server.MongoServerConfig;
 import com.eightkdata.mongowp.server.api.oplog.InsertOplogOperation;
 import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
 import com.eightkdata.mongowp.server.api.oplog.OplogVersion;
 import com.eightkdata.mongowp.server.api.oplog.UpdateOplogOperation;
 import com.eightkdata.mongowp.server.api.pojos.IteratorMongoCursor;
-import com.eightkdata.mongowp.server.api.tools.Empty;
-import com.google.common.collect.Lists;
 import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.*;
@@ -24,20 +21,13 @@ import com.torodb.concurrent.DefaultConcurrentToolsFactory.ForkJoinThreadFactory
 import com.torodb.concurrent.guice.ConcurrentModule;
 import com.torodb.core.BuildProperties;
 import com.torodb.core.annotations.ParallelLevel;
-import com.torodb.core.cursors.Cursor;
-import com.torodb.core.document.ToroDocument;
 import com.torodb.core.guice.CoreModule;
-import com.torodb.core.language.AttributeReference;
 import com.torodb.core.metrics.MetricsConfig;
 import com.torodb.core.metrics.guice.MetricsModule;
 import com.torodb.d2r.guice.D2RModule;
-import com.torodb.kvdocument.conversion.mongowp.MongoWPConverter;
-import com.torodb.kvdocument.values.KVInteger;
 import com.torodb.metainfo.guice.MetainfModule;
-import com.torodb.mongodb.core.MongodConnection;
 import com.torodb.mongodb.core.MongodServer;
 import com.torodb.mongodb.core.MongodServerConfig;
-import com.torodb.mongodb.core.WriteMongodTransaction;
 import com.torodb.mongodb.guice.MongoLayerModule;
 import com.torodb.mongodb.repl.OplogManager;
 import com.torodb.mongodb.repl.guice.AkkaDbClonerProvider;
@@ -45,20 +35,16 @@ import com.torodb.mongodb.repl.guice.DocsPerTransaction;
 import com.torodb.mongodb.repl.guice.MongoDbRepl;
 import com.torodb.mongodb.repl.guice.MongoDbReplModule.DefaultCommitHeuristic;
 import com.torodb.mongodb.repl.oplogreplier.DefaultOplogApplier.BatchLimits;
-import com.torodb.mongodb.repl.oplogreplier.OplogApplier.ApplyingJob;
 import com.torodb.mongodb.repl.oplogreplier.fetcher.LimitedOplogFetcher;
 import com.torodb.mongodb.repl.oplogreplier.fetcher.OplogFetcher;
 import com.torodb.mongodb.utils.DbCloner;
 import com.torodb.mongodb.utils.cloner.CommitHeuristic;
-import com.torodb.torod.ReadOnlyTorodTransaction;
-import com.torodb.torod.TorodConnection;
 import com.torodb.torod.TorodServer;
 import com.torodb.torod.guice.MemoryTorodModule;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
-import java.util.List;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinPool.ForkJoinWorkerThreadFactory;
 import java.util.concurrent.ForkJoinWorkerThread;
@@ -74,8 +60,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import static com.eightkdata.mongowp.bson.utils.DefaultBsonValues.newDocument;
-import static org.junit.Assert.*;
 
 import com.torodb.core.annotations.TorodbIdleService;
 import com.torodb.core.annotations.TorodbRunnableService;
@@ -96,6 +80,7 @@ public abstract class AbstractOplogApplierTest {
     private OplogApplier oplogApplier;
     private TorodServer torodServer;
     private OplogManager oplogManager;
+    private OplogTestContext testContext;
     private static final OpTimeFactory opTimeFactory = new OpTimeFactory();
 
     public abstract Module getMongodSpecificTestModule();
@@ -142,6 +127,11 @@ public abstract class AbstractOplogApplierTest {
         oplogManager.awaitRunning();
 
         oplogApplier = testInjector.getInstance(OplogApplier.class);
+
+        testContext = new DefaultOplogTestContext(
+                mongodServer,
+                oplogApplier
+        );
     }
 
     @After
@@ -166,138 +156,57 @@ public abstract class AbstractOplogApplierTest {
         }
     }
 
-    private void executeSimpleTest(OnTransactionConsumer<WriteMongodTransaction> given,
-            Stream<OplogOperation> oplog, boolean reapplying,
-            OnTransactionConsumer<ReadOnlyTorodTransaction> then) throws Exception {
-        executeSimpleTest(given,
-                oplog,
-                reapplying,
-                (ReadOnlyTorodTransaction trans) -> {
-                    then.execute(trans);
-                    return Empty.getInstance();
-        }
-        );
-    }
-
-    private <R> R executeSimpleTest(OnTransactionConsumer<WriteMongodTransaction> given,
-            Stream<OplogOperation> oplog, boolean updatesAsUpsert,
-            OnTransactionFunction<ReadOnlyTorodTransaction, R> then) throws Exception {
-        try (
-                MongodConnection conn = mongodServer.openConnection();
-                WriteMongodTransaction trans = conn.openWriteTransaction(true)) {
-
-            given.execute(trans);
-            trans.commit();
-        }
-
-        OplogFetcher fetcher = createOplogFetcher(oplog);
-
-        ApplyingJob job = oplogApplier.apply(fetcher, new ApplierContext.Builder()
-                .setReapplying(true)
-                .setUpdatesAsUpserts(updatesAsUpsert)
-                .build());
-        job.onFinishRaw().join();
-
-        try (TorodConnection conn = torodServer.openConnection();
-                ReadOnlyTorodTransaction trans = conn.openReadOnlyTransaction()) {
-            return then.execute(trans);
-        }
+    private void executeOplogTest(OplogTest oplogTest) throws Exception {
+        oplogTest.execute(testContext);
     }
 
     @Test
     public void emptyTest() throws Exception {
-        executeSimpleTest((t) -> {}, Stream.empty(), true, (t) -> {});
+        BDDOplogTest test = OplogTestParser
+                .fromExtendedJsonResource("doNothing.json");
+        executeOplogTest(test);
     }
 
     @Test
-    public void insertTest() throws Exception{
+    public void insertTestRepeated() throws Exception{
+        BDDOplogTest test = OplogTestParser
+                .fromExtendedJsonResource("insertRepeated.json");
+        executeOplogTest(test);
+    }
 
-        String db = "db";
-        String col = "col";
-
-        int id = 1;
-        KVInteger expectedId = KVInteger.of(1);
-        BsonDocument docToInsert = newDocument("_id", DefaultBsonValues.newInt(id));
-
-        OnTransactionConsumer<WriteMongodTransaction> given = (trans) -> {
-            trans.getTorodTransaction().insert(db, col, Stream.of(MongoWPConverter.toEagerDocument(docToInsert)));
-        };
-        Stream<OplogOperation> oplog = Stream.of(
-                createInsertOplogOp(db, col, docToInsert)
-        );
-        OnTransactionFunction<ReadOnlyTorodTransaction, List<ToroDocument>> then = (trans) -> {
-            List<ToroDocument> docs = Lists.newArrayList(
-                    trans.findByAttRef(db, col, new AttributeReference.Builder().addObjectKey("_id").build(), expectedId)
-                    .asDocCursor());
-            return docs;
-        };
-        
-        List<ToroDocument> docs = executeSimpleTest(given, oplog, false, then);
-
-        assertEquals("Exactly one document should be stored", 1, docs.size());
+    @Test
+    public void insertSimpleTest() throws Exception {
+        BDDOplogTest test = OplogTestParser
+                .fromExtendedJsonResource("simpleInsert.json");
+        executeOplogTest(test);
     }
 
     @Test
     public void updateTest_no_upsert() throws Exception {
-        String db = "db";
-        String col = "col";
-
-        int id1 = 1;
-        BsonDocument filter1 = newDocument("_id", DefaultBsonValues.newInt(id1));
-        AttributeReference aAttRef = new AttributeReference.Builder().addObjectKey("a").build();
-
-        OnTransactionConsumer<WriteMongodTransaction> given = (trans) -> {
-            trans.getTorodTransaction().insert(db, col, Stream.of(MongoWPConverter.toEagerDocument(filter1)));
-        };
-        Stream<OplogOperation> oplog = Stream.of(
-                createUpdateOplogOp(db, col, filter1, false, newDocument("$set", newDocument("a", DefaultBsonValues.newInt(1))))
-        );
-        OnTransactionConsumer<ReadOnlyTorodTransaction> then = (trans) -> {
-            Cursor<ToroDocument> id1Cursor = trans.findByAttRef(db, col, aAttRef, KVInteger.of(id1))
-                    .asDocCursor();
-            assertTrue("The update with id1 did not modify the state of the database", id1Cursor.hasNext());
-            ToroDocument id1Doc = id1Cursor.next();
-            assertEquals("The update with id1 lost its _id", KVInteger.of(id1), id1Doc.getRoot().get("_id"));
-            assertFalse("There are more documents that fullfil the id1 filter that was expected", id1Cursor.hasNext());
-
-        };
-        executeSimpleTest(given, oplog, false, then);
+        BDDOplogTest test = OplogTestParser
+                .fromExtendedJsonResource("update_no_upsert.json");
+        executeOplogTest(test);
     }
 
     @Test
     public void updateTest_upsert() throws Exception {
-        String db = "db";
-        String col = "col";
+        BDDOplogTest test = OplogTestParser
+                .fromExtendedJsonResource("update_upsert.json");
+        executeOplogTest(test);
+    }
 
-        int id1 = 1;
-        int id2 = 2;
-        BsonDocument filter1 = newDocument("_id", DefaultBsonValues.newInt(id1));
-        BsonDocument filter2 = newDocument("_id", DefaultBsonValues.newInt(id2));
-        AttributeReference aAttRef = new AttributeReference.Builder().addObjectKey("a").build();
+    @Test
+    public void insert_update_add() throws Exception {
+        BDDOplogTest test = OplogTestParser
+                .fromExtendedJsonResource("insert_update_add.json");
+        executeOplogTest(test);
+    }
 
-        OnTransactionConsumer<WriteMongodTransaction> given = (trans) -> {
-            trans.getTorodTransaction().insert(db, col, Stream.of(MongoWPConverter.toEagerDocument(filter1)));
-        };
-        Stream<OplogOperation> oplog = Stream.of(
-                createUpdateOplogOp(db, col, filter1, true, newDocument("$set", newDocument("a", DefaultBsonValues.newInt(1)))),
-                createUpdateOplogOp(db, col, filter2, true, newDocument("$set", newDocument("a", DefaultBsonValues.newInt(2))))
-        );
-        OnTransactionConsumer<ReadOnlyTorodTransaction> then = (trans) -> {
-            Cursor<ToroDocument> id1Cursor = trans.findByAttRef(db, col, aAttRef, KVInteger.of(id1))
-                    .asDocCursor();
-            assertTrue("The update with id1 did not modify the state of the database", id1Cursor.hasNext());
-            ToroDocument id1Doc = id1Cursor.next();
-            assertEquals("The update with id1 lost its _id", KVInteger.of(id1), id1Doc.getRoot().get("_id"));
-            assertFalse("There are more documents that fullfil the id1 filter that was expected", id1Cursor.hasNext());
-
-            Cursor<ToroDocument> id2Cursor = trans.findByAttRef(db, col, aAttRef, KVInteger.of(id2))
-                            .asDocCursor();
-            assertTrue("The update with id2 did not modify the state of the database", id2Cursor.hasNext());
-            ToroDocument id2Doc = id2Cursor.next();
-            assertEquals("The update with id2 lost its _id", KVInteger.of(id2), id2Doc.getRoot().get("_id"));
-            assertFalse("There are more documents that fullfil the id2 filter that was expected", id2Cursor.hasNext());
-        };
-        executeSimpleTest(given, oplog, false, then);
+    @Test
+    public void updateTest_letschat_upsert() throws Exception {
+        BDDOplogTest test = OplogTestParser
+                .fromExtendedJsonResource("letschat-upsert.json");
+        executeOplogTest(test);
     }
 
     private InsertOplogOperation createInsertOplogOp(String db, String col, BsonDocument doc) {

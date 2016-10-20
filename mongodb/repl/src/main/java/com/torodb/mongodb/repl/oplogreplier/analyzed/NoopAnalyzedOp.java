@@ -24,7 +24,9 @@ import com.eightkdata.mongowp.server.api.oplog.DeleteOplogOperation;
 import com.eightkdata.mongowp.server.api.oplog.UpdateOplogOperation;
 import com.torodb.kvdocument.values.KVDocument;
 import com.torodb.kvdocument.values.KVValue;
+import com.torodb.kvdocument.values.heap.MapKVDocument;
 import com.torodb.mongodb.language.update.UpdateAction;
+import java.util.LinkedHashMap;
 import java.util.function.Function;
 
 /**
@@ -65,13 +67,14 @@ public class NoopAnalyzedOp extends AbstractAnalyzedOp {
         assert UpdateActionsTool.parseUpdateAction(op) != null;
 
         Function<KVDocument, KVDocument> calculateFun = (fetched) -> {
-            if (fetched == null) {
-                UpdateAction updateAction = UpdateActionsTool.parseUpdateAction(op);
-                return UpdateActionsTool.applyModification(fetched, updateAction);
+            KVDocument newFetched = fetched;
+            if (newFetched == null) {
+                LinkedHashMap<String, KVValue<?>> map = new LinkedHashMap<>(1);
+                map.put("_id", getMongoDocId());
+                newFetched = new MapKVDocument(map);
             }
-            else {
-                return UpdateActionsTool.applyModification(fetched, UpdateActionsTool.parseUpdateAction(op));
-            }
+            UpdateAction updateAction = UpdateActionsTool.parseUpdateAction(op);
+            return UpdateActionsTool.applyModification(newFetched, updateAction);
         };
 
         return new UpsertModAnalyzedOp(getMongoDocId(), calculateFun);

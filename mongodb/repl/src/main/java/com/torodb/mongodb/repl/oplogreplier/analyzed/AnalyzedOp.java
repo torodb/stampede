@@ -60,7 +60,7 @@ public abstract class AnalyzedOp {
                         //UpsertSet is always like an insert
                         return andThenUpsertSet(op);
                     } else {
-                        return andThenUpsertSet(op);
+                        return andThenUpsertMod(op);
                     }
                 } else {
                     if (UpdateActionsTool.isSetModification(op)) {

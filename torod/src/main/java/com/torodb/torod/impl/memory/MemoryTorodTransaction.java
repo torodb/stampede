@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.json.Json;
 import org.jooq.lambda.tuple.Tuple2;
 
 /**
@@ -134,13 +135,21 @@ public abstract class MemoryTorodTransaction implements TorodTransaction {
 
     @Override
     public Stream<CollectionInfo> getCollectionsInfo(String dbName) {
-        throw new UnsupportedOperationException("Not supported yet."); //TODO: Implement when necessary
+        return getTransaction().data.row(dbName).keySet().stream()
+                .map(colName -> _getCollectionInfo(colName));
     }
 
     @Override
     public CollectionInfo getCollectionInfo(String dbName, String colName) throws
             CollectionNotFoundException {
-        throw new UnsupportedOperationException("Not supported yet."); //TODO: Implement when necessary
+        if (!getTransaction().data.contains(dbName, colName)) {
+            throw new CollectionNotFoundException(dbName, colName);
+        }
+        return _getCollectionInfo(colName);
+    }
+
+    private CollectionInfo _getCollectionInfo(String colName) {
+        return new CollectionInfo(colName, Json.createObjectBuilder().build());
     }
 
     @Override
