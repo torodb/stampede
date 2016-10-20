@@ -32,6 +32,7 @@ import org.apache.logging.log4j.Logger;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.internal.Console;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.net.HostAndPort;
@@ -45,7 +46,6 @@ import com.torodb.packaging.config.model.protocol.mongo.Replication;
 import com.torodb.packaging.config.util.ConfigUtils;
 import com.torodb.packaging.config.visitor.BackendImplementationVisitor;
 import com.torodb.packaging.util.Log4jUtils;
-import com.torodb.stampede.StampedeServer;
 import com.torodb.stampede.config.model.Config;
 
 /**
@@ -83,12 +83,22 @@ public class Main {
 			
 			System.exit(0);
 		}
-		
-		if (cliConfig.isPrintXmlConfig()) {
-			ConfigUtils.printXmlConfig(config, console);
-			
-			System.exit(0);
-		}
+        
+        if (cliConfig.isPrintXmlConfig()) {
+            ConfigUtils.printXmlConfig(config, console);
+            
+            System.exit(0);
+        }
+        
+        if (cliConfig.isPrintParam()) {
+            JsonNode jsonNode = ConfigUtils.getParam(config, cliConfig.getPrintParamPath());
+            
+            if (jsonNode != null) {
+                console.print(jsonNode.asText());
+            }
+            
+            System.exit(0);
+        }
 
 		configureLogger(cliConfig, config);
 

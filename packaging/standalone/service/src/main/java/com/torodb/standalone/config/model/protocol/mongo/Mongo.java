@@ -31,6 +31,7 @@ import com.torodb.packaging.config.annotation.Description;
 import com.torodb.packaging.config.model.backend.CursorConfig;
 import com.torodb.packaging.config.model.protocol.mongo.Net;
 import com.torodb.packaging.config.model.protocol.mongo.Replication;
+import com.torodb.packaging.config.util.ConfigUtils;
 import com.torodb.packaging.config.validation.NoDuplicatedReplName;
 import com.torodb.packaging.config.validation.NotNullElements;
 import com.torodb.packaging.config.validation.SSLEnabledForX509Authentication;
@@ -58,7 +59,7 @@ public class Mongo implements CursorConfig {
     private Long cursorTimeout = 10L * 60 * 1000;
     @Description("config.mongo.mongopassFile")
     @JsonProperty(required=true)
-    private String mongopassFile = System.getProperty("user.home", "/") + "/.mongopass";
+    private String mongopassFile = ConfigUtils.getUserHomeFilePath(".mongopass");
 
 	public Net getNet() {
 		return net;

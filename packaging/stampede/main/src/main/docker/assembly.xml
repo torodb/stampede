@@ -7,7 +7,7 @@
     </formats>
 	<fileSets>
 	    <fileSet>
-	        <directory>target/appassembler/bin</directory>
+	        <directory>target/app/bin</directory>
 	        <outputDirectory>toro_dist/bin</outputDirectory>
 	        <excludes>
 	            <exclude>*.bat</exclude>
@@ -16,8 +16,8 @@
 	        <fileMode>0755</fileMode>
 	    </fileSet>
 	    <fileSet>
-	        <directory>target/appassembler/repo</directory>
-	        <outputDirectory>toro_dist/repo</outputDirectory>
+	        <directory>target/app/lib</directory>
+	        <outputDirectory>toro_dist/lib</outputDirectory>
 	        <directoryMode>0755</directoryMode>
 	        <fileMode>0644</fileMode>
 	    </fileSet>
@@ -29,15 +29,6 @@
 	        <outputDirectory>.</outputDirectory>
 	        <directoryMode>0755</directoryMode>
 	        <fileMode>0755</fileMode>
-	    </fileSet>
-	    <fileSet>
-	        <directory>.docker/</directory>
-	        <outputDirectory>.</outputDirectory>
-	        <excludes>
-	            <exclude>*.sh</exclude>
-	        </excludes>
-	        <directoryMode>0755</directoryMode>
-	        <fileMode>0644</fileMode>
 	    </fileSet>
 	</fileSets>
 </assembly>

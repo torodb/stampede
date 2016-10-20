@@ -26,6 +26,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.torodb.packaging.config.annotation.Description;
+import com.torodb.packaging.config.util.ConfigUtils;
 import com.torodb.packaging.config.validation.ExistsAnyPassword;
 import com.torodb.packaging.config.validation.Host;
 import com.torodb.packaging.config.validation.Port;
@@ -47,10 +48,10 @@ public class Postgres extends com.torodb.packaging.config.model.backend.postgres
         super(
                 "localhost", 
                 5432, 
-                "totor", 
+                "torod", 
                 "torodb", 
                 null, 
-                System.getProperty("user.home", "/") + "/.toropass", 
+                ConfigUtils.getUserHomeFilePath(".toropass"), 
                 "toro", 
                 false
         );

@@ -69,6 +69,14 @@ public class ConfigUtils {
 
     private static final Logger LOGGER = LogManager.getLogger(ConfigUtils.class);
 
+    public final static String getUserHomePath() {
+        return System.getProperty("user.home", ".");
+    }
+
+    public final static String getUserHomeFilePath(String file) {
+        return getUserHomePath() + File.separatorChar + file;
+    }
+    
     public static ObjectMapper mapper() {
         ObjectMapper objectMapper = new ObjectMapper();
 
@@ -198,84 +206,103 @@ public class ConfigUtils {
         return null;
     }
 
-	public static ObjectNode mergeParam(ObjectMapper objectMapper, ObjectNode configRootNode, String pathAndProp, String value)
-			throws Exception {
-	    if (JsonPointer.compile(pathAndProp).equals(JsonPointer.compile("/"))) {
-	        return (ObjectNode) objectMapper.readTree(value);
-	    }
-	    
-		String path = pathAndProp.substring(0, pathAndProp.lastIndexOf("/"));
-		String prop = pathAndProp.substring(pathAndProp.lastIndexOf("/") + 1);
+    public static ObjectNode mergeParam(ObjectMapper objectMapper, ObjectNode configRootNode, String pathAndProp, String value)
+            throws Exception {
+        if (JsonPointer.compile(pathAndProp).equals(JsonPointer.compile("/"))) {
+            return (ObjectNode) objectMapper.readTree(value);
+        }
+        
+        String path = pathAndProp.substring(0, pathAndProp.lastIndexOf("/"));
+        String prop = pathAndProp.substring(pathAndProp.lastIndexOf("/") + 1);
 
-		JsonPointer pathPointer = JsonPointer.compile(path);
-		JsonNode pathNode = configRootNode.at(pathPointer);
+        JsonPointer pathPointer = JsonPointer.compile(path);
+        JsonNode pathNode = configRootNode.at(pathPointer);
 
-		if (pathNode.isMissingNode() || pathNode.isNull()) {
-			JsonPointer currentPointer = pathPointer;
-			JsonPointer childOfCurrentPointer = null;
-			List<JsonPointer> missingPointers = new ArrayList<>();
-			List<JsonPointer> childOfMissingPointers = new ArrayList<>();
-			do {
-				if (pathNode.isMissingNode() || pathNode.isNull()) {
-					missingPointers.add(0, currentPointer);
-					childOfMissingPointers.add(0, childOfCurrentPointer);
-				}
+        if (pathNode.isMissingNode() || pathNode.isNull()) {
+            JsonPointer currentPointer = pathPointer;
+            JsonPointer childOfCurrentPointer = null;
+            List<JsonPointer> missingPointers = new ArrayList<>();
+            List<JsonPointer> childOfMissingPointers = new ArrayList<>();
+            do {
+                if (pathNode.isMissingNode() || pathNode.isNull()) {
+                    missingPointers.add(0, currentPointer);
+                    childOfMissingPointers.add(0, childOfCurrentPointer);
+                }
 
-				childOfCurrentPointer = currentPointer;
-				currentPointer = currentPointer.head();
-				pathNode = configRootNode.at(currentPointer);
-			} while (pathNode.isMissingNode() || pathNode.isNull());
+                childOfCurrentPointer = currentPointer;
+                currentPointer = currentPointer.head();
+                pathNode = configRootNode.at(currentPointer);
+            } while (pathNode.isMissingNode() || pathNode.isNull());
 
-			for (int missingPointerIndex = 0; missingPointerIndex < missingPointers.size(); missingPointerIndex++) {
-				final JsonPointer missingPointer = missingPointers.get(missingPointerIndex);
-				final JsonPointer childOfMissingPointer = childOfMissingPointers.get(missingPointerIndex);
+            for (int missingPointerIndex = 0; missingPointerIndex < missingPointers.size(); missingPointerIndex++) {
+                final JsonPointer missingPointer = missingPointers.get(missingPointerIndex);
+                final JsonPointer childOfMissingPointer = childOfMissingPointers.get(missingPointerIndex);
 
-				final List<JsonNode> newNodes = new ArrayList<>();
+                final List<JsonNode> newNodes = new ArrayList<>();
 
-				if (pathNode.isObject()) {
-					((ObjectNode) pathNode).set(missingPointer.last().getMatchingProperty(),
-							createNode(childOfMissingPointer, newNodes));
-				} else if (pathNode.isArray() && missingPointer.last().mayMatchElement()) {
-					for (int index = ((ArrayNode) pathNode).size(); index < missingPointer.last().getMatchingIndex()
-							+ 1; index++) {
-						((ArrayNode) pathNode).add(createNode(childOfMissingPointer, newNodes));
-					}
-				} else {
-					throw new RuntimeException("Cannot set param " + pathAndProp + "=" + value);
-				}
+                if (pathNode.isObject()) {
+                    ((ObjectNode) pathNode).set(missingPointer.last().getMatchingProperty(),
+                            createNode(childOfMissingPointer, newNodes));
+                } else if (pathNode.isArray() && missingPointer.last().mayMatchElement()) {
+                    for (int index = ((ArrayNode) pathNode).size(); index < missingPointer.last().getMatchingIndex()
+                            + 1; index++) {
+                        ((ArrayNode) pathNode).add(createNode(childOfMissingPointer, newNodes));
+                    }
+                } else {
+                    throw new RuntimeException("Cannot set param " + pathAndProp + "=" + value);
+                }
 
-				pathNode = newNodes.get(newNodes.size() - 1);
-			}
-		}
+                pathNode = newNodes.get(newNodes.size() - 1);
+            }
+        }
 
-		Object valueAsObject;
-		try {
-		    valueAsObject = objectMapper.readValue(value, Object.class);
-		} catch(JsonMappingException jsonMappingException) {
-		    throw JsonMappingException.wrapWithPath(jsonMappingException, configRootNode, path.substring(1) + "/" + prop);
-		}
-		
-		if (pathNode instanceof ObjectNode) {
-	        ObjectNode objectNode = (ObjectNode) pathNode;
-	        if (valueAsObject != null) {
-	            JsonNode valueNode = objectMapper.valueToTree(valueAsObject);
-	            objectNode.set(prop, valueNode);
-	        } else {
-	            objectNode.remove(prop);
-	        }
-		} else if (pathNode instanceof ArrayNode) {
-	        ArrayNode arrayNode = (ArrayNode) pathNode;
-	        Integer index = Integer.valueOf(prop);
-	        if (valueAsObject != null) {
-	            JsonNode valueNode = objectMapper.valueToTree(valueAsObject);
-	            arrayNode.set(index, valueNode);
-	        } else {
-	            arrayNode.remove(index);
-	        }
-		}
-		
-		return configRootNode;
-	}
+        Object valueAsObject;
+        try {
+            valueAsObject = objectMapper.readValue(value, Object.class);
+        } catch(JsonMappingException jsonMappingException) {
+            throw JsonMappingException.wrapWithPath(jsonMappingException, configRootNode, path.substring(1) + "/" + prop);
+        }
+        
+        if (pathNode instanceof ObjectNode) {
+            ObjectNode objectNode = (ObjectNode) pathNode;
+            if (valueAsObject != null) {
+                JsonNode valueNode = objectMapper.valueToTree(valueAsObject);
+                objectNode.set(prop, valueNode);
+            } else {
+                objectNode.remove(prop);
+            }
+        } else if (pathNode instanceof ArrayNode) {
+            ArrayNode arrayNode = (ArrayNode) pathNode;
+            Integer index = Integer.valueOf(prop);
+            if (valueAsObject != null) {
+                JsonNode valueNode = objectMapper.valueToTree(valueAsObject);
+                arrayNode.set(index, valueNode);
+            } else {
+                arrayNode.remove(index);
+            }
+        }
+        
+        return configRootNode;
+    }
+
+    public static <T> JsonNode getParam(T config, String pathAndProp)
+            throws Exception {
+        XmlMapper xmlMapper = xmlMapper();
+        JsonNode configNode = xmlMapper.valueToTree(config);
+        
+        if (JsonPointer.compile(pathAndProp).equals(JsonPointer.compile("/"))) {
+            return configNode;
+        }
+        
+        JsonPointer pathPointer = JsonPointer.compile(pathAndProp);
+        JsonNode pathNode = configNode.at(pathPointer);
+
+        if (pathNode.isMissingNode() || pathNode.isNull()) {
+            return null;
+        }
+
+        return pathNode;
+    }
 
 	private static JsonNode createNode(JsonPointer childOfPointer, List<JsonNode> newNodes) {
 		JsonNode newNode;
