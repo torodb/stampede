@@ -19,6 +19,8 @@
 
 @echo off
 
+if "%DEBUG%"=="true" @echo on
+
 set ERROR_CODE=0
 
 :init
@@ -55,6 +57,8 @@ goto Win9xApp
 :Win9xGetScriptDir
 set SAVEDIR=%CD%
 %0\
+cd %0\.. 
+set PRGDIR=%CD%
 cd %0\..\.. 
 set BASEDIR=%CD%
 cd %SAVEDIR%
@@ -63,17 +67,38 @@ goto setup
 
 :WinNTGetScriptDir
 set BASEDIR=%~dp0\..
+set PRGDIR=%~dp0
 
 :setup
 
-FOR /F "tokens=* USEBACKQ" %%F IN (`"%PRGDIR%/@{assembler.name}" %CMD_LINE_ARGS% -lp /backend/postgres/port`) DO ( SET POSTGRES_PORT=%%F )
-FOR /F "tokens=* USEBACKQ" %%F IN (`"%PRGDIR%/@{assembler.name}" %CMD_LINE_ARGS% -lp /backend/postgres/user`) DO ( SET POSTGRES_USER=%%F )
-FOR /F "tokens=* USEBACKQ" %%F IN (`"%PRGDIR%/@{assembler.name}" %CMD_LINE_ARGS% -lp /backend/postgres/host`) DO ( SET POSTGRES_HOST=%%F )
-FOR /F "tokens=* USEBACKQ" %%F IN (`"%PRGDIR%/@{assembler.name}" %CMD_LINE_ARGS% -lp /backend/postgres/database`) DO ( SET POSTGRES_DATABASE=%%F )
-
-if "%POSTGRES_HOME%"=="" (
-    set POSTGRES_HOME=C:\Program Files\PostgreSQL\9.6
+cmd /c "%PRGDIR%\@{assembler.name}" --version > nul
+if %ERRORLEVEL% NEQ 0 (
+    echo %PRGDIR%\@{assembler.name} not working as expected
+    echo Please check Java installation and that java.exe path is present in PATH environment variable 
+    exit /b 1
 )
+
+if NOT "%POSTGRES_HOME%"=="" (
+    set PSQL=%POSTGRES_HOME%\bin\psql.exe
+) else (
+    set PSQL=psql
+)
+
+"%PSQL%" --version > nul
+if %ERRORLEVEL% NEQ 0 (
+    echo %PSQL% not found
+    echo Please check PostgreSQL installation and that installation path match POSTGRES_HOME environment variable or psql.exe path is present in PATH environment variable 
+    exit /b 1
+)
+
+FOR /F "tokens=* USEBACKQ" %%F IN (`cmd /c "%PRGDIR%\@{assembler.name}" %CMD_LINE_ARGS% -lp /backend/postgres/port`) DO ( SET POSTGRES_PORT=%%F )
+set "POSTGRES_PORT=%POSTGRES_PORT:~0,-1%"
+FOR /F "tokens=* USEBACKQ" %%F IN (`cmd /c "%PRGDIR%\@{assembler.name}" %CMD_LINE_ARGS% -lp /backend/postgres/user`) DO ( SET POSTGRES_USER=%%F )
+set "POSTGRES_USER=%POSTGRES_USER:~0,-1%"
+FOR /F "tokens=* USEBACKQ" %%F IN (`cmd /c "%PRGDIR%\@{assembler.name}" %CMD_LINE_ARGS% -lp /backend/postgres/host`) DO ( SET POSTGRES_HOST=%%F )
+set "POSTGRES_HOST=%POSTGRES_HOST:~0,-1%"
+FOR /F "tokens=* USEBACKQ" %%F IN (`cmd /c "%PRGDIR%\@{assembler.name}" %CMD_LINE_ARGS% -lp /backend/postgres/database`) DO ( SET POSTGRES_DATABASE=%%F )
+set "POSTGRES_DATABASE=%POSTGRES_DATABASE:~0,-1%"
 
 if "%TOROUSER%"=="" set TOROUSER=%USERNAME%
 
@@ -88,26 +113,18 @@ SET /A rnd_num=!RANDOM! * 62 / 32768 + 1
 for /F %%c in ('echo %%alfanum:~!rnd_num!^,1%%') do set torodb_password=!torodb_password!%%c
 )
 
-if NOT EXIST "%POSTGRES_HOME%\bin\psql.exe" (
-    echo psql.exe not found in path %POSTGRES_HOME%\bin\psql.exe
-    echo Please check PostgreSQL installation and that installation path match POSTGRES_HOME variable
-    exit 1
-)
-
-set PSQL="%POSTGRES_HOME%\bin\psql.exe"
-
 @REM Reaching here means variables are defined and arguments have been captured
 :endInit
 
-%PSQL% -U postgres -h %POSTGRES_HOST% -p %POSTGRES_PORT% --no-readline -c "SELECT 1" > nul
+"%PSQL%" -U postgres -h %POSTGRES_HOST% -p %POSTGRES_PORT% --no-readline -c "SELECT 1" > nul
 if %ERRORLEVEL% NEQ 0 goto PostgresNotRunnning
-%PSQL% -U postgres -h %POSTGRES_HOST% -p %POSTGRES_PORT% --no-readline %POSTGRES_DATABASE% -c "SELECT 1" > nul
+"%PSQL%" -U postgres -h %POSTGRES_HOST% -p %POSTGRES_PORT% --no-readline -d %POSTGRES_DATABASE% -c "SELECT 1" > nul
 if %ERRORLEVEL% EQU 0 goto DatabaseAlreadyExists
 
 echo Creating %POSTGRES_USER% user
-%PSQL% -U postgres -h %POSTGRES_HOST% -p %POSTGRES_PORT% --no-readline -c "CREATE USER %POSTGRES_USER% WITH PASSWORD '%torodb_password%'"
+"%PSQL%" -U postgres -h %POSTGRES_HOST% -p %POSTGRES_PORT% --no-readline -c "CREATE USER %POSTGRES_USER% WITH PASSWORD '%torodb_password%'"
 echo Creating torod database
-%PSQL% -U postgres -h %POSTGRES_HOST% -p %POSTGRES_PORT% --no-readline -c "CREATE DATABASE %POSTGRES_DATABASE% WITH OWNER %POSTGRES_USER%"
+"%PSQL%" -U postgres -h %POSTGRES_HOST% -p %POSTGRES_PORT% --no-readline -c "CREATE DATABASE %POSTGRES_DATABASE% WITH OWNER %POSTGRES_USER%"
 
 echo Creating %TOROPASSFILE% for user %TOROUSER%
 echo %POSTGRES_HOST%:%POSTGRES_PORT%:%POSTGRES_DATABASE%:%POSTGRES_USER%:%torodb_password%> "%TOROPASSFILE%"
@@ -115,7 +132,7 @@ attrib +I +A "%TOROPASSFILE%"
 
 set PGPASSWORD=%torodb_password%
 
-%PSQL% -h %POSTGRES_HOST% -p %POSTGRES_PORT% --no-readline -U %POSTGRES_USER% -d %POSTGRES_DATABASE% -h %POSTGRES_HOST% -p 5432 -c "SELECT 1" > nul
+"%PSQL%" -h %POSTGRES_HOST% -p %POSTGRES_PORT% --no-readline -U %POSTGRES_USER% -d %POSTGRES_DATABASE% -h %POSTGRES_HOST% -p 5432 -c "SELECT 1" > nul
 if %ERRORLEVEL% NEQ 0 goto PostgresSecurityRestrictions
 goto end
 
@@ -142,7 +159,7 @@ if "%FORCE_EXIT_ON_ERROR%" == "on" (
   if %ERROR_CODE% NEQ 0 exit %ERROR_CODE%
 )
 
-exit /B %ERROR_CODE%
+exit /b %ERROR_CODE%
 
 :PostgresNotRunnning
 

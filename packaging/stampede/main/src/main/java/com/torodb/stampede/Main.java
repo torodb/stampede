@@ -37,7 +37,9 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.net.HostAndPort;
 import com.google.inject.CreationException;
+import com.torodb.core.BuildProperties;
 import com.torodb.core.exceptions.SystemException;
+import com.torodb.packaging.DefaultBuildProperties;
 import com.torodb.packaging.config.model.backend.BackendPasswordConfig;
 import com.torodb.packaging.config.model.backend.derby.Derby;
 import com.torodb.packaging.config.model.backend.postgres.Postgres;
@@ -62,6 +64,12 @@ public class Main {
 		final CliConfig cliConfig = new CliConfig();
 		JCommander jCommander = new JCommander(cliConfig, cliBundle, args);
 		jCommander.setColumnSize(Integer.MAX_VALUE);
+		
+		if (cliConfig.isVersion()) {
+		    BuildProperties buildProperties = new DefaultBuildProperties();
+		    console.println(buildProperties.getFullVersion());
+		    System.exit(0);
+		}
 		
 		if (cliConfig.isHelp()) {
 			jCommander.usage();

@@ -1,0 +1,20 @@
+#!/bin/bash
+
+set -e
+
+(
+    max_seconds=15
+    while ! mongo mongodb:27017/local --eval true
+    do
+        sleep 3
+        max_seconds=$((max_seconds-1))
+        if [ "$max_seconds" -le 0 ]
+        then
+            exit 1
+        fi
+    done
+    
+    mongo  mongodb:27017/local --eval 'rs.initiate({_id:"rs1",members:[{_id:0,host:"mongodb:27017"}]})'
+) &
+
+exec /entrypoint.sh mongod --replSet rs1
