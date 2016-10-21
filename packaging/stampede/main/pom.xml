@@ -176,7 +176,7 @@
 									<goal>copy-dependencies</goal>
 								</goals>
 								<configuration>
-									<outputDirectory>${project.build.directory}/app/lib</outputDirectory>
+									<outputDirectory>${project.build.directory}/dist/lib</outputDirectory>
 									<overWriteReleases>false</overWriteReleases>
 									<overWriteSnapshots>false</overWriteSnapshots>
 									<overWriteIfNewer>true</overWriteIfNewer>
@@ -195,10 +195,10 @@
 									<goal>copy-resources</goal>
 								</goals>
 								<configuration>
-									<outputDirectory>${basedir}/target/app/bin</outputDirectory>
+									<outputDirectory>${basedir}/target/dist/</outputDirectory>
 									<resources>
 										<resource>
-											<directory>src/main/scripts</directory>
+											<directory>src/main/dist</directory>
 											<filtering>true</filtering>
 										</resource>
 									</resources>
@@ -215,7 +215,7 @@
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-jar-plugin</artifactId>
 						<configuration>
-                            <outputDirectory>${basedir}/target/app/lib/</outputDirectory>
+                            <outputDirectory>${basedir}/target/dist/lib/</outputDirectory>
                             <finalName>${assembler.name}-${project.version}</finalName>
 							<archive>
 								<manifest>
@@ -267,7 +267,7 @@
                                     <goal>copy-dependencies</goal>
                                 </goals>
                                 <configuration>
-                                    <outputDirectory>${project.build.directory}/app/lib</outputDirectory>
+                                    <outputDirectory>${project.build.directory}/dist/lib</outputDirectory>
                                     <overWriteReleases>false</overWriteReleases>
                                     <overWriteSnapshots>false</overWriteSnapshots>
                                     <overWriteIfNewer>true</overWriteIfNewer>
@@ -286,10 +286,10 @@
                                     <goal>copy-resources</goal>
                                 </goals>
                                 <configuration>
-                                    <outputDirectory>${basedir}/target/app/bin</outputDirectory>
+                                    <outputDirectory>${basedir}/target/dist/</outputDirectory>
                                     <resources>
                                         <resource>
-                                            <directory>src/main/scripts</directory>
+                                            <directory>src/main/dist</directory>
                                             <filtering>true</filtering>
                                         </resource>
                                     </resources>
@@ -306,7 +306,7 @@
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-jar-plugin</artifactId>
                         <configuration>
-                            <outputDirectory>${basedir}/target/app/lib/</outputDirectory>
+                            <outputDirectory>${basedir}/target/dist/lib/</outputDirectory>
                             <finalName>${assembler.name}-${project.version}</finalName>
                             <archive>
                                 <manifest>
@@ -338,7 +338,7 @@
                                             <descriptor>assembly.xml</descriptor>
                                         </assembly>
                                         <env>
-                                            <PATH>/maven/toro_dist/bin:$PATH</PATH>
+                                            <PATH>/maven/bin:$PATH</PATH>
                                         </env>
                                         <runCmds>
                                             <run>useradd -d /maven torodb</run>
@@ -346,7 +346,7 @@
                                         </runCmds>
                                         <entryPoint>
                                             <exec>
-                                                <arg>/maven/toro_dist/bin/docker/entry-point</arg>
+                                                <arg>/maven/bin/entry-point</arg>
                                             </exec>
                                         </entryPoint>
                                         <cmd>
@@ -392,7 +392,7 @@
                                     <name>8kdata/torodb-stampede</name>
                                     <run>
                                         <env>
-                                            <TORO_RUN_SETUP>false</TORO_RUN_SETUP>
+                                            <TORODB_SETUP>false</TORODB_SETUP>
                                             <MONGO_SYNC_SOURCE>${docker.mongo.syncsource}</MONGO_SYNC_SOURCE>
                                             <TORODB_BACKEND_HOST>${docker.postgres.host}</TORODB_BACKEND_HOST>
                                             <TORODB_BACKEND_PORT>${docker.postgres.port}</TORODB_BACKEND_PORT>
@@ -429,7 +429,7 @@
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-jar-plugin</artifactId>
                         <configuration>
-                            <outputDirectory>${basedir}/target/app/lib/</outputDirectory>
+                            <outputDirectory>${basedir}/target/dist/lib/</outputDirectory>
                             <finalName>${assembler.name}-${project.version}</finalName>
                             <archive>
                                 <manifest>
@@ -451,7 +451,7 @@
                                     <name>8kdata/torodb-stampede</name>
                                     <run>
                                         <env>
-                                            <TORO_RUN_SETUP>true</TORO_RUN_SETUP>
+                                            <TORODB_SETUP>true</TORODB_SETUP>
                                             <MONGO_SYNC_SOURCE>${docker.mongo.syncsource}</MONGO_SYNC_SOURCE>
                                             <POSTGRES_PASSWORD>${docker.postgres.password}</POSTGRES_PASSWORD>
                                             <TORODB_BACKEND_HOST>postgres</TORODB_BACKEND_HOST>
@@ -523,28 +523,14 @@
                                             <enabled>true</enabled>
                                             <color>green</color>
                                         </log>
+                                        <volumes>
+                                          <bind>
+                                            <volume>${project.basedir}/src/main/dist/docker:/util</volume>
+                                          </bind>
+                                        </volumes>
                                         <entrypoint>
                                             <arg>/bin/bash</arg>
-                                            <arg>-c</arg>
-                                            <arg>
-                                                set -e
-                                                (
-	                                                max_seconds=15
-	                                                while ! mongo mongodb:27017/local --eval true
-	                                                do
-	                                                    sleep 3
-	                                                    max_seconds=$((max_seconds-1))
-	                                                    if [ "$max_seconds" -le 0 ]
-	                                                    then
-	                                                        exit 1
-	                                                    fi
-	                                                done
-	                                                echo ok
-	                                                
-	                                                mongo  mongodb:27017/local --eval 'rs.initiate({_id:"rs1",members:[{_id:0,host:"mongodb:27017"}]})'
-                                                ) &amp;
-                                                exec mongod --replSet rs1
-                                            </arg>
+                                            <arg>/util/initiate-mongo-rs</arg>
                                         </entrypoint>
                                     </run>
                                 </image>
@@ -569,7 +555,7 @@
                                     <name>8kdata/torodb-stampede</name>
                                     <run>
                                         <env>
-                                            <TORO_RUN_SETUP>true</TORO_RUN_SETUP>
+                                            <TORODB_SETUP>true</TORODB_SETUP>
                                             <MONGO_SYNC_SOURCE>mongodb:27017</MONGO_SYNC_SOURCE>
                                             <POSTGRES_PASSWORD>${docker.postgres.password}</POSTGRES_PASSWORD>
                                             <TORODB_BACKEND_HOST>postgres</TORODB_BACKEND_HOST>

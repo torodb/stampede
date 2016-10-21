@@ -37,6 +37,8 @@ import com.torodb.stampede.config.model.backend.Backend;
 
 public class CliConfig {
 	
+    @Parameter(names={"--version"}, descriptionKey="cli.version")
+    private boolean version = false;
 	@Parameter(names={"-h", "--help"}, descriptionKey="cli.help")
 	private boolean help = false;
 	@Parameter(names={"-l", "--print-config"}, descriptionKey="cli.print-config")
@@ -127,6 +129,9 @@ public class CliConfig {
     @Parameter(names={"--application-name"}, descriptionKey="config.backend.postgres.applicationName")
     private String applicationName;
 
+    public boolean isVersion() {
+        return version;
+    }
 	public boolean isHelp() {
 		return help;
 	}

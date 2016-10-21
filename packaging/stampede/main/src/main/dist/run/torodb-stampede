@@ -18,8 +18,8 @@
 #   Copyright (c) 2001-2006 The Apache Software Foundation.  All rights
 #   reserved.
 
-$DEBUG > /dev/null 2>&1 && set -x
-$DEBUG > /dev/null 2>&1 && set -v
+[ "$DEBUG" == "true" ] && set -x
+[ "$DEBUG" == "true" ] && set -v
 set -e
 
 # resolve links - $0 may be a softlink
@@ -102,7 +102,7 @@ fi
 
 if [ -z "$TOROCONFIG" ]
 then
-  TOROCONFIG="$BASEDIR"/bin/@{assembler.name}.conf
+  TOROCONFIG="$BASEDIR"/conf/@{assembler.name}.conf
 fi
 
 CLASSPATH="$LIBDIR"/@{assembler.name}-@{version}.jar

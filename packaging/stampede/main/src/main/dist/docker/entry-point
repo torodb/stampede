@@ -27,7 +27,7 @@ then
         exit 1
     fi
     
-    if "${TORO_RUN_SETUP:-false}"
+    if "${TORODB_SETUP:-false}"
     then
         if [ -z "$POSTGRES_PASSWORD" ]
         then

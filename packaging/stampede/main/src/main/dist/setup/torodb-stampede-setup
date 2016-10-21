@@ -18,8 +18,8 @@
 #   Copyright (c) 2001-2006 The Apache Software Foundation.  All rights
 #   reserved.
 
-$DEBUG > /dev/null 2>&1 && set -x
-$DEBUG > /dev/null 2>&1 && set -v
+[ "$DEBUG" == "true" ] && set -x
+[ "$DEBUG" == "true" ] && set -v
 set -e
 
 # resolve links - $0 may be a softlink
@@ -38,7 +38,10 @@ done
 PRGDIR=`dirname "$PRG"`
 BASEDIR=`cd "$PRGDIR/.." >/dev/null; pwd`
 
-ADMIN_USER="postgres"
+if [ -z "$ADMIN_USER" ]
+then
+    ADMIN_USER="postgres"
+fi
 
 if [ "$(whoami)" != "root" ]
 then
@@ -66,7 +69,7 @@ POSTGRES_USER="$("$PRGDIR/@{assembler.name}" "$@" -lp /backend/postgres/user)"
 POSTGRES_DATABASE="$("$PRGDIR/@{assembler.name}" "$@" -lp /backend/postgres/database)"
 
 PSQL_OPTIONS=()
-if [ ! -z "$POSTGRES_HOST" ]
+if psql --no-readline -w -U "$ADMIN_USER" -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -c "SELECT 1" > /dev/null 2>&1
 then
     PSQL_OPTIONS+=("'-U'")
     PSQL_OPTIONS+=("'$ADMIN_USER'")
@@ -84,7 +87,7 @@ fi
 
 if su "$ADMIN_USER" -c "psql --no-readline ${PSQL_OPTIONS[*]} -c 'SELECT 1'" > /dev/null 2>&1
 then
-    if ! su "$ADMIN_USER" -c "psql --no-readline ${PSQL_OPTIONS[*]} torod -c 'SELECT 1'" > /dev/null 2>&1
+    if ! su "$ADMIN_USER" -c "psql --no-readline ${PSQL_OPTIONS[*]} -d torod -c 'SELECT 1'" > /dev/null 2>&1
     then
         echo "Creating $POSTGRES_USER user"
         su "$ADMIN_USER" -c "psql --no-readline ${PSQL_OPTIONS[*]} -c "'"CREATE USER '"$POSTGRES_USER"' WITH PASSWORD '"'$TORODB_BACKEND_PASSWORD'"'"'
