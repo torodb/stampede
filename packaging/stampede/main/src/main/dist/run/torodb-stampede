@@ -102,7 +102,13 @@ fi
 
 if [ -z "$TOROCONFIG" ]
 then
-  TOROCONFIG="$BASEDIR"/conf/@{assembler.name}.conf
+  TOROCONFIG="$BASEDIR"/conf/@{assembler.name}.yml
+fi
+
+TOROCONFIG_OPTS=()
+if [ -f "$TOROCONFIG" ]
+then
+    TOROCONFIG_OPTS=(-c "$TOROCONFIG")
 fi
 
 CLASSPATH="$LIBDIR"/@{assembler.name}-@{version}.jar
@@ -128,5 +134,5 @@ fi
 exec "$JAVACMD" $JAVA_OPTS  \
   -cp "$CLASSPATH" \
   @{assembler.mainClass} \
-  -c "$TOROCONFIG" \
+  "${TOROCONFIG_OPTS[@]}" \
   "$@"

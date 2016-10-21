@@ -105,9 +105,7 @@ public class Postgres extends com.torodb.packaging.config.model.backend.postgres
 	public String getApplicationName() {
 		return super.getApplicationName();
 	}
-    @Description("config.backend.postgres.includeForeignKeys")
-    @NotNull
-    @JsonProperty(required=true)
+    @JsonIgnore
     @Override
     public Boolean getIncludeForeignKeys() {
         return super.getIncludeForeignKeys();

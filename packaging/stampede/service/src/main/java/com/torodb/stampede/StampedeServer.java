@@ -78,7 +78,7 @@ public class StampedeServer extends ThreadFactoryIdleService {
         Injector injector = Guice.createInjector(
                 new ConfigModule(
                     config.getReplication(),
-                    config.getGeneric()),
+                    config.getBackend().getPool()),
                 new PackagingModule(clock),
                 new CoreModule(),
                 new BackendImplementationModule(config.getBackend().getBackendImplementation()),
@@ -93,7 +93,7 @@ public class StampedeServer extends ThreadFactoryIdleService {
                         ReplicationFiltersFactory.getReplicationFilters(replication),
                         replSetName
                 ),
-                new MetricsModule(config.getGeneric()),
+                new MetricsModule(config),
                 new ExecutorServicesModule(),
                 new ConcurrentModule()
         );

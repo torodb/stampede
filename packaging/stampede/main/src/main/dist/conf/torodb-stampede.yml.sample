@@ -1,7 +1,7 @@
 # ToroDB Stampede configuration file
 
-# Generic ToroDB Stampede configuration
-generic:
+# ToroDB Stampede logging configuration
+# logging:
 
   # Level of log emitted (will overwrite default log4j2 configuration)
   # Valid values are:
@@ -14,12 +14,6 @@ generic:
   # logLevel: <value>
   # File where log will be written
   # logFile: <log file path>
-  # The timeout in milliseconds after which retrieve a connection from the pool will fail.
-  connectionPoolTimeout: 10000 
-  # Maximum number of connections to establish to the database. It must be higher or equal than 3
-  connectionPoolSize: 30
-  # Reserved connections that will be reserved to store global cursors. It must be lower than total connections minus 2
-  reservedReadPoolSize: 10
   # Specifies level of log emitted for packages
   # logPackages:
     # Specify DEBUG log level for package com.torodb.
@@ -27,8 +21,9 @@ generic:
     # com.torodb: DEBUG
   # Logback configuration file
   # log4j2File: <log4j.xml file path>
-  # Enable or disable metrics system
-  metricsEnabled: false
+
+# Enable or disable metrics system
+metricsEnabled: false
 
 # MongoDB replication configuration
 replication:
@@ -40,8 +35,6 @@ replication:
   role: HIDDEN_SLAVE
   # The host and port (<host>:<port>) of the node from ToroDB has to replicate. If this node must run as primary, this paramenter must not be defined
   syncSource: localhost:27017
-  # The timeout in milliseconds after which an opened cursor will be closed automatically.
-  cursorTimeout: 600000
   # You can specify a file that use .pgpass syntax: <host>:<port>:<database>:<user>:<password> (can have multiple lines)
   # mongopassFile: <mongopass file path>
     
@@ -53,7 +46,7 @@ replication:
     # Each collection can contain a list of indexes each formed by one or more of those fields:
     #   - <collection>:
     #     - name: <the index name>
-    #       unqiue: <true when index is unique, false otherwise>
+    #       unique: <true when index is unique, false otherwise>
     #       keys:
     #         <the name of the field indexed>: <the index direction or type> 
     # Character '*' can be used to denote "any-character" and character '\' to protect characters. 
@@ -109,6 +102,11 @@ replication:
 
 # The backend configuration
 backend:
+  pool:
+    # The timeout in milliseconds after which retrieve a connection from the pool will fail.
+    connectionPoolTimeout: 10000 
+    # Maximum number of connections to establish to the database. It must be higher or equal than 3
+    connectionPoolSize: 30
   postgres:
     # The host or ip that will be used to connect
     host: "localhost"

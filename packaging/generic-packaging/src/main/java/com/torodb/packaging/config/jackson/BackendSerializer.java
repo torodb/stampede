@@ -21,6 +21,8 @@
 package com.torodb.packaging.config.jackson;
 
 import java.io.IOException;
+import java.util.Map;
+import java.util.function.Function;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -38,6 +40,7 @@ import com.fasterxml.jackson.databind.introspect.BeanPropertyDefinition;
 import com.fasterxml.jackson.databind.jsonFormatVisitors.JsonFormatVisitorWrapper;
 import com.fasterxml.jackson.databind.jsonFormatVisitors.JsonObjectFormatVisitor;
 import com.fasterxml.jackson.databind.type.TypeFactory;
+import com.google.common.collect.ImmutableMap;
 import com.torodb.core.exceptions.SystemException;
 import com.torodb.packaging.config.model.backend.Backend;
 import com.torodb.packaging.config.model.backend.BackendImplementation;
@@ -45,12 +48,26 @@ import com.torodb.packaging.config.model.backend.derby.Derby;
 import com.torodb.packaging.config.model.backend.postgres.Postgres;
 import com.torodb.packaging.config.visitor.BackendImplementationVisitor;
 
-public class BackendSerializer extends JsonSerializer<Backend> {
+public abstract class BackendSerializer<T extends Backend> extends JsonSerializer<T> {
     
-	@Override
-	public void serialize(Backend value, JsonGenerator jgen, SerializerProvider provider)
+    private final ImmutableMap<String, Function<T, Object>> getterMap;
+    
+	public BackendSerializer(ImmutableMap<String, Function<T, Object>> getterMap) {
+        super();
+        this.getterMap = getterMap;
+    }
+
+    @Override
+	public void serialize(T value, JsonGenerator jgen, SerializerProvider provider)
 			throws IOException, JsonProcessingException {
 		jgen.writeStartObject();
+		
+		for (Map.Entry<String, Function<T, Object>> getterEntry : getterMap.entrySet()) {
+		    Object getterValue = getterEntry.getValue().apply(value);
+		    if (getterValue != null) {
+		        jgen.writeObjectField(getterEntry.getKey(), getterValue);
+		    }
+		}
 
 		value.getBackendImplementation().accept(new BackendImplementationSerializerVisitor(value, jgen));
 
