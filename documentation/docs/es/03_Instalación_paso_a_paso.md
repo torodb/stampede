@@ -1,8 +1,10 @@
 [TOC]
 
-## Instalación de MongoDB Community Edition
+## Instalación de los requisitos previos
 
-### Ubuntu 16.04 LTS
+### MongoDB Community Edition
+
+#### Ubuntu 16.04 LTS
 
 En esta sección se decriben los pasos a seguir para instalar MongoDB Community Edition en un Ubuntu 16.04 LTS, si fuese necesario se puede encontrar más información en la [documentación oficial de MongoDB](https://docs.mongodb.com/v3.2/tutorial/install-mongodb-on-ubuntu/).
 
@@ -55,9 +57,9 @@ $ sudo service mongod restart
 
 Si ejecutamos el comando `mongo` podremos ver como se accede a la consola de MongoDB y se pueden ejecutar los diferentes comandos de MongoDB.
 
-## Configuración de un replica set en MongoDB
+### Configuración de un replica set
 
-### Ubuntu 16.04 LTS
+#### Ubuntu 16.04 LTS
 
 Para configurar la instalación de MongoDB como un nodo primario del replica set, debemos modificar el fichero `/etc/mongod.conf` para añadir las siguientes líneas.
 
@@ -80,9 +82,11 @@ Ahora podemos acceder a la consola de MongoDB con el comando `mongo` para poder 
 
 Para comprobar que la configuración del replica set es correcta podemos ejecutar el comando `rs.conf()`. Cuando tengamos configurados otros nodos del replica set los podremos añadir con el comando `rs.add(...)`.
 
-## Instalación de PostgreSQL
+### PostgreSQL 
 
-### Ubuntu 16.04 LTS
+El correcto funcionamiento de ToroDB Stampede depende de la existencia de un backend que permita el almacenamiento relacional, en esta versión el backend soportado es PostgreSQL.
+
+#### Ubuntu 16.04 LTS
 
 Se puede encontrar más información en el siguiente [enlace](https://www.digitalocean.com/community/tutorials/how-to-install-and-use-postgresql-on-ubuntu-16-04).
 
@@ -99,9 +103,9 @@ Podemos comprobar que la instalación ha sido satisfactoria accediendo a la cons
 $ sudo -u postgres psql
 ```
 
-## Instalar Oracle Java 8
+### Java
 
-### Ubuntu 16.04 LTS
+#### Ubuntu 16.04 LTS
 
 La instalación de Oracle Java 8 en Ubuntu 16.04 se hace a partir de paquetes del sistema, por lo que basta ejecutar los siguientes comandos.
 
@@ -110,8 +114,6 @@ $ sudo add-apt-repository ppa:webupd8team/java
 $ sudo apt-get update
 $ sudo apt-get install oracle-java8-installer
 ```
-
-## Otras herramientas
 
 ### Maven 3
 
@@ -125,3 +127,35 @@ Basta con descargar los paquetes oficiales, ejecutando los siguientes comandos.
 $ sudo apt-get update
 $ sudo apt-get install maven
 ```
+
+## Instalación con docker
+
+### Windows
+
+### Linux
+
+### Mac
+
+## Instalación con ficheros binarios
+
+### Windows
+
+### Linux
+
+### Mac
+
+## Instalación a partir de los fuentes
+
+### Windows
+
+### Linux
+
+### Mac
+
+## Instalación con paquetes
+
+### RPM
+
+### Debian
+
+## Configuración avanzada
