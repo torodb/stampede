@@ -68,15 +68,11 @@ public class CliConfig {
     private String connectionPoolTimeout;
     @Parameter(names={"--connection-pool-size"}, descriptionKey="config.generic.connectionPoolSize")
     private String connectionPoolSize;
-    @Parameter(names={"--reserved-read-pool-size"}, descriptionKey="config.generic.reservedReadPoolSize")
-    private String reservedReadPoolSize;
     @Parameter(names={"--enable-metrics"}, descriptionKey="config.generic.enableMetrics")
     private Boolean metricsEnabled;
 
     @Parameter(names={"--repl-set-name"}, descriptionKey="config.mongo.replication.replSetName")
     private String replSetName;
-    @Parameter(names={"--role"}, descriptionKey="config.mongo.replication.role")
-    private String role;
     @Parameter(names={"--sync-source"}, descriptionKey="config.mongo.replication.syncSource")
     private String syncSource;
     @Parameter(names={"--enable-ssl"}, descriptionKey="config.mongo.replication.enableSsl")
@@ -196,17 +192,11 @@ public class CliConfig {
     public String getConnectionPoolSize() {
         return connectionPoolSize;
     }
-    public String getReservedReadPoolSize() {
-        return reservedReadPoolSize;
-    }
     public Boolean getMetricsEnabled() {
         return metricsEnabled;
     }
     public String getReplSetName() {
         return replSetName;
-    }
-    public String getRole() {
-        return role;
     }
     public String getSyncSource() {
         return syncSource;
@@ -286,28 +276,16 @@ public class CliConfig {
     
     public void addParams() {
         if (logLevel != null) {
-            addParam("/generic/logLevel", logLevel);
+            addParam("/logging/logLevel", logLevel);
         }
         if (log4j2File != null) {
-            addParam("/generic/log4j2File", log4j2File);
-        }
-        if (connectionPoolTimeout != null) {
-            addParam("/generic/connectionPoolTimeout", connectionPoolTimeout);
-        }
-        if (connectionPoolSize != null) {
-            addParam("/generic/connectionPoolSize", connectionPoolSize);
-        }
-        if (reservedReadPoolSize != null) {
-            addParam("/generic/reservedReadPoolSize", reservedReadPoolSize);
+            addParam("/logging/log4j2File", log4j2File);
         }
         if (metricsEnabled != null) {
-            addParam("/generic/metricsEnabled", metricsEnabled?"true":"false");
+            addParam("/metricsEnabled", metricsEnabled?"true":"false");
         }
         if (replSetName != null) {
             addParam("/replication/replSetName", replSetName);
-        }
-        if (role != null) {
-            addParam("/replication/role", role);
         }
         if (syncSource != null) {
             addParam("/replication/syncSource", syncSource);
@@ -365,6 +343,12 @@ public class CliConfig {
         }
         if (mongopassFile != null) {
             addParam("/replication/mongopassFile", mongopassFile);
+        }
+        if (connectionPoolTimeout != null) {
+            addParam("/backend/pool/connectionPoolTimeout", connectionPoolTimeout);
+        }
+        if (connectionPoolSize != null) {
+            addParam("/backend/pool/connectionPoolSize", connectionPoolSize);
         }
         String backend = this.backend != null ? this.backend : "postgres";
         if (backendHost != null) {

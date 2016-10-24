@@ -107,7 +107,6 @@ public class ConfigUtils {
         objectMapper.configure(Feature.ALLOW_COMMENTS, true);
         objectMapper.configure(Feature.ALLOW_YAML_COMMENTS, true);
         objectMapper.setSerializationInclusion(Include.NON_NULL);
-        objectMapper.setSerializationInclusion(Include.NON_NULL);
         objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
     }
     

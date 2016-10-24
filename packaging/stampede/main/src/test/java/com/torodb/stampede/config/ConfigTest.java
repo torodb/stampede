@@ -98,20 +98,20 @@ public class ConfigTest {
     public void testParseWithParam() throws Exception {
         File tempFile = File.createTempFile("torodb", ".log");
         tempFile.deleteOnExit();
-        final String logFile = tempFile.getPath();
+        final String file = tempFile.getPath();
         
         CliConfig cliConfig = new CliConfig() {
             @Override
             public List<String> getParams() {
                 String[] params = new String[] { 
-                    "/generic/logFile=" + logFile
+                    "/logging/file=" + file
                 };
                 return Arrays.asList(params);
             }
         };
         Config config = CliConfigUtils.readConfig(cliConfig);
         
-        Assert.assertEquals("Parameter has different value than that specified", logFile, config.getGeneric().getLogFile());
+        Assert.assertEquals("Parameter has different value than that specified", file, config.getLogging().getFile());
     }
 
     @Test
@@ -120,36 +120,36 @@ public class ConfigTest {
             @Override
             public List<String> getParams() {
                 String[] params = new String[] { 
-                    "/generic/logFile=null"
+                    "/logging/file=null"
                 };
                 return Arrays.asList(params);
             }
         };
         Config config = CliConfigUtils.readConfig(cliConfig);
         
-        Assert.assertEquals("Parameter has different value than that specified", null, config.getGeneric().getLogFile());
+        Assert.assertEquals("Parameter has different value than that specified", null, config.getLogging().getFile());
     }
 
     @Test
     public void testParseWithLogPackagesParam() throws Exception {
         final String logPackage = "com.torodb";
-        final LogLevel logLevel = LogLevel.NONE;
+        final LogLevel level = LogLevel.NONE;
         
         CliConfig cliConfig = new CliConfig() {
             @Override
             public List<String> getParams() {
                 String[] params = new String[] { 
-                    "/generic/logPackages/" + logPackage + "=" + logLevel.name()
+                    "/logging/packages/" + logPackage + "=" + level.name()
                 };
                 return Arrays.asList(params);
             }
         };
         Config config = CliConfigUtils.readConfig(cliConfig);
         
-        Assert.assertTrue("/generic/logPackages not defined", config.getGeneric().getLogPackages() != null);
-        Assert.assertTrue("/generic/logPackages/" + logPackage + " not defined", config.getGeneric().getLogPackages().get(logPackage) != null);
-        Assert.assertEquals("/generic/logPackages has not 1 entry", 1, config.getGeneric().getLogPackages().size());
-        Assert.assertEquals("/generic/logPackages/" + logPackage + " has different value than that specified", logLevel, config.getGeneric().getLogPackages().get(logPackage));
+        Assert.assertTrue("/logging/packages not defined", config.getLogging().getPackages() != null);
+        Assert.assertTrue("/logging/packages/" + logPackage + " not defined", config.getLogging().getPackages().get(logPackage) != null);
+        Assert.assertEquals("/logging/packages has not 1 entry", 1, config.getLogging().getPackages().size());
+        Assert.assertEquals("/logging/packages/" + logPackage + " has different value than that specified", level, config.getLogging().getPackages().get(logPackage));
     }
 
     @Test(expected=IllegalArgumentException.class)
@@ -172,7 +172,7 @@ public class ConfigTest {
 			@Override
 			public List<String> getParams() {
 				String[] params = new String[] { 
-					"/generic/logLevel=ALL" 
+					"/logging/level=ALL" 
 				};
 				return Arrays.asList(params);
 			}
@@ -194,7 +194,7 @@ public class ConfigTest {
 		};
 		Config config = CliConfigUtils.readConfig(cliConfig);
 		
-		Assert.assertTrue("/generic not defined", config.getGeneric() != null);
+		Assert.assertTrue("/logging not defined", config.getLogging() != null);
 		Assert.assertTrue("/replication not defined", config.getReplication() != null);
 		Assert.assertTrue("/backend not defined", config.getBackend() != null);
 		Assert.assertEquals("/backend/postgres not defined", Postgres.class, config.getBackend().getBackendImplementation().getClass());
@@ -230,12 +230,12 @@ public class ConfigTest {
 		};
 		Config config = CliConfigUtils.readConfig(cliConfig);
 		
-        Assert.assertTrue("/generic not defined", config.getGeneric() != null);
-        Assert.assertTrue("/generic/logPackages not defined", config.getGeneric().getLogPackages() != null);
-        Assert.assertTrue("/generic/logPackages/com.torodb not defined", config.getGeneric().getLogPackages().get("com.torodb") != null);
-        Assert.assertEquals("/generic/logLevel has different value than that specified", LogLevel.NONE, config.getGeneric().getLogLevel());
-        Assert.assertEquals("/generic/logPackages has not 1 entry", 1, config.getGeneric().getLogPackages().size());
-        Assert.assertEquals("/generic/logPackages/com.torodb has different value than that specified", LogLevel.DEBUG, config.getGeneric().getLogPackages().get("com.torodb"));
+        Assert.assertTrue("/logging not defined", config.getLogging() != null);
+        Assert.assertTrue("/logging/packages not defined", config.getLogging().getPackages() != null);
+        Assert.assertTrue("/logging/packages/com.torodb not defined", config.getLogging().getPackages().get("com.torodb") != null);
+        Assert.assertEquals("/logging/level has different value than that specified", LogLevel.NONE, config.getLogging().getLevel());
+        Assert.assertEquals("/logging/packages has not 1 entry", 1, config.getLogging().getPackages().size());
+        Assert.assertEquals("/logging/packages/com.torodb has different value than that specified", LogLevel.DEBUG, config.getLogging().getPackages().get("com.torodb"));
         Assert.assertTrue("/replication not defined", config.getReplication() != null);
         Assert.assertEquals("/replication/replSetName has different value than that specified", "rs1", config.getReplication().getReplSetName());
         Assert.assertEquals("/replication/role has different value than that specified", Role.HIDDEN_SLAVE, config.getReplication().getRole());
@@ -309,12 +309,12 @@ public class ConfigTest {
         };
         Config config = CliConfigUtils.readConfig(cliConfig);
         
-        Assert.assertTrue("/generic not defined", config.getGeneric() != null);
-        Assert.assertTrue("/generic/logPackages not defined", config.getGeneric().getLogPackages() != null);
-        Assert.assertTrue("/generic/logPackages/com.torodb not defined", config.getGeneric().getLogPackages().get("com.torodb") != null);
-        Assert.assertEquals("/generic/logLevel has different value than that specified", LogLevel.NONE, config.getGeneric().getLogLevel());
-        Assert.assertEquals("/generic/logPackages has not 1 entry", 1, config.getGeneric().getLogPackages().size());
-        Assert.assertEquals("/generic/logPackages/com.torodb has different value than that specified", LogLevel.DEBUG, config.getGeneric().getLogPackages().get("com.torodb"));
+        Assert.assertTrue("/logging not defined", config.getLogging() != null);
+        Assert.assertTrue("/logging/packages not defined", config.getLogging().getPackages() != null);
+        Assert.assertTrue("/logging/packages/com.torodb not defined", config.getLogging().getPackages().get("com.torodb") != null);
+        Assert.assertEquals("/logging/level has different value than that specified", LogLevel.NONE, config.getLogging().getLevel());
+        Assert.assertEquals("/logging/packages has not 1 entry", 1, config.getLogging().getPackages().size());
+        Assert.assertEquals("/logging/packages/com.torodb has different value than that specified", LogLevel.DEBUG, config.getLogging().getPackages().get("com.torodb"));
         Assert.assertTrue("/replication not defined", config.getReplication() != null);
         Assert.assertEquals("/replication/replSetName has different value than that specified", "rs1", config.getReplication().getReplSetName());
         Assert.assertEquals("/replication/role has different value than that specified", Role.HIDDEN_SLAVE, config.getReplication().getRole());
@@ -351,12 +351,12 @@ public class ConfigTest {
         };
         Config config = CliConfigUtils.readConfig(cliConfig);
         
-        Assert.assertTrue("/generic not defined", config.getGeneric() != null);
-        Assert.assertTrue("/generic/logPackages not defined", config.getGeneric().getLogPackages() != null);
-        Assert.assertTrue("/generic/logPackages/com.torodb not defined", config.getGeneric().getLogPackages().get("com.torodb") != null);
-        Assert.assertEquals("/generic/logLevel has different value than that specified", LogLevel.NONE, config.getGeneric().getLogLevel());
-        Assert.assertEquals("/generic/logPackages has not 1 entry", 1, config.getGeneric().getLogPackages().size());
-        Assert.assertEquals("/generic/logPackages/com.torodb has different value than that specified", LogLevel.DEBUG, config.getGeneric().getLogPackages().get("com.torodb"));
+        Assert.assertTrue("/logging not defined", config.getLogging() != null);
+        Assert.assertTrue("/logging/packages not defined", config.getLogging().getPackages() != null);
+        Assert.assertTrue("/logging/packages/com.torodb not defined", config.getLogging().getPackages().get("com.torodb") != null);
+        Assert.assertEquals("/logging/level has different value than that specified", LogLevel.NONE, config.getLogging().getLevel());
+        Assert.assertEquals("/logging/packages has not 1 entry", 1, config.getLogging().getPackages().size());
+        Assert.assertEquals("/logging/packages/com.torodb has different value than that specified", LogLevel.DEBUG, config.getLogging().getPackages().get("com.torodb"));
         Assert.assertTrue("/replication not defined", config.getReplication() != null);
         Assert.assertEquals("/replication/replSetName has different value than that specified", "rs1", config.getReplication().getReplSetName());
         Assert.assertEquals("/replication/role has different value than that specified", Role.HIDDEN_SLAVE, config.getReplication().getRole());
@@ -403,12 +403,12 @@ public class ConfigTest {
         };
         Config config = CliConfigUtils.readConfig(cliConfig);
         
-        Assert.assertTrue("/generic not defined", config.getGeneric() != null);
-        Assert.assertTrue("/generic/logPackages not defined", config.getGeneric().getLogPackages() != null);
-        Assert.assertTrue("/generic/logPackages/com.torodb not defined", config.getGeneric().getLogPackages().get("com.torodb") != null);
-        Assert.assertEquals("/generic/logLevel has different value than that specified", LogLevel.NONE, config.getGeneric().getLogLevel());
-        Assert.assertEquals("/generic/logPackages has not 1 entry", 1, config.getGeneric().getLogPackages().size());
-        Assert.assertEquals("/generic/logPackages/com.torodb has different value than that specified", LogLevel.DEBUG, config.getGeneric().getLogPackages().get("com.torodb"));
+        Assert.assertTrue("/logging not defined", config.getLogging() != null);
+        Assert.assertTrue("/logging/packages not defined", config.getLogging().getPackages() != null);
+        Assert.assertTrue("/logging/packages/com.torodb not defined", config.getLogging().getPackages().get("com.torodb") != null);
+        Assert.assertEquals("/logging/level has different value than that specified", LogLevel.NONE, config.getLogging().getLevel());
+        Assert.assertEquals("/logging/packages has not 1 entry", 1, config.getLogging().getPackages().size());
+        Assert.assertEquals("/logging/packages/com.torodb has different value than that specified", LogLevel.DEBUG, config.getLogging().getPackages().get("com.torodb"));
         Assert.assertTrue("/replication not defined", config.getReplication() != null);
         Assert.assertEquals("/replication/replSetName has different value than that specified", "rs1", config.getReplication().getReplSetName());
         Assert.assertEquals("/replication/role has different value than that specified", Role.HIDDEN_SLAVE, config.getReplication().getRole());

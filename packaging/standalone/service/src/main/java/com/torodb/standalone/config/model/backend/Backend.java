@@ -29,9 +29,9 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.collect.ImmutableMap;
-import com.torodb.packaging.config.jackson.BackendSerializer;
 import com.torodb.packaging.config.model.backend.BackendImplementation;
 import com.torodb.standalone.config.jackson.BackendDeserializer;
+import com.torodb.standalone.config.jackson.BackendSerializer;
 import com.torodb.standalone.config.model.backend.derby.Derby;
 import com.torodb.standalone.config.model.backend.postgres.Postgres;
 

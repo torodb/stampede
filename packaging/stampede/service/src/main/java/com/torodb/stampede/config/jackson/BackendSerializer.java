@@ -20,21 +20,16 @@
 
 package com.torodb.stampede.config.jackson;
 
-import java.util.function.BiConsumer;
-
-import org.jooq.lambda.tuple.Tuple2;
-
 import com.google.common.collect.ImmutableMap;
 import com.torodb.stampede.config.model.backend.Backend;
-import com.torodb.stampede.config.model.backend.Pool;
 
-public class BackendDeserializer extends com.torodb.packaging.config.jackson.BackendDeserializer<Backend> {
-    
-    public BackendDeserializer() {
-        super(() -> new Backend(),
-                ImmutableMap.<String, Tuple2<Class<?>, BiConsumer<Backend, Object>>>of(
-                        "pool", new Tuple2<>(Pool.class, (backend, value) -> backend.setPool((Pool) value))
-                )
+public class BackendSerializer extends com.torodb.packaging.config.jackson.BackendSerializer<Backend> {
+
+    public BackendSerializer() {
+        super(
+            ImmutableMap.of(
+                    "pool", (backend) -> backend.getPool()
+            )
         );
     }
 

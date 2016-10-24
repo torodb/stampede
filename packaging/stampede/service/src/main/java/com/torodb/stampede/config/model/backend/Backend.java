@@ -29,9 +29,10 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.collect.ImmutableMap;
-import com.torodb.packaging.config.jackson.BackendSerializer;
+import com.torodb.packaging.config.annotation.Description;
 import com.torodb.packaging.config.model.backend.BackendImplementation;
 import com.torodb.stampede.config.jackson.BackendDeserializer;
+import com.torodb.stampede.config.jackson.BackendSerializer;
 import com.torodb.stampede.config.model.backend.postgres.Postgres;
 
 @JsonSerialize(using=BackendSerializer.class)
@@ -41,6 +42,12 @@ public class Backend extends com.torodb.packaging.config.model.backend.Backend {
             ImmutableMap.<String, Class<? extends BackendImplementation>>builder()
             .put("postgres", Postgres.class)
             .build();
+    
+    @Description("config.pool")
+    @NotNull
+    @Valid
+    @JsonProperty(required=true)
+    private Pool pool = new Pool();
     
     public Backend() {
         this(new Postgres());
@@ -61,4 +68,12 @@ public class Backend extends com.torodb.packaging.config.model.backend.Backend {
 	public BackendImplementation getBackendImplementation() {
 		return super.getBackendImplementation();
 	}
+    
+    public Pool getPool() {
+        return pool;
+    }
+    
+    public void setPool(Pool pool) {
+        this.pool = pool;
+    }
 }

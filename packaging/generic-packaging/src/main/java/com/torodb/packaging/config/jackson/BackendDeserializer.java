@@ -22,33 +22,41 @@ package com.torodb.packaging.config.jackson;
 
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
 import org.bson.json.JsonParseException;
+import org.jooq.lambda.tuple.Tuple2;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.collect.ImmutableMap;
 import com.torodb.core.exceptions.SystemException;
 import com.torodb.packaging.config.model.backend.Backend;
 import com.torodb.packaging.config.model.backend.BackendImplementation;
 
-public abstract class BackendDeserializer extends JsonDeserializer<Backend> {
+public abstract class BackendDeserializer<T extends Backend> extends JsonDeserializer<T> {
     
-    private final Supplier<Backend> backendProvider;
+    private final Supplier<T> backendProvider;
+    private final ImmutableMap<String, Tuple2<Class<?>, BiConsumer<T, Object>>> setterMap;
     
-    protected BackendDeserializer(Supplier<Backend> backendProvider) {
+    protected BackendDeserializer(Supplier<T> backendProvider, ImmutableMap<String, Tuple2<Class<?>, BiConsumer<T, Object>>> setterMap) {
         this.backendProvider = backendProvider;
+        this.setterMap = setterMap;
     }
     
 	@Override
-	public Backend deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException, JsonProcessingException {
-		Backend backend = backendProvider.get();
-		JsonNode node = jp.getCodec().readTree(jp);
+	public T deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException, JsonProcessingException {
+		T backend = backendProvider.get();
+        ObjectMapper mapper = (ObjectMapper) jp.getCodec();
+        ObjectNode node = (ObjectNode) jp.getCodec().readTree(jp);
 		
-		JsonNode backendImplementationNode = null;
+		JsonNode fieldNode = null;
 		Class<? extends BackendImplementation> backendImplementationClass = null;
 		Iterator<String> fieldNamesIterator = node.fieldNames();
 		while (fieldNamesIterator.hasNext()) {
@@ -58,19 +66,23 @@ public abstract class BackendDeserializer extends JsonDeserializer<Backend> {
                 throw new JsonParseException("Found multiples backend implementations but only one is allowed");
 			}
 			
-			backendImplementationNode = node.get(fieldName);
+			fieldNode = node.get(fieldName);
 			if (backend.hasBackendImplementation(fieldName)) {
                 backendImplementationClass = backend.getBackendImplementationClass(fieldName);
+			} else if (setterMap.containsKey(fieldName)) {
+			    Object value = mapper.treeToValue(fieldNode, setterMap.get(fieldName).v1());
+			    setterMap.get(fieldName).v2().accept(backend, value);
 			} else {
-			    throw new SystemException("Backend " + fieldName + " is not valid.");
+	            throw new SystemException("Backend " + node.fields().next() + " is not valid.");
 			}
 		}
-		
+
 		if (backendImplementationClass != null) {
 			backend.setBackendImplementation(
-					jp.getCodec().treeToValue(backendImplementationNode, backendImplementationClass));
+					jp.getCodec().treeToValue(fieldNode, backendImplementationClass));
 		}
 		
 		return backend;
 	}
+	
 }

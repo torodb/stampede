@@ -25,23 +25,30 @@ import javax.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.torodb.core.metrics.MetricsConfig;
 import com.torodb.packaging.config.annotation.Description;
-import com.torodb.packaging.config.model.generic.Generic;
 import com.torodb.stampede.config.model.backend.Backend;
+import com.torodb.stampede.config.model.logging.Logging;
 import com.torodb.stampede.config.model.replication.Replication;
 
 
 @JsonPropertyOrder({
-	"generic",
+	"logging",
+	"metricsEnabled",
 	"replication",
 	"backend"
 })
-public class Config {
+public class Config implements MetricsConfig {
 	
+    @Description("config.logging")
 	@NotNull
 	@Valid
 	@JsonProperty(required=true)
-	private Generic generic = new Generic();
+	private Logging logging = new Logging();
+    @Description("config.generic.metricsEnabled")
+    @NotNull
+    @JsonProperty(required=true)
+    private Boolean metricsEnabled = false;
 	@NotNull
 	@Valid
 	@JsonProperty(required=true)
@@ -52,12 +59,21 @@ public class Config {
 	@JsonProperty(required=true)
 	private Backend backend = new Backend();
 
-	public Generic getGeneric() {
-		return generic;
+	public Logging getLogging() {
+		return logging;
 	}
-	public void setGeneric(Generic generic) {
-		this.generic = generic;
+	public void setLogging(Logging logging) {
+	    if (logging != null) {
+	        this.logging = logging;
+	    }
 	}
+    @Override
+    public Boolean getMetricsEnabled() {
+        return metricsEnabled;
+    }
+    public void setMetricsEnabled(Boolean metricsEnabled){
+        this.metricsEnabled = metricsEnabled;
+    }
 	public Replication getReplication() {
 		return replication;
 	}

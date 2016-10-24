@@ -35,7 +35,7 @@ public class StampedeServerTest {
         );
         config.getBackend().setBackendImplementation(new Derby());
         config.getBackend().as(Derby.class).setPassword("torodb");
-        config.getGeneric().setLogLevel(LogLevel.TRACE);
+        config.getLogging().setLevel(LogLevel.TRACE);
 
         ConfigUtils.validateBean(config);
     }

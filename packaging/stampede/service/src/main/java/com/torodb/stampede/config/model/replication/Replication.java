@@ -20,24 +20,25 @@
 
 package com.torodb.stampede.config.model.replication;
 
-import javax.validation.constraints.NotNull;
-
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.torodb.packaging.config.annotation.Description;
 import com.torodb.packaging.config.model.backend.CursorConfig;
+import com.torodb.packaging.config.model.protocol.mongo.Role;
 import com.torodb.packaging.config.util.ConfigUtils;
 
 @JsonPropertyOrder({
-    "net",
-    "replication",
-    "cursorTimeout",
+    "replSetName",
+    "syncSource",
+    "ssl",
+    "auth",
+    "include",
+    "exclude",
     "mongopassFile"
 })
 public class Replication extends com.torodb.packaging.config.model.protocol.mongo.Replication implements CursorConfig {
-    @Description("config.mongo.cursorTimeout")
-    @NotNull
-    @JsonProperty(required=true)
+    @JsonIgnore
     private Long cursorTimeout = 10L * 60 * 1000;
     @Description("config.mongo.mongopassFile")
     @JsonProperty(required=true)
@@ -46,6 +47,11 @@ public class Replication extends com.torodb.packaging.config.model.protocol.mong
     public Replication() {
         setSyncSource("localhost:27017");
         setReplSetName("rs1");
+    }
+
+    @JsonIgnore
+    public Role getRole() {
+        return super.getRole();
     }
     
     @Override

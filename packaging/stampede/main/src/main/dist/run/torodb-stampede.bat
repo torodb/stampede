@@ -72,6 +72,11 @@ if "%JAVACMD%"=="" set JAVACMD=java
 
 if "%LIBDIR%"=="" set LIBDIR=%BASEDIR%\lib
 
+if "%TOROCONFIG%"=="" set TOROCONFIG=%BASEDIR%\conf\@{assembler.name}.yml
+
+set TOROCONFIG_OPTS=
+if EXIST "%TOROCONFIG%" set TOROCONFIG_OPTS=-c "$TOROCONFIG"
+
 set CLASSPATH="%LIBDIR%"\@{assembler.name}-@{version}.jar
 
 set ENDORSED_DIR=
@@ -82,7 +87,7 @@ if NOT "%CLASSPATH_PREFIX%" == "" set CLASSPATH=%CLASSPATH_PREFIX%;%CLASSPATH%
 @REM Reaching here means variables are defined and arguments have been captured
 :endInit
 
-%JAVACMD% %JAVA_OPTS%  -cp %CLASSPATH% @{assembler.mainClass} %CMD_LINE_ARGS%
+%JAVACMD% %JAVA_OPTS%  -cp %CLASSPATH% @{assembler.mainClass} %TOROCONFIG_OPTS% %CMD_LINE_ARGS%
 if %ERRORLEVEL% NEQ 0 goto error
 goto end
 

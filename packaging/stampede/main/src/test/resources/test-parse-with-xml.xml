@@ -1,13 +1,12 @@
 <config>
-  <generic>
-    <logLevel>NONE</logLevel>
-    <logPackages>
+  <logging>
+    <level>NONE</level>
+    <packages>
       <com.torodb>DEBUG</com.torodb>
-    </logPackages>
-  </generic>
+    </packages>
+  </logging>
   <replication>
     <replSetName>rs1</replSetName>
-    <role>HIDDEN_SLAVE</role>
     <syncSource>localhost:27017</syncSource>
   </replication>
   <backend>

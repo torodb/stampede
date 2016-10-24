@@ -20,12 +20,13 @@
 
 package com.torodb.standalone.config.jackson;
 
+import com.google.common.collect.ImmutableMap;
 import com.torodb.standalone.config.model.backend.Backend;
 
-public class BackendDeserializer extends com.torodb.packaging.config.jackson.BackendDeserializer {
+public class BackendDeserializer extends com.torodb.packaging.config.jackson.BackendDeserializer<Backend> {
     
     public BackendDeserializer() {
-        super(() -> new Backend());
+        super(() -> new Backend(), ImmutableMap.of());
     }
 
 }

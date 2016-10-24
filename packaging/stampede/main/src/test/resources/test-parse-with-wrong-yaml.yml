@@ -1,10 +1,9 @@
-generics:
+loggings:
   logLevel: NONE
   logPackages:
     com.torodb: DEBUG
 replication:
   replSetName: rs1
-  role: HIDDEN_SLAVE
   syncSource: localhost:27017
 backend:
   postgres:

@@ -154,8 +154,13 @@ it is convenient to create file `%APPDATA%\postgresql\pgpass.conf`:
 
 ### Configuration
 
-Configuration file used by `bin/@{assembler.name}` is `conf/@{assembler.name}.conf`. 
-You can change it or overwrite it using parameters. 
+Configuration file used by `bin/@{assembler.name}` is `conf/@{assembler.name}.yml` if present, if not
+default configuration will be used. To see default configuration:
+
+    bin/@{assembler.name} -l
+ 
+Or copy file `conf/@{assembler.name}.yml.sample` to `conf/@{assembler.name}.yml` and modify it
+ or overwrite it using parameters. 
 
 Please run `@{assembler.name} -h` or refer to [online documentation|@{assembler.url}] 
 for more info about @{assembler.fullName} configuration and parameters.
