@@ -82,11 +82,13 @@ Ahora podemos acceder a la consola de MongoDB con el comando `mongo` para poder 
 
 Para comprobar que la configuración del replica set es correcta podemos ejecutar el comando `rs.conf()`. Cuando tengamos configurados otros nodos del replica set los podremos añadir con el comando `rs.add(...)`.
 
-### PostgreSQL
+### Backend relacional
+
+#### PostgreSQL
 
 El correcto funcionamiento de ToroDB Stampede depende de la existencia de un backend que permita el almacenamiento relacional, en esta versión el backend soportado es PostgreSQL.
 
-#### Ubuntu 16.04 LTS
+##### Ubuntu 16.04 LTS
 
 Se puede encontrar más información en el siguiente [enlace](https://www.digitalocean.com/community/tutorials/how-to-install-and-use-postgresql-on-ubuntu-16-04).
 
