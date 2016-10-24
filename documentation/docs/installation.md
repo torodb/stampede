@@ -144,6 +144,16 @@ $ sudo apt-get install maven
 
 ### Mac
 
+Antes de arrancar ToroDB Stampede será necesario tener una instancia correctamente configurada de PostgreSQL y un MongoDB configurado como replica set.
+
+[//]: # (Indicar dónde se puede descargar el fichero binario para MacOS)
+
+```
+$ tar xjvf <stampede-binary>.tar.bz2
+
+$ torodb-stampede-<version>/bin/torodb-stampede
+```
+
 ## Instalación a partir de los fuentes
 
 ### Windows
