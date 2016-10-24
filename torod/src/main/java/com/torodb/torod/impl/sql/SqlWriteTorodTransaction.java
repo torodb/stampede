@@ -16,6 +16,7 @@ import com.torodb.core.TableRef;
 import com.torodb.core.cursors.Cursor;
 import com.torodb.core.exceptions.user.CollectionNotFoundException;
 import com.torodb.core.exceptions.user.DatabaseNotFoundException;
+import com.torodb.core.exceptions.user.UnsupportedUniqueIndexException;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.language.AttributeReference;
 import com.torodb.core.transaction.RollbackException;
@@ -36,6 +37,7 @@ import com.torodb.kvdocument.values.KVValue;
 import com.torodb.torod.IndexFieldInfo;
 import com.torodb.torod.SharedWriteTorodTransaction;
 import com.torodb.torod.pipeline.InsertPipeline;
+
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
@@ -173,6 +175,13 @@ public abstract class SqlWriteTorodTransaction<T extends WriteInternalTransactio
             TableRef tableRef = extractTableRef(attRef);
             String lastKey = extractKeyName(attRef.getKeys().get(attRef.getKeys().size() - 1));
             indexFieldDefs.add(new Tuple3<>(tableRef, lastKey, ordering));
+        }
+        
+        TableRef anyIndexTableRef = indexFieldDefs.stream().findAny().get().v1();
+        boolean isUniqueIndexWithMutlipleTableRefs = indexFieldDefs.stream().anyMatch(t -> !t.v1().equals(anyIndexTableRef));
+        
+        if (isUniqueIndexWithMutlipleTableRefs) {
+            throw new UnsupportedUniqueIndexException(dbName, colName, indexName);
         }
         
         boolean indexExists = metaColl.streamContainedMetaIndexes()

@@ -26,47 +26,36 @@ import javax.annotation.Nullable;
 /**
  *
  */
-public class UniqueIndexViolationException extends UserException {
+public class UniqueIndexViolationException extends IndexException {
 
-    private static final long serialVersionUID = -8679405097266977101L;
+    private static final long serialVersionUID = 1;
 
-    @Nullable
-    private final String index;
     @Nullable
     private final KVValue<?> repeatedValue;
 
     public UniqueIndexViolationException(String index, KVValue<?> repeatedValue) {
-        this.index = index;
+        super(null, null, index);
         this.repeatedValue = repeatedValue;
     }
 
     public UniqueIndexViolationException(String index, KVValue<?> repeatedValue, String message) {
-        super(message);
-        this.index = index;
+        super(message, null, null, index);
         this.repeatedValue = repeatedValue;
     }
 
     public UniqueIndexViolationException(String index, KVValue<?> repeatedValue, String message, Throwable cause) {
-        super(message, cause);
-        this.index = index;
+        super(message, cause, null, null, index);
         this.repeatedValue = repeatedValue;
     }
 
     public UniqueIndexViolationException(String message) {
-        super(message);
-        this.index = null;
+        super(message, null, null, null);
         this.repeatedValue = null;
     }
 
     public UniqueIndexViolationException(String message, Throwable cause) {
-        super(message, cause);
-        this.index = null;
+        super(message, cause, null, null, null);
         this.repeatedValue = null;
-    }
-
-    @Nullable
-    public String getIndex() {
-        return index;
     }
 
     @Nullable

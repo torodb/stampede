@@ -20,11 +20,17 @@
 
 package com.torodb.core.exceptions.user;
 
-public interface UserExceptionVisitor<Result, Argument> {
-    public Result visit(DatabaseNotFoundException userException, Argument arg);
-    public Result visit(CollectionNotFoundException userException, Argument arg);
-    public Result visit(IndexNotFoundException userException, Argument arg);
-    public Result visit(UnsupportedUniqueIndexException userException, Argument arg);
-    public Result visit(UpdateException userException, Argument arg);
-    public Result visit(UniqueIndexViolationException userException, Argument arg);
+public class UnsupportedUniqueIndexException extends IndexException {
+
+    private static final long serialVersionUID = 1L;
+
+    public UnsupportedUniqueIndexException(String database, String collection, String index) {
+        super(database, collection, index);
+    }
+
+    @Override
+    public <Result, Argument> Result accept(UserExceptionVisitor<Result, Argument> visitor, Argument arg) {
+        return visitor.visit(this, arg);
+    }
+
 }
