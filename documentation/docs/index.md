@@ -1,4 +1,4 @@
-# What is Toro Stampede?
+# ToroDB Stampede documentation
 
 In a MongoDB replica set, Toro Stampede can work as a node replicating the entire documental database in a relational way using PostgreSQL as a backend.
 
@@ -10,14 +10,9 @@ This doesn't mean that JSON is stored using JSON support from PostgreSQL, it is 
 
 With this approximation it is possible to have a NoSQL storage with actual relational capabilities without any change.
 
-## Para qué sirve ToroDB Stampede?
 
-TBD
+## Versions
 
-## Para qué no sirve ToroDB Stampede?
+## Documentation conventions
 
-TBD
-
-## Limitaciones de ToroDB Stampede?
-
-TBD
+## Glossary

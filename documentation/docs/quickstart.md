@@ -1,8 +1,8 @@
-[TOC]
+# Quickstart
 
-## Requisitos previos
+## Requisitos previos
 
-## Arranque
+## Arrancar ToroDB Stampede
 
 ### Configuración del backend
 
@@ -18,7 +18,7 @@ $ sudo -u postgres createuser --interactive
 $ sudo -u postgres createdb -O torodb torod
 ```
 
-## Ejemplo de mapeo
+## Ejemplo de mapeo
 
 El dataset utilizado para el ejemplo, es un listado de restaurantes con sus correspondientes evaluaciones, y la estructura de los documentos es como la indicada a continuación.
 

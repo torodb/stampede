@@ -1,6 +1,6 @@
-[TOC]
+# Installation and configuration
 
-## Instalación de los requisitos previos
+## Instalación de los requisitos previos
 
 ### MongoDB Community Edition
 
@@ -57,7 +57,7 @@ $ sudo service mongod restart
 
 Si ejecutamos el comando `mongo` podremos ver como se accede a la consola de MongoDB y se pueden ejecutar los diferentes comandos de MongoDB.
 
-### Configuración de un replica set
+### Configuración de un replica set
 
 #### Ubuntu 16.04 LTS
 
@@ -82,7 +82,7 @@ Ahora podemos acceder a la consola de MongoDB con el comando `mongo` para poder 
 
 Para comprobar que la configuración del replica set es correcta podemos ejecutar el comando `rs.conf()`. Cuando tengamos configurados otros nodos del replica set los podremos añadir con el comando `rs.add(...)`.
 
-### PostgreSQL 
+### PostgreSQL
 
 El correcto funcionamiento de ToroDB Stampede depende de la existencia de un backend que permita el almacenamiento relacional, en esta versión el backend soportado es PostgreSQL.
 
@@ -103,7 +103,7 @@ Podemos comprobar que la instalación ha sido satisfactoria accediendo a la cons
 $ sudo -u postgres psql
 ```
 
-### Java
+### Java
 
 #### Ubuntu 16.04 LTS
 
@@ -115,7 +115,7 @@ $ sudo apt-get update
 $ sudo apt-get install oracle-java8-installer
 ```
 
-### Maven 3
+### Maven
 
 Aunque para ejecutar Toro Stampede no es necesario compilar el código fuente, si se desea hacerlo hay que instalar Maven 3 para poder obtener las dependencias y lanzar el proceso de construcción.
 
@@ -128,34 +128,48 @@ $ sudo apt-get update
 $ sudo apt-get install maven
 ```
 
-## Instalación con docker
+## Instalación con docker
 
-### Windows
-
-### Linux
-
-### Mac
-
-## Instalación con ficheros binarios
-
-### Windows
+### Windows
 
 ### Linux
 
 ### Mac
 
-## Instalación a partir de los fuentes
+## Instalación a partir  ficheros binarios
 
-### Windows
+### Windows
 
 ### Linux
 
 ### Mac
 
-## Instalación con paquetes
+## Instalación a partir de los fuentes
 
-### RPM
+### Windows
+
+### Linux
+
+### Mac
+
+## Instalación con paquetes
+
+### RPM
 
 ### Debian
 
-## Configuración avanzada
+## Configuración básica de ToroDB
+
+### Config file
+
+### CLI parameters
+
+## Configuración avanzada
+
+### Config file
+
+### CLI parameters
+
+### How to manage/parse Stampede logs
+
+### Monitoring (metrics)
