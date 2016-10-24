@@ -99,7 +99,7 @@
         </dependency>
         <dependency>
             <groupId>com.torodb.packaging</groupId>
-            <artifactId>generic-packaging</artifactId>
+            <artifactId>standalone-service</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>

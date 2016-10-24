@@ -23,6 +23,6 @@ package com.torodb.packaging.config.model.protocol.mongo;
 import com.torodb.packaging.config.annotation.Description;
 
 public enum Role {
-	@Description(value="config.protocol.mongo.role.HIDDEN_SLAVE")
+	@Description(value="config.mongo.role.HIDDEN_SLAVE")
 	HIDDEN_SLAVE;
 }

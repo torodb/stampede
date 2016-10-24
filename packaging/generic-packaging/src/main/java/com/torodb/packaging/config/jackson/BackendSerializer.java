@@ -21,6 +21,8 @@
 package com.torodb.packaging.config.jackson;
 
 import java.io.IOException;
+import java.util.Map;
+import java.util.function.Function;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -38,19 +40,36 @@ import com.fasterxml.jackson.databind.introspect.BeanPropertyDefinition;
 import com.fasterxml.jackson.databind.jsonFormatVisitors.JsonFormatVisitorWrapper;
 import com.fasterxml.jackson.databind.jsonFormatVisitors.JsonObjectFormatVisitor;
 import com.fasterxml.jackson.databind.type.TypeFactory;
+import com.google.common.collect.ImmutableMap;
+import com.torodb.core.exceptions.SystemException;
 import com.torodb.packaging.config.model.backend.Backend;
+import com.torodb.packaging.config.model.backend.BackendImplementation;
 import com.torodb.packaging.config.model.backend.derby.Derby;
 import com.torodb.packaging.config.model.backend.postgres.Postgres;
 import com.torodb.packaging.config.visitor.BackendImplementationVisitor;
-import com.torodb.core.exceptions.SystemException;
 
-public class BackendSerializer extends JsonSerializer<Backend> {
-	@Override
-	public void serialize(Backend value, JsonGenerator jgen, SerializerProvider provider)
+public abstract class BackendSerializer<T extends Backend> extends JsonSerializer<T> {
+    
+    private final ImmutableMap<String, Function<T, Object>> getterMap;
+    
+	public BackendSerializer(ImmutableMap<String, Function<T, Object>> getterMap) {
+        super();
+        this.getterMap = getterMap;
+    }
+
+    @Override
+	public void serialize(T value, JsonGenerator jgen, SerializerProvider provider)
 			throws IOException, JsonProcessingException {
 		jgen.writeStartObject();
+		
+		for (Map.Entry<String, Function<T, Object>> getterEntry : getterMap.entrySet()) {
+		    Object getterValue = getterEntry.getValue().apply(value);
+		    if (getterValue != null) {
+		        jgen.writeObjectField(getterEntry.getKey(), getterValue);
+		    }
+		}
 
-		value.getBackendImplementation().accept(new BackendImplementationSerializerVisitor(jgen));
+		value.getBackendImplementation().accept(new BackendImplementationSerializerVisitor(value, jgen));
 
 		jgen.writeEndObject();
 	}
@@ -107,26 +126,28 @@ public class BackendSerializer extends JsonSerializer<Backend> {
 	}
 	
 	private static class BackendImplementationSerializerVisitor implements BackendImplementationVisitor {
-	    
+
+	    private final Backend backend;
 	    private final JsonGenerator jgen;
 	    
-	    private BackendImplementationSerializerVisitor(JsonGenerator jgen) {
+	    private BackendImplementationSerializerVisitor(Backend backend, JsonGenerator jgen) {
+	        this.backend = backend;
 	        this.jgen = jgen;
 	    }
 	    
         @Override
         public void visit(Postgres value) {
-            try {
-                jgen.writeObjectField("postgres", value);
-            } catch(Exception exception) {
-                throw new SystemException(exception);
-            }
+            defaultVisit(value);
         }
 
         @Override
         public void visit(Derby value) {
+            defaultVisit(value);
+        }
+
+        private void defaultVisit(BackendImplementation value) {
             try {
-                jgen.writeObjectField("derby", value);
+                jgen.writeObjectField(backend.getBackendImplementationName(value.getClass()), value);
             } catch(Exception exception) {
                 throw new SystemException(exception);
             }

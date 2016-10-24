@@ -14,5 +14,6 @@
     <modules>
         <module>generic-packaging</module>
         <module>standalone</module>
+        <module>stampede</module>
     </modules>
 </project>

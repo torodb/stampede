@@ -35,7 +35,7 @@ import javax.validation.ReportAsSingleViolation;
 @Constraint(validatedBy = ExistsAnyPasswordValidator.class)
 @ReportAsSingleViolation
 public @interface ExistsAnyPassword {
-	String message() default "{com.torodb.config.validation.PasswordOrToroPass.message}";
+	String message() default "{config.validation.PasswordOrToroPass.message}";
 
 	Class<?>[] groups() default {};
 

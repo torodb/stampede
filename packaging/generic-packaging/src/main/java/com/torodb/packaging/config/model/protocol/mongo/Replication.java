@@ -30,75 +30,80 @@ import com.torodb.packaging.config.annotation.Description;
 import com.torodb.packaging.config.validation.RequiredParametersForAuthentication;
 
 @JsonPropertyOrder({
-	"replSetName",
-	"role"
+    "replSetName",
+    "syncSource",
+	"role",
+	"ssl",
+	"auth",
+	"include",
+	"exclude"
 })
 public class Replication {
 	
-	@Description("config.protocol.mongo.replication.replSetName")
-	@NotEmpty
-	@JsonProperty(required=true)
 	private String replSetName;
-	@Description("config.protocol.mongo.replication.role")
-	@NotNull
-	@JsonProperty(required=true)
 	private Role role = Role.HIDDEN_SLAVE;
-	@Description("config.protocol.mongo.replication.syncSource")
-    @NotNull
-    @JsonProperty(required=true)
 	private String syncSource;
-    @Description("config.protocol.mongo.replication.ssl")
-    @NotNull
-    @JsonProperty(required=true)
     private SSL ssl = new SSL();
-    @Description("config.protocol.mongo.replication.auth")
-    @NotNull
-    @JsonProperty(required=true)
-    @RequiredParametersForAuthentication
     private Auth auth = new Auth();
-    @Description("config.protocol.mongo.replication.include")
-    @JsonProperty(required=true)
     private FilterList include;
-    @Description("config.protocol.mongo.replication.exclude")
-    @JsonProperty(required=true)
     private FilterList exclude;
 	
+    @Description("config.mongo.replication.replSetName")
+    @NotEmpty
+    @JsonProperty(required=true)
 	public String getReplSetName() {
 		return replSetName;
 	}
 	public void setReplSetName(String replSetName) {
 		this.replSetName = replSetName;
 	}
+    @Description("config.mongo.replication.role")
+    @NotNull
+    @JsonProperty(required=true)
 	public Role getRole() {
 		return role;
 	}
 	public void setRole(Role role) {
 		this.role = role;
 	}
+    @Description("config.mongo.replication.syncSource")
+    @NotNull
+    @JsonProperty(required=true)
 	public String getSyncSource() {
 		return syncSource;
 	}
 	public void setSyncSource(String syncSource) {
 		this.syncSource = syncSource;
 	}
+    @Description("config.mongo.replication.ssl")
+    @NotNull
+    @JsonProperty(required=true)
     public SSL getSsl() {
         return ssl;
     }
     public void setSsl(SSL ssl) {
         this.ssl = ssl;
     }
+    @Description("config.mongo.replication.auth")
+    @NotNull
+    @JsonProperty(required=true)
+    @RequiredParametersForAuthentication
     public Auth getAuth() {
         return auth;
     }
     public void setAuth(Auth auth) {
         this.auth = auth;
     }
+    @Description("config.mongo.replication.include")
+    @JsonProperty(required=true)
     public FilterList getInclude() {
         return include;
     }
     public void setInclude(FilterList include) {
         this.include = include;
     }
+    @Description("config.mongo.replication.exclude")
+    @JsonProperty(required=true)
     public FilterList getExclude() {
         return exclude;
     }

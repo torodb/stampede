@@ -31,7 +31,6 @@ import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
 import java.util.Set;
 
@@ -63,17 +62,21 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import com.google.common.base.Charsets;
-import com.google.common.net.HostAndPort;
-import com.torodb.packaging.config.model.Config;
-import com.torodb.packaging.config.model.backend.derby.Derby;
-import com.torodb.packaging.config.model.backend.postgres.Postgres;
-import com.torodb.packaging.config.model.protocol.mongo.Mongo;
-import com.torodb.packaging.config.model.protocol.mongo.Replication;
+import com.torodb.packaging.config.model.backend.BackendPasswordConfig;
+import com.torodb.packaging.config.model.protocol.mongo.MongoPasswordConfig;
 
 public class ConfigUtils {
 
     private static final Logger LOGGER = LogManager.getLogger(ConfigUtils.class);
 
+    public final static String getUserHomePath() {
+        return System.getProperty("user.home", ".");
+    }
+
+    public final static String getUserHomeFilePath(String file) {
+        return getUserHomePath() + File.separatorChar + file;
+    }
+    
     public static ObjectMapper mapper() {
         ObjectMapper objectMapper = new ObjectMapper();
 
@@ -104,7 +107,6 @@ public class ConfigUtils {
         objectMapper.configure(Feature.ALLOW_COMMENTS, true);
         objectMapper.configure(Feature.ALLOW_YAML_COMMENTS, true);
         objectMapper.setSerializationInclusion(Include.NON_NULL);
-        objectMapper.setSerializationInclusion(Include.NON_NULL);
         objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
     }
     
@@ -126,68 +128,48 @@ public class ConfigUtils {
         return new IllegalArgumentException("Validation error at " + jsonPointer + ": " + jsonMappingException.getMessage());
     }
 
-    public static Config readConfigFromYaml(String yamlString) throws JsonProcessingException, IOException {
+    public static <T> T readConfigFromYaml(Class<T> configClass, String yamlString) throws JsonProcessingException, IOException {
         ObjectMapper objectMapper = mapper();
         YAMLMapper yamlMapper = yamlMapper();
         
         JsonNode configNode = yamlMapper.readTree(yamlString);
 
-        Config config = objectMapper.treeToValue(configNode, Config.class);
+        T config = objectMapper.treeToValue(configNode, configClass);
 
         validateBean(config);
 
         return config;
     }
 
-    public static Config readConfigFromXml(String xmlString) throws JsonProcessingException, IOException {
+    public static <T> T readConfigFromXml(Class<T> configClass, String xmlString) throws JsonProcessingException, IOException {
         ObjectMapper objectMapper = mapper();
         XmlMapper xmlMapper = xmlMapper();
         
         JsonNode configNode = xmlMapper.readTree(xmlString);
 
-        Config config = objectMapper.treeToValue(configNode, Config.class);
+        T config = objectMapper.treeToValue(configNode, configClass);
 
         validateBean(config);
 
         return config;
     }
 
-    public static void parseToropassFile(final Config config) throws FileNotFoundException, IOException {
-        if (config.getBackend().isPostgresLike()) {
-            Postgres postgres = config.getBackend().asPostgres();
-            postgres.setPassword(getPasswordFromPassFile(
-                    postgres.getToropassFile(), 
-                    postgres.getHost(), 
-                    postgres.getPort(), 
-                    postgres.getDatabase(), 
-                    postgres.getUser()));
-        } else if(config.getBackend().isDerbyLike()) {
-            Derby derby = config.getBackend().asDerby();
-            derby.setPassword(getPasswordFromPassFile(
-                    derby.getToropassFile(), 
-                    derby.getHost(), 
-                    derby.getPort(), 
-                    derby.getDatabase(), 
-                    derby.getUser()));
-        }
+    public static void parseToropassFile(final BackendPasswordConfig backendPasswordConfig) throws FileNotFoundException, IOException {
+        backendPasswordConfig.setPassword(getPasswordFromPassFile(
+                backendPasswordConfig.getToropassFile(), 
+                backendPasswordConfig.getHost(), 
+                backendPasswordConfig.getPort(), 
+                backendPasswordConfig.getDatabase(), 
+                backendPasswordConfig.getUser()));
     }
 
-    public static void parseMongopassFile(final Config config) throws FileNotFoundException, IOException {
-        Mongo mongo = config.getProtocol().getMongo();
-        if (mongo.getReplication() != null) {
-            for (Replication replication : mongo.getReplication()) {
-                if (replication.getAuth().getUser() != null) {
-                    HostAndPort syncSource = HostAndPort.fromString(replication.getSyncSource())
-                            .withDefaultPort(27017);
-                    replication.getAuth().setPassword(getPasswordFromPassFile(
-                            mongo.getMongopassFile(), 
-                            syncSource.getHostText(), 
-                            syncSource.getPort(), 
-                            replication.getAuth().getSource(), 
-                            replication.getAuth().getUser()));
-                }
-            }
-        }
+    public static void parseMongopassFile(final MongoPasswordConfig mongoPasswordConfig) throws FileNotFoundException, IOException {
+        mongoPasswordConfig.setPassword(getPasswordFromPassFile(
+                mongoPasswordConfig.getMongopassFile(), 
+                mongoPasswordConfig.getHost(), 
+                mongoPasswordConfig.getPort(), 
+                mongoPasswordConfig.getDatabase(), 
+                mongoPasswordConfig.getUser()));
     }
 
     private static String getPasswordFromPassFile(String passFile, String host, int port, String database,
@@ -223,84 +205,103 @@ public class ConfigUtils {
         return null;
     }
 
-	public static ObjectNode mergeParam(ObjectMapper objectMapper, ObjectNode configRootNode, String pathAndProp, String value)
-			throws Exception {
-	    if (JsonPointer.compile(pathAndProp).equals(JsonPointer.compile("/"))) {
-	        return (ObjectNode) objectMapper.readTree(value);
-	    }
-	    
-		String path = pathAndProp.substring(0, pathAndProp.lastIndexOf("/"));
-		String prop = pathAndProp.substring(pathAndProp.lastIndexOf("/") + 1);
+    public static ObjectNode mergeParam(ObjectMapper objectMapper, ObjectNode configRootNode, String pathAndProp, String value)
+            throws Exception {
+        if (JsonPointer.compile(pathAndProp).equals(JsonPointer.compile("/"))) {
+            return (ObjectNode) objectMapper.readTree(value);
+        }
+        
+        String path = pathAndProp.substring(0, pathAndProp.lastIndexOf("/"));
+        String prop = pathAndProp.substring(pathAndProp.lastIndexOf("/") + 1);
 
-		JsonPointer pathPointer = JsonPointer.compile(path);
-		JsonNode pathNode = configRootNode.at(pathPointer);
+        JsonPointer pathPointer = JsonPointer.compile(path);
+        JsonNode pathNode = configRootNode.at(pathPointer);
 
-		if (pathNode.isMissingNode() || pathNode.isNull()) {
-			JsonPointer currentPointer = pathPointer;
-			JsonPointer childOfCurrentPointer = null;
-			List<JsonPointer> missingPointers = new ArrayList<>();
-			List<JsonPointer> childOfMissingPointers = new ArrayList<>();
-			do {
-				if (pathNode.isMissingNode() || pathNode.isNull()) {
-					missingPointers.add(0, currentPointer);
-					childOfMissingPointers.add(0, childOfCurrentPointer);
-				}
+        if (pathNode.isMissingNode() || pathNode.isNull()) {
+            JsonPointer currentPointer = pathPointer;
+            JsonPointer childOfCurrentPointer = null;
+            List<JsonPointer> missingPointers = new ArrayList<>();
+            List<JsonPointer> childOfMissingPointers = new ArrayList<>();
+            do {
+                if (pathNode.isMissingNode() || pathNode.isNull()) {
+                    missingPointers.add(0, currentPointer);
+                    childOfMissingPointers.add(0, childOfCurrentPointer);
+                }
 
-				childOfCurrentPointer = currentPointer;
-				currentPointer = currentPointer.head();
-				pathNode = configRootNode.at(currentPointer);
-			} while (pathNode.isMissingNode() || pathNode.isNull());
+                childOfCurrentPointer = currentPointer;
+                currentPointer = currentPointer.head();
+                pathNode = configRootNode.at(currentPointer);
+            } while (pathNode.isMissingNode() || pathNode.isNull());
 
-			for (int missingPointerIndex = 0; missingPointerIndex < missingPointers.size(); missingPointerIndex++) {
-				final JsonPointer missingPointer = missingPointers.get(missingPointerIndex);
-				final JsonPointer childOfMissingPointer = childOfMissingPointers.get(missingPointerIndex);
+            for (int missingPointerIndex = 0; missingPointerIndex < missingPointers.size(); missingPointerIndex++) {
+                final JsonPointer missingPointer = missingPointers.get(missingPointerIndex);
+                final JsonPointer childOfMissingPointer = childOfMissingPointers.get(missingPointerIndex);
 
-				final List<JsonNode> newNodes = new ArrayList<>();
+                final List<JsonNode> newNodes = new ArrayList<>();
 
-				if (pathNode.isObject()) {
-					((ObjectNode) pathNode).set(missingPointer.last().getMatchingProperty(),
-							createNode(childOfMissingPointer, newNodes));
-				} else if (pathNode.isArray() && missingPointer.last().mayMatchElement()) {
-					for (int index = ((ArrayNode) pathNode).size(); index < missingPointer.last().getMatchingIndex()
-							+ 1; index++) {
-						((ArrayNode) pathNode).add(createNode(childOfMissingPointer, newNodes));
-					}
-				} else {
-					throw new RuntimeException("Cannot set param " + pathAndProp + "=" + value);
-				}
+                if (pathNode.isObject()) {
+                    ((ObjectNode) pathNode).set(missingPointer.last().getMatchingProperty(),
+                            createNode(childOfMissingPointer, newNodes));
+                } else if (pathNode.isArray() && missingPointer.last().mayMatchElement()) {
+                    for (int index = ((ArrayNode) pathNode).size(); index < missingPointer.last().getMatchingIndex()
+                            + 1; index++) {
+                        ((ArrayNode) pathNode).add(createNode(childOfMissingPointer, newNodes));
+                    }
+                } else {
+                    throw new RuntimeException("Cannot set param " + pathAndProp + "=" + value);
+                }
 
-				pathNode = newNodes.get(newNodes.size() - 1);
-			}
-		}
+                pathNode = newNodes.get(newNodes.size() - 1);
+            }
+        }
 
-		Object valueAsObject;
-		try {
-		    valueAsObject = objectMapper.readValue(value, Object.class);
-		} catch(JsonMappingException jsonMappingException) {
-		    throw JsonMappingException.wrapWithPath(jsonMappingException, configRootNode, path.substring(1) + "/" + prop);
-		}
-		
-		if (pathNode instanceof ObjectNode) {
-	        ObjectNode objectNode = (ObjectNode) pathNode;
-	        if (valueAsObject != null) {
-	            JsonNode valueNode = objectMapper.valueToTree(valueAsObject);
-	            objectNode.set(prop, valueNode);
-	        } else {
-	            objectNode.remove(prop);
-	        }
-		} else if (pathNode instanceof ArrayNode) {
-	        ArrayNode arrayNode = (ArrayNode) pathNode;
-	        Integer index = Integer.valueOf(prop);
-	        if (valueAsObject != null) {
-	            JsonNode valueNode = objectMapper.valueToTree(valueAsObject);
-	            arrayNode.set(index, valueNode);
-	        } else {
-	            arrayNode.remove(index);
-	        }
-		}
-		
-		return configRootNode;
-	}
+        Object valueAsObject;
+        try {
+            valueAsObject = objectMapper.readValue(value, Object.class);
+        } catch(JsonMappingException jsonMappingException) {
+            throw JsonMappingException.wrapWithPath(jsonMappingException, configRootNode, path.substring(1) + "/" + prop);
+        }
+        
+        if (pathNode instanceof ObjectNode) {
+            ObjectNode objectNode = (ObjectNode) pathNode;
+            if (valueAsObject != null) {
+                JsonNode valueNode = objectMapper.valueToTree(valueAsObject);
+                objectNode.set(prop, valueNode);
+            } else {
+                objectNode.remove(prop);
+            }
+        } else if (pathNode instanceof ArrayNode) {
+            ArrayNode arrayNode = (ArrayNode) pathNode;
+            Integer index = Integer.valueOf(prop);
+            if (valueAsObject != null) {
+                JsonNode valueNode = objectMapper.valueToTree(valueAsObject);
+                arrayNode.set(index, valueNode);
+            } else {
+                arrayNode.remove(index);
+            }
+        }
+        
+        return configRootNode;
+    }
+
+    public static <T> JsonNode getParam(T config, String pathAndProp)
+            throws Exception {
+        XmlMapper xmlMapper = xmlMapper();
+        JsonNode configNode = xmlMapper.valueToTree(config);
+        
+        if (JsonPointer.compile(pathAndProp).equals(JsonPointer.compile("/"))) {
+            return configNode;
+        }
+        
+        JsonPointer pathPointer = JsonPointer.compile(pathAndProp);
+        JsonNode pathNode = configNode.at(pathPointer);
+
+        if (pathNode.isMissingNode() || pathNode.isNull()) {
+            return null;
+        }
+
+        return pathNode;
+    }
 
 	private static JsonNode createNode(JsonPointer childOfPointer, List<JsonNode> newNodes) {
 		JsonNode newNode;
@@ -316,14 +317,14 @@ public class ConfigUtils {
 		return newNode;
 	}
 
-	public static void printYamlConfig(Config config, Console console)
+	public static <T> void printYamlConfig(T config, Console console)
 			throws IOException, JsonGenerationException, JsonMappingException {
 		ObjectMapper objectMapper = yamlMapper();
 		ObjectWriter objectWriter = objectMapper.writer();
 		printConfig(config, console, objectWriter);
 	}
 
-	public static void printXmlConfig(Config config, Console console)
+	public static <T> void printXmlConfig(T config, Console console)
 			throws IOException, JsonGenerationException, JsonMappingException {
 		ObjectMapper objectMapper = xmlMapper();
 		ObjectWriter objectWriter = objectMapper.writer();
@@ -331,7 +332,7 @@ public class ConfigUtils {
 		printConfig(config, console, objectWriter);
 	}
 
-	private static void printConfig(Config config, Console console, ObjectWriter objectWriter)
+	private static <T> void printConfig(T config, Console console, ObjectWriter objectWriter)
 			throws IOException, JsonGenerationException, JsonMappingException, UnsupportedEncodingException {
 		ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 		PrintStream printStream = new PrintStream(byteArrayOutputStream, false, Charsets.UTF_8.name());
@@ -339,22 +340,21 @@ public class ConfigUtils {
 		console.println(byteArrayOutputStream.toString(Charsets.UTF_8.name()));
 	}
 
-	public static void printParamDescriptionFromConfigSchema(Console console, int tabs)
+	public static <T> void printParamDescriptionFromConfigSchema(Class<T> configClass, ResourceBundle resourceBundle, Console console, int tabs)
 			throws UnsupportedEncodingException, JsonMappingException {
 		ObjectMapper objectMapper = mapper();
-		ResourceBundle resourceBundle = PropertyResourceBundle.getBundle("ConfigMessages");
 		DescriptionFactoryWrapper visitor = new DescriptionFactoryWrapper(resourceBundle, console, tabs);
-		objectMapper.acceptJsonFormatVisitor(objectMapper.constructType(Config.class), visitor);
+		objectMapper.acceptJsonFormatVisitor(objectMapper.constructType(configClass), visitor);
 		console.println("");
 	}
 	
-	public static void validateBean(Config config) {
+	public static <T> void validateBean(T config) {
 		ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
 		Validator validator = factory.getValidator();
-		Set<ConstraintViolation<Config>> constraintViolations = validator.validate(config);
+		Set<ConstraintViolation<T>> constraintViolations = validator.validate(config);
 		if (!constraintViolations.isEmpty()) {
 			StringBuilder constraintViolationExceptionMessageBuilder = new StringBuilder();
-			for (ConstraintViolation<Config> constraintViolation : constraintViolations) {
+			for (ConstraintViolation<T> constraintViolation : constraintViolations) {
 				if (constraintViolationExceptionMessageBuilder.length() > 0) {
 					constraintViolationExceptionMessageBuilder.append(", ");
 				}

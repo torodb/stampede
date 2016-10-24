@@ -24,17 +24,24 @@ import javax.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.torodb.packaging.config.annotation.Description;
 
+
+@JsonPropertyOrder({
+    "mode",
+    "user",
+    "source"
+})
 public class Auth {
-    @Description("config.protocol.mongo.replication.auth.mode")
+    @Description("config.mongo.replication.auth.mode")
     @NotNull
     @JsonProperty(required=true)
     private AuthMode mode = AuthMode.disabled;
-    @Description("config.protocol.mongo.replication.auth.user")
+    @Description("config.mongo.replication.auth.user")
     @JsonProperty(required=true)
     private String user;
-    @Description("config.protocol.mongo.replication.auth.source")
+    @Description("config.mongo.replication.auth.source")
     @JsonProperty(required=true)
     private String source;
     @JsonIgnore

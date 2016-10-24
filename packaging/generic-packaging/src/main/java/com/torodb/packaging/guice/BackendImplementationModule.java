@@ -21,56 +21,80 @@
 
 package com.torodb.packaging.guice;
 
-import com.google.inject.AbstractModule;
+import javax.annotation.concurrent.Immutable;
+import javax.annotation.concurrent.ThreadSafe;
+import javax.inject.Inject;
+
+import com.google.inject.PrivateModule;
 import com.torodb.backend.DbBackendConfiguration;
 import com.torodb.backend.derby.guice.DerbyBackendModule;
 import com.torodb.backend.driver.derby.DerbyDbBackendConfiguration;
 import com.torodb.backend.driver.postgresql.PostgreSQLDbBackendConfiguration;
+import com.torodb.backend.guice.BackendModule;
 import com.torodb.backend.postgresql.guice.PostgreSQLBackendModule;
-import com.torodb.packaging.config.model.Config;
+import com.torodb.core.backend.BackendBundleFactory;
+import com.torodb.core.backend.IdentifierConstraints;
+import com.torodb.core.backend.SnapshotUpdater;
+import com.torodb.core.d2r.ReservedIdGenerator;
+import com.torodb.core.dsl.backend.BackendTransactionJobFactory;
+import com.torodb.packaging.config.model.backend.BackendImplementation;
+import com.torodb.packaging.config.model.backend.ConnectionPoolConfig;
+import com.torodb.packaging.config.model.backend.CursorConfig;
 import com.torodb.packaging.config.model.backend.derby.Derby;
 import com.torodb.packaging.config.model.backend.postgres.Postgres;
 import com.torodb.packaging.config.visitor.BackendImplementationVisitor;
-import javax.annotation.concurrent.Immutable;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
-public class BackendImplementationModule extends AbstractModule implements BackendImplementationVisitor {
-	private final Config config;
+public class BackendImplementationModule extends PrivateModule implements BackendImplementationVisitor {
+    private final CursorConfig cursorConfig;
+    private final ConnectionPoolConfig connectionPoolConfig;
+	private final BackendImplementation backendImplementation;
 
-	public BackendImplementationModule(Config config) {
-		this.config = config;
+	public BackendImplementationModule(CursorConfig cursorConfig, ConnectionPoolConfig connectionPoolConfig, 
+	        BackendImplementation backendImplementation) {
+	    this.cursorConfig = cursorConfig;
+	    this.connectionPoolConfig = connectionPoolConfig;
+		this.backendImplementation = backendImplementation;
 	}
 
 	@Override
 	protected void configure() {
-		config.getBackend().getBackendImplementation().accept(this);
+        bind(CursorConfig.class).toInstance(cursorConfig);
+        bind(ConnectionPoolConfig.class).toInstance(connectionPoolConfig);
+        install(new BackendModule());
+	    backendImplementation.accept(this);
+        expose(IdentifierConstraints.class);
+        expose(BackendBundleFactory.class);
+        expose(BackendTransactionJobFactory.class);
+        expose(ReservedIdGenerator.class);
+        expose(SnapshotUpdater.class);
 	}
 
 	@Override
 	public void visit(Postgres value) {
-		bind(PostgreSQLDbBackendConfiguration.class)
-                .toInstance(new PostgresSQLDbBackendConfigurationMapper(config, value));
+        bind(Postgres.class).toInstance(value);
+        bind(PostgreSQLDbBackendConfiguration.class).to(PostgresSQLDbBackendConfigurationMapper.class);
 		install(new PostgreSQLBackendModule());
 	}
 
 	@Override
 	public void visit(Derby value) {
-        bind(DerbyDbBackendConfiguration.class)
-                .toInstance(new DerbyBackendConfigurationMapper(config, value));
+        bind(Derby.class).toInstance(value);
+        bind(DerbyDbBackendConfiguration.class).to(DerbyBackendConfigurationMapper.class);
         install(new DerbyBackendModule());
 	}
     
     @Immutable
+    @ThreadSafe
     public static class DerbyBackendConfigurationMapper extends DbBackendConfigurationMapper implements DerbyDbBackendConfiguration {
         private final boolean embedded;
         private final boolean inMemory;
         
-        public DerbyBackendConfigurationMapper(Config config, Derby derby) {
-            super(config.getProtocol().getMongo().getCursorTimeout(),
-                    config.getGeneric().getConnectionPoolTimeout(),
-                    config.getGeneric().getConnectionPoolSize(),
-                    config.getGeneric().getReservedReadPoolSize(),
+        @Inject
+        public DerbyBackendConfigurationMapper(CursorConfig cursorConfig, ConnectionPoolConfig connectionPoolConfig, Derby derby) {
+            super(cursorConfig.getCursorTimeout(),
+                    connectionPoolConfig.getConnectionPoolTimeout(),
+                    connectionPoolConfig.getConnectionPoolSize(),
+                    connectionPoolConfig.getReservedReadPoolSize(),
                     derby.getHost(),
                     derby.getPort(),
                     derby.getDatabase(),
@@ -94,14 +118,13 @@ public class BackendImplementationModule extends AbstractModule implements Backe
     }
     
     @Immutable
-    @Singleton
     public static class PostgresSQLDbBackendConfigurationMapper extends DbBackendConfigurationMapper implements PostgreSQLDbBackendConfiguration {
         @Inject
-        public PostgresSQLDbBackendConfigurationMapper(Config config, Postgres postgres) {
-            super(config.getProtocol().getMongo().getCursorTimeout(),
-                    config.getGeneric().getConnectionPoolTimeout(),
-                    config.getGeneric().getConnectionPoolSize(),
-                    config.getGeneric().getReservedReadPoolSize(),
+        public PostgresSQLDbBackendConfigurationMapper(CursorConfig cursorConfig, ConnectionPoolConfig connectionPoolConfig, Postgres postgres) {
+            super(cursorConfig.getCursorTimeout(),
+                    connectionPoolConfig.getConnectionPoolTimeout(),
+                    connectionPoolConfig.getConnectionPoolSize(),
+                    connectionPoolConfig.getReservedReadPoolSize(),
                     postgres.getHost(),
                     postgres.getPort(),
                     postgres.getDatabase(),
@@ -110,7 +133,8 @@ public class BackendImplementationModule extends AbstractModule implements Backe
                     postgres.getIncludeForeignKeys());
         }
     }
-    
+
+    @ThreadSafe
 	public static abstract class DbBackendConfigurationMapper implements DbBackendConfiguration {
 
         private final long cursorTimeout;

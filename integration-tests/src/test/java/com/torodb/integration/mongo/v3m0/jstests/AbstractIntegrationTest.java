@@ -40,11 +40,13 @@ import org.slf4j.Logger;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.Multimap;
-import com.torodb.packaging.config.model.Config;
 import com.torodb.core.exceptions.SystemException;
 import com.torodb.integration.IntegrationTestEnvironment;
 import com.torodb.integration.TestCategory;
 import com.torodb.integration.ToroRunnerClassRule;
+import com.torodb.standalone.config.model.Config;
+import com.torodb.standalone.config.model.backend.derby.Derby;
+import com.torodb.standalone.config.model.backend.postgres.Postgres;
 
 public abstract class AbstractIntegrationTest {
 
@@ -86,10 +88,10 @@ public abstract class AbstractIntegrationTest {
 
 		String toroConnectionString = config.getProtocol().getMongo().getNet().getBindIp() + ":"
 				+ config.getProtocol().getMongo().getNet().getPort() + "/";
-		if (config.getBackend().isPostgresLike()) {
-		    toroConnectionString = toroConnectionString + config.getBackend().asPostgres().getDatabase();
-		} else if (config.getBackend().isDerbyLike()) {
-            toroConnectionString = toroConnectionString + config.getBackend().asDerby().getDatabase();
+		if (config.getBackend().isLike(Postgres.class)) {
+		    toroConnectionString = toroConnectionString + config.getBackend().as(Postgres.class).getDatabase();
+		} else if (config.getBackend().isLike(Derby.class)) {
+            toroConnectionString = toroConnectionString + config.getBackend().as(Derby.class).getDatabase();
 		} else {
 		    throw new SystemException("Backend " + config.getBackend().getBackendImplementation() + " is not supported");
 		}

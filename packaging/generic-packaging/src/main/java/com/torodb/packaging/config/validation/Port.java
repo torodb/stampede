@@ -41,7 +41,7 @@ import javax.validation.constraints.Min;
 @Min(0)
 @Max(65535)
 public @interface Port {
-	String message() default "{com.torodb.config.validation.Port.message}";
+	String message() default "{config.validation.Port.message}";
 
 	Class<?>[] groups() default {};
 

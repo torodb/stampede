@@ -1,0 +1,67 @@
+#!/bin/bash
+
+$DEBUG > /dev/null 2>&1 && set -x
+$DEBUG > /dev/null 2>&1 && set -v
+set -e
+
+if [ "${1:0:1}" = '-' ]; then
+    set -- @{assembler.name} "$@"
+fi
+
+if [ "$1" == "@{assembler.name}" ]
+then
+    shift
+    
+    DEFAULT_TORODB_BACKEND_HOST="$(/sbin/ip route|awk '/default/ { print $3 }')"
+    DEFAULT_MONGO_SYNC_SOURCE="$(/sbin/ip route|awk '/default/ { print $3 }'):27017"
+    
+    TORODB_BACKEND_HOST="${TORODB_BACKEND_HOST:-$DEFAULT_TORODB_BACKEND_HOST}"
+    TORODB_BACKEND_PORT="${TORODB_BACKEND_PORT:-5432}"
+    TORODB_BACKEND_DATABASE="${TORODB_BACKEND_DATABASE:-torod}"
+    TORODB_BACKEND_USER="${TORODB_BACKEND_USER:-torodb}"
+    MONGO_SYNC_SOURCE="${MONGO_SYNC_SOURCE:-$DEFAULT_MONGO_SYNC_SOURCE}"
+    
+    if [ -z "$TORODB_BACKEND_PASSWORD" ]
+    then
+        echo "You must set TORODB_BACKEND_PASSWORD environment variable with passowrd for user $TORODB_BACKEND_USER that will be used by @{fullName} to connect to database" >&2
+        exit 1
+    fi
+    
+    if "${TORODB_SETUP:-false}"
+    then
+        if [ -z "$POSTGRES_PASSWORD" ]
+        then
+            echo "You must set POSTGRES_PASSWORD environment variable with passowrd for user postgres that will be used to setup database" >&2
+            exit 1
+        fi
+        
+        echo "$TORODB_BACKEND_HOST:$TORODB_BACKEND_PORT:*:postgres:$POSTGRES_PASSWORD" > ~/.pgpass
+        chmod 400 ~/.pgpass
+        while ! psql -U postgres -h $TORODB_BACKEND_HOST -p $TORODB_BACKEND_PORT -c "SELECT 1"
+        do
+            sleep 3
+        done 
+        @{assembler.name}-setup root \
+            --backend-host "$TORODB_BACKEND_HOST" \
+            --backend-port "$TORODB_BACKEND_PORT" \
+            --backend-database "$TORODB_BACKEND_DATABASE" \
+            --backend-user "$TORODB_BACKEND_USER" \
+            --sync-source "$MONGO_SYNC_SOURCE" \
+            "$@"
+    else
+        echo "$TORODB_BACKEND_HOST:$TORODB_BACKEND_PORT:$TORODB_BACKEND_DATABASE:$TORODB_BACKEND_USER:$TORODB_BACKEND_PASSWORD" > ~/.toropass
+        chmod 400 ~/.toropass
+    fi
+
+    echo "ENV_PATH PATH=$PATH" >> /etc/login.defs
+    
+    set -- @{assembler.name} \
+        --backend-host "$TORODB_BACKEND_HOST" \
+        --backend-port "$TORODB_BACKEND_PORT" \
+        --backend-database "$TORODB_BACKEND_DATABASE" \
+        --backend-user "$TORODB_BACKEND_USER" \
+        --sync-source $MONGO_SYNC_SOURCE \
+        "$@"
+fi
+
+exec "$@"
