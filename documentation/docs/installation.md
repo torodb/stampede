@@ -29,7 +29,7 @@ $ sudo apt-get update
 Instalar el paquete de MongoDB Community Edition.
 
 ```
-$ sudo apt-get install -y mongodb-org
+$ sudo apt-get install mongodb-org
 ```
 
 Crear el fichero `/lib/systemd/system/mongod.service`. __Sólo para Ubuntu 16.04__.
@@ -60,6 +60,8 @@ Si ejecutamos el comando `mongo` podremos ver como se accede a la consola de Mon
 ### Configuración de un replica set
 
 #### Ubuntu 16.04 LTS
+
+Antes de proceder a crear el replica set y para evitar posibles problemas, debemos asegurarnos que en el fichero `/etc/hosts` tenemos una línea que referencia el nombre de nuestra máquina con la dirección IP de localhost, tal que `127.0.0.1  MACHINE-NAME`.
 
 Para configurar la instalación de MongoDB como un nodo primario del replica set, debemos modificar el fichero `/etc/mongod.conf` para añadir las siguientes líneas.
 
