@@ -41,19 +41,22 @@ import org.junit.runners.model.Statement;
 import org.postgresql.ds.PGSimpleDataSource;
 
 import com.beust.jcommander.internal.Console;
-import com.google.inject.Injector;
 import com.torodb.backend.DbBackendService;
 import com.torodb.backend.meta.TorodbSchema;
 import com.torodb.core.backend.IdentifierConstraints;
+import com.torodb.core.services.TorodbService;
+import com.torodb.core.supervision.Supervisor;
+import com.torodb.core.supervision.SupervisorDecision;
 import com.torodb.packaging.config.model.protocol.mongo.Replication;
 import com.torodb.packaging.config.util.ConfigUtils;
 import com.torodb.packaging.util.Log4jUtils;
-import com.torodb.standalone.ToroDbServer;
+import com.torodb.standalone.ToroDbStandaloneTestUtil;
+import com.torodb.standalone.ToroDbStandaloneTestUtil.TestService;
 import com.torodb.standalone.config.model.Config;
 import com.torodb.standalone.config.model.backend.derby.Derby;
 import com.torodb.standalone.config.model.backend.postgres.Postgres;
 
-public abstract class AbstractBackendRunnerClassRule implements TestRule {
+public abstract class AbstractBackendRunnerClassRule implements TestRule, Supervisor {
 
     private static final Logger LOGGER = LogManager.getLogger(AbstractBackendRunnerClassRule.class);
     private static final int TORO_BOOT_MAX_INTERVAL_MILLIS = 2 * 60 * 1000;
@@ -76,7 +79,7 @@ public abstract class AbstractBackendRunnerClassRule implements TestRule {
 	
 	private boolean started = false;
 	private Config config;
-	private Injector injector;
+	private TestService testService;
 
 	public AbstractBackendRunnerClassRule() {
         super();
@@ -104,17 +107,17 @@ public abstract class AbstractBackendRunnerClassRule implements TestRule {
 		return config;
 	}
 	
-	public Injector getInjector() {
-	    return injector;
+	public TestService getService() {
+	    return testService;
 	}
 	
 	protected synchronized void startupBackend() throws Exception {
 		if (!started) {
 			setupConfig();
-			
-            injector = ToroDbServer.createInjector(config, Clock.systemUTC());
 
 			Log4jUtils.setRootLevel(config.getGeneric().getLogLevel());
+			
+			testService = ToroDbStandaloneTestUtil.createInjectors(getConfig(), Clock.systemDefaultZone());
 			
             if (config.getBackend().isLike(Postgres.class)) {
                 Postgres postgresBackend = config.getBackend().as(Postgres.class);
@@ -266,8 +269,8 @@ public abstract class AbstractBackendRunnerClassRule implements TestRule {
 	protected abstract void shutDown() throws Exception;
 
     protected void cleanDatabase() throws Exception {
-        DbBackendService dbBackend = injector.getInstance(DbBackendService.class);
-        IdentifierConstraints identifierConstraints = injector.getInstance(IdentifierConstraints.class);
+        DbBackendService dbBackend = testService.getInjector().getInstance(DbBackendService.class);
+        IdentifierConstraints identifierConstraints = testService.getInjector().getInstance(IdentifierConstraints.class);
         try (Connection connection = dbBackend.createSystemConnection()) {
             DatabaseMetaData metaData = connection.getMetaData();
             ResultSet tables = metaData.getTables("%", "%", "%", new String[] { "TABLE", "VIEW" });
@@ -310,5 +313,14 @@ public abstract class AbstractBackendRunnerClassRule implements TestRule {
             }
             connection.commit();
         }
+        getService().checkOrCreateMetaDataTables();
+    }
+
+    @Override
+    public SupervisorDecision onError(TorodbService supervised, Throwable error) {
+        supervised.stopAsync();
+        supervised.awaitTerminated();
+        
+        throw new RuntimeException(error);
     }
 }

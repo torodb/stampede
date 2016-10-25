@@ -2,13 +2,12 @@ package com.torodb.standalone;
 
 
 import java.time.Clock;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import com.google.common.util.concurrent.Service;
 import com.torodb.packaging.config.model.generic.LogLevel;
 import com.torodb.packaging.config.util.ConfigUtils;
 import com.torodb.standalone.config.model.Config;
@@ -18,8 +17,7 @@ import com.torodb.standalone.config.model.backend.derby.Derby;
  *
  * @author gortiz
  */
-@Ignore
-public class ToroDbServerTest {
+public class ToroDbBootstrapServiceTest {
 
     private Config config;
 
@@ -36,18 +34,21 @@ public class ToroDbServerTest {
     }
 
     @Test
-    public void testCreate() {
-        ToroDbServer.create(config, Clock.systemUTC());
+    public void testCreateStampedeService() {
+        ToroDbBootstrap.createStandaloneService(config, Clock.systemUTC());
     }
 
     @Test
-    public void testInitiate() throws TimeoutException {
-        ToroDbServer server = ToroDbServer.create(config, Clock.systemUTC());
+    @Ignore(value = "The test is not working properly")
+    public void testCreateStampedeService_run() {
+        Service stampedeService = ToroDbBootstrap.createStandaloneService(
+                config,
+                Clock.systemUTC());
+        stampedeService.startAsync();
+        stampedeService.awaitRunning();
 
-        server.startAsync();
-        server.awaitRunning(10, TimeUnit.SECONDS);
-
-        server.stopAsync();
-        server.awaitTerminated(10, TimeUnit.SECONDS);
+        stampedeService.stopAsync();
+        stampedeService.awaitTerminated();
     }
+
 }

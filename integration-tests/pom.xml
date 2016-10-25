@@ -104,6 +104,13 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>com.torodb.packaging</groupId>
+            <artifactId>standalone-service</artifactId>
+            <version>${project.version}</version>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>com.8kdata.mongowp.server</groupId>
             <artifactId>mongo-server-api</artifactId>
             <scope>test</scope>

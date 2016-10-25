@@ -27,10 +27,14 @@ import javax.inject.Inject;
 
 import com.google.inject.PrivateModule;
 import com.torodb.backend.DbBackendConfiguration;
+import com.torodb.backend.DbBackendService;
+import com.torodb.backend.SqlHelper;
+import com.torodb.backend.SqlInterface;
 import com.torodb.backend.derby.guice.DerbyBackendModule;
 import com.torodb.backend.driver.derby.DerbyDbBackendConfiguration;
 import com.torodb.backend.driver.postgresql.PostgreSQLDbBackendConfiguration;
 import com.torodb.backend.guice.BackendModule;
+import com.torodb.backend.meta.SchemaUpdater;
 import com.torodb.backend.postgresql.guice.PostgreSQLBackendModule;
 import com.torodb.core.backend.BackendBundleFactory;
 import com.torodb.core.backend.IdentifierConstraints;
@@ -62,6 +66,10 @@ public class BackendImplementationModule extends PrivateModule implements Backen
         bind(ConnectionPoolConfig.class).toInstance(connectionPoolConfig);
         install(new BackendModule());
 	    backendImplementation.accept(this);
+        expose(SqlHelper.class);
+        expose(SqlInterface.class);
+        expose(SchemaUpdater.class);
+        expose(DbBackendService.class);
         expose(IdentifierConstraints.class);
         expose(BackendBundleFactory.class);
         expose(BackendTransactionJobFactory.class);
