@@ -27,7 +27,8 @@ import java.util.Map;
 
 import javax.validation.constraints.NotNull;
 
-import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.IndexOptions.IndexType;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.index.IndexOptions.KnownType;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.index.type.IndexType;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -134,9 +135,9 @@ public class FilterList extends HashMap<String, Map<String, List<IndexFilter>>> 
     }
     
     public static IndexType getIndexType(String filterType) {
-        for (IndexType indexType : IndexType.values()) {
-            if (indexType.toBsonValue().toString().equals(filterType)) {
-                return indexType;
+        for (KnownType knownType : KnownType.values()) {
+            if (knownType.getIndexType().toBsonValue().toString().equals(filterType)) {
+                return knownType.getIndexType();
             }
         }
         

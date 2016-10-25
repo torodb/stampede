@@ -25,8 +25,8 @@ import java.util.regex.Pattern;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.IndexOptions;
-import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.IndexOptions.IndexType;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.index.IndexOptions;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.index.IndexOptions.KnownType;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.torodb.mongodb.repl.ReplicationFilters.IndexFieldPattern;
@@ -477,7 +477,7 @@ public class ReplicationFiltersTest {
         Assert.assertFalse(filterProvider.getCollectionPredicate().test("other", "two"));
         Assert.assertFalse(filterProvider.getCollectionPredicate().test("other", "three"));
         Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index", false, ImmutableList.of()));
-        Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value"), IndexType.asc))));
+        Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value"), KnownType.asc.getIndexType()))));
         Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index", true, ImmutableList.of()));
         Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "two", "index", false, ImmutableList.of()));
         Assert.assertFalse(filterProvider.getIndexPredicate().test("test1", "one", "index", false, ImmutableList.of()));
@@ -497,18 +497,18 @@ public class ReplicationFiltersTest {
         Assert.assertTrue(filterProvider.getCollectionPredicate().test("test", "one"));
         Assert.assertFalse(filterProvider.getCollectionPredicate().test("test", "two"));
         Assert.assertFalse(filterProvider.getCollectionPredicate().test("test1", "one"));
-        Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value"), IndexType.asc))));
-        Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc1", "value"), IndexType.asc))));
-        Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value1"), IndexType.asc))));
-        Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value"), IndexType.desc))));
-        Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("1subdoc", "value"), IndexType.asc))));
-        Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "1value"), IndexType.asc))));
-        Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value", "another"), IndexType.asc))));
-        Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc"), IndexType.asc))));
-        Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("value"), IndexType.asc))));
-        Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "two", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value"), IndexType.asc))));
-        Assert.assertFalse(filterProvider.getIndexPredicate().test("test1", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value"), IndexType.asc))));
-        Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index1", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value"), IndexType.asc))));
+        Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value"), KnownType.asc.getIndexType()))));
+        Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc1", "value"), KnownType.asc.getIndexType()))));
+        Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value1"), KnownType.asc.getIndexType()))));
+        Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value"), KnownType.desc.getIndexType()))));
+        Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("1subdoc", "value"), KnownType.asc.getIndexType()))));
+        Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "1value"), KnownType.asc.getIndexType()))));
+        Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value", "another"), KnownType.asc.getIndexType()))));
+        Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc"), KnownType.asc.getIndexType()))));
+        Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("value"), KnownType.asc.getIndexType()))));
+        Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "two", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value"), KnownType.asc.getIndexType()))));
+        Assert.assertFalse(filterProvider.getIndexPredicate().test("test1", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value"), KnownType.asc.getIndexType()))));
+        Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index1", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value"), KnownType.asc.getIndexType()))));
     }
     
     @Test
@@ -554,7 +554,7 @@ public class ReplicationFiltersTest {
         Assert.assertTrue(filterProvider.getCollectionPredicate().test("other", "two"));
         Assert.assertTrue(filterProvider.getCollectionPredicate().test("other", "three"));
         Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index", false, ImmutableList.of()));
-        Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value"), IndexType.asc))));
+        Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value"), KnownType.asc.getIndexType()))));
         Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index", true, ImmutableList.of()));
         Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "two", "index", false, ImmutableList.of()));
         Assert.assertTrue(filterProvider.getIndexPredicate().test("test1", "one", "index", false, ImmutableList.of()));
@@ -574,17 +574,17 @@ public class ReplicationFiltersTest {
         Assert.assertTrue(filterProvider.getCollectionPredicate().test("test", "one"));
         Assert.assertTrue(filterProvider.getCollectionPredicate().test("test", "two"));
         Assert.assertTrue(filterProvider.getCollectionPredicate().test("test1", "one"));
-        Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value"), IndexType.asc))));
-        Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc1", "value"), IndexType.asc))));
-        Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value1"), IndexType.asc))));
-        Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value"), IndexType.desc))));
-        Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("1subdoc", "value"), IndexType.asc))));
-        Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "1value"), IndexType.asc))));
-        Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value", "another"), IndexType.asc))));
-        Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc"), IndexType.asc))));
-        Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("value"), IndexType.asc))));
-        Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "two", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value"), IndexType.asc))));
-        Assert.assertTrue(filterProvider.getIndexPredicate().test("test1", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value"), IndexType.asc))));
-        Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index1", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value"), IndexType.asc))));
+        Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value"), KnownType.asc.getIndexType()))));
+        Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc1", "value"), KnownType.asc.getIndexType()))));
+        Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value1"), KnownType.asc.getIndexType()))));
+        Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value"), KnownType.desc.getIndexType()))));
+        Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("1subdoc", "value"), KnownType.asc.getIndexType()))));
+        Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "1value"), KnownType.asc.getIndexType()))));
+        Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value", "another"), KnownType.asc.getIndexType()))));
+        Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc"), KnownType.asc.getIndexType()))));
+        Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("value"), KnownType.asc.getIndexType()))));
+        Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "two", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value"), KnownType.asc.getIndexType()))));
+        Assert.assertTrue(filterProvider.getIndexPredicate().test("test1", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value"), KnownType.asc.getIndexType()))));
+        Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index1", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value"), KnownType.asc.getIndexType()))));
     }
 }

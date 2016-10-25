@@ -31,9 +31,10 @@ import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.ListIndexesCommand.ListIndexesArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.ListIndexesCommand.ListIndexesResult;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.CursorResult;
-import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.IndexOptions;
-import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.IndexOptions.IndexType;
-import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.IndexOptions.IndexVersion;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.index.IndexOptions;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.index.IndexOptions.IndexVersion;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.index.IndexOptions.KnownType;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.index.type.IndexType;
 import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.Request;
 import com.torodb.mongodb.commands.impl.ReadTorodbCommandImpl;
@@ -83,7 +84,7 @@ public class ListIndexesImplementation implements ReadTorodbCommandImpl<ListInde
     }
 
     private IndexType extractType(IndexFieldInfo indexFieldInfo) {
-        return indexFieldInfo.isAscending() ? IndexType.asc : IndexType.desc;
+        return indexFieldInfo.isAscending() ? KnownType.asc.getIndexType() : KnownType.desc.getIndexType();
     }
     
 }
