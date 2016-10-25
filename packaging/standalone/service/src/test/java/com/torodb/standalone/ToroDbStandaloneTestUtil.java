@@ -31,7 +31,6 @@ import com.torodb.core.backend.BackendConnection;
 import com.torodb.core.backend.BackendService;
 import com.torodb.core.backend.ExclusiveWriteBackendTransaction;
 import com.torodb.core.exceptions.user.UserException;
-import com.torodb.core.services.TorodbService;
 import com.torodb.core.supervision.Supervisor;
 import com.torodb.core.supervision.SupervisorDecision;
 import com.torodb.standalone.config.model.Config;
@@ -41,7 +40,7 @@ public class ToroDbStandaloneTestUtil {
     
     private static final Supervisor STOP_AND_THROW_SUPERVISOR = new Supervisor() {
         @Override
-        public SupervisorDecision onError(TorodbService supervised, Throwable error) {
+        public SupervisorDecision onError(Object supervised, Throwable error) {
             return SupervisorDecision.STOP;
         }
     };

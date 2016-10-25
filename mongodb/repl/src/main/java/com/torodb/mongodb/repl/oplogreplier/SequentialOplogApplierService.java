@@ -27,7 +27,6 @@ import javax.inject.Inject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.torodb.core.annotations.TorodbIdleService;
-import com.torodb.core.services.TorodbService;
 import com.torodb.core.supervision.SupervisorDecision;
 
 /**
@@ -276,7 +275,7 @@ public class SequentialOplogApplierService extends IdleTorodbService implements 
         }
 
         @Override
-        public SupervisorDecision onError(TorodbService supervised, Throwable t) {
+        public SupervisorDecision onError(Object supervised, Throwable t) {
             executor.execute(
                     new Runnable() {
 

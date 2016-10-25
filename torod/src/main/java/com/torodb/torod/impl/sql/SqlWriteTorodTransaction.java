@@ -35,10 +35,10 @@ import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
 import com.torodb.kvdocument.values.KVDocument;
 import com.torodb.kvdocument.values.KVValue;
 import com.torodb.torod.IndexFieldInfo;
-import com.torodb.torod.SharedWriteTorodTransaction;
 import com.torodb.torod.pipeline.InsertPipeline;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import com.torodb.torod.SharedWriteTorodTransaction;
 
 /**
  *

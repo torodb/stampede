@@ -13,7 +13,6 @@ import com.google.inject.Injector;
 import com.torodb.core.Shutdowner;
 import com.torodb.core.backend.BackendBundle;
 import com.torodb.core.backend.BackendBundleFactory;
-import com.torodb.core.services.TorodbService;
 import com.torodb.core.supervision.Supervisor;
 import com.torodb.core.supervision.SupervisorDecision;
 import com.torodb.torod.TorodBundle;
@@ -43,7 +42,7 @@ public class ToroDbService extends AbstractIdleService implements Supervisor {
     }
 
     @Override
-    public SupervisorDecision onError(TorodbService supervised, Throwable error) {
+    public SupervisorDecision onError(Object supervised, Throwable error) {
         this.stopAsync();
         return SupervisorDecision.STOP;
     }

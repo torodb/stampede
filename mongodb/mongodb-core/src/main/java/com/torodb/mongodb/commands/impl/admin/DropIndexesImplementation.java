@@ -79,8 +79,14 @@ public class DropIndexesImplementation implements WriteTorodbCommandImpl<DropInd
         }
         
         for (String indexToDrop : indexesToDrop) {
-            if (!context.getTorodTransaction().dropIndex(req.getDatabase(), arg.getCollection(), indexToDrop)) {
-                return Status.from(ErrorCode.INDEX_NOT_FOUND, "index not found with name [" + indexToDrop + "]");
+            boolean dropped = context.getTorodTransaction().dropIndex(
+                    req.getDatabase(),
+                    arg.getCollection(),
+                    indexToDrop
+            );
+            if (!dropped) {
+                return Status.from(ErrorCode.INDEX_NOT_FOUND,
+                        "index not found with name [" + indexToDrop + "]");
             }
         }
 

@@ -20,13 +20,11 @@
 
 package com.torodb.core.supervision;
 
-import com.torodb.core.services.TorodbService;
-
 /**
  *
  */
 public interface Supervisor {
 
-    public SupervisorDecision onError(TorodbService supervised, Throwable error);
+    public SupervisorDecision onError(Object supervised, Throwable error);
 
 }

@@ -18,12 +18,12 @@ import com.torodb.kvdocument.values.KVValue;
 import com.torodb.mongodb.commands.impl.WriteTorodbCommandImpl;
 import com.torodb.mongodb.core.MongodMetrics;
 import com.torodb.mongodb.core.WriteMongodTransaction;
-import com.torodb.torod.SharedWriteTorodTransaction;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+import com.torodb.torod.SharedWriteTorodTransaction;
 
 /**
  *

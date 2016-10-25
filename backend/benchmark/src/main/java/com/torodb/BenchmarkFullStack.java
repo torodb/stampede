@@ -30,6 +30,7 @@ import com.torodb.torod.TorodConnection;
 import com.torodb.torod.TorodServer;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import com.torodb.torod.SharedWriteTorodTransaction;
 
 @SuppressFBWarnings(
         value = "UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR",

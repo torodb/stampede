@@ -33,7 +33,6 @@ import com.torodb.mongodb.repl.oplogreplier.batch.ConcurrentOplogBatchExecutor;
 import com.torodb.mongodb.repl.oplogreplier.batch.ConcurrentOplogBatchExecutor.ConcurrentOplogBatchExecutorMetrics;
 import com.torodb.torod.TorodBundle;
 import com.torodb.torod.TorodServer;
-import org.junit.Test;
 
 /**
  *
@@ -44,11 +43,6 @@ public class DefaultOplogApplierTest extends AbstractOplogApplierTest {
     @Override
     public Module getMongodSpecificTestModule() {
         return new DefaultMongodModule();
-    }
-    
-    @Test
-    public void updateTest_letschat_upsert() throws Exception {
-        super.updateTest_letschat_upsert();
     }
 
     private static class DefaultMongodModule extends PrivateModule {

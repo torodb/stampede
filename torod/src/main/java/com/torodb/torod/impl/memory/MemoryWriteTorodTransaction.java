@@ -13,7 +13,9 @@ import com.torodb.kvdocument.values.KVDocument;
 import com.torodb.kvdocument.values.KVValue;
 import com.torodb.torod.ExclusiveWriteTorodTransaction;
 import com.torodb.torod.IndexFieldInfo;
+import com.torodb.torod.IndexInfo;
 import com.torodb.torod.impl.memory.MemoryData.MDTransaction;
+import java.util.Map;
 
 /**
  *
@@ -84,7 +86,12 @@ public class MemoryWriteTorodTransaction extends MemoryTorodTransaction implemen
 
     @Override
     public boolean dropIndex(String dbName, String colName, String indexName) {
-        throw new UnsupportedOperationException("Not supported yet."); //TODO: Implement when necessary
+        Map<String, IndexInfo> indexesOnTable = getTransaction().getIndexes()
+                .get(dbName, colName);
+        if (indexesOnTable == null) {
+            return false;
+        }
+        return indexesOnTable.remove(indexName) != null;
     }
 
     @Override

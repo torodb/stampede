@@ -34,6 +34,7 @@ import java.util.concurrent.ThreadFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.torodb.core.modules.Bundle;
+import com.torodb.core.supervision.SupervisorDecision;
 import com.torodb.mongodb.core.MongodServer;
 import com.torodb.mongodb.repl.guice.MongoDbReplModule;
 import com.torodb.mongodb.repl.guice.MongodbReplConfig;
@@ -58,8 +59,11 @@ public class MongodbReplBundle extends AbstractBundle {
                 injector.getInstance(
                         Key.get(ThreadFactory.class, TorodbIdleService.class)),
                 supervisor);
+
+        Supervisor replSupervisor = new ReplSupervisor(supervisor);
+
         Injector replInjector = injector.createChildInjector(
-                new MongoDbReplModule(config)
+                new MongoDbReplModule(config, replSupervisor)
         );
 
         this.torodBundle = torodBundle;
@@ -68,6 +72,7 @@ public class MongodbReplBundle extends AbstractBundle {
         this.oplogManager = replInjector.getInstance(OplogManager.class);
         this.mongodServer = replInjector.getInstance(MongodServer.class);
         this.cachedMongoClientFactory = replInjector.getInstance(CachedMongoClientFactory.class);
+        
     }
 
     @Override
@@ -120,5 +125,21 @@ public class MongodbReplBundle extends AbstractBundle {
 
     public MongodServer getMongodServer() {
         return mongodServer;
+    }
+
+    private static class ReplSupervisor implements Supervisor {
+
+        private final Supervisor supervisor;
+
+        public ReplSupervisor(Supervisor supervisor) {
+            this.supervisor = supervisor;
+        }
+
+        @Override
+        public SupervisorDecision onError(Object supervised, Throwable error) {
+            LOGGER.error("Cached an error on the replication layer. Escalating it");
+            supervisor.onError(this, error);
+            return SupervisorDecision.STOP;
+        }
     }
 }
