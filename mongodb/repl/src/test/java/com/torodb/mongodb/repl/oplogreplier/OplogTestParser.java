@@ -78,8 +78,9 @@ public class OplogTestParser {
                 .setReapplying(true)
                 .setUpdatesAsUpserts(true)
                 .build();
-        return new ParsedOplogTest(getInitialState(doc), getExpectedState(doc),
-                getOps(doc), applierContext, getIgnore(doc));
+        return new ParsedOplogTest(getTestName(doc), getIgnore(doc),
+                getInitialState(doc), getExpectedState(doc), getOps(doc),
+                applierContext);
     }
 
     private static Collection<DatabaseState> getInitialState(BsonDocument root) {
@@ -161,23 +162,36 @@ public class OplogTestParser {
         return ignoreValue != null && ignoreValue.asBoolean().getPrimitiveValue();
     }
 
+    private static Optional<String> getTestName(BsonDocument doc) {
+        BsonValue<?> nameValue = doc.get("name");
+        return Optional.ofNullable(nameValue).map(value -> value.asString().getValue());
+    }
+
     private static class ParsedOplogTest extends BDDOplogTest {
 
+        private final Optional<String> name;
+        private final boolean ignore;
         private final Collection<DatabaseState> initialState;
         private final Collection<DatabaseState> expectedState;
         private final List<OplogOperation> oplogOps;
         private final ApplierContext applierContext;
-        private final boolean ignore;
 
-        public ParsedOplogTest(Collection<DatabaseState> initialState,
+        public ParsedOplogTest(Optional<String> name, boolean ignore,
+                Collection<DatabaseState> initialState,
                 Collection<DatabaseState> expectedState, 
                 List<OplogOperation> oplogOps,
-                ApplierContext applierContext, boolean ignore) {
+                ApplierContext applierContext) {
             this.initialState = initialState;
             this.expectedState = expectedState;
             this.oplogOps = oplogOps;
             this.applierContext = applierContext;
+            this.name = name;
             this.ignore = ignore;
+        }
+
+        @Override
+        public Optional<String> getTestName() {
+            return name;
         }
 
         @Override

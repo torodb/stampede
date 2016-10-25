@@ -8,6 +8,7 @@ import com.torodb.core.document.ToroDocument;
 import com.torodb.core.exceptions.user.UniqueIndexViolationException;
 import com.torodb.kvdocument.values.KVDocument;
 import com.torodb.kvdocument.values.KVValue;
+import com.torodb.torod.IndexInfo;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -30,13 +31,14 @@ import javax.annotation.concurrent.ThreadSafe;
 public class MemoryData {
 
     private Table<String, String, Map<Integer, KVDocument>> data = HashBasedTable.create();
+    private Table<String, String, Map<String, IndexInfo>> indexes = HashBasedTable.create();
     private final AtomicInteger idGenerator = new AtomicInteger();
     private ReadWriteLock lock = new ReentrantReadWriteLock(true);
 
     public MDReadTransaction openReadTransaction() {
         lock.readLock().lock();
         try {
-            return new MDReadTransaction(data);
+            return new MDReadTransaction(data, indexes);
         } finally {
             lock.readLock().unlock();
         }
@@ -47,24 +49,36 @@ public class MemoryData {
         Lock writeLock = lock.writeLock();
         writeLock.lock();
         try {
-            return new MDWriteTransaction(data, () -> idGenerator.incrementAndGet(), this::put, writeLock);
+            return new MDWriteTransaction(data, indexes, () -> idGenerator.incrementAndGet(), this::onCommit, writeLock);
         } catch (Throwable ex) {
             writeLock.unlock();
             throw ex;
         }
     }
 
-    private void put(Table<String, String, Map<Integer, KVDocument>> newData) {
-        data = newData;
+    private void onCommit(MDTransaction trans) {
+        this.data = trans.getData();
+        this.indexes = trans.getIndexes();
     }
 
     public static class MDTransaction implements AutoCloseable {
 
         private boolean closed = false;
         Table<String, String, Map<Integer, KVDocument>> data;
+        Table<String, String, Map<String, IndexInfo>> indexes;
 
-        public MDTransaction(Table<String, String, Map<Integer, KVDocument>> data) {
+        public MDTransaction(Table<String, String, Map<Integer, KVDocument>> data,
+                Table<String, String, Map<String, IndexInfo>> indexes) {
             this.data = data;
+            this.indexes = indexes;
+        }
+
+        public Table<String, String, Map<Integer, KVDocument>> getData() {
+            return data;
+        }
+
+        public Table<String, String, Map<String, IndexInfo>> getIndexes() {
+            return indexes;
         }
         
         public boolean isClosed() {
@@ -108,9 +122,11 @@ public class MemoryData {
     @NotThreadSafe
     public static class MDReadTransaction extends MDTransaction{
 
-        public MDReadTransaction(Table<String, String, Map<Integer, KVDocument>> data) {
-            super(data);
+        public MDReadTransaction(Table<String, String, Map<Integer, KVDocument>> data,
+                Table<String, String, Map<String, IndexInfo>> indexes) {
+            super(data, indexes);
         }
+
     }
 
     @NotThreadSafe
@@ -118,15 +134,16 @@ public class MemoryData {
 
         final Table<String, String, Map<Integer, KVDocument>> initialData;
         private final IntSupplier idGenerator;
-        private final Consumer<Table<String, String, Map<Integer, KVDocument>>> commitConsumer;
+        private final Consumer<MDTransaction> commitConsumer;
         private final Lock lock;
 
         public MDWriteTransaction(
                 Table<String, String, Map<Integer, KVDocument>> data,
+                Table<String, String, Map<String, IndexInfo>> indexes,
                 IntSupplier idGenerator,
-                Consumer<Table<String, String, Map<Integer, KVDocument>>> commitConsumer,
+                Consumer<MDTransaction> commitConsumer,
                 Lock lock) {
-            super(HashBasedTable.create(data));
+            super(HashBasedTable.create(data), HashBasedTable.create(indexes));
             this.idGenerator = idGenerator;
             this.commitConsumer = commitConsumer;
             this.lock = lock;
@@ -218,7 +235,7 @@ public class MemoryData {
         }
 
         void commit() {
-            commitConsumer.accept(data);
+            commitConsumer.accept(this);
         }
 
         @Override

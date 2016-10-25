@@ -154,12 +154,21 @@ public abstract class MemoryTorodTransaction implements TorodTransaction {
 
     @Override
     public Stream<IndexInfo> getIndexesInfo(String dbName, String colName) {
-        throw new UnsupportedOperationException("Not supported yet."); //TODO: Implement when necessary
+        Map<String, IndexInfo> indexesOnTable = getTransaction().getIndexes()
+                .get(dbName, colName);
+        if (indexesOnTable == null) {
+            return Stream.empty();
+        }
+        return indexesOnTable.values().stream();
     }
 
     @Override
-    public IndexInfo getIndexInfo(String dbName, String colName, String idxName) throws IndexNotFoundException {
-        throw new UnsupportedOperationException("Not supported yet."); //TODO: Implement when necessary
+    public IndexInfo getIndexInfo(String dbName, String colName, String idxName)
+            throws IndexNotFoundException {
+        return getIndexesInfo(dbName, colName)
+                .filter(index -> index.getName().equals(idxName))
+                .findAny().orElseThrow(()
+                        -> new IndexNotFoundException(dbName, colName, idxName));
     }
 
     @Override

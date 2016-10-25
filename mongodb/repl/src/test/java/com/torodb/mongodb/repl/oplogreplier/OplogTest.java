@@ -20,10 +20,14 @@
 
 package com.torodb.mongodb.repl.oplogreplier;
 
+import java.util.Optional;
+
 /**
  *
  */
 public interface OplogTest {
+
+    Optional<String> getTestName();
 
     boolean shouldIgnore();
 
