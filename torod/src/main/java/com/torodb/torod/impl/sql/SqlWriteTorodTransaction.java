@@ -177,11 +177,15 @@ public abstract class SqlWriteTorodTransaction<T extends WriteInternalTransactio
             indexFieldDefs.add(new Tuple3<>(tableRef, lastKey, ordering));
         }
         
-        TableRef anyIndexTableRef = indexFieldDefs.stream().findAny().get().v1();
-        boolean isUniqueIndexWithMutlipleTableRefs = indexFieldDefs.stream().anyMatch(t -> !t.v1().equals(anyIndexTableRef));
-        
-        if (isUniqueIndexWithMutlipleTableRefs) {
-            throw new UnsupportedUniqueIndexException(dbName, colName, indexName);
+        if (unique) {
+            TableRef anyIndexTableRef = indexFieldDefs.stream()
+                    .findAny().get().v1();
+            boolean isUniqueIndexWithMutlipleTableRefs = indexFieldDefs.stream()
+                    .anyMatch(t -> !t.v1().equals(anyIndexTableRef));
+            
+            if (isUniqueIndexWithMutlipleTableRefs) {
+                throw new UnsupportedUniqueIndexException(dbName, colName, indexName);
+            }
         }
         
         boolean indexExists = metaColl.streamContainedMetaIndexes()
