@@ -9,6 +9,7 @@ import com.google.common.base.Preconditions;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import org.apache.logging.log4j.LogManager;
@@ -32,24 +33,36 @@ public class TorodbCommandsLibrary implements CommandsLibrary {
         String version = "torodb-3.2-like";
         
         requiredTranslationMap = new HashMap<>();
-        this.exclusiveWriteLibrary = new NameBasedCommandsLibrary(version, exclusiveWriteExecutor.getSupportedCommands());
+
+        Function<Iterable<Command<?,?>>, CommandsLibrary> libraryFactory = (it) -> {
+            return new NameBasedCommandsLibrary.Builder(version)
+                .addCommands(it)
+                .build();
+        };
+
+        this.exclusiveWriteLibrary = libraryFactory.apply(
+                exclusiveWriteExecutor.getSupportedCommands());
         exclusiveWriteLibrary.getSupportedCommands().forEach((c) -> {
             classifyCommand(c, RequiredTransaction.EXCLUSIVE_WRITE_TRANSACTION);
         });
-        this.writeLibrary = new NameBasedCommandsLibrary(version, writeExecutor.getSupportedCommands());
+        this.writeLibrary = libraryFactory.apply(
+                writeExecutor.getSupportedCommands());
         writeLibrary.getSupportedCommands().forEach((c) -> {
             classifyCommand(c, RequiredTransaction.WRITE_TRANSACTION);
         });
-        this.readLibrary = new NameBasedCommandsLibrary(version, readOnlyExecutor.getSupportedCommands());
+        this.readLibrary = libraryFactory.apply(
+                readOnlyExecutor.getSupportedCommands());
         readLibrary.getSupportedCommands().forEach((c) -> {
             classifyCommand(c, RequiredTransaction.READ_TRANSACTION);
         });
-        this.noTransactionsLibrary = new NameBasedCommandsLibrary(version, connectionExecutor.getSupportedCommands());
+        this.noTransactionsLibrary = libraryFactory.apply(
+                connectionExecutor.getSupportedCommands());
         noTransactionsLibrary.getSupportedCommands().forEach((c) -> {
             classifyCommand(c, RequiredTransaction.NO_TRANSACTION);
         });
 
-        allCommands = new NameBasedCommandsLibrary(version, requiredTranslationMap.keySet());
+        allCommands = libraryFactory.apply(
+                requiredTranslationMap.keySet());
     }
 
     public RequiredTransaction getCommandType(Command<?,?> command) {
@@ -70,7 +83,7 @@ public class TorodbCommandsLibrary implements CommandsLibrary {
     }
 
     @Override
-    public Command find(BsonDocument requestDocument) {
+    public LibraryEntry find(BsonDocument requestDocument) {
         return allCommands.find(requestDocument);
     }
 

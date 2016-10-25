@@ -59,7 +59,6 @@ import com.torodb.mongodb.utils.DbCloner;
 import com.torodb.mongodb.utils.ListCollectionsRequester;
 import com.torodb.mongodb.utils.ListIndexesRequester;
 import com.torodb.mongodb.utils.NamespaceUtil;
-import com.torodb.torod.SharedWriteTorodTransaction;
 
 import akka.NotUsed;
 import akka.actor.ActorSystem;
@@ -83,6 +82,7 @@ import akka.stream.javadsl.Source;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import scala.concurrent.Await;
 import scala.concurrent.duration.Duration;
+import com.torodb.torod.SharedWriteTorodTransaction;
 
 /**
  * This class is used to clone databases using a client, so remote and local databases can

@@ -19,7 +19,6 @@ import com.torodb.core.backend.BackendService;
 import com.torodb.core.backend.ExclusiveWriteBackendTransaction;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.retrier.Retrier;
-import com.torodb.core.services.TorodbService;
 import com.torodb.core.supervision.Supervisor;
 import com.torodb.core.supervision.SupervisorDecision;
 import com.torodb.mongodb.repl.ConsistencyHandler;
@@ -57,7 +56,7 @@ public class StampedeService extends AbstractIdleService implements Supervisor {
     }
 
     @Override
-    public SupervisorDecision onError(TorodbService supervised, Throwable error) {
+    public SupervisorDecision onError(Object supervised, Throwable error) {
         this.stopAsync();
         return SupervisorDecision.STOP;
     }

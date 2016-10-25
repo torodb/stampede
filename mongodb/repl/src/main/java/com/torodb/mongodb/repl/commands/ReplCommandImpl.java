@@ -18,15 +18,21 @@
  * 
  */
 
-package com.torodb.mongodb.repl.oplogreplier;
+package com.torodb.mongodb.repl.commands;
+
+import com.eightkdata.mongowp.server.api.Command;
+import com.eightkdata.mongowp.server.api.CommandImplementation;
+import com.torodb.torod.SharedWriteTorodTransaction;
+import org.apache.logging.log4j.Logger;
 
 /**
  *
  */
-public interface OplogTest {
+public abstract  class ReplCommandImpl<Arg, Res> implements CommandImplementation<Arg, Res, SharedWriteTorodTransaction>{
 
-    boolean shouldIgnore();
-
-    void execute(OplogTestContext context) throws Exception;
+    protected void reportErrorIgnored(Logger logger, Command<?, ?> cmd, Throwable t) {
+        logger.warn(cmd.getCommandName() + " command execution failed. "
+                    + "Ignoring it", t);
+    }
 
 }

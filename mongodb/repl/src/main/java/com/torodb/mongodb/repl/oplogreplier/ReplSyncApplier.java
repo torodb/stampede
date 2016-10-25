@@ -3,13 +3,9 @@ package com.torodb.mongodb.repl.oplogreplier;
 
 import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
-import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.services.RunnableTorodbService;
 import com.torodb.core.supervision.Supervisor;
 import com.torodb.core.transaction.RollbackException;
-import com.torodb.mongodb.core.MongodConnection;
-import com.torodb.mongodb.core.MongodServer;
-import com.torodb.mongodb.core.WriteMongodTransaction;
 import com.torodb.mongodb.repl.OplogManager;
 import com.torodb.mongodb.repl.OplogManager.OplogManagerPersistException;
 import com.torodb.mongodb.repl.OplogManager.WriteOplogTransaction;
@@ -20,6 +16,10 @@ import javax.annotation.Nonnull;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.torodb.core.annotations.TorodbRunnableService;
+import com.torodb.core.exceptions.user.UserException;
+import com.torodb.mongodb.core.MongodConnection;
+import com.torodb.mongodb.core.MongodServer;
+import com.torodb.mongodb.core.WriteMongodTransaction;
 
 /**
  *
@@ -94,10 +94,10 @@ class ReplSyncApplier extends RunnableTorodbService {
                                 try {
                                     oplogOpApplier.apply(
                                             opToApply,
-                                            transaction,
+                                                transaction,
                                             applierContext
                                     );
-                                    transaction.commit();
+                                        transaction.commit();
                                     done = true;
                                 } catch (RollbackException ex) {
                                     LOGGER.debug("Recived a rollback exception while applying an oplog op", ex);
@@ -126,11 +126,12 @@ class ReplSyncApplier extends RunnableTorodbService {
                         callback.markAsApplied(opToApply);
                     }
                 } catch (InterruptedException ex) {
-                    LOGGER.debug("Interrupted applier thread while waiting for an operator");
+                    LOGGER.debug("Interrupted applier thread while applying an operator");
                 }
             }
             if(lastOperation != null) {
-                try (WriteOplogTransaction oplogTransaction = oplogManager.createWriteTransaction()) {
+                try (WriteOplogTransaction oplogTransaction =
+                        oplogManager.createWriteTransaction()) {
                     oplogTransaction.addOperation(lastOperation);
                 } catch (OplogManagerPersistException ex) {
                     if (callback.failedToApply(lastOperation, ex)) {

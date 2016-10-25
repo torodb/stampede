@@ -79,7 +79,7 @@ public class OplogTestParser {
                 .setUpdatesAsUpserts(true)
                 .build();
         return new ParsedOplogTest(getInitialState(doc), getExpectedState(doc),
-                getOps(doc), applierContext);
+                getOps(doc), applierContext, getIgnore(doc));
     }
 
     private static Collection<DatabaseState> getInitialState(BsonDocument root) {
@@ -156,21 +156,33 @@ public class OplogTestParser {
                 .collect(Collectors.toList());
     }
 
+    private static boolean getIgnore(BsonDocument doc) {
+        BsonValue<?> ignoreValue = doc.get("ignore");
+        return ignoreValue != null && ignoreValue.asBoolean().getPrimitiveValue();
+    }
+
     private static class ParsedOplogTest extends BDDOplogTest {
 
         private final Collection<DatabaseState> initialState;
         private final Collection<DatabaseState> expectedState;
         private final List<OplogOperation> oplogOps;
         private final ApplierContext applierContext;
+        private final boolean ignore;
 
         public ParsedOplogTest(Collection<DatabaseState> initialState,
                 Collection<DatabaseState> expectedState, 
                 List<OplogOperation> oplogOps,
-                ApplierContext applierContext) {
+                ApplierContext applierContext, boolean ignore) {
             this.initialState = initialState;
             this.expectedState = expectedState;
             this.oplogOps = oplogOps;
             this.applierContext = applierContext;
+            this.ignore = ignore;
+        }
+
+        @Override
+        public boolean shouldIgnore() {
+            return ignore;
         }
 
         @Override

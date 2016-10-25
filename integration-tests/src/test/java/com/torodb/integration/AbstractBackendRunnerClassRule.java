@@ -44,7 +44,6 @@ import com.beust.jcommander.internal.Console;
 import com.torodb.backend.DbBackendService;
 import com.torodb.backend.meta.TorodbSchema;
 import com.torodb.core.backend.IdentifierConstraints;
-import com.torodb.core.services.TorodbService;
 import com.torodb.core.supervision.Supervisor;
 import com.torodb.core.supervision.SupervisorDecision;
 import com.torodb.packaging.config.model.protocol.mongo.Replication;
@@ -317,10 +316,7 @@ public abstract class AbstractBackendRunnerClassRule implements TestRule, Superv
     }
 
     @Override
-    public SupervisorDecision onError(TorodbService supervised, Throwable error) {
-        supervised.stopAsync();
-        supervised.awaitTerminated();
-        
-        throw new RuntimeException(error);
+    public SupervisorDecision onError(Object supervised, Throwable error) {
+        return SupervisorDecision.STOP;
     }
 }

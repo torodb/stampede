@@ -79,7 +79,7 @@ public abstract class RunnableTorodbService extends AbstractExecutionThreadServi
     }
 
     @Override
-    public SupervisorDecision onError(TorodbService supervised, Throwable error) {
+    public SupervisorDecision onError(Object supervised, Throwable error) {
         return escalateError(error);
     }
 

@@ -2,14 +2,11 @@
 package com.torodb.mongodb.repl.oplogreplier;
 
 
-import java.util.Arrays;
-
 import com.eightkdata.mongowp.ErrorCode;
 import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.WriteConcern;
 import com.eightkdata.mongowp.bson.BsonDocument;
 import com.eightkdata.mongowp.exceptions.CommandNotFoundException;
-import com.eightkdata.mongowp.exceptions.ConflictingOperationInProgressException;
 import com.eightkdata.mongowp.exceptions.MongoException;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.CreateIndexesCommand;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.CreateIndexesCommand.CreateIndexesArgument;
@@ -24,21 +21,18 @@ import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.UpdateCommand.UpdateStatement;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.IndexOptions;
 import com.eightkdata.mongowp.server.api.Command;
+import com.eightkdata.mongowp.server.api.CommandsLibrary.LibraryEntry;
 import com.eightkdata.mongowp.server.api.Request;
-import com.eightkdata.mongowp.server.api.oplog.DbCmdOplogOperation;
-import com.eightkdata.mongowp.server.api.oplog.DbOplogOperation;
-import com.eightkdata.mongowp.server.api.oplog.DeleteOplogOperation;
-import com.eightkdata.mongowp.server.api.oplog.InsertOplogOperation;
-import com.eightkdata.mongowp.server.api.oplog.NoopOplogOperation;
-import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
-import com.eightkdata.mongowp.server.api.oplog.OplogOperationVisitor;
-import com.eightkdata.mongowp.server.api.oplog.UpdateOplogOperation;
-import com.torodb.mongodb.commands.TorodbCommandsLibrary;
+import com.eightkdata.mongowp.server.api.oplog.*;
 import com.torodb.mongodb.core.WriteMongodTransaction;
 import com.torodb.mongodb.repl.OplogManager;
 import com.torodb.mongodb.repl.ReplicationFilters;
+import com.torodb.mongodb.repl.commands.ReplCommandsExecutor;
+import com.torodb.mongodb.repl.commands.ReplCommandsLibrary;
 import com.torodb.mongodb.utils.DefaultIdUtils;
 import com.torodb.mongodb.utils.NamespaceUtil;
+import com.torodb.torod.SharedWriteTorodTransaction;
+import java.util.Arrays;
 import java.util.Collections;
 import javax.annotation.concurrent.ThreadSafe;
 import javax.inject.Inject;
@@ -47,6 +41,7 @@ import org.apache.logging.log4j.Logger;
 
 import static com.eightkdata.mongowp.bson.utils.DefaultBsonValues.newDocument;
 
+
 /**
  *
  */
@@ -54,14 +49,17 @@ import static com.eightkdata.mongowp.bson.utils.DefaultBsonValues.newDocument;
 public class OplogOperationApplier {
 
     private static final Logger LOGGER = LogManager.getLogger(OplogOperationApplier.class);
-    private final TorodbCommandsLibrary library;
     private final ReplicationFilters replicationFilters;
     private final Visitor visitor = new Visitor();
+    private final ReplCommandsLibrary library;
+    private final ReplCommandsExecutor executor;
 
     @Inject
-    public OplogOperationApplier(TorodbCommandsLibrary library, ReplicationFilters replicationFilters) {
-        this.library = library;
+    public OplogOperationApplier(ReplicationFilters replicationFilters,
+            ReplCommandsLibrary library, ReplCommandsExecutor executor) {
         this.replicationFilters = replicationFilters;
+        this.library = library;
+        this.executor = executor;
     }
 
     /**
@@ -83,19 +81,28 @@ public class OplogOperationApplier {
                 applierContext
         );
     }
-
-    private <Arg, Result> Status<Result> executeCommand(String db, Command<? super Arg, ? super Result> command, Arg arg, WriteMongodTransaction trans) throws MongoException {
+    
+    private <Arg, Result> Status<Result> executeReplCommand(String db,
+            Command<? super Arg, ? super Result> command,
+            Arg arg, SharedWriteTorodTransaction trans) {
         Request req = new Request(db, null, true, null);
-        
-        
+
+        Status<Result> result = executor.execute(req, command, arg, trans);
+
+        result = replicationFilters.getResultFilter(command).filter(result);
+
+        return result;
+    }
+
+    private <Arg, Result> Status<Result> executeTorodCommand(String db,
+            Command<? super Arg, ? super Result> command, Arg arg,
+            WriteMongodTransaction trans) throws MongoException {
+        Request req = new Request(db, null, true, null);
+
         Status<Result> result = trans.execute(req, command, arg);
-        
+
         result = replicationFilters.getResultFilter(command).filter(result);
         
-        if (result == null) {
-            throw new ConflictingOperationInProgressException("It was impossible to execute "
-                    + command.getCommandName() + " after several attempts");
-        }
         return result;
     }
 
@@ -155,32 +162,35 @@ public class OplogOperationApplier {
             WriteMongodTransaction trans,
             ApplierContext applierContext) throws OplogApplyingException {
         BsonDocument docToInsert = op.getDocToInsert();
-        try {
-            if (NamespaceUtil.isIndexesMetaCollection(op.getCollection())) {
-                insertIndex(docToInsert, op.getDatabase(), trans);
-            } else {
+        if (NamespaceUtil.isIndexesMetaCollection(op.getCollection())) {
+            insertIndex(docToInsert, op.getDatabase(), trans);
+        } else {
+            try {
                 insertDocument(op, trans);
+            } catch (MongoException ex) {
+                throw new OplogApplyingException(ex);
             }
-        } catch (MongoException ex) {
-            throw new OplogApplyingException(ex);
-        }
+        }        
     }
 
-    private Status<CreateIndexesResult> insertIndex(BsonDocument indexDoc, String database, WriteMongodTransaction trans) {
+    private Status<CreateIndexesResult> insertIndex(BsonDocument indexDoc,
+            String database, WriteMongodTransaction trans) {
         try {
             CreateIndexesCommand command = CreateIndexesCommand.INSTANCE;
             IndexOptions indexOptions = IndexOptions.unmarshall(indexDoc);
-            CreateIndexesArgument arg = new CreateIndexesArgument(
-                    indexOptions.getCollection(), Arrays.asList(new IndexOptions[] { indexOptions }));
 
-            return executeCommand(database, command, arg, trans);
+            CreateIndexesArgument arg = new CreateIndexesArgument(
+                    indexOptions.getCollection(), Arrays.asList(
+                            new IndexOptions[] { indexOptions }));
+
+            return executeReplCommand(database, command, arg, trans.getTorodTransaction());
         } catch (MongoException ex) {
             return Status.from(ex);
         }
     }
 
-    private void insertDocument(InsertOplogOperation op, WriteMongodTransaction trans) throws
-            MongoException {
+    private void insertDocument(InsertOplogOperation op, 
+            WriteMongodTransaction trans) throws MongoException {
 
         BsonDocument docToInsert = op.getDocToInsert();
 
@@ -196,7 +206,7 @@ public class OplogOperationApplier {
             );
         }
         while (true) {
-            executeCommand(
+            executeTorodCommand(
                     op.getDatabase(),
                     DeleteCommand.INSTANCE,
                     new DeleteCommand.DeleteArgument(
@@ -208,7 +218,7 @@ public class OplogOperationApplier {
                             null
                     ),
                     trans);
-            executeCommand(
+            executeTorodCommand(
                     op.getDatabase(),
                     InsertCommand.INSTANCE,
                     new InsertCommand.InsertArgument(op.getCollection(), Collections.singletonList(docToInsert), WriteConcern.fsync(), true, null),
@@ -226,7 +236,7 @@ public class OplogOperationApplier {
 
         Status<UpdateResult> status;
         try {
-            status = executeCommand(
+            status = executeTorodCommand(
                     op.getDatabase(),
                     UpdateCommand.INSTANCE,
                     new UpdateArgument(
@@ -269,7 +279,7 @@ public class OplogOperationApplier {
             ApplierContext applierContext) throws OplogApplyingException {
         try {
             //TODO: Check that the operation is executed even if the execution is interrupted!
-            Status<Long> status = executeCommand(
+            Status<Long> status = executeTorodCommand(
                     op.getDatabase(),
                     DeleteCommand.INSTANCE,
                     new DeleteArgument(
@@ -300,21 +310,28 @@ public class OplogOperationApplier {
             WriteMongodTransaction trans,
             ApplierContext applierContext) throws OplogApplyingException {
 
-        Command command = library.find(op.getRequest());
+        LibraryEntry librayEntry = library.find(op.getRequest());
+        Command command = librayEntry.getCommand();
         if (command == null) {
             BsonDocument document = op.getRequest();
             if (document.isEmpty()) {
-                throw new OplogApplyingException(new CommandNotFoundException("Empty document query"));
+                throw new OplogApplyingException(new CommandNotFoundException(
+                        "Empty document query"));
             }
             String firstKey = document.getFirstEntry().getKey();
             throw new OplogApplyingException(new CommandNotFoundException(firstKey));
         }
         Object arg;
         try {
-            arg = command.unmarshallArg(op.getRequest());
-            executeCommand(op.getDatabase(), command, arg, trans);
+            arg = command.unmarshallArg(op.getRequest(), librayEntry.getAlias());
         } catch (MongoException ex) {
             throw new OplogApplyingException(ex);
+        }
+        
+        Status executionResult = executeReplCommand(op.getDatabase(), command,
+                arg, trans.getTorodTransaction());
+        if (!executionResult.isOk()) {
+            throw new OplogApplyingException(new MongoException(executionResult));
         }
     }
 

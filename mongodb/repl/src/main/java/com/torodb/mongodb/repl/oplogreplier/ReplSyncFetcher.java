@@ -14,7 +14,6 @@ import javax.annotation.concurrent.NotThreadSafe;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.torodb.core.annotations.TorodbRunnableService;
-import com.torodb.core.services.TorodbService;
 import com.torodb.core.supervision.SupervisorDecision;
 
 /**
@@ -142,7 +141,7 @@ class ReplSyncFetcher extends RunnableTorodbService {
         public void fetchAborted(Throwable ex);
 
         @Override
-        public default SupervisorDecision onError(TorodbService supervised, Throwable error) {
+        public default SupervisorDecision onError(Object supervised, Throwable error) {
             fetchAborted(error);
             return SupervisorDecision.STOP;
         }
