@@ -57,7 +57,7 @@ Ahora deberíamos tener ToroDB Stampede activo y replicando las operaciones que 
 
 ## Ejemplo de mapeo
 
-Para tener un mejor ejemplo de como funciona Stampede, vamos a hacer un pequeño ejercicio. En este ejercicio importaremos una colección en MongoDB y veremos como los datos quedan replicados en PostgreSQL haciendo uso de Stampede.
+Para entender mejor el funcionamiento de Stampede, vamos a hacer un pequeño ejercicio. Importaremos una colección en MongoDB y veremos como los datos quedan replicados en PostgreSQL haciendo uso de Stampede.
 
 Suponiendo que tenemos Stampede corriendo correctamente, después de haber ejecutado los pasos anteriores, vamos a importar en Mongo el dataset que se encuentra en la siguiente [URL](https://www.dropbox.com/s/570d4tyt4hpsn03/primer-dataset.json?dl=0).
 
