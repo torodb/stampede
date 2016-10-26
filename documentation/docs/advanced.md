@@ -1,8 +1,8 @@
 # Advanced concepts
 
-Para comprender mejor la naturaleza del algoritmo de mapeo de documento JSON a un almacenamiento relacional, se ejecutará un ejemplo de mapeo usando el ejemplo [primer de MongoDB](https://docs.mongodb.com/getting-started/shell/import-data/).
+Para comprender mejor la naturaleza del algoritmo de mapeo de documentos JSON a un almacenamiento relacional, se realizará un ejemplo real usando el mismo [dataset](https://docs.mongodb.com/getting-started/shell/import-data/) que utiliza MongoDB en su documentación.
 
-Suponiendo que tenemos ToroDB Stampede replicando de un MongoDB, importaremos los datos del dataset en MongoDB para que se repliquen en formato relacional en PostgreSQL.
+Suponiendo que tenemos ToroDB Stampede replicando de un MongoDB, importaremos los datos en MongoDB para que se repliquen en formato relacional en PostgreSQL. Para ello basta ejecutar los siguientes comandos.
 
 ```
 $ wget https://www.dropbox.com/s/570d4tyt4hpsn03/primer-dataset.json?dl=0
@@ -38,19 +38,19 @@ En esencia, cada nivel del documento JSON se mapea a una tabla diferente en el b
 }
 ```
 
-Se crearían un total de 4 tablas que corresponden a los diferentes paths del documento. Es decir, una tabla inicial para la raíz del documento que se llamará primer, porque es el nombre de colección seleccionado, y otras tres tablas que corresponden con los paths de los subdocumentos encontrados.
+Se crearían un total de 4 tablas que corresponden a los diferentes niveles del documento. Es decir, una tabla inicial para la raíz del documento que se llama `primer`, porque es el nombre de colección seleccionado, y otras tres tablas que corresponden con los paths de los subdocumentos encontrados.
 
 * primer_address
 * primer_address_coord
 * primer_grades
 
+![Tables distribution](images/tables_distribution.jpeg)
+
 ### primer
 
-Como se ha indicado, la raíz del documento se mapea a una tabla que tiene como nombre el que se haya usado como nombre de colección en MongoDB, en este caso primer.
+Como se ha indicado, la raíz del documento se mapea a una tabla que tiene como nombre el que se haya usado en la colección de MongoDB, en este caso `primer`.
 
-A su vez, cada elemento del nivel raíz se mapea a una columna, ya sea este un tipo de dato primitivo o un subdocumento. En la siguiente sección se puede consultar el tipo de datos que existen y como son mapeados a columnas en el backend relacional.
-
-En este caso hay dos columnas con postfijo `_e` que significa que son un subdocumento, mientras que otras tienen postfijo `_s` que es el utilizado para los strings.
+A su vez, cada elemento del nivel raíz se mapea a una columna, ya sea este un tipo de dato escalar o un subdocumento. En la siguiente sección se puede consultar el tipo de datos que existen y como son mapeados a columnas en el backend relacional.
 
 ```
 did  | address_e | restaurant_id_s |                                               name_s                                               |                            cuisine_s                             |           _id_x            |   borough_s   | grades_e
@@ -81,6 +81,8 @@ did  |  rid  | seq | zipcode_s | coord_e |                street_s              
 ```
 
 ### primer_address_coord
+
+La tabla `primer_address_coord` es un caso especial, al igual que `primer_grades`, porque es un path que referencia a un array, por esta razón la columna `seq` posee valores que indican la posición del elemento en el array. Para comprender mejor las columnas de metadatos utilizadas en las tablas se puede leer el siguiente apartado.
 
 ```
 did  |  rid  |  pid  | seq |     v_d      
@@ -149,7 +151,7 @@ did  |  rid  | seq |         date_g         | score_i |    grade_s     | score_n
    7 |    38 |   4 | 2011-12-19 01:00:00+01 |      18 | B              |
 ```
 
-## Columnas y tipos de datos
+## Columnas y metadatos
 
 [TODO]: <> (Explicar los posibles valores de los campos tipo e)
 [TODO]: <> (Revisar que estén todos los tipos de datos ... BINARY, BOOLEAN, DATE, DOUBLE, INSTANT, INTEGER, LONG, MONGO_OBJECT_ID, MONGO_TIME_STAMP, NULL, STRING, TIME, CHILD)
@@ -212,4 +214,106 @@ En las filas que tienen valor `true` para la columna `score_n` significa que en 
     "name": "Swedish Football Club",
     "restaurant_id": "41278206"
 }
+```
+
+### Metadata
+
+#### Columnas de metadatos
+
+ToroDB Stampede crea varias columnas de metadato en las tablas que sirven para mantener y recomponer los documentos originales. Además servirán al usuario para poder hacer consultas complejas de los datos.
+
+| Columna | ¿Para qué sirve? |
+|---------|------------------|
+| did | Representa el identificador único del documento y posee el mismo valor para todas las filas correspondientes a ese documento. |
+| rid | Es un identificador único de la fila, por ejemplo, en el caso de arrays podemos encontrar varias filas con el mismo `did`, pero el `rid` es único para cada una. __Cabe señalar que la tabla raíz no tiene `rid` porque coincide con el `did`__. |
+| pid | Es la referencia al `rid` del elemento padre. Por ejemplo `primer_address_coord` posee los elementos con `rid` 0 y 1 que tienen como `pid` el valor 0, eso significa que son hijos de la fila de `primer_address` con `rid` 0. |
+| seq | Es un valor que sólo se utiliza en el caso de los arrays y que representa la posición del elemento en el array. |
+
+![PID reference](images/pid_reference.jpeg)
+
+#### Tablas de metadatos
+
+Las columnas de metadatos en las tablas de replicación no son suficientes para mantener el sistema, por lo que además también existen una serie de tablas de metadatos específicas que se guardan en el esquema `torod`.
+
+##### database
+
+La tabla `database` almacena el nombre utilizado por el usuario al crear la base de datos en MongoDB, lo cual se traduce en PostgreSQL en un esquema. Como el nombre de esquema tiene limitaciones de tamaño, se utiliza la tabla `database` para guardar el nombre usado por el usuario y el identificador que se usará en PostgreSQL, aunque en general serán equivalentes.
+
+```
+# select * from database;
+
+   name   | identifier
+----------+------------
+ stampede | stamped
+```
+
+##### collection
+
+Además del nombre de base de datos, en MondoDB hay que especificar en qué colección se guardan los datos, esta referencia es almacenada en la tabla `collection`.
+
+```
+# select * from collection;
+
+ database |       name        |        identifier        
+----------+-------------------+--------------------------
+ stampede | primer            | stampede_primer
+```
+
+##### doc_part
+
+Como ya hemos indicado previamente, el nombre de la tabla para el elemento raíz de un documento JSON es el mismo que se ha indicado como nombre de la colección de MongoDB. En ToroDB Stampede, el `table_ref` asociado a ese elemento es `{}` y su identificador, en este caso, es `primer`.
+
+Si, en cambio, hablamos del path `address.coord`, el table ref será `{address,coord}`, mientras que el identificador de la tabla será `primer_address_coord`.
+
+```
+# select * from doc_part;
+
+ database |    collection     |        table_ref        |               identifier                | last_rid
+----------+-------------------+-------------------------+-----------------------------------------+----------
+ stampede | primer            | {}                      | primer                                  |        0
+ stampede | primer            | {address}               | primer_address                          |        0
+ stampede | primer            | {grades}                | primer_grades                           |        0
+ stampede | primer            | {address,coord}         | primer_address_coord                    |        0
+```
+
+##### field
+
+La tabla `field` almacena el tipo de dato de cada columna y su identificador. Nuevamente, cabe destacar que el nombre utilizado en la columna no siempre coincidirá con el nombre original en el documento, si se han usado nombres de clave muy largos.
+
+Por tanto para una determinada combinación de `database, collection, table_ref`, se guarda el nombre de clave usado en el documento original, el nombre asignado a la columna y el tipo de datos que almacena. Este tipo de dato puede ser un tipo escalar, como `string` o `double` o puede ser un tipo `child` en cuyo caso hará referencia a una nueva tabla.
+
+```
+# select * from field;
+
+ database |    collection     |        table_ref        |         name          |      type       |       identifier        
+----------+-------------------+-------------------------+-----------------------+-----------------+-------------------------
+ stampede | primer            | {}                      | address               | CHILD           | address_e
+ stampede | primer            | {}                      | restaurant_id         | STRING          | restaurant_id_s
+ stampede | primer            | {}                      | name                  | STRING          | name_s
+ stampede | primer            | {}                      | cuisine               | STRING          | cuisine_s
+ stampede | primer            | {}                      | _id                   | MONGO_OBJECT_ID | _id_x
+ stampede | primer            | {}                      | borough               | STRING          | borough_s
+ stampede | primer            | {}                      | grades                | CHILD           | grades_e
+ stampede | primer            | {address}               | zipcode               | STRING          | zipcode_s
+ stampede | primer            | {address}               | coord                 | CHILD           | coord_e
+ stampede | primer            | {address}               | street                | STRING          | street_s
+ stampede | primer            | {address}               | building              | STRING          | building_s
+ stampede | primer            | {grades}                | date                  | INSTANT         | date_g
+ stampede | primer            | {grades}                | score                 | INTEGER         | score_i
+ stampede | primer            | {grades}                | grade                 | STRING          | grade_s
+ stampede | primer            | {grades}                | score                 | NULL            | score_n
+```
+
+##### scalar
+
+Por último la tabla `scalar` es utilizada para guardar el tipo de datos de los elementos de un array. Hay que tener en cuenta que en general para un mismo array todos los elementos serán del mismo tipo, pero no hay nada que impida que un documento JSON no contenga elementos de distintos tipos en un array.
+
+En el caso del ejemplo utilizado, sólo contiene una fila que indica que los elementos del array en el path `address.coord` son de tipo `double`. Esto se traduce en que el tipo de la columna `v_d` de la tabla `stampede_address_coord` es `double`.
+
+```
+# select * from scalar;
+
+ database | collection |    table_ref    |  type  | identifier
+----------+------------+-----------------+--------+------------
+ stampede | primer     | {address,coord} | DOUBLE | v_d
 ```
