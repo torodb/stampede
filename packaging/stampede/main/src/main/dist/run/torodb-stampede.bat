@@ -75,7 +75,7 @@ if "%LIBDIR%"=="" set LIBDIR=%BASEDIR%\lib
 if "%TOROCONFIG%"=="" set TOROCONFIG=%BASEDIR%\conf\@{assembler.name}.yml
 
 set TOROCONFIG_OPTS=
-if EXIST "%TOROCONFIG%" set TOROCONFIG_OPTS=-c "$TOROCONFIG"
+if EXIST "%TOROCONFIG%" set TOROCONFIG_OPTS=-c "%TOROCONFIG%"
 
 set CLASSPATH="%LIBDIR%"\@{assembler.name}-@{version}.jar
 
