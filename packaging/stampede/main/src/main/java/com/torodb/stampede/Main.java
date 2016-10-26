@@ -29,7 +29,6 @@ import java.util.ResourceBundle;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.core.async.AsyncLogger;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.internal.Console;
@@ -212,6 +211,7 @@ public class Main {
                         LOGGER.error(m.getMessage());
                     }
                 });
+                LogManager.shutdown();
                 System.exit(1);
             }
         } catch (Throwable ex) {
