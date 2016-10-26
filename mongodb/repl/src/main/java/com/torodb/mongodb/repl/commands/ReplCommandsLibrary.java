@@ -46,7 +46,7 @@ public class ReplCommandsLibrary implements CommandsLibrary {
                 .addCommand(CreateCollectionCommand.INSTANCE)
                 .addCommand(DropCollectionCommand.INSTANCE)
                 .addCommand(DropDatabaseCommand.INSTANCE)
-                .addAsAlias(LogAndStopCommand.INSTANCE, "collmod")
+                .addAsAlias(LogAndIgnoreCommand.INSTANCE, CollModCommand.INSTANCE.getCommandName())
                 .addAsAlias(LogAndIgnoreCommand.INSTANCE, "coverToCapped")
                 .addAsAlias(LogAndIgnoreCommand.INSTANCE, "emptycapped")
                 //drop indexes aliases
