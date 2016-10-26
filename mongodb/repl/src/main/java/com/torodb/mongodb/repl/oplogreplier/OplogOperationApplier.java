@@ -2,6 +2,17 @@
 package com.torodb.mongodb.repl.oplogreplier;
 
 
+import static com.eightkdata.mongowp.bson.utils.DefaultBsonValues.newDocument;
+
+import java.util.Arrays;
+import java.util.Collections;
+
+import javax.annotation.concurrent.ThreadSafe;
+import javax.inject.Inject;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.eightkdata.mongowp.ErrorCode;
 import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.WriteConcern;
@@ -22,23 +33,21 @@ import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.index.Inde
 import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.CommandsLibrary.LibraryEntry;
 import com.eightkdata.mongowp.server.api.Request;
-import com.eightkdata.mongowp.server.api.oplog.*;
+import com.eightkdata.mongowp.server.api.oplog.DbCmdOplogOperation;
+import com.eightkdata.mongowp.server.api.oplog.DbOplogOperation;
+import com.eightkdata.mongowp.server.api.oplog.DeleteOplogOperation;
+import com.eightkdata.mongowp.server.api.oplog.InsertOplogOperation;
+import com.eightkdata.mongowp.server.api.oplog.NoopOplogOperation;
+import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
+import com.eightkdata.mongowp.server.api.oplog.OplogOperationVisitor;
+import com.eightkdata.mongowp.server.api.oplog.UpdateOplogOperation;
 import com.torodb.mongodb.core.WriteMongodTransaction;
 import com.torodb.mongodb.repl.OplogManager;
-import com.torodb.mongodb.repl.ReplicationFilters;
 import com.torodb.mongodb.repl.commands.ReplCommandsExecutor;
 import com.torodb.mongodb.repl.commands.ReplCommandsLibrary;
 import com.torodb.mongodb.utils.DefaultIdUtils;
 import com.torodb.mongodb.utils.NamespaceUtil;
 import com.torodb.torod.SharedWriteTorodTransaction;
-import java.util.Arrays;
-import java.util.Collections;
-import javax.annotation.concurrent.ThreadSafe;
-import javax.inject.Inject;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import static com.eightkdata.mongowp.bson.utils.DefaultBsonValues.newDocument;
 
 
 /**
@@ -48,15 +57,12 @@ import static com.eightkdata.mongowp.bson.utils.DefaultBsonValues.newDocument;
 public class OplogOperationApplier {
 
     private static final Logger LOGGER = LogManager.getLogger(OplogOperationApplier.class);
-    private final ReplicationFilters replicationFilters;
     private final Visitor visitor = new Visitor();
     private final ReplCommandsLibrary library;
     private final ReplCommandsExecutor executor;
 
     @Inject
-    public OplogOperationApplier(ReplicationFilters replicationFilters,
-            ReplCommandsLibrary library, ReplCommandsExecutor executor) {
-        this.replicationFilters = replicationFilters;
+    public OplogOperationApplier(ReplCommandsLibrary library, ReplCommandsExecutor executor) {
         this.library = library;
         this.executor = executor;
     }
@@ -88,8 +94,6 @@ public class OplogOperationApplier {
 
         Status<Result> result = executor.execute(req, command, arg, trans);
 
-        result = replicationFilters.getResultFilter(command).filter(result);
-
         return result;
     }
 
@@ -100,8 +104,6 @@ public class OplogOperationApplier {
 
         Status<Result> result = trans.execute(req, command, arg);
 
-        result = replicationFilters.getResultFilter(command).filter(result);
-        
         return result;
     }
 

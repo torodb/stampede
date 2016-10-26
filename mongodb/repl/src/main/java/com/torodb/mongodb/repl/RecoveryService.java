@@ -375,7 +375,7 @@ public class RecoveryService extends RunnableTorodbService {
             throw new TryAgainException("Remote oplog does not cointain our last operation");
         }
 
-        OplogFetcher fetcher = replFilters.filterOplogFetcher(new LimitedOplogFetcher(oplogCursor));
+        OplogFetcher fetcher = new LimitedOplogFetcher(oplogCursor);
 
         ApplierContext context = new ApplierContext.Builder()
                 .setReapplying(true)

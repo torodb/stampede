@@ -47,6 +47,11 @@ public abstract class MemoryTorodTransaction implements TorodTransaction {
     }
 
     @Override
+    public boolean existsDatabase(String dbName) {
+        return getTransaction().existsDatabase(dbName);
+    }
+
+    @Override
     public boolean existsCollection(String dbName, String colName) {
         return getTransaction().existsCollection(dbName, colName);
     }

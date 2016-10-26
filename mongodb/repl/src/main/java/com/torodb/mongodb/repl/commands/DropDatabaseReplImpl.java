@@ -43,7 +43,13 @@ public class DropDatabaseReplImpl extends ReplCommandImpl<Empty, Empty> {
         try {
             LOGGER.info("Dropping database {}", req.getDatabase());
 
-            trans.dropDatabase(req.getDatabase());
+            if (trans.existsDatabase(req.getDatabase())) {
+                trans.dropDatabase(req.getDatabase());
+            } else {
+                LOGGER.info("Trying to drop database " + req.getDatabase() + " but it has not been found. "
+                        + "This is normal since the database could have a collection being filtered "
+                        + "or we are reapplying oplog during a recovery. Ignoring operation");
+            }
         } catch (UserException ex) {
             reportErrorIgnored(LOGGER, command, ex);
         }

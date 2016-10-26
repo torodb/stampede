@@ -65,6 +65,12 @@ public abstract class SqlTorodTransaction<T extends InternalTransaction> impleme
     }
 
     @Override
+    public boolean existsDatabase(String dbName) {
+        MetaDatabase metaDb = getInternalTransaction().getMetaSnapshot().getMetaDatabaseByName(dbName);
+        return metaDb != null;
+    }
+
+    @Override
     public boolean existsCollection(String dbName, String colName) {
         MetaDatabase metaDb = getInternalTransaction().getMetaSnapshot().getMetaDatabaseByName(dbName);
         return metaDb != null && metaDb.getMetaCollectionByName(colName) != null;

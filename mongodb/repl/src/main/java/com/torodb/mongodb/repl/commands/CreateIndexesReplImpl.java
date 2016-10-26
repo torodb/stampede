@@ -25,9 +25,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.eightkdata.mongowp.ErrorCode;
 import com.eightkdata.mongowp.Status;
-import com.eightkdata.mongowp.exceptions.CommandFailed;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.CreateIndexesCommand.CreateIndexesArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.CreateIndexesCommand.CreateIndexesResult;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.index.IndexOptions;
@@ -39,19 +41,30 @@ import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.index.type
 import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.Request;
 import com.google.common.collect.ImmutableList;
+import com.google.inject.Inject;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.language.AttributeReference;
 import com.torodb.core.language.AttributeReference.Key;
 import com.torodb.core.language.AttributeReference.ObjectKey;
 import com.torodb.core.transaction.metainf.FieldIndexOrdering;
 import com.torodb.mongodb.language.Constants;
+import com.torodb.mongodb.repl.ReplicationFilters;
 import com.torodb.torod.IndexFieldInfo;
 import com.torodb.torod.SharedWriteTorodTransaction;
 
 public class CreateIndexesReplImpl extends ReplCommandImpl<CreateIndexesArgument, CreateIndexesResult> {
+    private static final Logger LOGGER
+            = LogManager.getLogger(CreateIndexesReplImpl.class);
     
     private final static FieldIndexOrderingConverterIndexTypeVisitor filedIndexOrderingConverterVisitor = 
             new FieldIndexOrderingConverterIndexTypeVisitor();
+
+    private final ReplicationFilters replicationFilters;
+    
+    @Inject
+    public CreateIndexesReplImpl(ReplicationFilters replicationFilters) {
+        this.replicationFilters = replicationFilters;
+    }
 
     @Override
     public Status<CreateIndexesResult> apply(Request req,
@@ -62,28 +75,33 @@ public class CreateIndexesReplImpl extends ReplCommandImpl<CreateIndexesArgument
 
         try {
             boolean existsCollection = trans.existsCollection(req.getDatabase(), arg.getCollection());
+            boolean createdCollectionAutomatically = !existsCollection;
+            
             if (!existsCollection) {
                 trans.createIndex(req.getDatabase(), arg.getCollection(), Constants.ID_INDEX,
                         ImmutableList.<IndexFieldInfo>of(new IndexFieldInfo(new AttributeReference(Arrays.asList(new Key[] { new ObjectKey(Constants.ID) })), FieldIndexOrdering.ASC.isAscending())), true);
             }
 
-            boolean createdCollectionAutomatically = !existsCollection;
-
             for (IndexOptions indexOptions : arg.getIndexesToCreate()) {
+                if (!replicationFilters.getIndexPredicate().test(req.getDatabase(), arg.getCollection(), indexOptions.getName(), indexOptions.isUnique(), indexOptions.getKeys())) {
+                    LOGGER.info("Skipping filtered index {}.{}.{}.", 
+                            req.getDatabase(), arg.getCollection(), indexOptions.getName());
+                    continue;
+                }
+                    
                 if (indexOptions.getKeys().size() < 1) {
                     return Status.from(ErrorCode.CANNOT_CREATE_INDEX, "Index keys cannot be empty.");
                 }
 
                 if (indexOptions.isBackground()) {
-                    throw new CommandFailed("createIndexes",
-                            "Building index in background is not supported right now");
+                    LOGGER.warn("Building index in background is not supported. Ignoring option");
                 }
 
                 if (indexOptions.isSparse()) {
-                    throw new CommandFailed("createIndexes",
-                            "Sparse index are not supported right now");
+                    LOGGER.warn("Sparse index are not supported. Ignoring option");
                 }
 
+                boolean skipIndex = false;
                 List<IndexFieldInfo> fields = new ArrayList<>(indexOptions.getKeys().size());
                 for (IndexOptions.Key indexKey : indexOptions.getKeys()) {
                     AttributeReference.Builder attRefBuilder = new AttributeReference.Builder();
@@ -94,19 +112,28 @@ public class CreateIndexesReplImpl extends ReplCommandImpl<CreateIndexesArgument
                     IndexType indexType = indexKey.getType();
 
                     if (!KnownType.contains(indexType)) {
-                        return Status.from(ErrorCode.CANNOT_CREATE_INDEX, "bad index key pattern: Unknown index plugin '" 
-                                + indexKey.getType().toBsonValue().toString() + "'");
+                        String note = "Bad index key pattern: Unknown index type '" 
+                                + indexKey.getType().toBsonValue().toString() + "'. Skipping index.";
+                        LOGGER.warn(note);
+                        skipIndex = true;
+                        break;
                     }
 
                     Optional<FieldIndexOrdering> ordering = indexType.accept(filedIndexOrderingConverterVisitor, null);
                     if (!ordering.isPresent()) {
-                        throw new CommandFailed("createIndexes", 
-                                "Index of type " + indexType.toBsonValue().toString() + " is not supported right now");
+                        String note = "Index of type " + indexType.toBsonValue().toString() + " is not supported. Skipping index.";
+                        LOGGER.warn(note);
+                        skipIndex = true;
+                        break;
                     }
 
                     fields.add(new IndexFieldInfo(attRefBuilder.build(), ordering.get().isAscending()));
                 }
-
+                
+                if (skipIndex) {
+                    continue;
+                }
+                
                 if (trans.createIndex(req.getDatabase(), arg.getCollection(), indexOptions.getName(), fields, indexOptions.isUnique())) {
                     indexesAfter++;
                 }
@@ -121,8 +148,6 @@ public class CreateIndexesReplImpl extends ReplCommandImpl<CreateIndexesArgument
             return Status.ok(new CreateIndexesResult(indexesBefore, indexesAfter, note, createdCollectionAutomatically));
         } catch(UserException ex) {
             return Status.from(ErrorCode.COMMAND_FAILED, ex.getLocalizedMessage());
-        } catch(CommandFailed ex) {
-            return Status.from(ex);
         }
     }
 

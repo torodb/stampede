@@ -48,7 +48,13 @@ public class DropCollectionReplImpl extends ReplCommandImpl<CollectionCommandArg
         try {
             LOGGER.info("Drop collection {}", arg.getCollection());
 
-            trans.dropCollection(req.getDatabase(), arg.getCollection());
+            if (trans.existsCollection(req.getDatabase(), arg.getCollection())) {
+                trans.dropCollection(req.getDatabase(), arg.getCollection());
+            } else {
+                LOGGER.info("Trying to drop collection {}.{} but it has not been found. "
+                        + "This is normal when reapplying oplog during a recovery. Ignoring operation",
+                        req.getDatabase(), arg.getCollection());
+            }
         } catch (UserException ex) {
             reportErrorIgnored(LOGGER, command, ex);
         }

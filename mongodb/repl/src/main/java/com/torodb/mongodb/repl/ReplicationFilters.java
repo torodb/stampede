@@ -24,7 +24,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
@@ -33,14 +32,14 @@ import java.util.regex.Pattern;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jooq.lambda.fi.util.function.CheckedFunction;
 
-import com.eightkdata.mongowp.ErrorCode;
 import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.bson.BsonDocument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.CreateCollectionCommand;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.CreateIndexesCommand;
-import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.CreateIndexesCommand.CreateIndexesArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.DropCollectionCommand;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.DropIndexesCommand;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.RenameCollectionCommand;
@@ -60,12 +59,12 @@ import com.eightkdata.mongowp.server.api.oplog.UpdateOplogOperation;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.torodb.core.exceptions.SystemException;
-import com.torodb.mongodb.language.utils.NamespaceUtil;
 import com.torodb.mongodb.repl.oplogreplier.fetcher.FilteredOplogFetcher;
 import com.torodb.mongodb.repl.oplogreplier.fetcher.OplogFetcher;
 import com.torodb.mongodb.utils.IndexPredicate;
 
 public class ReplicationFilters {
+    private static final Logger LOGGER = LogManager.getLogger(ReplicationFilters.class);
 
     private final ImmutableMap<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>> whitelist;
     private final ImmutableMap<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>> blacklist;
@@ -99,36 +98,6 @@ public class ReplicationFilters {
 
     public OplogFetcher filterOplogFetcher(OplogFetcher originalFetcher) {
         return new FilteredOplogFetcher(oplogOperationPredicate, originalFetcher);
-    }
-    
-    private static final ResultFilter identityResultFilter = new ResultFilter() {
-        @Override
-        public <Result> Status<Result> filter(Status<Result> result) {
-            return result;
-        }
-    };
-    
-    private static final ImmutableMap<Command<?, ?>, ResultFilter> resultFilters = 
-        ImmutableMap.<Command<?, ?>, ResultFilter>builder()
-            .put(DropIndexesCommand.INSTANCE, new ResultFilter() {
-                @Override
-                public <Result> Status<Result> filter(Status<Result> result) {
-                    if (!result.isOk() && result.getErrorCode() == ErrorCode.INDEX_NOT_FOUND) {
-                        result = Status.ok();
-                    }
-                    return result;
-                }
-            })
-            .build();
-    
-    public ResultFilter getResultFilter(Command<?, ?> command) {
-        ResultFilter resultFilter = resultFilters.get(command);
-        
-        if (resultFilter == null) {
-            resultFilter = identityResultFilter;
-        }
-        
-        return resultFilter;
     }
     
     @FunctionalInterface
@@ -311,6 +280,7 @@ public class ReplicationFilters {
     private static final ImmutableMap<Command<?, ?>, CheckedFunction<BsonDocument, String>> collectionCommands = 
         ImmutableMap.<Command<?, ?>, CheckedFunction<BsonDocument, String>>builder()
             .put(CreateCollectionCommand.INSTANCE, d -> CreateCollectionCommand.INSTANCE.unmarshallArg(d).getCollection())
+            .put(CreateIndexesCommand.INSTANCE, d -> CreateIndexesCommand.INSTANCE.unmarshallArg(d).getCollection())
             .put(DropIndexesCommand.INSTANCE, d -> DropIndexesCommand.INSTANCE.unmarshallArg(d).getCollection())
             .put(DropCollectionCommand.INSTANCE, d -> DropCollectionCommand.INSTANCE.unmarshallArg(d).getCollection())
             .put(RenameCollectionCommand.INSTANCE, d -> RenameCollectionCommand.INSTANCE.unmarshallArg(d).getFromCollection())
@@ -319,59 +289,31 @@ public class ReplicationFilters {
             .put(UpdateCommand.INSTANCE, d -> UpdateCommand.INSTANCE.unmarshallArg(d).getCollection())
             .build();
     
-    private static final ImmutableMap<Command<?, ?>, CheckedFunction<BsonDocument, BiFunction<String, IndexPredicateImpl, Boolean>>> indexCommands = 
-        ImmutableMap.<Command<?, ?>, CheckedFunction<BsonDocument, BiFunction<String, IndexPredicateImpl, Boolean>>>builder()
-            .put(CreateIndexesCommand.INSTANCE, d -> {
-                CreateIndexesArgument arg = CreateIndexesCommand.INSTANCE.unmarshallArg(d);
-                
-                return (database, indexPredicate) -> {
-                    for (IndexOptions indexOptions : arg.getIndexesToCreate()) {
-                        if (!indexPredicate.test(database, arg.getCollection(), 
-                                indexOptions.getName(), 
-                                indexOptions.isUnique(), 
-                                indexOptions.getKeys())) {
-                            return false;
-                        }
-                    }
-                    return true;
-                };
-            })
-            .build();
-    
     private class OplogOperationPredicate implements OplogOperationVisitor<Boolean, Void>, Predicate<OplogOperation> {
 
         @Override
         public Boolean visit(DbCmdOplogOperation op, Void arg) {
             if (op.getCommandName().isPresent()) {
-                if (collectionCommands.containsKey(op.getCommandName().get())) {
+                String commandName = op.getCommandName().get();
+                if (collectionCommands.containsKey(commandName)) {
                     try {
                         assert op.getRequest() != null;
                         
-                        String collection = collectionCommands.get(op.getCommandName().get())
+                        String collection = collectionCommands.get(commandName)
                                 .apply(op.getRequest());
-                        return collectionPredicate.test(op.getDatabase(), collection);
+                        return testCollection(commandName, op.getDatabase(), collection);
                     } catch (Throwable e) {
                         throw new SystemException("Error while parsing argument for command " + op.getCommandName(), e);
                     }
                 }
-                if (indexCommands.containsKey(op.getCommandName().get())) {
-                    try {
-                        assert op.getRequest() != null;
-                        
-                        return indexCommands.get(op.getCommandName().get())
-                                .apply(op.getRequest())
-                                .apply(op.getDatabase(), indexPredicate);
-                    } catch (Throwable e) {
-                        throw new SystemException("Error while parsing argument for command " + op.getCommandName(), e);
-                    }
-                }
+                return testDatabase(commandName, op.getDatabase());
             }
-            return databasePredicate.test(op.getDatabase());
+            return testDatabase("unknown", op.getDatabase());
         }
 
         @Override
         public Boolean visit(DbOplogOperation op, Void arg) {
-            return databasePredicate.test(op.getDatabase());
+            return testDatabase("unknown", op.getDatabase());
         }
 
         @Override
@@ -381,33 +323,37 @@ public class ReplicationFilters {
 
         @Override
         public Boolean visit(InsertOplogOperation op, Void arg) {
-            if (NamespaceUtil.INDEXES_COLLECTION.equals(op.getCollection())) {
-                try {
-                    IndexOptions indexOptions = IndexOptions.unmarshall(op.getDocToInsert());
-                    if (!indexPredicate.test(op.getDatabase(), op.getCollection(), 
-                            indexOptions.getName(), 
-                            indexOptions.isUnique(), 
-                            indexOptions.getKeys())) {
-                        return false;
-                    }
-                    
-                    return true;
-                } catch (Throwable e) {
-                    throw new SystemException("Error while parsing argument for insert on collection " + NamespaceUtil.INDEXES_COLLECTION, e);
-                }
-            }
-            
             return collectionPredicate.test(op.getDatabase(), op.getCollection());
         }
 
         @Override
         public Boolean visit(NoopOplogOperation op, Void arg) {
-            return databasePredicate.test(op.getDatabase());
+            return true;
         }
 
         @Override
         public Boolean visit(UpdateOplogOperation op, Void arg) {
             return collectionPredicate.test(op.getDatabase(), op.getCollection());
+        }
+        
+        private boolean testDatabase(String commandName, String database) {
+            if (databasePredicate.test(database)) {
+                return true;
+            }
+            
+            LOGGER.info("Skipping operation {} for filtered database {}.", commandName, database);
+            
+            return false;
+        }
+        
+        private boolean testCollection(String commandName, String database, String collection) {
+            if (collectionPredicate.test(database, collection)) {
+                return true;
+            }
+            
+            LOGGER.info("Skipping operation {} for filtered collection {}.{}.", commandName, database, collection);
+            
+            return false;
         }
 
         @Override

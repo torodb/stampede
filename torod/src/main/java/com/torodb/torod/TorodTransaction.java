@@ -23,6 +23,8 @@ public interface TorodTransaction extends AutoCloseable {
 
     public TorodConnection getConnection();
 
+    public boolean existsDatabase(String dbName);
+
     public boolean existsCollection(String dbName, String colName);
     
     public List<String> getDatabases();

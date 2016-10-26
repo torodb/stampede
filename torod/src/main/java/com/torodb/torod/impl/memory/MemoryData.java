@@ -85,6 +85,10 @@ public class MemoryData {
             return closed;
         }
 
+        public boolean existsDatabase(String db) {
+            return data.containsRow(db);
+        }
+
         public boolean existsCollection(String db, String col) {
             return data.contains(db, col);
         }
