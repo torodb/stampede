@@ -56,6 +56,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.exc.PropertyBindingException;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -121,11 +122,27 @@ public class ConfigUtils {
             }
         }
         
-        if (LOGGER.isDebugEnabled()) {
-            return new IllegalArgumentException("Validation error at " + jsonPointer + ": " + jsonMappingException.getMessage(), jsonMappingException);
+        if (jsonMappingException instanceof PropertyBindingException) {
+            return transformJsonMappingException(jsonPointer, (PropertyBindingException) jsonMappingException);
         }
         
-        return new IllegalArgumentException("Validation error at " + jsonPointer + ": " + jsonMappingException.getMessage());
+        return transformJsonMappingException(jsonPointer, jsonMappingException);
+    }
+    
+    private static IllegalArgumentException transformJsonMappingException(JsonPointer jsonPointer, JsonMappingException jsonMappingException) {
+        return transformJsonMappingException(jsonPointer, "Wrong value", jsonMappingException);
+    }
+    
+    private static IllegalArgumentException transformJsonMappingException(JsonPointer jsonPointer, PropertyBindingException jsonMappingException) {
+        return transformJsonMappingException(jsonPointer, "Unrecognized field " + jsonMappingException.getPropertyName() + " (known fields: " + jsonMappingException.getKnownPropertyIds() + ")", jsonMappingException);
+    }
+    
+    private static IllegalArgumentException transformJsonMappingException(JsonPointer jsonPointer, String message, JsonMappingException jsonMappingException) {
+        if (LOGGER.isDebugEnabled()) {
+            return new IllegalArgumentException("Validation error at " + jsonPointer + ": " + message, jsonMappingException);
+        }
+        
+        return new IllegalArgumentException("Validation error at " + jsonPointer + ": " + message);
     }
 
     public static <T> T readConfigFromYaml(Class<T> configClass, String yamlString) throws JsonProcessingException, IOException {
@@ -353,20 +370,20 @@ public class ConfigUtils {
 		Validator validator = factory.getValidator();
 		Set<ConstraintViolation<T>> constraintViolations = validator.validate(config);
 		if (!constraintViolations.isEmpty()) {
-			StringBuilder constraintViolationExceptionMessageBuilder = new StringBuilder();
-			for (ConstraintViolation<T> constraintViolation : constraintViolations) {
-				if (constraintViolationExceptionMessageBuilder.length() > 0) {
-					constraintViolationExceptionMessageBuilder.append(", ");
-				}
-				Path path = constraintViolation.getPropertyPath();
-				JsonPointer pointer = toJsonPointer(path);
-				constraintViolationExceptionMessageBuilder.append(pointer.toString());
-				constraintViolationExceptionMessageBuilder.append(": ");
-				constraintViolationExceptionMessageBuilder.append(constraintViolation.getMessage());
-			}
-			throw new IllegalArgumentException(constraintViolationExceptionMessageBuilder.toString());
+			IllegalArgumentException illegalArgumentException = transformConstraintsValidation(
+                    constraintViolations);
+			throw illegalArgumentException;
 		}
 	}
+
+    private static <T> IllegalArgumentException transformConstraintsValidation(
+            Set<ConstraintViolation<T>> constraintViolations) {
+        ConstraintViolation<T> constraintViolation = constraintViolations.iterator().next();
+    	Path path = constraintViolation.getPropertyPath();
+    	JsonPointer jsonPointer = toJsonPointer(path);
+        return new IllegalArgumentException("Constraint validation errors at " + jsonPointer.toString() + ": "
+                + constraintViolation.getMessage());
+    }
 
 	public static JsonPointer toJsonPointer(Path path) {
 		JsonPointer pointer = JsonPointer.valueOf(null);
