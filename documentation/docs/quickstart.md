@@ -30,7 +30,7 @@ $ sudo adduser torodb
 Ahora ya se puede acceder a la nueva base de datos que se ha creado, que será la que utilice Stampede para hacer la replicación.
 
 ```
-$ sudo -u torodb psql
+$ sudo -u torodb psql torod
 ```
 
 ## Arrancar el binario de ToroDB Stampede
