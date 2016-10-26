@@ -70,14 +70,18 @@ public class SetFieldUpdateAction extends SingleFieldUpdateAction implements Res
             AttributeReference key,
             KVValue<?> newValue
     ) throws UpdateException {
-        Boolean result = AttributeReferenceToBuilderCallback.resolve(builder, 
-                key.getKeys(), 
-                true, 
-                this);
-        if (result == null) {
+        try {
+            Boolean result = AttributeReferenceToBuilderCallback.resolve(builder,
+                    key.getKeys(),
+                    true,
+                    this);
+            if (result == null) {
+                return false;
+            }
+            return result;
+        } catch (UpdateException ex) {
             return false;
         }
-        return result;
     }
 
     @Override

@@ -9,8 +9,7 @@ import com.google.inject.Provides;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.torodb.core.supervision.Supervisor;
 import com.torodb.mongodb.repl.*;
-import com.torodb.mongodb.repl.commands.ReplCommandsExecutor;
-import com.torodb.mongodb.repl.commands.ReplCommandsLibrary;
+import com.torodb.mongodb.repl.commands.ReplCommandsGuiceModule;
 import com.torodb.mongodb.repl.impl.MongoOplogReaderProvider;
 import com.torodb.mongodb.repl.impl.ReplicationErrorHandlerImpl;
 import com.torodb.mongodb.repl.oplogreplier.*;
@@ -141,8 +140,7 @@ public class MongoDbReplModule extends PrivateModule {
         bind(NamespaceJobExecutor.class)
                 .in(Singleton.class);
 
-        bind(ReplCommandsLibrary.class)
-                .in(Singleton.class);
+        install(new ReplCommandsGuiceModule());
     }
 
     @Provides
@@ -163,11 +161,6 @@ public class MongoDbReplModule extends PrivateModule {
     @Provides @RemoteSeed
     HostAndPort getRemoteSeed(MongodbReplConfig config) {
         return config.getMongoClientConfiguration().getHostAndPort();
-    }
-
-    @Provides @Singleton
-    ReplCommandsExecutor createReplCommandsExecutor(ReplCommandsLibrary library) {
-        return new ReplCommandsExecutor(library, replSupervisor);
     }
 
     public static class DefaultCommitHeuristic implements CommitHeuristic {

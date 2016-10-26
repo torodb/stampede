@@ -49,8 +49,7 @@ import com.torodb.mongodb.core.MongodServer;
 import com.torodb.mongodb.core.MongodServerConfig;
 import com.torodb.mongodb.guice.MongoLayerModule;
 import com.torodb.mongodb.repl.OplogManager;
-import com.torodb.mongodb.repl.commands.ReplCommandsExecutor;
-import com.torodb.mongodb.repl.commands.ReplCommandsLibrary;
+import com.torodb.mongodb.repl.commands.ReplCommandsGuiceModule;
 import com.torodb.mongodb.repl.guice.AkkaDbClonerProvider;
 import com.torodb.mongodb.repl.guice.DocsPerTransaction;
 import com.torodb.mongodb.repl.guice.MongoDbRepl;
@@ -73,6 +72,8 @@ import java.util.concurrent.ThreadFactory;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.rules.ExternalResource;
 
 /**
@@ -80,6 +81,8 @@ import org.junit.rules.ExternalResource;
  */
 public class OplogTestContextResourceRule extends ExternalResource {
 
+    private static final Logger LOGGER
+            = LogManager.getLogger(OplogTestContextResourceRule.class);
     private final Supplier<Module> specificModuleSupplier;
 
     private Injector testInjector;
@@ -219,18 +222,21 @@ public class OplogTestContextResourceRule extends ExternalResource {
             bind(MongoServerConfig.class)
                     .to(MongodServerConfig.class);
 
-            bind(ReplCommandsLibrary.class)
-                .in(javax.inject.Singleton.class);
+            bind(Supervisor.class)
+                    .annotatedWith(MongoDbRepl.class)
+                    .to(TestReplSupervisor.class);
+
+            install(new ReplCommandsGuiceModule());
         }
 
-        @Provides @Singleton
-        ReplCommandsExecutor createReplCommandsExecutor(ReplCommandsLibrary library) {
-            return new ReplCommandsExecutor(library, new Supervisor() {
-                @Override
-                public SupervisorDecision onError(Object supervised, Throwable error) {
-                    throw new AssertionError("Cached an exception on the repl supervisor");
-                }
-            });
+        private static class TestReplSupervisor implements Supervisor {
+
+            @Override
+            public SupervisorDecision onError(Object supervised, Throwable error) {
+                LOGGER.error("Error on " + supervised, error);
+                return SupervisorDecision.STOP;
+            }
+
         }
     }
 

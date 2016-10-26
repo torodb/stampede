@@ -46,6 +46,7 @@ public abstract class AbstractOplogApplierTest {
                 "insertRepeated",
                 "insert_update_add",
                 "letschat_upsert",
+                "update_array",
                 "update_no_upsert",
                 "update_upsert"
         );

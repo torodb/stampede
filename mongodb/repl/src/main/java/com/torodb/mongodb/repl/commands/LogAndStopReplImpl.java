@@ -25,7 +25,9 @@ import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.Request;
 import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.torodb.core.supervision.Supervisor;
+import com.torodb.mongodb.repl.guice.MongoDbRepl;
 import com.torodb.torod.SharedWriteTorodTransaction;
+import javax.inject.Inject;
 
 /**
  * The implementation of {@link LogAndStopCommand}.
@@ -34,7 +36,8 @@ public class LogAndStopReplImpl extends ReplCommandImpl<String, Empty> {
     
     private final Supervisor supervisor;
 
-    public LogAndStopReplImpl(Supervisor supervisor) {
+    @Inject
+    public LogAndStopReplImpl(@MongoDbRepl Supervisor supervisor) {
         this.supervisor = supervisor;
     }
 

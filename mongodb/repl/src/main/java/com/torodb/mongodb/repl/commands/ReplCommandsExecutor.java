@@ -24,8 +24,8 @@ import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.*;
 import com.eightkdata.mongowp.server.api.*;
 import com.eightkdata.mongowp.server.api.impl.MapBasedCommandsExecutor;
-import com.torodb.core.supervision.Supervisor;
 import com.torodb.torod.SharedWriteTorodTransaction;
+import javax.inject.Inject;
 
 /**
  *
@@ -34,21 +34,29 @@ public final class ReplCommandsExecutor implements CommandsExecutor<SharedWriteT
 
     private final MapBasedCommandsExecutor<SharedWriteTorodTransaction> delegate;
 
-    public ReplCommandsExecutor(ReplCommandsLibrary library, Supervisor supervisor) {
+    @Inject
+    public ReplCommandsExecutor(ReplCommandsLibrary library, 
+            LogAndStopReplImpl logAndStopReplImpl,
+            LogAndIgnoreReplImpl logAndIgnoreReplImpl,
+            CreateCollectionReplImpl createCollectionReplImpl,
+            CreateIndexesReplImpl createIndexesReplImpl,
+            DropCollectionReplImpl dropCollectionReplImpl,
+            DropDatabaseReplImpl dropDatabaseReplImpl,
+            DropIndexesReplImpl dropIndexesReplImpl) {
         delegate = MapBasedCommandsExecutor
                 .<SharedWriteTorodTransaction>fromLibraryBuilder(library)
-                .addImplementation(LogAndStopCommand.INSTANCE, new LogAndStopReplImpl(supervisor))
-                .addImplementation(LogAndIgnoreCommand.INSTANCE, new LogAndIgnoreReplImpl())
+                .addImplementation(LogAndStopCommand.INSTANCE, logAndStopReplImpl)
+                .addImplementation(LogAndIgnoreCommand.INSTANCE, logAndIgnoreReplImpl)
 //                .addImplementation(ApplyOpsCommand.INSTANCE, whatever)
 //                .addImplementation(colmod, whatever)
 //                .addImplementation(coverToCapped, whatever)
-                .addImplementation(CreateCollectionCommand.INSTANCE, new CreateCollectionReplImpl())
-                .addImplementation(DropCollectionCommand.INSTANCE, new DropCollectionReplImpl())
-                .addImplementation(DropDatabaseCommand.INSTANCE, new DropDatabaseReplImpl())
-                .addImplementation(DropIndexesCommand.INSTANCE, new DropIndexesReplImpl())
+                .addImplementation(CreateCollectionCommand.INSTANCE, createCollectionReplImpl)
+                .addImplementation(CreateIndexesCommand.INSTANCE, createIndexesReplImpl)
+                .addImplementation(DropCollectionCommand.INSTANCE, dropCollectionReplImpl)
+                .addImplementation(DropDatabaseCommand.INSTANCE, dropDatabaseReplImpl)
+                .addImplementation(DropIndexesCommand.INSTANCE, dropIndexesReplImpl)
 //                .addImplementation(emptycapped, whatever)
 
-                .addImplementation(CreateIndexesCommand.INSTANCE, new CreateIndexesReplImpl())
                 .build();
     }
 
