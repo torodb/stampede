@@ -10,7 +10,6 @@ import com.eightkdata.mongowp.exceptions.CommandNotFoundException;
 import com.eightkdata.mongowp.exceptions.MongoException;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.CreateIndexesCommand;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.CreateIndexesCommand.CreateIndexesArgument;
-import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.CreateIndexesCommand.CreateIndexesResult;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.DeleteCommand;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.DeleteCommand.DeleteArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.DeleteCommand.DeleteStatement;
@@ -173,8 +172,8 @@ public class OplogOperationApplier {
         }        
     }
 
-    private Status<CreateIndexesResult> insertIndex(BsonDocument indexDoc,
-            String database, WriteMongodTransaction trans) {
+    private void insertIndex(BsonDocument indexDoc, String database,
+            WriteMongodTransaction trans) throws OplogApplyingException {
         try {
             CreateIndexesCommand command = CreateIndexesCommand.INSTANCE;
             IndexOptions indexOptions = IndexOptions.unmarshall(indexDoc);
@@ -183,9 +182,13 @@ public class OplogOperationApplier {
                     indexOptions.getCollection(), Arrays.asList(
                             new IndexOptions[] { indexOptions }));
 
-            return executeReplCommand(database, command, arg, trans.getTorodTransaction());
+            Status executionResult = executeReplCommand(database, command, arg,
+                    trans.getTorodTransaction());
+            if (!executionResult.isOk()) {
+                throw new OplogApplyingException(new MongoException(executionResult));
+            }
         } catch (MongoException ex) {
-            return Status.from(ex);
+            throw new OplogApplyingException(ex);
         }
     }
 
