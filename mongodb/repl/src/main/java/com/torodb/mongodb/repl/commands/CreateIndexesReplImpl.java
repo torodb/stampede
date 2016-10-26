@@ -23,13 +23,19 @@ package com.torodb.mongodb.repl.commands;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import com.eightkdata.mongowp.ErrorCode;
 import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.exceptions.CommandFailed;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.CreateIndexesCommand.CreateIndexesArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.CreateIndexesCommand.CreateIndexesResult;
-import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.IndexOptions;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.index.IndexOptions;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.index.IndexOptions.KnownType;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.index.type.AscIndexType;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.index.type.DefaultIndexTypeVisitor;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.index.type.DescIndexType;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.index.type.IndexType;
 import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.Request;
 import com.google.common.collect.ImmutableList;
@@ -43,6 +49,9 @@ import com.torodb.torod.IndexFieldInfo;
 import com.torodb.torod.SharedWriteTorodTransaction;
 
 public class CreateIndexesReplImpl extends ReplCommandImpl<CreateIndexesArgument, CreateIndexesResult> {
+    
+    private final static FieldIndexOrderingConverterIndexTypeVisitor filedIndexOrderingConverterVisitor = 
+            new FieldIndexOrderingConverterIndexTypeVisitor();
 
     @Override
     public Status<CreateIndexesResult> apply(Request req,
@@ -81,26 +90,21 @@ public class CreateIndexesReplImpl extends ReplCommandImpl<CreateIndexesArgument
                     for (String key : indexKey.getKeys()) {
                         attRefBuilder.addObjectKey(key);
                     }
+                    
+                    IndexType indexType = indexKey.getType();
 
-                    FieldIndexOrdering ordering;
-                    switch(indexKey.getType()) {
-                    case asc:
-                        ordering = FieldIndexOrdering.ASC;
-                        break;
-                    case desc:
-                        ordering = FieldIndexOrdering.DESC;
-                        break;
-                    case twod:
-                    case twodsphere:
-                    case geoHaystack:
-                    case hashed:
-                    case text:
-                    default:
-                        throw new CommandFailed("createIndexes",
-                                "Index of type " + indexKey.getType().name() + " is not supported right now");
+                    if (!KnownType.contains(indexType)) {
+                        return Status.from(ErrorCode.CANNOT_CREATE_INDEX, "bad index key pattern: Unknown index plugin '" 
+                                + indexKey.getType().toBsonValue().toString() + "'");
                     }
 
-                    fields.add(new IndexFieldInfo(attRefBuilder.build(), ordering.isAscending()));
+                    Optional<FieldIndexOrdering> ordering = indexType.accept(filedIndexOrderingConverterVisitor, null);
+                    if (!ordering.isPresent()) {
+                        throw new CommandFailed("createIndexes", 
+                                "Index of type " + indexType.toBsonValue().toString() + " is not supported right now");
+                    }
+
+                    fields.add(new IndexFieldInfo(attRefBuilder.build(), ordering.get().isAscending()));
                 }
 
                 if (trans.createIndex(req.getDatabase(), arg.getCollection(), indexOptions.getName(), fields, indexOptions.isUnique())) {
@@ -119,6 +123,23 @@ public class CreateIndexesReplImpl extends ReplCommandImpl<CreateIndexesArgument
             return Status.from(ErrorCode.COMMAND_FAILED, ex.getLocalizedMessage());
         } catch(CommandFailed ex) {
             return Status.from(ex);
+        }
+    }
+
+    private static class FieldIndexOrderingConverterIndexTypeVisitor extends DefaultIndexTypeVisitor<Void, Optional<FieldIndexOrdering>> {
+        @Override
+        protected Optional<FieldIndexOrdering> defaultVisit(IndexType indexType, Void arg) {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<FieldIndexOrdering> visit(AscIndexType indexType, Void arg) {
+            return Optional.of(FieldIndexOrdering.ASC);
+        }
+
+        @Override
+        public Optional<FieldIndexOrdering> visit(DescIndexType indexType, Void arg) {
+            return Optional.of(FieldIndexOrdering.DESC);
         }
     }
 
