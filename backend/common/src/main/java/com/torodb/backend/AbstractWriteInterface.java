@@ -183,7 +183,9 @@ public abstract class AbstractWriteInterface implements WriteInterface {
                     }
                     preparedStatement.addBatch();
 
-                    LOGGER.trace("Added to insert {}", preparedStatement.toString());
+                    if (LOGGER.isTraceEnabled()){
+                    	LOGGER.trace("Added to insert {}", preparedStatement.toString());
+                    }
 
                     if (docCounter % maxBatchSize == 0 || !docPartRowIterator.hasNext()) {
                         preparedStatement.executeBatch();

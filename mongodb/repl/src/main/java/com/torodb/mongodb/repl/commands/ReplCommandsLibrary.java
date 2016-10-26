@@ -23,6 +23,7 @@ package com.torodb.mongodb.repl.commands;
 import java.util.Set;
 
 import com.eightkdata.mongowp.bson.BsonDocument;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.CollModCommand;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.CreateCollectionCommand;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.CreateIndexesCommand;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.DropCollectionCommand;
@@ -53,7 +54,7 @@ public class ReplCommandsLibrary implements CommandsLibrary {
                 .addCommand(DropCollectionCommand.INSTANCE)
                 .addCommand(DropDatabaseCommand.INSTANCE)
                 .addCommand(RenameCollectionCommand.INSTANCE)
-                .addAsAlias(LogAndStopCommand.INSTANCE, "collmod")
+                .addAsAlias(LogAndIgnoreCommand.INSTANCE, CollModCommand.INSTANCE.getCommandName())
                 .addAsAlias(LogAndIgnoreCommand.INSTANCE, "coverToCapped")
                 .addAsAlias(LogAndIgnoreCommand.INSTANCE, "emptycapped")
                 //drop indexes aliases

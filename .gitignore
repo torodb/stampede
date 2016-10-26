@@ -9,3 +9,4 @@ target/
 .classpath
 .settings/
 hs_err*.log
+/documentation/static
