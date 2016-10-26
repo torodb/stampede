@@ -96,7 +96,7 @@ public class DefaultIdentifierFactory implements IdentifierFactory {
         
         IdentifierChecker identifierChecker = new IndexIdentifierChecker(metaDatabase);
         
-        return generateUniqueIdentifier(nameChain, identifierChecker);
+        return generateUniqueIdentifier(nameChain, identifierChecker, "idx");
     }
 
     private String generateUniqueIdentifier(NameChain nameChain, IdentifierChecker uniqueIdentifierChecker) {

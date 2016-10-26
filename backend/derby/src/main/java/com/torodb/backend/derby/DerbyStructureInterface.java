@@ -62,6 +62,12 @@ public class DerbyStructureInterface extends AbstractStructureInterface {
             String toTableName) {
         return "RENAME TABLE \"" + fromSchemaName + "\".\"" + fromTableName + "\" TO  \"" + toTableName + "\"";
     }
+    
+    @Override
+    protected String getRenameIndexStatement(String fromSchemaName, String fromIndexName, 
+            String toIndexName) {
+        return "SET SCHEMA = \"" + fromSchemaName + "\"; RENAME INDEX \"" + fromIndexName + "\" TO \"" + toIndexName + "\"";
+    }
 
     @Override
     protected String getSetTableSchemaStatement(String fromSchemaName, String fromTableName, 
