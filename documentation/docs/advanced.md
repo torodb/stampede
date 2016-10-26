@@ -2,7 +2,7 @@
 
 Para comprender mejor la naturaleza del algoritmo de mapeo de documento JSON a un almacenamiento relacional, se ejecutará un ejemplo de mapeo usando el ejemplo [primer de MongoDB](https://docs.mongodb.com/getting-started/shell/import-data/).
 
-Suponiendo que tenemos ToroDB Stampede replicando de un MongoDB en replica set, importaremos los datos del dataset en MongoDB para que se repliquen en PostgreSQL.
+Suponiendo que tenemos ToroDB Stampede replicando de un MongoDB, importaremos los datos del dataset en MongoDB para que se repliquen en formato relacional en PostgreSQL.
 
 ```
 $ wget https://www.dropbox.com/s/570d4tyt4hpsn03/primer-dataset.json?dl=0
@@ -10,11 +10,11 @@ $ wget https://www.dropbox.com/s/570d4tyt4hpsn03/primer-dataset.json?dl=0
 $ mongoimport -d stampede -c primer primer-dataset.json
 ```
 
-Como se puede observar se ha hecho la importación en la base de datos stampede y la colección primer. En PostgreSQL esto significa que se ha creado dentro de la base de datos torod, el esquema stampede con una tabla raíz primer y una serie de tablas denominadas primer_*.
+Como se puede observar se ha hecho la importación en la base de datos con nombre `stampede` y la colección `primer`, esto es importante de cara al esquema y nombres de tablas que se van a utilizar. En PostgreSQL esto significa que se ha creado dentro de la base de datos torod, el esquema `stampede` con una tabla raíz `primer` y una serie de tablas denominadas `primer_*`.
 
 ## Table mapping
 
-Sabiendo que la estructura de los documentos JSON que contiene el dataset es equivalente a la siguiente.
+En esencia, cada nivel del documento JSON se mapea a una tabla diferente en el backend relacional. Por tanto, sabiendo que la estructura de los documentos JSON que contiene el dataset es equivalente a la siguiente.
 
 ```
 {
@@ -38,13 +38,23 @@ Sabiendo que la estructura de los documentos JSON que contiene el dataset es equ
 }
 ```
 
-Se crearían un total de 4 tablas que corresponden a los diferentes paths del documento que tienen como hijos un subdocumento.
+Se crearían un total de 4 tablas que corresponden a los diferentes paths del documento. Es decir, una tabla inicial para la raíz del documento que se llamará primer, porque es el nombre de colección seleccionado, y otras tres tablas que corresponden con los paths de los subdocumentos encontrados.
+
+* primer_address
+* primer_address_coord
+* primer_grades
 
 ### primer
 
+Como se ha indicado, la raíz del documento se mapea a una tabla que tiene como nombre el que se haya usado como nombre de colección en MongoDB, en este caso primer.
+
+A su vez, cada elemento del nivel raíz se mapea a una columna, ya sea este un tipo de dato primitivo o un subdocumento. En la siguiente sección se puede consultar el tipo de datos que existen y como son mapeados a columnas en el backend relacional.
+
+En este caso hay dos columnas con postfijo `_e` que significa que son un subdocumento, mientras que otras tienen postfijo `_s` que es el utilizado para los strings.
+
 ```
 did  | address_e | restaurant_id_s |                                               name_s                                               |                            cuisine_s                             |           _id_x            |   borough_s   | grades_e
--------+-----------+-----------------+----------------------------------------------------------------------------------------------------+------------------------------------------------------------------+----------------------------+---------------+----------
+-----+-----------+-----------------+----------------------------------------------------------------------------------------------------+------------------------------------------------------------------+----------------------------+---------------+----------
    0 | f         | 40384115        | Phil & Sons Restaurant & Pizzeria                                                                  | Pizza/Italian                                                    | \x580f12efbe6e3fff2237caef | Queens        | t
    1 | f         | 40384100        | Josie'S Restaurant                                                                                 | American                                                         | \x580f12efbe6e3fff2237caee | Manhattan     | t
    2 | f         | 40384036        | Mcdonald'S                                                                                         | Hamburgers                                                       | \x580f12efbe6e3fff2237caed | Brooklyn      | t
@@ -58,13 +68,148 @@ did  | address_e | restaurant_id_s |                                            
 ### primer_address
 
 ```
-
+did  |  rid  | seq | zipcode_s | coord_e |                street_s                | building_s
+-----+-------+-----+-----------+---------+----------------------------------------+------------
+   0 |     0 |     | 11355     | t       | Main Street                            | 57-29
+   1 |     1 |     | 10023     | t       | Amsterdam Avenue                       | 300
+   2 |     2 |     | 11207     | t       | Pennsylvania Avenue                    | 819
+   3 |     3 |     | 10314     | t       | Victory Boulevard                      | 3115
+   4 |     4 |     | 10019     | t       | Broadway                               | 1674
+   5 |     5 |     | 11354     | t       | Main Street                            | 4027
+   6 |     6 |     | 10019     | t       | West   52 Street                       | 256
+   7 |     7 |     | 10463     | t       | Broadway                               | 5977
 ```
 
 ### primer_address_coord
 
+```
+did  |  rid  |  pid  | seq |     v_d      
+-----+-------+-------+-----+--------------
+   0 |     0 |     0 |   0 |   -73.825679
+   0 |     1 |     0 |   1 |   40.7455975
+   1 |     2 |     1 |   0 |  -73.9809789
+   1 |     3 |     1 |   1 |   40.7802374
+   2 |     4 |     2 |   0 |  -73.8896643
+   2 |     5 |     2 |   1 |   40.6578505
+   3 |     6 |     3 |   0 |  -74.1630372
+   3 |     7 |     3 |   1 |     40.60731
+   4 |     8 |     4 |   0 |   -73.982872
+   4 |     9 |     4 |   1 |   40.7628094
+   5 |    10 |     5 |   0 |   -73.829714
+   5 |    11 |     5 |   1 |   40.7587648
+   6 |    12 |     6 |   0 |   -73.984752
+   6 |    13 |     6 |   1 |    40.763105
+   7 |    14 |     7 |   0 |  -73.8982704
+   7 |    15 |     7 |   1 |   40.8896923
+```
+
 ### primer_grades
 
-![Table mapping](images/relational_structure.jpg)
+```
+did  |  rid  | seq |         date_g         | score_i |    grade_s     | score_n
+-----+-------+-----+------------------------+---------+----------------+---------
+   0 |     0 |   0 | 2014-08-21 02:00:00+02 |       6 | A              |
+   0 |     1 |   1 | 2014-02-03 01:00:00+01 |      19 | B              |
+   0 |     2 |   2 | 2013-04-13 02:00:00+02 |       7 | A              |
+   0 |     3 |   3 | 2012-10-17 02:00:00+02 |       9 | A              |
+   0 |     4 |   4 | 2011-10-22 02:00:00+02 |      10 | A              |
+   1 |     5 |   0 | 2014-02-20 01:00:00+01 |      10 | A              |
+   1 |     6 |   1 | 2013-07-22 02:00:00+02 |      12 | A              |
+   1 |     7 |   2 | 2012-06-25 02:00:00+02 |      10 | A              |
+   1 |     8 |   3 | 2011-11-16 01:00:00+01 |      22 | B              |
+   1 |     9 |   4 | 2011-04-26 02:00:00+02 |      12 | A              |
+   2 |    10 |   0 | 2014-04-24 02:00:00+02 |       3 | A              |
+   2 |    11 |   1 | 2013-10-10 02:00:00+02 |       4 | A              |
+   2 |    12 |   2 | 2013-05-08 02:00:00+02 |       2 | A              |
+   2 |    13 |   3 | 2012-11-23 01:00:00+01 |       7 | A              |
+   2 |    14 |   4 | 2012-03-05 01:00:00+01 |      19 | B              |
+   2 |    15 |   5 | 2011-09-22 02:00:00+02 |      12 | A              |
+   2 |    16 |   6 | 2011-08-16 02:00:00+02 |       3 | P              |
+   3 |    17 |   0 | 2014-08-07 02:00:00+02 |      21 | B              |
+   3 |    18 |   1 | 2014-01-07 01:00:00+01 |      13 | A              |
+   3 |    19 |   2 | 2012-10-09 02:00:00+02 |      13 | A              |
+   3 |    20 |   3 | 2011-10-18 02:00:00+02 |       4 | A              |
+   4 |    21 |   0 | 2014-02-20 01:00:00+01 |       8 | A              |
+   4 |    22 |   1 | 2013-01-25 01:00:00+01 |      13 | A              |
+   4 |    23 |   2 | 2011-12-27 01:00:00+01 |      10 | A              |
+   5 |    24 |   0 | 2014-11-13 01:00:00+01 |      16 | B              |
+   5 |    25 |   1 | 2014-04-16 02:00:00+02 |       7 | A              |
+   5 |    26 |   2 | 2013-10-10 02:00:00+02 |       5 | A              |
+   5 |    27 |   3 | 2013-03-08 01:00:00+01 |       9 | A              |
+   5 |    28 |   4 | 2012-08-22 02:00:00+02 |      44 | C              |
+   6 |    29 |   0 | 2014-12-30 01:00:00+01 |      40 | Z              |
+   6 |    30 |   1 | 2014-05-29 02:00:00+02 |      10 | A              |
+   6 |    31 |   2 | 2013-09-24 02:00:00+02 |      10 | A              |
+   6 |    32 |   3 | 2013-02-12 01:00:00+01 |      18 | B              |
+   6 |    33 |   4 | 2012-05-11 02:00:00+02 |       6 | A              |
+   7 |    34 |   0 | 2014-05-30 02:00:00+02 |       6 | A              |
+   7 |    35 |   1 | 2013-04-25 02:00:00+02 |       7 | A              |
+   7 |    36 |   2 | 2012-11-20 01:00:00+01 |      12 | A              |
+   7 |    37 |   3 | 2012-05-30 02:00:00+02 |      10 | A              |
+   7 |    38 |   4 | 2011-12-19 01:00:00+01 |      18 | B              |
+```
 
-## Data conflict resolution
+## Columnas y tipos de datos
+
+[TODO]: <> (Explicar los posibles valores de los campos tipo e)
+[TODO]: <> (Revisar que estén todos los tipos de datos ... BINARY, BOOLEAN, DATE, DOUBLE, INSTANT, INTEGER, LONG, MONGO_OBJECT_ID, MONGO_TIME_STAMP, NULL, STRING, TIME, CHILD)
+
+| Postfijo | ¿Qué representa? |
+|----------|---------|
+| _e | Subdocumentos que están mapeados a otra tabla. |
+| _g | |
+| _i | Números enteros. |
+| _n | Valores nulos. |
+| _s | Cadenas de texto. |
+
+### Data conflict resolution
+
+Por la propia naturaleza de los documentos JSON puede ocurrir que un mismo path tenga dos tipos de datos diferentes, o que en algunos documentos ese path no exista. No es un problema para un documento JSON, pero sí lo es para un sistema relacional en el que cada columna tiene asociado un determinado tipo de dato.
+
+Para resolver este problema en ToroDB Stampede, se ha decidido crear una columna diferente para cada tipo de dato. Por ejemplo, en el extracto de la tabla `primer_grades` del ejemplo anterior, existen dos columna diferentes para el valor de la clave `score`. La columna `score_i` almacena los datos que son de tipo entero, mientras que la columna `score_n` indica cuando ese path tiene valor nulo o ni siquiera se ha especificado el path.
+
+Para que se comprenda mejor, a continuación se muestra un extracto de elementos en `primer_grades` que tienen valor para `score_i` y otros que no, pero que sí tienen valor para `score_n`.
+
+```
+did   |  rid  | seq |         date_g         | score_i |    grade_s     | score_n
+------+-------+-----+------------------------+---------+----------------+---------
+    0 |     0 |   0 | 2014-08-21 02:00:00+02 |       6 | A              |
+    0 |     1 |   1 | 2014-02-03 01:00:00+01 |      19 | B              |
+    0 |     2 |   2 | 2013-04-13 02:00:00+02 |       7 | A              |
+    0 |     3 |   3 | 2012-10-17 02:00:00+02 |       9 | A              |
+    0 |     4 |   4 | 2011-10-22 02:00:00+02 |      10 | A              |
+    1 |     5 |   0 | 2014-02-20 01:00:00+01 |      10 | A              |
+    1 |     6 |   1 | 2013-07-22 02:00:00+02 |      12 | A              |
+    1 |     7 |   2 | 2012-06-25 02:00:00+02 |      10 | A              |
+    1 |     8 |   3 | 2011-11-16 01:00:00+01 |      22 | B              |
+    1 |     9 |   4 | 2011-04-26 02:00:00+02 |      12 | A              |
+ 7148 | 34375 |   0 | 2015-01-20 01:00:00+01 |         | Not Yet Graded | t
+22559 | 91238 |   0 | 2015-01-20 01:00:00+01 |         | Not Yet Graded | t
+23204 | 91961 |   0 | 2015-01-20 01:00:00+01 |         | Not Yet Graded | t
+23392 | 92137 |   0 | 2015-01-20 01:00:00+01 |         | Not Yet Graded | t
+
+```
+
+En las filas que tienen valor `true` para la columna `score_n` significa que en el documento JSON asociado, el valor para `score` era `null`. Por ejemplo:
+
+```
+{
+    "address": {
+        "building": "725",
+        "coord": [-74.01381169999999, 40.6336821],
+        "street": "65 Street",
+        "zipcode": "11220"
+    },
+    "borough": "Brooklyn",
+    "cuisine": "Other",
+    "grades": [{
+        "date": {
+            "$date": 1421712000000
+        },
+        "grade": "Not Yet Graded",
+        "score": null
+    }],
+    "name": "Swedish Football Club",
+    "restaurant_id": "41278206"
+}
+```
