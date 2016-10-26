@@ -6,10 +6,10 @@ import com.torodb.core.TableRefFactory;
 import com.torodb.core.d2r.CollectionData;
 import com.torodb.core.d2r.D2RTranslator;
 import com.torodb.core.d2r.IdentifierFactory;
-import com.torodb.core.d2r.RidGenerator;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MutableMetaCollection;
 import com.torodb.kvdocument.values.KVDocument;
+import com.torodb.core.d2r.ReservedIdGenerator;
 
 public class D2RTranslatorStack implements D2RTranslator {
 
@@ -19,7 +19,7 @@ public class D2RTranslatorStack implements D2RTranslator {
 
     @Inject
 	public D2RTranslatorStack(TableRefFactory tableRefFactory, IdentifierFactory identifierFactory, 
-            RidGenerator ridGenerator, @Assisted MetaDatabase database, @Assisted MutableMetaCollection collection) {
+            ReservedIdGenerator ridGenerator, @Assisted MetaDatabase database, @Assisted MutableMetaCollection collection) {
         this.collectionMetaInfo = new CollectionMetaInfo(database, collection, identifierFactory, ridGenerator);
         this.docPartDataCollection = new DocPartDataCollection(collectionMetaInfo);
         this.d2Relational = new D2Relational(tableRefFactory, docPartDataCollection);

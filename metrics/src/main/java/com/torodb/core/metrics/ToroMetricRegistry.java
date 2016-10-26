@@ -4,13 +4,11 @@ import com.codahale.metrics.*;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import javax.inject.Singleton;
 import javax.management.ObjectName;
 
 import org.mpierce.metrics.reservoir.hdrhistogram.HdrHistogramReservoir;
 import org.mpierce.metrics.reservoir.hdrhistogram.HdrHistogramResetOnSnapshotReservoir;
 
-@Singleton
 public class ToroMetricRegistry extends MetricRegistry  {
 	
 	private final MbeanNameFactory mbeanNameFactory = new MbeanNameFactory();

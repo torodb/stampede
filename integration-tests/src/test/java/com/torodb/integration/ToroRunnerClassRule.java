@@ -25,8 +25,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.torodb.standalone.ToroDbServer;
-
 public class ToroRunnerClassRule extends AbstractBackendRunnerClassRule {
 
 	private final Set<Throwable> UNCAUGHT_EXCEPTIONS = new HashSet<>();
@@ -50,8 +48,6 @@ public class ToroRunnerClassRule extends AbstractBackendRunnerClassRule {
 		return ucaughtExceptions;
 	}
 
-	private ToroDbServer torodbServer;
-
     @Override
     protected void startUp() throws Exception {
         Thread.setDefaultUncaughtExceptionHandler(
@@ -61,18 +57,15 @@ public class ToroRunnerClassRule extends AbstractBackendRunnerClassRule {
                         addUncaughtException(e);
                     }
                 });
-        
-        torodbServer = getInjector().getInstance(ToroDbServer.class);
-        torodbServer.startAsync();
-        torodbServer.awaitRunning();
+
+        getService().startBackendBundle();
+        getService().startTorodBundle();
     }
 
     @Override
     protected void shutDown() throws Exception {
-        ToroDbServer torodbServer = this.torodbServer;
-        if (torodbServer != null) {
-            torodbServer.stopAsync();
-            torodbServer.awaitTerminated();
+        if (getService() != null) {
+            getService().shutDown();
         }
         
         List<Throwable> exceptions = getUcaughtExceptions();

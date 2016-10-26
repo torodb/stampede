@@ -10,16 +10,18 @@ import org.jooq.lambda.tuple.Tuple2;
 import com.google.common.collect.Multimap;
 import com.torodb.backend.ErrorHandler.Context;
 import com.torodb.core.backend.BackendTransaction;
+import com.torodb.core.backend.MetaInfoKey;
+import com.torodb.core.backend.BackendCursor;
+import com.torodb.core.backend.EmptyBackendCursor;
 import com.torodb.core.cursors.Cursor;
 import com.torodb.core.cursors.EmptyCursor;
-import com.torodb.core.cursors.EmptyToroCursor;
-import com.torodb.core.cursors.ToroCursor;
-import com.torodb.core.d2r.R2DTranslator;
+import com.torodb.core.exceptions.InvalidDatabaseException;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetaField;
 import com.torodb.kvdocument.values.KVValue;
+import java.util.Optional;
 
 /**
  *
@@ -31,15 +33,13 @@ public abstract class BackendTransactionImpl implements BackendTransaction {
     private final DSLContext dsl;
     private final SqlInterface sqlInterface;
     private final BackendConnectionImpl backendConnection;
-    private final R2DTranslator r2dTranslator;
 
     public BackendTransactionImpl(Connection connection, SqlInterface sqlInterface,
-            BackendConnectionImpl backendConnection, R2DTranslator r2dTranslator) {
+            BackendConnectionImpl backendConnection) {
         this.connection = connection;
         this.dsl = sqlInterface.getDslContextFactory().createDSLContext(connection);
         this.sqlInterface = sqlInterface;
         this.backendConnection = backendConnection;
-        this.r2dTranslator = r2dTranslator;
     }
 
     boolean isClosed() {
@@ -60,10 +60,6 @@ public abstract class BackendTransactionImpl implements BackendTransaction {
 
     BackendConnectionImpl getBackendConnection() {
         return backendConnection;
-    }
-
-    R2DTranslator getR2dTranslator() {
-        return r2dTranslator;
     }
 
     @Override
@@ -87,34 +83,34 @@ public abstract class BackendTransactionImpl implements BackendTransaction {
     }
 
     @Override
-    public ToroCursor findAll(MetaDatabase db, MetaCollection col) {
+    public BackendCursor findAll(MetaDatabase db, MetaCollection col) {
         try {
             Cursor<Integer> allDids = sqlInterface.getReadInterface().getAllCollectionDids(dsl, db, col);
-            return new LazyToroCursor(sqlInterface, r2dTranslator, allDids, dsl, db, col);
+            return new LazyBackendCursor(sqlInterface, allDids, dsl, db, col);
         } catch (SQLException ex) {
             throw sqlInterface.getErrorHandler().handleException(Context.FETCH, ex);
         }
     }
 
     @Override
-    public ToroCursor findByField(MetaDatabase db, MetaCollection col, MetaDocPart docPart, MetaField field, KVValue<?> value) {
+    public BackendCursor findByField(MetaDatabase db, MetaCollection col, MetaDocPart docPart, MetaField field, KVValue<?> value) {
         try {
             Cursor<Integer> allDids = sqlInterface.getReadInterface().getCollectionDidsWithFieldEqualsTo(dsl, db, col, docPart, field, value);
-            return new LazyToroCursor(sqlInterface, r2dTranslator, allDids, dsl, db, col);
+            return new LazyBackendCursor(sqlInterface, allDids, dsl, db, col);
         } catch (SQLException ex) {
             throw sqlInterface.getErrorHandler().handleException(Context.FETCH, ex);
         }
     }
 
     @Override
-    public ToroCursor findByFieldIn(MetaDatabase db, MetaCollection col, MetaDocPart docPart,
+    public BackendCursor findByFieldIn(MetaDatabase db, MetaCollection col, MetaDocPart docPart,
             Multimap<MetaField, KVValue<?>> valuesMultimap) {
         try {
             if (valuesMultimap.isEmpty()) {
-                return new EmptyToroCursor();
+                return new EmptyBackendCursor();
             }
             Cursor<Integer> allDids = sqlInterface.getReadInterface().getCollectionDidsWithFieldsIn(dsl, db, col, docPart, valuesMultimap);
-            return new LazyToroCursor(sqlInterface, r2dTranslator, allDids, dsl, db, col);
+            return new LazyBackendCursor(sqlInterface, allDids, dsl, db, col);
         } catch (SQLException ex) {
             throw sqlInterface.getErrorHandler().handleException(Context.FETCH, ex);
         }
@@ -134,8 +130,19 @@ public abstract class BackendTransactionImpl implements BackendTransaction {
     }
 
     @Override
-    public ToroCursor fetch(MetaDatabase db, MetaCollection col, Cursor<Integer> didCursor) {
-        return new LazyToroCursor(sqlInterface, r2dTranslator, didCursor, dsl, db, col);
+    public BackendCursor fetch(MetaDatabase db, MetaCollection col, Cursor<Integer> didCursor) {
+        return new LazyBackendCursor(sqlInterface, didCursor, dsl, db, col);
+    }
+
+    @Override
+    public Optional<KVValue<?>> readMetaInfo(MetaInfoKey key) throws
+            IllegalArgumentException {
+        return getBackendConnection().getMetaInfoHandler().readMetaInfo(getDsl(), key);
+    }
+
+    @Override
+    public void checkMetaDataTables() throws InvalidDatabaseException {
+        getSqlInterface().getStructureInterface().checkMetaDataTables(getDsl());
     }
 
     @Override

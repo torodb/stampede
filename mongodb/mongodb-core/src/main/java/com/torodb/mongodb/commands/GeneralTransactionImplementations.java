@@ -71,6 +71,7 @@ import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.net.HostAndPort;
+import com.google.inject.Injector;
 import com.torodb.mongodb.commands.impl.NotImplementedCommandImplementation;
 import com.torodb.mongodb.commands.impl.admin.ListCollectionsImplementation;
 import com.torodb.mongodb.commands.impl.admin.ListIndexesImplementation;
@@ -90,8 +91,8 @@ public class GeneralTransactionImplementations {
     private final Set<Command<?, ?>> supportedCommands;
     
     @Inject
-    GeneralTransactionImplementations(MapFactory mapFactory) {
-        map = mapFactory.get();
+    GeneralTransactionImplementations(Injector injector) {
+        map = new MapFactory(injector).get();
 
         supportedCommands = Collections.unmodifiableSet(
                 map.entrySet().stream()
@@ -120,21 +121,14 @@ public class GeneralTransactionImplementations {
         private final MyReplCommandsImplementationsBuilder replBuilder;
 
         @Inject
-        public MapFactory(
-                MyAdminCommandsImplementationBuilder adminBuilder,
-                MyAggregationCommandsImplementationBuilder aggregationBuilder,
-                MyAuthenticationCommandsImplementationsBuilder authenticationCommandsImplementationsBuilder,
-                MyDiagnosticCommandsImplementationBuilder diagnosticBuilder,
-                MyGeneralCommandsImplementationBuilder generalBuilder,
-                MyInternalCommandsImplementationsBuilder internalBuilder,
-                MyReplCommandsImplementationsBuilder replBuilder) {
-            this.adminBuilder = adminBuilder;
-            this.aggregationBuilder = aggregationBuilder;
-            this.authenticationCommandsImplementationsBuilder = authenticationCommandsImplementationsBuilder;
-            this.diagnosticBuilder = diagnosticBuilder;
-            this.generalBuilder = generalBuilder;
-            this.internalBuilder = internalBuilder;
-            this.replBuilder = replBuilder;
+        public MapFactory(Injector injector) {
+            this.adminBuilder = new MyAdminCommandsImplementationBuilder();
+            this.aggregationBuilder = new MyAggregationCommandsImplementationBuilder();
+            this.authenticationCommandsImplementationsBuilder = new MyAuthenticationCommandsImplementationsBuilder(injector);
+            this.diagnosticBuilder = new MyDiagnosticCommandsImplementationBuilder();
+            this.generalBuilder = new MyGeneralCommandsImplementationBuilder();
+            this.internalBuilder = new MyInternalCommandsImplementationsBuilder();
+            this.replBuilder = new MyReplCommandsImplementationsBuilder();
         }
 
         @Override
@@ -154,20 +148,10 @@ public class GeneralTransactionImplementations {
     }
 
     static class MyAdminCommandsImplementationBuilder extends AdminCommandsImplementationsBuilder<MongodTransaction> {
-        private final ListCollectionsImplementation listCollectionsImplementation;
-        private final ListIndexesImplementation listIndexesImplementation;
-
-        @Inject
-        public MyAdminCommandsImplementationBuilder(ListCollectionsImplementation listCollectionsImplementation,
-                ListIndexesImplementation listIndexesImplementation) {
-            super();
-            this.listCollectionsImplementation = listCollectionsImplementation;
-            this.listIndexesImplementation = listIndexesImplementation;
-        }
 
         @Override
         public CommandImplementation<ListCollectionsArgument, ListCollectionsResult, ? super MongodTransaction> getListCollectionsImplementation() {
-            return listCollectionsImplementation;
+            return new ListCollectionsImplementation();
         }
 
         @Override
@@ -187,7 +171,7 @@ public class GeneralTransactionImplementations {
 
         @Override
         public CommandImplementation<ListIndexesArgument, ListIndexesResult, MongodTransaction> getListIndexesImplementation() {
-            return listIndexesImplementation;
+            return new ListIndexesImplementation();
         }
 
         @Override
@@ -209,21 +193,17 @@ public class GeneralTransactionImplementations {
 
     static class MyAggregationCommandsImplementationBuilder extends AggregationCommandsImplementationsBuilder<MongodTransaction> {
 
-        private final CountImplementation countImplementation;
-        
-        @Inject
-        public MyAggregationCommandsImplementationBuilder(CountImplementation countImplementation) {
-            this.countImplementation = countImplementation;
-        }
-
         @Override
         public CommandImplementation<CountArgument, Long, ? super MongodTransaction> getCountImplementation() {
-            return countImplementation;
+            return new CountImplementation();
         }
 
     }
 
     static class MyAuthenticationCommandsImplementationsBuilder extends AuthenticationCommandsImplementationsBuilder<MongodTransaction> {
+
+        private MyAuthenticationCommandsImplementationsBuilder(Injector injector) {
+        }
 
         @Override
         public CommandImplementation<Empty, String, MongodTransaction> getGetNonceImplementation() {
@@ -232,26 +212,15 @@ public class GeneralTransactionImplementations {
     }
 
     static class MyDiagnosticCommandsImplementationBuilder extends DiagnosticCommandsImplementationsBuilder<MongodTransaction> {
-        
-        private final ListDatabasesImplementation listDatabasesImplementation;
-        private final CollStatsImplementation collStatsImplementation;
-        
-        @Inject
-        public MyDiagnosticCommandsImplementationBuilder(ListDatabasesImplementation listDatabasesImplementation,
-                CollStatsImplementation collStatsImplementation) {
-            super();
-            this.listDatabasesImplementation = listDatabasesImplementation;
-            this.collStatsImplementation = collStatsImplementation;
-        }
 
         @Override
         public CommandImplementation<CollStatsArgument, CollStatsReply, ? super MongodTransaction> getCollStatsImplementation() {
-            return collStatsImplementation;
+            return new CollStatsImplementation();
         }
 
         @Override
         public CommandImplementation<Empty, ListDatabasesReply, ? super MongodTransaction> getListDatabasesImplementation() {
-            return listDatabasesImplementation;
+            return new ListDatabasesImplementation();
         }
 
         @Override
@@ -277,8 +246,6 @@ public class GeneralTransactionImplementations {
     }
 
     static class MyGeneralCommandsImplementationBuilder extends GeneralCommandsImplementationsBuilder<MongodTransaction> {
-        @Inject
-        private FindImplementation findImpl;
 
         @Override
         public CommandImplementation<GetLastErrorArgument, GetLastErrorReply, MongodTransaction> getGetLastErrrorImplementation() {
@@ -287,7 +254,7 @@ public class GeneralTransactionImplementations {
 
         @Override
         public CommandImplementation<FindArgument, FindResult, ? super MongodTransaction> getFindImplementation() {
-            return findImpl;
+            return new FindImplementation();
         }
 
         @Override
@@ -346,7 +313,7 @@ public class GeneralTransactionImplementations {
     }
 
     static class MyReplCommandsImplementationsBuilder extends ReplCommandsImplementationsBuilder<MongodTransaction> {
-        
+
         @Override
         public CommandImplementation<ApplyOpsArgument, ApplyOpsReply, MongodTransaction> getApplyOpsImplementation() {
             return NotImplementedCommandImplementation.build();

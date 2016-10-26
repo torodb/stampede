@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.io.ByteSource;
 import com.torodb.backend.SqlInterface;
 import com.torodb.core.TableRefFactory;
 import com.torodb.core.transaction.metainf.FieldIndexOrdering;
@@ -19,6 +20,7 @@ import com.torodb.core.transaction.metainf.ImmutableMetaIndexField;
 import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
 import com.torodb.core.transaction.metainf.MutableMetaDocPart;
 import com.torodb.core.transaction.metainf.WrapperMutableMetaDocPart;
+import com.torodb.kvdocument.values.KVBinary.KVBinarySubtype;
 import com.torodb.kvdocument.values.KVBoolean;
 import com.torodb.kvdocument.values.KVDocument;
 import com.torodb.kvdocument.values.KVDouble;
@@ -26,6 +28,7 @@ import com.torodb.kvdocument.values.KVInteger;
 import com.torodb.kvdocument.values.KVLong;
 import com.torodb.kvdocument.values.KVNull;
 import com.torodb.kvdocument.values.heap.ByteArrayKVMongoObjectId;
+import com.torodb.kvdocument.values.heap.ByteSourceKVBinary;
 import com.torodb.kvdocument.values.heap.DefaultKVMongoTimestamp;
 import com.torodb.kvdocument.values.heap.LocalDateKVDate;
 import com.torodb.kvdocument.values.heap.LocalTimeKVTime;
@@ -57,6 +60,7 @@ public class TestData {
                 .put(new ImmutableMetaField("stringRoot", "stringRootField", FieldType.STRING))
                 .put(new ImmutableMetaField("dateRoot", "dateRootField", FieldType.DATE))
                 .put(new ImmutableMetaField("timeRoot", "timeRootField", FieldType.TIME))
+                .put(new ImmutableMetaField("binaryRoot", "binaryRootField", FieldType.BINARY))
                 .put(new ImmutableMetaField("mongoObjectIdRoot", "mongoObjectIdRootField", FieldType.MONGO_OBJECT_ID))
                 .put(new ImmutableMetaField("mongoTimeStampRoot", "mongoTimeStampRootField", FieldType.MONGO_TIME_STAMP))
                 .put(new ImmutableMetaField("instantRoot", "instantRootField", FieldType.INSTANT))
@@ -75,6 +79,7 @@ public class TestData {
                 .put(new ImmutableMetaField("stringSub", "stringSubField", FieldType.STRING))
                 .put(new ImmutableMetaField("dateSub", "dateSubField", FieldType.DATE))
                 .put(new ImmutableMetaField("timeSub", "timeSubField", FieldType.TIME))
+                .put(new ImmutableMetaField("binarySub", "binarySubField", FieldType.BINARY))
                 .put(new ImmutableMetaField("mongoObjectIdSub", "mongoObjectIdSubField", FieldType.MONGO_OBJECT_ID))
                 .put(new ImmutableMetaField("mongoTimeStampSub", "mongoTimeStampSubField", FieldType.MONGO_TIME_STAMP))
                 .put(new ImmutableMetaField("instantSub", "instantSubField", FieldType.INSTANT))
@@ -98,7 +103,9 @@ public class TestData {
         newSubDocPart
                 .addMetaField("newDateSub", "newDateSubField", FieldType.DATE);
         newSubDocPart
-                .addMetaField("newTimeSub", "newTimeSubField", FieldType.TIME);
+            .addMetaField("newTimeSub", "newTimeSubField", FieldType.TIME);
+        newSubDocPart
+            .addMetaField("newBinarySub", "newBinarySubField", FieldType.BINARY);
         newSubDocPart
                 .addMetaField("newMongoObjectIdSub", "newMongoObjectIdSubField", FieldType.MONGO_OBJECT_ID);
         newSubDocPart
@@ -128,6 +135,7 @@ public class TestData {
                         .putValue("stringRoot", new StringKVString("Lorem ipsum"))
                         .putValue("dateRoot", new LocalDateKVDate(LocalDate.of(2016, 06, 7)))
                         .putValue("timeRoot", new LocalTimeKVTime(LocalTime.of(17, 29, 00)))
+                        .putValue("binaryRoot", new ByteSourceKVBinary(KVBinarySubtype.MONGO_GENERIC, (byte) 0, ByteSource.wrap(new byte[] { 1, 2, 3, 4 })))
                         .putValue("mongoObjectIdRoot", new ByteArrayKVMongoObjectId(
                                 new byte[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}))
                         .putValue("mongoTimeStampRoot", new DefaultKVMongoTimestamp(0, 0))
@@ -141,6 +149,7 @@ public class TestData {
                                         .putValue("stringSub", new StringKVString("Lorem ipsum"))
                                         .putValue("dateSub", new LocalDateKVDate(LocalDate.of(2016, 06, 7)))
                                         .putValue("timeSub", new LocalTimeKVTime(LocalTime.of(17, 29, 00)))
+                                        .putValue("binarySub", new ByteSourceKVBinary(KVBinarySubtype.MONGO_GENERIC, (byte) 0, ByteSource.wrap(new byte[] { 1, 2, 3, 4 })))
                                         .putValue("mongoObjectIdSub", new ByteArrayKVMongoObjectId(
                                                 new byte[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}))
                                         .putValue("mongoTimeStampSub", new DefaultKVMongoTimestamp(0, 0))

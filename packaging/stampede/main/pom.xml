@@ -248,7 +248,7 @@
                         </executions>
                     </plugin>
                 </plugins>
-                <finalName>${name}-${project.version}</finalName>
+                <finalName>${project.name}-${project.version}</finalName>
             </build>
         </profile>
         
@@ -375,6 +375,8 @@
             <properties>
                 <docker.postgres.host></docker.postgres.host>
                 <docker.postgres.port>5432</docker.postgres.port>
+                <docker.postgres.password></docker.postgres.password>
+                <docker.torodb.setup>false</docker.torodb.setup>
                 <docker.torodb.backend.user>torodb</docker.torodb.backend.user>
                 <docker.torodb.backend.password>torodb</docker.torodb.backend.password>
                 <docker.mongo.syncsource></docker.mongo.syncsource>
@@ -392,8 +394,9 @@
                                     <name>8kdata/torodb-stampede</name>
                                     <run>
                                         <env>
-                                            <TORODB_SETUP>false</TORODB_SETUP>
+                                            <TORODB_SETUP>${docker.torodb.setup}</TORODB_SETUP>
                                             <MONGO_SYNC_SOURCE>${docker.mongo.syncsource}</MONGO_SYNC_SOURCE>
+                                            <POSTGRES_PASSWORD>${docker.postgres.password}</POSTGRES_PASSWORD>
                                             <TORODB_BACKEND_HOST>${docker.postgres.host}</TORODB_BACKEND_HOST>
                                             <TORODB_BACKEND_PORT>${docker.postgres.port}</TORODB_BACKEND_PORT>
                                             <TORODB_BACKEND_DATABASE>${docker.postgres.database}</TORODB_BACKEND_DATABASE>

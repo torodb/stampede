@@ -2,12 +2,11 @@
 package com.torodb.torod.impl.sql;
 
 import com.torodb.core.transaction.SharedWriteInternalTransaction;
-import com.torodb.torod.SharedWriteTorodTransaction;
 
 /**
  *
  */
-public class SqlSharedWriteTorodTransaction extends SqlWriteTorodTransaction<SharedWriteInternalTransaction> implements SharedWriteTorodTransaction {
+public class SqlSharedWriteTorodTransaction extends SqlWriteTorodTransaction<SharedWriteInternalTransaction> {
 
     public SqlSharedWriteTorodTransaction(SqlTorodConnection connection, boolean concurrent) {
         super(connection, concurrent);

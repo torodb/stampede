@@ -20,28 +20,25 @@
 
 package com.torodb.mongodb.language;
 
+import com.eightkdata.mongowp.bson.BsonObjectId;
+import com.eightkdata.mongowp.bson.impl.IntBasedBsonObjectId;
+import com.google.common.hash.Hasher;
+import com.google.common.hash.Hashing;
+import com.google.common.primitives.UnsignedInteger;
 import java.lang.management.ManagementFactory;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.security.SecureRandom;
 import java.util.Enumeration;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import javax.inject.Singleton;
-
+import javax.annotation.concurrent.ThreadSafe;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import com.eightkdata.mongowp.bson.BsonObjectId;
-import com.eightkdata.mongowp.bson.impl.IntBasedBsonObjectId;
-import com.google.common.hash.Hasher;
-import com.google.common.hash.Hashing;
-import com.google.common.primitives.UnsignedInteger;
 
 /**
  *
  */
-@Singleton
+@ThreadSafe
 public class ObjectIdFactory {
     private static final Logger LOGGER
             = LogManager.getLogger(ObjectIdFactory.class);

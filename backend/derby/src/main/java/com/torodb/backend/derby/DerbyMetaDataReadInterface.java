@@ -26,15 +26,7 @@ import javax.inject.Singleton;
 
 import com.torodb.backend.AbstractMetaDataReadInterface;
 import com.torodb.backend.SqlHelper;
-import com.torodb.backend.derby.tables.DerbyMetaCollectionTable;
-import com.torodb.backend.derby.tables.DerbyMetaDatabaseTable;
-import com.torodb.backend.derby.tables.DerbyMetaDocPartIndexTable;
-import com.torodb.backend.derby.tables.DerbyMetaDocPartTable;
-import com.torodb.backend.derby.tables.DerbyMetaDocPartIndexColumnTable;
-import com.torodb.backend.derby.tables.DerbyMetaFieldTable;
-import com.torodb.backend.derby.tables.DerbyMetaIndexFieldTable;
-import com.torodb.backend.derby.tables.DerbyMetaIndexTable;
-import com.torodb.backend.derby.tables.DerbyMetaScalarTable;
+import com.torodb.backend.derby.tables.*;
 
 /**
  *
@@ -51,6 +43,7 @@ public class DerbyMetaDataReadInterface extends AbstractMetaDataReadInterface {
     private final DerbyMetaDocPartIndexColumnTable metaFieldIndexTable;
     private final DerbyMetaIndexTable metaIndexTable;
     private final DerbyMetaIndexFieldTable metaIndexFieldTable;
+    private final DerbyKvTable kvTable;
 
     @Inject
     public DerbyMetaDataReadInterface(SqlHelper sqlHelper) {
@@ -65,6 +58,7 @@ public class DerbyMetaDataReadInterface extends AbstractMetaDataReadInterface {
         this.metaFieldIndexTable = DerbyMetaDocPartIndexColumnTable.DOC_PART_INDEX_COLUMN;
         this.metaIndexTable = DerbyMetaIndexTable.INDEX;
         this.metaIndexFieldTable = DerbyMetaIndexFieldTable.INDEX_FIELD;
+        this.kvTable = DerbyKvTable.KV;
     }
 
     @Nonnull
@@ -128,6 +122,13 @@ public class DerbyMetaDataReadInterface extends AbstractMetaDataReadInterface {
     @SuppressWarnings("unchecked")
     public DerbyMetaIndexFieldTable getMetaIndexFieldTable() {
         return metaIndexFieldTable;
+    }
+
+    @Nonnull
+    @Override
+    @SuppressWarnings("unchecked")
+    public DerbyKvTable getKvTable() {
+        return kvTable;
     }
 
     @Override

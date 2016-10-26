@@ -10,11 +10,13 @@ import org.jooq.DSLContext;
 import org.jooq.lambda.tuple.Tuple2;
 
 import com.torodb.core.cursors.Cursor;
+import com.torodb.core.d2r.DocPartResult;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetaField;
 import com.torodb.kvdocument.values.KVValue;
+import java.util.List;
 
 public interface ReadInterface {
 
@@ -41,11 +43,11 @@ public interface ReadInterface {
             throws SQLException;
 
     @Nonnull
-    DocPartResultBatch getCollectionResultSets(@Nonnull DSLContext dsl, @Nonnull MetaDatabase metaDatabase, @Nonnull MetaCollection metaCollection,
+    List<DocPartResult> getCollectionResultSets(@Nonnull DSLContext dsl, @Nonnull MetaDatabase metaDatabase, @Nonnull MetaCollection metaCollection,
             @Nonnull Cursor<Integer> didCursor, int maxSize) throws SQLException;
 
     @Nonnull
-    DocPartResultBatch getCollectionResultSets(@Nonnull DSLContext dsl, @Nonnull MetaDatabase metaDatabase, @Nonnull MetaCollection metaCollection,
+    List<DocPartResult> getCollectionResultSets(@Nonnull DSLContext dsl, @Nonnull MetaDatabase metaDatabase, @Nonnull MetaCollection metaCollection,
             @Nonnull Collection<Integer> dids) throws SQLException;
 
     int getLastRowIdUsed(@Nonnull DSLContext dsl, @Nonnull MetaDatabase metaDatabase, @Nonnull MetaCollection metaCollection, @Nonnull MetaDocPart metaDocPart);

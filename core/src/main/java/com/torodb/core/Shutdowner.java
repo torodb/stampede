@@ -25,12 +25,14 @@ import com.google.common.util.concurrent.Service;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.concurrent.ThreadSafe;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
  *
  */
+@ThreadSafe
 public class Shutdowner implements AutoCloseable {
 
     private static final Logger LOGGER = LogManager.getLogger(Shutdowner.class);
@@ -63,7 +65,7 @@ public class Shutdowner implements AutoCloseable {
                 try {
                     listener.onShutdown();
                 } catch (Throwable t) {
-                    LOGGER.error("Error while trying notifying the a shutdown", t);
+                    LOGGER.error("Error while trying to notify the a shutdown", t);
                 }
             }
         });

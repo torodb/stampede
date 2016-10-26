@@ -1,5 +1,6 @@
 package com.torodb.d2r;
 
+import com.torodb.core.d2r.DefaultIdentifierFactory;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -16,12 +17,12 @@ import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
 
 public class IdentifierFactoryImplTest {
 	
-	private IdentifierFactoryImpl identifierFactory;
+	private DefaultIdentifierFactory identifierFactory;
 	private TableRefFactory tableRefFactory= new TableRefFactoryImpl();
 
 	@Before
 	public void setUp() throws Exception {
-	    this.identifierFactory = new IdentifierFactoryImpl(new MockIdentifierInterface());
+	    this.identifierFactory = new DefaultIdentifierFactory(new MockIdentifierInterface());
 	}
     
     @Test

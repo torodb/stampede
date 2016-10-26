@@ -16,6 +16,7 @@ import com.torodb.core.TableRef;
 import com.torodb.core.cursors.Cursor;
 import com.torodb.core.exceptions.user.CollectionNotFoundException;
 import com.torodb.core.exceptions.user.DatabaseNotFoundException;
+import com.torodb.core.exceptions.user.UnsupportedUniqueIndexException;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.language.AttributeReference;
 import com.torodb.core.transaction.RollbackException;
@@ -34,8 +35,10 @@ import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
 import com.torodb.kvdocument.values.KVDocument;
 import com.torodb.kvdocument.values.KVValue;
 import com.torodb.torod.IndexFieldInfo;
-import com.torodb.torod.SharedWriteTorodTransaction;
 import com.torodb.torod.pipeline.InsertPipeline;
+
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import com.torodb.torod.SharedWriteTorodTransaction;
 
 /**
  *
@@ -60,7 +63,7 @@ public abstract class SqlWriteTorodTransaction<T extends WriteInternalTransactio
         InsertPipeline pipeline = getConnection().getServer()
                 .getInsertPipelineFactory(concurrent)
                 .createInsertPipeline(
-                        getConnection().getServer().getD2RTranslatorrFactory(),
+                        getConnection().getServer().getD2RTranslatorFactory(),
                         metaDb,
                         metaCol,
                         getInternalTransaction().getBackendTransaction()
@@ -174,6 +177,17 @@ public abstract class SqlWriteTorodTransaction<T extends WriteInternalTransactio
             indexFieldDefs.add(new Tuple3<>(tableRef, lastKey, ordering));
         }
         
+        if (unique) {
+            TableRef anyIndexTableRef = indexFieldDefs.stream()
+                    .findAny().get().v1();
+            boolean isUniqueIndexWithMutlipleTableRefs = indexFieldDefs.stream()
+                    .anyMatch(t -> !t.v1().equals(anyIndexTableRef));
+            
+            if (isUniqueIndexWithMutlipleTableRefs) {
+                throw new UnsupportedUniqueIndexException(dbName, colName, indexName);
+            }
+        }
+        
         boolean indexExists = metaColl.streamContainedMetaIndexes()
                 .anyMatch(index -> index.getName().equals(indexName) || (
                         index.isUnique() == unique && 
@@ -199,6 +213,9 @@ public abstract class SqlWriteTorodTransaction<T extends WriteInternalTransactio
         return !indexExists;
     }
 
+    @SuppressFBWarnings(value = "RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT",
+            justification = "Findbugs thinks MutableMetaCollection#removeMetaIndexByName"
+                    + "has no side effect")
     @Override
     public boolean dropIndex(String dbName, String colName, String indexName) {
         MutableMetaDatabase db = getInternalTransaction().getMetaSnapshot().getMetaDatabaseByName(dbName);

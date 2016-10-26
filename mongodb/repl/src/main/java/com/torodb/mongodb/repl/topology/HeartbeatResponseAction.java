@@ -20,12 +20,15 @@
 
 package com.torodb.mongodb.repl.topology;
 
+import java.io.Serializable;
 import java.time.Duration;
 
 /**
  *
  */
-class HeartbeatResponseAction {
+class HeartbeatResponseAction implements Serializable {
+
+    private static final long serialVersionUID = 434854838132840069L;
 
     private final Action action;
     private final int primaryIndex;

@@ -93,6 +93,7 @@ public class Postgres extends com.torodb.packaging.config.model.backend.postgres
 		return super.getPassword();
 	}
     @Description("config.backend.postgres.toropassFile")
+    @NotNull
     @JsonProperty(required=true)
     @Override
 	public String getToropassFile() {

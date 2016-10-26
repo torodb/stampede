@@ -1,33 +1,22 @@
 package com.torodb.backend;
 
+import com.google.common.collect.Lists;
+import com.torodb.backend.tables.*;
+import com.torodb.backend.tables.records.*;
 import java.util.Collection;
 
 import javax.annotation.Nonnull;
 
 import org.jooq.DSLContext;
 
-import com.torodb.backend.tables.MetaCollectionTable;
-import com.torodb.backend.tables.MetaDatabaseTable;
-import com.torodb.backend.tables.MetaDocPartIndexTable;
-import com.torodb.backend.tables.MetaDocPartTable;
-import com.torodb.backend.tables.MetaDocPartIndexColumnTable;
-import com.torodb.backend.tables.MetaFieldTable;
-import com.torodb.backend.tables.MetaIndexFieldTable;
-import com.torodb.backend.tables.MetaIndexTable;
-import com.torodb.backend.tables.MetaScalarTable;
-import com.torodb.backend.tables.records.MetaCollectionRecord;
-import com.torodb.backend.tables.records.MetaDatabaseRecord;
-import com.torodb.backend.tables.records.MetaDocPartIndexRecord;
-import com.torodb.backend.tables.records.MetaDocPartRecord;
-import com.torodb.backend.tables.records.MetaDocPartIndexColumnRecord;
-import com.torodb.backend.tables.records.MetaFieldRecord;
-import com.torodb.backend.tables.records.MetaIndexFieldRecord;
-import com.torodb.backend.tables.records.MetaIndexRecord;
-import com.torodb.backend.tables.records.MetaScalarRecord;
 import com.torodb.core.TableRef;
+import com.torodb.core.backend.MetaInfoKey;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 public interface MetaDataReadInterface {
     @Nonnull <R extends MetaDatabaseRecord> MetaDatabaseTable<R> getMetaDatabaseTable();
@@ -39,6 +28,7 @@ public interface MetaDataReadInterface {
     @Nonnull <T, R extends MetaDocPartIndexColumnRecord<T>> MetaDocPartIndexColumnTable<T, R> getMetaDocPartIndexColumnTable();
     @Nonnull <R extends MetaIndexRecord> MetaIndexTable<R> getMetaIndexTable();
     @Nonnull <T, R extends MetaIndexFieldRecord<T>> MetaIndexFieldTable<T, R> getMetaIndexFieldTable();
+    @Nonnull <R extends KvRecord> KvTable<R> getKvTable();
     
     @Nonnull Collection<InternalField<?>> getInternalFields(@Nonnull MetaDocPart metaDocPart);
     @Nonnull Collection<InternalField<?>> getInternalFields(@Nonnull TableRef tableRef);
@@ -52,4 +42,26 @@ public interface MetaDataReadInterface {
     long getCollectionSize(@Nonnull DSLContext dsl, @Nonnull MetaDatabase database, @Nonnull MetaCollection collection);
     long getDocumentsSize(@Nonnull DSLContext dsl, @Nonnull MetaDatabase database, @Nonnull MetaCollection collection);
     Long getIndexSize(@Nonnull DSLContext dsl, @Nonnull MetaDatabase database, @Nonnull MetaCollection collection, @Nonnull String index);
+
+    Optional<String> readKV(@Nonnull DSLContext dsl, @Nonnull MetaInfoKey key);
+    Stream<MetaDatabaseRecord> readMetaDatabaseTable(DSLContext dsl);
+
+    /**
+     *
+     * @return
+     */
+    default List<SemanticTable<?>> getMetaTables() {
+        return Lists.newArrayList(
+                getKvTable(),
+                getMetaDocPartIndexColumnTable(),
+                getMetaDocPartIndexTable(),
+                getMetaIndexFieldTable(),
+                getMetaScalarTable(),
+                getMetaFieldTable(),
+                getMetaDocPartTable(),
+                getMetaIndexTable(),
+                getMetaCollectionTable(),
+                getMetaDatabaseTable()
+        );
+    }
 }

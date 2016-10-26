@@ -46,7 +46,6 @@ import org.jooq.lambda.tuple.Tuple2;
 import org.junit.Test;
 
 import com.google.common.collect.ImmutableMultimap;
-import com.torodb.backend.DocPartResultBatch;
 import com.torodb.backend.MockDidCursor;
 import com.torodb.backend.SqlBuilder;
 import com.torodb.backend.converters.jooq.DataTypeForKV;
@@ -458,7 +457,7 @@ public class BackendIntegrationTest extends AbstractBackendTest {
             MetaCollection metaCollection = metaDatabase.getMetaCollectionByName(data.collection.getName());
             
             
-            Iterator<DocPartResult> docPartResultSets = sqlInterface.getReadInterface().getCollectionResultSets(
+            List<DocPartResult> docPartResultSets = sqlInterface.getReadInterface().getCollectionResultSets(
                     dsl, metaDatabase, metaCollection, 
                     new MockDidCursor(generatedDids.iterator()), generatedDids.size());
             
@@ -492,10 +491,10 @@ public class BackendIntegrationTest extends AbstractBackendTest {
             Collection<ToroDocument> readedToroDocuments;
             try (
                     Cursor<Integer> defaultDidCursor = sqlInterface.getReadInterface().getAllCollectionDids(dsl, metaDatabase, metaCollection);
-                    DocPartResultBatch batch = sqlInterface.getReadInterface().getCollectionResultSets(
+                    ) {
+                List<DocPartResult> batch = sqlInterface.getReadInterface().getCollectionResultSets(
                             dsl, metaDatabase, metaCollection,
                             defaultDidCursor,  generatedDids.size());
-                    ) {
                 readedToroDocuments = readDocuments(metaDatabase, metaCollection, batch);
             }
 
@@ -541,10 +540,10 @@ public class BackendIntegrationTest extends AbstractBackendTest {
             try (
                     Cursor<Integer> defaultDidCursor = sqlInterface.getReadInterface().getCollectionDidsWithFieldEqualsTo(
                             dsl, metaDatabase, metaCollection, metaDocPart, metaField, new StringKVString("0001"));
-                    DocPartResultBatch batch = sqlInterface.getReadInterface().getCollectionResultSets(
+                    ) {
+                List<DocPartResult> batch = sqlInterface.getReadInterface().getCollectionResultSets(
                             dsl, metaDatabase, metaCollection,
                             defaultDidCursor, generatedDids.size());
-                    ) {
                 readedToroDocuments = readDocuments(metaDatabase, metaCollection, batch);
             }
 
@@ -593,10 +592,11 @@ public class BackendIntegrationTest extends AbstractBackendTest {
             try (
                     Cursor<Tuple2<Integer, KVValue<?>>> didProjectionCursor = sqlInterface.getReadInterface().getCollectionDidsAndProjectionWithFieldsIn(
                             dsl, metaDatabase, metaCollection, metaDocPart, valuesMultimapBuilder.build());
-                    DocPartResultBatch batch = sqlInterface.getReadInterface().getCollectionResultSets(
+                    ) {
+                List<DocPartResult> batch = sqlInterface.getReadInterface().getCollectionResultSets(
                             dsl, metaDatabase, metaCollection,
                             didProjectionCursor.transform(t -> t.v1), generatedDids.size());
-                    ) {
+                    
                 readedToroDocuments = readDocuments(metaDatabase, metaCollection, batch);
             }
 
@@ -637,7 +637,7 @@ public class BackendIntegrationTest extends AbstractBackendTest {
                 MetaDatabase metaDatabase = mutableSnapshot.getMetaDatabaseByName(data.database.getName());
                 MetaCollection metaCollection = metaDatabase.getMetaCollectionByName(data.collection.getName());
                 
-                DocPartResultBatch docPartResultSets = sqlInterface.getReadInterface().getCollectionResultSets(
+                List<DocPartResult> docPartResultSets = sqlInterface.getReadInterface().getCollectionResultSets(
                         dsl, metaDatabase, metaCollection, 
                         new MockDidCursor(generatedDids.iterator()), generatedDids.size());
                 
@@ -655,7 +655,7 @@ public class BackendIntegrationTest extends AbstractBackendTest {
             MetaDatabase metaDatabase = mutableSnapshot.getMetaDatabaseByName(data.database.getName());
             MetaCollection metaCollection = metaDatabase.getMetaCollectionByName(data.collection.getName());
             
-            DocPartResultBatch docPartResultSets = sqlInterface.getReadInterface().getCollectionResultSets(
+            List<DocPartResult> docPartResultSets = sqlInterface.getReadInterface().getCollectionResultSets(
                     dsl, metaDatabase, metaCollection, 
                     new MockDidCursor(generatedDids.iterator()), generatedDids.size());
             

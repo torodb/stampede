@@ -9,7 +9,9 @@ import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetaSnapshot;
+import javax.annotation.concurrent.ThreadSafe;
 
+@ThreadSafe
 public interface IdentifierFactory {
 
     @Nonnull String toDatabaseIdentifier(@Nonnull MetaSnapshot metaSnapshot, @Nonnull String database);

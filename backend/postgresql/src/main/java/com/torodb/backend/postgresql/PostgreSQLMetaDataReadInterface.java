@@ -27,15 +27,7 @@ import javax.inject.Singleton;
 import com.torodb.backend.AbstractMetaDataReadInterface;
 import com.torodb.backend.SqlHelper;
 import com.torodb.backend.meta.TorodbSchema;
-import com.torodb.backend.postgresql.tables.PostgreSQLMetaCollectionTable;
-import com.torodb.backend.postgresql.tables.PostgreSQLMetaDatabaseTable;
-import com.torodb.backend.postgresql.tables.PostgreSQLMetaDocPartIndexTable;
-import com.torodb.backend.postgresql.tables.PostgreSQLMetaDocPartTable;
-import com.torodb.backend.postgresql.tables.PostgreSQLMetaDocPartIndexColumnTable;
-import com.torodb.backend.postgresql.tables.PostgreSQLMetaFieldTable;
-import com.torodb.backend.postgresql.tables.PostgreSQLMetaIndexFieldTable;
-import com.torodb.backend.postgresql.tables.PostgreSQLMetaIndexTable;
-import com.torodb.backend.postgresql.tables.PostgreSQLMetaScalarTable;
+import com.torodb.backend.postgresql.tables.*;
 
 /**
  *
@@ -53,6 +45,7 @@ public class PostgreSQLMetaDataReadInterface extends AbstractMetaDataReadInterfa
     private final PostgreSQLMetaDocPartIndexColumnTable metaDocPartIndexColumnTable;
     private final PostgreSQLMetaIndexTable metaIndexTable;
     private final PostgreSQLMetaIndexFieldTable metaIndexFieldTable;
+    private final PostgreSQLKvTable kvTable;
 
     @Inject
     public PostgreSQLMetaDataReadInterface(SqlHelper sqlHelper) {
@@ -68,6 +61,7 @@ public class PostgreSQLMetaDataReadInterface extends AbstractMetaDataReadInterfa
         this.metaDocPartIndexColumnTable = PostgreSQLMetaDocPartIndexColumnTable.DOC_PART_INDEX_COLUMN;
         this.metaIndexTable = PostgreSQLMetaIndexTable.INDEX;
         this.metaIndexFieldTable = PostgreSQLMetaIndexFieldTable.INDEX_FIELD;
+        this.kvTable = PostgreSQLKvTable.KV;
     }
 
     @Nonnull
@@ -131,6 +125,13 @@ public class PostgreSQLMetaDataReadInterface extends AbstractMetaDataReadInterfa
     @SuppressWarnings("unchecked")
     public PostgreSQLMetaIndexFieldTable getMetaIndexFieldTable() {
         return metaIndexFieldTable;
+    }
+
+    @Nonnull
+    @Override
+    @SuppressWarnings("unchecked")
+    public PostgreSQLKvTable getKvTable() {
+        return kvTable;
     }
     
     @Override

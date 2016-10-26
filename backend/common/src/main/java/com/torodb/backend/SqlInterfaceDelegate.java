@@ -33,14 +33,14 @@ public class SqlInterfaceDelegate implements SqlInterface {
     private final IdentifierConstraints identifierConstraints;
     private final ErrorHandler errorHandler;
     private final DslContextFactory dslContextFactory;
-    private final DbBackend dbBackend;
+    private final DbBackendService dbBackend;
 
     @Inject
     public SqlInterfaceDelegate(MetaDataReadInterface metaDataReadInterface,
             MetaDataWriteInterface metaDataWriteInterface, DataTypeProvider dataTypeProvider,
             StructureInterface structureInterface, ReadInterface readInterface, WriteInterface writeInterface,
             IdentifierConstraints identifierConstraints, ErrorHandler errorHandler,
-            DslContextFactory dslContextFactory, DbBackend dbBackend) {
+            DslContextFactory dslContextFactory, DbBackendService dbBackend) {
         super();
         this.metaDataReadInterface = metaDataReadInterface;
         this.metaDataWriteInterface = metaDataWriteInterface;
@@ -90,7 +90,7 @@ public class SqlInterfaceDelegate implements SqlInterface {
         return dslContextFactory;
     }
 
-    public DbBackend getDbBackend() {
+    public DbBackendService getDbBackend() {
         return dbBackend;
     }
 }

@@ -20,7 +20,6 @@
 
 package com.torodb.backend.derby;
 
-import javax.inject.Singleton;
 
 import org.jooq.SQLDialect;
 
@@ -44,7 +43,6 @@ import com.torodb.core.transaction.metainf.FieldType;
 /**
  *
  */
-@Singleton
 public class DerbyDataTypeProvider extends AbstractDataTypeProvider {
 
     public DerbyDataTypeProvider() {

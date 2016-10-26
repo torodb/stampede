@@ -24,13 +24,12 @@ import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.eightkdata.mongowp.utils.BsonDocumentBuilder;
 import com.eightkdata.mongowp.utils.BsonReaderTool;
 import com.google.common.base.Preconditions;
-import com.torodb.common.util.ThreadFactoryIdleService;
-import com.torodb.core.annotations.ToroDbIdleService;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.retrier.Retrier;
 import com.torodb.core.retrier.Retrier.Hint;
 import com.torodb.core.retrier.RetrierAbortException;
 import com.torodb.core.retrier.RetrierGiveUpException;
+import com.torodb.core.services.IdleTorodbService;
 import com.torodb.mongodb.annotations.Locked;
 import com.torodb.mongodb.core.MongodConnection;
 import com.torodb.mongodb.core.MongodServer;
@@ -51,11 +50,13 @@ import org.apache.logging.log4j.Logger;
 
 import static com.eightkdata.mongowp.bson.utils.DefaultBsonValues.*;
 
+import com.torodb.core.annotations.TorodbIdleService;
+
 /**
  *
  */
 @Singleton
-public class OplogManager extends ThreadFactoryIdleService {
+public class OplogManager extends IdleTorodbService {
 
     private static final Logger LOGGER = LogManager.getLogger(OplogManager.class);
     private static final String KEY = "lastAppliedOplogEntry";
@@ -71,8 +72,8 @@ public class OplogManager extends ThreadFactoryIdleService {
     private final ReplMetrics metrics;
 
     @Inject
-    public OplogManager(@ToroDbIdleService ThreadFactory threadFactory, MongodServer mongodServer,
-            Retrier retrier, ReplMetrics metrics) {
+    public OplogManager(@TorodbIdleService ThreadFactory threadFactory,
+            MongodServer mongodServer, Retrier retrier, ReplMetrics metrics) {
         super(threadFactory);
         this.connection = mongodServer.openConnection();
         this.retrier = retrier;

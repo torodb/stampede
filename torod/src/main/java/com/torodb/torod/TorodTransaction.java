@@ -8,11 +8,11 @@ import java.util.stream.Stream;
 import org.jooq.lambda.tuple.Tuple2;
 
 import com.torodb.core.cursors.Cursor;
-import com.torodb.core.cursors.ToroCursor;
 import com.torodb.core.exceptions.user.CollectionNotFoundException;
 import com.torodb.core.exceptions.user.IndexNotFoundException;
 import com.torodb.core.language.AttributeReference;
 import com.torodb.kvdocument.values.KVValue;
+import com.torodb.torod.cursors.TorodCursor;
 
 /**
  *
@@ -35,11 +35,11 @@ public interface TorodTransaction extends AutoCloseable {
     
     public long getDocumentsSize(String dbName, String colName);
 
-    public ToroCursor findAll(String dbName, String colName);
+    public TorodCursor findAll(String dbName, String colName);
 
-    public ToroCursor findByAttRef(String dbName, String colName, AttributeReference attRef, KVValue<?> value);
+    public TorodCursor findByAttRef(String dbName, String colName, AttributeReference attRef, KVValue<?> value);
 
-    public ToroCursor findByAttRefIn(String dbName, String colName, AttributeReference attRef, Collection<KVValue<?>> values);
+    public TorodCursor findByAttRefIn(String dbName, String colName, AttributeReference attRef, Collection<KVValue<?>> values);
 
     /**
      * Like {@link #findByAttRefIn(java.lang.String, java.lang.String, com.torodb.core.language.AttributeReference, java.util.Collection) },
@@ -64,7 +64,7 @@ public interface TorodTransaction extends AutoCloseable {
      * @param didCursor
      * @return
      */
-    public ToroCursor fetch(String dbName, String colName, Cursor<Integer> didCursor);
+    public TorodCursor fetch(String dbName, String colName, Cursor<Integer> didCursor);
 
     public Stream<CollectionInfo> getCollectionsInfo(String dbName);
 

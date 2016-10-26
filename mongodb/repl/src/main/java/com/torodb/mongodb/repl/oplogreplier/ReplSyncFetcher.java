@@ -3,8 +3,8 @@ package com.torodb.mongodb.repl.oplogreplier;
 
 import com.torodb.mongodb.repl.oplogreplier.fetcher.OplogFetcher;
 import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
-import com.torodb.common.util.ThreadFactoryRunnableService;
-import com.torodb.core.annotations.ToroDbRunnableService;
+import com.torodb.core.services.RunnableTorodbService;
+import com.torodb.core.supervision.Supervisor;
 import com.torodb.core.transaction.RollbackException;
 import com.torodb.mongodb.repl.oplogreplier.RollbackReplicationException;
 import com.torodb.mongodb.repl.oplogreplier.StopReplicationException;
@@ -13,12 +13,14 @@ import javax.annotation.Nonnull;
 import javax.annotation.concurrent.NotThreadSafe;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import com.torodb.core.annotations.TorodbRunnableService;
+import com.torodb.core.supervision.SupervisorDecision;
 
 /**
  *
  */
 @NotThreadSafe
-class ReplSyncFetcher extends ThreadFactoryRunnableService {
+class ReplSyncFetcher extends RunnableTorodbService {
 
     private static final Logger LOGGER = LogManager.getLogger(ReplSyncFetcher.class);
     
@@ -28,12 +30,17 @@ class ReplSyncFetcher extends ThreadFactoryRunnableService {
     private volatile Thread runThread;
 
     ReplSyncFetcher(
-            @ToroDbRunnableService ThreadFactory threadFactory,
+            @TorodbRunnableService ThreadFactory threadFactory,
             @Nonnull SyncServiceView callback,
             @Nonnull OplogFetcher fetcher) {
-        super(threadFactory);
+        super(callback, threadFactory);
         this.callback = callback;
         this.fetcher = fetcher;
+    }
+
+    @Override
+    protected Logger getLogger() {
+        return LOGGER;
     }
 
     @Override
@@ -49,7 +56,7 @@ class ReplSyncFetcher extends ThreadFactoryRunnableService {
     }
 
     @Override
-    public void run() {
+    public void runProtected() {
         runThread = Thread.currentThread();
         RollbackReplicationException rollbackEx = null;
         boolean oplogFinished = false;
@@ -117,7 +124,7 @@ class ReplSyncFetcher extends ThreadFactoryRunnableService {
         LOGGER.info(serviceName() + " stopped");
     }
     
-    public static interface SyncServiceView {
+    public static interface SyncServiceView extends Supervisor {
 
         void deliver(@Nonnull OplogOperation oplogOp) throws InterruptedException;
 
@@ -132,5 +139,11 @@ class ReplSyncFetcher extends ThreadFactoryRunnableService {
         public void fetchFinished();
 
         public void fetchAborted(Throwable ex);
+
+        @Override
+        public default SupervisorDecision onError(Object supervised, Throwable error) {
+            fetchAborted(error);
+            return SupervisorDecision.STOP;
+        }
     }
 }

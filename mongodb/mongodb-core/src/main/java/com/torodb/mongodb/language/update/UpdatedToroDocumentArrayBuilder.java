@@ -35,6 +35,7 @@ import com.torodb.kvdocument.values.KVDocument;
 import com.torodb.kvdocument.values.KVNull;
 import com.torodb.kvdocument.values.KVValue;
 import com.torodb.kvdocument.values.heap.ListKVArray;
+import javax.annotation.Nonnegative;
 
 /**
  *
@@ -69,10 +70,12 @@ class UpdatedToroDocumentArrayBuilder {
         return new UpdatedToroDocumentArrayBuilder();
     }
 
-    public boolean contains(int key) {
-        return isValue(key)
+    public boolean contains(@Nonnegative int key) {
+        return key < values.size() && (
+                isValue(key)
                 || isArrayBuilder(key)
-                || isObjectBuilder(key);
+                || isObjectBuilder(key)
+        );
     }
 
     public boolean isValue(int index) {

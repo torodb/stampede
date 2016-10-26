@@ -4,13 +4,11 @@ package com.torodb.torod.impl.sql;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.RemovalNotification;
-import com.torodb.common.util.ThreadFactoryIdleService;
 import com.torodb.core.TableRefFactory;
-import com.torodb.core.annotations.ToroDbIdleService;
 import com.torodb.core.annotations.UseThreads;
-import com.torodb.core.backend.Backend;
 import com.torodb.core.d2r.D2RTranslatorFactory;
 import com.torodb.core.d2r.IdentifierFactory;
+import com.torodb.core.services.IdleTorodbService;
 import com.torodb.core.transaction.InternalTransactionManager;
 import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
 import com.torodb.torod.TorodServer;
@@ -18,32 +16,36 @@ import com.torodb.torod.pipeline.InsertPipelineFactory;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.inject.Inject;
-import javax.inject.Singleton;
+import com.torodb.core.backend.BackendService;
+import com.torodb.core.annotations.TorodbIdleService;
+import com.torodb.core.d2r.R2DTranslator;
 
 /**
  *
  */
-@Singleton
-public class SqlTorodServer extends ThreadFactoryIdleService implements TorodServer {
+public class SqlTorodServer extends IdleTorodbService implements TorodServer {
 
     private final AtomicInteger connectionIdCounter = new AtomicInteger();
     private final D2RTranslatorFactory d2RTranslatorFactory;
+    private final R2DTranslator r2DTranslator;
     private final IdentifierFactory idFactory;
     private final InsertPipelineFactory singleThreadInsertPipelineFactory;
     private final InsertPipelineFactory concurrentInsertPipelineFactory;
     private final Cache<Integer, SqlTorodConnection> openConnections;
-    private final Backend backend;
+    private final BackendService backend;
     private final InternalTransactionManager internalTransactionManager;
     private final TableRefFactory tableRefFactory;
 
     @Inject
-    public SqlTorodServer(@ToroDbIdleService ThreadFactory threadFactory,
-            D2RTranslatorFactory d2RTranslatorFactory, IdentifierFactory idFactory,
+    public SqlTorodServer(@TorodbIdleService ThreadFactory threadFactory,
+            D2RTranslatorFactory d2RTranslatorFactory, 
+            R2DTranslator r2DTranslator, IdentifierFactory idFactory,
             InsertPipelineFactory singleThreadInsertPipelineFactory, 
-            @UseThreads InsertPipelineFactory concurrentInsertPipelineFactory, Backend backend,
+            @UseThreads InsertPipelineFactory concurrentInsertPipelineFactory, BackendService backend,
             InternalTransactionManager internalTransactionManager, TableRefFactory tableRefFactory) {
         super(threadFactory);
         this.d2RTranslatorFactory = d2RTranslatorFactory;
+        this.r2DTranslator = r2DTranslator;
         this.idFactory = idFactory;
         this.singleThreadInsertPipelineFactory = singleThreadInsertPipelineFactory;
         this.concurrentInsertPipelineFactory = concurrentInsertPipelineFactory;
@@ -68,15 +70,12 @@ public class SqlTorodServer extends ThreadFactoryIdleService implements TorodSer
 
     @Override
     protected void startUp() throws Exception {
-        backend.startAsync();
         backend.awaitRunning();
     }
 
     @Override
     protected void shutDown() throws Exception {
         openConnections.invalidateAll();
-        backend.stopAsync();
-        backend.awaitTerminated();
     }
 
     private void onConnectionInvalidated(RemovalNotification<Integer, SqlTorodConnection> notification) {
@@ -98,7 +97,7 @@ public class SqlTorodServer extends ThreadFactoryIdleService implements TorodSer
         backend.disableDataImportMode(snapshot);
     }
 
-    D2RTranslatorFactory getD2RTranslatorrFactory() {
+    D2RTranslatorFactory getD2RTranslatorFactory() {
         return d2RTranslatorFactory;
     }
 
@@ -114,7 +113,7 @@ public class SqlTorodServer extends ThreadFactoryIdleService implements TorodSer
         }
     }
 
-    Backend getBackend() {
+    BackendService getBackend() {
         return backend;
     }
 
@@ -128,6 +127,10 @@ public class SqlTorodServer extends ThreadFactoryIdleService implements TorodSer
 
     TableRefFactory getTableRefFactory() {
         return tableRefFactory;
+    }
+
+    R2DTranslator getR2DTranslator() {
+        return r2DTranslator;
     }
 
 }

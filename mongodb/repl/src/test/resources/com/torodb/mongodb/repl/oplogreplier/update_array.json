@@ -1,0 +1,148 @@
+{
+    "oplog": [
+        {
+            "ts": {
+                "$timestamp": {
+                    "t": 1477408361,
+                    "i": 3
+                }
+            },
+            "t": 1,
+            "h": 5612613912836196987,
+            "v": 2,
+            "op": "u",
+            "ns": "rocketchat.usersSessions",
+            "o2": {
+                "_id": "A9ZduD2wfcAPrR892"
+            },
+            "o": {
+                "$set": {
+                    "connections.1": {
+                        "id": "qq2T2zcPW34TCpZ32",
+                        "instanceId": "hvwaXsTmwCg58y8iZ",
+                        "status": "online",
+                        "_createdAt": {
+                            "$date": "2016-10-25T15:12:41.060Z"
+                        },
+                        "_updatedAt": {
+                            "$date": "2016-10-25T15:12:41.060Z"
+                        }
+                    }
+                }
+            }
+        }
+    ],
+    "initialState": {
+        "rocketchat": {
+            "usersSessions": [
+                {
+                    "_id": "A9ZduD2wfcAPrR892",
+                    "visitor": false,
+                    "connections": [
+                        {
+                            "id": "sGpxzhCLFDQ7DrkAY",
+                            "instanceId": "nwSiDFvqLrE8R2paf",
+                            "status": "away",
+                            "_createdAt": {
+                                "$date": "2016-10-25T15:19:27.810Z"
+                            },
+                            "_updatedAt": {
+                                "$date": "2016-10-25T15:23:30.562Z"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "_id": "9qjeABJr8sFoi5Hf8",
+                    "visitor": false,
+                    "connections": [
+                        {
+                            "id": "Q7zB7HuZpmLXtv8kP",
+                            "instanceId": "nwSiDFvqLrE8R2paf",
+                            "status": "away",
+                            "_createdAt": {
+                                "$date": "2016-10-25T15:19:28.814Z"
+                            },
+                            "_updatedAt": {
+                                "$date": "2016-10-25T15:23:52.581Z"
+                            }
+                        },
+                        {
+                            "id": "WMTj8pEYH6vZ7yDNr",
+                            "instanceId": "nwSiDFvqLrE8R2paf",
+                            "status": "online",
+                            "_createdAt": {
+                                "$date": "2016-10-25T15:19:29.765Z"
+                            },
+                            "_updatedAt": {
+                                "$date": "2016-10-25T15:30:15.079Z"
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    "expectedState": {
+        "rocketchat": {
+            "usersSessions": [
+                {
+                    "_id": "A9ZduD2wfcAPrR892",
+                    "visitor": false,
+                    "connections": [
+                        {
+                            "id": "sGpxzhCLFDQ7DrkAY",
+                            "instanceId": "nwSiDFvqLrE8R2paf",
+                            "status": "away",
+                            "_createdAt": {
+                                "$date": "2016-10-25T15:19:27.810Z"
+                            },
+                            "_updatedAt": {
+                                "$date": "2016-10-25T15:23:30.562Z"
+                            }
+                        },
+                        {
+                            "id": "qq2T2zcPW34TCpZ32",
+                            "instanceId": "hvwaXsTmwCg58y8iZ",
+                            "status": "online",
+                            "_createdAt": {
+                                "$date": "2016-10-25T15:12:41.060Z"
+                            },
+                            "_updatedAt": {
+                                "$date": "2016-10-25T15:12:41.060Z"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "_id": "9qjeABJr8sFoi5Hf8",
+                    "visitor": false,
+                    "connections": [
+                        {
+                            "id": "Q7zB7HuZpmLXtv8kP",
+                            "instanceId": "nwSiDFvqLrE8R2paf",
+                            "status": "away",
+                            "_createdAt": {
+                                "$date": "2016-10-25T15:19:28.814Z"
+                            },
+                            "_updatedAt": {
+                                "$date": "2016-10-25T15:23:52.581Z"
+                            }
+                        },
+                        {
+                            "id": "WMTj8pEYH6vZ7yDNr",
+                            "instanceId": "nwSiDFvqLrE8R2paf",
+                            "status": "online",
+                            "_createdAt": {
+                                "$date": "2016-10-25T15:19:29.765Z"
+                            },
+                            "_updatedAt": {
+                                "$date": "2016-10-25T15:30:15.079Z"
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+}

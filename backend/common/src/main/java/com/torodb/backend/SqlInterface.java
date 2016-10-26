@@ -47,6 +47,6 @@ public interface SqlInterface {
     
     @Nonnull DslContextFactory getDslContextFactory();
 
-    @Nonnull DbBackend getDbBackend();
+    @Nonnull DbBackendService getDbBackend();
 
 }

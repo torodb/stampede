@@ -18,15 +18,16 @@ import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
 import com.eightkdata.mongowp.server.api.pojos.MongoCursor;
 import com.eightkdata.mongowp.server.api.pojos.MongoCursor.Batch;
 import com.google.common.net.HostAndPort;
-import com.torodb.common.util.ThreadFactoryRunnableService;
-import com.torodb.core.annotations.ToroDbRunnableService;
+import com.torodb.core.services.RunnableTorodbService;
+import com.torodb.core.supervision.Supervisor;
 import com.torodb.mongodb.repl.exceptions.NoSyncSourceFoundException;
+import com.torodb.core.annotations.TorodbRunnableService;
 
 /**
  *
  */
 @NotThreadSafe
-class ReplSyncFetcher extends ThreadFactoryRunnableService {
+class ReplSyncFetcher extends RunnableTorodbService {
 
     private static final Logger LOGGER = LogManager.getLogger(ReplSyncFetcher.class);
     private static final int MIN_BATCH_SIZE = 5;
@@ -43,14 +44,15 @@ class ReplSyncFetcher extends ThreadFactoryRunnableService {
     private volatile Thread runThread;
 
     ReplSyncFetcher(
-            @ToroDbRunnableService ThreadFactory threadFactory,
+            @TorodbRunnableService ThreadFactory threadFactory,
+            Supervisor supervisor,
             @Nonnull SyncServiceView callback,
             @Nonnull SyncSourceProvider syncSourceProvider,
             @Nonnull OplogReaderProvider readerProvider,
             long lastAppliedHash,
             OpTime lastAppliedOpTime,
             ReplMetrics metrics) {
-        super(threadFactory);
+        super(supervisor, threadFactory);
         this.callback = callback;
         this.readerProvider = readerProvider;
         this.lastFetchedHash = 0;
@@ -84,7 +86,7 @@ class ReplSyncFetcher extends ThreadFactoryRunnableService {
     }
 
     @Override
-    public void run() {
+    public void runProtected() {
         runThread = Thread.currentThread();
         boolean rollbackNeeded = false;
         try {
@@ -138,6 +140,11 @@ class ReplSyncFetcher extends ThreadFactoryRunnableService {
             callback.fetchAborted(ex);
         }
         LOGGER.info(serviceName() + " stopped");
+    }
+
+    @Override
+    protected Logger getLogger() {
+        return LOGGER;
     }
 
     public boolean fetchIterationCanContinue() {

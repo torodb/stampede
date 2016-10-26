@@ -96,6 +96,8 @@ public class MongoClientHeartbeatNetworkHandler implements HeartbeatNetworkHandl
                     true,
                     req.getCmdObj()
             );
+        } finally {
+            client.close();
         }
     }
 }

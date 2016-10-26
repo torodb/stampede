@@ -7,8 +7,7 @@ import com.eightkdata.mongowp.exceptions.MongoException;
 import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.assistedinject.Assisted;
-import com.torodb.common.util.ThreadFactoryIdleService;
-import com.torodb.core.annotations.ToroDbIdleService;
+import com.torodb.core.services.IdleTorodbService;
 import com.torodb.mongodb.core.MongodServer;
 import com.torodb.mongodb.repl.OplogManager;
 import com.torodb.mongodb.repl.OplogManager.OplogManagerPersistException;
@@ -27,13 +26,15 @@ import javax.annotation.concurrent.ThreadSafe;
 import javax.inject.Inject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import com.torodb.core.annotations.TorodbIdleService;
+import com.torodb.core.supervision.SupervisorDecision;
 
 /**
  * The old {@link OplogApplierService} which uses a very simmilar algorithm to the one that MongoDB
  * uses.
  */
 @ThreadSafe
-public class SequentialOplogApplierService extends ThreadFactoryIdleService implements OplogApplierService {
+public class SequentialOplogApplierService extends IdleTorodbService implements OplogApplierService {
 
     /**
      * The maximum capacity of the {@linkplain #fetchQueue}.
@@ -67,7 +68,7 @@ public class SequentialOplogApplierService extends ThreadFactoryIdleService impl
 
     @Inject
     SequentialOplogApplierService(
-            @ToroDbIdleService ThreadFactory threadFactory,
+            @TorodbIdleService ThreadFactory threadFactory,
             @Assisted Callback callback,
             OplogManager oplogManager,
             OplogOperationApplier oplogOpApplier,
@@ -271,6 +272,21 @@ public class SequentialOplogApplierService extends ThreadFactoryIdleService impl
                     }
             );
             return false;
+        }
+
+        @Override
+        public SupervisorDecision onError(Object supervised, Throwable t) {
+            executor.execute(
+                    new Runnable() {
+
+                        @Override
+                        public void run() {
+                            LOGGER.error("Secondary state failed", t);
+                            callback.onError(t);
+                        }
+                    }
+            );
+            return SupervisorDecision.STOP;
         }
     }
 

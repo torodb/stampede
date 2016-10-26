@@ -36,7 +36,7 @@ import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.InsertCommand.InsertResult;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.CollectionOptions;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.CursorResult;
-import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.IndexOptions;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.index.IndexOptions;
 import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.Request;
 import com.eightkdata.mongowp.server.api.impl.CollectionCommandArgument;
@@ -59,7 +59,6 @@ import com.torodb.mongodb.utils.DbCloner;
 import com.torodb.mongodb.utils.ListCollectionsRequester;
 import com.torodb.mongodb.utils.ListIndexesRequester;
 import com.torodb.mongodb.utils.NamespaceUtil;
-import com.torodb.torod.SharedWriteTorodTransaction;
 
 import akka.NotUsed;
 import akka.actor.ActorSystem;
@@ -83,6 +82,7 @@ import akka.stream.javadsl.Source;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import scala.concurrent.Await;
 import scala.concurrent.duration.Duration;
+import com.torodb.torod.SharedWriteTorodTransaction;
 
 /**
  * This class is used to clone databases using a client, so remote and local databases can

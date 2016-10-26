@@ -71,7 +71,7 @@ public class ReplicationFiltersFactory {
                                 fieldReferencePatternBuilder.add(SimpleRegExpDecoder.decode(indexFieldKeyFilter));
                             }
                             indexPatternBuilder.addFieldPattern(fieldReferencePatternBuilder.build(), 
-                                    SimpleRegExpDecoder.decode(FilterList.getIndexType(indexFieldFilter.getValue()).name()));
+                                    SimpleRegExpDecoder.decode(FilterList.getIndexType(indexFieldFilter.getValue()).toBsonValue().toString()));
                         }
                         indexesBuilder.add(indexPatternBuilder.build());
                     }

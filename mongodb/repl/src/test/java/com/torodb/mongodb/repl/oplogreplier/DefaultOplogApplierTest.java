@@ -20,16 +20,19 @@
 package com.torodb.mongodb.repl.oplogreplier;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.inject.AbstractModule;
-import com.google.inject.Module;
-import com.google.inject.Singleton;
+import com.google.inject.*;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
+import com.torodb.backend.BackendServiceImpl;
+import com.torodb.core.backend.BackendService;
 import com.torodb.mongodb.repl.ReplicationFilters;
 import com.torodb.mongodb.repl.oplogreplier.analyzed.AnalyzedOpReducer;
 import com.torodb.mongodb.repl.oplogreplier.batch.AnalyzedOplogBatchExecutor;
 import com.torodb.mongodb.repl.oplogreplier.batch.BatchAnalyzer;
+import com.torodb.mongodb.repl.oplogreplier.batch.BatchAnalyzer.BatchAnalyzerFactory;
 import com.torodb.mongodb.repl.oplogreplier.batch.ConcurrentOplogBatchExecutor;
 import com.torodb.mongodb.repl.oplogreplier.batch.ConcurrentOplogBatchExecutor.ConcurrentOplogBatchExecutorMetrics;
+import com.torodb.torod.TorodBundle;
+import com.torodb.torod.TorodServer;
 
 /**
  *
@@ -37,14 +40,12 @@ import com.torodb.mongodb.repl.oplogreplier.batch.ConcurrentOplogBatchExecutor.C
  */
 public class DefaultOplogApplierTest extends AbstractOplogApplierTest {
 
-    Module module = new DefaultOplogApplierTestModule();
-
     @Override
-    public Module getSpecificTestModule() {
-        return module;
+    public Module getMongodSpecificTestModule() {
+        return new DefaultMongodModule();
     }
 
-    private static class DefaultOplogApplierTestModule extends AbstractModule {
+    private static class DefaultMongodModule extends PrivateModule {
         @Override
         protected void configure() {
             bind(ConcurrentOplogBatchExecutor.class)
@@ -66,11 +67,23 @@ public class DefaultOplogApplierTest extends AbstractOplogApplierTest {
                     .implement(BatchAnalyzer.class, BatchAnalyzer.class)
                     .build(BatchAnalyzer.BatchAnalyzerFactory.class)
             );
+            expose(BatchAnalyzerFactory.class);
+
             bind(AnalyzedOpReducer.class)
                     .toInstance(new AnalyzedOpReducer(true));
-            
+
             bind(ReplicationFilters.class)
                     .toInstance(new ReplicationFilters(ImmutableMap.of(), ImmutableMap.of()));
+            expose(ReplicationFilters.class);
+
+            bind(BackendService.class)
+                    .to(BackendServiceImpl.class)
+                    .asEagerSingleton();
+        }
+
+        @Provides
+        TorodServer getMongodServer(TorodBundle bundle) {
+            return bundle.getTorodServer();
         }
     }
 

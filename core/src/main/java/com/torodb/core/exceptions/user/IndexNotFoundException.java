@@ -20,31 +20,12 @@
 
 package com.torodb.core.exceptions.user;
 
-public class IndexNotFoundException extends UserException {
+public class IndexNotFoundException extends IndexException {
 
     private static final long serialVersionUID = 1L;
-    
-    private final String database;
-    private final String collection;
-    private final String index;
 
     public IndexNotFoundException(String database, String collection, String index) {
-        super();
-        this.database = database;
-        this.collection = collection;
-        this.index = index;
-    }
-
-    public String getDatabase() {
-        return database;
-    }
-
-    public String getCollection() {
-        return collection;
-    }
-    
-    public String getIndex() {
-        return index;
+        super(database, collection, index);
     }
 
     @Override

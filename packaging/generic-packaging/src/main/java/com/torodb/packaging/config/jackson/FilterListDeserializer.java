@@ -39,9 +39,11 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.torodb.packaging.config.model.protocol.mongo.FilterList;
 import com.torodb.packaging.config.model.protocol.mongo.FilterList.IndexFilter;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 public class FilterListDeserializer extends JsonDeserializer<FilterList> {
 	@Override
+    @SuppressFBWarnings("REC_CATCH_EXCEPTION")
 	public FilterList deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException, JsonProcessingException {
 	    FilterList filterList = new FilterList();
 
@@ -90,6 +92,7 @@ public class FilterListDeserializer extends JsonDeserializer<FilterList> {
 		return filterList;
 	}
 
+    @SuppressFBWarnings("REC_CATCH_EXCEPTION")
     private void readCollectionObject(JsonParser jp, ObjectNode collection, Map<String, List<IndexFilter>> collections)
             throws JsonProcessingException, JsonMappingException {
         Iterator<Entry<String, JsonNode>> collectionEntriesIterator = collection.fields();

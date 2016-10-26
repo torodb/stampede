@@ -26,7 +26,7 @@ import org.jooq.Schema;
 import org.jooq.Table;
 import org.jooq.impl.TableImpl;
 
-import com.torodb.backend.exceptions.InvalidDatabaseException;
+import com.torodb.core.exceptions.InvalidDatabaseException;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 

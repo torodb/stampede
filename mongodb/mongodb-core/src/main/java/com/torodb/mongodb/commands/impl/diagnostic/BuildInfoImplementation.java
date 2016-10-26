@@ -57,5 +57,5 @@ public class BuildInfoImplementation  extends ConnectionTorodbCommandImpl<Empty,
                 "amd64".equals(buildProperties.getOsArch()) ? 64 : 32, false, 
                 MongoLayerConstants.MAX_BSON_DOCUMENT_SIZE));
     }
-
+    
 }

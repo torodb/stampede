@@ -22,15 +22,25 @@
 package com.torodb.packaging.guice;
 
 import javax.annotation.concurrent.Immutable;
+import javax.annotation.concurrent.ThreadSafe;
 import javax.inject.Inject;
-import javax.inject.Singleton;
 
-import com.google.inject.AbstractModule;
+import com.google.inject.PrivateModule;
 import com.torodb.backend.DbBackendConfiguration;
+import com.torodb.backend.DbBackendService;
+import com.torodb.backend.SqlHelper;
+import com.torodb.backend.SqlInterface;
 import com.torodb.backend.derby.guice.DerbyBackendModule;
 import com.torodb.backend.driver.derby.DerbyDbBackendConfiguration;
 import com.torodb.backend.driver.postgresql.PostgreSQLDbBackendConfiguration;
+import com.torodb.backend.guice.BackendModule;
+import com.torodb.backend.meta.SchemaUpdater;
 import com.torodb.backend.postgresql.guice.PostgreSQLBackendModule;
+import com.torodb.core.backend.BackendBundleFactory;
+import com.torodb.core.backend.IdentifierConstraints;
+import com.torodb.core.backend.SnapshotUpdater;
+import com.torodb.core.d2r.ReservedIdGenerator;
+import com.torodb.core.dsl.backend.BackendTransactionJobFactory;
 import com.torodb.packaging.config.model.backend.BackendImplementation;
 import com.torodb.packaging.config.model.backend.ConnectionPoolConfig;
 import com.torodb.packaging.config.model.backend.CursorConfig;
@@ -38,16 +48,33 @@ import com.torodb.packaging.config.model.backend.derby.Derby;
 import com.torodb.packaging.config.model.backend.postgres.Postgres;
 import com.torodb.packaging.config.visitor.BackendImplementationVisitor;
 
-public class BackendImplementationModule extends AbstractModule implements BackendImplementationVisitor {
+public class BackendImplementationModule extends PrivateModule implements BackendImplementationVisitor {
+    private final CursorConfig cursorConfig;
+    private final ConnectionPoolConfig connectionPoolConfig;
 	private final BackendImplementation backendImplementation;
 
-	public BackendImplementationModule(BackendImplementation backendImplementation) {
+	public BackendImplementationModule(CursorConfig cursorConfig, ConnectionPoolConfig connectionPoolConfig, 
+	        BackendImplementation backendImplementation) {
+	    this.cursorConfig = cursorConfig;
+	    this.connectionPoolConfig = connectionPoolConfig;
 		this.backendImplementation = backendImplementation;
 	}
 
 	@Override
 	protected void configure() {
+        bind(CursorConfig.class).toInstance(cursorConfig);
+        bind(ConnectionPoolConfig.class).toInstance(connectionPoolConfig);
+        install(new BackendModule());
 	    backendImplementation.accept(this);
+        expose(SqlHelper.class);
+        expose(SqlInterface.class);
+        expose(SchemaUpdater.class);
+        expose(DbBackendService.class);
+        expose(IdentifierConstraints.class);
+        expose(BackendBundleFactory.class);
+        expose(BackendTransactionJobFactory.class);
+        expose(ReservedIdGenerator.class);
+        expose(SnapshotUpdater.class);
 	}
 
 	@Override
@@ -65,7 +92,7 @@ public class BackendImplementationModule extends AbstractModule implements Backe
 	}
     
     @Immutable
-    @Singleton
+    @ThreadSafe
     public static class DerbyBackendConfigurationMapper extends DbBackendConfigurationMapper implements DerbyDbBackendConfiguration {
         private final boolean embedded;
         private final boolean inMemory;
@@ -99,7 +126,6 @@ public class BackendImplementationModule extends AbstractModule implements Backe
     }
     
     @Immutable
-    @Singleton
     public static class PostgresSQLDbBackendConfigurationMapper extends DbBackendConfigurationMapper implements PostgreSQLDbBackendConfiguration {
         @Inject
         public PostgresSQLDbBackendConfigurationMapper(CursorConfig cursorConfig, ConnectionPoolConfig connectionPoolConfig, Postgres postgres) {
@@ -115,7 +141,8 @@ public class BackendImplementationModule extends AbstractModule implements Backe
                     postgres.getIncludeForeignKeys());
         }
     }
-    
+
+    @ThreadSafe
 	public static abstract class DbBackendConfigurationMapper implements DbBackendConfiguration {
 
         private final long cursorTimeout;

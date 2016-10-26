@@ -1,12 +1,12 @@
 
 package com.torodb.torod;
 
-import com.google.common.util.concurrent.Service;
+import com.torodb.core.services.TorodbService;
 
 /**
  *
  */
-public interface TorodServer extends Service {
+public interface TorodServer extends TorodbService {
 
     public TorodConnection openConnection();
 

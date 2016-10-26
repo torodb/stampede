@@ -36,6 +36,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.net.HostAndPort;
+import com.google.common.util.concurrent.Service;
 import com.google.inject.CreationException;
 import com.torodb.core.BuildProperties;
 import com.torodb.core.exceptions.SystemException;
@@ -54,198 +55,211 @@ import com.torodb.stampede.config.model.Config;
  * ToroDB's entry point
  */
 public class Main {
-	
-	private static final Logger LOGGER = LogManager.getLogger(Main.class);
-	
-	public static void main(String[] args) throws Exception {
-		Console console = JCommander.getConsole();
 
-		ResourceBundle cliBundle = PropertyResourceBundle.getBundle("CliMessages");
-		final CliConfig cliConfig = new CliConfig();
-		JCommander jCommander = new JCommander(cliConfig, cliBundle, args);
-		jCommander.setColumnSize(Integer.MAX_VALUE);
-		
-		if (cliConfig.isVersion()) {
-		    BuildProperties buildProperties = new DefaultBuildProperties();
-		    console.println(buildProperties.getFullVersion());
-		    System.exit(0);
-		}
-		
-		if (cliConfig.isHelp()) {
-			jCommander.usage();
-			System.exit(0);
-		}
+    private static final Logger LOGGER = LogManager.getLogger(Main.class);
 
-		if (cliConfig.isHelpParam()) {
-			console.println(cliBundle.getString("cli.help-param-header"));
-			ConfigUtils.printParamDescriptionFromConfigSchema(Config.class, cliBundle, console, 0);
-			System.exit(0);
-		}
-		
-		cliConfig.addParams();
-		
-		final Config config = CliConfigUtils.readConfig(cliConfig);
-		
-		if (cliConfig.isPrintConfig()) {
-			ConfigUtils.printYamlConfig(config, console);
-			
-			System.exit(0);
-		}
-        
-        if (cliConfig.isPrintXmlConfig()) {
-            ConfigUtils.printXmlConfig(config, console);
-            
-            System.exit(0);
-        }
-        
-        if (cliConfig.isPrintParam()) {
-            JsonNode jsonNode = ConfigUtils.getParam(config, cliConfig.getPrintParamPath());
-            
-            if (jsonNode != null) {
-                console.print(jsonNode.asText());
+    public static void main(String[] args) throws Exception {
+        try {
+            Console console = JCommander.getConsole();
+    
+            ResourceBundle cliBundle = PropertyResourceBundle.getBundle("CliMessages");
+            final CliConfig cliConfig = new CliConfig();
+            JCommander jCommander = new JCommander(cliConfig, cliBundle, args);
+            jCommander.setColumnSize(Integer.MAX_VALUE);
+    
+            if (cliConfig.isVersion()) {
+                BuildProperties buildProperties = new DefaultBuildProperties();
+                console.println(buildProperties.getFullVersion());
+                System.exit(0);
+            }
+    
+            if (cliConfig.isHelp()) {
+                jCommander.usage();
+                System.exit(0);
+            }
+    
+            if (cliConfig.isHelpParam()) {
+                console.println(cliBundle.getString("cli.help-param-header"));
+                ConfigUtils.printParamDescriptionFromConfigSchema(Config.class, cliBundle, console, 0);
+                System.exit(0);
+            }
+    
+            cliConfig.addParams();
+    
+            final Config config = CliConfigUtils.readConfig(cliConfig);
+    
+            if (cliConfig.isPrintConfig()) {
+                ConfigUtils.printYamlConfig(config, console);
+    
+                System.exit(0);
             }
             
-            System.exit(0);
-        }
-
-		configureLogger(cliConfig, config);
-
-		config.getBackend().getBackendImplementation().accept(new BackendImplementationVisitor() {
-            @Override
-            public void visit(Derby value) {
-                parseToropassFile(value);
+            if (cliConfig.isPrintXmlConfig()) {
+                ConfigUtils.printXmlConfig(config, console);
+                
+                System.exit(0);
             }
             
-            @Override
-            public void visit(Postgres value) {
-                parseToropassFile(value);
+            if (cliConfig.isPrintParam()) {
+                JsonNode jsonNode = ConfigUtils.getParam(config, cliConfig.getPrintParamPath());
+                
+                if (jsonNode != null) {
+                    console.print(jsonNode.asText());
+                }
+                
+                System.exit(0);
             }
-            
-            public void parseToropassFile(BackendPasswordConfig value) {
-                try {
-                    ConfigUtils.parseToropassFile(value);
-                } catch(Exception ex) {
-                    throw new SystemException(ex);
-                }
-            }
-        });
-        Replication replication = config.getReplication();
-        if (replication.getAuth().getUser() != null) {
-            HostAndPort syncSource = HostAndPort.fromString(replication.getSyncSource())
-                    .withDefaultPort(27017);
-            ConfigUtils.parseMongopassFile(new MongoPasswordConfig() {
-                
+    
+            configureLogger(cliConfig, config);
+
+            config.getBackend().getBackendImplementation().accept(new BackendImplementationVisitor() {
                 @Override
-                public void setPassword(String password) {
-                    replication.getAuth().setPassword(password);
+                public void visit(Derby value) {
+                    parseToropassFile(value);
                 }
                 
                 @Override
-                public String getUser() {
-                    return replication.getAuth().getUser();
+                public void visit(Postgres value) {
+                    parseToropassFile(value);
                 }
                 
-                @Override
-                public Integer getPort() {
-                    return syncSource.getPort();
-                }
-                
-                @Override
-                public String getPassword() {
-                    return replication.getAuth().getPassword();
-                }
-                
-                @Override
-                public String getMongopassFile() {
-                    return config.getReplication().getMongopassFile();
-                }
-                
-                @Override
-                public String getHost() {
-                    return syncSource.getHostText();
-                }
-                
-                @Override
-                public String getDatabase() {
-                    return replication.getAuth().getSource();
+                public void parseToropassFile(BackendPasswordConfig value) {
+                    try {
+                        ConfigUtils.parseToropassFile(value);
+                    } catch(Exception ex) {
+                        throw new SystemException(ex);
+                    }
                 }
             });
-        }
-        
-        if (config.getBackend().isLike(Postgres.class)) {
-            Postgres postgres = config.getBackend().as(Postgres.class);
-
-            if (cliConfig.isAskForPassword()) {
-                console.print("Database user " + postgres.getUser() + " password:");
-                postgres.setPassword(readPwd());
+            Replication replication = config.getReplication();
+            if (replication.getAuth().getUser() != null) {
+                HostAndPort syncSource = HostAndPort.fromString(replication.getSyncSource())
+                        .withDefaultPort(27017);
+                ConfigUtils.parseMongopassFile(new MongoPasswordConfig() {
+                    
+                    @Override
+                    public void setPassword(String password) {
+                        replication.getAuth().setPassword(password);
+                    }
+                    
+                    @Override
+                    public String getUser() {
+                        return replication.getAuth().getUser();
+                    }
+                    
+                    @Override
+                    public Integer getPort() {
+                        return syncSource.getPort();
+                    }
+                    
+                    @Override
+                    public String getPassword() {
+                        return replication.getAuth().getPassword();
+                    }
+                    
+                    @Override
+                    public String getMongopassFile() {
+                        return config.getReplication().getMongopassFile();
+                    }
+                    
+                    @Override
+                    public String getHost() {
+                        return syncSource.getHostText();
+                    }
+                    
+                    @Override
+                    public String getDatabase() {
+                        return replication.getAuth().getSource();
+                    }
+                });
             }
-        }
-		
-		try {
-            Clock clock = Clock.systemDefaultZone();
             
-            StampedeServer stampedeServer = StampedeServer.create(config, clock);
-
-            stampedeServer.startAsync();
-            stampedeServer.awaitTerminated();
-
-            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-                stampedeServer.stopAsync();
-                stampedeServer.awaitTerminated();
-            }));
-        } catch (CreationException ex) {
-            ex.getErrorMessages().stream().forEach(m -> {
-                if (m.getCause() != null) {
-                    LOGGER.error(m.getCause().getMessage());
-                } else {
-                    LOGGER.error(m.getMessage());
+            if (config.getBackend().isLike(Postgres.class)) {
+                Postgres postgres = config.getBackend().as(Postgres.class);
+    
+                if (cliConfig.isAskForPassword()) {
+                    console.print("Type database user " + postgres.getUser() + "'s password:");
+                    postgres.setPassword(readPwd());
                 }
-            });
-            System.exit(1);
-		} catch (Throwable ex) {
+                
+                if (postgres.getPassword() == null) {
+                    throw new SystemException("No password provided for database user " + postgres.getUser() + ".\n\n"
+                            + "Please add following line to file " + postgres.getToropassFile() + ":\n"
+                            + postgres.getDatabase() + ":" + postgres.getPort() + ":" 
+                            + postgres.getDatabase() + ":" + postgres.getUser() + ":<password>\n"
+                            + "Replace <password> for database user " + postgres.getUser() + "'s password");
+                }
+            }
+
+            try {
+                Clock clock = Clock.systemDefaultZone();
+                
+                Service stampedeService = StampedeBootstrap.createStampedeService(config, clock);
+    
+                stampedeService.startAsync();
+                stampedeService.awaitTerminated();
+    
+                Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                    stampedeService.stopAsync();
+                    stampedeService.awaitTerminated();
+                }));
+            } catch (CreationException ex) {
+                ex.getErrorMessages().stream().forEach(m -> {
+                    if (m.getCause() != null) {
+                        LOGGER.error(m.getCause().getMessage());
+                    } else {
+                        LOGGER.error(m.getMessage());
+                    }
+                });
+                LogManager.shutdown();
+                System.exit(1);
+            }
+        } catch (Throwable ex) {
             LOGGER.error("Fatal error on initialization", ex);
             Throwable rootCause = Throwables.getRootCause(ex);
-			String causeMessage = rootCause.getMessage();
-			JCommander.getConsole().println("Fatal error while ToroDB was starting: " + causeMessage);
-			System.exit(1);
-		}
-	}
+            String causeMessage = rootCause.getMessage();
+            LogManager.shutdown();
+            JCommander.getConsole().println("Fatal error while ToroDB was starting: " + causeMessage);
+            System.exit(1);
+        }
+    }
 
-	private static void configureLogger(CliConfig cliConfig, Config config) {
-		if (cliConfig.hasConfFile()) {
-		    if (config.getLogging().getLevel() != null) {
-		        Log4jUtils.setRootLevel(config.getLogging().getLevel());
-		    }
+    private static void configureLogger(CliConfig cliConfig, Config config) {
+        if (cliConfig.hasConfFile()) {
+            if (config.getLogging().getLevel() != null) {
+                Log4jUtils.setRootLevel(config.getLogging().getLevel());
+            }
 
-			if (config.getLogging().getPackages() != null) {
-				Log4jUtils.setLogPackages(config.getLogging().getPackages());
-			}
+            if (config.getLogging().getPackages() != null) {
+                Log4jUtils.setLogPackages(config.getLogging().getPackages());
+            }
 
-			if (config.getLogging().getFile() != null) {
-				Log4jUtils.appendToLogFile(config.getLogging().getFile());
-			}
-		}
-		// If not specified in configuration YAML then the log4j2.xml is used instead (by default)
-	}
+            if (config.getLogging().getFile() != null) {
+                Log4jUtils.appendToLogFile(config.getLogging().getFile());
+            }
+        }
+        // If not specified in configuration YAML then the log4j2.xml is used
+        // instead (by default)
+    }
 
-	private static String readPwd() throws IOException {
-		Console c = JCommander.getConsole();
-		if (System.console() == null) { // In Eclipse IDE
-			InputStream in = System.in;
-			int max = 50;
-			byte[] b = new byte[max];
+    private static String readPwd() throws IOException {
+        Console c = JCommander.getConsole();
+        if (System.console() == null) { // In Eclipse IDE
+            InputStream in = System.in;
+            int max = 50;
+            byte[] b = new byte[max];
 
-			int l = in.read(b);
-			l--;// last character is \n
-			if (l > 0) {
-				byte[] e = new byte[l];
-				System.arraycopy(b, 0, e, 0, l);
-				return new String(e, Charsets.UTF_8);
-			} else {
-				return null;
-			}
-		} else { // Outside Eclipse IDE
-			return new String(c.readPassword(false));
-		}
-	}
+            int l = in.read(b);
+            l--;// last character is \n
+            if (l > 0) {
+                byte[] e = new byte[l];
+                System.arraycopy(b, 0, e, 0, l);
+                return new String(e, Charsets.UTF_8);
+            } else {
+                return null;
+            }
+        } else { // Outside Eclipse IDE
+            return new String(c.readPassword(false));
+        }
+    }
 }

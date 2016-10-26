@@ -2,12 +2,12 @@ package com.torodb.d2r;
 
 import com.torodb.core.TableRef;
 import com.torodb.core.d2r.IdentifierFactory;
-import com.torodb.core.d2r.RidGenerator;
-import com.torodb.core.d2r.RidGenerator.DocPartRidGenerator;
+import com.torodb.core.d2r.ReservedIdGenerator.DocPartRidGenerator;
 import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MutableMetaCollection;
 import com.torodb.core.transaction.metainf.MutableMetaDocPart;
+import com.torodb.core.d2r.ReservedIdGenerator;
 
 public class CollectionMetaInfo {
 
@@ -16,7 +16,7 @@ public class CollectionMetaInfo {
 	private final IdentifierFactory identifierFactory;
 	private final DocPartRidGenerator docPartRidGenerator;
 	
-	public CollectionMetaInfo(MetaDatabase metaDatabase, MutableMetaCollection metaCollection, IdentifierFactory identifierFactory, RidGenerator ridGenerator) {
+	public CollectionMetaInfo(MetaDatabase metaDatabase, MutableMetaCollection metaCollection, IdentifierFactory identifierFactory, ReservedIdGenerator ridGenerator) {
 		this.metaDatabase = metaDatabase;
 		this.metaCollection = metaCollection;
 		this.identifierFactory = identifierFactory;

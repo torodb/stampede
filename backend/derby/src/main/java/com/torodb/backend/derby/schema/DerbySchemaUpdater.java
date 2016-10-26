@@ -20,6 +20,8 @@
 
 package com.torodb.backend.derby.schema;
 
+import com.torodb.backend.SqlHelper;
+import com.torodb.backend.SqlInterface;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -29,7 +31,8 @@ import com.torodb.backend.meta.AbstractSchemaUpdater;
 public class DerbySchemaUpdater extends AbstractSchemaUpdater {
 
     @Inject
-    public DerbySchemaUpdater() {
-        super();
+    public DerbySchemaUpdater(SqlInterface sqlInterface, SqlHelper sqlHelper) {
+        super(sqlInterface, sqlHelper);
     }
+
 }

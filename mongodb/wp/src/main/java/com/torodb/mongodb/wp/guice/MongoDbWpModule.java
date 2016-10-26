@@ -12,7 +12,7 @@ import com.eightkdata.mongowp.server.api.RequestProcessorAdaptor;
 import com.eightkdata.mongowp.server.callback.RequestProcessor;
 import com.eightkdata.mongowp.server.wp.DefaultRequestIdGenerator;
 import com.eightkdata.mongowp.server.wp.RequestIdGenerator;
-import com.google.inject.AbstractModule;
+import com.google.inject.PrivateModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.torodb.mongodb.core.ToroErrorHandler;
@@ -21,7 +21,7 @@ import com.torodb.mongodb.wp.TorodbSafeRequestProcessor;
 /**
  *
  */
-public class MongoDbWpModule extends AbstractModule {
+public class MongoDbWpModule extends PrivateModule {
 
     @Override
     protected void configure() {

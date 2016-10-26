@@ -33,8 +33,12 @@ import org.jooq.Result;
 
 import com.google.common.base.Preconditions;
 import com.torodb.backend.ErrorHandler.Context;
+import com.torodb.backend.tables.KvTable;
 import com.torodb.backend.tables.MetaDocPartTable;
+import com.torodb.backend.tables.records.KvRecord;
+import com.torodb.backend.tables.records.MetaDatabaseRecord;
 import com.torodb.core.TableRef;
+import com.torodb.core.backend.MetaInfoKey;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
@@ -42,6 +46,9 @@ import com.torodb.core.transaction.metainf.MetaIdentifiedDocPartIndex;
 import com.torodb.core.transaction.metainf.MetaIndex;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import java.util.*;
+import java.util.stream.Stream;
+import org.jooq.*;
 
 /**
  *
@@ -54,7 +61,8 @@ public abstract class AbstractMetaDataReadInterface implements MetaDataReadInter
     private final SqlHelper sqlHelper;
 
     @Inject
-    public AbstractMetaDataReadInterface(MetaDocPartTable<?, ?> metaDocPartTable, SqlHelper sqlHelper) {
+    public AbstractMetaDataReadInterface(MetaDocPartTable<?, ?> metaDocPartTable,
+            SqlHelper sqlHelper) {
         this.metaDocPartTable = metaDocPartTable;
         this.sqlHelper = sqlHelper;
     }
@@ -208,5 +216,23 @@ public abstract class AbstractMetaDataReadInterface implements MetaDataReadInter
             return metaDocPartTable.READ_FIRST_FIELDS;
         }
         return metaDocPartTable.READ_FIELDS;
+    }
+
+    @Override
+    public Optional<String> readKV(DSLContext dsl, MetaInfoKey key) {
+        KvTable<KvRecord> kvTable = getKvTable();
+        Condition c = kvTable.KEY.eq(key.getKeyName());
+
+        return dsl.select(kvTable.VALUE)
+                .from(kvTable)
+                .where(c)
+                .fetchOptional()
+                .map(Record1::value1);
+    }
+
+    @Override
+    public Stream<MetaDatabaseRecord> readMetaDatabaseTable(DSLContext dsl) {
+        return dsl.selectFrom(getMetaDatabaseTable())
+                .fetchStream();
     }
 }

@@ -1,5 +1,6 @@
 package com.torodb.backend;
 
+import com.torodb.core.backend.MetaInfoKey;
 import javax.annotation.Nonnull;
 
 import org.jooq.DSLContext;
@@ -13,6 +14,7 @@ import com.torodb.core.transaction.metainf.MetaDocPartIndexColumn;
 import com.torodb.core.transaction.metainf.MetaIndex;
 import com.torodb.core.transaction.metainf.MetaIndexField;
 import com.torodb.core.transaction.metainf.MetaScalar;
+import javax.annotation.Nullable;
 
 public interface MetaDataWriteInterface {
     void createMetaDatabaseTable(@Nonnull DSLContext dsl);
@@ -24,6 +26,7 @@ public interface MetaDataWriteInterface {
     void createMetaIndexFieldTable(@Nonnull DSLContext dsl);
     void createMetaDocPartIndexTable(@Nonnull DSLContext dsl);
     void createMetaFieldIndexTable(@Nonnull DSLContext dsl);
+    void createKvTable(@Nonnull DSLContext dsl);
     
     void addMetaDatabase(@Nonnull DSLContext dsl, @Nonnull MetaDatabase database);
     void addMetaCollection(@Nonnull DSLContext dsl, @Nonnull MetaDatabase database, @Nonnull MetaCollection collection);
@@ -41,4 +44,7 @@ public interface MetaDataWriteInterface {
     void deleteMetaDocPartIndex(@Nonnull DSLContext dsl, @Nonnull MetaDatabase database, @Nonnull MetaCollection collection, @Nonnull MetaDocPart docPart, @Nonnull MetaIdentifiedDocPartIndex index);
     
     int consumeRids(@Nonnull DSLContext dsl, @Nonnull MetaDatabase database, @Nonnull MetaCollection collection, @Nonnull MetaDocPart docPart, int count);
+
+    @Nullable
+    String writeMetaInfo(@Nonnull DSLContext dsl, @Nonnull MetaInfoKey key, @Nonnull String newValue);
 }

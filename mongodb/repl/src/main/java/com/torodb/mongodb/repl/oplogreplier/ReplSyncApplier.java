@@ -3,13 +3,9 @@ package com.torodb.mongodb.repl.oplogreplier;
 
 import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
-import com.torodb.common.util.ThreadFactoryRunnableService;
-import com.torodb.core.annotations.ToroDbRunnableService;
-import com.torodb.core.exceptions.user.UserException;
+import com.torodb.core.services.RunnableTorodbService;
+import com.torodb.core.supervision.Supervisor;
 import com.torodb.core.transaction.RollbackException;
-import com.torodb.mongodb.core.MongodConnection;
-import com.torodb.mongodb.core.MongodServer;
-import com.torodb.mongodb.core.WriteMongodTransaction;
 import com.torodb.mongodb.repl.OplogManager;
 import com.torodb.mongodb.repl.OplogManager.OplogManagerPersistException;
 import com.torodb.mongodb.repl.OplogManager.WriteOplogTransaction;
@@ -19,11 +15,16 @@ import java.util.concurrent.ThreadFactory;
 import javax.annotation.Nonnull;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import com.torodb.core.annotations.TorodbRunnableService;
+import com.torodb.core.exceptions.user.UserException;
+import com.torodb.mongodb.core.MongodConnection;
+import com.torodb.mongodb.core.MongodServer;
+import com.torodb.mongodb.core.WriteMongodTransaction;
 
 /**
  *
  */
-class ReplSyncApplier extends ThreadFactoryRunnableService {
+class ReplSyncApplier extends RunnableTorodbService {
 
     private static final Logger LOGGER = LogManager.getLogger(ReplSyncApplier.class);
     private final SyncServiceView callback;
@@ -34,16 +35,21 @@ class ReplSyncApplier extends ThreadFactoryRunnableService {
     private volatile Thread runThread;
 
     ReplSyncApplier(
-            @ToroDbRunnableService ThreadFactory threadFactory,
+            @TorodbRunnableService ThreadFactory threadFactory,
             @Nonnull OplogOperationApplier oplogOpApplier,
             @Nonnull MongodServer server,
             @Nonnull OplogManager oplogManager,
             @Nonnull SyncServiceView callback) {
-        super(threadFactory);
+        super(callback, threadFactory);
         this.callback = callback;
         this.connection = server.openConnection();
         this.oplogOpApplier = oplogOpApplier;
         this.oplogManager = oplogManager;
+    }
+
+    @Override
+    protected Logger getLogger() {
+        return LOGGER;
     }
 
     @Override
@@ -59,7 +65,7 @@ class ReplSyncApplier extends ThreadFactoryRunnableService {
     }
 
     @Override
-    protected void run() {
+    protected void runProtected() {
         runThread = Thread.currentThread();
         /*
          * TODO: In general, the replication context can be set as not reaplying. But it is not
@@ -88,10 +94,10 @@ class ReplSyncApplier extends ThreadFactoryRunnableService {
                                 try {
                                     oplogOpApplier.apply(
                                             opToApply,
-                                            transaction,
+                                                transaction,
                                             applierContext
                                     );
-                                    transaction.commit();
+                                        transaction.commit();
                                     done = true;
                                 } catch (RollbackException ex) {
                                     LOGGER.debug("Recived a rollback exception while applying an oplog op", ex);
@@ -120,11 +126,12 @@ class ReplSyncApplier extends ThreadFactoryRunnableService {
                         callback.markAsApplied(opToApply);
                     }
                 } catch (InterruptedException ex) {
-                    LOGGER.debug("Interrupted applier thread while waiting for an operator");
+                    LOGGER.debug("Interrupted applier thread while applying an operator");
                 }
             }
             if(lastOperation != null) {
-                try (WriteOplogTransaction oplogTransaction = oplogManager.createWriteTransaction()) {
+                try (WriteOplogTransaction oplogTransaction =
+                        oplogManager.createWriteTransaction()) {
                     oplogTransaction.addOperation(lastOperation);
                 } catch (OplogManagerPersistException ex) {
                     if (callback.failedToApply(lastOperation, ex)) {
@@ -144,7 +151,7 @@ class ReplSyncApplier extends ThreadFactoryRunnableService {
     }
 
 
-    public static interface SyncServiceView {
+    public static interface SyncServiceView extends Supervisor {
 
         public List<OplogOperation> takeOps() throws InterruptedException;
 

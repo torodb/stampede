@@ -1,7 +1,6 @@
 
 package com.torodb.concurrent.guice;
 
-import com.google.inject.Singleton;
 import com.torodb.core.Shutdowner;
 import java.time.Clock;
 import java.time.Duration;
@@ -15,7 +14,6 @@ import org.apache.logging.log4j.Logger;
 /**
  *
  */
-@Singleton
 public class ExecutorServiceShutdownHelper {
 
     private static final Logger LOGGER = LogManager.getLogger(ExecutorServiceShutdownHelper.class);

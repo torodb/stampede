@@ -21,35 +21,32 @@
 package com.torodb.backend.postgresql;
 
 
-import com.torodb.backend.AbstractDbBackend;
+import com.torodb.backend.AbstractDbBackendService;
 import com.torodb.backend.TransactionIsolationLevel;
 import com.torodb.backend.driver.postgresql.PostgreSQLDbBackendConfiguration;
 import com.torodb.backend.driver.postgresql.PostgreSQLDriverProvider;
-import com.torodb.core.annotations.ToroDbIdleService;
 import java.util.concurrent.ThreadFactory;
-import java.util.function.Consumer;
-import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import javax.sql.DataSource;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jooq.DSLContext;
+import com.torodb.core.annotations.TorodbIdleService;
 
 /**
  *
  * PostgreSQL-based backend
  */
-public class PostgreSQLDbBackend extends AbstractDbBackend<PostgreSQLDbBackendConfiguration> {
+public class PostgreSQLDbBackend extends AbstractDbBackendService<PostgreSQLDbBackendConfiguration> {
 
     private static final Logger LOGGER = LogManager.getLogger(PostgreSQLDbBackend.class);
 
     private final PostgreSQLDriverProvider driverProvider;
 
     @Inject
-    public PostgreSQLDbBackend(@ToroDbIdleService ThreadFactory threadFactory, 
-            PostgreSQLDbBackendConfiguration configuration, PostgreSQLDriverProvider driverProvider,
+    public PostgreSQLDbBackend(@TorodbIdleService ThreadFactory threadFactory,
+            PostgreSQLDbBackendConfiguration configuration, 
+            PostgreSQLDriverProvider driverProvider,
             PostgreSQLErrorHandler errorHandler) {
         super(threadFactory, configuration, errorHandler);
 

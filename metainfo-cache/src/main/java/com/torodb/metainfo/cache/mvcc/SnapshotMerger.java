@@ -49,6 +49,7 @@ import com.torodb.core.transaction.metainf.MutableMetaDocPart;
 import com.torodb.core.transaction.metainf.MutableMetaIndex;
 import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
 import com.torodb.core.transaction.metainf.UnmergeableException;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  *
@@ -256,6 +257,7 @@ public class SnapshotMerger {
         }
     }
 
+    @SuppressFBWarnings("RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE")
     private void merge(MetaDatabase oldDb, MutableMetaCollection newCol, ImmutableMetaCollection oldCol, MetaDocPart newStructure, ImmutableMetaDocPart oldStructure,
             ImmutableMetaDocPart.Builder parentBuilder, ImmutableMetaIdentifiedDocPartIndex changed, MetaElementState newState) throws UnmergeableException {
         ImmutableMetaIdentifiedDocPartIndex byId = oldStructure.getMetaDocPartIndexByIdentifier(changed.getIdentifier());
@@ -333,6 +335,7 @@ public class SnapshotMerger {
         }
     }
 
+    @SuppressFBWarnings("RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE")
     private void merge(MetaDatabase oldDb, MutableMetaCollection newStructure, ImmutableMetaCollection oldStructure,
             ImmutableMetaCollection.Builder parentBuilder, MutableMetaIndex changed, MetaElementState newState) throws UnmergeableException {
         ImmutableMetaIndex byName = oldStructure.getMetaIndexByName(changed.getName());

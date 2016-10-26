@@ -1,48 +1,21 @@
 
 package com.torodb.mongodb.repl;
 
-import com.eightkdata.mongowp.ErrorCode;
 import com.eightkdata.mongowp.OpTime;
-import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.WriteConcern;
-import com.eightkdata.mongowp.bson.BsonDocument;
 import com.eightkdata.mongowp.bson.BsonObjectId;
-import com.eightkdata.mongowp.bson.BsonValue;
-import com.eightkdata.mongowp.bson.utils.DefaultBsonValues;
-import com.eightkdata.mongowp.exceptions.MongoException;
-import com.eightkdata.mongowp.exceptions.UnknownErrorException;
-import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.DeleteCommand;
-import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.DeleteCommand.DeleteArgument;
-import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.DeleteCommand.DeleteStatement;
-import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.FindCommand;
-import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.FindCommand.FindArgument;
-import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.FindCommand.FindResult;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.GetLastErrorCommand.WriteConcernEnforcementResult;
-import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.InsertCommand;
-import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.InsertCommand.InsertArgument;
-import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.InsertCommand.InsertResult;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.MemberState;
-import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.ReplicaSetConfig;
-import com.eightkdata.mongowp.server.api.Request;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.torodb.common.util.ThreadFactoryIdleService;
-import com.torodb.core.annotations.ToroDbIdleService;
-import com.torodb.core.exceptions.user.UserException;
-import com.torodb.core.transaction.RollbackException;
+import com.torodb.core.retrier.RetrierGiveUpException;
+import com.torodb.core.services.IdleTorodbService;
 import com.torodb.mongodb.annotations.Locked;
-import com.torodb.mongodb.core.MongodConnection;
-import com.torodb.mongodb.core.MongodServer;
-import com.torodb.mongodb.core.ReadOnlyMongodTransaction;
-import com.torodb.mongodb.core.WriteMongodTransaction;
 import com.torodb.mongodb.language.ObjectIdFactory;
 import com.torodb.mongodb.repl.oplogreplier.OplogApplierService;
 import com.torodb.mongodb.repl.oplogreplier.RollbackReplicationException;
-import com.torodb.mongodb.repl.topology.TopologyService;
-import java.util.Collections;
-import java.util.Iterator;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.locks.Lock;
@@ -51,56 +24,43 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import javax.annotation.concurrent.NotThreadSafe;
 import javax.annotation.concurrent.ThreadSafe;
 import javax.inject.Inject;
-import javax.inject.Singleton;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import com.torodb.core.annotations.TorodbIdleService;
 
-import static com.eightkdata.mongowp.bson.utils.DefaultBsonValues.*;
+
 
 /**
  *
  */
 @ThreadSafe
-@Singleton
-public class ReplCoordinator extends ThreadFactoryIdleService implements ReplInterface {
+public class ReplCoordinator extends IdleTorodbService implements ReplInterface {
     private static final Logger LOGGER = LogManager.getLogger(ReplCoordinator.class);
-    private static final String CONSISTENT_DB = "torodb";
-    private static final String CONSISTENT_COL = "repl.consistent";
-    private final ReplCoordinatorOwnerCallback ownerCallback;
     private final ReadWriteLock lock;
     private volatile MemberState memberState;
-    private final OplogManager oplogManager;
-    private final MongodServer server;
-    private final SyncSourceProvider syncSourceProvider;
-    private final BsonObjectId myRID;
-    private final int myId;
     private final RecoveryService.RecoveryServiceFactory recoveryServiceFactory;
     private final OplogApplierService.OplogApplierServiceFactory oplogReplierFactory;
     private final ReplMetrics metrics;
     private final Executor executor;
-    private final TopologyService topologyService;
+    private final ConsistencyHandler consistencyHandler;
 
     private RecoveryService recoveryService;
     private OplogApplierService oplogReplierService;
-    private boolean consistent;
 
     @Inject
     public ReplCoordinator(
-            @ToroDbIdleService ThreadFactory threadFactory,
-            ReplCoordinatorOwnerCallback ownerCallback,
-            MongodServer server,
+            @TorodbIdleService ThreadFactory threadFactory,
             SyncSourceProvider syncSourceProvider,
             OplogManager oplogManager,
             ObjectIdFactory objectIdFactory,
             RecoveryService.RecoveryServiceFactory recoveryServiceFactory,
             OplogApplierService.OplogApplierServiceFactory oplogReplierFactory,
-            ReplMetrics metrics, TopologyService topologyService) {
+            ReplMetrics metrics, ConsistencyHandler consistencyHandler) {
         super(threadFactory);
-        this.ownerCallback = ownerCallback;
-        this.oplogManager = oplogManager;
         this.recoveryServiceFactory = recoveryServiceFactory;
         this.oplogReplierFactory = oplogReplierFactory;
         this.metrics = metrics;
+        this.consistencyHandler = consistencyHandler;
         
         this.lock = new ReentrantReadWriteLock();
 
@@ -108,11 +68,6 @@ public class ReplCoordinator extends ThreadFactoryIdleService implements ReplInt
         oplogReplierService = null;
         memberState = null;
 
-        this.myId = 123;
-        this.myRID = objectIdFactory.consumeObjectId();
-
-        this.server = server;
-        this.syncSourceProvider = syncSourceProvider;
         final ThreadFactory utilityThreadFactory = new ThreadFactoryBuilder()
                 .setThreadFactory(threadFactory)
                 .setNameFormat("repl-coord-util-%d")
@@ -120,40 +75,34 @@ public class ReplCoordinator extends ThreadFactoryIdleService implements ReplInt
         this.executor = (Runnable command) -> {
             utilityThreadFactory.newThread(command).start();
         };
-        this.topologyService = topologyService;
     }
 
     @Override
     protected void startUp() throws Exception {
-        LOGGER.info("Starting replication service");
+        LOGGER.debug("Starting replication coordinator");
         Lock writeLock = lock.writeLock();
         writeLock.lock();
         try {
             //TODO: temporal implementation
             loadStoredConfig();
 
-            topologyService.startAsync();
-            topologyService.awaitRunning();
-
-            oplogManager.startAsync();
-            oplogManager.awaitRunning();
-            loadConsistentState();
-
-            if (!isConsistent()) {
+            if (!consistencyHandler.isConsistent()) {
+                LOGGER.info("Database is not consistent.");
                 startRecoveryMode();
             }
             else {
+                LOGGER.info("Database is consistent.");
                 startSecondaryMode();
             }
         } finally {
             writeLock.unlock();
         }
-        LOGGER.info("Replication service started");
+        LOGGER.debug("Replication coordinator started");
     }
 
     @Override
     protected void shutDown() throws Exception {
-        LOGGER.info("Shutting down replication service");
+        LOGGER.debug("Shutting down replication coordinator");
         Lock writeLock = lock.writeLock();
         writeLock.lock();
         try {
@@ -169,13 +118,7 @@ public class ReplCoordinator extends ThreadFactoryIdleService implements ReplInt
         }
         awaitRecoveryStopped();
         awaitSecondaryStopped();
-        LOGGER.info("Replication service shutted down");
-        ownerCallback.replCoordStopped();
-    }
-
-    @Override
-    public void loadConfiguration(ReplicaSetConfig newConfig) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        LOGGER.debug("Replication coordinator shutted down");
     }
 
     @Override
@@ -214,26 +157,6 @@ public class ReplCoordinator extends ThreadFactoryIdleService implements ReplInt
         } else {
             metrics.getMemberState().setValue(null);
         }
-    }
-
-    @Override
-    public OplogManager getOplogManager() {
-        return oplogManager;
-    }
-
-    @Override
-    public long getSlaveDelaySecs() {
-        return 0;
-    }
-
-    @Override
-    public BsonObjectId getRID() {
-        return myRID;
-    }
-
-    @Override
-    public int getId() {
-        return myId;
     }
 
     @Locked(exclusive = true)
@@ -319,129 +242,18 @@ public class ReplCoordinator extends ThreadFactoryIdleService implements ReplInt
         setMemberState(null);
     }
 
-    @Locked(exclusive = true)
-    private void startPrimaryMode() {
-        LOGGER.info("Starting PRIMARY mode");
-        setMemberState(MemberState.RS_PRIMARY);
-    }
-
-    private boolean isConsistent() {
-        Lock readLock = lock.readLock();
-        readLock.lock();
-        try {
-            return consistent;
-        } finally {
-            readLock.unlock();
-        }
-    }
-
-    private Status<?> setConsistentState(boolean consistent) {
+    private void setConsistentState(boolean consistent) throws RetrierGiveUpException {
         Lock writeLock = lock.writeLock();
         writeLock.lock();
         try {
-            while (true) {
-                try {
-                    this.consistent = consistent;
-                    Status<?> result = flushConsistentState();
-                    LOGGER.info("Consistent state set to '" + consistent + "'");
-
-                    return result;
-                } catch (RollbackException ex) {
-                    LOGGER.warn("Rollback while trying to set the consistent state", ex);
-                }
-            }
-        }
-        catch (Throwable ex) {
-            LOGGER.error("It was impossible to store the consistent state", ex);
-            return Status.from(ErrorCode.UNKNOWN_ERROR, "It was impossible to store the consistent state " + ex);
+            consistencyHandler.setConsistent(consistent);
         } finally {
             writeLock.unlock();
         }
     }
 
-    private Status<?> flushConsistentState() throws RollbackException {
-        try (MongodConnection conn = server.openConnection();
-                WriteMongodTransaction trans = conn.openWriteTransaction()) {
-            Status<Long> deleteStatus = trans.execute(
-                    new Request(CONSISTENT_DB, null, true, null),
-                    DeleteCommand.INSTANCE,
-                    new DeleteArgument(
-                            CONSISTENT_COL,
-                            Collections.singletonList(
-                                    new DeleteStatement(
-                                            DefaultBsonValues.EMPTY_DOC,
-                                            true
-                                    )
-                            ),
-                            true,
-                            WriteConcern.fsync()
-                    )
-            );
-            if (!deleteStatus.isOk()) {
-                return deleteStatus;
-            }
-
-            Status<InsertResult> insertStatus = trans.execute(
-                    new Request(CONSISTENT_DB, null, true, null),
-                    InsertCommand.INSTANCE,
-                    new InsertArgument(
-                            CONSISTENT_COL,
-                            Collections.singletonList(
-                                    newDocument("consistent", newBoolean(consistent))
-                            ),
-                            WriteConcern.fsync(),
-                            true,
-                            null
-                    )
-            );
-            if (!insertStatus.isOk()) {
-                return insertStatus;
-            }
-            if (insertStatus.getResult().getN() != 1) {
-                return Status.from(ErrorCode.UNKNOWN_ERROR, "An invalid number of documents has "
-                        + "been inserted: " + insertStatus.getResult().getN());
-            }
-            trans.commit();
-            return Status.ok();
-        } catch (UserException ex) {
-            return Status.from(ErrorCode.UNKNOWN_ERROR, "Unexpected user exception: " + ex);
-        }
-    }
-
-    private void loadConsistentState() throws MongoException {
-        try (MongodConnection conn = server.openConnection();
-                ReadOnlyMongodTransaction trans = conn.openReadOnlyTransaction()) {
-            Status<FindResult> findStatus = trans.execute(
-                    new Request(CONSISTENT_DB, null, true, null),
-                    FindCommand.INSTANCE,
-                    new FindArgument.Builder()
-                    .setCollection(CONSISTENT_COL)
-                    .build()
-            );
-            if (!findStatus.isOk()) {
-                throw new UnknownErrorException(findStatus.getErrorMsg());
-            }
-            boolean newConsistent;
-            Iterator<BsonDocument> firstBatch = findStatus.getResult().getCursor().getFirstBatch();
-            if (!firstBatch.hasNext()) {
-                newConsistent = false;
-            }
-            else {
-                BsonDocument doc = firstBatch.next();
-                BsonValue consistentField = doc.get("consistent");
-                newConsistent = consistentField != null && consistentField.isBoolean()
-                        && consistentField.asBoolean().getValue();
-            }
-            consistent = newConsistent;
-        }
-    }
-
     private void loadStoredConfig() {
         LOGGER.warn("loadStoredConfig() is not implemented yet");
-    }
-
-    public static interface ReplCoordinatorOwnerCallback {
-        public void replCoordStopped();
     }
 
     @NotThreadSafe
@@ -607,10 +419,11 @@ public class ReplCoordinator extends ThreadFactoryIdleService implements ReplInt
 
         @Override
         public void setConsistentState(boolean consistent) {
-            Status<?> status = ReplCoordinator.this.setConsistentState(consistent);
-            if (!status.isOk()) {
-                LOGGER.error("Fatal error: It was impossible to store the consistent state: {}", status);
-                throw new AssertionError("Fatal error: It was impossible to store the consistent state: " + status);
+            try {
+                ReplCoordinator.this.setConsistentState(consistent);
+            } catch (Throwable ex) {
+                throw new AssertionError("Fatal error: It was impossible to "
+                        + "store the consistent state", ex);
             }
         }
 

@@ -28,13 +28,14 @@ import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.diagnos
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.diagnostic.ServerStatusCommand.ServerStatusArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.diagnostic.ServerStatusCommand.ServerStatusReply;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.diagnostic.ServerStatusCommand.StorageEngine;
-import com.eightkdata.mongowp.server.MongoServerConfig;
 import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.Request;
 import com.google.common.collect.ImmutableList;
+import com.google.common.net.HostAndPort;
 import com.torodb.mongodb.commands.impl.ConnectionTorodbCommandImpl;
 import com.torodb.mongodb.core.MongoLayerConstants;
 import com.torodb.mongodb.core.MongodConnection;
+import com.torodb.mongodb.core.MongodServerConfig;
 
 /**
  *
@@ -44,11 +45,11 @@ public class ServerStatusImplementation extends ConnectionTorodbCommandImpl<Serv
     private static final Logger LOGGER
             = LogManager.getLogger(ServerStatusImplementation.class);
 
-    private final MongoServerConfig mongoServerConfig;
+    private final HostAndPort selfHostAndPort;
 
     @Inject
-    public ServerStatusImplementation(MongoServerConfig mongoServerConfig) {
-        this.mongoServerConfig = mongoServerConfig;
+    public ServerStatusImplementation(MongodServerConfig mongoServerConfig) {
+        selfHostAndPort = mongoServerConfig.getHostAndPort();
     }
 
 
@@ -62,9 +63,9 @@ public class ServerStatusImplementation extends ConnectionTorodbCommandImpl<Serv
         
         if (arg.isHost()) {
             try {
-                replyBuilder.setHost(InetAddress.getLocalHost().getHostName() + ":" + mongoServerConfig.getPort());
+                replyBuilder.setHost(InetAddress.getLocalHost().getHostName() + ":" + selfHostAndPort.getPort());
             } catch(Throwable throwable) {
-                replyBuilder.setHost("localhost:" + mongoServerConfig.getPort());
+                replyBuilder.setHost("localhost:" + selfHostAndPort.getPort());
             }
         }
         if (arg.isVersion()) replyBuilder.setVersion(MongoLayerConstants.VERSION_STRING);

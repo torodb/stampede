@@ -40,14 +40,12 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.concurrent.ThreadSafe;
-import javax.inject.Singleton;
 import org.jooq.lambda.tuple.Tuple2;
 
 /**
  *
  */
 @ThreadSafe
-@Singleton
 public class NamespaceJobExecutor {
 
     private static final AttributeReference _ID_ATT_REF = new AttributeReference.Builder()

@@ -23,13 +23,14 @@ package com.torodb.mongodb.repl.topology;
 import com.eightkdata.mongowp.ErrorCode;
 import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.client.core.MongoConnection.RemoteCommandResponse;
+import com.eightkdata.mongowp.exceptions.InconsistentReplicaSetNamesException;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.internal.ReplSetHeartbeatCommand.ReplSetHeartbeatArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.internal.ReplSetHeartbeatReply;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.ReplicaSetConfig;
 import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.google.common.net.HostAndPort;
 import com.torodb.common.util.CompletionExceptions;
-import com.torodb.common.util.ThreadFactoryIdleService;
+import com.torodb.core.services.IdleTorodbService;
 import com.torodb.mongodb.repl.guice.ReplSetName;
 import java.time.Clock;
 import java.time.Duration;
@@ -50,7 +51,7 @@ import org.apache.logging.log4j.Logger;
  *
  */
 @Singleton
-public class TopologyHeartbeatHandler extends ThreadFactoryIdleService {
+public class TopologyHeartbeatHandler extends IdleTorodbService {
     private static final Logger LOGGER = LogManager.getLogger(TopologyHeartbeatHandler.class);
     private static final Duration POST_ERROR_HB_DELAY = Duration.ofSeconds(2);
 
@@ -68,7 +69,7 @@ public class TopologyHeartbeatHandler extends ThreadFactoryIdleService {
     public TopologyHeartbeatHandler(Clock clock, @ReplSetName String replSetName,
             HeartbeatNetworkHandler heartbeatSender, TopologyExecutor executor,
             TopologyErrorHandler errorHandler, ThreadFactory threadFactory,
-            HostAndPort seed) {
+            @RemoteSeed HostAndPort seed) {
         super(threadFactory);
         this.clock = clock;
         this.replSetName = replSetName;
@@ -134,12 +135,33 @@ public class TopologyHeartbeatHandler extends ThreadFactoryIdleService {
                         new RemoteCommandRequest<>(seed, "admin", Empty.getInstance())
                 ),
                 (coord, remoteConfig) -> {
-                    if (remoteConfig.isOk()) {
-                        updateConfig(coord, remoteConfig.getCommandReply().get());
+                    Status<ReplicaSetConfig> result = remoteConfig.asStatus();
+                    if (!result.isOk()) {
+                        return result;
                     }
-                    return remoteConfig.asStatus();
+                    ReplicaSetConfig replConfig = result.getResult();
+                    try {
+                        checkRemoteReplSetConfig(replConfig);
+                        updateConfig(coord, replConfig);
+                        return result;
+                    } catch (InconsistentReplicaSetNamesException ex) {
+                        LOGGER.warn(ex.getLocalizedMessage());
+                        return Status.from(ex);
+                    }
                 }
         );
+    }
+
+    private void checkRemoteReplSetConfig(ReplicaSetConfig remoteConfig) throws InconsistentReplicaSetNamesException {
+        //TODO(gortiz): DRY. Implement a better way to do that once the config
+        //is validated
+        String remoteReplSetName = remoteConfig.getReplSetName();
+        if (!replSetName.equals(remoteReplSetName)) {
+            throw new InconsistentReplicaSetNamesException(
+                    "The remote replica set configuration is named as '" 
+                    + remoteReplSetName +"', which differs with the local "
+                    + "replica set name '" + replSetName + "'");
+        }
     }
 
     @GuardedBy("executor")
@@ -287,7 +309,7 @@ public class TopologyHeartbeatHandler extends ThreadFactoryIdleService {
 
         private static final long serialVersionUID = 8879568483145061898L;
         private final HeartbeatResponseAction action;
-        private final @Nullable ReplSetHeartbeatReply reply;
+        private final transient @Nullable ReplSetHeartbeatReply reply;
 
         public UnsupportedHeartbeatResponseActionException(HeartbeatResponseAction action, ReplSetHeartbeatReply reply) {
             super("Heartbeat action " + action.getAction() + " is not supported");
@@ -299,6 +321,7 @@ public class TopologyHeartbeatHandler extends ThreadFactoryIdleService {
             return action;
         }
 
+        @Nullable 
         public ReplSetHeartbeatReply getReply() {
             return reply;
         }

@@ -6,7 +6,6 @@ import com.eightkdata.mongowp.WriteConcern;
 import com.eightkdata.mongowp.bson.BsonObjectId;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.general.GetLastErrorCommand.WriteConcernEnforcementResult;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.MemberState;
-import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.ReplicaSetConfig;
 import com.torodb.mongodb.annotations.Locked;
 import java.io.Closeable;
 import javax.annotation.Nonnull;
@@ -20,34 +19,6 @@ import javax.annotation.concurrent.ThreadSafe;
 public interface ReplInterface {
 
     public MemberStateInterface freezeMemberState(boolean toChangeState);
-
-    public void loadConfiguration(ReplicaSetConfig newConfig);
-
-    /**
-     *
-     * @return the delay this node is configured to have.
-     */
-    public long getSlaveDelaySecs();
-
-    public OplogManager getOplogManager();
-
-    /**
-     * Returns an id that identify this node on the replica set.
-     * <p>
-     * This id should be unique in the replica set, but it is not guaranteed.
-     * <p>
-     * @return
-     */
-    public BsonObjectId getRID();
-
-    /**
-     * Returns the id that identifies this node on the current
-     * {@linkplain ReplicaSetConfig replica set configuration} .
-     * <p>
-     * @return
-     */
-    public int getId();
-
 
     @ThreadSafe
     public static interface MemberStateInterface extends Closeable {

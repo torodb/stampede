@@ -20,25 +20,18 @@
 
 package com.torodb.backend.meta;
 
-import java.io.IOException;
-import java.sql.SQLException;
-
-import javax.annotation.Nonnull;
 
 import org.jooq.DSLContext;
 import org.jooq.Meta;
 
-import com.torodb.backend.SqlHelper;
-import com.torodb.backend.SqlInterface;
-import com.torodb.backend.exceptions.InvalidDatabaseException;
+import com.torodb.core.exceptions.InvalidDatabaseException;
 
 public interface SchemaUpdater {
 
-    public void checkOrCreate(
-            @Nonnull DSLContext dsl, 
-            @Nonnull Meta jooqMeta, 
-            @Nonnull SqlInterface sqlInterface,
-            @Nonnull SqlHelper sqlHelper
-    ) throws SQLException, IOException, InvalidDatabaseException;
+    public void checkOrCreate(DSLContext dsl, Meta jooqMeta) throws InvalidDatabaseException;
+
+    public default void checkOrCreate(DSLContext dsl) throws InvalidDatabaseException {
+        checkOrCreate(dsl, dsl.meta());
+    }
 
 }

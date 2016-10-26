@@ -20,6 +20,7 @@
 
 package com.torodb.mongodb.repl.impl;
 
+import com.torodb.core.supervision.SupervisorDecision;
 import com.torodb.mongodb.repl.ReplCoordinator;
 import com.torodb.mongodb.repl.ReplicationErrorHandler;
 import javax.inject.Inject;
@@ -50,6 +51,12 @@ public class ReplicationErrorHandlerImpl implements ReplicationErrorHandler {
         } else {
             LOGGER.warn("Found a new error while replication is already stopped");
         }
+    }
+
+    @Override
+    public SupervisorDecision onError(Object supervised, Throwable error) {
+        onTopologyError(error);
+        return SupervisorDecision.STOP;
     }
 
 }

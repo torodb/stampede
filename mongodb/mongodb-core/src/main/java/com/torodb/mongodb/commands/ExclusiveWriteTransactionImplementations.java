@@ -1,11 +1,6 @@
 
 package com.torodb.mongodb.commands;
 
-import java.util.Map.Entry;
-import java.util.Set;
-
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.MongoDb30Commands.MongoDb30CommandsImplementationBuilder;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.AdminCommands.AdminCommandsImplementationsBuilder;
@@ -70,6 +65,7 @@ import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.net.HostAndPort;
+import com.google.inject.Injector;
 import com.torodb.core.annotations.DoNotChange;
 import com.torodb.mongodb.commands.impl.NotImplementedCommandImplementation;
 import com.torodb.mongodb.commands.impl.admin.RenameCollectionImplementation;
@@ -89,8 +85,8 @@ public class ExclusiveWriteTransactionImplementations {
     private final ImmutableMap<Command<?,?>, CommandImplementation<?,?, ? super ExclusiveWriteMongodTransaction>> map;
 
     @Inject
-    ExclusiveWriteTransactionImplementations(MapFactory mapFactory) {
-        map = mapFactory.get();
+    ExclusiveWriteTransactionImplementations(Injector injector) {
+        map = new MapFactory(injector).get();
     }
 
     @DoNotChange
@@ -112,22 +108,14 @@ public class ExclusiveWriteTransactionImplementations {
         private final MyInternalCommandsImplementationsBuilder internalBuilder;
         private final MyReplCommandsImplementationsBuilder replBuilder;
 
-        @Inject
-        public MapFactory(
-                MyAdminCommandsImplementationBuilder adminBuilder,
-                MyAggregationCommandsImplementationBuilder aggregationBuilder,
-                MyAuthenticationCommandsImplementationsBuilder authenticationCommandsImplementationsBuilder,
-                MyDiagnosticCommandsImplementationBuilder diagnosticBuilder,
-                MyGeneralCommandsImplementationBuilder generalBuilder,
-                MyInternalCommandsImplementationsBuilder internalBuilder,
-                MyReplCommandsImplementationsBuilder replBuilder) {
-            this.adminBuilder = adminBuilder;
-            this.aggregationBuilder = aggregationBuilder;
-            this.authenticationCommandsImplementationsBuilder = authenticationCommandsImplementationsBuilder;
-            this.diagnosticBuilder = diagnosticBuilder;
-            this.generalBuilder = generalBuilder;
-            this.internalBuilder = internalBuilder;
-            this.replBuilder = replBuilder;
+        public MapFactory(Injector injector) {
+            this.adminBuilder = new MyAdminCommandsImplementationBuilder();
+            this.aggregationBuilder = new MyAggregationCommandsImplementationBuilder();
+            this.authenticationCommandsImplementationsBuilder = new MyAuthenticationCommandsImplementationsBuilder();
+            this.diagnosticBuilder = new MyDiagnosticCommandsImplementationBuilder();
+            this.generalBuilder = new MyGeneralCommandsImplementationBuilder();
+            this.internalBuilder = new MyInternalCommandsImplementationsBuilder();
+            this.replBuilder = new MyReplCommandsImplementationsBuilder();
         }
 
         @Override
@@ -151,13 +139,6 @@ public class ExclusiveWriteTransactionImplementations {
 
 
     static class MyAdminCommandsImplementationBuilder extends AdminCommandsImplementationsBuilder<ExclusiveWriteMongodTransaction> {
-        private final RenameCollectionImplementation renameCollectionImplementation;
-        
-        @Inject
-        public MyAdminCommandsImplementationBuilder(
-                RenameCollectionImplementation renameCollectionImplementation) {
-            this.renameCollectionImplementation = renameCollectionImplementation;
-        }
 
         @Override
         public CommandImplementation<ListCollectionsArgument, ListCollectionsResult, ExclusiveWriteMongodTransaction> getListCollectionsImplementation() {
@@ -196,7 +177,7 @@ public class ExclusiveWriteTransactionImplementations {
 
         @Override
         public CommandImplementation<RenameCollectionArgument, Empty, ? super ExclusiveWriteMongodTransaction> getRenameCollectionImplementation() {
-            return renameCollectionImplementation;
+            return new RenameCollectionImplementation();
         }
 
     }

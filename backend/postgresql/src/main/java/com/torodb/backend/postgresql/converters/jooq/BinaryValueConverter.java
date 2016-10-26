@@ -40,7 +40,7 @@ public class BinaryValueConverter implements
         KVValueConverter<byte[], byte[], KVBinary> {
     private static final long serialVersionUID = 1L;
 
-    public static final DataTypeForKV<KVBinary> TYPE = DataTypeForKV.from(PostgresDataType.BYTEA, new BinaryValueConverter());
+    public static final DataTypeForKV<KVBinary> TYPE = DataTypeForKV.from(PostgresDataType.BYTEA, new BinaryValueConverter(), -2);
 
     @Override
     public KVType getErasuredType() {

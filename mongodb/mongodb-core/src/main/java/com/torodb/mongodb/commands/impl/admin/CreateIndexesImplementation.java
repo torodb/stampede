@@ -23,13 +23,19 @@ package com.torodb.mongodb.commands.impl.admin;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import com.eightkdata.mongowp.ErrorCode;
 import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.exceptions.CommandFailed;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.CreateIndexesCommand.CreateIndexesArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.CreateIndexesCommand.CreateIndexesResult;
-import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.IndexOptions;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.index.IndexOptions;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.index.IndexOptions.KnownType;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.index.type.AscIndexType;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.index.type.DefaultIndexTypeVisitor;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.index.type.DescIndexType;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.index.type.IndexType;
 import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.Request;
 import com.google.common.collect.ImmutableList;
@@ -44,6 +50,9 @@ import com.torodb.mongodb.language.Constants;
 import com.torodb.torod.IndexFieldInfo;
 
 public class CreateIndexesImplementation implements WriteTorodbCommandImpl<CreateIndexesArgument, CreateIndexesResult> {
+    
+    private final static FieldIndexOrderingConverterIndexTypeVisitor filedIndexOrderingConverterVisitor = 
+            new FieldIndexOrderingConverterIndexTypeVisitor();
 
     @Override
     public Status<CreateIndexesResult> apply(Request req, Command<? super CreateIndexesArgument, ? super CreateIndexesResult> command,
@@ -67,12 +76,12 @@ public class CreateIndexesImplementation implements WriteTorodbCommandImpl<Creat
                 
                 if (indexOptions.isBackground()) {
                     throw new CommandFailed("createIndexes", 
-                            "Building index in background is not suppoeted right now");
+                            "Building index in background is not supported right now");
                 }
                 
                 if (indexOptions.isSparse()) {
                     throw new CommandFailed("createIndexes", 
-                            "Sparse index are not suppoeted right now");
+                            "Sparse index are not supported right now");
                 }
 
                 List<IndexFieldInfo> fields = new ArrayList<>(indexOptions.getKeys().size());
@@ -82,23 +91,20 @@ public class CreateIndexesImplementation implements WriteTorodbCommandImpl<Creat
                         attRefBuilder.addObjectKey(key);
                     }
                     
-                    FieldIndexOrdering ordering;
-                    switch(indexKey.getType()) {
-                    case asc:
-                        ordering = FieldIndexOrdering.ASC;
-                        break;
-                    case desc:
-                        ordering = FieldIndexOrdering.DESC;
-                        break;
-                    case geospatial:
-                    case hashed:
-                    case text:
-                    default:
-                        throw new CommandFailed("createIndexes", 
-                                "Index of type " + indexKey.getType().name() + " is not suppoeted right now");
+                    IndexType indexType = indexKey.getType();
+
+                    if (!KnownType.contains(indexType)) {
+                        return Status.from(ErrorCode.CANNOT_CREATE_INDEX, "bad index key pattern: Unknown index plugin '" 
+                                + indexKey.getType().toBsonValue().toString() + "'");
                     }
                     
-                    fields.add(new IndexFieldInfo(attRefBuilder.build(), ordering.isAscending()));
+                    Optional<FieldIndexOrdering> ordering = indexType.accept(filedIndexOrderingConverterVisitor, null);
+                    if (!ordering.isPresent()) {
+                        throw new CommandFailed("createIndexes", 
+                                "Index of type " + indexType.toBsonValue().toString() + " is not supported right now");
+                    }
+                    
+                    fields.add(new IndexFieldInfo(attRefBuilder.build(), ordering.get().isAscending()));
                 }
                 
                 if (context.getTorodTransaction().createIndex(req.getDatabase(), arg.getCollection(), indexOptions.getName(), fields, indexOptions.isUnique())) {
@@ -120,4 +126,20 @@ public class CreateIndexesImplementation implements WriteTorodbCommandImpl<Creat
         }
     }
 
+    private static class FieldIndexOrderingConverterIndexTypeVisitor extends DefaultIndexTypeVisitor<Void, Optional<FieldIndexOrdering>> {
+        @Override
+        protected Optional<FieldIndexOrdering> defaultVisit(IndexType indexType, Void arg) {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<FieldIndexOrdering> visit(AscIndexType indexType, Void arg) {
+            return Optional.of(FieldIndexOrdering.ASC);
+        }
+
+        @Override
+        public Optional<FieldIndexOrdering> visit(DescIndexType indexType, Void arg) {
+            return Optional.of(FieldIndexOrdering.DESC);
+        }
+    }
 }

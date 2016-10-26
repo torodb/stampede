@@ -23,24 +23,18 @@ import com.eightkdata.mongowp.client.core.UnreachableMongoServerException;
 import com.eightkdata.mongowp.exceptions.MongoException;
 import com.eightkdata.mongowp.exceptions.OplogOperationUnsupported;
 import com.eightkdata.mongowp.exceptions.OplogStartMissingException;
-import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.DropDatabaseCommand;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.diagnostic.ListDatabasesCommand;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.diagnostic.ListDatabasesCommand.ListDatabasesReply;
-import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.diagnostic.ListDatabasesCommand.ListDatabasesReply.DatabaseEntry;
-import com.eightkdata.mongowp.server.api.Request;
 import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
 import com.eightkdata.mongowp.server.api.pojos.MongoCursor;
 import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.google.common.base.Supplier;
 import com.google.common.net.HostAndPort;
 import com.google.inject.assistedinject.Assisted;
-import com.torodb.common.util.ThreadFactoryRunnableService;
-import com.torodb.core.annotations.ToroDbRunnableService;
 import com.torodb.core.exceptions.user.UserException;
+import com.torodb.core.services.RunnableTorodbService;
+import com.torodb.core.supervision.Supervisor;
 import com.torodb.core.transaction.RollbackException;
-import com.torodb.mongodb.core.MongodConnection;
-import com.torodb.mongodb.core.MongodServer;
-import com.torodb.mongodb.core.WriteMongodTransaction;
 import com.torodb.mongodb.repl.OplogManager.OplogManagerPersistException;
 import com.torodb.mongodb.repl.OplogManager.ReadOplogTransaction;
 import com.torodb.mongodb.repl.OplogManager.WriteOplogTransaction;
@@ -56,11 +50,17 @@ import com.torodb.mongodb.repl.oplogreplier.fetcher.OplogFetcher;
 import com.torodb.mongodb.utils.DbCloner;
 import com.torodb.mongodb.utils.DbCloner.CloneOptions;
 import com.torodb.mongodb.utils.DbCloner.CloningException;
+import com.torodb.core.annotations.TorodbRunnableService;
+import com.torodb.core.supervision.SupervisorDecision;
+import com.torodb.mongodb.core.MongodServer;
+import com.torodb.torod.TorodConnection;
+import com.torodb.torod.TorodServer;
+import com.torodb.torod.SharedWriteTorodTransaction;
 
 /**
  *
  */
-public class RecoveryService extends ThreadFactoryRunnableService {
+public class RecoveryService extends RunnableTorodbService {
     private static final int MAX_ATTEMPTS = 10;
     private static final Logger LOGGER = LogManager.getLogger(RecoveryService.class);
     private final Callback callback;
@@ -75,7 +75,7 @@ public class RecoveryService extends ThreadFactoryRunnableService {
     
     @Inject
     public RecoveryService(
-            @ToroDbRunnableService ThreadFactory threadFactory,
+            @TorodbRunnableService ThreadFactory threadFactory,
             @Assisted Callback callback,
             OplogManager oplogManager,
             SyncSourceProvider syncSourceProvider,
@@ -85,7 +85,7 @@ public class RecoveryService extends ThreadFactoryRunnableService {
             MongodServer server,
             OplogApplier oplogApplier,
             ReplicationFilters replFilters) {
-        super(threadFactory);
+        super(callback, threadFactory);
         this.callback = callback;
         this.oplogManager = oplogManager;
         this.syncSourceProvider = syncSourceProvider;
@@ -103,7 +103,12 @@ public class RecoveryService extends ThreadFactoryRunnableService {
     }
 
     @Override
-    protected void run() throws Exception {
+    protected Logger getLogger() {
+        return LOGGER;
+    }
+
+    @Override
+    protected void runProtected() throws Exception {
         try {
             int attempt = 0;
             boolean finished = false;
@@ -207,11 +212,13 @@ public class RecoveryService extends ThreadFactoryRunnableService {
                     return false;
                 }
 
-                try (MongodConnection connection = server.openConnection();
-                        WriteMongodTransaction trans = connection.openWriteTransaction()) {
+                TorodServer torodServer = server.getTorodServer();
+
+                try (TorodConnection connection = torodServer.openConnection();
+                        SharedWriteTorodTransaction trans = connection.openWriteTransaction(false)) {
                     OpTime lastRemoteOptime2 = reader.getLastOp().getOpTime();
                     LOGGER.info("First oplog application started");
-                    applyOplog(trans, reader, lastRemoteOptime1, lastRemoteOptime2);
+                    applyOplog(reader, lastRemoteOptime1, lastRemoteOptime2);
                     trans.commit();
                     LOGGER.info("First oplog application finished");
 
@@ -223,7 +230,7 @@ public class RecoveryService extends ThreadFactoryRunnableService {
                     OplogOperation lastOperation = reader.getLastOp();
                     OpTime lastRemoteOptime3 = lastOperation.getOpTime();
                     LOGGER.info("Second oplog application started");
-                    applyOplog(trans, reader, lastRemoteOptime2, lastRemoteOptime3);
+                    applyOplog(reader, lastRemoteOptime2, lastRemoteOptime3);
                     trans.commit();
                     LOGGER.info("Second oplog application finished");
 
@@ -283,29 +290,12 @@ public class RecoveryService extends ThreadFactoryRunnableService {
 
     private Status<?> dropDatabases() throws RollbackException, UserException, RollbackException {
 
-        try (MongodConnection conn = server.openConnection();
-                WriteMongodTransaction trans = conn.openWriteTransaction()) {
-            Status<ListDatabasesReply> listStatus = trans.execute(
-                    new Request("admin", null, true, null),
-                    ListDatabasesCommand.INSTANCE,
-                    Empty.getInstance()
-            );
-            if (!listStatus.isOk()) {
-                return listStatus;
-            }
-            assert listStatus.getResult() != null;
-            List<DatabaseEntry> dbs = listStatus.getResult().getDatabases();
-            for (DatabaseEntry database : dbs) {
-                String databaseName = database.getName();
-                if (!databaseName.equals("local")) {
-                    Status<?> status = trans.execute(
-                            new Request(database.getName(), null, true, null),
-                            DropDatabaseCommand.INSTANCE,
-                            Empty.getInstance()
-                    );
-                    if (!status.isOk()) {
-                        return status;
-                    }
+        try (TorodConnection conn = server.getTorodServer().openConnection();
+                SharedWriteTorodTransaction trans = conn.openWriteTransaction(false)) {
+            List<String> dbs = trans.getDatabases();
+            for (String dbName : dbs) {
+                if (!dbName.equals("local")) {
+                    trans.dropDatabase(dbName);
                 }
             }
             
@@ -371,7 +361,6 @@ public class RecoveryService extends ThreadFactoryRunnableService {
      * @param from
      */
     private void applyOplog(
-            WriteMongodTransaction trans,
             OplogReader remoteOplog,
             OpTime from,
             OpTime to) throws TryAgainException, MongoException, FatalErrorException {
@@ -468,7 +457,7 @@ public class RecoveryService extends ThreadFactoryRunnableService {
         }
     }
 
-    static interface Callback {
+    static interface Callback extends Supervisor {
         void recoveryFinished();
 
         void recoveryFailed();
@@ -478,6 +467,12 @@ public class RecoveryService extends ThreadFactoryRunnableService {
         public void setConsistentState(boolean consistent);
 
         public boolean canAcceptWrites(String database);
+
+        @Override
+        public default SupervisorDecision onError(Object supervised, Throwable error) {
+            recoveryFailed(error);
+            return SupervisorDecision.STOP;
+        }
     }
 
     public static interface RecoveryServiceFactory {

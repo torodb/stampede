@@ -17,19 +17,20 @@ import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.annotations.Warmup;
 import org.openjdk.jmh.infra.Blackhole;
 
-import com.google.inject.Injector;
 import com.torodb.backend.util.TestDataFactory;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.transaction.RollbackException;
 import com.torodb.kvdocument.values.KVDocument;
 import com.torodb.packaging.config.model.backend.postgres.Postgres;
-import com.torodb.standalone.ToroDbServer;
+import com.torodb.standalone.ToroDbStandaloneTestUtil;
+import com.torodb.standalone.ToroDbStandaloneTestUtil.TestService;
 import com.torodb.standalone.config.model.Config;
 import com.torodb.torod.SharedWriteTorodTransaction;
 import com.torodb.torod.TorodConnection;
 import com.torodb.torod.TorodServer;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import com.torodb.torod.SharedWriteTorodTransaction;
 
 @SuppressFBWarnings(
         value = "UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR",
@@ -48,8 +49,8 @@ public class BenchmarkFullStack {
             if (torod == null) {
                 Config config = new Config();
                 config.getBackend().as(Postgres.class).setPassword("torodb");
-                Injector injector = ToroDbServer.createInjector(config, Clock.systemUTC());
-                torod = injector.getInstance(TorodServer.class);
+                TestService testService = ToroDbStandaloneTestUtil.createInjectors(config, Clock.systemDefaultZone());
+                torod = testService.getInjector().getInstance(TorodServer.class);
                 torod.startAsync();
                 torod.awaitRunning();
             }

@@ -24,56 +24,57 @@ import com.google.common.io.CharStreams;
 import com.torodb.backend.ErrorHandler.Context;
 import com.torodb.backend.SqlHelper;
 import com.torodb.backend.SqlInterface;
-import com.torodb.backend.exceptions.InvalidDatabaseException;
-import com.torodb.backend.tables.SemanticTable;
+import com.torodb.core.exceptions.InvalidDatabaseException;
 import com.torodb.core.exceptions.SystemException;
+import com.torodb.core.exceptions.ToroRuntimeException;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
-import java.sql.SQLException;
+import java.util.Optional;
+import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jooq.DSLContext;
 import org.jooq.Meta;
 import org.jooq.Schema;
-import org.jooq.Table;
 
 @Singleton
 public abstract class AbstractSchemaUpdater implements SchemaUpdater {
 
     private static final Logger LOGGER = LogManager.getLogger(AbstractSchemaUpdater.class);
 
+    private final SqlInterface sqlInterface;
+    private final SqlHelper sqlHelper;
+
+    @Inject
+    public AbstractSchemaUpdater(SqlInterface sqlInterface, SqlHelper sqlHelper) {
+        this.sqlInterface = sqlInterface;
+        this.sqlHelper = sqlHelper;
+    }
+
     @Override
     public void checkOrCreate(
             DSLContext dsl, 
-            Meta jooqMeta, 
-            SqlInterface sqlInterface, 
-            SqlHelper sqlHelper
-    ) throws SQLException, IOException, InvalidDatabaseException {
-        Schema torodbSchema = null;
-        for (Schema schema : jooqMeta.getSchemas()) {
-            if (sqlInterface.getIdentifierConstraints().isSameIdentifier(TorodbSchema.IDENTIFIER, schema.getName())) {
-                torodbSchema = schema;
-                break;
-            }
-        }
-        if (torodbSchema == null) {
+            Meta jooqMeta) throws InvalidDatabaseException {
+        Optional<Schema> torodbSchema = sqlInterface.getStructureInterface()
+                .findTorodbSchema(dsl, jooqMeta);
+        if (!torodbSchema.isPresent()) {
             LOGGER.info("Schema '{}' not found. Creating it...", TorodbSchema.IDENTIFIER);
             createSchema(dsl, sqlInterface, sqlHelper);
             LOGGER.info("Schema '{}' created", TorodbSchema.IDENTIFIER);
         }
         else {
             LOGGER.info("Schema '{}' found. Checking it...", TorodbSchema.IDENTIFIER);
-            checkSchema(torodbSchema, sqlInterface);
+            checkSchema(torodbSchema.get(), sqlInterface);
             LOGGER.info("Schema '{}' checked", TorodbSchema.IDENTIFIER);
         }
     }
 
-    protected void createSchema(DSLContext dsl, SqlInterface sqlInterface, SqlHelper sqlHelper) throws SQLException, IOException {
+    protected void createSchema(DSLContext dsl, SqlInterface sqlInterface, SqlHelper sqlHelper)  {
         sqlInterface.getStructureInterface().createSchema(dsl, TorodbSchema.IDENTIFIER);
         sqlInterface.getMetaDataWriteInterface().createMetaDatabaseTable(dsl);
         sqlInterface.getMetaDataWriteInterface().createMetaCollectionTable(dsl);
@@ -84,37 +85,11 @@ public abstract class AbstractSchemaUpdater implements SchemaUpdater {
         sqlInterface.getMetaDataWriteInterface().createMetaIndexFieldTable(dsl);
         sqlInterface.getMetaDataWriteInterface().createMetaDocPartIndexTable(dsl);
         sqlInterface.getMetaDataWriteInterface().createMetaFieldIndexTable(dsl);
+        sqlInterface.getMetaDataWriteInterface().createKvTable(dsl);
     }
     
-    @SuppressWarnings({ "rawtypes", "unchecked" })
     private void checkSchema(Schema torodbSchema, SqlInterface sqlInterface) throws InvalidDatabaseException {
-        SemanticTable<?>[] metaTables = new SemanticTable[] {
-            sqlInterface.getMetaDataReadInterface().getMetaDatabaseTable(),
-            sqlInterface.getMetaDataReadInterface().getMetaCollectionTable(),
-            sqlInterface.getMetaDataReadInterface().getMetaDocPartTable(),
-            sqlInterface.getMetaDataReadInterface().getMetaFieldTable(),
-            sqlInterface.getMetaDataReadInterface().getMetaScalarTable(),
-            sqlInterface.getMetaDataReadInterface().getMetaIndexTable(),
-            sqlInterface.getMetaDataReadInterface().getMetaIndexFieldTable(),
-            sqlInterface.getMetaDataReadInterface().getMetaDocPartIndexTable(),
-            sqlInterface.getMetaDataReadInterface().getMetaDocPartIndexColumnTable()
-        };
-        for (SemanticTable metaTable : metaTables) {
-            String metaTableName = metaTable.getName();
-            boolean metaTableFound = false;
-            for (Table<?> table : torodbSchema.getTables()) {
-                if (sqlInterface.getIdentifierConstraints().isSameIdentifier(table.getName(), metaTableName)) {
-                    metaTable.checkSemanticallyEquals(table);
-                    metaTableFound = true;
-                    LOGGER.debug(table + " found and check");
-                }
-            }
-            if (!metaTableFound) {
-                throw new InvalidDatabaseException("The schema '" + TorodbSchema.IDENTIFIER + "'"
-                        + " does not contain the expected meta table '" 
-                        + metaTableName +"'");
-            }
-        }
+        sqlInterface.getStructureInterface().checkMetaDataTables(torodbSchema);
     }
 
     @SuppressFBWarnings(value = "UI_INHERITANCE_UNSAFE_GETRESOURCE",
@@ -123,15 +98,14 @@ public abstract class AbstractSchemaUpdater implements SchemaUpdater {
             DSLContext dsl, 
             String resourcePath,
             SqlHelper sqlHelper
-    ) throws IOException, SQLException {
-        InputStream resourceAsStream
-                = getClass().getResourceAsStream(resourcePath);
-        if (resourceAsStream == null) {
-            throw new SystemException(
-                    "Resource '" + resourcePath + "' does not exist"
-            );
-        }
-        try {
+    ) {
+        try (InputStream resourceAsStream
+                = getClass().getResourceAsStream(resourcePath)) {
+            if (resourceAsStream == null) {
+                throw new SystemException(
+                        "Resource '" + resourcePath + "' does not exist"
+                );
+            }
             String statementAsString
                     = CharStreams.toString(
                             new BufferedReader(
@@ -139,8 +113,8 @@ public abstract class AbstractSchemaUpdater implements SchemaUpdater {
                                             resourceAsStream,
                                             Charset.forName("UTF-8"))));
             sqlHelper.executeStatement(dsl, statementAsString, Context.UNKNOWN);
-        } finally {
-            resourceAsStream.close();
+        } catch (IOException ex) {
+            throw new ToroRuntimeException(ex);
         }
     }
 }

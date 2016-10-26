@@ -176,7 +176,7 @@ public class Main {
             Clock clock = Clock.systemDefaultZone();
             Service server;
             if (config.getProtocol().getMongo().getReplication() == null || config.getProtocol().getMongo().getReplication().isEmpty()) {
-                ToroDbServer toroDbServer = ToroDbServer.create(config, clock);
+                Service toroDbServer = ToroDbBootstrap.createStandaloneService(config, clock);
 
                 toroDbServer.startAsync();
                 toroDbServer.awaitRunning();
@@ -184,12 +184,7 @@ public class Main {
                 server = toroDbServer;
             }
             else {
-                ToroDbiServer toroDbiServer = ToroDbiServer.create(config, clock);
-
-                toroDbiServer.startAsync();
-                toroDbiServer.awaitTerminated();
-
-                server = toroDbiServer;
+                throw new UnsupportedOperationException("Replication not supported yet!");
             }
 
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {

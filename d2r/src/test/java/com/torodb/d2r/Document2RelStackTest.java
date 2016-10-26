@@ -1,5 +1,6 @@
 package com.torodb.d2r;
 
+import com.torodb.core.d2r.DefaultIdentifierFactory;
 import com.torodb.common.util.HexUtils;
 import com.torodb.core.TableRef;
 import com.torodb.core.TableRefFactory;
@@ -450,7 +451,7 @@ public class Document2RelStackTest {
 
 	private CollectionData parseDocument(String ...docNames) {
 		MockRidGenerator ridGenerator = new MockRidGenerator();
-		IdentifierFactory identifierFactory = new IdentifierFactoryImpl(new MockIdentifierInterface());
+		IdentifierFactory identifierFactory = new DefaultIdentifierFactory(new MockIdentifierInterface());
         MutableMetaDatabase db = mutableSnapshot.getMetaDatabaseByName(DB1);
 		D2RTranslator translator = new D2RTranslatorStack(tableRefFactory, identifierFactory, ridGenerator, db, db.getMetaCollectionByName(COLLA));
 		for (String doc: docNames){

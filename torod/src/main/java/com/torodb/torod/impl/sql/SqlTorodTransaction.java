@@ -1,6 +1,9 @@
 
 package com.torodb.torod.impl.sql;
 
+import com.torodb.torod.cursors.TorodCursor;
+import com.torodb.torod.cursors.EmptyTorodCursor;
+import com.torodb.core.backend.BackendCursor;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -16,23 +19,15 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import com.torodb.core.TableRef;
 import com.torodb.core.TableRefFactory;
-import com.torodb.core.cursors.Cursor;
-import com.torodb.core.cursors.EmptyCursor;
-import com.torodb.core.cursors.EmptyToroCursor;
-import com.torodb.core.cursors.ToroCursor;
+import com.torodb.core.cursors.*;
+import com.torodb.core.d2r.R2DTranslator;
 import com.torodb.core.exceptions.user.CollectionNotFoundException;
 import com.torodb.core.exceptions.user.IndexNotFoundException;
 import com.torodb.core.language.AttributeReference;
 import com.torodb.core.language.AttributeReference.Key;
 import com.torodb.core.language.AttributeReference.ObjectKey;
 import com.torodb.core.transaction.InternalTransaction;
-import com.torodb.core.transaction.metainf.FieldType;
-import com.torodb.core.transaction.metainf.MetaCollection;
-import com.torodb.core.transaction.metainf.MetaDatabase;
-import com.torodb.core.transaction.metainf.MetaDocPart;
-import com.torodb.core.transaction.metainf.MetaField;
-import com.torodb.core.transaction.metainf.MetaIndex;
-import com.torodb.core.transaction.metainf.MetaIndexField;
+import com.torodb.core.transaction.metainf.*;
 import com.torodb.kvdocument.values.KVValue;
 import com.torodb.torod.CollectionInfo;
 import com.torodb.torod.IndexInfo;
@@ -130,31 +125,34 @@ public abstract class SqlTorodTransaction<T extends InternalTransaction> impleme
     }
 
     @Override
-    public ToroCursor findAll(String dbName, String colName) {
+    public TorodCursor findAll(String dbName, String colName) {
         MetaDatabase db = getInternalTransaction().getMetaSnapshot().getMetaDatabaseByName(dbName);
         if (db == null) {
             LOGGER.trace("Db with name " + dbName + " does not exist. An empty cursor is returned");
-            return new EmptyToroCursor();
+            return new EmptyTorodCursor();
         }
         MetaCollection col = db.getMetaCollectionByName(colName);
         if (col == null) {
             LOGGER.trace("Collection " + dbName + '.' + colName + " does not exist. An empty cursor is returned");
-            return new EmptyToroCursor();
+            return new EmptyTorodCursor();
         }
-        return getInternalTransaction().getBackendTransaction().findAll(db, col);
+        return toToroCursor(getInternalTransaction()
+                .getBackendTransaction()
+                .findAll(db, col)
+        );
     }
 
     @Override
-    public ToroCursor findByAttRef(String dbName, String colName, AttributeReference attRef, KVValue<?> value) {
+    public TorodCursor findByAttRef(String dbName, String colName, AttributeReference attRef, KVValue<?> value) {
         MetaDatabase db = getInternalTransaction().getMetaSnapshot().getMetaDatabaseByName(dbName);
         if (db == null) {
             LOGGER.trace("Db with name " + dbName + " does not exist. An empty cursor is returned");
-            return new EmptyToroCursor();
+            return new EmptyTorodCursor();
         }
         MetaCollection col = db.getMetaCollectionByName(colName);
         if (col == null) {
             LOGGER.trace("Collection " + dbName + '.' + colName + " does not exist. An empty cursor is returned");
-            return new EmptyToroCursor();
+            return new EmptyTorodCursor();
         }
         TableRef ref = extractTableRef(attRef);
         String lastKey = extractKeyName(attRef.getKeys().get(attRef.getKeys().size() - 1));
@@ -162,33 +160,36 @@ public abstract class SqlTorodTransaction<T extends InternalTransaction> impleme
         MetaDocPart docPart = col.getMetaDocPartByTableRef(ref);
         if (docPart == null) {
             LOGGER.trace("DocPart " + dbName + '.' + colName + '.' + ref + " does not exist. An empty cursor is returned");
-            return new EmptyToroCursor();
+            return new EmptyTorodCursor();
         }
 
         MetaField field = docPart.getMetaFieldByNameAndType(lastKey, FieldType.from(value.getType()));
         if (field == null) {
             LOGGER.trace("Field " + dbName + '.' + colName + '.' + ref + '.' + lastKey + " does not exist. An empty cursor is returned");
-            return new EmptyToroCursor();
+            return new EmptyTorodCursor();
         }
 
-        return getInternalTransaction().getBackendTransaction().findByField(db, col, docPart, field, value);
+        return toToroCursor(getInternalTransaction()
+                .getBackendTransaction()
+                .findByField(db, col, docPart, field, value)
+        );
     }
 
     @Override
-    public ToroCursor findByAttRefIn(String dbName, String colName, AttributeReference attRef, Collection<KVValue<?>> values) {
+    public TorodCursor findByAttRefIn(String dbName, String colName, AttributeReference attRef, Collection<KVValue<?>> values) {
         MetaDatabase db = getInternalTransaction().getMetaSnapshot().getMetaDatabaseByName(dbName);
         if (db == null) {
             LOGGER.trace("Db with name " + dbName + " does not exist. An empty cursor is returned");
-            return new EmptyToroCursor();
+            return new EmptyTorodCursor();
         }
         MetaCollection col = db.getMetaCollectionByName(colName);
         if (col == null) {
             LOGGER.trace("Collection " + dbName + '.' + colName + " does not exist. An empty cursor is returned");
-            return new EmptyToroCursor();
+            return new EmptyTorodCursor();
         }
         if (values.isEmpty()) {
             LOGGER.trace("An empty list of values have been given as in condition. An empty cursor is returned");
-            return new EmptyToroCursor();
+            return new EmptyTorodCursor();
         }
 
         TableRef ref = extractTableRef(attRef);
@@ -197,7 +198,7 @@ public abstract class SqlTorodTransaction<T extends InternalTransaction> impleme
         MetaDocPart docPart = col.getMetaDocPartByTableRef(ref);
         if (docPart == null) {
             LOGGER.trace("DocPart " + dbName + '.' + colName + '.' + ref + " does not exist. An empty cursor is returned");
-            return new EmptyToroCursor();
+            return new EmptyTorodCursor();
         }
 
         Multimap<MetaField, KVValue<?>> valuesMap = ArrayListMultimap.create();
@@ -207,7 +208,10 @@ public abstract class SqlTorodTransaction<T extends InternalTransaction> impleme
                 valuesMap.put(field, value);
             }
         }
-        return getInternalTransaction().getBackendTransaction().findByFieldIn(db, col, docPart, valuesMap);
+        return toToroCursor(getInternalTransaction()
+                .getBackendTransaction()
+                .findByFieldIn(db, col, docPart, valuesMap)
+        );
     }
 
     @Override
@@ -248,18 +252,26 @@ public abstract class SqlTorodTransaction<T extends InternalTransaction> impleme
     }
 
     @Override
-    public ToroCursor fetch(String dbName, String colName, Cursor<Integer> didCursor) {
+    public TorodCursor fetch(String dbName, String colName, Cursor<Integer> didCursor) {
         MetaDatabase db = getInternalTransaction().getMetaSnapshot().getMetaDatabaseByName(dbName);
         if (db == null) {
             LOGGER.trace("Db with name " + dbName + " does not exist. An empty cursor is returned");
-            return new EmptyToroCursor();
+            return new EmptyTorodCursor();
         }
         MetaCollection col = db.getMetaCollectionByName(colName);
         if (col == null) {
             LOGGER.trace("Collection " + dbName + '.' + colName + " does not exist. An empty cursor is returned");
-            return new EmptyToroCursor();
+            return new EmptyTorodCursor();
         }
-        return getInternalTransaction().getBackendTransaction().fetch(db, col, didCursor);
+        return toToroCursor(getInternalTransaction()
+                .getBackendTransaction()
+                .fetch(db, col, didCursor)
+        );
+    }
+
+    private TorodCursor toToroCursor(BackendCursor backendCursor) {
+        R2DTranslator r2dTrans = getConnection().getServer().getR2DTranslator();
+        return new LazyTorodCursor(r2dTrans, backendCursor);
     }
 
     @Override

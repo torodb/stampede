@@ -1,6 +1,8 @@
 
 package com.torodb.torod.impl.memory;
 
+import com.torodb.torod.cursors.TorodCursor;
+import com.torodb.torod.cursors.DocTorodCursor;
 import com.torodb.core.cursors.*;
 import com.torodb.core.document.ToroDocument;
 import com.torodb.core.exceptions.user.CollectionNotFoundException;
@@ -18,6 +20,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.json.Json;
 import org.jooq.lambda.tuple.Tuple2;
 
 /**
@@ -59,7 +62,7 @@ public abstract class MemoryTorodTransaction implements TorodTransaction {
     }
 
     @Override
-    public ToroCursor findAll(String dbName, String colName) {
+    public TorodCursor findAll(String dbName, String colName) {
         return createCursor(getTransaction().streamCollection(dbName, colName));
     }
 
@@ -73,12 +76,12 @@ public abstract class MemoryTorodTransaction implements TorodTransaction {
     }
 
     @Override
-    public ToroCursor findByAttRef(String dbName, String colName, AttributeReference attRef, KVValue<?> value) {
+    public TorodCursor findByAttRef(String dbName, String colName, AttributeReference attRef, KVValue<?> value) {
         return createCursor(streamByAttRef(dbName, colName, attRef, value));
     }
 
     @Override
-    public ToroCursor findByAttRefIn(String dbName, String colName, AttributeReference attRef, Collection<KVValue<?>> values) {
+    public TorodCursor findByAttRefIn(String dbName, String colName, AttributeReference attRef, Collection<KVValue<?>> values) {
         return createCursor(
                 getTransaction().streamCollection(dbName, colName)
                         .filter(doc -> {
@@ -102,7 +105,7 @@ public abstract class MemoryTorodTransaction implements TorodTransaction {
     }
 
     @Override
-    public ToroCursor fetch(String dbName, String colName, Cursor<Integer> didCursor) {
+    public TorodCursor fetch(String dbName, String colName, Cursor<Integer> didCursor) {
         Map<Integer, KVDocument> colData = getTransaction().data.get(dbName, colName);
         return createCursor(didCursor.getRemaining().stream()
                 .map(did -> new Tuple2<>(did, colData.get(did)))
@@ -111,8 +114,8 @@ public abstract class MemoryTorodTransaction implements TorodTransaction {
         );
     }
 
-    private ToroCursor createCursor(Stream<ToroDocument> docsStream) {
-        return new DocToroCursor(new IteratorCursor<>(docsStream.iterator()));
+    private TorodCursor createCursor(Stream<ToroDocument> docsStream) {
+        return new DocTorodCursor(new IteratorCursor<>(docsStream.iterator()));
     }
 
     @Override
@@ -132,23 +135,40 @@ public abstract class MemoryTorodTransaction implements TorodTransaction {
 
     @Override
     public Stream<CollectionInfo> getCollectionsInfo(String dbName) {
-        throw new UnsupportedOperationException("Not supported yet."); //TODO: Implement when necessary
+        return getTransaction().data.row(dbName).keySet().stream()
+                .map(colName -> _getCollectionInfo(colName));
     }
 
     @Override
     public CollectionInfo getCollectionInfo(String dbName, String colName) throws
             CollectionNotFoundException {
-        throw new UnsupportedOperationException("Not supported yet."); //TODO: Implement when necessary
+        if (!getTransaction().data.contains(dbName, colName)) {
+            throw new CollectionNotFoundException(dbName, colName);
+        }
+        return _getCollectionInfo(colName);
+    }
+
+    private CollectionInfo _getCollectionInfo(String colName) {
+        return new CollectionInfo(colName, Json.createObjectBuilder().build());
     }
 
     @Override
     public Stream<IndexInfo> getIndexesInfo(String dbName, String colName) {
-        throw new UnsupportedOperationException("Not supported yet."); //TODO: Implement when necessary
+        Map<String, IndexInfo> indexesOnTable = getTransaction().getIndexes()
+                .get(dbName, colName);
+        if (indexesOnTable == null) {
+            return Stream.empty();
+        }
+        return indexesOnTable.values().stream();
     }
 
     @Override
-    public IndexInfo getIndexInfo(String dbName, String colName, String idxName) throws IndexNotFoundException {
-        throw new UnsupportedOperationException("Not supported yet."); //TODO: Implement when necessary
+    public IndexInfo getIndexInfo(String dbName, String colName, String idxName)
+            throws IndexNotFoundException {
+        return getIndexesInfo(dbName, colName)
+                .filter(index -> index.getName().equals(idxName))
+                .findAny().orElseThrow(()
+                        -> new IndexNotFoundException(dbName, colName, idxName));
     }
 
     @Override

@@ -29,11 +29,7 @@ metricsEnabled: false
 replication:
   # The name of the MongoDB Replica Set where this instance will attach
   replSetName: rs1
-  # The role that this instance will assume in the replica set.
-  # Valid values are:
-  # - HIDDEN_SLAVE
-  role: HIDDEN_SLAVE
-  # The host and port (<host>:<port>) of the node from ToroDB has to replicate. If this node must run as primary, this paramenter must not be defined
+  # The host and port (<host>:<port>) of the node from ToroDB has to replicate.
   syncSource: localhost:27017
   # You can specify a file that use .pgpass syntax: <host>:<port>:<database>:<user>:<password> (can have multiple lines)
   # mongopassFile: <mongopass file path>
@@ -49,7 +45,7 @@ replication:
     #       unique: <true when index is unique, false otherwise>
     #       keys:
     #         <the name of the field indexed>: <the index direction or type> 
-    # Character '*' can be used to denote "any-character" and character '\' to protect characters. 
+    # Character '*' can be used to denote "any-character" and character '\' to escape characters. 
 
   # A map of databases and/or collections and/or indexes that will not be replicated (override include property).
   # exclude:
@@ -62,7 +58,7 @@ replication:
     #       unqiue: <true when index is unique, false otherwise>
     #       keys:
     #         <the name of the field indexed>: <the index direction or type> 
-    # Character '*' can be used to denote "any-character" and character '\' to protect characters. 
+    # Character '*' can be used to denote "any-character" and character '\' to escape characters. 
   
   # SSL configuration for replication connection to MongoDB
   ssl:

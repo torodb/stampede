@@ -20,7 +20,6 @@
 
 package com.torodb.integration.backend;
 
-import com.torodb.backend.DbBackendService;
 import com.torodb.backend.SqlHelper;
 import com.torodb.backend.SqlInterface;
 import com.torodb.backend.meta.SchemaUpdater;
@@ -46,19 +45,17 @@ public class BackendRunnerClassRule extends AbstractBackendRunnerClassRule {
 
     @Override
     protected void startUp() throws Exception {
-        DbBackendService dbBackendService = getInjector().getInstance(DbBackendService.class);
-        dbBackendService.startAsync();
-        dbBackendService.awaitRunning();
-        sqlInterface = getInjector().getInstance(SqlInterface.class);
-        sqlHelper = getInjector().getInstance(SqlHelper.class);
-        schemaUpdater = getInjector().getInstance(SchemaUpdater.class);
+        getService().startBackendBundle();
+        sqlInterface = getService().getInjector().getInstance(SqlInterface.class);
+        sqlHelper = getService().getInjector().getInstance(SqlHelper.class);
+        schemaUpdater = getService().getInjector().getInstance(SchemaUpdater.class);
     }
 
     @Override
     protected void shutDown() throws Exception {
-        DbBackendService dbBackendService = getInjector().getInstance(DbBackendService.class);
-        dbBackendService.stopAsync();
-        dbBackendService.awaitTerminated();
+        if (getService() != null) {
+            getService().shutDown();
+        }
     }
     
     public void cleanDatabase() throws Exception {

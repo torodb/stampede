@@ -6,10 +6,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
+import com.google.common.util.concurrent.AbstractIdleService;
 import com.torodb.core.TableRef;
-import com.torodb.core.d2r.RidGenerator;
+import com.torodb.core.d2r.ReservedIdGenerator;
 
-public class MockRidGenerator implements RidGenerator {
+public class MockRidGenerator extends AbstractIdleService implements ReservedIdGenerator {
 	
 	private Table<String, String, DocPartRidGenerator> generators = HashBasedTable.create();
 
@@ -32,6 +33,14 @@ public class MockRidGenerator implements RidGenerator {
 		}
 		return map;
 	}
+
+    @Override
+    protected void startUp() throws Exception {
+    }
+
+    @Override
+    protected void shutDown() throws Exception {
+    }
 	
 	public static class CollectionRidGeneratorMemory implements DocPartRidGenerator {
 		
