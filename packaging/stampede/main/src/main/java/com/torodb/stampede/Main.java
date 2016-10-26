@@ -29,6 +29,7 @@ import java.util.ResourceBundle;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.async.AsyncLogger;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.internal.Console;
@@ -183,7 +184,11 @@ public class Main {
                 }
                 
                 if (postgres.getPassword() == null) {
-                    throw new SystemException("No password provided for database user " + postgres.getUser());
+                    throw new SystemException("No password provided for database user " + postgres.getUser() + ".\n\n"
+                            + "Please add following line to file " + postgres.getToropassFile() + ":\n"
+                            + postgres.getDatabase() + ":" + postgres.getPort() + ":" 
+                            + postgres.getDatabase() + ":" + postgres.getUser() + ":<password>\n"
+                            + "Replace <password> for database user " + postgres.getUser() + "'s password");
                 }
             }
 
@@ -213,6 +218,7 @@ public class Main {
             LOGGER.error("Fatal error on initialization", ex);
             Throwable rootCause = Throwables.getRootCause(ex);
             String causeMessage = rootCause.getMessage();
+            LogManager.shutdown();
             JCommander.getConsole().println("Fatal error while ToroDB was starting: " + causeMessage);
             System.exit(1);
         }
