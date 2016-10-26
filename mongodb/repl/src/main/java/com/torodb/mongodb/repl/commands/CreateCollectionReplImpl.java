@@ -32,6 +32,7 @@ import com.torodb.core.language.AttributeReference.Key;
 import com.torodb.core.language.AttributeReference.ObjectKey;
 import com.torodb.core.transaction.metainf.FieldIndexOrdering;
 import com.torodb.mongodb.language.Constants;
+import com.torodb.torod.ExclusiveWriteTorodTransaction;
 import com.torodb.torod.IndexFieldInfo;
 import java.util.Arrays;
 import org.apache.logging.log4j.LogManager;
@@ -50,7 +51,7 @@ public class CreateCollectionReplImpl extends ReplCommandImpl<CreateCollectionAr
             Request req,
             Command<? super CreateCollectionArgument, ? super Empty> command,
             CreateCollectionArgument arg,
-            SharedWriteTorodTransaction trans) {
+            ExclusiveWriteTorodTransaction trans) {
 
         try {
             if (!trans.existsCollection(req.getDatabase(), arg.getCollection())) {

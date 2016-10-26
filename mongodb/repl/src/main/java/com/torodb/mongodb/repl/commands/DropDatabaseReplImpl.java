@@ -27,6 +27,8 @@ import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.torodb.core.exceptions.user.UserException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import com.torodb.torod.ExclusiveWriteTorodTransaction;
 import com.torodb.torod.SharedWriteTorodTransaction;
 
 /**
@@ -39,7 +41,7 @@ public class DropDatabaseReplImpl extends ReplCommandImpl<Empty, Empty> {
     @Override
     public Status<Empty> apply(Request req,
             Command<? super Empty, ? super Empty> command, Empty arg,
-            SharedWriteTorodTransaction trans) {
+            ExclusiveWriteTorodTransaction trans) {
         try {
             LOGGER.info("Dropping database {}", req.getDatabase());
 

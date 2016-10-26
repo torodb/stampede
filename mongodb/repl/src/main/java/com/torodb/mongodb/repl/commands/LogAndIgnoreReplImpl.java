@@ -24,6 +24,7 @@ import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.Request;
 import com.eightkdata.mongowp.server.api.tools.Empty;
+import com.torodb.torod.ExclusiveWriteTorodTransaction;
 import com.torodb.torod.SharedWriteTorodTransaction;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -39,7 +40,7 @@ public class LogAndIgnoreReplImpl extends ReplCommandImpl<String, Empty> {
     @Override
     public Status<Empty> apply(Request req,
             Command<? super String, ? super Empty> command,
-            String arg, SharedWriteTorodTransaction trans) {
+            String arg, ExclusiveWriteTorodTransaction trans) {
         LOGGER.warn("Command {} is not supported. It will not be executed", arg);
         return Status.ok();
     }

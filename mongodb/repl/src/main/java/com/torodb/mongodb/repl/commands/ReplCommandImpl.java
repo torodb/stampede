@@ -20,15 +20,16 @@
 
 package com.torodb.mongodb.repl.commands;
 
+import org.apache.logging.log4j.Logger;
+
 import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.CommandImplementation;
-import com.torodb.torod.SharedWriteTorodTransaction;
-import org.apache.logging.log4j.Logger;
+import com.torodb.torod.ExclusiveWriteTorodTransaction;
 
 /**
  *
  */
-public abstract  class ReplCommandImpl<Arg, Res> implements CommandImplementation<Arg, Res, SharedWriteTorodTransaction>{
+public abstract  class ReplCommandImpl<Arg, Res> implements CommandImplementation<Arg, Res, ExclusiveWriteTorodTransaction>{
 
     protected void reportErrorIgnored(Logger logger, Command<?, ?> cmd, Throwable t) {
         logger.warn(cmd.getCommandName() + " command execution failed. "

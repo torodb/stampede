@@ -20,13 +20,19 @@
 
 package com.torodb.mongodb.repl.commands;
 
+import java.util.Set;
+
 import com.eightkdata.mongowp.bson.BsonDocument;
-import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.*;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.CreateCollectionCommand;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.CreateIndexesCommand;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.DropCollectionCommand;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.DropDatabaseCommand;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.DropIndexesCommand;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.RenameCollectionCommand;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.repl.ApplyOpsCommand;
 import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.CommandsLibrary;
 import com.eightkdata.mongowp.server.api.impl.NameBasedCommandsLibrary;
-import java.util.Set;
 
 
 /**
@@ -46,6 +52,7 @@ public class ReplCommandsLibrary implements CommandsLibrary {
                 .addCommand(CreateCollectionCommand.INSTANCE)
                 .addCommand(DropCollectionCommand.INSTANCE)
                 .addCommand(DropDatabaseCommand.INSTANCE)
+                .addCommand(RenameCollectionCommand.INSTANCE)
                 .addAsAlias(LogAndStopCommand.INSTANCE, "collmod")
                 .addAsAlias(LogAndIgnoreCommand.INSTANCE, "coverToCapped")
                 .addAsAlias(LogAndIgnoreCommand.INSTANCE, "emptycapped")

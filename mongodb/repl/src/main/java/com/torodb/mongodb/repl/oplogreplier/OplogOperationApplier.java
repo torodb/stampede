@@ -41,13 +41,13 @@ import com.eightkdata.mongowp.server.api.oplog.NoopOplogOperation;
 import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
 import com.eightkdata.mongowp.server.api.oplog.OplogOperationVisitor;
 import com.eightkdata.mongowp.server.api.oplog.UpdateOplogOperation;
-import com.torodb.mongodb.core.WriteMongodTransaction;
+import com.torodb.mongodb.core.ExclusiveWriteMongodTransaction;
 import com.torodb.mongodb.repl.OplogManager;
 import com.torodb.mongodb.repl.commands.ReplCommandsExecutor;
 import com.torodb.mongodb.repl.commands.ReplCommandsLibrary;
 import com.torodb.mongodb.utils.DefaultIdUtils;
 import com.torodb.mongodb.utils.NamespaceUtil;
-import com.torodb.torod.SharedWriteTorodTransaction;
+import com.torodb.torod.ExclusiveWriteTorodTransaction;
 
 
 /**
@@ -78,7 +78,7 @@ public class OplogOperationApplier {
      */
     @SuppressWarnings("unchecked")
     public void apply(OplogOperation op,
-            WriteMongodTransaction transaction,
+            ExclusiveWriteMongodTransaction transaction,
             ApplierContext applierContext) throws OplogApplyingException {
         op.accept(visitor, null).apply(
                 op,
@@ -89,7 +89,7 @@ public class OplogOperationApplier {
     
     private <Arg, Result> Status<Result> executeReplCommand(String db,
             Command<? super Arg, ? super Result> command,
-            Arg arg, SharedWriteTorodTransaction trans) {
+            Arg arg, ExclusiveWriteTorodTransaction trans) {
         Request req = new Request(db, null, true, null);
 
         Status<Result> result = executor.execute(req, command, arg, trans);
@@ -99,7 +99,7 @@ public class OplogOperationApplier {
 
     private <Arg, Result> Status<Result> executeTorodCommand(String db,
             Command<? super Arg, ? super Result> command, Arg arg,
-            WriteMongodTransaction trans) throws MongoException {
+            ExclusiveWriteMongodTransaction trans) throws MongoException {
         Request req = new Request(db, null, true, null);
 
         Status<Result> result = trans.execute(req, command, arg);
@@ -160,7 +160,7 @@ public class OplogOperationApplier {
 
     private void applyInsert(
             InsertOplogOperation op,
-            WriteMongodTransaction trans,
+            ExclusiveWriteMongodTransaction trans,
             ApplierContext applierContext) throws OplogApplyingException {
         BsonDocument docToInsert = op.getDocToInsert();
         if (NamespaceUtil.isIndexesMetaCollection(op.getCollection())) {
@@ -175,7 +175,7 @@ public class OplogOperationApplier {
     }
 
     private void insertIndex(BsonDocument indexDoc, String database,
-            WriteMongodTransaction trans) throws OplogApplyingException {
+            ExclusiveWriteMongodTransaction trans) throws OplogApplyingException {
         try {
             CreateIndexesCommand command = CreateIndexesCommand.INSTANCE;
             IndexOptions indexOptions = IndexOptions.unmarshall(indexDoc);
@@ -195,7 +195,7 @@ public class OplogOperationApplier {
     }
 
     private void insertDocument(InsertOplogOperation op, 
-            WriteMongodTransaction trans) throws MongoException {
+            ExclusiveWriteMongodTransaction trans) throws MongoException {
 
         BsonDocument docToInsert = op.getDocToInsert();
 
@@ -234,7 +234,7 @@ public class OplogOperationApplier {
 
     private void applyUpdate(
             UpdateOplogOperation op,
-            WriteMongodTransaction trans,
+            ExclusiveWriteMongodTransaction trans,
             ApplierContext applierContext) throws OplogApplyingException {
 
         boolean upsert = op.isUpsert() || applierContext.treatUpdateAsUpsert();
@@ -280,7 +280,7 @@ public class OplogOperationApplier {
 
     private void applyDelete(
             DeleteOplogOperation op,
-            WriteMongodTransaction trans,
+            ExclusiveWriteMongodTransaction trans,
             ApplierContext applierContext) throws OplogApplyingException {
         try {
             //TODO: Check that the operation is executed even if the execution is interrupted!
@@ -312,7 +312,7 @@ public class OplogOperationApplier {
     @SuppressWarnings("unchecked")
     private void applyCmd(
             DbCmdOplogOperation op,
-            WriteMongodTransaction trans,
+            ExclusiveWriteMongodTransaction trans,
             ApplierContext applierContext) throws OplogApplyingException {
 
         LibraryEntry librayEntry = library.find(op.getRequest());
@@ -344,7 +344,7 @@ public class OplogOperationApplier {
     private static interface OplogOperationApplierFunction<E extends OplogOperation> {
         public void apply(
                 E op,
-                WriteMongodTransaction transaction,
+                ExclusiveWriteMongodTransaction transaction,
                 ApplierContext applierContext) throws OplogApplyingException;
     }
 }

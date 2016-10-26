@@ -47,6 +47,7 @@ import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
+import com.torodb.core.transaction.metainf.MetaIdentifiedDocPartIndex;
 import com.torodb.core.transaction.metainf.MetaSnapshot;
 import java.util.*;
 import org.apache.logging.log4j.LogManager;
@@ -121,6 +122,18 @@ public abstract class AbstractStructureInterface implements StructureInterface {
             String renameStatement = getRenameTableStatement(fromSchemaName, fromMetaDocPart.getIdentifier(), toMetaDocPart.getIdentifier());
             sqlHelper.executeUpdate(dsl, renameStatement, Context.RENAME_TABLE);
             
+            Iterator<? extends MetaIdentifiedDocPartIndex> metaDocPartIndexIterator = fromMetaDocPart.streamIndexes().iterator();
+            while (metaDocPartIndexIterator.hasNext()) {
+                MetaIdentifiedDocPartIndex fromMetaIndex = metaDocPartIndexIterator.next();
+                MetaIdentifiedDocPartIndex toMetaIndex = toMetaDocPart.streamIndexes()
+                        .filter(index -> index.hasSameColumns(fromMetaIndex))
+                        .findAny()
+                        .get();
+                
+                String renameIndexStatement = getRenameIndexStatement(fromSchemaName, fromMetaIndex.getIdentifier(), toMetaIndex.getIdentifier());
+                sqlHelper.executeUpdate(dsl, renameIndexStatement, Context.RENAME_INDEX);
+            }
+            
             if (!fromSchemaName.equals(toSchemaName)) {
                 String setSchemaStatement = getSetTableSchemaStatement(fromSchemaName, fromMetaDocPart.getIdentifier(), toSchemaName);
                 sqlHelper.executeUpdate(dsl, setSchemaStatement, Context.SET_TABLE_SCHEMA);
@@ -130,7 +143,10 @@ public abstract class AbstractStructureInterface implements StructureInterface {
 
     protected abstract String getRenameTableStatement(String fromSchemaName, String fromTableName, 
             String toTableName);
-
+    
+    protected abstract String getRenameIndexStatement(String fromSchemaName, String fromIndexName, 
+            String toIndexName);
+    
     protected abstract String getSetTableSchemaStatement(String fromSchemaName, String fromTableName, 
             String toSchemaName);
     

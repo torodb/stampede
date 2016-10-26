@@ -48,7 +48,9 @@ public abstract class AbstractOplogApplierTest {
                 "letschat_upsert",
                 "update_array",
                 "update_no_upsert",
-                "update_upsert"
+                "update_upsert",
+                "renameIndex_noDropTarget",
+                "renameIndex_dropTarget"
         );
         return filesList.stream()
                 .map(filename -> Tuple.tuple(filename, filename + ".json"))
