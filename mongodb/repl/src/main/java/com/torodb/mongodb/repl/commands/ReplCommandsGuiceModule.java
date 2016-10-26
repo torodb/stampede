@@ -46,6 +46,7 @@ public class ReplCommandsGuiceModule extends PrivateModule {
         bind(CreateIndexesReplImpl.class);
         bind(DropCollectionReplImpl.class);
         bind(DropDatabaseReplImpl.class);
+        bind(DropIndexesReplImpl.class);
         bind(LogAndIgnoreReplImpl.class);
         bind(LogAndStopReplImpl.class);
     }

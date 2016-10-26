@@ -9,7 +9,7 @@ import javax.annotation.Nonnull;
 import com.eightkdata.mongowp.client.core.MongoClient;
 import com.eightkdata.mongowp.exceptions.MongoException;
 import com.eightkdata.mongowp.exceptions.NotMasterException;
-import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.IndexOptions;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.index.IndexOptions;
 import com.google.common.base.Supplier;
 import com.torodb.core.exceptions.ToroRuntimeException;
 import com.torodb.mongodb.core.MongodServer;

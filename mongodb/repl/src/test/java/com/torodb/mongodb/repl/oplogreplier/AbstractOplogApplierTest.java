@@ -51,7 +51,7 @@ public abstract class AbstractOplogApplierTest {
         );
         return filesList.stream()
                 .map(filename -> Tuple.tuple(filename, filename + ".json"))
-                .map(Unchecked.function((Tuple2<String, String> tuple) -> {
+                .map(Unchecked.<Tuple2<String, String>, Tuple2<String, OplogTest>>function((Tuple2<String, String> tuple) -> {
                     try {
                         OplogTest test = OplogTestParser.fromExtendedJsonResource(tuple.v2);
                         return Tuple.tuple(tuple.v1, test);
