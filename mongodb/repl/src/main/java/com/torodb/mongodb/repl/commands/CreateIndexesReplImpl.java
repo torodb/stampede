@@ -115,7 +115,7 @@ public class CreateIndexesReplImpl extends ReplCommandImpl<CreateIndexesArgument
 
                     if (!KnownType.contains(indexType)) {
                         String note = "Bad index key pattern: Unknown index type '" 
-                                + indexKey.getType().toBsonValue().toString() + "'. Skipping index.";
+                                + indexKey.getType().getName() + "'. Skipping index.";
                         LOGGER.warn(note);
                         skipIndex = true;
                         break;
@@ -123,7 +123,7 @@ public class CreateIndexesReplImpl extends ReplCommandImpl<CreateIndexesArgument
 
                     Optional<FieldIndexOrdering> ordering = indexType.accept(filedIndexOrderingConverterVisitor, null);
                     if (!ordering.isPresent()) {
-                        String note = "Index of type " + indexType.toBsonValue().toString() + " is not supported. Skipping index.";
+                        String note = "Index of type " + indexType.getName() + " is not supported. Skipping index.";
                         LOGGER.warn(note);
                         skipIndex = true;
                         break;

@@ -78,7 +78,7 @@ public class DropIndexesReplImpl extends ReplCommandImpl<DropIndexesArgument, Dr
                         .stream()
                         .map(key -> '"' + key.getKeys()
                             .stream()
-                            .collect(Collectors.joining(".")) + "\" :" + key.getType().toBsonValue().toString())
+                            .collect(Collectors.joining(".")) + "\" :" + key.getType().getName())
                         .collect(Collectors.joining(", ")) + "]. Ignoring the whole request",
                             arg.getIndexToDrop());
                     return Status.ok(new DropIndexesResult(indexesBefore));
