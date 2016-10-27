@@ -10,9 +10,12 @@ This doesn't mean that JSON is stored using JSON support from PostgreSQL, it is 
 
 With this approximation it is possible to have a NoSQL storage with actual relational capabilities without any change.
 
-
-## Versions
+[Versions]: <> (Esta sección no tiene sentido ahora mismo)
 
 ## Documentation conventions
 
 ## Glossary
+
+| Term | Definition |
+|------|------------|
+| __path__ | (JSON document path) The required sequence of keys to access one specific value of the document (for example, address.zipcode) | 
