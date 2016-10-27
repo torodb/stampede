@@ -10,7 +10,7 @@ $ wget https://www.dropbox.com/s/570d4tyt4hpsn03/primer-dataset.json?dl=0
 $ mongoimport -d stampede -c primer primer-dataset.json
 ```
 
-Como se puede observar se ha hecho la importación en la base de datos con nombre `stampede` y la colección `primer`, esto es importante de cara al esquema y nombres de tablas que se van a utilizar. En PostgreSQL esto significa que se ha creado dentro de la base de datos torod, el esquema `stampede` con una tabla raíz `primer` y una serie de tablas denominadas `primer_*`.
+Como se puede observar se ha hecho la importación en la base de datos con nombre `stampede` y la colección `primer`, esto es importante de cara al esquema y nombres de tablas que se van a utilizar. En PostgreSQL esto significa que se ha creado dentro de la base de datos `torod`, el esquema `stampede` con una tabla raíz `primer` y una serie de tablas denominadas `primer_*`.
 
 ## Table mapping
 
@@ -82,7 +82,7 @@ did  |  rid  | seq | zipcode_s | coord_e |                street_s              
 
 ### primer_address_coord
 
-La tabla `primer_address_coord` es un caso especial, al igual que `primer_grades`, porque es un path que referencia a un array, por esta razón la columna `seq` posee valores que indican la posición del elemento en el array. Para comprender mejor las columnas de metadatos utilizadas en las tablas se puede leer el siguiente apartado.
+La tabla `primer_address_coord` es un caso especial, al igual que `primer_grades`, porque es un path que referencia a un array, por esta razón la columna `seq` posee valores que indican la posición del elemento en el array. Para comprender mejor las columnas de metadatos utilizadas en las tablas se puede leer el apartado de [metada](advanced.md#metadata).
 
 ```
 did  |  rid  |  pid  | seq |     v_d      
@@ -156,6 +156,10 @@ did  |  rid  | seq |         date_g         | score_i |    grade_s     | score_n
 [TODO]: <> (Explicar los posibles valores de los campos tipo e)
 [TODO]: <> (Revisar que estén todos los tipos de datos ... BINARY, BOOLEAN, DATE, DOUBLE, INSTANT, INTEGER, LONG, MONGO_OBJECT_ID, MONGO_TIME_STAMP, NULL, STRING, TIME, CHILD)
 
+Como se puede observar en los extractos de las tablas creadas, los nombres de columnas incluyen un postfijo, que indica el tipo de dato. Como en JSON no hay restricciones a la hora de asignar valores a un campo, pero en un backend relacional sí, se ha decidido crear una columna para cada tipo de dato diferente asignado al mismo path (ver la sección [Data conflict resolution](advanced.md#data-conflict-resolution)).
+
+Los diferentes tipos de datos que maneja ToroDB Stampede se representan en la siguiente tabla.
+
 | Postfijo | ¿Qué representa? |
 |----------|---------|
 | _e | Subdocumentos que están mapeados a otra tabla. |
@@ -218,9 +222,11 @@ En las filas que tienen valor `true` para la columna `score_n` significa que en 
 
 ### Metadata
 
+Anteriormente se ha comentado que ToroDB Stampede almacena una serie de metadatos que le permiten gestionar el documento, recomponerlo o hacer diferentes tipos de búsquedas. Estos metadatos se diferencian entre una serie de columnas creadas en las propias tablas de datos y una serie de tablas específicas de uso interno.
+
 #### Columnas de metadatos
 
-ToroDB Stampede crea varias columnas de metadato en las tablas que sirven para mantener y recomponer los documentos originales. Además servirán al usuario para poder hacer consultas complejas de los datos.
+ToroDB Stampede crea varias columnas de metadatos en las tablas que sirven para mantener y recomponer los documentos originales. Además servirán al usuario para poder hacer consultas complejas de los datos.
 
 | Columna | ¿Para qué sirve? |
 |---------|------------------|
@@ -316,4 +322,84 @@ En el caso del ejemplo utilizado, sólo contiene una fila que indica que los ele
  database | collection |    table_ref    |  type  | identifier
 ----------+------------+-----------------+--------+------------
  stampede | primer     | {address,coord} | DOUBLE | v_d
+```
+
+## Example queries
+
+Supongamos que queremos hacer consultas sobre los datos replicados, como cabe esperar se puede usar la propia consola de PostgreSQL o cualquier herramienta que haga uso de su conector.
+
+Por ejemplo, si queremos el nombre de todos los locales que son panaderías en el código postal 10462, ejecutaríamos la siguiente query.
+
+```
+select p.name_s from primer p, primer_address pa
+where
+  p.cuisine_s = 'Bakery'
+  and p.did = pa.did
+  and pa.zipcode_s = '10462'
+```
+
+```
+# select p.name_s from primer p, primer_address pa where p.cuisine_s = 'Bakery' and p.did = pa.did and pa.zipcode_s = '10462';
+
+               name_s                
+-------------------------------------
+ Morris Park Bake Shop
+ Zaro'S Bread Basket
+ Ronald Pitusa Bakery
+ National Bakery
+ Conti'S Pastry Shoppe
+ Gina'S Italian Bakery & Pastry Shop
+ Mr Cake Bakery & Dessert
+```
+
+Una de las ventajas principales de tener los datos en formato relacional es que se puedenh realizar queries complejas de forma más sencilla y rápida. Por ejemplo si queremos conocer la nota media de cada una de las panaderías podríamos ejecutar la query siguiente.
+
+```
+select p.name_s, avg(pg.score_i)
+from primer p, primer_address pa, primer_grades pg
+where
+  p.cuisine_s = 'Bakery'
+  and p.did = pa.did
+  and pa.zipcode_s = '10462'
+  and pg.did = p.did
+group by p.name_s
+```
+
+```
+# select p.name_s, avg(pg.score_i) from primer p, primer_address pa, primer_grades pg where p.cuisine_s = 'Bakery' and p.did = pa.did and pa.zipcode_s = '10462' and pg.did = p.did group by p.name_s;
+
+               name_s                |         avg         
+-------------------------------------+---------------------
+ Conti'S Pastry Shoppe               | 10.3333333333333333
+ Gina'S Italian Bakery & Pastry Shop | 18.3333333333333333
+ Zaro'S Bread Basket                 |  8.1666666666666667
+ Mr Cake Bakery & Dessert            | 12.0000000000000000
+ Ronald Pitusa Bakery                |  9.0000000000000000
+ Morris Park Bake Shop               |  8.2000000000000000
+ National Bakery                     | 12.4000000000000000
+```
+
+Y ahora sería muy senillo filtrar aquellas que tengan un nota media superior a 10.
+
+```
+select p.name_s, avg(pg.score_i)
+from primer p, primer_address pa, primer_grades pg
+where
+  p.cuisine_s = 'Bakery'
+  and p.did = pa.did
+  and pa.zipcode_s = '10462'
+  and pg.did = p.did
+group by p.name_s
+having avg(pg.score_i) > 10
+```
+
+```
+# select p.name_s, avg(pg.score_i) from primer p, primer_address pa, primer_grades pg where p.cuisine_s = 'Bakery' and p.did = pa.did and pa.zipcode_s = '10462' and pg.did = p.did group by p.name_s having avg(pg.score_i) > 10;
+
+               name_s                |         avg         
+-------------------------------------+---------------------
+ Conti'S Pastry Shoppe               | 10.3333333333333333
+ Gina'S Italian Bakery & Pastry Shop | 18.3333333333333333
+ Mr Cake Bakery & Dessert            | 12.0000000000000000
+ National Bakery                     | 12.4000000000000000
 ```
