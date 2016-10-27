@@ -51,19 +51,24 @@ public abstract class AbstractIdentifierConstraints implements IdentifierConstra
     
     protected AbstractIdentifierConstraints(ImmutableSet<String> restrictedSchemaNames, ImmutableSet<String> restrictedColumnNames) {
         this.fieldTypeIdentifiers = Maps.immutableEnumMap(ImmutableMap.<FieldType, Character>builder()
-            .put(FieldType.BINARY,               Character.valueOf('r')) // [r]aw
-            .put(FieldType.BOOLEAN,              Character.valueOf('b')) // [b]inary
-            .put(FieldType.DATE,                 Character.valueOf('c')) // [c]alendar
+            .put(FieldType.BINARY,               Character.valueOf('r')) // [r]aw bytes
+            .put(FieldType.BOOLEAN,              Character.valueOf('b')) // [b]oolean
             .put(FieldType.DOUBLE,               Character.valueOf('d')) // [d]ouble
-            .put(FieldType.INSTANT,              Character.valueOf('g')) // [G]eorge Gamow or Admiral [G]race Hopper that were the earliest users of the term nanosecond
+            .put(FieldType.INSTANT,              Character.valueOf('t')) // [t]imestamp
             .put(FieldType.INTEGER,              Character.valueOf('i')) // [i]nteger
             .put(FieldType.LONG,                 Character.valueOf('l')) // [l]ong
-            .put(FieldType.MONGO_OBJECT_ID,      Character.valueOf('x'))
-            .put(FieldType.MONGO_TIME_STAMP,     Character.valueOf('y'))
             .put(FieldType.NULL,                 Character.valueOf('n')) // [n]ull
             .put(FieldType.STRING,               Character.valueOf('s')) // [s]tring
-            .put(FieldType.TIME,                 Character.valueOf('t')) // [t]ime
-            .put(FieldType.CHILD,                Character.valueOf('e')) // [e]lement
+            .put(FieldType.CHILD,                Character.valueOf('e')) // child [e]lement
+            
+            // Mongo types
+            .put(FieldType.MONGO_OBJECT_ID,      Character.valueOf('x'))
+            .put(FieldType.MONGO_TIME_STAMP,     Character.valueOf('y'))
+            
+            // No-Mongo types
+            .put(FieldType.DATE,                 Character.valueOf('c')) // [c]alendar
+            .put(FieldType.TIME,                 Character.valueOf('m')) // ti[m]e
+            
             .build());
         
         ImmutableMap.Builder<FieldType, String> scalarFieldTypeIdentifiersBuilder = 
