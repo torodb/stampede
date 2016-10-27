@@ -1,6 +1,10 @@
 
 package com.torodb.mongodb.repl.guice;
 
+import java.time.Duration;
+
+import javax.inject.Singleton;
+
 import com.eightkdata.mongowp.client.core.CachedMongoClientFactory;
 import com.eightkdata.mongowp.client.wrapper.MongoClientConfiguration;
 import com.google.common.net.HostAndPort;
@@ -8,12 +12,26 @@ import com.google.inject.PrivateModule;
 import com.google.inject.Provides;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.torodb.core.supervision.Supervisor;
-import com.torodb.mongodb.repl.*;
+import com.torodb.mongodb.core.MongodServer;
+import com.torodb.mongodb.guice.MongoLayerModule;
+import com.torodb.mongodb.repl.OplogManager;
+import com.torodb.mongodb.repl.OplogReaderProvider;
+import com.torodb.mongodb.repl.RecoveryService;
+import com.torodb.mongodb.repl.ReplCoordinator;
+import com.torodb.mongodb.repl.ReplMetrics;
+import com.torodb.mongodb.repl.ReplicationErrorHandler;
+import com.torodb.mongodb.repl.ReplicationFilters;
+import com.torodb.mongodb.repl.commands.ReplCommandImplementionsModule;
 import com.torodb.mongodb.repl.commands.ReplCommandsGuiceModule;
 import com.torodb.mongodb.repl.impl.MongoOplogReaderProvider;
 import com.torodb.mongodb.repl.impl.ReplicationErrorHandlerImpl;
-import com.torodb.mongodb.repl.oplogreplier.*;
+import com.torodb.mongodb.repl.oplogreplier.DefaultOplogApplier;
 import com.torodb.mongodb.repl.oplogreplier.DefaultOplogApplier.BatchLimits;
+import com.torodb.mongodb.repl.oplogreplier.DefaultOplogApplierService;
+import com.torodb.mongodb.repl.oplogreplier.OplogApplier;
+import com.torodb.mongodb.repl.oplogreplier.OplogApplierMetrics;
+import com.torodb.mongodb.repl.oplogreplier.OplogApplierService;
+import com.torodb.mongodb.repl.oplogreplier.OplogOperationApplier;
 import com.torodb.mongodb.repl.oplogreplier.analyzed.AnalyzedOpReducer;
 import com.torodb.mongodb.repl.oplogreplier.batch.AnalyzedOplogBatchExecutor;
 import com.torodb.mongodb.repl.oplogreplier.batch.BatchAnalyzer;
@@ -21,11 +39,11 @@ import com.torodb.mongodb.repl.oplogreplier.batch.ConcurrentOplogBatchExecutor;
 import com.torodb.mongodb.repl.oplogreplier.batch.ConcurrentOplogBatchExecutor.ConcurrentOplogBatchExecutorMetrics;
 import com.torodb.mongodb.repl.oplogreplier.batch.NamespaceJobExecutor;
 import com.torodb.mongodb.repl.oplogreplier.fetcher.ContinuousOplogFetcher;
-import com.torodb.mongodb.repl.topology.*;
+import com.torodb.mongodb.repl.topology.RemoteSeed;
+import com.torodb.mongodb.repl.topology.TopologyGuiceModule;
+import com.torodb.mongodb.repl.topology.TopologyService;
 import com.torodb.mongodb.utils.DbCloner;
 import com.torodb.mongodb.utils.cloner.CommitHeuristic;
-import java.time.Duration;
-import javax.inject.Singleton;
 
 /**
  *
@@ -141,6 +159,9 @@ public class MongoDbReplModule extends PrivateModule {
                 .in(Singleton.class);
 
         install(new ReplCommandsGuiceModule());
+        
+        install(new MongoLayerModule(new ReplCommandImplementionsModule()));
+        expose(MongodServer.class);
     }
 
     @Provides

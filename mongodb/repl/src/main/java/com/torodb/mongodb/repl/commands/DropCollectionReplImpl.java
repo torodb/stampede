@@ -20,16 +20,15 @@
 
 package com.torodb.mongodb.repl.commands;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.Request;
 import com.eightkdata.mongowp.server.api.impl.CollectionCommandArgument;
 import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.torodb.core.exceptions.user.UserException;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import com.torodb.torod.ExclusiveWriteTorodTransaction;
 import com.torodb.torod.SharedWriteTorodTransaction;
 
 /**
@@ -45,7 +44,7 @@ public class DropCollectionReplImpl extends ReplCommandImpl<CollectionCommandArg
             Request req,
             Command<? super CollectionCommandArgument, ? super Empty> command,
             CollectionCommandArgument arg,
-            ExclusiveWriteTorodTransaction trans) {
+            SharedWriteTorodTransaction trans) {
 
         try {
             LOGGER.info("Drop collection {}", arg.getCollection());

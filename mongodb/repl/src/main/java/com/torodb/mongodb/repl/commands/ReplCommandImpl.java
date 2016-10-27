@@ -24,12 +24,12 @@ import org.apache.logging.log4j.Logger;
 
 import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.CommandImplementation;
-import com.torodb.torod.ExclusiveWriteTorodTransaction;
+import com.torodb.torod.SharedWriteTorodTransaction;
 
 /**
  *
  */
-public abstract  class ReplCommandImpl<Arg, Res> implements CommandImplementation<Arg, Res, ExclusiveWriteTorodTransaction>{
+public abstract  class ReplCommandImpl<Arg, Res> implements CommandImplementation<Arg, Res, SharedWriteTorodTransaction>{
 
     protected void reportErrorIgnored(Logger logger, Command<?, ?> cmd, Throwable t) {
         logger.warn(cmd.getCommandName() + " command execution failed. "

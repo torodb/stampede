@@ -20,29 +20,20 @@
 
 package com.torodb.mongodb.repl.commands;
 
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.server.api.Command;
-import com.eightkdata.mongowp.server.api.Request;
-import com.eightkdata.mongowp.server.api.tools.Empty;
-import com.torodb.torod.SharedWriteTorodTransaction;
+import com.eightkdata.mongowp.server.api.CommandImplementation;
+import com.torodb.torod.ExclusiveWriteTorodTransaction;
 
 /**
  *
  */
-public class LogAndIgnoreReplImpl extends ReplCommandImpl<String, Empty> {
+public abstract  class ExclusiveReplCommandImpl<Arg, Res> implements CommandImplementation<Arg, Res, ExclusiveWriteTorodTransaction>{
 
-    private static final Logger LOGGER
-            = LogManager.getLogger(LogAndIgnoreReplImpl.class);
-
-    @Override
-    public Status<Empty> apply(Request req,
-            Command<? super String, ? super Empty> command,
-            String arg, SharedWriteTorodTransaction trans) {
-        LOGGER.warn("Command {} is not supported. It will not be executed", arg);
-        return Status.ok();
+    protected void reportErrorIgnored(Logger logger, Command<?, ?> cmd, Throwable t) {
+        logger.warn(cmd.getCommandName() + " command execution failed. "
+                    + "Ignoring it", t);
     }
 
 }

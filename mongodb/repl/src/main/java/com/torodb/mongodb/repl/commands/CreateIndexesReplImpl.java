@@ -50,7 +50,6 @@ import com.torodb.core.language.AttributeReference.ObjectKey;
 import com.torodb.core.transaction.metainf.FieldIndexOrdering;
 import com.torodb.mongodb.language.Constants;
 import com.torodb.mongodb.repl.ReplicationFilters;
-import com.torodb.torod.ExclusiveWriteTorodTransaction;
 import com.torodb.torod.IndexFieldInfo;
 import com.torodb.torod.SharedWriteTorodTransaction;
 
@@ -71,7 +70,7 @@ public class CreateIndexesReplImpl extends ReplCommandImpl<CreateIndexesArgument
     @Override
     public Status<CreateIndexesResult> apply(Request req,
             Command<? super CreateIndexesArgument, ? super CreateIndexesResult> command,
-            CreateIndexesArgument arg, ExclusiveWriteTorodTransaction trans) {
+            CreateIndexesArgument arg, SharedWriteTorodTransaction trans) {
         int indexesBefore = (int) trans.getIndexesInfo(req.getDatabase(), arg.getCollection()).count();
         int indexesAfter = indexesBefore;
 

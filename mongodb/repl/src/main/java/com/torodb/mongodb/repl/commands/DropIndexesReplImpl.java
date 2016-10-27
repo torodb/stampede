@@ -37,7 +37,6 @@ import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.Request;
 import com.torodb.core.language.AttributeReference;
 import com.torodb.mongodb.language.Constants;
-import com.torodb.torod.ExclusiveWriteTorodTransaction;
 import com.torodb.torod.IndexFieldInfo;
 import com.torodb.torod.IndexInfo;
 import com.torodb.torod.SharedWriteTorodTransaction;
@@ -54,7 +53,7 @@ public class DropIndexesReplImpl extends ReplCommandImpl<DropIndexesArgument, Dr
             Request req,
             Command<? super DropIndexesArgument, ? super DropIndexesResult> command,
             DropIndexesArgument arg,
-            ExclusiveWriteTorodTransaction trans) {
+            SharedWriteTorodTransaction trans) {
         int indexesBefore = (int) trans.getIndexesInfo(req.getDatabase(), arg.getCollection()).count();
         
         List<String> indexesToDrop;

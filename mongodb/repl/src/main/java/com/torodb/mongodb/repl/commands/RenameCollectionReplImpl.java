@@ -34,7 +34,7 @@ import com.torodb.core.exceptions.user.UserException;
 import com.torodb.mongodb.repl.ReplicationFilters;
 import com.torodb.torod.ExclusiveWriteTorodTransaction;
 
-public class RenameCollectionReplImpl extends ReplCommandImpl<RenameCollectionArgument, Empty> {
+public class RenameCollectionReplImpl extends ExclusiveReplCommandImpl<RenameCollectionArgument, Empty> {
     private static final Logger LOGGER
         = LogManager.getLogger(RenameCollectionReplImpl.class);
 

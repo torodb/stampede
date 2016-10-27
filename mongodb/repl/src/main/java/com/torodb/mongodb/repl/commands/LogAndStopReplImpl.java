@@ -20,15 +20,15 @@
 
 package com.torodb.mongodb.repl.commands;
 
+import javax.inject.Inject;
+
 import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.Request;
 import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.torodb.core.supervision.Supervisor;
 import com.torodb.mongodb.repl.guice.MongoDbRepl;
-import com.torodb.torod.ExclusiveWriteTorodTransaction;
 import com.torodb.torod.SharedWriteTorodTransaction;
-import javax.inject.Inject;
 
 /**
  * The implementation of {@link LogAndStopCommand}.
@@ -43,7 +43,7 @@ public class LogAndStopReplImpl extends ReplCommandImpl<String, Empty> {
     }
 
     @Override
-    public Status<Empty> apply(Request req, Command<? super String, ? super Empty> command, String arg, ExclusiveWriteTorodTransaction trans) {
+    public Status<Empty> apply(Request req, Command<? super String, ? super Empty> command, String arg, SharedWriteTorodTransaction trans) {
         UnsupportedOperationException ex = new UnsupportedOperationException(
                 "Command " +arg+ " is not supported yet");
         supervisor.onError(this, ex);

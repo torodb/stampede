@@ -20,6 +20,11 @@
 
 package com.torodb.mongodb.repl.commands;
 
+import java.util.Arrays;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.CreateCollectionCommand.CreateCollectionArgument;
 import com.eightkdata.mongowp.server.api.Command;
@@ -32,11 +37,7 @@ import com.torodb.core.language.AttributeReference.Key;
 import com.torodb.core.language.AttributeReference.ObjectKey;
 import com.torodb.core.transaction.metainf.FieldIndexOrdering;
 import com.torodb.mongodb.language.Constants;
-import com.torodb.torod.ExclusiveWriteTorodTransaction;
 import com.torodb.torod.IndexFieldInfo;
-import java.util.Arrays;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import com.torodb.torod.SharedWriteTorodTransaction;
 
 /**
@@ -51,7 +52,7 @@ public class CreateCollectionReplImpl extends ReplCommandImpl<CreateCollectionAr
             Request req,
             Command<? super CreateCollectionArgument, ? super Empty> command,
             CreateCollectionArgument arg,
-            ExclusiveWriteTorodTransaction trans) {
+            SharedWriteTorodTransaction trans) {
 
         try {
             if (!trans.existsCollection(req.getDatabase(), arg.getCollection())) {
