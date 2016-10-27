@@ -35,5 +35,5 @@ No todo podía ser perfecto, y hay una serie de limitaciones conocidas de ToroDB
 | Term | Definition |
 |------|------------|
 | __path__ | (JSON document path) The required sequence of keys to access one specific value of the document (for example, address.zipcode) | 
-| __replica set__ | |
-| __sharding__ | |
+| __replica set__ | A replica set is the way provided by MongoDB to add redundancy to survive network partitions and other technical failures ([more info](https://docs.mongodb.com/manual/tutorial/deploy-replica-set/)) |
+| __sharding__ | When the amount of data is too large it is recommended to distribute the information across multiple machines, this is known as sharding in MongoDB ([more info](https://docs.mongodb.com/v3.2/sharding/)) |
