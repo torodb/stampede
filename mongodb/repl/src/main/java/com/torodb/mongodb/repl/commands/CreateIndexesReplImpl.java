@@ -42,6 +42,7 @@ import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.Request;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
+import com.torodb.core.exceptions.user.UnsupportedUniqueIndexException;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.language.AttributeReference;
 import com.torodb.core.language.AttributeReference.Key;
@@ -135,8 +136,14 @@ public class CreateIndexesReplImpl extends ReplCommandImpl<CreateIndexesArgument
                     continue;
                 }
                 
-                if (trans.createIndex(req.getDatabase(), arg.getCollection(), indexOptions.getName(), fields, indexOptions.isUnique())) {
-                    indexesAfter++;
+                try {
+                    if (trans.createIndex(req.getDatabase(), arg.getCollection(), indexOptions.getName(), fields, indexOptions.isUnique())) {
+                        indexesAfter++;
+                    }
+                } catch(UnsupportedUniqueIndexException ex) {
+                    String note = "Unique index with keys on distinct subdocuments is not supported. Skipping index.";
+                    LOGGER.warn(note);
+                    continue;
                 }
             }
 
