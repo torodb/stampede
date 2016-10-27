@@ -1,5 +1,3 @@
-# Advanced concepts
-
 Para comprender mejor la naturaleza del algoritmo de mapeo de documentos JSON a un almacenamiento relacional, se realizará un ejemplo real usando el mismo [dataset](https://docs.mongodb.com/getting-started/shell/import-data/) que utiliza MongoDB en su documentación.
 
 Suponiendo que tenemos ToroDB Stampede replicando de un MongoDB, importaremos los datos en MongoDB para que se repliquen en formato relacional en PostgreSQL. Para ello basta ejecutar los siguientes comandos.
@@ -12,7 +10,7 @@ $ mongoimport -d stampede -c primer primer-dataset.json
 
 Como se puede observar se ha hecho la importación en la base de datos con nombre `stampede` y la colección `primer`, esto es importante de cara al esquema y nombres de tablas que se van a utilizar. En PostgreSQL esto significa que se ha creado dentro de la base de datos `torod`, el esquema `stampede` con una tabla raíz `primer` y una serie de tablas denominadas `primer_*`.
 
-## Table mapping
+# Table mapping
 
 En esencia, cada nivel del documento JSON se mapea a una tabla diferente en el backend relacional. Por tanto, sabiendo que la estructura de los documentos JSON que contiene el dataset es equivalente a la siguiente.
 
@@ -45,6 +43,8 @@ Se crearían un total de 4 tablas que corresponden a los diferentes niveles del 
 * primer_grades
 
 ![Tables distribution](images/tables_distribution.jpeg)
+
+## Created tables
 
 ### primer
 
@@ -151,7 +151,7 @@ did  |  rid  | seq |         date_g         | score_i |    grade_s     | score_n
    7 |    38 |   4 | 2011-12-19 01:00:00+01 |      18 | B              |
 ```
 
-## Columnas y metadatos
+# Columns and metadata
 
 [TODO]: <> (Explicar los posibles valores de los campos tipo e)
 [TODO]: <> (Revisar que estén todos los tipos de datos ... BINARY, BOOLEAN, DATE, DOUBLE, INSTANT, INTEGER, LONG, MONGO_OBJECT_ID, MONGO_TIME_STAMP, NULL, STRING, TIME, CHILD)
@@ -160,15 +160,29 @@ Como se puede observar en los extractos de las tablas creadas, los nombres de co
 
 Los diferentes tipos de datos que maneja ToroDB Stampede se representan en la siguiente tabla.
 
-| Postfijo | ¿Qué representa? |
-|----------|---------|
-| _e | Subdocumentos que están mapeados a otra tabla. |
-| _g | |
-| _i | Números enteros. |
-| _n | Valores nulos. |
-| _s | Cadenas de texto. |
+| Postfix | What does it mean? |
+|---------|--------------------|
+| _b | Boolean value, store like boolean in PostgreSQL. |
+| _c | A date (with time) value in format ISO-8601, stored with PostgreSQL type date. |
+| _d | A 64-bit IEEE 754 floating point, stored with PostgreSQL type double precision. |
+| _e | A child element, it can be an object or an array, stored with PostgreSQL type boolean with a value of false for object and true for array. |
+| _i | A 32-bit signed two's complement integer, stored with PostgreSQL type integer. |
+| _l | A 64-bit signed two's complement integer, stored with PostgreSQL type bigint. |
+| _n | A null value, stored with PostgreSQL type boolean (nullable). It cannot take value false, just true or null. When the value is true means the JSON document has value null for that path, when it is null and the associated column when it has value is null too, it means the path does not exist for that document. |
+| _m | A time value in format ISO-8601, stored with PostgreSQL type time. |
+| _r | Binary object, it is an array of bytes stored in PostgreSQL as bytea. |
+| _s | An array of UTF-8 characters representing a text, stored with PostgreSQL type character varying. |
+| _t | Number of milliseconds from 1970-01-01T00:00:00Z, stored with PostgreSQL type timestamptz. |
+| _x | This represent the MONGO_OBJECT_ID and it is stored as a PostgreSQL bytea. |
 
-### Data conflict resolution
+__Notes about MONGO_OBJECT_ID__: ObjectIds are small, likely unique, fast to generate, and ordered. ObjectId values consists of 12-bytes, where the first four bytes are a timestamp that reflect the ObjectId’s creation, specifically:
+
+* 4-byte value representing the seconds since the Unix epoch,
+* 3-byte machine identifier,
+* 2-byte process id, and
+* 3-byte counter, starting with a random value.
+
+## Data conflict resolution
 
 Por la propia naturaleza de los documentos JSON puede ocurrir que un mismo path tenga dos tipos de datos diferentes, o que en algunos documentos ese path no exista. No es un problema para un documento JSON, pero sí lo es para un sistema relacional en el que cada columna tiene asociado un determinado tipo de dato.
 
@@ -220,11 +234,11 @@ En las filas que tienen valor `true` para la columna `score_n` significa que en 
 }
 ```
 
-### Metadata
+## Metadata
 
 Anteriormente se ha comentado que ToroDB Stampede almacena una serie de metadatos que le permiten gestionar el documento, recomponerlo o hacer diferentes tipos de búsquedas. Estos metadatos se diferencian entre una serie de columnas creadas en las propias tablas de datos y una serie de tablas específicas de uso interno.
 
-#### Columnas de metadatos
+### Columnas de metadatos
 
 ToroDB Stampede crea varias columnas de metadatos en las tablas que sirven para mantener y recomponer los documentos originales. Además servirán al usuario para poder hacer consultas complejas de los datos.
 
@@ -237,11 +251,11 @@ ToroDB Stampede crea varias columnas de metadatos en las tablas que sirven para 
 
 ![PID reference](images/pid_reference.jpeg)
 
-#### Tablas de metadatos
+### Tablas de metadatos
 
 Las columnas de metadatos en las tablas de replicación no son suficientes para mantener el sistema, por lo que además también existen una serie de tablas de metadatos específicas que se guardan en el esquema `torod`.
 
-##### database
+#### database
 
 La tabla `database` almacena el nombre utilizado por el usuario al crear la base de datos en MongoDB, lo cual se traduce en PostgreSQL en un esquema. Como el nombre de esquema tiene limitaciones de tamaño, se utiliza la tabla `database` para guardar el nombre usado por el usuario y el identificador que se usará en PostgreSQL, aunque en general serán equivalentes.
 
@@ -253,7 +267,7 @@ La tabla `database` almacena el nombre utilizado por el usuario al crear la base
  stampede | stamped
 ```
 
-##### collection
+#### collection
 
 Además del nombre de base de datos, en MondoDB hay que especificar en qué colección se guardan los datos, esta referencia es almacenada en la tabla `collection`.
 
@@ -265,7 +279,7 @@ Además del nombre de base de datos, en MondoDB hay que especificar en qué cole
  stampede | primer            | stampede_primer
 ```
 
-##### doc_part
+#### doc_part
 
 Como ya hemos indicado previamente, el nombre de la tabla para el elemento raíz de un documento JSON es el mismo que se ha indicado como nombre de la colección de MongoDB. En ToroDB Stampede, el `table_ref` asociado a ese elemento es `{}` y su identificador, en este caso, es `primer`.
 
@@ -282,7 +296,7 @@ Si, en cambio, hablamos del path `address.coord`, el table ref será `{address,c
  stampede | primer            | {address,coord}         | primer_address_coord                    |        0
 ```
 
-##### field
+#### field
 
 La tabla `field` almacena el tipo de dato de cada columna y su identificador. Nuevamente, cabe destacar que el nombre utilizado en la columna no siempre coincidirá con el nombre original en el documento, si se han usado nombres de clave muy largos.
 
@@ -310,7 +324,7 @@ Por tanto para una determinada combinación de `database, collection, table_ref`
  stampede | primer            | {grades}                | score                 | NULL            | score_n
 ```
 
-##### scalar
+#### scalar
 
 Por último la tabla `scalar` es utilizada para guardar el tipo de datos de los elementos de un array. Hay que tener en cuenta que en general para un mismo array todos los elementos serán del mismo tipo, pero no hay nada que impida que un documento JSON no contenga elementos de distintos tipos en un array.
 
@@ -324,7 +338,7 @@ En el caso del ejemplo utilizado, sólo contiene una fila que indica que los ele
  stampede | primer     | {address,coord} | DOUBLE | v_d
 ```
 
-## Example queries
+# Example queries
 
 Supongamos que queremos hacer consultas sobre los datos replicados, como cabe esperar se puede usar la propia consola de PostgreSQL o cualquier herramienta que haga uso de su conector.
 
