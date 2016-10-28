@@ -18,7 +18,7 @@
  * 
  */
 
-package com.torodb.mongodb.repl.commands;
+package com.torodb.mongodb.repl.commands.impl;
 
 import java.util.Arrays;
 import java.util.Iterator;
@@ -37,7 +37,6 @@ import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.Request;
 import com.torodb.core.language.AttributeReference;
 import com.torodb.mongodb.language.Constants;
-import com.torodb.torod.ExclusiveWriteTorodTransaction;
 import com.torodb.torod.IndexFieldInfo;
 import com.torodb.torod.IndexInfo;
 import com.torodb.torod.SharedWriteTorodTransaction;
@@ -54,7 +53,7 @@ public class DropIndexesReplImpl extends ReplCommandImpl<DropIndexesArgument, Dr
             Request req,
             Command<? super DropIndexesArgument, ? super DropIndexesResult> command,
             DropIndexesArgument arg,
-            ExclusiveWriteTorodTransaction trans) {
+            SharedWriteTorodTransaction trans) {
         int indexesBefore = (int) trans.getIndexesInfo(req.getDatabase(), arg.getCollection()).count();
         
         List<String> indexesToDrop;
@@ -78,7 +77,7 @@ public class DropIndexesReplImpl extends ReplCommandImpl<DropIndexesArgument, Dr
                         .stream()
                         .map(key -> '"' + key.getKeys()
                             .stream()
-                            .collect(Collectors.joining(".")) + "\" :" + key.getType().toBsonValue().toString())
+                            .collect(Collectors.joining(".")) + "\" :" + key.getType().getName())
                         .collect(Collectors.joining(", ")) + "]. Ignoring the whole request",
                             arg.getIndexToDrop());
                     return Status.ok(new DropIndexesResult(indexesBefore));

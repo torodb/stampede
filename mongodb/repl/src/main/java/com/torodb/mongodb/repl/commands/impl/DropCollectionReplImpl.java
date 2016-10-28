@@ -18,45 +18,50 @@
  * 
  */
 
-package com.torodb.mongodb.repl.commands;
+package com.torodb.mongodb.repl.commands.impl;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.Request;
+import com.eightkdata.mongowp.server.api.impl.CollectionCommandArgument;
 import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.torodb.core.exceptions.user.UserException;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import com.torodb.torod.ExclusiveWriteTorodTransaction;
 import com.torodb.torod.SharedWriteTorodTransaction;
 
 /**
  *
  */
-public class DropDatabaseReplImpl extends ReplCommandImpl<Empty, Empty> {
+public class DropCollectionReplImpl extends ReplCommandImpl<CollectionCommandArgument, Empty> {
+
     private static final Logger LOGGER
-            = LogManager.getLogger(DropDatabaseReplImpl.class);
+            = LogManager.getLogger(DropCollectionReplImpl.class);
 
     @Override
-    public Status<Empty> apply(Request req,
-            Command<? super Empty, ? super Empty> command, Empty arg,
-            ExclusiveWriteTorodTransaction trans) {
-        try {
-            LOGGER.info("Dropping database {}", req.getDatabase());
+    public Status<Empty> apply(
+            Request req,
+            Command<? super CollectionCommandArgument, ? super Empty> command,
+            CollectionCommandArgument arg,
+            SharedWriteTorodTransaction trans) {
 
-            if (trans.existsDatabase(req.getDatabase())) {
-                trans.dropDatabase(req.getDatabase());
+        try {
+            LOGGER.info("Drop collection {}", arg.getCollection());
+
+            if (trans.existsCollection(req.getDatabase(), arg.getCollection())) {
+                trans.dropCollection(req.getDatabase(), arg.getCollection());
             } else {
-                LOGGER.info("Trying to drop database " + req.getDatabase() + " but it has not been found. "
-                        + "This is normal since the database could have a collection being filtered "
-                        + "or we are reapplying oplog during a recovery. Ignoring operation");
+                LOGGER.info("Trying to drop collection {}.{} but it has not been found. "
+                        + "This is normal when reapplying oplog during a recovery. Ignoring operation",
+                        req.getDatabase(), arg.getCollection());
             }
         } catch (UserException ex) {
             reportErrorIgnored(LOGGER, command, ex);
         }
 
         return Status.ok();
+
     }
 
 }

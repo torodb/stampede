@@ -389,7 +389,7 @@ public class ReplicationFilters {
                         fieldIterator.hasNext()) {
                     IndexFieldPattern fieldPattern = fieldPatternIterator.next();
                     IndexOptions.Key field = fieldIterator.next();
-                    if (!fieldPattern.getType().matcher(field.getType().toBsonValue().toString()).matches() ||
+                    if (!fieldPattern.getType().matcher(field.getType().getName()).matches() ||
                             fieldPattern.getKeys().size() != field.getKeys().size()) {
                         return false;
                     }

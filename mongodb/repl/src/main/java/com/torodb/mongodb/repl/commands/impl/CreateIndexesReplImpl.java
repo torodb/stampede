@@ -18,7 +18,7 @@
  *     
  */
 
-package com.torodb.mongodb.repl.commands;
+package com.torodb.mongodb.repl.commands.impl;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -50,7 +50,6 @@ import com.torodb.core.language.AttributeReference.ObjectKey;
 import com.torodb.core.transaction.metainf.FieldIndexOrdering;
 import com.torodb.mongodb.language.Constants;
 import com.torodb.mongodb.repl.ReplicationFilters;
-import com.torodb.torod.ExclusiveWriteTorodTransaction;
 import com.torodb.torod.IndexFieldInfo;
 import com.torodb.torod.SharedWriteTorodTransaction;
 
@@ -71,7 +70,7 @@ public class CreateIndexesReplImpl extends ReplCommandImpl<CreateIndexesArgument
     @Override
     public Status<CreateIndexesResult> apply(Request req,
             Command<? super CreateIndexesArgument, ? super CreateIndexesResult> command,
-            CreateIndexesArgument arg, ExclusiveWriteTorodTransaction trans) {
+            CreateIndexesArgument arg, SharedWriteTorodTransaction trans) {
         int indexesBefore = (int) trans.getIndexesInfo(req.getDatabase(), arg.getCollection()).count();
         int indexesAfter = indexesBefore;
 
@@ -115,7 +114,7 @@ public class CreateIndexesReplImpl extends ReplCommandImpl<CreateIndexesArgument
 
                     if (!KnownType.contains(indexType)) {
                         String note = "Bad index key pattern: Unknown index type '" 
-                                + indexKey.getType().toBsonValue().toString() + "'. Skipping index.";
+                                + indexKey.getType().getName() + "'. Skipping index.";
                         LOGGER.warn(note);
                         skipIndex = true;
                         break;
@@ -123,7 +122,7 @@ public class CreateIndexesReplImpl extends ReplCommandImpl<CreateIndexesArgument
 
                     Optional<FieldIndexOrdering> ordering = indexType.accept(filedIndexOrderingConverterVisitor, null);
                     if (!ordering.isPresent()) {
-                        String note = "Index of type " + indexType.toBsonValue().toString() + " is not supported. Skipping index.";
+                        String note = "Index of type " + indexType.getName() + " is not supported. Skipping index.";
                         LOGGER.warn(note);
                         skipIndex = true;
                         break;

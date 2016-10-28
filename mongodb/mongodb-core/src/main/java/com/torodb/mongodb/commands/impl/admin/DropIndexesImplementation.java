@@ -98,7 +98,7 @@ public class DropIndexesImplementation implements WriteTorodbCommandImpl<DropInd
             .stream()
             .map(key -> '"' + key.getKeys()
                     .stream()
-                    .collect(Collectors.joining(".")) + "\" :" + key.getType().toBsonValue().toString())
+                    .collect(Collectors.joining(".")) + "\" :" + key.getType().getName())
             .collect(Collectors.joining(", ")) + "]");
     }
     

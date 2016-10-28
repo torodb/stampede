@@ -1,12 +1,10 @@
 
-package com.torodb.mongodb.commands;
-
-import java.util.Set;
-import java.util.function.Supplier;
+package com.torodb.mongodb.repl.commands;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.AdminCommands.AdminCommandsImplementationsBuilder;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.CollModCommand.CollModArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.CollModCommand.CollModResult;
@@ -66,67 +64,61 @@ import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.repl.Re
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.ReplicaSetConfig;
 import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.CommandImplementation;
+import com.eightkdata.mongowp.server.api.Request;
 import com.eightkdata.mongowp.server.api.impl.CollectionCommandArgument;
 import com.eightkdata.mongowp.server.api.tools.Empty;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.net.HostAndPort;
 import com.google.inject.Injector;
-import com.torodb.core.annotations.DoNotChange;
+import com.torodb.mongodb.commands.AbstractCommandMapFactory;
+import com.torodb.mongodb.commands.WriteTransactionImplementations;
 import com.torodb.mongodb.commands.impl.NotImplementedCommandImplementation;
-import com.torodb.mongodb.commands.impl.admin.CreateCollectionImplementation;
-import com.torodb.mongodb.commands.impl.admin.CreateIndexesImplementation;
-import com.torodb.mongodb.commands.impl.admin.DropCollectionImplementation;
-import com.torodb.mongodb.commands.impl.admin.DropDatabaseImplementation;
-import com.torodb.mongodb.commands.impl.admin.DropIndexesImplementation;
 import com.torodb.mongodb.commands.impl.general.DeleteImplementation;
 import com.torodb.mongodb.commands.impl.general.InsertImplementation;
 import com.torodb.mongodb.commands.impl.general.UpdateImplementation;
 import com.torodb.mongodb.core.MongodMetrics;
 import com.torodb.mongodb.core.WriteMongodTransaction;
 import com.torodb.mongodb.language.ObjectIdFactory;
+import com.torodb.mongodb.repl.ReplicationFilters;
+import com.torodb.mongodb.repl.commands.impl.CreateCollectionReplImpl;
+import com.torodb.mongodb.repl.commands.impl.CreateIndexesReplImpl;
+import com.torodb.mongodb.repl.commands.impl.DropCollectionReplImpl;
+import com.torodb.mongodb.repl.commands.impl.DropDatabaseReplImpl;
+import com.torodb.mongodb.repl.commands.impl.DropIndexesReplImpl;
+import com.torodb.mongodb.repl.commands.impl.ReplCommandImpl;
 
 /**
  *
  */
 @Singleton
-public class WriteTransactionImplementations {
-
-    private final ImmutableMap<Command<?,?>, CommandImplementation<?,?, ? super WriteMongodTransaction>> map;
+public class ReplWriteTransactionImplementations extends WriteTransactionImplementations {
 
     @Inject
-    WriteTransactionImplementations(Injector injector) {
-        this(new MapFactory(injector));
+    protected ReplWriteTransactionImplementations(Injector injector) {
+        super(new MapFactory(injector));
     }
 
-    protected WriteTransactionImplementations(Supplier<ImmutableMap<Command<?,?>, CommandImplementation<?, ?, ? super WriteMongodTransaction>>> mapFactory) {
-        map = mapFactory.get();
-    }
+    static class MapFactory  extends AbstractCommandMapFactory<WriteMongodTransaction> {
 
-    @DoNotChange
-    Set<Command<?, ?>> getSupportedCommands() {
-        return map.keySet();
-    }
-
-    public ImmutableMap<Command<?, ?>, CommandImplementation<?, ?, ? super WriteMongodTransaction>> getMap() {
-        return map;
-    }
-
-    static class MapFactory extends AbstractCommandMapFactory<WriteMongodTransaction> {
         @Inject
-        public MapFactory(Injector injector) {
-            super(
-                    new MyAdminCommandsImplementationBuilder(),
+        MapFactory(Injector injector) {
+            super(new MyAdminCommandsImplementationBuilder(injector),
                     new MyAggregationCommandsImplementationBuilder(),
                     new MyAuthenticationCommandsImplementationsBuilder(),
                     new MyDiagnosticCommandsImplementationBuilder(),
                     new MyGeneralCommandsImplementationBuilder(injector),
                     new MyInternalCommandsImplementationsBuilder(),
-                    new MyReplCommandsImplementationsBuilder()
-            );
+                    new MyReplCommandsImplementationsBuilder());
         }
+
     }
-    
+
     static class MyAdminCommandsImplementationBuilder extends AdminCommandsImplementationsBuilder<WriteMongodTransaction> {
+
+        private final ReplicationFilters replicationFilters;
+        
+        public MyAdminCommandsImplementationBuilder(Injector injector) {
+            replicationFilters = injector.getInstance(ReplicationFilters.class);
+        }
 
         @Override
         public CommandImplementation<CollModArgument, CollModResult, ? super WriteMongodTransaction> getCollModImplementation() {
@@ -140,17 +132,17 @@ public class WriteTransactionImplementations {
 
         @Override
         public CommandImplementation<Empty, Empty, WriteMongodTransaction> getDropDatabaseImplementation() {
-            return new DropDatabaseImplementation();
+            return new ReplImplToCommandImplementationAdapter<>(new DropDatabaseReplImpl());
         }
 
         @Override
         public CommandImplementation<CollectionCommandArgument, Empty, WriteMongodTransaction> getDropCollectionImplementation() {
-            return new DropCollectionImplementation();
+            return new ReplImplToCommandImplementationAdapter<>(new DropCollectionReplImpl());
         }
 
         @Override
         public CommandImplementation<CreateCollectionArgument, Empty, WriteMongodTransaction> getCreateCollectionImplementation() {
-            return new CreateCollectionImplementation();
+            return new ReplImplToCommandImplementationAdapter<>(new CreateCollectionReplImpl());
         }
 
         @Override
@@ -160,12 +152,12 @@ public class WriteTransactionImplementations {
 
         @Override
         public CommandImplementation<CreateIndexesArgument, CreateIndexesResult, WriteMongodTransaction> getCreateIndexesImplementation() {
-            return new CreateIndexesImplementation();
+            return new ReplImplToCommandImplementationAdapter<>(new CreateIndexesReplImpl(replicationFilters));
         }
 
         @Override
         public CommandImplementation<DropIndexesArgument, DropIndexesResult, ? super WriteMongodTransaction> getDropIndexesImplementation() {
-            return new DropIndexesImplementation();
+            return new ReplImplToCommandImplementationAdapter<>(new DropIndexesReplImpl());
         }
 
         @Override
@@ -353,5 +345,21 @@ public class WriteTransactionImplementations {
             return NotImplementedCommandImplementation.build();
         }
 
+    }
+    
+    private static class ReplImplToCommandImplementationAdapter<Arg, Result> implements CommandImplementation<Arg, Result, WriteMongodTransaction> {
+        
+        private final ReplCommandImpl<Arg, Result> replCommand;
+        
+        public ReplImplToCommandImplementationAdapter(ReplCommandImpl<Arg, Result> replCommand) {
+            super();
+            this.replCommand = replCommand;
+        }
+
+        @Override
+        public Status<Result> apply(Request req, Command<? super Arg, ? super Result> command, Arg arg,
+                WriteMongodTransaction context) {
+            return replCommand.apply(req, command, arg, context.getTorodTransaction());
+        }
     }
 }
