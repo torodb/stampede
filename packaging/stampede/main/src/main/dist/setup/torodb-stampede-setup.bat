@@ -178,8 +178,8 @@ if "%POSTGRES_HOST%" == "localhost" (
     echo host    %POSTGRES_DATABASE%           %POSTGRES_USER%          ::1/128                 md5
     echo host    %POSTGRES_DATABASE%           %POSTGRES_USER%          127.0.0.1/32            md5
 ) else (
-    echo host    %POSTGRES_DATABASE%           %POSTGRES_USER%          <this machine IPv6>     md5
-    echo host    %POSTGRES_DATABASE%           %POSTGRES_USER%          <this machine IP>       md5
+    echo host    %POSTGRES_DATABASE%           %POSTGRES_USER%          <PostgreSQL's machine IPv6>     md5
+    echo host    %POSTGRES_DATABASE%           %POSTGRES_USER%          <PostgreSQL's machine IP>       md5
 )
 echo 
 echo ...and then restart PostgreSQL server 
