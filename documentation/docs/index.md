@@ -4,11 +4,11 @@ Connected to a MongoDB replica set, ToroDB Stampede is able to replicate the NoS
 
 ![ToroDB Stampede Structure](images/toro_stampede_structure.jpg)
 
-Existen algunas soluciones que hacen tareas similares usando el soporte JSON de PostgreSQL, pero siguen teniendo problemas a la hora de utilizar los datos y extraer información de ellos. Lo que hace ToroDB Stampede es replicar la estructura del documento en tablas relacionales y luego almancenar las tuplas de datos correspondientes al documento en esas tablas.
+There are other solutions that are able to store the JSON document in a relational table using PostgreSQL JSON support, but it doesn't solve the real problem of 'how to really use that data'. ToroDB Stampede replicates the document structure in different relational tables and stores the document data in different tuples using those tables.
 
 ![Mapping example](images/toro_stampede_mapping.jpg)
 
-Teniendo esta estructura relacional se evitan ciertos problemas de las soluciones NoSQL, como por ejemplo la realización de queries agregadas en un tiempo aceptable.
+With the relational structure, some given problems from NoSQL solutions are easier to solve, such as aggregated query execution in an admissible time.
 
 # ToroDB Stampede limitations
 
