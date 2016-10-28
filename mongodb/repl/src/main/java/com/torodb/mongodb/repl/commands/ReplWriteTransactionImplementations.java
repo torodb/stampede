@@ -79,6 +79,12 @@ import com.torodb.mongodb.core.MongodMetrics;
 import com.torodb.mongodb.core.WriteMongodTransaction;
 import com.torodb.mongodb.language.ObjectIdFactory;
 import com.torodb.mongodb.repl.ReplicationFilters;
+import com.torodb.mongodb.repl.commands.impl.CreateCollectionReplImpl;
+import com.torodb.mongodb.repl.commands.impl.CreateIndexesReplImpl;
+import com.torodb.mongodb.repl.commands.impl.DropCollectionReplImpl;
+import com.torodb.mongodb.repl.commands.impl.DropDatabaseReplImpl;
+import com.torodb.mongodb.repl.commands.impl.DropIndexesReplImpl;
+import com.torodb.mongodb.repl.commands.impl.ReplCommandImpl;
 
 /**
  *

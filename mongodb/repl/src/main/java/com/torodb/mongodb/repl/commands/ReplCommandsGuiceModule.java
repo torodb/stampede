@@ -22,6 +22,14 @@ package com.torodb.mongodb.repl.commands;
 
 import com.google.inject.PrivateModule;
 import com.google.inject.Singleton;
+import com.torodb.mongodb.repl.commands.impl.CreateCollectionReplImpl;
+import com.torodb.mongodb.repl.commands.impl.CreateIndexesReplImpl;
+import com.torodb.mongodb.repl.commands.impl.DropCollectionReplImpl;
+import com.torodb.mongodb.repl.commands.impl.DropDatabaseReplImpl;
+import com.torodb.mongodb.repl.commands.impl.DropIndexesReplImpl;
+import com.torodb.mongodb.repl.commands.impl.LogAndIgnoreReplImpl;
+import com.torodb.mongodb.repl.commands.impl.LogAndStopReplImpl;
+import com.torodb.mongodb.repl.commands.impl.RenameCollectionReplImpl;
 
 /**
  *

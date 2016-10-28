@@ -74,6 +74,8 @@ import com.torodb.mongodb.commands.ExclusiveWriteTransactionImplementations;
 import com.torodb.mongodb.commands.impl.NotImplementedCommandImplementation;
 import com.torodb.mongodb.core.ExclusiveWriteMongodTransaction;
 import com.torodb.mongodb.repl.ReplicationFilters;
+import com.torodb.mongodb.repl.commands.impl.ExclusiveReplCommandImpl;
+import com.torodb.mongodb.repl.commands.impl.RenameCollectionReplImpl;
 
 /**
  *

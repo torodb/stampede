@@ -18,7 +18,7 @@
  *     
  */
 
-package com.torodb.mongodb.repl.commands;
+package com.torodb.mongodb.repl.commands.impl;
 
 import java.util.ArrayList;
 import java.util.Arrays;
