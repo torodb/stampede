@@ -82,7 +82,7 @@ did  |  rid  | seq | zipcode_s | coord_e |                street_s              
 
 ### primer_address_coord
 
-La tabla `primer_address_coord` es un caso especial, al igual que `primer_grades`, porque es un path que referencia a un array, por esta razón la columna `seq` posee valores que indican la posición del elemento en el array. Para comprender mejor las columnas de metadatos utilizadas en las tablas se puede leer el apartado de [metada](advanced.md#metadata).
+La tabla `primer_address_coord` es un caso especial, al igual que `primer_grades`, porque es un path que referencia a un array, por esta razón la columna `seq` posee valores que indican la posición del elemento en el array. Para comprender mejor las columnas de metadatos utilizadas en las tablas se puede leer el apartado de [metada](how-to-use.md#metadata).
 
 ```
 did  |  rid  |  pid  | seq |     v_d      
@@ -156,7 +156,7 @@ did  |  rid  | seq |         date_g         | score_i |    grade_s     | score_n
 [TODO]: <> (Explicar los posibles valores de los campos tipo e)
 [TODO]: <> (Revisar que estén todos los tipos de datos ... BINARY, BOOLEAN, DATE, DOUBLE, INSTANT, INTEGER, LONG, MONGO_OBJECT_ID, MONGO_TIME_STAMP, NULL, STRING, TIME, CHILD)
 
-Como se puede observar en los extractos de las tablas creadas, los nombres de columnas incluyen un postfijo, que indica el tipo de dato. Como en JSON no hay restricciones a la hora de asignar valores a un campo, pero en un backend relacional sí, se ha decidido crear una columna para cada tipo de dato diferente asignado al mismo path (ver la sección [Data conflict resolution](advanced.md#data-conflict-resolution)).
+Como se puede observar en los extractos de las tablas creadas, los nombres de columnas incluyen un postfijo, que indica el tipo de dato. Como en JSON no hay restricciones a la hora de asignar valores a un campo, pero en un backend relacional sí, se ha decidido crear una columna para cada tipo de dato diferente asignado al mismo path (ver la sección [Data conflict resolution](how-to-use.md#data-conflict-resolution)).
 
 Los diferentes tipos de datos que maneja ToroDB Stampede se representan en la siguiente tabla.
 

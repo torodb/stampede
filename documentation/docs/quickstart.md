@@ -87,4 +87,4 @@ torod=# \d
 (4 rows)
 ```
 
-Para entender mejor como se realiza el mapeo de documentos JSON a tablas en una base de datos relacional, se puede consultar el siguiente [enlace](advanced.md) de la documentación.
+Para entender mejor como se realiza el mapeo de documentos JSON a tablas en una base de datos relacional, se puede consultar el siguiente [enlace](how-to-use.md) de la documentación.
