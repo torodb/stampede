@@ -12,23 +12,21 @@ With the relational structure, some given problems from NoSQL solutions are easi
 
 # ToroDB Stampede limitations
 
-No todo podía ser perfecto, y hay una serie de limitaciones conocidas de ToroDB Stampede.
+Not everything could be perfect and there are some known limitations from ToroDB Stampede.
 
-* Actualmente la versión soportada de MongoDB es la 3.2.
-* No está soportado el uso de [capped collections](https://docs.mongodb.com/manual/core/capped-collections/).
-* Si se hace uso del caracter `\0` se escapará debido a que PostgreSQL no soporta el uso de dicho caracter dentro de una cadena de texto.
-* Si se recibe el comando `applyOps` se para el servidor de replicación.
-* Si se recibe el comando `collmod` este será ignorado.
-* Actualmente no está soportado el uso de índices.
-* Actualmente no está soportado el uso en entornos de MongoDB configurados con sharding.
-* No se soportan ciertos operandos de update.
+* The only current MongoDB version supported is 3.2.
+* [Capped collections](https://docs.mongodb.com/manual/core/capped-collections/) usage is not supported.
+* If character `\0` is used in a string it will be escaped because PostgreSQL doesn't support it.
+* Command `applyOps` reception will stop the replication server.
+* Command `collmod` reception will be ignored.
+* Indexed are not supported currently.
+* MongoDB sharding environment are not supported currently.
 
-[TODO]: <> (no sabemos si por el oplog llegan los operandos de update que no soportamos)
-[TODO]: <> (tipos no soportados, hay que hacer una lista)
+[TODO]: <> (not supported types, we need a list)
 
-[Versions]: <> (Esta sección no tiene sentido ahora mismo)
+[Versions]: <> (this section doesn't make any sense currently)
 
-# Documentation conventions
+[Documentation conventions]: <> (we have no time right now for this section)
 
 # Glossary
 
