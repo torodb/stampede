@@ -1,7 +1,7 @@
 site_name: ToroDB Stampede
 theme: readthedocs
 pages:
-- About: index.md
+- 'About': index.md
 - 'Quickstart': quickstart.md
 - 'Installation and configuration': installation.md
 - 'How to use?': how-to-use.md
