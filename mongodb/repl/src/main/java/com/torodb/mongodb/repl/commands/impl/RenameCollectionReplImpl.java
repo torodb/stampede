@@ -60,7 +60,7 @@ public class RenameCollectionReplImpl extends ExclusiveReplCommandImpl<RenameCol
                 }
                 
                 LOGGER.info("Can not rename operation for filtered target collection {}.{}. "
-                        + "Deleting source collection {}.{}.", 
+                        + "Dropping source collection {}.{}.", 
                         arg.getToDatabase(), arg.getToCollection(),
                         arg.getFromDatabase(), arg.getFromCollection());
                 if (trans.existsCollection(arg.getFromDatabase(), arg.getFromCollection())) {
@@ -90,7 +90,11 @@ public class RenameCollectionReplImpl extends ExclusiveReplCommandImpl<RenameCol
                 return Status.ok();
             }
             
-            trans.renameCollection(arg.getFromDatabase(), arg.getFromCollection(), arg.getToDatabase(), arg.getToCollection());
+            LOGGER.info("Renaming collection {}.{} to {}.{}", arg.getFromDatabase(), arg.getFromCollection(), 
+                    arg.getToDatabase(), arg.getToCollection());
+            
+            trans.renameCollection(arg.getFromDatabase(), arg.getFromCollection(), 
+                    arg.getToDatabase(), arg.getToCollection());
         } catch (UserException ex) {
             return Status.from(ErrorCode.COMMAND_FAILED, ex.getLocalizedMessage());
         }
