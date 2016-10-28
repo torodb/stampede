@@ -5,8 +5,7 @@ pages:
 - 'Introduction to ToroDB Stampede': intro.md
 - 'Quickstart': quickstart.md
 - 'Installation and configuration': installation.md
-- 'ToroDB Stampede consistency': consistency.md
-- 'Advanced concepts': advanced.md
+- 'How to use?': how-to-use.md
 - 'BI Connectors': bi-connectors.md
 - 'A real application': real-app.md
-- 'Glossary': glossary.md
+- 'Appendix': appendix.md

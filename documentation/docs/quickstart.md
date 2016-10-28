@@ -1,6 +1,4 @@
-# Quickstart
-
-## Requisitos previos
+# Previous requirements
 
 Para el correcto funcionamiento de ToroDB Stampede serán necesarios una serie de requisitos previos:
 
@@ -10,7 +8,7 @@ Para el correcto funcionamiento de ToroDB Stampede serán necesarios una serie d
 
 En caso de que no se cumpla alguno de los requisitos, se puede encontrar más documentación al respecto en el siguiente [enlace](installation.md) de la documentación.
 
-## Configuración del backend
+# Backend configuration
 
 Para poder hacer la replicación de forma correcta, ToroDB Stampede necesita un backend correctamente configurado. Es decir, una base de datos que haga de motor de persistencia de los datos que se desean replicar, en este caso PostgreSQL.
 
@@ -33,7 +31,7 @@ Ahora ya se puede acceder a la nueva base de datos que se ha creado, que será l
 $ sudo -u torodb psql torod
 ```
 
-## Arrancar el binario de ToroDB Stampede
+# How to execute ToroDB Stampede binary distribution?
 
 Para ejecutar ToroDB Stampede bastará con descargar el fichero binario de la siguiente [URL](https://www.dropbox.com/s/54eyp7jyu8l70aa/torodb-stampede-0.50.0-SNAPSHOT.tar.bz2?dl=0), descomprimirlo y ejecutarlo pasándole como argumento un fichero con la configuración de PostgreSQL.
 
@@ -55,7 +53,7 @@ $ torodb-stampede-<version>/bin/torodb-stampede --toropass-file <postgres-creden
 
 Ahora deberíamos tener ToroDB Stampede activo y replicando las operaciones que se realicen contra MongoDB.
 
-## Ejemplo de mapeo
+# Replication example
 
 Para entender mejor el funcionamiento de Stampede, vamos a hacer un pequeño ejercicio. Importaremos una colección en MongoDB y veremos como los datos quedan replicados en PostgreSQL haciendo uso de Stampede.
 
