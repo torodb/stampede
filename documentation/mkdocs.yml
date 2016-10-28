@@ -5,4 +5,5 @@ pages:
 - 'Quickstart': quickstart.md
 - 'Installation and configuration': installation.md
 - 'How to use?': how-to-use.md
+- 'FAQ': faq.md
 - 'Appendix': appendix.md
