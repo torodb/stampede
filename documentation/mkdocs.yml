@@ -2,10 +2,7 @@ site_name: ToroDB Stampede
 theme: readthedocs
 pages:
 - About: index.md
-- 'Introduction to ToroDB Stampede': intro.md
 - 'Quickstart': quickstart.md
 - 'Installation and configuration': installation.md
 - 'How to use?': how-to-use.md
-- 'BI Connectors': bi-connectors.md
-- 'A real application': real-app.md
 - 'Appendix': appendix.md
