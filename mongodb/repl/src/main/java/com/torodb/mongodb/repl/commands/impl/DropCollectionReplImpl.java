@@ -47,7 +47,7 @@ public class DropCollectionReplImpl extends ReplCommandImpl<CollectionCommandArg
             SharedWriteTorodTransaction trans) {
 
         try {
-            LOGGER.info("Drop collection {}", arg.getCollection());
+            LOGGER.info("Dropping collection {}.{}", req.getDatabase(), arg.getCollection());
 
             if (trans.existsCollection(req.getDatabase(), arg.getCollection())) {
                 trans.dropCollection(req.getDatabase(), arg.getCollection());

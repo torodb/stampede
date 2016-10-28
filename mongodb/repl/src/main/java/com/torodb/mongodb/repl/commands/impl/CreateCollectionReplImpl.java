@@ -55,6 +55,8 @@ public class CreateCollectionReplImpl extends ReplCommandImpl<CreateCollectionAr
             SharedWriteTorodTransaction trans) {
 
         try {
+            LOGGER.info("Creating collection {}.{}", req.getDatabase(), arg.getCollection());
+            
             if (!trans.existsCollection(req.getDatabase(), arg.getCollection())) {
                 trans.createIndex(
                         req.getDatabase(),

@@ -91,10 +91,9 @@ public class DropIndexesReplImpl extends ReplCommandImpl<DropIndexesArgument, Dr
         }
         
         for (String indexToDrop : indexesToDrop) {
-            boolean dropped = trans.dropIndex(
-                    req.getDatabase(),
-                    arg.getCollection(),
-                    indexToDrop
+            LOGGER.info("Dropping index {} on collection {}.{}", req.getDatabase(), arg.getCollection(), indexToDrop);
+
+            boolean dropped = trans.dropIndex(req.getDatabase(), arg.getCollection(), indexToDrop
             );
             if (!dropped) {
                 LOGGER.info("Trying to drop index {}, but it has not been "
