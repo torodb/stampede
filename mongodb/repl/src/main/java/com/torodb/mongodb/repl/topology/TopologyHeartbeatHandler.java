@@ -217,6 +217,8 @@ public class TopologyHeartbeatHandler extends IdleTorodbService {
                     LOGGER.trace("Rescheduling a new heartbeat to {} on {}",
                             target, POST_ERROR_HB_DELAY);
                     scheduleHeartbeatToTarget(target, POST_ERROR_HB_DELAY);
+                } else {
+                    stopAsync();
                 }
             }
             return null;
@@ -234,6 +236,8 @@ public class TopologyHeartbeatHandler extends IdleTorodbService {
         if (errorHandler.sendHeartbeatError(t)) {
             LOGGER.trace("Rescheduling a new heartbeat to {} on {}", target, POST_ERROR_HB_DELAY);
             scheduleHeartbeatToTarget(target, POST_ERROR_HB_DELAY);
+        } else {
+            stopAsync();
         }
     }
 

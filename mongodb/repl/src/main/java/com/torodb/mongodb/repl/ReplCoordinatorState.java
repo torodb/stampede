@@ -20,13 +20,29 @@
 
 package com.torodb.mongodb.repl;
 
-import com.torodb.core.supervision.Supervisor;
-
 /**
  *
  */
-public interface ReplicationErrorHandler extends Supervisor {
+public enum ReplCoordinatorState {
 
-    public void onTopologyError(Throwable t);
+    /**
+     * The replication coordinator is not started yet.
+     */
+    STARTUP,
+    /**
+     * Replication coordinator is on recovery mode.
+     */
+    RECOVERY,
+    /**
+     * Replication coordinator is on secondary mode.
+     */
+    SECONDARY,
+    /**
+     * Replication coordinator is not an active mode (it is initating or
+     * transiting to another state).
+     */
+    IDLE,
+    ERROR,
+    TERMINATED;
 
 }

@@ -1,37 +1,22 @@
 
 package com.torodb.mongodb.repl.guice;
 
-import java.time.Duration;
-
-import javax.inject.Singleton;
-
 import com.eightkdata.mongowp.client.core.CachedMongoClientFactory;
 import com.eightkdata.mongowp.client.wrapper.MongoClientConfiguration;
 import com.google.common.net.HostAndPort;
+import com.google.inject.Key;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provides;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.torodb.core.supervision.Supervisor;
 import com.torodb.mongodb.core.MongodServer;
 import com.torodb.mongodb.guice.MongoLayerModule;
-import com.torodb.mongodb.repl.OplogManager;
-import com.torodb.mongodb.repl.OplogReaderProvider;
-import com.torodb.mongodb.repl.RecoveryService;
-import com.torodb.mongodb.repl.ReplCoordinator;
-import com.torodb.mongodb.repl.ReplMetrics;
-import com.torodb.mongodb.repl.ReplicationErrorHandler;
-import com.torodb.mongodb.repl.ReplicationFilters;
+import com.torodb.mongodb.repl.*;
 import com.torodb.mongodb.repl.commands.ReplCommandImplementionsModule;
 import com.torodb.mongodb.repl.commands.ReplCommandsGuiceModule;
 import com.torodb.mongodb.repl.impl.MongoOplogReaderProvider;
-import com.torodb.mongodb.repl.impl.ReplicationErrorHandlerImpl;
-import com.torodb.mongodb.repl.oplogreplier.DefaultOplogApplier;
 import com.torodb.mongodb.repl.oplogreplier.DefaultOplogApplier.BatchLimits;
-import com.torodb.mongodb.repl.oplogreplier.DefaultOplogApplierService;
-import com.torodb.mongodb.repl.oplogreplier.OplogApplier;
-import com.torodb.mongodb.repl.oplogreplier.OplogApplierMetrics;
-import com.torodb.mongodb.repl.oplogreplier.OplogApplierService;
-import com.torodb.mongodb.repl.oplogreplier.OplogOperationApplier;
+import com.torodb.mongodb.repl.oplogreplier.*;
 import com.torodb.mongodb.repl.oplogreplier.analyzed.AnalyzedOpReducer;
 import com.torodb.mongodb.repl.oplogreplier.batch.AnalyzedOplogBatchExecutor;
 import com.torodb.mongodb.repl.oplogreplier.batch.BatchAnalyzer;
@@ -44,6 +29,8 @@ import com.torodb.mongodb.repl.topology.TopologyGuiceModule;
 import com.torodb.mongodb.repl.topology.TopologyService;
 import com.torodb.mongodb.utils.DbCloner;
 import com.torodb.mongodb.utils.cloner.CommitHeuristic;
+import java.time.Duration;
+import javax.inject.Singleton;
 
 /**
  *
@@ -51,11 +38,11 @@ import com.torodb.mongodb.utils.cloner.CommitHeuristic;
 public class MongoDbReplModule extends PrivateModule {
 
     private final MongodbReplConfig config;
-    private final Supervisor replSupervisor;
+    private final Supervisor parentSupervisor;
 
     public MongoDbReplModule(MongodbReplConfig config, Supervisor replSupervisor) {
         this.config = config;
-        this.replSupervisor = replSupervisor;
+        this.parentSupervisor = replSupervisor;
     }
 
     @Override
@@ -67,6 +54,8 @@ public class MongoDbReplModule extends PrivateModule {
         bind(ReplCoordinator.class)
                 .in(Singleton.class);
         bind(OplogManager.class)
+                .in(Singleton.class);
+        bind(ReplCoordinatorStateMachine.class)
                 .in(Singleton.class);
 
         install(new MongoClientWrapperModule());
@@ -95,7 +84,9 @@ public class MongoDbReplModule extends PrivateModule {
 
         bind(DbCloner.class)
                 .annotatedWith(MongoDbRepl.class)
-                .toProvider(AkkaDbClonerProvider.class);
+                .toProvider(AkkaDbClonerProvider.class)
+                .in(Singleton.class);
+        expose(Key.get(DbCloner.class, MongoDbRepl.class));
 
         bind(OplogApplier.class)
                 .to(DefaultOplogApplier.class)
@@ -135,14 +126,7 @@ public class MongoDbReplModule extends PrivateModule {
                 .toInstance(new AnalyzedOpReducer(false));
 
         install(new TopologyGuiceModule());
-
-        bind(ReplicationErrorHandler.class)
-                .to(ReplicationErrorHandlerImpl.class)
-                .in(Singleton.class);
-
-        bind(Supervisor.class)
-                .annotatedWith(MongoDbRepl.class)
-                .to(ReplicationErrorHandler.class);
+        
         bind(MongodbReplConfig.class)
                 .toInstance(config);
 
@@ -162,6 +146,11 @@ public class MongoDbReplModule extends PrivateModule {
         
         install(new MongoLayerModule(new ReplCommandImplementionsModule()));
         expose(MongodServer.class);
+    }
+
+    @Provides @MongoDbRepl
+    Supervisor getReplSupervisor() {
+        return parentSupervisor;
     }
 
     @Provides

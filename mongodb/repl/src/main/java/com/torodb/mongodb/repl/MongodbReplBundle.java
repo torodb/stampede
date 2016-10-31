@@ -21,6 +21,7 @@
 package com.torodb.mongodb.repl;
 
 import com.eightkdata.mongowp.client.core.CachedMongoClientFactory;
+import com.google.common.base.Preconditions;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.torodb.core.annotations.TorodbIdleService;
@@ -36,8 +37,10 @@ import org.apache.logging.log4j.Logger;
 import com.torodb.core.modules.Bundle;
 import com.torodb.core.supervision.SupervisorDecision;
 import com.torodb.mongodb.core.MongodServer;
+import com.torodb.mongodb.repl.guice.MongoDbRepl;
 import com.torodb.mongodb.repl.guice.MongoDbReplModule;
 import com.torodb.mongodb.repl.guice.MongodbReplConfig;
+import com.torodb.mongodb.utils.DbCloner;
 
 /**
  *
@@ -52,6 +55,7 @@ public class MongodbReplBundle extends AbstractBundle {
     private final OplogManager oplogManager;
     private final MongodServer mongodServer;
     private final CachedMongoClientFactory cachedMongoClientFactory;
+    private final DbCloner dbCloner;
 
     public MongodbReplBundle(TorodBundle torodBundle, Supervisor supervisor,
             MongodbReplConfig config, Injector injector) {
@@ -72,7 +76,7 @@ public class MongodbReplBundle extends AbstractBundle {
         this.oplogManager = replInjector.getInstance(OplogManager.class);
         this.mongodServer = replInjector.getInstance(MongodServer.class);
         this.cachedMongoClientFactory = replInjector.getInstance(CachedMongoClientFactory.class);
-        
+        this.dbCloner = replInjector.getInstance(Key.get(DbCloner.class, MongoDbRepl.class));
     }
 
     @Override
@@ -88,7 +92,11 @@ public class MongodbReplBundle extends AbstractBundle {
         topologyService.awaitRunning();
         oplogManager.awaitRunning();
 
-        replCoordinator.start().join();
+        dbCloner.startAsync();
+        dbCloner.awaitRunning();
+
+        replCoordinator.startAsync();
+        replCoordinator.awaitRunning();
 
         LOGGER.info("Replication service started");
     }
@@ -98,12 +106,32 @@ public class MongodbReplBundle extends AbstractBundle {
         LOGGER.info("Shutting down replication service");
 
         LOGGER.debug("Shutting down replication layer");
-        replCoordinator.stop().join();
+        try {
+            replCoordinator.stopAsync();
+            replCoordinator.awaitTerminated();
+        } catch (IllegalStateException ex) {
+            Preconditions.checkState(!replCoordinator.isRunning(),
+                    "It was expected that {} was not running", replCoordinator);
+        }
+
+        dbCloner.stopAsync();
+        dbCloner.awaitTerminated();
+
         oplogManager.stopAsync();
         topologyService.stopAsync();
 
-        oplogManager.awaitTerminated();
-        topologyService.awaitTerminated();
+        try {
+            oplogManager.awaitTerminated();
+        } catch (IllegalStateException ex) {
+            Preconditions.checkState(!oplogManager.isRunning(),
+                    "It was expected that {} was not running", replCoordinator);
+        }
+        try {
+            topologyService.awaitTerminated();
+        } catch (IllegalStateException ex) {
+            Preconditions.checkState(!topologyService.isRunning(),
+                    "It was expected that {} was not running", replCoordinator);
+        }
 
         LOGGER.debug("Replication layer has been shutted down");
 
@@ -113,7 +141,11 @@ public class MongodbReplBundle extends AbstractBundle {
         cachedMongoClientFactory.invalidateAll();
         LOGGER.debug("Remote connections have been closed");
 
-        mongodServer.awaitTerminated();
+        try {
+            mongodServer.awaitTerminated();
+        } catch (IllegalStateException ex) {
+            Preconditions.checkState(!mongodServer.isRunning(), "It was expected that {} was not running", replCoordinator);
+        }
 
         LOGGER.info("Replication service shutted down");
     }
@@ -127,7 +159,7 @@ public class MongodbReplBundle extends AbstractBundle {
         return mongodServer;
     }
 
-    private static class ReplSupervisor implements Supervisor {
+    private class ReplSupervisor implements Supervisor {
 
         private final Supervisor supervisor;
 
@@ -137,9 +169,12 @@ public class MongodbReplBundle extends AbstractBundle {
 
         @Override
         public SupervisorDecision onError(Object supervised, Throwable error) {
-            LOGGER.error("Cached an error on the replication layer. Escalating it");
-            supervisor.onError(this, error);
-            return SupervisorDecision.STOP;
+            LOGGER.error("Catched an error on the replication layer. Escalating it");
+            SupervisorDecision decision = supervisor.onError(this, error);
+            if (decision == SupervisorDecision.STOP) {
+                MongodbReplBundle.this.stopAsync();
+            }
+            return decision;
         }
     }
 }

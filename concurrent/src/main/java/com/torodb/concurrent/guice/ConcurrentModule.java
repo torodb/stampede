@@ -1,6 +1,7 @@
 
 package com.torodb.concurrent.guice;
 
+import com.torodb.concurrent.ExecutorServiceShutdownHelper;
 import com.google.inject.PrivateModule;
 import com.google.inject.Singleton;
 import com.torodb.concurrent.DefaultConcurrentToolsFactory;
@@ -19,6 +20,7 @@ public class ConcurrentModule extends PrivateModule {
         expose(ConcurrentToolsFactory.class);
 
         bind(ExecutorServiceShutdownHelper.class);
+        expose(ExecutorServiceShutdownHelper.class);
     }
 
 }

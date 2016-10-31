@@ -64,6 +64,8 @@ public class ConcurrentOplogBatchExecutor extends AnalyzedOplogBatchExecutor {
             ConcurrentOplogBatchExecutorMetrics concurrentMetrics, SubBatchHeuristic subBatchHeuristic) {
         super(concurrentMetrics, oplogOperationApplier, server, retrier, namespaceJobExecutor);
         this.streamExecutor = concurrentToolsFactory.createStreamExecutor("concurrent-oplog-batch-executor", true);
+        this.streamExecutor.startAsync();
+        this.streamExecutor.awaitRunning();
         this.concurrentMetrics = concurrentMetrics;
         this.subBatchHeuristic = subBatchHeuristic;
     }

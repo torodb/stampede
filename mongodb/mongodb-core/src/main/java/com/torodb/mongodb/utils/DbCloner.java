@@ -11,12 +11,18 @@ import com.eightkdata.mongowp.exceptions.MongoException;
 import com.eightkdata.mongowp.exceptions.NotMasterException;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.index.IndexOptions;
 import com.google.common.base.Supplier;
+import com.google.common.util.concurrent.Service;
 import com.torodb.core.exceptions.ToroRuntimeException;
 import com.torodb.mongodb.core.MongodServer;
 
-public interface DbCloner {
+public interface DbCloner extends Service {
+    
     /**
      *
+     * @param dstDb
+     * @param remoteClient
+     * @param localServer
+     * @param opts
      * @throws CloningException
      * @throws NotMasterException if {@link CloneOptions#getWritePermissionSupplier()
      *                            opts.getWritePermissionSupplier().get()} is

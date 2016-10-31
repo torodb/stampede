@@ -17,6 +17,7 @@ import com.torodb.core.dsl.backend.BackendTransactionJobFactory;
 import com.torodb.core.exceptions.SystemException;
 import com.torodb.core.exceptions.SystemInterruptedException;
 import com.torodb.core.exceptions.user.UserException;
+import com.torodb.core.services.IdleTorodbService;
 import com.torodb.core.transaction.RollbackException;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MutableMetaCollection;
@@ -26,29 +27,70 @@ import com.torodb.torod.pipeline.DefaultToBackendFunction;
 import com.torodb.torod.pipeline.InsertPipeline;
 import com.torodb.torod.pipeline.InsertPipelineFactory;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ThreadFactory;
 import java.util.stream.Stream;
 import javax.inject.Inject;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import scala.concurrent.Await;
+import scala.concurrent.duration.Duration;
 
 /**
  *
  */
-public class AkkaInsertPipelineFactory implements InsertPipelineFactory {
+public class AkkaInsertPipelineFactory extends IdleTorodbService
+        implements InsertPipelineFactory {
 
-    private final Materializer materializer;
+    private static final Logger LOGGER
+            = LogManager.getLogger(AkkaInsertPipelineFactory.class);
+    private final ConcurrentToolsFactory concurrentToolsFactory;
+    private ActorSystem actorSystem;
+    private Materializer materializer;
     private final BackendTransactionJobFactory factory;
     private final int docBatch;
+    private ExecutorService executorService;
 
     @Inject
-    public AkkaInsertPipelineFactory(ConcurrentToolsFactory concurrentToolsFactory,
+    public AkkaInsertPipelineFactory(ThreadFactory threadFactory,
+            ConcurrentToolsFactory concurrentToolsFactory,
             BackendTransactionJobFactory factory, int docBatch) {
-        ActorSystem actorSystem = ActorSystem.create("insert-pipeline", null, null,
-                ExecutionContexts.fromExecutor(
-                        concurrentToolsFactory.createExecutorService("insert-pipeline", true)
-                )
-        );
-        this.materializer = ActorMaterializer.create(ActorMaterializerSettings.create(actorSystem), actorSystem, "insert");
+        super(threadFactory);
+        this.concurrentToolsFactory = concurrentToolsFactory;
         this.factory = factory;
         this.docBatch = docBatch;
+    }
+
+    @Override
+    protected void startUp() throws Exception {
+        executorService = concurrentToolsFactory.createExecutorService(
+                "insert-pipeline",
+                true
+        );
+        actorSystem = ActorSystem.create("insert-pipeline", null, null,
+                ExecutionContexts.fromExecutor(executorService)
+        );
+        this.materializer = ActorMaterializer.create(
+                ActorMaterializerSettings.create(actorSystem),
+                actorSystem,
+                "insert"
+        );
+    }
+
+    @Override
+    protected void shutDown() throws Exception {
+        if (actorSystem != null) {
+            try {
+                Await.result(actorSystem.terminate(), Duration.Inf());
+            } catch (Exception ex) {
+                throw new RuntimeException("It was impossible to shutdown the "
+                        + "insert-pipeline actor system", ex);
+            }
+        }
+        if (executorService != null) {
+            executorService.shutdown();
+        }
+        LOGGER.debug("Insert pipeline actor system terminated");
     }
 
     @Override
@@ -56,7 +98,12 @@ public class AkkaInsertPipelineFactory implements InsertPipelineFactory {
             D2RTranslatorFactory translatorFactory,
             MetaDatabase metaDb,
             MutableMetaCollection mutableMetaCollection,
-            WriteBackendTransaction backendConnection) {
+            WriteBackendTransaction backendConnection,
+            boolean concurrent) {
+        if (!concurrent) {
+            LOGGER.debug("Akka insert pipeline has been used when concurrent "
+                    + "hint is marked as false. It will be ignored");
+        }
         return new AkkaInsertPipeline(translatorFactory, metaDb, mutableMetaCollection, backendConnection);
     }
 

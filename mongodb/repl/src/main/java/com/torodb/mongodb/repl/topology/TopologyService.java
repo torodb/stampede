@@ -102,7 +102,7 @@ public class TopologyService extends IdleTorodbService {
     protected void shutDown() throws Exception {
         LOGGER.info("Topology service shutted down");
 
-        heartbeatHandler.shutDown();
+        heartbeatHandler.stopAsync();
         heartbeatHandler.awaitTerminated();
     }
 

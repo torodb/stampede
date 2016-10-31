@@ -24,7 +24,9 @@ import com.google.inject.Exposed;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provides;
 import com.torodb.core.concurrent.ConcurrentToolsFactory;
+import com.torodb.core.supervision.Supervisor;
 import com.torodb.mongodb.repl.SyncSourceProvider;
+import com.torodb.mongodb.repl.guice.MongoDbRepl;
 import java.time.Clock;
 import java.time.Duration;
 import java.util.concurrent.ThreadFactory;
@@ -59,6 +61,11 @@ public class TopologyGuiceModule extends PrivateModule {
 
         bind(TopologySyncSourceProvider.class)
                 .in(Singleton.class);
+    }
+
+    @Provides @Topology
+    Supervisor getTopologySupervisor(@MongoDbRepl Supervisor replSupervisor) {
+        return replSupervisor;
     }
 
     @Provides @Singleton @Exposed

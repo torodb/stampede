@@ -31,13 +31,7 @@ public interface ConcurrentToolsFactory {
     
     public int getDefaultMaxThreads();
 
-    public StreamExecutor createStreamExecutor(ExecutorService executor, int maxThreads);
-
     public StreamExecutor createStreamExecutor(String prefix, boolean blockerTasks, int maxThreads);
-
-    public default StreamExecutor createStreamExecutor(ExecutorService executor) {
-        return ConcurrentToolsFactory.this.createStreamExecutor(executor, getDefaultMaxThreads());
-    }
 
     public default StreamExecutor createStreamExecutor(String prefix, boolean blockerTasks) {
         return ConcurrentToolsFactory.this.createStreamExecutor(prefix, blockerTasks, getDefaultMaxThreads());

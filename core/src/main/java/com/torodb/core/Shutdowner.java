@@ -22,10 +22,13 @@ package com.torodb.core;
 
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Service;
-import java.lang.ref.WeakReference;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.torodb.core.services.ExecutorTorodbService;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.*;
 import javax.annotation.concurrent.ThreadSafe;
+import javax.inject.Inject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -33,46 +36,111 @@ import org.apache.logging.log4j.Logger;
  *
  */
 @ThreadSafe
-public class Shutdowner implements AutoCloseable {
+public class Shutdowner extends ExecutorTorodbService<ExecutorService> {
 
     private static final Logger LOGGER = LogManager.getLogger(Shutdowner.class);
+    private boolean shuttingDown;
 
     @SuppressWarnings("rawtypes")
-    private final List<WeakReference<ShutdownCallback>> closeables = new ArrayList<>();
+    private final List<ShutdownCallback> closeCallbacks = new ArrayList<>();
 
-    public synchronized void addCloseShutdownListener(AutoCloseable autoCloseable) {
-        closeables.add(new WeakReference<>(new AutoCloseableShutdownCallback(autoCloseable)));
+    @Inject
+    public Shutdowner(ThreadFactory threadFactory) {
+        super(
+                threadFactory,
+                (ThreadFactory tf) -> {
+            return Executors.newSingleThreadExecutor(
+                    new ThreadFactoryBuilder()
+                            .setThreadFactory(tf)
+                            .setNameFormat("torodb-shutdowner-%d")
+                            .build()
+            );
+        });
     }
 
-    public synchronized void addStopShutdownListener(Service service) {
-        closeables.add(new WeakReference<>(new ServiceShutdownCallback(service)));
+    public CompletableFuture<Boolean> addCloseShutdownListener(
+            AutoCloseable autoCloseable) {
+        ShutdownCallback<AutoCloseable> callback =
+                new AutoCloseableShutdownCallback(autoCloseable);
+        return addShutdownCallback(callback);
     }
 
-    public synchronized <R> void addShutdownListener(R resource, ShutdownListener<R> shutdownListener) {
-        closeables.add(new WeakReference<>(new ShutdownListenerShutdownCallback<>(resource, shutdownListener)));
+    public CompletableFuture<Boolean> addStopShutdownListener(Service service) {
+        ShutdownCallback<Service> callback = new ServiceShutdownCallback(service);
+        return addShutdownCallback(callback);
     }
 
-    public synchronized void compact() {
-        closeables.removeIf(ref -> ref.get() == null);
+    public <R> CompletableFuture<Boolean> addShutdownListener(
+            R resource,
+            ShutdownListener<R> shutdownListener) {
+        ShutdownCallback<R> callback = new ShutdownListenerShutdownCallback<>(
+                resource,
+                shutdownListener);
+        return addShutdownCallback(callback);
     }
 
-    @SuppressWarnings("rawtypes")
+    private <R> CompletableFuture<Boolean> addShutdownCallback(
+            ShutdownCallback<R> callback) {
+        return execute(() -> _addShutdownCallback(callback))
+                .handle((result, throwable) -> {
+                    if (throwable != null) {
+                        return result;
+                    }
+                    if (throwable instanceof CancellationException) {
+                        executeCloseCallback(callback);
+                        return true;
+                    } else {
+                        if (throwable instanceof CompletionException) {
+                            throw (CompletionException) throwable;
+                        } else {
+                            throw new CompletionException(throwable);
+                        }
+                    }
+                });
+    }
+
+    private <R> boolean _addShutdownCallback(ShutdownCallback<R> callback) {
+        if (!shuttingDown) {
+            closeCallbacks.add(callback);
+            return true;
+        } else {
+            executeCloseCallback(callback);
+            return false;
+        }
+    }
+
     @Override
-    public synchronized void close() {
-        Lists.reverse(closeables).forEach(ref -> {
-            ShutdownCallback listener = ref.get();
-            if (listener != null) {
-                try {
-                    listener.onShutdown();
-                } catch (Throwable t) {
-                    LOGGER.error("Error while trying to notify the a shutdown", t);
-                }
+    protected void shutDown() throws Exception {
+        execute(this::_close).join();
+        super.shutDown();
+    }
+
+    @SuppressWarnings("rawtypes")
+    private void _close() {
+        shuttingDown = true;
+        Lists.reverse(closeCallbacks).forEach(closeCallback -> {
+            if (closeCallback != null) {
+                executeCloseCallback(closeCallback);
             }
         });
     }
 
+    private void executeCloseCallback(ShutdownCallback<?> callback) {
+        try {
+            LOGGER.debug("Shutting down {}", callback::describeResource);
+            callback.onShutdown();
+        } catch (Throwable t) {
+            LOGGER.error("Error while trying to shutdown the resource "
+                    + callback.getResource(), t);
+        }
+    }
+
     public static interface ShutdownListener<E> {
         public void onShutdown(E e) throws Exception;
+
+        public default String describeResource(E resource) {
+            return resource.toString();
+        }
     }
 
     public static abstract class ShutdownCallback<E> {
@@ -81,6 +149,8 @@ public class Shutdowner implements AutoCloseable {
         public ShutdownCallback(E resource) {
             this.resource = resource;
         }
+
+        public abstract String describeResource();
 
         public E getResource() {
             return resource;
@@ -92,9 +162,15 @@ public class Shutdowner implements AutoCloseable {
     private static class ShutdownListenerShutdownCallback<E> extends ShutdownCallback<E> {
         private final ShutdownListener<E> listener;
 
-        public ShutdownListenerShutdownCallback(E resource, ShutdownListener<E> listener) {
+        public ShutdownListenerShutdownCallback(E resource,
+                ShutdownListener<E> listener) {
             super(resource);
             this.listener = listener;
+        }
+
+        @Override
+        public String describeResource() {
+            return listener.describeResource(getResource());
         }
 
         @Override
@@ -108,11 +184,20 @@ public class Shutdowner implements AutoCloseable {
         public ServiceShutdownCallback(Service resource) {
             super(resource);
         }
+
+        @Override
+        public String describeResource() {
+            return getResource() + " service";
+        }
         
         @Override
         public void onShutdown() throws Exception {
             getResource().stopAsync();
-            getResource().awaitTerminated();
+            try {
+                getResource().awaitTerminated();
+            } catch (IllegalStateException ex) {
+                LOGGER.warn(getResource() + " failed before it can be stopped", ex);
+            }
         }
     }
 
@@ -120,6 +205,11 @@ public class Shutdowner implements AutoCloseable {
 
         public AutoCloseableShutdownCallback(AutoCloseable resource) {
             super(resource);
+        }
+
+        @Override
+        public String describeResource() {
+            return getResource() + " autocloseable";
         }
         
         @Override
