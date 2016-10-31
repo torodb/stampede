@@ -57,7 +57,7 @@ public class StampedeService extends AbstractIdleService implements Supervisor {
 
     @Override
     public SupervisorDecision onError(Object supervised, Throwable error) {
-        LOGGER.error("Found an error on " + supervised +". Stopping ToroDB Stampede", error);
+        LOGGER.error("Error reported by " + supervised +". Stopping ToroDB Stampede", error);
         this.stopAsync();
         return SupervisorDecision.IGNORE;
     }

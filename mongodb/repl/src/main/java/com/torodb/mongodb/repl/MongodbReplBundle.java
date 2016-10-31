@@ -176,5 +176,10 @@ public class MongodbReplBundle extends AbstractBundle {
             }
             return decision;
         }
+
+        @Override
+        public String toString() {
+            return "replication supervisor";
+        }
     }
 }
