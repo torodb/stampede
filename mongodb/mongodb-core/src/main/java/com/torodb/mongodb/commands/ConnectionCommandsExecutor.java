@@ -1,11 +1,12 @@
 
 package com.torodb.mongodb.commands;
 
-import java.util.Collections;
+import java.time.Clock;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.function.Supplier;
 
+import javax.annotation.concurrent.ThreadSafe;
 import javax.inject.Inject;
 
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.MongoDb30Commands.MongoDb30CommandsImplementationBuilder;
@@ -70,7 +71,6 @@ import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.CommandImplementation;
 import com.eightkdata.mongowp.server.api.impl.CollectionCommandArgument;
 import com.eightkdata.mongowp.server.api.tools.Empty;
-import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.net.HostAndPort;
 import com.google.inject.Injector;
@@ -86,8 +86,6 @@ import com.torodb.mongodb.commands.impl.internal.WhatsMyUriImplementation;
 import com.torodb.mongodb.commands.impl.replication.IsMasterImplementation;
 import com.torodb.mongodb.core.MongodConnection;
 import com.torodb.mongodb.core.MongodServerConfig;
-import java.time.Clock;
-import javax.annotation.concurrent.ThreadSafe;
 
 /**
  *
@@ -96,61 +94,37 @@ import javax.annotation.concurrent.ThreadSafe;
 public class ConnectionCommandsExecutor {
 
     private final ImmutableMap<Command<?,?>, CommandImplementation<?,?, ? super MongodConnection>> map;
-    private final Set<Command<?, ?>> supportedCommands;
 
     @Inject
     ConnectionCommandsExecutor(Injector injector) {
-        map = new MapFactory(injector).get();
-
-        supportedCommands = Collections.unmodifiableSet(
-                map.entrySet().stream()
-                .filter((e) -> !(e.getValue() instanceof NotImplementedCommandImplementation))
-                .map((e) -> e.getKey())
-                .collect(Collectors.toSet())
-        );
+        this(new MapFactory(injector));
     }
 
+    protected ConnectionCommandsExecutor(Supplier<ImmutableMap<Command<?,?>, CommandImplementation<?, ?, ? super MongodConnection>>> mapFactory) {
+        map = mapFactory.get();
+    }
+    
     @DoNotChange
     Set<Command<?, ?>> getSupportedCommands() {
-        return supportedCommands;
+        return map.keySet();
     }
 
     public ImmutableMap<Command<?, ?>, CommandImplementation<?, ?, ? super MongodConnection>> getMap() {
         return map;
     }
     
-    static class MapFactory implements Supplier<ImmutableMap<Command<?,?>, CommandImplementation<?, ?, ? super MongodConnection>>> {
-
-        private final MyAdminCommandsImplementationBuilder adminBuilder;
-        private final MyAggregationCommandsImplementationBuilder aggregationBuilder;
-        private final MyAuthenticationCommandsImplementationsBuilder authenticationCommandsImplementationsBuilder;
-        private final MyDiagnosticCommandsImplementationBuilder diagnosticBuilder;
-        private final MyGeneralCommandsImplementationBuilder generalBuilder;
-        private final MyInternalCommandsImplementationsBuilder internalBuilder;
-        private final MyReplCommandsImplementationsBuilder replBuilder;
+    static class MapFactory extends AbstractCommandMapFactory<MongodConnection> {
 
         public MapFactory(Injector injector) {
-            this.adminBuilder = new MyAdminCommandsImplementationBuilder();
-            this.aggregationBuilder = new MyAggregationCommandsImplementationBuilder();
-            this.authenticationCommandsImplementationsBuilder = new MyAuthenticationCommandsImplementationsBuilder(injector);
-            this.diagnosticBuilder = new MyDiagnosticCommandsImplementationBuilder(injector);
-            this.generalBuilder = new MyGeneralCommandsImplementationBuilder();
-            this.internalBuilder = new MyInternalCommandsImplementationsBuilder();
-            this.replBuilder = new MyReplCommandsImplementationsBuilder(injector);
-        }
-
-        @Override
-        public ImmutableMap<Command<?,?>, CommandImplementation<?, ?, ? super MongodConnection>> get() {
-            MongoDb30CommandsImplementationBuilder<MongodConnection> implBuilder = new MongoDb30CommandsImplementationBuilder<>(
-                    adminBuilder, aggregationBuilder, authenticationCommandsImplementationsBuilder, diagnosticBuilder, generalBuilder, internalBuilder, replBuilder
+            super(
+                    new MyAdminCommandsImplementationBuilder(),
+                    new MyAggregationCommandsImplementationBuilder(),
+                    new MyAuthenticationCommandsImplementationsBuilder(injector),
+                    new MyDiagnosticCommandsImplementationBuilder(injector),
+                    new MyGeneralCommandsImplementationBuilder(),
+                    new MyInternalCommandsImplementationsBuilder(),
+                    new MyReplCommandsImplementationsBuilder(injector)
             );
-
-            ImmutableMap.Builder<Command<?,?>, CommandImplementation<?, ?, ? super MongodConnection>> builder = ImmutableMap.builder();
-            for (Entry<Command<?,?>, CommandImplementation<?, ?, ? super MongodConnection>> entry : implBuilder) {
-                builder.put(entry.getKey(), entry.getValue());
-            }
-
-            return builder.build();
         }
 
     }

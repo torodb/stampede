@@ -185,7 +185,7 @@ public class Main {
                 if (postgres.getPassword() == null) {
                     throw new SystemException("No password provided for database user " + postgres.getUser() + ".\n\n"
                             + "Please add following line to file " + postgres.getToropassFile() + ":\n"
-                            + postgres.getDatabase() + ":" + postgres.getPort() + ":" 
+                            + postgres.getHost() + ":" + postgres.getPort() + ":" 
                             + postgres.getDatabase() + ":" + postgres.getUser() + ":<password>\n"
                             + "Replace <password> for database user " + postgres.getUser() + "'s password");
                 }

@@ -136,7 +136,7 @@ public class FilterList extends HashMap<String, Map<String, List<IndexFilter>>> 
     
     public static IndexType getIndexType(String filterType) {
         for (KnownType knownType : KnownType.values()) {
-            if (knownType.getIndexType().toBsonValue().toString().equals(filterType)) {
+            if (knownType.getIndexType().getName().equals(filterType)) {
                 return knownType.getIndexType();
             }
         }

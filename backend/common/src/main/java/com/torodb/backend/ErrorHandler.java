@@ -25,6 +25,7 @@ public interface ErrorHandler {
         DROP_SCHEMA,
         DROP_TABLE,
         RENAME_TABLE,
+        RENAME_INDEX,
         SET_TABLE_SCHEMA,
         DROP_INDEX,
         DROP_UNIQUE_INDEX,

@@ -103,7 +103,7 @@ public class OplogTestContextResourceRule extends ExternalResource {
     @Override
     protected void before() throws Throwable {
 
-        Injector torodInjector = Guice.createInjector(
+        testInjector = Guice.createInjector(
                 new ReplTestModule(),
                 new TorodServerTestModule(),
                 new CoreModule(),
@@ -118,9 +118,7 @@ public class OplogTestContextResourceRule extends ExternalResource {
                         return true;
                     }
                 }),
-                new ConcurrentModule()
-        );
-        testInjector = torodInjector.createChildInjector(
+                new ConcurrentModule(),
                 new MongoLayerModule(),
                 new MongodServerTestModule(),
                 specificModuleSupplier.get()

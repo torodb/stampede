@@ -19,6 +19,31 @@
  */
 package com.torodb.mongodb.repl.oplogreplier.batch;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+
+import java.util.stream.Stream;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
+
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.Timer.Context;
@@ -27,27 +52,19 @@ import com.eightkdata.mongowp.exceptions.MongoException;
 import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
 import com.google.common.collect.Lists;
 import com.torodb.core.exceptions.user.DatabaseNotFoundException;
-import com.torodb.core.retrier.*;
+import com.torodb.core.retrier.AlwaysRetryRetrier;
+import com.torodb.core.retrier.NeverRetryRetrier;
+import com.torodb.core.retrier.Retrier;
+import com.torodb.core.retrier.RetrierAbortException;
+import com.torodb.core.retrier.RetrierGiveUpException;
 import com.torodb.core.transaction.RollbackException;
+import com.torodb.mongodb.core.ExclusiveWriteMongodTransaction;
 import com.torodb.mongodb.core.MongodConnection;
 import com.torodb.mongodb.core.MongodServer;
-import com.torodb.mongodb.core.WriteMongodTransaction;
 import com.torodb.mongodb.repl.oplogreplier.ApplierContext;
 import com.torodb.mongodb.repl.oplogreplier.OplogOperationApplier;
 import com.torodb.mongodb.repl.oplogreplier.OplogOperationApplier.OplogApplyingException;
 import com.torodb.mongodb.repl.oplogreplier.batch.AnalyzedOplogBatchExecutor.AnalyzedOplogBatchExecutorMetrics;
-import java.util.stream.Stream;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
-
-import static org.junit.Assert.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.BDDMockito.*;
-import static org.mockito.Mockito.mock;
 
 public class AnalyzedOplogBatchExecutorTest {
 
@@ -63,7 +80,7 @@ public class AnalyzedOplogBatchExecutorTest {
     @Mock
     private MongodConnection conn;
     @Mock
-    private WriteMongodTransaction writeTrans;
+    private ExclusiveWriteMongodTransaction writeTrans;
     private AnalyzedOplogBatchExecutor executor;
 
     @Before
@@ -73,6 +90,7 @@ public class AnalyzedOplogBatchExecutorTest {
         executor = spy(new AnalyzedOplogBatchExecutor(metrics, applier, server, retrier, namespaceJobExecutor));
 
         given(server.openConnection()).willReturn(conn);
+        given(conn.openExclusiveWriteTransaction()).willReturn(writeTrans);
         given(conn.openWriteTransaction()).willReturn(writeTrans);
 
         given(metrics.getCudBatchSize()).willReturn(mock(Histogram.class));
@@ -96,7 +114,7 @@ public class AnalyzedOplogBatchExecutorTest {
         //THEN
         then(server).should().openConnection();
         then(conn).should().close();
-        then(conn).should().openWriteTransaction();
+        then(conn).should().openExclusiveWriteTransaction();
         then(writeTrans).should().close();
         then(applier).should().apply(op, writeTrans, applierContext);
     }

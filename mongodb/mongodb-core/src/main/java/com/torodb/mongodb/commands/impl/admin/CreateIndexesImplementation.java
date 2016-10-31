@@ -95,13 +95,13 @@ public class CreateIndexesImplementation implements WriteTorodbCommandImpl<Creat
 
                     if (!KnownType.contains(indexType)) {
                         return Status.from(ErrorCode.CANNOT_CREATE_INDEX, "bad index key pattern: Unknown index plugin '" 
-                                + indexKey.getType().toBsonValue().toString() + "'");
+                                + indexKey.getType().getName() + "'");
                     }
                     
                     Optional<FieldIndexOrdering> ordering = indexType.accept(filedIndexOrderingConverterVisitor, null);
                     if (!ordering.isPresent()) {
                         throw new CommandFailed("createIndexes", 
-                                "Index of type " + indexType.toBsonValue().toString() + " is not supported right now");
+                                "Index of type " + indexType.getName() + " is not supported right now");
                     }
                     
                     fields.add(new IndexFieldInfo(attRefBuilder.build(), ordering.get().isAscending()));

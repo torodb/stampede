@@ -18,7 +18,12 @@
  * 
  */
 
-package com.torodb.mongodb.repl.commands;
+package com.torodb.mongodb.repl.commands.impl;
+
+import java.util.Arrays;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.CreateCollectionCommand.CreateCollectionArgument;
@@ -33,9 +38,6 @@ import com.torodb.core.language.AttributeReference.ObjectKey;
 import com.torodb.core.transaction.metainf.FieldIndexOrdering;
 import com.torodb.mongodb.language.Constants;
 import com.torodb.torod.IndexFieldInfo;
-import java.util.Arrays;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import com.torodb.torod.SharedWriteTorodTransaction;
 
 /**
@@ -53,6 +55,8 @@ public class CreateCollectionReplImpl extends ReplCommandImpl<CreateCollectionAr
             SharedWriteTorodTransaction trans) {
 
         try {
+            LOGGER.info("Creating collection {}.{}", req.getDatabase(), arg.getCollection());
+            
             if (!trans.existsCollection(req.getDatabase(), arg.getCollection())) {
                 trans.createIndex(
                         req.getDatabase(),

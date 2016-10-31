@@ -20,7 +20,6 @@
 
 [ "$DEBUG" == "true" ] && set -x
 [ "$DEBUG" == "true" ] && set -v
-set -e
 
 # resolve links - $0 may be a softlink
 PRG="$0"

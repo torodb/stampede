@@ -18,43 +18,37 @@
  * 
  */
 
-package com.torodb.mongodb.repl.commands;
+package com.torodb.mongodb.repl.commands.impl;
+
+import javax.inject.Inject;
 
 import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.Request;
-import com.eightkdata.mongowp.server.api.impl.CollectionCommandArgument;
 import com.eightkdata.mongowp.server.api.tools.Empty;
-import com.torodb.core.exceptions.user.UserException;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import com.torodb.core.supervision.Supervisor;
+import com.torodb.mongodb.repl.commands.LogAndStopCommand;
+import com.torodb.mongodb.repl.guice.MongoDbRepl;
 import com.torodb.torod.SharedWriteTorodTransaction;
 
 /**
- *
+ * The implementation of {@link LogAndStopCommand}.
  */
-public class DropCollectionReplImpl extends ReplCommandImpl<CollectionCommandArgument, Empty> {
+public class LogAndStopReplImpl extends ReplCommandImpl<String, Empty> {
+    
+    private final Supervisor supervisor;
 
-    private static final Logger LOGGER
-            = LogManager.getLogger(DropCollectionReplImpl.class);
+    @Inject
+    public LogAndStopReplImpl(@MongoDbRepl Supervisor supervisor) {
+        this.supervisor = supervisor;
+    }
 
     @Override
-    public Status<Empty> apply(
-            Request req,
-            Command<? super CollectionCommandArgument, ? super Empty> command,
-            CollectionCommandArgument arg,
-            SharedWriteTorodTransaction trans) {
-
-        try {
-            LOGGER.info("Drop collection {}", arg.getCollection());
-
-            trans.dropCollection(req.getDatabase(), arg.getCollection());
-        } catch (UserException ex) {
-            reportErrorIgnored(LOGGER, command, ex);
-        }
-
-        return Status.ok();
-
+    public Status<Empty> apply(Request req, Command<? super String, ? super Empty> command, String arg, SharedWriteTorodTransaction trans) {
+        UnsupportedOperationException ex = new UnsupportedOperationException(
+                "Command " +arg+ " is not supported yet");
+        supervisor.onError(this, ex);
+        throw ex;
     }
 
 }

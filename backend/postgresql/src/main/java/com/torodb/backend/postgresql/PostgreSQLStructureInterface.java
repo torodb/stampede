@@ -80,6 +80,12 @@ public class PostgreSQLStructureInterface extends AbstractStructureInterface {
             String toTableName) {
         return "ALTER TABLE \"" + fromSchemaName + "\".\"" + fromTableName + "\" RENAME TO \"" + toTableName + "\"";
     }
+    
+    @Override
+    protected String getRenameIndexStatement(String fromSchemaName, String fromIndexName, 
+            String toIndexName) {
+        return "ALTER INDEX \"" + fromSchemaName + "\".\"" + fromIndexName + "\" RENAME TO \"" + toIndexName + "\"";
+    }
 
     @Override
     protected String getSetTableSchemaStatement(String fromSchemaName, String fromTableName, 

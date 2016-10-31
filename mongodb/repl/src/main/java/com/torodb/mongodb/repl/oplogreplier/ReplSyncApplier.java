@@ -1,25 +1,28 @@
 
 package com.torodb.mongodb.repl.oplogreplier;
 
+import java.util.List;
+import java.util.concurrent.ThreadFactory;
+
+import javax.annotation.Nonnull;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
+import com.torodb.core.annotations.TorodbRunnableService;
+import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.services.RunnableTorodbService;
 import com.torodb.core.supervision.Supervisor;
 import com.torodb.core.transaction.RollbackException;
+import com.torodb.mongodb.core.ExclusiveWriteMongodTransaction;
+import com.torodb.mongodb.core.MongodConnection;
+import com.torodb.mongodb.core.MongodServer;
 import com.torodb.mongodb.repl.OplogManager;
 import com.torodb.mongodb.repl.OplogManager.OplogManagerPersistException;
 import com.torodb.mongodb.repl.OplogManager.WriteOplogTransaction;
 import com.torodb.mongodb.repl.oplogreplier.OplogOperationApplier.OplogApplyingException;
-import java.util.List;
-import java.util.concurrent.ThreadFactory;
-import javax.annotation.Nonnull;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import com.torodb.core.annotations.TorodbRunnableService;
-import com.torodb.core.exceptions.user.UserException;
-import com.torodb.mongodb.core.MongodConnection;
-import com.torodb.mongodb.core.MongodServer;
-import com.torodb.mongodb.core.WriteMongodTransaction;
 
 /**
  *
@@ -83,7 +86,7 @@ class ReplSyncApplier extends RunnableTorodbService {
                 .build();
         while (isRunning()) {
             OplogOperation lastOperation = null;
-            try (WriteMongodTransaction transaction = connection.openWriteTransaction()) {
+            try (ExclusiveWriteMongodTransaction transaction = connection.openExclusiveWriteTransaction()) {
                 try {
                     for (OplogOperation opToApply : callback.takeOps()) {
                         lastOperation = opToApply;

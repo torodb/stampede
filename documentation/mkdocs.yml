@@ -1,12 +1,9 @@
 site_name: ToroDB Stampede
 theme: readthedocs
 pages:
-- About: index.md
-- 'Introduction to ToroDB Stampede': intro.md
+- 'About': index.md
 - 'Quickstart': quickstart.md
 - 'Installation and configuration': installation.md
-- 'ToroDB Stampede consistency': consistency.md
-- 'Advanced concepts': advanced.md
-- 'BI Connectors': bi-connectors.md
-- 'A real application': real-app.md
-- 'Glossary': glossary.md
+- 'How to use?': how-to-use.md
+- 'FAQ': faq.md
+- 'Appendix': appendix.md

@@ -32,6 +32,12 @@
             <fileMode>0644</fileMode>
         </fileSet>
         <fileSet>
+            <directory>target/dist/systemd</directory>
+            <outputDirectory>conf</outputDirectory>
+            <directoryMode>0755</directoryMode>
+            <fileMode>0644</fileMode>
+        </fileSet>
+        <fileSet>
             <directory>target/dist/doc/</directory>
             <outputDirectory>.</outputDirectory>
             <includes>

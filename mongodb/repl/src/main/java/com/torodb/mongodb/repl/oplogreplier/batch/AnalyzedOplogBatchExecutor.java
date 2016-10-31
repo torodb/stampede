@@ -44,6 +44,7 @@ import com.torodb.core.retrier.Retrier.Hint;
 import com.torodb.core.retrier.RetrierAbortException;
 import com.torodb.core.retrier.RetrierGiveUpException;
 import com.torodb.core.transaction.RollbackException;
+import com.torodb.mongodb.core.ExclusiveWriteMongodTransaction;
 import com.torodb.mongodb.core.MongodConnection;
 import com.torodb.mongodb.core.MongodServer;
 import com.torodb.mongodb.core.WriteMongodTransaction;
@@ -78,7 +79,7 @@ public class AnalyzedOplogBatchExecutor implements
     public void execute(OplogOperation op, ApplierContext context)
             throws OplogApplyingException, RollbackException, UserException {
         try (MongodConnection connection = server.openConnection();
-                WriteMongodTransaction mongoTransaction = connection.openWriteTransaction()) {
+                ExclusiveWriteMongodTransaction mongoTransaction = connection.openExclusiveWriteTransaction()) {
 
             oplogOperationApplier.apply(op, mongoTransaction, context);
             mongoTransaction.commit();

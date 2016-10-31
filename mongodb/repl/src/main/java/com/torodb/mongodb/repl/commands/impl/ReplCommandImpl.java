@@ -18,12 +18,13 @@
  * 
  */
 
-package com.torodb.mongodb.repl.commands;
+package com.torodb.mongodb.repl.commands.impl;
+
+import org.apache.logging.log4j.Logger;
 
 import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.CommandImplementation;
 import com.torodb.torod.SharedWriteTorodTransaction;
-import org.apache.logging.log4j.Logger;
 
 /**
  *

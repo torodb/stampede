@@ -24,5 +24,5 @@ public interface IdentifierFactory {
 
     @Nonnull String toFieldIdentifierForScalar(@Nonnull FieldType fieldType);
 
-    @Nonnull String toIndexIdentifier(@Nonnull MetaDatabase metaSnapshot, @Nonnull String indexName, @Nonnull Iterable<Tuple2<String, Boolean>> identifiers);
+    @Nonnull String toIndexIdentifier(@Nonnull MetaDatabase metaSnapshot, String tableName, @Nonnull Iterable<Tuple2<String, Boolean>> identifiers);
 }

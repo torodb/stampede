@@ -4,7 +4,6 @@ import java.text.Normalizer;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.Locale;
 import java.util.Random;
 import java.util.regex.Pattern;
@@ -15,10 +14,8 @@ import org.jooq.lambda.tuple.Tuple2;
 
 import com.torodb.core.TableRef;
 import com.torodb.core.backend.IdentifierConstraints;
-import com.torodb.core.d2r.IdentifierFactory;
 import com.torodb.core.exceptions.SystemException;
 import com.torodb.core.transaction.metainf.FieldType;
-import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetaSnapshot;
@@ -99,7 +96,7 @@ public class DefaultIdentifierFactory implements IdentifierFactory {
         
         IdentifierChecker identifierChecker = new IndexIdentifierChecker(metaDatabase);
         
-        return generateUniqueIdentifier(nameChain, identifierChecker);
+        return generateUniqueIdentifier(nameChain, identifierChecker, "idx");
     }
 
     private String generateUniqueIdentifier(NameChain nameChain, IdentifierChecker uniqueIdentifierChecker) {
@@ -535,16 +532,14 @@ public class DefaultIdentifierFactory implements IdentifierFactory {
         
         @Override
         public boolean isUnique(String identifier) {
-            Iterator<? extends MetaCollection> metaCollectionIterator = metaDatabase.streamMetaCollections().iterator();
+            boolean noDocPartCollision = metaDatabase.streamMetaCollections()
+                    .allMatch(collection -> collection.getMetaDocPartByIdentifier(identifier) == null);
             
-            while (metaCollectionIterator.hasNext()){
-                MetaCollection metaCollection = metaCollectionIterator.next();
-                if (metaCollection.getMetaDocPartByIdentifier(identifier) != null) {
-                    return false;
-                }
-            }
+            boolean noIndexCollision = metaDatabase.streamMetaCollections()
+                    .flatMap(collection -> collection.streamContainedMetaDocParts())
+                    .allMatch(docPart -> docPart.getMetaDocPartIndexByIdentifier(identifier) == null);
             
-            return true;
+            return noDocPartCollision && noIndexCollision;
         }
 
         @Override
@@ -582,9 +577,14 @@ public class DefaultIdentifierFactory implements IdentifierFactory {
         
         @Override
         public boolean isUnique(String identifier) {
-            return metaDatabase.streamMetaCollections()
+            boolean noDocPartCollision = metaDatabase.streamMetaCollections()
+                    .allMatch(collection -> collection.getMetaDocPartByIdentifier(identifier) == null);
+            
+            boolean noIndexCollision = metaDatabase.streamMetaCollections()
                     .flatMap(collection -> collection.streamContainedMetaDocParts())
                     .allMatch(docPart -> docPart.getMetaDocPartIndexByIdentifier(identifier) == null);
+            
+            return noDocPartCollision && noIndexCollision;
         }
 
         @Override

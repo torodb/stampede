@@ -18,7 +18,7 @@
  * 
  */
 
-package com.torodb.mongodb.repl.commands;
+package com.torodb.mongodb.repl.commands.impl;
 
 import java.util.Arrays;
 import java.util.Iterator;
@@ -28,7 +28,6 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.eightkdata.mongowp.ErrorCode;
 import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.DropIndexesCommand.DropIndexesArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.DropIndexesCommand.DropIndexesResult;
@@ -49,7 +48,6 @@ public class DropIndexesReplImpl extends ReplCommandImpl<DropIndexesArgument, Dr
     private static final Logger LOGGER
             = LogManager.getLogger(DropIndexesReplImpl.class);
 
-
     @Override
     public Status<DropIndexesResult> apply(
             Request req,
@@ -65,22 +63,24 @@ public class DropIndexesReplImpl extends ReplCommandImpl<DropIndexesArgument, Dr
                 if (Constants.ID_INDEX.equals(arg.getIndexToDrop())) {
                     LOGGER.warn("Trying to drop index {}. Ignoring the whole request",
                             arg.getIndexToDrop());
+                    return Status.ok(new DropIndexesResult(indexesBefore));
                 }
                 indexesToDrop = Arrays.asList(arg.getIndexToDrop());
             } else {
-                if (arg.getKeys().stream().anyMatch(key -> !(KnownType.contains(key.getType())) ||
-                        (key.getType() != KnownType.asc.getIndexType() &&
-                        key.getType() != KnownType.desc.getIndexType()))) {
-                    return getStatusForIndexNotFoundWithKeys(arg);
-                }
-                
                 indexesToDrop = trans.getIndexesInfo(req.getDatabase(), arg.getCollection())
                     .filter(index -> indexFieldsMatchKeys(index, arg.getKeys()))
                     .map(index -> index.getName())
                     .collect(Collectors.toList());
                 
                 if (indexesToDrop.isEmpty()) {
-                    return getStatusForIndexNotFoundWithKeys(arg);
+                    LOGGER.warn("Index not found with keys [" + arg.getKeys()
+                        .stream()
+                        .map(key -> '"' + key.getKeys()
+                            .stream()
+                            .collect(Collectors.joining(".")) + "\" :" + key.getType().getName())
+                        .collect(Collectors.joining(", ")) + "]. Ignoring the whole request",
+                            arg.getIndexToDrop());
+                    return Status.ok(new DropIndexesResult(indexesBefore));
                 }
             }
         } else {
@@ -91,29 +91,20 @@ public class DropIndexesReplImpl extends ReplCommandImpl<DropIndexesArgument, Dr
         }
         
         for (String indexToDrop : indexesToDrop) {
-            boolean dropped = trans.dropIndex(
-                    req.getDatabase(),
-                    arg.getCollection(),
-                    indexToDrop
+            LOGGER.info("Dropping index {} on collection {}.{}", req.getDatabase(), arg.getCollection(), indexToDrop);
+
+            boolean dropped = trans.dropIndex(req.getDatabase(), arg.getCollection(), indexToDrop
             );
             if (!dropped) {
-                LOGGER.warn("Trying to drop index {}, but it has not been "
-                        + "found. Ignoring it", indexToDrop);
+                LOGGER.info("Trying to drop index {}, but it has not been "
+                        + "found. This is normal since the index could have been filtered or "
+                        + "we are reapplying oplog during a recovery. Ignoring it", indexToDrop);
             }
         }
 
         return Status.ok(new DropIndexesResult(indexesBefore));
     }
 
-    private Status<DropIndexesResult> getStatusForIndexNotFoundWithKeys(DropIndexesArgument arg) {
-        return Status.from(ErrorCode.INDEX_NOT_FOUND, "index not found with keys [" + arg.getKeys()
-            .stream()
-            .map(key -> '"' + key.getKeys()
-                    .stream()
-                    .collect(Collectors.joining(".")) + "\" :" + key.getType().toBsonValue().toString())
-            .collect(Collectors.joining(", ")) + "]");
-    }
-    
     private boolean indexFieldsMatchKeys(IndexInfo index, List<IndexOptions.Key> keys) {
         if (index.getFields().size() != keys.size()) {
             return false;

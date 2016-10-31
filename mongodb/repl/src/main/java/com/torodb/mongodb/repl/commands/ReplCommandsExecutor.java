@@ -20,19 +20,35 @@
 
 package com.torodb.mongodb.repl.commands;
 
-import com.eightkdata.mongowp.Status;
-import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.*;
-import com.eightkdata.mongowp.server.api.*;
-import com.eightkdata.mongowp.server.api.impl.MapBasedCommandsExecutor;
-import com.torodb.torod.SharedWriteTorodTransaction;
 import javax.inject.Inject;
+
+import com.eightkdata.mongowp.Status;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.CreateCollectionCommand;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.CreateIndexesCommand;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.DropCollectionCommand;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.DropDatabaseCommand;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.DropIndexesCommand;
+import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.admin.RenameCollectionCommand;
+import com.eightkdata.mongowp.server.api.Command;
+import com.eightkdata.mongowp.server.api.CommandsExecutor;
+import com.eightkdata.mongowp.server.api.Request;
+import com.eightkdata.mongowp.server.api.impl.MapBasedCommandsExecutor;
+import com.torodb.mongodb.repl.commands.impl.CreateCollectionReplImpl;
+import com.torodb.mongodb.repl.commands.impl.CreateIndexesReplImpl;
+import com.torodb.mongodb.repl.commands.impl.DropCollectionReplImpl;
+import com.torodb.mongodb.repl.commands.impl.DropDatabaseReplImpl;
+import com.torodb.mongodb.repl.commands.impl.DropIndexesReplImpl;
+import com.torodb.mongodb.repl.commands.impl.LogAndIgnoreReplImpl;
+import com.torodb.mongodb.repl.commands.impl.LogAndStopReplImpl;
+import com.torodb.mongodb.repl.commands.impl.RenameCollectionReplImpl;
+import com.torodb.torod.ExclusiveWriteTorodTransaction;
 
 /**
  *
  */
-public final class ReplCommandsExecutor implements CommandsExecutor<SharedWriteTorodTransaction> {
+public final class ReplCommandsExecutor implements CommandsExecutor<ExclusiveWriteTorodTransaction> {
 
-    private final MapBasedCommandsExecutor<SharedWriteTorodTransaction> delegate;
+    private final MapBasedCommandsExecutor<ExclusiveWriteTorodTransaction> delegate;
 
     @Inject
     public ReplCommandsExecutor(ReplCommandsLibrary library, 
@@ -42,9 +58,10 @@ public final class ReplCommandsExecutor implements CommandsExecutor<SharedWriteT
             CreateIndexesReplImpl createIndexesReplImpl,
             DropCollectionReplImpl dropCollectionReplImpl,
             DropDatabaseReplImpl dropDatabaseReplImpl,
-            DropIndexesReplImpl dropIndexesReplImpl) {
+            DropIndexesReplImpl dropIndexesReplImpl,
+            RenameCollectionReplImpl renameCollectionReplImpl) {
         delegate = MapBasedCommandsExecutor
-                .<SharedWriteTorodTransaction>fromLibraryBuilder(library)
+                .<ExclusiveWriteTorodTransaction>fromLibraryBuilder(library)
                 .addImplementation(LogAndStopCommand.INSTANCE, logAndStopReplImpl)
                 .addImplementation(LogAndIgnoreCommand.INSTANCE, logAndIgnoreReplImpl)
 //                .addImplementation(ApplyOpsCommand.INSTANCE, whatever)
@@ -55,6 +72,7 @@ public final class ReplCommandsExecutor implements CommandsExecutor<SharedWriteT
                 .addImplementation(DropCollectionCommand.INSTANCE, dropCollectionReplImpl)
                 .addImplementation(DropDatabaseCommand.INSTANCE, dropDatabaseReplImpl)
                 .addImplementation(DropIndexesCommand.INSTANCE, dropIndexesReplImpl)
+                .addImplementation(RenameCollectionCommand.INSTANCE, renameCollectionReplImpl)
 //                .addImplementation(emptycapped, whatever)
 
                 .build();
@@ -63,7 +81,7 @@ public final class ReplCommandsExecutor implements CommandsExecutor<SharedWriteT
     @Override
     public <Arg, Result> Status<Result> execute(Request request,
             Command<? super Arg, ? super Result> command, Arg arg,
-            SharedWriteTorodTransaction context) {
+            ExclusiveWriteTorodTransaction context) {
         return delegate.execute(request, command, arg, context);
     }
 }

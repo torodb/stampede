@@ -1,5 +1,6 @@
 package com.torodb.mongodb.guice;
 
+import com.google.inject.Module;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
@@ -15,6 +16,16 @@ import com.torodb.torod.TorodServer;
  *
  */
 public class MongoLayerModule extends PrivateModule {
+    
+    private final Module commandImplementationModule;
+    
+    public MongoLayerModule() {
+        this(new CommandImplementionsModule());
+    }
+    
+    public MongoLayerModule(Module commandImplementationModule) {
+        this.commandImplementationModule = commandImplementationModule;
+    }
 
     @Override
     protected void configure() {
@@ -22,7 +33,7 @@ public class MongoLayerModule extends PrivateModule {
                 .in(Singleton.class);
         expose(MongodServer.class);
 
-        install(new CommandImplementionsModule());
+        install(commandImplementationModule);
 
         bind(ObjectIdFactory.class)
                 .in(Singleton.class);
