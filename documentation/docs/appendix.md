@@ -1,5 +1,7 @@
 ## CLI options
 
+To execute ToroDb Stampede using the command line, a few options can be given to configure the system.
+
 Usage: `<main class> [options]`
 
 | Option | |
@@ -46,3 +48,9 @@ Usage: `<main class> [options]`
 | --toropass-file | You can specify a file that use .pgpass syntax: `<host>:<port>:<database>:<user>:<password>` (can have multiple lines) |
 | --version | Prints the version. |
 | -x, --xml-conf | Configuration file in XML format. |
+
+## Configuration file
+
+The other way to configure the system is through configuration file, as the CLI command, it has a few available options.
+
+__TBD__
