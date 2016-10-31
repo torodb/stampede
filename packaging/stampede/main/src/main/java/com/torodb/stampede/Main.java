@@ -215,7 +215,7 @@ public class Main {
                 System.exit(1);
             }
         } catch (Throwable ex) {
-            LOGGER.error("Fatal error on initialization", ex);
+            LOGGER.debug("Fatal error on initialization", ex);
             Throwable rootCause = Throwables.getRootCause(ex);
             String causeMessage = rootCause.getMessage();
             LogManager.shutdown();
