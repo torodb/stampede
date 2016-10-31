@@ -9,8 +9,6 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionException;
-import java.util.concurrent.Executor;
-import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -45,7 +43,6 @@ import com.google.common.annotations.Beta;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.torodb.common.util.RetryHelper.ExceptionHandler;
-import com.torodb.core.concurrent.StreamExecutor;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.retrier.Retrier;
 import com.torodb.core.retrier.Retrier.Hint;
@@ -61,8 +58,6 @@ import com.torodb.mongodb.utils.ListIndexesRequester;
 import com.torodb.mongodb.utils.NamespaceUtil;
 
 import akka.NotUsed;
-import akka.actor.ActorSystem;
-import akka.dispatch.ExecutionContexts;
 import akka.japi.Pair;
 import akka.japi.tuple.Tuple3;
 import akka.stream.ActorMaterializer;
@@ -79,10 +74,11 @@ import akka.stream.javadsl.Keep;
 import akka.stream.javadsl.Merge;
 import akka.stream.javadsl.Sink;
 import akka.stream.javadsl.Source;
+import com.torodb.concurrent.ActorSystemTorodbService;
+import com.torodb.core.concurrent.ConcurrentToolsFactory;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import scala.concurrent.Await;
-import scala.concurrent.duration.Duration;
 import com.torodb.torod.SharedWriteTorodTransaction;
+import java.util.concurrent.*;
 
 /**
  * This class is used to clone databases using a client, so remote and local databases can
@@ -98,14 +94,9 @@ import com.torodb.torod.SharedWriteTorodTransaction;
  * transactional way.
  */
 @Beta
-public class AkkaDbCloner implements DbCloner {
+public class AkkaDbCloner extends ActorSystemTorodbService implements DbCloner {
 
     private static final Logger LOGGER = LogManager.getLogger(AkkaDbCloner.class);
-    /**
-     * The executor that will execute each task in which the cloning is divided.
-     */
-    private final Executor executor;
-    private final StreamExecutor streamExecutor;
     /**
      * The number of parallel task that can be used to clone each collection
      */
@@ -115,36 +106,42 @@ public class AkkaDbCloner implements DbCloner {
      * insert phases.
      */
     private final int cursorBatchBufferSize;
-    /**
-     * The number of documents that each transaction will insert.
-     */
-    private final int insertBufferSize;
     private final CommitHeuristic commitHeuristic;
     private final Clock clock;
     private final Retrier retrier;
 
-    public AkkaDbCloner(Executor executor, int maxParallelInsertTasks, StreamExecutor streamExecutor,
-            int cursorBatchBufferSize, int insertBufferSize, CommitHeuristic commitHeuristic, 
-            Clock clock, Retrier retrier) {
-        this.executor = executor;
-        this.streamExecutor = streamExecutor;
+    public AkkaDbCloner(ThreadFactory threadFactory, 
+            ConcurrentToolsFactory concurrentToolsFactory,
+            int maxParallelInsertTasks, int cursorBatchBufferSize,
+            CommitHeuristic commitHeuristic, Clock clock, Retrier retrier) {
+        super(threadFactory,
+                () -> concurrentToolsFactory.createExecutorService(
+                        "db-cloner", false),
+                "akka-db-cloner"
+        );
+
         this.maxParallelInsertTasks = maxParallelInsertTasks;
         Preconditions.checkArgument(maxParallelInsertTasks >= 1, "The number of parallel insert "
                 + "tasks level must be higher than 0, but " + maxParallelInsertTasks + " was used");
         this.cursorBatchBufferSize = cursorBatchBufferSize;
         Preconditions.checkArgument(cursorBatchBufferSize >= 1, "cursorBatchBufferSize must be "
                 + "higher than 0, but " + cursorBatchBufferSize + " was used");
-        this.insertBufferSize = insertBufferSize;
-        Preconditions.checkArgument(insertBufferSize >= 1, "Insert buffer size must be higher than "
-                + "0, but " + insertBufferSize + " was used");
         this.commitHeuristic = commitHeuristic;
         this.clock = clock;
         this.retrier = retrier;
     }
 
     @Override
-    public void cloneDatabase(String dstDb, MongoClient remoteClient, MongodServer localServer,
-            CloneOptions opts) throws CloningException, NotMasterException, MongoException {
+    protected Logger getLogger() {
+        return LOGGER;
+    }
+
+    @Override
+    public void cloneDatabase(String dstDb, MongoClient remoteClient,
+            MongodServer localServer, CloneOptions opts) throws CloningException,
+            NotMasterException, MongoException {
+        Preconditions.checkState(isRunning(), "This db cloner is not running");
+
         if (!remoteClient.isRemote() && opts.getDbToClone().equals(dstDb)) {
             LOGGER.warn("Trying to clone a database to itself! Ignoring it");
             return;
@@ -177,39 +174,25 @@ public class AkkaDbCloner implements DbCloner {
         }
 
         try {
-            Stream<Runnable> prepareCollectionRunnables = collsToClone.stream()
-                    .map(collEntry -> () -> prepareCollection(localServer, dstDb, collEntry));
-            streamExecutor.executeRunnables(prepareCollectionRunnables)
-                    .join();
-        } catch (CompletionException ex) {
-            Throwable cause = ex.getCause();
-            if (cause != null) {
-                if (cause instanceof CloningException) {
-                    throw (CloningException) cause;
-                }
-                if (cause instanceof MongoException) {
-                    throw (MongoException) cause;
-                }
-                if (cause instanceof RollbackException) {
-                    throw new AssertionError("Unexpected rollback exception", cause);
-                }
+            for (Entry entry : collsToClone) {
+                prepareCollection(localServer, dstDb, entry);
             }
-            throw ex;
+        } catch (RollbackException ex) {
+            throw new AssertionError("Unexpected rollback exception", ex);
         }
         
-        ActorSystem actorSystem = ActorSystem.create("dbClone", null, null,
-                ExecutionContexts.fromExecutor(executor)
-        );
-        Materializer materializer = ActorMaterializer.create(actorSystem);
-
+        Materializer materializer = ActorMaterializer.create(getActorSystem());
+        
         try (MongoConnection remoteConnection = remoteClient.openConnection()) {
             if (opts.isCloneData()) {
                 for (Entry entry : collsToClone) {
-                    LOGGER.info("Cloning collection data {}.{} into {}.{}", fromDb, entry.getCollectionName(),
-                            dstDb, entry.getCollectionName());
+                    LOGGER.info("Cloning collection data {}.{} into {}.{}",
+                            fromDb, entry.getCollectionName(), dstDb,
+                            entry.getCollectionName());
 
                     try {
-                        cloneCollection(localServer, remoteConnection, dstDb, opts, materializer, entry);
+                        cloneCollection(localServer, remoteConnection, dstDb,
+                                opts, materializer, entry);
                     } catch(CompletionException completionException) {
                         Throwable cause = completionException.getCause();
                         if (cause instanceof RollbackException) {
@@ -222,11 +205,14 @@ public class AkkaDbCloner implements DbCloner {
             }
             if (opts.isCloneIndexes()) {
                 for (Entry entry : collsToClone) {
-                    LOGGER.info("Cloning collection indexes {}.{} into {}.{}", fromDb, entry.getCollectionName(),
-                            dstDb, entry.getCollectionName());
+                    LOGGER.info("Cloning collection indexes {}.{} into {}.{}",
+                            fromDb, entry.getCollectionName(), dstDb,
+                            entry.getCollectionName());
 
                     try {
-                        cloneIndex(localServer, dstDb, dstDb, remoteConnection, opts, entry.getCollectionName(), entry.getCollectionName());
+                        cloneIndex(localServer, dstDb, dstDb, remoteConnection,
+                                opts, entry.getCollectionName(),
+                                entry.getCollectionName());
                     } catch(CompletionException completionException) {
                         Throwable cause = completionException.getCause();
                         if (cause instanceof RollbackException) {
@@ -238,16 +224,11 @@ public class AkkaDbCloner implements DbCloner {
                 }
             }
         }
-        try {
-            Await.result(actorSystem.terminate(), Duration.Inf());
-        } catch (Exception ex) {
-            throw new CloningException("Error while trying to terminate the ActorSystem", ex);
-        }
     }
 
-    private void cloneCollection(MongodServer localServer, MongoConnection remoteConnection,
-            String toDb, CloneOptions opts, Materializer materializer, Entry collToClone)
-            throws MongoException {
+    private void cloneCollection(MongodServer localServer, 
+            MongoConnection remoteConnection, String toDb, CloneOptions opts,
+            Materializer materializer, Entry collToClone) throws MongoException {
 
         String collName = collToClone.getCollectionName();
 

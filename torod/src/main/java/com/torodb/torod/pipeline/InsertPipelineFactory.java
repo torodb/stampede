@@ -1,5 +1,6 @@
 package com.torodb.torod.pipeline;
 
+import com.google.common.util.concurrent.Service;
 import com.torodb.core.backend.WriteBackendTransaction;
 import com.torodb.core.d2r.D2RTranslatorFactory;
 import com.torodb.core.transaction.metainf.MetaDatabase;
@@ -8,7 +9,7 @@ import com.torodb.core.transaction.metainf.MutableMetaCollection;
 /**
  *
  */
-public interface InsertPipelineFactory {
+public interface InsertPipelineFactory extends Service {
 
     /**
      *
@@ -22,7 +23,8 @@ public interface InsertPipelineFactory {
             D2RTranslatorFactory translatorFactory,
             MetaDatabase metaDb,
             MutableMetaCollection mutableMetaCollection,
-            WriteBackendTransaction backendConnection);
+            WriteBackendTransaction backendConnection,
+            boolean concurrent);
 
 
 }

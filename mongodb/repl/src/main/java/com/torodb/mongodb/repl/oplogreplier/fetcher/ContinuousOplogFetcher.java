@@ -61,9 +61,17 @@ public class ContinuousOplogFetcher implements OplogFetcher {
 
     @Override
     public OplogBatch fetch() throws StopReplicationException, RollbackReplicationException {
+        if (state.isClosed()) {
+            return FinishedOplogBatch.getInstance();
+        }
         try {
             return retrier.retry(() -> {
                 try {
+
+                    if (state.isClosed()) {
+                        return FinishedOplogBatch.getInstance();
+                    }
+                    
                     state.prepareToFetch();
 
                     MongoCursor<OplogOperation> cursor = state.getLastUsedMongoCursor();
@@ -196,6 +204,7 @@ public class ContinuousOplogFetcher implements OplogFetcher {
 
     private class FetcherState implements AutoCloseable {
 
+        private volatile boolean closed = false;
         private long lastFetchedHash;
         private OpTime lastFetchedOpTime;
         private OplogReader oplogReader;
@@ -290,11 +299,16 @@ public class ContinuousOplogFetcher implements OplogFetcher {
             return cursor;
         }
 
+        public boolean isClosed() {
+            return closed;
+        }
+
         @Override
         public void close() {
             if (cursor != null) {
                 cursor.close();
             }
+            closed = true;
         }
 
         private void discardReader() {

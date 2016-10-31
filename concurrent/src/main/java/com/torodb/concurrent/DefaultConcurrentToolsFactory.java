@@ -1,7 +1,6 @@
 
 package com.torodb.concurrent;
 
-import com.torodb.concurrent.guice.ExecutorServiceShutdownHelper;
 import com.torodb.core.annotations.ParallelLevel;
 import com.torodb.core.concurrent.StreamExecutor;
 
@@ -39,70 +38,75 @@ public class DefaultConcurrentToolsFactory implements ConcurrentToolsFactory {
     }
 
     @Override
-    public StreamExecutor createStreamExecutor(String prefix, boolean blockerTasks, int maxThreads) {
+    public StreamExecutor createStreamExecutor(String prefix,
+            boolean blockerTasks, int maxThreads) {
         return new AkkaStreamExecutor(
+                blockerThreadFactoryFunction.apply(prefix),
                 maxThreads,
                 createExecutorService(prefix, blockerTasks, maxThreads),
-                this::closeExecutor
+                prefix
         );
     }
 
     @Override
-    public StreamExecutor createStreamExecutor(ExecutorService executor, int maxThreads) {
-        return new AkkaStreamExecutor(maxThreads, executor, (toClose) -> {});
-    }
-
-    private void closeExecutor(ExecutorService executorService) {
-        executorService.shutdown();
-    }
-
-    @Override
-    public ScheduledExecutorService createScheduledExecutorServiceWithMaxThreads(String prefix, int maxThreads) {
+    public ScheduledExecutorService createScheduledExecutorServiceWithMaxThreads(
+            String prefix, int maxThreads) {
         ThreadFactory threadFactory = blockerThreadFactoryFunction.apply(prefix);
-        ScheduledThreadPoolExecutor executorService = new ScheduledThreadPoolExecutor(maxThreads, threadFactory);
-        shutdownHelper.terminateOnShutdown(executorService);
+        ScheduledThreadPoolExecutor executorService =
+                new ScheduledThreadPoolExecutor(maxThreads, threadFactory);
+        shutdownHelper.terminateOnShutdown(prefix, executorService);
 
         return executorService;
     }
 
     @Override
-    public ExecutorService createExecutorServiceWithMaxThreads(String prefix, int maxThreads) {
+    public ExecutorService createExecutorServiceWithMaxThreads(
+            String prefix, int maxThreads) {
         ThreadFactory threadFactory = blockerThreadFactoryFunction.apply(prefix);
-        ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(maxThreads, maxThreads,
-                                  10L, TimeUnit.MINUTES,
-                                  new LinkedBlockingQueue<>(),
-                                  threadFactory);
+        ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(
+                maxThreads, maxThreads,
+                10L, TimeUnit.MINUTES,
+                new LinkedBlockingQueue<>(),
+                threadFactory);
         threadPoolExecutor.allowCoreThreadTimeOut(true);
-        shutdownHelper.terminateOnShutdown(threadPoolExecutor);
+        shutdownHelper.terminateOnShutdown(prefix, threadPoolExecutor);
         return threadPoolExecutor;
     }
 
     @Override
     @SuppressFBWarnings(value = {"NP_NONNULL_PARAM_VIOLATION"},
-            justification = "ForkJoinPool constructor admits a null UncaughtExceptionHandler")
-    public ExecutorService createExecutorService(String prefix, boolean blockerTasks, int maxThreads) {
+            justification = "ForkJoinPool constructor admits a null "
+                    + "UncaughtExceptionHandler")
+    public ExecutorService createExecutorService(String prefix,
+            boolean blockerTasks, int maxThreads) {
         ExecutorService executorService;
         if (blockerTasks) {
-            ThreadFactory threadFactory = blockerThreadFactoryFunction.apply(prefix);
-            ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(maxThreads, maxThreads,
-                                      10L, TimeUnit.MINUTES,
-                                      new LinkedBlockingQueue<>(),
-                                      threadFactory);
+            ThreadFactory threadFactory
+                    = blockerThreadFactoryFunction.apply(prefix);
+            ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(
+                    maxThreads, maxThreads,
+                    10L, TimeUnit.MINUTES,
+                    new LinkedBlockingQueue<>(),
+                    threadFactory);
             threadPoolExecutor.allowCoreThreadTimeOut(true);
             executorService = threadPoolExecutor;
         } else {
-            ForkJoinWorkerThreadFactory threadFactory = forkJoinThreadFactoryFunction.apply(prefix);
-            executorService = new ForkJoinPool(maxThreads, threadFactory, null, true);
+            ForkJoinWorkerThreadFactory threadFactory
+                    = forkJoinThreadFactoryFunction.apply(prefix);
+            executorService = new ForkJoinPool(maxThreads, threadFactory,
+                    null, true);
         }
-        shutdownHelper.terminateOnShutdown(executorService);
+        shutdownHelper.terminateOnShutdown(prefix, executorService);
         return executorService;
     }
 
-    public static interface BlockerThreadFactoryFunction extends Function<String, ThreadFactory> {
+    public static interface BlockerThreadFactoryFunction extends
+            Function<String, ThreadFactory> {
 
     }
 
-    public static interface ForkJoinThreadFactoryFunction extends Function<String, ForkJoinWorkerThreadFactory> {
+    public static interface ForkJoinThreadFactoryFunction extends
+            Function<String, ForkJoinWorkerThreadFactory> {
 
     }
 

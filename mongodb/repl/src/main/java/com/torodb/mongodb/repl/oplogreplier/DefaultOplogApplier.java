@@ -66,7 +66,6 @@ public class DefaultOplogApplier implements OplogApplier {
     private final OplogManager oplogManager;
     private final BatchAnalyzerFactory batchAnalyzerFactory;
     private final ActorSystem actorSystem;
-    private final ExecutorService stopperExecutorService;
     private final OplogApplierMetrics metrics;
 
     @Inject
@@ -78,8 +77,6 @@ public class DefaultOplogApplier implements OplogApplier {
         this.batchLimits = batchLimits;
         this.oplogManager = oplogManager;
         this.batchAnalyzerFactory = batchAnalyzerFactory;
-        this.stopperExecutorService = concurrentToolsFactory.createExecutorServiceWithMaxThreads(
-                "oplog-applier-stopper", 1);
         this.actorSystem = ActorSystem.create("oplog-applier", null, null,
                 ExecutionContexts.fromExecutor(
                         concurrentToolsFactory.createExecutorServiceWithMaxThreads(
@@ -130,31 +127,32 @@ public class DefaultOplogApplier implements OplogApplier {
                         }
                         if (cause instanceof CancellationException) { //the completable future has been cancelled
                             LOGGER.debug("Oplog replication stream has been cancelled");
-                            killSwitch.abort(cause); //to stop the stream on an external cancellation
+                            killSwitch.shutdown();
                         } else { //in this case the exception should came from the stream
                             LOGGER.error("Oplog replication stream finished exceptionally", cause);
                             //the stream should be finished exceptionally, but just in case we
                             //notify the kill switch to stop the stream.
-                            killSwitch.abort(cause);
+                            killSwitch.shutdown();
                         }
                     }
                 });
 
-        return new ApplyingJob() {
-            @Override
-            public CompletableFuture<Empty> onFinishRaw() {
-                return whenComplete;
-            }
+        return new DefaultApplyingJob(killSwitch, whenComplete);
+    }
 
-            @Override
-            public CompletableFuture<Empty> cancel() {
-                return CompletableFuture.supplyAsync(() -> {
-                    killSwitch.abort(new CancellationException());
-                    return whenComplete.exceptionally(t -> Empty.getInstance())
-                            .join();
-                }, stopperExecutorService);
-            }
-        };
+    private static class DefaultApplyingJob extends AbstractApplyingJob {
+        private final KillSwitch killSwitch;
+
+        public DefaultApplyingJob(KillSwitch killSwitch,
+                CompletableFuture<Empty> onFinish) {
+            super(onFinish);
+            this.killSwitch = killSwitch;
+        }
+        
+        @Override
+        public void cancel() {
+            killSwitch.shutdown();
+        }
     }
 
     @Override

@@ -2,40 +2,36 @@ package com.torodb.concurrent;
 
 import akka.Done;
 import akka.NotUsed;
-import akka.actor.ActorSystem;
-import akka.dispatch.ExecutionContexts;
 import akka.stream.*;
 import akka.stream.javadsl.*;
+import com.google.common.base.Preconditions;
 import com.torodb.core.annotations.ParallelLevel;
 import com.torodb.core.concurrent.StreamExecutor;
 import java.util.concurrent.*;
 import java.util.function.BiFunction;
-import java.util.function.Consumer;
 import java.util.stream.Stream;
 import javax.inject.Inject;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  *
  */
-public class AkkaStreamExecutor implements StreamExecutor {
+public class AkkaStreamExecutor extends ActorSystemTorodbService
+        implements StreamExecutor {
 
+    private static final Logger LOGGER
+            = LogManager.getLogger(AkkaStreamExecutor.class);
     private final int parallelLevel;
     private final Sink<Runnable, CompletionStage<Done>> genericRunnableGraph;
-    private final Materializer materializer;
-    private final ExecutorService executor;
-    private final Consumer<ExecutorService> onClose;
+    private Materializer materializer;
 
     @Inject
-    public AkkaStreamExecutor(@ParallelLevel int parallelLevel, ExecutorService executor,
-            Consumer<ExecutorService> onClose) {
+    public AkkaStreamExecutor(ThreadFactory threadFactory, 
+            @ParallelLevel int parallelLevel, ExecutorService executor,
+            String prefix) {
+        super(threadFactory, () -> executor, prefix);
         this.parallelLevel = parallelLevel;
-        this.executor = executor;
-        this.onClose = onClose;
-
-        ActorSystem actorSystem = ActorSystem.create("stream-executor", null, null,
-                ExecutionContexts.fromExecutor(executor)
-        );
-        materializer = ActorMaterializer.create(actorSystem);
 
         genericRunnableGraph = Flow.fromFunction(
                 (Runnable runnable) -> {
@@ -47,7 +43,19 @@ public class AkkaStreamExecutor implements StreamExecutor {
     }
 
     @Override
+    protected Logger getLogger() {
+        return LOGGER;
+    }
+
+    @Override
+    protected void startUp() throws Exception {
+        super.startUp();
+        materializer = ActorMaterializer.create(getActorSystem());
+    }
+
+    @Override
     public CompletableFuture<?> executeRunnables(Stream<Runnable> runnables) {
+        Preconditions.checkState(isRunning(), "This service is not running");
         return Source.fromIterator(() -> runnables.iterator())
                 .toMat(genericRunnableGraph, Keep.right())
                 .run(materializer)
@@ -56,6 +64,7 @@ public class AkkaStreamExecutor implements StreamExecutor {
 
     @Override
     public <I> CompletableFuture<?> execute(Stream<Callable<I>> callables) {
+        Preconditions.checkState(isRunning(), "This service is not running");
         Flow<Callable<I>, I, NotUsed> flow = Flow.fromFunction(callable -> callable.call());
 
         Graph<FlowShape<Callable<I>, I>, NotUsed> balanceGraph = createBalanceGraph(flow);
@@ -69,7 +78,7 @@ public class AkkaStreamExecutor implements StreamExecutor {
 
     @Override
     public <I, O> CompletableFuture<O> fold(Stream<Callable<I>> callables, O zero, BiFunction<O, I, O> fun) {
-
+        Preconditions.checkState(isRunning(), "This service is not running");
         Flow<Callable<I>, I, NotUsed> flow = Flow.fromFunction(callable -> callable.call());
 
         Graph<FlowShape<Callable<I>, I>, NotUsed> balanceGraph = createBalanceGraph(flow);
@@ -79,11 +88,6 @@ public class AkkaStreamExecutor implements StreamExecutor {
                 .toMat(Sink.fold(zero, (acum, newValue) -> fun.apply(acum, newValue)), Keep.right())
                 .run(materializer)
                 .toCompletableFuture();
-    }
-
-    @Override
-    public void close() {
-        onClose.accept(executor);
     }
 
     private <I, O> Graph<FlowShape<I, O>, NotUsed> createBalanceGraph(Flow<I, O, NotUsed> flow) {

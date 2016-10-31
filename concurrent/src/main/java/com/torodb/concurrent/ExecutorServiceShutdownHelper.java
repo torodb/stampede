@@ -1,7 +1,8 @@
 
-package com.torodb.concurrent.guice;
+package com.torodb.concurrent;
 
 import com.torodb.core.Shutdowner;
+import com.torodb.core.Shutdowner.ShutdownListener;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -26,11 +27,13 @@ public class ExecutorServiceShutdownHelper {
         this.clock = clock;
     }
 
-    public void terminateOnShutdown(ExecutorService executorService) {
-        shutdowner.addShutdownListener(executorService, this::onShutdown);
+    public void terminateOnShutdown(String executorServiceName,
+            ExecutorService executorService) {
+        shutdowner.addShutdownListener(executorService,
+                new ExecutorServiceShutdowner(executorServiceName));
     }
 
-    private void onShutdown(ExecutorService executorService) throws Exception {
+    public void shutdown(ExecutorService executorService) throws InterruptedException {
         Instant start = clock.instant();
         executorService.shutdown();
         boolean terminated = false;
@@ -42,6 +45,24 @@ public class ExecutorServiceShutdownHelper {
                         executorService,
                         Duration.between(start, clock.instant()));
             }
+        }
+    }
+
+    private class ExecutorServiceShutdowner implements ShutdownListener<ExecutorService> {
+        private final String executorServiceName;
+
+        public ExecutorServiceShutdowner(String executorServiceName) {
+            this.executorServiceName = executorServiceName;
+        }
+
+        @Override
+        public void onShutdown(ExecutorService e) throws Exception {
+            ExecutorServiceShutdownHelper.this.shutdown(e);
+        }
+
+        @Override
+        public String describeResource(ExecutorService resource) {
+            return executorServiceName + " executor service";
         }
     }
 

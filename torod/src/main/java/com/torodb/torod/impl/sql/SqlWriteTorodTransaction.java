@@ -61,12 +61,13 @@ public abstract class SqlWriteTorodTransaction<T extends WriteInternalTransactio
 
         //TODO: here we can not use a pipeline
         InsertPipeline pipeline = getConnection().getServer()
-                .getInsertPipelineFactory(concurrent)
+                .getInsertPipelineFactory()
                 .createInsertPipeline(
                         getConnection().getServer().getD2RTranslatorFactory(),
                         metaDb,
                         metaCol,
-                        getInternalTransaction().getBackendTransaction()
+                        getInternalTransaction().getBackendTransaction(),
+                        concurrent
                 );
         pipeline.insert(documents);
     }

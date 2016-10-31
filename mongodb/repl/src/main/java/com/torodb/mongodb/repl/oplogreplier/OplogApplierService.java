@@ -28,11 +28,13 @@ import com.google.common.util.concurrent.Service;
 public interface OplogApplierService extends Service {
 
     public static interface Callback {
-        void rollback(RollbackReplicationException ex);
+        void waitUntilStartPermision();
 
-        void onFinish();
+        void rollback(OplogApplierService oplogApplier, RollbackReplicationException ex);
 
-        void onError(Throwable t);
+        void onFinish(OplogApplierService oplogApplier);
+
+        void onError(OplogApplierService oplogApplier, Throwable t);
     }
 
     public static interface OplogApplierServiceFactory {

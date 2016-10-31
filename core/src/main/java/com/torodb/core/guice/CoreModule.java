@@ -21,6 +21,7 @@
 package com.torodb.core.guice;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.torodb.core.Shutdowner;
 import com.torodb.core.TableRefFactory;
@@ -30,6 +31,7 @@ import com.torodb.core.impl.TableRefFactoryImpl;
 import com.torodb.core.retrier.Retrier;
 import com.torodb.core.retrier.SmartRetrier;
 import com.torodb.core.transaction.InternalTransactionManager;
+import java.util.concurrent.ThreadFactory;
 
 /**
  *
@@ -61,20 +63,29 @@ public class CoreModule extends AbstractModule {
                 .to(DefaultIdentifierFactory.class)
                 .asEagerSingleton();
 
-        bind(Shutdowner.class)
-                .in(Singleton.class);
-
         bind(InternalTransactionManager.class)
                 .in(Singleton.class);
     }
 
     private static int millisToWait(int attempts, int millis) {
+        if (millis >= 2000) {
+            return 2000;
+        }
         int factor = (int) Math.round(millis * (1.5 + Math.random()));
         if (factor < 2) {
             assert millis <= 1;
             factor = 2;
         }
-        return millis * factor;
+        return Math.min(2000, millis * factor);
+    }
+
+    @Provides @Singleton
+    protected Shutdowner createShutdowner(ThreadFactory threadFactory) {
+        Shutdowner s = new Shutdowner(threadFactory);
+        s.startAsync();
+        s.awaitRunning();
+
+        return s;
     }
 
 }
