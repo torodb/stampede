@@ -85,10 +85,12 @@ public class TransactionalDbCloner extends AbstractService implements DbCloner {
 
     @Override
     protected void doStart() {
+        notifyStarted();
     }
 
     @Override
     protected void doStop() {
+        notifyStopped();
     }
 
     /**

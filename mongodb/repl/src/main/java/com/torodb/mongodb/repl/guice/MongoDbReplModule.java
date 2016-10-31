@@ -108,6 +108,7 @@ public class MongoDbReplModule extends PrivateModule {
 
         bind(AnalyzedOplogBatchExecutor.class)
                 .to(ConcurrentOplogBatchExecutor.class);
+        expose(AnalyzedOplogBatchExecutor.class);
 
         bind(ConcurrentOplogBatchExecutor.ConcurrentOplogBatchExecutorMetrics.class)
                 .in(Singleton.class);

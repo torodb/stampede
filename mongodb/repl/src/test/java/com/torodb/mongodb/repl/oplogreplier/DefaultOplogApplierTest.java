@@ -52,7 +52,9 @@ public class DefaultOplogApplierTest extends AbstractOplogApplierTest {
                     .in(Singleton.class);
 
             bind(AnalyzedOplogBatchExecutor.class)
-                    .to(ConcurrentOplogBatchExecutor.class);
+                    .to(ConcurrentOplogBatchExecutor.class)
+                    .in(Singleton.class);
+            expose(AnalyzedOplogBatchExecutor.class);
 
             bind(ConcurrentOplogBatchExecutor.ConcurrentOplogBatchExecutorMetrics.class)
                     .in(Singleton.class);

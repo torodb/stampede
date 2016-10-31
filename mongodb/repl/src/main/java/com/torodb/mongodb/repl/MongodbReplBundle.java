@@ -40,6 +40,7 @@ import com.torodb.mongodb.core.MongodServer;
 import com.torodb.mongodb.repl.guice.MongoDbRepl;
 import com.torodb.mongodb.repl.guice.MongoDbReplModule;
 import com.torodb.mongodb.repl.guice.MongodbReplConfig;
+import com.torodb.mongodb.repl.oplogreplier.batch.AnalyzedOplogBatchExecutor;
 import com.torodb.mongodb.utils.DbCloner;
 
 /**
@@ -56,6 +57,7 @@ public class MongodbReplBundle extends AbstractBundle {
     private final MongodServer mongodServer;
     private final CachedMongoClientFactory cachedMongoClientFactory;
     private final DbCloner dbCloner;
+    private final AnalyzedOplogBatchExecutor aobe;
 
     public MongodbReplBundle(TorodBundle torodBundle, Supervisor supervisor,
             MongodbReplConfig config, Injector injector) {
@@ -77,6 +79,7 @@ public class MongodbReplBundle extends AbstractBundle {
         this.mongodServer = replInjector.getInstance(MongodServer.class);
         this.cachedMongoClientFactory = replInjector.getInstance(CachedMongoClientFactory.class);
         this.dbCloner = replInjector.getInstance(Key.get(DbCloner.class, MongoDbRepl.class));
+        this.aobe = replInjector.getInstance(AnalyzedOplogBatchExecutor.class);
     }
 
     @Override
@@ -94,6 +97,9 @@ public class MongodbReplBundle extends AbstractBundle {
 
         dbCloner.startAsync();
         dbCloner.awaitRunning();
+
+        aobe.startAsync();
+        aobe.awaitRunning();
 
         replCoordinator.startAsync();
         replCoordinator.awaitRunning();
@@ -113,6 +119,9 @@ public class MongodbReplBundle extends AbstractBundle {
             Preconditions.checkState(!replCoordinator.isRunning(),
                     "It was expected that {} was not running", replCoordinator);
         }
+
+        aobe.stopAsync();
+        aobe.awaitTerminated();
 
         dbCloner.stopAsync();
         dbCloner.awaitTerminated();

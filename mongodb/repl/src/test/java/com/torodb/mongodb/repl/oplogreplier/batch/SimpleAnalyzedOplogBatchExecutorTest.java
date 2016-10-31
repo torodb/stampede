@@ -65,8 +65,9 @@ import com.torodb.mongodb.repl.oplogreplier.ApplierContext;
 import com.torodb.mongodb.repl.oplogreplier.OplogOperationApplier;
 import com.torodb.mongodb.repl.oplogreplier.OplogOperationApplier.OplogApplyingException;
 import com.torodb.mongodb.repl.oplogreplier.batch.AnalyzedOplogBatchExecutor.AnalyzedOplogBatchExecutorMetrics;
+import org.junit.After;
 
-public class AnalyzedOplogBatchExecutorTest {
+public class SimpleAnalyzedOplogBatchExecutorTest {
 
     @Mock
     private AnalyzedOplogBatchExecutorMetrics metrics;
@@ -81,13 +82,18 @@ public class AnalyzedOplogBatchExecutorTest {
     private MongodConnection conn;
     @Mock
     private ExclusiveWriteMongodTransaction writeTrans;
-    private AnalyzedOplogBatchExecutor executor;
+    private SimpleAnalyzedOplogBatchExecutor executor;
+    private SimpleAnalyzedOplogBatchExecutor actualExecutor;
 
     @Before
     public void setUp() {
         this.retrier = spy(NeverRetryRetrier.getInstance());
         MockitoAnnotations.initMocks(this);
-        executor = spy(new AnalyzedOplogBatchExecutor(metrics, applier, server, retrier, namespaceJobExecutor));
+
+        actualExecutor = new SimpleAnalyzedOplogBatchExecutor(metrics, applier,
+                server, retrier, namespaceJobExecutor);
+
+        executor = spy(actualExecutor);
 
         given(server.openConnection()).willReturn(conn);
         given(conn.openExclusiveWriteTransaction()).willReturn(writeTrans);
@@ -97,6 +103,15 @@ public class AnalyzedOplogBatchExecutorTest {
         given(metrics.getCudBatchTimer()).willReturn(mock(Timer.class));
         given(metrics.getNamespaceBatchTimer()).willReturn(mock(Timer.class));
         given(metrics.getCudBatchSize()).willReturn(mock(Histogram.class));
+
+        actualExecutor.startAsync();
+        actualExecutor.awaitRunning();
+    }
+
+    @After
+    public void tearDown() {
+        actualExecutor.stopAsync();
+        actualExecutor.awaitTerminated();
     }
 
     @Test
@@ -258,9 +273,9 @@ public class AnalyzedOplogBatchExecutorTest {
 
     /**
      * Test the behaviour of the method
-     * {@link AnalyzedOplogBatchExecutor#visit(com.torodb.mongodb.repl.oplogreplier.batch.SingleOpAnalyzedOplogBatch, com.torodb.mongodb.repl.oplogreplier.ApplierContext) that visits a single op}
+     * {@link SimpleAnalyzedOplogBatchExecutor#visit(com.torodb.mongodb.repl.oplogreplier.batch.SingleOpAnalyzedOplogBatch, com.torodb.mongodb.repl.oplogreplier.ApplierContext) that visits a single op}
      * when
-     * {@link AnalyzedOplogBatchExecutor#execute(com.eightkdata.mongowp.server.api.oplog.OplogOperation, com.torodb.mongodb.repl.oplogreplier.ApplierContext) the execution}
+     * {@link SimpleAnalyzedOplogBatchExecutor#execute(com.eightkdata.mongowp.server.api.oplog.OplogOperation, com.torodb.mongodb.repl.oplogreplier.ApplierContext) the execution}
      * fails until the given attempt.
      *
      *
@@ -277,7 +292,7 @@ public class AnalyzedOplogBatchExecutorTest {
                 .setReapplying(true)
                 .setUpdatesAsUpserts(false)
                 .build();
-        executor = spy(new AnalyzedOplogBatchExecutor(metrics, applier, server, myRetrier, namespaceJobExecutor));
+        executor = spy(new SimpleAnalyzedOplogBatchExecutor(metrics, applier, server, myRetrier, namespaceJobExecutor));
 
         Timer timer = mock(Timer.class);
         Context context = mock(Context.class);
@@ -404,8 +419,8 @@ public class AnalyzedOplogBatchExecutorTest {
     }
 
     /**
-     * Test the behaviour of the method {@link AnalyzedOplogBatchExecutor#visit(com.torodb.mongodb.repl.oplogreplier.batch.CudAnalyzedOplogBatch, com.torodb.mongodb.repl.oplogreplier.ApplierContext)  that visits a cud batch}
-     * when {@link AnalyzedOplogBatchExecutor#execute(com.torodb.mongodb.repl.oplogreplier.batch.CudAnalyzedOplogBatch, com.torodb.mongodb.repl.oplogreplier.ApplierContext) the execution}
+     * Test the behaviour of the method {@link SimpleAnalyzedOplogBatchExecutor#visit(com.torodb.mongodb.repl.oplogreplier.batch.CudAnalyzedOplogBatch, com.torodb.mongodb.repl.oplogreplier.ApplierContext)  that visits a cud batch}
+     * when {@link SimpleAnalyzedOplogBatchExecutor#execute(com.torodb.mongodb.repl.oplogreplier.batch.CudAnalyzedOplogBatch, com.torodb.mongodb.repl.oplogreplier.ApplierContext) the execution}
      * fails until the given attempt.
      *
      *
@@ -428,7 +443,7 @@ public class AnalyzedOplogBatchExecutorTest {
                 mock(OplogOperation.class),
                 lastOp
         ));
-        executor = spy(new AnalyzedOplogBatchExecutor(metrics, applier, server, myRetrier, namespaceJobExecutor));
+        executor = spy(new SimpleAnalyzedOplogBatchExecutor(metrics, applier, server, myRetrier, namespaceJobExecutor));
 
         Timer timer = mock(Timer.class);
         Context context = mock(Context.class);

@@ -55,6 +55,7 @@ import com.torodb.mongodb.repl.guice.DocsPerTransaction;
 import com.torodb.mongodb.repl.guice.MongoDbRepl;
 import com.torodb.mongodb.repl.guice.MongoDbReplModule.DefaultCommitHeuristic;
 import com.torodb.mongodb.repl.oplogreplier.DefaultOplogApplier.BatchLimits;
+import com.torodb.mongodb.repl.oplogreplier.batch.AnalyzedOplogBatchExecutor;
 import com.torodb.mongodb.utils.DbCloner;
 import com.torodb.mongodb.utils.cloner.CommitHeuristic;
 import com.torodb.torod.TorodBundle;
@@ -91,6 +92,7 @@ public class OplogTestContextResourceRule extends ExternalResource {
     private TorodServer torodServer;
     private OplogManager oplogManager;
     private OplogTestContext testContext;
+    private AnalyzedOplogBatchExecutor aobe;
 
     public OplogTestContextResourceRule(Supplier<Module> specificModuleSupplier) {
         this.specificModuleSupplier = specificModuleSupplier;
@@ -140,6 +142,11 @@ public class OplogTestContextResourceRule extends ExternalResource {
         oplogManager.startAsync();
         oplogManager.awaitRunning();
 
+        aobe = testInjector.getInstance(
+                AnalyzedOplogBatchExecutor.class);
+        aobe.startAsync();
+        aobe.awaitRunning();
+
         oplogApplier = testInjector.getInstance(OplogApplier.class);
 
         testContext = new DefaultOplogTestContext(
@@ -155,6 +162,11 @@ public class OplogTestContextResourceRule extends ExternalResource {
                 oplogApplier.close();
             } catch (Exception ex) {
             }
+        }
+
+        if (aobe != null) {
+            aobe.stopAsync();
+            aobe.awaitTerminated();
         }
 
         if (oplogManager != null) {

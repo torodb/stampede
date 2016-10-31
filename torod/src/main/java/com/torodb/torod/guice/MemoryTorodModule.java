@@ -56,10 +56,12 @@ public class MemoryTorodModule extends PrivateModule {
 
         @Override
         protected void doStart() {
+            notifyStarted();
         }
 
         @Override
         protected void doStop() {
+            notifyStopped();
         }
 
         @Override
