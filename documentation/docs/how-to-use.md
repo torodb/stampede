@@ -1,6 +1,6 @@
-Para comprender mejor la naturaleza del algoritmo de mapeo de documentos JSON a un almacenamiento relacional, se realizará un ejemplo real usando el mismo [dataset](https://docs.mongodb.com/getting-started/shell/import-data/) que utiliza MongoDB en su documentación.
+To understand better how the JSON document to relational storage mapping algorithm works, one example will be done using a known [dataset](https://docs.mongodb.com/getting-started/shell/import-data/) from MongoDB documentation.
 
-Suponiendo que tenemos ToroDB Stampede replicando de un MongoDB, importaremos los datos en MongoDB para que se repliquen en formato relacional en PostgreSQL. Para ello basta ejecutar los siguientes comandos.
+Given that ToroDB Stampede and all its requisites are met, the dataset will be imported into MongoDB to be replicated in PostgreSQL. This is done with next commands.
 
 ```
 $ wget https://www.dropbox.com/s/570d4tyt4hpsn03/primer-dataset.json?dl=0
@@ -8,11 +8,11 @@ $ wget https://www.dropbox.com/s/570d4tyt4hpsn03/primer-dataset.json?dl=0
 $ mongoimport -d stampede -c primer primer-dataset.json
 ```
 
-Como se puede observar se ha hecho la importación en la base de datos con nombre `stampede` y la colección `primer`, esto es importante de cara al esquema y nombres de tablas que se van a utilizar. En PostgreSQL esto significa que se ha creado dentro de la base de datos `torod`, el esquema `stampede` con una tabla raíz `primer` y una serie de tablas denominadas `primer_*`.
+The import was done with database `stampede` and collection `primer`, this is important because it determines the schema and table names created in the relational storage. In PostgreSQL the replication is done in the `torod` database, schema `stampede` with one root table `primer` and some associated tables named like `primer_*`.
 
 # Table mapping
 
-En esencia, cada nivel del documento JSON se mapea a una tabla diferente en el backend relacional. Por tanto, sabiendo que la estructura de los documentos JSON que contiene el dataset es equivalente a la siguiente.
+Essentially, each level of the JSON document is mapped to a different table in the relational backend. The structure of each document in the given dataset complies with the following structure.
 
 ```
 {
@@ -36,7 +36,7 @@ En esencia, cada nivel del documento JSON se mapea a una tabla diferente en el b
 }
 ```
 
-Se crearían un total de 4 tablas que corresponden a los diferentes niveles del documento. Es decir, una tabla inicial para la raíz del documento que se llama `primer`, porque es el nombre de colección seleccionado, y otras tres tablas que corresponden con los paths de los subdocumentos encontrados.
+So 4 tables will be created representing each different level from the document. One root table with name `primer`, because it is the collection name at `mongoimport` command. And another three tables representing the childs of the root document.
 
 * primer_address
 * primer_address_coord
@@ -48,9 +48,9 @@ Se crearían un total de 4 tablas que corresponden a los diferentes niveles del 
 
 ### primer
 
-Como se ha indicado, la raíz del documento se mapea a una tabla que tiene como nombre el que se haya usado en la colección de MongoDB, en este caso `primer`.
+As stated above, the root of the document is mapped to a table with the name used as collection name, it is `primer`.
 
-A su vez, cada elemento del nivel raíz se mapea a una columna, ya sea este un tipo de dato escalar o un subdocumento. En la siguiente sección se puede consultar el tipo de datos que existen y como son mapeados a columnas en el backend relacional.
+Each element of the root level is mapped to a different column of the table, either an scalar or subdocument. Next chapter contains the different datatypes that can be created in the relational schema. All of them are indicated as a postfix of the column name, for example `cuisine` key is created as `cuisine_s` because it contains string values.
 
 ```
 did  | address_e | restaurant_id_s |                                               name_s                                               |                            cuisine_s                             |           _id_x            |   borough_s   | grades_e
@@ -82,7 +82,7 @@ did  |  rid  | seq | zipcode_s | coord_e |                street_s              
 
 ### primer_address_coord
 
-La tabla `primer_address_coord` es un caso especial, al igual que `primer_grades`, porque es un path que referencia a un array, por esta razón la columna `seq` posee valores que indican la posición del elemento en el array. Para comprender mejor las columnas de metadatos utilizadas en las tablas se puede leer el apartado de [metada](how-to-use.md#metadata).
+The table `primer_address_coord` is a special case, like `primer_grades`, because those paths contain an array. That is the reason why a column `seq` is used in those tables, indicating the position of the element in the original arrays. To understand better the metadata columns it is recommended to read the chapter [metada](how-to-use.md#metadata).
 
 ```
 did  |  rid  |  pid  | seq |     v_d      
@@ -153,12 +153,11 @@ did  |  rid  | seq |         date_g         | score_i |    grade_s     | score_n
 
 # Columns and metadata
 
-[TODO]: <> (Explicar los posibles valores de los campos tipo e)
-[TODO]: <> (Revisar que estén todos los tipos de datos ... BINARY, BOOLEAN, DATE, DOUBLE, INSTANT, INTEGER, LONG, MONGO_OBJECT_ID, MONGO_TIME_STAMP, NULL, STRING, TIME, CHILD)
+[TODO]: <> (explain the possible values of `_e`)
 
-Como se puede observar en los extractos de las tablas creadas, los nombres de columnas incluyen un postfijo, que indica el tipo de dato. Como en JSON no hay restricciones a la hora de asignar valores a un campo, pero en un backend relacional sí, se ha decidido crear una columna para cada tipo de dato diferente asignado al mismo path (ver la sección [Data conflict resolution](how-to-use.md#data-conflict-resolution)).
+As it can be observed in the tables extracts above, the column names contains a postfix, it indicates the data type. In JSON there are no data type constraints but there are in a relational storage, so if one path contains two different data types two different columns are created (view more info at [Data conflict resolution](how-to-use.md#data-conflict-resolution))
 
-Los diferentes tipos de datos que maneja ToroDB Stampede se representan en la siguiente tabla.
+The different data types used by ToroDB Stampede are represented in the table below.
 
 | Postfix | What does it mean? |
 |---------|--------------------|
@@ -184,11 +183,9 @@ __Notes about MONGO_OBJECT_ID__: ObjectIds are small, likely unique, fast to gen
 
 ## Data conflict resolution
 
-Por la propia naturaleza de los documentos JSON puede ocurrir que un mismo path tenga dos tipos de datos diferentes, o que en algunos documentos ese path no exista. No es un problema para un documento JSON, pero sí lo es para un sistema relacional en el que cada columna tiene asociado un determinado tipo de dato.
+Because the JSON documents nature, it can happen that the same path contains different data types or even in some documents the path doesn't exist. That is not a problem for the JSON document but it is for a relational storage where each column should have an associated data type.
 
-Para resolver este problema en ToroDB Stampede, se ha decidido crear una columna diferente para cada tipo de dato. Por ejemplo, en el extracto de la tabla `primer_grades` del ejemplo anterior, existen dos columna diferentes para el valor de la clave `score`. La columna `score_i` almacena los datos que son de tipo entero, mientras que la columna `score_n` indica cuando ese path tiene valor nulo o ni siquiera se ha especificado el path.
-
-Para que se comprenda mejor, a continuación se muestra un extracto de elementos en `primer_grades` que tienen valor para `score_i` y otros que no, pero que sí tienen valor para `score_n`.
+To solve this problem in ToroDB Stampede, each data type has a different column. For example, in the `primer_grades` table there are two different columns for the `score` key. One is `score_i` that represents the integer values and another one is `score_n` that represents when that value contains null in the original document (because it is mandatory to detect when null value was given and when the path was not given).
 
 ```
 did   |  rid  | seq |         date_g         | score_i |    grade_s     | score_n
@@ -210,7 +207,7 @@ did   |  rid  | seq |         date_g         | score_i |    grade_s     | score_
 
 ```
 
-En las filas que tienen valor `true` para la columna `score_n` significa que en el documento JSON asociado, el valor para `score` era `null`. Por ejemplo:
+The rows with value `true` for column `score_n` means the associated JSON document had a value null for path `score` like it is shown in the next example.
 
 ```
 {
@@ -236,28 +233,28 @@ En las filas que tienen valor `true` para la columna `score_n` significa que en 
 
 ## Metadata
 
-Anteriormente se ha comentado que ToroDB Stampede almacena una serie de metadatos que le permiten gestionar el documento, recomponerlo o hacer diferentes tipos de búsquedas. Estos metadatos se diferencian entre una serie de columnas creadas en las propias tablas de datos y una serie de tablas específicas de uso interno.
+As stated above, ToroDB Stampede stores different metadata to be able to the document, recompose it or execute different complex queries. These metadata can be columns in the data tables or even specific metadata tables for internal usage.
 
-### Columnas de metadatos
+### Metadata columns
 
-ToroDB Stampede crea varias columnas de metadatos en las tablas que sirven para mantener y recomponer los documentos originales. Además servirán al usuario para poder hacer consultas complejas de los datos.
+ToroDB Stampede creates different metadata columns in the data tables.
 
-| Columna | ¿Para qué sirve? |
-|---------|------------------|
-| did | Representa el identificador único del documento y posee el mismo valor para todas las filas correspondientes a ese documento. |
-| rid | Es un identificador único de la fila, por ejemplo, en el caso de arrays podemos encontrar varias filas con el mismo `did`, pero el `rid` es único para cada una. __Cabe señalar que la tabla raíz no tiene `rid` porque coincide con el `did`__. |
-| pid | Es la referencia al `rid` del elemento padre. Por ejemplo `primer_address_coord` posee los elementos con `rid` 0 y 1 que tienen como `pid` el valor 0, eso significa que son hijos de la fila de `primer_address` con `rid` 0. |
-| seq | Es un valor que sólo se utiliza en el caso de los arrays y que representa la posición del elemento en el array. |
+| Column | What does it? |
+|--------|---------------|
+| did | It is the unique identifier of the document and it has the same value for all rows related to the same document. |
+| rid | It is the unique identifier of the row, for example when an array is mapped the rid is different for each row but the did is the same. |
+| pid | It is the reference to the parent rid. For example, `primer_address_coord` has elements with rid 0 and 1 and pid 0, that means they are childs of row with rid 0 at `primer_address`. |
+| seq | Represents the position of an element inside the original array. |
 
 ![PID reference](images/pid_reference.jpeg)
 
-### Tablas de metadatos
+### Metadata tables
 
-Las columnas de metadatos en las tablas de replicación no son suficientes para mantener el sistema, por lo que además también existen una serie de tablas de metadatos específicas que se guardan en el esquema `torod`.
+The metadata columns in the data tables are not enough to keep the data integrity, so there are some special metadata tables at the schema `torodb`.
 
 #### database
 
-La tabla `database` almacena el nombre utilizado por el usuario al crear la base de datos en MongoDB, lo cual se traduce en PostgreSQL en un esquema. Como el nombre de esquema tiene limitaciones de tamaño, se utiliza la tabla `database` para guardar el nombre usado por el usuario y el identificador que se usará en PostgreSQL, aunque en general serán equivalentes.
+Table `database` stores the name given by the user to the database in MongoDB, that is stored in a schema in PostgreSQL. Because PostgreSQL has limits on the database names it is dereferenced here, but usually the values are the same unless a very large name is used.
 
 ```
 # select * from database;
@@ -269,7 +266,7 @@ La tabla `database` almacena el nombre utilizado por el usuario al crear la base
 
 #### collection
 
-Además del nombre de base de datos, en MondoDB hay que especificar en qué colección se guardan los datos, esta referencia es almacenada en la tabla `collection`.
+Among the name of the database one, collection name was given in MongoDB layer, so it is stored in the table `collection` dereferencing it in the same way.
 
 ```
 # select * from collection;
@@ -281,9 +278,9 @@ Además del nombre de base de datos, en MondoDB hay que especificar en qué cole
 
 #### doc_part
 
-Como ya hemos indicado previamente, el nombre de la tabla para el elemento raíz de un documento JSON es el mismo que se ha indicado como nombre de la colección de MongoDB. En ToroDB Stampede, el `table_ref` asociado a ese elemento es `{}` y su identificador, en este caso, es `primer`.
+As stated above, the name of the table for the root element is the same one used in the MongoDB collection name. In ToroDB Stampede the `table_ref` associated to that element is `{}` and its identifier is the collection dereferenced name, here `primer`.
 
-Si, en cambio, hablamos del path `address.coord`, el table ref será `{address,coord}`, mientras que el identificador de la tabla será `primer_address_coord`.
+With larger paths, like `address.coord`, the table ref will be the composition of the path, so `{address,coord}`. And the table identifier will be the concatenation of the dereferenced names of collection and path identifiers `primer_address_coord`.
 
 ```
 # select * from doc_part;
@@ -298,9 +295,7 @@ Si, en cambio, hablamos del path `address.coord`, el table ref será `{address,c
 
 #### field
 
-La tabla `field` almacena el tipo de dato de cada columna y su identificador. Nuevamente, cabe destacar que el nombre utilizado en la columna no siempre coincidirá con el nombre original en el documento, si se han usado nombres de clave muy largos.
-
-Por tanto para una determinada combinación de `database, collection, table_ref`, se guarda el nombre de clave usado en el documento original, el nombre asignado a la columna y el tipo de datos que almacena. Este tipo de dato puede ser un tipo escalar, como `string` o `double` o puede ser un tipo `child` en cuyo caso hará referencia a una nueva tabla.
+`field` table stores the data type of each column and its identifier. For a given combination of `database, collection, table_ref`, the used name of the column is stored and the data type associated. This data type can be either a scalar value, like `string` or `double`, or a `child` type (this means an associated table exists)
 
 ```
 # select * from field;
@@ -326,9 +321,9 @@ Por tanto para una determinada combinación de `database, collection, table_ref`
 
 #### scalar
 
-Por último la tabla `scalar` es utilizada para guardar el tipo de datos de los elementos de un array. Hay que tener en cuenta que en general para un mismo array todos los elementos serán del mismo tipo, pero no hay nada que impida que un documento JSON no contenga elementos de distintos tipos en un array.
+`scalar` table is used to store the data type of the element of an array. This is because an array can contains different type of data in a JSON document.
 
-En el caso del ejemplo utilizado, sólo contiene una fila que indica que los elementos del array en el path `address.coord` son de tipo `double`. Esto se traduce en que el tipo de la columna `v_d` de la tabla `stampede_address_coord` es `double`.
+In the given example, the only row in `scalar` table is related to the path `address.coord` with type `double`. This means that column `v_d` in the table `stampede_address_coord` is a `double`.
 
 ```
 # select * from scalar;
@@ -340,9 +335,9 @@ En el caso del ejemplo utilizado, sólo contiene una fila que indica que los ele
 
 # Example queries
 
-Supongamos que queremos hacer consultas sobre los datos replicados, como cabe esperar se puede usar la propia consola de PostgreSQL o cualquier herramienta que haga uso de su conector.
+The data in the relational storage can be queries like any other relational dataset, using the `psql` command or any other tool able to connect to PostgreSQL.
 
-Por ejemplo, si queremos el nombre de todos los locales que son panaderías en el código postal 10462, ejecutaríamos la siguiente query.
+For example, the name of all bakeries in the ZIP code 10462, could be:
 
 ```
 select p.name_s from primer p, primer_address pa
@@ -366,7 +361,7 @@ where
  Mr Cake Bakery & Dessert
 ```
 
-Una de las ventajas principales de tener los datos en formato relacional es que se puedenh realizar queries complejas de forma más sencilla y rápida. Por ejemplo si queremos conocer la nota media de cada una de las panaderías podríamos ejecutar la query siguiente.
+One of the advantages having the data in a relational format is the ability to execute complex queries in a fast and efficient way. For example, to the previous query, the average score of each bakery could be added with just a few lines.
 
 ```
 select p.name_s, avg(pg.score_i)
@@ -393,7 +388,7 @@ group by p.name_s
  National Bakery                     | 12.4000000000000000
 ```
 
-Y ahora sería muy senillo filtrar aquellas que tengan un nota media superior a 10.
+And one filter can be applied with a few lines more, keeping query very simple and the execution time responsive.
 
 ```
 select p.name_s, avg(pg.score_i)
