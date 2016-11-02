@@ -19,8 +19,14 @@ Not everything could be perfect and there are some known limitations from ToroDB
 * If character `\0` is used in a string it will be escaped because PostgreSQL doesn't support it.
 * Command `applyOps` reception will stop the replication server.
 * Command `collmod` reception will be ignored.
-* Indexed are not supported currently.
 * MongoDB sharding environment are not supported currently.
+
+In addition to the previous limitations, just some kind of indexes are supported:
+
+* Index of type ascending and descending (those that ends in 1 and -1 when declared in mongo)
+* Simple indexes of one key
+* Compound indexes of multiple keys with the exception of unique compound indexes that have keys touching more than a single subdocument (eg: db.test.createIndex({"a": 1, "a.b": 1},{unique: true})
+* All keys path with the exception to the paths resolving in scalar value (eg: db.test.createIndex("a": 1) will not index value a of document {"a": [1,2,3]})
 
 [TODO]: <> (not supported types, we need a list)
 
