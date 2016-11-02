@@ -18,7 +18,7 @@ ToroDB Stampede expects some base configuration from the relational backend. So,
 This steps can be done with the next commands in a Linux environment.
 
 ```
-$ sudo -u postgres createuser -P --interactive
+$ sudo -u postgres createuser -S -R -D -P --interactive torodb
 
 $ sudo -u postgres createdb -O torodb torod
 
