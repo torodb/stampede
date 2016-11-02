@@ -10,3 +10,4 @@ target/
 .settings/
 hs_err*.log
 /documentation/static
+/documentation/site
