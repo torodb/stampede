@@ -21,8 +21,8 @@
 package com.torodb.mongodb.repl.oplogreplier;
 
 import com.eightkdata.mongowp.OpTime;
-import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.google.inject.assistedinject.Assisted;
+import com.torodb.core.concurrent.ConcurrentToolsFactory;
 import com.torodb.core.services.IdleTorodbService;
 import com.torodb.mongodb.repl.OplogManager;
 import com.torodb.mongodb.repl.OplogManager.ReadOplogTransaction;
@@ -31,7 +31,9 @@ import com.torodb.mongodb.repl.oplogreplier.OplogApplier.ApplyingJob;
 import com.torodb.mongodb.repl.oplogreplier.fetcher.ContinuousOplogFetcher;
 import com.torodb.mongodb.repl.oplogreplier.fetcher.ContinuousOplogFetcher.ContinuousOplogFetcherFactory;
 import com.torodb.mongodb.repl.oplogreplier.fetcher.OplogFetcher;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadFactory;
 import javax.inject.Inject;
 import org.apache.logging.log4j.LogManager;
@@ -54,53 +56,62 @@ public class DefaultOplogApplierService extends IdleTorodbService implements Opl
     private OplogFetcher fetcher;
     private ApplyingJob applyJob;
     private final ReplicationFilters replFilters;
+    private final ExecutorService selfExecutor;
+    private CompletableFuture<Void> onFinishFuture;
 
     @Inject
     public DefaultOplogApplierService(ThreadFactory threadFactory,
             OplogApplier oplogApplier, OplogManager oplogManager,
             ContinuousOplogFetcherFactory oplogFetcherFactory, 
-            @Assisted Callback callback, ReplicationFilters replFilters) {
+            @Assisted Callback callback, ReplicationFilters replFilters,
+            ConcurrentToolsFactory concurrentToolsFactory) {
         super(threadFactory);
         this.oplogApplier = oplogApplier;
         this.oplogFetcherFactory = oplogFetcherFactory;
         this.oplogManager = oplogManager;
         this.callback = callback;
         this.replFilters = replFilters;
+        this.selfExecutor = concurrentToolsFactory.createExecutorService("oplog-applier-service", true, 1);
     }
 
     @Override
     protected void startUp() throws Exception {
+        callback.waitUntilStartPermision();
         fetcher = createFetcher();
         applyJob = oplogApplier.apply(fetcher, new ApplierContext.Builder()
                 .setReapplying(false)
                 .setUpdatesAsUpserts(true)
                 .build()
         );
-        applyJob.onFinish().thenAccept(tuple -> {
+        
+        onFinishFuture = applyJob.onFinish().thenAcceptAsync(tuple -> {
             if (stopping) {
-                return ;
+                return;
             }
             switch (tuple.v1) {
                 case FINE:
                 case ROLLBACK:
-                    callback.rollback((RollbackReplicationException) tuple.v2);
+                    callback.rollback(this, (RollbackReplicationException) tuple.v2);
                     break;
                 case UNEXPECTED:
                 case STOP:
-                    callback.onError(tuple.v2);
+                    callback.onError(this, tuple.v2);
                     break;
                 case CANCELLED:
                     callback.onError(
+                            this,
                             new AssertionError("Unexpected cancellation of the applier while the "
                                     + "service is not stopping"));
                     break;
                 default:
                     callback.onError(
+                            this,
                             new AssertionError("Unexpected "
                                     + OplogApplier.ApplyingJobFinishState.class.getSimpleName()
-                                    + " found: " + tuple.v1 + " with error " + tuple.v2));
+                                    + " found: " + tuple.v1 + " with error "
+                                    + tuple.v2));
             }
-        });
+        }, selfExecutor);
     }
 
     @Override
@@ -109,13 +120,12 @@ public class DefaultOplogApplierService extends IdleTorodbService implements Opl
         stopping = true;
         if (applyJob != null) {
             if (!applyJob.onFinish().isDone()) {
-                LOGGER.trace("Requesting to stop the stream");
-                CompletableFuture<Empty> cancelFuture = applyJob.cancel();
-                LOGGER.trace("Waiting until applier finishes");
-                cancelFuture.join();
-                LOGGER.trace("Applier finished");
-            } else {
                 LOGGER.trace("Applier has been already finished");
+            } else {
+                LOGGER.trace("Requesting to stop the stream");
+                applyJob.cancel();
+                applyJob.onFinish().join();
+                LOGGER.trace("Applier finished");
             }
         } else {
             LOGGER.debug(serviceName() + " stopped before it was running?");
@@ -127,7 +137,14 @@ public class DefaultOplogApplierService extends IdleTorodbService implements Opl
         } else {
             LOGGER.debug(serviceName() + " stopped before it was running?");
         }
-        callback.onFinish();
+        if (onFinishFuture != null) {
+            onFinishFuture.join();
+        }
+        List<Runnable> pendingTasks = selfExecutor.shutdownNow();
+        assert pendingTasks.isEmpty() : "Oplog applier service shutted down "
+                + "before its task were correctly executed";
+
+        callback.onFinish(this);
     }
 
     private OplogFetcher createFetcher() {

@@ -68,7 +68,8 @@ public class ToroDbService extends AbstractIdleService implements Supervisor {
     protected void shutDown() throws Exception {
         LOGGER.info("Shutting down ToroDB Standalone");
         if (shutdowner != null) {
-            shutdowner.close();
+            shutdowner.stopAsync();
+            shutdowner.awaitTerminated();
         }
         LOGGER.info("ToroDB Stampede has been shutted down");
     }

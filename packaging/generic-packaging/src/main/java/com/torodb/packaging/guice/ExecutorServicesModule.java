@@ -60,7 +60,7 @@ public class ExecutorServicesModule extends AbstractModule {
         @Override
         public ThreadFactory apply(String prefix) {
             return new ThreadFactoryBuilder()
-                    .setNameFormat(prefix + " -%d")
+                    .setNameFormat(prefix + "-%d")
                     .build();
         }
     }

@@ -1,5 +1,5 @@
 
-package com.torodb.core.annotations;
+package com.torodb.mongodb.repl.topology;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
@@ -11,16 +11,13 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 
 /**
- * This annotation is used annotate a objects (usually handlers) that executes one or several
- * methods on several threads.
- *
- * It is important to say that objects injected with this annotation are <b>not required</b> to be
- * thread safe.
+ * This annotation is used identify resources that are related to the topology
+ * layer.
  */
 @Qualifier
 @Target({ FIELD, PARAMETER, METHOD, TYPE })
 @Retention(RUNTIME)
 @Documented
-public @interface UseThreads {
+@interface Topology {
 
 }

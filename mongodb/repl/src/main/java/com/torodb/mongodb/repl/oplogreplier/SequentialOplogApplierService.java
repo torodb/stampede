@@ -96,6 +96,7 @@ public class SequentialOplogApplierService extends IdleTorodbService implements 
 
     @Override
     protected void startUp() {
+        callback.waitUntilStartPermision();
         LOGGER.info("Starting SECONDARY service");
         paused = false;
         fetcherIsPaused = false;
@@ -156,7 +157,7 @@ public class SequentialOplogApplierService extends IdleTorodbService implements 
 
                         @Override
                         public void run() {
-                            callback.rollback(ex);
+                            callback.rollback(SequentialOplogApplierService.this, ex);
                         }
                     }
             );
@@ -205,7 +206,7 @@ public class SequentialOplogApplierService extends IdleTorodbService implements 
 
                         @Override
                         public void run() {
-                            callback.onError(ex);
+                            callback.onError(SequentialOplogApplierService.this, ex);
                         }
                     }
             );
@@ -237,7 +238,7 @@ public class SequentialOplogApplierService extends IdleTorodbService implements 
                         @Override
                         public void run() {
                             LOGGER.error("Secondary state failed to apply an operation: {}", status);
-                            callback.onError(new MongoException(status));
+                            callback.onError(SequentialOplogApplierService.this, new MongoException(status));
                         }
                     }
             );
@@ -252,7 +253,7 @@ public class SequentialOplogApplierService extends IdleTorodbService implements 
                         @Override
                         public void run() {
                             LOGGER.error("Secondary state failed to apply an operation", t);
-                            callback.onError(t);
+                            callback.onError(SequentialOplogApplierService.this, t);
                         }
                     }
             );
@@ -267,7 +268,7 @@ public class SequentialOplogApplierService extends IdleTorodbService implements 
                         @Override
                         public void run() {
                             LOGGER.error("Secondary state failed to apply an operation", t);
-                            callback.onError(t);
+                            callback.onError(SequentialOplogApplierService.this, t);
                         }
                     }
             );
@@ -282,7 +283,7 @@ public class SequentialOplogApplierService extends IdleTorodbService implements 
                         @Override
                         public void run() {
                             LOGGER.error("Secondary state failed", t);
-                            callback.onError(t);
+                            callback.onError(SequentialOplogApplierService.this, t);
                         }
                     }
             );

@@ -231,6 +231,9 @@ public class BackendServiceImpl extends IdleTorodbService implements BackendServ
     protected void startUp() throws Exception {
         LOGGER.debug("Starting backend...");
 
+        streamExecutor.startAsync();
+        streamExecutor.awaitRunning();
+
         LOGGER.trace("Waiting for {} to be running...", dbBackendService);
         dbBackendService.awaitRunning();
 
@@ -239,7 +242,8 @@ public class BackendServiceImpl extends IdleTorodbService implements BackendServ
 
     @Override
     protected void shutDown() throws Exception {
-        streamExecutor.close();
+        streamExecutor.stopAsync();
+        streamExecutor.awaitTerminated();
     }
 
     void onConnectionClosed(BackendConnectionImpl connection) {

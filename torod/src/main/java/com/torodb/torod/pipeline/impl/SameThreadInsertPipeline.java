@@ -101,4 +101,12 @@ public class SameThreadInsertPipeline implements InsertPipeline {
         this.docBatchSize = newBatchLength;
     }
 
+    public static interface Factory {
+        SameThreadInsertPipeline create(
+            D2RTranslatorFactory translatorFactory,
+            MetaDatabase metaDb,
+            MutableMetaCollection mutableMetaCollection,
+            WriteBackendTransaction backendConnection);
+    }
+
 }

@@ -57,8 +57,9 @@ public class StampedeService extends AbstractIdleService implements Supervisor {
 
     @Override
     public SupervisorDecision onError(Object supervised, Throwable error) {
+        LOGGER.error("Error reported by " + supervised +". Stopping ToroDB Stampede", error);
         this.stopAsync();
-        return SupervisorDecision.STOP;
+        return SupervisorDecision.IGNORE;
     }
 
     @Override
@@ -66,6 +67,7 @@ public class StampedeService extends AbstractIdleService implements Supervisor {
         LOGGER.info("Starting up ToroDB Stampede");
 
         shutdowner = bootstrapInjector.getInstance(Shutdowner.class);
+        shutdowner.awaitRunning();
 
         BackendBundle backendBundle = createBackendBundle();
         startBundle(backendBundle);
@@ -98,7 +100,8 @@ public class StampedeService extends AbstractIdleService implements Supervisor {
     protected void shutDown() throws Exception {
         LOGGER.info("Shutting down ToroDB Stampede");
         if (shutdowner != null) {
-            shutdowner.close();
+            shutdowner.stopAsync();
+            shutdowner.awaitTerminated();
         }
         LOGGER.info("ToroDB Stampede has been shutted down");
     }

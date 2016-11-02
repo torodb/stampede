@@ -33,6 +33,7 @@ import com.torodb.core.backend.SnapshotUpdater;
 import com.torodb.core.d2r.ReservedIdGenerator;
 import com.torodb.core.modules.Bundle;
 import com.torodb.core.transaction.metainf.MetainfoRepository;
+import com.torodb.torod.pipeline.InsertPipelineFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -47,19 +48,22 @@ public class TorodBundle extends AbstractBundle {
     private final MetainfoRepository metainfoRepository;
     private final SnapshotUpdater snapshotUpdater;
     private final ReservedIdGenerator reservedIdGenerator;
+    private final InsertPipelineFactory insertPipelineFactory;
 
     @Inject
     public TorodBundle(@TorodbIdleService ThreadFactory threadFactory,
             @Assisted Supervisor supervisor, TorodServer torodServer,
             @Assisted BackendBundle backendBundle, SnapshotUpdater snapshotUpdater,
             MetainfoRepository metainfoRepository,
-            ReservedIdGenerator reservedIdGenerator) {
+            ReservedIdGenerator reservedIdGenerator,
+            InsertPipelineFactory insertPipelineFactory) {
         super(threadFactory, supervisor);
         this.torodServer = torodServer;
         this.backendBundle = backendBundle;
         this.snapshotUpdater = snapshotUpdater;
         this.metainfoRepository = metainfoRepository;
         this.reservedIdGenerator = reservedIdGenerator;
+        this.insertPipelineFactory = insertPipelineFactory;
     }
 
     @Override
@@ -71,6 +75,11 @@ public class TorodBundle extends AbstractBundle {
         reservedIdGenerator.startAsync();
         reservedIdGenerator.awaitRunning();
 
+        LOGGER.trace("Starting insert pipeline factories");
+        insertPipelineFactory.startAsync();
+        insertPipelineFactory.awaitRunning();
+
+        LOGGER.trace("Starting Torod Sevice");
         torodServer.startAsync();
         torodServer.awaitRunning();
     }
@@ -80,6 +89,9 @@ public class TorodBundle extends AbstractBundle {
         torodServer.stopAsync();
         torodServer.awaitTerminated();
 
+        insertPipelineFactory.stopAsync();
+        insertPipelineFactory.awaitTerminated();
+        
         reservedIdGenerator.stopAsync();
         reservedIdGenerator.awaitTerminated();
     }

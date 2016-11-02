@@ -47,6 +47,7 @@ import com.eightkdata.mongowp.server.api.pojos.MongoCursor;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.net.HostAndPort;
+import com.google.common.util.concurrent.AbstractService;
 import com.torodb.mongodb.core.MongodConnection;
 import com.torodb.mongodb.core.MongodServer;
 import com.torodb.mongodb.core.WriteMongodTransaction;
@@ -67,18 +68,29 @@ import org.apache.logging.log4j.Logger;
  *
  */
 @Singleton
-public class TransactionalDbCloner implements DbCloner {
+public class TransactionalDbCloner extends AbstractService implements DbCloner {
     private static final Logger LOGGER = LogManager.getLogger(DbCloner.class);
 
     @Override
-    public void cloneDatabase(String dstDb, MongoClient remoteClient, MongodServer localServer, CloneOptions opts)
-            throws CloningException, NotMasterException, MongoException {
+    public void cloneDatabase(String dstDb, MongoClient remoteClient,
+            MongodServer localServer, CloneOptions opts) throws CloningException,
+            NotMasterException, MongoException {
         
         try (MongoConnection remoteConnection = remoteClient.openConnection();
                 MongodConnection localConnection = localServer.openConnection();
                 WriteMongodTransaction transaction = localConnection.openWriteTransaction(true)) {
             cloneDatabase(dstDb, remoteConnection, transaction, opts);
         }
+    }
+
+    @Override
+    protected void doStart() {
+        notifyStarted();
+    }
+
+    @Override
+    protected void doStop() {
+        notifyStopped();
     }
 
     /**

@@ -20,29 +20,31 @@
 
 package com.torodb.mongodb.repl.topology;
 
+import com.torodb.core.supervision.Supervisor;
+import com.torodb.core.supervision.SupervisorDecision;
 import javax.inject.Inject;
-import com.torodb.mongodb.repl.ReplicationErrorHandler;
+import com.torodb.mongodb.repl.guice.MongoDbRepl;
 
 /**
  *
  */
 public class DefaultTopologyErrorHandler implements TopologyErrorHandler {
-    private final ReplicationErrorHandler replErrorHandler;
+    private final Supervisor replSupervisor;
 
     @Inject
-    public DefaultTopologyErrorHandler(ReplicationErrorHandler replErrorHandler) {
-        this.replErrorHandler = replErrorHandler;
+    public DefaultTopologyErrorHandler(@MongoDbRepl Supervisor replSupervisor) {
+        this.replSupervisor = replSupervisor;
     }
 
     @Override
     public boolean sendHeartbeatError(Throwable t) {
-        replErrorHandler.onTopologyError(t);
-        return true;
+        SupervisorDecision decision = replSupervisor.onError(this, t);
+        return decision == SupervisorDecision.IGNORE;
     }
 
     @Override
     public boolean reciveHeartbeatError(Throwable t) {
-        replErrorHandler.onTopologyError(t);
-        return true;
+        SupervisorDecision decision = replSupervisor.onError(this, t);
+        return decision == SupervisorDecision.IGNORE;
     }
 }

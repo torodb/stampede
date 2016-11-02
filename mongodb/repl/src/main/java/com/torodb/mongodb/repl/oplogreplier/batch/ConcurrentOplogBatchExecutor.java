@@ -51,7 +51,7 @@ import com.torodb.mongodb.repl.oplogreplier.analyzed.AnalyzedOp;
 /**
  *
  */
-public class ConcurrentOplogBatchExecutor extends AnalyzedOplogBatchExecutor {
+public class ConcurrentOplogBatchExecutor extends SimpleAnalyzedOplogBatchExecutor {
 
     private final StreamExecutor streamExecutor;
     private final ConcurrentOplogBatchExecutorMetrics concurrentMetrics;
@@ -66,6 +66,21 @@ public class ConcurrentOplogBatchExecutor extends AnalyzedOplogBatchExecutor {
         this.streamExecutor = concurrentToolsFactory.createStreamExecutor("concurrent-oplog-batch-executor", true);
         this.concurrentMetrics = concurrentMetrics;
         this.subBatchHeuristic = subBatchHeuristic;
+    }
+
+    @Override
+    protected void doStart() {
+        super.doStart();
+        streamExecutor.startAsync();
+        streamExecutor.awaitRunning();
+    }
+
+    @Override
+    protected void doStop() {
+        streamExecutor.stopAsync();
+        streamExecutor.awaitTerminated();
+
+        super.doStop();
     }
 
     @Override

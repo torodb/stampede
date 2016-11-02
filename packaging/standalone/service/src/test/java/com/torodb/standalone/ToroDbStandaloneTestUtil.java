@@ -92,7 +92,9 @@ public class ToroDbStandaloneTestUtil {
         }
         
         public void shutDown() {
-            injector.getInstance(Shutdowner.class).close();
+            Shutdowner shutdowner = injector.getInstance(Shutdowner.class);
+            shutdowner.stopAsync();
+            shutdowner.awaitTerminated();
         }
     }
 }

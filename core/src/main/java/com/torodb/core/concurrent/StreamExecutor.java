@@ -1,16 +1,17 @@
 
 package com.torodb.core.concurrent;
 
+import com.google.common.util.concurrent.Service;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
 /**
- * A class that can be used to execute stream of tasks, returning a {@link CompletableFuture} that
- * will be done when all subtasks finish.
+ * A class that can be used to execute stream of tasks, returning a 
+ * {@link CompletableFuture} that will be done when all subtasks finish.
  */
-public interface StreamExecutor extends AutoCloseable {
+public interface StreamExecutor extends Service {
 
     /**
      * Executes the given runnables, returning a future that will be done once all runnables finish.
@@ -43,8 +44,5 @@ public interface StreamExecutor extends AutoCloseable {
      * @return
      */
     public <I, O> CompletableFuture<O> fold(Stream<Callable<I>> callables, O zero, BiFunction<O, I, O> fun);
-
-    @Override
-    public void close();
 
 }

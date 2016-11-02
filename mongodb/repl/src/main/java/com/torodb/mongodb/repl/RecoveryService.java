@@ -109,6 +109,7 @@ public class RecoveryService extends RunnableTorodbService {
 
     @Override
     protected void runProtected() throws Exception {
+        callback.waitUntilStartPermision();
         try {
             int attempt = 0;
             boolean finished = false;
@@ -131,13 +132,13 @@ public class RecoveryService extends RunnableTorodbService {
             }
 
             if (!finished) {
-                callback.recoveryFailed();
+                callback.recoveryFailed(this);
             }
             else {
-                callback.recoveryFinished();
+                callback.recoveryFinished(this);
             }
         } catch (Throwable ex) {
-            callback.recoveryFailed(ex);
+            callback.recoveryFailed(this, ex);
         }
     }
 
@@ -458,11 +459,13 @@ public class RecoveryService extends RunnableTorodbService {
     }
 
     static interface Callback extends Supervisor {
-        void recoveryFinished();
+        void waitUntilStartPermision();
 
-        void recoveryFailed();
+        void recoveryFinished(RecoveryService service);
 
-        void recoveryFailed(Throwable ex);
+        void recoveryFailed(RecoveryService service);
+
+        void recoveryFailed(RecoveryService service, Throwable ex);
 
         public void setConsistentState(boolean consistent);
 
@@ -470,8 +473,8 @@ public class RecoveryService extends RunnableTorodbService {
 
         @Override
         public default SupervisorDecision onError(Object supervised, Throwable error) {
-            recoveryFailed(error);
-            return SupervisorDecision.STOP;
+            recoveryFailed((RecoveryService) supervised, error);
+            return SupervisorDecision.IGNORE;
         }
     }
 

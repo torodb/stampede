@@ -5,7 +5,6 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.RemovalNotification;
 import com.torodb.core.TableRefFactory;
-import com.torodb.core.annotations.UseThreads;
 import com.torodb.core.d2r.D2RTranslatorFactory;
 import com.torodb.core.d2r.IdentifierFactory;
 import com.torodb.core.services.IdleTorodbService;
@@ -29,8 +28,7 @@ public class SqlTorodServer extends IdleTorodbService implements TorodServer {
     private final D2RTranslatorFactory d2RTranslatorFactory;
     private final R2DTranslator r2DTranslator;
     private final IdentifierFactory idFactory;
-    private final InsertPipelineFactory singleThreadInsertPipelineFactory;
-    private final InsertPipelineFactory concurrentInsertPipelineFactory;
+    private final InsertPipelineFactory insertPipelineFactory;
     private final Cache<Integer, SqlTorodConnection> openConnections;
     private final BackendService backend;
     private final InternalTransactionManager internalTransactionManager;
@@ -40,15 +38,14 @@ public class SqlTorodServer extends IdleTorodbService implements TorodServer {
     public SqlTorodServer(@TorodbIdleService ThreadFactory threadFactory,
             D2RTranslatorFactory d2RTranslatorFactory, 
             R2DTranslator r2DTranslator, IdentifierFactory idFactory,
-            InsertPipelineFactory singleThreadInsertPipelineFactory, 
-            @UseThreads InsertPipelineFactory concurrentInsertPipelineFactory, BackendService backend,
-            InternalTransactionManager internalTransactionManager, TableRefFactory tableRefFactory) {
+            InsertPipelineFactory insertPipelineFactory,
+            BackendService backend, TableRefFactory tableRefFactory,
+            InternalTransactionManager internalTransactionManager) {
         super(threadFactory);
         this.d2RTranslatorFactory = d2RTranslatorFactory;
         this.r2DTranslator = r2DTranslator;
         this.idFactory = idFactory;
-        this.singleThreadInsertPipelineFactory = singleThreadInsertPipelineFactory;
-        this.concurrentInsertPipelineFactory = concurrentInsertPipelineFactory;
+        this.insertPipelineFactory = insertPipelineFactory;
         this.backend = backend;
         this.internalTransactionManager = internalTransactionManager;
         this.tableRefFactory = tableRefFactory;
@@ -105,12 +102,8 @@ public class SqlTorodServer extends IdleTorodbService implements TorodServer {
         return idFactory;
     }
 
-    InsertPipelineFactory getInsertPipelineFactory(boolean concurrent) {
-        if (concurrent) {
-            return concurrentInsertPipelineFactory;
-        } else {
-            return singleThreadInsertPipelineFactory;
-        }
+    InsertPipelineFactory getInsertPipelineFactory() {
+        return insertPipelineFactory;
     }
 
     BackendService getBackend() {

@@ -167,22 +167,82 @@ for more info about @{assembler.fullName} configuration and parameters.
 
 ### System setup
 
-Run setup script as root (prepend by `sudo` on Ubuntu) passing as parameter the name of the 
-system user that will run @{assembler.fullName} to create PostgreSQL user and database:
+#### Create PostgreSQL user and database
 
-    bin/@{assembler.name}-setup <user name> 
+Create PosgreSQL user torodb:
 
-* For windows (will use current user to create PostgreSQL user and database):
+    createuser -S -R -D -P --interactive torodb
 
-    bin\@{assembler.name}-setup.bat
+Create PostgreSQL database torod with owner torodb:
+
+    createdatabase -O torodb torod
+
+* For Mac OS X and Windows:
+
+Open a console running psql command and type:
+
+    CREATE USER torodb WITH PASSWORD '<type here the password>';
+    CREATE DATABASE torod OWNER torodb;
+
+#### Create .toropass file
+
+Create a file that will contain the PostgreSQL user torodb's password:
+
+    echo "localhost:5432:torod:torodb:$(read -p "Type torodb user's password:"$'\n' -s pwd; echo $pwd)" > $HOME/.toropass
+
+* For Windows:
+
+    set /p pwd="Type torodb user's password:" & cls
+    echo localhost:5432:*:postgres:%pwd%> "%HOMEDRIVE%%HOMEPATH%\.toropass"
+
 
 ## Run @{assembler.fullName}
 
 To run @{assembler.fullName}:
 
-    bin/@{assembler.name}
+    "bin/@{assembler.name}"
 
 * For windows:
 
-    bin\@{assembler.name}.bat
+    "bin\@{assembler.name}.bat"
 
+### Run as a systemd service
+
+This only works for Linux distribution that have adopted systemd and is not an option 
+for Mac OS X and Windows users.
+
+All the following commands must be run as root. Precede them by sudo command 
+if you are running in Ubuntu.
+
+First you have to create a symbolic link to `bin/@{assembler.name}` in `/usr/bin` folder:
+
+    ln -s "$(pwd)/bin/@{assembler.name}" /usr/bin/.
+
+You have to create the system user `torodb`:
+
+    useradd -M -d "$(dirname "$(dirname "$(pwd)/bin/@{assembler.name}")")" torodb
+
+Now copy the file `systemd/@{assembler.name}.service.sample` to `/lib/systed/system` folder:
+
+    cp systemd/@{assembler.name}.service.sample /lib/systed/system/.
+
+Enable and start the newly created `@{assembler.name}` service:
+
+    systemctl enable @{assembler.name}
+    systemctl start @{assembler.name}
+
+View logs of `@{assembler.name}` service:
+
+    journalctl --no-pager -u torodb-stampede
+
+Following logs:
+
+    journalctl --no-pager -u torodb-stampede -f
+
+View all logs:
+
+    journalctl --no-tail --no-pager -u torodb-stampede
+
+To stop `@{assembler.name}` service:
+
+    systemctl stop @{assembler.name}
