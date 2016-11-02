@@ -1,7 +1,9 @@
 
 package com.torodb.backend.postgresql.converters;
 
+import com.torodb.backend.postgresql.converters.sql.StringSqlBinding;
 import com.torodb.common.util.HexUtils;
+import com.torodb.common.util.TextEscaper;
 import com.torodb.kvdocument.values.KVArray;
 import com.torodb.kvdocument.values.KVBinary;
 import com.torodb.kvdocument.values.KVBoolean;
@@ -22,10 +24,9 @@ import com.torodb.kvdocument.values.KVValueVisitor;
  *
  */
 public class PostgreSQLValueToCopyConverter implements KVValueVisitor<Void, StringBuilder> {
-    private static final char ROW_DELIMETER = '\n';
-    private static final char COLUMN_DELIMETER = '\t';
-
     public static final PostgreSQLValueToCopyConverter INSTANCE = new PostgreSQLValueToCopyConverter();
+    
+    private static final TextEscaper ESCAPER = TextEscaper.create(StringSqlBinding.Escapable.values(), CopyEscapable.values());
 
     PostgreSQLValueToCopyConverter() {
     }
@@ -72,7 +73,7 @@ public class PostgreSQLValueToCopyConverter implements KVValueVisitor<Void, Stri
 
     @Override
     public Void visit(KVString value, StringBuilder arg) {
-        escape(value.getValue(), arg);
+        ESCAPER.appendEscaped(arg, value.getValue());
         return null;
     }
 
@@ -127,48 +128,43 @@ public class PostgreSQLValueToCopyConverter implements KVValueVisitor<Void, Stri
         return null;
     }
 
-    private static void escape(String nonEscaped, StringBuilder appender) {
-        if (!needsEscape(nonEscaped)) { //doing that we reduce the number of created objects
-            appender.append(nonEscaped);
-            return ;
-        }
-        
-        appender.ensureCapacity(nonEscaped.length() + 16);
-        int lenght = nonEscaped.length();
-        int i = 0;
-        while (i < lenght) {
-            char c = nonEscaped.charAt(i);
-            switch (c) {
-                case ROW_DELIMETER:
-                case COLUMN_DELIMETER:
-                case '\\': //this can include false positives
-                case '\r':
-                    appender.append('\\');
-                    break;
-                default:
-                	break;
-            }
-            appender.append(c);
-            i++;
-        }
-    }
-
-    private static boolean needsEscape(String nonEscaped) {
-        int lenght = nonEscaped.length();
-        for (int i = 0; i < lenght; i++) {
-            switch (nonEscaped.charAt(i)) {
-                case ROW_DELIMETER:
-                case COLUMN_DELIMETER:
-                case '\\': //this can include false positives
-                case '\r':
-                    return true;
-            }
-        }
-        return false;
-    }
-
     @Override
     public Void visit(KVDocument value, StringBuilder arg) {
         throw new UnsupportedOperationException("Ouch this should not occur");
+    }
+    
+    private static final char COPY_ESCAPE_CHARACTER = '\\';
+    private static final char ROW_DELIMETER_CHARACTER = '\n';
+    private static final char COLUMN_DELIMETER_CHARACTER = '\t';
+    private static final char CARRIAGE_RETURN_CHARACTER = '\r';
+    
+    private enum CopyEscapable implements TextEscaper.Escapable {
+        ROW_DELIMETER(ROW_DELIMETER_CHARACTER, ROW_DELIMETER_CHARACTER),
+        COLUMN_DELIMETER(COLUMN_DELIMETER_CHARACTER, COLUMN_DELIMETER_CHARACTER),
+        CARRIAGE_RETURN(CARRIAGE_RETURN_CHARACTER, CARRIAGE_RETURN_CHARACTER),
+        COPY_ESCAPE(COPY_ESCAPE_CHARACTER, COPY_ESCAPE_CHARACTER);
+        
+        private final char character;
+        private final char suffixCharacter;
+        
+        private CopyEscapable(char character, char suffixCharacter) {
+            this.character = character;
+            this.suffixCharacter = suffixCharacter;
+        }
+
+        @Override
+        public char getCharacter() {
+            return character;
+        }
+
+        @Override
+        public char getSuffixCharacter() {
+            return suffixCharacter;
+        }
+
+        @Override
+        public char getEscapeCharacter() {
+            return COPY_ESCAPE_CHARACTER;
+        }
     }
 }
