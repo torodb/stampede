@@ -25,8 +25,18 @@ services:
     image: mongo:3.2
     ports:
       - "28017:27017"
-    volumes:
-      - ../target/dist/docker:/util
     entrypoint:
       - /bin/bash
-      - /util/initiate-mongo-rs
+      - "-c"
+      - mongo --nodb --eval '
+            var db; 
+            while (!db) { 
+                try { 
+                  db = new Mongo("mongodb:27017").getDB("local"); 
+                } catch(ex) {} 
+                sleep(3000); 
+            }; 
+            rs.initiate({_id:"rs1",members:[{_id:0,host:"mongodb:27017"}]});
+        ' 1>/dev/null 2>&1 & 
+        mongod --replSet rs1
+        
