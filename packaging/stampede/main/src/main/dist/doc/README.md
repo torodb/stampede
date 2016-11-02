@@ -1,173 +1,21 @@
-# @{assembler.fullName}
+# Previous requirements installation
 
-This is the @{assembler.fullName} binary distribution. It include a script 
+ToroDB Stampede's correct operation depends on a number of prerequisites, in the next table more information on how to install and manage them is provided.
 
-## Installation
+| | Decription | External links |
+|-|------------|----------------|
+| MongoDB | It is the NoSQL system where the original data is stored and the replication data source. | [more info](https://docs.mongodb.com/manual/installation/) |
+| Replica set configuration | ToroDB Stampede is designed to replicate from a MongoDB replica set, so it should be previously configured. | [more info](https://docs.mongodb.com/manual/tutorial/deploy-replica-set/) | 
+| PostgreSQL | ToroDB Stampede correct operation relies on the existence of a backend, right now it should be PostgreSQL. | [more info](https://wiki.postgresql.org/wiki/Detailed_installation_guides) |
+| Java | ToroDB Stampede has been written in Java so a Java Virtual Machine is required for it's execution. | [more info](https://java.com/en/download/help/index_installing.xml) |
 
-Please follow these instructions to install @{assembler.fullName} on your system.
+# Backend setup
 
-### System configuration
+## PostgreSQL configuration
 
-@{assembler.fullName} work with PostgreSQL version >=9.4. Depending on the system this 
-guide will help you install minimal version from upstream or from postgresql
-official repositories. If you want to have latest PostgreSQL version 
-please refer to 
-[official PostgreSQL installation guide|https://www.postgresql.org/download/]  
+ToroDB Stampede need a user and a database to be created in PostgreSQL to connect and store all the replicated data.
 
-#### Debian/Ubuntu
-
-Install OpenJDK 8 JRE headless and PostgreSQL 9.6/9.5 client and server:
-
-* For Debian 8:
-
-Add backports to /etc/apt/sources.list:
-
-    version=$(cat /etc/os-release|grep VERSION=|cut -d '(' -f 2|cut -d ')' -f 1)
-    echo "deb http://http.debian.net/debian ${version}-backports main" >> /etc/apt/sources.list
-
-Update repositories:
-
-    apt-get update
-
-Install openjdk 8 jre headless and postgresql 9.4: 
-
-    apt-get install openjdk-8-jre-headless postgresql
-
-* For Ubuntu 16.04:
-
-Install openjdk 8 jre headless and postgresql 9.5: 
-
-    sudo apt-get install openjdk-8-jre-headless postgresql
-
-Start PostgreSQL:
-
-* For Debian 7 and 8:
-
-    service postgresql start
-
-* For Ubuntu 16.04:
-    
-    sudo service postgresql start
-
-#### CentOS/Fedora
-
-First install postgresql 9.6 repository:
-
-
-* For CentOS/RHEL 7
-
-    rpm -Uvh http://yum.postgresql.org/9.6/redhat/rhel-6-x86_64/pgdg-redhat96-9.6-3.noarch.rpm
-
-* For CentOS/RHEL 6
-
-    rpm -Uvh http://yum.postgresql.org/9.6/redhat/rhel-7-x86_64/pgdg-redhat96-9.6-3.noarch.rpm
-
-* For CentOS/RHEL 5
-
-    rpm -Uvh http://yum.postgresql.org/9.6/redhat/rhel-5-x86_64/pgdg-redhat96-9.6-3.noarch.rpm
-
-* For Fedora 23
-
-    rpm -Uvh http://yum.postgresql.org/9.6/fedora/fedora-23-x86_64/pgdg-fedora96-9.6-3.noarch.rpm
-
-* For Fedora 22
-
-    rpm -Uvh http://yum.postgresql.org/9.6/fedora/fedora-22-x86_64/pgdg-fedora96-9.6-3.noarch.rpm
-
-* For Fedora 21
-
-    rpm -Uvh http://yum.postgresql.org/9.6/fedora/fedora-21-x86_64/pgdg-fedora96-9.6-3.noarch.rpm
-
-
-Install OpenJDK 8 JRE headless and PostgreSQL 9.6 client and server:
-
-    yum install java-1.8.0-openjdk-headless postgresql96 postgresql96-server
-    
-Setup PostgreSQL:
-
-    /usr/pgsql-9.6/bin/postgresql96-setup initdb
-
-Start PostgreSQL:
-
-* For CentOS/RHEL 7 and Fedora 23
-
-    systemctl start postgresql-9.6
-    systemctl enable postgresql-9.6
-
-* For CentOS/RHEL 6/5 and Fedora 22/21
-
-    service  postgresql-9.6 start
-    chkconfig postgresql-9.6 on
-
-#### Mac OS X
-
-Download Java JDK 8 from [Oracle|http://www.oracle.com/technetwork/java/javase/downloads/index.html]
-
-* Select JDK Download button
-* Select Mac OS X with .dmg file option
-* Open dmg file and follow installation process
-
-Download PostgreSQL 9.6 from [EnterpriseDB|http://www.enterprisedb.com/products-services-training/pgdownload]:
-
-* Select Mac OS X option
-* Open dmg file and follow installation process
-
-Now create a symbolic link for PostgreSQL client `psql` in `/usr/local/bin` location so
-it will be possible to connect to PostgreSQL without issuing the entire path to `psql`:
-
-    sudo mkdir -p /usr/local/bin
-    sudo ln -s /Library/PostgreSQL/9.6/bin/psql /usr/local/bin/psql
-
-To allow setup script to work without prompting postgres user password each time it connect to PostgreSQL
-it is convenient to create file `/var/root/.pgpass`:
-
-    sudo echo "localhost:5432:*:postgres:$(read -p "Type postgres user's password:"$'\n' -s pwd; echo $pwd)" | sudo tee /var/root/.pgpass > /dev/null
-    sudo chmod 400 /var/root/.pgpass
-
-#### Windows
-
-Download Java JDK 8 from [Oracle|http://www.oracle.com/technetwork/java/javase/downloads/index.html]
-
-* Select JRE Download button
-* Select Windows Offline with .exe file option
-* Open exe file and follow installation process
-
-Download PostgreSQL 9.6 from [EnterpriseDB|http://www.enterprisedb.com/products-services-training/pgdownload]:
-
-* Select Win option
-* Open exe file and follow installation process
-
-Now add PostgreSQL client `psql` to the `PATH` environment variable so
-it will be possible to connect to PostgreSQL without issuing the entire path to `psql`. 
-Open the Windows command prompt and type:
-
-    set PATH=%PATH%;C:/Program Files/PostgreSQL/9.6/bin/
-    setx PATH "%PATH%"
-
-To allow setup script to work without prompting postgres user password each time it connect to PostgreSQL
-it is convenient to create file `%APPDATA%\postgresql\pgpass.conf`:
-
-    mkdir "%APPDATA%\postgresql"
-    set /p pwd="Type postgres user's password:" & cls
-    echo localhost:5432:*:postgres:%pwd%> "%APPDATA%\postgresql\pgpass.conf"
-    attrib +I +A "%APPDATA%\postgresql\pgpass.conf"
-
-### Configuration
-
-Configuration file used by `bin/@{assembler.name}` is `conf/@{assembler.name}.yml` if present, if not
-default configuration will be used. To see default configuration:
-
-    bin/@{assembler.name} -l
- 
-Or copy file `conf/@{assembler.name}.yml.sample` to `conf/@{assembler.name}.yml` and modify it
- or overwrite it using parameters. 
-
-Please run `@{assembler.name} -h` or refer to [online documentation|@{assembler.url}] 
-for more info about @{assembler.fullName} configuration and parameters.
-
-### System setup
-
-#### Create PostgreSQL user and database
+### Linux
 
 Create PosgreSQL user torodb:
 
@@ -177,61 +25,67 @@ Create PostgreSQL database torod with owner torodb:
 
     createdatabase -O torodb torod
 
-* For Mac OS X and Windows:
+### Mac OS X/Windows
 
-Open a console running psql command and type:
+Open a console running `psql` command and type:
 
-    CREATE USER torodb WITH PASSWORD '<type here the password>';
+    CREATE USER torodb WITH PASSWORD '<torodb user''s password>';
     CREATE DATABASE torod OWNER torodb;
 
-#### Create .toropass file
+## Create .toropass file
+
+Assuming that PostgreSQL is running on host localhost and port 5432:
+
+### Linux/Mac OS X
 
 Create a file that will contain the PostgreSQL user torodb's password:
 
-    echo "localhost:5432:torod:torodb:$(read -p "Type torodb user's password:"$'\n' -s pwd; echo $pwd)" > $HOME/.toropass
+    echo "localhost:5432:torod:torodb:$(\
+        read -p "Type torodb user's password:"$'\n' -s pwd; echo $pwd)" > $HOME/.toropass
 
-* For Windows:
+### Windows
 
     set /p pwd="Type torodb user's password:" & cls
     echo localhost:5432:*:postgres:%pwd%> "%HOMEDRIVE%%HOMEPATH%\.toropass"
 
+# Executing ToroDB Stampede
 
-## Run @{assembler.fullName}
+## Linux/Mac
 
-To run @{assembler.fullName}:
+Given that previous prerequisites are met, the only step needed to launch ToroDB Stampede is the download of the binary distribution from the next [link](http://todo).
 
-    "bin/@{assembler.name}"
+    $ wget http://todo
+    
+    $ tar xjvf <stampede-binary>.tar.bz2
+    
+    $ torodb-stampede-<version>/bin/torodb-stampede
 
-* For windows:
+The main problems at this step is that MongoDB or PostgreSQL has a different user/password than expected, to avoid that problem configuration files can be provided.
 
-    "bin\@{assembler.name}.bat"
+    $ torodb-stampede-<version>/bin/torodb-stampede --toropass-file <postgres-credentials-file> --mongopass-file <mongo-credentials-file>
 
-### Run as a systemd service
+## As a Linux systemd service
 
-This only works for Linux distribution that have adopted systemd and is not an option 
-for Mac OS X and Windows users.
+All the following commands must be run as root. Precede them by sudo command if you are running in Ubuntu.
 
-All the following commands must be run as root. Precede them by sudo command 
-if you are running in Ubuntu.
+First you have to create a symbolic link to `bin/torodb-stampede` in `/usr/bin` folder:
 
-First you have to create a symbolic link to `bin/@{assembler.name}` in `/usr/bin` folder:
-
-    ln -s "$(pwd)/bin/@{assembler.name}" /usr/bin/.
+    ln -s "`pwd`/bin/torodb-stampede" /usr/bin/.
 
 You have to create the system user `torodb`:
 
-    useradd -M -d "$(dirname "$(dirname "$(pwd)/bin/@{assembler.name}")")" torodb
+    useradd -M -d "$(dirname "$(dirname "`pwd`/bin/torodb-stampede")")" torodb
 
-Now copy the file `systemd/@{assembler.name}.service.sample` to `/lib/systed/system` folder:
+Now copy the file `systemd/torodb-stampede.service.sample` to `/lib/systed/system` folder:
 
-    cp systemd/@{assembler.name}.service.sample /lib/systed/system/.
+    cp systemd/torodb-stampede.service.sample /lib/systed/system/.
 
-Enable and start the newly created `@{assembler.name}` service:
+Enable and start the newly created ToroDB Stampede service:
 
-    systemctl enable @{assembler.name}
-    systemctl start @{assembler.name}
+    systemctl enable torodb-stampede
+    systemctl start torodb-stampede
 
-View logs of `@{assembler.name}` service:
+To view logs of ToroDB Stampede service:
 
     journalctl --no-pager -u torodb-stampede
 
@@ -243,6 +97,6 @@ View all logs:
 
     journalctl --no-tail --no-pager -u torodb-stampede
 
-To stop `@{assembler.name}` service:
+To stop ToroDB Stampede service:
 
-    systemctl stop @{assembler.name}
+    systemctl stop torodb-stampede
