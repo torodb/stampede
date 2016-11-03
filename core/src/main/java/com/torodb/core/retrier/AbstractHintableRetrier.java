@@ -25,6 +25,7 @@ import com.torodb.common.util.RetryHelper.DelegateExceptionHandler;
 import com.torodb.common.util.RetryHelper.ExceptionHandler;
 import com.torodb.common.util.RetryHelper.RetryCallback;
 import com.torodb.core.exceptions.user.UserException;
+import com.torodb.core.transaction.RollbackException;
 import java.util.EnumSet;
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
@@ -128,8 +129,12 @@ public abstract class AbstractHintableRetrier implements Retrier {
         @Override
         public void handleException(RetryCallback<Result> callback, Exception t, int attempts)
                 throws T {
-            if (t instanceof RetrierAbortException) {
-                throw (RetrierAbortException) t;
+            if (t instanceof RuntimeException) {
+                if (t instanceof RollbackException) {
+                    super.handleException(callback, t, attempts);
+                } else {
+                    throw (RuntimeException) t;
+                }
             } else {
                 super.handleException(callback, t, attempts);
             }
