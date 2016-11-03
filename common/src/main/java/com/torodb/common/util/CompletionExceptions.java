@@ -38,7 +38,7 @@ public class CompletionExceptions {
      */
     public static Throwable getFirstNonCompletionException(Throwable ex) {
         Throwable t = ex;
-        while (t instanceof CompletionException) {
+        while (t instanceof CompletionException && t != t.getCause() && t.getCause() != null) {
             Throwable cause = t.getCause();
             if (cause == null) {
                 return t;
