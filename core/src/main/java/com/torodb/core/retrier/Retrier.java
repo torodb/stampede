@@ -3,6 +3,7 @@ package com.torodb.core.retrier;
 
 import com.torodb.common.util.RetryHelper.ExceptionHandler;
 import com.torodb.core.exceptions.user.UserException;
+import com.torodb.core.transaction.RollbackException;
 import java.util.EnumSet;
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
@@ -15,59 +16,81 @@ import javax.annotation.concurrent.ThreadSafe;
 public interface Retrier {
 
     /**
-     * Executes the callable until no checked or rollback exception is thrown or the replier policy
-     * decides to give up, in which throws a give up exception.
+     * Executes the callable until it finished correctly, a runtime exception
+     * different than {@link RollbackException} is thrown or the replier policy
+     * decides to give up.
      *
      * @param <Result>
      * @param callable
      * @param hints
      * @return the value returned by the callable on succeful executions
      * @throws RetrierGiveUpException if the policy decides to give up
+     * @throws RuntimeException       if the callable thrown a runtime exception
+     *                                that is not a RollbackException, that
+     *                                exception is rethrown
      */
-    public <Result> Result retry(Callable<Result> callable, EnumSet<Hint> hints) throws RetrierGiveUpException, RetrierAbortException;
+    public <Result> Result retry(Callable<Result> callable, EnumSet<Hint> hints)
+            throws RetrierGiveUpException;
 
     /**
-     * Executes the callable until no checked (but {@link UserException}) or rollback exception is
-     * thrown or the replier policy decides to give up, in which throws a give up exception.
+     * Executes the callable until it finished correctly, a runtime exception
+     * different than {@link RollbackException} is thrown, a
+     * {@link UserException} is thrown or the replier policy decides to give up.
      *
      * @param <Result>
      * @param callable the task to be done
      * @param hints
      * @return the value returned by the callable on succeful executions
-     * @throws UserException
      * @throws RetrierGiveUpException if the policy decides to give up
+     * @throws RuntimeException       if the callable thrown a runtime exception
+     *                                that is not a RollbackException, that
+     *                                exception is rethrown
+     * @throws UserException          if the callable thrown a user exception,
+     *                                that exception is rethrown
      */
     public <Result> Result retryOrUserEx(Callable<Result> callable, EnumSet<Hint> hints) throws UserException,
-            RetrierGiveUpException, RetrierAbortException;
+            RetrierGiveUpException, RuntimeException;
 
     /**
-     * Executes the callable until no checked or rollback exception is thrown or the replier policy
-     * decides to give up, in which returns the value returned by the given supplier.
+     * Executes the callable until it finished correctly, a runtime exception
+     * different than {@link RollbackException} is thrown or the replier policy
+     * decides to give up, in which case returns the value returned by the given
+     * supplier.
      *
      * @param <Result>
      * @param callable             the task to be done
-     * @param defaultValueSupplier a supplier whose value will be returned if the replier gives up.
+     * @param defaultValueSupplier a supplier whose value will be returned if
+     *                             the replier gives up.
      * @param hints
-     * @return the value returned by the callable on succesfull executions or the value returned by
-     *         the supplier if the retrier gives up
+     * @return the value returned by the callable on succesfull executions or
+     *         the value returned by the supplier if the retrier gives up
+     * @throws RuntimeException if the callable thrown a runtime exception that
+     *                          is not a RollbackException, that exception is
+     *                          rethrown
      */
-    public <Result> Result retry(Callable<Result> callable, Supplier<Result> defaultValueSupplier, EnumSet<Hint> hints);
+    public <Result> Result retry(Callable<Result> callable, Supplier<Result> defaultValueSupplier, EnumSet<Hint> hints) throws RuntimeException;
 
     /**
-     * Executes the callable until no checked or rollback exception is thrown or the replier policy
-     * decides to give up, in which case it delegates on the given {@link ExceptionHandler}.
+     * Executes the callable until it finished correctly, a runtime exception
+     * different than {@link RollbackException} is thrown or the replier policy
+     * decides to give up, in which case it delegates on the given
+     * {@link ExceptionHandler}.
      *
      * @param <Result>
      * @param <T>      The kind of exception the given handler can throw
      * @param callable the task to be done
-     * @param handler  The handler that will be used to handler checked or rollback exceptions once
-     *                 the replier gives up.
+     * @param handler  The handler that will be used to handler checked or
+     *                 rollback exceptions once the replier gives up.
      * @param hints
      * @return the value returned by the callable on succesfull executions
-     * @throws T When the replier gives up and the given handler decides to throw it.
+     * @throws T                When the replier gives up and the given handler
+     *                          decides to throw it.
+     * @throws RuntimeException if the callable thrown a runtime exception that
+     *                          is not a RollbackException, that exception is
+     *                          rethrown
      */
     public <Result, T extends Exception> Result retry(Callable<Result> callable, ExceptionHandler<Result, T> handler, EnumSet<Hint> hints)
-            throws T;
+            throws T, RuntimeException;
 
     /**
      * @see #retry(java.util.concurrent.Callable, java.util.EnumSet)
