@@ -21,10 +21,16 @@
 package com.torodb.core.retrier;
 
 import com.torodb.core.exceptions.ToroRuntimeException;
+import com.torodb.core.transaction.RollbackException;
 
 /**
- * This exception can be thrown by task executed by a {@link Retrier} to indicate that it should
- * give up.
+ * This exception can be thrown by task executed by a {@link Retrier} to 
+ * indicate that it should give up.
+ *
+ * The retrier will abort when any runtime exception different than
+ * {@link RollbackException} is thrown, so any runtime exception can be thrown,
+ * but this class is used to encourage to not throw a plain RuntimeException
+ * in the case the callable actively wants to abort following executions.
  */
 public class RetrierAbortException extends ToroRuntimeException {
 
