@@ -6,7 +6,7 @@ ToroDB Stampede correct operation has a few requirement.
 * One PostgreSQL instance to be used as a relational backend.
 * Java 8 virtual machine.
 
-If one or more of these requirements are not meet, more information and additional documentation can be found in the [installation](installation.md) chapter.
+If one or more of these requirements are not meet, more information and additional documentation can be found in the installation chapters.
 
 # Backend configuration
 
