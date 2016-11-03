@@ -148,6 +148,7 @@ public class PostgreSQLWriteInterface extends AbstractWriteInterface {
 	                        throw errorHandler.handleUserException(Context.INSERT, ex);
 	                    } catch (IOException ex) {
 	                        if (ex instanceof EOFException && ex.getMessage() == null) {
+	                            LOGGER.debug(ex);
                                 ex = new EOFException("End of file while COPYing data");
 	                        }
 	                        
