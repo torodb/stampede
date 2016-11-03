@@ -23,6 +23,7 @@ package com.torodb.stampede;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.Thread.UncaughtExceptionHandler;
 import java.time.Clock;
 import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
@@ -193,6 +194,19 @@ public class Main {
 
             try {
                 Clock clock = Clock.systemDefaultZone();
+                
+                Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler() {
+                    @Override
+                    public void uncaughtException(Thread t, Throwable e) {
+                        if (e instanceof OutOfMemoryError) {
+                            try {
+                                LOGGER.error("Fatal out of memory: " + e.getLocalizedMessage(), e);
+                            } finally {
+                                System.exit(1);
+                            }
+                        }
+                    }
+                });
                 
                 Service stampedeService = StampedeBootstrap.createStampedeService(config, clock);
     
