@@ -150,7 +150,7 @@ public class PostgreSQLWriteInterface extends AbstractWriteInterface {
 	                    }
 	                }
 	            } catch (SQLException ex) {
-	                throw new SystemException(ex);
+	                throw errorHandler.handleException(Context.INSERT, ex);
 	            } finally {
 	                dsl.configuration().connectionProvider().release(connection);
 	            }
