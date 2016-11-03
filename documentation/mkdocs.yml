@@ -1,14 +1,16 @@
 site_name: ToroDB Stampede
 theme: readthedocs
 pages:
-- 'About': index.md
-- 'Quickstart': quickstart.md
-- Installation and configuration:
-  - 'Previous requirements': installation/previous-requirements.md
-  - 'Installation with Docker': installation/docker.md
-  - 'Installation with binaries': installation/binaries.md
-  - 'Installation with source code': installation/source-code.md
-  - 'Configuration': installation/configuration.md
-- 'How to use?': how-to-use.md
-- 'FAQ': faq.md
-- 'Appendix': appendix.md
+  - 'About': index.md
+  - 'Quickstart': quickstart.md
+  - Installation and configuration:
+    - 'Previous requirements': installation/previous-requirements.md
+    - 'Installation with Docker': installation/docker.md
+    - 'Installation with binaries': installation/binaries.md
+    - 'Installation with source code': installation/source-code.md
+    - 'Configuration': installation/configuration.md
+  - 'How to use?': how-to-use.md
+  - 'FAQ': faq.md
+  - 'Appendix': appendix.md
+extra_css:
+  - css/8kdata.css
