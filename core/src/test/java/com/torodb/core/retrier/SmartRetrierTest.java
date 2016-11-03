@@ -71,6 +71,21 @@ public class SmartRetrierTest {
     }
 
     @Test
+    public void testError() throws RetrierGiveUpException {
+        AtomicInteger counter = new AtomicInteger(0);
+
+        try {
+            retrier.retry(() -> {
+                return throwError(counter);
+            });
+            Assert.fail("An error exception was expected");
+        } catch (MyError ignore) {
+        }
+
+        assertEquals(1, counter.get());
+    }
+
+    @Test
     public void testCheckedExecution() throws RetrierGiveUpException {
         AtomicInteger counter = new AtomicInteger(0);
 
@@ -115,11 +130,20 @@ public class SmartRetrierTest {
         throw new RollbackException();
     }
 
+    public static Integer throwError(AtomicInteger counter) {
+        counter.incrementAndGet();
+        throw new MyError();
+    }
+
     public static Integer finishSuccessfully(AtomicInteger counter) {
         return counter.incrementAndGet();
     }
 
     public static class MyRuntimeException extends RuntimeException {
+
+    }
+
+    public static class MyError extends Error {
 
     }
 

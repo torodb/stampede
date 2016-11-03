@@ -44,6 +44,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jooq.lambda.UncheckedException;
 
 
 
@@ -120,10 +121,29 @@ public class TopologyHeartbeatHandler extends IdleTorodbService {
             }
             else {
                 LOGGER.debug("Heartbeat start failed: {}", status);
+                switch (status.getErrorCode()) {
+                    case NO_REPLICATION_ENABLED:
+                        LOGGER.warn("The sync source {} is not running with "
+                                + "replication enabled", seed);
+                        break;
+                    case INCONSISTENT_REPLICA_SET_NAMES:
+                    default:
+                        LOGGER.warn(status.getErrorMsg());
+                        break;
+                }
                 return false;
             }
         } else {
-            LOGGER.debug("Heartbeat start failed", t);
+            Throwable usefulThrowable = CompletionExceptions
+                    .getFirstNonCompletionException(t);
+
+            if (usefulThrowable instanceof UncheckedException) {
+                usefulThrowable = usefulThrowable.getCause() != null ?
+                        usefulThrowable.getCause() : usefulThrowable;
+            }
+
+            LOGGER.warn("Heartbeat start failed (sync source: " + seed + "): " + usefulThrowable.getLocalizedMessage(),
+                    usefulThrowable);
             return false;
         }
     }
@@ -145,7 +165,6 @@ public class TopologyHeartbeatHandler extends IdleTorodbService {
                         updateConfig(coord, replConfig);
                         return result;
                     } catch (InconsistentReplicaSetNamesException ex) {
-                        LOGGER.warn(ex.getLocalizedMessage());
                         return Status.from(ex);
                     }
                 }
