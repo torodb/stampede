@@ -31,6 +31,7 @@ import akka.stream.stage.*;
 import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
 import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.google.common.base.Supplier;
+import com.google.common.base.Throwables;
 import com.torodb.core.Shutdowner;
 import com.torodb.core.concurrent.ConcurrentToolsFactory;
 import com.torodb.mongodb.repl.OplogManager;
@@ -129,7 +130,8 @@ public class DefaultOplogApplier implements OplogApplier {
                             LOGGER.debug("Oplog replication stream has been cancelled");
                             killSwitch.shutdown();
                         } else { //in this case the exception should came from the stream
-                            LOGGER.error("Oplog replication stream finished exceptionally", cause);
+                            cause = Throwables.getRootCause(cause);
+                            LOGGER.error("Oplog replication stream finished exceptionally: " + cause.getLocalizedMessage(), cause);
                             //the stream should be finished exceptionally, but just in case we
                             //notify the kill switch to stop the stream.
                             killSwitch.shutdown();
