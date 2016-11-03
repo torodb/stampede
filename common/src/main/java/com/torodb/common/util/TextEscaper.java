@@ -2,7 +2,6 @@ package com.torodb.common.util;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -50,14 +49,6 @@ public class TextEscaper {
     }
     
     public String escape(String text) {
-        return escape(Optional.empty(), text);
-    }
-    
-    public void appendEscaped(StringBuilder stringBuilder, String text) {
-        escape(Optional.of(stringBuilder), text);
-    }
-    
-    private String escape(Optional<StringBuilder> stringBuilder, String text) {
         Preconditions.checkArgument(text != null, "Can not escape null");
         
         String escapedText = text;
@@ -66,13 +57,7 @@ public class TextEscaper {
         for (int index = 0; index < textLength; index++) {
             char textCharacter = text.charAt(index);
             if (isEscapable(textCharacter)) {
-                StringBuilder escapedTextBuilder;
-                if (stringBuilder.isPresent()) {
-                    escapedTextBuilder = stringBuilder.get();
-                    escapedTextBuilder.append(text.substring(0, index));
-                } else {
-                    escapedTextBuilder = new StringBuilder(text.substring(0, index));
-                }
+                StringBuilder escapedTextBuilder = new StringBuilder(text.substring(0, index));
                 
                 for (; index < textLength; index++) {
                     textCharacter = text.charAt(index);
@@ -85,15 +70,37 @@ public class TextEscaper {
                     }
                 }
                 
-                if (!stringBuilder.isPresent()) {
-                    escapedText = escapedTextBuilder.toString();
-                }
-                
+                escapedText = escapedTextBuilder.toString();
                 break;
             }
         }
         
         return escapedText;
+    }
+    
+    public void appendEscaped(StringBuilder stringBuilder, String text) {
+        Preconditions.checkArgument(text != null, "Can not escape null");
+        
+        final int textLength = text.length();
+        
+        for (int index = 0; index < textLength; index++) {
+            char textCharacter = text.charAt(index);
+            if (isEscapable(textCharacter)) {
+                for (; index < textLength; index++) {
+                    textCharacter = text.charAt(index);
+                    if (isEscapable(textCharacter)) {
+                        Escapable escapable = escapeOf(textCharacter);
+                        stringBuilder.append(escapable.getEscapeCharacter());
+                        stringBuilder.append(escapable.getSuffixCharacter());
+                    } else {
+                        stringBuilder.append(textCharacter);
+                    }
+                }
+                
+                break;
+            }
+            stringBuilder.append(textCharacter);
+        }
     }
     
     public String unescape(String escapedText) {
