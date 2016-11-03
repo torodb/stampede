@@ -11,3 +11,4 @@ target/
 hs_err*.log
 /documentation/static
 /documentation/site
+.DS_Store
