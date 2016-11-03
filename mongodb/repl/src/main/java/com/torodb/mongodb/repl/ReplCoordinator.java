@@ -9,6 +9,8 @@ import javax.annotation.concurrent.ThreadSafe;
 import javax.inject.Inject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import com.google.common.base.Throwables;
 import com.torodb.core.annotations.TorodbIdleService;
 import com.torodb.core.supervision.EscalatingException;
 import com.torodb.core.supervision.Supervisor;
@@ -99,7 +101,8 @@ public class ReplCoordinator extends IdleTorodbService implements Supervisor {
 
         @Override
         public void recoveryFailed(RecoveryService service, Throwable ex) {
-            LOGGER.error("Fatal error while starting recovery mode", ex);
+            Throwable cause = Throwables.getRootCause(ex);
+            LOGGER.error("Fatal error while starting recovery mode: " + cause.getLocalizedMessage(), cause);
             ReplCoordinator.this.onError(service, ex);
         }
 
