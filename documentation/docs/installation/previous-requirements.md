@@ -13,7 +13,8 @@ Among the previous dependencies, if we want to compile the source code other req
 
 | | Description | External links |
 |-|-------------|----------------|
-| Maven | dependency management and construction tasks has been delegated to Apache Maven, so it is necessary to compile the source code. | [more info](http://maven.apache.org/install.html) | 
+| Git | It is the distributed version control system (DVCS) used to keep ToroDB Stampede source code up to date and synchronized between its committers. | [more info](https://git-scm.com/downloads) |
+| Maven | Dependency management and construction tasks has been delegated to Apache Maven, so it is necessary to compile the source code. | [more info](http://maven.apache.org/install.html) | 
 
 # Backend setup
 
