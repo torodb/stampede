@@ -19,7 +19,10 @@ public class DefaultFailingOplogApplierTest extends DefaultOplogApplierTest {
     public static Collection<Object[]> data() {
         return loadData(Lists.newArrayList(
                 "unknownCommand",
-                "emptyCommand"
+                "emptyCommand",
+                "insert_without_id",
+                "update_no_upsert_without_id",
+                "delete_without_id"
         ));
     }
 
