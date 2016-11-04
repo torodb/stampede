@@ -18,7 +18,7 @@ $ cd torodb-poc
 $ mvn clean package -P assembler
 ```
 
-Create .toropass file at current user home directory with the next content.
+Create `.toropass` file at current user home directory with the next content.
 
 ```
 localhost:5432:torod:torodb:<password>
