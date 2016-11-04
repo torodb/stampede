@@ -316,6 +316,12 @@ public class OplogOperationApplier {
             ApplierContext applierContext) throws OplogApplyingException {
 
         LibraryEntry librayEntry = library.find(op.getRequest());
+        
+        if (librayEntry == null) {
+            throw new OplogApplyingException(new CommandNotFoundException(
+                    op.getRequest().isEmpty() ? "?" : op.getRequest().getFirstEntry().getKey()));
+        }
+        
         Command command = librayEntry.getCommand();
         if (command == null) {
             BsonDocument document = op.getRequest();

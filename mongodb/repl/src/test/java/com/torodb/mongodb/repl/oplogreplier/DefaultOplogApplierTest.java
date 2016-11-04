@@ -38,7 +38,7 @@ import com.torodb.torod.TorodServer;
  *
  * @author gortiz
  */
-public class DefaultOplogApplierTest extends AbstractOplogApplierTest {
+public abstract class DefaultOplogApplierTest extends AbstractOplogApplierTest {
 
     @Override
     public Module getMongodSpecificTestModule() {
