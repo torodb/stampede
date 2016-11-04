@@ -12,7 +12,9 @@ import com.torodb.core.metrics.guice.MetricsModule;
 import com.torodb.metainfo.guice.MetainfModule;
 import com.torodb.mongodb.core.MongodServerConfig;
 import com.torodb.packaging.DefaultBuildProperties;
-import com.torodb.packaging.guice.BackendImplementationModule;
+import com.torodb.packaging.guice.BackendDerbyImplementationModule;
+import com.torodb.packaging.guice.BackendMultiImplementationModule;
+import com.torodb.packaging.guice.BackendPostgresImplementationModule;
 import com.torodb.packaging.guice.ExecutorServicesModule;
 import com.torodb.packaging.guice.PackagingModule;
 import com.torodb.standalone.config.model.Config;
@@ -40,11 +42,14 @@ class BootstrapModule extends AbstractModule {
         install(new MetainfModule());
         install(new MetricsModule(config.getGeneric()));
 
-        install(new BackendImplementationModule(
+        install(new BackendMultiImplementationModule(
                 config.getProtocol().getMongo(),
                 config.getGeneric(),
-                config.getBackend().getBackendImplementation()
+                config.getBackend().getBackendImplementation(),
+                new BackendPostgresImplementationModule(),
+                new BackendDerbyImplementationModule()
         ));
+        
         bind(Config.class)
                 .toInstance(config);
         bind(MongodServerConfig.class)

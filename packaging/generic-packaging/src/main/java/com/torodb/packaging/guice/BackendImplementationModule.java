@@ -21,51 +21,55 @@
 
 package com.torodb.packaging.guice;
 
-import javax.annotation.concurrent.Immutable;
-import javax.annotation.concurrent.ThreadSafe;
-import javax.inject.Inject;
+import java.util.function.Supplier;
 
+import com.google.inject.Module;
 import com.google.inject.PrivateModule;
-import com.torodb.backend.DbBackendConfiguration;
+import com.torodb.backend.BackendConfiguration;
 import com.torodb.backend.DbBackendService;
 import com.torodb.backend.SqlHelper;
 import com.torodb.backend.SqlInterface;
-import com.torodb.backend.derby.guice.DerbyBackendModule;
-import com.torodb.backend.driver.derby.DerbyDbBackendConfiguration;
-import com.torodb.backend.driver.postgresql.PostgreSQLDbBackendConfiguration;
 import com.torodb.backend.guice.BackendModule;
 import com.torodb.backend.meta.SchemaUpdater;
-import com.torodb.backend.postgresql.guice.PostgreSQLBackendModule;
 import com.torodb.core.backend.BackendBundleFactory;
 import com.torodb.core.backend.IdentifierConstraints;
 import com.torodb.core.backend.SnapshotUpdater;
 import com.torodb.core.d2r.ReservedIdGenerator;
 import com.torodb.core.dsl.backend.BackendTransactionJobFactory;
 import com.torodb.packaging.config.model.backend.BackendImplementation;
-import com.torodb.packaging.config.model.backend.ConnectionPoolConfig;
-import com.torodb.packaging.config.model.backend.CursorConfig;
-import com.torodb.packaging.config.model.backend.derby.Derby;
-import com.torodb.packaging.config.model.backend.postgres.Postgres;
-import com.torodb.packaging.config.visitor.BackendImplementationVisitor;
 
-public class BackendImplementationModule extends PrivateModule implements BackendImplementationVisitor {
-    private final CursorConfig cursorConfig;
-    private final ConnectionPoolConfig connectionPoolConfig;
-	private final BackendImplementation backendImplementation;
+public abstract class BackendImplementationModule<T extends BackendImplementation, C extends BackendConfiguration> extends PrivateModule {
+    private final Class<T> configurationClass;
+    private final Class<C> backendConfigurationClass;
+    private final Class<? extends C> backendConfigurationMapperClass; 
+    private final Supplier<Module> backendModuleSupplier;
+    
+    private BackendImplementation backendImplementation;
 
-	public BackendImplementationModule(CursorConfig cursorConfig, ConnectionPoolConfig connectionPoolConfig, 
-	        BackendImplementation backendImplementation) {
-	    this.cursorConfig = cursorConfig;
-	    this.connectionPoolConfig = connectionPoolConfig;
-		this.backendImplementation = backendImplementation;
+	public BackendImplementationModule(Class<T> configurationClass, 
+            Class<C> backendConfigurationClass, 
+            Class<? extends C> backendConfigurationMapperClass, 
+	        Supplier<Module> backendModuleSupplier) {
+	    this.configurationClass = configurationClass;
+	    this.backendConfigurationClass = backendConfigurationClass;
+	    this.backendConfigurationMapperClass = backendConfigurationMapperClass;
+	    this.backendModuleSupplier = backendModuleSupplier;
+	}
+	
+	public boolean isForConfiguration(BackendImplementation backendImplementation) {
+	    return configurationClass.isAssignableFrom(backendImplementation.getClass());
+	}
+	
+	public void setConfiguration(BackendImplementation backendImplementation) {
+	    this.backendImplementation = backendImplementation;
 	}
 
 	@Override
 	protected void configure() {
-        bind(CursorConfig.class).toInstance(cursorConfig);
-        bind(ConnectionPoolConfig.class).toInstance(connectionPoolConfig);
         install(new BackendModule());
-	    backendImplementation.accept(this);
+        bind(configurationClass).toInstance(configurationClass.cast(backendImplementation));
+        bind(backendConfigurationClass).to(backendConfigurationMapperClass);
+        install(backendModuleSupplier.get());
         expose(SqlHelper.class);
         expose(SqlInterface.class);
         expose(SchemaUpdater.class);
@@ -75,152 +79,5 @@ public class BackendImplementationModule extends PrivateModule implements Backen
         expose(BackendTransactionJobFactory.class);
         expose(ReservedIdGenerator.class);
         expose(SnapshotUpdater.class);
-	}
-
-	@Override
-	public void visit(Postgres value) {
-        bind(Postgres.class).toInstance(value);
-        bind(PostgreSQLDbBackendConfiguration.class).to(PostgresSQLDbBackendConfigurationMapper.class);
-		install(new PostgreSQLBackendModule());
-	}
-
-	@Override
-	public void visit(Derby value) {
-        bind(Derby.class).toInstance(value);
-        bind(DerbyDbBackendConfiguration.class).to(DerbyBackendConfigurationMapper.class);
-        install(new DerbyBackendModule());
-	}
-    
-    @Immutable
-    @ThreadSafe
-    public static class DerbyBackendConfigurationMapper extends DbBackendConfigurationMapper implements DerbyDbBackendConfiguration {
-        private final boolean embedded;
-        private final boolean inMemory;
-        
-        @Inject
-        public DerbyBackendConfigurationMapper(CursorConfig cursorConfig, ConnectionPoolConfig connectionPoolConfig, Derby derby) {
-            super(cursorConfig.getCursorTimeout(),
-                    connectionPoolConfig.getConnectionPoolTimeout(),
-                    connectionPoolConfig.getConnectionPoolSize(),
-                    connectionPoolConfig.getReservedReadPoolSize(),
-                    derby.getHost(),
-                    derby.getPort(),
-                    derby.getDatabase(),
-                    derby.getUser(),
-                    derby.getPassword(),
-                    derby.getIncludeForeignKeys());
-            
-            this.embedded = derby.getEmbedded();
-            this.inMemory = derby.getInMemory();
-        }
-
-        @Override
-        public boolean embedded() {
-            return embedded;
-        }
-
-        @Override
-        public boolean inMemory() {
-            return inMemory;
-        }
-    }
-    
-    @Immutable
-    public static class PostgresSQLDbBackendConfigurationMapper extends DbBackendConfigurationMapper implements PostgreSQLDbBackendConfiguration {
-        @Inject
-        public PostgresSQLDbBackendConfigurationMapper(CursorConfig cursorConfig, ConnectionPoolConfig connectionPoolConfig, Postgres postgres) {
-            super(cursorConfig.getCursorTimeout(),
-                    connectionPoolConfig.getConnectionPoolTimeout(),
-                    connectionPoolConfig.getConnectionPoolSize(),
-                    connectionPoolConfig.getReservedReadPoolSize(),
-                    postgres.getHost(),
-                    postgres.getPort(),
-                    postgres.getDatabase(),
-                    postgres.getUser(),
-                    postgres.getPassword(),
-                    postgres.getIncludeForeignKeys());
-        }
-    }
-
-    @ThreadSafe
-	public static abstract class DbBackendConfigurationMapper implements DbBackendConfiguration {
-
-        private final long cursorTimeout;
-        private final long connectionPoolTimeout;
-        private final int connectionPoolSize;
-        private final int reservedReadPoolSize;
-		private final String dbHost;
-		private final int dbPort;
-		private final String dbName;
-		private final String username;
-		private final String password;
-		private boolean includeForeignKeys;
-		
-		@Inject
-        public DbBackendConfigurationMapper(long cursorTimeout, long connectionPoolTimeout, int connectionPoolSize,
-                int reservedReadPoolSize, String dbHost, int dbPort, String dbName, String username, String password,
-                boolean includeForeignKeys) {
-            super();
-            this.cursorTimeout = cursorTimeout;
-            this.connectionPoolTimeout = connectionPoolTimeout;
-            this.connectionPoolSize = connectionPoolSize;
-            this.reservedReadPoolSize = reservedReadPoolSize;
-            this.dbHost = dbHost;
-            this.dbPort = dbPort;
-            this.dbName = dbName;
-            this.username = username;
-            this.password = password;
-            this.includeForeignKeys = includeForeignKeys;
-        }
-
-		@Override
-        public long getCursorTimeout() {
-            return cursorTimeout;
-        }
-
-        @Override
-        public long getConnectionPoolTimeout() {
-            return connectionPoolTimeout;
-        }
-
-        @Override
-		public int getConnectionPoolSize() {
-			return connectionPoolSize;
-		}
-
-		@Override
-		public int getReservedReadPoolSize() {
-			return reservedReadPoolSize;
-		}
-
-		@Override
-		public String getUsername() {
-			return username;
-		}
-
-		@Override
-		public String getPassword() {
-			return password;
-		}
-
-		@Override
-		public String getDbHost() {
-			return dbHost;
-		}
-
-		@Override
-		public String getDbName() {
-			return dbName;
-		}
-
-		@Override
-		public int getDbPort() {
-			return dbPort;
-		}
-
-        @Override
-        public boolean includeForeignKeys() {
-            return includeForeignKeys;
-        }
 	}
 }

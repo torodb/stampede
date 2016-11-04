@@ -20,12 +20,12 @@
 
 package com.torodb.backend.driver.derby;
 
-import com.torodb.backend.DbBackendConfiguration;
+import com.torodb.backend.BackendConfiguration;
 
 /**
  * Configuration data for the backend
  */
-public interface DerbyDbBackendConfiguration extends DbBackendConfiguration {
+public interface DerbyDbBackendConfiguration extends BackendConfiguration {
     public boolean inMemory();
     public boolean embedded();
 }

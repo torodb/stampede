@@ -39,7 +39,7 @@ import com.torodb.core.annotations.TorodbIdleService;
 /**
  *
  */
-public abstract class AbstractDbBackendService<Configuration extends DbBackendConfiguration> 
+public abstract class AbstractDbBackendService<Configuration extends BackendConfiguration> 
         extends IdleTorodbService implements DbBackendService {
 
     private static final Logger LOGGER = LogManager.getLogger(AbstractDbBackendService.class);

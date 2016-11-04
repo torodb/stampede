@@ -55,7 +55,7 @@ public class OfficialPostgreSQLDriver implements PostgreSQLDriverProvider {
     }
     
     @Override
-    public DataSource getConfiguredDataSource(PostgreSQLDbBackendConfiguration configuration, String poolName) {
+    public DataSource getConfiguredDataSource(PostgreSQLBackendConfiguration configuration, String poolName) {
         PGSimpleDataSource dataSource = new PGSimpleDataSource();
 
         dataSource.setUser(configuration.getUsername());

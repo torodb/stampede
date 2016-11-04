@@ -23,12 +23,7 @@
         </dependency>
         <dependency>
             <groupId>com.torodb</groupId>
-            <artifactId>backend-postgresql</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.torodb</groupId>
-            <artifactId>backend-derby</artifactId>
+            <artifactId>metrics</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -51,20 +46,20 @@
             <artifactId>repl</artifactId>
             <version>${project.version}</version>
         </dependency>
-
+        
         <dependency>
-            <groupId>com.8kdata.mongowp.server</groupId>
-            <artifactId>mongo-server-api</artifactId>
+            <groupId>com.torodb</groupId>
+            <artifactId>backend-postgresql</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>com.8kdata.mongowp.server</groupId>
-            <artifactId>mongo-server-core</artifactId>
+            <groupId>com.torodb</groupId>
+            <artifactId>backend-derby</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope>
         </dependency>
-        <dependency>
-            <groupId>com.8kdata.mongowp.client</groupId>
-            <artifactId>driver-wrapper</artifactId>
-        </dependency>
-
+        
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-core</artifactId>
@@ -139,24 +134,9 @@
             <type>test-jar</type>
             <scope>test</scope>
         </dependency>
-        <dependency>
-        	<groupId>com.torodb</groupId>
-        	<artifactId>metrics</artifactId>
-        	<version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.torodb</groupId>
-            <artifactId>concurrent</artifactId>
-            <version>0.50.0-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>org.jooq</groupId>
-            <artifactId>jool</artifactId>
-        </dependency>
     </dependencies>
     
     <build>
-                
         <plugins>
             <plugin>
                 <groupId>pl.project13.maven</groupId>

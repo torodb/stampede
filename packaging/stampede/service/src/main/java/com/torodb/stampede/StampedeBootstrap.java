@@ -17,8 +17,12 @@ public class StampedeBootstrap {
     private StampedeBootstrap() {}
 
     public static Service createStampedeService(Config config, Clock clock) {
-        Injector bootstrapInjector = Guice.createInjector(new BootstrapModule(
+        return createStampedeService(new BootstrapModule(
                 config, clock));
+    }
+
+    public static Service createStampedeService(BootstrapModule bootstrapModule) {
+        Injector bootstrapInjector = Guice.createInjector(bootstrapModule);
         ThreadFactory threadFactory = bootstrapInjector.getInstance(
                 ThreadFactory.class);
         
