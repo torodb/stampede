@@ -1,3 +1,5 @@
+# Configuration options
+
 ## CLI options
 
 To execute ToroDb Stampede using the command line, a few options can be given to configure the system.
@@ -51,6 +53,59 @@ Usage: `<main class> [options]`
 
 ## Configuration file
 
-The other way to configure the system is through configuration file, as the CLI command, it has a few available options.
+Another way to configure the system is through configuration file, as the CLI command, it has a few available options.
 
-__TBD__
+### ToroDB logging configuration
+
+| Option | |
+|--------|-|
+| /logging/log4j2File | Overwrites Log4j2 configuration file with the given one. |
+| /logging/level | Overwrites the default level with the given one. |
+| /logging/packages/<package-name> | Overwrites the default level for the given package name. | 
+| /logging/file | Overwrites the default value for the log output file path. |
+| /metricsEnabled | With value `true` enables the metrics system, and `false` disables it. |
+| /replication/replSetName | Overwrites the default value of the MongoDB Replica Set used for replication. |
+| /replication/syncSource | Overwrites the default connection address for the MongoDB Replica Set used for replication (host:port) |
+
+### Replication SSL configuration
+
+| Option | |
+|--------|-|
+| /replication/ssl/enabled | If `false` the SSL/TLS layer is disabled if `true` it is enabled. |
+| /replication/ssl/allowInvalidHostnames | If `true` hostname verification is disabled, if `false` it is enabled. | 
+| /replication/ssl/trustStoreFile | The path to the Java Key Store file containing the Certification Authority. If CAFile is specified it will be used instead. | 
+| /replication/ssl/trustStorePassword | The password of the Java Key Store file containing the Certification Authority. |
+| /replication/ssl/keyStoreFile | The path to the Java Key Store file containing the certificate and private key used to authenticate client. |
+| /replication/ssl/keyStorePassword | The password of the Java Key Store file containing and private key used to authenticate client. |
+| /replication/ssl/keyPassword | The password of the private key used to authenticate client. |
+| /replication/ssl/fipsMode | If `true` enable FIPS 140-2 mode. |
+| /replication/ssl/caFile | The path to the Certification Authority in PEM format. |
+
+### Replication authentication configuration
+
+| Option | |
+|--------|-|
+| /replication/auth/mode | Specifies the authentication mode, that can take one of the next values.<ul><li>disabled: Disable authentication mechanism.</li><li>negotiate: The client will negotiate best mechanism to authenticate. With server version 3.0 or above, the driver will authenticate using the SCRAM-SHA-1 mechanism. Otherwise, the driver will authenticate using the Challenge Response mechanism.</li><li>cr: Challenge Response authentication</li><li>x509: X.509 authentication</li><li>scram_sha1: SCRAM-SHA-1 SASL authentication</li></ul> |
+| /replication/auth/user | User to be authenticated. |
+| /replication/auth/source | The source database where the user is present. |
+| /replication/include/`<string>` | A map of databases and/or collections and/or indexes to exclusively replicate.<ul><li>Each entry represent a database name under which a list of collection names can be specified.</li><li>Each collection can contain a list of indexes each formed by one or more of those fields:<ul><li>name=<string> the index name</li><li>unqiue=<boolean> true when index is unique, false otherwise</li><li>keys/<string>=<string> the name of the field indexed and the index direction or type</ul><li>Character '\*' can be used to denote "any-character" and character '\' to escape characters.</li></ul> |
+| /replication/exclude/`<string>` | A map of databases and/or collections and/or indexes to exclusively replicate.<ul><li>Each entry represent a database name under which a list of collection names can be specified.</li><li>Each collection can contain a list of indexes each formed by one or more of those fields:<ul><li>name=<string> the index name</li><li>unqiue=<boolean> true when index is unique, false otherwise</li><li>keys/<string>=<string> the name of the field indexed and the index direction or type</ul><li>Character '\*' can be used to denote "any-character" and character '\' to escape characters.</li></ul> |
+| /replication/mongopassFile | Path to the file with MongoDB access configuration in `.pgpass` syntax. |
+
+### PostgreSQL configuration (default)
+
+| Option | |
+|--------|-|
+| /backend/postgres/host | The host or ip that will be used to connect. |
+| /backend/postgres/port | The port that will be used to connect. |
+| /backend/postgres/database | The database that will be used. |
+| /backend/postgres/user | The user that will be used to connect. |
+| /backend/postgres/toropassFile | Path to the file with PostgreSQL access configuration in  `.pgpass` syntax. |
+| /backend/postgres/applicationName | The application name used by driver to connect. |
+
+### ToroDB Stampede pool configuration
+
+| Option | |
+|--------|-|
+| /backend/pool/connectionPoolTimeout | The timeout in milliseconds after which retrieve a connection from the pool will fail. | 
+| /backend/pool/connectionPoolSize |  Maximum number of connections to establish to the database. It must be higher or equal than 3. | 
