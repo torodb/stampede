@@ -20,13 +20,22 @@
 
 package com.torodb.stampede.config.model.replication;
 
+import javax.validation.constraints.NotNull;
+
+import org.hibernate.validator.constraints.NotEmpty;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.torodb.packaging.config.annotation.Description;
 import com.torodb.packaging.config.model.backend.CursorConfig;
+import com.torodb.packaging.config.model.protocol.mongo.AbstractReplication;
+import com.torodb.packaging.config.model.protocol.mongo.Auth;
+import com.torodb.packaging.config.model.protocol.mongo.FilterList;
 import com.torodb.packaging.config.model.protocol.mongo.Role;
+import com.torodb.packaging.config.model.protocol.mongo.SSL;
 import com.torodb.packaging.config.util.ConfigUtils;
+import com.torodb.packaging.config.validation.RequiredParametersForAuthentication;
 
 @JsonPropertyOrder({
     "replSetName",
@@ -37,11 +46,8 @@ import com.torodb.packaging.config.util.ConfigUtils;
     "exclude",
     "mongopassFile"
 })
-public class Replication extends com.torodb.packaging.config.model.protocol.mongo.Replication implements CursorConfig {
-    @JsonIgnore
+public class Replication extends AbstractReplication implements CursorConfig {
     private Long cursorTimeout = 10L * 60 * 1000;
-    @Description("config.mongo.mongopassFile")
-    @JsonProperty(required=true)
     private String mongopassFile = ConfigUtils.getUserHomeFilePath(".mongopass");
 
     public Replication() {
@@ -49,22 +55,69 @@ public class Replication extends com.torodb.packaging.config.model.protocol.mong
         setReplSetName("rs1");
     }
 
+    @Override
+    @JsonIgnore
+    public Long getCursorTimeout() {
+        return cursorTimeout;
+    }
+    
+    public void setCursorTimeout(Long cursorTimeout) {
+        this.cursorTimeout = cursorTimeout;
+    }
+
+    @Description("config.mongo.mongopassFile")
+    @JsonProperty(required=true)
+    public String getMongopassFile() {
+        return mongopassFile;
+    }
+    
+    public void setMongopassFile(String mongopassFile) {
+        this.mongopassFile = mongopassFile;
+    }
+    
+    @Description("config.mongo.replication.replSetName")
+    @NotEmpty
+    @JsonProperty(required=true)
+    public String getReplSetName() {
+        return super.getReplSetName();
+    }
+    
     @JsonIgnore
     public Role getRole() {
         return super.getRole();
     }
     
-    @Override
-    public Long getCursorTimeout() {
-        return cursorTimeout;
+    @Description("config.mongo.replication.syncSource")
+    @NotNull
+    @JsonProperty(required=true)
+    public String getSyncSource() {
+        return super.getSyncSource();
     }
-    public void setCursorTimeout(Long cursorTimeout) {
-        this.cursorTimeout = cursorTimeout;
+    
+    @Description("config.mongo.replication.ssl")
+    @NotNull
+    @JsonProperty(required=true)
+    public SSL getSsl() {
+        return super.getSsl();
     }
-    public String getMongopassFile() {
-        return mongopassFile;
+    
+    @Description("config.mongo.replication.auth")
+    @NotNull
+    @JsonProperty(required=true)
+    @RequiredParametersForAuthentication
+    public Auth getAuth() {
+        return super.getAuth();
     }
-    public void setMongopassFile(String mongopassFile) {
-        this.mongopassFile = mongopassFile;
+    
+    @Description("config.mongo.replication.include")
+    @JsonProperty(required=true)
+    public FilterList getInclude() {
+        return super.getInclude();
+    }
+    
+    @Description("config.mongo.replication.exclude")
+    @JsonProperty(required=true)
+    public FilterList getExclude() {
+        return super.getExclude();
     }
 }

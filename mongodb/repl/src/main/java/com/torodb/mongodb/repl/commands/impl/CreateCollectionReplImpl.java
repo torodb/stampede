@@ -57,6 +57,10 @@ public class CreateCollectionReplImpl extends ReplCommandImpl<CreateCollectionAr
         try {
             LOGGER.info("Creating collection {}.{}", req.getDatabase(), arg.getCollection());
             
+            if (arg.getOptions().isCapped()) {
+                LOGGER.info("Ignoring capped flag for collection {}.{}", req.getDatabase(), arg.getCollection());
+            }
+            
             if (!trans.existsCollection(req.getDatabase(), arg.getCollection())) {
                 trans.createIndex(
                         req.getDatabase(),

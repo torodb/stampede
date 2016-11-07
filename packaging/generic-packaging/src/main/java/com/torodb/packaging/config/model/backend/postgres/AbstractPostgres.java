@@ -18,13 +18,13 @@
  *     
  */
 
-package com.torodb.packaging.config.model.backend.derby;
+package com.torodb.packaging.config.model.backend.postgres;
 
 import com.torodb.packaging.config.model.backend.BackendImplementation;
 import com.torodb.packaging.config.model.backend.BackendPasswordConfig;
 import com.torodb.packaging.config.visitor.BackendImplementationVisitor;
 
-public abstract class Derby implements BackendImplementation, BackendPasswordConfig {
+public abstract class AbstractPostgres implements BackendImplementation, BackendPasswordConfig {
 	private String host;
 	private Integer port;
 	private String database;
@@ -33,11 +33,9 @@ public abstract class Derby implements BackendImplementation, BackendPasswordCon
 	private String toropassFile;
 	private String applicationName;
 	private Boolean includeForeignKeys;
-	private Boolean embedded;
-	private Boolean inMemory;
 	
-	protected Derby(String host, Integer port, String database, String user, String password, String toropassFile,
-            String applicationName, Boolean includeForeignKeys, Boolean embedded, Boolean inMemory) {
+	protected AbstractPostgres(String host, Integer port, String database, String user, String password, String toropassFile,
+            String applicationName, Boolean includeForeignKeys) {
         super();
         this.host = host;
         this.port = port;
@@ -47,8 +45,6 @@ public abstract class Derby implements BackendImplementation, BackendPasswordCon
         this.toropassFile = toropassFile;
         this.applicationName = applicationName;
         this.includeForeignKeys = includeForeignKeys;
-        this.embedded = embedded;
-        this.inMemory = inMemory;
     }
 	
     public String getHost() {
@@ -63,12 +59,6 @@ public abstract class Derby implements BackendImplementation, BackendPasswordCon
 	public void setPort(Integer port) {
 		this.port = port;
 	}
-    public String getDatabase() {
-        return database;
-    }
-    public void setDatabase(String database) {
-        this.database = database;
-    }
 	public String getUser() {
 		return user;
 	}
@@ -83,12 +73,18 @@ public abstract class Derby implements BackendImplementation, BackendPasswordCon
 	public void setPassword(String password) {
 		this.password = password;
 	}
-    @Override
+	@Override
 	public String getToropassFile() {
 		return toropassFile;
 	}
 	public void setToropassFile(String toropassFile) {
 		this.toropassFile = toropassFile;
+	}
+	public String getDatabase() {
+		return database;
+	}
+	public void setDatabase(String database) {
+		this.database = database;
 	}
 	public String getApplicationName() {
 		return applicationName;
@@ -101,18 +97,6 @@ public abstract class Derby implements BackendImplementation, BackendPasswordCon
     }
     public Boolean getIncludeForeignKeys() {
         return includeForeignKeys;
-    }
-    public void setEmbedded(Boolean embedded) {
-        this.embedded = embedded;
-    }
-    public Boolean getEmbedded() {
-        return embedded;
-    }
-    public void setInMemory(Boolean inMemory) {
-        this.inMemory = inMemory;
-    }
-    public Boolean getInMemory() {
-        return inMemory;
     }
 	
 	@Override

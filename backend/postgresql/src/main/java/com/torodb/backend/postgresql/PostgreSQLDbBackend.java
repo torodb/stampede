@@ -23,7 +23,7 @@ package com.torodb.backend.postgresql;
 
 import com.torodb.backend.AbstractDbBackendService;
 import com.torodb.backend.TransactionIsolationLevel;
-import com.torodb.backend.driver.postgresql.PostgreSQLDbBackendConfiguration;
+import com.torodb.backend.driver.postgresql.PostgreSQLBackendConfiguration;
 import com.torodb.backend.driver.postgresql.PostgreSQLDriverProvider;
 import java.util.concurrent.ThreadFactory;
 import javax.annotation.Nonnull;
@@ -37,7 +37,7 @@ import com.torodb.core.annotations.TorodbIdleService;
  *
  * PostgreSQL-based backend
  */
-public class PostgreSQLDbBackend extends AbstractDbBackendService<PostgreSQLDbBackendConfiguration> {
+public class PostgreSQLDbBackend extends AbstractDbBackendService<PostgreSQLBackendConfiguration> {
 
     private static final Logger LOGGER = LogManager.getLogger(PostgreSQLDbBackend.class);
 
@@ -45,7 +45,7 @@ public class PostgreSQLDbBackend extends AbstractDbBackendService<PostgreSQLDbBa
 
     @Inject
     public PostgreSQLDbBackend(@TorodbIdleService ThreadFactory threadFactory,
-            PostgreSQLDbBackendConfiguration configuration, 
+            PostgreSQLBackendConfiguration configuration, 
             PostgreSQLDriverProvider driverProvider,
             PostgreSQLErrorHandler errorHandler) {
         super(threadFactory, configuration, errorHandler);
@@ -56,7 +56,7 @@ public class PostgreSQLDbBackend extends AbstractDbBackendService<PostgreSQLDbBa
     }
 
     @Override
-    protected DataSource getConfiguredDataSource(PostgreSQLDbBackendConfiguration configuration, String poolName) {
+    protected DataSource getConfiguredDataSource(PostgreSQLBackendConfiguration configuration, String poolName) {
         return driverProvider.getConfiguredDataSource(configuration, poolName);
     }
 

@@ -5,9 +5,9 @@ services:
     links:
       - postgres
     environment:
-      - TORODB_SETUP=true
-      - MONGO_SYNC_SOURCE
       - POSTGRES_PASSWORD
+      - TORODB_SETUP=true
+      - TORODB_SYNC_SOURCE
       - TORODB_BACKEND_HOST=postgres
       - TORODB_BACKEND_PORT=5432
       - TORODB_BACKEND_DATABASE

@@ -7,9 +7,14 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import com.google.common.util.concurrent.Service;
+import com.torodb.packaging.config.model.backend.BackendImplementation;
+import com.torodb.packaging.config.model.backend.ConnectionPoolConfig;
+import com.torodb.packaging.config.model.backend.CursorConfig;
 import com.torodb.packaging.config.model.generic.LogLevel;
 import com.torodb.packaging.config.model.protocol.mongo.Role;
 import com.torodb.packaging.config.util.ConfigUtils;
+import com.torodb.packaging.guice.BackendDerbyImplementationModule;
+import com.torodb.packaging.guice.BackendMultiImplementationModule;
 import com.torodb.stampede.config.model.Config;
 import com.torodb.stampede.config.model.replication.Replication;
 
@@ -42,15 +47,15 @@ public class StampedeBootstrapTest {
 
     @Test
     public void testCreateStampedeService() {
-        StampedeBootstrap.createStampedeService(config, Clock.systemUTC());
+        StampedeBootstrap.createStampedeService(
+                new TestBootstrapModule(config, Clock.systemUTC()));
     }
 
     @Test
-    @Ignore(value = "The test is not working properly")
+    @Ignore
     public void testCreateStampedeService_run() {
         Service stampedeService = StampedeBootstrap.createStampedeService(
-                config,
-                Clock.systemUTC());
+                new TestBootstrapModule(config, Clock.systemUTC()));
         stampedeService.startAsync();
         stampedeService.awaitRunning();
 
@@ -58,7 +63,24 @@ public class StampedeBootstrapTest {
         stampedeService.awaitTerminated();
     }
     
-    private class Derby extends com.torodb.packaging.config.model.backend.derby.Derby {
+    private static class TestBootstrapModule extends BootstrapModule {
+        public TestBootstrapModule(Config config, Clock clock) {
+            super(config, clock);
+        }
+
+        @Override
+        protected BackendMultiImplementationModule getBackendMultiImplementationModule(CursorConfig cursorConfig,
+                ConnectionPoolConfig connectionPoolConfig, BackendImplementation backendImplementation) {
+            return new BackendMultiImplementationModule(
+                    cursorConfig, 
+                    connectionPoolConfig, 
+                    backendImplementation,
+                    new BackendDerbyImplementationModule()
+            );
+        }
+    }
+    
+    private class Derby extends com.torodb.packaging.config.model.backend.derby.AbstractDerby {
         public Derby() {
             super(
                     "localhost", 

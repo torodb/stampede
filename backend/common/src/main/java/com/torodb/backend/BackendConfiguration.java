@@ -25,7 +25,7 @@ import javax.annotation.Nonnegative;
 /**
  * Configuration data for the backend
  */
-public interface DbBackendConfiguration {
+public interface BackendConfiguration {
 
     long getCursorTimeout();
     long getConnectionPoolTimeout();

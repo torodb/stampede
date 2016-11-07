@@ -26,6 +26,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.torodb.packaging.config.annotation.Description;
+import com.torodb.packaging.config.model.backend.postgres.AbstractPostgres;
 import com.torodb.packaging.config.util.ConfigUtils;
 import com.torodb.packaging.config.validation.ExistsAnyPassword;
 import com.torodb.packaging.config.validation.Host;
@@ -43,7 +44,7 @@ import com.torodb.packaging.config.validation.Port;
     "includeForeignKeys"
 })
 @ExistsAnyPassword
-public class Postgres extends com.torodb.packaging.config.model.backend.postgres.Postgres {
+public class Postgres extends AbstractPostgres {
 	public Postgres() {
         super(
                 "localhost", 

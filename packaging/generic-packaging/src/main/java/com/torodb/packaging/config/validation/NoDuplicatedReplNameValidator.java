@@ -27,19 +27,19 @@ import java.util.Set;
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 
-import com.torodb.packaging.config.model.protocol.mongo.Replication;
+import com.torodb.packaging.config.model.protocol.mongo.AbstractReplication;
 
-public class NoDuplicatedReplNameValidator implements ConstraintValidator<NoDuplicatedReplName, List<Replication>> {
+public class NoDuplicatedReplNameValidator implements ConstraintValidator<NoDuplicatedReplName, List<AbstractReplication>> {
 	
 	@Override
 	public void initialize(NoDuplicatedReplName constraintAnnotation) {
 	}
 
 	@Override
-	public boolean isValid(List<Replication> value, ConstraintValidatorContext context) {
+	public boolean isValid(List<AbstractReplication> value, ConstraintValidatorContext context) {
 		if (value != null) {
 			Set<String> replNameSet = new HashSet<>();
-			for (Replication replication : value) {
+			for (AbstractReplication replication : value) {
 				if (!replNameSet.add(replication.getReplSetName())) {
 					return false;
 				}

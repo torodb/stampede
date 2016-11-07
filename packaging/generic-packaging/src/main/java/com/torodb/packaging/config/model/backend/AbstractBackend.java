@@ -22,16 +22,16 @@ package com.torodb.packaging.config.model.backend;
 
 import com.google.common.collect.ImmutableMap;
 
-public abstract class Backend {
+public abstract class AbstractBackend {
     
     private final ImmutableMap<String, Class<? extends BackendImplementation>> backendClasses;
 	private BackendImplementation backendImplementation;
 
-    public Backend(ImmutableMap<String, Class<? extends BackendImplementation>> backendClasses) {
+    public AbstractBackend(ImmutableMap<String, Class<? extends BackendImplementation>> backendClasses) {
         this.backendClasses = backendClasses;
     }
 
-    public Backend(ImmutableMap<String, Class<? extends BackendImplementation>> backendClasses, BackendImplementation backendImplementation) {
+    public AbstractBackend(ImmutableMap<String, Class<? extends BackendImplementation>> backendClasses, BackendImplementation backendImplementation) {
         this(backendClasses);
         
         this.backendImplementation = backendImplementation;
@@ -51,7 +51,7 @@ public abstract class Backend {
                         backendImplementationClass.getSuperclass() != null &&
                         entry.getValue() == backendImplementationClass.getSuperclass()))
                 .findAny()
-                .orElseThrow(() -> new IllegalArgumentException("Backend not found for class " + backendImplementationClass.getName()))
+                .orElseThrow(() -> new IllegalArgumentException("AbstractBackend not found for class " + backendImplementationClass.getName()))
                 .getKey();
     }
     

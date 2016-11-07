@@ -25,6 +25,7 @@ import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.client.core.MongoConnection.ErroneousRemoteCommandResponse;
 import com.eightkdata.mongowp.client.core.MongoConnection.FromExceptionRemoteCommandRequest;
 import com.eightkdata.mongowp.client.core.MongoConnection.RemoteCommandResponse;
+import com.eightkdata.mongowp.client.core.UnreachableMongoServerException;
 import com.eightkdata.mongowp.exceptions.InconsistentReplicaSetNamesException;
 import com.eightkdata.mongowp.exceptions.MongoException;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.internal.ReplSetHeartbeatCommand.ReplSetHeartbeatArgument;
@@ -244,6 +245,9 @@ public class TopologyHeartbeatHandler extends IdleTorodbService {
     private RemoteCommandResponse<ReplSetHeartbeatReply> onNetworkError(
             Throwable t, HostAndPort target, Instant start) {
         Throwable cause = CompletionExceptions.getFirstNonCompletionException(t);
+        while (cause.getCause() != cause && cause instanceof UncheckedException) {
+            cause = cause.getCause();
+        }
         if (cause instanceof CancellationException) {
             LOGGER.trace("Heartbeat handling to {} has been cancelled "
                     + "before execution: {}", target, cause.getMessage());
@@ -271,19 +275,24 @@ public class TopologyHeartbeatHandler extends IdleTorodbService {
     private RemoteCommandResponse<ReplSetHeartbeatReply> handleHeartbeatError(
             Throwable t, Instant start) {
         Duration d = Duration.between(clock.instant(), start);
+        ErrorCode errorCode;
         if (t instanceof MongoException) {
             return new FromExceptionRemoteCommandRequest((MongoException) t, d);
+        } else if (t instanceof UnreachableMongoServerException) {
+            errorCode = ErrorCode.HOST_UNREACHABLE;
         } else {
-            if (!(t instanceof MongoRuntimeException)) {
+            if (!(t instanceof MongoRuntimeException)
+                    && !(t instanceof UnreachableMongoServerException)) {
                 LOGGER.warn("Unexpected exception {} catched by the topology "
                         + "heartbeat handler", t.getClass().getSimpleName());
             }
-            return new ErroneousRemoteCommandResponse<>(
-                    ErrorCode.UNKNOWN_ERROR,
-                    t.getLocalizedMessage(),
-                    d
-            );
+            errorCode = ErrorCode.UNKNOWN_ERROR;
         }
+        return new ErroneousRemoteCommandResponse<>(
+                errorCode,
+                t.getLocalizedMessage(),
+                d
+        );
     }
 
     @GuardedBy("executor")

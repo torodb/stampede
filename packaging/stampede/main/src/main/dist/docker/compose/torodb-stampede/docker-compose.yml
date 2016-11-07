@@ -3,9 +3,9 @@ services:
   torodb-stampede:
     image: 8kdata/torodb-stampede
     environment:
-      - TORODB_SETUP=false
-      - MONGO_SYNC_SOURCE
       - POSTGRES_PASSWORD
+      - TORODB_SETUP=false
+      - TORODB_SYNC_SOURCE
       - TORODB_BACKEND_HOST
       - TORODB_BACKEND_PORT
       - TORODB_BACKEND_DATABASE

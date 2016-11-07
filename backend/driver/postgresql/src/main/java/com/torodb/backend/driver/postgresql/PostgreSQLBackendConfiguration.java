@@ -20,8 +20,8 @@
 
 package com.torodb.backend.driver.postgresql;
 
-import com.torodb.backend.DbBackendConfiguration;
+import com.torodb.backend.BackendConfiguration;
 
-public interface PostgreSQLDbBackendConfiguration extends DbBackendConfiguration {
+public interface PostgreSQLBackendConfiguration extends BackendConfiguration {
 
 }

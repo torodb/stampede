@@ -13,54 +13,48 @@ Among the previous dependencies, if we want to compile the source code other req
 
 | | Description | External links |
 |-|-------------|----------------|
-| Maven | dependency management and construction tasks has been delegated to Apache Maven, so it is necessary to compile the source code. | [more info](http://maven.apache.org/install.html) | 
+| Git | It is the distributed version control system (DVCS) used to keep ToroDB Stampede source code up to date and synchronized between its committers. | [more info](https://git-scm.com/downloads) |
+| Maven | Dependency management and construction tasks has been delegated to Apache Maven, so it is necessary to compile the source code. | [more info](http://maven.apache.org/install.html) | 
 
 # Backend setup
 
 ## PostgreSQL configuration
 
-ToroDB Stampede need a user and a database to be created in PostgreSQL to connect and store all the replicated data.
+The default installation of ToroDB Stampede requires new user and database to work. This values can be changed and specified by configuration, but here the default specification is explained.
 
 ### Linux
 
-Create PosgreSQL user torodb:
-
-```
+```no-highlight
 $ createuser -S -R -D -P --interactive torodb
-```
 
-Create PostgreSQL database torod with owner torodb:
-
-```
 $ createdatabase -O torodb torod
 ```
 
 ### macOS/Windows
 
-Open a console running `psql` command and type:
+In macOS and Windows the user and database can be created using an administration connection with `psql` command.
 
-```
-# CREATE USER torodb WITH PASSWORD '<torodb user''s password>';
+```no-highlight
+> CREATE USER torodb WITH PASSWORD '<password>';
 
-# CREATE DATABASE torod OWNER torodb;
+> CREATE DATABASE torod OWNER torodb;
 ```
 
 ## Create .toropass file
 
-Assuming that PostgreSQL is running on host localhost and port 5432:
+The access configuration to the PostgreSQL database will be detailed in the `.toropass` file stored in the home directory. The example assumes local connection with default port is being used, but it can be changed by the user too.
 
 ### Linux/macOS
 
-Create a file that will contain the PostgreSQL user torodb's password:
+Create `.toropass` file in the home path with the content below.
 
-```
-$ echo "localhost:5432:torod:torodb:$(\
-  read -p "Type torodb user's password:"$'\n' -s pwd; echo $pwd)" > $HOME/.toropass
+```no-highlight
+localhost:5432:torod:torodb:<password>
 ```
 
 ### Windows
 
-```
+```no-highlight
 > set /p pwd="Type torodb user's password:" & cls
 
 > echo localhost:5432:*:postgres:%pwd%> "%HOMEDRIVE%%HOMEPATH%\.toropass"

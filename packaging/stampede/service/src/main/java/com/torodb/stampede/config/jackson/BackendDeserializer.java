@@ -25,10 +25,11 @@ import java.util.function.BiConsumer;
 import org.jooq.lambda.tuple.Tuple2;
 
 import com.google.common.collect.ImmutableMap;
+import com.torodb.packaging.config.jackson.AbstractBackendDeserializer;
 import com.torodb.stampede.config.model.backend.Backend;
 import com.torodb.stampede.config.model.backend.Pool;
 
-public class BackendDeserializer extends com.torodb.packaging.config.jackson.BackendDeserializer<Backend> {
+public class BackendDeserializer extends AbstractBackendDeserializer<Backend> {
     
     public BackendDeserializer() {
         super(() -> new Backend(),

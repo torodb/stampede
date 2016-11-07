@@ -25,7 +25,7 @@ import com.torodb.mongodb.repl.ConsistencyHandler;
 import com.torodb.mongodb.repl.MongodbReplBundle;
 import com.torodb.mongodb.repl.ReplicationFilters;
 import com.torodb.mongodb.repl.guice.MongodbReplConfig;
-import com.torodb.packaging.config.model.protocol.mongo.Replication;
+import com.torodb.packaging.config.model.protocol.mongo.AbstractReplication;
 import com.torodb.packaging.util.MongoClientConfigurationFactory;
 import com.torodb.packaging.util.ReplicationFiltersFactory;
 import com.torodb.stampede.config.model.Config;
@@ -84,7 +84,7 @@ public class StampedeService extends AbstractIdleService implements Supervisor {
         Injector finalInjector = createFinalInjector(
                 backendBundle, consistencyHandler);
 
-        Replication replication = getReplication();
+        AbstractReplication replication = getReplication();
         reportReplication(replication);
         TorodBundle torodBundle = createTorodBundle(finalInjector);
         startBundle(torodBundle);
@@ -147,16 +147,16 @@ public class StampedeService extends AbstractIdleService implements Supervisor {
         shutdowner.addStopShutdownListener(service);
     }
 
-    private Replication getReplication() {
+    private AbstractReplication getReplication() {
         Config config = bootstrapInjector.getInstance(Config.class);
         return config.getReplication();
     }
 
-    private void reportReplication(Replication replication) {
+    private void reportReplication(AbstractReplication replication) {
         LOGGER.info("Replicating from seeds: {}", replication.getSyncSource());
     }
 
-    private MongodbReplConfig getReplConfig(Replication replication) {
+    private MongodbReplConfig getReplConfig(AbstractReplication replication) {
         return new DefaultMongodbReplConfig(replication);
     }
 
@@ -165,7 +165,7 @@ public class StampedeService extends AbstractIdleService implements Supervisor {
         private final ReplicationFilters replFilters;
         private final String replSetName;
 
-        public DefaultMongodbReplConfig(Replication replication) {
+        public DefaultMongodbReplConfig(AbstractReplication replication) {
             this.mongoClientConf = MongoClientConfigurationFactory.getMongoClientConfiguration(replication);
             this.replFilters = ReplicationFiltersFactory.getReplicationFilters(replication);
             replSetName = replication.getReplSetName();

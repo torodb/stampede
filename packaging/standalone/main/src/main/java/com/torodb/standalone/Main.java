@@ -39,10 +39,10 @@ import com.google.common.util.concurrent.Service;
 import com.google.inject.CreationException;
 import com.torodb.core.exceptions.SystemException;
 import com.torodb.packaging.config.model.backend.BackendPasswordConfig;
-import com.torodb.packaging.config.model.backend.derby.Derby;
-import com.torodb.packaging.config.model.backend.postgres.Postgres;
+import com.torodb.packaging.config.model.backend.derby.AbstractDerby;
+import com.torodb.packaging.config.model.backend.postgres.AbstractPostgres;
 import com.torodb.packaging.config.model.protocol.mongo.MongoPasswordConfig;
-import com.torodb.packaging.config.model.protocol.mongo.Replication;
+import com.torodb.packaging.config.model.protocol.mongo.AbstractReplication;
 import com.torodb.packaging.config.util.ConfigUtils;
 import com.torodb.packaging.config.visitor.BackendImplementationVisitor;
 import com.torodb.packaging.util.Log4jUtils;
@@ -93,12 +93,12 @@ public class Main {
 
 		config.getBackend().getBackendImplementation().accept(new BackendImplementationVisitor() {
             @Override
-            public void visit(Derby value) {
+            public void visit(AbstractDerby value) {
                 parseToropassFile(value);
             }
             
             @Override
-            public void visit(Postgres value) {
+            public void visit(AbstractPostgres value) {
                 parseToropassFile(value);
             }
             
@@ -111,7 +111,7 @@ public class Main {
             }
         });
         if (config.getProtocol().getMongo().getReplication() != null) {
-            for (Replication replication : config.getProtocol().getMongo().getReplication()) {
+            for (AbstractReplication replication : config.getProtocol().getMongo().getReplication()) {
                 if (replication.getAuth().getUser() != null) {
                     HostAndPort syncSource = HostAndPort.fromString(replication.getSyncSource())
                             .withDefaultPort(27017);
@@ -156,15 +156,15 @@ public class Main {
             }
         }
         
-        if (config.getBackend().isLike(Postgres.class)) {
-            Postgres postgres = config.getBackend().as(Postgres.class);
+        if (config.getBackend().isLike(AbstractPostgres.class)) {
+            AbstractPostgres postgres = config.getBackend().as(AbstractPostgres.class);
 
             if (cliConfig.isAskForPassword()) {
                 console.print("Database user " + postgres.getUser() + " password:");
                 postgres.setPassword(readPwd());
             }
-        } else if (config.getBackend().isLike(Derby.class)) {
-            Derby derby = config.getBackend().as(Derby.class);
+        } else if (config.getBackend().isLike(AbstractDerby.class)) {
+            AbstractDerby derby = config.getBackend().as(AbstractDerby.class);
 
             if (cliConfig.isAskForPassword()) {
                 console.print("Database user " + derby.getUser() + " password:");

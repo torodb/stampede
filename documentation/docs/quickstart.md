@@ -17,7 +17,7 @@ ToroDB Stampede expects some base configuration from the relational backend. So,
 
 This steps can be done with the next commands in a Linux environment.
 
-```
+```no-highlight
 $ sudo -u postgres createuser -S -R -D -P --interactive torodb
 
 $ sudo -u postgres createdb -O torodb torod
@@ -27,7 +27,7 @@ $ sudo adduser torodb
 
 The easiest way to check if the database can be used is connecting to it using the new role. If it is accessible then ToroDB Stampede should be able to do replication using it.
 
-```
+```no-highlight
 $ sudo -u torodb psql torod
 ```
 
@@ -37,13 +37,13 @@ To execute ToroDB Stampede the binary distribution is necessary and it can be do
 
 Create a PostgreSQL credentials configuration file, using the `.pgpass` file structure. The right format is one or more lines formatted as `<host>:<port>:<database>:<user>:<password>`.
 
-```
+```no-highlight
 localhost:5432:torod:torodb:torodb
 ```
 
 Once the credentials file is created ToroDB Stampede can be launched.
 
-```
+```no-highlight
 $ wget https://www.dropbox.com/s/54eyp7jyu8l70aa/torodb-stampede-0.50.0-SNAPSHOT.tar.bz2?dl=0
 
 $ tar xjvf <stampede-binary>.tar.bz2
@@ -59,7 +59,7 @@ It is easier to understand what ToroDB Stampede does through an example. One dat
 
 If previous steps are done and ToroDB Stampede is up and running, the dataset can be downloaded from  [here](https://www.dropbox.com/s/570d4tyt4hpsn03/primer-dataset.json?dl=0) and the replication done using `mongoimport` command.
 
-```
+```no-highlight
 $ wget https://www.dropbox.com/s/570d4tyt4hpsn03/primer-dataset.json?dl=0
 
 $ mongoimport -d stampede -c primer primer-dataset.json
@@ -67,15 +67,15 @@ $ mongoimport -d stampede -c primer primer-dataset.json
 
 When `mongoimport` finished PostgreSQL should have the replicated structure and data stored in the `stampede` schema, because that was the name selected for the database in the `mongoimport` command. Connecting to PostgreSQL console, the data can be accessed.
 
-```
+```no-highlight
 $ sudo -u torodb psql torod
 
-# set schema 'stampede'
+> set schema 'stampede'
 ```
 
 The next table structure in the `stampede` schema is created.
 
-```
+```no-highlight
 torod=# \d
                 List of relations
   Schema  |         Name         | Type  | Owner  

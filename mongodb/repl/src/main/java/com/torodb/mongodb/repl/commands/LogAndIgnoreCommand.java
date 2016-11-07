@@ -21,15 +21,19 @@
 package com.torodb.mongodb.repl.commands;
 
 import com.eightkdata.mongowp.bson.BsonDocument;
-import com.eightkdata.mongowp.exceptions.*;
+import com.eightkdata.mongowp.exceptions.BadValueException;
+import com.eightkdata.mongowp.exceptions.FailedToParseException;
+import com.eightkdata.mongowp.exceptions.MongoException;
+import com.eightkdata.mongowp.exceptions.NoSuchKeyException;
+import com.eightkdata.mongowp.exceptions.TypesMismatchException;
 import com.eightkdata.mongowp.server.api.MarshalException;
-import com.eightkdata.mongowp.server.api.impl.AbstractNotAliasableCommand;
+import com.eightkdata.mongowp.server.api.impl.AbstractCommand;
 import com.eightkdata.mongowp.server.api.tools.Empty;
 
 /**
  *
  */
-public class LogAndIgnoreCommand extends AbstractNotAliasableCommand<String, Empty> {
+public class LogAndIgnoreCommand extends AbstractCommand<String, Empty> {
 
     public static final LogAndIgnoreCommand INSTANCE = new LogAndIgnoreCommand();
 
@@ -43,12 +47,12 @@ public class LogAndIgnoreCommand extends AbstractNotAliasableCommand<String, Emp
     }
 
     @Override
-    public String unmarshallArg(BsonDocument requestDoc) throws MongoException {
+    public String unmarshallArg(BsonDocument requestDoc, String aliasedAs) throws MongoException {
         return requestDoc.getFirstEntry().getKey();
     }
 
     @Override
-    public BsonDocument marshallArg(String request) throws MarshalException {
+    public BsonDocument marshallArg(String request, String aliasedAs) throws MarshalException {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 

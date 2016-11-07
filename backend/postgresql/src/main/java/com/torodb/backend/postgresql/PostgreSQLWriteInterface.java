@@ -20,6 +20,7 @@
 
 package com.torodb.backend.postgresql;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.Reader;
 import java.sql.Connection;
@@ -146,11 +147,16 @@ public class PostgreSQLWriteInterface extends AbstractWriteInterface {
 	                    } catch (SQLException ex) {
 	                        throw errorHandler.handleUserException(Context.INSERT, ex);
 	                    } catch (IOException ex) {
+	                        if (ex instanceof EOFException && ex.getMessage() == null) {
+	                            LOGGER.debug(ex);
+                                ex = new EOFException("End of file while COPYing data");
+	                        }
+	                        
 	                        throw new SystemException(ex);
 	                    }
 	                }
 	            } catch (SQLException ex) {
-	                throw new SystemException(ex);
+	                throw errorHandler.handleException(Context.INSERT, ex);
 	            } finally {
 	                dsl.configuration().connectionProvider().release(connection);
 	            }

@@ -28,5 +28,5 @@ import javax.sql.DataSource;
  * A provider for the PostgreSQL driver interface so that it is independent of the driver implementation
  */
 public interface PostgreSQLDriverProvider {
-    DataSource getConfiguredDataSource(PostgreSQLDbBackendConfiguration configuration, String poolName);
+    DataSource getConfiguredDataSource(PostgreSQLBackendConfiguration configuration, String poolName);
 }
