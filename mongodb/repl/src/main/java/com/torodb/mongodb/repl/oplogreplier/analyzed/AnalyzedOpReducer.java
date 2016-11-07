@@ -21,6 +21,7 @@ package com.torodb.mongodb.repl.oplogreplier.analyzed;
 
 import com.eightkdata.mongowp.bson.BsonValue;
 import com.eightkdata.mongowp.server.api.oplog.CollectionOplogOperation;
+import com.google.common.base.Preconditions;
 import com.torodb.kvdocument.conversion.mongowp.MongoWPConverter;
 import com.torodb.kvdocument.values.KVValue;
 import com.torodb.mongodb.repl.oplogreplier.ApplierContext;
@@ -52,7 +53,7 @@ public class AnalyzedOpReducer {
 
     public void analyzeAndReduce(Map<BsonValue<?>, AnalyzedOp> map,
             CollectionOplogOperation op, ApplierContext context) {
-        assert op.getDocId() != null : "Modifications without _id cannot be replicated on parallel";
+        Preconditions.checkArgument(op.getDocId() != null, "Modifications without _id cannot be replicated on parallel");
 
         AnalyzedOp oldOp = map.get(op.getDocId());
         if (oldOp == null) {
