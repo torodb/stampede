@@ -1,34 +1,34 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
-	<modelVersion>4.0.0</modelVersion>
+    <modelVersion>4.0.0</modelVersion>
 
-	<parent>
-		<groupId>com.torodb</groupId>
-		<artifactId>driver-parent</artifactId>
-		<version>0.50.0-SNAPSHOT</version>
-	</parent>
+    <parent>
+        <groupId>com.torodb</groupId>
+        <artifactId>driver-parent</artifactId>
+        <version>0.50.0-SNAPSHOT</version>
+    </parent>
 
-	<artifactId>driver-derby</artifactId>
+    <artifactId>driver-derby</artifactId>
 
-	<name>ToroDB-poc: Derby driver</name>
-	<description>
+    <name>ToroDB-poc: Derby driver</name>
+    <description>
         Derby JDBC driver.
         May be used by more databases than Derby itself, but provides some database-dependent configuration.
     </description>
 
-	<dependencies>
-		<dependency>
-			<groupId>com.torodb</groupId>
-			<artifactId>core</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>com.torodb</groupId>
-			<artifactId>backend-common</artifactId>
-			<version>${project.version}</version>
-		</dependency>
+    <dependencies>
+        <dependency>
+            <groupId>com.torodb</groupId>
+            <artifactId>core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.torodb</groupId>
+            <artifactId>backend-common</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <dependency>
             <groupId>org.apache.derby</groupId>
             <artifactId>derby</artifactId>
@@ -55,5 +55,5 @@
             <artifactId>log4j-core</artifactId>
             <scope>test</scope>
         </dependency>
-	</dependencies>
+    </dependencies>
 </project>

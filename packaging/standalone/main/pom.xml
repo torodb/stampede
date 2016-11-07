@@ -171,9 +171,9 @@
     <profiles>
         <profile>
             <id>assembler</id>
-			<properties>
-			  <profile.assembler>true</profile.assembler>
-			</properties>
+            <properties>
+              <profile.assembler>true</profile.assembler>
+            </properties>
             <build>
                 <plugins>
                     <plugin>

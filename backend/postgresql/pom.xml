@@ -1,30 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
 
-	<parent>
-		<groupId>com.torodb</groupId>
-		<artifactId>backend-parent</artifactId>
-		<version>0.50.0-SNAPSHOT</version>
-	</parent>
+    <parent>
+        <groupId>com.torodb</groupId>
+        <artifactId>backend-parent</artifactId>
+        <version>0.50.0-SNAPSHOT</version>
+    </parent>
 
-	<artifactId>backend-postgresql</artifactId>
-	<name>ToroDB-poc: Backend PostgreSQL</name>
-	<packaging>jar</packaging>
-	<dependencies>
-		<dependency>
-			<groupId>org.apache.logging.log4j</groupId>
-			<artifactId>log4j-api</artifactId>
-		</dependency>
+    <artifactId>backend-postgresql</artifactId>
+    <name>ToroDB-poc: Backend PostgreSQL</name>
+    <packaging>jar</packaging>
+    <dependencies>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-api</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.jooq</groupId>
             <artifactId>jooq</artifactId>
         </dependency>
-		<dependency>
-			<groupId>com.google.code.findbugs</groupId>
-			<artifactId>annotations</artifactId>
-		</dependency>
+        <dependency>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>annotations</artifactId>
+        </dependency>
         <dependency>
             <groupId>com.torodb.kvdocument</groupId>
             <artifactId>kvdocument-core</artifactId>
@@ -51,9 +51,9 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
-        	<groupId>com.torodb</groupId>
-        	<artifactId>metrics</artifactId>
-        	<version>${project.version}</version>
+            <groupId>com.torodb</groupId>
+            <artifactId>metrics</artifactId>
+            <version>${project.version}</version>
         </dependency>
         
         <dependency>
@@ -61,10 +61,10 @@
             <artifactId>junit</artifactId>
             <scope>test</scope>
         </dependency>
-	 <dependency>
-	  <groupId>com.google.inject.extensions</groupId>
-	  <artifactId>guice-assistedinject</artifactId>
-	 </dependency>
-	</dependencies>
-	<description>PostgreSQL implementation of a ToroDB backend.</description>
+     <dependency>
+      <groupId>com.google.inject.extensions</groupId>
+      <artifactId>guice-assistedinject</artifactId>
+     </dependency>
+    </dependencies>
+    <description>PostgreSQL implementation of a ToroDB backend.</description>
 </project>
