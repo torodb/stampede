@@ -49,7 +49,7 @@ public class MongoClientHeartbeatNetworkHandler implements HeartbeatNetworkHandl
     public MongoClientHeartbeatNetworkHandler(MongoClientFactory mongoClientFactory,
             ConcurrentToolsFactory concurrentToolsFactory) {
         this.mongoClientFactory = mongoClientFactory;
-        executorService = concurrentToolsFactory.createExecutorServiceWithMaxThreads("topology-heartbeat", 1);
+        executorService = concurrentToolsFactory.createExecutorService("topology-network", true);
     }
 
     @Override

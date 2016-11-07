@@ -1,8 +1,9 @@
+<h1>Installation with Docker</h1>
 ToroDB Stampede can be tested in a Docker container in two different ways. First option is to download the containers from a repository, the second one is to launch with Maven Docker tasks (if source code was previously downloaded).
 
-# From Docker repository
+## From Docker repository
 
-## With docker image
+### With docker image
 
 If `.toropass` file is created the docker containers can be launched with the command below.
 
@@ -18,7 +19,7 @@ $ TORODB_BACKEND_PASSWORD="<torodb user's password>"
 $ docker run -ti 8kdata/torodb-stampede
 ```
 
-## With docker-compose
+### With docker-compose
 
 The docker compose file must be downloaded and executed.
 
@@ -28,9 +29,9 @@ $ wget http://todo
 $ docker-compose up
 ```
 
-# From source code
+## From source code
 
-## Linux/macOS
+### Linux/macOS
 
 The source code contains some Maven tasks that can build the right artifacts to execute ToroDB Stampede and its dependencies in Docker containers.
 

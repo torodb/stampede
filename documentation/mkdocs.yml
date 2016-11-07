@@ -8,7 +8,7 @@ pages:
     - 'Previous requirements': installation/previous-requirements.md
     - 'Installation with Docker': installation/docker.md
     - 'Installation with binaries': installation/binaries.md
-    - 'Installation with source code': installation/source-code.md
+    - 'Installation from source code': installation/source-code.md
     - 'Configuration': installation/configuration.md
   - 'How to use?': how-to-use.md
   - 'FAQ': faq.md

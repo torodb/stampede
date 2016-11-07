@@ -66,6 +66,11 @@ public class RetrierTopologySyncSourceProvider implements SyncSourceProvider {
         return delegate.getLastUsedSyncSource();
     }
 
+    @Override
+    public boolean shouldChangeSyncSource() {
+        return delegate.shouldChangeSyncSource();
+    }
+
     private final HostAndPort call(Callable<HostAndPort> callable) throws NoSyncSourceFoundException {
         try {
             return retrier.retry(callable, Hint.TIME_SENSIBLE);

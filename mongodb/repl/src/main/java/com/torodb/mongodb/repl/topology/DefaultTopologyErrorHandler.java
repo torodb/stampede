@@ -21,7 +21,6 @@
 package com.torodb.mongodb.repl.topology;
 
 import com.torodb.core.supervision.Supervisor;
-import com.torodb.core.supervision.SupervisorDecision;
 import javax.inject.Inject;
 import com.torodb.mongodb.repl.guice.MongoDbRepl;
 
@@ -38,13 +37,11 @@ public class DefaultTopologyErrorHandler implements TopologyErrorHandler {
 
     @Override
     public boolean sendHeartbeatError(Throwable t) {
-        SupervisorDecision decision = replSupervisor.onError(this, t);
-        return decision == SupervisorDecision.IGNORE;
+        return true;
     }
 
     @Override
     public boolean reciveHeartbeatError(Throwable t) {
-        SupervisorDecision decision = replSupervisor.onError(this, t);
-        return decision == SupervisorDecision.IGNORE;
+        return true;
     }
 }

@@ -5,6 +5,7 @@ import com.eightkdata.mongowp.OpTime;
 import com.eightkdata.mongowp.exceptions.MongoException;
 import com.eightkdata.mongowp.exceptions.OplogOperationUnsupported;
 import com.eightkdata.mongowp.exceptions.OplogStartMissingException;
+import com.eightkdata.mongowp.server.api.MongoRuntimeException;
 import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
 import com.eightkdata.mongowp.server.api.pojos.MongoCursor;
 import com.eightkdata.mongowp.server.api.pojos.MongoCursor.Batch;
@@ -124,6 +125,13 @@ public class ContinuousOplogFetcher implements OplogFetcher {
                 } catch (StopReplicationException | RollbackReplicationException ex) { //a business error
                     throw new RetrierAbortException(ex); //do not try again
                 } catch (MongoServerException ex) { //TODO: Fix this violation on the abstraction!
+                    LOGGER.debug("Found an unwrapped MongodbServerException");
+                    state.discardReader(); //lets choose a new reader
+                    throw new RollbackException(ex); //rollback and hopefully use another member
+                } catch (MongoException | MongoRuntimeException ex) {
+                    LOGGER.warn("Catched an error while reading the remote "
+                            + "oplog: {}", ex.getLocalizedMessage());
+                    state.discardReader(); //lets choose a new reader
                     throw new RollbackException(ex); //rollback and hopefully use another member
                 }
             }, Hint.CRITICAL, Hint.TIME_SENSIBLE);
@@ -218,7 +226,7 @@ public class ContinuousOplogFetcher implements OplogFetcher {
         private void prepareToFetch() throws StopReplicationException, RollbackException, RollbackReplicationException {
             if (oplogReader == null) {
                 calculateOplogReader();
-            } else if (oplogReader.shouldChangeSyncSource()) {
+            } else if (syncSourceProvider.shouldChangeSyncSource()) {
                 LOGGER.info("A better sync source has been detected");
                 discardReader();
                 calculateOplogReader();
@@ -238,10 +246,12 @@ public class ContinuousOplogFetcher implements OplogFetcher {
         private OplogReader calculateOplogReader() throws StopReplicationException {
             if (oplogReader == null) {
                 try {
+                    LOGGER.debug("Looking for a sync source");
                     oplogReader = retrier.retry(() -> {
                         HostAndPort syncSource = syncSourceProvider.newSyncSource(lastFetchedOpTime);
                         return readerProvider.newReader(syncSource);
                     }, Hint.TIME_SENSIBLE, Hint.CRITICAL);
+                    LOGGER.info("Reading from {}", state.oplogReader.getSyncSource());
                 } catch (RetrierGiveUpException ex) {
                     throw new StopReplicationException("It was impossible find a reachable sync source", ex);
                 }
