@@ -29,12 +29,12 @@ import com.torodb.backend.driver.postgresql.PostgreSQLBackendConfiguration;
 import com.torodb.backend.postgresql.guice.PostgreSQLBackendModule;
 import com.torodb.packaging.config.model.backend.ConnectionPoolConfig;
 import com.torodb.packaging.config.model.backend.CursorConfig;
-import com.torodb.packaging.config.model.backend.postgres.Postgres;
+import com.torodb.packaging.config.model.backend.postgres.AbstractPostgres;
 
-public class BackendPostgresImplementationModule extends BackendImplementationModule<Postgres, PostgreSQLBackendConfiguration> {
+public class BackendPostgresImplementationModule extends BackendImplementationModule<AbstractPostgres, PostgreSQLBackendConfiguration> {
 
 	public BackendPostgresImplementationModule() {
-        super(Postgres.class, 
+        super(AbstractPostgres.class, 
                 PostgreSQLBackendConfiguration.class, 
                 PostgresSQLDbBackendConfigurationMapper.class, 
                 () -> new PostgreSQLBackendModule());
@@ -44,7 +44,7 @@ public class BackendPostgresImplementationModule extends BackendImplementationMo
     @ThreadSafe
     public static class PostgresSQLDbBackendConfigurationMapper extends BackendConfigurationMapper implements PostgreSQLBackendConfiguration {
         @Inject
-        public PostgresSQLDbBackendConfigurationMapper(CursorConfig cursorConfig, ConnectionPoolConfig connectionPoolConfig, Postgres postgres) {
+        public PostgresSQLDbBackendConfigurationMapper(CursorConfig cursorConfig, ConnectionPoolConfig connectionPoolConfig, AbstractPostgres postgres) {
             super(cursorConfig.getCursorTimeout(),
                     connectionPoolConfig.getConnectionPoolTimeout(),
                     connectionPoolConfig.getConnectionPoolSize(),

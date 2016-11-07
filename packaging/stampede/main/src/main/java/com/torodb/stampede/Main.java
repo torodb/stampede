@@ -43,14 +43,16 @@ import com.torodb.core.BuildProperties;
 import com.torodb.core.exceptions.SystemException;
 import com.torodb.packaging.DefaultBuildProperties;
 import com.torodb.packaging.config.model.backend.BackendPasswordConfig;
-import com.torodb.packaging.config.model.backend.derby.Derby;
-import com.torodb.packaging.config.model.backend.postgres.Postgres;
+import com.torodb.packaging.config.model.backend.derby.AbstractDerby;
+import com.torodb.packaging.config.model.backend.postgres.AbstractPostgres;
+import com.torodb.packaging.config.model.protocol.mongo.AbstractReplication;
 import com.torodb.packaging.config.model.protocol.mongo.MongoPasswordConfig;
-import com.torodb.packaging.config.model.protocol.mongo.Replication;
 import com.torodb.packaging.config.util.ConfigUtils;
 import com.torodb.packaging.config.visitor.BackendImplementationVisitor;
 import com.torodb.packaging.util.Log4jUtils;
 import com.torodb.stampede.config.model.Config;
+
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * ToroDB's entry point
@@ -115,12 +117,12 @@ public class Main {
 
             config.getBackend().getBackendImplementation().accept(new BackendImplementationVisitor() {
                 @Override
-                public void visit(Derby value) {
+                public void visit(AbstractDerby value) {
                     parseToropassFile(value);
                 }
                 
                 @Override
-                public void visit(Postgres value) {
+                public void visit(AbstractPostgres value) {
                     parseToropassFile(value);
                 }
                 
@@ -132,7 +134,7 @@ public class Main {
                     }
                 }
             });
-            Replication replication = config.getReplication();
+            AbstractReplication replication = config.getReplication();
             if (replication.getAuth().getUser() != null) {
                 HostAndPort syncSource = HostAndPort.fromString(replication.getSyncSource())
                         .withDefaultPort(27017);
@@ -175,8 +177,8 @@ public class Main {
                 });
             }
             
-            if (config.getBackend().isLike(Postgres.class)) {
-                Postgres postgres = config.getBackend().as(Postgres.class);
+            if (config.getBackend().isLike(AbstractPostgres.class)) {
+                AbstractPostgres postgres = config.getBackend().as(AbstractPostgres.class);
     
                 if (cliConfig.isAskForPassword()) {
                     console.print("Type database user " + postgres.getUser() + "'s password:");
@@ -197,6 +199,8 @@ public class Main {
                 
                 Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler() {
                     @Override
+                    @SuppressFBWarnings(value = "DM_EXIT",
+                    justification = "Since is really hard to stop cleanly all threads when an OOME is thrown we must exit to avoid no more action is performed that could lead to an unespected state")
                     public void uncaughtException(Thread t, Throwable e) {
                         if (e instanceof OutOfMemoryError) {
                             try {

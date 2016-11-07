@@ -23,16 +23,16 @@ package com.torodb.packaging.config.validation;
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 
-import com.torodb.packaging.config.model.backend.derby.Derby;
+import com.torodb.packaging.config.model.backend.derby.AbstractDerby;
 
-public class InMemoryOnlyIfEmbeddedValidator implements ConstraintValidator<InMemoryOnlyIfEmbedded, Derby> {
+public class InMemoryOnlyIfEmbeddedValidator implements ConstraintValidator<InMemoryOnlyIfEmbedded, AbstractDerby> {
 	
 	@Override
 	public void initialize(InMemoryOnlyIfEmbedded constraintAnnotation) {
 	}
 
 	@Override
-	public boolean isValid(Derby value, ConstraintValidatorContext context) {
+	public boolean isValid(AbstractDerby value, ConstraintValidatorContext context) {
 		if (value != null && value.getInMemory() != null && value.getEmbedded() != null) {
 		    return  !value.getInMemory() || value.getEmbedded();
 		}

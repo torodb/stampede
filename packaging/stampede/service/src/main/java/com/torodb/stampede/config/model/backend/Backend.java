@@ -30,6 +30,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.collect.ImmutableMap;
 import com.torodb.packaging.config.annotation.Description;
+import com.torodb.packaging.config.model.backend.AbstractBackend;
 import com.torodb.packaging.config.model.backend.BackendImplementation;
 import com.torodb.stampede.config.jackson.BackendDeserializer;
 import com.torodb.stampede.config.jackson.BackendSerializer;
@@ -37,7 +38,7 @@ import com.torodb.stampede.config.model.backend.postgres.Postgres;
 
 @JsonSerialize(using=BackendSerializer.class)
 @JsonDeserialize(using=BackendDeserializer.class)
-public class Backend extends com.torodb.packaging.config.model.backend.Backend {
+public class Backend extends AbstractBackend {
     public static final ImmutableMap<String, Class<? extends BackendImplementation>> BACKEND_CLASSES =
             ImmutableMap.<String, Class<? extends BackendImplementation>>builder()
             .put("postgres", Postgres.class)

@@ -46,7 +46,6 @@ import com.torodb.backend.meta.TorodbSchema;
 import com.torodb.core.backend.IdentifierConstraints;
 import com.torodb.core.supervision.Supervisor;
 import com.torodb.core.supervision.SupervisorDecision;
-import com.torodb.packaging.config.model.protocol.mongo.Replication;
 import com.torodb.packaging.config.util.ConfigUtils;
 import com.torodb.packaging.util.Log4jUtils;
 import com.torodb.standalone.ToroDbStandaloneTestUtil;
@@ -54,6 +53,7 @@ import com.torodb.standalone.ToroDbStandaloneTestUtil.TestService;
 import com.torodb.standalone.config.model.Config;
 import com.torodb.standalone.config.model.backend.derby.Derby;
 import com.torodb.standalone.config.model.backend.postgres.Postgres;
+import com.torodb.standalone.config.model.protocol.mongo.Replication;
 
 public abstract class AbstractBackendRunnerClassRule implements TestRule, Supervisor {
 

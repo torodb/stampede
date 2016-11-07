@@ -52,12 +52,12 @@ import com.google.common.net.HostAndPort;
 import com.torodb.core.exceptions.SystemException;
 import com.torodb.packaging.config.model.protocol.mongo.Auth;
 import com.torodb.packaging.config.model.protocol.mongo.AuthMode;
-import com.torodb.packaging.config.model.protocol.mongo.Replication;
+import com.torodb.packaging.config.model.protocol.mongo.AbstractReplication;
 import com.torodb.packaging.config.model.protocol.mongo.SSL;
 
 public class MongoClientConfigurationFactory {
     
-    public static MongoClientConfiguration getMongoClientConfiguration(Replication replication) {
+    public static MongoClientConfiguration getMongoClientConfiguration(AbstractReplication replication) {
         HostAndPort syncSource = HostAndPort.fromString(replication.getSyncSource())
                 .withDefaultPort(27017);
         

@@ -29,13 +29,13 @@ import com.torodb.backend.derby.guice.DerbyBackendModule;
 import com.torodb.backend.driver.derby.DerbyDbBackendConfiguration;
 import com.torodb.packaging.config.model.backend.ConnectionPoolConfig;
 import com.torodb.packaging.config.model.backend.CursorConfig;
-import com.torodb.packaging.config.model.backend.derby.Derby;
+import com.torodb.packaging.config.model.backend.derby.AbstractDerby;
 
-public class BackendDerbyImplementationModule extends BackendImplementationModule<Derby, DerbyDbBackendConfiguration> {
+public class BackendDerbyImplementationModule extends BackendImplementationModule<AbstractDerby, DerbyDbBackendConfiguration> {
 	
 	public BackendDerbyImplementationModule() {
         super(
-                Derby.class, 
+                AbstractDerby.class, 
                 DerbyDbBackendConfiguration.class, 
                 DerbyBackendConfigurationMapper.class,
                 () -> new DerbyBackendModule());
@@ -48,7 +48,7 @@ public class BackendDerbyImplementationModule extends BackendImplementationModul
         private final boolean inMemory;
         
         @Inject
-        public DerbyBackendConfigurationMapper(CursorConfig cursorConfig, ConnectionPoolConfig connectionPoolConfig, Derby derby) {
+        public DerbyBackendConfigurationMapper(CursorConfig cursorConfig, ConnectionPoolConfig connectionPoolConfig, AbstractDerby derby) {
             super(cursorConfig.getCursorTimeout(),
                     connectionPoolConfig.getConnectionPoolTimeout(),
                     connectionPoolConfig.getConnectionPoolSize(),

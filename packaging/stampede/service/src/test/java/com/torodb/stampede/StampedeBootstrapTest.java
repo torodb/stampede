@@ -80,7 +80,7 @@ public class StampedeBootstrapTest {
         }
     }
     
-    private class Derby extends com.torodb.packaging.config.model.backend.derby.Derby {
+    private class Derby extends com.torodb.packaging.config.model.backend.derby.AbstractDerby {
         public Derby() {
             super(
                     "localhost", 

@@ -18,13 +18,13 @@
  *     
  */
 
-package com.torodb.packaging.config.model.backend.postgres;
+package com.torodb.packaging.config.model.backend.derby;
 
 import com.torodb.packaging.config.model.backend.BackendImplementation;
 import com.torodb.packaging.config.model.backend.BackendPasswordConfig;
 import com.torodb.packaging.config.visitor.BackendImplementationVisitor;
 
-public abstract class Postgres implements BackendImplementation, BackendPasswordConfig {
+public abstract class AbstractDerby implements BackendImplementation, BackendPasswordConfig {
 	private String host;
 	private Integer port;
 	private String database;
@@ -33,9 +33,11 @@ public abstract class Postgres implements BackendImplementation, BackendPassword
 	private String toropassFile;
 	private String applicationName;
 	private Boolean includeForeignKeys;
+	private Boolean embedded;
+	private Boolean inMemory;
 	
-	protected Postgres(String host, Integer port, String database, String user, String password, String toropassFile,
-            String applicationName, Boolean includeForeignKeys) {
+	protected AbstractDerby(String host, Integer port, String database, String user, String password, String toropassFile,
+            String applicationName, Boolean includeForeignKeys, Boolean embedded, Boolean inMemory) {
         super();
         this.host = host;
         this.port = port;
@@ -45,6 +47,8 @@ public abstract class Postgres implements BackendImplementation, BackendPassword
         this.toropassFile = toropassFile;
         this.applicationName = applicationName;
         this.includeForeignKeys = includeForeignKeys;
+        this.embedded = embedded;
+        this.inMemory = inMemory;
     }
 	
     public String getHost() {
@@ -59,6 +63,12 @@ public abstract class Postgres implements BackendImplementation, BackendPassword
 	public void setPort(Integer port) {
 		this.port = port;
 	}
+    public String getDatabase() {
+        return database;
+    }
+    public void setDatabase(String database) {
+        this.database = database;
+    }
 	public String getUser() {
 		return user;
 	}
@@ -73,18 +83,12 @@ public abstract class Postgres implements BackendImplementation, BackendPassword
 	public void setPassword(String password) {
 		this.password = password;
 	}
-	@Override
+    @Override
 	public String getToropassFile() {
 		return toropassFile;
 	}
 	public void setToropassFile(String toropassFile) {
 		this.toropassFile = toropassFile;
-	}
-	public String getDatabase() {
-		return database;
-	}
-	public void setDatabase(String database) {
-		this.database = database;
 	}
 	public String getApplicationName() {
 		return applicationName;
@@ -97,6 +101,18 @@ public abstract class Postgres implements BackendImplementation, BackendPassword
     }
     public Boolean getIncludeForeignKeys() {
         return includeForeignKeys;
+    }
+    public void setEmbedded(Boolean embedded) {
+        this.embedded = embedded;
+    }
+    public Boolean getEmbedded() {
+        return embedded;
+    }
+    public void setInMemory(Boolean inMemory) {
+        this.inMemory = inMemory;
+    }
+    public Boolean getInMemory() {
+        return inMemory;
     }
 	
 	@Override

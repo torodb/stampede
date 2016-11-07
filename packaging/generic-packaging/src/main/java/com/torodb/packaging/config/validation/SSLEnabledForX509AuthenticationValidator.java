@@ -26,19 +26,19 @@ import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 
 import com.torodb.packaging.config.model.protocol.mongo.AuthMode;
-import com.torodb.packaging.config.model.protocol.mongo.Replication;
+import com.torodb.packaging.config.model.protocol.mongo.AbstractReplication;
 import com.torodb.packaging.config.model.protocol.mongo.SSL;
 
-public class SSLEnabledForX509AuthenticationValidator implements ConstraintValidator<SSLEnabledForX509Authentication, List<Replication>> {
+public class SSLEnabledForX509AuthenticationValidator implements ConstraintValidator<SSLEnabledForX509Authentication, List<AbstractReplication>> {
 	
 	@Override
 	public void initialize(SSLEnabledForX509Authentication constraintAnnotation) {
 	}
 
 	@Override
-	public boolean isValid(List<Replication> value, ConstraintValidatorContext context) {
+	public boolean isValid(List<AbstractReplication> value, ConstraintValidatorContext context) {
 		if (value != null) {
-			for (Replication replication : value) {
+			for (AbstractReplication replication : value) {
 				if (replication.getAuth().getMode() == AuthMode.x509) {
 				    SSL ssl = replication.getSsl();
 	                if (!ssl.getEnabled() ||
