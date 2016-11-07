@@ -40,13 +40,6 @@ public interface OplogReader extends Closeable {
     public OplogOperation getFirstOp() throws OplogStartMissingException, OplogOperationUnsupported, MongoException;
 
     /**
-     *
-     * @return true iff it is considered that is better to change the sync
-     *         source we are using
-     */
-    public boolean shouldChangeSyncSource();
-
-    /**
      * Close the reader and all resources associated with him.
      */
     @Override

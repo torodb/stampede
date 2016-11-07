@@ -19,7 +19,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.net.HostAndPort;
 import com.torodb.mongodb.repl.OplogReader;
 import java.util.EnumSet;
-import java.util.Iterator;
 import java.util.function.Consumer;
 
 import static com.eightkdata.mongowp.bson.utils.DefaultBsonValues.*;
@@ -91,11 +90,6 @@ public abstract class AbstractMongoOplogReader implements OplogReader {
                 newDocument("$and", conditions.build()),
                 flags,
                 NATURAL_ORDER_SORT);
-    }
-
-    @Override
-    public boolean shouldChangeSyncSource() {
-        return false;
     }
 
     public MongoCursor<OplogOperation> query(BsonDocument query, EnumSet<QueryOption> flags, BsonDocument sortBy) throws MongoException {

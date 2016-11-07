@@ -237,5 +237,10 @@ public class ContinuousOplogFetcherTest {
         public Optional<HostAndPort> getLastUsedSyncSource() {
             return Optional.of(hostAndPort);
         }
+
+        @Override
+        public boolean shouldChangeSyncSource() {
+            return false;
+        }
     }
 }

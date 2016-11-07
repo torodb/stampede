@@ -105,11 +105,6 @@ public class StaticOplogReader implements OplogReader {
     }
 
     @Override
-    public boolean shouldChangeSyncSource() {
-        return false;
-    }
-
-    @Override
     public void close() {
         closed = true;
     }

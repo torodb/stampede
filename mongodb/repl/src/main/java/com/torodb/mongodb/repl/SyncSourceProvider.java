@@ -30,4 +30,6 @@ public interface SyncSourceProvider {
 
     public Optional<HostAndPort> getLastUsedSyncSource();
 
+    public boolean shouldChangeSyncSource();
+
 }
