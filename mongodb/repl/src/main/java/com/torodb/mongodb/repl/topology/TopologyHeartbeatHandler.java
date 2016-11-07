@@ -113,6 +113,7 @@ public class TopologyHeartbeatHandler extends IdleTorodbService {
         LOGGER.debug("{} has been shutted down", serviceName());
     }
 
+    @GuardedBy("any")
     private boolean checkHeartbeatStarted(Status<?> status, Throwable t) {
         if (t == null) {
             if (status.isOk()) {
@@ -171,7 +172,8 @@ public class TopologyHeartbeatHandler extends IdleTorodbService {
         );
     }
 
-    private void checkRemoteReplSetConfig(ReplicaSetConfig remoteConfig) throws InconsistentReplicaSetNamesException {
+    private void checkRemoteReplSetConfig(ReplicaSetConfig remoteConfig)
+            throws InconsistentReplicaSetNamesException {
         //TODO(gortiz): DRY. Implement a better way to do that once the config
         //is validated
         String remoteReplSetName = remoteConfig.getReplSetName();
@@ -188,9 +190,13 @@ public class TopologyHeartbeatHandler extends IdleTorodbService {
         LOGGER.debug("Scheduling new heartbeats to nodes on config {}",
                 coord.getRsConfig().getConfigVersion());
         coord.getRsConfig().getMembers().stream()
-                .forEach(member -> scheduleHeartbeatToTarget(member.getHostAndPort(), Duration.ZERO));
+                .forEach(member -> scheduleHeartbeatToTarget(
+                        member.getHostAndPort(), 
+                        Duration.ZERO
+                ));
     }
 
+    @GuardedBy("any")
     private CompletableFuture<?> scheduleHeartbeatToTarget(final HostAndPort target, Duration delay) {
         LOGGER.trace("Scheduling heartbeat to {} in {}", target, delay);
 
@@ -210,12 +216,7 @@ public class TopologyHeartbeatHandler extends IdleTorodbService {
                 clock.instant(), replSetName, target);
 
         CompletableFuture<RemoteCommandResponse<ReplSetHeartbeatReply>> hbHandle = networkHandler
-                        .sendHeartbeat(request)
-                        .whenComplete((response, t) -> {
-                            if (t != null) {
-                                onRequestError(t, target);
-                            }
-                        });
+                        .sendHeartbeat(request);
 
         CompletableFuture<?> executeResponseFuture = executor.onCurrentVersion()
                 .andThenAcceptAsync(
@@ -225,38 +226,37 @@ public class TopologyHeartbeatHandler extends IdleTorodbService {
                 );
 
         executeResponseFuture.exceptionally(t -> {
-            Throwable cause = CompletionExceptions.getFirstNonCompletionException(t);
-            if (cause instanceof CancellationException) {
-                LOGGER.trace("Heartbeat handling to {} has been cancelled "
-                        + "before execution: {}", target, cause.getMessage());
-            } else {
-                LOGGER.debug("Error while handling a heartbeat response from "
-                        + target, t);
-                if (errorHandler.reciveHeartbeatError(t)) {
-                    LOGGER.trace("Rescheduling a new heartbeat to {} on {}",
-                            target, POST_ERROR_HB_DELAY);
-                    scheduleHeartbeatToTarget(target, POST_ERROR_HB_DELAY);
-                } else {
-                    stopAsync();
-                }
-            }
+            onNetworkError(t, target);
             return null;
         });
     }
 
     /**
-     * Called when a heartbeat request finishes exceptionally.
+     * Called when a heartbeat request fails on the network handler.
+     *
+     * It is important to not call this method more than once per request,
+     * otherwise more than one request can be scheduled to the target.
      * @param t
      * @param target
      */
-    private void onRequestError(Throwable t, HostAndPort target) {
-        LOGGER.trace("Error while sending a heartbeat to "
-                + target, t);
-        if (errorHandler.sendHeartbeatError(t)) {
-            LOGGER.trace("Rescheduling a new heartbeat to {} on {}", target, POST_ERROR_HB_DELAY);
-            scheduleHeartbeatToTarget(target, POST_ERROR_HB_DELAY);
+    @GuardedBy("any")
+    private void onNetworkError(Throwable t, HostAndPort target) {
+        Throwable cause = CompletionExceptions.getFirstNonCompletionException(t);
+        if (cause instanceof CancellationException) {
+            LOGGER.trace("Heartbeat handling to {} has been cancelled "
+                    + "before execution: {}", target, cause.getMessage());
         } else {
-            stopAsync();
+            LOGGER.debug("Error while on the heartbeat request sent to"
+                    + target, t);
+            if (errorHandler.reciveHeartbeatError(t)) {
+                LOGGER.trace("Rescheduling a new heartbeat to {} on {}",
+                        target, POST_ERROR_HB_DELAY);
+                scheduleHeartbeatToTarget(target, POST_ERROR_HB_DELAY);
+            } else {
+                LOGGER.trace("Aborting execution as requested by the topology "
+                        + "supervisor");
+                stopAsync();
+            }
         }
     }
 
@@ -318,6 +318,7 @@ public class TopologyHeartbeatHandler extends IdleTorodbService {
         }
     }
 
+    @GuardedBy("executor")
     private void updateConfig(TopologyCoordinator coord, ReplicaSetConfig config) {
         validateConfig(coord, config);
         coord.updateConfig(config, clock.instant());
