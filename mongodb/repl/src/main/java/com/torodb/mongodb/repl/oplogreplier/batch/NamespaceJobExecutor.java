@@ -146,10 +146,15 @@ public class NamespaceJobExecutor {
 
     private void deleteDocs(NamespaceJob job, WriteMongodTransaction transaction,
             Map<AnalyzedOp, Integer> fetchDids) {
+        if (fetchDids.isEmpty()) {
+            return;
+        }
+        
         Stream<Integer> didsToDelete = job.getJobs().stream()
                 .filter(AnalyzedOp::deletes)
-                .map(op -> fetchDids.get(op));
-
+                .map(op -> fetchDids.get(op))
+                .filter(did -> did != null);
+        
         transaction.getTorodTransaction().delete(job.getDatabase(), job.getCollection(),
                 new IteratorCursor<>(didsToDelete.iterator()));
     }
