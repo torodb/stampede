@@ -249,7 +249,7 @@ class ReplSyncFetcher extends RunnableTorodbService {
     }
 
     private void infrequentChecks(OplogReader reader) throws RestartFetchException {
-        if (reader.shouldChangeSyncSource()) {
+        if (syncSourceProvider.shouldChangeSyncSource()) {
             LOGGER.info("A better sync source has been detected");
             throw new RestartFetchException();
         }

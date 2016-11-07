@@ -22,11 +22,16 @@ package com.torodb.mongodb.repl.topology;
 
 import com.eightkdata.mongowp.ErrorCode;
 import com.eightkdata.mongowp.Status;
+import com.eightkdata.mongowp.client.core.MongoConnection.ErroneousRemoteCommandResponse;
+import com.eightkdata.mongowp.client.core.MongoConnection.FromExceptionRemoteCommandRequest;
 import com.eightkdata.mongowp.client.core.MongoConnection.RemoteCommandResponse;
+import com.eightkdata.mongowp.client.core.UnreachableMongoServerException;
 import com.eightkdata.mongowp.exceptions.InconsistentReplicaSetNamesException;
+import com.eightkdata.mongowp.exceptions.MongoException;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.internal.ReplSetHeartbeatCommand.ReplSetHeartbeatArgument;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.commands.internal.ReplSetHeartbeatReply;
 import com.eightkdata.mongowp.mongoserver.api.safe.library.v3m0.pojos.ReplicaSetConfig;
+import com.eightkdata.mongowp.server.api.MongoRuntimeException;
 import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.google.common.net.HostAndPort;
 import com.torodb.common.util.CompletionExceptions;
@@ -38,6 +43,7 @@ import java.time.Instant;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadFactory;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.GuardedBy;
 import javax.inject.Inject;
@@ -54,7 +60,6 @@ import org.jooq.lambda.UncheckedException;
 @Singleton
 public class TopologyHeartbeatHandler extends IdleTorodbService {
     private static final Logger LOGGER = LogManager.getLogger(TopologyHeartbeatHandler.class);
-    private static final Duration POST_ERROR_HB_DELAY = Duration.ofSeconds(2);
 
     private final HostAndPort seed;
     private final Clock clock;
@@ -113,6 +118,7 @@ public class TopologyHeartbeatHandler extends IdleTorodbService {
         LOGGER.debug("{} has been shutted down", serviceName());
     }
 
+    @GuardedBy("any")
     private boolean checkHeartbeatStarted(Status<?> status, Throwable t) {
         if (t == null) {
             if (status.isOk()) {
@@ -171,7 +177,8 @@ public class TopologyHeartbeatHandler extends IdleTorodbService {
         );
     }
 
-    private void checkRemoteReplSetConfig(ReplicaSetConfig remoteConfig) throws InconsistentReplicaSetNamesException {
+    private void checkRemoteReplSetConfig(ReplicaSetConfig remoteConfig)
+            throws InconsistentReplicaSetNamesException {
         //TODO(gortiz): DRY. Implement a better way to do that once the config
         //is validated
         String remoteReplSetName = remoteConfig.getReplSetName();
@@ -188,9 +195,13 @@ public class TopologyHeartbeatHandler extends IdleTorodbService {
         LOGGER.debug("Scheduling new heartbeats to nodes on config {}",
                 coord.getRsConfig().getConfigVersion());
         coord.getRsConfig().getMembers().stream()
-                .forEach(member -> scheduleHeartbeatToTarget(member.getHostAndPort(), Duration.ZERO));
+                .forEach(member -> scheduleHeartbeatToTarget(
+                        member.getHostAndPort(), 
+                        Duration.ZERO
+                ));
     }
 
+    @GuardedBy("any")
     private CompletableFuture<?> scheduleHeartbeatToTarget(final HostAndPort target, Duration delay) {
         LOGGER.trace("Scheduling heartbeat to {} in {}", target, delay);
 
@@ -206,58 +217,82 @@ public class TopologyHeartbeatHandler extends IdleTorodbService {
             return ;
         }
 
-        RemoteCommandRequest<ReplSetHeartbeatArgument> request = coord.prepareHeartbeatRequest(
-                clock.instant(), replSetName, target);
+        Instant start = clock.instant();
+        RemoteCommandRequest<ReplSetHeartbeatArgument> request = coord
+                .prepareHeartbeatRequest(start, replSetName, target);
 
-        CompletableFuture<RemoteCommandResponse<ReplSetHeartbeatReply>> hbHandle = networkHandler
-                        .sendHeartbeat(request)
-                        .whenComplete((response, t) -> {
-                            if (t != null) {
-                                onRequestError(t, target);
-                            }
-                        });
+        CompletableFuture<RemoteCommandResponse<ReplSetHeartbeatReply>> hbHandle
+                = networkHandler.sendHeartbeat(request)
+                .exceptionally(t -> onNetworkError(t, target, start));
 
-        CompletableFuture<?> executeResponseFuture = executor.onCurrentVersion()
+        executor.onCurrentVersion()
                 .andThenAcceptAsync(
                         hbHandle,
                         (coord2, response) -> handleHeartbeatResponse(
                                 coord2, target, request.getCmdObj(), response)
                 );
-
-        executeResponseFuture.exceptionally(t -> {
-            Throwable cause = CompletionExceptions.getFirstNonCompletionException(t);
-            if (cause instanceof CancellationException) {
-                LOGGER.trace("Heartbeat handling to {} has been cancelled "
-                        + "before execution: {}", target, cause.getMessage());
-            } else {
-                LOGGER.debug("Error while handling a heartbeat response from "
-                        + target, t);
-                if (errorHandler.reciveHeartbeatError(t)) {
-                    LOGGER.trace("Rescheduling a new heartbeat to {} on {}",
-                            target, POST_ERROR_HB_DELAY);
-                    scheduleHeartbeatToTarget(target, POST_ERROR_HB_DELAY);
-                } else {
-                    stopAsync();
-                }
-            }
-            return null;
-        });
     }
 
     /**
-     * Called when a heartbeat request finishes exceptionally.
+     * Called when a heartbeat request fails on the network handler.
+     *
+     * It is important to not call this method more than once per request,
+     * otherwise more than one request can be scheduled to the target.
      * @param t
      * @param target
      */
-    private void onRequestError(Throwable t, HostAndPort target) {
-        LOGGER.trace("Error while sending a heartbeat to "
-                + target, t);
-        if (errorHandler.sendHeartbeatError(t)) {
-            LOGGER.trace("Rescheduling a new heartbeat to {} on {}", target, POST_ERROR_HB_DELAY);
-            scheduleHeartbeatToTarget(target, POST_ERROR_HB_DELAY);
-        } else {
-            stopAsync();
+    @GuardedBy("any")
+    private RemoteCommandResponse<ReplSetHeartbeatReply> onNetworkError(
+            Throwable t, HostAndPort target, Instant start) {
+        Throwable cause = CompletionExceptions.getFirstNonCompletionException(t);
+        while (cause.getCause() != cause && cause instanceof UncheckedException) {
+            cause = cause.getCause();
         }
+        if (cause instanceof CancellationException) {
+            LOGGER.trace("Heartbeat handling to {} has been cancelled "
+                    + "before execution: {}", target, cause.getMessage());
+            throw (CancellationException) cause;
+        } else {
+            LOGGER.debug("Error while on the heartbeat request sent to "
+                    + target, t);
+            if (errorHandler.reciveHeartbeatError(cause)) {
+                RemoteCommandResponse<ReplSetHeartbeatReply> response =
+                        handleHeartbeatError(cause, start);
+                LOGGER.trace("Handled with a response with error {}",
+                        response.getErrorCode());
+                return response;
+            } else {
+                String msg = "Aborting execution as requested by the topology "
+                        + "supervisor";
+                LOGGER.trace(msg);
+                stopAsync();
+                throw new CancellationException(msg);
+            }
+        }
+    }
+
+    @Nonnull
+    private RemoteCommandResponse<ReplSetHeartbeatReply> handleHeartbeatError(
+            Throwable t, Instant start) {
+        Duration d = Duration.between(clock.instant(), start);
+        ErrorCode errorCode;
+        if (t instanceof MongoException) {
+            return new FromExceptionRemoteCommandRequest((MongoException) t, d);
+        } else if (t instanceof UnreachableMongoServerException) {
+            errorCode = ErrorCode.HOST_UNREACHABLE;
+        } else {
+            if (!(t instanceof MongoRuntimeException)
+                    && !(t instanceof UnreachableMongoServerException)) {
+                LOGGER.warn("Unexpected exception {} catched by the topology "
+                        + "heartbeat handler", t.getClass().getSimpleName());
+            }
+            errorCode = ErrorCode.UNKNOWN_ERROR;
+        }
+        return new ErroneousRemoteCommandResponse<>(
+                errorCode,
+                t.getLocalizedMessage(),
+                d
+        );
     }
 
     @GuardedBy("executor")
@@ -272,9 +307,9 @@ public class TopologyHeartbeatHandler extends IdleTorodbService {
         if (response.isOk()) {
             networkTime = response.getNetworkTime();
         } else {
-            LOGGER.debug("Error in heartbeat request to {}; {}", target, response.asStatus());
+            LOGGER.warn("Error in heartbeat request to {}; {}", target, response.asStatus());
             if (response.getBson() != null) {
-                LOGGER.info("heartbeat response: ", response.getBson());
+                LOGGER.debug("heartbeat response: ", response.getBson());
             }
 
             if (isUnauthorized) {
@@ -318,6 +353,7 @@ public class TopologyHeartbeatHandler extends IdleTorodbService {
         }
     }
 
+    @GuardedBy("executor")
     private void updateConfig(TopologyCoordinator coord, ReplicaSetConfig config) {
         validateConfig(coord, config);
         coord.updateConfig(config, clock.instant());

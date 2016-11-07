@@ -27,11 +27,11 @@ import akka.dispatch.ExecutionContexts;
 import akka.japi.Pair;
 import akka.stream.*;
 import akka.stream.javadsl.*;
-import akka.stream.stage.*;
 import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
 import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
+import com.torodb.concurrent.akka.BatchFlow;
 import com.torodb.core.Shutdowner;
 import com.torodb.core.concurrent.ConcurrentToolsFactory;
 import com.torodb.mongodb.repl.OplogManager;
@@ -293,134 +293,5 @@ public class DefaultOplogApplier implements OplogApplier {
 
     }
 
-    private static class BatchFlow<E, A> extends GraphStage<FlowShape<E, A>> {
-
-        public final Inlet<E> in = Inlet.create("in");
-        public final Outlet<A> out = Outlet.create("out");
-        private final int maxBatchSize;
-        private final FiniteDuration period;
-        private final Predicate<E> predicate;
-        private final ToIntFunction<E> costFunction;
-        private final Supplier<A> zero;
-        private final BiFunction<A, E, A> aggregate;
-        private final FlowShape<E,A> shape = FlowShape.of(in, out);
-        private static final String MY_TIMER_KEY = "key";
-
-        public BatchFlow(int maxBatchSize, FiniteDuration period, Predicate<E> predicate,
-                ToIntFunction<E> costFunction, Supplier<A> zero, BiFunction<A, E, A> aggregate) {
-            this.maxBatchSize = maxBatchSize;
-            this.period = period;
-            this.predicate = predicate;
-            this.costFunction = costFunction;
-            this.zero = zero;
-            this.aggregate = aggregate;
-        }
-
-        @Override
-        public FlowShape<E, A> shape() {
-            return shape;
-        }
-
-        @Override
-        public GraphStageLogic createLogic(Attributes inheritedAtts) {
-            return new TimerGraphStageLogic(shape) {
-                private A acum = zero.get();
-                /**
-                 * True iff buff is not empty AND (timer fired OR group is full OR predicate is true)
-                 */
-                private boolean groupClosed = false;
-                private boolean groupEmitted = false;
-                private boolean finished = false;
-                private int iteration = 0;
-                {
-                    setHandler(in, new AbstractInHandler() {
-                        @Override
-                        public void onPush() throws Exception {
-                            if (!groupClosed) {
-                                nextElement(grab(in));
-                            }
-                        }
-
-                        @Override
-                        public void onUpstreamFinish() throws Exception {
-                            finished = true;
-                            if (groupEmitted) {
-                                completeStage();
-                            } else {
-                                closeGroup();
-                            }
-                        }
-                    });
-
-                    setHandler(out, new AbstractOutHandler() {
-                        @Override
-                        public void onPull() throws Exception {
-                            if (groupClosed) {
-                                emitGroup();
-                            }
-                        }
-                    });
-                }
-
-                @Override
-                public void preStart() {
-                    schedulePeriodically(MY_TIMER_KEY, period);
-                    pull(in);
-                }
-
-                @Override
-                public void onTimer(Object timerKey) {
-                    assert timerKey.equals(MY_TIMER_KEY);
-                    if (iteration > 0) {
-                        closeGroup();
-                    }
-                }
-
-                private void nextElement(E elem) {
-                    groupEmitted = false;
-                    acum = aggregate.apply(acum, elem);
-                    iteration += costFunction.applyAsInt(elem);
-                    if (iteration >= maxBatchSize || predicate.test(elem)) {
-                        schedulePeriodically(MY_TIMER_KEY, period);
-                        closeGroup();
-                    } else {
-                        pull(in);
-                    }
-                }
-
-                private void closeGroup() {
-                    groupClosed = true;
-                    if (isAvailable(out)) {
-                        emitGroup();
-                    }
-                }
-
-                private void emitGroup() {
-                    groupEmitted = true;
-                    push(out, acum);
-                    acum = null;
-                    if (!finished) {
-                        startNewGroup();
-                    } else {
-                        completeStage();
-                    }
-                }
-
-                private void startNewGroup() {
-                    acum = zero.get();
-                    iteration = 0;
-                    groupClosed = false;
-                    if (isAvailable(in)) {
-                        nextElement(grab(in));
-                    } else {
-                        if (!hasBeenPulled(in)) {
-                            pull(in);
-                        }
-                    }
-                }
-            };
-        }
-
-    }
 
 }

@@ -48,14 +48,26 @@ public class TopologySyncSourceProvider implements SyncSourceProvider {
     }
 
     @Override
-    public HostAndPort newSyncSource(OpTime lastFetchedOpTime) throws NoSyncSourceFoundException {
-        return newSyncSource(Optional.of(lastFetchedOpTime), () -> new NoSyncSourceFoundException(lastFetchedOpTime));
+    public HostAndPort newSyncSource(OpTime lastFetchedOpTime)
+            throws NoSyncSourceFoundException {
+        return newSyncSource(
+                Optional.of(lastFetchedOpTime),
+                () -> new NoSyncSourceFoundException(lastFetchedOpTime)
+        );
     }
 
-    private HostAndPort newSyncSource(Optional<OpTime> minOpTime, Supplier<NoSyncSourceFoundException> exSupplier) throws NoSyncSourceFoundException {
+    private HostAndPort newSyncSource(Optional<OpTime> minOpTime, 
+            Supplier<NoSyncSourceFoundException> exSupplier)
+            throws NoSyncSourceFoundException {
         return topologyService.chooseNewSyncSource(minOpTime)
                 .join()
                 .orElseThrow(exSupplier);
+    }
+
+    @Override
+    public boolean shouldChangeSyncSource() {
+        return topologyService.shouldChangeSyncSource()
+                .join();
     }
 
     @Override

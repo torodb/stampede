@@ -26,6 +26,7 @@ import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.google.common.net.HostAndPort;
 import com.torodb.core.services.IdleTorodbService;
 import java.time.Clock;
+import java.time.Instant;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -64,11 +65,39 @@ public class TopologyService extends IdleTorodbService {
     }
 
     public CompletableFuture<Optional<HostAndPort>> getLastUsedSyncSource() {
-        return executor.onAnyVersion().mapAsync(TopologyCoordinator::getSyncSourceAddress);
+        return executor.onAnyVersion()
+                .mapAsync(TopologyCoordinator::getSyncSourceAddress);
     }
 
-    public CompletableFuture<Optional<HostAndPort>> chooseNewSyncSource(Optional<OpTime> lastFetchedOpTime) {
-        return executor.onAnyVersion().mapAsync(coord -> coord.chooseNewSyncSource(clock.instant(), lastFetchedOpTime));
+    public CompletableFuture<Optional<HostAndPort>> chooseNewSyncSource(
+            Optional<OpTime> lastFetchedOpTime) {
+        return executor.onAnyVersion()
+                .mapAsync(coord -> {
+                    Instant now = clock.instant();
+                    HostAndPort currentSyncSource = coord.getSyncSourceAddress()
+                            .orElse(null);
+                    boolean shouldChange = currentSyncSource == null ||
+                            coord.shouldChangeSyncSource(currentSyncSource, now);
+                    if (shouldChange) {
+                        return coord.chooseNewSyncSource(
+                                clock.instant(),
+                                lastFetchedOpTime
+                        );
+                    } else {
+                        return coord.getSyncSourceAddress();
+                    }
+                });
+    }
+
+    CompletableFuture<Boolean> shouldChangeSyncSource() {
+        return executor.onAnyVersion()
+                .mapAsync(coord -> {
+                    Instant now = clock.instant();
+                    HostAndPort currentSyncSource = coord.getSyncSourceAddress()
+                            .orElse(null);
+                    return currentSyncSource == null ||
+                            coord.shouldChangeSyncSource(currentSyncSource, now);
+                });
     }
 
     @Override

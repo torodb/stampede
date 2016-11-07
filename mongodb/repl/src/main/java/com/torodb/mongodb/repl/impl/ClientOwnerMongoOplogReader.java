@@ -29,7 +29,7 @@ public class ClientOwnerMongoOplogReader extends AbstractMongoOplogReader {
     protected void releaseConnection(MongoConnection connection) {
         connection.close();
     }
-
+    
     @Override
     public void close() {
         mongoClient.close();

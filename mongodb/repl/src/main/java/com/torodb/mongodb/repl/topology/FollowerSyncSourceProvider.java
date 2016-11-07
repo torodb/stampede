@@ -48,4 +48,9 @@ public class FollowerSyncSourceProvider implements SyncSourceProvider {
         return Optional.of(syncSource);
     }
 
+    @Override
+    public boolean shouldChangeSyncSource() {
+        return false;
+    }
+
 }
