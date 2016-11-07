@@ -307,9 +307,9 @@
                                     <name>8kdata/torodb-stampede</name>
                                     <run>
                                         <env>
-                                            <TORODB_SETUP>${docker.torodb.setup}</TORODB_SETUP>
-                                            <MONGO_SYNC_SOURCE>${docker.mongo.syncsource}</MONGO_SYNC_SOURCE>
                                             <POSTGRES_PASSWORD>${docker.postgres.password}</POSTGRES_PASSWORD>
+                                            <TORODB_SETUP>${docker.torodb.setup}</TORODB_SETUP>
+                                            <TORODB_SYNC_SOURCE>${docker.mongo.syncsource}</TORODB_SYNC_SOURCE>
                                             <TORODB_BACKEND_HOST>${docker.postgres.host}</TORODB_BACKEND_HOST>
                                             <TORODB_BACKEND_PORT>${docker.postgres.port}</TORODB_BACKEND_PORT>
                                             <TORODB_BACKEND_DATABASE>${docker.postgres.database}</TORODB_BACKEND_DATABASE>
@@ -367,9 +367,9 @@
                                     <name>8kdata/torodb-stampede</name>
                                     <run>
                                         <env>
-                                            <TORODB_SETUP>true</TORODB_SETUP>
-                                            <MONGO_SYNC_SOURCE>${docker.mongo.syncsource}</MONGO_SYNC_SOURCE>
                                             <POSTGRES_PASSWORD>${docker.postgres.password}</POSTGRES_PASSWORD>
+                                            <TORODB_SETUP>true</TORODB_SETUP>
+                                            <TORODB_SYNC_SOURCE>${docker.mongo.syncsource}</TORODB_SYNC_SOURCE>
                                             <TORODB_BACKEND_HOST>postgres</TORODB_BACKEND_HOST>
                                             <TORODB_BACKEND_PORT>5432</TORODB_BACKEND_PORT>
                                             <TORODB_BACKEND_DATABASE>torod</TORODB_BACKEND_DATABASE>
@@ -471,9 +471,9 @@
                                     <name>8kdata/torodb-stampede</name>
                                     <run>
                                         <env>
-                                            <TORODB_SETUP>true</TORODB_SETUP>
-                                            <MONGO_SYNC_SOURCE>mongodb:27017</MONGO_SYNC_SOURCE>
                                             <POSTGRES_PASSWORD>${docker.postgres.password}</POSTGRES_PASSWORD>
+                                            <TORODB_SETUP>true</TORODB_SETUP>
+                                            <TORODB_SYNC_SOURCE>mongodb:27017</TORODB_SYNC_SOURCE>
                                             <TORODB_BACKEND_HOST>postgres</TORODB_BACKEND_HOST>
                                             <TORODB_BACKEND_PORT>5432</TORODB_BACKEND_PORT>
                                             <TORODB_BACKEND_DATABASE>torod</TORODB_BACKEND_DATABASE>
