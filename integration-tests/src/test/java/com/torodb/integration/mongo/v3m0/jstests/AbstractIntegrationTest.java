@@ -93,7 +93,7 @@ public abstract class AbstractIntegrationTest {
 		} else if (config.getBackend().isLike(Derby.class)) {
             toroConnectionString = toroConnectionString + config.getBackend().as(Derby.class).getDatabase();
 		} else {
-		    throw new SystemException("Backend " + config.getBackend().getBackendImplementation() + " is not supported");
+		    throw new SystemException("AbstractBackend " + config.getBackend().getBackendImplementation() + " is not supported");
 		}
 		
 		URL mongoMocksUrl = AbstractIntegrationTest.class.getResource("mongo_mocks.js");

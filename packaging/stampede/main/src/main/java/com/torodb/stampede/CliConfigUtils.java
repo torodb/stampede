@@ -13,7 +13,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
-import com.torodb.packaging.config.model.backend.derby.Derby;
+import com.torodb.packaging.config.model.backend.derby.AbstractDerby;
 import com.torodb.packaging.config.util.ConfigUtils;
 import com.torodb.stampede.config.model.Config;
 import com.torodb.stampede.config.model.backend.Backend;

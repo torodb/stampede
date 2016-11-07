@@ -12,7 +12,11 @@ import com.torodb.core.metrics.guice.MetricsModule;
 import com.torodb.metainfo.guice.MetainfModule;
 import com.torodb.mongodb.core.MongodServerConfig;
 import com.torodb.packaging.DefaultBuildProperties;
-import com.torodb.packaging.guice.BackendImplementationModule;
+import com.torodb.packaging.config.model.backend.BackendImplementation;
+import com.torodb.packaging.config.model.backend.ConnectionPoolConfig;
+import com.torodb.packaging.config.model.backend.CursorConfig;
+import com.torodb.packaging.guice.BackendMultiImplementationModule;
+import com.torodb.packaging.guice.BackendPostgresImplementationModule;
 import com.torodb.packaging.guice.ExecutorServicesModule;
 import com.torodb.packaging.guice.PackagingModule;
 import com.torodb.stampede.config.model.Config;
@@ -40,11 +44,12 @@ class BootstrapModule extends AbstractModule {
         install(new MetainfModule());
         install(new MetricsModule(config));
 
-        install(new BackendImplementationModule(
+        install(getBackendMultiImplementationModule(
                 config.getReplication(),
                 config.getBackend().getPool(),
                 config.getBackend().getBackendImplementation()
         ));
+        
         bind(Config.class)
                 .toInstance(config);
         bind(MongodServerConfig.class)
@@ -53,5 +58,18 @@ class BootstrapModule extends AbstractModule {
                 .to(DefaultBuildProperties.class)
                 .asEagerSingleton();
     }
+    
+    protected BackendMultiImplementationModule getBackendMultiImplementationModule(
+            CursorConfig cursorConfig, 
+            ConnectionPoolConfig connectionPoolConfig, 
+            BackendImplementation backendImplementation) {
+        return new BackendMultiImplementationModule(
+                cursorConfig, 
+                connectionPoolConfig, 
+                backendImplementation,
+                new BackendPostgresImplementationModule()
+        );
+    }
+
     
 }

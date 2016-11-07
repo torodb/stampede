@@ -32,7 +32,7 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.converters.IParameterSplitter;
 import com.torodb.packaging.config.model.backend.BackendImplementation;
-import com.torodb.packaging.config.model.backend.derby.Derby;
+import com.torodb.packaging.config.model.backend.derby.AbstractDerby;
 import com.torodb.stampede.config.model.backend.Backend;
 
 public class CliConfig {
@@ -399,10 +399,10 @@ public class CliConfig {
         public void validate(String name, String value) throws ParameterException {
             if (value != null && 
                     (getBackendClass(value) == null || 
-                    getBackendClass(value) == Derby.class)) {
+                    getBackendClass(value) == AbstractDerby.class)) {
                 List<String> possibleValues = new ArrayList<>();
                 for (Class<? extends BackendImplementation> backendClass : Backend.BACKEND_CLASSES.values()) {
-                    if (backendClass == Derby.class) {
+                    if (backendClass == AbstractDerby.class) {
                         continue;
                     }
                     possibleValues.add(backendClass.getSimpleName().toLowerCase(Locale.US));

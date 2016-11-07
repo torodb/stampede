@@ -37,15 +37,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
 import com.torodb.core.exceptions.SystemException;
-import com.torodb.packaging.config.model.backend.Backend;
+import com.torodb.packaging.config.model.backend.AbstractBackend;
 import com.torodb.packaging.config.model.backend.BackendImplementation;
 
-public abstract class BackendDeserializer<T extends Backend> extends JsonDeserializer<T> {
+public abstract class AbstractBackendDeserializer<T extends AbstractBackend> extends JsonDeserializer<T> {
     
     private final Supplier<T> backendProvider;
     private final ImmutableMap<String, Tuple2<Class<?>, BiConsumer<T, Object>>> setterMap;
     
-    protected BackendDeserializer(Supplier<T> backendProvider, ImmutableMap<String, Tuple2<Class<?>, BiConsumer<T, Object>>> setterMap) {
+    protected AbstractBackendDeserializer(Supplier<T> backendProvider, ImmutableMap<String, Tuple2<Class<?>, BiConsumer<T, Object>>> setterMap) {
         this.backendProvider = backendProvider;
         this.setterMap = setterMap;
     }
@@ -73,7 +73,7 @@ public abstract class BackendDeserializer<T extends Backend> extends JsonDeseria
 			    Object value = mapper.treeToValue(fieldNode, setterMap.get(fieldName).v1());
 			    setterMap.get(fieldName).v2().accept(backend, value);
 			} else {
-	            throw new SystemException("Backend " + node.fields().next() + " is not valid.");
+	            throw new SystemException("AbstractBackend " + node.fields().next() + " is not valid.");
 			}
 		}
 

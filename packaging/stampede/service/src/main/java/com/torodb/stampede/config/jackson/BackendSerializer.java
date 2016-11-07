@@ -21,9 +21,10 @@
 package com.torodb.stampede.config.jackson;
 
 import com.google.common.collect.ImmutableMap;
+import com.torodb.packaging.config.jackson.AbstractBackendSerializer;
 import com.torodb.stampede.config.model.backend.Backend;
 
-public class BackendSerializer extends com.torodb.packaging.config.jackson.BackendSerializer<Backend> {
+public class BackendSerializer extends AbstractBackendSerializer<Backend> {
 
     public BackendSerializer() {
         super(

@@ -45,7 +45,7 @@ import com.torodb.packaging.config.validation.Port;
 })
 @ExistsAnyPassword
 @InMemoryOnlyIfEmbedded
-public class Derby extends com.torodb.packaging.config.model.backend.derby.Derby {
+public class Derby extends com.torodb.packaging.config.model.backend.derby.AbstractDerby {
 	public Derby() {
         super(
                 "localhost", 

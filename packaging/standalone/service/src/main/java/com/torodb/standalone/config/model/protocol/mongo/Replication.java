@@ -18,81 +18,53 @@
  *     
  */
 
-package com.torodb.stampede.config.model.replication;
+package com.torodb.standalone.config.model.protocol.mongo;
 
 import javax.validation.constraints.NotNull;
 
 import org.hibernate.validator.constraints.NotEmpty;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.torodb.packaging.config.annotation.Description;
-import com.torodb.packaging.config.model.backend.CursorConfig;
 import com.torodb.packaging.config.model.protocol.mongo.AbstractReplication;
 import com.torodb.packaging.config.model.protocol.mongo.Auth;
 import com.torodb.packaging.config.model.protocol.mongo.FilterList;
 import com.torodb.packaging.config.model.protocol.mongo.Role;
 import com.torodb.packaging.config.model.protocol.mongo.SSL;
-import com.torodb.packaging.config.util.ConfigUtils;
 import com.torodb.packaging.config.validation.RequiredParametersForAuthentication;
 
 @JsonPropertyOrder({
     "replSetName",
     "syncSource",
-    "ssl",
-    "auth",
-    "include",
-    "exclude",
-    "mongopassFile"
+	"role",
+	"ssl",
+	"auth",
+	"include",
+	"exclude"
 })
-public class Replication extends AbstractReplication implements CursorConfig {
-    private Long cursorTimeout = 10L * 60 * 1000;
-    private String mongopassFile = ConfigUtils.getUserHomeFilePath(".mongopass");
-
-    public Replication() {
-        setSyncSource("localhost:27017");
-        setReplSetName("rs1");
-    }
-
-    @Override
-    @JsonIgnore
-    public Long getCursorTimeout() {
-        return cursorTimeout;
-    }
-    
-    public void setCursorTimeout(Long cursorTimeout) {
-        this.cursorTimeout = cursorTimeout;
-    }
-
-    @Description("config.mongo.mongopassFile")
-    @JsonProperty(required=true)
-    public String getMongopassFile() {
-        return mongopassFile;
-    }
-    
-    public void setMongopassFile(String mongopassFile) {
-        this.mongopassFile = mongopassFile;
-    }
-    
+public class Replication extends AbstractReplication {
+	
     @Description("config.mongo.replication.replSetName")
     @NotEmpty
     @JsonProperty(required=true)
-    public String getReplSetName() {
-        return super.getReplSetName();
-    }
+	public String getReplSetName() {
+		return super.getReplSetName();
+	}
     
-    @JsonIgnore
-    public Role getRole() {
-        return super.getRole();
-    }
+    @Description("config.mongo.replication.role")
+    @NotNull
+    @JsonProperty(required=true)
+	public Role getRole() {
+		return super.getRole();
+	}
     
     @Description("config.mongo.replication.syncSource")
     @NotNull
     @JsonProperty(required=true)
-    public String getSyncSource() {
-        return super.getSyncSource();
-    }
+	public String getSyncSource() {
+		return super.getSyncSource();
+	}
     
     @Description("config.mongo.replication.ssl")
     @NotNull
@@ -120,4 +92,5 @@ public class Replication extends AbstractReplication implements CursorConfig {
     public FilterList getExclude() {
         return super.getExclude();
     }
+    
 }

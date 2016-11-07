@@ -42,17 +42,17 @@ import com.fasterxml.jackson.databind.jsonFormatVisitors.JsonObjectFormatVisitor
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.google.common.collect.ImmutableMap;
 import com.torodb.core.exceptions.SystemException;
-import com.torodb.packaging.config.model.backend.Backend;
+import com.torodb.packaging.config.model.backend.AbstractBackend;
 import com.torodb.packaging.config.model.backend.BackendImplementation;
-import com.torodb.packaging.config.model.backend.derby.Derby;
-import com.torodb.packaging.config.model.backend.postgres.Postgres;
+import com.torodb.packaging.config.model.backend.derby.AbstractDerby;
+import com.torodb.packaging.config.model.backend.postgres.AbstractPostgres;
 import com.torodb.packaging.config.visitor.BackendImplementationVisitor;
 
-public abstract class BackendSerializer<T extends Backend> extends JsonSerializer<T> {
+public abstract class AbstractBackendSerializer<T extends AbstractBackend> extends JsonSerializer<T> {
     
     private final ImmutableMap<String, Function<T, Object>> getterMap;
     
-	public BackendSerializer(ImmutableMap<String, Function<T, Object>> getterMap) {
+	public AbstractBackendSerializer(ImmutableMap<String, Function<T, Object>> getterMap) {
         super();
         this.getterMap = getterMap;
     }
@@ -127,21 +127,21 @@ public abstract class BackendSerializer<T extends Backend> extends JsonSerialize
 	
 	private static class BackendImplementationSerializerVisitor implements BackendImplementationVisitor {
 
-	    private final Backend backend;
+	    private final AbstractBackend backend;
 	    private final JsonGenerator jgen;
 	    
-	    private BackendImplementationSerializerVisitor(Backend backend, JsonGenerator jgen) {
+	    private BackendImplementationSerializerVisitor(AbstractBackend backend, JsonGenerator jgen) {
 	        this.backend = backend;
 	        this.jgen = jgen;
 	    }
 	    
         @Override
-        public void visit(Postgres value) {
+        public void visit(AbstractPostgres value) {
             defaultVisit(value);
         }
 
         @Override
-        public void visit(Derby value) {
+        public void visit(AbstractDerby value) {
             defaultVisit(value);
         }
 

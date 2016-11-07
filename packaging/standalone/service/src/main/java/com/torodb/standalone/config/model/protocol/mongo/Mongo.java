@@ -27,10 +27,11 @@ import javax.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.torodb.packaging.config.annotation.Description;
 import com.torodb.packaging.config.model.backend.CursorConfig;
+import com.torodb.packaging.config.model.protocol.mongo.AbstractReplication;
 import com.torodb.packaging.config.model.protocol.mongo.Net;
-import com.torodb.packaging.config.model.protocol.mongo.Replication;
 import com.torodb.packaging.config.util.ConfigUtils;
 import com.torodb.packaging.config.validation.NoDuplicatedReplName;
 import com.torodb.packaging.config.validation.NotNullElements;
@@ -52,7 +53,8 @@ public class Mongo implements CursorConfig {
     @NoDuplicatedReplName
     @NotNullElements
     @SSLEnabledForX509Authentication
-	private List<Replication> replication;
+    @JsonDeserialize(contentAs=Replication.class)
+	private List<AbstractReplication> replication;
     @Description("config.mongo.cursorTimeout")
     @NotNull
     @JsonProperty(required=true)
@@ -67,10 +69,10 @@ public class Mongo implements CursorConfig {
 	public void setNet(Net net) {
 		this.net = net;
 	}
-	public List<Replication> getReplication() {
+	public List<AbstractReplication> getReplication() {
 		return replication;
 	}
-	public void setReplication(List<Replication> replication) {
+	public void setReplication(List<AbstractReplication> replication) {
 		this.replication = replication;
 	}
 	@Override

@@ -38,7 +38,7 @@ import com.torodb.packaging.config.validation.RequiredParametersForAuthenticatio
 	"include",
 	"exclude"
 })
-public class Replication {
+public abstract class AbstractReplication {
 	
 	private String replSetName;
 	private Role role = Role.HIDDEN_SLAVE;

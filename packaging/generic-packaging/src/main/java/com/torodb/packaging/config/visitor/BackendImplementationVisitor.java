@@ -20,13 +20,13 @@
 
 package com.torodb.packaging.config.visitor;
 
-import com.torodb.packaging.config.model.backend.derby.Derby;
-import com.torodb.packaging.config.model.backend.postgres.Postgres;
+import com.torodb.packaging.config.model.backend.derby.AbstractDerby;
+import com.torodb.packaging.config.model.backend.postgres.AbstractPostgres;
 
 public interface BackendImplementationVisitor {
 
-    public void visit(Postgres value);
+    public void visit(AbstractPostgres value);
 
-    public void visit(Derby value);
+    public void visit(AbstractDerby value);
 
 }

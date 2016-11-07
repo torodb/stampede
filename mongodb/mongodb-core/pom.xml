@@ -56,9 +56,9 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-        	<groupId>com.torodb</groupId>
-        	<artifactId>metrics</artifactId>
-        	<version>${project.version}</version>
+            <groupId>com.torodb</groupId>
+            <artifactId>metrics</artifactId>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.typesafe.akka</groupId>

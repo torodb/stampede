@@ -30,7 +30,7 @@ import com.torodb.mongodb.repl.ReplicationFilters;
 import com.torodb.mongodb.repl.ReplicationFilters.IndexPattern;
 import com.torodb.packaging.config.model.protocol.mongo.FilterList;
 import com.torodb.packaging.config.model.protocol.mongo.FilterList.IndexFilter;
-import com.torodb.packaging.config.model.protocol.mongo.Replication;
+import com.torodb.packaging.config.model.protocol.mongo.AbstractReplication;
 import com.torodb.packaging.config.util.SimpleRegExpDecoder;
 
 /**
@@ -43,7 +43,7 @@ public class ReplicationFiltersFactory {
 
     private ReplicationFiltersFactory() {}
 
-    public static ReplicationFilters getReplicationFilters(Replication replication) {
+    public static ReplicationFilters getReplicationFilters(AbstractReplication replication) {
         ReplicationFilters replicationFilters = new ReplicationFilters(
                 convertFilterList(replication.getInclude()), 
                 convertFilterList(replication.getExclude()));
