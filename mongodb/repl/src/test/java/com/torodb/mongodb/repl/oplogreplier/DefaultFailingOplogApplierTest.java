@@ -18,6 +18,7 @@ public class DefaultFailingOplogApplierTest extends DefaultOplogApplierTest {
     @Parameters(name = "{0}")
     public static Collection<Object[]> data() {
         return loadData(Lists.newArrayList(
+                "applyOps",
                 "unknownCommand",
                 "emptyCommand",
                 "insert_without_id",
