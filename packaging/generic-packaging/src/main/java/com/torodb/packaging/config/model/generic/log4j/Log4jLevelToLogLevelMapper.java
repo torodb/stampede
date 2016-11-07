@@ -11,7 +11,7 @@ import java.util.stream.Stream;
 
 public class Log4jLevelToLogLevelMapper {
 
-    private Map<Level, LogLevel> dictionary = Collections.unmodifiableMap(Stream.of(
+    private static final Map<Level, LogLevel> DICTIONARY = Collections.unmodifiableMap(Stream.of(
             new AbstractMap.SimpleEntry<Level, LogLevel>(Level.OFF, LogLevel.NONE),
             new AbstractMap.SimpleEntry<Level, LogLevel>(Level.ERROR, LogLevel.ERROR),
             new AbstractMap.SimpleEntry<Level, LogLevel>(Level.WARN, LogLevel.WARNING),
@@ -20,16 +20,15 @@ public class Log4jLevelToLogLevelMapper {
             new AbstractMap.SimpleEntry<Level, LogLevel>(Level.TRACE, LogLevel.TRACE))
             .collect(Collectors.toMap((e) -> e.getKey(), (e) -> e.getValue())
             ));
+    private static final Map<LogLevel, Level> INVERSE_DICTIONARY = DICTIONARY.entrySet().stream()
+            .collect(Collectors.toMap((e) -> e.getValue(), (e) -> e.getKey()));
 
-    public LogLevel map(Level log4jLevel) {
-        return dictionary.get(log4jLevel);
+    public static LogLevel map(Level log4jLevel) {
+        return DICTIONARY.get(log4jLevel);
     }
 
-    public Level map(LogLevel logLevel) {
-        Map<LogLevel, Level> inverseDictionary = dictionary.entrySet().stream()
-                .collect(Collectors.toMap((e) -> e.getValue(), (e) -> e.getKey()));
-
-        return inverseDictionary.get(logLevel);
+    public static Level map(LogLevel logLevel) {
+        return INVERSE_DICTIONARY.get(logLevel);
     }
 
 }
