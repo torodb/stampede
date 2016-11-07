@@ -1,7 +1,8 @@
 site_name: ToroDB Stampede
 theme: readthedocs
 pages:
-  - 'About': index.md
+  - 'Welcome': index.md
+  - 'About': about.md
   - 'Quickstart': quickstart.md
   - Installation and configuration:
     - 'Previous requirements': installation/previous-requirements.md
