@@ -276,7 +276,7 @@ public class CliConfig {
     
     public void addParams() {
         if (logLevel != null) {
-            addParam("/logging/logLevel", logLevel);
+            addParam("/logging/level", logLevel);
         }
         if (log4j2File != null) {
             addParam("/logging/log4j2File", log4j2File);
