@@ -243,21 +243,19 @@ public class Main {
     }
 
     private static void configureLogger(CliConfig cliConfig, Config config) {
-        if (cliConfig.hasConfFile()) {
-            if (config.getLogging().getLevel() != null) {
-                Log4jUtils.setRootLevel(config.getLogging().getLevel());
-            }
-
-            if (config.getLogging().getPackages() != null) {
-                Log4jUtils.setLogPackages(config.getLogging().getPackages());
-            }
-
-            if (config.getLogging().getFile() != null) {
-                Log4jUtils.appendToLogFile(config.getLogging().getFile());
-            }
-        }
-        // If not specified in configuration YAML then the log4j2.xml is used
+        // If not specified in configuration then the log4j2.xml is used
         // instead (by default)
+        if (config.getLogging().getLevel() != null) {
+            Log4jUtils.setRootLevel(config.getLogging().getLevel());
+        }
+
+        if (config.getLogging().getPackages() != null) {
+            Log4jUtils.setLogPackages(config.getLogging().getPackages());
+        }
+
+        if (config.getLogging().getFile() != null) {
+            Log4jUtils.appendToLogFile(config.getLogging().getFile());
+        }
     }
 
     private static String readPwd() throws IOException {

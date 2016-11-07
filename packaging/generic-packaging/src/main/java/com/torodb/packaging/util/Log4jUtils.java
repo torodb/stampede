@@ -24,12 +24,12 @@ import java.io.File;
 import java.io.Serializable;
 import java.util.Map;
 
-import com.torodb.packaging.config.model.generic.log4j.Log4jLevelToLogLevelMapper;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.Appender;
 import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.LogEvent;
+import org.apache.logging.log4j.core.Logger;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.appender.AbstractAppender;
 import org.apache.logging.log4j.core.appender.FileAppender;
@@ -39,6 +39,7 @@ import org.apache.logging.log4j.core.layout.PatternLayout;
 
 import com.torodb.core.exceptions.SystemException;
 import com.torodb.packaging.config.model.generic.LogLevel;
+import com.torodb.packaging.config.model.generic.log4j.Log4jLevelToLogLevelMapper;
 
 public class Log4jUtils {
 
@@ -69,11 +70,8 @@ public class Log4jUtils {
     public static void setLogPackages(Map<String, LogLevel> logPackages) {
         for (Map.Entry<String, LogLevel> logPackage : logPackages.entrySet()) {
             LoggerContext coreContext = (LoggerContext) LogManager.getContext(false);
-            Configuration configuration = coreContext.getConfiguration();
-            org.apache.logging.log4j.LogManager.getLogger(logPackage.getKey());
-            if (configuration.getLoggers().containsKey(logPackage.getKey())) {
-                setLevel(configuration.getLoggerConfig(logPackage.getKey()), logPackage.getValue());
-            }
+            Logger logger = coreContext.getLogger(logPackage.getKey());
+            setLevel(logger, logPackage.getValue());
         }
     }
 
@@ -86,8 +84,13 @@ public class Log4jUtils {
     }
     
     private static void setLevel(LoggerConfig loggerConfig, LogLevel logLevel) {
-        Level log4jLevel = new Log4jLevelToLogLevelMapper().map(logLevel);
+        Level log4jLevel = Log4jLevelToLogLevelMapper.map(logLevel);
         loggerConfig.setLevel(log4jLevel);
+    }
+    
+    private static void setLevel(Logger logger, LogLevel logLevel) {
+        Level log4jLevel = Log4jLevelToLogLevelMapper.map(logLevel);
+        logger.setLevel(log4jLevel);
     }
 
     public static void addRootAppenderListener(AppenderListener appenderListener) {
