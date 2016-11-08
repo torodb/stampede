@@ -1,9 +1,9 @@
 <h1>Installation with Docker</h1>
-ToroDB Stampede can be tested in a Docker container in two different ways. First option is to download the containers from a repository, the second one is to launch with Maven Docker tasks (if source code was previously downloaded).
+ToroDB Stampede can be tested in a Docker container in two different ways. First option is to download the container (or containers if you chose to use Docker Compose) from a repository, the second one is to launch with Maven Docker tasks (if source code was previously downloaded).
 
 ## From Docker repository
 
-### With docker image
+### With Docker image
 
 If `.toropass` file is created the docker containers can be launched with the command below.
 
@@ -14,12 +14,12 @@ $ docker run -ti -v `realpath <postgres-credentials-file>`:/root/.toropass 8kdat
 In other case it will be enough with the creation of the environment variable `TORODB_BACKEND_PASSWORD`.
 
 ```no-highlight
-$ TORODB_BACKEND_PASSWORD="<torodb user's password>"
+$ TORODB_BACKEND_PASSWORD="<password>"
 
 $ docker run -ti 8kdata/torodb-stampede
 ```
 
-### With docker-compose
+### With Docker Compose
 
 The docker compose file must be downloaded and executed.
 

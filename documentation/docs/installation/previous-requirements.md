@@ -17,12 +17,14 @@ Among the previous dependencies, if we want to compile the source code other req
 |-|-------------|----------------|
 | Git | It is the distributed version control system (DVCS) used to keep ToroDB Stampede source code up to date and synchronized between its committers. | [more info](https://git-scm.com/downloads) |
 | Maven | Dependency management and construction tasks has been delegated to Apache Maven, so it is necessary to compile the source code. | [more info](http://maven.apache.org/install.html) | 
+| Docker | An open-source project that automates the deployment of Linux applications inside software containers. It allow to run a ToroDB Stampede and to test it in a controlled environment. | [more info](https://docs.docker.com/) | 
+| Docker Compose | A tool for defining and running multi-container Docker applications. It allow to run test scenarios like a ToroDB Stampede replicating from a MongoDB and connected to a PostgreSQL. | [more info](https://docs.docker.com/compose/install/) | 
 
 ## Backend setup
 
 ### PostgreSQL configuration
 
-The default installation of ToroDB Stampede requires new user and database to work. This values can be changed and specified by configuration, but here the default specification is explained.
+To work properly, the default installation of ToroDB Stampede requires a new user and a new database. User and database can be custom and specified in the configuration, but here we will explain how to create the user and database to work with default configuration.
 
 #### Linux
 
@@ -46,18 +48,10 @@ In macOS and Windows the user and database can be created using an administratio
 
 The access configuration to the PostgreSQL database will be detailed in the `.toropass` file stored in the home directory. The example assumes local connection with default port is being used, but it can be changed by the user too.
 
-#### Linux/macOS
+#### Linux/macOS/Windows
 
 Create `.toropass` file in the home path with the content below.
 
 ```no-highlight
 localhost:5432:torod:torodb:<password>
-```
-
-#### Windows
-
-```no-highlight
-> set /p pwd="Type torodb user's password:" & cls
-
-> echo localhost:5432:*:postgres:%pwd%> "%HOMEDRIVE%%HOMEPATH%\.toropass"
 ```

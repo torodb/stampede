@@ -33,7 +33,7 @@ $ cp packaging/stampede/main/target/dist/torodb-stampede-<version>.tar.bz2 $TORO
 
 $ cd $TOROHOME
 
-$ tar xjvf torodb-stampede-<version>.tar.bz2
+$ tar xjf torodb-stampede-<version>.tar.bz2
 
 $ torodb-stampede-<version>/bin/torodb-stampede
 ```

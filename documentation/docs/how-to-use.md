@@ -110,7 +110,7 @@ did  |  rid  |  pid  | seq |     v_d
 #### primer_grades
 
 ```
-did  |  rid  | seq |         date_g         | score_i |    grade_s     | score_n
+did  |  rid  | seq |         date_t         | score_i |    grade_s     | score_n
 -----+-------+-----+------------------------+---------+----------------+---------
    0 |     0 |   0 | 2014-08-21 02:00:00+02 |       6 | A              |
    0 |     1 |   1 | 2014-02-03 01:00:00+01 |      19 | B              |
@@ -163,18 +163,19 @@ The different data types used by ToroDB Stampede are represented in the table be
 
 | Postfix | What does it mean? |
 |---------|--------------------|
-| _b | Boolean value, store like boolean in PostgreSQL. |
+| _b | Boolean value, stored as a boolean in PostgreSQL. |
 | _c | A date (with time) value in format ISO-8601, stored with PostgreSQL type date. |
 | _d | A 64-bit IEEE 754 floating point, stored with PostgreSQL type double precision. |
-| _e | A child element, it can be an object or an array, stored with PostgreSQL type boolean with a value of false for object and true for array. |
+| _e | A child element, it can be an object or an array, stored with PostgreSQL type boolean with a value of false to indicate a child object and true to indicate a child array. |
 | _i | A 32-bit signed two's complement integer, stored with PostgreSQL type integer. |
 | _l | A 64-bit signed two's complement integer, stored with PostgreSQL type bigint. |
-| _n | A null value, stored with PostgreSQL type boolean (nullable). It cannot take value false, just true or null. When the value is true means the JSON document has value null for that path, when it is null and the associated column when it has value is null too, it means the path does not exist for that document. |
+| _n | A null value, stored with PostgreSQL type boolean (nullable). It cannot take value false, just true or null. When the value is true means the JSON document has value null for that path, when it is null it means the path has another value or does not exist for that document. |
 | _m | A time value in format ISO-8601, stored with PostgreSQL type time. |
 | _r | Binary object, it is an array of bytes stored in PostgreSQL as bytea. |
 | _s | An array of UTF-8 characters representing a text, stored with PostgreSQL type character varying. |
 | _t | Number of milliseconds from 1970-01-01T00:00:00Z, stored with PostgreSQL type timestamptz. |
 | _x | This represent the MONGO_OBJECT_ID and it is stored as a PostgreSQL bytea. |
+| _y | This represent the MONGO_TIMESTAMP and it is stored as a PostgreSQL composite type formed by an integer column secs and an integer column counter. |
 
 __Notes about MONGO_OBJECT_ID__: ObjectIds are small, likely unique, fast to generate, and ordered. ObjectId values consists of 12-bytes, where the first four bytes are a timestamp that reflect the ObjectId’s creation, specifically:
 
@@ -190,7 +191,7 @@ Because the JSON documents nature, it can happen that the same path contains dif
 To solve this problem in ToroDB Stampede, each data type has a different column. For example, in the `primer_grades` table there are two different columns for the `score` key. One is `score_i` that represents the integer values and another one is `score_n` that represents when that value contains null in the original document (because it is mandatory to detect when null value was given and when the path was not given).
 
 ```
-did   |  rid  | seq |         date_g         | score_i |    grade_s     | score_n
+did   |  rid  | seq |         date_t         | score_i |    grade_s     | score_n
 ------+-------+-----+------------------------+---------+----------------+---------
     0 |     0 |   0 | 2014-08-21 02:00:00+02 |       6 | A              |
     0 |     1 |   1 | 2014-02-03 01:00:00+01 |      19 | B              |
@@ -315,7 +316,7 @@ With larger paths, like `address.coord`, the table ref will be the composition o
  stampede | primer            | {address}               | coord                 | CHILD           | coord_e
  stampede | primer            | {address}               | street                | STRING          | street_s
  stampede | primer            | {address}               | building              | STRING          | building_s
- stampede | primer            | {grades}                | date                  | INSTANT         | date_g
+ stampede | primer            | {grades}                | date                  | INSTANT         | date_t
  stampede | primer            | {grades}                | score                 | INTEGER         | score_i
  stampede | primer            | {grades}                | grade                 | STRING          | grade_s
  stampede | primer            | {grades}                | score                 | NULL            | score_n

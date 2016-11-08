@@ -18,7 +18,7 @@ Not everything could be perfect and there are some known limitations from ToroDB
 * [Capped collections](https://docs.mongodb.com/manual/core/capped-collections/) usage is not supported.
 * If character `\0` is used in a string it will be escaped because PostgreSQL doesn't support it.
 * Command `applyOps` reception will stop the replication server.
-* Command `collmod` reception will be ignored.
+* Command `collMod` reception will be ignored.
 * MongoDB sharding environment are not supported currently.
 
 In addition to the previous limitations, just some kind of indexes are supported:

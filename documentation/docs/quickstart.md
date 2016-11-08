@@ -2,7 +2,7 @@
 
 ## Previous requirements
 
-ToroDB Stampede correct operation has a few requirement.
+To work properly, ToroDB Stampede has a few requirement:
 
 * A proper replica set configuration of MongoDB.
 * One PostgreSQL instance to be used as a relational backend.
@@ -12,12 +12,12 @@ If one or more of these requirements are not meet, more information and addition
 
 ## Backend configuration
 
-ToroDB Stampede expects some base configuration from the relational backend. So, if PostgreSQL is correctly installed the next steps should be done.
+ToroDB Stampede expects some basic configuration for the relational backend. Then, if PostgreSQL is correctly installed the next steps should be done.
 
 * Create role `torodb` with permissions to create a database and be able to do login.
 * Create database `torod` with owner `torodb`.
 
-This steps can be done with the next commands in a Linux environment.
+This steps can be done with the next commands in a Linux environment:
 
 ```no-highlight
 $ sudo -u postgres createuser -S -R -D -P --interactive torodb
@@ -40,17 +40,17 @@ To execute ToroDB Stampede the binary distribution is necessary and it can be do
 Create a PostgreSQL credentials configuration file, using the `.pgpass` file structure. The right format is one or more lines formatted as `<host>:<port>:<database>:<user>:<password>`.
 
 ```no-highlight
-localhost:5432:torod:torodb:torodb
+echo "localhost:5432:torod:torodb:torodb" | sudo -u torodb tee ~/.toropass
 ```
 
 Once the credentials file is created ToroDB Stampede can be launched.
 
 ```no-highlight
-$ wget https://www.dropbox.com/s/54eyp7jyu8l70aa/torodb-stampede-0.50.0-SNAPSHOT.tar.bz2?dl=0
+$ wget "https://www.dropbox.com/s/54eyp7jyu8l70aa/torodb-stampede-0.50.0-SNAPSHOT.tar.bz2?dl=0" -O torodb-stampede-0.50.0-SNAPSHOT.tar.bz2
 
-$ tar xjvf <stampede-binary>.tar.bz2
+$ tar xjf torodb-stampede-0.50.0-SNAPSHOT.tar.bz2
 
-$ torodb-stampede-<version>/bin/torodb-stampede --toropass-file <postgres-credentials>
+$ torodb-stampede-0.50.0-SNAPSHOT/bin/torodb-stampede
 ```
 
 If all goes fine, ToroDB Stampede is up and running and it will be replicating the operations done in MongoDB.
@@ -67,7 +67,7 @@ $ wget https://www.dropbox.com/s/570d4tyt4hpsn03/primer-dataset.json?dl=0
 $ mongoimport -d stampede -c primer primer-dataset.json
 ```
 
-When `mongoimport` finished PostgreSQL should have the replicated structure and data stored in the `stampede` schema, because that was the name selected for the database in the `mongoimport` command. Connecting to PostgreSQL console, the data can be accessed.
+When `mongoimport` finished and replication complete PostgreSQL should have the replicated structure and data stored in the `stampede` schema, because that was the name selected for the database in the `mongoimport` command. Connecting to PostgreSQL console, the data can be accessed.
 
 ```no-highlight
 $ sudo -u torodb psql torod
