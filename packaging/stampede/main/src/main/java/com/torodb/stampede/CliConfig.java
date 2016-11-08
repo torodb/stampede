@@ -99,8 +99,6 @@ public class CliConfig {
     private String authUser;
     @Parameter(names={"--auth-source"}, descriptionKey="config.mongo.replication.auth.source")
     private String authSource;
-    @Parameter(names={"--cursor-timeout"}, descriptionKey="config.mongo.cursorTimeout")
-    private String cursorTimeout;
     @Parameter(names={"--mongopass-file"}, descriptionKey="config.mongo.mongopassFile")
     private String mongopassFile;
 
@@ -229,9 +227,6 @@ public class CliConfig {
     public String getAuthSource() {
         return authSource;
     }
-    public String getCursorTimeout() {
-        return cursorTimeout;
-    }
     public String getMongopassFile() {
         return mongopassFile;
     }
@@ -305,9 +300,6 @@ public class CliConfig {
         }
         if (authSource != null) {
             addParam("/replication/auth/source", authSource);
-        }
-        if (cursorTimeout != null) {
-            addParam("/replication/cursorTimeout", cursorTimeout);
         }
         if (mongopassFile != null) {
             addParam("/replication/mongopassFile", mongopassFile);
