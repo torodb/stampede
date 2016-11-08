@@ -1,4 +1,6 @@
-# Project dependencies
+<h1>Previous requirements</h1>
+
+## Project dependencies
 
 ToroDB Stampede's correct operation depends on a number of known dependencies, in the next table more information on how to install and manage them is provided.
 
@@ -16,13 +18,13 @@ Among the previous dependencies, if we want to compile the source code other req
 | Git | It is the distributed version control system (DVCS) used to keep ToroDB Stampede source code up to date and synchronized between its committers. | [more info](https://git-scm.com/downloads) |
 | Maven | Dependency management and construction tasks has been delegated to Apache Maven, so it is necessary to compile the source code. | [more info](http://maven.apache.org/install.html) | 
 
-# Backend setup
+## Backend setup
 
-## PostgreSQL configuration
+### PostgreSQL configuration
 
 The default installation of ToroDB Stampede requires new user and database to work. This values can be changed and specified by configuration, but here the default specification is explained.
 
-### Linux
+#### Linux
 
 ```no-highlight
 $ createuser -S -R -D -P --interactive torodb
@@ -30,7 +32,7 @@ $ createuser -S -R -D -P --interactive torodb
 $ createdatabase -O torodb torod
 ```
 
-### macOS/Windows
+#### macOS/Windows
 
 In macOS and Windows the user and database can be created using an administration connection with `psql` command.
 
@@ -40,11 +42,11 @@ In macOS and Windows the user and database can be created using an administratio
 > CREATE DATABASE torod OWNER torodb;
 ```
 
-## Create .toropass file
+### Create .toropass file
 
 The access configuration to the PostgreSQL database will be detailed in the `.toropass` file stored in the home directory. The example assumes local connection with default port is being used, but it can be changed by the user too.
 
-### Linux/macOS
+#### Linux/macOS
 
 Create `.toropass` file in the home path with the content below.
 
@@ -52,7 +54,7 @@ Create `.toropass` file in the home path with the content below.
 localhost:5432:torod:torodb:<password>
 ```
 
-### Windows
+#### Windows
 
 ```no-highlight
 > set /p pwd="Type torodb user's password:" & cls
