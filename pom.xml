@@ -532,14 +532,6 @@
                     <includes>
                         <include>src/**/*.java</include>
                     </includes>
-                    <excludes>
-                        <exclude>src/assembly/**</exclude>
-                        <exclude>src/dist/**</exclude>
-                        <exclude>src/docker/**</exclude>
-                        <exclude>src/profiles/**</exclude>
-                        <exclude>src/profiles/**</exclude>
-                        <exclude>**/src/test/resources/**</exclude>
-                    </excludes>
                     <mapping>
                         <java>SLASHSTAR_STYLE</java>
                     </mapping>
