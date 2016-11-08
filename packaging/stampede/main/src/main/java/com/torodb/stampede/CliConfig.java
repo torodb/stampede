@@ -93,7 +93,7 @@ public class CliConfig {
     private String sslKeyStorePassword;
     @Parameter(names={"--ssl-key-password"}, descriptionKey="config.mongo.replication.ssl.keyPassword")
     private String sslKeyPassword;
-    @Parameter(names={"--auth-mode"}, descriptionKey="config.mongo.replication.auth.mode")
+    @Parameter(names={"--auth-mode"}, descriptionKey="config.mongo.replication.auth.mode_extended")
     private String authMode;
     @Parameter(names={"--auth-user"}, descriptionKey="config.mongo.replication.auth.user")
     private String authUser;
