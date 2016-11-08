@@ -186,10 +186,10 @@
                                         </tags>
                                         <nocache>true</nocache>
                                         <runCmds>
-                                            <run>#TODO: https://jira.mongodb.org/browse/SERVER-22143</run>
-                                            <run>curl "https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-3.2.8.tgz" | tar xz  -C /opt --transform 's-^[^/]*-mongodb-' -f -</run>
+                                            <run>apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv D68FA50FEA312927</run>
+                                            <run>echo "deb http://repo.mongodb.org/apt/ubuntu xenial/mongodb-org/3.2 multiverse" > /etc/apt/sources.list.d/mongodb-org-3.2.list</run>
                                             <run>apt-get update</run>
-                                            <run>apt-get install netcat postgresql-client python-pip -y</run>
+                                            <run>apt-get install netcat postgresql-client python-pip mongodb-org-shell mongodb-org-tools -y</run>
                                             <run>pip install awscli</run>
                                             <run>apt-get clean</run>
                                             <run>rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*</run>

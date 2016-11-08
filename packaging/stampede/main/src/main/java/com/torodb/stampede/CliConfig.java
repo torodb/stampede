@@ -90,22 +90,12 @@ public class CliConfig {
     private String sslKeyStorePassword;
     @Parameter(names={"--ssl-key-password"}, descriptionKey="config.mongo.replication.ssl.keyPassword")
     private String sslKeyPassword;
-    @Parameter(names={"--auth-mode"}, descriptionKey="config.mongo.replication.auth.mode")
+    @Parameter(names={"--auth-mode"}, descriptionKey="config.mongo.replication.auth.mode_extended")
     private String authMode;
     @Parameter(names={"--auth-user"}, descriptionKey="config.mongo.replication.auth.user")
     private String authUser;
     @Parameter(names={"--auth-source"}, descriptionKey="config.mongo.replication.auth.source")
     private String authSource;
-    @Parameter(names={"--gssapi-service-name"}, descriptionKey="config.mongo.replication.auth.gssapiServiceName")
-    private String gssapiServiceName;
-    @Parameter(names={"--gssapi-host-name"}, descriptionKey="config.mongo.replication.auth.gssapiHostName")
-    private String gssapiHostName;
-    @Parameter(names={"--gssapi-subject"}, descriptionKey="config.mongo.replication.auth.gssapiSubject")
-    private String gssapiSubject;
-    @Parameter(names={"--gssapi-sasl-client-properties"}, descriptionKey="config.mongo.replication.auth.gssapiSaslClientProperties")
-    private String gssapiSaslClientProperties;
-    @Parameter(names={"--cursor-timeout"}, descriptionKey="config.mongo.cursorTimeout")
-    private String cursorTimeout;
     @Parameter(names={"--mongopass-file"}, descriptionKey="config.mongo.mongopassFile")
     private String mongopassFile;
 
@@ -234,21 +224,6 @@ public class CliConfig {
     public String getAuthSource() {
         return authSource;
     }
-    public String getGssapiServiceName() {
-        return gssapiServiceName;
-    }
-    public String getGssapiHostName() {
-        return gssapiHostName;
-    }
-    public String getGssapiSubject() {
-        return gssapiSubject;
-    }
-    public String getGssapiSaslClientProperties() {
-        return gssapiSaslClientProperties;
-    }
-    public String getCursorTimeout() {
-        return cursorTimeout;
-    }
     public String getMongopassFile() {
         return mongopassFile;
     }
@@ -273,7 +248,7 @@ public class CliConfig {
     
     public void addParams() {
         if (logLevel != null) {
-            addParam("/logging/logLevel", logLevel);
+            addParam("/logging/level", logLevel);
         }
         if (log4j2File != null) {
             addParam("/logging/log4j2File", log4j2File);
@@ -322,21 +297,6 @@ public class CliConfig {
         }
         if (authSource != null) {
             addParam("/replication/auth/source", authSource);
-        }
-        if (gssapiServiceName != null) {
-            addParam("/replication/auth/gssapiServiceName", gssapiServiceName);
-        }
-        if (gssapiHostName != null) {
-            addParam("/replication/auth/gssapiHostName", gssapiHostName);
-        }
-        if (gssapiSubject != null) {
-            addParam("/replication/auth/gssapiSubject", gssapiSubject);
-        }
-        if (gssapiSaslClientProperties != null) {
-            addParam("/replication/auth/gssapiSaslClientProperties", gssapiSaslClientProperties);
-        }
-        if (cursorTimeout != null) {
-            addParam("/replication/cursorTimeout", cursorTimeout);
         }
         if (mongopassFile != null) {
             addParam("/replication/mongopassFile", mongopassFile);

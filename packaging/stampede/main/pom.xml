@@ -444,6 +444,9 @@
                                             <volume>${project.basedir}/src/main/dist/docker:/util</volume>
                                           </bind>
                                         </volumes>
+                                        <extraHosts>
+                                            <extraHost>mongodb:127.0.0.1</extraHost>
+                                        </extraHosts>
                                         <entrypoint>
                                             <arg>/bin/bash</arg>
                                             <arg>/util/initiate-mongo-rs</arg>

@@ -1,6 +1,8 @@
+<h1>Installation from source code</h1>
+
 The installation from the source code is quite similar to the binary installation, but it is necessary to build ToroDB Stampede from the sources first.
 
-# Linux/macOS
+## Linux/macOS
 
 Download source code.
 
@@ -18,7 +20,7 @@ $ cd torodb
 $ mvn clean package -P assembler,prod
 ```
 
-As explained in [previous requirements](../previous-requirements/#create-toropass-file) section, create `.toropass` file at current user home directory with the next content.
+As explained in [previous requirements](previous-requirements.md#create-toropass-file) section, create `.toropass` file at current user home directory with the next content.
 
 ```no-highlight
 localhost:5432:torod:torodb:<password>
@@ -31,12 +33,12 @@ $ cp packaging/stampede/main/target/dist/torodb-stampede-<version>.tar.bz2 $TORO
 
 $ cd $TOROHOME
 
-$ tar xjvf torodb-stampede-<version>.tar.bz2
+$ tar xjf torodb-stampede-<version>.tar.bz2
 
 $ torodb-stampede-<version>/bin/torodb-stampede
 ```
 
-# Windows
+## Windows
 
 Download source code in some temporal directory.
 
@@ -52,7 +54,7 @@ C:\tmp\>cd torodb
 C:\tmp\torodb>mvn clean package -P assembler,prod
 ```
 
-As explained in [previous requirements](../previous-requirements/#create-toropass-file) section, create `.toropass` file at current user home directory `C:\Users\<YOUR USER NAME>\.toropass` with the next content.
+As explained in [previous requirements](previous-requirements.md#create-toropass-file) section, create `.toropass` file at current user home directory `C:\Users\<YOUR USER NAME>\.toropass` with the next content.
 
 ```no-highlight
 localhost:5432:torod:torodb:<password>
@@ -64,4 +66,4 @@ Uncompress the Zip file located in `C:\tmp\torodb\packaging\stampede\main\target
 C:\>%TOROHOME%\bin\torodb-stampede
 ```
 
-or simply, double click on the `torodb-stampede.bat` file in the file explorer.
+or simply, double click on the `torodb-stampede.bat` file located in folder `bin`.

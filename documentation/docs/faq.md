@@ -1,3 +1,5 @@
+<h1>Frequently Asked Questions</h1>
+
 ## The command wget is not found in macOS
 
 By default macOS hasn't the wget tool in the terminal, if you want to use it [Homebrew](http://brew.sh) can be used.
