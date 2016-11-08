@@ -1,23 +1,20 @@
 /*
- * This file is part of ToroDB.
+ * MongoWP - ToroDB-poc: MongoDB Repl
+ * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
- * ToroDB is free software: you can redistribute it and/or modify
+ * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * ToroDB is distributed in the hope that it will be useful,
+ * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with repl. If not, see <http://www.gnu.org/licenses/>.
- *
- * Copyright (C) 2016 8Kdata.
- * 
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 package com.torodb.mongodb.repl.oplogreplier.batch;
 
 import java.util.ArrayList;
