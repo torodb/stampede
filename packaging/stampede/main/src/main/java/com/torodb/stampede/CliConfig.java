@@ -99,14 +99,6 @@ public class CliConfig {
     private String authUser;
     @Parameter(names={"--auth-source"}, descriptionKey="config.mongo.replication.auth.source")
     private String authSource;
-    @Parameter(names={"--gssapi-service-name"}, descriptionKey="config.mongo.replication.auth.gssapiServiceName")
-    private String gssapiServiceName;
-    @Parameter(names={"--gssapi-host-name"}, descriptionKey="config.mongo.replication.auth.gssapiHostName")
-    private String gssapiHostName;
-    @Parameter(names={"--gssapi-subject"}, descriptionKey="config.mongo.replication.auth.gssapiSubject")
-    private String gssapiSubject;
-    @Parameter(names={"--gssapi-sasl-client-properties"}, descriptionKey="config.mongo.replication.auth.gssapiSaslClientProperties")
-    private String gssapiSaslClientProperties;
     @Parameter(names={"--cursor-timeout"}, descriptionKey="config.mongo.cursorTimeout")
     private String cursorTimeout;
     @Parameter(names={"--mongopass-file"}, descriptionKey="config.mongo.mongopassFile")
@@ -237,18 +229,6 @@ public class CliConfig {
     public String getAuthSource() {
         return authSource;
     }
-    public String getGssapiServiceName() {
-        return gssapiServiceName;
-    }
-    public String getGssapiHostName() {
-        return gssapiHostName;
-    }
-    public String getGssapiSubject() {
-        return gssapiSubject;
-    }
-    public String getGssapiSaslClientProperties() {
-        return gssapiSaslClientProperties;
-    }
     public String getCursorTimeout() {
         return cursorTimeout;
     }
@@ -325,18 +305,6 @@ public class CliConfig {
         }
         if (authSource != null) {
             addParam("/replication/auth/source", authSource);
-        }
-        if (gssapiServiceName != null) {
-            addParam("/replication/auth/gssapiServiceName", gssapiServiceName);
-        }
-        if (gssapiHostName != null) {
-            addParam("/replication/auth/gssapiHostName", gssapiHostName);
-        }
-        if (gssapiSubject != null) {
-            addParam("/replication/auth/gssapiSubject", gssapiSubject);
-        }
-        if (gssapiSaslClientProperties != null) {
-            addParam("/replication/auth/gssapiSaslClientProperties", gssapiSaslClientProperties);
         }
         if (cursorTimeout != null) {
             addParam("/replication/cursorTimeout", cursorTimeout);
