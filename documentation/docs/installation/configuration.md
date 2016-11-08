@@ -1,11 +1,7 @@
-# Basic configuration
+<h1>Configuration</h1>
 
-## Config file
+The previous sections talk about basic configuration of the system, but it is highly probable ...
 
-## CLI parameters
+## Custom relational database connection
 
-# Advanced configuration
-
-## Config file
-
-## CLI parameters
+## Custom MongoDB connection
