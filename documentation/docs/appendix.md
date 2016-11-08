@@ -1,4 +1,4 @@
-# Configuration options
+<h1>Appendix</h1>
 
 ## CLI options
 

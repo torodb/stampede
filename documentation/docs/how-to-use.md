@@ -1,3 +1,5 @@
+<h1>How to use</h1>
+
 To understand better how the JSON document to relational storage mapping algorithm works, one example will be done using a known [dataset](https://docs.mongodb.com/getting-started/shell/import-data/) from MongoDB documentation.
 
 Given that ToroDB Stampede and all its requisites are met, the dataset will be imported into MongoDB to be replicated in PostgreSQL. This is done with next commands.
@@ -8,9 +10,9 @@ $ wget https://www.dropbox.com/s/570d4tyt4hpsn03/primer-dataset.json?dl=0
 $ mongoimport -d stampede -c primer primer-dataset.json
 ```
 
-The import was done with database `stampede` and collection `primer`, this is important because it determines the schema and table names created in the relational storage. In PostgreSQL the replication is done in the `torod` database, schema `stampede` with one root table `primer` and some associated tables named like `primer_*`.
+The import was done with database `stampede` and collection `primer`, this is important because it determines the schema and table names created in the relational storage. In PostgreSQL the replication is done in the `torod` database, schema `stampede` with one root table #`primer` and some associated tables named like `primer_*`.
 
-# Table mapping
+## Table mapping
 
 Essentially, each level of the JSON document is mapped to a different table in the relational backend. The structure of each document in the given dataset complies with the following structure.
 
@@ -44,9 +46,9 @@ So 4 tables will be created representing each different level from the document.
 
 ![Tables distribution](images/tables_distribution.jpeg)
 
-## Created tables
+### Created tables
 
-### primer
+#### primer
 
 As stated above, the root of the document is mapped to a table with the name used as collection name, it is `primer`.
 
@@ -65,7 +67,7 @@ did  | address_e | restaurant_id_s |                                            
    7 | f         | 40383819        | Short Stop Restaurant                                                                              | American                                                         | \x580f12efbe6e3fff2237cae8 | Bronx         | t
 ```
 
-### primer_address
+#### primer_address
 
 ```
 did  |  rid  | seq | zipcode_s | coord_e |                street_s                | building_s
@@ -80,7 +82,7 @@ did  |  rid  | seq | zipcode_s | coord_e |                street_s              
    7 |     7 |     | 10463     | t       | Broadway                               | 5977
 ```
 
-### primer_address_coord
+#### primer_address_coord
 
 The table `primer_address_coord` is a special case, like `primer_grades`, because those paths contain an array. That is the reason why a column `seq` is used in those tables, indicating the position of the element in the original arrays. To understand better the metadata columns it is recommended to read the chapter [metada](how-to-use.md#metadata).
 
@@ -105,7 +107,7 @@ did  |  rid  |  pid  | seq |     v_d
    7 |    15 |     7 |   1 |   40.8896923
 ```
 
-### primer_grades
+#### primer_grades
 
 ```
 did  |  rid  | seq |         date_g         | score_i |    grade_s     | score_n
@@ -151,7 +153,7 @@ did  |  rid  | seq |         date_g         | score_i |    grade_s     | score_n
    7 |    38 |   4 | 2011-12-19 01:00:00+01 |      18 | B              |
 ```
 
-# Columns and metadata
+## Columns and metadata
 
 [TODO]: <> (explain the possible values of `_e`)
 
@@ -181,7 +183,7 @@ __Notes about MONGO_OBJECT_ID__: ObjectIds are small, likely unique, fast to gen
 * 2-byte process id, and
 * 3-byte counter, starting with a random value.
 
-## Data conflict resolution
+### Data conflict resolution
 
 Because the JSON documents nature, it can happen that the same path contains different data types or even in some documents the path doesn't exist. That is not a problem for the JSON document but it is for a relational storage where each column should have an associated data type.
 
@@ -231,11 +233,11 @@ The rows with value `true` for column `score_n` means the associated JSON docume
 }
 ```
 
-## Metadata
+### Metadata
 
 As stated above, ToroDB Stampede stores different metadata to be able to the document, recompose it or execute different complex queries. These metadata can be columns in the data tables or even specific metadata tables for internal usage.
 
-### Metadata columns
+#### Metadata columns
 
 ToroDB Stampede creates different metadata columns in the data tables.
 
@@ -248,11 +250,11 @@ ToroDB Stampede creates different metadata columns in the data tables.
 
 ![PID reference](images/pid_reference.jpeg)
 
-### Metadata tables
+#### Metadata tables
 
 The metadata columns in the data tables are not enough to keep the data integrity, so there are some special metadata tables at the schema `torodb`.
 
-#### database
+##### database
 
 Table `database` stores the name given by the user to the database in MongoDB, that is stored in a schema in PostgreSQL. Because PostgreSQL has limits on the database names it is dereferenced here, but usually the values are the same unless a very large name is used.
 
@@ -264,7 +266,7 @@ Table `database` stores the name given by the user to the database in MongoDB, t
  stampede | stamped
 ```
 
-#### collection
+##### collection
 
 Among the name of the database one, collection name was given in MongoDB layer, so it is stored in the table `collection` dereferencing it in the same way.
 
@@ -276,7 +278,7 @@ Among the name of the database one, collection name was given in MongoDB layer, 
  stampede | primer            | stampede_primer
 ```
 
-#### doc_part
+##### doc_part
 
 As stated above, the name of the table for the root element is the same one used in the MongoDB collection name. In ToroDB Stampede the `table_ref` associated to that element is `{}` and its identifier is the collection dereferenced name, here `primer`.
 
@@ -293,7 +295,7 @@ With larger paths, like `address.coord`, the table ref will be the composition o
  stampede | primer            | {address,coord}         | primer_address_coord                    |        0
 ```
 
-#### field
+##### field
 
 `field` table stores the data type of each column and its identifier. For a given combination of `database, collection, table_ref`, the used name of the column is stored and the data type associated. This data type can be either a scalar value, like `string` or `double`, or a `child` type (this means an associated table exists)
 
@@ -319,7 +321,7 @@ With larger paths, like `address.coord`, the table ref will be the composition o
  stampede | primer            | {grades}                | score                 | NULL            | score_n
 ```
 
-#### scalar
+##### scalar
 
 `scalar` table is used to store the data type of the element of an array. This is because an array can contains different type of data in a JSON document.
 
@@ -333,7 +335,7 @@ In the given example, the only row in `scalar` table is related to the path `add
  stampede | primer     | {address,coord} | DOUBLE | v_d
 ```
 
-# Example queries
+## Example queries
 
 The data in the relational storage can be queries like any other relational dataset, using the `psql` command or any other tool able to connect to PostgreSQL.
 
