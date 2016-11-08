@@ -1,4 +1,4 @@
-# What is ToroDB Stampede?
+<h1>What is ToroDB Stampede?</h1>
 
 Connected to a MongoDB replica set, ToroDB Stampede is able to replicate the NoSQL data into a relational backend (right now the only available backend is PostgreSQL) using the oplog.
 
@@ -10,7 +10,7 @@ There are other solutions that are able to store the JSON document in a relation
 
 With the relational structure, some given problems from NoSQL solutions are easier to solve, such as aggregated query execution in an admissible time.
 
-# ToroDB Stampede limitations
+## ToroDB Stampede limitations
 
 Not everything could be perfect and there are some known limitations from ToroDB Stampede.
 
@@ -35,7 +35,7 @@ In addition to the previous limitations, just some kind of indexes are supported
 
 [Documentation conventions]: <> (we have no time right now for this section)
 
-# Glossary
+## Glossary
 
 | Term | Definition |
 |------|------------|
