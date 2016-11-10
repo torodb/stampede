@@ -18,6 +18,7 @@
 package com.torodb.core.retrier;
 
 import com.torodb.common.util.RetryHelper;
+import com.torodb.common.util.RetryHelper.DelegateExceptionHandler;
 import com.torodb.common.util.RetryHelper.ExceptionHandler;
 import com.torodb.common.util.RetryHelper.IncrementalWaitExceptionHandler;
 import com.torodb.common.util.RetryHelper.RetryCallback;
@@ -113,24 +114,47 @@ public class SmartRetrier extends AbstractHintableRetrier {
 
     private <Result, T extends Exception> ExceptionHandler<Result, T> createWithoutTimeHandler(
             IntPredicate giveUpPredicate, ExceptionHandler<Result, T> delegateHandler) {
-        return (RetryCallback<Result> callback, Exception t, int attempts) -> {
+        ExceptionHandler<Result, T> delegate = (RetryCallback<Result> callback,
+                Exception t, int attempts) -> {
             if (giveUpPredicate.test(attempts)) {
-                LOGGER.debug("Giving up when executing a task after {} executions", attempts, t);
+                LOGGER.debug("Giving up when executing a task after {} "
+                        + "executions", attempts, t);
                 delegateHandler.handleException(callback, t, attempts);
-            }
-            else {
-                LOGGER.trace("Trying to execute a task for {}th time", attempts);
+            } else {
+                LOGGER.trace("Trying to execute a task for {}th time",
+                        attempts);
                 callback.doRetry();
             }
         };
+        return loggerHandler(delegate);
     }
 
     private <Result, T extends Exception> ExceptionHandler<Result, T> createWithTimeHandler(
             IntPredicate giveUpPredicate, ExceptionHandler<Result, T> delegateHandler) {
-        return new IncrementalWaitExceptionHandler<>(
-                (millis, attempts) -> getMillisToWait(attempts, millis, giveUpPredicate),
-                delegateHandler
+        ExceptionHandler<Result, T> delegate = new IncrementalWaitExceptionHandler<>(
+            (millis, attempts) -> getMillisToWait(attempts, millis, giveUpPredicate),
+            delegateHandler
         );
+        return loggerHandler(delegate);
+    }
+
+    private <Result, T extends Exception> ExceptionHandler<Result, T> loggerHandler(
+            ExceptionHandler<Result, T> delegate) {
+        ExceptionHandler<Result, T> result;
+
+        if (LOGGER.isDebugEnabled()) {
+            result = new DelegateExceptionHandler<Result, T>(delegate) {
+                @Override
+                public void handleException(RetryCallback<Result> callback,
+                        Exception t, int attempts) throws T {
+                    LOGGER.debug("Exception catched on the replier", t);
+                    super.handleException(callback, t, attempts);
+                }
+            };
+        } else {
+            result = delegate;
+        }
+        return result;
     }
 
     @FunctionalInterface
