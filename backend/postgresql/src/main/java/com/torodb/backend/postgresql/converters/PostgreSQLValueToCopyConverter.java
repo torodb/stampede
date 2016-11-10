@@ -1,7 +1,7 @@
 
 package com.torodb.backend.postgresql.converters;
 
-import com.torodb.backend.postgresql.converters.sql.StringSqlBinding;
+import com.torodb.backend.postgresql.converters.util.CopyEscaper;
 import com.torodb.common.util.HexUtils;
 import com.torodb.common.util.TextEscaper;
 import com.torodb.kvdocument.values.KVArray;
@@ -26,7 +26,7 @@ import com.torodb.kvdocument.values.KVValueVisitor;
 public class PostgreSQLValueToCopyConverter implements KVValueVisitor<Void, StringBuilder> {
     public static final PostgreSQLValueToCopyConverter INSTANCE = new PostgreSQLValueToCopyConverter();
     
-    private static final TextEscaper ESCAPER = TextEscaper.create(StringSqlBinding.Escapable.values(), CopyEscapable.values());
+    private static final TextEscaper ESCAPER = CopyEscaper.INSTANCE;
 
     PostgreSQLValueToCopyConverter() {
     }
@@ -131,40 +131,5 @@ public class PostgreSQLValueToCopyConverter implements KVValueVisitor<Void, Stri
     @Override
     public Void visit(KVDocument value, StringBuilder arg) {
         throw new UnsupportedOperationException("Ouch this should not occur");
-    }
-    
-    private static final char COPY_ESCAPE_CHARACTER = '\\';
-    private static final char ROW_DELIMETER_CHARACTER = '\n';
-    private static final char COLUMN_DELIMETER_CHARACTER = '\t';
-    private static final char CARRIAGE_RETURN_CHARACTER = '\r';
-    
-    private enum CopyEscapable implements TextEscaper.Escapable {
-        ROW_DELIMETER(ROW_DELIMETER_CHARACTER, ROW_DELIMETER_CHARACTER),
-        COLUMN_DELIMETER(COLUMN_DELIMETER_CHARACTER, COLUMN_DELIMETER_CHARACTER),
-        CARRIAGE_RETURN(CARRIAGE_RETURN_CHARACTER, CARRIAGE_RETURN_CHARACTER),
-        COPY_ESCAPE(COPY_ESCAPE_CHARACTER, COPY_ESCAPE_CHARACTER);
-        
-        private final char character;
-        private final char suffixCharacter;
-        
-        private CopyEscapable(char character, char suffixCharacter) {
-            this.character = character;
-            this.suffixCharacter = suffixCharacter;
-        }
-
-        @Override
-        public char getCharacter() {
-            return character;
-        }
-
-        @Override
-        public char getSuffixCharacter() {
-            return suffixCharacter;
-        }
-
-        @Override
-        public char getEscapeCharacter() {
-            return COPY_ESCAPE_CHARACTER;
-        }
     }
 }

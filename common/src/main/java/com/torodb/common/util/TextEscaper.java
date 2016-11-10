@@ -4,35 +4,50 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 
 public class TextEscaper {
     
-    public static TextEscaper create(Escapable[]...escapableGroups) {
-        return new TextEscaper(escapableGroups);
+    public interface CharacterPredicate {
+        public boolean apply(char character);
     }
     
-    private final ImmutableList<Escapable> escapes;
-    private final ImmutableList<Escapable> escapables;
+    public interface Escapable {
+        public char getCharacter();
+        public char getSuffixCharacter();
+        public char getEscapeCharacter();
+    }
     
-    private TextEscaper(Escapable[]...escapableGroups) {
+    public static TextEscaper create(CharacterPredicate isEscapable, CharacterPredicate isEscapeCharacter, Escapable[]...escapableGroups) {
+        return new TextEscaper(isEscapable, isEscapeCharacter, escapableGroups);
+    }
+    
+    private final CharacterPredicate isEscapable;
+    private final CharacterPredicate isEscapeCharacter;
+    private final ImmutableMap<Character, Escapable> escapables;
+    private final ImmutableMap<Character, Escapable> escapablesBySuffix;
+    
+    protected TextEscaper(CharacterPredicate isEscapable, CharacterPredicate isEscapeCharacter, Escapable[]...escapableGroups) {
+        this.isEscapable = isEscapable;
+        this.isEscapeCharacter = isEscapeCharacter;
         List<Character> escapeCharacters = new ArrayList<>();
-        ImmutableList.Builder<Escapable> escapesBuilder = ImmutableList.builder();
         for (Escapable[] escapables : escapableGroups) {
             for (Escapable escapable : escapables) {
                 if (escapable.getCharacter() == escapable.getEscapeCharacter()) {
                     if (escapeCharacters.contains(escapable.getCharacter())) {
                         throw new IllegalArgumentException("Escape character '" + escapable.getCharacter() + "' is repeated");
                     }
-                    escapesBuilder.add(escapable);
+                    if (!isEscapeCharacter.apply(escapable.getCharacter())) {
+                        throw new IllegalArgumentException("Escape character '" + escapable.getCharacter() + "' does not apply to isEscapeCharacter predicate");
+                    }
                     escapeCharacters.add(escapable.getCharacter());
                 }
             }
         }
-        this.escapes = escapesBuilder.build();
         
         List<Character> escapableCharacters = new ArrayList<>();
-        ImmutableList.Builder<Escapable> escapablesBuilder = ImmutableList.builder();
+        ImmutableMap.Builder<Character, Escapable> escapablesBuilder = ImmutableMap.builder();
+        ImmutableMap.Builder<Character, Escapable> escapablesBySuffixBuilder = ImmutableMap.builder();
         for (Escapable[] escapables : escapableGroups) {
             for (Escapable escapable : escapables) {
                 if (!escapeCharacters.contains(escapable.getEscapeCharacter())) {
@@ -41,11 +56,16 @@ public class TextEscaper {
                 if (escapableCharacters.contains(escapable.getEscapeCharacter())) {
                     throw new IllegalArgumentException("Escapable character '" + escapable.getCharacter() + "' is repeated");
                 }
-                escapablesBuilder.add(escapable);
+                if (!isEscapable.apply(escapable.getCharacter())) {
+                    throw new IllegalArgumentException("Escape character '" + escapable.getCharacter() + "' does not apply to isEscapable predicate");
+                }
+                escapablesBuilder.put(escapable.getCharacter(), escapable);
+                escapablesBySuffixBuilder.put(escapable.getSuffixCharacter(), escapable);
                 escapableCharacters.add(escapable.getCharacter());
             }
         }
         this.escapables = escapablesBuilder.build();
+        this.escapablesBySuffix = escapablesBySuffixBuilder.build();
     }
     
     public String escape(String text) {
@@ -134,45 +154,31 @@ public class TextEscaper {
         return text;
     }
     
-    private boolean isEscapeCharacter(char character) {
-        for (Escapable escape : escapes) {
-            if (escape.getCharacter() == character) {
-                return true;
-            }
-        }
-        return false;
+    protected boolean isEscapeCharacter(char character) {
+        return isEscapeCharacter.apply(character);
     }
     
-    private boolean isEscapable(char character) {
-        for (Escapable escape : escapables) {
-            if (escape.getCharacter() == character) {
-                return true;
-            }
-        }
-        return false;
+    protected boolean isEscapable(char character) {
+        return isEscapable.apply(character);
     }
     
-    private Escapable escapeOf(char character) {
-        for (Escapable escape : escapables) {
-            if (escape.getCharacter() == character) {
-                return escape;
-            }
+    protected Escapable escapeOf(char character) {
+        Escapable escapable = escapables.get(character);
+        
+        if (escapable == null) {
+            throw new IllegalArgumentException("Character '" + character + "' is not escapable");
         }
-        throw new IllegalArgumentException("Character '" + character + "' is not escapable");
+        
+        return escapable;
     }
     
-    private Escapable unescapeOfSuffix(char suffixCharacter) {
-        for (Escapable escapable : escapables) {
-            if (escapable.getSuffixCharacter() == suffixCharacter) {
-                return escapable;
-            }
+    protected Escapable unescapeOfSuffix(char suffixCharacter) {
+        Escapable escapable = escapablesBySuffix.get(suffixCharacter);
+        
+        if (escapable == null) {
+            throw new IllegalArgumentException("Suffix escaped character '" + suffixCharacter + "' can not be escaped");
         }
-        throw new IllegalArgumentException("Suffix escaped character '" + suffixCharacter + "' can not be escaped");
-    }
-    
-    public interface Escapable {
-        public char getCharacter();
-        public char getSuffixCharacter();
-        public char getEscapeCharacter();
+        
+        return escapable;
     }
 }

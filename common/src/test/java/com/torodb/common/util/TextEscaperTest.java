@@ -25,7 +25,34 @@ import org.junit.Test;
 
 public class TextEscaperTest {
     
-    private static final TextEscaper ESCAPER = TextEscaper.create(Escapable.values(), CopyEscapable.values());
+    private static final TextEscaper ESCAPER = TextEscaper.create(
+            new TextEscaper.CharacterPredicate() {
+                @Override
+                public boolean apply(char character) {
+                    switch(character) {
+                    case ESCAPE_CHARACTER:
+                    case ZERO_CHARACTER:
+                    case COPY_ESCAPE_CHARACTER:
+                    case ROW_DELIMETER_CHARACTER:
+                    case COLUMN_DELIMETER_CHARACTER:
+                    case CARRIAGE_RETURN_CHARACTER:
+                        return true;
+                    }
+                    return false;
+                }
+            },
+            new TextEscaper.CharacterPredicate() {
+                @Override
+                public boolean apply(char character) {
+                    switch(character) {
+                    case ESCAPE_CHARACTER:
+                    case COPY_ESCAPE_CHARACTER:
+                        return true;
+                    }
+                    return false;
+                }
+            },
+            Escapable.values(), CopyEscapable.values());
     
     private final static char ESCAPE_CHARACTER = 1;
     private final static char ZERO_CHARACTER = 0;
