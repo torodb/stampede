@@ -33,7 +33,7 @@
     <inceptionYear>2014</inceptionYear>
 
     <organization>
-        <name>8Kdata</name>
+        <name>8Kdata Technology</name>
         <url>www.8kdata.com</url>
     </organization>
 
@@ -83,6 +83,7 @@
         <mongowp.version>0.50.0-SNAPSHOT</mongowp.version>
         <jmh.version>1.12</jmh.version>
         <metrics.version>3.1.2</metrics.version>
+        <license.header.file>com/mycila/maven/plugin/license/templates/AGPL-3.txt</license.header.file>
     </properties>
 
     <modules>
@@ -512,6 +513,37 @@
                                 </requireReleaseDeps>
                             </rules>
                         </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>com.mycila</groupId>
+                <artifactId>license-maven-plugin</artifactId>
+                <version>3.0</version>
+                <configuration>
+                    <header>${license.header.file}</header>
+                    <failIfMissing>true</failIfMissing>
+                    <properties>
+                        <project.name>MongoWP</project.name>
+                        <project.description>${project.name}</project.description>
+                        <project.inceptionYear>2014</project.inceptionYear>
+                        <owner>${project.organization.name}</owner>
+                        <email>${project.organization.url}</email>
+                    </properties>
+                    <includes>
+                        <include>src/**/*.java</include>
+                    </includes>
+                    <mapping>
+                        <java>SLASHSTAR_STYLE</java>
+                    </mapping>
+                    <errorMessage>Some files do not have the expected license header. Run com.mycila:license-maven-plugin:format to update all file headers</errorMessage>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>check-license</id>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
                     </execution>
                 </executions>
             </plugin>
