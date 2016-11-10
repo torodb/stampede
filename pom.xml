@@ -87,6 +87,7 @@
 
     <modules>
         <module>common</module>
+        <module>concurrent</module>
         <module>kvdocument</module>
         <!--<module>query</module>-->
         <module>metainfo-cache</module>
@@ -98,7 +99,7 @@
         <module>metrics</module>
         <module>packaging</module>
         <module>integration-tests</module>
-        <module>concurrent</module>
+        <module>benchmarks</module>
     </modules>
 
     <dependencyManagement>

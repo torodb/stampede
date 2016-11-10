@@ -3,12 +3,12 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.torodb</groupId>
-        <artifactId>backend-parent</artifactId>
+        <artifactId>torodb-parent</artifactId>
         <version>0.50.0-SNAPSHOT</version>
     </parent>
 
-    <name>ToroDB-poc: Backends benchmark</name>
-    <artifactId>benchmark</artifactId>
+    <name>ToroDB-poc: Benchmarks</name>
+    <artifactId>benchmarks</artifactId>
     <dependencies>
         <dependency>
             <groupId>org.openjdk.jmh</groupId>
@@ -135,6 +135,9 @@
     <profiles>
        <profile>
            <id>jmh</id>
+           <properties>
+               <jmh.classes>*</jmh.classes>
+           </properties>
            <build>
                <plugins>
                    <plugin>
@@ -145,12 +148,18 @@
                            <execution>
                                <phase>test</phase>
                                <goals>
-                                   <goal>java</goal>
+                                   <goal>exec</goal>
                                </goals>
                            </execution>
                        </executions>
                        <configuration>
-                          <mainClass>org.openjdk.jmh.Main</mainClass>
+                          <executable>java</executable>
+                          <arguments>
+                            <argument>-classpath</argument>
+                            <classpath/>
+                            <argument>org.openjdk.jmh.Main</argument>
+                            <argument>${jmh.classes}</argument>
+                          </arguments>
                        </configuration>
                     </plugin>
                </plugins>
