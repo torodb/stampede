@@ -524,7 +524,7 @@
                     <header>${license.header.file}</header>
                     <failIfMissing>true</failIfMissing>
                     <properties>
-                        <project.name>MongoWP</project.name>
+                        <project.name>ToroDB</project.name>
                         <project.description>${project.name}</project.description>
                         <project.inceptionYear>2014</project.inceptionYear>
                         <owner>${project.organization.name}</owner>

@@ -1,5 +1,5 @@
 /*
- * MongoWP - ToroDB-poc: MongoDB Repl
+ * ToroDB - ToroDB-poc: MongoDB Repl
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
