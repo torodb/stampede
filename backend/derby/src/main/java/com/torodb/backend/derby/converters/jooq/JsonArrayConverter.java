@@ -1,5 +1,5 @@
 /*
- * MongoWP - ToroDB-poc: Backend Derby
+ * ToroDB - ToroDB-poc: Backend Derby
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -15,7 +15,6 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 package com.torodb.backend.derby.converters.jooq;
 
 import java.io.StringReader;

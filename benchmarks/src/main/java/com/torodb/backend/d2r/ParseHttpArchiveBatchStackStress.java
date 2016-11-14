@@ -1,5 +1,5 @@
 /*
- * MongoWP - ToroDB-poc: Backends benchmark
+ * ToroDB - ToroDB-poc: Benchmarks
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -43,12 +43,13 @@ import com.torodb.core.d2r.ReservedIdGenerator;
 /**
  * 
  * To execute code you must download archives from: 
- * https://www.githubarchive.org/
+ * https://discuss.httparchive.org/t/how-to-download-the-http-archive-data/679
  * 
  * You can configure the source path, a subset of documents with a stream filter and the batch size
  *
  */
-public class ParseGitHubBatchStackStress {
+
+public class ParseHttpArchiveBatchStackStress {
 
 	public static void main(String[] args) throws IOException {
 
@@ -59,8 +60,8 @@ public class ParseGitHubBatchStackStress {
 
 		AtomicLong cont=new AtomicLong(0);
 		Stopwatch toroTimer = Stopwatch.createUnstarted();
-		JsonArchiveFeed feed = new JsonArchiveFeed("/temp/archive/");
-		feed.getGroupedFeedForLines(line -> line.length() < 1024, 50).forEach(docStream -> {
+		JsonArchiveFeed feed = new JsonArchiveFeed("/temp/httparchive/");
+		feed.getGroupedFeedForFiles((f)->f.getName().startsWith("160101_1J"), 50).forEach(docStream -> {
 			toroTimer.start();
 			executeMetaOperation(mvccMetainfoRepository, (mutableSnapshot) -> {
                 MutableMetaDatabase db = mutableSnapshot.getMetaDatabaseByName(DB1);
@@ -82,7 +83,7 @@ public class ParseGitHubBatchStackStress {
 		System.out.println("Rows:  " + cont);
 		System.out.println("Time Toro:   " + tt + " microsecs");
 		System.out.println("Speed: " + (tt / feed.documents) + " microsecs per document");
-		System.out.println("DPS: " + ((feed.documents / tt) * 1000000) + " documents per second");
+		System.out.println("DPS: " + ((feed.documents / tt) * 1000000) + " documents per second");		
 	}
-
+	
 }

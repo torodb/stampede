@@ -27,7 +27,6 @@ Parent project for the database backends module.
         <module>common</module>
         <module>derby</module>
         <module>postgresql</module>
-        <module>benchmark</module>
     </modules>
 
 </project>

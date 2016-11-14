@@ -1,5 +1,5 @@
 /*
- * MongoWP - ToroDB-poc: MongoDB Core
+ * ToroDB - ToroDB-poc: MongoDB Core
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify

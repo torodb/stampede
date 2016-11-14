@@ -42,6 +42,7 @@
             <outputDirectory>.</outputDirectory>
             <includes>
                 <include>README.md</include>
+                <include>LICENSE-GNU_AGPLv3.txt</include>
             </includes>
             <directoryMode>0755</directoryMode>
             <fileMode>0644</fileMode>

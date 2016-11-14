@@ -1,5 +1,5 @@
 /*
- * MongoWP - ToroDB-poc: Backend PostgreSQL
+ * ToroDB - ToroDB-poc: Backend PostgreSQL
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -22,12 +22,13 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import com.torodb.backend.converters.sql.SqlBinding;
+import com.torodb.backend.postgresql.converters.util.SqlEscaper;
 import com.torodb.common.util.TextEscaper;
 
 public class StringSqlBinding implements SqlBinding<String> {
     public static final StringSqlBinding INSTANCE = new StringSqlBinding();
     
-    private static final TextEscaper ESCAPER = TextEscaper.create(Escapable.values());
+    private static final TextEscaper ESCAPER = SqlEscaper.INSTANCE;
 
     @Override
     public String get(ResultSet resultSet, int columnIndex) throws SQLException {
@@ -41,36 +42,5 @@ public class StringSqlBinding implements SqlBinding<String> {
     @Override
     public void set(PreparedStatement preparedStatement, int parameterIndex, String value) throws SQLException {
         preparedStatement.setString(parameterIndex, ESCAPER.escape(value));
-    }
-    
-    private final static char ESCAPE_CHARACTER = 1;
-    private final static char ZERO_CHARACTER = 0;
-    
-    public enum Escapable implements TextEscaper.Escapable {
-        ZERO(ZERO_CHARACTER, '0'),
-        ESCAPE(ESCAPE_CHARACTER, '1');
-        
-        private final char character;
-        private final char suffixCharacter;
-        
-        private Escapable(char character, char suffixCharacter) {
-            this.character = character;
-            this.suffixCharacter = suffixCharacter;
-        }
-
-        @Override
-        public char getCharacter() {
-            return character;
-        }
-
-        @Override
-        public char getSuffixCharacter() {
-            return suffixCharacter;
-        }
-
-        @Override
-        public char getEscapeCharacter() {
-            return ESCAPE_CHARACTER;
-        }
     }
 }
