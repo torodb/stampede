@@ -11,11 +11,11 @@
     </prerequisites>
 
     <groupId>com.torodb</groupId>
-    <artifactId>torodb-parent</artifactId>
+    <artifactId>torodb-pom</artifactId>
     <version>0.50.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     
-    <name>ToroDB-poc parent</name>
+    <name>ToroDB parent</name>
     <description>
         ToroDB is an open source project that turns your RDBMS into a
         MongoDB-compatible server, supporting the MongoDB query API and
@@ -77,7 +77,6 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <torod.version>${project.version}</torod.version>
         <log4j.version>2.6.1</log4j.version>
         <jackson.version>2.6.3</jackson.version>
         <mongowp.version>0.50.0-SNAPSHOT</mongowp.version>
@@ -87,20 +86,9 @@
     </properties>
 
     <modules>
-        <module>common</module>
-        <module>concurrent</module>
-        <module>kvdocument</module>
-        <!--<module>query</module>-->
-        <module>metainfo-cache</module>
-        <module>backend</module>
-        <module>core</module>
-        <module>d2r</module>
-        <module>torod</module>
-        <module>mongodb</module>
-        <module>metrics</module>
-        <module>packaging</module>
-        <module>integration-tests</module>
-        <module>benchmarks</module>
+        <module>engine</module>
+        <module>server</module>
+        <module>stampede</module>
     </modules>
 
     <dependencyManagement>
@@ -128,11 +116,6 @@
             <dependency>
                 <groupId>com.8kdata.mongowp.server</groupId>
                 <artifactId>wp-layer</artifactId>
-                <version>${mongowp.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.8kdata.mongowp.api.safe.library</groupId>
-                <artifactId>v3m0</artifactId>
                 <version>${mongowp.version}</version>
             </dependency>
             <dependency>
@@ -221,17 +204,17 @@
             <dependency>
                 <groupId>org.jooq</groupId>
                 <artifactId>jooq-meta</artifactId>
-                <version>3.8.1</version>
+                <version>3.8.6</version>
             </dependency>
             <dependency>
                 <groupId>org.jooq</groupId>
                 <artifactId>jool</artifactId>
-                <version>0.9.11</version>
+                <version>0.9.12</version>
             </dependency>
             <dependency>
                 <groupId>com.zaxxer</groupId>
                 <artifactId>HikariCP</artifactId>
-                <version>2.4.6</version>
+                <version>2.5.1</version>
                 <exclusions>
                     <exclusion>
                         <groupId>org.slf4j</groupId>
@@ -327,7 +310,7 @@
             <dependency>
                 <groupId>com.google.code.findbugs</groupId>
                 <artifactId>annotations</artifactId>
-                <version>3.0.1u2</version>
+                <version>3.0.1</version>
                 <scope>provided</scope>
                 <type>jar</type>
             </dependency>
@@ -345,12 +328,12 @@
             <dependency>
                 <groupId>com.typesafe</groupId>
                 <artifactId>config</artifactId>
-                <version>1.3.0</version>
+                <version>1.3.1</version>
             </dependency>
             <dependency>
                 <groupId>com.typesafe.akka</groupId>
                 <artifactId>akka-stream_2.11</artifactId>
-                <version>2.4.9</version>
+                <version>2.4.12</version>
                 <exclusions>
                     <exclusion>
                         <groupId>org.scala-lang</groupId>
@@ -372,7 +355,7 @@
             <dependency>
                 <groupId>com.google.truth</groupId>
                 <artifactId>truth</artifactId>
-                <version>0.28</version>
+                <version>0.30</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
@@ -384,15 +367,8 @@
             <dependency>
                 <groupId>org.mockito</groupId>
                 <artifactId>mockito-core</artifactId>
-                <version>2.0.106-beta</version>
+                <version>2.2.15</version>
                 <scope>test</scope>
-                <exclusions>
-                    <exclusion>
-                        <!-- version 1.10.19 depends on hamcrest-core:1.1, meanwhile junit 4.12 depends on hamcrest-core:1.3 -->
-                        <groupId>org.hamcrest</groupId>
-                        <artifactId>hamcrest-core</artifactId>
-                    </exclusion>
-                </exclusions>
             </dependency>
 
             <dependency>
@@ -442,7 +418,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.5.1</version>
+                <version>3.6.0</version>
                 <configuration>
                     <source>1.8</source>
                     <target>1.8</target>
@@ -454,7 +430,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-resources-plugin</artifactId>
-                <version>2.7</version>
+                <version>3.0.1</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -567,7 +543,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-source-plugin</artifactId>
-                        <version>2.4</version>
+                        <version>3.0.1</version>
                         <executions>
                             <execution>
                                 <id>attach-sources</id>
@@ -580,7 +556,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>2.10.3</version>
+                        <version>2.10.4</version>
                         <configuration>
                             <failOnError>false</failOnError>
                         </configuration>
@@ -596,7 +572,7 @@
                     <plugin>
                         <groupId>org.jacoco</groupId>
                         <artifactId>jacoco-maven-plugin</artifactId>
-                        <version>0.7.6.201602180812</version>
+                        <version>0.7.7.201606060606</version>
                         <executions>
                             <execution>
                                 <goals>
@@ -622,7 +598,7 @@
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>findbugs-maven-plugin</artifactId>
-                        <version>3.0.3</version>
+                        <version>3.0.4</version>
                         <configuration>
                             <effort>Max</effort>
                             <threshold>Low</threshold>
