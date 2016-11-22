@@ -10,5 +10,8 @@ addons:
 
 sudo: false
   
+before_script:
+  - export GIT_BRANCH=$TRAVIS_BRANCH  
+  
 after_success:
   - bash <(curl -s https://codecov.io/bash) || echo "Codecov did not collect coverage reports"
