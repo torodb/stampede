@@ -38,7 +38,7 @@ The source code contains some Maven tasks that can build the right artifacts to 
 ```no-highlight
 $ mvn clean package -P docker -Ddocker.skipbase=false
 
-$ mvn -f packaging/stampede/main/pom.xml -P docker-stampede-fullstack docker:run -Ddocker.follow
+$ mvn -f stampede/main/pom.xml -P docker-stampede-fullstack docker:run -Ddocker.follow
 ```
 
 Sometimes, errors can appear due to the Docker cache. If that happens, cache can be disabled using command options, like is done in the next example. Usually these errors are related to network connection timeouts.
