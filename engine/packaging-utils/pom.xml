@@ -175,8 +175,7 @@
                         <configuration>
                             <images>
                                 <image>
-                                    <alias>torodb</alias>
-                                    <name>8kdata/torodb-base:%v</name>
+                                    <name>torodb/base:%v</name>
                                     <build>
                                         <skip>${docker.skipbase}</skip>
                                         <from>${docker.javaimage}</from>

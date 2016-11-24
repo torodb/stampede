@@ -239,9 +239,9 @@
                             <images>
                                 <image>
                                     <alias>torodb-stampede</alias>
-                                    <name>8kdata/torodb-stampede:%v</name>
+                                    <name>torodb/stampede:%v</name>
                                     <build>
-                                        <from>8kdata/torodb-base:latest</from>
+                                        <from>torodb/base:latest</from>
                                         <tags>
                                             <tag>${project.version}</tag>
                                             <tag>latest</tag>
@@ -304,7 +304,7 @@
                         <configuration>
                             <images>
                                 <image>
-                                    <name>8kdata/torodb-stampede</name>
+                                    <name>torodb/stampede</name>
                                     <run>
                                         <env>
                                             <POSTGRES_PASSWORD>${docker.postgres.password}</POSTGRES_PASSWORD>
@@ -364,7 +364,7 @@
                         <configuration>
                             <images>
                                 <image>
-                                    <name>8kdata/torodb-stampede</name>
+                                    <name>torodb/stampede</name>
                                     <run>
                                         <env>
                                             <POSTGRES_PASSWORD>${docker.postgres.password}</POSTGRES_PASSWORD>
@@ -471,7 +471,7 @@
                                     </run>
                                 </image>
                                 <image>
-                                    <name>8kdata/torodb-stampede</name>
+                                    <name>torodb/stampede</name>
                                     <run>
                                         <env>
                                             <POSTGRES_PASSWORD>${docker.postgres.password}</POSTGRES_PASSWORD>

@@ -1,7 +1,7 @@
 version: '2'
 services:
   torodb-stampede:
-    image: 8kdata/torodb-stampede
+    image: torodb/stampede
     links:
       - postgres
       - mongodb
