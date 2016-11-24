@@ -23,8 +23,8 @@ $ docker run -ti 8kdata/torodb-stampede
 
 The docker compose file must be downloaded and executed.
 
-```
-$ wget http://todo
+```no-highlight
+$ wget https://raw.githubusercontent.com/torodb/torodb/master/stampede/main/src/main/dist/docker/compose/torodb-stampede-fullstack/docker-compose.yml
 
 $ docker-compose up
 ```
@@ -43,6 +43,6 @@ $ mvn -f packaging/stampede/main/pom.xml -P docker-stampede-fullstack docker:run
 
 Sometimes, errors can appear due to the Docker cache. If that happens, cache can be disabled using command options, like is done in the next example. Usually these errors are related to network connection timeouts.
 
-```
+```no-highlight
 $  mvn clean package -P docker -Ddocker.skipbase=false -Ddocker.nocache=true
 ```
