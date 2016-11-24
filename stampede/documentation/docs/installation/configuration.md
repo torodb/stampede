@@ -60,6 +60,10 @@ replication:
 
 In this case the only collection replicated is *title* from *film* database.
 
+!!! danger "Exclusion removal"
+	If you stop ToroDB Stampede, remove an exclusion, and restart ToroDB Stampede, the replication process will replicate operations on this database/collection without replicating previously data form this database/collection, reaching an inconsistent state.
+	
+	It is recommended to delete ToroDB Stampede database and restart the whole replication process from scratch.     
 
 ### Exclude a MongoDB index
 
@@ -88,7 +92,4 @@ replication:
 ```
 
 !!! danger "Exclusion removal"
-	If you stop ToroDB Stampede, remove an exclusion, and restart ToroDB Stampede, the replication process will replicate operations on this database/collection without replicating previously data form this database/collection, reaching an inconsistent state.
-	
-	It is recommended to delete ToroDB Stampede database and restart the whole replication process from scratch.     
- 
+	If you stop ToroDB Stampede, remove an exclusion, and restart ToroDB Stampede, the replication process will not create the previously excluded indexes. ToroDB Stampede only creates indexes at the initial recovery process and when a create index command is found in the oplog replication process.
