@@ -18,9 +18,11 @@ Among the proper configuration into the relational database, ToroDB Stampede req
 
 TODO
 
-## Exclude a MongoDB database or collection
+## Exclude replication
 
 By default ToroDB Stampede replicates all databases and collections available in your MongoDB. You can exclude a whole database or some collection changing ToroDB Stampede configuracion.
+
+### Exclude a MongoDB database or collection
 
 In the replication section of the yml config file add an exclude item with the database to exclude:   
 
@@ -40,10 +42,11 @@ replication:
   syncSource: localhost:27017
   exclude: 
     <database name>:
-    	<collection name>: "*"
+    	- <collection name 1>
+    	- <collection name 2>
 ```
 
-For example, if you have two databases, films and music, and each one has two collections, title and performer. The configuration to exclude the whole music database, but in film database only performer collection, you should write:  
+For example, if you have two databases, *films* and *music*, and each one has two collections, *title* and *performer*. The configuration to exclude the whole *music* database, but in *film* database only *performer* collection, you should write:  
 
 ```json
 replication:
@@ -52,13 +55,13 @@ replication:
   exclude: 
     music: "*"
     film: 
-        performer: "*"
+        - performer
 ```
 
-In this case the only collection replicated is title from film database.
+In this case the only collection replicated is *title* from *film* database.
 
 
-## Exclude a MongoDB index
+### Exclude a MongoDB index
 
 Some index created in MongoDB for OLTP operations can be unusefull for OLAP and analytics operations. MongoDB indexes can be excluded in ToroDB Stampede allowing you to save disk space. You just need to add the index name  in the exclude section.
 
@@ -72,7 +75,7 @@ replication:
     		- name: <index name>
 ```
 
-If you want to exclude the index called city on collection performer from film database, you should write: 
+If you want to exclude the index called *city* on collection *performer* from *film* database, you should write: 
 
 ```json
 replication:
@@ -83,4 +86,9 @@ replication:
         performer:
         	- name: city
 ```
+
+!!! danger "Exclusion removal"
+	If you stop ToroDB Stampede, remove an exclusion, and restart ToroDB Stampede, the replication process will replicate operations on this database/collection without replicating previously data form this database/collection, reaching an inconsistent state.
+	
+	It is recommended to delete ToroDB Stampede database and restart the whole replication process from scratch.     
  
