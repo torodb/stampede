@@ -91,5 +91,7 @@ replication:
         	- name: city
 ```
 
+Any unsuported index in ToroDB Stampede (text , 2dsphere, 2d, hashed, ...) is ignored and is not created in the relational database, and you don't need to exclude it.  
+
 !!! danger "Exclusion removal"
 	If you stop ToroDB Stampede, remove an exclusion, and restart ToroDB Stampede, the replication process will not create the previously excluded indexes. ToroDB Stampede only creates indexes at the initial recovery process and when a create index command is found in the oplog replication process.
