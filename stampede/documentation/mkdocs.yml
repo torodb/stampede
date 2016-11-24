@@ -15,3 +15,5 @@ pages:
   - 'Appendix': appendix.md
 extra_css:
   - css/8kdata.css
+markdown_extensions:
+  - admonition:
