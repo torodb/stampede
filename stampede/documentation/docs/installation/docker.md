@@ -8,7 +8,7 @@ ToroDB Stampede can be tested in a Docker container in two different ways. First
 If `.toropass` file is created the docker containers can be launched with the command below.
 
 ```no-highlight
-$ docker run -ti -v `realpath <postgres-credentials-file>`:/root/.toropass 8kdata/torodb-stampede
+$ docker run -ti -v `realpath <postgres-credentials-file>`:/root/.toropass torodb/stampede
 ```
 
 In other case it will be enough with the creation of the environment variable `TORODB_BACKEND_PASSWORD`.
@@ -16,7 +16,7 @@ In other case it will be enough with the creation of the environment variable `T
 ```no-highlight
 $ TORODB_BACKEND_PASSWORD="<password>"
 
-$ docker run -ti 8kdata/torodb-stampede
+$ docker run -ti torodb/stampede
 ```
 
 ### With Docker Compose
