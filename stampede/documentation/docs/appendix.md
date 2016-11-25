@@ -48,11 +48,11 @@ Usage: `torodb-stampede [options]`
 
 ## Configuration file
 
-Another way to configure the system is through configuration file, as the CLI command, it has a few available options.
+Another way to configure the system is through configuration file or setting configuration parameters, using the CLI parameter `-p`. Next sections will provide a list of available parameters with the path that identify it in the configuration (as defined by [JSON pointer specification](https://tools.ietf.org/html/rfc6901)).
 
 ### ToroDB logging configuration
 
-| Option | |
+| Parameter |  |
 |--------|-|
 | /logging/log4j2File | Overwrites Log4j2 configuration file with the given one. |
 | /logging/level | Overwrites the default level with the given one. |
@@ -62,14 +62,14 @@ Another way to configure the system is through configuration file, as the CLI co
 
 ### Replication configuration
 
-| Option | |
+| Parameter |  |
 |--------|-|
 | /replication/replSetName | Overwrites the default value of the MongoDB Replica Set used for replication. |
 | /replication/syncSource | Overwrites the default connection address for the MongoDB Replica Set used for replication (host:port) |
 
 ### Replication SSL configuration
 
-| Option | |
+| Parameter |  |
 |--------|-|
 | /replication/ssl/enabled | If `false` the SSL/TLS layer is disabled if `true` it is enabled. |
 | /replication/ssl/allowInvalidHostnames | If `true` hostname verification is disabled, if `false` it is enabled. | 
@@ -83,7 +83,7 @@ Another way to configure the system is through configuration file, as the CLI co
 
 ### Replication authentication configuration
 
-| Option | |
+| Parameter |  |
 |--------|-|
 | /replication/auth/mode | Specifies the authentication mode, that can take one of the next values.<ul><li>disabled: Disable authentication mechanism.</li><li>negotiate: The client will negotiate best mechanism to authenticate. With server version 3.0 or above, the driver will authenticate using the SCRAM-SHA-1 mechanism. Otherwise, the driver will authenticate using the Challenge Response mechanism.</li><li>cr: Challenge Response authentication</li><li>x509: X.509 authentication</li><li>scram_sha1: SCRAM-SHA-1 SASL authentication</li></ul> |
 | /replication/auth/user | User to be authenticated. |
@@ -94,7 +94,7 @@ Another way to configure the system is through configuration file, as the CLI co
 
 ### PostgreSQL configuration
 
-| Option | |
+| Parameter |  |
 |--------|-|
 | /backend/postgres/host | The host or ip that will be used to connect. |
 | /backend/postgres/port | The port that will be used to connect. |
@@ -105,7 +105,7 @@ Another way to configure the system is through configuration file, as the CLI co
 
 ### ToroDB Stampede pool configuration
 
-| Option | |
+| Parameter |  |
 |--------|-|
 | /backend/pool/connectionPoolTimeout | The timeout in milliseconds after which retrieve a connection from the pool will fail. | 
 | /backend/pool/connectionPoolSize |  Maximum number of connections to establish to the database. It must be higher or equal than 3. | 
