@@ -59,6 +59,11 @@ Another way to configure the system is through configuration file, as the CLI co
 | /logging/packages/<package-name> | Overwrites the default level for the given package name. | 
 | /logging/file | Overwrites the default value for the log output file path. |
 | /metricsEnabled | With value `true` enables the metrics system, and `false` disables it. |
+
+### Replication configuration
+
+| Option | |
+|--------|-|
 | /replication/replSetName | Overwrites the default value of the MongoDB Replica Set used for replication. |
 | /replication/syncSource | Overwrites the default connection address for the MongoDB Replica Set used for replication (host:port) |
 
@@ -87,7 +92,7 @@ Another way to configure the system is through configuration file, as the CLI co
 | /replication/exclude/`<string>` | A map of databases and/or collections and/or indexes to exclusively replicate.<ul><li>Each entry represent a database name under which a list of collection names can be specified.</li><li>Each collection can contain a list of indexes each formed by one or more of those fields:<ul><li>name=<string> the index name</li><li>unqiue=<boolean> true when index is unique, false otherwise</li><li>keys/<string>=<string> the name of the field indexed and the index direction or type</ul><li>Character '\*' can be used to denote "any-character" and character '\' to escape characters.</li></ul> |
 | /replication/mongopassFile | Path to the file with MongoDB access configuration in `.pgpass` syntax. |
 
-### PostgreSQL configuration (default)
+### PostgreSQL configuration
 
 | Option | |
 |--------|-|
