@@ -13,6 +13,7 @@ pages:
     - 'PostgreSQL configuration tips': installation/postgresql-configuration-tips.md
   - 'How to use?': how-to-use.md
   - 'FAQ': faq.md
+  - 'Glossary': glossary.md
   - 'Appendix': appendix.md
 extra_css:
   - css/8kdata.css
