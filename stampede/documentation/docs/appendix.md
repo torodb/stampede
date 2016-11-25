@@ -4,7 +4,7 @@
 
 To execute ToroDb Stampede using the command line, a few options can be given to configure the system.
 
-Usage: `<main class> [options]`
+Usage: `torodb-stampede [options]`
 
 | Option | |
 |--------|-|
