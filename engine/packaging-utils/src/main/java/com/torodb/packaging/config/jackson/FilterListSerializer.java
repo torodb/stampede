@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Packaging utils
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,13 +13,10 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package com.torodb.packaging.config.jackson;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
+package com.torodb.packaging.config.jackson;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -32,40 +29,46 @@ import com.torodb.packaging.config.model.protocol.mongo.FilterList;
 import com.torodb.packaging.config.model.protocol.mongo.FilterList.IndexFilter;
 import com.torodb.packaging.config.util.DescriptionFactoryWrapper;
 
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+
 public class FilterListSerializer extends JsonSerializer<FilterList> {
-	@Override
-	public void serialize(FilterList value, JsonGenerator jgen, SerializerProvider provider)
-			throws IOException, JsonProcessingException {
-		jgen.writeStartObject();
 
-		serializeFields(value, jgen);
+  @Override
+  public void serialize(FilterList value, JsonGenerator jgen, SerializerProvider provider)
+      throws IOException, JsonProcessingException {
+    jgen.writeStartObject();
 
-		jgen.writeEndObject();
-	}
+    serializeFields(value, jgen);
 
-	private void serializeFields(FilterList value, JsonGenerator jgen) throws IOException {
-		for (Map.Entry<String, Map<String, List<IndexFilter>>> databaseEntry : value.entrySet()) {
-            jgen.writeArrayFieldStart(databaseEntry.getKey());
-            for (Map.Entry<String, List<IndexFilter>> collection : databaseEntry.getValue().entrySet()) {
-                if (collection.getValue().isEmpty()) {
-                    jgen.writeString(collection.getKey());
-                } else {
-                    jgen.writeStartObject();
-                    jgen.writeArrayFieldStart(collection.getKey());
-                    for (IndexFilter indexFilter : collection.getValue()) {
-                        jgen.writeObject(indexFilter);
-                    }
-                    jgen.writeEndArray();
-                    jgen.writeEndObject();
-                }
-            }
-            jgen.writeEndArray();
-		}
-	}
+    jgen.writeEndObject();
+  }
 
-	public void acceptJsonFormatVisitor(JsonFormatVisitorWrapper visitor, JavaType type) throws JsonMappingException {
-		if (!(visitor instanceof DescriptionFactoryWrapper)) {
-			super.acceptJsonFormatVisitor(visitor, type);
-		}
-	}
+  private void serializeFields(FilterList value, JsonGenerator jgen) throws IOException {
+    for (Map.Entry<String, Map<String, List<IndexFilter>>> databaseEntry : value.entrySet()) {
+      jgen.writeArrayFieldStart(databaseEntry.getKey());
+      for (Map.Entry<String, List<IndexFilter>> collection : databaseEntry.getValue().entrySet()) {
+        if (collection.getValue().isEmpty()) {
+          jgen.writeString(collection.getKey());
+        } else {
+          jgen.writeStartObject();
+          jgen.writeArrayFieldStart(collection.getKey());
+          for (IndexFilter indexFilter : collection.getValue()) {
+            jgen.writeObject(indexFilter);
+          }
+          jgen.writeEndArray();
+          jgen.writeEndObject();
+        }
+      }
+      jgen.writeEndArray();
+    }
+  }
+
+  public void acceptJsonFormatVisitor(JsonFormatVisitorWrapper visitor, JavaType type) throws
+      JsonMappingException {
+    if (!(visitor instanceof DescriptionFactoryWrapper)) {
+      super.acceptJsonFormatVisitor(visitor, type);
+    }
+  }
 }

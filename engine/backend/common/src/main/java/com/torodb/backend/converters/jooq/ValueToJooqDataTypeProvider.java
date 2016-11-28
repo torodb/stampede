@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Backend common
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,20 +13,22 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.backend.converters.jooq;
+
+import com.torodb.core.transaction.metainf.FieldType;
 
 import java.io.Serializable;
 
 import javax.annotation.Nonnull;
-
-import com.torodb.core.transaction.metainf.FieldType;
 
 /**
  *
  */
 public interface ValueToJooqDataTypeProvider extends Serializable {
 
-    @Nonnull public DataTypeForKV<?> getDataType(@Nonnull FieldType type);
+  @Nonnull
+  public DataTypeForKv<?> getDataType(@Nonnull FieldType type);
 }

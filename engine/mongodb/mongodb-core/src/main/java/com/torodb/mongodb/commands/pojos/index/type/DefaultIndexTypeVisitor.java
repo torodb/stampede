@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,52 +13,53 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.commands.pojos.index.type;
 
-public abstract class DefaultIndexTypeVisitor<Arg, Result> implements IndexTypeVisitor<Arg, Result> {
+public abstract class DefaultIndexTypeVisitor<A, R> implements IndexTypeVisitor<A, R> {
 
-    protected abstract Result defaultVisit(IndexType indexType, Arg arg);
-    
-    @Override
-    public Result visit(AscIndexType indexType, Arg arg) {
-        return defaultVisit(indexType, arg);
-    }
+  protected abstract R defaultVisit(IndexType indexType, A arg);
 
-    @Override
-    public Result visit(DescIndexType indexType, Arg arg) {
-        return defaultVisit(indexType, arg);
-    }
+  @Override
+  public R visit(AscIndexType indexType, A arg) {
+    return defaultVisit(indexType, arg);
+  }
 
-    @Override
-    public Result visit(TextIndexType indexType, Arg arg) {
-        return defaultVisit(indexType, arg);
-    }
+  @Override
+  public R visit(DescIndexType indexType, A arg) {
+    return defaultVisit(indexType, arg);
+  }
 
-    @Override
-    public Result visit(HashedIndexType indexType, Arg arg) {
-        return defaultVisit(indexType, arg);
-    }
+  @Override
+  public R visit(TextIndexType indexType, A arg) {
+    return defaultVisit(indexType, arg);
+  }
 
-    @Override
-    public Result visit(TwoDIndexType indexType, Arg arg) {
-        return defaultVisit(indexType, arg);
-    }
+  @Override
+  public R visit(HashedIndexType indexType, A arg) {
+    return defaultVisit(indexType, arg);
+  }
 
-    @Override
-    public Result visit(TwoDSphereIndexType indexType, Arg arg) {
-        return defaultVisit(indexType, arg);
-    }
+  @Override
+  public R visit(TwoDIndexType indexType, A arg) {
+    return defaultVisit(indexType, arg);
+  }
 
-    @Override
-    public Result visit(GeoHaystackIndexType indexType, Arg arg) {
-        return defaultVisit(indexType, arg);
-    }
+  @Override
+  public R visit(TwoDSphereIndexType indexType, A arg) {
+    return defaultVisit(indexType, arg);
+  }
 
-    @Override
-    public Result visit(UnknownIndexType indexType, Arg arg) {
-        return defaultVisit(indexType, arg);
-    }
+  @Override
+  public R visit(GeoHaystackIndexType indexType, A arg) {
+    return defaultVisit(indexType, arg);
+  }
+
+  @Override
+  public R visit(UnknownIndexType indexType, A arg) {
+    return defaultVisit(indexType, arg);
+  }
 
 }

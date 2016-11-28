@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.core.transaction.metainf;
 
 import javax.annotation.Nonnull;
@@ -24,24 +25,26 @@ import javax.annotation.Nonnull;
  */
 public interface MetaField {
 
-    /**
-     * The name of the given field on the document model.
-     * @return
-     */
-    @Nonnull
-    public abstract String getName();
+  /**
+   * The name of the given field on the document model.
+   *
+   * @return
+   */
+  @Nonnull
+  public abstract String getName();
 
-    /**
-     * The identifier of the given field on the SQL model
-     * @return
-     */
-    @Nonnull
-    public abstract String getIdentifier();
+  /**
+   * The identifier of the given field on the SQL model
+   *
+   * @return
+   */
+  @Nonnull
+  public abstract String getIdentifier();
 
-    @Nonnull
-    public abstract FieldType getType();
+  @Nonnull
+  public abstract FieldType getType();
 
-    public default String defautToString() {
-        return "field{" + "name:" + getName() + ", type:" + getType() + ", id:" + getIdentifier() + '}';
-    }
+  public default String defautToString() {
+    return "field{" + "name:" + getName() + ", type:" + getType() + ", id:" + getIdentifier() + '}';
+  }
 }

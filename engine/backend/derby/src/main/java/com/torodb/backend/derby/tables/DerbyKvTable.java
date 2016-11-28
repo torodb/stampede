@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Backend Derby
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,72 +13,72 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.backend.derby.tables;
 
 import com.torodb.backend.derby.tables.records.DerbyKvRecord;
+import com.torodb.backend.tables.KvTable;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.jooq.Field;
 import org.jooq.Table;
 import org.jooq.TableField;
 import org.jooq.impl.SQLDataType;
 
-import com.torodb.backend.tables.KvTable;
-
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-
-@SuppressFBWarnings(value = {"EQ_DOESNT_OVERRIDE_EQUALS","HE_HASHCODE_NO_EQUALS"})
+@SuppressFBWarnings(value = {"EQ_DOESNT_OVERRIDE_EQUALS", "HE_HASHCODE_NO_EQUALS"})
 public class DerbyKvTable extends KvTable<DerbyKvRecord> {
 
-    private static final long serialVersionUID = -5506554761865128847L;
-    /**
-	 * The singleton instance of <code>torodb.collections</code>
-	 */
-	public static final DerbyKvTable KV = new DerbyKvTable();
+  private static final long serialVersionUID = -5506554761865128847L;
+  /**
+   * The singleton instance of <code>torodb.collections</code>
+   */
+  public static final DerbyKvTable KV = new DerbyKvTable();
 
-	@Override
-    public Class<DerbyKvRecord> getRecordType() {
-        return DerbyKvRecord.class;
-    }
+  @Override
+  public Class<DerbyKvRecord> getRecordType() {
+    return DerbyKvRecord.class;
+  }
 
-    public DerbyKvTable() {
-		this(TABLE_NAME, null);
-	}
+  public DerbyKvTable() {
+    this(TABLE_NAME, null);
+  }
 
-	public DerbyKvTable(String alias) {
-	    this(alias, DerbyKvTable.KV);
-	}
+  public DerbyKvTable(String alias) {
+    this(alias, DerbyKvTable.KV);
+  }
 
-	private DerbyKvTable(String alias, Table<DerbyKvRecord> aliased) {
-		this(alias, aliased, null);
-	}
+  private DerbyKvTable(String alias, Table<DerbyKvRecord> aliased) {
+    this(alias, aliased, null);
+  }
 
-	private DerbyKvTable(String alias, Table<DerbyKvRecord> aliased, Field<?>[] parameters) {
-		super(alias, aliased, parameters);
-	}
-    
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public DerbyKvTable as(String alias) {
-		return new DerbyKvTable(alias, this);
-	}
+  private DerbyKvTable(String alias, Table<DerbyKvRecord> aliased, Field<?>[] parameters) {
+    super(alias, aliased, parameters);
+  }
 
-	/**
-	 * Rename this table
-	 */
-	public DerbyKvTable rename(String name) {
-		return new DerbyKvTable(name, null);
-	}
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public DerbyKvTable as(String alias) {
+    return new DerbyKvTable(alias, this);
+  }
 
-    @Override
-    protected TableField<DerbyKvRecord, String> createNameField() {
-        return createField(TableFields.KEY.fieldName, SQLDataType.VARCHAR.nullable(false), this, "");
-    }
+  /**
+   * Rename this table
+   */
+  @Override
+  public DerbyKvTable rename(String name) {
+    return new DerbyKvTable(name, null);
+  }
 
-    @Override
-    protected TableField<DerbyKvRecord, String> createIdentifierField() {
-        return createField(TableFields.VALUE.fieldName, SQLDataType.VARCHAR.nullable(false), this, "");
-    }
+  @Override
+  protected TableField<DerbyKvRecord, String> createNameField() {
+    return createField(TableFields.KEY.fieldName, SQLDataType.VARCHAR.nullable(false), this, "");
+  }
+
+  @Override
+  protected TableField<DerbyKvRecord, String> createIdentifierField() {
+    return createField(TableFields.VALUE.fieldName, SQLDataType.VARCHAR.nullable(false), this, "");
+  }
 }

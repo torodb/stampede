@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Backend common
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,42 +13,44 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.backend.converters.jooq;
 
+import com.torodb.core.transaction.metainf.FieldType;
 import org.jooq.Converter;
 import org.jooq.DataType;
 import org.jooq.impl.SQLDataType;
 
-import com.torodb.core.transaction.metainf.FieldType;
-
 /**
  *
  */
-public class FieldTypeConverter implements Converter<String, FieldType>{
-    private static final long serialVersionUID = 1L;
+public class FieldTypeConverter implements Converter<String, FieldType> {
 
-    public static final DataType<FieldType> TYPE = SQLDataType.VARCHAR.asConvertedDataType(new FieldTypeConverter());
+  private static final long serialVersionUID = 1L;
 
-    @Override
-    public FieldType from(String databaseObject) {
-        return FieldType.valueOf(databaseObject);
-    }
+  public static final DataType<FieldType> TYPE = SQLDataType.VARCHAR.asConvertedDataType(
+      new FieldTypeConverter());
 
-    @Override
-    public String to(FieldType userObject) {
-        return userObject.name();
-    }
+  @Override
+  public FieldType from(String databaseObject) {
+    return FieldType.valueOf(databaseObject);
+  }
 
-    @Override
-    public Class<String> fromType() {
-        return String.class;
-    }
+  @Override
+  public String to(FieldType userObject) {
+    return userObject.name();
+  }
 
-    @Override
-    public Class<FieldType> toType() {
-        return FieldType.class;
-    }
-    
+  @Override
+  public Class<String> fromType() {
+    return String.class;
+  }
+
+  @Override
+  public Class<FieldType> toType() {
+    return FieldType.class;
+  }
+
 }

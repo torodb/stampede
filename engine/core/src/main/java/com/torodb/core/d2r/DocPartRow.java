@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,26 +13,27 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.core.d2r;
 
-import com.torodb.kvdocument.values.KVValue;
+import com.torodb.kvdocument.values.KvValue;
 
 public interface DocPartRow {
 
-	DocPartData getDocPartData();
+  DocPartData getDocPartData();
 
-	int getDid();
+  int getDid();
 
-	int getRid();
+  int getRid();
 
-	Integer getPid();
+  Integer getPid();
 
-	Integer getSeq();
+  Integer getSeq();
 
-	Iterable<KVValue<?>> getFieldValues();
-	
-	Iterable<KVValue<?>> getScalarValues();
-	
+  Iterable<KvValue<?>> getFieldValues();
+
+  Iterable<KvValue<?>> getScalarValues();
+
 }

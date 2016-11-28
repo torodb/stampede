@@ -29,10 +29,10 @@
     },
     "oplog": [
         { 
-            "op" : "c", 
-            "ns" : "test.$cmd", 
-            "o" : { 
-                "applyOps" : "db1.col1"
+            "op": "c", 
+            "ns": "test.$cmd", 
+            "o": { 
+                "applyOps": "db1.col1"
             }
         }
     ]

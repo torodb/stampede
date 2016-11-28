@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,23 +13,24 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.commands.pojos.index.type;
 
 import com.eightkdata.mongowp.bson.utils.DefaultBsonValues;
 
 public class TwoDSphereIndexType extends AbstractIndexType {
 
-    public static final TwoDSphereIndexType INSTANCE = new TwoDSphereIndexType();
+  public static final TwoDSphereIndexType INSTANCE = new TwoDSphereIndexType();
 
-    private TwoDSphereIndexType() {
-        super(DefaultBsonValues.newString("2dsphere"));
-    }
+  private TwoDSphereIndexType() {
+    super(DefaultBsonValues.newString("2dsphere"));
+  }
 
-    @Override
-    public <Arg, Result> Result accept(IndexTypeVisitor<Arg, Result> visitor, Arg arg) {
-        return visitor.visit(this, arg);
-    }
+  @Override
+  public <A, R> R accept(IndexTypeVisitor<A, R> visitor, A arg) {
+    return visitor.visit(this, arg);
+  }
 
 }

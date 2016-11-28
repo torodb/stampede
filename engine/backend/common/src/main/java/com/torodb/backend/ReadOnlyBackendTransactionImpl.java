@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Backend common
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.backend;
 
 import com.torodb.core.backend.ReadOnlyBackendTransaction;
@@ -22,12 +23,13 @@ import com.torodb.core.backend.ReadOnlyBackendTransaction;
 /**
  *
  */
-public class ReadOnlyBackendTransactionImpl extends BackendTransactionImpl implements ReadOnlyBackendTransaction {
+public class ReadOnlyBackendTransactionImpl extends BackendTransactionImpl implements
+    ReadOnlyBackendTransaction {
 
-    public ReadOnlyBackendTransactionImpl(SqlInterface sqlInterface,
-            BackendConnectionImpl backendConnection) {
-        super(sqlInterface.getDbBackend().createReadOnlyConnection(),
-                sqlInterface, backendConnection);
-    }
+  public ReadOnlyBackendTransactionImpl(SqlInterface sqlInterface,
+      BackendConnectionImpl backendConnection) {
+    super(sqlInterface.getDbBackend().createReadOnlyConnection(),
+        sqlInterface, backendConnection);
+  }
 
 }

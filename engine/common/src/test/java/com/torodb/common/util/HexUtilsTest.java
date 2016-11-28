@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: common
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,47 +13,50 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.common.util;
+
+import static org.junit.Assert.assertEquals;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import javax.xml.bind.DatatypeConverter;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
+import javax.xml.bind.DatatypeConverter;
 
 public class HexUtilsTest {
-    private static byte[] bytes = new byte[1000];
 
-    @BeforeClass
-    public static void generateBytes() {
-        for(int i = 0; i < bytes.length; i++) {
-            bytes[i] = (byte) i;
-        }
+  private static byte[] bytes = new byte[1000];
+
+  @BeforeClass
+  public static void generateBytes() {
+    for (int i = 0; i < bytes.length; i++) {
+      bytes[i] = (byte) i;
     }
+  }
 
-    @Test
-    public void bytes2HexArray() {
-        String expected = DatatypeConverter.printHexBinary(bytes);
-        String result = HexUtils.bytes2Hex(bytes);
+  @Test
+  public void bytes2HexArray() {
+    String expected = DatatypeConverter.printHexBinary(bytes);
+    String result = HexUtils.bytes2Hex(bytes);
 
-        assertEquals(expected, result);
+    assertEquals(expected, result);
+  }
+
+  @Test
+  public void bytes2HexCollection() {
+    String expected = DatatypeConverter.printHexBinary(bytes);
+
+    List<Byte> collectionBytes = new ArrayList<>(bytes.length);
+    for (byte b : bytes) {
+      collectionBytes.add(b);
     }
+    String result = HexUtils.bytes2Hex(collectionBytes);
 
-    @Test
-    public void bytes2HexCollection() {
-        String expected = DatatypeConverter.printHexBinary(bytes);
-
-        List<Byte> collectionBytes = new ArrayList<>(bytes.length);
-        for(byte b : bytes) {
-            collectionBytes.add(b);
-        }
-        String result = HexUtils.bytes2Hex(collectionBytes);
-
-        assertEquals(expected, result);
-    }
+    assertEquals(expected, result);
+  }
 }

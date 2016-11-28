@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,11 +13,13 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.core.services;
 
 import com.google.common.util.concurrent.Service;
+
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -25,14 +27,14 @@ import java.util.concurrent.CompletableFuture;
  */
 public interface TorodbService extends Service {
 
-    public default CompletableFuture<?> stop() {
-        this.stopAsync();
-        return CompletableFuture.runAsync(this::awaitRunning);
-    }
+  public default CompletableFuture<?> stop() {
+    this.stopAsync();
+    return CompletableFuture.runAsync(this::awaitRunning);
+  }
 
-    public default CompletableFuture<?> start() {
-        this.startAsync();
-        return CompletableFuture.runAsync(this::awaitTerminated);
-    }
+  public default CompletableFuture<?> start() {
+    this.startAsync();
+    return CompletableFuture.runAsync(this::awaitTerminated);
+  }
 
 }

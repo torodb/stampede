@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Backend common
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,34 +13,35 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.backend.converters.json;
 
 import com.torodb.backend.converters.ValueConverter;
-import com.torodb.kvdocument.values.KVLong;
+import com.torodb.kvdocument.values.KvLong;
 
 /**
  *
  */
 public class LongValueToJsonConverter implements
-        ValueConverter<Number, KVLong> {
+    ValueConverter<Number, KvLong> {
 
-    private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
 
-    @Override
-    public Class<? extends Number> getJsonClass() {
-        return Long.class;
-    }
+  @Override
+  public Class<? extends Number> getJsonClass() {
+    return Long.class;
+  }
 
-    @Override
-    public Class<? extends KVLong> getValueClass() {
-        return KVLong.class;
-    }
+  @Override
+  public Class<? extends KvLong> getValueClass() {
+    return KvLong.class;
+  }
 
-    @Override
-    public KVLong toValue(Number value) {
-        return KVLong.of(value.longValue());
-    }
-    
+  @Override
+  public KvLong toValue(Number value) {
+    return KvLong.of(value.longValue());
+  }
+
 }

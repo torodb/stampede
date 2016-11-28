@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Backend Derby
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,89 +13,91 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.backend.derby.tables;
 
+import com.torodb.backend.derby.tables.records.DerbyMetaIndexRecord;
+import com.torodb.backend.tables.MetaIndexTable;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.jooq.Field;
 import org.jooq.Table;
 import org.jooq.TableField;
 import org.jooq.impl.SQLDataType;
 
-import com.torodb.backend.derby.tables.records.DerbyMetaIndexRecord;
-import com.torodb.backend.tables.MetaIndexTable;
-
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-
-@SuppressFBWarnings(value = {"EQ_DOESNT_OVERRIDE_EQUALS","HE_HASHCODE_NO_EQUALS"})
+@SuppressFBWarnings(value = {"EQ_DOESNT_OVERRIDE_EQUALS", "HE_HASHCODE_NO_EQUALS"})
 public class DerbyMetaIndexTable extends MetaIndexTable<DerbyMetaIndexRecord> {
 
-    private static final long serialVersionUID = -7901334417081875840L;
-    /**
-	 * The singleton instance of <code>torodb.index</code>
-	 */
-	public static final DerbyMetaIndexTable INDEX = new DerbyMetaIndexTable();
+  private static final long serialVersionUID = -7901334417081875840L;
+  /**
+   * The singleton instance of <code>torodb.index</code>
+   */
+  public static final DerbyMetaIndexTable INDEX = new DerbyMetaIndexTable();
 
-	@Override
-    public Class<DerbyMetaIndexRecord> getRecordType() {
-        return DerbyMetaIndexRecord.class;
-    }
-	
-	/**
-	 * Create a <code>torodb.index</code> table reference
-	 */
-	public DerbyMetaIndexTable() {
-		this(TABLE_NAME, null);
-	}
+  @Override
+  public Class<DerbyMetaIndexRecord> getRecordType() {
+    return DerbyMetaIndexRecord.class;
+  }
 
-	/**
-	 * Create an aliased <code>torodb.index</code> table reference
-	 */
-	public DerbyMetaIndexTable(String alias) {
-	    this(alias, DerbyMetaIndexTable.INDEX);
-	}
+  /**
+   * Create a <code>torodb.index</code> table reference
+   */
+  public DerbyMetaIndexTable() {
+    this(TABLE_NAME, null);
+  }
 
-	private DerbyMetaIndexTable(String alias, Table<DerbyMetaIndexRecord> aliased) {
-		this(alias, aliased, null);
-	}
+  /**
+   * Create an aliased <code>torodb.index</code> table reference
+   */
+  public DerbyMetaIndexTable(String alias) {
+    this(alias, DerbyMetaIndexTable.INDEX);
+  }
 
-	private DerbyMetaIndexTable(String alias, Table<DerbyMetaIndexRecord> aliased, Field<?>[] parameters) {
-		super(alias, aliased, parameters);
-	}
-    
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public DerbyMetaIndexTable as(String alias) {
-		return new DerbyMetaIndexTable(alias, this);
-	}
+  private DerbyMetaIndexTable(String alias, Table<DerbyMetaIndexRecord> aliased) {
+    this(alias, aliased, null);
+  }
 
-	/**
-	 * Rename this table
-	 */
-	public DerbyMetaIndexTable rename(String name) {
-		return new DerbyMetaIndexTable(name, null);
-	}
+  private DerbyMetaIndexTable(String alias, Table<DerbyMetaIndexRecord> aliased,
+      Field<?>[] parameters) {
+    super(alias, aliased, parameters);
+  }
 
-    @Override
-    protected TableField<DerbyMetaIndexRecord, String> createDatabaseField() {
-        return createField(TableFields.DATABASE.fieldName, SQLDataType.VARCHAR.nullable(false), this, "");
-    }
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public DerbyMetaIndexTable as(String alias) {
+    return new DerbyMetaIndexTable(alias, this);
+  }
 
-    @Override
-    protected TableField<DerbyMetaIndexRecord, String> createCollectionField() {
-        return createField(TableFields.COLLECTION.fieldName, SQLDataType.VARCHAR.nullable(false), this, "");
-    }
+  /**
+   * Rename this table
+   */
+  public DerbyMetaIndexTable rename(String name) {
+    return new DerbyMetaIndexTable(name, null);
+  }
 
-    @Override
-    protected TableField<DerbyMetaIndexRecord, String> createNameField() {
-        return createField(TableFields.NAME.fieldName, SQLDataType.VARCHAR.nullable(false), this, "");
-    }
+  @Override
+  protected TableField<DerbyMetaIndexRecord, String> createDatabaseField() {
+    return createField(TableFields.DATABASE.fieldName, SQLDataType.VARCHAR.nullable(false),
+        this, "");
+  }
 
-    @Override
-    protected TableField<DerbyMetaIndexRecord, Boolean> createUniqueField() {
-        return createField(TableFields.UNIQUE.fieldName, SQLDataType.BOOLEAN.nullable(false), this, "");
-    }
+  @Override
+  protected TableField<DerbyMetaIndexRecord, String> createCollectionField() {
+    return createField(TableFields.COLLECTION.fieldName, SQLDataType.VARCHAR.nullable(false), this,
+        "");
+  }
+
+  @Override
+  protected TableField<DerbyMetaIndexRecord, String> createNameField() {
+    return createField(TableFields.NAME.fieldName, SQLDataType.VARCHAR.nullable(false), this, "");
+  }
+
+  @Override
+  protected TableField<DerbyMetaIndexRecord, Boolean> createUniqueField() {
+    return createField(TableFields.UNIQUE.fieldName, SQLDataType.BOOLEAN.nullable(false), this, "");
+  }
 
 }

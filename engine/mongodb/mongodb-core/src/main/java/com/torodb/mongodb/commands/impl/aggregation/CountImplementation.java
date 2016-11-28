@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,18 +13,19 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.commands.impl.aggregation;
 
-import javax.inject.Singleton;
-
 import com.eightkdata.mongowp.Status;
-import com.torodb.mongodb.commands.signatures.aggregation.CountCommand.CountArgument;
 import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.Request;
 import com.torodb.mongodb.commands.impl.ReadTorodbCommandImpl;
+import com.torodb.mongodb.commands.signatures.aggregation.CountCommand.CountArgument;
 import com.torodb.mongodb.core.MongodTransaction;
+
+import javax.inject.Singleton;
 
 /**
  *
@@ -32,9 +33,13 @@ import com.torodb.mongodb.core.MongodTransaction;
 @Singleton
 public class CountImplementation implements ReadTorodbCommandImpl<CountArgument, Long> {
 
-    @Override
-    public Status<Long> apply(Request req, Command<? super CountArgument, ? super Long> command, CountArgument arg, MongodTransaction context) {
-            return Status.ok(context.getTorodTransaction().countAll(req.getDatabase(), arg.getCollection()));
-    }
+  @Override
+  public Status<Long> apply(Request req, Command<? super CountArgument, ? super Long> command,
+      CountArgument arg, MongodTransaction context) {
+    return Status.ok(
+        context.getTorodTransaction()
+            .countAll(req.getDatabase(), arg.getCollection())
+    );
+  }
 
 }

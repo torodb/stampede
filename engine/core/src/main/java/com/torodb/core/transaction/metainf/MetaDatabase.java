@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,11 +13,13 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.core.transaction.metainf;
 
 import java.util.stream.Stream;
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -26,30 +28,32 @@ import javax.annotation.Nullable;
  */
 public interface MetaDatabase {
 
-    /**
-     * The name of the database on the document model.
-     * @return 
-     */
-    @Nonnull
-    public String getName();
+  /**
+   * The name of the database on the document model.
+   *
+   * @return
+   */
+  @Nonnull
+  public String getName();
 
-    /**
-     * The identifier of the database on the SQL model.
-     * @return
-     */
-    @Nonnull
-    public String getIdentifier();
+  /**
+   * The identifier of the database on the SQL model.
+   *
+   * @return
+   */
+  @Nonnull
+  public String getIdentifier();
 
-    public Stream<? extends MetaCollection> streamMetaCollections();
+  public Stream<? extends MetaCollection> streamMetaCollections();
 
-    @Nullable
-    public MetaCollection getMetaCollectionByName(String collectionName);
+  @Nullable
+  public MetaCollection getMetaCollectionByName(String collectionName);
 
-    @Nullable
-    public MetaCollection getMetaCollectionByIdentifier(String collectionIdentifier);
+  @Nullable
+  public MetaCollection getMetaCollectionByIdentifier(String collectionIdentifier);
 
-    public default String defautToString() {
-        return "db{" + "name:" + getName() + ", id:" + getIdentifier() + '}';
-    }
+  public default String defautToString() {
+    return "db{" + "name:" + getName() + ", id:" + getIdentifier() + '}';
+  }
 
 }

@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Packaging utils
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,9 +13,12 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.packaging.config.validation;
+
+import com.torodb.packaging.config.model.protocol.mongo.AbstractReplication;
 
 import java.util.HashSet;
 import java.util.List;
@@ -24,25 +27,24 @@ import java.util.Set;
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 
-import com.torodb.packaging.config.model.protocol.mongo.AbstractReplication;
+public class NoDuplicatedReplNameValidator implements
+    ConstraintValidator<NoDuplicatedReplName, List<AbstractReplication>> {
 
-public class NoDuplicatedReplNameValidator implements ConstraintValidator<NoDuplicatedReplName, List<AbstractReplication>> {
-	
-	@Override
-	public void initialize(NoDuplicatedReplName constraintAnnotation) {
-	}
+  @Override
+  public void initialize(NoDuplicatedReplName constraintAnnotation) {
+  }
 
-	@Override
-	public boolean isValid(List<AbstractReplication> value, ConstraintValidatorContext context) {
-		if (value != null) {
-			Set<String> replNameSet = new HashSet<>();
-			for (AbstractReplication replication : value) {
-				if (!replNameSet.add(replication.getReplSetName())) {
-					return false;
-				}
-			}
-		}
+  @Override
+  public boolean isValid(List<AbstractReplication> value, ConstraintValidatorContext context) {
+    if (value != null) {
+      Set<String> replNameSet = new HashSet<>();
+      for (AbstractReplication replication : value) {
+        if (!replNameSet.add(replication.getReplSetName())) {
+          return false;
+        }
+      }
+    }
 
-		return true;
-	}
+    return true;
+  }
 }

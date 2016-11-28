@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Backend common
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,31 +13,33 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.backend.converters.array;
 
-import javax.json.JsonValue;
+import com.torodb.kvdocument.values.KvNull;
 
-import com.torodb.kvdocument.values.KVNull;
+import javax.json.JsonValue;
 
 /**
  *
  */
-public class NullToArrayConverter implements ArrayConverter<JsonValue, KVNull> {
-    private static final long serialVersionUID = 1L;
+public class NullToArrayConverter implements ArrayConverter<JsonValue, KvNull> {
 
-    @Override
-    public String toJsonLiteral(KVNull value) {
-        return "null";
+  private static final long serialVersionUID = 1L;
+
+  @Override
+  public String toJsonLiteral(KvNull value) {
+    return "null";
+  }
+
+  @Override
+  public KvNull fromJsonValue(JsonValue value) {
+    if (value != JsonValue.NULL) {
+      throw new AssertionError(value + " is not null value");
     }
 
-    @Override
-    public KVNull fromJsonValue(JsonValue value) {
-        if (value != JsonValue.NULL) {
-            throw new AssertionError(value + " is not null value");
-        }
-        
-        return KVNull.getInstance();
-    }
+    return KvNull.getInstance();
+  }
 }

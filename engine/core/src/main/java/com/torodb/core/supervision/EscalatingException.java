@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.core.supervision;
 
 /**
@@ -22,34 +23,30 @@ package com.torodb.core.supervision;
  */
 public class EscalatingException extends RuntimeException {
 
-    private static final long serialVersionUID = 38581834681239L;
+  private static final long serialVersionUID = 38581834681239L;
 
-    private transient Supervisor parentSupervisor = null;
-    private transient Supervisor escalatingSupervisor = null;
-    private transient Object errorSource = null;
+  private transient Supervisor parentSupervisor = null;
+  private transient Supervisor escalatingSupervisor = null;
+  private transient Object errorSource = null;
 
-    public EscalatingException(Supervisor parentSupervisor,
-            Supervisor escalatingSupervisor, Object errorSource,
-            Throwable cause) {
-        super(cause);
-        this.parentSupervisor = parentSupervisor;
-        this.escalatingSupervisor = escalatingSupervisor;
-        this.errorSource = errorSource;
-    }
+  public EscalatingException(Supervisor parentSupervisor,
+      Supervisor escalatingSupervisor, Object errorSource,
+      Throwable cause) {
+    super(cause);
+    this.parentSupervisor = parentSupervisor;
+    this.escalatingSupervisor = escalatingSupervisor;
+    this.errorSource = errorSource;
+  }
 
-    public static long getSerialVersionUID() {
-        return serialVersionUID;
-    }
+  public Supervisor getParentSupervisor() {
+    return parentSupervisor;
+  }
 
-    public Supervisor getParentSupervisor() {
-        return parentSupervisor;
-    }
+  public Supervisor getEscalatingSupervisor() {
+    return escalatingSupervisor;
+  }
 
-    public Supervisor getEscalatingSupervisor() {
-        return escalatingSupervisor;
-    }
-
-    public Object getErrorSource() {
-        return errorSource;
-    }
+  public Object getErrorSource() {
+    return errorSource;
+  }
 }

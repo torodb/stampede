@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Backend common
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,48 +13,51 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.backend.converters.array;
+
+import com.torodb.backend.udt.MongoTimestampUDT;
+import com.torodb.kvdocument.values.KvMongoTimestamp;
+import com.torodb.kvdocument.values.heap.DefaultKvMongoTimestamp;
 
 import javax.json.Json;
 import javax.json.JsonObject;
 
-import com.torodb.backend.udt.MongoTimestampUDT;
-import com.torodb.kvdocument.values.KVMongoTimestamp;
-import com.torodb.kvdocument.values.heap.DefaultKVMongoTimestamp;
-
 /**
  *
  */
-public class MongoTimestampToArrayConverter implements ArrayConverter<JsonObject, KVMongoTimestamp> {
-    private static final long serialVersionUID = 1L;
+public class MongoTimestampToArrayConverter
+    implements ArrayConverter<JsonObject, KvMongoTimestamp> {
 
-    private static final String SECS = MongoTimestampUDT.SECS.getName();
-    private static final String COUNTER = MongoTimestampUDT.COUNTER.getName();
+  private static final long serialVersionUID = 1L;
 
-    @Override
-    public String toJsonLiteral(KVMongoTimestamp value) {
-        return Json.createObjectBuilder()
-                .add(SECS, value.getSecondsSinceEpoch())
-                .add(COUNTER, value.getOrdinal())
-                .build().toString();
-    }
+  private static final String SECS = MongoTimestampUDT.SECS.getName();
+  private static final String COUNTER = MongoTimestampUDT.COUNTER.getName();
 
-    @Override
-    public KVMongoTimestamp fromJsonValue(JsonObject value) {
-        assert isValid(value);
-        return new DefaultKVMongoTimestamp(value.getInt(SECS), value.getInt(COUNTER));
+  @Override
+  public String toJsonLiteral(KvMongoTimestamp value) {
+    return Json.createObjectBuilder()
+        .add(SECS, value.getSecondsSinceEpoch())
+        .add(COUNTER, value.getOrdinal())
+        .build().toString();
+  }
+
+  @Override
+  public KvMongoTimestamp fromJsonValue(JsonObject value) {
+    assert isValid(value);
+    return new DefaultKvMongoTimestamp(value.getInt(SECS), value.getInt(COUNTER));
+  }
+
+  public boolean isValid(JsonObject object) {
+    try {
+      object.getInt(SECS);
+      object.getInt(COUNTER);
+      return true;
+    } catch (NullPointerException | ClassCastException ex) {
+      return false;
     }
-    
-    public boolean isValid(JsonObject object) {
-        try {
-            object.getInt(SECS);
-            object.getInt(COUNTER);
-            return true;
-        } catch (NullPointerException | ClassCastException ex) {
-            return false;
-        }
-    }
+  }
 
 }

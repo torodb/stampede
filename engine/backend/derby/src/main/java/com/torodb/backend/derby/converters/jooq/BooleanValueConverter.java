@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Backend Derby
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,61 +13,64 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.backend.derby.converters.jooq;
 
+import com.torodb.backend.converters.jooq.DataTypeForKv;
+import com.torodb.backend.converters.jooq.KvValueConverter;
+import com.torodb.backend.converters.sql.BooleanSqlBinding;
+import com.torodb.backend.converters.sql.SqlBinding;
+import com.torodb.kvdocument.types.BooleanType;
+import com.torodb.kvdocument.types.KvType;
+import com.torodb.kvdocument.values.KvBoolean;
 import org.jooq.DataType;
 import org.jooq.SQLDialect;
 import org.jooq.impl.DefaultDataType;
 import org.jooq.impl.SQLDataType;
 
-import com.torodb.backend.converters.jooq.DataTypeForKV;
-import com.torodb.backend.converters.jooq.KVValueConverter;
-import com.torodb.backend.converters.sql.BooleanSqlBinding;
-import com.torodb.backend.converters.sql.SqlBinding;
-import com.torodb.kvdocument.types.BooleanType;
-import com.torodb.kvdocument.types.KVType;
-import com.torodb.kvdocument.values.KVBoolean;
-
 /**
  *
  */
-public class BooleanValueConverter implements KVValueConverter<Boolean, Boolean, KVBoolean> {
-    private static final long serialVersionUID = 1L;
+public class BooleanValueConverter implements KvValueConverter<Boolean, Boolean, KvBoolean> {
 
-    public static final DataType<Boolean> BOOLEAN_TYPE = new DefaultDataType<Boolean>(SQLDialect.DERBY, SQLDataType.BOOLEAN, "BOOLEAN");
-    
-    public static final DataTypeForKV<KVBoolean> TYPE = DataTypeForKV.from(BOOLEAN_TYPE, new BooleanValueConverter());
+  private static final long serialVersionUID = 1L;
 
-    @Override
-    public KVType getErasuredType() {
-        return BooleanType.INSTANCE;
-    }
+  public static final DataType<Boolean> BOOLEAN_TYPE =
+      new DefaultDataType<Boolean>(SQLDialect.DERBY, SQLDataType.BOOLEAN, "BOOLEAN");
 
-    @Override
-    public KVBoolean from(Boolean databaseObject) {
-        return KVBoolean.from(databaseObject);
-    }
+  public static final DataTypeForKv<KvBoolean> TYPE = DataTypeForKv.from(BOOLEAN_TYPE,
+      new BooleanValueConverter());
 
-    @Override
-    public Boolean to(KVBoolean userObject) {
-        return userObject.getValue();
-    }
+  @Override
+  public KvType getErasuredType() {
+    return BooleanType.INSTANCE;
+  }
 
-    @Override
-    public Class<Boolean> fromType() {
-        return Boolean.class;
-    }
+  @Override
+  public KvBoolean from(Boolean databaseObject) {
+    return KvBoolean.from(databaseObject);
+  }
 
-    @Override
-    public Class<KVBoolean> toType() {
-        return KVBoolean.class;
-    }
+  @Override
+  public Boolean to(KvBoolean userObject) {
+    return userObject.getValue();
+  }
 
-    @Override
-    public SqlBinding<Boolean> getSqlBinding() {
-        return BooleanSqlBinding.INSTANCE;
-    }
+  @Override
+  public Class<Boolean> fromType() {
+    return Boolean.class;
+  }
+
+  @Override
+  public Class<KvBoolean> toType() {
+    return KvBoolean.class;
+  }
+
+  @Override
+  public SqlBinding<Boolean> getSqlBinding() {
+    return BooleanSqlBinding.INSTANCE;
+  }
 
 }

@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Backend Derby
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,58 +13,62 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.backend.derby.converters.jooq;
 
 import com.google.common.io.ByteSource;
-import com.torodb.backend.converters.jooq.DataTypeForKV;
-import com.torodb.backend.converters.jooq.KVValueConverter;
+import com.torodb.backend.converters.jooq.DataTypeForKv;
+import com.torodb.backend.converters.jooq.KvValueConverter;
 import com.torodb.backend.converters.sql.BinarySqlBinding;
 import com.torodb.backend.converters.sql.SqlBinding;
 import com.torodb.backend.derby.converters.jooq.binding.VarcharForBitDataBinding;
 import com.torodb.kvdocument.types.BinaryType;
-import com.torodb.kvdocument.types.KVType;
-import com.torodb.kvdocument.values.KVBinary;
-import com.torodb.kvdocument.values.KVBinary.KVBinarySubtype;
-import com.torodb.kvdocument.values.heap.ByteSourceKVBinary;
+import com.torodb.kvdocument.types.KvType;
+import com.torodb.kvdocument.values.KvBinary;
+import com.torodb.kvdocument.values.KvBinary.KvBinarySubtype;
+import com.torodb.kvdocument.values.heap.ByteSourceKvBinary;
 
 /**
  *
  */
 public class BinaryValueConverter implements
-        KVValueConverter<byte[], byte[], KVBinary> {
-    private static final long serialVersionUID = 1L;
+    KvValueConverter<byte[], byte[], KvBinary> {
 
-    public static final DataTypeForKV<KVBinary> TYPE = VarcharForBitDataBinding.fromKVValue(KVBinary.class, new BinaryValueConverter(), 32672);
+  private static final long serialVersionUID = 1L;
 
-    @Override
-    public KVType getErasuredType() {
-        return BinaryType.INSTANCE;
-    }
+  public static final DataTypeForKv<KvBinary> TYPE = VarcharForBitDataBinding
+      .fromKvValue(KvBinary.class, new BinaryValueConverter(), 32672);
 
-    @Override
-    public KVBinary from(byte[] databaseObject) {
-        return new ByteSourceKVBinary(KVBinarySubtype.MONGO_GENERIC, (byte) 0, ByteSource.wrap(databaseObject));
-    }
+  @Override
+  public KvType getErasuredType() {
+    return BinaryType.INSTANCE;
+  }
 
-    @Override
-    public byte[] to(KVBinary userObject) {
-        return userObject.getByteSource().read();
-    }
+  @Override
+  public KvBinary from(byte[] databaseObject) {
+    return new ByteSourceKvBinary(KvBinarySubtype.MONGO_GENERIC, (byte) 0, ByteSource.wrap(
+        databaseObject));
+  }
 
-    @Override
-    public Class<byte[]> fromType() {
-        return byte[].class;
-    }
+  @Override
+  public byte[] to(KvBinary userObject) {
+    return userObject.getByteSource().read();
+  }
 
-    @Override
-    public Class<KVBinary> toType() {
-        return KVBinary.class;
-    }
+  @Override
+  public Class<byte[]> fromType() {
+    return byte[].class;
+  }
 
-    @Override
-    public SqlBinding<byte[]> getSqlBinding() {
-        return BinarySqlBinding.INSTANCE;
-    }
+  @Override
+  public Class<KvBinary> toType() {
+    return KvBinary.class;
+  }
+
+  @Override
+  public SqlBinding<byte[]> getSqlBinding() {
+    return BinarySqlBinding.INSTANCE;
+  }
 }

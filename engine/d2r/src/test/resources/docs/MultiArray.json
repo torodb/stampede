@@ -1,6 +1,8 @@
 {
-	"name": "John",
-	"months" : [
-		[1]
-	]
+    "name": "John",
+    "months": [
+        [
+            1
+        ]
+    ]
 }

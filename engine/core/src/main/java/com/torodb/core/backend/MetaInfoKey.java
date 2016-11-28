@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,19 +13,20 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.core.backend;
 
 /**
- * Subclasses of this class can be used to store or read information from the
- * backend metainfo.
+ * Subclasses of this class can be used to store or read information from the backend metainfo.
  *
  * @see BackendTransaction#readMetaInfo(com.torodb.core.backend.MetaInfoKey)
- * @see WriteBackendTransaction#writeMetaInfo(com.torodb.core.backend.MetaInfoKey, com.torodb.kvdocument.values.KVValue) 
+ * @see WriteBackendTransaction#writeMetaInfo(com.torodb.core.backend.MetaInfoKey,
+ * com.torodb.kvdocument.values.KVValue)
  */
 @FunctionalInterface
 public interface MetaInfoKey {
-    
-    public abstract String getKeyName();
+
+  public abstract String getKeyName();
 }

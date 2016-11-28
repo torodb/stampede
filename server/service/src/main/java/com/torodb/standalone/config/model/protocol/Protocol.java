@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Server service
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,24 +13,27 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package com.torodb.standalone.config.model.protocol;
 
-import javax.validation.Valid;
+package com.torodb.standalone.config.model.protocol;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.torodb.standalone.config.model.protocol.mongo.Mongo;
 
-public class Protocol {
-	@Valid
-	@JsonProperty(required=true)
-	private Mongo mongo = new Mongo();
+import javax.validation.Valid;
 
-	public Mongo getMongo() {
-		return mongo;
-	}
-	public void setMongo(Mongo mongo) {
-		this.mongo = mongo;
-	}
+public class Protocol {
+
+  @Valid
+  @JsonProperty(required = true)
+  private Mongo mongo = new Mongo();
+
+  public Mongo getMongo() {
+    return mongo;
+  }
+
+  public void setMongo(Mongo mongo) {
+    this.mongo = mongo;
+  }
 }

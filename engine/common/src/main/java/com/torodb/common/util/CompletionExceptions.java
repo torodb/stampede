@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: common
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.common.util;
 
 import java.util.concurrent.CompletionException;
@@ -24,27 +25,29 @@ import java.util.concurrent.CompletionException;
  */
 public class CompletionExceptions {
 
-    private CompletionExceptions() {}
+  private CompletionExceptions() {
+  }
 
-    /**
-     * Returns the first cause of the given exception that is not a
-     * {@link CompletionException} or the deepest CompletionException if there
-     * are no exception different than CompletionException in the stack.
-     * @param ex
-     * @return
-     */
-    public static Throwable getFirstNonCompletionException(Throwable ex) {
-        Throwable t = ex;
-        while (t instanceof CompletionException && t != t.getCause() && t.getCause() != null) {
-            Throwable cause = t.getCause();
-            if (cause == null) {
-                return t;
-            }
-            t = cause;
-        }
-        assert t != null;
-        assert !(t instanceof CompletionException) || t.getCause() == null;
+  /**
+   * Returns the first cause of the given exception that is not a {@link CompletionException} or the
+   * deepest CompletionException if there are no exception different than CompletionException in the
+   * stack.
+   *
+   * @param ex
+   * @return
+   */
+  public static Throwable getFirstNonCompletionException(Throwable ex) {
+    Throwable t = ex;
+    while (t instanceof CompletionException && t != t.getCause() && t.getCause() != null) {
+      Throwable cause = t.getCause();
+      if (cause == null) {
         return t;
+      }
+      t = cause;
     }
+    assert t != null;
+    assert !(t instanceof CompletionException) || t.getCause() == null;
+    return t;
+  }
 
 }

@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,57 +13,58 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.language.update;
 
-import com.torodb.kvdocument.values.KVDocument;
-import com.torodb.kvdocument.values.KVValue;
+import com.torodb.kvdocument.values.KvDocument;
+import com.torodb.kvdocument.values.KvDocument.DocEntry;
+import com.torodb.kvdocument.values.KvValue;
 import com.torodb.mongodb.language.Constants;
-import com.torodb.kvdocument.values.KVDocument.DocEntry;
 
 /**
  *
  */
 public class SetDocumentUpdateAction extends UpdateAction {
 
-    private final KVDocument newValue;
+  private final KvDocument newValue;
 
-    public SetDocumentUpdateAction(KVDocument newValue) {
-        super();
-        this.newValue = newValue;
+  public SetDocumentUpdateAction(KvDocument newValue) {
+    super();
+    this.newValue = newValue;
+  }
+
+  public KvDocument getNewValue() {
+    return newValue;
+  }
+
+  @Override
+  public void apply(UpdatedToroDocumentBuilder builder) {
+    KvValue<?> objectId = null;
+    if (builder.contains(Constants.ID)) {
+      objectId = builder.getValue(Constants.ID);
     }
 
-    public KVDocument getNewValue() {
-        return newValue;
+    builder.clear();
+    for (DocEntry<?> entry : newValue) {
+      builder.putValue(entry.getKey(), entry.getValue());
     }
 
-    @Override
-    public void apply(UpdatedToroDocumentBuilder builder) {
-        KVValue<?> objectId = null;
-        if (builder.contains(Constants.ID)) {
-            objectId = builder.getValue(Constants.ID);
-        }
-        
-        builder.clear();
-        for (DocEntry<?> entry : newValue) {
-            builder.putValue(entry.getKey(), entry.getValue());
-        }
-        
-        if (objectId != null) {
-            builder.putValue(Constants.ID, objectId);
-        }
-        
-        builder.setUpdated();
+    if (objectId != null) {
+      builder.putValue(Constants.ID, objectId);
     }
 
-    @Override
-    public boolean isSetModification() {
-        return true;
-    }
+    builder.setUpdated();
+  }
 
-    @Override
-    public <Result, Arg> Result accept(UpdateActionVisitor<Result, Arg> visitor, Arg arg) {
-        return visitor.visit(this, arg);
-    }
+  @Override
+  public boolean isSetModification() {
+    return true;
+  }
+
+  @Override
+  public <R, A> R accept(UpdateActionVisitor<R, A> visitor, A arg) {
+    return visitor.visit(this, arg);
+  }
 }

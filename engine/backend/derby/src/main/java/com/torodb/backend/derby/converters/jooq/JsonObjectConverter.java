@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Backend Derby
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,44 +13,47 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.backend.derby.converters.jooq;
+
+import org.jooq.Converter;
+import org.jooq.DataType;
 
 import java.io.StringReader;
 
 import javax.json.Json;
 import javax.json.JsonObject;
 
-import org.jooq.Converter;
-import org.jooq.DataType;
-
 /**
  *
  */
-public class JsonObjectConverter implements Converter<String, JsonObject>{
-    private static final long serialVersionUID = 1L;
+public class JsonObjectConverter implements Converter<String, JsonObject> {
 
-    public static final DataType<JsonObject> TYPE = StringValueConverter.VARCHAR_TYPE.asConvertedDataType(new JsonObjectConverter());
+  private static final long serialVersionUID = 1L;
 
-    @Override
-    public JsonObject from(String databaseObject) {
-        return Json.createReader(new StringReader(databaseObject)).readObject();
-    }
+  public static final DataType<JsonObject> TYPE = StringValueConverter.VARCHAR_TYPE
+      .asConvertedDataType(new JsonObjectConverter());
 
-    @Override
-    public String to(JsonObject userObject) {
-        return userObject.toString();
-    }
+  @Override
+  public JsonObject from(String databaseObject) {
+    return Json.createReader(new StringReader(databaseObject)).readObject();
+  }
 
-    @Override
-    public Class<String> fromType() {
-        return String.class;
-    }
+  @Override
+  public String to(JsonObject userObject) {
+    return userObject.toString();
+  }
 
-    @Override
-    public Class<JsonObject> toType() {
-        return JsonObject.class;
-    }
-    
+  @Override
+  public Class<String> fromType() {
+    return String.class;
+  }
+
+  @Override
+  public Class<JsonObject> toType() {
+    return JsonObject.class;
+  }
+
 }

@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Backend common
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.backend.jobs;
 
 import com.torodb.core.backend.WriteBackendTransaction;
@@ -27,42 +28,42 @@ import com.torodb.core.transaction.metainf.MetaDocPart;
 
 public class InsertBackendJobImpl implements InsertBackendJob {
 
-    private final MetaDatabase db;
-    private final MetaCollection col;
-    private final DocPartData data;
+  private final MetaDatabase db;
+  private final MetaCollection col;
+  private final DocPartData data;
 
-    public InsertBackendJobImpl(MetaDatabase db, MetaCollection col, DocPartData data) {
-        super();
-        this.db = db;
-        this.col = col;
-        this.data = data;
-    }
+  public InsertBackendJobImpl(MetaDatabase db, MetaCollection col, DocPartData data) {
+    super();
+    this.db = db;
+    this.col = col;
+    this.data = data;
+  }
 
-    @Override
-    public void execute(WriteBackendTransaction connection) throws UserException {
-         connection.insert(db, col, data);
-    }
+  @Override
+  public void execute(WriteBackendTransaction connection) throws UserException {
+    connection.insert(db, col, data);
+  }
 
-    @Override
-    public MetaDatabase getDatabase() {
-        return db;
-    }
+  @Override
+  public MetaDatabase getDatabase() {
+    return db;
+  }
 
-    @Override
-    public MetaCollection getCollection() {
-        return col;
-    }
+  @Override
+  public MetaCollection getCollection() {
+    return col;
+  }
 
-    @Override
-    public DocPartData getDataToInsert() {
-        return data;
-    }
+  @Override
+  public DocPartData getDataToInsert() {
+    return data;
+  }
 
-    @Override
-    public String toString() {
-        MetaDocPart docPart = data.getMetaDocPart();
-        int rowCount = data.rowCount();
-        return "insert{db:" + db + ", col:" + col + ", docPart:" + docPart + ", rows:" + rowCount + '}';
-    }
+  @Override
+  public String toString() {
+    MetaDocPart docPart = data.getMetaDocPart();
+    int rowCount = data.rowCount();
+    return "insert{db:" + db + ", col:" + col + ", docPart:" + docPart + ", rows:" + rowCount + '}';
+  }
 
 }

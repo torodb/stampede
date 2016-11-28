@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.core.backend;
 
 import com.torodb.core.cursors.Cursor;
@@ -26,18 +27,18 @@ import com.torodb.core.d2r.DocPartResult;
  */
 public class EmptyBackendCursor implements BackendCursor {
 
-    private final Cursor<?> emptyCursor = new EmptyCursor<>();
+  private final Cursor<?> emptyCursor = new EmptyCursor<>();
 
-    @Override
-    @SuppressWarnings("unchecked")
-    public Cursor<DocPartResult> asDocPartResultCursor() {
-        return (Cursor<DocPartResult>) emptyCursor;
-    }
-    
-    @Override
-    @SuppressWarnings("unchecked")
-    public Cursor<Integer> asDidCursor() {
-        return (Cursor<Integer>) emptyCursor;
-    }
+  @Override
+  @SuppressWarnings("unchecked")
+  public Cursor<DocPartResult> asDocPartResultCursor() {
+    return (Cursor<DocPartResult>) emptyCursor;
+  }
+
+  @Override
+  @SuppressWarnings("unchecked")
+  public Cursor<Integer> asDidCursor() {
+    return (Cursor<Integer>) emptyCursor;
+  }
 
 }

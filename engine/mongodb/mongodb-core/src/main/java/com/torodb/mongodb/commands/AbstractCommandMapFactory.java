@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,13 +13,15 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.commands;
 
-import java.util.Map.Entry;
-import java.util.function.Supplier;
-
+import com.eightkdata.mongowp.server.api.Command;
+import com.eightkdata.mongowp.server.api.CommandImplementation;
+import com.google.common.collect.ImmutableMap;
+import com.torodb.mongodb.commands.impl.NotImplementedCommandImplementation;
 import com.torodb.mongodb.commands.signatures.MongoDb30Commands.MongoDb30CommandsImplementationBuilder;
 import com.torodb.mongodb.commands.signatures.admin.AdminCommands.AdminCommandsImplementationsBuilder;
 import com.torodb.mongodb.commands.signatures.aggregation.AggregationCommands.AggregationCommandsImplementationsBuilder;
@@ -28,51 +30,57 @@ import com.torodb.mongodb.commands.signatures.diagnostic.DiagnosticCommands.Diag
 import com.torodb.mongodb.commands.signatures.general.GeneralCommands.GeneralCommandsImplementationsBuilder;
 import com.torodb.mongodb.commands.signatures.internal.InternalCommands.InternalCommandsImplementationsBuilder;
 import com.torodb.mongodb.commands.signatures.repl.ReplCommands.ReplCommandsImplementationsBuilder;
-import com.eightkdata.mongowp.server.api.Command;
-import com.eightkdata.mongowp.server.api.CommandImplementation;
-import com.google.common.collect.ImmutableMap;
-import com.torodb.mongodb.commands.impl.NotImplementedCommandImplementation;
 
-public class AbstractCommandMapFactory<Context> implements Supplier<ImmutableMap<Command<?,?>, CommandImplementation<?, ?, ? super Context>>> {
-    private final AdminCommandsImplementationsBuilder<Context> adminBuilder;
-    private final AggregationCommandsImplementationsBuilder<Context> aggregationBuilder;
-    private final AuthenticationCommandsImplementationsBuilder<Context> authenticationCommandsImplementationsBuilder;
-    private final DiagnosticCommandsImplementationsBuilder<Context> diagnosticBuilder;
-    private final GeneralCommandsImplementationsBuilder<Context> generalBuilder;
-    private final InternalCommandsImplementationsBuilder<Context> internalBuilder;
-    private final ReplCommandsImplementationsBuilder<Context> replBuilder;
-    
-    public AbstractCommandMapFactory(AdminCommandsImplementationsBuilder<Context> adminBuilder,
-            AggregationCommandsImplementationsBuilder<Context> aggregationBuilder,
-            AuthenticationCommandsImplementationsBuilder<Context> authenticationCommandsImplementationsBuilder,
-            DiagnosticCommandsImplementationsBuilder<Context> diagnosticBuilder,
-            GeneralCommandsImplementationsBuilder<Context> generalBuilder,
-            InternalCommandsImplementationsBuilder<Context> internalBuilder,
-            ReplCommandsImplementationsBuilder<Context> replBuilder) {
-        super();
-        this.adminBuilder = adminBuilder;
-        this.aggregationBuilder = aggregationBuilder;
-        this.authenticationCommandsImplementationsBuilder = authenticationCommandsImplementationsBuilder;
-        this.diagnosticBuilder = diagnosticBuilder;
-        this.generalBuilder = generalBuilder;
-        this.internalBuilder = internalBuilder;
-        this.replBuilder = replBuilder;
-    }
+import java.util.Map.Entry;
+import java.util.function.Supplier;
 
-    @Override
-    public ImmutableMap<Command<?,?>, CommandImplementation<?, ?, ? super Context>> get() {
-        MongoDb30CommandsImplementationBuilder<Context> implBuilder = new MongoDb30CommandsImplementationBuilder<>(
-                adminBuilder, aggregationBuilder, authenticationCommandsImplementationsBuilder, diagnosticBuilder, generalBuilder, internalBuilder, replBuilder
+public class AbstractCommandMapFactory<ContextT> implements
+    Supplier<ImmutableMap<Command<?, ?>, CommandImplementation<?, ?, ? super ContextT>>> {
+
+  private final AdminCommandsImplementationsBuilder<ContextT> adminBuilder;
+  private final AggregationCommandsImplementationsBuilder<ContextT> aggregationBuilder;
+  @SuppressWarnings("checkstyle:LineLength")
+  private final AuthenticationCommandsImplementationsBuilder<ContextT> authenticationCommandsImplementationsBuilder;
+  private final DiagnosticCommandsImplementationsBuilder<ContextT> diagnosticBuilder;
+  private final GeneralCommandsImplementationsBuilder<ContextT> generalBuilder;
+  private final InternalCommandsImplementationsBuilder<ContextT> internalBuilder;
+  private final ReplCommandsImplementationsBuilder<ContextT> replBuilder;
+
+  @SuppressWarnings("checkstyle:LineLength")
+  public AbstractCommandMapFactory(AdminCommandsImplementationsBuilder<ContextT> adminBuilder,
+      AggregationCommandsImplementationsBuilder<ContextT> aggregationBuilder,
+      AuthenticationCommandsImplementationsBuilder<ContextT> authenticationCommandsImplementationsBuilder,
+      DiagnosticCommandsImplementationsBuilder<ContextT> diagnosticBuilder,
+      GeneralCommandsImplementationsBuilder<ContextT> generalBuilder,
+      InternalCommandsImplementationsBuilder<ContextT> internalBuilder,
+      ReplCommandsImplementationsBuilder<ContextT> replBuilder) {
+    super();
+    this.adminBuilder = adminBuilder;
+    this.aggregationBuilder = aggregationBuilder;
+    this.authenticationCommandsImplementationsBuilder = authenticationCommandsImplementationsBuilder;
+    this.diagnosticBuilder = diagnosticBuilder;
+    this.generalBuilder = generalBuilder;
+    this.internalBuilder = internalBuilder;
+    this.replBuilder = replBuilder;
+  }
+
+  @Override
+  public ImmutableMap<Command<?, ?>, CommandImplementation<?, ?, ? super ContextT>> get() {
+    MongoDb30CommandsImplementationBuilder<ContextT> implBuilder =
+        new MongoDb30CommandsImplementationBuilder<>(
+            adminBuilder, aggregationBuilder, authenticationCommandsImplementationsBuilder,
+            diagnosticBuilder, generalBuilder, internalBuilder, replBuilder
         );
 
-        ImmutableMap.Builder<Command<?,?>, CommandImplementation<?, ?, ? super Context>> builder = ImmutableMap.builder();
-        for (Entry<Command<?,?>, CommandImplementation<?, ?, ? super Context>> entry : implBuilder) {
-            if (entry.getValue() instanceof NotImplementedCommandImplementation) {
-                continue;
-            }
-            builder.put(entry.getKey(), entry.getValue());
-        }
-
-        return builder.build();
+    ImmutableMap.Builder<Command<?, ?>, CommandImplementation<?, ?, ? super ContextT>> builder =
+        ImmutableMap.builder();
+    for (Entry<Command<?, ?>, CommandImplementation<?, ?, ? super ContextT>> entry : implBuilder) {
+      if (entry.getValue() instanceof NotImplementedCommandImplementation) {
+        continue;
+      }
+      builder.put(entry.getKey(), entry.getValue());
     }
+
+    return builder.build();
+  }
 }

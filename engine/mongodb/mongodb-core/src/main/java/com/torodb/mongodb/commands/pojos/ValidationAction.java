@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,26 +13,28 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.commands.pojos;
 
 import com.eightkdata.mongowp.exceptions.BadValueException;
 
-/**
- *
- */
 public enum ValidationAction {
-    WARN,
-    ERROR_V;
-    
-    public static ValidationAction parse(String str) throws BadValueException {
-        switch (str) {
-            case "": return ERROR_V;
-            case "warn": return WARN;
-            case "error": return ERROR_V;
-            default: throw new BadValueException("Invalid validation action: " + str);
-        }
+  WARN,
+  ERROR_V;
+
+  public static ValidationAction parse(String str) throws BadValueException {
+    switch (str) {
+      case "":
+        return ERROR_V;
+      case "warn":
+        return WARN;
+      case "error":
+        return ERROR_V;
+      default:
+        throw new BadValueException("Invalid validation action: " + str);
     }
+  }
 
 }

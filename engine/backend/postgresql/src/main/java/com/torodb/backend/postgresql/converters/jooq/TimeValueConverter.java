@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Backend PostgreSQL
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,59 +13,61 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.backend.postgresql.converters.jooq;
 
-import java.sql.Time;
-
-import org.jooq.impl.SQLDataType;
-
-import com.torodb.backend.converters.jooq.DataTypeForKV;
-import com.torodb.backend.converters.jooq.KVValueConverter;
+import com.torodb.backend.converters.jooq.DataTypeForKv;
+import com.torodb.backend.converters.jooq.KvValueConverter;
 import com.torodb.backend.converters.sql.SqlBinding;
 import com.torodb.backend.converters.sql.TimeSqlBinding;
-import com.torodb.kvdocument.types.KVType;
+import com.torodb.kvdocument.types.KvType;
 import com.torodb.kvdocument.types.TimeType;
-import com.torodb.kvdocument.values.KVTime;
-import com.torodb.kvdocument.values.heap.LocalTimeKVTime;
+import com.torodb.kvdocument.values.KvTime;
+import com.torodb.kvdocument.values.heap.LocalTimeKvTime;
+import org.jooq.impl.SQLDataType;
+
+import java.sql.Time;
 
 /**
  *
  */
-public class TimeValueConverter implements KVValueConverter<Time, Time, KVTime>{
-    private static final long serialVersionUID = 1L;
+public class TimeValueConverter implements KvValueConverter<Time, Time, KvTime> {
 
-    public static final DataTypeForKV<KVTime> TYPE = DataTypeForKV.from(SQLDataType.TIME, new TimeValueConverter());
+  private static final long serialVersionUID = 1L;
 
-    @Override
-    public KVType getErasuredType() {
-        return TimeType.INSTANCE;
-    }
+  public static final DataTypeForKv<KvTime> TYPE = DataTypeForKv.from(SQLDataType.TIME,
+      new TimeValueConverter());
 
-    @Override
-    public KVTime from(Time databaseObject) {
-        return new LocalTimeKVTime(databaseObject.toLocalTime());
-    }
+  @Override
+  public KvType getErasuredType() {
+    return TimeType.INSTANCE;
+  }
 
-    @Override
-    public Time to(KVTime userObject) {
-        return Time.valueOf(userObject.getValue());
-    }
+  @Override
+  public KvTime from(Time databaseObject) {
+    return new LocalTimeKvTime(databaseObject.toLocalTime());
+  }
 
-    @Override
-    public Class<Time> fromType() {
-        return Time.class;
-    }
+  @Override
+  public Time to(KvTime userObject) {
+    return Time.valueOf(userObject.getValue());
+  }
 
-    @Override
-    public Class<KVTime> toType() {
-        return KVTime.class;
-    }
+  @Override
+  public Class<Time> fromType() {
+    return Time.class;
+  }
 
-    @Override
-    public SqlBinding<Time> getSqlBinding() {
-        return TimeSqlBinding.INSTANCE;
-    }
-    
+  @Override
+  public Class<KvTime> toType() {
+    return KvTime.class;
+  }
+
+  @Override
+  public SqlBinding<Time> getSqlBinding() {
+    return TimeSqlBinding.INSTANCE;
+  }
+
 }

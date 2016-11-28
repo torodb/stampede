@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,31 +13,35 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.annotations;
 
-import java.lang.annotation.*;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
 import javax.annotation.concurrent.GuardedBy;
 
 /**
- * This documentation annotation is used to inform that the annotated method
- * should be thread-protected by a lock.
- * <p/>
- * By default, the lock that has to be used is implicit by the context. If there
- * is not clear which lock should be used, it can be specified with 
- * {@link GuardedBy} annotation.
- * <p/>
- * The {@link #exclusive() } property informs if the lock must be exclusive or
- * not.
+ * This documentation annotation is used to inform that the annotated method should be
+ * thread-protected by a lock.
+ *
+ * <p/>By default, the lock that has to be used is implicit by the context. If there is not clear 
+ * which lock should be used, it can be specified with {@link GuardedBy} annotation.
+ *
+ * <p/>The {@link #exclusive() } property informs if the lock must be exclusive or not.
  */
 @Documented
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.CLASS)
 public @interface Locked {
 
-    /**
-     * @return if the given method must be executed in a exclusive lock
-     */
-    public boolean exclusive() default false;
+  /**
+   * @return if the given method must be executed in a exclusive lock
+   */
+  public boolean exclusive() default false;
 }

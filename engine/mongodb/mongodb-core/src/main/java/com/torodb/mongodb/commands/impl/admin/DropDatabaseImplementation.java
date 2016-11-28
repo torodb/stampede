@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.commands.impl.admin;
 
 import com.eightkdata.mongowp.ErrorCode;
@@ -30,21 +31,21 @@ import org.apache.logging.log4j.Logger;
 
 public class DropDatabaseImplementation implements WriteTorodbCommandImpl<Empty, Empty> {
 
-    private static final Logger LOGGER = LogManager.getLogger(DropDatabaseImplementation.class);
+  private static final Logger LOGGER = LogManager.getLogger(DropDatabaseImplementation.class);
 
-    @Override
-    public Status<Empty> apply(Request req, Command<? super Empty, ? super Empty> command,
-            Empty arg, WriteMongodTransaction context) {
-        try {
-            LOGGER.info("Drop database {}", req.getDatabase());
+  @Override
+  public Status<Empty> apply(Request req, Command<? super Empty, ? super Empty> command,
+      Empty arg, WriteMongodTransaction context) {
+    try {
+      LOGGER.info("Drop database {}", req.getDatabase());
 
-            context.getTorodTransaction().dropDatabase(req.getDatabase());
-        } catch (UserException ex) {
-            //TODO: Improve error reporting
-            return Status.from(ErrorCode.COMMAND_FAILED, ex.getLocalizedMessage());
-        }
-
-        return Status.ok();
+      context.getTorodTransaction().dropDatabase(req.getDatabase());
+    } catch (UserException ex) {
+      //TODO: Improve error reporting
+      return Status.from(ErrorCode.COMMAND_FAILED, ex.getLocalizedMessage());
     }
+
+    return Status.ok();
+  }
 
 }

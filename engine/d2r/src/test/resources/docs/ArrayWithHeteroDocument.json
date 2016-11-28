@@ -1,10 +1,11 @@
 {
-	"name": "John",
-	"department" : [
-		{
-			"name" : "dept1"
-		},{
-			"code" : 54
-		}
-	]
+    "name": "John",
+    "department": [
+        {
+            "name": "dept1"
+        },
+        {
+            "code": 54
+        }
+    ]
 }

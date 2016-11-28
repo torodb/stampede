@@ -1,5 +1,5 @@
 /*
- * ToroDB - KVDocument: MongoWP Converter
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.kvdocument.conversion.mongowp;
 
 import com.eightkdata.mongowp.bson.BsonType;
@@ -24,18 +25,18 @@ import com.eightkdata.mongowp.bson.BsonType;
  */
 public class UnsupportedBsonTypeException extends RuntimeException {
 
-    private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
 
-    private final BsonType bsonType;
+  private final BsonType bsonType;
 
-    public UnsupportedBsonTypeException(BsonType bsonType) {
-        super(bsonType + " is not supported on KVDocument model and should be "
-                + "consumed by a layer closer to MongoDB");
-        this.bsonType = bsonType;
-    }
+  public UnsupportedBsonTypeException(BsonType bsonType) {
+    super(bsonType + " is not supported on KVDocument model and should be "
+        + "consumed by a layer closer to MongoDB");
+    this.bsonType = bsonType;
+  }
 
-    public BsonType getBsonType() {
-        return bsonType;
-    }
+  public BsonType getBsonType() {
+    return bsonType;
+  }
 
 }

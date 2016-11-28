@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,39 +13,37 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.commands.signatures.internal;
 
 import com.eightkdata.mongowp.bson.BsonDocument;
 import com.eightkdata.mongowp.exceptions.BadValueException;
 import com.eightkdata.mongowp.exceptions.NoSuchKeyException;
 import com.eightkdata.mongowp.exceptions.TypesMismatchException;
-import com.torodb.mongodb.commands.signatures.repl.ApplyOpsCommand.ApplyOpsArgument.Precondition;
 import com.eightkdata.mongowp.utils.BsonReaderTool;
-import com.google.common.base.Preconditions;
 
 /**
  *
  */
 public class HandshakeReplSetUpdatePositionCommand extends HandshakeCommand {
 
-    @Override
-    public HandshakeArgument unmarshallArg(BsonDocument requestDoc)
-            throws TypesMismatchException, NoSuchKeyException, BadValueException {
+  @Override
+  public HandshakeArgument unmarshallArg(BsonDocument requestDoc)
+      throws TypesMismatchException, NoSuchKeyException, BadValueException {
 
-        BsonDocument doc = BsonReaderTool.getDocument(requestDoc, "handshake");
+    BsonDocument doc = BsonReaderTool.getDocument(requestDoc, "handshake");
 
-        HandshakeArgument result = super.unmarshallArg(doc);
+    HandshakeArgument result = super.unmarshallArg(doc);
 
-        if (result.getMemberId() == null) {
-            throw new NoSuchKeyException(
-                    "replSetUpdatePosition handshake was missing 'member' field"
-            );
-        }
-
-        return result;
+    if (result.getMemberId() == null) {
+      throw new NoSuchKeyException(
+          "replSetUpdatePosition handshake was missing 'member' field"
+      );
     }
 
+    return result;
+  }
 
 }

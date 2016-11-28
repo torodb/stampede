@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Backend common
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,33 +13,35 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.backend.converters.array;
+
+import com.torodb.kvdocument.values.KvInstant;
+import com.torodb.kvdocument.values.heap.InstantKvInstant;
+import org.jooq.tools.json.JSONValue;
 
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 
 import javax.json.JsonString;
 
-import org.jooq.tools.json.JSONValue;
-
-import com.torodb.kvdocument.values.KVInstant;
-import com.torodb.kvdocument.values.heap.InstantKVInstant;
-
 /**
  *
  */
-public class InstantToArrayConverter implements ArrayConverter<JsonString, KVInstant> {
-    private static final long serialVersionUID = 1L;
+public class InstantToArrayConverter implements ArrayConverter<JsonString, KvInstant> {
 
-    @Override
-    public String toJsonLiteral(KVInstant value) {
-        return JSONValue.toJSONString(value.toString());
-    }
+  private static final long serialVersionUID = 1L;
 
-    @Override
-    public KVInstant fromJsonValue(JsonString value) {
-        return new InstantKVInstant(Instant.from(DateTimeFormatter.ISO_OFFSET_DATE_TIME.parse(value.getString())));
-    }
+  @Override
+  public String toJsonLiteral(KvInstant value) {
+    return JSONValue.toJSONString(value.toString());
+  }
+
+  @Override
+  public KvInstant fromJsonValue(JsonString value) {
+    return new InstantKvInstant(Instant.from(DateTimeFormatter.ISO_OFFSET_DATE_TIME.parse(value
+        .getString())));
+  }
 }

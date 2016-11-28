@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Packaging utils
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.packaging.config.validation;
 
 import java.util.List;
@@ -23,21 +24,21 @@ import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 
 public class NotNullElementsValidator implements ConstraintValidator<NotNullElements, List<?>> {
-	
-	@Override
-	public void initialize(NotNullElements constraintAnnotation) {
-	}
 
-	@Override
-	public boolean isValid(List<?> value, ConstraintValidatorContext context) {
-		if (value != null) {
-			for (Object element : value) {
-				if (element == null) {
-					return false;
-				}
-			}
-		}
+  @Override
+  public void initialize(NotNullElements constraintAnnotation) {
+  }
 
-		return true;
-	}
+  @Override
+  public boolean isValid(List<?> value, ConstraintValidatorContext context) {
+    if (value != null) {
+      for (Object element : value) {
+        if (element == null) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
 }

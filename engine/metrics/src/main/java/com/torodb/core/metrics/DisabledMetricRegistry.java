@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Metrics
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,14 +13,10 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.core.metrics;
-
-import java.util.concurrent.Callable;
-import java.util.concurrent.TimeUnit;
-
-import javax.inject.Singleton;
 
 import com.codahale.metrics.Clock;
 import com.codahale.metrics.Counter;
@@ -30,198 +26,204 @@ import com.codahale.metrics.Meter;
 import com.codahale.metrics.Reservoir;
 import com.codahale.metrics.Snapshot;
 import com.codahale.metrics.Timer;
+import com.codahale.metrics.Timer.Context;
+
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
+
+import javax.inject.Singleton;
 
 /**
- * First iteration of Disabled Metric Registry.
- * Only metrics created using ToroMetricRegistry class are disabled.
- * Metrics are mocked, but Timer needs an instance of Context that is private.
+ * First iteration of Disabled Metric Registry. Only metrics created using ToroMetricRegistry class
+ * are disabled. Metrics are mocked, but Timer needs an instance of Context that is private.
  *
  */
 @Singleton
 public class DisabledMetricRegistry extends ToroMetricRegistry {
-	
-	private static final Counter mockedCounter = new MockedCounter();
-	private static final Meter mockedMeter = new MockedMeter();
-	private static final Histogram mockedHistogram = new MockedHistogram(new ExponentiallyDecayingReservoir());
-    private static final Timer mockedTimer = new MockedTimer();
-    @SuppressWarnings("rawtypes")
-    private static final SettableGauge mockedGauge = new MockedGauge();
-	
-	public Counter counter(MetricName name) {
-		return mockedCounter;
-	}
 
-	public Meter meter(MetricName name) {
-		return mockedMeter;
-	}
+  private static final Counter mockedCounter = new MockedCounter();
+  private static final Meter mockedMeter = new MockedMeter();
+  private static final Histogram mockedHistogram = new MockedHistogram(
+      new ExponentiallyDecayingReservoir());
+  private static final Timer mockedTimer = new MockedTimer();
+  @SuppressWarnings("rawtypes")
+  private static final SettableGauge mockedGauge = new MockedGauge();
 
-	public Histogram histogram(MetricName name) {
-		return mockedHistogram;
-	}
-    
-    public Histogram histogram(MetricName name, boolean resetOnSnapshot) {
-        return histogram(name);
+  public Counter counter(MetricName name) {
+    return mockedCounter;
+  }
+
+  public Meter meter(MetricName name) {
+    return mockedMeter;
+  }
+
+  public Histogram histogram(MetricName name) {
+    return mockedHistogram;
+  }
+
+  public Histogram histogram(MetricName name, boolean resetOnSnapshot) {
+    return histogram(name);
+  }
+
+  public Timer timer(MetricName name) {
+    return mockedTimer;
+  }
+
+  public Timer timer(MetricName name, boolean resetOnSnapshot) {
+    return timer(name);
+  }
+
+  @SuppressWarnings("unchecked")
+  public <T> SettableGauge<T> gauge(MetricName name) {
+    return mockedGauge;
+  }
+
+  public boolean remove(MetricName name) {
+    boolean removed = remove(name.getMetricName());
+    return removed;
+  }
+
+  public static class MockedCounter extends Counter {
+
+    public void inc() {
     }
 
-	public Timer timer(MetricName name) {
-		return mockedTimer;
-	}
-
-    public Timer timer(MetricName name, boolean resetOnSnapshot) {
-        return timer(name);
-    }
-	
-    @SuppressWarnings("unchecked")
-    public <T> SettableGauge<T> gauge(MetricName name) {
-        return mockedGauge;
+    public void inc(long n) {
     }
 
-	public boolean remove(MetricName name) {
-		boolean removed = remove(name.getMetricName());
-		return removed;
-	}
-	
-	public static class MockedCounter extends Counter {
-		
-	    public void inc() {
-	    }
+    public void dec() {
+    }
 
-	    public void inc(long n) {
-	    }
+    public void dec(long n) {
+    }
 
-	    public void dec() {
-	    }
+    @Override
+    public long getCount() {
+      return 0;
+    }
+  }
 
-	    public void dec(long n) {
-	    }
+  public static class MockedMeter extends Meter {
 
-	    @Override
-	    public long getCount() {
-	    	return 0;
-	    }
-	}
+    public void mark() {
+    }
 
+    public void mark(long n) {
+    }
 
-	public static class MockedMeter extends Meter {
+    @Override
+    public long getCount() {
+      return 0;
+    }
 
-		public void mark() {
-	    }
+    @Override
+    public double getFifteenMinuteRate() {
+      return 0;
+    }
 
-	    public void mark(long n) {
-	    }
+    @Override
+    public double getFiveMinuteRate() {
+      return 0;
+    }
 
-	    @Override
-	    public long getCount() {
-	        return 0;
-	    }
+    @Override
+    public double getMeanRate() {
+      return 0;
+    }
 
-	    @Override
-	    public double getFifteenMinuteRate() {
-	    	return 0;
-	    }
+    @Override
+    public double getOneMinuteRate() {
+      return 0;
+    }
+  }
 
-	    @Override
-	    public double getFiveMinuteRate() {
-	    	return 0;
-	    }
+  public static class MockedHistogram extends Histogram {
 
-	    @Override
-	    public double getMeanRate() {
-	    	return 0;
-	    }
+    public MockedHistogram(Reservoir reservoir) {
+      super(reservoir);
+    }
 
-	    @Override
-	    public double getOneMinuteRate() {
-	    	return 0;
-	    }
-	}
+    public void update(int value) {
+    }
 
-	public static class MockedHistogram extends Histogram {
-		
-	    public MockedHistogram(Reservoir reservoir) {
-			super(reservoir);
-		}
+    public void update(long value) {
+    }
 
-		public void update(int value) {
-	    }
+    @Override
+    public long getCount() {
+      return 0;
+    }
 
-	    public void update(long value) {
-	    }
+    @Override
+    public Snapshot getSnapshot() {
+      return super.getSnapshot();
+    }
+  }
 
-	    @Override
-	    public long getCount() {
-	        return 0;
-	    }
+  public static class MockedTimer extends Timer {
 
-	    @Override
-	    public Snapshot getSnapshot() {
-	    	return super.getSnapshot();
-	    }
-	}
+    private static final Timer shared = new Timer();
 
-	public static class MockedTimer extends Timer {
-		
-		private static final Timer shared = new Timer();
-		
-		public MockedTimer() {
-		}
-		
-	    public MockedTimer(Reservoir reservoir) {
-	    }
+    public MockedTimer() {
+    }
 
-	    public MockedTimer(Reservoir reservoir, Clock clock) {
-	    }
+    public MockedTimer(Reservoir reservoir) {
+    }
 
-	    public void update(long duration, TimeUnit unit) {
-	    }
+    public MockedTimer(Reservoir reservoir, Clock clock) {
+    }
 
-	    public <T> T time(Callable<T> event) throws Exception {
-	    	return event.call();
-	    }
+    public void update(long duration, TimeUnit unit) {
+    }
 
-	    public Context time() {
-	    	return shared.time();
-	    }
+    public <T> T time(Callable<T> event) throws Exception {
+      return event.call();
+    }
 
-	    @Override
-	    public long getCount() {
-	        return 0;
-	    }
+    public Context time() {
+      return shared.time();
+    }
 
-	    @Override
-	    public double getFifteenMinuteRate() {
-	        return 0;
-	    }
+    @Override
+    public long getCount() {
+      return 0;
+    }
 
-	    @Override
-	    public double getFiveMinuteRate() {
-	    	return 0;
-	    }
+    @Override
+    public double getFifteenMinuteRate() {
+      return 0;
+    }
 
-	    @Override
-	    public double getMeanRate() {
-	    	return 0;
-	    }
+    @Override
+    public double getFiveMinuteRate() {
+      return 0;
+    }
 
-	    @Override
-	    public double getOneMinuteRate() {
-	    	return 0;
-	    }
+    @Override
+    public double getMeanRate() {
+      return 0;
+    }
 
-	    @Override
-	    public Snapshot getSnapshot() {
-	        return null;
-	    }
-	}
-	
-	public static class MockedGauge<T> extends SettableGauge<T> {
-        @Override
-        public T getValue() {
-            return null;
-        }
+    @Override
+    public double getOneMinuteRate() {
+      return 0;
+    }
 
-        @Override
-        public void setValue(T value) {
-        }
-	}
+    @Override
+    public Snapshot getSnapshot() {
+      return null;
+    }
+  }
+
+  public static class MockedGauge<T> extends SettableGauge<T> {
+
+    @Override
+    public T getValue() {
+      return null;
+    }
+
+    @Override
+    public void setValue(T value) {
+    }
+  }
 }

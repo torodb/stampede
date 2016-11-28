@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,103 +13,105 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package com.torodb.mongodb.language.update;
 
-import java.util.Collection;
+package com.torodb.mongodb.language.update;
 
 import com.torodb.core.exceptions.user.UpdateException;
 import com.torodb.core.language.AttributeReference;
-import com.torodb.kvdocument.values.KVValue;
+import com.torodb.kvdocument.values.KvValue;
+
+import java.util.Collection;
 
 /**
  *
  */
-public class UnsetFieldUpdateAction extends SingleFieldUpdateAction implements ResolvedCallback<Boolean> {
+public class UnsetFieldUpdateAction extends SingleFieldUpdateAction implements
+    ResolvedCallback<Boolean> {
 
-    public UnsetFieldUpdateAction(Collection<AttributeReference> modifiedField) {
-        super(modifiedField);
-    }
+  public UnsetFieldUpdateAction(Collection<AttributeReference> modifiedField) {
+    super(modifiedField);
+  }
 
-    @Override
-    public void apply(UpdatedToroDocumentBuilder builder) throws UpdateException {
-        for (AttributeReference key : getModifiedField()) {
-            if (unset(new ObjectBuilderCallback(builder), key)) {
-                builder.setUpdated();
-                return;
-            }
-        }
+  @Override
+  public void apply(UpdatedToroDocumentBuilder builder) throws UpdateException {
+    for (AttributeReference key : getModifiedField()) {
+      if (unset(new ObjectBuilderCallback(builder), key)) {
+        builder.setUpdated();
+        return;
+      }
     }
-    
-    <K> boolean unset(
-            BuilderCallback<K> builder, 
-            Collection<AttributeReference> keys
-    ) throws UpdateException {
-        for (AttributeReference key : keys) {
-            if (unset(builder, key)) {
-                return true;
-            }
-        }
-        return false;
-    }
-    
-    <K> boolean unset(
-            BuilderCallback<K> builder, 
-            AttributeReference key
-    ) throws UpdateException {
-        Boolean result = AttributeReferenceToBuilderCallback.resolve(
-                builder, 
-                key.getKeys(), 
-                false, 
-                this
-        );
-        if (result == null) {
-            return false;
-        }
-        return result;
-    }
+  }
 
-    @Override
-    public <K> Boolean objectReferenced(
-            BuilderCallback<K> parentBuilder, 
-            K key, 
-            UpdatedToroDocumentBuilder child
-    ) {
-        parentBuilder.unset(key);
+  <K> boolean unset(
+      BuilderCallback<K> builder,
+      Collection<AttributeReference> keys
+  ) throws UpdateException {
+    for (AttributeReference key : keys) {
+      if (unset(builder, key)) {
         return true;
+      }
     }
+    return false;
+  }
 
-    @Override
-    public <K> Boolean arrayReferenced(
-            BuilderCallback<K> parentBuilder, 
-            K key, 
-            UpdatedToroDocumentArrayBuilder child
-    ) {
-        parentBuilder.unset(key);
-        return true;
+  <K> boolean unset(
+      BuilderCallback<K> builder,
+      AttributeReference key
+  ) throws UpdateException {
+    Boolean result = AttributeReferenceToBuilderCallback.resolve(
+        builder,
+        key.getKeys(),
+        false,
+        this
+    );
+    if (result == null) {
+      return false;
     }
+    return result;
+  }
 
-    @Override
-    public <K> Boolean valueReferenced(
-            BuilderCallback<K> parentBuilder, 
-            K key, 
-            KVValue<?> child
-    ) {
-        parentBuilder.unset(key);
-        return true;
-    }
+  @Override
+  public <K> Boolean objectReferenced(
+      BuilderCallback<K> parentBuilder,
+      K key,
+      UpdatedToroDocumentBuilder child
+  ) {
+    parentBuilder.unset(key);
+    return true;
+  }
 
-    @Override
-    public <K> Boolean newElementReferenced(
-            BuilderCallback<K> parentBuilder, 
-            K key
-    ) {
-        return false;
-    }
+  @Override
+  public <K> Boolean arrayReferenced(
+      BuilderCallback<K> parentBuilder,
+      K key,
+      UpdatedToroDocumentArrayBuilder child
+  ) {
+    parentBuilder.unset(key);
+    return true;
+  }
 
-    @Override
-    public <Result, Arg> Result accept(UpdateActionVisitor<Result, Arg> visitor, Arg arg) {
-        return visitor.visit(this, arg);
-    }
+  @Override
+  public <K> Boolean valueReferenced(
+      BuilderCallback<K> parentBuilder,
+      K key,
+      KvValue<?> child
+  ) {
+    parentBuilder.unset(key);
+    return true;
+  }
+
+  @Override
+  public <K> Boolean newElementReferenced(
+      BuilderCallback<K> parentBuilder,
+      K key
+  ) {
+    return false;
+  }
+
+  @Override
+  public <R, A> R accept(UpdateActionVisitor<R, A> visitor, A arg) {
+    return visitor.visit(this, arg);
+  }
 }

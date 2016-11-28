@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Backend Derby
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,23 +13,24 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.backend.derby.schema;
 
 import com.torodb.backend.SqlHelper;
 import com.torodb.backend.SqlInterface;
+import com.torodb.backend.meta.AbstractSchemaUpdater;
+
 import javax.inject.Inject;
 import javax.inject.Singleton;
-
-import com.torodb.backend.meta.AbstractSchemaUpdater;
 
 @Singleton
 public class DerbySchemaUpdater extends AbstractSchemaUpdater {
 
-    @Inject
-    public DerbySchemaUpdater(SqlInterface sqlInterface, SqlHelper sqlHelper) {
-        super(sqlInterface, sqlHelper);
-    }
+  @Inject
+  public DerbySchemaUpdater(SqlInterface sqlInterface, SqlHelper sqlHelper) {
+    super(sqlInterface, sqlHelper);
+  }
 
 }

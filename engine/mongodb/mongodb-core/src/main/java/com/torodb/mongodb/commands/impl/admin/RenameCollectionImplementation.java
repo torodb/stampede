@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,36 +13,40 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.commands.impl.admin;
 
 import com.eightkdata.mongowp.ErrorCode;
 import com.eightkdata.mongowp.Status;
-import com.torodb.mongodb.commands.signatures.admin.RenameCollectionCommand.RenameCollectionArgument;
 import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.Request;
 import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.mongodb.commands.impl.ExclusiveWriteTorodbCommandImpl;
+import com.torodb.mongodb.commands.signatures.admin.RenameCollectionCommand.RenameCollectionArgument;
 import com.torodb.mongodb.core.ExclusiveWriteMongodTransaction;
 
-public class RenameCollectionImplementation implements ExclusiveWriteTorodbCommandImpl<RenameCollectionArgument, Empty> {
+public class RenameCollectionImplementation implements
+    ExclusiveWriteTorodbCommandImpl<RenameCollectionArgument, Empty> {
 
-    @Override
-    public Status<Empty> apply(Request req, Command<? super RenameCollectionArgument, ? super Empty> command,
-            RenameCollectionArgument arg, ExclusiveWriteMongodTransaction context) {
-        try {
-            if (arg.isDropTarget()) {
-                context.getTorodTransaction().dropCollection(arg.getToDatabase(), arg.getToCollection());
-            }
-            
-            context.getTorodTransaction().renameCollection(arg.getFromDatabase(), arg.getFromCollection(), arg.getToDatabase(), arg.getToCollection());
-        } catch (UserException ex) {
-            return Status.from(ErrorCode.COMMAND_FAILED, ex.getLocalizedMessage());
-        }
+  @Override
+  public Status<Empty> apply(Request req,
+      Command<? super RenameCollectionArgument, ? super Empty> command,
+      RenameCollectionArgument arg, ExclusiveWriteMongodTransaction context) {
+    try {
+      if (arg.isDropTarget()) {
+        context.getTorodTransaction().dropCollection(arg.getToDatabase(), arg.getToCollection());
+      }
 
-        return Status.ok();
+      context.getTorodTransaction().renameCollection(arg.getFromDatabase(), arg.getFromCollection(),
+          arg.getToDatabase(), arg.getToCollection());
+    } catch (UserException ex) {
+      return Status.from(ErrorCode.COMMAND_FAILED, ex.getLocalizedMessage());
     }
+
+    return Status.ok();
+  }
 
 }

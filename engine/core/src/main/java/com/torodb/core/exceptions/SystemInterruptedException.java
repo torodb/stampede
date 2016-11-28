@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,34 +13,33 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.core.exceptions;
 
-import com.torodb.core.exceptions.SystemException;
-
 /**
- * 
+ *
  */
 public class SystemInterruptedException extends SystemException {
-    
-    private static final long serialVersionUID = 1L;
-    
-    private final InterruptedException cause;
-    
-    public SystemInterruptedException(InterruptedException cause) {
-        super(cause);
-        
-        this.cause = cause;
-    }
-    
-    public SystemInterruptedException(String message, InterruptedException cause) {
-        super(message, cause);
-        
-        this.cause = cause;
-    }
 
-    public InterruptedException getCause() {
-        return cause;
-    }
+  private static final long serialVersionUID = 1L;
+
+  private final InterruptedException cause;
+
+  public SystemInterruptedException(InterruptedException cause) {
+    super(cause);
+
+    this.cause = cause;
+  }
+
+  public SystemInterruptedException(String message, InterruptedException cause) {
+    super(message, cause);
+
+    this.cause = cause;
+  }
+
+  public InterruptedException getCause() {
+    return cause;
+  }
 }

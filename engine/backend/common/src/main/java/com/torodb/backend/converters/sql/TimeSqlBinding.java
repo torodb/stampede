@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Backend common
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.backend.converters.sql;
 
 import java.sql.PreparedStatement;
@@ -23,19 +24,21 @@ import java.sql.SQLException;
 import java.sql.Time;
 
 public class TimeSqlBinding implements SqlBinding<Time> {
-    public static final TimeSqlBinding INSTANCE = new TimeSqlBinding();
 
-    @Override
-    public Time get(ResultSet resultSet, int columnIndex) throws SQLException {
-        Time value = resultSet.getTime(columnIndex);
-        if (resultSet.wasNull()) {
-            return null;
-        }
-        return value;
-    }
+  public static final TimeSqlBinding INSTANCE = new TimeSqlBinding();
 
-    @Override
-    public void set(PreparedStatement preparedStatement, int parameterIndex, Time value) throws SQLException {
-        preparedStatement.setTime(parameterIndex, value);
+  @Override
+  public Time get(ResultSet resultSet, int columnIndex) throws SQLException {
+    Time value = resultSet.getTime(columnIndex);
+    if (resultSet.wasNull()) {
+      return null;
     }
+    return value;
+  }
+
+  @Override
+  public void set(PreparedStatement preparedStatement, int parameterIndex, Time value) throws
+      SQLException {
+    preparedStatement.setTime(parameterIndex, value);
+  }
 }

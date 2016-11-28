@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,24 +13,25 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.commands.impl.replication;
+
+import com.eightkdata.mongowp.Status;
+import com.eightkdata.mongowp.server.api.Command;
+import com.eightkdata.mongowp.server.api.Request;
+import com.eightkdata.mongowp.server.api.tools.Empty;
+import com.torodb.mongodb.commands.impl.ConnectionTorodbCommandImpl;
+import com.torodb.mongodb.commands.signatures.repl.IsMasterCommand.IsMasterReply;
+import com.torodb.mongodb.core.MongoLayerConstants;
+import com.torodb.mongodb.core.MongodConnection;
+import com.torodb.mongodb.core.MongodServerConfig;
 
 import java.time.Clock;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-
-import com.eightkdata.mongowp.Status;
-import com.torodb.mongodb.commands.signatures.repl.IsMasterCommand.IsMasterReply;
-import com.eightkdata.mongowp.server.api.Command;
-import com.eightkdata.mongowp.server.api.Request;
-import com.eightkdata.mongowp.server.api.tools.Empty;
-import com.torodb.mongodb.commands.impl.ConnectionTorodbCommandImpl;
-import com.torodb.mongodb.core.MongoLayerConstants;
-import com.torodb.mongodb.core.MongodConnection;
-import com.torodb.mongodb.core.MongodServerConfig;
 
 /**
  *
@@ -38,25 +39,26 @@ import com.torodb.mongodb.core.MongodServerConfig;
 @Singleton
 public class IsMasterImplementation extends ConnectionTorodbCommandImpl<Empty, IsMasterReply> {
 
-    private final Clock clock;
+  private final Clock clock;
 
-    @Inject
-    public IsMasterImplementation(Clock clock, MongodServerConfig ourConfig) {
-        this.clock = clock;
-    }
+  @Inject
+  public IsMasterImplementation(Clock clock, MongodServerConfig ourConfig) {
+    this.clock = clock;
+  }
 
-    @Override
-    public Status<IsMasterReply> apply(Request req, Command<? super Empty, ? super IsMasterReply> command, Empty arg, MongodConnection context) {
-        return Status.ok(
-                IsMasterReply.Builder.fromStandalone(
-                        MongoLayerConstants.MAX_BSON_DOCUMENT_SIZE,
-                        MongoLayerConstants.MAX_MESSAGE_SIZE_BYTES,
-                        MongoLayerConstants.MAX_WRITE_BATCH_SIZE,
-                        clock.instant(),
-                        MongoLayerConstants.MAX_WIRE_VERSION,
-                        MongoLayerConstants.MIN_WIRE_VERSION
-                ).build()
-        );
+  @Override
+  public Status<IsMasterReply> apply(Request req,
+      Command<? super Empty, ? super IsMasterReply> command, Empty arg, MongodConnection context) {
+    return Status.ok(
+        IsMasterReply.Builder.fromStandalone(
+            MongoLayerConstants.MAX_BSON_DOCUMENT_SIZE,
+            MongoLayerConstants.MAX_MESSAGE_SIZE_BYTES,
+            MongoLayerConstants.MAX_WRITE_BATCH_SIZE,
+            clock.instant(),
+            MongoLayerConstants.MAX_WIRE_VERSION,
+            MongoLayerConstants.MIN_WIRE_VERSION
+        ).build()
+    );
 
-    }
+  }
 }

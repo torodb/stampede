@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Backend PostgreSQL
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,59 +13,61 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.backend.postgresql.converters.jooq;
 
-import java.sql.Date;
-
-import org.jooq.impl.SQLDataType;
-
-import com.torodb.backend.converters.jooq.DataTypeForKV;
-import com.torodb.backend.converters.jooq.KVValueConverter;
+import com.torodb.backend.converters.jooq.DataTypeForKv;
+import com.torodb.backend.converters.jooq.KvValueConverter;
 import com.torodb.backend.converters.sql.DateSqlBinding;
 import com.torodb.backend.converters.sql.SqlBinding;
 import com.torodb.kvdocument.types.DateType;
-import com.torodb.kvdocument.types.KVType;
-import com.torodb.kvdocument.values.KVDate;
-import com.torodb.kvdocument.values.heap.LocalDateKVDate;
+import com.torodb.kvdocument.types.KvType;
+import com.torodb.kvdocument.values.KvDate;
+import com.torodb.kvdocument.values.heap.LocalDateKvDate;
+import org.jooq.impl.SQLDataType;
+
+import java.sql.Date;
 
 /**
  *
  */
-public class DateValueConverter implements KVValueConverter<Date, Date, KVDate> {
-    private static final long serialVersionUID = 1L;
+public class DateValueConverter implements KvValueConverter<Date, Date, KvDate> {
 
-    public static final DataTypeForKV<KVDate> TYPE = DataTypeForKV.from(SQLDataType.DATE, new DateValueConverter());
+  private static final long serialVersionUID = 1L;
 
-    @Override
-    public KVType getErasuredType() {
-        return DateType.INSTANCE;
-    }
+  public static final DataTypeForKv<KvDate> TYPE = DataTypeForKv.from(SQLDataType.DATE,
+      new DateValueConverter());
 
-    @Override
-    public KVDate from(Date databaseObject) {
-        return new LocalDateKVDate(databaseObject.toLocalDate());
-    }
+  @Override
+  public KvType getErasuredType() {
+    return DateType.INSTANCE;
+  }
 
-    @Override
-    public Date to(KVDate userObject) {
-        return Date.valueOf(userObject.getValue());
-    }
+  @Override
+  public KvDate from(Date databaseObject) {
+    return new LocalDateKvDate(databaseObject.toLocalDate());
+  }
 
-    @Override
-    public Class<Date> fromType() {
-        return Date.class;
-    }
+  @Override
+  public Date to(KvDate userObject) {
+    return Date.valueOf(userObject.getValue());
+  }
 
-    @Override
-    public Class<KVDate> toType() {
-        return KVDate.class;
-    }
+  @Override
+  public Class<Date> fromType() {
+    return Date.class;
+  }
 
-    @Override
-    public SqlBinding<Date> getSqlBinding() {
-        return DateSqlBinding.INSTANCE;
-    }
+  @Override
+  public Class<KvDate> toType() {
+    return KvDate.class;
+  }
+
+  @Override
+  public SqlBinding<Date> getSqlBinding() {
+    return DateSqlBinding.INSTANCE;
+  }
 
 }

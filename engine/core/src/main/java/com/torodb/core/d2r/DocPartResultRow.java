@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,12 +13,14 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.core.d2r;
 
 import com.torodb.core.transaction.metainf.FieldType;
-import com.torodb.kvdocument.values.KVValue;
+import com.torodb.kvdocument.values.KvValue;
+
 import javax.annotation.Nullable;
 
 /**
@@ -26,15 +28,15 @@ import javax.annotation.Nullable;
  */
 public interface DocPartResultRow {
 
-    public int getDid();
+  public int getDid();
 
-    public int getRid();
+  public int getRid();
 
-    public int getPid();
+  public int getPid();
 
-    @Nullable
-    public Integer getSeq();
+  @Nullable
+  public Integer getSeq();
 
-    public KVValue<?> getUserValue(int fieldIndex, FieldType fieldType);
+  public KvValue<?> getUserValue(int fieldIndex, FieldType fieldType);
 
 }

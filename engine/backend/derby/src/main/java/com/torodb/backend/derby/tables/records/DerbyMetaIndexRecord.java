@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Backend Derby
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.backend.derby.tables.records;
 
 import com.torodb.backend.derby.tables.DerbyMetaIndexTable;
@@ -22,32 +23,32 @@ import com.torodb.backend.tables.records.MetaIndexRecord;
 
 public class DerbyMetaIndexRecord extends MetaIndexRecord {
 
-    private static final long serialVersionUID = -2922006334416416115L;
+  private static final long serialVersionUID = -2922006334416416115L;
 
-    /**
-	 * Create a detached MetaIndexRecord
-	 */
-	public DerbyMetaIndexRecord() {
-		super(DerbyMetaIndexTable.INDEX);
-	}
+  /**
+   * Create a detached MetaIndexRecord
+   */
+  public DerbyMetaIndexRecord() {
+    super(DerbyMetaIndexTable.INDEX);
+  }
 
-    @Override
-    public MetaIndexRecord values(String database, String collection, String name, Boolean unique) {
-        
-        setDatabase(database);
-        setCollection(collection);
-        setName(name);
-        setUnique(unique);
-        return this;
-    }
+  @Override
+  public MetaIndexRecord values(String database, String collection, String name, Boolean unique) {
 
-	/**
-	 * Create a detached, initialised MetaIndexRecord
-	 */
-	public DerbyMetaIndexRecord(String database, String collection, String name, Boolean unique) {
-		super(DerbyMetaIndexTable.INDEX);
-		
-		values(database, collection, name, unique);
-	}
+    setDatabase(database);
+    setCollection(collection);
+    setName(name);
+    setUnique(unique);
+    return this;
+  }
+
+  /**
+   * Create a detached, initialised MetaIndexRecord
+   */
+  public DerbyMetaIndexRecord(String database, String collection, String name, Boolean unique) {
+    super(DerbyMetaIndexTable.INDEX);
+
+    values(database, collection, name, unique);
+  }
 
 }

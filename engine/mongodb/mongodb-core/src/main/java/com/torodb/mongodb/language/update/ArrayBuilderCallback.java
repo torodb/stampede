@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,80 +13,82 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.language.update;
 
-import com.torodb.kvdocument.values.KVValue;
+import com.torodb.kvdocument.values.KvValue;
 
 /**
  *
  */
 class ArrayBuilderCallback implements BuilderCallback<Integer> {
-    private final UpdatedToroDocumentArrayBuilder builder;
 
-    public ArrayBuilderCallback(UpdatedToroDocumentArrayBuilder builder) {
-        this.builder = builder;
-    }
+  private final UpdatedToroDocumentArrayBuilder builder;
 
-    @Override
-    public Class<Integer> getKeyClass() {
-        return Integer.class;
-    }
+  public ArrayBuilderCallback(UpdatedToroDocumentArrayBuilder builder) {
+    this.builder = builder;
+  }
 
-    @Override
-    public boolean contains(Integer key) {
-        return builder.contains(key);
-    }
+  @Override
+  public Class<Integer> getKeyClass() {
+    return Integer.class;
+  }
 
-    @Override
-    public boolean isValue(Integer key) {
-        return builder.isValue(key);
-    }
+  @Override
+  public boolean contains(Integer key) {
+    return builder.contains(key);
+  }
 
-    @Override
-    public KVValue<?> getValue(Integer key) {
-        return builder.getValue(key);
-    }
+  @Override
+  public boolean isValue(Integer key) {
+    return builder.isValue(key);
+  }
 
-    @Override
-    public boolean isArrayBuilder(Integer key) {
-        return builder.isArrayBuilder(key);
-    }
+  @Override
+  public KvValue<?> getValue(Integer key) {
+    return builder.getValue(key);
+  }
 
-    @Override
-    public UpdatedToroDocumentArrayBuilder getArrayBuilder(Integer key) {
-        return builder.getArrayBuilder(key);
-    }
+  @Override
+  public boolean isArrayBuilder(Integer key) {
+    return builder.isArrayBuilder(key);
+  }
 
-    @Override
-    public boolean isObjectBuilder(Integer key) {
-        return builder.isObjectBuilder(key);
-    }
+  @Override
+  public UpdatedToroDocumentArrayBuilder getArrayBuilder(Integer key) {
+    return builder.getArrayBuilder(key);
+  }
 
-    @Override
-    public UpdatedToroDocumentBuilder getObjectBuilder(Integer key) {
-        return builder.getObjectBuilder(key);
-    }
+  @Override
+  public boolean isObjectBuilder(Integer key) {
+    return builder.isObjectBuilder(key);
+  }
 
-    @Override
-    public UpdatedToroDocumentArrayBuilder newArray(Integer key) {
-        return builder.newArray(key);
-    }
+  @Override
+  public UpdatedToroDocumentBuilder getObjectBuilder(Integer key) {
+    return builder.getObjectBuilder(key);
+  }
 
-    @Override
-    public UpdatedToroDocumentBuilder newObject(Integer key) {
-        return builder.newObject(key);
-    }
+  @Override
+  public UpdatedToroDocumentArrayBuilder newArray(Integer key) {
+    return builder.newArray(key);
+  }
 
-    @Override
-    public void setValue(Integer key, KVValue<?> value) {
-        builder.setValue(key, value);
-    }
+  @Override
+  public UpdatedToroDocumentBuilder newObject(Integer key) {
+    return builder.newObject(key);
+  }
 
-    @Override
-    public boolean unset(Integer key) {
-        return builder.unset(key);
-    }
-    
+  @Override
+  public void setValue(Integer key, KvValue<?> value) {
+    builder.setValue(key, value);
+  }
+
+  @Override
+  public boolean unset(Integer key) {
+    return builder.unset(key);
+  }
+
 }

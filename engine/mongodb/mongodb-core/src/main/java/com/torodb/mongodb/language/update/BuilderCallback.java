@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,44 +13,45 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.language.update;
 
-import javax.annotation.Nonnull;
+import com.torodb.kvdocument.values.KvValue;
 
-import com.torodb.kvdocument.values.KVValue;
+import javax.annotation.Nonnull;
 
 /**
  *
  */
 interface BuilderCallback<K> {
 
-    Class<K> getKeyClass();
-    
-    boolean contains(K key);
+  Class<K> getKeyClass();
 
-    boolean isValue(K key);
+  boolean contains(K key);
 
-    @Nonnull
-    KVValue<?> getValue(K key);
+  boolean isValue(K key);
 
-    boolean isArrayBuilder(K key);
+  @Nonnull
+  KvValue<?> getValue(K key);
 
-    @Nonnull
-    UpdatedToroDocumentArrayBuilder getArrayBuilder(K key);
+  boolean isArrayBuilder(K key);
 
-    boolean isObjectBuilder(K key);
+  @Nonnull
+  UpdatedToroDocumentArrayBuilder getArrayBuilder(K key);
 
-    @Nonnull
-    UpdatedToroDocumentBuilder getObjectBuilder(K key);
+  boolean isObjectBuilder(K key);
 
-    UpdatedToroDocumentArrayBuilder newArray(K key);
+  @Nonnull
+  UpdatedToroDocumentBuilder getObjectBuilder(K key);
 
-    UpdatedToroDocumentBuilder newObject(K key);
+  UpdatedToroDocumentArrayBuilder newArray(K key);
 
-    void setValue(K key, KVValue<?> value);
+  UpdatedToroDocumentBuilder newObject(K key);
 
-    boolean unset(K key);
+  void setValue(K key, KvValue<?> value);
+
+  boolean unset(K key);
 
 }

@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,47 +13,53 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.core.transaction.metainf;
 
 import com.torodb.core.annotations.DoNotChange;
-import java.util.stream.Stream;
 import org.jooq.lambda.tuple.Tuple2;
+
+import java.util.stream.Stream;
 
 /**
  *
  */
 public interface MutableMetaDatabase extends MetaDatabase {
 
-    @Override
-    public MutableMetaCollection getMetaCollectionByIdentifier(String collectionIdentifier);
+  @Override
+  public MutableMetaCollection getMetaCollectionByIdentifier(String collectionIdentifier);
 
-    @Override
-    public MutableMetaCollection getMetaCollectionByName(String collectionName);
+  @Override
+  public MutableMetaCollection getMetaCollectionByName(String collectionName);
 
-    @Override
-    public Stream<? extends MutableMetaCollection> streamMetaCollections();
+  @Override
+  public Stream<? extends MutableMetaCollection> streamMetaCollections();
 
-    public abstract MutableMetaCollection addMetaCollection(String colName, String colId) throws IllegalArgumentException;
+  public abstract MutableMetaCollection addMetaCollection(String colName, String colId) throws
+      IllegalArgumentException;
 
-    /**
-     * Removes a meta collection selected by its name.
-     * @param collectionName
-     * @return true iff the meta collection was removed
-     */
-    public abstract boolean removeMetaCollectionByName(String collectionName);
+  /**
+   * Removes a meta collection selected by its name.
+   *
+   * @param collectionName
+   * @return true iff the meta collection was removed
+   */
+  public abstract boolean removeMetaCollectionByName(String collectionName);
 
-    /**
-     * REmoves a meta collection selected by its identifier
-     * @param collectionId
-     * @return true iff the meta collection was removed
-     */
-    public abstract boolean removeMetaCollectionByIdentifier(String collectionId);
+  /**
+   * REmoves a meta collection selected by its identifier
+   *
+   * @param collectionId
+   * @return true iff the meta collection was removed
+   */
+  public abstract boolean removeMetaCollectionByIdentifier(String collectionId);
 
-    @DoNotChange
-    public abstract Iterable<Tuple2<MutableMetaCollection, MetaElementState>> getModifiedCollections();
+  @DoNotChange
+  @SuppressWarnings("checkstyle:LineLength")
+  public abstract Iterable<Tuple2<MutableMetaCollection, MetaElementState>> getModifiedCollections();
 
-    public abstract ImmutableMetaDatabase immutableCopy();
+  public abstract ImmutableMetaDatabase immutableCopy();
 
 }

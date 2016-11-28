@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Backend Derby
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,11 +13,16 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.backend.derby;
 
-import static com.torodb.backend.ErrorHandler.Context.*;
+import static com.torodb.backend.ErrorHandler.Context.ADD_COLUMN;
+import static com.torodb.backend.ErrorHandler.Context.CREATE_SCHEMA;
+import static com.torodb.backend.ErrorHandler.Context.CREATE_TABLE;
+import static com.torodb.backend.ErrorHandler.Context.INSERT;
+
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.torodb.backend.AbstractErrorHandler;
@@ -28,25 +33,25 @@ import com.torodb.core.exceptions.user.UniqueIndexViolationException;
  */
 @Singleton
 public class DerbyErrorHandler extends AbstractErrorHandler {
-    
-    @Inject
-    public DerbyErrorHandler() {
-        super(
-                rollbackRule("40001"), 
-                rollbackRule("40P01"),
-                /**
-                 * Schema '?' already exists.
-                 */
-                rollbackRule("X0Y68", CREATE_SCHEMA),
-                /**
-                 * Table/View '?' already exists in Schema '?'.
-                 * Column '?' already exists in Table/View '"?"."?"'.
-                 */
-                rollbackRule("X0Y32", CREATE_TABLE, ADD_COLUMN),
-                /**
-                 * Duplicate key value in unique index on insert
-                 */
-                userRule("23505", b -> new UniqueIndexViolationException(b.getMessage(), b), INSERT)
-        );
-    }
+
+  @Inject
+  public DerbyErrorHandler() {
+    super(
+        rollbackRule("40001"),
+        rollbackRule("40P01"),
+        /**
+         * Schema '?' already exists.
+         */
+        rollbackRule("X0Y68", CREATE_SCHEMA),
+        /**
+         * Table/View '?' already exists in Schema '?'. Column '?' already exists in Table/View
+         * '"?"."?"'.
+         */
+        rollbackRule("X0Y32", CREATE_TABLE, ADD_COLUMN),
+        /**
+         * Duplicate key value in unique index on insert
+         */
+        userRule("23505", b -> new UniqueIndexViolationException(b.getMessage(), b), INSERT)
+    );
+  }
 }

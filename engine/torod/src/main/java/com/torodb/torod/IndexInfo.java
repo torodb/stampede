@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Torod Layer
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,78 +13,80 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.torod;
+
+import com.google.common.collect.ImmutableList;
+import com.torodb.core.language.AttributeReference;
 
 import javax.annotation.Nonnull;
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 
-import com.google.common.collect.ImmutableList;
-import com.torodb.core.language.AttributeReference;
-
 /**
  *
  */
 public class IndexInfo {
-    
+
+  private final String name;
+  private final boolean unique;
+  private final JsonObject properties;
+  private final ImmutableList<IndexFieldInfo> fields;
+
+  public IndexInfo(@Nonnull String name, boolean unique, @Nonnull JsonObject properties,
+      ImmutableList<IndexFieldInfo> fields) {
+    this.name = name;
+    this.unique = unique;
+    this.properties = properties;
+    this.fields = fields;
+  }
+
+  @Nonnull
+  public String getName() {
+    return name;
+  }
+
+  public boolean isUnique() {
+    return unique;
+  }
+
+  @Nonnull
+  public JsonObject getProperties() {
+    return properties;
+  }
+
+  @Nonnull
+  public ImmutableList<IndexFieldInfo> getFields() {
+    return fields;
+  }
+
+  public static class Builder {
+
     private final String name;
-    private final boolean unique;
-    private final JsonObject properties;
-    private final ImmutableList<IndexFieldInfo> fields;
+    private final boolean isUnique;
+    private final JsonObjectBuilder propertiesBuilder;
+    private final ImmutableList.Builder<IndexFieldInfo> fieldsBuilder;
 
-    public IndexInfo(@Nonnull String name, boolean unique, @Nonnull JsonObject properties,
-            ImmutableList<IndexFieldInfo> fields) {
-        this.name = name;
-        this.unique = unique;
-        this.properties = properties;
-        this.fields = fields;
+    public Builder(@Nonnull String name, boolean isUnique) {
+      this.name = name;
+      this.isUnique = isUnique;
+      this.propertiesBuilder = Json.createObjectBuilder();
+      this.fieldsBuilder = ImmutableList.builder();
     }
 
-    @Nonnull
-    public String getName() {
-        return name;
+    public Builder addField(AttributeReference attributeReference, boolean isAscending) {
+      fieldsBuilder.add(new IndexFieldInfo(attributeReference, isAscending));
+      return this;
     }
 
-    public boolean isUnique() {
-        return unique;
+    public IndexInfo build() {
+      return new IndexInfo(name, isUnique,
+          propertiesBuilder.build(),
+          fieldsBuilder.build());
     }
+  }
 
-    @Nonnull
-    public JsonObject getProperties() {
-        return properties;
-    }
-
-    @Nonnull
-    public ImmutableList<IndexFieldInfo> getFields() {
-        return fields;
-    }
-
-    public static class Builder {
-        private final String name;
-        private final boolean isUnique;
-        private final JsonObjectBuilder propertiesBuilder;
-        private final ImmutableList.Builder<IndexFieldInfo> fieldsBuilder;
-        
-        public Builder(@Nonnull String name, boolean isUnique) {
-            this.name = name;
-            this.isUnique = isUnique;
-            this.propertiesBuilder = Json.createObjectBuilder();
-            this.fieldsBuilder = ImmutableList.builder();
-        }
-        
-        public Builder addField(AttributeReference attributeReference, boolean isAscending) {
-            fieldsBuilder.add(new IndexFieldInfo(attributeReference, isAscending));
-            return this;
-        }
-        
-        public IndexInfo build() {
-            return new IndexInfo(name, isUnique, 
-                    propertiesBuilder.build(), 
-                    fieldsBuilder.build());
-        }
-    }
-    
 }

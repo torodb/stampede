@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Backend common
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,33 +13,32 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.backend;
 
-import java.sql.Connection;
-
-
+import com.google.inject.Inject;
 import org.jooq.DSLContext;
 import org.jooq.impl.DSL;
 
-import com.google.inject.Inject;
+import java.sql.Connection;
 
 /**
  *
  */
 public class DslContextFactoryImpl implements DslContextFactory {
-    
-    public final DataTypeProvider dataTypeProvider;
-    
-    @Inject
-    public DslContextFactoryImpl(DataTypeProvider dataTypeProvider) {
-        super();
-        this.dataTypeProvider = dataTypeProvider;
-    }
 
-    @Override
-    public DSLContext createDSLContext(Connection connection) {
-        return DSL.using(connection, dataTypeProvider.getDialect());
-    }
+  public final DataTypeProvider dataTypeProvider;
+
+  @Inject
+  public DslContextFactoryImpl(DataTypeProvider dataTypeProvider) {
+    super();
+    this.dataTypeProvider = dataTypeProvider;
+  }
+
+  @Override
+  public DSLContext createDslContext(Connection connection) {
+    return DSL.using(connection, dataTypeProvider.getDialect());
+  }
 }

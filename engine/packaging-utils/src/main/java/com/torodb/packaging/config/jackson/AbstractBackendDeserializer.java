@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Packaging utils
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,17 +13,10 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.packaging.config.jackson;
-
-import java.io.IOException;
-import java.util.Iterator;
-import java.util.function.BiConsumer;
-import java.util.function.Supplier;
-
-import org.bson.json.JsonParseException;
-import org.jooq.lambda.tuple.Tuple2;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -36,50 +29,61 @@ import com.google.common.collect.ImmutableMap;
 import com.torodb.core.exceptions.SystemException;
 import com.torodb.packaging.config.model.backend.AbstractBackend;
 import com.torodb.packaging.config.model.backend.BackendImplementation;
+import org.bson.json.JsonParseException;
+import org.jooq.lambda.tuple.Tuple2;
 
-public abstract class AbstractBackendDeserializer<T extends AbstractBackend> extends JsonDeserializer<T> {
-    
-    private final Supplier<T> backendProvider;
-    private final ImmutableMap<String, Tuple2<Class<?>, BiConsumer<T, Object>>> setterMap;
-    
-    protected AbstractBackendDeserializer(Supplier<T> backendProvider, ImmutableMap<String, Tuple2<Class<?>, BiConsumer<T, Object>>> setterMap) {
-        this.backendProvider = backendProvider;
-        this.setterMap = setterMap;
+import java.io.IOException;
+import java.util.Iterator;
+import java.util.function.BiConsumer;
+import java.util.function.Supplier;
+
+public abstract class AbstractBackendDeserializer<T extends AbstractBackend>
+    extends JsonDeserializer<T> {
+
+  private final Supplier<T> backendProvider;
+  private final ImmutableMap<String, Tuple2<Class<?>, BiConsumer<T, Object>>> setterMap;
+
+  protected AbstractBackendDeserializer(Supplier<T> backendProvider,
+      ImmutableMap<String, Tuple2<Class<?>, BiConsumer<T, Object>>> setterMap) {
+    this.backendProvider = backendProvider;
+    this.setterMap = setterMap;
+  }
+
+  @Override
+  public T deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException,
+      JsonProcessingException {
+    T backend = backendProvider.get();
+    ObjectMapper mapper = (ObjectMapper) jp.getCodec();
+    ObjectNode node = (ObjectNode) jp.getCodec().readTree(jp);
+
+    JsonNode fieldNode = null;
+    Class<? extends BackendImplementation> backendImplementationClass = null;
+    Iterator<String> fieldNamesIterator = node.fieldNames();
+    while (fieldNamesIterator.hasNext()) {
+      String fieldName = fieldNamesIterator.next();
+
+      if (backendImplementationClass != null) {
+        throw new JsonParseException("Found multiples backend implementations but only one is "
+            + "allowed");
+      }
+
+      fieldNode = node.get(fieldName);
+      if (backend.hasBackendImplementation(fieldName)) {
+        backendImplementationClass = backend.getBackendImplementationClass(fieldName);
+      } else if (setterMap.containsKey(fieldName)) {
+        Object value = mapper.treeToValue(fieldNode, setterMap.get(fieldName).v1());
+        setterMap.get(fieldName).v2().accept(backend, value);
+      } else {
+        throw new SystemException("AbstractBackend " + node.fields().next() + " is not valid.");
+      }
     }
-    
-	@Override
-	public T deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException, JsonProcessingException {
-		T backend = backendProvider.get();
-        ObjectMapper mapper = (ObjectMapper) jp.getCodec();
-        ObjectNode node = (ObjectNode) jp.getCodec().readTree(jp);
-		
-		JsonNode fieldNode = null;
-		Class<? extends BackendImplementation> backendImplementationClass = null;
-		Iterator<String> fieldNamesIterator = node.fieldNames();
-		while (fieldNamesIterator.hasNext()) {
-			String fieldName = fieldNamesIterator.next();
-			
-			if (backendImplementationClass != null) {
-                throw new JsonParseException("Found multiples backend implementations but only one is allowed");
-			}
-			
-			fieldNode = node.get(fieldName);
-			if (backend.hasBackendImplementation(fieldName)) {
-                backendImplementationClass = backend.getBackendImplementationClass(fieldName);
-			} else if (setterMap.containsKey(fieldName)) {
-			    Object value = mapper.treeToValue(fieldNode, setterMap.get(fieldName).v1());
-			    setterMap.get(fieldName).v2().accept(backend, value);
-			} else {
-	            throw new SystemException("AbstractBackend " + node.fields().next() + " is not valid.");
-			}
-		}
 
-		if (backendImplementationClass != null) {
-			backend.setBackendImplementation(
-					jp.getCodec().treeToValue(fieldNode, backendImplementationClass));
-		}
-		
-		return backend;
-	}
-	
+    if (backendImplementationClass != null) {
+      backend.setBackendImplementation(
+          jp.getCodec().treeToValue(fieldNode, backendImplementationClass));
+    }
+
+    return backend;
+  }
+
 }

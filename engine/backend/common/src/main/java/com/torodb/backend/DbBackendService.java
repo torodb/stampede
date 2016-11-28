@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Backend common
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,25 +13,38 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.backend;
 
 import com.torodb.core.services.TorodbService;
+
 import java.sql.Connection;
+
 import javax.sql.DataSource;
 
 public interface DbBackendService extends TorodbService {
 
-    public DataSource getSessionDataSource();
-    public DataSource getSystemDataSource();
-    public DataSource getGlobalCursorDatasource();
-    public void disableDataInsertMode();
-    public void enableDataInsertMode();
-    public long getDefaultCursorTimeout();
-    public boolean isOnDataInsertMode();
-    public boolean includeForeignKeys();
-    public Connection createSystemConnection();
-    public Connection createReadOnlyConnection();
-    public Connection createWriteConnection();
+  public DataSource getSessionDataSource();
+
+  public DataSource getSystemDataSource();
+
+  public DataSource getGlobalCursorDatasource();
+
+  public void disableDataInsertMode();
+
+  public void enableDataInsertMode();
+
+  public long getDefaultCursorTimeout();
+
+  public boolean isOnDataInsertMode();
+
+  public boolean includeForeignKeys();
+
+  public Connection createSystemConnection();
+
+  public Connection createReadOnlyConnection();
+
+  public Connection createWriteConnection();
 }

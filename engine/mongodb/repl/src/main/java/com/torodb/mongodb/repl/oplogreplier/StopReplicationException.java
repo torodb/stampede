@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Repl
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.repl.oplogreplier;
 
 /**
@@ -23,18 +24,18 @@ package com.torodb.mongodb.repl.oplogreplier;
  */
 public class StopReplicationException extends Exception {
 
-    private static final long serialVersionUID = 3910480066607753759L;
+  private static final long serialVersionUID = 3910480066607753759L;
 
-    public StopReplicationException(String message) {
-        super(message);
-    }
+  public StopReplicationException(String message) {
+    super(message);
+  }
 
-    public StopReplicationException(String message, Throwable cause) {
-        super(message, cause);
-    }
+  public StopReplicationException(String message, Throwable cause) {
+    super(message, cause);
+  }
 
-    public StopReplicationException(Throwable cause) {
-        super(cause);
-    }
+  public StopReplicationException(Throwable cause) {
+    super(cause);
+  }
 
 }

@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Backend common
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,9 +13,17 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.backend.converters.json;
+
+import com.torodb.backend.converters.ValueConverter;
+import com.torodb.backend.converters.array.ArrayConverter;
+import com.torodb.backend.converters.array.ValueToArrayConverterProvider;
+import com.torodb.kvdocument.values.KvArray;
+import com.torodb.kvdocument.values.KvValue;
+import com.torodb.kvdocument.values.heap.ListKvArray;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,45 +31,39 @@ import java.util.List;
 import javax.json.JsonArray;
 import javax.json.JsonValue;
 
-import com.torodb.backend.converters.ValueConverter;
-import com.torodb.backend.converters.array.ArrayConverter;
-import com.torodb.backend.converters.array.ValueToArrayConverterProvider;
-import com.torodb.kvdocument.values.KVArray;
-import com.torodb.kvdocument.values.KVValue;
-import com.torodb.kvdocument.values.heap.ListKVArray;
-
 /**
  *
  */
 public abstract class BaseArrayValueToJsonConverter implements
-        ValueConverter<JsonArray, KVArray> {
-    private static final long serialVersionUID = 1L;
-    
-    private final ValueToArrayConverterProvider valueToArrayConverterProvider;
-    
-    public BaseArrayValueToJsonConverter(ValueToArrayConverterProvider valueToArrayConverterProvider) {
-        super();
-        this.valueToArrayConverterProvider = valueToArrayConverterProvider;
-    }
+    ValueConverter<JsonArray, KvArray> {
 
-    @Override
-    public Class<? extends JsonArray> getJsonClass() {
-        return JsonArray.class;
-    }
+  private static final long serialVersionUID = 1L;
 
-    @Override
-    public Class<? extends KVArray> getValueClass() {
-        return KVArray.class;
-    }
+  private final ValueToArrayConverterProvider valueToArrayConverterProvider;
 
-    @SuppressWarnings({ "rawtypes", "unchecked" })
-    @Override
-    public KVArray toValue(JsonArray value) {
-        List<KVValue<?>> list = new ArrayList<>(value.size());
-        for (JsonValue child : value) {
-            ArrayConverter converter = valueToArrayConverterProvider.fromJsonValue(child);
-            list.add(converter.fromJsonValue(child));
-        }
-        return new ListKVArray(list);
+  public BaseArrayValueToJsonConverter(
+      ValueToArrayConverterProvider valueToArrayConverterProvider) {
+    this.valueToArrayConverterProvider = valueToArrayConverterProvider;
+  }
+
+  @Override
+  public Class<? extends JsonArray> getJsonClass() {
+    return JsonArray.class;
+  }
+
+  @Override
+  public Class<? extends KvArray> getValueClass() {
+    return KvArray.class;
+  }
+
+  @SuppressWarnings({"rawtypes", "unchecked"})
+  @Override
+  public KvArray toValue(JsonArray value) {
+    List<KvValue<?>> list = new ArrayList<>(value.size());
+    for (JsonValue child : value) {
+      ArrayConverter converter = valueToArrayConverterProvider.fromJsonValue(child);
+      list.add(converter.fromJsonValue(child));
     }
+    return new ListKvArray(list);
+  }
 }

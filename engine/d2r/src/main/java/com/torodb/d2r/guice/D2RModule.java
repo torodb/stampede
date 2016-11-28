@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: D2R Implementation
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.d2r.guice;
 
 import com.google.inject.PrivateModule;
@@ -30,17 +31,17 @@ import com.torodb.d2r.R2DTranslatorImpl;
  */
 public class D2RModule extends PrivateModule {
 
-    @Override
-    protected void configure() {
-        install(new FactoryModuleBuilder()
-                .implement(D2RTranslator.class, D2RTranslatorStack.class)
-                .build(D2RTranslatorFactory.class)
-        );
-        expose(D2RTranslatorFactory.class);
+  @Override
+  protected void configure() {
+    install(new FactoryModuleBuilder()
+        .implement(D2RTranslator.class, D2RTranslatorStack.class)
+        .build(D2RTranslatorFactory.class)
+    );
+    expose(D2RTranslatorFactory.class);
 
-        bind(R2DTranslator.class)
-                .to(R2DTranslatorImpl.class);
-        expose(R2DTranslator.class);
-    }
+    bind(R2DTranslator.class)
+        .to(R2DTranslatorImpl.class);
+    expose(R2DTranslator.class);
+  }
 
 }

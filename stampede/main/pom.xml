@@ -117,7 +117,7 @@
                                     </resources>
                                     <overwrite>true</overwrite>
                                     <delimiters>
-                                       <delimiter>@{*}</delimiter>
+                                        <delimiter>@{*}</delimiter>
                                     </delimiters>
                                     <useDefaultDelimiters>false</useDefaultDelimiters>
                                 </configuration>
@@ -208,7 +208,7 @@
                                     </resources>
                                     <overwrite>true</overwrite>
                                     <delimiters>
-                                       <delimiter>@{*}</delimiter>
+                                        <delimiter>@{*}</delimiter>
                                     </delimiters>
                                     <useDefaultDelimiters>false</useDefaultDelimiters>
                                 </configuration>
@@ -378,7 +378,7 @@
                                             <DEBUG>${docker.debug}</DEBUG>
                                         </env>
                                         <links>
-                                          <link>postgres:postgres</link>
+                                            <link>postgres:postgres</link>
                                         </links>
                                         <log>
                                             <prefix>torodb</prefix>
@@ -440,9 +440,9 @@
                                             <color>green</color>
                                         </log>
                                         <volumes>
-                                          <bind>
-                                            <volume>${project.basedir}/src/main/dist/docker:/util</volume>
-                                          </bind>
+                                            <bind>
+                                                <volume>${project.basedir}/src/main/dist/docker:/util</volume>
+                                            </bind>
                                         </volumes>
                                         <extraHosts>
                                             <extraHost>mongodb:127.0.0.1</extraHost>
@@ -485,8 +485,8 @@
                                             <DEBUG>${docker.debug}</DEBUG>
                                         </env>
                                         <links>
-                                          <link>postgres:postgres</link>
-                                          <link>mongodb:mongodb</link>
+                                            <link>postgres:postgres</link>
+                                            <link>mongodb:mongodb</link>
                                         </links>
                                         <log>
                                             <prefix>torodb</prefix>

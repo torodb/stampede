@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Backend common
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,194 +13,192 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.backend.tables.records;
 
+import com.torodb.backend.tables.MetaCollectionTable;
 import org.jooq.Field;
 import org.jooq.Record2;
 import org.jooq.Record3;
 import org.jooq.Row3;
 import org.jooq.impl.UpdatableRecordImpl;
 
-import com.torodb.backend.tables.MetaCollectionTable;
+@SuppressWarnings("checkstyle:OverloadMethodsDeclarationOrder")
+public abstract class MetaCollectionRecord extends UpdatableRecordImpl<MetaCollectionRecord>
+    implements Record3<String, String, String> {
 
-public abstract class MetaCollectionRecord extends UpdatableRecordImpl<MetaCollectionRecord> 
-        implements Record3<String, String, String> {
+  private static final long serialVersionUID = -2107968478;
 
-    private static final long serialVersionUID = -2107968478;
+  /**
+   * Setter for <code>torodb.collection.database</code>.
+   */
+  public void setDatabase(String value) {
+    set(0, value);
+  }
 
-    /**
-     * Setter for <code>torodb.collection.database</code>.
-     */
-    public void setDatabase(String value) {
-        set(0, value);
-    }
+  /**
+   * Getter for <code>torodb.collection.database</code>.
+   */
+  public String getDatabase() {
+    return (String) getValue(0);
+  }
 
-    /**
-     * Getter for <code>torodb.collection.database</code>.
-     */
-    public String getDatabase() {
-        return (String) getValue(0);
-    }
+  /**
+   * Setter for <code>torodb.collection.name</code>.
+   */
+  public void setName(String value) {
+    set(1, value);
+  }
 
-    /**
-     * Setter for <code>torodb.collection.name</code>.
-     */
-    public void setName(String value) {
-        set(1, value);
-    }
+  /**
+   * Getter for <code>torodb.collection.name</code>.
+   */
+  public String getName() {
+    return (String) getValue(1);
+  }
 
-    /**
-     * Getter for <code>torodb.collection.name</code>.
-     */
-    public String getName() {
-        return (String) getValue(1);
-    }
+  /**
+   * Getter for <code>torodb.collection.identifier</code>.
+   */
+  public String getIdentifier() {
+    return (String) getValue(2);
+  }
 
-    /**
-     * Getter for <code>torodb.collection.identifier</code>.
-     */
-    public String getIdentifier() {
-        return (String) getValue(2);
-    }
+  /**
+   * Setter for <code>torodb.collection.identifier</code>.
+   */
+  public void setIdentifier(String value) {
+    set(2, value);
+  }
 
-    /**
-     * Setter for <code>torodb.collection.identifier</code>.
-     */
-    public void setIdentifier(String value) {
-        set(2, value);
-    }
+  // -------------------------------------------------------------------------
+  // Primary key information
+  // -------------------------------------------------------------------------
+  /**
+   * {@inheritDoc}
+   */
+  @SuppressWarnings("unchecked")
+  @Override
+  public Record2<String, String> key() {
+    return (Record2<String, String>) super.key();
+  }
 
-	// -------------------------------------------------------------------------
-	// Primary key information
-	// -------------------------------------------------------------------------
+  // -------------------------------------------------------------------------
+  // Record7 type implementation
+  // -------------------------------------------------------------------------
+  /**
+   * {@inheritDoc}
+   */
+  @SuppressWarnings("unchecked")
+  @Override
+  public Row3<String, String, String> fieldsRow() {
+    return (Row3<String, String, String>) super.fieldsRow();
+  }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	@SuppressWarnings("unchecked")
-    @Override
-	public Record2<String, String> key() {
-		return (Record2<String, String>) super.key();
-	}
+  /**
+   * {@inheritDoc}
+   */
+  @SuppressWarnings("unchecked")
+  @Override
+  public Row3<String, String, String> valuesRow() {
+    return (Row3<String, String, String>) super.valuesRow();
+  }
 
-	// -------------------------------------------------------------------------
-	// Record7 type implementation
-	// -------------------------------------------------------------------------
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public Field<String> field1() {
+    return metaCollectionTable.DATABASE;
+  }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	@SuppressWarnings("unchecked")
-    @Override
-	public Row3<String, String, String> fieldsRow() {
-		return (Row3<String, String, String>) super.fieldsRow();
-	}
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public Field<String> field2() {
+    return metaCollectionTable.NAME;
+  }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	@SuppressWarnings("unchecked")
-    @Override
-	public Row3<String, String, String> valuesRow() {
-		return (Row3<String, String, String>) super.valuesRow();
-	}
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public Field<String> field3() {
+    return metaCollectionTable.IDENTIFIER;
+  }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Field<String> field1() {
-        return metaCollectionTable.DATABASE;
-    }
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public String value1() {
+    return getDatabase();
+  }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Field<String> field2() {
-        return metaCollectionTable.NAME;
-    }
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public String value2() {
+    return getName();
+  }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Field<String> field3() {
-        return metaCollectionTable.IDENTIFIER;
-    }
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public String value3() {
+    return getIdentifier();
+  }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public String value1() {
-        return getDatabase();
-    }
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public MetaCollectionRecord value1(String value) {
+    setDatabase(value);
+    return this;
+  }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public String value2() {
-        return getName();
-    }
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public MetaCollectionRecord value2(String value) {
+    setName(value);
+    return this;
+  }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public String value3() {
-        return getIdentifier();
-    }
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public MetaCollectionRecord value3(String value) {
+    setIdentifier(value);
+    return this;
+  }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public MetaCollectionRecord value1(String value) {
-        setDatabase(value);
-        return this;
-    }
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public abstract MetaCollectionRecord values(String database, String name, String identifier);
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public MetaCollectionRecord value2(String value) {
-        setName(value);
-        return this;
-    }
+  // -------------------------------------------------------------------------
+  // Constructors
+  // -------------------------------------------------------------------------
+  private final MetaCollectionTable<MetaCollectionRecord> metaCollectionTable;
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public MetaCollectionRecord value3(String value) {
-        setIdentifier(value);
-        return this;
-    }
+  /**
+   * Create a detached MetaCollectionRecord
+   */
+  @SuppressWarnings({"rawtypes", "unchecked"})
+  public MetaCollectionRecord(MetaCollectionTable metaCollectionTable) {
+    super(metaCollectionTable);
 
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public abstract MetaCollectionRecord values(String database, String name, String identifier);
-
-    // -------------------------------------------------------------------------
-    // Constructors
-    // -------------------------------------------------------------------------
-
-    private final MetaCollectionTable<MetaCollectionRecord> metaCollectionTable;
-    
-    /**
-     * Create a detached MetaCollectionRecord
-     */
-    @SuppressWarnings({ "rawtypes", "unchecked" })
-    public MetaCollectionRecord(MetaCollectionTable metaCollectionTable) {
-        super(metaCollectionTable);
-        
-        this.metaCollectionTable = metaCollectionTable;
-    }
+    this.metaCollectionTable = metaCollectionTable;
+  }
 }

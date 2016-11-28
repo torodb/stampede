@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Packaging utils
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,23 +13,25 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.packaging.config.validation;
+
+import com.torodb.packaging.config.model.backend.BackendPasswordConfig;
 
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 
-import com.torodb.packaging.config.model.backend.BackendPasswordConfig;
+public class ExistsAnyPasswordValidator implements
+    ConstraintValidator<ExistsAnyPassword, BackendPasswordConfig> {
 
-public class ExistsAnyPasswordValidator implements ConstraintValidator<ExistsAnyPassword, BackendPasswordConfig> {
-	
-	@Override
-	public void initialize(ExistsAnyPassword constraintAnnotation) {
-	}
+  @Override
+  public void initialize(ExistsAnyPassword constraintAnnotation) {
+  }
 
-	@Override
-	public boolean isValid(BackendPasswordConfig value, ConstraintValidatorContext context) {
-		return value == null || value.getPassword() != null || value.getToropassFile() != null;
-	}
+  @Override
+  public boolean isValid(BackendPasswordConfig value, ConstraintValidatorContext context) {
+    return value == null || value.getPassword() != null || value.getToropassFile() != null;
+  }
 }

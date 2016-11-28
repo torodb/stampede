@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: common
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,14 +13,16 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.common.util;
 
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -28,35 +30,35 @@ import java.util.concurrent.CompletableFuture;
  */
 public class ListeningFutureToCompletableFuture {
 
-    private ListeningFutureToCompletableFuture() {
-    }
+  private ListeningFutureToCompletableFuture() {
+  }
 
-    public static <T> CompletableFuture<T> toCompletableFuture(
-            final ListenableFuture<T> listenableFuture) {
-        //create an instance of CompletableFuture
-        CompletableFuture<T> completable = new CompletableFuture<T>() {
-            @Override
-            public boolean cancel(boolean mayInterruptIfRunning) {
-                // propagate cancel to the listenable future
-                boolean result = listenableFuture.cancel(mayInterruptIfRunning);
-                super.cancel(mayInterruptIfRunning);
-                return result;
-            }
-        };
+  public static <T> CompletableFuture<T> toCompletableFuture(
+      final ListenableFuture<T> listenableFuture) {
+    //create an instance of CompletableFuture
+    CompletableFuture<T> completable = new CompletableFuture<T>() {
+      @Override
+      public boolean cancel(boolean mayInterruptIfRunning) {
+        // propagate cancel to the listenable future
+        boolean result = listenableFuture.cancel(mayInterruptIfRunning);
+        super.cancel(mayInterruptIfRunning);
+        return result;
+      }
+    };
 
-        // add callback
-        Futures.addCallback(listenableFuture, new FutureCallback<T>() {
-            @Override
-            @SuppressFBWarnings("NP_PARAMETER_MUST_BE_NONNULL_BUT_MARKED_AS_NULLABLE")
-            public void onSuccess(T result) {
-                completable.complete(result);
-            }
+    // add callback
+    Futures.addCallback(listenableFuture, new FutureCallback<T>() {
+      @Override
+      @SuppressFBWarnings("NP_PARAMETER_MUST_BE_NONNULL_BUT_MARKED_AS_NULLABLE")
+      public void onSuccess(T result) {
+        completable.complete(result);
+      }
 
-            @Override
-            public void onFailure(Throwable t) {
-                completable.completeExceptionally(t);
-            }
-        });
-        return completable;
-    }
+      @Override
+      public void onFailure(Throwable t) {
+        completable.completeExceptionally(t);
+      }
+    });
+    return completable;
+  }
 }

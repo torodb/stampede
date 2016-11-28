@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Packaging utils
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.packaging.config.validation;
 
 import static java.lang.annotation.ElementType.TYPE;
@@ -27,14 +28,15 @@ import javax.validation.Constraint;
 import javax.validation.Payload;
 import javax.validation.ReportAsSingleViolation;
 
-@Target({ TYPE })
+@Target({TYPE})
 @Retention(RUNTIME)
-@Constraint(validatedBy = { InMemoryOnlyIfEmbeddedValidator.class })
+@Constraint(validatedBy = {InMemoryOnlyIfEmbeddedValidator.class})
 @ReportAsSingleViolation
 public @interface InMemoryOnlyIfEmbedded {
-	String message() default "{config.validation.InMemoryOnlyIfEmbedded.message}";
 
-	Class<?>[] groups() default {};
+  String message() default "{config.validation.InMemoryOnlyIfEmbedded.message}";
 
-	Class<? extends Payload>[] payload() default {};
+  Class<?>[] groups() default {};
+
+  Class<? extends Payload>[] payload() default {};
 }

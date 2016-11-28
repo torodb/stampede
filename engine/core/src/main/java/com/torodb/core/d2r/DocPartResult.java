@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,11 +13,13 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.core.d2r;
 
 import com.torodb.core.transaction.metainf.MetaDocPart;
+
 import java.util.Iterator;
 
 /**
@@ -25,12 +27,12 @@ import java.util.Iterator;
  */
 public interface DocPartResult extends AutoCloseable, Iterator<DocPartResultRow> {
 
-    public MetaDocPart getMetaDocPart();
+  public MetaDocPart getMetaDocPart();
 
-    @Override
-    public DocPartResultRow next() throws IllegalDocPartRowException;
+  @Override
+  public DocPartResultRow next() throws IllegalDocPartRowException;
 
-    @Override
-    public void close();
+  @Override
+  public void close();
 
 }

@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Repl
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,11 +13,13 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.repl.oplogreplier;
 
 import com.eightkdata.mongowp.server.api.oplog.UpdateOplogOperation;
+
 import java.util.Optional;
 
 /**
@@ -25,58 +27,62 @@ import java.util.Optional;
  */
 public final class ApplierContext {
 
-    private final boolean updatesAsUpserts;
-    private final Optional<Boolean> reapplying;
+  private final boolean updatesAsUpserts;
+  private final Optional<Boolean> reapplying;
 
-    public ApplierContext(boolean updatesAsUpserts, Optional<Boolean> reapplying) {
-        this.updatesAsUpserts = updatesAsUpserts;
-        this.reapplying = reapplying;
+  public ApplierContext(boolean updatesAsUpserts, Optional<Boolean> reapplying) {
+    this.updatesAsUpserts = updatesAsUpserts;
+    this.reapplying = reapplying;
+  }
+
+  /**
+   * Returns true if this updates must be executed as upserts.
+   *
+   * When this is true, {@link UpdateOplogOperation update oplog operations} should never fail.
+   *
+   * @return
+   */
+  public boolean treatUpdateAsUpsert() {
+    return updatesAsUpserts;
+  }
+
+  /**
+   * Return an optional whose value indicates if the oplog is being reapplyed.
+   *
+   * If the retuned optional is not {@link Optional#isPresent()}, then it is unknown if the oplog
+   * contains operations that have been already executed.
+   *
+   * @return
+   */
+  public Optional<Boolean> isReapplying() {
+    return reapplying;
+  }
+
+  public static class Builder {
+
+    private boolean updatesAsUpserts = true;
+    private Optional<Boolean> reapplying = Optional.empty();
+
+    public Builder() {
     }
 
-    /**
-     * Returns true if this updates must be executed as upserts.
-     *
-     * When this is true, {@link UpdateOplogOperation update oplog operations} should never fail.
-     * @return
-     */
-    public boolean treatUpdateAsUpsert() {
-        return updatesAsUpserts;
+    public Builder setUpdatesAsUpserts(boolean updatesAsUpserts) {
+      this.updatesAsUpserts = updatesAsUpserts;
+      return this;
     }
 
-    /**
-     * Return an optional whose value indicates if the oplog is being reapplyed.
-     *
-     * If the retuned optional is not {@link Optional#isPresent()}, then it is unknown if the oplog
-     * contains operations that have been already executed.
-     * @return
-     */
-    public Optional<Boolean> isReapplying() {
-        return reapplying;
+    public Builder setReapplying(boolean reapplying) {
+      this.reapplying = Optional.of(reapplying);
+      return this;
     }
 
-    public static class Builder {
-        private boolean updatesAsUpserts = true;
-        private Optional<Boolean> reapplying = Optional.empty();
-
-        public Builder() {}
-
-        public Builder setUpdatesAsUpserts(boolean updatesAsUpserts) {
-            this.updatesAsUpserts = updatesAsUpserts;
-            return this;
-        }
-
-        public Builder setReapplying(boolean reapplying) {
-            this.reapplying = Optional.of(reapplying);
-            return this;
-        }
-
-        public Builder setReapplying(Optional<Boolean> reaplying) {
-            this.reapplying = reaplying;
-            return this;
-        }
-
-        public ApplierContext build() {
-            return new ApplierContext(updatesAsUpserts, reapplying);
-        }
+    public Builder setReapplying(Optional<Boolean> reaplying) {
+      this.reapplying = reaplying;
+      return this;
     }
+
+    public ApplierContext build() {
+      return new ApplierContext(updatesAsUpserts, reapplying);
+    }
+  }
 }

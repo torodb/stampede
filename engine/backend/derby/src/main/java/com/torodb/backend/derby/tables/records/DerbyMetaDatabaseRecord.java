@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Backend Derby
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.backend.derby.tables.records;
 
 import com.torodb.backend.derby.tables.DerbyMetaDatabaseTable;
@@ -22,28 +23,28 @@ import com.torodb.backend.tables.records.MetaDatabaseRecord;
 
 public class DerbyMetaDatabaseRecord extends MetaDatabaseRecord {
 
-    private static final long serialVersionUID = -7220623531622958067L;
+  private static final long serialVersionUID = -7220623531622958067L;
 
-    /**
-	 * Create a detached MetaCollectionRecord
-	 */
-	public DerbyMetaDatabaseRecord() {
-		super(DerbyMetaDatabaseTable.DATABASE);
-	}
+  /**
+   * Create a detached MetaCollectionRecord
+   */
+  public DerbyMetaDatabaseRecord() {
+    super(DerbyMetaDatabaseTable.DATABASE);
+  }
 
-	/**
-	 * Create a detached, initialised MetaCollectionRecord
-	 */
-	public DerbyMetaDatabaseRecord(String name, String identifier) {
-		super(DerbyMetaDatabaseTable.DATABASE);
-		
-		values(name, identifier);
-	}
+  /**
+   * Create a detached, initialised MetaCollectionRecord
+   */
+  public DerbyMetaDatabaseRecord(String name, String identifier) {
+    super(DerbyMetaDatabaseTable.DATABASE);
 
-    @Override
-    public MetaDatabaseRecord values(String name, String identifier) {
-        setName(name);
-        setIdentifier(identifier);
-        return this;
-    }
+    values(name, identifier);
+  }
+
+  @Override
+  public MetaDatabaseRecord values(String name, String identifier) {
+    setName(name);
+    setIdentifier(identifier);
+    return this;
+  }
 }

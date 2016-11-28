@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Packaging utils
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,38 +13,39 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.packaging.config.validation;
+
+import com.torodb.packaging.config.model.protocol.mongo.Auth;
 
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 
-import com.torodb.packaging.config.model.protocol.mongo.Auth;
+public class RequiredParametersForAuthenticationValidator implements
+    ConstraintValidator<RequiredParametersForAuthentication, Auth> {
 
-public class RequiredParametersForAuthenticationValidator implements ConstraintValidator<RequiredParametersForAuthentication, Auth> {
-	
-	@Override
-	public void initialize(RequiredParametersForAuthentication constraintAnnotation) {
-	}
+  @Override
+  public void initialize(RequiredParametersForAuthentication constraintAnnotation) {
+  }
 
-	@Override
-	public boolean isValid(Auth value, ConstraintValidatorContext context) {
-	    switch (value.getMode()) {
-        case cr:
-        case negotiate:
-        case scram_sha1:
-            if (value.getUser() == null ||
-                    value.getSource() == null) {
-                return false;
-            }
-            break;
-        case x509:
-        case disabled:
-        default:
-            break;
-	    }
+  @Override
+  public boolean isValid(Auth value, ConstraintValidatorContext context) {
+    switch (value.getMode()) {
+      case cr:
+      case negotiate:
+      case scram_sha1:
+        if (value.getUser() == null || value.getSource() == null) {
+          return false;
+        }
+        break;
+      case x509:
+      case disabled:
+      default:
+        break;
+    }
 
-		return true;
-	}
+    return true;
+  }
 }

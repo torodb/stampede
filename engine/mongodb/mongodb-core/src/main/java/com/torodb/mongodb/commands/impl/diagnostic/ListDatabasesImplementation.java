@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,50 +13,53 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.commands.impl.diagnostic;
 
-import java.util.List;
-
-import javax.inject.Singleton;
-
 import com.eightkdata.mongowp.Status;
-import com.torodb.mongodb.commands.signatures.diagnostic.ListDatabasesCommand.ListDatabasesReply;
-import com.torodb.mongodb.commands.signatures.diagnostic.ListDatabasesCommand.ListDatabasesReply.DatabaseEntry;
 import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.Request;
 import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.torodb.mongodb.commands.impl.ReadTorodbCommandImpl;
+import com.torodb.mongodb.commands.signatures.diagnostic.ListDatabasesCommand.ListDatabasesReply;
+import com.torodb.mongodb.commands.signatures.diagnostic.ListDatabasesCommand.ListDatabasesReply.DatabaseEntry;
 import com.torodb.mongodb.core.MongodTransaction;
+
+import java.util.List;
+
+import javax.inject.Singleton;
 
 /**
  *
  */
 @Singleton
-public class ListDatabasesImplementation implements ReadTorodbCommandImpl<Empty, ListDatabasesReply> {
+public class ListDatabasesImplementation
+    implements ReadTorodbCommandImpl<Empty, ListDatabasesReply> {
 
-    @Override
-    public Status<ListDatabasesReply> apply(Request req, Command<? super Empty, ? super ListDatabasesReply> command,
-            Empty arg, MongodTransaction context) {
-        List<String> databases = context.getTorodTransaction().getDatabases();
-        
-        long totalSize = 0;
-        List<DatabaseEntry> databaseEntries = Lists.newArrayListWithCapacity(databases.size());
+  @Override
+  public Status<ListDatabasesReply> apply(Request req,
+      Command<? super Empty, ? super ListDatabasesReply> command,
+      Empty arg, MongodTransaction context) {
+    List<String> databases = context.getTorodTransaction().getDatabases();
 
-        for (String databaseName : databases) {
-            long databaseSize = context.getTorodTransaction().getDatabaseSize(databaseName);
-            databaseEntries.add(
-                    new DatabaseEntry(
-                            databaseName,
-                            databaseSize,
-                            databaseSize == 0)
-            );
-            totalSize += databaseSize;
-        }
-        return Status.ok(new ListDatabasesReply(ImmutableList.copyOf(databaseEntries), totalSize));
+    long totalSize = 0;
+    List<DatabaseEntry> databaseEntries = Lists.newArrayListWithCapacity(databases.size());
+
+    for (String databaseName : databases) {
+      long databaseSize = context.getTorodTransaction().getDatabaseSize(databaseName);
+      databaseEntries.add(
+          new DatabaseEntry(
+              databaseName,
+              databaseSize,
+              databaseSize == 0)
+      );
+      totalSize += databaseSize;
     }
+    return Status.ok(new ListDatabasesReply(ImmutableList.copyOf(databaseEntries), totalSize));
+  }
 
 }

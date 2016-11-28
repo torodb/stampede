@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.core.d2r;
 
 import com.torodb.core.exceptions.SystemException;
@@ -24,41 +25,42 @@ import com.torodb.core.exceptions.SystemException;
  */
 public class IllegalDocPartRowException extends SystemException {
 
-    private static final long serialVersionUID = -4712840763476138823L;
+  private static final long serialVersionUID = -4712840763476138823L;
 
-    private final Integer did;
-    private final Integer rid;
-    private final Integer pid;
-    private final Integer seq;
+  private final Integer did;
+  private final Integer rid;
+  private final Integer pid;
+  private final Integer seq;
 
-    public IllegalDocPartRowException(Integer did, Integer rid, Integer pid, Integer seq) {
-        this.did = did;
-        this.rid = rid;
-        this.pid = pid;
-        this.seq = seq;
-    }
+  public IllegalDocPartRowException(Integer did, Integer rid, Integer pid, Integer seq) {
+    this.did = did;
+    this.rid = rid;
+    this.pid = pid;
+    this.seq = seq;
+  }
 
-    public IllegalDocPartRowException(Integer did, Integer rid, Integer pid, Integer seq, String message) {
-        super(message);
-        this.did = did;
-        this.rid = rid;
-        this.pid = pid;
-        this.seq = seq;
-    }
+  public IllegalDocPartRowException(Integer did, Integer rid, Integer pid, Integer seq,
+      String message) {
+    super(message);
+    this.did = did;
+    this.rid = rid;
+    this.pid = pid;
+    this.seq = seq;
+  }
 
-    public Integer getDid() {
-        return did;
-    }
+  public Integer getDid() {
+    return did;
+  }
 
-    public Integer getRid() {
-        return rid;
-    }
+  public Integer getRid() {
+    return rid;
+  }
 
-    public Integer getPid() {
-        return pid;
-    }
+  public Integer getPid() {
+    return pid;
+  }
 
-    public Integer getSeq() {
-        return seq;
-    }
+  public Integer getSeq() {
+    return seq;
+  }
 }

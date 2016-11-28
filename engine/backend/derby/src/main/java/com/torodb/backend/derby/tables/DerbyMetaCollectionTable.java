@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Backend Derby
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,83 +13,85 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.backend.derby.tables;
 
+import com.torodb.backend.derby.tables.records.DerbyMetaCollectionRecord;
+import com.torodb.backend.tables.MetaCollectionTable;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.jooq.Field;
 import org.jooq.Table;
 import org.jooq.TableField;
 import org.jooq.impl.SQLDataType;
 
-import com.torodb.backend.derby.tables.records.DerbyMetaCollectionRecord;
-import com.torodb.backend.tables.MetaCollectionTable;
-
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-
-@SuppressFBWarnings(value = {"EQ_DOESNT_OVERRIDE_EQUALS","HE_HASHCODE_NO_EQUALS"})
+@SuppressFBWarnings(value = {"EQ_DOESNT_OVERRIDE_EQUALS", "HE_HASHCODE_NO_EQUALS"})
 public class DerbyMetaCollectionTable extends MetaCollectionTable<DerbyMetaCollectionRecord> {
 
-    private static final long serialVersionUID = 304258902776870571L;
-    /**
-	 * The singleton instance of <code>torodb.collections</code>
-	 */
-	public static final DerbyMetaCollectionTable COLLECTION = new DerbyMetaCollectionTable();
+  private static final long serialVersionUID = 304258902776870571L;
+  /**
+   * The singleton instance of <code>torodb.collections</code>
+   */
+  public static final DerbyMetaCollectionTable COLLECTION = new DerbyMetaCollectionTable();
 
-	@Override
-    public Class<DerbyMetaCollectionRecord> getRecordType() {
-        return DerbyMetaCollectionRecord.class;
-    }
-	
-	/**
-	 * Create a <code>torodb.collections</code> table reference
-	 */
-	public DerbyMetaCollectionTable() {
-		this(TABLE_NAME, null);
-	}
+  @Override
+  public Class<DerbyMetaCollectionRecord> getRecordType() {
+    return DerbyMetaCollectionRecord.class;
+  }
 
-	/**
-	 * Create an aliased <code>torodb.collections</code> table reference
-	 */
-	public DerbyMetaCollectionTable(String alias) {
-	    this(alias, DerbyMetaCollectionTable.COLLECTION);
-	}
+  /**
+   * Create a <code>torodb.collections</code> table reference
+   */
+  public DerbyMetaCollectionTable() {
+    this(TABLE_NAME, null);
+  }
 
-	private DerbyMetaCollectionTable(String alias, Table<DerbyMetaCollectionRecord> aliased) {
-		this(alias, aliased, null);
-	}
+  /**
+   * Create an aliased <code>torodb.collections</code> table reference
+   */
+  public DerbyMetaCollectionTable(String alias) {
+    this(alias, DerbyMetaCollectionTable.COLLECTION);
+  }
 
-	private DerbyMetaCollectionTable(String alias, Table<DerbyMetaCollectionRecord> aliased, Field<?>[] parameters) {
-		super(alias, aliased, parameters);
-	}
-    
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public DerbyMetaCollectionTable as(String alias) {
-		return new DerbyMetaCollectionTable(alias, this);
-	}
+  private DerbyMetaCollectionTable(String alias, Table<DerbyMetaCollectionRecord> aliased) {
+    this(alias, aliased, null);
+  }
 
-	/**
-	 * Rename this table
-	 */
-	public DerbyMetaCollectionTable rename(String name) {
-		return new DerbyMetaCollectionTable(name, null);
-	}
+  private DerbyMetaCollectionTable(String alias, Table<DerbyMetaCollectionRecord> aliased,
+      Field<?>[] parameters) {
+    super(alias, aliased, parameters);
+  }
 
-    @Override
-    protected TableField<DerbyMetaCollectionRecord, String> createDatabaseField() {
-        return createField(TableFields.DATABASE.fieldName, SQLDataType.VARCHAR.nullable(false), this, "");
-    }
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public DerbyMetaCollectionTable as(String alias) {
+    return new DerbyMetaCollectionTable(alias, this);
+  }
 
-    @Override
-    protected TableField<DerbyMetaCollectionRecord, String> createNameField() {
-        return createField(TableFields.NAME.fieldName, SQLDataType.VARCHAR.nullable(false), this, "");
-    }
+  /**
+   * Rename this table
+   */
+  public DerbyMetaCollectionTable rename(String name) {
+    return new DerbyMetaCollectionTable(name, null);
+  }
 
-    @Override
-    protected TableField<DerbyMetaCollectionRecord, String> createIdentifierField() {
-        return createField(TableFields.IDENTIFIER.fieldName, SQLDataType.VARCHAR.nullable(false), this, "");
-    }
+  @Override
+  protected TableField<DerbyMetaCollectionRecord, String> createDatabaseField() {
+    return createField(TableFields.DATABASE.fieldName, SQLDataType.VARCHAR.nullable(false),
+        this, "");
+  }
+
+  @Override
+  protected TableField<DerbyMetaCollectionRecord, String> createNameField() {
+    return createField(TableFields.NAME.fieldName, SQLDataType.VARCHAR.nullable(false), this, "");
+  }
+
+  @Override
+  protected TableField<DerbyMetaCollectionRecord, String> createIdentifierField() {
+    return createField(TableFields.IDENTIFIER.fieldName, SQLDataType.VARCHAR.nullable(false), this,
+        "");
+  }
 }

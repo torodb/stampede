@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Backend Derby
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,16 +13,14 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.backend.derby;
-
-
-import org.jooq.SQLDialect;
 
 import com.google.common.collect.ImmutableMap;
 import com.torodb.backend.AbstractDataTypeProvider;
-import com.torodb.backend.converters.jooq.DataTypeForKV;
+import com.torodb.backend.converters.jooq.DataTypeForKv;
 import com.torodb.backend.derby.converters.jooq.BinaryValueConverter;
 import com.torodb.backend.derby.converters.jooq.BooleanValueConverter;
 import com.torodb.backend.derby.converters.jooq.DateValueConverter;
@@ -36,34 +34,34 @@ import com.torodb.backend.derby.converters.jooq.NullValueConverter;
 import com.torodb.backend.derby.converters.jooq.StringValueConverter;
 import com.torodb.backend.derby.converters.jooq.TimeValueConverter;
 import com.torodb.core.transaction.metainf.FieldType;
+import org.jooq.SQLDialect;
 
 /**
  *
  */
 public class DerbyDataTypeProvider extends AbstractDataTypeProvider {
 
-    public DerbyDataTypeProvider() {
-        super(
-            ImmutableMap.<FieldType, DataTypeForKV<?>>builder()
-                .put(FieldType.CHILD, BooleanValueConverter.TYPE)
-                .put(FieldType.BOOLEAN, BooleanValueConverter.TYPE)
-                .put(FieldType.DOUBLE, DoubleValueConverter.TYPE)
-                .put(FieldType.INTEGER, IntegerValueConverter.TYPE)
-                .put(FieldType.LONG, LongValueConverter.TYPE)
-                .put(FieldType.NULL, NullValueConverter.TYPE)
-                .put(FieldType.STRING, StringValueConverter.TYPE)
-                .put(FieldType.DATE, DateValueConverter.TYPE)
-                .put(FieldType.INSTANT, InstantValueConverter.TYPE)
-                .put(FieldType.TIME, TimeValueConverter.TYPE)
-                .put(FieldType.MONGO_OBJECT_ID, MongoObjectIdValueConverter.TYPE)
-                .put(FieldType.MONGO_TIME_STAMP, MongoTimestampValueConverter.TYPE)
-                .put(FieldType.BINARY, BinaryValueConverter.TYPE)
-                .build()
-        );
-    }
+  public DerbyDataTypeProvider() {
+    super(ImmutableMap.<FieldType, DataTypeForKv<?>>builder()
+            .put(FieldType.CHILD, BooleanValueConverter.TYPE)
+            .put(FieldType.BOOLEAN, BooleanValueConverter.TYPE)
+            .put(FieldType.DOUBLE, DoubleValueConverter.TYPE)
+            .put(FieldType.INTEGER, IntegerValueConverter.TYPE)
+            .put(FieldType.LONG, LongValueConverter.TYPE)
+            .put(FieldType.NULL, NullValueConverter.TYPE)
+            .put(FieldType.STRING, StringValueConverter.TYPE)
+            .put(FieldType.DATE, DateValueConverter.TYPE)
+            .put(FieldType.INSTANT, InstantValueConverter.TYPE)
+            .put(FieldType.TIME, TimeValueConverter.TYPE)
+            .put(FieldType.MONGO_OBJECT_ID, MongoObjectIdValueConverter.TYPE)
+            .put(FieldType.MONGO_TIME_STAMP, MongoTimestampValueConverter.TYPE)
+            .put(FieldType.BINARY, BinaryValueConverter.TYPE)
+            .build()
+    );
+  }
 
-    @Override
-    public SQLDialect getDialect() {
-        return SQLDialect.DERBY;
-    }
+  @Override
+  public SQLDialect getDialect() {
+    return SQLDialect.DERBY;
+  }
 }

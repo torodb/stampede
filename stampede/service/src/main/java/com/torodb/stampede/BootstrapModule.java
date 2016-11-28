@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Stampede service
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,11 +13,10 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package com.torodb.stampede;
 
-import java.time.Clock;
+package com.torodb.stampede;
 
 import com.google.common.net.HostAndPort;
 import com.google.inject.AbstractModule;
@@ -37,55 +36,56 @@ import com.torodb.packaging.guice.ExecutorServicesModule;
 import com.torodb.packaging.guice.PackagingModule;
 import com.torodb.stampede.config.model.Config;
 
+import java.time.Clock;
+
 /**
  *
  */
 class BootstrapModule extends AbstractModule {
 
-    private final Config config;
-    private final Clock clock;
-    
-    public BootstrapModule(Config config, Clock clock) {
-        this.config = config;
-        this.clock = clock;
-    }
+  private final Config config;
+  private final Clock clock;
 
-    @Override
-    protected void configure() {
-        binder().requireExplicitBindings();
-        install(new PackagingModule(clock));
-        install(new CoreModule());
-        install(new ExecutorServicesModule());
-        install(new ConcurrentModule());
-        install(new MetainfModule());
-        install(new MetricsModule(config));
+  public BootstrapModule(Config config, Clock clock) {
+    this.config = config;
+    this.clock = clock;
+  }
 
-        install(getBackendMultiImplementationModule(
-                config.getReplication(),
-                config.getBackend().getPool(),
-                config.getBackend().getBackendImplementation()
-        ));
-        
-        bind(Config.class)
-                .toInstance(config);
-        bind(MongodServerConfig.class)
-                .toInstance(new MongodServerConfig(HostAndPort.fromParts("localhost", 27017)));
-        bind(BuildProperties.class)
-                .to(DefaultBuildProperties.class)
-                .asEagerSingleton();
-    }
-    
-    protected BackendMultiImplementationModule getBackendMultiImplementationModule(
-            CursorConfig cursorConfig, 
-            ConnectionPoolConfig connectionPoolConfig, 
-            BackendImplementation backendImplementation) {
-        return new BackendMultiImplementationModule(
-                cursorConfig, 
-                connectionPoolConfig, 
-                backendImplementation,
-                new BackendPostgresImplementationModule()
-        );
-    }
+  @Override
+  protected void configure() {
+    binder().requireExplicitBindings();
+    install(new PackagingModule(clock));
+    install(new CoreModule());
+    install(new ExecutorServicesModule());
+    install(new ConcurrentModule());
+    install(new MetainfModule());
+    install(new MetricsModule(config));
 
-    
+    install(getBackendMultiImplementationModule(
+        config.getReplication(),
+        config.getBackend().getPool(),
+        config.getBackend().getBackendImplementation()
+    ));
+
+    bind(Config.class)
+        .toInstance(config);
+    bind(MongodServerConfig.class)
+        .toInstance(new MongodServerConfig(HostAndPort.fromParts("localhost", 27017)));
+    bind(BuildProperties.class)
+        .to(DefaultBuildProperties.class)
+        .asEagerSingleton();
+  }
+
+  protected BackendMultiImplementationModule getBackendMultiImplementationModule(
+      CursorConfig cursorConfig,
+      ConnectionPoolConfig connectionPoolConfig,
+      BackendImplementation backendImplementation) {
+    return new BackendMultiImplementationModule(
+        cursorConfig,
+        connectionPoolConfig,
+        backendImplementation,
+        new BackendPostgresImplementationModule()
+    );
+  }
+
 }

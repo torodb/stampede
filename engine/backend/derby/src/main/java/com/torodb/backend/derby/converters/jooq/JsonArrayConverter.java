@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Backend Derby
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,44 +13,47 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.backend.derby.converters.jooq;
+
+import org.jooq.Converter;
+import org.jooq.DataType;
 
 import java.io.StringReader;
 
 import javax.json.Json;
 import javax.json.JsonArray;
 
-import org.jooq.Converter;
-import org.jooq.DataType;
-
 /**
  *
  */
-public class JsonArrayConverter implements Converter<String, JsonArray>{
-    private static final long serialVersionUID = 1L;
+public class JsonArrayConverter implements Converter<String, JsonArray> {
 
-    public static final DataType<JsonArray> TYPE = StringValueConverter.VARCHAR_TYPE.asConvertedDataType(new JsonArrayConverter());
+  private static final long serialVersionUID = 1L;
 
-    @Override
-    public JsonArray from(String databaseObject) {
-        return Json.createReader(new StringReader(databaseObject)).readArray();
-    }
+  public static final DataType<JsonArray> TYPE = StringValueConverter.VARCHAR_TYPE
+      .asConvertedDataType(new JsonArrayConverter());
 
-    @Override
-    public String to(JsonArray userObject) {
-        return userObject.toString();
-    }
+  @Override
+  public JsonArray from(String databaseObject) {
+    return Json.createReader(new StringReader(databaseObject)).readArray();
+  }
 
-    @Override
-    public Class<String> fromType() {
-        return String.class;
-    }
+  @Override
+  public String to(JsonArray userObject) {
+    return userObject.toString();
+  }
 
-    @Override
-    public Class<JsonArray> toType() {
-        return JsonArray.class;
-    }
-    
+  @Override
+  public Class<String> fromType() {
+    return String.class;
+  }
+
+  @Override
+  public Class<JsonArray> toType() {
+    return JsonArray.class;
+  }
+
 }

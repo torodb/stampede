@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: D2R Implementation
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.d2r.model;
 
 import com.torodb.core.TableRef;
@@ -23,315 +24,323 @@ import com.torodb.core.TableRefFactory;
 //TODO: Add constraint annotations and asserts
 public class PathStack {
 
-    private final TableRefFactory tableRefFactory;
-    
-	private PathInfo top = null;
+  private final TableRefFactory tableRefFactory;
 
-	public enum PathNodeType {
-		Field, Object, Array, Idx
-	};
+  private PathInfo top = null;
 
-	public PathStack(TableRefFactory tableRefFactory) {
-	    this.tableRefFactory = tableRefFactory;
-		this.top = new PathField("", null);
-	}
+  public enum PathNodeType {
+    Field,
+    Object,
+    Array,
+    Idx
+  }
 
-	public PathInfo peek() {
-		return top;
-	}
+  public PathStack(TableRefFactory tableRefFactory) {
+    this.tableRefFactory = tableRefFactory;
+    this.top = new PathField("", null);
+  }
 
-	public PathInfo pop() {
-		PathInfo topper = top;
-		top = top.getParent();
-		return topper;
-	}
+  public PathInfo peek() {
+    return top;
+  }
 
-	public void pushField(String name) {
-		top = top.appendField(name);
-	}
+  public PathInfo pop() {
+    PathInfo topper = top;
+    top = top.getParent();
+    return topper;
+  }
 
-	public void pushObject(DocPartRowImpl rowInfo) {
-		top = top.appendObject(rowInfo);
-	}
+  public void pushField(String name) {
+    top = top.appendField(name);
+  }
 
-	public void pushArray() {
-		if (top == null) {
-			throw new IllegalArgumentException("Building an array on root document");
-		}
-		top = top.appendArray();
-	}
+  public void pushObject(DocPartRowImpl rowInfo) {
+    top = top.appendObject(rowInfo);
+  }
 
-	public void pushArrayIdx(int idx) {
-		if (top == null) {
-			throw new IllegalArgumentException("Building an array index on root document");
-		} else if (top.getNodeType() != PathNodeType.Array) {
-			throw new IllegalArgumentException("Building an array index on document");
-		}
-		top = ((PathArray) top).appendIdx(idx);
-	}
+  public void pushArray() {
+    if (top == null) {
+      throw new IllegalArgumentException("Building an array on root document");
+    }
+    top = top.appendArray();
+  }
 
-	public void pushArrayIdx(int idx, DocPartRowImpl rowInfo) {
-		if (top == null) {
-			throw new IllegalArgumentException("Building an array index on root document");
-		} else if (top.getNodeType() != PathNodeType.Array) {
-			throw new IllegalArgumentException("Building an array index on document");
-		}
-		top = ((PathArray) top).appendIdx(idx, rowInfo);
-	}
+  public void pushArrayIdx(int idx) {
+    if (top == null) {
+      throw new IllegalArgumentException("Building an array index on root document");
+    } else if (top.getNodeType() != PathNodeType.Array) {
+      throw new IllegalArgumentException("Building an array index on document");
+    }
+    top = ((PathArray) top).appendIdx(idx);
+  }
 
-	public abstract class PathInfo {
+  public void pushArrayIdx(int idx, DocPartRowImpl rowInfo) {
+    if (top == null) {
+      throw new IllegalArgumentException("Building an array index on root document");
+    } else if (top.getNodeType() != PathNodeType.Array) {
+      throw new IllegalArgumentException("Building an array index on document");
+    }
+    top = ((PathArray) top).appendIdx(idx, rowInfo);
+  }
 
-		protected PathInfo parent;
-		protected TableRef tableRef;
+  public abstract class PathInfo {
 
-		private PathInfo(PathInfo parent) {
-			this.parent = parent;
-		}
+    protected PathInfo parent;
+    protected TableRef tableRef;
 
-		PathObject appendObject(DocPartRowImpl rowInfo) {
-			return new PathObject(this, rowInfo);
-		}
+    private PathInfo(PathInfo parent) {
+      this.parent = parent;
+    }
 
-		PathField appendField(String name) {
-			return new PathField(name, this);
-		}
+    PathObject appendObject(DocPartRowImpl rowInfo) {
+      return new PathObject(this, rowInfo);
+    }
 
-		PathArray appendArray() {
-			return new PathArray(1, this);
-		}
+    PathField appendField(String name) {
+      return new PathField(name, this);
+    }
 
-		public TableRef getTableRef(){
-			return tableRef;
-		}
-		
-		public PathInfo getParent() {
-			return this.parent;
-		}
+    PathArray appendArray() {
+      return new PathArray(1, this);
+    }
 
-		@Override
-		public int hashCode() {
-			return this.getPath().hashCode();
-		}
+    public TableRef getTableRef() {
+      return tableRef;
+    }
 
-		@Override
-		public boolean equals(Object obj) {
-			if (this == obj)
-				return true;
-			if (obj == null)
-				return false;
-			if (!(obj instanceof PathInfo))
-				return false;
-			PathInfo other = (PathInfo) obj;
-			return this.getPath().equals(other.getPath());
-		}
+    public PathInfo getParent() {
+      return this.parent;
+    }
 
-		public boolean is(PathNodeType type) {
-			return getNodeType().equals(type);
-		}
+    @Override
+    public int hashCode() {
+      return this.getPath().hashCode();
+    }
 
-		public abstract DocPartRowImpl findParentRowInfo();
-		
-		public abstract String getPath();
+    @Override
+    public boolean equals(Object obj) {
+      if (this == obj) {
+        return true;
+      }
+      if (obj == null) {
+        return false;
+      }
+      if (!(obj instanceof PathInfo)) {
+        return false;
+      }
+      PathInfo other = (PathInfo) obj;
+      return this.getPath().equals(other.getPath());
+    }
 
-		public abstract PathNodeType getNodeType();
+    public boolean is(PathNodeType type) {
+      return getNodeType().equals(type);
+    }
 
-	}
+    public abstract DocPartRowImpl findParentRowInfo();
 
-	public class PathField extends PathInfo {
+    public abstract String getPath();
 
-		private String fieldName;
-		private String path;
+    public abstract PathNodeType getNodeType();
 
-		private PathField(String fieldName, PathInfo parent) {
-			super(parent);
-			this.fieldName = fieldName;
-			this.path = calcPath();
-			if (parent==null){
-				this.tableRef = tableRefFactory.createRoot();
-			}else{
-				this.tableRef = tableRefFactory.createChild(parent.getTableRef(), fieldName);
-			}
-		}
+  }
 
-		private String calcPath() {
-			if (parent == null || parent.getPath().length()==0) {
-				return getFieldName();
-			}
-			return parent.getPath() + "." + getFieldName();
-		}
+  public class PathField extends PathInfo {
 
-		public PathObject getParentObject() {
-			return (PathObject) parent;
-		}
+    private String fieldName;
+    private String path;
 
-		@Override
-		public String getPath() {
-			return path;
-		}
+    private PathField(String fieldName, PathInfo parent) {
+      super(parent);
+      this.fieldName = fieldName;
+      this.path = calcPath();
+      if (parent == null) {
+        this.tableRef = tableRefFactory.createRoot();
+      } else {
+        this.tableRef = tableRefFactory.createChild(parent.getTableRef(), fieldName);
+      }
+    }
 
-		public String getFieldName() {
-			return fieldName;
-		}
+    private String calcPath() {
+      if (parent == null || parent.getPath().length() == 0) {
+        return getFieldName();
+      }
+      return parent.getPath() + "." + getFieldName();
+    }
 
-		@Override
-		public PathNodeType getNodeType() {
-			return PathNodeType.Field;
-		}
+    public PathObject getParentObject() {
+      return (PathObject) parent;
+    }
 
-		@Override
-		public String toString() {
-			if (parent == null || parent.getPath().length()==0) {
-				return getFieldName();
-			}
-			return parent.toString() + "." + getFieldName();
-		}
-		
-		@Override
-		public DocPartRowImpl findParentRowInfo() {
-			if (parent!=null){
-				return parent.findParentRowInfo();
-			}
-			return null;
-		}
-	}
+    @Override
+    public String getPath() {
+      return path;
+    }
 
-	public class PathObject extends PathInfo {
+    public String getFieldName() {
+      return fieldName;
+    }
 
-		private DocPartRowImpl rowInfo;
+    @Override
+    public PathNodeType getNodeType() {
+      return PathNodeType.Field;
+    }
 
-		private PathObject(PathInfo parent, DocPartRowImpl rowInfo) {
-			super(parent);
-			this.rowInfo = rowInfo;
-			this.tableRef = parent.getTableRef();
-		}
+    @Override
+    public String toString() {
+      if (parent == null || parent.getPath().length() == 0) {
+        return getFieldName();
+      }
+      return parent.toString() + "." + getFieldName();
+    }
 
-		@Override
-		public String getPath() {
-			return parent.getPath();
-		}
+    @Override
+    public DocPartRowImpl findParentRowInfo() {
+      if (parent != null) {
+        return parent.findParentRowInfo();
+      }
+      return null;
+    }
+  }
 
-		@Override
-		public PathNodeType getNodeType() {
-			return PathNodeType.Object;
-		}
+  public class PathObject extends PathInfo {
 
-		@Override
-		public String toString() {
-			return parent.toString();
-		}
-		
-		public DocPartRowImpl findParentRowInfo() {
-			return rowInfo;
-		}		
-	}
+    private DocPartRowImpl rowInfo;
 
-	public class PathArray extends PathInfo {
-		private int dimension;
-		private String path;
+    private PathObject(PathInfo parent, DocPartRowImpl rowInfo) {
+      super(parent);
+      this.rowInfo = rowInfo;
+      this.tableRef = parent.getTableRef();
+    }
 
-		private PathArray(int dimension, PathInfo parent) {
-			super(parent);
-			this.dimension = dimension;
-			this.path = calcPath();
-			if (dimension==1){
-				this.tableRef = parent.getTableRef();
-			}else{
-				this.tableRef = tableRefFactory.createChild(parent.tableRef, dimension);
-			}
-		}
+    @Override
+    public String getPath() {
+      return parent.getPath();
+    }
 
-		PathArrayIdx appendIdx(int idx) {
-			return new PathArrayIdx(idx, this);
-		}
+    @Override
+    public PathNodeType getNodeType() {
+      return PathNodeType.Object;
+    }
 
-		PathArrayIdx appendIdx(int idx, DocPartRowImpl rowInfo) {
-			return new PathArrayIdx(idx, this, rowInfo);
-		}
+    @Override
+    public String toString() {
+      return parent.toString();
+    }
 
-		@Override
-		public String getPath() {
-			return path;
-		}
+    public DocPartRowImpl findParentRowInfo() {
+      return rowInfo;
+    }
+  }
 
-		private String calcPath() {
-			if (dimension == 1) {
-				return parent.getPath();
-			}
-			PathInfo noArray = parent;
-			while (noArray.getNodeType() == PathNodeType.Array || noArray.getNodeType() == PathNodeType.Idx) {
-				noArray = noArray.getParent();
-			}
-			return noArray.getPath() + "$" + dimension;
-		}
+  public class PathArray extends PathInfo {
 
-		@Override
-		public String toString() {
-			return parent.toString();
-		}
+    private int dimension;
+    private String path;
 
-		@Override
-		public PathNodeType getNodeType() {
-			return PathNodeType.Array;
-		}
-		
-		public DocPartRowImpl findParentRowInfo() {
-			if (parent!=null){
-				return parent.findParentRowInfo();
-			}
-			return null;
-		}
-	}
+    private PathArray(int dimension, PathInfo parent) {
+      super(parent);
+      this.dimension = dimension;
+      this.path = calcPath();
+      if (dimension == 1) {
+        this.tableRef = parent.getTableRef();
+      } else {
+        this.tableRef = tableRefFactory.createChild(parent.tableRef, dimension);
+      }
+    }
 
-	// TODO maybe create to types: with and without rowinfo
-	public class PathArrayIdx extends PathInfo {
+    PathArrayIdx appendIdx(int idx) {
+      return new PathArrayIdx(idx, this);
+    }
 
-		private int idx;
-		private DocPartRowImpl rowInfo;
+    PathArrayIdx appendIdx(int idx, DocPartRowImpl rowInfo) {
+      return new PathArrayIdx(idx, this, rowInfo);
+    }
 
-		private PathArrayIdx(int idx, PathInfo parent) {
-			this(idx, parent, null);
-		}
+    @Override
+    public String getPath() {
+      return path;
+    }
 
-		private PathArrayIdx(int idx, PathInfo parent, DocPartRowImpl rowInfo) {
-			super(parent);
-			assert parent.getNodeType() == PathNodeType.Array;
-			this.idx = idx;
-			this.rowInfo = rowInfo;
-			this.tableRef = parent.tableRef;
-		}
+    private String calcPath() {
+      if (dimension == 1) {
+        return parent.getPath();
+      }
+      PathInfo noArray = parent;
+      while (noArray.getNodeType() == PathNodeType.Array || noArray.getNodeType()
+          == PathNodeType.Idx) {
+        noArray = noArray.getParent();
+      }
+      return noArray.getPath() + "$" + dimension;
+    }
 
-		PathArray appendArray() {
-			return new PathArray(((PathArray) parent).dimension + 1, this);
-		}
+    @Override
+    public String toString() {
+      return parent.toString();
+    }
 
-		@Override
-		public String getPath() {
-			return parent.getPath();
-		}
+    @Override
+    public PathNodeType getNodeType() {
+      return PathNodeType.Array;
+    }
 
-		@Override
-		public PathNodeType getNodeType() {
-			return PathNodeType.Idx;
-		}
+    public DocPartRowImpl findParentRowInfo() {
+      if (parent != null) {
+        return parent.findParentRowInfo();
+      }
+      return null;
+    }
+  }
 
-		@Override
-		public String toString() {
-			return parent.toString() + "[]";
-		}
+  // TODO maybe create to types: with and without rowinfo
+  public class PathArrayIdx extends PathInfo {
 
-		public int getIdx() {
-			return idx;
-		}
+    private int idx;
+    private DocPartRowImpl rowInfo;
 
-		public DocPartRowImpl findParentRowInfo() {
-			if (rowInfo != null) {
-				return rowInfo;
-			}
-			if (parent!=null){
-				return parent.findParentRowInfo();
-			}
-			return null;
-		}
-	}
+    private PathArrayIdx(int idx, PathInfo parent) {
+      this(idx, parent, null);
+    }
+
+    private PathArrayIdx(int idx, PathInfo parent, DocPartRowImpl rowInfo) {
+      super(parent);
+      assert parent.getNodeType() == PathNodeType.Array;
+      this.idx = idx;
+      this.rowInfo = rowInfo;
+      this.tableRef = parent.tableRef;
+    }
+
+    PathArray appendArray() {
+      return new PathArray(((PathArray) parent).dimension + 1, this);
+    }
+
+    @Override
+    public String getPath() {
+      return parent.getPath();
+    }
+
+    @Override
+    public PathNodeType getNodeType() {
+      return PathNodeType.Idx;
+    }
+
+    @Override
+    public String toString() {
+      return parent.toString() + "[]";
+    }
+
+    public int getIdx() {
+      return idx;
+    }
+
+    public DocPartRowImpl findParentRowInfo() {
+      if (rowInfo != null) {
+        return rowInfo;
+      }
+      if (parent != null) {
+        return parent.findParentRowInfo();
+      }
+      return null;
+    }
+  }
 
 }

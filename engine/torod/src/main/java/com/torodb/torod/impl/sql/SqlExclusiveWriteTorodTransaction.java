@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Torod Layer
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.torod.impl.sql;
 
 import com.torodb.core.exceptions.user.UserException;
@@ -28,31 +29,36 @@ import com.torodb.torod.ExclusiveWriteTorodTransaction;
 /**
  *
  */
-public class SqlExclusiveWriteTorodTransaction extends SqlWriteTorodTransaction<ExclusiveWriteInternalTransaction> implements ExclusiveWriteTorodTransaction {
+public class SqlExclusiveWriteTorodTransaction
+    extends SqlWriteTorodTransaction<ExclusiveWriteInternalTransaction>
+    implements ExclusiveWriteTorodTransaction {
 
-    public SqlExclusiveWriteTorodTransaction(SqlTorodConnection connection, boolean concurrent) {
-        super(connection, concurrent);
-    }
+  public SqlExclusiveWriteTorodTransaction(SqlTorodConnection connection, boolean concurrent) {
+    super(connection, concurrent);
+  }
 
-    @Override
-    protected ExclusiveWriteInternalTransaction createInternalTransaction(SqlTorodConnection connection) {
-        return connection
-                .getServer()
-                .getInternalTransactionManager()
-                .openExclusiveWriteTransaction(getConnection().getBackendConnection());
-    }
+  @Override
+  protected ExclusiveWriteInternalTransaction createInternalTransaction(
+      SqlTorodConnection connection) {
+    return connection
+        .getServer()
+        .getInternalTransactionManager()
+        .openExclusiveWriteTransaction(getConnection().getBackendConnection());
+  }
 
-    @Override
-    public void renameCollection(String fromDb, String fromCollection, String toDb, String toCollection) throws RollbackException, UserException {
-        MutableMetaDatabase fromMetaDb = getMetaDatabaseOrThrowException(fromDb);
-        MetaCollection fromMetaColl = getMetaCollectionOrThrowException(fromMetaDb, fromCollection);
+  @Override
+  public void renameCollection(String fromDb, String fromCollection, String toDb,
+      String toCollection) throws RollbackException, UserException {
+    MutableMetaDatabase fromMetaDb = getMetaDatabaseOrThrowException(fromDb);
+    MetaCollection fromMetaColl = getMetaCollectionOrThrowException(fromMetaDb, fromCollection);
 
-        MutableMetaDatabase toMetaDb = getOrCreateMetaDatabase(toDb);
-        MutableMetaCollection toMetaColl = createMetaCollection(toMetaDb, toCollection);
-        
-        getInternalTransaction().getBackendTransaction().renameCollection(fromMetaDb, fromMetaColl, toMetaDb, toMetaColl);
+    MutableMetaDatabase toMetaDb = getOrCreateMetaDatabase(toDb);
+    MutableMetaCollection toMetaColl = createMetaCollection(toMetaDb, toCollection);
 
-        fromMetaDb.removeMetaCollectionByName(fromCollection);
-    }
+    getInternalTransaction().getBackendTransaction().renameCollection(fromMetaDb, fromMetaColl,
+        toMetaDb, toMetaColl);
+
+    fromMetaDb.removeMetaCollectionByName(fromCollection);
+  }
 
 }

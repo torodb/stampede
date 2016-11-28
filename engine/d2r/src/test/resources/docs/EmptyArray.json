@@ -1,4 +1,5 @@
 {
-	"name": "John",
-	"department" : []
+    "name": "John",
+    "department": [
+    ]
 }

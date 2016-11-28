@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Backend Derby
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,61 +13,62 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.backend.derby.converters.jooq;
 
-import org.jooq.DataType;
-import org.jooq.SQLDialect;
-import org.jooq.impl.DefaultDataType;
-import org.jooq.impl.SQLDataType;
-
-import com.torodb.backend.converters.jooq.DataTypeForKV;
-import com.torodb.backend.converters.jooq.KVValueConverter;
+import com.torodb.backend.converters.jooq.DataTypeForKv;
+import com.torodb.backend.converters.jooq.KvValueConverter;
 import com.torodb.backend.converters.sql.IntegerSqlBinding;
 import com.torodb.backend.converters.sql.SqlBinding;
 import com.torodb.kvdocument.types.IntegerType;
-import com.torodb.kvdocument.types.KVType;
-import com.torodb.kvdocument.values.KVInteger;
-
+import com.torodb.kvdocument.types.KvType;
+import com.torodb.kvdocument.values.KvInteger;
+import org.jooq.DataType;
+import org.jooq.SQLDialect;
+import org.jooq.impl.DefaultDataType;
 
 /**
  *
  */
-public class IntegerValueConverter implements KVValueConverter<Integer, Integer, KVInteger>{
-    private static final long serialVersionUID = 1L;
+public class IntegerValueConverter implements KvValueConverter<Integer, Integer, KvInteger> {
 
-    public static final DataType<Integer> INTEGER_TYPE = new DefaultDataType<Integer>(SQLDialect.DERBY, Integer.class, "INTEGER");
-    
-    public static final DataTypeForKV<KVInteger> TYPE = DataTypeForKV.from(INTEGER_TYPE, new IntegerValueConverter());
+  private static final long serialVersionUID = 1L;
 
-    @Override
-    public KVType getErasuredType() {
-        return IntegerType.INSTANCE;
-    }
+  public static final DataType<Integer> INTEGER_TYPE =
+      new DefaultDataType<Integer>(SQLDialect.DERBY, Integer.class, "INTEGER");
 
-    @Override
-    public KVInteger from(Integer databaseObject) {
-        return KVInteger.of(databaseObject);
-    }
+  public static final DataTypeForKv<KvInteger> TYPE = DataTypeForKv.from(INTEGER_TYPE,
+      new IntegerValueConverter());
 
-    @Override
-    public Integer to(KVInteger userObject) {
-        return userObject.getValue();
-    }
+  @Override
+  public KvType getErasuredType() {
+    return IntegerType.INSTANCE;
+  }
 
-    @Override
-    public Class<Integer> fromType() {
-        return Integer.class;
-    }
+  @Override
+  public KvInteger from(Integer databaseObject) {
+    return KvInteger.of(databaseObject);
+  }
 
-    @Override
-    public Class<KVInteger> toType() {
-        return KVInteger.class;
-    }
+  @Override
+  public Integer to(KvInteger userObject) {
+    return userObject.getValue();
+  }
 
-    @Override
-    public SqlBinding<Integer> getSqlBinding() {
-        return IntegerSqlBinding.INSTANCE;
-    }
+  @Override
+  public Class<Integer> fromType() {
+    return Integer.class;
+  }
+
+  @Override
+  public Class<KvInteger> toType() {
+    return KvInteger.class;
+  }
+
+  @Override
+  public SqlBinding<Integer> getSqlBinding() {
+    return IntegerSqlBinding.INSTANCE;
+  }
 }

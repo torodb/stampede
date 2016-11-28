@@ -1,5 +1,5 @@
 /*
- * ToroDB - KVDocument: MongoWP Converter
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,38 +13,41 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.kvdocument.conversion.mongowp;
 
 import com.eightkdata.mongowp.bson.BsonDocument;
-import com.torodb.kvdocument.values.KVDocument;
+import com.torodb.kvdocument.values.KvDocument;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 import java.util.function.Function;
 
 /**
  *
  */
-public class ToBsonDocumentTranslator implements Function<KVDocument, BsonDocument> {
+public class ToBsonDocumentTranslator implements Function<KvDocument, BsonDocument> {
 
-    private ToBsonDocumentTranslator() {
-    }
+  private ToBsonDocumentTranslator() {
+  }
 
-    @Override
-    public BsonDocument apply(KVDocument t) {
-        return (BsonDocument) ToBsonValueTranslator.getInstance().apply(t);
-    }
+  @Override
+  public BsonDocument apply(KvDocument t) {
+    return (BsonDocument) ToBsonValueTranslator.getInstance().apply(t);
+  }
 
-    public static ToBsonDocumentTranslator getInstance() {
-        return ToBsonDocumentTranslatorHolder.INSTANCE;
-    }
+  public static ToBsonDocumentTranslator getInstance() {
+    return ToBsonDocumentTranslatorHolder.INSTANCE;
+  }
 
-    private static class ToBsonDocumentTranslatorHolder {
-        private static final ToBsonDocumentTranslator INSTANCE = new ToBsonDocumentTranslator();
-    }
+  private static class ToBsonDocumentTranslatorHolder {
 
-    @SuppressFBWarnings(value = "UPM_UNCALLED_PRIVATE_METHOD")
-    private Object readResolve()  {
-        return ToBsonDocumentTranslator.getInstance();
-    }
- }
+    private static final ToBsonDocumentTranslator INSTANCE = new ToBsonDocumentTranslator();
+  }
+
+  @SuppressFBWarnings(value = "UPM_UNCALLED_PRIVATE_METHOD")
+  private Object readResolve() {
+    return ToBsonDocumentTranslator.getInstance();
+  }
+}

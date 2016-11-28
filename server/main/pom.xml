@@ -133,7 +133,7 @@
         <profile>
             <id>assembler</id>
             <properties>
-              <profile.assembler>true</profile.assembler>
+                <profile.assembler>true</profile.assembler>
             </properties>
             <build>
                 <plugins>
@@ -255,7 +255,7 @@
                                             <TORODB_PASSWORD>${docker.torodb.password}</TORODB_PASSWORD>
                                         </env>
                                         <links>
-                                          <link>postgres:postgres</link>
+                                            <link>postgres:postgres</link>
                                         </links>
                                         <ports>
                                             <port>27018:27018</port>

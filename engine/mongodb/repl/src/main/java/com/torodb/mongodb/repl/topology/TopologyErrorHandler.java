@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Repl
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.repl.topology;
 
 import javax.annotation.Nonnull;
@@ -24,18 +25,18 @@ import javax.annotation.Nonnull;
  */
 public interface TopologyErrorHandler {
 
-    /**
-     *
-     * @param t
-     * @return true if a new heartbeat must be schedule
-     */
-    public boolean sendHeartbeatError(@Nonnull Throwable t);
+  /**
+   *
+   * @param t
+   * @return true if a new heartbeat must be schedule
+   */
+  public boolean sendHeartbeatError(@Nonnull Throwable t);
 
-    /**
-     *
-     * @param t
-     * @return true if a new heartbeat must be schedule
-     */
-    public boolean reciveHeartbeatError(@Nonnull Throwable t);
+  /**
+   *
+   * @param t
+   * @return true if a new heartbeat must be schedule
+   */
+  public boolean reciveHeartbeatError(@Nonnull Throwable t);
 
 }

@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.core.exceptions;
 
 import com.torodb.core.exceptions.user.UserException;
@@ -23,19 +24,20 @@ import com.torodb.core.exceptions.user.UserException;
  *
  */
 public class UserWrappedException extends CheckedWrappedException {
-    private static final long serialVersionUID = 1L;
 
-    public UserWrappedException(UserException cause) {
-        super(cause);
-    }
+  private static final long serialVersionUID = 1L;
 
-    @Override
-    public synchronized UserException getCause() {
-    	Exception cause = super.getCause();
-    	if (cause instanceof UserException){
-    		return (UserException) cause;
-    	}
-    	return null;
-    		
+  public UserWrappedException(UserException cause) {
+    super(cause);
+  }
+
+  @Override
+  public synchronized UserException getCause() {
+    Exception cause = super.getCause();
+    if (cause instanceof UserException) {
+      return (UserException) cause;
     }
+    return null;
+
+  }
 }

@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Backend common
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,126 +13,130 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.backend.tables;
 
-import java.util.Arrays;
-import java.util.List;
-
+import com.torodb.backend.meta.TorodbSchema;
+import com.torodb.backend.tables.records.KvRecord;
 import org.jooq.Field;
 import org.jooq.Table;
 import org.jooq.TableField;
 import org.jooq.UniqueKey;
 import org.jooq.impl.AbstractKeys;
 
-import com.torodb.backend.meta.TorodbSchema;
-import com.torodb.backend.tables.records.KvRecord;
+import java.util.Arrays;
+import java.util.List;
 
-
+@SuppressWarnings({"checkstyle:AbbreviationAsWordInName", "MemberName"})
 public abstract class KvTable<R extends KvRecord> extends SemanticTable<R> {
 
-    private static final long serialVersionUID = -8840058751911188345L;
+  private static final long serialVersionUID = -8840058751911188345L;
 
-    public static final String TABLE_NAME = "kv";
+  public static final String TABLE_NAME = "kv";
 
-    public enum TableFields {
-        KEY     ("key"),
-        VALUE   ("value");
+  public enum TableFields {
+    KEY("key"),
+    VALUE("value");
 
-        public final String fieldName;
+    public final String fieldName;
 
-        TableFields(String fieldName) {
-            this.fieldName = fieldName;
-        }
-
-        @Override
-        public String toString() {
-            return fieldName;
-        }
+    TableFields(String fieldName) {
+      this.fieldName = fieldName;
     }
 
-    /**
-     * The class holding records for this type
-     * @return 
-     */
     @Override
-    public abstract Class<R> getRecordType();
-
-    /**
-     * The column <code>torodb.kv.key</code>.
-     */
-    public final TableField<R, String> KEY
-            = createNameField();
-
-    /**
-     * The column <code>torodb.kv.value</code>.
-     */
-    public final TableField<R, String> VALUE
-            = createIdentifierField();
-
-    protected abstract TableField<R, String> createNameField();
-    protected abstract TableField<R, String> createIdentifierField();
-    
-    private final UniqueKeys<R> uniqueKeys;
-    
-    /**
-     * Create a <code>torodb.kv</code> table reference
-     */
-    public KvTable() {
-        this(TABLE_NAME, null);
+    public String toString() {
+      return fieldName;
     }
+  }
 
-    protected KvTable(String alias, Table<R> aliased) {
-        this(alias, aliased, null);
-    }
+  /**
+   * The class holding records for this type
+   *
+   * @return
+   */
+  @Override
+  public abstract Class<R> getRecordType();
 
-    protected KvTable(String alias, Table<R> aliased, Field<?>[] parameters) {
-        super(alias, TorodbSchema.TORODB, aliased, parameters, "");
-        
-        this.uniqueKeys = new UniqueKeys<R>(this);
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public UniqueKey<R> getPrimaryKey() {
-        return uniqueKeys.DATABASE_PKEY;
-    }
+  /**
+   * The column <code>torodb.kv.key</code>.
+   */
+  public final TableField<R, String> KEY = createNameField();
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public List<UniqueKey<R>> getKeys() {
-        return Arrays.<UniqueKey<R>>asList(uniqueKeys.DATABASE_PKEY, 
-                uniqueKeys.DATABASE_SCHEMA_UNIQUE
-        );
-    }
+  /**
+   * The column <code>torodb.kv.value</code>.
+   */
+  public final TableField<R, String> VALUE =
+      createIdentifierField();
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public abstract KvTable<R> as(String alias);
+  protected abstract TableField<R, String> createNameField();
 
-    /**
-     * Rename this table
-     */
-    public abstract KvTable<R> rename(String name);
-    
-    public UniqueKeys<R> getUniqueKeys() {
-        return uniqueKeys;
+  protected abstract TableField<R, String> createIdentifierField();
+
+  private final UniqueKeys<R> uniqueKeys;
+
+  /**
+   * Create a <code>torodb.kv</code> table reference
+   */
+  public KvTable() {
+    this(TABLE_NAME, null);
+  }
+
+  protected KvTable(String alias, Table<R> aliased) {
+    this(alias, aliased, null);
+  }
+
+  protected KvTable(String alias, Table<R> aliased, Field<?>[] parameters) {
+    super(alias, TorodbSchema.TORODB, aliased, parameters, "");
+
+    this.uniqueKeys = new UniqueKeys<R>(this);
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public UniqueKey<R> getPrimaryKey() {
+    return uniqueKeys.DATABASE_PKEY;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public List<UniqueKey<R>> getKeys() {
+    return Arrays.<UniqueKey<R>>asList(uniqueKeys.DATABASE_PKEY,
+        uniqueKeys.DATABASE_SCHEMA_UNIQUE
+    );
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public abstract KvTable<R> as(String alias);
+
+  /**
+   * Rename this table
+   */
+  public abstract KvTable<R> rename(String name);
+
+  public UniqueKeys<R> getUniqueKeys() {
+    return uniqueKeys;
+  }
+
+  @SuppressWarnings({"checkstyle:LineLength", "checkstyle:AbbreviationAsWordInName",
+      "checkstyle:MemberName"})
+  public static class UniqueKeys<KeyRecordT extends KvRecord> extends AbstractKeys {
+
+    private final UniqueKey<KeyRecordT> DATABASE_PKEY;
+    private final UniqueKey<KeyRecordT> DATABASE_SCHEMA_UNIQUE;
+
+    private UniqueKeys(KvTable<KeyRecordT> databaseTable) {
+      DATABASE_PKEY = createUniqueKey(databaseTable, databaseTable.KEY);
+      DATABASE_SCHEMA_UNIQUE = createUniqueKey(databaseTable, databaseTable.VALUE);
     }
-    
-    public static class UniqueKeys<KeyRecord extends KvRecord> extends AbstractKeys {
-        private final UniqueKey<KeyRecord> DATABASE_PKEY;
-        private final UniqueKey<KeyRecord> DATABASE_SCHEMA_UNIQUE;
-        
-        private UniqueKeys(KvTable<KeyRecord> databaseTable) {
-            DATABASE_PKEY = createUniqueKey(databaseTable, databaseTable.KEY);
-            DATABASE_SCHEMA_UNIQUE = createUniqueKey(databaseTable, databaseTable.VALUE);
-        }
-    }
+  }
 }

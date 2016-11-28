@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Packaging utils
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,19 +13,21 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package com.torodb.packaging.config.model.generic;
 
-import java.util.HashMap;
+package com.torodb.packaging.config.model.generic;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.torodb.packaging.config.jackson.LogPackagesDeserializer;
 import com.torodb.packaging.config.jackson.LogPackagesSerializer;
 
+import java.util.HashMap;
+
 @JsonSerialize(using = LogPackagesSerializer.class)
 @JsonDeserialize(using = LogPackagesDeserializer.class)
 public class LogPackages extends HashMap<String, LogLevel> {
-	private static final long serialVersionUID = -167180938971456194L;
+
+  private static final long serialVersionUID = -167180938971456194L;
 }

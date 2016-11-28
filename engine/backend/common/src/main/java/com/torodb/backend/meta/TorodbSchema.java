@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Backend common
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,36 +13,36 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.backend.meta;
-
-
-import java.util.List;
 
 import org.jooq.Table;
 import org.jooq.impl.SchemaImpl;
 
+import java.util.List;
+
 public class TorodbSchema extends SchemaImpl {
 
-	private static final long serialVersionUID = -1813122131;
+  private static final long serialVersionUID = -1813122131;
 
-    public static final String IDENTIFIER = "torodb";
+  public static final String IDENTIFIER = "torodb";
 
-    /**
-     * The reference instance of <code>torodb</code>
-     */
-    public static final TorodbSchema TORODB = new TorodbSchema();
+  /**
+   * The reference instance of <code>torodb</code>
+   */
+  public static final TorodbSchema TORODB = new TorodbSchema();
 
-    /**
-     * No further instances allowed
-     */
-	protected TorodbSchema() {
-		super(IDENTIFIER);
-	}
+  /**
+   * No further instances allowed
+   */
+  protected TorodbSchema() {
+    super(IDENTIFIER);
+  }
 
-	@Override
-	public final List<Table<?>> getTables() {
-	    throw new UnsupportedOperationException();
-	}
+  @Override
+  public final List<Table<?>> getTables() {
+    throw new UnsupportedOperationException();
+  }
 }

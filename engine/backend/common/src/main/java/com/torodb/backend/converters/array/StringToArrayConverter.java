@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Backend common
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,30 +13,31 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.backend.converters.array;
 
-import javax.json.JsonString;
-
+import com.torodb.kvdocument.values.KvString;
+import com.torodb.kvdocument.values.heap.StringKvString;
 import org.jooq.tools.json.JSONValue;
 
-import com.torodb.kvdocument.values.KVString;
-import com.torodb.kvdocument.values.heap.StringKVString;
+import javax.json.JsonString;
 
 /**
  *
  */
-public class StringToArrayConverter implements ArrayConverter<JsonString, KVString> {
-    private static final long serialVersionUID = 1L;
+public class StringToArrayConverter implements ArrayConverter<JsonString, KvString> {
 
-    @Override
-    public String toJsonLiteral(KVString value) {
-        return JSONValue.toJSONString(value.getValue());
-    }
+  private static final long serialVersionUID = 1L;
 
-    @Override
-    public KVString fromJsonValue(JsonString value) {
-        return new StringKVString(value.getString());
-    }
+  @Override
+  public String toJsonLiteral(KvString value) {
+    return JSONValue.toJSONString(value.getValue());
+  }
+
+  @Override
+  public KvString fromJsonValue(JsonString value) {
+    return new StringKvString(value.getString());
+  }
 }

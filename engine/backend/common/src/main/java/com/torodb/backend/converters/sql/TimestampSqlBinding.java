@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Backend common
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.backend.converters.sql;
 
 import java.sql.PreparedStatement;
@@ -23,19 +24,21 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 
 public class TimestampSqlBinding implements SqlBinding<Timestamp> {
-    public static final TimestampSqlBinding INSTANCE = new TimestampSqlBinding();
 
-    @Override
-    public Timestamp get(ResultSet resultSet, int columnIndex) throws SQLException {
-        Timestamp value = resultSet.getTimestamp(columnIndex);
-        if (resultSet.wasNull()) {
-            return null;
-        }
-        return value;
-    }
+  public static final TimestampSqlBinding INSTANCE = new TimestampSqlBinding();
 
-    @Override
-    public void set(PreparedStatement preparedStatement, int parameterIndex, Timestamp value) throws SQLException {
-        preparedStatement.setTimestamp(parameterIndex, value);
+  @Override
+  public Timestamp get(ResultSet resultSet, int columnIndex) throws SQLException {
+    Timestamp value = resultSet.getTimestamp(columnIndex);
+    if (resultSet.wasNull()) {
+      return null;
     }
+    return value;
+  }
+
+  @Override
+  public void set(PreparedStatement preparedStatement, int parameterIndex, Timestamp value) throws
+      SQLException {
+    preparedStatement.setTimestamp(parameterIndex, value);
+  }
 }

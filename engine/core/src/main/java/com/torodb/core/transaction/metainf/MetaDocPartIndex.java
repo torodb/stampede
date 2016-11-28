@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.core.transaction.metainf;
 
 import java.util.Iterator;
@@ -25,22 +26,22 @@ import javax.annotation.Nullable;
  */
 public interface MetaDocPartIndex {
 
-    public abstract boolean isUnique();
+  public abstract boolean isUnique();
 
-    public abstract int size();
-    
-    public abstract Iterator<? extends MetaDocPartIndexColumn> iteratorColumns();
+  public abstract int size();
 
-    @Nullable
-    public abstract MetaDocPartIndexColumn getMetaDocPartIndexColumnByPosition(int position);
+  public abstract Iterator<? extends MetaDocPartIndexColumn> iteratorColumns();
 
-    @Nullable
-    public abstract MetaDocPartIndexColumn getMetaDocPartIndexColumnByIdentifier(String columnName);
-    
-    public abstract boolean hasSameColumns(MetaDocPartIndex docPartIndex);
+  @Nullable
+  public abstract MetaDocPartIndexColumn getMetaDocPartIndexColumnByPosition(int position);
 
-    public default String defautToString() {
-        return "docPartIndex{" + "unique:" + isUnique() + '}';
-    }
-    
+  @Nullable
+  public abstract MetaDocPartIndexColumn getMetaDocPartIndexColumnByIdentifier(String columnName);
+
+  public abstract boolean hasSameColumns(MetaDocPartIndex docPartIndex);
+
+  public default String defautToString() {
+    return "docPartIndex{" + "unique:" + isUnique() + '}';
+  }
+
 }

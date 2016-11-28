@@ -1,5 +1,5 @@
 /*
- * ToroDB - KVDocument: Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.kvdocument.types;
 
 import javax.annotation.concurrent.Immutable;
@@ -23,52 +24,51 @@ import javax.annotation.concurrent.Immutable;
  *
  */
 @Immutable
-public class ArrayType implements KVType {
-    private static final long serialVersionUID = 1L;
-    
-    private final KVType elementType;
+public class ArrayType implements KvType {
 
-    public ArrayType(KVType elementType) {
-        this.elementType = elementType;
-    }
+  private static final long serialVersionUID = 1L;
 
-    public KVType getElementType() {
-        return elementType;
-    }
+  private final KvType elementType;
 
-    @Override
-    public int hashCode() {
-        int hash = 7;
-        hash = 23 * hash +
-                (this.elementType != null ? this.elementType.hashCode() : 0);
-        return hash;
-    }
+  public ArrayType(KvType elementType) {
+    this.elementType = elementType;
+  }
 
-    @Override
-    public boolean equals(Object obj) {
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        final ArrayType other = (ArrayType) obj;
-        if (this.elementType != other.elementType &&
-                (this.elementType == null ||
-                !this.elementType.equals(other.elementType))) {
-            return false;
-        }
-        return true;
-    }
+  public KvType getElementType() {
+    return elementType;
+  }
 
-    @Override
-    public <Result, Arg> Result accept(KVTypeVisitor<Result, Arg> visitor, Arg arg) {
-        return visitor.visit(this, arg);
-    }
+  @Override
+  public int hashCode() {
+    int hash = 7;
+    hash = 23 * hash + (this.elementType != null ? this.elementType.hashCode() : 0);
+    return hash;
+  }
 
-    @Override
-    public String toString() {
-        return "Array<" + elementType + '>';
+  @Override
+  public boolean equals(Object obj) {
+    if (obj == null) {
+      return false;
     }
-    
+    if (getClass() != obj.getClass()) {
+      return false;
+    }
+    final ArrayType other = (ArrayType) obj;
+    if (this.elementType != other.elementType && (this.elementType == null || !this.elementType
+        .equals(other.elementType))) {
+      return false;
+    }
+    return true;
+  }
+
+  @Override
+  public <R, A> R accept(KvTypeVisitor<R, A> visitor, A arg) {
+    return visitor.visit(this, arg);
+  }
+
+  @Override
+  public String toString() {
+    return "Array<" + elementType + '>';
+  }
+
 }

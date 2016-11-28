@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Repl
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.repl.commands;
 
 import com.google.inject.PrivateModule;
@@ -33,28 +34,28 @@ import com.torodb.mongodb.repl.commands.impl.RenameCollectionReplImpl;
  */
 public class ReplCommandsGuiceModule extends PrivateModule {
 
-    @Override
-    protected void configure() {
-        bind(ReplCommandsLibrary.class)
-                .in(Singleton.class);
-        expose(ReplCommandsLibrary.class);
+  @Override
+  protected void configure() {
+    bind(ReplCommandsLibrary.class)
+        .in(Singleton.class);
+    expose(ReplCommandsLibrary.class);
 
-        bind(ReplCommandsExecutor.class)
-                .in(Singleton.class);
-        expose(ReplCommandsExecutor.class);
+    bind(ReplCommandsExecutor.class)
+        .in(Singleton.class);
+    expose(ReplCommandsExecutor.class);
 
-        bindImplementations();
-    }
+    bindImplementations();
+  }
 
-    private void bindImplementations() {
-        bind(CreateCollectionReplImpl.class);
-        bind(CreateIndexesReplImpl.class);
-        bind(DropCollectionReplImpl.class);
-        bind(DropDatabaseReplImpl.class);
-        bind(DropIndexesReplImpl.class);
-        bind(LogAndIgnoreReplImpl.class);
-        bind(LogAndStopReplImpl.class);
-        bind(RenameCollectionReplImpl.class);
-    }
+  private void bindImplementations() {
+    bind(CreateCollectionReplImpl.class);
+    bind(CreateIndexesReplImpl.class);
+    bind(DropCollectionReplImpl.class);
+    bind(DropDatabaseReplImpl.class);
+    bind(DropIndexesReplImpl.class);
+    bind(LogAndIgnoreReplImpl.class);
+    bind(LogAndStopReplImpl.class);
+    bind(RenameCollectionReplImpl.class);
+  }
 
 }

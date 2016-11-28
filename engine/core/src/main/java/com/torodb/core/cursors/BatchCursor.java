@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,41 +13,42 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.core.cursors;
+
+import com.google.common.base.Preconditions;
 
 import java.util.Iterator;
 import java.util.List;
 
-import com.google.common.base.Preconditions;
-
 public class BatchCursor<E> implements AutoCloseable, Iterator<List<E>> {
 
-    private final Cursor<E> cursor;
-    private final int size;
-    
-    public BatchCursor(Cursor<E> cursor, int size) {
-        super();
-        
-        Preconditions.checkArgument(size > 0);
-        
-        this.cursor = cursor;
-        this.size = size;
-    }
+  private final Cursor<E> cursor;
+  private final int size;
 
-    @Override
-    public boolean hasNext() {
-        return cursor.hasNext();
-    }
+  public BatchCursor(Cursor<E> cursor, int size) {
+    super();
 
-    @Override
-    public List<E> next() {
-        return cursor.getNextBatch(size);
-    }
+    Preconditions.checkArgument(size > 0);
 
-    @Override
-    public void close() throws Exception {
-        cursor.close();
-    }
+    this.cursor = cursor;
+    this.size = size;
+  }
+
+  @Override
+  public boolean hasNext() {
+    return cursor.hasNext();
+  }
+
+  @Override
+  public List<E> next() {
+    return cursor.getNextBatch(size);
+  }
+
+  @Override
+  public void close() throws Exception {
+    cursor.close();
+  }
 }

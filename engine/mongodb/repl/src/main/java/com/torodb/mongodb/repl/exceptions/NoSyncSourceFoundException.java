@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Repl
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.repl.exceptions;
 
 import com.eightkdata.mongowp.OpTime;
@@ -23,19 +24,20 @@ import com.eightkdata.mongowp.OpTime;
  *
  */
 public class NoSyncSourceFoundException extends Exception {
-    private static final long serialVersionUID = 1L;
-    private final OpTime lastFetchedOpTime;
 
-    public NoSyncSourceFoundException() {
-        this.lastFetchedOpTime = null;
-    }
+  private static final long serialVersionUID = 1L;
+  private final OpTime lastFetchedOpTime;
 
-    public NoSyncSourceFoundException(OpTime lastFetchedOpTime) {
-        this.lastFetchedOpTime = lastFetchedOpTime;
-    }
+  public NoSyncSourceFoundException() {
+    this.lastFetchedOpTime = null;
+  }
 
-    public OpTime getLastFetchedOpTime() {
-        return lastFetchedOpTime;
-    }
+  public NoSyncSourceFoundException(OpTime lastFetchedOpTime) {
+    this.lastFetchedOpTime = lastFetchedOpTime;
+  }
+
+  public OpTime getLastFetchedOpTime() {
+    return lastFetchedOpTime;
+  }
 
 }

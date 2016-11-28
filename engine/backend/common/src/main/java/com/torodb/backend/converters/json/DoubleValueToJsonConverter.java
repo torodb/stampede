@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Backend common
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,52 +13,53 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.backend.converters.json;
 
 import com.torodb.backend.converters.ValueConverter;
-import com.torodb.kvdocument.values.KVDouble;
+import com.torodb.kvdocument.values.KvDouble;
 
 /**
  *
  */
 public class DoubleValueToJsonConverter implements
-        ValueConverter<Object, KVDouble> {
+    ValueConverter<Object, KvDouble> {
 
-    private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
 
-    @Override
-    public Class<? extends Object> getJsonClass() {
-        return Double.class;
+  @Override
+  public Class<? extends Object> getJsonClass() {
+    return Double.class;
+  }
+
+  @Override
+  public Class<? extends KvDouble> getValueClass() {
+    return KvDouble.class;
+  }
+
+  @Override
+  public KvDouble toValue(Object value) {
+    if (value instanceof Number) {
+      Number number = (Number) value;
+      return KvDouble.of(number.doubleValue());
     }
-
-    @Override
-    public Class<? extends KVDouble> getValueClass() {
-        return KVDouble.class;
+    if (value instanceof String) {
+      String string = (String) value;
+      if (string.equals("Infinity")) {
+        return KvDouble.of(Double.POSITIVE_INFINITY);
+      }
+      if (string.equals("-Infinity")) {
+        return KvDouble.of(Double.NEGATIVE_INFINITY);
+      }
+      if (string.equals("NaN")) {
+        return KvDouble.of(Double.NaN);
+      }
     }
+    throw new IllegalArgumentException(
+        "KVValue " + value + " has not been recognized as double value"
+    );
+  }
 
-    @Override
-    public KVDouble toValue(Object value) {
-        if (value instanceof Number) {
-            Number number = (Number) value;
-            return KVDouble.of(number.doubleValue());
-        }
-        if (value instanceof String) {
-            String string = (String) value;
-            if (string.equals("Infinity")) {
-                return KVDouble.of(Double.POSITIVE_INFINITY);
-            }
-            if (string.equals("-Infinity")) {
-                return KVDouble.of(Double.NEGATIVE_INFINITY);
-            }
-            if (string.equals("NaN")) {
-                return KVDouble.of(Double.NaN);
-            }
-        }
-        throw new IllegalArgumentException(
-                "KVValue "+value+" has not been recognized as double value"
-        );
-    }
-    
 }

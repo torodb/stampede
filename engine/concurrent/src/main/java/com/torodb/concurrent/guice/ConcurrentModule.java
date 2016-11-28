@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Concurrent Utils
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,14 +13,15 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.concurrent.guice;
 
-import com.torodb.concurrent.ExecutorServiceShutdownHelper;
 import com.google.inject.PrivateModule;
 import com.google.inject.Singleton;
 import com.torodb.concurrent.DefaultConcurrentToolsFactory;
+import com.torodb.concurrent.ExecutorServiceShutdownHelper;
 import com.torodb.core.concurrent.ConcurrentToolsFactory;
 
 /**
@@ -28,15 +29,15 @@ import com.torodb.core.concurrent.ConcurrentToolsFactory;
  */
 public class ConcurrentModule extends PrivateModule {
 
-    @Override
-    protected void configure() {
-        bind(ConcurrentToolsFactory.class)
-                .to(DefaultConcurrentToolsFactory.class)
-                .in(Singleton.class);
-        expose(ConcurrentToolsFactory.class);
+  @Override
+  protected void configure() {
+    bind(ConcurrentToolsFactory.class)
+        .to(DefaultConcurrentToolsFactory.class)
+        .in(Singleton.class);
+    expose(ConcurrentToolsFactory.class);
 
-        bind(ExecutorServiceShutdownHelper.class);
-        expose(ExecutorServiceShutdownHelper.class);
-    }
+    bind(ExecutorServiceShutdownHelper.class);
+    expose(ExecutorServiceShutdownHelper.class);
+  }
 
 }

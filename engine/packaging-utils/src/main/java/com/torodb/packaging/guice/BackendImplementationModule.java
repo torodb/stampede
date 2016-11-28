@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Packaging utils
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,11 +13,10 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package com.torodb.packaging.guice;
 
-import java.util.function.Supplier;
+package com.torodb.packaging.guice;
 
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
@@ -34,46 +33,51 @@ import com.torodb.core.d2r.ReservedIdGenerator;
 import com.torodb.core.dsl.backend.BackendTransactionJobFactory;
 import com.torodb.packaging.config.model.backend.BackendImplementation;
 
-public abstract class BackendImplementationModule<T extends BackendImplementation, C extends BackendConfiguration> extends PrivateModule {
-    private final Class<T> configurationClass;
-    private final Class<C> backendConfigurationClass;
-    private final Class<? extends C> backendConfigurationMapperClass; 
-    private final Supplier<Module> backendModuleSupplier;
-    
-    private BackendImplementation backendImplementation;
+import java.util.function.Supplier;
 
-	public BackendImplementationModule(Class<T> configurationClass, 
-            Class<C> backendConfigurationClass, 
-            Class<? extends C> backendConfigurationMapperClass, 
-	        Supplier<Module> backendModuleSupplier) {
-	    this.configurationClass = configurationClass;
-	    this.backendConfigurationClass = backendConfigurationClass;
-	    this.backendConfigurationMapperClass = backendConfigurationMapperClass;
-	    this.backendModuleSupplier = backendModuleSupplier;
-	}
-	
-	public boolean isForConfiguration(BackendImplementation backendImplementation) {
-	    return configurationClass.isAssignableFrom(backendImplementation.getClass());
-	}
-	
-	public void setConfiguration(BackendImplementation backendImplementation) {
-	    this.backendImplementation = backendImplementation;
-	}
+@SuppressWarnings("checkstyle:LineLength")
+public abstract class BackendImplementationModule<T extends BackendImplementation, C extends BackendConfiguration>
+    extends PrivateModule {
 
-	@Override
-	protected void configure() {
-        install(new BackendModule());
-        bind(configurationClass).toInstance(configurationClass.cast(backendImplementation));
-        bind(backendConfigurationClass).to(backendConfigurationMapperClass);
-        install(backendModuleSupplier.get());
-        expose(SqlHelper.class);
-        expose(SqlInterface.class);
-        expose(SchemaUpdater.class);
-        expose(DbBackendService.class);
-        expose(IdentifierConstraints.class);
-        expose(BackendBundleFactory.class);
-        expose(BackendTransactionJobFactory.class);
-        expose(ReservedIdGenerator.class);
-        expose(SnapshotUpdater.class);
-	}
+  private final Class<T> configurationClass;
+  private final Class<C> backendConfigurationClass;
+  private final Class<? extends C> backendConfigurationMapperClass;
+  private final Supplier<Module> backendModuleSupplier;
+
+  private BackendImplementation backendImplementation;
+
+  public BackendImplementationModule(Class<T> configurationClass,
+      Class<C> backendConfigurationClass,
+      Class<? extends C> backendConfigurationMapperClass,
+      Supplier<Module> backendModuleSupplier) {
+    this.configurationClass = configurationClass;
+    this.backendConfigurationClass = backendConfigurationClass;
+    this.backendConfigurationMapperClass = backendConfigurationMapperClass;
+    this.backendModuleSupplier = backendModuleSupplier;
+  }
+
+  public boolean isForConfiguration(BackendImplementation backendImplementation) {
+    return configurationClass.isAssignableFrom(backendImplementation.getClass());
+  }
+
+  public void setConfiguration(BackendImplementation backendImplementation) {
+    this.backendImplementation = backendImplementation;
+  }
+
+  @Override
+  protected void configure() {
+    install(new BackendModule());
+    bind(configurationClass).toInstance(configurationClass.cast(backendImplementation));
+    bind(backendConfigurationClass).to(backendConfigurationMapperClass);
+    install(backendModuleSupplier.get());
+    expose(SqlHelper.class);
+    expose(SqlInterface.class);
+    expose(SchemaUpdater.class);
+    expose(DbBackendService.class);
+    expose(IdentifierConstraints.class);
+    expose(BackendBundleFactory.class);
+    expose(BackendTransactionJobFactory.class);
+    expose(ReservedIdGenerator.class);
+    expose(SnapshotUpdater.class);
+  }
 }

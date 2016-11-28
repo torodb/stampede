@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Backend PostgreSQL
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,56 +13,58 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.backend.postgresql.converters.jooq;
 
-import org.jooq.util.postgres.PostgresDataType;
-
-import com.torodb.backend.converters.jooq.DataTypeForKV;
-import com.torodb.backend.converters.jooq.KVValueConverter;
+import com.torodb.backend.converters.jooq.DataTypeForKv;
+import com.torodb.backend.converters.jooq.KvValueConverter;
 import com.torodb.backend.converters.sql.LongSqlBinding;
 import com.torodb.backend.converters.sql.SqlBinding;
-import com.torodb.kvdocument.types.KVType;
+import com.torodb.kvdocument.types.KvType;
 import com.torodb.kvdocument.types.LongType;
-import com.torodb.kvdocument.values.KVLong;
+import com.torodb.kvdocument.values.KvLong;
+import org.jooq.util.postgres.PostgresDataType;
 
 /**
  *
  */
-public class LongValueConverter implements KVValueConverter<Long, Long, KVLong>{
-    private static final long serialVersionUID = 1L;
+public class LongValueConverter implements KvValueConverter<Long, Long, KvLong> {
 
-    public static final DataTypeForKV<KVLong> TYPE = DataTypeForKV.from(PostgresDataType.INT8, new LongValueConverter());
+  private static final long serialVersionUID = 1L;
 
-    @Override
-    public KVType getErasuredType() {
-        return LongType.INSTANCE;
-    }
+  public static final DataTypeForKv<KvLong> TYPE = DataTypeForKv.from(PostgresDataType.INT8,
+      new LongValueConverter());
 
-    @Override
-    public KVLong from(Long databaseObject) {
-        return KVLong.of(databaseObject);
-    }
+  @Override
+  public KvType getErasuredType() {
+    return LongType.INSTANCE;
+  }
 
-    @Override
-    public Long to(KVLong userObject) {
-        return userObject.getValue();
-    }
+  @Override
+  public KvLong from(Long databaseObject) {
+    return KvLong.of(databaseObject);
+  }
 
-    @Override
-    public Class<Long> fromType() {
-        return Long.class;
-    }
+  @Override
+  public Long to(KvLong userObject) {
+    return userObject.getValue();
+  }
 
-    @Override
-    public Class<KVLong> toType() {
-        return KVLong.class;
-    }
+  @Override
+  public Class<Long> fromType() {
+    return Long.class;
+  }
 
-    @Override
-    public SqlBinding<Long> getSqlBinding() {
-        return LongSqlBinding.INSTANCE;
-    }
-    
+  @Override
+  public Class<KvLong> toType() {
+    return KvLong.class;
+  }
+
+  @Override
+  public SqlBinding<Long> getSqlBinding() {
+    return LongSqlBinding.INSTANCE;
+  }
+
 }

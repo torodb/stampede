@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Stampede main
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,41 +13,42 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.stampede.config;
+
+import com.beust.jcommander.internal.Console;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 
-import com.beust.jcommander.internal.Console;
-
 public class ByteArrayConsole implements Console {
-	
-	private final ByteArrayOutputStream byteArrayOutputStream;
-	private final PrintStream printStream;
-	
-	public ByteArrayConsole() {
-		byteArrayOutputStream = new ByteArrayOutputStream();
-		printStream = new PrintStream(byteArrayOutputStream);
-	}
-	
-	public ByteArrayOutputStream getByteArrayOutputStream() {
-		return byteArrayOutputStream;
-	}
 
-	@Override
-	public char[] readPassword(boolean echoInput) {
-		return null;
-	}
-	
-	@Override
-	public void println(String msg) {
-		printStream.println(msg);
-	}
-	
-	@Override
-	public void print(String msg) {
-		printStream.print(msg);
-	}
+  private final ByteArrayOutputStream byteArrayOutputStream;
+  private final PrintStream printStream;
+
+  public ByteArrayConsole() {
+    byteArrayOutputStream = new ByteArrayOutputStream();
+    printStream = new PrintStream(byteArrayOutputStream);
+  }
+
+  public ByteArrayOutputStream getByteArrayOutputStream() {
+    return byteArrayOutputStream;
+  }
+
+  @Override
+  public char[] readPassword(boolean echoInput) {
+    return null;
+  }
+
+  @Override
+  public void println(String msg) {
+    printStream.println(msg);
+  }
+
+  @Override
+  public void print(String msg) {
+    printStream.print(msg);
+  }
 }

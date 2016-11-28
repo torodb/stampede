@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Repl
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.repl.oplogreplier.batch;
 
 import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
@@ -24,19 +25,20 @@ import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
  */
 public class SingleOpAnalyzedOplogBatch extends AnalyzedOplogBatch {
 
-    private final OplogOperation operation;
+  private final OplogOperation operation;
 
-    public SingleOpAnalyzedOplogBatch(OplogOperation operation) {
-        this.operation = operation;
-    }
-    
-    public OplogOperation getOperation() {
-        return operation;
-    }
+  public SingleOpAnalyzedOplogBatch(OplogOperation operation) {
+    this.operation = operation;
+  }
 
-    @Override
-    public <Result, Arg, T extends Throwable> Result accept(AnalyzedOplogBatchVisitor<Result, Arg, T> visitor, Arg arg) throws T {
-        return visitor.visit(this, arg);
-    }
+  public OplogOperation getOperation() {
+    return operation;
+  }
+
+  @Override
+  public <R, A, T extends Throwable> R accept(AnalyzedOplogBatchVisitor<R, A, T> visitor, A arg)
+      throws T {
+    return visitor.visit(this, arg);
+  }
 
 }

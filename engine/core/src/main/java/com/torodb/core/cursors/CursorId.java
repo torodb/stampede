@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.core.cursors;
 
 import java.io.Serializable;
@@ -26,38 +27,39 @@ import javax.annotation.concurrent.Immutable;
  */
 @Immutable
 public class CursorId implements Serializable {
-    private static final long serialVersionUID = 1L;
-    
-    private final long id;
 
-    public CursorId(long id) {
-        this.id = id;
-    }
-    
-    public long getNumericId() {
-        return id;
-    }
+  private static final long serialVersionUID = 1L;
 
-    @Override
-    public int hashCode() {
-        int hash = 5;
-        hash = 67 * hash + (int) (this.id ^ (this.id >>> 32));
-        return hash;
-    }
+  private final long id;
 
-    @Override
-    public boolean equals(Object obj) {
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        final CursorId other = (CursorId) obj;
-        if (this.id != other.id) {
-            return false;
-        }
-        return true;
+  public CursorId(long id) {
+    this.id = id;
+  }
+
+  public long getNumericId() {
+    return id;
+  }
+
+  @Override
+  public int hashCode() {
+    int hash = 5;
+    hash = 67 * hash + (int) (this.id ^ (this.id >>> 32));
+    return hash;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj == null) {
+      return false;
     }
-    
+    if (getClass() != obj.getClass()) {
+      return false;
+    }
+    final CursorId other = (CursorId) obj;
+    if (this.id != other.id) {
+      return false;
+    }
+    return true;
+  }
+
 }

@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Repl
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.repl.oplogreplier;
 
 import com.google.common.util.concurrent.Service;
@@ -24,18 +25,20 @@ import com.google.common.util.concurrent.Service;
  */
 public interface OplogApplierService extends Service {
 
-    public static interface Callback {
-        void waitUntilStartPermision();
+  public static interface Callback {
 
-        void rollback(OplogApplierService oplogApplier, RollbackReplicationException ex);
+    void waitUntilStartPermision();
 
-        void onFinish(OplogApplierService oplogApplier);
+    void rollback(OplogApplierService oplogApplier, RollbackReplicationException ex);
 
-        void onError(OplogApplierService oplogApplier, Throwable t);
-    }
+    void onFinish(OplogApplierService oplogApplier);
 
-    public static interface OplogApplierServiceFactory {
-        OplogApplierService createOplogApplier(Callback callback);
-    }
+    void onError(OplogApplierService oplogApplier, Throwable t);
+  }
+
+  public static interface OplogApplierServiceFactory {
+
+    OplogApplierService createOplogApplier(Callback callback);
+  }
 
 }

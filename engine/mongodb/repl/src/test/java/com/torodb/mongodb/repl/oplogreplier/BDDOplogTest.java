@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Repl
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.repl.oplogreplier;
 
 import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
@@ -22,6 +23,7 @@ import com.torodb.mongodb.core.MongodConnection;
 import com.torodb.mongodb.core.MongodServer;
 import com.torodb.mongodb.core.ReadOnlyMongodTransaction;
 import com.torodb.mongodb.core.WriteMongodTransaction;
+
 import java.util.stream.Stream;
 
 /**
@@ -29,32 +31,32 @@ import java.util.stream.Stream;
  */
 public abstract class BDDOplogTest implements OplogTest {
 
-    public abstract void given(WriteMongodTransaction trans) throws Exception;
+  public abstract void given(WriteMongodTransaction trans) throws Exception;
 
-    public abstract Stream<OplogOperation> streamOplog();
+  public abstract Stream<OplogOperation> streamOplog();
 
-    public abstract void then(ReadOnlyMongodTransaction trans) throws Exception;
+  public abstract void then(ReadOnlyMongodTransaction trans) throws Exception;
 
-    public abstract ApplierContext getApplierContext();
+  public abstract ApplierContext getApplierContext();
 
-    @Override
-    public void execute(OplogTestContext context) throws Exception {
-        MongodServer server = context.getMongodServer();
+  @Override
+  public void execute(OplogTestContext context) throws Exception {
+    MongodServer server = context.getMongodServer();
 
-        try (MongodConnection conn = server.openConnection()) {
-            try (WriteMongodTransaction trans = conn.openWriteTransaction(true)) {
-                given(trans);
-                trans.commit();
-            }
-        }
-        
-        context.apply(streamOplog(), getApplierContext());
-        
-        try (MongodConnection conn = server.openConnection()) {
-            try (ReadOnlyMongodTransaction trans = conn.openReadOnlyTransaction()) {
-                then(trans);
-            }
-        }
+    try (MongodConnection conn = server.openConnection()) {
+      try (WriteMongodTransaction trans = conn.openWriteTransaction(true)) {
+        given(trans);
+        trans.commit();
+      }
     }
+
+    context.apply(streamOplog(), getApplierContext());
+
+    try (MongodConnection conn = server.openConnection()) {
+      try (ReadOnlyMongodTransaction trans = conn.openReadOnlyTransaction()) {
+        then(trans);
+      }
+    }
+  }
 
 }

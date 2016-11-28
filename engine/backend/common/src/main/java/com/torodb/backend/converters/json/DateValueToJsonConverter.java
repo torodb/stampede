@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Backend common
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,36 +13,37 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.backend.converters.json;
 
-import java.time.LocalDate;
-
 import com.torodb.backend.converters.ValueConverter;
-import com.torodb.kvdocument.values.KVDate;
-import com.torodb.kvdocument.values.heap.LocalDateKVDate;
+import com.torodb.kvdocument.values.KvDate;
+import com.torodb.kvdocument.values.heap.LocalDateKvDate;
+
+import java.time.LocalDate;
 
 /**
  *
  */
-public class DateValueToJsonConverter implements ValueConverter<String, KVDate> {
+public class DateValueToJsonConverter implements ValueConverter<String, KvDate> {
 
-    private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
 
-    @Override
-    public Class<? extends String> getJsonClass() {
-        return String.class;
-    }
+  @Override
+  public Class<? extends String> getJsonClass() {
+    return String.class;
+  }
 
-    @Override
-    public Class<? extends KVDate> getValueClass() {
-        return KVDate.class;
-    }
+  @Override
+  public Class<? extends KvDate> getValueClass() {
+    return KvDate.class;
+  }
 
-    @Override
-    public KVDate toValue(String value) {
-        return new LocalDateKVDate(LocalDate.parse(value));
-    }
-    
+  @Override
+  public KvDate toValue(String value) {
+    return new LocalDateKvDate(LocalDate.parse(value));
+  }
+
 }

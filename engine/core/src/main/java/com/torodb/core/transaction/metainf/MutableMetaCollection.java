@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,68 +13,69 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.core.transaction.metainf;
-
-import java.util.Optional;
-import java.util.stream.Stream;
-
-import org.jooq.lambda.tuple.Tuple2;
 
 import com.torodb.core.TableRef;
 import com.torodb.core.annotations.DoNotChange;
+import org.jooq.lambda.tuple.Tuple2;
+
+import java.util.Optional;
+import java.util.stream.Stream;
 
 /**
  *
  */
 public interface MutableMetaCollection extends MetaCollection {
 
-    @Override
-    public MutableMetaDocPart getMetaDocPartByTableRef(TableRef tableRef);
+  @Override
+  public MutableMetaDocPart getMetaDocPartByTableRef(TableRef tableRef);
 
-    @Override
-    public MutableMetaDocPart getMetaDocPartByIdentifier(String docPartId);
+  @Override
+  public MutableMetaDocPart getMetaDocPartByIdentifier(String docPartId);
 
-    @Override
-    public MutableMetaIndex getMetaIndexByName(String indexId);
+  @Override
+  public MutableMetaIndex getMetaIndexByName(String indexId);
 
-    @Override
-    public Stream<? extends MutableMetaDocPart> streamContainedMetaDocParts();
+  @Override
+  public Stream<? extends MutableMetaDocPart> streamContainedMetaDocParts();
 
-    public MutableMetaDocPart addMetaDocPart(TableRef tableRef, String identifier) throws IllegalArgumentException;
+  public MutableMetaDocPart addMetaDocPart(TableRef tableRef, String identifier) throws
+      IllegalArgumentException;
 
-    @DoNotChange
-    public Iterable<? extends MutableMetaDocPart> getModifiedMetaDocParts();
+  @DoNotChange
+  public Iterable<? extends MutableMetaDocPart> getModifiedMetaDocParts();
 
-    @Override
-    public Stream<? extends MutableMetaIndex> streamContainedMetaIndexes();
+  @Override
+  public Stream<? extends MutableMetaIndex> streamContainedMetaIndexes();
 
-    public MutableMetaIndex addMetaIndex(String name, boolean unique) throws IllegalArgumentException;
-    
-    public boolean removeMetaIndexByName(String indexName);
+  public MutableMetaIndex addMetaIndex(String name, boolean unique) throws IllegalArgumentException;
 
-    @DoNotChange
-    public Iterable<Tuple2<MutableMetaIndex, MetaElementState>> getModifiedMetaIndexes();
-    
+  public boolean removeMetaIndexByName(String indexName);
 
-    public Optional<? extends MetaIndex> getAnyMissedIndex(MetaCollection oldCol,
-            MutableMetaDocPart newStructure, ImmutableMetaDocPart oldStructure, ImmutableMetaField newField);
+  @DoNotChange
+  public Iterable<Tuple2<MutableMetaIndex, MetaElementState>> getModifiedMetaIndexes();
 
-    public Optional<? extends MetaIndex> getAnyRelatedIndex(ImmutableMetaCollection oldCol,
-            MetaDocPart newStructure, ImmutableMetaIdentifiedDocPartIndex newDocPartIndex);
-    
-    public Optional<ImmutableMetaIndex> getAnyMissedIndex(ImmutableMetaCollection oldCol,
-            ImmutableMetaIdentifiedDocPartIndex newRemovedDocPartIndex);
+  public Optional<? extends MetaIndex> getAnyMissedIndex(MetaCollection oldCol,
+      MutableMetaDocPart newStructure, ImmutableMetaDocPart oldStructure,
+      ImmutableMetaField newField);
 
-    public Optional<ImmutableMetaIndex> getAnyConflictingIndex(
-            ImmutableMetaCollection oldStructure, MutableMetaIndex changed);
+  public Optional<ImmutableMetaIndex> getAnyMissedIndex(ImmutableMetaCollection oldCol,
+      ImmutableMetaIdentifiedDocPartIndex newRemovedDocPartIndex);
 
-    public Optional<ImmutableMetaDocPart> getAnyDocPartWithMissedDocPartIndex(
-            ImmutableMetaCollection oldStructure, MutableMetaIndex changed);
+  public Optional<? extends MetaIndex> getAnyRelatedIndex(ImmutableMetaCollection oldCol,
+      MetaDocPart newStructure, ImmutableMetaIdentifiedDocPartIndex newDocPartIndex);
 
-    public Optional<? extends MetaIdentifiedDocPartIndex> getAnyOrphanDocPartIndex(
-            ImmutableMetaCollection oldStructure, MutableMetaIndex changed);
-    
-    public abstract ImmutableMetaCollection immutableCopy();
+  public Optional<ImmutableMetaIndex> getAnyConflictingIndex(
+      ImmutableMetaCollection oldStructure, MutableMetaIndex changed);
+
+  public Optional<ImmutableMetaDocPart> getAnyDocPartWithMissedDocPartIndex(
+      ImmutableMetaCollection oldStructure, MutableMetaIndex changed);
+
+  public Optional<? extends MetaIdentifiedDocPartIndex> getAnyOrphanDocPartIndex(
+      ImmutableMetaCollection oldStructure, MutableMetaIndex changed);
+
+  public abstract ImmutableMetaCollection immutableCopy();
 }

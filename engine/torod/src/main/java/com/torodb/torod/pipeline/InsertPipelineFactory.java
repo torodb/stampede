@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Torod Layer
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.torod.pipeline;
 
 import com.google.common.util.concurrent.Service;
@@ -28,20 +29,19 @@ import com.torodb.core.transaction.metainf.MutableMetaCollection;
  */
 public interface InsertPipelineFactory extends Service {
 
-    /**
-     *
-     * @param translatorFactory
-     * @param metaDb
-     * @param mutableMetaCollection
-     * @param backendConnection
-     * @return
-     */
-    public InsertPipeline createInsertPipeline(
-            D2RTranslatorFactory translatorFactory,
-            MetaDatabase metaDb,
-            MutableMetaCollection mutableMetaCollection,
-            WriteBackendTransaction backendConnection,
-            boolean concurrent);
-
+  /**
+   *
+   * @param translatorFactory
+   * @param metaDb
+   * @param mutableMetaCollection
+   * @param backendConnection
+   * @return
+   */
+  public InsertPipeline createInsertPipeline(
+      D2RTranslatorFactory translatorFactory,
+      MetaDatabase metaDb,
+      MutableMetaCollection mutableMetaCollection,
+      WriteBackendTransaction backendConnection,
+      boolean concurrent);
 
 }

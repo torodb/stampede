@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,12 +13,13 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.core;
 
-
 import java.time.Instant;
+
 import javax.annotation.concurrent.Immutable;
 
 /**
@@ -27,35 +28,35 @@ import javax.annotation.concurrent.Immutable;
 @Immutable
 public interface BuildProperties {
 
-    public String getFullVersion();
+  public String getFullVersion();
 
-    public int getMajorVersion();
+  public int getMajorVersion();
 
-    public int getMinorVersion();
+  public int getMinorVersion();
 
-    public int getSubVersion();
+  public int getSubVersion();
 
-    public String getExtraVersion();
+  public String getExtraVersion();
 
-    public Instant getBuildTime();
+  public Instant getBuildTime();
 
-    public String getGitCommitId();
+  public String getGitCommitId();
 
-    public String getGitBranch();
+  public String getGitBranch();
 
-    public String getGitRemoteOriginURL();
+  public String getGitRemoteOriginUrl();
 
-    public String getJavaVersion();
+  public String getJavaVersion();
 
-    public String getJavaVendor();
+  public String getJavaVendor();
 
-    public String getJavaVMSpecificationVersion();
+  public String getJavaVmSpecificationVersion();
 
-    public String getJavaVMVersion();
+  public String getJavaVmVersion();
 
-    public String getOsName();
+  public String getOsName();
 
-    public String getOsArch();
+  public String getOsArch();
 
-    public String getOsVersion();
+  public String getOsVersion();
 }

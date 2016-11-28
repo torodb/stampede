@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Server service
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.standalone.config.jackson;
 
 import com.google.common.collect.ImmutableMap;
@@ -22,9 +23,9 @@ import com.torodb.packaging.config.jackson.AbstractBackendDeserializer;
 import com.torodb.standalone.config.model.backend.Backend;
 
 public class BackendDeserializer extends AbstractBackendDeserializer<Backend> {
-    
-    public BackendDeserializer() {
-        super(() -> new Backend(), ImmutableMap.of());
-    }
+
+  public BackendDeserializer() {
+    super(() -> new Backend(), ImmutableMap.of());
+  }
 
 }

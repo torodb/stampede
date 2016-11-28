@@ -1,15 +1,15 @@
 {
-	"name": "John",
-	"department" : 
-		{
-			"name" : "dept1",
-			"address" : 
-				{
-					"city" : "Madrid",
-					"country" : {
-						"code" : "es",
-						"spain" : "spain"
-					}
-				}
-		}
+    "name": "John",
+    "department": 
+            {
+                "name": "dept1",
+                "address": 
+                        {
+                            "city": "Madrid",
+                            "country": {
+                                "code": "es",
+                                "spain": "spain"
+                            }
+                        }
+            }
 }

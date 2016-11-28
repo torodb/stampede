@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.commands.signatures.repl;
 
 import com.eightkdata.mongowp.MongoConstants;
@@ -23,59 +24,59 @@ import com.eightkdata.mongowp.bson.utils.DefaultBsonValues;
 import com.eightkdata.mongowp.exceptions.BadValueException;
 import com.eightkdata.mongowp.exceptions.MongoException;
 import com.eightkdata.mongowp.fields.DocField;
-import com.torodb.mongodb.commands.pojos.ReplicaSetConfig;
-import com.torodb.mongodb.commands.tools.EmptyCommandArgumentMarshaller;
 import com.eightkdata.mongowp.server.api.impl.AbstractNotAliasableCommand;
 import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.eightkdata.mongowp.utils.BsonReaderTool;
+import com.torodb.mongodb.commands.pojos.ReplicaSetConfig;
+import com.torodb.mongodb.commands.tools.EmptyCommandArgumentMarshaller;
 
 /**
  * Returns the current replica set configuration.
  */
 public class ReplSetGetConfigCommand extends AbstractNotAliasableCommand<Empty, ReplicaSetConfig> {
 
-    public static final ReplSetGetConfigCommand INSTANCE = new ReplSetGetConfigCommand();
-    private static final DocField CONFIG_FIELD = new DocField("config");
+  public static final ReplSetGetConfigCommand INSTANCE = new ReplSetGetConfigCommand();
+  private static final DocField CONFIG_FIELD = new DocField("config");
 
-    private ReplSetGetConfigCommand() {
-        super("replSetGetConfig");
-    }
+  private ReplSetGetConfigCommand() {
+    super("replSetGetConfig");
+  }
 
-    @Override
-    public Class<? extends Empty> getArgClass() {
-        return Empty.class;
-    }
+  @Override
+  public Class<? extends Empty> getArgClass() {
+    return Empty.class;
+  }
 
-    @Override
-    public Empty unmarshallArg(BsonDocument requestDoc) {
-        return Empty.getInstance();
-    }
+  @Override
+  public Empty unmarshallArg(BsonDocument requestDoc) {
+    return Empty.getInstance();
+  }
 
-    @Override
-    public BsonDocument marshallArg(Empty request) {
-        return EmptyCommandArgumentMarshaller.marshallEmptyArgument(this);
-    }
+  @Override
+  public BsonDocument marshallArg(Empty request) {
+    return EmptyCommandArgumentMarshaller.marshallEmptyArgument(this);
+  }
 
-    @Override
-    public Class<? extends ReplicaSetConfig> getResultClass() {
-        return ReplicaSetConfig.class;
-    }
+  @Override
+  public Class<? extends ReplicaSetConfig> getResultClass() {
+    return ReplicaSetConfig.class;
+  }
 
-    @Override
-    public BsonDocument marshallResult(ReplicaSetConfig reply) {
-        return DefaultBsonValues.newDocument("config", reply.toBSON());
-    }
+  @Override
+  public BsonDocument marshallResult(ReplicaSetConfig reply) {
+    return DefaultBsonValues.newDocument("config", reply.toBson());
+  }
 
-    @Override
-    public ReplicaSetConfig unmarshallResult(BsonDocument resultDoc) throws
-            MongoException, UnsupportedOperationException {
-        if (!resultDoc.get("ok").equals(MongoConstants.BSON_OK)) {
-            throw new BadValueException("It is not defined how to parse errors "
-                    + "from " + getCommandName());
-        }
-        return ReplicaSetConfig.fromDocument(
-                BsonReaderTool.getDocument(resultDoc, CONFIG_FIELD)
-        );
+  @Override
+  public ReplicaSetConfig unmarshallResult(BsonDocument resultDoc) throws
+      MongoException, UnsupportedOperationException {
+    if (!resultDoc.get("ok").equals(MongoConstants.BSON_OK)) {
+      throw new BadValueException("It is not defined how to parse errors "
+          + "from " + getCommandName());
     }
+    return ReplicaSetConfig.fromDocument(
+        BsonReaderTool.getDocument(resultDoc, CONFIG_FIELD)
+    );
+  }
 
 }

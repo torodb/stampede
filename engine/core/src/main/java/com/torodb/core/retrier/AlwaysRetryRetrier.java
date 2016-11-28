@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,12 +13,14 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.core.retrier;
 
 import com.torodb.common.util.RetryHelper;
 import com.torodb.common.util.RetryHelper.ExceptionHandler;
+
 import java.util.EnumSet;
 
 /**
@@ -26,17 +28,19 @@ import java.util.EnumSet;
  */
 public class AlwaysRetryRetrier extends AbstractHintableRetrier {
 
-    private static final AlwaysRetryRetrier INSTANCE = new AlwaysRetryRetrier();
+  private static final AlwaysRetryRetrier INSTANCE = new AlwaysRetryRetrier();
 
-    private AlwaysRetryRetrier() {}
+  private AlwaysRetryRetrier() {
+  }
 
-    @Override
-    protected <Result, T extends Exception> ExceptionHandler<Result, T> getExceptionHandler(EnumSet<Hint> hints, ExceptionHandler<Result, T> delegateHandler) {
-        return RetryHelper.alwaysRetryHandler();
-    }
+  @Override
+  protected <R, T extends Exception> ExceptionHandler<R, T> getExceptionHandler(
+      EnumSet<Hint> hints, ExceptionHandler<R, T> delegateHandler) {
+    return RetryHelper.alwaysRetryHandler();
+  }
 
-    public static AlwaysRetryRetrier getInstance() {
-        return INSTANCE;
-    }
+  public static AlwaysRetryRetrier getInstance() {
+    return INSTANCE;
+  }
 
 }

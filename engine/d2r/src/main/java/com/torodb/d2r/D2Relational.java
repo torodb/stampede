@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: D2R Implementation
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.d2r;
 
 import com.torodb.core.TableRefFactory;
@@ -26,95 +27,98 @@ import com.torodb.d2r.model.PathStack.PathInfo;
 import com.torodb.d2r.model.PathStack.PathNodeType;
 import com.torodb.kvdocument.types.ArrayType;
 import com.torodb.kvdocument.types.DocumentType;
-import com.torodb.kvdocument.types.KVType;
-import com.torodb.kvdocument.values.KVArray;
-import com.torodb.kvdocument.values.KVDocument;
-import com.torodb.kvdocument.values.KVDocument.DocEntry;
-import com.torodb.kvdocument.values.KVValue;
+import com.torodb.kvdocument.types.KvType;
+import com.torodb.kvdocument.values.KvArray;
+import com.torodb.kvdocument.values.KvDocument;
+import com.torodb.kvdocument.values.KvDocument.DocEntry;
+import com.torodb.kvdocument.values.KvValue;
 
 public class D2Relational {
 
-	private static final DocumentVisitor visitor = new DocumentVisitor();
-	
-	private final ConsumerFromArrayIdx fromArrayIdx = new ConsumerFromArrayIdx();
-	private final DocConsumer docComsumer = new DocConsumer();
-	private final PathStack pathStack;
-	private final DocPartDataCollection docPartDataCollection;
+  private static final DocumentVisitor visitor = new DocumentVisitor();
 
-	public D2Relational(TableRefFactory tableRefFactory, DocPartDataCollection docPartDataCollection) {
-	    this.pathStack = new PathStack(tableRefFactory);
-		this.docPartDataCollection = docPartDataCollection;
-	}
+  private final ConsumerFromArrayIdx fromArrayIdx = new ConsumerFromArrayIdx();
+  private final DocConsumer docComsumer = new DocConsumer();
+  private final PathStack pathStack;
+  private final DocPartDataCollection docPartDataCollection;
 
-	public void translate(KVDocument document) {
-		docComsumer.consume(document);
-	}
+  public D2Relational(TableRefFactory tableRefFactory,
+      DocPartDataCollection docPartDataCollection) {
+    this.pathStack = new PathStack(tableRefFactory);
+    this.docPartDataCollection = docPartDataCollection;
+  }
 
-	public class DocConsumer {
-		
-		public void consume(KVDocument value) {
-			PathInfo parentPath = pathStack.peek();
-			DocPartDataImpl docPartData = docPartDataCollection.findDocPartData(parentPath);
-			DocPartRowImpl docPartRow = docPartData.newRowObject(getDocumentIndex(parentPath), parentPath.findParentRowInfo()); 
-			pathStack.pushObject(docPartRow);
-			for (DocEntry<?> entry : value) {
-				String key = entry.getKey();
-				KVValue<?> entryValue = entry.getValue();
-				if (isScalar(entryValue.getType())) {
-					docPartRow.addScalar(key, entryValue);
-				} else {
-					docPartRow.addChild(key, entryValue);
-					pathStack.pushField(key);
-					entryValue.accept(visitor, docComsumer);
-					pathStack.pop();
-				}
-			}
-			pathStack.pop();
-		}
-		
-		public void consume(KVArray value) {
-			int i = 0;
-			pathStack.pushArray();
-			PathInfo current = pathStack.peek();
-			DocPartDataImpl table = docPartDataCollection.findDocPartData(current);
-			for (KVValue<?> val : value) {
-				if (isScalar(val.getType())) {
-					DocPartRowImpl rowInfo = table.newRowObject(i++, current.findParentRowInfo());
-					rowInfo.addArrayItem(val);
-				}else{
-					pathStack.pushArrayIdx(i++);
-					val.accept(visitor, fromArrayIdx);
-					pathStack.pop();
-				}
-			}
-			pathStack.pop();
-		}
+  public void translate(KvDocument document) {
+    docComsumer.consume(document);
+  }
 
-	}
+  public class DocConsumer {
 
-	private class ConsumerFromArrayIdx extends DocConsumer {
+    public void consume(KvDocument value) {
+      PathInfo parentPath = pathStack.peek();
+      DocPartDataImpl docPartData = docPartDataCollection.findDocPartData(parentPath);
+      DocPartRowImpl docPartRow = docPartData.newRowObject(getDocumentIndex(parentPath), parentPath
+          .findParentRowInfo());
+      pathStack.pushObject(docPartRow);
+      for (DocEntry<?> entry : value) {
+        String key = entry.getKey();
+        KvValue<?> entryValue = entry.getValue();
+        if (isScalar(entryValue.getType())) {
+          docPartRow.addScalar(key, entryValue);
+        } else {
+          docPartRow.addChild(key, entryValue);
+          pathStack.pushField(key);
+          entryValue.accept(visitor, docComsumer);
+          pathStack.pop();
+        }
+      }
+      pathStack.pop();
+    }
 
-		@Override
-		public void consume(KVArray value) {
-			PathArrayIdx current = (PathArrayIdx) pathStack.pop();
-			DocPartDataImpl docPartData = docPartDataCollection.findDocPartData(current);
-			DocPartRowImpl docPartRow = docPartData.newRowObject(current.getIdx(), pathStack.peek().findParentRowInfo());
-			docPartRow.addChildToArray(value);
-			pathStack.pushArrayIdx(current.getIdx(), docPartRow);
-			super.consume(value);
-		}
+    public void consume(KvArray value) {
+      int i = 0;
+      pathStack.pushArray();
+      PathInfo current = pathStack.peek();
+      DocPartDataImpl table = docPartDataCollection.findDocPartData(current);
+      for (KvValue<?> val : value) {
+        if (isScalar(val.getType())) {
+          DocPartRowImpl rowInfo = table.newRowObject(i++, current.findParentRowInfo());
+          rowInfo.addArrayItem(val);
+        } else {
+          pathStack.pushArrayIdx(i++);
+          val.accept(visitor, fromArrayIdx);
+          pathStack.pop();
+        }
+      }
+      pathStack.pop();
+    }
 
-	}
+  }
 
-	private boolean isScalar(KVType kvType) {
-		return (kvType != DocumentType.INSTANCE) && !(kvType instanceof ArrayType);
-	}
+  private class ConsumerFromArrayIdx extends DocConsumer {
 
-	private Integer getDocumentIndex(PathInfo path) {
-		if (path.is(PathNodeType.Idx)) {
-			return ((PathArrayIdx) path).getIdx();
-		}
-		return null;
-	}
+    @Override
+    public void consume(KvArray value) {
+      PathArrayIdx current = (PathArrayIdx) pathStack.pop();
+      DocPartDataImpl docPartData = docPartDataCollection.findDocPartData(current);
+      DocPartRowImpl docPartRow = docPartData.newRowObject(current.getIdx(), pathStack.peek()
+          .findParentRowInfo());
+      docPartRow.addChildToArray(value);
+      pathStack.pushArrayIdx(current.getIdx(), docPartRow);
+      super.consume(value);
+    }
+
+  }
+
+  private boolean isScalar(KvType kvType) {
+    return (kvType != DocumentType.INSTANCE) && !(kvType instanceof ArrayType);
+  }
+
+  private Integer getDocumentIndex(PathInfo path) {
+    if (path.is(PathNodeType.Idx)) {
+      return ((PathArrayIdx) path).getIdx();
+    }
+    return null;
+  }
 
 }

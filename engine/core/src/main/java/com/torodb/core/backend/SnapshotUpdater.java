@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.core.backend;
 
 import com.torodb.core.exceptions.InvalidDatabaseException;
@@ -25,13 +26,14 @@ import com.torodb.core.transaction.metainf.MetainfoRepository;
  */
 public interface SnapshotUpdater {
 
-    /**
-     * Updates the given metainf repository to add all meta structures stored on the database.
-     *
-     * @param metainfoRepository The repository where meta structures will be added. It should be empty.
-     * @throws InvalidDatabaseException
-     */
-    public void updateSnapshot(MetainfoRepository metainfoRepository)
-            throws InvalidDatabaseException;
+  /**
+   * Updates the given metainf repository to add all meta structures stored on the database.
+   *
+   * @param metainfoRepository The repository where meta structures will be added. It should be
+   *                           empty.
+   * @throws InvalidDatabaseException
+   */
+  public void updateSnapshot(MetainfoRepository metainfoRepository)
+      throws InvalidDatabaseException;
 
 }

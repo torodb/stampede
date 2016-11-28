@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,26 +13,28 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.core.impl;
 
 import com.torodb.core.TableRef;
 import com.torodb.core.TableRefFactory;
 
 public class TableRefFactoryImpl implements TableRefFactory {
-    @Override
-    public TableRef createRoot() {
-        return TableRefImpl.ROOT;
-    }
 
-    @Override
-    public TableRef createChild(TableRef parent, String name) {
-        return new TableRefImpl(parent, name);
-    }
+  @Override
+  public TableRef createRoot() {
+    return TableRefImpl.ROOT;
+  }
 
-    @Override
-    public TableRef createChild(TableRef parent, int arrayDimension) {
-        return new TableRefImpl(parent, arrayDimension);
-    }
+  @Override
+  public TableRef createChild(TableRef parent, String name) {
+    return new TableRefImpl(parent, name);
+  }
+
+  @Override
+  public TableRef createChild(TableRef parent, int arrayDimension) {
+    return new TableRefImpl(parent, arrayDimension);
+  }
 }

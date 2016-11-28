@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Repl
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,11 +13,13 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.repl.oplogreplier;
 
 import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
+
 import java.util.List;
 
 /**
@@ -25,27 +27,27 @@ import java.util.List;
  */
 public class NormalOplogBatch implements OplogBatch {
 
-    private final List<OplogOperation> ops;
-    private boolean readyForMore;
+  private final List<OplogOperation> ops;
+  private boolean readyForMore;
 
-    public NormalOplogBatch(List<OplogOperation> ops, boolean readyForMore) {
-        this.ops = ops;
-        this.readyForMore = readyForMore;
-    }
+  public NormalOplogBatch(List<OplogOperation> ops, boolean readyForMore) {
+    this.ops = ops;
+    this.readyForMore = readyForMore;
+  }
 
-    @Override
-    public List<OplogOperation> getOps() {
-        return ops;
-    }
+  @Override
+  public List<OplogOperation> getOps() {
+    return ops;
+  }
 
-    @Override
-    public boolean isReadyForMore() {
-        return readyForMore;
-    }
+  @Override
+  public boolean isReadyForMore() {
+    return readyForMore;
+  }
 
-    @Override
-    public boolean isLastOne() {
-        return false;
-    }
+  @Override
+  public boolean isLastOne() {
+    return false;
+  }
 
 }

@@ -1,4 +1,6 @@
 {
-	"name": "John",
-	"day" : ["monday"]
+    "name": "John",
+    "day": [
+        "monday"
+    ]
 }

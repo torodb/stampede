@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Repl
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,32 +13,35 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.repl.topology;
 
 import com.torodb.core.supervision.Supervisor;
-import javax.inject.Inject;
 import com.torodb.mongodb.repl.guice.MongoDbRepl;
+
+import javax.inject.Inject;
 
 /**
  *
  */
 public class DefaultTopologyErrorHandler implements TopologyErrorHandler {
-    private final Supervisor replSupervisor;
 
-    @Inject
-    public DefaultTopologyErrorHandler(@MongoDbRepl Supervisor replSupervisor) {
-        this.replSupervisor = replSupervisor;
-    }
+  private final Supervisor replSupervisor;
 
-    @Override
-    public boolean sendHeartbeatError(Throwable t) {
-        return true;
-    }
+  @Inject
+  public DefaultTopologyErrorHandler(@MongoDbRepl Supervisor replSupervisor) {
+    this.replSupervisor = replSupervisor;
+  }
 
-    @Override
-    public boolean reciveHeartbeatError(Throwable t) {
-        return true;
-    }
+  @Override
+  public boolean sendHeartbeatError(Throwable t) {
+    return true;
+  }
+
+  @Override
+  public boolean reciveHeartbeatError(Throwable t) {
+    return true;
+  }
 }

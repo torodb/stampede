@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.core.cursors;
 
 import java.util.function.Function;
@@ -24,26 +25,26 @@ import java.util.function.Function;
  */
 public class TransformCursor<I, O> implements Cursor<O> {
 
-    private final Cursor<I> delegate;
-    private final Function<I, O> transformation;
+  private final Cursor<I> delegate;
+  private final Function<I, O> transformation;
 
-    public TransformCursor(Cursor<I> delegate, Function<I, O> transformFun) {
-        this.delegate = delegate;
-        this.transformation = transformFun;
-    }
+  public TransformCursor(Cursor<I> delegate, Function<I, O> transformFun) {
+    this.delegate = delegate;
+    this.transformation = transformFun;
+  }
 
-    @Override
-    public void close() {
-        delegate.close();
-    }
+  @Override
+  public void close() {
+    delegate.close();
+  }
 
-    @Override
-    public boolean hasNext() {
-        return delegate.hasNext();
-    }
+  @Override
+  public boolean hasNext() {
+    return delegate.hasNext();
+  }
 
-    @Override
-    public O next() {
-        return transformation.apply(delegate.next());
-    }
+  @Override
+  public O next() {
+    return transformation.apply(delegate.next());
+  }
 }

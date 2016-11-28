@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.core.retrier;
 
 import com.torodb.core.exceptions.ToroException;
@@ -25,14 +26,14 @@ import com.torodb.core.exceptions.ToroException;
  */
 public class RetrierGiveUpException extends ToroException {
 
-    private static final long serialVersionUID = -9052439274011714487L;
+  private static final long serialVersionUID = -9052439274011714487L;
 
-    public RetrierGiveUpException(String message, Throwable cause) {
-        super(message, cause);
-    }
+  public RetrierGiveUpException(String message, Throwable cause) {
+    super(message, cause);
+  }
 
-    public RetrierGiveUpException(Throwable cause) {
-        super(cause);
-    }
+  public RetrierGiveUpException(Throwable cause) {
+    super(cause);
+  }
 
 }

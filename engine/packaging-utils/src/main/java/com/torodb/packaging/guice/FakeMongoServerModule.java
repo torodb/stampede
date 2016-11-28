@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Packaging utils
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.packaging.guice;
 
 import com.eightkdata.mongowp.server.MongoServerConfig;
@@ -26,19 +27,20 @@ import com.torodb.mongodb.core.MongodServerConfig;
 import com.torodb.packaging.DefaultBuildProperties;
 
 public class FakeMongoServerModule extends AbstractModule {
-	@Override
-	protected void configure() {
-        bind(BuildProperties.class).to(DefaultBuildProperties.class).asEagerSingleton();
 
-        bind(MongoServerConfig.class)
-                .toInstance(() -> 27017);
-	}
+  @Override
+  protected void configure() {
+    bind(BuildProperties.class).to(DefaultBuildProperties.class).asEagerSingleton();
 
-    @Provides
-    public MongodServerConfig createMongodServerConfig() {
-        return new MongodServerConfig(HostAndPort.fromParts(
-                "localhost",
-                27017
-        ));
-    }
+    bind(MongoServerConfig.class)
+        .toInstance(() -> 27017);
+  }
+
+  @Provides
+  public MongodServerConfig createMongodServerConfig() {
+    return new MongodServerConfig(HostAndPort.fromParts(
+        "localhost",
+        27017
+    ));
+  }
 }
